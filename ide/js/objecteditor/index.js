@@ -662,7 +662,7 @@ export class ObjectEditor extends Morph {
     let items = [],
         t = this.target,
         pkg = ObjectPackage.lookupPackageForObject(t);
-    
+
     if (klass && pkg && pkg.objectClass === klass) {
       // FIXME!!!!
       if (t.constructor === klass && klass.name !== "Morph") {
@@ -676,7 +676,7 @@ export class ObjectEditor extends Morph {
           adoptObject(t, nextClass);
           this.refresh();
         }]);
-        
+
         items.push([`fork ${klass.name}`, async () => {
           let nextClass = withSuperclasses(t.constructor)[1],
               {package: {name: packageName}} = klass[Symbol.for("lively-module-meta")],
@@ -910,7 +910,7 @@ export class ObjectEditor extends Morph {
     //   // if (!input) return;
     //   let t = this.target,
     //       pkg = ObjectPackage.lookupPackageForObject(t);
-    // 
+    //
     //   if (!pkg) {
     //     let objPkgName = await this.world().prompt(
     //       `No object package exists yet for object ${t}.\n`
@@ -918,12 +918,12 @@ export class ObjectEditor extends Morph {
     //       historyId: "object-package-name-hist",
     //       input: string.capitalize(t.name).replace(/\s/g, "-")
     //     });
-    // 
+    //
     //     if (!objPkgName) { this.setStatusMessage("Canceled"); return; }
     //     pkg = ObjectPackage.withId(objPkgName);
     //     await pkg.adoptObject(t);
     //   }
-    // 
+    //
     //   let {methodName} = await addScript(t, "function() {}", "newMethod");
     //   await this.refresh();
     //   await this.selectMethod(t.constructor, {name: methodName}, true, true);
@@ -980,7 +980,20 @@ export class ObjectEditor extends Morph {
           await this.ui.importController.updateImports();
           await this.updateKnownGlobals();
         },
-        sourceRetriever: () => descr._modifiedSource(sourceEditor.textString).moduleSource
+        sourceRetriever: () => descr._modifiedSource(sourceEditor.textString).moduleSource,
+        highlightUndeclared: undeclaredVar => {
+          // start,end index into module source, compensate
+          let {start: varStart, end: varEnd} = undeclaredVar,
+              {sourceLocation: {start: classStart, end: classEnd}} = descr;
+          if (varStart < classStart || varEnd > classEnd) return;
+          varStart -= classStart;
+          varEnd -= classStart;
+          let range = {
+            start: sourceEditor.indexToPosition(varStart),
+            end: sourceEditor.indexToPosition(varEnd)};      
+          sourceEditor.selection = range;
+          sourceEditor.centerRange(range);
+        }
       });
 
     } catch (e) {

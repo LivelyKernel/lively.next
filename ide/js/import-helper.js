@@ -238,6 +238,7 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
   let {
     sourceUpdater,
     sourceRetriever,
+    highlightUndeclared,
     requester,
     keepTextPosition = true,
     ignore = [],
@@ -247,6 +248,16 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
 
   if (typeof sourceRetriever !== "function")
     sourceRetriever = () => textMorph.textString;
+
+  if (typeof highlightUndeclared !== "function")
+    highlightUndeclared = undeclared => {
+      let {start, end} = undeclared,
+          range = {
+            start: textMorph.indexToPosition(start),
+            end: textMorph.indexToPosition(end)};      
+      textMorph.selection = range;
+      textMorph.centerRange(range);
+    };
 
   var allUndeclared = updateUndeclared(), changes = [];
   if (!allUndeclared.length) return changes;
@@ -263,26 +274,21 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
   textMorph.collapseSelection()
 
   if (keepTextPosition) {
-    var {scroll, cursorPosition} = textMorph;
+    var {scroll, cursorPosition} = textMorph,
+        anchor = textMorph.addAnchor({...cursorPosition, id: "fix-undeclared-vars"});
   }
 
   while (true) {
     updateUndeclared(); if (!allUndeclared.length) break;
 
     let undeclared = allUndeclared[0],
-        {start, end, name} = undeclared,
-        range = {
-          start: textMorph.indexToPosition(start),
-          end: textMorph.indexToPosition(end)};
-
-    textMorph.selection = range;
-    textMorph.centerRange(range);
-
-    let imports = matchingExportsForUndeclared(undeclared, exports),
+        {name} = undeclared,
+        imports = matchingExportsForUndeclared(undeclared, exports),
         choices = ["ignore for now", "declare as global"].concat(
-          imports.map(ea => ({isListItem: true, value: ea, label: labelForExport(ea)})));
+          imports.map(ea => ({isListItem: true, value: ea, label: labelForExport(ea)}))),
+        choice;
 
-    var choice;
+    highlightUndeclared(undeclared);
     if (autoApplyIfSingleChoice && imports.length === 1) {
       choice = imports[0];
 
@@ -320,7 +326,8 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
 
   if (keepTextPosition) {
     textMorph.scroll = scroll;
-    textMorph.cursorPosition = cursorPosition;
+    textMorph.cursorPosition = anchor.position;
+    textMorph.removeAnchor(anchor);
   }
 
   return changes;
