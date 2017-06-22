@@ -2,14 +2,23 @@ import { MorphicEnv } from "./index.js";
 import { loadWorldFromResource } from "./serialization.js";
 import { resource, registerExtension as registerResourceExension } from "lively.resources";
 
+export function pathForBrowserHistory(worldResource) {
+  // how does the resource map to a URL shown in the browser URL bar? used for
+  // browser history
+  let url = worldResource.url,
+      isLocal = worldResource.url.startsWith("lively.storage://"),
+      query = isLocal ? "?location=local" : "",
+      basePath = "/worlds/",
+      name = worldResource.name().replace(/\.json$/, "");
+  return `${basePath}${name}${query}`;
+}
+
 export async function loadWorldFromURL(url, oldWorld, options) {
   let worldResource = url.isResource ? url :
         lively.resources.resource(System.decanonicalize(url)),
-      world = await loadWorldFromResource(worldResource),
-      defaultBrowserURL = "/worlds/" + worldResource.name().replace(/\.json$/, ""),
-      query = worldResource.url.startsWith("lively.storage://") ? "?location=local" : "";
+      world = await loadWorldFromResource(worldResource);
   options = {
-    browserURL: defaultBrowserURL + query,
+    pathForBrowserHistory: pathForBrowserHistory(worldResource),
     ...options
   };
   return loadWorld(world, oldWorld, options);
@@ -28,10 +37,10 @@ export async function loadWorld(newWorld, oldWorld, options = {}) {
   } = options;
 
   env = env || (oldWorld ? oldWorld.env : MorphicEnv.default());
-  
+
   let doc = env.domEnv.document || document,
       nativeLoadingIndicator = doc.getElementById("dom-loading-indicator");
-  
+
   try {
 
     let l2lClient = l2l && await setupLively2Lively();
@@ -43,11 +52,11 @@ export async function loadWorld(newWorld, oldWorld, options = {}) {
     await env.setWorld(newWorld);
 
     localconfig && await loadLocalConfig();
-  
+
     worldLoadDialog && newWorld.execCommand("load world");
 
-    if (options.browserURL) {
-      window.history.pushState({}, "lively.next", options.browserURL);
+    if (options.pathForBrowserHistory) {
+      window.history.pushState({}, "lively.next", options.pathForBrowserHistory);
     }
 
     return newWorld;

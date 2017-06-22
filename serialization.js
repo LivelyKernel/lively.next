@@ -6,6 +6,7 @@ import {
 import { World, Morph } from "./index.js";
 import { resource } from "lively.resources";
 import { newMorphId } from "./morph.js";
+import { pathForBrowserHistory } from "./world-loading.js";
 
 function normalizeOptions(options) {
   options = {reinitializeIds: false, ...options}
@@ -33,8 +34,12 @@ export async function loadWorldFromResource(fromResource) {
 }
 
 export async function saveWorldToResource(world = World.defaultWorld(), toResource, options) {
-
-  let {prettyPrint = true, showIndicator = true, changeName = true} = options || {};
+  let {
+    prettyPrint = true,
+    showIndicator = true,
+    changeName = true,
+    changeBrowserURL = true
+  } = options || {};
 
   if (!toResource) {
     var htmlResource = resource(document.location.href),
@@ -48,8 +53,14 @@ export async function saveWorldToResource(world = World.defaultWorld(), toResour
     toResource = resource(toResource);
 
   if (changeName) {
-    var oldName = world.name;
     world.name = toResource.nameWithoutExt();
+  }
+
+  if (changeBrowserURL) {
+    let histPath = encodeURI(options.pathForBrowserHistory
+                          || pathForBrowserHistory(toResource));
+    if (window.location.pathname !== histPath)
+      window.history.pushState({}, "lively.next", histPath);
   }
 
   // pretty printing bloats 2x!
@@ -65,7 +76,7 @@ export async function saveWorldToResource(world = World.defaultWorld(), toResour
     i.label = "Uploading..."
     await i.whenRendered();
     return toResource.writeJson(snap);
-  } finally { i && i.remove();  oldName && (world.name = oldName); }
+  } finally { i && i.remove(); }
 }
 
 
