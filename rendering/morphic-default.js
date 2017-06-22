@@ -1,3 +1,4 @@
+/*global Power4,TweenMax*/
 import { diff, patch, create, h } from "virtual-dom";
 import "gsap";
 import { num, obj, arr, properties, promise } from "lively.lang";
@@ -129,17 +130,17 @@ div.text-layer span {
 
 export class ShadowObject {
 
-    constructor(args) {
-        if (obj.isBoolean(args)) args = config.defaultShadow;
-        const {rotation, distance, blur, color, morph, inset, spread} = args;
-        this.rotation = obj.isNumber(rotation) ? rotation : 45; // in degrees
-        this.distance = obj.isNumber(distance) ? distance : 2;
-        this.blur = obj.isNumber(blur) ? blur : 6;
-        this.inset = inset || false;
-        this.spread = spread || 0;
-        this.color = color || Color.gray.darker();
-        this.morph = morph;
-    }
+  constructor(args) {
+    if (obj.isBoolean(args)) args = config.defaultShadow;
+    const {rotation, distance, blur, color, morph, inset, spread} = args;
+    this.rotation = obj.isNumber(rotation) ? rotation : 45; // in degrees
+    this.distance = obj.isNumber(distance) ? distance : 2;
+    this.blur = obj.isNumber(blur) ? blur : 6;
+    this.inset = inset || false;
+    this.spread = spread || 0;
+    this.color = color || Color.gray.darker();
+    this.morph = morph;
+  }
 
     get distance() { return this._distance }
     get blur() { return this._blur }
@@ -182,15 +183,26 @@ export class ShadowObject {
 
     get isShadowObject() { return true; }
 
-    toCss() {
-       const {x, y} = Point.polar(this.distance, num.toRadians(this.rotation));
-       return `${this.inset ? 'inset' : ''} ${this.color.toString()} ${x}px ${y}px ${this.blur}px ${this.spread}px`
-    }
+  toCss() {
+    const {x, y} = Point.polar(this.distance, num.toRadians(this.rotation));
+    return `${this.inset ? 'inset' : ''} ${this.color.toString()} ${x}px ${y}px ${this.blur}px ${this.spread}px`
+  }
+  
+  toJson() {
+    return obj.select(this, [
+      "rotation",
+      "distance",
+      "blur",
+      "color",
+      "inset",
+      "spread"
+    ]);
+  }
 
-    toFilterCss() {
-       const {x, y} = Point.polar(this.distance, num.toRadians(this.rotation));
-       return `drop-shadow(${x}px ${y}px ${this.blur}px ${this.color.toString()})`;
-    }
+  toFilterCss() {
+    const {x, y} = Point.polar(this.distance, num.toRadians(this.rotation));
+    return `drop-shadow(${x}px ${y}px ${this.blur}px ${this.color.toString()})`;
+  }
 
 }
 
