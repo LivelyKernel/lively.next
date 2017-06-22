@@ -1077,13 +1077,11 @@ export class Text extends Morph {
     extendTextAttributes = true,
     invalidateTextLayout = true
   ) {
-    let {insertedRange: range} = this.replace(
+    return this.replace(
       {start: pos, end: pos},
       textOrtextAndAttributes,
       extendTextAttributes,
-      invalidateTextLayout
-    );
-    return range;
+      invalidateTextLayout);
   }
 
   deleteText(range, invalidateTextLayout = true) {

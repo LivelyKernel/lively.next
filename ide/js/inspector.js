@@ -1,4 +1,4 @@
-/* globals Power4 */
+/*global Map, Power4*/
 import { Color, rect, pt } from "lively.graphics";
 import { obj, arr, promise, string } from "lively.lang";
 import { connect, disconnectAll, signal, disconnect, once } from "lively.bindings";
@@ -303,9 +303,7 @@ class PropertyNode extends InspectionNode {
             }
           });
           connect(this._propertyWidget, "openWidget", this.root, "onWidgetOpened", {
-            converter: widget => {
-              return {widget, node};
-            },
+            converter: widget => { return {widget, node}; },
             varMapping: {node: this._propertyWidget}
           });
         }
@@ -611,8 +609,7 @@ export class PropertyControl extends Label {
     if (!this.foldableProperties) return;
     if (
       arr.every(this.foldableProperties.map(p => newValue[p]), v =>
-        obj.equals(v, newValue.valueOf())
-      )
+        obj.equals(v, newValue.valueOf()))
     ) {
       this.toggleMultiValuePlaceholder(false);
     } else {
