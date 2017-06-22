@@ -372,7 +372,6 @@ export class Morph {
 
       borderWidth: {
         isStyleProp: true,
-        derived: true,
         type: 'Number',
         foldable: ['top', 'left', 'right', 'bottom'],
         min: 0,
@@ -394,7 +393,6 @@ export class Morph {
 
       borderRadius: {
         isStyleProp: true,
-        derived: true,
         type: 'Number',
         min: 0,
         foldable: ['top', 'left', 'right', 'bottom'],
@@ -425,7 +423,6 @@ export class Morph {
 
       borderStyle: {
         isStyleProp: true,
-        derived: true,
         type: 'Enum',
         foldable: ['top', 'left', 'right', 'bottom'],
         values: ["none", "hidden", "dotted", "dashed",
@@ -451,7 +448,6 @@ export class Morph {
 
       borderColor: {
         isStyleProp: true,
-        derived: true,
         type: "Color",
         foldable: ["top", "left", "right", "bottom"],
         defaultValue: {
@@ -2625,7 +2621,6 @@ export class Path extends Morph {
     return {
       borderColor: {
         isStyleProp: true,
-        derived: true,
         type: "ColorGradient",
         foldable: ["top", "left", "right", "bottom"],
         set(value) {
