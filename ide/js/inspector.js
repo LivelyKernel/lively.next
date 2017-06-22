@@ -114,7 +114,7 @@ var defaultPropertyOptions = {
 /*
 
 When using trees as a means to simply display information to the user
-it is sufficient to just supply anonymous objects as nodes in order to 
+it is sufficient to just supply anonymous objects as nodes in order to
 define a tree structure that can then be rendered by components/tree.js.
 
 This changes, once we allow the user to also interact with the tree nodes
@@ -122,7 +122,7 @@ and modify the data being dispalyed. Nodes now need to be aware of how they rela
 to the object that they are being retrieved from, and also which datafields
 they need to updated and/or check for an updated value.
 
-Furthermore, in order to reduce the total number of nodes that need to be 
+Furthermore, in order to reduce the total number of nodes that need to be
 rendered again in response to a change in the observed data structure it
 is nessecary for the nodes to make precise and easy to perform updates inside
 the rendered tree.
@@ -138,7 +138,7 @@ class InspectionNode {
   /* This node type is used for datapoints that do not provide any
      context information whatsoever, that is: They are not a Morph,
      a property of a morph or a member of a folded property.
-     Plain Inspection nodes do not provide interactiveness (they are read only), 
+     Plain Inspection nodes do not provide interactiveness (they are read only),
      so they do not store a target that they poll or propagate changes from and to. */
 
   constructor({
@@ -181,7 +181,7 @@ class InspectionNode {
     let {keyString, valueString} = this;
     return this._propertyWidget || (this._propertyWidget = `${keyString}: ${valueString}`);
   }
-  
+
 }
 
 class MorphNode extends InspectionNode {
@@ -217,7 +217,7 @@ class MorphNode extends InspectionNode {
       root: this.root,
       target: this.target,
       spec
-    });  
+    });
   }
 }
 
@@ -233,7 +233,7 @@ class PropertyNode extends InspectionNode {
     super(args);
     let {
       spec, // spec providing information about the inspected values type etc...
-      target // target is passed from previous morph context  
+      target // target is passed from previous morph context
     } = args;
     this.target = target;
     this.spec = spec;
@@ -245,7 +245,7 @@ class PropertyNode extends InspectionNode {
   }
 
   get isInternalProperty() {
-     return this.keyString == 'id' || this.keyString.includes('internal'); 
+     return this.keyString == 'id' || this.keyString.includes('internal');
   }
 
   getSubNode(nodeArgs) {
@@ -259,10 +259,10 @@ class PropertyNode extends InspectionNode {
     return this.foldedNodes[node.key] = new FoldedNode({
       ...node,
       root: this.root,
-      target: this.target, 
+      target: this.target,
       foldableNode: this,
       spec: obj.dissoc(this.spec, ['foldable'])
-    }); 
+    });
   }
 
   refreshProperty(v, updateTarget = false) {
@@ -299,18 +299,17 @@ class PropertyNode extends InspectionNode {
         if (!this.isInternalProperty && !spec.readOnly) {
           connect(this._propertyWidget, "propertyValue", this, "refreshProperty", {
             updater: function($upd, val) {
-              $upd(val, true); 
+              $upd(val, true);
             }
           });
           connect(this._propertyWidget, "openWidget", this.root, "onWidgetOpened", {
-            converter: widget => { return {widget, node}; },
-            varMapping: {node: this._propertyWidget}
+            converter: function(widget) { return {widget, node: this.sourceObj}; }
           });
         }
       }
     }
-    return this._propertyWidget || super.display();    
-  }  
+    return this._propertyWidget || super.display();
+  }
 }
 
 class FoldedNode extends PropertyNode {
@@ -329,7 +328,7 @@ class FoldedNode extends PropertyNode {
   refreshProperty(v, updateTarget) {
     this.foldableNode.refreshProperty({...this.target[this.foldableNode.key], [this.key]: v}, updateTarget);
   }
-  
+
 }
 
 function propertiesOf(node) {
@@ -369,7 +368,7 @@ function propertiesOf(node) {
     }
     if (options.includeSymbols) {
       for (let key of Object.getOwnPropertySymbols(target)) {
-        var keyString = safeToString(key), value = target[key], 
+        var keyString = safeToString(key), value = target[key],
             valueString = printValue(value),
             nodeArgs = {key, keyString, value, valueString, isCollapsed};
         props.push(node.getSubNode(nodeArgs));
@@ -430,7 +429,7 @@ class DraggedProp extends Morph {
 }
 
 export class PropertyControl extends Label {
-  
+
   get __only_serialize__() {
     return arr.without(super.__only_serialize__, 'attributeConnections');
   }
@@ -490,16 +489,16 @@ export class PropertyControl extends Label {
     }
     return false
   }
-  
+
   static render(args) {
     let propertyControl = this.baseControl(args);
-    
+
     if (!args.spec.type) args.spec = {...args.spec, type: this.inferType(args)}; // non mutating
 
     if (args.spec.foldable) {
       propertyControl.asFoldable(args.spec.foldable);
     }
-    
+
     switch (args.spec.type) {
         // 12.6.17
         // rms: not sure wether a string based spec is that effective in the long run
@@ -528,7 +527,7 @@ export class PropertyControl extends Label {
         propertyControl.renderPointControl(args); break;
       case "StyleSheets":
         propertyControl.renderStyleSheetControl(args); break;
-      case "Rectangle": 
+      case "Rectangle":
         propertyControl.renderRectangleControl(args); break;
       case "Boolean":
         propertyControl.renderBooleanControl(args); break;
@@ -539,10 +538,10 @@ export class PropertyControl extends Label {
       propertyControl.toggleFoldableValue(args.value);
       return propertyControl;
     }
-    
+
     return false;
   }
-  
+
   renderValueSelector(propertyControl, selectedValue, values) {
     propertyControl.control = new DropDownSelector({
       opacity: 0.8,
@@ -554,7 +553,7 @@ export class PropertyControl extends Label {
     // hack: since derived properties that are parametrized by a style sheet do not
     //       yet take effect in a morph such as the drop down selector, we need to
     //       manually trigger an update at render time
-    propertyControl.control.whenRendered().then(() => 
+    propertyControl.control.whenRendered().then(() =>
        propertyControl.control.updateStyleSheet());
     connect(propertyControl.control, "update", propertyControl, "propertyValue", {
       updater: function ($upd, val) {
@@ -593,7 +592,7 @@ export class PropertyControl extends Label {
       });
     if (active) {
       connect(this.multiValuePlaceholder, 'onMouseDown', this, 'propertyValue', {
-        converter: () => self.propertyValue.valueOf(), varMapping: {self: this}
+        converter: function() { return this.targetObj.propertyValue.valueOf(); }
       });
       this.control.opacity = 0;
       this.multiValuePlaceholder.visible = true;
@@ -602,20 +601,15 @@ export class PropertyControl extends Label {
       this.control.opacity = 1;
       this.multiValuePlaceholder.visible = false;
     }
-    
   }
 
   toggleFoldableValue(newValue) {
     if (!this.foldableProperties) return;
-    if (
-      arr.every(this.foldableProperties.map(p => newValue[p]), v =>
-        obj.equals(v, newValue.valueOf()))
-    ) {
-      this.toggleMultiValuePlaceholder(false);
-    } else {
-      this.toggleMultiValuePlaceholder(true);
-    }
+    this.toggleMultiValuePlaceholder(
+      !arr.every(this.foldableProperties.map(p => newValue[p]),
+                 v => obj.equals(v, newValue.valueOf())));
   }
+
   asFoldable(foldableProperties) {
     this.foldableProperties = foldableProperties;
     connect(this, 'update', this, 'toggleFoldableValue');
@@ -626,21 +620,21 @@ export class PropertyControl extends Label {
   }
 
   renderIconControl(args) {
-    
+
   }
 
   renderStringControl(args) {
-    
+
   }
 
   renderRichTextControl(args) {
-    
+
   }
 
   renderRectangleControl({value}) {
     this.control = new PaddingWidget({name: 'valueString', rectangle: value});
     connect(this.control, "rectangle", this, "propertyValue");
-    return this;    
+    return this;
   }
 
   renderVertexControl({target}) {
@@ -660,7 +654,7 @@ export class PropertyControl extends Label {
 
   renderNumberControl({value, spec, keyString}) {
     var baseFactor = .5, floatingPoint = spec.isFloat;
-    if ("max" in spec && "min" in spec 
+    if ("max" in spec && "min" in spec
         && spec.min != -Infinity && spec.max != Infinity) {
       baseFactor = (spec.max - spec.min) / 100;
       floatingPoint = true;
@@ -720,9 +714,9 @@ export class PropertyControl extends Label {
 
   renderColorControl(args, gradientEnabled = false) {
     this.control = new ColorWidget({
-          color: (args.value && args.value.valueOf) ? args.value.valueOf() : args.value,
-          gradientEnabled
-        });
+      color: (args.value && args.value.valueOf) ? args.value.valueOf() : args.value,
+      gradientEnabled
+    });
     connect(this.control, "update", this, "propertyValue");
     connect(this, 'update', this.control, 'color', {
       updater: function ($upd, val) {
@@ -734,9 +728,7 @@ export class PropertyControl extends Label {
   }
 
   onDragStart(evt) {
-    this.draggedProp = new DraggedProp({
-      control: this.copy()
-    });
+    this.draggedProp = new DraggedProp({control: this.copy()});
     this.draggedProp.openInWorld();
     connect(evt.hand, 'position', this.draggedProp, 'update');
   }
@@ -775,6 +767,7 @@ export class PropertyControl extends Label {
   }
 }
 
+
 class InspectorTreeData extends TreeData {
 
   constructor(args) {
@@ -789,7 +782,7 @@ class InspectorTreeData extends TreeData {
   }
 
   static fromListWithDepthAndIndexes(nodes) {
-    // ensure that the nodes are sorted by index, 
+    // ensure that the nodes are sorted by index,
     // or else the parent child relationship
     // will be inferred incorrectly
     var [root, ...nodes] = arr.sortBy(nodes, ({i}) => i);
@@ -798,7 +791,7 @@ class InspectorTreeData extends TreeData {
     var stack = [], prev = root;
     for(let {node, depth} of nodes) {
       if (stack.length < depth) {
-        stack.push(prev); 
+        stack.push(prev);
       }
       if (stack.length > depth) {
         stack.pop();
@@ -816,7 +809,7 @@ class InspectorTreeData extends TreeData {
   display(node) {
     return node.display();
   }
-  
+
   isCollapsed(node) { return node.isCollapsed; }
 
   collapse(node, bool) {
@@ -841,7 +834,7 @@ class InspectorTreeData extends TreeData {
       for (let i in node.children) {
         this.uncollapseAll(iterator, depth + 1, node.children[i]);
       }
-    } 
+    }
   }
 
   filter({sorter, maxDepth = 1, iterator, showUnknown, showInternal}) {
@@ -899,13 +892,11 @@ export default class Inspector extends Morph {
         serialize: false
       },
 
-      editorOpen: {defaultValue: false},
-
       selectedObject: {
         readOnly: true, derived: true,
         get() {
           var sel = this.ui.propertyTree.selection;
-          return sel ? sel.value : this.state.targetObject
+          return sel ? sel.value : this.targetObject
         }
       },
 
@@ -919,10 +910,10 @@ export default class Inspector extends Morph {
                    ['propertyTree'],
                    ['resizer'],
                    ['codeEditor']],
-            rows: [0, {fixed: 30}, 
+            rows: [0, {fixed: 30},
                    2, {fixed: 1},
                    3, {height: 0}]
-          });          
+          });
         }
       },
 
@@ -932,6 +923,7 @@ export default class Inspector extends Morph {
           return {
             codeEditor:       this.getSubmorphNamed("codeEditor"),
             terminalToggler:  this.getSubmorphNamed("terminal toggler"),
+            fixImportButton:  this.getSubmorphNamed('fix import button'),
             propertyTree:     this.getSubmorphNamed("propertyTree"),
             unknowns:         this.getSubmorphNamed("unknowns"),
             internals:        this.getSubmorphNamed("internals"),
@@ -1002,7 +994,7 @@ export default class Inspector extends Morph {
         }
       }
 
-    };  
+    };
   }
 
   constructor(props) {
@@ -1017,7 +1009,8 @@ export default class Inspector extends Morph {
         unknowns,
         internals,
         searchField,
-        codeEditor
+        codeEditor,
+        fixImportButton
       }
     } = this;
 
@@ -1034,6 +1027,7 @@ export default class Inspector extends Morph {
     connect(propertyTree,    'onScroll',    this, 'repositionOpenWidget');
     connect(resizer,         'onDrag',      this, 'adjustProportions');
     connect(terminalToggler, 'onMouseDown', this, 'toggleCodeEditor');
+    connect(fixImportButton, 'fire',        codeEditor, 'execCommand', {converter: () => "[javascript] fix undeclared variables"});
     connect(unknowns,        'trigger',     this, 'filterProperties');
     connect(internals,       'trigger',     this, 'filterProperties');
     connect(searchField,     'searchInput', this, 'filterProperties');
@@ -1061,7 +1055,7 @@ export default class Inspector extends Morph {
     this.originalTreeData && this.originalTreeData.asListWithIndexAndDepth(false).forEach(({node}) => {
       let v = this.targetObject[node.key];
       if (v != node.value && node.refreshProperty) {
-         node.refreshProperty(v); 
+         node.refreshProperty(v);
       }
     });
   }
@@ -1130,14 +1124,14 @@ export default class Inspector extends Morph {
         layout: new GridLayout({
           grid: [["searchField", "targetPicker", "internals", "unknowns"]],
           rows: [0, {paddingTop: 5, paddingBottom: 5}],
-          columns: [0, {paddingLeft: 5, paddingRight: 5}, 
+          columns: [0, {paddingLeft: 5, paddingRight: 5},
                     1, {fixed: 25},
                     2, {fixed: 75}, 3, {fixed: 80}]
         }),
         height: 30,
         submorphs: [
           searchField,
-          Icon.makeLabel('crosshairs', {name: 'targetPicker', 
+          Icon.makeLabel('crosshairs', {name: 'targetPicker',
                                         tooltip: 'Change Inspection Target'}),
           new LabeledCheckBox({label: "Internals", name: "internals"}),
           new LabeledCheckBox({label: "Unknowns", name: "unknowns"})
@@ -1152,7 +1146,11 @@ export default class Inspector extends Morph {
         styleClasses: ['toggle', 'inactive']
       }),
       {name: "resizer"},
-      {name: "codeEditor", ...textStyle}
+      {name: "codeEditor", ...textStyle},
+      {
+        name: 'fix import button', type: "button",
+        label: "fix imports", extent: pt(100, 20)
+      }
     ];
   }
 
@@ -1173,7 +1171,7 @@ export default class Inspector extends Morph {
     if (this.morphHighlighter == target) {
       target = this.morphHighlighter.morphBeneath(pos);
     }
-    if (target != this.possibleTarget 
+    if (target != this.possibleTarget
         && !target.ownerChain().includes(this.getWindow())) {
       if (this.morphHighlighter) this.morphHighlighter.deactivate();
       this.possibleTarget = target;
@@ -1188,7 +1186,7 @@ export default class Inspector extends Morph {
     this.targetObject = this.possibleTarget;
     this.stopSelect()
   }
-  
+
   stopSelect() {
     MorphHighlighter.removeHighlightersFrom($world);
     this.toggleSelectionInstructions(false);
@@ -1254,31 +1252,37 @@ export default class Inspector extends Morph {
       this.openWidget.position = pos;
     }
   }
-  
+
   adjustProportions(evt) {
     this.layout.row(1).height += evt.state.dragDelta.y;
   }
 
-  async toggleCodeEditor() {
-    let resizer = this.ui.resizer,
-        prevExtent = this.extent;
-     this.layout.disable();
-    if (this.editorOpen) {
-      this.editorOpen = false;
-      this.ui.terminalToggler.styleClasses = ['inactive', 'toggle'];
-      this.layout.row(3).height = this.layout.row(2).height = 0;
+  isEditorVisible() { return this.ui.codeEditor.height > 10; }
+
+  makeEditorVisible(bool) {
+    if (bool === this.isEditorVisible()) return;
+    let {
+      extent: prevExtent, layout,
+      ui: {terminalToggler, codeEditor}
+    } = this;
+    layout.disable();
+    if (!bool) {
+      terminalToggler.styleClasses = ['inactive', 'toggle'];
+      layout.row(3).height = layout.row(2).height = 0;
     } else {
-      this.editorOpen = true;
-      this.ui.terminalToggler.styleClasses = ['active', 'toggle'];
-      this.layout.row(3).height = 180;
-      this.layout.row(2).height = 5;
+      terminalToggler.styleClasses = ['active', 'toggle'];
+      layout.row(3).height = 180;
+      layout.row(2).height = 5;
     }
     this.extent = prevExtent;
-    this.layout.enable({duration: 300});
+    layout.enable({duration: 300});
     this.relayout({duration: 300});
-    this.ui.codeEditor.focus();
+    codeEditor.focus();
   }
 
+  async toggleCodeEditor() {
+    this.makeEditorVisible(!this.isEditorVisible());
+  }
 
   filterProperties() {
     let searchField = this.ui.searchField,
@@ -1295,15 +1299,23 @@ export default class Inspector extends Morph {
     connect(tree.treeData, 'onWidgetOpened', this, 'onWidgetOpened');
   }
 
-  relayout(animated) {
+  async relayout(animated) {
     this.layout.forceLayout(); // removes "sluggish" button alignment
-    var tree = this.ui.propertyTree,
-        toggler = this.ui.terminalToggler,
-        bottomLeft = tree.bounds().insetBy(5).bottomLeft();
+    let {ui: {
+          fixImportButton,
+          terminalToggler: toggler,
+          propertyTree: tree,
+          codeEditor
+        }} = this,
+        togglerBottomLeft = tree.bounds().insetBy(5).bottomLeft(),
+        buttonTopRight = codeEditor.bounds().insetBy(5).topRight();
+
     if (animated.duration) {
-      toggler.animate({bottomLeft, ...animated})
+      toggler.animate({bottomLeft: togglerBottomLeft, ...animated})
+      fixImportButton.animate({topRight: buttonTopRight, ...animated});
     } else {
-      toggler.bottomLeft = bottomLeft;
+      toggler.bottomLeft = togglerBottomLeft;
+      fixImportButton.topRight = buttonTopRight;
     }
   }
 
@@ -1319,4 +1331,3 @@ export default class Inspector extends Morph {
   get commands() { return inspectorCommands; }
 
 }
-
