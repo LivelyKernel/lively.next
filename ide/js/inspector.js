@@ -210,7 +210,7 @@ class MorphNode extends InspectionNode {
   }
 
   getSubNode(nodeArgs) {
-    let spec = this.propertyInfo[nodeArgs.keyString] || {};
+    let spec = this.propertyInfo[nodeArgs.key] || {};
     if (nodeArgs.value && nodeArgs.value.isMorph) return new MorphNode(nodeArgs)
     return new PropertyNode({
       ...nodeArgs,
@@ -266,8 +266,8 @@ class PropertyNode extends InspectionNode {
   }
 
   refreshProperty(v, updateTarget = false) {
-    if (updateTarget) this.target[this.keyString] = v;
-    this.value = this.target[this.keyString];
+    if (updateTarget) this.target[this.key] = v;
+    this.value = this.target[this.key];
     signal(this._propertyWidget, 'update', this.value);
     if (this.isFoldable) {
       for (let m in this.foldedNodes) {
@@ -1126,7 +1126,7 @@ export default class Inspector extends Morph {
         name: "searchBar",
         layout: new GridLayout({
           grid: [["searchField", "targetPicker", "internals", "unknowns"]],
-          rows: [0, {paddingTop: 5, paddingBottom: 5}],
+          rows: [0, {paddingTop: 5, paddingBottom: 3}],
           columns: [0, {paddingLeft: 5, paddingRight: 5},
                     1, {fixed: 25},
                     2, {fixed: 75}, 3, {fixed: 80}]
@@ -1246,18 +1246,20 @@ export default class Inspector extends Morph {
   repositionOpenWidget(evt) {
     if (this.openWidget) {
       let pos = this.focusedNode.control.globalBounds().center(),
+          x = Math.min(pos.x, this.globalBounds().center().x),
           treeBounds = this.ui.propertyTree.globalBounds();
       if (pos.y < treeBounds.top()) {
-        pos = treeBounds.topCenter().withX(pos.x)
+        pos = treeBounds.topCenter().withX(x)
       } else if (treeBounds.bottom() - 20 < pos.y) {
-        pos = treeBounds.bottomCenter().addXY(0, -20).withX(pos.x);
+        pos = treeBounds.bottomCenter().addXY(0, -20).withX(x);
       }
-      this.openWidget.position = pos;
+      this.openWidget.animate({position: pos, duration: 200});
     }
   }
 
   adjustProportions(evt) {
     this.layout.row(1).height += evt.state.dragDelta.y;
+    this.relayout();
   }
 
   isEditorVisible() { return this.ui.codeEditor.height > 10; }
@@ -1302,7 +1304,7 @@ export default class Inspector extends Morph {
     connect(tree.treeData, 'onWidgetOpened', this, 'onWidgetOpened');
   }
 
-  async relayout(animated) {
+  async relayout(animated={}) {
     this.layout.forceLayout(); // removes "sluggish" button alignment
     let {ui: {
           fixImportButton,

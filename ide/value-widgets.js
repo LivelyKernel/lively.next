@@ -76,7 +76,7 @@ class ShortcutWidget extends ContextSensitiveWidget {
     this.openPopover();
   }
 
-  openPopover() {
+  async openPopover() {
     /* provide a tool for editing the property at hand */
   }
   
@@ -90,9 +90,9 @@ export class VerticesWidget extends ShortcutWidget {
     }
   }
 
-  openPopover() {
+  async openPopover() {
      let editor = new VerticesPopover({pathOrPolygon: this.context});
-     editor.fadeIntoWorld(this.globalBounds().center());
+     await editor.fadeIntoWorld(this.globalBounds().center());
      connect(editor, 'vertices', this, 'vertices');
      signal(this, "openWidget", editor);
   }
@@ -107,12 +107,12 @@ export class StyleSheetWidget extends ShortcutWidget {
     }
   }
   
-  openPopover() {
+  async openPopover() {
     let editor = new Popover({
       popoverColor: LinearGradient.create({0: Color.gray.lighter(), 1: Color.gray}),
       targetMorph: new StyleSheetEditor({target: this.context})
     });
-    editor.fadeIntoWorld(this.globalBounds().center());
+    await editor.fadeIntoWorld(this.globalBounds().center());
     connect(editor, "fadeOut", editor.targetMorph, "closeOpenWidget");
     signal(this, "openWidget", editor);
   }  
@@ -136,9 +136,9 @@ export class LayoutWidget extends ShortcutWidget {
             'Configure ' + this.context.layout.name() + ' Layout' : 'No Layout';
   }
 
-  openPopover() {
-    let editor = new LayoutPopover({container: this.context})
-    editor.fadeIntoWorld(this.globalBounds().center());
+  async openPopover() {
+    let editor = new LayoutPopover({container: this.context, position: pt(0)})
+    await editor.fadeIntoWorld(this.globalBounds().center());
     connect(editor, 'layoutChanged', this, 'layoutChanged');
     signal(this, "openWidget", editor);
   }
@@ -349,13 +349,14 @@ export class ColorWidget extends Morph {
     this.color = color;
   }
 
-  openFillEditor() {
+  async openFillEditor() {
     let editor = new FillPopover({
       fillValue: this.color,
       title: "Fill Control",
       gradientEnabled: this.gradientEnabled
-    });    
-    editor.fadeIntoWorld(this.globalBounds().center());
+    });  
+    editor.position = pt(0);    
+    await editor.fadeIntoWorld(this.globalBounds().center());
     connect(editor, "fillValue", this, "update");
     signal(this, "openWidget", editor);
   }
@@ -574,9 +575,9 @@ export class ShadowWidget extends Morph {
     this.openPopover();
   }
 
-  openPopover() {
-    let shadowEditor = new ShadowPopover({shadowValue: this.shadowValue});
-    shadowEditor.fadeIntoWorld(this.globalBounds().center());
+  async openPopover() {
+    let shadowEditor = new ShadowPopover({shadowValue: this.shadowValue, position: pt(0)})
+    await shadowEditor.fadeIntoWorld(this.globalBounds().center());
     connect(shadowEditor, 'shadowValue', this, 'shadowValue');
     connect(this, 'shadowValue', this, 'update');
     signal(this, "openWidget", shadowEditor);
@@ -656,9 +657,9 @@ export class PointWidget extends Label {
     this.openPopover();
   }
 
-  openPopover() {
+  async openPopover() {
     let editor = new PointPopover({pointValue: this.pointValue});
-    editor.fadeIntoWorld(this.globalBounds().center());
+    await editor.fadeIntoWorld(this.globalBounds().center());
     connect(editor, 'pointValue', this, 'pointValue');
     signal(this, "openWidget", editor);
   }
@@ -684,10 +685,14 @@ export class PaddingWidget extends Label {
     this.openPopover();
   }
 
-  openPopover() {
+  async openPopover() {
     let editor = new RectanglePopover({rectangle: this.rectangle});
-    editor.fadeIntoWorld(this.globalBounds().center());
+    await editor.fadeIntoWorld(this.globalBounds().center());
     connect(editor, 'rectangle', this, 'rectangle');
     signal(this, "openWidget", editor);
   }
+}
+
+export class IconWidget extends Label {
+  
 }

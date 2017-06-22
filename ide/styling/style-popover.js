@@ -112,7 +112,8 @@ export class Popover extends Morph {
       "[name=arrow]": {
         fill: this.popoverColor.isGradient ? 
           this.popoverColor.stops[0].color : this.popoverColor,
-        dropShadow: {blur: 3, color: Color.black.withA(0.4)}
+        dropShadow: {blur: 3, color: Color.black.withA(0.4)},
+        draggable: false
       },
     });
   }
