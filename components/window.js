@@ -25,7 +25,7 @@ export default class Window extends Morph {
         borderWidth: 1,
         dropShadow: {
           rotation: 90,
-          distance: 10,
+          distance: 8,
           blur: 10,
           color: Color.gray.withA(0.5)
         }
@@ -74,9 +74,9 @@ export default class Window extends Morph {
         borderWidth: 1,
         dropShadow: {
           rotation: 90,
-          distance: 12,
+          distance: 8,
           blur: 35,
-          color: Color.black.withA(0.4),
+          color: Color.black.withA(0.3),
           spread: 5
         }
       }
