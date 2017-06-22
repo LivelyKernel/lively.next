@@ -1638,16 +1638,15 @@ var features$1 = {
   find: !!Array.prototype.find,
   findIndex: !!Array.prototype.findIndex,
   includes: !!Array.prototype.includes
-};
 
-// variety of functions for Arrays
+  // variety of functions for Arrays
 
 
-// -=-=-=-=-=-=-=-
-// array creations
-// -=-=-=-=-=-=-=-
+  // -=-=-=-=-=-=-=-
+  // array creations
+  // -=-=-=-=-=-=-=-
 
-function range(begin, end, step) {
+};function range(begin, end, step) {
   // Examples:
   //   arr.range(0,5) // => [0,1,2,3,4,5]
   //   arr.range(0,10,2) // => [0,2,4,6,8,10]
@@ -3540,13 +3539,12 @@ var features = {
   includes: !!String.prototype.includes,
   startsWith: !!String.prototype.startsWith,
   endsWith: !!String.prototype.endsWith
-};
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// printing and formatting strings
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // printing and formatting strings
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function format() {
+};function format() {
   // String+ -> String
   // Takes a variable number of arguments. The first argument is the format
   // string. Placeholders in the format string are marked with `"%s"`.
@@ -3927,15 +3925,31 @@ function toQueryParams(s, separator) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-
 // file system path support
 // -=-=-=-=-=-=-=-=-=-=-=-=-
+var pathDotRe = /\/\.\//g;
+var pathDoubleDotRe = /\/[^\/]+\/\.\./;
+var pathDoubleSlashRe = /(^|[^:])[\/]+/g;
+function normalizePath$1(pathString) {
+  var result = pathString;
+  // /foo/../bar --> /bar
+  do {
+    pathString = result;
+    result = pathString.replace(pathDoubleDotRe, '');
+  } while (result != pathString);
+  // foo//bar --> foo/bar
+  result = result.replace(pathDoubleSlashRe, '$1/');
+  // foo/./bar --> foo/bar
+  result = result.replace(pathDotRe, '/');
+  return result;
+}
+
 function joinPath() /*paths*/{
   // Joins the strings passed as paramters together so that ea string is
   // connected via a single "/".
   // Example:
   // string.joinPath("foo", "bar") // => "foo/bar";
-  var args = Array.prototype.slice.call(arguments);
-  return args.reduce(function (path, ea) {
+  return normalizePath$1(Array.prototype.slice.call(arguments).reduce(function (path, ea) {
     return typeof ea === "string" ? path.replace(/\/*$/, "") + "/" + ea.replace(/^\/*/, "") : path;
-  });
+  }));
 }
 
 // -=-=-=-=-=-=-=-=-
@@ -4228,9 +4242,9 @@ function stringMatch(s, patternString, options) {
     // }
     if (pattern.constructor !== RegExp) {
       var idx = s.indexOf(pattern);
-      if (idx === 0) return { match: pattern, rest: s.slice(pattern.length) };
-      // no match
-      for (var i = 0; i < pattern.length; i++) {
+      if (idx === 0) return { match: pattern, rest: s.slice(pattern.length)
+        // no match
+      };for (var i = 0; i < pattern.length; i++) {
         // figure out where we failed
         if (pattern[i] != s[i]) return { match: null, pos: i };
       }return { match: null };
@@ -4580,9 +4594,9 @@ function levenshtein(a, b) {
     tmp = a;a = b;b = tmp;
   }
 
-  row = Array(a.length + 1);
+  row = Array(a.length + 1
   // init the row
-  for (i = 0; i <= a.length; i++) {
+  );for (i = 0; i <= a.length; i++) {
     row[i] = i;
   } // fill in the rest
   for (i = 1; i <= b.length; i++) {
@@ -4625,6 +4639,7 @@ var string = Object.freeze({
 	tableize: tableize,
 	unescapeCharacterEntities: unescapeCharacterEntities,
 	toQueryParams: toQueryParams,
+	normalizePath: normalizePath$1,
 	joinPath: joinPath,
 	newUUID: newUUID,
 	createDataURI: createDataURI,
@@ -7416,19 +7431,17 @@ var NodejsWorker = {
     });
   }
 
-};
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // the worker interface, usable both in browser and node.js contexts
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// the worker interface, usable both in browser and node.js contexts
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  /*
+  Worker objects allow to fork processes in both Web and node.js JavaScript
+  environments. They provide this mechanism using web workers in the browser and
+  node.js child processes in node.js. The interface is unified for all platforms.
+   */
 
-/*
-Worker objects allow to fork processes in both Web and node.js JavaScript
-environments. They provide this mechanism using web workers in the browser and
-node.js child processes in node.js. The interface is unified for all platforms.
- */
-
-function fork(options, workerFunc, thenDo) {
+};function fork(options, workerFunc, thenDo) {
   // Fork automatically starts a worker and calls `workerFunc`. `workerFunc`
   // gets as a last paramter a callback, that, when invoked with an error and
   // result object, ends the worker execution.

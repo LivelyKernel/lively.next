@@ -385,16 +385,33 @@ function toQueryParams(s, separator) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-
 // file system path support
 // -=-=-=-=-=-=-=-=-=-=-=-=-
+const pathDotRe = /\/\.\//g,
+      pathDoubleDotRe = /\/[^\/]+\/\.\./,
+      pathDoubleSlashRe = /(^|[^:])[\/]+/g;
+function normalizePath(pathString) {
+  var result = pathString;
+  // /foo/../bar --> /bar
+  do {
+    pathString = result;
+    result = pathString.replace(pathDoubleDotRe, '');
+  } while (result != pathString);
+  // foo//bar --> foo/bar
+  result = result.replace(pathDoubleSlashRe, '$1/');
+  // foo/./bar --> foo/bar
+  result = result.replace(pathDotRe, '/');
+  return result;
+}
+
 function joinPath(/*paths*/) {
   // Joins the strings passed as paramters together so that ea string is
   // connected via a single "/".
   // Example:
   // string.joinPath("foo", "bar") // => "foo/bar";
-  var args = Array.prototype.slice.call(arguments);
-  return args.reduce(function(path, ea) {
-    return typeof ea === "string" ?
-      path.replace(/\/*$/, "") + "/" + ea.replace(/^\/*/, "") : path;
-  });
+  return normalizePath(
+    Array.prototype.slice.call(arguments).reduce((path, ea) =>
+        typeof ea === "string"
+                ? path.replace(/\/*$/, "") + "/" + ea.replace(/^\/*/, "")
+                : path));
 }
 
 // -=-=-=-=-=-=-=-=-
@@ -1088,6 +1105,7 @@ export {
   tableize,
   unescapeCharacterEntities,
   toQueryParams,
+  normalizePath,
   joinPath,
   newUUID,
   createDataURI,
