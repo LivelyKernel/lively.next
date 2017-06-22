@@ -23,7 +23,12 @@ export default class Window extends Morph {
         borderRadius: 7,
         borderColor: Color.gray,
         borderWidth: 1,
-        dropShadow: {distance: 10, blur: 40, color: Color.black.withA(.1)}
+        dropShadow: {
+          rotation: 90,
+          distance: 10,
+          blur: 10,
+          color: Color.gray.withA(0.5)
+        }
       },
       ".Window.inactive .windowButton": {
         borderColor: Color.gray.darker(),
@@ -67,7 +72,13 @@ export default class Window extends Morph {
         borderRadius: 7,
         borderColor: Color.gray,
         borderWidth: 1,
-        dropShadow: {distance: 10, blur: 40, color: Color.black.withA(.3)},
+        dropShadow: {
+          rotation: 90,
+          distance: 12,
+          blur: 35,
+          color: Color.black.withA(0.4),
+          spread: 5
+        }
       }
     });
   }

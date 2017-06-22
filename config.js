@@ -1,3 +1,4 @@
+/*global System*/
 import { Rectangle, Color } from "lively.graphics";
 
 if (typeof $world !== "undefined") {
@@ -7,7 +8,7 @@ if (typeof $world !== "undefined") {
 
 var config = {
 
-  defaultShadow: {distance: 2, blur: 6, color: Color.black.withA(.6)},
+  defaultShadow: {distance: 18, blur: 6, color: Color.darkGray.withA(.5), spread: 2},
   undoLevels: 20,
   halosEnabled: true,
   altClickDefinesThat: true,
