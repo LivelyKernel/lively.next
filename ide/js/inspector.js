@@ -165,6 +165,10 @@ class InspectionNode {
     this.root = root;
   }
 
+  get __only_serialize__() {
+    return [];
+  }
+
   get isInspectionNode() { return true }
 
   static for(node, root = null) {
@@ -238,6 +242,10 @@ class PropertyNode extends InspectionNode {
     this.target = target;
     this.spec = spec;
     this.foldedNodes = {};
+  }
+
+  __deserialize__(snapshot, objRef) {
+    this.spec = {}
   }
 
   get isFoldable() {
@@ -429,10 +437,6 @@ class DraggedProp extends Morph {
 }
 
 export class PropertyControl extends Label {
-
-  get __only_serialize__() {
-    return arr.without(super.__only_serialize__, 'attributeConnections');
-  }
 
   static get properties() {
     return {
@@ -776,6 +780,10 @@ class InspectorTreeData extends TreeData {
        this.root = InspectionNode.for(this.root, this);
   }
 
+  get __only_serialize__() {
+    return ['root'];
+  }
+
   asListWithIndexAndDepth(filtered = true) {
     let nodes = super.asListWithIndexAndDepth();
     return filtered ? nodes.filter(({node}) => node.visible) : nodes;
@@ -870,6 +878,41 @@ export default class Inspector extends Morph {
     this.openWidget && this.closeOpenWidget();
   }
 
+  __after_deserialize__() {
+    let t = this._serializableTarget;
+    var tree = new Tree({
+      name: "propertyTree",
+      ...this.treeStyle,
+      treeData: InspectorTreeData.forObject(null)
+    });
+
+    this.addMorph(tree, this.getSubmorphNamed("terminal toggler"));
+    this.layout.col(0).row(1).group.morph = tree;
+
+    this.whenRendered().then(
+      () => { 
+        if (this.targetObject.isMorph && 
+            this.targetObject.world() == this.world()) {
+          this.targetObject = this.targetObject;
+        } else {
+          this.targetObject = null;
+        }
+      }
+    );
+    
+    super.__after_deserialize__();
+  }
+  
+  __additionally_serialize__(snapshot, ref, pool, addFn) {
+    // empty tree
+    let submorphs = snapshot.props.submorphs.value;
+    for (let i = submorphs.length; i--; ) {
+      let {id} = submorphs[i];
+      if (pool.refForId(id).realObj == this.ui.propertyTree) arr.removeAt(submorphs, i);
+    }
+  }
+  
+
   static get properties() {
     return {
 
@@ -877,11 +920,15 @@ export default class Inspector extends Morph {
       fill: {defaultValue: Color.transparent},
       name: {defaultValue: "inspector"},
 
+      _serializableTarget: {defaultValue: null},
+
       targetObject: {
         after: ["submorphs"],
-        serialize: false,
+        //serialize: false,
         set(obj) {
+          this._serializableTarget = obj.isMorph ? obj.id : obj;
           this.setProperty("targetObject", obj);
+          if (!this.ui.propertyTree) return;
           this.originalTreeData = null;
           this.prepareForNewTargetObject(obj);
         }
@@ -939,6 +986,15 @@ export default class Inspector extends Morph {
         defaultValue: false, serialize: false
       },
 
+      treeStyle: {
+        readOnly: true,
+        defaultValue: {
+          borderWidth: 1,
+          borderColor: Color.gray,
+          fontSize: 14,
+          fontFamily: config.codeEditor.defaultStyle.fontFamily
+        }
+      },
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
@@ -1038,12 +1094,12 @@ export default class Inspector extends Morph {
   }
 
   refreshAllProperties() {
+    if (!this.targetObject || !this.targetObject.isMorph) return;
     if (this.targetObject._styleSheetProps != this.lastStyleSheetProps) {
       this.refreshTreeView();
       this.lastStyleSheetProps = this.targetObject._styleSheetProps;
       return;
     }
-    if (!this.targetObject || !this.targetObject.isMorph) return;
     let change = last(this.targetObject.env.changeManager.changesFor(this.targetObject));
     if (change == this.lastChange) return;
     if (this.focusedNode && this.focusedNode.keyString == change.prop) {
@@ -1104,11 +1160,7 @@ export default class Inspector extends Morph {
   }
 
   build() {
-    var treeStyle = {
-          borderWidth: 1, borderColor: Color.gray,
-          fontSize: 14, fontFamily: config.codeEditor.defaultStyle.fontFamily
-        },
-        textStyle = {
+    var textStyle = {
           type: "text",
           borderWidth: 1, borderColor: Color.gray,
           lineWrapping: "by-chars",
@@ -1141,7 +1193,7 @@ export default class Inspector extends Morph {
         ]
       },
       new Tree({
-        name: "propertyTree", ...treeStyle,
+        name: "propertyTree", ...this.treeStyle,
         treeData: InspectorTreeData.forObject(null)
       }),
       Icon.makeLabel('keyboard-o', {

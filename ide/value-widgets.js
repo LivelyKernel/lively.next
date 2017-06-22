@@ -123,8 +123,9 @@ export class LayoutWidget extends ShortcutWidget {
   static get properties() {
     return {
       title: {
+        after: ['submorphs'],
         initialize() {
-          this.title = this.context.layout ? 
+          this.title = this.context && this.context.layout ? 
             'Configure ' + this.context.layout.name() + ' Layout' : 'No Layout';
         }
       }
