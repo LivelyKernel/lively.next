@@ -518,9 +518,9 @@ describe("layout", () => {
     
     it("can vary proportion of the last column", () => {
       m.layout.col(2).width += 100;
-      expect(m.width).equals(300 + 100);
+      expect(m.width).equals(300);
       expect(m.layout.col(0).width).equals(100);
-      expect(m.layout.col(1).width).equals(100);
+      expect(m.layout.col(1).width).equals(0);
       expect(m.layout.col(2).width).equals(200);
     })
     
@@ -565,7 +565,7 @@ describe("layout", () => {
       expect(m3.width).equals(50);
       m.layout.col(3).width += 60;
       m.layout.apply();
-      expect(m2.width).equals(150);
+      expect(m2.width).equals(90);
       expect(m3.width).equals(110);
       m.layout.col(3).width -= 60;
       m.layout.apply();
@@ -574,15 +574,15 @@ describe("layout", () => {
       m.layout.col(3).width -= 50; // 0
       m.layout.apply();
       expect(m.layout.col(3).width).equals(0);
-      expect(m.layout.col(0).width).equals(150);
-      expect(m2.width).equals(150);
+      expect(m.layout.col(0).width).equals(200);
+      expect(m2.width).equals(200);
       expect(m3.width).equals(0);
       m.layout.col(3).width -= 50;
       m.applyLayoutIfNeeded();
       expect(m3.width).equals(0, 'prevent negative widths');
-      expect(m2.width).closeTo(150, 0.0001);
+      expect(m2.width).closeTo(200, 0.0001);
       expect(m.layout.col(3).width).equals(0);
-      expect(m.layout.col(0).width).equals(150);
+      expect(m.layout.col(0).width).equals(200);
       m.layout.col(3).fixed = m.layout.col(2).fixed = m.layout.col(1).fixed = 100;
       m.width = 400;
       m.layout.apply();
