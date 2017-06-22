@@ -3,7 +3,11 @@ import { resource } from "../index.js";
 const slashEndRe = /\/+$/,
       slashStartRe = /^\/+/,
       protocolRe = /^[a-z0-9-_\.]+:/,
-      slashslashRe = /^\/\/[^\/]+/;
+      slashslashRe = /^\/\/[^\/]+/,
+      // for resolve path:
+      pathDotRe = /\/\.\//g,
+      pathDoubleDotRe = /\/[^\/]+\/\.\./,
+      pathDoubleSlashRe = /(^|[^:])[\/]+/g;
 
 function nyi(obj, name) {
   throw new Error(`${name} for ${obj.constructor.name} not yet implemented`);
@@ -129,13 +133,13 @@ export default class Resource {
     // /foo/../bar --> /bar
     do {
       path = result;
-      result = path.replace(/\/[^\/]+\/\.\./, '');
+      result = path.replace(pathDoubleDotRe, '');
     } while (result != path);
 
     // foo//bar --> foo/bar
-    result = result.replace(/(^|[^:])[\/]+/g, '$1/');
+    result = result.replace(pathDoubleSlashRe, '$1/');
     // foo/./bar --> foo/bar
-    result = result.replace(/\/\.\//g, '/');
+    result = result.replace(pathDotRe, '/');
     if (result === this.path()) return this;
     if (result.startsWith("/")) result = result.slice(1);
     return this.newResource(this.root().url + result);
