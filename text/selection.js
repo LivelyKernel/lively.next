@@ -275,7 +275,14 @@ export class Selection {
 export class MultiSelection extends Selection {
 
   initialize(range) {
-    this.selections = [new Selection(this.textMorph, range)];
+    this._selections = [new Selection(this.textMorph, range)];
+  }
+
+  get selections() { return this._selections; }
+  set selections(sels) {
+    let removed = this._selections.filter(ea => !sels.includes(ea));
+    this._selections = sels;
+    removed.forEach(ea => ea.uninstall());
   }
 
   get isMultiSelection() { return true; }
@@ -370,12 +377,13 @@ export class MultiSelection extends Selection {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   mergeSelections() {
-    var sels = this.selections.slice();
+    var sels = this.selections.slice(),
+        removed = [];
     for (var i = sels.length-1; i >= 0; i--) {
       for (var j = sels.length-1; j >= 0; j--) {
         if (i === j) continue;
         if (sels[j].mergeWith(sels[i])) {
-          sels.splice(i, 1)
+          sels.splice(i, 1);
           break;
         }
       }
