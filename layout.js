@@ -19,7 +19,9 @@ class Layout {
     this.active = false;
     this.container = container;
     this.autoResize = autoResize != undefined ? autoResize : true;
-    this.onScheduleApply = onScheduleApply || (() => {});
+    this.onScheduleApply = onScheduleApply || ((submorph, animation ,change) => {
+      if (animation) debugger;
+    });
   }
 
   copy() {
@@ -34,7 +36,7 @@ class Layout {
   enable(animation) { 
     this.active = false; 
     this.refreshBoundsCache();
-    this.apply(animation);
+    this.scheduleApply(null, animation);
   }
 
   boundsChanged(container) {
@@ -62,6 +64,7 @@ class Layout {
       this.applyRequests = [];
       this.refreshBoundsCache();
       this.apply(this.lastAnim);
+      this.lastAnim = false;
     }
   }
 
@@ -87,31 +90,29 @@ class Layout {
   }
 
   onChange({selector, args, prop, value, prevValue, meta}) {
-    const anim = meta && meta.animation;
+    const anim = meta && meta.animation,
+          submorph = args && args[0];
     switch (selector) {
       case "removeMorph":
-        this.onSubmorphRemoved(args[0], anim);
+        this.onSubmorphRemoved(submorph, anim);
         break;
       case "addMorphAt":
-        this.onSubmorphAdded(args[0], anim);
+        this.onSubmorphAdded(submorph, anim);
         break;
     }
     if (["extent"].includes(prop) && !obj.equals(value, prevValue))
-      this.scheduleApply(anim);
+      this.scheduleApply(submorph, anim);
   }
   affectsLayout(submorph, {prop, value, prevValue}) {
-    return ["position", "scale", "rotation", "isLayoutable"].includes(prop)
-           && !obj.equals(value, prevValue)
-           && this.container.submorphs.includes(submorph);
+    return ["position", "scale", "rotation", "isLayoutable", 
+            'extent'].includes(prop)
+           && !obj.equals(value, prevValue);
   }
 
   onSubmorphChange(submorph, change) {
-    if ("extent" == change.prop && !change.value.equals(change.prevValue)) {
-       this.onSubmorphResized(submorph, change);
-    }
     if (this.affectsLayout(submorph, change)) {
-       this.scheduleApply(change.meta.animation);
-    }
+       this.onSubmorphResized(submorph, change);
+    } 
   }
 
   changePropertyAnimated(target, propName, value, animate) {
@@ -687,7 +688,7 @@ class LayoutAxis {
   get length() { return this.origin[this.dimension]; }
   set length(x) { 
     this.items.forEach(cell => {
-      cell[this.dimension] = x;
+      cell[this.dimension] = num.roundTo(x, 1);
     });
   }
 
@@ -755,6 +756,8 @@ class LayoutAxis {
 
   adjustLength(delta) {
     var nextDynamicAxis;
+    if (this.length + delta < 0) // trunkate delta
+        delta = -this.length;
     if (nextDynamicAxis = this.axisAfter.find(axis => !axis.fixed)) {
       delta = Math.min(delta, nextDynamicAxis.length);
       this.length += delta
@@ -762,13 +765,20 @@ class LayoutAxis {
       this.adjustProportion();
       nextDynamicAxis.adjustProportion();
     } else {
-      // we are either the last row, or there are no rows to steal from
-      if (this.length + delta < 0) // trunkate delta
-        delta = -this.length;
-      this.length += delta;
-      this.adjustProportion();
-      this.otherAxis.forEach(a => a.adjustProportion());
-      this.containerLength += delta;
+      // we are either the last axis
+      nextDynamicAxis = this.axisBefore.reverse().find(axis => !axis.fixed);
+      if (nextDynamicAxis) {
+        nextDynamicAxis.length -= delta;
+        this.length += delta;
+        this.adjustProportion();
+        nextDynamicAxis.adjustProportion();
+      } else {
+        //or there are no axis to steal from
+        this.length += delta;
+        this.adjustProportion();
+        this.otherAxis.forEach(a => a.adjustProportion());
+        this.containerLength += delta;
+      }
     }
   }
 
