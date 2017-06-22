@@ -659,15 +659,14 @@ function initializeClass(constructorFunc, superclassSpec) {
       pathInPackage: p ? currentModule.pathInPackage() : currentModule.id,
       lastChange: prevMeta && prevMeta.lastChange && t <= prevMeta.lastChange ? prevMeta.lastChange + 1 : t,
       lastSuperclassChange: 0
-    };
 
-    // if we have a module, we can listen to toplevel changes of it in case the
-    // superclass binding changes. With that we can keep our class up-to-date
-    // even if the superclass binding changes. This is especially useful for
-    // situations where modules have a circular dependency and classes in modules
-    // won't get defined correctly when loaded first. See
-    // https://github.com/LivelyKernel/lively.modules/issues/27 for more details
-    if (superclassSpec && superclassSpec.referencedAs) {
+      // if we have a module, we can listen to toplevel changes of it in case the
+      // superclass binding changes. With that we can keep our class up-to-date
+      // even if the superclass binding changes. This is especially useful for
+      // situations where modules have a circular dependency and classes in modules
+      // won't get defined correctly when loaded first. See
+      // https://github.com/LivelyKernel/lively.modules/issues/27 for more details
+    };if (superclassSpec && superclassSpec.referencedAs) {
       if (klass[moduleSubscribeToToplevelChangesSym]) {
         currentModule.unsubscribeFromToplevelDefinitionChanges(klass[moduleSubscribeToToplevelChangesSym]);
       }
@@ -837,8 +836,9 @@ function replaceSuper(node, state, path, options) {
   var currentMethod = state.currentMethod;
 
   if (!currentMethod) {
-    console.warn("[lively.classes] Trying to transform es6 class but got super call outside a method! " + lively_ast.stringify(node) + " in " + path.join("."));
+    console.warn("[lively.classes] Trying to transform es6 class but got super call outside a method! " + lively_ast.stringify(node) + " in " + path.join(".")
     // return node;
+    );
   }
 
   var _path$slice = path.slice(-2),

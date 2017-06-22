@@ -49,13 +49,13 @@ export class SourceDescriptor {
     if (!this._moduleSource) throw new Error("_moduleSource not defined!");
     return this._moduleSource;
   }
-  get moduleAst() { return this._moduleAst || (this._moduleAst = parse(this.moduleSource)); }
+  get moduleAst() { return this._moduleAst || (this._moduleAst = parse(this.moduleSource, {withComments: true})); }
   get moduleScope() { return this._moduleScope || (this._moduleScope = query.topLevelDeclsAndRefs(this.ast).scope); }
   get moduleImports() { return this._moduleImports || (this._moduleImports = query.imports(this.moduleScope)); }
   get ast() {
     if (this._ast) return this._ast;
     // be as concrete as possible
-    var parsed = parse(this.source), node = parsed.body[0];
+    var parsed = parse(this.source, {withComments: true}), node = parsed.body[0];
     if (node.type === "ExpressionStatement") node = node.expression;
     return this._ast = node;
   }
@@ -199,7 +199,7 @@ export class RuntimeSourceDescriptor {
 
   get moduleAst() {
     this.resetIfChanged();
-    return this._moduleAst || (this._moduleAst = parse(this.moduleSource));
+    return this._moduleAst || (this._moduleAst = parse(this.moduleSource, {withComments: true}));
   }
   get moduleScope() {
     this.resetIfChanged();
@@ -216,10 +216,12 @@ export class RuntimeSourceDescriptor {
       return this._declaredAndUndeclaredNames;
 
     var parsed = this.ast,
-        declaredNames = query.topLevelDeclsAndRefs(this.moduleAst).declaredNames,
+        {declaredNames} = query.topLevelDeclsAndRefs(this.moduleAst, {jslintGlobalComment: true}),
         declaredImports = arr.uniq(this.moduleImports.map(({local}) => local)),
         localDeclaredNames = arr.withoutAll(declaredNames, declaredImports),
-        undeclaredNames = arr.withoutAll(query.findGlobalVarRefs(parsed).map(ea => ea.name), declaredNames);
+        undeclaredNames = arr.withoutAll(
+          query.findGlobalVarRefs(parsed).map(ea => ea.name),
+          declaredNames);
 
     return this._declaredAndUndeclaredNames = {
       declaredNames,
@@ -240,7 +242,7 @@ export class RuntimeSourceDescriptor {
     this.resetIfChanged();
     if (this._ast) return this._ast;
     // be as concrete as possible
-    var parsed = parse(this.source), node = parsed.body[0];
+    var parsed = parse(this.source, {withComments: true}), node = parsed.body[0];
     if (node.type === "ExpressionStatement") node = node.expression;
     return this._ast = node;
   }
