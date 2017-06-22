@@ -335,6 +335,7 @@ export class TextPrompt extends AbstractPrompt {
       ],
       rows: [
         0, {fixed: label.height, paddingBottom: 2.5},
+        1, {fixed: input.height},
         2, {fixed: 35, paddingTop: 5, paddingBottom: 5},
       ],
       grid: [
