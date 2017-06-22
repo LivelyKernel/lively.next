@@ -9,7 +9,7 @@ import { isURL } from './url-helpers.js';
 import { emit, subscribe } from "lively.notifications";
 import { defaultClassToFunctionConverterName } from "lively.vm";
 import { runtime as classRuntime } from "lively.classes";
-import { ImportInjector, ImportRemover } from "./import-modification.js";
+import { ImportInjector, GlobalInjector, ImportRemover } from "./import-modification.js";
 
 export var detectModuleFormat = (function() {
   const esmFormatCommentRegExp = /['"]format (esm|es6)['"];/,
@@ -582,6 +582,14 @@ class ModuleInterface {
     }
 
     await this.changeSource(source);
+  }
+
+  async addGlobalDeclaration(varNamesToDeclareAsGlobal) {
+    let source = await this.source(),
+        {status, newSource} = GlobalInjector.run(source, varNamesToDeclareAsGlobal),
+        changed = status === "modified";
+    if (changed) await this.changeSource(newSource);
+    return changed;
   }
 
   async removeImports(specs) {

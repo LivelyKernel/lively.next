@@ -252,6 +252,57 @@ ImportRemover.removeUnusedImports(src)
 
 */
 
+export class GlobalInjector {
+
+  static run(src, namesToDeclareGlobal, optAst) {
+    let parsed = optAst || fuzzyParse(src, {withComments: true}),
+        globalComment = parsed.comments
+          ? parsed.comments.find(c => c.isBlock && c.text.startsWith("global"))
+          : null,
+        existingDecls = globalComment
+          ? globalComment.text.replace(/^global\s*/, "")
+              .split(",").map(ea => ea.trim()).filter(Boolean)
+          : [],
+        namesToInsert = namesToDeclareGlobal.filter(ea => !existingDecls.includes(ea));
+
+    if (!namesToInsert.length) return {
+      status: "not modified",
+      newSource: src,
+      generated: "",
+      from: 0, to: 0
+    }
+
+    if (!globalComment) {
+      let generated = `/*global ${namesToInsert.join(",")}*/\n`,
+          from = 0, to = generated.length,
+          newSource = generated + src;
+      return {
+        status: "modified",
+        newSource,
+        generated,
+        from, to
+      }
+    }
+
+    let from = globalComment.start + "/*".length + globalComment.text.length,
+        generated = namesToInsert.join(",");
+    if (!existingDecls.length) {
+      if (!globalComment.text.startsWith("global "))
+        generated = " " + generated;
+    } else {
+      generated = "," + generated;
+    }
+    let to = from + generated.length,
+        newSource = src.slice(0, from) + generated + src.slice(from);
+    return {
+      status: "modified",
+      newSource,
+      generated,
+      from, to
+    }
+  }
+}
+
 export class ImportRemover {
 
   static removeImports(moduleSource, importsToRemove, optModuleAst) {

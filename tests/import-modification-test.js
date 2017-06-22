@@ -1,7 +1,7 @@
 /*global System, beforeEach, afterEach, describe, it*/
 
 import { expect } from "mocha-es6";
-import { ImportInjector, ImportRemover } from "../src/import-modification.js";
+import { ImportInjector, GlobalInjector, ImportRemover } from "../src/import-modification.js";
 
 describe("import injector", () => {
 
@@ -214,4 +214,35 @@ describe("import remover", () => {
     expect(removedImports).deep.equals([{from: "./src/b.js", local: "xxx"}])
     expect(source).equals(`import { yyy } from "./src/b.js"; class Foo { m() { return yyy + 1 } }`)
   });
+});
+
+describe("global injector", () => {
+
+  it("makes global declarations via comment", () => {
+    expect(GlobalInjector.run("xxx + yyy", ["xxx"])).deep.equals({
+      "from": 0, "to": 15,
+      "generated": "/*global xxx*/\n",
+      "newSource": "/*global xxx*/\nxxx + yyy",
+      "status": "modified",
+    });
+    expect(GlobalInjector.run("/*global yyy*/xxx + yyy", ["xxx"])).deep.equals({
+      "from": 12, "to": 16,
+      "generated": ",xxx",
+      "newSource": "/*global yyy,xxx*/xxx + yyy",
+      "status": "modified"
+    });
+    expect(GlobalInjector.run("/*global*/xxx + yyy", ["xxx"])).deep.equals({
+      "from": 8, "to": 12,
+      "generated": " xxx",
+      "newSource": "/*global xxx*/xxx + yyy",
+      "status": "modified"
+    });
+    expect(GlobalInjector.run("xxx + yyy\n/*global   */", ["xxx"])).deep.equals({
+      "from": 21, "to": 24,
+      "generated": "xxx",
+      "newSource": "xxx + yyy\n/*global   xxx*/",
+      "status": "modified"
+    });
+  });
+
 });

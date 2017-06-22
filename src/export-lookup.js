@@ -99,14 +99,16 @@ export default class ExportLookup {
         cache = this.exportByModuleCache,
         exportsByModule = {};
 
-    await Promise.all(mods.map(moduleId =>
-     this.rawExportsOfModule(moduleId, options, exportsByModule)));
+    await Promise.all(
+      mods.map(moduleId =>
+        this.rawExportsOfModule(moduleId, options, exportsByModule).then(
+          result => (result ? (exportsByModule[moduleId] = result) : null))));
 
     return exportsByModule;
   }
 
-  rawExportsOfModule(moduleId, opts = {}, exportsByModule = {}) {
-    var System = this.System,
+  async rawExportsOfModule(moduleId, opts = {}) {
+    let {System, exportByModuleCache: cache} = this,
         excludedPackages = opts.excludedPackages || [],
         excludedURLs = opts.excludedURLs
                     || (opts.excludedURLs = excludedPackages.filter(ea => typeof ea === "string")),
@@ -116,17 +118,16 @@ export default class ExportLookup {
                            || (opts.excludedPackageURLs = excludedURLs.concat(excludedURLs.map(url =>
                                 System.decanonicalize(url.replace(/\/?$/, "/")).replace(/\/$/, "")))),
         livelyEnv = opts.livelyEnv || (opts.livelyEnv = System.get("@lively-env") || {}),
-        mods = opts.modes || (opts.modes = Object.keys(livelyEnv.loadedModules || {})),
-        cache = this.exportByModuleCache;
+        mods = opts.modes || (opts.modes = Object.keys(livelyEnv.loadedModules || {}));
 
     if (cache[moduleId]) {
-      var result = cache[moduleId].rawExports;
+      let result = cache[moduleId].rawExports;
       return excludedPackageURLs.includes(result.packageURL)
-      || excludeFns.some(fn => fn(result.packageURL))
-        ? null : exportsByModule[moduleId] = cache[moduleId];
+          || excludeFns.some(fn => fn(result.packageURL))
+            ? null : cache[moduleId];
     }
 
-    var mod = module(System, moduleId),
+    let mod = module(System, moduleId),
         pathInPackage = mod.pathInPackage(),
         p = mod.package(),
         isMain = p && p.main && pathInPackage === p.main,
@@ -140,26 +141,23 @@ export default class ExportLookup {
         };
 
     if (excludedPackageURLs.includes(packageURL)
-        || excludeFns.some(fn => fn(packageURL))) return;
+     || excludeFns.some(fn => fn(packageURL))) return null;
 
-    var format = mod.format();
-    if (["register", "es6", "esm"].includes(format)) {
-      return mod.exports()
-        .then(exports => result.exports = exports)
-        .catch(e => { result.error = e; return result; })
-        .then(() => cache[moduleId] = exportsByModule[moduleId] = {rawExports: result})
-    }
-
-    return mod.load()
-        .then(values => {
+    try {
+      var format = mod.format();
+      if (["register", "es6", "esm"].includes(format)) {
+        result.exports = await mod.exports();
+      } else {
+        let values = await mod.load();
         result.exports = [];
         for (var key in values) {
           if (key === "__useDefault" || key === "default") continue;
           result.exports.push({exported: key, local: key, type: "id"})
         }
-      })
-      .catch(e => { result.error = e; return result; })
-      .then(() => cache[moduleId] = exportsByModule[moduleId] = {rawExports: result})
+      }
+    } catch (err) { result.error = err; }
+
+    return cache[moduleId] = {rawExports: result};
   }
 
   resolveExportsOfModule(moduleId, exportsByModule, locked = {}) {
