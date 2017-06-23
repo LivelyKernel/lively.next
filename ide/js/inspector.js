@@ -11,7 +11,7 @@ import { last } from "lively.lang/array.js";
 
 import { GridLayout } from "../../layout.js";
 
-import { NumberWidget, IconWidget, PaddingWidget, VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
+import { NumberWidget, StringWidget, IconWidget, PaddingWidget, VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
 import { RichTextControl } from "../../text/ui.js";
 import { Point } from "lively.graphics/geometry-2d.js";
 import { MorphHighlighter } from "../../halo/morph.js";
@@ -215,7 +215,8 @@ class MorphNode extends InspectionNode {
 
   getSubNode(nodeArgs) {
     let spec = this.propertyInfo[nodeArgs.key] || {};
-    if (nodeArgs.value && nodeArgs.value.isMorph) return new MorphNode(nodeArgs)
+    if (nodeArgs.value && nodeArgs.value.isMorph) 
+       return new MorphNode({...nodeArgs, root: this.root})
     return new PropertyNode({
       ...nodeArgs,
       root: this.root,
