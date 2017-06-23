@@ -1,4 +1,4 @@
-/*global declare, it, describe, beforeEach, afterEach, before, after*/
+/*global declare, it, describe, beforeEach, afterEach, before, after,System,xdescribe*/
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { MorphicEnv, show } from "../index.js";
 import { expect } from "mocha-es6";
@@ -59,6 +59,7 @@ describInBrowser("halos", function() {
   });
   
   it("halo items never overlap each other", async () => {
+    submorph1.position = pt(100,100);
     submorph1.origin = pt(20,30);
     submorph1.extent = pt(20,20);
     var halo = await world.showHaloFor(submorph1),
@@ -69,7 +70,7 @@ describInBrowser("halos", function() {
             otherItem != item && !otherItem.isHandle && otherItem != halo.borderBox &&
             otherItem.globalBounds().intersects(item.globalBounds()))
           && item != halo.originHalo() && !item.isHandle && item != halo.borderBox);
-    expect(innerButton).equals(undefined, `halo item ${innerButton} is inside the bounds of its target`);
+    expect(innerButton).equals(undefined, `halo item ${innerButton && innerButton.name} is inside the bounds of its target`);
   });
 
   it("can select multiple morphs", async () => {
