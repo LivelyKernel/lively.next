@@ -1,6 +1,6 @@
 /* global Expo */
 import { arr, string } from "lively.lang";
-import { pt, rect, Color, Rectangle } from "lively.graphics";
+import { pt, LinearGradient, rect, Color, Rectangle } from "lively.graphics";
 import { Label, Icon, morph, Morph, ShadowObject } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 import {StyleSheet} from '../style-rules.js';
@@ -18,11 +18,52 @@ export default class Window extends Morph {
         position: pt(0, 0),
         layout: new HorizontalLayout({autoResize: true, spacing: 6})
       },
-      ".Window.inactive": {
-        fill: Color.gray.lighter().lighter(),
+      ".Window.inactive .windowButton .Label": {
+        fontColor: Color.gray.darker(),
+      },
+      ".Window .defaultLabelStyle": {
+        fontSize: 14,
+        position: pt(2,1)
+      },
+      ".Window .buttonGroup .windowButton": {
+        borderRadius: 14,
+        extent: windowButtonSize,
+        fill: Color.transparent,
+        nativeCursor: 'pointer',
+        extent: pt(15,13)
+      },
+      ".Window .windowButton .Label": {
+        nativeCursor: 'pointer'
+      },
+      ".Window .closeButton .Label.highlight": {
+        fontColor: Color.rgb(223, 75, 75),
+      },
+      ".Window.active .closeButton .Label.default": {
+        fontColor: Color.rgb(255, 96, 82) 
+      },
+      ".Window .minimizeButton .Label.highlight": {
+        fontColor: Color.rgb(224, 177, 77),
+      },
+        ".Window.active .minimizeButton .Label.default": {
+           fontColor: Color.rgb(255, 190, 6)
+        },
+      ".Window .maximizeButton .Label.highlight": {
+        fontColor: Color.rgb(40,116,166),
+      },
+      ".Window.active .maximizeButton .Label.default": {
+        fontColor: Color.rgb(52,152,219),
+      },
+      ".Window .windowTitleLabel": {
+        fill: Color.transparent,
+        fontColor: Color.darkGray
+      },
+      ".Window": {
         borderRadius: 7,
         borderColor: Color.gray,
-        borderWidth: 1,
+        borderWidth: 1
+      },
+      ".Window.inactive": {
+        fill: LinearGradient.create({0: Color.rgbHex('f8f9f9'), .2: Color.rgbHex('e5e8e8')}),
         dropShadow: {
           rotation: 90,
           distance: 8,
@@ -30,48 +71,11 @@ export default class Window extends Morph {
           color: Color.gray.withA(0.5)
         }
       },
-      ".Window.inactive .windowButton": {
-        borderColor: Color.gray.darker(),
-        fill: Color.gray,
-        borderRadius: 14,
-        extent: windowButtonSize
-      },
-      ".Window .defaultLabelStyle": {
-        fill: Color.transparent,
-        opacity: 0.5,
-        fontSize: 11,
-        position: pt(2,1)
-      },
-      ".Window.active .closeButton": {
-        borderWidth: 1,
-        borderRadius: 14,
-        extent: windowButtonSize,
-        borderColor: Color.rgb(223, 75, 75),
-        fill: Color.rgb(255, 96, 82)
-      },
-      ".Window.active .minimizeButton": {
-        borderWidth: 1,
-        borderRadius: 14,
-        extent: windowButtonSize,
-        borderColor: Color.rgb(224, 177, 77),
-        fill: Color.rgb(255, 190, 6)
-      },
-      ".Window.active .maximizeButton": {
-        borderWidth: 1,
-        borderRadius: 14,
-        extent: windowButtonSize,
-        borderColor: Color.rgb(91,181,91),
-        fill: Color.green
-      },
-      ".Window .windowTitleLabel": {
-        fill: Color.transparent,
-        fontColor: Color.darkGray
+      ".Window.inactive.minimized": {
+        fill: LinearGradient.create({0: Color.rgbHex('f8f9f9'), 1: Color.rgbHex('e5e8e8')})
       },
       ".Window.active": {
-        fill: Color.lightGray,
-        borderRadius: 7,
-        borderColor: Color.gray,
-        borderWidth: 1,
+        fill: LinearGradient.create({0: Color.rgbHex('e5e8e8'), .2: Color.rgbHex('b2babb')}),
         dropShadow: {
           rotation: 90,
           distance: 8,
@@ -79,6 +83,9 @@ export default class Window extends Morph {
           color: Color.black.withA(0.3),
           spread: 5
         }
+      },
+      ".Window.active.minimized": {
+        fill: LinearGradient.create({0: Color.rgbHex('e5e8e8'), 1: Color.rgbHex('b2babb')})
       }
     });
   }
@@ -145,7 +152,6 @@ export default class Window extends Morph {
     this.relayoutWindowControls();
     connect(this, "extent", this, "relayoutWindowControls");
     connect(this.titleLabel(), "extent", this, "relayoutWindowControls");
-    connect(this.getSubmorphNamed("window menu button"), "onMouseDown", this, "openWindowMenu");
   }
 
   async openWindowMenu() {
@@ -175,7 +181,6 @@ export default class Window extends Morph {
     var innerB = this.innerBounds(),
         title = this.titleLabel(),
         labelBounds = innerB.withHeight(25),
-        windowMenuButton = this.getSubmorphNamed('window menu button'),
         lastButtonOrWrapper = this.getSubmorphNamed("button wrapper") || arr.last(this.buttons()),
         buttonOffset = lastButtonOrWrapper.bounds().right() + 3,
         minLabelBounds = labelBounds.withLeftCenter(pt(buttonOffset, labelBounds.height / 2));
@@ -190,8 +195,6 @@ export default class Window extends Morph {
     title.textBounds().width < labelBounds.width - 2 * buttonOffset
       ? (title.center = labelBounds.center())
       : (title.leftCenter = minLabelBounds.leftCenter());
-
-    windowMenuButton.leftCenter = title.rightCenter;
   }
   
   ensureNotOverTheTop() {
@@ -210,13 +213,6 @@ export default class Window extends Morph {
         submorphs: this.buttons()
       }),
       this.titleLabel(),
-      Icon.makeLabel("list", {
-        styleClasses: ["windowTitleLabel"],
-        fontSize: 15,
-        nativeCursor: 'pointer',
-        padding: rect(5,0,0,0),
-        name: "window menu button"
-      })
     ];
   }
 
@@ -229,18 +225,11 @@ export default class Window extends Morph {
         tooltip: "close window",
         submorphs: [
           Label.icon("times", {
-            styleClasses: ["defaultLabelStyle"],
-            visible: false
+            styleClasses: ["defaultLabelStyle",'default'],
           })
         ]
       });
     connect(closeButton, "onMouseDown", this, "close");
-    connect(closeButton, "onHoverIn", closeButton.submorphs[0], "visible", {
-      converter: () => true
-    });
-    connect(closeButton, "onHoverOut", closeButton.submorphs[0], "visible", {
-      converter: () => false
-    });
 
     let minimizeButton =
       this.getSubmorphNamed("minimize") ||
@@ -250,18 +239,11 @@ export default class Window extends Morph {
         tooltip: "collapse window",
         submorphs: [
           Label.icon("minus", {
-            styleClasses: ["defaultLabelStyle"],
-            visible: false
+            styleClasses: ["defaultLabelStyle", 'default'],
           })
         ]
       });
     connect(minimizeButton, "onMouseDown", this, "toggleMinimize");
-    connect(minimizeButton, "onHoverIn", minimizeButton.submorphs[0], "visible", {
-      converter: () => true
-    });
-    connect(minimizeButton, "onHoverOut", minimizeButton.submorphs[0], "visible", {
-      converter: () => false
-    });
 
     if (this.resizable) {
       var maximizeButton =
@@ -269,24 +251,26 @@ export default class Window extends Morph {
         morph({
           name: "maximize",
           styleClasses: ['windowButton', "maximizeButton"],
-          tooltip: "maximize window",
+          tooltip: "Open Window Menu",
           submorphs: [
-            Label.icon("plus", {
-              styleClasses: ["defaultLabelStyle"],
-              visible: false
+            Label.icon("toggle-down", {
+              styleClasses: ["defaultLabelStyle", 'default'],
             })
           ]
         });
-      connect(maximizeButton, "onMouseDown", this, "toggleMaximize");
-      connect(maximizeButton, "onHoverIn", maximizeButton.submorphs[0], "visible", {
-        converter: () => true
-      });
-      connect(maximizeButton, "onHoverOut", maximizeButton.submorphs[0], "visible", {
-        converter: () => false
-      });
+      connect(maximizeButton, "onMouseDown", this, "openWindowMenu");
     }
 
-    return arr.compact([closeButton, minimizeButton, maximizeButton]);
+    let buttons = arr.compact([closeButton, minimizeButton, maximizeButton]);
+    buttons.forEach(b => {
+      connect(b, "onHoverIn", b.submorphs[0], "styleClasses", {
+        converter: () => ["defaultLabelStyle", "highlight"]
+      });
+      connect(b, "onHoverOut", b.submorphs[0], "styleClasses", {
+        converter: () => ["defaultLabelStyle", "default"]
+      });
+    });
+    return buttons; 
   }
 
   titleLabel() {
@@ -317,7 +301,7 @@ export default class Window extends Morph {
     return resizer;
   }
 
-  toggleMinimize() {
+  async toggleMinimize() {
     let {nonMinizedBounds, minimized, width} = this,
         bounds = this.bounds(),
         duration = 200,
@@ -327,19 +311,23 @@ export default class Window extends Morph {
     if (minimized) {
       this.minimized = false;
       this.minimizedBounds = bounds;
-      this.animate({bounds: nonMinizedBounds || bounds, duration, easing});
+      this.targetMorph.visible = true;
+      this.animate({bounds: nonMinizedBounds || bounds, 
+                    styleClasses: ['neutral', 'active'], duration, easing});
       collapseButton.tooltip = "collapse window";
     } else {
       this.minimized = true;
       this.nonMinizedBounds = bounds;
-      var minimizedBounds = this.minimizedBounds || bounds.withExtent(pt(width, 25)),
+      var minimizedBounds = this.minimizedBounds || bounds.withExtent(pt(width, 28)),
           labelBounds = this.titleLabel().textBounds(),
           buttonOffset = this.get('button wrapper').bounds().right() + 3;
       if (labelBounds.width + 2 * buttonOffset < minimizedBounds.width)
-        minimizedBounds = minimizedBounds.withWidth(labelBounds.width + buttonOffset + 3);
+        minimizedBounds = minimizedBounds.withWidth(labelBounds.width + buttonOffset + 5);
       this.minimizedBounds = minimizedBounds;
       collapseButton.tooltip = "uncollapse window";
-      this.animate({bounds: minimizedBounds, duration, easing});
+      await this.animate({styleClasses: ['minimized', 'active'],
+                          bounds: minimizedBounds, duration, easing});
+      this.targetMorph.visible = false;
     }
     this.resizer().visible = !this.minimized;
   }
@@ -401,7 +389,8 @@ export default class Window extends Morph {
       return this;
     }
 
-    this.styleClasses = ['active'];
+    this.removeStyleClass('inactive');
+    this.addStyleClass('active')
 
     if (!this.world()) this.openInWorldNearHand();
     else this.bringToFront();
@@ -419,7 +408,8 @@ export default class Window extends Morph {
 
   deactivate() {
     if (this.styleClasses.includes('inactive')) return;
-    this.styleClasses = ["inactive"];
+    this.removeStyleClass('active');
+    this.addStyleClass('inactive')
     this.titleLabel().fontWeight = "normal";
     this.relayoutWindowControls();
   }
