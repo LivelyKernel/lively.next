@@ -74,6 +74,8 @@ export class Button extends Morph {
 
       activeMode: {
         after: ["labelMorph"],
+        type: 'Enum',
+        values: ['active', 'inactive', 'triggered'],
         get() {
            return this._buttonMode || 'active'
         },
