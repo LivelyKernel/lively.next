@@ -3,7 +3,7 @@ import { Morph, Text, morph, Label, HorizontalLayout,
 import { connect, signal } from "lively.bindings";
 import { Color, LinearGradient, pt, rect } from "lively.graphics";
 import { ValueScrubber } from "../components/widgets.js";
-import { FillPopover, RectanglePopover, ShadowPopover, PointPopover, VerticesPopover, LayoutPopover, Popover } from "./styling/style-popover.js";
+import { FillPopover, IconPopover, RectanglePopover, ShadowPopover, PointPopover, VerticesPopover, LayoutPopover, Popover } from "./styling/style-popover.js";
 import { num, obj } from "lively.lang";
 import { StyleSheetEditor } from "../style-rules.js";
 
@@ -695,5 +695,41 @@ export class PaddingWidget extends Label {
 }
 
 export class IconWidget extends Label {
+
+  static get properties() {
+    return {
+      fontColor: {defaultValue: Color.gray.darker()},
+      fontFamily: {defaultValue: 'FontAwesome'},
+      nativeCursor: {defaultValue: 'pointer'},
+      iconValue: {
+        derived: true,
+        get() {
+          return this.value
+        },
+        set(v) {
+          this.value = v || "No Icon";
+        }
+      }
+    }
+  }
+
+  onMouseDown(evt) {
+    this.openPopover();
+  }
+  
+  async openPopover() {
+    let iconPicker = new IconPopover();
+    await iconPicker.fadeIntoWorld(this.globalBounds().center());
+    connect(iconPicker, 'select', this, 'iconValue', {converter: (iconName) => {
+      return iconName && Icon.makeLabel(iconName).value
+    }, varMapping: {Icon}});
+    signal(this, 'openWidget', iconPicker);
+  }
+  
+}
+
+export class StringWidget extends Text {
+
+  // inline editing of string, very basic
   
 }

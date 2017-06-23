@@ -11,7 +11,7 @@ import { last } from "lively.lang/array.js";
 
 import { GridLayout } from "../../layout.js";
 
-import { NumberWidget, PaddingWidget, VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
+import { NumberWidget, IconWidget, PaddingWidget, VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
 import { RichTextControl } from "../../text/ui.js";
 import { Point } from "lively.graphics/geometry-2d.js";
 import { MorphHighlighter } from "../../halo/morph.js";
@@ -623,8 +623,10 @@ export class PropertyControl extends Label {
     return this.renderValueSelector(this, value.valueOf ? value.valueOf() : value, values);
   }
 
-  renderIconControl(args) {
-
+  renderIconControl({value}) {
+    this.control = new IconWidget({name: 'valueString', iconValue: value});
+    connect(this.control, "iconValue", this, "propertyValue");
+    return this;
   }
 
   renderStringControl(args) {

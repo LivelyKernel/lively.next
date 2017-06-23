@@ -324,7 +324,6 @@ export class ValueScrubber extends Text {
   }
 
   getCurrentValue(delta, s) {
-    console.log(this.scrubbedValue)
     const v = this.scrubbedValue + (this.floatingPoint ? delta * s : Math.round(delta * s));
     return Math.max(this.min, Math.min(this.max, v));
   }
