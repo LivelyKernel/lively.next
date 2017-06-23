@@ -754,11 +754,13 @@ export class StringWidget extends Text {
 
   onFocus(evt) {
     super.onFocus(evt);
+    if (this.readOnly) return;
     this.borderColor = Color.white.withA(.9);
   }
 
   onBlur(evt) {
     super.onBlur(evt);
+    if (this.readOnly) return;
     this.borderColor = Color.transparent;
     this.textString = this.textString;
   }
