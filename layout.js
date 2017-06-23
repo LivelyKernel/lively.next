@@ -63,7 +63,7 @@ class Layout {
     if (this.applyRequests && this.applyRequests.length > 0) {
       this.applyRequests = [];
       this.refreshBoundsCache();
-      this.apply(this.lastAnim);
+      this.container.withMetaDo({isLayoutAction: true, animation: this.lastAnim}, () => this.apply(this.lastAnim));
       this.lastAnim = false;
     }
   }
@@ -104,12 +104,13 @@ class Layout {
       this.scheduleApply(submorph, anim);
   }
   affectsLayout(submorph, {prop, value, prevValue}) {
-    return ["position", "scale", "rotation", "isLayoutable", 
-            'extent'].includes(prop)
+    return ["position", "scale", "rotation", "isLayoutable", 'extent'].includes(prop)
            && !obj.equals(value, prevValue);
   }
 
   onSubmorphChange(submorph, change) {
+    if (change.meta && change.meta.isLayoutAction) 
+      return this.scheduleApply(submorph, change.meta.animation)
     if (this.affectsLayout(submorph, change)) {
        this.onSubmorphResized(submorph, change);
     } 
@@ -406,11 +407,12 @@ export class TilingLayout extends Layout {
         currentRowWidth = this.border.left,
         {spacing, layoutableSubmorphs} = this,
         previousRowHeight = spacing + this.border.top,
-        i = 0, rowSwitch = true;
+        i = 0,
+        rowSwitch = true;
 
     while (i < layoutableSubmorphs.length) {
       var submorphExtent = layoutableSubmorphs[i].extent, newPos;
-      if (rowSwitch || currentRowWidth + submorphExtent.x + 2*spacing <= width) {
+      if (rowSwitch || currentRowWidth + submorphExtent.x + 2 * spacing <= width) {
         newPos = pt(currentRowWidth + spacing, previousRowHeight);
         rowSwitch = false;
         if (animate) {
@@ -432,7 +434,6 @@ export class TilingLayout extends Layout {
 
     this.active = false;
   }
-
   getMinWidth() {
     return this.layoutableSubmorphs.reduce((s, e) => (e.extent.x > s) ? e.extent.x : s, 0) +
           this.border.left + this.border.right;
@@ -551,6 +552,7 @@ export class CellGroup {
           duration,
           easing
         });
+        if (target.layout) target.layout.forceLayout();
       } else {
         if (this.resize) target.extent = bounds.extent();
         target[this.alignedProperty || this.align] = bounds[this.align]().addPt(offset);
