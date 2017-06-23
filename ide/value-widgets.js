@@ -731,5 +731,36 @@ export class IconWidget extends Label {
 export class StringWidget extends Text {
 
   // inline editing of string, very basic
+  static get properties() {
+    return {
+      fill: {defaultValue: Color.transparent},
+      fontColor: {defaultValue: Color.blue},
+      nativeCursor: {defaultValue: 'auto'},
+      borderColor: {defaultValue: Color.transparent},
+      borderStyle: {defaultValue: 'dashed'},
+      borderRadius: {defaultValue: 4},
+      borderWidth: {defaultValue: 1},
+      padding: {defaultValue: rect(5,0,5,0)},
+      opacity: {defaultValue: .8},
+      isSelected: {
+        defaultValue: 'false',
+        set(v) {
+          this.setProperty('isSelected', v);
+          this.fontColor = v ? Color.white.withA(.7) : Color.blue;
+        }
+      }
+    }
+  }
+
+  onFocus(evt) {
+    super.onFocus(evt);
+    this.borderColor = Color.white.withA(.9);
+  }
+
+  onBlur(evt) {
+    super.onBlur(evt);
+    this.borderColor = Color.transparent;
+    this.textString = this.textString;
+  }
   
 }

@@ -1,3 +1,4 @@
+/*global Map,WeakMap*/
 import { arr, fun, obj, tree, string, promise } from "lively.lang";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { Label } from "lively.morphic/text/label.js";
@@ -202,6 +203,7 @@ export class TreeNode extends Morph {
     }
 
     this.styleClasses = isSelected ? ["selected"] : ["deselected"];
+    if (node) node.isSelected = isSelected;
 
     if (toggle) {
       toggle.fit();

@@ -301,7 +301,8 @@ class PropertyNode extends InspectionNode {
         keyString,
         valueString,
         value,
-        spec
+        spec,
+        node: this
       });
 
       if (this._propertyWidget) {
@@ -519,7 +520,7 @@ export class PropertyControl extends Label {
       case "String":
         propertyControl.renderStringControl(args); break;
       case "RichText":
-        propertyControl.renderRichTextControl(args); break;
+        propertyControl.renderStringControl(args); break;
       case "Layout":
         propertyControl.renderLayoutControl(args); break;
       case "Enum":
@@ -630,10 +631,16 @@ export class PropertyControl extends Label {
     return this;
   }
 
-  renderStringControl(args) {
-
+  renderStringControl({value, node, keyString}) {
+    this.control = new StringWidget({
+      name: "valueString",
+      textString: value,
+      readOnly: keyString == 'id'
+    });
+    connect(this.control, "textString", this, "propertyValue");
+    connect(node, "isSelected", this.control, "isSelected");
+    return this;
   }
-
   renderRichTextControl(args) {
 
   }
