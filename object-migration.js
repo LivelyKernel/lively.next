@@ -120,34 +120,6 @@ For now only a simple default theme...
 
   {
     date: "2017-06-20",
-    name: "Window Menu Button",
-    description: `Requested by Dan, Windows now come with an additional window button.`,
-    objectConverter: (idAndSnapshot, pool) => {
-      let {id, snapshot} = idAndSnapshot;
-      let rootMorph = pool.refForId(id).realObj;
-      if (rootMorph && rootMorph.isMorph)
-        rootMorph.withAllSubmorphsDo(win => {
-          if (!win.isWindow || win.submorphs.some(m => m.name === "window menu button")) return;
-          let menuButton = Icon.makeLabel("list", {
-            styleClasses: ["windowTitleLabel"],
-            fontSize: 15,
-            nativeCursor: "pointer",
-            padding: rect(5, 0, 0, 0),
-            name: "window menu button"
-          });
-          win.controls = [...win.controls, menuButton];
-          connect(menuButton, 'onMouseDown', win, 'openWindowMenu');
-          if (win.resizable) win.controls.push(win.resizer());
-          win.submorphs = [...win.submorphs, ...win.controls];
-          win.buttons().forEach(ea => ea.extent = pt(14,14));
-          win.getWindow().relayoutWindowControls();
-        });
-      return idAndSnapshot;
-    }
-  },
-
-  {
-    date: "2017-06-20",
     name: "Unwrapped Style Sheet Props",
     description: `Style Sheets now store foldable props in their nested format.`,
     objectConverter: (idAndSnapshot, pool) => {
