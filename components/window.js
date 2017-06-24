@@ -39,7 +39,7 @@ export default class Window extends Morph {
         fontColor: Color.rgb(223, 75, 75),
       },
       ".Window.active .closeButton .Label.default": {
-        fontColor: Color.rgb(255, 96, 82) 
+        fontColor: Color.rgb(255, 96, 82)
       },
       ".Window .minimizeButton .Label.highlight": {
         fontColor: Color.rgb(224, 177, 77),
@@ -91,6 +91,7 @@ export default class Window extends Morph {
   }
 
   static get properties() {
+
     return {
       controls: {
         after: ["submorphs"],
@@ -100,6 +101,7 @@ export default class Window extends Morph {
           this.submorphs = [...this.submorphs, ...this.controls];
         }
       },
+
       styleClasses: {defaultValue: ["active"]},
       clipMode: {defaultValue: "hidden"},
       resizable: {defaultValue: true},
@@ -154,6 +156,14 @@ export default class Window extends Morph {
     connect(this.titleLabel(), "extent", this, "relayoutWindowControls");
   }
 
+  fixControls() {
+    let title = this.title;
+    lively.lang.arr.invoke(this.controls, "remove");
+    this.propertiesAndPropertySettings()
+      .properties.controls.initialize.call(this);
+    this.title = title;
+  }
+
   async openWindowMenu() {
     let menuItems = [
       [
@@ -168,7 +178,7 @@ export default class Window extends Morph {
     ];
     this.targetMorph.world().openMenu(menuItems);
   }
-  
+
   get isWindow() {
     return true;
   }
@@ -196,7 +206,7 @@ export default class Window extends Morph {
       ? (title.center = labelBounds.center())
       : (title.leftCenter = minLabelBounds.leftCenter());
   }
-  
+
   ensureNotOverTheTop() {
     let world = this.world();
     if (!world) return;
@@ -270,7 +280,7 @@ export default class Window extends Morph {
         converter: () => ["defaultLabelStyle", "default"]
       });
     });
-    return buttons; 
+    return buttons;
   }
 
   titleLabel() {
@@ -312,7 +322,7 @@ export default class Window extends Morph {
       this.minimized = false;
       this.minimizedBounds = bounds;
       this.targetMorph.visible = true;
-      this.animate({bounds: nonMinizedBounds || bounds, 
+      this.animate({bounds: nonMinizedBounds || bounds,
                     styleClasses: ['neutral', 'active'], duration, easing});
       collapseButton.tooltip = "collapse window";
     } else {
