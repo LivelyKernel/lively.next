@@ -45,11 +45,11 @@ export function guessTextModeName(editor, filename = "", hint) {
 }
 
 
-function rangedToken(row, startColumn, endColumn, token) {
+function rangedToken(row, startColumn, endColumn, token, mode) {
   return {
     start: {row, column: startColumn},
     end: {row, column: endColumn},
-    token
+    token, mode
   }
 }
 
@@ -149,7 +149,7 @@ export default class EditorPlugin {
           attributes = [];  
       for (let i = 0; i < tokens.length; row++, i++) {
         let lineTokens = tokens[i];
-        for (let i = 0; i < lineTokens.length; i = i+4) {
+        for (let i = 0; i < lineTokens.length; i = i+5) {
           let startColumn = lineTokens[i],
               endColumn = lineTokens[i+1],
               token = lineTokens[i+2],
@@ -166,6 +166,39 @@ export default class EditorPlugin {
     if (this.checker)
       this.checker.onDocumentChange({}, textMorph, this);
   }
+  
+  tokensInRange({start, end}) {
+    let {lines, tokens} = tokenizeDocument(
+          this.mode,
+          this.textMorph.document,
+          start.row, end.row), result = [];
+
+    if (lines.length) {
+      let row = lines[0].row, attributes = [];  
+      for (let i = 0; i < tokens.length; row++, i++) {
+        let lineTokens = tokens[i];
+        for (let i = 0; i < lineTokens.length; i = i+5) {
+          let from = lineTokens[i],
+              to = lineTokens[i+1],
+              token = lineTokens[i+2],
+              mode = lineTokens[i+4];
+          if (row === start.row && start.column > 0) {
+            if (start.column >= to) continue;
+            if (from < start.column && start.column < to)
+              from = start.column;
+          }
+          if (row === end.row) {
+            if (end.column <= from) continue;
+            if (from < end.column && end.column < to)
+              to = end.column;
+          }
+          result.push(rangedToken(row, from, to, token, mode))
+        }
+      }
+    }
+
+    return result;
+  }
 
   tokensOfRow(row) {
     let {lines, tokens} = tokenizeDocument(
@@ -173,9 +206,12 @@ export default class EditorPlugin {
           this.textMorph.document,
           row, row),
         tokensOfLine = arr.last(tokens), result = [];
-    for (let i = 0; i < tokensOfLine.length; i = i+4) {
-      let from = tokensOfLine[i], to = tokensOfLine[i+1], token = tokensOfLine[i+2]
-      result.push(rangedToken(row, from, to, token))
+    for (let i = 0; i < tokensOfLine.length; i = i+5) {
+      let from = tokensOfLine[i],
+          to = tokensOfLine[i+1],
+          token = tokensOfLine[i+2],
+          mode = tokensOfLine[i+4];
+      result.push(rangedToken(row, from, to, token, mode))
     }
     return result;
   }

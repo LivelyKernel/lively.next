@@ -40,7 +40,7 @@ export function getMode(editorConfig, spec) {
     throw new Error(`mode ${spec.name} not known`);
 
   editorConfig = {indentUnit: 2, ...editorConfig};
-  return mode(editorConfig, spec);
+  return Object.assign(mode(editorConfig, spec), {name: spec.name});
 }
 
 export var mimeModes = {};
@@ -170,11 +170,9 @@ function tokenizeLine(mode, stream, line, state) {
   let tokens = [],
       prevLine = line.prevLine();
   state._string = text;
-let counter = 0;
   while (!stream.eol()) {
-if (counter++>10000) throw new Error("endless tokenizeLine");
     var name = mode.token(stream, state);
-    tokens.push(stream.start, stream.pos, name, stream.current());
+    tokens.push(stream.start, stream.pos, name, stream.current(), state.localMode || mode);
     stream.start = stream.pos;
   }
   return {tokens, state};
@@ -183,12 +181,13 @@ if (counter++>10000) throw new Error("endless tokenizeLine");
 
 function printTokens(tokens) {
   let report = "";
-  for (let i = 0; i < tokens.length; i+=4) {
+  for (let i = 0; i < tokens.length; i+=5) {
     let from = tokens[i+0],
         to = tokens[i+1],
         token = tokens[i+2],
-        content = tokens[i+3];
-    report += `${from} => ${to} ${token} ${content}\n`
+        content = tokens[i+3],
+        mode = tokens[i+4];
+    report += `${from} => ${to} ${token} ${content} ${mode.name}\n`
   }
   return report;
 }
@@ -220,9 +219,7 @@ function linesToTokenize(document, fromRow, toRow, validBeforePos) {
 
   // find line that has a modeState
   let linesBefore = 0, nextLine;
-let counter = 0;
   while ((nextLine = line.prevLine()) && linesBefore++ < 50) {
-if (counter++>10000) throw new Error("endless linesToTokenize 1");
     line = nextLine;
     if (line.modeState) { startState = line.modeState; break; }
     lines.unshift(line)
@@ -231,9 +228,7 @@ if (counter++>10000) throw new Error("endless linesToTokenize 1");
   // if modeState not found try to find the line with the smallest indent to start
   if (!startState) {
     let lineWithMinIndent = line, minIndent = Infinity;
-let counter2 = 0;
     while ((nextLine = line.prevLine()) && linesBefore++ < 100) {
-if (counter2++>10000) throw new Error("endless tokenizeLine 2");
       line = nextLine;
       if (line.modeState) { startState = line.modeState; break; }
       lines.unshift(line)
