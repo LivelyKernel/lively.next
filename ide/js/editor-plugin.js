@@ -16,7 +16,7 @@ import EditorPlugin from "../editor-plugin.js";
 import { Snippet } from "../../text/snippets.js";
 
 import {
-  localInterface,
+  localInterface, systemInterfaceNamed,
   serverInterfaceFor,
   l2lInterfaceFor
 } from "lively-system-interface";
@@ -63,16 +63,16 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
   }
 
   async getMenuItems(items) {
-    var editor = this.textMorph;
-    let jsItems = [
-      {command: "doit", target: editor, showKeyShortcuts: true},
-      {command: "printit", target: editor, showKeyShortcuts: true},
-      {command: "print inspectit", alias: "print inspect", target: editor, showKeyShortcuts: true},
-      {command: "eval all", target: editor, showKeyShortcuts: true},
-      {command: "text completion", alias: "code completion", target: editor, showKeyShortcuts: true},
-      {command: "[javascript] list errors and warnings", alias: "list errors and warnings", target: editor, showKeyShortcuts: true},
-      {isDivider: true},
-    ];
+    var editor = this.textMorph,
+        jsItems = [
+          {command: "doit", target: editor, showKeyShortcuts: true},
+          {command: "printit", target: editor, showKeyShortcuts: true},
+          {command: "print inspectit", alias: "print inspect", target: editor, showKeyShortcuts: true},
+          {command: "eval all", target: editor, showKeyShortcuts: true},
+          {command: "text completion", alias: "code completion", target: editor, showKeyShortcuts: true},
+          {command: "[javascript] list errors and warnings", alias: "list errors and warnings", target: editor, showKeyShortcuts: true},
+          {isDivider: true},
+        ];
 
     if (this.evalEnvironment.targetModule)
       jsItems.push(
@@ -134,35 +134,7 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
   }
 
   setSystemInterfaceNamed(interfaceSpec) {
-    if (!interfaceSpec) interfaceSpec = "local";
-
-    let systemInterface;
-
-    if (interfaceSpec.isSystemInterface) {
-      systemInterface = interfaceSpec;
-
-    } else {
-      // "l2l FA3V-ASBDFD3-..."
-      if (typeof interfaceSpec === "string" && interfaceSpec.startsWith("l2l "))
-        interfaceSpec = {type: "l2l", id: interfaceSpec.split(" ")[1]}
-
-      if (typeof interfaceSpec !== "string") {
-        if (interfaceSpec.type === "l2l")
-          systemInterface = l2lInterfaceFor(interfaceSpec.id, interfaceSpec.info)
-      }
-
-      if (typeof interfaceSpec !== "string") {
-        $world.setStatusMessage(`Unknown system interface ${interfaceSpec}`)
-        interfaceSpec = "local";
-      }
-
-      if (!systemInterface)
-        systemInterface = !interfaceSpec || interfaceSpec === "local" ?
-          localInterface :
-          serverInterfaceFor(interfaceSpec)
-    }
-
-    return this.setSystemInterface(systemInterface);
+    return this.setSystemInterface(systemInterfaceNamed(interfaceSpec));
   }
 
   runEval(code, opts) {

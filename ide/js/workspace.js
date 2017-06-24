@@ -1,3 +1,4 @@
+/*global System*/
 import { arr, obj } from "lively.lang";
 import { pt, Point, Color, Rectangle } from "lively.graphics";
 import { config, Icon, Window, DropDownList } from "../../index.js";
@@ -106,21 +107,6 @@ export default class Workspace extends Window {
       if (list.left < title.right + 3) list.left = title.right + 3;
     }
   }
-
-  // getControls() {
-  //   let label = this.addMorph(
-  //       Object.assign(Icon.makeLabel("file-o"), {
-  //         name: "pickFileButton",
-  //         nativeCursor: "pointer",
-  //         fontSize: 14,
-  //         fill: Color.transparent,
-  //         tooltip: "set file for workspace"
-  //       }));
-  //     connect(label, 'onHoverIn', label, 'fontSize', {converter: () => 16});
-  //     connect(label, 'onHoverOut', label, 'fontSize', {converter: () => 14});
-  //     connect(label, 'onMouseDown', this, 'execCommand', {converter: () => "[workspace] query for file"});
-  //   return [...super.getControls(), label];
-  // }
 
   get commands() {
     return [

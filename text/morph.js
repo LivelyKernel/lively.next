@@ -1,4 +1,4 @@
-/*global System*/
+/*global System,Map,WeakMap*/
 import {config, morph, Morph} from "lively.morphic";
 import {Rectangle, rect, Color, pt} from "lively.graphics";
 import {Selection, MultiSelection} from "./selection.js";
@@ -534,7 +534,17 @@ export class Text extends Morph {
           removed.forEach(p => this.removePlugin(p));
           plugins.forEach(p => this.addPlugin(p));
         }
+      },
+      
+      editorModeName: {
+        derived: true, after: ["plugins"],
+        get() {
+          let p = this.editorPlugin;
+          return p ? p.shortName : null;
+        },
+        set(nameOrMode) { this.changeEditorMode(nameOrMode); }
       }
+
     };
   }
 
@@ -823,15 +833,6 @@ export class Text extends Morph {
     if (!await lively.modules.doesModuleExist(url)) return null;
     let {default: Mode} = await lively.modules.module(url).load();
     return Mode;
-  }
-
-  get editorModeName() {
-    let p = this.editorPlugin;
-    return p ? p.shortName : null;
-  }
-
-  set editorModeName(nameOrMode) {
-    this.changeEditorMode(nameOrMode);
   }
 
   async changeEditorMode(nameOrMode) {
