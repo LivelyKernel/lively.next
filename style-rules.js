@@ -724,7 +724,7 @@ class StyleSheetData extends TreeData {
   }
 
   parseProps(styleSheet, rule) {
-    let children = [], props = styleSheet.rules[rule] || {};
+    let children = [], props = obj.dissoc(styleSheet.rules[rule], ['_rev']) || {};
     for (let prop in props) {
       if (prop == "_deactivated") continue;
       let spec = this.globalPropertySettings[prop] || {},
