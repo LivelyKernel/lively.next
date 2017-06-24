@@ -340,9 +340,16 @@ var commands = [
   {
     name: "open workspace",
     exec: async (world, opts = {}) => {
-      var language = "javascript";
+      var language = "javascript",
+          workspaceModules = {
+            "javascript": "lively.morphic/ide/js/workspace.js",
+            "shell": "lively.morphic/ide/shell/workspace.js",
+            "html": "lively.morphic/ide/html/workspace.js",
+            "text": null
+          },
+          alias = {"js": "javascript"};
       if (opts.askForMode) {
-        let workspaceLanguages = ["javascript", "text", "shell"];
+        let workspaceLanguages = Object.keys(workspaceModules);
         ({selected: [language]} = await world.filterableListPrompt(
           "Open workspace for...", workspaceLanguages));
         if (!language) return true;
@@ -351,12 +358,8 @@ var commands = [
         return world.execCommand("open text window", opts);
 
       opts = {content: "", ...opts, language};
-      var workspaceModules = {
-            "javascript": "lively.morphic/ide/js/workspace.js",
-            "js": "lively.morphic/ide/js/workspace.js",
-            "shell": "lively.morphic/ide/shell/workspace.js"
-          },
-          { default: Workspace } = await System.import(workspaceModules[opts.language]);
+      var mod = workspaceModules[opts.language] || workspaceModules[alias[opts.language]],
+          { default: Workspace } = await System.import(mod);
       return new Workspace({center: world.center, content: opts.content}).activate();
     }
   },
