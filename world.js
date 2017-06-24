@@ -77,9 +77,6 @@ export class World extends Morph {
     super.__deserialize__(snapshot, objRef);
     this._renderer = null;
     this._tooltipViewer = new TooltipViewer(this);
-
-    this.whenRendered().then(() =>
-      $world.propertiesAndPropertySettings().properties.styleSheets.initialize());
   }
 
   __additionally_serialize__(snapshot, objRef, pool, addFn) {

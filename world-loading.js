@@ -1,3 +1,4 @@
+/*global System*/
 import { MorphicEnv } from "./index.js";
 import { loadWorldFromResource } from "./serialization.js";
 import { resource, registerExtension as registerResourceExension } from "lively.resources";
@@ -33,7 +34,8 @@ export async function loadWorld(newWorld, oldWorld, options = {}) {
     localconfig = true,
     l2l = true,
     shell = true,
-    worldLoadDialog = false
+    worldLoadDialog = false,
+    initializeGlobalStyleSheets = true
   } = options;
 
   env = env || (oldWorld ? oldWorld.env : MorphicEnv.default());
@@ -52,6 +54,10 @@ export async function loadWorld(newWorld, oldWorld, options = {}) {
     await env.setWorld(newWorld);
 
     localconfig && await loadLocalConfig();
+
+    initializeGlobalStyleSheets && newWorld.whenRendered().then(() =>
+                                    newWorld.propertiesAndPropertySettings()
+                                      .properties.styleSheets.initialize.call(newWorld));
 
     worldLoadDialog && newWorld.execCommand("load world");
 
