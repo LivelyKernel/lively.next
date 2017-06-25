@@ -1340,11 +1340,12 @@ export default class Inspector extends Morph {
     } = this;
     layout.disable();
     if (!bool) {
+      this.codeEditorHeight = layout.row(3).height;
       terminalToggler.styleClasses = ['inactive', 'toggle'];
       layout.row(3).height = layout.row(2).height = 0;
     } else {
       terminalToggler.styleClasses = ['active', 'toggle'];
-      layout.row(3).height = 180;
+      layout.row(3).height = this.codeEditorHeight || 180;
       layout.row(2).height = 5;
     }
     this.extent = prevExtent;
@@ -1384,7 +1385,7 @@ export default class Inspector extends Morph {
         buttonTopRight = codeEditor.bounds().insetBy(5).topRight();
 
     if (animated.duration) {
-      toggler.animate({bottomRight: togglerBottomLeft, ...animated})
+      toggler.animate({bottomLeft: togglerBottomLeft, ...animated})
       fixImportButton.animate({topRight: buttonTopRight, ...animated});
     } else {
       toggler.bottomLeft = togglerBottomLeft;
