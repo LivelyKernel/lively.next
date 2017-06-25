@@ -8,6 +8,17 @@ if (typeof $world !== "undefined") {
 
 var config = {
 
+  /* browser support 2 ways to render shadows: 
+  
+  1. via boxShadows == fastShadows: true : these are fast since they just take into account the
+     bounds of a certain html tag (as the name implies). Does not work nicely for
+     images, polygon or composite morphs.
+  2. via filter == fastShadows: false : these are accurate shadows applied precisely to the silhouette of
+     a html tag composition. Also take into account svg shapes and transparency in 
+     images. To date (25.7.17) this options still seems to be burdensome for browsers.
+     Only reccomended for demos and presentations, not productive use.
+  */
+  fastShadows: false, 
   defaultShadow: {distance: 18, blur: 6, color: Color.darkGray.withA(.5), spread: 2},
   undoLevels: 20,
   halosEnabled: true,

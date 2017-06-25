@@ -201,7 +201,7 @@ export class ShadowObject {
 
   toFilterCss() {
     const {x, y} = Point.polar(this.distance, num.toRadians(this.rotation));
-    return `drop-shadow(${x}px ${y}px ${this.blur}px ${this.color.toString()})`;
+    return `drop-shadow(${x}px ${y}px ${this.blur / 2}px ${this.color.toString()})`;
   }
 
 }
@@ -257,12 +257,15 @@ class StyleMapper {
   }
 
   static getShadowStyle(morph) {
-    if (morph.isSvgMorph || morph.isImage) return {filter: shadowCss(morph)}
-    return {boxShadow: morph.dropShadow ?
-                    morph.dropShadow.toCss():
-                    "none"}
+    if (morph.isSvgMorph || morph.isImage) return {filter: shadowCss(morph)};
+    return config.fastShadows
+      ? {
+          boxShadow: morph.dropShadow ? morph.dropShadow.toCss() : "none"
+        }
+      : {
+          filter: morph.dropShadow ? morph.dropShadow.toFilterCss() : "none"
+        };
   }
-
   static getSvgAttributes({width, height, borderWidth}) {
      return {width: width || 1, height: height || 1,
              viewBox: [0, 0, width || 1, height || 1].join(" ")};
