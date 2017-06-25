@@ -1223,7 +1223,11 @@ export class ObjectEditor extends Morph {
                     return {
                       isListItem: true,
                       label: [
-                        `${klass.name} `, {fontSize: 10},
+                        `${klass.name}`, {
+                          fontSize: "80%",
+                          textStyleClasses: ["v-center-text"],
+                          paddingRight: "10px"
+                        },
                         `${ea.name}`, null
                       ],
                       value: {node: ea, selector: "selectMethod"}
