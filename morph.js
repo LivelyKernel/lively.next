@@ -2371,6 +2371,18 @@ export class Image extends Morph {
 
   get isImage() { return true }
 
+  get ratio() { let {x, y} = this.naturalExtent; return x / y; }
+
+  setWidthKeepingRatio(w) {
+    this.width = w
+    this.height = w/this.ratio
+  }
+
+  setHeightKeepingRatio(h) {
+    this.width = this.ratio/h
+    this.height = h
+  }
+
   loadUrl(url, autoResize = this.autoResize) {
     let prevAutoResize = this.autoResize;
     this.autoResize = autoResize;
@@ -2511,17 +2523,17 @@ export class Image extends Morph {
     let to = this.naturalExtent;
     `${from} => ${to}`;
     */
-    let {ctx, canvas, image} = this.canvasElementAndContext(),
+
+    let {ctx, canvas, image} = await this.canvasElementAndContext(),
         {width: newWidth, height: newHeight} = this,
-        {width: imageWidth, height: imageHeight} = image,
-        pixelratio = window.devicePixelRatio || 1;
+        {width: imageWidth, height: imageHeight} = image;
 
     canvas.width = imageWidth; canvas.height = imageHeight;
     ctx.drawImage(image, 0, 0, newWidth, newHeight);
     let data = ctx.getImageData(0, 0, imageWidth, imageHeight);
-    canvas.width = newWidth * pixelratio | 0;
-    canvas.height = newHeight * pixelratio | 0;
-    ctx.putImageData(data, 0,0);
+    canvas.width = newWidth;
+    canvas.height = newHeight;
+    ctx.putImageData(data, 0,0)
     return this.loadUrl(canvas.toDataURL(), false);
   }
 
