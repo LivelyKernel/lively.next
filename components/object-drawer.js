@@ -20,7 +20,6 @@ export default class ObjectDrawer extends Morph {
     this.n = 8;
     super({
       name: "object-drawer",
-      grabbable: false,
       position: pt(20, 20),
       extent: pt(this.n * (140 + 10) + 15, 140),
       fill: Color.white,
@@ -71,7 +70,7 @@ export default class ObjectDrawer extends Morph {
       type: "ellipse",
       position: pos, extent: objExt,
       fill: Color.random(), grabbable: false,
-      init() { this.grabbable = true; this.fill = Color.random(); }
+      init() { this.fill = Color.random(); }
     });
 
 
@@ -83,7 +82,7 @@ export default class ObjectDrawer extends Morph {
     this.addMorph({
       position: pos, extent: objExt,
       fill: Color.random(), grabbable: false,
-      init() { this.grabbable = true; this.fill = Color.random(); }
+      init() { this.fill = Color.random(); }
     });
 
 
@@ -95,10 +94,7 @@ export default class ObjectDrawer extends Morph {
     this.addMorph({
       type: "image",
       position: pos, extent: objExt,
-      fill: null, grabbable: false,
-      init() {
-        this.grabbable = true;
-      }
+      fill: null, grabbable: false
     });
 
 
@@ -123,10 +119,7 @@ export default class ObjectDrawer extends Morph {
       position: pos.addPt(pt(r,r)),
       origin: pt(r,r),
       fill: Color.yellow,
-      grabbable: false,
-      init() {
-        this.grabbable = true;
-      }
+      grabbable: false
     }));
 
 
@@ -146,7 +139,7 @@ export default class ObjectDrawer extends Morph {
       fontSize: 20,
       fontFamily: "Helvetica Neue, Arial, sans-serif",
       init() {
-        this.grabbable = true;
+        this.grabbable = false;
         this.readOnly = false;
         connect(this, "selectionChange", RichTextControl, "openDebouncedFor", {converter: sel => sel.textMorph})
       }
@@ -163,7 +156,7 @@ export default class ObjectDrawer extends Morph {
       leftCenter: pos, extent: pt(120, 30),
       active: false,
       init() {
-        this.grabbable = true;
+        this.grabbable = false;
         this.active = true;
       }
     });
@@ -179,7 +172,7 @@ export default class ObjectDrawer extends Morph {
       position: pos, extent: objExt, //pt(110, objExt.y),
       borderWidth: 1, borderColor: Color.gray,
       init() {
-        this.grabbable = true;
+        this.grabbable = false;
         this.listItemContainer.withAllSubmorphsDo(ea => ea.reactsToPointer = true);
       }
     });
@@ -218,9 +211,9 @@ export default class ObjectDrawer extends Morph {
       fill: Color.white, border: {color: Color.gray, width: 1},
       treeData: root,
       init() {
-        this.grabbable = true;
+        this.grabbable = false;
         this.submorphs = [
-          {name: "nodeItemContainer", extent: this.extent, reactsToPointer: false,
+          {name: "nodeItemContainer", extent: this.extent,
            fill: null, grabbable: false, clipMode: "visible"}]
         this.update()
       }
@@ -236,10 +229,10 @@ export default class ObjectDrawer extends Morph {
 
     pos = pt(arr.last(this.submorphs).right, 0).addPt(pt(10,10));
 
-    // this.addMorph(new Leash({
-    //   position: pos, start: pt(0,0), end: pt(100,100),
-    //   init() { this.vertices = [pt(0,0), pt(100,100)] }
-    // }));
+    this.addMorph(new Leash({
+      position: pos, start: pt(0,0), end: pt(100,100),
+      init() { this.vertices = [pt(0,0), pt(100,100)] }
+    }));
 
     this.width = arr.last(this.submorphs).right + 10;
 

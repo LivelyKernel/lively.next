@@ -315,9 +315,6 @@ export class ColorPalette extends Morph {
       const fill = Color.gray,
             colorFieldWidth = this.colorFieldWidth;
     return new StyleSheet({
-      ".Morph": {
-        grabbable: false
-      },
       ".ColorPalette": {
         fill: Color.transparent,
         extent: pt(200, 300),

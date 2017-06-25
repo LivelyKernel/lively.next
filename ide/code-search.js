@@ -89,7 +89,6 @@ export class CodeSearcher extends FilterableList {
             Text.makeInputLine({
               name: "input",
               fixedHeight: false,
-              grabbable: false,
               placeholder: 'Search Source Files',
               padding: 5,
               fontColor: Color.gray.darker(),
@@ -100,7 +99,6 @@ export class CodeSearcher extends FilterableList {
             new List({
               name: "list",
               items: [],
-              grabbable: false,
               clipMode: "auto",
               borderTop: {width: 1, color: Color.gray}
             })

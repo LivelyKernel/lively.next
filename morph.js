@@ -1,4 +1,3 @@
-/*global System,Uint8Array,Blob,location*/
 import { Color, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree, fun } from "lively.lang";
 import {
@@ -63,7 +62,7 @@ export class Morph {
       draggable: {isStyleProp: true, defaultValue: true},
       grabbable: {
         isStyleProp: true,
-        defaultValue: true,
+        defaultValue: false,
         set(bool) {
           // Since grabbing is implemented via dragging we also need to make
           // this morph draggable
