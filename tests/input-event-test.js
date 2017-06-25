@@ -187,9 +187,10 @@ describe("pointer event related", function() {
       env.eventDispatcher.simulateDOMEvents(
         {type: "pointermove", target: submorph2, position: morphPos.addXY(15,15)},
         {type: "pointermove", target: submorph2, position: morphPos.addXY(25,25)},
-        {type: "pointerup", target: world, position: morphPos.addXY(20,20)});
+        {type: "pointerdown", target: world, position: morphPos.addXY(20,20)});
       assertEventLogContains(["onMouseMove-world", "onMouseMove-world", 
-                              "onMouseUp-world", "onDrop-submorph1"]);
+                              "onBlur-submorph2", "onFocus-submorph1", 
+                              "onMouseDown-world", "onDrop-submorph1"]);
       expect(world.hands[0].carriesMorphs()).equals(false);
       expect(submorph2.owner).equals(submorph1);
       expect(submorph2.position).equals({x: 15,y: 20});

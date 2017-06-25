@@ -1669,10 +1669,8 @@ export class Morph {
     // into events/dispatcher.js
     if (this === evt.targetMorph) {
       setTimeout(() => {
-        if (this.grabbable && !evt.state.draggedMorph && evt.state.clickedOnMorph === this && !evt.hand.carriesMorphs()) {
-           evt.hand.grab(this); 
-           evt.hand.longClickGrab = true;
-        }
+        if (this.grabbable && !evt.state.draggedMorph && evt.state.clickedOnMorph === this && !evt.hand.carriesMorphs())
+          evt.hand.grab(this);
       }, 800);
     }
   }

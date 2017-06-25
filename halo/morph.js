@@ -853,7 +853,7 @@ class GrabHaloItem extends HaloItem {
     var undo = halo.target.undoStart("grab-halo");
     undo.addTarget(halo.target.owner);
     this.hand = hand;
-    halo.target.onGrab({hand, isShiftDown: () => false});
+    halo.target.onGrab({hand});
     halo.state.activeButton = this;
     this.opacity = .3
   }
@@ -1100,7 +1100,7 @@ class CopyHaloItem extends HaloItem {
       world.addMorph(halo);
       halo.refocus(copies);
       hand.grab(halo.target);
-      halo.target.onGrab({hand, isShiftDown: () => false});
+      halo.target.onGrab({hand});
       positions.forEach((pos,i) => copies[i].globalPosition = pos);
       halo.alignWithTarget();
 
