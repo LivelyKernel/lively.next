@@ -1,5 +1,6 @@
+/*global Sine*/
 import {
-  Ellipse,
+  Ellipse, Icon,
   Morph,
   Path,
   Text,
@@ -368,11 +369,52 @@ class ColumnHalo extends AxisHalo {
   getDeviderBounds() { return pt(4,15).extent(pt(2, 25)) }
 }
 
+class CellGuide extends Morph {
+
+  static get properties() {
+    return {
+      cellGroup: {
+
+      }
+    }
+  }
+
+  menuItems() {
+    let checked = Icon.makeLabel('check-square-o').textAndAttributes,
+        unchecked = Icon.makeLabel('square-o').textAndAttributes;
+    checked[1].textStyleClasses.push('annotation');
+    unchecked[1].textStyleClasses.push('annotation');
+    unchecked[1].paddingRight = "2px";
+    return [
+      ["Resize Policy", [
+        [["Rigid  ", null, ...(this.cellGroup.resize ? unchecked : checked)], () => {
+          this.cellGroup.resize = false;
+        }],
+        [['Space Filling  ', null, ...(this.cellGroup.resize ? checked : unchecked)], () => {
+          this.cellGroup.resize = true;
+        }]]],
+      ["Align at...",
+         ['center',  ...new Rectangle().sides, ...new Rectangle().corners].map(side => {
+           return [[side + "  ", null, ...(this.cellGroup.align == side ? checked : unchecked)], 
+                   () => this.cellGroup.align = side]
+         })
+      ],
+    ].concat(this.cellGroup.morph ? [["Release Morph from Cell", () => {
+        let m = this.cellGroup.morph;
+        if(m) {
+          this.world().firstHand.grab(m);
+          m.position = pt(0);
+        }
+      }]] : []);
+  }
+  
+}
+
 export class GridLayoutHalo extends Morph {
 
   constructor(container, pointerId) {
     super({
-      styleClasses: ["Halo"],
+//      styleClasses: ["Halo"],
       borderColor: Color.orange,
       borderWidth: 2,
       borderRadius: container.borderRadius,
@@ -566,7 +608,7 @@ export class GridLayoutHalo extends Morph {
           topLeft = this.cellResizer(cellGroup, "topLeft"),
           bottomRight = this.cellResizer(cellGroup, "bottomRight");
 
-    return this.addGuide(new Morph({
+    return this.addGuide(new CellGuide({
       cellGroup,
       bounds: cellGroup.bounds(),
       fill: Color.transparent,
