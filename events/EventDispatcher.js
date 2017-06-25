@@ -1,4 +1,3 @@
-/*global System*/
 import { arr, promise } from "lively.lang";
 import { pt } from "lively.graphics";
 import config from "../config.js";
@@ -332,22 +331,6 @@ export default class EventDispatcher {
           }
           state.clickCount = repeatedClick ? prevClickCount + 1 : 1;
         });
-
-        if (hand.carriesMorphs()) {
-          // make sure that the morph receiving the grabbed morphs is not a
-          // grabbed morph itself, i.e. the drop target must not be a child morph
-          // of the hand
-          if (state.dropHoverTarget) {
-            events.push(new Event("morphicdrophoverout", domEvt, this, [state.dropHoverTarget], hand, halo, layoutHalo));
-            targetMorph = state.dropHoverTarget;
-            state.dropHoverTarget = null;
-          } else {
-            targetMorph = hand.findDropTarget(defaultEvent.position, hand.grabbedMorphs);
-          }
-          if (hand.isAncestorOf(targetMorph)) { targetMorph = this.world; }
-          events.push(new Event("morphicdrop", domEvt, this, [targetMorph], hand, halo, layoutHalo));
-          defaultEvent.targetMorphs = [this.world];
-        }
         break;
 
 
@@ -372,23 +355,22 @@ export default class EventDispatcher {
           events.push(dragEndEvent(domEvt, this, targetMorph, state, hand, halo, layoutHalo));
           defaultEvent.targetMorphs = [this.world];
 
-
-        } 
-        // else if (hand.carriesMorphs()) {
-        //   // make sure that the morph receiving the grabbed morphs is not a
-        //   // grabbed morph itself, i.e. the drop target must not be a child morph
-        //   // of the hand
-        //   if (state.dropHoverTarget) {
-        //     events.push(new Event("morphicdrophoverout", domEvt, this, [state.dropHoverTarget], hand, halo, layoutHalo));
-        //     targetMorph = state.dropHoverTarget;
-        //     state.dropHoverTarget = null;
-        //   } else {
-        //     targetMorph = hand.findDropTarget(defaultEvent.position, hand.grabbedMorphs);
-        //   }
-        //   if (hand.isAncestorOf(targetMorph)) { targetMorph = this.world; }
-        //   events.push(new Event("morphicdrop", domEvt, this, [targetMorph], hand, halo, layoutHalo));
-        //   defaultEvent.targetMorphs = [this.world];
-        // }
+        // grab release
+        } else if (hand.carriesMorphs()) {
+          // make sure that the morph receiving the grabbed morphs is not a
+          // grabbed morph itself, i.e. the drop target must not be a child morph
+          // of the hand
+          if (state.dropHoverTarget) {
+            events.push(new Event("morphicdrophoverout", domEvt, this, [state.dropHoverTarget], hand, halo, layoutHalo));
+            targetMorph = state.dropHoverTarget;
+            state.dropHoverTarget = null;
+          } else {
+            targetMorph = hand.findDropTarget(defaultEvent.position, hand.grabbedMorphs);
+          }
+          if (hand.isAncestorOf(targetMorph)) { targetMorph = this.world; }
+          events.push(new Event("morphicdrop", domEvt, this, [targetMorph], hand, halo, layoutHalo));
+          defaultEvent.targetMorphs = [this.world];
+        }
         break;
 
 
@@ -432,9 +414,8 @@ export default class EventDispatcher {
           if (dist > dragTarget.dragTriggerDistance) {
             // FIXME should grab really be triggered through drag?
             if (dragTarget.grabbable) {
-              if (dist > dragTarget.grabTriggerDistance) {
-                 events.push(new Event("grab", domEvt, this, [dragTarget], hand, halo, layoutHalo));
-              }
+              events.push(new Event("grab", domEvt, this, [dragTarget], hand, halo, layoutHalo));
+
             } else if (dragTarget.draggable) {
               events.push(dragStartEvent(domEvt, this, dragTarget, state, hand, halo, layoutHalo));
             }
