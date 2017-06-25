@@ -1,4 +1,4 @@
-import { Label, Morph, show } from "lively.morphic";
+import { Label, config, Morph, show } from "lively.morphic";
 import { arr, obj, promise, fun } from "lively.lang";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 
@@ -131,7 +131,9 @@ export class Menu extends Morph {
     return {
       dropShadow: {
         initialize() {
-          this.dropShadow = true;
+          if (config.fastShadows || !this.ownerMenu) {
+             this.dropShadow = true; 
+          }
         }
       },
       submorphs: {
