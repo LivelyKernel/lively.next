@@ -1380,14 +1380,14 @@ export default class Inspector extends Morph {
           propertyTree: tree,
           codeEditor
         }} = this,
-        togglerBottomRight = tree.bounds().insetBy(5).bottomRight(),
+        togglerBottomLeft = tree.bounds().insetBy(5).bottomLeft(),
         buttonTopRight = codeEditor.bounds().insetBy(5).topRight();
 
     if (animated.duration) {
-      toggler.animate({bottomRight: togglerBottomRight, ...animated})
+      toggler.animate({bottomRight: togglerBottomLeft, ...animated})
       fixImportButton.animate({topRight: buttonTopRight, ...animated});
     } else {
-      toggler.bottomRight = togglerBottomRight;
+      toggler.bottomLeft = togglerBottomLeft;
       fixImportButton.topRight = buttonTopRight;
     }
   }
