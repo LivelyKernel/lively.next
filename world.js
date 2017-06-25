@@ -741,13 +741,9 @@ export class Hand extends Morph {
     this.grabbedMorphs.forEach(morph => {
       try {
         dropTarget.addMorph(morph);
-        let {pointerAndShadow, prevOwner} = this._grabbedMorphProperties.get(morph) || {}
+        let {pointerAndShadow} = this._grabbedMorphProperties.get(morph) || {}
         Object.assign(morph, pointerAndShadow);
         signal(this, "drop", morph);
-        if ((prevOwner && prevOwner.isWorld) && !dropTarget.isWorld) {
-          morph.grabbable = false;
-        }
-        if (!prevOwner || dropTarget.isWorld) morph.grabbable = true;
         morph.onBeingDroppedOn(this, dropTarget);
       } catch (err) {
         console.error(err);
