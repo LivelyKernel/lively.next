@@ -26,7 +26,16 @@ export default class Halo extends Morph {
       target: {},
       pointerId: {},
       submorphs: {after: ["target"], initialize() { this.initButtons(); }},
-      layout: {after: ["submorphs"], initialize() { this.initLayout(); }}
+      layout: {after: ["submorphs"], initialize() { this.initLayout(); }},
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            '.Morph': {
+              grabbable: false
+            }
+          })
+        }
+      },
     }
   }
 

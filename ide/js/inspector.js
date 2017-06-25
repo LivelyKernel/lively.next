@@ -1008,6 +1008,9 @@ export default class Inspector extends Morph {
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
+            ".Morph": {
+              grabbable: false
+            },
             "[name=selectionInstruction]": {
               fill: Color.black.withA(.7),
               borderRadius: 4,
@@ -1334,11 +1337,12 @@ export default class Inspector extends Morph {
     } = this;
     layout.disable();
     if (!bool) {
+      this.lastHeight = layout.row(3).height;
       terminalToggler.styleClasses = ['inactive', 'toggle'];
       layout.row(3).height = layout.row(2).height = 0;
     } else {
       terminalToggler.styleClasses = ['active', 'toggle'];
-      layout.row(3).height = 180;
+      layout.row(3).height = this.lastHeight || 180;
       layout.row(2).height = 5;
     }
     this.extent = prevExtent;

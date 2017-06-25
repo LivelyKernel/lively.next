@@ -503,6 +503,9 @@ export class ColorPicker extends Window {
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
+              ".Morph": {
+                grabbable: false
+              },
               ".ColorPicker .key": {
                 fill: Color.transparent,
                 fontColor: Color.gray,

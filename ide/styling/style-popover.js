@@ -86,6 +86,9 @@ export class Popover extends Morph {
 
   updateStyleSheet() {
     this.styleSheets = new StyleSheet({
+      ".Morph": {
+        grabbable: false
+      },
       ".Popover": {
         dropShadow: true,
         fill: Color.transparent,

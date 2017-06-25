@@ -156,6 +156,8 @@ export class TreeNode extends Morph {
         }
       },
 
+      grabbable: {defaultValue: false},
+      
       isCollapsable: {
         defaultValue: false,
         set(bool) {
@@ -400,6 +402,9 @@ export class Tree extends Morph {
       },
       ".TreeNode.selected": {
         fill: this.selectionColor
+      },
+      '.TreeNode .Label': {
+        grabbable: false
       },
       ".TreeNode.selected .Label": {
         fontColor: this.selectionFontColor,

@@ -13,7 +13,7 @@ export default class Window extends Morph {
     let windowButtonSize = pt(13, 13);
     return new StyleSheet('System Window Style',{
       ".Window .buttonGroup": {
-        draggable: false,
+        reactsToPointer: false,
         fill: Color.transparent,
         position: pt(0, 0),
         layout: new HorizontalLayout({autoResize: true, spacing: 6})
@@ -30,10 +30,12 @@ export default class Window extends Morph {
         extent: windowButtonSize,
         fill: Color.transparent,
         nativeCursor: 'pointer',
-        extent: pt(15,13)
+        extent: pt(15,13),
+        grabbable: false
       },
       ".Window .windowButton .Label": {
-        nativeCursor: 'pointer'
+        nativeCursor: 'pointer',
+        grabbable: false
       },
       ".Window .closeButton .Label.highlight": {
         fontColor: Color.rgb(223, 75, 75),
@@ -60,7 +62,8 @@ export default class Window extends Morph {
       ".Window": {
         borderRadius: 7,
         borderColor: Color.gray,
-        borderWidth: 1
+        borderWidth: 1,
+        grabbable: false
       },
       ".Window.inactive": {
         fill: Color.lightGray.lighter(),
@@ -71,9 +74,6 @@ export default class Window extends Morph {
           color: Color.gray.withA(0.5)
         }
       },
-      ".Window.inactive.minimized": {
-        fill: LinearGradient.create({0: Color.rgbHex('f8f9f9'), 1: Color.rgbHex('e5e8e8')})
-      },
       ".Window.active": {
         fill: Color.lightGray,
         dropShadow: {
@@ -83,9 +83,6 @@ export default class Window extends Morph {
           color: Color.black.withA(0.3),
           spread: 5
         }
-      },
-      ".Window.active.minimized": {
-        fill: LinearGradient.create({0: Color.rgbHex('e5e8e8'), 1: Color.rgbHex('b2babb')})
       }
     });
   }
@@ -302,6 +299,7 @@ export default class Window extends Morph {
     if (resizer) return resizer;
     resizer = morph({
       name: "resizer",
+      grabbable: false,
       nativeCursor: "nwse-resize",
       extent: pt(20, 20),
       fill: Color.transparent,

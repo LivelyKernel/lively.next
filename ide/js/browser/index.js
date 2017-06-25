@@ -260,6 +260,7 @@ export default class Browser extends Window {
 
     let style = {
           // borderWidth: 1, borderColor: Color.gray,
+          grabbable: false,
           fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"
         },
         textStyle = {
