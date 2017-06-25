@@ -9,7 +9,7 @@ import { connect, disconnect } from "lively.bindings";
 
 import DefaultTheme from "./themes/default.js";
 
-import { tokenizeDocument } from "./editor-modes.js";
+import { tokenizeDocument, visitDocumentTokens } from "./editor-modes.js";
 
 export function guessTextModeName(editor, filename = "", hint) {
   var mode = hint || "text",
@@ -166,54 +166,39 @@ export default class EditorPlugin {
     if (this.checker)
       this.checker.onDocumentChange({}, textMorph, this);
   }
-  
-  tokensInRange({start, end}) {
-    let {lines, tokens} = tokenizeDocument(
-          this.mode,
-          this.textMorph.document,
-          start.row, end.row), result = [];
 
-    if (lines.length) {
-      let row = lines[0].row, attributes = [];  
-      for (let i = 0; i < tokens.length; row++, i++) {
-        let lineTokens = tokens[i];
-        for (let i = 0; i < lineTokens.length; i = i+5) {
-          let from = lineTokens[i],
-              to = lineTokens[i+1],
-              token = lineTokens[i+2],
-              mode = lineTokens[i+4];
+  visitTokensInRange({start, end}, visitFn) {
+    // visitFn(tokenName, state, row, fromCol, toCol, stream, line, mode);
+    let {mode, textMorph: {document: doc}} = this,
+        row = start.row-1,
+        newLineFn = line => row++,
+        recordFn = (name, state, fromCol, toCol, stream, line, mode) => {
           if (row === start.row && start.column > 0) {
-            if (start.column >= to) continue;
-            if (from < start.column && start.column < to)
-              from = start.column;
+            if (start.column >= toCol) return;
+            if (fromCol < start.column && start.column < toCol)
+              fromCol = start.column;
           }
           if (row === end.row) {
-            if (end.column <= from) continue;
-            if (from < end.column && end.column < to)
-              to = end.column;
-          }
-          result.push(rangedToken(row, from, to, token, mode))
+            if (end.column <= fromCol) return;
+            if (fromCol < end.column && end.column < toCol)
+              toCol = end.column;
+          }          
+          visitFn(name, state, row, fromCol, toCol, stream, line, mode);
         }
-      }
-    }
+    visitDocumentTokens(mode, doc, start.row, end.row, null, newLineFn, recordFn);
+  }
 
+  tokensInRange(range) {
+    let result = [];
+    this.visitTokensInRange(range,
+      (token, state, row, fromCol, toCol, stream, line, mode) =>
+        result.push(rangedToken(row, fromCol, toCol, token, mode)));
     return result;
   }
 
   tokensOfRow(row) {
-    let {lines, tokens} = tokenizeDocument(
-          this.mode,
-          this.textMorph.document,
-          row, row),
-        tokensOfLine = arr.last(tokens), result = [];
-    for (let i = 0; i < tokensOfLine.length; i = i+5) {
-      let from = tokensOfLine[i],
-          to = tokensOfLine[i+1],
-          token = tokensOfLine[i+2],
-          mode = tokensOfLine[i+4];
-      result.push(rangedToken(row, from, to, token, mode))
-    }
-    return result;
+    let to = this.textMorph.getLine(row).length
+    return this.tokensInRange({start: {row, column: 0}, end: {row: row, column: to}});
   }
 
   tokenAt(pos) {
@@ -264,7 +249,7 @@ export default class EditorPlugin {
   }
 
   cmd_delete_backwards() {
-    var morph = this.textMorph,
+    var {textMorph: morph, openPairs} = this,
         sel = morph.selection,
         line = morph.getLine(sel.end.row),
         left = line[sel.end.column-1],
@@ -274,9 +259,31 @@ export default class EditorPlugin {
     }
     return false;
   }
-  
+
+  get openPairs() {
+    return {
+      "{": "}",
+      "[": "]",
+      "(": ")",
+      "\"": "\"",
+      "'": "'",
+      "`": "`",
+    }
+  }
+
+  get closePairs() {
+    return {
+      "}": "{",
+      "]": "[",
+      ")": "(",
+      "\"": "\"",
+      "'": "'",
+      "`": "`",
+    }
+  }
+
   cmd_insertstring(string) {
-    var morph = this.textMorph,
+    var {openPairs, closePairs, textMorph: morph} = this,
         sel = morph.selection,
         sels = sel.isMultiSelection ? sel.selections : [sel],
         offsetColumn = 0,
@@ -322,23 +329,3 @@ export default class EditorPlugin {
   }
 
 }
-
-
-var openPairs = {
-  "{": "}",
-  "[": "]",
-  "(": ")",
-  "\"": "\"",
-  "'": "'",
-  "`": "`",
-}
-
-var closePairs = {
-  "}": "{",
-  "]": "[",
-  ")": "(",
-   "\"": "\"",
-  "'": "'",
-  "`": "`",
-}
-

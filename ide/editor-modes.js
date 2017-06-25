@@ -73,9 +73,9 @@ export function indentLines(textMorph, mode, fromRow, toRow, how, aggressive, op
     let line = lines[i], row = line.row;
     if (row >= fromRow && row <= toRow)
       indentLine(textMorph, mode, line, state, how, aggressive, options);
-    ({state} = tokenizeLine(mode, stream, lines[i], state));
+    state = tokenizeLine(mode, stream, lines[i], state, () => {});
   }
-  return true
+  return true;
 }
 
 function indentLine(textMorph, mode, line, stateBefore, how, aggressive, options) {
@@ -144,38 +144,36 @@ function indentLine(textMorph, mode, line, stateBefore, how, aggressive, options
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-export function tokenizeLines(mode, lines, startState) {
-  if (!lines.length) return [];
+function tokenizeLines(mode, lines, startState, newLineFn, recordFn) {
+  if (!lines.length) return;
   var state = !startState
     ? mode.startState()
     : typeof mode.copyState === "function"
         ? mode.copyState(startState)
         : copyState(mode, startState);
-  let stream = new StringStream("", 2),
-      result = [];
+  let stream = new StringStream("", 2);
   for (let i = 0; i < lines.length; i++) {
-    var {tokens, state} = tokenizeLine(mode, stream, lines[i], state)
-    result.push(tokens)
+    let line = lines[i];
+    newLineFn(line)
+    state = tokenizeLine(mode, stream, line, state, recordFn);
   }
-  return result;
 }
 
-function tokenizeLine(mode, stream, line, state) {
+function tokenizeLine(mode, stream, line, state, recordFn) {
   let {text} = line
-  if (!text) return {tokens: [], state};
+  if (!text) return state;
   stream.reset(text, 2/*indent...FIXME*/);
   state = line.modeState = typeof mode.copyState === "function"
     ? mode.copyState(state)
     : copyState(mode, state);
-  let tokens = [],
-      prevLine = line.prevLine();
+  let tokens = [], prevLine = line.prevLine();
   state._string = text;
   while (!stream.eol()) {
     var name = mode.token(stream, state);
-    tokens.push(stream.start, stream.pos, name, stream.current(), state.localMode || mode);
+    recordFn(name, state, stream.start, stream.pos, stream, line, mode);
     stream.start = stream.pos;
   }
-  return {tokens, state};
+  return state;
 }
 
 
@@ -192,19 +190,33 @@ function printTokens(tokens) {
   return report;
 }
 
+export function visitDocumentTokens(
+  mode, document, fromRow, toRow, validBeforePos,
+  newLineFn, recordFn
+) {
+  // newLineFn(documentline) gets called whenever a new line is encountered
+  // recordFn(tokenName, state, fromCol, toCol, stream, line, mode) gets called
+  // for each token
+  var {lines, state} = linesToTokenize(document, fromRow, toRow, validBeforePos);
+  tokenizeLines(mode, lines, state, newLineFn, recordFn);
+  return lines;
+}
 
 export function tokenizeDocument(mode, document, fromRow, toRow, validBeforePos) {
-  let lines, tokens, state;
+  var tokens = [], current, lines,
+      newLineFn = line => tokens.push(current = []),
+      recordFn = (name, state, from, to, stream, line, mode) =>
+                    current.push(from, to, name,
+                                 stream.current(),
+                                 state.localMode || mode);
   try {
-    ({lines, state} = linesToTokenize(document, fromRow, toRow, validBeforePos));
-    tokens = tokenizeLines(mode, lines, state);
+    lines = visitDocumentTokens(
+      mode, document, fromRow, toRow, validBeforePos, newLineFn, recordFn);
   } catch (err) {
-    ({lines, state} = linesToTokenize(document, fromRow, toRow, null));
-    tokens = tokenizeLines(mode, lines, state);
+    tokens.length = 0;
+    lines = visitDocumentTokens(
+      mode, document, fromRow, toRow, null, newLineFn, recordFn);
   }
-
-  // lines.length && console.log(`${lines[0].row} => ${lively.lang.arr.last(lines).row}`)
-
   return {tokens, lines};
 }
 
