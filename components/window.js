@@ -63,7 +63,7 @@ export default class Window extends Morph {
         borderWidth: 1
       },
       ".Window.inactive": {
-        fill: LinearGradient.create({0: Color.rgbHex('f8f9f9'), .2: Color.rgbHex('e5e8e8')}),
+        fill: Color.lightGray.lighter(),
         dropShadow: {
           rotation: 90,
           distance: 8,
@@ -75,7 +75,7 @@ export default class Window extends Morph {
         fill: LinearGradient.create({0: Color.rgbHex('f8f9f9'), 1: Color.rgbHex('e5e8e8')})
       },
       ".Window.active": {
-        fill: LinearGradient.create({0: Color.rgbHex('e5e8e8'), .2: Color.rgbHex('b2babb')}),
+        fill: Color.lightGray,
         dropShadow: {
           rotation: 90,
           distance: 8,
