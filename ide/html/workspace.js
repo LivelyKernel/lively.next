@@ -1,4 +1,4 @@
-/*global System*/
+/*global System,DOMParser*/
 import { promise } from "lively.lang";
 import { Color } from "lively.graphics";
 import { config } from "../../index.js";
@@ -54,13 +54,20 @@ export default class Workspace extends JSWorkspace {
     }
   }
 
+  parse(html) {
+    return new DOMParser().parseFromString(html, "text/html");
+  }
+
   async loadDocumentHTML() {
     let html = await this.runEval("document.documentElement.innerHTML");
     this.targetMorph.textString = html;
   }
 
   async saveDocumentHTML() {
-    let html = this.targetMorph.textString;
+    let html = this.targetMorph.textString,
+        scripts = Array.from(this.parse(html).querySelectorAll("script"));
+    if (!scripts.some(ea => ea.src.includes("livelify-web.js")))
+      html += `<script src="/livelify-web.js"></script>`;
     await this.runEval(`document.documentElement.innerHTML = ${JSON.stringify(html)}`);
   }
 

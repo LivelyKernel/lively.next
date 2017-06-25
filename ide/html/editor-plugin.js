@@ -12,7 +12,30 @@ import {
   astEditorCommands as jsAstEditorCommands
 } from "../js/commands.js";
 import { localInterface, systemInterfaceNamed } from "lively-system-interface";
+import { runCommand } from "../shell/shell-interface.js";
+import HTMLNavigator from "./navigator.js";
 
+
+var indentHTMLCommand = {
+  name: "[HTML] cleanup",
+  exec: async text => {
+    /*global show*/
+    let undo = text.undoManager.ensureNewGroup(text, "[HTML] cleanup");
+    await text.saveExcursion(async () => {
+      if (text.selection.isEmpty()) text.selectAll();
+      let allText = text.textString,
+          selectedText = text.selection.text;
+      // inspect(await runCommand("tidy --indent", {stdin: text.textString}).whenDone())
+      let {stdout} = await runCommand("tidy --indent", {stdin: text.textString}).whenDone();
+      stdout = stdout.replace(/\s*<meta name="generator"[^>]+>/, "");
+      text.textString = stdout;
+      text.selectAll();
+      text.execCommand("indent according to mode");
+    });
+    text.undoManager.group(undo);
+    return true;
+  }
+}
 export default class HTMLEditorPlugin extends EditorPlugin {
 
   static get shortName() { return "html"; }
@@ -27,7 +50,58 @@ export default class HTMLEditorPlugin extends EditorPlugin {
   get isHTMLEditorPlugin() { return true }
   get isJSEditorPlugin() { return true }
 
+  cmd_insertstring(string) {
+    let {textMorph: morph} = this,
+        handled = super.cmd_insertstring(string);
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    let closeBracket = string === ">";
+    if (closeBracket) {
+      let pos = {...morph.cursorPosition};
+      if (!handled) {
+        morph.insertText(">", pos);
+        pos.column++
+        handled = true;
+      }
+      
+      let matching = morph.findMatchingBackward(pos, "left", {">": "<"});
+      if (matching) {
+        let textInBetween = morph.textInRange({start: matching, end: pos}),
+            match = textInBetween.match(/^\<([a-z0-9\$\!#_\-]+)\>$/i);
+        if (match) {
+          morph.insertText(`</${match[1]}>`, pos);
+          morph.cursorPosition = pos;
+        }
+      }
+      return true;
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // inserts closing tag via multi selection
+    let openBracket = string === "<";
+    if (false && openBracket) {
+      let {row, column} = morph.cursorPosition,
+          lineString = morph.getLine(row);
+      if ("<>" === lineString.slice(column-1, column+1)) {
+        morph.insertText("</>", {row, column: column+1})
+        morph.selection.addRange({start: {row, column: column+3}, end: {row, column: column+3}})
+        morph.selection.selections = lively.lang.arr.rotate(morph.selection.selections, -1);
+      }
+    }
+
+    return handled;
+  }
+
+  get openPairs() {
+    return {...super.openPairs, "<": ">"}
+  }
   
+  get closePairs() {
+    return {...super.closePairs, ">": "<"}
+  }
+
+  getNavigator(otherCommands) { return new HTMLNavigator(); }
+
   // getSnippets() {
   //   return jsSnippets.map(([trigger, expansion]) =>
   //     new Snippet({trigger, expansion}));
@@ -43,7 +117,15 @@ export default class HTMLEditorPlugin extends EditorPlugin {
       ...otherCommands,
       ...jsIdeCommands,
       ...jsEditorCommands,
+      indentHTMLCommand
       // ...jsAstEditorCommands
+    ];
+  }
+  
+  getKeyBindings(other) {
+    return [
+      {command: "[HTML] cleanup", keys: "Shift-Tab"},
+      ...other,
     ];
   }
 

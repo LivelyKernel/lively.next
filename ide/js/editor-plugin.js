@@ -62,6 +62,22 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
     ];
   }
 
+  getKeyBindings(other) {
+    return [
+      ...other,
+      {keys: 'Shift-Tab',   command: {command: "[javascript] auto format code"}},
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // ide related
+      {keys: "Ctrl-C E", command: "[javascript] list errors and warnings"},
+      {keys: {mac: "Meta-Shift-L L I N T R", win: "Ctrl-Shift-L L I N T R"}, command: "[javascript] eslint report"},
+      {keys: {mac: "Meta-Shift-L L I N T P", win: "Ctrl-Shift-L L I N T P"}, command: "[javascript] eslint preview fixes"},
+      {keys: {mac: "Meta-Shift-L L I N T F", win: "Ctrl-Shift-L L I N T F"}, command: "[javascript] eslint fix"},
+      {keys: {mac: "Meta-Shift-L M O D E", win: "Ctrl-Shift-L M O D E"}, command: "change editor mode"},
+      {keys: "Ctrl-C I", command: "[javascript] inject import"},
+      {keys: "Ctrl-C C I", command: "[javascript] fix undeclared variables"}
+    ]
+  }
+
   async getMenuItems(items) {
     var editor = this.textMorph,
         jsItems = [

@@ -203,7 +203,6 @@ var config = {
       {keys: 'Enter', command: "newline"},
       {keys: 'Space', command: {command: "insertstring", args: {string: " ", undoGroup: true}}},
       {keys: 'Tab',   command: {command: "tab - snippet expand or indent"}},
-      {keys: 'Shift-Tab',   command: {command: "[javascript] auto format code"}},
 
       {keys: {win: 'Ctrl-]', mac: 'Meta-]'}, command: "indent"},
       {keys: {win: 'Ctrl-[', mac: 'Meta-['}, command: "outdent"},
@@ -253,16 +252,6 @@ var config = {
       {keys: "Ctrl-Shift-;",                     command: "[multi select] remove focused cursor"},
       {keys: "Alt-Ctrl-A",                       command: "[multi select] align cursors"},
       {keys: "Ctrl-X R",                         command: "[multi select] create rectangular selection"},
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // ide related
-      {keys: "Ctrl-C E", command: "[javascript] list errors and warnings"},
-      {keys: {mac: "Meta-Shift-L L I N T R", win: "Ctrl-Shift-L L I N T R"}, command: "[javascript] eslint report"},
-      {keys: {mac: "Meta-Shift-L L I N T P", win: "Ctrl-Shift-L L I N T P"}, command: "[javascript] eslint preview fixes"},
-      {keys: {mac: "Meta-Shift-L L I N T F", win: "Ctrl-Shift-L L I N T F"}, command: "[javascript] eslint fix"},
-      {keys: {mac: "Meta-Shift-L M O D E", win: "Ctrl-Shift-L M O D E"}, command: "change editor mode"},
-      {keys: "Ctrl-C I", command: "[javascript] inject import"},
-      {keys: "Ctrl-C C I", command: "[javascript] fix undeclared variables"},
 
       {keys: {win: 'Shift-Ctrl-S|Ctrl-Alt-Space', mac: 'Ctrl-Command-space|Ctrl-Alt-Space'},      command: 'contractRegion'},
       {keys: {win: 'Shift-Ctrl-E|Ctrl-Shift-Space', mac: 'Shift-Command-Space|Ctrl-Shift-Space'}, command: 'expandRegion'},
