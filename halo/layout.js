@@ -403,6 +403,7 @@ class CellGuide extends Morph {
         let m = this.cellGroup.morph;
         if(m) {
           this.world().firstHand.grab(m);
+          this.world().firstHand.longClickGrab = true;
           m.position = pt(0);
         }
       }]] : []);
