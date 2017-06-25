@@ -1903,7 +1903,13 @@ export class Morph {
 
 
   onGrab(evt) {
-    evt.hand.grab(this);
+    if (evt.isShiftDown()) {
+       let copy = this.copy();
+       copy.position = this.transformPointToMorph(evt.hand, pt(0,0));
+       evt.hand.grab(copy);
+    } else {
+       evt.hand.grab(this); 
+    }
   }
 
   onDrop(evt) {
