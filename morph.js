@@ -7,7 +7,7 @@ import {
   AnimationQueue,
   ShadowObject
 } from "./rendering/morphic-default.js";
-import { morph, show } from "./index.js";
+import { morph, Icon, show } from "./index.js";
 import { MorphicEnv } from "./env.js";
 import config from "./config.js";
 import CommandHandler from "./CommandHandler.js";
@@ -1866,9 +1866,14 @@ export class Morph {
     //     text.setFontSize(10);
     //   })}]);
 
+    let checked = Icon.makeLabel('check-square-o').textAndAttributes,
+        unchecked = Icon.makeLabel('square-o').textAndAttributes;
+    unchecked[1].paddingRight = "7px";
+    checked[1].paddingRight = "5px";
+
     ['grabbable', 'draggable', 'acceptsDrops', 'halosEnabled'].forEach(propName =>
       morphicMenuItems[1].push(
-        [`[${this[propName] ? "x" : " "}] ` + propName,
+        [[...(this[propName] ? checked : unchecked), "  " + propName],
          () => this[propName] = !this[propName]]));
 
     // if (this.hasFixedPosition()) {
