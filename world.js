@@ -210,7 +210,7 @@ export class World extends Morph {
   }
 
   onLongClick(evt) {
-    this.onMouseDown(evt, true);
+    //this.onMouseDown(evt, true);
   }
 
   onMouseWheel(evt) {

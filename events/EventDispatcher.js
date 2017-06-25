@@ -333,7 +333,7 @@ export default class EventDispatcher {
           state.clickCount = repeatedClick ? prevClickCount + 1 : 1;
         });
 
-        if (hand.carriesMorphs()) {
+        if (hand.carriesMorphs() && hand.longClickGrab) {
           // make sure that the morph receiving the grabbed morphs is not a
           // grabbed morph itself, i.e. the drop target must not be a child morph
           // of the hand
@@ -347,6 +347,7 @@ export default class EventDispatcher {
           if (hand.isAncestorOf(targetMorph)) { targetMorph = this.world; }
           events.push(new Event("morphicdrop", domEvt, this, [targetMorph], hand, halo, layoutHalo));
           defaultEvent.targetMorphs = [this.world];
+          hand.longClickGrab = false;
         }
         break;
 
@@ -373,22 +374,21 @@ export default class EventDispatcher {
           defaultEvent.targetMorphs = [this.world];
 
 
-        } 
-        // else if (hand.carriesMorphs()) {
-        //   // make sure that the morph receiving the grabbed morphs is not a
-        //   // grabbed morph itself, i.e. the drop target must not be a child morph
-        //   // of the hand
-        //   if (state.dropHoverTarget) {
-        //     events.push(new Event("morphicdrophoverout", domEvt, this, [state.dropHoverTarget], hand, halo, layoutHalo));
-        //     targetMorph = state.dropHoverTarget;
-        //     state.dropHoverTarget = null;
-        //   } else {
-        //     targetMorph = hand.findDropTarget(defaultEvent.position, hand.grabbedMorphs);
-        //   }
-        //   if (hand.isAncestorOf(targetMorph)) { targetMorph = this.world; }
-        //   events.push(new Event("morphicdrop", domEvt, this, [targetMorph], hand, halo, layoutHalo));
-        //   defaultEvent.targetMorphs = [this.world];
-        // }
+        } else if (hand.carriesMorphs() && !hand.longClickGrab) {
+          // make sure that the morph receiving the grabbed morphs is not a
+          // grabbed morph itself, i.e. the drop target must not be a child morph
+          // of the hand
+          if (state.dropHoverTarget) {
+            events.push(new Event("morphicdrophoverout", domEvt, this, [state.dropHoverTarget], hand, halo, layoutHalo));
+            targetMorph = state.dropHoverTarget;
+            state.dropHoverTarget = null;
+          } else {
+            targetMorph = hand.findDropTarget(defaultEvent.position, hand.grabbedMorphs);
+          }
+          if (hand.isAncestorOf(targetMorph)) { targetMorph = this.world; }
+          events.push(new Event("morphicdrop", domEvt, this, [targetMorph], hand, halo, layoutHalo));
+          defaultEvent.targetMorphs = [this.world];
+        }
         break;
 
 
