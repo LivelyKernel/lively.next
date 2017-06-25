@@ -877,6 +877,7 @@ class GrabHaloItem extends HaloItem {
     halo.toggleMorphHighlighter(false, prevDropTarget);
     MorphHighlighter.removeHighlightersFrom(halo);
     halo.target.undoStop("grab-halo");
+    if (dropTarget.isWorld) halo.target.grabbable = true;
     this.opacity = 1;
   }
 
@@ -1124,6 +1125,7 @@ class CopyHaloItem extends HaloItem {
     undo.addTarget(dropTarget);
     hand.dropMorphsOn(dropTarget);
     halo.target.undoStop("copy-halo");
+    if (dropTarget.isWorld) halo.target.grabbable = true;
     halo.alignWithTarget();
   }
 
