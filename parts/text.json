@@ -58,6 +58,10 @@
           "key": "borderColorTop",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
         },
+        "grabbable": {
+          "key": "grabbable",
+          "value": true
+        },
         "borderRadiusBottom": {
           "key": "borderRadiusBottom",
           "value": 3

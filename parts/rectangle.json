@@ -16,6 +16,10 @@
           "key": "name",
           "value": "rectangle"
         },
+        "grabbable": {
+          "key": "grabbable",
+          "value": true
+        },
         "position": {
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(418.0,436.4)"
