@@ -1,3 +1,4 @@
+/*global System,Uint8Array,Blob,location*/
 import { Color, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree, fun } from "lively.lang";
 import {
@@ -1661,6 +1662,7 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get dragTriggerDistance() { return 0; }
+  get grabTriggerDistance() { return 10; }
 
   onMouseDown(evt) {
     // FIXME this doesn't belong here. Event dispatch related code should go
