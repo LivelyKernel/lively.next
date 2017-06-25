@@ -403,6 +403,11 @@ class ColorDetails extends Morph {
      this.get('R').value = `R ${r.toFixed(0)}\n\nG ${g.toFixed(0)}\n\nB ${b.toFixed(0)}\n\nH ${h.toFixed(0)}\n\nS ${s.toFixed(2)}\n\nV ${v.toFixed(2)}`
    }
 
+  onHashViewerChanged(hexString) {
+    let color = Color.rgbHex(hexString);
+    this.owner.owner.color = color;
+  }
+
    keyValue({name, key, value, update, editable}) {
     return new Morph({
       fill: Color.transparent,
@@ -420,8 +425,7 @@ class ColorDetails extends Morph {
       editable: true,
       value: this.color.toHexString()
     });
-    connect(hashViewer.get('hashViewer'), 'updateValue', this, 'color', {
-       converter: (v) => Color.rgbHex(v), varMapping: {Color}})
+    connect(hashViewer.get('hashViewer'), 'updateValue', this, 'onHashViewerChanged')
     return hashViewer;
   }
 
