@@ -613,7 +613,7 @@ export class PropertyControl extends Label {
     if (!this.foldableProperties) return;
     this.toggleMultiValuePlaceholder(
       !arr.every(this.foldableProperties.map(p => newValue[p]),
-                 v => obj.equals(v, newValue.valueOf())));
+                 v => obj.equals(v, newValue && newValue.valueOf())));
   }
 
   asFoldable(foldableProperties) {
@@ -622,7 +622,7 @@ export class PropertyControl extends Label {
   }
 
   renderEnumControl({value, spec: {values}}) {
-    return this.renderValueSelector(this, value.valueOf ? value.valueOf() : value, values);
+    return this.renderValueSelector(this, value && value.valueOf ? value.valueOf() : value, values);
   }
 
   renderIconControl({value}) {
