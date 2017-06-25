@@ -1,8 +1,8 @@
 {
-  "id": "Part_dash_item_dash_for_dash_partsbin_93D98AAE_45A9_4029_B28F_21AE13DC60BF",
+  "id": "Part_dash_item_dash_for_dash_partsbin_08E56D5D_B0F3_4BEF_9674_CF1EFE074320",
   "snapshot": {
-    "Part_dash_item_dash_for_dash_partsbin_93D98AAE_45A9_4029_B28F_21AE13DC60BF": {
-      "rev": 519004,
+    "Part_dash_item_dash_for_dash_partsbin_08E56D5D_B0F3_4BEF_9674_CF1EFE074320": {
+      "rev": 71953,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -17,7 +17,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(322.6,290.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(666.9,744.8)"
         },
         "origin": {
           "key": "origin",
@@ -36,8 +36,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-              "rev": 511086
+              "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+              "rev": 67674
             }
           ]
         },
@@ -57,51 +57,54 @@
             "morph"
           ]
         },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "6403F90E-1454-49DD-AF1F-22A621A3941E",
+            "rev": 0
+          }
         },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "F2BE1A97-87F4-4677-8114-4DF355D4C825",
+            "rev": 0
+          }
         },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "8F013646-6A79-4527-8AA4-F6D1F0055C05",
+            "rev": 0
+          }
         },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 4
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 4
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 4
-        },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 4
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "C17D9CEC-EA72-4C31-8600-06E451566D4B",
+            "rev": 0
+          }
         }
       },
       "lively.serializer-class-info": {
         "className": "Part_dash_item_dash_for_dash_partsbin",
         "module": {
           "package": {
-            "name": "38C79579-61C1-46DE-A025-FF870C3DA84F"
+            "name": "38C79579-61C1-46DE-A025-FF870C3DA84F",
+            "version": "0.1.0"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1498424505642,
+          "lastSuperclassChange": 1498423531312
         }
       }
     },
-    "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1": {
-      "rev": 511086,
+    "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3": {
+      "rev": 67674,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -112,52 +115,52 @@
           "value": [
             {
               "__ref__": true,
-              "id": "C718C9D8-B4AF-433B-8C99-CE409E662CD9",
+              "id": "92B7B3F4-6D5E-4EF7-B1DC-4BB18EA36F4D",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "6AF582FF-55E2-44F9-9F50-AF96A193E710",
+              "id": "F04884B4-A543-4C80-B499-8D9F4F4B5407",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "92E34CBC-735D-4328-9269-8B10DBB26BB9",
+              "id": "3C31A906-3295-43EF-86BC-02B9EC23C1FA",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "719A16BE-6A76-4384-ACFC-8162B4BD2C46",
+              "id": "8E103246-7A79-4FE0-9AF5-16DE2CBA9EE5",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "7C5AA781-5A02-4EA8-91C8-7074BCA058C4",
+              "id": "48459C60-0744-4423-8677-1B5B3115566C",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "A98D2B77-4903-4524-A142-F27760ACE41D",
+              "id": "7325CA43-3992-4ABE-B637-F599C9317A97",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "31113A94-5276-43E2-933D-4FF6FBE3F8D7",
+              "id": "ADC680FA-AF25-442A-BD41-F1924C752EE5",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "800F026A-8296-44FD-AA5C-6996CA93209C",
+              "id": "7E4AEDF6-5CB8-4EC3-8FD2-681B99DD9F42",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "071B6998-FE7B-409A-9FDD-E67D60FA1106",
+              "id": "5D5F3E73-74B5-4E33-B419-00D660C94A91",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "43B7CC7C-4050-496C-9C84-D9F8CEC05448",
+              "id": "250DA39A-B75C-4784-B7A2-41DF1390F357",
               "rev": 0
             }
           ]
@@ -170,7 +173,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "009D9A10-6BDC-483F-A2A0-B5BA534FC0AC",
+            "id": "30675680-88BA-48C5-AFCF-6C3391158538",
             "rev": 0
           }
         },
@@ -203,8 +206,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_8E97D617_0B1C_4F75_9470_034D51111609",
-              "rev": 515607
+              "id": "Label_E9BA1C41_EDD0_40AE_8904_0A25019C7841",
+              "rev": 67161
             }
           ]
         },
@@ -219,40 +222,33 @@
             "activeStyle",
             "activeStyle",
             "activeStyle",
+            "activeStyle",
             "activeStyle"
           ]
         },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "659ADD45-23B0-405F-8CA1-2CC7188744E3",
+            "rev": 0
+          }
         },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "16202FDD-D348-435F-8A66-41C89962BA22",
+            "rev": 0
+          }
         },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
-        },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 14
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 14
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 14
-        },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 14
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "E711053D-B379-404F-A8DC-A4C86A9E5005",
+            "rev": 0
+          }
         },
         "padding": {
           "key": "padding",
@@ -262,13 +258,21 @@
           "key": "activeMode",
           "value": "active"
         },
+        "iconMorph": {
+          "key": "iconMorph",
+          "value": null
+        },
         "labelMorph": {
           "key": "labelMorph",
           "value": {
             "__ref__": true,
-            "id": "Label_8E97D617_0B1C_4F75_9470_034D51111609",
-            "rev": 515607
+            "id": "Label_E9BA1C41_EDD0_40AE_8904_0A25019C7841",
+            "rev": 67161
           }
+        },
+        "icon": {
+          "key": "icon",
+          "value": ""
         }
       },
       "lively.serializer-class-info": {
@@ -278,11 +282,13 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "components/buttons.js"
+          "pathInPackage": "components/buttons.js",
+          "lastChange": 1498423057308,
+          "lastSuperclassChange": 1498423531312
         }
       }
     },
-    "C718C9D8-B4AF-433B-8C99-CE409E662CD9": {
+    "92B7B3F4-6D5E-4EF7-B1DC-4BB18EA36F4D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -301,8 +307,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "sourceAttrName": {
@@ -313,8 +319,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "targetMethodName": {
@@ -325,7 +331,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "467C9E78-4544-48B0-8980-089859CAEDFD",
+            "id": "3640C84C-CF67-4DD3-9DE5-77B71543EA19",
             "rev": 0
           }
         },
@@ -345,11 +351,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1498423056877,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "467C9E78-4544-48B0-8980-089859CAEDFD": {
+    "3640C84C-CF67-4DD3-9DE5-77B71543EA19": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -360,21 +368,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         }
       }
     },
-    "6AF582FF-55E2-44F9-9F50-AF96A193E710": {
+    "F04884B4-A543-4C80-B499-8D9F4F4B5407": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -393,8 +401,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "sourceAttrName": {
@@ -405,8 +413,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "targetMethodName": {
@@ -417,7 +425,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "CF042A1E-CEA8-4C48-9EF7-50D3C608036E",
+            "id": "066BB851-01F8-4518-B4CE-E678B7E6448D",
             "rev": 0
           }
         },
@@ -437,11 +445,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1498423056877,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "CF042A1E-CEA8-4C48-9EF7-50D3C608036E": {
+    "066BB851-01F8-4518-B4CE-E678B7E6448D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -452,21 +462,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         }
       }
     },
-    "92E34CBC-735D-4328-9269-8B10DBB26BB9": {
+    "3C31A906-3295-43EF-86BC-02B9EC23C1FA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -485,8 +495,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "sourceAttrName": {
@@ -497,8 +507,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "targetMethodName": {
@@ -509,7 +519,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "DFB68095-C04D-4C0C-B63C-5BA221709A7C",
+            "id": "F2BB6761-2798-47C9-9BFF-433F182C0B70",
             "rev": 0
           }
         },
@@ -529,11 +539,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1498423056877,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "DFB68095-C04D-4C0C-B63C-5BA221709A7C": {
+    "F2BB6761-2798-47C9-9BFF-433F182C0B70": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -544,21 +556,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         }
       }
     },
-    "719A16BE-6A76-4384-ACFC-8162B4BD2C46": {
+    "8E103246-7A79-4FE0-9AF5-16DE2CBA9EE5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -577,8 +589,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "sourceAttrName": {
@@ -589,8 +601,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "targetMethodName": {
@@ -601,7 +613,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D041AF60-290A-40A5-8B84-E644BD79EE11",
+            "id": "B9A1243B-9997-4B2C-A4F8-7AEAAF056D3C",
             "rev": 0
           }
         },
@@ -621,11 +633,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1498423056877,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "D041AF60-290A-40A5-8B84-E644BD79EE11": {
+    "B9A1243B-9997-4B2C-A4F8-7AEAAF056D3C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -636,21 +650,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         }
       }
     },
-    "7C5AA781-5A02-4EA8-91C8-7074BCA058C4": {
+    "48459C60-0744-4423-8677-1B5B3115566C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -669,8 +683,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "sourceAttrName": {
@@ -681,8 +695,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "targetMethodName": {
@@ -693,7 +707,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "5120E61C-1DDD-4487-BF30-3A5D236645A3",
+            "id": "E416AA09-2226-4F6C-B185-A97CF53BD31B",
             "rev": 0
           }
         },
@@ -713,11 +727,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1498423056877,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "5120E61C-1DDD-4487-BF30-3A5D236645A3": {
+    "E416AA09-2226-4F6C-B185-A97CF53BD31B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -728,21 +744,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         }
       }
     },
-    "A98D2B77-4903-4524-A142-F27760ACE41D": {
+    "7325CA43-3992-4ABE-B637-F599C9317A97": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -761,8 +777,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "sourceAttrName": {
@@ -773,8 +789,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "targetMethodName": {
@@ -785,7 +801,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "1427D5E2-BFB3-48D8-B3E0-3EA9F0EF339D",
+            "id": "2F2DBCB7-F2B2-4738-9460-2B91DB1C4568",
             "rev": 0
           }
         },
@@ -805,11 +821,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1498423056877,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "1427D5E2-BFB3-48D8-B3E0-3EA9F0EF339D": {
+    "2F2DBCB7-F2B2-4738-9460-2B91DB1C4568": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -820,21 +838,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         }
       }
     },
-    "31113A94-5276-43E2-933D-4FF6FBE3F8D7": {
+    "ADC680FA-AF25-442A-BD41-F1924C752EE5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -853,8 +871,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "sourceAttrName": {
@@ -865,8 +883,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "targetMethodName": {
@@ -877,7 +895,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "1A669E81-A435-4D83-95DE-05CD21D3084C",
+            "id": "54301AA2-908B-4588-BAF8-9887DE3A4F0C",
             "rev": 0
           }
         },
@@ -897,11 +915,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1498423056877,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "1A669E81-A435-4D83-95DE-05CD21D3084C": {
+    "54301AA2-908B-4588-BAF8-9887DE3A4F0C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -912,21 +932,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         }
       }
     },
-    "800F026A-8296-44FD-AA5C-6996CA93209C": {
+    "7E4AEDF6-5CB8-4EC3-8FD2-681B99DD9F42": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -945,8 +965,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "sourceAttrName": {
@@ -957,8 +977,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_4C8BEE8F_023B_4D77_A81D_C92D8846A3BE",
-            "rev": 471236
+            "id": "Part_dash_item_dash_for_dash_partsbin_7F686EF8_3C18_4213_AAB2_CE177873B158",
+            "rev": 67100
           }
         },
         "targetMethodName": {
@@ -969,7 +989,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "A47188E6-6DC3-4C24-BD36-B4A82D3A02D9",
+            "id": "886A8BDA-BA9E-4EC1-B22F-9B55B0331F20",
             "rev": 0
           }
         },
@@ -989,12 +1009,14 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1498423056877,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "Part_dash_item_dash_for_dash_partsbin_4C8BEE8F_023B_4D77_A81D_C92D8846A3BE": {
-      "rev": 471236,
+    "Part_dash_item_dash_for_dash_partsbin_7F686EF8_3C18_4213_AAB2_CE177873B158": {
+      "rev": 67100,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1028,13 +1050,13 @@
           "value": [
             {
               "__ref__": true,
-              "id": "HTMLMorph_C7AD5D1E_B879_42BD_BF4F_A468578C9257",
-              "rev": 471222
+              "id": "HTMLMorph_39C75B66_D229_4B9F_9D4D_76594FBD3427",
+              "rev": 67082
             },
             {
               "__ref__": true,
-              "id": "Label_CF1E7666_363E_48E6_803C_D9879287C905",
-              "rev": 471234
+              "id": "Label_238B12CD_9D3E_4D0B_87DC_3E316F30961C",
+              "rev": 67098
             }
           ]
         },
@@ -1054,67 +1076,54 @@
             "morph"
           ]
         },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "CD6DF2C3-3865-4E59-B816-1CE9AC59D5BC",
+            "rev": 0
+          }
         },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "9C6539AC-6246-477E-ABB0-581E32AF47BD",
+            "rev": 0
+          }
         },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "26A1C7AF-1EE4-4A7E-893D-AD2B73911893",
+            "rev": 0
+          }
         },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 4
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 4
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 4
-        },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 4
-        },
-        "borderWidthBottom": {
-          "key": "borderWidthBottom",
-          "value": 1
-        },
-        "borderWidthLeft": {
-          "key": "borderWidthLeft",
-          "value": 1
-        },
-        "borderWidthRight": {
-          "key": "borderWidthRight",
-          "value": 1
-        },
-        "borderWidthTop": {
-          "key": "borderWidthTop",
-          "value": 1
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "432690CA-15CE-43A7-BA49-3BD16CB847CE",
+            "rev": 0
+          }
         }
       },
       "lively.serializer-class-info": {
         "className": "Part_dash_item_dash_for_dash_partsbin",
         "module": {
           "package": {
-            "name": "38C79579-61C1-46DE-A025-FF870C3DA84F"
+            "name": "38C79579-61C1-46DE-A025-FF870C3DA84F",
+            "version": "0.1.0"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1498424505642,
+          "lastSuperclassChange": 1498423531312
         }
       }
     },
-    "HTMLMorph_C7AD5D1E_B879_42BD_BF4F_A468578C9257": {
-      "rev": 471222,
+    "HTMLMorph_39C75B66_D229_4B9F_9D4D_76594FBD3427": {
+      "rev": 67082,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1163,6 +1172,38 @@
             "morph"
           ]
         },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "FB24A288-98F0-4BB1-A06F-825808A7A9D6",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "91DB05C8-8A0D-4E9F-8EF8-29D2B147C613",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "5F13DFB0-5BFD-42CE-9FE8-4A86723CA191",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "C86DC43E-7309-473E-98B4-3B258882E31D",
+            "rev": 0
+          }
+        },
         "html": {
           "key": "html",
           "value": "<div style=\"width: 100%;\"><div style=\"position: absolute; top: 10px;            left: 23.150000000000006px\"><div draggable=\"false\" style=\"background-image: linear-gradient(rgb(242, 243, 244) 0%, rgb(215, 219, 221) 100%); transform: translate(9.12409px, 0px) rotate(0deg) scale(0.364964, 0.364964); transform-origin: 0px 0px 0px; display: inline; width: 224px; height: 274px; border-style: solid; border-width: 1px; border-color: rgb(215, 219, 221); border-radius: 9px; box-shadow: rgba(102, 102, 102, 0.517647) 6.36396px 6.36396px 22px; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(9px, 9px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 206px; height: 23px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div style=\" position: absolute; left: 44.0312px; top: 3px; width: 3px; height: 14px; background-color: black; z-index: 5; display: none;\"></div><div style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 14px; padding: 3px 11px 6px 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 14px; line-height: 14px;\"><span style=\"font-size: 12px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">Search</span></div><div style=\"height: 0px; width: 38.0312px;\"></div></div></div><div draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(9px, 41px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 206px; height: 224px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: auto;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div>"
@@ -1175,12 +1216,110 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "html-morph.js"
+          "pathInPackage": "html-morph.js",
+          "lastChange": 1498423057354,
+          "lastSuperclassChange": 1498423531312
         }
       }
     },
-    "Label_CF1E7666_363E_48E6_803C_D9879287C905": {
-      "rev": 471234,
+    "FB24A288-98F0-4BB1-A06F-825808A7A9D6": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "91DB05C8-8A0D-4E9F-8EF8-29D2B147C613": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "5F13DFB0-5BFD-42CE-9FE8-4A86723CA191": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "C86DC43E-7309-473E-98B4-3B258882E31D": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "Label_238B12CD_9D3E_4D0B_87DC_3E316F30961C": {
+      "rev": 67098,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1221,13 +1360,45 @@
             "morph"
           ]
         },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "2CB33104-C9D1-41E2-9273-52AAC01A0675",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "1C79F571-7973-45C8-813E-AC0F45807CE4",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "EDC3B64D-0E06-45B0-8970-678886767F04",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "2C249153-BB22-475A-B16E-A3268D1EB887",
+            "rev": 0
+          }
+        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
             "IconPicker",
             {
               "__ref__": true,
-              "id": "0D81E3E5-D264-4925-9A6A-90ABE024E4EA",
+              "id": "5F1BEE37-B7DB-41E6-9E09-3E5ECE2B06BB",
               "rev": 0
             }
           ]
@@ -1252,11 +1423,109 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "text/label.js"
+          "pathInPackage": "text/label.js",
+          "lastChange": 1498423056906,
+          "lastSuperclassChange": 1498423531312
         }
       }
     },
-    "0D81E3E5-D264-4925-9A6A-90ABE024E4EA": {
+    "2CB33104-C9D1-41E2-9273-52AAC01A0675": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "1C79F571-7973-45C8-813E-AC0F45807CE4": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "EDC3B64D-0E06-45B0-8970-678886767F04": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "2C249153-BB22-475A-B16E-A3268D1EB887": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "5F1BEE37-B7DB-41E6-9E09-3E5ECE2B06BB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1265,7 +1534,103 @@
         }
       }
     },
-    "A47188E6-6DC3-4C24-BD36-B4A82D3A02D9": {
+    "CD6DF2C3-3865-4E59-B816-1CE9AC59D5BC": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 1
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 1
+        },
+        "left": {
+          "key": "left",
+          "value": 1
+        },
+        "right": {
+          "key": "right",
+          "value": 1
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "9C6539AC-6246-477E-ABB0-581E32AF47BD": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 4
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 4
+        },
+        "right": {
+          "key": "right",
+          "value": 4
+        },
+        "left": {
+          "key": "left",
+          "value": 4
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "26A1C7AF-1EE4-4A7E-893D-AD2B73911893": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "432690CA-15CE-43A7-BA49-3BD16CB847CE": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "886A8BDA-BA9E-4EC1-B22F-9B55B0331F20": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1276,21 +1641,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_4C8BEE8F_023B_4D77_A81D_C92D8846A3BE",
-            "rev": 471236
+            "id": "Part_dash_item_dash_for_dash_partsbin_7F686EF8_3C18_4213_AAB2_CE177873B158",
+            "rev": 67100
           }
         }
       }
     },
-    "071B6998-FE7B-409A-9FDD-E67D60FA1106": {
+    "5D5F3E73-74B5-4E33-B419-00D660C94A91": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1309,8 +1674,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "sourceAttrName": {
@@ -1321,8 +1686,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_CD7C21E1_25D3_4F2F_B9D9_09AA11685BC3",
-            "rev": 471279
+            "id": "Part_dash_item_dash_for_dash_partsbin_8399D3A2_C603_4F26_9352_747E1D0603B6",
+            "rev": 67155
           }
         },
         "targetMethodName": {
@@ -1333,7 +1698,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F472DD34-43B7-4848-BD1C-C8E70E558170",
+            "id": "F641B05D-F9D7-465E-9DB2-DDCE47840A6D",
             "rev": 0
           }
         },
@@ -1353,12 +1718,14 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1498423056877,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "Part_dash_item_dash_for_dash_partsbin_CD7C21E1_25D3_4F2F_B9D9_09AA11685BC3": {
-      "rev": 471279,
+    "Part_dash_item_dash_for_dash_partsbin_8399D3A2_C603_4F26_9352_747E1D0603B6": {
+      "rev": 67155,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1392,13 +1759,13 @@
           "value": [
             {
               "__ref__": true,
-              "id": "HTMLMorph_8C9DF5AB_9237_4421_BCB2_A9097EBEE167",
-              "rev": 471265
+              "id": "HTMLMorph_D42678E4_A8DC_4562_AC7A_C10AB45CB107",
+              "rev": 67137
             },
             {
               "__ref__": true,
-              "id": "Label_59F0BEFE_E754_43A1_92D5_265A31D35312",
-              "rev": 471277
+              "id": "Label_F428CCB1_9667_4118_B84F_84BCD4FACE36",
+              "rev": 67153
             }
           ]
         },
@@ -1418,67 +1785,54 @@
             "morph"
           ]
         },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "B5C250B9-6F10-45C1-AF7E-3CDED928073D",
+            "rev": 0
+          }
         },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "9FFCF70C-EDBA-4AE5-8CC2-7E59167DCE18",
+            "rev": 0
+          }
         },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "6BE4302A-D381-4D43-98D9-0B73E5DCB669",
+            "rev": 0
+          }
         },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 4
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 4
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 4
-        },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 4
-        },
-        "borderWidthBottom": {
-          "key": "borderWidthBottom",
-          "value": 1
-        },
-        "borderWidthLeft": {
-          "key": "borderWidthLeft",
-          "value": 1
-        },
-        "borderWidthRight": {
-          "key": "borderWidthRight",
-          "value": 1
-        },
-        "borderWidthTop": {
-          "key": "borderWidthTop",
-          "value": 1
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "62AFC46B-AE4F-4DEF-B80D-0FE3A085F3E9",
+            "rev": 0
+          }
         }
       },
       "lively.serializer-class-info": {
         "className": "Part_dash_item_dash_for_dash_partsbin",
         "module": {
           "package": {
-            "name": "38C79579-61C1-46DE-A025-FF870C3DA84F"
+            "name": "38C79579-61C1-46DE-A025-FF870C3DA84F",
+            "version": "0.1.0"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1498424505642,
+          "lastSuperclassChange": 1498423531312
         }
       }
     },
-    "HTMLMorph_8C9DF5AB_9237_4421_BCB2_A9097EBEE167": {
-      "rev": 471265,
+    "HTMLMorph_D42678E4_A8DC_4562_AC7A_C10AB45CB107": {
+      "rev": 67137,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1527,6 +1881,38 @@
             "morph"
           ]
         },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "B271ABC9-A630-4089-A18E-0143901A4ED5",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "43D92C6A-1510-47F1-A42F-839E774A5979",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "54142434-6171-4137-B70E-8C971E1195CB",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "3946F6D0-C890-43E8-8FBC-C1ED58635924",
+            "rev": 0
+          }
+        },
         "html": {
           "key": "html",
           "value": "<div style=\"width: 100%;\"><div style=\"position: absolute; top: 10px;            left: 23.150000000000006px\"><div draggable=\"false\" style=\"background-image: linear-gradient(rgb(242, 243, 244) 0%, rgb(215, 219, 221) 100%); transform: translate(9.12409px, 0px) rotate(0deg) scale(0.364964, 0.364964); transform-origin: 0px 0px 0px; display: inline; width: 224px; height: 274px; border-style: solid; border-width: 1px; border-color: rgb(215, 219, 221); border-radius: 9px; box-shadow: rgba(102, 102, 102, 0.517647) 6.36396px 6.36396px 22px; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(9px, 9px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 206px; height: 23px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div style=\" position: absolute; left: 44.0312px; top: 3px; width: 3px; height: 14px; background-color: black; z-index: 5; display: none;\"></div><div style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 14px; padding: 3px 11px 6px 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 14px; line-height: 14px;\"><span style=\"font-size: 12px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">Search</span></div><div style=\"height: 0px; width: 38.0312px;\"></div></div></div><div draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(9px, 41px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 206px; height: 224px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: auto;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div>"
@@ -1539,12 +1925,110 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "html-morph.js"
+          "pathInPackage": "html-morph.js",
+          "lastChange": 1498423057354,
+          "lastSuperclassChange": 1498423531312
         }
       }
     },
-    "Label_59F0BEFE_E754_43A1_92D5_265A31D35312": {
-      "rev": 471277,
+    "B271ABC9-A630-4089-A18E-0143901A4ED5": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "43D92C6A-1510-47F1-A42F-839E774A5979": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "54142434-6171-4137-B70E-8C971E1195CB": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "3946F6D0-C890-43E8-8FBC-C1ED58635924": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "Label_F428CCB1_9667_4118_B84F_84BCD4FACE36": {
+      "rev": 67153,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1585,13 +2069,45 @@
             "morph"
           ]
         },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "9D5EF503-FCB9-4B9E-899D-476E328DEC9E",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "2900B839-82D5-43ED-B419-18500CEE6D1A",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "3AC93FA8-20E3-4BA9-BAB9-227F0F12126D",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "02A0AA22-47D1-4453-9693-A0023AB6D92B",
+            "rev": 0
+          }
+        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
             "IconPicker",
             {
               "__ref__": true,
-              "id": "BEF69C3B-3266-4DC0-89B5-186AF47AB8AB",
+              "id": "E9D50007-DC24-484D-AFF1-2CBEEBBAF331",
               "rev": 0
             }
           ]
@@ -1616,11 +2132,109 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "text/label.js"
+          "pathInPackage": "text/label.js",
+          "lastChange": 1498423056906,
+          "lastSuperclassChange": 1498423531312
         }
       }
     },
-    "BEF69C3B-3266-4DC0-89B5-186AF47AB8AB": {
+    "9D5EF503-FCB9-4B9E-899D-476E328DEC9E": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "2900B839-82D5-43ED-B419-18500CEE6D1A": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "3AC93FA8-20E3-4BA9-BAB9-227F0F12126D": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "02A0AA22-47D1-4453-9693-A0023AB6D92B": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "E9D50007-DC24-484D-AFF1-2CBEEBBAF331": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1629,7 +2243,103 @@
         }
       }
     },
-    "F472DD34-43B7-4848-BD1C-C8E70E558170": {
+    "B5C250B9-6F10-45C1-AF7E-3CDED928073D": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 1
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 1
+        },
+        "left": {
+          "key": "left",
+          "value": 1
+        },
+        "right": {
+          "key": "right",
+          "value": 1
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "9FFCF70C-EDBA-4AE5-8CC2-7E59167DCE18": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 4
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 4
+        },
+        "right": {
+          "key": "right",
+          "value": 4
+        },
+        "left": {
+          "key": "left",
+          "value": 4
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "6BE4302A-D381-4D43-98D9-0B73E5DCB669": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "62AFC46B-AE4F-4DEF-B80D-0FE3A085F3E9": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "F641B05D-F9D7-465E-9DB2-DDCE47840A6D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1640,21 +2350,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_CD7C21E1_25D3_4F2F_B9D9_09AA11685BC3",
-            "rev": 471279
+            "id": "Part_dash_item_dash_for_dash_partsbin_8399D3A2_C603_4F26_9352_747E1D0603B6",
+            "rev": 67155
           }
         }
       }
     },
-    "43B7CC7C-4050-496C-9C84-D9F8CEC05448": {
+    "250DA39A-B75C-4784-B7A2-41DF1390F357": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1673,8 +2383,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "sourceAttrName": {
@@ -1685,8 +2395,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_93D98AAE_45A9_4029_B28F_21AE13DC60BF",
-            "rev": 519004
+            "id": "Part_dash_item_dash_for_dash_partsbin_08E56D5D_B0F3_4BEF_9674_CF1EFE074320",
+            "rev": 71953
           }
         },
         "targetMethodName": {
@@ -1697,7 +2407,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "5AE58416-A665-46A2-B344-CC4788D3E4AB",
+            "id": "B88C8103-C6C0-459C-825C-E1A4215573A2",
             "rev": 0
           }
         },
@@ -1717,11 +2427,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1498423056877,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "5AE58416-A665-46A2-B344-CC4788D3E4AB": {
+    "B88C8103-C6C0-459C-825C-E1A4215573A2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1732,21 +2444,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_93D98AAE_45A9_4029_B28F_21AE13DC60BF",
-            "rev": 519004
+            "id": "Part_dash_item_dash_for_dash_partsbin_08E56D5D_B0F3_4BEF_9674_CF1EFE074320",
+            "rev": 71953
           }
         }
       }
     },
-    "009D9A10-6BDC-483F-A2A0-B5BA534FC0AC": {
+    "30675680-88BA-48C5-AFCF-6C3391158538": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1773,8 +2485,8 @@
           "key": "morph",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "onChange": {
@@ -1788,12 +2500,14 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "rendering/morphic-default.js"
+          "pathInPackage": "rendering/morphic-default.js",
+          "lastChange": 1498423056850,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "Label_8E97D617_0B1C_4F75_9470_034D51111609": {
-      "rev": 515607,
+    "Label_E9BA1C41_EDD0_40AE_8904_0A25019C7841": {
+      "rev": 67161,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1804,7 +2518,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "4CB9B197-3E8E-4314-B59C-77DF2789A835",
+              "id": "80194C53-A8A8-415C-9EA5-7436BC6D6DA5",
               "rev": 0
             }
           ]
@@ -1823,7 +2537,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(7.8,6.5)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(8.2,5.5)"
         },
         "origin": {
           "key": "origin",
@@ -1831,7 +2545,7 @@
         },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,12.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(8.7,14.0)"
         },
         "fill": {
           "key": "fill",
@@ -1849,13 +2563,45 @@
             "morph"
           ]
         },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "F6C519E9-6640-4AE4-84FE-9DE8AB94064A",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "DFA27D13-B3A8-4648-9A2A-AA55DBFAD405",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "A4FCB670-9F37-4244-AA69-78F7DF23F3DC",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "43C0C46E-F6B6-40AB-9DC0-E967B4D55E6E",
+            "rev": 0
+          }
+        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
             "",
             {
               "__ref__": true,
-              "id": "411F800D-9FDC-4AFF-A6E6-F239E2C6F5FF",
+              "id": "1392646E-8506-4070-898D-F1BD0EA5A03A",
               "rev": 0
             }
           ]
@@ -1876,11 +2622,13 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "text/label.js"
+          "pathInPackage": "text/label.js",
+          "lastChange": 1498423056906,
+          "lastSuperclassChange": 1498423531312
         }
       }
     },
-    "4CB9B197-3E8E-4314-B59C-77DF2789A835": {
+    "80194C53-A8A8-415C-9EA5-7436BC6D6DA5": {
       "rev": 0,
       "props": {
         "doNotSerialize": {
@@ -1895,8 +2643,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_8E97D617_0B1C_4F75_9470_034D51111609",
-            "rev": 515607
+            "id": "Label_E9BA1C41_EDD0_40AE_8904_0A25019C7841",
+            "rev": 67161
           }
         },
         "sourceAttrName": {
@@ -1907,8 +2655,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         },
         "targetMethodName": {
@@ -1919,7 +2667,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "21C4FE3B-9296-43FA-AE27-47ED9166EC97",
+            "id": "060F4122-BC56-4520-9076-27D7A6988F2F",
             "rev": 0
           }
         },
@@ -1939,32 +2687,130 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1498423056877,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "21C4FE3B-9296-43FA-AE27-47ED9166EC97": {
+    "060F4122-BC56-4520-9076-27D7A6988F2F": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_8E97D617_0B1C_4F75_9470_034D51111609",
-            "rev": 515607
+            "id": "Label_E9BA1C41_EDD0_40AE_8904_0A25019C7841",
+            "rev": 67161
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_1EB26A65_5BD3_4DA8_9C9B_C62730A14DF3",
+            "rev": 67674
           }
         }
       }
     },
-    "411F800D-9FDC-4AFF-A6E6-F239E2C6F5FF": {
+    "F6C519E9-6640-4AE4-84FE-9DE8AB94064A": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "DFA27D13-B3A8-4648-9A2A-AA55DBFAD405": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "A4FCB670-9F37-4244-AA69-78F7DF23F3DC": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "43C0C46E-F6B6-40AB-9DC0-E967B4D55E6E": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "1392646E-8506-4070-898D-F1BD0EA5A03A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1982,6 +2828,174 @@
           ]
         }
       }
+    },
+    "659ADD45-23B0-405F-8CA1-2CC7188744E3": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 14
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 14
+        },
+        "right": {
+          "key": "right",
+          "value": 14
+        },
+        "left": {
+          "key": "left",
+          "value": 14
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "16202FDD-D348-435F-8A66-41C89962BA22": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "E711053D-B379-404F-A8DC-A4C86A9E5005": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "6403F90E-1454-49DD-AF1F-22A621A3941E": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "F2BE1A97-87F4-4677-8114-4DF355D4C825": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 4
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 4
+        },
+        "right": {
+          "key": "right",
+          "value": 4
+        },
+        "left": {
+          "key": "left",
+          "value": 4
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "8F013646-6A79-4527-8AA4-F6D1F0055C05": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "C17D9CEC-EA72-4C31-8600-06E451566D4B": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
     }
   },
   "requiredVersion": "~0.1",
@@ -1989,7 +3003,7 @@
     "local://lively-object-modules/": {
       "38C79579-61C1-46DE-A025-FF870C3DA84F": {
         "package.json": "{\n  \"name\": \"38C79579-61C1-46DE-A025-FF870C3DA84F\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
-        "index.js": "import { Morph, show, Image, morph, Icon, HTMLMorph } from \"lively.morphic\";\nimport { Color, pt } from \"lively.graphics/index.js\";\nimport { connect, once, disconnect } from \"lively.bindings/index.js\";\nimport { resource } from \"lively.resources/index.js\";\nimport { loadMorphFromSnapshot } from \"lively.morphic/serialization.js\";\nimport LoadingIndicator from \"lively.morphic/components/loading-indicator.js\";\n\nexport default class Part_dash_item_dash_for_dash_partsbin extends Morph {\n\n  static get properties() {\n    return {\n      partName: {serialize: false},\n      partResource: {serialize: false},\n      snapshot: {serialize: false}\n    }\n  }\n\n  reset() {\n    connect(this.getSubmorphNamed(\"remove-button\"), 'fire', this, 'interactivelyRemovePart');\n  }\n\n  beforePublish() {\n    this.clear()\n  }\n\n  clear() {\n    this.snapshot = null;\n    this.partResource = null;\n    this.partName = \"\";\n    let label = this.getSubmorphNamed('preview-label'),\n        preview = this.getSubmorphNamed('html-preview'),\n        imagePreview = this.getSubmorphNamed('image-preview');\n    label && label.remove();\n    imagePreview && imagePreview.remove();\n    if (preview)\n      preview.html = `\n  <div style=\"display: flex;\n              align-items: center;\n              justify-content: center;\n              height: 100%;\n              background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))\">\n    <p style=\"font: bold 20pt Inconsolata, monospace; color: lightgray;\">Loading</p>\n  </div>`;\n  }\n\n  async showPart(partResource) {\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/star.json\")\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/button.json\")\n    // await this.showPart(partResource)\n    this.clear();\n    this.partName = partResource.name().replace(/\\.json$/, \"\");\n    this.snapshot = JSON.parse(await partResource.read());\n    this.partResource = partResource;\n    await this.addPreviewMorph();\n    this.addLabel();\n    this.getSubmorphNamed(\"remove-button\").visible = false;\n  }\n\n  async addPreviewMorph() {\n    let {snapshot: {preview}} = this;\n    if (typeof preview !== \"string\" || !preview) preview = \"no preview\";\n    return preview.startsWith(\"data:image/\") ?\n      await this.addImagePreviewMorph(preview) :\n      this.addHTMLPreviewMorph(preview);\n  }\n\n  async addImagePreviewMorph(dataURI) {\n    let {extent, partName} = this,\n        margin = 10,\n        {x: w, y: h} = extent,\n        edgeLength = Math.min(w-2*margin, h-2*margin),\n        borderWidth = 1,\n        previewSpec = {\n          name: \"image-preview\",\n          fill: null,\n          reactsToPointer: false,\n          imageUrl: dataURI,\n          nativeCursor: \"-webkit-grab\"\n        },\n        htmlPreview = this.getSubmorphNamed(\"html-preview\"),\n        preview = htmlPreview ? htmlPreview.replaceWith(new Image()) : this.addMorphBack(new Image());\n   Object.assign(preview, previewSpec);\n\n   preview.extent = await preview.determineNaturalExtent();\n   preview.scale = Math.min(edgeLength / preview.width, edgeLength / preview.height);\n   preview.center = pt(w/2, h/2);\n   preview.dropShadow = {color: Color.gray, blur: 5 / preview.scale};\n   return preview;\n  }\n\n  addHTMLPreviewMorph(html) {\n    let {extent, partName} = this,\n        margin = 10,\n        previewWidth = 100+2*margin,\n        previewHeight = 100+2*margin,\n        {x: w, y: h} = extent,\n        borderWidth = 1,\n        previewHTML = `<div style=\"width: 100%;\">`\n                    + `<div style=\"position: absolute; top: ${margin}px;`\n                    + `            left: ${margin + (w-previewWidth) / 2}px\">`\n                    + html\n                    + `</div>`,\n      previewSpec = {\n        name: \"html-preview\",\n        fill: null,\n        reactsToPointer: false,\n        html: previewHTML,\n        extent: pt(w, h),\n        // border: {width: 1, color: Color.gray, radius: 5},\n        nativeCursor: \"-webkit-grab\"\n      };\n    var preview = this.getSubmorphNamed(\"html-preview\") || this.addMorphBack(new HTMLMorph());\n    Object.assign(preview, previewSpec);\n    preview.domNode.style.pointerEvents = \"none\";\n    return preview;\n  }\n\n  addLabel() {\n    let {partName, width, height} = this\n    if (this.getSubmorphNamed('preview-label'))\n      this.getSubmorphNamed('preview-label').remove();\n    this.addMorph({\n      bottomCenter: pt(width/2, height-5),\n      type: 'label', fontSize: 12, fontColor: Color.gray.darker(),\n      fill: Color.gray.withA(.7), borderRadius: 10, padding: 4,\n      value: partName, name: 'preview-label'\n    });\n  }\n\n  onDragStart(evt) {\n    this.createAndGrabNewInstance();\n  }\n\n  async createAndGrabNewInstance() {\n    // FIXME\n    var hand = this.world().firstHand;\n    this.draggable = false;\n    this.env.eventDispatcher.eventState.draggedMorph = null;\n    let relativeGrabPos = this.localize(hand.position).scaleBy(1/this.width, 1/this.height);\n\n    try {\n      let {snapshot} = this,\n          preview = this.getSubmorphNamed('html-preview') || this.getSubmorphNamed('image-preview');\n      if (!preview.isImage) {\n        var previewDiv = preview.domNode.childNodes[0].childNodes[0].childNodes[0],\n            scale = 1 / (previewDiv.getBoundingClientRect().width / previewDiv.offsetWidth)\n      } else {\n        var scale = 1;\n      }\n      let grabbedPreview = preview.copy(),\n          naturalExtent = preview.isImage ? await preview.determineNaturalExtent() : preview.extent,\n          positionInHand = hand.localize(preview.globalBounds().center())\n      \n      hand.grab(grabbedPreview);\n      grabbedPreview.center = positionInHand;\n      // if the hand leaves or enters the parts bin's bounds\n      // toggle the loadPartWithPreview or assignCategory behavior\n      grabbedPreview.animate({\n         scale: 1,\n         center: positionInHand,\n         dropShadow: true,\n         duration: 300\n      });\n      connect(hand, 'drop', this, 'loadPartWithPreview', {\n        updater: function($upd, droppedMorph) {\n          if (grabbedPreview !== droppedMorph) return;\n          let l = LoadingIndicator.open(\"Loading part...\");\n          grabbedPreview.addMorph(l);\n          l.center = grabbedPreview.innerBounds().center();\n          this.disconnect();\n          $upd(snapshot, grabbedPreview, scale, relativeGrabPos);\n        },\n        varMapping: {LoadingIndicator, snapshot, grabbedPreview, scale, relativeGrabPos}\n      });\n\n    }\n    catch (e) { this.showError(e) }\n    finally { this.draggable = true; }\n  }\n\n  async loadPartWithPreview(snapshot, preview, scale, relativeGrabPos) {\n    try {\n      let part = await loadMorphFromSnapshot(snapshot);\n      if (!preview.owner) return;\n      $world.addMorph(part);\n      if (preview.owner.isHand) part.topLeft = part.extent.scaleByPt(relativeGrabPos).negated();\n      else part.center = preview.globalBounds().center();\n      preview.remove();\n    } catch (e) { this.showError(e); }\n  }\n\n  async interactivelyRemovePart() {\n    let {partName, partResource} = this,\n        really = await this.world().confirm(`Do you really want to remove part ${partName}?`, {requester: this.owner});\n    if (!really) return;\n    await partResource.remove();\n    if (this.owner.owner.isPartsBin) { this.remove(); }\n  }\n\n  onHoverIn(evt) {\n    let btn = this.getSubmorphNamed(\"remove-button\");\n    btn.bringToFront();\n    btn.visible = true;\n  }\n\n  onHoverOut(evt) {\n    let btn = this.getSubmorphNamed(\"remove-button\");\n    btn.visible = false;\n  }\n}\n\n"
+        "index.js": "import { Morph, show, Image, morph, Icon, HTMLMorph } from \"lively.morphic\";\nimport { Color, pt } from \"lively.graphics/index.js\";\nimport { connect, once, disconnect } from \"lively.bindings/index.js\";\nimport { resource } from \"lively.resources/index.js\";\nimport { loadMorphFromSnapshot } from \"lively.morphic/serialization.js\";\nimport LoadingIndicator from \"lively.morphic/components/loading-indicator.js\";\n\nexport default class Part_dash_item_dash_for_dash_partsbin extends Morph {\n\n  static get properties() {\n    return {\n      partName: {serialize: false},\n      partResource: {serialize: false},\n      snapshot: {serialize: false}\n    }\n  }\n\n  reset() {\n    connect(this.getSubmorphNamed(\"remove-button\"), 'fire', this, 'interactivelyRemovePart');\n  }\n\n  beforePublish() {\n    this.clear()\n  }\n\n  clear() {\n    this.snapshot = null;\n    this.partResource = null;\n    this.partName = \"\";\n    let label = this.getSubmorphNamed('preview-label'),\n        preview = this.getSubmorphNamed('html-preview'),\n        imagePreview = this.getSubmorphNamed('image-preview');\n    label && label.remove();\n    imagePreview && imagePreview.remove();\n    if (preview)\n      preview.html = `\n  <div style=\"display: flex;\n              align-items: center;\n              justify-content: center;\n              height: 100%;\n              background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))\">\n    <p style=\"font: bold 20pt Inconsolata, monospace; color: lightgray;\">Loading</p>\n  </div>`;\n  }\n\n  async showPart(partResource) {\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/star.json\")\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/button.json\")\n    // await this.showPart(partResource)\n    this.clear();\n    this.partName = partResource.name().replace(/\\.json$/, \"\");\n    this.snapshot = JSON.parse(await partResource.read());\n    this.partResource = partResource;\n    await this.addPreviewMorph();\n    this.addLabel();\n    this.getSubmorphNamed(\"remove-button\").visible = false;\n  }\n\n  async addPreviewMorph() {\n    let {snapshot: {preview}} = this;\n    if (typeof preview !== \"string\" || !preview) preview = \"no preview\";\n    return preview.startsWith(\"data:image/\") ?\n      await this.addImagePreviewMorph(preview) :\n      this.addHTMLPreviewMorph(preview);\n  }\n\n  async addImagePreviewMorph(dataURI) {\n    let {extent, partName} = this,\n        margin = 10,\n        {x: w, y: h} = extent,\n        edgeLength = Math.min(w-2*margin, h-2*margin),\n        borderWidth = 1,\n        previewSpec = {\n          name: \"image-preview\",\n          fill: null,\n          reactsToPointer: false,\n          imageUrl: dataURI,\n          nativeCursor: \"-webkit-grab\"\n        },\n        htmlPreview = this.getSubmorphNamed(\"html-preview\"),\n        preview = htmlPreview ? htmlPreview.replaceWith(new Image()) : this.addMorphBack(new Image());\n   Object.assign(preview, previewSpec);\n\n   preview.extent = await preview.determineNaturalExtent();\n   preview.scale = Math.min(edgeLength / preview.width, edgeLength / preview.height);\n   preview.center = pt(w/2, h/2);\n   preview.dropShadow = {color: Color.gray, blur: 5 / preview.scale};\n   return preview;\n  }\n\n  addHTMLPreviewMorph(html) {\n    let {extent, partName} = this,\n        margin = 10,\n        previewWidth = 100+2*margin,\n        previewHeight = 100+2*margin,\n        {x: w, y: h} = extent,\n        borderWidth = 1,\n        previewHTML = `<div style=\"width: 100%;\">`\n                    + `<div style=\"position: absolute; top: ${margin}px;`\n                    + `            left: ${margin + (w-previewWidth) / 2}px\">`\n                    + html\n                    + `</div>`,\n      previewSpec = {\n        name: \"html-preview\",\n        fill: null,\n        reactsToPointer: false,\n        html: previewHTML,\n        extent: pt(w, h),\n        // border: {width: 1, color: Color.gray, radius: 5},\n        nativeCursor: \"-webkit-grab\"\n      };\n    var preview = this.getSubmorphNamed(\"html-preview\") || this.addMorphBack(new HTMLMorph());\n    Object.assign(preview, previewSpec);\n    preview.domNode.style.pointerEvents = \"none\";\n    return preview;\n  }\n\n  addLabel() {\n    let {partName, width, height} = this\n    if (this.getSubmorphNamed('preview-label'))\n      this.getSubmorphNamed('preview-label').remove();\n    this.addMorph({\n      bottomCenter: pt(width/2, height-5),\n      type: 'label', fontSize: 12, fontColor: Color.gray.darker(),\n      fill: Color.gray.withA(.7), borderRadius: 10, padding: 4,\n      value: partName, name: 'preview-label'\n    });\n  }\n\n  onDragStart(evt) {\n    this.createAndGrabNewInstance();\n  }\n\n  async createAndGrabNewInstance() {\n    // FIXME\n    var hand = this.world().firstHand;\n    this.draggable = false;\n    this.env.eventDispatcher.eventState.draggedMorph = null;\n    let relativeGrabPos = this.localize(hand.position).scaleBy(1/this.width, 1/this.height);\n\n    try {\n      let {snapshot} = this,\n          preview = this.getSubmorphNamed('html-preview') || this.getSubmorphNamed('image-preview');\n      if (!preview.isImage) {\n        var previewDiv = preview.domNode.childNodes[0].childNodes[0].childNodes[0],\n            scale = 1 / (previewDiv.getBoundingClientRect().width / previewDiv.offsetWidth)\n      } else {\n        var scale = 1;\n      }\n      let grabbedPreview = preview.copy(),\n          naturalExtent = preview.isImage ? await preview.determineNaturalExtent() : preview.extent,\n          positionInHand = hand.localize(preview.globalBounds().center())\n      \n      hand.grab(grabbedPreview);\n      grabbedPreview.center = positionInHand;\n      // if the hand leaves or enters the parts bin's bounds\n      // toggle the loadPartWithPreview or assignCategory behavior\n      grabbedPreview.animate({\n         scale: 1,\n         center: positionInHand,\n         dropShadow: true,\n         duration: 300\n      });\n      connect(hand, 'drop', this, 'loadPartWithPreview', {\n        updater: function($upd, droppedMorph) {\n          if (grabbedPreview !== droppedMorph) return;\n          let l = LoadingIndicator.open(\"Loading part...\");\n          grabbedPreview.addMorph(l);\n          l.center = grabbedPreview.innerBounds().center();\n          this.disconnect();\n          $upd(snapshot, grabbedPreview, scale, relativeGrabPos);\n        },\n        varMapping: {LoadingIndicator, snapshot, grabbedPreview, scale, relativeGrabPos}\n      });\n\n    }\n    catch (e) { this.showError(e) }\n    finally { this.draggable = true; }\n  }\n\n  async loadPartWithPreview(snapshot, preview, scale, relativeGrabPos) {\n    try {\n      let part = await loadMorphFromSnapshot(snapshot);\n      if (!preview.owner) return;\n      $world.addMorph(part);\n      if (preview.owner.isHand) part.topLeft = part.extent.scaleByPt(relativeGrabPos).negated();\n      else part.center = preview.globalBounds().center();\n      preview.remove();\n      part.grabbable = true;\n    } catch (e) { this.showError(e); }\n  }\n\n  async interactivelyRemovePart() {\n    let {partName, partResource} = this,\n        really = await this.world().confirm(`Do you really want to remove part ${partName}?`, {requester: this.owner});\n    if (!really) return;\n    await partResource.remove();\n    if (this.owner.owner.isPartsBin) { this.remove(); }\n  }\n\n  onHoverIn(evt) {\n    let btn = this.getSubmorphNamed(\"remove-button\");\n    btn.bringToFront();\n    btn.visible = true;\n  }\n\n  onHoverOut(evt) {\n    let btn = this.getSubmorphNamed(\"remove-button\");\n    btn.visible = false;\n  }\n}\n\n"
       }
     }
   },
