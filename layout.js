@@ -247,6 +247,12 @@ class FloatLayout extends Layout {
 }
 
 export class VerticalLayout extends FloatLayout {
+  
+  constructor(props = {}) {
+    super(props);
+    // supported directions: "left", "centered"
+    this._align = props.align || "left";
+  }
 
   name() { return "Vertical" }
   description() { return "Assemble the submorphs in a vertically growing list." }
@@ -254,6 +260,9 @@ export class VerticalLayout extends FloatLayout {
   inspect(pointerId) {
     return new FlexLayoutHalo(this.container, pointerId);
   }
+
+  get align() { return this._align; }
+  set align(d) { this._align = d; this.apply(); }
 
   get autoResize() { return this._autoResize; }
   set autoResize(active) { this._autoResize = active; this.apply(); }
@@ -267,11 +276,13 @@ export class VerticalLayout extends FloatLayout {
   apply(animate = false) {
     if (this.active || !this.container) return;
     super.apply(animate);
+
     let {
           container,
           autoResize,
           resizeSubmorphs,
           spacing,
+          align,
           layoutableSubmorphs: submorphs
         } = this,
         pos = pt(spacing, spacing),
@@ -279,11 +290,13 @@ export class VerticalLayout extends FloatLayout {
 
     this.active = true;
     submorphs.forEach(m => {
+      let y = pos.y,
+          x = align === "centered" ? container.width/2 - m.width / 2 : pos.x
       if (animate) {
         const {duration, easing} = animate;
-        m.animate({topLeft: pos, duration, easing});
+        m.animate({topLeft: pt(x, y), duration, easing});
       } else {
-        m.topLeft = pos;
+        m.topLeft = pt(x, y);
       }
       pos = m.bottomLeft.addPt(pt(0, spacing));
       if (resizeSubmorphs)
