@@ -137,12 +137,15 @@ export class CompletionController {
     }
 
     return {
-       styleSheets: new StyleSheet({
-          ".ListItemMorph": {
-            fontFamily, fontSize
-          }
-        }),
-      fontFamily, fontSize,
+      styleSheets: new StyleSheet({
+        "[name=input]": {
+          fill: Color.transparent
+        },
+        ".ListItemMorph": {
+          fontFamily,
+          fontSize
+        }
+      }),      fontFamily, fontSize,
       position: bounds.topLeft(),
       extent: bounds.extent(),
       items, input: prefix,
@@ -185,13 +188,19 @@ export class CompletionController {
         menu = new FilterableList(spec),
         input = menu.inputMorph,
         list = menu.listMorph,
-        prefix = spec.input;
+        prefix = spec.input,
+        mask = menu.addMorph({
+          name: 'prefix mask',
+          bounds: input.textBounds() 
+        }, input);
 
+    connect(input, 'textString', mask, 'setBounds', {
+      converter: () => input.textBounds(),
+      varMapping: {input}
+    });
     connect(menu, "accepted", this, "insertCompletion", {
       updater: function($upd) {
-        let textToInsert,
-            customInsertionFn = null,
-            completion = this.sourceObj.selection;
+        let textToInsert, customInsertionFn = null, completion = this.sourceObj.selection;
         if (completion) {
           if (completion.prefix) prefix = completion.prefix;
           textToInsert = completion.completion;
@@ -200,7 +209,9 @@ export class CompletionController {
           textToInsert = this.sourceObj.inputMorph.textString;
         }
         $upd(textToInsert, prefix, customInsertionFn);
-      }, varMapping: {prefix}});
+      },
+      varMapping: {prefix}
+    });
     connect(menu, "accepted", menu, "remove");
     connect(menu, "canceled", menu, "remove");
     connect(menu, "remove", this.textMorph, "focus");
@@ -209,21 +220,21 @@ export class CompletionController {
     world.addMorph(menu);
 
     list.dropShadow = new ShadowObject({rotation: 45, distance: 2, blur: 2, color: Color.gray.darker()});
-    list.fill = Color.white.withA(.85);
+    list.fill = Color.white.withA(0.85);
     list.addStyleClass("hiddenScrollbar");
 
-    input.height = list.itemHeight
+    input.height = list.itemHeight;
     input.fixedHeight = true;
-    input.fill = Color.transparent;
-    input.defaultTextStyle = {backgroundColor: this.textMorph.fill};
     input.focus();
 
-    menu.get('padding').height = 0;
+    menu.get("padding").height = 0;
     menu.relayout();
     menu.selectedIndex = 0;
     if (prefix.length) {
       input.gotoDocumentEnd();
-      menu.moveBy(pt(-input.textBounds().width, 0));
+      menu.moveBy(pt(-input.textBounds().width + 2, 0));
+    } else {
+      menu.moveBy(pt(2, 0));
     }
     return menu;
   }
