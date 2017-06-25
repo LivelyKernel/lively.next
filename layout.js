@@ -6,6 +6,7 @@ import {
   TilingLayoutHalo
 } from "./halo/layout.js";
 import { isNumber } from "lively.lang/object.js";
+import { sortBy } from "lively.lang/array.js";
 
 
 class Layout {
@@ -44,7 +45,15 @@ class Layout {
   }
   
   get layoutableSubmorphs() {
-    return this.container.submorphs.filter(m => m.isLayoutable && !this.ignore.includes(m.name));
+    return sortBy(
+      this.container.submorphs.filter(
+        m => m.isLayoutable && !this.ignore.includes(m.name)),
+      m => this.layoutOrder(m));
+  }
+
+  layoutOrder(aMorph) {
+    // helps orderdSubmorphs order my morphs
+    return this.container.submorphs.indexOf(aMorph);
   }
 
   get submorphBoundsChanged() {
@@ -181,6 +190,7 @@ export class FillLayout extends Layout {
   }
 
   name() { return "Fill" }
+
   description() { return "Forces all submorphs to match the extent of their owner."}
 
   set spacing(spacing = 0) {
@@ -222,6 +232,7 @@ export class FillLayout extends Layout {
     this.active = false;
   }
 
+  layoutOrder(aMorph) { return aMorph.top; }
 }
 
 class FloatLayout extends Layout {
@@ -243,7 +254,8 @@ class FloatLayout extends Layout {
     }
     return false;
   }
-  
+
+  layoutOrder(aMorph) { return aMorph.left; }
 }
 
 export class VerticalLayout extends FloatLayout {
@@ -283,13 +295,13 @@ export class VerticalLayout extends FloatLayout {
           resizeSubmorphs,
           spacing,
           align,
-          layoutableSubmorphs: submorphs
+          layoutableSubmorphs
         } = this,
         pos = pt(spacing, spacing),
         maxWidth = 0;
 
     this.active = true;
-    submorphs.forEach(m => {
+    layoutableSubmorphs.forEach(m => {
       let y = pos.y,
           x = align === "centered" ? container.width/2 - m.width / 2 : pos.x
       if (animate) {
@@ -304,7 +316,7 @@ export class VerticalLayout extends FloatLayout {
       maxWidth = Math.max(m.bounds().width, maxWidth);
     });
 
-    if (autoResize && submorphs.length > 0) {
+    if (autoResize && layoutableSubmorphs.length > 0) {
       const newExtent = pt(maxWidth + 2 * spacing, pos.y);
       if (animate) {
         const {duration, easing} = animate;
@@ -316,7 +328,8 @@ export class VerticalLayout extends FloatLayout {
     this.lastBoundsExtent = this.container.bounds().extent();
     this.active = false;
   }
-   
+
+  layoutOrder(aMorph) { return aMorph.top; }
 }
 
 export class HorizontalLayout extends FloatLayout {
@@ -462,6 +475,9 @@ export class TilingLayout extends Layout {
         maxSubmorphWidth = this.getMinWidth();
     return Math.max(width, maxSubmorphWidth);
   }
+
+  layoutOrder(aMorph) { return aMorph.top; }
+
 }
 
 export class CenteredTilingLayout extends TilingLayout {
