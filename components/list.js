@@ -84,7 +84,9 @@ class ListItemMorph extends Label {
   }
 
   onMouseDown(evt) {
-    this.owner.owner.onItemMorphClicked(evt, this);
+    var {state: {clickCount}} = evt,
+        method = clickCount === 2 ? "onItemMorphDoubleClicked" : "onItemMorphClicked";
+    this.owner.owner[method](evt, this);
   }
 }
 
@@ -602,6 +604,8 @@ export class List extends Morph {
 
   onScroll() { this.update(); }
 
+  onItemMorphDoubleClicked(evt, itemMorph) {}
+
   onItemMorphClicked(evt, itemMorph) {
     var itemI = itemMorph.itemIndex,
         {selectedIndexes} = this,
@@ -918,6 +922,7 @@ export class FilterableList extends Morph {
     super(props);
     connect(this.inputMorph, "inputChanged", this, "updateFilter");
     connect(this.listMorph, "selection", this, "selectionChanged");
+    connect(this.listMorph, "onItemMorphDoubleClicked", this, "acceptInput");
     this.updateFilter();
     this.layout = new CustomLayout({relayout: () => this.relayout()});
   }
