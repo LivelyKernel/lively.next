@@ -1,5 +1,6 @@
+/*global Map*/
 import { Color, Rectangle, pt } from "lively.graphics";
-import { morph, StyleSheet, FilterableList } from "lively.morphic";
+import { morph, ShadowObject, StyleSheet, FilterableList } from "lively.morphic";
 import { connect } from "lively.bindings";
 import { arr, string } from "lively.lang";
 
@@ -203,12 +204,11 @@ export class CompletionController {
     connect(menu, "accepted", menu, "remove");
     connect(menu, "canceled", menu, "remove");
     connect(menu, "remove", this.textMorph, "focus");
-    connect(input, 'onBlur', menu, 'remove')
 
     var world = this.textMorph.world();
     world.addMorph(menu);
 
-    list.dropShadow = true;
+    list.dropShadow = new ShadowObject({rotation: 45, distance: 2, blur: 2, color: Color.gray.darker()});
     list.fill = Color.white.withA(.85);
     list.addStyleClass("hiddenScrollbar");
 
