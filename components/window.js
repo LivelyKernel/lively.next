@@ -71,9 +71,6 @@ export default class Window extends Morph {
           color: Color.gray.withA(0.5)
         }
       },
-      ".Window.inactive.minimized": {
-        fill: LinearGradient.create({0: Color.rgbHex('f8f9f9'), 1: Color.rgbHex('e5e8e8')})
-      },
       ".Window.active": {
         fill: Color.lightGray,
         dropShadow: {
@@ -83,9 +80,6 @@ export default class Window extends Morph {
           color: Color.black.withA(0.3),
           spread: 5
         }
-      },
-      ".Window.active.minimized": {
-        fill: LinearGradient.create({0: Color.rgbHex('e5e8e8'), 1: Color.rgbHex('b2babb')})
       }
     });
   }
