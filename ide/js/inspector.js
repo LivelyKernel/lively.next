@@ -699,7 +699,13 @@ export class PropertyControl extends Label {
 
   renderShadowControl(args) {
     this.control = new ShadowWidget({name: 'valueString', shadowValue: args.value});
-    connect(this.control, 'shadowValue', this, 'propertyValue');
+    connect(this.control, 'update', this, 'propertyValue');
+    connect(this, "update", this.control, "shadowValue", {
+      updater: function($upd, val) {
+        val = (val && val.valueOf ? val.valueOf() : val) || null;
+        if (this.targetObj.shadowValue != val) $upd(val);
+      }
+    });
     return this;
   }
 

@@ -555,7 +555,14 @@ export class ShadowWidget extends Morph {
 
   static get properties() {
     return {
-      shadowValue: {},
+      shadowValue: {
+        after: ['submorphs'],
+        defaultValue: null,
+        set(v) {
+          this.setProperty('shadowValue', v);
+          this.renderShadowDisplay();
+        }
+      },
       fill: {defaultValue: Color.transparent},
       nativeCursor: {defaultValue: 'pointer'},
       fontSize: {defaultValue: 12},
@@ -585,6 +592,10 @@ export class ShadowWidget extends Morph {
   }
 
   update() {
+   this.renderShadowDisplay();
+  }
+
+  renderShadowDisplay() {
     if (!this.shadowValue) {
       this.submorphs = [{opacity: .8, reactsToPointer: false, 
                          name: 'valueString', type: 'label', value: 'No Shadow'}];
@@ -593,7 +604,7 @@ export class ShadowWidget extends Morph {
     if (this.submorphs.length > 1) {
       this.updateShadowDisplay();
     } else {
-      this.initShadowDisplay()
+      this.initShadowDisplay();
     }
   }
 
