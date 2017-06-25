@@ -753,7 +753,7 @@ export class Hand extends Morph {
         console.error(err);
         this.world().showError(`Error dropping ${morph} onto ${dropTarget}:\n${err.stack}`);
         if (morph.owner !== dropTarget)
-          this.world.addMorph(dropTarget);
+          this.world().addMorph(dropTarget);
       }
     });
   }
