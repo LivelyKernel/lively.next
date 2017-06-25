@@ -1,4 +1,4 @@
-/*global declare, it, describe, beforeEach, afterEach*/
+/*global declare, it, describe, beforeEach, afterEach,System,xit*/
 import { expect } from "mocha-es6";
 import { promise } from "lively.lang";
 import { pt, Color } from "lively.graphics";
@@ -173,10 +173,10 @@ describe("pointer event related", function() {
       submorph2.grabbable = true;
       var morphPos = submorph2.globalPosition;
 
-      // grab
+      // grab 
       env.eventDispatcher.simulateDOMEvents(
         {type: "pointerdown", target: submorph2, position: morphPos.addXY(5,5)},
-        {type: "pointermove", target: submorph2, position: morphPos.addXY(10,10)});
+        {type: "pointermove", target: submorph2, position: morphPos.addXY(15,15)});
       assertEventLogContains([
         "onFocus-submorph2", "onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2",
         "onMouseMove-world", "onGrab-submorph2"]);
@@ -186,9 +186,11 @@ describe("pointer event related", function() {
       // drop
       env.eventDispatcher.simulateDOMEvents(
         {type: "pointermove", target: submorph2, position: morphPos.addXY(15,15)},
-        {type: "pointermove", target: submorph2, position: morphPos.addXY(20,20)},
-        {type: "pointerup", target: world, position: morphPos.addXY(20,20)});
-      assertEventLogContains(["onMouseMove-world", "onMouseMove-world", "onMouseUp-world", "onDrop-submorph1"]);
+        {type: "pointermove", target: submorph2, position: morphPos.addXY(25,25)},
+        {type: "pointerdown", target: world, position: morphPos.addXY(20,20)});
+      assertEventLogContains(["onMouseMove-world", "onMouseMove-world", 
+                              "onBlur-submorph2", "onFocus-submorph1", 
+                              "onMouseDown-world", "onDrop-submorph1"]);
       expect(world.hands[0].carriesMorphs()).equals(false);
       expect(submorph2.owner).equals(submorph1);
       expect(submorph2.position).equals({x: 15,y: 20});
@@ -208,16 +210,17 @@ describe("pointer event related", function() {
       world.renderAsRoot(env.renderer);
       env.eventDispatcher.simulateDOMEvents(
         {type: "pointerdown", target: m2, position: pt(60,60)},
-        {type: "pointermove", target: m2, position: (pt(65,65))});
+        {type: "pointermove", target: m2, position: pt(70,70)});
       expect(m2.globalPosition).equals(prevGlobalPos);
       expect(m2.owner).not.equals(world);
       env.eventDispatcher.simulateDOMEvents(
-        {type: "pointermove", target: m2, position: pt(50,50)});
-      expect(m2.globalPosition).equals(pt(45,45));
+        {type: "pointermove", target: m2, position: pt(50,50)},
+        {type: "pointerup", target: m2, position: pt(50,50)});
+      expect(m2.globalPosition).equals(pt(40,40));
       env.eventDispatcher.simulateDOMEvents(
-        {type: "pointerup", target: m1, position: (pt(2,2))});
+        {type: "pointerdown", target: m1, position: (pt(2,2))});
       expect(m2.owner).equals(world);
-      expect(m2.globalPosition).equals(pt(45,45));
+      expect(m2.globalPosition).equals(pt(40,40));
     });
 
   });
