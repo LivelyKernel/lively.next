@@ -1,3 +1,4 @@
+/*global System,WeakMap*/
 import { promise, obj, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
 import {
@@ -158,11 +159,7 @@ export class Renderer {
         h("canvas", {
           width: canvas.width,
           height: canvas.height,
-          style: {
-            "pointer-events": "none",
-            position: "absolute",
-            width: "100%", height: "100%"
-          },
+          style: {"pointer-events": "none", position: "absolute"},
           canvasHook: new CanvasHook(),
         }),
         this.renderSubmorphs(canvas)
