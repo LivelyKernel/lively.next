@@ -1857,6 +1857,7 @@ export class Morph {
   openMenu(items, optEvt) {
     return items && items.length ? this.world().openWorldMenu(optEvt, items) : null;
   }
+
   menuItems() {
     var world = this.world(),
         items = [], self = this;
@@ -1981,6 +1982,16 @@ export class Morph {
         [[...(this[propName] ? checked : unchecked), "  " + propName],
          () => this[propName] = !this[propName]]));
 
+    let connectionItems = this.connectionMenuItems();
+    if (connectionItems) {
+      items.push(["connections...", connectionItems]);
+    }
+
+    let connectItems = this.connectMenuItems();
+    if (connectItems) {
+      items.push(["connect...", connectItems]);
+    }
+
     // if (this.hasFixedPosition()) {
     //   morphicMenuItems[1].push(["set unfixed", function() {
     //     self.disableFixedPositioning();
@@ -1991,6 +2002,50 @@ export class Morph {
     //   }]);
     // }
 
+    return items;
+  }
+
+  connectionMenuItems() {
+    if (!this.attributeConnections || !this.attributeConnections.length) return null;
+    return this.attributeConnections.map(c => [String(c), [
+      ["show", async () => {
+        let { interactivelyShowConnection } = await System.import("lively.morphic/fabrik.js");
+        interactivelyShowConnection(c);
+      }],
+      ["edit", async () => {
+        let { interactivelyReEvaluateConnection } = await System.import("lively.morphic/fabrik.js");
+        interactivelyReEvaluateConnection(c)
+      }],
+      ["disconnect", () => { c.disconnect(); $world.setStatusMessage("disconnected " + c)}]
+    ]]);
+  }
+
+  sourceDataBindings() {
+    let props = this.propertiesAndPropertySettings().properties,
+        groupedProps = arr.groupByKey(Object.keys(props).map(
+          name => ({name, ...props[name]})), "group"),
+        customOrder = ["core", "geometry", "interaction", "styling", "layouting"],
+        sortedGroupedProps = [];
+
+    customOrder.forEach(ea => sortedGroupedProps.push(groupedProps[ea]));
+    arr.withoutAll(groupedProps.keys(), customOrder).forEach(
+      ea => sortedGroupedProps.push(groupedProps[ea]));
+    return sortedGroupedProps;
+  }
+
+  targetDataBindings() { return this.sourceDataBindings(); }
+
+  connectMenuItems() {
+    let bindings = this.sourceDataBindings(),
+        items = bindings.map(
+          group => [
+            group[0].group || "uncategorized",
+            group.map(ea => [
+              ea.name, async () => {
+                let { interactiveConnectGivenSource } = await System.import("lively.morphic/fabrik.js");
+                interactiveConnectGivenSource(this, ea.name);
+              }
+            ])]);
     return items;
   }
 
@@ -2013,7 +2068,7 @@ export class Morph {
        copy.position = this.transformPointToMorph(evt.hand, pt(0,0));
        evt.hand.grab(copy);
     } else {
-       evt.hand.grab(this); 
+       evt.hand.grab(this);
     }
   }
 
