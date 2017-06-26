@@ -277,7 +277,12 @@ class PropertyNode extends InspectionNode {
   refreshProperty(v, updateTarget = false) {
     if (updateTarget) this.target[this.key] = v;
     this.value = this.target[this.key];
-    signal(this._propertyWidget, 'update', this.value);
+    if (typeof this._propertyWidget == 'string') {
+      this._propertyWidget = `${this.keyString}: ${this.valueString = printValue(v)}`;
+      this.renderedNode.labelValue = this._propertyWidget;
+    } else {
+      signal(this._propertyWidget, 'update', this.value);
+    }
     if (this.isFoldable) {
       for (let m in this.foldedNodes) {
         this.foldedNodes[m].value = this.value[m];
@@ -1117,19 +1122,21 @@ export default class Inspector extends Morph {
       return;
     }
     let change = last(this.targetObject.env.changeManager.changesFor(this.targetObject));
-    if (change == this.lastChange) return;
+    if (change == this.lastChange && this.lastSubmorphs == printValue(this.targetObject && this.targetObject.submorphs)) 
+      return;
     if (this.focusedNode && this.focusedNode.keyString == change.prop) {
       this.repositionOpenWidget();
       return;
     }
     this.lastChange = change;
+    this.lastSubmorphs = printValue(this.targetObject && this.targetObject.submorphs)
     this.refreshTreeView()
   }
 
   refreshTreeView() {
     this.originalTreeData && this.originalTreeData.asListWithIndexAndDepth(false).forEach(({node}) => {
       let v = this.targetObject[node.key];
-      if (v != node.value && node.refreshProperty) {
+      if (!obj.equals(v, node.value) && node.refreshProperty) {
          node.refreshProperty(v);
       }
     });
