@@ -1675,7 +1675,6 @@ export class Morph {
 
   onMouseUp(evt) {}
   onMouseMove(evt) {}
-  onLongClick(evt) {}
 
   addKeyBindings(bindings) {
     this.addMethodCallChangeDoing({
