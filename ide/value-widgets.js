@@ -3,7 +3,7 @@ import { Morph, Text, morph, Label, HorizontalLayout,
 import { connect, signal } from "lively.bindings";
 import { Color, LinearGradient, pt, rect } from "lively.graphics";
 import { ValueScrubber } from "../components/widgets.js";
-import { FillPopover, IconPopover, RectanglePopover, ShadowPopover, PointPopover, VerticesPopover, LayoutPopover, Popover } from "./styling/style-popover.js";
+import { FillPopover, TextPopover, IconPopover, RectanglePopover, ShadowPopover, PointPopover, VerticesPopover, LayoutPopover, Popover } from "./styling/style-popover.js";
 import { num, obj } from "lively.lang";
 import { StyleSheetEditor } from "../style-rules.js";
 
@@ -753,6 +753,20 @@ export class StringWidget extends Text {
       borderWidth: {defaultValue: 1},
       padding: {defaultValue: rect(5,0,5,0)},
       opacity: {defaultValue: .8},
+      stringValue: {
+        after: ['textString'],
+        set(v) {
+          this.setProperty('stringValue', v);
+          this.textString = this.truncate(v);
+          this.nativeCursor = this.stringTooLong ? 'pointer' : 'auto';
+        }
+      },
+      stringTooLong: {
+        readOnly: true,
+        get() {
+          return this.stringValue.length > 200  
+        }
+      },
       isSelected: {
         defaultValue: 'false',
         set(v) {
@@ -763,17 +777,37 @@ export class StringWidget extends Text {
     }
   }
 
+  truncate(s) {
+    if (s.length > 200) {
+      return s.slice(1, 20) + "...";
+    } else {
+      return s;
+    }
+  }
+
   onFocus(evt) {
     super.onFocus(evt);
     if (this.readOnly) return;
+    if (this.stringTooLong) {
+      // open string edit widget instead
+      return this.openPopover();
+    }
     this.borderColor = Color.white.withA(.9);
+    this.textString = this.stringValue;
   }
 
   onBlur(evt) {
     super.onBlur(evt);
     if (this.readOnly) return;
     this.borderColor = Color.transparent;
-    this.textString = this.textString;
+    this.valueString = this.textString;
+  }
+
+  async openPopover() {
+    let textEditor = new TextPopover({text: this.stringValue});
+    await textEditor.fadeIntoWorld(this.globalBounds().center());
+    connect(textEditor, 'save', this, 'stringValue');
+    signal(this, 'openWidget', textEditor);
   }
   
 }

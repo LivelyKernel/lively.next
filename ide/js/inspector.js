@@ -639,10 +639,10 @@ export class PropertyControl extends Label {
   renderStringControl({value, node, keyString}) {
     this.control = new StringWidget({
       name: "valueString",
-      textString: value,
+      stringValue: value,
       readOnly: keyString == 'id'
     });
-    connect(this.control, "textString", this, "propertyValue");
+    connect(this.control, "stringValue", this, "propertyValue");
     connect(node, "isSelected", this.control, "isSelected");
     return this;
   }

@@ -1,4 +1,4 @@
-import { Morph, ShadowObject, GridLayout, TilingLayout, StyleSheet, CustomLayout, morph, HorizontalLayout, VerticalLayout } from "lively.morphic";
+import { Morph, config, Text, ShadowObject, GridLayout, TilingLayout, StyleSheet, CustomLayout, morph, HorizontalLayout, VerticalLayout } from "lively.morphic";
 import { ModeSelector, DropDownSelector, SearchField, CheckBox } from "../../components/widgets.js";
 import { connect, signal } from "lively.bindings";
 import { arr, string, obj } from "lively.lang";
@@ -904,4 +904,49 @@ export class RectanglePopover extends StylePopover {
       }
     ];  
   }
+}
+
+export class TextPopover extends StylePopover {
+
+  static get properties() {
+    return {
+      text: {defaultValue: 'Enter some text!'}
+    }
+  }
+
+  controls() {
+    let editor = new Text({
+            name: "editor",
+            extent: pt(300,200),
+            textString: this.text,
+            lineWrapping: "by-chars",
+            ...config.codeEditor.defaultStyle
+          });
+    return [{layout: new HorizontalLayout(),
+             fill: Color.transparent,
+             borderColor: Color.gray,
+             borderWidth: 1, borderRadius: 4,
+             clipMode: 'hidden',
+             submorphs: [editor]}]
+  }
+
+  get commands() {
+    return super.commands.concat([
+      {
+        name: "save string",
+        async exec(textPopover) {
+          textPopover.text = textPopover.get('editor').textString;
+          signal(textPopover, 'save', textPopover.text);
+          textPopover.setStatusMessage(`String saved!`, Color.green);
+        }
+      }
+    ]);
+  }
+
+  get keybindings() {
+    return super.keybindings.concat([
+      {keys: {mac: "Command-S", win: "Ctrl-S"}, command: "save string"}
+    ]);
+  }
+  
 }
