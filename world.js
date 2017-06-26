@@ -209,6 +209,24 @@ export class World extends Morph {
     }
   }
 
+  onLongClick(evt) {
+    var target = evt.state.prevClick.clickedOnMorph;
+    var haloTarget;
+
+    var morphsBelow = evt.world.morphsContainingPoint(evt.position),
+        morphsBelowTarget = morphsBelow.slice(morphsBelow.indexOf(target));
+    morphsBelow = morphsBelow.filter(ea => ea.halosEnabled);
+    morphsBelowTarget = morphsBelowTarget.filter(ea => ea.halosEnabled);
+    haloTarget = morphsBelowTarget[0] || morphsBelow[0];
+
+    var removeHalo = evt.halo && !evt.targetMorphs.find(morph => morph.isHaloItem),
+        removeLayoutHalo = evt.layoutHalo && !evt.targetMorphs.find(morph => morph.isHaloItem),
+        addHalo = (!evt.halo || removeHalo) && haloTarget;
+    if (removeLayoutHalo) evt.layoutHalo.remove();
+    if (removeHalo) evt.halo.remove();
+    if (addHalo) { evt.stop(); this.showHaloFor(haloTarget, evt.domEvt.pointerId); return; }
+  }
+
   onMouseWheel(evt) {
     // When holding shift pressed you can scroll around in the world without
     // scrolling an individual clipped morph that might be below the mouse cursor

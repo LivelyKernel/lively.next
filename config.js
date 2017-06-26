@@ -26,6 +26,7 @@ var config = {
   verboseLogging: true,
   maxStatusMessages: 5,
   repeatClickInterval: 250, // max time between clicks for double-, triple-click
+  longClick: {minDur: 500, maxDur: 1000, maxDist: 2}, // time and distance for long-click
   showTooltipsAfter: .8,
 
   ide: {

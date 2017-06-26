@@ -1,3 +1,4 @@
+/* global System */
 import { arr, promise } from "lively.lang";
 import { pt } from "lively.graphics";
 import config from "../config.js";
@@ -37,6 +38,7 @@ const typeToMethodMap = {
   "pointerdown":            "onMouseDown",
   "pointerup":              "onMouseUp",
   "pointermove":            "onMouseMove",
+  "longclick":              "onLongClick",
   "hoverin":                "onHoverIn",
   "hoverout":               "onHoverOut",
   "morphicdrag":            "onDrag",
@@ -317,6 +319,7 @@ export default class EventDispatcher {
 
           state.clickedOnMorph = targetMorph;
           state.clickedOnPosition = defaultEvent.position;
+          state.downTimeStamp = domEvt.timeStamp;
 
           let repeatedClick = false, prevClickCount = 0;
           if (state.prevClick) {
@@ -343,6 +346,15 @@ export default class EventDispatcher {
           if (touch) {
             this.world.removeHandForPointerId(pointerId);
           };
+
+          // long click
+          let clickDuration = domEvt.timeStamp - state.downTimeStamp,
+              dist = state.clickedOnPosition.dist(defaultEvent.position),
+              {maxDist, minDur, maxDur} = config.longClick;
+          if (dist < maxDist && clickDuration >= minDur && clickDuration <= maxDur) {
+            let evt = new Event("longclick", domEvt, this, eventTargets, hand, halo, layoutHalo);
+            this.schedule(evt);
+          }
         });
 
         // drag release

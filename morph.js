@@ -1,3 +1,4 @@
+/*global System,Uint8Array,Blob,location*/
 import { Color, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree, fun } from "lively.lang";
 import {
@@ -1675,6 +1676,7 @@ export class Morph {
 
   onMouseUp(evt) {}
   onMouseMove(evt) {}
+  onLongClick(evt) {}
 
   addKeyBindings(bindings) {
     this.addMethodCallChangeDoing({
