@@ -105,4 +105,5 @@ export async function interactivelyEvaluateConnection(
     );
   }
   $world.setStatusMessage("connected!", Color.green);
+  interactivelyShowConnection(result.value);
 }
