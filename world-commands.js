@@ -340,7 +340,7 @@ var commands = [
   {
     name: "open workspace",
     exec: async (world, opts = {}) => {
-      var language = "javascript",
+      var language = opts.language || "javascript",
           workspaceModules = {
             "javascript": "lively.morphic/ide/js/workspace.js",
             "shell": "lively.morphic/ide/shell/workspace.js",
