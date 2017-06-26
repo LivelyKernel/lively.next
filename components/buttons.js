@@ -148,8 +148,13 @@ export class Button extends Morph {
         },
         set(codeOrIconMorph) {
           this.setProperty('icon', codeOrIconMorph);
-          if (!this.iconMorph) return;
-          if (codeOrIconMorph && codeOrIconMorph.isMorph) {
+          if (!this.iconMorph) {
+            this.iconMorph = this.addMorph({
+              type: "label",
+              name: "icon",
+              value: ""
+            });
+          }          if (codeOrIconMorph && codeOrIconMorph.isMorph) {
             this.iconMorph = codeOrIconMorph;
           } else {
             this.iconMorph.value = codeOrIconMorph || "";
