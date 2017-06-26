@@ -1412,6 +1412,16 @@ export class MorphHighlighter extends Morph {
       styleClasses: {defaultValue: ['inactive']},
       reactsToPointer: {defaultValue: false},
       halo: {},
+      highlightedSides: {
+        defaultValue: [],
+        set(sides) {
+          this.setProperty('highlightedSides', sides);
+          this.alignWithHalo();
+          this.submorphs = sides.map(side => {
+            return {type: 'ellipse', fill: Color.orange, center: this.innerBounds()[side]()}
+          })
+        }
+      },
       showLayout: {defaultValue: false},
       styleSheets: {
         initialize() {
@@ -1444,13 +1454,14 @@ export class MorphHighlighter extends Morph {
     delete halo._morphHighlighters;
   }
 
-  static for(halo, morph, showLayout) {
+  static for(halo, morph, showLayout=false, highlightedSides=[]) {
     var store = (halo._morphHighlighters = halo._morphHighlighters || {});
     properties.forEachOwn(store, (_, h) => h.alignWithHalo());
     if (!morph || morph.ownerChain().find(owner => owner.isHaloItem)) return null;
     store[morph.id] =
       store[morph.id] ||
       halo.addMorph(new this({targetId: morph.id, halo, showLayout}));
+    store[morph.id].highlightedSides = highlightedSides;
     return store[morph.id];
   }
   
@@ -1480,6 +1491,7 @@ export class MorphHighlighter extends Morph {
       this.alignWithHalo();
     }
   }
+  
   handleDrop(morph) {
     this.layoutHalo && this.layoutHalo.handleDrop(morph);
   } 
