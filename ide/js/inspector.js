@@ -279,9 +279,12 @@ class PropertyNode extends InspectionNode {
     this.value = this.target[this.key];
     if (typeof this._propertyWidget == 'string') {
       this._propertyWidget = `${this.keyString}: ${this.valueString = printValue(v)}`;
-      this.renderedNode.labelValue = this._propertyWidget;
+      if (this.renderedNode) this.renderedNode.labelValue = this._propertyWidget;
     } else {
       signal(this._propertyWidget, 'update', this.value);
+      if (!updateTarget) {
+        this._propertyWidget.highlight();
+      }
     }
     if (this.isFoldable) {
       for (let m in this.foldedNodes) {
@@ -340,7 +343,7 @@ class FoldedNode extends PropertyNode {
     this.foldedProp = foldableNode.key + string.capitalize(this.key);
   }
 
-  refreshProperty(v, updateTarget) {
+  refreshProperty(v, updateTarget = false) {
     this.foldableNode.refreshProperty({...this.target[this.foldableNode.key], [this.key]: v}, updateTarget);
   }
 
@@ -783,11 +786,10 @@ export class PropertyControl extends Label {
 
   highlight() {
    if (this.highlighter) this.highlighter.remove();
-   const hl = this.highlighter = this.get('keyString').copy();
+   const hl = this.highlighter = this.addMorph(({type: 'label', name: 'valueString', value: this.keyString}))
    hl.isLayoutable = false;
    hl.fontWeight = "bold", hl.fontColor = Color.orange;
    hl.reactsToPointer = false;
-   this.addMorph(hl);
    hl.fadeOut(2000);
   }
 }
@@ -1134,8 +1136,13 @@ export default class Inspector extends Morph {
   }
 
   refreshTreeView() {
+    var v;
     this.originalTreeData && this.originalTreeData.asListWithIndexAndDepth(false).forEach(({node}) => {
-      let v = this.targetObject[node.key];
+      if (node.foldableNode) {
+        v = this.targetObject[node.foldableNode.key][node.key]; 
+      } else {
+        v = this.targetObject[node.key];
+      }
       if (!obj.equals(v, node.value) && node.refreshProperty) {
          node.refreshProperty(v);
       }
