@@ -1418,7 +1418,8 @@ export class MorphHighlighter extends Morph {
           this.setProperty('highlightedSides', sides);
           this.alignWithHalo();
           this.submorphs = sides.map(side => {
-            return {type: 'ellipse', fill: Color.orange, center: this.innerBounds()[side]()}
+            return {type: 'ellipse', isHaloItem: true, 
+                    fill: Color.orange, center: this.innerBounds()[side]()}
           })
         }
       },

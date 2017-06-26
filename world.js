@@ -773,8 +773,8 @@ export class Hand extends Morph {
         filterFn = typeof optFilterFn === "function"
           ? (m, i) =>
               !this.isAncestorOf(m) &&
-              m.acceptsDrops &&
-              grabbedMorphs.every(ea => ea.wantsToBeDroppedOn(m)) &&
+              m.acceptsDrops && !grabbedMorphs.includes(m)
+              && grabbedMorphs.every(ea => ea.wantsToBeDroppedOn(m)) &&
               optFilterFn(m, i)
           : m => !this.isAncestorOf(m) && m.acceptsDrops;
     return morphs.find(filterFn);
