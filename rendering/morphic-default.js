@@ -258,7 +258,7 @@ class StyleMapper {
 
   static getShadowStyle(morph) {
     if (morph.isSvgMorph || morph.isImage) return {filter: shadowCss(morph)};
-    return config.fastShadows
+    return (config.fastShadows || (morph.dropShadow && morph.dropShadow.inset))
       ? {
           boxShadow: morph.dropShadow ? morph.dropShadow.toCss() : "none"
         }
