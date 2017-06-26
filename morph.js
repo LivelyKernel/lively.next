@@ -16,6 +16,7 @@ import { TargetScript } from "./ticking.js";
 import { copyMorph } from "./serialization.js";
 import { isNumber, isString } from "lively.lang/object.js";
 import { capitalize } from "lively.lang/string.js";
+import { connect, once } from "lively.bindings";
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -26,11 +27,12 @@ export function newMorphId(classOrClassName) {
   return prefix + "_" + string.newUUID().replace(/-/g, "_");
 }
 
-function generateUnfolded(propName, members=['top', 'left', 'right', 'bottom']) {
+function generateUnfolded(propName, members=['top', 'left', 'right', 'bottom'], group = "core") {
   // generate the accessors for members of a folded property
   let propertyDeclarations = {};
   for (let m of members) {
     propertyDeclarations[propName + capitalize(m)] = {
+      group,
       derived: true,
       after: [propName],
       get() { return this.getProperty(propName)[m] },
@@ -54,14 +56,20 @@ export class Morph {
     return {
 
       name: {
+        group: "core",
         initialize() {
           let className = this.constructor.name;
           this.name = (string.startsWithVowel(className) ? "an" : "a") + className;
         }
       },
 
-      draggable: {isStyleProp: true, defaultValue: true},
+      draggable: {
+        group: "interaction",
+        isStyleProp: true, defaultValue: true
+      },
+
       grabbable: {
+        group: "interaction",
         isStyleProp: true,
         defaultValue: false,
         set(bool) {
@@ -72,8 +80,14 @@ export class Morph {
         }
       },
 
-      acceptsDrops: {isStyleProp: true, defaultValue: true},
+      acceptsDrops: {
+        group: "interaction",
+        isStyleProp: true,
+        defaultValue: true
+      },
+
       dropShadow: {
+        group: "styling",
         type: 'Shadow',
         isStyleProp: true,
         defaultValue: null,
@@ -86,9 +100,18 @@ export class Morph {
         }
       },
 
-      tooltip:            {defaultValue: null},
-      focusable:          {defaultValue: true},
+      tooltip:            {
+        group: "core",
+        defaultValue: null
+      },
+
+      focusable: {
+        group: "interaction",
+        defaultValue: true
+      },
+
       nativeCursor: {
+        group: "interaction",
         type: "Enum",
         values: [
           "auto",
@@ -131,107 +154,163 @@ export class Morph {
         isStyleProp: true,
         defaultValue: "auto"
       },
-      halosEnabled:       {isStyleProp: true, defaultValue: !!config.halosEnabled},
-      reactsToPointer:    {defaultValue: true},
 
-      position: {type: "Point", isStyleProp: true, defaultValue: pt(0, 0)},
-      origin:   {type: 'Point', isStyleProp: true, defaultValue: pt(0,0)},
-      extent:   {type: 'Point', isStyleProp: true, defaultValue: pt(10, 10)},
+      halosEnabled: {
+        group: "interaction",
+        isStyleProp: true,
+        defaultValue: !!config.halosEnabled
+      },
+
+      reactsToPointer: {
+        group: "interaction",
+        defaultValue: true
+      },
+
+      position: {
+        group: "geometry",
+        type: "Point", isStyleProp: true, defaultValue: pt(0, 0)
+      },
+
+      origin:   {
+        group: "geometry",
+        type: 'Point', isStyleProp: true, defaultValue: pt(0,0)
+      },
+
+      extent:   {
+        group: "geometry",
+        type: 'Point', isStyleProp: true, defaultValue: pt(10, 10)
+      },
+
       width: {
+        group: "geometry",
         derived: true, after: ['extent'], before: ['submorphs'],
         get()         { return this.extent.x; },
         set(v)        { return this.extent = pt(v, this.extent.y); }
       },
+
       height: {
+        group: "geometry",
         derived: true, after: ['extent'], before: ['submorphs'],
         get()        { return this.extent.y; },
         set(v)       { return this.extent = pt(this.extent.x, v); }
       },
+
       left: {
+        group: "geometry",
         derived: true, after: ['extent', 'submorphs'],
         get()          { return this.bounds().left(); },
         set(v)         { return this.moveBy(pt(v - this.left), 0); }
       },
+
       right: {
+        group: "geometry",
         derived: true, after: ['extent', 'submorphs'],
         get()         { return this.bounds().right(); },
         set(v)        { return this.moveBy(pt(v - this.right), 0); }
       },
       top: {
+        group: "geometry",
         derived: true, after: ['extent', 'submorphs'],
         get()           { return this.bounds().top(); },
         set(v)          { return this.moveBy(pt(0, v - this.top)); }
       },
       bottom: {
+        group: "geometry",
         derived: true, after: ['extent', 'submorphs'],
         get()        { return this.bounds().bottom(); },
         set(v)       { return this.moveBy(pt(0, v - this.bottom)); }
       },
       center: {
+        group: "geometry",
         derived: true, after: ['extent', 'submorphs'],
         get()        { return this.bounds().center(); },
         set(v)       { return this.align(this.center, v); }
       },
       topLeft: {
+        group: "geometry",
         derived: true, after: ['extent', 'submorphs'],
         get()       { return this.bounds().topLeft(); },
         set(v)      { return this.align(this.topLeft, v); }
       },
       topRight: {
+        group: "geometry",
         derived: true, after: ['extent', 'submorphs'],
         get()      { return this.bounds().topRight(); },
         set(v)     { return this.align(this.topRight, v); }
       },
       bottomRight: {
+        group: "geometry",
         derived: true, after: ['extent'],
         get()   { return this.bounds().bottomRight(); },
         set(v)  { return this.align(this.bottomRight, v); }
       },
       bottomLeft: {
+        group: "geometry",
         derived: true, after: ['extent', 'submorphs'],
         get()    { return this.bounds().bottomLeft(); },
         set(v)   { return this.align(this.bottomLeft, v); }
       },
       bottomCenter: {
+        group: "geometry",
         derived: true, after: ['extent', 'submorphs'],
         get()  { return this.bounds().bottomCenter(); },
         set(v) { return this.align(this.bottomCenter, v); }
       },
       topCenter: {
+        group: "geometry",
         derived: true, after: ['extent', 'submorphs'],
         get()     { return this.bounds().topCenter(); },
         set(v)    { return this.align(this.topCenter, v); }
       },
       leftCenter: {
+        group: "geometry",
         derived: true, after: ['extent', 'submorphs'],
           get()    { return this.bounds().leftCenter(); },
           set(v)   { return this.align(this.leftCenter, v); }
       },
       rightCenter: {
+        group: "geometry",
         derived: true, after: ['extent', 'submorphs'],
         get()   { return this.bounds().rightCenter(); },
         set(v)  { return this.align(this.rightCenter, v); }
       },
       rotation: {
+        group: "geometry",
         type: 'Number',
         isFloat: true,
-        isStyleProp: true, defaultValue:  0},
-      scale: {type: "Number", min: 0, isFloat: true,
-              isStyleProp: true, defaultValue: 1},
+        isStyleProp: true, defaultValue:  0
+      },
+
+      scale: {
+        group: "geometry",
+        type: "Number", min: 0,
+        isFloat: true,
+        isStyleProp: true, defaultValue: 1
+      },
+
       opacity: {
+        group: "styling",
         type: 'Number',
         min: 0,
         max: 1,
         isStyleProp: true, defaultValue: 1
       },
-      fill:               {
+
+      fill: {
+        group: "styling",
         type: 'ColorGradient',
         isStyleProp: true, defaultValue: Color.white
       },
-      visible:            {isStyleProp: true, defaultValue: true},
+
+      visible: {
+        group: "styling",
+        isStyleProp: true,
+        defaultValue: true
+      },
 
 
       submorphs: {
+        group: "core",
         defaultValue: [],
         after: ["isLayoutable", "origin", "position", "rotation", "scale"],
         get() { return (this.getProperty("submorphs") || []).slice(); },
@@ -248,6 +327,7 @@ export class Morph {
       },
 
       clipMode: {
+        group: "styling",
         type: 'Enum',
         values: ["visible", "hidden", "scroll", "auto"],
         isStyleProp: true,
@@ -259,6 +339,7 @@ export class Morph {
       },
 
       scroll: {
+        group: "geometry",
         defaultValue: pt(0, 0),
         type: 'Point',
         set({x, y}) {
@@ -271,9 +352,13 @@ export class Morph {
         }
       },
 
-      scrollbarOffset: {defaultValue: pt(15,15)},
+      scrollbarOffset: {
+        group: "styling",
+        defaultValue: pt(15,15)
+      },
 
       styleClasses: {
+        group: "styling",
         isStyleProp: true,
         defaultValue: ["morph"],
         get() {
@@ -285,6 +370,7 @@ export class Morph {
       },
 
       layout: {
+        group: "layouting",
         isStyleProp: true,
         type: 'Layout',
         after: ["submorphs", "extent", "origin", "position", "isLayoutable"],
@@ -293,9 +379,14 @@ export class Morph {
           this.setProperty("layout", value);
         }
       },
-      isLayoutable: {isStyleProp: true, defaultValue: true},
+
+      isLayoutable: {
+        group: "layouting",
+        isStyleProp: true, defaultValue: true
+      },
 
       borderLeft: {
+        group: "styling",
         isStyleProp: true,
         derived: true,
         after:   ["borderStyleLeft", "borderWidthLeft", "borderColorLeft"],
@@ -315,6 +406,7 @@ export class Morph {
       },
 
       borderRight: {
+        group: "styling",
         isStyleProp: true,
         derived: true,
         after:  ["borderStyleRight", "borderWidthRight", "borderColorRight"],
@@ -334,6 +426,7 @@ export class Morph {
       },
 
       borderBottom: {
+        group: "styling",
         isStyleProp: true,
         derived: true,
         after: ["borderStyleBottom", "borderWidthBottom", "borderColorBottom"],
@@ -353,6 +446,7 @@ export class Morph {
       },
 
       borderTop: {
+        group: "styling",
         isStyleProp: true,
         derived: true,
         after: ["borderStyleTop", "borderWidthTop", "borderColorTop"],
@@ -372,6 +466,7 @@ export class Morph {
       },
 
       borderWidth: {
+        group: "styling",
         isStyleProp: true,
         type: 'Number',
         foldable: ['top', 'left', 'right', 'bottom'],
@@ -390,9 +485,10 @@ export class Morph {
         }
       },
 
-      ...generateUnfolded('borderWidth'),
+      ...generateUnfolded('borderWidth', undefined, "styling"),
 
       borderRadius: {
+        group: "styling",
         isStyleProp: true,
         type: 'Number',
         min: 0,
@@ -420,9 +516,10 @@ export class Morph {
         }
       },
 
-      ...generateUnfolded('borderRadius'),
+      ...generateUnfolded('borderRadius', undefined, "styling"),
 
       borderStyle: {
+        group: "styling",
         isStyleProp: true,
         type: 'Enum',
         foldable: ['top', 'left', 'right', 'bottom'],
@@ -445,9 +542,10 @@ export class Morph {
         }
       },
 
-      ...generateUnfolded('borderStyle'),
+      ...generateUnfolded('borderStyle', undefined, "styling"),
 
       borderColor: {
+        group: "styling",
         isStyleProp: true,
         type: "Color",
         foldable: ["top", "left", "right", "bottom"],
@@ -468,9 +566,10 @@ export class Morph {
         }
       },
 
-      ...generateUnfolded('borderColor'),
+      ...generateUnfolded('borderColor', undefined, "styling"),
 
       border: {
+        group: "styling",
         isStyleProp: true,
         derived: true,
         after: ["borderStyle", "borderWidth", "borderColor"],
@@ -486,6 +585,7 @@ export class Morph {
       },
 
       styleSheets: {
+        group: "styling",
         before: ['submorphs'],
         type: 'StyleSheets',
         set(sheets) {
@@ -499,6 +599,7 @@ export class Morph {
       },
 
       styleProperties: {
+        group: "styling",
         derived: true, readOnly: true,
         get() {
           var p = this.propertiesAndPropertySettings().properties,
@@ -511,6 +612,7 @@ export class Morph {
       },
 
       style: {
+        group: "styling",
         derived: true, readOnly: true,
         get() {
           let styleProperties = this.styleProperties, style = {};
@@ -523,14 +625,18 @@ export class Morph {
       },
 
       epiMorph: {
+        group: "core",
         doc: "epi morphs are 'transient' morphs, i.e. meta objects that should not be serialized like halo items, menus, etc.",
         defaultValue: false
       },
-      respondsToVisibleWindow:  {
+
+      respondsToVisibleWindow: {
+        group: "interaction",
         doc: "Morphs will respond to changes in visible window and a call will be made to the morph's relayout function, supplying the event generated",
         defaultValue: false
-      },
+      }
     }
+
   }
 
   constructor(props) {
