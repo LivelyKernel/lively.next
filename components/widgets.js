@@ -23,6 +23,12 @@ import { MorphHighlighter } from "../halo/morph.js";
 class LeashEndpoint extends Ellipse {
 
   get dragTriggerDistance() { return this.connectedMorph ? 20 : 0 }
+
+  onDragStart(evt) {
+    let {lastDragPosition, clickedOnPosition} = evt.state;
+    evt.state.dragDelta = lastDragPosition.subPt(clickedOnPosition);
+    this.leash.onEndpointDrag(evt);
+  }
   
   onDrag(evt) {
     if (this.connectedMorph) {
