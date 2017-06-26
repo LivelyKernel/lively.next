@@ -7,7 +7,7 @@ import {
   morph
 } from "../index.js";
 import { Color, pt, rect, Rectangle, LinearGradient } from "lively.graphics";
-import { obj, properties, num, arr } from "lively.lang";
+import { obj, promise, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
 import { Icon } from "lively.morphic/components/icons.js";
 import { createMorphSnapshot } from "../serialization.js";
@@ -1504,6 +1504,68 @@ export class MorphHighlighter extends Morph {
     }
     this.styleClasses = ['inactive'];
     this.alignWithHalo();
+  }
+
+}
+
+export class InteractiveMorphSelector {
+
+  static selectMorph(world, controllingMorph) {
+    let sel = new this(world, controllingMorph);
+    sel.selectNewTarget();
+    return sel.whenDone;
+  }
+
+  constructor(world = $world, controllingMorph = null) {
+    this.controllingMorph = controllingMorph;
+    this.selectorMorph = null;
+    this.morphHighlighter = null;
+    this.possibleTarget = null;
+    this.world = world;
+    this.whenDone = null;
+  }
+
+  selectNewTarget() {
+    this.targetObject = null;
+    let deferred = promise.deferred();
+    deferred.promise.resolve = deferred.resolve;
+    this.whenDone = deferred.promise;
+    this.selectorMorph = Icon.makeLabel('crosshairs', {fontSize: 20}).openInWorld();
+    connect(this.world.firstHand, 'position', this, 'scanForTargetAt');
+    once(this.selectorMorph, 'onMouseDown', this, 'selectTarget');
+    once(this.selectorMorph, 'onKeyDown', this, 'stopSelect');
+    this.selectorMorph.focus();
+    this.scanForTargetAt(this.world.firstHand.position);
+  }
+
+  scanForTargetAt(pos) {
+    this.selectorMorph.center = pos;
+    var target = this.selectorMorph.morphBeneath(pos);
+    if (this.morphHighlighter == target) {
+      target = this.morphHighlighter.morphBeneath(pos);
+    }
+    if (target != this.possibleTarget
+        && (!this.controllingMorph
+         || !target.ownerChain().includes(this.controllingMorph.getWindow()))) {
+      if (this.morphHighlighter) this.morphHighlighter.deactivate();
+      this.possibleTarget = target;
+      if (this.possibleTarget && !this.possibleTarget.isWorld) {
+        let h = this.morphHighlighter = MorphHighlighter.for(this.world, target);
+        h && h.show();
+      }
+    }
+  }
+
+  selectTarget() {
+    this.targetObject = this.possibleTarget;
+    this.stopSelect();
+  }
+
+  stopSelect() {
+    MorphHighlighter.removeHighlightersFrom(this.world);
+    disconnect(this.world.firstHand, 'position', this, 'scanForTargetAt');
+    this.selectorMorph.remove();
+    this.whenDone && this.whenDone.resolve(this.targetObject);
   }
 
 }
