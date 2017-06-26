@@ -388,3 +388,16 @@ export class StatusMessageForMorph extends StatusMessage {
 
   onMouseUp(evt) {}
 }
+
+export function showConnector(morph1, morph2, delay = 3000) {
+  if (!morph1 || !morph1.world() ||!morph2 || !morph2.world()) return null;
+
+  let p1 = morph1.owner.worldPoint(morph1.center),
+      p2 = morph2.owner.worldPoint(morph2.center);
+
+  let path = $world.addMorph({
+    type: "path", vertices: [p1, p2], borderWidth: 2, borderColor: Color.red
+  })
+  if (delay) setTimeout(() => path.remove(), delay);
+  return path;
+}
