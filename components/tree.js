@@ -464,121 +464,134 @@ export class Tree extends Morph {
   update() {
     if (!this.treeData || !this.nodeItemContainer) return;
 
-    let {
-          treeData,
-          padding, scroll: {y: scrollY}, extent,
-          additionalRenderSpace,
-          defaultNodeMorphTextBounds, resizeNodes,
-          nodeMorphs, nodeItemContainer: container, selection
-        } = this,
-        {
-          width: defaultCharWidth,
-          height: defaultNodeHeight,
-          toggleWidth
-        } = defaultNodeMorphTextBounds,
-        visibleBottom = scrollY + extent.y + additionalRenderSpace,
-        visibleTop = scrollY - additionalRenderSpace,
-        nodes = treeData.asListWithIndexAndDepth(),
-        i = 1, y = padding.top(), x = padding.left(),
-        goalWidth = resizeNodes ? extent.x - (padding.left() + padding.right()) : null,
-        maxWidth = 0;
+    this.withMetaDo({isLayoutAction: true}, () => {
+      let {
+        treeData,
+        padding,
+        scroll: {y: scrollY},
+        extent,
+        additionalRenderSpace,
+        defaultNodeMorphTextBounds,
+        resizeNodes,
+        nodeMorphs,
+        nodeItemContainer: container,
+        selection
+      } = this,
+          {
+            width: defaultCharWidth,
+            height: defaultNodeHeight,
+            toggleWidth
+          } = defaultNodeMorphTextBounds,
+          visibleBottom = scrollY + extent.y + additionalRenderSpace,
+          visibleTop = scrollY - additionalRenderSpace,
+          nodes = treeData.asListWithIndexAndDepth(),
+          i = 1,
+          y = padding.top(),
+          x = padding.left(),
+          goalWidth = resizeNodes ? extent.x - (padding.left() + padding.right()) : null,
+          maxWidth = 0;
 
-    let dummyNodeMorph = new TreeNode(this.nodeStyle),
-        lineHeightCache = this._lineHeightCache || (this._lineHeightCache = [0/*root*/]);
+      let dummyNodeMorph = new TreeNode(this.nodeStyle),
+          lineHeightCache = this._lineHeightCache || (this._lineHeightCache = [0 /*root*/]);
 
-    // skip not visible notes out of scroll bounds
-    for (; i < nodes.length; i++) {
-      var height;
-      if (lineHeightCache[i]) {
-        height = lineHeightCache[i];
-      } else {
-        var node = nodes[i].node,
-            displayed = treeData.safeDisplay(node);
-        if (typeof displayed === "string") {
-          height = defaultNodeHeight;
-          maxWidth = Math.max(maxWidth, displayed.length*defaultCharWidth);
-        } else {
-          dummyNodeMorph.displayNode(
-            displayed, null,
-            pt(x+(toggleWidth+4)*(nodes[i].depth-1), y),
-            toggleWidth,
-            goalWidth,
-            false, true, true);
-
-          height = dummyNodeMorph.height;
-          maxWidth = Math.max(maxWidth, dummyNodeMorph.width);
-        }
-        lineHeightCache[i] = height;
-      }
-      if (y + height >= visibleTop) break;
-      y += height;
-    }
-
-    this.dontRecordChangesWhile(() => {
-      // render visible nodes
+      // skip not visible notes out of scroll bounds
       for (; i < nodes.length; i++) {
-        if (y >= visibleBottom) break;
-        var nodeMorph = nodeMorphs.shift();
-        if (!nodeMorph) {
-          nodeMorph = container.addMorph(new TreeNode(this.nodeStyle));
+        var height;
+        if (lineHeightCache[i]) {
+          height = lineHeightCache[i];
+        } else {
+          var node = nodes[i].node, displayed = treeData.safeDisplay(node);
+          if (typeof displayed === "string") {
+            height = defaultNodeHeight;
+            maxWidth = Math.max(maxWidth, displayed.length * defaultCharWidth);
+          } else {
+            dummyNodeMorph.displayNode(
+              displayed,
+              null,
+              pt(x + (toggleWidth + 4) * (nodes[i].depth - 1), y),
+              toggleWidth,
+              goalWidth,
+              false,
+              true,
+              true
+            );
+
+            height = dummyNodeMorph.height;
+            maxWidth = Math.max(maxWidth, dummyNodeMorph.width);
+          }
+          lineHeightCache[i] = height;
         }
-
-        var node = nodes[i].node;
-        nodeMorph.displayNode(
-          treeData.safeDisplay(node),
-          node,
-          pt(x+(toggleWidth+4)*(nodes[i].depth-1), y),
-          toggleWidth,
-          goalWidth,
-          node === selection,
-          !treeData.isLeaf(node),
-          treeData.isCollapsed(node));
-
-        var height = nodeMorph.height;
-        lineHeightCache[i] = height;
-        maxWidth = Math.max(maxWidth, nodeMorph.width);
-
+        if (y + height >= visibleTop) break;
         y += height;
       }
 
-      nodeMorphs.forEach(ea => ea.remove()); // remove invisible left overs
-    });
+      this.dontRecordChangesWhile(() => {
+        // render visible nodes
+        for (; i < nodes.length; i++) {
+          if (y >= visibleBottom) break;
+          var nodeMorph = nodeMorphs.shift();
+          if (!nodeMorph) {
+            nodeMorph = container.addMorph(new TreeNode(this.nodeStyle));
+          }
 
-    for (; i < nodes.length; i++) {
-      var height;
-      if (lineHeightCache[i]) {
-        height = lineHeightCache[i];
-      } else {
-        var node = nodes[i].node,
-            displayed = treeData.safeDisplay(node), height;
-        if (typeof displayed === "string") {
-          height = defaultNodeHeight;
-          maxWidth = Math.max(maxWidth, displayed.length*defaultCharWidth);
-        } else {
-          dummyNodeMorph.displayNode(
-            displayed, null,
-            pt(x+(toggleWidth+4)*(nodes[i].depth-1), y),
+          var node = nodes[i].node;
+          nodeMorph.displayNode(
+            treeData.safeDisplay(node),
+            node,
+            pt(x + (toggleWidth + 4) * (nodes[i].depth - 1), y),
             toggleWidth,
             goalWidth,
-            false, true, true);
-          height = dummyNodeMorph.height;
-          maxWidth = Math.max(maxWidth, dummyNodeMorph.width);
+            node === selection,
+            !treeData.isLeaf(node),
+            treeData.isCollapsed(node)
+          );
+
+          var height = nodeMorph.height;
+          lineHeightCache[i] = height;
+          maxWidth = Math.max(maxWidth, nodeMorph.width);
+
+          y += height;
         }
-        lineHeightCache[i] = height;
+
+        nodeMorphs.forEach(ea => ea.remove()); // remove invisible left overs
+      });
+
+      for (; i < nodes.length; i++) {
+        var height;
+        if (lineHeightCache[i]) {
+          height = lineHeightCache[i];
+        } else {
+          var node = nodes[i].node, displayed = treeData.safeDisplay(node), height;
+          if (typeof displayed === "string") {
+            height = defaultNodeHeight;
+            maxWidth = Math.max(maxWidth, displayed.length * defaultCharWidth);
+          } else {
+            dummyNodeMorph.displayNode(
+              displayed,
+              null,
+              pt(x + (toggleWidth + 4) * (nodes[i].depth - 1), y),
+              toggleWidth,
+              goalWidth,
+              false,
+              true,
+              true
+            );
+            height = dummyNodeMorph.height;
+            maxWidth = Math.max(maxWidth, dummyNodeMorph.width);
+          }
+          lineHeightCache[i] = height;
+        }
+        y += height;
       }
-      y += height;
-    }
 
-    if (lineHeightCache.length > i)
-      lineHeightCache.splice(i, lineHeightCache.length-i)
+      if (lineHeightCache.length > i) lineHeightCache.splice(i, lineHeightCache.length - i);
 
-    // resize container to allow scrolling
-    container.extent = pt(maxWidth, y+padding.bottom());
+      // resize container to allow scrolling
+      container.extent = pt(maxWidth, y + padding.bottom());
 
-    dummyNodeMorph.remove();
-
+      dummyNodeMorph.remove();
+    });
   }
-
   buildViewState(nodeIdFn) {
     if (typeof nodeIdFn !== "function")
       nodeIdFn = node => node;
@@ -799,12 +812,12 @@ export class TreeData {
     return this.asListWithIndexAndDepth().map(ea => ea.node);
   }
 
-  asListWithIndexAndDepth() {
+  asListWithIndexAndDepth(filterFn = false) {
     var nodesWithIndex = []
     tree.prewalk(this.root,
       (node, i, depth) => nodesWithIndex.push({node, depth, i}),
       (node) => this.getChildrenIfUncollapsed(node));
-    return nodesWithIndex;
+    return filterFn ? nodesWithIndex.filter(filterFn) : nodesWithIndex;
   }
 
   pathOf(node) {
@@ -881,6 +894,16 @@ export class TreeData {
       return this;
     } else {
       return treeData;
+    }
+  }
+
+  uncollapseAll(iterator, depth=0, node) {
+    if (!node) return this.uncollapseAll(iterator, depth, this.root);
+    if (iterator(node, depth)) {
+      node.isCollapsed && this.collapse(node, false);
+      for (let i in node.children) {
+        this.uncollapseAll(iterator, depth + 1, node.children[i]);
+      }
     }
   }
 
