@@ -88,6 +88,9 @@ class ListItemMorph extends Label {
         method = clickCount === 2 ? "onItemMorphDoubleClicked" : "onItemMorphClicked";
     this.owner.owner[method](evt, this);
   }
+  onDragStart(evt){
+    this.owner.owner['onDragStart'](evt,this)
+  }
 }
 
 var listCommands = [
