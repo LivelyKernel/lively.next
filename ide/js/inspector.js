@@ -14,7 +14,7 @@ import { GridLayout } from "../../layout.js";
 import { NumberWidget, StringWidget, IconWidget, PaddingWidget, VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
 import { RichTextControl } from "../../text/ui.js";
 import { Point } from "lively.graphics/geometry-2d.js";
-import { MorphHighlighter } from "../../halo/morph.js";
+import { MorphHighlighter, InteractiveMorphSelector } from "../../halo/morph.js";
 
 var inspectorCommands = [
 
@@ -1102,7 +1102,7 @@ export default class Inspector extends Morph {
       }
     ).catch(err => $world.logError(err));
 
-    connect(targetPicker,    'onMouseDown', this, 'selectNewTarget');
+    connect(targetPicker,    'onMouseDown', this, 'selectTarget');
     connect(propertyTree,    'onScroll',    this, 'repositionOpenWidget');
     connect(resizer,         'onDrag',      this, 'adjustProportions');
     connect(terminalToggler, 'onMouseDown', this, 'toggleCodeEditor');
@@ -1128,7 +1128,6 @@ export default class Inspector extends Morph {
       return;
     if (this.focusedNode && this.focusedNode.keyString == change.prop) {
       this.repositionOpenWidget();
-      return;
     }
     this.lastChange = change;
     this.lastSubmorphs = printValue(this.targetObject && this.targetObject.submorphs)
@@ -1239,45 +1238,11 @@ export default class Inspector extends Morph {
     ];
   }
 
-  selectNewTarget() {
-    this.ui.targetPicker.fontColor = Color.orange;
-    this.selectorMorph = Icon.makeLabel('crosshairs', {fontSize: 20}).openInWorld();
-    connect($world.firstHand, 'position', this, 'scanForTargetAt');
-    once(this.selectorMorph, 'onMouseDown', this, 'selectTarget');
-    once(this.selectorMorph, 'onKeyDown', this, 'stopSelect');
+  async selectTarget() {
     this.toggleSelectionInstructions(true);
-    this.selectorMorph.focus();
-    this.scanForTargetAt($world.firstHand.position);
-  }
-
-  scanForTargetAt(pos) {
-    this.selectorMorph.center = pos;
-    var target = this.selectorMorph.morphBeneath(pos);
-    if (this.morphHighlighter == target) {
-      target = this.morphHighlighter.morphBeneath(pos);
-    }
-    if (target != this.possibleTarget
-        && !target.ownerChain().includes(this.getWindow())) {
-      if (this.morphHighlighter) this.morphHighlighter.deactivate();
-      this.possibleTarget = target;
-      if (this.possibleTarget && !this.possibleTarget.isWorld) {
-        let h = this.morphHighlighter = MorphHighlighter.for($world, target);
-        h && h.show();
-      }
-    }
-  }
-
-  selectTarget() {
-    this.targetObject = this.possibleTarget;
-    this.stopSelect()
-  }
-
-  stopSelect() {
-    MorphHighlighter.removeHighlightersFrom($world);
+    let newTarget = await InteractiveMorphSelector.selectMorph();
     this.toggleSelectionInstructions(false);
-    this.ui.targetPicker.fontColor = Color.black;
-    disconnect($world.firstHand, 'position', this, 'scanForTargetAt');
-    this.selectorMorph.remove();
+    if (newTarget) this.targetObject = newTarget;
   }
 
   toggleSelectionInstructions(active) {
@@ -1308,6 +1273,7 @@ export default class Inspector extends Morph {
       this.instructionWidget = null;
     }
   }
+
   closeOpenWidget() {
     this.openWidget.close();
     disconnect(this.getWindow(), 'bringToFront', this.openWidget, 'openInWorld');
