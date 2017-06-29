@@ -21,7 +21,6 @@ class Layout {
     this.container = container;
     this.autoResize = autoResize != undefined ? autoResize : true;
     this.onScheduleApply = onScheduleApply || ((submorph, animation ,change) => {
-      if (animation) debugger;
     });
   }
 
@@ -699,7 +698,11 @@ class LayoutAxis {
 
   get frozen() { return this.origin.frozen[this.dimension] }
   set frozen(active) { this.origin.frozen[this.dimension] = active}
-
+  
+  set align(align) {
+    this.items.forEach(c => c.group.state.align = align);
+  }
+  
   get fixed() { return this.origin.fixed[this.dimension] }
   set fixed(active) {
     var newLength, containerLength;
@@ -1297,7 +1300,10 @@ export class GridLayout extends Layout {
       if (row.length < columnCount)
         row = row.concat(arr.withN(columnCount - row.length, null));
       return row.map(v => {
-        if (v && v.isMorph) return v;
+        if (v && v.isMorph) {
+          if (v.owner != this.container) this.container.addMorph(v);
+          return v;
+        }
         if (v) return this.container.getSubmorphNamed(v) || v;
         return v;
       })
