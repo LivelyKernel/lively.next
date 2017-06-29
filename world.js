@@ -587,7 +587,10 @@ export class World extends Morph {
       opts.customize(promptMorph);
 
     if (opts.animated) {
-       var animator = new Morph({
+      if (this.previousPrompt) {
+        this.previousPrompt.transitionTo(promptMorph)
+      } else {
+        var animator = new Morph({
           fill: Color.transparent, extent: pt(1,1),
           opacity: 0, center: this.center
        });
@@ -595,8 +598,10 @@ export class World extends Morph {
        animator.addMorph(promptMorph);
        animator.scale = 2;
        await animator.animate({scale: 1, opacity: 1, duration: 500});
-       animator.remove(); promptMorph.openInWorld();
+       animator.remove(); promptMorph.openInWorld(); 
+      }
     }
+    this.previousPrompt = promptMorph;
     return promise.finally(promptMorph.activate(opts), () => focused && focused.focus());
   }
 

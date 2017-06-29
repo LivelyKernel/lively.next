@@ -98,7 +98,8 @@ export async function interactivelyEvaluateConnection(
     input,
     historyId: "lively.bindings-interactive-morph-connect",
     mode: "js",
-    evalEnvironment
+    evalEnvironment,
+    animated: true
   });
   if (!source) { $world.setStatusMessage("connect canceled"); return; }
   let result = await lively.vm.runEval(source, evalEnvironment);
@@ -500,6 +501,7 @@ export class ConnectionInspector extends Window {
     });
     return morph({
         name: "controls",
+        reactsToPointer: false, 
         fill: Color.transparent,
         extent: pt(tree.nodeItemContainer.bounds().width, 300),
         layout: new GridLayout({

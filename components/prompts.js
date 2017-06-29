@@ -106,6 +106,32 @@ export class AbstractPrompt extends Morph {
     ]);
   }
 
+  async transitionTo(otherPrompt, duration = 500) {
+    // assumes to be working with prompts opened in world
+    let morphBox = morph({
+      fill: this.fill, 
+      borderRadius: this.borderRadius,
+    });
+    otherPrompt.opacity = 0;
+    otherPrompt.fill = Color.transparent;
+    otherPrompt.scale = otherPrompt.width / this.width;
+    otherPrompt.openInWorld();
+    this.fill = Color.transparent;
+    $world.addMorph(morphBox, this);
+    morphBox.setBounds(this.bounds());
+
+    otherPrompt.center = morphBox.center = this.center;
+
+    morphBox.whenRendered().then(async () => {
+      this.animate({scale: this.width / otherPrompt.width, opacity: 0, duration});
+      morphBox.animate({bounds: otherPrompt.bounds(), duration});
+      await otherPrompt.animate({scale: 1, opacity: 1, duration});
+      otherPrompt.fill = morphBox.fill;
+      morphBox.remove()
+      this.remove();
+    });
+  }
+
 }
 
 // $world.inform(lively.lang.arr.range(0,40).join("\n"))
