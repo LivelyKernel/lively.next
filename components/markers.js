@@ -4,6 +4,7 @@ import {pt, Color, Point, Rectangle, rect} from "lively.graphics";
 import {morph, StyleSheet, Morph, MorphicEnv, ShadowObject} from "lively.morphic";
 import {connect, disconnect} from "lively.bindings";
 import {Icon} from "./icons.js";
+import { Leash } from "./widgets.js";
 
 export function show(target) {
   var world = MorphicEnv.default().world;
@@ -393,11 +394,14 @@ export function showConnector(morph1, morph2, delay = 3000) {
   if (!morph1 || !morph1.world() ||!morph2 || !morph2.world()) return null;
 
   let p1 = morph1.owner.worldPoint(morph1.center),
-      p2 = morph2.owner.worldPoint(morph2.center);
+      p2 = morph2.owner.worldPoint(morph2.center),
+      midPoint = p1.lineTo(p2).sampleN(2)[1];
 
-  let path = $world.addMorph({
-    type: "path", vertices: [p1, p2], borderWidth: 2, borderColor: Color.red
-  })
-  if (delay) setTimeout(() => path.remove(), delay);
+  let path = $world.addMorph(new Leash({
+    vertices: [midPoint, midPoint], borderWidth: 2, 
+    endpointStyle: {fill: Color.red}, borderColor: Color.red
+  }))
+  path.animate({vertices: [p1, p2], duration: 400});
+  if (delay) setTimeout(() => path.fadeOut(), delay);
   return path;
 }
