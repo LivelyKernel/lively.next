@@ -808,29 +808,7 @@ class InspectorTreeData extends TreeData {
   }
 
   asListWithIndexAndDepth(filtered = true) {
-    let nodes = super.asListWithIndexAndDepth();
-    return filtered ? nodes.filter(({node}) => node.visible) : nodes;
-  }
-
-  static fromListWithDepthAndIndexes(nodes) {
-    // ensure that the nodes are sorted by index,
-    // or else the parent child relationship
-    // will be inferred incorrectly
-    var [root, ...nodes] = arr.sortBy(nodes, ({i}) => i);
-    root = root.node // create new node
-    root.children = [];
-    var stack = [], prev = root;
-    for(let {node, depth} of nodes) {
-      if (stack.length < depth) {
-        stack.push(prev);
-      }
-      if (stack.length > depth) {
-        stack.pop();
-      }
-      node.children = [];
-      stack[depth - 1].children.push(prev = node);
-    }
-    return new this(root)
+    return super.asListWithIndexAndDepth(({node}) => filtered ? node.visible : true);;
   }
 
   static forObject(obj) {
@@ -857,16 +835,6 @@ class InspectorTreeData extends TreeData {
   getChildren(node) { return node.children; }
 
   isLeaf(node) { return obj.isPrimitive(node.value); }
-
-  uncollapseAll(iterator, depth=0, node) {
-    if (!node) return this.uncollapseAll(iterator, depth, this.root);
-    if (iterator(node, depth)) {
-      node.isCollapsed && this.collapse(node, false);
-      for (let i in node.children) {
-        this.uncollapseAll(iterator, depth + 1, node.children[i]);
-      }
-    }
-  }
 
   filter({sorter, maxDepth = 1, iterator, showUnknown, showInternal}) {
     this.uncollapseAll(
