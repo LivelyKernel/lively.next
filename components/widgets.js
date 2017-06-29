@@ -442,7 +442,17 @@ export class LabeledCheckBox extends Morph {
   static get properties() {
     return {
       name: {defaultValue: "LabeledCheckBox"},
-      alignCheckBox: {defaultValue: "left"},
+      alignCheckBox: {
+        defaultValue: "left", 
+        type: 'Enum', 
+        values: ['left', 'right'],
+        set(v) {
+          this.layout = new HorizontalLayout({
+            direction: v == 'left' ? 'leftToRight' : 'rightToLeft'
+          });
+          this.setProperty('alignCheckBox', v);
+        }
+      },
       layout: {
         initialize() {
           this.layout = new HorizontalLayout({
@@ -479,7 +489,7 @@ export class LabeledCheckBox extends Morph {
           return this.checkboxMorph.active;
         },
         set(value) {
-          this.checkboxMorph.active;
+          this.checkboxMorph.active = value;
         }
       },
       labelMorph: {
@@ -771,7 +781,8 @@ export class SearchField extends Text {
               borderRadius: 15,
               borderWidth: 1,
               borderColor: Color.gray,
-              padding: rect(6, 3, 0, 0)
+              padding: rect(6, 3, 0, 0),
+              clipMode: 'hidden'
             },
             ".idle": {
               fontColor: Color.gray.darker()
