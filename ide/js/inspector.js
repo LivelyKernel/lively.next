@@ -426,7 +426,7 @@ class DraggedProp extends Morph {
   applyToTarget() {
     let {keyString, propertyValue} = this.control;
     this.remove();
-    MorphHighlighter.removeHighlightersFrom($world);
+    MorphHighlighter.removeHighlighters($world);
     if (this.currentTarget) this.currentTarget[keyString] = propertyValue;
   }
 

@@ -875,7 +875,7 @@ class GrabHaloItem extends HaloItem {
     halo.state.activeButton = null;
     halo.alignWithTarget();
     halo.toggleMorphHighlighter(false, prevDropTarget);
-    MorphHighlighter.removeHighlightersFrom(halo);
+    MorphHighlighter.removeHighlighters(halo);
     halo.target.undoStop("grab-halo");
     this.opacity = 1;
   }
@@ -1449,7 +1449,7 @@ export class MorphHighlighter extends Morph {
     }
   }
 
-  static removeHighlightersFrom(halo=$world) {
+  static removeHighlighters(halo=$world) {
     let store = halo._morphHighlighters;
     for (let id in store) { store[id].remove(); }
     delete halo._morphHighlighters;
@@ -1562,7 +1562,7 @@ export class InteractiveMorphSelector {
   }
 
   stopSelect() {
-    MorphHighlighter.removeHighlightersFrom(this.world);
+    MorphHighlighter.removeHighlighters(this.world);
     disconnect(this.world.firstHand, 'position', this, 'scanForTargetAt');
     this.selectorMorph.remove();
     this.whenDone && this.whenDone.resolve(this.targetObject);
