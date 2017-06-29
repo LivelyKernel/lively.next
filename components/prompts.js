@@ -398,8 +398,8 @@ export class EditPrompt extends AbstractPrompt {
     if (inputWidth > this.width-25)
       this.width = Math.min(this.maxWidth, inputWidth+25);
 
-    this.addMorph({name: "ok button", type: "button", label: "OK", ...this.okButtonStyle});
-    this.addMorph({name: "cancel button", type: "button", label: "Cancel", ...this.cancelButtonStyle});
+    this.addMorph({name: "ok button", type: "button", label: "OK", styleClasses: ['ok']});
+    this.addMorph({name: "cancel button", type: "button", label: "Cancel", styleClasses: ['cancel']});
 
     connect(this.getSubmorphNamed("ok button"), 'fire', this, 'resolve');
     connect(this.getSubmorphNamed("cancel button"), 'fire', this, 'reject');
@@ -423,12 +423,12 @@ export class EditPrompt extends AbstractPrompt {
     const l = this.layout = new GridLayout({
       columns: [
         0, {paddingLeft: 4},
-        1, {fixed: 100},
-        2, {paddingRight: 4, fixed: 100}
+        1, {fixed: 100, paddingRight: 2.5},
+        2, {paddingLeft: 2.5, paddingRight: 4, fixed: 100}
       ],
       rows: [
         0, {fixed: label.height, paddingBottom: 2.5},
-        2, {paddingTop: 2.5, paddingBottom: 2.5, fixed: 25},
+        2, {paddingTop: 5, paddingBottom: 5, fixed: 35},
       ],
       grid: [
         ["label", "label", "label"],

@@ -27,7 +27,13 @@ class LeashEndpoint extends Ellipse {
   onDragStart(evt) {
     let {lastDragPosition, clickedOnPosition} = evt.state;
     evt.state.dragDelta = lastDragPosition.subPt(clickedOnPosition);
+    evt.state.endpoint = this;
     this.leash.onEndpointDrag(evt);
+  }
+
+  canConnectTo(m) {
+    return !m.isWorld && !m.isHaloItem && this.leash.canConnectTo(m)
+            && !m.isHighlighter && !m.ownerChain().some(m => m.isHaloItem)
   }
   
   onDrag(evt) {
@@ -36,9 +42,8 @@ class LeashEndpoint extends Ellipse {
     } else {
       var m = evt.hand.findDropTarget(
         evt.hand.position,
-        [this, this.leash, ...(this.highlighter ? [this.highlighter] : [])],
-        m => !m.isWorld && !m.isHaloItem 
-             && !m.ownerChain().some(m => m.isHaloItem)
+        [this.leash, this.leash.endPoint, this.leash.startPoint],
+        m => this.canConnectTo(m)
       );
       if (this.possibleTarget != m && this.highlighter) this.highlighter.deactivate();
       this.possibleTarget = m;
@@ -55,7 +60,7 @@ class LeashEndpoint extends Ellipse {
   }
 
   onDragEnd() {
-    MorphHighlighter.removeHighlightersFrom();
+    MorphHighlighter.removeHighlighters();
     if (this.possibleTarget && this.closestSide) {
       this.attachTo(this.possibleTarget, this.closestSide);
     }
@@ -79,6 +84,9 @@ class LeashEndpoint extends Ellipse {
   }
 
   update(change) {
+    if (change 
+        && !["position", "extent", "rotation", "scale"].includes(change.prop) 
+        && change.target != this.connectedMorph) return;
     if (!this.connectedMorph) return;
     const globalPos = this.getConnectionPoint(), pos = this.leash.localize(globalPos);
     this.vertex = {...this.vertex, ...pos};
@@ -86,17 +94,20 @@ class LeashEndpoint extends Ellipse {
 
   clearConnection() {
     if (this.connectedMorph) {
-      ["position", "extent", "rotation", "scale"].forEach(prop => {
-        disconnect(this.connectedMorph, prop, this, "update");
-      });
+      disconnect(this.connectedMorph, 'onSubmorphChange', this, 'update');
       this.connectedMorph = null;
     }
   }
 
-  relayout() {
+  relayout(change) {
+    var anim;
     const {x, y} = this.vertex, bw = this.leash.borderWidth;
     //this.extent = this.pt((2*bw), (2 * bw));
-    this.center = pt(x + bw, y + bw);
+    if (anim = change && change.meta.animation) {
+      this.animate({center: pt(x + bw, y + bw), duration: anim.duration})
+    } else {
+      this.center = pt(x + bw, y + bw); 
+    }
   }
 
   attachTo(morph, side) {
@@ -107,9 +118,7 @@ class LeashEndpoint extends Ellipse {
       ...this.leash.vertices[this.index],
       controlPoints: this.leash.controlPointsFor(side, this)
     };
-    ['position', 'extent', 'rotation', 'scale'].forEach(prop => {
-      connect(this.connectedMorph, prop, this, "update");
-    })
+    connect(morph, 'onChange', this, "update");
     this.update();
     this.leash.openInWorld(this.leash.globalPosition);
   }
@@ -155,7 +164,11 @@ export class Leash extends Path {
     return {
       start: {},
       end: {},
+      canConnectTo: {
+        defaultValue: m => true
+      },
       reactsToPointer: {defaultValue: false},
+      wantsDroppedMorphs: {defaultValue: false},
       direction: {
          type: 'Enum',
          values: ['unidirectional', 'outward', 'inward'],
@@ -185,9 +198,8 @@ export class Leash extends Path {
             (this.startPoint = this.endpoint(0)),
             (this.endPoint = this.endpoint(1))
           ];
-          connect(this, "extent", this, "relayout");
-          connect(this, "position", this, "relayout");
-          this.whenRendered().then(() => this.updateEndpointStyles());
+          connect(this, "onChange", this, "relayout");
+          this.updateEndpointStyles()
         }
       }
     };
@@ -198,8 +210,8 @@ export class Leash extends Path {
   }
 
   updateEndpointStyles() {
-    Object.assign(this.startPoint, this.endpointStyle);
-    Object.assign(this.endPoint, this.endpointStyle);
+    Object.assign(this.startPoint, this.getEndpointStyle(0));
+    Object.assign(this.endPoint, this.getEndpointStyle(1));
     this.relayout();
   }
 
@@ -233,9 +245,10 @@ export class Leash extends Path {
     return {previous: next.scaleBy(100), next: next.negated().scaleBy(100)};
   }
 
-  relayout() {
-    this.startPoint.relayout();
-    this.endPoint.relayout();
+  relayout(change) {
+    if (change && !['vertices', 'position'].includes(change.prop)) return;
+    this.startPoint.relayout(change);
+    this.endPoint.relayout(change);
   }
 }
 

@@ -68,7 +68,7 @@ export default class Window extends Morph {
           rotation: 90,
           distance: 8,
           blur: 10,
-          color: Color.gray.withA(0.5)
+          color: Color.black.withA(0.1)
         }
       },
       ".Window.active": {
