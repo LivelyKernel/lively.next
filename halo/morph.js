@@ -11,6 +11,7 @@ import { obj, promise, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
 import { Icon } from "lively.morphic/components/icons.js";
 import { createMorphSnapshot } from "../serialization.js";
+import { ConnectionInspector } from "../fabrik.js";
 
 
 
@@ -48,7 +49,7 @@ export default class Halo extends Morph {
           [null,     null,   null,   null,  null,   null,   null     ],
           ["copy",   null,   null,   null,  null,   null,   "edit"   ],
           [null,     null,   null,   null,  null,   null,   null     ],
-          [null,  null,   null,   null,  null,   null,   "inspect"],
+          ["connections",  null,   null,   null,  null,   null,   "inspect"],
           [null,     null,   null,   null,  null,   null,   null     ],
           ["rotate", null,   null,   null,  null,   null,   "resize" ],
           [null,     "name", "name", "name","name", "name", null     ]]});
@@ -65,6 +66,7 @@ export default class Halo extends Morph {
         this.dragHalo(),
         this.grabHalo(),
         this.menuHalo(),
+        this.connectionHalo(),
         this.inspectHalo(),
         this.editHalo(),
         this.copyHalo(),
@@ -193,6 +195,7 @@ export default class Halo extends Morph {
   grabHalo() { return GrabHaloItem.for(this); }
   dragHalo() { return DragHaloItem.for(this); }
   menuHalo() { return MenuHaloItem.for(this); }
+  connectionHalo() { return ConnectionsHaloItem.for(this); }
   inspectHalo() { return InspectHaloItem.for(this); }
   editHalo() { return EditHaloItem.for(this); }
   rotateHalo() { return RotateHaloItem.for(this); }
@@ -1397,6 +1400,28 @@ class MenuHaloItem extends HaloItem {
 
 }
 
+class ConnectionsHaloItem extends HaloItem {
+
+  static get morphName() { return 'connections'; }
+
+  static get properties() {
+    return {
+      styleClasses: {
+        defaultValue: ['fa', 'fa-tencent-weibo']
+      },
+      tooltip: {defaultValue: "Manage this morph's connections"},
+      draggable: {defaultValue: false}
+    }
+  }
+
+  async onMouseDown(evt) {
+    let target = this.halo.target, connectionInspector = new ConnectionInspector({target});
+    this.halo.remove();
+    connectionInspector.fadeIntoWorld(target.globalBounds().center());
+  }
+  
+}
+
 
 
 // The orange thing that indicates a drop target when a grabbed morph is
@@ -1412,6 +1437,7 @@ export class MorphHighlighter extends Morph {
       styleClasses: {defaultValue: ['inactive']},
       reactsToPointer: {defaultValue: false},
       halo: {},
+      isHighlighter: {readOnly: true, defaultValue: true},
       highlightedSides: {
         defaultValue: [],
         set(sides) {
