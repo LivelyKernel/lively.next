@@ -1,7 +1,8 @@
-import { Morph, config, Text, ShadowObject, GridLayout, TilingLayout, StyleSheet, CustomLayout, morph, HorizontalLayout, VerticalLayout } from "lively.morphic";
-import { ModeSelector, DropDownSelector, SearchField, CheckBox } from "../../components/widgets.js";
+/*global target,connection*/
+import { Morph, Icon, config, Text, ShadowObject, GridLayout, TilingLayout, StyleSheet, CustomLayout, morph, HorizontalLayout, VerticalLayout } from "lively.morphic";
+import { ModeSelector, LabeledCheckBox, Leash, DropDownSelector, SearchField, CheckBox } from "../../components/widgets.js";
 import { connect, signal } from "lively.bindings";
-import { arr, string, obj } from "lively.lang";
+import { arr, promise, string, obj } from "lively.lang";
 import { Color, rect, Rectangle, pt } from "lively.graphics";
 import { GradientEditor } from "./gradient-editor.js";
 import { ColorPickerField } from "./color-picker.js";
@@ -10,6 +11,10 @@ import KeyHandler from "../../events/KeyHandler.js";
 import { NumberWidget } from "../value-widgets.js";
 import { range, flatten } from "lively.lang/array.js";
 import { SvgStyleHalo } from "../../halo/vertices.js";
+import { FilterableList } from "../../components/list.js";
+import { TreeData, Tree } from "../../components/tree.js";
+import { isArray } from "lively.lang/object.js";
+import Window from "../../components/window.js";
 
 const duration = 200;
 
@@ -24,6 +29,8 @@ export class Popover extends Morph {
         }
       },
       targetMorph: {
+        derived: true,
+        after: ['submorphs'],
         defaultValue: {
           extent: pt(200, 200),
           fill: Color.transparent,
@@ -34,6 +41,12 @@ export class Popover extends Morph {
               value: "No Target Specified"
             }
           ]
+        },
+        get() {
+          return this.get('body').submorphs[0]
+        },
+        set(m) {
+          this.get('body').addMorph(m);
         }
       },
       styleSheets: {
@@ -67,7 +80,6 @@ export class Popover extends Morph {
         }
       },
       submorphs: {
-        after: ["targetMorph"],
         initialize() {
           this.submorphs = [
             {
@@ -77,7 +89,7 @@ export class Popover extends Morph {
               extent: pt(20,20),
               vertices: [pt(-1, 0), pt(0, -0.5), pt(1, 0)]
             },
-            {name: "body", submorphs: [this.targetMorph]},
+            {name: "body"},
           ];
         }
       }
@@ -104,10 +116,10 @@ export class Popover extends Morph {
           fontWeight: 'bold'
         },
       ".NumberWidget": {
-            padding: rect(5,3,0,0),
-            borderRadius: 3,
-            borderWidth: 1,
-            borderColor: Color.gray,
+        padding: rect(5, 3, 0, 0),
+        borderRadius: 3,
+        borderWidth: 1,
+        borderColor: Color.gray
       },
       "[name=arrow]": {
         fill: this.popoverColor.isGradient ? 
@@ -228,9 +240,14 @@ class StylePopover extends Popover {
           this.targetMorph = morph({
             fill: Color.transparent,
             submorphs: this.controls()});
+          this.setupConnections();
         }
       }
     }  
+  }
+
+  setupConnections() {
+    // wire up signals and events to morphs
   }
 
   controls() {
@@ -244,46 +261,67 @@ export class IconPopover extends StylePopover {
 
   static get properties() {
     return {
-      popoverColor: {defaultValue: Color.gray.lighter()}
+      popoverColor: {defaultValue: Color.gray.lighter()},
+      ui: {
+        get() {
+          return {
+            searchInput: this.get('searchInput'),
+            iconList: this.get('iconList')
+          }
+        }
+      }
     };
   }
 
+  updateStyleSheet() {
+    super.updateStyleSheet();
+    this.styleSheets = [...this.styleSheets, new StyleSheet({
+        "[name=iconList]": {
+          padding: 8,
+          fill: Color.transparent,
+          fontFamily: "FontAwesome",
+          clipMode: "auto",
+          lineWrapping: "by-chars",
+          fontSize: 25,
+          textAlign: "justify",
+        }
+    })]
+  }
+
   controls() {
-    let width = 200, height = 200,
+    let width = 200,
+        height = 200,
         margin = 4,
-        searchBarHeight = 20,
-        controls = [
+        searchBarHeight = 20;
+    return [
+      {
+        draggable: false,
+        layout: new VerticalLayout({spacing: 4}),
+        fill: Color.transparent,
+        submorphs: [
           new SearchField({
-            name: "search-input",
+            name: "searchInput",
             width,
             placeHolder: "Search Icons"
           }),
           morph({
             textAndAttributes: this.iconAsTextAttributes(),
-            name: "icon-list",
+            name: "iconList",
             type: "text",
             extent: pt(width, height),
-            padding: Rectangle.inset(8),
-            fill: Color.transparent,
-            fontFamily: "FontAwesome",
             textStyleClasses: ["fa"],
-            clipMode: "auto",
-            lineWrapping: "by-chars",
-            fontSize: 25,
-            textAlign: "justify",
+            clipMode: 'auto',
             readOnly: true
           })
-        ];
+        ]
+      }
+    ];  
+  }
 
-    let [searchInput, iconList] = controls;
+  setupConnections() {
+    let {searchInput, iconList} = this.ui;
     connect(searchInput, "searchInput", this, "filterIcons");
     connect(iconList, "onMouseUp", this, "iconSelectClick");
-    return [{
-      draggable: false,
-      layout: new VerticalLayout({spacing: 4}),
-      fill: Color.transparent,
-      submorphs: controls
-    }];
   }
   
   iconAsTextAttributes(filterFn) {
@@ -298,24 +336,21 @@ export class IconPopover extends StylePopover {
   }
 
   filterIcons() {
-    let searchField = this.getSubmorphNamed("search-input");
-    this.getSubmorphNamed("icon-list").textAndAttributes = this.iconAsTextAttributes(name =>
-      searchField.matches(name.toLowerCase())
+    this.ui.iconList.textAndAttributes = this.iconAsTextAttributes(name =>
+      this.ui.searchInput.matches(name.toLowerCase())
     );
   }
   
   iconSelectClick(evt) {
     // let iconList = this.get("icon-list");
-    let iconList = this.getSubmorphNamed("icon-list"),
-        textPos = iconList.textPositionFromPoint(evt.positionIn(iconList)),
+    let textPos = this.ui.iconList.textPositionFromPoint(evt.positionIn(this.ui.iconList)),
         iconName = this.iconAtTextPos(textPos);
     this.setStatusMessage(iconName);
     signal(this, "select", iconName);
   }
 
   iconAtTextPos({row, column}) {
-    // let iconList = this.get("icon-list");
-    let iconList = this.getSubmorphNamed("icon-list"),
+    let iconList = this.ui.iconList,
         range = {start: {row, column: column-1}, end: {row, column: column+1}},
         found = iconList.textAndAttributesInRange(range);
     while (found.length) {
@@ -439,47 +474,73 @@ export class FillPopover extends StylePopover {
     return {
       gradientEnabled: {defaultValue: true},
       fillValue: {defaultValue: Color.blue},
-      popoverColor: {defaultValue: Color.gray.lighter()}
+      popoverColor: {defaultValue: Color.gray.lighter()},
+      ui: {
+        get() {
+          return {
+            colorField: this.get('colorField'),
+            fillSelector: this.get('fillSelector'),
+            gradientEditor: this.get("gradient editor")
+          }
+        }
+      }
     }
   }
 
-  getColorField(colorValue) {
-    const colorField = new ColorPickerField({
-      name: "colorPicker", colorValue
-    });
-    connect(this, 'close', colorField, 'remove');
-    connect(colorField, 'update', this, 'fillValue');
-    connect(this, "onMouseDown", colorField, "removeWidgets");
-    return colorField;
+  setupConnections() {
+    let {fillSelector, colorField, gradientEditor} = this.ui;
+    fillSelector && connect(this, 'fillValue', fillSelector, 'value');
+    gradientEditor && connect(gradientEditor, 'gradientValue', this, 'fillValue');
+    if (colorField) {
+      connect(this, 'close', colorField, 'remove');
+      connect(colorField, 'update', this, 'fillValue');
+      connect(this, "onMouseDown", colorField, "removeWidgets");
+    }
   }
   
   controls() {
     if (!this.gradientEnabled) {
-      return [{fill: Color.transparent,
-              layout: new VerticalLayout({spacing: 4}),
-              submorphs: [this.getColorField(this.fillValue)]}];
-    }
-    let selectedControl = this.fillValue && this.fillValue.isGradient ? "Gradient" : "Fill",
-        fillSelector = new SelectableControl({
-          value: this.fillValue,
-          selectedControl,
-          selectableControls: {
-            Fill: value => this.getColorField(value),
-            Gradient: value => {
-              const g = new GradientEditor({name: "gradient editor", gradientValue: value});
-              // g.gradientHandle && this.placeBehindMe(g.gradientHandle);
-              // connect(g, "openHandle", this, "placeBehindMe");
-              connect(g, "gradientValue", this, "fillValue");
-              (async () => {
-                await g.whenRendered();
-                g.update();
-              })();
-              return g;
-            }
+      return [
+        {
+          fill: Color.transparent,
+          layout: new VerticalLayout({spacing: 4}),
+          submorphs: [
+            new ColorPickerField({
+              name: "colorField",
+              colorValue: this.fillValue
+            })
+          ]
+        }
+      ];
+    }    
+    let selectedControl = this.fillValue && this.fillValue.isGradient ? "Gradient" : "Fill";
+    return [
+      new SelectableControl({
+        name: "fillSelector",
+        value: this.fillValue,
+        selectedControl,
+        selectableControls: {
+          Fill: value => {
+            let p = new ColorPickerField({
+              name: "colorField",
+              colorValue: value
+            });
+            p.whenRendered().then(() => {
+              this.setupConnections();
+            });
+            return p;
+          },
+          Gradient: value => {
+            const g = new GradientEditor({name: "gradient editor", gradientValue: value});
+            g.whenRendered().then(() => {
+              this.setupConnections();
+              g.update();
+            });
+            return g;
           }
-        });
-    connect(this, 'fillValue', fillSelector, 'value');
-    return [fillSelector];
+        }
+      })
+    ];  
   }
 }
 
