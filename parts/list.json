@@ -1,1 +1,3088 @@
-{"id":"List_A67CF8F9_0C56_4AE4_A26E_0F11FEC60B94","snapshot":{"List_A67CF8F9_0C56_4AE4_A26E_0F11FEC60B94":{"rev":12213,"props":{"_tickingScripts":{"key":"_tickingScripts","value":[]},"attributeConnections":{"key":"attributeConnections"},"clipMode":{"key":"clipMode","value":"auto"},"extent":{"key":"extent","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"},"name":{"key":"name","value":"a list 1"},"origin":{"key":"origin","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"position":{"key":"position","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(292.0,547.0)"},"scroll":{"key":"scroll","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,1.0)"},"styleClasses":{"key":"styleClasses","value":["List","Morph","morph"]},"submorphs":{"key":"submorphs","value":[{"__ref__":true,"id":"Morph_F497868F_0C5C_40B7_A845_0DD0444DA648","rev":7904}]},"borderColorBottom":{"key":"borderColorBottom","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"},"borderColorLeft":{"key":"borderColorLeft","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"},"borderColorRight":{"key":"borderColorRight","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"},"borderColorTop":{"key":"borderColorTop","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"},"borderWidthBottom":{"key":"borderWidthBottom","value":1},"borderWidthLeft":{"key":"borderWidthLeft","value":1},"borderWidthRight":{"key":"borderWidthRight","value":1},"borderWidthTop":{"key":"borderWidthTop","value":1},"morphClasses":{"key":"morphClasses","value":["list"]},"fontFamily":{"key":"fontFamily","value":"Helvetica Neue, Arial, sans-serif"},"fontSize":{"key":"fontSize","value":12},"padding":{"key":"padding","value":"__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(3,3,0,0)"},"itemPadding":{"key":"itemPadding","value":"__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"},"items":{"key":"items","value":[{"__ref__":true,"id":"F59325AB-AE18-4764-A5C7-D1BD5010501E","rev":0},{"__ref__":true,"id":"05D23E2A-7690-48BA-BEDA-4A659045CB93","rev":0},{"__ref__":true,"id":"8D7085A6-369A-4A27-8793-6E1E19A74944","rev":0},{"__ref__":true,"id":"B96D4935-0D70-477E-A532-FB5F965B391E","rev":0},{"__ref__":true,"id":"72E5DFB0-D776-4538-A926-36841098B613","rev":0},{"__ref__":true,"id":"F5468135-2CED-47C4-90BE-48DA782DC527","rev":0},{"__ref__":true,"id":"3441CCD7-2C88-4628-B7E0-D2B688ED7A8E","rev":0},{"__ref__":true,"id":"D3ED8B3B-9DC5-4392-80E4-5218144B6AC0","rev":0},{"__ref__":true,"id":"29964F1F-EA6E-4D7F-B0BC-0F931F9A9296","rev":0},{"__ref__":true,"id":"A4E0FBCF-8C33-4F11-BCAA-F37D28C824C7","rev":0}]},"multiSelect":{"key":"multiSelect","value":false},"selectedIndex":{"key":"selectedIndex","value":6},"selectedIndexes":{"key":"selectedIndexes","value":[6]},"selection":{"key":"selection","value":"item 6"},"selections":{"key":"selections","value":["item 6"]}},"lively.serializer-class-info":{"className":"List","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"components/list.js"}}},"Morph_F497868F_0C5C_40B7_A845_0DD0444DA648":{"rev":7904,"props":{"_tickingScripts":{"key":"_tickingScripts","value":[]},"attributeConnections":{"key":"attributeConnections"},"extent":{"key":"extent","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,166.0)"},"fill":{"key":"fill","value":null},"halosEnabled":{"key":"halosEnabled","value":false},"name":{"key":"name","value":"listItemContainer"},"position":{"key":"position","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(3.0,3.0)"},"styleClasses":{"key":"styleClasses","value":["Morph","morph"]},"submorphs":{"key":"submorphs","value":[{"__ref__":true,"id":"listitemmorph_8E5D96E3_311B_43B7_885C_D1217CF10450","rev":7906},{"__ref__":true,"id":"listitemmorph_C58900B6_6DE0_40B4_8324_10DFBD7B23DA","rev":7908},{"__ref__":true,"id":"listitemmorph_2AAD25AF_044A_4522_92AC_AD2D3E446A67","rev":7910},{"__ref__":true,"id":"listitemmorph_E3DC4C9A_59AB_4F41_8427_831CB7E4D445","rev":7912},{"__ref__":true,"id":"listitemmorph_A381F315_BF86_43FB_9BE1_BD40DCEC9D09","rev":7914},{"__ref__":true,"id":"listitemmorph_4256886D_AD8C_4C5A_96B3_88DC5DC1D04B","rev":7916},{"__ref__":true,"id":"listitemmorph_E3D80430_3F18_46C1_9E82_A4F4115323B4","rev":7918},{"__ref__":true,"id":"listitemmorph_3D0932E0_5B77_462B_9029_47CD12D3F67E","rev":7920},{"__ref__":true,"id":"listitemmorph_A6412E54_E6A7_4397_A9E3_8AC20A5C9E62","rev":12212}]}},"lively.serializer-class-info":{"className":"Morph","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"morph.js"}}},"listitemmorph_8E5D96E3_311B_43B7_885C_D1217CF10450":{"rev":7906,"props":{"_tickingScripts":{"key":"_tickingScripts","value":[]},"attributeConnections":{"key":"attributeConnections"},"draggable":{"key":"draggable","value":false},"extent":{"key":"extent","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,16.0)"},"fill":{"key":"fill","value":null},"nativeCursor":{"key":"nativeCursor","value":"default"},"origin":{"key":"origin","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"position":{"key":"position","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"scroll":{"key":"scroll","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"styleClasses":{"key":"styleClasses","value":["ListItemMorph","Label","Morph","morph"]},"tooltip":{"key":"tooltip","value":"item 0"},"submorphs":{"key":"submorphs","value":[]},"textAndAttributes":{"key":"textAndAttributes","value":[["item 0",{"__ref__":true,"id":"B65CD3E4-E47A-4B73-8672-3CB877C34A35","rev":0}]]},"autofit":{"key":"autofit","value":false},"padding":{"key":"padding","value":"__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"},"fontFamily":{"key":"fontFamily","value":"Helvetica Neue, Arial, sans-serif"},"fontSize":{"key":"fontSize","value":12},"fontColor":{"key":"fontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"},"fontWeight":{"key":"fontWeight","value":"normal"},"fontStyle":{"key":"fontStyle","value":"normal"},"textDecoration":{"key":"textDecoration","value":"none"},"itemIndex":{"key":"itemIndex","value":0},"selectionFontColor":{"key":"selectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"},"selectionColor":{"key":"selectionColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"},"nonSelectionFontColor":{"key":"nonSelectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"}},"lively.serializer-class-info":{"className":"ListItemMorph","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"components/list.js"}}},"B65CD3E4-E47A-4B73-8672-3CB877C34A35":{"rev":0,"props":{}},"listitemmorph_C58900B6_6DE0_40B4_8324_10DFBD7B23DA":{"rev":7908,"props":{"_tickingScripts":{"key":"_tickingScripts","value":[]},"attributeConnections":{"key":"attributeConnections"},"draggable":{"key":"draggable","value":false},"extent":{"key":"extent","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,16.0)"},"fill":{"key":"fill","value":null},"nativeCursor":{"key":"nativeCursor","value":"default"},"origin":{"key":"origin","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"position":{"key":"position","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,16.0)"},"scroll":{"key":"scroll","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"styleClasses":{"key":"styleClasses","value":["ListItemMorph","Label","Morph","morph"]},"tooltip":{"key":"tooltip","value":"item 1"},"submorphs":{"key":"submorphs","value":[]},"textAndAttributes":{"key":"textAndAttributes","value":[["item 1",{"__ref__":true,"id":"CF5FA435-68B5-459C-A456-862D76E03907","rev":0}]]},"autofit":{"key":"autofit","value":false},"padding":{"key":"padding","value":"__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"},"fontFamily":{"key":"fontFamily","value":"Helvetica Neue, Arial, sans-serif"},"fontSize":{"key":"fontSize","value":12},"fontColor":{"key":"fontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"},"fontWeight":{"key":"fontWeight","value":"normal"},"fontStyle":{"key":"fontStyle","value":"normal"},"textDecoration":{"key":"textDecoration","value":"none"},"itemIndex":{"key":"itemIndex","value":1},"selectionFontColor":{"key":"selectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"},"selectionColor":{"key":"selectionColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"},"nonSelectionFontColor":{"key":"nonSelectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"}},"lively.serializer-class-info":{"className":"ListItemMorph","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"components/list.js"}}},"CF5FA435-68B5-459C-A456-862D76E03907":{"rev":0,"props":{}},"listitemmorph_2AAD25AF_044A_4522_92AC_AD2D3E446A67":{"rev":7910,"props":{"_tickingScripts":{"key":"_tickingScripts","value":[]},"attributeConnections":{"key":"attributeConnections"},"draggable":{"key":"draggable","value":false},"extent":{"key":"extent","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,16.0)"},"fill":{"key":"fill","value":null},"nativeCursor":{"key":"nativeCursor","value":"default"},"origin":{"key":"origin","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"position":{"key":"position","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,32.0)"},"scroll":{"key":"scroll","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"styleClasses":{"key":"styleClasses","value":["ListItemMorph","Label","Morph","morph"]},"tooltip":{"key":"tooltip","value":"item 2"},"submorphs":{"key":"submorphs","value":[]},"textAndAttributes":{"key":"textAndAttributes","value":[["item 2",{"__ref__":true,"id":"BD794F49-ED5C-4418-8DBF-E81D5EE51E2D","rev":0}]]},"autofit":{"key":"autofit","value":false},"padding":{"key":"padding","value":"__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"},"fontFamily":{"key":"fontFamily","value":"Helvetica Neue, Arial, sans-serif"},"fontSize":{"key":"fontSize","value":12},"fontColor":{"key":"fontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"},"fontWeight":{"key":"fontWeight","value":"normal"},"fontStyle":{"key":"fontStyle","value":"normal"},"textDecoration":{"key":"textDecoration","value":"none"},"itemIndex":{"key":"itemIndex","value":2},"selectionFontColor":{"key":"selectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"},"selectionColor":{"key":"selectionColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"},"nonSelectionFontColor":{"key":"nonSelectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"}},"lively.serializer-class-info":{"className":"ListItemMorph","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"components/list.js"}}},"BD794F49-ED5C-4418-8DBF-E81D5EE51E2D":{"rev":0,"props":{}},"listitemmorph_E3DC4C9A_59AB_4F41_8427_831CB7E4D445":{"rev":7912,"props":{"_tickingScripts":{"key":"_tickingScripts","value":[]},"attributeConnections":{"key":"attributeConnections"},"draggable":{"key":"draggable","value":false},"extent":{"key":"extent","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,16.0)"},"fill":{"key":"fill","value":null},"nativeCursor":{"key":"nativeCursor","value":"default"},"origin":{"key":"origin","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"position":{"key":"position","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,48.0)"},"scroll":{"key":"scroll","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"styleClasses":{"key":"styleClasses","value":["ListItemMorph","Label","Morph","morph"]},"tooltip":{"key":"tooltip","value":"item 3"},"submorphs":{"key":"submorphs","value":[]},"textAndAttributes":{"key":"textAndAttributes","value":[["item 3",{"__ref__":true,"id":"22AD0143-3443-438D-A3AE-C67A02163F89","rev":0}]]},"autofit":{"key":"autofit","value":false},"padding":{"key":"padding","value":"__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"},"fontFamily":{"key":"fontFamily","value":"Helvetica Neue, Arial, sans-serif"},"fontSize":{"key":"fontSize","value":12},"fontColor":{"key":"fontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"},"fontWeight":{"key":"fontWeight","value":"normal"},"fontStyle":{"key":"fontStyle","value":"normal"},"textDecoration":{"key":"textDecoration","value":"none"},"itemIndex":{"key":"itemIndex","value":3},"selectionFontColor":{"key":"selectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"},"selectionColor":{"key":"selectionColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"},"nonSelectionFontColor":{"key":"nonSelectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"}},"lively.serializer-class-info":{"className":"ListItemMorph","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"components/list.js"}}},"22AD0143-3443-438D-A3AE-C67A02163F89":{"rev":0,"props":{}},"listitemmorph_A381F315_BF86_43FB_9BE1_BD40DCEC9D09":{"rev":7914,"props":{"_tickingScripts":{"key":"_tickingScripts","value":[]},"attributeConnections":{"key":"attributeConnections"},"draggable":{"key":"draggable","value":false},"extent":{"key":"extent","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,16.0)"},"fill":{"key":"fill","value":null},"nativeCursor":{"key":"nativeCursor","value":"default"},"origin":{"key":"origin","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"position":{"key":"position","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,64.0)"},"scroll":{"key":"scroll","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"styleClasses":{"key":"styleClasses","value":["ListItemMorph","Label","Morph","morph"]},"tooltip":{"key":"tooltip","value":"item 4"},"submorphs":{"key":"submorphs","value":[]},"textAndAttributes":{"key":"textAndAttributes","value":[["item 4",{"__ref__":true,"id":"691183FB-3E29-4025-8727-2446538635EF","rev":0}]]},"autofit":{"key":"autofit","value":false},"padding":{"key":"padding","value":"__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"},"fontFamily":{"key":"fontFamily","value":"Helvetica Neue, Arial, sans-serif"},"fontSize":{"key":"fontSize","value":12},"fontColor":{"key":"fontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"},"fontWeight":{"key":"fontWeight","value":"normal"},"fontStyle":{"key":"fontStyle","value":"normal"},"textDecoration":{"key":"textDecoration","value":"none"},"itemIndex":{"key":"itemIndex","value":4},"selectionFontColor":{"key":"selectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"},"selectionColor":{"key":"selectionColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"},"nonSelectionFontColor":{"key":"nonSelectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"}},"lively.serializer-class-info":{"className":"ListItemMorph","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"components/list.js"}}},"691183FB-3E29-4025-8727-2446538635EF":{"rev":0,"props":{}},"listitemmorph_4256886D_AD8C_4C5A_96B3_88DC5DC1D04B":{"rev":7916,"props":{"_tickingScripts":{"key":"_tickingScripts","value":[]},"attributeConnections":{"key":"attributeConnections"},"draggable":{"key":"draggable","value":false},"extent":{"key":"extent","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,16.0)"},"fill":{"key":"fill","value":null},"nativeCursor":{"key":"nativeCursor","value":"default"},"origin":{"key":"origin","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"position":{"key":"position","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,80.0)"},"scroll":{"key":"scroll","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"styleClasses":{"key":"styleClasses","value":["ListItemMorph","Label","Morph","morph"]},"tooltip":{"key":"tooltip","value":"item 5"},"submorphs":{"key":"submorphs","value":[]},"textAndAttributes":{"key":"textAndAttributes","value":[["item 5",{"__ref__":true,"id":"ADAF1F28-E5CB-478B-8116-3496506906B6","rev":0}]]},"autofit":{"key":"autofit","value":false},"padding":{"key":"padding","value":"__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"},"fontFamily":{"key":"fontFamily","value":"Helvetica Neue, Arial, sans-serif"},"fontSize":{"key":"fontSize","value":12},"fontColor":{"key":"fontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"},"fontWeight":{"key":"fontWeight","value":"normal"},"fontStyle":{"key":"fontStyle","value":"normal"},"textDecoration":{"key":"textDecoration","value":"none"},"itemIndex":{"key":"itemIndex","value":5},"selectionFontColor":{"key":"selectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"},"selectionColor":{"key":"selectionColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"},"nonSelectionFontColor":{"key":"nonSelectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"}},"lively.serializer-class-info":{"className":"ListItemMorph","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"components/list.js"}}},"ADAF1F28-E5CB-478B-8116-3496506906B6":{"rev":0,"props":{}},"listitemmorph_E3D80430_3F18_46C1_9E82_A4F4115323B4":{"rev":7918,"props":{"_tickingScripts":{"key":"_tickingScripts","value":[]},"attributeConnections":{"key":"attributeConnections"},"draggable":{"key":"draggable","value":false},"extent":{"key":"extent","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,16.0)"},"fill":{"key":"fill","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"},"nativeCursor":{"key":"nativeCursor","value":"default"},"origin":{"key":"origin","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"position":{"key":"position","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,96.0)"},"scroll":{"key":"scroll","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"styleClasses":{"key":"styleClasses","value":["ListItemMorph","Label","Morph","morph"]},"tooltip":{"key":"tooltip","value":"item 6"},"submorphs":{"key":"submorphs","value":[]},"textAndAttributes":{"key":"textAndAttributes","value":[["item 6",{"__ref__":true,"id":"B10076CD-0796-47A1-BE40-5BE2504FB5FC","rev":0}]]},"autofit":{"key":"autofit","value":false},"padding":{"key":"padding","value":"__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"},"fontFamily":{"key":"fontFamily","value":"Helvetica Neue, Arial, sans-serif"},"fontSize":{"key":"fontSize","value":12},"fontColor":{"key":"fontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"},"fontWeight":{"key":"fontWeight","value":"normal"},"fontStyle":{"key":"fontStyle","value":"normal"},"textDecoration":{"key":"textDecoration","value":"none"},"itemIndex":{"key":"itemIndex","value":6},"selectionFontColor":{"key":"selectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"},"selectionColor":{"key":"selectionColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"},"nonSelectionFontColor":{"key":"nonSelectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"}},"lively.serializer-class-info":{"className":"ListItemMorph","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"components/list.js"}}},"B10076CD-0796-47A1-BE40-5BE2504FB5FC":{"rev":0,"props":{}},"listitemmorph_3D0932E0_5B77_462B_9029_47CD12D3F67E":{"rev":7920,"props":{"_tickingScripts":{"key":"_tickingScripts","value":[]},"attributeConnections":{"key":"attributeConnections"},"draggable":{"key":"draggable","value":false},"extent":{"key":"extent","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,16.0)"},"fill":{"key":"fill","value":null},"nativeCursor":{"key":"nativeCursor","value":"default"},"origin":{"key":"origin","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"position":{"key":"position","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,112.0)"},"scroll":{"key":"scroll","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"styleClasses":{"key":"styleClasses","value":["ListItemMorph","Label","Morph","morph"]},"tooltip":{"key":"tooltip","value":"item 7"},"submorphs":{"key":"submorphs","value":[]},"textAndAttributes":{"key":"textAndAttributes","value":[["item 7",{"__ref__":true,"id":"F3991509-9071-485D-8AEE-B7D266C2D0D4","rev":0}]]},"autofit":{"key":"autofit","value":false},"padding":{"key":"padding","value":"__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"},"fontFamily":{"key":"fontFamily","value":"Helvetica Neue, Arial, sans-serif"},"fontSize":{"key":"fontSize","value":12},"fontColor":{"key":"fontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"},"fontWeight":{"key":"fontWeight","value":"normal"},"fontStyle":{"key":"fontStyle","value":"normal"},"textDecoration":{"key":"textDecoration","value":"none"},"itemIndex":{"key":"itemIndex","value":7},"selectionFontColor":{"key":"selectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"},"selectionColor":{"key":"selectionColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"},"nonSelectionFontColor":{"key":"nonSelectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"}},"lively.serializer-class-info":{"className":"ListItemMorph","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"components/list.js"}}},"F3991509-9071-485D-8AEE-B7D266C2D0D4":{"rev":0,"props":{}},"listitemmorph_A6412E54_E6A7_4397_A9E3_8AC20A5C9E62":{"rev":12212,"props":{"_tickingScripts":{"key":"_tickingScripts","value":[]},"attributeConnections":{"key":"attributeConnections"},"draggable":{"key":"draggable","value":false},"extent":{"key":"extent","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,16.0)"},"fill":{"key":"fill","value":null},"nativeCursor":{"key":"nativeCursor","value":"default"},"origin":{"key":"origin","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"position":{"key":"position","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,128.0)"},"scroll":{"key":"scroll","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"styleClasses":{"key":"styleClasses","value":["ListItemMorph","Label","Morph","morph"]},"tooltip":{"key":"tooltip","value":"item 8"},"submorphs":{"key":"submorphs","value":[]},"textAndAttributes":{"key":"textAndAttributes","value":[["item 8",{"__ref__":true,"id":"D2CE1F7E-D7BF-4B13-B32D-7E3DB6F1A00F","rev":0}]]},"autofit":{"key":"autofit","value":false},"padding":{"key":"padding","value":"__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"},"fontFamily":{"key":"fontFamily","value":"Helvetica Neue, Arial, sans-serif"},"fontSize":{"key":"fontSize","value":12},"fontColor":{"key":"fontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"},"fontWeight":{"key":"fontWeight","value":"normal"},"fontStyle":{"key":"fontStyle","value":"normal"},"textDecoration":{"key":"textDecoration","value":"none"},"itemIndex":{"key":"itemIndex","value":8},"selectionFontColor":{"key":"selectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"},"selectionColor":{"key":"selectionColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"},"nonSelectionFontColor":{"key":"nonSelectionFontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"}},"lively.serializer-class-info":{"className":"ListItemMorph","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"components/list.js"}}},"D2CE1F7E-D7BF-4B13-B32D-7E3DB6F1A00F":{"rev":0,"props":{}},"F59325AB-AE18-4764-A5C7-D1BD5010501E":{"rev":0,"props":{"_rev":{"key":"_rev","value":0},"isListItem":{"key":"isListItem","value":true},"string":{"key":"string","value":"item 0"},"value":{"key":"value","value":"item 0"}}},"05D23E2A-7690-48BA-BEDA-4A659045CB93":{"rev":0,"props":{"_rev":{"key":"_rev","value":0},"isListItem":{"key":"isListItem","value":true},"string":{"key":"string","value":"item 1"},"value":{"key":"value","value":"item 1"}}},"8D7085A6-369A-4A27-8793-6E1E19A74944":{"rev":0,"props":{"_rev":{"key":"_rev","value":0},"isListItem":{"key":"isListItem","value":true},"string":{"key":"string","value":"item 2"},"value":{"key":"value","value":"item 2"}}},"B96D4935-0D70-477E-A532-FB5F965B391E":{"rev":0,"props":{"_rev":{"key":"_rev","value":0},"isListItem":{"key":"isListItem","value":true},"string":{"key":"string","value":"item 3"},"value":{"key":"value","value":"item 3"}}},"72E5DFB0-D776-4538-A926-36841098B613":{"rev":0,"props":{"_rev":{"key":"_rev","value":0},"isListItem":{"key":"isListItem","value":true},"string":{"key":"string","value":"item 4"},"value":{"key":"value","value":"item 4"}}},"F5468135-2CED-47C4-90BE-48DA782DC527":{"rev":0,"props":{"_rev":{"key":"_rev","value":0},"isListItem":{"key":"isListItem","value":true},"string":{"key":"string","value":"item 5"},"value":{"key":"value","value":"item 5"}}},"3441CCD7-2C88-4628-B7E0-D2B688ED7A8E":{"rev":0,"props":{"_rev":{"key":"_rev","value":0},"isListItem":{"key":"isListItem","value":true},"string":{"key":"string","value":"item 6"},"value":{"key":"value","value":"item 6"}}},"D3ED8B3B-9DC5-4392-80E4-5218144B6AC0":{"rev":0,"props":{"_rev":{"key":"_rev","value":0},"isListItem":{"key":"isListItem","value":true},"string":{"key":"string","value":"item 7"},"value":{"key":"value","value":"item 7"}}},"29964F1F-EA6E-4D7F-B0BC-0F931F9A9296":{"rev":0,"props":{"_rev":{"key":"_rev","value":0},"isListItem":{"key":"isListItem","value":true},"string":{"key":"string","value":"item 8"},"value":{"key":"value","value":"item 8"}}},"A4E0FBCF-8C33-4F11-BCAA-F37D28C824C7":{"rev":0,"props":{"_rev":{"key":"_rev","value":0},"isListItem":{"key":"isListItem","value":true},"string":{"key":"string","value":"item 9"},"value":{"key":"value","value":"item 9"}}}},"packages":{},"preview":"data:image/png;base64,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"}
+{
+  "id": "List_B1830680_3141_42AF_A1A7_D84F921492B1",
+  "snapshot": {
+    "List_B1830680_3141_42AF_A1A7_D84F921492B1": {
+      "rev": 109374,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "a list 1"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(207.6,1193.2)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Morph_788EA78E_36E5_4CDD_B48C_44D0C97F37E3",
+              "rev": 106525
+            }
+          ]
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.9)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "List",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "FFD31AF2-F5D6-4735-8076-F7BE64B03708",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "98B13CD8-1339-45BF-BAFB-B52600F9416B",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "575EEE0C-8AF8-4D0C-8467-F7040A85FFBE",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "388B8AC6-D208-4B78-BA3E-54D05AFEA41F",
+            "rev": 0
+          }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "2F20679D-0BC4-4580-920D-746C0B534AC4",
+              "rev": 0
+            }
+          ]
+        },
+        "nonSelectionFontColor": {
+          "key": "nonSelectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(3,3,0,0)"
+        },
+        "itemPadding": {
+          "key": "itemPadding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"
+        },
+        "items": {
+          "key": "items",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "8C31904F-B8C8-4449-8B9B-FA6ABBC2EA01",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "CF8DC7BB-3F99-4356-B849-09E10D6E4512",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "36B1E523-AA73-4BAC-A4E4-97DB66B0129B",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "7658CE30-25E1-4929-93A2-0C06CD12F37E",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "B2C807E6-2B8E-4BFC-919F-E1F5649F5B29",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "424B42AC-E249-4B0F-94FC-4A8302C940EF",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "F6D449B6-467D-46A6-B654-5DA4BD983616",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "9757E6BC-B51C-458F-8613-AD291623A19C",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "919AE0FD-92AA-480D-BA86-0CF9B60F90AF",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "E8CA1DBA-D4D9-4DE4-B9EB-79DB8FF5E4DF",
+              "rev": 0
+            }
+          ]
+        },
+        "selectedIndex": {
+          "key": "selectedIndex",
+          "value": 3
+        },
+        "selectedIndexes": {
+          "key": "selectedIndexes",
+          "value": [
+            3
+          ]
+        },
+        "selection": {
+          "key": "selection",
+          "value": "item 3"
+        },
+        "selections": {
+          "key": "selections",
+          "value": [
+            "item 3"
+          ]
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "List",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/list.js",
+          "lastChange": 1498767978218,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "Morph_788EA78E_36E5_4CDD_B48C_44D0C97F37E3": {
+      "rev": 106525,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "listItemContainer"
+        },
+        "halosEnabled": {
+          "key": "halosEnabled",
+          "value": false
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(3.0,3.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,159.3)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": null
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "ListItemMorph_60EECB11_C10D_4940_9BC2_C04337673075",
+              "rev": 106276
+            },
+            {
+              "__ref__": true,
+              "id": "ListItemMorph_00A5CF0E_C17D_4182_B122_ECE0BBA7B0FF",
+              "rev": 106306
+            },
+            {
+              "__ref__": true,
+              "id": "ListItemMorph_6C7D8DA2_82EB_4C15_8E46_30DDA706B8B5",
+              "rev": 106336
+            },
+            {
+              "__ref__": true,
+              "id": "ListItemMorph_0BB81850_BCF8_4EDB_B9A5_C0F6332901D0",
+              "rev": 106366
+            },
+            {
+              "__ref__": true,
+              "id": "ListItemMorph_EA040F00_D478_4977_848B_809C478F1EF3",
+              "rev": 106396
+            },
+            {
+              "__ref__": true,
+              "id": "ListItemMorph_70A7D3EF_5CE8_4B7D_8666_C5868713AFB1",
+              "rev": 106426
+            },
+            {
+              "__ref__": true,
+              "id": "ListItemMorph_19852417_DCF4_4FB1_A4EF_ED1D89BFB22C",
+              "rev": 106456
+            },
+            {
+              "__ref__": true,
+              "id": "ListItemMorph_7614ED00_647D_459F_8F50_C36C0B2AAC27",
+              "rev": 106486
+            },
+            {
+              "__ref__": true,
+              "id": "ListItemMorph_6F3F3172_A74D_4729_9F55_F3FF37227889",
+              "rev": 106516
+            },
+            {
+              "__ref__": true,
+              "id": "listitemmorph_65C0087B_A86D_445E_B587_46227E852791",
+              "rev": 106528
+            }
+          ]
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "936DBE69-77FE-4AB1-9731-C48160BD4532",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "3D735E9A-6035-4F99-BE3B-EB1C888BB119",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "0111994F-EF87-4B29-98BA-CE1EA86A28E7",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "B6B645EF-466B-4669-B50F-FAF269A1D6CF",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Morph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js",
+          "lastChange": 1498766799412,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "ListItemMorph_60EECB11_C10D_4940_9BC2_C04337673075": {
+      "rev": 106276,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "aListItemMorph"
+        },
+        "tooltip": {
+          "key": "tooltip",
+          "value": "item 0"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,15.3)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "ListItemMorph",
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "BD647053-8A4A-4F87-936F-772293237DC5",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "58CCDC3E-703F-4A40-8C7C-7C476C98A8F7",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "F9F2296B-B48F-4ED3-91A9-E30CEE43117D",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "5E21B06E-B3A5-4FC3-937D-10E9AA527652",
+            "rev": 0
+          }
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "item 0",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Helvetica Neue, Arial, sans-serif"
+        },
+        "itemIndex": {
+          "key": "itemIndex",
+          "value": 0
+        },
+        "selectionFontColor": {
+          "key": "selectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "selectionColor": {
+          "key": "selectionColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"
+        },
+        "nonSelectionFontColor": {
+          "key": "nonSelectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ListItemMorph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/list.js",
+          "lastChange": 1498767978200,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "BD647053-8A4A-4F87-936F-772293237DC5": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "58CCDC3E-703F-4A40-8C7C-7C476C98A8F7": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "F9F2296B-B48F-4ED3-91A9-E30CEE43117D": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "5E21B06E-B3A5-4FC3-937D-10E9AA527652": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "ListItemMorph_00A5CF0E_C17D_4182_B122_ECE0BBA7B0FF": {
+      "rev": 106306,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "aListItemMorph"
+        },
+        "tooltip": {
+          "key": "tooltip",
+          "value": "item 1"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,15.3)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,15.3)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "ListItemMorph",
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "B5F272EE-722E-48EE-B6CC-D7BB6136A4DC",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "FCEF3690-8043-4175-ADCB-3D405B15E811",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "FB9D9646-2E1E-4C5D-914F-9ED7049FB51D",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "D8EDD926-332F-4252-8827-9EF86F0BB80F",
+            "rev": 0
+          }
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "item 1",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Helvetica Neue, Arial, sans-serif"
+        },
+        "itemIndex": {
+          "key": "itemIndex",
+          "value": 1
+        },
+        "selectionFontColor": {
+          "key": "selectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "selectionColor": {
+          "key": "selectionColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"
+        },
+        "nonSelectionFontColor": {
+          "key": "nonSelectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ListItemMorph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/list.js",
+          "lastChange": 1498767978200,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "B5F272EE-722E-48EE-B6CC-D7BB6136A4DC": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "FCEF3690-8043-4175-ADCB-3D405B15E811": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "FB9D9646-2E1E-4C5D-914F-9ED7049FB51D": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "D8EDD926-332F-4252-8827-9EF86F0BB80F": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "ListItemMorph_6C7D8DA2_82EB_4C15_8E46_30DDA706B8B5": {
+      "rev": 106336,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "aListItemMorph"
+        },
+        "tooltip": {
+          "key": "tooltip",
+          "value": "item 2"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,30.7)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,15.3)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "ListItemMorph",
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "D6BB6D86-CF9A-4062-88DE-859576EB5729",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "A840B6FB-929A-449B-ACD8-84ABF92E1805",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "E5C858D3-A26C-447C-846D-E5BE60132DCD",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "AFD72E7F-92F1-4E58-BB0F-AA38C68B0A33",
+            "rev": 0
+          }
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "item 2",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Helvetica Neue, Arial, sans-serif"
+        },
+        "itemIndex": {
+          "key": "itemIndex",
+          "value": 2
+        },
+        "selectionFontColor": {
+          "key": "selectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "selectionColor": {
+          "key": "selectionColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"
+        },
+        "nonSelectionFontColor": {
+          "key": "nonSelectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ListItemMorph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/list.js",
+          "lastChange": 1498767978200,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "D6BB6D86-CF9A-4062-88DE-859576EB5729": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "A840B6FB-929A-449B-ACD8-84ABF92E1805": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "E5C858D3-A26C-447C-846D-E5BE60132DCD": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "AFD72E7F-92F1-4E58-BB0F-AA38C68B0A33": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "ListItemMorph_0BB81850_BCF8_4EDB_B9A5_C0F6332901D0": {
+      "rev": 106366,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "aListItemMorph"
+        },
+        "tooltip": {
+          "key": "tooltip",
+          "value": "item 3"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,46.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,15.3)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "ListItemMorph",
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "07BF6BD5-115F-44EE-9D4B-C15084BBC977",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "38BEACC9-4876-4F22-89D0-15E49650DE65",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "1DB7F20D-63D1-4B4C-8367-CB87C24AFF8E",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "35FA6310-B9A6-4CD9-A43D-2A39CFA84D03",
+            "rev": 0
+          }
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "item 3",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Helvetica Neue, Arial, sans-serif"
+        },
+        "isSelected": {
+          "key": "isSelected",
+          "value": true
+        },
+        "itemIndex": {
+          "key": "itemIndex",
+          "value": 3
+        },
+        "selectionFontColor": {
+          "key": "selectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "selectionColor": {
+          "key": "selectionColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"
+        },
+        "nonSelectionFontColor": {
+          "key": "nonSelectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ListItemMorph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/list.js",
+          "lastChange": 1498767978200,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "07BF6BD5-115F-44EE-9D4B-C15084BBC977": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "38BEACC9-4876-4F22-89D0-15E49650DE65": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "1DB7F20D-63D1-4B4C-8367-CB87C24AFF8E": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "35FA6310-B9A6-4CD9-A43D-2A39CFA84D03": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "ListItemMorph_EA040F00_D478_4977_848B_809C478F1EF3": {
+      "rev": 106396,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "aListItemMorph"
+        },
+        "tooltip": {
+          "key": "tooltip",
+          "value": "item 4"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,61.3)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,15.3)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "ListItemMorph",
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "2401A68A-6C7C-470D-9265-96C6CDA43161",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "085B0421-DADA-419C-8432-A28D8C362833",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "0D65BB2C-7EF3-42C9-96C1-072670627A45",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "500485F7-0DBF-48AD-AD18-A10020548C5D",
+            "rev": 0
+          }
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "item 4",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Helvetica Neue, Arial, sans-serif"
+        },
+        "itemIndex": {
+          "key": "itemIndex",
+          "value": 4
+        },
+        "selectionFontColor": {
+          "key": "selectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "selectionColor": {
+          "key": "selectionColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"
+        },
+        "nonSelectionFontColor": {
+          "key": "nonSelectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ListItemMorph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/list.js",
+          "lastChange": 1498767978200,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "2401A68A-6C7C-470D-9265-96C6CDA43161": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "085B0421-DADA-419C-8432-A28D8C362833": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "0D65BB2C-7EF3-42C9-96C1-072670627A45": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "500485F7-0DBF-48AD-AD18-A10020548C5D": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "ListItemMorph_70A7D3EF_5CE8_4B7D_8666_C5868713AFB1": {
+      "rev": 106426,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "aListItemMorph"
+        },
+        "tooltip": {
+          "key": "tooltip",
+          "value": "item 5"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,76.7)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,15.3)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "ListItemMorph",
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "4A6533A4-D42A-4E05-ABB5-B16A4A8210C9",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "C6409B7B-8026-4358-AB9A-043202DB495E",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "5D674434-4496-49BC-96E6-4F194F9AE6F6",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "52D33F12-E704-4654-AB71-2D8FB70E0C1E",
+            "rev": 0
+          }
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "item 5",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Helvetica Neue, Arial, sans-serif"
+        },
+        "itemIndex": {
+          "key": "itemIndex",
+          "value": 5
+        },
+        "selectionFontColor": {
+          "key": "selectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "selectionColor": {
+          "key": "selectionColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"
+        },
+        "nonSelectionFontColor": {
+          "key": "nonSelectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ListItemMorph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/list.js",
+          "lastChange": 1498767978200,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "4A6533A4-D42A-4E05-ABB5-B16A4A8210C9": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "C6409B7B-8026-4358-AB9A-043202DB495E": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "5D674434-4496-49BC-96E6-4F194F9AE6F6": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "52D33F12-E704-4654-AB71-2D8FB70E0C1E": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "ListItemMorph_19852417_DCF4_4FB1_A4EF_ED1D89BFB22C": {
+      "rev": 106456,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "aListItemMorph"
+        },
+        "tooltip": {
+          "key": "tooltip",
+          "value": "item 6"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,92.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,15.3)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "ListItemMorph",
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "AB9FF933-91E6-452B-B8C0-36962A5D0E69",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "71376C51-B50A-4996-86BD-C357773B84EE",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "BFE1E4D4-12C8-4D50-AE02-01272474FE40",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "BE32E856-DC45-4962-9004-3359B72D2644",
+            "rev": 0
+          }
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "item 6",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Helvetica Neue, Arial, sans-serif"
+        },
+        "itemIndex": {
+          "key": "itemIndex",
+          "value": 6
+        },
+        "selectionFontColor": {
+          "key": "selectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "selectionColor": {
+          "key": "selectionColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"
+        },
+        "nonSelectionFontColor": {
+          "key": "nonSelectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ListItemMorph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/list.js",
+          "lastChange": 1498767978200,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "AB9FF933-91E6-452B-B8C0-36962A5D0E69": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "71376C51-B50A-4996-86BD-C357773B84EE": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "BFE1E4D4-12C8-4D50-AE02-01272474FE40": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "BE32E856-DC45-4962-9004-3359B72D2644": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "ListItemMorph_7614ED00_647D_459F_8F50_C36C0B2AAC27": {
+      "rev": 106486,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "aListItemMorph"
+        },
+        "tooltip": {
+          "key": "tooltip",
+          "value": "item 7"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,107.3)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,15.3)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "ListItemMorph",
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "AE3174D3-C3E7-44F7-8FC5-A4BD3C743833",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "33F951A1-43B0-4A78-9FAB-89654E0D6C24",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "D378B20A-2C12-4E79-B031-F3E89F60838F",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "4DBEBAF9-D6BB-4913-86D6-359B92A6D0B2",
+            "rev": 0
+          }
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "item 7",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Helvetica Neue, Arial, sans-serif"
+        },
+        "itemIndex": {
+          "key": "itemIndex",
+          "value": 7
+        },
+        "selectionFontColor": {
+          "key": "selectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "selectionColor": {
+          "key": "selectionColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"
+        },
+        "nonSelectionFontColor": {
+          "key": "nonSelectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ListItemMorph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/list.js",
+          "lastChange": 1498767978200,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "AE3174D3-C3E7-44F7-8FC5-A4BD3C743833": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "33F951A1-43B0-4A78-9FAB-89654E0D6C24": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "D378B20A-2C12-4E79-B031-F3E89F60838F": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "4DBEBAF9-D6BB-4913-86D6-359B92A6D0B2": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "ListItemMorph_6F3F3172_A74D_4729_9F55_F3FF37227889": {
+      "rev": 106516,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "aListItemMorph"
+        },
+        "tooltip": {
+          "key": "tooltip",
+          "value": "item 8"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,122.7)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,15.3)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "ListItemMorph",
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "3CDBE6F2-0CED-4458-8DB5-EE31733BA36E",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "7C416C1A-F63C-4A18-9614-44AA25D47AFD",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "227F964A-BBF5-49FC-90E9-BADA322F710C",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "7A6E619E-864A-44CE-8621-8E2913189AEC",
+            "rev": 0
+          }
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "item 8",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Helvetica Neue, Arial, sans-serif"
+        },
+        "itemIndex": {
+          "key": "itemIndex",
+          "value": 8
+        },
+        "selectionFontColor": {
+          "key": "selectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "selectionColor": {
+          "key": "selectionColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,204)"
+        },
+        "nonSelectionFontColor": {
+          "key": "nonSelectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ListItemMorph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/list.js",
+          "lastChange": 1498767978200,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "3CDBE6F2-0CED-4458-8DB5-EE31733BA36E": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "7C416C1A-F63C-4A18-9614-44AA25D47AFD": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "227F964A-BBF5-49FC-90E9-BADA322F710C": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "7A6E619E-864A-44CE-8621-8E2913189AEC": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "listitemmorph_65C0087B_A86D_445E_B587_46227E852791": {
+      "rev": 106528,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "aListItemMorph"
+        },
+        "tooltip": {
+          "key": "tooltip",
+          "value": "item 9"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,138.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(140.3,15.3)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "ListItemMorph",
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "53E7A17D-41E6-447B-9041-D8B3787C3AE2",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "776AED2A-8A1E-49DF-9E3B-1452DCEF4DB3",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "87E46CD8-DA1B-4267-BC15-09DBA3DB4F69",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "A3EECC61-AFC5-412A-A1B6-B0C15EF43BD1",
+            "rev": 0
+          }
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "item 9",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(1,1,0,0)"
+        },
+        "itemIndex": {
+          "key": "itemIndex",
+          "value": 9
+        },
+        "nonSelectionFontColor": {
+          "key": "nonSelectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(51,51,51)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ListItemMorph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/list.js",
+          "lastChange": 1498767978200,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "53E7A17D-41E6-447B-9041-D8B3787C3AE2": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "776AED2A-8A1E-49DF-9E3B-1452DCEF4DB3": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "87E46CD8-DA1B-4267-BC15-09DBA3DB4F69": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "A3EECC61-AFC5-412A-A1B6-B0C15EF43BD1": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "936DBE69-77FE-4AB1-9731-C48160BD4532": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "3D735E9A-6035-4F99-BE3B-EB1C888BB119": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "0111994F-EF87-4B29-98BA-CE1EA86A28E7": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "B6B645EF-466B-4669-B50F-FAF269A1D6CF": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "FFD31AF2-F5D6-4735-8076-F7BE64B03708": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 1
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 1
+        },
+        "left": {
+          "key": "left",
+          "value": 1
+        },
+        "right": {
+          "key": "right",
+          "value": 1
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "98B13CD8-1339-45BF-BAFB-B52600F9416B": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "575EEE0C-8AF8-4D0C-8467-F7040A85FFBE": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "388B8AC6-D208-4B78-BA3E-54D05AFEA41F": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "2F20679D-0BC4-4580-920D-746C0B534AC4": {
+      "rev": 0,
+      "props": {
+        "rules": {
+          "key": "rules",
+          "value": {
+            "__ref__": true,
+            "id": "1995596F-5D95-4E7B-891A-AC26B63BFB24",
+            "rev": 0
+          }
+        },
+        "context": {
+          "key": "context",
+          "value": {
+            "__ref__": true,
+            "id": "List_B1830680_3141_42AF_A1A7_D84F921492B1",
+            "rev": 109374
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "StyleSheet",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "style-rules.js",
+          "lastChange": 1498766799614,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "1995596F-5D95-4E7B-891A-AC26B63BFB24": {
+      "rev": 0,
+      "props": {
+        ".List.dark": {
+          "key": ".List.dark",
+          "value": {
+            "__ref__": true,
+            "id": "6972E55F-CD13-4B03-9B03-63B5CA6F1DB8",
+            "rev": 0
+          }
+        },
+        ".List.dark .ListItemMorph": {
+          "key": ".List.dark .ListItemMorph",
+          "value": {
+            "__ref__": true,
+            "id": "E6EB6AD4-DAD8-4898-ADB1-9AD7413CD749",
+            "rev": 0
+          }
+        },
+        ".List.default": {
+          "key": ".List.default",
+          "value": {
+            "__ref__": true,
+            "id": "E2EF78B9-CBBD-4B8B-AC38-C6E51C9CE325",
+            "rev": 0
+          }
+        }
+      }
+    },
+    "6972E55F-CD13-4B03-9B03-63B5CA6F1DB8": {
+      "rev": 0,
+      "props": {
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
+        },
+        "hideScrollbars": {
+          "key": "hideScrollbars",
+          "value": true
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(2,0,0,0)"
+        }
+      }
+    },
+    "E6EB6AD4-DAD8-4898-ADB1-9AD7413CD749": {
+      "rev": 0,
+      "props": {
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Monaco, monospace"
+        },
+        "nonSelectionFontColor": {
+          "key": "nonSelectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "selectionFontColor": {
+          "key": "selectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        },
+        "selectionColor": {
+          "key": "selectionColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        }
+      }
+    },
+    "E2EF78B9-CBBD-4B8B-AC38-C6E51C9CE325": {
+      "rev": 0,
+      "props": {
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(2,0,0,0)"
+        }
+      }
+    },
+    "8C31904F-B8C8-4449-8B9B-FA6ABBC2EA01": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "isListItem": {
+          "key": "isListItem",
+          "value": true
+        },
+        "string": {
+          "key": "string",
+          "value": "item 0"
+        },
+        "value": {
+          "key": "value",
+          "value": "item 0"
+        }
+      }
+    },
+    "CF8DC7BB-3F99-4356-B849-09E10D6E4512": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "isListItem": {
+          "key": "isListItem",
+          "value": true
+        },
+        "string": {
+          "key": "string",
+          "value": "item 1"
+        },
+        "value": {
+          "key": "value",
+          "value": "item 1"
+        }
+      }
+    },
+    "36B1E523-AA73-4BAC-A4E4-97DB66B0129B": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "isListItem": {
+          "key": "isListItem",
+          "value": true
+        },
+        "string": {
+          "key": "string",
+          "value": "item 2"
+        },
+        "value": {
+          "key": "value",
+          "value": "item 2"
+        }
+      }
+    },
+    "7658CE30-25E1-4929-93A2-0C06CD12F37E": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "isListItem": {
+          "key": "isListItem",
+          "value": true
+        },
+        "string": {
+          "key": "string",
+          "value": "item 3"
+        },
+        "value": {
+          "key": "value",
+          "value": "item 3"
+        }
+      }
+    },
+    "B2C807E6-2B8E-4BFC-919F-E1F5649F5B29": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "isListItem": {
+          "key": "isListItem",
+          "value": true
+        },
+        "string": {
+          "key": "string",
+          "value": "item 4"
+        },
+        "value": {
+          "key": "value",
+          "value": "item 4"
+        }
+      }
+    },
+    "424B42AC-E249-4B0F-94FC-4A8302C940EF": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "isListItem": {
+          "key": "isListItem",
+          "value": true
+        },
+        "string": {
+          "key": "string",
+          "value": "item 5"
+        },
+        "value": {
+          "key": "value",
+          "value": "item 5"
+        }
+      }
+    },
+    "F6D449B6-467D-46A6-B654-5DA4BD983616": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "isListItem": {
+          "key": "isListItem",
+          "value": true
+        },
+        "string": {
+          "key": "string",
+          "value": "item 6"
+        },
+        "value": {
+          "key": "value",
+          "value": "item 6"
+        }
+      }
+    },
+    "9757E6BC-B51C-458F-8613-AD291623A19C": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "isListItem": {
+          "key": "isListItem",
+          "value": true
+        },
+        "string": {
+          "key": "string",
+          "value": "item 7"
+        },
+        "value": {
+          "key": "value",
+          "value": "item 7"
+        }
+      }
+    },
+    "919AE0FD-92AA-480D-BA86-0CF9B60F90AF": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "isListItem": {
+          "key": "isListItem",
+          "value": true
+        },
+        "string": {
+          "key": "string",
+          "value": "item 8"
+        },
+        "value": {
+          "key": "value",
+          "value": "item 8"
+        }
+      }
+    },
+    "E8CA1DBA-D4D9-4DE4-B9EB-79DB8FF5E4DF": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "isListItem": {
+          "key": "isListItem",
+          "value": true
+        },
+        "string": {
+          "key": "string",
+          "value": "item 9"
+        },
+        "value": {
+          "key": "value",
+          "value": "item 9"
+        }
+      }
+    }
+  },
+  "requiredVersion": "~0.1",
+  "packages": {},
+  "preview": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJMAAACCCAYAAABCb/orAAAJgElEQVR4Xu2dTWhUSRCAa1Z0BzaJorts9BCJkEUYDwETrwH1MKcELx4iJgcVERHCXLwk/ubiLSAeAnqIgqBExJwEf45eMoEcMiIbJOiGNcEl8e8wurBZqrGHTjNjZl73e13drx7IxMzrn6r6Ul3vvep6mWKxuAZ8pF4DXV1dGVMlZBCm/fv3m/bD7Qlo4NOnT5FmMT8/DwxTJNWF24hhCte2iUvGMCWu8nAHZJjCtW3ikpGDaWFhAcbGxuDy5cuwurpa+Xnbtm3WlfPhwwcYGhqCubk5yOfzMDw8DNls1vo4aemQHEyq4lWwbMNULpdhdHQUuru7oa+vD65fvy6GPnfuXFpsb13OWjBNTU2JsXp7e6uOGdvVnASoUCjAxYsXhdfYt2+f8FDoqdDYS0tLld8hZDMzM/Dw4UNoamqCyclJ8R2eh+3x3JGREQGMeqBXwu/RM7W3t4s+ECgcxza41q1GtMNqMEmQ5JSrARU7TPoyh5NBwyMkeF8KDb+8vCyWplKpBKdPn4bx8XHI5XLC4ywuLgowXr9+XRUS3evh/y9duiT+IVx8NK4BHSYdpFpAJQ6TDoUKg/4dgtbW1ia8Ua2lUvdEDFPj8OgtyMVMtQJwBAa9j3q0trYKr7OysiKWORlA1wMTeyZzeLyGSQVGFUTGTI3AxDFTimHSY6ZHjx4JbyTjokY9E1/NpQwmCRB+6ldzcomTV2KNwoR98n0mu0CRi5nsise9JakBCdPs7Gxdw3Z2dorzYruaq2sWfBJJDTBMJM3i56QYJj/tRnLWDBNJs/g5KYbJT7uRnDU5mJJMQZEWwXtWb9++5YwBQ0TJwaTKE2cKigrS1atXYXBwkGEKDaakUlBQbzLzAFNW3r9/zzCFClPcKSiq3niZM6Toe3Nyy9yPsgbU5DXTFBSGyQ5Aai9ewWQzBYVhSjlMNlNQGKYUw4Siq2m7pikoDFPKYJIA4WccKSh8n8kuUORiJrvicW9JaoBhSlLbgY/FMAVu4CTFY5iS1HbgYzFMgRs4SfEYpiS1HfhYDFPgBk5SPHIwJZnPhM/6JiYmhL5lcQwuWhEdP3IwqaLEmc+Eu4BfvHhRSTvhkjrRIZItycGUZD6Tqj4uqRMwTEnmM6Ea8Vnf9PQ0V48zYIqsZ9Jhsl1SR19OuTaTAUXfm3oFUxz5TLisYgExhJeL25sB5RVMtvOZME7CUoQYfHO1ODOQsLU3MOFkbeYzcaU4c3j0HkjDJAHCT9v5TBhw4xYn9eB7TWaAkYPJTBxu7VIDDJNL7Qc2NsMUmEFdikMKpkxmxqUueGxDDXz82CF6IFE5jmEytKbj5gyTYwOENDw5mK5c2QVnzvwGhcJf0NGRrfx8586Kdb0/ffoHHDrULPp9+bIMuVzJ+hhp6pAcTKryVbBsw4R9Hzu2HU6deiOGvH27HV69KsPhw3+myf5WZSUHkwTowYNV6O/fAc3NP8Hnz//B2bNvhKc6f74VtmzJVH6HkN28uRvy+a3w9et/sGfPz+K7+/dX4PjxHeLcZ88+bwgJeqmdOzezdzLAiyxM+jKHMt64sVtAcvLkGyiVcrB16yYYGFiA/v7tcOLEr3Dr1j9w9+6K8DItLZsEgD09zXD06Hbxcy3vdvBgM3smA4hkU29g0qFQl0D9OwTt3bt/hTfaaKlEr4YgSu9nezm1YCNvuvAKJjS6enz7tgbXri3Brl2bxTKHXur588/Ca9ULk+wPodrIg3ljVUcT9QomFRhVXzJmMoEJPdjQ0O8wNrYMFy787cgcfg/rDUx6zIQB84EDv1TiokY9kw4g9rd3b7bi3fw2q5vZk4ZJAoSf+tWcXOLQi0T1TOp9Jo6ZzAEkB5O5SNyDKw0wTK40H+C4DFOARnUlEsPkSvMBjsswBWhUVyKRgsmVEnhcOxoglWmJIiVZBUWqUL74GTdj8kbM6GCRg0kVJc4qKOo4srTO+Pg4wxSdJbqbMAuFgthtOzc3V6mdtLq6KrZyLy0traunhDtzcbdvU1MTTE5Oiu/wPGyP546MjEBfX19VNcm2i4uLog17pug0kfNMtZY5FFHd0Stf7zU8PAylUgmwDgF6llwuB6Ojo4Bw4MZNveCFqipc3hC4gYEBsUWcYYoOErb0BqY4qqDgrl48enp61oFqptL0tvYKJptVUNAD3rt3T0BULpcZJgt/A17BZLMKSrVaA6hPDsKjU+UNTHrMZPOtTnxrIDpAakvSMEmA8NN2FRQ9EFeDezuqTV8v5GBKnwnCkZhhCseWziVhmJybIJwJSJgalWh+fh66uroyjbbTz88Ui8U1vutsqkYa7RkmGnYIYhYMUxBmpCEEw0TDDkHMghxMSeYz6XfBBwcHKy/mCcK6CQtBDiZV/rjzmTBToK2trWZ6SsK28H44cjAl9VYnfLiLqSpHjhzhHCZLGJOFKe63OsnncZh8hwcXlDcnyhuYbOcz6a+7UJPtstmsuWZT2INXMNnMZ9Jtze9SMaffK5hs5jNVgwkzE3B55ff0RgPLG5hQPJtvdZIbCTCHHJc1fkdvNIDUVqRhkgDhZxz5TOp9pnw+z69UNeSJHEyG8nBzhxpgmBwqP7ShGabQLOpQHobJofJDG5phCs2iDuVhmBwqP7ShycGUZAqK+nyutbWVX0lvSDc5mFR54kxBkVkD3d3dIgVFv4lpqNdUNicHU1IpKGqtAX6wa4d9sjDFnYKCnujJkyfw5csXePz4MfAyZw6UNzDZTkFBmGRNJ9xqhY9Wpqen+ZGKAVNewWQzBUWPkTgFxYCi7029gslmCooe3DNMKYLJdgqKngPOmZaBwxR3Cop6n4lzwAOEyVwk7sGVBsjFTK4UweOaa0CHCTe1VjsmJibW/ZqroJjrPrgeqnkmHSgdJFQCwxQcCuYC1VrmJFDVQGKYzPUeZA8cMwVpVjdCkYMpqRSUanXA+fmcGYTkYFLFiTMFRVcb75szAwlbk4MpqRQUV9Cam4xuD2RhijsFRTUJ12myAygJmDo6OuxIw7041UBLS0uk8TGDw1rpZoYpkg3INfIaptnZWXIKdTmhzs5Ol8MDw+RU/XYHZ5iKxbUfLXNTU1PQ29tbVevsmdarJW6Y8LFIrUciOBPSnglBwoNhqs+DJQETzqQWUGRhkiAxTPWBhGclBVMtoBim+m1F/kyG6QcxEy9zjfGbFEzeLXNSjRyA1w9UEjB5G4BvpEa+mkv2am4je5CNmTaaOH7PMDFMqgbEmzD5cUo9fzr0z3Htmf4HaCCMZE1oN14AAAAASUVORK5CYII="
+}
