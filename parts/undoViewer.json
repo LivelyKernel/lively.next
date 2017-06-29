@@ -1,8 +1,8 @@
 {
-  "id": "Window_8490662A_57D4_4151_AED4_7E007FD628CA",
+  "id": "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4",
   "snapshot": {
-    "Window_8490662A_57D4_4151_AED4_7E007FD628CA": {
-      "rev": 8634,
+    "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4": {
+      "rev": 43003,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -13,7 +13,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "8599EF45-5BE7-4784-92C4-7DEC08ADB744",
+              "id": "02FC69DB-0787-497B-A2BE-C7DD1F79ECFA",
               "rev": 0
             }
           ]
@@ -35,23 +35,23 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_C5E38D1C_2927_4933_8261_51B87FE537D6",
-              "rev": 12905
+              "id": "Morph_6725FA16_517A_4993_B818_FA319200E535",
+              "rev": 43016
             },
             {
               "__ref__": true,
-              "id": "Label_0BFAB8CD_0D75_44E1_9161_DD96A39E748A",
-              "rev": 16250
+              "id": "Label_8E9D6122_B757_4CC8_BA8E_6E050354C923",
+              "rev": 43021
             },
             {
               "__ref__": true,
-              "id": "Morph_F52F6A4A_48F0_4D01_BDC1_BC9323A099D6",
-              "rev": 16247
+              "id": "Morph_061E1A5E_03F3_440D_ADB5_791581A668DE",
+              "rev": 43018
             },
             {
               "__ref__": true,
-              "id": "UndoViewer_BEDA72E0_4D41_42BC_99E9_FADE40EB81E7",
-              "rev": 17760
+              "id": "UndoViewer_472C7602_FEDD_4A41_9BF5_6371A9E0425B",
+              "rev": 45756
             }
           ]
         },
@@ -67,7 +67,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "1ED6715F-7813-48D6-921E-44CEA9B3282B",
+            "id": "6507F162-FFFC-4C8B-B0E6-3A72A01C00A7",
             "rev": 0
           }
         },
@@ -76,18 +76,18 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_C5E38D1C_2927_4933_8261_51B87FE537D6",
-              "rev": 12905
+              "id": "Morph_6725FA16_517A_4993_B818_FA319200E535",
+              "rev": 43016
             },
             {
               "__ref__": true,
-              "id": "Label_0BFAB8CD_0D75_44E1_9161_DD96A39E748A",
-              "rev": 16250
+              "id": "Label_8E9D6122_B757_4CC8_BA8E_6E050354C923",
+              "rev": 43021
             },
             {
               "__ref__": true,
-              "id": "Morph_F52F6A4A_48F0_4D01_BDC1_BC9323A099D6",
-              "rev": 16247
+              "id": "Morph_061E1A5E_03F3_440D_ADB5_791581A668DE",
+              "rev": 43018
             }
           ]
         }
@@ -100,12 +100,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "components/window.js",
-          "lastChange": 1498756859636,
-          "lastSuperclassChange": 1498756859116
+          "lastChange": 1498769625525,
+          "lastSuperclassChange": 1498769624995
         }
       }
     },
-    "8599EF45-5BE7-4784-92C4-7DEC08ADB744": {
+    "02FC69DB-0787-497B-A2BE-C7DD1F79ECFA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -124,8 +124,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Window_8490662A_57D4_4151_AED4_7E007FD628CA",
-            "rev": 8634
+            "id": "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4",
+            "rev": 43003
           }
         },
         "sourceAttrName": {
@@ -136,8 +136,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_8490662A_57D4_4151_AED4_7E007FD628CA",
-            "rev": 8634
+            "id": "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4",
+            "rev": 43003
           }
         },
         "targetMethodName": {
@@ -148,7 +148,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "094DB9FF-95A7-49EC-92A1-EDDE7A01C352",
+            "id": "21A15647-C853-4454-B4B6-5EC3C75E9058",
             "rev": 0
           }
         },
@@ -169,12 +169,12 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "094DB9FF-95A7-49EC-92A1-EDDE7A01C352": {
+    "21A15647-C853-4454-B4B6-5EC3C75E9058": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -185,22 +185,22 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Window_8490662A_57D4_4151_AED4_7E007FD628CA",
-            "rev": 8634
+            "id": "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4",
+            "rev": 43003
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_8490662A_57D4_4151_AED4_7E007FD628CA",
-            "rev": 8634
+            "id": "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4",
+            "rev": 43003
           }
         }
       }
     },
-    "Morph_C5E38D1C_2927_4933_8261_51B87FE537D6": {
-      "rev": 12905,
+    "Morph_6725FA16_517A_4993_B818_FA319200E535": {
+      "rev": 43016,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -222,18 +222,18 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_01F3D29C_C914_495F_BEED_445F750FABD2",
-              "rev": 12902
+              "id": "Morph_66CF890E_C10C_4A22_92DF_336F630A2F24",
+              "rev": 43013
             },
             {
               "__ref__": true,
-              "id": "Morph_450D935B_FCE6_40E8_B4F6_B3486C6EDA9A",
-              "rev": 12903
+              "id": "Morph_2761D5EB_09FA_4306_8C97_3B967C90EEFF",
+              "rev": 43014
             },
             {
               "__ref__": true,
-              "id": "Morph_0303EEDC_DEC8_4F10_A7EB_5635344E2978",
-              "rev": 12904
+              "id": "Morph_A70ABC24_C945_41E1_94A5_4971D5F2C3C2",
+              "rev": 43015
             }
           ]
         },
@@ -248,7 +248,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "F113E5D3-0E45-47E6-BDC0-C494265CA478",
+            "id": "485D052C-EA3B-4D65-AB6C-36254C2F1B19",
             "rev": 0
           }
         },
@@ -256,7 +256,7 @@
           "key": "borderRadius",
           "value": {
             "__ref__": true,
-            "id": "FD33C1E1-4FC0-43D5-B27E-37AFB4BFD108",
+            "id": "CC2FCBCE-FFBB-4968-86C7-E528B559BF98",
             "rev": 0
           }
         },
@@ -264,7 +264,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "BEFDCEA6-AB55-4F53-868E-CEFB8A440622",
+            "id": "EFBC32E4-2DDC-4B0E-9632-6F4EC8D58EFD",
             "rev": 0
           }
         },
@@ -272,7 +272,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "A85AA887-2A9D-403E-A39B-555D26F2EBEE",
+            "id": "516E3BE7-EFC1-4A92-A3C1-F7D21D21DA7E",
             "rev": 0
           }
         }
@@ -285,13 +285,13 @@
             "version": "0.1.0"
           },
           "pathInPackage": "morph.js",
-          "lastChange": 1498756859116,
+          "lastChange": 1498769624995,
           "lastSuperclassChange": 0
         }
       }
     },
-    "Morph_01F3D29C_C914_495F_BEED_445F750FABD2": {
-      "rev": 12902,
+    "Morph_66CF890E_C10C_4A22_92DF_336F630A2F24": {
+      "rev": 43013,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -302,17 +302,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "128B64CE-57DF-45B1-AC7F-90EA374443CD",
+              "id": "0774FE23-B357-4103-ABD1-3F2890F088CA",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "54EFF322-E198-41A8-975A-A885E0A64DF6",
+              "id": "48D4EDE5-E26E-42A7-98D6-339A15B05015",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "D3D5FB43-F1CD-4F50-9B09-2B280A6E189F",
+              "id": "22B339F6-AB05-43D4-8306-FA9BDFBF555B",
               "rev": 0
             }
           ]
@@ -334,8 +334,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_B373D0D3_7062_4CF2_B711_9D93CC0B26C8",
-              "rev": 12690
+              "id": "Label_F991A828_E9C9_48F1_A233_9B11238503E9",
+              "rev": 43010
             }
           ]
         },
@@ -351,7 +351,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "C27FF24F-5171-4485-A5B4-1648F3D0CB9B",
+            "id": "15E6269B-3F02-40DD-BA41-7CD618EC6467",
             "rev": 0
           }
         },
@@ -359,7 +359,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "D35E0239-7C97-46BC-A684-2A614F0DC98A",
+            "id": "104355E7-7521-45D9-9972-59E0D69E588E",
             "rev": 0
           }
         },
@@ -367,7 +367,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "0940E718-1153-4B51-A52C-40DE6881984A",
+            "id": "5464F0BA-6675-44CE-AA90-689484F27F85",
             "rev": 0
           }
         }
@@ -380,12 +380,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "morph.js",
-          "lastChange": 1498756859116,
+          "lastChange": 1498769624995,
           "lastSuperclassChange": 0
         }
       }
     },
-    "128B64CE-57DF-45B1-AC7F-90EA374443CD": {
+    "0774FE23-B357-4103-ABD1-3F2890F088CA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -404,8 +404,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_01F3D29C_C914_495F_BEED_445F750FABD2",
-            "rev": 12902
+            "id": "Morph_66CF890E_C10C_4A22_92DF_336F630A2F24",
+            "rev": 43013
           }
         },
         "sourceAttrName": {
@@ -416,8 +416,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_8490662A_57D4_4151_AED4_7E007FD628CA",
-            "rev": 8634
+            "id": "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4",
+            "rev": 43003
           }
         },
         "targetMethodName": {
@@ -428,7 +428,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "1ACF51B9-FC60-41A6-AD7D-06921908DCEE",
+            "id": "A4315E5C-4E7D-4947-AB3A-BB2AFD5954BA",
             "rev": 0
           }
         },
@@ -449,12 +449,12 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "1ACF51B9-FC60-41A6-AD7D-06921908DCEE": {
+    "A4315E5C-4E7D-4947-AB3A-BB2AFD5954BA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -465,21 +465,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Morph_01F3D29C_C914_495F_BEED_445F750FABD2",
-            "rev": 12902
+            "id": "Morph_66CF890E_C10C_4A22_92DF_336F630A2F24",
+            "rev": 43013
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_8490662A_57D4_4151_AED4_7E007FD628CA",
-            "rev": 8634
+            "id": "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4",
+            "rev": 43003
           }
         }
       }
     },
-    "54EFF322-E198-41A8-975A-A885E0A64DF6": {
+    "48D4EDE5-E26E-42A7-98D6-339A15B05015": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -498,8 +498,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_01F3D29C_C914_495F_BEED_445F750FABD2",
-            "rev": 12902
+            "id": "Morph_66CF890E_C10C_4A22_92DF_336F630A2F24",
+            "rev": 43013
           }
         },
         "sourceAttrName": {
@@ -510,8 +510,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_B373D0D3_7062_4CF2_B711_9D93CC0B26C8",
-            "rev": 12690
+            "id": "Label_F991A828_E9C9_48F1_A233_9B11238503E9",
+            "rev": 43010
           }
         },
         "targetMethodName": {
@@ -522,7 +522,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "CCA27A24-4D34-4D26-B2D6-886FEE0AE8C8",
+            "id": "E9E5312D-FB29-43ED-9446-F0CE7B8BED7F",
             "rev": 0
           }
         },
@@ -550,13 +550,13 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "Label_B373D0D3_7062_4CF2_B711_9D93CC0B26C8": {
-      "rev": 12690,
+    "Label_F991A828_E9C9_48F1_A233_9B11238503E9": {
+      "rev": 43010,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -571,7 +571,7 @@
         },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(10.5,16.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(11.0,14.2)"
         },
         "submorphs": {
           "key": "submorphs",
@@ -590,7 +590,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "14436DF9-AD58-410E-BB9B-A1781A36D749",
+            "id": "436FA313-511B-4F93-8ABB-1309B99C44CC",
             "rev": 0
           }
         },
@@ -598,7 +598,7 @@
           "key": "borderRadius",
           "value": {
             "__ref__": true,
-            "id": "18D8546A-E4CF-47C1-9D16-362957C175A9",
+            "id": "8623D6C4-AD07-46C5-B203-F6E0E7CF999F",
             "rev": 0
           }
         },
@@ -606,7 +606,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "FC30B282-F8D1-486B-85EE-180C90CDDF66",
+            "id": "984678EC-194B-4CE0-9A5C-A5095789DDC8",
             "rev": 0
           }
         },
@@ -614,7 +614,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "78D7C75F-EF41-409E-B07E-FE4D074936E7",
+            "id": "CBB659E5-E41E-43C8-A511-1B2A316FA819",
             "rev": 0
           }
         },
@@ -624,7 +624,7 @@
             "",
             {
               "__ref__": true,
-              "id": "8BBD63D3-BA5D-4801-B853-8FBF60E35E0A",
+              "id": "0444A956-9496-4237-9C67-BF9286B801B6",
               "rev": 0
             }
           ]
@@ -638,12 +638,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "text/label.js",
-          "lastChange": 1498756859088,
-          "lastSuperclassChange": 1498756859116
+          "lastChange": 1498769624967,
+          "lastSuperclassChange": 1498769624995
         }
       }
     },
-    "14436DF9-AD58-410E-BB9B-A1781A36D749": {
+    "436FA313-511B-4F93-8ABB-1309B99C44CC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -671,7 +671,7 @@
         }
       }
     },
-    "18D8546A-E4CF-47C1-9D16-362957C175A9": {
+    "8623D6C4-AD07-46C5-B203-F6E0E7CF999F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -699,7 +699,7 @@
         }
       }
     },
-    "FC30B282-F8D1-486B-85EE-180C90CDDF66": {
+    "984678EC-194B-4CE0-9A5C-A5095789DDC8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -727,7 +727,7 @@
         }
       }
     },
-    "78D7C75F-EF41-409E-B07E-FE4D074936E7": {
+    "CBB659E5-E41E-43C8-A511-1B2A316FA819": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -755,7 +755,7 @@
         }
       }
     },
-    "8BBD63D3-BA5D-4801-B853-8FBF60E35E0A": {
+    "0444A956-9496-4237-9C67-BF9286B801B6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -774,7 +774,7 @@
         }
       }
     },
-    "CCA27A24-4D34-4D26-B2D6-886FEE0AE8C8": {
+    "E9E5312D-FB29-43ED-9446-F0CE7B8BED7F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -785,21 +785,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Morph_01F3D29C_C914_495F_BEED_445F750FABD2",
-            "rev": 12902
+            "id": "Morph_66CF890E_C10C_4A22_92DF_336F630A2F24",
+            "rev": 43013
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_B373D0D3_7062_4CF2_B711_9D93CC0B26C8",
-            "rev": 12690
+            "id": "Label_F991A828_E9C9_48F1_A233_9B11238503E9",
+            "rev": 43010
           }
         }
       }
     },
-    "D3D5FB43-F1CD-4F50-9B09-2B280A6E189F": {
+    "22B339F6-AB05-43D4-8306-FA9BDFBF555B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -818,8 +818,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_01F3D29C_C914_495F_BEED_445F750FABD2",
-            "rev": 12902
+            "id": "Morph_66CF890E_C10C_4A22_92DF_336F630A2F24",
+            "rev": 43013
           }
         },
         "sourceAttrName": {
@@ -830,8 +830,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_B373D0D3_7062_4CF2_B711_9D93CC0B26C8",
-            "rev": 12690
+            "id": "Label_F991A828_E9C9_48F1_A233_9B11238503E9",
+            "rev": 43010
           }
         },
         "targetMethodName": {
@@ -842,7 +842,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "86AD1C60-4DFB-4018-AA06-117E6CC7CF8C",
+            "id": "068887E8-EE9C-4E42-8D11-65A8123CF137",
             "rev": 0
           }
         },
@@ -870,12 +870,12 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "86AD1C60-4DFB-4018-AA06-117E6CC7CF8C": {
+    "068887E8-EE9C-4E42-8D11-65A8123CF137": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -886,21 +886,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Morph_01F3D29C_C914_495F_BEED_445F750FABD2",
-            "rev": 12902
+            "id": "Morph_66CF890E_C10C_4A22_92DF_336F630A2F24",
+            "rev": 43013
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_B373D0D3_7062_4CF2_B711_9D93CC0B26C8",
-            "rev": 12690
+            "id": "Label_F991A828_E9C9_48F1_A233_9B11238503E9",
+            "rev": 43010
           }
         }
       }
     },
-    "C27FF24F-5171-4485-A5B4-1648F3D0CB9B": {
+    "15E6269B-3F02-40DD-BA41-7CD618EC6467": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -928,7 +928,7 @@
         }
       }
     },
-    "D35E0239-7C97-46BC-A684-2A614F0DC98A": {
+    "104355E7-7521-45D9-9972-59E0D69E588E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -956,7 +956,7 @@
         }
       }
     },
-    "0940E718-1153-4B51-A52C-40DE6881984A": {
+    "5464F0BA-6675-44CE-AA90-689484F27F85": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -984,8 +984,8 @@
         }
       }
     },
-    "Morph_450D935B_FCE6_40E8_B4F6_B3486C6EDA9A": {
-      "rev": 12903,
+    "Morph_2761D5EB_09FA_4306_8C97_3B967C90EEFF": {
+      "rev": 43014,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -996,17 +996,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "D8CED2D4-66E6-4E70-A5F8-AED26AC0BC18",
+              "id": "48E1089A-B61C-4991-8A22-1DD684CD1011",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "4E88844E-F3C9-4926-9F7E-0F8BEFC521C1",
+              "id": "731552F8-06AD-4C07-A41B-3E83DF9F044A",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "89B9A544-BD56-4022-AC20-739E68A46321",
+              "id": "03E7EC6C-E49E-46FC-995E-D88CCB0675F1",
               "rev": 0
             }
           ]
@@ -1028,8 +1028,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_22A54D69_E8E6_4393_A521_D1CAE40E1F97",
-              "rev": 12691
+              "id": "Label_28E481F6_87BE_47EE_8CC2_CE319E855A38",
+              "rev": 43011
             }
           ]
         },
@@ -1045,7 +1045,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "BBC9B5FA-FF16-424D-B8E0-2800E8DD9F2B",
+            "id": "5568A2C6-5546-415F-80EB-F102EFFDEDBE",
             "rev": 0
           }
         },
@@ -1053,7 +1053,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "8A9900F1-F5BE-4D27-A22B-CA0D237A4026",
+            "id": "0BE7951E-BA1E-44DE-9DF4-4FE727C8F885",
             "rev": 0
           }
         },
@@ -1061,7 +1061,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "1D4D5822-EF89-4107-BBF5-13B696BE87B1",
+            "id": "F2C2B720-7FFD-4180-A618-A760E6F33001",
             "rev": 0
           }
         }
@@ -1074,12 +1074,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "morph.js",
-          "lastChange": 1498756859116,
+          "lastChange": 1498769624995,
           "lastSuperclassChange": 0
         }
       }
     },
-    "D8CED2D4-66E6-4E70-A5F8-AED26AC0BC18": {
+    "48E1089A-B61C-4991-8A22-1DD684CD1011": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1098,8 +1098,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_450D935B_FCE6_40E8_B4F6_B3486C6EDA9A",
-            "rev": 12903
+            "id": "Morph_2761D5EB_09FA_4306_8C97_3B967C90EEFF",
+            "rev": 43014
           }
         },
         "sourceAttrName": {
@@ -1110,8 +1110,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_8490662A_57D4_4151_AED4_7E007FD628CA",
-            "rev": 8634
+            "id": "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4",
+            "rev": 43003
           }
         },
         "targetMethodName": {
@@ -1122,7 +1122,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "3DFB21F4-6CDB-460F-822C-1B9FC1FDD3C5",
+            "id": "28F7D716-89B3-4950-97F5-4771AEEA2116",
             "rev": 0
           }
         },
@@ -1143,12 +1143,12 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "3DFB21F4-6CDB-460F-822C-1B9FC1FDD3C5": {
+    "28F7D716-89B3-4950-97F5-4771AEEA2116": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1159,21 +1159,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Morph_450D935B_FCE6_40E8_B4F6_B3486C6EDA9A",
-            "rev": 12903
+            "id": "Morph_2761D5EB_09FA_4306_8C97_3B967C90EEFF",
+            "rev": 43014
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_8490662A_57D4_4151_AED4_7E007FD628CA",
-            "rev": 8634
+            "id": "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4",
+            "rev": 43003
           }
         }
       }
     },
-    "4E88844E-F3C9-4926-9F7E-0F8BEFC521C1": {
+    "731552F8-06AD-4C07-A41B-3E83DF9F044A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1192,8 +1192,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_450D935B_FCE6_40E8_B4F6_B3486C6EDA9A",
-            "rev": 12903
+            "id": "Morph_2761D5EB_09FA_4306_8C97_3B967C90EEFF",
+            "rev": 43014
           }
         },
         "sourceAttrName": {
@@ -1204,8 +1204,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_22A54D69_E8E6_4393_A521_D1CAE40E1F97",
-            "rev": 12691
+            "id": "Label_28E481F6_87BE_47EE_8CC2_CE319E855A38",
+            "rev": 43011
           }
         },
         "targetMethodName": {
@@ -1216,7 +1216,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "10D178DC-3B2E-4486-8F45-F5909A0F1B2D",
+            "id": "FDD04572-4E7E-4B17-9B8C-807FD461E099",
             "rev": 0
           }
         },
@@ -1244,13 +1244,13 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "Label_22A54D69_E8E6_4393_A521_D1CAE40E1F97": {
-      "rev": 12691,
+    "Label_28E481F6_87BE_47EE_8CC2_CE319E855A38": {
+      "rev": 43011,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1265,7 +1265,7 @@
         },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(10.5,16.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(11.0,14.2)"
         },
         "submorphs": {
           "key": "submorphs",
@@ -1284,7 +1284,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "3D4030C9-7D1A-49F1-A9E3-DCC910789FD2",
+            "id": "A6D3EEDF-0052-4D3F-9237-43FAE4F30E3E",
             "rev": 0
           }
         },
@@ -1292,7 +1292,7 @@
           "key": "borderRadius",
           "value": {
             "__ref__": true,
-            "id": "8BEA9889-431C-41F2-BDF8-6FD9A45BD94B",
+            "id": "FB7B8C0F-1E83-47AC-A249-6F19D935CCD8",
             "rev": 0
           }
         },
@@ -1300,7 +1300,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "5CB84E7D-2D17-47C4-943A-BEBD33100201",
+            "id": "B85DC002-08ED-4624-AB00-194A95A16361",
             "rev": 0
           }
         },
@@ -1308,7 +1308,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "28201E8F-7FB6-4079-8EB7-5FD0411D0641",
+            "id": "67DC5C6D-CCE8-4935-BE73-04334F255DFB",
             "rev": 0
           }
         },
@@ -1318,7 +1318,7 @@
             "",
             {
               "__ref__": true,
-              "id": "C327E710-5A5D-4DD9-9410-1E534D1C3324",
+              "id": "AD1578D3-14CD-4682-826F-22D4E6E1DBDE",
               "rev": 0
             }
           ]
@@ -1332,12 +1332,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "text/label.js",
-          "lastChange": 1498756859088,
-          "lastSuperclassChange": 1498756859116
+          "lastChange": 1498769624967,
+          "lastSuperclassChange": 1498769624995
         }
       }
     },
-    "3D4030C9-7D1A-49F1-A9E3-DCC910789FD2": {
+    "A6D3EEDF-0052-4D3F-9237-43FAE4F30E3E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1365,7 +1365,7 @@
         }
       }
     },
-    "8BEA9889-431C-41F2-BDF8-6FD9A45BD94B": {
+    "FB7B8C0F-1E83-47AC-A249-6F19D935CCD8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1393,7 +1393,7 @@
         }
       }
     },
-    "5CB84E7D-2D17-47C4-943A-BEBD33100201": {
+    "B85DC002-08ED-4624-AB00-194A95A16361": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1421,7 +1421,7 @@
         }
       }
     },
-    "28201E8F-7FB6-4079-8EB7-5FD0411D0641": {
+    "67DC5C6D-CCE8-4935-BE73-04334F255DFB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1449,7 +1449,7 @@
         }
       }
     },
-    "C327E710-5A5D-4DD9-9410-1E534D1C3324": {
+    "AD1578D3-14CD-4682-826F-22D4E6E1DBDE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1468,7 +1468,7 @@
         }
       }
     },
-    "10D178DC-3B2E-4486-8F45-F5909A0F1B2D": {
+    "FDD04572-4E7E-4B17-9B8C-807FD461E099": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1479,21 +1479,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Morph_450D935B_FCE6_40E8_B4F6_B3486C6EDA9A",
-            "rev": 12903
+            "id": "Morph_2761D5EB_09FA_4306_8C97_3B967C90EEFF",
+            "rev": 43014
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_22A54D69_E8E6_4393_A521_D1CAE40E1F97",
-            "rev": 12691
+            "id": "Label_28E481F6_87BE_47EE_8CC2_CE319E855A38",
+            "rev": 43011
           }
         }
       }
     },
-    "89B9A544-BD56-4022-AC20-739E68A46321": {
+    "03E7EC6C-E49E-46FC-995E-D88CCB0675F1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1512,8 +1512,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_450D935B_FCE6_40E8_B4F6_B3486C6EDA9A",
-            "rev": 12903
+            "id": "Morph_2761D5EB_09FA_4306_8C97_3B967C90EEFF",
+            "rev": 43014
           }
         },
         "sourceAttrName": {
@@ -1524,8 +1524,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_22A54D69_E8E6_4393_A521_D1CAE40E1F97",
-            "rev": 12691
+            "id": "Label_28E481F6_87BE_47EE_8CC2_CE319E855A38",
+            "rev": 43011
           }
         },
         "targetMethodName": {
@@ -1536,7 +1536,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "896138AF-A913-4C8E-9E0C-7054BF444411",
+            "id": "DBD97332-0C27-4F8B-9A60-AAAE936AB863",
             "rev": 0
           }
         },
@@ -1564,12 +1564,12 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "896138AF-A913-4C8E-9E0C-7054BF444411": {
+    "DBD97332-0C27-4F8B-9A60-AAAE936AB863": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1580,21 +1580,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Morph_450D935B_FCE6_40E8_B4F6_B3486C6EDA9A",
-            "rev": 12903
+            "id": "Morph_2761D5EB_09FA_4306_8C97_3B967C90EEFF",
+            "rev": 43014
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_22A54D69_E8E6_4393_A521_D1CAE40E1F97",
-            "rev": 12691
+            "id": "Label_28E481F6_87BE_47EE_8CC2_CE319E855A38",
+            "rev": 43011
           }
         }
       }
     },
-    "BBC9B5FA-FF16-424D-B8E0-2800E8DD9F2B": {
+    "5568A2C6-5546-415F-80EB-F102EFFDEDBE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1622,7 +1622,7 @@
         }
       }
     },
-    "8A9900F1-F5BE-4D27-A22B-CA0D237A4026": {
+    "0BE7951E-BA1E-44DE-9DF4-4FE727C8F885": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1650,7 +1650,7 @@
         }
       }
     },
-    "1D4D5822-EF89-4107-BBF5-13B696BE87B1": {
+    "F2C2B720-7FFD-4180-A618-A760E6F33001": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1678,8 +1678,8 @@
         }
       }
     },
-    "Morph_0303EEDC_DEC8_4F10_A7EB_5635344E2978": {
-      "rev": 12904,
+    "Morph_A70ABC24_C945_41E1_94A5_4971D5F2C3C2": {
+      "rev": 43015,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1690,17 +1690,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "650EE27D-9D07-4AC6-AD36-42DE11267548",
+              "id": "D9A4B433-372E-4E26-9BD4-7B4174EDB5F4",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "0641B0A4-57D1-45EE-BF87-6ED3D041B092",
+              "id": "5A0EFD43-D208-45FF-9FBE-DF01E9B66218",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "5734654A-0DA2-4430-82F6-5CCE3FBEB562",
+              "id": "FF63CDF8-FF23-4C7E-ACB9-2B188A06FB49",
               "rev": 0
             }
           ]
@@ -1722,8 +1722,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_0C94CD54_EDE5_4CFD_A3CD_8431354D7C06",
-              "rev": 12692
+              "id": "Label_987B6EC9_85B5_42A9_B456_124EACB83A97",
+              "rev": 43012
             }
           ]
         },
@@ -1739,7 +1739,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "D50B6578-C28A-42FD-9DB2-1DB3BFF3559D",
+            "id": "B5CA3674-B151-4410-9C4B-132C0A4FC2B7",
             "rev": 0
           }
         },
@@ -1747,7 +1747,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "8213451D-6ACA-492A-829F-0959F994ABB5",
+            "id": "AB63FFCB-7CB7-4EB6-9B3B-3F51F04899CB",
             "rev": 0
           }
         },
@@ -1755,7 +1755,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "EE676670-6015-4D84-9823-7DB3CC8528D1",
+            "id": "3A2534E4-781B-4974-B9CA-8F876354A08F",
             "rev": 0
           }
         }
@@ -1768,12 +1768,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "morph.js",
-          "lastChange": 1498756859116,
+          "lastChange": 1498769624995,
           "lastSuperclassChange": 0
         }
       }
     },
-    "650EE27D-9D07-4AC6-AD36-42DE11267548": {
+    "D9A4B433-372E-4E26-9BD4-7B4174EDB5F4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1792,8 +1792,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_0303EEDC_DEC8_4F10_A7EB_5635344E2978",
-            "rev": 12904
+            "id": "Morph_A70ABC24_C945_41E1_94A5_4971D5F2C3C2",
+            "rev": 43015
           }
         },
         "sourceAttrName": {
@@ -1804,8 +1804,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_8490662A_57D4_4151_AED4_7E007FD628CA",
-            "rev": 8634
+            "id": "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4",
+            "rev": 43003
           }
         },
         "targetMethodName": {
@@ -1816,7 +1816,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "8BB7E255-4159-4A44-B75F-D81E4ECD22D2",
+            "id": "EB81538F-6E2C-4826-AB14-0237F8033173",
             "rev": 0
           }
         },
@@ -1837,12 +1837,12 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "8BB7E255-4159-4A44-B75F-D81E4ECD22D2": {
+    "EB81538F-6E2C-4826-AB14-0237F8033173": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1853,21 +1853,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Morph_0303EEDC_DEC8_4F10_A7EB_5635344E2978",
-            "rev": 12904
+            "id": "Morph_A70ABC24_C945_41E1_94A5_4971D5F2C3C2",
+            "rev": 43015
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_8490662A_57D4_4151_AED4_7E007FD628CA",
-            "rev": 8634
+            "id": "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4",
+            "rev": 43003
           }
         }
       }
     },
-    "0641B0A4-57D1-45EE-BF87-6ED3D041B092": {
+    "5A0EFD43-D208-45FF-9FBE-DF01E9B66218": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1886,8 +1886,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_0303EEDC_DEC8_4F10_A7EB_5635344E2978",
-            "rev": 12904
+            "id": "Morph_A70ABC24_C945_41E1_94A5_4971D5F2C3C2",
+            "rev": 43015
           }
         },
         "sourceAttrName": {
@@ -1898,8 +1898,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_0C94CD54_EDE5_4CFD_A3CD_8431354D7C06",
-            "rev": 12692
+            "id": "Label_987B6EC9_85B5_42A9_B456_124EACB83A97",
+            "rev": 43012
           }
         },
         "targetMethodName": {
@@ -1910,7 +1910,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "85226DD4-AA01-411A-81EA-38E46979B542",
+            "id": "F3C7D7FF-9509-4D5D-A9B0-5A818A3DF9AB",
             "rev": 0
           }
         },
@@ -1938,13 +1938,13 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "Label_0C94CD54_EDE5_4CFD_A3CD_8431354D7C06": {
-      "rev": 12692,
+    "Label_987B6EC9_85B5_42A9_B456_124EACB83A97": {
+      "rev": 43012,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1959,7 +1959,7 @@
         },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(10.5,16.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(12.0,14.2)"
         },
         "submorphs": {
           "key": "submorphs",
@@ -1978,7 +1978,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "80F9F187-AD95-4986-9086-88B590E9DEC2",
+            "id": "8726561C-1BCA-47A7-9CFC-F708C11C8119",
             "rev": 0
           }
         },
@@ -1986,7 +1986,7 @@
           "key": "borderRadius",
           "value": {
             "__ref__": true,
-            "id": "FDC0BE61-4056-4F40-84EA-805F3E43C713",
+            "id": "EF6DC741-7AD5-4851-B206-787AA6F3F5E4",
             "rev": 0
           }
         },
@@ -1994,7 +1994,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "439A940A-5978-4A06-9F1C-339433912E52",
+            "id": "0EC70531-384B-484F-AD7D-822D3EC391F7",
             "rev": 0
           }
         },
@@ -2002,7 +2002,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "2578F850-2544-4F98-9DF4-24AB88226F2D",
+            "id": "00F27BE5-8F30-4D84-8851-CC681CFA6C93",
             "rev": 0
           }
         },
@@ -2012,7 +2012,7 @@
             "",
             {
               "__ref__": true,
-              "id": "FAB2396F-6CD0-4286-A5BE-1E25764E0F4F",
+              "id": "8D9FFC10-48CD-47F1-9D8E-E184F2668EBE",
               "rev": 0
             }
           ]
@@ -2026,12 +2026,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "text/label.js",
-          "lastChange": 1498756859088,
-          "lastSuperclassChange": 1498756859116
+          "lastChange": 1498769624967,
+          "lastSuperclassChange": 1498769624995
         }
       }
     },
-    "80F9F187-AD95-4986-9086-88B590E9DEC2": {
+    "8726561C-1BCA-47A7-9CFC-F708C11C8119": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2059,7 +2059,7 @@
         }
       }
     },
-    "FDC0BE61-4056-4F40-84EA-805F3E43C713": {
+    "EF6DC741-7AD5-4851-B206-787AA6F3F5E4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2087,7 +2087,7 @@
         }
       }
     },
-    "439A940A-5978-4A06-9F1C-339433912E52": {
+    "0EC70531-384B-484F-AD7D-822D3EC391F7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2115,7 +2115,7 @@
         }
       }
     },
-    "2578F850-2544-4F98-9DF4-24AB88226F2D": {
+    "00F27BE5-8F30-4D84-8851-CC681CFA6C93": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2143,7 +2143,7 @@
         }
       }
     },
-    "FAB2396F-6CD0-4286-A5BE-1E25764E0F4F": {
+    "8D9FFC10-48CD-47F1-9D8E-E184F2668EBE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2162,7 +2162,7 @@
         }
       }
     },
-    "85226DD4-AA01-411A-81EA-38E46979B542": {
+    "F3C7D7FF-9509-4D5D-A9B0-5A818A3DF9AB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2173,21 +2173,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Morph_0303EEDC_DEC8_4F10_A7EB_5635344E2978",
-            "rev": 12904
+            "id": "Morph_A70ABC24_C945_41E1_94A5_4971D5F2C3C2",
+            "rev": 43015
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_0C94CD54_EDE5_4CFD_A3CD_8431354D7C06",
-            "rev": 12692
+            "id": "Label_987B6EC9_85B5_42A9_B456_124EACB83A97",
+            "rev": 43012
           }
         }
       }
     },
-    "5734654A-0DA2-4430-82F6-5CCE3FBEB562": {
+    "FF63CDF8-FF23-4C7E-ACB9-2B188A06FB49": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2206,8 +2206,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_0303EEDC_DEC8_4F10_A7EB_5635344E2978",
-            "rev": 12904
+            "id": "Morph_A70ABC24_C945_41E1_94A5_4971D5F2C3C2",
+            "rev": 43015
           }
         },
         "sourceAttrName": {
@@ -2218,8 +2218,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_0C94CD54_EDE5_4CFD_A3CD_8431354D7C06",
-            "rev": 12692
+            "id": "Label_987B6EC9_85B5_42A9_B456_124EACB83A97",
+            "rev": 43012
           }
         },
         "targetMethodName": {
@@ -2230,7 +2230,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "299EF67D-8D22-49E0-83C5-6A9DA226BB05",
+            "id": "31858D85-1C3A-4B1F-BD56-902FD3D13BCF",
             "rev": 0
           }
         },
@@ -2258,12 +2258,12 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "299EF67D-8D22-49E0-83C5-6A9DA226BB05": {
+    "31858D85-1C3A-4B1F-BD56-902FD3D13BCF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2274,21 +2274,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Morph_0303EEDC_DEC8_4F10_A7EB_5635344E2978",
-            "rev": 12904
+            "id": "Morph_A70ABC24_C945_41E1_94A5_4971D5F2C3C2",
+            "rev": 43015
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_0C94CD54_EDE5_4CFD_A3CD_8431354D7C06",
-            "rev": 12692
+            "id": "Label_987B6EC9_85B5_42A9_B456_124EACB83A97",
+            "rev": 43012
           }
         }
       }
     },
-    "D50B6578-C28A-42FD-9DB2-1DB3BFF3559D": {
+    "B5CA3674-B151-4410-9C4B-132C0A4FC2B7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2316,7 +2316,7 @@
         }
       }
     },
-    "8213451D-6ACA-492A-829F-0959F994ABB5": {
+    "AB63FFCB-7CB7-4EB6-9B3B-3F51F04899CB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2344,7 +2344,7 @@
         }
       }
     },
-    "EE676670-6015-4D84-9823-7DB3CC8528D1": {
+    "3A2534E4-781B-4974-B9CA-8F876354A08F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2372,7 +2372,7 @@
         }
       }
     },
-    "F113E5D3-0E45-47E6-BDC0-C494265CA478": {
+    "485D052C-EA3B-4D65-AB6C-36254C2F1B19": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2400,7 +2400,7 @@
         }
       }
     },
-    "FD33C1E1-4FC0-43D5-B27E-37AFB4BFD108": {
+    "CC2FCBCE-FFBB-4968-86C7-E528B559BF98": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2428,7 +2428,7 @@
         }
       }
     },
-    "BEFDCEA6-AB55-4F53-868E-CEFB8A440622": {
+    "EFBC32E4-2DDC-4B0E-9632-6F4EC8D58EFD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2456,7 +2456,7 @@
         }
       }
     },
-    "A85AA887-2A9D-403E-A39B-555D26F2EBEE": {
+    "516E3BE7-EFC1-4A92-A3C1-F7D21D21DA7E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2484,8 +2484,8 @@
         }
       }
     },
-    "Label_0BFAB8CD_0D75_44E1_9161_DD96A39E748A": {
-      "rev": 16250,
+    "Label_8E9D6122_B757_4CC8_BA8E_6E050354C923": {
+      "rev": 43021,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2496,7 +2496,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "91BB325A-1845-47CD-9F72-61DCFD128D18",
+              "id": "860CF1ED-4231-4D7E-A321-9D8C75CB64B5",
               "rev": 0
             }
           ]
@@ -2533,7 +2533,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "712EDAE4-091B-4352-82C9-F78AD8350948",
+            "id": "B612B3C9-201E-4EDB-97BA-362A3211715F",
             "rev": 0
           }
         },
@@ -2541,7 +2541,7 @@
           "key": "borderRadius",
           "value": {
             "__ref__": true,
-            "id": "210FD3F3-50F1-46A7-8CAC-ED6604793BD7",
+            "id": "AC1653E2-EE06-4E15-B57E-8B08CC21AA9C",
             "rev": 0
           }
         },
@@ -2549,7 +2549,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "BB157EB4-879E-4734-B176-A511AE5BFCB3",
+            "id": "4D5C1C8B-2BE1-4873-8CEE-5AEA9B61B5B2",
             "rev": 0
           }
         },
@@ -2557,7 +2557,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "D7665AB6-EE49-4516-8781-B6A866D6C2EF",
+            "id": "2B753BB6-D6B8-46CD-AFDF-228D8DBB5222",
             "rev": 0
           }
         },
@@ -2567,7 +2567,7 @@
             "undoViewer",
             {
               "__ref__": true,
-              "id": "E0233425-D66D-4004-B3CF-A314813FF8FE",
+              "id": "3A6945EA-D1E4-406F-805A-48797913533F",
               "rev": 0
             }
           ]
@@ -2585,12 +2585,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "text/label.js",
-          "lastChange": 1498756859088,
-          "lastSuperclassChange": 1498756859116
+          "lastChange": 1498769624967,
+          "lastSuperclassChange": 1498769624995
         }
       }
     },
-    "91BB325A-1845-47CD-9F72-61DCFD128D18": {
+    "860CF1ED-4231-4D7E-A321-9D8C75CB64B5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2609,8 +2609,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_0BFAB8CD_0D75_44E1_9161_DD96A39E748A",
-            "rev": 16250
+            "id": "Label_8E9D6122_B757_4CC8_BA8E_6E050354C923",
+            "rev": 43021
           }
         },
         "sourceAttrName": {
@@ -2621,8 +2621,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_8490662A_57D4_4151_AED4_7E007FD628CA",
-            "rev": 8634
+            "id": "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4",
+            "rev": 43003
           }
         },
         "targetMethodName": {
@@ -2633,7 +2633,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "C8394F1B-B865-437D-B59F-F7E459AB1DA7",
+            "id": "B0270D6A-DCD8-4315-BEFD-1CE67DDEC4A4",
             "rev": 0
           }
         },
@@ -2654,12 +2654,12 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "C8394F1B-B865-437D-B59F-F7E459AB1DA7": {
+    "B0270D6A-DCD8-4315-BEFD-1CE67DDEC4A4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2670,21 +2670,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_0BFAB8CD_0D75_44E1_9161_DD96A39E748A",
-            "rev": 16250
+            "id": "Label_8E9D6122_B757_4CC8_BA8E_6E050354C923",
+            "rev": 43021
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_8490662A_57D4_4151_AED4_7E007FD628CA",
-            "rev": 8634
+            "id": "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4",
+            "rev": 43003
           }
         }
       }
     },
-    "712EDAE4-091B-4352-82C9-F78AD8350948": {
+    "B612B3C9-201E-4EDB-97BA-362A3211715F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2712,7 +2712,7 @@
         }
       }
     },
-    "210FD3F3-50F1-46A7-8CAC-ED6604793BD7": {
+    "AC1653E2-EE06-4E15-B57E-8B08CC21AA9C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2740,7 +2740,7 @@
         }
       }
     },
-    "BB157EB4-879E-4734-B176-A511AE5BFCB3": {
+    "4D5C1C8B-2BE1-4873-8CEE-5AEA9B61B5B2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2768,7 +2768,7 @@
         }
       }
     },
-    "D7665AB6-EE49-4516-8781-B6A866D6C2EF": {
+    "2B753BB6-D6B8-46CD-AFDF-228D8DBB5222": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2796,7 +2796,7 @@
         }
       }
     },
-    "E0233425-D66D-4004-B3CF-A314813FF8FE": {
+    "3A6945EA-D1E4-406F-805A-48797913533F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2805,8 +2805,8 @@
         }
       }
     },
-    "Morph_F52F6A4A_48F0_4D01_BDC1_BC9323A099D6": {
-      "rev": 16247,
+    "Morph_061E1A5E_03F3_440D_ADB5_791581A668DE": {
+      "rev": 43018,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2817,7 +2817,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "945D1838-E884-47FE-A895-02B0A62957AA",
+              "id": "79D2A1FD-70A8-4816-A708-F080428661AA",
               "rev": 0
             }
           ]
@@ -2857,7 +2857,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "1BDB6698-41A8-4D1C-8434-8BD5AC639DB4",
+            "id": "9116A1BF-6F2C-42A6-904D-F5035FE6FF9F",
             "rev": 0
           }
         },
@@ -2865,7 +2865,7 @@
           "key": "borderRadius",
           "value": {
             "__ref__": true,
-            "id": "DFF1B855-13BD-40EC-A4D6-4EDB876BB999",
+            "id": "3441E6E6-9E45-4B13-91AA-CCF344A51732",
             "rev": 0
           }
         },
@@ -2873,7 +2873,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "3128FA6B-8618-4BFE-B08C-6A1AEC77607C",
+            "id": "A36D231D-04B9-4654-907A-6828AC338937",
             "rev": 0
           }
         },
@@ -2881,7 +2881,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "9889A5A8-B383-419A-9151-1C0781A68141",
+            "id": "1A971402-56E8-46F9-9D71-03D11B05CB31",
             "rev": 0
           }
         }
@@ -2894,12 +2894,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "morph.js",
-          "lastChange": 1498756859116,
+          "lastChange": 1498769624995,
           "lastSuperclassChange": 0
         }
       }
     },
-    "945D1838-E884-47FE-A895-02B0A62957AA": {
+    "79D2A1FD-70A8-4816-A708-F080428661AA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2918,8 +2918,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_F52F6A4A_48F0_4D01_BDC1_BC9323A099D6",
-            "rev": 16247
+            "id": "Morph_061E1A5E_03F3_440D_ADB5_791581A668DE",
+            "rev": 43018
           }
         },
         "sourceAttrName": {
@@ -2930,8 +2930,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_8490662A_57D4_4151_AED4_7E007FD628CA",
-            "rev": 8634
+            "id": "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4",
+            "rev": 43003
           }
         },
         "targetMethodName": {
@@ -2942,7 +2942,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "7A9796E6-661F-4B21-9EDA-E623F8D359B8",
+            "id": "EE0DF939-7F24-4F60-9568-430BAAC9E6A6",
             "rev": 0
           }
         },
@@ -2967,12 +2967,12 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "7A9796E6-661F-4B21-9EDA-E623F8D359B8": {
+    "EE0DF939-7F24-4F60-9568-430BAAC9E6A6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2983,21 +2983,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Morph_F52F6A4A_48F0_4D01_BDC1_BC9323A099D6",
-            "rev": 16247
+            "id": "Morph_061E1A5E_03F3_440D_ADB5_791581A668DE",
+            "rev": 43018
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_8490662A_57D4_4151_AED4_7E007FD628CA",
-            "rev": 8634
+            "id": "Window_BCD02A10_D2A7_4784_893E_4E6E6D263AF4",
+            "rev": 43003
           }
         }
       }
     },
-    "1BDB6698-41A8-4D1C-8434-8BD5AC639DB4": {
+    "9116A1BF-6F2C-42A6-904D-F5035FE6FF9F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3025,7 +3025,7 @@
         }
       }
     },
-    "DFF1B855-13BD-40EC-A4D6-4EDB876BB999": {
+    "3441E6E6-9E45-4B13-91AA-CCF344A51732": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3053,7 +3053,7 @@
         }
       }
     },
-    "3128FA6B-8618-4BFE-B08C-6A1AEC77607C": {
+    "A36D231D-04B9-4654-907A-6828AC338937": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3081,7 +3081,7 @@
         }
       }
     },
-    "9889A5A8-B383-419A-9151-1C0781A68141": {
+    "1A971402-56E8-46F9-9D71-03D11B05CB31": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3109,8 +3109,8 @@
         }
       }
     },
-    "UndoViewer_BEDA72E0_4D41_42BC_99E9_FADE40EB81E7": {
-      "rev": 17760,
+    "UndoViewer_472C7602_FEDD_4A41_9BF5_6371A9E0425B": {
+      "rev": 45756,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -3148,24 +3148,20 @@
           "value": [
             {
               "__ref__": true,
-              "id": "PropertyList_9E5ECD11_23E4_4EF5_A01C_ED0878F10B03",
-              "rev": 17758
+              "id": "PropertyList_E3D6967F_4DE7_4840_9787_B8FBB7B85319",
+              "rev": 45754
             },
             {
               "__ref__": true,
-              "id": "ValueList_A7FAA932_24E2_4576_9166_66D68A24F4B8",
-              "rev": 17759
+              "id": "ValueList_CA5FB17F_14DA_4EBF_B75E_0005705D0A1D",
+              "rev": 45755
             },
             {
               "__ref__": true,
-              "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-              "rev": 16364
+              "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+              "rev": 24465
             }
           ]
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "scrollbarOffset": {
           "key": "scrollbarOffset",
@@ -3183,7 +3179,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "4864D05E-AAF0-4583-BCC0-9B133A1BC21C",
+            "id": "36F2F434-6747-4C0E-9955-1B7E9FA2CB5E",
             "rev": 0
           }
         },
@@ -3191,7 +3187,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "7B257439-BECA-48F7-A4AF-27922C98F5E8",
+            "id": "A6CE0AAF-B875-44DA-BC35-16CCC5B78490",
             "rev": 0
           }
         },
@@ -3199,7 +3195,7 @@
           "key": "borderRadius",
           "value": {
             "__ref__": true,
-            "id": "E7CF1D9B-2704-42F2-A66A-3372E7913C9A",
+            "id": "208BBDED-25D2-48E5-9E45-627DF0A071C6",
             "rev": 0
           }
         },
@@ -3207,7 +3203,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "623EEE96-2B4F-4C89-A5CE-C44468125FEA",
+            "id": "5574C586-7A3F-4D89-A1C5-34F9EE0DDA67",
             "rev": 0
           }
         },
@@ -3215,7 +3211,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "317DFD89-142F-4DB7-8402-8258E5017F00",
+            "id": "7E801ED9-F447-46AC-B808-7CF26359F4FA",
             "rev": 0
           }
         }
@@ -3228,13 +3224,13 @@
             "version": "0.1.0"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498757073369,
-          "lastSuperclassChange": 1498756859116
+          "lastChange": 1498769625869,
+          "lastSuperclassChange": 1498769624995
         }
       }
     },
-    "PropertyList_9E5ECD11_23E4_4EF5_A01C_ED0878F10B03": {
-      "rev": 17758,
+    "PropertyList_E3D6967F_4DE7_4840_9787_B8FBB7B85319": {
+      "rev": 45754,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -3245,12 +3241,12 @@
           "value": [
             {
               "__ref__": true,
-              "id": "A15CCA67-3EFA-4574-95D9-CA67048FC8C9",
+              "id": "696F88B6-F7B6-4E73-B386-11A8CDEDCD5A",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "F2511DC1-A4B7-4258-8AA2-0919E65D0FE5",
+              "id": "D357165A-81B9-46F5-8181-EA45C068A2C0",
               "rev": 0
             }
           ]
@@ -3276,8 +3272,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_E9504D7B_A637_4ACB_9CDF_B3C7BFA30629",
-              "rev": 3805
+              "id": "Morph_2D340B05_CCEE_4067_BC9B_865F22DAE89A",
+              "rev": 3931
             }
           ]
         },
@@ -3298,7 +3294,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "A0457C36-417B-4FDB-B906-229A1CE53D5F",
+            "id": "DB3E7953-7173-4A19-9A57-EF2784880CA1",
             "rev": 0
           }
         },
@@ -3306,7 +3302,7 @@
           "key": "borderRadius",
           "value": {
             "__ref__": true,
-            "id": "6E3115F2-25B6-4C4F-9E0C-987CD0C3693A",
+            "id": "D8F77A86-4586-48B3-95D1-A24841810E0F",
             "rev": 0
           }
         },
@@ -3314,7 +3310,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "5B77C661-1B72-4FBA-B99E-9352E3A431CC",
+            "id": "E074A82D-919B-42BC-877D-895AC2041EBF",
             "rev": 0
           }
         },
@@ -3322,7 +3318,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "25E71B55-A87C-4BBD-88A4-A8AA6157E245",
+            "id": "0A787D5E-009A-4C54-BE3A-D5ADCD9E6407",
             "rev": 0
           }
         },
@@ -3331,7 +3327,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "EF197446-7179-47CC-9B5D-5D64D1A9316B",
+              "id": "7A0EA097-8C72-4FEE-820A-189B35FA7FDF",
               "rev": 0
             }
           ]
@@ -3350,12 +3346,12 @@
         },
         "selectedIndex": {
           "key": "selectedIndex",
-          "value": 0
+          "value": 4
         },
         "selectedIndexes": {
           "key": "selectedIndexes",
           "value": [
-            0
+            4
           ]
         },
         "selections": {
@@ -3373,12 +3369,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756860078,
-          "lastSuperclassChange": 1498756859472
+          "lastChange": 1498769625898,
+          "lastSuperclassChange": 1498769625360
         }
       }
     },
-    "A15CCA67-3EFA-4574-95D9-CA67048FC8C9": {
+    "696F88B6-F7B6-4E73-B386-11A8CDEDCD5A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3397,8 +3393,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "PropertyList_9E5ECD11_23E4_4EF5_A01C_ED0878F10B03",
-            "rev": 17758
+            "id": "PropertyList_E3D6967F_4DE7_4840_9787_B8FBB7B85319",
+            "rev": 45754
           }
         },
         "sourceAttrName": {
@@ -3409,8 +3405,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "UndoViewer_BEDA72E0_4D41_42BC_99E9_FADE40EB81E7",
-            "rev": 17760
+            "id": "UndoViewer_472C7602_FEDD_4A41_9BF5_6371A9E0425B",
+            "rev": 45756
           }
         },
         "targetMethodName": {
@@ -3421,7 +3417,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "C83B31EB-92F3-48F1-9B24-E5412D9C5139",
+            "id": "18791EFD-9BC2-4163-AE42-D2E4E261359B",
             "rev": 0
           }
         },
@@ -3436,6 +3432,9 @@
         "converterString": {
           "key": "converterString",
           "value": "obj => {\n                  var {source, target} = this.varMapping, selection = source.selection;\n                  target.filterFor(selection);\n                }"
+        },
+        "converter": {
+          "key": "converter"
         }
       },
       "lively.serializer-class-info": {
@@ -3446,33 +3445,33 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "C83B31EB-92F3-48F1-9B24-E5412D9C5139": {
+    "18791EFD-9BC2-4163-AE42-D2E4E261359B": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "PropertyList_9E5ECD11_23E4_4EF5_A01C_ED0878F10B03",
-            "rev": 17758
+            "id": "PropertyList_E3D6967F_4DE7_4840_9787_B8FBB7B85319",
+            "rev": 45754
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "UndoViewer_BEDA72E0_4D41_42BC_99E9_FADE40EB81E7",
-            "rev": 17760
+            "id": "UndoViewer_472C7602_FEDD_4A41_9BF5_6371A9E0425B",
+            "rev": 45756
           }
         }
       }
     },
-    "F2511DC1-A4B7-4258-8AA2-0919E65D0FE5": {
+    "D357165A-81B9-46F5-8181-EA45C068A2C0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3491,8 +3490,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "PropertyList_9E5ECD11_23E4_4EF5_A01C_ED0878F10B03",
-            "rev": 17758
+            "id": "PropertyList_E3D6967F_4DE7_4840_9787_B8FBB7B85319",
+            "rev": 45754
           }
         },
         "sourceAttrName": {
@@ -3503,8 +3502,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "UndoViewer_BEDA72E0_4D41_42BC_99E9_FADE40EB81E7",
-            "rev": 17760
+            "id": "UndoViewer_472C7602_FEDD_4A41_9BF5_6371A9E0425B",
+            "rev": 45756
           }
         },
         "targetMethodName": {
@@ -3515,7 +3514,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "1E66EF20-8F36-4A35-9698-72A0AC7B49CE",
+            "id": "CADDB743-C36E-4473-B7CC-61175A87059C",
             "rev": 0
           }
         },
@@ -3543,12 +3542,12 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "1E66EF20-8F36-4A35-9698-72A0AC7B49CE": {
+    "CADDB743-C36E-4473-B7CC-61175A87059C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3559,22 +3558,22 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "PropertyList_9E5ECD11_23E4_4EF5_A01C_ED0878F10B03",
-            "rev": 17758
+            "id": "PropertyList_E3D6967F_4DE7_4840_9787_B8FBB7B85319",
+            "rev": 45754
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "UndoViewer_BEDA72E0_4D41_42BC_99E9_FADE40EB81E7",
-            "rev": 17760
+            "id": "UndoViewer_472C7602_FEDD_4A41_9BF5_6371A9E0425B",
+            "rev": 45756
           }
         }
       }
     },
-    "Morph_E9504D7B_A637_4ACB_9CDF_B3C7BFA30629": {
-      "rev": 3805,
+    "Morph_2D340B05_CCEE_4067_BC9B_865F22DAE89A": {
+      "rev": 3931,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -3618,7 +3617,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "75E0FC57-9166-4DAF-9885-E2EE31D87E20",
+            "id": "7077228A-3F23-4E3F-B603-46940D4EC705",
             "rev": 0
           }
         },
@@ -3626,7 +3625,7 @@
           "key": "borderRadius",
           "value": {
             "__ref__": true,
-            "id": "6A8D5BC5-F038-4DBA-A6DD-31C30A887200",
+            "id": "3EFF265D-1736-427E-A3DF-2B6365476564",
             "rev": 0
           }
         },
@@ -3634,7 +3633,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "C1962C2A-8FE4-4C9A-A27F-C672B8DB0926",
+            "id": "81A2E7AD-5487-4AF4-90D7-B67A2A64D1D4",
             "rev": 0
           }
         },
@@ -3642,7 +3641,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "05D4DE70-2A27-4AC5-B3D7-110C09C4632C",
+            "id": "0D85C1E0-DE43-465B-8274-93FF970378FD",
             "rev": 0
           }
         }
@@ -3655,12 +3654,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "morph.js",
-          "lastChange": 1498756859116,
+          "lastChange": 1498769624995,
           "lastSuperclassChange": 0
         }
       }
     },
-    "75E0FC57-9166-4DAF-9885-E2EE31D87E20": {
+    "7077228A-3F23-4E3F-B603-46940D4EC705": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3688,7 +3687,7 @@
         }
       }
     },
-    "6A8D5BC5-F038-4DBA-A6DD-31C30A887200": {
+    "3EFF265D-1736-427E-A3DF-2B6365476564": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3716,7 +3715,7 @@
         }
       }
     },
-    "C1962C2A-8FE4-4C9A-A27F-C672B8DB0926": {
+    "81A2E7AD-5487-4AF4-90D7-B67A2A64D1D4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3744,7 +3743,7 @@
         }
       }
     },
-    "05D4DE70-2A27-4AC5-B3D7-110C09C4632C": {
+    "0D85C1E0-DE43-465B-8274-93FF970378FD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3772,7 +3771,7 @@
         }
       }
     },
-    "A0457C36-417B-4FDB-B906-229A1CE53D5F": {
+    "DB3E7953-7173-4A19-9A57-EF2784880CA1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3800,7 +3799,7 @@
         }
       }
     },
-    "6E3115F2-25B6-4C4F-9E0C-987CD0C3693A": {
+    "D8F77A86-4586-48B3-95D1-A24841810E0F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3828,7 +3827,7 @@
         }
       }
     },
-    "5B77C661-1B72-4FBA-B99E-9352E3A431CC": {
+    "E074A82D-919B-42BC-877D-895AC2041EBF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3856,7 +3855,7 @@
         }
       }
     },
-    "25E71B55-A87C-4BBD-88A4-A8AA6157E245": {
+    "0A787D5E-009A-4C54-BE3A-D5ADCD9E6407": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3884,14 +3883,14 @@
         }
       }
     },
-    "EF197446-7179-47CC-9B5D-5D64D1A9316B": {
+    "7A0EA097-8C72-4FEE-820A-189B35FA7FDF": {
       "rev": 0,
       "props": {
         "rules": {
           "key": "rules",
           "value": {
             "__ref__": true,
-            "id": "0399712A-FE35-46A3-A720-B6DD05430D61",
+            "id": "B82CFED7-E43C-40D2-B696-F3562075CB73",
             "rev": 0
           }
         },
@@ -3899,8 +3898,8 @@
           "key": "context",
           "value": {
             "__ref__": true,
-            "id": "PropertyList_9E5ECD11_23E4_4EF5_A01C_ED0878F10B03",
-            "rev": 17758
+            "id": "PropertyList_E3D6967F_4DE7_4840_9787_B8FBB7B85319",
+            "rev": 45754
           }
         }
       },
@@ -3912,12 +3911,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "style-rules.js",
-          "lastChange": 1498756859302,
+          "lastChange": 1498769625191,
           "lastSuperclassChange": 0
         }
       }
     },
-    "0399712A-FE35-46A3-A720-B6DD05430D61": {
+    "B82CFED7-E43C-40D2-B696-F3562075CB73": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3928,7 +3927,7 @@
           "key": ".List.dark",
           "value": {
             "__ref__": true,
-            "id": "13DB2B3C-53F2-410F-982B-512A3F74B143",
+            "id": "B6D1B1B1-6B63-4097-9148-35505AE98B19",
             "rev": 0
           }
         },
@@ -3936,7 +3935,7 @@
           "key": ".List.dark .ListItemMorph",
           "value": {
             "__ref__": true,
-            "id": "E1FE58FB-9FF2-42E4-9F6F-F419C2B8F928",
+            "id": "A76304AF-9921-4925-992E-94F37C614E7F",
             "rev": 0
           }
         },
@@ -3944,13 +3943,13 @@
           "key": ".List.default",
           "value": {
             "__ref__": true,
-            "id": "D63B52F5-2539-45AD-A9FB-5EEE1F833808",
+            "id": "BE5AF87B-495D-4C41-B5DE-1B290A191B4D",
             "rev": 0
           }
         }
       }
     },
-    "13DB2B3C-53F2-410F-982B-512A3F74B143": {
+    "B6D1B1B1-6B63-4097-9148-35505AE98B19": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3971,7 +3970,7 @@
         }
       }
     },
-    "E1FE58FB-9FF2-42E4-9F6F-F419C2B8F928": {
+    "A76304AF-9921-4925-992E-94F37C614E7F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3996,7 +3995,7 @@
         }
       }
     },
-    "D63B52F5-2539-45AD-A9FB-5EEE1F833808": {
+    "BE5AF87B-495D-4C41-B5DE-1B290A191B4D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4009,8 +4008,8 @@
         }
       }
     },
-    "ValueList_A7FAA932_24E2_4576_9166_66D68A24F4B8": {
-      "rev": 17759,
+    "ValueList_CA5FB17F_14DA_4EBF_B75E_0005705D0A1D": {
+      "rev": 45755,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -4021,7 +4020,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "9320DE21-4BA4-4795-9A73-2204B79CC6C5",
+              "id": "E9789D74-9304-4FFD-80CA-AB3F69C32594",
               "rev": 0
             }
           ]
@@ -4047,8 +4046,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_4058B128_0219_4F4C_A971_B02B06C5ECB7",
-              "rev": 3561
+              "id": "Morph_8CD5FB50_18BF_4333_B269_94281FA9A0CA",
+              "rev": 3603
             }
           ]
         },
@@ -4069,7 +4068,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "2F5425A9-BAFF-4640-9AE0-0CFA685A5BA9",
+            "id": "1CA95CAB-3430-4BA1-ABFB-3B7E4D65C7F7",
             "rev": 0
           }
         },
@@ -4077,7 +4076,7 @@
           "key": "borderRadius",
           "value": {
             "__ref__": true,
-            "id": "B14E0499-9BF6-43A7-95B2-DF13FF3DB27C",
+            "id": "8536A1DB-8DDD-4898-8D01-513C61FC9BD1",
             "rev": 0
           }
         },
@@ -4085,7 +4084,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "A8D243C1-5428-407A-8C34-1AA2DD4A361B",
+            "id": "6CA3374B-1E20-4CA5-B32D-0720FB613559",
             "rev": 0
           }
         },
@@ -4093,7 +4092,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "1254A460-C11F-41E8-88AF-7CB1A7905A83",
+            "id": "F6AB8A04-7E31-4F90-A84A-1E1F0DA334B0",
             "rev": 0
           }
         },
@@ -4102,7 +4101,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "27612EA3-8A0F-41C2-AA4B-7AECCAAC2F1B",
+              "id": "9914A8A5-A3FE-4B0C-9715-7F7AB6DBF00F",
               "rev": 0
             }
           ]
@@ -4121,12 +4120,12 @@
         },
         "selectedIndex": {
           "key": "selectedIndex",
-          "value": 0
+          "value": 1
         },
         "selectedIndexes": {
           "key": "selectedIndexes",
           "value": [
-            0
+            1
           ]
         },
         "selections": {
@@ -4144,12 +4143,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756860108,
-          "lastSuperclassChange": 1498756859472
+          "lastChange": 1498769944426,
+          "lastSuperclassChange": 1498769625360
         }
       }
     },
-    "9320DE21-4BA4-4795-9A73-2204B79CC6C5": {
+    "E9789D74-9304-4FFD-80CA-AB3F69C32594": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4168,8 +4167,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "ValueList_A7FAA932_24E2_4576_9166_66D68A24F4B8",
-            "rev": 17759
+            "id": "ValueList_CA5FB17F_14DA_4EBF_B75E_0005705D0A1D",
+            "rev": 45755
           }
         },
         "sourceAttrName": {
@@ -4180,8 +4179,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "UndoViewer_BEDA72E0_4D41_42BC_99E9_FADE40EB81E7",
-            "rev": 17760
+            "id": "UndoViewer_472C7602_FEDD_4A41_9BF5_6371A9E0425B",
+            "rev": 45756
           }
         },
         "targetMethodName": {
@@ -4192,7 +4191,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "4DC4CBC0-F51F-4D9D-931E-BB1E25E7956A",
+            "id": "23F2F0AB-544C-445F-B116-A73A40C78890",
             "rev": 0
           }
         },
@@ -4207,6 +4206,9 @@
         "converterString": {
           "key": "converterString",
           "value": "obj => {\n                  var {source, target} = this.varMapping, selection = source.selection;\n                  return selection;\n                }"
+        },
+        "converter": {
+          "key": "converter"
         }
       },
       "lively.serializer-class-info": {
@@ -4217,34 +4219,38 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "4DC4CBC0-F51F-4D9D-931E-BB1E25E7956A": {
+    "23F2F0AB-544C-445F-B116-A73A40C78890": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "ValueList_A7FAA932_24E2_4576_9166_66D68A24F4B8",
-            "rev": 17759
+            "id": "ValueList_CA5FB17F_14DA_4EBF_B75E_0005705D0A1D",
+            "rev": 45755
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "UndoViewer_BEDA72E0_4D41_42BC_99E9_FADE40EB81E7",
-            "rev": 17760
+            "id": "UndoViewer_472C7602_FEDD_4A41_9BF5_6371A9E0425B",
+            "rev": 45756
           }
         }
       }
     },
-    "Morph_4058B128_0219_4F4C_A971_B02B06C5ECB7": {
-      "rev": 3561,
+    "Morph_8CD5FB50_18BF_4333_B269_94281FA9A0CA": {
+      "rev": 3603,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -4288,7 +4294,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "7C2A7835-C07D-4691-AC09-0C6F9C42CBB4",
+            "id": "0E3DB34B-C1A9-4DD8-AC5A-221626BDF5F0",
             "rev": 0
           }
         },
@@ -4296,7 +4302,7 @@
           "key": "borderRadius",
           "value": {
             "__ref__": true,
-            "id": "F2A4D728-4316-4CA6-8006-80BEFD602820",
+            "id": "31EC3D00-8A9B-4EE2-9601-42179B67034B",
             "rev": 0
           }
         },
@@ -4304,7 +4310,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "EC895AE5-63F1-4DDC-A74A-6EAEA61F54B8",
+            "id": "A18CAE7F-FE67-4CA5-88FF-350D53D77F22",
             "rev": 0
           }
         },
@@ -4312,7 +4318,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "AB7A97E2-3939-48A6-9F56-3A380C9331BA",
+            "id": "B3EB82D7-EFA0-470C-B76C-C906EB421F16",
             "rev": 0
           }
         }
@@ -4325,12 +4331,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "morph.js",
-          "lastChange": 1498756859116,
+          "lastChange": 1498769624995,
           "lastSuperclassChange": 0
         }
       }
     },
-    "7C2A7835-C07D-4691-AC09-0C6F9C42CBB4": {
+    "0E3DB34B-C1A9-4DD8-AC5A-221626BDF5F0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4358,7 +4364,7 @@
         }
       }
     },
-    "F2A4D728-4316-4CA6-8006-80BEFD602820": {
+    "31EC3D00-8A9B-4EE2-9601-42179B67034B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4386,7 +4392,7 @@
         }
       }
     },
-    "EC895AE5-63F1-4DDC-A74A-6EAEA61F54B8": {
+    "A18CAE7F-FE67-4CA5-88FF-350D53D77F22": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4414,7 +4420,7 @@
         }
       }
     },
-    "AB7A97E2-3939-48A6-9F56-3A380C9331BA": {
+    "B3EB82D7-EFA0-470C-B76C-C906EB421F16": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4442,7 +4448,7 @@
         }
       }
     },
-    "2F5425A9-BAFF-4640-9AE0-0CFA685A5BA9": {
+    "1CA95CAB-3430-4BA1-ABFB-3B7E4D65C7F7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4470,7 +4476,7 @@
         }
       }
     },
-    "B14E0499-9BF6-43A7-95B2-DF13FF3DB27C": {
+    "8536A1DB-8DDD-4898-8D01-513C61FC9BD1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4498,7 +4504,7 @@
         }
       }
     },
-    "A8D243C1-5428-407A-8C34-1AA2DD4A361B": {
+    "6CA3374B-1E20-4CA5-B32D-0720FB613559": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4526,7 +4532,7 @@
         }
       }
     },
-    "1254A460-C11F-41E8-88AF-7CB1A7905A83": {
+    "F6AB8A04-7E31-4F90-A84A-1E1F0DA334B0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4554,14 +4560,14 @@
         }
       }
     },
-    "27612EA3-8A0F-41C2-AA4B-7AECCAAC2F1B": {
+    "9914A8A5-A3FE-4B0C-9715-7F7AB6DBF00F": {
       "rev": 0,
       "props": {
         "rules": {
           "key": "rules",
           "value": {
             "__ref__": true,
-            "id": "40DEC009-59D7-4069-BF1E-7F02007B871A",
+            "id": "0DF3CA21-7EEC-4D7A-A41A-623C65498802",
             "rev": 0
           }
         },
@@ -4569,8 +4575,8 @@
           "key": "context",
           "value": {
             "__ref__": true,
-            "id": "ValueList_A7FAA932_24E2_4576_9166_66D68A24F4B8",
-            "rev": 17759
+            "id": "ValueList_CA5FB17F_14DA_4EBF_B75E_0005705D0A1D",
+            "rev": 45755
           }
         }
       },
@@ -4582,12 +4588,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "style-rules.js",
-          "lastChange": 1498756859302,
+          "lastChange": 1498769625191,
           "lastSuperclassChange": 0
         }
       }
     },
-    "40DEC009-59D7-4069-BF1E-7F02007B871A": {
+    "0DF3CA21-7EEC-4D7A-A41A-623C65498802": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4598,7 +4604,7 @@
           "key": ".List.dark",
           "value": {
             "__ref__": true,
-            "id": "6BB5BC7F-45DD-4EDC-A9A0-822B612AD2B0",
+            "id": "83568DF1-B978-4044-8129-E61C487DA934",
             "rev": 0
           }
         },
@@ -4606,7 +4612,7 @@
           "key": ".List.dark .ListItemMorph",
           "value": {
             "__ref__": true,
-            "id": "04AE9BA9-7ED1-4891-BC0C-E595ED487942",
+            "id": "C93F32E0-DEB9-4A56-8F76-87A83B75BE20",
             "rev": 0
           }
         },
@@ -4614,13 +4620,13 @@
           "key": ".List.default",
           "value": {
             "__ref__": true,
-            "id": "DDBA9E69-70D3-4307-858D-6B4AFF898936",
+            "id": "D0C8F43B-DE31-4C3A-A776-5B792D3BC549",
             "rev": 0
           }
         }
       }
     },
-    "6BB5BC7F-45DD-4EDC-A9A0-822B612AD2B0": {
+    "83568DF1-B978-4044-8129-E61C487DA934": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4641,7 +4647,7 @@
         }
       }
     },
-    "04AE9BA9-7ED1-4891-BC0C-E595ED487942": {
+    "C93F32E0-DEB9-4A56-8F76-87A83B75BE20": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4666,7 +4672,7 @@
         }
       }
     },
-    "DDBA9E69-70D3-4307-858D-6B4AFF898936": {
+    "D0C8F43B-DE31-4C3A-A776-5B792D3BC549": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4679,8 +4685,8 @@
         }
       }
     },
-    "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5": {
-      "rev": 16364,
+    "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521": {
+      "rev": 24465,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -4691,22 +4697,22 @@
           "value": [
             {
               "__ref__": true,
-              "id": "2AA5887B-A089-493A-8285-38863CF0CF1C",
+              "id": "421BC07D-1A7F-40F0-950F-0ACE854DC925",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "BAB36AA4-6FC6-4889-85BF-D59EC6EFA180",
+              "id": "C973F393-7E02-4260-A1CC-1134BE9BCA5C",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "66A2325F-704C-40CD-B4A1-F7BF9B75C9F8",
+              "id": "28866164-2E15-4387-97E2-E84E3821DFEC",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "21520C05-0429-4E90-A246-68F4718E6907",
+              "id": "BF9D77B2-3E78-46C3-9021-EA671A27190F",
               "rev": 0
             }
           ]
@@ -4728,18 +4734,18 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_7A8DC0B9_F60B_491D_86F3_4D9D36AA0B0E",
-              "rev": 12702
+              "id": "Label_485AEE32_8A4C_4957_843F_A932B7D17626",
+              "rev": 43022
             },
             {
               "__ref__": true,
-              "id": "Label_7914E37C_7E34_43D7_A220_C151A2DBBE88",
-              "rev": 16363
+              "id": "Label_A74319E3_99E0_4161_812C_23D7DC038AB0",
+              "rev": 43025
             },
             {
               "__ref__": true,
-              "id": "Label_367A7DA2_1EC3_490F_84DD_1B1999AE81F3",
-              "rev": 12706
+              "id": "Label_C0862850_8D99_4CD4_ADA7_9F5CE9EC2967",
+              "rev": 43026
             }
           ]
         },
@@ -4768,6 +4774,8 @@
             "activeStyle",
             "activeStyle",
             "activeStyle",
+            "activeStyle",
+            "activeStyle",
             "activeStyle"
           ]
         },
@@ -4775,7 +4783,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "D2088C3F-956C-480C-972C-3EE9CEAF1B52",
+            "id": "E2153D43-48C6-4727-BE60-B3D59FC9C5F2",
             "rev": 0
           }
         },
@@ -4791,16 +4799,16 @@
           "key": "iconMorph",
           "value": {
             "__ref__": true,
-            "id": "Label_7A8DC0B9_F60B_491D_86F3_4D9D36AA0B0E",
-            "rev": 12702
+            "id": "Label_485AEE32_8A4C_4957_843F_A932B7D17626",
+            "rev": 43022
           }
         },
         "labelMorph": {
           "key": "labelMorph",
           "value": {
             "__ref__": true,
-            "id": "Label_7914E37C_7E34_43D7_A220_C151A2DBBE88",
-            "rev": 16363
+            "id": "Label_A74319E3_99E0_4161_812C_23D7DC038AB0",
+            "rev": 43025
           }
         },
         "icon": {
@@ -4816,12 +4824,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "components/buttons.js",
-          "lastChange": 1498756859508,
-          "lastSuperclassChange": 1498756859116
+          "lastChange": 1498769625402,
+          "lastSuperclassChange": 1498769624995
         }
       }
     },
-    "2AA5887B-A089-493A-8285-38863CF0CF1C": {
+    "421BC07D-1A7F-40F0-950F-0ACE854DC925": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4840,8 +4848,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         },
         "sourceAttrName": {
@@ -4852,8 +4860,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         },
         "targetMethodName": {
@@ -4864,7 +4872,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "149DD518-1893-474A-9F0B-AA63C383AD01",
+            "id": "E186EB11-0767-447C-93C4-46C5293A767A",
             "rev": 0
           }
         },
@@ -4885,12 +4893,12 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "149DD518-1893-474A-9F0B-AA63C383AD01": {
+    "E186EB11-0767-447C-93C4-46C5293A767A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4901,21 +4909,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         }
       }
     },
-    "BAB36AA4-6FC6-4889-85BF-D59EC6EFA180": {
+    "C973F393-7E02-4260-A1CC-1134BE9BCA5C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4934,8 +4942,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         },
         "sourceAttrName": {
@@ -4946,8 +4954,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         },
         "targetMethodName": {
@@ -4958,7 +4966,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "3B948D83-2EB3-4032-93DE-55F472334A89",
+            "id": "D45F1C85-0003-4A34-A6DF-E0D946F7F390",
             "rev": 0
           }
         },
@@ -4979,12 +4987,12 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "3B948D83-2EB3-4032-93DE-55F472334A89": {
+    "D45F1C85-0003-4A34-A6DF-E0D946F7F390": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4995,21 +5003,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         }
       }
     },
-    "66A2325F-704C-40CD-B4A1-F7BF9B75C9F8": {
+    "28866164-2E15-4387-97E2-E84E3821DFEC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5028,8 +5036,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         },
         "sourceAttrName": {
@@ -5040,8 +5048,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         },
         "targetMethodName": {
@@ -5052,7 +5060,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "336CD896-CF84-44E3-805F-BD1C008EE876",
+            "id": "AD297738-5384-43C3-83E7-6BEF3DA64C39",
             "rev": 0
           }
         },
@@ -5073,12 +5081,12 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "336CD896-CF84-44E3-805F-BD1C008EE876": {
+    "AD297738-5384-43C3-83E7-6BEF3DA64C39": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5089,21 +5097,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         }
       }
     },
-    "21520C05-0429-4E90-A246-68F4718E6907": {
+    "BF9D77B2-3E78-46C3-9021-EA671A27190F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5122,8 +5130,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         },
         "sourceAttrName": {
@@ -5134,8 +5142,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         },
         "targetMethodName": {
@@ -5146,7 +5154,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "FED1FD38-4070-4068-B688-0F422E5C3965",
+            "id": "9D39EA78-064D-4766-87A5-437E3DC2E931",
             "rev": 0
           }
         },
@@ -5167,12 +5175,12 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "FED1FD38-4070-4068-B688-0F422E5C3965": {
+    "9D39EA78-064D-4766-87A5-437E3DC2E931": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5183,22 +5191,22 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         }
       }
     },
-    "Label_7A8DC0B9_F60B_491D_86F3_4D9D36AA0B0E": {
-      "rev": 12702,
+    "Label_485AEE32_8A4C_4957_843F_A932B7D17626": {
+      "rev": 43022,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -5209,7 +5217,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "7766A6AD-804B-40A9-9D6B-0B74A837F5DC",
+              "id": "2CC2A1AD-3BDE-4525-8FA7-72B7EA6C3A7B",
               "rev": 0
             }
           ]
@@ -5242,7 +5250,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "C2FB2CF8-9A26-478B-AD60-8419A5169713",
+            "id": "61D5BDB6-DE94-4E2A-ADF8-43F2BB48B2C5",
             "rev": 0
           }
         },
@@ -5250,7 +5258,7 @@
           "key": "borderRadius",
           "value": {
             "__ref__": true,
-            "id": "1F44AF9A-10F2-4374-AF70-7B5931030E2E",
+            "id": "CDED9539-978A-4426-BC35-5C989D31B5D1",
             "rev": 0
           }
         },
@@ -5258,7 +5266,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "2011A73C-297D-4E75-BD2C-1B800B7AF1F5",
+            "id": "2567E649-26CB-49D9-8530-09F1827E086E",
             "rev": 0
           }
         },
@@ -5266,7 +5274,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "6D119AD7-7F6F-4E30-AFA2-1F4A093B7591",
+            "id": "B09D80C7-F335-4215-BBFF-FC23F1E95A5F",
             "rev": 0
           }
         },
@@ -5286,12 +5294,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "text/label.js",
-          "lastChange": 1498756859088,
-          "lastSuperclassChange": 1498756859116
+          "lastChange": 1498769624967,
+          "lastSuperclassChange": 1498769624995
         }
       }
     },
-    "7766A6AD-804B-40A9-9D6B-0B74A837F5DC": {
+    "2CC2A1AD-3BDE-4525-8FA7-72B7EA6C3A7B": {
       "rev": 0,
       "props": {
         "doNotSerialize": {
@@ -5306,8 +5314,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_7A8DC0B9_F60B_491D_86F3_4D9D36AA0B0E",
-            "rev": 12702
+            "id": "Label_485AEE32_8A4C_4957_843F_A932B7D17626",
+            "rev": 43022
           }
         },
         "sourceAttrName": {
@@ -5318,8 +5326,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         },
         "targetMethodName": {
@@ -5330,7 +5338,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "2E4B5DB9-3D23-4CCC-A307-67B7CE57BC99",
+            "id": "CE7AFE91-14AA-4668-BA92-470D7BD2A48A",
             "rev": 0
           }
         },
@@ -5351,33 +5359,33 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "2E4B5DB9-3D23-4CCC-A307-67B7CE57BC99": {
+    "CE7AFE91-14AA-4668-BA92-470D7BD2A48A": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_7A8DC0B9_F60B_491D_86F3_4D9D36AA0B0E",
-            "rev": 12702
+            "id": "Label_485AEE32_8A4C_4957_843F_A932B7D17626",
+            "rev": 43022
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         }
       }
     },
-    "C2FB2CF8-9A26-478B-AD60-8419A5169713": {
+    "61D5BDB6-DE94-4E2A-ADF8-43F2BB48B2C5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5405,7 +5413,7 @@
         }
       }
     },
-    "1F44AF9A-10F2-4374-AF70-7B5931030E2E": {
+    "CDED9539-978A-4426-BC35-5C989D31B5D1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5433,7 +5441,7 @@
         }
       }
     },
-    "2011A73C-297D-4E75-BD2C-1B800B7AF1F5": {
+    "2567E649-26CB-49D9-8530-09F1827E086E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5461,7 +5469,7 @@
         }
       }
     },
-    "6D119AD7-7F6F-4E30-AFA2-1F4A093B7591": {
+    "B09D80C7-F335-4215-BBFF-FC23F1E95A5F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5489,8 +5497,8 @@
         }
       }
     },
-    "Label_7914E37C_7E34_43D7_A220_C151A2DBBE88": {
-      "rev": 16363,
+    "Label_A74319E3_99E0_4161_812C_23D7DC038AB0": {
+      "rev": 43025,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -5501,7 +5509,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "DFAA7831-43A4-4267-A20F-15E0AC114314",
+              "id": "BAF55181-94E3-4C8C-AFC2-80E935B3E2C4",
               "rev": 0
             }
           ]
@@ -5538,7 +5546,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "90A2FA26-89E1-4C1C-8F52-6CB98D285C4A",
+            "id": "79924833-7337-4FB6-95EC-6B539AC93DDC",
             "rev": 0
           }
         },
@@ -5546,7 +5554,7 @@
           "key": "borderRadius",
           "value": {
             "__ref__": true,
-            "id": "74A893A9-4E15-4C2F-ADE7-8C605B193270",
+            "id": "5C1ACF29-2946-41F2-91A1-601316D72EE9",
             "rev": 0
           }
         },
@@ -5554,7 +5562,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "05E0AE01-227E-438B-84C6-182183AE2EC1",
+            "id": "48B101C8-70F8-4D23-931C-A6791EFF7BCC",
             "rev": 0
           }
         },
@@ -5562,7 +5570,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "251B3FF2-D1B5-4C21-9C29-405106ECE4F2",
+            "id": "7E6E88EE-0ADF-4F3A-B438-032FF293FC77",
             "rev": 0
           }
         },
@@ -5586,12 +5594,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "text/label.js",
-          "lastChange": 1498756859088,
-          "lastSuperclassChange": 1498756859116
+          "lastChange": 1498769624967,
+          "lastSuperclassChange": 1498769624995
         }
       }
     },
-    "DFAA7831-43A4-4267-A20F-15E0AC114314": {
+    "BAF55181-94E3-4C8C-AFC2-80E935B3E2C4": {
       "rev": 0,
       "props": {
         "doNotSerialize": {
@@ -5606,8 +5614,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_7914E37C_7E34_43D7_A220_C151A2DBBE88",
-            "rev": 16363
+            "id": "Label_A74319E3_99E0_4161_812C_23D7DC038AB0",
+            "rev": 43025
           }
         },
         "sourceAttrName": {
@@ -5618,8 +5626,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         },
         "targetMethodName": {
@@ -5630,7 +5638,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "DFD80089-CF1C-451B-9482-1E3660D41E30",
+            "id": "21A1BD78-B6D8-4C8E-A0EE-34A91CE53765",
             "rev": 0
           }
         },
@@ -5651,33 +5659,33 @@
             "version": "0.1.1"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1498756859050,
+          "lastChange": 1498769624926,
           "lastSuperclassChange": 0
         }
       }
     },
-    "DFD80089-CF1C-451B-9482-1E3660D41E30": {
+    "21A1BD78-B6D8-4C8E-A0EE-34A91CE53765": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_7914E37C_7E34_43D7_A220_C151A2DBBE88",
-            "rev": 16363
+            "id": "Label_A74319E3_99E0_4161_812C_23D7DC038AB0",
+            "rev": 43025
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         }
       }
     },
-    "90A2FA26-89E1-4C1C-8F52-6CB98D285C4A": {
+    "79924833-7337-4FB6-95EC-6B539AC93DDC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5705,7 +5713,7 @@
         }
       }
     },
-    "74A893A9-4E15-4C2F-ADE7-8C605B193270": {
+    "5C1ACF29-2946-41F2-91A1-601316D72EE9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5733,7 +5741,7 @@
         }
       }
     },
-    "05E0AE01-227E-438B-84C6-182183AE2EC1": {
+    "48B101C8-70F8-4D23-931C-A6791EFF7BCC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5761,7 +5769,7 @@
         }
       }
     },
-    "251B3FF2-D1B5-4C21-9C29-405106ECE4F2": {
+    "7E6E88EE-0ADF-4F3A-B438-032FF293FC77": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5789,8 +5797,8 @@
         }
       }
     },
-    "Label_367A7DA2_1EC3_490F_84DD_1B1999AE81F3": {
-      "rev": 12706,
+    "Label_C0862850_8D99_4CD4_ADA7_9F5CE9EC2967": {
+      "rev": 43026,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -5823,7 +5831,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "4503254F-2D49-435F-9990-CACC2FF24F03",
+            "id": "F15D3CE0-438F-472F-9C9D-FD255E641D42",
             "rev": 0
           }
         },
@@ -5831,7 +5839,7 @@
           "key": "borderRadius",
           "value": {
             "__ref__": true,
-            "id": "64B16400-B7E5-47B5-A410-A600351B6E7D",
+            "id": "80BDB948-2A57-4470-8CAC-E2661D7F805B",
             "rev": 0
           }
         },
@@ -5839,7 +5847,7 @@
           "key": "borderStyle",
           "value": {
             "__ref__": true,
-            "id": "454FA8E7-1640-48CA-A265-EB96FF560B05",
+            "id": "C1A7FCF5-5092-45F9-A43F-E1543646BF1E",
             "rev": 0
           }
         },
@@ -5847,7 +5855,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "C027B416-4A8C-43D1-8B38-7DDB3747D671",
+            "id": "E66AE5C4-83F1-4B7B-8C70-EB51686FE15E",
             "rev": 0
           }
         },
@@ -5871,12 +5879,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "text/label.js",
-          "lastChange": 1498756859088,
-          "lastSuperclassChange": 1498756859116
+          "lastChange": 1498769624967,
+          "lastSuperclassChange": 1498769624995
         }
       }
     },
-    "4503254F-2D49-435F-9990-CACC2FF24F03": {
+    "F15D3CE0-438F-472F-9C9D-FD255E641D42": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5904,7 +5912,7 @@
         }
       }
     },
-    "64B16400-B7E5-47B5-A410-A600351B6E7D": {
+    "80BDB948-2A57-4470-8CAC-E2661D7F805B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5932,7 +5940,7 @@
         }
       }
     },
-    "454FA8E7-1640-48CA-A265-EB96FF560B05": {
+    "C1A7FCF5-5092-45F9-A43F-E1543646BF1E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5960,7 +5968,7 @@
         }
       }
     },
-    "C027B416-4A8C-43D1-8B38-7DDB3747D671": {
+    "E66AE5C4-83F1-4B7B-8C70-EB51686FE15E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5988,7 +5996,7 @@
         }
       }
     },
-    "D2088C3F-956C-480C-972C-3EE9CEAF1B52": {
+    "E2153D43-48C6-4727-BE60-B3D59FC9C5F2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6016,7 +6024,7 @@
         }
       }
     },
-    "4864D05E-AAF0-4583-BCC0-9B133A1BC21C": {
+    "36F2F434-6747-4C0E-9955-1B7E9FA2CB5E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6031,7 +6039,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "48CC9B7C-EEB3-4568-9FD2-F20BCEB23705",
+            "id": "3928561B-59D5-46CF-B317-B8EE8E73F59A",
             "rev": 0
           }
         },
@@ -6055,8 +6063,8 @@
           "key": "container",
           "value": {
             "__ref__": true,
-            "id": "UndoViewer_BEDA72E0_4D41_42BC_99E9_FADE40EB81E7",
-            "rev": 17760
+            "id": "UndoViewer_472C7602_FEDD_4A41_9BF5_6371A9E0425B",
+            "rev": 45756
           }
         },
         "autoResize": {
@@ -6071,32 +6079,32 @@
           "value": [
             {
               "__ref__": true,
-              "id": "9DCD2D1B-E3C8-4D35-82D5-0DFDCA4B2085",
+              "id": "6AE2006B-010D-46EC-A2D8-90454192DC42",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "82BDFC72-CA8C-469B-AE30-17293A0DF3C1",
+              "id": "4E12B2AB-8AA8-4ABC-B511-C0E7F680404F",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "596F4DFB-CE6E-4168-AF81-B5063FB48910",
+              "id": "02F78D72-F972-48B7-9A6A-522D78C01CE2",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "AB58DEA4-5C32-4497-AE2D-C197DE851E77",
+              "id": "1B12A3BF-5F8B-4220-8F24-3716246FD128",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "6B18BC0A-E105-48B5-89D4-A0425C79F553",
+              "id": "4D160DD8-02C1-44ED-806C-21003AF429D9",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "85100289-9226-45A4-A8C3-8FAA11B647DF",
+              "id": "9712E573-14D8-4534-A849-004B74318F33",
               "rev": 0
             }
           ]
@@ -6105,7 +6113,7 @@
           "key": "config",
           "value": {
             "__ref__": true,
-            "id": "59AAC70D-30EB-4BA8-BEA9-2A64BA1296D2",
+            "id": "42B3E171-0077-413E-BA9A-A09FF2DAC84C",
             "rev": 0
           }
         },
@@ -6113,7 +6121,7 @@
           "key": "grid",
           "value": {
             "__ref__": true,
-            "id": "BA17C195-5CF7-4084-A9EF-85A22C73649D",
+            "id": "345E6BE8-72CD-4E38-8EB5-214AE5FF1D95",
             "rev": 0
           }
         },
@@ -6121,7 +6129,7 @@
           "key": "layoutableSubmorphBounds",
           "value": [
             "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(3,3,150,310)",
-            "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(3,3,487,312.6666603088379)",
+            "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(3,3,487,310)",
             "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,101.01388931274414,21.333333015441895)"
           ]
         },
@@ -6138,12 +6146,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "layout.js",
-          "lastChange": 1498756859465,
+          "lastChange": 1498769625353,
           "lastSuperclassChange": 0
         }
       }
     },
-    "48CC9B7C-EEB3-4568-9FD2-F20BCEB23705": {
+    "3928561B-59D5-46CF-B317-B8EE8E73F59A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6168,7 +6176,7 @@
         }
       }
     },
-    "9DCD2D1B-E3C8-4D35-82D5-0DFDCA4B2085": {
+    "6AE2006B-010D-46EC-A2D8-90454192DC42": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6179,7 +6187,7 @@
           "key": "state",
           "value": {
             "__ref__": true,
-            "id": "99DA873A-EAF1-45E3-88BB-0A8C1A0DE532",
+            "id": "89646561-E17A-4273-B9DC-3B79DA9F5F98",
             "rev": 0
           }
         }
@@ -6192,12 +6200,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "layout.js",
-          "lastChange": 1498756859444,
+          "lastChange": 1498769625335,
           "lastSuperclassChange": 0
         }
       }
     },
-    "99DA873A-EAF1-45E3-88BB-0A8C1A0DE532": {
+    "89646561-E17A-4273-B9DC-3B79DA9F5F98": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6209,7 +6217,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "99727E9F-D2BF-49A3-8673-B795F811622F",
+              "id": "E3484244-725C-445D-A5E8-2DB06F139C60",
               "rev": 0
             }
           ]
@@ -6218,7 +6226,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "4864D05E-AAF0-4583-BCC0-9B133A1BC21C",
+            "id": "36F2F434-6747-4C0E-9955-1B7E9FA2CB5E",
             "rev": 0
           }
         },
@@ -6233,13 +6241,13 @@
           "key": "morph",
           "value": {
             "__ref__": true,
-            "id": "PropertyList_9E5ECD11_23E4_4EF5_A01C_ED0878F10B03",
-            "rev": 17758
+            "id": "PropertyList_E3D6967F_4DE7_4840_9787_B8FBB7B85319",
+            "rev": 45754
           }
         }
       }
     },
-    "99727E9F-D2BF-49A3-8673-B795F811622F": {
+    "E3484244-725C-445D-A5E8-2DB06F139C60": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6250,7 +6258,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "4864D05E-AAF0-4583-BCC0-9B133A1BC21C",
+            "id": "36F2F434-6747-4C0E-9955-1B7E9FA2CB5E",
             "rev": 0
           }
         },
@@ -6258,7 +6266,7 @@
           "key": "fixed",
           "value": {
             "__ref__": true,
-            "id": "6DE48582-2CD8-46D1-BB40-C5BFDEB9E3F2",
+            "id": "F7F40310-74D1-4AFE-8978-6208BC2ACAEA",
             "rev": 0
           }
         },
@@ -6266,7 +6274,7 @@
           "key": "frozen",
           "value": {
             "__ref__": true,
-            "id": "F67B2588-519D-400D-A121-AE4ABA6275B2",
+            "id": "6F35E656-0BB1-4F6E-A142-678E8BF2A2B5",
             "rev": 0
           }
         },
@@ -6274,7 +6282,7 @@
           "key": "min",
           "value": {
             "__ref__": true,
-            "id": "99F2FBCA-8AF0-4003-A1BB-DADF0E2DF5F1",
+            "id": "F5D4FB20-93F4-469C-A4D5-E7D9E254FC96",
             "rev": 0
           }
         },
@@ -6282,7 +6290,7 @@
           "key": "top",
           "value": {
             "__ref__": true,
-            "id": "BA17C195-5CF7-4084-A9EF-85A22C73649D",
+            "id": "345E6BE8-72CD-4E38-8EB5-214AE5FF1D95",
             "rev": 0
           }
         },
@@ -6293,7 +6301,7 @@
           "key": "bottom",
           "value": {
             "__ref__": true,
-            "id": "9F24D713-F93B-4942-B68F-1032D259A1ED",
+            "id": "07A10E99-2052-4F4B-B6B8-3B69AAE86F0F",
             "rev": 0
           }
         },
@@ -6301,7 +6309,7 @@
           "key": "right",
           "value": {
             "__ref__": true,
-            "id": "6B2A7C13-3FB5-4BD7-8714-8CD9FF6CA92B",
+            "id": "052F7284-696B-4551-8786-B92FA4C0BF8C",
             "rev": 0
           }
         },
@@ -6313,7 +6321,7 @@
           "key": "proportion",
           "value": {
             "__ref__": true,
-            "id": "9D0903F7-38A6-4132-98B3-F184391236D6",
+            "id": "3CD3A9F5-7C1B-4BEC-907C-E39E7679C9D8",
             "rev": 0
           }
         },
@@ -6329,7 +6337,7 @@
           "key": "group",
           "value": {
             "__ref__": true,
-            "id": "9DCD2D1B-E3C8-4D35-82D5-0DFDCA4B2085",
+            "id": "6AE2006B-010D-46EC-A2D8-90454192DC42",
             "rev": 0
           }
         },
@@ -6346,12 +6354,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "layout.js",
-          "lastChange": 1498756859458,
+          "lastChange": 1498769625349,
           "lastSuperclassChange": 0
         }
       }
     },
-    "6DE48582-2CD8-46D1-BB40-C5BFDEB9E3F2": {
+    "F7F40310-74D1-4AFE-8978-6208BC2ACAEA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6368,7 +6376,7 @@
         }
       }
     },
-    "F67B2588-519D-400D-A121-AE4ABA6275B2": {
+    "6F35E656-0BB1-4F6E-A142-678E8BF2A2B5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6385,7 +6393,7 @@
         }
       }
     },
-    "99F2FBCA-8AF0-4003-A1BB-DADF0E2DF5F1": {
+    "F5D4FB20-93F4-469C-A4D5-E7D9E254FC96": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6402,7 +6410,7 @@
         }
       }
     },
-    "BA17C195-5CF7-4084-A9EF-85A22C73649D": {
+    "345E6BE8-72CD-4E38-8EB5-214AE5FF1D95": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6413,7 +6421,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "4864D05E-AAF0-4583-BCC0-9B133A1BC21C",
+            "id": "36F2F434-6747-4C0E-9955-1B7E9FA2CB5E",
             "rev": 0
           }
         },
@@ -6421,7 +6429,7 @@
           "key": "fixed",
           "value": {
             "__ref__": true,
-            "id": "66AC8E96-99C8-44C5-ACFE-240C15AB50EA",
+            "id": "19FD19AA-FC55-489E-AF57-DF287F4B9A04",
             "rev": 0
           }
         },
@@ -6429,7 +6437,7 @@
           "key": "frozen",
           "value": {
             "__ref__": true,
-            "id": "28895F3B-9B92-41FD-8B8B-D8CBAEF42866",
+            "id": "0CB4E3AE-9F7B-40B8-AA3D-9F4084E52A75",
             "rev": 0
           }
         },
@@ -6437,7 +6445,7 @@
           "key": "min",
           "value": {
             "__ref__": true,
-            "id": "38F252D6-20DB-4FFB-9693-FCB8355A668D",
+            "id": "977641F9-5C82-4074-B6FC-F8DF6F8456DA",
             "rev": 0
           }
         },
@@ -6451,7 +6459,7 @@
           "key": "bottom",
           "value": {
             "__ref__": true,
-            "id": "99727E9F-D2BF-49A3-8673-B795F811622F",
+            "id": "E3484244-725C-445D-A5E8-2DB06F139C60",
             "rev": 0
           }
         },
@@ -6459,7 +6467,7 @@
           "key": "right",
           "value": {
             "__ref__": true,
-            "id": "A04CC2BC-4AAE-449A-8EF2-2053803475C2",
+            "id": "945BF742-7B51-4ADB-B958-F83A4417EBE1",
             "rev": 0
           }
         },
@@ -6471,7 +6479,7 @@
           "key": "proportion",
           "value": {
             "__ref__": true,
-            "id": "F05CAEE5-7F9D-4611-BD6C-D8EECA1AE774",
+            "id": "67CC070E-5DF1-412E-B1C8-1FCC4282638B",
             "rev": 0
           }
         },
@@ -6487,7 +6495,7 @@
           "key": "group",
           "value": {
             "__ref__": true,
-            "id": "85100289-9226-45A4-A8C3-8FAA11B647DF",
+            "id": "9712E573-14D8-4534-A849-004B74318F33",
             "rev": 0
           }
         },
@@ -6504,12 +6512,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "layout.js",
-          "lastChange": 1498756859458,
+          "lastChange": 1498769625349,
           "lastSuperclassChange": 0
         }
       }
     },
-    "66AC8E96-99C8-44C5-ACFE-240C15AB50EA": {
+    "19FD19AA-FC55-489E-AF57-DF287F4B9A04": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6526,7 +6534,7 @@
         }
       }
     },
-    "28895F3B-9B92-41FD-8B8B-D8CBAEF42866": {
+    "0CB4E3AE-9F7B-40B8-AA3D-9F4084E52A75": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6543,7 +6551,7 @@
         }
       }
     },
-    "38F252D6-20DB-4FFB-9693-FCB8355A668D": {
+    "977641F9-5C82-4074-B6FC-F8DF6F8456DA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6560,7 +6568,7 @@
         }
       }
     },
-    "A04CC2BC-4AAE-449A-8EF2-2053803475C2": {
+    "945BF742-7B51-4ADB-B958-F83A4417EBE1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6571,7 +6579,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "4864D05E-AAF0-4583-BCC0-9B133A1BC21C",
+            "id": "36F2F434-6747-4C0E-9955-1B7E9FA2CB5E",
             "rev": 0
           }
         },
@@ -6579,7 +6587,7 @@
           "key": "fixed",
           "value": {
             "__ref__": true,
-            "id": "FC80DFC8-525D-4456-990A-AE830884A78A",
+            "id": "85FAA252-4E28-4EB6-B04C-F4F1C6C8AD97",
             "rev": 0
           }
         },
@@ -6587,7 +6595,7 @@
           "key": "frozen",
           "value": {
             "__ref__": true,
-            "id": "0FFCE395-EE01-4552-8471-B502430BB123",
+            "id": "E33F74EC-52F1-4B7F-AF34-2FC8B5B77E6D",
             "rev": 0
           }
         },
@@ -6595,7 +6603,7 @@
           "key": "min",
           "value": {
             "__ref__": true,
-            "id": "A210A14A-2F25-4D3C-9584-9493B0BD57AD",
+            "id": "88236C65-4D11-4827-8969-F5CE38454A0F",
             "rev": 0
           }
         },
@@ -6606,7 +6614,7 @@
           "key": "left",
           "value": {
             "__ref__": true,
-            "id": "BA17C195-5CF7-4084-A9EF-85A22C73649D",
+            "id": "345E6BE8-72CD-4E38-8EB5-214AE5FF1D95",
             "rev": 0
           }
         },
@@ -6614,7 +6622,7 @@
           "key": "bottom",
           "value": {
             "__ref__": true,
-            "id": "6B2A7C13-3FB5-4BD7-8714-8CD9FF6CA92B",
+            "id": "052F7284-696B-4551-8786-B92FA4C0BF8C",
             "rev": 0
           }
         },
@@ -6629,7 +6637,7 @@
           "key": "proportion",
           "value": {
             "__ref__": true,
-            "id": "0D294429-B4D8-4A16-9A7C-48A1A3BAECB9",
+            "id": "38BA25A0-E4DF-4054-8B2F-A36738C3947E",
             "rev": 0
           }
         },
@@ -6645,7 +6653,7 @@
           "key": "group",
           "value": {
             "__ref__": true,
-            "id": "6B18BC0A-E105-48B5-89D4-A0425C79F553",
+            "id": "4D160DD8-02C1-44ED-806C-21003AF429D9",
             "rev": 0
           }
         }
@@ -6658,12 +6666,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "layout.js",
-          "lastChange": 1498756859458,
+          "lastChange": 1498769625349,
           "lastSuperclassChange": 0
         }
       }
     },
-    "FC80DFC8-525D-4456-990A-AE830884A78A": {
+    "85FAA252-4E28-4EB6-B04C-F4F1C6C8AD97": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6680,7 +6688,7 @@
         }
       }
     },
-    "0FFCE395-EE01-4552-8471-B502430BB123": {
+    "E33F74EC-52F1-4B7F-AF34-2FC8B5B77E6D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6697,7 +6705,7 @@
         }
       }
     },
-    "A210A14A-2F25-4D3C-9584-9493B0BD57AD": {
+    "88236C65-4D11-4827-8969-F5CE38454A0F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6714,7 +6722,7 @@
         }
       }
     },
-    "6B2A7C13-3FB5-4BD7-8714-8CD9FF6CA92B": {
+    "052F7284-696B-4551-8786-B92FA4C0BF8C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6725,7 +6733,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "4864D05E-AAF0-4583-BCC0-9B133A1BC21C",
+            "id": "36F2F434-6747-4C0E-9955-1B7E9FA2CB5E",
             "rev": 0
           }
         },
@@ -6733,7 +6741,7 @@
           "key": "fixed",
           "value": {
             "__ref__": true,
-            "id": "981A41E4-3C86-4923-978C-9469B343DAA3",
+            "id": "24DC14F4-9E0B-467D-A3A1-BE454AF434BF",
             "rev": 0
           }
         },
@@ -6741,7 +6749,7 @@
           "key": "frozen",
           "value": {
             "__ref__": true,
-            "id": "CFAE2AD8-1886-4F51-BA60-63F7FB059064",
+            "id": "08802311-0610-44F4-8662-7138F8165215",
             "rev": 0
           }
         },
@@ -6749,7 +6757,7 @@
           "key": "min",
           "value": {
             "__ref__": true,
-            "id": "3DBA9BD6-D777-43A6-A7FC-FD0FAFC7845C",
+            "id": "645DE256-EE66-4668-B74E-A460DEAB7D28",
             "rev": 0
           }
         },
@@ -6757,7 +6765,7 @@
           "key": "top",
           "value": {
             "__ref__": true,
-            "id": "A04CC2BC-4AAE-449A-8EF2-2053803475C2",
+            "id": "945BF742-7B51-4ADB-B958-F83A4417EBE1",
             "rev": 0
           }
         },
@@ -6765,7 +6773,7 @@
           "key": "left",
           "value": {
             "__ref__": true,
-            "id": "99727E9F-D2BF-49A3-8673-B795F811622F",
+            "id": "E3484244-725C-445D-A5E8-2DB06F139C60",
             "rev": 0
           }
         },
@@ -6773,7 +6781,7 @@
           "key": "bottom",
           "value": {
             "__ref__": true,
-            "id": "A7804AA7-37F2-43CC-B653-954279622D69",
+            "id": "F8FA6BD3-63F7-49FA-ABC1-C6CEDBE7580B",
             "rev": 0
           }
         },
@@ -6788,7 +6796,7 @@
           "key": "proportion",
           "value": {
             "__ref__": true,
-            "id": "EDCEE6C2-2BAC-49C8-B08C-C034A84971BA",
+            "id": "047784DF-67E2-435A-B6B2-3E7417A314EA",
             "rev": 0
           }
         },
@@ -6804,7 +6812,7 @@
           "key": "group",
           "value": {
             "__ref__": true,
-            "id": "AB58DEA4-5C32-4497-AE2D-C197DE851E77",
+            "id": "1B12A3BF-5F8B-4220-8F24-3716246FD128",
             "rev": 0
           }
         }
@@ -6817,12 +6825,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "layout.js",
-          "lastChange": 1498756859458,
+          "lastChange": 1498769625349,
           "lastSuperclassChange": 0
         }
       }
     },
-    "981A41E4-3C86-4923-978C-9469B343DAA3": {
+    "24DC14F4-9E0B-467D-A3A1-BE454AF434BF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6839,7 +6847,7 @@
         }
       }
     },
-    "CFAE2AD8-1886-4F51-BA60-63F7FB059064": {
+    "08802311-0610-44F4-8662-7138F8165215": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6856,7 +6864,7 @@
         }
       }
     },
-    "3DBA9BD6-D777-43A6-A7FC-FD0FAFC7845C": {
+    "645DE256-EE66-4668-B74E-A460DEAB7D28": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6873,7 +6881,7 @@
         }
       }
     },
-    "A7804AA7-37F2-43CC-B653-954279622D69": {
+    "F8FA6BD3-63F7-49FA-ABC1-C6CEDBE7580B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6884,7 +6892,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "4864D05E-AAF0-4583-BCC0-9B133A1BC21C",
+            "id": "36F2F434-6747-4C0E-9955-1B7E9FA2CB5E",
             "rev": 0
           }
         },
@@ -6892,7 +6900,7 @@
           "key": "fixed",
           "value": {
             "__ref__": true,
-            "id": "1CAAA812-15FD-4707-8C10-148717B7B749",
+            "id": "350C8970-FD2D-493C-8EE4-C95608FA2FB6",
             "rev": 0
           }
         },
@@ -6900,7 +6908,7 @@
           "key": "frozen",
           "value": {
             "__ref__": true,
-            "id": "6B1A69B0-F385-4B0A-A9CB-8D6B542483FB",
+            "id": "C253402C-7715-47F8-AA41-A03A1C4B8D29",
             "rev": 0
           }
         },
@@ -6908,7 +6916,7 @@
           "key": "min",
           "value": {
             "__ref__": true,
-            "id": "BF0307C6-E51A-4DF1-94B2-FC7BEEE4E0A0",
+            "id": "2B9C1794-5020-42AE-822D-A67346616EC4",
             "rev": 0
           }
         },
@@ -6916,7 +6924,7 @@
           "key": "top",
           "value": {
             "__ref__": true,
-            "id": "6B2A7C13-3FB5-4BD7-8714-8CD9FF6CA92B",
+            "id": "052F7284-696B-4551-8786-B92FA4C0BF8C",
             "rev": 0
           }
         },
@@ -6924,7 +6932,7 @@
           "key": "left",
           "value": {
             "__ref__": true,
-            "id": "9F24D713-F93B-4942-B68F-1032D259A1ED",
+            "id": "07A10E99-2052-4F4B-B6B8-3B69AAE86F0F",
             "rev": 0
           }
         },
@@ -6942,7 +6950,7 @@
           "key": "proportion",
           "value": {
             "__ref__": true,
-            "id": "4BF5B999-301F-4FA6-A0EC-430B775E0267",
+            "id": "850FD079-3F9C-490C-840A-5AAA9FB118B1",
             "rev": 0
           }
         },
@@ -6958,7 +6966,7 @@
           "key": "group",
           "value": {
             "__ref__": true,
-            "id": "596F4DFB-CE6E-4168-AF81-B5063FB48910",
+            "id": "02F78D72-F972-48B7-9A6A-522D78C01CE2",
             "rev": 0
           }
         }
@@ -6971,12 +6979,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "layout.js",
-          "lastChange": 1498756859458,
+          "lastChange": 1498769625349,
           "lastSuperclassChange": 0
         }
       }
     },
-    "1CAAA812-15FD-4707-8C10-148717B7B749": {
+    "350C8970-FD2D-493C-8EE4-C95608FA2FB6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6993,7 +7001,7 @@
         }
       }
     },
-    "6B1A69B0-F385-4B0A-A9CB-8D6B542483FB": {
+    "C253402C-7715-47F8-AA41-A03A1C4B8D29": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7010,7 +7018,7 @@
         }
       }
     },
-    "BF0307C6-E51A-4DF1-94B2-FC7BEEE4E0A0": {
+    "2B9C1794-5020-42AE-822D-A67346616EC4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7027,7 +7035,7 @@
         }
       }
     },
-    "9F24D713-F93B-4942-B68F-1032D259A1ED": {
+    "07A10E99-2052-4F4B-B6B8-3B69AAE86F0F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7038,7 +7046,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "4864D05E-AAF0-4583-BCC0-9B133A1BC21C",
+            "id": "36F2F434-6747-4C0E-9955-1B7E9FA2CB5E",
             "rev": 0
           }
         },
@@ -7046,7 +7054,7 @@
           "key": "fixed",
           "value": {
             "__ref__": true,
-            "id": "83B62CAE-C76F-4CBD-8253-FC1D4EB6AB80",
+            "id": "13D43FB4-97A1-4D84-9F11-523B6DF39068",
             "rev": 0
           }
         },
@@ -7054,7 +7062,7 @@
           "key": "frozen",
           "value": {
             "__ref__": true,
-            "id": "E3188C73-FE6B-4AC6-B398-FF6CF5207283",
+            "id": "16EAE476-3539-43A7-A75D-7D4DD6CDE2CC",
             "rev": 0
           }
         },
@@ -7062,7 +7070,7 @@
           "key": "min",
           "value": {
             "__ref__": true,
-            "id": "5D66B0C9-FFDD-428A-9031-103CD6FD20E5",
+            "id": "F15EA4E1-20A7-4D21-969D-66671DE2226B",
             "rev": 0
           }
         },
@@ -7070,7 +7078,7 @@
           "key": "top",
           "value": {
             "__ref__": true,
-            "id": "99727E9F-D2BF-49A3-8673-B795F811622F",
+            "id": "E3484244-725C-445D-A5E8-2DB06F139C60",
             "rev": 0
           }
         },
@@ -7084,7 +7092,7 @@
           "key": "right",
           "value": {
             "__ref__": true,
-            "id": "A7804AA7-37F2-43CC-B653-954279622D69",
+            "id": "F8FA6BD3-63F7-49FA-ABC1-C6CEDBE7580B",
             "rev": 0
           }
         },
@@ -7096,7 +7104,7 @@
           "key": "proportion",
           "value": {
             "__ref__": true,
-            "id": "0422D8F1-1BAE-4844-984C-D7E66F152455",
+            "id": "82B3E879-3CB1-4C89-8828-96237CAEE700",
             "rev": 0
           }
         },
@@ -7112,7 +7120,7 @@
           "key": "group",
           "value": {
             "__ref__": true,
-            "id": "82BDFC72-CA8C-469B-AE30-17293A0DF3C1",
+            "id": "4E12B2AB-8AA8-4ABC-B511-C0E7F680404F",
             "rev": 0
           }
         }
@@ -7125,12 +7133,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "layout.js",
-          "lastChange": 1498756859458,
+          "lastChange": 1498769625349,
           "lastSuperclassChange": 0
         }
       }
     },
-    "83B62CAE-C76F-4CBD-8253-FC1D4EB6AB80": {
+    "13D43FB4-97A1-4D84-9F11-523B6DF39068": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7147,7 +7155,7 @@
         }
       }
     },
-    "E3188C73-FE6B-4AC6-B398-FF6CF5207283": {
+    "16EAE476-3539-43A7-A75D-7D4DD6CDE2CC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7164,7 +7172,7 @@
         }
       }
     },
-    "5D66B0C9-FFDD-428A-9031-103CD6FD20E5": {
+    "F15EA4E1-20A7-4D21-969D-66671DE2226B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7181,7 +7189,7 @@
         }
       }
     },
-    "0422D8F1-1BAE-4844-984C-D7E66F152455": {
+    "82B3E879-3CB1-4C89-8828-96237CAEE700": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7198,7 +7206,7 @@
         }
       }
     },
-    "82BDFC72-CA8C-469B-AE30-17293A0DF3C1": {
+    "4E12B2AB-8AA8-4ABC-B511-C0E7F680404F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7209,7 +7217,7 @@
           "key": "state",
           "value": {
             "__ref__": true,
-            "id": "135C6566-0D1B-4766-B040-213429CDD44A",
+            "id": "D02E2EA4-B54F-433A-97EB-0CE958568D93",
             "rev": 0
           }
         }
@@ -7222,12 +7230,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "layout.js",
-          "lastChange": 1498756859444,
+          "lastChange": 1498769625335,
           "lastSuperclassChange": 0
         }
       }
     },
-    "135C6566-0D1B-4766-B040-213429CDD44A": {
+    "D02E2EA4-B54F-433A-97EB-0CE958568D93": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7239,7 +7247,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "9F24D713-F93B-4942-B68F-1032D259A1ED",
+              "id": "07A10E99-2052-4F4B-B6B8-3B69AAE86F0F",
               "rev": 0
             }
           ]
@@ -7248,7 +7256,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "4864D05E-AAF0-4583-BCC0-9B133A1BC21C",
+            "id": "36F2F434-6747-4C0E-9955-1B7E9FA2CB5E",
             "rev": 0
           }
         },
@@ -7263,13 +7271,13 @@
           "key": "morph",
           "value": {
             "__ref__": true,
-            "id": "Button_5CDBB6D3_8CF8_4796_9D9E_D431573C65E5",
-            "rev": 16364
+            "id": "Button_A2AAF93C_BB83_4DD6_9486_41D9D0FB0521",
+            "rev": 24465
           }
         }
       }
     },
-    "4BF5B999-301F-4FA6-A0EC-430B775E0267": {
+    "850FD079-3F9C-490C-840A-5AAA9FB118B1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7286,7 +7294,7 @@
         }
       }
     },
-    "596F4DFB-CE6E-4168-AF81-B5063FB48910": {
+    "02F78D72-F972-48B7-9A6A-522D78C01CE2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7297,7 +7305,7 @@
           "key": "state",
           "value": {
             "__ref__": true,
-            "id": "16CBB972-53DF-4638-9C70-B23380BE2DE6",
+            "id": "74EECB06-344C-4F2E-AAB1-20D85B9A243F",
             "rev": 0
           }
         }
@@ -7310,12 +7318,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "layout.js",
-          "lastChange": 1498756859444,
+          "lastChange": 1498769625335,
           "lastSuperclassChange": 0
         }
       }
     },
-    "16CBB972-53DF-4638-9C70-B23380BE2DE6": {
+    "74EECB06-344C-4F2E-AAB1-20D85B9A243F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7327,7 +7335,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "A7804AA7-37F2-43CC-B653-954279622D69",
+              "id": "F8FA6BD3-63F7-49FA-ABC1-C6CEDBE7580B",
               "rev": 0
             }
           ]
@@ -7336,7 +7344,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "4864D05E-AAF0-4583-BCC0-9B133A1BC21C",
+            "id": "36F2F434-6747-4C0E-9955-1B7E9FA2CB5E",
             "rev": 0
           }
         },
@@ -7353,7 +7361,7 @@
         }
       }
     },
-    "EDCEE6C2-2BAC-49C8-B08C-C034A84971BA": {
+    "047784DF-67E2-435A-B6B2-3E7417A314EA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7370,7 +7378,7 @@
         }
       }
     },
-    "AB58DEA4-5C32-4497-AE2D-C197DE851E77": {
+    "1B12A3BF-5F8B-4220-8F24-3716246FD128": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7381,7 +7389,7 @@
           "key": "state",
           "value": {
             "__ref__": true,
-            "id": "79485A8F-3EA4-4C16-A8AC-72C014843328",
+            "id": "C6011A97-BB19-4890-BDDF-4F91BADE1F26",
             "rev": 0
           }
         }
@@ -7394,12 +7402,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "layout.js",
-          "lastChange": 1498756859444,
+          "lastChange": 1498769625335,
           "lastSuperclassChange": 0
         }
       }
     },
-    "79485A8F-3EA4-4C16-A8AC-72C014843328": {
+    "C6011A97-BB19-4890-BDDF-4F91BADE1F26": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7411,7 +7419,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "6B2A7C13-3FB5-4BD7-8714-8CD9FF6CA92B",
+              "id": "052F7284-696B-4551-8786-B92FA4C0BF8C",
               "rev": 0
             }
           ]
@@ -7420,7 +7428,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "4864D05E-AAF0-4583-BCC0-9B133A1BC21C",
+            "id": "36F2F434-6747-4C0E-9955-1B7E9FA2CB5E",
             "rev": 0
           }
         },
@@ -7435,13 +7443,13 @@
           "key": "morph",
           "value": {
             "__ref__": true,
-            "id": "ValueList_A7FAA932_24E2_4576_9166_66D68A24F4B8",
-            "rev": 17759
+            "id": "ValueList_CA5FB17F_14DA_4EBF_B75E_0005705D0A1D",
+            "rev": 45755
           }
         }
       }
     },
-    "0D294429-B4D8-4A16-9A7C-48A1A3BAECB9": {
+    "38BA25A0-E4DF-4054-8B2F-A36738C3947E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7458,7 +7466,7 @@
         }
       }
     },
-    "6B18BC0A-E105-48B5-89D4-A0425C79F553": {
+    "4D160DD8-02C1-44ED-806C-21003AF429D9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7469,7 +7477,7 @@
           "key": "state",
           "value": {
             "__ref__": true,
-            "id": "E4E14D10-405B-4362-B2C4-3D9BBBC8FF32",
+            "id": "36B2CE31-13CB-42C4-9B7B-A4FD5C2068AF",
             "rev": 0
           }
         }
@@ -7482,12 +7490,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "layout.js",
-          "lastChange": 1498756859444,
+          "lastChange": 1498769625335,
           "lastSuperclassChange": 0
         }
       }
     },
-    "E4E14D10-405B-4362-B2C4-3D9BBBC8FF32": {
+    "36B2CE31-13CB-42C4-9B7B-A4FD5C2068AF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7499,7 +7507,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "A04CC2BC-4AAE-449A-8EF2-2053803475C2",
+              "id": "945BF742-7B51-4ADB-B958-F83A4417EBE1",
               "rev": 0
             }
           ]
@@ -7508,7 +7516,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "4864D05E-AAF0-4583-BCC0-9B133A1BC21C",
+            "id": "36F2F434-6747-4C0E-9955-1B7E9FA2CB5E",
             "rev": 0
           }
         },
@@ -7524,7 +7532,7 @@
         }
       }
     },
-    "F05CAEE5-7F9D-4611-BD6C-D8EECA1AE774": {
+    "67CC070E-5DF1-412E-B1C8-1FCC4282638B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7541,7 +7549,7 @@
         }
       }
     },
-    "85100289-9226-45A4-A8C3-8FAA11B647DF": {
+    "9712E573-14D8-4534-A849-004B74318F33": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7552,7 +7560,7 @@
           "key": "state",
           "value": {
             "__ref__": true,
-            "id": "B84C0342-276C-4F93-AC13-8426A056035B",
+            "id": "31708DBD-9F13-433B-BFBD-959BA1CD18D1",
             "rev": 0
           }
         }
@@ -7565,12 +7573,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "layout.js",
-          "lastChange": 1498756859444,
+          "lastChange": 1498769625335,
           "lastSuperclassChange": 0
         }
       }
     },
-    "B84C0342-276C-4F93-AC13-8426A056035B": {
+    "31708DBD-9F13-433B-BFBD-959BA1CD18D1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7582,7 +7590,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "BA17C195-5CF7-4084-A9EF-85A22C73649D",
+              "id": "345E6BE8-72CD-4E38-8EB5-214AE5FF1D95",
               "rev": 0
             }
           ]
@@ -7591,7 +7599,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "4864D05E-AAF0-4583-BCC0-9B133A1BC21C",
+            "id": "36F2F434-6747-4C0E-9955-1B7E9FA2CB5E",
             "rev": 0
           }
         },
@@ -7607,7 +7615,7 @@
         }
       }
     },
-    "9D0903F7-38A6-4132-98B3-F184391236D6": {
+    "3CD3A9F5-7C1B-4BEC-907C-E39E7679C9D8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7624,7 +7632,7 @@
         }
       }
     },
-    "59AAC70D-30EB-4BA8-BEA9-2A64BA1296D2": {
+    "42B3E171-0077-413E-BA9A-A09FF2DAC84C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7655,7 +7663,7 @@
         }
       }
     },
-    "7B257439-BECA-48F7-A4AF-27922C98F5E8": {
+    "A6CE0AAF-B875-44DA-BC35-16CCC5B78490": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7683,7 +7691,7 @@
         }
       }
     },
-    "E7CF1D9B-2704-42F2-A66A-3372E7913C9A": {
+    "208BBDED-25D2-48E5-9E45-627DF0A071C6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7711,7 +7719,7 @@
         }
       }
     },
-    "623EEE96-2B4F-4C89-A5CE-C44468125FEA": {
+    "5574C586-7A3F-4D89-A1C5-34F9EE0DDA67": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7739,7 +7747,7 @@
         }
       }
     },
-    "317DFD89-142F-4DB7-8402-8258E5017F00": {
+    "7E801ED9-F447-46AC-B808-7CF26359F4FA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7767,7 +7775,7 @@
         }
       }
     },
-    "1ED6715F-7813-48D6-921E-44CEA9B3282B": {
+    "6507F162-FFFC-4C8B-B0E6-3A72A01C00A7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7801,7 +7809,7 @@
     "local://lively-object-modules/": {
       "UndoViewer": {
         "package.json": "{\n  \"name\": \"UndoViewer\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
-        "index.js": "import { Morph } from \"lively.morphic/morph.js\";\nimport { connect, disconnectAll } from \"lively.bindings/index.js\";\nimport { debounce } from \"lively.lang/function.js\";\n\nexport default class UndoViewer extends Morph {\n  static get properties (){\n    return {\n      target: {defaultValue: null,\n              set(target) {\n                this.setProperty(\"target\", target);\n              }},\n      maxLength: {defaultValue: 100}\n    }\n  }\n  onLoad() {\n        this.getQueue(this.target)\n        \n        var propertyList = this.getSubmorphNamed('propertyList'),\n          valueList = this.getSubmorphNamed('valueList'),\n            self = this;             \n        var reload = debounce(500,function(){              \n              self.onLoad()\n             if (propertyList.selection){\n               self.filterFor(propertyList.selection)\n             }\n            })\n        if (this.target){\n          this.target.onChange = (change)=>{\n            reload()\n          }\n        }\n        \n        disconnectAll(this)\n        connect(propertyList,'onMouseUp',this,'updateValues',{converter: (obj)=>{\n          var {source,target} = this.varMapping,\n              selection = source.selection\n            target.filterFor(selection)\n        }})\n        connect(valueList,'onMouseUp',this,'valueAction',{converter: (obj)=>{\n          var {source,target} = this.varMapping,\n              selection = source.selection\n              return selection\n              // target.valueAction(selection)\n        }})\n        if (this.undoQueue){\n          propertyList.items = []\n          var properties = ['all']\n          this.undoQueue.forEach(function(ea){            \n            if (properties.indexOf(ea.prop) == -1){\n              properties.push(ea.prop)\n            }\n          })\n          // console.log(properties)\n          propertyList.items = properties\n        }\n  }\n  \n  getQueue(target){\n    this.undoQueue = (target ? target.env.changeManager.changes.filter(function(ea){\n      return ea.target == target\n    }) : []).filter(function(obj){\n      return (obj.value != obj.prevValue)\n    }).slice(-1 * this.maxLength)\n    \n  }\n  updateValues(aList){\n    // alert(aList)\n  }\n  filterFor(property){\n    var valueList = this.getSubmorphNamed('valueList')\n    var items = this.undoQueue\n    .filter(function(obj){\n      \n      return (obj.prop == property || property == 'all')\n    }).map(function(obj){\n      \n      if (obj.type == 'setter'){\n        if (obj.prevValue == null){\n          obj.prevValue = 'null'\n        }\n        if (obj.value == null){\n          obj.value = 'null'\n        }\n        \n        var prev = obj.prevValue.toString ? obj.prevValue.toString() : JSON.stringify(obj.prevValue),\n            next = obj.value.toString ? obj.value.toString() : JSON.stringify(obj.value),\n            display = obj.prop + ' >> From: ' + prev + ' To: ' + next\n    } else if (obj.type == 'method-call'){\n      var method = obj.selector,\n          targ = obj.target.toString ? obj.target.toString() : JSON.stringify(obj.target),\n          display = method + ' on ' + targ\n    }\n      return {toString: function(){ return display},\n             ...obj}\n    })\n    valueList.items = items\n    // valueList.submorphs.forEach(function(ea){\n    //   var onDragStart = function(evt){\n    //     console.log('hit')\n    //   }\n    //   ea.onDragStart = onDragStart\n    // })\n  }\n  valueAction(obj){\n    // console.log(obj)\n  }\n  beforePublish(){\n    var propertyList = this.getSubmorphNamed('propertyList'),\n        valueList = this.getSubmorphNamed('valueList')\n    propertyList.items = []\n    valueList.items = []\n    this.undoQueue = []\n    this.target = null\n  }\n}\n\n\n\n\n\n\n\n\n\n\n"
+        "index.js": "import { Morph } from \"lively.morphic/morph.js\";\nimport { connect, disconnectAll } from \"lively.bindings/index.js\";\nimport { debounce } from \"lively.lang/function.js\";\n\nexport default class UndoViewer extends Morph {\n  static get properties (){\n    return {\n      target: {defaultValue: null,\n              set(target) {\n                this.setProperty(\"target\", target);\n              }},\n      maxLength: {defaultValue: 100}\n    }\n  }\n  onLoad() {\n        this.getQueue(this.target)\n        \n        var propertyList = this.getSubmorphNamed('propertyList'),\n          valueList = this.getSubmorphNamed('valueList'),\n            self = this;             \n        var reload = debounce(500,function(){              \n              self.onLoad()\n             if (propertyList.selection){\n               self.filterFor(propertyList.selection)\n             }\n            })\n        if (this.target){\n          this.target.onChange = (change)=>{\n            reload()\n          }\n        }\n        \n        disconnectAll(this)\n        connect(propertyList,'onMouseUp',this,'updateValues',{converter: (obj)=>{\n          var {source,target} = this.varMapping,\n              selection = source.selection\n            target.filterFor(selection)\n        }})\n        connect(valueList,'onMouseUp',this,'valueAction',{converter: (obj)=>{\n          var {source,target} = this.varMapping,\n              selection = source.selection\n              return selection\n              // target.valueAction(selection)\n        }})\n        if (this.undoQueue){\n          propertyList.items = []\n          var properties = ['all']\n          this.undoQueue.forEach(function(ea){            \n            if (properties.indexOf(ea.prop) == -1){\n              properties.push(ea.prop)\n            }\n          })\n          // console.log(properties)\n          propertyList.items = properties\n        }\n  }\n  \n  getQueue(target){\n    this.undoQueue = (target ? target.env.changeManager.changes.filter(function(ea){\n      return ea.target == target\n    }) : []).filter(function(obj){\n      return (obj.value != obj.prevValue)\n    }).slice(-1 * this.maxLength)\n    \n  }\n  updateValues(aList){\n    // alert(aList)\n  }\n  filterFor(property){\n    var valueList = this.getSubmorphNamed('valueList')\n    var items = this.undoQueue\n    .filter(function(obj){\n      \n      return (obj.prop == property || property == 'all')\n    }).map(function(obj){\n      \n      if (obj.type == 'setter'){\n        if (obj.prevValue == null){\n          obj.prevValue = 'null'\n        }\n        if (obj.value == null){\n          obj.value = 'null'\n        }\n        \n        var prev = obj.prevValue.toString ? obj.prevValue.toString() : JSON.stringify(obj.prevValue),\n            next = obj.value.toString ? obj.value.toString() : JSON.stringify(obj.value),\n            display = obj.prop + ' >> From: ' + prev + ' To: ' + next\n    } else if (obj.type == 'method-call'){\n      var method = obj.selector,\n          targ = obj.target.toString ? obj.target.toString() : JSON.stringify(obj.target),\n          display = method + ' on ' + targ\n    }\n      return {toString: function(){ return display},\n             ...obj}\n    })\n    valueList.items = items    \n    valueList.submorphs.forEach(function(ea){\n      var onDragStart = function(evt){\n        console.log('hit')\n      }\n      ea.onDragStart = onDragStart\n    })\n  }\n  valueAction(obj){\n    // console.log(obj)\n  }\n  beforePublish(){\n    var propertyList = this.getSubmorphNamed('propertyList'),\n        valueList = this.getSubmorphNamed('valueList')\n    propertyList.items = []\n    valueList.items = []\n    this.undoQueue = []\n    this.target = null\n  }\n}\n\n\n\n\n\n\n\n\n\n\n"
       },
       "PropertyList": {
         "package.json": "{\n  \"name\": \"PropertyList\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
@@ -7809,7 +7817,7 @@
       },
       "ValueList": {
         "package.json": "{\n  \"name\": \"ValueList\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
-        "index.js": "import { List } from \"lively.morphic\";\n\nexport default class ValueList extends List {\n  \n}\n\n"
+        "index.js": "import { List } from \"lively.morphic\";\n\nexport default class ValueList extends List {\n  onItemMorphDragged(evt,itemMorph){\n    console.log(itemMorph)\n  }\n}\n\n"
       }
     }
   },
