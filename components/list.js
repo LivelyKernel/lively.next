@@ -24,6 +24,7 @@ class ListItemMorph extends Label {
       clipMode:              {defaultValue: "hidden"},
       autofit:               {defaultValue: false},
       isSelected:            {defaultValue: false},
+      draggable:             {defaultValue: true},
       fill: {
         derived: true,
         get() {
@@ -89,7 +90,10 @@ class ListItemMorph extends Label {
     this.owner.owner[method](evt, this);
   }
   onDragStart(evt){
-    this.owner.owner['onDragStart'](evt,this)
+    this.owner.owner.onItemMorphDragged(evt,this)    
+  }
+  onDrag(evt){
+    
   }
 }
 
@@ -644,6 +648,10 @@ export class List extends Morph {
     this.selectedIndexes = indexes;
   }
 
+  onItemMorphDragged(evt, itemMorph){
+    
+  }
+  
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // event handling
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
