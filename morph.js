@@ -1707,10 +1707,21 @@ export class Morph {
     return false;
   }
 
+  getAllNamed(name, result = []) {
+    if (!this._morphicState /*pre-init when used in constructor*/
+     || !this.submorphs.length) return result;
+    for (let i = 0; i < this.submorphs.length; i++) {
+      let morph = this.submorphs[i];
+      if (this.getNameTest(morph, name)) result.push(morph);
+    }
+    for (let i = 0; i < this.submorphs.length; i++)
+      this.submorphs[i].getAllNamed(name, result);
+    return result;
+  }
+
   getSubmorphNamed(name) {
     if (!this._morphicState /*pre-init when used in constructor*/
      || !this.submorphs.length) return null;
-    let isRe = obj.isRegExp(name);
     for (let i = 0; i < this.submorphs.length; i++) {
       let morph = this.submorphs[i];
       if (this.getNameTest(morph, name)) return morph;
@@ -1747,6 +1758,9 @@ export class Morph {
   getMorphWithId(id) {
     return this.withAllSubmorphsDetect(({id: morphId}) => id === morphId);
   }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // mirror prototype
 
   setMirrored(bool){
     if(!bool){
