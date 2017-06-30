@@ -1,3 +1,4 @@
+/*global global,System*/
 import { fun, arr, obj } from "lively.lang";
 import { pt, Rectangle } from "lively.graphics";
 import { h } from "virtual-dom/dist/virtual-dom.js";
@@ -6,8 +7,30 @@ import { addOrChangeCSSDeclaration } from "../rendering/dom-helper.js";
 import { inspect, show } from "lively.morphic";
 import { hyperscriptFnForDocument } from "../rendering/dom-helper.js";
 import { objectReplacementChar } from "./document.js";
+import config from "../config.js";
 
 let cssInstalled = false;
+
+var debug = !!config.onloadURLQuery["debug-text"];
+
+function printViewState(textMorph) {
+
+  let {
+    viewState: {
+      scrollTop, scrollHeight,
+      heightBefore, textHeight,
+      firstVisibleRow, lastVisibleRow,
+      firstFullyVisibleRow, lastFullyVisibleRow,
+      visibleLines
+    },
+    document: {lines}
+  } = textMorph;
+
+  console.log(`${textMorph} #${textMorph.id.slice(0,12)}
+scroll: ${scrollTop} + ${scrollHeight}
+lines: ${firstVisibleRow} - ${lastVisibleRow}
+height: ${textHeight}, ${lines.length} lines`);
+}
 
 function installCSS(domEnv) {
   cssInstalled = true;
@@ -487,6 +510,8 @@ export default class Renderer {
       firstFullyVisibleRow, lastFullyVisibleRow,
       visibleLines
     });
+
+    debug && printViewState(morph);
 
     return renderedLines;
   }

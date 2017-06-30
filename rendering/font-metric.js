@@ -1,7 +1,10 @@
+/*global System, global, self*/
 import { string, obj } from "lively.lang";
 import FontDetector from "./font-detector.js";
 import { cumulativeOffset } from "./dom-helper.js";
+import { config } from "lively.morphic";
 
+var debug = !!config.onloadURLQuery["debug-font-metric"];
 
 export default class FontMetric {
 
