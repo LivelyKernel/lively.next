@@ -410,6 +410,8 @@ export class Text extends Morph {
       },
 
       textDecoration: {
+        type: "Enum",
+        values: ['none', 'underline'],
         defaultValue: "none",
         isStyleProp: true,
         isDefaultTextStyleProp: true,
@@ -2275,12 +2277,33 @@ export class Text extends Morph {
   }
 
   onKeyDown(evt) {
+    if (this.compositionRange) return;
     this.selection.cursorBlinkStart();
     KeyHandler.invokeKeyHandlers(this, evt, true /*no input evts*/);
   }
 
   onTextInput(evt) {
     KeyHandler.invokeKeyHandlers(this, evt, false /*allow input evts*/);
+  }
+
+  onCompositionStart(evt) {
+　　 this.insertTextAndSelect(evt.data);
+    this.compositionRange = this.selection.range;
+  }
+
+  onCompositionUpdate(evt) {
+    console.log(evt);
+    this.selection.range = this.compositionRange;
+    this.selection.text = [evt.data, {textDecoration: 'underline'}];
+    this.compositionRange = this.selection.range;
+  }
+
+  onCompositionEnd(evt) {
+    console.log(evt);
+    this.selection.range = this.compositionRange;
+    this.selection.text = evt.data;
+    this.cursorPosition = this.compositionRange.end;
+    this.compositionRange = null;
   }
 
   onCut(evt) {

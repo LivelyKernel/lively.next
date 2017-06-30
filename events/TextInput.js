@@ -49,7 +49,7 @@ export default class TextInput {
       /*extent cannot be 0, input won't work correctly in Chrome 52.0*/
       width: 20px; height: 20px;
       z-index: 0;
-      opacity: 0;
+      opacity: 1;
       background: transparent;
       -moz-appearance: none;
       appearance: none;
@@ -256,21 +256,25 @@ export default class TextInput {
     if (!evt.data) evt.data = this.readValue();
     this.resetValue();
     this.eventDispatcher.dispatchDOMEvent(evt);
+    console.log(evt);
   }
 
   onCompositionStart(evt) {
     this.inputState.composition = {};
+    this.eventDispatcher.dispatchDOMEvent(evt);
   }
 
   onCompositionUpdate(evt) {
     var {composition: c} = this.inputState,
         val = this.readValue();
     if (c.lastValue === val) return;
-    c.lastValue = val;
+    c.lastValue = val;    
+    this.eventDispatcher.dispatchDOMEvent(evt);
   }
 
   onCompositionEnd(evt) {
     this.inputState.composition = null;
+    this.eventDispatcher.dispatchDOMEvent(evt);
   }
 
   setPosition(pos) {
