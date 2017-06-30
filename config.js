@@ -6,7 +6,31 @@ if (typeof $world !== "undefined") {
     ea.hasOwnProperty("_cachedKeyhandlers") && (ea._cachedKeyhandlers = null));
 }
 
+function parseURLQuery() {
+  if (typeof document === "undefined" || !document.location) return {};
+  var search = (document.location.hash || document.location.search).slice(1),
+      args = search && search.split("&"),
+      options = {};
+  if (args) for (var i = 0; i < args.length; i++) {
+    var keyAndVal = args[i].split("="),
+        key = keyAndVal[0],
+        val = true;
+    if (keyAndVal.length > 1) {
+      val = decodeURIComponent(keyAndVal.slice(1).join("="));
+      if (val.match(/^(true|false|null|[0-9"[{].*)$/))
+        try { val = JSON.parse(val); } catch(e) {
+          if (val[0] === "[") val = val.slice(1,-1).split(","); // handle string arrays
+          // if not JSON use string itself
+        }
+    }
+    options[key] = val;
+  }
+  return options;
+}
+
 var config = {
+
+  onloadURLQuery: parseURLQuery(),
 
   /* browser support 2 ways to render shadows: 
   
