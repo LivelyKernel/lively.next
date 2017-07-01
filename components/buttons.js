@@ -154,7 +154,8 @@ export class Button extends Morph {
               name: "icon",
               value: ""
             });
-          }          if (codeOrIconMorph && codeOrIconMorph.isMorph) {
+          }
+          if (codeOrIconMorph && codeOrIconMorph.isMorph) {
             this.iconMorph = codeOrIconMorph;
           } else {
             this.iconMorph.value = codeOrIconMorph || "";
