@@ -224,6 +224,19 @@ export default class FontMetric {
 
 function textlayerNodeForFontMeasure(morph) {
   let {text_layer_node, fontmetric_text_layer_node} = morph.viewState;
+
+  // due to vdom, references to actual nodes don't guarantee that a node is
+  // used in the way we think it would...
+  if (text_layer_node) {
+    if (!text_layer_node.className.includes("newtext-text-layer"))
+      morph.viewState.text_layer_node = text_layer_node =
+        text_layer_node.parentNode.querySelector(".newtext-text-layer.actual");
+  }
+  if (fontmetric_text_layer_node) {
+    if (!fontmetric_text_layer_node.className.includes("newtext-text-layer"))
+      morph.viewState.fontmetric_text_layer_node = fontmetric_text_layer_node = null;
+  }
+
   if (text_layer_node && !fontmetric_text_layer_node && text_layer_node.parentNode)
     fontmetric_text_layer_node = morph.viewState.fontmetric_text_layer_node =
       text_layer_node.parentNode.querySelector(".newtext-text-layer.font-measure");
@@ -410,15 +423,16 @@ class DOMTextMeasure {
           if (results[i]) continue;
           let node = lineNodes[i],
               {left, top, width, height} = node.getBoundingClientRect();
+
           this.lineBBoxCache[styleKey + "_" + lines[i].text] = results[i] = {
             x: left - node.offsetLeft + offsetX - textNodeOffsetLeft,
             y: top - node.offsetTop + offsetY - textNodeOffsetTop,
             width, height
           };
         }
-        // if (!this.debug)
-          for (let i = 0; i < lineNodes.length; i++)
-            textNode.removeChild(lineNodes[i]);
+
+        for (let i = 0; i < lineNodes.length; i++)
+          textNode.removeChild(lineNodes[i]);
 
         return results;
       });
@@ -591,7 +605,7 @@ function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
         // "right" bias for rect means that if we get multiple rects for a
         // single char (if it comes after a line break caused by wrapping, we
         // prefer the bounds on the next (the wrapped) line)
-        ({left, top, width, height} = measureCharInner(document, textNode, i, "right")),
+        ({left, top, width, height} = measureCharInner(document, textNode, i, "right"));
         x = left + offsetX;
         y = top + offsetY;
 
@@ -602,7 +616,7 @@ function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
       ({left, top, width, height} = node.getBoundingClientRect());
       x = left + offsetX,
       y = top + offsetY;
-      result[index++] = {x,y,width,height};
+      result[index++] = {x,y, width, height};
 
     } else throw new Error(`Cannot deal with node ${node}`);
 
