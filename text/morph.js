@@ -537,7 +537,7 @@ export class Text extends Morph {
           plugins.forEach(p => this.addPlugin(p));
         }
       },
-      
+
       editorModeName: {
         derived: true, after: ["plugins"],
         get() {
@@ -634,36 +634,49 @@ export class Text extends Morph {
   }
 
   onChange(change) {
-    let textChange = change.selector === "replace",
-        viewChange = change.prop === "extent" || change.prop === "scroll";
+    let {prop, selector} = change,
+        wraps = this.lineWrapping,
+        textChange = false,
+        viewChange = false,
+        softLayoutChange = false,
+        hardLayoutChange = false,
+        scrollChange = false;
 
-    if (change.prop === "scroll") this.viewState.wasScrolled = true;
+    if (selector) {
+      textChange = selector === "replace";
 
-    if (
-      (change.prop === "extent" && this.lineWrapping) ||
-      change.prop === "wordSpacing" ||
-      change.prop === "letterSpacing" ||
-      change.prop === "lineHeight" ||
-      change.prop === "textAlign" ||
-      change.prop === "fontFamily" ||
-      change.prop === "fontSize" ||
-      change.prop === "fontWeight" ||
-      change.prop === "fontStyle" ||
-      change.prop === "textDecoration" ||
-      change.prop === "textStyleClasses" ||
-      change.prop === "fixedHeight" ||
-      change.prop === "fixedWidth" ||
-      change.prop === "lineWrapping" ||
-      change.prop === "tabWidth"
-    )
-      this.invalidateTextLayout(true /*reset char bounds*/);
-
-    if (change.prop === "padding") this.invalidateTextLayout(false);
+    } else {
+      switch (prop) {
+        case 'scroll': viewChange = true; scrollChange = true; break;
+        case 'extent': viewChange = true;
+        case "wordSpacing":
+        case "letterSpacing":
+        case "tabWidth": if (wraps) hardLayoutChange = true; break;
+        case "fontFamily":
+        case "fontSize":
+        case "lineHeight":
+        case "textAlign":
+        case "fontWeight":
+        case "fontStyle":
+        case "textStyleClasses":
+        case "fixedWidth":
+        case "lineWrapping": hardLayoutChange = true; break;
+        case "fixedHeight":
+        case "padding": softLayoutChange = true; break;
+      }
+    }
 
     super.onChange(change);
 
-    textChange && signal(this, "textChange", change);
-    viewChange && signal(this, "viewChange", change);
+    if (scrollChange) this.viewState.wasScrolled = true;
+
+    if (hardLayoutChange || softLayoutChange)
+      this.invalidateTextLayout(
+        hardLayoutChange /*reset char bounds*/,
+        hardLayoutChange /*reset line heights*/);
+
+    if (textChange) signal(this, "textChange", change);
+    if (viewChange) signal(this, "viewChange", change);
   }
 
   removeMorph(morph) {
@@ -860,14 +873,14 @@ export class Text extends Morph {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  invalidateTextLayout(resetCharBoundsCache = false) {
+  invalidateTextLayout(resetCharBoundsCache = false, resetLineHeights = false) {
     let vs = this.viewState;
     if (!vs) return;
     if (!this.fixedWidth || !this.fixedHeight) vs._needsFit = true;
     let tl = this.textLayout;
     if (tl) {
       if (resetCharBoundsCache) tl.resetLineCharBoundsCache(this);
-      tl.estimateLineHeights(this, false);
+      tl.estimateLineHeights(this, resetLineHeights);
     }
   }
 
@@ -1152,7 +1165,7 @@ export class Text extends Morph {
       },
       () => {
         if (invalidateTextLayout) {
-          this.invalidateTextLayout();
+          this.invalidateTextLayout(false, false,);
           this.textLayout.resetLineCharBoundsCacheOfRange(this, insertedRange);
         }
         if (!eqPosition(range.end, insertedRange.end)) {
@@ -1401,7 +1414,7 @@ export class Text extends Morph {
   }
 
   onAttributesChanged(range) {
-    this.invalidateTextLayout();
+    this.invalidateTextLayout(false, false);
     let tl = this.textLayout;
     if (tl) {
       tl.resetLineCharBoundsCacheOfRange(this, range);
@@ -2292,14 +2305,12 @@ export class Text extends Morph {
   }
 
   onCompositionUpdate(evt) {
-    console.log(evt);
     this.selection.range = this.compositionRange;
     this.selection.text = [evt.data, {textDecoration: 'underline'}];
     this.compositionRange = this.selection.range;
   }
 
   onCompositionEnd(evt) {
-    console.log(evt);
     this.selection.range = this.compositionRange;
     this.selection.text = evt.data;
     this.cursorPosition = this.compositionRange.end;

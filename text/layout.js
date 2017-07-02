@@ -1,3 +1,4 @@
+/*global WeakMap*/
 import { Rectangle, pt } from "lively.graphics";
 import { arr } from "lively.lang";
 import { inspect } from "lively.morphic";
@@ -18,7 +19,7 @@ export default class TextLayout {
   resetLineCharBoundsCache(morph) {
     this.lineCharBoundsCache = new WeakMap();
     if (morph) {
-      this.estimateLineHeights(morph, true);
+      this.estimateLineHeights(morph);
       morph.makeDirty();
     }
   }
@@ -38,7 +39,7 @@ export default class TextLayout {
       this.resetLineCharBoundsCacheOfRow(morph, row);
   }
 
-  estimateLineHeights(morph, force = false) {
+  estimateLineHeights(morph, force) {
     let {
           fontMetric, textRenderer, document,
           defaultTextStyle,
@@ -50,7 +51,8 @@ export default class TextLayout {
         paddingRight = padding.right(),
         paddingTop = padding.top(),
         paddingBottom = padding.bottom(),
-        { lines, stringSize } = document;
+        { lines, stringSize } = document,
+        directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph);
 
     if (debug) {
       debug = morph.debugHelper(debug);
@@ -60,7 +62,6 @@ export default class TextLayout {
     // fast and exact version for small texts:
     if (!debug && morph.lineCount() < 10 && morph.document.stringSize < 3000) {
       var directRenderLineFn = textRenderer.directRenderLineFn(morph),
-          directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph),
           linesBounds = fontMetric.manuallyComputeBoundsOfLines(
             morph, lines, 0, 0, {
               defaultTextStyle, width: morphWidth, height: morphHeight,
@@ -74,13 +75,13 @@ export default class TextLayout {
       return;
     }
 
-    var directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph),
-        nMeasured = 0;
+    var nMeasured = 0;
 
     morphWidth = morphWidth - paddingLeft - paddingRight;
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i];
+      
       if (!force && line.height > 0) continue;
 
       nMeasured++;
