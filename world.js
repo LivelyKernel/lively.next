@@ -33,9 +33,10 @@ export class World extends Morph {
       resizePolicy : {
         doc: "how the world behaves on window size changes 'elastic': resizes to window extent, 'static': leaves its extent unchanged",
         defaultValue: 'elastic',
+        after: ["clipMode"],
         set(val) {
           this.setProperty("resizePolicy", val);
-          this.clipMode = val === "static" ? "auto" : "hidden";
+          this.clipMode = val === "static" ? "visible" : "hidden";
         }
       },
 
@@ -368,26 +369,26 @@ export class World extends Morph {
     // this.env.eventDispatcher
     this._cachedWindowBounds = null;
     this.updateVisibleWindowMorphs(evt);
+    this.onMouseMove(evt);
   }
 
   onWindowResize(evt) {
     this._cachedWindowBounds = null;
-    if (this.resizePolicy  != 'rigid')
+    if (this.resizePolicy === 'elastic')
       this.execCommand("resize to fit window");
     this.updateVisibleWindowMorphs(evt);
   }
 
   updateVisibleWindowMorphs(evt) {
-    /*
-    Currently checks all morphs to see if an update is required.  Could possibly be streamlined by having a discrete
-    list of morphs to be updated instead of traversing tree or moving to a CSS method if necessary.
-    */
-    this.withAllSubmorphsDo((aMorph) => {
-      if (aMorph.respondsToVisibleWindow && aMorph.relayout && (typeof aMorph.relayout == 'function')) {
-        aMorph.relayout(evt);
-      } else if (aMorph.respondsToVisibleWindow) {
-        aMorph.showError(new Error(aMorph + " listed as responding to visible window change, but has no relayout insctruction"));
-      };
+    // Currently checks all morphs to see if an update is required.  Could
+    // possibly be streamlined by having a discrete list of morphs to be updated
+    // instead of traversing tree or moving to a CSS method if necessary.
+    this.withAllSubmorphsDo(aMorph => {
+      if (!aMorph.respondsToVisibleWindow) return;
+      if (typeof aMorph.relayout !== 'function')
+        return aMorph.showError(new Error(`${aMorph} listed as responding to visible window`
+                                          + ` change, but has no relayout instruction`));
+      aMorph.relayout(evt);
     });
   }
 
