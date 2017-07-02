@@ -89,8 +89,12 @@ export class Event {
       if (worldNode.id === this.world.id) break;
       worldNode = worldNode.parentNode;
     }
-    // if (!worldNode)
-    //   worldNode = this.domEvt.target.ownerDocument.getElementById(this.world.id);
+
+    if (!worldNode) {
+      let target = this.domEvt.target,
+          doc = target.nodeType === target.DOCUMENT_NODE ? target : target.ownerDocument;
+      worldNode = doc.getElementById(this.world.id);
+    }
 
     if (!worldNode) {
       console.error(`event position: cannot find world node for determining the position!`)
