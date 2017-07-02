@@ -337,10 +337,11 @@ class DOMTextMeasure {
 
   defaultCharExtent(morph, styleOpts, rendertTextLayerFn) {
     let styleKey = this.generateStyleKey(styleOpts),
-        {defaultCharWidthHeightCache} = this,
-        found = defaultCharWidthHeightCache[styleKey];
+        found = this.defaultCharWidthHeightCache[styleKey];
 
-    if (found) return found;
+    if (typeof found !== "undefined"
+     && (found.height !== 0 || found.width !== 0))
+      return found;
 
     var {doc} = this,
         testStringW = "abcdefghijklmnopqrstufwxyz ABCDEFGHIJKLMNOPQRSTUFWXYZ 1234567890 {}[];,./<>?'\"!@#$%^&*()-=_+",
@@ -366,7 +367,7 @@ class DOMTextMeasure {
 
         textNode.removeChild(spanW);
         textNode.removeChild(spanH);
-        return defaultCharWidthHeightCache[styleKey] = {
+        return this.defaultCharWidthHeightCache[styleKey] = {
           width: width/testStringW.length,
           height: Math.ceil(height/4)
         };

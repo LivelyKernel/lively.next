@@ -256,7 +256,6 @@ export default class TextInput {
     if (!evt.data) evt.data = this.readValue();
     this.resetValue();
     this.eventDispatcher.dispatchDOMEvent(evt);
-    console.log(evt);
   }
 
   onCompositionStart(evt) {
