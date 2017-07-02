@@ -15,6 +15,10 @@ export const defaultCSS = `
 
 /*-=- html fixes -=-*/
 
+html {
+  overflow: visible;
+}
+
 textarea.lively-text-input.debug {
   z-index: 20 !important;
   opacity: 1 !important;
