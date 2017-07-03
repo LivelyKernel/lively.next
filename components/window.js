@@ -159,23 +159,29 @@ export default class Window extends Morph {
   }
 
   async openWindowMenu() {
-    let menuItems = [
+    let w = this.world() || this.env.world;
+    return this.targetMorph.world().openMenu([
       [
         "Change Window Title",
         async () => {
-          let newTitle = await $world.prompt("Enter New Name", {input: this.title});
+          let newTitle = await w.prompt("Enter New Name", {input: this.title});
           if (newTitle) this.title = newTitle;
         }
       ],
+      [
+        "Align and resize", [
+          {alias: "left",   target: w, command: "resize active window", args: {window: this, how: "left"}},
+          {alias: "center", target: w, command: "resize active window", args: {window: this, how: "center"}},
+          {alias: "right",  target: w, command: "resize active window", args: {window: this, how: "right"}},
+          {alias: "reset",  target: w, command: "resize active window", args: {window: this, how: "reset"}},
+        ]
+      ],
       {isDivider: true},
       ...(await this.targetMorph.menuItems())
-    ];
-    this.targetMorph.world().openMenu(menuItems);
+    ]);
   }
 
-  get isWindow() {
-    return true;
-  }
+  get isWindow() { return true; }
 
   targetMorphBounds() {
     return new Rectangle(0, 25, this.width, this.height - 25);

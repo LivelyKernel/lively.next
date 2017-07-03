@@ -180,7 +180,23 @@ var commands = [
     name: "resize to fit window",
     exec: (world) => {
       delete world._cachedWindowBounds;
-      world.extent = world.windowBounds().extent();
+      world.extent = world.windowBounds().union(world.submorphBounds()).extent();
+      return true;
+    }
+  },
+
+  {
+    name: "resize manually",
+    exec: async (world, args = {}) => {
+      let width, height;
+      width = Number(args.width || await world.prompt("Enter world width", {input: world.bounds().width}));
+      if (typeof width === "number")
+        height = Number(args.height || await world.prompt("Enter world height", {input: world.bounds().height}));
+
+      if (typeof width === "number" && !isNaN(width)
+       && typeof height === "number" && !isNaN(height))
+        world.extent = pt(width, height);
+
       return true;
     }
   },

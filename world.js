@@ -37,6 +37,7 @@ export class World extends Morph {
         set(val) {
           this.setProperty("resizePolicy", val);
           this.clipMode = val === "static" ? "visible" : "hidden";
+          if (val == "elastic") this.execCommand("resize to fit window");
         }
       },
 
@@ -350,9 +351,18 @@ export class World extends Morph {
       {isDivider: true},
       {command: "run command",              target: this},
       {command: "select morph",             target: this},
-      // {command: "resize to fit window",     target: this},
       {command: "window switcher",          target: this},
+      ["Resize", 
+         this.resizePolicy === "static" ? [
+          {command: "resize to fit window", target: this},
+          {command: "resize manually", target: this},
+          ["change resize policy to elastic", () => this.resizePolicy = "elastic"]
+         ] : [
+           ["change resize policy to static", () => this.resizePolicy = "static"]
+         ]
+      ],
       {command: "report a bug",          target: this},
+      {isDivider: true},
       {command: "save world",          target: this},
       {command: "load world",          target: this},
     ];
