@@ -174,23 +174,25 @@ describe("pointer event related", function() {
       var morphPos = submorph2.globalPosition;
 
       // grab 
-      env.eventDispatcher.simulateDOMEvents(
+      await env.eventDispatcher.simulateDOMEvents(
         {type: "pointerdown", target: submorph2, position: morphPos.addXY(5,5)},
         {type: "pointermove", target: submorph2, position: morphPos.addXY(15,15)});
+
       assertEventLogContains([
-        "onFocus-submorph2", "onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2",
-        "onMouseMove-world", "onGrab-submorph2"]);
+        "onFocus-submorph2",
+        "onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2",
+        "onMouseMove-world",
+        "onGrab-submorph2"
+      ]);
       expect(world.hands[0].carriesMorphs()).equals(true);
       var offsetWhenGrabbed = submorph2.position;
-
       // drop
       env.eventDispatcher.simulateDOMEvents(
         {type: "pointermove", target: submorph2, position: morphPos.addXY(15,15)},
         {type: "pointermove", target: submorph2, position: morphPos.addXY(25,25)},
-        {type: "pointerdown", target: world, position: morphPos.addXY(20,20)});
+        {type: "pointerup", target: world, position: morphPos.addXY(20,20)});
       assertEventLogContains(["onMouseMove-world", "onMouseMove-world", 
-                              "onBlur-submorph2", "onFocus-submorph1", 
-                              "onMouseDown-world", "onDrop-submorph1"]);
+                              "onMouseUp-world", "onDrop-submorph1"]);
       expect(world.hands[0].carriesMorphs()).equals(false);
       expect(submorph2.owner).equals(submorph1);
       expect(submorph2.position).equals({x: 15,y: 20});
