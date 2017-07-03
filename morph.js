@@ -574,7 +574,17 @@ export class Morph {
         derived: true,
         after: ["borderStyle", "borderWidth", "borderColor"],
         get() {
-          return {style: this.borderStyle, width: this.borderWidth, color: this.borderColor};
+          let self = this;
+          return {
+            get style()           { return self.borderStyle; },
+            set style(val)        { self.borderStyle = val; },
+            get width()           { return self.borderWidth; },
+            set width(val)        { self.borderWidth = val; },
+            get color()           { return self.borderColor; },
+            set color(val)        { self.borderColor = val; },
+            get borderRadius()    { return self.borderRadius; },
+            set borderRadius(val) { self.borderRadius = val; }
+          };
         },
         set(x)   {
           if ("style" in x) this.borderStyle = x.style;
