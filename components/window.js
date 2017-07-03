@@ -47,10 +47,10 @@ export default class Window extends Morph {
         ".Window.active .minimizeButton .Label.default": {
            fontColor: Color.rgb(255, 190, 6)
         },
-      ".Window .maximizeButton .Label.highlight": {
+      ".Window .windowMenuButton .Label.highlight": {
         fontColor: Color.rgb(40,116,166),
       },
-      ".Window.active .maximizeButton .Label.default": {
+      ".Window.active .windowMenuButton .Label.default": {
         fontColor: Color.rgb(52,152,219),
       },
       ".Window .windowTitleLabel": {
@@ -256,11 +256,11 @@ export default class Window extends Morph {
     connect(minimizeButton, "onMouseDown", this, "toggleMinimize");
 
     if (this.resizable) {
-      var maximizeButton =
-        this.getSubmorphNamed("maximize") ||
+      var windowMenuButton =
+        this.getSubmorphNamed("window menu button") ||
         morph({
-          name: "maximize",
-          styleClasses: ['windowButton', "maximizeButton"],
+          name: "window menu button",
+          styleClasses: ['windowButton', "windowMenuButton"],
           tooltip: "Open Window Menu",
           submorphs: [
             Label.icon("toggle-down", {
@@ -268,10 +268,10 @@ export default class Window extends Morph {
             })
           ]
         });
-      connect(maximizeButton, "onMouseDown", this, "openWindowMenu");
+      connect(windowMenuButton, "onMouseDown", this, "openWindowMenu");
     }
 
-    let buttons = arr.compact([closeButton, minimizeButton, maximizeButton]);
+    let buttons = arr.compact([closeButton, minimizeButton, windowMenuButton]);
     buttons.forEach(b => {
       connect(b, "onHoverIn", b.submorphs[0], "styleClasses", {
         converter: () => ["defaultLabelStyle", "highlight"]

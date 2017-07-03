@@ -53,19 +53,13 @@ morph breaks old windows without it.
           rootMorph = pool.refForId(id).realObj;
       if (rootMorph && rootMorph.isMorph)
         rootMorph.withAllSubmorphsDo(win => {
-          if (!win.isWindow || win.submorphs.some(m => m.name === "button wrapper")) return;
+          if (!win.isWindow) return;
 
-          let btnWrapper = morph({
-            name: "button wrapper",
-            styleClasses: ["buttonGroup"],
-            submorphs: win.buttons()
-          });
-          win.controls = [btnWrapper, win.titleLabel()];
-          if (win.resizable) win.controls.push(win.resizer());
-          win.submorphs = [...win.submorphs, ...win.controls];
-          btnWrapper.position = pt(0,0)
-          win.buttons().forEach(ea => ea.extent = pt(14,14));
-          win.getWindow().relayoutWindowControls();
+          if (!win.submorphs.some(m => m.name === "button wrapper")
+           || !win.get("button wrapper").submorphs.some(m => m.name === "window menu button")) {
+            win.fixControls();
+          }
+
         });
       return idAndSnapshot;
     }
