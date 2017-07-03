@@ -376,7 +376,18 @@ export class World extends Morph {
   }
 
   onWindowScroll(evt) {
-    // this.env.eventDispatcher
+    // rk 2017-07-02: Experimental, see evts/TextInput.js ensureBeingAtCursorOfText
+    let {
+      positionChangedTime,
+      scrollLeftWhenChanged,
+      scrollTopWhenChanged,
+    } = evt.dispatcher.keyInputHelper.inputState;
+    if (Date.now() - positionChangedTime < 500) {
+      document.documentElement.scrollLeft = scrollLeftWhenChanged;
+      document.documentElement.scrollTop = scrollTopWhenChanged;
+      return;
+    }
+
     this._cachedWindowBounds = null;
     this.updateVisibleWindowMorphs(evt);
     this.onMouseMove(evt);
@@ -599,17 +610,16 @@ export class World extends Morph {
 
     if (opts.animated) {
       if (this.previousPrompt) {
-        this.previousPrompt.transitionTo(promptMorph)
+        this.previousPrompt.transitionTo(promptMorph);
       } else {
-        var animator = new Morph({
+        var animator = this.addMorph({
           fill: Color.transparent, extent: pt(1,1),
-          opacity: 0, center: this.center
-       });
-       animator.openInWorld();
-       animator.addMorph(promptMorph);
-       animator.scale = 2;
-       await animator.animate({scale: 1, opacity: 1, duration: 500});
-       animator.remove(); promptMorph.openInWorld(); 
+          opacity: 0, center: this.center,
+          scale: 2, submorphs: [promptMorph]
+        });
+        await animator.animate({scale: 1, opacity: 1, duration: 500});
+        promptMorph.openInWorld(promptMorph.globalPosition);
+        animator.remove();
       }
     }
     this.previousPrompt = promptMorph;

@@ -476,12 +476,7 @@ class DOMTextMeasure {
         // for font measuring:
         textNode = textlayerNodeForFontMeasure(morph);
 
-    if (textNode) {
-      let layerBounds = textNode.getBoundingClientRect();
-      textNodeOffsetLeft = layerBounds.left;
-      textNodeOffsetTop = layerBounds.top;
-
-    } else textNode = cache[styleKey];
+    if (!textNode) textNode = cache[styleKey];
 
     if (!textNode) {
       this.textlayerNodeCacheCount++;
@@ -500,6 +495,10 @@ class DOMTextMeasure {
 
       } else { root.appendChild(textNode); }
     }
+
+    let layerBounds = textNode.getBoundingClientRect();
+    textNodeOffsetLeft = layerBounds.left;
+    textNodeOffsetTop = layerBounds.top;
 
     try {
       return doFn(textNode, textNodeOffsetLeft, textNodeOffsetTop);

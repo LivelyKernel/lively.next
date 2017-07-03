@@ -1408,9 +1408,9 @@ export class Morph {
 
   openInWorldNear(pos, optWorld) {
     var world = optWorld || this.world() || this.env.world;
-    if (!world) return;
+    if (!world) return this;
     this.center = pos;
-    this.setBounds(world.visibleBounds().translateForInclusion(this.bounds()))
+    this.setBounds(world.visibleBounds().insetBy(5).translateForInclusion(this.bounds()))
     return this.openInWorld(this.position);
   }
 
@@ -1426,12 +1426,12 @@ export class Morph {
       console.warn(`Cannot open morph ${this}, world morph not found;`)
       return this;
     }
-    world.addMorph(this);
     if (pos) this.position = pos;
     else {
       this.center = world.visibleBounds().center();
       this.snap();
     }
+    world.addMorph(this);
     return this;
   }
 

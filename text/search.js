@@ -113,7 +113,6 @@ export class TextSearcher {
 
 export class SearchWidget extends Morph {
 
-
   static get properties() {
     return {
       name:         {defaultValue: "search widget"},
@@ -399,10 +398,11 @@ export class SearchWidget extends Morph {
   }
 
   prepareForNewSearch() {
-    var text = this.target,
-        world = text.world(),
-        state = this.state;
-    world.addMorph(this);
+    var {target: text, state} = this,
+        world = text.world();
+
+    if (!world) return;
+    this.openInWorld(world.visibleBounds().center(), world);
     this.topRight = text.globalBounds().insetBy(5).topRight();
 
     var {scroll, selection: sel} = text;

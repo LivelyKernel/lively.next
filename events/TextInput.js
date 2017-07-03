@@ -1,3 +1,4 @@
+/*global show*/
 import { promise } from "lively.lang";
 import bowser from "bowser";
 
@@ -19,7 +20,10 @@ export default class TextInput {
     this.inputState = {
       composition: null,
       manualCopy: null,
-      manualPaste: null
+      manualPaste: null,
+      positionChangedTime: 0,
+      scrollLeftWhenChanged: 0,
+      scrollTopWhenChanged: 0
     }
   }
 
@@ -82,7 +86,8 @@ export default class TextInput {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // event handlers
     domState.eventHandlers = [
-      {type: "focus",   node: newRootNode,           fn: evt => this.onRootNodeFocus(evt), capturing: true},
+      {type: "focusin", node: newRootNode,           fn: evt => this.onRootNodeFocus(evt), capturing: true},
+      {type: "focusin", node: domState.textareaNode, fn: evt => this.onTextAreaFocus(evt), capturing: true},
       {type: "blur",    node: domState.textareaNode, fn: evt => this.onTextAreaBlur(evt), capturing: true},
       {type: "keydown", node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
       {type: "keyup",   node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
@@ -244,6 +249,8 @@ export default class TextInput {
     });
   }
 
+  onTextAreaFocus(evt) {}
+
   onRootNodeFocus(evt) {
     var {textareaNode, rootNode} = this.domState || {};
     if (evt.target === textareaNode || evt.target === rootNode)
@@ -290,13 +297,26 @@ export default class TextInput {
   ensureBeingAtCursorOfText(textMorph) {
     // move the textarea to the text cursor
 
-    if (!textMorph.world()) return;
+    let world = textMorph.world();
+    if (!world) return;
 
     let {startRow, endRow} = textMorph.whatsVisible,
         {row, column} = textMorph.cursorPosition;
     row = Math.max(startRow, Math.min(row, endRow));
     let localCursorPos = textMorph.charBoundsFromTextPosition({row, column}).topLeft(),
-        globalCursorPos = textMorph.worldPoint(localCursorPos.subPt(textMorph.scroll));
+        globalCursorPos = world.visibleBounds().insetBy(10).constrainPt(
+                            textMorph.worldPoint(
+                              localCursorPos.subPt(textMorph.scroll)));
+
+
+    // rk 2017-07-02: Experimental, when input/text areas are focused the DOM
+    // tries to auto scroll to them, even if they are inside the visible bounds
+    // this can lead to the screen "jumping".  For a first fix, we remember the
+    // scroll here and restore it in World>>onWorldScroll if we think the scroll
+    // originated from the text area focus
+    this.inputState.positionChangedTime = Date.now();
+    this.inputState.scrollLeftWhenChanged = document.documentElement.scrollLeft;
+    this.inputState.scrollTopWhenChanged = document.documentElement.scrollTop;
 
     this.setPosition(globalCursorPos);
   }
