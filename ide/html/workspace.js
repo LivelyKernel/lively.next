@@ -47,8 +47,7 @@ export default class Workspace extends JSWorkspace {
         derived: true, readOnly: true, after: ["targetMorph"],
         get() { this.getSubmorphNamed("eval backend button") },
         initialize() {
-          this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(
-            this, "local"));
+          this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(this, "local"));
         }
       }
     }
@@ -68,7 +67,8 @@ export default class Workspace extends JSWorkspace {
         scripts = Array.from(this.parse(html).querySelectorAll("script"));
     if (!scripts.some(ea => ea.src.includes("livelify-web.js")))
       html += `<script src="/livelify-web.js"></script>`;
-    await this.runEval(`document.documentElement.innerHTML = ${JSON.stringify(html)}`);
+    if (this.htmlPlugin.systemInterface().name !== "local")
+      await this.runEval(`document.documentElement.innerHTML = ${JSON.stringify(html)}`);
   }
 
   async runEval(source) {
