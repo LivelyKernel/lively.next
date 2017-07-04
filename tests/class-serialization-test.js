@@ -1,4 +1,4 @@
-/*global describe, it, beforeEach, afterEach*/
+/*global describe, it, beforeEach, afterEach,System*/
 import { expect } from "mocha-es6";
 
 import { ObjectPool, deserialize, serialize, ObjectRef } from "../index.js";
@@ -65,7 +65,7 @@ describe('class serialization', function() {
     var serialized = objPool.snapshot(),
         result = ClassHelper.sourceModulesIn(serialized);
 
-    expect(result).to.deep.equal([{
+    expect(result).to.containSubset([{
       className: "TestDummy",
       module: {
         package: {name: "lively.serializer2", version: serializerVersion},
