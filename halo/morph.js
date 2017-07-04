@@ -1536,14 +1536,15 @@ export class MorphHighlighter extends Morph {
 
 export class InteractiveMorphSelector {
 
-  static selectMorph(world, controllingMorph) {
-    let sel = new this(world, controllingMorph);
+  static selectMorph(world, controllingMorph, optFilterFn) {
+    let sel = new this(world, controllingMorph, optFilterFn);
     sel.selectNewTarget();
     return sel.whenDone;
   }
 
-  constructor(world = $world, controllingMorph = null) {
+  constructor(world = $world, controllingMorph = null, optFilterFn) {
     this.controllingMorph = controllingMorph;
+    this.filterFn = optFilterFn;
     this.selectorMorph = null;
     this.morphHighlighter = null;
     this.possibleTarget = null;
@@ -1565,20 +1566,34 @@ export class InteractiveMorphSelector {
   }
 
   scanForTargetAt(pos) {
-    this.selectorMorph.center = pos;
-    var target = this.selectorMorph.morphBeneath(pos);
-    if (this.morphHighlighter == target) {
-      target = this.morphHighlighter.morphBeneath(pos);
+    let {
+      selectorMorph,
+      morphHighlighter,
+      possibleTarget,
+      controllingMorph,
+      filterFn
+    } = this;
+
+    selectorMorph.center = pos;
+    var target = selectorMorph.morphBeneath(pos);
+    if (morphHighlighter == target) {
+      target = morphHighlighter.morphBeneath(pos);
     }
-    if (target != this.possibleTarget
-        && (!this.controllingMorph
-         || !target.ownerChain().includes(this.controllingMorph.getWindow()))) {
-      if (this.morphHighlighter) this.morphHighlighter.deactivate();
-      this.possibleTarget = target;
-      if (this.possibleTarget && !this.possibleTarget.isWorld) {
-        let h = this.morphHighlighter = MorphHighlighter.for(this.world, target);
-        h && h.show();
-      }
+    if (target === possibleTarget) return;
+    if (controllingMorph) {
+      if (target === controllingMorph) return;
+      if (target.ownerChain().includes(controllingMorph.getWindow())) return;
+    }
+    if (typeof filterFn === "function") {
+      console.log(target, filterFn(target))
+      if (!filterFn(target)) return;
+    }
+
+    if (morphHighlighter) morphHighlighter.deactivate();
+    possibleTarget = this.possibleTarget = target;
+    if (possibleTarget && !possibleTarget.isWorld) {
+      this.morphHighlighter = morphHighlighter = MorphHighlighter.for(this.world, target);
+      morphHighlighter && morphHighlighter.show();
     }
   }
 
