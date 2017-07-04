@@ -15,7 +15,7 @@ export class Button extends Morph {
 
   static get styleSheet() {
     return new StyleSheet('Button Style', {
-      ".Button": {borderWidth: 1, borderRadius: 5, extent: pt(100,)},
+      ".Button": {borderWidth: 1, borderRadius: 5, extent: pt(100, 20)},
       ".Button.activeStyle": {
         borderColor: Color.gray,
         fill: new LinearGradient({
