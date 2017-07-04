@@ -79,7 +79,7 @@ export default class EditorPlugin {
     this._ast = null;
     this._tokens = [];
     this._tokenizerValidBefore = null;
-    this.__dont_serialize__ = ["mode"];
+    this.__dont_serialize__ = ["mode", "_ast", "_tokens", "_tokenizerValidBefore"];
   }
 
   __deserialize__() { this.mode = this.constructor.mode; }
