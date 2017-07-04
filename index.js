@@ -623,10 +623,10 @@ function noUpdate(noUpdateSpec, func) {
                    && targetObj === ea.getTargetObj()
                    && targetAttr === ea.getTargetMethodName() :
           ea => ea.getSourceAttrName() === attr,
-        conns = obj.attributeConnections.filter(filter);
-    arr.invoke(conns, 'activate');
+        conns = obj.attributeConnections && obj.attributeConnections.filter(filter);
+    conns && arr.invoke(conns, 'activate');
     try { result = func(); }
-    finally { arr.invoke(conns,'deactivate'); }
+    finally { conns && arr.invoke(conns,'deactivate'); }
   }
   return result;
 }
