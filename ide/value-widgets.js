@@ -6,6 +6,7 @@ import { ValueScrubber } from "../components/widgets.js";
 import { FillPopover, TextPopover, IconPopover, RectanglePopover, ShadowPopover, PointPopover, VerticesPopover, LayoutPopover, Popover } from "./styling/style-popover.js";
 import { num, obj } from "lively.lang";
 import { StyleSheetEditor } from "../style-rules.js";
+import InputLine from "../text/input-line.js";
 
 /*
 
@@ -739,7 +740,7 @@ export class IconWidget extends Label {
   
 }
 
-export class StringWidget extends Text {
+export class StringWidget extends InputLine {
 
   // inline editing of string, very basic
   static get properties() {
@@ -752,7 +753,8 @@ export class StringWidget extends Text {
       borderRadius: {defaultValue: 4},
       borderWidth: {defaultValue: 1},
       padding: {defaultValue: rect(5,0,5,0)},
-      opacity: {defaultValue: .8},
+      fixedWidth:   {defaultValue: false},
+      fixedHeight:   {defaultValue: false},
       stringValue: {
         after: ['textString'],
         set(v) {
@@ -763,15 +765,13 @@ export class StringWidget extends Text {
       },
       stringTooLong: {
         readOnly: true,
-        get() {
-          return this.stringValue.length > 200  
-        }
+        get() { return this.stringValue.includes("\n"); }
       },
       isSelected: {
         defaultValue: 'false',
         set(v) {
           this.setProperty('isSelected', v);
-          this.fontColor = v ? Color.white.withA(.7) : Color.blue;
+          this.fontColor = v ? Color.white : Color.blue;
         }
       }
     }
@@ -785,29 +785,30 @@ export class StringWidget extends Text {
     }
   }
 
-  onFocus(evt) {
+  async onFocus(evt) {
     super.onFocus(evt);
     if (this.readOnly) return;
-    if (this.stringTooLong) {
-      // open string edit widget instead
-      return this.openPopover();
+    if (!this.stringTooLong) {
+      this.borderColor = Color.white.withA(.9);
+      this.textString = this.stringValue;
+      return;
     }
-    this.borderColor = Color.white.withA(.9);
-    this.textString = this.stringValue;
+    let result = await this.world().editPrompt(
+      "edit string", {requester: this,input: this.stringValue});
+    if (typeof result === "string") this.onInput(result);
   }
 
   onBlur(evt) {
     super.onBlur(evt);
     if (this.readOnly) return;
     this.borderColor = Color.transparent;
-    this.valueString = this.textString;
+    this.onInput(this.textString)
   }
 
-  async openPopover() {
-    let textEditor = new TextPopover({text: this.stringValue});
-    await textEditor.fadeIntoWorld(this.globalBounds().center());
-    connect(textEditor, 'save', this, 'stringValue');
-    signal(this, 'openWidget', textEditor);
+  onInput(input) {
+    this.owner.focus();
+    signal(this, "inputAccepted", input);
+    this.stringValue = input;
   }
-  
+
 }
