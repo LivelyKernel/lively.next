@@ -361,9 +361,10 @@ export default class EventDispatcher {
         if (state.draggedMorph) {
           events.push(dragEndEvent(domEvt, this, targetMorph, state, hand, halo, layoutHalo));
           defaultEvent.targetMorphs = [this.world];
+        }
 
         // grab release
-        } else if (hand.carriesMorphs()) {
+        if (hand.carriesMorphs()) {
           // make sure that the morph receiving the grabbed morphs is not a
           // grabbed morph itself, i.e. the drop target must not be a child morph
           // of the hand

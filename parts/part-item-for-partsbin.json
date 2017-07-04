@@ -1,8 +1,8 @@
 {
-  "id": "Part_dash_item_dash_for_dash_partsbin_93D98AAE_45A9_4029_B28F_21AE13DC60BF",
+  "id": "Part_dash_item_dash_for_dash_partsbin_E0A8D3E0_8E2C_4387_9AB9_1C13BC75234C",
   "snapshot": {
-    "Part_dash_item_dash_for_dash_partsbin_93D98AAE_45A9_4029_B28F_21AE13DC60BF": {
-      "rev": 519004,
+    "Part_dash_item_dash_for_dash_partsbin_E0A8D3E0_8E2C_4387_9AB9_1C13BC75234C": {
+      "rev": 48138,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -17,7 +17,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(322.6,290.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(166.3,170.0)"
         },
         "origin": {
           "key": "origin",
@@ -36,8 +36,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-              "rev": 511086
+              "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+              "rev": 47459
             }
           ]
         },
@@ -57,51 +57,54 @@
             "morph"
           ]
         },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "78B033C5-D93F-4A51-9F48-3FBABCC5E73A",
+            "rev": 0
+          }
         },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "4347CC7A-4D30-487F-BDF3-A1A8F9BD265A",
+            "rev": 0
+          }
         },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "8F848646-8FAC-4747-9E3C-F1DF2EE9E8BA",
+            "rev": 0
+          }
         },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 4
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 4
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 4
-        },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 4
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "D4665F4B-767F-4C8C-9334-3086AF4D4355",
+            "rev": 0
+          }
         }
       },
       "lively.serializer-class-info": {
         "className": "Part_dash_item_dash_for_dash_partsbin",
         "module": {
           "package": {
-            "name": "38C79579-61C1-46DE-A025-FF870C3DA84F"
+            "name": "38C79579-61C1-46DE-A025-FF870C3DA84F",
+            "version": "0.1.0"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1499203892740,
+          "lastSuperclassChange": 1499203617697
         }
       }
     },
-    "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1": {
-      "rev": 511086,
+    "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81": {
+      "rev": 47459,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -112,52 +115,52 @@
           "value": [
             {
               "__ref__": true,
-              "id": "C718C9D8-B4AF-433B-8C99-CE409E662CD9",
+              "id": "AE4A88F3-6DE0-415E-A5E5-5BB472029A75",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "6AF582FF-55E2-44F9-9F50-AF96A193E710",
+              "id": "614415EE-12DB-4E4B-A422-8C263783722E",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "92E34CBC-735D-4328-9269-8B10DBB26BB9",
+              "id": "30876969-51A6-4B3B-A496-4AF8ACE00608",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "719A16BE-6A76-4384-ACFC-8162B4BD2C46",
+              "id": "E0AD259D-99F6-4C81-B52B-46E2B61359E5",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "7C5AA781-5A02-4EA8-91C8-7074BCA058C4",
+              "id": "99DC9A2C-4BD3-4840-811C-06D1DB1B32E7",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "A98D2B77-4903-4524-A142-F27760ACE41D",
+              "id": "FC7FE444-8A03-4397-96A4-62276A891065",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "31113A94-5276-43E2-933D-4FF6FBE3F8D7",
+              "id": "0A1119CA-51B2-4947-B10C-2AD49249FCF1",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "800F026A-8296-44FD-AA5C-6996CA93209C",
+              "id": "CBBC804A-318B-4F24-A6D5-E161BC33E0E5",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "071B6998-FE7B-409A-9FDD-E67D60FA1106",
+              "id": "D79DBECE-8FCF-4E5B-83A5-FE178C37D590",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "43B7CC7C-4050-496C-9C84-D9F8CEC05448",
+              "id": "B6F89556-7D2B-4A3C-AC86-63A4F143F1C1",
               "rev": 0
             }
           ]
@@ -170,7 +173,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "009D9A10-6BDC-483F-A2A0-B5BA534FC0AC",
+            "id": "E5A3325E-36FD-48D1-96AA-54610439D6B4",
             "rev": 0
           }
         },
@@ -203,8 +206,13 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_8E97D617_0B1C_4F75_9470_034D51111609",
-              "rev": 515607
+              "id": "label_7E46B4D7_59A3_44FC_85E2_8ADB75A03C33",
+              "rev": 47461
+            },
+            {
+              "__ref__": true,
+              "id": "Label_89113AD1_0722_4A16_B6CA_DB0F3A6DB48B",
+              "rev": 47464
             }
           ]
         },
@@ -219,40 +227,42 @@
             "activeStyle",
             "activeStyle",
             "activeStyle",
+            "activeStyle",
+            "activeStyle",
             "activeStyle"
           ]
         },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "27F5BA88-9112-48E1-877B-E717953A1EC0",
+            "rev": 0
+          }
         },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "7BBEF5D1-AD45-401E-9009-9A893739CC96",
+            "rev": 0
+          }
         },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "0C90259A-6474-4DB0-948C-FC8AE0891C97",
+            "rev": 0
+          }
         },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 14
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 14
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 14
-        },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 14
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "159AEC4E-5D34-46EB-BD2B-68E478203C5F",
+            "rev": 0
+          }
         },
         "padding": {
           "key": "padding",
@@ -262,13 +272,25 @@
           "key": "activeMode",
           "value": "active"
         },
+        "iconMorph": {
+          "key": "iconMorph",
+          "value": {
+            "__ref__": true,
+            "id": "label_7E46B4D7_59A3_44FC_85E2_8ADB75A03C33",
+            "rev": 47461
+          }
+        },
         "labelMorph": {
           "key": "labelMorph",
           "value": {
             "__ref__": true,
-            "id": "Label_8E97D617_0B1C_4F75_9470_034D51111609",
-            "rev": 515607
+            "id": "Label_89113AD1_0722_4A16_B6CA_DB0F3A6DB48B",
+            "rev": 47464
           }
+        },
+        "icon": {
+          "key": "icon",
+          "value": ""
         }
       },
       "lively.serializer-class-info": {
@@ -278,11 +300,13 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "components/buttons.js"
+          "pathInPackage": "components/buttons.js",
+          "lastChange": 1499203618038,
+          "lastSuperclassChange": 1499203617697
         }
       }
     },
-    "C718C9D8-B4AF-433B-8C99-CE409E662CD9": {
+    "AE4A88F3-6DE0-415E-A5E5-5BB472029A75": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -301,8 +325,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "sourceAttrName": {
@@ -313,8 +337,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "targetMethodName": {
@@ -325,7 +349,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "467C9E78-4544-48B0-8980-089859CAEDFD",
+            "id": "D46B42FA-D04D-43F2-83EC-91631919851D",
             "rev": 0
           }
         },
@@ -345,11 +369,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1499203617599,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "467C9E78-4544-48B0-8980-089859CAEDFD": {
+    "D46B42FA-D04D-43F2-83EC-91631919851D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -360,21 +386,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         }
       }
     },
-    "6AF582FF-55E2-44F9-9F50-AF96A193E710": {
+    "614415EE-12DB-4E4B-A422-8C263783722E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -393,8 +419,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "sourceAttrName": {
@@ -405,8 +431,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "targetMethodName": {
@@ -417,7 +443,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "CF042A1E-CEA8-4C48-9EF7-50D3C608036E",
+            "id": "BD25B71D-773B-429B-AC60-B3C3D8DC3190",
             "rev": 0
           }
         },
@@ -437,11 +463,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1499203617599,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "CF042A1E-CEA8-4C48-9EF7-50D3C608036E": {
+    "BD25B71D-773B-429B-AC60-B3C3D8DC3190": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -452,21 +480,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         }
       }
     },
-    "92E34CBC-735D-4328-9269-8B10DBB26BB9": {
+    "30876969-51A6-4B3B-A496-4AF8ACE00608": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -485,8 +513,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "sourceAttrName": {
@@ -497,8 +525,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "targetMethodName": {
@@ -509,7 +537,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "DFB68095-C04D-4C0C-B63C-5BA221709A7C",
+            "id": "085627EC-0BEF-4A7C-B530-0DBF97A6C28D",
             "rev": 0
           }
         },
@@ -529,11 +557,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1499203617599,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "DFB68095-C04D-4C0C-B63C-5BA221709A7C": {
+    "085627EC-0BEF-4A7C-B530-0DBF97A6C28D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -544,21 +574,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         }
       }
     },
-    "719A16BE-6A76-4384-ACFC-8162B4BD2C46": {
+    "E0AD259D-99F6-4C81-B52B-46E2B61359E5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -577,8 +607,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "sourceAttrName": {
@@ -589,8 +619,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "targetMethodName": {
@@ -601,7 +631,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D041AF60-290A-40A5-8B84-E644BD79EE11",
+            "id": "D51982D6-2770-4BCD-A5C9-7BE550725E83",
             "rev": 0
           }
         },
@@ -621,11 +651,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1499203617599,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "D041AF60-290A-40A5-8B84-E644BD79EE11": {
+    "D51982D6-2770-4BCD-A5C9-7BE550725E83": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -636,21 +668,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         }
       }
     },
-    "7C5AA781-5A02-4EA8-91C8-7074BCA058C4": {
+    "99DC9A2C-4BD3-4840-811C-06D1DB1B32E7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -669,8 +701,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "sourceAttrName": {
@@ -681,8 +713,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "targetMethodName": {
@@ -693,7 +725,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "5120E61C-1DDD-4487-BF30-3A5D236645A3",
+            "id": "110C7B4F-B437-4030-9695-C5633AA73833",
             "rev": 0
           }
         },
@@ -713,11 +745,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1499203617599,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "5120E61C-1DDD-4487-BF30-3A5D236645A3": {
+    "110C7B4F-B437-4030-9695-C5633AA73833": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -728,21 +762,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         }
       }
     },
-    "A98D2B77-4903-4524-A142-F27760ACE41D": {
+    "FC7FE444-8A03-4397-96A4-62276A891065": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -761,8 +795,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "sourceAttrName": {
@@ -773,8 +807,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "targetMethodName": {
@@ -785,7 +819,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "1427D5E2-BFB3-48D8-B3E0-3EA9F0EF339D",
+            "id": "DADC6ED6-DB21-4880-955C-4CFAE84254A2",
             "rev": 0
           }
         },
@@ -805,11 +839,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1499203617599,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "1427D5E2-BFB3-48D8-B3E0-3EA9F0EF339D": {
+    "DADC6ED6-DB21-4880-955C-4CFAE84254A2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -820,21 +856,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         }
       }
     },
-    "31113A94-5276-43E2-933D-4FF6FBE3F8D7": {
+    "0A1119CA-51B2-4947-B10C-2AD49249FCF1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -853,8 +889,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "sourceAttrName": {
@@ -865,8 +901,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "targetMethodName": {
@@ -877,7 +913,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "1A669E81-A435-4D83-95DE-05CD21D3084C",
+            "id": "B08FEC4F-743B-4FB0-B183-6015983190AE",
             "rev": 0
           }
         },
@@ -897,11 +933,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1499203617599,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "1A669E81-A435-4D83-95DE-05CD21D3084C": {
+    "B08FEC4F-743B-4FB0-B183-6015983190AE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -912,21 +950,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         }
       }
     },
-    "800F026A-8296-44FD-AA5C-6996CA93209C": {
+    "CBBC804A-318B-4F24-A6D5-E161BC33E0E5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -945,8 +983,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "sourceAttrName": {
@@ -957,8 +995,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_4C8BEE8F_023B_4D77_A81D_C92D8846A3BE",
-            "rev": 471236
+            "id": "Part_dash_item_dash_for_dash_partsbin_8908D48B_22A1_40EA_A766_3C5856B49D60",
+            "rev": 21377
           }
         },
         "targetMethodName": {
@@ -969,7 +1007,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "A47188E6-6DC3-4C24-BD36-B4A82D3A02D9",
+            "id": "BFA42310-3E95-4BCF-BAB7-1877D27483B9",
             "rev": 0
           }
         },
@@ -989,12 +1027,14 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1499203617599,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "Part_dash_item_dash_for_dash_partsbin_4C8BEE8F_023B_4D77_A81D_C92D8846A3BE": {
-      "rev": 471236,
+    "Part_dash_item_dash_for_dash_partsbin_8908D48B_22A1_40EA_A766_3C5856B49D60": {
+      "rev": 21377,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1028,13 +1068,13 @@
           "value": [
             {
               "__ref__": true,
-              "id": "HTMLMorph_C7AD5D1E_B879_42BD_BF4F_A468578C9257",
-              "rev": 471222
+              "id": "HTMLMorph_B129DA4F_9EEF_4951_8374_E4E02CCA2DF4",
+              "rev": 21355
             },
             {
               "__ref__": true,
-              "id": "Label_CF1E7666_363E_48E6_803C_D9879287C905",
-              "rev": 471234
+              "id": "Label_317BA3FA_6E98_43C1_B8B3_CEF87AD53FBD",
+              "rev": 21375
             }
           ]
         },
@@ -1054,67 +1094,54 @@
             "morph"
           ]
         },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "04971ADA-61D5-4CC3-8DD5-48E87A85BF12",
+            "rev": 0
+          }
         },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "EEA4990B-D5EE-4B37-B303-C981096E586D",
+            "rev": 0
+          }
         },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "39F7797F-C853-4680-936E-A2DED8001B8E",
+            "rev": 0
+          }
         },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 4
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 4
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 4
-        },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 4
-        },
-        "borderWidthBottom": {
-          "key": "borderWidthBottom",
-          "value": 1
-        },
-        "borderWidthLeft": {
-          "key": "borderWidthLeft",
-          "value": 1
-        },
-        "borderWidthRight": {
-          "key": "borderWidthRight",
-          "value": 1
-        },
-        "borderWidthTop": {
-          "key": "borderWidthTop",
-          "value": 1
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "BD8B05C3-0FEB-4353-8AD5-5912EE12A710",
+            "rev": 0
+          }
         }
       },
       "lively.serializer-class-info": {
         "className": "Part_dash_item_dash_for_dash_partsbin",
         "module": {
           "package": {
-            "name": "38C79579-61C1-46DE-A025-FF870C3DA84F"
+            "name": "38C79579-61C1-46DE-A025-FF870C3DA84F",
+            "version": "0.1.0"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1499203892740,
+          "lastSuperclassChange": 1499203617697
         }
       }
     },
-    "HTMLMorph_C7AD5D1E_B879_42BD_BF4F_A468578C9257": {
-      "rev": 471222,
+    "HTMLMorph_B129DA4F_9EEF_4951_8374_E4E02CCA2DF4": {
+      "rev": 21355,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1163,6 +1190,38 @@
             "morph"
           ]
         },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "26BE9E95-1EDC-4599-A91E-167F2EDAE0A2",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "5B19B638-C854-42EA-8C99-6A724EB97DCF",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "8B994BC2-537B-487B-9AC4-5739A400D386",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "F39216CF-52F2-4285-8E6C-30BF1957ED1F",
+            "rev": 0
+          }
+        },
         "html": {
           "key": "html",
           "value": "<div style=\"width: 100%;\"><div style=\"position: absolute; top: 10px;            left: 23.150000000000006px\"><div draggable=\"false\" style=\"background-image: linear-gradient(rgb(242, 243, 244) 0%, rgb(215, 219, 221) 100%); transform: translate(9.12409px, 0px) rotate(0deg) scale(0.364964, 0.364964); transform-origin: 0px 0px 0px; display: inline; width: 224px; height: 274px; border-style: solid; border-width: 1px; border-color: rgb(215, 219, 221); border-radius: 9px; box-shadow: rgba(102, 102, 102, 0.517647) 6.36396px 6.36396px 22px; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(9px, 9px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 206px; height: 23px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div style=\" position: absolute; left: 44.0312px; top: 3px; width: 3px; height: 14px; background-color: black; z-index: 5; display: none;\"></div><div style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 14px; padding: 3px 11px 6px 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 14px; line-height: 14px;\"><span style=\"font-size: 12px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">Search</span></div><div style=\"height: 0px; width: 38.0312px;\"></div></div></div><div draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(9px, 41px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 206px; height: 224px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: auto;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div>"
@@ -1175,12 +1234,126 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "html-morph.js"
+          "pathInPackage": "html-morph.js",
+          "lastChange": 1499203618143,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "Label_CF1E7666_363E_48E6_803C_D9879287C905": {
-      "rev": 471234,
+    "26BE9E95-1EDC-4599-A91E-167F2EDAE0A2": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "5B19B638-C854-42EA-8C99-6A724EB97DCF": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "8B994BC2-537B-487B-9AC4-5739A400D386": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "F39216CF-52F2-4285-8E6C-30BF1957ED1F": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "Label_317BA3FA_6E98_43C1_B8B3_CEF87AD53FBD": {
+      "rev": 21375,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1221,13 +1394,45 @@
             "morph"
           ]
         },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "6A7B921E-FF3F-43BE-BA19-5497DF4C8AD0",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "A540BC57-5371-4DA6-9DF9-77DA58EC1A66",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "17AAB751-C78A-4D8D-95F1-B296E584B818",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "CB9D46BA-3CA6-45D1-BBA4-7F8305E194E4",
+            "rev": 0
+          }
+        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
             "IconPicker",
             {
               "__ref__": true,
-              "id": "0D81E3E5-D264-4925-9A6A-90ABE024E4EA",
+              "id": "66913AAF-DDD4-44FE-85D7-1340E4B79A0D",
               "rev": 0
             }
           ]
@@ -1252,11 +1457,125 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "text/label.js"
+          "pathInPackage": "text/label.js",
+          "lastChange": 1499203617663,
+          "lastSuperclassChange": 1499203617697
         }
       }
     },
-    "0D81E3E5-D264-4925-9A6A-90ABE024E4EA": {
+    "6A7B921E-FF3F-43BE-BA19-5497DF4C8AD0": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "A540BC57-5371-4DA6-9DF9-77DA58EC1A66": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "17AAB751-C78A-4D8D-95F1-B296E584B818": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "CB9D46BA-3CA6-45D1-BBA4-7F8305E194E4": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "66913AAF-DDD4-44FE-85D7-1340E4B79A0D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1265,7 +1584,119 @@
         }
       }
     },
-    "A47188E6-6DC3-4C24-BD36-B4A82D3A02D9": {
+    "04971ADA-61D5-4CC3-8DD5-48E87A85BF12": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 1
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 1
+        },
+        "left": {
+          "key": "left",
+          "value": 1
+        },
+        "right": {
+          "key": "right",
+          "value": 1
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "EEA4990B-D5EE-4B37-B303-C981096E586D": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 4
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 4
+        },
+        "right": {
+          "key": "right",
+          "value": 4
+        },
+        "left": {
+          "key": "left",
+          "value": 4
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "39F7797F-C853-4680-936E-A2DED8001B8E": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "BD8B05C3-0FEB-4353-8AD5-5912EE12A710": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "BFA42310-3E95-4BCF-BAB7-1877D27483B9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1276,21 +1707,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_4C8BEE8F_023B_4D77_A81D_C92D8846A3BE",
-            "rev": 471236
+            "id": "Part_dash_item_dash_for_dash_partsbin_8908D48B_22A1_40EA_A766_3C5856B49D60",
+            "rev": 21377
           }
         }
       }
     },
-    "071B6998-FE7B-409A-9FDD-E67D60FA1106": {
+    "D79DBECE-8FCF-4E5B-83A5-FE178C37D590": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1309,8 +1740,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "sourceAttrName": {
@@ -1321,8 +1752,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_CD7C21E1_25D3_4F2F_B9D9_09AA11685BC3",
-            "rev": 471279
+            "id": "Part_dash_item_dash_for_dash_partsbin_37953B5A_ED41_47AD_BECB_EA2760E32D81",
+            "rev": 21432
           }
         },
         "targetMethodName": {
@@ -1333,7 +1764,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F472DD34-43B7-4848-BD1C-C8E70E558170",
+            "id": "575C9C8E-56BD-429B-ADB4-13785EAD9AEC",
             "rev": 0
           }
         },
@@ -1353,12 +1784,14 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1499203617599,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "Part_dash_item_dash_for_dash_partsbin_CD7C21E1_25D3_4F2F_B9D9_09AA11685BC3": {
-      "rev": 471279,
+    "Part_dash_item_dash_for_dash_partsbin_37953B5A_ED41_47AD_BECB_EA2760E32D81": {
+      "rev": 21432,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1392,13 +1825,13 @@
           "value": [
             {
               "__ref__": true,
-              "id": "HTMLMorph_8C9DF5AB_9237_4421_BCB2_A9097EBEE167",
-              "rev": 471265
+              "id": "HTMLMorph_B09FE5F2_2284_471D_8D48_C9F18C6C4C89",
+              "rev": 21410
             },
             {
               "__ref__": true,
-              "id": "Label_59F0BEFE_E754_43A1_92D5_265A31D35312",
-              "rev": 471277
+              "id": "Label_27CF9E43_AC3B_4C63_9981_B983A1479761",
+              "rev": 21430
             }
           ]
         },
@@ -1418,67 +1851,54 @@
             "morph"
           ]
         },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "C06023ED-4B97-4B11-B834-C2BC40AE9B1A",
+            "rev": 0
+          }
         },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "6925F0C3-1F9E-4940-ACD9-9E4839A4C6F9",
+            "rev": 0
+          }
         },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "2CC885F0-C691-48B2-B345-EC3BBABA4E63",
+            "rev": 0
+          }
         },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 4
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 4
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 4
-        },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 4
-        },
-        "borderWidthBottom": {
-          "key": "borderWidthBottom",
-          "value": 1
-        },
-        "borderWidthLeft": {
-          "key": "borderWidthLeft",
-          "value": 1
-        },
-        "borderWidthRight": {
-          "key": "borderWidthRight",
-          "value": 1
-        },
-        "borderWidthTop": {
-          "key": "borderWidthTop",
-          "value": 1
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "B4C77AA1-6A80-48E1-8765-A85F377C4E05",
+            "rev": 0
+          }
         }
       },
       "lively.serializer-class-info": {
         "className": "Part_dash_item_dash_for_dash_partsbin",
         "module": {
           "package": {
-            "name": "38C79579-61C1-46DE-A025-FF870C3DA84F"
+            "name": "38C79579-61C1-46DE-A025-FF870C3DA84F",
+            "version": "0.1.0"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1499203892740,
+          "lastSuperclassChange": 1499203617697
         }
       }
     },
-    "HTMLMorph_8C9DF5AB_9237_4421_BCB2_A9097EBEE167": {
-      "rev": 471265,
+    "HTMLMorph_B09FE5F2_2284_471D_8D48_C9F18C6C4C89": {
+      "rev": 21410,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1527,6 +1947,38 @@
             "morph"
           ]
         },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "0B9C3147-9817-435C-B991-691A5873BC21",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "78DFEBD1-6DB5-47AA-A844-B51BB73EE321",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "55B1C5F8-7056-4AF7-98A7-5E2072575885",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "FC67916A-E692-4372-ABEA-73C8556AB26A",
+            "rev": 0
+          }
+        },
         "html": {
           "key": "html",
           "value": "<div style=\"width: 100%;\"><div style=\"position: absolute; top: 10px;            left: 23.150000000000006px\"><div draggable=\"false\" style=\"background-image: linear-gradient(rgb(242, 243, 244) 0%, rgb(215, 219, 221) 100%); transform: translate(9.12409px, 0px) rotate(0deg) scale(0.364964, 0.364964); transform-origin: 0px 0px 0px; display: inline; width: 224px; height: 274px; border-style: solid; border-width: 1px; border-color: rgb(215, 219, 221); border-radius: 9px; box-shadow: rgba(102, 102, 102, 0.517647) 6.36396px 6.36396px 22px; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(9px, 9px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 206px; height: 23px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div style=\" position: absolute; left: 44.0312px; top: 3px; width: 3px; height: 14px; background-color: black; z-index: 5; display: none;\"></div><div style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 14px; padding: 3px 11px 6px 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 14px; line-height: 14px;\"><span style=\"font-size: 12px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">Search</span></div><div style=\"height: 0px; width: 38.0312px;\"></div></div></div><div draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(9px, 41px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 206px; height: 224px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: auto;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div>"
@@ -1539,12 +1991,126 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "html-morph.js"
+          "pathInPackage": "html-morph.js",
+          "lastChange": 1499203618143,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "Label_59F0BEFE_E754_43A1_92D5_265A31D35312": {
-      "rev": 471277,
+    "0B9C3147-9817-435C-B991-691A5873BC21": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "78DFEBD1-6DB5-47AA-A844-B51BB73EE321": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "55B1C5F8-7056-4AF7-98A7-5E2072575885": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "FC67916A-E692-4372-ABEA-73C8556AB26A": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "Label_27CF9E43_AC3B_4C63_9981_B983A1479761": {
+      "rev": 21430,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1585,13 +2151,45 @@
             "morph"
           ]
         },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "8CAECA0B-F6EE-416B-B531-6769A92CA4AC",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "5C5419B6-C7BA-4266-B835-3045B4274674",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "54EA8FF3-266C-440B-8FC9-7C6414E3077E",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "F486D797-EF84-43C4-9DD6-A2D0A1AC6551",
+            "rev": 0
+          }
+        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
             "IconPicker",
             {
               "__ref__": true,
-              "id": "BEF69C3B-3266-4DC0-89B5-186AF47AB8AB",
+              "id": "A5BF2610-1521-4BCA-9FCA-74D8341C93D2",
               "rev": 0
             }
           ]
@@ -1616,11 +2214,125 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "text/label.js"
+          "pathInPackage": "text/label.js",
+          "lastChange": 1499203617663,
+          "lastSuperclassChange": 1499203617697
         }
       }
     },
-    "BEF69C3B-3266-4DC0-89B5-186AF47AB8AB": {
+    "8CAECA0B-F6EE-416B-B531-6769A92CA4AC": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "5C5419B6-C7BA-4266-B835-3045B4274674": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "54EA8FF3-266C-440B-8FC9-7C6414E3077E": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "F486D797-EF84-43C4-9DD6-A2D0A1AC6551": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "A5BF2610-1521-4BCA-9FCA-74D8341C93D2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1629,7 +2341,119 @@
         }
       }
     },
-    "F472DD34-43B7-4848-BD1C-C8E70E558170": {
+    "C06023ED-4B97-4B11-B834-C2BC40AE9B1A": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 1
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 1
+        },
+        "left": {
+          "key": "left",
+          "value": 1
+        },
+        "right": {
+          "key": "right",
+          "value": 1
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "6925F0C3-1F9E-4940-ACD9-9E4839A4C6F9": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 4
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 4
+        },
+        "right": {
+          "key": "right",
+          "value": 4
+        },
+        "left": {
+          "key": "left",
+          "value": 4
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "2CC885F0-C691-48B2-B345-EC3BBABA4E63": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "B4C77AA1-6A80-48E1-8765-A85F377C4E05": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "575C9C8E-56BD-429B-ADB4-13785EAD9AEC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1640,21 +2464,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_CD7C21E1_25D3_4F2F_B9D9_09AA11685BC3",
-            "rev": 471279
+            "id": "Part_dash_item_dash_for_dash_partsbin_37953B5A_ED41_47AD_BECB_EA2760E32D81",
+            "rev": 21432
           }
         }
       }
     },
-    "43B7CC7C-4050-496C-9C84-D9F8CEC05448": {
+    "B6F89556-7D2B-4A3C-AC86-63A4F143F1C1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1673,8 +2497,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "sourceAttrName": {
@@ -1685,8 +2509,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_93D98AAE_45A9_4029_B28F_21AE13DC60BF",
-            "rev": 519004
+            "id": "Part_dash_item_dash_for_dash_partsbin_E0A8D3E0_8E2C_4387_9AB9_1C13BC75234C",
+            "rev": 48138
           }
         },
         "targetMethodName": {
@@ -1697,7 +2521,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "5AE58416-A665-46A2-B344-CC4788D3E4AB",
+            "id": "79A6D19F-C411-465F-A5BC-CD118017567E",
             "rev": 0
           }
         },
@@ -1717,11 +2541,13 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1499203617599,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "5AE58416-A665-46A2-B344-CC4788D3E4AB": {
+    "79A6D19F-C411-465F-A5BC-CD118017567E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1732,21 +2558,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_93D98AAE_45A9_4029_B28F_21AE13DC60BF",
-            "rev": 519004
+            "id": "Part_dash_item_dash_for_dash_partsbin_E0A8D3E0_8E2C_4387_9AB9_1C13BC75234C",
+            "rev": 48138
           }
         }
       }
     },
-    "009D9A10-6BDC-483F-A2A0-B5BA534FC0AC": {
+    "E5A3325E-36FD-48D1-96AA-54610439D6B4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1773,8 +2599,8 @@
           "key": "morph",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "onChange": {
@@ -1788,12 +2614,14 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "rendering/morphic-default.js"
+          "pathInPackage": "rendering/morphic-default.js",
+          "lastChange": 1499203617565,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "Label_8E97D617_0B1C_4F75_9470_034D51111609": {
-      "rev": 515607,
+    "label_7E46B4D7_59A3_44FC_85E2_8ADB75A03C33": {
+      "rev": 47461,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1804,7 +2632,283 @@
           "value": [
             {
               "__ref__": true,
-              "id": "4CB9B197-3E8E-4314-B59C-77DF2789A835",
+              "id": "8099FA10-1A7F-42A3-87FC-E0E782AA5A6F",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "icon"
+        },
+        "reactsToPointer": {
+          "key": "reactsToPointer",
+          "value": false
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "282A43FF-9FFB-42BA-B6AE-3297AEE83E65",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "CC8A6908-1595-4BA2-8185-27C792E7DDEB",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "CD22FECA-9DEE-406B-9C01-1C0B80760135",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "11AAEFC5-E395-4FE0-B43F-0E334CD02139",
+            "rev": 0
+          }
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "",
+            null
+          ]
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Label",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/label.js",
+          "lastChange": 1499203617663,
+          "lastSuperclassChange": 1499203617697
+        }
+      }
+    },
+    "8099FA10-1A7F-42A3-87FC-E0E782AA5A6F": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "label_7E46B4D7_59A3_44FC_85E2_8ADB75A03C33",
+            "rev": 47461
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "extent"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "546C6357-04C0-4D84-B267-E9C0E4206D4F",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js",
+          "lastChange": 1499203617599,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "546C6357-04C0-4D84-B267-E9C0E4206D4F": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "label_7E46B4D7_59A3_44FC_85E2_8ADB75A03C33",
+            "rev": 47461
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
+          }
+        }
+      }
+    },
+    "282A43FF-9FFB-42BA-B6AE-3297AEE83E65": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "CC8A6908-1595-4BA2-8185-27C792E7DDEB": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "CD22FECA-9DEE-406B-9C01-1C0B80760135": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "11AAEFC5-E395-4FE0-B43F-0E334CD02139": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "Label_89113AD1_0722_4A16_B6CA_DB0F3A6DB48B": {
+      "rev": 47464,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "4F793875-37AC-4AF9-AB94-94B492F6CFA0",
               "rev": 0
             }
           ]
@@ -1849,13 +2953,45 @@
             "morph"
           ]
         },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "24D18351-B167-46CD-94F7-0CA593C692CC",
+            "rev": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "3F1B1E61-EB3F-4C69-832D-565B15138DAC",
+            "rev": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": {
+            "__ref__": true,
+            "id": "888B0BF2-D8A1-4E9F-98C6-8F9166453818",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "0E624D35-1E1D-4E22-9CDA-10644CA1E831",
+            "rev": 0
+          }
+        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
             "",
             {
               "__ref__": true,
-              "id": "411F800D-9FDC-4AFF-A6E6-F239E2C6F5FF",
+              "id": "F7EE45B4-8161-4864-9F2E-70891A25F69A",
               "rev": 0
             }
           ]
@@ -1876,11 +3012,13 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "text/label.js"
+          "pathInPackage": "text/label.js",
+          "lastChange": 1499203617663,
+          "lastSuperclassChange": 1499203617697
         }
       }
     },
-    "4CB9B197-3E8E-4314-B59C-77DF2789A835": {
+    "4F793875-37AC-4AF9-AB94-94B492F6CFA0": {
       "rev": 0,
       "props": {
         "doNotSerialize": {
@@ -1895,8 +3033,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_8E97D617_0B1C_4F75_9470_034D51111609",
-            "rev": 515607
+            "id": "Label_89113AD1_0722_4A16_B6CA_DB0F3A6DB48B",
+            "rev": 47464
           }
         },
         "sourceAttrName": {
@@ -1907,8 +3045,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         },
         "targetMethodName": {
@@ -1919,7 +3057,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "21C4FE3B-9296-43FA-AE27-47ED9166EC97",
+            "id": "EB238FA3-09D9-46A6-A47A-4BDAAB687C30",
             "rev": 0
           }
         },
@@ -1939,32 +3077,146 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1499203617599,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "21C4FE3B-9296-43FA-AE27-47ED9166EC97": {
+    "EB238FA3-09D9-46A6-A47A-4BDAAB687C30": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_8E97D617_0B1C_4F75_9470_034D51111609",
-            "rev": 515607
+            "id": "Label_89113AD1_0722_4A16_B6CA_DB0F3A6DB48B",
+            "rev": 47464
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_80F5AACA_90FE_4743_80B1_B8390CAFDDD1",
-            "rev": 511086
+            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
+            "rev": 47459
           }
         }
       }
     },
-    "411F800D-9FDC-4AFF-A6E6-F239E2C6F5FF": {
+    "24D18351-B167-46CD-94F7-0CA593C692CC": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "3F1B1E61-EB3F-4C69-832D-565B15138DAC": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "888B0BF2-D8A1-4E9F-98C6-8F9166453818": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "0E624D35-1E1D-4E22-9CDA-10644CA1E831": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "F7EE45B4-8161-4864-9F2E-70891A25F69A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1982,6 +3234,230 @@
           ]
         }
       }
+    },
+    "27F5BA88-9112-48E1-877B-E717953A1EC0": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "7BBEF5D1-AD45-401E-9009-9A893739CC96": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 14
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 14
+        },
+        "right": {
+          "key": "right",
+          "value": 14
+        },
+        "left": {
+          "key": "left",
+          "value": 14
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "0C90259A-6474-4DB0-948C-FC8AE0891C97": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "159AEC4E-5D34-46EB-BD2B-68E478203C5F": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "78B033C5-D93F-4A51-9F48-3FBABCC5E73A": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "4347CC7A-4D30-487F-BDF3-A1A8F9BD265A": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 4
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 4
+        },
+        "right": {
+          "key": "right",
+          "value": 4
+        },
+        "left": {
+          "key": "left",
+          "value": 4
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "8F848646-8FAC-4747-9E3C-F1DF2EE9E8BA": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "solid"
+        },
+        "left": {
+          "key": "left",
+          "value": "solid"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "solid"
+        },
+        "right": {
+          "key": "right",
+          "value": "solid"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "D4665F4B-767F-4C8C-9334-3086AF4D4355": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
     }
   },
   "requiredVersion": "~0.1",
@@ -1989,7 +3465,7 @@
     "local://lively-object-modules/": {
       "38C79579-61C1-46DE-A025-FF870C3DA84F": {
         "package.json": "{\n  \"name\": \"38C79579-61C1-46DE-A025-FF870C3DA84F\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
-        "index.js": "import { Morph, show, Image, morph, Icon, HTMLMorph } from \"lively.morphic\";\nimport { Color, pt } from \"lively.graphics/index.js\";\nimport { connect, once, disconnect } from \"lively.bindings/index.js\";\nimport { resource } from \"lively.resources/index.js\";\nimport { loadMorphFromSnapshot } from \"lively.morphic/serialization.js\";\nimport LoadingIndicator from \"lively.morphic/components/loading-indicator.js\";\n\nexport default class Part_dash_item_dash_for_dash_partsbin extends Morph {\n\n  static get properties() {\n    return {\n      partName: {serialize: false},\n      partResource: {serialize: false},\n      snapshot: {serialize: false}\n    }\n  }\n\n  reset() {\n    connect(this.getSubmorphNamed(\"remove-button\"), 'fire', this, 'interactivelyRemovePart');\n  }\n\n  beforePublish() {\n    this.clear()\n  }\n\n  clear() {\n    this.snapshot = null;\n    this.partResource = null;\n    this.partName = \"\";\n    let label = this.getSubmorphNamed('preview-label'),\n        preview = this.getSubmorphNamed('html-preview'),\n        imagePreview = this.getSubmorphNamed('image-preview');\n    label && label.remove();\n    imagePreview && imagePreview.remove();\n    if (preview)\n      preview.html = `\n  <div style=\"display: flex;\n              align-items: center;\n              justify-content: center;\n              height: 100%;\n              background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))\">\n    <p style=\"font: bold 20pt Inconsolata, monospace; color: lightgray;\">Loading</p>\n  </div>`;\n  }\n\n  async showPart(partResource) {\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/star.json\")\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/button.json\")\n    // await this.showPart(partResource)\n    this.clear();\n    this.partName = partResource.name().replace(/\\.json$/, \"\");\n    this.snapshot = JSON.parse(await partResource.read());\n    this.partResource = partResource;\n    await this.addPreviewMorph();\n    this.addLabel();\n    this.getSubmorphNamed(\"remove-button\").visible = false;\n  }\n\n  async addPreviewMorph() {\n    let {snapshot: {preview}} = this;\n    if (typeof preview !== \"string\" || !preview) preview = \"no preview\";\n    return preview.startsWith(\"data:image/\") ?\n      await this.addImagePreviewMorph(preview) :\n      this.addHTMLPreviewMorph(preview);\n  }\n\n  async addImagePreviewMorph(dataURI) {\n    let {extent, partName} = this,\n        margin = 10,\n        {x: w, y: h} = extent,\n        edgeLength = Math.min(w-2*margin, h-2*margin),\n        borderWidth = 1,\n        previewSpec = {\n          name: \"image-preview\",\n          fill: null,\n          reactsToPointer: false,\n          imageUrl: dataURI,\n          nativeCursor: \"-webkit-grab\"\n        },\n        htmlPreview = this.getSubmorphNamed(\"html-preview\"),\n        preview = htmlPreview ? htmlPreview.replaceWith(new Image()) : this.addMorphBack(new Image());\n   Object.assign(preview, previewSpec);\n\n   preview.extent = await preview.determineNaturalExtent();\n   preview.scale = Math.min(edgeLength / preview.width, edgeLength / preview.height);\n   preview.center = pt(w/2, h/2);\n   preview.dropShadow = {color: Color.gray, blur: 5 / preview.scale};\n   return preview;\n  }\n\n  addHTMLPreviewMorph(html) {\n    let {extent, partName} = this,\n        margin = 10,\n        previewWidth = 100+2*margin,\n        previewHeight = 100+2*margin,\n        {x: w, y: h} = extent,\n        borderWidth = 1,\n        previewHTML = `<div style=\"width: 100%;\">`\n                    + `<div style=\"position: absolute; top: ${margin}px;`\n                    + `            left: ${margin + (w-previewWidth) / 2}px\">`\n                    + html\n                    + `</div>`,\n      previewSpec = {\n        name: \"html-preview\",\n        fill: null,\n        reactsToPointer: false,\n        html: previewHTML,\n        extent: pt(w, h),\n        // border: {width: 1, color: Color.gray, radius: 5},\n        nativeCursor: \"-webkit-grab\"\n      };\n    var preview = this.getSubmorphNamed(\"html-preview\") || this.addMorphBack(new HTMLMorph());\n    Object.assign(preview, previewSpec);\n    preview.domNode.style.pointerEvents = \"none\";\n    return preview;\n  }\n\n  addLabel() {\n    let {partName, width, height} = this\n    if (this.getSubmorphNamed('preview-label'))\n      this.getSubmorphNamed('preview-label').remove();\n    this.addMorph({\n      bottomCenter: pt(width/2, height-5),\n      type: 'label', fontSize: 12, fontColor: Color.gray.darker(),\n      fill: Color.gray.withA(.7), borderRadius: 10, padding: 4,\n      value: partName, name: 'preview-label'\n    });\n  }\n\n  onDragStart(evt) {\n    this.createAndGrabNewInstance();\n  }\n\n  async createAndGrabNewInstance() {\n    // FIXME\n    var hand = this.world().firstHand;\n    this.draggable = false;\n    this.env.eventDispatcher.eventState.draggedMorph = null;\n    let relativeGrabPos = this.localize(hand.position).scaleBy(1/this.width, 1/this.height);\n\n    try {\n      let {snapshot} = this,\n          preview = this.getSubmorphNamed('html-preview') || this.getSubmorphNamed('image-preview');\n      if (!preview.isImage) {\n        var previewDiv = preview.domNode.childNodes[0].childNodes[0].childNodes[0],\n            scale = 1 / (previewDiv.getBoundingClientRect().width / previewDiv.offsetWidth)\n      } else {\n        var scale = 1;\n      }\n      let grabbedPreview = preview.copy(),\n          naturalExtent = preview.isImage ? await preview.determineNaturalExtent() : preview.extent,\n          positionInHand = hand.localize(preview.globalBounds().center())\n      \n      hand.grab(grabbedPreview);\n      grabbedPreview.center = positionInHand;\n      // if the hand leaves or enters the parts bin's bounds\n      // toggle the loadPartWithPreview or assignCategory behavior\n      grabbedPreview.animate({\n         scale: 1,\n         center: positionInHand,\n         dropShadow: true,\n         duration: 300\n      });\n      connect(hand, 'drop', this, 'loadPartWithPreview', {\n        updater: function($upd, droppedMorph) {\n          if (grabbedPreview !== droppedMorph) return;\n          let l = LoadingIndicator.open(\"Loading part...\");\n          grabbedPreview.addMorph(l);\n          l.center = grabbedPreview.innerBounds().center();\n          this.disconnect();\n          $upd(snapshot, grabbedPreview, scale, relativeGrabPos);\n        },\n        varMapping: {LoadingIndicator, snapshot, grabbedPreview, scale, relativeGrabPos}\n      });\n\n    }\n    catch (e) { this.showError(e) }\n    finally { this.draggable = true; }\n  }\n\n  async loadPartWithPreview(snapshot, preview, scale, relativeGrabPos) {\n    try {\n      let part = await loadMorphFromSnapshot(snapshot);\n      if (!preview.owner) return;\n      $world.addMorph(part);\n      if (preview.owner.isHand) part.topLeft = part.extent.scaleByPt(relativeGrabPos).negated();\n      else part.center = preview.globalBounds().center();\n      preview.remove();\n    } catch (e) { this.showError(e); }\n  }\n\n  async interactivelyRemovePart() {\n    let {partName, partResource} = this,\n        really = await this.world().confirm(`Do you really want to remove part ${partName}?`, {requester: this.owner});\n    if (!really) return;\n    await partResource.remove();\n    if (this.owner.owner.isPartsBin) { this.remove(); }\n  }\n\n  onHoverIn(evt) {\n    let btn = this.getSubmorphNamed(\"remove-button\");\n    btn.bringToFront();\n    btn.visible = true;\n  }\n\n  onHoverOut(evt) {\n    let btn = this.getSubmorphNamed(\"remove-button\");\n    btn.visible = false;\n  }\n}\n\n"
+        "index.js": "import { Morph, show, Image, morph, Icon, HTMLMorph } from \"lively.morphic\";\nimport { Color, pt } from \"lively.graphics/index.js\";\nimport { connect, once, disconnect } from \"lively.bindings/index.js\";\nimport { resource } from \"lively.resources/index.js\";\nimport { loadMorphFromSnapshot } from \"lively.morphic/serialization.js\";\nimport LoadingIndicator from \"lively.morphic/components/loading-indicator.js\";\n\nexport default class Part_dash_item_dash_for_dash_partsbin extends Morph {\n\n  static get properties() {\n    return {\n      partName: {serialize: false},\n      partResource: {serialize: false},\n      snapshot: {serialize: false}\n    }\n  }\n\n  reset() {\n    connect(this.getSubmorphNamed(\"remove-button\"), 'fire', this, 'interactivelyRemovePart');\n  }\n\n  beforePublish() {\n    this.clear()\n  }\n\n  clear() {\n    this.snapshot = null;\n    this.partResource = null;\n    this.partName = \"\";\n    let label = this.getSubmorphNamed('preview-label'),\n        preview = this.getSubmorphNamed('html-preview'),\n        imagePreview = this.getSubmorphNamed('image-preview');\n    label && label.remove();\n    imagePreview && imagePreview.remove();\n    if (preview)\n      preview.html = `\n  <div style=\"display: flex;\n              align-items: center;\n              justify-content: center;\n              height: 100%;\n              background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))\">\n    <p style=\"font: bold 20pt Inconsolata, monospace; color: lightgray;\">Loading</p>\n  </div>`;\n  }\n\n  async showPart(partResource) {\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/star.json\")\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/button.json\")\n    // await this.showPart(partResource)\n    this.clear();\n    this.partName = partResource.name().replace(/\\.json$/, \"\");\n    this.snapshot = JSON.parse(await partResource.read());\n    this.partResource = partResource;\n    await this.addPreviewMorph();\n    this.addLabel();\n    this.getSubmorphNamed(\"remove-button\").visible = false;\n  }\n\n  async addPreviewMorph() {\n    let {snapshot: {preview}} = this;\n    if (typeof preview !== \"string\" || !preview) preview = \"no preview\";\n    return preview.startsWith(\"data:image/\") ?\n      await this.addImagePreviewMorph(preview) :\n      this.addHTMLPreviewMorph(preview);\n  }\n\n  async addImagePreviewMorph(dataURI) {\n    let {extent, partName} = this,\n        margin = 10,\n        {x: w, y: h} = extent,\n        edgeLength = Math.min(w-2*margin, h-2*margin),\n        borderWidth = 1,\n        previewSpec = {\n          name: \"image-preview\",\n          fill: null,\n          reactsToPointer: false,\n          imageUrl: dataURI,\n          nativeCursor: \"-webkit-grab\"\n        },\n        htmlPreview = this.getSubmorphNamed(\"html-preview\"),\n        preview = htmlPreview ? htmlPreview.replaceWith(new Image()) : this.addMorphBack(new Image());\n   Object.assign(preview, previewSpec);\n\n   preview.extent = await preview.determineNaturalExtent();\n   preview.scale = Math.min(edgeLength / preview.width, edgeLength / preview.height);\n   preview.center = pt(w/2, h/2);\n   preview.dropShadow = {color: Color.gray, blur: 5 / preview.scale};\n   return preview;\n  }\n\n  addHTMLPreviewMorph(html) {\n    let {extent, partName} = this,\n        margin = 10,\n        previewWidth = 100+2*margin,\n        previewHeight = 100+2*margin,\n        {x: w, y: h} = extent,\n        borderWidth = 1,\n        previewHTML = `<div style=\"width: 100%;\">`\n                    + `<div style=\"position: absolute; top: ${margin}px;`\n                    + `            left: ${margin + (w-previewWidth) / 2}px\">`\n                    + html\n                    + `</div>`,\n      previewSpec = {\n        name: \"html-preview\",\n        fill: null,\n        reactsToPointer: false,\n        html: previewHTML,\n        extent: pt(w, h),\n        // border: {width: 1, color: Color.gray, radius: 5},\n        nativeCursor: \"-webkit-grab\"\n      };\n    var preview = this.getSubmorphNamed(\"html-preview\") || this.addMorphBack(new HTMLMorph());\n    Object.assign(preview, previewSpec);\n    preview.domNode.style.pointerEvents = \"none\";\n    return preview;\n  }\n\n  addLabel() {\n    let {partName, width, height} = this\n    if (this.getSubmorphNamed('preview-label'))\n      this.getSubmorphNamed('preview-label').remove();\n    this.addMorph({\n      bottomCenter: pt(width/2, height-5),\n      type: 'label', fontSize: 12, fontColor: Color.gray.darker(),\n      fill: Color.gray.withA(.7), borderRadius: 10, padding: 4,\n      value: partName, name: 'preview-label'\n    });\n  }\n\n  onDragStart(evt) {\n    this.createAndGrabNewInstance(evt.hand);\n  }\n\n  async createAndGrabNewInstance(hand) {\n    this.draggable = false;\n    let relativeGrabPos = this.localize(hand.position).scaleBy(1/this.width, 1/this.height);\n\n    try {\n      let {snapshot} = this,\n          preview = this.getSubmorphNamed('html-preview') || this.getSubmorphNamed('image-preview');\n      if (!preview.isImage) {\n        var previewDiv = preview.domNode.childNodes[0].childNodes[0].childNodes[0],\n            scale = 1 / (previewDiv.getBoundingClientRect().width / previewDiv.offsetWidth)\n      } else {\n        var scale = 1;\n      }\n      let grabbedPreview = preview.copy(),\n          naturalExtent = preview.isImage ? await preview.determineNaturalExtent() : preview.extent,\n          positionInHand = hand.localize(preview.globalBounds().center())\n      \n      hand.grab(grabbedPreview);\n      grabbedPreview.center = positionInHand;\n      // if the hand leaves or enters the parts bin's bounds\n      // toggle the loadPartWithPreview or assignCategory behavior\n      grabbedPreview.animate({\n         scale: 1,\n         center: positionInHand,\n         dropShadow: true,\n         duration: 300\n      });\n      connect(hand, 'drop', this, 'loadPartWithPreview', {\n        updater: function($upd, droppedMorph) {\n          if (grabbedPreview !== droppedMorph) return;\n          let l = LoadingIndicator.open(\"Loading part...\");\n          grabbedPreview.addMorph(l);\n          l.center = grabbedPreview.innerBounds().center();\n          this.disconnect();\n          $upd(snapshot, grabbedPreview, scale, relativeGrabPos);\n        },\n        varMapping: {LoadingIndicator, snapshot, grabbedPreview, scale, relativeGrabPos}\n      });\n\n    }\n    catch (e) { this.showError(e) }\n    finally { this.draggable = true; }\n  }\n\n  async loadPartWithPreview(snapshot, preview, scale, relativeGrabPos) {\n    try {\n      let part = await loadMorphFromSnapshot(snapshot);\n      if (!preview.owner) return;\n      $world.addMorph(part);\n      if (preview.owner.isHand) part.topLeft = part.extent.scaleByPt(relativeGrabPos).negated();\n      else part.center = preview.globalBounds().center();\n      preview.remove();\n    } catch (e) { this.showError(e); }\n  }\n\n  async interactivelyRemovePart() {\n    let {partName, partResource} = this,\n        really = await this.world().confirm(`Do you really want to remove part ${partName}?`, {requester: this.owner});\n    if (!really) return;\n    await partResource.remove();\n    if (this.owner.owner.isPartsBin) { this.remove(); }\n  }\n\n  onHoverIn(evt) {\n    let btn = this.getSubmorphNamed(\"remove-button\");\n    btn.bringToFront();\n    btn.visible = true;\n  }\n\n  onHoverOut(evt) {\n    let btn = this.getSubmorphNamed(\"remove-button\");\n    btn.visible = false;\n  }\n}\n\n"
       }
     }
   },
