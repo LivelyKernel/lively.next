@@ -520,12 +520,10 @@ export var astEditorCommands = [
 
   {
     name: "selectSymbolReferenceOrDeclaration",
+    doc: "Finds the name of the currently selected symbol and will use the JS ast to select references and declarations whose name matches the symbol in the current scope.",
     readOnly: true,
     multiSelectAction: "single",
     exec: function(ed, args = {direction: null/*next,prev*/}) {
-      // finds the name of the currently selected symbol and will use the JS
-      // ast to select references and declarations whose name matches the symbol
-      // in the current scope
       // 1. get the token / identifier info of what is currently selected
 
       var nav = ed.pluginInvokeFirst("getNavigator");

@@ -1,3 +1,4 @@
+/*global show*/
 import EditorPlugin from "../editor-plugin.js";
 
 import "./mode.js"
@@ -14,28 +15,197 @@ import {
 import { localInterface, systemInterfaceNamed } from "lively-system-interface";
 import { runCommand } from "../shell/shell-interface.js";
 import HTMLNavigator from "./navigator.js";
+import HTMLChecker from "./checker.js";
+import parse5 from "lively.morphic/ide/html/parse5.browserified.js";
+import { IFrameMorph } from "../../html-morph.js";
+import { arr, string } from "lively.lang";
+import { Color } from "lively.graphics";
+
+// export async function tidyHtml(htmlSrc) {
+//   let {stdout} = await runCommand("tidy --indent", {stdin: htmlSrc}).whenDone();
+//   stdout = stdout.replace(/\s*<meta name="generator"[^>]+>/, "");
+//   return stdout;  
+// }
 
 
-var indentHTMLCommand = {
-  name: "[HTML] cleanup",
-  exec: async text => {
-    /*global show*/
-    let undo = text.undoManager.ensureNewGroup(text, "[HTML] cleanup");
-    await text.saveExcursion(async () => {
-      if (text.selection.isEmpty()) text.selectAll();
-      let allText = text.textString,
-          selectedText = text.selection.text;
-      // inspect(await runCommand("tidy --indent", {stdin: text.textString}).whenDone())
-      let {stdout} = await runCommand("tidy --indent", {stdin: text.textString}).whenDone();
-      stdout = stdout.replace(/\s*<meta name="generator"[^>]+>/, "");
-      text.textString = stdout;
-      text.selectAll();
-      text.execCommand("indent according to mode");
-    });
-    text.undoManager.group(undo);
-    return true;
-  }
+export async function tidyHtml(htmlSrc) {
+  let {default: beautify} = await lively.modules.module("lively.morphic/ide/html/js-beautify-html.1.6.15.js").load({format: "global"});
+  return beautify(htmlSrc);
 }
+
+var commands = [
+
+  {
+    name: "[HTML] cleanup",
+    exec: async text => {
+      /*global show*/
+      let undo = text.undoManager.ensureNewGroup(text, "[HTML] cleanup");
+      await text.saveExcursion(async () => {
+        if (text.selection.isEmpty()) text.selectAll();
+        let allText = text.textString,
+            selectedText = text.selection.text;
+        text.textString = await tidyHtml(text.textString);
+        text.selectAll();
+        text.execCommand("indent according to mode");
+      });
+      text.undoManager.group(undo);
+      return true;
+    }
+  },
+
+  {
+    name: "[HTML] select open and close tag",
+    exec: text => {
+      let plugin = text.editorPlugin,
+          sel = text._multiSelection || text.selection,
+          nav = plugin.getNavigator(),
+          ranges = nav.rangesForStartAndEndTag(text, text.cursorPosition, plugin.parse());
+      if (ranges) {
+        if (ranges.startTag) {
+          // fit them to tag names
+          ranges.startTag.start.column += 1;
+          ranges.startTag.end = text.document.scanForward(
+            ranges.startTag.start, (char, p) => (char === " " || char === ">") && p);
+          sel.addRange(ranges.startTag);
+        }
+        if (ranges.endTag) {
+          ranges.endTag.start.column += 2;
+          ranges.endTag.end.column -= 1;
+          sel.addRange(ranges.endTag);
+        }
+      }
+      return true;
+    }
+  },
+
+  {
+    name: "[HTML] render in iframe",
+    exec: text => {
+      let iframeMorph = text._iframeMorph;
+      if (!iframeMorph || !iframeMorph.world()) {
+        iframeMorph = text._iframeMorph = new IFrameMorph()
+        iframeMorph.openInWindow({title: "rendered HTML"});
+      }
+
+      let url, html, win = text.getWindow();
+      // is it a html workspace?
+      if (win && win.isHTMLWorkspace) url = win.file;
+      // file editor?
+      else if (text.owner && text.owner.isTextEditor) url = text.owner.location;
+
+      if (url) { iframeMorph.loadURL(url); }
+      else iframeMorph.displayHTML(text.textString);
+
+      return iframeMorph;
+    }
+  },
+
+  {
+    name: "[HTML] interactively select HTML node",
+    exec: async (editor, args = {}) => {
+
+      let currentIndex = editor.positionToIndex(args.startPos || editor.cursorPosition),
+          src = editor.textString,
+          p = editor.editorPlugin,
+          parsed = filterNodes(p.parse()),
+          nodes = [],
+          currentNodeIndex = 0,
+          printedTree = string.printTree(
+            parsed,
+            n => { nodes.push(n); return `${n.nodeName}`; },
+            n => n.childNodes),
+          lines = printedTree.split("\n"),
+          interstingNodes = nodes,
+          counter = 0,
+          items = interstingNodes.map((n, i) => {
+            let index = `${i}\u2003\u2003\u2003`.slice(0, String(lines.length).length),
+                preview,
+                {startOffset, endOffset} = n.__location || {};
+            if (typeof startOffset !== "number") {
+              preview = " [virtual]"
+            } else {
+              if (startOffset <= currentIndex &&
+                  currentIndex <= endOffset) currentNodeIndex = counter;
+              preview = n.nodeName === "#text"
+                ? n.value.trim() || "<empty>"
+              : src.slice(startOffset, endOffset).replace(/\n/g, "");
+            }
+            counter++;
+
+            return {
+              isListItem: true,
+              value: n,
+              label: [
+                `${index}`, {
+                  fontSize: "80%",
+                  textStyleClasses: ["v-center-text"],
+                  paddingRight: "10px"
+                },
+                lines[i], null
+              ],
+              annotation: [
+                preview, {
+                  fontSize: "80%",
+                  textStyleClasses: ["truncated-text"],
+                  maxWidth: 180
+                }
+              ]
+            }
+          }), choice;
+
+      await editor.saveExcursion(async () => {
+        ({selected: [choice]} = await $world.filterableListPrompt(
+          "Select node", items, {
+            onSelection: node => {
+              if (!node.__location) return;
+              let {startOffset, endOffset} = node.__location;
+              editor.removeMarker('selected tag');
+              editor.flash({
+                start: editor.indexToPosition(startOffset),
+                end: editor.indexToPosition(endOffset),
+              }, {id: 'selected tag', time: 1000, fill: Color.rgb(200,235,255)});
+            },
+            preselect: currentNodeIndex,
+            historyId: "lively.morphic-ide-html-select-html-node"
+          }));
+      });
+
+      if (typeof args.action === "function") {
+        args.action(choice);
+        return choice;
+      }
+
+      editor.focus();
+
+      if (!choice) return null;
+
+      let {startOffset, endOffset} = choice.__location || {};
+      if (typeof startOffset === "number") {
+        editor.saveMark();
+        editor.selection = {
+          end: editor.indexToPosition(startOffset),
+          start: editor.indexToPosition(endOffset),
+        }
+        editor.scrollCursorIntoView();
+      }
+      return choice;
+
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+      function filterNodes(node) {
+        if (node.nodeName !== "#document" && !node.__location) return null;
+        if (node.nodeName === "#text" && !node.value.trim()) return null;
+        let copy = lively.lang.obj.clone(node);
+        if (node.childNodes)
+          copy.childNodes = node.childNodes.slice().map(ea => filterNodes(ea)).filter(Boolean);
+        return copy;
+      }
+    }
+
+  }
+]
+
 export default class HTMLEditorPlugin extends EditorPlugin {
 
   static get shortName() { return "html"; }
@@ -44,6 +214,7 @@ export default class HTMLEditorPlugin extends EditorPlugin {
 
   constructor() {
     super()
+    this.checker = new HTMLChecker();
     this.evalEnvironment = {format: "esm", targetModule: "lively://lively.next-html-workspace", context: null}
   }
 
@@ -63,7 +234,7 @@ export default class HTMLEditorPlugin extends EditorPlugin {
         pos.column++
         handled = true;
       }
-      
+
       let matching = morph.findMatchingBackward(pos, "left", {">": "<"});
       if (matching) {
         let textInBetween = morph.textInRange({start: matching, end: pos}),
@@ -95,7 +266,7 @@ export default class HTMLEditorPlugin extends EditorPlugin {
   get openPairs() {
     return {...super.openPairs, "<": ">"}
   }
-  
+
   get closePairs() {
     return {...super.closePairs, ">": "<"}
   }
@@ -117,16 +288,35 @@ export default class HTMLEditorPlugin extends EditorPlugin {
       ...otherCommands,
       ...jsIdeCommands,
       ...jsEditorCommands,
-      indentHTMLCommand
+      ...commands
       // ...jsAstEditorCommands
     ];
   }
-  
+
   getKeyBindings(other) {
     return [
-      {command: "[HTML] cleanup", keys: "Shift-Tab"},
       ...other,
+      {command: "[HTML] cleanup", keys: "Shift-Tab"},
+      {command: "[HTML] select open and close tag", keys: "Ctrl-Shift-'"},
+      {command: "[HTML] render in iframe", keys: "Alt-G"},
+      {command: "[HTML] interactively select HTML node", keys: "Alt-J"},
     ];
+  }
+
+  async getMenuItems(items) {
+    var editor = this.textMorph,
+        htmlItems = [
+          {command: "[HTML] render in iframe", alias: "render in iframe", target: editor},
+          ["selection", [
+            {command: "expandRegion", alias: "expand", target: editor},
+            {command: "contractRegion", alias: "contract", target: editor},
+            {command: "[HTML] select open and close tag", alias: "select open/end tag", target: editor},
+            {command: "[HTML] interactively select HTML node", alias: "select html node...", target: editor},
+          ]],
+          {isDivider: true},
+        ];
+
+    return htmlItems.concat(items);
   }
 
   sanatizedJsEnv(envMixin) {
@@ -152,6 +342,15 @@ export default class HTMLEditorPlugin extends EditorPlugin {
     var env = this.sanatizedJsEnv(opts),
         endpoint = this.systemInterface(env);
     return endpoint.runEval(code, env);
+  }
+
+  get parser() { return parse5; }
+
+  parse() {
+    // astType = 'FunctionExpression' || astType == 'FunctionDeclaration' || null
+    if (this._ast) return this._ast;
+    let {parser, textMorph: {textString: src}} = this;
+    return parser ? this._ast = parser.parse(src, {locationInfo: true}) : null;
   }
 
 }

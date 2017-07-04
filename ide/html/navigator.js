@@ -1,96 +1,124 @@
+/*global inspect*/
 // FIXME proper dependency to lively.ast
 
-import { arr } from "lively.lang";
+import { last } from "lively.lang/array.js";
 
+function nodesAt(index, node, result = []) {
+  if (!node) return result;
+  let l = node.__location;
+  if (l) {
+    if (index < l.startOffset || l.endOffset < index) return result;
+    result.push(node);
 
-
-
-function searchForTagRange(ed, startLeft, startRight) {
-  
-  let rangeRight = {start: startRight, end: ed.documentEndPosition},
-      rangeLeft = {start: {column: 0, row: 0}, end: startLeft},
-      foundRight = null, foundLeft = null;
-
-  ed.editorPlugin.visitTokensInRange(
-    rangeRight,
-    (token, state, row, fromCol, toCol, stream, line, mode) => {
-      if (foundRight) return;
-      if (token !== "tag") return;
-      let range = {start: {row, column: fromCol}, end: {row, column: toCol}},
-          text = ed.textInRange(range);
-      range.end.column++;
-      foundRight = {range, text};
-    })
-
-  if (!foundRight) return null;
-
-  ed.editorPlugin.visitTokensInRange(
-    rangeLeft,
-    (token, state, row, fromCol, toCol, stream, line, mode) => {
-      if (foundLeft) return;
-      if (token !== "tag") return;
-      let range = {start: {row, column: fromCol}, end: {row, column: toCol}},
-          text = ed.textInRange(range);
-      if (text !== foundRight.text) return;
-      range.start.column--;
-      foundLeft = {range, text};
-    });
-
-  if (!foundLeft) return;
-
-  return {tagname: foundLeft.text, start: foundLeft.range.start, end: foundRight.range.end};
+    if (l.attrs) {
+      let attrName = Object.keys(l.attrs).find(name => {
+        let {startOffset, endOffset} = l.attrs[name];
+        return startOffset <= index && index <= endOffset;
+      });
+      if (attrName) {
+        let attr = node.attrs.find(ea => ea.name === attrName);
+        attr.__location = l.attrs[attrName];
+        result.push(attr);
+      }
+    }
+  }
+  if (node.childNodes)
+    node.childNodes.forEach(childNode => nodesAt(index, childNode, result));
+  return result;
 }
 
+function expandOnToken(ed, t, prevExpandState) {
+  return {range: [posToIdx(ed, t.start), posToIdx(ed, t.end)], prev: prevExpandState}
+}
 
-export function htmlParse(textMorph) {
-  // produces a tree like
-  //  root
-  //  html
-  //   \-head
-  //     |-title
-  //     \-body
-  //       |-h1
-  //       \-span
-  // ea node has start/end text pos + tagName properties
-  
-  let docRange = textMorph.documentRange,
-      tree = makeNode(null, docRange.start, docRange.end),
-      stack = [tree],
-      tagStart = false;
-  
-  textMorph.editorPlugin.visitTokensInRange(
-    textMorph.documentRange,
-    (token, state, row, fromCol, toCol, stream, line, mode) => {
-      let range = {start: {row, column: fromCol}, end: {row, column: toCol}},
-          t = textMorph.textInRange(range);
-      if (token === "tag bracket") {
-        if (t === "</" || t === "/>") {
-          let closedTag = stack.pop();
-          closedTag.end = range.end;
-console.log("CLOOOSING", t, closedTag.tagName);
-        } else if (t === "<") tagStart = true;
-        return;
-      }
-      if (token === "tag") {
-        if (tagStart) {
-          tagStart = false;
-          range.start.column--; // <
-          let newTag = makeNode(t, range.start, null);
-          arr.last(stack).children.push(newTag);
-          stack.push(newTag);
-        }
-      }
-    });
-  return tree;
-  
-  function makeNode(tagName, start, end) {
-    return {start, end, tagName, children: []};
+function tokenPosition(ed, row, token) {
+  var offset = posToIdx(ed, {column: 0, row});
+  return {
+    tokenStart: offset + token.start,
+    tokenEnd: offset + token.start + token.value.length
   }
 }
 
+function posToIdx(ed, pos) { return ed.positionToIndex(pos); }
+function idxToPos(ed, idx) { return ed.indexToPosition(idx); }
+
+
+
 export default class HTMLNavigator {
 
-  ensureAST() { return {}; }
+  ensureAST(ed) { return ed.editorPlugin.parse(); }
+
+  // -=-=-=-=-=-=-
+  // selection
+  // -=-=-=-=-=-=-
+
+  rangesForStartAndEndTag(ed, pos, ast) {
+    let index = posToIdx(ed, ed.cursorPosition),
+        node = last(nodesAt(index, ast));
+    if (!node) return null;
+    let {startTag, endTag} = node.__location;
+    if (!startTag) return null;
+    return {
+      startTag: {
+        start: idxToPos(ed, startTag.startOffset),
+        end: idxToPos(ed, startTag.endOffset),
+      },
+      endTag: endTag ? {
+        start: idxToPos(ed, endTag.startOffset),
+        end: idxToPos(ed, endTag.endOffset),
+      } : null
+    }
+  }
+
+  // -=-=-=-=-=-=-
+  // movement
+  // -=-=-=-=-=-=-
+
+  move(selector, ed) {
+    var select = !!ed.activeMark || !ed.selection.isEmpty(),
+        sel = ed.selection,
+        pos = sel.lead,
+        idx = ed.positionToIndex(pos),
+        newIdx = this[selector](ed, idx),
+        newPos = ed.indexToPosition(newIdx),
+        isBackwards = sel.isBackwards;
+    if (!newPos) return;
+    sel.lead = newPos;
+    if (!select)
+      sel.anchor = newPos;
+    ed.scrollCursorIntoView();
+  }
+
+  forwardSexp(ed) { this.move("_forwardSexp", ed); }
+  backwardSexp(ed) { this.move("_backwardSexp", ed); }
+  backwardUpSexp(ed) { this.move("_backwardUpSexp", ed); }
+  forwardDownSexp(ed) { this.move("_forwardDownSexp", ed); }
+
+  _forwardSexp(ed, fromIndex) {
+    let ast = ed.editorPlugin.parse(),
+        node = last(nodesAt(fromIndex, ast));
+    return (node && node.__location.endOffset) || fromIndex;
+  }
+  _backwardSexp(ed, fromIndex) {
+    let ast = ed.editorPlugin.parse(),
+        node = last(nodesAt(fromIndex, ast));
+    if (!node) return fromIndex;
+    if (node.__location.startOffset === fromIndex)
+      node = last(nodesAt(fromIndex-1, ast));
+    return (node && node.__location.startOffset) || fromIndex;
+  }
+  _forwardDownSexp(ed, fromIndex) {
+    let ast = ed.editorPlugin.parse(),
+        node = last(nodesAt(fromIndex, ast));
+    return (node && node.childNodes && node.childNodes[0]
+         && node.childNodes[0].__location && node.childNodes[0].__location.startOffset)
+        || fromIndex;
+  }
+  _backwardUpSexp(ed, fromIndex) {
+    let ast = ed.editorPlugin.parse(),
+        node = last(nodesAt(fromIndex, ast).slice(0, -1));
+    return (node && node.__location.startOffset) || fromIndex;
+  }
 
   // -=-=-=-=-=-=-
   // expanding
@@ -98,57 +126,27 @@ export default class HTMLNavigator {
 
   expandRegion(ed, src, ast, expandState) {
       // use token if no selection
-/*global show*/
 
-      var hasSelection = expandState.range[0] !== expandState.range[1],
-          p = ed.indexToPosition(expandState.range[0]),
+      var [from, to] = expandState.range,
+          hasSelection = from !== to,
+          p = ed.indexToPosition(from),
           token = ed.tokenAt(p);
-show(token)
 
-      // if (!hasSelection && token && ["keyword", "identifier"].includes(token.type)) {
-      if (!hasSelection && token) {
-        return expandOnToken(token)
-      }
-      return {range: [start, end],prev: expandState}
+      if (!hasSelection && token && token.start.column + 1 < token.end.column)
+        return expandOnToken(ed, token, expandState);
 
-      ast = ast || this.parse(src);
-
-      var pos = expandState.range[0],
-          nodes = lively.ast.query.nodesAtIndex(ast, pos),
-          containingNode = nodes.reverse().find(function(node) {
-              return node.start < expandState.range[0]
-                  || node.end > expandState.range[1]; });
-
+      let containingNode = hasSelection
+        ? lively.lang.arr.intersect(nodesAt(from, ast), nodesAt(to, ast))
+            .reverse()
+            .find(ea => {
+              let l = ea.__location;
+              return l && l.startOffset < from || l.endOffset > to;
+            })
+        : last(nodesAt(from, ast));
       if (!containingNode) return expandState;
+      let {startOffset, endOffset} = containingNode.__location
 
-      var start = containingNode.start,
-          end = containingNode.end;
-
-      if (containingNode.type === "Literal" && (containingNode.raw || "").match(/^['"`]/)
-       && (expandState.range[0] !== containingNode.start && expandState.range[1] !== containingNode.end)
-       && (containingNode.start+1 < expandState.range[0]
-        || containingNode.end-1 > expandState.range[1])) {
-        return {range: [start+1, end-1],prev: expandState}
-      }
-
-      return {range: [start, end],prev: expandState}
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-      function expandOnToken(t) {
-        return {range: [posToIdx(t.start), posToIdx(t.end)], prev: expandState}
-      }
-
-      function tokenPosition() {
-        var offset = posToIdx({column: 0, row: p.row});
-        return {
-          tokenStart: offset + token.start,
-          tokenEnd: offset + token.start + token.value.length
-        }
-      }
-
-      function posToIdx(pos) { return ed.positionToIndex(pos); }
-      function idxToPos(idx) { return ed.indexToPosition(idx); }
+      return {range: [startOffset, endOffset], prev: expandState};
   }
 
   contractRegion(ed, src, ast, expandState) {

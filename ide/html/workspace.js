@@ -53,6 +53,8 @@ export default class Workspace extends JSWorkspace {
     }
   }
 
+  get isHTMLWorkspace() { return true; }
+
   parse(html) {
     return new DOMParser().parseFromString(html, "text/html");
   }
@@ -94,6 +96,11 @@ export default class Workspace extends JSWorkspace {
             } catch (e) { workspace.showError(e); throw e; }
             workspace.setStatusMessage(`Saved to ${workspace.file.url}`, Color.green);
             await promise.delay(500);
+          }
+          if (workspace.targetMorph._iframeMorph) {
+            try {
+              workspace.targetMorph.execCommand("[HTML] render in iframe");
+            } catch (e) {};
           }
           try {
             await workspace.saveDocumentHTML();
