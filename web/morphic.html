@@ -22,6 +22,8 @@
     <script src="/lively.modules/dist/lively.modules.js"></script>
 
     <script>
+      if (document.location.host !== "lively-next.org")
+        document.title = `lively.next (${document.location.host})`;
       var origin = document.location.origin;
       Promise.resolve()
         .then(polyfills)

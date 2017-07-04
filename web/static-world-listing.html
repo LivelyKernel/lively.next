@@ -78,6 +78,8 @@
     </script>
 
     <script>
+      if (document.location.host !== "lively-next.org")
+        document.title = `lively.next (${document.location.host})`;
       var origin = document.location.origin;
       polyfills()
         .then(function() { return lively.resources.resource(origin).join("package-registry.json").readJson(); })
