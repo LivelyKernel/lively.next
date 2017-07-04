@@ -1,4 +1,5 @@
 /*global btoa,JsDiff*/
+/*lively.vm dontTransform: ["btoa"]*/
 
 // String utility methods for printing, parsing, and converting strings.
 
@@ -443,8 +444,7 @@ function createDataURI(content, mimeType) {
   // Example:
   //   window.open(string.createDataURI('<h1>test</h1>', 'text/html'));
   mimeType = mimeType || "text/plain";
-  return "data:" + mimeType
-     + ";base64," + btoa(content);
+  return "data:" + mimeType + ";base64," + btoa(content);
 }
 
 function hashCode(s) {

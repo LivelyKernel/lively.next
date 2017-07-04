@@ -3531,6 +3531,7 @@ var obj = Object.freeze({
 });
 
 /*global btoa,JsDiff*/
+/*lively.vm dontTransform: ["btoa"]*/
 
 // String utility methods for printing, parsing, and converting strings.
 
