@@ -307,4 +307,21 @@ export class Button extends Morph {
       this.activeMode = 'triggered';
   }
 
+  async interactivelyChangeLabel() {
+    let newLabel = await this.world().prompt("edit button label", {
+      input: this.labelMorph.textString,
+      historyId: "lively.morphic-button-edit-label-hist"
+    });
+    if (typeof newLabel === "string")
+      this.label = newLabel;
+  }
+
+  menuItems() {
+    let items = super.menuItems();
+
+    items.unshift({isDivider: true});
+    items.unshift(["change label", () => this.interactivelyChangeLabel()]);
+
+    return items;
+  }
 }
