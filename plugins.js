@@ -62,7 +62,7 @@ class CustomSerializePlugin {
   serializeObject(realObj, isProperty, pool, serializedObjMap, path) {
     if (typeof realObj.__serialize__ !== "function") return null;
     let serialized = realObj.__serialize__(pool, serializedObjMap, path);
-    if (serialized.hasOwnProperty("__expr__")) {
+    if (serialized && serialized.hasOwnProperty("__expr__")) {
       let expr = pool.expressionSerializer.exprStringEncode(serialized);
       serialized = isProperty ? expr : {__expr__: expr};
     }
