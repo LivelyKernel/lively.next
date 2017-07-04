@@ -263,7 +263,7 @@ export default class Window extends Morph {
           styleClasses: ['windowButton', "windowMenuButton"],
           tooltip: "Open Window Menu",
           submorphs: [
-            Label.icon("toggle-down", {
+            Label.icon("chevron-down", {
               styleClasses: ["defaultLabelStyle", 'default'],
             })
           ]
