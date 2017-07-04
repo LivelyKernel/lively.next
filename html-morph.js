@@ -1,7 +1,9 @@
-import { obj } from "lively.lang";
+/*global show*/
+import { obj, promise, string } from "lively.lang";
 import { pt } from "lively.graphics";
 import { Morph } from "./index.js";
 import vdom from "virtual-dom";
+import { delay } from "lively.lang/promise.js";
 var { diff, patch, h, create: createElement } = vdom
 
 // see https://github.com/Matt-Esch/virtual-dom/blob/master/docs/widget.md
@@ -109,6 +111,127 @@ export class HTMLMorph extends Morph {
 
   render(renderer) {
     return new CustomVNode(this, renderer);
+  }
+
+}
+
+
+export class IFrameMorph extends HTMLMorph {
+
+  static async example() {
+    let iframeMorph = new IFrameMorph().openInWindow({title: "iframe"}).targetMorph;
+
+    iframeMorph.srcDoc = ""
+    iframeMorph.src = "http://localhost:9011/worlds/html%20export"
+
+    await iframeMorph.loadURL("https://google.com");
+iframeMorph.iframe.src
+iframeMorph.iframe.srcDoc
+iframeMorph.src = ""
+iframeMorph.srcDoc = "fooo"
+    await iframeMorph.reload()
+
+  }
+
+  static get properties() {
+
+    return {
+    
+      html: {
+        initialize() {
+          this.html = this.defaultHTML;
+          this.srcDoc = this.defaultSrcDoc;
+        },
+      },
+
+      iframe: {
+        derived: true, readOnly: true, after: ["domNode"],
+        get() {
+          return this.domNode.querySelector("iframe");
+        }
+      },
+
+      src: {
+        derived: true, after: ["iframe"],
+        get() { return this.iframe.src; },
+        set(val) {
+          this.iframe.removeAttribute("srcDoc");
+          this.iframe.src = val;
+          let {promise: p, resolve, reject} = promise.deferred();
+          this._whenLoaded = promise;
+          this.iframe.onload = arg => resolve(arg);
+        }
+      },
+
+      srcDoc: {
+        derived: true, after: ["iframe"],
+        get() { return this.iframe.srcdoc; },
+        set(val) {
+          this.iframe.removeAttribute("src");
+          this.iframe.srcdoc = val;
+          this._whenLoaded = this.whenRendered().then(() => delay(20));
+        }
+      },
+
+      iframeScroll: {
+        derived: true, after: ["iframe"],
+        get() {
+          try {
+            var {scrollX: x, scrollY: y} = this.iframe.contentWindow;
+            return pt(x, y);
+          } catch (err) { return pt(0,0); }
+        },
+        set(val) {
+          try {
+            this.iframe.contentWindow.scrollTo(val.x, val.y);
+          } catch (err) {}
+        }
+      }
+    }
+  }
+
+  reload() {
+    return this.src
+      ? this.loadURL(this.src)
+      : this.srcDoc ? this.displayHTML(this.srcDoc) : null;
+  }
+
+  whenLoaded() {
+    return this._whenLoaded || Promise.resolve();
+  }
+
+  async displayHTML(html, opts = {}) {
+    var {keepScroll = true} = opts, scroll;
+    if (keepScroll) scroll = this.iframeScroll;
+    this.srcDoc = html;
+    await this.whenLoaded();
+    if (keepScroll && scroll) this.iframeScroll = scroll;
+
+    return this;
+  }
+
+  async loadURL(url, opts = {}) {
+    var {keepScroll = true} = opts, scroll;
+    if (keepScroll) scroll = this.iframeScroll;
+    this.src = url;
+    await this.whenLoaded();
+    if (keepScroll && scroll) this.iframeScroll = scroll;
+    return this;
+  }
+
+  get defaultSrcDoc() {
+    return `
+    <div style=\"display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))\">
+      <p style=\"font: bold 40pt Inconsolata, monospace; color: lightgray;\">&lt;iFrame&#x2F;&gt;</p>
+    </div>`;
+  }
+
+  get defaultHTML() {
+    return `<iframe width="100%" height="100%" frameBorder="false" srcdoc=""></iframe>`;
   }
 
 }
