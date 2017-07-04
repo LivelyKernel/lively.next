@@ -255,8 +255,6 @@ var config = {
 
 
       {keys: {mac: 'Meta-Shift-L L T'}, command: "toggle line wrapping"},
-      {keys: {win: 'Ctrl-=', mac: 'Meta-='}, command: "increase font size"},
-      {keys: {win: 'Ctrl--', mac: 'Meta--'}, command: "decrease font size"},
 
       {keys: "Esc|Ctrl-G", command: "cancel input"},
 
@@ -299,6 +297,15 @@ var config = {
       {keys: "Ctrl-Shift-'", command: "selectSymbolReferenceOrDeclaration"},
       {keys: "Ctrl-Shift-[", command: "selectSymbolReferenceOrDeclarationPrev"},
       {keys: "Ctrl-Shift-]", command: "selectSymbolReferenceOrDeclarationNext"},
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // rich text
+      {keys: {win: 'Ctrl-=', mac: 'Meta-='}, command: "increase font size"},
+      {keys: {win: 'Ctrl--', mac: 'Meta--'}, command: "decrease font size"},
+      {keys: "Alt-K", command: "set link of selection"},
+      {keys: "Alt-O", command: "set doit of selection"},
+      {keys: "Alt-Shift-U", command: "reset text style"},
+      {keys: {mac: "Meta-Shift-L T U I", win: "Ctrl-Shift-L T U I"}, command: "open text attribute controls"},
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // helpful stuff

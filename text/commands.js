@@ -1,4 +1,4 @@
-/*global System*/
+/*global System,localStorage*/
 
 import { chain, arr, string, date } from "lively.lang";
 import { pt } from "lively.graphics";
@@ -1033,55 +1033,6 @@ var commands = [
   },
 
   {
-    name: "increase font size",
-    scrollCursorIntoView: false,
-    exec: function(morph) { morph.keepPosAtSameScrollOffsetWhile(() => morph.fontSize++); return true; }
-  },
-
-  {
-    name: "decrease font size",
-    scrollCursorIntoView: false,
-    exec: function(morph) { morph.keepPosAtSameScrollOffsetWhile(() => morph.fontSize--); return true; }
-  },
-
-  {
-    name: "change font",
-    scrollCursorIntoView: false,
-    exec: async function(morph) {
-
-      let fontNames = [
-            "serif",
-            "sans-serif",
-            "monospace"
-          ],
-          lsKey = "lively.morpic/text-change-font-additional-fonts",
-          additional = localStorage[lasKey]
-      if (additional) {
-        additional = JSON.parse(additional);
-        fontNames.push(...additional);
-      }
-      if (!fontNames.map(ea => ea.toLowerCase()).includes(morph.fontFamily.toLowerCase())) {
-        fontNames.push(morph.fontFamily);
-        additional = [...(additional || []), morph.fontFamily];
-        localStorage[lsKey] = JSON.stringify(additional)
-      }
-
-
-      let {selections: [choice]} = await $world.editListPrompt("choose font", fontNames, {
-        requester: morph,
-        preselect: fontNames.indexOf(morph.fontFamily),
-        historyId: "lively.morpic/text-change-font-hist",
-      });
-
-      if (choice) {
-        morph.fontFamily = choice;
-      }
-
-      return true;
-    }
-  },
-
-  {
     name: "cancel input",
     scrollCursorIntoView: false,
     multiSelectAction: "single",
@@ -1395,6 +1346,9 @@ commands.push(...navCommands);
 
 import { commands as codeCommands } from "./generic-code-commands.js";
 commands.push(...codeCommands);
+
+import { commands as richTextCommands } from "./rich-text-commands.js";
+commands.push(...richTextCommands);
 
 export default commands;
 

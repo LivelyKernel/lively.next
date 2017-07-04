@@ -1904,21 +1904,30 @@ export class Text extends Morph {
     if (this.isFocused()) this.ensureKeyInputHelperAtCursor();
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // click-doit support
+  // FIXME move this to somewhere else?
+
+  evalEnvForDoit(doit/*from attribute.doit*/) {
+    let moduleId = `lively://text-doit/${this.id}`,
+        mod = lively.modules.module(moduleId);
+    return {
+      context: doit.context || this,
+      format: "esm",
+      targetModule: moduleId
+    }
+  }
+
   callTextAttributeDoitFromMouseEvent(evt, clickPos) {
     let attribute = this.textAttributeAtPoint(clickPos) || [],
         doit = attribute && attribute.doit;
 
     if (!doit || !doit.code) return false;
 
-    // FIXME move this to somewhere else?
-    let moduleId = `lively://text-doit/${this.id}`, mod = lively.modules.module(moduleId);
+    let env = this.evalEnvForDoit(doit),
+        mod = lively.modules.module(env.targetModule);
     mod.recorder.evt = evt;
-    lively.vm
-      .runEval(doit.code, {
-        context: doit.context || this,
-        format: "esm",
-        targetModule: moduleId
-      })
+    lively.vm.runEval(doit.code, env)
       .catch(err => this.world().logError(new Error(`Error in text doit: ${err.stack}`)))
       .then(() => (mod.recorder.evt = null));
 
@@ -2236,6 +2245,11 @@ export class Text extends Morph {
         alias: "paste",
         target: this,
         showKeyShortcuts: this.keysForCommand("clipboard paste")
+      },
+      {
+        command: "open text attribute controls",
+        alias: "edit text attribtues",
+        target: this
       },
       {isDivider: true},
       {

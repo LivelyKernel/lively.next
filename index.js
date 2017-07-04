@@ -1,3 +1,4 @@
+/*global System*/
 export { default as config } from "./config.js";
 export * from "./morph.js";
 export * from "./world.js";
@@ -23,7 +24,7 @@ import { Morph, Image, Ellipse, Triangle, Path, Polygon } from "./morph.js";
 import { Text } from "./text/morph.js";
 import { Label } from "./text/label.js";
 import { Button } from "./components/buttons.js";
-import { CheckBox } from "./components/widgets.js";
+import { CheckBox, LabeledCheckBox } from "./components/widgets.js";
 import { List } from "./components/list.js";
 import { HTMLMorph } from './html-morph.js';
 import Window from "./components/window.js";
@@ -48,6 +49,7 @@ export function morph(props = {}, opts = {restore: false}) {
         case 'list':     klass = List; break;
         case 'button':   klass = Button; break;
         case 'checkbox': klass = CheckBox; break;
+        case 'labeledcheckbox': klass = LabeledCheckBox; break;
         case 'polygon':  klass = Polygon; break;
         case 'canvas':   klass = Canvas; break;
         case 'html':     klass = HTMLMorph; break;
