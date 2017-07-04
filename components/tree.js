@@ -727,8 +727,7 @@ export class Tree extends Morph {
     let w = this.world(),
         f = w.focusedMorph;
     // to not steal keys from inner morphs
-    if (f !== this || f !== this.nodeItemContainer ||
-        !this.nodeItemContainer.submorphs.includes(f)) return;
+    if (f.isText && !f.readOnly) return;
     return super.onKeyDown(evt);
   }
 
