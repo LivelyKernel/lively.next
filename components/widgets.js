@@ -89,7 +89,8 @@ class LeashEndpoint extends Ellipse {
         && change.target != this.connectedMorph) return;
     if (!this.connectedMorph) return;
     const globalPos = this.getConnectionPoint(), pos = this.leash.localize(globalPos);
-    this.vertex = {...this.vertex, ...pos};
+    this.vertex.position = pos;
+    this.relayout();
   }
 
   clearConnection() {
@@ -101,7 +102,7 @@ class LeashEndpoint extends Ellipse {
 
   relayout(change) {
     var anim;
-    const {x, y} = this.vertex, bw = this.leash.borderWidth;
+    const {x, y} = this.vertex.position, bw = this.leash.borderWidth;
     //this.extent = this.pt((2*bw), (2 * bw));
     if (anim = change && change.meta.animation) {
       this.animate({center: pt(x + bw, y + bw), duration: anim.duration})
@@ -112,15 +113,12 @@ class LeashEndpoint extends Ellipse {
 
   attachTo(morph, side) {
     this.clearConnection();
+    this.leash.openInWorld(this.leash.position);
     this.connectedMorph = morph;
     this.attachedSide = side;
-    this.vertex = {
-      ...this.leash.vertices[this.index],
-      controlPoints: this.leash.controlPointsFor(side, this)
-    };
-    connect(this.connectedMorph, 'onChange', this, "update");
+    this.vertex.controlPoints = this.leash.controlPointsFor(side, this);
     this.update();
-    this.leash.openInWorld(this.leash.globalPosition);
+    connect(this.connectedMorph, 'onChange', this, "update");
   }
 
   static get properties() {
@@ -222,8 +220,8 @@ export class Leash extends Path {
   }
 
   onEndpointDrag(evt) {
-    const v = evt.state.endpoint.vertex, {x, y} = v;
-    evt.state.endpoint.vertex = {...v, ...pt(x, y).addPt(evt.state.dragDelta)};
+    const pos = evt.state.endpoint.vertex.position;
+    evt.state.endpoint.vertex.position = pos.addPt(evt.state.dragDelta);
     this.relayout();
   }
 
