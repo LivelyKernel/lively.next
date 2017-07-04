@@ -11,7 +11,8 @@ import { sortBy } from "lively.lang/array.js";
 
 class Layout {
 
-  constructor({spacing, border, container, autoResize, ignore, onScheduleApply} = {}) {
+  constructor(args = {}) {
+    let {spacing, border, container, autoResize, ignore, onScheduleApply, layoutOrder} = args;
     this.applyRequests = [];
     this.border = {top: 0, left: 0, right: 0, bottom: 0, ...border};
     this.spacing = spacing || 0;
@@ -22,6 +23,7 @@ class Layout {
     this.autoResize = autoResize != undefined ? autoResize : true;
     this.onScheduleApply = onScheduleApply || ((submorph, animation ,change) => {
     });
+    if (layoutOrder) this.layoutOrder = layoutOrder
   }
 
   copy() {

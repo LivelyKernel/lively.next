@@ -101,7 +101,15 @@ export class GradientEditor extends Morph {
 
   static get styleSheet() {
     return new StyleSheet({
-      ".GradientEditor": {layout: new VerticalLayout({spacing: 3}), fill: Color.transparent},
+      ".GradientEditor": {
+        layout: new VerticalLayout({
+          spacing: 3,
+          layoutOrder(m) {
+            return this.container.submorphs.indexOf(m)
+          }
+        }),
+        fill: Color.transparent
+      },
       ".GradientEditor [name=addStopLabel]": {
         fontSize: 18,
         fontColor: Color.orange,
@@ -142,7 +150,11 @@ export class GradientEditor extends Morph {
         tooltip: "Open Color Palette"
       },
       ".GradientEditor [name=typeSelector]": {fill: Color.transparent, extent: pt(180, 40)},
-      ".GradientEditor .modeButton": {nativeCursor: "pointer", extent: pt(30, 30), borderWidth: 2},
+      ".GradientEditor .modeButton": {
+        nativeCursor: "pointer",
+        extent: pt(30, 30),
+        borderWidth: 2
+      },
       ".GradientEditor [name=instruction]": {
         fontSize: 15,
         padding: Rectangle.inset(15),
@@ -163,7 +175,6 @@ export class GradientEditor extends Morph {
       }
     });
   }
-
   async selectRadialGradient() {
     this.gradientClass = RadialGradient;
     this.get("linearMode").borderColor = Color.gray.darker();

@@ -146,7 +146,10 @@ class SelectableControl extends Morph {
       fill: {defaultValue: Color.transparent},
       layout: {
         initialize() {
-          this.layout = new VerticalLayout({spacing: 10, autoResize: true});
+          this.layout = new VerticalLayout({
+            spacing: 10, autoResize: true,
+            layoutOrder(m) { return this.container.submorphs.indexOf(m) }
+          });
         }
       },
       submorphs: {

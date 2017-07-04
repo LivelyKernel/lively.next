@@ -338,7 +338,9 @@ export class ColorPalette extends Morph {
         layout: new VerticalLayout({resizeContainer: false})
       },
       ".ColorPalette [name=paletteContainer]": {
-        layout: new TilingLayout(),
+        layout: new TilingLayout({
+          layoutOrder(m) { return this.container.submorphs.indexOf(m) }
+        }),
         fill: Color.transparent
       },
       ".ColorPalette .vacantColorField": {
