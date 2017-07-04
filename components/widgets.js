@@ -94,7 +94,7 @@ class LeashEndpoint extends Ellipse {
 
   clearConnection() {
     if (this.connectedMorph) {
-      disconnect(this.connectedMorph, 'onSubmorphChange', this, 'update');
+      disconnect(this.connectedMorph, 'onChange', this, 'update');
       this.connectedMorph = null;
     }
   }
@@ -118,7 +118,7 @@ class LeashEndpoint extends Ellipse {
       ...this.leash.vertices[this.index],
       controlPoints: this.leash.controlPointsFor(side, this)
     };
-    connect(morph, 'onChange', this, "update");
+    connect(this.connectedMorph, 'onChange', this, "update");
     this.update();
     this.leash.openInWorld(this.leash.globalPosition);
   }
