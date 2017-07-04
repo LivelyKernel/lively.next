@@ -723,6 +723,15 @@ export class Tree extends Morph {
     signal(this, "contextMenuRequested", {nodeMorph, evt});
   }
 
+  onKeyDown(evt) {
+    let w = this.world(),
+        f = w.focusedMorph;
+    // to not steal keys from inner morphs
+    if (f !== this || f !== this.nodeItemContainer ||
+        !this.nodeItemContainer.submorphs.includes(f)) return;
+    return super.onKeyDown(evt);
+  }
+
   get keybindings() {
     return [
       {keys: "Up|Ctrl-P", command: "select node above"},
