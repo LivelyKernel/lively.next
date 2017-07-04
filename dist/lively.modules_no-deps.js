@@ -4729,7 +4729,9 @@ function normalizePackageURL(System, packageURL) {
   // ensure it's a directory
   if (!url.match(/\.js/)) url = url;else if (url.indexOf(url + ".js") > -1) url = url.replace(/\.js$/, "");else url = url.split("/").slice(0, -1).join("/");
 
-  if (url.match(/\.js$/)) throw new Error("packageURL is expected to point to a directory but seems to be a .js file: " + url);
+  if (url.match(/\.js$/)) {
+    console.warn("packageURL is expected to point to a directory but seems to be a .js file: " + url);
+  }
 
   return String(url).replace(/\/$/, "");
 }

@@ -4194,6 +4194,7 @@ var obj = Object.freeze({
 });
 
 /*global btoa,JsDiff*/
+/*lively.vm dontTransform: ["btoa"]*/
 
 // String utility methods for printing, parsing, and converting strings.
 
@@ -24352,6 +24353,12 @@ function isFunctionNode(node) {
   return node.type === "ArrowFunctionExpression" || node.type === "FunctionExpression" || node.type === "FunctionDeclaration";
 }
 
+var firstIdRe = /^[^_a-z]/i;
+var trailingIdRe = /[^_a-z0-9]/ig;
+function ensureIdentifier(name) {
+  return name.replace(firstIdRe, "_").replace(trailingIdRe, "_");
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function constructorTemplate(name) {
@@ -24511,7 +24518,7 @@ function replaceClass(node, state, path, options) {
         // native debuggers. We have to be careful about it b/c it shadows
         // outer functions / vars, something that is totally not apparent for a user
         // of the class syntax. That's the reason for making it a little cryptic
-        var methodId = id(className + "_" + (key.name || key.value) + "_"),
+        var methodId = id(className + "_" + ensureIdentifier(key.name || key.value) + "_"),
             _props = ["key", literal(key.name || key.value), "value", _extends({}, value, defineProperty({ id: methodId }, methodKindSymbol, classSide ? "static" : "proto"))];
 
         decl = objectLiteral(_props);
@@ -70457,7 +70464,9 @@ function normalizePackageURL(System, packageURL) {
   // ensure it's a directory
   if (!url.match(/\.js/)) url = url;else if (url.indexOf(url + ".js") > -1) url = url.replace(/\.js$/, "");else url = url.split("/").slice(0, -1).join("/");
 
-  if (url.match(/\.js$/)) throw new Error("packageURL is expected to point to a directory but seems to be a .js file: " + url);
+  if (url.match(/\.js$/)) {
+    console.warn("packageURL is expected to point to a directory but seems to be a .js file: " + url);
+  }
 
   return String(url).replace(/\/$/, "");
 }
