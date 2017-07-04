@@ -24,6 +24,14 @@ function isFunctionNode(node) {
        || node.type === "FunctionDeclaration"
 }
 
+const firstIdRe = /^[^_a-z]/i,
+      trailingIdRe = /[^_a-z0-9]/ig;
+function ensureIdentifier(name) {
+  return name
+    .replace(firstIdRe, "_")
+    .replace(trailingIdRe, "_");
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function constructorTemplate(name) {
@@ -207,7 +215,7 @@ function replaceClass(node, state, path, options) {
         // native debuggers. We have to be careful about it b/c it shadows
         // outer functions / vars, something that is totally not apparent for a user
         // of the class syntax. That's the reason for making it a little cryptic
-        let methodId = id(className + "_" + (key.name || key.value) + "_"),
+        let methodId = id(className + "_" + ensureIdentifier(key.name || key.value) + "_"),
             props = [
               "key", literal(key.name || key.value),
               "value", {...value, id: methodId, [methodKindSymbol]: classSide ? "static" : "proto"}];
