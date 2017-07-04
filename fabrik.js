@@ -65,6 +65,18 @@ export async function interactiveConnectGivenSource(sourceObj, sourceAttr) {
               group.map(ea => [
                 ea.name, () => interactivelyEvaluateConnection(
                                 sourceObj, sourceAttr, selected, ea.name)])]);
+
+  let w = sourceObj.world();
+  w && items.push(["custom...", async () => {
+    let attr = await w.prompt("Enter custom target connection point", {
+      requester: this,
+      historyId: "lively.morphic-custom-target-connection-points",
+      useLastInput: true
+    })
+    attr && interactivelyEvaluateConnection(
+      sourceObj, sourceAttr, selected, attr);
+  }]);
+
   selected.openMenu(items);      
 }
 

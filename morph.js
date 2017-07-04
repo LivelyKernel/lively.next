@@ -2059,6 +2059,7 @@ export class Morph {
 
   connectMenuItems() {
     let bindings = this.sourceDataBindings(),
+        w = this.world(),
         items = bindings.map(
           group => [
             group[0].group || "uncategorized",
@@ -2068,6 +2069,17 @@ export class Morph {
                 interactiveConnectGivenSource(this, ea.name);
               }
             ])]);
+    
+    w && items.push(["custom...", async () => {
+      let { interactiveConnectGivenSource } = await System.import("lively.morphic/fabrik.js");
+      let attr = await w.prompt("Enter custom connection point", {
+        requester: this,
+        historyId: "lively.morphic-custom-connection-points",
+        useLastInput: true
+      })
+      if (attr) interactiveConnectGivenSource(this, attr);
+    }]);
+
     return items;
   }
 
