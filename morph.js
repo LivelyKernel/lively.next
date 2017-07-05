@@ -2759,6 +2759,8 @@ class PathPoint {
   constructor(path, props = {}) {
     this.path = path;
     Object.assign(this, obj.dissoc(props, "path"));
+    connect(this, 'position', path, 'makeDirty');
+    connect(this, 'controlPoints', path, 'makeDirty');
   }
 
   get isSmooth() { return this._isSmooth; }
@@ -2854,7 +2856,10 @@ export class Path extends Morph {
         defaultValue: [],
         type: "Vertices",
         set(vs) {
-          vs = vs.map(v => new PathPoint(this, {...v, borderWidth: this.borderWidth}));
+          vs = vs.map(v => {
+            let p = new PathPoint(this, {...v, borderWidth: this.borderWidth});
+            return p;
+          });
           this.setProperty("vertices", vs);
         }
       }
