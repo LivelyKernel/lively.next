@@ -66,18 +66,6 @@ export async function interactiveConnectGivenSource(sourceObj, sourceAttr) {
               group.map(ea => [
                 ea.name, () => interactivelyEvaluateConnection(
                                 sourceObj, sourceAttr, selected, ea.name)])]);
-
-  let w = sourceObj.world();
-  w && items.push(["custom...", async () => {
-    let attr = await w.prompt("Enter custom target connection point", {
-      requester: this,
-      historyId: "lively.morphic-custom-target-connection-points",
-      useLastInput: true
-    })
-    attr && interactivelyEvaluateConnection(
-      sourceObj, sourceAttr, selected, attr);
-  }]);
-
   selected.openMenu(items);      
 }
 
@@ -425,9 +413,9 @@ class ConnectionPin extends Morph {
       borderWidth: {defaultValue: 2},
       extent: {defaultValue: pt(15,15)},
       borderRadius: {defaultValue: 15},
-      //clipMode: {defaultValue: 'hidden'},
       expanded: {defaultValue: true},
-      collapsible: {defualtValue: false},
+      collapsible: {defaultValue: false},
+      draggable: {defaultValue: false},
       propertyName: {},
       orientation: {defaultValue: 'right'},
       styleClasses: {defaultValue: ['light']},
@@ -774,6 +762,7 @@ export class ConnectionHalo extends Morph {
 
   static get properties() {
     return {
+      acceptsDrops: {defaultValue: false},
       fill: {defaultValue: Color.transparent},
       target: {
         set(t) {
@@ -782,7 +771,7 @@ export class ConnectionHalo extends Morph {
           if (!t.world())
             throw Error('Can not display visual connections for morphs not opened in world!');
           this.setProperty('target', t);
-          this.setBounds(t.bounds());
+          this.setBounds(t.globalBounds());
         }
       },
       styleSheets: {
