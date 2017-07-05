@@ -11,7 +11,7 @@ import { obj, promise, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
 import { Icon } from "lively.morphic/components/icons.js";
 import { createMorphSnapshot } from "../serialization.js";
-import { ConnectionInspector } from "../fabrik.js";
+import { ConnectionInspector, ConnectionHalo } from "../fabrik.js";
 
 
 
@@ -1415,9 +1415,13 @@ class ConnectionsHaloItem extends HaloItem {
   }
 
   async onMouseDown(evt) {
-    let target = this.halo.target, connectionInspector = new ConnectionInspector({target});
+    // let target = this.halo.target, connectionInspector = new ConnectionInspector({target});
+    // this.halo.remove();
+    // connectionInspector.fadeIntoWorld(target.globalBounds().center());
     this.halo.remove();
-    connectionInspector.fadeIntoWorld(target.globalBounds().center());
+    let target = this.halo.target,
+        connectionHalo = new ConnectionHalo({target});
+    connectionHalo.openInWorld(connectionHalo.position);
   }
   
 }

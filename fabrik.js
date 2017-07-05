@@ -2,12 +2,13 @@ import { InteractiveMorphSelector, MorphHighlighter } from "./halo/morph.js";
 import { connect, signal, once } from "lively.bindings";
 import { Color, rect, pt } from "lively.graphics";
 import { showConnector } from "./components/markers.js";
-import { show, VerticalLayout, StyleSheet, Icon, GridLayout, morph, Window } from "lively.morphic";
+import { show, HorizontalLayout, Morph, VerticalLayout, StyleSheet, Icon, GridLayout, morph, Window } from "lively.morphic";
 import { TreeData, Tree } from "./components/tree.js";
 import { arr } from "lively.lang";
 import { Leash, LabeledCheckBox, SearchField } from "./components/widgets.js";
 import { isArray } from "lively.lang/object.js";
 import { max } from "lively.lang/array.js";
+import { hashCode } from "lively.lang/string.js";
 
 
 // this.attributeConnections[4].getConverter()
@@ -134,218 +135,18 @@ class ConnectionNode {
     Object.assign(this, args);
   }
 
-  display() {
-    if (this.type == 'connectedPin') {
-      return this.displayConnected();
-    } else {
-      return this.displayVacant();
-    }
-  }
-
   clearCache() {
     this._cached = null;
   }
 
-  displayVacant() {
-    var l, p;
-    l = morph({type: 'label', value: this.name, 
-               submorphs: [p = this.renderVacantPin()]})
-    l.fit(); 
-    p.leftCenter = l.innerBounds().rightCenter().addXY(5,0); 
-    return this._cached = l;
-  }
-  
-  displayConnected() {
-    var connectionPoint, connector;
-    let maxAttrLen = arr.max(this.connections, c => c.targetMethodName.length).targetMethodName.length,
-        [first, ...rest] = this.connections,
-        longestTargetMethod = arr.max(this.connections, c => c.targetMethodName.length).targetMethodName;
-    var nameLabel, longestLabel;
-    this._cached = morph({
-      styleClasses: ["connectionPin"],
-      extent: pt(100, 20 + (this.connections.length * 15)),
-      layout: new GridLayout({
-        fitToCell: false,
-        grid: [
-          [
-            nameLabel = morph({type: "label", value: this.name}),
-            ...this.renderConnectedPin(first)
-          ],
-          ...(rest.length ? rest.map(c => [null, ...this.renderConnectedPin(c)]) : []),
-          [null, null, null, this.renderVacantPin()]
-        ],
-        columns: [0, {paddingLeft: 5, fixed: nameLabel.textBounds().width + 15}, 
-                  1, {fixed: longestTargetMethod.length * 10},
-                  2, {fixed: 15},
-                  3, {fixed: 20}]
-      })
-    });
-    this._cached.layout.col(2).align = 'rightCenter';
-    this._cached.layout.col(2).alignedProperty = 'rightCenter';    
-    this._cached.layout.col(3).align = 'center';
-    return this._cached;
+  display() {
+    return this._cached || (this._cached = new ConnectionPin({
+      target: this.target, 
+      propertyName: this.name, 
+      connections: this.connections
+    }));
   }
 
-  renderVacantPin() {
-    var connector,
-        connectorPin = morph({
-          type: "ellipse",
-          styleClasses: ["vacantPin"],
-          submorphs: [
-            (connector = new Leash({
-              opacity: 0,
-              position: pt(3, 3),
-              vertices: [pt(0, 0), pt(0, 0)],
-              canConnectTo: m => arr.intersect(
-                [m, ...m.ownerChain()],
-                [connectorPin, ...connectorPin.ownerChain()]
-              ).length < 2
-            }))
-          ]
-        });
-    connect(connector.endPoint, "onDragStart", this, "startConnecting", {
-      updater: function($upd) {
-        $upd(connector, connectorPin)
-      },
-      varMapping: {connector, connectorPin}
-    });
-    connect(connector.endPoint, "onDragEnd", this, "stopConnecting", {
-      updater: function($upd) {
-        $upd(connector, connectorPin)},
-      varMapping: {connector, connectorPin}
-    });
-    return connectorPin;
-  }
-  
-  renderConnectedPin(connection) {
-    var connectionPoint = morph({type: "ellipse", styleClasses: ["occupiedPin"]}),
-        removeButton = Icon.makeLabel('remove', {
-          fontColor: Color.gray.darker(),
-          nativeCursor: 'pointer'
-        }),
-        description = morph({
-      type: "text", fill: Color.transparent, 
-      readOnly: true, nativeCursor: 'pointer', padding: rect(0,1,0,0),
-      textAndAttributes: [
-        ...Icon.makeLabel("long-arrow-right").textAndAttributes, "  ", null,
-        connection.targetMethodName, null
-      ],
-    })
-    connect(description, 'onHoverIn', this, 'showConnection', {
-      converter: () => ({connection, connectionPoint, description}),
-      varMapping: {connection, connectionPoint, description}
-    });
-    connect(description, 'onHoverOut', this, 'hideConnection', {
-      converter: () => ({connection, connectionPoint, description}), 
-      varMapping: {connection, connectionPoint, description}
-    });
-    connect(description, 'onMouseDown', this, 'editConnection', {
-      converter: () => ({connection, connectionPoint, description}), 
-      varMapping: {connection, connectionPoint, description}
-    });
-    connect(removeButton, 'onMouseDown', this, 'removeConnection', {
-      converter: () => connection,
-      varMapping: {connection}
-    });
-    return [description, removeButton, connectionPoint];
-  }
-
-  visualizeConnection(m1, m2, existingLeash, leashStyle = {}) {
-    // if m2 is not a morph, then render a data pointer (to open inspector)
-    let sides = rect(0).sides.concat(rect(0).corners),
-        leash = existingLeash || new Leash({
-          borderColor: Color.orange,
-          endpointStyle: {
-            start: {fill: Color.transparent, nativeCursor: "auto"},
-            end: {fill: Color.orange}
-          },
-          ...leashStyle
-        });
-    leash.startPoint.attachTo(m1, "rightCenter");
-    leash.endPoint.attachTo(m2, m2.globalBounds().partNameNearest(sides, m1.globalPosition));
-    return leash;
-  }
-
-  showConnection({connection, connectionPoint, description}) {
-    connectionPoint.fill = Color.orange;
-    description.fontColor = Color.orange;
-    this.morphHighlighter = MorphHighlighter.for($world, connection.targetObj).show();
-    this.connectionIndicator = this.visualizeConnection(
-      connectionPoint,
-      connection.targetObj,
-      this.connectionIndicator
-    );
-  }  
-  
-  hideConnection({connection, connectionPoint, description}) {
-    description.fontColor = Color.black;
-    connectionPoint.fill = Color.gray.darker();
-    if (this.connectionIndicator) this.connectionIndicator.remove();
-    MorphHighlighter.removeHighlighters();
-  }
-
-  async editConnection({connection, connectionPoint, description}) {
-    this.hideConnection({connection, connectionPoint, description});
-    let leash = this.visualizeConnection(connectionPoint, connection.targetObj, false, {
-      borderColor: Color.gray.darker(),
-      endpointStyle: {
-        start: {fill: Color.transparent, nativeCursor: "auto"},
-        end: {fill: Color.gray.darker()}
-      }
-    });
-    await interactivelyReEvaluateConnection(connection, 'Edit Connection', false);
-    leash.remove();
-  }
-
-  removeConnection(connection) {
-    connection.disconnect();
-    signal(this.treeData, 'update', new ConnectionTreeData(this.target));
-  }
-
-  startConnecting(connectorLeash, connectorPin) {
-    connectorLeash.startPoint.attachTo(connectorPin, 'center');
-    connectorLeash.animate({opacity: .8, duration: 300});
-    connectorLeash.vertices[0].position = pt(2,2);
-  }
-
-  async stopConnecting(connectorLeash, connectorPin) {
-    let {startPoint, endPoint} = connectorLeash,
-         sourceObj = this.target,
-         sourceAttr = this.name,
-         targetObj = endPoint.connectedMorph;
-    if (targetObj) {
-      let {
-        selected: [targetAttr]
-      } = await $world.filterableListPrompt(
-        "Select Attribute to connect to...",
-        arr.flatten(targetObj.sourceDataBindings()).map(n => n.name),
-        {
-          preselect: 0,
-          historyId: null,
-          fuzzy: true,
-          actions: ["default"],
-          selectedAction: "default",
-          theme: "dark"
-        }
-      );
-      targetAttr && await interactivelyEvaluateConnection(
-        sourceObj,
-        sourceAttr,
-        targetObj,
-        targetAttr,
-        null,
-        null,
-        "Conform Connection",
-        false
-      );
-    }    
-    await connectorLeash.animate({opacity: 0, duration: 300});
-    connectorLeash.startPoint.clearConnection();
-    connectorLeash.endPoint.clearConnection();
-    connectorLeash.remove();
-    this._cached = null;
-    signal(this.treeData, 'update', new ConnectionTreeData(this.target));
-  }
 }
 
 class ConnectionTreeData extends TreeData {
@@ -368,8 +169,7 @@ class ConnectionTreeData extends TreeData {
         name, treeData, target: morph,
         visible: !!connectionsWithName.length,
         priority: connectionsWithName.length,
-        connections: connectionsWithName,
-        connectionPin: childrenOrPin
+        connections: connectionsWithName
       });
     }
     super({
@@ -464,25 +264,6 @@ export class ConnectionInspector extends Window {
         borderRadius: {bottom: 4, left: 4, right: 4, top: 0},
         borderWidth: 1,
         borderColor: Color.gray
-      },
-      '.connectionPin': {
-        borderRadius: 5,
-        fill: Color.gray.lighter(),
-        borderColor: Color.gray,
-        borderWidth: 1
-      },
-      '.connectionPin .Label': {
-         fontColor: Color.gray.darker(),
-         padding: 2
-      },
-      '.occupiedPin': {
-        fill: Color.gray.darker(),
-        nativeCursor: 'pointer'
-      },
-      '.vacantPin': {
-        draggable: false, 
-        borderWidth: 1, borderColor: Color.gray.darker(),
-        nativeCursor: '-webkit-grab'
       }
     });
   }
@@ -576,4 +357,519 @@ export class ConnectionInspector extends Window {
     return new ConnectionTreeData(this.target);
   }
   
+}
+
+class ConnectionPin extends Morph {
+
+  static get properties() {
+    return {
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            ".light .connectionPin": {
+              borderRadius: 5,
+              fill: Color.gray.lighter(),
+              borderColor: Color.gray,
+              borderWidth: 1
+            },
+            ".dark .connectionPin": {
+              borderRadius: 5,
+              fill: Color.black.withA(.7),
+              borderColor: Color.gray,
+              borderWidth: 1
+            },
+            ".light .connectionPin .Label": {
+              fontColor: Color.gray.darker(),
+              padding: 2
+            },
+            ".dark .connectionPin .Label": {
+              fontColor: Color.white,
+              padding: 2
+            },
+            ".dark .connectionPin .Text": {
+              fontColor: Color.white,
+              padding: 2
+            },
+            ".light .occupiedPin": {
+              fill: Color.gray.darker(),
+              nativeCursor: "pointer"
+            },
+            ".dark .occupiedPin": {
+              fill: Color.white.withA(.8),
+              nativeCursor: "pointer"
+            },
+            ".vacantPin": {
+              draggable: false,
+              borderWidth: 1,
+              nativeCursor: "-webkit-grab"
+            },
+            ".light .vacantPin": {
+              borderColor: Color.gray.darker(),
+            },
+            ".dark .vacantPin": {
+              fill: Color.white.withA(.4),
+              borderColor: Color.gray
+            },
+            ".propertyName": {
+              padding: rect(2,2,2,2),
+              fontWeight: "bold",
+              fontStyle: "italic",
+              fontColor: Color.gray.darker()
+            }
+          });        
+        }
+      },
+      nativeCursor: {defaultValue: 'pointer'},
+      fill: {defaultValue: Color.red},
+      borderColor: {defaultValue: Color.black},
+      borderWidth: {defaultValue: 2},
+      extent: {defaultValue: pt(15,15)},
+      borderRadius: {defaultValue: 15},
+      //clipMode: {defaultValue: 'hidden'},
+      expanded: {defaultValue: true},
+      collapsible: {defualtValue: false},
+      propertyName: {},
+      orientation: {defaultValue: 'right'},
+      styleClasses: {defaultValue: ['light']},
+      target: {},
+      connections: {
+        defaultValue: [] 
+      },
+      submorphs: {
+        initialize() {
+          this.update();
+        }
+      }
+    }
+  }
+
+  async update(duration = 0) {
+    if (this.connections.length > 0) {
+      this.connectionControl = this.displayConnected();
+    } else {
+      this.connectionControl = this.displayVacant();
+    }
+    if (this.expanded) {
+      this.submorphs = [this.connectionControl];
+      if (duration) {
+        this.connectionControl.scale = 0;
+        this.connectionControl.animate({scale: 1, duration});
+        this.animate({
+          layout: new HorizontalLayout(),
+          fill: Color.transparent,
+          borderColor: Color.transparent,
+          duration
+        });
+      } else {
+        this.fill = this.borderColor = Color.transparent;
+        this.layout = new HorizontalLayout();
+      }
+    } else {
+      if (duration) {
+        this.submorphs[0].animate({scale: 0, duration});
+        this.borderRadius = 5;
+        await this.animate({
+          layout: null,
+          fill: Color.red,
+          borderColor: Color.black,
+          extent: pt(15, 15),
+          borderRadius: 15,
+          duration
+        });
+      } else {
+        this.layout = null;
+        this.fill = Color.red;
+        this.borderColor = Color.black;
+        this.extent = pt(15,15);
+      }
+      var l;
+      this.submorphs = [
+        l = morph({
+          type: 'label', 
+          styleClasses: ['propertyName'],
+          value: this.propertyName,
+          opacity: duration ? 0 : 1,
+          leftCenter: this.innerBounds().rightCenter()
+        })
+      ];
+      l.animate({opacity: 1, duration});
+    }
+  }
+
+  displayVacant() {
+    var l, p;
+    l = morph({type: 'label', value: this.propertyName, 
+               submorphs: [p = this.renderVacantPin()]})
+    l.fit(); 
+    p.leftCenter = l.innerBounds().rightCenter().addXY(5,0); 
+    return this._cached = l;
+  }
+
+  renderVacantPin() {
+    var connector,
+        connectorPin = morph({
+          type: "ellipse",
+          styleClasses: ["vacantPin"],
+          submorphs: [
+            (connector = new Leash({
+              opacity: 0,
+              borderColor: Color.gray.darker(),
+              endpointStyle: {fill: Color.gray.darker()},
+              position: pt(3, 3),
+              vertices: [pt(0, 0), pt(0, 0)],
+              canConnectTo: m => arr.intersect(
+                [m, ...m.ownerChain()],
+                [connectorPin, ...connectorPin.ownerChain()]
+              ).length < 2
+            }))
+          ]
+        });
+    connect(connector.endPoint, "onDragStart", this, "startConnecting", {
+      updater: function($upd) {
+        $upd(connector, connectorPin)
+      },
+      varMapping: {connector, connectorPin}
+    });
+    connect(connector.endPoint, "onDragEnd", this, "stopConnecting", {
+      updater: function($upd) {
+        $upd(connector, connectorPin)},
+      varMapping: {connector, connectorPin}
+    });
+    return connectorPin;
+  }
+  
+  displayConnected() {
+    var connectionPoint, connector;
+    let maxAttrLen = arr.max(this.connections, c => c.targetMethodName.length).targetMethodName.length,
+        [first, ...rest] = this.connections,
+        longestTargetMethod = arr.max(this.connections, c => c.targetMethodName.length).targetMethodName;
+    var nameLabel, longestLabel;
+    this._cached = morph({
+      styleClasses: ["connectionPin"],
+      extent: pt(100, 20 + (this.connections.length * 15)),
+      layout: new GridLayout({
+        fitToCell: false,
+        grid: [
+          [
+            nameLabel = morph({type: "label", fontWeight: 'bold', value: this.propertyName}),
+            ...this.renderConnectedPin(first)
+          ],
+          ...(rest.length ? rest.map(c => [null, ...this.renderConnectedPin(c)]) : []),
+          [null, null, null, this.renderVacantPin()]
+        ],
+        columns: [0, {paddingLeft: 5, fixed: nameLabel.textBounds().width + 15}, 
+                  1, {fixed: 15 + (longestTargetMethod.length * 9)},
+                  2, {fixed: 15},
+                  3, {fixed: 20}]
+      })
+    });
+    this._cached.layout.col(2).align = 'rightCenter';
+    this._cached.layout.col(2).alignedProperty = 'rightCenter';    
+    this._cached.layout.col(3).align = 'center';
+    return this._cached;
+  }
+  
+  renderConnectedPin(connection) {
+    var connectionPoint = morph({type: "ellipse", styleClasses: ["occupiedPin"]}),
+        removeButton = Icon.makeLabel('remove', {
+          nativeCursor: 'pointer'
+        }),
+        description = morph({
+      type: "text", fill: Color.transparent, 
+      readOnly: true, nativeCursor: 'pointer', padding: rect(0,1,0,0),
+      textAndAttributes: [
+        ...Icon.makeLabel("long-arrow-right").textAndAttributes, "  ", null,
+        connection.targetMethodName, null
+      ],
+    })
+    connect(description, 'onHoverIn', this, 'showConnection', {
+      converter: () => ({connection, connectionPoint, description}),
+      varMapping: {connection, connectionPoint, description}
+    });
+    connect(description, 'onHoverOut', this, 'hideConnection', {
+      converter: () => ({connection, connectionPoint, description}), 
+      varMapping: {connection, connectionPoint, description}
+    });
+    connect(description, 'onMouseDown', this, 'editConnection', {
+      converter: () => ({connection, connectionPoint, description}), 
+      varMapping: {connection, connectionPoint, description}
+    });
+    connect(removeButton, 'onMouseDown', this, 'removeConnection', {
+      converter: () => connection,
+      varMapping: {connection}
+    });
+    return [description, removeButton, connectionPoint];
+  }
+
+  visualizeConnection(m1, m2, existingLeash, leashStyle = {}) {
+    // if m2 is not a morph, then render a data pointer (to open inspector)
+    let sides = rect(0).sides.concat(rect(0).corners),
+        leash = existingLeash || new Leash({
+          borderColor: Color.orange,
+          endpointStyle: {
+            start: {fill: Color.transparent, nativeCursor: "auto"},
+            end: {fill: Color.orange}
+          },
+          ...leashStyle
+        });
+    leash.startPoint.attachTo(m1, "rightCenter");
+    leash.endPoint.attachTo(m2, m2.globalBounds().partNameNearest(sides, m1.globalPosition));
+    return leash;
+  }
+
+  showConnection({connection, connectionPoint, description}) {
+    connectionPoint.fill = Color.orange;
+    description.fontColor = Color.orange;
+    this.morphHighlighter = MorphHighlighter.for($world, connection.targetObj).show();
+    this.connectionIndicator = this.visualizeConnection(
+      connectionPoint,
+      connection.targetObj,
+      this.connectionIndicator
+    );
+  }  
+  
+  hideConnection({connection, connectionPoint, description}) {
+    description.fontColor = Color.black;
+    connectionPoint.fill = Color.white;
+    if (this.connectionIndicator) this.connectionIndicator.remove();
+    MorphHighlighter.removeHighlighters();
+  }
+
+  async editConnection({connection, connectionPoint, description}) {
+    this.connectingInProgress = true;
+    this.hideConnection({connection, connectionPoint, description});
+    let leash = this.visualizeConnection(connectionPoint, connection.targetObj, false, {
+      borderColor: Color.gray.darker(),
+      endpointStyle: {
+        start: {fill: Color.transparent, nativeCursor: "auto"},
+        end: {fill: Color.gray.darker()}
+      }
+    });
+    await interactivelyReEvaluateConnection(connection, 'Edit Connection', false);
+    this.connectingInProgress = false;
+    this.focus();
+    leash.remove();
+  }
+
+  removeConnection(connection) {
+    connection.disconnect();
+    this.connections = (this.target.attributeConnections || []).filter(c => c.sourceAttrName == this.propertyName); 
+    this.focus();
+    this.update();
+  }
+
+  startConnecting(connectorLeash, connectorPin) {
+    this.connectingInProgress = true;
+    connectorLeash.animate({opacity: .8, duration: 300});
+    connectorLeash.startPoint.attachTo(connectorPin, 'center');
+    connectorLeash.vertices[0].position = pt(2,2);
+  }
+
+  async stopConnecting(connectorLeash, connectorPin) {
+    let {startPoint, endPoint} = connectorLeash,
+         sourceObj = this.target,
+         sourceAttr = this.propertyName,
+         targetObj = endPoint.connectedMorph;
+    if (targetObj) {
+      let {
+        selected: [targetAttr]
+      } = await $world.filterableListPrompt(
+        "Select Attribute to connect to...",
+        arr.flatten(targetObj.sourceDataBindings()).map(n => n.name),
+        {
+          preselect: 0,
+          historyId: null,
+          fuzzy: true,
+          actions: ["default"],
+          selectedAction: "default",
+          theme: "dark"
+        }
+      );
+      targetAttr && await interactivelyEvaluateConnection(
+        sourceObj,
+        sourceAttr,
+        targetObj,
+        targetAttr,
+        null,
+        null,
+        "Confirm Connection",
+        false
+      );
+    }    
+    await connectorLeash.animate({opacity: 0, duration: 300});
+    connectorLeash.startPoint.clearConnection();
+    connectorLeash.endPoint.clearConnection();
+    connectorLeash.remove();
+    this.connections = (this.target.attributeConnections || []).filter(c => c.sourceAttrName == this.propertyName);
+    this.connectingInProgress = false;
+    this.focus();
+    this.update();
+  }
+
+  async showAllConnections(active) {
+    this.previewConnections(false);
+    this.expanded = active;
+    this.update(200)
+  }
+
+  previewConnections(active) {
+    if (active) {
+      this.previews = this.connections.map(conn => {
+        return this.visualizeConnection(this, conn.targetObj, false, {
+          borderColor: Color.black,
+          endpointStyle: {
+            start: {fill: Color.transparent, reactsToPointer: false},
+            end: {fill: Color.black}
+          }
+        });
+      });
+    } else {
+      arr.invoke(this.previews || [], "remove");
+    }
+  }
+  
+  onHoverIn(evt) {
+    this.collapsible && !this.expanded && this.previewConnections(true);
+  }
+
+  onHoverOut(evt) {
+    this.collapsible && this.previewConnections(false);
+  }
+
+  onMouseDown(evt) {
+     !this.expanded && this.collapsible && this.showAllConnections(true);
+  }
+
+  onBlur(evt) {
+    setTimeout(() => {
+      let focused = this.world() && this.world().focusedMorph;
+      if (this !== focused && !this.withAllSubmorphsDetect(m => m == focused)) {
+        this.onFocusLost();
+      }
+    }, 100);
+  }
+
+  onFocusLost() {
+     !this.connectingInProgress && this.collapsible && this.showAllConnections(false);
+  }
+  
+}
+
+export class ConnectionHalo extends Morph {
+  /*
+    The connection halo is an alternative visual interface to the
+    window based connection inspector.
+    The ConnectionHalo represents the existing connections by pins, that are
+    distributed around the bounding box of the selected morph.
+    Each pin is aligned such that it is as close as possible to the visual morph
+    it is connected to in the world.
+    The connection is visualized just as in the connection inspector, when the user
+    hovers over the pins in question.
+    New connections can be created via the add connections button that is attached
+    directly to the halo. 
+    Pins connected to invisble datastructures, or morphs no inside the world, are vizualized in
+    an open ended connection, that allows the user to open up an inspector on the connection's 
+    target object.
+  */
+
+  static get properties() {
+    return {
+      fill: {defaultValue: Color.transparent},
+      target: {
+        set(t) {
+          if (!t.isMorph) 
+            throw Error('Can not display visual connections for non morphic objects!');
+          if (!t.world())
+            throw Error('Can not display visual connections for morphs not opened in world!');
+          this.setProperty('target', t);
+          this.setBounds(t.bounds());
+        }
+      },
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            ".controlButton": {
+              fill: Color.black.withA(0.7),
+              borderRadius: 20,
+              fontSize: 15,
+              fontColor: Color.white,
+              borderWidth: 2,
+              nativeCursor: 'pointer',
+              borderColor: Color.white,
+              dropShadow: true,
+            },
+            '.controlButton .Label': {
+              fontColor: Color.white
+            }
+          })
+        }
+      },
+      submorphs: {
+        after: ['target'],
+        initialize() {
+          this.placeConnectionPins();
+        }
+      }
+    }
+  }
+
+  initControls() {
+    // add close button
+    let closeButton = Icon.makeLabel('close', {
+      styleClasses: ['controlButton'],
+            padding: rect(6,4,4,4),
+    });
+    // add create new pin button
+    let addPinButton = morph({
+      type: 'button',
+      width: 110,
+      icon: Icon.makeLabel('plus'),
+      label: 'Add Connection',
+      styleClasses: ['controlButton'],
+      padding: rect(4,5,4,1),
+    })
+
+    this.addMorph({
+      fill: Color.transparent, 
+      bottomCenter: this.innerBounds().insetBy(-10).topCenter(),
+      layout: new HorizontalLayout(),
+      submorphs: [addPinButton, closeButton]
+    });
+
+    connect(closeButton, 'onMouseDown', this, 'remove');
+    connect(addPinButton, 'onMouseDown', this.target, 'openMenu', {
+      converter: () => /*global target*/ target.connectMenuItems(),
+      varMapping: {target: this.target}
+    });
+  }
+
+  getPlacementPoints() {
+    return [
+      ...this.innerBounds().translatedBy(pt(-8,-8)).leftEdge().sample(20).reverse(),
+      ...this.innerBounds().translatedBy(pt(-8,-8)).bottomEdge().sample(20).reverse(),
+      ...this.innerBounds().translatedBy(pt(-8,-8)).rightEdge().sample(20).reverse(),
+    ]
+  }
+
+  placeConnectionPins() {
+    var placementPoints = this.getPlacementPoints(), 
+        sides = rect(0).sides.concat(rect(0).corners);
+    this.submorphs = [];
+    this.initControls();
+    arr.groupBy(this.target.attributeConnections || [], c => c.sourceAttrName)
+       .forEachGroup((propertyName, connections) => {
+      let center = placementPoints.pop()
+      this.addMorphBack(
+        new ConnectionPin({
+          expanded: false,
+          styleClasses: ['dark'],
+          propertyName,
+          connections,
+          target: this.target,
+          collapsible: true,
+          orientation: this.bounds().partNameNearest(sides, center)
+        })
+      ).position = center;
+    });
+  }
 }
