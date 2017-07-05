@@ -197,68 +197,68 @@ export class Morph {
 
       left: {
         group: "geometry",
-        derived: true, after: ['extent', 'submorphs'],
+        derived: true, after: ['extent', 'submorphs', 'layout'],
         get()          { return this.bounds().left(); },
         set(v)         { return this.moveBy(pt(v - this.left), 0); }
       },
 
       right: {
         group: "geometry",
-        derived: true, after: ['extent', 'submorphs'],
+        derived: true, after: ['extent', 'submorphs', 'layout'],
         get()         { return this.bounds().right(); },
         set(v)        { return this.moveBy(pt(v - this.right), 0); }
       },
       top: {
         group: "geometry",
-        derived: true, after: ['extent', 'submorphs'],
+        derived: true, after: ['extent', 'submorphs', 'layout'],
         get()           { return this.bounds().top(); },
         set(v)          { return this.moveBy(pt(0, v - this.top)); }
       },
       bottom: {
         group: "geometry",
-        derived: true, after: ['extent', 'submorphs'],
+        derived: true, after: ['extent', 'submorphs', 'layout'],
         get()        { return this.bounds().bottom(); },
         set(v)       { return this.moveBy(pt(0, v - this.bottom)); }
       },
       center: {
         group: "geometry",
-        derived: true, after: ['extent', 'submorphs'],
+        derived: true, after: ['extent', 'submorphs', 'layout'],
         get()        { return this.bounds().center(); },
         set(v)       { return this.align(this.center, v); }
       },
       topLeft: {
         group: "geometry",
-        derived: true, after: ['extent', 'submorphs'],
+        derived: true, after: ['extent', 'submorphs', 'layout'],
         get()       { return this.bounds().topLeft(); },
         set(v)      { return this.align(this.topLeft, v); }
       },
       topRight: {
         group: "geometry",
-        derived: true, after: ['extent', 'submorphs'],
+        derived: true, after: ['extent', 'submorphs', 'layout'],
         get()      { return this.bounds().topRight(); },
         set(v)     { return this.align(this.topRight, v); }
       },
       bottomRight: {
         group: "geometry",
-        derived: true, after: ['extent'],
+        derived: true, after: ['extent', 'layout'],
         get()   { return this.bounds().bottomRight(); },
         set(v)  { return this.align(this.bottomRight, v); }
       },
       bottomLeft: {
         group: "geometry",
-        derived: true, after: ['extent', 'submorphs'],
+        derived: true, after: ['extent', 'submorphs', 'layout'],
         get()    { return this.bounds().bottomLeft(); },
         set(v)   { return this.align(this.bottomLeft, v); }
       },
       bottomCenter: {
         group: "geometry",
-        derived: true, after: ['extent', 'submorphs'],
+        derived: true, after: ['extent', 'submorphs', 'layout'],
         get()  { return this.bounds().bottomCenter(); },
         set(v) { return this.align(this.bottomCenter, v); }
       },
       topCenter: {
         group: "geometry",
-        derived: true, after: ['extent', 'submorphs'],
+        derived: true, after: ['extent', 'submorphs', 'layout'],
         get()     { return this.bounds().topCenter(); },
         set(v)    { return this.align(this.topCenter, v); }
       },
