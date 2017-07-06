@@ -430,4 +430,24 @@ export class Label extends Morph {
 
     return h("span", attrs, text);
   }
+  
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // events
+  
+  async interactivelyChangeLabel() {
+    let newLabel = await this.world().prompt("edit label", {
+      input: this.textString,
+      historyId: "lively.morphic-label-edit-hist"
+    });
+    if (typeof newLabel === "string")
+      this.textString = newLabel;
+  }
+  
+  menuItems() {
+    let items = super.menuItems();
+    items.unshift({isDivider: true});
+    items.unshift(["change label", () => this.interactivelyChangeLabel()]);
+    return items;
+  }
+
 }
