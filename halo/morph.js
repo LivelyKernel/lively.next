@@ -597,6 +597,8 @@ class HaloItem extends Morph {
   get isEpiMorph() { return true; }
   get isHaloItem() { return true };
 
+  menuItems() { return []; }
+
   init() {}
   update() {}
   stop() {}

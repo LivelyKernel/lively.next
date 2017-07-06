@@ -1172,7 +1172,10 @@ export class Morph {
   resizeBy(delta) { this.extent = this.extent.addPt(delta); }
   snap(grid) { this.position = this.position.roundTo(grid || 1); }
 
-  get isEpiMorph() { /*transient "meta" morph*/ return this.getProperty("epiMorph"); }
+  get isEpiMorph() {
+    /*transient "meta" morph*/
+    return this.getProperty("epiMorph");
+  }
 
   isUsedAsEpiMorph() {
     var m = this;
@@ -1586,7 +1589,7 @@ export class Morph {
   }
 
   closestCommonAncestor(other) {
-     return arr.intersect([this, ...this.ownerChain()], [other, ...other.ownerChain()])[0];
+    return arr.intersect([this, ...this.ownerChain()], [other, ...other.ownerChain()])[0];
   }
 
   transformForNewOwner(newOwner) {
@@ -2311,7 +2314,7 @@ return ;
   }
 
   renderPreview(opts = {}) {
-    // Creates a DOM node that is a "preview" of he morph, i.e. a
+    // Creates a DOM node that is a "preview" of the morph, i.e. a
     // representation that looks like the morph but doesn't morphic behavior
     // attached
 
