@@ -199,7 +199,7 @@ export class World extends Morph {
   }
 
   onMouseUp(evt) {
-    if (evt.isCommandKey() || evt.isShiftDown()) evt.stop();
+    if (evt.isCommandKey()/* || evt.isShiftDown()*/) evt.stop();
     if (evt.isAltDown() && config.altClickDefinesThat) {
       var target = this.morphsContainingPoint(evt.position)[0];
       // FIXME currently delayed to overwrite that in old morphic
@@ -340,7 +340,6 @@ export class World extends Morph {
       ]],
       ["Tools", [
         {command: "open PartsBin",            target: this},
-        {command: "open object drawer",       target: this},
         {command: "open workspace",           target: this},
         {command: "open browser",             target: this},
         {command: "choose and browse module", target: this},
@@ -356,9 +355,9 @@ export class World extends Morph {
          this.resizePolicy === "static" ? [
           {command: "resize to fit window", target: this},
           {command: "resize manually", target: this},
-          ["change resize policy to elastic", () => this.resizePolicy = "elastic"]
+          ["switch to automatic resizing of world", () => this.resizePolicy = "elastic"]
          ] : [
-           ["change resize policy to static", () => this.resizePolicy = "static"]
+           ["switch to manual resizing of world", () => this.resizePolicy = "static"]
          ]
       ],
       {command: "report a bug",          target: this},
