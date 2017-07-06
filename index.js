@@ -43,6 +43,9 @@ class AttributeConnection {
     if (spec.varMapping)
       this.varMapping = Object.assign(spec.varMapping, this.varMapping);
 
+    // ensure that spec is valid
+    this.getSpec();
+
     return this;
   }
 
