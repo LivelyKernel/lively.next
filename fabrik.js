@@ -600,15 +600,27 @@ class ConnectionPin extends Morph {
           },
           ...leashStyle
         });
+    // fixme: the attachment points of the leashes should be parametrized...
     leash.startPoint.attachTo(m1, "rightCenter");
-    leash.endPoint.attachTo(m2, m2.globalBounds().partNameNearest(sides, m1.globalPosition));
+    if (m2.isMorph) {
+       leash.endPoint.attachTo(m2, m2.globalBounds()
+          .partNameNearest(sides, m1.globalPosition)); 
+    } else {
+       let visualPointer = morph({
+         type: 'label', value: m2.toString(), 
+         styleClasses: ['Tooltip'] , padding: rect(8,4)
+       }).openInWorld(m1.globalBounds().rightCenter().addXY(100, 0));
+       once(leash, 'remove', visualPointer, 'remove');
+       leash.endPoint.attachTo(visualPointer, 'leftCenter');
+    }
     return leash;
   }
 
   showConnection({connection, connectionPoint, description}) {
     connectionPoint.fill = Color.orange;
     description.fontColor = Color.orange;
-    this.morphHighlighter = MorphHighlighter.for($world, connection.targetObj).show();
+    if (connection.targetObj.isMorph)
+      this.morphHighlighter = MorphHighlighter.for($world, connection.targetObj).show();
     this.connectionIndicator = this.visualizeConnection(
       connectionPoint,
       connection.targetObj,
@@ -763,6 +775,7 @@ export class ConnectionHalo extends Morph {
   static get properties() {
     return {
       acceptsDrops: {defaultValue: false},
+      epiMorph: {defaultValue: true},
       fill: {defaultValue: Color.transparent},
       target: {
         set(t) {
