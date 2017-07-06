@@ -380,9 +380,7 @@ export class Label extends Morph {
           paddingRight: padding.right() + "px",
           paddingTop: padding.top() + "px",
           paddingBottom: padding.bottom() + "px",
-          cursor: this.nativeCursor,
-          "white-space": "pre",
-          "word-break": "keep-all"
+          cursor: this.nativeCursor
         },
         attrs = defaultAttributes(this, renderer);
 
