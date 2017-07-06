@@ -12,6 +12,7 @@ export function show(target) {
   if (target === null || target === undefined) target = String(target);
   if (target.isMorph) return showRect(target.world(), target.globalBounds());
   if (target.isPoint) return showRect(world, new Rectangle(target.x - 5, target.y - 5, 10, 10));
+  if (target.isLine) return showLine(world, target);
   if (target.isRectangle) return showRect(world, target);
   if (typeof Element !== "undefined" && target instanceof Element)
     return showRect(world, Rectangle.fromElement(target));
@@ -21,8 +22,7 @@ export function show(target) {
     typeof target === "boolean" ||
     (typeof Node !== "undefined" && target instanceof Node) ||
     target instanceof RegExp
-  )
-    target = String(target);
+  ) target = String(target);
   if (typeof target === "object") target = obj.inspect(target, {maxDepth: 1});
   if (typeof target === "string" && arguments.length === 1) return world.setStatusMessage(target);
 
@@ -388,6 +388,20 @@ export class StatusMessageForMorph extends StatusMessage {
   }
 
   onMouseUp(evt) {}
+}
+
+function showLine(world, line, delay = 3000) {
+  let {start, end} = line,
+      vec = end.subPt(start),
+      path = world.addMorph({
+        position: start,
+        rotation: vec.theta(),
+        border: {width: 1, color: Color.red},
+        width: vec.fastR(),
+        height: 0
+      })
+  if (delay) setTimeout(() => path.fadeOut(), delay);
+  return path;
 }
 
 export function showConnector(morph1, morph2, delay = 3000) {
