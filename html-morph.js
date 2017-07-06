@@ -98,6 +98,8 @@ export class HTMLMorph extends Morph {
     }
   }
 
+  get isHTMLMorph() { return true; }
+
   get defaultHTML() {
      return `
 <div style="display: flex;

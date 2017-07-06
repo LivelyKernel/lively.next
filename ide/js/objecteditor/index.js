@@ -15,6 +15,7 @@ import { interactivelySaveObjectToPartsBinFolder } from "../../../partsbin.js";
 import { emit } from "lively.notifications/index.js";
 import { LinearGradient } from "lively.graphics/index.js";
 import { adoptObject } from "lively.classes/runtime.js";
+import { InteractiveMorphSelector } from "../../../halo/morph.js";
 
 
 // var oe = ObjectEditor.open({target: this})
@@ -1008,32 +1009,42 @@ export class ObjectEditor extends Morph {
   }
 
   async interactivelyAddImport() {
+    let {
+      selectedClass, selectedMethod, selectedModule, state,
+      ui: {importController, sourceEditor},
+      editorPlugin
+    } = this;
+
     try {
-      var {selectedClass, selectedMethod} = this.state;
       if (!selectedClass) {
         this.showError(new Error("No class selected"));
         return;
       }
 
-      var system = await this.editorPlugin.systemInterface(),
+      var system = await editorPlugin.systemInterface(),
           choices = await interactivelyChooseImports(system);
       if (!choices) return null;
 
       // FIXME move this into system interface!
-      var m = this.selectedModule,
-          origSource = await m.source();
+      var origSource = await selectedModule.source();
 
-      this.state.isSaving = true;
-      await m.addImports(choices);
+      state.isSaving = true;
+      await selectedModule.addImports(choices);
+
+      let insertions = choices.map(({local, exported}) =>
+        exported === "default" ? local : exported);
+      sourceEditor.insertTextAndSelect(
+        insertions.join("\n"),
+        sourceEditor.cursorPosition);
 
     } catch (e) {
-      origSource && await m.changeSource(origSource);
+      origSource && await selectedModule.changeSource(origSource);
       this.showError(e);
     } finally {
-      this.state.isSaving = false;
-      await this.get("importController").updateImports();
+      state.isSaving = false;
+      await importController.updateImports();
       await this.updateKnownGlobals();
-      this.get("sourceEditor").focus();
+      sourceEditor.focus();
     }
   }
 
@@ -1295,9 +1306,17 @@ export class ObjectEditor extends Morph {
       {
         name: "choose target",
         exec: async ed => {
-          var [selected] = await $world.execCommand("select morph", {justReturn: true});
-          if (selected) ed.target = selected;
-          return true;
+          /*global inspect*/
+          if (ed.env.eventDispatcher.isKeyPressed("Shift")) {
+            var [selected] = await $world.execCommand("select morph", {justReturn: true});
+            if (selected) ed.target = selected;
+          } else {
+            let selected = await InteractiveMorphSelector.selectMorph(ed.world());
+            if (selected) ed.target = selected;
+          }
+
+          ed.focus();
+          return ed.target;
         }
       }
     ];
