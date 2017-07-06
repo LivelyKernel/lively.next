@@ -14,13 +14,12 @@ export { Button } from "./components/buttons.js";
 export { Menu } from "./components/menus.js";
 export * from "./components/tooltips.js";
 export { Icon } from "./components/icons.js";
-export { Canvas } from "./components/canvas.js";
 export * from "./components/list.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import { World, Hand } from "./world.js";
-import { Morph, Image, Ellipse, Triangle, Path, Polygon } from "./morph.js";
+import { Morph, Image, Ellipse, Triangle, Path, Polygon, LineMorph } from "./morph.js";
 import { Text } from "./text/morph.js";
 import { Label } from "./text/label.js";
 import { Button } from "./components/buttons.js";
@@ -51,7 +50,7 @@ export function morph(props = {}, opts = {restore: false}) {
         case 'checkbox': klass = CheckBox; break;
         case 'labeledcheckbox': klass = LabeledCheckBox; break;
         case 'polygon':  klass = Polygon; break;
-        case 'canvas':   klass = Canvas; break;
+        case 'line':     klass = LineMorph; break;
         case 'html':     klass = HTMLMorph; break;
       }
   }

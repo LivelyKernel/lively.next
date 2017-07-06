@@ -2962,3 +2962,53 @@ export class Polygon extends Path {
   get isPolygon() { return true; }
 
 }
+
+export class LineMorph extends Morph {
+
+  static get properties() {
+    return {
+      borderWidth: {defaultValue: 0},
+      fill: {defaultValue: Color.black},
+      height: {defaultValue: 1},
+      line: {
+        defaultValue: Line.fromCoords(0, 0, 0, 0),
+        set(val) {
+          this.setProperty("line", val);
+          this.update();
+        }
+      },
+      start: {
+        derived: true, after: ["line"],
+        get(val) { return this.line.start; },
+        set(val) { this.line = this.line.withStart(val); }
+      },
+      end: {
+        derived: true, after: ["line"],
+        get(val) { return this.line.end; },
+        set(val) { this.line = this.line.withEnd(val); }
+      },
+      position: {
+        derived: true, after: ["line"],
+        get(val) { return this.start; },
+        set(val) {
+          let delta = val.subPt(this.start);
+          this.line = new Line(val, this.end.addPt(delta));
+        }
+      }
+    }
+  }
+
+  get isPolygon() { return true; }
+
+  update() {
+    if (this._isUpdating) return;
+    this._isUpdating = true;
+    let {line, height} = this,
+        vec = line.toVector();
+    // offset of "width"
+    this.setProperty("position", this.position.addPt(line.perpendicularLine(0, height, "cc").toVector()))
+    this.width = vec.fastR();
+    this.rotation = vec.theta();
+    this._isUpdating = false;
+  }
+}
