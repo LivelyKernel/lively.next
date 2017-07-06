@@ -1603,6 +1603,8 @@ export class InteractiveMorphSelector {
     var target = this.selectorMorph.morphBeneath(pos);
     if (this.morphHighlighter == target) {
       target = this.morphHighlighter.morphBeneath(pos);
+    } else if (target && target.isEpiMorph) {
+      target = target.morphBeneath(pos);
     }
     if (target != this.possibleTarget
         && (!this.controllingMorph
