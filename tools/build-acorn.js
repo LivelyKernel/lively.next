@@ -5,7 +5,7 @@
 
 var fs = require("fs"),
     path = require("path"),
-    acornDir = "node_modules/acorn";
+    acornDir = path.dirname(require.resolve("acorn/", module));
 
 module.exports = new Promise((resolve, reject) => {
   var acornSrc = fs.readFileSync(path.join(acornDir, "dist/acorn.js")),
