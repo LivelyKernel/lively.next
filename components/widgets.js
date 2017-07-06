@@ -711,7 +711,7 @@ export class DropDownSelector extends Morph {
   getMenuEntries() {
     const currentValue = this.getNameFor(this.selectedValue);
     return [
-      ...(this.selectedValue ? [{command: currentValue, target: this}] : []),
+      ...(this.selectedValue != undefined ? [{command: currentValue, target: this}] : []),
       ...arr.compact(
         this.commands.map(c => {
           return c.name != currentValue && {command: c.name, target: this};
@@ -724,7 +724,7 @@ export class DropDownSelector extends Morph {
     if (obj.isArray(this.values)) {
       return this.values.map(v => {
         return {
-          name: v,
+          name: String(v),
           exec: () => {
             signal(this, 'update', v);
             this.selectedValue = v;
