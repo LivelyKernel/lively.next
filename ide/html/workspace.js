@@ -64,11 +64,20 @@ export default class Workspace extends JSWorkspace {
     this.targetMorph.textString = html;
   }
 
-  async saveDocumentHTML() {
-    let html = this.targetMorph.textString,
-        scripts = Array.from(this.parse(html).querySelectorAll("script"));
-    if (!scripts.some(ea => ea.src.includes("livelify-web.js")))
-      html += `<script src="/livelify-web.js"></script>`;
+  livelyfyHTML(html) {
+    // injects lively script
+    let scripts = Array.from(this.parse(html).querySelectorAll("script"));
+    if (!scripts.some(ea => ea.src.includes("livelify-web.js"))) {
+      let script = `<script src="/livelify-web.js"></script>`,
+          bodyEnd = html.indexOf("</body>");
+      if (bodyEnd > -1) {
+        html = html.slice(0, bodyEnd) + script + html.slice(bodyEnd);
+      } else { html += script; }
+    }
+    return html;
+  }
+
+  async saveDocumentHTML(html) {
     if (this.htmlPlugin.systemInterface().name !== "local")
       await this.runEval(`document.documentElement.innerHTML = ${JSON.stringify(html)}`);
   }
@@ -90,20 +99,25 @@ export default class Workspace extends JSWorkspace {
       {
         name: "[workspace] save content",
         async exec(workspace) {
-          if (workspace.file) {
-            try {
-              await workspace.file.write(workspace.content);
-            } catch (e) { workspace.showError(e); throw e; }
-            workspace.setStatusMessage(`Saved to ${workspace.file.url}`, Color.green);
-            await promise.delay(500);
-          }
+          let html = workspace.content;
+
           if (workspace.targetMorph._iframeMorph) {
             try {
               workspace.targetMorph.execCommand("[HTML] render in iframe");
             } catch (e) {};
           }
+
+          html = workspace.livelyfyHTML(html);
+          if (workspace.file) {
+            try {
+              await workspace.file.write(html);
+            } catch (e) { workspace.showError(e); throw e; }
+            workspace.setStatusMessage(
+              `Saved to ${workspace.file.url}`, Color.green);
+            await promise.delay(500);
+          }
           try {
-            await workspace.saveDocumentHTML();
+            await workspace.saveDocumentHTML(html);
             workspace.setStatusMessage(`HTML applied`, Color.green);
           } catch (err) { workspace.showError(err); }
           return workspace;
