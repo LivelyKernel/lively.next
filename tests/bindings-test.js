@@ -1,4 +1,4 @@
-/*global describe, it, beforeEach, afterEach*/
+/*global describe, it, beforeEach, afterEach,xit*/
 import { expect } from "mocha-es6";
 
 import { connect, noUpdate, callWhenPathNotNull, disconnectAll, disconnect, signal } from "lively.bindings";
@@ -311,6 +311,18 @@ describe("converter", () => {
     obj1.x = 10;
     expect(3).equals(obj2.y);
   });
+
+  it("does not connect when converter can not be compiled", () => {
+    var obj1 = {}, obj2 = {}, error;
+    try {
+      connect(obj1, 'value', obj2, 'value', {converter(val) { return val + 10 }});
+    } catch (e) {
+      error = e;
+    }
+    expect(obj1.attributeConnections).to.be.undefined;
+    expect(error).to.not.be.undefined;
+  }) 
+ 
 
 });
 
