@@ -202,6 +202,7 @@ export default class EventDispatcher {
       hover: {hoveredOverMorphs: [], unresolvedPointerOut: false},
       scroll: {interactiveScrollInProgress: null},
       keyInputState: null,
+      pressedKeys: {},
       html5Drag: {},
       dropHoverTarget: null
     };
@@ -222,6 +223,11 @@ export default class EventDispatcher {
 
   isMorphFocused(morph) {
     return this.eventState.focusedMorph === morph;
+  }
+
+  isKeyPressed(keyName) {
+    return Object.keys(this.eventState.pressedKeys).map(ea => ea.toLowerCase())
+      .includes(keyName.toLowerCase());
   }
 
   whenIdle() {
@@ -290,6 +296,17 @@ export default class EventDispatcher {
 
     switch (type) {
 
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // tracking pressed keys
+      case 'keydown':
+        state.pressedKeys[defaultEvent.key] = true;
+        break;
+
+      case 'keyup':
+        if (defaultEvent.key === "Meta") state.pressedKeys = {};
+        else delete state.pressedKeys[defaultEvent.key];
+        break;
+      
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       case 'click':
         // Note, we currently don't subscribe to click DOM events, this is just a
