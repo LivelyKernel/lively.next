@@ -709,6 +709,10 @@ export class TilingLayoutHalo extends Morph {
      });
   }
 
+  updateSpacing(s) {
+    this.target.spacing = s;
+  }
+
   optionControls() {
     const layout = this.target,
           spacing = new NumberWidget({
@@ -720,7 +724,7 @@ export class TilingLayoutHalo extends Morph {
             borderColor: Color.gray,
             unit: "px"
           });
-    connect(spacing, 'number', layout, 'spacing');
+    connect(spacing, 'udpate', this, 'updateSpacing');
     return [
       [
         {
@@ -827,6 +831,10 @@ export class FlexLayoutHalo extends Morph {
     this.alignWithTarget();
   }
 
+  updateSpacing(s) {
+    this.target.spacing = s
+  }
+
   optionControls() {
     const layout = this.target,
           spacing = new NumberWidget({
@@ -852,7 +860,7 @@ export class FlexLayoutHalo extends Morph {
             fill: Color.transparent,
             checked: layout.resizeSubmorphs
           });
-    connect(spacing, 'number', layout, 'spacing');
+    connect(spacing, 'update', this, 'updateSpacing');
     connect(autoResizeCb, "checked", this, "updateAutoResizePolicy");
     connect(resizeSubmorphsCb, "checked", this, "updateResizeSubmorphsPolicy");
     return [
