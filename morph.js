@@ -2755,6 +2755,29 @@ export class Image extends Morph {
 
     return this.loadUrl(canvas.toDataURL(), false);
   }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async interactivelyChangeImageURL() {
+    let url = await this.world().prompt("Enter image url", {
+      historyId: "lively.morphic-image-url-inputs",
+      input: this.imageUrl.startsWith("data:") ? "" : this.imageUrl,
+      requester: this,
+    });
+    if (typeof url === "string")
+      this.imageUrl = url;
+  }
+
+  menuItems() {
+    let items = super.menuItems();
+    items.unshift(
+      ["change image url...", () => this.interactivelyChangeImageURL()],
+      ["resize image to its real image size", () => this.extent = this.naturalExtent],
+      ["resample image to fit current bounds", () => this.resampleImageToFitBounds()],
+      {isDivider: true})
+    return items;
+  }
 }
 
 class PathPoint {
