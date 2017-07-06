@@ -1,3 +1,4 @@
+/*global System,Map*/
 import domToImage from "dom-to-image";
 
 /*
@@ -74,6 +75,14 @@ export async function renderMorphToDataURI(morph, opts = {}) {
   // looking like the morph.  This node is then fed to dom-to-image where it is
   // rendered on a canvas and the rendering is returned as data URI
 
+  // Nodes of HTML morphs are identity-based, ie the preview render will move
+  // those to another parent.  To properly restore the HTML morphs, we move their
+  // nodes back to their original parent
+  let htmlMorphRestoreMap = new Map();
+  morph.withAllSubmorphsDo(ea =>
+    ea.isHTMLMorph && htmlMorphRestoreMap.set(
+      ea, {domNode: ea.domNode, parentNode: ea.domNode.parentNode}));
+
 
   let {document, window} = morph.env.domEnv,
       node = morph.renderPreview({...opts, asNode: true}), dataURI,
@@ -114,5 +123,10 @@ export async function renderMorphToDataURI(morph, opts = {}) {
 
   } finally {
     wrapper.parentNode && wrapper.parentNode.removeChild(wrapper);
+    
+    for (let [htmlMorph, {domNode, parentNode}] of htmlMorphRestoreMap) {
+      if (domNode && parentNode && domNode.parentNode !== parentNode)
+        parentNode.appendChild(domNode)
+    }
   }
 }
