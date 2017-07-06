@@ -16,7 +16,7 @@ import { TargetScript } from "./ticking.js";
 import { copyMorph } from "./serialization.js";
 import { isNumber, isString } from "lively.lang/object.js";
 import { capitalize } from "lively.lang/string.js";
-import { connect, once } from "lively.bindings";
+import { connect, signal, once } from "lively.bindings";
 import { showAndSnapToGuides, removeSnapToGuidesOf } from "./halo/drag-guides.js";
 
 const defaultCommandHandler = new CommandHandler();
@@ -945,10 +945,14 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onChange(change) {
-
     const anim = change.meta && change.meta.animation;
-    if (['position', 'rotation', 'scale', 'origin', 'reactsToPointer'].includes(change.prop))
-        this.updateTransform({[change.prop]: change.value});
+    if (['position', 'rotation', 'scale', 'origin', 'reactsToPointer'].includes(change.prop)) {
+      this.onBoundsChanged(this.bounds())    
+      this.updateTransform({[change.prop]: change.value});
+    }
+    if (change.prop == 'extent') {
+      this.onBoundsChanged(this.bounds())    
+    }
     if (change.prop == "layout") {
       if (anim) {
          change.value && change.value.attachAnimated(anim.duration, this, anim.easing);
@@ -958,6 +962,14 @@ export class Morph {
     }
     this.layout && this.layout.onChange(change);
     this.resetStyleSheetInfo(change)
+  }
+
+  onBoundsChanged(bounds) {
+    if (this.name == 'background image') debugger;
+    signal(this, 'bounds', bounds);
+    [...bounds.corners, ...bounds.sides].forEach(c => {
+      signal(this, c, bounds.partNamed(c))
+    })
   }
 
   resetStyleSheetInfo(change) {
