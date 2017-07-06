@@ -14094,7 +14094,7 @@ module.exports = function(acorn) {
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v7.10.0',
+        version: 'v7.7.4',
         browser: true,
         env: {},
         argv: [],
@@ -22140,7 +22140,7 @@ var helpers = {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "console", "$world", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "lively"];
+var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "Array", "Number", "parseFloat", "parseInt", "Infinity", "NaN", "Boolean", "String", "Symbol", "Date", "Promise", "RegExp", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "JSON", "Math", "console", "ArrayBuffer", "Uint8Array", "Int8Array", "Uint16Array", "Int16Array", "Uint32Array", "Int32Array", "Float32Array", "Float64Array", "Uint8ClampedArray", "DataView", "Map", "Set", "WeakMap", "WeakSet", "Proxy", "Reflect", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "escape", "unescape", "eval", "isFinite", "isNaN", "Intl", "navigator", "window", "document", "Blob", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "btoa", "atob", "sessionStorage", "localStorage", "$world", "lively"];
 
 function scopes(parsed) {
   var vis = new ScopeVisitor(),
