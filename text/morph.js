@@ -22,6 +22,7 @@ import { textAndAttributesWithSubRanges } from "./attributes.js";
 import { serializeMorph, deserializeMorph } from "../serialization.js";
 
 export class Text extends Morph {
+  
   static makeLabel(value, props) {
     return new Label({
       value,
@@ -459,6 +460,8 @@ export class Text extends Morph {
         // only-by-words: break lines at word boundaries. If not possible, line will be
         // wider than text
         // by-chars: Break line whenever character sequence reaches text width
+        type: 'Enum',
+        values: [false, true, 'by-words', 'anywhere', 'only-by-words', 'wider', 'by-chars'],
         isStyleProp: true,
         defaultValue: false,
         after: ["document", "viewState"]
