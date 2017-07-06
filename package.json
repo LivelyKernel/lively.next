@@ -17,7 +17,8 @@
     "svg-intersections": "0.2.5",
     "three": "^0.84.0",
     "virtual-dom": "^2.1.1",
-    "jsdom": "^9.4.0"
+    "jsdom": "^9.4.0",
+    "webfontloader": "^1.6.28"
   },
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.8.0",
@@ -48,6 +49,7 @@
         "~node": "gsap/src/minified/TweenMax.min.js",
         "node": "@empty"
       },
+      "webfontloader": "webfontloader/1.6.28/webfontloader.js",
       "gsap-css": {
         "~node": "gsap/src/minified/plugins/CSSPlugin.min.js",
         "node": "@empty"
