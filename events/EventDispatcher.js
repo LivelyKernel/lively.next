@@ -90,8 +90,11 @@ function dragStartEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layo
   var evt = new Event("morphicdragstart", domEvt, dispatcher, [targetMorph], hand, halo, layoutHalo)
     .onDispatch(() => {
       state.draggedMorph = targetMorph;
+      state.dragStartMorphPosition = targetMorph.position;
+      state.dragStartPosition = evt.position;
       state.lastDragPosition = evt.position;
       state.dragDelta = pt(0,0);
+      state.absDragDelta = pt(0,0);
     })
     .onStop(() => {
       state.draggedMorph = null;
@@ -108,6 +111,7 @@ function dragEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHal
                              .transformDirection(
                                    evt.position.subPt(
                                         state.lastDragPosition));
+      state.absDragDelta = evt.position.subPt(state.clickedOnPosition);
     })
     .onAfterDispatch(() => state.lastDragPosition = evt.position)
     .onStop(() => {
@@ -120,14 +124,21 @@ function dragEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHal
 function dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHalo) {
   var ctx = state.draggedMorph || targetMorph,
       evt = new Event("morphicdragend", domEvt, dispatcher, [ctx], hand, halo, layoutHalo)
-    .onDispatch(() => state.dragDelta = (ctx.owner || dispatcher.world)
-                                             .getInverseTransform()
-                                             .transformDirection(
-                                                   evt.position.subPt(
-                                                        state.lastDragPosition)))
+    .onDispatch(() => {
+      state.dragDelta = (ctx.owner || dispatcher.world)
+        .getInverseTransform()
+        .transformDirection(
+          evt.position.subPt(
+            state.lastDragPosition));
+      state.absDragDelta = evt.position.subPt(state.clickedOnPosition);
+    })
     .onAfterDispatch(() => {
       state.draggedMorph = null;
       state.lastDragPosition = null;
+      state.dragDelta = pt(0,0);
+      state.absDragDelta = pt(0,0);
+      state.dragStartMorphPosition = null;
+      state.dragStartPosition = null;
     });
   return evt;
 }
@@ -198,7 +209,10 @@ export default class EventDispatcher {
       prevClick: null,
       draggedMorph: null,
       dragDelta: null,
+      absDragDelta: null,
       lastDragPosition: null,
+      dragStartMorphPosition: null,
+      dragStartPosition: null,
       hover: {hoveredOverMorphs: [], unresolvedPointerOut: false},
       scroll: {interactiveScrollInProgress: null},
       keyInputState: null,
