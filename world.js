@@ -173,7 +173,7 @@ export class World extends Morph {
     // note that the logic for cycling halos from morph to underlying morph is
     // implemented in Halo>>onMouseDown
     var haloTarget;
-    if (isCommandKey) {
+    if (isCommandKey && !target.isHalo) {
       var morphsBelow = evt.world.morphsContainingPoint(evt.position),
           morphsBelowTarget = morphsBelow.slice(morphsBelow.indexOf(target));
       morphsBelow = morphsBelow.filter(ea => ea.halosEnabled);

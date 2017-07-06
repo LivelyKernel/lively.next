@@ -175,6 +175,7 @@ export default class Halo extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   remove() {
+    debugger;
     this.detachFromTarget();
     super.remove();
   }
@@ -382,6 +383,7 @@ export default class Halo extends Morph {
     const target = evt.state.clickedOnMorph;
     if (!evt.isCommandKey() && target == this.borderBox) return this.remove();
     if (evt.isShiftDown() && evt.isCommandKey()) {
+      debugger;
       const actualMorph = this.target.isMorphSelection ?
         this.target.morphBeneath(evt.position) : this.morphBeneath(evt.position);
       this.isAlreadySelected(actualMorph) ?
@@ -499,7 +501,7 @@ class MultiSelectionTarget extends Morph {
     return {
       visible:                {defaultValue: false},
       modifiesSelectedMorphs: {defaultValue: false},
-      selectedMorphs:         {defaultValue: []}
+      selectedMorphs:         {defaultValue: []},
     }
   }
 
@@ -535,6 +537,7 @@ class MultiSelectionTarget extends Morph {
   }
 
   updatePosition({prevValue, value}) {
+    if (this.selectionGrabbed) return;
     const delta = value.subPt(prevValue);
     this.selectedMorphs.forEach(m => m.moveBy(delta));
   }
@@ -1563,15 +1566,14 @@ export class MorphHighlighter extends Morph {
 
 export class InteractiveMorphSelector {
 
-  static selectMorph(world, controllingMorph, optFilterFn) {
-    let sel = new this(world, controllingMorph, optFilterFn);
+  static selectMorph(world, controllingMorph) {
+    let sel = new this(world, controllingMorph);
     sel.selectNewTarget();
     return sel.whenDone;
   }
 
-  constructor(world = $world, controllingMorph = null, optFilterFn) {
+  constructor(world = $world, controllingMorph = null) {
     this.controllingMorph = controllingMorph;
-    this.filterFn = optFilterFn;
     this.selectorMorph = null;
     this.morphHighlighter = null;
     this.possibleTarget = null;
@@ -1593,34 +1595,20 @@ export class InteractiveMorphSelector {
   }
 
   scanForTargetAt(pos) {
-    let {
-      selectorMorph,
-      morphHighlighter,
-      possibleTarget,
-      controllingMorph,
-      filterFn
-    } = this;
-
-    selectorMorph.center = pos;
-    var target = selectorMorph.morphBeneath(pos);
-    if (morphHighlighter == target) {
-      target = morphHighlighter.morphBeneath(pos);
+    this.selectorMorph.center = pos;
+    var target = this.selectorMorph.morphBeneath(pos);
+    if (this.morphHighlighter == target) {
+      target = this.morphHighlighter.morphBeneath(pos);
     }
-    if (target === possibleTarget) return;
-    if (controllingMorph) {
-      if (target === controllingMorph) return;
-      if (target.ownerChain().includes(controllingMorph.getWindow())) return;
-    }
-    if (typeof filterFn === "function") {
-      console.log(target, filterFn(target))
-      if (!filterFn(target)) return;
-    }
-
-    if (morphHighlighter) morphHighlighter.deactivate();
-    possibleTarget = this.possibleTarget = target;
-    if (possibleTarget && !possibleTarget.isWorld) {
-      this.morphHighlighter = morphHighlighter = MorphHighlighter.for(this.world, target);
-      morphHighlighter && morphHighlighter.show();
+    if (target != this.possibleTarget
+        && (!this.controllingMorph
+         || !target.ownerChain().includes(this.controllingMorph.getWindow()))) {
+      if (this.morphHighlighter) this.morphHighlighter.deactivate();
+      this.possibleTarget = target;
+      if (this.possibleTarget && !this.possibleTarget.isWorld) {
+        let h = this.morphHighlighter = MorphHighlighter.for(this.world, target);
+        h && h.show();
+      }
     }
   }
 
