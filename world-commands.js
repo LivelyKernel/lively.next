@@ -149,9 +149,12 @@ var commands = [
       var halos = world.halos();
       halos.forEach(h => h.remove());
       world.hands.forEach(ea => ea.cancelGrab(true, evt));
-      var focusTarget = (arr.last(halos) && arr.last(halos).target)
+      var f = (arr.last(halos) && arr.last(halos).target)
                       || world.focusedMorph || world;
-      focusTarget.focus();
+      f.focus();
+      if (f.isText) {
+        f.selection.disableMultiSelect && f.selection.disableMultiSelect();
+      }
       return false;
     }
   },
