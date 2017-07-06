@@ -1369,11 +1369,16 @@ class ResizeHandle extends HaloItem {
     this.halo.toggleDiagonal(shiftDown, corner);    
     this.updateAlignmentGuide(altDown);
 
+
+    let sides = [],
+        cl = corner.toLowerCase();
+    if (cl.includes("left")) sides.push("left");
+    if (cl.includes("top")) sides.push("top");
+    if (cl.includes("bottom")) sides.push("bottom");
+    if (cl.includes("right")) sides.push("right");
+
     showAndSnapToResizeGuides(
-      this.halo.target,
-      corner === "rightCenter" || corner === "leftCenter"
-        ? "x" : corner === "topCenter" || corner === "bottomCenter"
-        ? "y" : "xy" /*axis*/,
+      this.halo.target, sides,
       true/*showGuides*/, ctrlDown/*snap*/,
       5/*epsilon*/, 200/*maxDist*/);
   }
