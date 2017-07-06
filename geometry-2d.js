@@ -1027,6 +1027,9 @@ export class Line {
 
   get isLine() { return true }
 
+  withStart(start) { return new Line(start, this.end); }
+  withEnd(end) { return new Line(this.start, end); }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // accessing
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1120,6 +1123,19 @@ export class Line {
     }
 
     return pt(x,y);
+  }
+
+  perpendicularLine(relPos = 0, magn = 1, rot = "cc"/*c-clockwise, cc-counterclockwise*/) {
+    let {start} = this,
+        vec = this.toVector(),
+        fromPos = start.addPt(vec.scaleBy(relPos)),
+        thetaOrtho = vec.theta() + (rot === "cc" ? -1 : 1) * Math.PI/2;
+    return new Line(fromPos, fromPos.addPt(Point.polar(magn, thetaOrtho)));
+  }
+
+  toVector() { 
+    let {start, end} = this;
+    return end.subPt(start);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
