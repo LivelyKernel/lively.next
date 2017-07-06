@@ -154,6 +154,7 @@ export default class Halo extends Morph {
       this.buttonControls.forEach(b => { b.visible = true;});
       this.propertyDisplay.disable();
     }
+    this.nameHalo().alignInHalo();
     this.ensureResizeHandles().forEach(h => h.alignInHalo());
     !this.resizeOnly && this.originHalo().alignInHalo();
     this.layout && this.layout.enable();
@@ -175,7 +176,6 @@ export default class Halo extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   remove() {
-    debugger;
     this.detachFromTarget();
     super.remove();
   }
@@ -788,7 +788,10 @@ class NameHaloItem extends HaloItem {
   }
 
   alignInHalo() {
-    this.nameHolders.forEach(nh => nh.update())
+    arr.zip(this.targets(), this.nameHolders).map(([{target}, nh]) => {
+      nh.target = target; 
+      nh.update()
+    });
     var {x, y} = this.halo.innerBounds().bottomCenter().addPt(pt(0, 2));
     this.topCenter = pt(Math.max(x, 30), Math.max(y, 80));
   }
@@ -1108,7 +1111,7 @@ class CopyHaloItem extends HaloItem {
     if (isMultiSelection) {
       // FIXME! haaaaack
       let copies = target.selectedMorphs.map(ea => world.addMorph(ea.copy())),
-          positions = copies.map(ea => ea.position);
+          positions = copies.map(ea => {ea.name += ' copy'; return ea.position});
       copies[0].undoStart("copy-halo");
       world.addMorph(halo);
       halo.refocus(copies);
@@ -1120,6 +1123,7 @@ class CopyHaloItem extends HaloItem {
     } else {
       let pos = target.globalPosition,
           copy = world.addMorph(target.copy());
+      copy.name += ' copy';
       copy.globalPosition = pos;
       copy.undoStart("copy-halo");
       hand.grab(copy);
