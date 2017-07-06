@@ -12,6 +12,7 @@ import { connect, signal, disconnect, disconnectAll, once } from "lively.binding
 import { Icon } from "lively.morphic/components/icons.js";
 import { createMorphSnapshot } from "../serialization.js";
 import { ConnectionInspector, ConnectionHalo } from "../fabrik.js";
+import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from "./drag-guides.js";
 
 
 
@@ -927,9 +928,10 @@ class DragHaloItem extends HaloItem {
     this.halo.state.activeButton = null;
     this.halo.alignWithTarget();
     this.updateAlignmentGuide(false);
+    removeSnapToGuidesOf(this.halo.target);
   }
 
-  update(delta, grid = false) {
+  update(delta, grid = false, snapToGuides = false) {
     var newPos = this.actualPos.addPt(this.targetTransform.transformDirection(delta));
     this.actualPos = newPos;
     if (grid) {
@@ -937,10 +939,14 @@ class DragHaloItem extends HaloItem {
     }
     this.halo.target.position = newPos;
     this.updateAlignmentGuide(grid);
+    if (!grid)
+      showAndSnapToGuides(
+        this.halo.target, true /*showGuides*/, snapToGuides,
+        5/*eps*/, 500/*maxDist*/);
   }
 
   onDragStart(evt) { this.init() }
-  onDrag(evt) { this.update(evt.state.dragDelta, evt.isAltDown()); }
+  onDrag(evt) { this.update(evt.state.dragDelta, evt.isAltDown(), evt.isCtrlDown()); }
   onDragEnd(evt) { this.stop() }
   onKeyUp(evt) { this.updateAlignmentGuide(false); }
 }
@@ -1326,7 +1332,7 @@ class ResizeHandle extends HaloItem {
   }
 
   onDrag(evt) {
-    this.update(evt.position, evt.isShiftDown(), evt.isAltDown());
+    this.update(evt.position, evt.isShiftDown(), evt.isAltDown(), evt.isCtrlDown());
     this.focus();
   }
 
@@ -1345,31 +1351,41 @@ class ResizeHandle extends HaloItem {
     this.halo.toggleDiagonal(proportional, this.corner);
   }
 
-  update(currentPos, shiftDown = false, altDown = false) {
-    var target = this.halo.target,
-      oldPosition = target.position,
-      {x, y} = this.startPos.subPt(currentPos),
-      delta = this.tfm.transformDirection(pt(x, y));
+  update(currentPos, shiftDown = false, altDown = false, ctrlDown = false) {
+    var {corner, tfm, startPos, halo: {target}} = this,
+        oldPosition = target.position,
+        {x, y} = startPos.subPt(currentPos),
+        delta = tfm.transformDirection(pt(x, y));
     if (altDown) {
       delta = delta.griddedBy(pt(10,10));
     }
     this.halo.updateBoundsFor(
-      this.corner,
+      corner,
       shiftDown,
       delta,
       this.startBounds,
       this.startOrigin
     );
-    this.halo.toggleDiagonal(shiftDown, this.corner);    
+    this.halo.toggleDiagonal(shiftDown, corner);    
     this.updateAlignmentGuide(altDown);
+
+    showAndSnapToResizeGuides(
+      this.halo.target,
+      corner === "rightCenter" || corner === "leftCenter"
+        ? "x" : corner === "topCenter" || corner === "bottomCenter"
+        ? "y" : "xy" /*axis*/,
+      true/*showGuides*/, ctrlDown/*snap*/,
+      5/*epsilon*/, 200/*maxDist*/);
   }
 
   stop(proportional) {
-    this.halo.layout = this.savedLayout;
-    this.halo.state.activeButton = null;
-    this.halo.alignWithTarget();
-    this.halo.toggleDiagonal(false);
+    let {halo: h} = this;
+    h.layout = this.savedLayout;
+    h.state.activeButton = null;
+    h.alignWithTarget();
+    h.toggleDiagonal(false);
     this.updateAlignmentGuide(false);
+    removeSnapToGuidesOf(h.target);
   }
 
   updateAlignmentGuide(active) {

@@ -1,5 +1,5 @@
 /*global System,Uint8Array,Blob,location*/
-import { Color, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
+import { Color, Line, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree, fun } from "lively.lang";
 import {
   renderRootMorph,
@@ -17,6 +17,7 @@ import { copyMorph } from "./serialization.js";
 import { isNumber, isString } from "lively.lang/object.js";
 import { capitalize } from "lively.lang/string.js";
 import { connect, once } from "lively.bindings";
+import { showAndSnapToGuides, removeSnapToGuidesOf } from "./halo/drag-guides.js";
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -2092,20 +2093,28 @@ export class Morph {
 
   onDragStart(evt) {
     this.undoStart("drag-move");
-    let {lastDragPosition, clickedOnPosition} = evt.state;
-    this.moveBy(lastDragPosition.subPt(clickedOnPosition));
+    let {dragStartMorphPosition, absDragDelta} = evt.state;
+    this.position = dragStartMorphPosition.addPt(absDragDelta);
   }
-  onDragEnd(evt) { this.undoStop("drag-move"); }
-  onDrag(evt) { this.moveBy(evt.state.dragDelta); }
 
+  onDragEnd(evt) {
+    this.undoStop("drag-move");
+    removeSnapToGuidesOf(this);
+  }
+
+  onDrag(evt) {
+    let {dragStartMorphPosition, absDragDelta} = evt.state;
+    this.position = dragStartMorphPosition.addPt(absDragDelta);
+    showAndSnapToGuides(this, evt.isCtrlDown()/*show guides*/, evt.isCtrlDown()/*snap*/);
+  }
 
   onGrab(evt) {
     if (evt.isShiftDown()) {
-       let copy = this.copy();
-       copy.position = this.transformPointToMorph(evt.hand, pt(0,0));
-       evt.hand.grab(copy);
+      let copy = this.copy();
+      copy.position = this.transformPointToMorph(evt.hand, pt(0,0));
+      evt.hand.grab(copy);
     } else {
-       evt.hand.grab(this);
+      evt.hand.grab(this);
     }
   }
 
