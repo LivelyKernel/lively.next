@@ -1,0 +1,518 @@
+{
+  "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
+  "snapshot": {
+    "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A": {
+      "rev": 711242,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "15F6E1C0-0510-4084-84F2-683E653797EE",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "D12F7C90-CE08-40B0-9853-DA0049CE5743",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "progress bar"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(1018.4,104.7)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(248.3,36.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(253,254,254)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Morph_5D42AA05_2080_4ECB_A639_DEF3DC88082F",
+              "rev": 757387
+            },
+            {
+              "__ref__": true,
+              "id": "Label_8AD72219_5EFF_4744_8E23_643F8953629A",
+              "rev": 757388
+            }
+          ]
+        },
+        "clipMode": {
+          "key": "clipMode",
+          "value": "hidden"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Progress",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 8
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 8
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 8
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 8
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "progress": {
+          "key": "progress",
+          "value": 0.4
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Progress",
+        "module": {
+          "package": {
+            "name": "Progress",
+            "version": null
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "15F6E1C0-0510-4084-84F2-683E653797EE": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
+            "rev": 711242
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "progress"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
+            "rev": 711242
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "update"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "FE488692-1857-470A-BFFB-EB5D6DED96C9",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "FE488692-1857-470A-BFFB-EB5D6DED96C9": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
+            "rev": 711242
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
+            "rev": 711242
+          }
+        }
+      }
+    },
+    "D12F7C90-CE08-40B0-9853-DA0049CE5743": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
+            "rev": 711242
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "extent"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
+            "rev": 711242
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "update"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "62B525D0-6CD9-4E14-97FC-044082133C5B",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "62B525D0-6CD9-4E14-97FC-044082133C5B": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
+            "rev": 711242
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
+            "rev": 711242
+          }
+        }
+      }
+    },
+    "Morph_5D42AA05_2080_4ECB_A639_DEF3DC88082F": {
+      "rev": 757387,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "filler"
+        },
+        "reactsToPointer": {
+          "key": "reactsToPointer",
+          "value": false
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(99.3,36.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": {
+            "__ref__": true,
+            "id": "CAF7E770-0D65-4D64-955E-B841E80A7B4B",
+            "rev": 0
+          }
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Morph",
+            "morph"
+          ]
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Morph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "CAF7E770-0D65-4D64-955E-B841E80A7B4B": {
+      "rev": 0,
+      "props": {
+        "stops": {
+          "key": "stops",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "1A974C7F-5A9E-40A1-8593-124EB942A4DF",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "569A2DE5-A562-4F5E-962E-432FE4DEA330",
+              "rev": 0
+            }
+          ]
+        },
+        "_vector": {
+          "key": "_vector",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,1)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "LinearGradient",
+        "module": {
+          "package": {
+            "name": "lively.graphics",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "color.js"
+        }
+      }
+    },
+    "1A974C7F-5A9E-40A1-8593-124EB942A4DF": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(216,216,216)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 0
+        }
+      }
+    },
+    "569A2DE5-A562-4F5E-962E-432FE4DEA330": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(199,197,197)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 1
+        }
+      }
+    },
+    "Label_8AD72219_5EFF_4744_8E23_643F8953629A": {
+      "rev": 757388,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "label"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "reactsToPointer": {
+          "key": "reactsToPointer",
+          "value": false
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(96.1,9.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(56.0,18.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "no label",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 16
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Label",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/label.js"
+        }
+      }
+    }
+  },
+  "requiredVersion": "~0.1",
+  "packages": {
+    "local://lively-object-modules/": {
+      "Progress": {
+        "package.json": "{\n  \"name\": \"Progress\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
+        "index.js": "import { Morph } from \"lively.morphic\";\nimport { pt } from \"lively.graphics/index.js\";\nimport { connect, disconnect } from \"lively.bindings/index.js\";\n\nexport default class Progress extends Morph {\n\n  \n  static readme() {\n    `\n    Set property progressBar.progress to a value between 0 and 1 to modify the progress indicator.\n    progressBar.label to change its label.\n    \n    `\n  }\n\n  static get properties() {\n    return {\n      progress: {},\n      ui: {\n        derived: true, readOnly: true, after: [\"submorphs\"],\n        get() {\n          return {\n            filler: this.getSubmorphNamed(\"filler\"),\n            label: this.getSubmorphNamed(\"label\")\n          }\n        },\n      },\n      label: {\n        derived: true, after: [\"submorphs\"],\n        get() { return this.getSubmorphNamed(\"label\").value; },\n        set(val) {\n          this.getSubmorphNamed(\"label\").value = val;\n          this.getSubmorphNamed(\"label\").fit();\n          this.relayout();\n        }\n      }\n    }\n  }\n\n  reset() {\n    this.label = \"no label\";\n    this.clipMode = \"hidden\";\n    connect(this, 'progress', this, 'update');\n    connect(this, 'extent', this, 'update');\n  }\n\n  relayout() {\n    let {filler, label} = this.ui;\n    filler.position = pt(0,0);\n    filler.height = this.height;\n    label.center = this.innerBounds().center();\n  }\n\n  update() {\n    // this.getSubmorphNamed(\"label\").value = this.progress.toFixed(0.01)\n    let filler = this.ui.filler;\n    filler.width = Math.min(this.width, Math.max(0, this.width * this.progress));\n    this.relayout();\n  }\n\n}\n\n"
+      }
+    }
+  },
+  "preview": "data:image/png;base64,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"
+}
