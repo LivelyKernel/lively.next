@@ -951,11 +951,11 @@ export class Morph {
   onChange(change) {
     const anim = change.meta && change.meta.animation;
     if (['position', 'rotation', 'scale', 'origin', 'reactsToPointer'].includes(change.prop)) {
-      this.onBoundsChanged(this.bounds())    
+      this.onBoundsChanged(this.bounds())
       this.updateTransform({[change.prop]: change.value});
     }
     if (change.prop == 'extent') {
-      this.onBoundsChanged(this.bounds())    
+      this.onBoundsChanged(this.bounds())
     }
     if (change.prop == "layout") {
       if (anim) {
@@ -1179,6 +1179,23 @@ export class Morph {
     if (this.submorphs.length < 1) return this.innerBounds();
     return this.submorphs.map(submorph => submorph.bounds())
                          .reduce((a,b) => a.union(b));
+  }
+
+  fitToSubmorphs(padding = Rectangle.inset(0)) {
+    let {submorphs: morphs} = this;
+    if (!morphs.length) return;
+
+    let bounds = morphs.reduce(
+      (bnds, ea) => bnds.union(ea.bounds()),
+      morphs[0].bounds());
+
+    let topOffset = bounds.top() - padding.top(),
+        leftOffset = bounds.left() - padding.left();
+    this.moveBy(pt(leftOffset, topOffset));
+    arr.invoke(this.submorphs, "moveBy", pt(-leftOffset, -topOffset));
+    this.extent = pt(
+      bounds.width + padding.left() + padding.right(),
+      bounds.height + padding.top() + padding.bottom());
   }
 
   align(p1, p2) { return this.moveBy(p2.subPt(p1)); }
@@ -1954,52 +1971,6 @@ export class Morph {
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // lively bindings
-    // var connectionNames = Properties.own(this.getConnectionPoints());
-    // items.push(["Connect ...", connectionNames.collect(function(name) {
-    //   return [name, function() {
-    //     var builder = self.getVisualBindingsBuilderFor(name);
-    //     builder.openInHand();
-    //     builder.setPosition(pt(0,0));
-    //   }]
-    // }).concat([['Custom ...', function() {
-    //   world.prompt('Name of custom connection start?', function(name) {
-    //     if (!name) return;
-    //     var builder = self.getVisualBindingsBuilderFor(name);
-    //     builder.openInHand();
-    //     builder.setPosition(pt(0,0));
-    //   });
-    // }]])
-    //            ]);
-
-    // items.push(["Connections...", {
-    //   getConnections: function() {
-    //     if (!this.connections) {
-    //       this.connections = !self.attributeConnections ? [] :
-    //       self.attributeConnections
-    //       // rk: come on, this is a mess!
-    //         .reject(function(ea) { return ea.dependedBy }) // Meta connection
-    //         .reject(function(ea) { return ea.targetMethodName == 'alignToMagnet'}) // Meta connection
-    //     }
-    //     return this.connections;
-    //   },
-    //   condition: function() {
-    //     return this.getConnections().length > 0;
-    //   },
-    //   getItems: function() {
-    //     return this.getConnections()
-    //       .collect(function(ea) {
-    //       var s = ea.sourceAttrName + " -> " + ea.targetObj  + "." + ea.targetMethodName
-    //       return [s, [
-    //         ["Disconnect", function() { alertOK("disconnecting " + ea); ea.disconnect(); }],
-    //         ["Edit converter", function() { var window = lively.bindings.editConnection(ea); }],
-    //         ["Show", function() { lively.bindings.showConnection(ea); }],
-    //         ["Hide", function() { if (ea.visualConnector) ea.visualConnector.remove(); }]]];
-    //     });
-    //   }
-    // }]);
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // morphic properties
     var morphicMenuItems = ['Morphic properties', []];
     items.push(morphicMenuItems);
@@ -2023,6 +1994,27 @@ export class Morph {
       morphicMenuItems[1].push(
         [[...(this[propName] ? checked : unchecked), "  " + propName],
          () => this[propName] = !this[propName]]));
+
+
+    
+    items.push(["Fit to submorphs", async () => {
+      let padding = await this.world().prompt("Padding around submorphs:", {
+        input: "Rectangle.inset(5)",
+        historyId: "lively.morphic-fit-to-submorphs-padding-hist",
+        requester: this
+      })
+      if (typeof padding !== "string") return;
+      let {value} = await lively.vm.runEval(padding, {topLevelVarRecorder: {Rectangle}});
+
+      padding = value && value.isRectangle ? value : Rectangle.inset(0);
+      
+      this.undoStart("fitToSubmorphs");
+      this.fitToSubmorphs(padding);
+      this.undoStop("fitToSubmorphs");
+    }]);
+
+    
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     let connectionItems = this.connectionMenuItems();
     if (connectionItems) {
@@ -2089,7 +2081,7 @@ export class Morph {
                 interactiveConnectGivenSource(this, ea.name);
               }
             ])]);
-    
+
     w && items.push(["custom...", async () => {
       let { interactiveConnectGivenSource } = await System.import("lively.morphic/fabrik.js");
       let attr = await w.prompt("Enter custom connection point", {
