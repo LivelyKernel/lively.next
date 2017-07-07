@@ -18,7 +18,7 @@ export class RichTextControl extends Morph {
     if (selection.isEmpty()) {
       var ctrl = cachedControls.get(textMorph);
       if (ctrl) {
-        ctrl.update();        
+        ctrl.update();
         ctrl.alignAtTarget();
         if (!ctrl.world()) textMorph.world().addMorph(ctrl);
       }
@@ -33,7 +33,8 @@ export class RichTextControl extends Morph {
         cachedControls.set(textMorph, ctrl);
       }
       textMorph.world().addMorph(ctrl);
-      ctrl.focusOn(textMorph);
+      ctrl.focusOn(textMorph, true);
+      ctrl.alwaysTargetFocusedMorph();
     })();
   }
 
@@ -43,7 +44,8 @@ export class RichTextControl extends Morph {
     if (!ctrl) {
       ctrl = new RichTextControl();
       cachedControls.set(textMorph, ctrl);
-      ctrl.focusOn(textMorph);
+      ctrl.focusOn(textMorph, true);
+      ctrl.alwaysTargetFocusedMorph();
     } else ctrl.update();
     ctrl.alignAtTarget();
     if (!ctrl.world()) textMorph.world().addMorph(ctrl);
@@ -54,7 +56,6 @@ export class RichTextControl extends Morph {
     return {
       autoRemove: {defaultValue: false},
       target: {},
-      copiedStyle: {},
       uiSpec: {
         defaultValue: {
           closeButton: true,
@@ -337,7 +338,7 @@ export class RichTextControl extends Morph {
    }
   }
 
-  focusOn(textMorph) {
+  focusOn(textMorph, align = true) {
     // if (this.autoRemove) {
     //   this.topCenter = textMorph.getGlobalTransform()
     //       .transformRectToRect(textMorph.selectionBounds()).bottomCenter();
@@ -345,7 +346,7 @@ export class RichTextControl extends Morph {
     // }
     this.target = textMorph;
     this.update();
-    this.alignAtTarget();
+    if (align) this.alignAtTarget();
   }
 
   update() {
@@ -569,18 +570,31 @@ export class RichTextControl extends Morph {
   }
 
   copyStyle() {
-    let morph = this.target,
-        style = morph.getStyleInRange(morph.selection),
+    let {target} = this,
+        style = target.selection.isEmpty() ?
+                  target.defaultTextStyle :
+                  target.getStyleInRange(target.selection),
         styleString = JSON.stringify(style, null, 2);
-    this.copiedStyle = style;
-    this.setStatusMessage(`Copied style\n${styleString}`);
+    this.constructor.copiedStyle = style;
+
     this.getSubmorphNamed("paste style button").tooltip = "paste style\n" + styleString;
+
+    this.env.eventDispatcher.doCopyWithMimeTypes([
+      {type: 'text/plain', data: styleString},
+      {type: 'application/morphic-text-style', styleString}
+    ]).then(() => this.setStatusMessage(`Copied style\n${styleString}`))
+      .catch(err => this.showError(err));
+
   }
 
   pasteStyle() {
-    let morph = this.target;
-    morph.selections.forEach(sel =>
-      morph.addTextAttribute(this.copiedStyle, sel));
+    let {target, constructor: {copiedStyle}} = this;
+    if (target.selection.isEmpty()) {
+      Object.assign(target, copiedStyle);
+    } else {
+      target.selections.forEach(sel =>
+        target.addTextAttribute(this.constructor.copiedStyle, sel));
+    }
   }
 
   clearStyle() {
@@ -635,5 +649,21 @@ export class RichTextControl extends Morph {
       this.target.attributeConnections.forEach(
         con => con.targetObj === this && con.disconnect());
     this.remove();
+  }
+
+  alwaysTargetFocusedMorph() {
+    this.startStepping(1500, "updateTarget");
+  }
+
+  updateTarget() {
+    let w = this.world();
+    if (!w) return;
+    let {focusedMorph: m} = w;
+    if (m && m.isText && !this.isAncestorOf(m) && this.target !== m)
+      this.focusOn(m, false);
+  }
+
+  onMouseDown(evt) {
+    this.updateTarget();
   }
 }
