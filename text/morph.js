@@ -1132,10 +1132,10 @@ export class Text extends Morph {
     if (nothingToInsert && nothingToDelete) return range;
 
     let attrToExtend;
-    if (extendTextAttributes && range.start.column > 0) {
+    if (extendTextAttributes) {
       attrToExtend = this.textAttributeAt({
         row: range.start.row,
-        column: range.start.column - 1
+        column: range.start.column - (range.start.column > 0 ? 1 : 0)
       });
     }
 
