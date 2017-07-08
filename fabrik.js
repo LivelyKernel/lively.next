@@ -434,6 +434,7 @@ class ConnectionPin extends Morph {
   }
 
   async update(duration = 0) {
+    let world = this.world();
     if (this.connections.length > 0) {
       this.connectionControl = this.displayConnected();
     } else {
@@ -450,11 +451,23 @@ class ConnectionPin extends Morph {
           borderColor: Color.transparent,
           duration
         });
-      } else {
+      } else {        
         this.fill = this.borderColor = Color.transparent;
         this.layout = new HorizontalLayout();
       }
+      if (world) {
+          this.initPos = this.position;
+          let pos = world
+            .visibleBounds()
+            .insetBy(5)
+            .translateForInclusion(this.globalBounds())
+            .topLeft();
+          duration ? this.animate({globalPosition: pos, duration}) : (this.globalPosition = pos);
+        }
     } else {
+      if (this.initPos) 
+        duration ? 
+          this.animate({position: this.initPos, duration}) : (this.position = this.initPos);
       if (duration) {
         this.submorphs[0].animate({scale: 0, duration});
         this.borderRadius = 5;
@@ -795,6 +808,7 @@ export class ConnectionHalo extends Morph {
     return {
       acceptsDrops: {defaultValue: false},
       epiMorph: {defaultValue: true},
+      reactsToPointer: {defaultValue: false},
       fill: {defaultValue: Color.transparent},
       target: {
         set(t) {
