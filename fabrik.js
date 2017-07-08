@@ -399,7 +399,9 @@ class ConnectionPin extends Morph {
               borderColor: Color.gray
             },
             ".propertyName": {
-              padding: rect(2,2,2,2),
+              padding: rect(7,2,2,2),
+              fill: Color.gray.lighter(),
+              borderRadius: 10,
               fontWeight: "bold",
               fontStyle: "italic",
               fontColor: Color.gray.darker()
@@ -477,10 +479,26 @@ class ConnectionPin extends Morph {
           styleClasses: ['propertyName'],
           value: this.propertyName,
           opacity: duration ? 0 : 1,
-          leftCenter: this.innerBounds().rightCenter()
+          ...this.getAlignmentProps()
         })
       ];
       l.animate({opacity: 1, duration});
+    }
+  }
+
+  getAlignmentProps() {
+    switch(this.orientation) {
+       case 'right':
+         return {leftCenter: this.innerBounds().rightCenter().addXY(5,0)}
+       case 'bottom':
+         return {
+           rotation: Math.PI / 2,
+           topCenter: this.innerBounds().bottomCenter().addXY(0,5)
+         }
+       case 'left':
+         return {
+           rightCenter: this.innerBounds().leftCenter().addXY(-5,0)
+         }        
     }
   }
 
@@ -589,7 +607,7 @@ class ConnectionPin extends Morph {
     return [description, removeButton, connectionPoint];
   }
 
-  visualizeConnection(m1, m2, existingLeash, leashStyle = {}) {
+  visualizeConnection(m1, m2, existingLeash, leashStyle = {}, orientation = 'right') {
     // if m2 is not a morph, then render a data pointer (to open inspector)
     let sides = rect(0).sides.concat(rect(0).corners),
         leash = existingLeash || new Leash({
@@ -601,7 +619,7 @@ class ConnectionPin extends Morph {
           ...leashStyle
         });
     // fixme: the attachment points of the leashes should be parametrized...
-    leash.startPoint.attachTo(m1, "rightCenter");
+    leash.startPoint.attachTo(m1, orientation + 'Center');
     if (m2.isMorph) {
        leash.endPoint.attachTo(m2, m2.globalBounds()
           .partNameNearest(sides, m1.globalPosition)); 
@@ -653,7 +671,8 @@ class ConnectionPin extends Morph {
 
   removeConnection(connection) {
     connection.disconnect();
-    this.connections = (this.target.attributeConnections || []).filter(c => c.sourceAttrName == this.propertyName); 
+    this.connections = (this.target.attributeConnections || [])
+                          .filter(c => c.sourceAttrName == this.propertyName); 
     this.focus();
     this.update();
   }
@@ -721,7 +740,7 @@ class ConnectionPin extends Morph {
             start: {fill: Color.transparent, reactsToPointer: false},
             end: {fill: Color.black}
           }
-        });
+        }, this.orientation);
       });
     } else {
       arr.invoke(this.previews || [], "remove");
@@ -847,9 +866,12 @@ export class ConnectionHalo extends Morph {
 
   getPlacementPoints() {
     return [
-      ...this.innerBounds().translatedBy(pt(-8,-8)).leftEdge().sample(20).reverse(),
-      ...this.innerBounds().translatedBy(pt(-8,-8)).bottomEdge().sample(20).reverse(),
-      ...this.innerBounds().translatedBy(pt(-8,-8)).rightEdge().sample(20).reverse(),
+      ...this.innerBounds().translatedBy(pt(-8,-8)).leftEdge().sample(20)
+             .reverse().map(p => [p, 'left']),
+      ...this.innerBounds().translatedBy(pt(-8,-8)).bottomEdge().sample(20)
+             .reverse().map(p => [p, 'bottom']),
+      ...this.innerBounds().translatedBy(pt(-8,-8)).rightEdge().sample(20)
+             .reverse().map(p => [p, 'right']),
     ]
   }
 
@@ -860,7 +882,7 @@ export class ConnectionHalo extends Morph {
     this.initControls();
     arr.groupBy(this.target.attributeConnections || [], c => c.sourceAttrName)
        .forEachGroup((propertyName, connections) => {
-      let center = placementPoints.pop()
+      let [center, orientation] = placementPoints.pop()
       this.addMorphBack(
         new ConnectionPin({
           expanded: false,
@@ -869,7 +891,7 @@ export class ConnectionHalo extends Morph {
           connections,
           target: this.target,
           collapsible: true,
-          orientation: this.bounds().partNameNearest(sides, center)
+          orientation
         })
       ).position = center;
     });
