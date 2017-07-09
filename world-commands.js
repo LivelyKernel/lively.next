@@ -575,6 +575,15 @@ var commands = [
   },
 
   {
+    name: "open scene graph inspector",
+    exec: async (world, args = {target: null}) => {
+      let inspector = await loadObjectFromPartsbinFolder("scene graph inspector");
+      inspector.targetMorph = args.target || world;
+      return inspector.openInWindow({title: "morph graph"});
+    }
+  },
+
+  {
     name: "open browser",
     progressIndicator: "opening browser...",
     exec: async (world, args = {packageName: "lively.morphic", moduleName: "morph.js"}, _, evt) => {

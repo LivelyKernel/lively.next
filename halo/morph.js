@@ -11,9 +11,9 @@ import { obj, promise, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
 import { Icon } from "lively.morphic/components/icons.js";
 import { createMorphSnapshot } from "../serialization.js";
-import { ConnectionInspector, ConnectionHalo } from "../fabrik.js";
+import { ConnectionHalo } from "../fabrik.js";
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from "./drag-guides.js";
-import { TreeData, Tree } from "../components/tree.js";
+
 
 
 
@@ -1631,102 +1631,4 @@ export class InteractiveMorphSelector {
     this.whenDone && this.whenDone.resolve(this.targetObject);
   }
 
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function morphToTreeNode(morph, submorphFilter = m => true) {
-  return {
-    morph,
-    isCollapsed: true, 
-    isSelected: false,
-    _childMap: new WeakMap(),
-    get children() {
-      return this.morph.submorphs.filter(submorphFilter).map(m => {
-        let node = this._childMap.get(m);
-        if (!node) {
-          node = morphToTreeNode(m, submorphFilter);
-          this._childMap.set(m, node);
-        }
-        return node;
-      });;
-    }
-  }
-}
-
-class MorphSceneTreeData extends TreeData {
-  static empty() {
-    return new this({children: [], isCollapsed: true})
-  }
-  display(node) { return node.morph ? node.morph.toString() : "root" }
-  isCollapsed(node) { return node.isCollapsed; }
-  collapse(node, bool) { node.isCollapsed = bool; }
-  getChildren(node) { return node.children; }
-  isLeaf(node) { return node.morph.submorphs.length === 0; }
-}
-
-export class TreeMorphSelector {
-
-  constructor(rootMorph) {
-    this.widget = null;
-    this.rootMorph = rootMorph;
-  }
-
-  openInWindow(title = "morph tree") {
-    return this.build().openInWindow({title})
-  }
-
-  get rootMorph() { return this._rootMorph; }
-  set rootMorph(m) {
-    this._rootMorph = m;
-    let {widget} = this;
-    if (widget) {
-      let tree = widget.get("tree")
-      tree.treeData = m ? new MorphSceneTreeData({
-        children: [morphToTreeNode(m)],
-        isCollapsed: false
-      }) : MorphSceneTreeData.empty();
-    }
-  }
-
-  build() {
-    if (this.widget) return this.widget;
-
-    let widget = this.widget = morph({
-      extent: pt(300, 300),
-      submorphs: [
-        new Tree({
-          extent: pt(300,270), fill: Color.white, border: {color: Color.gray, width: 1},
-          name: "tree",
-          treeData: MorphSceneTreeData.empty()
-        }),
-        {
-          type: "button",
-          label: "inspect",
-          name: "inspect button",
-          bottomLeft: pt(10, 300 - 10)
-        },
-        {
-          type: "button",
-          label: "edit",
-          name: "edit button",
-          bottomLeft: pt(110, 300 - 10)
-        }
-      ]
-    });
-    
-    connect(widget.get("tree"), 'selection',      this, 'showMorph');
-    connect(widget.get("inspect button"), 'fire', this, 'inspectMorph');
-    connect(widget.get("edit button"), 'fire',    this, 'editMorph');
-
-    this.rootMorph = this.rootMorph;
-
-    return widget;
-  }
-
-  get selectedMorph() { return this.widget.get("tree").selection.morph; }
-
-  editMorph() { this.selectedMorph.edit(); }
-  inspectMorph() { this.selectedMorph.inspect(); }
-  showMorph() { this.selectedMorph.show(); }
 }
