@@ -85,13 +85,13 @@ export default class L2LTracker extends L2LConnection {
         toRemove = ids.filter(id => !this.getSocketForClientId(id));
     toRemove.forEach(id => this.clients.delete(id));
     if (toRemove.length)
-      console.log(`[${this}] removing disconnected clients ${ids.join(",")}`)
+      console.log(`[l2l] ${this} removing disconnected clients ${ids.join(",")}`)
   }
 
   open() {
     if (this.isOnline()) return Promise.resolve(this);
 
-    if (this.debug) console.log(`[${this}] starts listening to connection events`);
+    if (this.debug) console.log(`[l2l] ${this} starts listening to connection events`);
 
     this._open = true;
     this.ioNamespace.on("connection", this._connectionHandler = this.onConnection.bind(this));
@@ -100,7 +100,7 @@ export default class L2LTracker extends L2LConnection {
 
   close() {
     if (!this.isOnline()) return Promise.resolve();
-    if (this.debug) console.log(`[${this}] stops listening to connection events`)
+    if (this.debug) console.log(`[l2l] ${this} stops listening to connection events`)
 
     this.ioNamespace.removeListener("connection", this._connectionHandler)
 
@@ -112,7 +112,7 @@ export default class L2LTracker extends L2LConnection {
         s.disconnect(true);
         this.io.nsps[ns].remove(s);
       } catch (e) {
-        console.error("error in ${this}.disconnect", e.stack || e)
+        console.error(`error in ${this}.disconnect`, e.stack || e)
       }
     }
     delete this.io.nsps[ns]
@@ -130,14 +130,14 @@ export default class L2LTracker extends L2LConnection {
   }
 
   onConnection(socket) {
-    if (this.debug) console.log(`[${this}] got connection request ${socket.id}`);
+    if (this.debug) console.log(`[l2l] ${this} got connection request ${socket.id}`);
 
     socket.join('defaultRoom');
-    if (this.debug) console.log(`[${socket.id}] joined defaultRoom`);
+    if (this.debug) console.log(`[l2l] ${socket.id} joined defaultRoom`);
 
     // FIXME, remove this
     let ip = socket.request.headers["x-real-ip"] || socket.request.socket.remoteAddress;
-    console.log(`[${this}] client connected ${socket.id} ${ip}`);
+    console.log(`[l2l] ${this} client connected ${socket.id} ${ip}`);
 
     socket.on("error", (err) => this.onError(err));
     socket.on("connect", () => this.onConnect(socket));
@@ -147,15 +147,15 @@ export default class L2LTracker extends L2LConnection {
   }
 
   onConnect(socket) {
-    if (this.debug) console.log(`[${this}] connected to ${socket.id}`);
+    if (this.debug) console.log(`[l2l] ${this} connected to ${socket.id}`);
   }
 
   onDisconnect(socket) {
-    if (this.debug) console.log(`[${this}] disconnected from ${socket.id}`);
+    if (this.debug) console.log(`[l2l] ${this} disconnected from ${socket.id}`);
   }
 
   registerClient({sender, data}, answerFn, socket) {
-    this.debug && console.log(`[${this}] got register request ${JSON.stringify({sender, data})}`);
+    this.debug && console.log(`[l2l] ${this} got register request ${JSON.stringify({sender, data})}`);
     this.clients.set(sender, {socketId: socket.id, registeredAt: new Date(), info: data});
     var msgNo = this._outgoingOrderNumberingByTargets.get(sender);
     typeof answerFn === "function" && answerFn({nextMessageNumber: msgNo, trackerId: this.id});
@@ -163,13 +163,13 @@ export default class L2LTracker extends L2LConnection {
 
   unregisterClient(_, answerFn, socket) {
     var clientId = this.getClientIdForSocketId(socket.id);
-    this.debug && console.log(`[${this}] got unregister request ${clientId}`);
+    this.debug && console.log(`[l2l] ${this} got unregister request ${clientId}`);
     this.clients.delete(clientId);
     typeof answerFn === "function" && answerFn();
   }
 
   receive(msg, socket, ackFn) {
-    // this.debug && console.log(`[${this}] received`, msg);
+    // this.debug && console.log(`[l2l] ${this} received`, msg);
 
     // 1. is the message for the tracker itself?
     if (!msg.target || msg.target === this.id || msg.target === "tracker") {
