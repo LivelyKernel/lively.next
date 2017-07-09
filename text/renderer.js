@@ -452,13 +452,16 @@ export default class Renderer {
           height,
           scroll,
           padding: {x: padLeft, y: padTop, width: padWidth, height: padHeight},
-          document: doc
+          document: doc,
+          clipMode
         } = morph,
         padRight = padLeft + padWidth,
         padBottom = padTop + padHeight,
         scrollTop = scroll.y,
         scrollHeight = height,
-        textHeight = doc.height;
+        lastLineNo = doc.rowCount-1,
+        textHeight = doc.height,
+        clips = clipMode !== "visible";
 
     // figure out where the visible area of the text starts / ends in terms of
     // visible lines
@@ -468,20 +471,19 @@ export default class Renderer {
       offset: startOffset,
       y: heightBefore,
       row: startRow
-    } = doc.findLineByVerticalOffset(Math.max(0, scrollTop - padTop))
-     || doc.getLine(0) || {startRow: 0, heightBefore: 0, startOffset: 0};
+    } = doc.findLineByVerticalOffset(clips ? Math.max(0, clips ? scrollTop - padTop : 0) : 0)
+     || {row: 0, y: 0, offset: 0, line: doc.getLine(0)};
 
     let {
       line: endLine,
       offset: endLineOffset,
-      y: endY,
       row: endRow
-    } = doc.findLineByVerticalOffset(Math.min(doc.height, (scrollTop - padTop) + scrollHeight))
-     || doc.getLine(doc.rowCount-1) || {endRow: 0, endLineOffset: 0, endY: 0};
+    } = doc.findLineByVerticalOffset(clips ? Math.min(textHeight, (scrollTop - padTop) + scrollHeight) : textHeight)
+     || {row: lastLineNo, offset: 0, y: 0, line: doc.getLine(lastLineNo)};
 
-    let firstVisibleRow = startRow,
+    let firstVisibleRow = clips ? startRow : 0,
         firstFullyVisibleRow = startOffset === 0 ? startRow : startRow + 1,
-        lastVisibleRow = endRow + 1,
+        lastVisibleRow = clips ? endRow + 1 : lastLineNo,
         lastFullyVisibleRow = !endLine || endLineOffset === endLine.height ? endRow : endRow-1;
 
     // render lines via virtual-dom
