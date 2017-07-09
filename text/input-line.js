@@ -483,7 +483,10 @@ export class PasswordInputLine extends HTMLMorph {
     this.lastInput = this.input
   }
 
-  focus() { this.domNode && this.domNode.focus() }
+  focus() {
+    super.focus()
+    this.domNode && this.domNode.focus(); 
+  }
 
   acceptInput() { var i = this.input; signal(this, "inputAccepted", i); return i; }
   onInputChanged(change) { signal(this, "inputChanged", change); }
