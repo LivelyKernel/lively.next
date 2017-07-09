@@ -1,3 +1,4 @@
+/*global System*/
 import { arr, obj } from "lively.lang"
 import { query, parse } from "lively.ast";
 import { pt } from "lively.graphics";
@@ -21,8 +22,9 @@ export async function findTestModulesInPackage(systemInterface, packageOrUrl) {
   return Promise.all(
     resources.map(async ({url}) => {
       if (!url.endsWith(".js")) return null;
-      var source = await systemInterface.moduleRead(url),
-          hasMochaImports = query.imports(query.scopes(parse(source))).some(({fromModule}) =>
+      var source = await systemInterface.moduleRead(url), parsed;
+      try { parsed = parse(source) } catch (err) { return null; }
+      let hasMochaImports = query.imports(query.scopes(parsed)).some(({fromModule}) =>
             fromModule.includes("mocha-es6"));
       if (!hasMochaImports) return null;
       try { return testsFromSource(source).length ? url : null; } catch (e) { return null; }
@@ -37,8 +39,11 @@ export function testsFromSource(sourceOrAst) {
   //  {fullTitle: "completion of resolved promise", node: {/*...*/}, type: "test"}]
 
   var testStack = [], testsAndSuites = [],
-      {parse} = System.get(System.decanonicalize("lively.ast")),
-      ast = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
+      {parse} = System.get(System.decanonicalize("lively.ast")), ast;
+
+  try {
+    ast = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
+  } catch (err) { return testsAndSuites; }
 
   lively.ast.acorn.walk.recursive(ast, {}, {
     CallExpression: (node, state, c) => {
@@ -492,19 +497,24 @@ export default class TestRunner extends HTMLMorph {
     return `System.get(System.normalizeSync('lively.morphic')).MorphicEnv.default().world.getMorphWithId('${this.id}')`;
   }
 
-  renderTests(state) {
+  async renderTests(state) {
+
     var self = this,
         collapsed = Object.keys(state.collapsedSuites),
         tests = state.loadedTests || [],
         runningTest = tests.find(test => test.state === "running"),
-        files = tests.map(test =>
-          this.renderFile(test.file, test.tests, collapsed)
-             + test.tests.slice(1/*except root suite*/)
+        renderedFiles = [];
+        
+        for (let test of tests) {
+          renderedFiles.push(
+            (await this.renderFile(test.file, test.tests, collapsed))
+            + test.tests.slice(1/*except root suite*/)
                .map(ea =>
                  ea.type === "test" ?
                    this.renderTest(ea, test.tests, test.file, collapsed) :
                    this.renderSuite(ea, test.tests, test.file, collapsed))
-               .join("\n"));
+               .join("\n"))
+        }
 
     this.html = `
        <div class="controls">
@@ -513,7 +523,7 @@ export default class TestRunner extends HTMLMorph {
          <input type="button" class="collapse-button" value="toggle collapse" onmouseup="${this.htmlRef}.collapseToggle()"></input>
          <span class="${runningTest ? "" : "hidden"}">Running: ${runningTest && runningTest.title}</span>
        </div>
-       <div class="suites">${files.join("\n")}</div>`;
+       <div class="suites">${renderedFiles.join("\n")}</div>`;
   }
 
   renderTest(test, testsAndSuites, file, collapsed) {
@@ -578,14 +588,15 @@ export default class TestRunner extends HTMLMorph {
             </div>`
   }
 
-  renderFile(file, testsAndSuites, collapsed) {
+  async renderFile(file, testsAndSuites, collapsed) {
     var id = file,
         myTests = testsAndSuites.filter(ea => ea.type === "test"),
         duration = arr.sum(arr.compact(myTests.map(ea => ea.duration))),
         state = (myTests||[]).some(t => t.state === "failed") ?
           "failed" : (myTests.every(t => t.state === "succeeded") ? "succeeded" : ""),
-        mod = lively.modules.module(id),
-        name = mod.package().name + "/" + mod.pathInPackage(),
+        sys = this.systemInterface,
+        pack = await sys.getPackageForModule(id),
+        name = pack ? pack.name + "/" + sys.shortModuleName(id, pack) : id,
         classes = ["test-file", state],
         isCollapsed = collapsed.includes(id);
 
@@ -659,7 +670,7 @@ export default class TestRunner extends HTMLMorph {
 
   async interactivelyloadTests() {
     let sys = this.systemInterface,
-        packages = await sys.getPackages()
+        packages = (await sys.getPackages())
           .map(({name, url}) => {
             return {isListItem: true, string: name, value: {name, url}}; }),
         {selected: [pkg]} = await $world.filterableListPrompt(
