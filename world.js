@@ -608,17 +608,10 @@ export class World extends Morph {
       opts.customize(promptMorph);
 
     if (opts.animated) {
-      if (this.previousPrompt) {
+      if (this.previousPrompt && this.previousPrompt.world()) {
         this.previousPrompt.transitionTo(promptMorph);
       } else {
-        var animator = this.addMorph({
-          fill: Color.transparent, extent: pt(1,1),
-          opacity: 0, center: this.center,
-          scale: 2, submorphs: [promptMorph]
-        });
-        await animator.animate({scale: 1, opacity: 1, duration: 500});
         promptMorph.openInWorld(promptMorph.globalPosition);
-        animator.remove();
       }
     }
     this.previousPrompt = promptMorph;
