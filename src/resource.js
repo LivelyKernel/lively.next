@@ -111,6 +111,37 @@ export default class Resource {
         && otherRes.parents().some(p => p.equals(this));
   }
 
+  query() {
+    let url = this.url;
+    let [_, search] = this.url.split("?"), query = {};
+    if (!search) return query;
+    var args = search && search.split("&");
+    if (args) for (var i = 0; i < args.length; i++) {
+      var keyAndVal = args[i].split("="),
+          key = keyAndVal[0],
+          val = true;
+      if (keyAndVal.length > 1) {
+        val = decodeURIComponent(keyAndVal.slice(1).join("="));
+        if (val.match(/^(true|false|null|[0-9"[{].*)$/))
+          try { val = JSON.parse(val); } catch(e) {
+            if (val[0] === "[") val = val.slice(1,-1).split(","); // handle string arrays
+            // if not JSON use string itself
+          }
+      }
+      query[key] = val;
+    }
+    return query;
+  }
+
+  withQuery(queryObj) {
+    let query = {...this.query(), ...queryObj},
+        [url] = this.url.split("?"),
+        queryString = Object.keys(query)
+          .map(key => `${key}=${encodeURIComponent(String(query[key]))}`)
+          .join("&");
+    return this.newResource(`${url}?${queryString}`);
+  }
+
   commonDirectory(other) {
     if (other.schemeAndHost() !== this.schemeAndHost()) return null;
     if (this.isDirectory() && this.equals(other)) return this;

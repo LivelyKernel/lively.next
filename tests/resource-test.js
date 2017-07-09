@@ -1,4 +1,4 @@
-/*global beforeEach, afterEach, describe, it*/
+/*global beforeEach, afterEach, describe, it,System*/
 
 import { expect } from "mocha-es6";
 
@@ -289,6 +289,19 @@ describe("url operations", () => {
 });
 
 
+describe("url queries", () => {
+
+  it("read and set", () => {
+    expect(resource("local://fooo?foo&bar=23").query()).deep.equals({bar: 23, foo: true});
+    expect(resource("local://fooo").query()).deep.equals({});
+    expect(resource("local://fooo").withQuery({bar: 23, foo: true}).url)
+      .equals("local://fooo?bar=23&foo=true");
+    expect(resource("local://fooo?baz=zork").withQuery({bar: 23, foo: true}).url)
+      .equals("local://fooo?baz=zork&bar=23&foo=true");
+  });
+
+});
+
 describe("extensions", () => {
 
   it("registers and unregisters resource extension", async () => {
@@ -305,4 +318,3 @@ describe("extensions", () => {
   });
 
 });
-
