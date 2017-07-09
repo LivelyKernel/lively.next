@@ -131,6 +131,7 @@ export default class Halo extends Morph {
   }
 
   alignWithTarget() {
+    if (this.active) return;
     if (!this.world()) {
       this.visible = false;
       return this.whenRendered().then(() => {
@@ -259,6 +260,7 @@ export default class Halo extends Morph {
           delta.x * width,
           delta.y * height),
         oldPosition = this.target.position;
+    this.active = true;
     this.target.setBounds(bounds.insetByRect(offsetRect));
     if (this.target.isPolygon || this.target.isPath) {
       // refrain from adjusting origin
@@ -267,6 +269,8 @@ export default class Halo extends Morph {
       this.target.origin = origin.addPt({x: -offsetRect.x, y: -offsetRect.y});
       this.target.position = oldPosition;
     }
+    this.active = false;
+    this.alignWithTarget();
   }
 
   proportionalDelta(corner, delta, bounds) {
@@ -727,7 +731,7 @@ class NameHaloItem extends HaloItem {
     this.validityIndicator = Icon.makeLabel("check", {
       fontColor: Color.green,
       fontSize: 15,
-      padding: rect(4, 2, 4, 0)
+      padding: rect(4, 6, 4, 0)
     });
 
     this.alignInHalo();
