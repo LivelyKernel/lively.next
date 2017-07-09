@@ -846,6 +846,7 @@ export class Text extends Morph {
 
   async lookupEditorPluginNamed(modeName) {
     // let modeName = "js"
+    modeName = config.ide.modes.aliases[modeName] || modeName;
     let isAbsURL = /^[^:\\]+:\/\//.test(modeName),
         url = isAbsURL ? modeName : `lively.morphic/ide/${modeName}/editor-plugin.js`;
     if (!await lively.modules.doesModuleExist(url)) return null;
@@ -1143,7 +1144,7 @@ export class Text extends Morph {
     for (let i = 0; i < textAndAttributes.length; i = i + 2) {
       let content = textAndAttributes[i], attrs = textAndAttributes[i + 1];
       if (content.isMorph) morphsInAddedText.push(content);
-      if (attrToExtend) textAndAttributes[i + 1] = {...attrs, ...attrToExtend};
+      if (attrToExtend) textAndAttributes[i + 1] = {...attrToExtend, ...attrs};
     }
 
     undoGroup && this.undoManager.undoStart(this, "replace");
