@@ -570,7 +570,7 @@ var commands = [
         world.setStatusMessage("no target for Inspector");
         return null;
       }
-      return inspect({target: args.target});
+      return inspect(args.target);
     }
   },
 
