@@ -98,21 +98,43 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // initial world files
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     console.log(`=> setting up scripts and assets`);
+      
+    // FIXME, this is old stuff...
     let toRemove = [
-      "rebuild.sh",
-      "backup.sh",
-      "package.json",
-      "index.js",
-      "index.html",
-      "mirror.js",
-      "mirror.html",
-      "fix-links.js"]
+          "rebuild.sh",
+          "backup.sh",
+          "package.json",
+          "index.js",
+          "index.html",
+          "mirror.js",
+          "mirror.html",
+          "fix-links.js"],
+        toInstall = [
+          {path: "lively.installer/assets/config.js",      canBeLinked: true, overwrite: true},
+          {path: "lively.installer/assets/localconfig.js", canBeLinked: false, overwrite: false},
+          {path: "lively.installer/assets/start.sh",       canBeLinked: true, overwrite: true},
+          {path: "lively.installer/assets/update.sh",      canBeLinked: true, overwrite: true},
+          {path: "lively.installer/assets/config.js",      canBeLinked: true, overwrite: true},
+          {path: "lively.morphic/assets/favicon.ico",      canBeLinked: true, overwrite: true},
+        ];
+
     for (let fn of toRemove)
       await safelyRemove(resource(baseDir), resource(baseDir).join(fn));
 
-    await resource(baseDir).join("lively.installer/assets/start.sh").copyTo(resource(baseDir).join("start.sh"));
-    await resource(baseDir).join("lively.installer/assets/update.sh").copyTo(resource(baseDir).join("update.sh"));
-    await resource(baseDir).join("lively.morphic/assets/favicon.ico").copyTo(resource(baseDir).join("favicon.ico"));
+    for (let {path, overwrite, canBeLinked} of toInstall) {
+      let from = resource(baseDir).join(path),
+          to = resource(baseDir).join(from.name());
+      if (await to.exists()) {
+        if (!overwrite) continue;
+        if (await to.read() !== await from.read())
+          await safelyRemove(resource(baseDir), to);
+      }
+      if (!canBeLinked || process.platform === "win32") {
+        await from.copyTo(to);
+      } else {
+        await exec(`ln -sf ${from.path()} ${to.path()}`);
+      }
+    }
 
     await exec("chmod a+x start.sh update.sh", {cwd: resource(baseDir).path()});
 

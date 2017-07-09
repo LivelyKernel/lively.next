@@ -17,5 +17,5 @@ eval $(node -p 'let PWD=process.cwd();let packages = JSON.parse(require("fs").re
 cd lively.server;
 
 node bin/start-server.js \
-  -p 9011 --hostname 0.0.0.0 \
-  --root-directory $lv_next_dir
+  --root-directory $lv_next_dir \
+  --config $lv_next_dir/config.js
