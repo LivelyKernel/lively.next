@@ -4,19 +4,13 @@
 var start = require("../index.js");
 
 var parseArgs = require('minimist'),
-    port = 3000,
-    hostname = "localhost",
-    rootDirectory = process.cwd(),
+    defaultRootDirectory = process.cwd(),
     isMain = !module.parent;
 
 if (isMain) {
   var args = parseArgs(process.argv.slice(2), {
     alias: {port: "p", "root-directory": "d"}
   });
-
-  if ("port" in args) port = args.port;
-  if ("hostname" in args) hostname = args.hostname;
-  if ("root-directory" in args) rootDirectory = args["root-directory"];
+  start(args.hostname, args.port, args.config, args["root-directory"] || defaultRootDirectory);
 }
 
-start(hostname, port, rootDirectory);

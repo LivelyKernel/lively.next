@@ -6,13 +6,23 @@ require("socket.io");
 
 const defaultServerDir = __dirname;
 var livelySystem;
+var config = {
+  serverDir: defaultServerDir,
+  port: 9011,
+  hostname: "localhost",
+  rootDirectory: null,
+  plugins: []
+};
 
-module.exports = function start(hostname, port, rootDirectory, serverDir) {
-  if (!rootDirectory) rootDirectory = process.cwd();
-  if (!serverDir) serverDir = defaultServerDir;
-
+module.exports = function start(hostname, port, configFile, rootDirectory, serverDir) {
+  config.rootDirectory = rootDirectory || process.cwd();
+  config.serverDir = serverDir || defaultServerDir;
+  setupLogger();
   var step = 1;
-  console.log(`Lively server starting with root dir ${rootDirectory}`);
+  console.log(`[lively.server] system base directory: ${rootDirectory}`);
+  return setupSystem(config.rootDirectory)
+    .then(() => console.log(`[lively.server] ${step++}. preparing system`))
+    .then(() => lively.modules.registerPackage(config.serverDir))
 
   return setupLivelyModulesTestSystem(rootDirectory)
     .then(() => console.log(`[lively.server] ${step++}. preparing system...`))
@@ -22,10 +32,22 @@ module.exports = function start(hostname, port, rootDirectory, serverDir) {
     .then(resources => resources.ensureFetch())
     .then(() => livelySystem.import("lively.storage"))
     .then(() => livelySystem.import("lively-system-interface"))
+    .then(() => configFile ? console.log(`[lively.server] ${step++}. loading ${configFile}`) : null)
+    .then(() => configFile ? livelySystem.import(configFile) : null)
+    .then(configMod => {
+      if (!configMod || !configMod.default || !configMod.default.server) return;
+      Object.assign(config, configMod.default.server);
+      // passed in arguments take precedence
+      if (hostname) config.hostname = hostname;
+      if (port) config.port = port;
+     })
+
     // 2. this loads and starts the server
     .then(() => console.log(`[lively.server] ${step++}. starting server...`))
     .then(() => livelySystem.import(serverDir + "/server.js"))
     .then(serverMod => startServer(serverMod, serverDir, port, hostname, rootDirectory))
+    .then(() => livelySystem.import(config.serverDir + "/server.js"))
+    .then(serverMod => startServer(serverMod, config))
     .then(server => {
       console.log(`[lively.server] ${step++}. ${server} running`);
       return server;
@@ -48,23 +70,12 @@ function setupLivelyModulesTestSystem(rootDirectory) {
   return registry.update();
 }
 
-function startServer(serverMod, serverDir, port, hostname, rootDirectory) {
-  var opts = {port, hostname, plugins: [], jsdav: {rootDirectory}};
+function startServer(serverMod, config) {
+  let {serverDir, port, hostname, rootDirectory} = config,
+      serverConfig = {port, hostname, plugins: [], jsdav: {rootDirectory}};
   return Promise.all(
-    [
-      serverDir + "/plugins/cors.js",
-      serverDir + "/plugins/proxy.js",
-      serverDir + "/plugins/socketio.js",
-      serverDir + "/plugins/eval.js",
-      serverDir + "/plugins/l2l.js",
-      serverDir + "/plugins/remote-shell.js",
-      serverDir + "/plugins/world-loading.js",
-      serverDir + "/plugins/lib-lookup.js",
-      serverDir + "/plugins/dav.js",
-      serverDir + "/plugins/moduleBundler.js",
-      serverDir + "/plugins/user.js",
-      serverDir + "/plugins/discussion.js"
-    ].map(path => livelySystem.import(path).then(mod =>
-                    opts.plugins.push(new mod.default(opts))))
-  ).then(() => serverMod.start(opts));
+    config.plugins.map(path =>
+      livelySystem.import(path).then(mod =>
+        serverConfig.plugins.push(new mod.default(serverConfig))))
+  ).then(() => serverMod.start(serverConfig));
 }
