@@ -4779,7 +4779,12 @@ function importPackage$1(System, packageURL) {
 }
 
 function removePackage$2(System, packageURL) {
-  return getPackage$1(System, packageURL).remove();
+  var _lookupPackage3 = lookupPackage(System, packageURL),
+      pkg = _lookupPackage3.pkg,
+      url = _lookupPackage3.url,
+      registry = _lookupPackage3.registry;
+
+  return pkg ? pkg.remove() : null;
 }
 
 function reloadPackage$1(System, packageURL, opts) {
