@@ -23,7 +23,7 @@ export default class LivelyServer {
     return {
       hostname: "localhost",
       port: 9101,
-      debug: true,
+      debug: false,
       ...opts
     }
   }
@@ -204,7 +204,7 @@ export default class LivelyServer {
       }
     }
 
-    this.debug && console.log(`[${this}] Installed plugins: ${toInstallOrdered.map(ea => ea.pluginId).join(", ")}`);
+    this.debug && console.log(`[lively.server] ${this}, installed plugins: ${toInstallOrdered.map(ea => ea.pluginId).join(", ")}`);
   }
 
   removePlugin(plugin) {

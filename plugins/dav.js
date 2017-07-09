@@ -3,9 +3,20 @@
 import { obj } from "lively.lang";
 
 // FIXME...
-var DavHandler = System._nodeRequire(`jsDAV/lib/DAV/handler`),
-    FsTree = System._nodeRequire(`jsDAV/lib/DAV/backends/fs/tree`),
-    defaultPlugins = System._nodeRequire(`jsDAV/lib/DAV/server`).DEFAULT_PLUGINS;
+var DavHandler, FsTree, jsDavPlugins = {};
+(function loadJsDAV() {
+  // jsDAV shows unimportant console logs while loading, hide those...
+  let log = console.log;
+  console.log = () => {}
+  try {
+    DavHandler = System._nodeRequire(`jsDAV/lib/DAV/handler`);
+    FsTree = System._nodeRequire(`jsDAV/lib/DAV/backends/fs/tree`);
+    jsDavPlugins.browser = System._nodeRequire(`jsDAV/lib/DAV/plugins/browser.js`);
+  }
+  catch (err) { console.error(`cannot load jsdav:` , err); }
+  finally { console.log = log; }  
+})();
+
 
 
 export default class LivelyDAVPlugin {
@@ -20,7 +31,7 @@ export default class LivelyDAVPlugin {
   }
 
   setOptions(opts) { Object.assign(this.options, opts); }
-  
+
   get pluginId() { return "jsdav"; }
 
   get after() { return ["cors", "socketio", "eval"]; }
@@ -37,7 +48,7 @@ export default class LivelyDAVPlugin {
     server.tmpDir = './tmp'; // httpPut writes tmp files
     server.options = {};
     // for showing dir contents
-    server.plugins = obj.select(defaultPlugins, ["browser"]);
+    server.plugins = {...jsDavPlugins};
 
     // https server has slightly different interface
     if (!server.baseUri) server.baseUri = '/';

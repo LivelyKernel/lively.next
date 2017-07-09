@@ -1,8 +1,11 @@
 /*global process,require,__dirname,module*/
 require("systemjs");
-let modules = require("lively.modules");
-let resource = lively.resources.resource;
+const modules = require("lively.modules");
+const resource = lively.resources.resource;
 require("socket.io");
+const util = require('util');
+const winston = require("winston")
+
 
 const defaultServerDir = __dirname;
 var livelySystem;
@@ -24,14 +27,15 @@ module.exports = function start(hostname, port, configFile, rootDirectory, serve
     .then(() => console.log(`[lively.server] ${step++}. preparing system`))
     .then(() => lively.modules.registerPackage(config.serverDir))
 
-  return setupLivelyModulesTestSystem(rootDirectory)
-    .then(() => console.log(`[lively.server] ${step++}. preparing system...`))
-    .then(() => lively.modules.registerPackage(serverDir))
     // 1. This loads the lively system
     .then(() => livelySystem.import("lively.resources"))
     .then(resources => resources.ensureFetch())
     .then(() => livelySystem.import("lively.storage"))
-    .then(() => livelySystem.import("lively-system-interface"))
+    .then(() =>
+      silenceDuring(
+        // we use "GLOBAL" as normally declared var, nodejs doesn't seem to care...
+        data => !String(data).includes("DeprecationWarning: 'GLOBAL'"),
+        livelySystem.import("lively-system-interface")))
     .then(() => configFile ? console.log(`[lively.server] ${step++}. loading ${configFile}`) : null)
     .then(() => configFile ? livelySystem.import(configFile) : null)
     .then(configMod => {
@@ -43,24 +47,49 @@ module.exports = function start(hostname, port, configFile, rootDirectory, serve
      })
 
     // 2. this loads and starts the server
-    .then(() => console.log(`[lively.server] ${step++}. starting server...`))
-    .then(() => livelySystem.import(serverDir + "/server.js"))
-    .then(serverMod => startServer(serverMod, serverDir, port, hostname, rootDirectory))
+    .then(() => console.log(`[lively.server] ${step++}. starting server`))
     .then(() => livelySystem.import(config.serverDir + "/server.js"))
     .then(serverMod => startServer(serverMod, config))
     .then(server => {
-      console.log(`[lively.server] ${step++}. ${server} running`);
+      console.log(`[lively.server] ${step++}. server sucessfully started`);
       return server;
     })
+
     .catch(err => {
       console.error(`Error starting server: ${err.stack}`);
-      console.log(err)
       process.exit(1);
     });
 };
 
+async function silenceDuring(filter, promise) {
+  let {stdout, stderr} = process,
+      {write: stdoutWrite} = stdout,
+      {write: stderrWrite} = stderr;
+  stdout.write = d => filter(d) && stdoutWrite.call(stdout, d);
+  stderr.write = d => filter(d) && stderrWrite.call(stderr, d);
+  try { return await promise; } finally {
+    stdout.write = stdoutWrite;
+    stderr.write = stderrWrite;
+  }
+}
 
-function setupLivelyModulesTestSystem(rootDirectory) {
+function formatArgs(args){
+  return [util.format.apply(util.format, Array.prototype.slice.call(args))];
+}
+
+function setupLogger() {
+  let logger = new winston.Logger();
+  logger.add(winston.transports.Console, {colorize: true, timestamp: true});
+  console.livelyLogger = logger;
+  console.log = function() { logger.info.apply(logger, formatArgs(arguments)); };
+  console.info = function() { logger.info.apply(logger, formatArgs(arguments)); };
+  console.warn = function() { logger.warn.apply(logger, formatArgs(arguments)); };
+  console.error = function() { logger.error.apply(logger, formatArgs(arguments)); };
+  console.debug = function() { logger.debug.apply(logger, formatArgs(arguments)); };
+  return logger;
+}
+
+function setupSystem(rootDirectory) {
   var baseURL = "file://" + rootDirectory;
   livelySystem = lively.modules.getSystem("lively", {baseURL});
   lively.modules.changeSystem(livelySystem, true);
