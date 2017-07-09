@@ -1956,6 +1956,11 @@ export class Morph {
       ]]);
     }
 
+    if (this.submorphs.length) {
+      items.push(["Select all submorphs",
+        () => this.world().showHaloFor(this.submorphs.slice())]);
+    }
+
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // stepping scripts
     var steppingItems = [];
