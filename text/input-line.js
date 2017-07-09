@@ -1,7 +1,7 @@
 /*global System*/
 // import config from "../config.js";
 import { obj, arr, num } from "lively.lang";
-import { Rectangle, Color, pt } from "lively.graphics";
+import { Rectangle, rect, Color, pt } from "lively.graphics";
 import { connect, signal, disconnect } from "lively.bindings"; // for makeInputLine
 import { Text } from "../text/morph.js"
 import { Range } from "./range.js";
@@ -171,6 +171,18 @@ export default class InputLine extends Text {
     this.updatePlaceholder();
   }
 
+  onChange(change) {
+    if (["extent",
+         "fontSize",
+         "padding",
+         "fontFamily",
+         "position",
+         "selection"].includes(change.prop)) { this.updatePlaceholder(); }
+
+
+    return super.onChange(change);
+  }
+
   get isInputLine() { return true; }
 
   get allowDuplicatesInHistory() { return false }
@@ -201,18 +213,20 @@ export default class InputLine extends Text {
   updatePlaceholder() {
     let placeholder = this.getSubmorphNamed("placeholder");
     if (!placeholder) return;
-    if (this.input.length) {
+    if (!!this.input.length) {
       placeholder.visible = false;
       return;
     }
+
+    let textB = this.textBounds();
+    placeholder.leftCenter = this.label.length
+                           ? textB.rightCenter().addXY(0, this.borderWidth)
+                           : textB.leftCenter().withX(0);
     placeholder.visible = true;
     placeholder.height = this.height;
     placeholder.padding = this.padding;
     placeholder.defaultTextStyle = this.defaultTextStyle;
-    if (this.label.length)
-      placeholder.leftCenter = this.textBounds().rightCenter().addXY(0, this.borderWidth);
-    else
-      placeholder.leftCenter = pt(0, this.height/2);
+    placeholder.lineHeight = this.height + "px";
   }
 
   fixCursor() {
@@ -382,30 +396,56 @@ export class PasswordInputLine extends HTMLMorph {
 
   static get properties() {
     return {
+      // this.clipMode = "hidden"
       extent: {defaultValue: pt(100,20)},
+
       html: {
-        initialize() {
-          this.html = `<input style="height: calc(100% - 6px); width: calc(100% - 6px);" type="password" value="">`;
-        }
+        derived: true,
+        initialize() {},
+        get() { return ""; },
+        set(x) {}
       },
 
-      inputNode: {
-        readOnly: true, derived: true, after: ["domNode"],
-        get() { return this.domNode.childNodes[0]; }
-      },
+      domNodeTagName: {readOnly: true, get() { return "input"; }},
+      domNodeStyle: {readOnly: true, get() { return ""; }},
 
       input: {
-        derived: true, after: ["inputNode"],
-        get() { return this.inputNode.value || ""; },
-        set(val) { this.ensureInputNode().then(n => n.value = val); }
+        derived: true, after: ["domNode"],
+        get() { return (this.domNode && this.domNode.value) || ""; },
+        set(val) { this.updateHtml(this.input); }
       },
 
       placeholder: {
-        derived: true, after: ["inputNode"],
-        get() { return this.inputNode.placeholder; },
-        set(val) { this.ensureInputNode().then(n => n.placeholder = val); }
-      }
+        after: ["domNode"],
+        set(val) { this.setProperty("placeholder", val); this.updateHtml(this.input); }
+      },
 
+      fontSize: {
+        defaultValue: 12, after: ["input"],
+        set(value) { this.setProperty("fontSize", value); this.updateHtml(this.input); }
+      },
+
+      fontFamily: {
+        defaultValue: "sans-serif", after: ["input"],
+        set(value) { this.setProperty("fontFamily", value); this.updateHtml(this.input); }
+      },
+
+      padding: {
+        defaultValue: Rectangle.inset(2), after: ["input"],
+        set(value) { this.setProperty("padding", value); this.updateHtml(this.input); }
+      },
+
+      // extent: {
+      //   defaultValue: pt(100,20), after: ["input"],
+      //   get(value) {
+      //     let ext = this.getProperty("extent"), pad = this.padding;
+      //     return ext.addXY(pad.left() + pad.right(), pad.top() + pad.bottom());
+      //   },
+      //   set(value) {
+      //     let pad = this.padding;
+      //     this.setProperty("extent", value.addXY(-(pad.left() + pad.right()), -(pad.top() + pad.bottom())));
+      //   },
+      // }
     }
   }
 
@@ -414,28 +454,25 @@ export class PasswordInputLine extends HTMLMorph {
     this.onLoad();
   }
 
+  bounds() {
+    // FIXME
+    // show(this.owner.getGlobalTransform().transformRectToRect(this.bounds()))
+
+    return super.bounds();
+    // let {padding} = this, {x,y,width, height} = super.bounds();
+    // return rect(x, y, width + padding.left()+padding.right(), height + padding.top()+padding.bottom());
+  }
+
   onLoad() {
-    this.updateHtml();
     // hmm key events aren't dispatched by default...
     this.ensureInputNode().then(node => {
+      this.updateHtml(this.input);
       node.onkeydown = evt => this.env.eventDispatcher.dispatchDOMEvent(evt, this, "onKeyDown");
       node.onkeyup = evt => this.env.eventDispatcher.dispatchDOMEvent(evt, this, "onKeyUp");
     });
   }
 
-  ensureInputNode() { return this.whenRendered().then(() => this.inputNode); }
-
-  static get properties() {
-    return {
-      fontSize: {
-        defaultValue: 12,
-        set(value) {
-          this.setProperty("fontSize", value);
-          this.updateHtml();
-        }
-      }
-    }
-  }
+  ensureInputNode() { return this.whenRendered().then(() => this.domNode); }
 
   onKeyDown(evt) {
     super.onKeyDown(evt);
@@ -446,24 +483,30 @@ export class PasswordInputLine extends HTMLMorph {
     this.lastInput = this.input
   }
 
-  get inputNode() { return this.domNode.childNodes[0]; }
-  ensureInputNode() { return this.whenRendered().then(() => this.inputNode); }
-
-  get input() { return this.inputNode.value || ""; }
-  set input(val) { 
-    this.ensureInputNode().then(n => n.value = val);
-  }
-
-  get placeholder() { return this.inputNode.placeholder; }
-  set placeholder(val) { this.ensureInputNode().then(n => n.placeholder = val); }
-
-  focus() { this.ensureInputNode().then(n => n.focus()); }
+  focus() { this.domNode && this.domNode.focus() }
 
   acceptInput() { var i = this.input; signal(this, "inputAccepted", i); return i; }
   onInputChanged(change) { signal(this, "inputChanged", change); }
 
-  updateHtml() {
-    this.html = `<input style="height: calc(100% - 6px); width: calc(100% - 6px); font-size: ${this.fontSize}pt" type="password" value="${this.input}">`;
+  async updateHtml(input) {
+    // await this.updateHtml(this.input)
+    let {fontSize, fontFamily, padding, placeholder} = this,
+        padt = padding.top(),
+        padr = padding.right(),
+        padb = padding.bottom(),
+        padl = padding.left();
+    let n = await this.ensureInputNode();
+    n.setAttribute("type", "password");
+    n.setAttribute("placeholder", placeholder);
+    n.setAttribute("value", input);
+    Object.assign(n.style, {
+      height: `calc(100% - ${padt}px - ${padb}px)`,
+      width: `calc(100% - ${padl}px - ${padr}px)`,
+      "border-width": 0,
+      padding: `${padt}px ${padr}px ${padb}px ${padl}px`,
+      "font-size": `${fontSize}px`,
+      "font-family": `${fontFamily}`
+    });
   }
 
   get commands() {

@@ -18,11 +18,12 @@ class CustomVNode {
   get type() { return "Widget"; }
 
   renderMorph() {
-    var vtree = this.morphVtree = this.renderer.renderMorph(this.morph);
+    let {morph, renderer} = this;
+    var vtree = this.morphVtree = renderer.renderMorph(morph);
     // The placeholder in vdom that our real dom node will replace
-    var key = "customNode-key-" + this.morph.id;
+    var key = "customNode-key-" + morph.id;
     if (!vtree.children[0] || vtree.children[0].key !== key)
-      vtree.children.unshift(h("div", {key}, []));
+      vtree.children.unshift(h(morph.domNodeTagName || "div", {key}, []));
     return vtree;
   }
 
@@ -69,12 +70,18 @@ export class HTMLMorph extends Morph {
         set(value) { this.domNode.innerHTML = value; }
       },
 
+      domNodeTagName: {readOnly: true, get() { return "div"; }},
+      domNodeStyle: {
+        readOnly: true,
+        get() { return "position: absolute; width: 100%; height: 100%;"; }
+      },
+
       domNode: {
         derived: true,/*FIXME only for dont serialize...*/
         get() {
           if (!this._domNode) {
-            this._domNode = this.document.createElement("div")
-            this._domNode.setAttribute("style", "position: absolute; width: 100%; height: 100%;");
+            this._domNode = this.document.createElement(this.domNodeTagName)
+            this._domNode.setAttribute("style", this.domNodeStyle);
           }
           return this._domNode
         },

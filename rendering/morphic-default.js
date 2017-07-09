@@ -129,6 +129,24 @@ div.text-layer span {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/*-=- input elements -=-*/
+
+input[type="password"]::-webkit-input-placeholder {
+  color: rgb(202, 202, 202);
+}
+input[type="password"]::-moz-placeholder {
+  color: rgb(202, 202, 202);
+}
+input[type="password"]:-ms-input-placeholder {
+  color: rgb(202, 202, 202);
+}
+input[type="password"]:-moz-placeholder {
+  color: rgb(202, 202, 202);
+}
+input[type="password"]:placeholder {
+  color: rgb(202, 202, 202);
+}
 `;
 
 
