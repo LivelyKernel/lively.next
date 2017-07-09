@@ -4,7 +4,7 @@ import { Color, rect, pt } from "lively.graphics";
 import { showConnector } from "./components/markers.js";
 import { show, HorizontalLayout, Morph, VerticalLayout, StyleSheet, Icon, GridLayout, morph, Window } from "lively.morphic";
 import { TreeData, Tree } from "./components/tree.js";
-import { arr } from "lively.lang";
+import { arr, obj } from "lively.lang";
 import { Leash, LabeledCheckBox, SearchField } from "./components/widgets.js";
 import { isArray } from "lively.lang/object.js";
 import { max } from "lively.lang/array.js";
@@ -95,7 +95,6 @@ export async function interactivelyEvaluateConnection(
     sourceObj, targetObj, connect, once
   })
   let source = await $world.editPrompt(prompt, {
-    //requester: targetObj,
     input,
     historyId: "lively.bindings-interactive-morph-connect",
     mode: "js",
@@ -354,6 +353,17 @@ class ConnectionPin extends Morph {
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
+            ".ConnectionPin.collapsed": {
+              fill: Color.rgb(133, 193, 233),
+              borderColor: Color.rgb(27, 79, 114),
+              extent: pt(15, 15),
+              borderRadius: 15
+            },
+            ".ConnectionPin.expanded": {
+              fill: Color.transparent,
+              borderColor: Color.transparent,              
+              borderRadius: 0
+            },
             ".light .connectionPin": {
               borderRadius: 5,
               fill: Color.gray.lighter(),
@@ -410,11 +420,7 @@ class ConnectionPin extends Morph {
         }
       },
       nativeCursor: {defaultValue: 'pointer'},
-      fill: {defaultValue: Color.red},
-      borderColor: {defaultValue: Color.black},
       borderWidth: {defaultValue: 2},
-      extent: {defaultValue: pt(15,15)},
-      borderRadius: {defaultValue: 15},
       expanded: {defaultValue: true},
       collapsible: {defaultValue: false},
       draggable: {defaultValue: false},
@@ -443,17 +449,15 @@ class ConnectionPin extends Morph {
     if (this.expanded) {
       this.submorphs = [this.connectionControl];
       if (duration) {
+        let styleClasses = [...arr.without(this.styleClasses, 'collapsed'), 'expanded'];
         this.connectionControl.scale = 0;
         this.connectionControl.animate({scale: 1, duration});
         this.animate({
-          layout: new HorizontalLayout(),
-          fill: Color.transparent,
-          borderColor: Color.transparent,
+          styleClasses,
           duration
         });
       } else {        
-        this.fill = this.borderColor = Color.transparent;
-        this.layout = new HorizontalLayout();
+        this.styleClasses = styleClasses;
       }
       if (world) {
           this.initPos = this.position;
@@ -465,25 +469,18 @@ class ConnectionPin extends Morph {
           duration ? this.animate({globalPosition: pos, duration}) : (this.globalPosition = pos);
         }
     } else {
+      let styleClasses = [...arr.without(this.styleClasses, 'expanded'), 'collapsed'];
       if (this.initPos) 
         duration ? 
           this.animate({position: this.initPos, duration}) : (this.position = this.initPos);
       if (duration) {
         this.submorphs[0].animate({scale: 0, duration});
-        this.borderRadius = 5;
         await this.animate({
-          layout: null,
-          fill: Color.red,
-          borderColor: Color.black,
-          extent: pt(15, 15),
-          borderRadius: 15,
+          styleClasses,
           duration
         });
       } else {
-        this.layout = null;
-        this.fill = Color.red;
-        this.borderColor = Color.black;
-        this.extent = pt(15,15);
+        this.styleClasses = styleClasses;
       }
       var l;
       this.submorphs = [
@@ -817,7 +814,7 @@ export class ConnectionHalo extends Morph {
           if (!t.world())
             throw Error('Can not display visual connections for morphs not opened in world!');
           this.setProperty('target', t);
-          this.setBounds(t.globalBounds());
+          this.alignWithTarget();
         }
       },
       styleSheets: {
@@ -843,9 +840,17 @@ export class ConnectionHalo extends Morph {
         after: ['target'],
         initialize() {
           this.placeConnectionPins();
+          this.whenRendered().then(() => this.alignWithTarget());
         }
       }
     }
+  }
+
+  alignWithTarget() {
+    if (!this.world()) return;
+    let visibleBounds = this.world().visibleBounds().insetBy(100);
+    this.setBounds(this.target.globalBounds().intersection(visibleBounds))
+    this.placeConnectionPins();
   }
 
   initControls() {
@@ -866,6 +871,7 @@ export class ConnectionHalo extends Morph {
 
     this.addMorph({
       fill: Color.transparent, 
+      name: 'control wrapper',
       bottomCenter: this.innerBounds().insetBy(-10).topCenter(),
       layout: new HorizontalLayout(),
       submorphs: [addPinButton, closeButton]
