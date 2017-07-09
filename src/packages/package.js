@@ -59,7 +59,8 @@ function importPackage(System, packageURL) {
 }
 
 function removePackage(System, packageURL) {
-  return getPackage(System, packageURL).remove();
+  let {pkg, url, registry} = lookupPackage(System, packageURL);
+  return pkg ? pkg.remove() : null;
 }
 
 function reloadPackage(System, packageURL, opts) {
