@@ -66,13 +66,11 @@ export class ColorPickerField extends Morph {
                 {
                   name: "topLeft",
                   extent: colorFieldExtent,
-                  fill: this.colorValue
                 },
                 {
                   name: "bottomRight",
                   type: "polygon",
                   extent: colorFieldExtent,
-                  fill: this.colorValue.withA(1),
                   origin: pt(0, 0),
                   vertices: [pt(0, 0), colorFieldExtent.withX(0), colorFieldExtent]
                 },
@@ -105,6 +103,7 @@ export class ColorPickerField extends Morph {
           connect(this.getSubmorphNamed('pickerButton'), 'onMouseDown', this, 'openPicker');
           connect(this.getSubmorphNamed('paletteButton'), 'onMouseDown', this, 'openPalette');
           connect(this, 'remove', this, 'removeWidgets');
+          this.colorValue && this.update(this.colorValue)
         }
       }
      }

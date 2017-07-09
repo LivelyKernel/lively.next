@@ -138,9 +138,10 @@ export class Popover extends Morph {
 }
 
 class SelectableControl extends Morph {
+  
   static get properties() {
     return {
-      value: {},
+      target: {},
       selectableControls: {},
       selectedControl: {},
       fill: {defaultValue: Color.transparent},
@@ -153,27 +154,28 @@ class SelectableControl extends Morph {
         }
       },
       submorphs: {
+        after: ['selectableControls', 'selectedControl', 'target'],
         initialize() {
           const modeSelector = new ModeSelector({
             name: "modeSelector",
             items: this.selectableControls,
             init: this.selectedControl
           });
-          this.submorphs = [
-            modeSelector,
-            this.selectableControls[this.selectedControl](this.value)
-          ];
+          this.submorphs = [modeSelector];
           modeSelector.width = 100;
           connect(modeSelector, "switchLabel", this, "select");
+          this.select(this.selectableControls[this.selectedControl]);
         }
-      }    };
+      }    
+    };
   }
   
-  select(control) {
-    const c = control(this.value);
-    c.opacity = 0;
-    this.animate({submorphs: [this.get("modeSelector"), c], duration});
-    c.animate({opacity: 1, duration});
+  async select(cmd) {
+    const control = await this.target.execCommand(cmd),
+          selector = this.get("modeSelector");
+    control.opacity = 0;
+    this.animate({submorphs: [selector, control], duration});
+    control.animate({opacity: 1, duration});
   }
 }
 
@@ -393,7 +395,7 @@ export class LayoutPopover extends StylePopover {
     this.showLayoutHaloFor(this.container)
     return [{
       fill: Color.transparent,
-      layout: new VerticalLayout({spacing: 5}),
+      layout: new VerticalLayout({spacing: 5, layoutOrder: m => this.submorphs.indexOf(m)}),
       submorphs: [this.layoutPicker(), this.layoutControls()]
     }];
   }
@@ -500,6 +502,38 @@ export class FillPopover extends StylePopover {
       connect(this, "onMouseDown", colorField, "removeWidgets");
     }
   }
+
+  get commands() {
+    return super.commands.concat([
+      {
+        name: "switch to fill",
+        exec: () => {
+          let p = new ColorPickerField({
+            name: "colorField",
+            colorValue: this.fillValue
+          });
+          p.whenRendered().then(() => {
+            this.setupConnections();
+          });
+          return p;
+        }
+      },
+      {
+        name: "switch to gradient",
+        exec: () => {
+          const g = new GradientEditor({
+            name: "gradient editor",
+            gradientValue: this.fillValue
+          });
+          g.whenRendered().then(() => {
+            this.setupConnections();
+            g.update();
+          });
+          return g;
+        }
+      }
+    ]);
+  }  
   
   controls() {
     if (!this.gradientEnabled) {
@@ -520,27 +554,11 @@ export class FillPopover extends StylePopover {
     return [
       new SelectableControl({
         name: "fillSelector",
-        value: this.fillValue,
+        target: this,
         selectedControl,
         selectableControls: {
-          Fill: value => {
-            let p = new ColorPickerField({
-              name: "colorField",
-              colorValue: value
-            });
-            p.whenRendered().then(() => {
-              this.setupConnections();
-            });
-            return p;
-          },
-          Gradient: value => {
-            const g = new GradientEditor({name: "gradient editor", gradientValue: value});
-            g.whenRendered().then(() => {
-              this.setupConnections();
-              g.update();
-            });
-            return g;
-          }
+          Fill: 'switch to fill',
+          Gradient: 'switch to gradient'
         }
       })
     ];  
