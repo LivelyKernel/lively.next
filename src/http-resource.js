@@ -257,6 +257,11 @@ export default class WebDAVResource extends Resource {
     return this.assignProperties(props); // lastModified, etag, ...
   }
 
+  async post(body = null) {
+    let res = await makeRequest(this, "POST", body, {});
+    if (!res.ok) throw new Error(`Error in POST ${this.url}: ${res.statusText}`);
+    return res.text();
+  }
 }
 
 
