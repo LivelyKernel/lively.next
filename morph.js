@@ -868,6 +868,10 @@ export class Morph {
     return this.env.world.execCommand("open object editor", {...opts, target: this});
   }
 
+  inspect(opts) {
+    return this.env.world.execCommand("open object inspector", {...opts, target: this});
+  }
+
   livelyCustomInspect() {
     var properties = [],
         ignored = [], seen = {},
