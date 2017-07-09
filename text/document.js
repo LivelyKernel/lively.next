@@ -1,3 +1,4 @@
+/*global System*/
 /*
 
 The text document deals with the actual contents of text: lines which in turn
@@ -241,38 +242,40 @@ class InnerTreeNode extends TreeNode {
 
   insert(lineSpecs, atIndex = this.size) {
 
-    if (this.isLeaf) {
+    var {children, options, isLeaf} = this;
+
+    if (isLeaf) {
       var lines = [], height = 0, stringSize = 0;
       for (var i = 0; i < lineSpecs.length; i++) {
         var line = this.ensureLine(lineSpecs[i]);
         lines.push(line);
         height = height + line.height;
         stringSize = stringSize + line.stringSize;
+        children.splice(atIndex++, 0, line);
       }
 
-      this.children.splice(atIndex, 0, ...lines);
       this.resize(lines.length, height, stringSize);
       this.balanceAfterGrowth();
       return lines;
     }
 
-    if (this.children.length === 0)
-      this.children.push(new InnerTreeNode({
+    if (children.length === 0)
+      children.push(new InnerTreeNode({
         parent: this, children: [],
         size: 0, stringSize: 0,
         width: 0, height: 0,
-        options: this.options
+        options: options
       }));
 
     var i = 0;
-    for (; i < this.children.length; i++) {
-      var child = this.children[i], childSize = child.size;
+    for (; i < children.length; i++) {
+      var child = children[i], childSize = child.size;
       if (atIndex <= childSize)
         return child.insert(lineSpecs, atIndex);
       atIndex = atIndex - childSize;
     }
 
-    var last = this.children[i-1];
+    var last = children[i-1];
     return last.insert(lineSpecs, last.size);
   }
 
@@ -1504,7 +1507,7 @@ export default class Document {
     if (
       !textAndAttributes ||
       !textAndAttributes.length ||
-      (textAndAttributes.length === 2 && !textAndAttributes[0])    
+      (textAndAttributes.length === 2 && !textAndAttributes[0])
     ) return {start: pos, end: pos};
 
     if (debug && !debug.debugDocumentUpdate) debug = false;
@@ -1733,7 +1736,7 @@ export default class Document {
     this.insertLines([newLine], row+1);
     return {start: {row, column}, end: {row: row+1, column: 0}};
   }
-  
+
   replace({start, end}, replacement, debug) {
     if (!replacement.length) {
       this.remove({start, end}, debug);
