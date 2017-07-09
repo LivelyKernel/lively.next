@@ -4,8 +4,9 @@ import { MorphicEnv, Morph } from "../index.js";
 import { morph } from "../index.js";
 import { expect } from "mocha-es6";
 import { pt, Color } from "lively.graphics";
-import { serializeMorph, deserializeMorph, loadMorphFromSnapshot } from "../serialization.js";
+import { serializeMorph, createMorphSnapshot, deserializeMorph, loadMorphFromSnapshot } from "../serialization.js";
 import { arr } from "lively.lang";
+import ObjectPackage from "lively.classes/object-classes.js";
 
 var world;
 function createDummyWorld() {
@@ -30,7 +31,7 @@ function teardown() { MorphicEnv.popDefault().uninstall(); }
 class OnLoadTestMorph extends Morph { onLoad() { this.onLoadCalled = true; }}
 
 describe("morph serialization", () => {
-  
+
   beforeEach(setup);
   afterEach(teardown);
 
@@ -44,13 +45,43 @@ describe("morph serialization", () => {
     expect(copy.fill).equals(m.fill);
     expect(copy.extent).equals(m.extent);
   });
-  
+
   it("uses onLoad function", () => {
     var m = new OnLoadTestMorph();
     expect(m.onLoadCalled).equals(undefined, "onLoad called on construction");
     expect(m.copy().onLoadCalled).equals(true, "onLoad not called on deserialization");
   });
 
+
+  describe("object packages", () => {
+
+    var objPackages = [];
+
+    afterEach(() => Promise.all(objPackages.map(ea => ea.remove())));
+
+    it("gets snapshotted", async () => {
+
+      let p1 = ObjectPackage.withId("MorphA"),
+          p2 = ObjectPackage.withId("MorphB");
+
+      objPackages.push(p1, p2);
+      
+      let c1 = await p1.ensureObjectClass(Morph),
+          c2 = await p2.ensureObjectClass(Morph)
+      await p1.objectModule.systemModule.changeSource(`
+        import { Morph } from "lively.morphic";
+        export default class MorphA extends Morph {
+          static get properties() { return {foo: {}}; }
+        }`);
+
+      let m1 = new c1();
+      m1.foo = new c2();
+
+      let snap = await createMorphSnapshot(m1)
+      expect(snap.packages["local://lively-object-modules/"]).to.have.keys("MorphA", "MorphB");      
+    });
+    
+  })
 });
 
 const migrationBlobs = {
@@ -59,7 +90,7 @@ const migrationBlobs = {
 
 
 describe("object migrations", () => {
-  
+
   it("2017-04-29 button wrapper", async () => {
     // (await loadMorphFromSnapshot(migrationBlobs["2017-04-29 button wrapper"], {migrations: []})).openInWorld()
     // (await loadMorphFromSnapshot(migrationBlobs["2017-04-29 button wrapper"])).openInWorld()

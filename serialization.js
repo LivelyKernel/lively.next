@@ -1,3 +1,4 @@
+/*global System*/
 import {
   requiredModulesOfSnapshot,
   deserializeWithMigrations,
@@ -104,16 +105,17 @@ export async function createMorphSnapshot(aMorph, options = {}) {
       snapshot = serializeMorph(aMorph);
 
   if (addPackages) {
+    // 1. save object packages
     let packages = snapshot.packages = {},
-        // 1. save object packages
-        packagesToSave = aMorph.withAllSubmorphsDo(m => {
-          let klass = m.constructor,
-              moduleMeta = klass[Symbol.for("lively-module-meta")];
-          // if it's a "local" object package then save that as part of the snapshot
-          if (!moduleMeta) return null;
-          let p = lively.modules.getPackage(moduleMeta.package.name);
-          return p && p.address.startsWith("local://") ? p : null
-        }).filter(Boolean);
+        objects = snapshot.snapshot,
+        packagesToSave = [];
+    for (let id in objects) {
+      let classInfo = objects[id]["lively.serializer-class-info"];
+      if (!classInfo || !classInfo.module || !classInfo.module.package) continue;
+      let p = lively.modules.getPackage(classInfo.module.package.name);
+      // if it's a "local" object package then save that as part of the snapshot
+      if (p.address.startsWith("local://")) packagesToSave.push(p);
+    }
     await Promise.all(
       packagesToSave.map(async p => {
         let root = resource(p.address).asDirectory(),
