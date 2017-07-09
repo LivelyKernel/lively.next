@@ -15,6 +15,7 @@ var isWindows = process.platform !== 'linux'
              && process.platform !== 'darwin'
              && process.platform.include('win');
 
+var LIVELY = System.baseURL.replace(/^file:\/\//, "");
 
 var binDir = System.decanonicalize("lively.shell/bin").replace(/^file:\/\//, "");
 
@@ -24,7 +25,8 @@ var defaultEnv = Object.assign(
     PAGER:'ul | cat -s',
     MANPAGER:'ul | cat -s',
     TERM:"xterm",
-    PATH: binDir + path.delimiter + process.env.PATH
+    PATH: binDir + path.delimiter + process.env.PATH,
+    LIVELY
   })
 
 
