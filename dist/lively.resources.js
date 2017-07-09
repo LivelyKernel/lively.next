@@ -834,10 +834,51 @@ var set$1 = function set$1(object, property, value, receiver) {
   return value;
 };
 
+var slicedToArray = function () {
+  function sliceIterator(arr, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
+
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr, i) {
+    if (Array.isArray(arr)) {
+      return arr;
+    } else if (Symbol.iterator in Object(arr)) {
+      return sliceIterator(arr, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
+
 var slashEndRe = /\/+$/;
 var slashStartRe = /^\/+/;
 var protocolRe = /^[a-z0-9-_\.]+:/;
 var slashslashRe = /^\/\/[^\/]+/;
+var pathDotRe = /\/\.\//g;
+var pathDoubleDotRe = /\/[^\/]+\/\.\./;
+var pathDoubleSlashRe = /(^|[^:])[\/]+/g;
 
 function nyi(obj, name) {
   throw new Error(name + " for " + obj.constructor.name + " not yet implemented");
@@ -967,6 +1008,49 @@ var Resource$$1 = function () {
       });
     }
   }, {
+    key: "query",
+    value: function query() {
+      var url = this.url;
+
+      var _url$split = this.url.split("?"),
+          _url$split2 = slicedToArray(_url$split, 2),
+          _ = _url$split2[0],
+          search = _url$split2[1],
+          query = {};
+
+      if (!search) return query;
+      var args = search && search.split("&");
+      if (args) for (var i = 0; i < args.length; i++) {
+        var keyAndVal = args[i].split("="),
+            key = keyAndVal[0],
+            val = true;
+        if (keyAndVal.length > 1) {
+          val = decodeURIComponent(keyAndVal.slice(1).join("="));
+          if (val.match(/^(true|false|null|[0-9"[{].*)$/)) try {
+            val = JSON.parse(val);
+          } catch (e) {
+            if (val[0] === "[") val = val.slice(1, -1).split(","); // handle string arrays
+            // if not JSON use string itself
+          }
+        }
+        query[key] = val;
+      }
+      return query;
+    }
+  }, {
+    key: "withQuery",
+    value: function withQuery(queryObj) {
+      var query = _extends({}, this.query(), queryObj),
+          _url$split3 = this.url.split("?"),
+          _url$split4 = slicedToArray(_url$split3, 1),
+          url = _url$split4[0],
+          queryString = Object.keys(query).map(function (key) {
+        return key + "=" + encodeURIComponent(String(query[key]));
+      }).join("&");
+
+      return this.newResource(url + "?" + queryString);
+    }
+  }, {
     key: "commonDirectory",
     value: function commonDirectory(other) {
       if (other.schemeAndHost() !== this.schemeAndHost()) return null;
@@ -992,13 +1076,13 @@ var Resource$$1 = function () {
       // /foo/../bar --> /bar
       do {
         path = result;
-        result = path.replace(/\/[^\/]+\/\.\./, '');
+        result = path.replace(pathDoubleDotRe, '');
       } while (result != path);
 
       // foo//bar --> foo/bar
-      result = result.replace(/(^|[^:])[\/]+/g, '$1/');
+      result = result.replace(pathDoubleSlashRe, '$1/');
       // foo/./bar --> foo/bar
-      result = result.replace(/\/\.\//g, '/');
+      result = result.replace(pathDotRe, '/');
       if (result === this.path()) return this;
       if (result.startsWith("/")) result = result.slice(1);
       return this.newResource(this.root().url + result);
@@ -2086,6 +2170,46 @@ var WebDAVResource = function (_Resource) {
       }
 
       return readProperties;
+    }()
+  }, {
+    key: "post",
+    value: function () {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
+        var body = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+        var res;
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+          while (1) {
+            switch (_context9.prev = _context9.next) {
+              case 0:
+                _context9.next = 2;
+                return makeRequest(this, "POST", body, {});
+
+              case 2:
+                res = _context9.sent;
+
+                if (res.ok) {
+                  _context9.next = 5;
+                  break;
+                }
+
+                throw new Error("Error in POST " + this.url + ": " + res.statusText);
+
+              case 5:
+                return _context9.abrupt("return", res.text());
+
+              case 6:
+              case "end":
+                return _context9.stop();
+            }
+          }
+        }, _callee9, this);
+      }));
+
+      function post() {
+        return _ref9.apply(this, arguments);
+      }
+
+      return post;
     }()
   }]);
   return WebDAVResource;
