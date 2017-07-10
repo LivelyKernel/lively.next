@@ -6,7 +6,7 @@ export async function start(opts = {}) {
   // opts = {hostname, port, userdb}
   opts = {...opts};
   var server = LivelyAuthServer.ensure(opts);
- await server.whenStarted();
+  await server.whenStarted();
   return server;
 }
 
@@ -16,7 +16,7 @@ export default class LivelyAuthServer {
     return {
       hostname: "localhost",
       port: 9021,
-      debug: false,
+      debug: true,
       ...opts
     }
   }
