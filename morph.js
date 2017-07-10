@@ -563,7 +563,12 @@ export class Morph {
           if (value.isColor) {
             value = {top: value, left: value, right: value, bottom: value};
           }
-          this.setProperty("borderColor", value);
+          this.setProperty(
+            "borderColor",
+            obj.extract(value, ["top", "left", "right", "bottom"], (k, v) => {
+              return obj.isArray(v) ? Color.fromTuple(v) : v
+            })
+          ); 
         }
       },
 
@@ -739,6 +744,17 @@ export class Morph {
         let {id} = submorphs[i];
         if (pool.refForId(id).realObj.isEpiMorph)
           arr.removeAt(submorphs, i);
+      }
+    }
+
+    for (let foldedProp of ['borderColor', 'borderWidth', 'borderStyle', 'borderRadius']) {
+      snapshot.props[foldedProp] = {
+        key: foldedProp,
+        verbatim: true,
+        value: obj.extract(
+          this[foldedProp], ['top', 'right', 'bottom', 'left'], (prop, value) => {
+            return value.isColor ? value.toTuple() : value
+        })
       }
     }
   }
@@ -2897,7 +2913,12 @@ export class Path extends Morph {
           if (value.isColor || value.isGradient) {
             value = {top: value, left: value, right: value, bottom: value};
           }
-          this.setProperty("borderColor", value);
+          this.setProperty(
+            "borderColor",
+            obj.extract(value, ["top", "left", "right", "bottom"], (k, v) => {
+              return obj.isArray(v) ? Color.fromTuple(v) : v
+            })
+          );        
         }
       },
       vertices: {

@@ -170,6 +170,10 @@ export class SearchWidget extends Morph {
             '.Button.replace [name=label]': {
               fontColor: Color.white,
             },
+            '.InputLine [name=placeholder]': {
+              fontSize: 14,
+              fontFamily: "Monaco, monospace",
+            },
             '.InputLine': {
               fill: Color.gray.withA(0.2),
               fontSize: 14,
