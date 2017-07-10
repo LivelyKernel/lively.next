@@ -169,6 +169,15 @@ export class SearchWidget extends Morph {
             },
             '.Button.replace [name=label]': {
               fontColor: Color.white,
+            },
+            '.InputLine': {
+              fill: Color.gray.withA(0.2),
+              fontSize: 14,
+              fontFamily: "Monaco, monospace",
+              fontColor: Color.white,
+              borderWidth: 1,
+              borderColor: Color.gray,
+              padding: Rectangle.inset(2),
             }
           });
         }
@@ -200,37 +209,35 @@ export class SearchWidget extends Morph {
           let fontSize = 14, fontFamily = "Monaco, monospace";
 
           this.submorphs = [
-            new Button({name: "acceptButton", label: Icon.textAttribute("check-circle-o"), styleClasses: ["nav"]}).fit(),
-            new Button({name: "cancelButton", label: Icon.textAttribute("times-circle-o"), styleClasses: ["nav"]}).fit(),
+            new Button({
+              name: "acceptButton",
+              label: Icon.textAttribute("check-circle-o"),
+              styleClasses: ["nav"]
+            }).fit(),
+            new Button({
+              name: "cancelButton",
+              label: Icon.textAttribute("times-circle-o"),
+              styleClasses: ["nav"]
+            }).fit(),
             new Button({
               name: "nextButton",
               label: Icon.textAttribute("arrow-circle-o-down"),
               styleClasses: ["nav"]
             }).fit(),
-            new Button({name: "prevButton", label: Icon.textAttribute("arrow-circle-o-up"), styleClasses: ["nav"]}).fit(),
+            new Button({
+              name: "prevButton",
+              label: Icon.textAttribute("arrow-circle-o-up"),
+              styleClasses: ["nav"]
+            }).fit(),
             Text.makeInputLine({
               name: "searchInput",
               width: this.width,
-              fill: Color.gray.withA(0.2),
-              fontSize,
-              fontFamily,
-              fontColor: Color.white,
-              borderWidth: 1,
-              borderColor: Color.gray,
-              padding: Rectangle.inset(2),
               placeholder: "search input",
               historyId: "lively.morphic-text search"
             }),
             Text.makeInputLine({
               name: "replaceInput",
               width: this.width,
-              fill: Color.gray.withA(0.2),
-              fontSize,
-              fontFamily,
-              fontColor: Color.white,
-              borderWidth: 1,
-              borderColor: Color.gray,
-              padding: Rectangle.inset(2),
               placeholder: "replace input",
               historyId: "lively.morphic-text replace"
             }),
@@ -242,8 +249,7 @@ export class SearchWidget extends Morph {
             })
           ];
         }
-      }
-    }
+      }    }
   }
 
   constructor(props = {}) {
