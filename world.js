@@ -1,6 +1,6 @@
 /*global System,WeakMap*/
 import { Rectangle, Color, pt } from "lively.graphics";
-import { arr, obj, promise } from "lively.lang";
+import { arr, fun, obj, promise } from "lively.lang";
 import { once, signal } from "lively.bindings";
 import { StatusMessage, StatusMessageForMorph } from './components/markers.js';
 import { Morph, Tooltip, List, FilterableList, inspect, config, MorphicEnv, Window, Menu, Button } from "./index.js";
@@ -291,16 +291,29 @@ export class World extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // html5 drag - drop
 
-  async onNativeDragover(evt) {
+  async nativeDrop_ensureUploadIndicator() {
     if (!this._cachedDragIndicator)
       this._cachedDragIndicator = loadObjectFromPartsbinFolder("upload-indicator");
     let i = await this._cachedDragIndicator;
     if (!i.world()) i.openInWorld();
+    fun.debounceNamed("remove-uploadd-indicator", 1000, () => {
+      this.nativeDrop_removeUploadIndicator();
+    })();
+  }
+
+  nativeDrop_removeUploadIndicator() {
+    if (this._cachedDragIndicator)
+      this._cachedDragIndicator.then(i => i.remove());
+  }
+
+  onNativeDragover(evt) {
+    show(evt.targetMorph)
+    if (evt.targetMorph === this)
+      this.ensureUploadIndicator();
   }
 
   async onNativeDrop(evt) {
-    if (this._cachedDragIndicator)
-      this._cachedDragIndicator.then(i => i.remove());
+    this.nativeDrop_removeUploadIndicator();
 
     let {domEvt} = evt;
     // show(`
