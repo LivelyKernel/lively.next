@@ -19,7 +19,7 @@ if (isMain) {
   Promise.resolve()
     .then(() => setupSystem())
     .then(() => lively.modules.registerPackage(baseURL))
-    .then(() => lvm.module(baseURL + "/server.js").load())
+    .then(() => lvm.module(baseURL + "/server/server.js").load())
     .then(serverMod => serverMod.start(args))
     .catch(err => {
       console.error(`Error starting server: ${err.stack}`);

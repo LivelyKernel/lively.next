@@ -2,9 +2,9 @@
 import { expect } from "mocha-es6";
 import { join } from "path";
 import { resource } from "lively.resources";
-import UserDB from "../user-db.js";
-import User from "../user.js";
-import { start } from "../server.js";
+import UserDB from "../server/user-db.js";
+import User from "../server/user.js";
+import { start } from "../server/server.js";
 import http from "http";
 
 function req(path = "/", method = "GET", body, headers = {}) {
