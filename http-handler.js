@@ -28,7 +28,7 @@ let routes = [
       if (!user.checkPassword(data.password))
         return fail(`password for ${data.name} does not match`);
 
-      success({status: "login successful", token: user.sign()});
+      success({status: "login successful", token: user.token});
     }
   },
 
@@ -47,8 +47,7 @@ let routes = [
       if (user) return fail(`A user with the name "${data.name}" is already registered!`, true);
 
       user = await userDB.createUser(data);
-      console.log(user)
-      success({status: `User "${user.name}" registered successful`, token: user.sign()});
+      success({status: `User "${user.name}" registered successful`, token: user.token});
     }
   },
 
@@ -73,6 +72,30 @@ let routes = [
           default: return fail(String(err), true);
         }
       }
+    }
+  },
+
+  {
+    path: "/modify",
+    methods: ["POST"],
+    handle: async (server, req, res, next, success, fail) => {
+      let data;
+      try { data = await body(req, true); } catch (err) { return fail("json error"); }
+      if (typeof data.token !== "string")
+        return fail("invalid request, no token", true);
+
+      let decoded;
+      try { decoded = await verify(data.token); }
+      catch (err) { return fail(`Token does not verify: `, String(err), true); }
+
+      let userDB = UserDB.ensureDB(server.options.userdb, {}),
+          user = await userDB.getUserNamed(decoded.name);
+      if (!user) return fail(`no user ${data.name}`);      
+
+      try { user.modify(data.changes); }
+      catch (err) { return fail(`User change failure: `, err.message, true); }
+
+      success({status: "modification successful", token: user.token});
     }
   }
 

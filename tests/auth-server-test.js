@@ -107,27 +107,27 @@ describe("auth server", function () {
     it("non-existing user", async () => {
       var {data, statusCode} = await req("/register", "POST", {name: "new user", password: "bar"});
       expect(statusCode).equals(200, "1");
-      console.log(data)
       expect(data).containSubset({status: `User "new user" registered successful`});
       expect(jwtTokenDecode(data.token)).containSubset({body: {name: "new user", roles: {}}});
     });
 
   });
   
-  describe("change user", () => {
+  describe("change user data", () => {
 
+    let user;
     beforeEach(async () => {
-      let user = new User({name: "test-user-1", password: "foo"})
+      user = new User({name: "test-user-1", password: "foo"});
       await user.storeIntoDB(userDB);
     });
 
     it("change email", async () => {
-      var {data, statusCode} = await req("/change", "POST",
-        {name: "test-user-1", password: "foo", changes: {email: "foo@bar.com"}});
+      var {data, statusCode} = await req("/modify", "POST",
+        {token: user.token, changes: {email: "foo@bar.com"}});
+      expect(data).containSubset({status: 'modification successful'});
       expect(statusCode).equals(200, "1");
-      expect(data).containSubset({
-        status: `Changing user data for "test-user-1":\n email changed to "foo@bar.com"`
-      });
+      expect(jwtTokenDecode(data.token)).containSubset(
+        {body: {name: "test-user-1", email: "foo@bar.com"}});
     });
 
   });
