@@ -20,13 +20,13 @@ let routes = [
       try { data = await body(req, true); } catch (err) { return fail("json error"); }
 
       if (typeof data.name !== "string" && typeof data.password !== "string")
-        return fail("invalid request");
+        return fail("invalid request", true);
 
       let userDB = UserDB.ensureDB(server.options.userdb, {}),
           user = await userDB.getUserNamed(data.name);
-      if (!user) return fail(`no user ${data.name}`);
+      if (!user) return fail(`no user ${data.name}`, true);
       if (!user.checkPassword(data.password))
-        return fail(`password for ${data.name} does not match`);
+        return fail(`password for ${data.name} does not match`, true);
 
       success({status: "login successful", token: user.token});
     }
