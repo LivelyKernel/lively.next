@@ -6,16 +6,8 @@ import { obj } from "lively.lang";
 
 export default class User {
 
-  static get userCache() {
-    if (!this._userCache) this._userCache = new Map();
-    return this._userCache;
-  }
-
-  static namedSync(name) { return this.userCache.get(name); }
-
   static named(name, userDB) {
-    return Promise.resolve(this.userCache.get(name) || this.loadFromDB(name, userDB)
-      .then(user => { this.userCache.set(name, user); return user; }))
+    return this.loadFromDB(name, userDB);
   }
 
   static async loadFromDB(name, userDB) {

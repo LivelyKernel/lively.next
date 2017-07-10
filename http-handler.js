@@ -23,13 +23,32 @@ let routes = [
         return fail("invalid request");
 
       let userDB = UserDB.ensureDB(server.options.userdb, {}),
-          users = await userDB.getAllUsers(),
-          user = await userDB.getUserNamed(data.name)
+          user = await userDB.getUserNamed(data.name);
       if (!user) return fail(`no user ${data.name}`);
       if (!user.checkPassword(data.password))
         return fail(`password for ${data.name} does not match`);
 
       success({status: "login successful", token: user.sign()});
+    }
+  },
+
+  {
+    path: "/register",
+    methods: ["POST"],
+    handle: async (server, req, res, next, success, fail) => {
+      let data;
+      try { data = await body(req, true); } catch (err) { return fail("json error", true); }
+
+      if (typeof data.name !== "string" && typeof data.password !== "string")
+        return fail("invalid request, expected name and password fields", true);
+
+      let userDB = UserDB.ensureDB(server.options.userdb, {}),
+          user = await userDB.getUserNamed(data.name)
+      if (user) return fail(`A user with the name "${data.name}" is already registered!`, true);
+
+      user = await userDB.createUser(data);
+      console.log(user)
+      success({status: `User "${user.name}" registered successful`, token: user.sign()});
     }
   },
 

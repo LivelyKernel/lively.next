@@ -89,6 +89,49 @@ describe("auth server", function () {
 
   });
 
+  describe("register", () => {
+
+    beforeEach(async () => {
+      let user = new User({name: "test-user-1", password: "foo"})
+      await user.storeIntoDB(userDB);
+    });
+
+    it("existing user", async () => {
+      var {data, statusCode} = await req("/register", "POST", {name: "test-user-1", password: "foo"});
+      expect(statusCode).equals(400, "1");
+      expect(data).containSubset({
+        error: "/register failed, A user with the name \"test-user-1\" is already registered!"
+      });
+    });
+
+    it("non-existing user", async () => {
+      var {data, statusCode} = await req("/register", "POST", {name: "new user", password: "bar"});
+      expect(statusCode).equals(200, "1");
+      console.log(data)
+      expect(data).containSubset({status: `User "new user" registered successful`});
+      expect(jwtTokenDecode(data.token)).containSubset({body: {name: "new user", roles: {}}});
+    });
+
+  });
+  
+  describe("change user", () => {
+
+    beforeEach(async () => {
+      let user = new User({name: "test-user-1", password: "foo"})
+      await user.storeIntoDB(userDB);
+    });
+
+    it("change email", async () => {
+      var {data, statusCode} = await req("/change", "POST",
+        {name: "test-user-1", password: "foo", changes: {email: "foo@bar.com"}});
+      expect(statusCode).equals(200, "1");
+      expect(data).containSubset({
+        status: `Changing user data for "test-user-1":\n email changed to "foo@bar.com"`
+      });
+    });
+
+  });
+
   describe("verify", () => {
 
     beforeEach(async () => {
