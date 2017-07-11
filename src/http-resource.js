@@ -258,9 +258,16 @@ export default class WebDAVResource extends Resource {
   }
 
   async post(body = null) {
-    let res = await makeRequest(this, "POST", body, {});
-    if (!res.ok) throw new Error(`Error in POST ${this.url}: ${res.statusText}`);
-    return res.text();
+    if (typeof body !== "string") body = JSON.stringify(body);
+    let res = await makeRequest(this, "POST", body, {}),
+        text, json;
+    try { text = await res.text(); } catch (err) {}
+    if (text && res.headers.get("content-type") === "application/json") {
+      try { json = JSON.parse(text); } catch (err) {}
+    }
+    if (!res.ok) {
+      throw new Error(`Error in POST ${this.url}: ${text || res.statusText}`);
+    } else return json || text;
   }
 }
 
