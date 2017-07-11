@@ -57,24 +57,8 @@ export class Popover extends Morph {
       layout: {
         initialize() {
           this.layout = new CustomLayout({
-            relayout(self, animated) {
-              let body = self.get('body'),
-                  arrow = self.get('arrow'),
-                  offset = arrow.height;
-              if (body.extent == self.extent) return;
-              if (animated) {
-                self.animate({
-                  origin: pt(body.width / 2, -offset),
-                  extent: body.extent,
-                  duration
-                });
-                body.animate({position: pt(-body.width/2,offset), duration});
-              } else {                
-                self.extent = body.extent;
-                self.origin = pt(self.width/2,-offset);
-                body.topCenter = pt(0,offset);
-                arrow.bottomCenter = pt(0,offset);
-              }
+            relayout: function(self, animated) {
+              self.relayout(animated);
             }
           })
         }
@@ -94,6 +78,24 @@ export class Popover extends Morph {
         }
       }
     };
+  }
+
+  relayout(animated) {
+    let body = this.get("body"), arrow = this.get("arrow"), offset = arrow.height;
+    if (body.extent == this.extent) return;
+    if (animated) {
+      this.animate({
+        origin: pt(body.width / 2, -offset),
+        extent: body.extent,
+        duration
+      });
+      body.animate({position: pt(-body.width / 2, offset), duration});
+    } else {
+      this.extent = body.extent;
+      this.origin = pt(this.width / 2, -offset);
+      body.topCenter = pt(0, offset);
+      arrow.bottomCenter = pt(0, offset);
+    }
   }
 
   updateStyleSheet() {
@@ -141,7 +143,9 @@ class SelectableControl extends Morph {
   
   static get properties() {
     return {
-      target: {},
+      target: {
+        type: 'Morph'
+      },
       selectableControls: {},
       selectedControl: {},
       fill: {defaultValue: Color.transparent},
@@ -149,7 +153,9 @@ class SelectableControl extends Morph {
         initialize() {
           this.layout = new VerticalLayout({
             spacing: 10, autoResize: true,
-            layoutOrder(m) { return this.container.submorphs.indexOf(m) }
+            layoutOrder: function(m) { 
+              return this.container.submorphs.indexOf(m) 
+            }
           });
         }
       },
@@ -171,6 +177,7 @@ class SelectableControl extends Morph {
   }
   
   async select(cmd) {
+    if (!this.target) return;
     const control = await this.target.execCommand(cmd),
           selector = this.get("modeSelector");
     control.opacity = 0;
@@ -395,7 +402,12 @@ export class LayoutPopover extends StylePopover {
     this.showLayoutHaloFor(this.container)
     return [{
       fill: Color.transparent,
-      layout: new VerticalLayout({spacing: 5, layoutOrder: m => this.submorphs.indexOf(m)}),
+        layout: new VerticalLayout({
+          spacing: 5,
+          layoutOrder: function(m) {
+            return this.container.submorphs.indexOf(m);
+          }
+        }),      
       submorphs: [this.layoutPicker(), this.layoutControls()]
     }];
   }

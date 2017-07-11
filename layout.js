@@ -23,7 +23,10 @@ class Layout {
     this.autoResize = autoResize != undefined ? autoResize : true;
     this.onScheduleApply = onScheduleApply || ((submorph, animation ,change) => {
     });
-    if (layoutOrder) this.layoutOrder = layoutOrder
+    if (layoutOrder) {
+       this.layoutOrder = layoutOrder
+       this.layoutOrderSource = JSON.stringify(String(layoutOrder));
+    }
   }
 
   copy() {
@@ -46,6 +49,8 @@ class Layout {
   }
   
   get layoutableSubmorphs() {
+    if (!this.layoutOrder) 
+      this.layoutOrder = Closure.fromSource(JSON.parse(this.layoutOrderSource)).recreateFunc();
     return sortBy(
       this.container.submorphs.filter(
         m => m.isLayoutable && !this.ignore.includes(m.name)),
@@ -156,7 +161,9 @@ export class CustomLayout extends Layout {
   
   constructor(config = {}) {
      this.relayout = config.relayout;
-     this.layouterString = String(config.relayout);
+     // apply JSON stringification, since else the source string does not
+     // survive serialization (improper escaping)
+     this.layouterString = JSON.stringify(String(config.relayout));
      this.varMapping = config.varMapping || {};
      super(config);
   }
@@ -168,7 +175,8 @@ export class CustomLayout extends Layout {
      super.apply(animate);
      this.active = true;
      if (!this.relayout) {
-       this.relayout = Closure.fromSource(this.layouterString, this.varMapping).recreateFunc()
+       this.relayout = Closure.fromSource(JSON.parse(this.layouterString), 
+         this.varMapping).recreateFunc()
      }
      this.relayout(this.container, animate);
      this.lastBoundsExtent = this.container && this.container.bounds().extent();
@@ -315,6 +323,7 @@ export class VerticalLayout extends FloatLayout {
       if (resizeSubmorphs)
         m.width = container.width - spacing*2
       maxWidth = Math.max(m.bounds().width, maxWidth);
+      m.layout && m.layout.forceLayout()
     });
 
     if (autoResize && layoutableSubmorphs.length > 0) {
@@ -381,6 +390,7 @@ export class HorizontalLayout extends FloatLayout {
     layoutableSubmorphs.reduce((pos, m) => {
       this.changePropertyAnimated(m, "topLeft", pos, animate);
       return m.topRight.addPt(pt(spacing, 0));
+      m.layout && m.layout.forceLayout()
     }, pt(Math.max(0, startX)+spacing, spacing));
 
     if (autoResize) {
