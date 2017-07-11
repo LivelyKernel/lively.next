@@ -11,8 +11,6 @@ import UserPlugin from "lively.server/plugins/user.js";
 import SocketioPlugin from "lively.server/plugins/socketio.js";
 import L2lPlugin from "lively.server/plugins/l2l.js";
 
-import * as authserver from "lively.user/authserver.js"
-
 let hostname = "localhost",
     port = 9009,
     namespace = "l2l-test";

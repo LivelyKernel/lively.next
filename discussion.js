@@ -2,7 +2,6 @@ import { Database } from "lively.storage";
 import {date, arr, obj} from 'lively.lang';
 import { hashCode } from "lively.lang/string.js";
 import { newUUID } from "lively.lang/string.js";
-import { verify } from "lively.user/authserver.js";
 
 const topicDB = Database.ensureDB("lively.discussion.storage", {adapter: "memory"});
 
