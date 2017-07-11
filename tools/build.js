@@ -9,7 +9,7 @@ var targetFile = "dist/lively.user-client.js";
 
 module.exports = Promise.resolve()
   .then(() => rollup.rollup({
-    entry: "client/user.js",
+    entry: "index.js",
     plugins: [
       babel({
         exclude: 'node_modules/**',

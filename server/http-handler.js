@@ -76,6 +76,33 @@ let routes = [
   },
 
   {
+    path: "/check-password",
+    methods: ["POST"],
+    handle: async (server, req, res, next, success, fail) => {
+      let data;
+      try { data = await body(req, true); } catch (err) { return fail("json error"); }
+
+      let {password, token} = data;
+      if (typeof token !== "string" || typeof password !== "string")
+        return fail("invalid request, need token and password", true);
+
+      let name;
+      try { name = await verify(token).name; } catch (err) {
+        switch (err.name) {
+          case 'TokenExpiredError': return fail('token expired', true);
+          case 'JsonWebTokenError': return fail('token malformed', true);
+          default: return fail(String(err), true);
+        }
+      }
+
+      let userDB = UserDB.ensureDB(server.options.userdb, {}),
+          user = await userDB.getUserNamed(name);
+      if (!user) return fail(`no user ${name}`, true);
+      success({status: user.checkPassword(password)});
+    }
+  },
+
+  {
     path: "/modify",
     methods: ["POST"],
     handle: async (server, req, res, next, success, fail) => {
@@ -83,6 +110,8 @@ let routes = [
       try { data = await body(req, true); } catch (err) { return fail("json error"); }
       if (typeof data.token !== "string")
         return fail("invalid request, no token", true);
+      if (typeof data.changes !== "object")
+        return fail("invalid request, no changes", true);
 
       let decoded;
       try { decoded = await verify(data.token); }
@@ -90,7 +119,7 @@ let routes = [
 
       let userDB = UserDB.ensureDB(server.options.userdb, {}),
           user = await userDB.getUserNamed(decoded.name);
-      if (!user) return fail(`no user ${data.name}`);      
+      if (!user) return fail(`no user ${data.name}`);
 
       try { user.modify(data.changes); }
       catch (err) { return fail(`User change failure: `, err.message, true); }

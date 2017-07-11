@@ -112,7 +112,7 @@ describe("auth server", function () {
     });
 
   });
-  
+
   describe("change user data", () => {
 
     let user;
@@ -130,18 +130,38 @@ describe("auth server", function () {
         {body: {name: "test-user-1", email: "foo@bar.com"}});
     });
 
+    it("change password", async () => {
+      var {data, statusCode} = await req("/modify", "POST",
+        {token: user.token, changes: {password: "bar"}});
+      expect(data).containSubset({status: 'modification successful'});
+      expect(statusCode).equals(200, "1");
+      expect(jwtTokenDecode(data.token)).containSubset({body: {name: "test-user-1"}});
+      var {data} = await req("/login", "POST", {name: "test-user-1", password: "bar"});
+      expect(data).containSubset({status: `login successful`});
+    });
+
   });
 
   describe("verify", () => {
 
+    let user;
     beforeEach(async () => {
-      let user = new User({name: "test-user-1", password: "foo"})
+      user = new User({name: "test-user-1", password: "foo"})
       await user.storeIntoDB(userDB);
     });
 
+    it("check password", async () => {
+      var {data} = await req("/check-password", "POST", {token: user.token, password: "foo"});
+      expect(data).containSubset({status: true});
+      var {data} = await req("/check-password", "POST", {token: user.token, password: "bar"});
+      expect(data).containSubset({status: false});
+      var {data} = await req("/check-password", "POST", {name: "test-user-1", password: "bar"});
+      expect(data).containSubset({error: "/check-password failed, invalid request, need token and password"});
+    });
+
     it("verify correct token", async () => {
-      var {data} = await req("/login", "POST", {name: "test-user-1", password: "foo"});
-      var {data} = await req("/verify", "POST", {token: data.token});
+      var {data} = await req("/login", "POST", {name: "test-user-1", password: "foo"}),
+          {data} = await req("/verify", "POST", {token: data.token});
       expect(data).containSubset({status: `OK`});
     });
 

@@ -44,6 +44,8 @@ export default class User {
   set roles(val) { this._token = null; this._roles = val; }
   get hashedPassword() { return this._hashedPassword; }
   set hashedPassword(val) { this._hashedPassword = val; }
+  get password() { return ""; }
+  set password(val) { this.changePassword(val); }
 
   get token() {
     if (this._token) return this._token;
@@ -60,8 +62,9 @@ export default class User {
     if ("hashedPassword" in changes)
       throw new Error("changing hashedPassword not supported");
 
+    let supportedModificationProps = [...userProps, "password"];
     for (let key in changes) {
-      if (userProps.includes(key)) this[key] = changes[key];
+      if (supportedModificationProps.includes(key)) this[key] = changes[key];
       else console.warn(`${this}.modify: ignoring property ${key}`);
     }
   }
