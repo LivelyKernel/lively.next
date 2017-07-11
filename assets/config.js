@@ -6,7 +6,7 @@ var config = {
     plugins: [
       "lively.server/plugins/cors.js",
       "lively.server/plugins/dav.js",
-      // "lively.server/plugins/discussion.js",
+      "lively.server/plugins/discussion.js",
       "lively.server/plugins/eval.js",
       "lively.server/plugins/l2l.js",
       "lively.server/plugins/lib-lookup.js",
@@ -14,8 +14,7 @@ var config = {
       "lively.server/plugins/proxy.js",
       "lively.server/plugins/remote-shell.js",
       "lively.server/plugins/socketio.js",
-     // "lively.server/plugins/user.js",
-      "lively.server/plugins/world-loading.js",
+      "lively.server/plugins/world-loading.js"
     ]
   }
 }
