@@ -1,7 +1,6 @@
 /*global describe,System,beforeEach,afterEach,it,before,after,xdescribe*/
 import { expect } from "mocha-es6";
 import { join } from "path";
-import { resource } from "lively.resources";
 import UserDB from "../server/user-db.js";
 import User from "../server/user.js";
 import { start } from "../server/server.js";
@@ -32,7 +31,7 @@ function jwtTokenDecode(token) {
   return {header: JSON.parse(atob(a)), body: JSON.parse(atob(b))}
 }
 
-let testDBUrl = resource(System.baseURL).join("lively-user-test-db.idb").url,
+let testDBUrl = System.baseURL + "lively-user-test-db.idb",
     userDB, server, hostname = "0.0.0.0", port = 9099;
 
 describe("auth server", function () {
@@ -73,12 +72,13 @@ describe("auth server", function () {
     it("with non-existing users", async () => {
       var {data, statusCode} = await req("/login", "POST", {name: "foo", password: "bar"});
       expect(statusCode).equals(400, "1");
-      expect(data).deep.equals({error: `/login failed`});
+      expect(data).deep.equals({error: `/login failed, no user "foo"`});
     });
 
     it("with wrong password", async () => {
       var {data} = await req("/login", "POST", {name: "test-user-1", password: "bar"});
-      expect(data).deep.equals({error: `/login failed`});
+      expect(data).deep.equals(
+        {error: "/login failed, password for \"test-user-1\" does not match"});
     });
 
     it("with correct user and password", async () => {

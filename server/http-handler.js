@@ -24,9 +24,9 @@ let routes = [
 
       let userDB = UserDB.ensureDB(server.options.userdb, {}),
           user = await userDB.getUserNamed(data.name);
-      if (!user) return fail(`no user ${data.name}`, true);
+      if (!user) return fail(`no user "${data.name}"`, true);
       if (!user.checkPassword(data.password))
-        return fail(`password for ${data.name} does not match`, true);
+        return fail(`password for "${data.name}" does not match`, true);
 
       success({status: "login successful", token: user.token});
     }

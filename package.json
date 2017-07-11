@@ -1,13 +1,22 @@
 {
   "name": "lively.user",
   "version": "0.2.0",
+  "repository": "https://github.com/LivelyKernel/lively.user",
+  "license": "MIT",
+  "scripts": {
+    "test": "mocha-es6 tests/*-test.js"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^7.4.1",
     "lively.lang": "^1.0.18",
     "minimist": "^0.0.8",
     "lively.modules": "^0.8.18",
+    "lively.storage": "*",
     "systemjs": "^0.19"
+  },
+  "devDependencies": {
+    "mocha-es6": "^0.5"
   },
   "systemjs": {
     "main": "index.js"
