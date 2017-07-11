@@ -958,7 +958,7 @@ var Resource$$1 = function () {
     key: "nameWithoutExt",
     value: function nameWithoutExt() {
       var name = this.name(),
-          extIndex = name.indexOf(".");
+          extIndex = name.lastIndexOf(".");
       if (extIndex > 0) name = name.slice(0, extIndex);
       return name;
     }
@@ -2176,33 +2176,55 @@ var WebDAVResource = function (_Resource) {
     value: function () {
       var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
         var body = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-        var res;
+        var res, text, json;
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
           while (1) {
             switch (_context9.prev = _context9.next) {
               case 0:
-                _context9.next = 2;
+                if (typeof body !== "string") body = JSON.stringify(body);
+                _context9.next = 3;
                 return makeRequest(this, "POST", body, {});
 
-              case 2:
+              case 3:
                 res = _context9.sent;
+                text = void 0;
+                json = void 0;
+                _context9.prev = 6;
+                _context9.next = 9;
+                return res.text();
+
+              case 9:
+                text = _context9.sent;
+                _context9.next = 14;
+                break;
+
+              case 12:
+                _context9.prev = 12;
+                _context9.t0 = _context9["catch"](6);
+
+              case 14:
+                if (text && res.headers.get("content-type") === "application/json") {
+                  try {
+                    json = JSON.parse(text);
+                  } catch (err) {}
+                }
 
                 if (res.ok) {
-                  _context9.next = 5;
+                  _context9.next = 19;
                   break;
                 }
 
-                throw new Error("Error in POST " + this.url + ": " + res.statusText);
+                throw new Error("Error in POST " + this.url + ": " + (text || res.statusText));
 
-              case 5:
-                return _context9.abrupt("return", res.text());
+              case 19:
+                return _context9.abrupt("return", json || text);
 
-              case 6:
+              case 20:
               case "end":
                 return _context9.stop();
             }
           }
-        }, _callee9, this);
+        }, _callee9, this, [[6, 12]]);
       }));
 
       function post() {
