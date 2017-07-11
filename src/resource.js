@@ -75,7 +75,7 @@ export default class Resource {
 
   nameWithoutExt() {
     let name = this.name(),
-        extIndex = name.indexOf(".");
+        extIndex = name.lastIndexOf(".");
     if (extIndex > 0) name = name.slice(0, extIndex);
     return name;
   }
