@@ -80,6 +80,21 @@ export default class User {
     return this.loginOrRegister("register", password, this.url);
   }
 
+  async checkPassword(password) {
+    if (!this.isLoggedIn)
+      throw new Error("To check password, user needs to login.")
+    let {error, status} = await POST(this.url + "/check-password", {token: this.token, password});
+    if (error) throw new Error(error);
+    return status;
+  }
+
+  async modify(changes) {
+    let {error, status, token} = await POST(this.url + "/modify", {token: this.token, changes});
+    if (error) return {error};
+    if (token) this.token = token;
+    return {status};
+  }
+
   toString() { return `<User ${this.name} logged in: ${this.isLoggedIn()}>`; }
 }
 

@@ -6,7 +6,7 @@
   if (typeof GLOBAL.lively === "undefined") GLOBAL.lively = {};
   (function() {
     this.lively = this.lively || {};
-this.lively.user = (function () {
+(function (exports) {
 'use strict';
 
 var asyncToGenerator = function (fn) {
@@ -397,6 +397,100 @@ var User = function () {
       return this.loginOrRegister("register", password, this.url);
     }
   }, {
+    key: "checkPassword",
+    value: function () {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(password) {
+        var _ref4, error, status;
+
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                if (this.isLoggedIn) {
+                  _context3.next = 2;
+                  break;
+                }
+
+                throw new Error("To check password, user needs to login.");
+
+              case 2:
+                _context3.next = 4;
+                return POST(this.url + "/check-password", { token: this.token, password: password });
+
+              case 4:
+                _ref4 = _context3.sent;
+                error = _ref4.error;
+                status = _ref4.status;
+
+                if (!error) {
+                  _context3.next = 9;
+                  break;
+                }
+
+                throw new Error(error);
+
+              case 9:
+                return _context3.abrupt("return", status);
+
+              case 10:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function checkPassword(_x8) {
+        return _ref3.apply(this, arguments);
+      }
+
+      return checkPassword;
+    }()
+  }, {
+    key: "modify",
+    value: function () {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(changes) {
+        var _ref6, error, status, token;
+
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                _context4.next = 2;
+                return POST(this.url + "/modify", { token: this.token, changes: changes });
+
+              case 2:
+                _ref6 = _context4.sent;
+                error = _ref6.error;
+                status = _ref6.status;
+                token = _ref6.token;
+
+                if (!error) {
+                  _context4.next = 8;
+                  break;
+                }
+
+                return _context4.abrupt("return", { error: error });
+
+              case 8:
+                if (token) this.token = token;
+                return _context4.abrupt("return", { status: status });
+
+              case 10:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function modify(_x9) {
+        return _ref5.apply(this, arguments);
+      }
+
+      return modify;
+    }()
+  }, {
     key: "toString",
     value: function toString() {
       return "<User " + this.name + " logged in: " + this.isLoggedIn() + ">";
@@ -421,23 +515,23 @@ var GuestUser = function (_User) {
   }, {
     key: "loginOrRegister",
     value: function () {
-      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(action, password, authServerURL) {
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(action, password, authServerURL) {
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
-            switch (_context3.prev = _context3.next) {
+            switch (_context5.prev = _context5.next) {
               case 0:
                 throw new Error("Guest user cannot " + action + "!");
 
               case 1:
               case "end":
-                return _context3.stop();
+                return _context5.stop();
             }
           }
-        }, _callee3, this);
+        }, _callee5, this);
       }));
 
-      function loginOrRegister(_x8, _x9, _x10) {
-        return _ref3.apply(this, arguments);
+      function loginOrRegister(_x10, _x11, _x12) {
+        return _ref7.apply(this, arguments);
       }
 
       return loginOrRegister;
@@ -459,9 +553,9 @@ var GuestUser = function (_User) {
 var guestUser = guestUser || new GuestUser("guest");
 var userMap = userMap || new Map();
 
-return User;
+exports.ClientUser = User;
 
-}());
+}((this.lively.user = this.lively.user || {})));
 
   }).call(GLOBAL);
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.user;
