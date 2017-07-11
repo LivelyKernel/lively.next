@@ -1,3 +1,4 @@
+/*global alert*/
 import ClassHelper from "./class-helper.js";
 import { Path, arr, graph } from "lively.lang";
 import ExpressionSerializer from "./plugins/expression-serializer.js";
@@ -113,7 +114,6 @@ export function findPathFromToId(snapshot, fromId, toId, options = {}) {
       strings.push(className || "Object");
     }
     if (showPropNames) {
-      console.log(referencesOfId(snapshot, currId, true))
       var ref = referencesOfId(snapshot, currId, true).find(ea => ea.id === nextId) || {key: "????"};
       strings.push(ref.key);
     }
