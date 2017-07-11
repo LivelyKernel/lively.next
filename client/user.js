@@ -46,6 +46,10 @@ export default class User {
     return Object.assign(this.named(name, url), {roles, createdAt, email, token});
   }
 
+  static clearCache() {
+    userMap = new Map();
+  }
+
   constructor(name, url) {
     this.url = url;
     this.name = name;
