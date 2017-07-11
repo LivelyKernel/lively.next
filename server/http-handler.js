@@ -150,8 +150,22 @@ function success(req, res, path, data) {
 }
 
 export async function handleRequest(server, req, res, next) {
+  // this is for letsencrypt...
+  if (req.url.startsWith("/.well-known"))    {
+    try {
+      let file = lively.resources.resource(lively.modules.getPackage("lively.user").url).join(req.url),
+          content = await file.read();
+      res.writeHead(200, {"content-type": "text/plain"});
+      res.end(content);
+    } catch(err) {
+      res.writeHead(404, {});
+      res.end(String(err));
+    }
+  }
+
+
   let route = routes.find(r => matches(req, r));
-  
+
   if (!route) return next();
   let s = (data) => success(req, res, req.url, data);
   let f = (reason, sendReason) => fail(req, res, req.url, reason, sendReason);
