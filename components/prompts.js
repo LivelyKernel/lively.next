@@ -6,6 +6,7 @@ import { List, FilterableList } from "./list.js"
 import InputLine, { PasswordInputLine } from "../text/input-line.js"
 import { Icon } from "./icons.js"
 import { connect } from 'lively.bindings';
+import { HorizontalLayout } from "../layout.js";
 
 export class AbstractPrompt extends Morph {
 
@@ -106,7 +107,7 @@ export class AbstractPrompt extends Morph {
     ]);
   }
 
-  async transitionTo(otherPrompt, duration = 500) {
+  async transitionTo(otherPrompt, duration = 300) {
     // assumes to be working with prompts opened in world
     let morphBox = morph({
       fill: this.fill, 
@@ -154,7 +155,7 @@ export class InformPrompt extends AbstractPrompt {
   initLayout() {
      const label = this.getSubmorphNamed("label");
      label.fit();
-     this.width = label.width + 10;
+     this.width = Math.max(label.width + 10, this.width);
      this.height = label.height + 30;
      const l = this.layout = new GridLayout({
         columns: [
@@ -210,7 +211,7 @@ export class ConfirmPrompt extends AbstractPrompt {
      //         define the overall width of the container
      const label = this.getSubmorphNamed("label");
      label.fit();
-     this.width = label.width + 10;
+     this.width = Math.max(this.width, label.width + 10);
      this.height = label.height + 30;
      const l = this.layout = new GridLayout({
        columns: [
@@ -240,10 +241,16 @@ export class MultipleChoicePrompt extends AbstractPrompt {
         fontSize: 14, fontColor: Color.gray
       });
 
+    let choidesContainer = this.addMorph({
+      name: 'choices',
+      fill: Color.transparent,
+      layout: new HorizontalLayout({spacing: 5, direction: 'centered'})
+    })
+
     choices.forEach((choice, i) => {
-      var btn = this.addMorph({
+      var btn = choidesContainer.addMorph({
         name: "button " + i, type: "button",
-        styleClasses: ['ok'],
+        styleClasses: ['standard'],
         padding: Rectangle.inset(10, 8),
         label: choice});
       btn.choice = choice;
@@ -258,26 +265,25 @@ export class MultipleChoicePrompt extends AbstractPrompt {
     //         define the overall width of the container
     var label = this.getSubmorphNamed("label");
     label && label.fit();
-    var buttons = this.submorphs.filter(({isButton}) => isButton);
+    var buttons = this.get('choices').submorphs.filter(({isButton}) => isButton);
     buttons.forEach(ea => ea.fit())
 
     this.width = Math.max(
       label ? label.width + 10 : 0,
-      buttons.reduce((width, ea) => width + ea.width + 10, 0) + 20);
+      buttons.reduce((width, ea) => width + ea.width + 10, 0));
 
-    const l = this.layout = new GridLayout({
-       fitToCell: false,
+    this.height = buttons[0].height + label.height + 10;
+
+    this.layout = new GridLayout({
+       fitToCell: true,
+       columns: [0, {paddingLeft: 5, paddingRight: 5}],
+       rows: label ? [0, {height: label.height, fixed: true}, 
+                      1, {paddingBottom: 5}] : [0, {paddingBottom: 5}],
        grid: label ?
-               [arr.withN(buttons.length, "label"),
-                buttons.map(({name}) => name)] :
-               [buttons.map(({name}) => name)],
+               [["label"],
+                ['choices']] :
+               [['choices']],
     });
-    buttons.forEach((b, i) => {
-      l.col(i).paddingLeft = 5;
-      l.col(i).width = b.width;
-      l.col(i).paddingRight = 5;
-    })
-    l.row(1).paddingBottom = 5;
   }
 
   onKeyDown(evt) {
@@ -392,10 +398,12 @@ export class EditPrompt extends AbstractPrompt {
   get maxWidth() { return this.env.world.visibleBounds().width - 20; }
 
   build({label, input, historyId, useLastInput, mode, textStyle, evalEnvironment}) {
-    this.addMorph({
+    let title = this.addMorph({
       fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray,
       name: "label", type: "label", value: label
     });
+
+    this.width = title.textBounds().width;
 
     if (!textStyle) textStyle = {};
     if (mode && !textStyle.fontFamily) textStyle.fontFamily = "Monaco, monospace";
@@ -549,10 +557,12 @@ export class PasswordPrompt extends AbstractPrompt {
   get maxWidth() { return 800; }
 
   build({label, placeholder}) {
-    this.addMorph({
+    let title = this.addMorph({
       fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray,
       name: "label", type: "label", value: label
     });
+
+    this.width = Math.max(this.width, title.textBounds().width + 10);
 
     var passwordInput = this.addMorph(new PasswordInputLine({
       name: "input", placeholder: placeholder || "", borderWidth: 0
@@ -626,13 +636,14 @@ export class ListPrompt extends AbstractPrompt {
     listFontFamily = listFontFamily || "Monaco, monospace";
     listFontSize = listFontSize || 12;
 
-    var labelProps = {
+    var title = {
       name: "label", type: "label", value: label,
       fill: null, padding: Rectangle.inset(3),
       fontSize: labelFontSize, fontFamily: labelFontFamily, fontColor: Color.gray
     }
 
-    this.addMorph(labelProps);
+    title = this.addMorph(title);
+    this.width = Math.max(this.width, title.textBounds().width + 10);
 
     var listProps = {
       name: "list", type: filterable ? FilterableList : List,
