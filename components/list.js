@@ -704,7 +704,6 @@ export class FilterableList extends Morph {
 
       fill: {defaultValue: Color.transparent},
       borderWidth: {defaultValue: 1},
-      borderColor: {defaultValue: 1},
       updateSelectionsAfterFilter: {defaultValue: false},
 
       theme: {

@@ -582,7 +582,7 @@ export class ModeSelector extends Morph {
         }
       },
       layout: {
-        after: ["items"],
+        after: ["items", 'keys', 'values'],
         initialize() {
           this.layout = new GridLayout({
             rows: [0, {paddingBottom: 10}],
@@ -594,6 +594,7 @@ export class ModeSelector extends Morph {
         }
       },
       submorphs: {
+        after: ["items", 'keys', 'values'],
         initialize() {
           this.submorphs = [
             {name: "typeMarker"},
@@ -612,18 +613,22 @@ export class ModeSelector extends Morph {
 
   createLabels(keys, values, tooltips = {}) {
     return arr.zip(keys, values).map(([name, value]) => {
-      const tooltip = tooltips[name];
-      return {
+      const tooltip = tooltips[name],
+            label = morph({
         name: name + "Label",
         styleClasses: ["label"],
         type: "label",
         value: name,
         autofit: true,
-        ...(tooltip && {tooltip}),
-        onMouseDown: evt => {
-          this.update(name, value);
-        }
-      };
+        ...(tooltip && {tooltip})
+      });
+      connect(label, 'onMouseDown', this, 'update', {
+        updater: function($upd) {
+          $upd(name, value)
+        },
+        varMapping: {name, value}
+      })
+      return label;
     });
   }
 
