@@ -26,6 +26,7 @@ async function POST(url, body) {
   return json;
 }
 
+
 export default class User {
 
   static get guest() { return guestUser; }
@@ -77,6 +78,7 @@ export default class User {
 
   toString() { return `<User ${this.name} logged in: ${this.isLoggedIn()}>`; }
 }
+
 
 class GuestUser extends User {
 
