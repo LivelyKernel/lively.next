@@ -307,7 +307,6 @@ export class World extends Morph {
   }
 
   onNativeDragover(evt) {
-    show(evt.targetMorph)
     if (evt.targetMorph === this)
       this.ensureUploadIndicator();
   }
@@ -480,9 +479,11 @@ export class World extends Morph {
     return this.submorphs.find(m => m.isHalo && m.state && m.state.pointerId === pointerId);
   }
 
-  async showHaloFor(target, pointerId = this.firstHand && this.firstHand.pointerId) {
-    var {default: Halo} = await System.import("lively.morphic/halo/morph.js");
-    return this.addMorph(new Halo({pointerId, target}));
+  async showHaloFor(target, pointerId = this.firstHand && this.firstHand.pointerId, focus = true) {
+    var {default: Halo} = await System.import("lively.morphic/halo/morph.js"),
+        halo = this.addMorph(new Halo({pointerId, target}));
+    if (focus) halo.focus()
+    return halo;
   }
 
   async showHaloForSelection(selection, pointerId) {
