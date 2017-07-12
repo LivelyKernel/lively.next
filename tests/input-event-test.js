@@ -142,7 +142,7 @@ describe("pointer event related", function() {
         {type: "pointermove", position: pt(40, 50)});
       expect(dragEvent.state.dragDelta).equals(pt(10,15))
       env.eventDispatcher.simulateDOMEvents({type: "pointerup", target: m, position: pt(40, 51)});
-      expect(dragEndEvent.state.dragDelta).equals(pt(0, 1))
+      expect(dragEndEvent.state.dragDelta).equals(pt(0, 0))
     });
 
   });
