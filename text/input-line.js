@@ -412,7 +412,7 @@ export class PasswordInputLine extends HTMLMorph {
       input: {
         derived: true, after: ["domNode"],
         get() { return (this.domNode && this.domNode.value) || ""; },
-        set(val) { this.updateHtml(this.input); }
+        set(val) { this.domNode.value = val; this.updateHtml(this.input); }
       },
 
       placeholder: {
