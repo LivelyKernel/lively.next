@@ -4,6 +4,7 @@ import "gsap";
 import { num, obj, arr, properties, promise } from "lively.lang";
 import { Color, RadialGradient, pt, Point, LinearGradient, rect } from "lively.graphics";
 import { config } from "../index.js";
+import { styleProps, addSvgAttributes, addPathAttributes } from "./property-dom-mapping.js"
 
 // move to lively.lang
 function pad(array, n, getPadElement = arr.last) {
@@ -34,7 +35,7 @@ textarea.lively-text-input.debug {
   user-select: none;
 }
 
-.hiddenScrollbar::-webkit-scrollbar { 
+.hiddenScrollbar::-webkit-scrollbar {
   /* This is the magic bit */
   display: none;
 }
@@ -151,7 +152,7 @@ input[type="password"]:placeholder {
 
 
 export class ShadowObject {
-
+  
   constructor(args) {
     if (obj.isBoolean(args)) args = config.defaultShadow;
     const {rotation, distance, blur, color, morph, inset, spread} = args;
@@ -163,53 +164,54 @@ export class ShadowObject {
     this.color = color || Color.gray.darker();
     this.morph = morph;
   }
-
-    get distance() { return this._distance }
-    get blur() { return this._blur }
-    get rotation() { return this._rotation }
-    get color() { return this._color }
-    get inset() { return this._inset }
-
-    /*rms 5.3.17: This is a problem in general: mutating properties of
-      morph properties that are themselves objects will not be tracked
-      correctly by the change recording, since the reference does not change.
-      Recreating a new property object on every set seems costly also.
-      Maybe we should allow properties to communicate with the change recording
-      to let it know when things about it (i.e. dropShadow.blur, vertices.at(0), gradient.stops....)
-      have changed.*/
-
-    set inset(v) {
-      this._inset = v;
-      if (this.morph) this.morph.dropShadow = this;
-    }
-
-    set distance(d) {
-       this._distance = d;
-       if (this.morph) this.morph.dropShadow = this;
-    }
-
-    set blur(b) {
-       this._blur = b;
-       if (this.morph) this.morph.dropShadow = this;
-    }
-
-    set rotation(r) {
-       this._rotation = r;
-       if (this.morph) this.morph.dropShadow = this;
-    }
-
-    set color(c) {
-       this._color = c;
-       if (this.morph) this.morph.dropShadow = this;
-    }
-
-    get isShadowObject() { return true; }
-
-  toCss() {
-    const {x, y} = Point.polar(this.distance, num.toRadians(this.rotation));
-    return `${this.inset ? 'inset' : ''} ${this.color.toString()} ${x}px ${y}px ${this.blur}px ${this.spread}px`
+  
+  get distance() { return this._distance }
+  get blur() { return this._blur }
+  get rotation() { return this._rotation }
+  get color() { return this._color }
+  get inset() { return this._inset }
+  
+  /*rms 5.3.17: This is a problem in general: mutating properties of
+  morph properties that are themselves objects will not be tracked
+  correctly by the change recording, since the reference does not change.
+  Recreating a new property object on every set seems costly also.
+  Maybe we should allow properties to communicate with the change recording
+  to let it know when things about it (i.e. dropShadow.blur, vertices.at(0), gradient.stops....)
+  have changed.*/
+  
+  set inset(v) {
+    this._inset = v;
+    if (this.morph) this.morph.dropShadow = this;
   }
   
+  set distance(d) {
+    this._distance = d;
+    if (this.morph) this.morph.dropShadow = this;
+  }
+  
+  set blur(b) {
+    this._blur = b;
+    if (this.morph) this.morph.dropShadow = this;
+  }
+  
+  set rotation(r) {
+    this._rotation = r;
+    if (this.morph) this.morph.dropShadow = this;
+  }
+  
+  set color(c) {
+    this._color = c;
+    if (this.morph) this.morph.dropShadow = this;
+  }
+  
+  get isShadowObject() { return true; }
+
+  toCss() {
+    let {distance, rotation, color, inset, blur} = this,
+        {x, y} = Point.polar(distance, num.toRadians(rotation));
+    return `${inset ? 'inset' : ''} ${color.toString()} ${x}px ${y}px ${blur}px ${this.spread}px`
+  }
+
   toJson() {
     return obj.select(this, [
       "rotation",
@@ -222,132 +224,13 @@ export class ShadowObject {
   }
 
   toFilterCss() {
-    const {x, y} = Point.polar(this.distance, num.toRadians(this.rotation));
-    return `drop-shadow(${x}px ${y}px ${this.blur / 2}px ${this.color.toString()})`;
+    let {distance, rotation, blur, color} = this,
+        {x, y} = Point.polar(distance, num.toRadians(rotation));
+    return `drop-shadow(${x}px ${y}px ${blur / 2}px ${color.toString()})`;
   }
 
 }
 
-class StyleMapper {
-
-  static getTransform({position, origin, scale, rotation}) {
-    return {
-       transform: `translate3d(${Math.round(position.x - origin.x)}px, ${Math.round(position.y - origin.y)}px, 0px) rotate(${rotation.toFixed(2)}rad) scale(${scale.toFixed(2)},${scale.toFixed(2)})`}
-  }
-
-  static getTransformOrigin({origin}) {
-    return origin && {transformOrigin: `${origin.x}px ${origin.y}px`};
-  }
-
-  static getDisplay({visible}) {
-    return (visible != null) && {display: visible ? "" : "none"};
-  }
-
-  static getBorderRadius({borderRadiusLeft, borderRadiusRight, borderRadiusBottom, borderRadiusTop}) {
-    return {borderRadius: `${borderRadiusTop}px ${borderRadiusTop}px ${borderRadiusBottom}px ${borderRadiusBottom}px / ${borderRadiusLeft}px ${borderRadiusRight}px ${borderRadiusRight}px ${borderRadiusLeft}px`};
-  }
-
-  static getBorder({borderWidthLeft, borderColorLeft, borderStyleLeft,
-             borderWidthRight, borderColorRight, borderStyleRight, borderColor,
-             borderWidthBottom, borderColorBottom, borderStyleBottom,
-             borderWidthTop, borderColorTop, borderStyleTop}) {
-    return {
-      "border-left-style":   `${borderStyleLeft}`,
-      "border-right-style":  `${borderStyleRight}`,
-      "border-bottom-style": `${borderStyleBottom}`,
-      "border-top-style":    `${borderStyleTop}`,
-      "border-left-width":   `${borderWidthLeft}px`,
-      "border-right-width":  `${borderWidthRight}px`,
-      "border-bottom-width": `${borderWidthBottom}px`,
-      "border-top-width":    `${borderWidthTop}px`,
-      "border-top-color": borderColorTop ? borderColorTop.toString() : "transparent",
-      "border-right-color": borderColorRight ? borderColorRight.toString() : "transparent",
-      "border-bottom-color": borderColorBottom ? borderColorBottom.toString() : "transparent",
-      "border-left-color": borderColorLeft ? borderColorLeft.toString() : "transparent",
-      ...(borderColor && borderColor.isGradient) ? {"border-image": borderColor.toString()} : {}
-    }
-  }
-
-  static getFill({fill}) {
-    return fill && (fill.isGradient ? {backgroundImage: fill.toString()} : {background: fill.toString()})
-  }
-
-  static getExtentStyle({width, height, extent}) {
-    if(width && height) return {width: width + 'px', height: height + 'px'};
-    if(extent) return {width: extent.x + 'px', height: extent.y + 'px'};
-    return null;
-  }
-
-  static getShadowStyle(morph) {
-    if (morph.isSvgMorph || morph.isImage) return {filter: shadowCss(morph)};
-    return (config.fastShadows || (morph.dropShadow && morph.dropShadow.inset))
-      ? {
-          boxShadow: morph.dropShadow ? morph.dropShadow.toCss() : "none"
-        }
-      : {
-          filter: morph.dropShadow ? morph.dropShadow.toFilterCss() : "none"
-        };
-  }
-  static getSvgAttributes({width, height, borderWidth}) {
-     return {width: width || 1, height: height || 1,
-             viewBox: [0, 0, width || 1, height || 1].join(" ")};
-  }
-
-  static getPathAttributes(path, fill = false) {
-    var vertices = path.vertices.map(({x, y, controlPoints}) => ({controlPoints, ...path.origin.addXY(x, y)})),
-        {x: startX, y: startY, controlPoints: {next: {x: startNextX, y: startNextY}}} = vertices[0],
-        startNext = pt(startX + startNextX, startY + startNextY),
-        {x: endX, y: endY, controlPoints: {previous: {x: endPrevX, y: endPrevY}}} = arr.last(vertices),
-        endPrev = pt(endX + endPrevX, endY + endPrevY),
-        interVertices = vertices.slice(1, -1),
-
-        {id, fill, borderColor, borderWidth} = path,
-        fill = path.fill
-             ? path.fill.isGradient ? "url(#gradient-fill" + id + ")" : fill.toString()
-             : "transparent",
-        stroke = borderColor.valueOf().isGradient
-          ? "url(#gradient-borderColor" + id + ")"
-          : borderColor.valueOf().toString(),
-        d = `M${startX}, ${startY} C `
-          + `${startNext.x}, ${startNext.y} `
-          + interVertices.map(({x, y, controlPoints: {previous: p, next: n}}) => {
-               return `${x + p.x},${y + p.y} ${x},${y} C ${x + n.x},${y + n.y}`;
-             }).join(" ")
-          + ` ${endPrev.x},${endPrev.y} ${endX},${endY}`;
-
-    return {
-      "stroke-width": borderWidth.valueOf(),
-      ...this.getSvgBorderStyle(path),
-      "paint-order": "stroke",
-      fill, stroke, d
-    };
-  }
-
-  static getSvgBorderStyle(svg) {
-      const bw = svg.borderWidth.valueOf(),
-            style = {
-          solid: {},
-          dashed: {"stroke-dasharray": bw * 1.61 + " " + bw},
-          dotted: {"stroke-dasharray": "1 " + bw * 2,"stroke-linecap": "round", "stroke-linejoin": "round",}
-      }
-      return style[svg.borderStyle.valueOf()];
-  }
-
-  static getStyleProps(morph) {
-    return {
-      ...this.getFill(morph),
-      ...this.getTransform(morph),
-      ...this.getTransformOrigin(morph),
-      ...this.getDisplay(morph),
-      ...this.getExtentStyle(morph),
-      ...this.getBorder(morph),
-      ...this.getBorderRadius(morph),
-      ...this.getShadowStyle(morph),
-      ...(morph.opacity != null && {opacity: morph.opacity})
-    }
-  }
-
-}
 
 export class AnimationQueue {
 
@@ -357,12 +240,8 @@ export class AnimationQueue {
   }
 
   maskedProps(type) {
-     const l = this.animations.length;
-     if (l > 0) {
-        return obj.merge(this.animations.map(a => a.getAnimationProps(type)[0]));
-     } else {
-        return {}
-     }
+    const l = this.animations.length;
+    return l > 0 ? obj.merge(this.animations.map(a => a.getAnimationProps(type)[0])) : {};
   }
 
   get animationsActive() { return true }
@@ -394,7 +273,7 @@ export class PropertyAnimation {
     this.morph = morph;
     this.config = this.convertGradients(this.convertBounds(config));
     this.needsAnimation = {svg: morph.isSvgMorph, path: morph.isPath, polygon: morph.isPolygon};
-    this.capturedProperties = {...obj.select(this.morph, this.propsToCapture)};
+    this.capturedProperties = obj.select(this.morph, this.propsToCapture);
   }
 
   get propsToCapture() {
@@ -583,12 +462,16 @@ export class PropertyAnimation {
     }
     return [obj.isEmpty(before) ? false : before, obj.isEmpty(after) ? false : after]
   }
-  
+
   gatherAnimationProps() {
-     return {css: StyleMapper.getStyleProps(this.morph),
-             svg: this.morph.isSvgMorph && StyleMapper.getSvgAttributes(this.morph),
-             path: this.morph.isPath && StyleMapper.getPathAttributes(this.morph),
-             polygon: this.morph.isPolygon && StyleMapper.getPathAttributes(this.morph)}
+    let {morph} = this,
+        {isSvgMorph, isPath, isPolygon} = morph,
+        props = {}
+    props.css = styleProps(this.morph);
+    if (isSvgMorph) props.svg = addSvgAttributes(morph, {});
+    if (isPath) props.path = addPathAttributes(morph);
+    if (isPolygon) props.polygon = addPathAttributes(morph);
+    return props;
   }
 
   assignProps() {
@@ -642,28 +525,25 @@ export class PropertyAnimation {
 }
 
 export function defaultStyle(morph) {
-
   var { opacity, reactsToPointer, nativeCursor, clipMode } = morph,
-      styleProps = StyleMapper.getStyleProps(morph),
+      domStyle = styleProps(morph),
       maskedProps = morph._animationQueue.maskedProps("css");
 
-  if ('backgroundImage' in maskedProps) delete styleProps['background'];
+  if ('backgroundImage' in maskedProps) delete domStyle['background'];
 
   if (clipMode !== "visible") {
-    styleProps.overflow = clipMode;
+    domStyle.overflow = clipMode;
     // Fix for Chrome scroll issue, see
     // https://github.com/noraesae/perfect-scrollbar/issues/612
     // https://developers.google.com/web/updates/2016/04/scroll-anchoring
-    styleProps["overflow-anchor"] = "none";
+    domStyle["overflow-anchor"] = "none";
   }
 
-  return {
-    ...styleProps,
-    ...maskedProps,
-    position: "absolute",
-    "pointer-events": reactsToPointer ? "auto" : "none",
-    cursor: nativeCursor
-  };
+  Object.assign(domStyle, maskedProps)
+  domStyle.position = "absolute";
+  domStyle["pointer-events"] = reactsToPointer ? "auto" : "none";
+  domStyle.cursor = nativeCursor;
+  return domStyle;
 }
 
 // Sets the scroll later...
@@ -742,50 +622,50 @@ export function defaultAttributes(morph, renderer) {
 }
 
 export function svgAttributes(svg) {
-  return {
-    animation: new SvgAnimation(svg, "svg"),
-    attributes: {
-      ...StyleMapper.getSvgAttributes(svg),
-      ...svg._animationQueue.maskedProps("svg")
-    }
-  };
+  let animation = new SvgAnimation(svg, "svg"), attributes = {};
+  addSvgAttributes(svg, attributes);
+  Object.assign(attributes, svg._animationQueue.maskedProps("svg"));
+  return {animation, attributes};
 }
 
 export function pathAttributes(path) {
-  return {
-    animation: new SvgAnimation(path, "path"),
-    attributes: {
-      ...StyleMapper.getPathAttributes(path),
-      ...path._animationQueue.maskedProps("path")
-    }
-  };
-}
-
-function shadowCss(morph) {
-  return morph.dropShadow ?
-            morph.dropShadow.toFilterCss() :
-            ``;
+  let animation = new SvgAnimation(path, "path"), attributes = {};
+  addPathAttributes(path, attributes);
+  Object.assign(attributes, path._animationQueue.maskedProps("path"))
+  return {animation, attributes};
 }
 
 export function renderGradient(morph, prop) {
   const gradient = morph[prop].valueOf(),
-        {bounds, focus, vector} = gradient;
-  return h(gradient.type, {
-               namespace: "http://www.w3.org/2000/svg",
-               attributes: {id: "gradient-" + prop + morph.id,
-                            gradientUnits: "userSpaceOnUse",
-                            r: "50%",
-                            ...(vector && {gradientTransform: `rotate(${num.toDegrees(vector.extent().theta())}, ${morph.width / 2}, ${morph.height / 2})`}),
-                            ...(focus && bounds && {gradientTransform: `matrix(
-                                    ${bounds.width / morph.width}, 0, 0, ${bounds.height / morph.height},
-                                    ${((morph.width / 2) - (bounds.width / morph.width) * (morph.width / 2)) + (focus.x * morph.width) - (morph.width / 2)},
-                                    ${((morph.height / 2) - (bounds.height / morph.height) * (morph.height / 2)) + (focus.y * morph.height) - (morph.height / 2)})`})}},
-               gradient.stops.map(({offset, color}) =>
-                        h("stop",
-                            {namespace: "http://www.w3.org/2000/svg",
-                              attributes:
-                                {offset: (offset * 100) + "%",
-                                 "stop-color": color.toString()}})));
+        {bounds, focus, vector, stops} = gradient,
+        {extent: {x: w, y: h}} = morph,
+        props = {
+          namespace: "http://www.w3.org/2000/svg",
+          attributes: {
+            id: "gradient-" + prop + morph.id,
+            gradientUnits: "userSpaceOnUse",
+            r: "50%"
+          }
+        };
+  if (vector) {
+    props.attributes.gradientTransform = `rotate(${num.toDegrees(vector.extent().theta())}, ${w / 2}, ${h / 2})`
+  }
+  if (focus && bounds) {
+    let {width: bw, height: bh} = bounds,
+        {x, y} = focus;
+    props.attributes.gradientTransform =`matrix(
+${bw / w}, 0, 0, ${bh / h},
+${((w / 2) - (bw / w) * (w / 2)) + (x * w) - (w / 2)},
+${((h / 2) - (bh / h) * (h / 2)) + (y * h) - (h / 2)})`;
+  }
+
+  return h(gradient.type, props,
+          stops.map(stop =>
+                    h("stop",
+                      {namespace: "http://www.w3.org/2000/svg",
+                       attributes:
+                       {offset: (stop.offset * 100) + "%",
+                        "stop-color": stop.color.toString()}})));
 }
 
 function initDOMState(renderer, world) {
