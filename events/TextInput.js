@@ -245,7 +245,7 @@ export default class TextInput {
     setTimeout(() => {
       var {textareaNode, rootNode} = this.domState || {};
       if (rootNode && document.activeElement === rootNode)
-        rootNode && rootNode.focus();
+        textareaNode && textareaNode.focus();
     });
   }
 
