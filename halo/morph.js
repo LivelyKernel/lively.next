@@ -388,7 +388,6 @@ export default class Halo extends Morph {
     const target = evt.state.clickedOnMorph;
     if (!evt.isCommandKey() && target == this.borderBox) return this.remove();
     if (evt.isShiftDown() && evt.isCommandKey()) {
-      debugger;
       const actualMorph = this.target.isMorphSelection ?
         this.target.morphBeneath(evt.position) : this.morphBeneath(evt.position);
       this.isAlreadySelected(actualMorph) ?
@@ -620,10 +619,12 @@ class HaloItem extends Morph {
 class NameHolder extends Morph {
 
   static get properties() {
+
     return {
       tooltip:   {defaultValue: "Click to edit the morph's name"},
       draggable: {defaultValue: false},
       fill:      {defaultValue: Color.transparent},
+      forceUniqueName: {defaultValue: false},
       layout:    {
         after: ["nameHolder"],
         initialize() { this.layout = new HorizontalLayout({spacing: 7}); }
@@ -640,6 +641,7 @@ class NameHolder extends Morph {
         }
       }
     }
+
   }
 
   onHoverIn(evt) {
@@ -703,7 +705,7 @@ class NameHolder extends Morph {
   }
 
   updateName(newName) {
-    if (this.validName) {
+    if (!this.forceUniqueName || this.validName) {
       this.target.name = newName;
       signal(this, "active", [false, this]);
     }
