@@ -612,7 +612,7 @@ export class World extends Morph {
 
     promptMorph.openInWorldNear(
       opts.requester ?
-        opts.requester.globalBounds().center() :
+        visBounds.constrainPt(opts.requester.globalBounds().center()) :
         visBounds.center(), this);
 
     if (promptMorph.height > visBounds.height)
