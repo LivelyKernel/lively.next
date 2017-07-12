@@ -53,15 +53,23 @@ var config = {
   longClick: {minDur: 500, maxDur: 1000, maxDist: 2}, // time and distance for long-click
   showTooltipsAfter: .8,
 
+  users: {
+    authServerURL: "https://auth.lively-next.org"
+  },
+
   ide: {
+
     js: {
-      ignoredPackages: ["lively.web", "no group", url => url.includes("lively.next-node_modules") || url.includes("node_modules")]
+      ignoredPackages: [
+        "lively.web", "no group",
+        url => url.includes("lively.next-node_modules") || url.includes("node_modules")
+      ]
     },
+
     modes: {
       aliases: {
         "sh": "shell",
-        "markdown": "md",
-        
+        "markdown": "md"
       }
     }
   },
