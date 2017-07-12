@@ -96,9 +96,13 @@ import { promise } from "lively.lang";
 import { migrations } from "./object-migration.js";
 import { ObjectMigrationPlugin } from "lively.serializer2/plugins.js";
 
+const isNode = System.get("@system-env").node;
+
 export async function createMorphSnapshot(aMorph, options = {}) {
   let {
-        addPreview = true, previewWidth = 100, previewHeight = 100, previewType = "png",
+        addPreview = !isNode,
+        previewWidth = 100, previewHeight = 100,
+        previewType = "png",
         testLoad = true,
         addPackages = true
       } = options,

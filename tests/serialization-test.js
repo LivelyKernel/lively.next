@@ -30,7 +30,7 @@ function teardown() { MorphicEnv.popDefault().uninstall(); }
 
 class OnLoadTestMorph extends Morph { onLoad() { this.onLoadCalled = true; }}
 
-describe("morph serialization", () => {
+describe("morph serialization", function() {
 
   beforeEach(setup);
   afterEach(teardown);
