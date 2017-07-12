@@ -191,10 +191,12 @@ var commands = [
   {
     name: "resize manually",
     exec: async (world, args = {}) => {
-      let width, height;
-      width = Number(args.width || await world.prompt("Enter world width", {input: world.bounds().width}));
+      let width, height,
+          winBounds = world.windowBounds(),
+          bounds = world.bounds();
+      width = Number(args.width || await world.prompt("Enter world width", {input: Math.max(bounds.width, winBounds.width)}));
       if (typeof width === "number")
-        height = Number(args.height || await world.prompt("Enter world height", {input: world.bounds().height}));
+        height = Number(args.height || await world.prompt("Enter world height", {input: Math.max(bounds.height, winBounds.height)}));
 
       if (typeof width === "number" && !isNaN(width)
        && typeof height === "number" && !isNaN(height))
