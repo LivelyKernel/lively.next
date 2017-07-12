@@ -592,7 +592,10 @@ export class PasswordPrompt extends AbstractPrompt {
 
   resolve() { super.resolve(this.get("input").acceptInput()); }
 
-  focus() { this.get("input").focus(); }
+  focus() {
+    let i = this.get("input");
+    i.whenRendered().then(() => i.focus())
+  }
 }
 
 
