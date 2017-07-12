@@ -28,6 +28,10 @@ const domEventsWeListenTo = [
   {type: "drop",      capturing: false}
 ];
 
+const eventsCausingImmediateRender = new Set([
+  "pointerdown", "pointerup", "keydown", "keyup", "input"
+]);
+
 const globalDomEventsWeListenTo = [
   {type: 'resize', capturing: false, morphMethod: "onWindowResize"},
   {type: 'orientationchange', capturing: false, morphMethod: "onWindowResize"},
@@ -626,8 +630,10 @@ export default class EventDispatcher {
     });
     events.forEach(evt => this.dispatchEvent(evt, morphMethod));
 
-    if (this.world && this.world.needsRerender()) {
-      this.world.env.renderer.renderStep();
+    if (world && world.needsRerender()) {
+      let renderer = world.env.renderer;
+      if (eventsCausingImmediateRender.has(domEvt.type)) renderer.renderStep();
+      else renderer.renderLater();
     }
   }
 
