@@ -985,7 +985,6 @@ export class Morph {
   }
 
   onBoundsChanged(bounds) {
-    if (this.name == 'background image') debugger;
     signal(this, 'bounds', bounds);
     [...bounds.corners, ...bounds.sides].forEach(c => {
       signal(this, c, bounds.partNamed(c))
@@ -1849,8 +1848,9 @@ export class Morph {
     // into events/dispatcher.js
     if (this === evt.targetMorph) {
       setTimeout(() => {
-        if (this.grabbable && !evt.state.draggedMorph && evt.state.clickedOnMorph === this && !evt.hand.carriesMorphs())
-          evt.hand.grab(this);
+        if (this.grabbable && !evt.state.draggedMorph
+            && evt.state.clickedOnMorph === this
+            && !evt.hand.carriesMorphs()) evt.hand.grab(this);
       }, 800);
     }
   }
