@@ -194,6 +194,7 @@ export default class EventDispatcher {
     this.installed = false;
     this.handlerFunctions = [];
     this.killRing = new KillRing(config.text.clipboardBufferLength);
+    this.nodeMorphMap = new WeakMap();
 
     this.resetState();
   }
@@ -584,8 +585,10 @@ export default class EventDispatcher {
   }
 
   dispatchDOMEvent(domEvt, targetMorph, morphMethod) {
+    let {world, eventState: state, nodeMorphMap} = this;
+
     if (!targetMorph && focusTargetingEvents.includes(domEvt.type)) {
-      targetMorph = this.eventState.focusedMorph || this.world;
+      targetMorph = state.focusedMorph || world;
     } else if (!targetMorph) {
       // search for the target node that represents a morph: Not all nodes with
       // event handlers might be rendered by morphs, e.g. in case of HTML morphs
@@ -598,8 +601,13 @@ export default class EventDispatcher {
         if (cssClasses && cssClasses.includes("Morph")) break;
         if (!(targetNode = targetNode.parentNode)) return;
       }
-      var targetId = targetNode.id;
-      targetMorph = this.world.withAllSubmorphsDetect(sub => sub.id === targetId);
+      
+      targetMorph = nodeMorphMap.get(targetNode);
+      if (!targetMorph) {
+        var targetId = targetNode.id;
+        targetMorph = world.withAllSubmorphsDetect(sub => sub.id === targetId);
+        if (targetMorph) nodeMorphMap.set(targetNode, targetMorph);
+      }
     }
 
     if (!targetMorph) {
