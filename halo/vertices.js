@@ -9,7 +9,7 @@ import { arr } from "lively.lang";
 import { connect } from "lively.bindings";
 
 import { Leash } from "../components/widgets.js";
-import { StyleSheet } from "../style-rules.js";
+import { StyleSheet } from "../style-sheets.js";
 
 import { pathAttributes } from "../rendering/morphic-default.js";
 

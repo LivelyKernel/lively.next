@@ -7,7 +7,7 @@ export * from "./text/label.js";
 export * from "./html-morph.js";
 export * from "./env.js";
 export * from "./layout.js";
-export { StyleSheet } from "./style-rules.js";
+export { StyleSheet } from "./style-sheets.js";
 export { show } from "./components/markers.js"
 export { ShadowObject } from "./rendering/morphic-default.js";
 export { Button } from "./components/buttons.js";

@@ -9,7 +9,7 @@ import {signal, connect, disconnect} from "lively.bindings";
 import {Slider} from "../../components/widgets.js";
 import { obj } from "lively.lang";
 import {ColorPalette} from "./color-palette.js";
-import { StyleSheet } from '../../style-rules.js';
+import { StyleSheet } from '../../style-sheets.js';
 import { zip } from "lively.lang/array.js";
 import { Popover } from "./style-popover.js";
 

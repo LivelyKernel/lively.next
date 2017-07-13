@@ -6,7 +6,7 @@ import { Morph, CustomLayout, VerticalLayout, HorizontalLayout,
 import { DropDownSelector, ModeSelector, Slider } from "../../components/widgets.js";
 import { connect, signal } from "lively.bindings";
 import { num, arr } from "lively.lang";
-import { StyleSheet } from "../../style-rules.js";
+import { StyleSheet } from "../../style-sheets.js";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
 

@@ -7,7 +7,7 @@ import {Morph, Image, VerticalLayout, GridLayout,
         Text, Path, HorizontalLayout, Ellipse, morph} from "../../index.js";
 import {num, obj, arr} from "lively.lang";
 import {Icon} from "lively.morphic/components/icons.js";
-import {StyleSheet} from "../../style-rules.js";
+import {StyleSheet} from "../../style-sheets.js";
 import {connect, signal, once} from "lively.bindings";
 import { Popover } from "./style-popover.js";
 

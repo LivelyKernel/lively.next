@@ -3,7 +3,7 @@ import { arr, string } from "lively.lang";
 import { pt, LinearGradient, rect, Color, Rectangle } from "lively.graphics";
 import { Label, Icon, morph, Morph, ShadowObject } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
-import {StyleSheet} from '../style-rules.js';
+import {StyleSheet} from '../style-sheets.js';
 import {HorizontalLayout} from '../layout.js';
 
 
