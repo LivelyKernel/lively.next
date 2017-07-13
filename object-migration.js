@@ -130,6 +130,22 @@ For now only a simple default theme...
         });
       return idAndSnapshot;
     }
+  },
+
+  {
+    date: "2017-07-13",
+    name: "Renamed style-rules.js to style-sheets.js",
+    snapshotConverter: idAndSnapshot => {
+      let {snapshot} = idAndSnapshot;
+      for (let key in snapshot) {
+        let serialized = snapshot[key], klass = serialized["lively.serializer-class-info"];
+        if (!klass) continue;
+        if (klass.className === "StyleSheet") {
+          klass.module.pathInPackage = "style-sheets.js";
+        }
+      }
+      return idAndSnapshot;
+    }
   }
 
 ];
