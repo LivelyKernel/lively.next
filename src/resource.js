@@ -63,6 +63,8 @@ export default class Resource {
     return path === "" ? "/" : path;
   }
 
+  pathWithoutQuery() { return this.path().split("?")[0]; }
+
   name() {
     let path = this.path(),
         queryIndex = path.lastIndexOf("?");
