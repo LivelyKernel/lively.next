@@ -120,23 +120,27 @@ class VertexHandle extends Morph {
         vertices: [pt(0, 0), this.vertex.controlPoints.next]
       })
     ];
-    connect(prev, 'onEndpointDrag', this, 'update', {updater: ($upd, evt) => {
+    connect(prev, "onEndpointDrag", this, "update", {
+      updater: ($upd, evt) => {
         let p = evt.state.endpoint;
         if (p.index == 1) {
-          vertex.movePreviousControlPoint(
+          this.targetObj.vertex.movePreviousControlPoint(
+            p.getGlobalTransform().inverse().transformDirection(evt.state.dragDelta)
+          );
+          $upd();
+        }
+      }
+    });    
+    connect(next, 'onEndpointDrag', this, 'update', {updater: ($upd, evt) => {
+        let p = evt.state.endpoint;
+        if (p.index == 1) {
+          this.targetObj.vertex.moveNextControlPoint(
             p.getGlobalTransform().inverse().transformDirection(evt.state.dragDelta)
           );
           $upd();
         }    
-    }, varMapping: {vertex: this.vertex}});
-    connect(next, 'onEndpointDrag', this, 'update', {updater: ($upd, evt) => {
-        let p = evt.state.endpoint;
-        if (p.index == 1) {
-          vertex.moveNextControlPoint(
-            p.getGlobalTransform().inverse().transformDirection(evt.state.dragDelta)
-          );
-          $upd();
-        }    }, varMapping: {vertex: this.vertex}})
+      }
+    });
     return points;
   }
 

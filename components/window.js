@@ -314,7 +314,7 @@ export default class Window extends Morph {
   async toggleMinimize() {
     let {nonMinizedBounds, minimized, width} = this,
         bounds = this.bounds(),
-        duration = 200,
+        duration = 100,
         collapseButton = this.getSubmorphNamed("minimize"),
         easing = Expo.easeOut;
 
@@ -343,7 +343,7 @@ export default class Window extends Morph {
   }
 
   toggleMaximize() {
-    var easing = Expo.easeOut, duration = 200;
+    var easing = Expo.easeOut, duration = 100;
     if (this.maximized) {
       this.animate({bounds: this.nonMaximizedBounds, duration, easing});
       this.resizer().bottomRight = this.extent;

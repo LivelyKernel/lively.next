@@ -229,12 +229,11 @@ class HarmonyPalette extends Morph {
   }
 }
 
-// new Popover({name: 'Color Palette', targetMorph: new ColorPalette({color: Color.red})})
-
 export class ColorPalette extends Morph {
 
    static get properties() {
      return {
+       extent: {defaultValue: pt(200, 300)},
        colorPalette: {
          after: ['submorphs'],
          defaultValue: "flatDesign",
@@ -317,8 +316,12 @@ export class ColorPalette extends Morph {
     return new StyleSheet({
       ".ColorPalette": {
         fill: Color.transparent,
-        extent: pt(200, 300),
-        layout: new VerticalLayout({resizeContainer: true})
+        layout: new VerticalLayout({
+          resizeContainer: true,
+          layoutOrder: function(m) {
+            return this.container.submorphs.indexOf(m);
+          }
+        })
       },
       ".ColorPalette [name=arrow]": {fill, grabbable: false, draggable: false},
       ".ColorPalette .paletteFormatter": {
@@ -330,8 +333,9 @@ export class ColorPalette extends Morph {
         fill: Color.transparent
       },
       ".ColorPalette [name=paletteView]": {
-          clipMode: "hidden", fill: Color.transparent,
-          layout: new VerticalLayout()
+        clipMode: "hidden",
+        fill: Color.transparent,
+        layout: new VerticalLayout()
       },
       ".ColorPalette [name=solidColorPalette]": {
         fill: Color.transparent,
@@ -339,7 +343,9 @@ export class ColorPalette extends Morph {
       },
       ".ColorPalette [name=paletteContainer]": {
         layout: new TilingLayout({
-          layoutOrder(m) { return this.container.submorphs.indexOf(m) }
+          layoutOrder(m) {
+            return this.container.submorphs.indexOf(m);
+          }
         }),
         fill: Color.transparent
       },
@@ -378,7 +384,7 @@ export class ColorPalette extends Morph {
         center: pt(8, 8),
         extent: pt(12, 12)
       }
-    });
+    });   
    }
 
    isHaloItem() { return true }

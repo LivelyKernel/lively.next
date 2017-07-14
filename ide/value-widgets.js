@@ -5,7 +5,7 @@ import { Color, LinearGradient, pt, rect } from "lively.graphics";
 import { ValueScrubber } from "../components/widgets.js";
 import { FillPopover, TextPopover, IconPopover, RectanglePopover, ShadowPopover, PointPopover, VerticesPopover, LayoutPopover, Popover } from "./styling/style-popover.js";
 import { num, obj } from "lively.lang";
-import { StyleSheetEditor } from "../style-rules.js";
+import { StyleSheetEditor } from "../style-sheets.js";
 import InputLine from "../text/input-line.js";
 
 /*

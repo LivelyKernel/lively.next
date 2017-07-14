@@ -398,6 +398,9 @@ export class Tree extends Morph {
       ".TreeNode [name=toggle]": {
         fontSize: this.fontSize
       },
+      ".TreeNode.deselected": {
+        fill: Color.transparent
+      },
       ".TreeNode.selected": {
         fill: this.selectionColor
       },
