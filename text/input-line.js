@@ -383,6 +383,29 @@ export default class InputLine extends Text {
       duration: 200
     });
   }
+  
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // html export
+  htmlExport_transformNode(node) {
+    let doc = node.ownerDocument,
+        input = doc.createElement("input"),
+        textCSSProps = [
+          "padding",
+          "font-family",
+          "font-weight",
+          "font-style",
+          "text-decoration",
+          "font-size",
+          "color"],
+        textLayer = node.querySelector(".newtext-text-layer.actual");
+    input.id = node.id; input.className = node.className;
+    input.style = node.style.cssText;
+    Object.assign(input.style, obj.select(textLayer.style, textCSSProps));
+    input.placeholder = this.placeholder;
+    input.type = "text";
+    input.name = this.name.replace(/[\s"]/g, "-");
+    return input;
+  }
 }
 
 
@@ -524,4 +547,26 @@ export class PasswordInputLine extends HTMLMorph {
       {keys: {mac: "Meta-S", win: "Ctrl-S"}, command: "accept input"}
     ]);
   }
+  
+  htmlExport_transformNode(node) {    
+    let doc = node.ownerDocument,
+        oldInput = node.querySelector("input"),
+        input = doc.createElement("input"),
+        textCSSProps = [
+          "padding",
+          "font-family",
+          "font-weight",
+          "font-style",
+          "text-decoration",
+          "font-size",
+          "color"];
+    input.id = node.id; input.className = node.className;
+    input.placeholder = this.placeholder;
+    input.style = node.style.cssText;
+    Object.assign(input.style, obj.select(oldInput.style, textCSSProps));
+    input.type = "password";
+    input.name = this.name.replace(/[\s"]/g, "-");
+    return input;
+  }
+
 }

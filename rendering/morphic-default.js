@@ -1,10 +1,11 @@
 /*global Power4,TweenMax*/
-import { diff, patch, create, h } from "virtual-dom";
+import { diff, patch, create, height } from "virtual-dom";
 import "gsap";
 import { num, obj, arr, properties, promise } from "lively.lang";
 import { Color, RadialGradient, pt, Point, LinearGradient, rect } from "lively.graphics";
 import { config } from "../index.js";
 import { styleProps, addSvgAttributes, addPathAttributes } from "./property-dom-mapping.js"
+import { h } from "virtual-dom";
 
 // move to lively.lang
 function pad(array, n, getPadElement = arr.last) {
@@ -133,19 +134,19 @@ div.text-layer span {
 
 /*-=- input elements -=-*/
 
-input[type="password"]::-webkit-input-placeholder {
+input::-webkit-input-placeholder {
   color: rgb(202, 202, 202);
 }
-input[type="password"]::-moz-placeholder {
+input::-moz-placeholder {
   color: rgb(202, 202, 202);
 }
-input[type="password"]:-ms-input-placeholder {
+input:-ms-input-placeholder {
   color: rgb(202, 202, 202);
 }
-input[type="password"]:-moz-placeholder {
+input:-moz-placeholder {
   color: rgb(202, 202, 202);
 }
-input[type="password"]:placeholder {
+input:placeholder {
   color: rgb(202, 202, 202);
 }
 `;
@@ -638,7 +639,7 @@ export function pathAttributes(path) {
 export function renderGradient(morph, prop) {
   const gradient = morph[prop].valueOf(),
         {bounds, focus, vector, stops} = gradient,
-        {extent: {x: w, y: h}} = morph,
+        {extent: {x: width, y: height}} = morph,
         props = {
           namespace: "http://www.w3.org/2000/svg",
           attributes: {
@@ -648,15 +649,16 @@ export function renderGradient(morph, prop) {
           }
         };
   if (vector) {
-    props.attributes.gradientTransform = `rotate(${num.toDegrees(vector.extent().theta())}, ${w / 2}, ${h / 2})`
+    props.attributes.gradientTransform =
+      `rotate(${num.toDegrees(vector.extent().theta())}, ${width / 2}, ${height / 2})`
   }
   if (focus && bounds) {
     let {width: bw, height: bh} = bounds,
         {x, y} = focus;
     props.attributes.gradientTransform =`matrix(
-${bw / w}, 0, 0, ${bh / h},
-${((w / 2) - (bw / w) * (w / 2)) + (x * w) - (w / 2)},
-${((h / 2) - (bh / h) * (h / 2)) + (y * h) - (h / 2)})`;
+${bw / width}, 0, 0, ${bh / height},
+${((width / 2) - (bw / width) * (width / 2)) + (x * width) - (width / 2)},
+${((height / 2) - (bh / height) * (height / 2)) + (y * height) - (height / 2)})`;
   }
 
   return h(gradient.type, props,

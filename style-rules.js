@@ -1,3 +1,4 @@
+/*global Power4*/
 /* globals Power4 */
 import { arr, tree, obj } from "lively.lang";
 import { Sizzle, SizzleExpression } from "./sizzle.js";
