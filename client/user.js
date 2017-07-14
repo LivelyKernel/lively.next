@@ -72,6 +72,13 @@ export default class User {
     return {status: answer.status};
   }
 
+  async verify() {
+    // note: services should not trust if this verify method returns true, they
+    // should check against the user token against the authServerURL/verify
+    let {error, status} = await POST(this.url + "/verify", {token: this.token});
+    return error ? false : true;
+  }
+
   login(password) {
     return this.loginOrRegister("login", password, this.url);
   }
