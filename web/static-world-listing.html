@@ -67,8 +67,8 @@
     <script src="/lively.next-node_modules/babel-standalone/babel.js"></script>
     <script src="/lively.next-node_modules/systemjs/dist/system.src.js"></script>
     <script src="/lively.modules/dist/lively.modules.js"></script>
-    <script src="/lively.user/dist/lively.user-client.js"></script>
     <script src="/lively.storage/dist/lively.storage_with-pouch.js"></script>
+    <script src="/lively.user/dist/lively.user-client.js"></script>
 
     <script src="/lively.2lively/dist/lively.2lively_client.js"></script>
     <script>
@@ -79,11 +79,31 @@
     </script>
 
     <script>
-      if (document.location.host !== "lively-next.org")
-        document.title = `lively.next (${document.location.host})`;
-      var origin = document.location.origin;
+      var res = lively.resources.resource,
+          loc = document.location,
+          origin = loc.origin,
+          query = res(loc.href).query(),
+          loginDone = false,
+          userRegistry = lively.user.UserRegistry.current;
+
+      if (loc.host !== "lively-next.org")
+        document.title = `lively.next (${loc.host})`;
+
+      if (!userRegistry.hasUserStored() || query.login) {
+        Promise.all([
+          lively.resources.loadViaScript("/lively.user/html/html-ui.js"),
+          res(`${origin}/lively.user/html/html-ui.fragment`).read()])
+          .then(function(result) {
+            var content = result[1];
+            document.body.insertAdjacentHTML("beforeend", content);
+            return window.setupForHTMLPage()();
+          })
+          .then(function(user) { loginDone = true; return user; })
+          .catch(function(err) { console.error(err); });
+      } else loginDone = true;
+
       polyfills()
-        .then(function() { return lively.resources.resource(origin).join("package-registry.json").readJson(); })
+        .then(function() { return res(origin).join("package-registry.json").readJson(); })
         .then(function(packageCached) {
           var System = lively.modules.getSystem("listing", {baseURL: String(origin)});
           lively.modules.changeSystem(System, true);

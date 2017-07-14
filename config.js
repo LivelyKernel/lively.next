@@ -54,7 +54,8 @@ var config = {
   showTooltipsAfter: .8,
 
   users: {
-    authServerURL: "https://auth.lively-next.org"
+    authServerURL: "https://auth.lively-next.org",
+    autoLoginAsGuest: false
   },
 
   ide: {
