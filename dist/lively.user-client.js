@@ -229,7 +229,7 @@ var POST = function () {
 
           case 12:
             _context.prev = 12;
-            _context.t0 = _context["catch"](6);
+            _context.t0 = _context['catch'](6);
 
           case 14:
             if (text && res.headers.get("content-type") === "application/json") {
@@ -246,10 +246,10 @@ var POST = function () {
             throw new Error("Unexpected response: " + text);
 
           case 17:
-            return _context.abrupt("return", json);
+            return _context.abrupt('return', json);
 
           case 18:
-          case "end":
+          case 'end':
             return _context.stop();
         }
       }
@@ -273,6 +273,13 @@ function jwtTokenDecode(token) {
   return JSON.parse(atob(b));
 }
 
+function guid() {
+  var s4 = function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  };
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
 function makeRequest(url) {
   var method = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "GET";
   var body = arguments[2];
@@ -289,10 +296,10 @@ function makeRequest(url) {
 
 var User = function () {
   createClass(User, null, [{
-    key: "named",
+    key: 'named',
     value: function named(name, url) {
-      var key = name + "-" + url;
-      var user = userMap.get(key);
+      var key = name + "-" + url,
+          user = userMap.get(key);
       if (!user) {
         user = new this(name, url);
         userMap.set(key, user);
@@ -300,7 +307,7 @@ var User = function () {
       return user;
     }
   }, {
-    key: "fromToken",
+    key: 'fromToken',
     value: function fromToken(token, url) {
       var _jwtTokenDecode = jwtTokenDecode(token),
           name = _jwtTokenDecode.name,
@@ -311,12 +318,12 @@ var User = function () {
       return Object.assign(this.named(name, url), { roles: roles, createdAt: createdAt, email: email, token: token });
     }
   }, {
-    key: "clearCache",
+    key: 'clearCache',
     value: function clearCache() {
       userMap = new Map();
     }
   }, {
-    key: "guest",
+    key: 'guest',
     get: function get() {
       return guestUser;
     }
@@ -334,12 +341,12 @@ var User = function () {
   }
 
   createClass(User, [{
-    key: "isLoggedIn",
+    key: 'isLoggedIn',
     value: function isLoggedIn() {
       return !!this.token;
     }
   }, {
-    key: "loginOrRegister",
+    key: 'loginOrRegister',
     value: function () {
       var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(action, password, authServerURL) {
         var email, createdAt, roles, name, payload, answer, token, _jwtTokenDecode2;
@@ -364,16 +371,16 @@ var User = function () {
                   break;
                 }
 
-                return _context2.abrupt("return", answer);
+                return _context2.abrupt('return', answer);
 
               case 10:
                 token = answer.token, _jwtTokenDecode2 = jwtTokenDecode(token), roles = _jwtTokenDecode2.roles, createdAt = _jwtTokenDecode2.createdAt, email = _jwtTokenDecode2.email;
 
                 Object.assign(this, { roles: roles, createdAt: createdAt, email: email, token: token });
-                return _context2.abrupt("return", { status: answer.status });
+                return _context2.abrupt('return', { status: answer.status });
 
               case 13:
-              case "end":
+              case 'end':
                 return _context2.stop();
             }
           }
@@ -387,113 +394,151 @@ var User = function () {
       return loginOrRegister;
     }()
   }, {
-    key: "login",
-    value: function login(password) {
-      return this.loginOrRegister("login", password, this.url);
-    }
-  }, {
-    key: "register",
-    value: function register(password) {
-      return this.loginOrRegister("register", password, this.url);
-    }
-  }, {
-    key: "checkPassword",
+    key: 'verify',
     value: function () {
-      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(password) {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
         var _ref4, error, status;
 
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                if (this.isLoggedIn) {
-                  _context3.next = 2;
-                  break;
-                }
-
-                throw new Error("To check password, user needs to login.");
+                _context3.next = 2;
+                return POST(this.url + "/verify", { token: this.token });
 
               case 2:
-                _context3.next = 4;
-                return POST(this.url + "/check-password", { token: this.token, password: password });
-
-              case 4:
                 _ref4 = _context3.sent;
                 error = _ref4.error;
                 status = _ref4.status;
+                return _context3.abrupt('return', error ? false : true);
 
-                if (!error) {
-                  _context3.next = 9;
-                  break;
-                }
-
-                throw new Error(error);
-
-              case 9:
-                return _context3.abrupt("return", status);
-
-              case 10:
-              case "end":
+              case 6:
+              case 'end':
                 return _context3.stop();
             }
           }
         }, _callee3, this);
       }));
 
-      function checkPassword(_x8) {
+      function verify() {
         return _ref3.apply(this, arguments);
       }
 
-      return checkPassword;
+      return verify;
     }()
   }, {
-    key: "modify",
+    key: 'login',
+    value: function login(password) {
+      return this.loginOrRegister("login", password, this.url);
+    }
+  }, {
+    key: 'register',
+    value: function register(password) {
+      return this.loginOrRegister("register", password, this.url);
+    }
+  }, {
+    key: 'checkPassword',
     value: function () {
-      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(changes) {
-        var _ref6, error, status, token;
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(password) {
+        var _ref6, error, status;
 
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                _context4.next = 2;
-                return POST(this.url + "/modify", { token: this.token, changes: changes });
-
-              case 2:
-                _ref6 = _context4.sent;
-                error = _ref6.error;
-                status = _ref6.status;
-                token = _ref6.token;
-
-                if (!error) {
-                  _context4.next = 8;
+                if (this.isLoggedIn) {
+                  _context4.next = 2;
                   break;
                 }
 
-                return _context4.abrupt("return", { error: error });
+                throw new Error("To check password, user needs to login.");
 
-              case 8:
-                if (token) this.token = token;
-                return _context4.abrupt("return", { status: status });
+              case 2:
+                _context4.next = 4;
+                return POST(this.url + "/check-password", { token: this.token, password: password });
+
+              case 4:
+                _ref6 = _context4.sent;
+                error = _ref6.error;
+                status = _ref6.status;
+
+                if (!error) {
+                  _context4.next = 9;
+                  break;
+                }
+
+                throw new Error(error);
+
+              case 9:
+                return _context4.abrupt('return', status);
 
               case 10:
-              case "end":
+              case 'end':
                 return _context4.stop();
             }
           }
         }, _callee4, this);
       }));
 
-      function modify(_x9) {
+      function checkPassword(_x8) {
         return _ref5.apply(this, arguments);
+      }
+
+      return checkPassword;
+    }()
+  }, {
+    key: 'modify',
+    value: function () {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(changes) {
+        var _ref8, error, status, token, _jwtTokenDecode3, name, roles, createdAt, email;
+
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                _context5.next = 2;
+                return POST(this.url + "/modify", { token: this.token, changes: changes });
+
+              case 2:
+                _ref8 = _context5.sent;
+                error = _ref8.error;
+                status = _ref8.status;
+                token = _ref8.token;
+
+                if (!error) {
+                  _context5.next = 8;
+                  break;
+                }
+
+                return _context5.abrupt('return', { error: error });
+
+              case 8:
+                if (token) {
+                  _jwtTokenDecode3 = jwtTokenDecode(token), name = _jwtTokenDecode3.name, roles = _jwtTokenDecode3.roles, createdAt = _jwtTokenDecode3.createdAt, email = _jwtTokenDecode3.email;
+
+                  Object.assign(this, { roles: roles, createdAt: createdAt, email: email, token: token });
+                }
+
+                return _context5.abrupt('return', { status: status });
+
+              case 10:
+              case 'end':
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function modify(_x9) {
+        return _ref7.apply(this, arguments);
       }
 
       return modify;
     }()
   }, {
-    key: "toString",
+    key: 'toString',
     value: function toString() {
-      return "<User " + this.name + " logged in: " + this.isLoggedIn() + ">";
+      return '<' + this.constructor.name + ' ' + this.name + ' ' + (this.isLoggedIn() ? "" : "not ") + 'logged in>';
     }
   }]);
   return User;
@@ -508,41 +553,36 @@ var GuestUser = function (_User) {
   }
 
   createClass(GuestUser, [{
-    key: "isLoggedIn",
+    key: 'isLoggedIn',
     value: function isLoggedIn() {
       return false;
     }
   }, {
-    key: "loginOrRegister",
+    key: 'loginOrRegister',
     value: function () {
-      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(action, password, authServerURL) {
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(action, password, authServerURL) {
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
-            switch (_context5.prev = _context5.next) {
+            switch (_context6.prev = _context6.next) {
               case 0:
                 throw new Error("Guest user cannot " + action + "!");
 
               case 1:
-              case "end":
-                return _context5.stop();
+              case 'end':
+                return _context6.stop();
             }
           }
-        }, _callee5, this);
+        }, _callee6, this);
       }));
 
       function loginOrRegister(_x10, _x11, _x12) {
-        return _ref7.apply(this, arguments);
+        return _ref9.apply(this, arguments);
       }
 
       return loginOrRegister;
     }()
   }, {
-    key: "toString",
-    value: function toString() {
-      return "<GuestUser " + this.name + ">";
-    }
-  }, {
-    key: "isGuestUser",
+    key: 'isGuestUser',
     get: function get() {
       return true;
     }
@@ -550,10 +590,191 @@ var GuestUser = function (_User) {
   return GuestUser;
 }(User);
 
-var guestUser = guestUser || new GuestUser("guest");
 var userMap = userMap || new Map();
+var guestUser = guestUser || GuestUser.named("guest-" + guid(), null);
+
+var UserRegistry = function () {
+  function UserRegistry() {
+    classCallCheck(this, UserRegistry);
+  }
+
+  createClass(UserRegistry, [{
+    key: "hasUserStored",
+    value: function hasUserStored() {
+      try {
+        return !!localStorage["lively.user"] || !!sessionStorage["lively.user"];
+      } catch (err) {
+        return false;
+      }
+    }
+  }, {
+    key: "login",
+    value: function () {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(user, password) {
+        var _ref2, error;
+
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (user.isGuestUser) {
+                  _context.next = 7;
+                  break;
+                }
+
+                _context.next = 3;
+                return user.login(password);
+
+              case 3:
+                _ref2 = _context.sent;
+                error = _ref2.error;
+
+                if (!error) {
+                  _context.next = 7;
+                  break;
+                }
+
+                throw Error(error);
+
+              case 7:
+                this.saveUserToLocalStorage(user);
+                return _context.abrupt("return", user);
+
+              case 9:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function login(_x, _x2) {
+        return _ref.apply(this, arguments);
+      }
+
+      return login;
+    }()
+  }, {
+    key: "logout",
+    value: function () {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(user) {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                try {
+                  delete localStorage["lively.user"];
+                  delete sessionStorage["lively.user"];
+                } catch (err) {}
+                return _context2.abrupt("return", user && user.isGuestUser ? user : User.guest);
+
+              case 2:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function logout(_x3) {
+        return _ref3.apply(this, arguments);
+      }
+
+      return logout;
+    }()
+  }, {
+    key: "register",
+    value: function () {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(user, password) {
+        var _ref5, error;
+
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                if (!(!user || user.isGuestUser)) {
+                  _context3.next = 2;
+                  break;
+                }
+
+                throw new Error("guest users cannot register");
+
+              case 2:
+                _context3.next = 4;
+                return user.register(password);
+
+              case 4:
+                _ref5 = _context3.sent;
+                error = _ref5.error;
+
+                if (!error) {
+                  _context3.next = 8;
+                  break;
+                }
+
+                throw Error(error);
+
+              case 8:
+                this.saveUserToLocalStorage(user);
+                return _context3.abrupt("return", user);
+
+              case 10:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function register(_x4, _x5) {
+        return _ref4.apply(this, arguments);
+      }
+
+      return register;
+    }()
+  }, {
+    key: "loadUserFromLocalStorage",
+    value: function loadUserFromLocalStorage(authServerURL) {
+      try {
+        var stored = localStorage["lively.user"] || sessionStorage["lively.user"];
+        if (stored) {
+          stored = JSON.parse(stored);
+          return stored.isGuest ? GuestUser.named(stored.name, null) : User.fromToken(stored.token, authServerURL);
+        }
+      } catch (err) {
+        console.warn("Could not read user from localStorage: " + err);
+      }
+      return GuestUser.guest;
+    }
+  }, {
+    key: "saveUserToLocalStorage",
+    value: function saveUserToLocalStorage(user) {
+      if (!user || !user.isGuestUser && !user.token) return false;
+
+      try {
+        if (user.isGuestUser) {
+          sessionStorage["lively.user"] = JSON.stringify({ isGuest: true, name: user.name });
+        } else {
+          localStorage["lively.user"] = JSON.stringify({ token: user.token });
+        }
+        return true;
+      } catch (err) {
+        console.warn("Could not save user into local/sessionStorage: " + err);
+        return false;
+      }
+    }
+  }], [{
+    key: "current",
+    get: function get() {
+      return this._current || (this._current = new this());
+    }
+  }]);
+  return UserRegistry;
+}();
 
 exports.ClientUser = User;
+exports.GuestUser = GuestUser;
+exports.UserRegistry = UserRegistry;
 
 }((this.lively.user = this.lively.user || {})));
 

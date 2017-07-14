@@ -1,0 +1,379 @@
+<style type="text/css" id="new-text-css">
+
+    /* markers */
+
+    .newtext-marker-layer {
+      position: absolute;
+    }
+
+    /* selection / cursor */
+
+    .newtext-cursor {
+      z-index: 5;
+      pointer-events: none;
+      position: absolute;
+      background-color: black;
+    }
+
+    .hidden-cursor .newtext-cursor {
+      background-color: transparent !important;
+    }
+
+    .newtext-cursor.diminished {
+      background-color: gray;
+    }
+
+    .newtext-selection-layer {
+      position: absolute;
+    }
+
+    /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+    /* text layer / content */
+
+    .newtext-text-layer {
+      box-sizing: border-box;
+      position: absolute;
+      
+      z-index: 0;
+      min-width: 100%;
+    }
+
+    .newtext-before-filler {}
+
+    .newtext-text-layer.wrap-by-words {
+      
+      overflow-wrap: break-word;
+      max-width: 100%;
+    }
+
+    .newtext-text-layer.only-wrap-by-words {
+      
+      overflow-wrap: break-all;
+      max-width: 100%;
+    }
+
+    .newtext-text-layer.wrap-by-chars {
+      
+      word-break: break-all;
+      max-width: 100%;
+    }
+
+    .newtext-text-layer.no-wrapping {
+    }
+
+    .newtext-text-layer .line {
+      -moz-border-radius: 0;
+      -webkit-border-radius: 0;
+      border-radius: 0;
+      border-width: 0;
+      background: transparent;
+      font-family: inherit;
+      font-size: inherit;
+      margin: 0;
+      word-wrap: normal;
+      line-height: inherit;
+      color: inherit;
+      position: relative;
+      overflow: visible;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-variant-ligatures: contextual;
+      font-variant-ligatures: contextual;
+    }
+
+    .line .Morph {
+      display: inline-block !important;
+      vertical-align: middle !important;
+    }
+
+    blockquote {
+      margin: 0;
+      -webkit-margin-start: 0;
+      -webkit-margin-end: 0;
+    }
+
+    .newtext-text-layer blockquote {
+      margin-left: 2em;
+      margin-right: 2em;
+      border-left: 2px lightgray solid;
+      padding-left: 2%;
+    }
+
+    /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+    /* debug styling */
+
+    .debug-info {
+      position: absolute;
+      outline: 1px solid green;
+      pointer-events: none;
+      z-index: 4;
+      text-align: center;
+      font-family: monospace;
+      color: green;
+      background-color: white;
+      font-size: small;
+      vertical-align: baseline;
+    }
+
+    .debug-line {
+      position: absolute;
+      outline: 1px solid red;
+      pointer-events: none;
+      z-index: 4,
+      text-align: right;
+      font-family: monospace;
+      font-size: small;
+      vertical-align: baseline;
+      color: red;
+    }
+
+    .debug-char {
+      position: absolute;
+      outline: 1px solid orange;
+      pointer-events: none;
+      z-index: 3
+    }
+
+  </style>
+<style type="text/css" id="lively-morphic-css">
+
+/*-=- html fixes -=-*/
+
+html {
+  overflow: visible;
+}
+
+textarea.lively-text-input.debug {
+  z-index: 20 !important;
+  opacity: 1 !important;
+  background: rgba(0,255,0,0.5) !important;
+}
+
+.no-html-select {
+  -webkit-touch-callout: none;
+  
+  
+  
+  
+  
+}
+
+.hiddenScrollbar::-webkit-scrollbar {
+  /* This is the magic bit */
+  display: none;
+}
+
+
+/*-=- generic morphic -=-*/
+
+.Morph {
+  outline: none;
+  /*for aliasing issue in chrome: http://stackoverflow.com/questions/6492027/css-transform-jagged-edges-in-chrome*/
+  -webkit-backface-visibility: hidden;
+
+  /*include border size in extent of element*/
+  box-sizing: border-box;
+
+  /*don't use dom selection on morphs*/
+  -webkit-touch-callout: none;
+  
+  
+  
+  
+  
+}
+
+.Tooltip {
+  z-index: 3;
+}
+
+.Hand {
+  z-index: 1;
+}
+
+/*-=- halos -=-*/
+
+.Halo {
+  z-index: 2;
+}
+
+.HaloItem:not(.NameHaloItem) {
+  /*FIXME: we shouldn't need to hardcode the size...*/
+  line-height: 24px !important;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.halo-mesh {
+  background-color:transparent;
+  background-image: linear-gradient(rgba(0,0,0,.1) 2px, transparent 2px),
+  linear-gradient(90deg, rgba(0,0,0,.1) 2px, transparent 2px),
+  linear-gradient(rgba(0,0,0,.1) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(0,0,0,.1) 1px, transparent 1px);
+  background-size:100px 100px, 100px 100px, 10px 10px, 10px 10px;
+  background-position:-2px -2px, -2px -2px, -1px -1px, -1px -1px;
+}
+
+/*-=- text -=-*/
+
+.center-text {
+  text-align: center;
+}
+
+.v-center-text {
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+div.text-layer span {
+  line-height: normal;
+}
+
+/*-=- text -=-*/
+
+.Label span {
+  white-space: nowrap;
+  float: left;
+}
+
+.Label .annotation {
+/*  vertical-align: middle;
+  height: 100%;*/
+  /*vertical align*/
+  float: right;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: right;
+}
+
+.truncated-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*-=- input elements -=-*/
+
+input::-webkit-input-placeholder {
+  color: rgb(202, 202, 202);
+}
+input::-moz-placeholder {
+  color: rgb(202, 202, 202);
+}
+input:-ms-input-placeholder {
+  color: rgb(202, 202, 202);
+}
+input:-moz-placeholder {
+  color: rgb(202, 202, 202);
+}
+input:placeholder {
+  color: rgb(202, 202, 202);
+}
+</style>
+<link type="text/css" rel="stylesheet" id="lively-font-awesome" href="http://localhost:9011/lively.morphic/assets/font-awesome/css/font-awesome.css">
+<link type="text/css" rel="stylesheet" id="lively-font-inconsolata" href="http://localhost:9011/lively.morphic/assets/inconsolata/inconsolata.css">
+<div class="exported-morph-container html-login-widget" style="display: none; width: 336.3px; height: 285px;">
+
+    <div id="LoginWidget_19E46649_92AA_4D92_9640_538CAD5ED07D" class="LoginWidget UserWidget Morph morph login-widget" draggable="false" style="background-image: linear-gradient(rgb(253, 254, 254) 0%, rgb(242, 243, 244) 100%); transform-origin: 0px 0px 0px; width: 336.3px; height: 285px; border-style: solid; border-width: 1px; border-color: rgb(189, 195, 199); border-radius: 8px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: auto;">
+        <div style="position: absolute; transform: translate(-1px, -1px);"><input id="InputLine_A8D91C00_003A_403E_8F8B_ECC78ED017E9" class="InputLine Text Morph morph user-name-input" placeholder="Name" type="text" name="user-name-input" tabindex="1" style="background: rgb(255, 255, 255); transform: translate3d(29px, 63px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 277.8px; height: 30px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 0px; filter: none; opacity: 1; overflow: hidden; overflow-anchor: none; position: absolute; pointer-events: auto; padding: 3px 10px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none; font-size: 20px; color: rgb(0, 0, 0);">
+            <input
+                id="PasswordInputLine_8FAC53F0_8A9B_4F88_8372_CB75F0740F37" class="PasswordInputLine HTMLMorph Morph morph password-input" placeholder="Password" type="password" name="password-input" tabindex="2" style="background: rgb(255, 255, 255); transform: translate3d(29px, 99px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 277.8px; height: 30px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: auto; padding: 3px 10px; font-family: sans-serif; font-size: 20px;">
+                <div id="Button_A734180F_3E7C_40BD_8314_AF1E9C4CDB7B" class="Button Morph morph activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle register-button" draggable="false" style="background-image: linear-gradient(-0.180459deg, rgb(46, 134, 193) 0%, rgb(93, 173, 226) 100%); transform: translate3d(179px, 170px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 116.3px; height: 41px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 5px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: pointer;">
+                    <div style="position: absolute; transform: translate(-1px, -1px);">
+                        <div id="Label_ED8FD6F2_39FE_4787_93BD_46651A0651E7" class="Label Morph morph icon" draggable="false" style="background: rgba(0, 0, 0, 0); transform: translate3d(0px, 0px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 0px; height: 0px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: none; cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;">
+                            <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                        </div>
+                        <div id="Label_EF2C159A_E331_4533_9806_E901DA8E1CEA" class="Label Morph morph label" draggable="false" style="background: rgba(0, 0, 0, 0); transform: translate3d(21px, 8px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 73.3281px; height: 25px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: none; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-size: 20px; color: rgb(255, 255, 255); padding: 0px; font-weight: bold;"><span>register</span>
+                            <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                        </div>
+                        <div id="Label_5612FDEE_7037_4E1E_829D_A374C3857674" class="Label Morph morph iconMorph" draggable="false" style="background: rgba(0, 0, 0, 0); transform: translate3d(0px, 0px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 0px; height: 0px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;">
+                            <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="Button_AAF01F76_C23C_4F9C_8879_2B809ADBDE8F" class="Button Morph morph activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle login-button" draggable="false" style="background-image: linear-gradient(-0.180459deg, rgb(46, 134, 193) 0%, rgb(93, 173, 226) 100%); transform: translate3d(41px, 170px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 116.3px; height: 41px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 5px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: pointer;">
+                    <div style="position: absolute; transform: translate(-1px, -1px);">
+                        <div id="Label_39EE0904_8301_46F9_A9F2_E35A6D11741D" class="Label Morph morph icon" draggable="false" style="background: rgba(0, 0, 0, 0); transform: translate3d(0px, 0px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 0px; height: 0px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: none; cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;">
+                            <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                        </div>
+                        <div id="Label_AD1F157F_0473_410E_9469_C6110E8C5335" class="Label Morph morph label" draggable="false" style="background: rgba(0, 0, 0, 0); transform: translate3d(35px, 8px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 46.625px; height: 25px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: none; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-size: 20px; color: rgb(255, 255, 255); padding: 0px; font-weight: bold;"><span>login</span>
+                            <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                        </div>
+                        <div id="Label_1F390DB6_887C_4B40_9A9D_1D36B070CCF3" class="Label Morph morph iconMorph" draggable="false" style="background: rgba(0, 0, 0, 0); transform: translate3d(0px, 0px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 0px; height: 0px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;">
+                            <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="Text_805CCF2B_E36E_4D9F_8DD6_2A120D93C00E" class="Text Morph morph title" draggable="false" style="background: rgba(255, 255, 255, 0); transform: translate3d(134px, 6px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 69.3281px; height: 41px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 3px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: default;">
+                    <div class="newtext-cursor" style="left: 18px; top: 8px; width: 3px; height: 24px; display: none;"></div>
+                    <div class="newtext-text-layer no-wrapping font-measure" style="height: 41px; padding: 8px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: bold; font-style: normal; text-decoration: none; font-size: 20px; color: rgb(102, 102, 102); tab-size: 2;"></div>
+                    <div class="newtext-text-layer no-wrapping actual" style="height: 41px; padding: 8px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: bold; font-style: normal; text-decoration: none; font-size: 20px; color: rgb(102, 102, 102); tab-size: 2;">
+                        <div class="newtext-before-filler" style="height: 0px;"></div>
+                        <div class="line" data-row="0"><span>Login</span></div>
+                    </div>
+                    <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                </div>
+                <div id="Button_611AFEEC_F4FF_4F7B_8D9A_0CCABA759DA9" class="Button Morph morph activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle guest-button" draggable="false" style="background-image: linear-gradient(-0.180459deg, rgb(178, 178, 178) 0%, rgb(224, 224, 224) 100%); transform: translate3d(66px, 224px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 209.641px; height: 41px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 5px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: pointer;">
+                    <div style="position: absolute; transform: translate(-1px, -1px);">
+                        <div id="Label_A84502E7_3754_438E_864F_49B12460D64A" class="Label Morph morph icon" draggable="false" style="background: rgba(0, 0, 0, 0); transform: translate3d(0px, 0px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 0px; height: 0px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: none; cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;">
+                            <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                        </div>
+                        <div id="Label_8E618CDF_8889_4946_8006_985203987EE9" class="Label Morph morph label" draggable="false" style="background: rgba(0, 0, 0, 0); transform: translate3d(20px, 8px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 169.641px; height: 25px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: none; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-size: 20px; color: rgb(255, 255, 255); padding: 0px; font-weight: bold;"><span>continue as guest</span>
+                            <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                        </div>
+                        <div id="Label_CA90C323_899D_42C5_9A8D_1EBF0769D8F2" class="Label Morph morph iconMorph" draggable="false" style="background: rgba(0, 0, 0, 0); transform: translate3d(0px, 0px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 0px; height: 0px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;">
+                            <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+    </div>
+</div>
+<div class="exported-morph-container html-register-widget" style="display: none; width: 336.3px; height: 285px;">
+
+    <div id="RegisterWidget_6048A1AE_A215_4AE2_94D4_771E3738B0B9" class="RegisterWidget UserWidget Morph morph register-widget" draggable="false" style="background-image: linear-gradient(rgb(253, 254, 254) 0%, rgb(242, 243, 244) 100%); transform-origin: 0px 0px 0px; width: 336.3px; height: 285px; border-style: solid; border-width: 1px; border-color: rgb(189, 195, 199); border-radius: 8px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: auto;">
+        <div style="position: absolute; transform: translate(-1px, -1px);">
+            <div id="Button_40EEDA59_FB1F_44C9_AC1D_9AF8EBCB7436" class="Button Morph morph activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle register-button" draggable="false" style="background-image: linear-gradient(-0.180459deg, rgb(46, 134, 193) 0%, rgb(93, 173, 226) 100%); transform: translate3d(43px, 227px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 116.3px; height: 41px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 5px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: pointer;">
+                <div style="position: absolute; transform: translate(-1px, -1px);">
+                    <div id="Label_841F5F22_4148_4B3A_9874_24B7D732F838" class="Label Morph morph icon" draggable="false" style="background: rgba(0, 0, 0, 0); transform: translate3d(0px, 0px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 0px; height: 0px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: none; cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;">
+                        <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                    </div>
+                    <div id="Label_2557C6F9_8870_49FA_B245_F9B8228BCADF" class="Label Morph morph label" draggable="false" style="background: rgba(0, 0, 0, 0); transform: translate3d(21px, 8px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 73.3281px; height: 25px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: none; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-size: 20px; color: rgb(255, 255, 255); padding: 0px; font-weight: bold;"><span>register</span>
+                        <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                    </div>
+                    <div id="Label_57B98C91_C7D4_40CB_8BF5_7D0F8101FC0D" class="Label Morph morph iconMorph" draggable="false" style="background: rgba(0, 0, 0, 0); transform: translate3d(0px, 0px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 0px; height: 0px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;">
+                        <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="Button_206B14E7_CC31_4573_B1DB_EAA50519F59B" class="Button Morph morph activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle activeStyle cancel-button"
+                draggable="false" style="background-image: linear-gradient(-0.180459deg, rgb(46, 134, 193) 0%, rgb(93, 173, 226) 100%); transform: translate3d(177px, 227px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 116.3px; height: 41px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 5px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: pointer;">
+                <div style="position: absolute; transform: translate(-1px, -1px);">
+                    <div id="Label_3784BAA4_B636_4671_AC5D_AA6CB4F46366" class="Label Morph morph icon" draggable="false" style="background: rgba(0, 0, 0, 0); transform: translate3d(0px, 0px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 0px; height: 0px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: none; cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;">
+                        <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                    </div>
+                    <div id="Label_930081F6_EBFF_497D_897A_577825D97055" class="Label Morph morph label" draggable="false" style="background: rgba(0, 0, 0, 0); transform: translate3d(27px, 8px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 62.9531px; height: 25px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: none; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-size: 20px; color: rgb(255, 255, 255); padding: 0px; font-weight: bold;"><span>cancel</span>
+                        <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                    </div>
+                    <div id="Label_D3320E9C_A0E4_4253_AAF5_AB592E23D91F" class="Label Morph morph iconMorph" draggable="false" style="background: rgba(0, 0, 0, 0); transform: translate3d(0px, 0px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 0px; height: 0px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;">
+                        <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                    </div>
+                </div>
+            </div><input id="PasswordInputLine_E3349ABB_651F_463C_97EA_422EDE694DE7" class="PasswordInputLine HTMLMorph Morph morph password-input-2" placeholder="Retype password" type="password" name="password-input-2" tabindex="4" style="background: rgb(255, 255, 255); transform: translate3d(29px, 165px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 277.8px; height: 30px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: auto; padding: 3px 10px; font-family: sans-serif; font-size: 20px;">
+            <input
+                id="PasswordInputLine_78554416_2A7D_462C_BE04_1CAECE9DA94F" class="PasswordInputLine HTMLMorph Morph morph password-input" placeholder="Password" type="password" name="password-input" tabindex="3" style="background: rgb(255, 255, 255); transform: translate3d(29px, 129px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 277.8px; height: 30px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 0px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: auto; padding: 3px 10px; font-family: sans-serif; font-size: 20px;"><input id="InputLine_2C504C8F_5B07_4A2A_951D_83AC9FBC9B65" class="InputLine Text Morph morph user-name-input" placeholder="User name" type="text" name="user-name-input" tabindex="1" style="background: rgb(255, 255, 255); transform: translate3d(29px, 58px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 277.8px; height: 30px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 0px; filter: none; opacity: 1; overflow: hidden; overflow-anchor: none; position: absolute; pointer-events: auto; padding: 3px 10px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none; font-size: 20px; color: rgb(0, 0, 0);">
+                <input
+                    id="InputLine_C4B0429D_5CF4_4CC7_AEBB_ED7A16A3EB2D" class="InputLine Text Morph morph email-input" placeholder="E-mail address" type="text" name="email-input" tabindex="2" style="background: rgb(255, 255, 255); transform: translate3d(29px, 93px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 278.3px; height: 30px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 0px; filter: none; opacity: 1; overflow: hidden; overflow-anchor: none; position: absolute; pointer-events: auto; padding: 3px 10px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none; font-size: 20px; color: rgb(0, 0, 0);">
+                    <div id="Text_E93E56B3_D9FA_45C5_A304_8B65CCCDC9F9" class="Text Morph morph create-user-title-copy" draggable="false" style="background: rgba(255, 255, 255, 0); transform: translate3d(52px, 7px, 0px) rotate(0rad) scale(1, 1); transform-origin: 0px 0px 0px; width: 231.922px; height: 41px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 3px; filter: none; opacity: 1; position: absolute; pointer-events: auto; cursor: default;">
+                        <div class="newtext-cursor" style="left: 137px; top: 8px; width: 3px; height: 24px; display: none;"></div>
+                        <div class="newtext-text-layer no-wrapping font-measure" style="height: 41px; padding: 8px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: bold; font-style: normal; text-decoration: none; font-size: 20px; color: rgb(102, 102, 102); tab-size: 2;"></div>
+                        <div class="newtext-text-layer no-wrapping actual" style="height: 41px; padding: 8px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: bold; font-style: normal; text-decoration: none; font-size: 20px; color: rgb(102, 102, 102); tab-size: 2;">
+                            <div class="newtext-before-filler" style="height: 0px;"></div>
+                            <div class="line" data-row="0"><span>Register User Account</span></div>
+                        </div>
+                        <div style="position: absolute; transform: translate(0px, 0px);"></div>
+                    </div>
+        </div>
+    </div>
+</div>
