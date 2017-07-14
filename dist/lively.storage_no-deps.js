@@ -1429,7 +1429,7 @@ var LivelyStorageResource = function (_Resource) {
               case 0:
                 debug && console.log("[" + this + "] read");
                 _context.next = 3;
-                return this.db.get(this.path());
+                return this.db.get(this.pathWithoutQuery());
 
               case 3:
                 file = _context.sent;
@@ -1502,7 +1502,7 @@ var LivelyStorageResource = function (_Resource) {
 
               case 4:
                 _context3.next = 6;
-                return this.db.update(this.path(), function (spec) {
+                return this.db.update(this.pathWithoutQuery(), function (spec) {
                   if (spec && spec.isDirectory) throw new Error(_this3.url + " already exists and is a directory (cannot write into it!)");
                   var t = Date.now();
                   if (!spec) {
@@ -1569,7 +1569,7 @@ var LivelyStorageResource = function (_Resource) {
 
               case 3:
                 _context4.next = 5;
-                return this.db.get(this.path());
+                return this.db.get(this.pathWithoutQuery());
 
               case 5:
                 spec = _context4.sent;
@@ -1592,7 +1592,7 @@ var LivelyStorageResource = function (_Resource) {
               case 10:
                 t = Date.now();
                 _context4.next = 13;
-                return this.db.set(this.path(), {
+                return this.db.set(this.pathWithoutQuery(), {
                   etag: undefined,
                   type: undefined,
                   contentType: undefined,
@@ -1638,7 +1638,7 @@ var LivelyStorageResource = function (_Resource) {
                 }
 
                 _context5.next = 5;
-                return this.db.get(this.path());
+                return this.db.get(this.pathWithoutQuery());
 
               case 5:
                 _context5.t0 = !!_context5.sent;
@@ -1670,7 +1670,7 @@ var LivelyStorageResource = function (_Resource) {
             switch (_context6.prev = _context6.next) {
               case 0:
                 debug && console.log("[" + this + "] remove");
-                thisPath = this.path();
+                thisPath = this.pathWithoutQuery();
                 db = this.db;
                 _context6.next = 5;
                 return db.docList({ startkey: thisPath, endkey: thisPath + "\uFFFF" });
@@ -1705,7 +1705,7 @@ var LivelyStorageResource = function (_Resource) {
     key: "readProperties",
     value: function readProperties() {
       debug && console.log("[" + this + "] readProperties");
-      return this.db.get(this.path());
+      return this.db.get(this.pathWithoutQuery());
     }
   }, {
     key: "dirList",
@@ -1733,7 +1733,7 @@ var LivelyStorageResource = function (_Resource) {
 
               case 3:
                 exclude = opts.exclude;
-                prefix = this.path();
+                prefix = this.pathWithoutQuery();
                 children = [];
                 _context7.next = 8;
                 return this.db.getAll({ startkey: prefix, endkey: prefix + "\uFFFF" });
@@ -1840,10 +1840,9 @@ var resourceExtension = {
     return url.startsWith("lively.storage:");
   },
   resourceClass: LivelyStorageResource
-};
 
-// will install resource extension:
-lively_resources.registerExtension(resourceExtension);
+  // will install resource extension:
+};lively_resources.registerExtension(resourceExtension);
 
 // to trigger resource extension
 

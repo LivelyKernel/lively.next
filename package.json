@@ -1,6 +1,6 @@
 {
   "name": "lively.storage",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Database interface for lively.next",
   "homepage": "https://github.com/LivelyKernel/lively.storage",
   "author": "Robert Krahn",

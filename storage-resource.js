@@ -29,7 +29,7 @@ export default class LivelyStorageResource extends Resource {
 
   async read() {
     debug && console.log(`[${this}] read`);
-    let file = await this.db.get(this.path()),
+    let file = await this.db.get(this.pathWithoutQuery()),
         content = file && file.content;
     return !content ? "" :
       typeof content === "string" ? content :
@@ -48,7 +48,7 @@ export default class LivelyStorageResource extends Resource {
     if (this.isDirectory())
       throw new Error(`Cannot write into a directory! (${this.url})`);
 
-    await this.db.update(this.path(), spec => {
+    await this.db.update(this.pathWithoutQuery(), spec => {
       if (spec && spec.isDirectory)
         throw new Error(`${this.url} already exists and is a directory (cannot write into it!)`);
       let t = Date.now();
@@ -84,14 +84,14 @@ export default class LivelyStorageResource extends Resource {
     debug && console.log(`[${this}] mkdir`);
     if (!this.isDirectory())
       throw new Error(`Cannot mkdir a file! (${this.url})`);
-    let spec = await this.db.get(this.path());
+    let spec = await this.db.get(this.pathWithoutQuery());
     if (spec) {
       if (!spec.isDirectory)
         throw new Error(`${this.url} already exists and is a file (cannot mkdir it!)`);
       return this;
     }
     let t = Date.now();
-    await this.db.set(this.path(), {
+    await this.db.set(this.pathWithoutQuery(), {
       etag: undefined,
       type: undefined,
       contentType: undefined,
@@ -107,12 +107,12 @@ export default class LivelyStorageResource extends Resource {
 
   async exists() {
     debug && console.log(`[${this}] exists`);
-    return this.isRoot() || !!await this.db.get(this.path());
+    return this.isRoot() || !!await this.db.get(this.pathWithoutQuery());
   }
 
   async remove() {
     debug && console.log(`[${this}] remove`);
-    let thisPath = this.path(),
+    let thisPath = this.pathWithoutQuery(),
         db = this.db,
         matching = await db.docList({startkey: thisPath, endkey: thisPath + "\uffff"});
     await db.setDocuments(matching.map(({id: _id, rev: _rev}) => ({_id, _rev, _deleted: true})));
@@ -121,7 +121,7 @@ export default class LivelyStorageResource extends Resource {
 
   readProperties() {
     debug && console.log(`[${this}] readProperties`);
-    return this.db.get(this.path());
+    return this.db.get(this.pathWithoutQuery());
   }
 
   async dirList(depth = 1, opts = {}) {
@@ -129,7 +129,7 @@ export default class LivelyStorageResource extends Resource {
     if (!this.isDirectory()) return this.asDirectory().dirList(depth, opts);
   
     let {exclude} = opts,
-        prefix = this.path(),
+        prefix = this.pathWithoutQuery(),
         children = [],
         docs = await this.db.getAll({startkey: prefix, endkey: prefix + "\uffff"})
 
