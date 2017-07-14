@@ -1,3 +1,4 @@
+/*global System*/
 import LivelyServer from "../server.js";
 import { resource } from "lively.resources";
 
@@ -19,15 +20,18 @@ export default class WorldLoadingPlugin {
   resetHTMLCache() { this.cachedHTML = {}; }
 
   async handleRequest(req, res, next) {
-    if ((req.url === "/" || req.url === "/index.html") && req.method.toUpperCase() === "GET") {
-      res.writeHead(301,  {location: "/worlds/"});
+    let [url, query] = req.url.split("?");
+    query = query ? "?" + query : "";
+
+    if ((url === "/" || url === "/index.html") && req.method.toUpperCase() === "GET") {
+      res.writeHead(301,  {location: "/worlds/" + query});
       res.end();
       return;
     }
 
-    if (!req.url.startsWith("/worlds")) return next();
+    if (!url.startsWith("/worlds")) return next();
 
-    let htmlFile = req.url === "/worlds" || req.url === "/worlds/" ?
+    let htmlFile = url === "/worlds" || url === "/worlds/" ?
           "static-world-listing.html" : "morphic.html";
     if (!this.cachedHTML[htmlFile]) {
       let htmlResource = resource(System.baseURL).join("lively.morphic/web/" + htmlFile);
