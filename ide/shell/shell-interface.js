@@ -71,7 +71,8 @@ const defaultGrepExclusions = [
   ".git",
   "node_modules",
   "dist",
-  ".module_cache"
+  ".module_cache",
+  "lively.next-node_modules"
 ];
 
 export function doGrep(queryString, path, options = {}) {
