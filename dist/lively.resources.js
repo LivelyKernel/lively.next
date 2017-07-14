@@ -944,6 +944,11 @@ var Resource$$1 = function () {
       return path === "" ? "/" : path;
     }
   }, {
+    key: "pathWithoutQuery",
+    value: function pathWithoutQuery() {
+      return this.path().split("?")[0];
+    }
+  }, {
     key: "name",
     value: function name() {
       var path = this.path(),
