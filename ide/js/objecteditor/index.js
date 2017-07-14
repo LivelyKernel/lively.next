@@ -816,10 +816,14 @@ export class ObjectEditor extends Morph {
   async doSave() {
     let {selectedModule, selectedClass, selectedMethod} = this;
 
-    if (!selectedClass) throw new Error("No class selected");
+    if (!selectedClass) {
+      return {success: false, reason: "No class selected"}
+    }
 
-    if (config.objectEditor.fixUndeclaredVarsOnSave)
-      await this.execCommand("[javascript] fix undeclared variables");
+    if (config.objectEditor.fixUndeclaredVarsOnSave) {
+      let fixed = await this.execCommand("[javascript] fix undeclared variables");
+      if (!fixed) return {success: false, reason: "Save canceled"};
+    }
 
     let editor = this.get("sourceEditor"),
         descr = this.sourceDescriptorFor(selectedClass),
@@ -828,9 +832,10 @@ export class ObjectEditor extends Morph {
 
     // ensure that the source is a class declaration
     if (parsed.body.length !== 1 || parsed.body[0].type !== "ClassDeclaration") {
-      let err = new Error(`Code is expected to contain the class definition of ${selectedClass}, aborting save.`);
-      this.showError(err);
-      return;
+      return {
+        success: false,
+        reason: `Code is expected to contain the class definition of ${selectedClass}, aborting save.`
+      };
     }
 
     // we do not support renaming classes by changing the source (yet?)
@@ -847,10 +852,7 @@ export class ObjectEditor extends Morph {
      && this.state.moduleChangeWarning && this.state.moduleChangeWarning === selectedModule.id) {
       var really = await this.world().confirm(
         `The module ${selectedModule.id} you are trying to save changed elsewhere!\nOverwrite those changes?`);
-      if (!really) {
-        this.setStatusMessage("Save canceled");
-        return;
-      }
+      if (!really) return {success: false, reason: "Save canceled"};
       this.state.moduleChangeWarning = null;
     }
 
@@ -863,6 +865,7 @@ export class ObjectEditor extends Morph {
         await this.refresh();
         await this.updateSource(editor.textString, this.selectedModule.id);
       });
+      return {success: true};
     } finally { this.state.isSaving = false; }
   }
 
@@ -962,7 +965,7 @@ export class ObjectEditor extends Morph {
       let {state: {selectedClass, selectedMethod}, ui: {sourceEditor}} = this;
       if (!selectedClass) {
         this.showError(new Error("No class selected"));
-        return;
+        return null;
       }
 
       let descr = this.sourceDescriptorFor(selectedClass),
@@ -971,7 +974,7 @@ export class ObjectEditor extends Morph {
 
       this.state.isSaving = true;
 
-      let changes = await interactivlyFixUndeclaredVariables(sourceEditor, {
+      return await interactivlyFixUndeclaredVariables(sourceEditor, {
         requester: sourceEditor,
         sourceUpdater: async (type, arg) => {
           if (type === "import") await m.addImports(arg);
@@ -1000,6 +1003,7 @@ export class ObjectEditor extends Morph {
     } catch (e) {
       origSource && await m.changeSource(origSource);
       this.showError(e);
+      return null;
     } finally {
       this.state.isSaving = false;
       await this.ui.importController.updateImports();
@@ -1186,7 +1190,7 @@ export class ObjectEditor extends Morph {
 
       {
         name: "[javascript] fix undeclared variables",
-        exec: async ed => { await ed.interactivlyFixUndeclaredVariables(); return true; }
+        exec: async ed => ed.interactivlyFixUndeclaredVariables()
       },
 
       {
@@ -1264,8 +1268,8 @@ export class ObjectEditor extends Morph {
         name: "save source",
         exec: async ed => {
           try {
-            await ed.doSave();
-            ed.setStatusMessage("saved", Color.green);
+            let {success, reason} = await ed.doSave();
+            ed.setStatusMessage(success ? "saved" : reason, success ? Color.green : null);
           } catch (e) { ed.showError(e); }
           return true;
         }

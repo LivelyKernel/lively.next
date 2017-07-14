@@ -278,6 +278,8 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
         anchor = textMorph.addAnchor({...cursorPosition, id: "fix-undeclared-vars"});
   }
 
+  var canceled = false;
+
   while (true) {
     updateUndeclared(); if (!allUndeclared.length) break;
 
@@ -297,7 +299,7 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
       ({selected: [choice]} = await $world.filterableListPrompt(
         `Found undeclared variable ${name}.  How should it be handled?`,
         choices, {requester, theme: "dark", preselect: choices.length > 2 ? 2 : 0}));
-      if (!choice) break;
+      if (!choice) { canceled = true; break; }
     }
 
     if (choice === choices[0]) { ignore.push(name); continue; }
@@ -330,7 +332,7 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
     textMorph.removeAnchor(anchor);
   }
 
-  return changes;
+  return canceled ? null : changes;
 
   function updateUndeclared() {
     return allUndeclared = undeclaredVariables(sourceRetriever(), knownGlobals)

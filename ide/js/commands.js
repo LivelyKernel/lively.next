@@ -279,10 +279,11 @@ export var jsIdeCommands = [
   {
     name: "[javascript] fix undeclared variables",
     exec: async (text, opts = {ignore: [], autoApplyIfSingleChoice: false}) => {
-      var {interactivlyFixUndeclaredVariables} =
+      let {interactivlyFixUndeclaredVariables} =
         await System.import("lively.morphic/ide/js/import-helper.js");
-      await interactivlyFixUndeclaredVariables(text, opts);
+      let result = await interactivlyFixUndeclaredVariables(text, opts);
       text.focus();
+      return result;
     }
   },
 

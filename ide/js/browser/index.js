@@ -984,7 +984,11 @@ export default class Browser extends Window {
       } else {
 
         if (config.systemBrowser.fixUndeclaredVarsOnSave) {
-          await sourceEditor.execCommand("[javascript] fix undeclared variables");
+          let fixed = await sourceEditor.execCommand("[javascript] fix undeclared variables");
+          if (!fixed) {
+            this.setStatusMessage("Save canceled");
+            return;
+          }
           content = this.ui.sourceEditor.textString;
         }
 
