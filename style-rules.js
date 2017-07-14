@@ -1183,15 +1183,9 @@ export class StyleSheet {
     ["borderRadius", "borderWidth", "borderColor", "borderStyle"].forEach(p => {
       if (p in props) {
         let v = props[p];
+        if (!v) v = 0;
         props[p] = arr.intersect(obj.keys(v), ["top", "left", "bottom", "right"]).length == 4
-          ? v
-          : {
-              top: v,
-              bottom: v,
-              right: v,
-              left: v,
-              valueOf: () => v
-            };
+          ? v : { top: v, bottom: v, right: v, left: v, valueOf: () => v };
       }
     });
     return props;
