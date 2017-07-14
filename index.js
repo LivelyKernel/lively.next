@@ -399,145 +399,72 @@ class AttributeConnection {
   }
 }
 
-// AttributeConnection.addMethods({
-//   toLiteral() {
-//     var self  = this;
-//     function getId(obj) {
-//       if (!obj) {
-//         console.warn('Cannot correctly serialize connections having '
-//               + 'undefined source or target objects');
-//         return null;
-//       }
-//       if (obj.id && Object.isFunction(obj.id))
-//         return obj.id();
-//       if (obj.nodeType && obj.getAttribute) { // is it a real node?
-//         var id = obj.getAttribute('id')
-//         if (!id) { // create a new id
-//           id = 'ElementConnection--' + Date.now();
-//           obj.setAttribute('id', id);
-//         }
-//         return id;
-//       }
-//       console.warn('Cannot correctly serialize connections having '
-//             + 'source or target objects that have no id: ' + self);
-//       return null
-//     }
-//     var literal = {
-//       sourceObj: getId(this.sourceObj),
-//       sourceAttrName: this.sourceAttrName,
-//       targetObj: getId(this.targetObj),
-//       targetMethodName: this.targetMethodName
-//     };
-//     if (this.converterString) literal.converter = this.converterString;
-//     if (this.updaterString) literal.updater = this.updaterString;
-//     if (this.removeAfterUpdate) literal.removeAfterUpdate = true;
-//     if (this.forceAttributeConnection) literal.forceAttributeConnection = true;
-//     return literal;
-//   }
-// })
-
-// Object.extend(AttributeConnection, {
-//   fromLiteral(literal, importer) {
-//     if (!importer)
-//       throw new Error('AttributeConnection needs importer for resolving uris!!!');
-
-//     // just create the connection, connection not yet installed!!!
-//     var con = new AttributeConnection(
-//       null, literal.sourceAttrName, null, literal.targetMethodName, literal);
-
-//     // when target/source obj are restored asynchronly
-//     new AttributeConnection(con, 'sourceObj', con, 'onSourceAndTargetRestored',
-//       {removeAfterUpdate: true}).connect();
-//     new AttributeConnection(con, 'targetObj', con, 'onSourceAndTargetRestored',
-//       {removeAfterUpdate: true}).connect();
-
-//     function restore(id, fieldName) {
-//       if (!id) {
-//         console.warn('cannot deserialize ' + fieldName + ' when deserilaizing a connect');
-//         return
-//       }
-//       if (id.split('--')[0] == 'ElementConnection') { // FIXME brittle!!!
-//         con[fieldName] = importer.canvas().ownerDocument.getElementById(id);
-//         return
-//       }
-//       importer.addPatchSite(con, fieldName, id);
-//     };
-
-//     restore(literal.sourceObj, 'sourceObj');
-//     restore(literal.targetObj, 'targetObj');
-
-//     return con;
-//   }
-// });
-
-// AttributeConnection.addMethods('serialization', {
-//   onrestore() {
-//     try {
-//       if (this.targetObj && this.sourceObj) this.connect();
-//     } catch(e) {
-//       dbgOn(true);
-//       console.error('AttributeConnection>>onrestore: Cannot restore ' + this + '\n' + e);
-//     }
-//   }
-// });
-
-
-  // documentation: 'connect parameters: source, sourceProp, target, targetProp, spec\n'
-  //       + 'spec can be: {\n'
-  //       + '  removeAfterUpdate: Boolean,\n'
-  //       + '  forceAttributeConnection: Boolean,\n'
-  //       + '  converter: Function,\n'
-  //       + '  updater: Function,\n'
-  //       + '  varMapping: Object\n'
-  //       + '}',
 
 function connect(sourceObj, attrName, targetObj, targetMethodName, specOrConverter) {
-  // 1: determine what kind of connection to create. Default is
+
+  // 1: is it a function connection? targetMethodName => "call"
+  if (typeof targetObj === "function"
+      && (typeof targetMethodName === "undefined"
+          || typeof targetMethodName === "object")) {
+    specOrConverter = targetMethodName;
+    targetMethodName = "call";
+    // make function.call work, passing "null" as this
+    if (!specOrConverter) specOrConverter = {};
+    if (!specOrConverter.updater) specOrConverter.updater = ($upd, val) => $upd(null, val);
+  }
+
+  // 2: determine what kind of connection to create. Default is
   //  AttributeConnection but source.connections/
   //  source.getConnectionPoints can specify different settings
   var connectionPoints = (sourceObj.getConnectionPoints && sourceObj.getConnectionPoints())
-            || (sourceObj.connections),
-    connectionPoint = connectionPoints && connectionPoints[attrName],
-    klass = (connectionPoint && connectionPoint.map && lively.morphic && lively.morphic.GeometryConnection)
-       || (connectionPoint && connectionPoint.connectionClassType && lively.Class.forName(connectionPoint.connectionClassType))
-       || AttributeConnection,
-    spec;
+                         || (sourceObj.connections),
+      connectionPoint = connectionPoints && connectionPoints[attrName],
+      klass = (connectionPoint && connectionPoint.map
+               && lively.morphic && lively.morphic.GeometryConnection)
+       || (connectionPoint && connectionPoint.connectionClassType
+           && lively.Class.forName(connectionPoint.connectionClassType))
+       || AttributeConnection, spec;
 
-  // 2: connection settings: converter/updater/...
+  // 3: connection settings: converter/updater/...
   if (typeof specOrConverter === "function") {
     console.warn('Directly passing a converter function to connect() '
-           + 'is deprecated! Use spec object instead!');
+               + 'is deprecated! Use spec object instead!');
     spec = {converter: specOrConverter};
-  } else {
-    spec = specOrConverter;
-  }
+  } else spec = specOrConverter;
 
   if (connectionPoint) spec = lively.lang.obj.merge(connectionPoint, spec);
 
-  // 3: does a similar connection exist? Yes: update it with new specs,
+  // 4: does a similar connection exist? Yes: update it with new specs,
   //  no: create new connection
   var connection = new klass(sourceObj, attrName, targetObj, targetMethodName, spec),
-    existing = connection.getExistingConnection();
+      existing = connection.getExistingConnection();
   if (existing) {
     existing.resetSpec();
     existing.init(sourceObj, attrName, targetObj, targetMethodName, spec);
     return existing;
   }
+
   var result = connection.connect();
 
-  // 4: notify source object if it has a #onConnect method
-  if (typeof sourceObj.onConnect === "function") {
+  // 5: notify source object if it has a #onConnect method
+  if (typeof sourceObj.onConnect === "function")
     sourceObj.onConnect(attrName, targetObj, targetMethodName)
-  }
 
-  // 5: If wanted updated the connection right now
-  if (connectionPoint && connectionPoint.updateOnConnect) {
+  // 6: If wanted updated the connection right now
+  if (connectionPoint && connectionPoint.updateOnConnect)
     connection.update(sourceObj[attrName]);
-  }
   return result;
 }
 
 function disconnect(sourceObj, attrName, targetObj, targetMethodName) {
+
+  // is it a function connection? targetMethodName => "call"
+  if (typeof targetObj === "function"
+      && (typeof targetMethodName === "undefined"
+          || typeof targetMethodName === "object")) {
+    targetMethodName = "call";
+  }
+
   if (!sourceObj.attributeConnections) return;
 
   sourceObj.attributeConnections.slice().forEach(function(con) {
@@ -557,6 +484,17 @@ function disconnectAll(sourceObj) {
 }
 
 function once(sourceObj, attrName, targetObj, targetMethodName, spec) {
+  // function connection:
+  if (typeof targetObj === "function"
+      && (typeof targetMethodName === "undefined"
+          || typeof targetMethodName === "object")) {
+    spec = targetMethodName;
+    targetMethodName = "call";
+    spec = spec || {};
+    // make function.call work, passing "null" as this
+    if (!spec) spec = {};
+    if (!spec.updater) spec.updater = ($upd, val) => $upd(null, val);
+  } else spec = spec || {};
   spec = spec || {};
   spec.removeAfterUpdate = true;
   return connect(sourceObj, attrName, targetObj, targetMethodName, spec);

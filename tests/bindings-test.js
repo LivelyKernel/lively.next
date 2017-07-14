@@ -1,7 +1,7 @@
 /*global describe, it, beforeEach, afterEach,xit*/
 import { expect } from "mocha-es6";
 
-import { connect, noUpdate, callWhenPathNotNull, disconnectAll, disconnect, signal } from "lively.bindings";
+import { connect, once, noUpdate, callWhenPathNotNull, disconnectAll, disconnect, signal } from "lively.bindings";
 
 describe("connect", () => {
 
@@ -595,6 +595,26 @@ describe("method connections", () => {
 
     expect(1).equals(target1.value, 'target1');
     expect(1).equals(target2.value, 'target2');
+  });
+
+});
+
+describe("function connections", () => {
+
+  it("attr to function", () => {
+    var obj = {}, seen = [];
+    connect(obj, 'x', val => seen.push(val));
+    obj.x = 23;
+    obj.x = 24;
+    expect(seen).equals([23, 24]);
+  });
+
+  it("attr to function once", () => {
+    var obj = {}, seen = [];
+    once(obj, 'x', val => seen.push(val));
+    obj.x = 23;
+    obj.x = 24;
+    expect(seen).equals([23]);
   });
 
 });
