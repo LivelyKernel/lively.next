@@ -1,13 +1,13 @@
 /*global Power4*/
 /* globals Power4 */
 import { arr, tree, obj } from "lively.lang";
-import { Sizzle, SizzleExpression } from "./sizzle.js";
+import { Sizzle, SizzleVisitor, SizzleExpression } from "./sizzle.js";
 import { ShadowObject, CustomLayout, Button, Text, Icon, HorizontalLayout, morph, Morph, config} from "./index.js";
 import { Color, pt, rect } from "lively.graphics";
 import { connect, once, signal, disconnect } from "lively.bindings";
 import { TreeData, Tree } from "./components/tree.js";
 import { PropertyControl } from "./ide/js/inspector.js";
-import { safeToString, isObject } from "lively.lang/object.js";
+import { safeToString } from "lively.lang/object.js";
 import { LinearGradient } from "lively.graphics/color.js";
 import { CompletionController } from "./text/completion.js";
 
@@ -1191,11 +1191,16 @@ export class StyleSheet {
     });
     return props;
   }
+
+  apply() {
+    for (let rule in this.rules) {
+      this.refreshMorphsFor(rule);
+    }
+  }
+  
   refreshMorphsFor(rule) {
     for (let morph of this.sizzle.select(rule)) {
-       morph._styleSheetProps = null;
-       morph._transform = null;
-       morph.makeDirty();
+       Object.assign(morph, this.getStyleProps(morph))
     }
   }
 
@@ -1212,6 +1217,34 @@ export class StyleSheet {
   toggleRule(rule) {
     this.rules[rule]._deactivated = !this.rules[rule]._deactivated;
     this.refreshMorphsFor(rule);
+  }
+
+  applicableRules() {
+    let ar = {};
+    for (let rule in this.rules) {
+      ar[rule] = [this, rule];
+    }
+    return ar;    
+  }
+
+  applyRule(rule, morph) {
+    var props = {}, rule = this.rules[rule];
+    if (rule._deactivated) return;
+    props = obj.dissoc(rule, ['_deactivated']);
+    if ("layout" in props) {
+      let layout = props.layout.copy();
+      layout.container = morph;
+      props.layout = layout;
+    }
+    if ("dropShadow" in props) {
+      props.dropShadow = new ShadowObject(props.dropShadow);
+      props.dropShadow.morph = morph;
+    }
+    if ("padding" in props) {
+      props.padding = props.padding.isRect ?
+        props.padding : rect(props.padding, props.padding);
+    }
+    Object.assign(morph, props);
   }
 
   getStyleProps(morph) {
@@ -1235,7 +1268,6 @@ export class StyleSheet {
       props.padding = props.padding.isRect ?
         props.padding : rect(props.padding, props.padding);
     }
-    props.layout && props.layout.scheduleApply();
     return props;
   }
 }

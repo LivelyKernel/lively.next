@@ -8,15 +8,14 @@ export class SizzleExpression {
   }
 
   constructor(rule, context) {
-    this.morphIndex = {};
-    this.matchedMorphs = [];
+    this.matchStacks = {};
     this.context = context;
     this.compileRule(rule);
   }
 
   compileRule(rule) {
     this.compiledRule = [];
-    for (let token of rule.split(' ').reverse()) {
+    for (let token of rule.split(' ')) {
        this.compiledRule.push(this.createMatcher(token));
     }
     if (arr.any(this.compiledRule, matcher => !matcher)) {
@@ -24,20 +23,12 @@ export class SizzleExpression {
       this.compileError = true;
       return;
     }
-    this.context.withAllSubmorphsDo(m => {
-      this.addToIndex(m)
-    })
   }
 
   createMatcher(token) {
     return arr.findAndGet([ClassMatcher, NameMatcher, IdMatcher], Matcher =>
       Matcher.create(token)
     );
-  }
-
-  hasIndexed(morph) {
-    let entry = this.morphIndex[morph.id];
-    return entry && entry.name == morph.name && obj.equals(entry.styleClasses, morph.styleClasses);
   }
 
   match(morph) {
@@ -48,16 +39,29 @@ export class SizzleExpression {
     return matchmap;
   }
 
-  addToIndex(morph) {
-    return (this.morphIndex[morph.id] = {
-      name: morph.name,
-      styleClasses: morph.styleClasses,
-      ...this.match(morph)
-    });
+  reset() {
+    this.active = false;
+    this.matchStacks = {};
   }
 
-  removeFromIndex(morph) {
-    delete this.morphIndex[morph.id];
+  startMatching() { 
+    this.active = true;
+  }
+
+  seen(morph) {
+    if (this.context == morph) this.startMatching();
+    if (!this.active) return false; 
+    var matcherIdx = (morph.owner && this.matchStacks[morph.owner.id]) || 0;
+    if (this.compiledRule[matcherIdx].matches(morph)) {
+      if (matcherIdx < this.compiledRule.length - 1) {
+         this.matchStacks[morph.id] = matcherIdx + 1;
+      } else {
+        return true;
+      }
+    } else {
+      this.matchStacks[morph.id] = matcherIdx;
+      return false;
+    }
   }
 
   matches(morph) {
@@ -167,25 +171,6 @@ export class Sizzle {
     this.cachedExpressions = {};
   }
 
-  hasIndexed(morph) {
-    for (let rule in this.cachedExpressions) {
-      if (this.cachedExpressions[rule].hasIndexed(morph)) return true;
-    }
-    return false;
-  }
-
-  addToIndex(morph) {
-    for (let rule in this.cachedExpressions) {
-      this.cachedExpressions[rule].addToIndex(morph);
-    }
-  }
-
-  removeFromIndex(morph) {
-    for (let rule in this.cachedExpressions) {
-      this.cachedExpressions[rule].removeFromIndex(morph);
-    }
-  }
-
   fetchExpressionFor(rule) {
     var expr = this.cachedExpressions[rule];
     if (!expr) {
@@ -201,6 +186,129 @@ export class Sizzle {
   select(rule) {
     let expr = this.fetchExpressionFor(rule);
     return this.context.withAllSubmorphsSelect(m => expr.matches(m));
+  }
+  
+}
+
+// sizzle visitor algorithm
+// improve performance by matching expressions "on the go"
+// while the morph tree is being traversed.
+// this combines expression matching and transformation while avoiding
+// redundant checks and recomputiation of intermediate results
+
+export class SizzleVisitor {
+
+  /* A sizzle visitor is an object that is bound to a given morph hierarchy
+     (i.e. a context) and designed to efficiently match a set of sizzle expressions
+     that is associated with different morphs in the hierarchy and allows to 
+     immediately respond to a matching morph through a callback function.
+     SizzleVisitor is designed to be called upon repeatedly to quickly
+     check all morphs with their associated sizzle expressions whenever changes
+     within the morph hierarchy are applied (i.e. changes to name, submorph, styleClasses) */
+
+  constructor(rootMorph) {
+    this.rootMorph = rootMorph;
+    this.expressionCache = {};
+  }
+
+  retrieveExpressions(morph) {
+    /*
+         function, that is passed the current morph being visited as an argument,
+         and which may return an hashmap of expressions (as strings) to values.
+         The expressions are then taken by the visitor and used to check for matching
+         morphs beginning at the currently visited morph. (see visitMorph() for details)
+         The visitor performs automatic internalization of the expressions,
+         and fetches the precompiled expressions when available to save memory and allocations.
+    */
+    throw Error('Not yet implemented!')
+  }
+
+  visitMorph(morph, matchingExpressions) {
+    /*
+         function, that is called on each morph being visited together with an array
+         containing the matching expressions' value for that morph.
+    */
+    throw Error('Not yet implemented!')
+  }
+
+  getChildren(morph) {
+    /* 
+        function returning the next siblings to visit. This can be used to cut down the
+        total amount of morphs getting visited.
+    */
+    throw Error('Not yet implemented!')
+  }
+  
+  visit(morph) {
+
+    if (!morph) {
+      this.ownerChain = [(morph = this.rootMorph)];
+      this.morphExpressions = [];
+      for (let id in this.expressionCache) {
+        for (let expr in this.expressionCache[id]) {
+          this.expressionCache[id][expr].reset()
+        }
+      }
+    }
+
+    let exprsToValues = this.retrieveExpressions(morph), 
+        matchingValues = [];
+
+    exprsToValues && this.morphExpressions.push([morph, exprsToValues]);
+
+    for (let [context, exprsToValues] of this.morphExpressions) {
+      let cache = this.expressionCache[context.id] || {};
+      if (obj.isArray(exprsToValues)) {
+        exprsToValues.forEach(ev => 
+          this.matchExpressions(context, morph, ev, cache, matchingValues)
+        );
+      } else {
+        this.matchExpressions(context, morph, exprsToValues, cache, matchingValues);
+      }
+      this.expressionCache[context.id] = cache;
+    }
+
+    this.visitMorph(morph, matchingValues);
+
+    this.getChildren(morph).forEach(m => {
+      this.ownerChain.push(m);
+      this.visit(m);
+      this.ownerChain.pop();
+    });
+    
+    exprsToValues && this.morphExpressions.pop();
+  }
+
+  matchExpressions(ctx, morph, exprsToValues, exprCache, valueContainer) {
+    for (let expr in exprsToValues) {
+      let compiledExpr = exprCache[expr] || SizzleExpression.compile(expr, ctx);
+      if (!compiledExpr.compileError) {
+        if (compiledExpr.seen(morph)) valueContainer.push(exprsToValues[expr]);
+      }
+      exprCache[expr] = compiledExpr;
+    }
+  }
+}
+
+export class StylingVisitor extends SizzleVisitor {
+
+  retrieveExpressions(morph) {
+    if (morph.styleSheets.length < 1) return false;
+    return morph.styleSheets.map(ss => ss.applicableRules());
+  }
+
+  visitMorph(morph, styleSheetsToApply) {
+    if (!morph._wantsStyling) return;
+    for (let [ss, rule] of styleSheetsToApply) {
+      ss.applyRule(rule, morph);
+    }
+    morph._wantsStyling = false;
+  }
+
+  getChildren(morph) {
+    return morph.submorphs.filter(m => {
+      return m.needsRerender()
+    });
   }
   
 }
