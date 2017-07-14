@@ -8,10 +8,12 @@ export function pathForBrowserHistory(worldResource) {
   // browser history
   let url = worldResource.url,
       isLocal = worldResource.url.startsWith("lively.storage://"),
-      query = isLocal ? "?location=local" : "",
+      query = {...worldResource.query(), ...isLocal ? {location: "local"} : {}},
+      queryString = Object.keys(query).length
+        ? "?" + worldResource.withQuery(query).url.split("?")[1] : "",
       basePath = "/worlds/",
       name = worldResource.name().replace(/\.json$/, "");
-  return `${basePath}${name}${query}`;
+  return `${basePath}${name}${queryString}`;
 }
 
 export async function loadWorldFromURL(url, oldWorld, options) {
