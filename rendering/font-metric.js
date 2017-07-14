@@ -449,7 +449,7 @@ class DOMTextMeasure {
         let lineNode = renderLineFn(line),
             _ = textNode.appendChild(lineNode),
             {doc: document} = this,
-            result = (line.stringSize > 1000
+            result = (line.stringSize > 10000
 
                    && charBoundsOfBigMonospacedLine(
                     morph, fontMetric, line, lineNode,
