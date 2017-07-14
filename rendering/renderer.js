@@ -1,5 +1,5 @@
 /*global System,WeakMap*/
-import { promise, obj, num } from "lively.lang";
+import { promise, arr, tree, obj, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
 import {
   defaultStyle,
@@ -7,9 +7,11 @@ import {
   defaultAttributes,
   defaultCSS,
   pathAttributes,
-  svgAttributes
+  svgAttributes,
+  renderMorph
 } from "./morphic-default.js";
 import { h } from "virtual-dom";
+import { Transform, pt } from "lively.graphics";
 
 
 export class Renderer {
@@ -249,6 +251,62 @@ export class Renderer {
         ),
         this.renderSubmorphs(morph)
       ]);
+  }
+
+  renderPreview(morph, opts) {
+    // Creates a DOM node that is a "preview" of the morph, i.e. a
+    // representation that looks like the morph but doesn't morphic behavior
+    // attached
+
+    // FIXME doesn't work with scale yet...!
+
+    let {width = 100, height = 100, center = true, asNode = false} = opts,
+        {
+          borderWidthLeft, borderWidthTop, borderWidthBottom, borderWidthRight,
+          scale, position, origin, rotation
+        } = morph,
+        // goalWidth = width - (borderWidthLeft + borderWidthRight),
+        // goalHeight = height - (borderWidthTop + borderWidthBottom),
+        goalWidth = width,
+        goalHeight = height,
+        invTfm = new Transform(position.negated(), 0, pt(1/morph.scale,1/scale)),
+        bbox = invTfm.transformRectToRect(morph.bounds()),
+        w = bbox.width, h = bbox.height,
+        ratio = Math.min(goalWidth/w, goalHeight/h),
+        node = renderMorph(morph),
+        tfm = new Transform(
+          bbox.topLeft().negated().scaleBy(ratio).subPt(origin),
+          rotation, pt(ratio, ratio));
+
+    if (center) {
+      var previewBounds = tfm.transformRectToRect(
+            morph.extent.extentAsRectangle()),
+          offsetX = previewBounds.width < goalWidth ?
+            (goalWidth-previewBounds.width) / 2 : 0,
+          offsetY = previewBounds.height < goalHeight ?
+            (goalHeight-previewBounds.height) / 2 : 0;
+      tfm = tfm.preConcatenate(new Transform(pt(offsetX, offsetY)))
+    }
+
+    node.style.transform = tfm.toCSSTransformString();
+    node.style.pointerEvents = "";
+
+    // preview nodes must not appear like nodes of real morphs otherwise we
+    // mistaken them for morphs and do wrong stuff in event dispatch etc.
+    tree.prewalk(node, (node) => {
+      if (typeof node.className !== "string") return;
+        let cssClasses = node.className
+              .split(" ")
+              .map(ea => ea.trim())
+              .filter(Boolean),
+            isMorph = cssClasses.includes("Morph");
+      if (!isMorph) return;
+      node.className = arr.withoutAll(cssClasses, ["morph", "Morph"]).join(" ");
+      node.id = "";
+    },
+    node => Array.from(node.childNodes));
+
+    return asNode ? node : node.outerHTML;
   }
 
 }

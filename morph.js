@@ -3,7 +3,6 @@ import { Color, Line, Point, pt, rect, Rectangle, Transform } from "lively.graph
 import { string, obj, arr, num, promise, tree, fun } from "lively.lang";
 import {
   renderRootMorph,
-  renderMorph,
   AnimationQueue,
   ShadowObject
 } from "./rendering/morphic-default.js";
@@ -16,7 +15,7 @@ import { TargetScript } from "./ticking.js";
 import { copyMorph } from "./serialization.js";
 import { isNumber, isString } from "lively.lang/object.js";
 import { capitalize } from "lively.lang/string.js";
-import { connect, signal, once } from "lively.bindings";
+import { connect, signal } from "lively.bindings";
 import { showAndSnapToGuides, removeSnapToGuidesOf } from "./halo/drag-guides.js";
 
 const defaultCommandHandler = new CommandHandler();
@@ -752,9 +751,8 @@ export class Morph {
         key: foldedProp,
         verbatim: true,
         value: obj.extract(
-          this[foldedProp], ['top', 'right', 'bottom', 'left'], (prop, value) => {
-            return value.isColor ? value.toTuple() : value
-        })
+          this[foldedProp], ['top', 'right', 'bottom', 'left'],
+          (prop, value) => value && value.isColor ? value.toTuple() : value)
       }
     }
   }
@@ -2340,9 +2338,8 @@ return ;
 
   applyLayoutIfNeeded() {
      if (!this._dirty) return;
-     for (var i in this.submorphs) {
+     for (var i in this.submorphs)
        this.submorphs[i].applyLayoutIfNeeded();
-     }
      this.layout && this.layout.forceLayout();
   }
 
@@ -2351,61 +2348,14 @@ return ;
      return renderRootMorph(this, renderer);
   }
 
-  renderPreview(opts = {}) {
+  renderPreview(opts = {}, renderer = this.env.renderer) {
     // Creates a DOM node that is a "preview" of the morph, i.e. a
     // representation that looks like the morph but doesn't morphic behavior
     // attached
-
-    // FIXME doesn't work with scale yet...!
-
-    let {width = 100, height = 100, center = true, asNode = false} = opts,
-        {
-          borderWidthLeft, borderWidthTop, borderWidthBottom, borderWidthRight,
-          scale, position, origin, rotation
-        } = this,
-        // goalWidth = width - (borderWidthLeft + borderWidthRight),
-        // goalHeight = height - (borderWidthTop + borderWidthBottom),
-        goalWidth = width,
-        goalHeight = height,
-        invTfm = new Transform(position.negated(), 0, pt(1/this.scale,1/scale)),
-        bbox = invTfm.transformRectToRect(this.bounds()),
-        w = bbox.width, h = bbox.height,
-        ratio = Math.min(goalWidth/w, goalHeight/h),
-        node = renderMorph(this),
-        tfm = new Transform(
-          bbox.topLeft().negated().scaleBy(ratio).subPt(origin),
-          rotation, pt(ratio, ratio));
-
-    if (center) {
-      var previewBounds = tfm.transformRectToRect(
-            this.extent.extentAsRectangle()),
-          offsetX = previewBounds.width < goalWidth ?
-            (goalWidth-previewBounds.width) / 2 : 0,
-          offsetY = previewBounds.height < goalHeight ?
-            (goalHeight-previewBounds.height) / 2 : 0;
-      tfm = tfm.preConcatenate(new Transform(pt(offsetX, offsetY)))
-    }
-
-    node.style.transform = tfm.toCSSTransformString();
-    node.style.pointerEvents = "";
-
-    // preview nodes must not appear like nodes of real morphs otherwise we
-    // mistaken them for morphs and do wrong stuff in event dispatch etc.
-    tree.prewalk(node, (node) => {
-      if (typeof node.className !== "string") return;
-        let cssClasses = node.className
-              .split(" ")
-              .map(ea => ea.trim())
-              .filter(Boolean),
-            isMorph = cssClasses.includes("Morph");
-      if (!isMorph) return;
-      node.className = arr.withoutAll(cssClasses, ["morph", "Morph"]).join(" ");
-      node.id = "";
-    },
-    node => Array.from(node.childNodes));
-
-    return asNode ? node : node.outerHTML;
+    // opts = {width = 100, height = 100, center = true, asNode = false}
+    return renderer.renderPreview(this, opts);
   }
+
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // ticking
