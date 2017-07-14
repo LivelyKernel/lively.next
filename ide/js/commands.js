@@ -21,7 +21,6 @@ function doEval(
   additionalOpts,
   code = morph.textInRange(range)
 ) {
-
   var jsPlugin = morph.pluginFind(p => p.isJSEditorPlugin);
   if (!jsPlugin)
     throw new Error(`doit not possible: cannot find js editor plugin of !${morph}`)
@@ -70,7 +69,7 @@ export var jsEditorCommands = [
       } catch (e) { err = e; }
       err ?
         morph.showError(err) :
-        morph.setStatusMessage(result.value);
+        morph.setStatusMessage(string.truncate(result.value, 1000));
       return result;
     }
   },
