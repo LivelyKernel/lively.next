@@ -170,7 +170,7 @@ function body(req, isJSON) {
 function fail(req, res, path, reason, sendReason = false) {
   console.log(`${path} failed: ${reason}`);
   res.writeHead(400, {"content-type": "application/json"});
-  res.end(JSON.stringify({error: `${path} failed${sendReason ? ", " + reason : ""}`}));
+  res.end(JSON.stringify({error: sendReason ? reason : `${path} failed`}));
 }
 
 function success(req, res, path, data) {
