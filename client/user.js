@@ -5,6 +5,11 @@ function jwtTokenDecode(token) {
   return JSON.parse(atob(b));
 }
 
+function guid() {
+  const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
 function makeRequest(url, method = "GET", body, headers = {}) {
   var useCors = true, fetchOpts = {method};
   if (useCors) fetchOpts.mode = "cors"
@@ -27,13 +32,13 @@ async function POST(url, body) {
 }
 
 
-export default class User {
+export class User {
 
   static get guest() { return guestUser; }
 
   static named(name, url) {
-    let key = name + "-" + url;
-    let user = userMap.get(key);
+    let key = name + "-" + url,
+        user = userMap.get(key);
     if (!user) {
       user = new this(name, url);
       userMap.set(key, user);
@@ -98,15 +103,19 @@ export default class User {
   async modify(changes) {
     let {error, status, token} = await POST(this.url + "/modify", {token: this.token, changes});
     if (error) return {error};
-    if (token) this.token = token;
+    if (token) {
+      let {name, roles, createdAt, email} = jwtTokenDecode(token);
+      Object.assign(this, {roles, createdAt, email, token});
+    }
+
     return {status};
   }
 
-  toString() { return `<User ${this.name} logged in: ${this.isLoggedIn()}>`; }
+  toString() { return `<${this.constructor.name} ${this.name} ${this.isLoggedIn() ? "" : "not "}logged in>`; }
 }
 
 
-class GuestUser extends User {
+export class GuestUser extends User {
 
   get isGuestUser() { return true; }
 
@@ -115,10 +124,8 @@ class GuestUser extends User {
   async loginOrRegister(action, password, authServerURL) {
     throw new Error("Guest user cannot " + action + "!");
   }
-
-  toString() { return `<GuestUser ${this.name}>`; }
 }
 
 
-var guestUser = guestUser || new GuestUser("guest");
 var userMap = userMap || new Map();
+var guestUser = guestUser || GuestUser.named("guest-" + guid(), null);
