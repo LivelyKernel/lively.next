@@ -89,7 +89,7 @@ var commands = [
 
       let url, html, win = text.getWindow();
       // is it a html workspace?
-      if (win && win.isHTMLWorkspace) url = win.file;
+      if (win && win.isHTMLWorkspace) url = win.file.url;
       // file editor?
       else if (text.owner && text.owner.isTextEditor) url = text.owner.location;
 
