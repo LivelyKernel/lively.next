@@ -1,6 +1,7 @@
-function setupForHTMLPage() {
+(function setupForHTMLPage() {
     let UserRegistry = lively.user.UserRegistry, ClientUser = lively.user.ClientUser, authServerURL = "https://auth.lively-next.org", overlay, resolve, reject, loginWidget = document.querySelector(".html-login-widget"), registerWidget = document.querySelector(".html-register-widget");
-    return openUserUI;
+    lively.user.html = { openUserUI: openUserUI };
+    return;
     function openUserUI() {
       setupLoginWidget();
       setupRegisterWidget();
@@ -14,7 +15,7 @@ function setupForHTMLPage() {
     function resolveWithUser(user) {
       console.log(`Logged in as ${ user }`);
       overlay.remove();
-      resolve();
+      resolve(user);
     }
     async function tryRegister() {
       let userNameInput = registerWidget.querySelector(".user-name-input"), passwordInput = registerWidget.querySelector(".password-input"), passwordInput2 = registerWidget.querySelector(".password-input-2"), emailInput = registerWidget.querySelector(".email-input"), username = userNameInput.value, email = emailInput.value, password = passwordInput.value, password2 = passwordInput2.value;
@@ -116,4 +117,4 @@ function setupForHTMLPage() {
       };
       return overlay;
     }
-  }
+  })();

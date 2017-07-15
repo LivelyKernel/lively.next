@@ -16,7 +16,7 @@ async function updateHTMLStuff() {
 
   let base = resource(System.decanonicalize(`lively.user/`));
   await base.join("html/html-ui.fragment").write(`${morphicStyles()}\n${html1}\n${html2}`);
-  await base.join("html/html-ui.js").write(String(setupForHTMLPage));
+  await base.join("html/html-ui.js").write(`(${setupForHTMLPage})();`);
 }
 
 function setupForHTMLPage() {
@@ -29,7 +29,8 @@ function setupForHTMLPage() {
       loginWidget = document.querySelector(".html-login-widget"),
       registerWidget = document.querySelector(".html-register-widget")
 
-  return openUserUI;
+  lively.user.html = {openUserUI: openUserUI};
+  return;
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -44,7 +45,7 @@ function setupForHTMLPage() {
   function resolveWithUser(user) {
     console.log(`Logged in as ${user}`);
     overlay.remove();
-    resolve();
+    resolve(user);
   }
 
   async function tryRegister() {

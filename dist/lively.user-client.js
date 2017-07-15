@@ -593,6 +593,7 @@ var GuestUser = function (_User) {
 var userMap = userMap || new Map();
 var guestUser = guestUser || GuestUser.named("guest-" + guid(), null);
 
+/*global System*/
 var UserRegistry = function () {
   function UserRegistry() {
     classCallCheck(this, UserRegistry);
@@ -666,9 +667,11 @@ var UserRegistry = function () {
                   delete localStorage["lively.user"];
                   delete sessionStorage["lively.user"];
                 } catch (err) {}
-                return _context2.abrupt("return", user && user.isGuestUser ? user : User.guest);
+                user = user && user.isGuestUser ? user : User.guest;
+                if (lively.notifications) lively.notifications.emit("lively.user/userchanged", { user: user }, Date.now(), System);
+                return _context2.abrupt("return", user);
 
-              case 2:
+              case 4:
               case "end":
                 return _context2.stop();
             }
@@ -751,9 +754,12 @@ var UserRegistry = function () {
     value: function saveUserToLocalStorage(user) {
       if (!user || !user.isGuestUser && !user.token) return false;
 
+      if (lively.notifications) lively.notifications.emit("lively.user/userchanged", { user: user }, Date.now(), System);
+
       try {
         if (user.isGuestUser) {
           sessionStorage["lively.user"] = JSON.stringify({ isGuest: true, name: user.name });
+          delete localStorage["lively.user"];
         } else {
           localStorage["lively.user"] = JSON.stringify({ token: user.token });
         }
