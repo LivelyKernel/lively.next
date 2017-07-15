@@ -3,6 +3,7 @@ import { MorphicEnv } from "./index.js";
 import { loadWorldFromResource } from "./serialization.js";
 import { resource, registerExtension as registerResourceExension } from "lively.resources";
 
+
 export function pathForBrowserHistory(worldResource) {
   // how does the resource map to a URL shown in the browser URL bar? used for
   // browser history
@@ -37,7 +38,9 @@ export async function loadWorld(newWorld, oldWorld, options = {}) {
     l2l = true,
     shell = true,
     worldLoadDialog = false,
-    initializeGlobalStyleSheets = true
+    initializeGlobalStyleSheets = true,
+    showUserFlap = typeof newWorld.showsUserFlap === "undefined"
+      ? true : newWorld.showsUserFlap
   } = options;
 
   env = env || (oldWorld ? oldWorld.env : MorphicEnv.default());
@@ -66,6 +69,8 @@ export async function loadWorld(newWorld, oldWorld, options = {}) {
     if (options.pathForBrowserHistory) {
       window.history.pushState({}, "lively.next", options.pathForBrowserHistory);
     }
+
+    newWorld.showsUserFlap = showUserFlap;
 
     return newWorld;
   } catch (e) {

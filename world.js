@@ -24,6 +24,7 @@ import worldCommands from "./world-commands.js";
 import { loadWorldFromURL, loadWorld } from "./world-loading.js";
 import LoadingIndicator from "./components/loading-indicator.js";
 import { GradientEditor } from "./ide/styling/gradient-editor.js";
+import { UserUI } from "lively.user/morphic/user-ui.js";
 
 export class World extends Morph {
 
@@ -38,6 +39,14 @@ export class World extends Morph {
           this.setProperty("resizePolicy", val);
           this.clipMode = val === "static" ? "visible" : "hidden";
           if (val == "elastic") this.execCommand("resize to fit window");
+        }
+      },
+
+      showsUserFlap: {
+        defaultValue: true,
+        set(bool) {
+          this.setProperty("showsUserFlap", bool);
+          UserUI[bool ? "showUserFlap" : "hideUserFlap"](this);
         }
       },
 
