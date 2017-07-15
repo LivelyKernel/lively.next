@@ -348,7 +348,7 @@ export default class Browser extends Window {
              layout: new GridLayout({
                 grid: [["commands", null, "eval backend button", null]],
                 rows: [0, {paddingBottom: 2}],
-                columns: [2, {fixed: 100}, 3, {fixed: 5}],
+                columns: [0, {paddingLeft: 2}, 2, {fixed: 100}, 3, {fixed: 5}],
                 groups: {commands: {resize: false}}
              }),
              fill: Color.transparent,

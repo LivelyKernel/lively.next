@@ -1510,7 +1510,7 @@ export class MorphHighlighter extends Morph {
       target: {
         readOnly: true, derived: true,
         get() {
-          return $world.getMorphWithId(this.targetId);
+          return this.world().getMorphWithId(this.targetId);
         }
       }
     }

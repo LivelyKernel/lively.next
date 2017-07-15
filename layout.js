@@ -29,6 +29,10 @@ class Layout {
     }
   }
 
+  attach() {
+    this.apply();
+  }
+
   copy() {
     return new this.constructor(this);
   }
@@ -78,7 +82,10 @@ class Layout {
     if (this.applyRequests && this.applyRequests.length > 0) {
       this.applyRequests = [];
       this.refreshBoundsCache();
-      this.container.withMetaDo({isLayoutAction: true, animation: this.lastAnim}, () => this.apply(this.lastAnim));
+      this.container.withMetaDo({
+        isLayoutAction: true, 
+        animation: this.lastAnim
+      }, () => this.apply(this.lastAnim));
       this.lastAnim = false;
     }
   }
@@ -92,10 +99,7 @@ class Layout {
   }
 
   onSubmorphResized(submorph, change) {
-    if (this.container.submorphs.includes(submorph)
-        || this.submorphBoundsChanged
-        || this.boundsChanged(this.container))
-      this.scheduleApply(submorph, change.meta.animation, change)
+    this.scheduleApply(submorph, change.meta.animation, change)
   }
   onSubmorphAdded(submorph, animation) { 
     this.scheduleApply(submorph, animation)
@@ -118,6 +122,7 @@ class Layout {
     if (["extent"].includes(prop) && !obj.equals(value, prevValue))
       this.scheduleApply(submorph, anim);
   }
+  
   affectsLayout(submorph, {prop, value, prevValue}) {
     return ["position", "scale", "rotation", "isLayoutable", 'extent'].includes(prop)
            && !obj.equals(value, prevValue);
@@ -1182,6 +1187,10 @@ export class GridLayout extends Layout {
 
   name() { return "Grid" }
   description() { return "Aligns the submorphs alongside a configurable grid. Columns and rows and be configured to have different proportional, minimal or fixed sizes. Cells can further be grouped such that submorphs fill up multiple slots of the grid." }
+
+  attach() {
+    this.apply()
+  }
 
   initGrid() {
     const grid = this.ensureGrid(this.config),
