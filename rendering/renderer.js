@@ -12,7 +12,7 @@ import {
 } from "./morphic-default.js";
 import { h } from "virtual-dom";
 import { Transform, pt } from "lively.graphics";
-
+import { diff, patch, create as createNode } from "virtual-dom";
 
 export class Renderer {
 
@@ -33,6 +33,7 @@ export class Renderer {
     this.domNode = null;
     this.domEnvironment = domEnvironment;
     this.renderMap = new WeakMap();
+    this.fixedMorphNodeMap = new Map();
     this.renderWorldLoopProcess = null;
     this.renderWorldLoopLater = null;
     this.requestAnimationFrame = domEnvironment.window.requestAnimationFrame.bind(domEnvironment.window);
@@ -111,8 +112,45 @@ export class Renderer {
     return tree;
   }
 
+  renderAsFixed(morph) {
+    let tree = this.render(morph);
+    tree.properties.style.position = "fixed";
+    return tree;
+  }
+
+  renderFixedMorphs(fixedMorphs, world) {
+    let {domNode, fixedMorphNodeMap} = this;
+    if (!fixedMorphs.length && !fixedMorphNodeMap.size) return;
+    if (!domNode || !domNode.parentNode) return;
+
+    for (let [morph, node] of fixedMorphNodeMap) {
+      if (!fixedMorphs.includes(morph)) {
+        node.parentNode.removeChild(node);
+        fixedMorphNodeMap.delete(morph);
+      }
+    }
+
+    for (let morph of fixedMorphs) {
+
+      var tree = this.renderMap.get(morph) || this.renderAsFixed(morph),
+          newTree = this.renderAsFixed(morph),
+          patches = diff(tree, newTree);
+
+      var morphNode = fixedMorphNodeMap.get(morph);
+      if (!morphNode) {
+        morphNode = createNode(tree, this.domEnvironment);
+        fixedMorphNodeMap.set(morph, morphNode);
+      }
+      if (!morphNode.parentNode)
+        domNode.parentNode.appendChild(morphNode);
+    
+      patch(morphNode, patches);
+    }
+
+  }
+
   renderMorph(morph) {
-    let submorphs = this.renderSelectedSubmorphs(morph, morph.submorphs);
+    let submorphs = this.renderSubmorphs(morph);
     return h("div", {
       ...defaultAttributes(morph, this),
       style: defaultStyle(morph)
@@ -131,6 +169,23 @@ export class Renderer {
         transform: `translate(${oX - borderWidthLeft}px,${oY - borderWidthTop}px)`
       }
     }, submorphs.map(m => this.render(m)));
+  }
+
+  renderWorld(world) {
+    let {submorphs} = world,
+        normalSubmorphs = [],fixedMorphs = [];
+    for (let i = 0; i < submorphs.length; i++) {
+      let morph = submorphs[i];
+      if (morph.hasFixedPosition) fixedMorphs.push(morph);
+      else normalSubmorphs.push(morph);
+    }
+    let renderedSubmorphs = this.renderSelectedSubmorphs(world, normalSubmorphs),
+        vnode = h("div", {
+          ...defaultAttributes(world, this),
+          style: defaultStyle(world),
+        }, renderedSubmorphs);
+    vnode.fixedMorphs = fixedMorphs;
+    return vnode;
   }
 
   renderImage(image) {

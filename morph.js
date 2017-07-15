@@ -288,6 +288,12 @@ export class Morph {
         isStyleProp: true, defaultValue: 1
       },
 
+      hasFixedPosition: {
+        group: "geometry",
+        doc: "When morph is submorph of world hasFixedPosition == true will keep the morph at the same position relative to top left of the browser window. This means, when the world is scrolled, the morph keeps its place.",
+        defaultValue: false
+      },
+
       opacity: {
         group: "styling",
         type: 'Number',
@@ -307,7 +313,6 @@ export class Morph {
         isStyleProp: true,
         defaultValue: true
       },
-
 
       submorphs: {
         group: "core",
@@ -1546,10 +1551,18 @@ export class Morph {
      // having the other morph in the current morph's owner chain
     if (direction == "down") return other.transformTillMorph(this, "up").inverse();
     var tfm = new Transform();
-    for (var morph = this; (morph != other) && (morph != undefined); morph = morph.owner) {
-       tfm.preConcatenate(new Transform(morph.origin))
-          .preConcatenate(morph.getTransform())
-          .preConcatenate(morph != this ? new Transform(morph.scroll.negated()) : new Transform());
+    for (var morph = this; morph && morph != other; morph = morph.owner) {
+      let {origin, scroll}= morph;
+      if (origin.x !== 0 || origin.y !== 0)
+        tfm.preConcatenate(new Transform(morph.origin))
+      tfm.preConcatenate(morph.getTransform())
+      if (morph != this) {
+        if (scroll.x !== 0 || scroll.y !== 0)
+          tfm.preConcatenate(new Transform(scroll.negated()));
+      }
+      if (morph.hasFixedPosition && morph.owner) {
+        tfm.preConcatenate(new Transform(morph.owner.scroll));
+      }
     }
     return tfm;
   }
@@ -1568,32 +1581,41 @@ export class Morph {
   transformToMorph(other) {
     var tfm = this.getGlobalTransform(),
         inv = other.getGlobalTransform().inverse();
-    tfm.preConcatenate(inv)
-    tfm.preConcatenate(new Transform(other.scroll));
+    tfm.preConcatenate(inv);
+    var {scroll} = other;
+    if (scroll.x !== 0 || scroll.y !== 0)
+      tfm.preConcatenate(new Transform(scroll));
     return tfm;
   }
 
   transformPointToMorph(other, p) {
-     for(var [d, m] of this.pathToMorph(other)) {
-        if (this != m && d == 'up') {
-          p.x -= m.scroll.x;
-          p.y -= m.scroll.y;
+    for (var [d, m] of this.pathToMorph(other)) {
+      if (this != m && d == 'up') {
+        p.x -= m.scroll.x;
+        p.y -= m.scroll.y;
+        if (m.hasFixedPosition && m.owner) {
+          p.x += m.owner.scroll.x;
+          p.y += m.owner.scroll.y;
         }
-        this.applyTransform(d, m, p);
-        if (this != m && d == 'down') {
-          p.x += m.scroll.x;
-          p.y += m.scroll.y;
+      }
+      this.applyTransform(d, m, p);
+      if (this != m && d == 'down') {
+        p.x += m.scroll.x;
+        p.y += m.scroll.y;
+        if (m.hasFixedPosition && m.owner) {
+          p.x -= m.owner.scroll.x;
+          p.y -= m.owner.scroll.y;
         }
-     }
-     return p;
+      }
+    }
+    return p;
   }
 
   transformRectToMorph(other, r) {
      var tl, tr, br, bl;
      [tl = r.topLeft(), tr = r.topRight(),
-      br = r.bottomRight(), bl = r.bottomLeft()].forEach(corner => {
-        this.transformPointToMorph(other, corner);
-     });
+      br = r.bottomRight(), bl = r.bottomLeft()]
+       .forEach(corner => this.transformPointToMorph(other, corner));
      return Rectangle.unionPts([tl,tr,br,bl]);
   }
 
