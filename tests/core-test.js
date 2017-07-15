@@ -189,6 +189,45 @@ describe("relationship", () => {
       expect(submorph2.get("submorph1")).equals(submorph1);
     });
 
+    describe("generate reference chain", () => {
+      it("generateReferenceExpression", () => {
+        var m1 = morph(),
+            m2 = morph(),
+            m3 = morph(),
+            m4 = morph(),
+            m5 = morph(),
+            m6 = morph(),
+            m7 = morph();
+        world.addMorph(m1);
+        world.addMorph(m2);
+        m1.name = "some-morph";
+        m2.name = "some-morph";
+  
+        world.addMorph(m3);
+        m3.addMorph(m4);
+        m4.addMorph(m5);
+        m3.addMorph(m6);
+        m3.addMorph(m7);
+  
+        m3.name = "m3";
+        m4.name = "m4";
+        m5.name = "m5";
+        m6.name = "m6";
+        m7.name = "m7";
+  
+        expect(`$world.getMorphById("${m1.id}")`).equals(m1.generateReferenceExpression());
+        expect(`$world.getMorphById("${m2.id}")`).equals(m2.generateReferenceExpression());
+  
+        expect('$world.get("m3")').equals(m3.generateReferenceExpression());
+        expect('$world.get("m3").get("m4")').equals(m4.generateReferenceExpression());
+        expect('$world.get("m3").get("m5")').equals(m5.generateReferenceExpression());
+  
+        expect("this").equals(m2.generateReferenceExpression({fromMorph: m2}));
+        expect('$world.get("m3").get("m7")').equals(m7.generateReferenceExpression({fromMorph: m5}));
+      });
+
+    });
+
   });
 });
 

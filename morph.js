@@ -567,7 +567,7 @@ export class Morph {
             obj.extract(value, ["top", "left", "right", "bottom"], (k, v) => {
               return obj.isArray(v) ? Color.fromTuple(v) : v
             })
-          ); 
+          );
         }
       },
 
@@ -1817,6 +1817,93 @@ export class Morph {
     return this.withAllSubmorphsDetect(({id: morphId}) => id === morphId);
   }
 
+  generateReferenceExpression(opts = {}) {
+    // creates a expr (string) that, when evaluated, looks up a morph starting
+    // from another morph
+    // Example:
+    // this.generateReferenceExpression()
+    //   $world.get("aBrowser").get("sourceEditor");
+
+    let morph = this,
+        world = morph.world(),
+        {
+          maxLength = 10,
+          fromMorph = world
+        } = opts;
+
+    if (fromMorph === morph) return "this";
+
+    var rootExpr = world === fromMorph ? "$world" : "this";
+
+    // can we find it at all? if not return a generic "morph"
+    if (!world && (!morph.name || fromMorph.get(morph.name) !== morph))
+      return "morph";
+
+    var vm = lively.vm,
+        exprs = makeReferenceExpressionListFor(morph);
+
+    return exprs.length > maxLength
+      ? `$world.getMorphWithId("${morph.id}")`
+      : exprs.join(".");
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    function makeReferenceExpressionListFor(morph) {
+      var name = morph.name,
+          owners = morph.ownerChain(),
+          owner = morph.owner,
+          world = morph.world(),
+          exprList;
+
+      if (morph === fromMorph) exprList = [rootExpr];
+
+      if (world === morph) exprList = ["$world"];
+
+      if (!exprList && name && owner) {
+        if (owner === world && arr.count(arr.pluck(world.submorphs, "name"), name) === 1) {
+          exprList = [`$world.get("${name}")`]
+
+        }
+
+        if (!exprList && owner != world) {
+          for (let i = owners.length-1; i--; ) {
+            if (owners[i].getAllNamed(name).length === 1){
+              exprList = [...makeReferenceExpressionListFor(owners[i]), `get("${name}")`];
+              break;
+            }
+          }
+
+        }
+
+        if (!exprList) {
+          var exprsToCheck = [...makeReferenceExpressionListFor(owner), `get("${name}")`];
+          if (vm.syncEval(exprsToCheck.join("."), {context: fromMorph}).value === morph) {
+            exprList = exprsToCheck;
+          }
+        }
+      }
+
+      // if (!exprList && owner && owner.name) {
+      //   var idx = owner.submorphs.indexOf(morph);
+      //   exprList = makeReferenceExpressionListFor(morph.owner).concat([`submorphs[${idx}]`]);
+      // }
+
+      if (!exprList) {
+        exprList = [`${rootExpr}.getMorphById("${morph.id}")`];
+      }
+
+      return exprList;
+    }
+
+    function commonOwner(m1, m2) {
+      var owners1 = m1.ownerChain(),
+          owners2 = m2.ownerChain();
+      if (owners1.includes(m2)) return m2;
+      if (owners2.includes(m1)) return m1;
+      return arr.intersect(owners1, owners2)[0];
+    }
+
+  }
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // mirror prototype
 
@@ -2015,7 +2102,7 @@ export class Morph {
          () => this[propName] = !this[propName]]));
 
 
-    
+
     items.push(["Fit to submorphs", async () => {
       let padding = await this.world().prompt("Padding around submorphs:", {
         input: "Rectangle.inset(5)",
@@ -2026,13 +2113,13 @@ export class Morph {
       let {value} = await lively.vm.runEval(padding, {topLevelVarRecorder: {Rectangle}});
 
       padding = value && value.isRectangle ? value : Rectangle.inset(0);
-      
+
       this.undoStart("fitToSubmorphs");
       this.fitToSubmorphs(padding);
       this.undoStop("fitToSubmorphs");
     }]);
 
-    
+
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     let connectionItems = this.connectionMenuItems();
@@ -2868,7 +2955,7 @@ export class Path extends Morph {
             obj.extract(value, ["top", "left", "right", "bottom"], (k, v) => {
               return obj.isArray(v) ? Color.fromTuple(v) : v
             })
-          );        
+          );
         }
       },
       vertices: {
