@@ -1,9 +1,9 @@
 /*global System, declare, it, xit, describe, beforeEach, afterEach, before, after*/
-import { StyleSheet } from "../style-rules.js";
+import { StyleSheet } from "../style-sheets.js";
 import { Morph, MorphicEnv, HorizontalLayout, morph } from "../index.js";
 import { expect } from "mocha-es6";
 import { pt, rect, Color, Rectangle } from "lively.graphics";
-import { Sizzle } from "../sizzle.js";
+import { Sizzle, StylingVisitor } from "../sizzle.js";
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 
 describe("Sizzle", () => {
@@ -33,6 +33,7 @@ describe("Style Rules", function() {
       styleClasses: ["root"],
       submorphs: [
         {
+          name: 'B',
           styleClasses: ["bob"],
           submorphs: [
             {
@@ -43,16 +44,19 @@ describe("Style Rules", function() {
         }
       ]
     }),
-    m2 = m1.get('A');
+    m2 = m1.get('A'),
+    m3 = m1.get('B');
     m1.styleSheets = new StyleSheet({
       ".root": {fill: Color.orange},
       ".bob": {fill: Color.red},
       ".alice": {fill: Color.yellow}
     });
+
+    new StylingVisitor(m1).visit();
+    
     expect(m1.fill).equals(Color.orange);
-    expect(m1._styleSheetsInScope).equals(m1.styleSheets);
-    expect(m1._styleSheetProps.fill).not.undefined;
     expect(m2.fill).equals(Color.yellow);
+    expect(m3.fill).equals(Color.red);
   });
 
   it("applies a style once a morph is added to the hierarchy", () => {
@@ -62,6 +66,7 @@ describe("Style Rules", function() {
       ".child": {fill: Color.green}
     });
     m1.addMorph(m2);
+    new StylingVisitor(m1).visit();
     expect(m2.fill).equals(Color.green);
     m2.submorphs = [
       {
@@ -71,6 +76,7 @@ describe("Style Rules", function() {
       {styleClasses: ["child"]},
       {styleClasses: ["root"]}
     ];
+    new StylingVisitor(m1).visit();
     expect(m2.submorphs.map(m => m.fill)).equals([Color.green, Color.green, Color.orange]);
     expect(m2.submorphs[0].submorphs[0].fill).equals(Color.green);
   });
@@ -84,6 +90,7 @@ describe("Style Rules", function() {
     m1.addMorph(m2);
     m1.styleClasses = ["child"];
     m2.styleClasses = ["root"];
+    new StylingVisitor(m1).visit();
     expect(m1.fill).equals(Color.green);
     expect(m2.fill).equals(Color.orange);
   });
@@ -97,6 +104,7 @@ describe("Style Rules", function() {
     m1.addMorph(m2);
     m1.name = "child";
     m2.name = "root";
+    new StylingVisitor(m1).visit();
     expect(m1.fill).equals(Color.green);
     expect(m2.fill).equals(Color.orange);
   });
@@ -113,9 +121,11 @@ describe("Style Rules", function() {
     });
     m1.addMorph(m2);
     m2.addMorph(m3);
+    new StylingVisitor(m0).visit();
     expect(m2.fill).not.equals(Color.brown);
     expect(m3.fill).not.equals(Color.green);
     m0.addMorph(m1);
+    new StylingVisitor(m0).visit();
     expect(m1.fill).equals(Color.orange);
     expect(m2.fill).equals(Color.brown);
     expect(m3.fill).equals(Color.green);
@@ -132,12 +142,37 @@ describe("Style Rules", function() {
     });
     m2.addMorph(m3);
     m1.addMorph(m2);
+    let visitor = new StylingVisitor(m1);
+    visitor.visit();
+    expect(visitor.expressionCache).to.have.all.keys(m1.id, m2.id);
+    expect(visitor.expressionCache[m1.id]).to.have.all.keys('.child', '.root');
+    expect(visitor.expressionCache[m2.id]).to.have.all.keys('.child');
     expect(m1.fill).equals(Color.orange);
     expect(m2.fill).equals(Color.black);
     expect(m3.fill).equals(Color.black);
     expect(m3.borderColor.left).equals(Color.red);
   });
 
+  it("handles multiple style sheets per morph", () => {
+    const m1 = new Morph({name: "m1", styleClasses: ["root"]}),
+          m2 = new Morph({name: "m2", styleClasses: ["child"]}),
+          m3 = new Morph({name: "m3", styleClasses: ["child"]});
+    m1.styleSheets = [
+      new StyleSheet({
+        ".root": {fill: Color.orange},
+        ".child": {fill: Color.green, borderWidth: 10}
+      }),
+      new StyleSheet({".child": {fill: Color.black, borderColor: Color.red}})
+    ];
+    m2.addMorph(m3);
+    m1.addMorph(m2);
+    let visitor = new StylingVisitor(m1);
+    visitor.visit();
+    expect(m2.borderWidth.valueOf()).equals(10);
+    expect(m2.borderColor.valueOf()).equals(Color.red);
+    expect(m2.fill).equals(Color.black);
+  });
+  
   it("updates layouts on changing submorphs", async () => {
     const m1 = new Morph({name: "m1", styleClasses: ["root"]}),
           m2 = new Morph({name: "m2", styleClasses: ["child"]}),
@@ -158,7 +193,7 @@ describe("Style Rules", function() {
     expect(m1.width).equals(100 + m3.width);
   });
   
-  it('results in the same transform behaviors as if morphs where directly set', () => {
+  it("results in the same transform behaviors as if morphs where directly set", () => {
     let hierarchy = new Morph({
       styleSheets: [
         new StyleSheet({
@@ -180,10 +215,10 @@ describe("Style Rules", function() {
         }
       ]
     });
-      expect(hierarchy.styleSheets[0].sizzle.context).equals(hierarchy);
-      expect(hierarchy.get('A').extent).equals(pt(30,30));
-      expect(hierarchy.get('A').globalBounds()).equals(rect(60,60,30,30))
-  })
+    new StylingVisitor(hierarchy).visit();
+    expect(hierarchy.get("A").extent).equals(pt(30, 30));
+    expect(hierarchy.get("A").globalBounds()).equals(rect(60, 60, 30, 30));
+  });
 
   it('updates all affected morphs if style sheet rules are changed', () => {
     var sheet, hierarchy = new Morph({
