@@ -32,7 +32,7 @@ function callMorphHTMLTransforms(morph, node, parents = []) {
 
 export function morphicStyles() {
   let styleLinks = Array.from(document.querySelectorAll("link"))
-        .map(ea => ea.outerHTML).join("\n"),
+        .map(ea => ea.outerHTML.replace(`href="${document.origin}`, `href="`)).join("\n"),
       styles = Array.from(document.querySelectorAll("style"))
         .map(ea => ea.outerHTML).join("\n")
         .replace(/white-space: pre[^\;]*;/g, "")
@@ -52,6 +52,11 @@ export async function generateHTMLForAll(morphs, dirResource, options) {
 }
 
 export async function generateHTML(morph, htmlResource, options = {}) {
+  if (htmlResource && !htmlResource.isResource) {
+    options = htmlResource;
+    htmlResource = null;
+  }
+
   let {isFragment = false, addStyles = true} = options,
       root = morphToNode(morph),
       htmlClassName = `html-${morph.name.replace(/[\s|"]/g, "-")}`;
@@ -70,7 +75,8 @@ export async function generateHTML(morph, htmlResource, options = {}) {
           ${root.outerHTML}</div></body>`;
 
   html = await tidyHtml(html);
-  await htmlResource.write(html);
+  if (htmlResource)
+    await htmlResource.write(html);
   return html;
 }
 
