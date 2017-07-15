@@ -5,7 +5,7 @@ import {
   HorizontalLayout
 } from "../../index.js";
 import {pt, Rectangle, Color, LinearGradient, rect} from "lively.graphics";
-import {signal, connect, disconnect} from "lively.bindings";
+import {signal, once, connect, disconnect} from "lively.bindings";
 import {Slider} from "../../components/widgets.js";
 import { obj } from "lively.lang";
 import {ColorPalette} from "./color-palette.js";
@@ -108,14 +108,6 @@ export class ColorPickerField extends Morph {
       }
      }
    }
-
-  onHoverIn() {
-    if (!this.palette)
-      this.palette = new Popover({
-        name: "Color Palette",
-        targetMorph: new ColorPalette({color: Color.red})
-      });
-  }
   
    onKeyDown(evt) {
       if (evt.key == "Escape") {
@@ -146,14 +138,15 @@ export class ColorPickerField extends Morph {
     const p =
       this.palette ||
       new Popover({
+        position: pt(0,0),
         name: "Color Palette", 
         targetMorph: new ColorPalette({color: this.colorValue})
       });
     connect(p.targetMorph, "color", this, "update");
-    p.topLeft = pt(0,0);
     p.isLayoutable = false; 
     this.palette = await p.fadeIntoWorld(this.globalBounds().insetBy(10).bottomCenter());
     this.removePicker();
+    once(p, 'remove', p, 'topLeft', {converter: () => pt(0,0), varMapping: {pt}});
   }
   
    removePalette() {
@@ -373,7 +366,9 @@ class ColorDetails extends Morph {
       color: {defaultValue: Color.blue},
       width: {defaultValue: 80},
       fill: {defaultValue: Color.transparent},
-      layout: {initialize() {this.layout = new VerticalLayout({spacing: 9})}},
+      layout: {initialize() {this.layout = new VerticalLayout({
+        spacing: 9, layoutOrder: m => this.container.submorphs.indexOf(m) 
+      })}},
       submorphs: {
         after: ['color'],
         initialize() {

@@ -211,6 +211,7 @@ export class ColorWidget extends Morph {
       this.submorphs = this.color.isGradient ? 
         this.renderGradientValue() : this.renderColorValue(); 
     } else {
+      if (!this.color) return;
       this.color.isGradient ? 
         this.updateGradientValue() : this.updateColorValue();
     }

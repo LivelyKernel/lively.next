@@ -43,10 +43,11 @@ export class Popover extends Morph {
           ]
         },
         get() {
-          return this.get('body').submorphs[0]
+          return this.get('body').submorphs[0];
         },
         set(m) {
           this.get('body').addMorph(m);
+          this.relayout();
         }
       },
       styleSheets: {
@@ -738,6 +739,7 @@ export class PointPopover extends StylePopover {
   }
 
   relayout() {
+    super.relayout();
     let m = this.getSubmorphNamed('mesh'),
         pv = this.getSubmorphNamed('point value view');
     m.origin = m.innerBounds().center().addXY(4,1);

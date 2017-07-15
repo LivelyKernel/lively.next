@@ -912,10 +912,12 @@ export default class Inspector extends Morph {
       name: {defaultValue: "inspector"},
 
       _serializableTarget: {defaultValue: null},
+      openWidget: {
+        type: 'Morph'
+      },
 
       targetObject: {
         after: ["submorphs"],
-        //serialize: false,
         set(obj) {
           this._serializableTarget = obj.isMorph ? obj.id : obj;
           this.setProperty("targetObject", obj);
