@@ -105,6 +105,8 @@ export class World extends Morph {
 
   get isWorld() { return true }
 
+  render(renderer) { return renderer.renderWorld(this); }
+
   get draggable() { return true; }
   set draggable(_) {}
   get grabbable() { return false; }
@@ -402,12 +404,14 @@ export class World extends Morph {
       scrollLeftWhenChanged,
       scrollTopWhenChanged,
     } = evt.dispatcher.keyInputHelper.inputState;
+    let docEl = document.documentElement;
     if (Date.now() - positionChangedTime < 500) {
-      document.documentElement.scrollLeft = scrollLeftWhenChanged;
-      document.documentElement.scrollTop = scrollTopWhenChanged;
+      docEl.scrollLeft = scrollLeftWhenChanged;
+      docEl.scrollTop = scrollTopWhenChanged;
       return;
     }
 
+    this.setProperty("scroll", pt(docEl.scrollLeft, docEl.scrollTop));
     this._cachedWindowBounds = null;
     this.updateVisibleWindowMorphs(evt);
     this.onMouseMove(evt);
@@ -418,6 +422,9 @@ export class World extends Morph {
     if (this.resizePolicy === 'elastic')
       this.execCommand("resize to fit window");
     this.updateVisibleWindowMorphs(evt);
+    for (let morph of this.submorphs)
+      if (typeof morph.onWorldResize === "function")
+        morph.onWorldResize(evt);
   }
 
   updateVisibleWindowMorphs(evt) {
