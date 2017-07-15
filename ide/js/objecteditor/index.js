@@ -664,6 +664,10 @@ export class ObjectEditor extends Morph {
         t = this.target,
         pkg = ObjectPackage.lookupPackageForObject(t);
 
+    if (klass) {
+      items.push({command: "open browse snippet", target: this});
+    }
+
     if (klass && pkg && pkg.objectClass === klass) {
       // FIXME!!!!
       if (t.constructor === klass && klass.name !== "Morph") {
@@ -1123,6 +1127,22 @@ export class ObjectEditor extends Morph {
     } catch (e) { !silent && this.showError(e); }
   }
 
+  browseSnippetForSelection() {
+    // produces a string that, when evaluated, will open the browser at the
+    // same location it is at now
+    let c = this.selectedClass,
+        m = this.selectedMethod,
+        mod = this.selectedModule,
+        t = this.target;
+
+    let codeSnip = `$world.execCommand("open object editor", {`
+    codeSnip += `target: ${t.generateReferenceExpression()}`;
+    if (c) codeSnip += `, selectedClass: "${c.name}"`
+    if (c) codeSnip += `, selectedMethod: "${m.name}"`;
+    codeSnip += `});`;
+
+    return codeSnip;
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // events
@@ -1322,6 +1342,13 @@ export class ObjectEditor extends Morph {
           ed.focus();
           return ed.target;
         }
+      },
+
+      {
+        name: "open browse snippet",
+        exec: oe =>
+        oe.world().execCommand("open workspace",
+          {content: oe.browseSnippetForSelection(), language: "javascript"})
       }
     ];
   }
