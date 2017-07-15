@@ -131,6 +131,9 @@ export class MorphicEnv {
     systemChangeHandlers["lively.partsbin/partpublished"] = [
       subscribe("lively.partsbin/partpublished", (evt) =>
         this.getTargetsFor("onPartPublished").forEach(ea => ea.onPartPublished(evt)))];
+    systemChangeHandlers["lively.user/userchanged"] = [
+      subscribe("lively.user/userchanged", (evt) =>
+        this.getTargetsFor("onUserChanged").forEach(ea => ea.onUserChanged(evt)))];
   }
 
   uninstallSystemChangeHandlers() {
@@ -144,12 +147,15 @@ export class MorphicEnv {
 
   getTargetsFor(selector) {
     let world = this.world, targets = [];
-    if (!world || typeof world.getWindows !== "function") return targets;
-    for (let win of world.getWindows()) {
-      if (typeof win[selector] === "function")
-        targets.push(win);
-      if (win.targetMorph && typeof win.targetMorph[selector] === "function")
-        targets.push(win.targetMorph);
+    if (!world || !world.submorphs) return targets;
+    if (typeof world[selector] === "function")
+      targets.push(world);
+    for (let morph of world.submorphs) {
+      if (typeof morph[selector] === "function")
+        targets.push(morph);
+      if (morph.isWindow && morph.targetMorph
+          && typeof morph.targetMorph[selector] === "function")
+        targets.push(morph.targetMorph);
     }
     return targets;
   }
