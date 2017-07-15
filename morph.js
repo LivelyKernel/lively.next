@@ -721,10 +721,6 @@ export class Morph {
     }
   }
 
-  instrumentedByStyleSheet(prop) {
-    return this._morphicState[prop] == this.defaultProperty(prop) && prop in this._styleSheetProps;
-  }
-
   get __only_serialize__() {
     let defaults = this.defaultProperties,
         properties = this.propertiesAndPropertySettings().properties,
@@ -735,7 +731,6 @@ export class Morph {
         descr.readOnly ||
         descr.derived ||
         this[key] === defaults[key] ||
-        this.instrumentedByStyleSheet(key) ||
         (descr.hasOwnProperty("serialize") && !descr.serialize)
       ) continue;
       propsToSerialize.push(key);
@@ -784,7 +779,6 @@ export class Morph {
         descr.derived ||
         this[key] === defaults[key] ||
         (this[key] && typeof this[key].equals === "function" && this[key].equals(defaults[key])) ||
-        this.instrumentedByStyleSheet(key) ||
         (descr.hasOwnProperty("serialize") && !descr.serialize) ||
         key in ignored
       ) continue;
