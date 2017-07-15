@@ -1,5 +1,5 @@
 /*global Power4,TweenMax*/
-import { diff, patch, create, height } from "virtual-dom";
+import { diff, patch, create as createNode } from "virtual-dom";
 import "gsap";
 import { num, obj, arr, properties, promise } from "lively.lang";
 import { Color, RadialGradient, pt, Point, LinearGradient, rect } from "lively.graphics";
@@ -683,18 +683,20 @@ export function renderMorph(morph, renderer = morph.env.renderer) {
   // helper that outputs a dom element for the morph, independent from the
   // morph being rendered as part of a world or not. The node returned *is not*
   // the DOM node that represents the morph as part of its world! It's a new node!
-  return create(morph.render(renderer), renderer.domEnvironment);
+  return createNode(morph.render(renderer), renderer.domEnvironment);
 }
 
 export function renderRootMorph(world, renderer) {
   if (!world.needsRerender()) return;
 
   var tree = renderer.renderMap.get(world) || renderer.render(world),
-      domNode = renderer.domNode || (renderer.domNode = create(tree, renderer.domEnvironment)),
       newTree = renderer.render(world),
-      patches = diff(tree, newTree);
+      patches = diff(tree, newTree),
+      domNode = renderer.domNode || (renderer.domNode = createNode(tree, renderer.domEnvironment));
 
   if (!domNode.parentNode) initDOMState(renderer, world);
 
   patch(domNode, patches);
+
+  renderer.renderFixedMorphs(newTree.fixedMorphs, world);
 }
