@@ -470,8 +470,8 @@ export class PropertyAnimation {
         props = {}
     props.css = styleProps(this.morph);
     if (isSvgMorph) props.svg = addSvgAttributes(morph, {});
-    if (isPath) props.path = addPathAttributes(morph);
-    if (isPolygon) props.polygon = addPathAttributes(morph);
+    if (isPath) props.path = addPathAttributes(morph, {});
+    if (isPolygon) props.polygon = addPathAttributes(morph, {});
     return props;
   }
 
