@@ -1,5 +1,6 @@
+/*global System*/
 import { User, GuestUser } from "./user.js";
-
+  
 export default class UserRegistry {
 
   static get current() {
@@ -26,7 +27,10 @@ export default class UserRegistry {
       delete localStorage["lively.user"];
       delete sessionStorage["lively.user"];
     } catch (err) {}
-    return user && user.isGuestUser ? user : User.guest;
+    user = user && user.isGuestUser ? user : User.guest;
+    if (lively.notifications)
+      lively.notifications.emit("lively.user/userchanged", {user}, Date.now(), System);
+    return user;
   }
 
   async register(user, password) {
@@ -55,10 +59,14 @@ export default class UserRegistry {
 
   saveUserToLocalStorage(user) {
     if (!user || (!user.isGuestUser && !user.token)) return false;
-    
+
+    if (lively.notifications)
+      lively.notifications.emit("lively.user/userchanged", {user}, Date.now(), System);
+
     try {
       if (user.isGuestUser) {
         sessionStorage["lively.user"] = JSON.stringify({isGuest: true, name: user.name});
+        delete localStorage["lively.user"];
       } else {
         localStorage["lively.user"] = JSON.stringify({token: user.token});
       }
