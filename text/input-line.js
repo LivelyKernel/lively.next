@@ -403,7 +403,7 @@ export default class InputLine extends Text {
     Object.assign(input.style, obj.select(textLayer.style, textCSSProps));
     input.placeholder = this.placeholder;
     input.type = "text";
-    input.name = this.name.replace(/[\s"]/g, "-");
+    input.autocomplete = input.name = this.name.replace(/[\s"]/g, "-");
     return input;
   }
 }
@@ -565,7 +565,7 @@ export class PasswordInputLine extends HTMLMorph {
     input.style = node.style.cssText;
     Object.assign(input.style, obj.select(oldInput.style, textCSSProps));
     input.type = "password";
-    input.name = this.name.replace(/[\s"]/g, "-");
+    input.autocomplete = input.name = this.name.replace(/[\s"]/g, "-");
     return input;
   }
 
