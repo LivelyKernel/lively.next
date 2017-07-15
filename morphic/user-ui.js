@@ -2,7 +2,7 @@
 import { Morph } from "lively.morphic/morph.js";
 import { pt, Rectangle, Color } from "lively.graphics/index.js";
 import { promise } from "lively.lang/index.js";
-import { morph, config } from "lively.morphic/index.js";
+import { morph, Menu, config } from "lively.morphic/index.js";
 import { adoptObject } from "lively.classes/runtime.js";
 import { connect, once, signal } from "lively.bindings/index.js";
 import { ClientUser } from "lively.user/index.js";
@@ -51,16 +51,31 @@ export var UserUI = {
     return UserRegistry.current.loadUserFromLocalStorage(config.users.authServerURL);
   },
 
+  showUserFlap(world = $world) {
+    this.hideUserFlap(world);
+    return new UserFlap().open();
+  },
+
+  hideUserFlap(world = $world) {
+    world.submorphs
+      .filter(ea => ea.name === "user flap")
+      .forEach(ea => ea.remove());
+  },
+
   async showWidget(widgetName, options = {}) {
     let {modal = true, user = this.getCurrentUser()} = options,
         widget = await this.loadMorph(widgetName);
     return widget.run(modal, options.world, user);
   },
 
-  async showUserInfo(options = {}) { return this.showWidget("user info", options); },
+  async showUserInfo(options = {}) {
+    return this.showWidget("user info", options);
+    // let {user = this.getCurrentUser()} = options;
+    // return user.isGuestUser ? this.showLogin(options) : this.showWidget("user info", options);
+  },
   async showLogin(options = {}) { return this.showWidget("login widget", options); },
   async showRegister(options = {}) { return this.showWidget("register widget", options); },
-  
+
   async loadMorph(name, options) {
     let url = System.decanonicalize(`lively.user/morphic/${name}.json`),
         snap = await resource(url).readJson();
@@ -204,6 +219,8 @@ export class UserInfoWidget extends UserWidget {
       passwordInput2];
   }
 
+  onEnterPressed() { this.trySave(); }
+
   reset() {
     this.withAllSubmorphsDo(ea => { ea.draggable = false; ea.grabbable = false; });
 
@@ -241,7 +258,8 @@ export class UserInfoWidget extends UserWidget {
         password = passwordInput.input,
         password2 = passwordInput2.input;
 
-    if (!email && !password && !password2) return this.world().inform("Nothing changed", {requester: this});
+    // if (!email && !password && !password2) return this.world().inform("Nothing changed", {requester: this});
+    if (user.email == email && !password && !password2) return signal(this, "resolved", user);
 
     if (password || password2) {
 
@@ -270,7 +288,9 @@ export class UserInfoWidget extends UserWidget {
     await UserRegistry.current.saveUserToLocalStorage(user);
     await notify(this, status);
 
-    this.displayUser(user)
+    this.displayUser(user);
+
+    signal(this, "resolved", user);
   }
 
   async logout() {
@@ -455,4 +475,131 @@ export class RegisterWidget extends UserWidget {
   close() {
     signal(this, "resolved", this.user);
   }
+}
+
+export class UserFlap extends Morph {
+
+  static get properties() {
+    return {
+
+      submorphs: {
+        initialize() {
+          this.submorphs = [{
+            type: "label", name: "label",
+            fontSize: 18,
+            padding: Rectangle.inset(4),
+            reactsToPointer: false
+          }];
+        }
+      },
+
+      name: {initialize() { this.name = "user flap"; }},
+      epiMorph: {defaultValue: true},
+      draggable: {defaultValue: false},
+      grabbable: {defaultValue: false},
+      acceptsDrops: {defaultValue: false},
+      fill: {defaultValue: Color.rgba(255,255,255,0.5)},
+      borderLeft: {defaultValue: {width: 1, color: Color.gray}},
+      borderRight: {defaultValue: {width: 1, color: Color.gray}},
+      borderBottom: {defaultValue: {width: 1, color: Color.gray}},
+      borderRadiusBottom: {defaultValue: 10},
+      borderRadiusLeft: {defaultValue: 10},
+      borderRadiusRight: {defaultValue: 10},
+      nativeCursor: {defaultValue: "pointer"},
+    }
+  }
+
+  get isUserFlap() { return true; }
+
+  get isMaximized() { return this.submorphs.length > 1; }
+
+  open() {
+    this.openInWorld();
+    this.showUser(this.currentUser(), false);
+    this.alignInWorld(false);
+    this.hasFixedPosition = true;
+    return this;
+  }
+
+  onMouseDown(evt) {
+    if (!this.isMaximized) this.maximize();
+  }
+
+  currentUser() {
+    return UserRegistry.current.loadUserFromLocalStorage(config.users.authServerURL);
+  }
+
+  onUserChanged(evt) {
+    // console.log("user changed!!!", evt)
+    if (!this.isMaximized) this.showUser(evt.user || {name: "???"}, false);
+  }
+
+  onWorldResize(evt) { this.alignInWorld(); }
+
+  alignInWorld(animated) {
+    let w = $world.visibleBounds().width;
+    if (animated) this.animate({topRight: pt(w - 10, 0)});
+    else this.topRight = pt(w - 10, 0);
+  }
+
+  async minimize() { await this.showUser(this.currentUser(), true); }
+
+  async maximize() { await this.showMenu(this.currentUser(), true); }
+
+  async changeWidthAndHeight(newWidth, newHeight, animated) {
+    if (animated) {
+      await this.animate({
+        position: this.position.addXY(this.width - newWidth, 0),
+        extent: pt(newWidth, newHeight),
+        duration: 500
+      });
+    }
+    else {
+      this.extent = pt(newWidth, newHeight);
+      this.position = this.position.addXY(this.width - newWidth, 0);
+    }
+  }
+
+  async showUser(user, animated = false) {
+  // this.showUser(false);
+    let label = this.getSubmorphNamed("label"),
+        menu = this.getSubmorphNamed("menu"),
+        userName = String(user.name);
+    if (userName.startsWith("guest-")) userName = "guest";
+    label.visible = true;
+    label.value = [userName, {fontColor: Color.gray.darker()}];
+    label.fit();
+    if (menu && animated) menu.animate({opacity: 0, duration: 500});
+    await this.changeWidthAndHeight(label.width + 20, label.height, animated);
+    label.bottomCenter = this.innerBounds().bottomCenter();
+    menu && menu.remove();
+  }
+
+  showUserInfo(user) { return UserUI.showUserInfo({user}); }
+  showLogin(user) { return UserUI.showLogin({user}); }
+  logout(user) { UserRegistry.current.logout(user); }
+
+  async showMenu(user, animated = false) {
+    let label = this.getSubmorphNamed("label"),
+        menu = Object.assign(Menu.forItems(
+          user.isGuestUser ? [
+            ["login", () => { this.minimize(); this.showLogin(user); }],
+            ["close", () => this.minimize()]
+          ] :
+          [
+            ["show user info", () => { this.minimize(); this.showUserInfo(user); }],
+            ["logout", async () => { await this.minimize(); this.logout(user); }],
+            ["close", () => this.minimize()],
+          ]), {
+            name: "menu",
+            position: pt(10, 5),
+            dropShadow: false,
+            opacity: animated ? 0 : 1,
+          });
+    label.visible = false;
+    this.addMorph(menu);
+    if (animated) menu.animate({opacity: 1, duration: 500});
+    await this.changeWidthAndHeight(menu.width + 20, menu.height + 10, animated);
+  }
+
 }
