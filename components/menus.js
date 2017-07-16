@@ -198,6 +198,16 @@ export class Menu extends Morph {
     };
   }
 
+  onChange(change) {
+    let {prop, selector} = change;
+    switch (prop) {
+      case "itemPadding":
+      case "fontSize":
+      case "fontFamily": this.updateMorphs(); break;
+    }
+    super.onChange(change);
+  }
+
   async remove() {
     await this.animate({opacity: 0, duration: 300});
     super.remove()
