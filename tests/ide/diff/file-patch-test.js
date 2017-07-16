@@ -609,3 +609,28 @@ describe("diff and patch", () => {
   });
 
 });
+
+
+describe("unified diff", () => {
+
+  let diffA = `--- /a	2017-07-13 13:41:52.000000000 -0700
++++ /b	2017-07-15 11:13:17.000000000 -0700
+@@ -1,5 +1,6 @@
++/*global System*/
+ xxx
+-
++  
+ yyy
+ 
+   zzz
+`;
+  expect("reads patch", () => {
+    var patch = FilePatch.read(diffA);
+    expect(patch) .containSubset({
+      command: "",
+      fileNameA: "/a",
+      fileNameB: "/b",
+      headerLines: ["--- /a	2017-07-13 13:41:52.000000000 -0700", "+++ /b	2017-07-15 11:13:17.000000000 -0700"],
+    })
+  })
+})

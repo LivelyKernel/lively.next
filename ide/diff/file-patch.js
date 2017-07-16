@@ -6,29 +6,28 @@ export class FilePatch {
 
   static readAll(patchString) {
     // read a patch string that contains multiple patches to files
-    var patchLines = string.lines(patchString)
-      .reduce(function(patchLines, line) {
-        // A typical patch looks like
-        // diff --git a/foo.js b/foo.js
-        // index eff30c3..49a21ef 100644
-        // --- a/foo.js
-        // +++ b/foo.js
-        // @@ -781,5 +781,5 @@ ...
-        //    a
-        // -  b
-        // +  c
-        // split it at diff ... index
-        var last = arr.last(patchLines);
-        if (!last) patchLines.push([line]);
-        else if (line.match(/^(---|\+\+\+|@@|-|\+|\\| )/)) last.push(line);
-        else if (last.length === 1) {
-          // if we have just read the command the next line is probably an index...
-          last.push(line);
-        }
-        else if (line === "") { /*ignore*/ }
-        else patchLines.push([line]);
-        return patchLines;
-      }, []);
+    var patchLines = string.lines(patchString).reduce((patchLines, line) => {
+      // A typical patch looks like
+      // diff --git a/foo.js b/foo.js
+      // index eff30c3..49a21ef 100644
+      // --- a/foo.js
+      // +++ b/foo.js
+      // @@ -781,5 +781,5 @@ ...
+      //    a
+      // -  b
+      // +  c
+      // split it at diff ... index
+      var last = arr.last(patchLines);
+      if (!last) patchLines.push([line]);
+      else if (line.match(/^(---|\+\+\+|@@|-|\+|\\| )/)) last.push(line);
+      else if (last.length === 1) {
+        // if we have just read the command the next line is probably an index...
+        last.push(line);
+      }
+      else if (line === "") { /*ignore*/ }
+      else patchLines.push([line]);
+      return patchLines;
+    }, []);
 
     return patchLines.map(ea => FilePatch.read(ea));
   }
@@ -76,8 +75,10 @@ export class FilePatch {
       // line 0 like: "diff --git a/test.txt b/test.txt\n". Also support
       // directly parse hunks if we see no header.
 
-      var headerLines = this.headerLines = arr.takeWhile(lines, (line) => !line.startsWith("---"));
-      if (!headerLines[0].match(/^index/i))
+      var headerLines = this.headerLines = arr.takeWhile(
+        lines, (line) => !line.startsWith("---"));
+
+      if (headerLines.length && !headerLines[0].match(/^index/i))
         this.command = headerLines[0];
 
       lines = lines.slice(headerLines.length);
