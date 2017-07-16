@@ -48,19 +48,19 @@ describe("ObjectDB", function() {
 
     before(async () => {
       world1 = Object.assign(createDummyWorld(), {name: "objectdb test world"});
-      commit1 = await objectDB.snapshotObject("world", world1, {}, user1);
       world2 = Object.assign(createDummyWorld(), {name: "another objectdb test world"});
-      commit2 = await objectDB.snapshotObject("world", world2, {}, user1);
-      commit3 = await objectDB.snapshotObject("world", Object.assign(world2, {fill: Color.red}), {}, user1);
-      commit4 = await objectDB.snapshotObject("world", Object.assign(world2, {fill: Color.green}), {}, user1);
-      commit5 = await objectDB.snapshotObject("part", part1 = morph(), {}, user1);
+      commit1 = await objectDB.snapshotObject("world", world1, {}, {user: user1});
+      commit2 = await objectDB.snapshotObject("world", world2, {}, {user: user1});
+      commit3 = await objectDB.snapshotObject("world", Object.assign(world2, {fill: Color.red}), {}, {user: user1});
+      commit4 = await objectDB.snapshotObject("world", Object.assign(world2, {fill: Color.green}), {}, {user: user1});
+      commit5 = await objectDB.snapshotObject("part", part1 = morph({name: "a part"}), {}, {user: user1, metadata: {something: "hello world"}});
     });
 
     it("knows objects", async () => {
-      expect(await objectDB.objects("part")).equals(["aMorph"])
+      expect(await objectDB.objects("part")).equals(["a part"])
       expect(await objectDB.objects("world")).equals(["another objectdb test world", "objectdb test world"])
       expect(await objectDB.objects()).deep.equals({
-        "part": ["aMorph"],
+        "part": ["a part"],
         "world": ["another objectdb test world","objectdb test world"]
       });
     });
@@ -91,7 +91,7 @@ describe("ObjectDB", function() {
       let fullStats = await objectDB.objectStats();
       expect(fullStats).deep.equals({
         part: {
-          aMorph: {
+          "a part": {
             count: 1,
             newest: commit5.timestamp,
             oldest: commit5.timestamp
@@ -139,6 +139,11 @@ describe("ObjectDB", function() {
       });
     });
 
+    it("stores metadata", async () => {
+      let commit = await objectDB.getLatestCommit("part", "a part")
+      expect(commit).containSubset({metadata: {something: "hello world"}});
+    });
+
     describe("versions", () => {
 
       it("gets versions", async () => {
@@ -164,6 +169,41 @@ describe("ObjectDB", function() {
 });
 
 
+describe("loading objects", function() {
+
+  this.timeout(30*1000);
+
+  before(async () => {
+    objectDB = ObjectDB.named("lively-morphic-objectdb-test", {snapshotLocation});
+    world1 = Object.assign(createDummyWorld(), {name: "objectdb test world"});
+    world2 = Object.assign(createDummyWorld(), {name: "other objectdb test world"});
+    commit1 = await objectDB.snapshotObject("world", world1, {}, {user: user1});
+    commit2 = await objectDB.snapshotObject("world", Object.assign(world1, {fill: Color.red}), {}, {user: user1});
+    commit3 = await objectDB.snapshotObject("world", Object.assign(world1, {fill: Color.green}), {}, {user: user1});
+    commit4 = await objectDB.snapshotObject("world", world2, {}, {user: user1});
+  });
+
+  after(async () => {
+    await objectDB.destroy();
+    await snapshotLocation.remove();
+    await delay(500);
+  });
+
+  it("load latest", async () => {
+    let world1Copy = await objectDB.loadObject("world", world1.name);
+    expect(world1Copy.isWorld).equals(true, "not a world");
+    expect(world1Copy.fill).equals(Color.green);
+  });
+
+  it("load from commit", async () => {
+    let world1Copy = await objectDB.loadObject("world", world1.name, {}, commit2);
+    expect(world1Copy.isWorld).equals(true, "not a world");
+    expect(world1Copy.fill).equals(Color.red);
+  });
+
+});
+
+
 describe("deletions in ObjectDB", function() {
 
   this.timeout(30*1000);
@@ -172,10 +212,10 @@ describe("deletions in ObjectDB", function() {
     objectDB = ObjectDB.named("lively-morphic-objectdb-test", {snapshotLocation});
     world1 = Object.assign(createDummyWorld(), {name: "objectdb test world"});
     world2 = Object.assign(createDummyWorld(), {name: "other objectdb test world"});
-    commit1 = await objectDB.snapshotObject("world", world1, {}, user1);
-    commit2 = await objectDB.snapshotObject("world", Object.assign(world1, {fill: Color.red}), {}, user1);
-    commit3 = await objectDB.snapshotObject("world", Object.assign(world1, {fill: Color.green}), {}, user1);
-    commit4 = await objectDB.snapshotObject("world", world2, {}, user1);
+    commit1 = await objectDB.snapshotObject("world", world1, {}, {user: user1});
+    commit2 = await objectDB.snapshotObject("world", Object.assign(world1, {fill: Color.red}), {}, {user: user1});
+    commit3 = await objectDB.snapshotObject("world", Object.assign(world1, {fill: Color.green}), {}, {user: user1});
+    commit4 = await objectDB.snapshotObject("world", world2, {}, {user: user1});
   });
 
   afterEach(async () => {
@@ -244,22 +284,44 @@ describe("deletions in ObjectDB", function() {
     it("version data removed", async () => {
       await objectDB.delete("world", world1.name, false/*dry run*/);
       let hist1 = await objectDB.versionGraph("world", world1.name);
-      expect(hist1).containSubset({deleted: true});
+      expect(hist1).equals(null);
       let hist2 = await objectDB.versionGraph("world", world2.name);
       expect(hist2).containSubset({refs: {}, history: {}});
     });
 
-    // xit("world one version", async () => {
-    //   expect(await objectDB.worlds()).equals([]);
-    // 
-    //   let world = Object.assign(createDummyWorld(), {name: "objectdb test world"}),
-    //       meta = await objectDB.storeWorld(world, user1),
-    //       res = objectDB.snapshotResourceFor(meta);
-    // 
-    //   objectDB.removeWorld()
-    //   expect(await objectDB.worlds()).equals([]);
-    //   expect(await res.exists()).equals(false);
-    // });
+    describe("single commit", async () => {
+
+      it("head", async () => {
+        expect(await objectDB.getLatestCommit("world", world1.name)).containSubset(commit3);
+
+        // let deletion = await objectDB.deleteCommit(commit3._id, true /*dry run*/);
+         await objectDB.deleteCommit(commit3._id, false /*dry run*/);
+
+        let stats = await objectDB.objectStats("world", world1.name);
+        expect(stats).deep.equals({
+          count: 2,
+          oldest: commit1.timestamp,
+          newest: commit2.timestamp,
+        });
+
+        expect(await objectDB.getLatestCommit("world", world1.name)).containSubset(commit2, "latest commit");
+
+        expect(await objectDB.snapshotResourceFor(commit3).exists()).equals(false, "snapshot not deleted");
+        expect(await objectDB.snapshotResourceFor(commit2).exists()).equals(true, "snapshot wrongly deleted");
+      });
+
+      it("all backwards", async () => {
+        await objectDB.deleteCommit(commit3._id, false);
+        await objectDB.deleteCommit(commit2._id, false);
+        await objectDB.deleteCommit(commit1._id, false);
+        let stats = await objectDB.objectStats();
+        expect(stats).deep.equals({
+          world: {"other objectdb test world": { count: 1, newest: commit4.timestamp, oldest: commit4.timestamp }}
+        });
+      })
+
+    });
+
   });
 
 });

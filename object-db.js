@@ -1,6 +1,6 @@
 /*global System,process,require*/
 import { Database } from "lively.storage";
-import { createMorphSnapshot } from "./serialization.js";
+import { createMorphSnapshot, loadMorphFromSnapshot } from "./serialization.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // sha1
@@ -51,67 +51,18 @@ export default class ObjectDB {
     return this.snapshotLocation.join(`${first}/${rest}.json`);
   }
 
-  async snapshotObject(
-    type, object, snapshotOptions,
-    user, description = "no description", tags = [],
-    commitMessage = "", ref = "HEAD", expectedPrevVersion
-  ) {
+  async snapshotObject(type, object, snapshotOptions, commitSpec, ref, expectedPrevVersion) {
     let snapshot = await createMorphSnapshot(object, snapshotOptions);
-    return this.commitSnapshot(
-      type, object.name, snapshot,
-      user, description, tags,
-      commitMessage, ref, expectedPrevVersion);
+    return this.commitSnapshot(type, object.name, snapshot, commitSpec, ref, expectedPrevVersion);
   }
 
-  async commitSnapshot(
-    type, name, snapshot,
-    user, description = "no description", tags = [],
-    commitMessage = "", ref = "HEAD", expectedPrevVersion
-  ) {
-    if (!user) throw new Error("User needed to store stuff in object DB!")
-    if (!type) throw new Error("object needs a type");
-    if (!name) throw new Error("object needs a name");
-
-    // Retrieve version graph for object. Check if the prev version requirement
-    // is met and get the ancestors
-    let versionDB = this.__versionDB || await this._versionDB(),
-        versionData = await versionDB.get(type + "/" + name),
-        ancestor = versionData ? versionData.refs[ref] : null,
-        ancestors = ancestor ? [ancestor] : [];
-    if (expectedPrevVersion) {
-      if (!versionData) throw new Error(`Trying to store ${name} on top of expected version ${expectedPrevVersion} but no version entry exists!`);
-      if (ancestor !== expectedPrevVersion) throw new Error(`Trying to store ${name} on top of expected version ${expectedPrevVersion} but ref ${ref} is of version ${ancestor}!`);
-    }
-
-    // Snapshot object and create commit.
-
-    let snapshotJson = JSON.stringify(snapshot),
-        commit = this._createCommit(
-          type, name, description, tags, user,
-          commitMessage, ancestors,
-          snapshot, snapshotJson);
-
-    // update version graph
-    if (!versionData) versionData = {refs: {}, history: {}};
-    versionData.refs[ref] = commit._id;
-    versionData.history[commit._id] = ancestors;
-    await versionDB.set(type + "/" + name, versionData);
-
-    // store the commit
-    let commitDB = this.__commitDB || await this._commitDB();
-    commit = await commitDB.set(commit._id, commit);
-
-    // write snapshot to resource
-    let res = this.snapshotResourceFor(commit);
-    await res.parent().ensureExistance();
-    if (res.canDealWithJSON) await res.writeJson(snapshot);
-    else await res.write(snapshotJson);
-
-    return commit;
+  async loadObject(type, object, loadOptions, commitIdOrCommit) {
+    let snapshot = await this.loadSnapshot(type, object, commitIdOrCommit);
+    return loadMorphFromSnapshot(snapshot, loadOptions);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // meta data management
+  // data management
 
   async objects(type) {
     let stats = await this.objectStats(type);
@@ -161,13 +112,78 @@ export default class ObjectDB {
   }
 
   async getLatestCommit(type, objectName, ref = "HEAD") {
-    let [commit] = await this._log(type, objectName, ref, 1),
-        commitDB = this.__commitDB || await this._commitDB();
-    return commitDB.get(commit.id);
+    let [commitId] = await this._log(type, objectName, ref, 1);
+    if (!commitId) return null;
+    let commitDB = this.__commitDB || await this._commitDB();
+    return commitDB.get(commitId);
+  }
+
+  async commitSnapshot(type, name, snapshot, commitSpec, ref = "HEAD", expectedPrevVersion) {
+    let {
+      user,
+      description = "no description",
+      tags = [],
+      message = "",
+      metadata
+    } = commitSpec;
+
+    if (!type) throw new Error("object needs a type");
+    if (!name) throw new Error("object needs a name");
+    if (!user) throw new Error(`Cannot snapshot ${type}/${name} without user`);
+
+    // Retrieve version graph for object. Check if the prev version requirement
+    // is met and get the ancestors
+    let versionDB = this.__versionDB || await this._versionDB(),
+        versionData = await versionDB.get(type + "/" + name),
+        ancestor = versionData ? versionData.refs[ref] : null,
+        ancestors = ancestor ? [ancestor] : [];
+    if (expectedPrevVersion) {
+      if (!versionData) throw new Error(`Trying to store ${name} on top of expected version ${expectedPrevVersion} but no version entry exists!`);
+      if (ancestor !== expectedPrevVersion) throw new Error(`Trying to store ${name} on top of expected version ${expectedPrevVersion} but ref ${ref} is of version ${ancestor}!`);
+    }
+
+    // Snapshot object and create commit.
+
+    let snapshotJson = JSON.stringify(snapshot),
+        commit = this._createCommit(
+          type, name, description, tags, metadata,
+          user, message, ancestors,
+          snapshot, snapshotJson);
+
+    // update version graph
+    if (!versionData) versionData = {refs: {}, history: {}};
+    versionData.refs[ref] = commit._id;
+    versionData.history[commit._id] = ancestors;
+    await versionDB.set(type + "/" + name, versionData);
+
+    // store the commit
+    let commitDB = this.__commitDB || await this._commitDB();
+    commit = await commitDB.set(commit._id, commit);
+
+    // write snapshot to resource
+    let res = this.snapshotResourceFor(commit);
+    await res.parent().ensureExistance();
+    if (res.canDealWithJSON) await res.writeJson(snapshot);
+    else await res.write(snapshotJson);
+
+    return commit;
+  }
+
+  async loadSnapshot(type, name, commitOrId, ref = "HEAD") {    
+    let commit;
+    if (commitOrId && typeof commitOrId !== "string") {
+      commit = commitOrId;
+    } else if (commitOrId) {
+      let commitDB = this.__commitDB || await this._commitDB();
+      commit = await commitDB.get(commitOrId);
+    } else {
+      commit = await this.getLatestCommit(type, name, ref);
+    }
+    return this.snapshotResourceFor(commit).readJson();
   }
 
   _createCommit(
-    type, name, description, tags, user,
+    type, name, description, tags, metadata, user,
     commitMessage = "", ancestors = [],
     snapshot, snapshotJson
   ) {
@@ -182,6 +198,8 @@ export default class ObjectDB {
       message: commitMessage,
       preview: snapshot.preview,
       content: sha1(snapshotJson),
+      metadata,
+      ancestors
     }
     return Object.assign(commit, {_id: sha1(JSON.stringify(commit))});
   }
@@ -234,8 +252,9 @@ export default class ObjectDB {
   // versioning
 
   async versionGraph(type, objectName) {
-    let versionDB = this.__versionDB || await this._versionDB()
-    return versionDB.get(type + "/" + objectName);
+    let versionDB = this.__versionDB || await this._versionDB(),
+        graph = await versionDB.get(type + "/" + objectName);
+    return !graph || graph.deleted ? null : graph;
   }
 
   async _log(type, objectName, ref = "HEAD", limit = Infinity) {
@@ -327,6 +346,50 @@ export default class ObjectDB {
     return {
       commits: commitDeletions,
       history: deletedHist,
+      resources
+    }
+  }
+  
+  async deleteCommit(commitOrId, dryRun = true, ref = "HEAD") {
+    let commit;
+    if (commitOrId && typeof commitOrId !== "string") {
+      commit = commitOrId;
+    } else if (commitOrId) {
+      let commitDB = this.__commitDB || await this._commitDB();
+      commit = await commitDB.get(commitOrId);
+    }
+    
+    if (!commit) throw new Error("commit needed!");
+
+    let versionDB = this.__versionDB || await this._versionDB(),
+        objectDB = this.__commitDB || await this._commitDB(),
+        {name, type, _id} = commit,
+        resources = [this.snapshotResourceFor(commit)],
+        commitDeletions = [{...commit, _deleted: true}],
+        hist = await versionDB.get(type + "/" + name);
+
+    if (!hist) throw new Error(`No history for ${type}/${name}@${commit._id}`);
+    if (!hist.refs[ref]) throw new Error(`Cannot delete commit ${type}/${name}@${commit._id} b/c it is not where ref ${ref} is pointing!`);
+    
+    let [ancestor] = hist.history[commit._id] || [];    
+    if (!ancestor && Object.keys(hist.history).length <= 1) {
+      hist.deleted = true;
+    } else if (!ancestor) {
+      throw new Error(`Cannot delete commit ${type}/${name}@${commit._id} b/c it has no ancestor but there are still other commits!`);
+    } else {
+      delete hist.history[commit._id];
+      hist.refs[ref] = ancestor;
+    }
+
+    if (!dryRun) {
+      await objectDB.setDocuments(commitDeletions);
+      await versionDB.set(type + "/" + name, hist);
+      Promise.all(resources.map(ea => ea.remove()));
+    }
+
+    return {
+      commits: commitDeletions,
+      history: hist,
       resources
     }
   }
