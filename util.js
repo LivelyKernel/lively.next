@@ -13,26 +13,29 @@ function maybeFileResource(url) {
 
 var fixGnuTar = undefined;
 
-async function npmSearchForVersions(packageNameAndRange) {
+async function npmSearchForVersions(pname, range = "*") {
   // let packageNameAndRange = "lively.lang@~0.4"
   try {
-    let [pname, range = "*"] = packageNameAndRange.split("@"),
-        {name, version, dist: {shasum, tarball}} = await resource(`http://registry.npmjs.org/${pname}/${range}`).readJson();
+    // pname = pname.replace(/\@/g, "_40");
+    pname = pname.replace(/\//g, "%2f");
+    let {name, version, dist: {shasum, tarball}} = await resource(`http://registry.npmjs.org/${pname}/${range}`).readJson();
     return {name, version, tarball};
   } catch (err) {
     console.error(err);
-    throw new Error(`Cannot find npm package for ${packageNameAndRange}`);
+    throw new Error(`Cannot find npm package for ${pname}@${range}`);
   }
 }
 
-async function npmDownloadArchive(packageNameAndRange, destinationDir) {
+async function npmDownloadArchive(pname, range, destinationDir) {
   destinationDir = maybeFileResource(destinationDir);
-  let {version, name, tarball: archiveURL} = await npmSearchForVersions(packageNameAndRange);
-  let archive=`${name}-${version}.tgz`;
+  let {version, name, tarball: archiveURL} = await npmSearchForVersions(pname, range);
+  let nameForArchive = name.replace(/\//g, "%2f");
+  let archive=`${nameForArchive}-${version}.tgz`;
+
   if (!archiveURL) {
     archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`;
   }
-  console.log(`[flatn] downloading ${packageNameAndRange} - ${archiveURL}`);
+  console.log(`[flatn] downloading ${name}@${range} - ${archiveURL}`);
   let downloadedArchive = destinationDir.join(archive);
   await resource(archiveURL).beBinary().copyTo(downloadedArchive);
   return {downloadedArchive, name, version};
@@ -49,6 +52,8 @@ async function untar(downloadedArchive, targetDir, name) {
   // FIXME use tar module???
 
   if (!name) name = downloadedArchive.name().replace(/(\.tar|\.tar.tgz|.tgz)$/, "");
+  name = name.replace(/\//g, "%2f");
+
   downloadedArchive = maybeFileResource(downloadedArchive);
   targetDir = maybeFileResource(targetDir);
 

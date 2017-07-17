@@ -14,26 +14,29 @@ function maybeFileResource(url) {
 
 var fixGnuTar = undefined;
 
-async function npmSearchForVersions(packageNameAndRange) {
+async function npmSearchForVersions(pname, range = "*") {
   // let packageNameAndRange = "lively.lang@~0.4"
   try {
-    let [pname, range = "*"] = packageNameAndRange.split("@"),
-        {name, version, dist: {shasum, tarball}} = await resource(`http://registry.npmjs.org/${pname}/${range}`).readJson();
+    // pname = pname.replace(/\@/g, "_40");
+    pname = pname.replace(/\//g, "%2f");
+    let {name, version, dist: {shasum, tarball}} = await resource(`http://registry.npmjs.org/${pname}/${range}`).readJson();
     return {name, version, tarball};
   } catch (err) {
     console.error(err);
-    throw new Error(`Cannot find npm package for ${packageNameAndRange}`);
+    throw new Error(`Cannot find npm package for ${pname}@${range}`);
   }
 }
 
-async function npmDownloadArchive(packageNameAndRange, destinationDir) {
+async function npmDownloadArchive(pname, range, destinationDir) {
   destinationDir = maybeFileResource(destinationDir);
-  let {version, name, tarball: archiveURL} = await npmSearchForVersions(packageNameAndRange);
-  let archive=`${name}-${version}.tgz`;
+  let {version, name, tarball: archiveURL} = await npmSearchForVersions(pname, range);
+  let nameForArchive = name.replace(/\//g, "%2f");
+  let archive=`${nameForArchive}-${version}.tgz`;
+
   if (!archiveURL) {
     archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`;
   }
-  console.log(`[flatn] downloading ${packageNameAndRange} - ${archiveURL}`);
+  console.log(`[flatn] downloading ${name}@${range} - ${archiveURL}`);
   let downloadedArchive = destinationDir.join(archive);
   await resource(archiveURL).beBinary().copyTo(downloadedArchive);
   return {downloadedArchive, name, version};
@@ -50,6 +53,8 @@ async function untar(downloadedArchive, targetDir, name) {
   // FIXME use tar module???
 
   if (!name) name = downloadedArchive.name().replace(/(\.tar|\.tar.tgz|.tgz)$/, "");
+  name = name.replace(/\//g, "%2f");
+
   downloadedArchive = maybeFileResource(downloadedArchive);
   targetDir = maybeFileResource(targetDir);
 
@@ -969,13 +974,12 @@ function maybeFileResource(url) {
   return url.isResource ? url : resource(url);
 }
 
-function pathForNameAndVersion(nameAndVersion, destinationDir) {
-  // pathForNameAndVersion("foo-bar@1.2.3", "file:///x/y")
-  // pathForNameAndVersion("foo-bar@foo/bar", "file:///x/y")
-  // pathForNameAndVersion("foo-bar@git+https://github.com/foo/bar#master", "file:///x/y")
+function pathForNameAndVersion(name, version, destinationDir) {
+  // pathForNameAndVersion("foo-bar", "1.2.3", "file:///x/y")
+  // pathForNameAndVersion("foo-bar", "foo/bar", "file:///x/y")
+  // pathForNameAndVersion("foo-bar", "git+https://github.com/foo/bar#master", "file:///x/y")
 
-  let [name, version] = nameAndVersion.split("@"),
-      gitSpec = gitSpecFromVersion(version);
+  let gitSpec = gitSpecFromVersion(version);
 
   // "git clone -b my-branch git@github.com:user/myproject.git"
   return gitSpec ?
@@ -984,7 +988,7 @@ function pathForNameAndVersion(nameAndVersion, destinationDir) {
 }
 
 
-async function packageDownload(packageNameAndRange, destinationDir, verbose, attempt = 0) {
+async function packageDownload(name, range, destinationDir, verbose, attempt = 0) {
   // packageNameAndRange like "lively.modules@^0.7.45"
   // if no @ part than we assume @*
 
@@ -992,24 +996,24 @@ async function packageDownload(packageNameAndRange, destinationDir, verbose, att
 
     destinationDir = maybeFileResource(destinationDir);
 
-    if (!packageNameAndRange.includes("@")) {
+    if (!range) {
       // any version
-      packageNameAndRange += "@*";
+      range = "*";
     }
 
     // download package to tmp location
     let tmp = resource("file://" + tmpdir()).join("package_install_tmp/");
     await tmp.ensureExistance()
 
-    let pathSpec = pathForNameAndVersion(packageNameAndRange, destinationDir.path()),
+    let pathSpec = pathForNameAndVersion(name, range, destinationDir.path()),
         downloadDir = pathSpec.gitURL
           ? await packageDownloadViaGit(pathSpec, tmp, verbose)
-          : await packageDownloadViaNpm(packageNameAndRange, tmp, verbose);
+          : await packageDownloadViaNpm(name, range, tmp, verbose);
 
 
     let packageJSON = downloadDir.join("package.json"), config;
     if (!await packageJSON.exists())
-      throw new Error(`Downloaded package ${packageNameAndRange} does not have a package.json file at ${packageJSON}`);
+      throw new Error(`Downloaded package ${name}@${range} does not have a package.json file at ${packageJSON}`);
 
     config = await packageJSON.readJson();
     let packageDir;
@@ -1023,7 +1027,7 @@ async function packageDownload(packageNameAndRange, destinationDir, verbose, att
     }
 
     await addNpmSpecificConfigAdditions(
-      packageJSON, config, packageNameAndRange, pathSpec.gitURL);
+      packageJSON, config, name, range, pathSpec.gitURL);
 
     await downloadDir.rename(packageDir);
 
@@ -1034,11 +1038,11 @@ async function packageDownload(packageNameAndRange, destinationDir, verbose, att
 
   } catch (err) {
     if (attempt >= 3) {
-      console.error(`Download of ${packageNameAndRange} failed:`, err.stack);
+      console.error(`Download of ${name}@${range} failed:`, err.stack);
       throw err;
     }
-    console.log(`[flatn] retrying download of ${packageNameAndRange}`);
-    return packageDownload(packageNameAndRange, destinationDir, verbose, attempt+1);
+    console.log(`[flatn] retrying download of ${name}@${range}`);
+    return packageDownload(name, range, destinationDir, verbose, attempt+1);
   }
 }
 
@@ -1052,24 +1056,23 @@ async function packageDownloadViaGit({gitURL: url, name, branch}, targetDir, ver
   return dir;
 }
 
-async function packageDownloadViaNpm(packageNameAndRange, targetDir, verbose) {
+async function packageDownloadViaNpm(nameRaw, range, targetDir, verbose) {
   // packageNameAndRange like "lively.modules@^0.7.45"
   // if no @ part than we assume @*
   let {
     downloadedArchive,
     name, version
-  } = await npmDownloadArchive(packageNameAndRange, targetDir, verbose);
+  } = await npmDownloadArchive(nameRaw, range, targetDir, verbose);
   return untar(downloadedArchive, targetDir, name);
 }
 
-function addNpmSpecificConfigAdditions(configFile, config, packageNameAndRange, gitURL) {
+function addNpmSpecificConfigAdditions(configFile, config, name, version, gitURL) {
   // npm adds some magic "_" properties to the package.json. There is no
   // specification of it and the official stance is that it is npm internal but
   // some packages depend on that. In order to allow npm scripts like install to
   // work smoothly we add a subset of those props here.
-    let [_, version] = packageNameAndRange.split("@"),
-        _id = gitURL ?
-          packageNameAndRange :
+    let _id = gitURL ?
+          `${name}@${version}` :
           `${config.name}@${config.version}`,
         _from = gitURL ?
           `${config.name}@${gitURL}` :
@@ -1297,7 +1300,7 @@ module.exports.BuildProcess = BuildProcess;
 // <<< file:///Users/robert/Lively/lively-dev2/flatn/build.js
 
 // >>> file:///Users/robert/Lively/lively-dev2/flatn/index.js
-/*global require, module*/
+/*global require, module,process*/
 
 
 
@@ -1433,7 +1436,7 @@ async function installPackage(
 
     if (!installed) {
       (verbose || debug) && console.log(`[flatn] installing package ${name}@${version}`);
-      installed = await packageDownload(version ? name + "@" + version : name, destinationDir, verbose);
+      installed = await packageDownload(name, version, destinationDir, verbose);
       if (!installed)
         throw new Error(`Could not download package ${name + "@" + version}`);
 

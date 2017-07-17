@@ -1,4 +1,4 @@
-/*global require, module*/
+/*global require, module,process*/
 import { packageDownload } from "./download.js";
 import { PackageMap, PackageSpec } from "./package-map.js";
 import { BuildProcess } from "./build.js";
@@ -131,7 +131,7 @@ async function installPackage(
 
     if (!installed) {
       (verbose || debug) && console.log(`[flatn] installing package ${name}@${version}`);
-      installed = await packageDownload(version ? name + "@" + version : name, destinationDir, verbose);
+      installed = await packageDownload(name, version, destinationDir, verbose);
       if (!installed)
         throw new Error(`Could not download package ${name + "@" + version}`);
 
