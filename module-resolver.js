@@ -84,4 +84,9 @@ function findModuleInPackage(requesterPackage, basename, request) {
   }
   if (fs.existsSync(fullpath + ".js")) return fullpath + ".js";
   if (fs.existsSync(fullpath + ".json")) return fullpath + ".json";
+  // packageConfig.main field wrong? yes, this happens...
+  if (fullpath !== path.join(pathToPackage, "index.js") &&
+     fs.existsSync(path.join(pathToPackage, "index.js")))
+    return path.join(pathToPackage, "index.js");
+  return null;
 }
