@@ -1,6 +1,7 @@
 /*global System,process,require*/
 import { Database } from "lively.storage";
 import { createMorphSnapshot, loadMorphFromSnapshot } from "./serialization.js";
+import { parallel } from "lively.lang/promise.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // sha1
@@ -63,6 +64,8 @@ export default class ObjectDB {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // data management
+
+  async has(type, name) { return !!(await this.objectStats(type, name)); }
 
   async objects(type) {
     let stats = await this.objectStats(type);
@@ -134,7 +137,7 @@ export default class ObjectDB {
     // Retrieve version graph for object. Check if the prev version requirement
     // is met and get the ancestors
     let versionDB = this.__versionDB || await this._versionDB(),
-        versionData = await versionDB.get(type + "/" + name),
+        versionData = await this.versionGraph(type, name),
         ancestor = versionData ? versionData.refs[ref] : null,
         ancestors = ancestor ? [ancestor] : [];
     if (expectedPrevVersion) {
@@ -169,7 +172,7 @@ export default class ObjectDB {
     return commit;
   }
 
-  async loadSnapshot(type, name, commitOrId, ref = "HEAD") {    
+  async loadSnapshot(type, name, commitOrId, ref = "HEAD") {
     let commit;
     if (commitOrId && typeof commitOrId !== "string") {
       commit = commitOrId;
@@ -310,6 +313,130 @@ export default class ObjectDB {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // export
+
+  async exportToDir(exportDir, nameAndTypes, copyResources = false) {
+    let commitDB = this.__commitDB || await this._commitDB();;
+    for (let {name, type} of nameAndTypes) {
+      let currentExportDir = exportDir.join(type).join(name),
+          {refs, history} = await this.versionGraph(type, name),
+          commitIds = Object.keys(history),
+          commits = await commitDB.getDocuments(commitIds.map(id => ({id}))),
+          resourcesForCopy = copyResources ? commits.map(commit => {
+            delete commit._rev;
+            let from = this.snapshotResourceFor(commit),
+                to = currentExportDir.join(from.parent().name() + "/" + from.name());
+            return {from, to};
+          }) : [];
+
+      if (!copyResources) commits.forEach(commit => { delete commit._rev; });
+      await currentExportDir.join("index.json").writeJson({name, type});
+      await currentExportDir.join("commits.json").writeJson(commits);
+      await currentExportDir.join("history.json").writeJson({refs, history});
+      for (let {from, to} of resourcesForCopy)
+        await from.copyTo(to);
+    }
+  }
+
+  async exportToSpecs(nameAndTypes) {
+    // note: only version data, no snapshots!
+    let specs = [], commitDB = this.__commitDB || await this._commitDB();;
+    if (!nameAndTypes) { // = everything
+      nameAndTypes = [];
+      let stats = (await this.objectStats()) || {};
+      for (let type in stats) 
+        for (let name in stats[type])
+          nameAndTypes.push({type, name})
+    }
+
+    for (let {name, type} of nameAndTypes) {
+      let {refs, history} = await this.versionGraph(type, name),
+          commitIds = Object.keys(history),
+          commits = await commitDB.getDocuments(commitIds.map(id => ({id})));
+      commits.forEach(commit => { delete commit._rev; });
+      specs.push({type, name, commits, history: {refs, history}})
+    }
+    return specs;
+  }
+
+  async importFromDir(importDir, overwrite = false, copyResources = false) {
+    // let commitDB = this.__commitDB || await this._commitDB();;
+
+    // 1. discover type/names;
+    // depth 1: type dirs, depth 2: object dirs, those include index.json, ...
+    let indexes = await importDir.dirList(3, {exclude: ea => ea.name() !== "index.json"})
+    indexes = indexes.filter(ea => ea.name() === "index.json"); // FIXME!
+    let dirs = indexes.map(ea => ea.parent());
+
+    let versionDB = this.__versionDB || await this._versionDB(),
+        commitDB = this.__commitDB || await this._commitDB(),
+        {snapshotLocation} = this, importSpecs = [];
+
+    // 2. retrieve import data
+    for (let dir of dirs) importSpecs.push(await findImportDataIn(dir));
+
+    return this.importFromSpecs(importSpecs, overwrite, copyResources);
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    async function findImportDataIn(dir) {
+      // dir is directory with index.json etc.
+      let [{type, name}, commits, history] = await Promise.all([
+            dir.join("index.json").readJson(),
+            dir.join("commits.json").readJson(),
+            dir.join("history.json").readJson(),
+          ]),
+          snapshotDirs = copyResources ?
+            await dir.dirList(1, {exclude: ea => !ea.isDirectory()}) : [];
+      return {dir, type, name, commits, history, snapshotDirs};
+    }
+  }
+  
+  async importFromSpecs(specs, overwrite = false, copyResources = false) {
+    if (!overwrite) {
+      let versionDB = this.__versionDB || await this._versionDB();
+      for (let {type, name} of specs) {
+        if (await versionDB.get(`${type}/${name}`))
+          throw new Error(`Import failed: object ${type}/${name} already exists and overwrite is not allowed`);
+      }
+    }
+
+    for (let spec of specs)
+      await this.importFromSpec(spec, true, copyResources);
+      
+    return specs;
+  }
+
+  async importFromSpec(spec, overwrite = false, copyResources = false) {
+    let versionDB = this.__versionDB || await this._versionDB(),
+        commitDB = this.__commitDB || await this._commitDB(),
+        {snapshotLocation} = this,
+        {type, name, commits, history, snapshotDirs} = spec;
+    
+    if (!overwrite && await versionDB.get(`${type}/${name}`))
+      throw new Error(`Import failed: object ${type}/${name} already exists and overwrite is not allowed`);
+
+    await Promise.all([
+      commitDB.setDocuments(commits),
+      versionDB.set(`${type}/${name}`, history),
+      ...(snapshotDirs && copyResources
+          ? snapshotDirs.map(ea =>
+                             ea.copyTo(snapshotLocation.join(ea.name()).asDirectory())) : [])
+    ]);
+
+    return spec;
+  }
+
+  async importFromResource(type, resource, commitData, purgeHistory = false) {
+    let snap = await resource.readJson(),
+        {id, snapshot} = snap,
+        name = snapshot[id].props.name.value;
+    if (purgeHistory && await this.has(type, name))
+      await this.delete(type, name, false);
+    return this.commitSnapshot(type, name, snap, commitData);
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // deletion
 
   async delete(type, name, dryRun = true) {
@@ -349,7 +476,7 @@ export default class ObjectDB {
       resources
     }
   }
-  
+
   async deleteCommit(commitOrId, dryRun = true, ref = "HEAD") {
     let commit;
     if (commitOrId && typeof commitOrId !== "string") {
@@ -358,7 +485,7 @@ export default class ObjectDB {
       let commitDB = this.__commitDB || await this._commitDB();
       commit = await commitDB.get(commitOrId);
     }
-    
+
     if (!commit) throw new Error("commit needed!");
 
     let versionDB = this.__versionDB || await this._versionDB(),
@@ -370,8 +497,8 @@ export default class ObjectDB {
 
     if (!hist) throw new Error(`No history for ${type}/${name}@${commit._id}`);
     if (!hist.refs[ref]) throw new Error(`Cannot delete commit ${type}/${name}@${commit._id} b/c it is not where ref ${ref} is pointing!`);
-    
-    let [ancestor] = hist.history[commit._id] || [];    
+
+    let [ancestor] = hist.history[commit._id] || [];
     if (!ancestor && Object.keys(hist.history).length <= 1) {
       hist.deleted = true;
     } else if (!ancestor) {
