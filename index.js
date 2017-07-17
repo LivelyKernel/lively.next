@@ -65,7 +65,7 @@ function packageDirsFromEnv() {
   }
 }
 
-function setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs) {  
+function setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
   packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
   individualPackageDirs = ensurePathFormat(individualPackageDirs);
   devPackageDirs = ensurePathFormat(devPackageDirs);
@@ -120,10 +120,14 @@ async function installPackage(
   if (!fs.existsSync(destinationDir))
     fs.mkdirSync(destinationDir);
 
-  let queue = [pNameAndVersion.split("@")],
-      seen = {},
-      newPackages = [],
-      installedNew = 0;
+    let atIndex = pNameAndVersion.lastIndexOf("@");
+    if (atIndex === -1) atIndex = pNameAndVersion.length;
+    let name = pNameAndVersion.slice(0, atIndex),
+        version = pNameAndVersion.slice(atIndex+1),
+        queue = [[name, version]],
+        seen = {},
+        newPackages = [],
+        installedNew = 0;
 
   while (queue.length) {
     let [name, version] = queue.shift(),
@@ -188,7 +192,11 @@ function addDependencyToPackage(
   let {location} = packageSpec;
 
   if (!packageSpec[dependencyField]) packageSpec[dependencyField] = {};
-  let [depName, depVersionRange] = depNameAndRange.split("@"),
+  
+  let atIndex = depNameAndRange.lastIndexOf("@");
+  if (atIndex === -1) atIndex = depNameAndRange.length;
+  let depName = depNameAndRange.slice(0, atIndex),
+      depVersionRange = depNameAndRange.slice(atIndex+1),
       depVersion = packageSpec[dependencyField][depName];
 
   return installPackage(

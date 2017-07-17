@@ -1,5 +1,5 @@
-/*global require,process,__dirname*/
 "format cjs";
+/*global require,process,__dirname*/
 var path = require("path");
 var fs = require("fs");
 var Module = require("module");
@@ -29,7 +29,8 @@ function installResolver() {
           basename = request.split("/")[0],
           {packageCollectionDirs, individualPackageDirs, devPackageDirs} = packageDirsFromEnv(),
           packageMap = ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs),
-          packageFound = packageMap.lookup(basename, deps[basename]),
+          packageFound = packageMap.lookup(basename, deps[basename])
+                      || packageMap.lookup(request, deps[request])/*for package names with "/"*/,
           resolved = packageFound && findModuleInPackage(packageFound, basename, request);
 
       if (resolved) return resolved;

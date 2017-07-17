@@ -122,8 +122,12 @@ class BuildProcess {
         this.verbose && buildStages.length && console.log(`[flatn] Running build stage ${i++}/${n}`);
         continue;
       }
+      
       let next = stage[0],
-          [name, version] = next.split("@"),
+          atIndex = next.lastIndexOf("@");
+      if (atIndex === -1) atIndex = next.length;
+      let name = next.slice(0, atIndex),
+          version = next.slice(atIndex+1),
           packageSpec = packageMap.lookup(name, version);
       if (!packageSpec) throw new Error(`[flatn build] package ${next} cannot be found in package map, skipping its build`);
 

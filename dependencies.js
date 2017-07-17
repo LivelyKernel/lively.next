@@ -29,8 +29,11 @@ function depGraph(packageSpec, packageMap, dependencyFields = ["dependencies"]) 
   while (queue.length) {
     let nameAndVersion = queue.shift();
     if (nameAndVersion in resolvedVersions) continue;
-
-    let [name, version] = nameAndVersion.split("@"),
+    
+    let atIndex = nameAndVersion.lastIndexOf("@");
+    if (atIndex === -1) atIndex = nameAndVersion.length;
+    let name = nameAndVersion.slice(0, atIndex),
+        version = nameAndVersion.slice(atIndex+1),
         pSpec = packageMap.lookup(name, version);
     if (!pSpec) throw new Error(`Cannot resolve package ${nameAndVersion}`);
 

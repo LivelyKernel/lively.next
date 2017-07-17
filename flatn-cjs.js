@@ -555,7 +555,13 @@ class PackageMap {
     // repo then if the git commit matches.  Additionally dev packages are
     // supported.  If a dev package with `name` is found it always matches
 
-    let gitSpec = gitSpecFromVersion(versionRange || "");
+    let gitSpec = gitSpecFromVersion(versionRange || "");    
+    if (!gitSpec && versionRange) {
+      try {
+        // parse stuff like "3001.0001.0000-dev-harmony-fb" into "3001.1.0-dev-harmony-fb"
+        versionRange = new semver.Range(versionRange, true).toString();
+      } catch(err) {}
+    }    
     return this.findPackage((key, pkg) => pkg.matches(name, versionRange, gitSpec));
   }
 
@@ -785,7 +791,7 @@ class PackageSpec {
        return true
     }
 
-    if (semver.parse(version || "") && semver.satisfies(version, versionRange))
+    if (semver.parse(version || "", true) && semver.satisfies(version, versionRange, true))
       return true;
 
     return false;
@@ -903,8 +909,11 @@ function depGraph(packageSpec, packageMap, dependencyFields = ["dependencies"]) 
   while (queue.length) {
     let nameAndVersion = queue.shift();
     if (nameAndVersion in resolvedVersions) continue;
-
-    let [name, version] = nameAndVersion.split("@"),
+    
+    let atIndex = nameAndVersion.lastIndexOf("@");
+    if (atIndex === -1) atIndex = nameAndVersion.length;
+    let name = nameAndVersion.slice(0, atIndex),
+        version = nameAndVersion.slice(atIndex+1),
         pSpec = packageMap.lookup(name, version);
     if (!pSpec) throw new Error(`Cannot resolve package ${nameAndVersion}`);
 
@@ -1018,10 +1027,10 @@ async function packageDownload(name, range, destinationDir, verbose, attempt = 0
     config = await packageJSON.readJson();
     let packageDir;
     if (pathSpec.gitURL) {
-      let dirName = config.name + "/" + pathSpec.versionInFileName;
+      let dirName = config.name.replace(/\//g, "__SLASH__") + "/" + pathSpec.versionInFileName;
       packageDir = maybeFileResource(destinationDir).join(dirName).asDirectory();
     } else {
-      let dirName = config.name + "/" + config.version;
+      let dirName = config.name.replace(/\//g, "__SLASH__") + "/" + config.version;
       packageDir = destinationDir.join(dirName).asDirectory();
       pathSpec = Object.assign({}, pathSpec, {location: packageDir});
     }
@@ -1207,8 +1216,12 @@ class BuildProcess {
         this.verbose && buildStages.length && console.log(`[flatn] Running build stage ${i++}/${n}`);
         continue;
       }
+      
       let next = stage[0],
-          [name, version] = next.split("@"),
+          atIndex = next.lastIndexOf("@");
+      if (atIndex === -1) atIndex = next.length;
+      let name = next.slice(0, atIndex),
+          version = next.slice(atIndex+1),
           packageSpec = packageMap.lookup(name, version);
       if (!packageSpec) throw new Error(`[flatn build] package ${next} cannot be found in package map, skipping its build`);
 
@@ -1370,7 +1383,7 @@ function packageDirsFromEnv() {
   }
 }
 
-function setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs) {  
+function setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
   packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
   individualPackageDirs = ensurePathFormat(individualPackageDirs);
   devPackageDirs = ensurePathFormat(devPackageDirs);
@@ -1425,10 +1438,14 @@ async function installPackage(
   if (!fs.existsSync(destinationDir))
     fs.mkdirSync(destinationDir);
 
-  let queue = [pNameAndVersion.split("@")],
-      seen = {},
-      newPackages = [],
-      installedNew = 0;
+    let atIndex = pNameAndVersion.lastIndexOf("@");
+    if (atIndex === -1) atIndex = pNameAndVersion.length;
+    let name = pNameAndVersion.slice(0, atIndex),
+        version = pNameAndVersion.slice(atIndex+1),
+        queue = [[name, version]],
+        seen = {},
+        newPackages = [],
+        installedNew = 0;
 
   while (queue.length) {
     let [name, version] = queue.shift(),
@@ -1493,7 +1510,11 @@ function addDependencyToPackage(
   let {location} = packageSpec;
 
   if (!packageSpec[dependencyField]) packageSpec[dependencyField] = {};
-  let [depName, depVersionRange] = depNameAndRange.split("@"),
+  
+  let atIndex = depNameAndRange.lastIndexOf("@");
+  if (atIndex === -1) atIndex = depNameAndRange.length;
+  let depName = depNameAndRange.slice(0, atIndex),
+      depVersionRange = depNameAndRange.slice(atIndex+1),
       depVersion = packageSpec[dependencyField][depName];
 
   return installPackage(

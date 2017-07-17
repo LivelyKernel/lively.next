@@ -267,7 +267,13 @@ class PackageMap {
     // repo then if the git commit matches.  Additionally dev packages are
     // supported.  If a dev package with `name` is found it always matches
 
-    let gitSpec = gitSpecFromVersion(versionRange || "");
+    let gitSpec = gitSpecFromVersion(versionRange || "");    
+    if (!gitSpec && versionRange) {
+      try {
+        // parse stuff like "3001.0001.0000-dev-harmony-fb" into "3001.1.0-dev-harmony-fb"
+        versionRange = new semver.Range(versionRange, true).toString();
+      } catch(err) {}
+    }    
     return this.findPackage((key, pkg) => pkg.matches(name, versionRange, gitSpec));
   }
 
@@ -497,7 +503,7 @@ class PackageSpec {
        return true
     }
 
-    if (semver.parse(version || "") && semver.satisfies(version, versionRange))
+    if (semver.parse(version || "", true) && semver.satisfies(version, versionRange, true))
       return true;
 
     return false;

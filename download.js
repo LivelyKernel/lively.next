@@ -61,10 +61,10 @@ async function packageDownload(name, range, destinationDir, verbose, attempt = 0
     config = await packageJSON.readJson();
     let packageDir;
     if (pathSpec.gitURL) {
-      let dirName = config.name + "/" + pathSpec.versionInFileName;
+      let dirName = config.name.replace(/\//g, "__SLASH__") + "/" + pathSpec.versionInFileName;
       packageDir = maybeFileResource(destinationDir).join(dirName).asDirectory();
     } else {
-      let dirName = config.name + "/" + config.version;
+      let dirName = config.name.replace(/\//g, "__SLASH__") + "/" + config.version;
       packageDir = destinationDir.join(dirName).asDirectory();
       pathSpec = Object.assign({}, pathSpec, {location: packageDir});
     }
