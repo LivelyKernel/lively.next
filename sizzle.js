@@ -292,6 +292,11 @@ export class SizzleVisitor {
 
 export class StylingVisitor extends SizzleVisitor {
 
+  constructor(args) {
+    super(args);
+    this.retainedProps = {};
+  }
+
   retrieveExpressions(morph) {
     if (morph.styleSheets.length < 1) return false;
     return morph.styleSheets.map(ss => ss.applicableRules());
@@ -299,8 +304,10 @@ export class StylingVisitor extends SizzleVisitor {
 
   visitMorph(morph, styleSheetsToApply) {
     if (!morph._wantsStyling) return;
+    // is there a way to prevent rendering while these changes are happening?
+    Object.assign(morph, this.retainedProps[morph.id] || {});
     for (let [ss, rule] of styleSheetsToApply) {
-      ss.applyRule(rule, morph);
+      this.retainedProps[morph.id] = ss.applyRule(rule, morph);
     }
     morph._wantsStyling = false;
   }

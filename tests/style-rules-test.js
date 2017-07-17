@@ -243,12 +243,51 @@ describe("Style Rules", function() {
         }
       ]
     });
-
+    let v = new StylingVisitor(hierarchy);
+    v.visit();
     sheet.setRule('.bob', {fill: Color.red});
     sheet.removeRule('.alice');
+    v.visit()
 
     expect(hierarchy.get('A').position).equals(pt(0,0));
     expect(hierarchy.get('B').position).equals(pt(0,0));
     expect(hierarchy.get('B').fill).equals(Color.red);
+  });
+
+  it("resets properties to their initial values, if rules stop being applied", () => {
+    var sheet, hierarchy = new Morph({
+      styleSheets: [
+        sheet = new StyleSheet({
+          ".root": {position: pt(20, 20)},
+          ".bob": {position: pt(40, 40)},
+          ".alice": {extent: pt(30, 30)}
+        })
+      ],
+      styleClasses: ["root"],
+      submorphs: [
+        {
+          name: 'B',
+          styleClasses: ["bob"],
+          submorphs: [
+            {
+              name: "A",
+              styleClasses: ["alice"]
+            }
+          ]
+        }
+      ]
+    });
+
+    expect(hierarchy.get('A').extent).equals(pt(10,10))
+    
+    let v = new StylingVisitor(hierarchy);
+    v.visit();
+
+    expect(hierarchy.get('A').extent).equals(pt(30,30))
+    // the StylingVisitor remembers the overridden values for each morph
+    hierarchy.get('A').removeStyleClass('alice');
+    v.visit();
+
+    expect(hierarchy.get('A').extent).equals(pt(10,10))
   })
 });

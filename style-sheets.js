@@ -1171,11 +1171,6 @@ export class StyleSheet {
 
   set context(morph) {
     this._context = morph;
-    this.sizzle = new Sizzle(morph);
-    this.context.withAllSubmorphsDo(m => {
-       m._styleSheetProps = null;
-       m.makeDirty();
-    });
   }
 
   get context() { return this._context }
@@ -1192,31 +1187,19 @@ export class StyleSheet {
     return props;
   }
 
-  apply() {
-    for (let rule in this.rules) {
-      this.refreshMorphsFor(rule);
-    }
-  }
-  
-  refreshMorphsFor(rule) {
-    for (let morph of this.sizzle.select(rule)) {
-       Object.assign(morph, this.getStyleProps(morph))
-    }
-  }
-
   removeRule(rule) {
     delete this.rules[rule];
-    this.refreshMorphsFor(rule);
+    this.context.requestStyling();
   }
 
   setRule(rule, props) {
     this.rules[rule] = this.unwrapFoldedProps(props);
-    this.refreshMorphsFor(rule);
+    this.context.requestStyling();
   }
 
   toggleRule(rule) {
     this.rules[rule]._deactivated = !this.rules[rule]._deactivated;
-    this.refreshMorphsFor(rule);
+    this.context.requestStyling();
   }
 
   applicableRules() {
@@ -1244,30 +1227,8 @@ export class StyleSheet {
       props.padding = props.padding.isRect ?
         props.padding : rect(props.padding, props.padding);
     }
+    let prevValues = obj.select(morph, obj.keys(rule))
     Object.assign(morph, props);
-  }
-
-  getStyleProps(morph) {
-    var props = {}, rule;
-    for (rule in this.rules) {
-      if (this.rules[rule]._deactivated) continue;
-      if (this.sizzle.matches(rule, morph)) {
-        props = obj.dissoc({...props, ...this.rules[rule]}, ['_deactivated']);
-      }
-    }
-    if ("layout" in props) {
-      let layout = props.layout.copy();
-      layout.container = morph;
-      props.layout = layout;
-    }
-    if ("dropShadow" in props) {
-      props.dropShadow = new ShadowObject(props.dropShadow);
-      props.dropShadow.morph = morph;
-    }
-    if ("padding" in props) {
-      props.padding = props.padding.isRect ?
-        props.padding : rect(props.padding, props.padding);
-    }
-    return props;
+    return prevValues;
   }
 }
