@@ -2,7 +2,7 @@
 import { Morph } from "lively.morphic/morph.js";
 import { pt, Rectangle, Color } from "lively.graphics/index.js";
 import { promise } from "lively.lang/index.js";
-import { morph, Menu, config } from "lively.morphic/index.js";
+import { morph, Icon, Menu, config } from "lively.morphic/index.js";
 import { adoptObject } from "lively.classes/runtime.js";
 import { connect, once, signal } from "lively.bindings/index.js";
 import { ClientUser } from "lively.user/index.js";
@@ -481,7 +481,6 @@ export class UserFlap extends Morph {
 
   static get properties() {
     return {
-
       submorphs: {
         initialize() {
           this.submorphs = [{
@@ -489,12 +488,24 @@ export class UserFlap extends Morph {
             fontSize: 18,
             padding: Rectangle.inset(4),
             reactsToPointer: false
-          }];
+          }, 
+           Icon.makeLabel('user', {
+             name: 'avatar', 
+             fontColor: Color.black.withA(.3),
+             fontSize: 15,
+             clipMode: 'hidden',
+             padding: Rectangle.inset(2, 2, 4, 0),
+             borderWidth: 1,
+             borderColor: Color.black.withA(.3),
+             extent: pt(20,20),
+             borderRadius: 10
+           })];
         }
       },
 
       name: {initialize() { this.name = "user flap"; }},
       epiMorph: {defaultValue: true},
+      clipMode: {defaultValue: 'hidden'},
       draggable: {defaultValue: false},
       grabbable: {defaultValue: false},
       acceptsDrops: {defaultValue: false},
@@ -511,7 +522,7 @@ export class UserFlap extends Morph {
 
   get isUserFlap() { return true; }
 
-  get isMaximized() { return this.submorphs.length > 1; }
+  get isMaximized() { return this.submorphs.length > 2; }
 
   open() {
     this.openInWorld();
@@ -561,17 +572,20 @@ export class UserFlap extends Morph {
   }
 
   async showUser(user, animated = false) {
-  // this.showUser(false);
     let label = this.getSubmorphNamed("label"),
         menu = this.getSubmorphNamed("menu"),
+        avatar = this.getSubmorphNamed("avatar"),
         userName = String(user.name);
     if (userName.startsWith("guest-")) userName = "guest";
+    avatar.visible = true;
     label.visible = true;
     label.value = [userName, {fontColor: Color.gray.darker()}];
     label.fit();
+    avatar.fit();
     if (menu && animated) menu.animate({opacity: 0, duration: 500});
-    await this.changeWidthAndHeight(label.width + 20, label.height, animated);
-    label.bottomCenter = this.innerBounds().bottomCenter();
+    await this.changeWidthAndHeight(label.width + 20 + avatar.width, label.height, animated);
+    label.leftCenter = this.innerBounds().insetBy(10).leftCenter();
+    avatar.leftCenter = label.rightCenter;
     menu && menu.remove();
   }
 
@@ -579,23 +593,27 @@ export class UserFlap extends Morph {
   showLogin(user) { return UserUI.showLogin({user}); }
   logout(user) { UserRegistry.current.logout(user); }
 
+  onBlur(evt) {
+    this.minimize();
+  }
+
   async showMenu(user, animated = false) {
     let label = this.getSubmorphNamed("label"),
+        avatar = this.getSubmorphNamed('avatar'),
         menu = Object.assign(Menu.forItems(
           user.isGuestUser ? [
             ["login", () => { this.minimize(); this.showLogin(user); }],
-            ["close", () => this.minimize()]
           ] :
           [
             ["show user info", () => { this.minimize(); this.showUserInfo(user); }],
             ["logout", async () => { await this.minimize(); this.logout(user); }],
-            ["close", () => this.minimize()],
           ]), {
             name: "menu",
             position: pt(10, 5),
             dropShadow: false,
             opacity: animated ? 0 : 1,
           });
+    avatar.visible = false;
     label.visible = false;
     this.addMorph(menu);
     if (animated) menu.animate({opacity: 1, duration: 500});
