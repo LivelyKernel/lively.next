@@ -17,8 +17,8 @@ async function npmSearchForVersions(packageNameAndRange) {
   // let packageNameAndRange = "lively.lang@~0.4"
   try {
     let [pname, range = "*"] = packageNameAndRange.split("@"),
-        {name, version} = await resource(`http://registry.npmjs.org/${pname}/${range}`).readJson()
-    return {name, version};
+        {name, version, dist: {shasum, tarball}} = await resource(`http://registry.npmjs.org/${pname}/${range}`).readJson();
+    return {name, version, tarball};
   } catch (err) {
     console.error(err);
     throw new Error(`Cannot find npm package for ${packageNameAndRange}`);
@@ -27,9 +27,11 @@ async function npmSearchForVersions(packageNameAndRange) {
 
 async function npmDownloadArchive(packageNameAndRange, destinationDir) {
   destinationDir = maybeFileResource(destinationDir);
-  let {version, name} = await npmSearchForVersions(packageNameAndRange),
-      archive=`${name}-${version}.tgz`,
-      archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`
+  let {version, name, tarball: archiveURL} = await npmSearchForVersions(packageNameAndRange);
+  let archive=`${name}-${version}.tgz`;
+  if (!archiveURL) {
+    archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`;
+  }
   console.log(`[flatn] downloading ${packageNameAndRange} - ${archiveURL}`);
   let downloadedArchive = destinationDir.join(archive);
   await resource(archiveURL).beBinary().copyTo(downloadedArchive);
@@ -68,7 +70,7 @@ async function untar(downloadedArchive, targetDir, name) {
   }
 
   // console.log(`[${name}] extracting ${downloadedArchive.path()} => ${targetDir.join(name).asDirectory().url}`);
-			  
+
   if (fixGnuTar === undefined) {
     try {
       await x(`tar --version | grep -q 'gnu'`);
@@ -116,7 +118,7 @@ async function gitClone(gitURL, intoDir, branch = "master") {
   } catch (err) {
     throw new Error(`git clone of ${gitURL} branch ${branch} into ${destPath} failed:\n${err}`);
   }
-  
+
   if (tmp) await tmp.join(name + "/").rename(intoDir);
 }
 
