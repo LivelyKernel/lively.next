@@ -23,6 +23,8 @@ export class StorageDatabase extends Database {
 
 export default class LivelyStorageResource extends Resource {
 
+  get canDealWithJSON() { return true; }
+
   get db() {
     return this._db || (this._db = StorageDatabase.ensureDB(this.host()));
   }
