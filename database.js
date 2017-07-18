@@ -1,3 +1,4 @@
+/*global global,self,process,System,require*/
 import _PouchDB from "pouchdb";
 import pouchdbAdapterMem from "pouchdb-adapter-mem";
 
@@ -306,6 +307,10 @@ export default class Database {
       }
     }
     return result;
+  }
+
+  query(subject, opts) {
+    return this.pouchdb.query(subject, opts);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
