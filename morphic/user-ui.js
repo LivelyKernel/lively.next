@@ -485,14 +485,16 @@ export class UserFlap extends Morph {
         initialize() {
           this.submorphs = [{
             type: "label", name: "label",
-            fontSize: 18,
+            fontSize: 12,
+            fontFamliy: "Helvetica Neue, Verdana, Sans Serif",
+            fontWeight: "bold",
             padding: Rectangle.inset(4),
             reactsToPointer: false
           }, 
            Icon.makeLabel('user', {
              name: 'avatar', 
              fontColor: Color.black.withA(.3),
-             fontSize: 15,
+             fontSize: 12,
              clipMode: 'hidden',
              padding: Rectangle.inset(2, 2, 4, 0),
              borderWidth: 1,
@@ -612,12 +614,16 @@ export class UserFlap extends Morph {
             position: pt(10, 5),
             dropShadow: false,
             opacity: animated ? 0 : 1,
+            borderWidth: 0,
+            fontSize: 12,
+            fontFamily: "Helvetica Neue, Verdana, Sans Serif"
           });
     avatar.visible = false;
     label.visible = false;
     this.addMorph(menu);
     if (animated) menu.animate({opacity: 1, duration: 500});
-    await this.changeWidthAndHeight(menu.width + 20, menu.height + 10, animated);
+    await this.changeWidthAndHeight(
+      menu.width + 20, menu.height + 10, animated);
   }
 
 }

@@ -56,7 +56,7 @@ export class User {
   }
 
   constructor(name, url) {
-    this.url = url;
+    this.realm = url;
     this.name = name;
     this.roles = {};
     this.createdAt = 0;
@@ -68,7 +68,8 @@ export class User {
 
   async loginOrRegister(action, password, authServerURL) {
     var {email, createdAt, roles, name} = this,
-        payload = action === "register" ? {password, email, createdAt, roles, name} : {password, name},
+        payload = action === "register" ?
+          {password, email, createdAt, roles, name} : {password, name},
         answer = await POST(authServerURL + "/" + action, payload);
     if (answer.error) return answer;
     var {token} = answer,
@@ -80,28 +81,28 @@ export class User {
   async verify() {
     // note: services should not trust if this verify method returns true, they
     // should check against the user token against the authServerURL/verify
-    let {error, status} = await POST(this.url + "/verify", {token: this.token});
+    let {error, status} = await POST(this.realm + "/verify", {token: this.token});
     return error ? false : true;
   }
 
   login(password) {
-    return this.loginOrRegister("login", password, this.url);
+    return this.loginOrRegister("login", password, this.realm);
   }
 
   register(password) {
-    return this.loginOrRegister("register", password, this.url);
+    return this.loginOrRegister("register", password, this.realm);
   }
 
   async checkPassword(password) {
     if (!this.isLoggedIn)
       throw new Error("To check password, user needs to login.")
-    let {error, status} = await POST(this.url + "/check-password", {token: this.token, password});
+    let {error, status} = await POST(this.realm + "/check-password", {token: this.token, password});
     if (error) throw new Error(error);
     return status;
   }
 
   async modify(changes) {
-    let {error, status, token} = await POST(this.url + "/modify", {token: this.token, changes});
+    let {error, status, token} = await POST(this.realm + "/modify", {token: this.token, changes});
     if (error) return {error};
     if (token) {
       let {name, roles, createdAt, email} = jwtTokenDecode(token);

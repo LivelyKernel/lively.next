@@ -332,7 +332,7 @@ var User = function () {
   function User(name, url) {
     classCallCheck(this, User);
 
-    this.url = url;
+    this.realm = url;
     this.name = name;
     this.roles = {};
     this.createdAt = 0;
@@ -404,7 +404,7 @@ var User = function () {
             switch (_context3.prev = _context3.next) {
               case 0:
                 _context3.next = 2;
-                return POST(this.url + "/verify", { token: this.token });
+                return POST(this.realm + "/verify", { token: this.token });
 
               case 2:
                 _ref4 = _context3.sent;
@@ -429,12 +429,12 @@ var User = function () {
   }, {
     key: 'login',
     value: function login(password) {
-      return this.loginOrRegister("login", password, this.url);
+      return this.loginOrRegister("login", password, this.realm);
     }
   }, {
     key: 'register',
     value: function register(password) {
-      return this.loginOrRegister("register", password, this.url);
+      return this.loginOrRegister("register", password, this.realm);
     }
   }, {
     key: 'checkPassword',
@@ -455,7 +455,7 @@ var User = function () {
 
               case 2:
                 _context4.next = 4;
-                return POST(this.url + "/check-password", { token: this.token, password: password });
+                return POST(this.realm + "/check-password", { token: this.token, password: password });
 
               case 4:
                 _ref6 = _context4.sent;
@@ -497,7 +497,7 @@ var User = function () {
             switch (_context5.prev = _context5.next) {
               case 0:
                 _context5.next = 2;
-                return POST(this.url + "/modify", { token: this.token, changes: changes });
+                return POST(this.realm + "/modify", { token: this.token, changes: changes });
 
               case 2:
                 _ref8 = _context5.sent;
