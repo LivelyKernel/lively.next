@@ -1573,6 +1573,11 @@ var Resource$$1 = function () {
     get: function get() {
       return true;
     }
+  }, {
+    key: "canDealWithJSON",
+    get: function get() {
+      return false;
+    }
   }]);
   return Resource$$1;
 }();

@@ -41,6 +41,8 @@ export default class Resource {
 
   get isResource() { return true; }
 
+  get canDealWithJSON() { return false; }
+
   equals(otherResource) {
     if (!otherResource || this.constructor !== otherResource.constructor)
       return false;
