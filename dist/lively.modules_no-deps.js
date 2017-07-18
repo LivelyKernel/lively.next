@@ -1866,10 +1866,8 @@ var customTranslate = function () {
               load.source = source;
               load.metadata["lively.modules instrumented"] = true;
               instrumented = true;
-              debug && console.log("[lively.modules] loaded %s as es6 module", load.name
+              debug && console.log("[lively.modules] loaded %s as es6 module", load.name);
               // debug && console.log(load.source)
-
-              );
             } else if (load.metadata.format === "global") {
               mod.recorderName = "System.global";
               mod.recorder = System.global;
@@ -4969,8 +4967,8 @@ var Package = function () {
                 url = this.url;
                 allPackages = Package.allPackageURLs(System);
                 packagesToIgnore = allPackages.filter(function (purl) {
-                  return purl !== url && !url.startsWith(purl /*parent packages*/);
-                });
+                  return purl !== url && !url.startsWith(purl);
+                } /*parent packages*/);
                 _context.next = 6;
                 return lively_resources.resource(url).dirList('infinity', { exclude: exclude });
 
