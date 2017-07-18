@@ -1,7 +1,7 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after,xit,xdescribe*/
 import { expect } from "mocha-es6";
-import ObjectDB from "../objectdb.js";
-import { obj, promise } from "lively.lang";
+import ObjectDB, { ObjectDBInterface } from "../objectdb.js";
+import { obj, arr, promise } from "lively.lang";
 import { resource } from "lively.resources";
 
 function createDummyObject() {
@@ -21,9 +21,31 @@ function createDummyObject() {
 //   return root;
 // }
 
+async function fillDB1() {
+  world1 = Object.assign(createDummyObject(), {name: "objectdb test world"});
+  world2 = Object.assign(createDummyObject(), {name: "another objectdb test world"});
+  part1 = Object.assign(createDummyObject(), {name: "a part"});
+  commit1 = await objectDB.snapshotObject("world", world1.name, world1, {}, {user: user1});
+  commit2 = await objectDB.snapshotObject("world", world2.name, world2, {}, {user: user1});
+  commit3 = await objectDB.snapshotObject("world", world2.name, Object.assign(world2, {x: 23}), {}, {user: user1});
+  commit4 = await objectDB.snapshotObject("world", world2.name, Object.assign(world2, {x: 42}), {}, {user: user1});
+  commit5 = await objectDB.snapshotObject("part", part1.name, part1, {}, {user: user1, metadata: {something: "hello world"}});
+}
+
+async function fillDB2() {
+  objectDB = ObjectDB.named("lively-morphic-objectdb-test", {snapshotLocation});
+  world1 = Object.assign(createDummyObject(), {name: "objectdb test world"});
+  world2 = Object.assign(createDummyObject(), {name: "other objectdb test world"});
+  commit1 = await objectDB.snapshotObject("world", world1.name, world1, {}, {user: user1});
+  commit2 = await objectDB.snapshotObject("world", world1.name, Object.assign(world1, {x: 23}), {}, {user: user1});
+  commit3 = await objectDB.snapshotObject("world", world1.name, Object.assign(world1, {x: 42}), {}, {user: user1});
+  commit4 = await objectDB.snapshotObject("world", world2.name, world2, {}, {user: user1});
+}
+
 let snapshotLocation = resource("local://lively-morphic-objectdb-test/snapshots/"),
     user1 = {name: "test-user-1"},
     user2 = {name: "test-user-2"},
+    dbName = "lively-morphic-objectdb-test",
     objectDB;
 
 let part1, commit5, commit4, commit3, commit2, world2, commit1, world1;
@@ -33,7 +55,7 @@ describe("ObjectDB", function() {
   this.timeout(30*1000);
 
   before(() => {
-    objectDB = ObjectDB.named("lively-morphic-objectdb-test", {snapshotLocation});
+    objectDB = ObjectDB.named(dbName, {snapshotLocation});
   });
 
   after(async () => {
@@ -49,16 +71,7 @@ describe("ObjectDB", function() {
 
   describe("querying object data", () => {
 
-    before(async () => {
-      world1 = Object.assign(createDummyObject(), {name: "objectdb test world"});
-      world2 = Object.assign(createDummyObject(), {name: "another objectdb test world"});
-      part1 = Object.assign(createDummyObject(), {name: "a part"});
-      commit1 = await objectDB.snapshotObject("world", world1.name, world1, {}, {user: user1});
-      commit2 = await objectDB.snapshotObject("world", world2.name, world2, {}, {user: user1});
-      commit3 = await objectDB.snapshotObject("world", world2.name, Object.assign(world2, {x: 23}), {}, {user: user1});
-      commit4 = await objectDB.snapshotObject("world", world2.name, Object.assign(world2, {x: 42}), {}, {user: user1});
-      commit5 = await objectDB.snapshotObject("part", part1.name, part1, {}, {user: user1, metadata: {something: "hello world"}});
-    });
+    before(fillDB1);
 
     it("knows objects", async () => {
       expect(await objectDB.objects("part")).equals(["a part"])
@@ -176,15 +189,7 @@ describe("loading objects", function() {
 
   this.timeout(30*1000);
 
-  before(async () => {
-    objectDB = ObjectDB.named("lively-morphic-objectdb-test", {snapshotLocation});
-    world1 = Object.assign(createDummyObject(), {name: "objectdb test world"});
-    world2 = Object.assign(createDummyObject(), {name: "other objectdb test world"});
-    commit1 = await objectDB.snapshotObject("world", world1.name, world1, {}, {user: user1});
-    commit2 = await objectDB.snapshotObject("world", world1.name, Object.assign(world1, {x: 23}), {}, {user: user1});
-    commit3 = await objectDB.snapshotObject("world", world1.name, Object.assign(world1, {x: 42}), {}, {user: user1});
-    commit4 = await objectDB.snapshotObject("world", world2.name, world2, {}, {user: user1});
-  });
+  before(fillDB2);
 
   after(async () => {
     await objectDB.destroy();
@@ -209,15 +214,7 @@ describe("deletions in ObjectDB", function() {
 
   this.timeout(30*1000);
 
-  beforeEach(async () => {
-    objectDB = ObjectDB.named("lively-morphic-objectdb-test", {snapshotLocation});
-    world1 = Object.assign(createDummyObject(), {name: "objectdb test world"});
-    world2 = Object.assign(createDummyObject(), {name: "other objectdb test world"});
-    commit1 = await objectDB.snapshotObject("world", world1.name, world1, {}, {user: user1});
-    commit2 = await objectDB.snapshotObject("world", world1.name, Object.assign(world1, {x: 23}), {}, {user: user1});
-    commit3 = await objectDB.snapshotObject("world", world1.name, Object.assign(world1, {x: 42}), {}, {user: user1});
-    commit4 = await objectDB.snapshotObject("world", world2.name, world2, {}, {user: user1});
-  });
+  beforeEach(fillDB2);
 
   afterEach(async () => {
     await objectDB.destroy();
@@ -335,15 +332,7 @@ describe("export and import", function() {
 
   this.timeout(30*1000);
 
-  beforeEach(async () => {
-    objectDB = ObjectDB.named("lively-morphic-objectdb-test", {snapshotLocation});
-    world1 = Object.assign(createDummyObject(), {name: "objectdb test world"});
-    world2 = Object.assign(createDummyObject(), {name: "other objectdb test world"});
-    commit1 = await objectDB.snapshotObject("world", world1.name, world1, {}, {user: user1});
-    commit2 = await objectDB.snapshotObject("world", world1.name, Object.assign(world1, {x: 23}), {}, {user: user1});
-    commit3 = await objectDB.snapshotObject("world", world1.name, Object.assign(world1, {x: 42}), {}, {user: user1});
-    commit4 = await objectDB.snapshotObject("world", world2.name, world2, {}, {user: user1});
-  });
+  beforeEach(fillDB2);
 
   afterEach(async () => {
     await objectDB.destroy();
@@ -406,6 +395,104 @@ describe("export and import", function() {
           commits2 = await objectDB2.getCommits("world", "objectdb test world");
       expect(commits1.map(ea => obj.dissoc(ea, ["_rev"])))
         .deep.equals(commits2.map(ea => obj.dissoc(ea, ["_rev"])));      
+    });
+
+  });
+
+});
+
+
+describe("interface test", function() {
+
+  this.timeout(30*1000);
+
+  before(async () => {    
+    objectDB = ObjectDB.named(dbName, {snapshotLocation});
+    await fillDB1();
+  });
+
+  after(async () => {
+    await objectDB.destroy();
+    await snapshotLocation.remove();
+  });
+
+  describe("commit retrieval", () => {
+
+    it("get list of all latest commits", async () => {
+      let expected = [commit5, commit1, commit4].map(ea => ea._id),
+          commits = await ObjectDBInterface.fetchCommits({db: dbName});
+      expect(arr.intersect(commits.map(ea => ea._id), expected))
+        .to.have.length(commits.length, "not all commits found");
+    });
+
+    it("get list of all latest commits by type", async () => {
+      // versionDB = objectDB.__versionDB;
+      // await versionDB.getAll({startkey: "world/\u0000", endkey: "world/\uffff"})
+
+      let expected = [commit1, commit4].map(ea => ea._id),
+          commits = await ObjectDBInterface.fetchCommits({db: dbName, type: "world"});
+      expect(arr.intersect(commits.map(ea => ea._id), expected))
+        .to.have.length(commits.length, "not all commits found");
+    });
+    
+    it("get by types + names", async () => {
+      let expected = [commit4].map(ea => ea._id),
+          commits = await ObjectDBInterface.fetchCommits({db: dbName, typesAndNames: [{type: "world", name: world2.name}]});
+      expect(arr.intersect(commits.map(ea => ea._id), expected))
+        .to.have.length(commits.length, "not all commits found");
+    });
+
+    it("get by type name", async () => {
+      let expected = [commit4].map(ea => ea._id),
+          commits = await ObjectDBInterface.fetchCommits({db: dbName, typesAndNames: [{type: "world", name: world2.name}]});
+      expect(arr.intersect(commits.map(ea => ea._id), expected))
+        .to.have.length(commits.length, "not all commits found");
+    });
+
+    it("filter out known", async () => {
+      let expected = [commit1, commit5].map(ea => ea._id),
+          commits = await ObjectDBInterface.fetchCommits({db: dbName, knownCommitIds: {[commit4._id]: true}});
+      expect(arr.intersect(commits.map(ea => ea._id), expected))
+        .to.have.length(commits.length, "not all commits found");
+    });
+    
+    it("commit log", async () => {
+      // await objectDB.versionGraph("world", world2.name)
+      let expected = [commit3, commit4].map(ea => ea._id),
+          commitIds = await ObjectDBInterface.fetchLog({db: dbName, ref: "HEAD", commit: commit4._id, limit: 2});
+      expect(arr.intersect(commitIds, expected))
+        .to.have.length(commitIds.length, "not all commits found 1");
+      let expected2 = [commit2, commit4].map(ea => ea._id),
+          commits = await ObjectDBInterface.fetchLog({db: dbName, ref: "HEAD", type: "world", name: world2.name, includeCommits: true, knownCommitIds: {[commit3._id]: true}});
+      expect(arr.intersect(commits.map(ea => ea._id), expected2))
+        .to.have.length(commits.length, "not all commits found 2");
+    });
+
+  });
+
+  describe("fetching snapshots", () => {
+    
+    it("does it", async () => {
+      // await objectDB.versionGraph("world", world2.name)
+      let snapshot1 = await ObjectDBInterface.fetchSnapshot({db: dbName, ref: "HEAD", type: "world", name: world2.name});
+      expect(snapshot1).deep.equals({foo: {bar: 23}, x: 42, name: "another objectdb test world"});
+      let snapshot2 = await ObjectDBInterface.fetchSnapshot({db: dbName, commit: commit3._id});
+      expect(snapshot2).deep.equals({foo: {bar: 23}, x: 23, name: "another objectdb test world"});
+    });
+
+  });
+
+  describe("committing snapshots", () => {
+
+    it("commits", async () => {
+      // await objectDB.versionGraph("world", world2.name)
+      let snapshot = {foo: {bar: 23}, x: 99, name: "another objectdb test world"}
+      try {
+        await ObjectDBInterface.commitSnapshot({db: dbName, type: "world", name: world2.name, expectedParentCommit: commit3._id, commitSpec: {user: user1}, snapshot});
+        expect().assert(false, "allowing to cmmit with wrong prev commit");
+      } catch (err) {}
+
+      let committed = await ObjectDBInterface.commitSnapshot({db: dbName, type: "world", name: world2.name, expectedParentCommit: commit4._id, commitSpec: {user: user1}, snapshot});
     });
 
   });

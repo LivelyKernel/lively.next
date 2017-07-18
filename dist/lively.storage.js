@@ -37669,12 +37669,72 @@ var objectDBs = objectDBs || new Map();
 
 var ObjectDB = function () {
   createClass(ObjectDB, null, [{
+    key: "find",
+    value: function () {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(name) {
+        var found, metaDB, meta;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                found = objectDBs.get(name);
+
+                if (!found) {
+                  _context.next = 3;
+                  break;
+                }
+
+                return _context.abrupt("return", found);
+
+              case 3:
+                metaDB = Database.ensureDB("__internal__objectdb-meta");
+                _context.next = 6;
+                return metaDB.get(name);
+
+              case 6:
+                meta = _context.sent;
+
+                if (meta) {
+                  _context.next = 9;
+                  break;
+                }
+
+                return _context.abrupt("return");
+
+              case 9:
+                return _context.abrupt("return", this.named(name, meta));
+
+              case 10:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function find(_x) {
+        return _ref.apply(this, arguments);
+      }
+
+      return find;
+    }()
+  }, {
     key: "named",
-    value: function named(name, options) {
+    value: function named(name) {
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
       var existing = objectDBs.get(name);
       if (existing) return existing;
+      if (!options || !options.snapshotLocation) throw new Error("need snapshotLocation");
+      if (typeof options.snapshotLocation === "string") options.snapshotLocation = lively_resources.resource(options.snapshotLocation);
       var db = new this(name, options);
       objectDBs.set(name, db);
+
+      var metaDB = Database.ensureDB("__internal__objectdb-meta");
+      metaDB.set(name, options).catch(function (err) {
+        return console.error("error writing objectdb meta:", err);
+      });
+
       return db;
     }
   }]);
@@ -37692,47 +37752,50 @@ var ObjectDB = function () {
   createClass(ObjectDB, [{
     key: "destroy",
     value: function () {
-      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
-        var commitDB, versionDB;
-        return regeneratorRuntime.wrap(function _callee$(_context) {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        var commitDB, versionDB, metaDB;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
-            switch (_context.prev = _context.next) {
+            switch (_context2.prev = _context2.next) {
               case 0:
                 commitDB = Database.findDB("commits-" + this.name);
 
                 if (!commitDB) {
-                  _context.next = 4;
+                  _context2.next = 4;
                   break;
                 }
 
-                _context.next = 4;
+                _context2.next = 4;
                 return commitDB.destroy();
 
               case 4:
                 versionDB = Database.findDB("version-graph-" + this.name);
 
                 if (!versionDB) {
-                  _context.next = 8;
+                  _context2.next = 8;
                   break;
                 }
 
-                _context.next = 8;
+                _context2.next = 8;
                 return versionDB.destroy();
 
               case 8:
                 objectDBs.delete(this.name);
-                // await this.snapshotLocation.remove()
 
-              case 9:
+                metaDB = Database.ensureDB("__internal__objectdb-meta");
+                _context2.next = 12;
+                return metaDB.remove(this.name);
+
+              case 12:
               case "end":
-                return _context.stop();
+                return _context2.stop();
             }
           }
-        }, _callee, this);
+        }, _callee2, this);
       }));
 
       function destroy() {
-        return _ref.apply(this, arguments);
+        return _ref2.apply(this, arguments);
       }
 
       return destroy;
@@ -37752,11 +37815,11 @@ var ObjectDB = function () {
   }, {
     key: "snapshotObject",
     value: function () {
-      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(type, name, object, snapshotOptions, commitSpec, ref, expectedPrevVersion) {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(type, name, object, snapshotOptions, commitSpec, ref, expectedPrevVersion) {
         var serializeFn, snapshot;
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context2.prev = _context2.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
                 snapshotOptions = snapshotOptions || {};
 
@@ -37764,48 +37827,12 @@ var ObjectDB = function () {
                   return x;
                 };
 
-                _context2.next = 4;
+                _context3.next = 4;
                 return serializeFn(object, snapshotOptions);
 
               case 4:
-                snapshot = _context2.sent;
-                return _context2.abrupt("return", this.commitSnapshot(type, name, snapshot, commitSpec, ref, expectedPrevVersion));
-
-              case 6:
-              case "end":
-                return _context2.stop();
-            }
-          }
-        }, _callee2, this);
-      }));
-
-      function snapshotObject(_x, _x2, _x3, _x4, _x5, _x6, _x7) {
-        return _ref2.apply(this, arguments);
-      }
-
-      return snapshotObject;
-    }()
-  }, {
-    key: "loadObject",
-    value: function () {
-      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(type, name, loadOptions, commitIdOrCommit, ref) {
-        var snapshot, deserializeFn;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                loadOptions = loadOptions || {};
-                _context3.next = 3;
-                return this.loadSnapshot(type, name, commitIdOrCommit, ref);
-
-              case 3:
                 snapshot = _context3.sent;
-
-                deserializeFn = function deserializeFn(x) {
-                  return x;
-                };
-
-                return _context3.abrupt("return", deserializeFn(snapshot, loadOptions));
+                return _context3.abrupt("return", this.commitSnapshot(type, name, snapshot, commitSpec, ref, expectedPrevVersion));
 
               case 6:
               case "end":
@@ -37815,8 +37842,44 @@ var ObjectDB = function () {
         }, _callee3, this);
       }));
 
-      function loadObject(_x8, _x9, _x10, _x11, _x12) {
+      function snapshotObject(_x3, _x4, _x5, _x6, _x7, _x8, _x9) {
         return _ref3.apply(this, arguments);
+      }
+
+      return snapshotObject;
+    }()
+  }, {
+    key: "loadObject",
+    value: function () {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(type, name, loadOptions, commitIdOrCommit, ref) {
+        var snapshot, deserializeFn;
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                loadOptions = loadOptions || {};
+                _context4.next = 3;
+                return this.loadSnapshot(type, name, commitIdOrCommit, ref);
+
+              case 3:
+                snapshot = _context4.sent;
+
+                deserializeFn = function deserializeFn(x) {
+                  return x;
+                };
+
+                return _context4.abrupt("return", deserializeFn(snapshot, loadOptions));
+
+              case 6:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function loadObject(_x10, _x11, _x12, _x13, _x14) {
+        return _ref4.apply(this, arguments);
       }
 
       return loadObject;
@@ -37828,62 +37891,18 @@ var ObjectDB = function () {
   }, {
     key: "has",
     value: function () {
-      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(type, name) {
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                _context4.next = 2;
-                return this.objectStats(type, name);
-
-              case 2:
-                return _context4.abrupt("return", !!_context4.sent);
-
-              case 3:
-              case "end":
-                return _context4.stop();
-            }
-          }
-        }, _callee4, this);
-      }));
-
-      function has(_x13, _x14) {
-        return _ref4.apply(this, arguments);
-      }
-
-      return has;
-    }()
-  }, {
-    key: "objects",
-    value: function () {
-      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(type) {
-        var stats, result, _type;
-
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(type, name) {
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
                 _context5.next = 2;
-                return this.objectStats(type);
+                return this.objectStats(type, name);
 
               case 2:
-                stats = _context5.sent;
+                return _context5.abrupt("return", !!_context5.sent);
 
-                if (!type) {
-                  _context5.next = 5;
-                  break;
-                }
-
-                return _context5.abrupt("return", Object.keys(stats || {}));
-
-              case 5:
-                result = {};
-
-                for (_type in stats) {
-                  result[_type] = Object.keys(stats[_type]);
-                }return _context5.abrupt("return", result);
-
-              case 8:
+              case 3:
               case "end":
                 return _context5.stop();
             }
@@ -37891,8 +37910,52 @@ var ObjectDB = function () {
         }, _callee5, this);
       }));
 
-      function objects(_x15) {
+      function has(_x15, _x16) {
         return _ref5.apply(this, arguments);
+      }
+
+      return has;
+    }()
+  }, {
+    key: "objects",
+    value: function () {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(type) {
+        var stats, result, _type;
+
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                _context6.next = 2;
+                return this.objectStats(type);
+
+              case 2:
+                stats = _context6.sent;
+
+                if (!type) {
+                  _context6.next = 5;
+                  break;
+                }
+
+                return _context6.abrupt("return", Object.keys(stats || {}));
+
+              case 5:
+                result = {};
+
+                for (_type in stats) {
+                  result[_type] = Object.keys(stats[_type]);
+                }return _context6.abrupt("return", result);
+
+              case 8:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, this);
+      }));
+
+      function objects(_x17) {
+        return _ref6.apply(this, arguments);
       }
 
       return objects;
@@ -37900,29 +37963,29 @@ var ObjectDB = function () {
   }, {
     key: "objectStats",
     value: function () {
-      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(objectType, objectName) {
-        var statsByType, commitDB, queryOpts, _ref7, rows, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _ref9, objectTypeAndName, _ref9$value, count, newest, oldest, _objectTypeAndName$sp, _objectTypeAndName$sp2, type, _objectName, statsOfType;
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(objectType, objectName) {
+        var statsByType, commitDB, queryOpts, _ref8, rows, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _ref10, objectTypeAndName, _ref10$value, count, newest, oldest, _objectTypeAndName$sp, _objectTypeAndName$sp2, type, _objectName, statsOfType;
 
-        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
-            switch (_context6.prev = _context6.next) {
+            switch (_context7.prev = _context7.next) {
               case 0:
                 statsByType = {};
-                _context6.t0 = this.__commitDB;
+                _context7.t0 = this.__commitDB;
 
-                if (_context6.t0) {
-                  _context6.next = 6;
+                if (_context7.t0) {
+                  _context7.next = 6;
                   break;
                 }
 
-                _context6.next = 5;
+                _context7.next = 5;
                 return this._commitDB();
 
               case 5:
-                _context6.t0 = _context6.sent;
+                _context7.t0 = _context7.sent;
 
               case 6:
-                commitDB = _context6.t0;
+                commitDB = _context7.t0;
                 queryOpts = { reduce: true, group: true };
 
                 if (objectType && objectName) {
@@ -37934,98 +37997,98 @@ var ObjectDB = function () {
                   queryOpts.endkey = objectType + "\uFFF0";
                 }
 
-                _context6.prev = 9;
-                _context6.next = 12;
+                _context7.prev = 9;
+                _context7.next = 12;
                 return commitDB.pouchdb.query("nameWithMaxMinTimestamp_index", queryOpts);
 
               case 12:
-                _ref7 = _context6.sent;
-                rows = _ref7.rows;
+                _ref8 = _context7.sent;
+                rows = _ref8.rows;
                 _iteratorNormalCompletion = true;
                 _didIteratorError = false;
                 _iteratorError = undefined;
-                _context6.prev = 17;
+                _context7.prev = 17;
 
                 for (_iterator = rows[Symbol.iterator](); !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                  _ref9 = _step.value;
-                  objectTypeAndName = _ref9.key, _ref9$value = _ref9.value, count = _ref9$value.count, newest = _ref9$value.max, oldest = _ref9$value.min;
+                  _ref10 = _step.value;
+                  objectTypeAndName = _ref10.key, _ref10$value = _ref10.value, count = _ref10$value.count, newest = _ref10$value.max, oldest = _ref10$value.min;
                   _objectTypeAndName$sp = objectTypeAndName.split("\0"), _objectTypeAndName$sp2 = slicedToArray(_objectTypeAndName$sp, 2), type = _objectTypeAndName$sp2[0], _objectName = _objectTypeAndName$sp2[1], statsOfType = statsByType[type] || (statsByType[type] = {});
 
                   statsOfType[_objectName] = { count: count, newest: newest, oldest: oldest };
                 }
-                _context6.next = 25;
+                _context7.next = 25;
                 break;
 
               case 21:
-                _context6.prev = 21;
-                _context6.t1 = _context6["catch"](17);
+                _context7.prev = 21;
+                _context7.t1 = _context7["catch"](17);
                 _didIteratorError = true;
-                _iteratorError = _context6.t1;
+                _iteratorError = _context7.t1;
 
               case 25:
-                _context6.prev = 25;
-                _context6.prev = 26;
+                _context7.prev = 25;
+                _context7.prev = 26;
 
                 if (!_iteratorNormalCompletion && _iterator.return) {
                   _iterator.return();
                 }
 
               case 28:
-                _context6.prev = 28;
+                _context7.prev = 28;
 
                 if (!_didIteratorError) {
-                  _context6.next = 31;
+                  _context7.next = 31;
                   break;
                 }
 
                 throw _iteratorError;
 
               case 31:
-                return _context6.finish(28);
+                return _context7.finish(28);
 
               case 32:
-                return _context6.finish(25);
+                return _context7.finish(25);
 
               case 33:
-                _context6.next = 39;
+                _context7.next = 39;
                 break;
 
               case 35:
-                _context6.prev = 35;
-                _context6.t2 = _context6["catch"](9);
+                _context7.prev = 35;
+                _context7.t2 = _context7["catch"](9);
 
-                console.error(_context6.t2);
-                return _context6.abrupt("return", statsByType);
+                console.error(_context7.t2);
+                return _context7.abrupt("return", statsByType);
 
               case 39:
                 if (!(objectType && objectName)) {
-                  _context6.next = 41;
+                  _context7.next = 41;
                   break;
                 }
 
-                return _context6.abrupt("return", (statsByType[objectType] || {})[objectName]);
+                return _context7.abrupt("return", (statsByType[objectType] || {})[objectName]);
 
               case 41:
                 if (!objectType) {
-                  _context6.next = 43;
+                  _context7.next = 43;
                   break;
                 }
 
-                return _context6.abrupt("return", statsByType[objectType]);
+                return _context7.abrupt("return", statsByType[objectType]);
 
               case 43:
-                return _context6.abrupt("return", statsByType);
+                return _context7.abrupt("return", statsByType);
 
               case 44:
               case "end":
-                return _context6.stop();
+                return _context7.stop();
             }
           }
-        }, _callee6, this, [[9, 35], [17, 21, 25, 33], [26,, 28, 32]]);
+        }, _callee7, this, [[9, 35], [17, 21, 25, 33], [26,, 28, 32]]);
       }));
 
-      function objectStats(_x16, _x17) {
-        return _ref6.apply(this, arguments);
+      function objectStats(_x18, _x19) {
+        return _ref7.apply(this, arguments);
       }
 
       return objectStats;
@@ -38033,112 +38096,53 @@ var ObjectDB = function () {
   }, {
     key: "getCommits",
     value: function () {
-      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(type, objectName) {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(type, objectName) {
         var ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "HEAD";
         var limit = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : Infinity;
         var history, commitDB, commits;
-        return regeneratorRuntime.wrap(function _callee7$(_context7) {
-          while (1) {
-            switch (_context7.prev = _context7.next) {
-              case 0:
-                _context7.next = 2;
-                return this._log(type, objectName, ref, limit);
-
-              case 2:
-                history = _context7.sent;
-
-                if (history.length) {
-                  _context7.next = 5;
-                  break;
-                }
-
-                return _context7.abrupt("return", []);
-
-              case 5:
-                _context7.t0 = this.__commitDB;
-
-                if (_context7.t0) {
-                  _context7.next = 10;
-                  break;
-                }
-
-                _context7.next = 9;
-                return this._commitDB();
-
-              case 9:
-                _context7.t0 = _context7.sent;
-
-              case 10:
-                commitDB = _context7.t0;
-                _context7.next = 13;
-                return commitDB.getDocuments(history.map(function (ea) {
-                  return { id: ea };
-                }));
-
-              case 13:
-                commits = _context7.sent;
-                return _context7.abrupt("return", commits);
-
-              case 15:
-              case "end":
-                return _context7.stop();
-            }
-          }
-        }, _callee7, this);
-      }));
-
-      function getCommits(_x18, _x19) {
-        return _ref10.apply(this, arguments);
-      }
-
-      return getCommits;
-    }()
-  }, {
-    key: "getLatestCommit",
-    value: function () {
-      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(type, objectName) {
-        var ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "HEAD";
-
-        var _ref12, _ref13, commitId, commitDB;
-
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
             switch (_context8.prev = _context8.next) {
               case 0:
                 _context8.next = 2;
-                return this._log(type, objectName, ref, 1);
+                return this._log(type, objectName, ref, limit);
 
               case 2:
-                _ref12 = _context8.sent;
-                _ref13 = slicedToArray(_ref12, 1);
-                commitId = _ref13[0];
+                history = _context8.sent;
 
-                if (commitId) {
-                  _context8.next = 7;
+                if (history.length) {
+                  _context8.next = 5;
                   break;
                 }
 
-                return _context8.abrupt("return", null);
+                return _context8.abrupt("return", []);
 
-              case 7:
+              case 5:
                 _context8.t0 = this.__commitDB;
 
                 if (_context8.t0) {
-                  _context8.next = 12;
+                  _context8.next = 10;
                   break;
                 }
 
-                _context8.next = 11;
+                _context8.next = 9;
                 return this._commitDB();
 
-              case 11:
+              case 9:
                 _context8.t0 = _context8.sent;
 
-              case 12:
+              case 10:
                 commitDB = _context8.t0;
-                return _context8.abrupt("return", commitDB.get(commitId));
+                _context8.next = 13;
+                return commitDB.getDocuments(history.map(function (ea) {
+                  return { id: ea };
+                }));
 
-              case 14:
+              case 13:
+                commits = _context8.sent;
+                return _context8.abrupt("return", commits);
+
+              case 15:
               case "end":
                 return _context8.stop();
             }
@@ -38146,8 +38150,149 @@ var ObjectDB = function () {
         }, _callee8, this);
       }));
 
-      function getLatestCommit(_x22, _x23) {
+      function getCommits(_x20, _x21) {
         return _ref11.apply(this, arguments);
+      }
+
+      return getCommits;
+    }()
+  }, {
+    key: "getCommit",
+    value: function () {
+      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(commitId) {
+        var commitDB;
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+          while (1) {
+            switch (_context9.prev = _context9.next) {
+              case 0:
+                _context9.t0 = this.__commitDB;
+
+                if (_context9.t0) {
+                  _context9.next = 5;
+                  break;
+                }
+
+                _context9.next = 4;
+                return this._commitDB();
+
+              case 4:
+                _context9.t0 = _context9.sent;
+
+              case 5:
+                commitDB = _context9.t0;
+                return _context9.abrupt("return", commitDB.get(commitId));
+
+              case 7:
+              case "end":
+                return _context9.stop();
+            }
+          }
+        }, _callee9, this);
+      }));
+
+      function getCommit(_x24) {
+        return _ref12.apply(this, arguments);
+      }
+
+      return getCommit;
+    }()
+  }, {
+    key: "getCommitsWithIds",
+    value: function () {
+      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(commitIds) {
+        var commitDB;
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+          while (1) {
+            switch (_context10.prev = _context10.next) {
+              case 0:
+                _context10.t0 = this.__commitDB;
+
+                if (_context10.t0) {
+                  _context10.next = 5;
+                  break;
+                }
+
+                _context10.next = 4;
+                return this._commitDB();
+
+              case 4:
+                _context10.t0 = _context10.sent;
+
+              case 5:
+                commitDB = _context10.t0;
+                return _context10.abrupt("return", commitDB.getDocuments(commitIds.map(function (id) {
+                  return { id: id };
+                })));
+
+              case 7:
+              case "end":
+                return _context10.stop();
+            }
+          }
+        }, _callee10, this);
+      }));
+
+      function getCommitsWithIds(_x25) {
+        return _ref13.apply(this, arguments);
+      }
+
+      return getCommitsWithIds;
+    }()
+  }, {
+    key: "getLatestCommit",
+    value: function () {
+      var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(type, objectName) {
+        var ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "HEAD";
+
+        var _ref15, _ref16, commitId, commitDB;
+
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+          while (1) {
+            switch (_context11.prev = _context11.next) {
+              case 0:
+                _context11.next = 2;
+                return this._log(type, objectName, ref, 1);
+
+              case 2:
+                _ref15 = _context11.sent;
+                _ref16 = slicedToArray(_ref15, 1);
+                commitId = _ref16[0];
+
+                if (commitId) {
+                  _context11.next = 7;
+                  break;
+                }
+
+                return _context11.abrupt("return", null);
+
+              case 7:
+                _context11.t0 = this.__commitDB;
+
+                if (_context11.t0) {
+                  _context11.next = 12;
+                  break;
+                }
+
+                _context11.next = 11;
+                return this._commitDB();
+
+              case 11:
+                _context11.t0 = _context11.sent;
+
+              case 12:
+                commitDB = _context11.t0;
+                return _context11.abrupt("return", commitDB.get(commitId));
+
+              case 14:
+              case "end":
+                return _context11.stop();
+            }
+          }
+        }, _callee11, this);
+      }));
+
+      function getLatestCommit(_x26, _x27) {
+        return _ref14.apply(this, arguments);
       }
 
       return getLatestCommit;
@@ -38155,20 +38300,20 @@ var ObjectDB = function () {
   }, {
     key: "commitSnapshot",
     value: function () {
-      var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(type, name, snapshot, commitSpec) {
+      var _ref17 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(type, name, snapshot, commitSpec) {
         var ref = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : "HEAD";
         var expectedPrevVersion = arguments[5];
 
         var user, _commitSpec$descripti, description, _commitSpec$tags, tags, _commitSpec$message, message, metadata, versionDB, versionData, ancestor, ancestors, snapshotJson, commit, commitDB, res;
 
-        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+        return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
-            switch (_context9.prev = _context9.next) {
+            switch (_context12.prev = _context12.next) {
               case 0:
                 user = commitSpec.user, _commitSpec$descripti = commitSpec.description, description = _commitSpec$descripti === undefined ? "no description" : _commitSpec$descripti, _commitSpec$tags = commitSpec.tags, tags = _commitSpec$tags === undefined ? [] : _commitSpec$tags, _commitSpec$message = commitSpec.message, message = _commitSpec$message === undefined ? "" : _commitSpec$message, metadata = commitSpec.metadata;
 
                 if (type) {
-                  _context9.next = 3;
+                  _context12.next = 3;
                   break;
                 }
 
@@ -38176,7 +38321,7 @@ var ObjectDB = function () {
 
               case 3:
                 if (name) {
-                  _context9.next = 5;
+                  _context12.next = 5;
                   break;
                 }
 
@@ -38184,55 +38329,55 @@ var ObjectDB = function () {
 
               case 5:
                 if (user) {
-                  _context9.next = 7;
+                  _context12.next = 7;
                   break;
                 }
 
                 throw new Error("Cannot snapshot " + type + "/" + name + " without user");
 
               case 7:
-                _context9.t0 = this.__versionDB;
+                _context12.t0 = this.__versionDB;
 
-                if (_context9.t0) {
-                  _context9.next = 12;
+                if (_context12.t0) {
+                  _context12.next = 12;
                   break;
                 }
 
-                _context9.next = 11;
+                _context12.next = 11;
                 return this._versionDB();
 
               case 11:
-                _context9.t0 = _context9.sent;
+                _context12.t0 = _context12.sent;
 
               case 12:
-                versionDB = _context9.t0;
-                _context9.next = 15;
+                versionDB = _context12.t0;
+                _context12.next = 15;
                 return this.versionGraph(type, name);
 
               case 15:
-                versionData = _context9.sent;
+                versionData = _context12.sent;
                 ancestor = versionData ? versionData.refs[ref] : null;
                 ancestors = ancestor ? [ancestor] : [];
 
                 if (!expectedPrevVersion) {
-                  _context9.next = 23;
+                  _context12.next = 23;
                   break;
                 }
 
                 if (versionData) {
-                  _context9.next = 21;
+                  _context12.next = 21;
                   break;
                 }
 
-                throw new Error("Trying to store " + name + " on top of expected version " + expectedPrevVersion + " but no version entry exists!");
+                throw new Error("Trying to store \"" + type + "/" + name + "\" on top of expected version " + expectedPrevVersion + " but no version entry exists!");
 
               case 21:
                 if (!(ancestor !== expectedPrevVersion)) {
-                  _context9.next = 23;
+                  _context12.next = 23;
                   break;
                 }
 
-                throw new Error("Trying to store " + name + " on top of expected version " + expectedPrevVersion + " but ref " + ref + " is of version " + ancestor + "!");
+                throw new Error("Trying to store \"" + type + "/" + name + "\" on top of expected version " + expectedPrevVersion + " but ref " + ref + " is of version " + ancestor + "!");
 
               case 23:
 
@@ -38245,67 +38390,67 @@ var ObjectDB = function () {
                 if (!versionData) versionData = { refs: {}, history: {} };
                 versionData.refs[ref] = commit._id;
                 versionData.history[commit._id] = ancestors;
-                _context9.next = 29;
+                _context12.next = 29;
                 return versionDB.set(type + "/" + name, versionData);
 
               case 29:
-                _context9.t1 = this.__commitDB;
+                _context12.t1 = this.__commitDB;
 
-                if (_context9.t1) {
-                  _context9.next = 34;
+                if (_context12.t1) {
+                  _context12.next = 34;
                   break;
                 }
 
-                _context9.next = 33;
+                _context12.next = 33;
                 return this._commitDB();
 
               case 33:
-                _context9.t1 = _context9.sent;
+                _context12.t1 = _context12.sent;
 
               case 34:
-                commitDB = _context9.t1;
-                _context9.next = 37;
+                commitDB = _context12.t1;
+                _context12.next = 37;
                 return commitDB.set(commit._id, commit);
 
               case 37:
-                commit = _context9.sent;
+                commit = _context12.sent;
 
 
                 // write snapshot to resource
                 res = this.snapshotResourceFor(commit);
-                _context9.next = 41;
+                _context12.next = 41;
                 return res.parent().ensureExistance();
 
               case 41:
                 if (!res.canDealWithJSON) {
-                  _context9.next = 46;
+                  _context12.next = 46;
                   break;
                 }
 
-                _context9.next = 44;
+                _context12.next = 44;
                 return res.writeJson(snapshot);
 
               case 44:
-                _context9.next = 48;
+                _context12.next = 48;
                 break;
 
               case 46:
-                _context9.next = 48;
+                _context12.next = 48;
                 return res.write(snapshotJson);
 
               case 48:
-                return _context9.abrupt("return", commit);
+                return _context12.abrupt("return", commit);
 
               case 49:
               case "end":
-                return _context9.stop();
+                return _context12.stop();
             }
           }
-        }, _callee9, this);
+        }, _callee12, this);
       }));
 
-      function commitSnapshot(_x25, _x26, _x27, _x28) {
-        return _ref14.apply(this, arguments);
+      function commitSnapshot(_x29, _x30, _x31, _x32) {
+        return _ref17.apply(this, arguments);
       }
 
       return commitSnapshot;
@@ -38313,73 +38458,73 @@ var ObjectDB = function () {
   }, {
     key: "loadSnapshot",
     value: function () {
-      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(type, name, commitOrId) {
+      var _ref18 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(type, name, commitOrId) {
         var ref = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : "HEAD";
         var commit, commitDB;
-        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+        return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
-            switch (_context10.prev = _context10.next) {
+            switch (_context13.prev = _context13.next) {
               case 0:
                 commit = void 0;
 
                 if (!(commitOrId && typeof commitOrId !== "string")) {
-                  _context10.next = 5;
+                  _context13.next = 5;
                   break;
                 }
 
                 commit = commitOrId;
-                _context10.next = 20;
+                _context13.next = 20;
                 break;
 
               case 5:
                 if (!commitOrId) {
-                  _context10.next = 17;
+                  _context13.next = 17;
                   break;
                 }
 
-                _context10.t0 = this.__commitDB;
+                _context13.t0 = this.__commitDB;
 
-                if (_context10.t0) {
-                  _context10.next = 11;
+                if (_context13.t0) {
+                  _context13.next = 11;
                   break;
                 }
 
-                _context10.next = 10;
+                _context13.next = 10;
                 return this._commitDB();
 
               case 10:
-                _context10.t0 = _context10.sent;
+                _context13.t0 = _context13.sent;
 
               case 11:
-                commitDB = _context10.t0;
-                _context10.next = 14;
+                commitDB = _context13.t0;
+                _context13.next = 14;
                 return commitDB.get(commitOrId);
 
               case 14:
-                commit = _context10.sent;
-                _context10.next = 20;
+                commit = _context13.sent;
+                _context13.next = 20;
                 break;
 
               case 17:
-                _context10.next = 19;
+                _context13.next = 19;
                 return this.getLatestCommit(type, name, ref);
 
               case 19:
-                commit = _context10.sent;
+                commit = _context13.sent;
 
               case 20:
-                return _context10.abrupt("return", this.snapshotResourceFor(commit).readJson());
+                return _context13.abrupt("return", this.snapshotResourceFor(commit).readJson());
 
               case 21:
               case "end":
-                return _context10.stop();
+                return _context13.stop();
             }
           }
-        }, _callee10, this);
+        }, _callee13, this);
       }));
 
-      function loadSnapshot(_x30, _x31, _x32) {
-        return _ref15.apply(this, arguments);
+      function loadSnapshot(_x34, _x35, _x36) {
+        return _ref18.apply(this, arguments);
       }
 
       return loadSnapshot;
@@ -38411,42 +38556,42 @@ var ObjectDB = function () {
   }, {
     key: "_commitDB",
     value: function () {
-      var _ref16 = asyncToGenerator(regeneratorRuntime.mark(function _callee11() {
+      var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
         var dbName, db, hasIndexes, nameIndex, nameAndTimestampIndex, nameWithMaxMinTimestamp;
-        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+        return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
-            switch (_context11.prev = _context11.next) {
+            switch (_context14.prev = _context14.next) {
               case 0:
                 if (!this.__commitDB) {
-                  _context11.next = 2;
+                  _context14.next = 2;
                   break;
                 }
 
-                return _context11.abrupt("return", this.__commitDB);
+                return _context14.abrupt("return", this.__commitDB);
 
               case 2:
                 dbName = "commits-" + this.name, db = Database.findDB(dbName);
 
                 if (!db) {
-                  _context11.next = 5;
+                  _context14.next = 5;
                   break;
                 }
 
-                return _context11.abrupt("return", this.__commitDB = db);
+                return _context14.abrupt("return", this.__commitDB = db);
 
               case 5:
 
                 db = Database.ensureDB(dbName);
 
                 // prepare indexes
-                _context11.next = 8;
+                _context14.next = 8;
                 return Promise.all([db.has("_design/name_index"), db.has("_design/nameAndTimestamp_index"), db.has("_design/nameWithMaxMinTimestamp_index")]);
 
               case 8:
-                hasIndexes = _context11.sent;
+                hasIndexes = _context14.sent;
 
                 if (hasIndexes.every(Boolean)) {
-                  _context11.next = 16;
+                  _context14.next = 16;
                   break;
                 }
 
@@ -38463,26 +38608,26 @@ var ObjectDB = function () {
                     'nameWithMaxMinTimestamp_index': {
                       map: "doc => emit(`${doc.type}\0${doc.name}`, doc.timestamp)",
                       reduce: "_stats" } } };
-                _context11.next = 14;
+                _context14.next = 14;
                 return db.setDocuments([nameIndex, nameAndTimestampIndex, nameWithMaxMinTimestamp]);
 
               case 14:
-                _context11.next = 16;
+                _context14.next = 16;
                 return Promise.all([db.pouchdb.query('name_index', { stale: 'update_after' }), db.pouchdb.query('nameAndTimestamp_index', { stale: 'update_after' }), db.pouchdb.query("nameWithMaxMinTimestamp_index", { stale: 'update_after' })]);
 
               case 16:
-                return _context11.abrupt("return", this.__commitDB = db);
+                return _context14.abrupt("return", this.__commitDB = db);
 
               case 17:
               case "end":
-                return _context11.stop();
+                return _context14.stop();
             }
           }
-        }, _callee11, this);
+        }, _callee14, this);
       }));
 
       function _commitDB() {
-        return _ref16.apply(this, arguments);
+        return _ref19.apply(this, arguments);
       }
 
       return _commitDB;
@@ -38494,44 +38639,44 @@ var ObjectDB = function () {
   }, {
     key: "versionGraph",
     value: function () {
-      var _ref17 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(type, objectName) {
+      var _ref20 = asyncToGenerator(regeneratorRuntime.mark(function _callee15(type, objectName) {
         var versionDB, graph;
-        return regeneratorRuntime.wrap(function _callee12$(_context12) {
+        return regeneratorRuntime.wrap(function _callee15$(_context15) {
           while (1) {
-            switch (_context12.prev = _context12.next) {
+            switch (_context15.prev = _context15.next) {
               case 0:
-                _context12.t0 = this.__versionDB;
+                _context15.t0 = this.__versionDB;
 
-                if (_context12.t0) {
-                  _context12.next = 5;
+                if (_context15.t0) {
+                  _context15.next = 5;
                   break;
                 }
 
-                _context12.next = 4;
+                _context15.next = 4;
                 return this._versionDB();
 
               case 4:
-                _context12.t0 = _context12.sent;
+                _context15.t0 = _context15.sent;
 
               case 5:
-                versionDB = _context12.t0;
-                _context12.next = 8;
+                versionDB = _context15.t0;
+                _context15.next = 8;
                 return versionDB.get(type + "/" + objectName);
 
               case 8:
-                graph = _context12.sent;
-                return _context12.abrupt("return", !graph || graph.deleted ? null : graph);
+                graph = _context15.sent;
+                return _context15.abrupt("return", !graph || graph.deleted ? null : graph);
 
               case 10:
               case "end":
-                return _context12.stop();
+                return _context15.stop();
             }
           }
-        }, _callee12, this);
+        }, _callee15, this);
       }));
 
-      function versionGraph(_x36, _x37) {
-        return _ref17.apply(this, arguments);
+      function versionGraph(_x40, _x41) {
+        return _ref20.apply(this, arguments);
       }
 
       return versionGraph;
@@ -38539,28 +38684,28 @@ var ObjectDB = function () {
   }, {
     key: "_log",
     value: function () {
-      var _ref18 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(type, objectName) {
+      var _ref21 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(type, objectName) {
         var ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "HEAD";
         var limit = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : Infinity;
 
-        var data, version, history, _ref19, _ref20;
+        var data, version, history, _ref22, _ref23;
 
-        return regeneratorRuntime.wrap(function _callee13$(_context13) {
+        return regeneratorRuntime.wrap(function _callee16$(_context16) {
           while (1) {
-            switch (_context13.prev = _context13.next) {
+            switch (_context16.prev = _context16.next) {
               case 0:
-                _context13.next = 2;
+                _context16.next = 2;
                 return this.versionGraph(type, objectName);
 
               case 2:
-                data = _context13.sent;
+                data = _context16.sent;
 
                 if (!(!data || data.deleted)) {
-                  _context13.next = 5;
+                  _context16.next = 5;
                   break;
                 }
 
-                return _context13.abrupt("return", []);
+                return _context16.abrupt("return", []);
 
               case 5:
                 version = data.refs.HEAD, history = [];
@@ -38569,7 +38714,7 @@ var ObjectDB = function () {
                 
 
                 if (!history.includes(version)) {
-                  _context13.next = 9;
+                  _context16.next = 9;
                   break;
                 }
 
@@ -38578,34 +38723,34 @@ var ObjectDB = function () {
               case 9:
                 history.push(version);
                 // FIXME what about multiple ancestors?
-                _ref19 = data.history[version] || [];
-                _ref20 = slicedToArray(_ref19, 1);
-                version = _ref20[0];
+                _ref22 = data.history[version] || [];
+                _ref23 = slicedToArray(_ref22, 1);
+                version = _ref23[0];
 
                 if (!(!version || history.length >= limit)) {
-                  _context13.next = 15;
+                  _context16.next = 15;
                   break;
                 }
 
-                return _context13.abrupt("break", 17);
+                return _context16.abrupt("break", 17);
 
               case 15:
-                _context13.next = 6;
+                _context16.next = 6;
                 break;
 
               case 17:
-                return _context13.abrupt("return", history);
+                return _context16.abrupt("return", history);
 
               case 18:
               case "end":
-                return _context13.stop();
+                return _context16.stop();
             }
           }
-        }, _callee13, this);
+        }, _callee16, this);
       }));
 
-      function _log(_x38, _x39) {
-        return _ref18.apply(this, arguments);
+      function _log(_x42, _x43) {
+        return _ref21.apply(this, arguments);
       }
 
       return _log;
@@ -38613,14 +38758,14 @@ var ObjectDB = function () {
   }, {
     key: "_findTimestampedVersionsOfObjectNamed",
     value: function () {
-      var _ref21 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(objectName) {
+      var _ref24 = asyncToGenerator(regeneratorRuntime.mark(function _callee17(objectName) {
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-        var _options$include_docs, include_docs, _options$descending, descending, _options$startTime, startTime, _options$endTime, endTime, startkey, endkey, objectDB, _ref22, rows;
+        var _options$include_docs, include_docs, _options$descending, descending, _options$startTime, startTime, _options$endTime, endTime, startkey, endkey, objectDB, _ref25, rows;
 
-        return regeneratorRuntime.wrap(function _callee14$(_context14) {
+        return regeneratorRuntime.wrap(function _callee17$(_context17) {
           while (1) {
-            switch (_context14.prev = _context14.next) {
+            switch (_context17.prev = _context17.next) {
               case 0:
                 _options$include_docs = options.include_docs;
                 include_docs = _options$include_docs === undefined ? true : _options$include_docs;
@@ -38632,22 +38777,22 @@ var ObjectDB = function () {
                 endTime = _options$endTime === undefined ? "9".repeat(13) : _options$endTime;
                 startkey = objectName + "\0" + (descending ? endTime : startTime);
                 endkey = objectName + "\0" + (descending ? startTime : endTime);
-                _context14.t0 = this.__commitDB;
+                _context17.t0 = this.__commitDB;
 
-                if (_context14.t0) {
-                  _context14.next = 15;
+                if (_context17.t0) {
+                  _context17.next = 15;
                   break;
                 }
 
-                _context14.next = 14;
+                _context17.next = 14;
                 return this._commitDB();
 
               case 14:
-                _context14.t0 = _context14.sent;
+                _context17.t0 = _context17.sent;
 
               case 15:
-                objectDB = _context14.t0;
-                _context14.next = 18;
+                objectDB = _context17.t0;
+                _context17.next = 18;
                 return objectDB.pouchdb.query("nameAndTimestamp_index", _extends({}, options, {
                   descending: descending,
                   include_docs: include_docs,
@@ -38656,9 +38801,9 @@ var ObjectDB = function () {
                 }));
 
               case 18:
-                _ref22 = _context14.sent;
-                rows = _ref22.rows;
-                return _context14.abrupt("return", include_docs ? rows.map(function (ea) {
+                _ref25 = _context17.sent;
+                rows = _ref25.rows;
+                return _context17.abrupt("return", include_docs ? rows.map(function (ea) {
                   return ea.doc;
                 }) : rows.map(function (ea) {
                   return ea.id;
@@ -38666,14 +38811,14 @@ var ObjectDB = function () {
 
               case 21:
               case "end":
-                return _context14.stop();
+                return _context17.stop();
             }
           }
-        }, _callee14, this);
+        }, _callee17, this);
       }));
 
-      function _findTimestampedVersionsOfObjectNamed(_x42) {
-        return _ref21.apply(this, arguments);
+      function _findTimestampedVersionsOfObjectNamed(_x46) {
+        return _ref24.apply(this, arguments);
       }
 
       return _findTimestampedVersionsOfObjectNamed;
@@ -38681,28 +38826,28 @@ var ObjectDB = function () {
   }, {
     key: "_versionDB",
     value: function () {
-      var _ref23 = asyncToGenerator(regeneratorRuntime.mark(function _callee15() {
+      var _ref26 = asyncToGenerator(regeneratorRuntime.mark(function _callee18() {
         var dbName, db;
-        return regeneratorRuntime.wrap(function _callee15$(_context15) {
+        return regeneratorRuntime.wrap(function _callee18$(_context18) {
           while (1) {
-            switch (_context15.prev = _context15.next) {
+            switch (_context18.prev = _context18.next) {
               case 0:
                 if (!this.__versionDB) {
-                  _context15.next = 2;
+                  _context18.next = 2;
                   break;
                 }
 
-                return _context15.abrupt("return", this.__versionDB);
+                return _context18.abrupt("return", this.__versionDB);
 
               case 2:
                 dbName = "version-graph-" + this.name, db = Database.findDB(dbName);
 
                 if (!db) {
-                  _context15.next = 5;
+                  _context18.next = 5;
                   break;
                 }
 
-                return _context15.abrupt("return", this.__versionDB = db);
+                return _context18.abrupt("return", this.__versionDB = db);
 
               case 5:
                 db = Database.ensureDB(dbName);
@@ -38713,18 +38858,18 @@ var ObjectDB = function () {
                 // db.setDocuments([typeAndNameIndex]);
                 // await Promise.alll([db.pouchdb.query('type_name_index', {stale: 'update_after'})]);
 
-                return _context15.abrupt("return", this.__versionDB = db);
+                return _context18.abrupt("return", this.__versionDB = db);
 
               case 7:
               case "end":
-                return _context15.stop();
+                return _context18.stop();
             }
           }
-        }, _callee15, this);
+        }, _callee18, this);
       }));
 
       function _versionDB() {
-        return _ref23.apply(this, arguments);
+        return _ref26.apply(this, arguments);
       }
 
       return _versionDB;
@@ -38736,62 +38881,60 @@ var ObjectDB = function () {
   }, {
     key: "exportToDir",
     value: function () {
-      var _ref24 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(exportDir, nameAndTypes) {
+      var _ref27 = asyncToGenerator(regeneratorRuntime.mark(function _callee19(exportDir, nameAndTypes) {
         var _this = this;
 
         var copyResources = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
         var commitDB, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _loop, _iterator2, _step2;
 
-        return regeneratorRuntime.wrap(function _callee16$(_context17) {
+        return regeneratorRuntime.wrap(function _callee19$(_context20) {
           while (1) {
-            switch (_context17.prev = _context17.next) {
+            switch (_context20.prev = _context20.next) {
               case 0:
-                _context17.t0 = this.__commitDB;
+                _context20.t0 = this.__commitDB;
 
-                if (_context17.t0) {
-                  _context17.next = 5;
+                if (_context20.t0) {
+                  _context20.next = 5;
                   break;
                 }
 
-                _context17.next = 4;
+                _context20.next = 4;
                 return this._commitDB();
 
               case 4:
-                _context17.t0 = _context17.sent;
+                _context20.t0 = _context20.sent;
 
               case 5:
-                commitDB = _context17.t0;
+                commitDB = _context20.t0;
                 ;
                 _iteratorNormalCompletion2 = true;
                 _didIteratorError2 = false;
                 _iteratorError2 = undefined;
-                _context17.prev = 10;
+                _context20.prev = 10;
                 _loop = regeneratorRuntime.mark(function _loop() {
-                  var _ref25, name, type, currentExportDir, _ref26, refs, history, commitIds, commits, resourcesForCopy, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, _ref28, from, to;
+                  var _ref28, name, type, currentExportDir, _ref29, refs, history, commitIds, commits, resourcesForCopy, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, _ref31, from, to;
 
-                  return regeneratorRuntime.wrap(function _loop$(_context16) {
+                  return regeneratorRuntime.wrap(function _loop$(_context19) {
                     while (1) {
-                      switch (_context16.prev = _context16.next) {
+                      switch (_context19.prev = _context19.next) {
                         case 0:
-                          _ref25 = _step2.value;
-                          name = _ref25.name, type = _ref25.type;
+                          _ref28 = _step2.value;
+                          name = _ref28.name, type = _ref28.type;
                           currentExportDir = exportDir.join(type).join(name);
-                          _context16.next = 5;
+                          _context19.next = 5;
                           return _this.versionGraph(type, name);
 
                         case 5:
-                          _ref26 = _context16.sent;
-                          refs = _ref26.refs;
-                          history = _ref26.history;
+                          _ref29 = _context19.sent;
+                          refs = _ref29.refs;
+                          history = _ref29.history;
                           commitIds = Object.keys(history);
-                          _context16.next = 11;
-                          return commitDB.getDocuments(commitIds.map(function (id) {
-                            return { id: id };
-                          }));
+                          _context19.next = 11;
+                          return _this.getCommitsWithIds(commitIds);
 
                         case 11:
-                          commits = _context16.sent;
+                          commits = _context19.sent;
                           resourcesForCopy = copyResources ? commits.map(function (commit) {
                             delete commit._rev;
                             var from = _this.snapshotResourceFor(commit),
@@ -38803,77 +38946,77 @@ var ObjectDB = function () {
                           if (!copyResources) commits.forEach(function (commit) {
                             delete commit._rev;
                           });
-                          _context16.next = 16;
+                          _context19.next = 16;
                           return currentExportDir.join("index.json").writeJson({ name: name, type: type });
 
                         case 16:
-                          _context16.next = 18;
+                          _context19.next = 18;
                           return currentExportDir.join("commits.json").writeJson(commits);
 
                         case 18:
-                          _context16.next = 20;
+                          _context19.next = 20;
                           return currentExportDir.join("history.json").writeJson({ refs: refs, history: history });
 
                         case 20:
                           _iteratorNormalCompletion3 = true;
                           _didIteratorError3 = false;
                           _iteratorError3 = undefined;
-                          _context16.prev = 23;
+                          _context19.prev = 23;
                           _iterator3 = resourcesForCopy[Symbol.iterator]();
 
                         case 25:
                           if (_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done) {
-                            _context16.next = 33;
+                            _context19.next = 33;
                             break;
                           }
 
-                          _ref28 = _step3.value;
-                          from = _ref28.from, to = _ref28.to;
-                          _context16.next = 30;
+                          _ref31 = _step3.value;
+                          from = _ref31.from, to = _ref31.to;
+                          _context19.next = 30;
                           return from.copyTo(to);
 
                         case 30:
                           _iteratorNormalCompletion3 = true;
-                          _context16.next = 25;
+                          _context19.next = 25;
                           break;
 
                         case 33:
-                          _context16.next = 39;
+                          _context19.next = 39;
                           break;
 
                         case 35:
-                          _context16.prev = 35;
-                          _context16.t0 = _context16["catch"](23);
+                          _context19.prev = 35;
+                          _context19.t0 = _context19["catch"](23);
                           _didIteratorError3 = true;
-                          _iteratorError3 = _context16.t0;
+                          _iteratorError3 = _context19.t0;
 
                         case 39:
-                          _context16.prev = 39;
-                          _context16.prev = 40;
+                          _context19.prev = 39;
+                          _context19.prev = 40;
 
                           if (!_iteratorNormalCompletion3 && _iterator3.return) {
                             _iterator3.return();
                           }
 
                         case 42:
-                          _context16.prev = 42;
+                          _context19.prev = 42;
 
                           if (!_didIteratorError3) {
-                            _context16.next = 45;
+                            _context19.next = 45;
                             break;
                           }
 
                           throw _iteratorError3;
 
                         case 45:
-                          return _context16.finish(42);
+                          return _context19.finish(42);
 
                         case 46:
-                          return _context16.finish(39);
+                          return _context19.finish(39);
 
                         case 47:
                         case "end":
-                          return _context16.stop();
+                          return _context19.stop();
                       }
                     }
                   }, _loop, _this, [[23, 35, 39, 47], [40,, 42, 46]]);
@@ -38882,61 +39025,61 @@ var ObjectDB = function () {
 
               case 13:
                 if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
-                  _context17.next = 18;
+                  _context20.next = 18;
                   break;
                 }
 
-                return _context17.delegateYield(_loop(), "t1", 15);
+                return _context20.delegateYield(_loop(), "t1", 15);
 
               case 15:
                 _iteratorNormalCompletion2 = true;
-                _context17.next = 13;
+                _context20.next = 13;
                 break;
 
               case 18:
-                _context17.next = 24;
+                _context20.next = 24;
                 break;
 
               case 20:
-                _context17.prev = 20;
-                _context17.t2 = _context17["catch"](10);
+                _context20.prev = 20;
+                _context20.t2 = _context20["catch"](10);
                 _didIteratorError2 = true;
-                _iteratorError2 = _context17.t2;
+                _iteratorError2 = _context20.t2;
 
               case 24:
-                _context17.prev = 24;
-                _context17.prev = 25;
+                _context20.prev = 24;
+                _context20.prev = 25;
 
                 if (!_iteratorNormalCompletion2 && _iterator2.return) {
                   _iterator2.return();
                 }
 
               case 27:
-                _context17.prev = 27;
+                _context20.prev = 27;
 
                 if (!_didIteratorError2) {
-                  _context17.next = 30;
+                  _context20.next = 30;
                   break;
                 }
 
                 throw _iteratorError2;
 
               case 30:
-                return _context17.finish(27);
+                return _context20.finish(27);
 
               case 31:
-                return _context17.finish(24);
+                return _context20.finish(24);
 
               case 32:
               case "end":
-                return _context17.stop();
+                return _context20.stop();
             }
           }
-        }, _callee16, this, [[10, 20, 24, 32], [25,, 27, 31]]);
+        }, _callee19, this, [[10, 20, 24, 32], [25,, 27, 31]]);
       }));
 
-      function exportToDir(_x44, _x45) {
-        return _ref24.apply(this, arguments);
+      function exportToDir(_x48, _x49) {
+        return _ref27.apply(this, arguments);
       }
 
       return exportToDir;
@@ -38944,53 +39087,38 @@ var ObjectDB = function () {
   }, {
     key: "exportToSpecs",
     value: function () {
-      var _ref29 = asyncToGenerator(regeneratorRuntime.mark(function _callee17(nameAndTypes) {
-        var specs, commitDB, stats, type, name, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, _ref31, _name, _type2, _ref32, refs, history, commitIds, commits;
+      var _ref32 = asyncToGenerator(regeneratorRuntime.mark(function _callee20(nameAndTypes) {
+        var specs, stats, type, name, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, _ref34, _name, _type2, _ref35, refs, history, commitIds, commits;
 
-        return regeneratorRuntime.wrap(function _callee17$(_context18) {
+        return regeneratorRuntime.wrap(function _callee20$(_context21) {
           while (1) {
-            switch (_context18.prev = _context18.next) {
+            switch (_context21.prev = _context21.next) {
               case 0:
+                // note: only version data, no snapshots!
                 specs = [];
-                _context18.t0 = this.__commitDB;
-
-                if (_context18.t0) {
-                  _context18.next = 6;
-                  break;
-                }
-
-                _context18.next = 5;
-                return this._commitDB();
-
-              case 5:
-                _context18.t0 = _context18.sent;
-
-              case 6:
-                commitDB = _context18.t0;
-                ;
 
                 if (nameAndTypes) {
-                  _context18.next = 17;
+                  _context21.next = 10;
                   break;
                 }
 
                 // = everything
                 nameAndTypes = [];
-                _context18.next = 12;
+                _context21.next = 5;
                 return this.objectStats();
 
-              case 12:
-                _context18.t1 = _context18.sent;
+              case 5:
+                _context21.t0 = _context21.sent;
 
-                if (_context18.t1) {
-                  _context18.next = 15;
+                if (_context21.t0) {
+                  _context21.next = 8;
                   break;
                 }
 
-                _context18.t1 = {};
+                _context21.t0 = {};
 
-              case 15:
-                stats = _context18.t1;
+              case 8:
+                stats = _context21.t0;
 
                 for (type in stats) {
                   for (name in stats[type]) {
@@ -38998,94 +39126,92 @@ var ObjectDB = function () {
                   }
                 }
 
-              case 17:
+              case 10:
                 _iteratorNormalCompletion4 = true;
                 _didIteratorError4 = false;
                 _iteratorError4 = undefined;
-                _context18.prev = 20;
+                _context21.prev = 13;
                 _iterator4 = nameAndTypes[Symbol.iterator]();
 
-              case 22:
+              case 15:
                 if (_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done) {
-                  _context18.next = 39;
+                  _context21.next = 32;
                   break;
                 }
 
-                _ref31 = _step4.value;
-                _name = _ref31.name, _type2 = _ref31.type;
-                _context18.next = 27;
+                _ref34 = _step4.value;
+                _name = _ref34.name, _type2 = _ref34.type;
+                _context21.next = 20;
                 return this.versionGraph(_type2, _name);
 
-              case 27:
-                _ref32 = _context18.sent;
-                refs = _ref32.refs;
-                history = _ref32.history;
+              case 20:
+                _ref35 = _context21.sent;
+                refs = _ref35.refs;
+                history = _ref35.history;
                 commitIds = Object.keys(history);
-                _context18.next = 33;
-                return commitDB.getDocuments(commitIds.map(function (id) {
-                  return { id: id };
-                }));
+                _context21.next = 26;
+                return this.getCommitsWithIds(commitIds);
 
-              case 33:
-                commits = _context18.sent;
+              case 26:
+                commits = _context21.sent;
 
                 commits.forEach(function (commit) {
                   delete commit._rev;
                 });
                 specs.push({ type: _type2, name: _name, commits: commits, history: { refs: refs, history: history } });
 
-              case 36:
+              case 29:
                 _iteratorNormalCompletion4 = true;
-                _context18.next = 22;
+                _context21.next = 15;
                 break;
 
-              case 39:
-                _context18.next = 45;
+              case 32:
+                _context21.next = 38;
                 break;
 
-              case 41:
-                _context18.prev = 41;
-                _context18.t2 = _context18["catch"](20);
+              case 34:
+                _context21.prev = 34;
+                _context21.t1 = _context21["catch"](13);
                 _didIteratorError4 = true;
-                _iteratorError4 = _context18.t2;
+                _iteratorError4 = _context21.t1;
 
-              case 45:
-                _context18.prev = 45;
-                _context18.prev = 46;
+              case 38:
+                _context21.prev = 38;
+                _context21.prev = 39;
 
                 if (!_iteratorNormalCompletion4 && _iterator4.return) {
                   _iterator4.return();
                 }
 
-              case 48:
-                _context18.prev = 48;
+              case 41:
+                _context21.prev = 41;
 
                 if (!_didIteratorError4) {
-                  _context18.next = 51;
+                  _context21.next = 44;
                   break;
                 }
 
                 throw _iteratorError4;
 
-              case 51:
-                return _context18.finish(48);
+              case 44:
+                return _context21.finish(41);
 
-              case 52:
-                return _context18.finish(45);
+              case 45:
+                return _context21.finish(38);
 
-              case 53:
-                return _context18.abrupt("return", specs);
+              case 46:
+                return _context21.abrupt("return", specs);
 
-              case 54:
+              case 47:
               case "end":
-                return _context18.stop();
+                return _context21.stop();
             }
           }
-        }, _callee17, this, [[20, 41, 45, 53], [46,, 48, 52]]);
+        }, _callee20, this, [[13, 34, 38, 46], [39,, 41, 45]]);
       }));
 
-      function exportToSpecs(_x47) {
-        return _ref29.apply(this, arguments);
+      function exportToSpecs(_x51) {
+        return _ref32.apply(this, arguments);
       }
 
       return exportToSpecs;
@@ -39093,81 +39219,81 @@ var ObjectDB = function () {
   }, {
     key: "importFromDir",
     value: function () {
-      var _ref33 = asyncToGenerator(regeneratorRuntime.mark(function _callee19(importDir) {
+      var _ref36 = asyncToGenerator(regeneratorRuntime.mark(function _callee22(importDir) {
         var overwrite = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         var findImportDataIn = function () {
-          var _ref34 = asyncToGenerator(regeneratorRuntime.mark(function _callee18(dir) {
-            var _ref35, _ref36, _ref36$, type, name, commits, history, snapshotDirs;
+          var _ref37 = asyncToGenerator(regeneratorRuntime.mark(function _callee21(dir) {
+            var _ref38, _ref39, _ref39$, type, name, commits, history, snapshotDirs;
 
-            return regeneratorRuntime.wrap(function _callee18$(_context19) {
+            return regeneratorRuntime.wrap(function _callee21$(_context22) {
               while (1) {
-                switch (_context19.prev = _context19.next) {
+                switch (_context22.prev = _context22.next) {
                   case 0:
-                    _context19.next = 2;
+                    _context22.next = 2;
                     return Promise.all([dir.join("index.json").readJson(), dir.join("commits.json").readJson(), dir.join("history.json").readJson()]);
 
                   case 2:
-                    _ref35 = _context19.sent;
-                    _ref36 = slicedToArray(_ref35, 3);
-                    _ref36$ = _ref36[0];
-                    type = _ref36$.type;
-                    name = _ref36$.name;
-                    commits = _ref36[1];
-                    history = _ref36[2];
+                    _ref38 = _context22.sent;
+                    _ref39 = slicedToArray(_ref38, 3);
+                    _ref39$ = _ref39[0];
+                    type = _ref39$.type;
+                    name = _ref39$.name;
+                    commits = _ref39[1];
+                    history = _ref39[2];
 
                     if (!copyResources) {
-                      _context19.next = 15;
+                      _context22.next = 15;
                       break;
                     }
 
-                    _context19.next = 12;
+                    _context22.next = 12;
                     return dir.dirList(1, { exclude: function exclude(ea) {
                         return !ea.isDirectory();
                       } });
 
                   case 12:
-                    _context19.t0 = _context19.sent;
-                    _context19.next = 16;
+                    _context22.t0 = _context22.sent;
+                    _context22.next = 16;
                     break;
 
                   case 15:
-                    _context19.t0 = [];
+                    _context22.t0 = [];
 
                   case 16:
-                    snapshotDirs = _context19.t0;
-                    return _context19.abrupt("return", { dir: dir, type: type, name: name, commits: commits, history: history, snapshotDirs: snapshotDirs });
+                    snapshotDirs = _context22.t0;
+                    return _context22.abrupt("return", { dir: dir, type: type, name: name, commits: commits, history: history, snapshotDirs: snapshotDirs });
 
                   case 18:
                   case "end":
-                    return _context19.stop();
+                    return _context22.stop();
                 }
               }
-            }, _callee18, this);
+            }, _callee21, this);
           }));
 
-          return function findImportDataIn(_x51) {
-            return _ref34.apply(this, arguments);
+          return function findImportDataIn(_x55) {
+            return _ref37.apply(this, arguments);
           };
         }();
 
         var copyResources = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
-        var indexes, dirs, versionDB, commitDB, snapshotLocation, importSpecs, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, dir;
+        var indexes, dirs, snapshotLocation, importSpecs, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, dir;
 
-        return regeneratorRuntime.wrap(function _callee19$(_context20) {
+        return regeneratorRuntime.wrap(function _callee22$(_context23) {
           while (1) {
-            switch (_context20.prev = _context20.next) {
+            switch (_context23.prev = _context23.next) {
               case 0:
-                _context20.next = 2;
+                _context23.next = 2;
                 return importDir.dirList(3, { exclude: function exclude(ea) {
                     return ea.name() !== "index.json";
                   } });
 
               case 2:
-                indexes = _context20.sent;
+                indexes = _context23.sent;
 
                 indexes = indexes.filter(function (ea) {
                   return ea.name() === "index.json";
@@ -39175,115 +39301,84 @@ var ObjectDB = function () {
                 dirs = indexes.map(function (ea) {
                   return ea.parent();
                 });
-                _context20.t0 = this.__versionDB;
-
-                if (_context20.t0) {
-                  _context20.next = 10;
-                  break;
-                }
-
-                _context20.next = 9;
-                return this._versionDB();
-
-              case 9:
-                _context20.t0 = _context20.sent;
-
-              case 10:
-                versionDB = _context20.t0;
-                _context20.t1 = this.__commitDB;
-
-                if (_context20.t1) {
-                  _context20.next = 16;
-                  break;
-                }
-
-                _context20.next = 15;
-                return this._commitDB();
-
-              case 15:
-                _context20.t1 = _context20.sent;
-
-              case 16:
-                commitDB = _context20.t1;
-                snapshotLocation = this.snapshotLocation;
-                importSpecs = [];
-
+                snapshotLocation = this.snapshotLocation, importSpecs = [];
 
                 // 2. retrieve import data
+
                 _iteratorNormalCompletion5 = true;
                 _didIteratorError5 = false;
                 _iteratorError5 = undefined;
-                _context20.prev = 22;
+                _context23.prev = 9;
                 _iterator5 = dirs[Symbol.iterator]();
 
-              case 24:
+              case 11:
                 if (_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done) {
-                  _context20.next = 34;
+                  _context23.next = 21;
                   break;
                 }
 
                 dir = _step5.value;
-                _context20.t2 = importSpecs;
-                _context20.next = 29;
+                _context23.t0 = importSpecs;
+                _context23.next = 16;
                 return findImportDataIn(dir);
 
-              case 29:
-                _context20.t3 = _context20.sent;
+              case 16:
+                _context23.t1 = _context23.sent;
 
-                _context20.t2.push.call(_context20.t2, _context20.t3);
+                _context23.t0.push.call(_context23.t0, _context23.t1);
 
-              case 31:
+              case 18:
                 _iteratorNormalCompletion5 = true;
-                _context20.next = 24;
+                _context23.next = 11;
                 break;
 
-              case 34:
-                _context20.next = 40;
+              case 21:
+                _context23.next = 27;
                 break;
 
-              case 36:
-                _context20.prev = 36;
-                _context20.t4 = _context20["catch"](22);
+              case 23:
+                _context23.prev = 23;
+                _context23.t2 = _context23["catch"](9);
                 _didIteratorError5 = true;
-                _iteratorError5 = _context20.t4;
+                _iteratorError5 = _context23.t2;
 
-              case 40:
-                _context20.prev = 40;
-                _context20.prev = 41;
+              case 27:
+                _context23.prev = 27;
+                _context23.prev = 28;
 
                 if (!_iteratorNormalCompletion5 && _iterator5.return) {
                   _iterator5.return();
                 }
 
-              case 43:
-                _context20.prev = 43;
+              case 30:
+                _context23.prev = 30;
 
                 if (!_didIteratorError5) {
-                  _context20.next = 46;
+                  _context23.next = 33;
                   break;
                 }
 
                 throw _iteratorError5;
 
-              case 46:
-                return _context20.finish(43);
+              case 33:
+                return _context23.finish(30);
 
-              case 47:
-                return _context20.finish(40);
+              case 34:
+                return _context23.finish(27);
 
-              case 48:
-                return _context20.abrupt("return", this.importFromSpecs(importSpecs, overwrite, copyResources));
+              case 35:
+                return _context23.abrupt("return", this.importFromSpecs(importSpecs, overwrite, copyResources));
 
-              case 49:
+              case 36:
               case "end":
-                return _context20.stop();
+                return _context23.stop();
             }
           }
-        }, _callee19, this, [[22, 36, 40, 48], [41,, 43, 47]]);
+        }, _callee22, this, [[9, 23, 27, 35], [28,, 30, 34]]);
       }));
 
-      function importFromDir(_x48) {
-        return _ref33.apply(this, arguments);
+      function importFromDir(_x52) {
+        return _ref36.apply(this, arguments);
       }
 
       return importFromDir;
@@ -39291,56 +39386,56 @@ var ObjectDB = function () {
   }, {
     key: "importFromSpecs",
     value: function () {
-      var _ref37 = asyncToGenerator(regeneratorRuntime.mark(function _callee20(specs) {
+      var _ref40 = asyncToGenerator(regeneratorRuntime.mark(function _callee23(specs) {
         var overwrite = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var copyResources = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
-        var versionDB, _iteratorNormalCompletion6, _didIteratorError6, _iteratorError6, _iterator6, _step6, _ref39, type, name, _iteratorNormalCompletion7, _didIteratorError7, _iteratorError7, _iterator7, _step7, spec;
+        var versionDB, _iteratorNormalCompletion6, _didIteratorError6, _iteratorError6, _iterator6, _step6, _ref42, type, name, _iteratorNormalCompletion7, _didIteratorError7, _iteratorError7, _iterator7, _step7, spec;
 
-        return regeneratorRuntime.wrap(function _callee20$(_context21) {
+        return regeneratorRuntime.wrap(function _callee23$(_context24) {
           while (1) {
-            switch (_context21.prev = _context21.next) {
+            switch (_context24.prev = _context24.next) {
               case 0:
                 if (overwrite) {
-                  _context21.next = 36;
+                  _context24.next = 36;
                   break;
                 }
 
-                _context21.t0 = this.__versionDB;
+                _context24.t0 = this.__versionDB;
 
-                if (_context21.t0) {
-                  _context21.next = 6;
+                if (_context24.t0) {
+                  _context24.next = 6;
                   break;
                 }
 
-                _context21.next = 5;
+                _context24.next = 5;
                 return this._versionDB();
 
               case 5:
-                _context21.t0 = _context21.sent;
+                _context24.t0 = _context24.sent;
 
               case 6:
-                versionDB = _context21.t0;
+                versionDB = _context24.t0;
                 _iteratorNormalCompletion6 = true;
                 _didIteratorError6 = false;
                 _iteratorError6 = undefined;
-                _context21.prev = 10;
+                _context24.prev = 10;
                 _iterator6 = specs[Symbol.iterator]();
 
               case 12:
                 if (_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done) {
-                  _context21.next = 22;
+                  _context24.next = 22;
                   break;
                 }
 
-                _ref39 = _step6.value;
-                type = _ref39.type, name = _ref39.name;
-                _context21.next = 17;
+                _ref42 = _step6.value;
+                type = _ref42.type, name = _ref42.name;
+                _context24.next = 17;
                 return versionDB.get(type + "/" + name);
 
               case 17:
-                if (!_context21.sent) {
-                  _context21.next = 19;
+                if (!_context24.sent) {
+                  _context24.next = 19;
                   break;
                 }
 
@@ -39348,112 +39443,112 @@ var ObjectDB = function () {
 
               case 19:
                 _iteratorNormalCompletion6 = true;
-                _context21.next = 12;
+                _context24.next = 12;
                 break;
 
               case 22:
-                _context21.next = 28;
+                _context24.next = 28;
                 break;
 
               case 24:
-                _context21.prev = 24;
-                _context21.t1 = _context21["catch"](10);
+                _context24.prev = 24;
+                _context24.t1 = _context24["catch"](10);
                 _didIteratorError6 = true;
-                _iteratorError6 = _context21.t1;
+                _iteratorError6 = _context24.t1;
 
               case 28:
-                _context21.prev = 28;
-                _context21.prev = 29;
+                _context24.prev = 28;
+                _context24.prev = 29;
 
                 if (!_iteratorNormalCompletion6 && _iterator6.return) {
                   _iterator6.return();
                 }
 
               case 31:
-                _context21.prev = 31;
+                _context24.prev = 31;
 
                 if (!_didIteratorError6) {
-                  _context21.next = 34;
+                  _context24.next = 34;
                   break;
                 }
 
                 throw _iteratorError6;
 
               case 34:
-                return _context21.finish(31);
+                return _context24.finish(31);
 
               case 35:
-                return _context21.finish(28);
+                return _context24.finish(28);
 
               case 36:
                 _iteratorNormalCompletion7 = true;
                 _didIteratorError7 = false;
                 _iteratorError7 = undefined;
-                _context21.prev = 39;
+                _context24.prev = 39;
                 _iterator7 = specs[Symbol.iterator]();
 
               case 41:
                 if (_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done) {
-                  _context21.next = 48;
+                  _context24.next = 48;
                   break;
                 }
 
                 spec = _step7.value;
-                _context21.next = 45;
+                _context24.next = 45;
                 return this.importFromSpec(spec, true, copyResources);
 
               case 45:
                 _iteratorNormalCompletion7 = true;
-                _context21.next = 41;
+                _context24.next = 41;
                 break;
 
               case 48:
-                _context21.next = 54;
+                _context24.next = 54;
                 break;
 
               case 50:
-                _context21.prev = 50;
-                _context21.t2 = _context21["catch"](39);
+                _context24.prev = 50;
+                _context24.t2 = _context24["catch"](39);
                 _didIteratorError7 = true;
-                _iteratorError7 = _context21.t2;
+                _iteratorError7 = _context24.t2;
 
               case 54:
-                _context21.prev = 54;
-                _context21.prev = 55;
+                _context24.prev = 54;
+                _context24.prev = 55;
 
                 if (!_iteratorNormalCompletion7 && _iterator7.return) {
                   _iterator7.return();
                 }
 
               case 57:
-                _context21.prev = 57;
+                _context24.prev = 57;
 
                 if (!_didIteratorError7) {
-                  _context21.next = 60;
+                  _context24.next = 60;
                   break;
                 }
 
                 throw _iteratorError7;
 
               case 60:
-                return _context21.finish(57);
+                return _context24.finish(57);
 
               case 61:
-                return _context21.finish(54);
+                return _context24.finish(54);
 
               case 62:
-                return _context21.abrupt("return", specs);
+                return _context24.abrupt("return", specs);
 
               case 63:
               case "end":
-                return _context21.stop();
+                return _context24.stop();
             }
           }
-        }, _callee20, this, [[10, 24, 28, 36], [29,, 31, 35], [39, 50, 54, 62], [55,, 57, 61]]);
+        }, _callee23, this, [[10, 24, 28, 36], [29,, 31, 35], [39, 50, 54, 62], [55,, 57, 61]]);
       }));
 
-      function importFromSpecs(_x52) {
-        return _ref37.apply(this, arguments);
+      function importFromSpecs(_x56) {
+        return _ref40.apply(this, arguments);
       }
 
       return importFromSpecs;
@@ -39461,90 +39556,90 @@ var ObjectDB = function () {
   }, {
     key: "importFromSpec",
     value: function () {
-      var _ref40 = asyncToGenerator(regeneratorRuntime.mark(function _callee21(spec) {
+      var _ref43 = asyncToGenerator(regeneratorRuntime.mark(function _callee24(spec) {
         var overwrite = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var copyResources = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
         var versionDB, commitDB, snapshotLocation, type, name, commits, history, snapshotDirs;
-        return regeneratorRuntime.wrap(function _callee21$(_context22) {
+        return regeneratorRuntime.wrap(function _callee24$(_context25) {
           while (1) {
-            switch (_context22.prev = _context22.next) {
+            switch (_context25.prev = _context25.next) {
               case 0:
-                _context22.t0 = this.__versionDB;
+                _context25.t0 = this.__versionDB;
 
-                if (_context22.t0) {
-                  _context22.next = 5;
+                if (_context25.t0) {
+                  _context25.next = 5;
                   break;
                 }
 
-                _context22.next = 4;
+                _context25.next = 4;
                 return this._versionDB();
 
               case 4:
-                _context22.t0 = _context22.sent;
+                _context25.t0 = _context25.sent;
 
               case 5:
-                versionDB = _context22.t0;
-                _context22.t1 = this.__commitDB;
+                versionDB = _context25.t0;
+                _context25.t1 = this.__commitDB;
 
-                if (_context22.t1) {
-                  _context22.next = 11;
+                if (_context25.t1) {
+                  _context25.next = 11;
                   break;
                 }
 
-                _context22.next = 10;
+                _context25.next = 10;
                 return this._commitDB();
 
               case 10:
-                _context22.t1 = _context22.sent;
+                _context25.t1 = _context25.sent;
 
               case 11:
-                commitDB = _context22.t1;
+                commitDB = _context25.t1;
                 snapshotLocation = this.snapshotLocation;
                 type = spec.type;
                 name = spec.name;
                 commits = spec.commits;
                 history = spec.history;
                 snapshotDirs = spec.snapshotDirs;
-                _context22.t2 = !overwrite;
+                _context25.t2 = !overwrite;
 
-                if (!_context22.t2) {
-                  _context22.next = 23;
+                if (!_context25.t2) {
+                  _context25.next = 23;
                   break;
                 }
 
-                _context22.next = 22;
+                _context25.next = 22;
                 return versionDB.get(type + "/" + name);
 
               case 22:
-                _context22.t2 = _context22.sent;
+                _context25.t2 = _context25.sent;
 
               case 23:
-                if (!_context22.t2) {
-                  _context22.next = 25;
+                if (!_context25.t2) {
+                  _context25.next = 25;
                   break;
                 }
 
                 throw new Error("Import failed: object " + type + "/" + name + " already exists and overwrite is not allowed");
 
               case 25:
-                _context22.next = 27;
+                _context25.next = 27;
                 return Promise.all([commitDB.setDocuments(commits), versionDB.set(type + "/" + name, history)].concat(toConsumableArray(snapshotDirs && copyResources ? snapshotDirs.map(function (ea) {
                   return ea.copyTo(snapshotLocation.join(ea.name()).asDirectory());
                 }) : [])));
 
               case 27:
-                return _context22.abrupt("return", spec);
+                return _context25.abrupt("return", spec);
 
               case 28:
               case "end":
-                return _context22.stop();
+                return _context25.stop();
             }
           }
-        }, _callee21, this);
+        }, _callee24, this);
       }));
 
-      function importFromSpec(_x55) {
-        return _ref40.apply(this, arguments);
+      function importFromSpec(_x59) {
+        return _ref43.apply(this, arguments);
       }
 
       return importFromSpec;
@@ -39552,53 +39647,53 @@ var ObjectDB = function () {
   }, {
     key: "importFromResource",
     value: function () {
-      var _ref41 = asyncToGenerator(regeneratorRuntime.mark(function _callee22(type, name, resource, commitData) {
+      var _ref44 = asyncToGenerator(regeneratorRuntime.mark(function _callee25(type, name, resource$$1, commitData) {
         var purgeHistory = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
         var snap;
-        return regeneratorRuntime.wrap(function _callee22$(_context23) {
+        return regeneratorRuntime.wrap(function _callee25$(_context26) {
           while (1) {
-            switch (_context23.prev = _context23.next) {
+            switch (_context26.prev = _context26.next) {
               case 0:
-                _context23.next = 2;
-                return resource.readJson();
+                _context26.next = 2;
+                return resource$$1.readJson();
 
               case 2:
-                snap = _context23.sent;
-                _context23.t0 = purgeHistory;
+                snap = _context26.sent;
+                _context26.t0 = purgeHistory;
 
-                if (!_context23.t0) {
-                  _context23.next = 8;
+                if (!_context26.t0) {
+                  _context26.next = 8;
                   break;
                 }
 
-                _context23.next = 7;
+                _context26.next = 7;
                 return this.has(type, name);
 
               case 7:
-                _context23.t0 = _context23.sent;
+                _context26.t0 = _context26.sent;
 
               case 8:
-                if (!_context23.t0) {
-                  _context23.next = 11;
+                if (!_context26.t0) {
+                  _context26.next = 11;
                   break;
                 }
 
-                _context23.next = 11;
+                _context26.next = 11;
                 return this.delete(type, name, false);
 
               case 11:
-                return _context23.abrupt("return", this.commitSnapshot(type, name, snap, commitData));
+                return _context26.abrupt("return", this.commitSnapshot(type, name, snap, commitData));
 
               case 12:
               case "end":
-                return _context23.stop();
+                return _context26.stop();
             }
           }
-        }, _callee22, this);
+        }, _callee25, this);
       }));
 
-      function importFromResource(_x58, _x59, _x60, _x61) {
-        return _ref41.apply(this, arguments);
+      function importFromResource(_x62, _x63, _x64, _x65) {
+        return _ref44.apply(this, arguments);
       }
 
       return importFromResource;
@@ -39610,54 +39705,54 @@ var ObjectDB = function () {
   }, {
     key: "delete",
     value: function () {
-      var _ref42 = asyncToGenerator(regeneratorRuntime.mark(function _callee23(type, name) {
+      var _ref45 = asyncToGenerator(regeneratorRuntime.mark(function _callee26(type, name) {
         var dryRun = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
-        var resources, commitDeletions, objectDB, opts, _ref43, rows, _iteratorNormalCompletion8, _didIteratorError8, _iteratorError8, _iterator8, _step8, _ref46, commit, versionDB, _ref45, _id, _rev, deletedHist;
+        var resources, commitDeletions, objectDB, opts, _ref46, rows, _iteratorNormalCompletion8, _didIteratorError8, _iteratorError8, _iterator8, _step8, _ref49, commit, versionDB, _ref48, _id, _rev, deletedHist;
 
-        return regeneratorRuntime.wrap(function _callee23$(_context24) {
+        return regeneratorRuntime.wrap(function _callee26$(_context27) {
           while (1) {
-            switch (_context24.prev = _context24.next) {
+            switch (_context27.prev = _context27.next) {
               case 0:
                 resources = [], commitDeletions = [];
 
                 // 1. meta data to delete
 
-                _context24.t0 = this.__commitDB;
+                _context27.t0 = this.__commitDB;
 
-                if (_context24.t0) {
-                  _context24.next = 6;
+                if (_context27.t0) {
+                  _context27.next = 6;
                   break;
                 }
 
-                _context24.next = 5;
+                _context27.next = 5;
                 return this._commitDB();
 
               case 5:
-                _context24.t0 = _context24.sent;
+                _context27.t0 = _context27.sent;
 
               case 6:
-                objectDB = _context24.t0;
+                objectDB = _context27.t0;
                 opts = {
                   include_docs: true,
                   startkey: type + "\0" + name + "\0",
                   endkey: type + "\0" + name + "\uFFFF"
                 };
-                _context24.next = 10;
+                _context27.next = 10;
                 return objectDB.query("nameAndTimestamp_index", opts);
 
               case 10:
-                _ref43 = _context24.sent;
-                rows = _ref43.rows;
+                _ref46 = _context27.sent;
+                rows = _ref46.rows;
                 _iteratorNormalCompletion8 = true;
                 _didIteratorError8 = false;
                 _iteratorError8 = undefined;
-                _context24.prev = 15;
+                _context27.prev = 15;
 
 
                 for (_iterator8 = rows[Symbol.iterator](); !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
-                  _ref46 = _step8.value;
-                  commit = _ref46.doc;
+                  _ref49 = _step8.value;
+                  commit = _ref49.doc;
 
                   // 2. resources to delete
                   resources.push(this.snapshotResourceFor(commit));
@@ -39665,74 +39760,74 @@ var ObjectDB = function () {
                 }
 
                 // 3. history to delete
-                _context24.next = 23;
+                _context27.next = 23;
                 break;
 
               case 19:
-                _context24.prev = 19;
-                _context24.t1 = _context24["catch"](15);
+                _context27.prev = 19;
+                _context27.t1 = _context27["catch"](15);
                 _didIteratorError8 = true;
-                _iteratorError8 = _context24.t1;
+                _iteratorError8 = _context27.t1;
 
               case 23:
-                _context24.prev = 23;
-                _context24.prev = 24;
+                _context27.prev = 23;
+                _context27.prev = 24;
 
                 if (!_iteratorNormalCompletion8 && _iterator8.return) {
                   _iterator8.return();
                 }
 
               case 26:
-                _context24.prev = 26;
+                _context27.prev = 26;
 
                 if (!_didIteratorError8) {
-                  _context24.next = 29;
+                  _context27.next = 29;
                   break;
                 }
 
                 throw _iteratorError8;
 
               case 29:
-                return _context24.finish(26);
+                return _context27.finish(26);
 
               case 30:
-                return _context24.finish(23);
+                return _context27.finish(23);
 
               case 31:
-                _context24.t2 = this.__versionDB;
+                _context27.t2 = this.__versionDB;
 
-                if (_context24.t2) {
-                  _context24.next = 36;
+                if (_context27.t2) {
+                  _context27.next = 36;
                   break;
                 }
 
-                _context24.next = 35;
+                _context27.next = 35;
                 return this._versionDB();
 
               case 35:
-                _context24.t2 = _context24.sent;
+                _context27.t2 = _context27.sent;
 
               case 36:
-                versionDB = _context24.t2;
-                _context24.next = 39;
+                versionDB = _context27.t2;
+                _context27.next = 39;
                 return versionDB.get(type + "/" + name);
 
               case 39:
-                _ref45 = _context24.sent;
-                _id = _ref45._id;
-                _rev = _ref45._rev;
+                _ref48 = _context27.sent;
+                _id = _ref48._id;
+                _rev = _ref48._rev;
                 deletedHist = { _id: _id, _rev: _rev, deleted: true };
 
                 if (dryRun) {
-                  _context24.next = 49;
+                  _context27.next = 49;
                   break;
                 }
 
-                _context24.next = 46;
+                _context27.next = 46;
                 return objectDB.setDocuments(commitDeletions);
 
               case 46:
-                _context24.next = 48;
+                _context27.next = 48;
                 return versionDB.setDocuments([deletedHist]);
 
               case 48:
@@ -39741,7 +39836,7 @@ var ObjectDB = function () {
                 }));
 
               case 49:
-                return _context24.abrupt("return", {
+                return _context27.abrupt("return", {
                   commits: commitDeletions,
                   history: deletedHist,
                   resources: resources
@@ -39749,14 +39844,14 @@ var ObjectDB = function () {
 
               case 50:
               case "end":
-                return _context24.stop();
+                return _context27.stop();
             }
           }
-        }, _callee23, this, [[15, 19, 23, 31], [24,, 26, 30]]);
+        }, _callee26, this, [[15, 19, 23, 31], [24,, 26, 30]]);
       }));
 
-      function _delete(_x63, _x64) {
-        return _ref42.apply(this, arguments);
+      function _delete(_x67, _x68) {
+        return _ref45.apply(this, arguments);
       }
 
       return _delete;
@@ -39764,107 +39859,107 @@ var ObjectDB = function () {
   }, {
     key: "deleteCommit",
     value: function () {
-      var _ref47 = asyncToGenerator(regeneratorRuntime.mark(function _callee24(commitOrId) {
+      var _ref50 = asyncToGenerator(regeneratorRuntime.mark(function _callee27(commitOrId) {
         var dryRun = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         var ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "HEAD";
 
-        var commit, commitDB, versionDB, objectDB, _commit, name, type, _id, resources, commitDeletions, hist, _ref48, _ref49, ancestor;
+        var commit, commitDB, versionDB, objectDB, _commit, name, type, _id, resources, commitDeletions, hist, _ref51, _ref52, ancestor;
 
-        return regeneratorRuntime.wrap(function _callee24$(_context25) {
+        return regeneratorRuntime.wrap(function _callee27$(_context28) {
           while (1) {
-            switch (_context25.prev = _context25.next) {
+            switch (_context28.prev = _context28.next) {
               case 0:
                 commit = void 0;
 
                 if (!(commitOrId && typeof commitOrId !== "string")) {
-                  _context25.next = 5;
+                  _context28.next = 5;
                   break;
                 }
 
                 commit = commitOrId;
-                _context25.next = 15;
+                _context28.next = 15;
                 break;
 
               case 5:
                 if (!commitOrId) {
-                  _context25.next = 15;
+                  _context28.next = 15;
                   break;
                 }
 
-                _context25.t0 = this.__commitDB;
+                _context28.t0 = this.__commitDB;
 
-                if (_context25.t0) {
-                  _context25.next = 11;
+                if (_context28.t0) {
+                  _context28.next = 11;
                   break;
                 }
 
-                _context25.next = 10;
+                _context28.next = 10;
                 return this._commitDB();
 
               case 10:
-                _context25.t0 = _context25.sent;
+                _context28.t0 = _context28.sent;
 
               case 11:
-                commitDB = _context25.t0;
-                _context25.next = 14;
+                commitDB = _context28.t0;
+                _context28.next = 14;
                 return commitDB.get(commitOrId);
 
               case 14:
-                commit = _context25.sent;
+                commit = _context28.sent;
 
               case 15:
                 if (commit) {
-                  _context25.next = 17;
+                  _context28.next = 17;
                   break;
                 }
 
                 throw new Error("commit needed!");
 
               case 17:
-                _context25.t1 = this.__versionDB;
+                _context28.t1 = this.__versionDB;
 
-                if (_context25.t1) {
-                  _context25.next = 22;
+                if (_context28.t1) {
+                  _context28.next = 22;
                   break;
                 }
 
-                _context25.next = 21;
+                _context28.next = 21;
                 return this._versionDB();
 
               case 21:
-                _context25.t1 = _context25.sent;
+                _context28.t1 = _context28.sent;
 
               case 22:
-                versionDB = _context25.t1;
-                _context25.t2 = this.__commitDB;
+                versionDB = _context28.t1;
+                _context28.t2 = this.__commitDB;
 
-                if (_context25.t2) {
-                  _context25.next = 28;
+                if (_context28.t2) {
+                  _context28.next = 28;
                   break;
                 }
 
-                _context25.next = 27;
+                _context28.next = 27;
                 return this._commitDB();
 
               case 27:
-                _context25.t2 = _context25.sent;
+                _context28.t2 = _context28.sent;
 
               case 28:
-                objectDB = _context25.t2;
+                objectDB = _context28.t2;
                 _commit = commit;
                 name = _commit.name;
                 type = _commit.type;
                 _id = _commit._id;
                 resources = [this.snapshotResourceFor(commit)];
                 commitDeletions = [_extends({}, commit, { _deleted: true })];
-                _context25.next = 37;
+                _context28.next = 37;
                 return versionDB.get(type + "/" + name);
 
               case 37:
-                hist = _context25.sent;
+                hist = _context28.sent;
 
                 if (hist) {
-                  _context25.next = 40;
+                  _context28.next = 40;
                   break;
                 }
 
@@ -39872,27 +39967,27 @@ var ObjectDB = function () {
 
               case 40:
                 if (hist.refs[ref]) {
-                  _context25.next = 42;
+                  _context28.next = 42;
                   break;
                 }
 
                 throw new Error("Cannot delete commit " + type + "/" + name + "@" + commit._id + " b/c it is not where ref " + ref + " is pointing!");
 
               case 42:
-                _ref48 = hist.history[commit._id] || [], _ref49 = slicedToArray(_ref48, 1), ancestor = _ref49[0];
+                _ref51 = hist.history[commit._id] || [], _ref52 = slicedToArray(_ref51, 1), ancestor = _ref52[0];
 
                 if (!(!ancestor && Object.keys(hist.history).length <= 1)) {
-                  _context25.next = 47;
+                  _context28.next = 47;
                   break;
                 }
 
                 hist.deleted = true;
-                _context25.next = 53;
+                _context28.next = 53;
                 break;
 
               case 47:
                 if (ancestor) {
-                  _context25.next = 51;
+                  _context28.next = 51;
                   break;
                 }
 
@@ -39904,15 +39999,15 @@ var ObjectDB = function () {
 
               case 53:
                 if (dryRun) {
-                  _context25.next = 59;
+                  _context28.next = 59;
                   break;
                 }
 
-                _context25.next = 56;
+                _context28.next = 56;
                 return objectDB.setDocuments(commitDeletions);
 
               case 56:
-                _context25.next = 58;
+                _context28.next = 58;
                 return versionDB.set(type + "/" + name, hist);
 
               case 58:
@@ -39921,7 +40016,7 @@ var ObjectDB = function () {
                 }));
 
               case 59:
-                return _context25.abrupt("return", {
+                return _context28.abrupt("return", {
                   commits: commitDeletions,
                   history: hist,
                   resources: resources
@@ -39929,14 +40024,14 @@ var ObjectDB = function () {
 
               case 60:
               case "end":
-                return _context25.stop();
+                return _context28.stop();
             }
           }
-        }, _callee24, this);
+        }, _callee27, this);
       }));
 
-      function deleteCommit(_x66) {
-        return _ref47.apply(this, arguments);
+      function deleteCommit(_x70) {
+        return _ref50.apply(this, arguments);
       }
 
       return deleteCommit;
@@ -39948,11 +40043,11 @@ var ObjectDB = function () {
 var debug = false;
 var slashRe = /\//g;
 
-function applyExclude(resource, exclude) {
+function applyExclude(resource$$1, exclude) {
   if (!exclude) return true;
-  if (typeof exclude === "string") return !resource.url.includes(exclude);
-  if (typeof exclude === "function") return !exclude(resource);
-  if (exclude instanceof RegExp) return !exclude.test(resource.url);
+  if (typeof exclude === "string") return !resource$$1.url.includes(exclude);
+  if (typeof exclude === "function") return !exclude(resource$$1);
+  if (exclude instanceof RegExp) return !exclude.test(resource$$1.url);
   return true;
 }
 

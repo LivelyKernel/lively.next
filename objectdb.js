@@ -1,5 +1,6 @@
 /*global System,process,require*/
 import Database from "./database.js";
+import { resource } from "lively.resources";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // sha1
@@ -14,11 +15,29 @@ var objectDBs = objectDBs || new Map();
 
 export default class ObjectDB {
 
-  static named(name, options) {
+  static async find(name) {
+    let found = objectDBs.get(name);
+    if (found) return found;
+    let metaDB = Database.ensureDB("__internal__objectdb-meta"),
+        meta = await metaDB.get(name);
+    if (!meta) return;
+    return this.named(name, meta);
+  }
+
+  static named(name, options = {}) {
     let existing = objectDBs.get(name);
     if (existing) return existing;
+    if (!options || !options.snapshotLocation)
+      throw new Error("need snapshotLocation");
+    if (typeof options.snapshotLocation === "string")
+      options.snapshotLocation = resource(options.snapshotLocation);
     let db = new this(name, options);
     objectDBs.set(name, db);
+
+    let metaDB = Database.ensureDB("__internal__objectdb-meta");
+    metaDB.set(name, options).catch(err =>
+      console.error(`error writing objectdb meta:`, err))
+
     return db;
   }
 
@@ -37,6 +56,10 @@ export default class ObjectDB {
     let versionDB = Database.findDB("version-graph-" + this.name);
     if (versionDB) await versionDB.destroy();
     objectDBs.delete(this.name);
+    
+    let metaDB = Database.ensureDB("__internal__objectdb-meta");
+    await metaDB.remove(this.name);
+
     // await this.snapshotLocation.remove()
   }
 
@@ -116,6 +139,16 @@ export default class ObjectDB {
     return commits;
   }
 
+  async getCommit(commitId) {
+    let commitDB = this.__commitDB || await this._commitDB();
+    return commitDB.get(commitId);
+  }
+
+  async getCommitsWithIds(commitIds) {
+    let commitDB = this.__commitDB || await this._commitDB();
+    return commitDB.getDocuments(commitIds.map(id => ({id})));
+  }
+
   async getLatestCommit(type, objectName, ref = "HEAD") {
     let [commitId] = await this._log(type, objectName, ref, 1);
     if (!commitId) return null;
@@ -143,8 +176,8 @@ export default class ObjectDB {
         ancestor = versionData ? versionData.refs[ref] : null,
         ancestors = ancestor ? [ancestor] : [];
     if (expectedPrevVersion) {
-      if (!versionData) throw new Error(`Trying to store ${name} on top of expected version ${expectedPrevVersion} but no version entry exists!`);
-      if (ancestor !== expectedPrevVersion) throw new Error(`Trying to store ${name} on top of expected version ${expectedPrevVersion} but ref ${ref} is of version ${ancestor}!`);
+      if (!versionData) throw new Error(`Trying to store "${type}/${name}" on top of expected version ${expectedPrevVersion} but no version entry exists!`);
+      if (ancestor !== expectedPrevVersion) throw new Error(`Trying to store "${type}/${name}" on top of expected version ${expectedPrevVersion} but ref ${ref} is of version ${ancestor}!`);
     }
 
     // Snapshot object and create commit.
@@ -323,7 +356,7 @@ export default class ObjectDB {
       let currentExportDir = exportDir.join(type).join(name),
           {refs, history} = await this.versionGraph(type, name),
           commitIds = Object.keys(history),
-          commits = await commitDB.getDocuments(commitIds.map(id => ({id}))),
+          commits = await this.getCommitsWithIds(commitIds),
           resourcesForCopy = copyResources ? commits.map(commit => {
             delete commit._rev;
             let from = this.snapshotResourceFor(commit),
@@ -342,11 +375,11 @@ export default class ObjectDB {
 
   async exportToSpecs(nameAndTypes) {
     // note: only version data, no snapshots!
-    let specs = [], commitDB = this.__commitDB || await this._commitDB();;
+    let specs = [];
     if (!nameAndTypes) { // = everything
       nameAndTypes = [];
       let stats = (await this.objectStats()) || {};
-      for (let type in stats) 
+      for (let type in stats)
         for (let name in stats[type])
           nameAndTypes.push({type, name})
     }
@@ -354,7 +387,7 @@ export default class ObjectDB {
     for (let {name, type} of nameAndTypes) {
       let {refs, history} = await this.versionGraph(type, name),
           commitIds = Object.keys(history),
-          commits = await commitDB.getDocuments(commitIds.map(id => ({id})));
+          commits = await this.getCommitsWithIds(commitIds);
       commits.forEach(commit => { delete commit._rev; });
       specs.push({type, name, commits, history: {refs, history}})
     }
@@ -370,9 +403,7 @@ export default class ObjectDB {
     indexes = indexes.filter(ea => ea.name() === "index.json"); // FIXME!
     let dirs = indexes.map(ea => ea.parent());
 
-    let versionDB = this.__versionDB || await this._versionDB(),
-        commitDB = this.__commitDB || await this._commitDB(),
-        {snapshotLocation} = this, importSpecs = [];
+    let {snapshotLocation} = this, importSpecs = [];
 
     // 2. retrieve import data
     for (let dir of dirs) importSpecs.push(await findImportDataIn(dir));
@@ -393,7 +424,7 @@ export default class ObjectDB {
       return {dir, type, name, commits, history, snapshotDirs};
     }
   }
-  
+
   async importFromSpecs(specs, overwrite = false, copyResources = false) {
     if (!overwrite) {
       let versionDB = this.__versionDB || await this._versionDB();
@@ -405,7 +436,7 @@ export default class ObjectDB {
 
     for (let spec of specs)
       await this.importFromSpec(spec, true, copyResources);
-      
+
     return specs;
   }
 
@@ -414,7 +445,7 @@ export default class ObjectDB {
         commitDB = this.__commitDB || await this._commitDB(),
         {snapshotLocation} = this,
         {type, name, commits, history, snapshotDirs} = spec;
-    
+
     if (!overwrite && await versionDB.get(`${type}/${name}`))
       throw new Error(`Import failed: object ${type}/${name} already exists and overwrite is not allowed`);
 
@@ -519,5 +550,111 @@ export default class ObjectDB {
       history: hist,
       resources
     }
+  }
+}
+
+
+export var ObjectDBInterface = {
+
+  async fetchCommits({db: dbName, ref, type, typesAndNames, knownCommitIds}) {
+    let db = await ObjectDB.find(dbName),
+        defaultRef = ref || "HEAD";
+
+    if (!db) throw new Error(`db ${dbName} does not exist`);
+
+    let commitDB = db.__commitDB || await db._commitDB(),
+        versionDB = db.__versionDB || await db._versionDB();
+
+    let versionQueryOpts = {},
+        refsByTypeAndName = {};
+    if (typesAndNames) {
+      let keys = versionQueryOpts.keys = [];
+      for (let {type, name, ref} of typesAndNames) {
+        keys.push(`${type}/${name}`);
+        if (ref) refsByTypeAndName[`${type}/${name}`] = ref;
+      }
+
+    } else if (type) {
+      versionQueryOpts.startkey = `${type}/\u0000"`;
+      versionQueryOpts.endkey = `${type}/\uffff"`;
+    }
+    let versions = await versionDB.getAll(versionQueryOpts), commitIds = [];
+
+    for (let version of versions) {
+      if (version.deleted) continue;
+      let {_id, refs} = version,
+          ref = refsByTypeAndName[_id] || defaultRef,
+          commitId = refs[ref];
+      if (commitId && !knownCommitIds
+       || !knownCommitIds.hasOwnProperty(commitId))
+        commitIds.push(commitId);
+    }
+
+    return db.getCommitsWithIds(commitIds);
+  },
+
+  async fetchVersionGraph({db: dbName, type, name}) {
+    let db = await ObjectDB.find(dbName),
+        {refs, history} = await this.versionGraph(type, name);
+    return {refs, history};
+  },
+
+  async fetchLog({db: dbName, type, name, ref, commit, limit, includeCommits, knownCommitIds}) {
+    let db = await ObjectDB.find(dbName),
+        defaultRef = ref || "HEAD";
+
+    if (!limit) limit = Infinity;
+    if (!commit && !ref) ref = defaultRef;
+
+    let startCommitId;
+    if (commit) {
+      startCommitId = commit;
+      if (!type || !name) ({type, name} = await db.getCommit(commit));
+    }
+
+    let versionGraph = await db.versionGraph(type, name);
+    if (!versionGraph) throw new Error(`Unknown object ${type}/${name}`);
+    let {refs, history} = versionGraph;
+    if (!startCommitId) startCommitId = refs[ref];
+
+    let currentCommit = startCommitId, result = [];
+    while (result.length < limit && !result.includes(currentCommit)) {
+      result.push(currentCommit);
+      let ancestors = history[currentCommit];
+      if (!ancestors || !ancestors.length) break;
+      [currentCommit] = ancestors;
+    }
+
+    if (includeCommits) {
+      if (knownCommitIds) result = result.filter(id => !knownCommitIds.hasOwnProperty(id));
+      result = await db.getCommitsWithIds(result);
+    }
+
+    return result;
+  },
+
+  async fetchSnapshot({db: dbName, type, name, ref, commit: commitId}) {
+    let db = await ObjectDB.find(dbName),
+        defaultRef = "HEAD";
+
+    if (!commitId) {
+      let versionGraph = await db.versionGraph(type, name);
+      if (!versionGraph) throw new Error(`Unknown object ${type}/${name}`);
+      commitId = versionGraph.refs[ref || defaultRef];
+      if (!commitId) throw new Error(`Cannot find commit for ref ${ref} of ${type}/${name}`);
+    }
+
+    let commit = await db.getCommit(commitId);
+    if (!commit) throw new Error(`Cannot find commit ${commitId}`);
+    return db.loadSnapshot(undefined, undefined, commit);
+  },
+
+  async commitSnapshot({db: dbName, type, name, ref, expectedParentCommit, commitSpec, snapshot}) {
+    if (!type || !name) throw new Error(`Commit needs type/name!`);
+    if (!commitSpec) throw new Error(`Commit needs commitSpec!`);
+    let db = await ObjectDB.find(dbName);
+    if (!ref) ref = "HEAD";
+
+    return db.commitSnapshot(type, name, snapshot, commitSpec, ref, expectedParentCommit);
   }
 }
