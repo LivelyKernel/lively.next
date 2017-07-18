@@ -1,5 +1,5 @@
 /*global System*/
-import ObjectDB from "lively.objectdb";
+import { ObjectDB } from "lively.storage";
 import { loadMorphFromSnapshot, createMorphSnapshot } from "./serialization.js";
 import { resource } from "lively.resources";
 
