@@ -3,14 +3,52 @@ import { StyleSheet } from "../style-sheets.js";
 import { Morph, MorphicEnv, HorizontalLayout, morph } from "../index.js";
 import { expect } from "mocha-es6";
 import { pt, rect, Color, Rectangle } from "lively.graphics";
-import { Sizzle, StylingVisitor } from "../sizzle.js";
+import { Sizzle, StylingVisitor, SizzleVisitor } from "../sizzle.js";
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 
+
+class TestVisitor extends SizzleVisitor {
+
+  constructor(context, expr) {
+    super(context);
+    this.sizzleExpression = expr;
+  }
+  
+  retrieveExpressions(morph) {
+    // only use the assigned expression for the whole hierarchy
+    return morph.owner ? false : {[this.sizzleExpression]: true};
+  }
+
+  visitMorph(morph, matching) {
+    morph.matched = matching.length > 0;
+  }
+
+  getChildren(morph) {
+    return morph.submorphs;
+  }
+}
+
 describe("Sizzle", () => {
+  
   it("does not confuse AND-classes with structural class relation", () => {
     const m = new Morph({styleClasses: ["root", "child"]});
     expect(new Sizzle(m).select('.root .child')).to.be.empty;
   });
+
+  it("matches nested morphs correctly", () => {
+    const m = new Morph({
+      styleClasses: ["root", "child"],
+      submorphs: [
+        {
+          type: 'label',
+          submorphs: [{name: 'L', type: "label", matched: false}]
+        }
+      ]
+    });
+    new TestVisitor(m, '.root.child .Label').visit()
+    expect(m.get('L').matched).to.be.true;
+    expect(new Sizzle(m).select('.root.child .Label')).to.not.be.empty;
+  });  
 });
 
 var env, world;
@@ -290,4 +328,5 @@ describe("Style Rules", function() {
 
     expect(hierarchy.get('A').extent).equals(pt(10,10))
   })
+  
 });
