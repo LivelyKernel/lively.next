@@ -194,13 +194,13 @@ describe("flat packages", function() {
             "package.json": JSON.stringify({
               name: "foo",
               version: "1.2.3",
-              dependencies: {"strip-ansi@2.0.1": "^2"}
+              dependencies: {"strip-ansi": "^2"}
             })
           }
         }
       });
-      let {packageMap, newPackages} = await installDependenciesOfPackage(
-        installDir.join("foo").path());
+      let {packageMap, newPackages} =
+          await installDependenciesOfPackage(installDir.join("foo").path());
       expect(newPackages.map(ea => ea.name)).equals(["strip-ansi", "ansi-regex"]);
       expect(packageMap.dependencyMap).to.have.keys(
         ["strip-ansi@2.0.1", "ansi-regex@1.1.1"]);
