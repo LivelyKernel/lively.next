@@ -453,15 +453,17 @@ export class LayoutPopover extends StylePopover {
 
   update() {}
 
+  applyLayout(l) {
+    this.container.animate({layout: l});
+    this.showLayoutHaloFor(this.container);
+    this.updateControls(this.controls());
+    signal(this, "layoutChanged", this.container.layout);
+  }
+
   layoutPicker() {
     const items = this.getLayoutObjects().map(l => {
       return {
-        [this.getLayoutName(l)]: () => {
-          this.container.animate({layout: l});
-          this.showLayoutHaloFor(this.container);
-          this.updateControls(this.controls());
-          signal(this, 'layoutChanged', this.container.layout);
-        }
+        [this.getLayoutName(l)]: l
       };
     });
     let layoutSelector = this.get("Layout Type") || new DropDownSelector({
@@ -471,7 +473,7 @@ export class LayoutPopover extends StylePopover {
             selectedValue: this.container.layout,
             values: obj.merge(items)
           });
-    connect(layoutSelector, 'selectedValue', this.container, 'layout');
+    connect(layoutSelector, 'selectedValue', this, 'applyLayout');
     return layoutSelector;
   }
 
