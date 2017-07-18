@@ -31,14 +31,6 @@ export class SizzleExpression {
     );
   }
 
-  match(morph) {
-    var matchmap = {};
-    for (let rule of this.compiledRule) {
-      matchmap[rule.description] = rule.matches(morph);
-    }
-    return matchmap;
-  }
-
   reset() {
     this.active = false;
     this.matchStacks = {};
@@ -48,14 +40,15 @@ export class SizzleExpression {
     this.active = true;
   }
 
-  seen(morph) {
+  matches(morph) {
     if (this.context == morph) this.startMatching();
-    if (!this.active) return false; 
+    if (!this.active) return false;
     var matcherIdx = (morph.owner && this.matchStacks[morph.owner.id]) || 0;
     if (this.compiledRule[matcherIdx].matches(morph)) {
       if (matcherIdx < this.compiledRule.length - 1) {
-         this.matchStacks[morph.id] = matcherIdx + 1;
+        this.matchStacks[morph.id] = matcherIdx + 1;
       } else {
+        this.matchStacks[morph.id] = matcherIdx;
         return true;
       }
     } else {
@@ -64,27 +57,6 @@ export class SizzleExpression {
     }
   }
 
-  matches(morph) {
-    if (this.compileError) return false;
-    let ownerChain = morph.ownerChain(),
-        [firstMatcher, ...remainingMatchers] = this.compiledRule;
-    // match leaf
-    if (!firstMatcher.matches(morph)) return false;
-    // ensure that other morphs in the hierarchy match the remainder of the rule
-    var isMatch = true;
-    for (let matcher of remainingMatchers) {
-      isMatch = false;
-      for (let idx in ownerChain) {
-        if (matcher.matches(ownerChain[idx])) {
-          ownerChain = arr.drop(ownerChain, idx + 1);
-          isMatch = true;
-          break;
-        }
-      }
-      if (!isMatch) return false; // break up early
-    }
-    return isMatch;
-  }
 }
 
 class Matcher {
@@ -211,6 +183,12 @@ export class SizzleVisitor {
     this.expressionCache = {};
   }
 
+  deleteFromCache(morph) {
+    morph.withAllSubmorphsDo(m => {
+      delete this.expressionCache[m.id]
+    })
+  }
+
   retrieveExpressions(morph) {
     /*
          function, that is passed the current morph being visited as an argument,
@@ -283,7 +261,7 @@ export class SizzleVisitor {
     for (let expr in exprsToValues) {
       let compiledExpr = exprCache[expr] || SizzleExpression.compile(expr, ctx);
       if (!compiledExpr.compileError) {
-        if (compiledExpr.seen(morph)) valueContainer.push(exprsToValues[expr]);
+        if (compiledExpr.matches(morph)) valueContainer.push(exprsToValues[expr]);
       }
       exprCache[expr] = compiledExpr;
     }
@@ -305,10 +283,31 @@ export class StylingVisitor extends SizzleVisitor {
   visitMorph(morph, styleSheetsToApply) {
     if (!morph._wantsStyling) return;
     // is there a way to prevent rendering while these changes are happening?
-    Object.assign(morph, this.retainedProps[morph.id] || {});
+    //Object.assign(morph, this.retainedProps[morph.id] || {});
+    let retained = this.retainedProps[morph.id] || {},
+        prevAppliedRules = obj.keys(retained),
+        changedProps = {};
+    var ruleProps;
     for (let [ss, rule] of styleSheetsToApply) {
-      this.retainedProps[morph.id] = ss.applyRule(rule, morph);
+      Object.assign(changedProps, ruleProps = ss.applyRule(rule, morph));
+      arr.remove(prevAppliedRules, rule);
+      if (retained[rule]) {
+        for (let prop in retained[rule]) {
+          if (prop in changedProps) continue;
+          morph[prop] = retained[rule][prop];
+        }
+      }
+      retained[rule] = ruleProps;
     }
+    // the rules that are no longer applied are reset back to the values
+    // they were at when the style was applied initially, given that the current value
+    // coincides with the rules value
+    for (let rule of prevAppliedRules) {
+      Object.assign(morph, obj.dissoc(retained[rule], obj.keys(changedProps)));
+      delete retained[rule];
+    }
+    
+    this.retainedProps[morph.id] = retained;
     morph._wantsStyling = false;
   }
 

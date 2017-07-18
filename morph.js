@@ -682,7 +682,6 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
-    this.initializeProperties
     this.initializeProperties(props);
     if (props.bounds) this.setBounds(props.bounds);
 
@@ -1338,6 +1337,11 @@ export class Morph {
   }
 
   remove() {
+    this.ownerChain().forEach(m => {
+      if (m._stylingVisitor) {
+        m._stylingVisitor.deleteFromCache(this);
+      }
+    });
     if (this.owner) this.owner.removeMorph(this);
     this._cachedPaths = {};
     this._pathDependants.forEach(dep => dep._cachedPaths = {});
