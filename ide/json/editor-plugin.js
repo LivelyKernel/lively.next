@@ -1,8 +1,8 @@
 import { arr } from "lively.lang";
 import JavaScriptEditorPlugin from "../js/editor-plugin.js";
 
-import prism from "https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/prism.js";
-import "https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/components/prism-json.js";
+import prism from "prism";
+import "prism-json";
 
 var warnStyle = {"border-bottom": "2px dotted orange"},
     errorStyle = {"background-color": "red"};

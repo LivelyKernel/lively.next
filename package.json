@@ -14,6 +14,7 @@
     "lively.lang": "^1.0.0",
     "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
     "pepjs": "^0.4.3",
+    "prismjs": "^1.6.0",
     "svg-intersections": "0.2.5",
     "three": "^0.84.0",
     "virtual-dom": "^2.1.1",
@@ -45,6 +46,8 @@
       "virtual-dom": "virtual-dom/dist/virtual-dom.js",
       "bowser": "bowser/bowser.js",
       "prettier": "./ide/js/prettier.min.js",
+      "prism": "prismjs/prism.js",
+      "prism-json": "prismjs/components/prism-json.js",
       "gsap": {
         "~node": "gsap/src/minified/TweenMax.min.js",
         "node": "@empty"
