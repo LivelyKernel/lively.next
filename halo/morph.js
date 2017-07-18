@@ -28,10 +28,34 @@ export default class Halo extends Morph {
       resizeOnly: {defaultValue: false},
       target: {},
       pointerId: {},
-      submorphs: {after: ["target"], initialize() { this.initButtons(); }},
-      layout: {after: ["submorphs"], initialize() { this.initLayout(); }}
-    }
-  }
+      submorphs: {
+        after: ["target"],
+        initialize() {
+          this.initButtons();
+          this.alignWithTarget();
+        }
+      },
+      layout: {
+        after: ["submorphs"],
+        initialize() {
+          this.initLayout();
+        }
+      },
+      target: {
+        get() {
+          return this.state ? this.state.target : null;
+        },
+        set(t) {
+          let isUpdate = !!this.state.target;
+          this.detachFromTarget();
+          if (!this.state) this.state = {};
+          t = this.prepareTarget(t);
+          this.state.target = t;
+          isUpdate && this.alignWithTarget();
+          connect(t, "onChange", this, "alignWithTarget");
+        }
+      }
+    };  }
 
   initLayout() {
     var layout = this.layout = new GridLayout({
@@ -76,7 +100,7 @@ export default class Halo extends Morph {
         this.nameHalo(),
         this.originHalo()
       ]
-    ]
+    ];
   }
 
   get isEpiMorph() { return true; }
@@ -86,11 +110,11 @@ export default class Halo extends Morph {
   get isHalo() { return true }
 
   get borderBox() {
-    return this.getSubmorphNamed("border-box") || this.addMorphBack({
+    return this.getSubmorphNamed("border-box") || this.addMorphBack(morph({
       isHalo: true,
       name: "border-box", fill: Color.transparent,
       borderColor: Color.red, borderWidth: 1
-    });
+    }));
   }
 
 
@@ -100,17 +124,6 @@ export default class Halo extends Morph {
 
   get pointerId() { return this.state ? this.state.pointerId : null; }
   set pointerId(p) { if (!this.state) this.state = {}; this.state.pointerId = p; }
-
-  get target() { return this.state ? this.state.target : null; }
-  set target(t) {
-    this.detachFromTarget();
-
-    if (!this.state) this.state = {};
-    t = this.prepareTarget(t);
-    this.state.target = t
-    this.alignWithTarget();
-    connect(t, "onChange", this, "alignWithTarget");
-  }
 
   prepareTarget(target) {
     if (!obj.isArray(target)) return target;
@@ -132,19 +145,12 @@ export default class Halo extends Morph {
 
   alignWithTarget() {
     if (this.active) return;
-    if (!this.world()) {
-      this.visible = false;
-      return this.whenRendered().then(() => {
-        this.visible = true;
-        this.alignWithTarget();
-      });
-    }
     const targetBounds = this.target.globalBounds(),
           worldBounds = this.target.world().visibleBounds(),
           {x, y, width, height} = targetBounds.intersection(worldBounds);
     this.layout && this.layout.disable();
     this.setBounds(targetBounds.insetBy(-36).intersection(worldBounds));
-    this.borderBox.setBounds(this.localize(pt(x,y)).extent(pt(width,height)));
+    this.borderBox.setBounds(pt(x,y).subPt(this.position).extent(pt(width,height)));
     if (this.state.activeButton) {
       this.buttonControls.forEach(ea => ea.visible = false);
       this.ensureResizeHandles().forEach(h => h.visible = false);
@@ -1218,13 +1224,14 @@ class OriginHaloItem extends HaloItem {
   get tooltip() { return "Change the morph's origin"; }
 
   computePositionAtTarget() {
-    return this.halo
-      .localizePointFrom(pt(0, 0), this.halo.target)
-      .subPt(pt(7.5, 7.5));
+    if (!this.world()) 
+      return this.halo.borderBox.position.addPt(this.halo.target.origin);
+    else
+      return this.halo.localizePointFrom(pt(0, 0), this.halo.target);
   }
 
   alignInHalo() {
-    this.position = this.computePositionAtTarget();
+    this.center = this.computePositionAtTarget();
   }
 
   valueForPropertyDisplay() { return this.halo.target.origin; }
@@ -1244,7 +1251,7 @@ class OriginHaloItem extends HaloItem {
     var {halo} = this,
         oldOrigin = halo.target.origin,
         globalOrigin = halo.target.worldPoint(oldOrigin),
-        newOrigin = halo.target.localize(globalOrigin.addPt(delta));
+        newOrigin = halo.target.localize(globalOrigin.addPt(delta)).subPt(halo.target.scroll);
     delta = newOrigin.subPt(oldOrigin);
     halo.target.adjustOrigin(halo.target.origin.addPt(delta));
   }
