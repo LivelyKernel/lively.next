@@ -8,7 +8,8 @@ import {
   deferred,
   waitFor,
   delayReject,
-  convertCallbackFun
+  convertCallbackFun,
+  parallel
 } from "../promise.js";
 
 
@@ -154,4 +155,46 @@ describe('promise', () => {
 
   });
 
+  describe("parallel", () => {
+
+    let maxParallel = 0, currentParallel = 0,
+        range = n => Array.from(Array(n)).map((_, i) => i),
+        spawn = val => new Promise(res => {
+          maxParallel = Math.max(maxParallel, ++currentParallel);
+          setTimeout(() => { --currentParallel; res(val); }, 10);
+        });
+
+
+   afterEach(() => { maxParallel = 0; currentParallel = 0; });
+
+    it("runs without limit by default", async () => {
+      let result = await parallel(range(10).map(n => () => spawn(n)));
+      expect(result).equals(range(10));
+      expect(maxParallel).equals(10);
+      expect(currentParallel).equals(0);
+    });
+
+    it("with limit", async () => {
+      let result = await parallel(range(10).map(n => () => spawn(n)), 3);
+      expect(result).equals(range(10));
+      expect(maxParallel).equals(3);
+      expect(currentParallel).equals(0);
+    });
+
+    it("encounting error", async () => {
+      let started = [false, false, false, false];
+      try {
+        await parallel([
+          () => { started[0] = true; return delay(10); },
+          () => { started[1] = true; return delay(10); },
+          () => { started[2] = true; throw "foo" },
+          () => { started[3] = true; return delay(10); },
+        ], 2);
+        expect().assert(false, "...")
+      } catch (err) {
+        expect(started).equals([true, true, true, false]);
+      }
+    });
+
+  });
 });

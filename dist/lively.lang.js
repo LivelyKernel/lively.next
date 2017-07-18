@@ -4599,9 +4599,9 @@ function levenshtein(a, b) {
     tmp = a;a = b;b = tmp;
   }
 
-  row = Array(a.length + 1
+  row = Array(a.length + 1);
   // init the row
-  );for (i = 0; i <= a.length; i++) {
+  for (i = 0; i <= a.length; i++) {
     row[i] = i;
   } // fill in the rest
   for (i = 1; i <= b.length; i++) {
@@ -5378,6 +5378,56 @@ function promise_finally(promise, finallyFn) {
   });
 }
 
+function parallel(promiseGenFns) {
+  var parallelLimit = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Infinity;
+
+  // Starts functions from promiseGenFns that are expected to return a promise
+  // Once `parallelLimit` promises are unresolved at the same time, stops
+  // spawning further promises until a running promise resolves
+
+  if (!promiseGenFns.length) return Promise.resolve([]);
+
+  var results = [],
+      error = null,
+      index = 0,
+      left = promiseGenFns.length,
+      resolve = void 0,
+      reject = void 0;
+
+  return new Promise(function (res, rej) {
+    resolve = function resolve() {
+      return res(results);
+    };
+    reject = function reject(err) {
+      return rej(error = err);
+    };
+    spawnMore();
+  });
+
+  function spawn() {
+    parallelLimit--;
+    try {
+      var i = index++,
+          prom = promiseGenFns[i]();
+      prom.then(function (result) {
+        parallelLimit++;
+        results[i] = result;
+        if (--left === 0) resolve();else spawnMore();
+      }).catch(function (err) {
+        return reject(err);
+      });
+    } catch (err) {
+      reject(err);
+    }
+  }
+
+  function spawnMore() {
+    while (!error && left > 0 && index < promiseGenFns.length && parallelLimit > 0) {
+      spawn();
+    }
+  }
+}
+
 // FIXME!
 Object.assign(promise, {
   delay: delay$1,
@@ -5388,7 +5438,8 @@ Object.assign(promise, {
   convertCallbackFun: convertCallbackFun,
   convertCallbackFunWithManyArgs: convertCallbackFunWithManyArgs,
   chain: chain$1,
-  "finally": promise_finally
+  "finally": promise_finally,
+  parallel: parallel
 });
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-

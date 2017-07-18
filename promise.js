@@ -169,6 +169,44 @@ function promise_finally(promise, finallyFn) {
     .catch(err => { try { finallyFn(); } catch(err) { console.error("Error in promise finally: " + err.stack || err); }; throw err; });
 }
 
+function parallel(promiseGenFns, parallelLimit = Infinity) {
+  // Starts functions from promiseGenFns that are expected to return a promise
+  // Once `parallelLimit` promises are unresolved at the same time, stops
+  // spawning further promises until a running promise resolves
+
+  if (!promiseGenFns.length) return Promise.resolve([]);
+
+  let results = [],
+      error = null,
+      index = 0,
+      left = promiseGenFns.length,
+      resolve, reject;
+
+  return new Promise((res, rej) => {
+    resolve = () => res(results);
+    reject = err => rej(error = err);
+    spawnMore();
+  });
+
+  function spawn() {
+    parallelLimit--;
+    try {
+      let i = index++, prom = promiseGenFns[i]();
+      prom.then(result => {
+        parallelLimit++;
+        results[i] = result;
+        if (--left === 0) resolve();
+        else spawnMore();
+      }).catch(err => reject(err));
+    } catch (err) { reject(err); }
+  }
+
+  function spawnMore() {
+    while (!error && left > 0 && index < promiseGenFns.length && parallelLimit > 0)
+      spawn();
+  }
+}
+
 // FIXME!
 Object.assign(promise, {
   delay,
@@ -179,7 +217,8 @@ Object.assign(promise, {
   convertCallbackFun,
   convertCallbackFunWithManyArgs,
   chain,
-  "finally": promise_finally
+  "finally": promise_finally,
+  parallel
 });
 
 export default promise;
@@ -196,4 +235,5 @@ export {
   convertCallbackFunWithManyArgs,
   chain,
   promise_finally as finally,
+  parallel
 }
