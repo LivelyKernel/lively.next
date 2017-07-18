@@ -1,4 +1,4 @@
-/*global require, process, Promise, System*/
+/*global require, process, Promise*/
 
 /*
  * Methods helping with promises (Promise/A+ model). Not a promise shim.
@@ -64,28 +64,22 @@ function waitFor(ms, tester, timeoutObj) {
         timeoutValue = undefined,
         error = undefined,
         value = undefined,
-        /* requestAnimationFrame will be more responsive in the browser context,
-           so use that if execution is happening inside the browser */
-        i = (System.get("@system-env").browser ? 
-                window.requestAnimationFrame.bind(window) : setInterval)(() => {
-          if (stopped) {
-            clearInterval(i);
-            return;
-          }
-          try {
-            value = tester();
-          } catch (e) {
-            error = e;
-          }
+        i = setInterval(() => {
+          if (stopped) { clearInterval(i); return; }
+          try { value = tester(); } catch (e) { error = e; }
           if (!value && !error && !timedout) return;
           stopped = true;
           clearInterval(i);
           if (error) return reject(error);
-          if (timedout) return typeof timeoutObj === "undefined" ? reject(new Error("timeout")) : resolve(timeoutObj);
+          if (timedout)
+            return typeof timeoutObj === "undefined"
+              ? reject(new Error("timeout"))
+              : resolve(timeoutObj);
           return resolve(value);
         }, 10);
-    if (typeof ms === "number") setTimeout(() => (timedout = true), ms);
-  });}
+    if (typeof ms === "number") setTimeout(() => timedout = true, ms);
+  });
+}
 
 function deferred() {
   // returns an object
