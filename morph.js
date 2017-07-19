@@ -312,7 +312,11 @@ export class Morph {
       visible: {
         group: "styling",
         isStyleProp: true,
-        defaultValue: true
+        defaultValue: true,
+        set (bool) {
+          if (!bool) this.makeDirty(); /*updates stopped afterwards*/
+          this.setProperty("visible", bool);
+        }
       },
 
       submorphs: {
