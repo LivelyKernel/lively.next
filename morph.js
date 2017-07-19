@@ -2378,12 +2378,7 @@ return ;
   onAfterRender(node) {}
 
   whenRendered(maxChecks = 50) {
-    let morph = this;
-    return new Promise(function renderCheck(resolve, reject) {
-      if (!morph._dirty && !morph._rendering) return resolve(morph);
-      if (--maxChecks <= 0) return reject();
-      requestAnimationFrame(() => renderCheck(resolve, reject));
-    });
+    return this.env.whenRendered(this, maxChecks);
   }
 
   render(renderer) {

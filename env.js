@@ -32,6 +32,9 @@ export class MorphicEnv {
 
   static get envs() { return this._envs || (this._envs = []); }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // initialize / release
+
   constructor(domEnv = defaultDOMEnv()) {
     this.initialized = false;
     this.fontMetric = null;
@@ -47,6 +50,9 @@ export class MorphicEnv {
     this.undoManager = new UndoManager();
 
     this.installSystemChangeHandlers();
+
+    this.whenRenderedRequesters = new Map();
+    this.whenRenderedTickingProcess = null;
 
     if (typeof domEnv.then === "function") {
       this._waitForDOMEnv = domEnv.then(env => {
@@ -85,6 +91,11 @@ export class MorphicEnv {
       this.fontMetric.uninstall();
       this.fontMetric = null;
     }
+    if (this.domEnv && this.whenRenderedTickingProcess) {
+      this.domEnv.window.cancelAnimationFrame(this.whenRenderedTickingProcess);
+      this.whenRenderedTickingProcess = null;
+    }
+    this.whenRenderedRequesters = new Map();
     this.domEnv && this.domEnv.destroy();
     this.initialized = false;
     return Promise.resolve();
@@ -117,6 +128,9 @@ export class MorphicEnv {
 
     return world.whenRendered().then(() => this);
   }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // notification handling
 
   installSystemChangeHandlers() {
     if (this.systemChangeHandlers) return;
@@ -160,6 +174,9 @@ export class MorphicEnv {
     return targets;
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // history
+
   deleteHistory() {
     var {changeManager, world, fontMetric} = this;
     changeManager && (changeManager.changes.length = 0);
@@ -177,6 +194,46 @@ export class MorphicEnv {
     });
     return `${changeManager.changes.length} changes recorded\n${morphsWithUndo} morphs with undos\n${undoChanges} undo changes`
 
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // whenRendered updates
+
+  updateWhenRenderedRequests() {
+    let {whenRenderedRequesters} = this, nRequesters = 0;
+    for (let [morph, requestState] of whenRenderedRequesters) {
+      let {maxAttempts, currentAttempt, resolve, reject} = requestState;
+      if (!morph._dirty && !morph._rendering) {
+        whenRenderedRequesters.delete(morph);
+        resolve(morph)
+      } else if (++requestState.currentAttempt > maxAttempts) {
+        whenRenderedRequesters.delete(morph);
+        reject(new Error(`Failed to wait for whenRendered of ${morph} (tried ${maxAttempts}x)`));
+      } else nRequesters++;
+    }
+    if (!nRequesters) this.whenRenderedTickingProcess = null;
+    else this.whenRenderedTickingProcess = this.domEnv.window.requestAnimationFrame(
+                                            () => this.updateWhenRenderedRequests());
+  }
+
+
+  whenRendered(morph, maxAttempts = 50) {
+    let {whenRenderedRequesters, whenRenderedTickingProcess} = this,
+        requestState = whenRenderedRequesters.get(morph);
+    if (!requestState) {
+      let resolve, reject, promise = new Promise((rs, rj) => { resolve = rs; reject = rj; })
+      whenRenderedRequesters.set(morph, requestState = {
+        maxAttempts,
+        currentAttempt: 0,
+        resolve,
+        reject,
+        promise
+      });
+    }
+    if (!whenRenderedTickingProcess)
+      this.whenRenderedTickingProcess = this.domEnv.window.requestAnimationFrame(
+                                          () => this.updateWhenRenderedRequests());
+    return requestState.promise;
   }
 
 }
