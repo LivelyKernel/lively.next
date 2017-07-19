@@ -1,4 +1,4 @@
-/*global System,process,require*/
+/*global System,process,require,fetch*/
 import Database from "./database.js";
 import { resource } from "lively.resources";
 
@@ -10,6 +10,9 @@ import { resource } from "lively.resources";
 const sha1 = (function sha1_setup(){function r(r){if(void 0===r)return o(!1);var e=o(!0);return e.update(r),e.digest()}function e(){var r=f.createHash("sha1");return{update:function(e){return r.update(e)},digest:function(){return r.digest("hex")}}}function t(r){function e(r){if("string"==typeof r)return t(r);var e=r.length;h+=8*e;for(var n=0;n<e;n++)o(r[n])}function t(r){var e=r.length;h+=8*e;for(var t=0;t<e;t++)o(r.charCodeAt(t))}function o(r){a[y]|=(255&r)<<g,g?g-=8:(y++,g=24),16===y&&u()}function f(){o(128),(y>14||14===y&&g<24)&&u(),y=14,g=24,o(0),o(0),o(h>0xffffffffff?h/1099511627776:0),o(h>4294967295?h/4294967296:0);for(var r=24;r>=0;r-=8)o(h>>r);return i(s)+i(c)+i(v)+i(p)+i(d)}function u(){for(var r=16;r<80;r++){var e=a[r-3]^a[r-8]^a[r-14]^a[r-16];a[r]=e<<1|e>>>31}var t,n,o=s,f=c,u=v,i=p,g=d;for(r=0;r<80;r++){r<20?(t=i^f&(u^i),n=1518500249):r<40?(t=f^u^i,n=1859775393):r<60?(t=f&u|i&(f|u),n=2400959708):(t=f^u^i,n=3395469782);var h=(o<<5|o>>>27)+t+g+n+(0|a[r]);g=i,i=u,u=f<<30|f>>>2,f=o,o=h}for(s=s+o|0,c=c+f|0,v=v+u|0,p=p+i|0,d=d+g|0,y=0,r=0;r<16;r++)a[r]=0}function i(r){for(var e="",t=28;t>=0;t-=4)e+=(r>>t&15).toString(16);return e}var a,s=1732584193,c=4023233417,v=2562383102,p=271733878,d=3285377520,y=0,g=24,h=0;return a=r?n:new Uint32Array(80),{update:e,digest:f}}var n,o,f;return"object"==typeof process&&"object"==typeof process.versions&&process.versions.node&&"renderer"!==process.__atom_type?(f="undefined"!=typeof System?System._nodeRequire("crypto"):require("crypto"),o=e):(n=new Uint32Array(80),o=t),r})();
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// let db = await ObjectDB.find("test-object-db");
+// await db.objectStats()
 
 var objectDBs = objectDBs || new Map();
 
@@ -29,14 +32,17 @@ export default class ObjectDB {
     if (existing) return existing;
     if (!options || !options.snapshotLocation)
       throw new Error("need snapshotLocation");
-    if (typeof options.snapshotLocation === "string")
-      options.snapshotLocation = resource(options.snapshotLocation);
+    if (typeof options.snapshotLocation === "string") {
+      try { options.snapshotLocation = resource(options.snapshotLocation); }
+      catch (err) { options.snapshotLocation = resource(System.baseURL)
+        .join(options.snapshotLocation); }
+    }
     let db = new this(name, options);
     objectDBs.set(name, db);
 
     let metaDB = Database.ensureDB("__internal__objectdb-meta");
-    metaDB.set(name, options).catch(err =>
-      console.error(`error writing objectdb meta:`, err))
+    metaDB.set(name, {...options, snapshotLocation: options.snapshotLocation.url})
+      .catch(err => console.error(`error writing objectdb meta:`, err));
 
     return db;
   }
@@ -267,7 +273,7 @@ export default class ObjectDB {
           nameAndTimestampIndex = {
             _id: '_design/nameAndTimestamp_index',
             views: {'nameAndTimestamp_index': {
-              map: "function (doc) { emit(`${doc.type}\u0000${doc.name}\u0000${doc.timestamp}}`); }"}}},
+              map: "function (doc) { emit(`${doc.type}\u0000${doc.name}\u0000${doc.timestamp}}\u0000${doc._id}}`); }"}}},
           nameWithMaxMinTimestamp = {
             _id: '_design/nameWithMaxMinTimestamp_index',
             views: {
@@ -460,11 +466,11 @@ export default class ObjectDB {
     return spec;
   }
 
-  async importFromResource(type, name, resource, commitData, purgeHistory = false) {
+  async importFromResource(type, name, resource, commitSpec, purgeHistory = false) {
     let snap = await resource.readJson();
     if (purgeHistory && await this.has(type, name))
       await this.delete(type, name, false);
-    return this.commitSnapshot(type, name, snap, commitData);
+    return this.commitSnapshot(type, name, snap, commitSpec);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -554,12 +560,136 @@ export default class ObjectDB {
 }
 
 
+
+
+
+function checkArg(name, value, spec) {
+  if (typeof value === "undefined" && typeof spec === "string" && !spec.includes("undefined"))
+    throw new Error(`parameter ${name} is undefined`);
+
+  if (typeof spec === "string") {
+    let actualType = typeof value,
+        actualClass = value ? value.constructor.name : "",
+        types = spec.split("|"),
+        matches = types.some(t => actualType === t || actualClass === t)
+    if (!matches)
+      throw new Error(`parameter "${name}" expected to be of type ${spec} but is ${actualClass || actualType}`)
+  }
+
+  if (typeof spec === "function") {
+    let result = spec(value);
+    if (result && result.error)
+      throw new Error(`check of parameter "${name}" failed: ${result.error}`)
+  }
+}
+
+function checkArgs(args, specs, testFn) {
+  for (let key in specs)
+    checkArg(key, args[key], specs[key]);
+  if (typeof testFn === "function") {
+    let result = testFn(args);
+    if (result && result.error)
+      throw new Error(result.error);
+  }
+  return args;
+}
+
 export var ObjectDBInterface = {
 
-  async fetchCommits({db: dbName, ref, type, typesAndNames, knownCommitIds}) {
-    let db = await ObjectDB.find(dbName),
-        defaultRef = ref || "HEAD";
+  async describe(method) {
+    // await ObjectDBInterface.describe(method = "importFromResource")
+    // await ObjectDBInterface.describe()
+    try {
+      if (!this._methodSpecs) {
+        let src = await lively.modules.module("lively.storage/objectdb.js").source(),
+            parsed = lively.ast.parse(src, {withComments: true}),
+            entities = lively.ast.categorizer.findDecls(parsed);
+        this._methodSpecs = entities.filter(ea => ea.parent && ea.parent.name === "ObjectDBInterface");
+      }
 
+      return method ? methodNameAndParametersAndDescription(this._methodSpecs, method) :
+        this._methodSpecs
+          .map(ea => methodNameAndParametersAndDescription(this._methodSpecs, ea.name))
+          .filter(Boolean)
+    } catch (err) { return `Error in describe ${err}`; }
+
+    function methodNameAndParametersAndDescription(methodSpecs, name) {
+      let methodSpec = methodSpecs.find(ea => ea.name === name),
+          body = methodSpec.node.value.body,
+          stmts = body.body || [],
+          comment = (body.comments || []).find(ea => ea.end < stmts[0].start),
+          doc = {name, parameters: [], sideEffect: false, returns: null, description: ""};
+
+      if (comment && comment.text.trim()) {
+        let text = lively.lang.string.changeIndent(comment.text, " ", 0),
+            commentLines = text.split("\n");
+        for (let line of commentLines) {
+          if (line.startsWith("ignore-in-doc")) { doc.description = ""; break; }
+          if (line.startsWith("side effect:")) {
+            doc.sideEffect = JSON.parse(line.split(":")[1]);
+            continue;
+          }
+          if (line.startsWith("returns:")) {
+            doc.returns = line.split(":")[1].trim();
+            continue;
+          }
+          doc.description += line + "\n";
+        }
+      }
+      
+      for (let stmt of stmts) {
+        if ("checkArgs" !== lively.lang.Path("declarations.0.init.callee.name").get(stmt))
+          continue;
+        let props = lively.lang.Path("declarations.0.id.properties").get(stmt);
+        if (props) {
+          doc.parameters = props.map(ea => ea.key.name);
+        }
+      }
+      return doc
+    }
+  },
+
+  async ensureDB(args) {
+    // side effect: true
+    // returns: boolean
+    // Ensures that a database with the name `db` exists.  If not, creates one
+    // and sets it up so that snapshots that get committed are stored into
+    // snapshotLocation.  The return value indicates if a new DB was create
+    // (true) or if one already existed (false).
+    let {db: dbName, snapshotLocation} = checkArgs(args, {
+      db: "string",
+      snapshotLocation: "string|Resource"
+    }), db = await ObjectDB.find(dbName);
+    if (db) return false;
+    ObjectDB.named(dbName, {snapshotLocation});
+    return true;
+  },
+
+  async destroyDB(args) {
+    // side effect: true
+    // returns: boolean
+    // Removes the DB with the name `db`. Returns true if such a DB existed and
+    // if it was destroyed
+    let {db: dbName} = checkArgs(args, {db: "string"}),
+        db = await ObjectDB.find(dbName);
+    if (!db) return false;
+    await db.destroy();
+    return true;
+  },
+
+  async fetchCommits(args) {
+    // side effect: false
+    // returns: [commits]
+    // Gets the lates commits from all objects specified in `typesAndNames`.
+    let {db: dbName, ref, type, typesAndNames, knownCommitIds} = checkArgs(args, {
+      db: "string",
+      ref: "string|undefined",
+      type: "string|undefined",
+      typesAndNames: "Array|undefined",
+      knownCommitIds: "object|undefined"
+    }), db = await ObjectDB.find(dbName)
+    if (!ref) ref = "HEAD";
+    
     if (!db) throw new Error(`db ${dbName} does not exist`);
 
     let commitDB = db.__commitDB || await db._commitDB(),
@@ -582,9 +712,9 @@ export var ObjectDBInterface = {
 
     for (let version of versions) {
       if (version.deleted) continue;
-      let {_id, refs} = version,
-          ref = refsByTypeAndName[_id] || defaultRef,
-          commitId = refs[ref];
+      let {_id, refs} = version;
+      ref = refsByTypeAndName[_id] || ref;
+        let commitId = refs[ref];
       if (commitId && !knownCommitIds
        || !knownCommitIds.hasOwnProperty(commitId))
         commitIds.push(commitId);
@@ -593,14 +723,38 @@ export var ObjectDBInterface = {
     return db.getCommitsWithIds(commitIds);
   },
 
-  async fetchVersionGraph({db: dbName, type, name}) {
-    let db = await ObjectDB.find(dbName),
+  async fetchVersionGraph(args) {
+    // side effect: false
+    // returns: {refs: {refName => commitId}, history: [commitId]}
+    let {db: dbName, type, name} = checkArgs(args, {
+          db: "string",
+          type: "string",
+          name: "string"
+        }),
+        db = await ObjectDB.find(dbName),
         {refs, history} = await this.versionGraph(type, name);
     return {refs, history};
   },
 
-  async fetchLog({db: dbName, type, name, ref, commit, limit, includeCommits, knownCommitIds}) {
-    let db = await ObjectDB.find(dbName),
+  async fetchLog(args) {
+    // side effect: false
+    // returns: [commitIds]|[commits]
+    let {
+          db: dbName, type, name, ref,
+          commit, limit, includeCommits,
+          knownCommitIds
+        } = checkArgs(args, {
+          db: "string",
+          type: "string|undefined",
+          name: "string|undefined",
+          ref: "string|undefined",
+          commit: "string|undefined",
+          limit: "number|undefined",
+          includeCommits: "boolean|undefined",
+          knownCommitIds: "object|undefined",
+        }, args => args.type && args.name || args.commit
+                      ? null : {error: `Eiter .type + .name or .commit needed!`}),
+        db = await ObjectDB.find(dbName),
         defaultRef = ref || "HEAD";
 
     if (!limit) limit = Infinity;
@@ -633,8 +787,18 @@ export var ObjectDBInterface = {
     return result;
   },
 
-  async fetchSnapshot({db: dbName, type, name, ref, commit: commitId}) {
-    let db = await ObjectDB.find(dbName),
+  async fetchSnapshot(args) {
+    // side effect: false
+    // returns: object
+    let {db: dbName, type, name, ref, commit: commitId} = checkArgs(args, {
+          db: "string",
+          type: "string|undefined",
+          name: "string|undefined",
+          ref: "string|undefined",
+          commit: "string|undefined"
+        }, args => args.type && args.name || args.commit
+                      ? null : {error: `Eiter .type + .name or .commit needed!`}),
+        db = await ObjectDB.find(dbName),
         defaultRef = "HEAD";
 
     if (!commitId) {
@@ -649,12 +813,220 @@ export var ObjectDBInterface = {
     return db.loadSnapshot(undefined, undefined, commit);
   },
 
-  async commitSnapshot({db: dbName, type, name, ref, expectedParentCommit, commitSpec, snapshot}) {
-    if (!type || !name) throw new Error(`Commit needs type/name!`);
-    if (!commitSpec) throw new Error(`Commit needs commitSpec!`);
-    let db = await ObjectDB.find(dbName);
-    if (!ref) ref = "HEAD";
+  async commitSnapshot(args) {
+    // side effect: true
+    // returns: commit
+    let {
+        db: dbName, type, name, ref,
+        expectedParentCommit, commitSpec,
+        snapshot
+      } = checkArgs(args, {
+          db: "string",
+          type: "string", name: "string",
+          ref: "string|undefined",
+          snapshot: "object",
+          commitSpec: "object",
+          expectedParentCommit: "string|undefined"
+        }), db = await ObjectDB.find(dbName);
 
+    if (!ref) ref = "HEAD";
     return db.commitSnapshot(type, name, snapshot, commitSpec, ref, expectedParentCommit);
+  },
+
+  async exportToSpecs(args) {
+    // side effect: false
+    // returns: {name: String, type: String, history: {}, commits: [commit]}
+    let {db: dbName, nameAndTypes} = checkArgs(args, {
+          db: "string",
+          nameAndTypes: "Array|undefined"
+        }), db = await ObjectDB.find(dbName);
+    return db.exportToSpecs(nameAndTypes);
+  },
+
+  async exportToDir(args) {
+    // side effect: true
+    // returns: undefined
+    let {db: dbName, url, nameAndTypes, copyResources} = checkArgs(args, {
+      db: "string",
+      url: "string",
+      nameAndTypes: "Array|undefined",
+      copyResources: "boolean|undefined"
+    }), db = await ObjectDB.find(dbName), exportDir;
+    try { exportDir = resource(url); }
+    catch (err) { exportDir = resource(System.baseURL).join(url); }
+    return db.exportToDir(exportDir, nameAndTypes, copyResources);
+  },
+
+  async importFromDir(args) {
+    // side effect: true
+    // returns: [{dir, type, name, commits, history, snapshotDirs}]
+    let {db: dbName, url, overwrite, copyResources} = checkArgs(args, {
+      db: "string", url: "string",
+      overwrite: "boolean|undefined",
+      copyResources: "boolean|undefined"
+    }), db = await ObjectDB.find(dbName), importDir;
+    try { importDir = resource(url); }
+    catch (err) { importDir = resource(System.baseURL).join(url); }
+    return db.importFromDir(importDir, overwrite, copyResources);
+  },
+
+  async importFromSpecs(args) {
+    // side effect: true
+    // returns: [{dir, type, name, commits, history, snapshotDirs}]
+    let {db: dbName, specs, overwrite, copyResources} = checkArgs(args, {
+      db: "string",
+      specs: "object",
+      overwrite: "boolean|undefined",
+      copyResources: "boolean|undefined"
+    }), db = await ObjectDB.find(dbName);
+    return db.importFromSpecs(specs, overwrite, copyResources);
+  },
+
+  async importFromResource(args) {
+    // side effect: true
+    // returns: [{dir, type, name, commits, history, snapshotDirs}]
+    // Example:
+    // let user = select($world.getCurrentUser(), ["name", "realm", "email"])
+    // let commitSpec = {user, description: "An empty world.", metadata: {belongsToCore: true}};
+    // let result = ObjectDBInterface.importFromResource({
+    //   db: "test-object-db",
+    //   url: "lively.morphic/worlds/default.json",
+    //   type: "world", name: "default", commitSpec, purgeHistory: true
+    // })
+
+    let {db: dbName, type, name, url, commitSpec, purgeHistory} = checkArgs(args, {
+      db: "string",
+      type: "string", name: "string",
+      url: "string",
+      commitSpec: "object",
+      purgeHistory: "boolean|undefined"
+    }), db = await ObjectDB.find(dbName), res;
+    try { res = resource(url); } catch (err) { res = resource(System.baseURL).join(url); }
+    return db.importFromResource(type, name, res, commitSpec, purgeHistory);
   }
+
+}
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
+// let httpDB = new ObjectDBHTTPInterface()
+// await httpDB.exportToSpecs({db: "test-object-db"})
+
+export class ObjectDBHTTPInterface {
+
+  constructor(serverURL = document.origin + "/objectdb/") {
+    this.serverURL = serverURL;
+  }
+
+
+  async _processResponse(res) {
+    let contentType = res.headers.get("content-type"),
+        answer = await res.text(), json;
+    if (contentType === "application/json") {
+      try { json = JSON.parse(answer); } catch (err) {}
+    }
+    if (!res.ok >= 400) {    
+      throw new Error((json && json.error) || answer || res.statusText);
+    }
+    return json || answer;
+  }
+
+  async _GET(action, opts = {}) {
+    let query = Object.keys(opts).map(key => {
+          let val = opts[key];
+          if (typeof val === "object") val = JSON.stringify(val);
+          return `${key}=${encodeURIComponent(val)}`;
+        }).join("&"),
+        url = this.serverURL + action + "?" + query;
+    return this._processResponse(await fetch(url));
+  }
+  
+  async _POST(action, opts = {}) {
+    let url = this.serverURL + action;
+    return this._processResponse(await fetch(url, {
+      method: "POST", body: JSON.stringify(opts),
+      headers: {"content-type": "application/json"}
+    }));
+  }
+
+  async describe(args) {
+    // parameters: 
+    // returns: null
+    return this._GET("describe", args);
+  }
+ 
+  async ensureDB(args) {
+    // parameters: db, snapshotLocation
+    // returns: boolean
+    return this._POST("ensureDB", args);
+  }
+  
+  async destroyDB(args) {
+    // parameters: db
+    // returns: boolean
+    return this._POST("destroyDB", args);
+  }
+  
+  async fetchCommits(args) {
+    // parameters: db, ref, type, typesAndNames, knownCommitIds
+    // returns: [commits]
+    return this._GET("fetchCommits", args);
+  }
+  
+  async fetchVersionGraph(args) {
+    // parameters: db, type, name
+    // returns: {refs
+    return this._GET("fetchVersionGraph", args);
+  }
+
+  async fetchLog(args) {
+    // parameters: db, type, name, ref, commit, limit, includeCommits, knownCommitIds
+    // returns: [commitIds]|[commits]
+    return this._GET("fetchLog", args);
+  }
+  
+  async fetchSnapshot(args) {
+    // parameters: db, type, name, ref, commit
+    // returns: object
+    return this._GET("fetchSnapshot", args);
+  }
+  
+  async commitSnapshot(args) {
+    // parameters: db, type, name, ref, expectedParentCommit, commitSpec, snapshot
+    // returns: commit
+    return this._POST("commitSnapshot", args);
+  }
+  
+  async exportToSpecs(args) {
+    // parameters: db, nameAndTypes
+    // returns: [{dir, type, name, commits, history, snapshotDirs}]
+    return this._GET("exportToSpecs", args);
+  }
+  
+  async exportToDir(args) {
+    // parameters: db, url, nameAndTypes, copyResources
+    // returns: undefined
+    return this._POST("exportToDir", args);
+  }
+  
+  async importFromDir(args) {
+    // parameters: db, url, overwrite, copyResources
+    // returns: [{dir, type, name, commits, history, snapshotDirs}]
+    return this._POST("importFromDir", args);
+  }
+  
+  async importFromSpecs(args) {
+    // parameters: db, specs, overwrite, copyResources
+    // returns: [{dir, type, name, commits, history, snapshotDirs}]
+    return this._POST("importFromSpecs", args);
+  }
+  
+  async importFromResource(args) {
+    // parameters: db, type, name, url, commitSpec, purgeHistory
+    // returns: [{dir, type, name, commits, history, snapshotDirs}]
+    return this._POST("importFromResource", args);
+  }
+  
 }

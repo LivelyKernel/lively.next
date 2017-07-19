@@ -457,7 +457,6 @@ describe("interface test", function() {
     });
     
     it("commit log", async () => {
-      // await objectDB.versionGraph("world", world2.name)
       let expected = [commit3, commit4].map(ea => ea._id),
           commitIds = await ObjectDBInterface.fetchLog({db: dbName, ref: "HEAD", commit: commit4._id, limit: 2});
       expect(arr.intersect(commitIds, expected))
@@ -473,7 +472,6 @@ describe("interface test", function() {
   describe("fetching snapshots", () => {
     
     it("does it", async () => {
-      // await objectDB.versionGraph("world", world2.name)
       let snapshot1 = await ObjectDBInterface.fetchSnapshot({db: dbName, ref: "HEAD", type: "world", name: world2.name});
       expect(snapshot1).deep.equals({foo: {bar: 23}, x: 42, name: "another objectdb test world"});
       let snapshot2 = await ObjectDBInterface.fetchSnapshot({db: dbName, commit: commit3._id});
@@ -485,7 +483,6 @@ describe("interface test", function() {
   describe("committing snapshots", () => {
 
     it("commits", async () => {
-      // await objectDB.versionGraph("world", world2.name)
       let snapshot = {foo: {bar: 23}, x: 99, name: "another objectdb test world"}
       try {
         await ObjectDBInterface.commitSnapshot({db: dbName, type: "world", name: world2.name, expectedParentCommit: commit3._id, commitSpec: {user: user1}, snapshot});
