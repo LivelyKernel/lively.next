@@ -552,20 +552,27 @@ export function defaultStyle(morph) {
 // See https://github.com/Matt-Esch/virtual-dom/blob/dcb8a14e96a5f78619510071fd39a5df52d381b7/docs/hooks.md
 // for why this has to be a function of prototype
 function MorphAfterRenderHook(morph, renderer) { this.morph = morph; this.renderer = renderer; }
-MorphAfterRenderHook.prototype.hook = function(node, propertyName, previousValue) {
-  // 1. wait for node to be really rendered, i.e. it's in DOM
-  promise.waitFor(400, () => !!node.parentNode).catch(err => false).then(isInDOM => {
-    if (isInDOM) {
-      // 2. update scroll of morph itself
-      // 3. Update scroll of DOM nodes of submorphs
-      if (this.morph._submorphOrderChanged && this.morph.submorphs.length) {
-        this.morph._submorphOrderChanged = false;
-        this.updateScrollOfSubmorphs(this.morph, this.renderer);
-      } else if (this.morph.isClip()) this.updateScroll(this.morph, node);
-    }
+MorphAfterRenderHook.prototype.hook = function(node, propertyName, previousValue, attempt = 0) {
+  let isInDOM = !!node.parentNode;
+
+  if (isInDOM) {
+    // 2. update scroll of morph itself
+    // 3. Update scroll of DOM nodes of submorphs
+    if (this.morph._submorphOrderChanged && this.morph.submorphs.length) {
+      this.morph._submorphOrderChanged = false;
+      this.updateScrollOfSubmorphs(this.morph, this.renderer);
+    } else if (this.morph.isClip()) this.updateScroll(this.morph, node);
+  }
+
+  if (isInDOM || attempt > 3) {
     this.morph._rendering = false; // see morph.makeDirty();
     this.morph.onAfterRender(node);
-  });
+    return;
+  }
+
+  // wait for node to be really rendered, i.e. it's in DOM
+  attempt++;
+  setTimeout(() => this.hook(node, propertyName, previousValue, attempt), 20*attempt)
 }
 MorphAfterRenderHook.prototype.updateScroll = function(morph, node) {
   // interactiveScrollInProgress: see morph.onMouseWheel

@@ -2367,7 +2367,7 @@ return ;
     // the render process is done
     if (this._dirty) return;
     this._dirty = true;
-    if (this.owner) this.owner.makeDirty();
+    if (this.owner && this.visible) this.owner.makeDirty();
   }
 
   needsRerender() { return this._dirty; }
