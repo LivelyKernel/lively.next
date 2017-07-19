@@ -1,4 +1,5 @@
 import { resource } from "../index.js";
+import { parseQuery } from "./helpers.js";
 
 const slashEndRe = /\/+$/,
       slashStartRe = /^\/+/,
@@ -115,27 +116,7 @@ export default class Resource {
         && otherRes.parents().some(p => p.equals(this));
   }
 
-  query() {
-    let url = this.url;
-    let [_, search] = this.url.split("?"), query = {};
-    if (!search) return query;
-    var args = search && search.split("&");
-    if (args) for (var i = 0; i < args.length; i++) {
-      var keyAndVal = args[i].split("="),
-          key = keyAndVal[0],
-          val = true;
-      if (keyAndVal.length > 1) {
-        val = decodeURIComponent(keyAndVal.slice(1).join("="));
-        if (val.match(/^(true|false|null|[0-9"[{].*)$/))
-          try { val = JSON.parse(val); } catch(e) {
-            if (val[0] === "[") val = val.slice(1,-1).split(","); // handle string arrays
-            // if not JSON use string itself
-          }
-      }
-      query[key] = val;
-    }
-    return query;
-  }
+  query() { return parseQuery(this.url); }
 
   withQuery(queryObj) {
     let query = {...this.query(), ...queryObj},

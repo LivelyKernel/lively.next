@@ -1,5 +1,6 @@
 /*global System*/
 export { default as Resource } from "./src/resource.js";
+export { parseQuery } from "./src/helpers.js";
 import { resourceExtension as httpResourceExtension } from "./src/http-resource.js";
 import { resourceExtension as fileResourceExtension } from "./src/fs-resource.js";
 import { resourceExtension as localResourceExtension } from "./src/local-resource.js";

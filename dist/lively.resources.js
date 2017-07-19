@@ -872,6 +872,69 @@ var slicedToArray = function () {
   };
 }();
 
+function applyExclude(exclude, resources) {
+  if (Array.isArray(exclude)) return exclude.reduce(function (intersect, exclude) {
+    return applyExclude(exclude, intersect);
+  }, resources);
+  if (typeof exclude === "string") return resources.filter(function (ea) {
+    return ea.path() !== exclude && ea.name() !== exclude;
+  });
+  if (exclude instanceof RegExp) return resources.filter(function (ea) {
+    return !exclude.test(ea.path()) && !exclude.test(ea.name());
+  });
+  if (typeof exclude === "function") return resources.filter(function (ea) {
+    return !exclude(ea);
+  });
+  return resources;
+}
+
+/*
+
+applyExclude(["foo", "foo"], [
+  {path: () => "foo", name: () => "foo"},
+  {path: () => "bar", name: () => "bar"},
+  {path: () => "baz", name: () => "baz"}
+])
+
+applyExclude(["bar", "foo"], [
+  {path: () => "foo", name: () => "foo"},
+  {path: () => "bar", name: () => "bar"},
+  {path: () => "baz", name: () => "baz"}
+])
+
+*/
+
+// parseQuery('?hello=world&x={"foo":{"bar": "baz"}}')
+// parseQuery("?db=test-object-db&url=lively.morphic%2Fworlds%2Fdefault.json&type=world&name=default&commitSpec=%7B%22user%22%3A%7B%22name%22%3A%22robert%22%2C%22realm%22%3A%22https%3A%2F%2Fauth.lively-next.org%22%2C%22email%22%3A%22robert%40kra.hn%22%7D%2C%22description%22%3A%22An%20empty%20world.%20A%20place%20to%20start%20from%20scratch.%22%2C%22metadata%22%3A%7B%22belongsToCore%22%3Atrue%7D%7D&purgeHistory=true")
+
+function parseQuery(url) {
+  var url = url,
+      _url$split = url.split("?"),
+      _url$split2 = slicedToArray(_url$split, 2),
+      _ = _url$split2[0],
+      search = _url$split2[1],
+      query = {};
+
+  if (!search) return query;
+  var args = search.split("&");
+  if (args) for (var i = 0; i < args.length; i++) {
+    var keyAndVal = args[i].split("="),
+        key = keyAndVal[0],
+        val = true;
+    if (keyAndVal.length > 1) {
+      val = decodeURIComponent(keyAndVal.slice(1).join("="));
+      if (val.match(/^(true|false|null|[0-9"[{].*)$/)) try {
+        val = JSON.parse(val);
+      } catch (e) {
+        if (val[0] === "[") val = val.slice(1, -1).split(","); // handle string arrays
+        // if not JSON use string itself
+      }
+    }
+    query[key] = val;
+  }
+  return query;
+}
+
 var slashEndRe = /\/+$/;
 var slashStartRe = /^\/+/;
 var protocolRe = /^[a-z0-9-_\.]+:/;
@@ -1015,40 +1078,15 @@ var Resource$$1 = function () {
   }, {
     key: "query",
     value: function query() {
-      var url = this.url;
-
-      var _url$split = this.url.split("?"),
-          _url$split2 = slicedToArray(_url$split, 2),
-          _ = _url$split2[0],
-          search = _url$split2[1],
-          query = {};
-
-      if (!search) return query;
-      var args = search && search.split("&");
-      if (args) for (var i = 0; i < args.length; i++) {
-        var keyAndVal = args[i].split("="),
-            key = keyAndVal[0],
-            val = true;
-        if (keyAndVal.length > 1) {
-          val = decodeURIComponent(keyAndVal.slice(1).join("="));
-          if (val.match(/^(true|false|null|[0-9"[{].*)$/)) try {
-            val = JSON.parse(val);
-          } catch (e) {
-            if (val[0] === "[") val = val.slice(1, -1).split(","); // handle string arrays
-            // if not JSON use string itself
-          }
-        }
-        query[key] = val;
-      }
-      return query;
+      return parseQuery(this.url);
     }
   }, {
     key: "withQuery",
     value: function withQuery(queryObj) {
       var query = _extends({}, this.query(), queryObj),
-          _url$split3 = this.url.split("?"),
-          _url$split4 = slicedToArray(_url$split3, 1),
-          url = _url$split4[0],
+          _url$split = this.url.split("?"),
+          _url$split2 = slicedToArray(_url$split, 1),
+          url = _url$split2[0],
           queryString = Object.keys(query).map(function (key) {
         return key + "=" + encodeURIComponent(String(query[key]));
       }).join("&");
@@ -1581,38 +1619,6 @@ var Resource$$1 = function () {
   }]);
   return Resource$$1;
 }();
-
-function applyExclude(exclude, resources) {
-  if (Array.isArray(exclude)) return exclude.reduce(function (intersect, exclude) {
-    return applyExclude(exclude, intersect);
-  }, resources);
-  if (typeof exclude === "string") return resources.filter(function (ea) {
-    return ea.path() !== exclude && ea.name() !== exclude;
-  });
-  if (exclude instanceof RegExp) return resources.filter(function (ea) {
-    return !exclude.test(ea.path()) && !exclude.test(ea.name());
-  });
-  if (typeof exclude === "function") return resources.filter(function (ea) {
-    return !exclude(ea);
-  });
-  return resources;
-}
-
-/*
-
-applyExclude(["foo", "foo"], [
-  {path: () => "foo", name: () => "foo"},
-  {path: () => "bar", name: () => "bar"},
-  {path: () => "baz", name: () => "baz"}
-])
-
-applyExclude(["bar", "foo"], [
-  {path: () => "foo", name: () => "foo"},
-  {path: () => "bar", name: () => "bar"},
-  {path: () => "baz", name: () => "baz"}
-])
-
-*/
 
 /*global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace*/
 
@@ -3452,6 +3458,7 @@ exports.ensureFetch = ensureFetch;
 exports.registerExtension = registerExtension;
 exports.unregisterExtension = unregisterExtension;
 exports.Resource = Resource$$1;
+exports.parseQuery = parseQuery;
 
 }((this.lively.resources = this.lively.resources || {}),typeof module !== 'undefined' && typeof module.require === 'function' ? module.require('fs') : {readFile: function() { throw new Error('fs module not available'); }}));
 
