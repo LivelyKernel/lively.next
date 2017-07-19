@@ -2377,10 +2377,13 @@ return ;
   }
   onAfterRender(node) {}
 
-  whenRendered() {
-    return promise
-      .waitFor(() => !this._dirty && !this._rendering)
-      .then(() => this);
+  whenRendered(maxChecks = 50) {
+    let morph = this;
+    return new Promise(function renderCheck(resolve, reject) {
+      if (!morph._dirty && !morph._rendering) return resolve(morph);
+      if (--maxChecks <= 0) return reject();
+      requestAnimationFrame(() => renderCheck(resolve, reject));
+    });
   }
 
   render(renderer) {
