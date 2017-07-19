@@ -1,8 +1,26 @@
-/*global require, process, Promise*/
+import { newUUID } from "./string.js";
+/*global require, process, Promise, System*/
 
 /*
  * Methods helping with promises (Promise/A+ model). Not a promise shim.
  */
+
+function fastSetInterval(cb, ms, ...args) {
+  let maxTimeout = 2000,
+      interval = {time: null, active: true, id: newUUID()};
+  function step(ts) {
+    if (!interval.time) interval.time = ts;
+    cb(args);
+    if (ts - interval.time > maxTimeout) return;
+    if (interval.active) window.requestAnimationFrame(step);    
+  }
+  window.requestAnimationFrame(step);
+  return interval;
+}
+
+function fastClearInterval(interval) {
+  interval.active = false;
+}
 
 function promise(obj) {
   // Promise object / function converter
@@ -64,12 +82,14 @@ function waitFor(ms, tester, timeoutObj) {
         timeoutValue = undefined,
         error = undefined,
         value = undefined,
-        i = setInterval(() => {
-          if (stopped) { clearInterval(i); return; }
+        intervalFn = System.get("@system-env").browser ? fastSetInterval : setInterval,
+        clearFn = System.get("@system-env").browser ? fastClearInterval : clearInterval,
+        i = intervalFn(() => {
+          if (stopped) { clearFn(i); return; }
           try { value = tester(); } catch (e) { error = e; }
           if (!value && !error && !timedout) return;
           stopped = true;
-          clearInterval(i);
+          clearFn(i);
           if (error) return reject(error);
           if (timedout)
             return typeof timeoutObj === "undefined"
