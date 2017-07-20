@@ -17,29 +17,70 @@ export class Button extends Morph {
     return new StyleSheet('Button Style', {
       ".Button": {borderWidth: 1, borderRadius: 5, padding: Rectangle.inset(4,2)},
       ".Button.activeStyle": {
+        fontSize: 12, 
+        fontColor: Color.almostBlack,
         borderColor: Color.gray,
         fill: new LinearGradient({
-          stops: [{offset: 0, color: Color.white}, {offset: 1, color: new Color.rgb(236, 240, 241)}]
+          stops: [{offset: 0, color: Color.white}, 
+                  {offset: 1, color: new Color.rgb(236, 240, 241)}]
         }),
         nativeCursor: "pointer"
       },
       ".Button.triggerStyle": {
         borderColor: Color.gray,
         fill: Color.rgb(161, 161, 161),
-        nativeCursor: "pointer"
+        nativeCursor: "pointer",
+        fontSize: 12, 
+        fontColor: Color.almostBlack
       },
       ".Button.inactiveStyle": {
         borderColor: Color.gray,
         opacity: .5,
         fill: new LinearGradient({
-          stops: [{offset: 0, color: Color.white}, {offset: 1, color: new Color.rgb(236, 240, 241)}]
+          stops: [
+            {offset: 0, color: Color.white}, 
+            {offset: 1, color: new Color.rgb(236, 240, 241)}
+          ]
         }),
-        nativeCursor: "not-allowed"
-      },
-      ".Button.activeStyle [name=label]": {fontSize: 12, fontColor: Color.almostBlack},
-      ".Button.triggerStyle [name=label]": {fontSize: 12, fontColor: Color.almostBlack},
-      ".Button.inactiveStyle [name=label]": {fontSize: 12, fontColor: Color.almostBlack.withA(0.5)}
+        nativeCursor: "not-allowed",
+        fontSize: 12, 
+        fontColor: Color.almostBlack.withA(0.5)
+      }
     });
+  }
+
+  static renderStyleAccessors(modes) {
+    let accessors = {};
+    for (let mode in modes) {
+      accessors[mode] = {
+        initialize() {
+          let button = this,
+              handler = {
+                get(modeStyle, prop) {
+                  let v = prop in modeStyle ? modeStyle[prop] : button[prop];
+                  if (prop == mode) return undefined;
+                  return v;
+                },
+                set(modeStyle, prop, value) {
+                  if (prop == mode) return true;
+                  this.dontRecordChangesWhile(() => {
+                    let v = button[prop];
+                    button[prop] = value; // leverage the existing setter of the property
+                    modeStyle[prop] = button[prop];
+                    button[prop] = v;
+                    button.adjustStyleSheet(modes[mode], prop, button[prop]);
+                  });
+                  return true;
+                }
+              };
+          this[mode] = new Proxy({
+              __propertyInfo__: button.propertiesAndPropertySettings().properties
+            }, handler
+          );
+        }
+      }
+    }
+    return accessors;
   }
 
   static get properties() {
@@ -51,7 +92,7 @@ export class Button extends Morph {
       fontSize: {
         type: "Number",
         min: 0,
-        isStyleProps: true,
+        isStyleProp: true,
         defaultValue: 12,
         after: ['labelMorph', 'iconMorph'],
         set(s) {
@@ -62,7 +103,7 @@ export class Button extends Morph {
       },
 
       fontColor: {
-        isStyleProps: true,
+        isStyleProp: true,
         defaultValue: Color.black,
         after: ['labelMorph', 'iconMorph'],
         set(c) {
@@ -188,7 +229,13 @@ export class Button extends Morph {
         after: ["labelMorph"], derived: true,
         get() { return this.labelMorph.textAndAttributes; },
         set(val) { this.labelMorph.textAndAttributes = val; }
-      }
+      },
+
+      ...this.renderStyleAccessors({
+        activeStyle: '.activeStyle',
+        triggerStyle: '.triggerStyle',
+        inactiveStyle: '.inactiveStyle'
+      })
     }
   }
 
@@ -203,6 +250,32 @@ export class Button extends Morph {
     connect(this, 'fontFamily', this, 'relayout');
   }
 
+  get __dont_serialize__() {
+    return ['activeStyle', 'triggerStyle', 'inactiveStyle'];
+  }
+
+  isStyleProp(prop) {
+    if (prop == 'styleClasses') return;
+    this.propertySpecs = this.propertySpecs || this.propertiesAndPropertySettings().properties;
+    return this.propertySpecs[prop] && this.propertySpecs[prop].isStyleProp
+  }
+
+  adjustStyleSheet(style, prop, value) {
+    /*
+     When we directly set style properties of a button, we want the
+     style for the current mode to be influenced and not be overriden,
+     by global style sheets, or changing activeModes.
+    */
+    if (!this.isStyleProp(prop)) return;
+    if (this.styleSheets.length < 1) this.styleSheets = new StyleSheet({});
+    let sheet = this.styleSheets[0],
+        props = {
+          ...(sheet.rules[style] || {}),
+          [prop]: value
+        };
+    sheet.setRule(style, props);
+  }
+  
   get isButton() { return true }
 
   relayout() {
@@ -265,7 +338,7 @@ export class Button extends Morph {
   }
 
   perform() {
-    let classes = arr.withoutAll(this.styleClasses, ['inactiveStyle', 'activeStyle'])
+    let classes = arr.withoutAll(this.styleClasses, ['triggerStyle', 'inactiveStyle', 'activeStyle'])
     this.styleClasses = [...classes, 'triggerStyle'];
   }
 
