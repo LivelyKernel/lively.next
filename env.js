@@ -5,6 +5,7 @@ import { ChangeManager } from "./changes.js";
 import { UndoManager } from "./undo.js";
 import EventDispatcher from "./events/EventDispatcher.js";
 import { subscribe, unsubscribe } from "lively.notifications";
+import { requestAnimationFrameStacked, cancelAnimationFrameStacked } from "lively.lang/promise.js";
 
 
 // MorphicEnv.reset();
@@ -92,7 +93,7 @@ export class MorphicEnv {
       this.fontMetric = null;
     }
     if (this.domEnv && this.whenRenderedTickingProcess) {
-      this.domEnv.window.cancelAnimationFrame(this.whenRenderedTickingProcess);
+      cancelAnimationFrameStacked(this.whenRenderedTickingProcess);
       this.whenRenderedTickingProcess = null;
     }
     this.whenRenderedRequesters = new Map();
@@ -212,7 +213,7 @@ export class MorphicEnv {
       } else nRequesters++;
     }
     if (!nRequesters) this.whenRenderedTickingProcess = null;
-    else this.whenRenderedTickingProcess = this.domEnv.window.requestAnimationFrame(
+    else this.whenRenderedTickingProcess = requestAnimationFrameStacked(
                                             () => this.updateWhenRenderedRequests());
   }
 
@@ -231,7 +232,7 @@ export class MorphicEnv {
       });
     }
     if (!whenRenderedTickingProcess)
-      this.whenRenderedTickingProcess = this.domEnv.window.requestAnimationFrame(
+      this.whenRenderedTickingProcess = requestAnimationFrameStacked(
                                           () => this.updateWhenRenderedRequests());
     return requestState.promise;
   }

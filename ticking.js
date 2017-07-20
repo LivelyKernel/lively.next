@@ -1,3 +1,5 @@
+/*global System*/
+import { requestAnimationFrameStacked } from "lively.lang/promise.js";
 class Script {
 
   constructor() {
@@ -33,7 +35,7 @@ class Script {
     this.type = typeof ms === "number" ? "setTimeout" : "requestAnimationFrame";
     this.currentTimeout = this.type === "setTimeout" ?
       this.global.setTimeout(this.tick.bind(this), ms) :
-      this.global.requestAnimationFrame(this.tick.bind(this))
+      requestAnimationFrameStacked(this.tick.bind(this))
   }
 
   stop() {
