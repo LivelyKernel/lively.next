@@ -12,7 +12,8 @@ import { sortBy } from "lively.lang/array.js";
 class Layout {
 
   constructor(args = {}) {
-    let {spacing, border, container, autoResize, ignore, onScheduleApply, layoutOrder} = args;
+    let {spacing, border, container, manualUpdate, 
+         autoResize, ignore, onScheduleApply, layoutOrder} = args;
     this.applyRequests = [];
     this.border = {top: 0, left: 0, right: 0, bottom: 0, ...border};
     this.spacing = spacing || 0;
@@ -20,6 +21,7 @@ class Layout {
     this.lastBoundsExtent = this.container && this.container.bounds().extent();
     this.active = false;
     this.container = container;
+    this.manualUpdate = manualUpdate;
     this.autoResize = autoResize != undefined ? autoResize : true;
     this.onScheduleApply = onScheduleApply || ((submorph, animation ,change) => {
     });
@@ -31,6 +33,7 @@ class Layout {
 
   attach() {
     this.apply();
+    this.refreshBoundsCache();
   }
 
   copy() {
@@ -44,12 +47,15 @@ class Layout {
   disable() { this.active = true; }
   enable(animation) { 
     this.active = false; 
-    this.refreshBoundsCache();
     this.scheduleApply(null, animation);
   }
 
   boundsChanged(container) {
     return !(this.lastBoundsExtent && container.bounds().extent().equals(this.lastBoundsExtent));
+  }
+
+  extentChanged(container) {
+    return !(this.lastExtent && container.extent.equals(this.lastExtent));
   }
   
   get layoutableSubmorphs() {
@@ -67,20 +73,40 @@ class Layout {
   }
 
   get submorphBoundsChanged() {
+    let {layoutableSubmorphs, layoutableSubmorphBounds} = this;
+    if (!layoutableSubmorphBounds
+     || (layoutableSubmorphs.length != layoutableSubmorphBounds.length)) {
+        return true;
+    }
+    for (let i = 0; i < layoutableSubmorphs.length; i++) {
+      let m = layoutableSubmorphs[i],
+          b = layoutableSubmorphBounds[i], nb;
+      if (!b.equals(nb = m.bounds())) {
+        return true;
+      }
+    }
     return false;
   }
 
-  refreshBoundsCache() { 
-    this.layoutableSubmorphBounds = this.layoutableSubmorphs.map(m => m.submorphBounds());
+  refreshBoundsCache() {
+    this.lastExtent = this.container.extent;    
+    this.layoutableSubmorphBounds = this.layoutableSubmorphs.map(m => m.bounds());
   }
 
   onContainerRender() {
     this.forceLayout();
   }
 
+  get noLayoutActionNeeded() {
+    return !this.submorphBoundsChanged 
+            && !this.boundsChanged(this.container)
+            && !this.extentChanged(this.container)
+  }
+
   forceLayout() {
     if (this.applyRequests && this.applyRequests.length > 0) {
       this.applyRequests = [];
+      if (this.noLayoutActionNeeded) return;
       this.refreshBoundsCache();
       this.container.withMetaDo({
         isLayoutAction: true, 
@@ -250,24 +276,6 @@ export class FillLayout extends Layout {
 }
 
 class FloatLayout extends Layout {
-
-  get submorphBoundsChanged() {
-    let {layoutableSubmorphs, layoutableSubmorphBounds} = this;
-    if (!layoutableSubmorphBounds
-     || layoutableSubmorphs.length != layoutableSubmorphBounds.length) {
-        this.refreshBoundsCache();
-        layoutableSubmorphBounds = this.layoutableSubmorphBounds;
-    }
-    for (let i = 0; i < layoutableSubmorphs.length; i++) {
-      let m = layoutableSubmorphs[i],
-          b = layoutableSubmorphBounds[i], nb;
-      if (!b.equals(nb = m.submorphBounds())) {
-        layoutableSubmorphBounds[i] = nb;
-        return true;
-      }
-    }
-    return false;
-  }
 
   layoutOrder(aMorph) { return aMorph.left; }
 }
@@ -886,7 +894,7 @@ export class LayoutColumn extends LayoutAxis {
     } else {
       this.adjustLength(delta);
     }
-    this.layout.apply();
+    !this.layout.manualUpdate && this.layout.apply();
   }
 
   set paddingLeft(left) {
@@ -1017,7 +1025,7 @@ export class LayoutRow extends LayoutAxis {
       this.adjustLength(delta);
       this.proportion = this.origin.dynamicHeight > 0 ? this.height / this.origin.dynamicHeight : 0;
     }
-    this.layout.apply();
+    !this.layout.manualUpdate && this.layout.apply();
   }
 
   remove() {
@@ -1188,10 +1196,6 @@ export class GridLayout extends Layout {
   name() { return "Grid" }
   description() { return "Aligns the submorphs alongside a configurable grid. Columns and rows and be configured to have different proportional, minimal or fixed sizes. Cells can further be grouped such that submorphs fill up multiple slots of the grid." }
 
-  attach() {
-    this.apply()
-  }
-
   initGrid() {
     const grid = this.ensureGrid(this.config),
           rows = grid.map(row => new LayoutRow(new LayoutCell({row, layout: this})));
@@ -1234,7 +1238,8 @@ export class GridLayout extends Layout {
   set fitToCell(fit) { 
      this.config.fitToCell = fit; 
      this.cellGroups.forEach(g => g.resize = fit);
-     this.apply() }
+     this.apply() 
+  }
 
   get notInLayout() {
     return arr.withoutAll(
@@ -1292,6 +1297,15 @@ export class GridLayout extends Layout {
     });
     this.lastBoundsExtent = this.container.bounds().extent();
     this.active = false;
+  }
+
+  get submorphBoundsChanged() {
+    for (let g of this.cellGroups) {
+      if (g.morph && !g.bounds().equals(g.morph.bounds())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   getCellGroupFor(morph) {

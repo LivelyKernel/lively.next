@@ -946,6 +946,7 @@ export default class Inspector extends Morph {
         after: ["submorphs"],
         initialize() {
           this.layout = new GridLayout({
+            manualUpdate: true,
             grid: [['searchBar'],
                    ['propertyTree'],
                    ['resizer'],
@@ -1176,6 +1177,7 @@ export default class Inspector extends Morph {
       {
         name: "searchBar",
         layout: new GridLayout({
+          manualUpdate: true,
           grid: [["searchField", "targetPicker", "internals", "unknowns"]],
           rows: [0, {paddingTop: 5, paddingBottom: 3}],
           columns: [0, {paddingLeft: 5, paddingRight: 5},

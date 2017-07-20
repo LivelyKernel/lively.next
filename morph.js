@@ -2393,7 +2393,7 @@ return ;
      if (!this._dirty) return;
      for (var i in this.submorphs)
        this.submorphs[i].applyLayoutIfNeeded();
-     this.layout && this.layout.forceLayout();
+     this.layout && !this.layout.manualUpdate && this.layout.forceLayout();
   }
 
   requestStyling() {

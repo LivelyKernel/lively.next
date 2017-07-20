@@ -355,7 +355,10 @@ export default class Browser extends Window {
              reactsToPointer: false,
              borderBottom: {color: Color.gray, width: 1},
              submorphs: [
-               {name: "commands", layout: new HorizontalLayout({spacing: 2, autoResize: false}),
+               {name: "commands", layout: new HorizontalLayout({
+                   spacing: 2, autoResize: false, layoutOrder: function(m) {
+                     return this.container.submorphs.indexOf(m)
+                   }}),
                 fill: Color.transparent,
                 submorphs: [
                  {...btnStyle, name: "historyBackwardButton", label: Icon.makeLabel("step-backward"), tooltip: "back in browse history"},

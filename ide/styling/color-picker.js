@@ -367,8 +367,7 @@ class ColorDetails extends Morph {
       width: {defaultValue: 80},
       fill: {defaultValue: Color.transparent},
       layout: {initialize() {this.layout = new VerticalLayout({
-        spacing: 9, layoutOrder: m => this.container.submorphs.indexOf(m) 
-      })}},
+        spacing: 9, layoutOrder(m) { return this.container.submorphs.indexOf(m) }})}},
       submorphs: {
         after: ['color'],
         initialize() {

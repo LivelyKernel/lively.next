@@ -678,8 +678,107 @@ describe("layout", () => {
                            [null, null, "m3"]]
                       });
       m.addMorph({name: "m4", extent: pt(22,22)});
+      expect(m.layout.layoutableSubmorphs.length).equals(4);
+      expect(m.layout.layoutableSubmorphBounds.length).equals(3);
+      expect(m.layout.submorphBoundsChanged).is.true;
       m.applyLayoutIfNeeded();
       expect(m.getSubmorphNamed("m4").bounds()).equals(rect(200,100,100,100));
     })
   });
+
+  describe('updating policy', () => {
+
+    beforeEach(() => {
+       m = morph({
+            name: "A",
+            layout: new TilingLayout(),
+            submorphs: [
+              morph({
+                name: "B",
+                layout: new HorizontalLayout({
+                  resizeContainer: true
+                }),
+                submorphs: [
+                  morph({
+                    name: "C",
+                    layout: new VerticalLayout({
+                      resizeContainer: true
+                    }),
+                    submorphs: [morph({name: "D"})]
+                  })
+                ]
+              })
+            ]
+          });
+     });
+
+    it("schedules layout updates on submorph change", () => {
+      var b = m.get('B'), c = m.get('C'), d = m.get('D'), a = m;
+      expect(a.layout.applyRequests).is.empty
+      expect(c.layout.layoutableSubmorphBounds[0]).equals(d.bounds());
+      d.extent = pt(20, 20);
+      expect(a.layout.applyRequests.length).equals(1);
+      expect(b.layout.applyRequests.length).equals(1);
+      expect(c.layout.applyRequests.length).equals(1);
+      expect(b.layout.boundsChanged(b)).is.true;
+      expect(b.layout.submorphBoundsChanged).is.true;
+      expect(c.layout.boundsChanged(c)).is.true;
+      expect(c.layout.submorphBoundsChanged).is.true;
+      c.clipMode = 'hidden';      
+      c.layout.resizeContainer = false;
+      expect(c.layout.boundsChanged(c)).is.false;
+      expect(c.layout.submorphBoundsChanged).is.true;
+      expect(c.layout.noLayoutActionNeeded).is.false;
+      c.extent = pt(100, 100);
+      expect(c.layout.boundsChanged(c)).is.true;
+      expect(c.layout.noLayoutActionNeeded).is.false;   
+      a.applyLayoutIfNeeded();
+      c.extent = pt(25, 25);
+      expect(c.layout.noLayoutActionNeeded).is.false;      
+    });
+    
+    it('ignores updates in response to changes that did not affect layout', () => {
+      var b = m.get('B'), c = m.get('C'), d = m.get('D'), a = m;
+      c.layout.resizeContainer = false;
+      d.extent = pt(100,100);
+      expect(c.layout.boundsChanged(c)).is.true;
+      expect(c.layout.submorphBoundsChanged).is.true;
+      expect(b.layout.boundsChanged(b)).is.true;
+      expect(b.layout.submorphBoundsChanged).is.true;
+      c.clipMode = 'hidden';
+      expect(c.layout.boundsChanged(c)).is.false;
+      expect(c.layout.submorphBoundsChanged).is.true;
+      expect(b.layout.boundsChanged(b)).is.false;
+      expect(b.layout.submorphBoundsChanged).is.false;
+      a.applyLayoutIfNeeded();
+      expect(b.layout.boundsChanged(b)).is.false;
+      expect(b.layout.submorphBoundsChanged).is.false;
+      expect(c.layout.boundsChanged(c)).is.false;
+      expect(c.layout.submorphBoundsChanged).is.false;
+      d.extent = pt(20,20);
+      expect(b.layout.boundsChanged(b)).is.false;
+      expect(b.layout.submorphBoundsChanged).is.false;
+      expect(c.layout.boundsChanged(c)).is.false;
+      expect(c.layout.submorphBoundsChanged).is.true;
+    });
+
+    it('does not respond to scroll changes of clipped morphs', () => {
+      var b = m.get('B'), c = m.get('C'), d = m.get('D'), a = m;
+      c.clipMode = 'hidden';
+      d.extent = pt(100,100);
+      a.applyLayoutIfNeeded();
+      b.layout.refreshBoundsCache();
+      expect(b.layout.noLayoutActionNeeded).is.true;
+      c.scroll = pt(0,-40);
+      expect(b.layout.noLayoutActionNeeded).is.true;
+    });
+
+    it('does layout if extent of morph changes', () => {
+      var b = m.get('B'), c = m.get('C'), d = m.get('D'), a = m;
+      a.applyLayoutIfNeeded();
+      b.extent = pt(25,25);
+      expect(b.layout.noLayoutActionNeeded).is.false;
+    })
+    
+  })
 })
