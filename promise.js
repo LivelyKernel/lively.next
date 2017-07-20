@@ -1,20 +1,44 @@
 import { newUUID } from "./string.js";
+import { pushIfNotIncluded, removeAt } from "./array.js";
 /*global require, process, Promise, System*/
 
 /*
  * Methods helping with promises (Promise/A+ model). Not a promise shim.
  */
 
-function fastSetInterval(cb, ms, ...args) {
-  let maxTimeout = 2000,
-      interval = {time: null, active: true, id: newUUID()};
+const requests = [];
+
+function flush(ms) {
+  let reqs = requests, i = reqs.length;
+  requests = [];
+  while (i--) reqs[i](ms);
+}
+
+export function requestAnimationFrameStacked(cb) {
+  if (!requests.length) window.requestAnimationFrame(flush)
+  return {requests, idx: pushIfNotIncluded(requests, cb) - 1 || requests.indexOf(cb)}
+}
+
+export function cancelAnimationFrameStacked(ref) {
+  if (requests == ref.requests) {
+    removeAt(requests, ref.idx);
+  }
+}
+
+function fastSetInterval(cb, ms = 0, ...args) {
+  let interval = {time: null, active: true};
   function step(ts) {
     if (!interval.time) interval.time = ts;
-    cb(args);
-    if (ts - interval.time > maxTimeout) return;
-    if (interval.active) window.requestAnimationFrame(step);    
+    // rms 17.7.17: I have found the system to be snappier,
+    //              when I just ignore the interval.
+    // if (ts - interval.time > ms) {
+    //    interval.time = null; 
+    //    cb(args);
+    // }
+    cb(...args);
+    if (interval.active) requestAnimationFrameStacked(step);    
   }
-  window.requestAnimationFrame(step);
+  requestAnimationFrameStacked(step);
   return interval;
 }
 
