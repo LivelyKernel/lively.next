@@ -630,6 +630,15 @@ export class World extends Morph {
     return statusMessage;
   }
 
+  async addProgressBar(opts = {}) {
+    let {location = "center"} = opts,
+        pBar = await loadObjectFromPartsbinFolder("progress bar");
+    Object.assign(pBar, {progress: 0}, obj.dissoc(opts, ["location"]));
+    this.addMorph(pBar);
+    pBar.align(pBar[location], this.visibleBounds()[location]());
+    return pBar;
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // dialogs
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
