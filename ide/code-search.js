@@ -71,7 +71,6 @@ export class CodeSearcher extends FilterableList {
         initialize() {
           this.styleSheets = new StyleSheet({
             "[name=searchInUnloadedModulesCheckbox] .Label": {
-              padding: rect(2,2,0,0),
               fontColor: Color.gray.darker()
             },
             ".List .ListItemMorph": {

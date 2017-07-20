@@ -664,6 +664,7 @@ export class DropDownSelector extends Morph {
           this.relayout();
         }
       },
+      fontColor: {isStyleProp: true, defaultValue: Color.black},
       fontSize: {isStyleProp: true, defaultValue: 12},
       fontFamily: {isStyleProp: true, defaultValue: 'Sans-Serif'},
       border: {defaultValue: {radius: 3, color: Color.gray.darker(), style: "solid"}},
@@ -687,9 +688,10 @@ export class DropDownSelector extends Morph {
     }
   }
 
-  updateStyleSheet() {
+  updateStyleSheet(args) {
     this.styleSheets = new StyleSheet({
       ".Label": {
+        fontColor: this.fontColor,
         fontSize: this.fontSize,
         fontFamily: this.fontFamily
       },
@@ -698,6 +700,7 @@ export class DropDownSelector extends Morph {
         opacity: .8
       }
     });
+    this.whenRendered().then(() => this.requestStyling());
   }
 
   build() {
@@ -711,6 +714,7 @@ export class DropDownSelector extends Morph {
       },
       this.dropDownLabel
     ];
+    connect(this, 'onChange', this, 'updateStyleSheet');
   }
 
   getMenuEntries() {

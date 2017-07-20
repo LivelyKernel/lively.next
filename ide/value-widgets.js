@@ -699,6 +699,8 @@ export class PaddingWidget extends Label {
   static get properties() {
     return {
       nativeCursor: {defaultValue: 'pointer'},
+      styleClasses: {defaultValue: ['TreeLabel']},
+      fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
       rectangle: {
         defaultValue: rect(0),
         set(r) {
