@@ -43,7 +43,8 @@ export function parseQuery(url) {
         val = true;
     if (keyAndVal.length > 1) {
       val = decodeURIComponent(keyAndVal.slice(1).join("="));
-      if (val.match(/^(true|false|null|[0-9"[{].*)$/))
+      if (val === "undefined") val = undefined;
+      else if (val.match(/^(true|false|null|[0-9"[{].*)$/))
         try { val = JSON.parse(val); } catch(e) {
           if (val[0] === "[") val = val.slice(1,-1).split(","); // handle string arrays
           // if not JSON use string itself
