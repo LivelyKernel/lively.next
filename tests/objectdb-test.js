@@ -316,7 +316,23 @@ describe("deletions in ObjectDB", function() {
         expect(stats).deep.equals({
           world: {"other objectdb test world": { count: 1, newest: commit4.timestamp, oldest: commit4.timestamp }}
         });
-      })
+      });
+
+    });
+
+    describe("object", async () => {
+
+      it("marks object as deleted", async () => {
+        let commit = await objectDB.commit("world", world1.name, null, {user: user1, message: "deleted world1"})
+        expect(commit).has.property("deleted", true);
+
+        expect(await objectDB.getLatestCommit("world", world1.name)).equals(null);
+        expect(await objectDB.getLatestCommit("world", world1.name, "HEAD", true)).not.equals(null);
+        expect(arr.pluck(await ObjectDBInterface.fetchCommits({db: dbName}), "name"))
+          .equals(["other objectdb test world"])
+        expect(arr.pluck(await ObjectDBInterface.fetchCommits({db: dbName, includeDeleted: true}), "name"))
+          .equals(["objectdb test world", "other objectdb test world"])
+      });
 
     });
 
@@ -485,11 +501,11 @@ describe("interface test", function() {
     it("commits", async () => {
       let snapshot = {foo: {bar: 23}, x: 99, name: "another objectdb test world"}
       try {
-        await ObjectDBInterface.commitSnapshot({db: dbName, type: "world", name: world2.name, expectedParentCommit: commit3._id, commitSpec: {user: user1}, snapshot});
+        await ObjectDBInterface.commit({db: dbName, type: "world", name: world2.name, expectedParentCommit: commit3._id, commitSpec: {user: user1}, snapshot});
         expect().assert(false, "allowing to cmmit with wrong prev commit");
       } catch (err) {}
 
-      let committed = await ObjectDBInterface.commitSnapshot({db: dbName, type: "world", name: world2.name, expectedParentCommit: commit4._id, commitSpec: {user: user1}, snapshot});
+      let committed = await ObjectDBInterface.commit({db: dbName, type: "world", name: world2.name, expectedParentCommit: commit4._id, commitSpec: {user: user1}, snapshot});
     });
 
   });

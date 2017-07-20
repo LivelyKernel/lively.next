@@ -36166,16 +36166,16 @@ function extend() {
     GLOBAL.atob = function(str) { return new Buffer(str, 'base64').toString() };
   (function() {
     this.lively = this.lively || {};
-(function (exports,_PouchDB,pouchdbAdapterMem,lively_resources) {
+(function (exports,_PouchDB,pouchdbAdapterMem,lively_resources,lively_lang) {
 'use strict';
 
 _PouchDB = 'default' in _PouchDB ? _PouchDB['default'] : _PouchDB;
 pouchdbAdapterMem = 'default' in pouchdbAdapterMem ? pouchdbAdapterMem['default'] : pouchdbAdapterMem;
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-  return typeof obj;
-} : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj$$1) {
+  return typeof obj$$1;
+} : function (obj$$1) {
+  return obj$$1 && typeof Symbol === "function" && obj$$1.constructor === Symbol && obj$$1 !== Symbol.prototype ? "symbol" : typeof obj$$1;
 };
 
 
@@ -36429,7 +36429,8 @@ function nodejs_leveldbPath(dbName) {
   }
 
   if (!isNode) throw new Error("nodejs_leveldbPath called under non-nodejs environment");
-  var serverPath = GLOBAL.process.cwd();
+  var basePath = typeof System !== "undefined" && System.baseURL.startsWith("file://") ? System.baseURL.replace("file://", "") : GLOBAL.process.cwd();
+
   // are we in a typical lively.next env? Meaning serverPath points to
   // lively.next-dir/lively.server. If so, use parent dir of lively.server
 
@@ -36441,17 +36442,19 @@ function nodejs_leveldbPath(dbName) {
       readdirSync = _nodejsRequire2.readdirSync,
       readFileSync = _nodejsRequire2.readFileSync;
 
+  if (dbName.includes("/")) return join(basePath, dbName);
+
   try {
-    var parentPackage = readFileSync(join(serverPath, "../package.json")),
+    var parentPackage = readFileSync(join(basePath, "../package.json")),
         conf = JSON.parse(parentPackage);
     if (conf.name === "lively.web" || conf.name === "lively.next") {
-      var _dbDir = join(serverPath, "../.livelydbs");
+      var _dbDir = join(basePath, "../.livelydbs");
       if (!existsSync(_dbDir)) mkdirSync(_dbDir);
       return join(_dbDir, dbName);
     }
   } catch (e) {}
 
-  var dbDir = join(serverPath, ".livelydbs");
+  var dbDir = join(basePath, ".livelydbs");
   if (!existsSync(dbDir)) mkdirSync(dbDir);
   return join(dbDir, dbName);
 }
@@ -37666,6 +37669,7 @@ var sha1 = function sha1_setup() {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 // let db = await ObjectDB.find("test-object-db");
+// db = objectDBs.get("lively.morphic/objectdb/morphicdb")
 // await db.objectStats()
 
 var objectDBs = objectDBs || new Map();
@@ -37767,7 +37771,7 @@ var ObjectDB = function () {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                commitDB = Database.findDB("commits-" + this.name);
+                commitDB = Database.findDB(this.name + "-commits");
 
                 if (!commitDB) {
                   _context2.next = 4;
@@ -37778,7 +37782,7 @@ var ObjectDB = function () {
                 return commitDB.destroy();
 
               case 4:
-                versionDB = Database.findDB("version-graph-" + this.name);
+                versionDB = Database.findDB(this.name + "-version-graph");
 
                 if (!versionDB) {
                   _context2.next = 8;
@@ -37824,7 +37828,7 @@ var ObjectDB = function () {
   }, {
     key: "snapshotObject",
     value: function () {
-      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(type, name, object, snapshotOptions, commitSpec, ref, expectedPrevVersion) {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(type, name, object, snapshotOptions, commitSpec, preview, ref, expectedPrevVersion) {
         var serializeFn, snapshot;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
@@ -37841,7 +37845,7 @@ var ObjectDB = function () {
 
               case 4:
                 snapshot = _context3.sent;
-                return _context3.abrupt("return", this.commitSnapshot(type, name, snapshot, commitSpec, ref, expectedPrevVersion));
+                return _context3.abrupt("return", this.commit(type, name, snapshot, commitSpec, preview, ref, expectedPrevVersion));
 
               case 6:
               case "end":
@@ -37851,7 +37855,7 @@ var ObjectDB = function () {
         }, _callee3, this);
       }));
 
-      function snapshotObject(_x3, _x4, _x5, _x6, _x7, _x8, _x9) {
+      function snapshotObject(_x3, _x4, _x5, _x6, _x7, _x8, _x9, _x10) {
         return _ref3.apply(this, arguments);
       }
 
@@ -37887,7 +37891,7 @@ var ObjectDB = function () {
         }, _callee4, this);
       }));
 
-      function loadObject(_x10, _x11, _x12, _x13, _x14) {
+      function loadObject(_x11, _x12, _x13, _x14, _x15) {
         return _ref4.apply(this, arguments);
       }
 
@@ -37919,7 +37923,7 @@ var ObjectDB = function () {
         }, _callee5, this);
       }));
 
-      function has(_x15, _x16) {
+      function has(_x16, _x17) {
         return _ref5.apply(this, arguments);
       }
 
@@ -37963,7 +37967,7 @@ var ObjectDB = function () {
         }, _callee6, this);
       }));
 
-      function objects(_x17) {
+      function objects(_x18) {
         return _ref6.apply(this, arguments);
       }
 
@@ -38096,7 +38100,7 @@ var ObjectDB = function () {
         }, _callee7, this, [[9, 35], [17, 21, 25, 33], [26,, 28, 32]]);
       }));
 
-      function objectStats(_x18, _x19) {
+      function objectStats(_x19, _x20) {
         return _ref7.apply(this, arguments);
       }
 
@@ -38159,7 +38163,7 @@ var ObjectDB = function () {
         }, _callee8, this);
       }));
 
-      function getCommits(_x20, _x21) {
+      function getCommits(_x21, _x22) {
         return _ref11.apply(this, arguments);
       }
 
@@ -38199,7 +38203,7 @@ var ObjectDB = function () {
         }, _callee9, this);
       }));
 
-      function getCommit(_x24) {
+      function getCommit(_x25) {
         return _ref12.apply(this, arguments);
       }
 
@@ -38214,26 +38218,34 @@ var ObjectDB = function () {
           while (1) {
             switch (_context10.prev = _context10.next) {
               case 0:
-                _context10.t0 = this.__commitDB;
-
-                if (_context10.t0) {
-                  _context10.next = 5;
+                if (commitIds.length) {
+                  _context10.next = 2;
                   break;
                 }
 
-                _context10.next = 4;
+                return _context10.abrupt("return", []);
+
+              case 2:
+                _context10.t0 = this.__commitDB;
+
+                if (_context10.t0) {
+                  _context10.next = 7;
+                  break;
+                }
+
+                _context10.next = 6;
                 return this._commitDB();
 
-              case 4:
+              case 6:
                 _context10.t0 = _context10.sent;
 
-              case 5:
+              case 7:
                 commitDB = _context10.t0;
                 return _context10.abrupt("return", commitDB.getDocuments(commitIds.map(function (id) {
                   return { id: id };
                 })));
 
-              case 7:
+              case 9:
               case "end":
                 return _context10.stop();
             }
@@ -38241,7 +38253,7 @@ var ObjectDB = function () {
         }, _callee10, this);
       }));
 
-      function getCommitsWithIds(_x25) {
+      function getCommitsWithIds(_x26) {
         return _ref13.apply(this, arguments);
       }
 
@@ -38252,8 +38264,9 @@ var ObjectDB = function () {
     value: function () {
       var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(type, objectName) {
         var ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "HEAD";
+        var includeDeleted = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
 
-        var _ref15, _ref16, commitId, commitDB;
+        var _ref15, _ref16, commitId, commitDB, commit;
 
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
@@ -38290,9 +38303,23 @@ var ObjectDB = function () {
 
               case 12:
                 commitDB = _context11.t0;
-                return _context11.abrupt("return", commitDB.get(commitId));
+                _context11.next = 15;
+                return commitDB.get(commitId);
 
-              case 14:
+              case 15:
+                commit = _context11.sent;
+
+                if (!(commit && commit.deleted && !includeDeleted)) {
+                  _context11.next = 18;
+                  break;
+                }
+
+                return _context11.abrupt("return", null);
+
+              case 18:
+                return _context11.abrupt("return", commit);
+
+              case 19:
               case "end":
                 return _context11.stop();
             }
@@ -38300,18 +38327,18 @@ var ObjectDB = function () {
         }, _callee11, this);
       }));
 
-      function getLatestCommit(_x26, _x27) {
+      function getLatestCommit(_x27, _x28) {
         return _ref14.apply(this, arguments);
       }
 
       return getLatestCommit;
     }()
   }, {
-    key: "commitSnapshot",
+    key: "commit",
     value: function () {
-      var _ref17 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(type, name, snapshot, commitSpec) {
-        var ref = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : "HEAD";
-        var expectedPrevVersion = arguments[5];
+      var _ref17 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(type, name, snapshot, commitSpec, preview) {
+        var ref = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : "HEAD";
+        var expectedPrevVersion = arguments[6];
 
         var user, _commitSpec$descripti, description, _commitSpec$tags, tags, _commitSpec$message, message, metadata, versionDB, versionData, ancestor, ancestors, snapshotJson, commit, commitDB, res;
 
@@ -38342,7 +38369,7 @@ var ObjectDB = function () {
                   break;
                 }
 
-                throw new Error("Cannot snapshot " + type + "/" + name + " without user");
+                throw new Error("Cannot commit " + type + "/" + name + " without user");
 
               case 7:
                 _context12.t0 = this.__versionDB;
@@ -38392,7 +38419,7 @@ var ObjectDB = function () {
 
                 // Snapshot object and create commit.
 
-                snapshotJson = JSON.stringify(snapshot), commit = this._createCommit(type, name, description, tags, metadata, user, message, ancestors, snapshot, snapshotJson);
+                snapshotJson = snapshot ? JSON.stringify(snapshot) : null, commit = this._createCommit(type, name, description, tags, metadata, user, message, ancestors, snapshot, snapshotJson, preview);
 
                 // update version graph
 
@@ -38424,33 +38451,36 @@ var ObjectDB = function () {
               case 37:
                 commit = _context12.sent;
 
-
-                // write snapshot to resource
-                res = this.snapshotResourceFor(commit);
-                _context12.next = 41;
-                return res.parent().ensureExistance();
-
-              case 41:
-                if (!res.canDealWithJSON) {
-                  _context12.next = 46;
+                if (!snapshot) {
+                  _context12.next = 49;
                   break;
                 }
 
-                _context12.next = 44;
+                res = this.snapshotResourceFor(commit);
+                _context12.next = 42;
+                return res.parent().ensureExistance();
+
+              case 42:
+                if (!res.canDealWithJSON) {
+                  _context12.next = 47;
+                  break;
+                }
+
+                _context12.next = 45;
                 return res.writeJson(snapshot);
 
-              case 44:
-                _context12.next = 48;
+              case 45:
+                _context12.next = 49;
                 break;
 
-              case 46:
-                _context12.next = 48;
+              case 47:
+                _context12.next = 49;
                 return res.write(snapshotJson);
 
-              case 48:
+              case 49:
                 return _context12.abrupt("return", commit);
 
-              case 49:
+              case 50:
               case "end":
                 return _context12.stop();
             }
@@ -38458,11 +38488,11 @@ var ObjectDB = function () {
         }, _callee12, this);
       }));
 
-      function commitSnapshot(_x29, _x30, _x31, _x32) {
+      function commit(_x31, _x32, _x33, _x34, _x35) {
         return _ref17.apply(this, arguments);
       }
 
-      return commitSnapshot;
+      return commit;
     }()
   }, {
     key: "loadSnapshot",
@@ -38522,9 +38552,17 @@ var ObjectDB = function () {
                 commit = _context13.sent;
 
               case 20:
+                if (commit) {
+                  _context13.next = 22;
+                  break;
+                }
+
+                throw new Error("Cannot find commit to loadSnapshot for " + type + "/" + name + " (using " + commitOrId + ")");
+
+              case 22:
                 return _context13.abrupt("return", this.snapshotResourceFor(commit).readJson());
 
-              case 21:
+              case 23:
               case "end":
                 return _context13.stop();
             }
@@ -38532,7 +38570,7 @@ var ObjectDB = function () {
         }, _callee13, this);
       }));
 
-      function loadSnapshot(_x34, _x35, _x36) {
+      function loadSnapshot(_x37, _x38, _x39) {
         return _ref18.apply(this, arguments);
       }
 
@@ -38541,11 +38579,13 @@ var ObjectDB = function () {
   }, {
     key: "_createCommit",
     value: function _createCommit(type, name, description, tags, metadata, user) {
-      var commitMessage = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : "";
+      var message = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : "";
       var ancestors = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : [];
       var snapshot = arguments[8];
       var snapshotJson = arguments[9];
+      var preview = arguments[10];
 
+      if (!preview && snapshot && snapshot.preview) preview = snapshot.preview;
       var commit = {
         name: name, type: type, timestamp: Date.now(),
         author: {
@@ -38554,13 +38594,16 @@ var ObjectDB = function () {
           realm: user.realm
         },
         tags: [], description: description,
-        message: commitMessage,
-        preview: snapshot.preview,
-        content: sha1(snapshotJson),
+        message: message,
+        preview: preview,
+        content: snapshotJson ? sha1(snapshotJson) : null,
+        deleted: !snapshot,
         metadata: metadata,
         ancestors: ancestors
       };
-      return Object.assign(commit, { _id: sha1(JSON.stringify(commit)) });
+      var hashObj = lively_lang.obj.dissoc(commit, ["preview"]),
+          commitHash = sha1(JSON.stringify(hashObj));
+      return Object.assign(commit, { _id: commitHash });
     }
   }, {
     key: "_commitDB",
@@ -38579,7 +38622,7 @@ var ObjectDB = function () {
                 return _context14.abrupt("return", this.__commitDB);
 
               case 2:
-                dbName = "commits-" + this.name, db = Database.findDB(dbName);
+                dbName = this.name + "-commits", db = Database.findDB(dbName);
 
                 if (!db) {
                   _context14.next = 5;
@@ -38684,7 +38727,7 @@ var ObjectDB = function () {
         }, _callee15, this);
       }));
 
-      function versionGraph(_x40, _x41) {
+      function versionGraph(_x43, _x44) {
         return _ref20.apply(this, arguments);
       }
 
@@ -38758,7 +38801,7 @@ var ObjectDB = function () {
         }, _callee16, this);
       }));
 
-      function _log(_x42, _x43) {
+      function _log(_x45, _x46) {
         return _ref21.apply(this, arguments);
       }
 
@@ -38826,7 +38869,7 @@ var ObjectDB = function () {
         }, _callee17, this);
       }));
 
-      function _findTimestampedVersionsOfObjectNamed(_x46) {
+      function _findTimestampedVersionsOfObjectNamed(_x49) {
         return _ref24.apply(this, arguments);
       }
 
@@ -38849,7 +38892,7 @@ var ObjectDB = function () {
                 return _context18.abrupt("return", this.__versionDB);
 
               case 2:
-                dbName = "version-graph-" + this.name, db = Database.findDB(dbName);
+                dbName = this.name + "-version-graph", db = Database.findDB(dbName);
 
                 if (!db) {
                   _context18.next = 5;
@@ -38894,6 +38937,7 @@ var ObjectDB = function () {
         var _this = this;
 
         var copyResources = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+        var includeDeleted = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
 
         var commitDB, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _loop, _iterator2, _step2;
 
@@ -38930,7 +38974,7 @@ var ObjectDB = function () {
                         case 0:
                           _ref28 = _step2.value;
                           name = _ref28.name, type = _ref28.type;
-                          currentExportDir = exportDir.join(type).join(name);
+                          currentExportDir = exportDir.join(type).join(name).asDirectory();
                           _context19.next = 5;
                           return _this.versionGraph(type, name);
 
@@ -38944,6 +38988,12 @@ var ObjectDB = function () {
 
                         case 11:
                           commits = _context19.sent;
+
+
+                          if (!includeDeleted) commits = commits.filter(function (ea) {
+                            return !ea.deleted;
+                          });
+
                           resourcesForCopy = copyResources ? commits.map(function (commit) {
                             delete commit._rev;
                             var from = _this.snapshotResourceFor(commit),
@@ -38955,80 +39005,84 @@ var ObjectDB = function () {
                           if (!copyResources) commits.forEach(function (commit) {
                             delete commit._rev;
                           });
-                          _context19.next = 16;
+                          _context19.next = 17;
+                          return currentExportDir.ensureExistance();
+
+                        case 17:
+                          _context19.next = 19;
                           return currentExportDir.join("index.json").writeJson({ name: name, type: type });
 
-                        case 16:
-                          _context19.next = 18;
+                        case 19:
+                          _context19.next = 21;
                           return currentExportDir.join("commits.json").writeJson(commits);
 
-                        case 18:
-                          _context19.next = 20;
+                        case 21:
+                          _context19.next = 23;
                           return currentExportDir.join("history.json").writeJson({ refs: refs, history: history });
 
-                        case 20:
+                        case 23:
                           _iteratorNormalCompletion3 = true;
                           _didIteratorError3 = false;
                           _iteratorError3 = undefined;
-                          _context19.prev = 23;
+                          _context19.prev = 26;
                           _iterator3 = resourcesForCopy[Symbol.iterator]();
 
-                        case 25:
+                        case 28:
                           if (_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done) {
-                            _context19.next = 33;
+                            _context19.next = 36;
                             break;
                           }
 
                           _ref31 = _step3.value;
                           from = _ref31.from, to = _ref31.to;
-                          _context19.next = 30;
+                          _context19.next = 33;
                           return from.copyTo(to);
 
-                        case 30:
-                          _iteratorNormalCompletion3 = true;
-                          _context19.next = 25;
-                          break;
-
                         case 33:
-                          _context19.next = 39;
+                          _iteratorNormalCompletion3 = true;
+                          _context19.next = 28;
                           break;
 
-                        case 35:
-                          _context19.prev = 35;
-                          _context19.t0 = _context19["catch"](23);
+                        case 36:
+                          _context19.next = 42;
+                          break;
+
+                        case 38:
+                          _context19.prev = 38;
+                          _context19.t0 = _context19["catch"](26);
                           _didIteratorError3 = true;
                           _iteratorError3 = _context19.t0;
 
-                        case 39:
-                          _context19.prev = 39;
-                          _context19.prev = 40;
+                        case 42:
+                          _context19.prev = 42;
+                          _context19.prev = 43;
 
                           if (!_iteratorNormalCompletion3 && _iterator3.return) {
                             _iterator3.return();
                           }
 
-                        case 42:
-                          _context19.prev = 42;
+                        case 45:
+                          _context19.prev = 45;
 
                           if (!_didIteratorError3) {
-                            _context19.next = 45;
+                            _context19.next = 48;
                             break;
                           }
 
                           throw _iteratorError3;
 
-                        case 45:
+                        case 48:
+                          return _context19.finish(45);
+
+                        case 49:
                           return _context19.finish(42);
 
-                        case 46:
-                          return _context19.finish(39);
-
-                        case 47:
+                        case 50:
                         case "end":
                           return _context19.stop();
                       }
                     }
-                  }, _loop, _this, [[23, 35, 39, 47], [40,, 42, 46]]);
+                  }, _loop, _this, [[26, 38, 42, 50], [43,, 45, 49]]);
                 });
                 _iterator2 = nameAndTypes[Symbol.iterator]();
 
@@ -39087,7 +39141,7 @@ var ObjectDB = function () {
         }, _callee19, this, [[10, 20, 24, 32], [25,, 27, 31]]);
       }));
 
-      function exportToDir(_x48, _x49) {
+      function exportToDir(_x51, _x52) {
         return _ref27.apply(this, arguments);
       }
 
@@ -39097,6 +39151,8 @@ var ObjectDB = function () {
     key: "exportToSpecs",
     value: function () {
       var _ref32 = asyncToGenerator(regeneratorRuntime.mark(function _callee20(nameAndTypes) {
+        var includeDeleted = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
         var specs, stats, type, name, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, _ref34, _name, _type2, _ref35, refs, history, commitIds, commits;
 
         return regeneratorRuntime.wrap(function _callee20$(_context21) {
@@ -39144,7 +39200,7 @@ var ObjectDB = function () {
 
               case 15:
                 if (_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done) {
-                  _context21.next = 32;
+                  _context21.next = 33;
                   break;
                 }
 
@@ -39164,62 +39220,65 @@ var ObjectDB = function () {
               case 26:
                 commits = _context21.sent;
 
+                if (!includeDeleted) commits = commits.filter(function (ea) {
+                  return !ea.deleted;
+                });
                 commits.forEach(function (commit) {
                   delete commit._rev;
                 });
                 specs.push({ type: _type2, name: _name, commits: commits, history: { refs: refs, history: history } });
 
-              case 29:
+              case 30:
                 _iteratorNormalCompletion4 = true;
                 _context21.next = 15;
                 break;
 
-              case 32:
-                _context21.next = 38;
+              case 33:
+                _context21.next = 39;
                 break;
 
-              case 34:
-                _context21.prev = 34;
+              case 35:
+                _context21.prev = 35;
                 _context21.t1 = _context21["catch"](13);
                 _didIteratorError4 = true;
                 _iteratorError4 = _context21.t1;
 
-              case 38:
-                _context21.prev = 38;
+              case 39:
                 _context21.prev = 39;
+                _context21.prev = 40;
 
                 if (!_iteratorNormalCompletion4 && _iterator4.return) {
                   _iterator4.return();
                 }
 
-              case 41:
-                _context21.prev = 41;
+              case 42:
+                _context21.prev = 42;
 
                 if (!_didIteratorError4) {
-                  _context21.next = 44;
+                  _context21.next = 45;
                   break;
                 }
 
                 throw _iteratorError4;
 
-              case 44:
-                return _context21.finish(41);
-
               case 45:
-                return _context21.finish(38);
+                return _context21.finish(42);
 
               case 46:
-                return _context21.abrupt("return", specs);
+                return _context21.finish(39);
 
               case 47:
+                return _context21.abrupt("return", specs);
+
+              case 48:
               case "end":
                 return _context21.stop();
             }
           }
-        }, _callee20, this, [[13, 34, 38, 46], [39,, 41, 45]]);
+        }, _callee20, this, [[13, 35, 39, 47], [40,, 42, 46]]);
       }));
 
-      function exportToSpecs(_x51) {
+      function exportToSpecs(_x55) {
         return _ref32.apply(this, arguments);
       }
 
@@ -39283,7 +39342,7 @@ var ObjectDB = function () {
             }, _callee21, this);
           }));
 
-          return function findImportDataIn(_x55) {
+          return function findImportDataIn(_x60) {
             return _ref37.apply(this, arguments);
           };
         }();
@@ -39298,11 +39357,12 @@ var ObjectDB = function () {
               case 0:
                 _context23.next = 2;
                 return importDir.dirList(3, { exclude: function exclude(ea) {
-                    return ea.name() !== "index.json";
+                    return !ea.isDirectory() && ea.name() !== "index.json";
                   } });
 
               case 2:
                 indexes = _context23.sent;
+
 
                 indexes = indexes.filter(function (ea) {
                   return ea.name() === "index.json";
@@ -39386,7 +39446,7 @@ var ObjectDB = function () {
         }, _callee22, this, [[9, 23, 27, 35], [28,, 30, 34]]);
       }));
 
-      function importFromDir(_x52) {
+      function importFromDir(_x57) {
         return _ref36.apply(this, arguments);
       }
 
@@ -39556,7 +39616,7 @@ var ObjectDB = function () {
         }, _callee23, this, [[10, 24, 28, 36], [29,, 31, 35], [39, 50, 54, 62], [55,, 57, 61]]);
       }));
 
-      function importFromSpecs(_x56) {
+      function importFromSpecs(_x61) {
         return _ref40.apply(this, arguments);
       }
 
@@ -39647,7 +39707,7 @@ var ObjectDB = function () {
         }, _callee24, this);
       }));
 
-      function importFromSpec(_x59) {
+      function importFromSpec(_x64) {
         return _ref43.apply(this, arguments);
       }
 
@@ -39691,7 +39751,7 @@ var ObjectDB = function () {
                 return this.delete(type, name, false);
 
               case 11:
-                return _context26.abrupt("return", this.commitSnapshot(type, name, snap, commitSpec));
+                return _context26.abrupt("return", this.commit(type, name, snap, commitSpec));
 
               case 12:
               case "end":
@@ -39701,7 +39761,7 @@ var ObjectDB = function () {
         }, _callee25, this);
       }));
 
-      function importFromResource(_x62, _x63, _x64, _x65) {
+      function importFromResource(_x67, _x68, _x69, _x70) {
         return _ref44.apply(this, arguments);
       }
 
@@ -39859,7 +39919,7 @@ var ObjectDB = function () {
         }, _callee26, this, [[15, 19, 23, 31], [24,, 26, 30]]);
       }));
 
-      function _delete(_x67, _x68) {
+      function _delete(_x72, _x73) {
         return _ref45.apply(this, arguments);
       }
 
@@ -40039,7 +40099,7 @@ var ObjectDB = function () {
         }, _callee27, this);
       }));
 
-      function deleteCommit(_x70) {
+      function deleteCommit(_x75) {
         return _ref50.apply(this, arguments);
       }
 
@@ -40295,7 +40355,7 @@ var ObjectDBInterface = {
     var _this5 = this;
 
     return asyncToGenerator(regeneratorRuntime.mark(function _callee31() {
-      var _checkArgs3, dbName, ref, type, typesAndNames, knownCommitIds, db, commitDB, versionDB, versionQueryOpts, refsByTypeAndName, keys, _iteratorNormalCompletion11, _didIteratorError11, _iteratorError11, _iterator11, _step11, _ref54, _type3, name, _ref55, versions, commitIds, _iteratorNormalCompletion12, _didIteratorError12, _iteratorError12, _iterator12, _step12, version, _id, refs, commitId;
+      var _checkArgs3, dbName, ref, type, typesAndNames, knownCommitIds, includeDeleted, db, commitDB, versionDB, versionQueryOpts, refsByTypeAndName, keys, _iteratorNormalCompletion11, _didIteratorError11, _iteratorError11, _iterator11, _step11, _ref54, _type3, name, _ref55, versions, commitIds, _iteratorNormalCompletion12, _didIteratorError12, _iteratorError12, _iterator12, _step12, version, _id, refs, commitId, commits;
 
       return regeneratorRuntime.wrap(function _callee31$(_context32) {
         while (1) {
@@ -40306,63 +40366,65 @@ var ObjectDBInterface = {
                 ref: "string|undefined",
                 type: "string|undefined",
                 typesAndNames: "Array|undefined",
-                knownCommitIds: "object|undefined"
+                knownCommitIds: "object|undefined",
+                includeDeleted: "boolean|undefined"
               });
               dbName = _checkArgs3.db;
               ref = _checkArgs3.ref;
               type = _checkArgs3.type;
               typesAndNames = _checkArgs3.typesAndNames;
               knownCommitIds = _checkArgs3.knownCommitIds;
-              _context32.next = 8;
+              includeDeleted = _checkArgs3.includeDeleted;
+              _context32.next = 9;
               return ObjectDB.find(dbName);
 
-            case 8:
+            case 9:
               db = _context32.sent;
 
               if (!ref) ref = "HEAD";
 
               if (db) {
-                _context32.next = 12;
+                _context32.next = 13;
                 break;
               }
 
               throw new Error("db " + dbName + " does not exist");
 
-            case 12:
+            case 13:
               _context32.t0 = db.__commitDB;
 
               if (_context32.t0) {
-                _context32.next = 17;
+                _context32.next = 18;
                 break;
               }
 
-              _context32.next = 16;
+              _context32.next = 17;
               return db._commitDB();
 
-            case 16:
+            case 17:
               _context32.t0 = _context32.sent;
 
-            case 17:
+            case 18:
               commitDB = _context32.t0;
               _context32.t1 = db.__versionDB;
 
               if (_context32.t1) {
-                _context32.next = 23;
+                _context32.next = 24;
                 break;
               }
 
-              _context32.next = 22;
+              _context32.next = 23;
               return db._versionDB();
 
-            case 22:
+            case 23:
               _context32.t1 = _context32.sent;
 
-            case 23:
+            case 24:
               versionDB = _context32.t1;
               versionQueryOpts = {}, refsByTypeAndName = {};
 
               if (!typesAndNames) {
-                _context32.next = 48;
+                _context32.next = 49;
                 break;
               }
 
@@ -40370,7 +40432,7 @@ var ObjectDBInterface = {
               _iteratorNormalCompletion11 = true;
               _didIteratorError11 = false;
               _iteratorError11 = undefined;
-              _context32.prev = 30;
+              _context32.prev = 31;
 
               for (_iterator11 = typesAndNames[Symbol.iterator](); !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
                 _ref54 = _step11.value;
@@ -40380,78 +40442,78 @@ var ObjectDBInterface = {
                 if (_ref55) refsByTypeAndName[_type3 + "/" + name] = _ref55;
               }
 
-              _context32.next = 38;
+              _context32.next = 39;
               break;
 
-            case 34:
-              _context32.prev = 34;
-              _context32.t2 = _context32["catch"](30);
+            case 35:
+              _context32.prev = 35;
+              _context32.t2 = _context32["catch"](31);
               _didIteratorError11 = true;
               _iteratorError11 = _context32.t2;
 
-            case 38:
-              _context32.prev = 38;
+            case 39:
               _context32.prev = 39;
+              _context32.prev = 40;
 
               if (!_iteratorNormalCompletion11 && _iterator11.return) {
                 _iterator11.return();
               }
 
-            case 41:
-              _context32.prev = 41;
+            case 42:
+              _context32.prev = 42;
 
               if (!_didIteratorError11) {
-                _context32.next = 44;
+                _context32.next = 45;
                 break;
               }
 
               throw _iteratorError11;
 
-            case 44:
-              return _context32.finish(41);
-
             case 45:
-              return _context32.finish(38);
+              return _context32.finish(42);
 
             case 46:
-              _context32.next = 49;
+              return _context32.finish(39);
+
+            case 47:
+              _context32.next = 50;
               break;
 
-            case 48:
+            case 49:
               if (type) {
                 versionQueryOpts.startkey = type + "/\0\"";
                 versionQueryOpts.endkey = type + "/\uFFFF\"";
               }
 
-            case 49:
-              _context32.next = 51;
+            case 50:
+              _context32.next = 52;
               return versionDB.getAll(versionQueryOpts);
 
-            case 51:
+            case 52:
               versions = _context32.sent;
               commitIds = [];
               _iteratorNormalCompletion12 = true;
               _didIteratorError12 = false;
               _iteratorError12 = undefined;
-              _context32.prev = 56;
+              _context32.prev = 57;
               _iterator12 = versions[Symbol.iterator]();
 
-            case 58:
+            case 59:
               if (_iteratorNormalCompletion12 = (_step12 = _iterator12.next()).done) {
-                _context32.next = 69;
+                _context32.next = 70;
                 break;
               }
 
               version = _step12.value;
 
               if (!version.deleted) {
-                _context32.next = 62;
+                _context32.next = 63;
                 break;
               }
 
-              return _context32.abrupt("continue", 66);
+              return _context32.abrupt("continue", 67);
 
-            case 62:
+            case 63:
               _id = version._id, refs = version.refs;
 
               ref = refsByTypeAndName[_id] || ref;
@@ -40459,54 +40521,63 @@ var ObjectDBInterface = {
 
               if (commitId && !knownCommitIds || !knownCommitIds.hasOwnProperty(commitId)) commitIds.push(commitId);
 
-            case 66:
+            case 67:
               _iteratorNormalCompletion12 = true;
-              _context32.next = 58;
+              _context32.next = 59;
               break;
 
-            case 69:
-              _context32.next = 75;
+            case 70:
+              _context32.next = 76;
               break;
 
-            case 71:
-              _context32.prev = 71;
-              _context32.t3 = _context32["catch"](56);
+            case 72:
+              _context32.prev = 72;
+              _context32.t3 = _context32["catch"](57);
               _didIteratorError12 = true;
               _iteratorError12 = _context32.t3;
 
-            case 75:
-              _context32.prev = 75;
+            case 76:
               _context32.prev = 76;
+              _context32.prev = 77;
 
               if (!_iteratorNormalCompletion12 && _iterator12.return) {
                 _iterator12.return();
               }
 
-            case 78:
-              _context32.prev = 78;
+            case 79:
+              _context32.prev = 79;
 
               if (!_didIteratorError12) {
-                _context32.next = 81;
+                _context32.next = 82;
                 break;
               }
 
               throw _iteratorError12;
 
-            case 81:
-              return _context32.finish(78);
-
             case 82:
-              return _context32.finish(75);
+              return _context32.finish(79);
 
             case 83:
-              return _context32.abrupt("return", db.getCommitsWithIds(commitIds));
+              return _context32.finish(76);
 
             case 84:
+              _context32.next = 86;
+              return db.getCommitsWithIds(commitIds);
+
+            case 86:
+              commits = _context32.sent;
+
+              if (!includeDeleted) commits = commits.filter(function (ea) {
+                return !ea.deleted;
+              });
+              return _context32.abrupt("return", commits);
+
+            case 89:
             case "end":
               return _context32.stop();
           }
         }
-      }, _callee31, _this5, [[30, 34, 38, 46], [39,, 41, 45], [56, 71, 75, 83], [76,, 78, 82]]);
+      }, _callee31, _this5, [[31, 35, 39, 47], [40,, 42, 46], [57, 72, 76, 84], [77,, 79, 83]]);
     }))();
   },
   fetchVersionGraph: function fetchVersionGraph(args) {
@@ -40532,16 +40603,25 @@ var ObjectDBInterface = {
 
             case 6:
               db = _context33.sent;
-              _context33.next = 9;
-              return _this6.versionGraph(type, name);
+
+              if (db) {
+                _context33.next = 9;
+                break;
+              }
+
+              throw new Error("db " + dbName + " does not exist");
 
             case 9:
+              _context33.next = 11;
+              return db.versionGraph(type, name);
+
+            case 11:
               _ref56 = _context33.sent;
               refs = _ref56.refs;
               history = _ref56.history;
               return _context33.abrupt("return", { refs: refs, history: history });
 
-            case 13:
+            case 15:
             case "end":
               return _context33.stop();
           }
@@ -40586,6 +40666,14 @@ var ObjectDBInterface = {
               db = _context34.sent;
               defaultRef = ref || "HEAD";
 
+              if (db) {
+                _context34.next = 15;
+                break;
+              }
+
+              throw new Error("db " + dbName + " does not exist");
+
+            case 15:
 
               if (!limit) limit = Infinity;
               if (!commit && !ref) ref = defaultRef;
@@ -40593,50 +40681,50 @@ var ObjectDBInterface = {
               startCommitId = void 0;
 
               if (!commit) {
-                _context34.next = 25;
+                _context34.next = 27;
                 break;
               }
 
               startCommitId = commit;
 
               if (!(!type || !name)) {
-                _context34.next = 25;
+                _context34.next = 27;
                 break;
               }
 
               ;
-              _context34.next = 22;
+              _context34.next = 24;
               return db.getCommit(commit);
 
-            case 22:
+            case 24:
               _ref57 = _context34.sent;
               type = _ref57.type;
               name = _ref57.name;
 
-            case 25:
-              _context34.next = 27;
+            case 27:
+              _context34.next = 29;
               return db.versionGraph(type, name);
 
-            case 27:
+            case 29:
               versionGraph = _context34.sent;
 
               if (versionGraph) {
-                _context34.next = 30;
+                _context34.next = 32;
                 break;
               }
 
               throw new Error("Unknown object " + type + "/" + name);
 
-            case 30:
+            case 32:
               refs = versionGraph.refs, history = versionGraph.history;
 
               if (!startCommitId) startCommitId = refs[ref];
 
               currentCommit = startCommitId, result = [];
 
-            case 33:
+            case 35:
               if (!(result.length < limit && !result.includes(currentCommit))) {
-                _context34.next = 42;
+                _context34.next = 44;
                 break;
               }
 
@@ -40644,37 +40732,37 @@ var ObjectDBInterface = {
               ancestors = history[currentCommit];
 
               if (!(!ancestors || !ancestors.length)) {
-                _context34.next = 38;
+                _context34.next = 40;
                 break;
               }
 
-              return _context34.abrupt("break", 42);
+              return _context34.abrupt("break", 44);
 
-            case 38:
+            case 40:
               _ancestors = slicedToArray(ancestors, 1);
               currentCommit = _ancestors[0];
-              _context34.next = 33;
+              _context34.next = 35;
               break;
 
-            case 42:
+            case 44:
               if (!includeCommits) {
-                _context34.next = 47;
+                _context34.next = 49;
                 break;
               }
 
               if (knownCommitIds) result = result.filter(function (id) {
                 return !knownCommitIds.hasOwnProperty(id);
               });
-              _context34.next = 46;
+              _context34.next = 48;
               return db.getCommitsWithIds(result);
 
-            case 46:
+            case 48:
               result = _context34.sent;
 
-            case 47:
+            case 49:
               return _context34.abrupt("return", result);
 
-            case 48:
+            case 50:
             case "end":
               return _context34.stop();
           }
@@ -40713,52 +40801,63 @@ var ObjectDBInterface = {
               db = _context35.sent;
               defaultRef = "HEAD";
 
-              if (commitId) {
-                _context35.next = 19;
+
+              ref = ref || defaultRef;
+
+              if (db) {
+                _context35.next = 13;
                 break;
               }
 
-              _context35.next = 13;
-              return db.versionGraph(type, name);
+              throw new Error("db " + dbName + " does not exist");
 
             case 13:
+              if (commitId) {
+                _context35.next = 22;
+                break;
+              }
+
+              _context35.next = 16;
+              return db.versionGraph(type, name);
+
+            case 16:
               versionGraph = _context35.sent;
 
               if (versionGraph) {
-                _context35.next = 16;
+                _context35.next = 19;
                 break;
               }
 
               throw new Error("Unknown object " + type + "/" + name);
 
-            case 16:
-              commitId = versionGraph.refs[ref || defaultRef];
+            case 19:
+              commitId = versionGraph.refs[ref];
 
               if (commitId) {
-                _context35.next = 19;
+                _context35.next = 22;
                 break;
               }
 
               throw new Error("Cannot find commit for ref " + ref + " of " + type + "/" + name);
 
-            case 19:
-              _context35.next = 21;
+            case 22:
+              _context35.next = 24;
               return db.getCommit(commitId);
 
-            case 21:
+            case 24:
               commit = _context35.sent;
 
               if (commit) {
-                _context35.next = 24;
+                _context35.next = 27;
                 break;
               }
 
               throw new Error("Cannot find commit " + commitId);
 
-            case 24:
+            case 27:
               return _context35.abrupt("return", db.loadSnapshot(undefined, undefined, commit));
 
-            case 25:
+            case 28:
             case "end":
               return _context35.stop();
           }
@@ -40766,11 +40865,11 @@ var ObjectDBInterface = {
       }, _callee34, _this8);
     }))();
   },
-  commitSnapshot: function commitSnapshot(args) {
+  commit: function commit(args) {
     var _this9 = this;
 
     return asyncToGenerator(regeneratorRuntime.mark(function _callee35() {
-      var _checkArgs7, dbName, type, name, ref, expectedParentCommit, commitSpec, snapshot, db;
+      var _checkArgs7, dbName, type, name, ref, expectedParentCommit, commitSpec, snapshot, preview, db;
 
       return regeneratorRuntime.wrap(function _callee35$(_context36) {
         while (1) {
@@ -40781,6 +40880,7 @@ var ObjectDBInterface = {
                 type: "string", name: "string",
                 ref: "string|undefined",
                 snapshot: "object",
+                preview: "string|undefined",
                 commitSpec: "object",
                 expectedParentCommit: "string|undefined"
               });
@@ -40791,17 +40891,18 @@ var ObjectDBInterface = {
               expectedParentCommit = _checkArgs7.expectedParentCommit;
               commitSpec = _checkArgs7.commitSpec;
               snapshot = _checkArgs7.snapshot;
-              _context36.next = 10;
+              preview = _checkArgs7.preview;
+              _context36.next = 11;
               return ObjectDB.find(dbName);
 
-            case 10:
+            case 11:
               db = _context36.sent;
 
 
               if (!ref) ref = "HEAD";
-              return _context36.abrupt("return", db.commitSnapshot(type, name, snapshot, commitSpec, ref, expectedParentCommit));
+              return _context36.abrupt("return", db.commit(type, name, snapshot, commitSpec, preview, ref, expectedParentCommit));
 
-            case 13:
+            case 14:
             case "end":
               return _context36.stop();
           }
@@ -40821,7 +40922,8 @@ var ObjectDBInterface = {
             case 0:
               _checkArgs8 = checkArgs(args, {
                 db: "string",
-                nameAndTypes: "Array|undefined"
+                nameAndTypes: "Array|undefined",
+                includeDeleted: "boolean|undefined"
               });
               dbName = _checkArgs8.db;
               nameAndTypes = _checkArgs8.nameAndTypes;
@@ -40830,9 +40932,18 @@ var ObjectDBInterface = {
 
             case 5:
               db = _context37.sent;
+
+              if (db) {
+                _context37.next = 8;
+                break;
+              }
+
+              throw new Error("db " + dbName + " does not exist");
+
+            case 8:
               return _context37.abrupt("return", db.exportToSpecs(nameAndTypes));
 
-            case 7:
+            case 9:
             case "end":
               return _context37.stop();
           }
@@ -40844,7 +40955,7 @@ var ObjectDBInterface = {
     var _this11 = this;
 
     return asyncToGenerator(regeneratorRuntime.mark(function _callee37() {
-      var _checkArgs9, dbName, url, nameAndTypes, copyResources, db, exportDir;
+      var _checkArgs9, dbName, url, nameAndTypes, copyResources, includeDeleted, db, exportDir;
 
       return regeneratorRuntime.wrap(function _callee37$(_context38) {
         while (1) {
@@ -40854,27 +40965,37 @@ var ObjectDBInterface = {
                 db: "string",
                 url: "string",
                 nameAndTypes: "Array|undefined",
-                copyResources: "boolean|undefined"
+                copyResources: "boolean|undefined",
+                includeDeleted: "boolean|undefined"
               });
               dbName = _checkArgs9.db;
               url = _checkArgs9.url;
               nameAndTypes = _checkArgs9.nameAndTypes;
               copyResources = _checkArgs9.copyResources;
-              _context38.next = 7;
+              includeDeleted = _checkArgs9.includeDeleted;
+              _context38.next = 8;
               return ObjectDB.find(dbName);
 
-            case 7:
+            case 8:
               db = _context38.sent;
               exportDir = void 0;
 
+              if (db) {
+                _context38.next = 12;
+                break;
+              }
+
+              throw new Error("db " + dbName + " does not exist");
+
+            case 12:
               try {
                 exportDir = lively_resources.resource(url);
               } catch (err) {
                 exportDir = lively_resources.resource(System.baseURL).join(url);
               }
-              return _context38.abrupt("return", db.exportToDir(exportDir, nameAndTypes, copyResources));
+              return _context38.abrupt("return", db.exportToDir(exportDir, nameAndTypes, copyResources, includeDeleted));
 
-            case 11:
+            case 14:
             case "end":
               return _context38.stop();
           }
@@ -40908,6 +41029,14 @@ var ObjectDBInterface = {
               db = _context39.sent;
               importDir = void 0;
 
+              if (db) {
+                _context39.next = 11;
+                break;
+              }
+
+              throw new Error("db " + dbName + " does not exist");
+
+            case 11:
               try {
                 importDir = lively_resources.resource(url);
               } catch (err) {
@@ -40915,7 +41044,7 @@ var ObjectDBInterface = {
               }
               return _context39.abrupt("return", db.importFromDir(importDir, overwrite, copyResources));
 
-            case 11:
+            case 13:
             case "end":
               return _context39.stop();
           }
@@ -40948,9 +41077,18 @@ var ObjectDBInterface = {
 
             case 7:
               db = _context40.sent;
+
+              if (db) {
+                _context40.next = 10;
+                break;
+              }
+
+              throw new Error("db " + dbName + " does not exist");
+
+            case 10:
               return _context40.abrupt("return", db.importFromSpecs(specs, overwrite, copyResources));
 
-            case 9:
+            case 11:
             case "end":
               return _context40.stop();
           }
@@ -40988,6 +41126,14 @@ var ObjectDBInterface = {
               db = _context41.sent;
               res = void 0;
 
+              if (db) {
+                _context41.next = 13;
+                break;
+              }
+
+              throw new Error("db " + dbName + " does not exist");
+
+            case 13:
               try {
                 res = lively_resources.resource(url);
               } catch (err) {
@@ -40995,7 +41141,7 @@ var ObjectDBInterface = {
               }
               return _context41.abrupt("return", db.importFromResource(type, name, res, commitSpec, purgeHistory));
 
-            case 13:
+            case 15:
             case "end":
               return _context41.stop();
           }
@@ -41042,7 +41188,7 @@ var ObjectDBHTTPInterface = function () {
                   } catch (err) {}
                 }
 
-                if (!(!res.ok >= 400)) {
+                if (!(!res.ok || json.error)) {
                   _context42.next = 8;
                   break;
                 }
@@ -41060,7 +41206,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee41, this);
       }));
 
-      function _processResponse(_x74) {
+      function _processResponse(_x79) {
         return _ref58.apply(this, arguments);
       }
 
@@ -41097,7 +41243,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee42, this);
       }));
 
-      function _GET(_x75) {
+      function _GET(_x80) {
         return _ref59.apply(this, arguments);
       }
 
@@ -41133,7 +41279,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee43, this);
       }));
 
-      function _POST(_x77) {
+      function _POST(_x82) {
         return _ref60.apply(this, arguments);
       }
 
@@ -41157,7 +41303,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee44, this);
       }));
 
-      function describe(_x79) {
+      function describe(_x84) {
         return _ref61.apply(this, arguments);
       }
 
@@ -41181,7 +41327,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee45, this);
       }));
 
-      function ensureDB(_x80) {
+      function ensureDB(_x85) {
         return _ref62.apply(this, arguments);
       }
 
@@ -41205,7 +41351,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee46, this);
       }));
 
-      function destroyDB(_x81) {
+      function destroyDB(_x86) {
         return _ref63.apply(this, arguments);
       }
 
@@ -41229,7 +41375,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee47, this);
       }));
 
-      function fetchCommits(_x82) {
+      function fetchCommits(_x87) {
         return _ref64.apply(this, arguments);
       }
 
@@ -41253,7 +41399,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee48, this);
       }));
 
-      function fetchVersionGraph(_x83) {
+      function fetchVersionGraph(_x88) {
         return _ref65.apply(this, arguments);
       }
 
@@ -41277,7 +41423,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee49, this);
       }));
 
-      function fetchLog(_x84) {
+      function fetchLog(_x89) {
         return _ref66.apply(this, arguments);
       }
 
@@ -41301,21 +41447,21 @@ var ObjectDBHTTPInterface = function () {
         }, _callee50, this);
       }));
 
-      function fetchSnapshot(_x85) {
+      function fetchSnapshot(_x90) {
         return _ref67.apply(this, arguments);
       }
 
       return fetchSnapshot;
     }()
   }, {
-    key: "commitSnapshot",
+    key: "commit",
     value: function () {
       var _ref68 = asyncToGenerator(regeneratorRuntime.mark(function _callee51(args) {
         return regeneratorRuntime.wrap(function _callee51$(_context52) {
           while (1) {
             switch (_context52.prev = _context52.next) {
               case 0:
-                return _context52.abrupt("return", this._POST("commitSnapshot", args));
+                return _context52.abrupt("return", this._POST("commit", args));
 
               case 1:
               case "end":
@@ -41325,11 +41471,11 @@ var ObjectDBHTTPInterface = function () {
         }, _callee51, this);
       }));
 
-      function commitSnapshot(_x86) {
+      function commit(_x91) {
         return _ref68.apply(this, arguments);
       }
 
-      return commitSnapshot;
+      return commit;
     }()
   }, {
     key: "exportToSpecs",
@@ -41349,7 +41495,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee52, this);
       }));
 
-      function exportToSpecs(_x87) {
+      function exportToSpecs(_x92) {
         return _ref69.apply(this, arguments);
       }
 
@@ -41373,7 +41519,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee53, this);
       }));
 
-      function exportToDir(_x88) {
+      function exportToDir(_x93) {
         return _ref70.apply(this, arguments);
       }
 
@@ -41397,7 +41543,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee54, this);
       }));
 
-      function importFromDir(_x89) {
+      function importFromDir(_x94) {
         return _ref71.apply(this, arguments);
       }
 
@@ -41421,7 +41567,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee55, this);
       }));
 
-      function importFromSpecs(_x90) {
+      function importFromSpecs(_x95) {
         return _ref72.apply(this, arguments);
       }
 
@@ -41445,7 +41591,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee56, this);
       }));
 
-      function importFromResource(_x91) {
+      function importFromResource(_x96) {
         return _ref73.apply(this, arguments);
       }
 
@@ -41620,8 +41766,8 @@ var LivelyStorageResource = function (_Resource) {
     }()
   }, {
     key: "writeJson",
-    value: function writeJson(obj) {
-      return this.write(obj);
+    value: function writeJson(obj$$1) {
+      return this.write(obj$$1);
     }
   }, {
     key: "mkdir",
@@ -41929,7 +42075,7 @@ exports.Database = Database;
 exports.ObjectDB = ObjectDB;
 exports.ObjectDBInterface = ObjectDBInterface;
 
-}((this.lively.storage = this.lively.storage || {}),PouchDB,pouchdbAdapterMem,lively.resources));
+}((this.lively.storage = this.lively.storage || {}),PouchDB,pouchdbAdapterMem,lively.resources,lively.lang));
 
   }).call(GLOBAL);
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.storage;

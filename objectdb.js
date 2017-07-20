@@ -1,6 +1,7 @@
 /*global System,process,require,fetch*/
 import Database from "./database.js";
 import { resource } from "lively.resources";
+import { obj } from "lively.lang";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // sha1
@@ -12,6 +13,7 @@ const sha1 = (function sha1_setup(){function r(r){if(void 0===r)return o(!1);var
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 // let db = await ObjectDB.find("test-object-db");
+// db = objectDBs.get("lively.morphic/objectdb/morphicdb")
 // await db.objectStats()
 
 var objectDBs = objectDBs || new Map();
@@ -57,9 +59,9 @@ export default class ObjectDB {
   }
 
   async destroy() {
-    let commitDB = Database.findDB("commits-" + this.name);
+    let commitDB = Database.findDB(this.name + "-commits");
     if (commitDB) await commitDB.destroy();
-    let versionDB = Database.findDB("version-graph-" + this.name);
+    let versionDB = Database.findDB(this.name + "-version-graph");
     if (versionDB) await versionDB.destroy();
     objectDBs.delete(this.name);
     
@@ -79,11 +81,11 @@ export default class ObjectDB {
     return this.snapshotLocation.join(`${first}/${rest}.json`);
   }
 
-  async snapshotObject(type, name, object, snapshotOptions, commitSpec, ref, expectedPrevVersion) {
+  async snapshotObject(type, name, object, snapshotOptions, commitSpec, preview, ref, expectedPrevVersion) {
     snapshotOptions = snapshotOptions || {};
     let serializeFn = x => x,
         snapshot = await serializeFn(object, snapshotOptions);
-    return this.commitSnapshot(type, name, snapshot, commitSpec, ref, expectedPrevVersion);
+    return this.commit(type, name, snapshot, commitSpec, preview, ref, expectedPrevVersion);
   }
 
   async loadObject(type, name, loadOptions, commitIdOrCommit, ref) {
@@ -151,18 +153,21 @@ export default class ObjectDB {
   }
 
   async getCommitsWithIds(commitIds) {
+    if (!commitIds.length) return [];
     let commitDB = this.__commitDB || await this._commitDB();
     return commitDB.getDocuments(commitIds.map(id => ({id})));
   }
 
-  async getLatestCommit(type, objectName, ref = "HEAD") {
+  async getLatestCommit(type, objectName, ref = "HEAD", includeDeleted = false) {
     let [commitId] = await this._log(type, objectName, ref, 1);
     if (!commitId) return null;
     let commitDB = this.__commitDB || await this._commitDB();
-    return commitDB.get(commitId);
+    let commit = await commitDB.get(commitId);
+    if (commit && commit.deleted && !includeDeleted) return null;
+    return commit;
   }
 
-  async commitSnapshot(type, name, snapshot, commitSpec, ref = "HEAD", expectedPrevVersion) {
+  async commit(type, name, snapshot, commitSpec, preview, ref = "HEAD", expectedPrevVersion) {
     let {
       user,
       description = "no description",
@@ -173,7 +178,7 @@ export default class ObjectDB {
 
     if (!type) throw new Error("object needs a type");
     if (!name) throw new Error("object needs a name");
-    if (!user) throw new Error(`Cannot snapshot ${type}/${name} without user`);
+    if (!user) throw new Error(`Cannot commit ${type}/${name} without user`);
 
     // Retrieve version graph for object. Check if the prev version requirement
     // is met and get the ancestors
@@ -188,11 +193,11 @@ export default class ObjectDB {
 
     // Snapshot object and create commit.
 
-    let snapshotJson = JSON.stringify(snapshot),
+    let snapshotJson = snapshot ? JSON.stringify(snapshot) : null,
         commit = this._createCommit(
           type, name, description, tags, metadata,
           user, message, ancestors,
-          snapshot, snapshotJson);
+          snapshot, snapshotJson, preview);
 
     // update version graph
     if (!versionData) versionData = {refs: {}, history: {}};
@@ -205,10 +210,12 @@ export default class ObjectDB {
     commit = await commitDB.set(commit._id, commit);
 
     // write snapshot to resource
-    let res = this.snapshotResourceFor(commit);
-    await res.parent().ensureExistance();
-    if (res.canDealWithJSON) await res.writeJson(snapshot);
-    else await res.write(snapshotJson);
+    if (snapshot) {
+      let res = this.snapshotResourceFor(commit);
+      await res.parent().ensureExistance();
+      if (res.canDealWithJSON) await res.writeJson(snapshot);
+      else await res.write(snapshotJson);
+    }
 
     return commit;
   }
@@ -223,14 +230,17 @@ export default class ObjectDB {
     } else {
       commit = await this.getLatestCommit(type, name, ref);
     }
+    if (!commit)
+      throw new Error(`Cannot find commit to loadSnapshot for ${type}/${name} (using ${commitOrId})`)
     return this.snapshotResourceFor(commit).readJson();
   }
 
   _createCommit(
     type, name, description, tags, metadata, user,
-    commitMessage = "", ancestors = [],
-    snapshot, snapshotJson
+    message = "", ancestors = [],
+    snapshot, snapshotJson, preview
   ) {
+    if (!preview && snapshot && snapshot.preview) preview = snapshot.preview;
     let commit = {
       name, type, timestamp: Date.now(),
       author: {
@@ -239,19 +249,22 @@ export default class ObjectDB {
         realm: user.realm
       },
       tags: [], description,
-      message: commitMessage,
-      preview: snapshot.preview,
-      content: sha1(snapshotJson),
+      message,
+      preview,
+      content: snapshotJson ? sha1(snapshotJson) : null,
+      deleted: !snapshot,
       metadata,
       ancestors
     }
-    return Object.assign(commit, {_id: sha1(JSON.stringify(commit))});
+    let hashObj = obj.dissoc(commit, ["preview"]),
+        commitHash = sha1(JSON.stringify(hashObj));
+    return Object.assign(commit, {_id: commitHash});
   }
 
   async _commitDB() {
     if (this.__commitDB) return this.__commitDB;
 
-    let dbName = "commits-" + this.name,
+    let dbName = this.name + "-commits",
         db = Database.findDB(dbName);
     if (db) return this.__commitDB = db;
 
@@ -339,7 +352,7 @@ export default class ObjectDB {
 
   async _versionDB() {
     if (this.__versionDB) return this.__versionDB;
-    let dbName = "version-graph-" + this.name,
+    let dbName = this.name + "-version-graph",
         db = Database.findDB(dbName);
     if (db) return this.__versionDB = db;
     db = Database.ensureDB(dbName);
@@ -356,21 +369,26 @@ export default class ObjectDB {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // export
 
-  async exportToDir(exportDir, nameAndTypes, copyResources = false) {
+  async exportToDir(exportDir, nameAndTypes, copyResources = false, includeDeleted = false) {
     let commitDB = this.__commitDB || await this._commitDB();;
     for (let {name, type} of nameAndTypes) {
-      let currentExportDir = exportDir.join(type).join(name),
+      let currentExportDir = exportDir.join(type).join(name).asDirectory(),
           {refs, history} = await this.versionGraph(type, name),
           commitIds = Object.keys(history),
-          commits = await this.getCommitsWithIds(commitIds),
-          resourcesForCopy = copyResources ? commits.map(commit => {
-            delete commit._rev;
-            let from = this.snapshotResourceFor(commit),
-                to = currentExportDir.join(from.parent().name() + "/" + from.name());
-            return {from, to};
-          }) : [];
+          commits = await this.getCommitsWithIds(commitIds);
+
+      if (!includeDeleted)
+        commits = commits.filter(ea => !ea.deleted);
+
+      let resourcesForCopy = copyResources ? commits.map(commit => {
+        delete commit._rev;
+        let from = this.snapshotResourceFor(commit),
+            to = currentExportDir.join(from.parent().name() + "/" + from.name());
+        return {from, to};
+      }) : [];
 
       if (!copyResources) commits.forEach(commit => { delete commit._rev; });
+      await currentExportDir.ensureExistance();
       await currentExportDir.join("index.json").writeJson({name, type});
       await currentExportDir.join("commits.json").writeJson(commits);
       await currentExportDir.join("history.json").writeJson({refs, history});
@@ -379,7 +397,7 @@ export default class ObjectDB {
     }
   }
 
-  async exportToSpecs(nameAndTypes) {
+  async exportToSpecs(nameAndTypes, includeDeleted = false) {
     // note: only version data, no snapshots!
     let specs = [];
     if (!nameAndTypes) { // = everything
@@ -394,6 +412,8 @@ export default class ObjectDB {
       let {refs, history} = await this.versionGraph(type, name),
           commitIds = Object.keys(history),
           commits = await this.getCommitsWithIds(commitIds);
+      if (!includeDeleted)
+        commits = commits.filter(ea => !ea.deleted);
       commits.forEach(commit => { delete commit._rev; });
       specs.push({type, name, commits, history: {refs, history}})
     }
@@ -405,7 +425,8 @@ export default class ObjectDB {
 
     // 1. discover type/names;
     // depth 1: type dirs, depth 2: object dirs, those include index.json, ...
-    let indexes = await importDir.dirList(3, {exclude: ea => ea.name() !== "index.json"})
+    let indexes = await importDir.dirList(3, {exclude: ea => !ea.isDirectory() && ea.name() !== "index.json"})
+
     indexes = indexes.filter(ea => ea.name() === "index.json"); // FIXME!
     let dirs = indexes.map(ea => ea.parent());
 
@@ -470,7 +491,7 @@ export default class ObjectDB {
     let snap = await resource.readJson();
     if (purgeHistory && await this.has(type, name))
       await this.delete(type, name, false);
-    return this.commitSnapshot(type, name, snap, commitSpec);
+    return this.commit(type, name, snap, commitSpec);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -681,15 +702,19 @@ export var ObjectDBInterface = {
     // side effect: false
     // returns: [commits]
     // Gets the lates commits from all objects specified in `typesAndNames`.
-    let {db: dbName, ref, type, typesAndNames, knownCommitIds} = checkArgs(args, {
+    let {
+      db: dbName, ref, type,
+      typesAndNames, knownCommitIds, includeDeleted
+    } = checkArgs(args, {
       db: "string",
       ref: "string|undefined",
       type: "string|undefined",
       typesAndNames: "Array|undefined",
-      knownCommitIds: "object|undefined"
+      knownCommitIds: "object|undefined",
+      includeDeleted: "boolean|undefined"
     }), db = await ObjectDB.find(dbName)
     if (!ref) ref = "HEAD";
-    
+
     if (!db) throw new Error(`db ${dbName} does not exist`);
 
     let commitDB = db.__commitDB || await db._commitDB(),
@@ -720,7 +745,10 @@ export var ObjectDBInterface = {
         commitIds.push(commitId);
     }
 
-    return db.getCommitsWithIds(commitIds);
+    let commits = await db.getCommitsWithIds(commitIds);
+    if (!includeDeleted)
+      commits = commits.filter(ea => !ea.deleted);
+    return commits;
   },
 
   async fetchVersionGraph(args) {
@@ -731,8 +759,9 @@ export var ObjectDBInterface = {
           type: "string",
           name: "string"
         }),
-        db = await ObjectDB.find(dbName),
-        {refs, history} = await this.versionGraph(type, name);
+        db = await ObjectDB.find(dbName);
+    if (!db) throw new Error(`db ${dbName} does not exist`);
+    let {refs, history} = await db.versionGraph(type, name);
     return {refs, history};
   },
 
@@ -756,6 +785,8 @@ export var ObjectDBInterface = {
                       ? null : {error: `Eiter .type + .name or .commit needed!`}),
         db = await ObjectDB.find(dbName),
         defaultRef = ref || "HEAD";
+
+    if (!db) throw new Error(`db ${dbName} does not exist`);
 
     if (!limit) limit = Infinity;
     if (!commit && !ref) ref = defaultRef;
@@ -801,10 +832,14 @@ export var ObjectDBInterface = {
         db = await ObjectDB.find(dbName),
         defaultRef = "HEAD";
 
+    ref = ref || defaultRef;
+
+    if (!db) throw new Error(`db ${dbName} does not exist`);
+
     if (!commitId) {
       let versionGraph = await db.versionGraph(type, name);
       if (!versionGraph) throw new Error(`Unknown object ${type}/${name}`);
-      commitId = versionGraph.refs[ref || defaultRef];
+      commitId = versionGraph.refs[ref];
       if (!commitId) throw new Error(`Cannot find commit for ref ${ref} of ${type}/${name}`);
     }
 
@@ -813,24 +848,25 @@ export var ObjectDBInterface = {
     return db.loadSnapshot(undefined, undefined, commit);
   },
 
-  async commitSnapshot(args) {
+  async commit(args) {
     // side effect: true
     // returns: commit
     let {
         db: dbName, type, name, ref,
         expectedParentCommit, commitSpec,
-        snapshot
+        snapshot, preview
       } = checkArgs(args, {
           db: "string",
           type: "string", name: "string",
           ref: "string|undefined",
           snapshot: "object",
+          preview: "string|undefined",
           commitSpec: "object",
           expectedParentCommit: "string|undefined"
         }), db = await ObjectDB.find(dbName);
 
     if (!ref) ref = "HEAD";
-    return db.commitSnapshot(type, name, snapshot, commitSpec, ref, expectedParentCommit);
+    return db.commit(type, name, snapshot, commitSpec, preview, ref, expectedParentCommit);
   },
 
   async exportToSpecs(args) {
@@ -838,23 +874,27 @@ export var ObjectDBInterface = {
     // returns: {name: String, type: String, history: {}, commits: [commit]}
     let {db: dbName, nameAndTypes} = checkArgs(args, {
           db: "string",
-          nameAndTypes: "Array|undefined"
+          nameAndTypes: "Array|undefined",
+          includeDeleted: "boolean|undefined"
         }), db = await ObjectDB.find(dbName);
+    if (!db) throw new Error(`db ${dbName} does not exist`);
     return db.exportToSpecs(nameAndTypes);
   },
 
   async exportToDir(args) {
     // side effect: true
     // returns: undefined
-    let {db: dbName, url, nameAndTypes, copyResources} = checkArgs(args, {
+    let {db: dbName, url, nameAndTypes, copyResources, includeDeleted} = checkArgs(args, {
       db: "string",
       url: "string",
       nameAndTypes: "Array|undefined",
-      copyResources: "boolean|undefined"
+      copyResources: "boolean|undefined",
+      includeDeleted: "boolean|undefined"
     }), db = await ObjectDB.find(dbName), exportDir;
+    if (!db) throw new Error(`db ${dbName} does not exist`);
     try { exportDir = resource(url); }
     catch (err) { exportDir = resource(System.baseURL).join(url); }
-    return db.exportToDir(exportDir, nameAndTypes, copyResources);
+    return db.exportToDir(exportDir, nameAndTypes, copyResources, includeDeleted);
   },
 
   async importFromDir(args) {
@@ -865,6 +905,7 @@ export var ObjectDBInterface = {
       overwrite: "boolean|undefined",
       copyResources: "boolean|undefined"
     }), db = await ObjectDB.find(dbName), importDir;
+    if (!db) throw new Error(`db ${dbName} does not exist`);
     try { importDir = resource(url); }
     catch (err) { importDir = resource(System.baseURL).join(url); }
     return db.importFromDir(importDir, overwrite, copyResources);
@@ -879,6 +920,7 @@ export var ObjectDBInterface = {
       overwrite: "boolean|undefined",
       copyResources: "boolean|undefined"
     }), db = await ObjectDB.find(dbName);
+    if (!db) throw new Error(`db ${dbName} does not exist`);
     return db.importFromSpecs(specs, overwrite, copyResources);
   },
 
@@ -901,6 +943,7 @@ export var ObjectDBInterface = {
       commitSpec: "object",
       purgeHistory: "boolean|undefined"
     }), db = await ObjectDB.find(dbName), res;
+    if (!db) throw new Error(`db ${dbName} does not exist`);
     try { res = resource(url); } catch (err) { res = resource(System.baseURL).join(url); }
     return db.importFromResource(type, name, res, commitSpec, purgeHistory);
   }
@@ -927,7 +970,7 @@ export class ObjectDBHTTPInterface {
     if (contentType === "application/json") {
       try { json = JSON.parse(answer); } catch (err) {}
     }
-    if (!res.ok >= 400) {    
+    if (!res.ok || json.error) {    
       throw new Error((json && json.error) || answer || res.statusText);
     }
     return json || answer;
@@ -970,14 +1013,14 @@ export class ObjectDBHTTPInterface {
   }
   
   async fetchCommits(args) {
-    // parameters: db, ref, type, typesAndNames, knownCommitIds
+    // parameters: db, ref, type, typesAndNames, knownCommitIds, includeDeleted
     // returns: [commits]
     return this._GET("fetchCommits", args);
   }
   
   async fetchVersionGraph(args) {
     // parameters: db, type, name
-    // returns: {refs
+    // returns: {refs, history}
     return this._GET("fetchVersionGraph", args);
   }
 
@@ -993,14 +1036,14 @@ export class ObjectDBHTTPInterface {
     return this._GET("fetchSnapshot", args);
   }
   
-  async commitSnapshot(args) {
-    // parameters: db, type, name, ref, expectedParentCommit, commitSpec, snapshot
+  async commit(args) {
+    // parameters: db, type, name, ref, expectedParentCommit, commitSpec, preview, snapshot
     // returns: commit
-    return this._POST("commitSnapshot", args);
+    return this._POST("commit", args);
   }
   
   async exportToSpecs(args) {
-    // parameters: db, nameAndTypes
+    // parameters: db, nameAndTypes, includeDeleted
     // returns: [{dir, type, name, commits, history, snapshotDirs}]
     return this._GET("exportToSpecs", args);
   }
