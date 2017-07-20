@@ -60,8 +60,11 @@ class ShortcutWidget extends ContextSensitiveWidget {
       submorphs: {
         initialize() {
           this.submorphs = [
-            Icon.makeLabel('arrow-right', {fontSize: 15, padding: rect(1,1,4,1)}),
+            Icon.makeLabel('arrow-right', {
+              styleClasses: ['TreeLabel'],
+              fontSize: 15, padding: rect(1,1,4,1)}),
             {type: "label", value: this.title, fontSize: 14, 
+             styleClasses: ['TreeLabel'],
              fontWeight: 'bold',
              name: 'valueString', opacity: .8,
              borderRadius: 5, padding: rect(0,1,0,0), 
@@ -238,12 +241,14 @@ export class ColorWidget extends Morph {
     return [
         {
           type: "label",
+          styleClasses: ['TreeLabel'],
           value: this.color.type + "(",
           name: "valueString"
         },
         ...this.renderStops(),
         {
           type: "label",
+          styleClasses: ['TreeLabel'],
           value: ")"
         }
      ];
@@ -282,7 +287,8 @@ export class ColorWidget extends Morph {
         type: "label",
         value: "No Color",
         fontSize: 14,
-        name: "valueString"
+        name: "valueString",
+        styleClasses: ['TreeLabel']
       }
     ];  }
 
@@ -306,7 +312,8 @@ export class ColorWidget extends Morph {
           type: "label",
           value: obj.safeToString(this.color),
           fontSize: 14,
-          name: "valueString"
+          name: "valueString",
+          styleClasses: ['TreeLabel']
         }
       ];
   }
@@ -393,6 +400,7 @@ export class NumberWidget extends Morph {
   static get properties() {
 
     return {
+      extent: {defaultValue: pt(55, 25)},
       number: {
         defaultValue: 0,
         set(v) {
@@ -508,8 +516,6 @@ export class NumberWidget extends Morph {
         fontColor: Color.black
       },
       ".NumberWidget": {
-        extent: pt(55, 25),
-        fill: this.fill || Color.transparent,
         clipMode: "hidden"
       },
       "[name=down]": {padding: rect(0, -3)},
@@ -599,8 +605,16 @@ export class ShadowWidget extends Morph {
 
   renderShadowDisplay() {
     if (!this.shadowValue) {
-      this.submorphs = [{opacity: .8, reactsToPointer: false, 
-                         name: 'valueString', type: 'label', value: 'No Shadow'}];
+      this.submorphs = [
+        {
+          opacity: 0.8,
+          reactsToPointer: false,
+          styleClasses: ["TreeLabel"],
+          name: "valueString",
+          type: "label",
+          value: "No Shadow"
+        }
+      ];
       return;
     }
     if (this.submorphs.length > 1) {
@@ -609,7 +623,6 @@ export class ShadowWidget extends Morph {
       this.initShadowDisplay();
     }
   }
-
   updateShadowDisplay() {
     let {inset, blur, spread, distance, color} = this.shadowValue,
         [nameLabel, {submorphs: [shadowColor]}, paramLabel] = this.submorphs;
@@ -649,6 +662,7 @@ export class PointWidget extends Label {
     return {
       fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
       nativeCursor: {defaultValue: 'pointer'},
+      styleClasses: {defaultValue: ['TreeLabel']}, // in order to be highlighted in tree
       pointValue: {
         after: ['textAndAttributes'],
         set(p) {

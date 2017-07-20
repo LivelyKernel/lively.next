@@ -460,6 +460,7 @@ export class PropertyControl extends Label {
           this.submorphs = [c];
         }
       },
+      styleClasses: {defaultValue: ['TreeLabel']},
       draggable: {defaultValue: true},
       nativeCursor: {defaultValue: '-webkit-grab'},
       root: {},
@@ -561,6 +562,7 @@ export class PropertyControl extends Label {
       opacity: 0.8,
       fill: Color.white.withA(0.5),
       name: "valueString",
+      styleClasses: ['TreeLabel'],
       selectedValue,
       values
     });

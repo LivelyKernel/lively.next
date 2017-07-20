@@ -892,6 +892,9 @@ export class StyleSheetEditor extends Morph {
       ".TreeNode": {
         fill: Color.transparent
       },
+      ".TreeNode [name=valueString]": {
+        borderWidth: 0,
+      },
       ".TreeNode.selected": {
         fill: Color.transparent,
         fontColor: Color.black,
@@ -957,7 +960,8 @@ export class StyleSheetEditor extends Morph {
         fontSize: 14
       },
       ".Control": {
-        nativeCursor: "pointer"
+        nativeCursor: "pointer",
+        fontColor: Color.rgbHex("5499c7")
       },
       // property control
       ".createProp": {

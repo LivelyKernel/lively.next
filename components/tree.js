@@ -61,10 +61,11 @@ export class TreeNode extends Morph {
           return this.getSubmorphNamed("toggle") || (this.addMorph({
             type: Label, name: "toggle",
             fill: null, textString: this.isCollapsed ? "\uf196" : "\uf147",
-            padding: Rectangle.inset(2),
             fontSize: this.fontSize-3,
             textStyleClasses: ["fa"],
+            styleClasses: ['TreeLabel'],
             fontFamily: "FontAwesome",
+            padding: 2,
             nativeCursor: "pointer"
           }));
         }
@@ -74,7 +75,7 @@ export class TreeNode extends Morph {
         after: ["submorphs"], derived: true, readOnly: true,
         get() {
           return this.getSubmorphNamed("label") || this.addMorph({
-            type: Label, name: "label", autofit: false,
+            type: Label, name: "label", autofit: false, styleClasses: ['TreeLabel'],
             fontSize: this.fontSize, fontWeight: this.fontWeight, fontFamily: this.fontFamily,
             fill: null
           });
@@ -392,10 +393,7 @@ export class Tree extends Morph {
         fontSize: this.fontSize,
         fontColor: this.fontColor
       },      
-      ".TreeNode [name=valueString]": {
-        fontSize: this.fontSize
-      },
-      ".TreeNode [name=toggle]": {
+      ".TreeNode .TreeLabel": {
         fontSize: this.fontSize
       },
       ".TreeNode.deselected": {
@@ -404,11 +402,11 @@ export class Tree extends Morph {
       ".TreeNode.selected": {
         fill: this.selectionColor
       },
-      ".TreeNode.selected .Label": {
+      ".TreeNode.selected .TreeLabel": {
         fontColor: this.selectionFontColor,
         borderColor:  this.selectionFontColor
       },
-      ".TreeNode.deselected .Label": {
+      ".TreeNode.deselected .TreeLabel": {
         fontColor: this.nonSelectionFontColor,
         borderColor:  this.nonSelectionFontColor
       }
