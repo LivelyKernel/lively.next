@@ -1,8 +1,8 @@
 {
-  "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
+  "id": "Progress_CB24FF49_25F5_4D87_A76D_60D74288FF2D",
   "snapshot": {
-    "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A": {
-      "rev": 711242,
+    "Progress_CB24FF49_25F5_4D87_A76D_60D74288FF2D": {
+      "rev": 41703,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -13,12 +13,12 @@
           "value": [
             {
               "__ref__": true,
-              "id": "15F6E1C0-0510-4084-84F2-683E653797EE",
+              "id": "A311EE39-3D74-4CA9-A964-3F537C82759D",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "D12F7C90-CE08-40B0-9853-DA0049CE5743",
+              "id": "7AF57C1A-DDBA-4CB0-AA87-298A96E885C0",
               "rev": 0
             }
           ]
@@ -29,7 +29,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(1018.4,104.7)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(1131.8,130.0)"
         },
         "origin": {
           "key": "origin",
@@ -48,19 +48,27 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_5D42AA05_2080_4ECB_A639_DEF3DC88082F",
-              "rev": 757387
+              "id": "Morph_1B2DFAF7_DFF9_45F6_AAF0_4031AEC7C7D6",
+              "rev": 29919
             },
             {
               "__ref__": true,
-              "id": "Label_8AD72219_5EFF_4744_8E23_643F8953629A",
-              "rev": 757388
+              "id": "Label_27E63E77_96EA_4ED4_8444_3BA2E2CD0AB5",
+              "rev": 29920
             }
           ]
         },
         "clipMode": {
           "key": "clipMode",
           "value": "hidden"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -70,53 +78,69 @@
             "morph"
           ]
         },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderWidth": {
+          "key": "borderWidth",
+          "verbatim": true,
+          "value": {
+            "top": 1,
+            "right": 1,
+            "bottom": 1,
+            "left": 1
+          }
         },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderRadius": {
+          "key": "borderRadius",
+          "verbatim": true,
+          "value": {
+            "top": 8,
+            "right": 8,
+            "bottom": 8,
+            "left": 8
+          }
         },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderStyle": {
+          "key": "borderStyle",
+          "verbatim": true,
+          "value": {
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
+          }
         },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "borderColor": {
+          "key": "borderColor",
+          "verbatim": true,
+          "value": {
+            "top": [
+              0.7411764705882353,
+              0.7647058823529411,
+              0.7803921568627451,
+              1
+            ],
+            "right": [
+              0.7411764705882353,
+              0.7647058823529411,
+              0.7803921568627451,
+              1
+            ],
+            "bottom": [
+              0.7411764705882353,
+              0.7647058823529411,
+              0.7803921568627451,
+              1
+            ],
+            "left": [
+              0.7411764705882353,
+              0.7647058823529411,
+              0.7803921568627451,
+              1
+            ]
+          }
         },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 8
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 8
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 8
-        },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 8
-        },
-        "borderWidthBottom": {
-          "key": "borderWidthBottom",
-          "value": 1
-        },
-        "borderWidthLeft": {
-          "key": "borderWidthLeft",
-          "value": 1
-        },
-        "borderWidthRight": {
-          "key": "borderWidthRight",
-          "value": 1
-        },
-        "borderWidthTop": {
-          "key": "borderWidthTop",
-          "value": 1
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         },
         "progress": {
           "key": "progress",
@@ -128,15 +152,21 @@
         "module": {
           "package": {
             "name": "Progress",
-            "version": null
+            "version": "0.1.0"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1500514972286,
+          "lastSuperclassChange": 1500513136101
         }
       }
     },
-    "15F6E1C0-0510-4084-84F2-683E653797EE": {
+    "A311EE39-3D74-4CA9-A964-3F537C82759D": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -149,8 +179,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
-            "rev": 711242
+            "id": "Progress_CB24FF49_25F5_4D87_A76D_60D74288FF2D",
+            "rev": 41703
           }
         },
         "sourceAttrName": {
@@ -161,8 +191,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
-            "rev": 711242
+            "id": "Progress_CB24FF49_25F5_4D87_A76D_60D74288FF2D",
+            "rev": 41703
           }
         },
         "targetMethodName": {
@@ -173,7 +203,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "FE488692-1857-470A-BFFB-EB5D6DED96C9",
+            "id": "0E31C15D-2F95-46AB-ABB5-5170BD7088C3",
             "rev": 0
           }
         },
@@ -191,36 +221,46 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1500513135986,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "FE488692-1857-470A-BFFB-EB5D6DED96C9": {
+    "0E31C15D-2F95-46AB-ABB5-5170BD7088C3": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
-            "rev": 711242
+            "id": "Progress_CB24FF49_25F5_4D87_A76D_60D74288FF2D",
+            "rev": 41703
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
-            "rev": 711242
+            "id": "Progress_CB24FF49_25F5_4D87_A76D_60D74288FF2D",
+            "rev": 41703
           }
         }
       }
     },
-    "D12F7C90-CE08-40B0-9853-DA0049CE5743": {
+    "7AF57C1A-DDBA-4CB0-AA87-298A96E885C0": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -233,8 +273,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
-            "rev": 711242
+            "id": "Progress_CB24FF49_25F5_4D87_A76D_60D74288FF2D",
+            "rev": 41703
           }
         },
         "sourceAttrName": {
@@ -245,8 +285,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
-            "rev": 711242
+            "id": "Progress_CB24FF49_25F5_4D87_A76D_60D74288FF2D",
+            "rev": 41703
           }
         },
         "targetMethodName": {
@@ -257,7 +297,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "62B525D0-6CD9-4E14-97FC-044082133C5B",
+            "id": "8E499511-8F68-4504-89FB-60D2C2C8CD24",
             "rev": 0
           }
         },
@@ -275,35 +315,41 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1500513135986,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "62B525D0-6CD9-4E14-97FC-044082133C5B": {
+    "8E499511-8F68-4504-89FB-60D2C2C8CD24": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
-            "rev": 711242
+            "id": "Progress_CB24FF49_25F5_4D87_A76D_60D74288FF2D",
+            "rev": 41703
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Morph_0D09D64C_4BE5_408B_B7D0_780AB8C0092A",
-            "rev": 711242
+            "id": "Progress_CB24FF49_25F5_4D87_A76D_60D74288FF2D",
+            "rev": 41703
           }
         }
       }
     },
-    "Morph_5D42AA05_2080_4ECB_A639_DEF3DC88082F": {
-      "rev": 757387,
+    "Morph_1B2DFAF7_DFF9_45F6_AAF0_4031AEC7C7D6": {
+      "rev": 29919,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -336,7 +382,7 @@
           "key": "fill",
           "value": {
             "__ref__": true,
-            "id": "CAF7E770-0D65-4D64-955E-B841E80A7B4B",
+            "id": "ECB9AA71-C7C0-4AB9-9136-7B64D9B78195",
             "rev": 0
           }
         },
@@ -350,6 +396,70 @@
             "Morph",
             "morph"
           ]
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "verbatim": true,
+          "value": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "verbatim": true,
+          "value": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "verbatim": true,
+          "value": {
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "verbatim": true,
+          "value": {
+            "top": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "right": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "bottom": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "left": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         }
       },
       "lively.serializer-class-info": {
@@ -359,24 +469,30 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "morph.js"
+          "pathInPackage": "morph.js",
+          "lastChange": 1500513136101,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "CAF7E770-0D65-4D64-955E-B841E80A7B4B": {
+    "ECB9AA71-C7C0-4AB9-9136-7B64D9B78195": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "stops": {
           "key": "stops",
           "value": [
             {
               "__ref__": true,
-              "id": "1A974C7F-5A9E-40A1-8593-124EB942A4DF",
+              "id": "51D728EC-95B4-4C2B-B62E-942410A9CAA9",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "569A2DE5-A562-4F5E-962E-432FE4DEA330",
+              "id": "8B67493F-7893-40F6-BC25-ACAD3741BA6F",
               "rev": 0
             }
           ]
@@ -393,13 +509,19 @@
             "name": "lively.graphics",
             "version": "0.1.1"
           },
-          "pathInPackage": "color.js"
+          "pathInPackage": "color.js",
+          "lastChange": 1500513135872,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "1A974C7F-5A9E-40A1-8593-124EB942A4DF": {
+    "51D728EC-95B4-4C2B-B62E-942410A9CAA9": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "color": {
           "key": "color",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(216,216,216)"
@@ -410,9 +532,13 @@
         }
       }
     },
-    "569A2DE5-A562-4F5E-962E-432FE4DEA330": {
+    "8B67493F-7893-40F6-BC25-ACAD3741BA6F": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "color": {
           "key": "color",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(199,197,197)"
@@ -423,8 +549,8 @@
         }
       }
     },
-    "Label_8AD72219_5EFF_4744_8E23_643F8953629A": {
-      "rev": 757388,
+    "Label_27E63E77_96EA_4ED4_8444_3BA2E2CD0AB5": {
+      "rev": 29920,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -447,7 +573,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(96.1,9.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(96.2,9.0)"
         },
         "origin": {
           "key": "origin",
@@ -472,6 +598,70 @@
             "Morph",
             "morph"
           ]
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "verbatim": true,
+          "value": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "verbatim": true,
+          "value": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "verbatim": true,
+          "value": {
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "verbatim": true,
+          "value": {
+            "top": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "right": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "bottom": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "left": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         },
         "textAndAttributes": {
           "key": "textAndAttributes",
@@ -500,7 +690,9 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "text/label.js"
+          "pathInPackage": "text/label.js",
+          "lastChange": 1500513136050,
+          "lastSuperclassChange": 1500513136101
         }
       }
     }
@@ -510,9 +702,9 @@
     "local://lively-object-modules/": {
       "Progress": {
         "package.json": "{\n  \"name\": \"Progress\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
-        "index.js": "import { Morph } from \"lively.morphic\";\nimport { pt } from \"lively.graphics/index.js\";\nimport { connect, disconnect } from \"lively.bindings/index.js\";\n\nexport default class Progress extends Morph {\n\n  \n  static readme() {\n    `\n    Set property progressBar.progress to a value between 0 and 1 to modify the progress indicator.\n    progressBar.label to change its label.\n    \n    `\n  }\n\n  static get properties() {\n    return {\n      progress: {},\n      ui: {\n        derived: true, readOnly: true, after: [\"submorphs\"],\n        get() {\n          return {\n            filler: this.getSubmorphNamed(\"filler\"),\n            label: this.getSubmorphNamed(\"label\")\n          }\n        },\n      },\n      label: {\n        derived: true, after: [\"submorphs\"],\n        get() { return this.getSubmorphNamed(\"label\").value; },\n        set(val) {\n          this.getSubmorphNamed(\"label\").value = val;\n          this.getSubmorphNamed(\"label\").fit();\n          this.relayout();\n        }\n      }\n    }\n  }\n\n  reset() {\n    this.label = \"no label\";\n    this.clipMode = \"hidden\";\n    connect(this, 'progress', this, 'update');\n    connect(this, 'extent', this, 'update');\n  }\n\n  relayout() {\n    let {filler, label} = this.ui;\n    filler.position = pt(0,0);\n    filler.height = this.height;\n    label.center = this.innerBounds().center();\n  }\n\n  update() {\n    // this.getSubmorphNamed(\"label\").value = this.progress.toFixed(0.01)\n    let filler = this.ui.filler;\n    filler.width = Math.min(this.width, Math.max(0, this.width * this.progress));\n    this.relayout();\n  }\n\n}\n\n"
+        "index.js": "import { Morph } from \"lively.morphic\";\nimport { pt } from \"lively.graphics/index.js\";\nimport { connect, disconnect } from \"lively.bindings/index.js\";\nimport { promise } from \"lively.lang/index.js\";\n\nexport default class Progress extends Morph {\n\n\n  static readme() {\n    `\n    Set property progressBar.progress to a value between 0 and 1 to modify the progress indicator.\n    progressBar.label to change its label.\n\n    `\n  }\n\n  static get properties() {\n    return {\n      progress: {},\n      ui: {\n        derived: true, readOnly: true, after: [\"submorphs\"],\n        get() {\n          return {\n            filler: this.getSubmorphNamed(\"filler\"),\n            label: this.getSubmorphNamed(\"label\")\n          }\n        },\n      },\n      label: {\n        derived: true, after: [\"submorphs\"],\n        get() { return this.getSubmorphNamed(\"label\").value; },\n        set(val) {\n          this.getSubmorphNamed(\"label\").value = val;\n          this.getSubmorphNamed(\"label\").fit();\n          this.relayout();\n        }\n      }\n    }\n  }\n\n  reset() {\n    this.label = \"no label\";\n    this.clipMode = \"hidden\";\n    connect(this, 'progress', this, 'update');\n    connect(this, 'extent', this, 'update');\n  }\n\n  relayout() {\n    let {filler, label} = this.ui;\n    filler.position = pt(0,0);\n    filler.height = this.height;\n    label.center = this.innerBounds().center();\n  }\n\n  update() {\n    // this.getSubmorphNamed(\"label\").value = this.progress.toFixed(0.01)\n    let filler = this.ui.filler;\n    filler.width = Math.min(this.width, Math.max(0, this.width * this.progress));\n    this.relayout();\n  }\n\n  async stayOpenWhile(whileFn) {\n    if (!this.world()) this.openInWorld();\n    try { return await whileFn(this); } finally { this.remove(); }\n  }\n\n  stayOpenForEach(promiseGenFns) {\n    return this.stayOpenWhile(async () => {\n      let max = promiseGenFns.length, results = [];\n      for (let i = 0; i < promiseGenFns.length; i++) {\n        results.push(await promiseGenFns[i]());\n        this.progress = i/max;\n      }\n      return results;\n    });\n  }\n\n  stayOpenForEachParallel(promiseGenFns, parallelLimit = Infinity) {\n    let max = promiseGenFns.length, done = 0;\n    return this.stayOpenWhile(async () =>\n      promise.parallel(promiseGenFns.map(fn => async () => {\n        let result = await fn();\n        done++; this.progress = done/max;\n        return result;\n      }), parallelLimit));\n  }\n}\n\n"
       }
     }
   },
-  "preview": "data:image/png;base64,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"
+  "preview": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPgAAAAkCAYAAACkLfdfAAAIqklEQVR4Xu2de1BUVRjAv7vLsiDsgixIWDPOOMpDyDGVl4zmZP/kq+wP0QJMZ8IoEZQmCxNWQ/gjJph4CAgTiCTGoqZpaT7QaIGc6aVZ+ZjM8Q/fggkL7Kv5Ptvbsr5It3vv7p4zw+wse+853/3u9zvf+b5z7rkcOBS9Xu87yCm0Mo571mI2R5ktFrXjMew70wDTgLQ0IJfJbsnl8l8tVnNbb3BQ/uzx4wdQQs5ezKP6rjSrFWqffCJYIeM4MBmNYLVa6Y/jOPb5P+thfHi4tKyGSeMyGhg0GuF2bx8Y+gxw5o8/zXIZt3RmUkIjD3jnDz+9PcLbO0+pkKssZjOD+X+G+V6dZkRkpMsYFBNU2hr48eSv3WaTsYAAP9je8eqokYGVXpxVzTy1eCOV8IgIaVsNk86lNPDzL7/1chhzD1jlPaM1AQqzxQJgtQJwHPsUQQ8RUVEuZUBMWOlrgDvY3rlhTNiod4z9BqX1n6Ccfd5JTgitBwa49IFxNQm5Nv13x54K1UwfMBiY5xZ55BI5YYKr2Q+TV+Ia4I5829UdpgkIMJtMgnssoT2k1NtjgEucFhcUjzv0TYc1dKSKxdwixNyOuY6o6GgXNCEmspQ1QICPCvQXJeaUukcVWj4GuJRRcU3ZeMBZ9lz82YMJMTGuaUVMaslqgAAPCfBjHlyErLnjCMGZgONCmtz33oPLly9DbV0dyGSyhxrhnt27oaysDJq3b4egoKCHHn+/A1p1OqipqYFtzc2PVc8jC8BO5DXAA848uPgePPrpp51mmgj4quxsuHbtGmxpbBwW4Nubm6Guru6xAXdWPU5ThgdXdAdw9QgPVoF0Lt3ZgL+dk0Me/L8C3qLTQUBAwCMrhgH+yKpz+okEeLDK1+kVswqHp4GBgQFo2LIFJkRFQZBGA9u2bYNbt25BXFwc5Gu14OPjQxWhR/60qQkaGhrAbDaDn58fpKenw5y5c+lBIMeCxzsCjrBXV1VBe3s71TFmzBhISUmB52bNotNtYK5ZswZ0Oh2cPn2a2snIyIAXZs/mm0D5Kisr4fChQ+Dt7Q3xCQkkS2ho6JB6HneoPzwNsqMepAEGuMj20WcwgFarBQQdS3h4OFy6dIkgj4yMhLLycgJ4bW4udHV1QUhICExLSoIv9+2DwcFBmD1nDuTk5DwUcDw2eeFCuH37NkycOBE0wcFw7OhRAn3DBx9AUlISAY6xMxa5XE6dTEdHB31ftmwZvJqSAjdu3IC01FQwGAwQEREBCoUCTp48ScfXNzTA6NGj+Y6CAS6yceHKVPTgGv87XoIV4TWAYOfl54PJZIKPSkogJiYG+vv74ZXFiwlshOTUqVOwetUqAq5g40aCqbe3F9Jff506g01VVdQx2BdHD451ZK1cCUuXLoWU1FQ69Ny5c1THSwsWQGZmJg84gvtxWRl4eXnBhQsX4M2MDOoIdK2tUF5eDgf274fc3FyY9fzzVA92NsXFxUPqcUYsL/zdcL8WGeAi31Mb4NHR0fBhcTFJY4PzxIkTlInet3cv1NfXQ0lpKXlfW/lizx4oKSmBjYWFkJCQ8EDAsbO4cuUKdQ7oxW/evAl6vR52tLbeBXhFZSWNHmylqKgIjhw+DJ/U18Py9HQwGo2wubaWDw1wdLDirbdAo9FQuKFraXFKsk7kW+MWzRPgQX5Kt7gYV7wIBBxj7WnTpsH769bdBTh68K8PHCBgHJNfGCNnvPHGsABHCDcWFBDUjsXeg2M76KnV6n838sFOoKqqigcch+f3KoGBgfBZSwsDXEKGyAAX+WbYAI+LjQXthg33BXzz5s2UDccY11YQvIqKimEB3rR1K40C4uPjYdHixRAWFgYWiwVeW7KE4nj7IXp1TQ2MGzeObwfb+HzXLppPtw3XyysqhiT3MKzAhODYsWNZDC6yTdk3T4CPHOEtIZE8SxQEXLt+PcTGxsL6+wDeduQIgbxixQpY8PLLfCeAC1mOHz8OVdXVQ4C0H+Zj5hyHzTmrV1Msv2PnTvD396c6Dh08CIWFhbAwORmWL1/Ox+D2iTscjmM+AIf16NlxxIB1oqe2TaXh99SUFHh25kxYu3YtA1xCJswAF/lm3A9wXKSCQGIMrlQqYVFyMmWuU9PSYPr06dDU1ARH29ooJsfknONUmeNCl62NjTTFNmPGDJg3fz50dnYCrjjDgnVgmLD/q6/4LDp2JOjtKysqKNFmS87ZOgXsJLKzsyn7j4k3lK2wqIjOYfPgIhuVXfN3APdVsEdFRdrson9ggDx3YmIirMvL472zNj+fIMS4G+Phs2fPQnZWFoFkK5MmTaLhuW2u3N6sHJeqXr16FVZmZtLKNltJW7IEcHSAACPgPd3dUFpaSpDilJytzJ03D7KysvjVcJhE27Rp0xArxt/nv/gi/Q87jurq6sdeEScdTFxXEgI80MeLbfYg8mYP+OjopMmTH2hJCO358+dp/lulUg2Jx4djgnj+xYsXKUuP8+m+vr40Pdfd3U3DbZzTtpWenh7KtKOnDg4Ovqt6nKa7fv06nYO/2587HFnYMcJogAdc6EcjWXt3bwv1zJQpwtx11orHaIAAD1DKmQeXgAdngHsMd4JdKA8486jibLRor/fJU6cKduNZQ56hAQJc7S1jHlwCHpwB7hnQCXmVPODMg4vvwafExgp571lbHqABAlyl4JgHl4AHZ4B7AHECXyLX9m1Xj1opVxtNJrZtk8jbNk2NixP49rPm3F0D3LHO4/pAX2Viv6GPvXBQhBcO2r8LbgoD3N15E/z6uLb2zsKQkap3/+rp4diLB8V78SAuPol1eORTcGtgDbqdBrh9Z84ofS5d61Ur5XJc1cQgFw/yqfHxbmdg7ILE1QBt5nX4G/0rKr8Rteb+Pt97vbeaQS8M9HGJieJaA2vdrTRw4tTvg/xufd99/2OODLgCy6DBB7fnYVALA7W9ntkQ3a34EvVi8N3gZs6S9zcxq4mZhjP0HAAAAABJRU5ErkJggg=="
 }
