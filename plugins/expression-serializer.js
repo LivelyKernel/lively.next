@@ -1,3 +1,4 @@
+/*global System*/
 export default class ExpressionSerializer {
 
   constructor(opts) {
@@ -62,8 +63,12 @@ export default class ExpressionSerializer {
     if (bindings) {
       var keys = Object.keys(bindings);
       for (var i = 0; i < keys.length; i++) {
-        var from = keys[i];
-        string = `{${bindings[from].join(",")}}:${from}:${string}`
+        var from = keys[i], binding = bindings[from];
+        if (Array.isArray(binding)) {
+          binding = binding.map(ea =>
+            typeof ea === "string" ? ea : ea.exported + ":" + ea.local).join(",")
+        }
+        string = `{${binding}}:${from}:${string}`;
       }
     }
     return this.prefix + string

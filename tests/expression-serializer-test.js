@@ -22,6 +22,13 @@ describe("expression serializer format", () => {
       expect(sut.exprStringEncode({__expr__: "foo()", bindings: {"package/foo.js": ["foo", "bar"],"package/zork.js": ["xxx"]}}))
         .equals("_prefix:{xxx}:package/zork.js:{foo,bar}:package/foo.js:foo()"));
 
+    it("with alias bindings", () =>
+      expect(
+        sut.exprStringEncode({
+          __expr__: "bar() + zork()",
+          bindings: {"package/foo.js": [{exported: "foo", local: "bar"}, {exported: "bar", local: "zork"}]}
+        })).equals("_prefix:{foo:bar,bar:zork}:package/foo.js:bar() + zork()"));
+
   });
 
   describe("decode", () => {
