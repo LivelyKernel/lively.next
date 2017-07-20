@@ -162,8 +162,8 @@ export class TreeNode extends Morph {
         set(bool) {
           this.setProperty("isCollapsable", bool);
           var toggle = this.getSubmorphNamed("toggle");
-          if (!bool && toggle) toggle.remove();
-          if (bool && !toggle) this.addMorph(this.toggle);
+          if (!bool && toggle) toggle.visible = false;
+          if (bool && !toggle) this.toggle.visible = true;
           this.relayout();
         }
       },
@@ -188,7 +188,9 @@ export class TreeNode extends Morph {
     var toggle = this.getSubmorphNamed("toggle"), displayedMorph;
 
     if (!isCollapsable && toggle) {
-      toggle.remove();
+      toggle.visible = false;
+    } else {
+      toggle && (toggle.visible = true);
     }
     if (displayedNode && displayedNode.isMorph) {
       displayedMorph = this.displayedMorph = displayedNode;
@@ -206,17 +208,9 @@ export class TreeNode extends Morph {
     this.styleClasses = isSelected ? ["selected"] : ["deselected"];
     if (node) node.isSelected = isSelected;
 
-    if (toggle) {
-      toggle.fit();
-      var toggleWidth = toggle.right + toggle.padding.right(),
-          {y: height} = (this.extent = displayedMorph.extent.addXY(toggleWidth, 0));
-      toggle.leftCenter = pt(0, height / 2 + toggle.padding.top() / 2);
-      displayedMorph.topLeft = pt(toggleWidth, 0);
-    } else {
-      displayedMorph.topLeft = pt(defaultToggleWidth, 0);
-      this.extent = displayedMorph.extent.addXY(defaultToggleWidth, 0);
-    }
-
+    displayedMorph.position = pt(defaultToggleWidth + 3, 0);
+    this.extent = displayedMorph.bounds().extent().addXY(defaultToggleWidth, 0);
+    
     this.myNode = node;
     if (this.myNode) this.myNode.renderedNode = this;
   }
@@ -230,7 +224,7 @@ export class TreeNode extends Morph {
       var bounds = toggle.textBounds();
       this.height = Math.max(bounds.height, this.height);
       this.padding = Rectangle.inset(bounds.width+4, 1, 1, 1);
-      toggle.leftCenter = pt(1, (this.height)/2);
+      toggle.leftCenter = pt(1,this.height/2);
     } else {
       this.padding = Rectangle.inset(1);
     }

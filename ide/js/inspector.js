@@ -286,6 +286,8 @@ class PropertyNode extends InspectionNode {
         this._propertyWidget.highlight();
       }
     }
+    if (this.renderedNode) 
+      this.renderedNode.width = this._propertyWidget.bounds().width + this.renderedNode.toggle.width + 3;
     if (this.isFoldable) {
       for (let m in this.foldedNodes) {
         this.foldedNodes[m].value = this.value[m];
@@ -566,11 +568,6 @@ export class PropertyControl extends Label {
       selectedValue,
       values
     });
-    // hack: since derived properties that are parametrized by a style sheet do not
-    //       yet take effect in a morph such as the drop down selector, we need to
-    //       manually trigger an update at render time
-    propertyControl.control.whenRendered().then(() =>
-       propertyControl.control.updateStyleSheet());
     connect(propertyControl.control, "update", propertyControl, "propertyValue", {
       updater: function ($upd, val) {
         if (this.targetObj.propertyValue != val) $upd(val);
@@ -685,8 +682,8 @@ export class PropertyControl extends Label {
     }
     this.control = new NumberWidget({
       name: "valueString",
-      height: 17,
       baseFactor,
+      extent: pt(50,17),
       floatingPoint,
       borderWidth: 0,
       borderColor: Color.transparent,
