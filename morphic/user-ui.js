@@ -511,7 +511,7 @@ export class UserFlap extends Morph {
       draggable: {defaultValue: false},
       grabbable: {defaultValue: false},
       acceptsDrops: {defaultValue: false},
-      fill: {defaultValue: Color.rgba(255,255,255,0.5)},
+      fill: {defaultValue: Color.white},
       borderLeft: {defaultValue: {width: 1, color: Color.gray}},
       borderRight: {defaultValue: {width: 1, color: Color.gray}},
       borderBottom: {defaultValue: {width: 1, color: Color.gray}},
