@@ -964,45 +964,52 @@ export class RectanglePopover extends StylePopover {
     return [
       {
         fill: Color.transparent,
-        extent: pt(120,100),
+        extent: pt(120, 100),
         layout: new GridLayout({
-          grid: [['top', 'top scrubber'],
-                 ['right', 'right scrubber'],
-                 ['left', 'left scrubber'],
-                 ['bottom', 'bottom scrubber']],
+          grid: [
+            ["top", "top scrubber"],
+            ["right", "right scrubber"],
+            ["left", "left scrubber"],
+            ["bottom", "bottom scrubber"]
+          ],
           columns: [0, {paddingLeft: 2}, 1, {paddingRight: 2, fixed: true, width: 40}],
-          rows: arr.flatten(arr.range(0,3).map(i => [i, {paddingTop: 2, paddingBottom: 2}]))
+          rows: arr.flatten(arr.range(0, 3).map(i => [i, {paddingTop: 2, paddingBottom: 2}]))
         }),
-        submorphs: arr.flatten([["top", "y"], 
-                                ["right", "width"], 
-                                ["bottom", "height"], 
-                                ["left", 'x']].map(([side, prop]) => {
-          let widget = new NumberWidget({
-            name: side + ' scrubber',
-            number: this.rectangle.partNamed(side)
-          });
-          connect(widget, "update", this, "rectangle", {
-            updater: function($upd, val) {
-              let r = this.targetObj.rectangle.toLiteral();
-              $upd(Rectangle.fromLiteral({...r, [prop]: val}));
-            },
-            varMapping: {prop, Rectangle}
-          });
-          return [
+        submorphs: arr.flatten(
+          ["top", "right", "bottom", "left"].map(side => {
+            let widget = new NumberWidget({
+              name: side + " scrubber",
+              number: this.rectangle.partNamed(side)
+            });
+            connect(widget, "update", this, "rectangle", {
+              updater: function($upd, val) {
+                let r = this.targetObj.rectangle,
+                    sides = {
+                      left: r.left(),
+                      top: r.top(),
+                      right: r.right(),
+                      bottom: r.bottom(),
+                      [side]: val
+                    };
+                $upd(Rectangle.inset(sides.left, sides.top, sides.right, sides.bottom));
+              },
+              varMapping: {side, Rectangle}
+            });
+            return [
               {
                 type: "label",
-                styleClasses: ['controlName'],
+                styleClasses: ["controlName"],
                 name: side,
                 value: side,
                 padding: 3
               },
               widget
             ];
-        }))
+          })
+        )
       }
-    ];  
-  }
-}
+    ];
+  }}
 
 export class TextPopover extends StylePopover {
 
