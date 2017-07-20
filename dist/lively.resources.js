@@ -923,7 +923,7 @@ function parseQuery(url) {
         val = true;
     if (keyAndVal.length > 1) {
       val = decodeURIComponent(keyAndVal.slice(1).join("="));
-      if (val.match(/^(true|false|null|[0-9"[{].*)$/)) try {
+      if (val === "undefined") val = undefined;else if (val.match(/^(true|false|null|[0-9"[{].*)$/)) try {
         val = JSON.parse(val);
       } catch (e) {
         if (val[0] === "[") val = val.slice(1, -1).split(","); // handle string arrays
@@ -1277,52 +1277,63 @@ var Resource$$1 = function () {
       var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(otherResource) {
         var _this2 = this;
 
+        var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         var toFile, fromResources, toResources;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
                 if (!this.isFile()) {
-                  _context2.next = 10;
+                  _context2.next = 13;
                   break;
                 }
 
                 toFile = otherResource.isFile() ? otherResource : otherResource.join(this.name());
-                _context2.t0 = toFile;
+
+                if (!ensureParent) {
+                  _context2.next = 5;
+                  break;
+                }
+
                 _context2.next = 5;
-                return this.read();
+                return toFile.parent().ensureExistance();
 
               case 5:
-                _context2.t1 = _context2.sent;
+                _context2.t0 = toFile;
                 _context2.next = 8;
-                return _context2.t0.write.call(_context2.t0, _context2.t1);
+                return this.read();
 
               case 8:
-                _context2.next = 22;
+                _context2.t1 = _context2.sent;
+                _context2.next = 11;
+                return _context2.t0.write.call(_context2.t0, _context2.t1);
+
+              case 11:
+                _context2.next = 25;
                 break;
 
-              case 10:
+              case 13:
                 if (otherResource.isDirectory()) {
-                  _context2.next = 12;
+                  _context2.next = 15;
                   break;
                 }
 
                 throw new Error("Cannot copy a directory to a file!");
 
-              case 12:
-                _context2.next = 14;
+              case 15:
+                _context2.next = 17;
                 return this.dirList('infinity');
 
-              case 14:
+              case 17:
                 fromResources = _context2.sent;
                 toResources = fromResources.map(function (ea) {
                   return otherResource.join(ea.relativePathFrom(_this2));
                 });
-                _context2.next = 18;
+                _context2.next = 21;
                 return otherResource.ensureExistance();
 
-              case 18:
-                _context2.next = 20;
+              case 21:
+                _context2.next = 23;
                 return fromResources.reduceRight(function (next, ea, i) {
                   return function () {
                     return Promise.resolve(ea.isDirectory() && toResources[i].ensureExistance()).then(next);
@@ -1331,20 +1342,20 @@ var Resource$$1 = function () {
                   return Promise.resolve();
                 })();
 
-              case 20:
-                _context2.next = 22;
+              case 23:
+                _context2.next = 25;
                 return fromResources.reduceRight(function (next, ea, i) {
                   return function () {
-                    return Promise.resolve(ea.isFile() && ea.copyTo(toResources[i])).then(next);
+                    return Promise.resolve(ea.isFile() && ea.copyTo(toResources[i], false)).then(next);
                   };
                 }, function () {
                   return Promise.resolve();
                 })();
 
-              case 22:
+              case 25:
                 return _context2.abrupt("return", this);
 
-              case 23:
+              case 26:
               case "end":
                 return _context2.stop();
             }
@@ -1381,7 +1392,7 @@ var Resource$$1 = function () {
         }, _callee3, this);
       }));
 
-      function rename$$1(_x5) {
+      function rename$$1(_x6) {
         return _ref3.apply(this, arguments);
       }
 
@@ -1530,7 +1541,7 @@ var Resource$$1 = function () {
         }, _callee9, this);
       }));
 
-      function dirList(_x6, _x7) {
+      function dirList(_x7, _x8) {
         return _ref9.apply(this, arguments);
       }
 
@@ -1553,7 +1564,7 @@ var Resource$$1 = function () {
         }, _callee10, this);
       }));
 
-      function readProperties(_x8) {
+      function readProperties(_x9) {
         return _ref10.apply(this, arguments);
       }
 
@@ -1590,7 +1601,7 @@ var Resource$$1 = function () {
         }, _callee11, this);
       }));
 
-      function readJson(_x10) {
+      function readJson(_x11) {
         return _ref11.apply(this, arguments);
       }
 

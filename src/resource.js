@@ -241,10 +241,13 @@ export default class Resource {
     return this;
   }
 
-  async copyTo(otherResource) {
+  async copyTo(otherResource, ensureParent = true) {
     if (this.isFile()) {
       var toFile = otherResource.isFile() ? otherResource : otherResource.join(this.name());
+      if (ensureParent)
+        await toFile.parent().ensureExistance();
       await toFile.write(await this.read());
+
     } else {
       if (!otherResource.isDirectory()) throw new Error(`Cannot copy a directory to a file!`);
       var fromResources = await this.dirList('infinity'),
@@ -254,7 +257,7 @@ export default class Resource {
       await otherResource.ensureExistance();
       await fromResources.reduceRight((next, ea, i) =>
         () => Promise.resolve(
-                ea.isDirectory() && toResources[i].ensureExistance() ).then(next),
+                ea.isDirectory() && toResources[i].ensureExistance()).then(next),
         () => Promise.resolve())();
   
       // copy individual files, this can happen in parallel but certain protocols
@@ -262,7 +265,7 @@ export default class Resource {
       // synchronize this as well by default
       await fromResources.reduceRight((next, ea, i) =>
         () => Promise.resolve(
-                ea.isFile() && ea.copyTo(toResources[i])).then(next),
+                ea.isFile() && ea.copyTo(toResources[i], false)).then(next),
         () => Promise.resolve())();
 
     }
