@@ -33,23 +33,27 @@ function nodejs_leveldbPath(dbName) {
   }
 
   if (!isNode) throw new Error(`nodejs_leveldbPath called under non-nodejs environment`);
-  let serverPath = GLOBAL.process.cwd();
+  let basePath = typeof System !== "undefined" && System.baseURL.startsWith("file://")
+                    ? System.baseURL.replace("file://", "") : GLOBAL.process.cwd()
+
   // are we in a typical lively.next env? Meaning serverPath points to
   // lively.next-dir/lively.server. If so, use parent dir of lively.server
   let {join} = nodejsRequire("path"),
       {mkdirSync, existsSync, readdirSync, readFileSync} = nodejsRequire("fs");
 
+  if (dbName.includes("/")) return join(basePath, dbName);
+
   try {
-    let parentPackage = readFileSync(join(serverPath, "../package.json")),
+    let parentPackage = readFileSync(join(basePath, "../package.json")),
         conf = JSON.parse(parentPackage)
     if (conf.name === "lively.web" || conf.name === "lively.next") {
-      let dbDir = join(serverPath, "../.livelydbs")
+      let dbDir = join(basePath, "../.livelydbs")
       if (!existsSync(dbDir)) mkdirSync(dbDir);
       return join(dbDir, dbName);
     }
   } catch (e) {}
 
-  let dbDir = join(serverPath, ".livelydbs")
+  let dbDir = join(basePath, ".livelydbs")
   if (!existsSync(dbDir)) mkdirSync(dbDir);
   return join(dbDir, dbName);
 }
