@@ -1,8 +1,8 @@
 {
-  "id": "Part_dash_item_dash_for_dash_partsbin_E0A8D3E0_8E2C_4387_9AB9_1C13BC75234C",
+  "id": "Part_dash_item_dash_for_dash_partsbin_720FBD41_DC32_45CC_AA4A_74F75BC087EE",
   "snapshot": {
-    "Part_dash_item_dash_for_dash_partsbin_E0A8D3E0_8E2C_4387_9AB9_1C13BC75234C": {
-      "rev": 48138,
+    "Part_dash_item_dash_for_dash_partsbin_720FBD41_DC32_45CC_AA4A_74F75BC087EE": {
+      "rev": 134755,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -17,7 +17,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(166.3,170.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(186.8,368.0)"
         },
         "origin": {
           "key": "origin",
@@ -36,14 +36,10 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-              "rev": 47459
+              "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+              "rev": 131175
             }
           ]
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "scrollbarOffset": {
           "key": "scrollbarOffset",
@@ -59,35 +55,67 @@
         },
         "borderWidth": {
           "key": "borderWidth",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "78B033C5-D93F-4A51-9F48-3FBABCC5E73A",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderRadius": {
           "key": "borderRadius",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "4347CC7A-4D30-487F-BDF3-A1A8F9BD265A",
-            "rev": 0
+            "top": 4,
+            "right": 4,
+            "bottom": 4,
+            "left": 4
           }
         },
         "borderStyle": {
           "key": "borderStyle",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "8F848646-8FAC-4747-9E3C-F1DF2EE9E8BA",
-            "rev": 0
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
           }
         },
         "borderColor": {
           "key": "borderColor",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "D4665F4B-767F-4C8C-9334-3086AF4D4355",
-            "rev": 0
+            "top": [
+              0.7411764705882353,
+              0.7647058823529411,
+              0.7803921568627451,
+              1
+            ],
+            "right": [
+              0.7411764705882353,
+              0.7647058823529411,
+              0.7803921568627451,
+              1
+            ],
+            "bottom": [
+              0.7411764705882353,
+              0.7647058823529411,
+              0.7803921568627451,
+              1
+            ],
+            "left": [
+              0.7411764705882353,
+              0.7647058823529411,
+              0.7803921568627451,
+              1
+            ]
           }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         }
       },
       "lively.serializer-class-info": {
@@ -98,13 +126,13 @@
             "version": "0.1.0"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499203892740,
-          "lastSuperclassChange": 1499203617697
+          "lastChange": 1500564678292,
+          "lastSuperclassChange": 1500564479573
         }
       }
     },
-    "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81": {
-      "rev": 47459,
+    "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41": {
+      "rev": 131175,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -115,52 +143,42 @@
           "value": [
             {
               "__ref__": true,
-              "id": "AE4A88F3-6DE0-415E-A5E5-5BB472029A75",
+              "id": "2528F490-5214-4CC1-848C-05D23C5BC5F4",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "614415EE-12DB-4E4B-A422-8C263783722E",
+              "id": "1BCE5393-64BC-4967-B4D7-0418C8B13A9B",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "30876969-51A6-4B3B-A496-4AF8ACE00608",
+              "id": "BA929FD2-20C4-4859-BE02-DB3C82F757B1",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "E0AD259D-99F6-4C81-B52B-46E2B61359E5",
+              "id": "AE1B36D8-3337-4FAA-98DD-C555EEB6A82C",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "99DC9A2C-4BD3-4840-811C-06D1DB1B32E7",
+              "id": "30BB7F36-3E53-4268-BFF8-01E142978CC2",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "FC7FE444-8A03-4397-96A4-62276A891065",
+              "id": "EE7DA542-0802-4E91-9E12-54A9574290DF",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "0A1119CA-51B2-4947-B10C-2AD49249FCF1",
+              "id": "C1D891A8-F05A-4355-9C97-313EAF9F7398",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "CBBC804A-318B-4F24-A6D5-E161BC33E0E5",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "D79DBECE-8FCF-4E5B-83A5-FE178C37D590",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "B6F89556-7D2B-4A3C-AC86-63A4F143F1C1",
+              "id": "A70F8D8B-AA6C-4BD1-BA86-C6522C2E3F66",
               "rev": 0
             }
           ]
@@ -173,7 +191,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "E5A3325E-36FD-48D1-96AA-54610439D6B4",
+            "id": "E8CFD507-1F66-4165-8E77-68C3EAE7BD44",
             "rev": 0
           }
         },
@@ -195,7 +213,7 @@
         },
         "fill": {
           "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0.6529411764705882)"
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0.65)"
         },
         "visible": {
           "key": "visible",
@@ -206,13 +224,13 @@
           "value": [
             {
               "__ref__": true,
-              "id": "label_7E46B4D7_59A3_44FC_85E2_8ADB75A03C33",
-              "rev": 47461
+              "id": "Label_939D1A15_4B3D_4EA6_8382_940913FBF956",
+              "rev": 126736
             },
             {
               "__ref__": true,
-              "id": "Label_89113AD1_0722_4A16_B6CA_DB0F3A6DB48B",
-              "rev": 47464
+              "id": "Label_5C506210_2254_4AD8_B3D7_42618BF4B79F",
+              "rev": 126735
             }
           ]
         },
@@ -222,51 +240,86 @@
             "Button",
             "Morph",
             "morph",
-            "activeStyle",
-            "activeStyle",
-            "activeStyle",
-            "activeStyle",
-            "activeStyle",
-            "activeStyle",
-            "activeStyle",
             "activeStyle"
           ]
         },
         "borderWidth": {
           "key": "borderWidth",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "27F5BA88-9112-48E1-877B-E717953A1EC0",
-            "rev": 0
+            "top": 1,
+            "right": 1,
+            "bottom": 1,
+            "left": 1
           }
         },
         "borderRadius": {
           "key": "borderRadius",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "7BBEF5D1-AD45-401E-9009-9A893739CC96",
-            "rev": 0
+            "top": 15,
+            "right": 15,
+            "bottom": 15,
+            "left": 15
           }
         },
         "borderStyle": {
           "key": "borderStyle",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "0C90259A-6474-4DB0-948C-FC8AE0891C97",
-            "rev": 0
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
           }
         },
         "borderColor": {
           "key": "borderColor",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "159AEC4E-5D34-46EB-BD2B-68E478203C5F",
-            "rev": 0
+            "top": [
+              0.8,
+              0.8,
+              0.8,
+              1
+            ],
+            "right": [
+              0.8,
+              0.8,
+              0.8,
+              1
+            ],
+            "bottom": [
+              0.8,
+              0.8,
+              0.8,
+              1
+            ],
+            "left": [
+              0.8,
+              0.8,
+              0.8,
+              1
+            ]
           }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "6945D7A2-EB43-467B-8579-E0E957A32645",
+              "rev": 0
+            }
+          ]
         },
         "padding": {
           "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(4,2,0,0)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(248,249,249)"
         },
         "activeMode": {
           "key": "activeMode",
@@ -276,16 +329,16 @@
           "key": "iconMorph",
           "value": {
             "__ref__": true,
-            "id": "label_7E46B4D7_59A3_44FC_85E2_8ADB75A03C33",
-            "rev": 47461
+            "id": "Label_939D1A15_4B3D_4EA6_8382_940913FBF956",
+            "rev": 126736
           }
         },
         "labelMorph": {
           "key": "labelMorph",
           "value": {
             "__ref__": true,
-            "id": "Label_89113AD1_0722_4A16_B6CA_DB0F3A6DB48B",
-            "rev": 47464
+            "id": "Label_5C506210_2254_4AD8_B3D7_42618BF4B79F",
+            "rev": 126735
           }
         },
         "icon": {
@@ -301,12 +354,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "components/buttons.js",
-          "lastChange": 1499203618038,
-          "lastSuperclassChange": 1499203617697
+          "lastChange": 1500564479827,
+          "lastSuperclassChange": 1500564479573
         }
       }
     },
-    "AE4A88F3-6DE0-415E-A5E5-5BB472029A75": {
+    "2528F490-5214-4CC1-848C-05D23C5BC5F4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -325,8 +378,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "sourceAttrName": {
@@ -337,8 +390,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "targetMethodName": {
@@ -349,7 +402,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D46B42FA-D04D-43F2-83EC-91631919851D",
+            "id": "156D1DBA-DD49-4D72-8CC2-F7BEBF5AF332",
             "rev": 0
           }
         },
@@ -367,15 +420,15 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499203617599,
+          "lastChange": 1500564479507,
           "lastSuperclassChange": 0
         }
       }
     },
-    "D46B42FA-D04D-43F2-83EC-91631919851D": {
+    "156D1DBA-DD49-4D72-8CC2-F7BEBF5AF332": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -386,21 +439,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         }
       }
     },
-    "614415EE-12DB-4E4B-A422-8C263783722E": {
+    "1BCE5393-64BC-4967-B4D7-0418C8B13A9B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -419,8 +472,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "sourceAttrName": {
@@ -431,8 +484,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "targetMethodName": {
@@ -443,7 +496,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "BD25B71D-773B-429B-AC60-B3C3D8DC3190",
+            "id": "22C4C4CF-7E04-4234-92ED-AA497B5FDB54",
             "rev": 0
           }
         },
@@ -461,15 +514,15 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499203617599,
+          "lastChange": 1500564479507,
           "lastSuperclassChange": 0
         }
       }
     },
-    "BD25B71D-773B-429B-AC60-B3C3D8DC3190": {
+    "22C4C4CF-7E04-4234-92ED-AA497B5FDB54": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -480,21 +533,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         }
       }
     },
-    "30876969-51A6-4B3B-A496-4AF8ACE00608": {
+    "BA929FD2-20C4-4859-BE02-DB3C82F757B1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -513,8 +566,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "sourceAttrName": {
@@ -525,8 +578,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "targetMethodName": {
@@ -537,7 +590,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "085627EC-0BEF-4A7C-B530-0DBF97A6C28D",
+            "id": "6D50A294-0807-45E8-8E4F-E30C23062286",
             "rev": 0
           }
         },
@@ -555,15 +608,15 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499203617599,
+          "lastChange": 1500564479507,
           "lastSuperclassChange": 0
         }
       }
     },
-    "085627EC-0BEF-4A7C-B530-0DBF97A6C28D": {
+    "6D50A294-0807-45E8-8E4F-E30C23062286": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -574,21 +627,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         }
       }
     },
-    "E0AD259D-99F6-4C81-B52B-46E2B61359E5": {
+    "AE1B36D8-3337-4FAA-98DD-C555EEB6A82C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -607,8 +660,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "sourceAttrName": {
@@ -619,8 +672,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "targetMethodName": {
@@ -631,7 +684,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D51982D6-2770-4BCD-A5C9-7BE550725E83",
+            "id": "948C58E0-B5C8-4FD2-90EE-C33FB65081DD",
             "rev": 0
           }
         },
@@ -649,15 +702,15 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499203617599,
+          "lastChange": 1500564479507,
           "lastSuperclassChange": 0
         }
       }
     },
-    "D51982D6-2770-4BCD-A5C9-7BE550725E83": {
+    "948C58E0-B5C8-4FD2-90EE-C33FB65081DD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -668,21 +721,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         }
       }
     },
-    "99DC9A2C-4BD3-4840-811C-06D1DB1B32E7": {
+    "30BB7F36-3E53-4268-BFF8-01E142978CC2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -701,8 +754,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "sourceAttrName": {
@@ -713,8 +766,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "targetMethodName": {
@@ -725,7 +778,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "110C7B4F-B437-4030-9695-C5633AA73833",
+            "id": "C2FC5D2B-96C4-4467-9A6A-8FFDF1E7D222",
             "rev": 0
           }
         },
@@ -743,15 +796,15 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499203617599,
+          "lastChange": 1500564479507,
           "lastSuperclassChange": 0
         }
       }
     },
-    "110C7B4F-B437-4030-9695-C5633AA73833": {
+    "C2FC5D2B-96C4-4467-9A6A-8FFDF1E7D222": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -762,21 +815,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         }
       }
     },
-    "FC7FE444-8A03-4397-96A4-62276A891065": {
+    "EE7DA542-0802-4E91-9E12-54A9574290DF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -795,8 +848,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "sourceAttrName": {
@@ -807,8 +860,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "targetMethodName": {
@@ -819,7 +872,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "DADC6ED6-DB21-4880-955C-4CFAE84254A2",
+            "id": "7A2E2DAB-31FF-4389-8455-36837EF2C6AE",
             "rev": 0
           }
         },
@@ -837,15 +890,15 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499203617599,
+          "lastChange": 1500564479507,
           "lastSuperclassChange": 0
         }
       }
     },
-    "DADC6ED6-DB21-4880-955C-4CFAE84254A2": {
+    "7A2E2DAB-31FF-4389-8455-36837EF2C6AE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -856,21 +909,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         }
       }
     },
-    "0A1119CA-51B2-4947-B10C-2AD49249FCF1": {
+    "C1D891A8-F05A-4355-9C97-313EAF9F7398": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -889,8 +942,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "sourceAttrName": {
@@ -901,8 +954,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "targetMethodName": {
@@ -913,7 +966,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "B08FEC4F-743B-4FB0-B183-6015983190AE",
+            "id": "314CE774-9E8B-4BB0-9FDC-C1F42A006A61",
             "rev": 0
           }
         },
@@ -931,15 +984,15 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499203617599,
+          "lastChange": 1500564479507,
           "lastSuperclassChange": 0
         }
       }
     },
-    "B08FEC4F-743B-4FB0-B183-6015983190AE": {
+    "314CE774-9E8B-4BB0-9FDC-C1F42A006A61": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -950,27 +1003,23 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         }
       }
     },
-    "CBBC804A-318B-4F24-A6D5-E161BC33E0E5": {
+    "A70F8D8B-AA6C-4BD1-BA86-C6522C2E3F66": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -983,8 +1032,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "sourceAttrName": {
@@ -995,8 +1044,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_8908D48B_22A1_40EA_A766_3C5856B49D60",
-            "rev": 21377
+            "id": "Part_dash_item_dash_for_dash_partsbin_720FBD41_DC32_45CC_AA4A_74F75BC087EE",
+            "rev": 134755
           }
         },
         "targetMethodName": {
@@ -1007,7 +1056,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "BFA42310-3E95-4BCF-BAB7-1877D27483B9",
+            "id": "C51EF5FD-EC45-4627-B246-BB5FFF2F90BF",
             "rev": 0
           }
         },
@@ -1025,1554 +1074,36 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499203617599,
+          "lastChange": 1500564479507,
           "lastSuperclassChange": 0
         }
       }
     },
-    "Part_dash_item_dash_for_dash_partsbin_8908D48B_22A1_40EA_A766_3C5856B49D60": {
-      "rev": 21377,
-      "props": {
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections"
-        },
-        "name": {
-          "key": "name",
-          "value": "part-item-for-partsbin"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(166.3,50.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(253,254,254)"
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "HTMLMorph_B129DA4F_9EEF_4951_8374_E4E02CCA2DF4",
-              "rev": 21355
-            },
-            {
-              "__ref__": true,
-              "id": "Label_317BA3FA_6E98_43C1_B8B3_CEF87AD53FBD",
-              "rev": 21375
-            }
-          ]
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "scrollbarOffset": {
-          "key": "scrollbarOffset",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Part_dash_item_dash_for_dash_partsbin",
-            "Morph",
-            "morph"
-          ]
-        },
-        "borderWidth": {
-          "key": "borderWidth",
-          "value": {
-            "__ref__": true,
-            "id": "04971ADA-61D5-4CC3-8DD5-48E87A85BF12",
-            "rev": 0
-          }
-        },
-        "borderRadius": {
-          "key": "borderRadius",
-          "value": {
-            "__ref__": true,
-            "id": "EEA4990B-D5EE-4B37-B303-C981096E586D",
-            "rev": 0
-          }
-        },
-        "borderStyle": {
-          "key": "borderStyle",
-          "value": {
-            "__ref__": true,
-            "id": "39F7797F-C853-4680-936E-A2DED8001B8E",
-            "rev": 0
-          }
-        },
-        "borderColor": {
-          "key": "borderColor",
-          "value": {
-            "__ref__": true,
-            "id": "BD8B05C3-0FEB-4353-8AD5-5912EE12A710",
-            "rev": 0
-          }
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "Part_dash_item_dash_for_dash_partsbin",
-        "module": {
-          "package": {
-            "name": "38C79579-61C1-46DE-A025-FF870C3DA84F",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js",
-          "lastChange": 1499203892740,
-          "lastSuperclassChange": 1499203617697
-        }
-      }
-    },
-    "HTMLMorph_B129DA4F_9EEF_4951_8374_E4E02CCA2DF4": {
-      "rev": 21355,
-      "props": {
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections"
-        },
-        "name": {
-          "key": "name",
-          "value": "html-preview"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "-webkit-grab"
-        },
-        "reactsToPointer": {
-          "key": "reactsToPointer",
-          "value": false
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": null
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "HTMLMorph",
-            "Morph",
-            "morph"
-          ]
-        },
-        "borderWidth": {
-          "key": "borderWidth",
-          "value": {
-            "__ref__": true,
-            "id": "26BE9E95-1EDC-4599-A91E-167F2EDAE0A2",
-            "rev": 0
-          }
-        },
-        "borderRadius": {
-          "key": "borderRadius",
-          "value": {
-            "__ref__": true,
-            "id": "5B19B638-C854-42EA-8C99-6A724EB97DCF",
-            "rev": 0
-          }
-        },
-        "borderStyle": {
-          "key": "borderStyle",
-          "value": {
-            "__ref__": true,
-            "id": "8B994BC2-537B-487B-9AC4-5739A400D386",
-            "rev": 0
-          }
-        },
-        "borderColor": {
-          "key": "borderColor",
-          "value": {
-            "__ref__": true,
-            "id": "F39216CF-52F2-4285-8E6C-30BF1957ED1F",
-            "rev": 0
-          }
-        },
-        "html": {
-          "key": "html",
-          "value": "<div style=\"width: 100%;\"><div style=\"position: absolute; top: 10px;            left: 23.150000000000006px\"><div draggable=\"false\" style=\"background-image: linear-gradient(rgb(242, 243, 244) 0%, rgb(215, 219, 221) 100%); transform: translate(9.12409px, 0px) rotate(0deg) scale(0.364964, 0.364964); transform-origin: 0px 0px 0px; display: inline; width: 224px; height: 274px; border-style: solid; border-width: 1px; border-color: rgb(215, 219, 221); border-radius: 9px; box-shadow: rgba(102, 102, 102, 0.517647) 6.36396px 6.36396px 22px; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(9px, 9px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 206px; height: 23px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div style=\" position: absolute; left: 44.0312px; top: 3px; width: 3px; height: 14px; background-color: black; z-index: 5; display: none;\"></div><div style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 14px; padding: 3px 11px 6px 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 14px; line-height: 14px;\"><span style=\"font-size: 12px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">Search</span></div><div style=\"height: 0px; width: 38.0312px;\"></div></div></div><div draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(9px, 41px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 206px; height: 224px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: auto;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div>"
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "HTMLMorph",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "html-morph.js",
-          "lastChange": 1499203618143,
-          "lastSuperclassChange": 0
-        }
-      }
-    },
-    "26BE9E95-1EDC-4599-A91E-167F2EDAE0A2": {
+    "C51EF5FD-EC45-4627-B246-BB5FFF2F90BF": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "5B19B638-C854-42EA-8C99-6A724EB97DCF": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "8B994BC2-537B-487B-9AC4-5739A400D386": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "F39216CF-52F2-4285-8E6C-30BF1957ED1F": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "Label_317BA3FA_6E98_43C1_B8B3_CEF87AD53FBD": {
-      "rev": 21375,
-      "props": {
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections"
-        },
-        "name": {
-          "key": "name",
-          "value": "preview-label"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(38.1,113.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(70.0,17.0)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Label",
-            "Morph",
-            "morph"
-          ]
-        },
-        "borderWidth": {
-          "key": "borderWidth",
-          "value": {
-            "__ref__": true,
-            "id": "6A7B921E-FF3F-43BE-BA19-5497DF4C8AD0",
-            "rev": 0
-          }
-        },
-        "borderRadius": {
-          "key": "borderRadius",
-          "value": {
-            "__ref__": true,
-            "id": "A540BC57-5371-4DA6-9DF9-77DA58EC1A66",
-            "rev": 0
-          }
-        },
-        "borderStyle": {
-          "key": "borderStyle",
-          "value": {
-            "__ref__": true,
-            "id": "17AAB751-C78A-4D8D-95F1-B296E584B818",
-            "rev": 0
-          }
-        },
-        "borderColor": {
-          "key": "borderColor",
-          "value": {
-            "__ref__": true,
-            "id": "CB9D46BA-3CA6-45D1-BBA4-7F8305E194E4",
-            "rev": 0
-          }
-        },
-        "textAndAttributes": {
-          "key": "textAndAttributes",
-          "value": [
-            "IconPicker",
-            {
-              "__ref__": true,
-              "id": "66913AAF-DDD4-44FE-85D7-1340E4B79A0D",
-              "rev": 0
-            }
-          ]
-        },
-        "padding": {
-          "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
-        },
-        "fontSize": {
-          "key": "fontSize",
-          "value": 15
-        },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "Label",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "text/label.js",
-          "lastChange": 1499203617663,
-          "lastSuperclassChange": 1499203617697
-        }
-      }
-    },
-    "6A7B921E-FF3F-43BE-BA19-5497DF4C8AD0": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "A540BC57-5371-4DA6-9DF9-77DA58EC1A66": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "17AAB751-C78A-4D8D-95F1-B296E584B818": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "CB9D46BA-3CA6-45D1-BBA4-7F8305E194E4": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "66913AAF-DDD4-44FE-85D7-1340E4B79A0D": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        }
-      }
-    },
-    "04971ADA-61D5-4CC3-8DD5-48E87A85BF12": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 1
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 1
-        },
-        "left": {
-          "key": "left",
-          "value": 1
-        },
-        "right": {
-          "key": "right",
-          "value": 1
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "EEA4990B-D5EE-4B37-B303-C981096E586D": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 4
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 4
-        },
-        "right": {
-          "key": "right",
-          "value": 4
-        },
-        "left": {
-          "key": "left",
-          "value": 4
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "39F7797F-C853-4680-936E-A2DED8001B8E": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "BD8B05C3-0FEB-4353-8AD5-5912EE12A710": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "BFA42310-3E95-4BCF-BAB7-1877D27483B9": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_8908D48B_22A1_40EA_A766_3C5856B49D60",
-            "rev": 21377
+            "id": "Part_dash_item_dash_for_dash_partsbin_720FBD41_DC32_45CC_AA4A_74F75BC087EE",
+            "rev": 134755
           }
         }
       }
     },
-    "D79DBECE-8FCF-4E5B-83A5-FE178C37D590": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "fire"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_37953B5A_ED41_47AD_BECB_EA2760E32D81",
-            "rev": 21432
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "interactivelyRemovePart"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "575C9C8E-56BD-429B-ADB4-13785EAD9AEC",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.1"
-          },
-          "pathInPackage": "index.js",
-          "lastChange": 1499203617599,
-          "lastSuperclassChange": 0
-        }
-      }
-    },
-    "Part_dash_item_dash_for_dash_partsbin_37953B5A_ED41_47AD_BECB_EA2760E32D81": {
-      "rev": 21432,
-      "props": {
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections"
-        },
-        "name": {
-          "key": "name",
-          "value": "part-item-for-partsbin"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(166.3,50.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(253,254,254)"
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "HTMLMorph_B09FE5F2_2284_471D_8D48_C9F18C6C4C89",
-              "rev": 21410
-            },
-            {
-              "__ref__": true,
-              "id": "Label_27CF9E43_AC3B_4C63_9981_B983A1479761",
-              "rev": 21430
-            }
-          ]
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "scrollbarOffset": {
-          "key": "scrollbarOffset",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Part_dash_item_dash_for_dash_partsbin",
-            "Morph",
-            "morph"
-          ]
-        },
-        "borderWidth": {
-          "key": "borderWidth",
-          "value": {
-            "__ref__": true,
-            "id": "C06023ED-4B97-4B11-B834-C2BC40AE9B1A",
-            "rev": 0
-          }
-        },
-        "borderRadius": {
-          "key": "borderRadius",
-          "value": {
-            "__ref__": true,
-            "id": "6925F0C3-1F9E-4940-ACD9-9E4839A4C6F9",
-            "rev": 0
-          }
-        },
-        "borderStyle": {
-          "key": "borderStyle",
-          "value": {
-            "__ref__": true,
-            "id": "2CC885F0-C691-48B2-B345-EC3BBABA4E63",
-            "rev": 0
-          }
-        },
-        "borderColor": {
-          "key": "borderColor",
-          "value": {
-            "__ref__": true,
-            "id": "B4C77AA1-6A80-48E1-8765-A85F377C4E05",
-            "rev": 0
-          }
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "Part_dash_item_dash_for_dash_partsbin",
-        "module": {
-          "package": {
-            "name": "38C79579-61C1-46DE-A025-FF870C3DA84F",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js",
-          "lastChange": 1499203892740,
-          "lastSuperclassChange": 1499203617697
-        }
-      }
-    },
-    "HTMLMorph_B09FE5F2_2284_471D_8D48_C9F18C6C4C89": {
-      "rev": 21410,
-      "props": {
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections"
-        },
-        "name": {
-          "key": "name",
-          "value": "html-preview"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "-webkit-grab"
-        },
-        "reactsToPointer": {
-          "key": "reactsToPointer",
-          "value": false
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": null
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "HTMLMorph",
-            "Morph",
-            "morph"
-          ]
-        },
-        "borderWidth": {
-          "key": "borderWidth",
-          "value": {
-            "__ref__": true,
-            "id": "0B9C3147-9817-435C-B991-691A5873BC21",
-            "rev": 0
-          }
-        },
-        "borderRadius": {
-          "key": "borderRadius",
-          "value": {
-            "__ref__": true,
-            "id": "78DFEBD1-6DB5-47AA-A844-B51BB73EE321",
-            "rev": 0
-          }
-        },
-        "borderStyle": {
-          "key": "borderStyle",
-          "value": {
-            "__ref__": true,
-            "id": "55B1C5F8-7056-4AF7-98A7-5E2072575885",
-            "rev": 0
-          }
-        },
-        "borderColor": {
-          "key": "borderColor",
-          "value": {
-            "__ref__": true,
-            "id": "FC67916A-E692-4372-ABEA-73C8556AB26A",
-            "rev": 0
-          }
-        },
-        "html": {
-          "key": "html",
-          "value": "<div style=\"width: 100%;\"><div style=\"position: absolute; top: 10px;            left: 23.150000000000006px\"><div draggable=\"false\" style=\"background-image: linear-gradient(rgb(242, 243, 244) 0%, rgb(215, 219, 221) 100%); transform: translate(9.12409px, 0px) rotate(0deg) scale(0.364964, 0.364964); transform-origin: 0px 0px 0px; display: inline; width: 224px; height: 274px; border-style: solid; border-width: 1px; border-color: rgb(215, 219, 221); border-radius: 9px; box-shadow: rgba(102, 102, 102, 0.517647) 6.36396px 6.36396px 22px; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(9px, 9px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 206px; height: 23px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div style=\" position: absolute; left: 44.0312px; top: 3px; width: 3px; height: 14px; background-color: black; z-index: 5; display: none;\"></div><div style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 14px; padding: 3px 11px 6px 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 14px; line-height: 14px;\"><span style=\"font-size: 12px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">Search</span></div><div style=\"height: 0px; width: 38.0312px;\"></div></div></div><div draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(9px, 41px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 206px; height: 224px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: auto;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div>"
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "HTMLMorph",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "html-morph.js",
-          "lastChange": 1499203618143,
-          "lastSuperclassChange": 0
-        }
-      }
-    },
-    "0B9C3147-9817-435C-B991-691A5873BC21": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "78DFEBD1-6DB5-47AA-A844-B51BB73EE321": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "55B1C5F8-7056-4AF7-98A7-5E2072575885": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "FC67916A-E692-4372-ABEA-73C8556AB26A": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "Label_27CF9E43_AC3B_4C63_9981_B983A1479761": {
-      "rev": 21430,
-      "props": {
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections"
-        },
-        "name": {
-          "key": "name",
-          "value": "preview-label"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(38.1,113.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(70.0,17.0)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Label",
-            "Morph",
-            "morph"
-          ]
-        },
-        "borderWidth": {
-          "key": "borderWidth",
-          "value": {
-            "__ref__": true,
-            "id": "8CAECA0B-F6EE-416B-B531-6769A92CA4AC",
-            "rev": 0
-          }
-        },
-        "borderRadius": {
-          "key": "borderRadius",
-          "value": {
-            "__ref__": true,
-            "id": "5C5419B6-C7BA-4266-B835-3045B4274674",
-            "rev": 0
-          }
-        },
-        "borderStyle": {
-          "key": "borderStyle",
-          "value": {
-            "__ref__": true,
-            "id": "54EA8FF3-266C-440B-8FC9-7C6414E3077E",
-            "rev": 0
-          }
-        },
-        "borderColor": {
-          "key": "borderColor",
-          "value": {
-            "__ref__": true,
-            "id": "F486D797-EF84-43C4-9DD6-A2D0A1AC6551",
-            "rev": 0
-          }
-        },
-        "textAndAttributes": {
-          "key": "textAndAttributes",
-          "value": [
-            "IconPicker",
-            {
-              "__ref__": true,
-              "id": "A5BF2610-1521-4BCA-9FCA-74D8341C93D2",
-              "rev": 0
-            }
-          ]
-        },
-        "padding": {
-          "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
-        },
-        "fontSize": {
-          "key": "fontSize",
-          "value": 15
-        },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "Label",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "text/label.js",
-          "lastChange": 1499203617663,
-          "lastSuperclassChange": 1499203617697
-        }
-      }
-    },
-    "8CAECA0B-F6EE-416B-B531-6769A92CA4AC": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "5C5419B6-C7BA-4266-B835-3045B4274674": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "54EA8FF3-266C-440B-8FC9-7C6414E3077E": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "F486D797-EF84-43C4-9DD6-A2D0A1AC6551": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "A5BF2610-1521-4BCA-9FCA-74D8341C93D2": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        }
-      }
-    },
-    "C06023ED-4B97-4B11-B834-C2BC40AE9B1A": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 1
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 1
-        },
-        "left": {
-          "key": "left",
-          "value": 1
-        },
-        "right": {
-          "key": "right",
-          "value": 1
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "6925F0C3-1F9E-4940-ACD9-9E4839A4C6F9": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 4
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 4
-        },
-        "right": {
-          "key": "right",
-          "value": 4
-        },
-        "left": {
-          "key": "left",
-          "value": 4
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "2CC885F0-C691-48B2-B345-EC3BBABA4E63": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "B4C77AA1-6A80-48E1-8765-A85F377C4E05": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "575C9C8E-56BD-429B-ADB4-13785EAD9AEC": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_37953B5A_ED41_47AD_BECB_EA2760E32D81",
-            "rev": 21432
-          }
-        }
-      }
-    },
-    "B6F89556-7D2B-4A3C-AC86-63A4F143F1C1": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "fire"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_E0A8D3E0_8E2C_4387_9AB9_1C13BC75234C",
-            "rev": 48138
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "interactivelyRemovePart"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "79A6D19F-C411-465F-A5BC-CD118017567E",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.1"
-          },
-          "pathInPackage": "index.js",
-          "lastChange": 1499203617599,
-          "lastSuperclassChange": 0
-        }
-      }
-    },
-    "79A6D19F-C411-465F-A5BC-CD118017567E": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_E0A8D3E0_8E2C_4387_9AB9_1C13BC75234C",
-            "rev": 48138
-          }
-        }
-      }
-    },
-    "E5A3325E-36FD-48D1-96AA-54610439D6B4": {
+    "E8CFD507-1F66-4165-8E77-68C3EAE7BD44": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2599,8 +1130,8 @@
           "key": "morph",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "onChange": {
@@ -2615,13 +1146,13 @@
             "version": "0.1.0"
           },
           "pathInPackage": "rendering/morphic-default.js",
-          "lastChange": 1499203617565,
+          "lastChange": 1500564479474,
           "lastSuperclassChange": 0
         }
       }
     },
-    "label_7E46B4D7_59A3_44FC_85E2_8ADB75A03C33": {
-      "rev": 47461,
+    "Label_939D1A15_4B3D_4EA6_8382_940913FBF956": {
+      "rev": 126736,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2632,7 +1163,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "8099FA10-1A7F-42A3-87FC-E0E782AA5A6F",
+              "id": "7240CF66-6BD6-4D15-90E6-6C597ADBAB19",
               "rev": 0
             }
           ]
@@ -2663,35 +1194,67 @@
         },
         "borderWidth": {
           "key": "borderWidth",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "282A43FF-9FFB-42BA-B6AE-3297AEE83E65",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderRadius": {
           "key": "borderRadius",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "CC8A6908-1595-4BA2-8185-27C792E7DDEB",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderStyle": {
           "key": "borderStyle",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "CD22FECA-9DEE-406B-9C01-1C0B80760135",
-            "rev": 0
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
           }
         },
         "borderColor": {
           "key": "borderColor",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "11AAEFC5-E395-4FE0-B43F-0E334CD02139",
-            "rev": 0
+            "top": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "right": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "bottom": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "left": [
+              1,
+              1,
+              1,
+              1
+            ]
           }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         },
         "textAndAttributes": {
           "key": "textAndAttributes",
@@ -2699,6 +1262,10 @@
             "",
             null
           ]
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(248,249,249)"
         }
       },
       "lively.serializer-class-info": {
@@ -2709,12 +1276,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "text/label.js",
-          "lastChange": 1499203617663,
-          "lastSuperclassChange": 1499203617697
+          "lastChange": 1500564479537,
+          "lastSuperclassChange": 1500564479573
         }
       }
     },
-    "8099FA10-1A7F-42A3-87FC-E0E782AA5A6F": {
+    "7240CF66-6BD6-4D15-90E6-6C597ADBAB19": {
       "rev": 0,
       "props": {
         "doNotSerialize": {
@@ -2729,8 +1296,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "label_7E46B4D7_59A3_44FC_85E2_8ADB75A03C33",
-            "rev": 47461
+            "id": "Label_939D1A15_4B3D_4EA6_8382_940913FBF956",
+            "rev": 126736
           }
         },
         "sourceAttrName": {
@@ -2741,8 +1308,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "targetMethodName": {
@@ -2753,7 +1320,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "546C6357-04C0-4D84-B267-E9C0E4206D4F",
+            "id": "B96D001D-773B-4876-BF1D-8ED286D59E37",
             "rev": 0
           }
         },
@@ -2771,133 +1338,37 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499203617599,
+          "lastChange": 1500564479507,
           "lastSuperclassChange": 0
         }
       }
     },
-    "546C6357-04C0-4D84-B267-E9C0E4206D4F": {
+    "B96D001D-773B-4876-BF1D-8ED286D59E37": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "label_7E46B4D7_59A3_44FC_85E2_8ADB75A03C33",
-            "rev": 47461
+            "id": "Label_939D1A15_4B3D_4EA6_8382_940913FBF956",
+            "rev": 126736
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         }
       }
     },
-    "282A43FF-9FFB-42BA-B6AE-3297AEE83E65": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "CC8A6908-1595-4BA2-8185-27C792E7DDEB": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "CD22FECA-9DEE-406B-9C01-1C0B80760135": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "11AAEFC5-E395-4FE0-B43F-0E334CD02139": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "Label_89113AD1_0722_4A16_B6CA_DB0F3A6DB48B": {
-      "rev": 47464,
+    "Label_5C506210_2254_4AD8_B3D7_42618BF4B79F": {
+      "rev": 126735,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2908,7 +1379,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "4F793875-37AC-4AF9-AB94-94B492F6CFA0",
+              "id": "48E12F10-5E11-4E22-85A7-D881F6A2A85C",
               "rev": 0
             }
           ]
@@ -2955,35 +1426,67 @@
         },
         "borderWidth": {
           "key": "borderWidth",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "24D18351-B167-46CD-94F7-0CA593C692CC",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderRadius": {
           "key": "borderRadius",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "3F1B1E61-EB3F-4C69-832D-565B15138DAC",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderStyle": {
           "key": "borderStyle",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "888B0BF2-D8A1-4E9F-98C6-8F9166453818",
-            "rev": 0
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
           }
         },
         "borderColor": {
           "key": "borderColor",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "0E624D35-1E1D-4E22-9CDA-10644CA1E831",
-            "rev": 0
+            "top": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "right": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "bottom": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "left": [
+              1,
+              1,
+              1,
+              1
+            ]
           }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         },
         "textAndAttributes": {
           "key": "textAndAttributes",
@@ -2991,7 +1494,7 @@
             "",
             {
               "__ref__": true,
-              "id": "F7EE45B4-8161-4864-9F2E-70891A25F69A",
+              "id": "2CE089C6-6B02-4443-845A-4DC0D28D164B",
               "rev": 0
             }
           ]
@@ -3002,7 +1505,7 @@
         },
         "fontColor": {
           "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(248,249,249)"
         }
       },
       "lively.serializer-class-info": {
@@ -3013,12 +1516,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "text/label.js",
-          "lastChange": 1499203617663,
-          "lastSuperclassChange": 1499203617697
+          "lastChange": 1500564479537,
+          "lastSuperclassChange": 1500564479573
         }
       }
     },
-    "4F793875-37AC-4AF9-AB94-94B492F6CFA0": {
+    "48E12F10-5E11-4E22-85A7-D881F6A2A85C": {
       "rev": 0,
       "props": {
         "doNotSerialize": {
@@ -3033,8 +1536,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_89113AD1_0722_4A16_B6CA_DB0F3A6DB48B",
-            "rev": 47464
+            "id": "Label_5C506210_2254_4AD8_B3D7_42618BF4B79F",
+            "rev": 126735
           }
         },
         "sourceAttrName": {
@@ -3045,8 +1548,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         },
         "targetMethodName": {
@@ -3057,7 +1560,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "EB238FA3-09D9-46A6-A47A-4BDAAB687C30",
+            "id": "9A578556-E089-42B3-B402-E2E42CF30A02",
             "rev": 0
           }
         },
@@ -3075,148 +1578,36 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499203617599,
+          "lastChange": 1500564479507,
           "lastSuperclassChange": 0
         }
       }
     },
-    "EB238FA3-09D9-46A6-A47A-4BDAAB687C30": {
+    "9A578556-E089-42B3-B402-E2E42CF30A02": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_89113AD1_0722_4A16_B6CA_DB0F3A6DB48B",
-            "rev": 47464
+            "id": "Label_5C506210_2254_4AD8_B3D7_42618BF4B79F",
+            "rev": 126735
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_93A61EF6_8693_4A52_AD64_6E0E9F8DCA81",
-            "rev": 47459
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
           }
         }
       }
     },
-    "24D18351-B167-46CD-94F7-0CA593C692CC": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "3F1B1E61-EB3F-4C69-832D-565B15138DAC": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "888B0BF2-D8A1-4E9F-98C6-8F9166453818": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "0E624D35-1E1D-4E22-9CDA-10644CA1E831": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "F7EE45B4-8161-4864-9F2E-70891A25F69A": {
+    "2CE089C6-6B02-4443-845A-4DC0D28D164B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3235,224 +1626,197 @@
         }
       }
     },
-    "27F5BA88-9112-48E1-877B-E717953A1EC0": {
+    "6945D7A2-EB43-467B-8579-E0E957A32645": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "rules": {
+          "key": "rules",
+          "value": {
+            "__ref__": true,
+            "id": "1CE91D37-0F5A-48F0-8C17-D78973195BDE",
+            "rev": 0
+          }
         },
-        "top": {
-          "key": "top",
-          "value": 0
+        "context": {
+          "key": "context",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A504B55B_6AB4_4884_8E93_5EE7ED219D41",
+            "rev": 131175
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "StyleSheet",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "style-sheets.js",
+          "lastChange": 1500564479780,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "1CE91D37-0F5A-48F0-8C17-D78973195BDE": {
+      "rev": 0,
+      "props": {
+        ".activeStyle": {
+          "key": ".activeStyle",
+          "value": {
+            "__ref__": true,
+            "id": "6039861A-50BB-4581-8B49-47CA6AC71CBE",
+            "rev": 0
+          }
         },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
+        ".triggerStyle": {
+          "key": ".triggerStyle",
+          "value": {
+            "__ref__": true,
+            "id": "FE6AED28-DF29-4523-AC8B-9C8103F66A1B",
+            "rev": 0
+          }
         },
+        ".inactiveStyle": {
+          "key": ".inactiveStyle",
+          "value": {
+            "__ref__": true,
+            "id": "15D9D6C6-1FF0-48C7-AB24-D5175A6E0A09",
+            "rev": 0
+          }
+        }
+      }
+    },
+    "6039861A-50BB-4581-8B49-47CA6AC71CBE": {
+      "rev": 0,
+      "props": {
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "084E6069-D961-4407-A656-BE1C6370A38C",
+            "rev": 0
+          }
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0.65)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(248,249,249)"
+        }
+      }
+    },
+    "084E6069-D961-4407-A656-BE1C6370A38C": {
+      "rev": 0,
+      "props": {
         "left": {
           "key": "left",
-          "value": 0
+          "value": 15
         },
         "right": {
           "key": "right",
-          "value": 0
+          "value": 15
+        },
+        "top": {
+          "key": "top",
+          "value": 15
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 15
         },
         "valueOf": {
           "key": "valueOf"
         }
       }
     },
-    "7BBEF5D1-AD45-401E-9009-9A893739CC96": {
+    "FE6AED28-DF29-4523-AC8B-9C8103F66A1B": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0.65)"
         },
-        "top": {
-          "key": "top",
-          "value": 14
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(97,106,107)"
         },
-        "bottom": {
-          "key": "bottom",
-          "value": 14
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "1063BC9F-49BA-4A46-ACFF-47E2DD412F79",
+            "rev": 0
+          }
+        }
+      }
+    },
+    "1063BC9F-49BA-4A46-ACFF-47E2DD412F79": {
+      "rev": 0,
+      "props": {
+        "left": {
+          "key": "left",
+          "value": 15
         },
         "right": {
           "key": "right",
-          "value": 14
+          "value": 15
         },
-        "left": {
-          "key": "left",
-          "value": 14
+        "top": {
+          "key": "top",
+          "value": 15
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 15
         },
         "valueOf": {
           "key": "valueOf"
         }
       }
     },
-    "0C90259A-6474-4DB0-948C-FC8AE0891C97": {
+    "15D9D6C6-1FF0-48C7-AB24-D5175A6E0A09": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "8C53065D-BA2E-441C-B8A4-710225077AEA",
+            "rev": 0
+          }
         },
-        "top": {
-          "key": "top",
-          "value": "solid"
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0.65)"
         },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(248,249,249)"
         }
       }
     },
-    "159AEC4E-5D34-46EB-BD2B-68E478203C5F": {
+    "8C53065D-BA2E-441C-B8A4-710225077AEA": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
-        },
         "left": {
           "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+          "value": 15
         },
         "right": {
           "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "78B033C5-D93F-4A51-9F48-3FBABCC5E73A": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+          "value": 15
         },
         "top": {
           "key": "top",
-          "value": 0
+          "value": 15
         },
         "bottom": {
           "key": "bottom",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "4347CC7A-4D30-487F-BDF3-A1A8F9BD265A": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 4
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 4
-        },
-        "right": {
-          "key": "right",
-          "value": 4
-        },
-        "left": {
-          "key": "left",
-          "value": 4
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "8F848646-8FAC-4747-9E3C-F1DF2EE9E8BA": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "D4665F4B-767F-4C8C-9334-3086AF4D4355": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+          "value": 15
         },
         "valueOf": {
           "key": "valueOf"
