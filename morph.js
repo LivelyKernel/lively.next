@@ -1295,6 +1295,8 @@ export class Morph {
       this._submorphOrderChanged = true;
       this.makeDirty();
       submorph.resumeSteppingAll();
+
+      submorph.withAllSubmorphsDo(ea => ea.onOwnerChanged(this));
     });
 
     return submorph;
@@ -1352,7 +1354,13 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants.forEach(dep => dep._cachedPaths = {});
     this._pathDependants = [];
+    this.withAllSubmorphsDo(ea => ea.onOwnerChanged(null));
     return this
+  }
+
+  onOwnerChanged(newOwner) {
+    // newOwner = null => me or any of my owners was removed
+    // newOwner = morp => me or any of my owners was added to another morph
   }
 
   async fadeOut(duration=1000) {

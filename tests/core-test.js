@@ -152,6 +152,20 @@ describe("relationship", () => {
       expect(globalPositionBefore).equals(submorph1.globalPosition);
     });
 
+    it("onOwnerChanged gets triggered on remove and add", () => {
+      let observed1 = [], observed2 = [];
+      submorph1.onOwnerChanged = owner => observed1.push(owner);
+      submorph2.onOwnerChanged = owner => observed2.push(owner);
+      submorph1.remove();
+      expect(observed1).equals([null]);
+      expect(observed2).equals([null]);
+      observed1.length = 0; observed2.length = 0;
+
+      world.addMorph(submorph1)
+      expect(observed1).equals([world]);
+      expect(observed2).equals([world]);
+    });
+
   });
 
   describe("morph lookup", () => {
