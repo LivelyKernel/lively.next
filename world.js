@@ -2,7 +2,7 @@
 import { Rectangle, Color, pt } from "lively.graphics";
 import { arr, fun, obj, promise } from "lively.lang";
 import { once, signal } from "lively.bindings";
-import { StatusMessage, StatusMessageForMorph } from './components/markers.js';
+import { StatusMessage, StatusMessageForMorph } from './halo/markers.js';
 import { Morph, Tooltip, List, FilterableList, inspect, config, MorphicEnv, Window, Menu, Button } from "./index.js";
 import { TooltipViewer } from "./components/tooltips.js";
 

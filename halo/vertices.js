@@ -8,10 +8,10 @@ import { intersect, shape, bezier } from 'svg-intersections';
 import { arr } from "lively.lang";
 import { connect } from "lively.bindings";
 
-import { Leash } from "../components/widgets.js";
 import { StyleSheet } from "../style-sheets.js";
 
 import { pathAttributes } from "../rendering/morphic-default.js";
+import { Leash } from "./markers.js";
 
 /* rms: I tried doing this via polymorphic dispatch
          on the different morphs directly, but

@@ -8,7 +8,7 @@ export * from "./html-morph.js";
 export * from "./env.js";
 export * from "./layout.js";
 export { StyleSheet } from "./style-sheets.js";
-export { show } from "./components/markers.js"
+export { show, Leash} from "./halo/markers.js"
 export { ShadowObject } from "./rendering/morphic-default.js";
 export { Button } from "./components/buttons.js";
 export { Menu } from "./components/menus.js";
