@@ -1,8 +1,8 @@
 {
-  "id": "window_F9E68982_9710_4577_9474_B7ABED9AD7D6",
+  "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
   "snapshot": {
-    "window_F9E68982_9710_4577_9474_B7ABED9AD7D6": {
-      "rev": 183269,
+    "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7": {
+      "rev": 221387,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -13,47 +13,71 @@
           "value": [
             {
               "__ref__": true,
-              "id": "DFEAA8D3-D0CC-4C3A-8734-912A68B977EF",
+              "id": "600C5500-2E13-425B-B6AE-2FEC603C09F5",
               "rev": 0
             }
           ]
         },
         "name": {
           "key": "name",
-          "value": "window for GoogleMapsCanvas"
+          "value": "window for GoogleMapsCanvas copy copy copy"
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "70782ECA-130A-4A36-88CD-583E6CC96757",
+            "rev": 0
+          }
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(933.0,397.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(856.6,102.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(498.0,418.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(243,243,243)"
         },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
-              "id": "htmlmorph_01B79A0C_714A_41C1_98AF_694D66826218",
-              "rev": 183450
+              "id": "GoogleMaps_DBF5F412_83DB_40F8_96F9_18DB34BE238C",
+              "rev": 221391
             },
             {
               "__ref__": true,
-              "id": "morph_C582B5D2_667B_460E_85B9_FF909735A27A",
-              "rev": 183446
+              "id": "Morph_8780B581_A9F4_46F7_9316_00F42A67C2FF",
+              "rev": 207151
             },
             {
               "__ref__": true,
-              "id": "label_4B59A174_54FB_469D_9B3E_6DBA91991990",
-              "rev": 183451
+              "id": "Label_2BAC4E10_2227_4FD8_9A16_CC55BDA1AABC",
+              "rev": 221392
             },
             {
               "__ref__": true,
-              "id": "morph_C0C6D364_9FF0_4C3E_9890_E62CCED47713",
-              "rev": 183448
+              "id": "Morph_D425985A_3226_423D_A9AE_F4C73AA73175",
+              "rev": 221389
             }
           ]
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,1.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -63,31 +87,87 @@
             "inactive"
           ]
         },
+        "borderWidth": {
+          "key": "borderWidth",
+          "verbatim": true,
+          "value": {
+            "top": 1,
+            "right": 1,
+            "bottom": 1,
+            "left": 1
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "verbatim": true,
+          "value": {
+            "top": 7,
+            "right": 7,
+            "bottom": 7,
+            "left": 7
+          }
+        },
         "borderStyle": {
           "key": "borderStyle",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "1819BB9C-6F05-42FF-8D32-E1BF824F6D49",
-            "rev": 0
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
           }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "verbatim": true,
+          "value": {
+            "top": [
+              0.8,
+              0.8,
+              0.8,
+              1
+            ],
+            "right": [
+              0.8,
+              0.8,
+              0.8,
+              1
+            ],
+            "bottom": [
+              0.8,
+              0.8,
+              0.8,
+              1
+            ],
+            "left": [
+              0.8,
+              0.8,
+              0.8,
+              1
+            ]
+          }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         },
         "controls": {
           "key": "controls",
           "value": [
             {
               "__ref__": true,
-              "id": "morph_C582B5D2_667B_460E_85B9_FF909735A27A",
-              "rev": 183446
+              "id": "Morph_8780B581_A9F4_46F7_9316_00F42A67C2FF",
+              "rev": 207151
             },
             {
               "__ref__": true,
-              "id": "label_4B59A174_54FB_469D_9B3E_6DBA91991990",
-              "rev": 183451
+              "id": "Label_2BAC4E10_2227_4FD8_9A16_CC55BDA1AABC",
+              "rev": 221392
             },
             {
               "__ref__": true,
-              "id": "morph_C0C6D364_9FF0_4C3E_9890_E62CCED47713",
-              "rev": 183448
+              "id": "Morph_D425985A_3226_423D_A9AE_F4C73AA73175",
+              "rev": 221389
             }
           ]
         }
@@ -100,14 +180,18 @@
             "version": "0.1.0"
           },
           "pathInPackage": "components/window.js",
-          "lastChange": 1499134065491,
-          "lastSuperclassChange": 1499134065295
+          "lastChange": 1500597771128,
+          "lastSuperclassChange": 1500598228374
         }
       }
     },
-    "DFEAA8D3-D0CC-4C3A-8734-912A68B977EF": {
+    "600C5500-2E13-425B-B6AE-2FEC603C09F5": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -120,8 +204,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "window_F9E68982_9710_4577_9474_B7ABED9AD7D6",
-            "rev": 183269
+            "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
+            "rev": 221387
           }
         },
         "sourceAttrName": {
@@ -132,8 +216,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "window_F9E68982_9710_4577_9474_B7ABED9AD7D6",
-            "rev": 183269
+            "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
+            "rev": 221387
           }
         },
         "targetMethodName": {
@@ -144,7 +228,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "827A801C-51BC-4586-A210-D571403B8343",
+            "id": "D38E1259-26BD-4DD2-B90B-36E3C01A4E89",
             "rev": 0
           }
         },
@@ -162,37 +246,90 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499134065237,
+          "lastChange": 1500597770616,
           "lastSuperclassChange": 0
         }
       }
     },
-    "827A801C-51BC-4586-A210-D571403B8343": {
+    "D38E1259-26BD-4DD2-B90B-36E3C01A4E89": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "window_F9E68982_9710_4577_9474_B7ABED9AD7D6",
-            "rev": 183269
+            "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
+            "rev": 221387
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "window_F9E68982_9710_4577_9474_B7ABED9AD7D6",
-            "rev": 183269
+            "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
+            "rev": 221387
           }
         }
       }
     },
-    "htmlmorph_01B79A0C_714A_41C1_98AF_694D66826218": {
-      "rev": 183450,
+    "70782ECA-130A-4A36-88CD-583E6CC96757": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 90
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 8
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 10
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": false
+        },
+        "spread": {
+          "key": "spread",
+          "value": 0
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0.1)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
+            "rev": 221387
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js",
+          "lastChange": 1500597770568,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "GoogleMaps_DBF5F412_83DB_40F8_96F9_18DB34BE238C": {
+      "rev": 221391,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -203,7 +340,7 @@
         },
         "name": {
           "key": "name",
-          "value": "Google Maps"
+          "value": "GoogleMapsCanvas"
         },
         "draggable": {
           "key": "draggable",
@@ -244,45 +381,77 @@
         },
         "borderWidth": {
           "key": "borderWidth",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "9F20A897-E1AF-455D-A640-7DE89A828BF1",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderRadius": {
           "key": "borderRadius",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "0CE6E0E6-462C-4308-8CBC-40138B53D534",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderStyle": {
           "key": "borderStyle",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "D84E66EF-1885-47A3-9E25-800AF1D753FD",
-            "rev": 0
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
           }
         },
         "borderColor": {
           "key": "borderColor",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "4A2BF3CC-C669-4915-8913-01275DA3AB4B",
-            "rev": 0
+            "top": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "right": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "bottom": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "left": [
+              1,
+              1,
+              1,
+              1
+            ]
           }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         },
         "html": {
           "key": "html",
-          "value": "<div style=\"height: 100%; position: relative; overflow: hidden;\" id=\"map-canvas-htmlmorph_01B79A0C_714A_41C1_98AF_694D66826218\"><div style=\"height: 100%; width: 100%; position: absolute; top: 0px; left: 0px; background-color: rgb(229, 227, 223);\"><div class=\"gm-style\" style=\"position: absolute; z-index: 0; left: 0px; top: 0px; height: 100%; width: 100%; padding: 0px; border-width: 0px; margin: 0px;\"><div tabindex=\"0\" style=\"position: absolute; z-index: 0; left: 0px; top: 0px; height: 100%; width: 100%; padding: 0px; border-width: 0px; margin: 0px; cursor: url(&quot;https://maps.gstatic.com/mapfiles/openhand_8_8.cur&quot;) 8 8, default;\"><div style=\"z-index: 1; position: absolute; top: 0px; left: 0px; width: 100%; transform-origin: 0px 0px 0px; transform: matrix(1, 0, 0, 1, -449, 368);\"><div style=\"position: absolute; left: 0px; top: 0px; z-index: 100; width: 100%;\"><div style=\"position: absolute; left: 0px; top: 0px; z-index: 0;\"><div aria-hidden=\"true\" style=\"position: absolute; left: 0px; top: 0px; z-index: 1; visibility: inherit;\"><div style=\"width: 256px; height: 256px; position: absolute; left: 434px; top: -516px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: 434px; top: -260px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: 690px; top: -516px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: 690px; top: -260px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: 434px; top: -4px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: 690px; top: -4px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: 946px; top: -260px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: 946px; top: -516px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: 946px; top: -4px;\"></div></div></div></div><div style=\"position: absolute; left: 0px; top: 0px; z-index: 101; width: 100%;\"></div><div style=\"position: absolute; left: 0px; top: 0px; z-index: 102; width: 100%;\"></div><div style=\"position: absolute; left: 0px; top: 0px; z-index: 103; width: 100%;\"><div style=\"position: absolute; left: 0px; top: 0px; z-index: -1;\"><div aria-hidden=\"true\" style=\"position: absolute; left: 0px; top: 0px; z-index: 1; visibility: inherit;\"><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: 434px; top: -516px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: 434px; top: -260px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: 690px; top: -516px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: 690px; top: -260px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: 434px; top: -4px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: 690px; top: -4px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: 946px; top: -260px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: 946px; top: -516px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: 946px; top: -4px;\"></div></div></div></div><div style=\"position: absolute; z-index: 0; left: 436px; top: -403px;\"><div style=\"overflow: hidden; width: 498px; height: 393px;\"><img src=\"https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?1m2&amp;1i151810&amp;2i50545&amp;2e1&amp;3u9&amp;4m2&amp;1u498&amp;2u393&amp;5m5&amp;1e0&amp;5sen-US&amp;6sus&amp;10b1&amp;12b1&amp;token=14755\" style=\"width: 498px; height: 393px;\"></div></div><div style=\"position: absolute; left: 0px; top: 0px; z-index: 0;\"><div aria-hidden=\"true\" style=\"position: absolute; left: 0px; top: 0px; z-index: 1; visibility: inherit;\"><div style=\"position: absolute; left: 690px; top: -516px; transition: opacity 200ms ease-out;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i9!2i82!3i197!4i256!2m3!1e0!2sm!3i383077280!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0!5m1!5f2&amp;token=61444\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: 434px; top: -516px; transition: opacity 200ms ease-out;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i9!2i81!3i197!4i256!2m3!1e0!2sm!3i383077280!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0!5m1!5f2&amp;token=10427\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: 434px; top: -260px; transition: opacity 200ms ease-out;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i9!2i81!3i198!4i256!2m3!1e0!2sm!3i383077280!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0!5m1!5f2&amp;token=101777\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: 690px; top: -260px; transition: opacity 200ms ease-out;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i9!2i82!3i198!4i256!2m3!1e0!2sm!3i383077280!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0!5m1!5f2&amp;token=21723\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: 434px; top: -4px;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i9!2i81!3i199!4i256!2m3!1e0!2sm!3i383077280!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0!5m1!5f2&amp;token=62056\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: 690px; top: -4px;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i9!2i82!3i199!4i256!2m3!1e0!2sm!3i383077280!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0!5m1!5f2&amp;token=113073\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: 946px; top: -260px;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i9!2i83!3i198!4i256!2m3!1e0!2sm!3i383077280!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0!5m1!5f2&amp;token=72740\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: 946px; top: -516px;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i9!2i83!3i197!4i256!2m3!1e0!2sm!3i383077280!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0!5m1!5f2&amp;token=112461\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: 946px; top: -4px;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i9!2i83!3i199!4i256!2m3!1e0!2sm!3i383077280!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0!5m1!5f2&amp;token=33019\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div></div></div></div><div class=\"gm-style-pbc\" style=\"z-index: 2; position: absolute; height: 100%; width: 100%; padding: 0px; border-width: 0px; margin: 0px; left: 0px; top: 0px; opacity: 0;\"><p class=\"gm-style-pbt\"></p></div><div style=\"z-index: 3; position: absolute; height: 100%; width: 100%; padding: 0px; border-width: 0px; margin: 0px; left: 0px; top: 0px;\"><div style=\"z-index: 1; position: absolute; height: 100%; width: 100%; padding: 0px; border-width: 0px; margin: 0px; left: 0px; top: 0px;\"></div></div><div style=\"z-index: 4; position: absolute; top: 0px; left: 0px; width: 100%; transform-origin: 0px 0px 0px; transform: matrix(1, 0, 0, 1, -449, 368);\"><div style=\"position: absolute; left: 0px; top: 0px; z-index: 104; width: 100%;\"></div><div style=\"position: absolute; left: 0px; top: 0px; z-index: 105; width: 100%;\"></div><div style=\"position: absolute; left: 0px; top: 0px; z-index: 106; width: 100%;\"></div><div style=\"position: absolute; left: 0px; top: 0px; z-index: 107; width: 100%;\"></div></div></div><div style=\"margin-left: 5px; margin-right: 5px; z-index: 1000000; position: absolute; left: 0px; bottom: 0px;\"><a target=\"_blank\" href=\"https://maps.google.com/maps?ll=37.525924,-122.322137&amp;z=9&amp;t=m&amp;hl=en-US&amp;gl=US&amp;mapclient=apiv3\" title=\"Click to see this area on Google Maps\" style=\"position: static; overflow: visible; float: none; display: inline;\"><div style=\"width: 66px; height: 26px; cursor: pointer;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/google4_hdpi.png\" draggable=\"false\" style=\"position: absolute; left: 0px; top: 0px; width: 66px; height: 26px; user-select: none; border: 0px; padding: 0px; margin: 0px;\"></div></a></div><div style=\"background-color: white; padding: 15px 21px; border: 1px solid rgb(171, 171, 171); font-family: Roboto, Arial, sans-serif; color: rgb(34, 34, 34); box-shadow: rgba(0, 0, 0, 0.2) 0px 4px 16px; z-index: 10000002; display: none; width: 256px; height: 148px; position: absolute; left: 99px; top: 107px;\"><div style=\"padding: 0px 0px 10px; font-size: 16px;\">Map Data</div><div style=\"font-size: 13px;\">Map data ©2017 Google</div><div style=\"width: 13px; height: 13px; overflow: hidden; position: absolute; opacity: 0.7; right: 12px; top: 12px; z-index: 10000; cursor: pointer;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/mapcnt6.png\" draggable=\"false\" style=\"position: absolute; left: -2px; top: -336px; width: 59px; height: 492px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div></div><div class=\"gmnoprint\" style=\"z-index: 1000001; position: absolute; right: 166px; bottom: 0px; width: 121px;\"><div draggable=\"false\" class=\"gm-style-cc\" style=\"user-select: none; height: 14px; line-height: 14px;\"><div style=\"opacity: 0.7; width: 100%; height: 100%; position: absolute;\"><div style=\"width: 1px;\"></div><div style=\"background-color: rgb(245, 245, 245); width: auto; height: 100%; margin-left: 1px;\"></div></div><div style=\"position: relative; padding-right: 6px; padding-left: 6px; font-family: Roboto, Arial, sans-serif; font-size: 10px; color: rgb(68, 68, 68); white-space: nowrap; direction: ltr; text-align: right; vertical-align: middle; display: inline-block;\"><a style=\"color: rgb(68, 68, 68); text-decoration: none; cursor: pointer; display: none;\">Map Data</a><span style=\"\">Map data ©2017 Google</span></div></div></div><div class=\"gmnoscreen\" style=\"position: absolute; right: 0px; bottom: 0px;\"><div style=\"font-family: Roboto, Arial, sans-serif; font-size: 11px; color: rgb(68, 68, 68); direction: ltr; text-align: right; background-color: rgb(245, 245, 245);\">Map data ©2017 Google</div></div><div class=\"gmnoprint gm-style-cc\" draggable=\"false\" style=\"z-index: 1000001; user-select: none; height: 14px; line-height: 14px; position: absolute; right: 95px; bottom: 0px;\"><div style=\"opacity: 0.7; width: 100%; height: 100%; position: absolute;\"><div style=\"width: 1px;\"></div><div style=\"background-color: rgb(245, 245, 245); width: auto; height: 100%; margin-left: 1px;\"></div></div><div style=\"position: relative; padding-right: 6px; padding-left: 6px; font-family: Roboto, Arial, sans-serif; font-size: 10px; color: rgb(68, 68, 68); white-space: nowrap; direction: ltr; text-align: right; vertical-align: middle; display: inline-block;\"><a href=\"https://www.google.com/intl/en-US_US/help/terms_maps.html\" target=\"_blank\" style=\"text-decoration: none; cursor: pointer; color: rgb(68, 68, 68);\">Terms of Use</a></div></div><div style=\"cursor: pointer; width: 25px; height: 25px; overflow: hidden; display: none; margin: 10px 14px; position: absolute; top: 0px; right: 0px;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/sv9.png\" draggable=\"false\" class=\"gm-fullscreen-control\" style=\"position: absolute; left: -52px; top: -86px; width: 164px; height: 175px; user-select: none; border: 0px; padding: 0px; margin: 0px;\"></div><div draggable=\"false\" class=\"gm-style-cc\" style=\"user-select: none; height: 14px; line-height: 14px; position: absolute; right: 0px; bottom: 0px;\"><div style=\"opacity: 0.7; width: 100%; height: 100%; position: absolute;\"><div style=\"width: 1px;\"></div><div style=\"background-color: rgb(245, 245, 245); width: auto; height: 100%; margin-left: 1px;\"></div></div><div style=\"position: relative; padding-right: 6px; padding-left: 6px; font-family: Roboto, Arial, sans-serif; font-size: 10px; color: rgb(68, 68, 68); white-space: nowrap; direction: ltr; text-align: right; vertical-align: middle; display: inline-block;\"><a target=\"_new\" title=\"Report errors in the road map or imagery to Google\" href=\"https://www.google.com/maps/@37.5259236,237.6778631,9z/data=!10m1!1e1!12b1?source=apiv3&amp;rapsrc=apiv3\" style=\"font-family: Roboto, Arial, sans-serif; font-size: 10px; color: rgb(68, 68, 68); text-decoration: none; position: relative;\">Report a map error</a></div></div><div class=\"gmnoprint gm-bundled-control gm-bundled-control-on-bottom\" draggable=\"false\" controlwidth=\"28\" controlheight=\"93\" style=\"margin: 10px; user-select: none; position: absolute; bottom: 107px; right: 28px;\"><div class=\"gmnoprint\" controlwidth=\"28\" controlheight=\"55\" style=\"position: absolute; left: 0px; top: 38px;\"><div draggable=\"false\" style=\"user-select: none; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; border-radius: 2px; cursor: pointer; background-color: rgb(255, 255, 255); width: 28px; height: 55px;\"><div title=\"Zoom in\" style=\"position: relative; width: 28px; height: 27px; left: 0px; top: 0px;\"><div style=\"overflow: hidden; position: absolute; width: 15px; height: 15px; left: 7px; top: 6px;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/tmapctrl_hdpi.png\" draggable=\"false\" style=\"position: absolute; left: 0px; top: 0px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none; width: 120px; height: 54px;\"></div></div><div style=\"position: relative; overflow: hidden; width: 67%; height: 1px; left: 16%; background-color: rgb(230, 230, 230); top: 0px;\"></div><div title=\"Zoom out\" style=\"position: relative; width: 28px; height: 27px; left: 0px; top: 0px;\"><div style=\"overflow: hidden; position: absolute; width: 15px; height: 15px; left: 7px; top: 6px;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/tmapctrl_hdpi.png\" draggable=\"false\" style=\"position: absolute; left: 0px; top: -15px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none; width: 120px; height: 54px;\"></div></div></div></div><div class=\"gm-svpc\" controlwidth=\"28\" controlheight=\"28\" style=\"background-color: rgb(255, 255, 255); box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; border-radius: 2px; width: 28px; height: 28px; cursor: url(&quot;https://maps.gstatic.com/mapfiles/openhand_8_8.cur&quot;) 8 8, default; position: absolute; left: 0px; top: 0px;\"><div style=\"position: absolute; left: 1px; top: 1px;\"></div><div style=\"position: absolute; left: 1px; top: 1px;\"><div aria-label=\"Street View Pegman Control\" style=\"width: 26px; height: 26px; overflow: hidden; position: absolute; left: 0px; top: 0px;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/cb_scout5_hdpi.png\" draggable=\"false\" style=\"position: absolute; left: -147px; top: -26px; width: 215px; height: 835px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div aria-label=\"Pegman is on top of the Map\" style=\"width: 26px; height: 26px; overflow: hidden; position: absolute; left: 0px; top: 0px; visibility: hidden;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/cb_scout5_hdpi.png\" draggable=\"false\" style=\"position: absolute; left: -147px; top: -52px; width: 215px; height: 835px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div aria-label=\"Street View Pegman Control\" style=\"width: 26px; height: 26px; overflow: hidden; position: absolute; left: 0px; top: 0px; visibility: hidden;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/cb_scout5_hdpi.png\" draggable=\"false\" style=\"position: absolute; left: -147px; top: -78px; width: 215px; height: 835px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div></div></div><div class=\"gmnoprint\" controlwidth=\"28\" controlheight=\"0\" style=\"display: none; position: absolute;\"><div title=\"Rotate map 90 degrees\" style=\"width: 28px; height: 28px; overflow: hidden; position: absolute; border-radius: 2px; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; cursor: pointer; background-color: rgb(255, 255, 255); display: none;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/tmapctrl4_hdpi.png\" draggable=\"false\" style=\"position: absolute; left: -141px; top: 6px; width: 170px; height: 54px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div class=\"gm-tilt\" style=\"width: 28px; height: 28px; overflow: hidden; position: absolute; border-radius: 2px; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; top: 0px; cursor: pointer; background-color: rgb(255, 255, 255);\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/tmapctrl4_hdpi.png\" draggable=\"false\" style=\"position: absolute; left: -141px; top: -13px; width: 170px; height: 54px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div></div></div><div class=\"gmnoprint\" style=\"margin: 10px; z-index: 0; position: absolute; cursor: pointer; left: 0px; top: 0px;\"><div class=\"gm-style-mtc\" style=\"float: left;\"><div draggable=\"false\" title=\"Show street map\" style=\"direction: ltr; overflow: hidden; text-align: center; position: relative; color: rgb(0, 0, 0); font-family: Roboto, Arial, sans-serif; user-select: none; font-size: 11px; background-color: rgb(255, 255, 255); padding: 8px; border-bottom-left-radius: 2px; border-top-left-radius: 2px; -webkit-background-clip: padding-box; background-clip: padding-box; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; min-width: 22px; font-weight: 500;\">Map</div><div style=\"background-color: white; z-index: -1; padding: 2px; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; position: absolute; left: 0px; top: 29px; text-align: left; display: none;\"><div draggable=\"false\" title=\"Show street map with terrain\" style=\"color: rgb(0, 0, 0); font-family: Roboto, Arial, sans-serif; user-select: none; font-size: 11px; background-color: rgb(255, 255, 255); padding: 6px 8px 6px 6px; direction: ltr; text-align: left; white-space: nowrap;\"><span role=\"checkbox\" style=\"box-sizing: border-box; position: relative; line-height: 0; font-size: 0px; margin: 0px 5px 0px 0px; display: inline-block; background-color: rgb(255, 255, 255); border: 1px solid rgb(198, 198, 198); border-radius: 1px; width: 13px; height: 13px; vertical-align: middle;\"><div style=\"position: absolute; left: 1px; top: -2px; width: 13px; height: 11px; overflow: hidden; display: none;\"><img src=\"https://maps.gstatic.com/mapfiles/mv/imgs8.png\" draggable=\"false\" style=\"position: absolute; left: -52px; top: -44px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none; width: 68px; height: 67px;\"></div></span><label style=\"vertical-align: middle; cursor: pointer;\">Terrain</label></div></div></div><div class=\"gm-style-mtc\" style=\"float: left;\"><div draggable=\"false\" title=\"Show satellite imagery\" style=\"direction: ltr; overflow: hidden; text-align: center; position: relative; color: rgb(86, 86, 86); font-family: Roboto, Arial, sans-serif; user-select: none; font-size: 11px; background-color: rgb(255, 255, 255); padding: 8px; border-bottom-right-radius: 2px; border-top-right-radius: 2px; -webkit-background-clip: padding-box; background-clip: padding-box; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; border-left: 0px; min-width: 40px;\">Satellite</div><div style=\"background-color: white; z-index: -1; padding: 2px; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; position: absolute; right: 0px; top: 29px; text-align: left; display: none;\"><div draggable=\"false\" title=\"Show imagery with street names\" style=\"color: rgb(0, 0, 0); font-family: Roboto, Arial, sans-serif; user-select: none; font-size: 11px; background-color: rgb(255, 255, 255); padding: 6px 8px 6px 6px; direction: ltr; text-align: left; white-space: nowrap;\"><span role=\"checkbox\" style=\"box-sizing: border-box; position: relative; line-height: 0; font-size: 0px; margin: 0px 5px 0px 0px; display: inline-block; background-color: rgb(255, 255, 255); border: 1px solid rgb(198, 198, 198); border-radius: 1px; width: 13px; height: 13px; vertical-align: middle;\"><div style=\"position: absolute; left: 1px; top: -2px; width: 13px; height: 11px; overflow: hidden;\"><img src=\"https://maps.gstatic.com/mapfiles/mv/imgs8.png\" draggable=\"false\" style=\"position: absolute; left: -52px; top: -44px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none; width: 68px; height: 67px;\"></div></span><label style=\"vertical-align: middle; cursor: pointer;\">Labels</label></div></div></div></div></div></div></div>"
+          "value": "<div style=\"height: 100%; position: relative; overflow: hidden;\" id=\"map-canvas-GoogleMaps_DBF5F412_83DB_40F8_96F9_18DB34BE238C\"><div style=\"height: 100%; width: 100%; position: absolute; top: 0px; left: 0px; background-color: rgb(229, 227, 223);\"><div class=\"gm-style\" style=\"position: absolute; z-index: 0; left: 0px; top: 0px; height: 100%; width: 100%; padding: 0px; border-width: 0px; margin: 0px;\"><div tabindex=\"0\" style=\"position: absolute; z-index: 0; left: 0px; top: 0px; height: 100%; width: 100%; padding: 0px; border-width: 0px; margin: 0px; cursor: url(&quot;https://maps.gstatic.com/mapfiles/openhand_8_8.cur&quot;) 8 8, default;\"><div style=\"z-index: 1; position: absolute; top: 0px; left: 0px; width: 100%; transform-origin: 0px 0px 0px; transform: matrix(1, 0, 0, 1, 0, 0);\"><div style=\"position: absolute; left: 0px; top: 0px; z-index: 100; width: 100%;\"><div style=\"position: absolute; left: 0px; top: 0px; z-index: 0;\"><div aria-hidden=\"true\" style=\"position: absolute; left: 0px; top: 0px; z-index: 1; visibility: inherit;\"><div style=\"width: 256px; height: 256px; position: absolute; left: 25px; top: 114px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: -231px; top: 114px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: 25px; top: -142px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: 25px; top: 370px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: 281px; top: 114px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: -231px; top: -142px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: -231px; top: 370px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: 281px; top: -142px;\"></div><div style=\"width: 256px; height: 256px; position: absolute; left: 281px; top: 370px;\"></div></div></div></div><div style=\"position: absolute; left: 0px; top: 0px; z-index: 101; width: 100%;\"></div><div style=\"position: absolute; left: 0px; top: 0px; z-index: 102; width: 100%;\"></div><div style=\"position: absolute; left: 0px; top: 0px; z-index: 103; width: 100%;\"><div style=\"position: absolute; left: 0px; top: 0px; z-index: -1;\"><div aria-hidden=\"true\" style=\"position: absolute; left: 0px; top: 0px; z-index: 1; visibility: inherit;\"><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: 25px; top: 114px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: -231px; top: 114px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: 25px; top: -142px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: 25px; top: 370px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: 281px; top: 114px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: -231px; top: -142px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: -231px; top: 370px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: 281px; top: -142px;\"></div><div style=\"width: 256px; height: 256px; overflow: hidden; position: absolute; left: 281px; top: 370px;\"></div></div></div></div><div style=\"position: absolute; z-index: 0; left: 0px; top: 0px;\"><div style=\"overflow: hidden; width: 498px; height: 393px;\"><img src=\"https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?1m2&amp;1i41703&amp;2i101262&amp;2e1&amp;3u10&amp;4m2&amp;1u498&amp;2u393&amp;5m5&amp;1e0&amp;5sen-US&amp;6sus&amp;10b1&amp;12b1&amp;token=49535\" style=\"width: 498px; height: 393px;\"></div></div><div style=\"position: absolute; left: 0px; top: 0px; z-index: 0;\"><div aria-hidden=\"true\" style=\"position: absolute; left: 0px; top: 0px; z-index: 1; visibility: inherit;\"><div style=\"position: absolute; left: 25px; top: 114px; transition: opacity 200ms ease-out;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i10!2i163!3i396!4i256!2m3!1e0!2sm!3i386079608!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0&amp;token=89535\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: -231px; top: 114px; transition: opacity 200ms ease-out;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i10!2i162!3i396!4i256!2m3!1e0!2sm!3i386079608!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0&amp;token=40746\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: 25px; top: -142px; transition: opacity 200ms ease-out;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i10!2i163!3i395!4i256!2m3!1e0!2sm!3i386079608!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0&amp;token=53514\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: 25px; top: 370px; transition: opacity 200ms ease-out;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i10!2i163!3i397!4i256!2m3!1e0!2sm!3i386079536!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0&amp;token=54136\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: 281px; top: 114px; transition: opacity 200ms ease-out;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i10!2i164!3i396!4i256!2m3!1e0!2sm!3i386079608!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0&amp;token=7253\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: -231px; top: -142px; transition: opacity 200ms ease-out;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i10!2i162!3i395!4i256!2m3!1e0!2sm!3i386079608!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0&amp;token=4725\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: -231px; top: 370px; transition: opacity 200ms ease-out;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i10!2i162!3i397!4i256!2m3!1e0!2sm!3i386079536!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0&amp;token=5347\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: 281px; top: -142px; transition: opacity 200ms ease-out;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i10!2i164!3i395!4i256!2m3!1e0!2sm!3i386079608!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0&amp;token=102303\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div style=\"position: absolute; left: 281px; top: 370px; transition: opacity 200ms ease-out;\"><img src=\"https://maps.googleapis.com/maps/vt?pb=!1m5!1m4!1i10!2i164!3i397!4i256!2m3!1e0!2sm!3i386079584!3m9!2sen-US!3sUS!5e18!12m1!1e68!12m3!1e37!2m1!1ssmartmaps!4e0&amp;token=66592\" draggable=\"false\" alt=\"\" style=\"width: 256px; height: 256px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div></div></div></div><div class=\"gm-style-pbc\" style=\"z-index: 2; position: absolute; height: 100%; width: 100%; padding: 0px; border-width: 0px; margin: 0px; left: 0px; top: 0px; opacity: 0;\"><p class=\"gm-style-pbt\"></p></div><div style=\"z-index: 3; position: absolute; height: 100%; width: 100%; padding: 0px; border-width: 0px; margin: 0px; left: 0px; top: 0px;\"><div style=\"z-index: 1; position: absolute; height: 100%; width: 100%; padding: 0px; border-width: 0px; margin: 0px; left: 0px; top: 0px;\"></div></div><div style=\"z-index: 4; position: absolute; top: 0px; left: 0px; width: 100%; transform-origin: 0px 0px 0px; transform: matrix(1, 0, 0, 1, 0, 0);\"><div style=\"position: absolute; left: 0px; top: 0px; z-index: 104; width: 100%;\"></div><div style=\"position: absolute; left: 0px; top: 0px; z-index: 105; width: 100%;\"></div><div style=\"position: absolute; left: 0px; top: 0px; z-index: 106; width: 100%;\"></div><div style=\"position: absolute; left: 0px; top: 0px; z-index: 107; width: 100%;\"></div></div></div><div style=\"margin-left: 5px; margin-right: 5px; z-index: 1000000; position: absolute; left: 0px; bottom: 0px;\"><a target=\"_blank\" href=\"https://maps.google.com/maps?ll=37.628775,-122.388055&amp;z=10&amp;t=m&amp;hl=en-US&amp;gl=US&amp;mapclient=apiv3\" title=\"Click to see this area on Google Maps\" style=\"position: static; overflow: visible; float: none; display: inline;\"><div style=\"width: 66px; height: 26px; cursor: pointer;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/google4.png\" draggable=\"false\" style=\"position: absolute; left: 0px; top: 0px; width: 66px; height: 26px; user-select: none; border: 0px; padding: 0px; margin: 0px;\"></div></a></div><div style=\"background-color: white; padding: 15px 21px; border: 1px solid rgb(171, 171, 171); font-family: Roboto, Arial, sans-serif; color: rgb(34, 34, 34); box-shadow: rgba(0, 0, 0, 0.2) 0px 4px 16px; z-index: 10000002; display: none; width: 256px; height: 148px; position: absolute; left: 99px; top: 107px;\"><div style=\"padding: 0px 0px 10px; font-size: 16px;\">Map Data</div><div style=\"font-size: 13px;\">Map data ©2017 Google</div><div style=\"width: 13px; height: 13px; overflow: hidden; position: absolute; opacity: 0.7; right: 12px; top: 12px; z-index: 10000; cursor: pointer;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/mapcnt6.png\" draggable=\"false\" style=\"position: absolute; left: -2px; top: -336px; width: 59px; height: 492px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div></div><div class=\"gmnoprint\" style=\"z-index: 1000001; position: absolute; right: 166px; bottom: 0px; width: 121px;\"><div draggable=\"false\" class=\"gm-style-cc\" style=\"user-select: none; height: 14px; line-height: 14px;\"><div style=\"opacity: 0.7; width: 100%; height: 100%; position: absolute;\"><div style=\"width: 1px;\"></div><div style=\"background-color: rgb(245, 245, 245); width: auto; height: 100%; margin-left: 1px;\"></div></div><div style=\"position: relative; padding-right: 6px; padding-left: 6px; font-family: Roboto, Arial, sans-serif; font-size: 10px; color: rgb(68, 68, 68); white-space: nowrap; direction: ltr; text-align: right; vertical-align: middle; display: inline-block;\"><a style=\"color: rgb(68, 68, 68); text-decoration: none; cursor: pointer; display: none;\">Map Data</a><span style=\"\">Map data ©2017 Google</span></div></div></div><div class=\"gmnoscreen\" style=\"position: absolute; right: 0px; bottom: 0px;\"><div style=\"font-family: Roboto, Arial, sans-serif; font-size: 11px; color: rgb(68, 68, 68); direction: ltr; text-align: right; background-color: rgb(245, 245, 245);\">Map data ©2017 Google</div></div><div class=\"gmnoprint gm-style-cc\" draggable=\"false\" style=\"z-index: 1000001; user-select: none; height: 14px; line-height: 14px; position: absolute; right: 95px; bottom: 0px;\"><div style=\"opacity: 0.7; width: 100%; height: 100%; position: absolute;\"><div style=\"width: 1px;\"></div><div style=\"background-color: rgb(245, 245, 245); width: auto; height: 100%; margin-left: 1px;\"></div></div><div style=\"position: relative; padding-right: 6px; padding-left: 6px; font-family: Roboto, Arial, sans-serif; font-size: 10px; color: rgb(68, 68, 68); white-space: nowrap; direction: ltr; text-align: right; vertical-align: middle; display: inline-block;\"><a href=\"https://www.google.com/intl/en-US_US/help/terms_maps.html\" target=\"_blank\" style=\"text-decoration: none; cursor: pointer; color: rgb(68, 68, 68);\">Terms of Use</a></div></div><div style=\"cursor: pointer; width: 25px; height: 25px; overflow: hidden; display: none; margin: 10px 14px; position: absolute; top: 0px; right: 0px;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/sv9.png\" draggable=\"false\" class=\"gm-fullscreen-control\" style=\"position: absolute; left: -52px; top: -86px; width: 164px; height: 175px; user-select: none; border: 0px; padding: 0px; margin: 0px;\"></div><div draggable=\"false\" class=\"gm-style-cc\" style=\"user-select: none; height: 14px; line-height: 14px; position: absolute; right: 0px; bottom: 0px;\"><div style=\"opacity: 0.7; width: 100%; height: 100%; position: absolute;\"><div style=\"width: 1px;\"></div><div style=\"background-color: rgb(245, 245, 245); width: auto; height: 100%; margin-left: 1px;\"></div></div><div style=\"position: relative; padding-right: 6px; padding-left: 6px; font-family: Roboto, Arial, sans-serif; font-size: 10px; color: rgb(68, 68, 68); white-space: nowrap; direction: ltr; text-align: right; vertical-align: middle; display: inline-block;\"><a target=\"_new\" title=\"Report errors in the road map or imagery to Google\" href=\"https://www.google.com/maps/@37.6287751,-122.3880549,10z/data=!10m1!1e1!12b1?source=apiv3&amp;rapsrc=apiv3\" style=\"font-family: Roboto, Arial, sans-serif; font-size: 10px; color: rgb(68, 68, 68); text-decoration: none; position: relative;\">Report a map error</a></div></div><div class=\"gmnoprint gm-bundled-control gm-bundled-control-on-bottom\" draggable=\"false\" controlwidth=\"28\" controlheight=\"93\" style=\"margin: 10px; user-select: none; position: absolute; bottom: 107px; right: 28px;\"><div class=\"gmnoprint\" controlwidth=\"28\" controlheight=\"55\" style=\"position: absolute; left: 0px; top: 38px;\"><div draggable=\"false\" style=\"user-select: none; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; border-radius: 2px; cursor: pointer; background-color: rgb(255, 255, 255); width: 28px; height: 55px;\"><div title=\"Zoom in\" style=\"position: relative; width: 28px; height: 27px; left: 0px; top: 0px;\"><div style=\"overflow: hidden; position: absolute; width: 15px; height: 15px; left: 7px; top: 6px;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/tmapctrl.png\" draggable=\"false\" style=\"position: absolute; left: 0px; top: 0px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none; width: 120px; height: 54px;\"></div></div><div style=\"position: relative; overflow: hidden; width: 67%; height: 1px; left: 16%; background-color: rgb(230, 230, 230); top: 0px;\"></div><div title=\"Zoom out\" style=\"position: relative; width: 28px; height: 27px; left: 0px; top: 0px;\"><div style=\"overflow: hidden; position: absolute; width: 15px; height: 15px; left: 7px; top: 6px;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/tmapctrl.png\" draggable=\"false\" style=\"position: absolute; left: 0px; top: -15px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none; width: 120px; height: 54px;\"></div></div></div></div><div class=\"gm-svpc\" controlwidth=\"28\" controlheight=\"28\" style=\"background-color: rgb(255, 255, 255); box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; border-radius: 2px; width: 28px; height: 28px; cursor: url(&quot;https://maps.gstatic.com/mapfiles/openhand_8_8.cur&quot;) 8 8, default; position: absolute; left: 0px; top: 0px;\"><div style=\"position: absolute; left: 1px; top: 1px;\"></div><div style=\"position: absolute; left: 1px; top: 1px;\"><div aria-label=\"Street View Pegman Control\" style=\"width: 26px; height: 26px; overflow: hidden; position: absolute; left: 0px; top: 0px;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/cb_scout5.png\" draggable=\"false\" style=\"position: absolute; left: -147px; top: -26px; width: 215px; height: 835px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div aria-label=\"Pegman is on top of the Map\" style=\"width: 26px; height: 26px; overflow: hidden; position: absolute; left: 0px; top: 0px; visibility: hidden;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/cb_scout5.png\" draggable=\"false\" style=\"position: absolute; left: -147px; top: -52px; width: 215px; height: 835px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div aria-label=\"Street View Pegman Control\" style=\"width: 26px; height: 26px; overflow: hidden; position: absolute; left: 0px; top: 0px; visibility: hidden;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/cb_scout5.png\" draggable=\"false\" style=\"position: absolute; left: -147px; top: -78px; width: 215px; height: 835px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div></div></div><div class=\"gmnoprint\" controlwidth=\"28\" controlheight=\"0\" style=\"display: none; position: absolute;\"><div title=\"Rotate map 90 degrees\" style=\"width: 28px; height: 28px; overflow: hidden; position: absolute; border-radius: 2px; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; cursor: pointer; background-color: rgb(255, 255, 255); display: none;\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/tmapctrl4.png\" draggable=\"false\" style=\"position: absolute; left: -141px; top: 6px; width: 170px; height: 54px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div><div class=\"gm-tilt\" style=\"width: 28px; height: 28px; overflow: hidden; position: absolute; border-radius: 2px; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; top: 0px; cursor: pointer; background-color: rgb(255, 255, 255);\"><img src=\"https://maps.gstatic.com/mapfiles/api-3/images/tmapctrl4.png\" draggable=\"false\" style=\"position: absolute; left: -141px; top: -13px; width: 170px; height: 54px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none;\"></div></div></div><div class=\"gmnoprint\" style=\"margin: 10px; z-index: 0; position: absolute; cursor: pointer; left: 0px; top: 0px;\"><div class=\"gm-style-mtc\" style=\"float: left;\"><div draggable=\"false\" title=\"Show street map\" style=\"direction: ltr; overflow: hidden; text-align: center; position: relative; color: rgb(0, 0, 0); font-family: Roboto, Arial, sans-serif; user-select: none; font-size: 11px; background-color: rgb(255, 255, 255); padding: 8px; border-bottom-left-radius: 2px; border-top-left-radius: 2px; -webkit-background-clip: padding-box; background-clip: padding-box; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; min-width: 22px; font-weight: 500;\">Map</div><div style=\"background-color: white; z-index: -1; padding: 2px; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; position: absolute; left: 0px; top: 29px; text-align: left; display: none;\"><div draggable=\"false\" title=\"Show street map with terrain\" style=\"color: rgb(0, 0, 0); font-family: Roboto, Arial, sans-serif; user-select: none; font-size: 11px; background-color: rgb(255, 255, 255); padding: 6px 8px 6px 6px; direction: ltr; text-align: left; white-space: nowrap;\"><span role=\"checkbox\" style=\"box-sizing: border-box; position: relative; line-height: 0; font-size: 0px; margin: 0px 5px 0px 0px; display: inline-block; background-color: rgb(255, 255, 255); border: 1px solid rgb(198, 198, 198); border-radius: 1px; width: 13px; height: 13px; vertical-align: middle;\"><div style=\"position: absolute; left: 1px; top: -2px; width: 13px; height: 11px; overflow: hidden; display: none;\"><img src=\"https://maps.gstatic.com/mapfiles/mv/imgs8.png\" draggable=\"false\" style=\"position: absolute; left: -52px; top: -44px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none; width: 68px; height: 67px;\"></div></span><label style=\"vertical-align: middle; cursor: pointer;\">Terrain</label></div></div></div><div class=\"gm-style-mtc\" style=\"float: left;\"><div draggable=\"false\" title=\"Show satellite imagery\" style=\"direction: ltr; overflow: hidden; text-align: center; position: relative; color: rgb(86, 86, 86); font-family: Roboto, Arial, sans-serif; user-select: none; font-size: 11px; background-color: rgb(255, 255, 255); padding: 8px; border-bottom-right-radius: 2px; border-top-right-radius: 2px; -webkit-background-clip: padding-box; background-clip: padding-box; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; border-left: 0px; min-width: 40px;\">Satellite</div><div style=\"background-color: white; z-index: -1; padding: 2px; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; position: absolute; right: 0px; top: 29px; text-align: left; display: none;\"><div draggable=\"false\" title=\"Show imagery with street names\" style=\"color: rgb(0, 0, 0); font-family: Roboto, Arial, sans-serif; user-select: none; font-size: 11px; background-color: rgb(255, 255, 255); padding: 6px 8px 6px 6px; direction: ltr; text-align: left; white-space: nowrap;\"><span role=\"checkbox\" style=\"box-sizing: border-box; position: relative; line-height: 0; font-size: 0px; margin: 0px 5px 0px 0px; display: inline-block; background-color: rgb(255, 255, 255); border: 1px solid rgb(198, 198, 198); border-radius: 1px; width: 13px; height: 13px; vertical-align: middle;\"><div style=\"position: absolute; left: 1px; top: -2px; width: 13px; height: 11px; overflow: hidden;\"><img src=\"https://maps.gstatic.com/mapfiles/mv/imgs8.png\" draggable=\"false\" style=\"position: absolute; left: -52px; top: -44px; user-select: none; border: 0px; padding: 0px; margin: 0px; max-width: none; width: 68px; height: 67px;\"></div></span><label style=\"vertical-align: middle; cursor: pointer;\">Labels</label></div></div></div></div></div></div></div>"
         },
         "mapState": {
           "key": "mapState",
           "value": {
             "__ref__": true,
-            "id": "AB6FAB48-AF9F-4ECD-A3AF-699F55D79258",
+            "id": "BFAE3A38-D129-4C1F-83F5-9E078F8C5D36",
             "rev": 0
           }
         }
@@ -295,108 +464,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499190960273,
-          "lastSuperclassChange": 1499134065582
+          "lastChange": 1500600473060,
+          "lastSuperclassChange": 1500597771301
         }
       }
     },
-    "9F20A897-E1AF-455D-A640-7DE89A828BF1": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "0CE6E0E6-462C-4308-8CBC-40138B53D534": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "D84E66EF-1885-47A3-9E25-800AF1D753FD": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "4A2BF3CC-C669-4915-8913-01275DA3AB4B": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "AB6FAB48-AF9F-4ECD-A3AF-699F55D79258": {
+    "BFAE3A38-D129-4C1F-83F5-9E078F8C5D36": {
       "rev": 0,
       "props": {
         "__dont_serialize__": {
@@ -409,32 +482,40 @@
         },
         "canvasId": {
           "key": "canvasId",
-          "value": "map-canvas-htmlmorph_01B79A0C_714A_41C1_98AF_694D66826218"
+          "value": "map-canvas-GoogleMaps_DBF5F412_83DB_40F8_96F9_18DB34BE238C"
         },
         "mapOptions": {
           "key": "mapOptions",
           "value": {
             "__ref__": true,
-            "id": "040F7870-0E4F-4D9F-955E-8746C39CDB89",
+            "id": "2885A73D-A4FF-4EBB-A79A-43FAE63FB5BF",
             "rev": 0
           }
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
         }
       }
     },
-    "040F7870-0E4F-4D9F-955E-8746C39CDB89": {
+    "2885A73D-A4FF-4EBB-A79A-43FAE63FB5BF": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "center": {
           "key": "center",
           "value": {
             "__ref__": true,
-            "id": "CCE0BAFC-AEA8-4F3D-897A-F7A72311687F",
+            "id": "5C74D469-E21A-41A7-A7F6-EDED13FD1BD5",
             "rev": 0
           }
         },
         "zoom": {
           "key": "zoom",
-          "value": 9
+          "value": 10
         },
         "mapTypeId": {
           "key": "mapTypeId",
@@ -442,21 +523,21 @@
         }
       }
     },
-    "CCE0BAFC-AEA8-4F3D-897A-F7A72311687F": {
+    "5C74D469-E21A-41A7-A7F6-EDED13FD1BD5": {
       "rev": 0,
       "props": {
         "lng": {
           "key": "lng",
-          "value": 237.67786306762696
+          "value": -122.38805490112304
         },
         "lat": {
           "key": "lat",
-          "value": 37.52592363063673
+          "value": 37.62877507693743
         }
       }
     },
-    "morph_C582B5D2_667B_460E_85B9_FF909735A27A": {
-      "rev": 183446,
+    "Morph_8780B581_A9F4_46F7_9316_00F42A67C2FF": {
+      "rev": 207151,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -469,29 +550,49 @@
           "key": "name",
           "value": "button wrapper"
         },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(69.0,25.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
         },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
-              "id": "morph_72CC8C34_6D6C_41AE_BCCE_8F9061FC5E3A",
-              "rev": 183443
+              "id": "Morph_2132BDC5_0A11_4CC7_B32F_DB1B45159949",
+              "rev": 207148
             },
             {
               "__ref__": true,
-              "id": "morph_38993F61_2506_4026_B2FA_CFC0CCB58799",
-              "rev": 183444
+              "id": "Morph_7F9F2521_5C6A_43FB_9907_08D3C5C0A9FE",
+              "rev": 207149
             },
             {
               "__ref__": true,
-              "id": "morph_FAEEA231_BE04_477A_88B2_F53678099105",
-              "rev": 183445
+              "id": "Morph_99AC022A_A362_49C5_A981_1C6B396F9AF1",
+              "rev": 207150
             }
           ]
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -500,37 +601,77 @@
             "buttonGroup"
           ]
         },
-        "borderWidth": {
-          "key": "borderWidth",
+        "layout": {
+          "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "29BCA895-6CD1-4DC6-9366-58BBC91D9F16",
+            "id": "25713162-D0DE-4C23-970A-20F09C960312",
             "rev": 0
+          }
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "verbatim": true,
+          "value": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderRadius": {
           "key": "borderRadius",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "BBAC810D-196F-4D37-9A94-272774B6A031",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderStyle": {
           "key": "borderStyle",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "AFA4B910-C551-4351-8CC3-E8E6416593D1",
-            "rev": 0
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
           }
         },
         "borderColor": {
           "key": "borderColor",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "60195462-F051-4EE3-9C1C-46AF7A26B3D9",
-            "rev": 0
+            "top": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "right": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "bottom": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "left": [
+              1,
+              1,
+              1,
+              1
+            ]
           }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         }
       },
       "lively.serializer-class-info": {
@@ -541,13 +682,13 @@
             "version": "0.1.0"
           },
           "pathInPackage": "morph.js",
-          "lastChange": 1499134065295,
+          "lastChange": 1500598228374,
           "lastSuperclassChange": 0
         }
       }
     },
-    "morph_72CC8C34_6D6C_41AE_BCCE_8F9061FC5E3A": {
-      "rev": 183443,
+    "Morph_2132BDC5_0A11_4CC7_B32F_DB1B45159949": {
+      "rev": 207148,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -558,17 +699,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "475F82A9-2145-4954-9C99-7AADB88BA75D",
+              "id": "2DB9F460-2F5C-4099-8900-9067384BEF87",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "44FEEE80-1EC8-4C3D-8A2F-DA3F62EBB8CF",
+              "id": "8B2863E1-2C9C-4271-9FCF-38349D22D48C",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "F6120647-F3A5-4BDE-8EB3-BA7E034E5968",
+              "id": "DA7E4EFA-241E-4889-B20B-C07FC56E9579",
               "rev": 0
             }
           ]
@@ -579,21 +720,41 @@
         },
         "tooltip": {
           "key": "tooltip",
-          "value": "close window"
+          "value": "Remove Stop"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
         },
         "position": {
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(6.0,6.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,13.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
         },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
-              "id": "label_ACAA8D3A_F2D3_44EE_A70A_23D82E77DEC6",
-              "rev": 183440
+              "id": "Label_E77202E1_10A0_4189_B407_92A82EEEC99E",
+              "rev": 221342
             }
           ]
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -605,27 +766,67 @@
         },
         "borderWidth": {
           "key": "borderWidth",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "3B66E656-DFD1-4985-96B8-2DC4E56818A0",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "verbatim": true,
+          "value": {
+            "top": 14,
+            "right": 14,
+            "bottom": 14,
+            "left": 14
           }
         },
         "borderStyle": {
           "key": "borderStyle",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "E03FF0B3-BB86-4E85-9575-8DFB96C84416",
-            "rev": 0
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
           }
         },
         "borderColor": {
           "key": "borderColor",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "6B2ACEF7-FFC4-4D8A-8751-66BC4A27FF42",
-            "rev": 0
+            "top": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "right": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "bottom": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "left": [
+              1,
+              1,
+              1,
+              1
+            ]
           }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         }
       },
       "lively.serializer-class-info": {
@@ -636,14 +837,18 @@
             "version": "0.1.0"
           },
           "pathInPackage": "morph.js",
-          "lastChange": 1499134065295,
+          "lastChange": 1500598228374,
           "lastSuperclassChange": 0
         }
       }
     },
-    "475F82A9-2145-4954-9C99-7AADB88BA75D": {
+    "2DB9F460-2F5C-4099-8900-9067384BEF87": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -656,8 +861,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "morph_72CC8C34_6D6C_41AE_BCCE_8F9061FC5E3A",
-            "rev": 183443
+            "id": "Morph_2132BDC5_0A11_4CC7_B32F_DB1B45159949",
+            "rev": 207148
           }
         },
         "sourceAttrName": {
@@ -668,8 +873,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "window_F9E68982_9710_4577_9474_B7ABED9AD7D6",
-            "rev": 183269
+            "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
+            "rev": 221387
           }
         },
         "targetMethodName": {
@@ -680,7 +885,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "ADF1C93D-D52B-4FDE-BC02-E7E507AF5BF1",
+            "id": "FB053D13-58AE-403A-B830-3ED1434EC9D6",
             "rev": 0
           }
         },
@@ -698,38 +903,46 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499134065237,
+          "lastChange": 1500597770616,
           "lastSuperclassChange": 0
         }
       }
     },
-    "ADF1C93D-D52B-4FDE-BC02-E7E507AF5BF1": {
+    "FB053D13-58AE-403A-B830-3ED1434EC9D6": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "morph_72CC8C34_6D6C_41AE_BCCE_8F9061FC5E3A",
-            "rev": 183443
+            "id": "Morph_2132BDC5_0A11_4CC7_B32F_DB1B45159949",
+            "rev": 207148
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "window_F9E68982_9710_4577_9474_B7ABED9AD7D6",
-            "rev": 183269
+            "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
+            "rev": 221387
           }
         }
       }
     },
-    "44FEEE80-1EC8-4C3D-8A2F-DA3F62EBB8CF": {
+    "8B2863E1-2C9C-4271-9FCF-38349D22D48C": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -742,8 +955,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "morph_72CC8C34_6D6C_41AE_BCCE_8F9061FC5E3A",
-            "rev": 183443
+            "id": "Morph_2132BDC5_0A11_4CC7_B32F_DB1B45159949",
+            "rev": 207148
           }
         },
         "sourceAttrName": {
@@ -754,8 +967,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "label_ACAA8D3A_F2D3_44EE_A70A_23D82E77DEC6",
-            "rev": 183440
+            "id": "Label_E77202E1_10A0_4189_B407_92A82EEEC99E",
+            "rev": 221342
           }
         },
         "targetMethodName": {
@@ -766,7 +979,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "0BC3DBE5-03F3-45EE-BEDA-31E37FBE1FB5",
+            "id": "6488286B-CEE3-4397-AB2C-7440CD3D0232",
             "rev": 0
           }
         },
@@ -781,6 +994,9 @@
         "converterString": {
           "key": "converterString",
           "value": "() => [\n                    \"defaultLabelStyle\",\n                    \"highlight\"\n                  ]"
+        },
+        "converter": {
+          "key": "converter"
         }
       },
       "lively.serializer-class-info": {
@@ -788,16 +1004,16 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499134065237,
+          "lastChange": 1500597770616,
           "lastSuperclassChange": 0
         }
       }
     },
-    "label_ACAA8D3A_F2D3_44EE_A70A_23D82E77DEC6": {
-      "rev": 183440,
+    "Label_E77202E1_10A0_4189_B407_92A82EEEC99E": {
+      "rev": 221342,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -810,6 +1026,18 @@
           "key": "name",
           "value": "aLabel"
         },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.0,1.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(11.0,14.0)"
@@ -817,6 +1045,10 @@
         "submorphs": {
           "key": "submorphs",
           "value": []
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -829,35 +1061,67 @@
         },
         "borderWidth": {
           "key": "borderWidth",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "C0A3C666-69D9-4B86-9359-F8F514ED76C3",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderRadius": {
           "key": "borderRadius",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "33D01C56-7032-4B56-8572-C9AB48B66546",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderStyle": {
           "key": "borderStyle",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "6DB0C3AA-751E-4687-AC99-031204956BF6",
-            "rev": 0
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
           }
         },
         "borderColor": {
           "key": "borderColor",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "8C4F2218-4641-492B-A749-6EE13F16D802",
-            "rev": 0
+            "top": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "right": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "bottom": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "left": [
+              1,
+              1,
+              1,
+              1
+            ]
           }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         },
         "textAndAttributes": {
           "key": "textAndAttributes",
@@ -865,10 +1129,22 @@
             "",
             {
               "__ref__": true,
-              "id": "086E01B8-DF61-4017-9963-26CFCA6A9B66",
+              "id": "2F5D478E-A44A-4422-94FE-6F9EC452E360",
               "rev": 0
             }
           ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 14
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
         }
       },
       "lively.serializer-class-info": {
@@ -879,110 +1155,18 @@
             "version": "0.1.0"
           },
           "pathInPackage": "text/label.js",
-          "lastChange": 1499134065269,
-          "lastSuperclassChange": 1499134065295
+          "lastChange": 1500597770685,
+          "lastSuperclassChange": 1500598228374
         }
       }
     },
-    "C0A3C666-69D9-4B86-9359-F8F514ED76C3": {
+    "2F5D478E-A44A-4422-94FE-6F9EC452E360": {
       "rev": 0,
       "props": {
-        "top": {
-          "key": "top",
+        "_rev": {
+          "key": "_rev",
           "value": 0
         },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "33D01C56-7032-4B56-8572-C9AB48B66546": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "6DB0C3AA-751E-4687-AC99-031204956BF6": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "8C4F2218-4641-492B-A749-6EE13F16D802": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "086E01B8-DF61-4017-9963-26CFCA6A9B66": {
-      "rev": 0,
-      "props": {
         "fontFamily": {
           "key": "fontFamily",
           "value": ""
@@ -995,30 +1179,38 @@
         }
       }
     },
-    "0BC3DBE5-03F3-45EE-BEDA-31E37FBE1FB5": {
+    "6488286B-CEE3-4397-AB2C-7440CD3D0232": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "morph_72CC8C34_6D6C_41AE_BCCE_8F9061FC5E3A",
-            "rev": 183443
+            "id": "Morph_2132BDC5_0A11_4CC7_B32F_DB1B45159949",
+            "rev": 207148
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "label_ACAA8D3A_F2D3_44EE_A70A_23D82E77DEC6",
-            "rev": 183440
+            "id": "Label_E77202E1_10A0_4189_B407_92A82EEEC99E",
+            "rev": 221342
           }
         }
       }
     },
-    "F6120647-F3A5-4BDE-8EB3-BA7E034E5968": {
+    "DA7E4EFA-241E-4889-B20B-C07FC56E9579": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -1031,8 +1223,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "morph_72CC8C34_6D6C_41AE_BCCE_8F9061FC5E3A",
-            "rev": 183443
+            "id": "Morph_2132BDC5_0A11_4CC7_B32F_DB1B45159949",
+            "rev": 207148
           }
         },
         "sourceAttrName": {
@@ -1043,8 +1235,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "label_ACAA8D3A_F2D3_44EE_A70A_23D82E77DEC6",
-            "rev": 183440
+            "id": "Label_E77202E1_10A0_4189_B407_92A82EEEC99E",
+            "rev": 221342
           }
         },
         "targetMethodName": {
@@ -1055,7 +1247,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "B144B119-4DF0-4756-A347-7DDF84F833B1",
+            "id": "14FAB939-1A92-432E-B4D0-416788AA24EF",
             "rev": 0
           }
         },
@@ -1070,6 +1262,9 @@
         "converterString": {
           "key": "converterString",
           "value": "() => [\n                    \"defaultLabelStyle\",\n                    \"default\"\n                  ]"
+        },
+        "converter": {
+          "key": "converter"
         }
       },
       "lively.serializer-class-info": {
@@ -1077,109 +1272,41 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499134065237,
+          "lastChange": 1500597770616,
           "lastSuperclassChange": 0
         }
       }
     },
-    "B144B119-4DF0-4756-A347-7DDF84F833B1": {
+    "14FAB939-1A92-432E-B4D0-416788AA24EF": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "morph_72CC8C34_6D6C_41AE_BCCE_8F9061FC5E3A",
-            "rev": 183443
+            "id": "Morph_2132BDC5_0A11_4CC7_B32F_DB1B45159949",
+            "rev": 207148
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "label_ACAA8D3A_F2D3_44EE_A70A_23D82E77DEC6",
-            "rev": 183440
+            "id": "Label_E77202E1_10A0_4189_B407_92A82EEEC99E",
+            "rev": 221342
           }
         }
       }
     },
-    "3B66E656-DFD1-4985-96B8-2DC4E56818A0": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "E03FF0B3-BB86-4E85-9575-8DFB96C84416": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "6B2ACEF7-FFC4-4D8A-8751-66BC4A27FF42": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "morph_38993F61_2506_4026_B2FA_CFC0CCB58799": {
-      "rev": 183444,
+    "Morph_7F9F2521_5C6A_43FB_9907_08D3C5C0A9FE": {
+      "rev": 207149,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1190,17 +1317,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "20377DC6-3B81-4629-AA03-B9C16930EEA0",
+              "id": "1EEAAFD9-9FBD-4FEA-AD26-ED517338FC18",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "EDBEA094-E741-44AA-9DB0-F408221402A5",
+              "id": "4C75E530-68CE-4459-9CC1-006AB8ECEDCA",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "886EFF19-1B59-40C1-B026-49CDB2116A09",
+              "id": "6E9EBBDB-2A84-420F-A183-D0F2007172F7",
               "rev": 0
             }
           ]
@@ -1213,19 +1340,39 @@
           "key": "tooltip",
           "value": "collapse window"
         },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
         "position": {
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(27.0,6.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,13.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
         },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
-              "id": "label_A148E66B_44A2_4884_AAD2_1898B9A95BC3",
-              "rev": 183441
+              "id": "Label_11BB6CD0_872D_4C87_8E45_038EEEF374DC",
+              "rev": 207100
             }
           ]
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -1237,27 +1384,67 @@
         },
         "borderWidth": {
           "key": "borderWidth",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "890259F0-266F-453E-8594-875BB50904CB",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "verbatim": true,
+          "value": {
+            "top": 14,
+            "right": 14,
+            "bottom": 14,
+            "left": 14
           }
         },
         "borderStyle": {
           "key": "borderStyle",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "9F1B2076-BE7E-4BFF-A012-74B92B988526",
-            "rev": 0
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
           }
         },
         "borderColor": {
           "key": "borderColor",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "E396EB04-42FB-42B8-A04A-EF568E6595A9",
-            "rev": 0
+            "top": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "right": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "bottom": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "left": [
+              1,
+              1,
+              1,
+              1
+            ]
           }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         }
       },
       "lively.serializer-class-info": {
@@ -1268,14 +1455,18 @@
             "version": "0.1.0"
           },
           "pathInPackage": "morph.js",
-          "lastChange": 1499134065295,
+          "lastChange": 1500598228374,
           "lastSuperclassChange": 0
         }
       }
     },
-    "20377DC6-3B81-4629-AA03-B9C16930EEA0": {
+    "1EEAAFD9-9FBD-4FEA-AD26-ED517338FC18": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -1288,8 +1479,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "morph_38993F61_2506_4026_B2FA_CFC0CCB58799",
-            "rev": 183444
+            "id": "Morph_7F9F2521_5C6A_43FB_9907_08D3C5C0A9FE",
+            "rev": 207149
           }
         },
         "sourceAttrName": {
@@ -1300,8 +1491,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "window_F9E68982_9710_4577_9474_B7ABED9AD7D6",
-            "rev": 183269
+            "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
+            "rev": 221387
           }
         },
         "targetMethodName": {
@@ -1312,7 +1503,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F934C170-1D2E-4C25-992E-E9D9FE64FE8B",
+            "id": "0B09B0CC-C916-4174-AA03-051442712642",
             "rev": 0
           }
         },
@@ -1330,38 +1521,46 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499134065237,
+          "lastChange": 1500597770616,
           "lastSuperclassChange": 0
         }
       }
     },
-    "F934C170-1D2E-4C25-992E-E9D9FE64FE8B": {
+    "0B09B0CC-C916-4174-AA03-051442712642": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "morph_38993F61_2506_4026_B2FA_CFC0CCB58799",
-            "rev": 183444
+            "id": "Morph_7F9F2521_5C6A_43FB_9907_08D3C5C0A9FE",
+            "rev": 207149
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "window_F9E68982_9710_4577_9474_B7ABED9AD7D6",
-            "rev": 183269
+            "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
+            "rev": 221387
           }
         }
       }
     },
-    "EDBEA094-E741-44AA-9DB0-F408221402A5": {
+    "4C75E530-68CE-4459-9CC1-006AB8ECEDCA": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -1374,8 +1573,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "morph_38993F61_2506_4026_B2FA_CFC0CCB58799",
-            "rev": 183444
+            "id": "Morph_7F9F2521_5C6A_43FB_9907_08D3C5C0A9FE",
+            "rev": 207149
           }
         },
         "sourceAttrName": {
@@ -1386,8 +1585,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "label_A148E66B_44A2_4884_AAD2_1898B9A95BC3",
-            "rev": 183441
+            "id": "Label_11BB6CD0_872D_4C87_8E45_038EEEF374DC",
+            "rev": 207100
           }
         },
         "targetMethodName": {
@@ -1398,7 +1597,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "633747B9-A175-476A-8B34-60F4C4667332",
+            "id": "4A8D364A-A0CD-4281-9689-0C86E61E6C17",
             "rev": 0
           }
         },
@@ -1423,16 +1622,16 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499134065237,
+          "lastChange": 1500597770616,
           "lastSuperclassChange": 0
         }
       }
     },
-    "label_A148E66B_44A2_4884_AAD2_1898B9A95BC3": {
-      "rev": 183441,
+    "Label_11BB6CD0_872D_4C87_8E45_038EEEF374DC": {
+      "rev": 207100,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1445,6 +1644,18 @@
           "key": "name",
           "value": "aLabel"
         },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.0,1.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(11.0,14.0)"
@@ -1452,6 +1663,10 @@
         "submorphs": {
           "key": "submorphs",
           "value": []
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -1464,35 +1679,67 @@
         },
         "borderWidth": {
           "key": "borderWidth",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "5479A8BF-1483-4CF1-8B0A-833DA0C6BF8E",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderRadius": {
           "key": "borderRadius",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "7CCCE648-3431-4C2D-A458-0A8D9D916B82",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderStyle": {
           "key": "borderStyle",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "2BFB8921-F69E-46E6-931F-E3C5C74710C7",
-            "rev": 0
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
           }
         },
         "borderColor": {
           "key": "borderColor",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "1294E780-0A74-410B-A4FA-D7132C5CC71E",
-            "rev": 0
+            "top": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "right": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "bottom": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "left": [
+              1,
+              1,
+              1,
+              1
+            ]
           }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         },
         "textAndAttributes": {
           "key": "textAndAttributes",
@@ -1500,10 +1747,22 @@
             "",
             {
               "__ref__": true,
-              "id": "CD90FB43-CE3E-4F8F-8FBF-DBEB9F3A5A17",
+              "id": "56D2D073-A949-452B-8F5A-18B7667D3547",
               "rev": 0
             }
           ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 14
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
         }
       },
       "lively.serializer-class-info": {
@@ -1514,110 +1773,18 @@
             "version": "0.1.0"
           },
           "pathInPackage": "text/label.js",
-          "lastChange": 1499134065269,
-          "lastSuperclassChange": 1499134065295
+          "lastChange": 1500597770685,
+          "lastSuperclassChange": 1500598228374
         }
       }
     },
-    "5479A8BF-1483-4CF1-8B0A-833DA0C6BF8E": {
+    "56D2D073-A949-452B-8F5A-18B7667D3547": {
       "rev": 0,
       "props": {
-        "top": {
-          "key": "top",
+        "_rev": {
+          "key": "_rev",
           "value": 0
         },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "7CCCE648-3431-4C2D-A458-0A8D9D916B82": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "2BFB8921-F69E-46E6-931F-E3C5C74710C7": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "1294E780-0A74-410B-A4FA-D7132C5CC71E": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "CD90FB43-CE3E-4F8F-8FBF-DBEB9F3A5A17": {
-      "rev": 0,
-      "props": {
         "fontFamily": {
           "key": "fontFamily",
           "value": ""
@@ -1630,30 +1797,38 @@
         }
       }
     },
-    "633747B9-A175-476A-8B34-60F4C4667332": {
+    "4A8D364A-A0CD-4281-9689-0C86E61E6C17": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "morph_38993F61_2506_4026_B2FA_CFC0CCB58799",
-            "rev": 183444
+            "id": "Morph_7F9F2521_5C6A_43FB_9907_08D3C5C0A9FE",
+            "rev": 207149
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "label_A148E66B_44A2_4884_AAD2_1898B9A95BC3",
-            "rev": 183441
+            "id": "Label_11BB6CD0_872D_4C87_8E45_038EEEF374DC",
+            "rev": 207100
           }
         }
       }
     },
-    "886EFF19-1B59-40C1-B026-49CDB2116A09": {
+    "6E9EBBDB-2A84-420F-A183-D0F2007172F7": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -1666,8 +1841,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "morph_38993F61_2506_4026_B2FA_CFC0CCB58799",
-            "rev": 183444
+            "id": "Morph_7F9F2521_5C6A_43FB_9907_08D3C5C0A9FE",
+            "rev": 207149
           }
         },
         "sourceAttrName": {
@@ -1678,8 +1853,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "label_A148E66B_44A2_4884_AAD2_1898B9A95BC3",
-            "rev": 183441
+            "id": "Label_11BB6CD0_872D_4C87_8E45_038EEEF374DC",
+            "rev": 207100
           }
         },
         "targetMethodName": {
@@ -1690,7 +1865,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "17FA6D36-A9A8-4985-80C4-8125A17BAFF8",
+            "id": "4896770C-1EF2-4B96-BDC1-869064B81392",
             "rev": 0
           }
         },
@@ -1715,109 +1890,41 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499134065237,
+          "lastChange": 1500597770616,
           "lastSuperclassChange": 0
         }
       }
     },
-    "17FA6D36-A9A8-4985-80C4-8125A17BAFF8": {
+    "4896770C-1EF2-4B96-BDC1-869064B81392": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "morph_38993F61_2506_4026_B2FA_CFC0CCB58799",
-            "rev": 183444
+            "id": "Morph_7F9F2521_5C6A_43FB_9907_08D3C5C0A9FE",
+            "rev": 207149
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "label_A148E66B_44A2_4884_AAD2_1898B9A95BC3",
-            "rev": 183441
+            "id": "Label_11BB6CD0_872D_4C87_8E45_038EEEF374DC",
+            "rev": 207100
           }
         }
       }
     },
-    "890259F0-266F-453E-8594-875BB50904CB": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "9F1B2076-BE7E-4BFF-A012-74B92B988526": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "E396EB04-42FB-42B8-A04A-EF568E6595A9": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "morph_FAEEA231_BE04_477A_88B2_F53678099105": {
-      "rev": 183445,
+    "Morph_99AC022A_A362_49C5_A981_1C6B396F9AF1": {
+      "rev": 207150,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1828,17 +1935,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "E5DE14FE-63B6-4C45-8FC0-664C63F15E1B",
+              "id": "E19AB3B3-2E78-4E90-ABB2-CF933FF2779D",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "6A8E97E3-B717-4A9C-A841-7BCEC8C331D0",
+              "id": "0EFFCBBA-BF13-4D63-B229-302EA67630FD",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "BA6FB46E-ED1E-4317-91B1-9A2AD44B6031",
+              "id": "A014FA96-8A08-4416-9456-BA3F601E318B",
               "rev": 0
             }
           ]
@@ -1851,19 +1958,39 @@
           "key": "tooltip",
           "value": "Open Window Menu"
         },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
         "position": {
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(48.0,6.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,13.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
         },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
-              "id": "label_5D58A7A5_FDDF_4FB7_ABAE_3EED2E048C8C",
-              "rev": 183442
+              "id": "Label_12F69C2A_9D09_4138_B994_410136F23A1A",
+              "rev": 207142
             }
           ]
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -1875,27 +2002,67 @@
         },
         "borderWidth": {
           "key": "borderWidth",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "B98AB110-45FA-4EA3-8281-FDC78765646B",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "verbatim": true,
+          "value": {
+            "top": 14,
+            "right": 14,
+            "bottom": 14,
+            "left": 14
           }
         },
         "borderStyle": {
           "key": "borderStyle",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "5EC77AA1-D1F9-40FE-B8DC-33864FF05392",
-            "rev": 0
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
           }
         },
         "borderColor": {
           "key": "borderColor",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "4DA49D34-7381-45EE-B2FB-965DBDC45A29",
-            "rev": 0
+            "top": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "right": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "bottom": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "left": [
+              1,
+              1,
+              1,
+              1
+            ]
           }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         }
       },
       "lively.serializer-class-info": {
@@ -1906,14 +2073,18 @@
             "version": "0.1.0"
           },
           "pathInPackage": "morph.js",
-          "lastChange": 1499134065295,
+          "lastChange": 1500598228374,
           "lastSuperclassChange": 0
         }
       }
     },
-    "E5DE14FE-63B6-4C45-8FC0-664C63F15E1B": {
+    "E19AB3B3-2E78-4E90-ABB2-CF933FF2779D": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -1926,8 +2097,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "morph_FAEEA231_BE04_477A_88B2_F53678099105",
-            "rev": 183445
+            "id": "Morph_99AC022A_A362_49C5_A981_1C6B396F9AF1",
+            "rev": 207150
           }
         },
         "sourceAttrName": {
@@ -1938,8 +2109,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "window_F9E68982_9710_4577_9474_B7ABED9AD7D6",
-            "rev": 183269
+            "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
+            "rev": 221387
           }
         },
         "targetMethodName": {
@@ -1950,7 +2121,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D53515AA-6E0B-4F94-91D2-56BDF7E9A800",
+            "id": "448710D9-D1F8-46B9-AF08-CD84A704B746",
             "rev": 0
           }
         },
@@ -1968,38 +2139,46 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499134065237,
+          "lastChange": 1500597770616,
           "lastSuperclassChange": 0
         }
       }
     },
-    "D53515AA-6E0B-4F94-91D2-56BDF7E9A800": {
+    "448710D9-D1F8-46B9-AF08-CD84A704B746": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "morph_FAEEA231_BE04_477A_88B2_F53678099105",
-            "rev": 183445
+            "id": "Morph_99AC022A_A362_49C5_A981_1C6B396F9AF1",
+            "rev": 207150
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "window_F9E68982_9710_4577_9474_B7ABED9AD7D6",
-            "rev": 183269
+            "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
+            "rev": 221387
           }
         }
       }
     },
-    "6A8E97E3-B717-4A9C-A841-7BCEC8C331D0": {
+    "0EFFCBBA-BF13-4D63-B229-302EA67630FD": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -2012,8 +2191,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "morph_FAEEA231_BE04_477A_88B2_F53678099105",
-            "rev": 183445
+            "id": "Morph_99AC022A_A362_49C5_A981_1C6B396F9AF1",
+            "rev": 207150
           }
         },
         "sourceAttrName": {
@@ -2024,8 +2203,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "label_5D58A7A5_FDDF_4FB7_ABAE_3EED2E048C8C",
-            "rev": 183442
+            "id": "Label_12F69C2A_9D09_4138_B994_410136F23A1A",
+            "rev": 207142
           }
         },
         "targetMethodName": {
@@ -2036,7 +2215,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "99DB13DA-97F8-4EF7-B936-FB2B51BB8EB4",
+            "id": "C3A7164A-B262-4271-AB70-F45D46B53F72",
             "rev": 0
           }
         },
@@ -2061,16 +2240,16 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499134065237,
+          "lastChange": 1500597770616,
           "lastSuperclassChange": 0
         }
       }
     },
-    "label_5D58A7A5_FDDF_4FB7_ABAE_3EED2E048C8C": {
-      "rev": 183442,
+    "Label_12F69C2A_9D09_4138_B994_410136F23A1A": {
+      "rev": 207142,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2083,6 +2262,18 @@
           "key": "name",
           "value": "aLabel"
         },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.0,1.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(12.0,14.0)"
@@ -2090,6 +2281,10 @@
         "submorphs": {
           "key": "submorphs",
           "value": []
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -2102,35 +2297,67 @@
         },
         "borderWidth": {
           "key": "borderWidth",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "96FB9DDD-3858-4BB8-AD88-08E13136DCC2",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderRadius": {
           "key": "borderRadius",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "BB2E6CC7-7752-4A40-A5CA-C6C89DE50844",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderStyle": {
           "key": "borderStyle",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "6F28A512-0DA5-42BB-AD16-4BC79A5276D0",
-            "rev": 0
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
           }
         },
         "borderColor": {
           "key": "borderColor",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "D52FDBB3-08B6-423B-88BF-780C34A7A501",
-            "rev": 0
+            "top": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "right": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "bottom": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "left": [
+              1,
+              1,
+              1,
+              1
+            ]
           }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         },
         "textAndAttributes": {
           "key": "textAndAttributes",
@@ -2138,10 +2365,22 @@
             "",
             {
               "__ref__": true,
-              "id": "F51CF587-A695-4889-B4E2-BC2C1169F9DE",
+              "id": "E8F1C0DB-F09B-41E8-BFE4-5B7E917066C3",
               "rev": 0
             }
           ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 14
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
         }
       },
       "lively.serializer-class-info": {
@@ -2152,110 +2391,18 @@
             "version": "0.1.0"
           },
           "pathInPackage": "text/label.js",
-          "lastChange": 1499134065269,
-          "lastSuperclassChange": 1499134065295
+          "lastChange": 1500597770685,
+          "lastSuperclassChange": 1500598228374
         }
       }
     },
-    "96FB9DDD-3858-4BB8-AD88-08E13136DCC2": {
+    "E8F1C0DB-F09B-41E8-BFE4-5B7E917066C3": {
       "rev": 0,
       "props": {
-        "top": {
-          "key": "top",
+        "_rev": {
+          "key": "_rev",
           "value": 0
         },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "BB2E6CC7-7752-4A40-A5CA-C6C89DE50844": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "6F28A512-0DA5-42BB-AD16-4BC79A5276D0": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "D52FDBB3-08B6-423B-88BF-780C34A7A501": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "F51CF587-A695-4889-B4E2-BC2C1169F9DE": {
-      "rev": 0,
-      "props": {
         "fontFamily": {
           "key": "fontFamily",
           "value": ""
@@ -2268,30 +2415,38 @@
         }
       }
     },
-    "99DB13DA-97F8-4EF7-B936-FB2B51BB8EB4": {
+    "C3A7164A-B262-4271-AB70-F45D46B53F72": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "morph_FAEEA231_BE04_477A_88B2_F53678099105",
-            "rev": 183445
+            "id": "Morph_99AC022A_A362_49C5_A981_1C6B396F9AF1",
+            "rev": 207150
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "label_5D58A7A5_FDDF_4FB7_ABAE_3EED2E048C8C",
-            "rev": 183442
+            "id": "Label_12F69C2A_9D09_4138_B994_410136F23A1A",
+            "rev": 207142
           }
         }
       }
     },
-    "BA6FB46E-ED1E-4317-91B1-9A2AD44B6031": {
+    "A014FA96-8A08-4416-9456-BA3F601E318B": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -2304,8 +2459,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "morph_FAEEA231_BE04_477A_88B2_F53678099105",
-            "rev": 183445
+            "id": "Morph_99AC022A_A362_49C5_A981_1C6B396F9AF1",
+            "rev": 207150
           }
         },
         "sourceAttrName": {
@@ -2316,8 +2471,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "label_5D58A7A5_FDDF_4FB7_ABAE_3EED2E048C8C",
-            "rev": 183442
+            "id": "Label_12F69C2A_9D09_4138_B994_410136F23A1A",
+            "rev": 207142
           }
         },
         "targetMethodName": {
@@ -2328,7 +2483,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "FC7F023B-9177-478B-A67F-88C7A3EDBDEE",
+            "id": "3537124C-833D-45FD-A5FE-4DC0CE595B73",
             "rev": 0
           }
         },
@@ -2353,44 +2508,119 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499134065237,
+          "lastChange": 1500597770616,
           "lastSuperclassChange": 0
         }
       }
     },
-    "FC7F023B-9177-478B-A67F-88C7A3EDBDEE": {
+    "3537124C-833D-45FD-A5FE-4DC0CE595B73": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "morph_FAEEA231_BE04_477A_88B2_F53678099105",
-            "rev": 183445
+            "id": "Morph_99AC022A_A362_49C5_A981_1C6B396F9AF1",
+            "rev": 207150
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "label_5D58A7A5_FDDF_4FB7_ABAE_3EED2E048C8C",
-            "rev": 183442
+            "id": "Label_12F69C2A_9D09_4138_B994_410136F23A1A",
+            "rev": 207142
           }
         }
       }
     },
-    "B98AB110-45FA-4EA3-8281-FDC78765646B": {
+    "25713162-D0DE-4C23-970A-20F09C960312": {
+      "rev": 0,
+      "props": {
+        "applyRequests": {
+          "key": "applyRequests",
+          "value": []
+        },
+        "border": {
+          "key": "border",
+          "value": {
+            "__ref__": true,
+            "id": "8652F67D-DA4F-4875-9768-EADD4C4350CD",
+            "rev": 0
+          }
+        },
+        "_spacing": {
+          "key": "_spacing",
+          "value": 6
+        },
+        "ignore": {
+          "key": "ignore",
+          "value": []
+        },
+        "lastBoundsExtent": {
+          "key": "lastBoundsExtent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(69.0,25.0)"
+        },
+        "active": {
+          "key": "active",
+          "value": false
+        },
+        "container": {
+          "key": "container",
+          "value": {
+            "__ref__": true,
+            "id": "Morph_8780B581_A9F4_46F7_9316_00F42A67C2FF",
+            "rev": 207151
+          }
+        },
+        "_autoResize": {
+          "key": "_autoResize",
+          "value": true
+        },
+        "onScheduleApply": {
+          "key": "onScheduleApply"
+        },
+        "layoutOrder": {
+          "key": "layoutOrder"
+        },
+        "layoutOrderSource": {
+          "key": "layoutOrderSource",
+          "value": "\"function FloatLayout_layoutOrder_(aMorph) {\\n              return aMorph.left;\\n            }\""
+        },
+        "_direction": {
+          "key": "_direction",
+          "value": "leftToRight"
+        },
+        "maxHeight": {
+          "key": "maxHeight",
+          "value": 0
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "HorizontalLayout",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "layout.js",
+          "lastChange": 1500597771413,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "8652F67D-DA4F-4875-9768-EADD4C4350CD": {
       "rev": 0,
       "props": {
         "top": {
           "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
           "value": 0
         },
         "left": {
@@ -2401,157 +2631,14 @@
           "key": "right",
           "value": 0
         },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "5EC77AA1-D1F9-40FE-B8DC-33864FF05392": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "4DA49D34-7381-45EE-B2FB-965DBDC45A29": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "29BCA895-6CD1-4DC6-9366-58BBC91D9F16": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": 0
-        },
         "bottom": {
           "key": "bottom",
           "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
         }
       }
     },
-    "BBAC810D-196F-4D37-9A94-272774B6A031": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "AFA4B910-C551-4351-8CC3-E8E6416593D1": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "60195462-F051-4EE3-9C1C-46AF7A26B3D9": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "label_4B59A174_54FB_469D_9B3E_6DBA91991990": {
-      "rev": 183451,
+    "Label_2BAC4E10_2227_4FD8_9A16_CC55BDA1AABC": {
+      "rev": 221392,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2562,7 +2649,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "2EFC7976-2503-4596-A10F-82DCD44325A4",
+              "id": "A0869C8E-DC2C-4C0E-9D32-647F14C160FB",
               "rev": 0
             }
           ]
@@ -2579,6 +2666,10 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(213.3,4.5)"
         },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(71.4,16.0)"
@@ -2586,6 +2677,10 @@
         "submorphs": {
           "key": "submorphs",
           "value": []
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -2597,35 +2692,67 @@
         },
         "borderWidth": {
           "key": "borderWidth",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "BC0B1E04-879D-4F77-85C0-4DE16153B39E",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderRadius": {
           "key": "borderRadius",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "3ED6B925-78E0-4A5B-9498-49FDBFCC99A2",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderStyle": {
           "key": "borderStyle",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "8FFF2809-A611-4DDB-90A1-063CA7E38722",
-            "rev": 0
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
           }
         },
         "borderColor": {
           "key": "borderColor",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "D6CA5901-DCA9-4166-94A2-FF325E8F81A4",
-            "rev": 0
+            "top": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "right": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "bottom": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "left": [
+              1,
+              1,
+              1,
+              1
+            ]
           }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         },
         "textAndAttributes": {
           "key": "textAndAttributes",
@@ -2633,7 +2760,7 @@
             "Google Maps",
             {
               "__ref__": true,
-              "id": "C0848D4E-56D1-4D16-8BBA-6A56E4309412",
+              "id": "BFAC2B8B-441B-4704-A573-D101209FEBA9",
               "rev": 0
             }
           ]
@@ -2641,6 +2768,10 @@
         "padding": {
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,2,0,-2)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
         }
       },
       "lively.serializer-class-info": {
@@ -2651,14 +2782,18 @@
             "version": "0.1.0"
           },
           "pathInPackage": "text/label.js",
-          "lastChange": 1499134065269,
-          "lastSuperclassChange": 1499134065295
+          "lastChange": 1500597770685,
+          "lastSuperclassChange": 1500598228374
         }
       }
     },
-    "2EFC7976-2503-4596-A10F-82DCD44325A4": {
+    "A0869C8E-DC2C-4C0E-9D32-647F14C160FB": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -2671,8 +2806,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "label_4B59A174_54FB_469D_9B3E_6DBA91991990",
-            "rev": 183451
+            "id": "Label_2BAC4E10_2227_4FD8_9A16_CC55BDA1AABC",
+            "rev": 221392
           }
         },
         "sourceAttrName": {
@@ -2683,8 +2818,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "window_F9E68982_9710_4577_9474_B7ABED9AD7D6",
-            "rev": 183269
+            "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
+            "rev": 221387
           }
         },
         "targetMethodName": {
@@ -2695,7 +2830,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "CDA52484-D37E-4965-8089-88A4F08F2E7D",
+            "id": "CC16D790-2CC2-47DC-AC3E-B9DFF15EC3DC",
             "rev": 0
           }
         },
@@ -2713,137 +2848,50 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499134065237,
+          "lastChange": 1500597770616,
           "lastSuperclassChange": 0
         }
       }
     },
-    "CDA52484-D37E-4965-8089-88A4F08F2E7D": {
+    "CC16D790-2CC2-47DC-AC3E-B9DFF15EC3DC": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "label_4B59A174_54FB_469D_9B3E_6DBA91991990",
-            "rev": 183451
+            "id": "Label_2BAC4E10_2227_4FD8_9A16_CC55BDA1AABC",
+            "rev": 221392
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "window_F9E68982_9710_4577_9474_B7ABED9AD7D6",
-            "rev": 183269
+            "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
+            "rev": 221387
           }
         }
       }
     },
-    "BC0B1E04-879D-4F77-85C0-4DE16153B39E": {
+    "BFAC2B8B-441B-4704-A573-D101209FEBA9": {
       "rev": 0,
       "props": {
-        "top": {
-          "key": "top",
+        "_rev": {
+          "key": "_rev",
           "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
         }
       }
     },
-    "3ED6B925-78E0-4A5B-9498-49FDBFCC99A2": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "8FFF2809-A611-4DDB-90A1-063CA7E38722": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "D6CA5901-DCA9-4166-94A2-FF325E8F81A4": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "C0848D4E-56D1-4D16-8BBA-6A56E4309412": {
-      "rev": 0,
-      "props": {}
-    },
-    "morph_C0C6D364_9FF0_4C3E_9890_E62CCED47713": {
-      "rev": 183448,
+    "Morph_D425985A_3226_423D_A9AE_F4C73AA73175": {
+      "rev": 221389,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2854,7 +2902,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "A20A9069-7CC4-483C-8564-16AAFB934200",
+              "id": "17872D90-E276-4C47-BAF2-1C813F1742D1",
               "rev": 0
             }
           ]
@@ -2871,6 +2919,10 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(478.0,398.0)"
         },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(20.0,20.0)"
@@ -2883,6 +2935,10 @@
           "key": "submorphs",
           "value": []
         },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -2892,35 +2948,67 @@
         },
         "borderWidth": {
           "key": "borderWidth",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "EC6AFE08-B8A7-48F0-8D97-D64F02A0E1DF",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderRadius": {
           "key": "borderRadius",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "D36B25F9-8594-4B4C-96A7-47947725F256",
-            "rev": 0
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
           }
         },
         "borderStyle": {
           "key": "borderStyle",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "A05C30AE-5020-4120-877A-716BA26E9D1D",
-            "rev": 0
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
           }
         },
         "borderColor": {
           "key": "borderColor",
+          "verbatim": true,
           "value": {
-            "__ref__": true,
-            "id": "12C1987D-77F9-43A1-BF46-ED46732E77F3",
-            "rev": 0
+            "top": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "right": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "bottom": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "left": [
+              1,
+              1,
+              1,
+              1
+            ]
           }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         }
       },
       "lively.serializer-class-info": {
@@ -2931,14 +3019,18 @@
             "version": "0.1.0"
           },
           "pathInPackage": "morph.js",
-          "lastChange": 1499134065295,
+          "lastChange": 1500598228374,
           "lastSuperclassChange": 0
         }
       }
     },
-    "A20A9069-7CC4-483C-8564-16AAFB934200": {
+    "17872D90-E276-4C47-BAF2-1C813F1742D1": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -2951,8 +3043,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "morph_C0C6D364_9FF0_4C3E_9890_E62CCED47713",
-            "rev": 183448
+            "id": "Morph_D425985A_3226_423D_A9AE_F4C73AA73175",
+            "rev": 221389
           }
         },
         "sourceAttrName": {
@@ -2963,8 +3055,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "window_F9E68982_9710_4577_9474_B7ABED9AD7D6",
-            "rev": 183269
+            "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
+            "rev": 221387
           }
         },
         "targetMethodName": {
@@ -2975,7 +3067,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "BEE542EA-BB14-4675-BE48-63613CD64CA8",
+            "id": "BFB2FDD4-109F-4FA7-822F-E5527DD27F2D",
             "rev": 0
           }
         },
@@ -3000,152 +3092,36 @@
         "module": {
           "package": {
             "name": "lively.bindings",
-            "version": "0.1.1"
+            "version": "0.1.2"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1499134065237,
+          "lastChange": 1500597770616,
           "lastSuperclassChange": 0
         }
       }
     },
-    "BEE542EA-BB14-4675-BE48-63613CD64CA8": {
+    "BFB2FDD4-109F-4FA7-822F-E5527DD27F2D": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "morph_C0C6D364_9FF0_4C3E_9890_E62CCED47713",
-            "rev": 183448
+            "id": "Morph_D425985A_3226_423D_A9AE_F4C73AA73175",
+            "rev": 221389
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "window_F9E68982_9710_4577_9474_B7ABED9AD7D6",
-            "rev": 183269
+            "id": "Window_C073ACBA_9B04_43D7_9E40_F32B95AADCC7",
+            "rev": 221387
           }
-        }
-      }
-    },
-    "EC6AFE08-B8A7-48F0-8D97-D64F02A0E1DF": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "D36B25F9-8594-4B4C-96A7-47947725F256": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "A05C30AE-5020-4120-877A-716BA26E9D1D": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "12C1987D-77F9-43A1-BF46-ED46732E77F3": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "left": {
-          "key": "left",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "right": {
-          "key": "right",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
-        },
-        "valueOf": {
-          "key": "valueOf"
-        }
-      }
-    },
-    "1819BB9C-6F05-42FF-8D32-E1BF824F6D49": {
-      "rev": 0,
-      "props": {
-        "top": {
-          "key": "top",
-          "value": "solid"
-        },
-        "left": {
-          "key": "left",
-          "value": "solid"
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": "solid"
-        },
-        "right": {
-          "key": "right",
-          "value": "solid"
-        },
-        "valueOf": {
-          "key": "valueOf"
         }
       }
     }
@@ -3155,7 +3131,7 @@
     "local://lively-object-modules/": {
       "GoogleMaps": {
         "package.json": "{\n  \"name\": \"GoogleMaps\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
-        "index.js": "import { HTMLMorph } from \"lively.morphic\";\nimport { debounceNamed, waitForAll } from \"lively.lang/function.js\";\nimport { loadViaScript } from \"lively.resources/index.js\";\n\nimport { clone } from \"lively.lang/object.js\";\nimport { batchify, flatten } from \"lively.lang/array.js\";\nimport { delay } from \"lively.lang/promise.js\";\n\nexport default class GoogleMaps extends HTMLMorph {\n\n\n  static get properties() {\n    return {\n\n      draggable: {},\n\n      mapState: {\n        after: [\"id\"],\n\n        initialize() {\n          this.mapState = {\n            __dont_serialize__: ['map', 'markers', 'polylines'],\n            map: null,\n            markers: [],\n            polylines: [],\n            canvasId: \"map-canvas-\" + this.id,\n            mapOptions: {\n              // Bay area\n              center: {lat: 37.6195297039513, lng: 237.68678945922852},\n              zoom: 10,\n              mapTypeId: 'roadmap'\n            },\n            ...this.mapState\n          }\n        }\n      },\n\n      gmaps: {\n        derived: true, readOnly: true,\n        get() { return window.google ? window.google.maps : null; }\n      },\n\n      gevent: {\n        derived: true, readOnly: true, after: [\"gmaps\"],\n        get() { let {gmaps} = gmaps; return gmaps ? gmaps.event : null; }\n      },\n\n      extent: {\n        set(val) {\n          this.setProperty(\"extent\", val);\n          var {mapState} = this;\n          debounceNamed('on-map-resize-' + this.id, 200, () =>\n            window.google.maps.event.trigger(mapState.map, 'resize'))();\n        }\n      }\n    }\n  }\n\n\n  __serialize__(pool, serializedObjMap, path) {\n    // c=this.copy()\n    var s = this.mapState;\n    if (s.map) {\n      var map = s.map, opts = s.mapOptions, center = map.getCenter();\n      opts.center = {lng: center.lng(), lat: center.lat()};\n      opts.mapTypeId = s.map.getMapTypeId();\n      opts.zoom = s.map.getZoom();\n    }\n    return null;\n  }\n\n  onLoad() {\n    this.init();\n  }\n\n  async init() {\n    try {\n      this.reset();\n      await this.loadGoogleMapsAPI();\n      await this.loadMap()\n    } catch (err) {\n      console.error(`Error initializing google maps:`, err);\n    }\n  }\n\n  reset() {\n    if (this.mapState.map) this.gevent.clearInstanceListeners(this.mapState.map);\n    if (this.mapState.markers && this.mapState.markers.length) this.removeAllMarkers();\n    if (this.mapState.polylines && this.mapState.polylines.length) this.removeAllPolylines();\n    this.propertiesAndPropertySettings().properties.mapState.initialize.call(this)\n    this.html = '<div style=\"height:100%\" id=\"' + this.mapState.canvasId + '\"/>';\n    this.name = 'GoogleMapsCanvas'\n\n    // this.getWindow().copyToPartsBinWithUserRequest()\n  }\n\n  ensureMapOptions(mapState) {\n    // mapState = this.mapState\n    let {gmaps} = this;\n    if (!this.gmaps) return null;\n    var opts = {...mapState.mapOptions};\n    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n    // center\n    if (!opts.center) {\n      opts.center = new gmaps.LatLng(-34.397, 150.644);\n    } else if (!(opts.center instanceof gmaps.LatLng)) {\n      opts.center = new gmaps.LatLng(opts.center.lat || -34.397, opts.center.lng || 150.644);\n    }\n    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n    // mapType\n    if (!opts.mapTypeId) {\n      opts.mapTypeId = gmaps.MapTypeId.ROADMAP;\n    } else if (typeof opts.mapTypeId === \"string\") {\n      opts.mapTypeId = gmaps.MapTypeId[opts.mapTypeId.toUpperCase()]\n    }\n    // misc\n    opts.zoom = opts.zoom || 8;\n    return opts;\n  }\n\n  addMarker(posOrMarker, options) {\n    options = options || {};\n\n    var marker,\n        map = this.mapState.map,\n        ev = this.gevent;\n\n    if (posOrMarker instanceof this.gmaps.Marker) {\n      marker = posOrMarker;\n    } else {\n      var pos = posOrMarker,\n          latLng = pos instanceof this.gmaps.LatLng ?\n          pos : new this.gmaps.LatLng(pos.lat || pos.latitude || pos.x, pos.lng || pos.longitude || pos.y);\n      marker = new this.gmaps.Marker({position: latLng});\n    }\n\n\n    marker.setMap(map);\n    if (!this.mapState.markers) this.mapState.markers = [];\n    this.mapState.markers.push(marker);\n\n    if (options.onMouseDown) {\n      this.gevent.addListener(marker, 'click', function(evt) {\n        options.onMouseDown(evt, marker);\n      });\n    }\n\n    if (options.icon) marker.setIcon(options.icon);\n\n    if (options.info) {\n      marker.info = new this.gmaps.InfoWindow({content: options.info.content || options.info});\n\n      if (options.info.hover) {\n        ev.addListener(marker.info, 'closeclick', function () {\n          marker.info.stayOpen = false;\n        });\n        ev.addListener(marker, 'mouseout', function () {\n          if (!marker.info.stayOpen) marker.info.close();\n        });\n        ev.addListener(marker, 'mouseover', function () {\n          marker.info.open(map, marker);\n        });\n        ev.addListener(marker, 'click', function () {\n          marker.info.stayOpen = true;\n        });\n      } else {\n        ev.addListener(marker, 'click', function () {\n          marker.info.open(map, marker);\n        });\n      }\n    }\n\n    return marker;\n  }\n\n\n  addMarkerForAddress(addressString, options) {\n    // this.addMarkerForAddress('1065 Greco Ave, Sunnyvale', {\n    //         info: {content: 'test '.times(10), hover: true},\n    //     onMouseDown: function(evt, marker, options) { show('click'); }})\n    // this.removeAllMarkers()\n    var gc = new this.gmaps.Geocoder();\n    gc.geocode({address: addressString}, (result) => {\n      if (!result || result.length == 0) {\n        // alert('nothing found')\n        return;\n      }\n      var pos = result[0].geometry.location;\n      this.addMarker(pos, options);\n    });\n  }\n\n\n  addMarkers(positions, opts) {\n    positions.forEach((p) => {\n      var posOpts = clone(opts || {});\n      if (p.onMouseDown) {\n        posOpts.onMouseDown = p.onMouseDown;\n        delete p.onMouseDown;\n      }\n      if (p) this.addMarker(p, posOpts);\n    });\n  }\n\n  addMarkersForAddresses(adresses, options) {\n    adresses.forEach((ea, i) =>\n      this.addMarkerForAddress(ea, options ? options[i]: {}));\n  }\n\n  addPolyline(pathOrPolyline, options) {\n\n    var polyline;\n\n    if (pathOrPolyline instanceof this.gmaps.Polyline) {\n      polyline = pathOrPolyline;\n    } else {\n      // Polylines should be encoded as in https://developers.google.com/maps/documentation/utilities/polylineutility\n      var path = pathOrPolyline;\n      if (typeof path === \"string\") {\n        path = this.gmaps.geometry.encoding.decodePath(path);\n      }\n\n      polyline = new this.gmaps.Polyline({\n        path: path,\n        geodesic: true,\n        strokeColor: '#FF0000',\n        strokeOpacity: 1.0,\n        strokeWeight: 2\n      });\n    }\n\n    if (!this.mapState.polylines) this.mapState.polylines = [];\n    this.mapState.polylines.push(polyline);\n\n    polyline.setMap(this.mapState.map);\n\n    return polyline;\n  }\n\n\n  getElevationAlongPolyline(polyline, thenDo) {\n\n    // Elevation service issue, see http://stackoverflow.com/questions/11420176/elevation-service-unknown-error\n    // we need to break up path that are too long\n\n    var batches = batchify(\n          polyline.getPath().getArray(),\n          function batchConstrained(batch) { return batch.length <= 200; }),\n        samples = 256,\n        samplesPerBatch  = Math.ceil(samples / batches.length),\n        elevator = new this.gmaps.ElevationService();\n\n    waitForAll(\n      batches.map(function(batch) {\n\n        var pathRequest = {\n          'path': batch,\n          'samples': samplesPerBatch\n        }\n\n        return function(n) {\n          // withElevationDo(batch, {samples: samplesPerBatch}, n);\n          elevator.getElevationAlongPath(pathRequest, function(results, status) {\n            if (status != this.gmaps.ElevationStatus.OK) { n(status); }\n            else n(null, results);\n          });\n        }\n      }), (err, results) => thenDo(err, results && flatten(results)));\n  }\n\n  async loadGoogleMapsAPI(attempt = 0) {\n    if (attempt >= 1000)\n      throw new Error(`Failed loading google maps`);\n\n    // await this.init();\n    if (!!this.gmaps) {\n      if (!this.gmaps.Load) return; // loaded\n      await delay(300); return this.loadGoogleMapsAPI(attempt + 1);\n    }\n\n    var initFuncName = 'google_maps_init';\n    if (window[initFuncName]) {\n      await delay(300); return this.loadGoogleMapsAPI(attempt + 1);\n    }\n\n    function initGoogle() {\n      console.log('Google Maps API loaded');\n      delete window[initFuncName];\n    }\n    window[initFuncName] = initGoogle;\n    var url = 'https://maps.googleapis.com/maps/api/js?'\n    + 'libraries=geometry,places&'\n    + 'key=AIzaSyCqIO22KtIs_lxhyhDJf-MpwvFIx8n9Z-4&'\n    + 'sensor=false&callback=' + initFuncName;\n    loadViaScript(url);\n    await delay(100);\n    return this.loadGoogleMapsAPI(attempt + 1);\n  }\n\n\n  loadMap() {\n    if (typeof window.google === 'undefined') {\n      this.setStatusMessage('Trying to initialize Google Map but google API not loaded!');\n      return;\n    }\n    var mapOptions = this.ensureMapOptions(this.mapState);\n    this.mapState.map = new this.gmaps.Map(\n    document.getElementById(this.mapState.canvasId), mapOptions);\n  }\n\n\n  removeAllMarkers() {\n    // this.removeAllMarkers();\n    if (!this.mapState.markers || !this.mapState.markers.length) return;\n    var m; while ((m = this.mapState.markers.shift())) {\n      this.gevent.clearInstanceListeners(m);\n      m.setMap(null);\n    }\n  }\n\n\n  removeAllPolylines() {\n    // this.removeAllMarkers();\n    if (!this.mapState.polylines || !this.mapState.polylines.length) return;\n    var m; while ((m = this.mapState.polylines.shift())) {\n      this.gevent.clearInstanceListeners(m);\n      m.setMap(null);\n    }\n  }\n\n\n  removePolyline(polyline) {\n    if (this.mapState.polylines) {\n      this.mapState.polylines = this.mapState.polylines.without(polyline);\n    }\n\n    this.gevent.clearInstanceListeners(polyline);\n    polyline.setMap(null);\n  }\n\n}\n\n"
+        "index.js": "import { HTMLMorph } from \"lively.morphic\";\nimport { debounceNamed, waitForAll } from \"lively.lang/function.js\";\nimport { loadViaScript } from \"lively.resources/index.js\";\n\nimport { clone } from \"lively.lang/object.js\";\nimport { batchify, flatten } from \"lively.lang/array.js\";\nimport { delay, waitFor } from \"lively.lang/promise.js\";\n\nexport default class GoogleMaps extends HTMLMorph {\n\n  static get properties() {\n    return {\n\n      draggable: {},\n\n      mapState: {\n        after: [],\n\n        initialize() {\n          this.mapState = {\n            __dont_serialize__: ['map', 'markers', 'polylines'],\n            map: null,\n            markers: [],\n            polylines: [],\n            canvasId: \"map-canvas-\" + this.id,\n            mapOptions: {\n              // Bay area\n              center: {lat: 37.6195297039513, lng: 237.68678945922852},\n              zoom: 10,\n              mapTypeId: 'roadmap'\n            },\n            ...this.mapState\n          }\n        }\n      },\n\n      zoom: {\n        derived: true, after: [\"mapState\"],\n        get() { let {map} = this.mapState; return map ? map.getZoom() : 1; },\n        set(val) {\n          waitFor(15000, () => this.mapState.map).then(map => map.setZoom(val));\n        },\n      },\n\n      gmaps: {\n        derived: true, readOnly: true,\n        get() { return window.google ? window.google.maps : null; }\n      },\n\n      gevent: {\n        derived: true, readOnly: true, after: [\"gmaps\"],\n        get() { let {gmaps} = this; return gmaps ? gmaps.event : null; }\n      },\n\n      extent: {\n        set(val) {\n          this.setProperty(\"extent\", val);\n          waitFor(15000, () => this.mapState.map)\n            .then(map => debounceNamed('on-map-resize-' + this.id, 200, () =>\n                    window.google.maps.event.trigger(map, 'resize'))());\n        }\n      }\n    }\n  }\n\n\n  __serialize__(pool, serializedObjMap, path) {\n    // c=this.copy()\n    var s = this.mapState\n    if (s.map) {\n      var map = s.map, opts = s.mapOptions, center = map.getCenter();\n      opts.center = {lng: center.lng(), lat: center.lat()};\n      opts.mapTypeId = s.map.getMapTypeId();\n      opts.zoom = s.map.getZoom();\n    }\n    return null;\n  }\n\n  onLoad() {\n    this.init();\n  }\n\n  async init() {\n    try {\n      this.reset();\n      await this.loadGoogleMapsAPI();\n      await this.loadMap()\n    } catch (err) {\n      console.error(`Error initializing google maps:`, err);\n    }\n  }\n\n  reset() {\n    if (this.mapState.map) this.gevent.clearInstanceListeners(this.mapState.map);\n    if (this.mapState.markers && this.mapState.markers.length) this.removeAllMarkers();\n    if (this.mapState.polylines && this.mapState.polylines.length) this.removeAllPolylines();\n    this.propertiesAndPropertySettings().properties.mapState.initialize.call(this)\n    this.mapState.canvasId = \"map-canvas-\" + this.id;\n    this.html = '<div style=\"height:100%\" id=\"' + this.mapState.canvasId + '\"/>';\n    this.name = 'GoogleMapsCanvas';\n\n    // this.getWindow().copyToPartsBinWithUserRequest()\n  }\n\n  ensureMapOptions(mapState) {\n    // mapState = this.mapState\n\n    let {gmaps} = this;\n    if (!this.gmaps) return null;\n    var opts = {...mapState.mapOptions};\n    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n    // center\n    if (!opts.center) {\n      opts.center = new gmaps.LatLng(-34.397, 150.644);\n\n    } else if (!(opts.center instanceof gmaps.LatLng)) {\n      opts.center = new gmaps.LatLng(\n        opts.center.lat || -34.397,\n        opts.center.lng || 150.644);\n    }\n    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n    // mapType\n    if (!opts.mapTypeId) {\n      opts.mapTypeId = gmaps.MapTypeId.ROADMAP;\n    } else if (typeof opts.mapTypeId === \"string\") {\n      opts.mapTypeId = gmaps.MapTypeId[opts.mapTypeId.toUpperCase()]\n    }\n    // misc\n    opts.zoom = opts.zoom || 8;\n    return opts;\n  }\n\n\n  async loadGoogleMapsAPI(attempt = 0) {\n    if (attempt >= 1000)\n      throw new Error(`Failed loading google maps`);\n\n    // await this.init();\n    if (!!this.gmaps) {\n      if (!this.gmaps.Load) return; // loaded\n      await delay(300); return this.loadGoogleMapsAPI(attempt + 1);\n    }\n\n    var initFuncName = 'google_maps_init';\n    if (window[initFuncName]) {\n      await delay(300); return this.loadGoogleMapsAPI(attempt + 1);\n    }\n\n    function initGoogle() {\n      console.log('Google Maps API loaded');\n      delete window[initFuncName];\n    }\n    window[initFuncName] = initGoogle;\n    var url = 'https://maps.googleapis.com/maps/api/js?'\n            + 'libraries=geometry,places&'\n            + 'key=AIzaSyCqIO22KtIs_lxhyhDJf-MpwvFIx8n9Z-4&'\n            + 'sensor=false&callback=' + initFuncName;\n    loadViaScript(url);\n    await delay(100);\n    return this.loadGoogleMapsAPI(attempt + 1);\n  }\n\n  loadMap() {\n    if (typeof window.google === 'undefined') {\n      return this.setStatusMessage(`Trying to initialize Google Map but `\n                                 + `google API not loaded!`);\n    }\n    return waitFor(15000, () => document.getElementById(this.mapState.canvasId))\n      .then(canvas => {\n        let mapOptions = this.ensureMapOptions(this.mapState);\n        this.mapState.map = new this.gmaps.Map(canvas, mapOptions);\n      });\n  }\n\n  \n  onOwnerChanged(newOwner) {\n    if (!newOwner) return;\n    if (!this.mapState.map) this.loadMap();\n  }\n\n  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n  // marker API\n\n  addMarker(posOrMarker, options) {\n    options = options || {};\n\n    var marker,\n        map = this.mapState.map,\n        ev = this.gevent;\n\n    if (posOrMarker instanceof this.gmaps.Marker) {\n      marker = posOrMarker;\n    } else {\n      var pos = posOrMarker,\n          latLng = pos instanceof this.gmaps.LatLng ?\n          pos : new this.gmaps.LatLng(pos.lat || pos.latitude || pos.x, pos.lng || pos.longitude || pos.y);\n      marker = new this.gmaps.Marker({position: latLng});\n    }\n\n\n    marker.setMap(map);\n    if (!this.mapState.markers) this.mapState.markers = [];\n    this.mapState.markers.push(marker);\n\n    if (options.onMouseDown) {\n      this.gevent.addListener(marker, 'click', function(evt) {\n        options.onMouseDown(evt, marker);\n      });\n    }\n\n    if (options.icon) marker.setIcon(options.icon);\n\n    if (options.info) {\n      marker.info = new this.gmaps.InfoWindow({content: options.info.content || options.info});\n\n      if (options.info.hover) {\n        ev.addListener(marker.info, 'closeclick', function () {\n          marker.info.stayOpen = false;\n        });\n        ev.addListener(marker, 'mouseout', function () {\n          if (!marker.info.stayOpen) marker.info.close();\n        });\n        ev.addListener(marker, 'mouseover', function () {\n          marker.info.open(map, marker);\n        });\n        ev.addListener(marker, 'click', function () {\n          marker.info.stayOpen = true;\n        });\n      } else {\n        ev.addListener(marker, 'click', function () {\n          marker.info.open(map, marker);\n        });\n      }\n    }\n\n    return marker;\n  }\n\n\n  addMarkerForAddress(addressString, options) {\n    // this.addMarkerForAddress('1065 Greco Ave, Sunnyvale', {\n    //         info: {content: 'test '.times(10), hover: true},\n    //     onMouseDown: function(evt, marker, options) { show('click'); }})\n    // this.removeAllMarkers()\n    var gc = new this.gmaps.Geocoder();\n    gc.geocode({address: addressString}, (result) => {\n      if (!result || result.length == 0) {\n        // alert('nothing found')\n        return;\n      }\n      var pos = result[0].geometry.location;\n      this.addMarker(pos, options);\n    });\n  }\n\n\n  addMarkers(positions, opts) {\n    positions.forEach((p) => {\n      var posOpts = clone(opts || {});\n      if (p.onMouseDown) {\n        posOpts.onMouseDown = p.onMouseDown;\n        delete p.onMouseDown;\n      }\n      if (p) this.addMarker(p, posOpts);\n    });\n  }\n\n  addMarkersForAddresses(adresses, options) {\n    adresses.forEach((ea, i) =>\n      this.addMarkerForAddress(ea, options ? options[i]: {}));\n  }\n\n  addPolyline(pathOrPolyline, options) {\n\n    var polyline;\n\n    if (pathOrPolyline instanceof this.gmaps.Polyline) {\n      polyline = pathOrPolyline;\n    } else {\n      // Polylines should be encoded as in https://developers.google.com/maps/documentation/utilities/polylineutility\n      var path = pathOrPolyline;\n      if (typeof path === \"string\") {\n        path = this.gmaps.geometry.encoding.decodePath(path);\n      }\n\n      polyline = new this.gmaps.Polyline({\n        path: path,\n        geodesic: true,\n        strokeColor: '#FF0000',\n        strokeOpacity: 1.0,\n        strokeWeight: 2\n      });\n    }\n\n    if (!this.mapState.polylines) this.mapState.polylines = [];\n    this.mapState.polylines.push(polyline);\n\n    polyline.setMap(this.mapState.map);\n\n    return polyline;\n  }\n\n\n  getElevationAlongPolyline(polyline, thenDo) {\n\n    // Elevation service issue, see http://stackoverflow.com/questions/11420176/elevation-service-unknown-error\n    // we need to break up path that are too long\n\n    var batches = batchify(\n          polyline.getPath().getArray(),\n          function batchConstrained(batch) { return batch.length <= 200; }),\n        samples = 256,\n        samplesPerBatch  = Math.ceil(samples / batches.length),\n        elevator = new this.gmaps.ElevationService();\n\n    waitForAll(\n      batches.map(function(batch) {\n\n        var pathRequest = {\n          'path': batch,\n          'samples': samplesPerBatch\n        }\n\n        return function(n) {\n          // withElevationDo(batch, {samples: samplesPerBatch}, n);\n          elevator.getElevationAlongPath(pathRequest, function(results, status) {\n            if (status != this.gmaps.ElevationStatus.OK) { n(status); }\n            else n(null, results);\n          });\n        }\n      }), (err, results) => thenDo(err, results && flatten(results)));\n  }\n\n  removeAllMarkers() {\n    // this.removeAllMarkers();\n    if (!this.mapState.markers || !this.mapState.markers.length) return;\n    var m; while ((m = this.mapState.markers.shift())) {\n      this.gevent.clearInstanceListeners(m);\n      m.setMap(null);\n    }\n  }\n\n\n  removeAllPolylines() {\n    // this.removeAllMarkers();\n    if (!this.mapState.polylines || !this.mapState.polylines.length) return;\n    var m; while ((m = this.mapState.polylines.shift())) {\n      this.gevent.clearInstanceListeners(m);\n      m.setMap(null);\n    }\n  }\n\n\n  removePolyline(polyline) {\n    if (this.mapState.polylines) {\n      this.mapState.polylines = this.mapState.polylines.without(polyline);\n    }\n\n    this.gevent.clearInstanceListeners(polyline);\n    polyline.setMap(null);\n  }\n\n}\n\n"
       }
     }
   },
