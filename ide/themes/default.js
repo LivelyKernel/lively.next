@@ -8,11 +8,13 @@ class DefaultTheme {
 
   get default() { return {fontColor: "#333"}; }
 
-  get header()        { return {fontColor: "#6b94be"}; }
+  get header()        { return {fontSize: 20, fontColor: "#6b94ee"}; }
+  get "header-1"()    { return {fontSize: 20, fontColor: "#6b94ee"}; }
+  get "header-2"()    { return {fontSize: 18, fontColor: "#6b94be"}; }
+  get "header-3"()    { return {fontSize: 14, fontColor: "#6b94be"}; }
   get quote()         { return {fontColor: "#090"}; }
   get negative()      { return {fontColor: "#d44"}; }
   get positive()      { return {fontColor: "#292"}; }
-  get header()        { return {fontWeight: "bold"}; }
   get strong()        { return {fontWeight: "bold"}; }
   get em()            { return {fontStyle: "italic"}; }
   get link()          { return {textDecoration: "underline"}; }

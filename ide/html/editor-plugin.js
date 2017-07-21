@@ -1,4 +1,3 @@
-/*global show*/
 import EditorPlugin from "../editor-plugin.js";
 
 import "./mode.js"
