@@ -613,7 +613,7 @@ export default class Renderer {
     let rendered;
     if (renderer) {
       rendered = renderer.render(morph);
-      rendered.properties.style.position = "";
+      rendered.properties.style.position = "relative";
       rendered.properties.style.transform = "";
       return rendered;
     }
