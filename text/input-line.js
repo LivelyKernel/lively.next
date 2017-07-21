@@ -156,7 +156,7 @@ export default class InputLine extends Text {
             } else {
               placeholder.defaultTextStyle = {...this.defaultTextStyle, fontColor: Color.gray};
               placeholder.value = val;
-            }            
+            }
           }
           this.updatePlaceholder();
         }
@@ -252,7 +252,7 @@ export default class InputLine extends Text {
 
   deleteText(range) {
     range = range.isRange ? range : new Range(range);
-    if (range.isEmpty()) return;    
+    if (range.isEmpty()) return;
     range = range.subtract({
       start: {row: 0, column: 0},
       end: {row: 0, column: this.label.length}
@@ -366,7 +366,7 @@ export default class InputLine extends Text {
       {keys: "Alt-Shift-H", command: "remove items from history"}
     ]);
   }
-  
+
 
   onFocus(evt) {
     super.onFocus(evt);
@@ -383,7 +383,7 @@ export default class InputLine extends Text {
       duration: 200
     });
   }
-  
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // html export
   htmlExport_transformNode(node) {
@@ -508,7 +508,7 @@ export class PasswordInputLine extends HTMLMorph {
 
   focus() {
     super.focus()
-    this.domNode && this.domNode.focus(); 
+    this.domNode && this.domNode.focus();
   }
 
   acceptInput() { var i = this.input; signal(this, "inputAccepted", i); return i; }
@@ -547,8 +547,8 @@ export class PasswordInputLine extends HTMLMorph {
       {keys: {mac: "Meta-S", win: "Ctrl-S"}, command: "accept input"}
     ]);
   }
-  
-  htmlExport_transformNode(node) {    
+
+  htmlExport_transformNode(node) {
     let doc = node.ownerDocument,
         oldInput = node.querySelector("input"),
         input = doc.createElement("input"),
