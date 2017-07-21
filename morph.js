@@ -1178,7 +1178,7 @@ export class Morph {
   // morphic relationship
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  replaceWith(other, indexForOtherMorph) {
+  replaceWith(other, indexForOtherMorph, replaceSubmorphs = true) {
     // this method switches the scene graph location of two morphs (this and
     // other). Morphs can be unrelated or in child/owner relationship.
     // Transforms / submorphs of this and other are also replaced so that the
@@ -1203,20 +1203,26 @@ export class Morph {
 
     myOwner && this.remove();
     otherOwner && other.remove();
-    this.submorphs = [];
-    other.submorphs = [];
+    if (replaceSubmorphs) {
+      this.submorphs = [];
+      other.submorphs = [];
+    }
 
     if (myOwner === other) {
       otherOwner && otherOwner.addMorphAt(this, otherIndex);
-      this.submorphs = otherSubmorphs.slice(0, myIndex)
-                        .concat(other)
-                        .concat(otherSubmorphs.slice(myIndex))
-      other.submorphs = mySubmorphs;
+      if (replaceSubmorphs) {
+        this.submorphs = otherSubmorphs.slice(0, myIndex)
+          .concat(other)
+          .concat(otherSubmorphs.slice(myIndex))
+        other.submorphs = mySubmorphs;
+      }
     } else {
       myOwner && myOwner.addMorphAt(other, myIndex);
       otherOwner && otherOwner.addMorphAt(this, otherIndex);
-      other.submorphs = mySubmorphs;
-      this.submorphs = otherSubmorphs;
+      if (replaceSubmorphs) {
+        other.submorphs = mySubmorphs;
+        this.submorphs = otherSubmorphs;
+      }
     }
 
     other.setTransform(myTfm);
