@@ -1,5 +1,5 @@
 import { tidyHtml } from "../ide/html/editor-plugin.js";
-import { IFrameMorph } from "lively.morphic";
+import { IFrameMorph, show } from "lively.morphic";
 import { create as createNode } from "virtual-dom";
 
 export function morphToNode(morph, renderer = morph.env.renderer) {
@@ -57,7 +57,8 @@ export async function generateHTML(morph, htmlResource, options = {}) {
     htmlResource = null;
   }
 
-  let {isFragment = false, addStyles = true} = options,
+  let {isFragment = false, addStyles = true, container: containerOpts, removeTargetFromLinks = true} = options,
+      {width: containerWidth, height: containerHeight} = containerOpts || {},
       root = morphToNode(morph),
       htmlClassName = `html-${morph.name.replace(/[\s|"]/g, "-")}`;
 
@@ -65,14 +66,20 @@ export async function generateHTML(morph, htmlResource, options = {}) {
 
   let html = isFragment
     ? `<div class="exported-morph-container ${htmlClassName}" 
-            style="width: ${root.style.width}; height: ${root.style.height};">\n`
+            style="width: ${containerWidth || root.style.width}; height: ${containerHeight || root.style.height};">\n`
        + (addStyles ? morphicStyles() : "")
        + `\n${root.outerHTML}\n</div>`
     : `<head><title>lively.next</title><meta charset="UTF-8">`
        + (addStyles ? morphicStyles() : "") + `\n</head>`
        + `<body><div class="exported-morph-container ${htmlClassName}"
-                     style="width: ${root.style.width}; height: ${root.style.height};">
+                     style="width: ${containerWidth || root.style.width}; height: ${containerHeight || root.style.height};">
           ${root.outerHTML}</div></body>`;
+  
+  if (removeTargetFromLinks) {
+    while (html.match(/(<a .*) target="_blank"/)) {
+      html = html.replace(/(<a .*) target="_blank"/, "$1");
+    }
+  }
 
   html = await tidyHtml(html);
   if (htmlResource)
