@@ -2171,12 +2171,12 @@ export class Morph {
             ])]);
 
     w && items.push(["custom...", async () => {
-      let { interactiveConnectGivenSource } = await System.import("lively.morphic/fabrik.js");
-      let attr = await w.prompt("Enter custom connection point", {
-        requester: this,
-        historyId: "lively.morphic-custom-connection-points",
-        useLastInput: true
-      })
+      let { interactiveConnectGivenSource } = await System.import("lively.morphic/fabrik.js"),
+          attr = await w.prompt("Enter custom connection point", {
+            requester: this,
+            historyId: "lively.morphic-custom-connection-points",
+            useLastInput: true
+          })
       if (attr) interactiveConnectGivenSource(this, attr);
     }]);
 

@@ -57,16 +57,29 @@ export function printConnectionElements(
 
 export async function interactiveConnectGivenSource(sourceObj, sourceAttr) {
   let selected = await InteractiveMorphSelector.selectMorph(),
-      bindings = selected && selected.targetDataBindings();
+      bindings = selected && selected.targetDataBindings(),
+      world = sourceObj.world();
   if (!bindings || !bindings.length) {
-    $world.setStatusMessage("connect canceled"); return; }
-  
+    world.setStatusMessage("connect canceled"); return; }
+
   let items = bindings.map(
     group => [group[0].group || "uncategorized",
               group.map(ea => [
                 ea.name, () => interactivelyEvaluateConnection(
                                 sourceObj, sourceAttr, selected, ea.name)])]);
-  selected.openMenu(items);      
+
+
+    items.push(["custom...", async () => {
+      let attr = await world.prompt("Enter custom connection point", {
+            requester: selected,
+            historyId: "lively.morphic-custom-connection-points",
+            useLastInput: true
+          })
+      if (attr) interactivelyEvaluateConnection(sourceObj, sourceAttr, selected, attr);
+    }]);
+ 
+  
+  selected.openMenu(items);
 }
 
 export async function interactivelyReEvaluateConnection(connection, prompt = "confirm connection", highlight) {
