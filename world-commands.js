@@ -381,7 +381,7 @@ var commands = [
       opts = {content: "", ...opts, language};
       var mod = workspaceModules[opts.language] || workspaceModules[alias[opts.language]],
           { default: Workspace } = await System.import(mod);
-      return new Workspace({center: world.center, content: opts.content}).activate();
+      return new Workspace({center: world.center, content: opts.content, target: opts.target}).activate();
     }
   },
 
