@@ -12,7 +12,7 @@ import { sortBy } from "lively.lang/array.js";
 class Layout {
 
   constructor(args = {}) {
-    let {spacing, border, container, manualUpdate, 
+    let {spacing, border, container, manualUpdate,
          autoResize, ignore, onScheduleApply, layoutOrder} = args;
     this.applyRequests = [];
     this.border = {top: 0, left: 0, right: 0, bottom: 0, ...border};
@@ -45,8 +45,8 @@ class Layout {
 
   isEnabled() { /*FIXME!*/ return !this.active; }
   disable() { this.active = true; }
-  enable(animation) { 
-    this.active = false; 
+  enable(animation) {
+    this.active = false;
     this.scheduleApply(null, animation);
   }
 
@@ -57,9 +57,9 @@ class Layout {
   extentChanged(container) {
     return !(this.lastExtent && container.extent.equals(this.lastExtent));
   }
-  
+
   get layoutableSubmorphs() {
-    if (!this.layoutOrder) 
+    if (!this.layoutOrder)
       this.layoutOrder = Closure.fromSource(JSON.parse(this.layoutOrderSource)).recreateFunc();
     return sortBy(
       this.container.submorphs.filter(
@@ -89,7 +89,7 @@ class Layout {
   }
 
   refreshBoundsCache() {
-    this.lastExtent = this.container.extent;    
+    this.lastExtent = this.container.extent;
     this.layoutableSubmorphBounds = this.layoutableSubmorphs.map(m => m.bounds());
   }
 
@@ -98,7 +98,7 @@ class Layout {
   }
 
   get noLayoutActionNeeded() {
-    return !this.submorphBoundsChanged 
+    return !this.submorphBoundsChanged
             && !this.boundsChanged(this.container)
             && !this.extentChanged(this.container)
   }
@@ -109,7 +109,7 @@ class Layout {
       if (this.noLayoutActionNeeded) return;
       this.refreshBoundsCache();
       this.container.withMetaDo({
-        isLayoutAction: true, 
+        isLayoutAction: true,
         animation: this.lastAnim
       }, () => this.apply(this.lastAnim));
       this.lastAnim = false;
@@ -127,10 +127,10 @@ class Layout {
   onSubmorphResized(submorph, change) {
     this.scheduleApply(submorph, change.meta.animation, change)
   }
-  onSubmorphAdded(submorph, animation) { 
+  onSubmorphAdded(submorph, animation) {
     this.scheduleApply(submorph, animation)
   }
-  onSubmorphRemoved(submorph, animation) { 
+  onSubmorphRemoved(submorph, animation) {
     this.scheduleApply(submorph, animation)
   }
 
@@ -148,18 +148,18 @@ class Layout {
     if (["extent"].includes(prop) && !obj.equals(value, prevValue))
       this.scheduleApply(submorph, anim);
   }
-  
+
   affectsLayout(submorph, {prop, value, prevValue}) {
     return ["position", "scale", "rotation", "isLayoutable", 'extent'].includes(prop)
            && !obj.equals(value, prevValue);
   }
 
   onSubmorphChange(submorph, change) {
-    if (change.meta && change.meta.isLayoutAction) 
+    if (change.meta && change.meta.isLayoutAction)
       return this.scheduleApply(submorph, change.meta.animation)
     if (this.affectsLayout(submorph, change)) {
        this.onSubmorphResized(submorph, change);
-    } 
+    }
   }
 
   changePropertyAnimated(target, propName, value, animate) {
@@ -189,7 +189,7 @@ class Layout {
 }
 
 export class CustomLayout extends Layout {
-  
+
   constructor(config = {}) {
      this.relayout = config.relayout;
      // apply JSON stringification, since else the source string does not
@@ -206,14 +206,14 @@ export class CustomLayout extends Layout {
      super.apply(animate);
      this.active = true;
      if (!this.relayout) {
-       this.relayout = Closure.fromSource(JSON.parse(this.layouterString), 
+       this.relayout = Closure.fromSource(JSON.parse(this.layouterString),
          this.varMapping).recreateFunc()
      }
      this.relayout(this.container, animate);
      this.lastBoundsExtent = this.container && this.container.bounds().extent();
      this.active = false;
   }
-  
+
 }
 
 /* TODO: This is just a very simple constraint layout, that should
@@ -281,7 +281,7 @@ class FloatLayout extends Layout {
 }
 
 export class VerticalLayout extends FloatLayout {
-  
+
   constructor(props = {}) {
     super(props);
     // supported directions: "left", "centered"
@@ -361,6 +361,8 @@ export class HorizontalLayout extends FloatLayout {
     super(props);
     // supported directions: "leftToRight", "rightToLeft", "centered"
     this._direction = props.direction || "leftToRight";
+    // top, center, bottom
+    this._align = props.align || "top";
   }
 
   name() { return "Horizontal"; }
@@ -371,6 +373,9 @@ export class HorizontalLayout extends FloatLayout {
   get direction() { return this._direction; }
   set direction(d) { this._direction = d; this.apply(); }
 
+  get align() { return this._align; }
+  set align(d) { this._align = d; this.apply(); }
+
   get autoResize() { return this._autoResize; }
   set autoResize(active) { this._autoResize = active; this.apply(); }
 
@@ -380,7 +385,7 @@ export class HorizontalLayout extends FloatLayout {
   apply(animate = false) {
     if (this.active || !this.container || !this.container.submorphs.length) return;
 
-    var { direction, spacing, container, autoResize, layoutableSubmorphs } = this;
+    var { direction, align, spacing, container, autoResize, layoutableSubmorphs } = this;
 
     if (!layoutableSubmorphs.length) return;
 
@@ -400,11 +405,28 @@ export class HorizontalLayout extends FloatLayout {
       startX = (container.width - minExtent.x)/2
     }
 
-    layoutableSubmorphs.reduce((pos, m) => {
-      this.changePropertyAnimated(m, "topLeft", pos, animate);
-      return m.topRight.addPt(pt(spacing, 0));
-      m.layout && m.layout.forceLayout()
-    }, pt(Math.max(0, startX)+spacing, spacing));
+    if (align === "top") {
+      let top = spacing;
+      layoutableSubmorphs.reduce((pos, m) => {
+        this.changePropertyAnimated(m, "topLeft", pos, animate);
+        return m.topRight.addPt(pt(spacing, 0));
+        m.layout && m.layout.forceLayout()
+      }, pt(Math.max(0, startX)+spacing, top));
+    } else if (align === "bottom") {
+      let bottom = minExtent.y - spacing;
+      layoutableSubmorphs.reduce((pos, m) => {
+        this.changePropertyAnimated(m, "bottomLeft", pos, animate);
+        return m.bottomRight.addPt(pt(spacing, 0));
+        m.layout && m.layout.forceLayout()
+      }, pt(Math.max(0, startX)+spacing, bottom));
+    } else {
+      let yCenter = minExtent.y/2;
+      layoutableSubmorphs.reduce((pos, m) => {
+        this.changePropertyAnimated(m, "leftCenter", pos, animate);
+        return m.rightCenter.addPt(pt(spacing, 0));
+        m.layout && m.layout.forceLayout()
+      }, pt(Math.max(0, startX)+spacing, yCenter));
+    }
 
     if (autoResize) {
       var w = 0;
@@ -675,12 +697,12 @@ export class CellGroup {
 
 }
 
-/* 
+/*
   Combines the concept of rows and columns. Each row or column (axis) defines its width or height
   (its length) by an absolute number of pixels.
   An Axis can be either fixed or proportional. Proportional axis adjust their width
   upon change of the container's extent. This is done by computing the ratio of the the
-  axis' length to to the containers width or height that is made up of proportional 
+  axis' length to to the containers width or height that is made up of proportional
   axis respectively.
   The ratio is then used to compute the new adjusted width of the column in turn.
   This saves us from juggling with ratios and absolute values and mediate between
@@ -723,11 +745,11 @@ class LayoutAxis {
 
   get frozen() { return this.origin.frozen[this.dimension] }
   set frozen(active) { this.origin.frozen[this.dimension] = active}
-  
+
   set align(align) {
     this.items.forEach(c => c.group.state.align = align);
   }
-  
+
   get fixed() { return this.origin.fixed[this.dimension] }
   set fixed(active) {
     var newLength, containerLength;
@@ -745,7 +767,7 @@ class LayoutAxis {
   }
 
   get length() { return this.origin[this.dimension]; }
-  set length(x) { 
+  set length(x) {
     this.items.forEach(cell => {
       cell[this.dimension] = num.roundTo(x, 1);
     });
@@ -774,7 +796,7 @@ class LayoutAxis {
     this.layout.apply()
   }
 
-  /* 
+  /*
    In order to be numerically stable (lengths go to very small values or 0)
    axis and cells need to store their dynamic proportion which is used in turn to
    compute their current length.
@@ -845,7 +867,7 @@ class LayoutAxis {
     var dynamicAxis = [...this.otherAxis.filter(a => !a.fixed), ...this.fixed ? [] : [this]],
         l = (this.containerLength - this.staticLength) / dynamicAxis.length;
     dynamicAxis.map(a => {
-      if (!a.fixed) a.length = l; 
+      if (!a.fixed) a.length = l;
       return a;
     }).forEach(a => a.adjustProportion());
   }
@@ -890,7 +912,7 @@ export class LayoutColumn extends LayoutAxis {
     const delta = w - this.width;
     if (this.fixed) {
       this.length += delta;
-      this.container.width += delta; 
+      this.container.width += delta;
     } else {
       this.adjustLength(delta);
     }
@@ -1071,7 +1093,7 @@ export class LayoutCell {
     }
 
     this.proportion = {
-       width: 1 / (1 + this.before.length + this.after.length), 
+       width: 1 / (1 + this.before.length + this.after.length),
        height: 1 / (1 + this.above.length + this.below.length)
     };
 
@@ -1138,7 +1160,7 @@ export class LayoutCell {
               .map(c => c.width)
             );
   }
-  
+
   get totalStaticHeight() {
     return arr.sum(
              [this, ...this.above, ...this.below]
@@ -1235,10 +1257,10 @@ export class GridLayout extends Layout {
   set compensateOrigin(compensate) { this.config.compensateOrigin = compensate; this.apply() }
 
   get fitToCell() { return this.config.fitToCell }
-  set fitToCell(fit) { 
-     this.config.fitToCell = fit; 
+  set fitToCell(fit) {
+     this.config.fitToCell = fit;
      this.cellGroups.forEach(g => g.resize = fit);
-     this.apply() 
+     this.apply()
   }
 
   get notInLayout() {
