@@ -1,9 +1,21 @@
-/*global System,WeakMap*/
+/*global System,WeakMap,FormData,fetch,DOMParser*/
 import { Rectangle, Color, pt } from "lively.graphics";
 import { arr, fun, obj, promise } from "lively.lang";
 import { once, signal } from "lively.bindings";
 import { StatusMessage, StatusMessageForMorph } from './halo/markers.js';
-import { Morph, Tooltip, List, FilterableList, inspect, config, MorphicEnv, Window, Menu, Button } from "./index.js";
+import {
+  Morph,
+  Tooltip,
+  List,
+  FilterableList,
+  Image,
+  inspect,
+  config,
+  MorphicEnv,
+  Window,
+  Menu,
+  Button
+} from "./index.js";
 import { TooltipViewer } from "./components/tooltips.js";
 
 import {
@@ -17,7 +29,6 @@ import {
   EditListPrompt
 } from "./components/prompts.js";
 import { loadMorphFromSnapshot, loadWorldFromResource } from "./serialization.js";
-
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import { uploadFile } from "./events/html-drop-handler.js";
 import worldCommands from "./world-commands.js";
@@ -329,19 +340,124 @@ export class World extends Morph {
 
   onNativeDragover(evt) {
     if (evt.targetMorph === this)
-      this.ensureUploadIndicator();
+      this.nativeDrop_ensureUploadIndicator();
   }
 
   async onNativeDrop(evt) {
+    /*global show, inspect*/
     this.nativeDrop_removeUploadIndicator();
 
-    let {domEvt} = evt;
+    let {domEvt} = evt,
+        {files, items} = domEvt.dataTransfer,
+        baseURL = document.origin;
+
+    if (files.length) {
+      let really = await this.confirm(
+        `Upload ${files.length} file${files.length > 1 ? "s": ""}?`);
+
+      if (!really) return;
+
+      let fd = new FormData()
+      for (let i = 0; i < files.length; i++)
+        fd.append('file', files[i], files[i].name);
+
+      let res, answerText;
+      try {
+        res = await fetch("/upload", {method: 'POST', body: fd});
+        answerText = await res.text();
+
+      } catch (err) {
+        return this.showError(`Upload failed: ${err.message}\n`);
+      }
+
+      if (!res.ok) {
+        return this.showError(answerText || res.statusText);
+      }
+      try {
+        let answer = JSON.parse(answerText);
+
+        if (answer.status !== "done") {
+          return this.setStatusMessage(`File upload failed: ${answer.status}`)
+        }
+
+        this.setStatusMessage(`Uploaded ${answer.uploadedFiles.length} file`)
+
+        let files = answer.uploadedFiles.map(ea => {
+          let res = lively.resources.resource(baseURL).join(ea.path);
+          return {
+            ...ea,
+            url: res.url,
+            name: res.name()
+          }
+        });
+        let images = [], videos = [], others = [];
+        for (let f of files) {
+          if (f.type.startsWith("image/")) images.push(f);
+          else if (f.type.startsWith("video")) videos.push(f);
+          else others.push(f);
+        }
+        if (videos.length) {
+          for (let v of videos) {
+            let video = Object.assign(await loadObjectFromPartsbinFolder("video morph"), {
+              videoURL: v.url,
+              name: v.name
+            }).openInWorld();
+          }
+        }
+        if (images.length) {
+          let openImages = true;
+          // let openImages = await this.confirm(
+          //   images.length > 1 ?
+          //     `There were ${images.length} images uploaded. Open them?` :
+          //     `There was 1 image uploaded. Open it?`);
+          if (openImages) {
+            images.forEach(ea => {
+              let img = new Image({
+                imageUrl: ea.url,
+                autoResize: true,
+                name: ea.name
+              });
+              img.whenLoaded().then(() => img.openInWorld());
+            });
+          }
+        }
+        if (others.length) {
+          for (let file of others) {
+            let open = await this.confirm(`open file ${file.name} (${file.type})?`);
+            if (open) this.execCommand("open file", {url: file.url})
+          }
+        }
+      } catch (err) { this.showError(err); }
+      return;
+    }
+
     // show(`
     //   ${domEvt.dataTransfer.files.length}
     //   ${domEvt.dataTransfer.items.length}
     //   ${domEvt.target}
     //   ${domEvt.dataTransfer.types}
     // `)
+
+    let types = domEvt.dataTransfer.types;
+    if (types.includes("text/html")) {
+      let html = domEvt.dataTransfer.getData("text/html"),
+          parsed = new DOMParser().parseFromString(html, "text/html"),
+          imgs = parsed.querySelectorAll("img");
+      // is it a dropped image?
+      if (imgs.length === 1 && imgs[0].src && types.includes("text/uri-list")) {
+        let url = imgs[0].src;
+        let img = new Image({
+          imageUrl: url,
+          autoResize: true,
+          name: arr.last(url.split("/"))
+        });
+        img.whenLoaded().then(() => img.openInWorld());
+      } else {
+        Object.assign(await loadObjectFromPartsbinFolder("html-morph"), {html})
+          .openInWorld();
+      }
+      return;
+    }
 
     for (let i = 0; i < domEvt.dataTransfer.items.length; i++) {
       let item = domEvt.dataTransfer.items[i];
@@ -354,7 +470,8 @@ export class World extends Morph {
           uploadedMorph && uploadedMorph.openInWorld();
         }
       } else if (item.kind === "string") {
-        item.getAsString((s) => inspect(s))
+        // show({kind: item.kind, type: item.type})
+        item.getAsString((s) => inspect(s));
       }
     }
   }
@@ -384,7 +501,7 @@ export class World extends Morph {
       {command: "run command",              target: this},
       {command: "select morph",             target: this},
       {command: "window switcher",          target: this},
-      ["Resize", 
+      ["Resize",
          this.resizePolicy === "static" ? [
           {command: "resize to fit window", target: this},
           {command: "resize manually", target: this},
