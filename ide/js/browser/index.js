@@ -391,10 +391,7 @@ export default class Browser extends Window {
         sourceEditor =       container.getSubmorphNamed("sourceEditor"),
         metaInfoText =       container.getSubmorphNamed("metaInfoText");
 
-    (async () => { 
-      await container.whenRendered(); 
-      container.getSubmorphNamed('commands').submorphs.map(b => b.isButton && b.fit());
-    })()
+    browserCommands.withAllSubmorphsDo(b => b.isButton && b.fit());
 
     hresizer.addScalingAbove(moduleList);
     hresizer.addScalingAbove(codeEntityTree);
@@ -598,8 +595,6 @@ export default class Browser extends Window {
       systemInterface
     } = browseSpec,
       {sourceEditor, codeEntityTree, moduleList} = this.ui;
-
-    if (this.world()) await this.whenRendered();
 
     if (optSystemInterface || systemInterface) {
       this.systemInterface = optSystemInterface || systemInterface;
@@ -937,8 +932,7 @@ export default class Browser extends Window {
       hasTests = tests && tests.length;
     }
 
-    runTestsInModuleButton.visible = runTestsInModuleButton.isLayoutable = hasTests;
-    moduleCommands.layout.apply();
+    runTestsInModuleButton.visible = runTestsInModuleButton.isLayoutable = !!hasTests;
   }
 
   async save(attempt = 0) {
