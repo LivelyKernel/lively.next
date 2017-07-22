@@ -122,6 +122,17 @@ export class HTMLMorph extends Morph {
     return new CustomVNode(this, renderer);
   }
 
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  menuItems() {
+    let items = super.menuItems();
+    items.unshift(
+      ["edit html...", () => this.world().execCommand("open workspace", {language: "html", content: this.html, target: this})],
+      {isDivider: true})
+    return items;
+  }
+
 }
 
 
@@ -198,6 +209,8 @@ iframeMorph.srcDoc = "fooo"
       }
     }
   }
+
+  get isIFrameMorph() { return true; }
 
   reload() {
     return this.src

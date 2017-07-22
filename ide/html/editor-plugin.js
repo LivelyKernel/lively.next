@@ -79,14 +79,19 @@ var commands = [
 
   {
     name: "[HTML] render in iframe",
-    exec: text => {
-      let iframeMorph = text._iframeMorph;
+    exec: (text, args = {}) => {
+      let url, html, win = text.getWindow();
+      let iframeMorph = args.iframe
+        || (win && win.isHTMLWorkspace && win.target/*html workspace*/)
+        || text._iframeMorph;
+      if (iframeMorph && !iframeMorph.isIFrameMorph) iframeMorph = null;
       if (!iframeMorph || !iframeMorph.world()) {
-        iframeMorph = text._iframeMorph = new IFrameMorph()
+        iframeMorph = new IFrameMorph()
         iframeMorph.openInWindow({title: "rendered HTML"});
+        if (win && win.isHTMLWorkspace) win.target = iframeMorph;
+        else text._iframeMorph = iframeMorph;
       }
 
-      let url, html, win = text.getWindow();
       // is it a html workspace?
       if (win && win.isHTMLWorkspace) url = win.file.url;
       // file editor?

@@ -32,6 +32,8 @@ export default class Workspace extends JSWorkspace {
         }
       },
 
+      target: {},
+
       htmlPlugin: {
         derived: true, readOnly: true,
         get() { return this.targetMorph.editorPlugin; }
@@ -101,10 +103,12 @@ export default class Workspace extends JSWorkspace {
         async exec(workspace) {
           let html = workspace.content;
 
-          if (workspace.targetMorph._iframeMorph) {
-            try {
-              workspace.targetMorph.execCommand("[HTML] render in iframe");
-            } catch (e) {};
+          if (workspace.target) {
+            if (workspace.target.isIFrameMorph) {
+              workspace.targetMorph.execCommand("[HTML] render in iframe", {iframe: workspace.target.isIFrameMorph});
+            } else if (workspace.target.isHTMLMorph) {
+              workspace.target.html = html;
+            }
           }
 
           html = workspace.livelyfyHTML(html);
@@ -116,6 +120,7 @@ export default class Workspace extends JSWorkspace {
               `Saved to ${workspace.file.url}`, Color.green);
             await promise.delay(500);
           }
+
           try {
             await workspace.saveDocumentHTML(html);
             workspace.setStatusMessage(`HTML applied`, Color.green);
