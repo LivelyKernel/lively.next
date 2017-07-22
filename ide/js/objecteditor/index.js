@@ -893,7 +893,7 @@ export class ObjectEditor extends Morph {
           `No object package exists yet for object ${t}.\n`
         + `Enter a name for a new package:`, {
           historyId: "object-package-name-hist",
-          input: string.capitalize(t.name).replace(/\s/g, "-")
+          input: string.capitalize(t.name).replace(/\s+(.)/g, (_, match) => match.toUpperCase())
         });
 
         if (!objPkgName) { this.setStatusMessage("Canceled"); return; }
