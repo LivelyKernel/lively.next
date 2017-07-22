@@ -475,7 +475,7 @@ class StyleRuleControl extends Morph {
        submorphs: {
          after: ['key', 'value'],
         initialize() {
-          var ruleInput;
+          var ruleInput, props = this.styleSheet.rules[this.key];
           this.layout = new HorizontalLayout({spacing: 2});
           this.submorphs = [
             ruleInput = morph({name: "rule", type: "text", textString: this.key}),
@@ -483,7 +483,7 @@ class StyleRuleControl extends Morph {
               name: "rule toggler",
               type: "checkbox",
               scale: 0.9,
-              checked: !this.styleSheet.rules[this.key]._deactivated
+              checked: !props || !props._deactivated
             }
           ];
           connect(this.getSubmorphNamed("rule toggler"), "trigger", this, "toggleRule");
@@ -522,17 +522,15 @@ class StyleRuleControl extends Morph {
   }
 
   compileRule() {
-    let ruleInput = this.getSubmorphNamed('rule');
-    ruleInput.textString = ruleInput.textString.replace(/\r?\n|\r/g, '');
+    let ruleInput = this.getSubmorphNamed('rule'),
+        matcher = ruleInput.textString = ruleInput.textString.replace(/\r?\n|\r/g, '');
     if (!validRule(ruleInput.textString)) {
       this.toggleError(true);
     } else {
       this.toggleError(false);
-      signal(this, "replaceRule", {
-        styleSheet: this.styleSheet,
-        rule: this.key,
-        matcher: ruleInput.textString
-      });
+      this.styleSheet.setRule(matcher, this.styleSheet.rules[this.key]);
+      this.styleSheet.removeRule(this.rule);
+      this.key = matcher;
     }
     this.removeStyleClass('hover');
   }
@@ -542,7 +540,8 @@ class StyleRuleControl extends Morph {
   }
 
   onHoverIn(evt) {
-    this.highlighters = this.styleSheet.sizzle
+    if (this.styleClasses.includes('error')) return;
+    this.highlighters = new Sizzle(this.styleSheet.context)
       .select(this.key)
       .filter(m => ![m, ...m.ownerChain()].includes(this.getWindow()))
       .map(m => $world.addMorph(morph({bounds: m.globalBounds(), fill: Color.orange.withA(0.4)}, m.ownerChain().find(m => m.owner == $world))));
@@ -628,10 +627,6 @@ class StyleSheetData extends TreeData {
     signal(this, "update");
   }
 
-  replaceRule({styleSheet, rule, matcher}) {
-
-  }
-
   removeStyleSheet(node) {
     let styleSheets = this.root.children;
     this.targetMorph.styleSheets = arr.without(this.targetMorph.styleSheets, node.value)
@@ -706,7 +701,7 @@ class StyleSheetData extends TreeData {
       if (spec && spec.foldable) {
         // refresh all the folded member nodes
         for (let n of children) {
-            signal(n.displayedMorph, "update", value.valueOf ? value.valueOf() : value);
+            n.displayedMorph && signal(n.displayedMorph, "update", value.valueOf ? value.valueOf() : value);
         }
       }
     }
@@ -778,7 +773,6 @@ class StyleSheetData extends TreeData {
       case "rule":
         if (!node.displayedMorph) {
           let ruleControl = node.displayedMorph = new StyleRuleControl(node);
-          connect(ruleControl, 'replaceRule', this, 'replaceRule');
         }
         return node.displayedMorph;
       case "new-rule":
@@ -893,6 +887,7 @@ export class StyleSheetEditor extends Morph {
         fill: Color.transparent
       },
       ".TreeNode [name=valueString]": {
+        fontSize: 14,
         borderWidth: 0,
       },
       ".TreeNode.selected": {
@@ -1124,9 +1119,7 @@ export class StyleSheetEditor extends Morph {
   relayout() {
     let tree = this.get('propertyTree'),
         treeItemBounds = tree.nodeItemContainer.bounds();
-    if (treeItemBounds.height > this.height && this.height < 300) {
-      this.height = Math.min(treeItemBounds.height, 300);
-    }
+    this.height = Math.min(treeItemBounds.height, 300);
     this.width = tree.width = treeItemBounds.width + 10;
     tree.height = this.height;
     this.get('resizer').bottomRight = this.extent;
