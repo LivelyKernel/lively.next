@@ -292,7 +292,8 @@ export class SearchWidget extends Morph {
     searchInput.addCommands([
       {name: "realign top-bottom-center", exec: async () => {
         this.target.execCommand("realign top-bottom-center");
-        this.addSearchMarkersForPreview(this.state.inProgress && this.state.inProgress.found, false)
+        this.addSearchMarkersForPreview(
+          this.state.inProgress && this.state.inProgress.found, false);
         return true;
       }}
     ]);
@@ -399,12 +400,10 @@ export class SearchWidget extends Morph {
     });
   }
 
-  addSearchMarkersForPreview(found, noCursor = true) {
-    
-    found && this.whenRendered().then(() => promise.delay(20)).then(() => {
-      this.addSearchMarkers(found);
-      noCursor && this.target.removeMarker("search-highlight-cursor");
-    });
+  addSearchMarkersForPreview(found, noCursor = true) {    
+    if (!found) return;
+    this.addSearchMarkers(found);
+    noCursor && this.target.removeMarker("search-highlight-cursor");
   }
 
   prepareForNewSearch() {
@@ -466,7 +465,7 @@ export class SearchWidget extends Morph {
 
     var result = this.state.inProgress = {...opts, needle: this.input, found};
     this.applySearchResult(result);
-    found && this.whenRendered().then(() => this.addSearchMarkers(found, backwards));
+    found && this.addSearchMarkers(found, backwards);
     return result;
   }
 
