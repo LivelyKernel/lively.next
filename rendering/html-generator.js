@@ -64,17 +64,20 @@ export async function generateHTML(morph, htmlResource, options = {}) {
 
   root.style.transform = "";
 
-  let html = isFragment
-    ? `<div class="exported-morph-container ${htmlClassName}" 
-            style="width: ${containerWidth || root.style.width}; height: ${containerHeight || root.style.height};">\n`
-       + (addStyles ? morphicStyles() : "")
-       + `\n${root.outerHTML}\n</div>`
-    : `<head><title>lively.next</title><meta charset="UTF-8">`
-       + (addStyles ? morphicStyles() : "") + `\n</head>`
-       + `<body><div class="exported-morph-container ${htmlClassName}"
-                     style="width: ${containerWidth || root.style.width}; height: ${containerHeight || root.style.height};">
-          ${root.outerHTML}</div></body>`;
-  
+  let morphHtml = `<div class="exported-morph-container ${htmlClassName}"`
+                + `    style="max-width: ${containerWidth || root.style.width};`
+                + `           height: ${containerHeight || root.style.height};">`
+                + `${root.outerHTML}\n</div>`, html;
+
+  if (isFragment) {
+    html = addStyles ? morphicStyles() + morphHtml : morphHtml;
+
+  } else {    
+    html = `<head><title>lively.next</title><meta charset="UTF-8">`;
+    if (addStyles) html += morphicStyles();
+    html += `</head><body>\n` + morphHtml + "</body>"
+  }
+
   if (removeTargetFromLinks) {
     while (html.match(/(<a .*) target="_blank"/)) {
       html = html.replace(/(<a .*) target="_blank"/, "$1");
