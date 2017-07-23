@@ -24,35 +24,35 @@ export class AbstractPrompt extends Morph {
         initialize() {
           this.styleSheets = new StyleSheet({
             ".Button": {borderRadius: 15},
-            ".Button.activeStyle.standard": {
+            ".Button.standard": {
               borderWidth: 2,
               fill: Color.transparent,
               borderColor: Color.white,
               nativeCursor: "pointer"
             },
-            ".Button.activeStyle.cancel": {
+            ".Button.cancel": {
               borderWidth: 2,
               fill: Color.transparent,
               borderColor: Color.red.lighter(),
               fontStyle: "bold",
               nativeCursor: "pointer"
             },
-            ".Button.activeStyle.ok": {
+            ".Button.ok": {
               borderWidth: 2,
               fill: Color.transparent,
               borderColor: Color.green.lighter(),
               fontStyle: "bold",
               nativeCursor: "pointer"
             },
-            ".Button.activeStyle.standard [name=label]": {
+            ".Button.standard [name=label]": {
               fontStyle: "bold",
               fontColor: Color.white
             },
-            ".Button.activeStyle.cancel [name=label]": {
+            ".Button.cancel [name=label]": {
               fontColor: Color.red.lighter(),
               fontStyle: "bold"
             },
-            ".Button.activeStyle.ok [name=label]": {
+            ".Button.ok [name=label]": {
               fontColor: Color.green.lighter(),
               fontStyle: "bold"
             }

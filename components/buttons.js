@@ -1,163 +1,59 @@
-import { pt, LinearGradient, Color, Rectangle } from "lively.graphics";
-import { Morph, StyleSheet } from "lively.morphic";
-import { signal, disconnect, connect } from "lively.bindings";
-import { obj, arr } from "lively.lang/index.js";
+import { Morph } from "lively.morphic";
+import { Rectangle, LinearGradient, Color, pt } from "lively.graphics";
+import { signal } from "lively.bindings";
 
-// var b = new Button({label: "test", extent: pt(22,18)}).openInWorld()
-// b.scale = 10
-// import { Icon } from "./icons.js";
-// b.label = [Icon.textAttribute("plus")]
-// b.padding = Rectangle.inset(2,4,2,5); b.fit()
-// b.relayout()
-// b.fit()
+// let b = new Button().openInWorld()
 
 export class Button extends Morph {
 
-  static get styleSheet() {
-    return new StyleSheet('Button Style', {
-      ".Button": {borderWidth: 1, borderRadius: 5, padding: Rectangle.inset(4,2)},
-      ".Button.activeStyle": {
-        fontSize: 12, 
-        fontColor: Color.almostBlack,
-        borderColor: Color.gray,
-        fill: new LinearGradient({
-          stops: [{offset: 0, color: Color.white}, 
-                  {offset: 1, color: new Color.rgb(236, 240, 241)}]
-        }),
-        nativeCursor: "pointer"
-      },
-      ".Button.triggerStyle": {
-        borderColor: Color.gray,
-        fill: Color.rgb(161, 161, 161),
-        nativeCursor: "pointer",
-        fontSize: 12, 
-        fontColor: Color.almostBlack
-      },
-      ".Button.inactiveStyle": {
-        borderColor: Color.gray,
-        opacity: .5,
-        fill: new LinearGradient({
-          stops: [
-            {offset: 0, color: Color.white}, 
-            {offset: 1, color: new Color.rgb(236, 240, 241)}
-          ]
-        }),
-        nativeCursor: "not-allowed",
-        fontSize: 12, 
-        fontColor: Color.almostBlack.withA(0.5)
-      }
-    });
-  }
-
-  static renderStyleAccessors(modes) {
-    let accessors = {};
-    for (let mode in modes) {
-      accessors[mode] = {
-        initialize() {
-          let button = this,
-              handler = {
-                get(modeStyle, prop) {
-                  let v = prop in modeStyle ? modeStyle[prop] : button[prop];
-                  if (prop == mode) return undefined;
-                  return v;
-                },
-                set(modeStyle, prop, value) {
-                  if (prop == mode) return true;
-                  this.dontRecordChangesWhile(() => {
-                    let v = button[prop];
-                    button[prop] = value; // leverage the existing setter of the property
-                    modeStyle[prop] = button[prop];
-                    button[prop] = v;
-                    button.adjustStyleSheet(modes[mode], prop, button[prop]);
-                  });
-                  return true;
-                }
-              };
-          this[mode] = new Proxy({
-              __propertyInfo__: button.propertiesAndPropertySettings().properties
-            }, handler
-          );
-        }
-      }
-    }
-    return accessors;
-  }
-
   static get properties() {
+
     return {
       padding: {isStyleProp: true, defaultValue: Rectangle.inset(4,2)},
-      draggable:    {defaultValue: false},
+      draggable: {defaultValue: false},
       extent: {defaultValue: pt(100,20)},
-      
+      borderColor: {defaultValue: Color.gray},
+      borderWidth: {defaultValue: 1},
+      borderRadius: {defaultValue: 5},
+      nativeCursor: {defaultValue: "pointer"},
+      fill: {defaultValue: new LinearGradient({stops: [{offset: 0, color: Color.white}, {offset: 1, color: Color.rgb(236, 240, 241)} ], vector: 0})},
+
+      deactivated: {
+        defaultValue: false,
+        set(val) {
+          this.setProperty("deactivated", val);
+          this.nativeCursor = val ? "not-allowed" : "pointer";
+          this.labelMorph.opacity = val ? 0.6 : 1;
+        }
+      },
+
+      pressed: {
+        defaultValue: null,
+        set(val) {
+          let oldVal = this.getProperty("pressed");
+          this.setProperty("pressed", val);
+          let realFill = (!val && oldVal && oldVal.originalFill) || this.defaultProperty("fill");
+          this.fill = val ? realFill.darker() : realFill;
+        }
+      },
+
       fontSize: {
-        type: "Number",
-        min: 0,
-        isStyleProp: true,
-        defaultValue: 12,
-        after: ['labelMorph', 'iconMorph'],
+        type: "Number", min: 4, isStyleProp: true, defaultValue: 12,
+        after: ['labelMorph'],
         set(s) {
           this.setProperty('fontSize', s);
           this.labelMorph.fontSize = s;
-          this.iconMorph && (this.iconMorph.fontSize = s);
         }
       },
 
       fontColor: {
-        isStyleProp: true,
-        defaultValue: Color.black,
-        after: ['labelMorph', 'iconMorph'],
+        isStyleProp: true, defaultValue: Color.almostBlack, after: ['labelMorph'],
         set(c) {
           this.setProperty('fontColor', c);
           this.labelMorph.fontColor = c;
-          this.iconMorph && (this.iconMorph.fontColor = c);
         }
       },
 
-      activeMode: {
-        after: ["labelMorph"],
-        type: 'Enum',
-        values: ['active', 'inactive', 'triggered'],
-        get() {
-           return this._buttonMode || 'active'
-        },
-        set(m) {
-           switch(m) {
-             case "active":
-               this.activate();
-               break;
-             case "inactive":
-               this.deactivate();
-               break;
-             case "triggered":
-               this.perform();
-               break;
-           }
-           this._buttonMode = m;
-        }
-      },
-      iconMorph: {
-        after: ['submorphs'],
-        initialize() {
-          this.iconMorph = this.addMorph({
-            type: "label", name: "icon",
-            value: ""
-          });
-        },
-        get() { return this.getSubmorphNamed('icon') },
-        set(iconMorph) {
-          var existing = this.iconMorph;
-          if (existing) {
-            disconnect(this.iconMorph, "extent", this, "relayout");
-            existing.remove();
-          }
-          if (!iconMorph) return;
-          iconMorph.name = "icon";
-          iconMorph.reactsToPointer = false;
-          this.addMorphAt(iconMorph, 0);
-          connect(this.iconMorph, 'extent', this, 'relayout');
-        }
-      },
-      // button label
       labelMorph: {
         after: ["submorphs"],
         initialize() {
@@ -169,45 +65,11 @@ export class Button extends Morph {
         get() { return this.getSubmorphNamed("label"); },
         set(labelMorph) {
           var existing = this.labelMorph;
-          if (existing) {
-            disconnect(this.labelMorph, "extent", this, "relayout");
-            existing.remove();
-          }
+          if (existing) existing.remove();
           labelMorph.name = "label";
           labelMorph.reactsToPointer = false;
           this.addMorphAt(labelMorph, 0);
-          connect(this.labelMorph, 'extent', this, 'relayout');
         }
-      },
-
-      icon: {
-        after: ['labelMorph', 'iconMorph'], 
-        isStyleProp: true,
-        type: "Icon", // "" -> no icon, else a valid font awesome icon code
-        initialize() {
-          this.icon = "";
-        },
-        set(codeOrIconMorph) {
-          this.setProperty('icon', codeOrIconMorph);
-          if (!this.iconMorph) {
-            this.iconMorph = this.addMorph({
-              type: "label",
-              name: "icon",
-              value: ""
-            });
-          }
-          if (codeOrIconMorph && codeOrIconMorph.isMorph) {
-            this.iconMorph = codeOrIconMorph;
-          } else {
-            this.iconMorph.value = codeOrIconMorph || "";
-          }
-        }
-      },
-
-      iconPosition: {
-        defaultValue: "left",
-        type: "Enum",
-        values: ["left", "right", "bottom", "top"]
       },
 
       label: {
@@ -229,92 +91,57 @@ export class Button extends Morph {
         after: ["labelMorph"], derived: true,
         get() { return this.labelMorph.textAndAttributes; },
         set(val) { this.labelMorph.textAndAttributes = val; }
-      },
+      }
 
-      ...this.renderStyleAccessors({
-        activeStyle: '.activeStyle',
-        triggerStyle: '.triggerStyle',
-        inactiveStyle: '.inactiveStyle'
-      })
     }
   }
 
   constructor(props) {
     super(props);
-    this.activeMode = 'active';
     this.relayout();
-    connect(this, 'extent', this, 'relayout');
-    connect(this, 'iconPosition', this, 'relayout');
-    connect(this, 'padding', this, 'relayout');
-    connect(this, 'fontSize', this, 'relayout');
-    connect(this, 'fontFamily', this, 'relayout');
   }
 
-  get __dont_serialize__() {
-    return ['activeStyle', 'triggerStyle', 'inactiveStyle'];
-  }
-
-  isStyleProp(prop) {
-    if (prop == 'styleClasses') return;
-    this.propertySpecs = this.propertySpecs || this.propertiesAndPropertySettings().properties;
-    return this.propertySpecs[prop] && this.propertySpecs[prop].isStyleProp
-  }
-
-  adjustStyleSheet(style, prop, value) {
-    /*
-     When we directly set style properties of a button, we want the
-     style for the current mode to be influenced and not be overriden,
-     by global style sheets, or changing activeModes.
-    */
-    if (!this.isStyleProp(prop)) return;
-    if (this.styleSheets.length < 1) this.styleSheets = new StyleSheet({});
-    let sheet = this.styleSheets[0],
-        props = {
-          ...(sheet.rules[style] || {}),
-          [prop]: value
-        };
-    sheet.setRule(style, props);
-  }
-  
   get isButton() { return true }
 
-  relayout() {
-    var label = this.labelMorph,
-        icon = this.iconMorph;
-    if (!label) return;
-    var padding = this.padding,
-        padT = padding.top(),
-        padB = padding.bottom(),
-        padL = padding.left(),
-        padR = padding.right(),
-        minHeight = label.height + padT + padB,
-        minWidth = label.width + padL + padR;
-    if (minHeight > this.height) this.height = minHeight;
-    if (minWidth > this.width) this.width = minWidth;
-    let innerPadding = this.innerBounds().insetByRect(padding);
-    label.center = innerPadding.center();
-    if (!icon || !this.iconMorph.value) return this;
-    switch (this.iconPosition) {
-      case 'left':
-        label.rightCenter = innerPadding.rightCenter();
-        icon.rightCenter = label.leftCenter;
-        return this;
-      case 'right':
-        label.leftCenter = innerPadding.leftCenter();
-        icon.leftCenter = label.rightCenter;
-        return this;
-      case 'top':
-        label.bottomCenter = innerPadding.bottomCenter();
-        icon.bottomCenter = label.topCenter;
-        return this;
-      case 'bottom':
-        label.topCenter = innerPadding.topCenter();
-        icon.topCenter = label.bottomCenter;  
-        return this;        
+  enable() { this.deactivated = false; }
+
+  disable() { this.deactivated = true; }
+
+  onChange(change) {
+    let {prop} = change;
+    switch (prop) {
+      case 'extent':
+      case 'padding':
+      case 'fontSize':
+      case 'fontFamily': this.relayout();
     }
-    return this;
+    return super.onChange(change);
   }
-  
+
+  onSubmorphChange(change, submorph) {
+    if (submorph === this.labelMorph && change.prop === "extent") this.relayout();
+    return super.onSubmorphChange(change, submorph);
+  }
+
+  relayout() {
+    var label = this.labelMorph;
+    if (!label || this._relayouting) return;
+    this._relayouting = true;
+    try {
+      var padding = this.padding,
+          padT = padding.top(),
+          padB = padding.bottom(),
+          padL = padding.left(),
+          padR = padding.right(),
+          minHeight = label.height + padT + padB,
+          minWidth = label.width + padL + padR;
+      if (minHeight > this.height) this.height = minHeight;
+      if (minWidth > this.width) this.width = minWidth;
+      let innerPadding = this.innerBounds().insetByRect(padding);
+      label.center = innerPadding.center();
+    } finally { this._relayouting = false; }
+  }
+
   fit() {
     var padding = this.padding, label = this.labelMorph;
     label.fit();
@@ -322,29 +149,6 @@ export class Button extends Morph {
     this.relayout();
     return this;
   }
-
-  get isActive() {
-    return this.activeMode == 'active'
-  }
-
-  activate() {
-    let classes = arr.withoutAll(this.styleClasses, ['inactiveStyle', 'triggerStyle'])
-    this.styleClasses = [...classes, 'activeStyle'];
-  }
-
-  deactivate() {
-    let classes = arr.withoutAll(this.styleClasses, ['activeStyle', 'triggerStyle'])
-    this.styleClasses = [...classes, 'inactiveStyle'];
-  }
-
-  perform() {
-    let classes = arr.withoutAll(this.styleClasses, ['triggerStyle', 'inactiveStyle', 'activeStyle'])
-    this.styleClasses = [...classes, 'triggerStyle'];
-  }
-
-  enable() { this.activeMode = "active"; }
-
-  disable() { this.activeMode = "inactive"; }
 
   trigger() {
     try {
@@ -357,27 +161,27 @@ export class Button extends Morph {
     }
   }
 
-  onMouseDown(evt) {
-    if (this.isActive && this.innerBoundsContainsPoint(evt.positionIn(this)))
-      this.activeMode = 'triggered'
+  onMouseDown(evt) {    
+    if (!evt.isAltDown() && !this.deactivated
+     && this.innerBoundsContainsPoint(evt.positionIn(this)))
+      this.pressed = {originalFill: this.fill};
   }
 
   onMouseUp(evt) {
-    if (evt.isClickTarget(this) && this.activeMode == 'triggered') {
-      this.activeMode = 'active';
+    if (evt.isClickTarget(this) && this.pressed) {
       this.trigger();
+      this.pressed = null;
     }
   }
 
   onHoverOut(evt) {
     // When leaving the button without mouse up, reset appearance
-    if (this.activeMode == 'triggered' && evt.isClickTarget(this))
-      this.activeMode = 'active';
+    if (this.pressed && evt.isClickTarget(this)) this.pressed = null;
   }
-
+  
   onHoverIn(evt) {
-    if (this.isActive && evt.isClickTarget(this))
-      this.activeMode = 'triggered';
+    if (!this.deactivated && evt.isClickTarget(this))
+      this.pressed = this.pressed = {originalFill: this.fill};
   }
 
   async interactivelyChangeLabel() {
@@ -391,10 +195,9 @@ export class Button extends Morph {
 
   menuItems() {
     let items = super.menuItems();
-
     items.unshift({isDivider: true});
     items.unshift(["change label", () => this.interactivelyChangeLabel()]);
-
     return items;
   }
+
 }
