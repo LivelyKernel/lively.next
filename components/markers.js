@@ -1,10 +1,10 @@
 /* global Element, Node */
-import {obj, arr, string} from "lively.lang";
+import {obj, string} from "lively.lang";
 import {pt, Color, Point, Rectangle, rect} from "lively.graphics";
-import {morph, Path, Ellipse, StyleSheet, Morph, MorphicEnv, ShadowObject, Label} from "lively.morphic";
+import {morph, StyleSheet, Morph, MorphicEnv, ShadowObject} from "lively.morphic";
 import {connect, disconnect} from "lively.bindings";
-import { MorphHighlighter } from "./morph.js";
-import { shape, intersect } from "svg-intersections";
+import {Icon} from "./icons.js";
+import { Leash } from "./widgets.js";
 
 export function show(target) {
   var world = MorphicEnv.default().world;
@@ -229,7 +229,7 @@ export class StatusMessage extends Morph {
               name: "closeButton",
               type: "button",
               extent: pt(22, 22),
-              label: Label.icon("close")
+              label: Icon.makeLabel("close")
             }
           ];
           this.relayout();
@@ -342,7 +342,7 @@ export class StatusMessageForMorph extends StatusMessage {
                 name: "expandButton",
                 type: "button",
                 extent: pt(22, 22),
-                label: Label.icon("expand")
+                label: Icon.makeLabel("expand")
               });
               connect(btn, "fire", this, "expand");
             }
@@ -418,234 +418,4 @@ export function showConnector(morph1, morph2, delay = 3000) {
   path.animate({vertices: [p1, p2], duration: 400});
   if (delay) setTimeout(() => path.fadeOut(), delay);
   return path;
-}
-
-class LeashEndpoint extends Ellipse {
-
-  get dragTriggerDistance() { return this.connectedMorph ? 20 : 0 }
-
-  onDragStart(evt) {
-    let {lastDragPosition, clickedOnPosition} = evt.state;
-    evt.state.dragDelta = lastDragPosition.subPt(clickedOnPosition);
-    evt.state.endpoint = this;
-    this.leash.onEndpointDrag(evt);
-  }
-
-  canConnectTo(m) {
-    return !m.isWorld && !m.isHaloItem && this.leash.canConnectTo(m)
-            && !m.isHighlighter && !m.ownerChain().some(m => m.isHaloItem)
-  }
-  
-  onDrag(evt) {
-    if (this.connectedMorph) {
-      this.clearConnection();
-    } else {
-      var m = evt.hand.findDropTarget(
-        evt.hand.position,
-        [this.leash, this.leash.endPoint, this.leash.startPoint],
-        m => this.canConnectTo(m)
-      );
-      if (this.possibleTarget != m && this.highlighter) this.highlighter.deactivate();
-      this.possibleTarget = m;
-      if (this.possibleTarget) {
-         this.closestSide = this.possibleTarget
-        .globalBounds()
-        .partNameNearest(obj.keys(Leash.connectionPoints), this.globalPosition);
-      this.highlighter = MorphHighlighter.for($world, this.possibleTarget, false, [this.closestSide]);
-      this.highlighter.show(); 
-      }
-    }
-    evt.state.endpoint = this;
-    this.leash.onEndpointDrag(evt);
-  }
-
-  onDragEnd() {
-    MorphHighlighter.removeHighlighters();
-    if (this.possibleTarget && this.closestSide) {
-      this.attachTo(this.possibleTarget, this.closestSide);
-    }
-  }
-
-  getConnectionPoint() {
-    const {isPath, isPolygon, vertices, origin} = this.connectedMorph,
-          gb = this.connectedMorph.globalBounds();
-    if ((isPath || isPolygon) && this.attachedSide != "center") {
-      const vs = vertices.map(({x, y}) => pt(x, y).addPt(origin)),
-            ib = Rectangle.unionPts(vs),
-            side = ib[this.attachedSide](),
-            center = ib.center().addPt(ib.center().subPt(side)),
-            line = shape("line", {x1: side.x, y1: side.y, x2: center.x, y2: center.y}),
-            path = shape("polyline", {points: vs.map(({x, y}) => `${x},${y}`).join(" ")}),
-            {x, y} = arr.min(intersect(path, line).points, ({x, y}) => pt(x, y).dist(side));
-      return pt(x, y).addPt(gb.topLeft());
-    } else {
-      return gb[this.attachedSide]();
-    }
-  }
-
-  update(change) {
-    if (change 
-        && !["position", "extent", "rotation", "scale"].includes(change.prop) 
-        && change.target != this.connectedMorph) return;
-    if (!this.connectedMorph) return;
-    const globalPos = this.getConnectionPoint(), pos = this.leash.localize(globalPos);
-    this.vertex.position = pos;
-    this.relayout();
-  }
-
-  clearConnection() {
-    if (this.connectedMorph) {
-      disconnect(this.connectedMorph, 'onChange', this, 'update');
-      this.connectedMorph = null;
-    }
-  }
-
-  relayout(change) {
-    var anim;
-    const {x, y} = this.vertex.position, bw = this.leash.borderWidth;
-    //this.extent = this.pt((2*bw), (2 * bw));
-    if (anim = change && change.meta.animation) {
-      this.animate({center: pt(x + bw, y + bw), duration: anim.duration})
-    } else {
-      this.center = pt(x + bw, y + bw); 
-    }
-  }
-
-  attachTo(morph, side) {
-    this.clearConnection();
-    this.leash.openInWorld(this.leash.position);
-    this.connectedMorph = morph;
-    this.attachedSide = side;
-    this.vertex.controlPoints = this.leash.controlPointsFor(side, this);
-    this.update();
-    connect(this.connectedMorph, 'onChange', this, "update");
-  }
-
-  static get properties() {
-    return {
-      index: {},
-      leash: {},
-      nativeCursor: {defaultValue: '-webkit-grab'},
-      attachedSide: {},
-      connectedMorph: {},
-      vertex: {
-        after: ['leash'],
-        get() {
-          return this.leash.vertices[this.index];
-        },
-        set(v) {
-          this.leash.vertices[this.index] = v;
-          this.leash.vertices = this.leash.vertices; // this is a very akward interface
-        }
-      }
-    };
-  }
-}
-
-export class Leash extends Path {
-
-  static get connectionPoints() {
-    return {
-      topCenter: pt(0, -1),
-      topLeft: pt(-1, -1),
-      rightCenter: pt(1, 0),
-      bottomRight: pt(1, 1),
-      bottomCenter: pt(0, 1),
-      bottomLeft: pt(-1, 1),
-      leftCenter: pt(-1, 0),
-      topRight: pt(1, -1),
-      center: pt(0, 0)
-    }
-  }
-  
-  static get properties() {
-    return {
-      start: {},
-      end: {},
-      canConnectTo: {
-        defaultValue: m => true
-      },
-      reactsToPointer: {defaultValue: false},
-      wantsDroppedMorphs: {defaultValue: false},
-      direction: {
-         type: 'Enum',
-         values: ['unidirectional', 'outward', 'inward'],
-         defaultValue: 'unidirectional'
-      },
-      endpointStyle: {
-        isStyleProp: true,
-        defaultValue: {
-          fill: Color.black,
-          origin: pt(3.5, 3.5),
-          extent: pt(10, 10),
-          nativeCursor: "-webkit-grab"
-        }
-      },
-      borderWidth: {defaultValue: 2},
-      borderColor: {defaultValue: Color.black},
-      fill: {defaultValue: Color.transparent},
-      vertices: {
-        after: ["start", "end"],
-        initialize() {
-          this.vertices = [this.start, this.end];
-        }
-      },
-      submorphs: {
-        initialize() {
-          this.submorphs = [
-            (this.startPoint = this.endpoint(0)),
-            (this.endPoint = this.endpoint(1))
-          ];
-          connect(this, "onChange", this, "relayout");
-          this.updateEndpointStyles()
-        }
-      }
-    };
-  }
-
-  onMouseDown(evt) {
-    this.updateEndpointStyles();
-  }
-
-  updateEndpointStyles() {
-    Object.assign(this.startPoint, this.getEndpointStyle(0));
-    Object.assign(this.endPoint, this.getEndpointStyle(1));
-    this.relayout();
-  }
-
-  remove() {
-    super.remove();
-    this.startPoint.clearConnection();
-    this.endPoint.clearConnection();
-  }
-
-  onEndpointDrag(evt) {
-    const pos = evt.state.endpoint.vertex.position;
-    evt.state.endpoint.vertex.position = pos.addPt(evt.state.dragDelta);
-    this.relayout();
-  }
-
-  getEndpointStyle(idx) {
-    return {
-      ...this.endpointStyle,
-      ...(idx == 0 ? this.endpointStyle.start : this.endpointStyle.end)
-    };
-  }
-
-  endpoint(idx) {
-    const leash = this, {x, y} = leash.vertices[idx];
-    return new LeashEndpoint({index: idx, leash: this, position: pt(x, y)});
-  }
-
-  controlPointsFor(side, endpoint) {
-    var next = Leash.connectionPoints[side];
-    next = (endpoint == this.startPoint ? next.negated() : next);
-    return {previous: next.scaleBy(100), next: next.negated().scaleBy(100)};
-  }
-
-  relayout(change) {
-    if (change && !['vertices', 'position'].includes(change.prop)) return;
-    this.startPoint.relayout(change);
-    this.endPoint.relayout(change);
-  }
 }

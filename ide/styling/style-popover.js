@@ -1,6 +1,6 @@
 /*global target,connection*/
 import { Morph, Icon, config, Text, ShadowObject, GridLayout, TilingLayout, StyleSheet, CustomLayout, morph, HorizontalLayout, VerticalLayout } from "lively.morphic";
-import { ModeSelector, LabeledCheckBox, DropDownSelector, SearchField, CheckBox } from "../../components/widgets.js";
+import { ModeSelector, LabeledCheckBox, Leash, DropDownSelector, SearchField, CheckBox } from "../../components/widgets.js";
 import { connect, signal } from "lively.bindings";
 import { arr, promise, string, obj } from "lively.lang";
 import { Color, rect, Rectangle, pt } from "lively.graphics";
