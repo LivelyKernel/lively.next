@@ -213,28 +213,32 @@ export class Color {
     return [r, g, b];
   }
 
-  static get black()         { return black         }
-  static get almostBlack()   { return almostBlack   }
-  static get white()         { return white         }
-  static get gray()          { return gray          }
-  static get red()           { return red           }
-  static get green()         { return green         }
-  static get yellow()        { return yellow        }
-  static get blue()          { return blue          }
-  static get purple()        { return purple        }
-  static get magenta()       { return magenta       }
-  static get pink()          { return pink          }
-  static get turquoise()     { return turquoise     }
-  static get tangerine()     { return tangerine     }
-  static get orange()        { return orange        }
-  static get cyan()          { return cyan          }
-  static get brown()         { return brown         }
-  static get limeGreen()     { return limeGreen     }
-  static get darkGray()      { return darkGray      }
-  static get lightGray()     { return lightGray     }
-  static get veryLightGray() { return veryLightGray }
-  static get transparent()   { return transparent   }
-
+  static get named() {
+    if (this._named) return this._named;
+    return this._named = {
+      black:         new Color(0,0,0),
+      almostBlack:   Color.rgb(64, 64, 64),
+      white:         new Color(1,1,1),
+      gray:          new Color(0.8,0.8,0.8),
+      red:           new Color(0.8,0,0),
+      green:         new Color(0,0.8,0),
+      yellow:        new Color(0.8,0.8,0),
+      blue:          new Color(0,0,0.8),
+      purple:        new Color(1,0,1),
+      magenta:       new Color(1,0,1),
+      pink:          Color.rgb(255,30,153),
+      turquoise:     Color.rgb(0,240,255),
+      tangerine:     Color.rgb(242,133,0),
+      orange:        Color.rgb(255,153,0),
+      cyan:          Color.rgb(0,255,255),
+      brown:         Color.rgb(182,67,0),
+      limeGreen:     Color.rgb(51,255,0),
+      darkGray:      Color.rgb(102,102,102),
+      lightGray:     Color.rgb(230,230,230),
+      veryLightGray: Color.rgb(243,243,243),
+      transparent:   Color.rgba(0,0,0,0)
+    }
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -369,12 +373,23 @@ export class Color {
     }
   }
 
+  toJSExpr() {
+    return `Color.${this.name || this.toString()}`
+  }
+
+  get name() {
+    let named = Color.named;
+    return Object.keys(named).find(ea => named[ea].equals(this));
+  }
 }
+
+Object.assign(Color, Color.named);
+
 
 class Gradient {
 
   static create(offsetAndColors) {
-    /* 
+    /*
      Create a linear gradient by specifying only the
      stops in a less cumbersome fashion:
        LinearGradient.create({"0": Color.red, ".5": Color.green, ...)
@@ -385,7 +400,7 @@ class Gradient {
     }
     return new this({stops: parsedStops})
   }
-  
+
   constructor(stops) {
     this.stops = stops.map(s => s) || [];
   }
@@ -396,25 +411,25 @@ class Gradient {
     }
     return false;
   }
-  
+
   getStopsLighter(n) {
-      return arr.collect(this.stops, function(ea) {
-          return {offset: ea.offset, color: ea.color.lighter(n)};
-      });
+    return arr.collect(this.stops, function(ea) {
+      return {offset: ea.offset, color: ea.color.lighter(n)};
+    });
   }
-  
+
   getStopsDarker(n) {
       return arr.collect(this.stops, function(ea) {
           return {offset: ea.offset, color: ea.color.darker(n)};
       });
   }
-  
+
   get isGradient() { return true }
-  
+
 }
 
 export class LinearGradient extends Gradient {
-  
+
   constructor({stops, vector}) {
     super(stops);
     this.vector = vector;
@@ -439,13 +454,13 @@ export class LinearGradient extends Gradient {
   angleToRect(rad) {
      return Point.polar(1, rad).extentAsRectangle().withCenter(pt(.5,.5))
   }
-  
+
   vectorAsAngle() {
-     return this.vector.extent().theta();
+    return this.vector.extent().theta();
   }
-  
+
   toString() { return this.toCSSString(); }
-  
+
   get vector() { return this._vector }
   set vector(value) {
     if (!value) this._vector = this.vectors.northsouth;
@@ -453,10 +468,10 @@ export class LinearGradient extends Gradient {
     else if (typeof value === "number") this._vector = this.angleToRect(value); //radians
     else this._vector = value;
   }
-  
+
   lighter(n) { return new this.constructor({stops: this.getStopsLighter(n), vector: this.vector}) }
   darker() { return new this.constructor({stops: this.getStopsDarker(), vector: this.vector}) }
-  
+
   toCSSString() {
     // default webkit way of defining gradients
     var deg = num.toDegrees(this.vectorAsAngle()) + 90,
@@ -465,10 +480,16 @@ export class LinearGradient extends Gradient {
     str += ')';
     return str;
   }
+  
+  toJSExpr() {
+    let stops = this.stops.map(ea => `{offset: ${ea.offset}, color: ${ea.color.toJSExpr()}}`).join(", "),
+        vector = num.toDegrees(this.vectorAsAngle()) - 90;
+    return `new LinearGradient({stops: [${stops}], vector: ${vector}})`;
+  }
 }
 
 export class RadialGradient extends Gradient {
-  
+
   constructor({stops, focus, bounds}) {
     super(stops);
     this.focus = focus || pt(0.5, 0.5);
@@ -476,12 +497,12 @@ export class RadialGradient extends Gradient {
   }
 
   get type() { return "radialGradient" }
-  
+
   toString() { return this.toCSSString() }
-  
+
   lighter(n) { return new this.constructor({stops: this.getStopsLighter(n), focus: this.focus, bounds: this.bounds}) }
   darker() { return new this.constructor({stops: this.getStopsDarker(), focus: this.focus, bounds: this.bounds}) }
-  
+
   toCSSString() {
     const innerCircle = this.focus.scaleBy(100.0),
           ext = this.bounds.extent();
@@ -491,11 +512,11 @@ export class RadialGradient extends Gradient {
     str += ')';
     return str;
   }
-  
+
 }
 
-/* 
-   Flat design or flat UI colors are quite popular in web design today 
+/*
+   Flat design or flat UI colors are quite popular in web design today
    where bold, bright colors are used to create clean, simple interfaces.
 */
 
@@ -521,7 +542,7 @@ export const flatDesignColors = [
 "#707b7c","#616a6b","#515a5a","#424949"];
 
 /*
-  Material design is a visual language and design system developed 
+  Material design is a visual language and design system developed
   by Google with an almost flat style and vibrant color schemes.
 */
 
@@ -556,26 +577,3 @@ export const materialDesignColors = [
 "#455a64","#37474f","#263238","#ffffff","#000000"];
 
 export const webSafeColors = ["ccff00", "ccff33", "ccff66", "ccff99", "ccffcc", "ccffff", "ffffff", "ffffcc", "ffff99", "ffff66", "ffff33", "ffff00", "cccc00", "cccc33", "cccc66", "cccc99", "cccccc", "ccccff", "ffccff", "ffcccc", "ffcc99", "ffcc66", "ffcc33", "ffcc00", "cc9900", "cc9933", "cc9966", "cc9999", "cc99cc", "cc99ff", "ff99ff", "ff99cc", "ff9999", "ff9966", "ff9933", "ff9900", "cc6600", "cc6633", "cc6666", "cc6699", "cc66cc", "cc66ff", "ff66ff", "ff66cc", "ff6699", "ff6666", "ff6633", "ff6600", "cc3300", "cc3333", "cc3366", "cc3399", "cc33cc", "cc33ff", "ff33ff", "ff33cc", "ff3399", "ff3366", "ff3333", "ff3300", "cc0000", "cc0033", "cc0066", "cc0099", "cc00cc", "cc00ff", "ff00ff", "ff00cc", "ff0099", "ff0066", "ff0033", "ff0000", "660000", "660033", "660066", "660099", "6600cc", "6600ff", "9900ff", "9900cc", "990099", "990066", "990033", "990000", "663300", "663333", "663366", "663399", "6633cc", "6633ff", "9933ff", "9933cc", "993399", "993366", "993333", "993300", "666600", "666633", "666666", "666699", "6666cc", "6666ff", "9966ff", "9966cc", "996699", "996666", "996633", "996600", "669900", "669933", "669966", "669999", "6699cc", "6699ff", "9999ff", "9999cc", "999999", "999966", "999933", "999900", "66cc00", "66cc33", "66cc66", "66cc99", "66cccc", "66ccff", "99ccff", "99cccc", "99cc99", "99cc66", "99cc33", "99cc00", "66ff00", "66ff33", "66ff66", "66ff99", "66ffcc", "66ffff", "99ffff", "99ffcc", "99ff99", "99ff66", "99ff33", "99ff00", "00ff00", "00ff33", "00ff66", "00ff99", "00ffcc", "00ffff", "33ffff", "33ffcc", "33ff99", "33ff66", "33ff33", "33ff00", "00cc00", "00cc33", "00cc66", "00cc99", "00cccc", "00ccff", "33ccff", "33cccc", "33cc99", "33cc66", "33cc33", "33cc00", "009900", "009933", "009966", "009999", "0099cc", "0099ff", "3399ff", "3399cc", "339999", "339966", "339933", "339900", "006600", "006633", "006666", "006699", "0066cc", "0066ff", "3366ff", "3366cc", "336699", "336666", "336633", "336600", "003300", "003333", "003366", "003399", "0033cc", "0033ff", "3333ff", "3333cc", "333399", "333366", "333333", "333300", "000000", "000033", "000066", "000099", "0000cc", "0000ff", "3300ff", "3300cc", "330099", "330066", "330033", "330000"];
-
-// well-known colors
-export const black         = new Color(0,0,0),
-             almostBlack   = Color.rgb(64, 64, 64),
-             white         = new Color(1,1,1),
-             gray          = new Color(0.8,0.8,0.8),
-             red           = new Color(0.8,0,0),
-             green         = new Color(0,0.8,0),
-             yellow        = new Color(0.8,0.8,0),
-             blue          = new Color(0,0,0.8),
-             purple        = new Color(1,0,1),
-             magenta       = new Color(1,0,1),
-             pink          = Color.rgb(255,30,153),
-             turquoise     = Color.rgb(0,240,255),
-             tangerine     = Color.rgb(242,133,0),
-             orange        = Color.rgb(255,153,0),
-             cyan          = Color.rgb(0,255,255),
-             brown         = Color.rgb(182,67,0),
-             limeGreen     = Color.rgb(51,255,0),
-             darkGray      = Color.rgb(102,102,102),
-             lightGray     = Color.rgb(230,230,230),
-             veryLightGray = Color.rgb(243,243,243),
-             transparent   = Color.rgba(0,0,0,0);
