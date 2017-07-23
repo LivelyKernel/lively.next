@@ -35,7 +35,6 @@ import worldCommands from "./world-commands.js";
 import { loadWorldFromURL, loadWorld } from "./world-loading.js";
 import LoadingIndicator from "./components/loading-indicator.js";
 import { GradientEditor } from "./ide/styling/gradient-editor.js";
-import { UserUI } from "lively.user/morphic/user-ui.js";
 
 export class World extends Morph {
 
@@ -55,9 +54,10 @@ export class World extends Morph {
 
       showsUserFlap: {
         defaultValue: true,
-        set(bool) {
+        set(bool) {          
           this.setProperty("showsUserFlap", bool);
-          UserUI[bool ? "showUserFlap" : "hideUserFlap"](this);
+          System.import("lively.user/morphic/user-ui.js")
+            .then(userUI => userUI.UserUI[bool ? "showUserFlap" : "hideUserFlap"](this));
         }
       },
 
