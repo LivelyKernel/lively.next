@@ -12,8 +12,7 @@ import {
   config,
   MorphicEnv,
   Window,
-  Menu,
-  Button
+  Menu
 } from "./index.js";
 import { StatusMessage, StatusMessageForMorph } from './components/markers.js';
 import { TooltipViewer } from "./components/tooltips.js";
@@ -64,7 +63,6 @@ export class World extends Morph {
       styleSheets: {
         initialize() {
           this.styleSheets = [
-            Button.styleSheet,
             StatusMessage.styleSheet,
             Window.styleSheet,
             FilterableList.styleSheet,
