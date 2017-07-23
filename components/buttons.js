@@ -15,51 +15,25 @@ export class Button extends Morph {
       borderColor: {defaultValue: Color.gray},
       borderWidth: {defaultValue: 1},
       borderRadius: {defaultValue: 5},
+      nativeCursor: {defaultValue: "pointer"},
+      fill: {defaultValue: new LinearGradient({stops: [{offset: 0, color: Color.white}, {offset: 1, color: Color.rgb(236, 240, 241)} ], vector: 0})},
 
       deactivated: {
-        after: ["activeStyle", "inactiveStyle"], defaultValue: false,
+        defaultValue: false,
         set(val) {
           this.setProperty("deactivated", val);
-          Object.assign(this, val ? this.inactiveStyle : this.activeStyle);
+          this.nativeCursor = val ? "not-allowed" : "pointer";
+          this.labelMorph.opacity = val ? 0.6 : 1;
         }
       },
 
       pressed: {
-        after: ["activeStyle", "inactiveStyle"], defaultValue: false,
+        defaultValue: null,
         set(val) {
+          let oldVal = this.getProperty("pressed");
           this.setProperty("pressed", val);
-          let fill = this.activeStyle.fill;
-          this.fill = val ? fill.darker() : fill;
-        }
-      },
-
-      activeStyle: {
-        after: ["labelMorph"], isStyleProp: true,
-        get() {
-          return this.getProperty("activeStyle") || {
-            fill: new LinearGradient({stops: [{offset: 0, color: Color.white}, {offset: 1, color: Color.rgb(236, 240, 241)} ], vector: 0}),
-            fontColor: Color.almostBlack,
-            nativeCursor: "pointer"
-          }
-        },
-        set(val) {
-          this.setProperty("activeStyle", val);
-          if (!this.deactivated) Object.assign(this, val);
-        }
-      },
-
-      inactiveStyle: {
-        after: ["labelMorph"], isStyleProp: true,
-        get() {
-          return this.getProperty("inactiveStyle") || {
-            fill: new LinearGradient({stops: [{offset: 0, color: Color.white}, {offset: 1, color: Color.rgb(236, 240, 241)}], vector: 0}),
-            fontColor: Color.rgba(64,64,64,0.5),
-            nativeCursor: "not-allowed"
-          }
-        },
-        set(val) {
-          this.setProperty("inactiveStyle", val);
-          if (this.deactivated) Object.assign(this, val);
+          let realFill = (!val && oldVal.originalFill) || this.defaultProperty("fill");
+          this.fill = val ? realFill.darker() : realFill;
         }
       },
 
@@ -124,7 +98,6 @@ export class Button extends Morph {
 
   constructor(props) {
     super(props);
-    Object.assign(this, this[this.deactivated ? "inactiveStyle" : "activeStyle"]);
     this.relayout();
   }
 
@@ -188,26 +161,27 @@ export class Button extends Morph {
     }
   }
 
-  onMouseDown(evt) {
-    if (!evt.isAltDown() && !this.deactivated && this.innerBoundsContainsPoint(evt.positionIn(this))) {
-      this.pressed = true;
-    }
+  onMouseDown(evt) {    
+    if (!evt.isAltDown() && !this.deactivated
+     && this.innerBoundsContainsPoint(evt.positionIn(this)))
+      this.pressed = {originalFill: this.fill};
   }
 
   onMouseUp(evt) {
     if (evt.isClickTarget(this) && this.pressed) {
       this.trigger();
-      this.pressed = false;
+      this.pressed = null;
     }
   }
 
   onHoverOut(evt) {
     // When leaving the button without mouse up, reset appearance
-    if (this.pressed && evt.isClickTarget(this)) this.pressed = false;
+    if (this.pressed && evt.isClickTarget(this)) this.pressed = null;
   }
   
   onHoverIn(evt) {
-    if (!this.deactivated && evt.isClickTarget(this)) this.pressed = true;
+    if (!this.deactivated && evt.isClickTarget(this))
+      this.pressed = this.pressed = {originalFill: this.fill};
   }
 
   async interactivelyChangeLabel() {
