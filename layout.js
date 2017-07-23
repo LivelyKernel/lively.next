@@ -209,7 +209,11 @@ export class CustomLayout extends Layout {
        this.relayout = Closure.fromSource(JSON.parse(this.layouterString),
          this.varMapping).recreateFunc()
      }
-     this.relayout(this.container, animate);
+     try {
+       this.relayout(this.container, animate);
+     } catch (err) {
+       console.error(`Error in relayout() of a custom layout:`, err);
+     }
      this.lastBoundsExtent = this.container && this.container.bounds().extent();
      this.active = false;
   }
