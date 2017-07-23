@@ -32,7 +32,7 @@ export class Button extends Morph {
         set(val) {
           let oldVal = this.getProperty("pressed");
           this.setProperty("pressed", val);
-          let realFill = (!val && oldVal.originalFill) || this.defaultProperty("fill");
+          let realFill = (!val && oldVal && oldVal.originalFill) || this.defaultProperty("fill");
           this.fill = val ? realFill.darker() : realFill;
         }
       },
