@@ -13,7 +13,6 @@ import {
 import { h } from "virtual-dom";
 import { Transform, pt } from "lively.graphics";
 import { diff, patch, create as createNode } from "virtual-dom";
-import { requestAnimationFrameStacked, cancelAnimationFrameStacked } from "lively.lang/promise.js";
 
 export class Renderer {
 
@@ -37,8 +36,7 @@ export class Renderer {
     this.fixedMorphNodeMap = new Map();
     this.renderWorldLoopProcess = null;
     this.renderWorldLoopLater = null;
-    this.requestAnimationFrame = requestAnimationFrameStacked;
-    this.cancelAnimationFrame = cancelAnimationFrameStacked;
+    this.requestAnimationFrame = domEnvironment.window.requestAnimationFrame.bind(domEnvironment.window);
   }
 
   clear() {
@@ -62,9 +60,9 @@ export class Renderer {
   }
 
   stopRenderWorldLoop() {
-    this.cancelAnimationFrame(this.renderWorldLoopProcess);
+    this.domEnvironment.window.cancelAnimationFrame(this.renderWorldLoopProcess);
     this.renderWorldLoopProcess = null;
-    this.cancelAnimationFrame(this.renderWorldLoopLater);
+    this.domEnvironment.window.cancelAnimationFrame(this.renderWorldLoopLater);
     this.renderWorldLoopLater = null;
   }
 
