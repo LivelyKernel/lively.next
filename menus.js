@@ -2,7 +2,6 @@ import { Label, config, Morph, show } from "lively.morphic";
 import { arr, obj, promise, fun } from "lively.lang";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 
-import worldCommands from "lively.morphic/world-commands.js";
 
 export const menuCommands = [{
   name: 'open menu at hand',

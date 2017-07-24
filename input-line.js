@@ -1,5 +1,4 @@
 /*global System*/
-// import config from "../config.js";
 import { obj, arr, num } from "lively.lang";
 import { Rectangle, rect, Color, pt } from "lively.graphics";
 import { connect, signal, disconnect } from "lively.bindings"; // for makeInputLine
