@@ -12,7 +12,6 @@
     "lively.modules": "^0.8.18",
     "lively.morphic": "^0.1.0",
     "lively.bindings": "^0.1.2",
-    "systemjs": "^0.19"
   },
   "devDependencies": {
     "babel-core": "^6.16.0",
