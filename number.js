@@ -51,6 +51,14 @@ function average(numbers) {
   return numbers.reduce(function(sum, n) { return sum + n; }, 0) / numbers.length;
 }
 
+function averageInc(newVal, oldAvg, n) {
+  // show-in-doc
+  // Example:
+  //   let nums = range(0, 10).map(() => random(0, 10))
+  //   nums.reduce((avg, ea, i) => avgInc(ea, avg, i+1), 0);
+  return (newVal - oldAvg)/n + oldAvg;
+}
+
 function median(numbers) {
   // show-in-doc
   var sorted = numbers.sort(function(a,b) { return b - a; }),
@@ -172,6 +180,7 @@ export {
   randomSmallerInteger,
   humanReadableByteSize,
   average,
+  averageInc,
   median,
   between,
   sort,
