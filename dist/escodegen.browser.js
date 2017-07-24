@@ -123,6 +123,7 @@
         '/': Precedence.Multiplicative
       };
       var F_ALLOW_IN = 1, F_ALLOW_CALL = 1 << 1, F_ALLOW_UNPARATH_NEW = 1 << 2, F_FUNC_BODY = 1 << 3, F_DIRECTIVE_CTX = 1 << 4, F_SEMICOLON_OPT = 1 << 5;
+      var F_XJS_NOINDENT = 1 << 8, F_XJS_NOPAREN = 1 << 9;
       var E_FTT = F_ALLOW_CALL | F_ALLOW_UNPARATH_NEW, E_TTF = F_ALLOW_IN | F_ALLOW_CALL, E_TTT = F_ALLOW_IN | F_ALLOW_CALL | F_ALLOW_UNPARATH_NEW, E_TFF = F_ALLOW_IN, E_FFT = F_ALLOW_UNPARATH_NEW, E_TFT = F_ALLOW_IN | F_ALLOW_UNPARATH_NEW;
       var S_TFFF = F_ALLOW_IN, S_TFFT = F_ALLOW_IN | F_SEMICOLON_OPT, S_FFFF = 0, S_TFTF = F_ALLOW_IN | F_DIRECTIVE_CTX, S_TTFF = F_ALLOW_IN | F_FUNC_BODY;
       function getDefaultOptions() {
@@ -815,23 +816,19 @@
           }
           result = join(result, operator);
           result = [
-            join(result, that.generateExpression(stmt.right, Precedence.Sequence, E_TTT)),
+            join(result, that.generateExpression(stmt.right, Precedence.Sequence + (operator === 'of' ? 1 : 0), E_TTT)),
             ')'
           ];
         });
         result.push(this.maybeBlock(stmt.body, flags));
         return result;
       };
-      CodeGenerator.prototype.generatePropertyKey = function (expr, computed, value) {
+      CodeGenerator.prototype.generatePropertyKey = function (expr, computed) {
         var result = [];
         if (computed) {
           result.push('[');
         }
-        if (value.type === 'AssignmentPattern') {
-          result.push(this.AssignmentPattern(value, Precedence.Sequence, E_TTT));
-        } else {
-          result.push(this.generateExpression(expr, Precedence.Sequence, E_TTT));
-        }
+        result.push(this.generateExpression(expr, Precedence.Sequence, E_TTT));
         if (computed) {
           result.push(']');
         }
@@ -1112,7 +1109,7 @@
             code = fragment.charCodeAt(i + 8);
             return code === 40 || esutils.code.isWhiteSpace(code) || code === 42 || esutils.code.isLineTerminator(code);
           }
-          result = [this.generateExpression(stmt.expression, Precedence.Sequence, E_TTT)];
+          result = [this.generateExpression(stmt.expression, Precedence.Sequence, E_TTT | F_XJS_NOINDENT)];
           fragment = toSourceNodeWhenNeeded(result).toString();
           if (fragment.charCodeAt(0) === 123 || isClassPrefixed(fragment) || isFunctionPrefixed(fragment) || isAsyncPrefixed(fragment) || directive && flags & F_DIRECTIVE_CTX && stmt.expression.type === Syntax.Literal && typeof stmt.expression.value === 'string') {
             result = [
@@ -1573,7 +1570,7 @@
           result = [this.generateExpression(expr.callee, Precedence.Call, E_TTF)];
           result.push('(');
           for (i = 0, iz = expr['arguments'].length; i < iz; ++i) {
-            result.push(this.generateExpression(expr['arguments'][i], Precedence.Assignment, E_TTT));
+            result.push(this.generateExpression(expr['arguments'][i], Precedence.Assignment, E_TTT | F_XJS_NOPAREN));
             if (i + 1 < iz) {
               result.push(',' + space);
             }
@@ -1626,8 +1623,8 @@
         },
         MetaProperty: function (expr, precedence, flags) {
           var result, meta, property;
-          meta = typeof expr.meta.type === 'string' && expr.meta.type === Syntax.Identifier ? expr.meta.name : expr.meta;
-          property = typeof expr.property.type === 'string' && expr.property.type === Syntax.Identifier ? expr.property.name : expr.property;
+          meta = expr.meta && typeof expr.meta.type === 'string' && expr.meta.type === Syntax.Identifier ? expr.meta.name : expr.meta;
+          property = expr.property && typeof expr.property.type === 'string' && expr.property.type === Syntax.Identifier ? expr.property.name : expr.property;
           result = [
             meta,
             '.',
@@ -1725,7 +1722,7 @@
                 }
               } else {
                 result.push(multiline ? indent : '');
-                result.push(that.generateExpression(expr.elements[i], Precedence.Assignment, E_TTT));
+                result.push(that.generateExpression(expr.elements[i], Precedence.Assignment, E_TTT | F_XJS_NOINDENT | F_XJS_NOPAREN));
               }
               if (i + 1 < iz) {
                 result.push(',' + (multiline ? newline : space));
@@ -1738,9 +1735,6 @@
           result.push(multiline ? base : '');
           result.push(']');
           return result;
-        },
-        RestElement: function (expr, precedence, flags) {
-          return '...' + this.generatePattern(expr.argument);
         },
         ClassExpression: function (expr, precedence, flags) {
           var result, fragment;
@@ -1765,13 +1759,13 @@
           }
           if (expr.kind === 'get' || expr.kind === 'set') {
             fragment = [
-              join(expr.kind, this.generatePropertyKey(expr.key, expr.computed, expr.value)),
+              join(expr.kind, this.generatePropertyKey(expr.key, expr.computed)),
               this.generateFunctionBody(expr.value)
             ];
           } else {
             fragment = [
               generateMethodPrefix(expr),
-              this.generatePropertyKey(expr.key, expr.computed, expr.value),
+              this.generatePropertyKey(expr.key, expr.computed),
               this.generateFunctionBody(expr.value)
             ];
           }
@@ -1782,22 +1776,25 @@
             return [
               expr.kind,
               noEmptySpace(),
-              this.generatePropertyKey(expr.key, expr.computed, expr.value),
+              this.generatePropertyKey(expr.key, expr.computed),
               this.generateFunctionBody(expr.value)
             ];
           }
+          if (expr.kind === 'init' && !expr.method && expr.shorthand) {
+            return this.generatePattern(expr.value, Precedence.Assignment, E_TTT);
+          }
           if (expr.shorthand) {
-            return this.generatePropertyKey(expr.key, expr.computed, expr.value);
+            return this.generatePropertyKey(expr.key, expr.computed);
           }
           if (expr.method) {
             return [
               generateMethodPrefix(expr),
-              this.generatePropertyKey(expr.key, expr.computed, expr.value),
+              this.generatePropertyKey(expr.key, expr.computed),
               this.generateFunctionBody(expr.value)
             ];
           }
           return [
-            this.generatePropertyKey(expr.key, expr.computed, expr.value),
+            this.generatePropertyKey(expr.key, expr.computed),
             ':' + space,
             this.generateExpression(expr.value, Precedence.Assignment, E_TTT)
           ];
@@ -1859,13 +1856,13 @@
           multiline = false;
           if (expr.properties.length === 1) {
             property = expr.properties[0];
-            if (property.type !== 'RestElement' && property.value.type !== Syntax.Identifier) {
+            if (property.value && property.value.type !== Syntax.Identifier) {
               multiline = true;
             }
           } else {
             for (i = 0, iz = expr.properties.length; i < iz; ++i) {
               property = expr.properties[i];
-              if (property.type !== 'RestElement' && !property.shorthand) {
+              if (!property.shorthand) {
                 multiline = true;
                 break;
               }
@@ -1900,6 +1897,9 @@
         },
         Identifier: function (expr, precedence, flags) {
           return generateIdentifier(expr);
+        },
+        Import: function (expr, precedence, flags) {
+          return 'import';
         },
         ImportDefaultSpecifier: function (expr, precedence, flags) {
           return generateIdentifier(expr.id || expr.local);
@@ -1954,9 +1954,6 @@
           }
           if (typeof expr.value === 'boolean') {
             return expr.value ? 'true' : 'false';
-          }
-          if (expr.regex) {
-            return '/' + expr.regex.pattern + '/' + expr.regex.flags;
           }
           return generateRegExp(expr.value);
         },
@@ -2023,6 +2020,24 @@
             this.generateExpression(expr.argument, Precedence.Assignment, E_TTT)
           ];
         },
+        RestElement: function (expr, precedence, flags) {
+          return [
+            '...',
+            this.generatePattern(expr.argument, Precedence.Assignment, E_TTT)
+          ];
+        },
+        SpreadProperty: function (expr, precedence, flags) {
+          return [
+            '...',
+            this.generateExpression(expr.argument, Precedence.Assignment, E_TTT)
+          ];
+        },
+        RestProperty: function (expr, precedence, flags) {
+          return [
+            '...',
+            this.generatePattern(expr.argument, Precedence.Assignment, E_TTT)
+          ];
+        },
         TaggedTemplateExpression: function (expr, precedence, flags) {
           var itemFlags = E_TTF;
           if (!(flags & F_ALLOW_CALL)) {
@@ -2053,6 +2068,154 @@
         },
         ModuleSpecifier: function (expr, precedence, flags) {
           return this.Literal(expr, precedence, flags);
+        },
+        JSXText: function (expr, precedence, flags) {
+          if (expr.hasOwnProperty('raw'))
+            return expr.raw;
+          return String(expr.value);
+        },
+        JSXAttribute: function (expr, precedence, flags) {
+          var result = [];
+          var fragment = this.generateExpression(expr.name, Precedence.Sequence, {
+              allowIn: true,
+              allowCall: true
+            });
+          result.push(fragment);
+          if (expr.value) {
+            result.push('=');
+            if (expr.value.type === Syntax.Literal) {
+              fragment = xjsEscapeAttr(expr.value.value, expr.value.raw);
+            } else {
+              fragment = this.generateExpression(expr.value, Precedence.Sequence, {
+                allowIn: true,
+                allowCall: true
+              });
+            }
+            result.push(fragment);
+          }
+          return result;
+        },
+        JSXClosingElement: function (expr, precedence, flags) {
+          return [
+            '</',
+            this.generateExpression(expr.name, Precedence.Sequence, 0),
+            '>'
+          ];
+        },
+        JSXElement: function (expr, precedence, flags) {
+          var result = [], that = this;
+          if (!(flags & F_XJS_NOINDENT)) {
+            base += indent;
+          }
+          var fragment = this.generateExpression(expr.openingElement, Precedence.JSXElement, {
+              allowIn: true,
+              allowCall: true
+            });
+          result.push(fragment);
+          var xjsFragments = [];
+          var i, len;
+          withIndent(function (indent) {
+            for (i = 0, len = expr.children.length; i < len; ++i) {
+              if (expr.children[i].type === Syntax.Literal) {
+                fragment = expr.children[i].raw;
+                if (fragment) {
+                  xjsFragments.push(fragment);
+                }
+                continue;
+              }
+              fragment = that.generateExpression(expr.children[i], Precedence.JSXElement, E_TTF | F_XJS_NOINDENT);
+              xjsFragments.push(fragment);
+            }
+            for (i = 0, len = xjsFragments.length; i < len; ++i) {
+              result.push(xjsFragments[i]);
+            }
+          });
+          if (expr.closingElement) {
+            fragment = that.generateExpression(expr.closingElement, Precedence.JSXElement, 0);
+            result.push(fragment);
+          }
+          if (!(flags & F_XJS_NOINDENT)) {
+            base = base.slice(0, base.length - indent.length);
+            if (hasLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
+              if (flags & F_XJS_NOPAREN) {
+                result = [
+                  newline + base + indent,
+                  result
+                ];
+              } else {
+                result = [
+                  '(' + newline + base + indent,
+                  result,
+                  newline + base + ')'
+                ];
+              }
+            }
+          }
+          return result;
+        },
+        JSXExpressionContainer: function (expr, precedence, flags) {
+          return [
+            '{',
+            this.generateExpression(expr.expression, Precedence.Sequence, E_TTF),
+            '}'
+          ];
+        },
+        JSXIdentifier: function (expr, precedence, flags) {
+          return expr.name;
+        },
+        JSXMemberExpression: function (expr, precedence, flags) {
+          return [
+            this.generateExpression(expr.object, Precedence.Sequence, E_TFF),
+            '.',
+            this.generateExpression(expr.property, Precedence.Sequence, 0)
+          ];
+        },
+        JSXNamespacedName: function (expr, precedence, flags) {
+          return [
+            this.generateExpression(expr.namespace, Precedence.Sequence, 0),
+            ':',
+            this.generateExpression(expr.name, Precedence.Sequence, 0)
+          ];
+        },
+        JSXOpeningElement: function (expr, precedence, flags) {
+          var result = ['<'], that = this;
+          var fragment = this.generateExpression(expr.name, Precedence.Sequence, 0);
+          result.push(fragment);
+          var xjsFragments = [];
+          for (var i = 0, len = expr.attributes.length; i < len; ++i) {
+            fragment = that.generateExpression(expr.attributes[i], Precedence.Sequence, E_TTF);
+            xjsFragments.push({
+              expr: expr.attributes[i],
+              name: expr.attributes[i].name && expr.attributes[i].name.name,
+              fragment: fragment,
+              multiline: hasLineTerminator(toSourceNodeWhenNeeded(fragment).toString())
+            });
+            if (expr.attributes.length > 3 && expr.attributes[i].value && expr.attributes[i].value.type !== Syntax.Literal) {
+              xjsFragments[xjsFragments.length - 1].multiline = true;
+            }
+          }
+          withIndent(function (indent) {
+            for (var i = 0, len = xjsFragments.length; i < len; ++i) {
+              if (i > 0 && i % 3 === 0 || xjsFragments[i].multiline) {
+                result.push(newline + indent);
+              } else {
+                result.push(' ');
+              }
+              result.push(that.generateExpression(xjsFragments[i].expr, Precedence.Sequence, E_TTF));
+            }
+          });
+          result.push(expr.selfClosing ? '/>' : '>');
+          return result;
+        },
+        JSXSpreadAttribute: function (expr, precedence, flags) {
+          return [
+            '{...',
+            this.generateExpression(expr.argument, Precedence.Sequence, {
+              allowIn: true,
+              allowCall: true
+            }),
+            '}'
+          ];
         }
       };
       merge(CodeGenerator.prototype, CodeGenerator.Expression);
@@ -2158,6 +2321,12 @@
         }
         return pair.map.toString();
       }
+      function xjsEscapeAttr(s, raw) {
+        if (s.indexOf('"') >= 0 || s.indexOf("'") >= 0) {
+          return raw;
+        }
+        return quotes === 'double' ? '"' + s + '"' : "'" + s + "'";
+      }
       FORMAT_MINIFY = {
         indent: {
           style: '',
@@ -2183,9 +2352,9 @@
   });
   require.define('/package.json', function (module, exports, __dirname, __filename) {
     module.exports = {
-      'name': 'escodegen',
-      'description': 'ECMAScript code generator',
-      'homepage': 'http://github.com/estools/escodegen',
+      'name': 'escodegen-wallaby',
+      'description': 'ECMAScript code generator with JSX support',
+      'homepage': 'http://github.com/wallabyjs/escodegen',
       'main': 'escodegen.js',
       'bin': {
         'esgenerate': './bin/esgenerate.js',
@@ -2199,16 +2368,16 @@
         'escodegen.js',
         'package.json'
       ],
-      'version': '1.8.1',
-      'engines': { 'node': '>=0.12.0' },
+      'version': '1.6.12',
+      'engines': { 'node': '>=0.10.0' },
       'maintainers': [{
-          'name': 'Yusuke Suzuki',
-          'email': 'utatane.tea@gmail.com',
-          'web': 'http://github.com/Constellation'
+          'name': 'Artem Govorov',
+          'email': 'artem.govorov@gmail.com',
+          'web': 'http://dm.gl'
         }],
       'repository': {
         'type': 'git',
-        'url': 'http://github.com/estools/escodegen.git'
+        'url': 'http://github.com/wallabyjs/escodegen.git'
       },
       'dependencies': {
         'estraverse': '^1.9.1',
@@ -2228,7 +2397,10 @@
         'gulp-mocha': '^2.0.0',
         'semver': '^5.1.0'
       },
-      'license': 'BSD-2-Clause',
+      'licenses': [{
+          'type': 'BSD',
+          'url': 'http://github.com/wallabyjs/escodegen/raw/master/LICENSE.BSD'
+        }],
       'scripts': {
         'test': 'gulp travis',
         'unit-test': 'gulp test',

@@ -5175,7 +5175,9 @@ exports.pluginsLoose = pluginsLoose;
 Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
-  (function(acorn) {
+  
+/* <<< acorn-es7-plugin/acorn-v4.js >>> */
+(function(acorn) {
   var module = {exports: {}};
   var asyncExit = /^async[\t ]+(return|throw)/ ;
 var atomOrPropertyOrLabel = /^\s*[):;]/ ;
@@ -5374,7 +5376,9 @@ module.exports = asyncAwaitPlugin ;
 
   acorn.plugins.asyncawait = module.exports;
 })(this.acorn);
-  (function(acorn) {
+  
+/* <<< acorn-object-spread/inject.js >>> */
+(function(acorn) {
   var module = {exports: {}};
   'use strict';
 
@@ -5431,6 +5435,709 @@ module.exports = function(acorn) {
 
   acorn.plugins.objectSpread = function objectSpreadPlugin(instance) {
     pp.parseObj = parseObj;
+  };
+
+  return acorn;
+};
+
+  module.exports(acorn);
+})(this.acorn);
+  /* <<< acorn-jsx/inject.js >>> */
+(function(acorn) {
+  var module = {exports: {}};
+  'use strict';
+
+var XHTMLEntities = {
+  quot: '\u0022',
+  amp: '&',
+  apos: '\u0027',
+  lt: '<',
+  gt: '>',
+  nbsp: '\u00A0',
+  iexcl: '\u00A1',
+  cent: '\u00A2',
+  pound: '\u00A3',
+  curren: '\u00A4',
+  yen: '\u00A5',
+  brvbar: '\u00A6',
+  sect: '\u00A7',
+  uml: '\u00A8',
+  copy: '\u00A9',
+  ordf: '\u00AA',
+  laquo: '\u00AB',
+  not: '\u00AC',
+  shy: '\u00AD',
+  reg: '\u00AE',
+  macr: '\u00AF',
+  deg: '\u00B0',
+  plusmn: '\u00B1',
+  sup2: '\u00B2',
+  sup3: '\u00B3',
+  acute: '\u00B4',
+  micro: '\u00B5',
+  para: '\u00B6',
+  middot: '\u00B7',
+  cedil: '\u00B8',
+  sup1: '\u00B9',
+  ordm: '\u00BA',
+  raquo: '\u00BB',
+  frac14: '\u00BC',
+  frac12: '\u00BD',
+  frac34: '\u00BE',
+  iquest: '\u00BF',
+  Agrave: '\u00C0',
+  Aacute: '\u00C1',
+  Acirc: '\u00C2',
+  Atilde: '\u00C3',
+  Auml: '\u00C4',
+  Aring: '\u00C5',
+  AElig: '\u00C6',
+  Ccedil: '\u00C7',
+  Egrave: '\u00C8',
+  Eacute: '\u00C9',
+  Ecirc: '\u00CA',
+  Euml: '\u00CB',
+  Igrave: '\u00CC',
+  Iacute: '\u00CD',
+  Icirc: '\u00CE',
+  Iuml: '\u00CF',
+  ETH: '\u00D0',
+  Ntilde: '\u00D1',
+  Ograve: '\u00D2',
+  Oacute: '\u00D3',
+  Ocirc: '\u00D4',
+  Otilde: '\u00D5',
+  Ouml: '\u00D6',
+  times: '\u00D7',
+  Oslash: '\u00D8',
+  Ugrave: '\u00D9',
+  Uacute: '\u00DA',
+  Ucirc: '\u00DB',
+  Uuml: '\u00DC',
+  Yacute: '\u00DD',
+  THORN: '\u00DE',
+  szlig: '\u00DF',
+  agrave: '\u00E0',
+  aacute: '\u00E1',
+  acirc: '\u00E2',
+  atilde: '\u00E3',
+  auml: '\u00E4',
+  aring: '\u00E5',
+  aelig: '\u00E6',
+  ccedil: '\u00E7',
+  egrave: '\u00E8',
+  eacute: '\u00E9',
+  ecirc: '\u00EA',
+  euml: '\u00EB',
+  igrave: '\u00EC',
+  iacute: '\u00ED',
+  icirc: '\u00EE',
+  iuml: '\u00EF',
+  eth: '\u00F0',
+  ntilde: '\u00F1',
+  ograve: '\u00F2',
+  oacute: '\u00F3',
+  ocirc: '\u00F4',
+  otilde: '\u00F5',
+  ouml: '\u00F6',
+  divide: '\u00F7',
+  oslash: '\u00F8',
+  ugrave: '\u00F9',
+  uacute: '\u00FA',
+  ucirc: '\u00FB',
+  uuml: '\u00FC',
+  yacute: '\u00FD',
+  thorn: '\u00FE',
+  yuml: '\u00FF',
+  OElig: '\u0152',
+  oelig: '\u0153',
+  Scaron: '\u0160',
+  scaron: '\u0161',
+  Yuml: '\u0178',
+  fnof: '\u0192',
+  circ: '\u02C6',
+  tilde: '\u02DC',
+  Alpha: '\u0391',
+  Beta: '\u0392',
+  Gamma: '\u0393',
+  Delta: '\u0394',
+  Epsilon: '\u0395',
+  Zeta: '\u0396',
+  Eta: '\u0397',
+  Theta: '\u0398',
+  Iota: '\u0399',
+  Kappa: '\u039A',
+  Lambda: '\u039B',
+  Mu: '\u039C',
+  Nu: '\u039D',
+  Xi: '\u039E',
+  Omicron: '\u039F',
+  Pi: '\u03A0',
+  Rho: '\u03A1',
+  Sigma: '\u03A3',
+  Tau: '\u03A4',
+  Upsilon: '\u03A5',
+  Phi: '\u03A6',
+  Chi: '\u03A7',
+  Psi: '\u03A8',
+  Omega: '\u03A9',
+  alpha: '\u03B1',
+  beta: '\u03B2',
+  gamma: '\u03B3',
+  delta: '\u03B4',
+  epsilon: '\u03B5',
+  zeta: '\u03B6',
+  eta: '\u03B7',
+  theta: '\u03B8',
+  iota: '\u03B9',
+  kappa: '\u03BA',
+  lambda: '\u03BB',
+  mu: '\u03BC',
+  nu: '\u03BD',
+  xi: '\u03BE',
+  omicron: '\u03BF',
+  pi: '\u03C0',
+  rho: '\u03C1',
+  sigmaf: '\u03C2',
+  sigma: '\u03C3',
+  tau: '\u03C4',
+  upsilon: '\u03C5',
+  phi: '\u03C6',
+  chi: '\u03C7',
+  psi: '\u03C8',
+  omega: '\u03C9',
+  thetasym: '\u03D1',
+  upsih: '\u03D2',
+  piv: '\u03D6',
+  ensp: '\u2002',
+  emsp: '\u2003',
+  thinsp: '\u2009',
+  zwnj: '\u200C',
+  zwj: '\u200D',
+  lrm: '\u200E',
+  rlm: '\u200F',
+  ndash: '\u2013',
+  mdash: '\u2014',
+  lsquo: '\u2018',
+  rsquo: '\u2019',
+  sbquo: '\u201A',
+  ldquo: '\u201C',
+  rdquo: '\u201D',
+  bdquo: '\u201E',
+  dagger: '\u2020',
+  Dagger: '\u2021',
+  bull: '\u2022',
+  hellip: '\u2026',
+  permil: '\u2030',
+  prime: '\u2032',
+  Prime: '\u2033',
+  lsaquo: '\u2039',
+  rsaquo: '\u203A',
+  oline: '\u203E',
+  frasl: '\u2044',
+  euro: '\u20AC',
+  image: '\u2111',
+  weierp: '\u2118',
+  real: '\u211C',
+  trade: '\u2122',
+  alefsym: '\u2135',
+  larr: '\u2190',
+  uarr: '\u2191',
+  rarr: '\u2192',
+  darr: '\u2193',
+  harr: '\u2194',
+  crarr: '\u21B5',
+  lArr: '\u21D0',
+  uArr: '\u21D1',
+  rArr: '\u21D2',
+  dArr: '\u21D3',
+  hArr: '\u21D4',
+  forall: '\u2200',
+  part: '\u2202',
+  exist: '\u2203',
+  empty: '\u2205',
+  nabla: '\u2207',
+  isin: '\u2208',
+  notin: '\u2209',
+  ni: '\u220B',
+  prod: '\u220F',
+  sum: '\u2211',
+  minus: '\u2212',
+  lowast: '\u2217',
+  radic: '\u221A',
+  prop: '\u221D',
+  infin: '\u221E',
+  ang: '\u2220',
+  and: '\u2227',
+  or: '\u2228',
+  cap: '\u2229',
+  cup: '\u222A',
+  'int': '\u222B',
+  there4: '\u2234',
+  sim: '\u223C',
+  cong: '\u2245',
+  asymp: '\u2248',
+  ne: '\u2260',
+  equiv: '\u2261',
+  le: '\u2264',
+  ge: '\u2265',
+  sub: '\u2282',
+  sup: '\u2283',
+  nsub: '\u2284',
+  sube: '\u2286',
+  supe: '\u2287',
+  oplus: '\u2295',
+  otimes: '\u2297',
+  perp: '\u22A5',
+  sdot: '\u22C5',
+  lceil: '\u2308',
+  rceil: '\u2309',
+  lfloor: '\u230A',
+  rfloor: '\u230B',
+  lang: '\u2329',
+  rang: '\u232A',
+  loz: '\u25CA',
+  spades: '\u2660',
+  clubs: '\u2663',
+  hearts: '\u2665',
+  diams: '\u2666'
+};
+
+
+var hexNumber = /^[\da-fA-F]+$/;
+var decimalNumber = /^\d+$/;
+
+module.exports = function(acorn) {
+  var tt = acorn.tokTypes;
+  var tc = acorn.tokContexts;
+
+  tc.j_oTag = new acorn.TokContext('<tag', false);
+  tc.j_cTag = new acorn.TokContext('</tag', false);
+  tc.j_expr = new acorn.TokContext('<tag>...</tag>', true, true);
+
+  tt.jsxName = new acorn.TokenType('jsxName');
+  tt.jsxText = new acorn.TokenType('jsxText', {beforeExpr: true});
+  tt.jsxTagStart = new acorn.TokenType('jsxTagStart');
+  tt.jsxTagEnd = new acorn.TokenType('jsxTagEnd');
+
+  tt.jsxTagStart.updateContext = function() {
+    this.context.push(tc.j_expr); // treat as beginning of JSX expression
+    this.context.push(tc.j_oTag); // start opening tag context
+    this.exprAllowed = false;
+  };
+  tt.jsxTagEnd.updateContext = function(prevType) {
+    var out = this.context.pop();
+    if (out === tc.j_oTag && prevType === tt.slash || out === tc.j_cTag) {
+      this.context.pop();
+      this.exprAllowed = this.curContext() === tc.j_expr;
+    } else {
+      this.exprAllowed = true;
+    }
+  };
+
+  var pp = acorn.Parser.prototype;
+
+  // Reads inline JSX contents token.
+
+  pp.jsx_readToken = function() {
+    var out = '', chunkStart = this.pos;
+    for (;;) {
+      if (this.pos >= this.input.length)
+        this.raise(this.start, 'Unterminated JSX contents');
+      var ch = this.input.charCodeAt(this.pos);
+
+      switch (ch) {
+      case 60: // '<'
+      case 123: // '{'
+        if (this.pos === this.start) {
+          if (ch === 60 && this.exprAllowed) {
+            ++this.pos;
+            return this.finishToken(tt.jsxTagStart);
+          }
+          return this.getTokenFromCode(ch);
+        }
+        out += this.input.slice(chunkStart, this.pos);
+        return this.finishToken(tt.jsxText, out);
+
+      case 38: // '&'
+        out += this.input.slice(chunkStart, this.pos);
+        out += this.jsx_readEntity();
+        chunkStart = this.pos;
+        break;
+
+      default:
+        if (acorn.isNewLine(ch)) {
+          out += this.input.slice(chunkStart, this.pos);
+          out += this.jsx_readNewLine(true);
+          chunkStart = this.pos;
+        } else {
+          ++this.pos;
+        }
+      }
+    }
+  };
+
+  pp.jsx_readNewLine = function(normalizeCRLF) {
+    var ch = this.input.charCodeAt(this.pos);
+    var out;
+    ++this.pos;
+    if (ch === 13 && this.input.charCodeAt(this.pos) === 10) {
+      ++this.pos;
+      out = normalizeCRLF ? '\n' : '\r\n';
+    } else {
+      out = String.fromCharCode(ch);
+    }
+    if (this.options.locations) {
+      ++this.curLine;
+      this.lineStart = this.pos;
+    }
+
+    return out;
+  };
+
+  pp.jsx_readString = function(quote) {
+    var out = '', chunkStart = ++this.pos;
+    for (;;) {
+      if (this.pos >= this.input.length)
+        this.raise(this.start, 'Unterminated string constant');
+      var ch = this.input.charCodeAt(this.pos);
+      if (ch === quote) break;
+      if (ch === 38) { // '&'
+        out += this.input.slice(chunkStart, this.pos);
+        out += this.jsx_readEntity();
+        chunkStart = this.pos;
+      } else if (acorn.isNewLine(ch)) {
+        out += this.input.slice(chunkStart, this.pos);
+        out += this.jsx_readNewLine(false);
+        chunkStart = this.pos;
+      } else {
+        ++this.pos;
+      }
+    }
+    out += this.input.slice(chunkStart, this.pos++);
+    return this.finishToken(tt.string, out);
+  };
+
+  pp.jsx_readEntity = function() {
+    var str = '', count = 0, entity;
+    var ch = this.input[this.pos];
+    if (ch !== '&')
+      this.raise(this.pos, 'Entity must start with an ampersand');
+    var startPos = ++this.pos;
+    while (this.pos < this.input.length && count++ < 10) {
+      ch = this.input[this.pos++];
+      if (ch === ';') {
+        if (str[0] === '#') {
+          if (str[1] === 'x') {
+            str = str.substr(2);
+            if (hexNumber.test(str))
+              entity = String.fromCharCode(parseInt(str, 16));
+          } else {
+            str = str.substr(1);
+            if (decimalNumber.test(str))
+              entity = String.fromCharCode(parseInt(str, 10));
+          }
+        } else {
+          entity = XHTMLEntities[str];
+        }
+        break;
+      }
+      str += ch;
+    }
+    if (!entity) {
+      this.pos = startPos;
+      return '&';
+    }
+    return entity;
+  };
+
+
+  // Read a JSX identifier (valid tag or attribute name).
+  //
+  // Optimized version since JSX identifiers can't contain
+  // escape characters and so can be read as single slice.
+  // Also assumes that first character was already checked
+  // by isIdentifierStart in readToken.
+
+  pp.jsx_readWord = function() {
+    var ch, start = this.pos;
+    do {
+      ch = this.input.charCodeAt(++this.pos);
+    } while (acorn.isIdentifierChar(ch) || ch === 45); // '-'
+    return this.finishToken(tt.jsxName, this.input.slice(start, this.pos));
+  };
+
+  // Transforms JSX element name to string.
+
+  function getQualifiedJSXName(object) {
+    if (object.type === 'JSXIdentifier')
+      return object.name;
+
+    if (object.type === 'JSXNamespacedName')
+      return object.namespace.name + ':' + object.name.name;
+
+    if (object.type === 'JSXMemberExpression')
+      return getQualifiedJSXName(object.object) + '.' +
+      getQualifiedJSXName(object.property);
+  }
+
+  // Parse next token as JSX identifier
+
+  pp.jsx_parseIdentifier = function() {
+    var node = this.startNode();
+    if (this.type === tt.jsxName)
+      node.name = this.value;
+    else if (this.type.keyword)
+      node.name = this.type.keyword;
+    else
+      this.unexpected();
+    this.next();
+    return this.finishNode(node, 'JSXIdentifier');
+  };
+
+  // Parse namespaced identifier.
+
+  pp.jsx_parseNamespacedName = function() {
+    var startPos = this.start, startLoc = this.startLoc;
+    var name = this.jsx_parseIdentifier();
+    if (!this.options.plugins.jsx.allowNamespaces || !this.eat(tt.colon)) return name;
+    var node = this.startNodeAt(startPos, startLoc);
+    node.namespace = name;
+    node.name = this.jsx_parseIdentifier();
+    return this.finishNode(node, 'JSXNamespacedName');
+  };
+
+  // Parses element name in any form - namespaced, member
+  // or single identifier.
+
+  pp.jsx_parseElementName = function() {
+    var startPos = this.start, startLoc = this.startLoc;
+    var node = this.jsx_parseNamespacedName();
+    if (this.type === tt.dot && node.type === 'JSXNamespacedName' && !this.options.plugins.jsx.allowNamespacedObjects) {
+      this.unexpected();
+    }
+    while (this.eat(tt.dot)) {
+      var newNode = this.startNodeAt(startPos, startLoc);
+      newNode.object = node;
+      newNode.property = this.jsx_parseIdentifier();
+      node = this.finishNode(newNode, 'JSXMemberExpression');
+    }
+    return node;
+  };
+
+  // Parses any type of JSX attribute value.
+
+  pp.jsx_parseAttributeValue = function() {
+    switch (this.type) {
+    case tt.braceL:
+      var node = this.jsx_parseExpressionContainer();
+      if (node.expression.type === 'JSXEmptyExpression')
+        this.raise(node.start, 'JSX attributes must only be assigned a non-empty expression');
+      return node;
+
+    case tt.jsxTagStart:
+    case tt.string:
+      return this.parseExprAtom();
+
+    default:
+      this.raise(this.start, 'JSX value should be either an expression or a quoted JSX text');
+    }
+  };
+
+  // JSXEmptyExpression is unique type since it doesn't actually parse anything,
+  // and so it should start at the end of last read token (left brace) and finish
+  // at the beginning of the next one (right brace).
+
+  pp.jsx_parseEmptyExpression = function() {
+    var node = this.startNodeAt(this.lastTokEnd, this.lastTokEndLoc);
+    return this.finishNodeAt(node, 'JSXEmptyExpression', this.start, this.startLoc);
+  };
+
+  // Parses JSX expression enclosed into curly brackets.
+
+
+  pp.jsx_parseExpressionContainer = function() {
+    var node = this.startNode();
+    this.next();
+    node.expression = this.type === tt.braceR
+      ? this.jsx_parseEmptyExpression()
+      : this.parseExpression();
+    this.expect(tt.braceR);
+    return this.finishNode(node, 'JSXExpressionContainer');
+  };
+
+  // Parses following JSX attribute name-value pair.
+
+  pp.jsx_parseAttribute = function() {
+    var node = this.startNode();
+    if (this.eat(tt.braceL)) {
+      this.expect(tt.ellipsis);
+      node.argument = this.parseMaybeAssign();
+      this.expect(tt.braceR);
+      return this.finishNode(node, 'JSXSpreadAttribute');
+    }
+    node.name = this.jsx_parseNamespacedName();
+    node.value = this.eat(tt.eq) ? this.jsx_parseAttributeValue() : null;
+    return this.finishNode(node, 'JSXAttribute');
+  };
+
+  // Parses JSX opening tag starting after '<'.
+
+  pp.jsx_parseOpeningElementAt = function(startPos, startLoc) {
+    var node = this.startNodeAt(startPos, startLoc);
+    node.attributes = [];
+    node.name = this.jsx_parseElementName();
+    while (this.type !== tt.slash && this.type !== tt.jsxTagEnd)
+      node.attributes.push(this.jsx_parseAttribute());
+    node.selfClosing = this.eat(tt.slash);
+    this.expect(tt.jsxTagEnd);
+    return this.finishNode(node, 'JSXOpeningElement');
+  };
+
+  // Parses JSX closing tag starting after '</'.
+
+  pp.jsx_parseClosingElementAt = function(startPos, startLoc) {
+    var node = this.startNodeAt(startPos, startLoc);
+    node.name = this.jsx_parseElementName();
+    this.expect(tt.jsxTagEnd);
+    return this.finishNode(node, 'JSXClosingElement');
+  };
+
+  // Parses entire JSX element, including it's opening tag
+  // (starting after '<'), attributes, contents and closing tag.
+
+  pp.jsx_parseElementAt = function(startPos, startLoc) {
+    var node = this.startNodeAt(startPos, startLoc);
+    var children = [];
+    var openingElement = this.jsx_parseOpeningElementAt(startPos, startLoc);
+    var closingElement = null;
+
+    if (!openingElement.selfClosing) {
+      contents: for (;;) {
+        switch (this.type) {
+        case tt.jsxTagStart:
+          startPos = this.start; startLoc = this.startLoc;
+          this.next();
+          if (this.eat(tt.slash)) {
+            closingElement = this.jsx_parseClosingElementAt(startPos, startLoc);
+            break contents;
+          }
+          children.push(this.jsx_parseElementAt(startPos, startLoc));
+          break;
+
+        case tt.jsxText:
+          children.push(this.parseExprAtom());
+          break;
+
+        case tt.braceL:
+          children.push(this.jsx_parseExpressionContainer());
+          break;
+
+        default:
+          this.unexpected();
+        }
+      }
+      if (getQualifiedJSXName(closingElement.name) !== getQualifiedJSXName(openingElement.name)) {
+        this.raise(
+          closingElement.start,
+          'Expected corresponding JSX closing tag for <' + getQualifiedJSXName(openingElement.name) + '>');
+      }
+    }
+
+    node.openingElement = openingElement;
+    node.closingElement = closingElement;
+    node.children = children;
+    if (this.type === tt.relational && this.value === "<") {
+      this.raise(this.start, "Adjacent JSX elements must be wrapped in an enclosing tag");
+    }
+    return this.finishNode(node, 'JSXElement');
+  };
+
+  // Parse JSX text
+
+  pp.jsx_parseText = function(value) {
+    var node = this.parseLiteral(value);
+    node.type = "JSXText";
+
+    return node;
+  };
+
+  // Parses entire JSX element from current position.
+
+  pp.jsx_parseElement = function() {
+    var startPos = this.start, startLoc = this.startLoc;
+    this.next();
+    return this.jsx_parseElementAt(startPos, startLoc);
+  };
+
+  acorn.plugins.jsx = function(instance, opts) {
+    if (!opts) {
+      return;
+    }
+
+    if (typeof opts !== 'object') {
+      opts = {};
+    }
+
+    instance.options.plugins.jsx = {
+      allowNamespaces: opts.allowNamespaces !== false,
+      allowNamespacedObjects: !!opts.allowNamespacedObjects
+    };
+
+    instance.extend('parseExprAtom', function(inner) {
+      return function(refShortHandDefaultPos) {
+        if (this.type === tt.jsxText)
+          return this.jsx_parseText(this.value);
+        else if (this.type === tt.jsxTagStart)
+          return this.jsx_parseElement();
+        else
+          return inner.call(this, refShortHandDefaultPos);
+      };
+    });
+
+    instance.extend('readToken', function(inner) {
+      return function(code) {
+        var context = this.curContext();
+
+        if (context === tc.j_expr) return this.jsx_readToken();
+
+        if (context === tc.j_oTag || context === tc.j_cTag) {
+          if (acorn.isIdentifierStart(code)) return this.jsx_readWord();
+
+          if (code == 62) {
+            ++this.pos;
+            return this.finishToken(tt.jsxTagEnd);
+          }
+
+          if ((code === 34 || code === 39) && context == tc.j_oTag)
+            return this.jsx_readString(code);
+        }
+
+        if (code === 60 && this.exprAllowed && this.input.charCodeAt(this.pos + 1) !== 33) {
+          ++this.pos;
+          return this.finishToken(tt.jsxTagStart);
+        }
+        return inner.call(this, code);
+      };
+    });
+
+    instance.extend('updateContext', function(inner) {
+      return function(prevType) {
+        if (this.type == tt.braceL) {
+          var curContext = this.curContext();
+          if (curContext == tc.j_oTag) this.context.push(tc.b_expr);
+          else if (curContext == tc.j_expr) this.context.push(tc.b_tmpl);
+          else inner.call(this, prevType);
+          this.exprAllowed = true;
+        } else if (this.type === tt.slash && prevType === tt.jsxTagStart) {
+          this.context.length -= 2; // do not consider JSX expr -> JSX open tag -> ... anymore
+          this.context.push(tc.j_cTag); // reconsider as closing tag context
+          this.exprAllowed = false;
+        } else {
+          return inner.call(this, prevType);
+        }
+      };
+    });
   };
 
   return acorn;
@@ -5566,6 +6273,7 @@ module.exports = function(acorn) {
         '/': Precedence.Multiplicative
       };
       var F_ALLOW_IN = 1, F_ALLOW_CALL = 1 << 1, F_ALLOW_UNPARATH_NEW = 1 << 2, F_FUNC_BODY = 1 << 3, F_DIRECTIVE_CTX = 1 << 4, F_SEMICOLON_OPT = 1 << 5;
+      var F_XJS_NOINDENT = 1 << 8, F_XJS_NOPAREN = 1 << 9;
       var E_FTT = F_ALLOW_CALL | F_ALLOW_UNPARATH_NEW, E_TTF = F_ALLOW_IN | F_ALLOW_CALL, E_TTT = F_ALLOW_IN | F_ALLOW_CALL | F_ALLOW_UNPARATH_NEW, E_TFF = F_ALLOW_IN, E_FFT = F_ALLOW_UNPARATH_NEW, E_TFT = F_ALLOW_IN | F_ALLOW_UNPARATH_NEW;
       var S_TFFF = F_ALLOW_IN, S_TFFT = F_ALLOW_IN | F_SEMICOLON_OPT, S_FFFF = 0, S_TFTF = F_ALLOW_IN | F_DIRECTIVE_CTX, S_TTFF = F_ALLOW_IN | F_FUNC_BODY;
       function getDefaultOptions() {
@@ -6258,23 +6966,19 @@ module.exports = function(acorn) {
           }
           result = join(result, operator);
           result = [
-            join(result, that.generateExpression(stmt.right, Precedence.Sequence, E_TTT)),
+            join(result, that.generateExpression(stmt.right, Precedence.Sequence + (operator === 'of' ? 1 : 0), E_TTT)),
             ')'
           ];
         });
         result.push(this.maybeBlock(stmt.body, flags));
         return result;
       };
-      CodeGenerator.prototype.generatePropertyKey = function (expr, computed, value) {
+      CodeGenerator.prototype.generatePropertyKey = function (expr, computed) {
         var result = [];
         if (computed) {
           result.push('[');
         }
-        if (value.type === 'AssignmentPattern') {
-          result.push(this.AssignmentPattern(value, Precedence.Sequence, E_TTT));
-        } else {
-          result.push(this.generateExpression(expr, Precedence.Sequence, E_TTT));
-        }
+        result.push(this.generateExpression(expr, Precedence.Sequence, E_TTT));
         if (computed) {
           result.push(']');
         }
@@ -6555,7 +7259,7 @@ module.exports = function(acorn) {
             code = fragment.charCodeAt(i + 8);
             return code === 40 || esutils.code.isWhiteSpace(code) || code === 42 || esutils.code.isLineTerminator(code);
           }
-          result = [this.generateExpression(stmt.expression, Precedence.Sequence, E_TTT)];
+          result = [this.generateExpression(stmt.expression, Precedence.Sequence, E_TTT | F_XJS_NOINDENT)];
           fragment = toSourceNodeWhenNeeded(result).toString();
           if (fragment.charCodeAt(0) === 123 || isClassPrefixed(fragment) || isFunctionPrefixed(fragment) || isAsyncPrefixed(fragment) || directive && flags & F_DIRECTIVE_CTX && stmt.expression.type === Syntax.Literal && typeof stmt.expression.value === 'string') {
             result = [
@@ -7016,7 +7720,7 @@ module.exports = function(acorn) {
           result = [this.generateExpression(expr.callee, Precedence.Call, E_TTF)];
           result.push('(');
           for (i = 0, iz = expr['arguments'].length; i < iz; ++i) {
-            result.push(this.generateExpression(expr['arguments'][i], Precedence.Assignment, E_TTT));
+            result.push(this.generateExpression(expr['arguments'][i], Precedence.Assignment, E_TTT | F_XJS_NOPAREN));
             if (i + 1 < iz) {
               result.push(',' + space);
             }
@@ -7069,8 +7773,8 @@ module.exports = function(acorn) {
         },
         MetaProperty: function (expr, precedence, flags) {
           var result, meta, property;
-          meta = typeof expr.meta.type === 'string' && expr.meta.type === Syntax.Identifier ? expr.meta.name : expr.meta;
-          property = typeof expr.property.type === 'string' && expr.property.type === Syntax.Identifier ? expr.property.name : expr.property;
+          meta = expr.meta && typeof expr.meta.type === 'string' && expr.meta.type === Syntax.Identifier ? expr.meta.name : expr.meta;
+          property = expr.property && typeof expr.property.type === 'string' && expr.property.type === Syntax.Identifier ? expr.property.name : expr.property;
           result = [
             meta,
             '.',
@@ -7168,7 +7872,7 @@ module.exports = function(acorn) {
                 }
               } else {
                 result.push(multiline ? indent : '');
-                result.push(that.generateExpression(expr.elements[i], Precedence.Assignment, E_TTT));
+                result.push(that.generateExpression(expr.elements[i], Precedence.Assignment, E_TTT | F_XJS_NOINDENT | F_XJS_NOPAREN));
               }
               if (i + 1 < iz) {
                 result.push(',' + (multiline ? newline : space));
@@ -7181,9 +7885,6 @@ module.exports = function(acorn) {
           result.push(multiline ? base : '');
           result.push(']');
           return result;
-        },
-        RestElement: function (expr, precedence, flags) {
-          return '...' + this.generatePattern(expr.argument);
         },
         ClassExpression: function (expr, precedence, flags) {
           var result, fragment;
@@ -7208,13 +7909,13 @@ module.exports = function(acorn) {
           }
           if (expr.kind === 'get' || expr.kind === 'set') {
             fragment = [
-              join(expr.kind, this.generatePropertyKey(expr.key, expr.computed, expr.value)),
+              join(expr.kind, this.generatePropertyKey(expr.key, expr.computed)),
               this.generateFunctionBody(expr.value)
             ];
           } else {
             fragment = [
               generateMethodPrefix(expr),
-              this.generatePropertyKey(expr.key, expr.computed, expr.value),
+              this.generatePropertyKey(expr.key, expr.computed),
               this.generateFunctionBody(expr.value)
             ];
           }
@@ -7225,22 +7926,25 @@ module.exports = function(acorn) {
             return [
               expr.kind,
               noEmptySpace(),
-              this.generatePropertyKey(expr.key, expr.computed, expr.value),
+              this.generatePropertyKey(expr.key, expr.computed),
               this.generateFunctionBody(expr.value)
             ];
           }
+          if (expr.kind === 'init' && !expr.method && expr.shorthand) {
+            return this.generatePattern(expr.value, Precedence.Assignment, E_TTT);
+          }
           if (expr.shorthand) {
-            return this.generatePropertyKey(expr.key, expr.computed, expr.value);
+            return this.generatePropertyKey(expr.key, expr.computed);
           }
           if (expr.method) {
             return [
               generateMethodPrefix(expr),
-              this.generatePropertyKey(expr.key, expr.computed, expr.value),
+              this.generatePropertyKey(expr.key, expr.computed),
               this.generateFunctionBody(expr.value)
             ];
           }
           return [
-            this.generatePropertyKey(expr.key, expr.computed, expr.value),
+            this.generatePropertyKey(expr.key, expr.computed),
             ':' + space,
             this.generateExpression(expr.value, Precedence.Assignment, E_TTT)
           ];
@@ -7302,13 +8006,13 @@ module.exports = function(acorn) {
           multiline = false;
           if (expr.properties.length === 1) {
             property = expr.properties[0];
-            if (property.type !== 'RestElement' && property.value.type !== Syntax.Identifier) {
+            if (property.value && property.value.type !== Syntax.Identifier) {
               multiline = true;
             }
           } else {
             for (i = 0, iz = expr.properties.length; i < iz; ++i) {
               property = expr.properties[i];
-              if (property.type !== 'RestElement' && !property.shorthand) {
+              if (!property.shorthand) {
                 multiline = true;
                 break;
               }
@@ -7343,6 +8047,9 @@ module.exports = function(acorn) {
         },
         Identifier: function (expr, precedence, flags) {
           return generateIdentifier(expr);
+        },
+        Import: function (expr, precedence, flags) {
+          return 'import';
         },
         ImportDefaultSpecifier: function (expr, precedence, flags) {
           return generateIdentifier(expr.id || expr.local);
@@ -7397,9 +8104,6 @@ module.exports = function(acorn) {
           }
           if (typeof expr.value === 'boolean') {
             return expr.value ? 'true' : 'false';
-          }
-          if (expr.regex) {
-            return '/' + expr.regex.pattern + '/' + expr.regex.flags;
           }
           return generateRegExp(expr.value);
         },
@@ -7466,6 +8170,24 @@ module.exports = function(acorn) {
             this.generateExpression(expr.argument, Precedence.Assignment, E_TTT)
           ];
         },
+        RestElement: function (expr, precedence, flags) {
+          return [
+            '...',
+            this.generatePattern(expr.argument, Precedence.Assignment, E_TTT)
+          ];
+        },
+        SpreadProperty: function (expr, precedence, flags) {
+          return [
+            '...',
+            this.generateExpression(expr.argument, Precedence.Assignment, E_TTT)
+          ];
+        },
+        RestProperty: function (expr, precedence, flags) {
+          return [
+            '...',
+            this.generatePattern(expr.argument, Precedence.Assignment, E_TTT)
+          ];
+        },
         TaggedTemplateExpression: function (expr, precedence, flags) {
           var itemFlags = E_TTF;
           if (!(flags & F_ALLOW_CALL)) {
@@ -7496,6 +8218,154 @@ module.exports = function(acorn) {
         },
         ModuleSpecifier: function (expr, precedence, flags) {
           return this.Literal(expr, precedence, flags);
+        },
+        JSXText: function (expr, precedence, flags) {
+          if (expr.hasOwnProperty('raw'))
+            return expr.raw;
+          return String(expr.value);
+        },
+        JSXAttribute: function (expr, precedence, flags) {
+          var result = [];
+          var fragment = this.generateExpression(expr.name, Precedence.Sequence, {
+              allowIn: true,
+              allowCall: true
+            });
+          result.push(fragment);
+          if (expr.value) {
+            result.push('=');
+            if (expr.value.type === Syntax.Literal) {
+              fragment = xjsEscapeAttr(expr.value.value, expr.value.raw);
+            } else {
+              fragment = this.generateExpression(expr.value, Precedence.Sequence, {
+                allowIn: true,
+                allowCall: true
+              });
+            }
+            result.push(fragment);
+          }
+          return result;
+        },
+        JSXClosingElement: function (expr, precedence, flags) {
+          return [
+            '</',
+            this.generateExpression(expr.name, Precedence.Sequence, 0),
+            '>'
+          ];
+        },
+        JSXElement: function (expr, precedence, flags) {
+          var result = [], that = this;
+          if (!(flags & F_XJS_NOINDENT)) {
+            base += indent;
+          }
+          var fragment = this.generateExpression(expr.openingElement, Precedence.JSXElement, {
+              allowIn: true,
+              allowCall: true
+            });
+          result.push(fragment);
+          var xjsFragments = [];
+          var i, len;
+          withIndent(function (indent) {
+            for (i = 0, len = expr.children.length; i < len; ++i) {
+              if (expr.children[i].type === Syntax.Literal) {
+                fragment = expr.children[i].raw;
+                if (fragment) {
+                  xjsFragments.push(fragment);
+                }
+                continue;
+              }
+              fragment = that.generateExpression(expr.children[i], Precedence.JSXElement, E_TTF | F_XJS_NOINDENT);
+              xjsFragments.push(fragment);
+            }
+            for (i = 0, len = xjsFragments.length; i < len; ++i) {
+              result.push(xjsFragments[i]);
+            }
+          });
+          if (expr.closingElement) {
+            fragment = that.generateExpression(expr.closingElement, Precedence.JSXElement, 0);
+            result.push(fragment);
+          }
+          if (!(flags & F_XJS_NOINDENT)) {
+            base = base.slice(0, base.length - indent.length);
+            if (hasLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
+              if (flags & F_XJS_NOPAREN) {
+                result = [
+                  newline + base + indent,
+                  result
+                ];
+              } else {
+                result = [
+                  '(' + newline + base + indent,
+                  result,
+                  newline + base + ')'
+                ];
+              }
+            }
+          }
+          return result;
+        },
+        JSXExpressionContainer: function (expr, precedence, flags) {
+          return [
+            '{',
+            this.generateExpression(expr.expression, Precedence.Sequence, E_TTF),
+            '}'
+          ];
+        },
+        JSXIdentifier: function (expr, precedence, flags) {
+          return expr.name;
+        },
+        JSXMemberExpression: function (expr, precedence, flags) {
+          return [
+            this.generateExpression(expr.object, Precedence.Sequence, E_TFF),
+            '.',
+            this.generateExpression(expr.property, Precedence.Sequence, 0)
+          ];
+        },
+        JSXNamespacedName: function (expr, precedence, flags) {
+          return [
+            this.generateExpression(expr.namespace, Precedence.Sequence, 0),
+            ':',
+            this.generateExpression(expr.name, Precedence.Sequence, 0)
+          ];
+        },
+        JSXOpeningElement: function (expr, precedence, flags) {
+          var result = ['<'], that = this;
+          var fragment = this.generateExpression(expr.name, Precedence.Sequence, 0);
+          result.push(fragment);
+          var xjsFragments = [];
+          for (var i = 0, len = expr.attributes.length; i < len; ++i) {
+            fragment = that.generateExpression(expr.attributes[i], Precedence.Sequence, E_TTF);
+            xjsFragments.push({
+              expr: expr.attributes[i],
+              name: expr.attributes[i].name && expr.attributes[i].name.name,
+              fragment: fragment,
+              multiline: hasLineTerminator(toSourceNodeWhenNeeded(fragment).toString())
+            });
+            if (expr.attributes.length > 3 && expr.attributes[i].value && expr.attributes[i].value.type !== Syntax.Literal) {
+              xjsFragments[xjsFragments.length - 1].multiline = true;
+            }
+          }
+          withIndent(function (indent) {
+            for (var i = 0, len = xjsFragments.length; i < len; ++i) {
+              if (i > 0 && i % 3 === 0 || xjsFragments[i].multiline) {
+                result.push(newline + indent);
+              } else {
+                result.push(' ');
+              }
+              result.push(that.generateExpression(xjsFragments[i].expr, Precedence.Sequence, E_TTF));
+            }
+          });
+          result.push(expr.selfClosing ? '/>' : '>');
+          return result;
+        },
+        JSXSpreadAttribute: function (expr, precedence, flags) {
+          return [
+            '{...',
+            this.generateExpression(expr.argument, Precedence.Sequence, {
+              allowIn: true,
+              allowCall: true
+            }),
+            '}'
+          ];
         }
       };
       merge(CodeGenerator.prototype, CodeGenerator.Expression);
@@ -7601,6 +8471,12 @@ module.exports = function(acorn) {
         }
         return pair.map.toString();
       }
+      function xjsEscapeAttr(s, raw) {
+        if (s.indexOf('"') >= 0 || s.indexOf("'") >= 0) {
+          return raw;
+        }
+        return quotes === 'double' ? '"' + s + '"' : "'" + s + "'";
+      }
       FORMAT_MINIFY = {
         indent: {
           style: '',
@@ -7626,9 +8502,9 @@ module.exports = function(acorn) {
   });
   require.define('/package.json', function (module, exports, __dirname, __filename) {
     module.exports = {
-      'name': 'escodegen',
-      'description': 'ECMAScript code generator',
-      'homepage': 'http://github.com/estools/escodegen',
+      'name': 'escodegen-wallaby',
+      'description': 'ECMAScript code generator with JSX support',
+      'homepage': 'http://github.com/wallabyjs/escodegen',
       'main': 'escodegen.js',
       'bin': {
         'esgenerate': './bin/esgenerate.js',
@@ -7642,16 +8518,16 @@ module.exports = function(acorn) {
         'escodegen.js',
         'package.json'
       ],
-      'version': '1.8.1',
-      'engines': { 'node': '>=0.12.0' },
+      'version': '1.6.12',
+      'engines': { 'node': '>=0.10.0' },
       'maintainers': [{
-          'name': 'Yusuke Suzuki',
-          'email': 'utatane.tea@gmail.com',
-          'web': 'http://github.com/Constellation'
+          'name': 'Artem Govorov',
+          'email': 'artem.govorov@gmail.com',
+          'web': 'http://dm.gl'
         }],
       'repository': {
         'type': 'git',
-        'url': 'http://github.com/estools/escodegen.git'
+        'url': 'http://github.com/wallabyjs/escodegen.git'
       },
       'dependencies': {
         'estraverse': '^1.9.1',
@@ -7671,7 +8547,10 @@ module.exports = function(acorn) {
         'gulp-mocha': '^2.0.0',
         'semver': '^5.1.0'
       },
-      'license': 'BSD-2-Clause',
+      'licenses': [{
+          'type': 'BSD',
+          'url': 'http://github.com/wallabyjs/escodegen/raw/master/LICENSE.BSD'
+        }],
       'scripts': {
         'test': 'gulp travis',
         'unit-test': 'gulp test',
@@ -10403,8 +11282,7 @@ module.exports = function(acorn) {
 'use strict';
 
 // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-// Generated on 17-02-14 21:00 PST
-
+// Generated on 17-07-23 16:45 PDT
 function Visitor() {}
 Visitor.prototype.accept = function accept(node, state, path) {
   if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
@@ -10450,6 +11328,18 @@ Visitor.prototype.accept = function accept(node, state, path) {
       return this.visitModuleDeclaration(node, state, path);
     case "ModuleSpecifier":
       return this.visitModuleSpecifier(node, state, path);
+    case "JSXEmptyExpression":
+      return this.visitJSXEmptyExpression(node, state, path);
+    case "JSXExpressionContainer":
+      return this.visitJSXExpressionContainer(node, state, path);
+    case "JSXSpreadChild":
+      return this.visitJSXSpreadChild(node, state, path);
+    case "JSXBoundaryElement":
+      return this.visitJSXBoundaryElement(node, state, path);
+    case "JSXAttribute":
+      return this.visitJSXAttribute(node, state, path);
+    case "JSXText":
+      return this.visitJSXText(node, state, path);
     case "Identifier":
       return this.visitIdentifier(node, state, path);
     case "Literal":
@@ -10558,6 +11448,18 @@ Visitor.prototype.accept = function accept(node, state, path) {
       return this.visitExportAllDeclaration(node, state, path);
     case "AwaitExpression":
       return this.visitAwaitExpression(node, state, path);
+    case "JSXMemberExpression":
+      return this.visitJSXMemberExpression(node, state, path);
+    case "JSXNamespacedName":
+      return this.visitJSXNamespacedName(node, state, path);
+    case "JSXOpeningElement":
+      return this.visitJSXOpeningElement(node, state, path);
+    case "JSXClosingElement":
+      return this.visitJSXClosingElement(node, state, path);
+    case "JSXSpreadAttribute":
+      return this.visitJSXSpreadAttribute(node, state, path);
+    case "JSXElement":
+      return this.visitJSXElement(node, state, path);
     case "RegExpLiteral":
       return this.visitRegExpLiteral(node, state, path);
     case "FunctionDeclaration":
@@ -10568,6 +11470,8 @@ Visitor.prototype.accept = function accept(node, state, path) {
       return this.visitForOfStatement(node, state, path);
     case "ClassDeclaration":
       return this.visitClassDeclaration(node, state, path);
+    case "JSXIdentifier":
+      return this.visitJSXIdentifier(node, state, path);
   }
   throw new Error("No visit function in AST visitor Visitor for:\n  " + path.join(".") + "\n  " + JSON.stringify(node));
 };
@@ -10727,6 +11631,42 @@ Visitor.prototype.visitModuleSpecifier = function visitModuleSpecifier(node, sta
   var visitor = this;
   // local is of types Identifier
   node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  return node;
+};
+Visitor.prototype.visitJSXEmptyExpression = function visitJSXEmptyExpression(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitJSXExpressionContainer = function visitJSXExpressionContainer(node, state, path) {
+  var visitor = this;
+  // expression is of types Expression, JSXEmptyExpression
+  node["expression"] = visitor.accept(node["expression"], state, path.concat(["expression"]));
+  return node;
+};
+Visitor.prototype.visitJSXSpreadChild = function visitJSXSpreadChild(node, state, path) {
+  var visitor = this;
+  // expression is of types Expression
+  node["expression"] = visitor.accept(node["expression"], state, path.concat(["expression"]));
+  return node;
+};
+Visitor.prototype.visitJSXBoundaryElement = function visitJSXBoundaryElement(node, state, path) {
+  var visitor = this;
+  // name is of types JSXIdentifier, JSXMemberExpression, JSXNamespacedName
+  node["name"] = visitor.accept(node["name"], state, path.concat(["name"]));
+  return node;
+};
+Visitor.prototype.visitJSXAttribute = function visitJSXAttribute(node, state, path) {
+  var visitor = this;
+  // name is of types JSXIdentifier, JSXNamespacedName
+  node["name"] = visitor.accept(node["name"], state, path.concat(["name"]));
+  // value is of types Literal, JSXExpressionContainer, JSXElement
+  if (node["value"]) {
+    node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
+  }
+  return node;
+};
+Visitor.prototype.visitJSXText = function visitJSXText(node, state, path) {
+  var visitor = this;
   return node;
 };
 Visitor.prototype.visitIdentifier = function visitIdentifier(node, state, path) {
@@ -11243,6 +12183,66 @@ Visitor.prototype.visitAwaitExpression = function visitAwaitExpression(node, sta
   node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
   return node;
 };
+Visitor.prototype.visitJSXMemberExpression = function visitJSXMemberExpression(node, state, path) {
+  var visitor = this;
+  // object is of types JSXMemberExpression, JSXIdentifier
+  node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
+  // property is of types JSXIdentifier
+  node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
+  return node;
+};
+Visitor.prototype.visitJSXNamespacedName = function visitJSXNamespacedName(node, state, path) {
+  var visitor = this;
+  // namespace is of types JSXIdentifier
+  node["namespace"] = visitor.accept(node["namespace"], state, path.concat(["namespace"]));
+  // name is of types JSXIdentifier
+  node["name"] = visitor.accept(node["name"], state, path.concat(["name"]));
+  return node;
+};
+Visitor.prototype.visitJSXOpeningElement = function visitJSXOpeningElement(node, state, path) {
+  var visitor = this;
+  // attributes is a list with types JSXAttribute, JSXSpreadAttribute
+  var newElements = [];
+  for (var i = 0; i < node["attributes"].length; i++) {
+    var ea = node["attributes"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["attributes", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["attributes"] = newElements;
+  // name is of types JSXIdentifier, JSXMemberExpression, JSXNamespacedName
+  node["name"] = visitor.accept(node["name"], state, path.concat(["name"]));
+  return node;
+};
+Visitor.prototype.visitJSXClosingElement = function visitJSXClosingElement(node, state, path) {
+  var visitor = this;
+  // name is of types JSXIdentifier, JSXMemberExpression, JSXNamespacedName
+  node["name"] = visitor.accept(node["name"], state, path.concat(["name"]));
+  return node;
+};
+Visitor.prototype.visitJSXSpreadAttribute = function visitJSXSpreadAttribute(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+};
+Visitor.prototype.visitJSXElement = function visitJSXElement(node, state, path) {
+  var visitor = this;
+  // openingElement is of types JSXOpeningElement
+  node["openingElement"] = visitor.accept(node["openingElement"], state, path.concat(["openingElement"]));
+  // children is a list with types JSXText, JSXExpressionContainer, JSXSpreadChild, JSXElement
+  var newElements = [];
+  for (var i = 0; i < node["children"].length; i++) {
+    var ea = node["children"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["children", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["children"] = newElements;
+  // closingElement is of types JSXClosingElement
+  if (node["closingElement"]) {
+    node["closingElement"] = visitor.accept(node["closingElement"], state, path.concat(["closingElement"]));
+  }
+  return node;
+};
 Visitor.prototype.visitRegExpLiteral = function visitRegExpLiteral(node, state, path) {
   var visitor = this;
   return node;
@@ -11295,6 +12295,10 @@ Visitor.prototype.visitClassDeclaration = function visitClassDeclaration(node, s
   }
   // body is of types ClassBody
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitJSXIdentifier = function visitJSXIdentifier(node, state, path) {
+  var visitor = this;
   return node;
 };
 
@@ -12897,6 +13901,7 @@ function fuzzyParse(source, options) {
   options.sourceType = options.sourceType || "module";
   options.plugins = options.plugins || {};
   // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
+  options.plugins.jsx = options.plugins.hasOwnProperty("jsx") ? options.plugins.jsx : true;
   options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
   options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ? options.plugins.objectSpread : true;
 
@@ -12958,6 +13963,7 @@ function parse(source, options) {
   options.sourceType = options.sourceType || "module";
   if (!options.hasOwnProperty("allowImportExportEverywhere")) options.allowImportExportEverywhere = true;
   options.plugins = options.plugins || {};
+  options.plugins.jsx = options.plugins.hasOwnProperty("jsx") ? options.plugins.jsx : true;
   options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
   options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ? options.plugins.objectSpread : true;
 
@@ -14472,8 +15478,7 @@ function extractComments(astOrCode, optCode) {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function isInObjectMethod(comment) {
-    return lively_lang.arr.equals(comment.path.slice(-2), ["value", "body"] // obj expr
-    );
+    return lively_lang.arr.equals(comment.path.slice(-2), ["value", "body"]); // obj expr
   }
 
   function isInAssignedMethod(comment) {
@@ -14710,8 +15715,8 @@ function findDecls(parsed, options) {
               var def = _step2.value;
 
               if (def.parent && filtered.includes(def.parent) || // parent is in
-              (def.node.source || "").includes("\n" // more than one line
-              )) filtered.push(def);
+              (def.node.source || "").includes("\n") // more than one line
+              ) filtered.push(def);
             }
           } catch (err) {
             _didIteratorError2 = true;

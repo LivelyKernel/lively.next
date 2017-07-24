@@ -26,7 +26,8 @@
   },
   "homepage": "https://github.com/LivelyKernel/lively.ast",
   "dependencies": {
-    "lively.lang": "^1.0.0"
+    "lively.lang": "^1.0.0",
+    "acorn-jsx": "^4.0.1"
   },
   "devDependencies": {
     "acorn": "^4.0.3",

@@ -11,14 +11,28 @@ module.exports = new Promise((resolve, reject) => {
   var acornSrc = fs.readFileSync(path.join(acornDir, "dist/acorn.js")),
       walkSrc = fs.readFileSync(path.join(acornDir, "dist/walk.js")),
       looseSrc = fs.readFileSync(path.join(acornDir, "dist/acorn_loose.js")),
-      acornAsyncSrc = `(function(acorn) {
+      acornAsyncSrc = 
+`
+/* <<< acorn-es7-plugin/acorn-v4.js >>> */
+(function(acorn) {
   var module = {exports: {}};
   ${patchAcornSource(fs.readFileSync(require.resolve("acorn-es7-plugin/acorn-v4.js")))}
   acorn.plugins.asyncawait = module.exports;
 })(this.acorn);`,
-      acornObjectSpreadSrc = `(function(acorn) {
+acornObjectSpreadSrc =
+`
+/* <<< acorn-object-spread/inject.js >>> */
+(function(acorn) {
   var module = {exports: {}};
   ${fs.readFileSync(require.resolve("acorn-object-spread/inject.js")).toString().replace(/let /g, "var ")}
+  module.exports(acorn);
+})(this.acorn);`,
+
+acornJsxXHTMLSrc = fs.readFileSync(require.resolve("acorn-jsx/xhtml.js")).toString().replace("module.exports =", "var XHTMLEntities ="),
+acornJsxSrc = `/* <<< acorn-jsx/inject.js >>> */
+(function(acorn) {
+  var module = {exports: {}};
+  ${fs.readFileSync(require.resolve("acorn-jsx/inject.js")).toString().replace(/let /g, "var ").replace("var XHTMLEntities = require('./xhtml');", acornJsxXHTMLSrc)}
   module.exports(acorn);
 })(this.acorn);`,
       targetFile = "dist/acorn.js",
@@ -29,6 +43,7 @@ module.exports = new Promise((resolve, reject) => {
   ${looseSrc}
   ${acornAsyncSrc}
   ${acornObjectSpreadSrc}
+  ${acornJsxSrc}
   return this.acorn;
 })();`;
   
