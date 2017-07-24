@@ -6,46 +6,6 @@ import { pushIfNotIncluded, removeAt } from "./array.js";
  * Methods helping with promises (Promise/A+ model). Not a promise shim.
  */
 
-const requests = [];
-
-function flush(ms) {
-  let reqs = requests, i = reqs.length;
-  requests = [];
-  while (i--) reqs[i](ms);
-}
-
-export function requestAnimationFrameStacked(cb) {
-  if (!requests.length) window.requestAnimationFrame(flush)
-  return {requests, idx: pushIfNotIncluded(requests, cb) - 1 || requests.indexOf(cb)}
-}
-
-export function cancelAnimationFrameStacked(ref) {
-  if (requests == ref.requests) {
-    removeAt(requests, ref.idx);
-  }
-}
-
-function fastSetInterval(cb, ms = 0, ...args) {
-  let interval = {time: null, active: true};
-  function step(ts) {
-    if (!interval.time) interval.time = ts;
-    // rms 17.7.17: I have found the system to be snappier,
-    //              when I just ignore the interval.
-    // if (ts - interval.time > ms) {
-    //    interval.time = null; 
-    //    cb(args);
-    // }
-    cb(...args);
-    if (interval.active) requestAnimationFrameStacked(step);    
-  }
-  requestAnimationFrameStacked(step);
-  return interval;
-}
-
-function fastClearInterval(interval) {
-  interval.active = false;
-}
-
 function promise(obj) {
   // Promise object / function converter
   // Example:
@@ -98,7 +58,6 @@ function waitFor(ms, tester, timeoutObj) {
   // and `ms` milliseconds passed, reject with timeout error
   // if timeoutObj is passed will resolve(!) with this object instead of raise
   // an error
-
   if (typeof ms === "function") { tester = ms; ms = undefined; }
   return new Promise((resolve, reject) => {
     let stopped = false,
@@ -106,14 +65,12 @@ function waitFor(ms, tester, timeoutObj) {
         timeoutValue = undefined,
         error = undefined,
         value = undefined,
-        intervalFn = System.get("@system-env").browser ? fastSetInterval : setInterval,
-        clearFn = System.get("@system-env").browser ? fastClearInterval : clearInterval,
-        i = intervalFn(() => {
-          if (stopped) { clearFn(i); return; }
+        i = setInterval(() => {
+          if (stopped) return clearInterval(i);
           try { value = tester(); } catch (e) { error = e; }
           if (!value && !error && !timedout) return;
           stopped = true;
-          clearFn(i);
+          clearInterval(i);
           if (error) return reject(error);
           if (timedout)
             return typeof timeoutObj === "undefined"

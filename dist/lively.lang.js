@@ -4740,6 +4740,14 @@ function average(numbers) {
   }, 0) / numbers.length;
 }
 
+function averageInc(newVal, oldAvg, n) {
+  // show-in-doc
+  // Example:
+  //   let nums = range(0, 10).map(() => random(0, 10))
+  //   nums.reduce((avg, ea, i) => avgInc(ea, avg, i+1), 0);
+  return (newVal - oldAvg) / n + oldAvg;
+}
+
 function median(numbers) {
   // show-in-doc
   var sorted = numbers.sort(function (a, b) {
@@ -4863,6 +4871,7 @@ var num = Object.freeze({
 	randomSmallerInteger: randomSmallerInteger,
 	humanReadableByteSize: humanReadableByteSize,
 	average: average,
+	averageInc: averageInc,
 	median: median,
 	between: between,
 	sort: sort$1,
@@ -5184,7 +5193,7 @@ var date = Object.freeze({
 	relativeTo: relativeTo
 });
 
-/*global require, process, Promise*/
+/*global require, process, Promise, System*/
 
 /*
  * Methods helping with promises (Promise/A+ model). Not a promise shim.
@@ -5212,8 +5221,8 @@ function delay$1(ms, resolveVal) {
 
 function delayReject(ms, rejectVal) {
   // like `promise.delay` but rejects
-  return new Promise(function (_, reject) {
-    return setTimeout(reject, ms, rejectVal);
+  return new Promise(function (_, reject$$1) {
+    return setTimeout(reject$$1, ms, rejectVal);
   });
 }
 
@@ -5221,15 +5230,15 @@ function timeout(ms, promise) {
   // Takes a promise and either resolves to the value of the original promise
   // when it succeeds before `ms` milliseconds passed or fails with a timeout
   // error
-  return new Promise(function (resolve, reject) {
+  return new Promise(function (resolve, reject$$1) {
     var done = false;
     setTimeout(function () {
-      return !done && (done = true) && reject(new Error('Promise timed out'));
+      return !done && (done = true) && reject$$1(new Error('Promise timed out'));
     }, ms);
     promise.then(function (val) {
       return !done && (done = true) && resolve(val);
     }, function (err) {
-      return !done && (done = true) && reject(err);
+      return !done && (done = true) && reject$$1(err);
     });
   });
 }
@@ -5240,20 +5249,17 @@ function waitFor$1(ms, tester, timeoutObj) {
   // and `ms` milliseconds passed, reject with timeout error
   // if timeoutObj is passed will resolve(!) with this object instead of raise
   // an error
-
   if (typeof ms === "function") {
     tester = ms;ms = undefined;
   }
-  return new Promise(function (resolve, reject) {
+  return new Promise(function (resolve, reject$$1) {
     var stopped = false,
         timedout = false,
         timeoutValue = undefined,
         error = undefined,
         value = undefined,
         i = setInterval(function () {
-      if (stopped) {
-        clearInterval(i);return;
-      }
+      if (stopped) return clearInterval(i);
       try {
         value = tester();
       } catch (e) {
@@ -5262,8 +5268,8 @@ function waitFor$1(ms, tester, timeoutObj) {
       if (!value && !error && !timedout) return;
       stopped = true;
       clearInterval(i);
-      if (error) return reject(error);
-      if (timedout) return typeof timeoutObj === "undefined" ? reject(new Error("timeout")) : resolve(timeoutObj);
+      if (error) return reject$$1(error);
+      if (timedout) return typeof timeoutObj === "undefined" ? reject$$1(new Error("timeout")) : resolve(timeoutObj);
       return resolve(value);
     }, 10);
     if (typeof ms === "number") setTimeout(function () {
@@ -5278,11 +5284,11 @@ function deferred() {
   // that separates the resolve/reject handling from the promise itself
   // Similar to the deprecated `Promise.defer()`
   var resolve,
-      reject,
+      reject$$1,
       promise = new Promise(function (_resolve, _reject) {
-    resolve = _resolve;reject = _reject;
+    resolve = _resolve;reject$$1 = _reject;
   });
-  return { resolve: resolve, reject: reject, promise: promise };
+  return { resolve: resolve, reject: reject$$1, promise: promise };
 }
 
 function convertCallbackFun(func) {
@@ -5301,9 +5307,9 @@ function convertCallbackFun(func) {
   return function promiseGenerator() /*args*/{
     var args = Array.from(arguments),
         self = this;
-    return new Promise(function (resolve, reject) {
+    return new Promise(function (resolve, reject$$1) {
       args.push(function (err, result) {
-        return err ? reject(err) : resolve(result);
+        return err ? reject$$1(err) : resolve(result);
       });
       func.apply(self, args);
     });
@@ -5316,28 +5322,28 @@ function convertCallbackFunWithManyArgs(func) {
   return function promiseGenerator() /*args*/{
     var args = Array.from(arguments),
         self = this;
-    return new Promise(function (resolve, reject) {
+    return new Promise(function (resolve, reject$$1) {
       args.push(function () /*err + args*/{
         var args = Array.from(arguments),
             err = args.shift();
-        return err ? reject(err) : resolve(args);
+        return err ? reject$$1(err) : resolve(args);
       });
       func.apply(self, args);
     });
   };
 }
 
-function _chainResolveNext(promiseFuncs, prevResult, akku, resolve, reject) {
+function _chainResolveNext(promiseFuncs, prevResult, akku, resolve, reject$$1) {
   var next = promiseFuncs.shift();
   if (!next) resolve(prevResult);else {
     try {
       Promise.resolve(next(prevResult, akku)).then(function (result) {
-        return _chainResolveNext(promiseFuncs, result, akku, resolve, reject);
+        return _chainResolveNext(promiseFuncs, result, akku, resolve, reject$$1);
       }).catch(function (err) {
-        reject(err);
+        reject$$1(err);
       });
     } catch (err) {
-      reject(err);
+      reject$$1(err);
     }
   }
 }
@@ -5357,8 +5363,8 @@ function chain$1(promiseFuncs) {
   //   (prevVal, state) => { state.second = prevVal; return state }
   // ]).then(result => console.log(result));
   // // => prints {first: 23,second: 25}
-  return new Promise(function (resolve, reject) {
-    return _chainResolveNext(promiseFuncs.slice(), undefined, {}, resolve, reject);
+  return new Promise(function (resolve, reject$$1) {
+    return _chainResolveNext(promiseFuncs.slice(), undefined, {}, resolve, reject$$1);
   });
 }
 
@@ -5392,13 +5398,13 @@ function parallel(promiseGenFns) {
       index = 0,
       left = promiseGenFns.length,
       resolve = void 0,
-      reject = void 0;
+      reject$$1 = void 0;
 
   return new Promise(function (res, rej) {
     resolve = function resolve() {
       return res(results);
     };
-    reject = function reject(err) {
+    reject$$1 = function reject$$1(err) {
       return rej(error = err);
     };
     spawnMore();
@@ -5414,10 +5420,10 @@ function parallel(promiseGenFns) {
         results[i] = result;
         if (--left === 0) resolve();else spawnMore();
       }).catch(function (err) {
-        return reject(err);
+        return reject$$1(err);
       });
     } catch (err) {
-      reject(err);
+      reject$$1(err);
     }
   }
 
