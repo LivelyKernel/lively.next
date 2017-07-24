@@ -415,7 +415,7 @@ export class GridLayoutHalo extends Morph {
 
   constructor(container, pointerId) {
     super({
-//      styleClasses: ["Halo"],
+      isHaloItem: true,
       borderColor: Color.orange,
       borderWidth: 2,
       borderRadius: container.borderRadius,
@@ -437,7 +437,9 @@ export class GridLayoutHalo extends Morph {
   }
 
   handleDrop(morph) {
-     if (this.currentCell) this.currentCell.cellGroup.morph = morph;
+     if (this.currentCell) morph.whenRendered().then(
+        () => this.currentCell.cellGroup.morph = morph
+     );
   }
 
   initialize() {
@@ -777,10 +779,11 @@ export class FlexLayoutHalo extends Morph {
   previewDrop(morphs) {
      const pulseDuration = 2000;
      if (this.previews.length > 0) return;
-     this.previews = morphs.map(morph =>
+     this.previews = morphs.map(morph => 
          this.container.addMorph({
            isHaloItem: true,
-           bounds: morph.bounds(),
+           position: this.container.localize(this.world().firstHand.position),
+           extent: morph.bounds().extent(),
            fill: Color.orange.withA(.3),
            borderColor: Color.orange,
            borderWidth: 2,

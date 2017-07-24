@@ -1558,7 +1558,6 @@ export class MorphHighlighter extends Morph {
         this.layoutHalo || this.world().showLayoutHaloFor(this.target, this.pointerId);
       this.styleClasses = ['inactive'];
       this.alignWithHalo();
-      this.addMorph(this.layoutHalo);
       if (this.halo.get("grab").hand.grabbedMorphs)
         this.layoutHalo.previewDrop(this.halo.get("grab").hand.grabbedMorphs);
     } else {
