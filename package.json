@@ -1,7 +1,7 @@
 {
   "name": "lively.components",
   "version": "0.1.0",
-  "repository": "https://github.com/LivelyKernel/lively.package",
+  "repository": "https://github.com/LivelyKernel/lively.components",
   "license": "MIT",
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
