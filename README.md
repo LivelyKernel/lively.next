@@ -12,6 +12,46 @@ flatn installs packages into one or multiple directories and tells nodejs how to
 
 ![](flatn.png)
 
+
+## How it works
+
+Instead of finding packages / modules by convention, with flatn you specify explicitly what package locations should be used for lookup.  There are three categories for package locations:
+
+1. collection package directories
+2. package directories
+3. dev package directories
+
+Collection package dirs specify parent directories in which a subfolder structure points to actual packages, e.g.
+
+```
+collection dir
+├── acorn
+│   ├── 1.2.2
+│   │   ├── package.json
+│   │   └── src
+│   │       └── ...
+│   ├── 4.0.13
+│   │   ├── package.json
+│   │   └── src
+│   │       └── ...
+├── acorn-es7-plugin
+│   └── 1.1.7
+│       ├── package.json
+│       └── ...
+├── acorn-jsx
+│   └── 4.0.1
+│       └── ...
+```
+
+The folder structure will be established by calling `flatn install`.  There can be multiple collection package directories, at runtime they will be all used for package lookup, prioritized by the order in which they where specified.
+
+Package directories denote a patch to individual packages, no special directory structure is necessary.  The versioning information will be read from a `package.json` file that is expected to be at the root of the package directory.
+
+Dev package directories are similar to package directories except that packages specified there will have the highest priority during lookup.  For packages of collection or normal package dirs, the version will be used during looking, according to [semver](https://github.com/npm/node-semver).  I.e. if you have a package bar that dependes on `acorn@^1` then the `collection dir/acorn/1.2.2` location will be found using the example from above.  If you specify acorn as a dev package, however, versioning info when requiring this package will be disregarded.  This makes sure that all packages that depend on a dev package will use only a single version, so you can be sure that changes to the dev package will have an effect on all dependends.
+
+Collection/ package/ dev package directories can be specified via environment variables, comamnd line or modified at runtime in JavaScript.
+
+
 ## Rationale
 
 npm installs package dependencies into node_modules folder inside of packages that require them.  The internal module resolve mechanism in nodejs then traverses the file system tree upward when it wants to load (require) one module from another one, looking into the node_modules folder to the matching package.
