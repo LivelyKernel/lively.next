@@ -1,5 +1,5 @@
 import { pt, rect, Color } from "lively.graphics";
-import { Morph } from "lively.morphic";
+import { Morph, Image } from "lively.morphic";
 import { connect } from "lively.bindings/index.js";
 
 

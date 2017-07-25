@@ -207,9 +207,10 @@ export class Renderer {
   }
 
   renderCanvas(canvas) {
-    const CanvasHook = function(){}
+    const CanvasHook = function(morph) { this.morph = morph; }
     CanvasHook.prototype.hook = function(node, prop, prev) {
-      canvas._canvas = node;    // remember HTML canvas node for drawing
+      if (this.morph._canvas !== node)
+        canvas._canvas = node;    // remember HTML canvas node for drawing
     }
     return h("div", {
       ...defaultAttributes(canvas, this),
@@ -219,7 +220,7 @@ export class Renderer {
           width: canvas.width,
           height: canvas.height,
           style: {"pointer-events": "none", position: "absolute"},
-          canvasHook: new CanvasHook(),
+          canvasHook: new CanvasHook(canvas),
         }),
         this.renderSubmorphs(canvas)
       ]);
