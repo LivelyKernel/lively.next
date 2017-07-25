@@ -288,7 +288,7 @@ export class VerticalLayout extends FloatLayout {
 
   constructor(props = {}) {
     super(props);
-    // supported directions: "left", "centered"
+    // supported directions: "left", "center"
     this._align = props.align || "left";
   }
 
@@ -299,6 +299,7 @@ export class VerticalLayout extends FloatLayout {
     return new FlexLayoutHalo(this.container, pointerId);
   }
 
+  get possibleAlignValues() { return ["left", "center", "right"]; }
   get align() { return this._align; }
   set align(d) { this._align = d; this.apply(); }
 
@@ -329,7 +330,7 @@ export class VerticalLayout extends FloatLayout {
     this.active = true;
     layoutableSubmorphs.forEach(m => {
       let y = pos.y,
-          x = align === "centered" ? container.width/2 - m.width / 2 : pos.x
+          x = align === "center" ? container.width/2 - m.width / 2 : pos.x
       if (animate) {
         const {duration, easing} = animate;
         m.animate({topLeft: pt(x, y), duration, easing});
@@ -374,9 +375,11 @@ export class HorizontalLayout extends FloatLayout {
 
   inspect(pointerId) { return new FlexLayoutHalo(this.container, pointerId); }
 
+  get possibleDirectionValues() { return ["leftToRight", "rightToLeft", "centered"]; }
   get direction() { return this._direction; }
   set direction(d) { this._direction = d; this.apply(); }
 
+  get possibleAlignValues() { return ["top", "center", "bottom"]; }
   get align() { return this._align; }
   set align(d) { this._align = d; this.apply(); }
 
@@ -398,9 +401,8 @@ export class HorizontalLayout extends FloatLayout {
     this.maxHeight = 0;
 
 
-    var minExtent = direction === "leftToRight" && !autoResize ?
-      container.extent :
-      this.computeMinContainerExtent(spacing, container, layoutableSubmorphs);
+    var minExtent = this.computeMinContainerExtent(spacing, container, layoutableSubmorphs);
+    if (!autoResize) minExtent = minExtent.maxPt(container.extent);
 
     var startX = 0;
     if (direction === "rightToLeft") {
@@ -417,14 +419,14 @@ export class HorizontalLayout extends FloatLayout {
         m.layout && m.layout.forceLayout()
       }, pt(Math.max(0, startX)+spacing, top));
     } else if (align === "bottom") {
-      let bottom = minExtent.y - spacing;
+      let bottom = minExtent.y + (autoResize ? spacing : -spacing);
       layoutableSubmorphs.reduce((pos, m) => {
         this.changePropertyAnimated(m, "bottomLeft", pos, animate);
         return m.bottomRight.addPt(pt(spacing, 0));
         m.layout && m.layout.forceLayout()
       }, pt(Math.max(0, startX)+spacing, bottom));
     } else {
-      let yCenter = minExtent.y/2;
+      let yCenter = minExtent.y/2 + (autoResize ? spacing : 0);
       layoutableSubmorphs.reduce((pos, m) => {
         this.changePropertyAnimated(m, "leftCenter", pos, animate);
         return m.rightCenter.addPt(pt(spacing, 0));
@@ -440,7 +442,7 @@ export class HorizontalLayout extends FloatLayout {
       } else  {
         w = arr.last(layoutableSubmorphs).right + spacing;
       }
-
+    
       var newExtent = pt(Math.max(minExtent.x, w), minExtent.y + 2 * spacing);
       this.changePropertyAnimated(container, "extent", newExtent, animate);
     }

@@ -11,7 +11,7 @@ import {
 } from "../index.js";
 import { Color, pt, rect, Rectangle } from "lively.graphics";
 import { arr } from "lively.lang";
-import { LabeledCheckBox } from "../components/widgets.js";
+import { LabeledCheckBox, DropDownSelector } from "../components/widgets.js";
 import { connect } from "lively.bindings";
 import { NumberWidget } from "../ide/value-widgets.js";
 
@@ -772,38 +772,36 @@ export class FlexLayoutHalo extends Morph {
      this.removePreviews();
   }
 
-  handleDrop(morph) {
-  
-  }
+  handleDrop(morph) {}
 
   previewDrop(morphs) {
-     const pulseDuration = 2000;
-     if (this.previews.length > 0) return;
-     this.previews = morphs.map(morph => 
-         this.container.addMorph({
-           isHaloItem: true,
-           position: this.container.localize(this.world().firstHand.position),
-           extent: morph.bounds().extent(),
-           fill: Color.orange.withA(.3),
-           borderColor: Color.orange,
-           borderWidth: 2,
-           opacity: 1,
-           borderStyle: "dashed",
-           async step() {
-              const easing = Sine.easeInOut;
-              await this.animate({opacity: .5, duration: pulseDuration / 2, easing})
-              await this.animate({opacity: 1, duration: pulseDuration / 2, easing});
-           }
-        }));
-     this.previews.forEach(p => {
-         p.step(); p.startStepping(pulseDuration, "step")
-     });
+    const pulseDuration = 2000;
+    if (this.previews.length > 0) return;
+    this.previews = morphs.map(morph => 
+    this.container.addMorph({
+      isHaloItem: true,
+      position: this.container.localize(this.world().firstHand.position),
+      extent: morph.bounds().extent(),
+      fill: Color.orange.withA(.3),
+      borderColor: Color.orange,
+      borderWidth: 2,
+      opacity: 1,
+      borderStyle: "dashed",
+      async step() {
+        const easing = Sine.easeInOut;
+        await this.animate({opacity: .5, duration: pulseDuration / 2, easing})
+        await this.animate({opacity: 1, duration: pulseDuration / 2, easing});
+      }
+    }));
+    this.previews.forEach(p => {
+      p.step(); p.startStepping(pulseDuration, "step")
+    });
   }
 
   remove() {
-     super.remove();
-     this.removePreviews();
-     return this;
+    super.remove();
+    this.removePreviews();
+    return this;
   }
 
   removePreviews() {
@@ -816,7 +814,7 @@ export class FlexLayoutHalo extends Morph {
   }
 
   alignWithTarget() {
-       this.setBounds(this.container.globalBounds());
+    this.setBounds(this.container.globalBounds());
   };
 
   get target() { return this.state.target }
@@ -834,12 +832,41 @@ export class FlexLayoutHalo extends Morph {
     this.alignWithTarget();
   }
 
+  updateAlignmentPolicy(val) { this.target.align = val; }
+
+  updateDirectionPolicy(val) { this.target.direction = val; }
+
   updateSpacing(s) {
     this.target.spacing = s
   }
 
   optionControls() {
     const layout = this.target,
+          alignmentSelector = layout.possibleAlignValues ? {
+            fill: Color.transparent, layout: new HorizontalLayout({spacing: 3, direction: "centered", align: "center"}),
+            submorphs: [
+              {type: "label", value: "align: "},
+              new DropDownSelector({
+                name: "alignment",
+                borderRadius: 2,
+                padding: 3,
+                selectedValue: layout.align,
+                values: layout.possibleAlignValues
+              })]
+          } : null,
+          directionSelector = layout.possibleDirectionValues ? {
+            fill: Color.transparent, layout: new HorizontalLayout({spacing: 3, direction: "centered", align: "center"}),
+            submorphs: [
+              {type: "label", value: "direction: "},
+              new DropDownSelector({
+                name: "direction",
+                borderRadius: 2,
+                padding: 3,
+                selectedValue: layout.direction,
+                values: layout.possibleDirectionValues
+              })
+            ]
+          } : null,
           spacing = new NumberWidget({
             fill: Color.white,
             borderWidth: 1,
@@ -863,12 +890,17 @@ export class FlexLayoutHalo extends Morph {
             fill: Color.transparent,
             checked: layout.resizeSubmorphs
           });
+
     connect(spacing, 'update', this, 'updateSpacing');
     connect(autoResizeCb, "checked", this, "updateAutoResizePolicy");
     connect(resizeSubmorphsCb, "checked", this, "updateResizeSubmorphsPolicy");
+    alignmentSelector && connect(alignmentSelector.submorphs[1], "selectedValue", this, "updateAlignmentPolicy");
+    directionSelector && connect(directionSelector.submorphs[1], "selectedValue", this, "updateDirectionPolicy");
+
     return [
         autoResizeCb,
         resizeSubmorphsCb,
+        ...[alignmentSelector, directionSelector].filter(Boolean),
         {fill: Color.transparent, layout: new HorizontalLayout(),
          submorphs: [
            {type: 'label', value: 'Submorph Spacing', 
