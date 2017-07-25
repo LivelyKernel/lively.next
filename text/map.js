@@ -18,7 +18,7 @@ export default class TextMap extends Canvas {
     return {
       textMorph: {},
       relativeBoundsInTextMorph: {},
-      extent: {defaultValue: pt(120, 50)},
+      extent: {defaultValue: pt(60, 50)},
       markers: {}
     }
   }
@@ -51,7 +51,6 @@ export default class TextMap extends Canvas {
 
     if (add) {
       this.textMorph.addMorph(this);
-      this.width = 120;
       this.height = this.textMorph.height;
     }
     this.update();
@@ -79,19 +78,23 @@ export default class TextMap extends Canvas {
   get measure() {
     let {width, height, textMorph} = this,
         {document: doc} = textMorph,
-        heightPerLine = Math.min(2, height / doc.lines.length);
-    return {width, height, heightPerLine}
+        heightPerLine = Math.min(2, height / doc.lines.length),
+        widthPerChar = .5;
+    return {width, height, heightPerLine, widthPerChar}
   }
 
   update() {
-    let {context: ctx, textMorph, measure: {width, height, heightPerLine}} = this,
+    let {
+          context: ctx,
+          textMorph,
+          measure: {width, height, heightPerLine, widthPerChar}
+        } = this,
         {document: doc, textLayout, markers, selections} = textMorph,
         {startRow, endRow} = textLayout.whatsVisible(textMorph);
 
     if (this.owner === textMorph) {
       this.topRight = this.textMorph.innerBounds().topRight().addPt(this.textMorph.scroll);
     }
-
 
     if (!ctx) return;
 
@@ -109,8 +112,14 @@ export default class TextMap extends Canvas {
     ctx.lineWidth = Math.max(1, heightPerLine-.3)
     ctx.strokeStyle = "gray"
     for (let line of doc.lines) {
+      let text = line.text;
+      let length = text.length;
+      let lengthNoTrailingSpace = text.trimLeft().length
+      let x = (length - lengthNoTrailingSpace);
       ctx.moveTo(x, y);
-      ctx.lineTo(x + line.text.length, y);
+      ctx.lineTo(x + lengthNoTrailingSpace*widthPerChar, y);
+      // ctx.moveTo(x, y);
+      // ctx.lineTo(x + line.text.length*widthPerChar, y);
       x = 0;
       y += heightPerLine;
     }
