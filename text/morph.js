@@ -2424,6 +2424,15 @@ export class Text extends Morph {
 
   onScroll(evt) {
     if (this.isFocused()) this.ensureKeyInputHelperAtCursor();
+    // FIXME rk 2017-07-25: quick hack to make text map work
+    {
+      let node = this.env.renderer.getNodeForMorph(this);
+      if (node) {
+        let {scrollTop, scrollLeft} = node;
+        signal(this, "viewChanged", {prop: "scroll", value: pt(scrollLeft, scrollTop)})
+      }
+      
+    }
   }
 
   ensureKeyInputHelperAtCursor() {
