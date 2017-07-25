@@ -35,6 +35,7 @@ function generateUnfolded(propName, members=['top', 'left', 'right', 'bottom'], 
     propertyDeclarations[propName + capitalize(m)] = {
       group,
       derived: true,
+      generated: true,
       after: [propName],
       get() { return this.getProperty(propName)[m] },
       set(v) { this[propName] = {...this.getProperty(propName), [m]: v} }
@@ -860,20 +861,23 @@ export class Morph {
   }
 
   livelyCustomInspect() {
-    var properties = [],
-        ignored = [], seen = {},
-        wellKnown = Object.keys(this._morphicState);
+    var ignored = {_id: true, _owner: true}, seen = {},
+        props = this.propertiesAndPropertySettings().properties,
+        properties = [];
+    for (let key in props) {
+      if (ignored[key] || (props[key].derived && !props[key].showInInspector)) continue;
+      seen[key] = true;
+      properties.push({key, value: this[key]});
+    }
 
-    wellKnown.push("id", "owner");
-    ignored.push("_id", "_owner");
+    properties.push({key: "id", value: this.id});
+    properties.push({key: "owner", value: this.owner});
 
-    properties.push(...wellKnown
-      .map(key => { seen[key] = true; return {key, value: this[key]}; })
-      .sort((a, b) => {
-        let aK = a.key.toLowerCase(),
-            bK = b.key.toLowerCase();
-        return aK < bK ? -1 : aK === bK ? 0 : 1
-      }))
+    properties = properties.sort((a, b) => {
+      let aK = a.key.toLowerCase(),
+          bK = b.key.toLowerCase();
+      return aK < bK ? -1 : aK === bK ? 0 : 1
+    });
 
     var morphInternals = [
       "attributeConnections",
@@ -894,15 +898,15 @@ export class Morph {
       "_styleSheetProps",
       "_renderer",
       "_tooltipViewer",
-      "layout"
-    ]
+      "layout",
+    ];
 
     if (this.attributeConnections) {
       for (let c of this.attributeConnections)
-        ignored.push(`$$${c.sourceAttrName}`, `${c.sourceAttrName}`);
+        ignored[`$$${c.sourceAttrName}`, `${c.sourceAttrName}`] = true;
     }
 
-    for (let ignore of ignored) seen[ignore] = true;
+    Object.assign(seen, ignored)
     for (let key of morphInternals) {
       if (!(key in this)) continue;
       seen[key] = true;
