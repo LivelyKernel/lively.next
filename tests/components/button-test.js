@@ -61,98 +61,36 @@ describe("buttons", function() {
   beforeEach(setup);
   afterEach(teardown);
 
-  describe('button modes', () => {
+  describe('press', () => {
 
-     it ("allows to switch between modes", () => {
-       button.activeMode = 'triggered';
-       expect(button.fill).equals(triggerColor);
-       button.activeMode = 'inactive';
-       expect(button.fill).equals(inactiveColor);
-       button.activeMode = 'active';
-       expect(button.fill).equals(activeColor);
+     it ("is pressed", async () => {
+       await env.eventDispatcher.simulateDOMEvents({type: "pointerdown", position: button.center, target: button});
+       expect(button.pressed).keys("originalFill");
+       await env.eventDispatcher.simulateDOMEvents({type: "pointerup", position: button.center, target: button});
+       expect(button.pressed).equals(null, "pressed");
      })
 
-     it ('leaving button on press releases', () => {
-        env.eventDispatcher.simulateDOMEvents({type: "pointerdown", position: button.center, target: button});
-        expect(button.activeMode).equals('triggered');
-        env.eventDispatcher.simulateDOMEvents({type: "hoverout", target: button});
-        expect(button.activeMode).equals('active');
+     it ('leaving button on press releases', async () => {
+        await env.eventDispatcher.simulateDOMEvents({type: "pointerdown", position: button.center, target: button});
+        await env.eventDispatcher.simulateDOMEvents({type: "hoverout", target: button});
+        expect(button.pressed).equals(null);
      })
-     
+
   });
 
   describe("button mode styles", () => {
 
-    it('styles icon as labels correctly', () => {
-       var b = new Button({icon: Icon.makeLabel("times-circle-o")});
-       b.styleSheets = new StyleSheet({
-          '.activeStyle [name=label]': {
-            fontSize: 22
-          }
-       })
-       expect(b.icon.value[0]).equals(Icon.makeLabel("times-circle-o").value[0]);
-       expect(b.labelMorph.fontSize).equals(22);
-       b.activeMode = 'triggered';
-       expect(b.icon.value[0]).equals(Icon.makeLabel("times-circle-o").value[0]);
-       expect(b.labelMorph.fontSize).equals(12);
+    it('styles icon as labels correctly', async () => {
+       var b = new Button({icon: "times-circle-o"});
+       expect(b.labelMorph.value[0]).equals(Icon.makeLabel("times-circle-o").value[0]);
     });
 
     it('allows to change the label', () => {
        button.label = "Hello!";
-       button.activeMode = "triggered";
+       button.pressed = {};
        expect(button.label).equals("Hello!");
     });
 
-    it('allows to mix labels and icons', () => {
-      button.label = 'Hello';
-      button.icon = Icon.makeLabel('times-circle-o').value;
-      button.iconPosition = 'bottom';
-
-      expect(button.submorphs.length).equals(2);
-      expect(button.iconMorph.topCenter).equals(button.labelMorph.bottomCenter);
-
-      button.iconPosition = 'right';
-      expect(button.iconMorph.leftCenter).equals(button.labelMorph.rightCenter);
-
-      button.icon = null;
-      expect(button.iconMorph.value).equals('');
-    });
-    
-    it("active style restored on mouse up", () => {
-      button.styleSheets = new StyleSheet({
-        ".Button.activeStyle": {
-          fill: Color.orange
-        },
-        ".Button.activeStyle [name=label]": {
-          fontSize: 15,
-          fontColor: Color.black,
-          fontStyle: "bold"
-        },
-        ".Button.triggerStyle": {
-          fill: Color.red
-        },
-        ".Button.triggerStyle [name=label]": {
-          fontSize: 50,
-          fontStyle: "italic",
-          fontColor: Color.blue
-        }
-      });
-     button.activeMode = 'triggered';
-     env.eventDispatcher.simulateDOMEvents({type: "pointerdown", target: button});
-     expect(button.activeMode).equals('triggered');
-     expect(button.styleClasses).to.include('triggerStyle');
-     expect(button.fill).equals(Color.red);
-     expect(button.labelMorph.fontStyle).equals('italic');
-     expect(button.labelMorph.fontSize).equals(50);
-     expect(button.labelMorph.fontColor).equals(Color.blue, "trigger font color")
-     env.eventDispatcher.simulateDOMEvents({type: "pointerup", target: button});
-     expect(button.activeMode).equals('active');
-     expect(button.labelMorph.fontColor).equals(Color.black, "active font color")
-     expect(button.labelMorph.fontSize).equals(15);
-     expect(button.labelMorph.fontStyle).equals('bold');
-     expect(button.fill).equals(Color.orange);
-    });
-    
   })
-  
+
 });
