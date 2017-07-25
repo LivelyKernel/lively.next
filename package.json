@@ -1,0 +1,39 @@
+{
+  "name": "lively.ide",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LivelyKernel/lively.ide"
+  },
+  "dependencies": {
+    "lively.components": "https://github.com/LivelyKernel/lively.components",
+    "lively.bindings":   "https://github.com/LivelyKernel/lively.bindings",
+    "lively.graphics":   "https://github.com/LivelyKernel/lively.graphics",
+    "lively.lang": "^1.0.0",
+    "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
+  },
+  "devDependencies": {
+    "babel-plugin-external-helpers": "^6.8.0",
+    "babel-plugin-syntax-object-rest-spread": "^6.13.0",
+    "babel-plugin-transform-async-to-generator": "^6.16.0",
+    "babel-plugin-transform-object-rest-spread": "^6.16.0",
+    "babel-plugin-transform-exponentiation-operator": "6.22.0",
+    "babel-preset-es2015": "^6.16.0",
+    "babel-preset-es2015-rollup": "^1.1.1",
+    "babel-regenerator-runtime": "^6.5.0",
+    "doc-comments": "^0.1.4",
+    "lively.classes": "*",
+    "lively.source-transform": "*",
+    "mocha-es6": "^0.5",
+    "rollup": "^0.36.1",
+    "rollup-plugin-babel": "^2.6.1"
+  },
+  "systemjs": {
+    "main": "index.js",
+    }
+  },
+  "scripts": {
+    "build": "node tools/build.js",
+    "test": "mocha-es6 tests/{,diff/,js/,shell/}*-test.js"
+  }
+}
