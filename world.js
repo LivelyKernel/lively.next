@@ -53,7 +53,7 @@ export class World extends Morph {
 
       showsUserFlap: {
         defaultValue: true,
-        set(bool) {          
+        set(bool) {
           this.setProperty("showsUserFlap", bool);
           System.import("lively.user/morphic/user-ui.js")
             .then(userUI => userUI.UserUI[bool ? "showUserFlap" : "hideUserFlap"](this));
@@ -345,11 +345,22 @@ export class World extends Morph {
     /*global show, inspect*/
     this.nativeDrop_removeUploadIndicator();
 
+
     let {domEvt} = evt,
         {files, items} = domEvt.dataTransfer,
         baseURL = document.origin;
 
     if (files.length) {
+      let user = this.getCurrentUser(),
+          uploadPath = user.isGuestUser ? "uploads/" : "users/" + $world.getCurrentUser().name + "/uploads";
+      if (evt.isAltDown()) {
+        uploadPath = await this.prompt("Choose upload location", {
+          history: "lively.morphic-html-drop-file-upload-location",
+          input: uploadPath
+        });
+        if (!uploadPath) return this.setStatusMessage("Canceled upload");
+      }
+
       let really = await this.confirm(
         `Upload ${files.length} file${files.length > 1 ? "s": ""}?`);
 
@@ -361,7 +372,11 @@ export class World extends Morph {
 
       let res, answerText;
       try {
-        res = await fetch("/upload", {method: 'POST', body: fd});
+        let headers = {};
+        if (!user.isGuestUser) headers["Authorization"] = `Bearer ${user.token}`;
+        res = await fetch(
+          `/upload?uploadPath=${encodeURIComponent(uploadPath)}`,
+          {method: 'POST', body: fd, headers});
         answerText = await res.text();
 
       } catch (err) {
