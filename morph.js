@@ -2422,11 +2422,13 @@ return ;
   }
 
   renderAsRoot(renderer) {
-     this.dontRecordChangesWhile(() => {
-       (this._stylingVisitor = this._stylingVisitor || new StylingVisitor(this)).visit();
-       this.applyLayoutIfNeeded();
-     })
-     return renderRootMorph(this, renderer);
+    this.dontRecordChangesWhile(() => {
+      let stylingVisitor = this._stylingVisitor;
+      if (!stylingVisitor) stylingVisitor = this._stylingVisitor = new StylingVisitor(this);
+      stylingVisitor.visit();
+      this.applyLayoutIfNeeded();
+    })
+    return renderRootMorph(this, renderer);
   }
 
   renderPreview(opts = {}, renderer = this.env.renderer) {

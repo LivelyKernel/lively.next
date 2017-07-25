@@ -312,9 +312,7 @@ export class StylingVisitor extends SizzleVisitor {
   }
 
   getChildren(morph) {
-    return morph.submorphs.filter(m => {
-      return m.needsRerender()
-    });
+    return morph.submorphs.filter(m => m.needsRerender());
   }
   
 }
