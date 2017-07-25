@@ -1,4 +1,4 @@
-import { Morph, GridLayout, Text, StyleSheet, Label, Icon, morph } from "lively.morphic";
+import { CustomLayout, Morph, GridLayout, Text, StyleSheet, Label, Icon, morph } from "lively.morphic";
 import { pt, LinearGradient, Color, Rectangle, rect } from "lively.graphics";
 import { arr, Path, string, obj } from "lively.lang";
 import { signal, once } from "lively.bindings";
@@ -679,7 +679,6 @@ export class List extends Morph {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import { connect } from "lively.bindings";
-import { CustomLayout } from "../layout.js";
 
 export class FilterableList extends Morph {
 

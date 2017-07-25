@@ -408,7 +408,7 @@ export default class InputLine extends Text {
 
 
 
-import { HTMLMorph } from "../html-morph.js"
+import { HTMLMorph } from "lively.morphic"
 
 // var i = new PasswordInputLine().openInWorld();
 // i.remove();
