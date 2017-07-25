@@ -64,6 +64,14 @@ export async function generateHTML(morph, htmlResource, options = {}) {
 
   root.style.transform = "";
 
+  if (removeTargetFromLinks) {
+    lively.lang.tree.postwalk(root, (node) => {
+      if (String(node.tagName).toLowerCase() !== "a") return;
+      if (node.target === "_blank" && !node.getAttribute("href").startsWith("http"))
+        node.setAttribute("target", "");
+    }, n => n.childNodes)
+  }
+
   let morphHtml = `<div class="exported-morph-container ${htmlClassName}"`
                 + `    style="max-width: ${containerWidth || root.style.width};`
                 + `           height: ${containerHeight || root.style.height};">`
@@ -76,12 +84,6 @@ export async function generateHTML(morph, htmlResource, options = {}) {
     html = `<head><title>lively.next</title><meta charset="UTF-8">`;
     if (addStyles) html += morphicStyles();
     html += `</head><body>\n` + morphHtml + "</body>"
-  }
-
-  if (removeTargetFromLinks) {
-    while (html.match(/(<a .*) target="_blank"/)) {
-      html = html.replace(/(<a .*) target="_blank"/, "$1");
-    }
   }
 
   html = await tidyHtml(html);
