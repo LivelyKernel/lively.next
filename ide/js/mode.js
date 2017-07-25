@@ -762,7 +762,8 @@ if (counter++ > 100000) throw new Error("endless");
     indent: function(state, textAfter) {
       if (state.tokenize == tokenComment) return passIndent;
       if (state.tokenize != tokenBase) return 0;
-      var firstChar = textAfter && textAfter.charAt(0), lexical = state.lexical, top
+      var firstChar = textAfter && textAfter.charAt(0), lexical = state.lexical, top;
+
       // Kludge to prevent 'maybelse' from blocking lexical scope pops
       if (!/^\s*else\b/.test(textAfter)) for (var i = state.cc.length - 1; i >= 0; --i) {
         var c = state.cc[i];
@@ -777,8 +778,24 @@ if (counter++ > 100000) throw new Error("endless");
       if (statementIndent && lexical.type == ")" && lexical.prev.type == "stat")
         lexical = lexical.prev;
       var type = lexical.type, closing = firstChar == type;
+      
+      var {_string} = state;
+      // tertiary op: always align leading : under ?
+      if (_string && _string.trimLeft().startsWith("?") && firstChar === ":")
+        return _string.indexOf("?");
 
-      if (type == "vardef") return lexical.indented + (state.lastType == "operator" || state.lastType == "," ? lexical.info + 1 : 0);
+      if (_string && state.lastType === ":" && lexical.type !== "}")
+        return _string.match(/^\s*/)[0].length;
+
+      // if (type == "vardef") return lexical.indented + (state.lastType == "operator" || state.lastType == "," ? lexical.info + 1 : 0);
+      if (type == "vardef") {
+        let equalsSignWidth = lexical.indented + lexical.info + 2 + state.localVars.name.length;
+        if (firstChar === "?" || firstChar === ":" || firstChar === "|" || firstChar === "&") return equalsSignWidth;
+        // if (firstChar === "?" || firstChar === ":") return lexical.indented + lexical.info + 1;
+        if (state.lastType == ",") return lexical.indented + lexical.info + 1;
+        if (state.lastType == "operator") return equalsSignWidth + 3;
+        return lexical.indented;
+      }
       else if (type == "form" && firstChar == "{") return lexical.indented;
       else if (type == "form") return lexical.indented + indentUnit;
       else if (type == "stat")
