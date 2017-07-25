@@ -1,37 +1,15 @@
 {
-  "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
+  "id": "button_0CA327C5_C27A_4696_9C79_56DEA85F3BE1",
   "snapshot": {
-    "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F": {
-      "rev": 128324,
+    "button_0CA327C5_C27A_4696_9C79_56DEA85F3BE1": {
+      "rev": 63383,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
           "value": []
         },
         "attributeConnections": {
-          "key": "attributeConnections",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "69A75681-6CA2-4888-8C9E-4106A48051E3",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "D7FC6C1A-8B68-419D-9BB1-B44A7D0FFE87",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "9EFFA013-98C0-46A9-8C64-D1DAB5B0A6C0",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "F53FA3F7-D980-4C70-8250-6917A8D935FA",
-              "rev": 0
-            }
-          ]
+          "key": "attributeConnections"
         },
         "name": {
           "key": "name",
@@ -39,7 +17,11 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(737.0,768.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(549.1,349.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "extent": {
           "key": "extent",
@@ -50,13 +32,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "label_80A2B52A_C417_48D6_A39E_19146CCAD165",
-              "rev": 128440
-            },
-            {
-              "__ref__": true,
-              "id": "label_1EF3632C_5F8E_44D4_9EDA_D594A4E9BF98",
-              "rev": 128441
+              "id": "label_A6B7D518_FD52_4149_B5AF_0C77845A38E6",
+              "rev": 53763
             }
           ]
         },
@@ -65,25 +42,84 @@
           "value": [
             "Button",
             "Morph",
-            "morph",
-            "activeStyle"
+            "morph"
           ]
         },
-        "padding": {
-          "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(20,8,0,0)"
+        "borderWidth": {
+          "key": "borderWidth",
+          "verbatim": true,
+          "value": {
+            "top": 1,
+            "right": 1,
+            "bottom": 1,
+            "left": 1
+          }
         },
-        "activeMode": {
-          "key": "activeMode",
-          "value": "active"
+        "borderRadius": {
+          "key": "borderRadius",
+          "verbatim": true,
+          "value": {
+            "top": 5,
+            "right": 5,
+            "bottom": 5,
+            "left": 5
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "verbatim": true,
+          "value": {
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "verbatim": true,
+          "value": {
+            "top": [
+              0.8,
+              0.8,
+              0.8,
+              1
+            ],
+            "right": [
+              0.8,
+              0.8,
+              0.8,
+              1
+            ],
+            "bottom": [
+              0.8,
+              0.8,
+              0.8,
+              1
+            ],
+            "left": [
+              0.8,
+              0.8,
+              0.8,
+              1
+            ]
+          }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
         },
         "labelMorph": {
           "key": "labelMorph",
           "value": {
             "__ref__": true,
-            "id": "label_80A2B52A_C417_48D6_A39E_19146CCAD165",
-            "rev": 128440
+            "id": "label_A6B7D518_FD52_4149_B5AF_0C77845A38E6",
+            "rev": 53763
           }
+        },
+        "label": {
+          "key": "label",
+          "value": "a button"
         }
       },
       "lively.serializer-class-info": {
@@ -94,371 +130,20 @@
             "version": "0.1.0"
           },
           "pathInPackage": "components/buttons.js",
-          "lastChange": 1497013101166,
-          "lastSuperclassChange": 1497013100993
+          "lastChange": 1500860416987,
+          "lastSuperclassChange": 1500860416613
         }
       }
     },
-    "69A75681-6CA2-4888-8C9E-4106A48051E3": {
-      "rev": 0,
-      "props": {
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "extent"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "BD83F69A-C0DB-400B-A3BB-8D89DDA5C4B3",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.1"
-          },
-          "pathInPackage": "index.js",
-          "lastChange": 1497013100931,
-          "lastSuperclassChange": 0
-        }
-      }
-    },
-    "BD83F69A-C0DB-400B-A3BB-8D89DDA5C4B3": {
-      "rev": 0,
-      "props": {
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        }
-      }
-    },
-    "D7FC6C1A-8B68-419D-9BB1-B44A7D0FFE87": {
-      "rev": 0,
-      "props": {
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "padding"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "9EB373EF-A41C-4851-A8D6-C819462691E9",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.1"
-          },
-          "pathInPackage": "index.js",
-          "lastChange": 1497013100931,
-          "lastSuperclassChange": 0
-        }
-      }
-    },
-    "9EB373EF-A41C-4851-A8D6-C819462691E9": {
-      "rev": 0,
-      "props": {
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        }
-      }
-    },
-    "9EFFA013-98C0-46A9-8C64-D1DAB5B0A6C0": {
-      "rev": 0,
-      "props": {
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "fontSize"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "727872C7-8192-4C9F-AAAE-AC474525ADCE",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.1"
-          },
-          "pathInPackage": "index.js",
-          "lastChange": 1497013100931,
-          "lastSuperclassChange": 0
-        }
-      }
-    },
-    "727872C7-8192-4C9F-AAAE-AC474525ADCE": {
-      "rev": 0,
-      "props": {
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        }
-      }
-    },
-    "F53FA3F7-D980-4C70-8250-6917A8D935FA": {
-      "rev": 0,
-      "props": {
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "fontFamily"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "B8D02EB1-F8BE-46F6-B336-E5C4F0EF2935",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.1"
-          },
-          "pathInPackage": "index.js",
-          "lastChange": 1497013100931,
-          "lastSuperclassChange": 0
-        }
-      }
-    },
-    "B8D02EB1-F8BE-46F6-B336-E5C4F0EF2935": {
-      "rev": 0,
-      "props": {
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        }
-      }
-    },
-    "label_80A2B52A_C417_48D6_A39E_19146CCAD165": {
-      "rev": 128440,
+    "label_A6B7D518_FD52_4149_B5AF_0C77845A38E6": {
+      "rev": 53763,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
           "value": []
         },
         "attributeConnections": {
-          "key": "attributeConnections",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "E3028B55-ED2E-4F9C-825B-4E86D0A74181",
-              "rev": 0
-            }
-          ]
+          "key": "attributeConnections"
         },
         "name": {
           "key": "name",
@@ -488,16 +173,76 @@
             "morph"
           ]
         },
+        "borderWidth": {
+          "key": "borderWidth",
+          "verbatim": true,
+          "value": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "verbatim": true,
+          "value": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "verbatim": true,
+          "value": {
+            "top": "solid",
+            "right": "solid",
+            "bottom": "solid",
+            "left": "solid"
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "verbatim": true,
+          "value": {
+            "top": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "right": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "bottom": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "left": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "styleSheets": {
+          "key": "styleSheets",
+          "value": []
+        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
             "a button",
             null
           ]
-        },
-        "padding": {
-          "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
         }
       },
       "lively.serializer-class-info": {
@@ -508,154 +253,13 @@
             "version": "0.1.0"
           },
           "pathInPackage": "text/label.js",
-          "lastChange": 1497013100956,
-          "lastSuperclassChange": 1497013100993
-        }
-      }
-    },
-    "E3028B55-ED2E-4F9C-825B-4E86D0A74181": {
-      "rev": 0,
-      "props": {
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "label_80A2B52A_C417_48D6_A39E_19146CCAD165",
-            "rev": 128440
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "extent"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "5A15ECC1-21F2-462A-9FCE-6FA1414ACA36",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.1"
-          },
-          "pathInPackage": "index.js",
-          "lastChange": 1497013100931,
-          "lastSuperclassChange": 0
-        }
-      }
-    },
-    "5A15ECC1-21F2-462A-9FCE-6FA1414ACA36": {
-      "rev": 0,
-      "props": {
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "label_80A2B52A_C417_48D6_A39E_19146CCAD165",
-            "rev": 128440
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "button_C6B5C03D_19C9_43D7_B34D_01E2A56A270F",
-            "rev": 128324
-          }
-        }
-      }
-    },
-    "label_1EF3632C_5F8E_44D4_9EDA_D594A4E9BF98": {
-      "rev": 128441,
-      "props": {
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections"
-        },
-        "name": {
-          "key": "name",
-          "value": "iconMorph"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Label",
-            "Morph",
-            "morph"
-          ]
-        },
-        "textAndAttributes": {
-          "key": "textAndAttributes",
-          "value": [
-            "",
-            null
-          ]
-        },
-        "padding": {
-          "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "Label",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "text/label.js",
-          "lastChange": 1497013100956,
-          "lastSuperclassChange": 1497013100993
+          "lastChange": 1500860416559,
+          "lastSuperclassChange": 1500860416613
         }
       }
     }
   },
   "requiredVersion": "~0.1",
   "packages": {},
-  "preview": "data:image/png;base64,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"
+  "preview": "data:image/png;base64,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"
 }
