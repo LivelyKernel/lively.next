@@ -7,6 +7,8 @@ import { occurStartCommand } from "./occur.js";
 import { Icon } from "../components/icons.js";
 import { Button } from "../components/buttons.js";
 import TextMap from "./map.js";
+import { delay } from "lively.lang/promise.js";
+import { debounceNamed } from "lively.lang/function.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // finds string / regexp matches in text morphs
@@ -280,7 +282,7 @@ export class SearchWidget extends Morph {
     connect(cancelButton, "fire", this, "execCommand", {converter: () => "cancel search"});
     connect(nextButton, "fire", this, "execCommand", {converter: () => "search next"});
     connect(prevButton, "fire", this, "execCommand", {converter: () => "search prev"});
-    connect(searchInput, "inputChanged", this, "search");
+    connect(searchInput, "inputChanged", this, "searchLater");
     connect(replaceButton, "fire", this, "execCommand", {converter: () => "replace and go to next"});
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -369,11 +371,15 @@ export class SearchWidget extends Morph {
     var {target: text, textMap} = this,
         {startRow, endRow} = text.whatsVisible,
         lines = text.document.lineStrings,
-        i = 0;
-    if (textMap) { startRow = 0, endRow = lines.length-1;  }
+        i = 0,
+        {maxCharsPerLine, fastHighlightLineCount} = config.codeEditor.search;
+    
+    if (textMap && found.match.length >= 3 && lines.length < fastHighlightLineCount) {
+      startRow = 0, endRow = lines.length-1;
+    }
     for (var row = startRow; row <= endRow; row++) {
       var line = lines[row] || "";
-      for (var col = 0; col < line.length; col++) {
+      for (var col = 0; col < Math.min(line.length, maxCharsPerLine); col++) {
         if (line.slice(col).toLowerCase().indexOf(found.match.toLowerCase()) === 0) {
           text.addMarker({
             id: "search-highlight-" + i++,
@@ -442,7 +448,7 @@ export class SearchWidget extends Morph {
       // FIXME...! noUpdate etc
       disconnect(inputMorph, "inputChanged", this, "search");
       this.input = state.last.needle;
-      connect(inputMorph, "inputChanged", this, "search");
+      connect(inputMorph, "inputChanged", this, "searchLater");
       this.addSearchMarkersForPreview(state.last.found);
     }
 
@@ -465,6 +471,10 @@ export class SearchWidget extends Morph {
 
   searchNext() { return this.advance(false); }
   searchPrev() { return this.advance(true); }
+
+  searchLater() {
+    debounceNamed(this.id + "-search", 300, () => this.search())();
+  }
 
   search() {
     if (!this.input) {

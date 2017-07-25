@@ -340,6 +340,8 @@ var config = {
     defaultTheme: "default",
     collapseSelection: false,
     search: {
+      maxCharsPerLine: 10e3,
+      fastHighlightLineCount: 4e3,
       showTextMap: true,
     },
     defaultStyle: {
