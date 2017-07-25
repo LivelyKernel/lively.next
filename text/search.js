@@ -1,11 +1,12 @@
 import { Rectangle, rect, pt, Color } from "lively.graphics";
 import { connect, disconnect } from "lively.bindings"
 import { obj, promise, Path } from "lively.lang";
-import { Morph, GridLayout, StyleSheet, Text } from "../index.js";
+import { Morph, config, GridLayout, StyleSheet, Text } from "../index.js";
 import { lessPosition, minPosition, maxPosition } from "./position.js";
 import { occurStartCommand } from "./occur.js";
 import { Icon } from "../components/icons.js";
 import { Button } from "../components/buttons.js";
+import TextMap from "./map.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // finds string / regexp matches in text morphs
@@ -211,7 +212,7 @@ export class SearchWidget extends Morph {
         after: ["extent"],
         initialize() {
           let fontSize = 14, fontFamily = "Monaco, monospace";
-
+          
           this.submorphs = [
             new Button({
               name: "acceptButton",
@@ -234,14 +235,14 @@ export class SearchWidget extends Morph {
               styleClasses: ["nav"]
             }).fit(),
             Text.makeInputLine({
-              name: "searchInput",
-              width: this.width,
+              name: "searchInput", clipMode: "visible",
+              width: this.width, height: 20,
               placeholder: "search input",
               historyId: "lively.morphic-text search"
             }),
             Text.makeInputLine({
-              name: "replaceInput",
-              width: this.width,
+              name: "replaceInput", clipMode: "visible",
+              width: this.width, height: 20,
               placeholder: "replace input",
               historyId: "lively.morphic-text replace"
             }),
@@ -253,7 +254,13 @@ export class SearchWidget extends Morph {
             })
           ];
         }
-      }    }
+      },
+
+      textMap: {
+        after: ["submorphs"]
+      }
+    
+    }
   }
 
   constructor(props = {}) {
@@ -307,12 +314,14 @@ export class SearchWidget extends Morph {
   cleanup() {
     this.removeSearchMarkers();
     this.state.inProgress = null;
+    this.textMap && this.textMap.update();
   }
 
   cancelSearch() {
     if (this.state.inProgress)
       this.state.last = this.state.inProgress;
     this.cleanup();
+    this.removeTextMap();
     if (this.state.before) {
       var {scroll, selectionRange} = this.state.before;
       this.target.selection = selectionRange;
@@ -330,6 +339,7 @@ export class SearchWidget extends Morph {
       this.state.before && this.target.saveMark(this.state.before.position);
     this.get("searchInput").acceptInput(); // for history
     this.cleanup();
+    this.removeTextMap();
     this.state.before = null;
     this.remove();
     this.target.focus();
@@ -356,11 +366,11 @@ export class SearchWidget extends Morph {
   addSearchMarkers(found) {
     this.removeSearchMarkers();
 
-    var text = this.target,
+    var {target: text, textMap} = this,
         {startRow, endRow} = text.whatsVisible,
         lines = text.document.lineStrings,
         i = 0;
-
+    if (textMap) { startRow = 0, endRow = lines.length-1;  }
     for (var row = startRow; row <= endRow; row++) {
       var line = lines[row] || "";
       for (var col = 0; col < line.length; col++) {
@@ -379,6 +389,7 @@ export class SearchWidget extends Morph {
         }
       }
     }
+    
 
     var positionRange;
     if (this.state.backwards) {
@@ -398,6 +409,8 @@ export class SearchWidget extends Morph {
         [this.state.backwards ? "border-left" : "border-right"]: "3px red solid",
       }
     });
+    
+    textMap && textMap.update();
   }
 
   addSearchMarkersForPreview(found, noCursor = true) {    
@@ -414,6 +427,7 @@ export class SearchWidget extends Morph {
     this.openInWorld(world.visibleBounds().center(), world);
     this.topRight = text.globalBounds().insetBy(5).topRight();
 
+    var inputMorph = this.get("searchInput");
     var {scroll, selection: sel} = text;
     state.position = sel.lead;
     state.before = {
@@ -422,10 +436,9 @@ export class SearchWidget extends Morph {
       selectionRange: sel.range,
       selectionReverse: sel.isReverse()
     }
-
-
+    
+    
     if (state.last && state.last.found) {
-      var inputMorph = this.get("searchInput");
       // FIXME...! noUpdate etc
       disconnect(inputMorph, "inputChanged", this, "search");
       this.input = state.last.needle;
@@ -433,7 +446,7 @@ export class SearchWidget extends Morph {
       this.addSearchMarkersForPreview(state.last.found);
     }
 
-    this.get("searchInput").selectAll();
+    inputMorph.selectAll();
     this.focus();
   }
 
@@ -467,6 +480,25 @@ export class SearchWidget extends Morph {
     this.applySearchResult(result);
     found && this.addSearchMarkers(found, backwards);
     return result;
+  }
+
+  showTextMap() {
+    let textMap = this.textMap = new TextMap();
+    textMap.attachTo(this.target);
+    textMap.isLayoutable = false;
+    this.addMorph(textMap)
+    textMap.topRight = this.innerBounds().bottomRight();
+    textMap.height = this.target.height - this.height - 10
+    textMap.update()
+    return textMap;
+  }
+
+  removeTextMap() {
+    if (this.textMap) {
+      this.textMap.remove();
+      this.textMap.detachFromCurrentTextMorph();
+      this.textMap = null;
+    }
   }
 
   get keybindings() {
@@ -566,6 +598,10 @@ export var searchCommands = [
         (morph._searchWidget = new SearchWidget({target: morph, extent: pt(300,20)}));
       search.state.backwards = opts.backwards;
       search.prepareForNewSearch();
+
+      if (config.codeEditor.search.showTextMap) {
+        search.showTextMap();
+      }
       return true;
     }
   }

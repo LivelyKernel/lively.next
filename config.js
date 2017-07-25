@@ -339,6 +339,9 @@ var config = {
   codeEditor: {
     defaultTheme: "default",
     collapseSelection: false,
+    search: {
+      showTextMap: true,
+    },
     defaultStyle: {
       fontFamily: "Monaco, Inconsolata, monospace",
       padding: Rectangle.inset(4, 2, 4, 2),
