@@ -18,7 +18,6 @@ import {
 } from "lively.morphic";
 import {intersect, shape} from "svg-intersections";
 import {roundTo} from "lively.lang/number.js";
-import { MorphHighlighter } from "lively.morphic/halo/morph.js";
 
 export class Slider extends Morph {
   constructor(props) {
@@ -151,7 +150,7 @@ export class ValueScrubber extends Text {
   onDrag(evt) {
     // x delta is the offset to the original value
     // y is the scale
-    const {scale, offset} = this.getScaleAndOffset(evt), 
+    const {scale, offset} = this.getScaleAndOffset(evt),
           v = this.getCurrentValue(offset, scale);
     signal(this, "scrub", v);
     this.textString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
@@ -224,8 +223,8 @@ export class LabeledCheckBox extends Morph {
     return {
       name: {defaultValue: "LabeledCheckBox"},
       alignCheckBox: {
-        defaultValue: "left", 
-        type: 'Enum', 
+        defaultValue: "left",
+        type: 'Enum',
         values: ['left', 'right'],
         set(v) {
           this.layout = new HorizontalLayout({
@@ -238,7 +237,7 @@ export class LabeledCheckBox extends Morph {
         initialize() {
           this.layout = new HorizontalLayout({
             direction: this.alignCheckBox == 'left' ? 'leftToRight' : 'rightToLeft'
-          });  
+          });
         }
       },
       label: {
@@ -406,7 +405,7 @@ export class ModeSelector extends Morph {
     this.layout.forceLayout();
     let tm = this.get("typeMarker"),
         bounds = this.currentLabel.bounds();
-    animated ? await tm.animate({bounds, duration: 200}) : tm.setBounds(bounds); 
+    animated ? await tm.animate({bounds, duration: 200}) : tm.setBounds(bounds);
   }
 
   async update(label, value, silent = false) {
@@ -447,7 +446,7 @@ export class DropDownSelector extends Morph {
       styleSheets: {
         after: ['fontFamily', 'fontSize'],
         initialize() {
-          this.updateStyleSheet();  
+          this.updateStyleSheet();
         }
       },
       submorphs: {
@@ -533,7 +532,7 @@ export class DropDownSelector extends Morph {
   }
 
   relayout() {
-    const vPrinted = this.getNameFor(this.selectedValue), 
+    const vPrinted = this.getNameFor(this.selectedValue),
           valueLabel = this.get("currentValue");
     if (vPrinted == "undefined") {
       valueLabel.value = "Not set";
@@ -585,7 +584,7 @@ export class SearchField extends Text {
                 distance: 0
               }
             }
-          });        
+          });
         }
       },
       layout: {
@@ -707,7 +706,7 @@ export class SearchField extends Text {
               state.escaped = true;
               return state;
             }
-  
+
             if (char === " " && !state.escaped) {
               if (!state.spaceSeen && state.current) {
                 state.tokens.push(state.current);
@@ -754,7 +753,7 @@ export class SearchField extends Text {
     this.animate({styleClasses: ["idle"], duration: 300});
 
   }
-  
+
   onFocus(evt) {
     super.onFocus(evt);
     this.animate({styleClasses: ["selected"], duration: 300});
