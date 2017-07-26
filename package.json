@@ -12,6 +12,7 @@
     "lively.halos":      "https://github.com/LivelyKernel/lively.halos",
     "lively.lang": "^1.0.0",
     "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
+    "prismjs": "^1.6.0"
   },
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.8.0",
@@ -31,6 +32,9 @@
   },
   "systemjs": {
     "main": "index.js",
+    "map": {
+      "prism": "prismjs/prism.js",
+      "prism-json": "prismjs/components/prism-json.js"
     }
   },
   "scripts": {
