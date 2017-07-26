@@ -6,16 +6,12 @@ import { obj, arr, promise, string } from "lively.lang";
 import { connect, disconnectAll, signal, disconnect, once } from "lively.bindings";
 import { Morph, GridLayout, HorizontalLayout, morph, CustomLayout, Label, Icon, StyleSheet, config } from "lively.morphic";
 import { isBoolean, isString, isNumber } from "lively.lang/object.js";
-
-// lively.components
 import { Tree, TreeData } from "lively.components";
 import { DropDownSelector, SearchField, LabeledCheckBox } from "lively.components/widgets.js";
+import { MorphHighlighter, InteractiveMorphSelector } from "lively.halos/morph.js";
 
-// lively.halos
-import { MorphHighlighter, InteractiveMorphSelector } from "lively.morphic/halo/morph.js";
-
-import { NumberWidget, StringWidget, IconWidget, PaddingWidget, 
-         VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget, 
+import { NumberWidget, StringWidget, IconWidget, PaddingWidget,
+         VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget,
          BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
 import { RichTextControl } from "../text/ui.js";
 
@@ -218,7 +214,7 @@ class MorphNode extends InspectionNode {
 
   getSubNode(nodeArgs) {
     let spec = this.propertyInfo[nodeArgs.key] || {};
-    if (nodeArgs.value && nodeArgs.value.isMorph) 
+    if (nodeArgs.value && nodeArgs.value.isMorph)
        return new MorphNode({...nodeArgs, root: this.root})
     return new PropertyNode({
       ...nodeArgs,
@@ -289,7 +285,7 @@ class PropertyNode extends InspectionNode {
         this._propertyWidget.highlight();
       }
     }
-    if (this.renderedNode) 
+    if (this.renderedNode)
       this.renderedNode.width = this._propertyWidget.bounds().width + this.renderedNode.toggle.width + 3;
     if (this.isFoldable) {
       for (let m in this.foldedNodes) {
@@ -883,8 +879,8 @@ export default class Inspector extends Morph {
     this.layout.col(0).row(1).group.morph = tree;
 
     this.whenRendered().then(
-      () => { 
-        if (this.targetObject.isMorph && 
+      () => {
+        if (this.targetObject.isMorph &&
             this.targetObject.world() == this.world()) {
           this.targetObject = this.targetObject;
         } else {
@@ -892,10 +888,10 @@ export default class Inspector extends Morph {
         }
       }
     );
-    
+
     super.__after_deserialize__();
   }
-  
+
   __additionally_serialize__(snapshot, ref, pool, addFn) {
     // empty tree
     let submorphs = snapshot.props.submorphs.value;
@@ -904,7 +900,7 @@ export default class Inspector extends Morph {
       if (pool.refForId(id).realObj == this.ui.propertyTree) arr.removeAt(submorphs, i);
     }
   }
-  
+
 
   static get properties() {
     return {
@@ -1097,7 +1093,7 @@ export default class Inspector extends Morph {
       return;
     }
     let change = last(this.targetObject.env.changeManager.changesFor(this.targetObject));
-    if (change == this.lastChange && this.lastSubmorphs == printValue(this.targetObject && this.targetObject.submorphs)) 
+    if (change == this.lastChange && this.lastSubmorphs == printValue(this.targetObject && this.targetObject.submorphs))
       return;
     if (this.focusedNode && this.focusedNode.keyString == change.prop) {
       this.repositionOpenWidget();
@@ -1111,7 +1107,7 @@ export default class Inspector extends Morph {
     var v;
     this.originalTreeData && this.originalTreeData.asListWithIndexAndDepth(false).forEach(({node}) => {
       if (node.foldableNode) {
-        v = this.targetObject[node.foldableNode.key][node.key]; 
+        v = this.targetObject[node.foldableNode.key][node.key];
       } else {
         v = this.targetObject[node.key];
       }

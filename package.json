@@ -9,6 +9,7 @@
     "lively.components": "https://github.com/LivelyKernel/lively.components",
     "lively.bindings":   "https://github.com/LivelyKernel/lively.bindings",
     "lively.graphics":   "https://github.com/LivelyKernel/lively.graphics",
+    "lively.halos":      "https://github.com/LivelyKernel/lively.halos",
     "lively.lang": "^1.0.0",
     "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
   },
