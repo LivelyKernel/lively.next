@@ -1,10 +1,10 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after,System,xdescribe*/
-import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import { MorphicEnv, show } from "../index.js";
+import { createDOMEnvironment } from "lively.morphic/rendering/dom-helper.js";
+import { MorphicEnv, morph } from "lively.morphic";
 import { expect } from "mocha-es6";
-import { morph } from "../index.js";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { num, promise, fun } from "lively.lang";
+import { show } from "../index.js";
 
 var describInBrowser = System.get("@system-env").browser ? describe :
   (title, fn) => { console.warn(`Test ${title} is currently only supported in a browser`); return xdescribe(title, fn); }
