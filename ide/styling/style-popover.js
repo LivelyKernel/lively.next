@@ -15,6 +15,7 @@ import { FilterableList } from "../../components/list.js";
 import { TreeData, Tree } from "../../components/tree.js";
 import { isArray } from "lively.lang/object.js";
 import Window from "../../components/window.js";
+import { ProportionalLayout } from "../../layout.js";
 
 const duration = 200;
 
@@ -390,6 +391,7 @@ export class LayoutPopover extends StylePopover {
       new HorizontalLayout({autoResize: false}),
       new VerticalLayout({autoResize: false}),
       new TilingLayout(),
+      new ProportionalLayout(),
       new GridLayout({grid: [[null], [null], [null]]})
     ];
   }
@@ -418,7 +420,7 @@ export class LayoutPopover extends StylePopover {
     if (this.layoutHalo) {
       this.getSubmorphNamed("controlContainer").animate({
         isLayoutable: true,
-        submorphs: this.layoutHalo.optionControls(),
+        submorphs: this.layoutHalo.optionControls(this),
         duration: 300
       });
     } else {
@@ -483,7 +485,7 @@ export class LayoutPopover extends StylePopover {
       fill: Color.transparent,
       layout: new VerticalLayout(),
       isLayoutable: !!this.layoutHalo,
-      submorphs: this.layoutHalo ? this.layoutHalo.optionControls() : []
+      submorphs: this.layoutHalo ? this.layoutHalo.optionControls(this) : []
     };
   }
 }
