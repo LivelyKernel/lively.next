@@ -9,8 +9,9 @@
     "lively.bindings":   "https://github.com/LivelyKernel/lively.bindings",
     "lively.morphic":    "https://github.com/LivelyKernel/lively.morphic",
     "lively.graphics":   "https://github.com/LivelyKernel/lively.graphics",
+    "lively.components": "https://github.com/LivelyKernel/lively.components",
     "lively.lang": "^1.0.0",
-    "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
+    "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2"
   },
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.8.0",
@@ -30,10 +31,9 @@
   },
   "systemjs": {
     "main": "index.js"
-    }
   },
   "scripts": {
     "build": "node tools/build.js",
-    "test": "mocha-es6 tests/{,text/,components/,text2/}*-test.js"
+    "test": "mocha-es6 tests/*-test.js"
   }
 }
