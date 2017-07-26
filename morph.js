@@ -6,12 +6,12 @@ import {
   GridLayout,
   morph,
   Icon
-} from "../index.js";
+} from "lively.morphic";
+import { createMorphSnapshot } from "lively.morphic/serialization.js";
 import { Color, pt, rect, Rectangle, LinearGradient } from "lively.graphics";
 import { obj, promise, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
-import { createMorphSnapshot } from "../serialization.js";
-import { ConnectionHalo } from "../fabrik.js";
+import { ConnectionHalo } from "./fabrik.js";
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from "./drag-guides.js";
 
 
@@ -802,7 +802,7 @@ class NameHaloItem extends HaloItem {
 
   alignInHalo() {
     arr.zip(this.targets(), this.nameHolders).map(([{target}, nh]) => {
-      nh.target = target; 
+      nh.target = target;
       nh.update()
     });
     var {x, y} = this.halo.innerBounds().bottomCenter().addPt(pt(0, 2));
@@ -981,7 +981,7 @@ class InspectHaloItem extends HaloItem {
   onMouseDown(evt) {
     this.halo.remove();
     (async () => {
-       var {default: Inspector} = await System.import("lively.morphic/ide/js/inspector.js");
+       var {default: Inspector} = await System.import("lively.ide/js/inspector.js");
        Inspector.openInWindow({targetObject: this.halo.target});
     })()
   }
@@ -1148,7 +1148,7 @@ class CopyHaloItem extends HaloItem {
   stop(hand) {
     var {halo} = this,
         dropTarget = hand.findDropTarget(
-          hand.position, 
+          hand.position,
           [halo.target],
           m => !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem)),
         undo = halo.target.undoInProgress;
@@ -1224,7 +1224,7 @@ class OriginHaloItem extends HaloItem {
   get tooltip() { return "Change the morph's origin"; }
 
   computePositionAtTarget() {
-    if (!this.world()) 
+    if (!this.world())
       return this.halo.borderBox.position.addPt(this.halo.target.origin);
     else
       return this.halo.localizePointFrom(pt(0, 0), this.halo.target);
@@ -1387,7 +1387,7 @@ class ResizeHandle extends HaloItem {
       this.startBounds,
       this.startOrigin
     );
-    this.halo.toggleDiagonal(shiftDown, corner);    
+    this.halo.toggleDiagonal(shiftDown, corner);
     this.updateAlignmentGuide(altDown);
 
 
@@ -1467,7 +1467,7 @@ class ConnectionsHaloItem extends HaloItem {
         connectionHalo = new ConnectionHalo({target});
     connectionHalo.openInWorld(connectionHalo.position);
   }
-  
+
 }
 
 
@@ -1492,7 +1492,7 @@ export class MorphHighlighter extends Morph {
           this.setProperty('highlightedSides', sides);
           this.alignWithHalo();
           this.submorphs = sides.map(side => {
-            return {type: 'ellipse', isHaloItem: true, 
+            return {type: 'ellipse', isHaloItem: true,
                     fill: Color.orange, center: this.innerBounds()[side]()}
           })
         }
@@ -1539,7 +1539,7 @@ export class MorphHighlighter extends Morph {
     store[morph.id].highlightedSides = highlightedSides;
     return store[morph.id];
   }
-  
+
   static interceptDrop(halo, target, morph) {
      var store = halo._morphHighlighters = halo._morphHighlighters || {};
      store && store[target.id].handleDrop(morph)
@@ -1565,10 +1565,10 @@ export class MorphHighlighter extends Morph {
       this.alignWithHalo();
     }
   }
-  
+
   handleDrop(morph) {
     this.layoutHalo && this.layoutHalo.handleDrop(morph);
-  } 
+  }
 
   deactivate() {
     if (this.layoutHalo) {

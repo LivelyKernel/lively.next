@@ -13,7 +13,7 @@ import { Color, pt, rect, Rectangle } from "lively.graphics";
 import { arr } from "lively.lang";
 import { widgets } from "lively.components";
 import { connect } from "lively.bindings";
-import { NumberWidget } from "lively.morphic/ide/value-widgets.js";
+import { NumberWidget } from "lively.ide/value-widgets.js";
 
 class AxisHalo extends Morph {
 
@@ -395,7 +395,7 @@ class CellGuide extends Morph {
         }]]],
       ["Align at...",
          ['center',  ...new Rectangle().sides, ...new Rectangle().corners].map(side => {
-           return [[side + "  ", null, ...(this.cellGroup.align == side ? checked : unchecked)], 
+           return [[side + "  ", null, ...(this.cellGroup.align == side ? checked : unchecked)],
                    () => this.cellGroup.align = side]
          })
       ],
@@ -408,7 +408,7 @@ class CellGuide extends Morph {
         }
       }]] : []);
   }
-  
+
 }
 
 export class GridLayoutHalo extends Morph {
@@ -685,7 +685,7 @@ export class TilingLayoutHalo extends Morph {
   };
 
   handleDrop(morph) {
-  
+
   }
 
   previewDrop(morphs) {
@@ -726,7 +726,7 @@ export class TilingLayoutHalo extends Morph {
             borderColor: Color.gray,
             unit: "px"
           });
-    connect(spacing, 'udpate', this, 'updateSpacing');
+    connect(spacing, 'update', this, 'updateSpacing');
     return [
       [
         {
@@ -773,13 +773,13 @@ export class FlexLayoutHalo extends Morph {
   }
 
   handleDrop(morph) {
-  
+
   }
 
   previewDrop(morphs) {
      const pulseDuration = 2000;
      if (this.previews.length > 0) return;
-     this.previews = morphs.map(morph => 
+     this.previews = morphs.map(morph =>
          this.container.addMorph({
            isHaloItem: true,
            position: this.container.localize(this.world().firstHand.position),
@@ -871,7 +871,7 @@ export class FlexLayoutHalo extends Morph {
         resizeSubmorphsCb,
         {fill: Color.transparent, layout: new HorizontalLayout(),
          submorphs: [
-           {type: 'label', value: 'Submorph Spacing', 
+           {type: 'label', value: 'Submorph Spacing',
             fontColor: Color.gray.darker(),
             padding: rect(0,5,5,5)}, spacing]}
     ];
