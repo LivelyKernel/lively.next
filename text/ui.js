@@ -539,7 +539,7 @@ export class RichTextControl extends Morph {
   }
 
   async openFontColorChooser() {
-    let { ColorPicker } = await System.import("lively.morphic/ide/styling/color-picker.js"),
+    let { ColorPicker } = await System.import("lively.ide/styling/color-picker.js"),
         {target: t} = this,
         {fontColor} = t.getStyleInRange(t.selection) || {};
     if (!fontColor) fontColor = t.fontColor;

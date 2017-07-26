@@ -2,16 +2,14 @@ import { Color, rect, LinearGradient, pt, Rectangle } from "lively.graphics";
 import { arr, Path, obj, fun, promise, string } from "lively.lang";
 import { connect, disconnect, noUpdate } from "lively.bindings";
 import { Icon, morph, StyleSheet, show, Label, HorizontalLayout, GridLayout, config } from "lively.morphic";
+import { HorizontalResizer, Tree, TreeData, InputLine,
+         Window, Button, DropDownList, List } from "lively.components";
 
 // lively.ide
 import JSONEditorPlugin from "../../json/editor-plugin.js";
 import JavaScriptEditorPlugin from "../editor-plugin.js";
 import EvalBackendChooser from "../eval-backend-ui.js";
 import browserCommands from "./commands.js";
-
-// lively.components
-import { HorizontalResizer, Tree, TreeData, InputLine, 
-         Window, Button, DropDownList, List } from "lively.components";
 
 import "mocha-es6/index.js";
 
@@ -1004,7 +1002,7 @@ export default class Browser extends Window {
 
       if (attempt > 0 || err instanceof SyntaxError)
         return sourceEditor.showError(err);
-      
+
       // try to reload the module, sometimes format changes (global => esm etc need a reload)
       let result = await this.reloadModule(false);
       sourceEditor.textString = content;
@@ -1028,7 +1026,7 @@ export default class Browser extends Window {
         resetEnv = hard ? true : false;
     try {
       await systemInterface.interactivelyReloadModule(
-        null, m.name, reloadDeps, resetEnv);      
+        null, m.name, reloadDeps, resetEnv);
       await this.selectModuleNamed(m.nameInPackage);
       sourceEditor.scroll = scroll;
       sourceEditor.cursorPosition = cursorPosition;

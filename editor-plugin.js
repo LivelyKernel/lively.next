@@ -55,16 +55,16 @@ function rangedToken(row, startColumn, endColumn, token, mode) {
 
 
 // optional hooks:
-// 
+//
 // getComment() { /*{lineCommentStart: STRING, blockCommentStart: STRING, blockCommentEnd: STRING}*/ }
-// 
+//
 // getCompleters(otherCompleters) { /*list of completers, see lively.morphic/text/completion.js*/ }
-// 
+//
 // getCommands(otherCommands) { /*list of interactive commands, {name, exec} */ }
-// 
+//
 // getMenuItems(items) { /* list of menu items, {command, alias, target} or [name, () => { stuff }]*/ }
-// 
-// getSnippets() { /* list of snippets, see lively.morphic/text/snippets.js */ }
+//
+// getSnippets() { /* list of snippets, see lively.ide/text/snippets.js */ }
 
 export default class EditorPlugin {
 
@@ -146,7 +146,7 @@ export default class EditorPlugin {
 
     if (lines.length) {
       let row = lines[0].row,
-          attributes = [];  
+          attributes = [];
       for (let i = 0; i < tokens.length; row++, i++) {
         let lineTokens = tokens[i];
         for (let i = 0; i < lineTokens.length; i = i+5) {
@@ -159,7 +159,7 @@ export default class EditorPlugin {
             style);
         }
       }
-      textMorph.setTextAttributesWithSortedRanges(attributes);    
+      textMorph.setTextAttributesWithSortedRanges(attributes);
       this._tokenizerValidBefore = {row: arr.last(lines).row+1, column: 0};
     }
 
@@ -182,7 +182,7 @@ export default class EditorPlugin {
             if (end.column <= fromCol) return;
             if (fromCol < end.column && end.column < toCol)
               toCol = end.column;
-          }          
+          }
           visitFn(name, state, row, fromCol, toCol, stream, line, mode);
         }
     visitDocumentTokens(mode, doc, start.row, end.row, null, newLineFn, recordFn);
@@ -313,7 +313,7 @@ export default class EditorPlugin {
     // to find the matching opening pair part. If this can be found we do not
     // insert anything, just jump over the char
     if (right in closePairs && string === right) {
-       sel.goRight(1); return true; 
+       sel.goRight(1); return true;
     }
 
     // Normal close, not matching, just insert default

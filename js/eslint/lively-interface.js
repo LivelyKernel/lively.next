@@ -8,7 +8,7 @@ var eslint = {verify() { return [] }};
   // In order to configure that correctly the format statement needs to go into
   // a package config. I don't want to add this to lively.morphic as the js ide
   // package will be split off later anyway
-  var eslintURL = System.decanonicalize("lively.morphic/ide/js/eslint/eslint-browserified.js");
+  var eslintURL = System.decanonicalize("lively.ide/js/eslint/eslint-browserified.js");
   // lively.modules.module(eslintURL).unload();
   System.config({meta: {[eslintURL]: {format: "global"}}});
   ({ eslint } = await System.import(eslintURL));
@@ -110,7 +110,7 @@ export default class ESLinter {
       }
 
       if (!foundFix) break;
-    }    
+    }
 
     return source;
   }

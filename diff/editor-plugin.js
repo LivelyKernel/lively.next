@@ -1,15 +1,14 @@
 import { arr, string } from "lively.lang";
-import EditorPlugin from "../editor-plugin.js";
 import { pt } from "lively.graphics";
 import { config } from "lively.morphic";
-import { lessEqPosition } from "lively.morphic/text//position.js";
+import { lessEqPosition } from "lively.morphic/text/position.js";
 
 import DiffNavigator from "./navigator.js";
 import DiffTokenizer from "./tokenizer.js";
 import { FilePatch } from "./file-patch.js";
-
-import { runCommand } from "lively.morphic/ide/shell/shell-interface.js"
-import * as git from "lively.morphic/ide/shell/git.js"
+import EditorPlugin from "../editor-plugin.js";
+import { runCommand } from "../shell/shell-interface.js"
+import * as git from "../shell/git.js"
 
 // that.plugins = [new DiffEditorPlugin()]
 
@@ -43,7 +42,7 @@ export default class DiffEditorPlugin extends EditorPlugin {
   }
 
   tokenize(string) {
-    let tokens = [], patches = []; 
+    let tokens = [], patches = [];
     if (string) {
       try {
         ({tokens, patches} = this.tokenizer.tokenize(string));

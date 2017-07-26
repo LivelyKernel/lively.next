@@ -13,7 +13,7 @@ import {
 } from "./commands.js";
 
 import EditorPlugin from "../editor-plugin.js";
-import { Snippet } from "../../text/snippets.js";
+import { Snippet } from "../text/snippets.js";
 
 import {
   localInterface, systemInterfaceNamed,

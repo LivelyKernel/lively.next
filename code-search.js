@@ -3,11 +3,8 @@ import { pt, rect, LinearGradient, Color, Rectangle } from "lively.graphics";
 import { config, StyleSheet, Text, show, morph } from 'lively.morphic';
 import { connect } from 'lively.bindings';
 import { localInterface } from "lively-system-interface/index.js";
-// lively.components
-import { widgets, LoadingIndicator, 
+import { widgets, LoadingIndicator,
          Window, FilterableList, List} from "lively.components";
-
-// lively.ide
 import Browser from "./js/browser/index.js";
 
 export async function doSearch(

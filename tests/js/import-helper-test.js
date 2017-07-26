@@ -1,10 +1,8 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { expect } from "mocha-es6";
-
-import { cleanupUnusedImports, interactivelyInjectImportIntoText } from "lively.morphic/ide/js/import-helper.js";
-
 import { Text, inspect } from 'lively.morphic';
-import { JavaScriptEditorPlugin } from "lively.morphic/ide/js/editor-plugin.js";
+import { cleanupUnusedImports, interactivelyInjectImportIntoText } from "lively.ide/js/import-helper.js";
+import { JavaScriptEditorPlugin } from "lively.ide/js/editor-plugin.js";
 
 function listItem(item) {
   // make sure that object is of the form

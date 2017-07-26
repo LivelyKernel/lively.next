@@ -1,34 +1,32 @@
-import EditorPlugin from "../editor-plugin.js";
+import { IFrameMorph } from "lively.morphic/html-morph.js";
+import { arr, string } from "lively.lang";
+import { Color } from "lively.graphics";
+import { localInterface, systemInterfaceNamed } from "lively-system-interface";
 
+import EditorPlugin from "../editor-plugin.js";
 import "./mode.js"
 import { getMode } from "../editor-modes.js";
-
 import { completers as jsCompleters } from "../js/completers.js";
 import { snippets as jsSnippets } from "../js/snippets.js";
-
 import {
   jsIdeCommands,
   jsEditorCommands,
   astEditorCommands as jsAstEditorCommands
 } from "../js/commands.js";
-import { localInterface, systemInterfaceNamed } from "lively-system-interface";
 import { runCommand } from "../shell/shell-interface.js";
 import HTMLNavigator from "./navigator.js";
 import HTMLChecker from "./checker.js";
-import parse5 from "lively.morphic/ide/html/parse5.browserified.js";
-import { IFrameMorph } from "../../html-morph.js";
-import { arr, string } from "lively.lang";
-import { Color } from "lively.graphics";
+import parse5 from "./parse5.browserified.js";
 
 // export async function tidyHtml(htmlSrc) {
 //   let {stdout} = await runCommand("tidy --indent", {stdin: htmlSrc}).whenDone();
 //   stdout = stdout.replace(/\s*<meta name="generator"[^>]+>/, "");
-//   return stdout;  
+//   return stdout;
 // }
 
 
 export async function tidyHtml(htmlSrc) {
-  let {default: beautify} = await lively.modules.module("lively.morphic/ide/html/js-beautify-html.1.6.15.js").load({format: "global"});
+  let {default: beautify} = await lively.modules.module("lively.ide/html/js-beautify-html.1.6.15.js").load({format: "global"});
   return beautify(htmlSrc);
 }
 

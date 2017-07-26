@@ -1,7 +1,7 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { expect } from "mocha-es6";
 
-import { parseCommand } from "lively.morphic/ide/shell/shell-interface.js";
+import { parseCommand } from "lively.ide/shell/shell-interface.js";
 
 describe("command parsing", () => {
 
@@ -21,7 +21,7 @@ describe("command parsing", () => {
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         ["foo -- bar", ['foo', '--', 'bar']]
     ];
-  
+
     commandParseData.forEach(([cmd, expected]) => {
       var result = parseCommand(cmd);
       expect(expected).equals(result, `\n${cmd}\n${expected} vs ${result}`);

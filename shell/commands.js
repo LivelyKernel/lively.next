@@ -19,10 +19,9 @@ export var astEditorCommands = [
 export var shellCommands = [{
   name: 'run command',
   exec: async (ctx, cmd) => {
-    return await runCommand(cmd);  
+    return await runCommand(cmd);
   }
 }]
 
-lively.modules.module("lively.morphic/ide/shell/editor-plugin.js")
+lively.modules.module("lively.ide/shell/editor-plugin.js")
   .reload({reloadDeps: false, resetEnv: false});
-

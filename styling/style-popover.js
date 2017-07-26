@@ -2,6 +2,8 @@
 import { Morph, Icon, config, Text, ShadowObject, GridLayout,
          TilingLayout, StyleSheet, CustomLayout, morph,
          HorizontalLayout, VerticalLayout, Icons } from "lively.morphic";
+import KeyHandler from "lively.morphic/events/KeyHandler.js";
+
 import { connect, signal } from "lively.bindings";
 import { arr, promise, string, obj } from "lively.lang";
 import { Color, rect, Rectangle, pt } from "lively.graphics";
@@ -12,11 +14,10 @@ import { FilterableList, TreeData, Tree, Window } from 'lively.components'
 import { ModeSelector, LabeledCheckBox, DropDownSelector,
          SearchField, CheckBox } from 'lively.components/widgets.js';
 
-import { SvgStyleHalo } from "lively.halo/vertices.js";
+import { SvgStyleHalo } from "lively.halos/vertices.js";
 
 import { GradientEditor } from "./gradient-editor.js";
 import { ColorPickerField } from "./color-picker.js";
-import KeyHandler from "../../events/KeyHandler.js";
 import { NumberWidget } from "../value-widgets.js";
 
 const duration = 200;

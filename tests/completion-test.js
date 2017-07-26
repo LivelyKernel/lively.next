@@ -1,10 +1,9 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 import { promise } from "lively.lang";
-import { World } from "../../index.js";
-import { Text } from "../../text/morph.js";
+import { World, Text } from "lively.morphic";
 import { pt } from "lively.graphics";
-import { CompletionController, WordCompleter } from "../../ide/text/completion.js";
-import { DynamicJavaScriptCompleter } from "../../ide/js/completers.js";
+import { CompletionController, WordCompleter } from "../../text/completion.js";
+import { DynamicJavaScriptCompleter } from "../../js/completers.js";
 import { expect } from "mocha-es6";
 
 var describeInBrowser = System.get("@system-env").browser ? describe :
@@ -27,7 +26,7 @@ describeInBrowser("completion controller", () => {
   ("computes dynamic JS completions", async () => {
     if (!System.get(System.decanonicalize("lively.vm/index.js"))) return;
     if (!System.get(System.decanonicalize("lively-system-interface"))) return;
-    let {default: JavaScriptEditorPlugin} = await System.import("lively.morphic/ide/js/editor-plugin.js")
+    let {default: JavaScriptEditorPlugin} = await System.import("lively.ide/js/editor-plugin.js")
     text.plugins = [new JavaScriptEditorPlugin()];
     text.textString = "this.";
     text.gotoDocumentEnd();
@@ -35,7 +34,7 @@ describeInBrowser("completion controller", () => {
         {items} = await controller.completionListSpec();
     expect(items).containSubset([{value: {completion: "textString"}}]);
   });
-  
+
 })
 
 

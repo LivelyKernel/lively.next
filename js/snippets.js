@@ -1,4 +1,4 @@
-import { Snippet } from "../../text/snippets.js";
+import { Snippet } from "../text/snippets.js";
 
 export var snippets = [
 
@@ -25,7 +25,7 @@ export var snippets = [
   ["import", 'import { ${0:name} } from "${1:module}";'],
   ["importd", 'import ${0:name} from "${1:module}";'],
   ["import*", 'import * as ${0:name} from "${1:module}";'],
-  
+
 // ["export", ],
 // regex /\b/expo?r?t?/
 // export { ${0:name} };
@@ -38,7 +38,7 @@ export var snippets = [
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // classes
-  
+
   ["subclass", 'class ${0:name} extends ${1:base} {\n  constructor(${2:args}) {\n    super(${3:args})\n    $4\n  }\n}'],
   ["class", 'class ${0:name} {\n  constructor(${1:args}) {\n    $2\n  }\n}'],
 
@@ -56,14 +56,14 @@ export var snippets = [
   ["try", "try {${0:/* code */}} catch (err) {}"],
 
   ["do", "do {${1:/* code */}} while (${0:/* condition */});"],
-  
-  
+
+
   ["fori", 'for (let ${0:prop} in ${1:obj}) {\n  ${2:obj[prop]}\n}'],
   ["foro", 'for (let ${0:value} of ${1:iterable}) {\n  ${2:value}\n}'],
-  
-  
+
+
   ["for-", 'for (let ${0:i} = ${1:list}.length; ${2:i}--; ) {\n  $3\n}'],
-  
+
   ["for", 'for (let ${0:i} = 0; ${1:i} < ${3:list}.length; ${2:i}++) {\n  $4\n}'],
 
 
@@ -114,7 +114,7 @@ export var snippets = [
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // string stuff
   ["$", "${$0}"],
-  
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // console, debugging
   ["cl", "console.log($0)"],
@@ -123,7 +123,7 @@ export var snippets = [
   ["s", "show(`$0`);"],
 
   ["l2lC", 'import L2LClient from "lively.2lively/client.js";\nlet l2lClient = L2LClient.default();$0'],
-  
+
   // functions
   ["fun", "function ${0:functionName}($1) {$2}"],
   ["fn", "function($0) {$1}"],
@@ -137,43 +137,43 @@ export var snippets = [
 // snippet setTimeout
 // regex /\b/st|timeout|setTimeo?u?t?/
 // setTimeout(function() {${0:$TM_SELECTED_TEXT}}, ${1:100});
-// 
+//
 // snippet setInterval
 // regex /\b/int|setI?n?t?e?r?v?a?l?/
 // var i = setInterval(function() {${0:$TM_SELECTED_TEXT}}, ${1:1000});
 // clearInterval(i);
-// 
-// 
-// 
+//
+//
+//
 // # session snippet
 // snippet getS
 // var s = lively.net.SessionTracker.getSession();
-// 
+//
 // snippet shell
 // var {code, output} = await lively.shell.run("${1:command}");
-// 
+//
 
-// 
+//
 // # hasOwnProperty
 // snippet has
 // hasOwnProperty(${1})
-// 
+//
 // # block comment
 // snippet /*
 // /*
 //  * ${1:description}
 //  */
-// 
+//
 // # JSON.parse
 // snippet jsonp
 // JSON.parse(${1:jstr});
-// 
+//
 // # JSON.stringify
 // snippet jsons
 // JSON.stringify(${1:object});
-// 
+//
 
-// 
+//
 // # mocha / chai / expect
 // snippet describe
 // regex /^\s*/desc?r?i?b?e?/
@@ -184,22 +184,22 @@ export var snippets = [
 // it("${1:tested-action}", () => {
 // ${0}
 // });
-// 
+//
 // snippet beforeEach
 // regex /^\s*/before?E?a?c?h?/
 // beforeEach(${1:done} => {
 // ${0}
 // });
-// 
+//
 // snippet afterEach
 // regex /^\s*/after?E?a?c?h?/
 // afterEach(() => {
 // ${0}
 // });
-// 
-// 
+//
+//
 
-// 
+//
 // #
 // # $world snippets
 // snippet prompt
@@ -212,5 +212,5 @@ export var snippets = [
 // if (!input) return;
 // ${0}
 // });
-// 
-// 
+//
+//

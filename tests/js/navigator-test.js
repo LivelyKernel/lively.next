@@ -1,10 +1,8 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { expect } from "mocha-es6";
-
-import { Text } from "lively.morphic/text/morph.js";
-import { JavaScriptEditorPlugin } from "lively.morphic/ide/js/editor-plugin.js";
-
-import JSNavigator from "lively.morphic/ide/js/navigator.js";
+import { Text } from "lively.morphic";
+import { JavaScriptEditorPlugin } from "lively.ide/js/editor-plugin.js";
+import JSNavigator from "lively.ide/js/navigator.js";
 
 
 describe("js code navigator expression movements", () => {
@@ -156,4 +154,3 @@ describe("js code navigator expand and contract", () => {
   });
 
 });
-

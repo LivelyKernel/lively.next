@@ -155,7 +155,7 @@ class ExportPrompt {
       }),
       {
         multiSelect: true,
-        historyId: "lively.morphic/ide/js-interactively-import",
+        historyId: "lively.ide/js-interactively-import",
         extent: pt(800, 500),
         fuzzy: "value.exported",
 
@@ -254,7 +254,7 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
       let {start, end} = undeclared,
           range = {
             start: textMorph.indexToPosition(start),
-            end: textMorph.indexToPosition(end)};      
+            end: textMorph.indexToPosition(end)};
       textMorph.selection = range;
       textMorph.centerRange(range);
     };

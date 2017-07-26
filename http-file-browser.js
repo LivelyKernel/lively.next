@@ -1,14 +1,11 @@
 import { show, Window, Morph, Label, Text } from "lively.morphic"
 import { Tree, TreeData } from "lively.components"
-import TextEditor from "lively.morphic/ide/text-editor.js"
-
 import { arr, fun, promise, num, date, string } from "lively.lang"
-
 import { pt, Rectangle, rect, Color } from "lively.graphics"
 import { connect, signal, once } from "lively.bindings"
-
 import { resource } from "lively.resources";
 
+import TextEditor from "./text-editor.js"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // this.world().openInWindow(HTTPFileBrowser.forLocation(document.location.origin)).activate()
@@ -137,7 +134,7 @@ var browserCommands = [
       if (!loc.isDirectory()) loc = loc.parent();
       var newDir = await browser.world().prompt("Enter name of new directory", {
         input: loc.url,
-        historyId: "lively.morphic/ide/http-file-browser-file-name-query"
+        historyId: "lively.ide/http-file-browser-file-name-query"
       });
       if (!newDir) {
         browser.world().inform("add directory canceled");
@@ -160,7 +157,7 @@ var browserCommands = [
       if (!loc.isDirectory()) loc = loc.parent();
       var newFile = await browser.world().prompt("Enter name of new file", {
         input: loc.url,
-        historyId: "lively.morphic/ide/http-file-browser-file-name-query"
+        historyId: "lively.ide/http-file-browser-file-name-query"
       });
       if (!newFile) {
         browser.world().inform("add file canceled");
@@ -213,7 +210,7 @@ var browserCommands = [
       return (async () => {
         var newName = await browser.world().prompt(`Rename ${browser.selectedFile.url} to`, {
           input: browser.selectedFile.url,
-          historyId: "lively.morphic/ide/http-file-browser-file-name-query",
+          historyId: "lively.ide/http-file-browser-file-name-query",
         });
         if (!newName) {
           browser.world().inform("rename canceled");
@@ -266,7 +263,7 @@ var browserCommands = [
           })),
           {selected: [targetURL]} = await browser.world().filterableListPrompt(
             "Choose module to open", items, {
-              historyId: "lively.morphic/ide/http-file-browser-find-file",
+              historyId: "lively.ide/http-file-browser-find-file",
               requester: browser, width: 700, multiSelect: false})
 
       if (!targetURL) {
@@ -488,7 +485,7 @@ export default class HTTPFileBrowser extends Morph {
         },
         set(viewState) {
           this.ui.fileTree.applyViewState(viewState, resource => resource.url);
-        }          
+        }
       }
     }
   }

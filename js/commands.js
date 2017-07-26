@@ -1,7 +1,7 @@
 /*global System*/
 import { arr, string } from "lively.lang";
-import { show } from "lively.morphic/halo/markers.js";
-import { Range } from "../../text/range.js";
+import { show } from "lively.halos/markers.js";
+import { Range } from "lively.morphic";
 import Inspector from "./inspector.js";
 
 function getEvalEnv(morph) {
@@ -268,7 +268,7 @@ export var jsIdeCommands = [
     exec: async (text, opts = {gotoImport: false, insertImportAtCursor: true}) => {
       await lively.lang.promise.delay(0);
       var {interactivelyInjectImportIntoText} =
-        await System.import("lively.morphic/ide/js/import-helper.js");
+        await System.import("lively.ide/js/import-helper.js");
       var result = await interactivelyInjectImportIntoText(text, opts);
       if (!result) text.setStatusMessage("canceled");
       return result;
@@ -279,7 +279,7 @@ export var jsIdeCommands = [
     name: "[javascript] fix undeclared variables",
     exec: async (text, opts = {ignore: [], autoApplyIfSingleChoice: false}) => {
       let {interactivlyFixUndeclaredVariables} =
-        await System.import("lively.morphic/ide/js/import-helper.js");
+        await System.import("lively.ide/js/import-helper.js");
       let result = await interactivlyFixUndeclaredVariables(text, opts);
       text.focus();
       return result;
@@ -290,7 +290,7 @@ export var jsIdeCommands = [
     name: "[javascript] remove unused imports",
     exec: async (text, opts = {query: true}) => {
       var {cleanupUnusedImports} =
-        await System.import("lively.morphic/ide/js/import-helper.js");
+        await System.import("lively.ide/js/import-helper.js");
       var status = await cleanupUnusedImports(text, opts);
       text.setStatusMessage(status);
       return true
@@ -300,7 +300,7 @@ export var jsIdeCommands = [
   {
     name: "[javascript] eslint report",
     exec: async text => {
-      var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint/lively-interface.js")
+      var { default: ESLinter } = await System.import("lively.ide/js/eslint/lively-interface.js")
       try { return ESLinter.reportOnMorph(text); } catch(e) { text.showError(e); }
     }
   },
@@ -308,7 +308,7 @@ export var jsIdeCommands = [
   {
     name: "[javascript] eslint preview fixes",
     exec: async text => {
-      var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint/lively-interface.js")
+      var { default: ESLinter } = await System.import("lively.ide/js/eslint/lively-interface.js")
       try { return ESLinter.previewFixesOnMorph(text); } catch(e) { text.showError(e); }
     }
   },
@@ -571,5 +571,5 @@ export var astEditorCommands = [
 
 ];
 
-lively.modules.module("lively.morphic/ide/js/editor-plugin.js")
+lively.modules.module("lively.ide/js/editor-plugin.js")
   .reload({reloadDeps: false, resetEnv: false});
