@@ -3,6 +3,7 @@ import { expect } from "mocha-es6";
 import { Morph, morph, VerticalLayout, HorizontalLayout, TilingLayout, GridLayout, MorphicEnv } from "../index.js";
 import { pt, Color, rect } from "lively.graphics";
 import { arr } from "lively.lang";
+import { ProportionalLayout } from "../layout.js";
 
 var world, m, env, grid, layout;
 
@@ -685,6 +686,39 @@ describe("layout", () => {
       expect(m.getSubmorphNamed("m4").bounds()).equals(rect(200,100,100,100));
     })
   });
+  
+  
+  describe('proportional layout', () => {
+
+    let container;
+    beforeEach(() => container = morph({
+      extent: pt(100, 100), fill: Color.yellow, layout: new ProportionalLayout(),
+      submorphs: [
+        {name: "a", extent: pt(10, 10), fill: Color.red, position: pt(10, 10)},
+        {name: "b", extent: pt(10, 10), fill: Color.orange, position: pt(50,50)}
+      ]
+    }));
+
+    it("scales by default", () => {
+      container.extent = pt(120,120);
+      container.applyLayoutIfNeeded();
+      expect(container.submorphs[0].bounds()).equals(rect(12, 12, 12, 12));
+    })
+
+    it("moves", () => {
+      container.layout = new ProportionalLayout({submorphSettings: [["a", "move"]]});
+      container.extent = pt(120,120);
+      container.applyLayoutIfNeeded();
+      expect(container.submorphs[0].bounds()).equals(rect(30, 30, 10, 10));
+    });
+
+    it("fixed", () => {
+      container.layout = new ProportionalLayout({submorphSettings: [["a", "fixed"]]});
+      container.extent = pt(120,120);
+      container.applyLayoutIfNeeded();
+      expect(container.submorphs[0].bounds()).equals(rect(10,10,10,10));
+    });
+  });
 
   describe('updating policy', () => {
 
@@ -779,6 +813,6 @@ describe("layout", () => {
       b.extent = pt(25,25);
       expect(b.layout.noLayoutActionNeeded).is.false;
     })
-    
-  })
+
+  });
 })

@@ -1,12 +1,13 @@
 import { pt, rect } from "lively.graphics";
 import { arr, Closure, num, grid, obj } from "lively.lang";
 import {
-  GridLayoutHalo,
+  GridLayoutHalo, ProportionalLayoutHalo,
   FlexLayoutHalo,
   TilingLayoutHalo
 } from "./halo/layout.js";
 import { isNumber } from "lively.lang/object.js";
-import { sortBy } from "lively.lang/array.js";
+import { sortBy, flatmap } from "lively.lang/array.js";
+import { once } from "lively.bindings";
 
 
 class Layout {
@@ -23,11 +24,10 @@ class Layout {
     this.container = container;
     this.manualUpdate = manualUpdate;
     this.autoResize = autoResize != undefined ? autoResize : true;
-    this.onScheduleApply = onScheduleApply || ((submorph, animation ,change) => {
-    });
+    this.onScheduleApply = onScheduleApply || ((submorph, animation ,change) => {});
     if (layoutOrder) {
-       this.layoutOrder = layoutOrder
-       this.layoutOrderSource = JSON.stringify(String(layoutOrder));
+      this.layoutOrder = layoutOrder;
+      this.layoutOrderSource = JSON.stringify(String(layoutOrder));
     }
   }
 
@@ -36,9 +36,7 @@ class Layout {
     this.refreshBoundsCache();
   }
 
-  copy() {
-    return new this.constructor(this);
-  }
+  copy() { return new this.constructor(this); }
 
   description() { return "Describe the layout behavior here."; }
   name() { return "Name presented to the user."; }
@@ -88,7 +86,7 @@ class Layout {
     return false;
   }
 
-  refreshBoundsCache() {
+  refreshBoundsCache() {    
     this.lastExtent = this.container.extent;
     this.layoutableSubmorphBounds = this.layoutableSubmorphs.map(m => m.bounds());
   }
@@ -464,6 +462,121 @@ export class HorizontalLayout extends FloatLayout {
 
 }
 
+
+export class ProportionalLayout extends Layout {
+
+  static get proportionalLayoutSettingsForMorphs() {
+    return this._proportionalLayoutSettingsForMorphs 
+      || (this._proportionalLayoutSettingsForMorphs = new WeakMap());
+  }
+
+  name() { return "Proportional" }
+  description() { return "Resizes, scales, and moves morphs according to their original position." }
+
+  inspect(pointerId) {
+    // return new ProportionalLayoutHalo(this.container, pointerId);
+    return new ProportionalLayoutHalo(this.container, pointerId);
+  }
+
+  constructor(args) {
+    super(args);
+    this.extentDelta = pt(0,0);
+    this.submorphSettings = (args && args.submorphSettings) || [];
+  }
+
+  settingsFor(morph) {
+    // move, resize, scale, fixed
+    let settings = this.constructor.proportionalLayoutSettingsForMorphs.get(morph);
+    return settings || {x: "scale", y: "scale"};
+  }
+
+  changeSettingsFor(morph, mergin) {
+    if (typeof mergin === "string") mergin = {x: mergin, y: mergin};
+    this.constructor.proportionalLayoutSettingsForMorphs
+      .set(morph, {...this.settingsFor(morph), ...mergin})
+  }
+
+  get submorphSettings() { return this._submorphSettings; }
+  set submorphSettings(submorphSettings) {
+    if (!this.container) {
+      once(this, "container", this, "submorphSettings",
+        {converter: () => submorphSettings, varMapping: {submorphSettings}});
+      return;
+    }
+    this._submorphSettings = submorphSettings;
+    this.changeSubmorphSettings(submorphSettings);
+  }
+
+  changeSubmorphSettings(submorphSettings) {
+    for (let [morphSelector, setting] of submorphSettings) {
+      let morphs = morphsMatchingSelector(this.container, morphSelector);
+      morphs.forEach(m => this.changeSettingsFor(m, setting));
+    }
+
+    function morphsMatchingSelector(container, selector) {      
+      let morphs = [];
+      if (!selector) return morphs;
+      if (selector.isMorph) {
+        morphs = [selector];
+      } else if (selector instanceof RegExp) {
+        morphs = container.submorphs.filter(ea => ea.name.match(selector));
+      } else if (typeof selector === "string") {
+        morphs = container.submorphs.filter(ea => ea.name === selector);
+      } else if (Array.isArray(selector)) {
+        morphs = flatmap(selector, sel => morphsMatchingSelector(container, sel));
+      }
+      return morphs;
+    }
+  }
+
+  refreshBoundsCache() {    
+    let {container: {extent}, lastExtent} = this;
+    if (lastExtent && !extent.eqPt(lastExtent))
+      this.extentDelta = this.extentDelta.addPt(extent.subPt(lastExtent));
+    this.lastExtent = extent;
+    this.layoutableSubmorphBounds = this.layoutableSubmorphs.map(m => m.bounds());
+  }
+
+  apply(animate = false) {
+    let {container, active, extentDelta: {x: deltaX, y: deltaY}} = this,
+        {extent} = container || {};
+    if (active || !container || (deltaX == 0 && deltaY == 0))
+      return;
+
+    this.extentDelta = pt(0,0);
+    this.active = true;
+    super.apply(animate);
+
+    let {layoutableSubmorphs} = this;
+
+    var scalePt = extent.scaleByPt(extent.addXY(-deltaX, -deltaY).invertedSafely());
+    for (let m of layoutableSubmorphs) {
+      let {x, y} = this.settingsFor(m),
+          moveX = 0, moveY = 0, resizeX = 0, resizeY = 0;
+      
+      if (x === "move") moveX = deltaX;
+      if (y === "move") moveY = deltaY;
+      if (x === "resize") resizeX = deltaX;
+      if (y === "resize") resizeY = deltaY;
+      
+      if (x === "scale" || y === "scale") {
+        var morphScale = pt(
+          x === "scale" ? scalePt.x : 1,
+          y === "scale" ? scalePt.y : 1);
+        m.position = m.position.scaleByPt(morphScale);
+        m.extent = m.extent.scaleByPt(morphScale);
+      }
+      
+      if (moveX || moveY) m.moveBy(pt(moveX, moveY));
+      if (resizeX || resizeY) m.extent = m.extent.addXY(resizeX, resizeY);
+    }
+
+    // this.lastExtent = extent;
+    this.active = false;
+  }
+
+}
+
 export class TilingLayout extends Layout {
 
   name() { return "Tiling" }
@@ -512,6 +625,7 @@ export class TilingLayout extends Layout {
 
     this.active = false;
   }
+
   getMinWidth() {
     return this.layoutableSubmorphs.reduce((s, e) => (e.extent.x > s) ? e.extent.x : s, 0) +
           this.border.left + this.border.right;

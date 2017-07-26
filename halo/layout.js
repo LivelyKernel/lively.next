@@ -1,6 +1,6 @@
 /*global Sine*/
 import {
-  Ellipse, Icon,
+  Ellipse, Button, Icon,
   Morph,
   Path,
   Text,
@@ -12,8 +12,9 @@ import {
 import { Color, pt, rect, Rectangle } from "lively.graphics";
 import { arr } from "lively.lang";
 import { LabeledCheckBox, DropDownSelector } from "../components/widgets.js";
-import { connect } from "lively.bindings";
+import { connect, disconnect } from "lively.bindings";
 import { NumberWidget } from "../ide/value-widgets.js";
+import { InteractiveMorphSelector } from "./morph.js";
 
 class AxisHalo extends Morph {
 
@@ -907,6 +908,131 @@ export class FlexLayoutHalo extends Morph {
             fontColor: Color.gray.darker(),
             padding: rect(0,5,5,5)}, spacing]}
     ];
+  }
+
+}
+
+
+export class ProportionalLayoutHalo extends Morph {
+
+  constructor(container, pointerId) {
+    super({
+      reactsToPointer: false,
+      isHaloItem: true,
+      styleClasses: ["Halo"],
+      fill: Color.transparent,
+      epiMorph: true
+    });
+    this.state = {container, pointerId, target: container.layout};
+    this.alignWithTarget();
+  }
+
+  handleDrop(morph) {}
+  onDrop(evt) { evt.hand.dropMorphsOn(this.container); }
+
+  alignWithTarget() {this.setBounds(this.container.globalBounds()); };
+
+  get target() { return this.state.target; }
+  get container() { return this.state.container; }
+
+  // updateDirectionPolicy(val) { this.target.direction = val; }
+
+  updateSubmorphProportionalLayoutSettings({policy, submorph, axis}) {
+  submorph.show()
+    this.target.changeSettingsFor(submorph, {[axis]: policy});
+  }
+  
+  async chooseSubmorphToChangeLayoutSettings() {
+    /*global inspect*/
+    let morphs = this.target.layoutableSubmorphs, submorph;
+    if (this.env.eventDispatcher.isKeyPressed("Shift")) {
+      let items = morphs.map(m => { return {isListItem: true, string: String(m), value: m}});
+      submorph = await $world.listPrompt("Select morph", items, {requester: this, onSelection: ea => ea.show()});
+    } else {
+      submorph = await InteractiveMorphSelector.selectMorph(
+        this.world(), this, target => morphs.includes(target));
+    }
+
+    if (!submorph) return;
+
+    let controls = this.state.popover.get("controlContainer");
+    let configItems = controls.getAllNamed(/submorph config/);
+    let options = ["move", "resize", "scale", "fixed"],
+        submorphSettings = this.target.settingsFor(submorph);
+    if (!configItems.length) {
+      controls.submorphs = [
+        ...controls.submorphs,
+        {
+          name: 'submorph config X-Axis policy',
+          position: pt(0, this.height),
+          fill: Color.transparent,
+          layout: new HorizontalLayout({spacing: 3, direction: "centered", align: "center"}),
+          submorphs: [
+            {type: 'label', value: "submorph X-Axis policy: "},
+            new DropDownSelector({
+              name: "x-axis policy selector",
+              borderRadius: 2, padding: 3,
+              selectedValue: submorphSettings.x,
+              values: options
+            })
+          ]
+        }, {
+          name: 'submorph config Y-Axis policy',
+          position: pt(0, this.height),
+          fill: Color.transparent,
+          layout: new HorizontalLayout({spacing: 3, direction: "centered", align: "center"}),
+          submorphs: [
+            {type: 'label', value: "submorph Y-Axis policy: "},
+            new DropDownSelector({
+              name: "y-axis policy selector",
+              borderRadius: 2, padding: 3,
+              selectedValue: submorphSettings.y,
+              values: options
+            })
+          ]
+        }
+      ];
+    }
+
+    let xSel = controls.getSubmorphNamed("x-axis policy selector"),
+        ySel = controls.getSubmorphNamed("y-axis policy selector");
+    disconnect(xSel, "selectedValue", this, "updateSubmorphProportionalLayoutSettings");
+    disconnect(ySel, "selectedValue", this, "updateSubmorphProportionalLayoutSettings");
+
+    xSel.selectedValue = submorphSettings.x;
+    ySel.selectedValue = submorphSettings.y;
+
+    connect(xSel, "selectedValue", this, "updateSubmorphProportionalLayoutSettings", {
+      converter: policy => ({policy, axis: "x", submorph}), varMapping: {submorph}});
+    connect(ySel, "selectedValue", this, "updateSubmorphProportionalLayoutSettings", {
+      converter: policy => ({policy, axis: "y", submorph}), varMapping: {submorph}});
+  }
+
+  optionControls(popover) {
+    this.state.popover = popover;
+    const layout = this.target,
+          xAxis = new LabeledCheckBox({
+            name: "x-axis", label: 'X-Axis',
+            alignCheckBox: 'right',
+            fill: Color.transparent,
+            checked: layout.xAxisEnabled
+          }),
+          yAxis = new LabeledCheckBox({
+            name: "y-axis", label: 'Y-Axis',
+            alignCheckBox: 'right',
+            fill: Color.transparent,
+            checked: layout.yAxisEnabled
+          }),
+          modifySubmorphSettingsButton = new Button({
+            name: "modify submorph settings button",
+            label: [...Icon.textAttribute("crosshairs"), "\u00a0Change submorph settings", {marginLeft: "5px"}]
+          });
+
+    connect(xAxis, 'checked', this, 'updateXAxisEnabled');
+    connect(yAxis, 'checked', this, 'updateYAxisEnabled');
+    connect(modifySubmorphSettingsButton, 'fire', this, 'chooseSubmorphToChangeLayoutSettings');
+
+    return [xAxis, yAxis, modifySubmorphSettingsButton];
   }
 
 }

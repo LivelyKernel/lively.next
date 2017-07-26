@@ -3,19 +3,24 @@ import { Morph, Text, morph, Label, HorizontalLayout,
 import { connect, signal } from "lively.bindings";
 import { Color, LinearGradient, pt, rect } from "lively.graphics";
 import { ValueScrubber } from "../components/widgets.js";
-import { FillPopover, TextPopover, IconPopover, RectanglePopover, ShadowPopover, PointPopover, VerticesPopover, LayoutPopover, Popover } from "./styling/style-popover.js";
+import { FillPopover, TextPopover, IconPopover, RectanglePopover, ShadowPopover,
+         PointPopover, VerticesPopover, LayoutPopover, Popover} from "./styling/style-popover.js";
 import { num, obj } from "lively.lang";
 import { StyleSheetEditor } from "../style-sheets.js";
 import InputLine from "../text/input-line.js";
 
 /*
 
-Value Widgets are the default visual elements in lively.morphic to modify certain
-types of values via direct manipulation.
-The idea is to make frequently reappearing types of values within the morphic system (such as Points, Gradients, Colors etc...) easily recognizable by the user in various different context (i.e. tools).
-The widgets are designed to be easily embeddable into a variety of different context both in a programmatic and visual (that is aesthetic) way.
+Value Widgets are the default visual elements in lively.morphic to modify
+certain types of values via direct manipulation. The idea is to make frequently
+reappearing types of values within the morphic system (such as Points,
+Gradients, Colors etc...) easily recognizable by the user in various different
+context (i.e. tools). The widgets are designed to be easily embeddable into a
+variety of different context both in a programmatic and visual (that is
+aesthetic) way.
 
-Developers conceiving new tools in lively are therefore encouraged to make use of these existing and/or add their own for new types of values as they please.
+Developers conceiving new tools in lively are therefore encouraged to make use
+of these existing and/or add their own for new types of values as they please.
 
 */
 
@@ -23,8 +28,16 @@ Developers conceiving new tools in lively are therefore encouraged to make use o
 
   About Context Sensitive Widgets:
 
-  It so happens that some properties of morphs can not be inspected in a meaningful way without taking into account to which morph the current property belongs to.
-  Take for instance the example of the layout property: Parametrizing layouts in a visual ways often requires us to directly interact with the morph the layout is attached to. For instance adding and removing morphs to and from cells of a GridLayout can not be done via direct manipulation without referring top a concrete morph instance that the GridLayout is attached to. Though these types of properties are (fortnunately rare), the widgets that modify these properties require a certain context (that is a morph) they can bind the change requests by the user.
+  It so happens that some properties of morphs can not be inspected in a
+  meaningful way without taking into account to which morph the current
+  property belongs to.   Take for instance the example of the layout property:
+  Parametrizing layouts in a visual ways often requires us to directly interact
+  with the morph the layout is attached to. For instance adding and removing
+  morphs to and from cells of a GridLayout can not be done via direct
+  manipulation without referring top a concrete morph instance that the
+  GridLayout is attached to. Though these types of properties are (fortnunately
+  rare), the widgets that modify these properties require a certain context
+  (that is a morph) they can bind the change requests by the user.
 
 */
 
