@@ -282,7 +282,7 @@ export class SearchWidget extends Morph {
     connect(cancelButton, "fire", this, "execCommand", {converter: () => "cancel search"});
     connect(nextButton, "fire", this, "execCommand", {converter: () => "search next"});
     connect(prevButton, "fire", this, "execCommand", {converter: () => "search prev"});
-    connect(searchInput, "inputChanged", this, "searchLater");
+    connect(searchInput, "inputChanged", this, "search");
     connect(replaceButton, "fire", this, "execCommand", {converter: () => "replace and go to next"});
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -448,7 +448,7 @@ export class SearchWidget extends Morph {
       // FIXME...! noUpdate etc
       disconnect(inputMorph, "inputChanged", this, "search");
       this.input = state.last.needle;
-      connect(inputMorph, "inputChanged", this, "searchLater");
+      connect(inputMorph, "inputChanged", this, "search");
       this.addSearchMarkersForPreview(state.last.found);
     }
 
@@ -471,10 +471,6 @@ export class SearchWidget extends Morph {
 
   searchNext() { return this.advance(false); }
   searchPrev() { return this.advance(true); }
-
-  searchLater() {
-    debounceNamed(this.id + "-search", 300, () => this.search())();
-  }
 
   search() {
     if (!this.input) {
