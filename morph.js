@@ -12,7 +12,7 @@ import { Color, pt, rect, Rectangle, LinearGradient } from "lively.graphics";
 import { obj, promise, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
 import { ConnectionHalo } from "./fabrik.js";
-import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from "./drag-guides.js";
+import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from "lively.morphic/drag-guides.js";
 
 
 
