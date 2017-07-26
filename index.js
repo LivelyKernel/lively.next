@@ -3,6 +3,7 @@ export * from "./buttons.js";
 export * from './menus.js';
 export * from './resizers.js';
 export * from './tree.js';
+export * from './iframe.js';
 import * as prompts from './prompts';
 import * as widgets from './widgets.js';
 
@@ -42,15 +43,13 @@ promise.waitFor(() => registerMorphClass).then(() => {
         Tooltip.styleSheet
       ];
     }
-  }, 
-    ...menuCommands, 
-    ...prompts.promptCommands, 
+  },
+    ...menuCommands,
+    ...prompts.promptCommands,
     ...windowCommands,
     ...loadingIndicatorCommands);
-  
+
   for (let klass in classMapping) {
     registerMorphClass(klass, classMapping[klass]);
   }
 });
-
-
