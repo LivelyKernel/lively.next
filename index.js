@@ -14,7 +14,7 @@ import {menuCommands} from './menus.js';
 import {Window, windowCommands} from './window.js';
 import {LoadingIndicator, loadingIndicatorCommands} from './loading-indicator.js';
 
-export {LoadingIndicator, Window, prompts, widgets};
+export {LoadingIndicator, Window, prompts, widgets, InputLine};
 
 import { registerMorphClass, Tooltip } from 'lively.morphic';
 import worldCommands from 'lively.morphic/world-commands.js';
