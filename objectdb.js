@@ -973,7 +973,18 @@ export var ObjectDBInterface = {
     if (!db) throw new Error(`db ${dbName} does not exist`);
     try { res = resource(url); } catch (err) { res = resource(System.baseURL).join(url); }
     return db.importFromResource(type, name, res, commitSpec, purgeHistory);
-  }
+  },
+
+  async delete(args) {
+    // side effect: true
+    // returns: deletion spec
+    let {db: dbName, type, name, dryRun} = checkArgs(args, {
+          db: "string", type: "string", name: "string",
+          dryRun: "boolean|undefined"
+        }), db = await ObjectDB.find(dbName);
+
+    return db.delete(type, name, typeof dryRun === "undefined" || dryRun);
+  },
 
 }
 
@@ -1098,5 +1109,12 @@ export class ObjectDBHTTPInterface {
     // returns: [{dir, type, name, commits, history, snapshotDirs}]
     return this._POST("importFromResource", args);
   }
+  
+  async delete(args) {
+    // parameters: db, type, name, dryRun
+    // returns: deletion spec
+    return this._POST("delete", args);
+  }
+  
   
 }
