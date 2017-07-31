@@ -1065,6 +1065,26 @@ var usefulEditorCommands = [
   },
 
   {
+    name: "[todo] toggle todo marker",
+    exec: function(ed) {
+      var sel = ed.selection;
+      if (sel.isEmpty()) ed.selectLine();
+      var undoneRe = /\[\s*\]/g,
+          doneRe = /\[X\]/g,
+          replacement = sel.text;
+      if (undoneRe.test(replacement)) {
+        replacement = replacement.replace(undoneRe, '[X]');
+      } else if (doneRe.test(replacement)) {
+        replacement = replacement.replace(doneRe, '[ ]');
+      } else {
+        replacement = "[ ] " + replacement.trimLeft();
+      }
+      sel.text = replacement
+      return true;
+    }
+  },
+
+  {
     name: 'selected lines: sort',
     exec: function(text) {
       var {start: {row: startRow}, end: {row: endRow}} = text.selection,
