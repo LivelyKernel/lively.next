@@ -93,16 +93,6 @@ export default class InputLine extends Text {
       historyId:    {defaultValue: null},
       clearOnInput: {defaultValue: false},
 
-      haloShadow: {
-        defaultValue: {
-          blur: 6,
-          color: Color.rgb(52,152,219),
-          distance: 0,
-          rotation: 45
-        }
-      },
-      highlightWhenFocused: {defaultValue: false},
-
       height: {
         after: ["padding", "textAndAttributes"],
         initialize() {

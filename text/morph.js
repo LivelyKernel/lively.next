@@ -223,6 +223,28 @@ export class Text extends Morph {
         }
       },
 
+      haloShadow: {
+        group: "styling",
+        type: 'Shadow',
+        isStyleProp: true,
+        defaultValue: null
+      },
+
+      highlightWhenFocused: {
+        defaultValue: false, after: ["haloShadow"],
+        set(val) {
+          this.setProperty("highlightWhenFocused", val);
+          if (val && !this.haloShadow) {
+            this.haloShadow = {
+              blur: 6,
+              color: Color.rgb(52,152,219),
+              distance: 0,
+              rotation: 45
+            }
+          }
+        }
+      },
+
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // selection
 
@@ -2048,11 +2070,17 @@ export class Text extends Morph {
   }
 
   onContextMenu(evt) {
-    var posClicked = this.textPositionFromPoint(this.localize(evt.position));
-    var sels = this.selection.selections || [this.selection];
+    if (evt.targetMorph !== this) return;
+    evt.stop();
+
+    var posClicked = this.textPositionFromPoint(this.localize(evt.position)),
+        sels = this.selection.selections || [this.selection];
     if (this.selection.isEmpty() || sels.every(sel => !sel.range.containsPosition(posClicked)))
       this.cursorPosition = posClicked;
-    return super.onContextMenu(evt);
+
+    Promise
+      .resolve(this.menuItemsForContextMenu()).then(items => this.openMenu(items, evt))
+      .catch(err => $world.logError(err));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -2234,6 +2262,11 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async menuItems() {
+    let [items1, items2] = await Promise.all([super.menuItems(), this.menuItemsForContextMenu()]);
+    return items1.concat({isDivider: true}).concat(items2);
+  }
+
+  async menuItemsForContextMenu() {
     var items = [
       {command: "text undo", alias: "undo", target: this, showKeyShortcuts: true},
       {command: "text redo", alias: "redo", target: this, showKeyShortcuts: true},
@@ -2418,8 +2451,24 @@ export class Text extends Morph {
   }
 
   onFocus(evt) {
+    super.onFocus(evt);
     this.makeDirty();
     this.selection.cursorBlinkStart();
+    this.dropShadow
+    this.highlightWhenFocused && this.animate({
+      dropShadow: this.haloShadow || this.propertiesAndPropertySettings().properties.haloShadow.defaultValue,
+      duration: 200
+    });
+  }
+
+  onBlur(evt) {
+    this.makeDirty();
+    this.selection.cursorBlinkStop();
+    this.highlightWhenFocused && this.animate({
+      dropShadow: null,
+      duration: 200
+    });
+    super.onBlur(evt);
   }
 
   onScroll(evt) {
@@ -2439,11 +2488,6 @@ export class Text extends Morph {
     // move the textarea to the text cursor
     if (this.env.eventDispatcher.keyInputHelper)
       this.env.eventDispatcher.keyInputHelper.ensureBeingAtCursorOfText(this);
-  }
-
-  onBlur(evt) {
-    this.makeDirty();
-    this.selection.cursorBlinkStop();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
