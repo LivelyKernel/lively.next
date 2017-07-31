@@ -32,18 +32,7 @@ import {promise} from 'lively.lang';
 
 promise.waitFor(() => registerMorphClass).then(() => {
   // install world commands
-  worldCommands.push({
-    name: "install themes",
-    exec: world => {
-      world.styleSheets = [
-        Window.styleSheet,
-        FilterableList.styleSheet,
-        List.styleSheet,
-        LoadingIndicator.styleSheet,
-        Tooltip.styleSheet
-      ];
-    }
-  },
+  worldCommands.push(
     ...menuCommands,
     ...prompts.promptCommands,
     ...windowCommands,

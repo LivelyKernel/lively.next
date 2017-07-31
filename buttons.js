@@ -16,7 +16,15 @@ export class Button extends Morph {
       borderWidth: {defaultValue: 1},
       borderRadius: {defaultValue: 5},
       nativeCursor: {defaultValue: "pointer"},
-      fill: {defaultValue: new LinearGradient({stops: [{offset: 0, color: Color.white}, {offset: 1, color: Color.rgb(236, 240, 241)} ], vector: 0})},
+      fill: {
+        defaultValue: new LinearGradient({
+          stops: [
+            {offset: 0, color: Color.white},
+            {offset: 1, color: Color.rgb(236, 240, 241)}
+          ],
+          vector: 0
+        })
+    },
 
       deactivated: {
         defaultValue: false,
@@ -73,7 +81,7 @@ export class Button extends Morph {
       },
 
       label: {
-        after: ["labelMorph"], 
+        after: ["labelMorph"],
         isStyleProp: true,
         type: "RichText", // this includes an attributes Array
         set(stringOrAttributesOrMorph) {
@@ -91,8 +99,20 @@ export class Button extends Morph {
         after: ["labelMorph"], derived: true,
         get() { return this.labelMorph.textAndAttributes; },
         set(val) { this.labelMorph.textAndAttributes = val; }
-      }
+      },
 
+      icon: {
+        after: ['labelMorph'], derived: true, isStyleProp: true,
+        showInInspector: true,
+        type: "Icon", // "" -> no icon, else a valid font awesome icon code
+        get() { return this.label[0]; },
+        set(iconNameOrCode) {
+          try {
+            if (Array.isArray(iconNameOrCode)) this.label = iconNameOrCode;
+            else this.label = Icon.textAttribute(iconNameOrCode);
+          } catch (err) {}
+        }
+      },
     }
   }
 
@@ -161,7 +181,7 @@ export class Button extends Morph {
     }
   }
 
-  onMouseDown(evt) {    
+  onMouseDown(evt) {
     if (!evt.isAltDown() && !this.deactivated
      && this.innerBoundsContainsPoint(evt.positionIn(this)))
       this.pressed = {originalFill: this.fill};
@@ -178,7 +198,7 @@ export class Button extends Morph {
     // When leaving the button without mouse up, reset appearance
     if (this.pressed && evt.isClickTarget(this)) this.pressed = null;
   }
-  
+
   onHoverIn(evt) {
     if (!this.deactivated && evt.isClickTarget(this))
       this.pressed = this.pressed = {originalFill: this.fill};
