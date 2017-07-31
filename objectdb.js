@@ -370,13 +370,35 @@ export default class ObjectDB {
   // export
 
   async exportToDir(exportDir, nameAndTypes, copyResources = false, includeDeleted = false) {
-    let commitDB = this.__commitDB || await this._commitDB();;
-    for (let {name, type} of nameAndTypes) {
-      let currentExportDir = exportDir.join(type).join(name).asDirectory(),
-          {refs, history} = await this.versionGraph(type, name),
-          commitIds = Object.keys(history),
-          commits = await this.getCommitsWithIds(commitIds);
 
+    if (typeof exportDir === "string") exportDir = resource(exportDir);
+    
+    let commitDB = this.__commitDB || await this._commitDB(),
+        versionDB = this.__versionDB || await this._versionDB(),
+        backupData = [];
+
+    if (!nameAndTypes) {
+      let versions = await versionDB.getAll();
+      for (let {refs, history, _id} of versions) {
+        if (_id.startsWith("_")) continue;
+        let {type, name} = await this.getCommit(refs.HEAD || Object.keys(history)[0]),
+            currentExportDir = exportDir.join(type).join(name).asDirectory(),
+            commitIds = Object.keys(history),
+            commits = await this.getCommitsWithIds(commitIds);
+        backupData.push({refs, history, currentExportDir, commits, name, type});
+      }
+    } else {
+      for (let {name, type} of nameAndTypes) {
+        let currentExportDir = exportDir.join(type).join(name).asDirectory(),
+            {refs, history} = await this.versionGraph(type, name),
+            commitIds = Object.keys(history),
+            commits = await this.getCommitsWithIds(commitIds);
+        backupData.push({refs, history, currentExportDir, commits, name, type});
+      }
+    }
+
+    for (let {refs, history, currentExportDir, commits, name, type} of backupData) {
+console.log({refs, history, currentExportDir, commits, name, type})
       if (!includeDeleted)
         commits = commits.filter(ea => !ea.deleted);
 
