@@ -16,7 +16,12 @@ export class Button extends Morph {
       borderWidth: {defaultValue: 1},
       borderRadius: {defaultValue: 5},
       nativeCursor: {defaultValue: "pointer"},
-      fill: {defaultValue: new LinearGradient({stops: [{offset: 0, color: Color.white}, {offset: 1, color: Color.rgb(236, 240, 241)} ], vector: 0})},
+      fill: {
+        defaultValue: new LinearGradient({
+          stops: [
+            {offset: 0, color: Color.white},
+            {offset: 1, color: Color.rgb(236, 240, 241)}
+          ], vector: 0})},
 
       deactivated: {
         defaultValue: false,
@@ -73,7 +78,7 @@ export class Button extends Morph {
       },
 
       label: {
-        after: ["labelMorph"], 
+        after: ["labelMorph"],
         isStyleProp: true,
         type: "RichText", // this includes an attributes Array
         set(stringOrAttributesOrMorph) {
