@@ -173,7 +173,7 @@ export class SnapshotInspector {
         [num.humanReadableByteSize(tuple.bytes),
          tuple.count,
          num.humanReadableByteSize(tuple.bytes / tuple.count),
-         tuple.name])];
+         string.truncate(tuple.name, 300)])];
     return string.printTable(items, {separator: ' | '})
   }
 
