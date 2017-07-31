@@ -276,6 +276,11 @@ export default class Database {
     return result;
   }
 
+  async docCount() {
+    let entries = await this.pouchdb.allDocs();
+    return entries.rows.length;
+  }
+
   async revList(id) {
     // get a list of all revision ids in form ["2-xxx", "1-yyy", ...] of doc
     // with id
