@@ -365,6 +365,19 @@ var Resource$$1 = function () {
       return decodeURIComponent(lastPart);
     }
   }, {
+    key: "ext",
+    value: function ext() {
+      var url = this.url;
+      if (url.endsWith("/")) return "";
+
+      var _ref = url.match(/\.([^\/\.]+$)/) || ["", ""],
+          _ref2 = slicedToArray(_ref, 2),
+          _ = _ref2[0],
+          ext = _ref2[1];
+
+      return ext.toLowerCase();
+    }
+  }, {
     key: "nameWithoutExt",
     value: function nameWithoutExt() {
       var name = this.name(),
@@ -559,7 +572,7 @@ var Resource$$1 = function () {
   }, {
     key: "ensureExistance",
     value: function () {
-      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(optionalContent) {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee(optionalContent) {
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -608,7 +621,7 @@ var Resource$$1 = function () {
       }));
 
       function ensureExistance(_x3) {
-        return _ref.apply(this, arguments);
+        return _ref3.apply(this, arguments);
       }
 
       return ensureExistance;
@@ -616,7 +629,7 @@ var Resource$$1 = function () {
   }, {
     key: "copyTo",
     value: function () {
-      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(otherResource) {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(otherResource) {
         var _this2 = this;
 
         var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
@@ -706,7 +719,7 @@ var Resource$$1 = function () {
       }));
 
       function copyTo(_x4) {
-        return _ref2.apply(this, arguments);
+        return _ref4.apply(this, arguments);
       }
 
       return copyTo;
@@ -714,7 +727,7 @@ var Resource$$1 = function () {
   }, {
     key: "rename",
     value: function () {
-      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(otherResource) {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(otherResource) {
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -735,7 +748,7 @@ var Resource$$1 = function () {
       }));
 
       function rename$$1(_x6) {
-        return _ref3.apply(this, arguments);
+        return _ref5.apply(this, arguments);
       }
 
       return rename$$1;
@@ -754,7 +767,7 @@ var Resource$$1 = function () {
   }, {
     key: "read",
     value: function () {
-      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
@@ -769,7 +782,7 @@ var Resource$$1 = function () {
       }));
 
       function read() {
-        return _ref4.apply(this, arguments);
+        return _ref6.apply(this, arguments);
       }
 
       return read;
@@ -777,7 +790,7 @@ var Resource$$1 = function () {
   }, {
     key: "write",
     value: function () {
-      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
@@ -792,7 +805,7 @@ var Resource$$1 = function () {
       }));
 
       function write() {
-        return _ref5.apply(this, arguments);
+        return _ref7.apply(this, arguments);
       }
 
       return write;
@@ -800,7 +813,7 @@ var Resource$$1 = function () {
   }, {
     key: "mkdir",
     value: function () {
-      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
@@ -815,7 +828,7 @@ var Resource$$1 = function () {
       }));
 
       function mkdir() {
-        return _ref6.apply(this, arguments);
+        return _ref8.apply(this, arguments);
       }
 
       return mkdir;
@@ -823,7 +836,7 @@ var Resource$$1 = function () {
   }, {
     key: "exists",
     value: function () {
-      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
@@ -838,7 +851,7 @@ var Resource$$1 = function () {
       }));
 
       function exists() {
-        return _ref7.apply(this, arguments);
+        return _ref9.apply(this, arguments);
       }
 
       return exists;
@@ -846,7 +859,7 @@ var Resource$$1 = function () {
   }, {
     key: "remove",
     value: function () {
-      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
             switch (_context8.prev = _context8.next) {
@@ -861,7 +874,7 @@ var Resource$$1 = function () {
       }));
 
       function remove() {
-        return _ref8.apply(this, arguments);
+        return _ref10.apply(this, arguments);
       }
 
       return remove;
@@ -869,7 +882,7 @@ var Resource$$1 = function () {
   }, {
     key: "dirList",
     value: function () {
-      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(depth, opts) {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(depth, opts) {
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
           while (1) {
             switch (_context9.prev = _context9.next) {
@@ -884,7 +897,7 @@ var Resource$$1 = function () {
       }));
 
       function dirList(_x7, _x8) {
-        return _ref9.apply(this, arguments);
+        return _ref11.apply(this, arguments);
       }
 
       return dirList;
@@ -892,7 +905,7 @@ var Resource$$1 = function () {
   }, {
     key: "readProperties",
     value: function () {
-      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(opts) {
+      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(opts) {
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
             switch (_context10.prev = _context10.next) {
@@ -907,7 +920,7 @@ var Resource$$1 = function () {
       }));
 
       function readProperties(_x9) {
-        return _ref10.apply(this, arguments);
+        return _ref12.apply(this, arguments);
       }
 
       return readProperties;
@@ -922,7 +935,7 @@ var Resource$$1 = function () {
   }, {
     key: "readJson",
     value: function () {
-      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(obj) {
+      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(obj) {
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
             switch (_context11.prev = _context11.next) {
@@ -944,7 +957,7 @@ var Resource$$1 = function () {
       }));
 
       function readJson(_x11) {
-        return _ref11.apply(this, arguments);
+        return _ref13.apply(this, arguments);
       }
 
       return readJson;
@@ -1093,6 +1106,15 @@ function readXMLPropfindResult(xmlString) {
   });
 }
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// MIT License Copyright (c) Sindre Sorhus <sindresorhus@gmail.com>
+// https://github.com/sindresorhus/binary-extensions
+var binaryExtensions = ["3ds", "3g2", "3gp", "7z", "a", "aac", "adp", "ai", "aif", "aiff", "alz", "ape", "apk", "ar", "arj", "asf", "au", "avi", "bak", "bh", "bin", "bk", "bmp", "btif", "bz2", "bzip2", "cab", "caf", "cgm", "class", "cmx", "cpio", "cr2", "csv", "cur", "dat", "deb", "dex", "djvu", "dll", "dmg", "dng", "doc", "docm", "docx", "dot", "dotm", "dra", "DS_Store", "dsk", "dts", "dtshd", "dvb", "dwg", "dxf", "ecelp4800", "ecelp7470", "ecelp9600", "egg", "eol", "eot", "epub", "exe", "f4v", "fbs", "fh", "fla", "flac", "fli", "flv", "fpx", "fst", "fvt", "g3", "gif", "graffle", "gz", "gzip", "h261", "h263", "h264", "icns", "ico", "ief", "img", "ipa", "iso", "jar", "jpeg", "jpg", "jpgv", "jpm", "jxr", "key", "ktx", "lha", "lvp", "lz", "lzh", "lzma", "lzo", "m3u", "m4a", "m4v", "mar", "mdi", "mht", "mid", "midi", "mj2", "mka", "mkv", "mmr", "mng", "mobi", "mov", "movie", "mp3", "mp4", "mp4a", "mpeg", "mpg", "mpga", "mxu", "nef", "npx", "numbers", "o", "oga", "ogg", "ogv", "otf", "pages", "pbm", "pcx", "pdf", "pea", "pgm", "pic", "png", "pnm", "pot", "potm", "potx", "ppa", "ppam", "ppm", "pps", "ppsm", "ppsx", "ppt", "pptm", "pptx", "psd", "pya", "pyc", "pyo", "pyv", "qt", "rar", "ras", "raw", "rgb", "rip", "rlc", "rmf", "rmvb", "rtf", "rz", "s3m", "s7z", "scpt", "sgi", "shar", "sil", "sketch", "slk", "smv", "so", "sub", "swf", "tar", "tbz", "tbz2", "tga", "tgz", "thmx", "tif", "tiff", "tlz", "ttc", "ttf", "txz", "udf", "uvh", "uvi", "uvm", "uvp", "uvs", "uvu", "viv", "vob", "war", "wav", "wax", "wbmp", "wdp", "weba", "webm", "webp", "whl", "wim", "wm", "wma", "wmv", "wmx", "woff", "woff2", "wvx", "xbm", "xif", "xla", "xlam", "xls", "xlsb", "xlsm", "xlsx", "xlt", "xltm", "xltx", "xm", "xmind", "xpi", "xpm", "xwd", "xz", "z", "zip", "zipx"];
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
 function defaultOrigin() {
   // FIXME nodejs usage???
   return document.location.origin;
@@ -1141,6 +1163,7 @@ var WebDAVResource = function (_Resource) {
     _this.useProxy = opts.hasOwnProperty("useProxy") ? opts.useProxy : false;
     _this.useCors = opts.hasOwnProperty("useCors") ? opts.useCors : false;
     _this.headers = opts.headers || {};
+    _this.binary = _this.isFile() ? binaryExtensions.includes(_this.ext()) : false;
     return _this;
   }
 
