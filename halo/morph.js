@@ -1445,6 +1445,29 @@ class MenuHaloItem extends HaloItem {
 }
 
 class ConnectionsHaloItem extends HaloItem {
+  
+  static get connectionHaloMap() {
+    return this._connectionHaloMap || (this._connectionHaloMap = new WeakMap())
+  }
+
+  static removeHalosFor(morph) {
+    if (!this._connectionHaloMap) return;
+    let halo = this._connectionHaloMap.get(morph);
+    if (halo) {
+      halo.remove();
+      this._connectionHaloMap.delete(morph);
+    }
+  }
+
+  static openHalosFor(morph) {
+    let halo = this.connectionHaloMap.get(morph);
+    if (!halo) {
+      halo = new ConnectionHalo({target: morph});
+      this.connectionHaloMap.set(morph, halo);
+    }
+    halo.openInWorld(halo.position);
+    return halo;
+  }
 
   static get morphName() { return 'connections'; }
 
@@ -1459,13 +1482,11 @@ class ConnectionsHaloItem extends HaloItem {
   }
 
   async onMouseDown(evt) {
-    // let target = this.halo.target, connectionInspector = new ConnectionInspector({target});
-    // this.halo.remove();
-    // connectionInspector.fadeIntoWorld(target.globalBounds().center());
+    let halo = this.constructor.openHalosFor(this.halo.target);
+    once(halo, "remove", this.constructor, "removeHalosFor", {
+      converter: function() { return this.sourceObj.target; }
+    });
     this.halo.remove();
-    let target = this.halo.target,
-        connectionHalo = new ConnectionHalo({target});
-    connectionHalo.openInWorld(connectionHalo.position);
   }
   
 }

@@ -938,8 +938,7 @@ export class ProportionalLayoutHalo extends Morph {
   // updateDirectionPolicy(val) { this.target.direction = val; }
 
   updateSubmorphProportionalLayoutSettings({policy, submorph, axis}) {
-  submorph.show()
-    this.target.changeSettingsFor(submorph, {[axis]: policy});
+    this.target.changeSettingsFor(submorph, {[axis]: policy}, true/*save*/);
   }
   
   async chooseSubmorphToChangeLayoutSettings() {

@@ -2161,29 +2161,37 @@ export class Morph {
 
   targetDataBindings() { return this.sourceDataBindings(); }
 
-  connectMenuItems() {
+  connectMenuItems(actionFn) {
+    // returns menu of source attributes that can be used for connection from this object.
+    // when actionFn is passed it will be called with (sourceAttrName, morph, propertySpec)
+    // sourceAttrName can be "custom..." in this case the user can enter specify manually
+    // what the source should be
     let bindings = this.sourceDataBindings(),
         w = this.world(),
         items = bindings.map(
           group => [
             group[0].group || "uncategorized",
             group.map(ea => [
-              ea.name, async () => {
-                let { interactiveConnectGivenSource } = await System.import("lively.morphic/fabrik.js");
+              ea.name, actionFn ? () => actionFn(ea.name, this, ea) : async () => {
+                let { interactiveConnectGivenSource } =
+                   await System.import("lively.morphic/fabrik.js");
                 interactiveConnectGivenSource(this, ea.name);
               }
             ])]);
 
-    w && items.push(["custom...", async () => {
-      let { interactiveConnectGivenSource } = await System.import("lively.morphic/fabrik.js"),
-          attr = await w.prompt("Enter custom connection point", {
-            requester: this,
-            historyId: "lively.morphic-custom-connection-points",
-            useLastInput: true
-          })
-      if (attr) interactiveConnectGivenSource(this, attr);
-    }]);
-
+    w && items.push([
+      "custom...", actionFn ?
+      () => actionFn("custom...", this, null) :
+      async () => {
+        let { interactiveConnectGivenSource } =
+             await System.import("lively.morphic/fabrik.js"),
+            attr = await w.prompt("Enter custom connection point", {
+              requester: this,
+              historyId: "lively.morphic-custom-connection-points",
+              useLastInput: true
+            });
+        if (attr) interactiveConnectGivenSource(this, attr);
+      }]);
     return items;
   }
 
