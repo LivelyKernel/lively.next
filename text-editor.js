@@ -3,6 +3,7 @@ import { obj, arr, num, fun, promise } from "lively.lang"
 import { pt, Rectangle, rect, Color } from "lively.graphics"
 import { connect, signal, once } from "lively.bindings"
 import { resource } from "lively.resources";
+import { guessTextModeName } from "./editor-plugin.js";
 
 // this.world().openInWindow(new TextEditor).activate()
 
@@ -29,20 +30,16 @@ const editorCommands = [
   {
     name: "save file",
     exec: async textEditor => {
-      let f = textEditor.locationResource;
-      if (!f) {
-        textEditor.setStatusMessage("No file selected");
-        return true;
-      }
-
+      let action = textEditor.customSaveAction || textEditor.defaultSaveAction;
       try {
-        await f.write(textEditor.ui.contentText.textString);
-        textEditor.setStatusMessage(`${f.url} saved`, Color.green);
-        signal(textEditor, "contentSaved");
+        let result = await action(textEditor);
+        if (result.saved) {
+          textEditor.setStatusMessage(result.message || `saved`, Color.green);
+          signal(textEditor, "contentSaved");
+        } else textEditor.setStatusMessage(result.message || `not saved`);
       } catch (e) {
-        textEditor.showError(`Error writing ${f.url}: ${e.stack || e}`);
+        textEditor.showError(`Error saving: ${e.stack || e}`);
       }
-
       return true;
     }
   },
@@ -105,10 +102,13 @@ export default class TextEditor extends Morph {
       border: {defaultValue: {width: 1, color: Color.black}},
       extent: {defaultValue: pt(700,600)},
 
+      historyId: {defaultValue: "lively.morphic-text editor url"},
+
       submorphs: {
+        after: ["historyId"],
         initialize() {
           this.submorphs = [
-            Text.makeInputLine({name: "urlInput", historyId: "lively.morphic-text editor url"}),
+            Text.makeInputLine({name: "urlInput", historyId: this.historyId}),
             {name: "loadButton", type: "button", label: "reload"},
             {name: "saveButton", type: "button", label: "save"},
             {name: "removeButton", type: "button", label: "remove"},
@@ -145,7 +145,7 @@ export default class TextEditor extends Morph {
           urlInput.input = val || "";
           urlInput.acceptInput();
           if (urlInput.isFocused()) contentText.focus();
-          this.showFileContent(resource(url));
+          this.showFileContent(url);
           if (typeof lineNumber !== "undefined") this.lineNumber = lineNumber;
         }
       },
@@ -171,6 +171,14 @@ export default class TextEditor extends Morph {
             ed.centerRow(row);
           })
         }
+      },
+
+      customSaveAction: {
+        // fn that gets text editor and returns {saved: BOOLEAN, message: STRING}
+      },
+
+      customLoadContentAction: {
+        // fn that gets text editor and url returns content string
       }
     }
   }
@@ -217,48 +225,36 @@ export default class TextEditor extends Morph {
     return {lineNumber, url}
   }
 
-  async showFileContent(resource) {
-    var deferred = promise.deferred();
+  async showFileContent(url) {
+    let deferred = promise.deferred();
     this._loadPromise = deferred.promise;
     try {
-      var content = await resource.read();
-      await this.prepareEditorForFile(resource, content);
+      let res, content;
+      if (this.customLoadContentAction) {
+        content = await this.customLoadContentAction(this, url);
+      } else {
+        res = resource(url);
+        content = await res.read();
+      }
+      if (!content) content = "";
+      await this.prepareEditorForFile(url, content);
       var win = this.getWindow();
-      if (win) win.title = resource.name();
+      if (win) win.title = res ? res.name() : url;
       deferred.resolve(this);
-    } catch (e) { this.showError(e); deferred.reject(e); }
+    } catch (err) { this.showError(err); deferred.reject(err); }
     return this._loadPromise;
   }
 
-  async prepareEditorForFile(resource, content = "") {
-    var ed = this.ui.contentText, mode, setupFn;
+  async prepareEditorForFile(url, content = "") {
+    // FIXME
+    if (typeof content === "object") ({content, url} = content);
 
-    var url = (resource || {}).url;
+    var ed = this.ui.contentText, mode, setupFn;
 
     if (content.length > 2**19/*0.5MB*/) {
       this.setStatusMessage(`File content very big, ${num.humanReadableByteSize(content.length)}. Styling is disabled`);
-
-    } else if (url) {
-
-      var basename = arr.last(url.split("/")),
-          [_, ext] = basename.match(/\.([^\.\s]+)$/) || [];
-
-      // FIXME
-      if (ext === "js") {
-        mode = "js";
-        setupFn = (ed, plugin) =>
-          plugin.evalEnvironment = {
-            get targetModule() { return url; },
-            context: ed,
-            get format() { return lively.modules.module(this.targetModule).format() || "global"; }
-          };
-
-      } else if (["Dockerfile", ".bash_profile", ".profile", ".bashrc"].includes(basename)) {
-        mode = "sh";
-
-      } else {
-        mode = ext;
-      }
+    } else {
+      mode = guessTextModeName(content, url);
     }
 
     try {
@@ -272,6 +268,15 @@ export default class TextEditor extends Morph {
     ed.textString = content;
     ed.gotoDocumentStart();
     ed.scroll = pt(0,0);
+  }
+
+  async defaultSaveAction(textEditor) {
+    let f = textEditor.locationResource;
+    if (f) {
+      await f.write(textEditor.ui.contentText.textString);
+      return {saved: true}
+    }
+    return {saved: false, message: "No file selected"}
   }
 
   focus() {

@@ -323,6 +323,7 @@ export class ColorWidget extends Morph {
       {
         type: "label",
         padding: rect(0, 0, 5, 0),
+        styleClasses: ['TreeLabel'],
         value: gradient.type == 'linearGradient'
           ? num.toDegrees(gradient.vectorAsAngle()).toFixed() + "°,"
           : ""
@@ -342,7 +343,7 @@ export class ColorWidget extends Morph {
         ]
       });
       stops.push({
-        type: "label",
+        type: "label", styleClasses: ['TreeLabel'],
         padding: rect(0,0,5,0),
         value: (offset * 100).toFixed() + "%" + (i < gradient.stops.length - 1 ? ',' : '')
       });

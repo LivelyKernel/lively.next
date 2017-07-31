@@ -88,6 +88,11 @@ export class GradientEditor extends Morph {
         initialize() {
           this.build();
         }
+      },
+      styleSheets: {
+        initialize() {
+          this.styleSheets = GradientEditor.styleSheet;
+        }
       }
     };
   }
@@ -318,15 +323,13 @@ class StopControlHead extends Morph {
            
    async expand() {
       if (this.submorphs.length > 1) return;
-      const oldCenter = this.globalBounds().center(),
-            palette = this.get("paletteField");
+      const palette = this.get("paletteField");
       this.layout = null;
       this.submorphs = [this.closeButton(), palette, this.pickerField()];
-      this.openInWorld(this.globalPosition);
       palette.animate({extent: pt(15,15), duration: 200});
       await this.animate({
         layout: new HorizontalLayout({spacing: 3}), 
-        center: oldCenter, duration: 200
+        center: pt(-1,-15), duration: 200
       });
       this.stopVisualizer.gradientEditor.update();
    }
@@ -343,7 +346,6 @@ class StopControlHead extends Morph {
         layout: new HorizontalLayout({spacing: 3}), 
         center: oldCenter, duration: 200
       });
-      this.stopControl.addMorph(this);
    }
            
    onWidgetClosed() {
@@ -559,7 +561,7 @@ class GradientStopControl extends Morph {
      this.nativeCursor = '-webkit-grabbing';
      this.stopVisualizer.nativeCursor = '-webkit-grabbing';
      this.offsetView = this.addMorph(new Text({
-        type: 'text', styleClasses: ['propertyView']
+        type: 'text', styleClasses: ['Tooltip'], padding: 3
      })).openInWorld(evt.hand.position.addPt(pt(10,10)));
   }
           

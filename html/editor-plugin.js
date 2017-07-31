@@ -1,4 +1,4 @@
-import { IFrameMorph } from "lively.morphic/html-morph.js";
+import { IFrameMorph } from "lively.components";
 import { arr, string } from "lively.lang";
 import { Color } from "lively.graphics";
 import { localInterface, systemInterfaceNamed } from "lively-system-interface";

@@ -1,6 +1,7 @@
 /*global System,WeakMap*/
 import { fun, arr } from "lively.lang"
-import { show, HorizontalLayout, VerticalLayout, inspect, morph, Morph, Icon, loadObjectFromPartsbinFolder } from "lively.morphic";
+import { show, Text, HorizontalLayout, VerticalLayout, 
+         inspect, morph, Morph, Icon, loadObjectFromPartsbinFolder } from "lively.morphic";
 import { pt, LinearGradient, Rectangle, Color } from "lively.graphics";
 import { connect, noUpdate } from "lively.bindings"
 
@@ -172,7 +173,7 @@ export class RichTextControl extends Morph {
         ensure() {
           let existing = this.getSubmorphNamed("font button");
           if (existing) return existing;
-          let fontItems = RichTextControl.basicFontItems();
+          let fontItems = Text.basicFontItems();
           let {extent} = this.btnStyle;
           let btn = this.addMorph(new DropDownList({
             selection: fontItems[0], items: fontItems,

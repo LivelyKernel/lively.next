@@ -4,17 +4,17 @@ import { Icon, Morph, HorizontalLayout, GridLayout, config } from "lively.morphi
 import { pt, Color } from "lively.graphics";
 import JavaScriptEditorPlugin from "../editor-plugin.js";
 import { withSuperclasses, lexicalClassMembers, isClass } from "lively.classes/util.js";
-import { TreeData, Tree } from "lively.morphic/components/tree.js";
+import { TreeData, Tree } from "lively.components";
 import { connect } from "lively.bindings";
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
 import ObjectPackage, { addScript, isObjectClass, isObjectClassFor } from "lively.classes/object-classes.js";
 import { chooseUnusedImports, interactivlyFixUndeclaredVariables, interactivelyChooseImports } from "../import-helper.js";
 import { module } from "lively.modules";
-import { interactivelySaveObjectToPartsBinFolder } from "../../../partsbin.js";
+import { interactivelySaveObjectToPartsBinFolder } from "lively.morphic/partsbin.js";
 import { emit } from "lively.notifications/index.js";
 import { LinearGradient } from "lively.graphics/index.js";
 import { adoptObject } from "lively.classes/runtime.js";
-import { InteractiveMorphSelector } from "../../../halo/morph.js";
+import { InteractiveMorphSelector } from "lively.halos/morph.js";
 
 
 // var oe = ObjectEditor.open({target: this})
@@ -251,7 +251,8 @@ export class ObjectEditor extends Morph {
       runMethodButton,
       saveButton,
       sourceEditor,
-      toggleImportsButton
+      toggleImportsButton,
+      classAndMethodControls
     } = this.ui;
 
     connect(inspectObjectButton, "fire", this, "execCommand", {converter: () => "open object inspector for target"});
@@ -276,6 +277,12 @@ export class ObjectEditor extends Morph {
     connect(sourceEditor, "textChange", this, "updateUnsavedChangeIndicatorDebounced");
 
     connect(classTree, "contextMenuRequested", this, "contextMenuForClassTree");
+
+    this.applyLayoutIfNeeded();
+
+    [inspectObjectButton, publishButton, chooseTargetButton,
+     removeButton,addButton,forkPackageButton, openInBrowserButton
+    ].forEach(ea => ea.extent = pt(26,24));
   }
 
   __additionally_serialize__(snapshot, objRef, pool, addFn) {
@@ -364,35 +371,31 @@ export class ObjectEditor extends Morph {
 
         topBtnStyle = {
           type: "button",
-          activeStyle: {
-            fill: new LinearGradient({stops: [
-               {offset: 0, color: Color.white},
-               {offset: 1, color: new Color.rgb(236,240,241)}
-            ]}),
-            border: {color: Color.gray, style: "solid", radius: 5},
-            nativeCursor: "pointer"
-          },
+          fill: new LinearGradient({
+            stops: [
+              {offset: 0, color: Color.white},
+              {offset: 1, color: new Color.rgb(236,240,241)}]}),
+          border: {color: Color.gray, style: "solid", radius: 5},
+          nativeCursor: "pointer",
           extent: pt(26,24),
         },
 
         btnStyle = {
           type: "button",
-          activeStyle: {
-            fill: Color.white,
-            border: {color: Color.lightGray, style: "solid", radius: 5},
-            nativeCursor: "pointer"
-          },
+          fill: Color.white,
+          border: {color: Color.lightGray, style: "solid", radius: 5},
+          nativeCursor: "pointer",
           extent: pt(26,24),
         };
 
     return [
       {name: "objectCommands",
        fill: Color.transparent, reactsToPointer: false,
-       layout: new HorizontalLayout({autoResize: false, direction: "centered", spacing: 2}),
+       layout: new HorizontalLayout({direction: "centered", spacing: 2}),
        submorphs: [
-         {...topBtnStyle, name: "inspectObjectButton", fontSize: 18, label: Icon.makeLabel("gears"), tooltip: "open object inspector"},
-         {...topBtnStyle, name: "publishButton", fontSize: 18, label: Icon.makeLabel("cloud-upload"), tooltip: "publish object to PartsBin"},
-         {...topBtnStyle, name: "chooseTargetButton", fontSize: 18, label: Icon.makeLabel("crosshairs"), tooltip: "select another target"},
+         {...topBtnStyle, name: "inspectObjectButton", fontSize: 14, label: Icon.textAttribute("gears"), tooltip: "open object inspector"},
+         {...topBtnStyle, name: "publishButton", fontSize: 14, label: Icon.textAttribute("cloud-upload"), tooltip: "publish object to PartsBin"},
+         {...topBtnStyle, name: "chooseTargetButton", fontSize: 14, label: Icon.textAttribute("crosshairs"), tooltip: "select another target"},
        ]},
 
       {type: Tree, name: "classTree", treeData: new ClassTreeData(null),
@@ -400,11 +403,12 @@ export class ObjectEditor extends Morph {
        borderBottom: {width: 1, color: Color.gray}},
 
       {name: "classAndMethodControls",
-       layout: new HorizontalLayout({autoResize: false, direction: "centered", spacing: 2}), submorphs: [
-         {...btnStyle, name: "addButton", label: Icon.makeLabel("plus"), tooltip: "add a new method"},
-         {...btnStyle, name: "removeButton", label: Icon.makeLabel("minus"), tooltip: "remove a method or class"},
-         {...btnStyle, name: "forkPackageButton", fontSize: 14, label: Icon.makeLabel("code-fork"), tooltip: "fork package"},
-         {...btnStyle, name: "openInBrowserButton", fontSize: 14, label: Icon.makeLabel("external-link"), tooltip: "open selected class in system browser"},
+       width: 100,
+       layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
+         {...btnStyle, name: "addButton", label: Icon.textAttribute("plus"), tooltip: "add a new method"},
+         {...btnStyle, name: "removeButton", label: Icon.textAttribute("minus"), tooltip: "remove a method or class"},
+         {...btnStyle, name: "forkPackageButton", label: Icon.textAttribute("code-fork"), tooltip: "fork package"},
+         {...btnStyle, name: "openInBrowserButton", label: Icon.textAttribute("external-link"), tooltip: "open selected class in system browser"},
        ]},
 
       {name: "sourceEditor", ...textStyle},
@@ -859,7 +863,7 @@ export class ObjectEditor extends Morph {
       this.state.moduleChangeWarning = null;
     }
 
-    this.backupSourceInLocalStorage(editor.textString);
+    this.backupSourceInLocalStorage(content);
 
     this.state.isSaving = true;
     try {
@@ -873,10 +877,10 @@ export class ObjectEditor extends Morph {
   }
 
   backupSourceInLocalStorage(source) {
-    var store = JSON.parse(localStorage["oe helper"] || '{"saves": []}')
+    var store = JSON.parse(localStorage.getItem("oe helper") || '{"saves": []}')
+    if (store.saves.length > 100) store.saves = store.saves.slice(40, 100);
     store.saves.push(source);
-    if (store.saves.length > 300) store.saves = store.saves.slice(-300);
-    localStorage["oe helper"] = JSON.stringify(store);
+    localStorage.setItem("oe helper", JSON.stringify(store))
   }
 
   async interactivelyAddMethod() {
@@ -1394,17 +1398,15 @@ class ImportController extends Morph {
         btnStyle = {
           type: "button",
           fontSize: 10,
-          activeStyle: {
-            fill: Color.white,
-            border: {color: Color.lightGray, style: "solid", radius: 5},
-            nativeCursor: "pointer"
-          },
+          fill: Color.white,
+          border: {color: Color.lightGray, style: "solid", radius: 5},
+          nativeCursor: "pointer",
           extent: pt(26,24),
         };
 
     this.submorphs = [
       {...listStyle, name: "importsList", multiSelect: true, borderBottom: {width: 1, color: Color.gray}},
-      {name: "buttons", layout: new HorizontalLayout({autoResize: false, direction: "centered", spacing: 2}),
+      {name: "buttons", layout: new HorizontalLayout({direction: "centered", spacing: 2}),
         submorphs: [
         {...btnStyle, name: "addImportButton", label: Icon.makeLabel("plus"), tooltip: "add new import"},
         {...btnStyle, name: "removeImportButton", label: Icon.makeLabel("minus"), tooltip: "remove selected import(s)"},
@@ -1419,6 +1421,13 @@ class ImportController extends Morph {
         ["buttons"]
       ]});
     this.layout.row(1).fixed = 30;
+    this.applyLayoutIfNeeded();
+    
+    // FIXME
+    [this.get("openButton"),
+     this.get("cleanupButton"),
+     this.get("removeImportButton"),
+     this.get("addImportButton")].forEach(btn => btn.extent = btnStyle.extent)
   }
 
   async updateImports() {

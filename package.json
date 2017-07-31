@@ -33,6 +33,7 @@
   "systemjs": {
     "main": "index.js",
     "map": {
+      "prettier": "./js/prettier.min.js",
       "prism": "prismjs/prism.js",
       "prism-json": "prismjs/components/prism-json.js"
     }

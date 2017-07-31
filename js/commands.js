@@ -330,7 +330,7 @@ export var jsIdeCommands = [
       };
 
       let module = lively.modules.module,
-          prettierURL = System.normalizeSync("prettier", System.normalizeSync("lively.morphic")),
+          prettierURL = System.normalizeSync("prettier", System.normalizeSync("lively.ide")),
           prettier = await module(prettierURL).load({format: "global",instrument: false}),
           {findNodeByAstIndex} = await module("lively.ast/lib/acorn-extension.js").load(),
           {parse, printAst, withMozillaAstDo} = await module("lively.ast").load(),

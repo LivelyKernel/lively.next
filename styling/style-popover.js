@@ -10,7 +10,7 @@ import { Color, rect, Rectangle, pt } from "lively.graphics";
 import { range, flatten } from "lively.lang/array.js";
 import { isArray } from "lively.lang/object.js";
 
-import { FilterableList, TreeData, Tree, Window } from 'lively.components'
+import { FilterableList, TreeData, Tree, Window, widgets } from 'lively.components'
 import { ModeSelector, LabeledCheckBox, DropDownSelector,
          SearchField, CheckBox } from 'lively.components/widgets.js';
 
@@ -422,7 +422,7 @@ export class LayoutPopover extends StylePopover {
     if (this.layoutHalo) {
       this.getSubmorphNamed("controlContainer").animate({
         isLayoutable: true,
-        submorphs: this.layoutHalo.optionControls(),
+        submorphs: this.optionControls(this.layoutHalo),
         duration: 300
       });
     } else {
@@ -481,13 +481,114 @@ export class LayoutPopover extends StylePopover {
     return layoutSelector;
   }
 
+  gridLayoutOptions() {
+      const layout = this.container.halo,
+            compensateOrigin = new widgets.LabeledCheckBox({
+                name: "compensateOrigin", label: 'Compensate Origin',
+                fill: Color.transparent,
+                checked: layout.compensateOrigin}),
+            fitToCell = new widgets.LabeledCheckBox({
+              label: 'Resize Submorphs', fill: Color.transparent,
+                name: "fitToCell", checked: layout.fitToCell});
+      connect(compensateOrigin, "checked", layout, "compensateOrigin");
+      connect(fitToCell, "checked", layout, "fitToCell");
+      connect(compensateOrigin, "checked", this, "alignWithTarget");
+      return [compensateOrigin, fitToCell];
+  }
+
+  flexLayoutOptions() {
+    const layout = this.container.halo,
+          spacing = new NumberWidget({
+            fill: Color.white,
+            borderWidth: 1,
+            borderRadius: 4,
+            padding: rect(5,4,0,0),
+            borderColor: Color.gray,
+            min: 0,
+            number: layout.spacing,
+            unit: "px",
+          }),
+          autoResizeCb = new widgets.LabeledCheckBox({
+            name: "autoResize", label: 'Resize Container',
+            alignCheckBox: 'right',
+            fill: Color.transparent,
+            checked: layout.autoResize
+          }),
+          resizeSubmorphsCb = new widgets.LabeledCheckBox({
+            label: 'Resize Submorphs',
+            name: "resizeSubmorphs",
+            alignCheckBox: 'right',
+            fill: Color.transparent,
+            checked: layout.resizeSubmorphs
+          });
+    connect(spacing, 'update', this, 'updateSpacing');
+    connect(autoResizeCb, "checked", this, "updateAutoResizePolicy");
+    connect(resizeSubmorphsCb, "checked", this, "updateResizeSubmorphsPolicy");
+    return [
+        autoResizeCb,
+        resizeSubmorphsCb,
+        {fill: Color.transparent, layout: new HorizontalLayout(),
+         submorphs: [
+           {type: 'label', value: 'Submorph Spacing',
+            fontColor: Color.gray.darker(),
+            padding: rect(0,5,5,5)}, spacing]}
+    ];
+  }
+
+  tilingLayoutOptions() {
+    const layout = this.container.layout,
+          spacing = new NumberWidget({
+            min: 0,
+            number: layout.spacing,
+            padding: rect(5,3,0,0),
+            borderRadius: 3,
+            borderWidth: 1,
+            borderColor: Color.gray,
+            unit: "px"
+          });
+    connect(spacing, 'update', this, 'updateSpacing');
+    return [
+      [
+        {
+          type: "text",
+          textString: "Submorph Spacing",
+          padding: rect(0,5,5,5),
+          fill: Color.transparent,
+          fontColor: Color.gray.darker(),
+          readOnly: true
+        },
+        spacing
+      ]
+    ].map(x => {
+      return {
+        submorphs: x,
+        fill: Color.transparent,
+        layout: new HorizontalLayout({spacing: 3})
+      };
+    });
+  }
+
+  optionControls(halo) {
+    // rms 31.7.17 not so nice, but fastest way I could come up with
+    // to remove the circular dependency to lively.halos
+    switch (halo.constructor)  {
+      case 'GridLayoutHalo':
+        return this.gridLayoutControls();
+      case 'TilinLayoutHalo':
+        return this.tilingLayoutOptions();
+      case 'FlexLayoutHalo':
+        return this.flexLayoutOptions();
+    }
+    
+  }
+
   layoutControls() {
     return {
       name: 'controlContainer',
       fill: Color.transparent,
       layout: new VerticalLayout(),
       isLayoutable: !!this.layoutHalo,
-      submorphs: this.layoutHalo ? this.layoutHalo.optionControls() : []
+      submorphs: this.layoutHalo ? this.optionControls(this.layoutHalo) : []
     };
   }
 }
