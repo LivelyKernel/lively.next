@@ -1210,9 +1210,14 @@ export default class Inspector extends Morph {
   }
 
   async selectTarget() {
-    this.toggleSelectionInstructions(true);
-    let newTarget = await InteractiveMorphSelector.selectMorph();
-    this.toggleSelectionInstructions(false);
+    var newTarget;
+    if (this.env.eventDispatcher.isKeyPressed("Shift")) {
+      [newTarget] = await $world.execCommand("select morph", {justReturn: true});
+    } else {
+      this.toggleSelectionInstructions(true);
+      newTarget = await InteractiveMorphSelector.selectMorph();
+      this.toggleSelectionInstructions(false);
+    }
     if (newTarget) this.targetObject = newTarget;
   }
 
