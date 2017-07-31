@@ -2653,8 +2653,8 @@ export class Image extends Morph {
   }
 
   setHeightKeepingRatio(h) {
-    this.width = this.ratio/h
-    this.height = h
+    this.width = h/this.ratio;
+    this.height = h;
   }
 
   loadUrl(url, autoResize = this.autoResize) {
