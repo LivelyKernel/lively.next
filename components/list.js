@@ -991,7 +991,7 @@ export class FilterableList extends Morph {
         }), {tokens: [], current: "", escaped: false, spaceSeen: false});
     parsed.current && parsed.tokens.push(parsed.current)
     var lowercasedTokens = parsed.tokens.map(ea => ea.toLowerCase());
-    return {tokens: parsed.tokens, lowercasedTokens};
+    return {tokens: parsed.tokens, lowercasedTokens, input: filterText};
   }
 
   updateFilter() {
