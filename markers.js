@@ -1,8 +1,9 @@
 /* global Element, Node */
-import {obj, string} from "lively.lang";
+import {obj, arr, string} from "lively.lang";
 import {pt, Color, Point, Rectangle, rect} from "lively.graphics";
-import {morph, Icon, StyleSheet, Morph, MorphicEnv, ShadowObject} from "lively.morphic";
+import {morph, Path, Ellipse, Icon, StyleSheet, Morph, MorphicEnv, ShadowObject} from "lively.morphic";
 import {connect, disconnect} from "lively.bindings";
+import { MorphHighlighter } from "./morph.js";
 
 export function show(target) {
   var world = MorphicEnv.default().world;
@@ -142,10 +143,12 @@ class BoundsMarker extends Morph {
   }
 }
 
+// install style sheets in world when rendered
+
 export class StatusMessage extends Morph {
 
   static get styleSheet() {
-    return new StyleSheet({
+    return new StyleSheet("Status Message Style", {
       ".StatusMessage [name=messageText]": {
         draggable: false,
         readOnly: true,

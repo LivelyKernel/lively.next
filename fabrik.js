@@ -743,7 +743,8 @@ class ConnectionPin extends Morph {
     connectorLeash.startPoint.clearConnection();
     connectorLeash.endPoint.clearConnection();
     connectorLeash.remove();
-    this.connections = (this.target.attributeConnections || []).filter(c => c.sourceAttrName == this.propertyName);
+    this.connections = (this.target.attributeConnections || [])
+      .filter(c => c.sourceAttrName == this.propertyName);
     this.connectingInProgress = false;
     this.focus();
     this.update();
@@ -831,6 +832,9 @@ export class ConnectionHalo extends Morph {
           this.alignWithTarget();
         }
       },
+
+      visiblePins: {defaultValue: []},
+      
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
@@ -878,7 +882,7 @@ export class ConnectionHalo extends Morph {
       type: 'button',
       width: 110,
       icon: Icon.makeLabel('plus'),
-      label: 'Add Connection',
+      label: 'Add Pin...',
       styleClasses: ['controlButton'],
       padding: rect(4,5,4,1),
     })
@@ -892,10 +896,28 @@ export class ConnectionHalo extends Morph {
     });
 
     connect(closeButton, 'onMouseDown', this, 'remove');
-    connect(addPinButton, 'onMouseDown', this.target, 'openMenu', {
-      converter: () => /*global target*/ target.connectMenuItems(),
-      varMapping: {target: this.target}
+    connect(addPinButton, 'onMouseDown', this, 'interactivelyAddPin');
+    // connect(addPinButton, 'onMouseDown', this.target, 'openMenu', {
+    //   converter: () => /*global target*/ target.connectMenuItems(),
+    //   varMapping: {target: this.target}
+    // });
+  }
+
+ interactivelyAddPin() {
+    let menuItems = this.target.connectMenuItems(async (name, target, spec) => {
+      if (name === "custom...") {
+        name = await this.world.prompt("Enter custom connection point", {
+          requester: this,
+          historyId: "lively.morphic-custom-connection-points",
+          useLastInput: true
+        });
+      }
+      if (!name) return;
+      arr.pushIfNotIncluded(this.visiblePins, name);
+      this.placeConnectionPins();
     });
+
+   this.target.openMenu(menuItems);
   }
 
   getPlacementPoints() {
@@ -910,19 +932,27 @@ export class ConnectionHalo extends Morph {
   }
 
   placeConnectionPins() {
-    var placementPoints = this.getPlacementPoints(),
+    var placementPoints = this.getPlacementPoints(), 
         sides = rect(0).sides.concat(rect(0).corners);
     this.submorphs = [];
     this.initControls();
-    arr.groupBy(this.target.attributeConnections || [], c => c.sourceAttrName)
-       .forEachGroup((propertyName, connections) => {
+
+    let pinsAndConnections = this.visiblePins.reduce(
+      (spec, name) => Object.assign(spec, {[name]: []}), {});
+    (this.target.attributeConnections || []).reduce((spec, con) => {
+      let conns = spec[con.sourceAttrName] || (spec[con.sourceAttrName] = []);
+      conns.push(con);
+      return spec;
+    }, pinsAndConnections);
+
+    Object.keys(pinsAndConnections).map((sourceName) => {
       let [center, orientation] = placementPoints.pop()
       this.addMorphBack(
         new ConnectionPin({
           expanded: false,
           styleClasses: ['dark'],
-          propertyName,
-          connections,
+          propertyName: sourceName,
+          connections: pinsAndConnections[sourceName],
           target: this.target,
           collapsible: true,
           orientation
@@ -930,4 +960,5 @@ export class ConnectionHalo extends Morph {
       ).position = center;
     });
   }
+
 }

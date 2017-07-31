@@ -1445,6 +1445,29 @@ class MenuHaloItem extends HaloItem {
 }
 
 class ConnectionsHaloItem extends HaloItem {
+  
+  static get connectionHaloMap() {
+    return this._connectionHaloMap || (this._connectionHaloMap = new WeakMap())
+  }
+
+  static removeHalosFor(morph) {
+    if (!this._connectionHaloMap) return;
+    let halo = this._connectionHaloMap.get(morph);
+    if (halo) {
+      halo.remove();
+      this._connectionHaloMap.delete(morph);
+    }
+  }
+
+  static openHalosFor(morph) {
+    let halo = this.connectionHaloMap.get(morph);
+    if (!halo) {
+      halo = new ConnectionHalo({target: morph});
+      this.connectionHaloMap.set(morph, halo);
+    }
+    halo.openInWorld(halo.position);
+    return halo;
+  }
 
   static get morphName() { return 'connections'; }
 
@@ -1459,13 +1482,11 @@ class ConnectionsHaloItem extends HaloItem {
   }
 
   async onMouseDown(evt) {
-    // let target = this.halo.target, connectionInspector = new ConnectionInspector({target});
-    // this.halo.remove();
-    // connectionInspector.fadeIntoWorld(target.globalBounds().center());
+    let halo = this.constructor.openHalosFor(this.halo.target);
+    once(halo, "remove", this.constructor, "removeHalosFor", {
+      converter: function() { return this.sourceObj.target; }
+    });
     this.halo.remove();
-    let target = this.halo.target,
-        connectionHalo = new ConnectionHalo({target});
-    connectionHalo.openInWorld(connectionHalo.position);
   }
 
 }
@@ -1583,18 +1604,19 @@ export class MorphHighlighter extends Morph {
 
 export class InteractiveMorphSelector {
 
-  static selectMorph(world, controllingMorph) {
-    let sel = new this(world, controllingMorph);
+  static selectMorph(world, controllingMorph, filterFn) {
+    let sel = new this(world, controllingMorph, filterFn);
     sel.selectNewTarget();
     return sel.whenDone;
   }
 
-  constructor(world = $world, controllingMorph = null) {
+  constructor(world = $world, controllingMorph = null, filterFn) {
     this.controllingMorph = controllingMorph;
     this.selectorMorph = null;
     this.morphHighlighter = null;
     this.possibleTarget = null;
     this.world = world;
+    this.filterFn = filterFn;
     this.whenDone = null;
   }
 
@@ -1614,18 +1636,20 @@ export class InteractiveMorphSelector {
   scanForTargetAt(pos) {
     this.selectorMorph.center = pos;
     var target = this.selectorMorph.morphBeneath(pos);
-    if (this.morphHighlighter == target) {
-      target = this.morphHighlighter.morphBeneath(pos);
+    let {possibleTarget, controllingMorph, filterFn, world, morphHighlighter} = this;
+    if (morphHighlighter == target) {
+      target = morphHighlighter.morphBeneath(pos);
     } else if (target && target.isEpiMorph) {
       target = target.morphBeneath(pos);
     }
-    if (target != this.possibleTarget
-        && (!this.controllingMorph
-         || !target.ownerChain().includes(this.controllingMorph.getWindow()))) {
-      if (this.morphHighlighter) this.morphHighlighter.deactivate();
-      this.possibleTarget = target;
-      if (this.possibleTarget && !this.possibleTarget.isWorld) {
-        let h = this.morphHighlighter = MorphHighlighter.for(this.world, target);
+    if (target != possibleTarget
+        && (!controllingMorph
+         || !target.ownerChain().includes(controllingMorph.getWindow()))
+        && (!filterFn || filterFn(target))) {
+      if (morphHighlighter) morphHighlighter.deactivate();
+      this.possibleTarget = possibleTarget = target;
+      if (possibleTarget && !possibleTarget.isWorld) {
+        let h = this.morphHighlighter = MorphHighlighter.for(world, target);
         h && h.show();
       }
     }

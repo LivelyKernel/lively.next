@@ -31,6 +31,8 @@ export const haloCommands = [
   }
 ];
 
+export {StatusMessage, Halo, show, StatusMessageForMorph};
+
 morphCommands.push(...arr.filter(haloCommands, haloCmd =>
   !morphCommands.find(morphCmd => morphCmd.name == haloCmd.name)))
 

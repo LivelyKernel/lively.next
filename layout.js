@@ -785,6 +785,10 @@ export class FlexLayoutHalo extends Morph {
     this.alignWithTarget();
   }
 
+  updateAlignmentPolicy(val) { this.target.align = val; }
+
+  updateDirectionPolicy(val) { this.target.direction = val; }
+
   updateSpacing(s) {
     this.target.spacing = s
   }
