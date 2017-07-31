@@ -78,6 +78,13 @@ export default class Resource {
     return decodeURIComponent(lastPart);
   }
 
+  ext() {
+    let url = this.url;
+    if (url.endsWith("/")) return "";
+    let [_, ext] = url.match(/\.([^\/\.]+$)/) || ["", ""];
+    return ext.toLowerCase();
+  }
+
   nameWithoutExt() {
     let name = this.name(),
         extIndex = name.lastIndexOf(".");
