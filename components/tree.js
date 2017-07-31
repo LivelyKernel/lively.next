@@ -65,7 +65,7 @@ export class TreeNode extends Morph {
             textStyleClasses: ["fa"],
             styleClasses: ['TreeLabel'],
             fontFamily: "FontAwesome",
-            padding: 2,
+            padding: Rectangle.inset(2),
             nativeCursor: "pointer"
           }));
         }
@@ -100,6 +100,11 @@ export class TreeNode extends Morph {
           if (m != this.label) this.label.value = '';
           this.submorphs = arr.uniq(arr.compact([this.getSubmorphNamed('toggle'), this.label, m]));
         }
+      },
+
+      padding: {
+        defaultValue: Rectangle.inset(4, 2),
+        after: ["label", "toggle", 'displayedMorph'],
       },
 
       fontFamily: {
@@ -185,12 +190,19 @@ export class TreeNode extends Morph {
     this.isCollapsable = isCollapsable;
     this.isCollapsed = isCollapsed;
 
+    let padding = this.padding, padl = 0, padr = 0, padt = 0, padb = 0;
+    if (padding) {
+      padl = padding.left();
+      padt = padding.top();
+      padr = padding.right();
+      padb = padding.bottom();
+    }
+
     var toggle = this.getSubmorphNamed("toggle"), displayedMorph;
 
-    if (!isCollapsable && toggle) {
-      toggle.visible = false;
-    } else {
-      toggle && (toggle.visible = true);
+    if (toggle){
+      toggle.visible = this.isCollapsable;
+      toggle.position = pt(padl, padt)
     }
     if (displayedNode && displayedNode.isMorph) {
       displayedMorph = this.displayedMorph = displayedNode;
@@ -201,15 +213,18 @@ export class TreeNode extends Morph {
       this.labelValue = displayedNode;
       displayedMorph.fit();
       if (goalWidth) {
-        displayedMorph.width = Math.max(displayedMorph.textBounds().width, goalWidth - defaultToggleWidth);
+        displayedMorph.width = Math.max(
+          displayedMorph.textBounds().width,
+          goalWidth - defaultToggleWidth);
       }
     }
 
     this.styleClasses = isSelected ? ["selected"] : ["deselected"];
     if (node) node.isSelected = isSelected;
 
-    displayedMorph.position = pt(defaultToggleWidth + 3, 0);
-    this.extent = displayedMorph.bounds().extent().addXY(defaultToggleWidth, 0);
+    displayedMorph.position = pt(defaultToggleWidth + padl + 3, padt);
+
+    this.extent = displayedMorph.bounds().extent().addXY(defaultToggleWidth + 3 + padl + padr, padb);
     
     this.myNode = node;
     if (this.myNode) this.myNode.renderedNode = this;
@@ -223,10 +238,10 @@ export class TreeNode extends Morph {
       toggle.fit();
       var bounds = toggle.textBounds();
       this.height = Math.max(bounds.height, this.height);
-      this.padding = Rectangle.inset(bounds.width+4, 1, 1, 1);
+      // this.padding = Rectangle.inset(bounds.width+4, 1, 1, 1);
       toggle.leftCenter = pt(1,this.height/2);
     } else {
-      this.padding = Rectangle.inset(1);
+      // this.padding = Rectangle.inset(1);
     }
   }
 
