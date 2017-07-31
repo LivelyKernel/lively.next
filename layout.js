@@ -287,6 +287,8 @@ export class VerticalLayout extends FloatLayout {
   constructor(props = {}) {
     super(props);
     // supported directions: "left", "center"
+    this._resizeSubmorphs = typeof props.resizeSubmorphs !== "undefined" ?
+                              props.resizeSubmorphs : false;
     this._align = props.align || "left";
   }
 
@@ -484,16 +486,31 @@ export class ProportionalLayout extends Layout {
     this.submorphSettings = (args && args.submorphSettings) || [];
   }
 
+  __after_deserialize__(snapshot, ref) {
+    let {_submorphSettings, container} = this,
+        map = this.constructor.proportionalLayoutSettingsForMorphs;
+    if (!_submorphSettings || !container) return;
+    for (let [ident, setting] of _submorphSettings) {
+      let [morph] = this._morphsMatchingSelector(container, ident);
+      morph && map.set(morph, setting);
+    }
+  }
+
   settingsFor(morph) {
     // move, resize, scale, fixed
     let settings = this.constructor.proportionalLayoutSettingsForMorphs.get(morph);
     return settings || {x: "scale", y: "scale"};
   }
 
-  changeSettingsFor(morph, mergin) {
+  changeSettingsFor(morph, mergin, save = false) {
     if (typeof mergin === "string") mergin = {x: mergin, y: mergin};
     this.constructor.proportionalLayoutSettingsForMorphs
-      .set(morph, {...this.settingsFor(morph), ...mergin})
+      .set(morph, {...this.settingsFor(morph), ...mergin});
+    if (save) {
+      let settings = this.submorphSettings.filter(ea => ea[0] !== morph.name);
+      settings.push([morph.name, this.settingsFor(morph)]);
+      this._submorphSettings = settings;
+    }
   }
 
   get submorphSettings() { return this._submorphSettings; }
@@ -509,24 +526,24 @@ export class ProportionalLayout extends Layout {
 
   changeSubmorphSettings(submorphSettings) {
     for (let [morphSelector, setting] of submorphSettings) {
-      let morphs = morphsMatchingSelector(this.container, morphSelector);
+      let morphs = this._morphsMatchingSelector(this.container, morphSelector);
       morphs.forEach(m => this.changeSettingsFor(m, setting));
     }
+  }
 
-    function morphsMatchingSelector(container, selector) {      
-      let morphs = [];
-      if (!selector) return morphs;
-      if (selector.isMorph) {
-        morphs = [selector];
-      } else if (selector instanceof RegExp) {
-        morphs = container.submorphs.filter(ea => ea.name.match(selector));
-      } else if (typeof selector === "string") {
-        morphs = container.submorphs.filter(ea => ea.name === selector);
-      } else if (Array.isArray(selector)) {
-        morphs = flatmap(selector, sel => morphsMatchingSelector(container, sel));
-      }
-      return morphs;
+  _morphsMatchingSelector(container, selector) {      
+    let morphs = [];
+    if (!selector) return morphs;
+    if (selector.isMorph) {
+      morphs = [selector];
+    } else if (selector instanceof RegExp) {
+      morphs = container.submorphs.filter(ea => ea.name.match(selector));
+    } else if (typeof selector === "string") {
+      morphs = container.submorphs.filter(ea => ea.name === selector);
+    } else if (Array.isArray(selector)) {
+      morphs = flatmap(selector, sel => this._morphsMatchingSelector(container, sel));
     }
+    return morphs;
   }
 
   refreshBoundsCache() {    
