@@ -14,7 +14,9 @@ var config = {
       "lively.server/plugins/proxy.js",
       "lively.server/plugins/remote-shell.js",
       "lively.server/plugins/socketio.js",
-      "lively.server/plugins/world-loading.js"
+      "lively.server/plugins/world-loading.js",
+      "lively.server/plugins/file-upload.js",
+      "lively.server/plugins/objectdb.js"
     ]
   }
 }
