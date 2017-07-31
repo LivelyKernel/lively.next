@@ -143,7 +143,7 @@ var commands = [
 
   {
     name: "escape",
-    exec: (world, _1, _2, evt) => {    
+    exec: (world, _1, _2, evt) => {
       var eventState =  world.env.eventDispatcher.eventState;
       if (eventState.menu) eventState.menu.remove();
       var halos = world.halos();
@@ -381,7 +381,13 @@ var commands = [
       opts = {content: "", ...opts, language};
       var mod = workspaceModules[opts.language] || workspaceModules[alias[opts.language]],
           { default: Workspace } = await System.import(mod);
-      return new Workspace({center: world.center, content: opts.content, target: opts.target}).activate();
+      console.log(opts)
+      return new Workspace({
+        center: world.center,
+        content: opts.content,
+        target: opts.target,
+        systemInterface: opts.systemInterface || opts.backend
+      }).activate();
     }
   },
 

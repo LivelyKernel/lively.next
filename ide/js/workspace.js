@@ -56,10 +56,10 @@ export default class Workspace extends Window {
       },
 
       systemInterface: {
-        derived: true, readOnly: true, after: ["jsPlugin"],
+        derived: true, after: ["jsPlugin"],
         get() { return this.jsPlugin.systemInterface(); },
         set(systemInterface) {
-          this.jsPlugin.setSystemInterface(systemInterface);
+          this.jsPlugin.setSystemInterfaceNamed(systemInterface);
         }
       },
 
