@@ -518,6 +518,71 @@ var commands = [
   },
 
   {
+    name: 'search workspaces',
+    exec: async function() {
+
+      let {selected: [choice]} = await $world.filterableListPrompt("search workspaces", [], {
+        historyId: "lively.morphic-ide-search-workspaces-hist",
+        customize: listPrompt => {
+          listPrompt.getSubmorphNamed("list").updateFilter = function() {
+            var parsed = this.parseInput();
+            if (parsed.input.length < 3) return;
+            let morphs = findWindowOrMorphWithStrings(parsed.lowercasedTokens);
+            this.listMorph.items = morphsToCandidates(morphs, parsed.lowercasedTokens);
+          }
+
+        }
+      });
+
+      if (choice) {
+        let {morph, window: win, row} = choice;
+        if (win) {
+          if (win.minimized) win.toggleMinimize();
+          win.activate()
+        }
+        (win || morph).show();
+        this.cursorPosition = {row, column: 0};
+
+        return morph;
+      }
+
+      return null;
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+      function morphsToCandidates(morphs, tokens) {
+        return morphs.map(function(m) {
+          var win = m.world() ? m.getWindow() : $world.withAllSubmorphsDetect(m => m.isWindow && m.targetMorph === morph),
+              row = 0,
+              preview = lively.lang.string.lines(m.textString).find((l, i) => {
+                l = l.toLowerCase(); row = i;
+                return tokens.every(token => l.includes(token));
+              }),
+              title = win ? win.title : m.toString();
+          return preview ? {
+            isListItem: true,
+            string: title + " | " + preview,
+            value: {window: win, morph: m, row}
+          } : null;
+        }).filter(Boolean);
+      }
+
+      function findWindowOrMorphWithStrings(strings) {
+        return $world.withAllSubmorphsDo(morph => {
+          // collapsed window's codeeditor is not in world, pluck them manually
+          if (morph.isWindow && morph.minimized && morph.targetMorph && morph.targetMorph.isText) morph = morph.targetMorph;
+          if (!morph.textString) return null;
+          if (!morph.isText) return null;
+          if (morph.isUsedAsEpiMorph()) return null;
+          let textString = morph.textString.toLowerCase();
+          if (!strings.every(string => textString.includes(string))) return null;
+          return morph;
+        }).filter(Boolean);
+      }
+    }
+  },
+
+  {
     name: "open PartsBin",
     exec: async world => {
       var { loadObjectFromPartsbinFolder } = await System.import("lively.morphic/partsbin.js")
@@ -536,13 +601,13 @@ var commands = [
       } else {
         let { interactivelyLoadObjectFromPartsBinFolder } = await System.import("lively.morphic/partsbin.js");
         part = await interactivelyLoadObjectFromPartsBinFolder();
-      }          
+      }
       if (part && open) part.openInWorldNearHand();
       return part;
     }
   },
 
-  
+
   {
     name: "open object drawer",
     exec: async world => {
