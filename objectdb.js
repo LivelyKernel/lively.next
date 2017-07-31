@@ -20,6 +20,11 @@ var objectDBs = objectDBs || new Map();
 
 export default class ObjectDB {
 
+  static async dbList() {
+    let metaDB = Database.ensureDB("__internal__objectdb-meta");
+    return (await metaDB.getAll()).map(ea => ea._id)
+  }  
+
   static async find(name) {
     let found = objectDBs.get(name);
     if (found) return found;
@@ -64,7 +69,7 @@ export default class ObjectDB {
     let versionDB = Database.findDB(this.name + "-version-graph");
     if (versionDB) await versionDB.destroy();
     objectDBs.delete(this.name);
-    
+
     let metaDB = Database.ensureDB("__internal__objectdb-meta");
     await metaDB.remove(this.name);
 
@@ -679,7 +684,7 @@ export var ObjectDBInterface = {
           doc.description += line + "\n";
         }
       }
-      
+
       for (let stmt of stmts) {
         if ("checkArgs" !== lively.lang.Path("declarations.0.init.callee.name").get(stmt))
           continue;
@@ -992,7 +997,7 @@ export class ObjectDBHTTPInterface {
     if (contentType === "application/json") {
       try { json = JSON.parse(answer); } catch (err) {}
     }
-    if (!res.ok || json.error) {    
+    if (!res.ok || json.error) {
       throw new Error((json && json.error) || answer || res.statusText);
     }
     return json || answer;
@@ -1007,7 +1012,7 @@ export class ObjectDBHTTPInterface {
         url = this.serverURL + action + "?" + query;
     return this._processResponse(await fetch(url));
   }
-  
+
   async _POST(action, opts = {}) {
     let url = this.serverURL + action;
     return this._processResponse(await fetch(url, {
@@ -1017,29 +1022,29 @@ export class ObjectDBHTTPInterface {
   }
 
   async describe(args) {
-    // parameters: 
+    // parameters:
     // returns: null
     return this._GET("describe", args);
   }
- 
+
   async ensureDB(args) {
     // parameters: db, snapshotLocation
     // returns: boolean
     return this._POST("ensureDB", args);
   }
-  
+
   async destroyDB(args) {
     // parameters: db
     // returns: boolean
     return this._POST("destroyDB", args);
   }
-  
+
   async fetchCommits(args) {
     // parameters: db, ref, type, typesAndNames, knownCommitIds, includeDeleted
     // returns: [commits]
     return this._GET("fetchCommits", args);
   }
-  
+
   async fetchVersionGraph(args) {
     // parameters: db, type, name
     // returns: {refs, history}
@@ -1051,43 +1056,43 @@ export class ObjectDBHTTPInterface {
     // returns: [commitIds]|[commits]
     return this._GET("fetchLog", args);
   }
-  
+
   async fetchSnapshot(args) {
     // parameters: db, type, name, ref, commit
     // returns: object
     return this._GET("fetchSnapshot", args);
   }
-  
+
   async commit(args) {
     // parameters: db, type, name, ref, expectedParentCommit, commitSpec, preview, snapshot
     // returns: commit
     return this._POST("commit", args);
   }
-  
+
   async exportToSpecs(args) {
     // parameters: db, nameAndTypes, includeDeleted
     // returns: [{dir, type, name, commits, history, snapshotDirs}]
     return this._GET("exportToSpecs", args);
   }
-  
+
   async exportToDir(args) {
     // parameters: db, url, nameAndTypes, copyResources
     // returns: undefined
     return this._POST("exportToDir", args);
   }
-  
+
   async importFromDir(args) {
     // parameters: db, url, overwrite, copyResources
     // returns: [{dir, type, name, commits, history, snapshotDirs}]
     return this._POST("importFromDir", args);
   }
-  
+
   async importFromSpecs(args) {
     // parameters: db, specs, overwrite, copyResources
     // returns: [{dir, type, name, commits, history, snapshotDirs}]
     return this._POST("importFromSpecs", args);
   }
-  
+
   async importFromResource(args) {
     // parameters: db, type, name, url, commitSpec, purgeHistory
     // returns: [{dir, type, name, commits, history, snapshotDirs}]
