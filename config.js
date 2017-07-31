@@ -88,6 +88,7 @@ var config = {
     {keys: "Escape", command: "escape"},
     {keys: {win: "Ctrl-Escape", mac: "Meta-Escape"}, command: "close active window or morph"},
     {keys: "Alt-Shift-C", command: "toggle minimize active window"},
+    {keys: {mac: "Meta-Shift-L W S", win: "Ctrl-Shift-L W S"}, command: "search workspaces"},
     {keys: {mac: "Meta-O", win: "Ctrl-O"}, command: "open status message of focused morph"},
 
     {keys: {win: "Ctrl-K", mac: "Meta-K"}, command: {command: "open workspace", onlyWhenFocused: false, args: {askForMode: true}}},
@@ -242,7 +243,6 @@ var config = {
       {keys: "Ctrl-Up", command: "goto paragraph above"},
       {keys: "Ctrl-Down", command: "goto paragraph below"},
 
-
       {keys: {win: "Ctrl-Shift-Home", mac: "Meta-Shift-Up"},           command: {command: "goto start", args: {select: true}}},
       {keys: {win: "Ctrl-Shift-End", mac: "Meta-Shift-Down"},          command: {command: "goto end", args: {select: true}}},
       {keys: {win: "Ctrl-Home", mac: "Meta-Up|Meta-Home|Alt-Shift-,"}, command: "goto start"},
@@ -270,6 +270,7 @@ var config = {
       {keys: "Ctrl-Space", command: "toggle active mark"},
 
 
+      {keys: {mac: 'Meta-Shift-L M O D E'}, command: "change editor mode"},
       {keys: {mac: 'Meta-Shift-L L T'}, command: "toggle line wrapping"},
 
       {keys: "Esc|Ctrl-G", command: "cancel input"},
@@ -325,6 +326,7 @@ var config = {
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // helpful stuff
+      {keys: {mac: "Meta-Shift-L T D", win: "Ctrl-Shift-L T D"}, command: "[todo] toggle todo marker"},
       {keys: {mac: "Meta-Shift-L D A T E", win: "Ctrl-Shift-L D A T E"}, command: 'insert date'},
       {keys: "Ctrl-C Ctrl-I", command: "change string inflection"},
       {keys: "Alt-Shift-4"/*Alt-Shift-$*/, command: 'spell check word'},
