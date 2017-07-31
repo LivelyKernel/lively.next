@@ -6,14 +6,12 @@ import {
   Text,
   HorizontalLayout,
   VerticalLayout,
-  morph,
-  Menu
-} from "../index.js";
+  morph
+} from "lively.morphic";
 import { Color, pt, rect, Rectangle } from "lively.graphics";
 import { arr } from "lively.lang";
-import { widgets } from "lively.components";
+import { widgets, Menu } from "lively.components";
 import { connect } from "lively.bindings";
-import { NumberWidget } from "lively.ide/value-widgets.js";
 
 class AxisHalo extends Morph {
 
@@ -448,21 +446,6 @@ export class GridLayoutHalo extends Morph {
       this.focus();
   }
 
-  optionControls() {
-      const layout = this.target,
-            compensateOrigin = new widgets.LabeledCheckBox({
-                name: "compensateOrigin", label: 'Compensate Origin',
-                fill: Color.transparent,
-                checked: layout.compensateOrigin}),
-            fitToCell = new widgets.LabeledCheckBox({
-              label: 'Resize Submorphs', fill: Color.transparent,
-                name: "fitToCell", checked: layout.fitToCell});
-      connect(compensateOrigin, "checked", layout, "compensateOrigin");
-      connect(fitToCell, "checked", layout, "fitToCell");
-      connect(compensateOrigin, "checked", this, "alignWithTarget");
-      return [compensateOrigin, fitToCell];
-  }
-
   get isLayoutHalo() { return false }
 
   get container() { return this.state.container; }
@@ -715,38 +698,6 @@ export class TilingLayoutHalo extends Morph {
     this.target.spacing = s;
   }
 
-  optionControls() {
-    const layout = this.target,
-          spacing = new NumberWidget({
-            min: 0,
-            number: layout.spacing,
-            padding: rect(5,3,0,0),
-            borderRadius: 3,
-            borderWidth: 1,
-            borderColor: Color.gray,
-            unit: "px"
-          });
-    connect(spacing, 'update', this, 'updateSpacing');
-    return [
-      [
-        {
-          type: "text",
-          textString: "Submorph Spacing",
-          padding: rect(0,5,5,5),
-          fill: Color.transparent,
-          fontColor: Color.gray.darker(),
-          readOnly: true
-        },
-        spacing
-      ]
-    ].map(x => {
-      return {
-        submorphs: x,
-        fill: Color.transparent,
-        layout: new HorizontalLayout({spacing: 3})
-      };
-    });
-  }
 
 }
 
@@ -836,45 +787,6 @@ export class FlexLayoutHalo extends Morph {
 
   updateSpacing(s) {
     this.target.spacing = s
-  }
-
-  optionControls() {
-    const layout = this.target,
-          spacing = new NumberWidget({
-            fill: Color.white,
-            borderWidth: 1,
-            borderRadius: 4,
-            padding: rect(5,4,0,0),
-            borderColor: Color.gray,
-            min: 0,
-            number: layout.spacing,
-            unit: "px",
-          }),
-          autoResizeCb = new widgets.LabeledCheckBox({
-            name: "autoResize", label: 'Resize Container',
-            alignCheckBox: 'right',
-            fill: Color.transparent,
-            checked: layout.autoResize
-          }),
-          resizeSubmorphsCb = new widgets.LabeledCheckBox({
-            label: 'Resize Submorphs',
-            name: "resizeSubmorphs",
-            alignCheckBox: 'right',
-            fill: Color.transparent,
-            checked: layout.resizeSubmorphs
-          });
-    connect(spacing, 'update', this, 'updateSpacing');
-    connect(autoResizeCb, "checked", this, "updateAutoResizePolicy");
-    connect(resizeSubmorphsCb, "checked", this, "updateResizeSubmorphsPolicy");
-    return [
-        autoResizeCb,
-        resizeSubmorphsCb,
-        {fill: Color.transparent, layout: new HorizontalLayout(),
-         submorphs: [
-           {type: 'label', value: 'Submorph Spacing',
-            fontColor: Color.gray.darker(),
-            padding: rect(0,5,5,5)}, spacing]}
-    ];
   }
 
 }
