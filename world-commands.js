@@ -953,20 +953,21 @@ var commands = [
       var relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
       if (relayed) return relayed;
 
-      let dialog = await loadObjectFromPartsbinFolder("save world dialog"),
-          {destination, name} = await $world.openPrompt(dialog, {targetWorld: world});
+      let dialog = await loadObjectFromPartsbinFolder("save world dialog 2"),
+          {name} = await world.openPrompt(dialog, {targetWorld: world});
 
-      if (!name) return null;      
+      if (!name) return null;
 
       let url;
-      if (destination === "server")
-        url = System.decanonicalize(`lively.morphic/worlds/${name}.json`);
-      else if (destination === "local storage")
-        url = `lively.storage://worlds/${name}.json`;
-      else {
-        world.showError(new Error("Invalid destination: " + destination));
-        return null;
-      }
+
+      // if (destination === "server")
+      //   url = System.decanonicalize(`lively.morphic/worlds/${name}.json`);
+      // else if (destination === "local storage")
+      //   url = `lively.storage://worlds/${name}.json`;
+      // else {
+      //   world.showError(new Error("Invalid destination: " + destination));
+      //   return null;
+      // }
 
       try {
         await saveWorldToResource(world, url, {previewWidth: 200, previewHeight: 200, previewType: "png"});
@@ -977,21 +978,30 @@ var commands = [
       }
     }
   },
-  
+
   {
     name: "load world",
     exec: async (oldWorld, args = {}) => {
-      let {resource, world} = args;
-
-      if (!resource && !world) { // old world selection
-        let worldList = oldWorld.get("world-list") || await loadObjectFromPartsbinFolder("world-list");
-        return await worldList.bringToFront().alignInWorld(oldWorld).setLocationToLastChoiceOr("public");
-      }
-
+      // args: {
+      //   id: commitId
+      //   name: world name
+      //   ref: ref the world was committed on
+      //   world: the world morph to load
+      // }
+      let {id, commit, name, ref, world} = args;
       let World = oldWorld.constructor;
-      return resource ?
-        World.loadWorldFromURL(resource, oldWorld) :
-        World.loadWorld(world, oldWorld);
+
+      if (world) return World.loadWorld(world, oldWorld);
+      if (id || commit) return World.loadFromCommit(id || commit, oldWorld);
+      if (name) return World.loadFromDB(name, ref, oldWorld);
+      
+
+      let worldList = oldWorld.get("world-list") || await loadObjectFromPartsbinFolder("world-list");
+      worldList.bringToFront().alignInWorld(oldWorld);
+      if (worldList.setLocationToLastChoiceOr)
+        worldList.setLocationToLastChoiceOr("public");
+      return worldList;
+        
     }
   }
 
