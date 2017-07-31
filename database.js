@@ -130,7 +130,28 @@ export default class Database {
     if (db) return db;
     db = new this(name, options);
     this.databases.set(name, db);
+    if (!name.endsWith("lively.storage-meta"))
+      this.createMetaEntryForDB(name, options);
     return db;
+  }
+
+  static knownDBs(dbName, options) {
+    let metaDB = Database.ensureDB("lively.storage-meta");
+    return metaDB.getAll().then(metaEntries => metaEntries.map(ea => ea._id));
+  }
+
+  static createMetaEntryForDB(dbName, options) {
+    let metaDB = Database.ensureDB("lively.storage-meta");
+    metaDB.has(dbName).then(known =>
+      !known && metaDB.set(dbName, {created: Date.now(), options}));
+  }
+
+  static async knowsDB(dbName) {
+    let db = this.ensureDB(dbName),
+        docCount = await db.docCount();
+    if (docCount > 0) return true;
+    await db.destroy()
+    return false;
   }
 
   constructor(name, options = {}) {
