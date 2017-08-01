@@ -792,6 +792,24 @@ export var ObjectDBInterface = {
     return {refs, history};
   },
 
+  async exists(args) {
+    // side effect: false
+    // returns: {exists: BOOLEAN, commitId}    
+    let {db: dbName, type, name, ref} = checkArgs(args, {
+          db: "string",
+          type: "string",
+          name: "string",
+          ref: "string|undefined"
+        }),
+        db = await ObjectDB.find(dbName),
+        hist = await db.versionGraph(type, name);
+    if (!hist) return {exists: false, commitId: undefined};
+    ref = ref || "HEAD";
+    let commit = hist.refs[ref];
+    if (!commit) return {exists: false, commitId: undefined};
+    return {exists: true, commitId: commit}
+  },
+
   async fetchLog(args) {
     // side effect: false
     // returns: [commitIds]|[commits]
@@ -1060,6 +1078,12 @@ export class ObjectDBHTTPInterface {
     // parameters: db, type, name
     // returns: {refs, history}
     return this._GET("fetchVersionGraph", args);
+  }
+
+  async exists(args) {
+    // parameters: db, type, name, ref
+    // returns: {commit, exists}
+    return this._GET("exists", args);
   }
 
   async fetchLog(args) {
