@@ -89,6 +89,7 @@ export class Button extends Morph {
             this.setProperty('label', stringOrAttributesOrMorph)
             this.labelMorph.value = stringOrAttributesOrMorph;
           }
+          this.labelMorph.fit();
         }
       },
 
@@ -113,11 +114,6 @@ export class Button extends Morph {
     }
   }
 
-  constructor(props) {
-    super(props);
-    this.relayout();
-  }
-
   get isButton() { return true }
 
   enable() { this.deactivated = false; }
@@ -126,11 +122,13 @@ export class Button extends Morph {
 
   onChange(change) {
     let {prop} = change;
-    switch (prop) {
-      case 'extent':
-      case 'padding':
-      case 'fontSize':
-      case 'fontFamily': this.relayout();
+    if (this.label/*don't call too early*/) {
+      switch (prop) {
+        case 'extent':
+        case 'padding':
+        case 'fontSize':
+        case 'fontFamily': this.relayout();
+      }
     }
     return super.onChange(change);
   }
