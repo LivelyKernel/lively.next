@@ -1,6 +1,6 @@
 /*global System,Uint8Array,Blob,location*/
 import { Color, Line, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
-import { string, obj, arr, num, promise, tree, fun } from "lively.lang";
+import { string, obj, arr, num, promise, tree, fun, Path as PropPath } from "lively.lang";
 import {
   renderRootMorph,
   AnimationQueue,
@@ -664,7 +664,9 @@ export class Morph {
         group: "interaction",
         doc: "Morphs will respond to changes in visible window and a call will be made to the morph's relayout function, supplying the event generated",
         defaultValue: false
-      }
+      },
+
+      metadata: {group: "core"}
     }
 
   }
@@ -842,6 +844,20 @@ export class Morph {
   getProperty(key) { return this._morphicState[key] }
   setProperty(key, value, meta) {
     return this.addValueChange(key, value, meta);
+  }
+
+  changeMetaData(path, data, serialize = true, merge = true) {
+    let {metadata} = this;
+    if (!metadata) metadata = {};
+    PropPath(path).withParentAndKeyDo(metadata, true, (parent, key) => {
+      if (merge) parent[key] = {...parent[key], ...data};
+      else parent[key] = data;
+      if (!serialize) {
+        let dont = parent.__dont_serialize__ || (parent.__dont_serialize__ = []);
+        arr.pushIfNotIncluded(dont, key);
+      }
+    });
+    this.metadata = metadata;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
