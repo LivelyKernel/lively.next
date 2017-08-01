@@ -105,6 +105,13 @@ export default class MorphicDB {
     return this.httpDB.fetchSnapshot({db, type, name, ref, commit: commitIdOrCommit});
   }
 
+  async exists(type, name, ref) {
+    // await MorphicDB.default.latestWorldCommits()
+    await this.initializeIfNecessary();
+    let {name: db} = this;
+    return this.httpDB.exists({db, type, name, ref});
+  }
+
   async history(type, name) {
     // await MorphicDB.default.latestWorldCommits()
     await this.initializeIfNecessary();
