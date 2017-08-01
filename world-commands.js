@@ -1,10 +1,13 @@
 /*global System*/
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
-import { tree, Path, arr, string, obj } from "lively.lang";
+import { tree, date, Path, arr, string, obj } from "lively.lang";
 import { show, inspect, Text, config } from "./index.js";
 import KeyHandler from "./events/KeyHandler.js";
-import { saveWorldToResource, loadWorldFromResource } from "./serialization.js";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
+import { MorphicDB } from "./morphicdb/index.js";
+import { delay } from "lively.lang/promise.js";
+import LoadingIndicator from "./components/loading-indicator.js";
+import { pathForBrowserHistory } from "./world-loading.js";
 
 
 var commands = [
@@ -953,29 +956,78 @@ var commands = [
       var relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
       if (relayed) return relayed;
 
-      let dialog = await loadObjectFromPartsbinFolder("save world dialog 2"),
-          {name} = await world.openPrompt(dialog, {targetWorld: world});
+      args = {showSaveDialog: true, ...args};
 
-      if (!name) return null;
+      let name = world.name, tags = [], description = "",
+          oldCommit = Path("metadata.commit").get(world),
+          db = MorphicDB.default;
 
-      let url;
+      if (args.showSaveDialog) {
+        let dialog = await loadObjectFromPartsbinFolder("save world dialog");
+        ({name, tags, description} = await world.openPrompt(dialog, {targetWorld: world}));
+        if (!name) return null;        
+      } else if (oldCommit) {
+        ({name, tags, description} = oldCommit);
+      }
 
-      // if (destination === "server")
-      //   url = System.decanonicalize(`lively.morphic/worlds/${name}.json`);
-      // else if (destination === "local storage")
-      //   url = `lively.storage://worlds/${name}.json`;
-      // else {
-      //   world.showError(new Error("Invalid destination: " + destination));
-      //   return null;
-      // }
+
+      var i = LoadingIndicator.open(`saving ${name}...`);
+      await delay(80);
 
       try {
-        await saveWorldToResource(world, url, {previewWidth: 200, previewHeight: 200, previewType: "png"});
-        world.setStatusMessage(`saved world to ${url}`);
+        let snapshotOptions = {previewWidth: 200, previewHeight: 200, previewType: "png"},
+            ref = "HEAD",
+            oldName = oldCommit ? oldCommit.name : world.name,
+            expectedParentCommit;
+
+        if (oldName !== name) {
+          let {exists, commitId: existingCommitId} = await db.exists("world", name);
+          if (exists) {
+            let overwrite = await world.confirm(`A world "${name}" already exists, overwrite?`);
+            if (!overwrite) return;
+            expectedParentCommit = existingCommitId;
+          }
+          world.name = name;
+        } else {
+          expectedParentCommit = oldCommit ? oldCommit._id : undefined;
+        }
+
+        let commitSpec = {user: world.getCurrentUser(),
+                          message: "world save", tags, description},
+            commit = await db.snapshotAndCommit(
+              "world", name, world, snapshotOptions,
+              commitSpec, ref, expectedParentCommit);
+
+        // hist
+        if (window.history) {
+          let queryString = typeof document !== "undefined" ? document.location.search : "",
+              path = pathForBrowserHistory(name, queryString);
+          window.history.pushState({}, "lively.next", path);
+        }
+
+        world.setStatusMessage(`saved world ${name}`);
         world.get("world-list") && world.get("world-list").onWorldSaved(name);
+
+        return commit;
+        
+
       } catch (err) {
-        $world.logError("Error saving world: " + err.stack);
-      }
+        let [_, typeAndName, expectedVersion, actualVersion] = err.message.match(/Trying to store "([^\"]+)" on top of expected version ([^\s]+) but ref HEAD is of version ([^\s\!]+)/) || [];
+        if (expectedVersion && actualVersion) {
+          let [newerCommit] = await db.log(actualVersion, 1, /*includeCommits = */true),
+              {author: {name: authorName}, timestamp} = newerCommit,
+              overwriteQ = `The current version of world ${name} is not the most recent!\n`
+                  + `A newer version by ${authorName} was saved on `
+                  + `${date.format(new Date(timestamp), "yyyy-mm-dd HH:MM")}. Overwrite?`,
+              overwrite = await world.confirm(overwriteQ);
+          if (!overwrite) return;
+          world.changeMetaData("commit", newerCommit, /*serialize = */false, /*merge = */false);
+          return world.execCommand("save world", {...args, showSaveDialog: false});
+        }
+
+        console.error(err);
+        world.logError("Error saving world: " + err);
+      } finally { i.remove(); }
     }
   },
 
@@ -994,12 +1046,11 @@ var commands = [
       if (world) return World.loadWorld(world, oldWorld);
       if (id || commit) return World.loadFromCommit(id || commit, oldWorld);
       if (name) return World.loadFromDB(name, ref, oldWorld);
-      
 
       let worldList = oldWorld.get("world-list") || await loadObjectFromPartsbinFolder("world-list");
       worldList.bringToFront().alignInWorld(oldWorld);
-      if (worldList.setLocationToLastChoiceOr)
-        worldList.setLocationToLastChoiceOr("public");
+      worldList.update();
+      worldList.focus();
       return worldList;
         
     }
