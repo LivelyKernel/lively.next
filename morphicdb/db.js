@@ -1,4 +1,4 @@
-/*global System*/
+/*global System,inspect*/
 import { ObjectDBHTTPInterface } from "lively.storage/objectdb.js";
 import { Database } from "lively.storage";
 import { loadMorphFromSnapshot, createMorphSnapshot } from "../serialization.js";
@@ -90,12 +90,11 @@ export default class MorphicDB {
     return this.httpDB.fetchCommits({db, type, ref, knownCommitIds});
   }
 
-  async fetchCommit(type, name, id, ref) {
+  async fetchCommit(type, name, ref) {
     await this.initializeIfNecessary();
-    let typesAndNames = !id ? [{type, name, ref}] : undefined,
-        knownCommitIds = id ? {[id]: true} : undefined,
+    let typesAndNames = [{type, name, ref}],
         commits = await this.httpDB.fetchCommits(
-          {db: this.name, ref, type, typesAndNames, knownCommitIds});
+          {db: this.name, ref, type, typesAndNames});
     return commits[0];
   }
 
@@ -126,22 +125,16 @@ export default class MorphicDB {
   }
 
   async snapshotAndCommit(type, name, morph, snapshotOptions, commitSpec, ref, expectedParentCommit) {
-    let snapshot = await createMorphSnapshot(morph, snapshotOptions);
-    return this.commit(type, name, snapshot, commitSpec, ref, expectedParentCommit);
+    let snapshot = await createMorphSnapshot(morph, snapshotOptions),
+        commit = await this.commit(type, name, snapshot, commitSpec, ref, expectedParentCommit);
+    morph.changeMetaData("commit", commit, /*serialize = */false, /*merge = */false);
+    
+    return commit;
   }
 
   async commit(type, name, snapshot, commitSpec, ref, expectedParentCommit) {
     await this.initializeIfNecessary();
     let {name: db} = this;
-    console.log({
-      db,
-      type,
-      name,
-      ref,
-      expectedParentCommit,
-      commitSpec,
-      snapshot /*, preview*/
-    })
     return this.httpDB.commit({
       db,
       type,
@@ -154,8 +147,16 @@ export default class MorphicDB {
   }
 
   async load(type, name, loadOptions, commitIdOrCommit, ref) {
-    let snapshot = await this.fetchSnapshot(type, name, commitIdOrCommit, ref);
-    return loadMorphFromSnapshot(snapshot, loadOptions);
+    let commit = commitIdOrCommit;
+    if (!commit) {
+      commit = await this.fetchCommit(type, name, ref);
+    } else if (typeof commit === "string") {
+      [commit] = await this.log(commit, 1, true);
+    }
+    let snapshot = await this.fetchSnapshot(undefined, undefined, commit._id),
+        morph = await loadMorphFromSnapshot(snapshot, loadOptions);
+    morph.changeMetaData("commit", commit, /*serialize = */false, /*merge = */false);
+    return morph;
   }
 
   async delete(type, name, dryRun = true) {
