@@ -58,6 +58,7 @@ export default class ObjectDBPlugin {
             case "explainInterface":   return await this.explainInterface(req, res);
             case "fetchCommits":       return await this.fetchCommits(req, res);
             case "fetchVersionGraph":  return await this.fetchVersionGraph(req, res);
+            case "exists":             return await this.exists(req, res);
             case "fetchLog":           return await this.fetchLog(req, res);
             case "fetchSnapshot":      return await this.fetchSnapshot(req, res);
             case "exportToSpecs":      return await this.exportToSpecs(req, res);
@@ -147,6 +148,15 @@ sources.join("\n\n");
   async fetchVersionGraph(req, res) {
     let {db, type, name} = parseQuery(req.url),
         result = await ObjectDBInterface.fetchVersionGraph({db, type, name});
+    if (typeof result !== "object") result = {status: String(result)};
+    let payload = JSON.stringify(result);
+    res.writeHead(200, {"content-type": "application/json"});
+    res.end(payload);
+  }
+
+  async exists(req, res) {
+    let {db, type, name, ref} = parseQuery(req.url),
+        result = await ObjectDBInterface.exists({db, type, name, ref});
     if (typeof result !== "object") result = {status: String(result)};
     let payload = JSON.stringify(result);
     res.writeHead(200, {"content-type": "application/json"});
