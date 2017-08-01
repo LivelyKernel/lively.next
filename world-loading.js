@@ -2,30 +2,46 @@
 import { MorphicEnv } from "./index.js";
 import { loadWorldFromResource } from "./serialization.js";
 import { resource, registerExtension as registerResourceExension } from "lively.resources";
+import { MorphicDB } from "./morphicdb/index.js";
 
 
-export function pathForBrowserHistory(worldResource) {
+export function pathForBrowserHistory(worldName, queryString) {
   // how does the resource map to a URL shown in the browser URL bar? used for
   // browser history
-  let url = worldResource.url,
-      isLocal = worldResource.url.startsWith("lively.storage://"),
-      query = {...worldResource.query(), ...isLocal ? {location: "local"} : {}},
-      queryString = Object.keys(query).length
-        ? "?" + worldResource.withQuery(query).url.split("?")[1] : "",
-      basePath = "/worlds/",
-      name = worldResource.name().replace(/\.json$/, "");
-  return `${basePath}${name}${queryString}`;
+  queryString = queryString.trim();
+  if (!queryString || queryString === "?") queryString = "";
+  let basePath = "/worlds/";
+  worldName = worldName.replace(/\.json$/, "").replace(/%20/g, " ");
+  return `${basePath}${worldName}${queryString}`;
 }
 
 export async function loadWorldFromURL(url, oldWorld, options) {
   let worldResource = url.isResource ? url :
         lively.resources.resource(System.decanonicalize(url)),
-      world = await loadWorldFromResource(worldResource);
+      name = worldResource.nameWithoutExt();
+  return loadWorldFromDB(name, undefined, oldWorld, options);
+}
+
+export async function loadWorldFromCommit(commitOrId, oldWorld, options) {
+    let db = MorphicDB.default,
+        newWorld = await db.load("world", undefined, options, commitOrId),
+        queryString = typeof document !== "undefined" ? document.location.search : ""  
   options = {
-    pathForBrowserHistory: pathForBrowserHistory(worldResource),
+    pathForBrowserHistory: pathForBrowserHistory(newWorld.name, queryString),
     ...options
   };
-  return loadWorld(world, oldWorld, options);
+  return loadWorld(newWorld, oldWorld, options)
+}
+
+export async function loadWorldFromDB(name, ref, oldWorld, options) {
+  let db = MorphicDB.default,
+      newWorld = await db.load("world", name, options, undefined/*commit||id*/, ref || undefined),
+      queryString = typeof document !== "undefined" ? document.location.search : ""  
+  options = {
+    pathForBrowserHistory: pathForBrowserHistory(name, queryString),
+    ...options
+  };
+  return loadWorld(newWorld, oldWorld, options)
 }
 
 export async function loadWorld(newWorld, oldWorld, options = {}) {
