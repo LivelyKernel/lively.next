@@ -2,7 +2,7 @@
   "id": "SaveWorldDialog_31BAA4DB_37D3_4364_B903_BF1D8B1D5667",
   "snapshot": {
     "SaveWorldDialog_31BAA4DB_37D3_4364_B903_BF1D8B1D5667": {
-      "rev": 692623,
+      "rev": 772407,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -17,7 +17,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(562.0,582.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(755.0,602.0)"
         },
         "origin": {
           "key": "origin",
@@ -37,7 +37,7 @@
             {
               "__ref__": true,
               "id": "Label_A56F64C5_3D2D_445F_BBEB_519652A3818B",
-              "rev": 692627
+              "rev": 772411
             },
             {
               "__ref__": true,
@@ -62,17 +62,17 @@
             {
               "__ref__": true,
               "id": "InputLine_3C8EAAD4_0C79_42E3_B4BB_83B6297E3EA6",
-              "rev": 637003
+              "rev": 693833
             },
             {
               "__ref__": true,
               "id": "Text_CDD59048_622A_41A5_B99E_EEAB5ACC5988",
-              "rev": 637016
+              "rev": 695425
             },
             {
               "__ref__": true,
               "id": "InputLine_D66C9681_718B_4E3D_A90B_C98CB88FC849",
-              "rev": 636987
+              "rev": 694671
             },
             {
               "__ref__": true,
@@ -171,7 +171,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "A1D143CE-2C8B-4267-BEBB-51B7DFB6E73C",
+              "id": "03DE16C1-48F7-4064-B099-A0D4B3714BC3",
               "rev": 0
             }
           ]
@@ -193,13 +193,13 @@
             "version": "0.1.0"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1501463186519,
+          "lastChange": 1501468566588,
           "lastSuperclassChange": 1501452793362
         }
       }
     },
     "Label_A56F64C5_3D2D_445F_BBEB_519652A3818B": {
-      "rev": 692627,
+      "rev": 772411,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -349,27 +349,27 @@
           "value": [
             {
               "__ref__": true,
-              "id": "A01BEA20-7ACA-4587-8397-237BA962DFFA",
+              "id": "75CA92F8-50F4-4DDE-A4BF-07DA40DC87E5",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "A5FE2FD6-7EEC-4013-9160-3AEEAA8261B0",
+              "id": "055E48C7-96A1-4F9B-9FB2-3CB0F1F41618",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "5F8219C8-E4AF-4B67-9DC9-002B97B3DB2E",
+              "id": "45122FC5-965A-4926-B8B2-B02A0BF50ACB",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "6E42AB03-3B5A-444C-ABC1-DDADF9A06344",
+              "id": "E03DAA95-1789-43D8-8429-F127B2506560",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "EDDED08F-81E1-4C66-92E3-C90318E1D378",
+              "id": "B9D4597E-625F-4B62-8B5E-D520814CF1C7",
               "rev": 0
             }
           ]
@@ -503,7 +503,7 @@
         }
       }
     },
-    "A01BEA20-7ACA-4587-8397-237BA962DFFA": {
+    "75CA92F8-50F4-4DDE-A4BF-07DA40DC87E5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -546,7 +546,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F74C78A2-B7C5-4CC3-8610-D6018220DDA9",
+            "id": "48C454A1-C47F-4AC0-B728-6CD98A479C28",
             "rev": 0
           }
         },
@@ -572,7 +572,7 @@
         }
       }
     },
-    "F74C78A2-B7C5-4CC3-8610-D6018220DDA9": {
+    "48C454A1-C47F-4AC0-B728-6CD98A479C28": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -597,7 +597,7 @@
         }
       }
     },
-    "A5FE2FD6-7EEC-4013-9160-3AEEAA8261B0": {
+    "055E48C7-96A1-4F9B-9FB2-3CB0F1F41618": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -640,7 +640,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "E417C0B9-582F-40FC-82C8-73BDF0777139",
+            "id": "ED25672A-DFF7-4AC9-A8E7-6911535141A7",
             "rev": 0
           }
         },
@@ -666,7 +666,7 @@
         }
       }
     },
-    "E417C0B9-582F-40FC-82C8-73BDF0777139": {
+    "ED25672A-DFF7-4AC9-A8E7-6911535141A7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -691,7 +691,7 @@
         }
       }
     },
-    "5F8219C8-E4AF-4B67-9DC9-002B97B3DB2E": {
+    "45122FC5-965A-4926-B8B2-B02A0BF50ACB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -734,7 +734,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "09156163-7F70-4FED-8189-6019A2F3ABC5",
+            "id": "6DCF26A9-F6BE-4D25-B4C0-CC43708BCEB3",
             "rev": 0
           }
         },
@@ -760,7 +760,7 @@
         }
       }
     },
-    "09156163-7F70-4FED-8189-6019A2F3ABC5": {
+    "6DCF26A9-F6BE-4D25-B4C0-CC43708BCEB3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -785,7 +785,7 @@
         }
       }
     },
-    "6E42AB03-3B5A-444C-ABC1-DDADF9A06344": {
+    "E03DAA95-1789-43D8-8429-F127B2506560": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -828,7 +828,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "440CDCC2-00D8-4B25-BA47-58AB7154F687",
+            "id": "216B82DE-2119-4C19-88FE-EB0758499A9D",
             "rev": 0
           }
         },
@@ -854,7 +854,7 @@
         }
       }
     },
-    "440CDCC2-00D8-4B25-BA47-58AB7154F687": {
+    "216B82DE-2119-4C19-88FE-EB0758499A9D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -879,7 +879,7 @@
         }
       }
     },
-    "EDDED08F-81E1-4C66-92E3-C90318E1D378": {
+    "B9D4597E-625F-4B62-8B5E-D520814CF1C7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -911,7 +911,7 @@
           "value": {
             "__ref__": true,
             "id": "SaveWorldDialog_31BAA4DB_37D3_4364_B903_BF1D8B1D5667",
-            "rev": 692623
+            "rev": 772407
           }
         },
         "targetMethodName": {
@@ -922,7 +922,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "723A7ED5-CD93-4197-86E7-33A7428C7C24",
+            "id": "A48047E4-EC32-4DA0-8E5B-D22CC48ACD3D",
             "rev": 0
           }
         },
@@ -948,7 +948,7 @@
         }
       }
     },
-    "723A7ED5-CD93-4197-86E7-33A7428C7C24": {
+    "A48047E4-EC32-4DA0-8E5B-D22CC48ACD3D": {
       "rev": 0,
       "props": {
         "source": {
@@ -964,7 +964,7 @@
           "value": {
             "__ref__": true,
             "id": "SaveWorldDialog_31BAA4DB_37D3_4364_B903_BF1D8B1D5667",
-            "rev": 692623
+            "rev": 772407
           }
         }
       }
@@ -981,7 +981,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "7D6B18B8-616D-495D-99DC-B0A42B511423",
+              "id": "DBE6139D-66ED-46D4-B601-36EA784BAFD5",
               "rev": 0
             }
           ]
@@ -1096,7 +1096,7 @@
             "cancel",
             {
               "__ref__": true,
-              "id": "391F60E4-60E4-4BF3-A811-D0377B8E38D9",
+              "id": "0F275DEF-64C7-4574-B25F-247CE8F40CA3",
               "rev": 0
             }
           ]
@@ -1127,7 +1127,7 @@
         }
       }
     },
-    "7D6B18B8-616D-495D-99DC-B0A42B511423": {
+    "DBE6139D-66ED-46D4-B601-36EA784BAFD5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1170,7 +1170,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "065066CF-8CD0-4858-A2AC-7AD41A299BE9",
+            "id": "7010A2A2-F651-4699-A3A8-25DD51937E74",
             "rev": 0
           }
         },
@@ -1196,7 +1196,7 @@
         }
       }
     },
-    "065066CF-8CD0-4858-A2AC-7AD41A299BE9": {
+    "7010A2A2-F651-4699-A3A8-25DD51937E74": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1221,7 +1221,7 @@
         }
       }
     },
-    "391F60E4-60E4-4BF3-A811-D0377B8E38D9": {
+    "0F275DEF-64C7-4574-B25F-247CE8F40CA3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1242,27 +1242,27 @@
           "value": [
             {
               "__ref__": true,
-              "id": "50D1699C-8295-4286-B57F-233DCF4A8982",
+              "id": "03731F42-82B4-4F92-81D7-515B675F2129",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "3DDDCFE4-6985-4D1C-9CDF-F36426F92CB8",
+              "id": "40AC004B-D763-4CE0-A8DB-C287B07C7F9F",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "80778C2A-9712-4933-8239-70439DD3685A",
+              "id": "C0729C39-260B-4A92-8CF8-E9648104B625",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "EC654703-6605-4DB1-8CEE-14D6F4A03B2F",
+              "id": "F5107A28-A20E-4E1A-A170-32AF3BA490E2",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "4D8A4D70-E0C9-4704-B119-74BCC8DCF805",
+              "id": "1714F583-FA8E-4388-AC68-885AC89FB73E",
               "rev": 0
             }
           ]
@@ -1396,7 +1396,7 @@
         }
       }
     },
-    "50D1699C-8295-4286-B57F-233DCF4A8982": {
+    "03731F42-82B4-4F92-81D7-515B675F2129": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1439,7 +1439,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D284FE50-4AFD-4571-9A1F-221FAAA3A2B1",
+            "id": "12CC54F4-A5A5-4698-A195-DE64C8A3E1FC",
             "rev": 0
           }
         },
@@ -1465,7 +1465,7 @@
         }
       }
     },
-    "D284FE50-4AFD-4571-9A1F-221FAAA3A2B1": {
+    "12CC54F4-A5A5-4698-A195-DE64C8A3E1FC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1490,7 +1490,7 @@
         }
       }
     },
-    "3DDDCFE4-6985-4D1C-9CDF-F36426F92CB8": {
+    "40AC004B-D763-4CE0-A8DB-C287B07C7F9F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1533,7 +1533,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "892E0D5D-6949-4DAB-992F-297D930DB450",
+            "id": "AEFF2254-D2AD-4D25-8291-A8119724DD9C",
             "rev": 0
           }
         },
@@ -1559,7 +1559,7 @@
         }
       }
     },
-    "892E0D5D-6949-4DAB-992F-297D930DB450": {
+    "AEFF2254-D2AD-4D25-8291-A8119724DD9C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1584,7 +1584,7 @@
         }
       }
     },
-    "80778C2A-9712-4933-8239-70439DD3685A": {
+    "C0729C39-260B-4A92-8CF8-E9648104B625": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1627,7 +1627,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "16828367-37EE-4960-A18C-0A4E97EFA437",
+            "id": "A61EA5B2-B0AB-4782-A830-106694CDF315",
             "rev": 0
           }
         },
@@ -1653,7 +1653,7 @@
         }
       }
     },
-    "16828367-37EE-4960-A18C-0A4E97EFA437": {
+    "A61EA5B2-B0AB-4782-A830-106694CDF315": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1678,7 +1678,7 @@
         }
       }
     },
-    "EC654703-6605-4DB1-8CEE-14D6F4A03B2F": {
+    "F5107A28-A20E-4E1A-A170-32AF3BA490E2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1721,7 +1721,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "C4C5356D-4900-4F4D-99D9-7069C88935C3",
+            "id": "94DBF79E-13B8-4CCD-9D43-B9B4FBD2E34E",
             "rev": 0
           }
         },
@@ -1747,7 +1747,7 @@
         }
       }
     },
-    "C4C5356D-4900-4F4D-99D9-7069C88935C3": {
+    "94DBF79E-13B8-4CCD-9D43-B9B4FBD2E34E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1772,7 +1772,7 @@
         }
       }
     },
-    "4D8A4D70-E0C9-4704-B119-74BCC8DCF805": {
+    "1714F583-FA8E-4388-AC68-885AC89FB73E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1804,7 +1804,7 @@
           "value": {
             "__ref__": true,
             "id": "SaveWorldDialog_31BAA4DB_37D3_4364_B903_BF1D8B1D5667",
-            "rev": 692623
+            "rev": 772407
           }
         },
         "targetMethodName": {
@@ -1815,7 +1815,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "6AE0197C-8432-4FF8-87F6-03A93645998C",
+            "id": "E3EF7534-DC44-4527-BA90-C295CC664832",
             "rev": 0
           }
         },
@@ -1841,7 +1841,7 @@
         }
       }
     },
-    "6AE0197C-8432-4FF8-87F6-03A93645998C": {
+    "E3EF7534-DC44-4527-BA90-C295CC664832": {
       "rev": 0,
       "props": {
         "source": {
@@ -1857,7 +1857,7 @@
           "value": {
             "__ref__": true,
             "id": "SaveWorldDialog_31BAA4DB_37D3_4364_B903_BF1D8B1D5667",
-            "rev": 692623
+            "rev": 772407
           }
         }
       }
@@ -1874,7 +1874,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "6363A678-4ECF-4A0E-B4E1-EB4FE2228920",
+              "id": "F1A9FA4C-7D49-41C9-B9D5-B33F1BD9CCAE",
               "rev": 0
             }
           ]
@@ -1989,7 +1989,7 @@
             "OK",
             {
               "__ref__": true,
-              "id": "CDDAB38A-2765-4B02-A268-3022F18A9C51",
+              "id": "74C70781-1E51-41AF-A974-5A400742D51E",
               "rev": 0
             }
           ]
@@ -2020,7 +2020,7 @@
         }
       }
     },
-    "6363A678-4ECF-4A0E-B4E1-EB4FE2228920": {
+    "F1A9FA4C-7D49-41C9-B9D5-B33F1BD9CCAE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2063,7 +2063,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "62960DDF-AFBC-4F97-8974-DACAFDF39CE5",
+            "id": "DF2645B4-02C7-4DB1-AF3B-C64736A7BFDF",
             "rev": 0
           }
         },
@@ -2089,7 +2089,7 @@
         }
       }
     },
-    "62960DDF-AFBC-4F97-8974-DACAFDF39CE5": {
+    "DF2645B4-02C7-4DB1-AF3B-C64736A7BFDF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2114,7 +2114,7 @@
         }
       }
     },
-    "CDDAB38A-2765-4B02-A268-3022F18A9C51": {
+    "74C70781-1E51-41AF-A974-5A400742D51E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2239,7 +2239,7 @@
             "save as: ",
             {
               "__ref__": true,
-              "id": "16D82312-69E6-4786-9B3C-02687ADB9A7C",
+              "id": "934DC294-EFB1-4E27-ABE0-67BA8AE6117C",
               "rev": 0
             }
           ]
@@ -2270,7 +2270,7 @@
         }
       }
     },
-    "16D82312-69E6-4786-9B3C-02687ADB9A7C": {
+    "934DC294-EFB1-4E27-ABE0-67BA8AE6117C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2423,7 +2423,7 @@
       }
     },
     "InputLine_3C8EAAD4_0C79_42E3_B4BB_83B6297E3EA6": {
-      "rev": 637003,
+      "rev": 693833,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2434,12 +2434,12 @@
           "value": [
             {
               "__ref__": true,
-              "id": "9C9BD731-DB36-44FA-8569-626EE2F111D3",
+              "id": "D7A7DB83-0A83-4470-B157-F21E0825DFCC",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "CFA1E0FD-32DC-457D-9565-989D1C2E8815",
+              "id": "AC4F9FD0-00EE-455B-B7F2-47DCA8594C0E",
               "rev": 0
             }
           ]
@@ -2556,7 +2556,7 @@
           "key": "embeddedMorphMap",
           "value": {
             "__ref__": true,
-            "id": "75196005-4975-4A68-943E-BBF958354062",
+            "id": "376FA10C-F5DE-4DE1-89A7-2C72C9106FA8",
             "rev": 0
           }
         },
@@ -2568,7 +2568,7 @@
           "key": "haloShadow",
           "value": {
             "__ref__": true,
-            "id": "94D11F81-9422-4E6F-BD2A-13D90973A6E8",
+            "id": "48F02FC2-0DD2-4D49-9565-D2B5455335A7",
             "rev": 0
           }
         },
@@ -2589,42 +2589,42 @@
           "value": [
             {
               "__ref__": true,
-              "id": "29767A60-1C4C-493E-B2D1-3B1F59D738EE",
+              "id": "0CE9A902-4EC0-4800-A9B6-D88F9ED1745B",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "E2A6F5C3-F9E5-4D61-AB7E-C930EBBC0812",
+              "id": "178DB86B-2E1A-41A7-97B9-22E111FCF424",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "B447E0F2-479B-4BAC-9209-24F8F9FB6775",
+              "id": "ADA28A7F-A4A9-437A-8848-A7C3C56CA85D",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "104F7A61-848A-47F8-9F77-881503A27EA4",
+              "id": "90BF1FC4-D24E-48F4-A095-3DFE8412E644",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "E113843F-3438-4571-942F-851FEDE8B487",
+              "id": "C0ABC53D-E199-4FA9-AADB-6B82CD9939CB",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "7ECD4A72-8408-4CB4-9CDA-80EF0B403B7C",
+              "id": "67C5FFF2-A751-409D-9373-30FF32AF9C3E",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "02112952-32E4-49DF-A96B-9C5CE15B7F14",
+              "id": "47743E81-0E61-4350-9AD4-F124DA8F74F0",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "362DDD5B-0CAB-473A-84D2-4EFD9CA5007B",
+              "id": "DD311420-A982-493D-B728-B8399201F032",
               "rev": 0
             },
             {
@@ -2690,7 +2690,7 @@
         }
       }
     },
-    "9C9BD731-DB36-44FA-8569-626EE2F111D3": {
+    "D7A7DB83-0A83-4470-B157-F21E0825DFCC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2710,7 +2710,7 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_3C8EAAD4_0C79_42E3_B4BB_83B6297E3EA6",
-            "rev": 637003
+            "rev": 693833
           }
         },
         "sourceAttrName": {
@@ -2722,7 +2722,7 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_3C8EAAD4_0C79_42E3_B4BB_83B6297E3EA6",
-            "rev": 637003
+            "rev": 693833
           }
         },
         "targetMethodName": {
@@ -2733,7 +2733,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "AB1146EA-9918-48DE-8A86-5E00CF17B50D",
+            "id": "CA2AA6F0-8C58-4B0A-A208-2446893A6AF8",
             "rev": 0
           }
         },
@@ -2759,7 +2759,7 @@
         }
       }
     },
-    "AB1146EA-9918-48DE-8A86-5E00CF17B50D": {
+    "CA2AA6F0-8C58-4B0A-A208-2446893A6AF8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2771,7 +2771,7 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_3C8EAAD4_0C79_42E3_B4BB_83B6297E3EA6",
-            "rev": 637003
+            "rev": 693833
           }
         },
         "target": {
@@ -2779,12 +2779,12 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_3C8EAAD4_0C79_42E3_B4BB_83B6297E3EA6",
-            "rev": 637003
+            "rev": 693833
           }
         }
       }
     },
-    "CFA1E0FD-32DC-457D-9565-989D1C2E8815": {
+    "AC4F9FD0-00EE-455B-B7F2-47DCA8594C0E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2804,7 +2804,7 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_3C8EAAD4_0C79_42E3_B4BB_83B6297E3EA6",
-            "rev": 637003
+            "rev": 693833
           }
         },
         "sourceAttrName": {
@@ -2816,7 +2816,7 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_3C8EAAD4_0C79_42E3_B4BB_83B6297E3EA6",
-            "rev": 637003
+            "rev": 693833
           }
         },
         "targetMethodName": {
@@ -2827,7 +2827,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "14213C8A-9410-4FD0-BBD7-992046678A8F",
+            "id": "4C6FD5E4-9675-49EA-86DE-8D35DF89C0AF",
             "rev": 0
           }
         },
@@ -2853,7 +2853,7 @@
         }
       }
     },
-    "14213C8A-9410-4FD0-BBD7-992046678A8F": {
+    "4C6FD5E4-9675-49EA-86DE-8D35DF89C0AF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2865,7 +2865,7 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_3C8EAAD4_0C79_42E3_B4BB_83B6297E3EA6",
-            "rev": 637003
+            "rev": 693833
           }
         },
         "target": {
@@ -2873,12 +2873,12 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_3C8EAAD4_0C79_42E3_B4BB_83B6297E3EA6",
-            "rev": 637003
+            "rev": 693833
           }
         }
       }
     },
-    "75196005-4975-4A68-943E-BBF958354062": {
+    "376FA10C-F5DE-4DE1-89A7-2C72C9106FA8": {
       "rev": 0,
       "props": {},
       "entries": [],
@@ -2886,7 +2886,7 @@
         "className": "Map"
       }
     },
-    "94D11F81-9422-4E6F-BD2A-13D90973A6E8": {
+    "48F02FC2-0DD2-4D49-9565-D2B5455335A7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2934,7 +2934,7 @@
         }
       }
     },
-    "29767A60-1C4C-493E-B2D1-3B1F59D738EE": {
+    "0CE9A902-4EC0-4800-A9B6-D88F9ED1745B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2949,7 +2949,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "D0CCCABE-E82D-4F70-BEE9-979B9640CF21",
+            "id": "A5DBFD32-28AE-4510-ADDE-922C838E6E34",
             "rev": 0
           }
         },
@@ -2971,7 +2971,7 @@
         }
       }
     },
-    "D0CCCABE-E82D-4F70-BEE9-979B9640CF21": {
+    "A5DBFD32-28AE-4510-ADDE-922C838E6E34": {
       "rev": 0,
       "props": {
         "column": {
@@ -2984,7 +2984,7 @@
         }
       }
     },
-    "E2A6F5C3-F9E5-4D61-AB7E-C930EBBC0812": {
+    "178DB86B-2E1A-41A7-97B9-22E111FCF424": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2999,7 +2999,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "B95EE292-F086-48E9-9A47-82AF33435DB5",
+            "id": "4074EB24-4D7C-42A6-9F53-F4DB7D72EB5A",
             "rev": 0
           }
         },
@@ -3021,7 +3021,7 @@
         }
       }
     },
-    "B95EE292-F086-48E9-9A47-82AF33435DB5": {
+    "4074EB24-4D7C-42A6-9F53-F4DB7D72EB5A": {
       "rev": 0,
       "props": {
         "column": {
@@ -3034,7 +3034,7 @@
         }
       }
     },
-    "B447E0F2-479B-4BAC-9209-24F8F9FB6775": {
+    "ADA28A7F-A4A9-437A-8848-A7C3C56CA85D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3049,7 +3049,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "B33C6E93-F331-4F61-8AAD-D0EB2E44CA99",
+            "id": "D55E0B49-13F8-46AB-AF4B-251620C09C52",
             "rev": 0
           }
         },
@@ -3071,7 +3071,7 @@
         }
       }
     },
-    "B33C6E93-F331-4F61-8AAD-D0EB2E44CA99": {
+    "D55E0B49-13F8-46AB-AF4B-251620C09C52": {
       "rev": 0,
       "props": {
         "column": {
@@ -3084,7 +3084,7 @@
         }
       }
     },
-    "104F7A61-848A-47F8-9F77-881503A27EA4": {
+    "90BF1FC4-D24E-48F4-A095-3DFE8412E644": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3099,7 +3099,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "7581D3B4-D074-4368-BFCA-5F48CDEC94C9",
+            "id": "34121C74-CCBA-413E-A795-37BC0F4619D1",
             "rev": 0
           }
         },
@@ -3121,7 +3121,7 @@
         }
       }
     },
-    "7581D3B4-D074-4368-BFCA-5F48CDEC94C9": {
+    "34121C74-CCBA-413E-A795-37BC0F4619D1": {
       "rev": 0,
       "props": {
         "column": {
@@ -3134,7 +3134,7 @@
         }
       }
     },
-    "E113843F-3438-4571-942F-851FEDE8B487": {
+    "C0ABC53D-E199-4FA9-AADB-6B82CD9939CB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3149,7 +3149,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "8B57BCC0-E85F-4292-8A2A-3E020CF4C365",
+            "id": "098510B0-6FE8-46F2-8C58-47D5DF19DB84",
             "rev": 0
           }
         },
@@ -3171,7 +3171,7 @@
         }
       }
     },
-    "8B57BCC0-E85F-4292-8A2A-3E020CF4C365": {
+    "098510B0-6FE8-46F2-8C58-47D5DF19DB84": {
       "rev": 0,
       "props": {
         "column": {
@@ -3184,7 +3184,7 @@
         }
       }
     },
-    "7ECD4A72-8408-4CB4-9CDA-80EF0B403B7C": {
+    "67C5FFF2-A751-409D-9373-30FF32AF9C3E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3199,7 +3199,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "D8395ECC-F5BA-470F-8767-3240C223B47C",
+            "id": "3190C7D2-35E0-4A53-8319-4B04307C6486",
             "rev": 0
           }
         },
@@ -3221,7 +3221,7 @@
         }
       }
     },
-    "D8395ECC-F5BA-470F-8767-3240C223B47C": {
+    "3190C7D2-35E0-4A53-8319-4B04307C6486": {
       "rev": 0,
       "props": {
         "column": {
@@ -3234,7 +3234,7 @@
         }
       }
     },
-    "02112952-32E4-49DF-A96B-9C5CE15B7F14": {
+    "47743E81-0E61-4350-9AD4-F124DA8F74F0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3249,7 +3249,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "58B4E842-E65B-4488-ABBD-EB072EC26A95",
+            "id": "2878C97B-91CC-4A7F-ADC5-FA510DAB7E4C",
             "rev": 0
           }
         },
@@ -3271,7 +3271,7 @@
         }
       }
     },
-    "58B4E842-E65B-4488-ABBD-EB072EC26A95": {
+    "2878C97B-91CC-4A7F-ADC5-FA510DAB7E4C": {
       "rev": 0,
       "props": {
         "row": {
@@ -3284,7 +3284,7 @@
         }
       }
     },
-    "362DDD5B-0CAB-473A-84D2-4EFD9CA5007B": {
+    "DD311420-A982-493D-B728-B8399201F032": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3299,7 +3299,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "58B4E842-E65B-4488-ABBD-EB072EC26A95",
+            "id": "2878C97B-91CC-4A7F-ADC5-FA510DAB7E4C",
             "rev": 0
           }
         },
@@ -3332,7 +3332,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "A003F085-15EB-4423-8163-E1D738F53ADC",
+            "id": "0DF88D48-3897-4D97-9DE8-B9C7FB4DB50D",
             "rev": 0
           }
         },
@@ -3354,7 +3354,7 @@
         }
       }
     },
-    "A003F085-15EB-4423-8163-E1D738F53ADC": {
+    "0DF88D48-3897-4D97-9DE8-B9C7FB4DB50D": {
       "rev": 0,
       "props": {
         "row": {
@@ -3378,7 +3378,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "D746D5D5-5534-4CB6-B2EF-D5FE69501BC2",
+            "id": "3CDC0150-902A-4D52-A7B0-8440A15AD17D",
             "rev": 0
           }
         },
@@ -3400,7 +3400,7 @@
         }
       }
     },
-    "D746D5D5-5534-4CB6-B2EF-D5FE69501BC2": {
+    "3CDC0150-902A-4D52-A7B0-8440A15AD17D": {
       "rev": 0,
       "props": {
         "row": {
@@ -3414,7 +3414,7 @@
       }
     },
     "Text_CDD59048_622A_41A5_B99E_EEAB5ACC5988": {
-      "rev": 637016,
+      "rev": 695425,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -3425,7 +3425,7 @@
         },
         "name": {
           "key": "name",
-          "value": "description copy"
+          "value": "description"
         },
         "nativeCursor": {
           "key": "nativeCursor",
@@ -3535,7 +3535,7 @@
           "key": "embeddedMorphMap",
           "value": {
             "__ref__": true,
-            "id": "0900FC39-3289-4844-A75E-E3F8117B5790",
+            "id": "37E7092D-2358-44D8-B7AC-AEAB9C5223A8",
             "rev": 0
           }
         },
@@ -3555,7 +3555,7 @@
           "key": "haloShadow",
           "value": {
             "__ref__": true,
-            "id": "7176F290-7861-46C1-B27B-D174D9A647F3",
+            "id": "3D627F11-2151-4091-8C50-C75345BAEA92",
             "rev": 0
           }
         },
@@ -3572,52 +3572,52 @@
           "value": [
             {
               "__ref__": true,
-              "id": "2A800AE0-BACA-4C46-89EA-8BCC53536DD9",
+              "id": "BB758EB2-CB0D-4E57-A25A-F93C06D5C366",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "3C3516D0-A9F8-4458-B09D-023EBACEDCEB",
+              "id": "DB1512B9-F108-475C-B1EB-3805B081DBEC",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "475DA87F-820B-41CF-B7DB-123C26B09B60",
+              "id": "2C022C79-3366-419F-BAB3-9D49370AFBE3",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "37F1209A-8B17-4C15-A1FA-D2DA703B2BE0",
+              "id": "F11A8989-DF57-44FF-A372-ACCCE00242D5",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "97457174-EE4D-4B28-8471-E76A962D1909",
+              "id": "562B63B9-35EE-4D4E-B29D-1954ECDA0AE5",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "F447F0B8-AB5A-4452-8033-82B56D3FF9DC",
+              "id": "F67035F4-25EC-410B-BE09-36AD3760B12F",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "E5EE1316-7FC7-4DCF-8980-A889B67EFA33",
+              "id": "D90C5F98-C34E-475B-8488-17E6C52A3836",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "790F81D0-931C-47CB-99C3-38B724717D49",
+              "id": "03798CB3-80A0-4CE0-B01A-82391BF7C8FF",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "74FC5F69-8AE1-4BD9-ABB1-F74F1A8CEBC0",
+              "id": "D557D1AC-6111-4755-9C2E-0DEC10CF5240",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "ABC7CC7B-EBBC-41AF-9A5E-FADC1D8EA655",
+              "id": "96658120-0F0D-4226-8B8B-8EA67A7EC881",
               "rev": 0
             },
             {
@@ -3675,7 +3675,7 @@
         }
       }
     },
-    "0900FC39-3289-4844-A75E-E3F8117B5790": {
+    "37E7092D-2358-44D8-B7AC-AEAB9C5223A8": {
       "rev": 0,
       "props": {},
       "entries": [],
@@ -3683,7 +3683,7 @@
         "className": "Map"
       }
     },
-    "7176F290-7861-46C1-B27B-D174D9A647F3": {
+    "3D627F11-2151-4091-8C50-C75345BAEA92": {
       "rev": 0,
       "props": {
         "_rotation": {
@@ -3727,7 +3727,7 @@
         }
       }
     },
-    "2A800AE0-BACA-4C46-89EA-8BCC53536DD9": {
+    "BB758EB2-CB0D-4E57-A25A-F93C06D5C366": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3742,7 +3742,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "A05836A7-DF78-4E7B-9AEB-7E775179BC98",
+            "id": "3233FAD8-EA49-4465-B21E-F3F6BD4523C9",
             "rev": 0
           }
         },
@@ -3764,7 +3764,7 @@
         }
       }
     },
-    "A05836A7-DF78-4E7B-9AEB-7E775179BC98": {
+    "3233FAD8-EA49-4465-B21E-F3F6BD4523C9": {
       "rev": 0,
       "props": {
         "row": {
@@ -3777,7 +3777,7 @@
         }
       }
     },
-    "3C3516D0-A9F8-4458-B09D-023EBACEDCEB": {
+    "DB1512B9-F108-475C-B1EB-3805B081DBEC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3792,7 +3792,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "A05836A7-DF78-4E7B-9AEB-7E775179BC98",
+            "id": "3233FAD8-EA49-4465-B21E-F3F6BD4523C9",
             "rev": 0
           }
         },
@@ -3814,7 +3814,7 @@
         }
       }
     },
-    "475DA87F-820B-41CF-B7DB-123C26B09B60": {
+    "2C022C79-3366-419F-BAB3-9D49370AFBE3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3829,7 +3829,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "A05836A7-DF78-4E7B-9AEB-7E775179BC98",
+            "id": "3233FAD8-EA49-4465-B21E-F3F6BD4523C9",
             "rev": 0
           }
         },
@@ -3851,7 +3851,7 @@
         }
       }
     },
-    "37F1209A-8B17-4C15-A1FA-D2DA703B2BE0": {
+    "F11A8989-DF57-44FF-A372-ACCCE00242D5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3866,7 +3866,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "A05836A7-DF78-4E7B-9AEB-7E775179BC98",
+            "id": "3233FAD8-EA49-4465-B21E-F3F6BD4523C9",
             "rev": 0
           }
         },
@@ -3888,7 +3888,7 @@
         }
       }
     },
-    "97457174-EE4D-4B28-8471-E76A962D1909": {
+    "562B63B9-35EE-4D4E-B29D-1954ECDA0AE5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3903,7 +3903,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "A05836A7-DF78-4E7B-9AEB-7E775179BC98",
+            "id": "3233FAD8-EA49-4465-B21E-F3F6BD4523C9",
             "rev": 0
           }
         },
@@ -3925,7 +3925,7 @@
         }
       }
     },
-    "F447F0B8-AB5A-4452-8033-82B56D3FF9DC": {
+    "F67035F4-25EC-410B-BE09-36AD3760B12F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3940,7 +3940,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "A05836A7-DF78-4E7B-9AEB-7E775179BC98",
+            "id": "3233FAD8-EA49-4465-B21E-F3F6BD4523C9",
             "rev": 0
           }
         },
@@ -3962,7 +3962,7 @@
         }
       }
     },
-    "E5EE1316-7FC7-4DCF-8980-A889B67EFA33": {
+    "D90C5F98-C34E-475B-8488-17E6C52A3836": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3977,7 +3977,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "A05836A7-DF78-4E7B-9AEB-7E775179BC98",
+            "id": "3233FAD8-EA49-4465-B21E-F3F6BD4523C9",
             "rev": 0
           }
         },
@@ -3999,7 +3999,7 @@
         }
       }
     },
-    "790F81D0-931C-47CB-99C3-38B724717D49": {
+    "03798CB3-80A0-4CE0-B01A-82391BF7C8FF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4014,7 +4014,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "A05836A7-DF78-4E7B-9AEB-7E775179BC98",
+            "id": "3233FAD8-EA49-4465-B21E-F3F6BD4523C9",
             "rev": 0
           }
         },
@@ -4036,7 +4036,7 @@
         }
       }
     },
-    "74FC5F69-8AE1-4BD9-ABB1-F74F1A8CEBC0": {
+    "D557D1AC-6111-4755-9C2E-0DEC10CF5240": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4051,7 +4051,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "A05836A7-DF78-4E7B-9AEB-7E775179BC98",
+            "id": "3233FAD8-EA49-4465-B21E-F3F6BD4523C9",
             "rev": 0
           }
         },
@@ -4073,7 +4073,7 @@
         }
       }
     },
-    "ABC7CC7B-EBBC-41AF-9A5E-FADC1D8EA655": {
+    "96658120-0F0D-4226-8B8B-8EA67A7EC881": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4088,7 +4088,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "A05836A7-DF78-4E7B-9AEB-7E775179BC98",
+            "id": "3233FAD8-EA49-4465-B21E-F3F6BD4523C9",
             "rev": 0
           }
         },
@@ -4121,7 +4121,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "F8201A60-C18A-4A3D-BF10-C9D280E07333",
+            "id": "9C5FD292-B8B8-4196-8C57-B41F87421B38",
             "rev": 0
           }
         },
@@ -4143,7 +4143,7 @@
         }
       }
     },
-    "F8201A60-C18A-4A3D-BF10-C9D280E07333": {
+    "9C5FD292-B8B8-4196-8C57-B41F87421B38": {
       "rev": 0,
       "props": {
         "row": {
@@ -4167,7 +4167,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "907C2B06-9D39-41E0-8FB9-B78F2B3101CE",
+            "id": "C62B46B7-1377-40F7-A1CA-65E8A5FB43A6",
             "rev": 0
           }
         },
@@ -4189,7 +4189,7 @@
         }
       }
     },
-    "907C2B06-9D39-41E0-8FB9-B78F2B3101CE": {
+    "C62B46B7-1377-40F7-A1CA-65E8A5FB43A6": {
       "rev": 0,
       "props": {
         "row": {
@@ -4203,7 +4203,7 @@
       }
     },
     "InputLine_D66C9681_718B_4E3D_A90B_C98CB88FC849": {
-      "rev": 636987,
+      "rev": 694671,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -4214,19 +4214,19 @@
           "value": [
             {
               "__ref__": true,
-              "id": "139B9F0C-0D54-4810-85CB-579A4E92BC77",
+              "id": "29342382-C895-4F2E-B148-35E3F4F42A1F",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "CFA6CBE6-BCC1-4836-9EAC-E2E51B0F683C",
+              "id": "E10E4C96-5CA5-44D4-8C4E-85C706B3C92E",
               "rev": 0
             }
           ]
         },
         "name": {
           "key": "name",
-          "value": "name input copy"
+          "value": "tag input"
         },
         "dropShadow": {
           "key": "dropShadow",
@@ -4336,7 +4336,7 @@
           "key": "embeddedMorphMap",
           "value": {
             "__ref__": true,
-            "id": "591F42A2-73FA-40BF-892F-680D545394D0",
+            "id": "ACC72FE2-FAA1-43B8-9411-491CE7CA6D86",
             "rev": 0
           }
         },
@@ -4348,7 +4348,7 @@
           "key": "haloShadow",
           "value": {
             "__ref__": true,
-            "id": "A343625E-BB50-4D79-85C7-AEB8757CC4F9",
+            "id": "AE5EE806-B726-47D2-A9C0-F94E78B723EA",
             "rev": 0
           }
         },
@@ -4369,52 +4369,52 @@
           "value": [
             {
               "__ref__": true,
-              "id": "E0534399-4B52-4356-ABA1-F878E7CA6F75",
+              "id": "B3CF63B9-2767-4492-AAAC-55DF6546660F",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "516659D6-41EA-4A48-B0B5-338090BF5519",
+              "id": "A3CF0526-6A1F-4B8B-8BBE-79FBDFC59CD0",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "DA7843F3-A424-468E-9D2A-903945C8FC33",
+              "id": "02A6708C-68E5-4975-A9CC-5F7ED6E96386",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "CF2F22B8-4410-4D4C-8CD5-FD868C043DBE",
+              "id": "341E90C3-7F8C-4D85-B7B0-DAEF47402618",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "11AFC1A3-D48F-4BC7-981D-BF13800D895B",
+              "id": "FF3E62C3-E8B9-4FA6-85AC-C98EDA85B435",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "B6647030-B258-415A-AF05-83CD603A5AC7",
+              "id": "835409A8-A016-43C9-B5D6-D088A6FEC6EE",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "F34681C6-E93C-4103-B00F-D74FDC1F5E38",
+              "id": "B66BBA4B-D548-4D4D-B104-7A7B15A23CD1",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "6EBFD15D-7776-4845-BB3D-2927F83F0720",
+              "id": "33F839EB-5C11-47B3-9D90-8D47E7E2E7E2",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "0CBA1E60-596D-4EF3-883A-F10866ABE664",
+              "id": "D9769178-B357-4891-92B2-129F64E53C29",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "74313540-B6E5-4650-BBA8-66BB606F2592",
+              "id": "5207DC59-00AB-4F64-997C-D354DF590026",
               "rev": 0
             },
             {
@@ -4480,7 +4480,7 @@
         }
       }
     },
-    "139B9F0C-0D54-4810-85CB-579A4E92BC77": {
+    "29342382-C895-4F2E-B148-35E3F4F42A1F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4500,7 +4500,7 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_D66C9681_718B_4E3D_A90B_C98CB88FC849",
-            "rev": 636987
+            "rev": 694671
           }
         },
         "sourceAttrName": {
@@ -4512,7 +4512,7 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_D66C9681_718B_4E3D_A90B_C98CB88FC849",
-            "rev": 636987
+            "rev": 694671
           }
         },
         "targetMethodName": {
@@ -4523,7 +4523,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "FCB0281B-11A5-4E33-8BD1-102434A0EFC3",
+            "id": "057FFF8F-A09C-4A3D-A492-37CD6A9D7AE2",
             "rev": 0
           }
         },
@@ -4549,7 +4549,7 @@
         }
       }
     },
-    "FCB0281B-11A5-4E33-8BD1-102434A0EFC3": {
+    "057FFF8F-A09C-4A3D-A492-37CD6A9D7AE2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4561,7 +4561,7 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_D66C9681_718B_4E3D_A90B_C98CB88FC849",
-            "rev": 636987
+            "rev": 694671
           }
         },
         "target": {
@@ -4569,12 +4569,12 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_D66C9681_718B_4E3D_A90B_C98CB88FC849",
-            "rev": 636987
+            "rev": 694671
           }
         }
       }
     },
-    "CFA6CBE6-BCC1-4836-9EAC-E2E51B0F683C": {
+    "E10E4C96-5CA5-44D4-8C4E-85C706B3C92E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4594,7 +4594,7 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_D66C9681_718B_4E3D_A90B_C98CB88FC849",
-            "rev": 636987
+            "rev": 694671
           }
         },
         "sourceAttrName": {
@@ -4606,7 +4606,7 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_D66C9681_718B_4E3D_A90B_C98CB88FC849",
-            "rev": 636987
+            "rev": 694671
           }
         },
         "targetMethodName": {
@@ -4617,7 +4617,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "6A497320-DFA5-42EA-998D-43155962AB40",
+            "id": "B0A164EC-8740-40FD-BCD4-78BC216356CB",
             "rev": 0
           }
         },
@@ -4643,7 +4643,7 @@
         }
       }
     },
-    "6A497320-DFA5-42EA-998D-43155962AB40": {
+    "B0A164EC-8740-40FD-BCD4-78BC216356CB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4655,7 +4655,7 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_D66C9681_718B_4E3D_A90B_C98CB88FC849",
-            "rev": 636987
+            "rev": 694671
           }
         },
         "target": {
@@ -4663,12 +4663,12 @@
           "value": {
             "__ref__": true,
             "id": "InputLine_D66C9681_718B_4E3D_A90B_C98CB88FC849",
-            "rev": 636987
+            "rev": 694671
           }
         }
       }
     },
-    "591F42A2-73FA-40BF-892F-680D545394D0": {
+    "ACC72FE2-FAA1-43B8-9411-491CE7CA6D86": {
       "rev": 0,
       "props": {},
       "entries": [],
@@ -4676,7 +4676,7 @@
         "className": "Map"
       }
     },
-    "A343625E-BB50-4D79-85C7-AEB8757CC4F9": {
+    "AE5EE806-B726-47D2-A9C0-F94E78B723EA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4724,7 +4724,7 @@
         }
       }
     },
-    "E0534399-4B52-4356-ABA1-F878E7CA6F75": {
+    "B3CF63B9-2767-4492-AAAC-55DF6546660F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4739,7 +4739,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "25F7F30C-5060-443D-99BC-B9B398C21B8B",
+            "id": "0FDF25D3-9475-4298-860E-D4928D60D2EA",
             "rev": 0
           }
         },
@@ -4761,7 +4761,7 @@
         }
       }
     },
-    "25F7F30C-5060-443D-99BC-B9B398C21B8B": {
+    "0FDF25D3-9475-4298-860E-D4928D60D2EA": {
       "rev": 0,
       "props": {
         "column": {
@@ -4774,7 +4774,7 @@
         }
       }
     },
-    "516659D6-41EA-4A48-B0B5-338090BF5519": {
+    "A3CF0526-6A1F-4B8B-8BBE-79FBDFC59CD0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4789,7 +4789,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "6B899B65-A714-4376-8032-5EB2E421693F",
+            "id": "9D7A2F3F-46D3-4314-94F7-3DE428D8A874",
             "rev": 0
           }
         },
@@ -4811,7 +4811,7 @@
         }
       }
     },
-    "6B899B65-A714-4376-8032-5EB2E421693F": {
+    "9D7A2F3F-46D3-4314-94F7-3DE428D8A874": {
       "rev": 0,
       "props": {
         "column": {
@@ -4824,7 +4824,7 @@
         }
       }
     },
-    "DA7843F3-A424-468E-9D2A-903945C8FC33": {
+    "02A6708C-68E5-4975-A9CC-5F7ED6E96386": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4839,7 +4839,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "4BE7BB5B-5695-45DC-A493-E615911053DE",
+            "id": "211419DD-0D43-48D4-AF17-038EBD568B1D",
             "rev": 0
           }
         },
@@ -4861,7 +4861,7 @@
         }
       }
     },
-    "4BE7BB5B-5695-45DC-A493-E615911053DE": {
+    "211419DD-0D43-48D4-AF17-038EBD568B1D": {
       "rev": 0,
       "props": {
         "column": {
@@ -4874,7 +4874,7 @@
         }
       }
     },
-    "CF2F22B8-4410-4D4C-8CD5-FD868C043DBE": {
+    "341E90C3-7F8C-4D85-B7B0-DAEF47402618": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4889,7 +4889,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "A1D87E86-6162-4BF8-ADA3-267430E21E44",
+            "id": "872D834D-CFDC-4F51-A23E-ED4071851F0E",
             "rev": 0
           }
         },
@@ -4911,7 +4911,7 @@
         }
       }
     },
-    "A1D87E86-6162-4BF8-ADA3-267430E21E44": {
+    "872D834D-CFDC-4F51-A23E-ED4071851F0E": {
       "rev": 0,
       "props": {
         "column": {
@@ -4924,7 +4924,7 @@
         }
       }
     },
-    "11AFC1A3-D48F-4BC7-981D-BF13800D895B": {
+    "FF3E62C3-E8B9-4FA6-85AC-C98EDA85B435": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4939,7 +4939,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "EF4F1591-4F57-430C-8444-782A3EB361F9",
+            "id": "E3D82204-C662-427E-9FB2-2674BC47DA33",
             "rev": 0
           }
         },
@@ -4961,7 +4961,7 @@
         }
       }
     },
-    "EF4F1591-4F57-430C-8444-782A3EB361F9": {
+    "E3D82204-C662-427E-9FB2-2674BC47DA33": {
       "rev": 0,
       "props": {
         "column": {
@@ -4974,7 +4974,7 @@
         }
       }
     },
-    "B6647030-B258-415A-AF05-83CD603A5AC7": {
+    "835409A8-A016-43C9-B5D6-D088A6FEC6EE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4989,7 +4989,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "E364B32A-4403-41F0-8938-C53D21587E3D",
+            "id": "E4B71657-8445-44FC-A003-F20FD174A769",
             "rev": 0
           }
         },
@@ -5011,7 +5011,7 @@
         }
       }
     },
-    "E364B32A-4403-41F0-8938-C53D21587E3D": {
+    "E4B71657-8445-44FC-A003-F20FD174A769": {
       "rev": 0,
       "props": {
         "column": {
@@ -5024,7 +5024,7 @@
         }
       }
     },
-    "F34681C6-E93C-4103-B00F-D74FDC1F5E38": {
+    "B66BBA4B-D548-4D4D-B104-7A7B15A23CD1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5039,7 +5039,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "D15F7510-1B63-4AC3-B0E9-B8AC432A357F",
+            "id": "525B4A48-7BC0-41E2-8CBE-F0E693947519",
             "rev": 0
           }
         },
@@ -5061,7 +5061,7 @@
         }
       }
     },
-    "D15F7510-1B63-4AC3-B0E9-B8AC432A357F": {
+    "525B4A48-7BC0-41E2-8CBE-F0E693947519": {
       "rev": 0,
       "props": {
         "column": {
@@ -5074,7 +5074,7 @@
         }
       }
     },
-    "6EBFD15D-7776-4845-BB3D-2927F83F0720": {
+    "33F839EB-5C11-47B3-9D90-8D47E7E2E7E2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5089,7 +5089,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "738DFF83-0B32-4D97-A818-D71E72AC04E1",
+            "id": "DBA1D9B7-B207-4EC0-B215-B37F97B4D685",
             "rev": 0
           }
         },
@@ -5111,7 +5111,7 @@
         }
       }
     },
-    "738DFF83-0B32-4D97-A818-D71E72AC04E1": {
+    "DBA1D9B7-B207-4EC0-B215-B37F97B4D685": {
       "rev": 0,
       "props": {
         "column": {
@@ -5124,7 +5124,7 @@
         }
       }
     },
-    "0CBA1E60-596D-4EF3-883A-F10866ABE664": {
+    "D9769178-B357-4891-92B2-129F64E53C29": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5139,7 +5139,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "7CC10755-9C99-461B-B8FA-A8811558CD63",
+            "id": "4D645B7C-14DE-4909-8356-3E02BA93384B",
             "rev": 0
           }
         },
@@ -5161,7 +5161,7 @@
         }
       }
     },
-    "7CC10755-9C99-461B-B8FA-A8811558CD63": {
+    "4D645B7C-14DE-4909-8356-3E02BA93384B": {
       "rev": 0,
       "props": {
         "column": {
@@ -5174,7 +5174,7 @@
         }
       }
     },
-    "74313540-B6E5-4650-BBA8-66BB606F2592": {
+    "5207DC59-00AB-4F64-997C-D354DF590026": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5189,7 +5189,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "C2121E8B-9EDB-4BA1-9FF6-7AA25B00FF9B",
+            "id": "4A496FC9-9FBF-4357-BE67-69E87FA10B8F",
             "rev": 0
           }
         },
@@ -5211,7 +5211,7 @@
         }
       }
     },
-    "C2121E8B-9EDB-4BA1-9FF6-7AA25B00FF9B": {
+    "4A496FC9-9FBF-4357-BE67-69E87FA10B8F": {
       "rev": 0,
       "props": {
         "column": {
@@ -5235,7 +5235,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "D5706667-581A-498A-ABF2-EB5E634AE638",
+            "id": "EF6020F5-78BF-4A42-B495-455FFED53F8D",
             "rev": 0
           }
         },
@@ -5257,7 +5257,7 @@
         }
       }
     },
-    "D5706667-581A-498A-ABF2-EB5E634AE638": {
+    "EF6020F5-78BF-4A42-B495-455FFED53F8D": {
       "rev": 0,
       "props": {
         "row": {
@@ -5281,7 +5281,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "3EAFF16D-9D22-4124-ACC5-336B18162908",
+            "id": "A76F2742-541A-415A-988D-5026A19AA947",
             "rev": 0
           }
         },
@@ -5303,7 +5303,7 @@
         }
       }
     },
-    "3EAFF16D-9D22-4124-ACC5-336B18162908": {
+    "A76F2742-541A-415A-988D-5026A19AA947": {
       "rev": 0,
       "props": {
         "row": {
@@ -5459,14 +5459,14 @@
         }
       }
     },
-    "A1D143CE-2C8B-4267-BEBB-51B7DFB6E73C": {
+    "03DE16C1-48F7-4064-B099-A0D4B3714BC3": {
       "rev": 0,
       "props": {
         "rules": {
           "key": "rules",
           "value": {
             "__ref__": true,
-            "id": "94E21C67-5DF3-40EC-B8D5-48AB5D86AE58",
+            "id": "3D57D663-0C91-4717-BA8D-DD2A07EDA30D",
             "rev": 0
           }
         },
@@ -5475,7 +5475,7 @@
           "value": {
             "__ref__": true,
             "id": "SaveWorldDialog_31BAA4DB_37D3_4364_B903_BF1D8B1D5667",
-            "rev": 692623
+            "rev": 772407
           }
         }
       },
@@ -5492,7 +5492,7 @@
         }
       }
     },
-    "94E21C67-5DF3-40EC-B8D5-48AB5D86AE58": {
+    "3D57D663-0C91-4717-BA8D-DD2A07EDA30D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5503,7 +5503,7 @@
           "key": ".Button",
           "value": {
             "__ref__": true,
-            "id": "1141C6CC-99A4-4A16-ADAF-2B135E831DC9",
+            "id": "06BF4758-69F1-44EB-9B07-B15AB9FC85A7",
             "rev": 0
           }
         },
@@ -5511,7 +5511,7 @@
           "key": ".Button.activeStyle.standard",
           "value": {
             "__ref__": true,
-            "id": "5B95B7AC-10AE-4E87-86BB-4CB0514B9FC6",
+            "id": "D0A5796E-1206-4AD5-8486-B039AA946397",
             "rev": 0
           }
         },
@@ -5519,7 +5519,7 @@
           "key": ".Button.activeStyle.cancel",
           "value": {
             "__ref__": true,
-            "id": "A7D284B3-AA86-4B36-9CDC-A85DEE25D2FC",
+            "id": "1258D635-0FF5-42DD-9128-126E08752C18",
             "rev": 0
           }
         },
@@ -5527,7 +5527,7 @@
           "key": ".Button.activeStyle.ok",
           "value": {
             "__ref__": true,
-            "id": "970E9390-5F38-47D4-A324-144FFF54DCED",
+            "id": "2D3D61D7-B056-48EA-A17A-028088D9CAA9",
             "rev": 0
           }
         },
@@ -5535,7 +5535,7 @@
           "key": ".Button.activeStyle.standard [name=label]",
           "value": {
             "__ref__": true,
-            "id": "A5D33EC9-6CBC-456C-BFA8-14FF77465E05",
+            "id": "869F5B3A-2491-439A-8FE5-5F3A5A3B2187",
             "rev": 0
           }
         },
@@ -5543,7 +5543,7 @@
           "key": ".Button.activeStyle.cancel [name=label]",
           "value": {
             "__ref__": true,
-            "id": "D03DF4C2-9334-4D9A-8058-5EA616391439",
+            "id": "0AC82C2C-4E15-4FFC-A9F4-FA8BA1FB0E4B",
             "rev": 0
           }
         },
@@ -5551,13 +5551,13 @@
           "key": ".Button.activeStyle.ok [name=label]",
           "value": {
             "__ref__": true,
-            "id": "05EE9078-174A-40F9-BB3C-145ABB5B44FF",
+            "id": "7C248A2A-9D31-4A3F-BDF3-51057907A2E1",
             "rev": 0
           }
         }
       }
     },
-    "1141C6CC-99A4-4A16-ADAF-2B135E831DC9": {
+    "06BF4758-69F1-44EB-9B07-B15AB9FC85A7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5568,13 +5568,13 @@
           "key": "borderRadius",
           "value": {
             "__ref__": true,
-            "id": "C89E4AE7-3A9C-4C7C-9CFA-24636E6D31A8",
+            "id": "8E76D31A-3839-4ADB-A0DF-FD1BAAD95274",
             "rev": 0
           }
         }
       }
     },
-    "C89E4AE7-3A9C-4C7C-9CFA-24636E6D31A8": {
+    "8E76D31A-3839-4ADB-A0DF-FD1BAAD95274": {
       "rev": 0,
       "props": {
         "top": {
@@ -5598,7 +5598,7 @@
         }
       }
     },
-    "5B95B7AC-10AE-4E87-86BB-4CB0514B9FC6": {
+    "D0A5796E-1206-4AD5-8486-B039AA946397": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5609,7 +5609,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "831D4FE6-2B1D-415E-BA73-4D976F9BDF16",
+            "id": "9C0F85BF-11D5-4524-B9E0-AF1D6D18D080",
             "rev": 0
           }
         },
@@ -5621,7 +5621,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "785E5D24-737B-4B3C-9881-2655D25FCCE2",
+            "id": "9436E9D4-591E-48F9-B73A-46E5F557DEF0",
             "rev": 0
           }
         },
@@ -5631,7 +5631,7 @@
         }
       }
     },
-    "831D4FE6-2B1D-415E-BA73-4D976F9BDF16": {
+    "9C0F85BF-11D5-4524-B9E0-AF1D6D18D080": {
       "rev": 0,
       "props": {
         "top": {
@@ -5655,7 +5655,7 @@
         }
       }
     },
-    "785E5D24-737B-4B3C-9881-2655D25FCCE2": {
+    "9436E9D4-591E-48F9-B73A-46E5F557DEF0": {
       "rev": 0,
       "props": {
         "top": {
@@ -5679,7 +5679,7 @@
         }
       }
     },
-    "A7D284B3-AA86-4B36-9CDC-A85DEE25D2FC": {
+    "1258D635-0FF5-42DD-9128-126E08752C18": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5690,7 +5690,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "50388BEA-3003-4421-A7CC-4933DEE39B87",
+            "id": "E9EA0F81-FCFB-4777-A4DE-CA314F2AB6A9",
             "rev": 0
           }
         },
@@ -5702,7 +5702,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "5E29315E-0C79-4CBC-BBCE-160DFF77412D",
+            "id": "CE4A8964-037D-493D-A74D-29329EB04851",
             "rev": 0
           }
         },
@@ -5716,7 +5716,7 @@
         }
       }
     },
-    "50388BEA-3003-4421-A7CC-4933DEE39B87": {
+    "E9EA0F81-FCFB-4777-A4DE-CA314F2AB6A9": {
       "rev": 0,
       "props": {
         "top": {
@@ -5740,7 +5740,7 @@
         }
       }
     },
-    "5E29315E-0C79-4CBC-BBCE-160DFF77412D": {
+    "CE4A8964-037D-493D-A74D-29329EB04851": {
       "rev": 0,
       "props": {
         "top": {
@@ -5764,7 +5764,7 @@
         }
       }
     },
-    "970E9390-5F38-47D4-A324-144FFF54DCED": {
+    "2D3D61D7-B056-48EA-A17A-028088D9CAA9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5775,7 +5775,7 @@
           "key": "borderWidth",
           "value": {
             "__ref__": true,
-            "id": "5B3642EB-4056-4E11-ADEB-31DEAE2765A3",
+            "id": "43B494F5-EFE5-46D0-B5C9-46C4C786EF30",
             "rev": 0
           }
         },
@@ -5787,7 +5787,7 @@
           "key": "borderColor",
           "value": {
             "__ref__": true,
-            "id": "5E5157DC-431F-4F3F-A903-16E2A3753E54",
+            "id": "04ED0BF7-B691-4E97-83FE-E7C764BD5825",
             "rev": 0
           }
         },
@@ -5801,7 +5801,7 @@
         }
       }
     },
-    "5B3642EB-4056-4E11-ADEB-31DEAE2765A3": {
+    "43B494F5-EFE5-46D0-B5C9-46C4C786EF30": {
       "rev": 0,
       "props": {
         "top": {
@@ -5825,7 +5825,7 @@
         }
       }
     },
-    "5E5157DC-431F-4F3F-A903-16E2A3753E54": {
+    "04ED0BF7-B691-4E97-83FE-E7C764BD5825": {
       "rev": 0,
       "props": {
         "top": {
@@ -5849,7 +5849,7 @@
         }
       }
     },
-    "A5D33EC9-6CBC-456C-BFA8-14FF77465E05": {
+    "869F5B3A-2491-439A-8FE5-5F3A5A3B2187": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5866,7 +5866,7 @@
         }
       }
     },
-    "D03DF4C2-9334-4D9A-8058-5EA616391439": {
+    "0AC82C2C-4E15-4FFC-A9F4-FA8BA1FB0E4B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5883,7 +5883,7 @@
         }
       }
     },
-    "05EE9078-174A-40F9-BB3C-145ABB5B44FF": {
+    "7C248A2A-9D31-4A3F-BDF3-51057907A2E1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5906,7 +5906,7 @@
     "local://lively-object-modules/": {
       "SaveWorldDialog2": {
         "package.json": "{\n  \"name\": \"SaveWorldDialog2\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
-        "index.js": "/*global System*/\nimport { AbstractPrompt } from \"lively.morphic/components/prompts.js\";\nimport { Color, pt } from \"lively.graphics/index.js\";\nimport { connect } from \"lively.bindings/index.js\";\nimport { resource } from \"lively.resources/index.js\";\nimport { System as defaultSystem } from \"lively.modules/index.js\";\n\nexport default class SaveWorldDialog2 extends AbstractPrompt {\n\n  static get properties() {\n\n    return {\n\n      isEpiMorph: {get() { return true}},\n\n      worldName: {\n        derived: true, after: [\"submorphs\"],\n        get() { return this.ui.nameInput.textString; },\n        set(name) { this.ui.nameInput.textString = name; }\n      },\n\n      ui: {\n        derived: true, readOnly: true, after: [\"submorphs\"],\n        get() {\n          return {\n            label: this.getSubmorphNamed(\"save-dialog-label\"),\n            cancelButton: this.getSubmorphNamed(\"cancelButton\"),\n            okButton: this.getSubmorphNamed(\"okButton\"),\n            nameInput: this.getSubmorphNamed(\"name input\"),\n            nameLabel: this.getSubmorphNamed(\"name label\"),\n            destinationChooser: this.getSubmorphNamed(\"destination chooser\"),\n            destinationChooserLabel: this.getSubmorphNamed(\"destination chooser label\")\n          }\n        }\n      },\n    }\n\n  }\n\n  alignInWorld(world = this.world()) {\n    world.addMorph(this);\n    let {width, height} = world.visibleBounds();\n    this.width = (width*1/2) - 5;\n    this.height = (height*1/2) - 10\n    this.center = world.visibleBounds().center();\n    return this;\n  }\n\n  reset() {\n    // this.reset();\n    // this.openInWorld()\n\n    this.ui.nameInput.input = \"\";\n    this.layout = null;\n    this.clipMode = \"hidden\";\n\n    this.ui.label.fontColor = Color.white\n    this.ui.label.fontSize = 21;\n    this.ui.label.value = \"Save world\";\n    this.ui.label.fit()\n\n    connect(this.ui.cancelButton, 'fire', this, 'reject');\n    connect(this.ui.okButton, 'fire', this, 'resolve');\n\n    // this.ui.destinationChooser.items = [\"local storage\", \"server\"];\n  }\n\n  get lastDestination() {\n    return localStorage[\"save world dialog last destination\"] || \"server\"\n  }\n\n  set lastDestination(dest) {\n    localStorage[\"save world dialog last destination\"] = dest;\n  }\n\n  activate(opts) {\n    let {ui: {nameInput, destinationChooser}, lastDestination} = this;\n\n    // nameInput.showHistItem(\"prev\"); // FIXME, last saved world name\n\n    if (opts && opts.targetWorld)\n      nameInput.input = opts.targetWorld.name;\n    \n    if (destinationChooser.items.some(ea =>\n      ea.string === lastDestination))\n        destinationChooser.selection = lastDestination;\n\n    return super.activate();\n  }\n\n  reject() {\n    super.reject({name: null, destination: null});\n  }\n\n  resolve() {\n    let name = this.ui.nameInput.input;\n    if (!name) return this.reject();\n    this.remove(); // hard remove to not have save dialog in serialization\n    this.ui.nameInput.acceptInput();\n    let destination = this.ui.destinationChooser.selection;\n    this.lastDestination = destination;\n    return super.resolve({name, destination});\n  }\n\n  focus() {\n    this.ui.nameInput.focus();\n  }\n\n  beforePublish() {\n    // disconnectAll(this);\n    this.reset();\n  }\n\n  worldResources() {\n    let r = resource(System.decanonicalize(\"lively.morphic/worlds/\"));\n    return r.dirList(1, {exclude: ea => !ea.name().endsWith(\".json\")})\n  }\n\n  resourceFor(name) {\n    return resource(System.decanonicalize(`lively.morphic/worlds/${name}.json`))\n  }\n\n  onKeyDown(evt) {\n    \n  }\n}\n\n\n\n"
+        "index.js": "/*global System*/\nimport { AbstractPrompt } from \"lively.morphic/components/prompts.js\";\nimport { Color, pt } from \"lively.graphics/index.js\";\nimport { connect } from \"lively.bindings/index.js\";\nimport { resource } from \"lively.resources/index.js\";\nimport { System as defaultSystem } from \"lively.modules/index.js\";\n\nexport default class SaveWorldDialog2 extends AbstractPrompt {\n\n  static get properties() {\n\n    return {\n\n      isEpiMorph: {get() { return true}},\n\n      worldName: {\n        derived: true, after: [\"submorphs\"],\n        get() { return this.ui.nameInput.textString; },\n        set(name) { this.ui.nameInput.textString = name; }\n      },\n\n      ui: {\n        derived: true, readOnly: true, after: [\"submorphs\"],\n        get() {\n          return {\n            label: this.getSubmorphNamed(\"save-dialog-label\"),\n            cancelButton: this.getSubmorphNamed(\"cancelButton\"),\n            okButton: this.getSubmorphNamed(\"okButton\"),\n            nameInput: this.getSubmorphNamed(\"name input\"),\n            nameLabel: this.getSubmorphNamed(\"name label\")\n          }\n        }\n      },\n    }\n\n  }\n\n  alignInWorld(world = this.world()) {\n    world.addMorph(this);\n    let {width, height} = world.visibleBounds();\n    this.width = (width*1/2) - 5;\n    this.height = (height*1/2) - 10\n    this.center = world.visibleBounds().center();\n    return this;\n  }\n\n  reset() {\n    // this.reset();\n    // this.openInWorld()\n\n    this.ui.nameInput.input = \"\";\n    this.layout = null;\n    this.clipMode = \"hidden\";\n\n    this.ui.label.fontColor = Color.white\n    this.ui.label.fontSize = 21;\n    this.ui.label.value = \"Save world\";\n    this.ui.label.fit()\n\n    connect(this.ui.cancelButton, 'fire', this, 'reject');\n    connect(this.ui.okButton, 'fire', this, 'resolve');\n  }\n\n  get lastDestination() {\n    return localStorage[\"save world dialog last destination\"] || \"server\"\n  }\n\n  set lastDestination(dest) {\n    localStorage[\"save world dialog last destination\"] = dest;\n  }\n\n  activate(opts) {\n    let {ui: {nameInput}} = this;\n\n    // nameInput.showHistItem(\"prev\"); // FIXME, last saved world name\n\n    if (opts && opts.targetWorld)\n      nameInput.input = opts.targetWorld.name;\n\n    return super.activate();\n  }\n\n  reject() {\n    super.reject({name: null, destination: null});\n  }\n\n  resolve() {\n    let name = this.ui.nameInput.input;\n    if (!name) return this.reject();\n    this.remove(); // hard remove to not have save dialog in serialization\n    this.ui.nameInput.acceptInput();\n    return super.resolve({name});\n  }\n\n  focus() {\n    this.ui.nameInput.focus();\n  }\n\n  beforePublish() {\n    // disconnectAll(this);\n    this.reset();\n  }\n\n  worldResources() {\n    let r = resource(System.decanonicalize(\"lively.morphic/worlds/\"));\n    return r.dirList(1, {exclude: ea => !ea.name().endsWith(\".json\")})\n  }\n\n  resourceFor(name) {\n    return resource(System.decanonicalize(`lively.morphic/worlds/${name}.json`))\n  }\n\n  onKeyDown(evt) {\n    \n  }\n}\n\n\n\n"
       }
     }
   },
