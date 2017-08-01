@@ -161,6 +161,11 @@ export default function browserCommands(browser) {
       name: "choose and browse package resources",
       exec: browser => browser.world().execCommand("choose and browse package resources", {browser})
     },
+    
+    {
+      name: "choose and browse module",
+      exec: browser => browser.world().execCommand("choose and browse module", {browser})
+    },
 
     {
       name: "reload module",

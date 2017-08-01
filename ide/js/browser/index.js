@@ -152,7 +152,7 @@ export default class Browser extends Window {
     connect(historyBackwardButton, 'fire', this, 'execCommand', {converter: () => "browser history backward"});
     connect(historyForwardButton,  'fire', this, 'execCommand', {converter: () => "browser history forward"});
     connect(browseHistoryButton,   'fire', this, 'execCommand', {converter: () => "browser history browse"});
-    connect(browseModulesButton,   'fire', this, 'execCommand', {converter: () => "choose and browse package resources"});
+    connect(browseModulesButton,   'fire', this, 'execCommand', {converter: () => "choose and browse module"});
     connect(addPackageButton,      'fire', this, 'execCommand', {converter: () => "add package"});
     connect(removePackageButton,   'fire', this, 'execCommand', {converter: () => "remove package"});
     connect(addModuleButton,       'fire', this, 'execCommand', {converter: () => "load or add module"});
