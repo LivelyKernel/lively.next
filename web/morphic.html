@@ -8,10 +8,11 @@
     <div id="dom-loading-indicator"
          style="position: fixed; top: 50%; left: 50%;
                 margin-left: -160px; margin-top: -90px; z-index: 10;">
-      <div style="width: 320px; height: 180px; font-size: 30pt; border-radius: 10px;
+      <div style="width: 320px; height: 220px; font-size: 30pt; border-radius: 10px;
                   color: #ff7700; font-family: Helvetica Neue, Arial, sans-serif;
                   padding: 10px; background: #666;">
          <center><b>Loading</b></center>
+         <center id="dom-loading-status" style="font-size: 15pt;">...</center>
          <div style="background-image: url(/lively.morphic/lively-web-logo-small-animate.svg);
                      background-size: cover; height: 100%; margin-left: 110px; margin-top: 20px;"></div>
       </div>
@@ -24,6 +25,11 @@
     <script>
       if (document.location.host !== "lively-next.org")
         document.title = `lively.next (${document.location.host})`;
+      let status = document.getElementById("dom-loading-status");
+      function log() {
+        console.log(...arguments);
+        status.innerText = [...arguments].join(" ");
+      }
       var res = lively.resources.resource,
           loc = document.location,
           origin = loc.origin,
@@ -50,7 +56,7 @@
               .catch(function(err) { console.error(err); });
           } else loginDone = true;
         });
-      
+
       Promise.resolve()
         .then(polyfills)
         .then(bootstrapLivelySystem)
@@ -90,6 +96,7 @@
             lively.lang.promise.waitFor(function() { return loginDone; })
           ]).then(function(result) {
             var morphic = result[0];
+            log("Loading world...");
             return morphic.World.loadWorldFromURL(worldLocation.resource, null, {
               verbose: true,
               localconfig: true,
@@ -102,20 +109,25 @@
             });
           })
         })
-        .then(function() { worldLoaded = true; console.log("...lively.morphic world created"); })
+        .then(function() { worldLoaded = true; log("...lively.morphic world created"); })
         .catch(function(err) {
           //if (err.originalErr) err = err.originalErr;  // do not hide vital information!
           console.error(err);
           var printed = err.message;
-          printed += err.stack.includes(err.message) ? err.stack.replace(err.message, "\n") : err.stack;
-          console.error(printed);
+          if (err.stack !== err.message) {
+            printed += err.stack.includes(err.message) ? err.stack.replace(err.message, "\n") : err.stack;
+            console.error(printed);
+          }
+          let pre = document.createElement("pre");
+          pre.innerText = printed;
+          document.body.appendChild(pre);
         });
 
       function bootstrapLivelySystem() {
 
         // for loading an instrumented version of the packages comprising the lively.system
         return Promise.resolve()
-          .then(function() { console.log("starting bootstrap process..."); })
+          .then(function() { log("starting bootstrap process..."); })
 
           .then(function() { return lively.resources.resource(origin).join("package-registry.json").readJson(); })
           .then(function (packageCached) {
@@ -174,14 +186,14 @@
               "lively.storage",
               function(m) { lively.storage = m; })})
 
-          .then(function() { console.log("...lively systems are ready!"); });
+          .then(function() { log("...lively systems are ready!"); });
       }
 
       function importPackageAndDo(packageURL, doFunc) {
         var name = packageURL.split("/").slice(-1)[0];
+        log(`...loading ${name}...`);
         return lively.modules.importPackage(packageURL)
-          .then(doFunc || function() {})
-          .then(function() { console.log("...%s loaded...", name); })
+          .then(doFunc || function() {});
       }
 
       function polyfills() {
