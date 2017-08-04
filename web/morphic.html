@@ -104,7 +104,7 @@
         })
         .then(function() { worldLoaded = true; console.log("...lively.morphic world created"); })
         .catch(function(err) {
-          if (err.originalErr) err = err.originalErr;
+          //if (err.originalErr) err = err.originalErr;  // do not hide vital information!
           console.error(err);
           var printed = err.message;
           printed += err.stack.includes(err.message) ? err.stack.replace(err.message, "\n") : err.stack;
