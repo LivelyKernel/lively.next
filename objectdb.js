@@ -105,9 +105,9 @@ export default class ObjectDB {
 
   async has(type, name) { return !!(await this.objectStats(type, name)); }
 
-  async objects(type) {
-    let stats = await this.objectStats(type);
-    if (type) return Object.keys(stats || {});
+  async objects(optType) {
+    let stats = await this.objectStats(optType);
+    if (optType) return Object.keys(stats || {});
     let result = {};
     for (let type in stats)
       result[type] = Object.keys(stats[type]);
