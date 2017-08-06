@@ -24,7 +24,7 @@ export default class ObjectDB {
 
   static async dbList() {
     let metaDB = Database.ensureDB("__internal__objectdb-meta");
-    return (await metaDB.getAll()).map(ea => ea._id)
+    return (await metaDB.getAll()).map(ea => ea._id);
   }
 
   static async find(name) {
@@ -200,12 +200,21 @@ export default class ObjectDB {
 
     // Snapshot object and create commit.
 
-    let snapshotJson = snapshot ? JSON.stringify(snapshot) : null;
+    let snapshotJson = snapshot ? JSON.stringify(snapshot) : null,
+        commit = this._createCommit(
+          type, name, description, tags, metadata,
+          user, message, ancestors,
+          snapshot, snapshotJson, preview);
 
-    let commit = this._createCommit(
-      type, name, description, tags, metadata,
-      user, message, ancestors,
-      snapshot, snapshotJson, preview);
+    // update version graph
+    if (!versionData) versionData = {refs: {}, history: {}};
+    versionData.refs[ref] = commit._id;
+    versionData.history[commit._id] = ancestors;
+    await versionDB.set(type + "/" + name, versionData);
+
+    // store the commit
+    let commitDB = this.__commitDB || await this._commitDB();
+    commit = await commitDB.set(commit._id, commit);
 
     // write snapshot to resource
     if (snapshot) {
@@ -214,16 +223,6 @@ export default class ObjectDB {
       if (res.canDealWithJSON) await res.writeJson(snapshot);
       else await res.write(snapshotJson);
     }
-
-    // store the commit
-    let commitDB = this.__commitDB || await this._commitDB();
-    commit = await commitDB.set(commit._id, commit);
-
-    // update version graph
-    if (!versionData) versionData = {refs: {}, history: {}};
-    versionData.refs[ref] = commit._id;
-    versionData.history[commit._id] = ancestors;
-    await versionDB.set(type + "/" + name, versionData);
 
     return commit;
   }
@@ -249,7 +248,7 @@ export default class ObjectDB {
     snapshot, snapshotJson, preview
   ) {
     if (!preview && snapshot && snapshot.preview) preview = snapshot.preview;
-    return this._createCommitFromSpec({
+    let commit = {
       name, type, timestamp: Date.now(),
       author: {
         name: user.name,
@@ -263,19 +262,41 @@ export default class ObjectDB {
       deleted: !snapshot,
       metadata,
       ancestors
-    });
-  }
-
-  _createCommitFromSpec(commit) {
-    if (!commit.name) throw new Error(`commit needs name`);
-    if (!commit.type) throw new Error(`commit needs type`);
-    if (!commit.author) throw new Error(`commit needs author`);
-    if (!commit.author.name) throw new Error(`commit needs author.name`);
-    if (!commit.timestamp) commit.timestamp = Date.now();
-    if (!commit.tags) commit.tags = [];
+    }
     let hashObj = obj.dissoc(commit, ["preview"]),
         commitHash = sha1(JSON.stringify(hashObj));
     return Object.assign(commit, {_id: commitHash});
+  }
+
+
+  get _indexes() {
+    var nameIndex = {
+      _id: '_design/name_index',
+      views: {'name_index': {map: 'function (doc) { emit(`${doc.type}\u0000${doc.name}}`); }'}}},
+        nameAndTimestampIndex = {
+          _id: '_design/nameAndTimestamp_index',
+          views: {'nameAndTimestamp_index': {
+            map: "function (doc) { emit(`${doc.type}\u0000${doc.name}\u0000${doc.timestamp}}\u0000${doc._id}}`); }"}}},
+        nameWithMaxMinTimestamp = {
+          _id: '_design/nameWithMaxMinTimestamp_index',
+          views: {
+            'nameWithMaxMinTimestamp_index': {
+              map: 'doc => emit(`${doc.type}\u0000${doc.name}`, doc.timestamp)',
+              reduce: "_stats"}}
+        },
+        nameTypeFilter = {
+          _id: '_design/nameTypeFilter',
+          filters: {
+            'nameTypeFilter': `(doc, req) => {
+              if (doc._id[0] === "_") return true;
+              if (!req.query) return true;
+              
+              if (req.query.onlyIds && req.query.onlyIds[doc._id]) return true;
+              if (req.query.onlyTypesAndNames && req.query.onlyTypesAndNames[doc.type + "\\u0000" + doc.name]) return true;
+              return false;
+            }`}
+        };
+    return {nameTypeFilter, nameWithMaxMinTimestamp, nameAndTimestampIndex, nameIndex};
   }
 
   async _commitDB() {
@@ -297,33 +318,18 @@ export default class ObjectDB {
     if (!hasIndexes.every(Boolean)) {
       console.log(`Preparing indexes for object storage DB ${dbName}`);
 
-      var nameIndex = {
-            _id: '_design/name_index',
-            views: {'name_index': {map: 'function (doc) { emit(`${doc.type}\u0000${doc.name}}`); }'}}},
-          nameAndTimestampIndex = {
-            _id: '_design/nameAndTimestamp_index',
-            views: {'nameAndTimestamp_index': {
-              map: "function (doc) { emit(`${doc.type}\u0000${doc.name}\u0000${doc.timestamp}}\u0000${doc._id}}`); }"}}},
-          nameWithMaxMinTimestamp = {
-            _id: '_design/nameWithMaxMinTimestamp_index',
-            views: {
-              'nameWithMaxMinTimestamp_index': {
-                map: 'doc => emit(`${doc.type}\u0000${doc.name}`, doc.timestamp)',
-                reduce: "_stats"}}
-          },
-          nameTypeFilter = {
-            _id: '_design/nameTypeFilter',
-            filters: {
-              'nameTypeFilter': `(doc, req) => {
-// console.log(nameTypeFilter, doc, req);
-debugger
-console.log("foooo?")
-                if (!req.query.typeNameMap) return true;
-return true;
-              }`}
-          };
-
-      await db.setDocuments([nameIndex, nameAndTimestampIndex, nameWithMaxMinTimestamp, nameTypeFilter]);
+      var {
+        nameTypeFilter,
+        nameWithMaxMinTimestamp,
+        nameAndTimestampIndex,
+        nameIndex
+      } = this._indexes;
+      await db.setDocuments([
+        nameIndex,
+        nameAndTimestampIndex,
+        nameWithMaxMinTimestamp,
+        nameTypeFilter
+      ]);
       await Promise.all([
         db.pouchdb.query('name_index', {stale: 'update_after'}),
         db.pouchdb.query('nameAndTimestamp_index', {stale: 'update_after'}),
@@ -588,19 +594,19 @@ return true;
   replicateTo(remoteCommitDB, remoteVersionDB, toSnapshotLocation, options) {
     return new Synchronization(
       this, remoteCommitDB, remoteVersionDB, toSnapshotLocation,
-      {live: false, method: "replicateTo", ...options}).start();
+      {method: "replicateTo", ...options}).start();
   }
 
   replicateFrom(remoteCommitDB, remoteVersionDB, toSnapshotLocation, options) {
     return new Synchronization(
       this, remoteCommitDB, remoteVersionDB, toSnapshotLocation,
-      {live: false, method: "replicateFrom", ...options}).start();
+      {method: "replicateFrom", ...options}).start();
   }
 
   sync(remoteCommitDB, remoteVersionDB, toSnapshotLocation, options) {
     return new Synchronization(
       this, remoteCommitDB, remoteVersionDB, toSnapshotLocation,
-      {live: false, method: "sync", ...options}).start();
+      {method: "sync", ...options}).start();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -693,7 +699,8 @@ return true;
 class Synchronization {
 
   constructor(fromObjectDB, remoteCommitDB, remoteVersionDB, remoteLocation, options = {}) {
-    this.options = {live: false, method: "sync", ...options};
+    // replicationFilter: {onlyIds: {STRING: BOOL}, onlyTypesAndNames: {[type+"\u0000"+name]: BOOL}}
+    this.options = {live: false, method: "sync", replicationFilter: undefined, ...options};
     this.state = "not started";
     this.fromObjectDB = fromObjectDB;
     this.remoteCommitDB = remoteCommitDB;
@@ -730,20 +737,26 @@ class Synchronization {
           remoteCommitDB,
           remoteVersionDB,
           remoteLocation,
-          options: {live, method}
+          options: {live = false, retry = false, method, replicationFilter}
         } = this,
 
         versionDB = fromObjectDB.__versionDB || await fromObjectDB._versionDB(),
         commitDB = fromObjectDB.__commitDB || await fromObjectDB._commitDB(),
         versionChangeListener,
-        fromSnapshotLocation = fromObjectDB.snapshotLocation,
+        fromSnapshotLocation = fromObjectDB.snapshotLocation;
 
-        commitReplication = commitDB[method](remoteCommitDB, {
-          live, retry: true, conflicts: true,
+    if (!await remoteCommitDB.has('_design/nameTypeFilter')) {
+      var {nameTypeFilter} = fromObjectDB._indexes;
+      await remoteCommitDB.set('_design/nameTypeFilter', nameTypeFilter);
+    }
+
+    let commitReplication = commitDB[method](remoteCommitDB, {
+          live, retry,
+          // conflicts: true,
           filter: 'nameTypeFilter/nameTypeFilter',
-          query_params: {type: 'marsupial'}
+          query_params: replicationFilter
         }),
-        versionReplication = versionDB[method](remoteVersionDB, {live, retry: true, conflicts: true}),
+        versionReplication = versionDB[method](remoteVersionDB, {live, retry, conflicts: true}),
 
         commitReplicationState = "not started",
         versionReplicationState = "not started";
@@ -787,7 +800,12 @@ class Synchronization {
     })
     .on('paused', () => { commitReplicationState = "paused"; updateState(this); })
     .on('active', () => { commitReplicationState = "active"; updateState(this); })
-    .on('error', err => console.error(`${this} commit replication error`, err))
+    .on('error', err => {
+      commitReplicationState = "complete"; updateState(this);
+      console.error(`${this} commit replication error`, err);
+      debugger;
+      tryToResolve(this, [err]);
+    })
     .on('complete', info => {
       commitReplicationState = "complete"; updateState(this);
       let errors = method === "sync" ? info.push.errors.concat(info.pull.errors) : info.errors;
@@ -800,7 +818,11 @@ class Synchronization {
     })
     .on('paused', () => { versionReplicationState = "paused"; updateState(this); })
     .on('active', () => { versionReplicationState = "active"; updateState(this); })
-    .on('error', err => console.error(`${this} version replication error`, err))
+    .on('error', err => {
+      versionReplicationState = "complete"; updateState(this);
+      console.error(`${this} version replication error`, err);
+      tryToResolve(this, [err]);
+    })
     .on('complete', info => {
       versionReplicationState = "complete"; updateState(this);
       let errors = method === "sync" ? info.push.errors.concat(info.pull.errors) : info.errors;
@@ -822,10 +844,13 @@ class Synchronization {
     }
 
     function tryToResolve(sync, errors) {
-      if (commitReplicationState !== "complete" || versionReplicationState !== "complete") return;
+      if (!errors.length && (commitReplicationState !== "complete" || versionReplicationState !== "complete")) return;
       versionChangeListener.cancel();
       let err;
       if (errors.length) {
+        sync.state = "complete";
+        commitReplication.cancel();
+        versionReplication.cancel();
         err = new Error(`Synchronization error:\n  ${errors.join("\n  ")}`);
         err.errors = errors;
       }
