@@ -101,7 +101,7 @@ export default class Browser extends Window {
           return this.editorPlugin.systemInterface();
         },
         set(systemInterface) {
-          this.editorPlugin.setSystemInterface(systemInterface);
+          this.editorPlugin.setSystemInterfaceNamed(systemInterface)
         }
       },
 
@@ -586,16 +586,16 @@ export default class Browser extends Window {
     // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
 
     let {
-      packageName,
-      moduleName,
-      textPosition,
-      codeEntity,
-      scroll,
-      codeEntityTreeScroll,
-      moduleListScroll,
-      systemInterface
-    } = browseSpec,
-      {sourceEditor, codeEntityTree, moduleList} = this.ui;
+          packageName,
+          moduleName,
+          textPosition,
+          codeEntity,
+          scroll,
+          codeEntityTreeScroll,
+          moduleListScroll,
+          systemInterface
+        } = browseSpec,
+        {sourceEditor, codeEntityTree, moduleList} = this.ui;
 
     if (optSystemInterface || systemInterface) {
       this.systemInterface = optSystemInterface || systemInterface;
