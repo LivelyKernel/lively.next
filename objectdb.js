@@ -2,6 +2,8 @@
 import Database from "./database.js";
 import { resource } from "lively.resources";
 import { obj } from "lively.lang";
+import { promise } from "lively.lang";
+import { deferred } from "lively.lang/promise.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // sha1
@@ -23,7 +25,7 @@ export default class ObjectDB {
   static async dbList() {
     let metaDB = Database.ensureDB("__internal__objectdb-meta");
     return (await metaDB.getAll()).map(ea => ea._id)
-  }  
+  }
 
   static async find(name) {
     let found = objectDBs.get(name);
@@ -198,21 +200,12 @@ export default class ObjectDB {
 
     // Snapshot object and create commit.
 
-    let snapshotJson = snapshot ? JSON.stringify(snapshot) : null,
-        commit = this._createCommit(
-          type, name, description, tags, metadata,
-          user, message, ancestors,
-          snapshot, snapshotJson, preview);
+    let snapshotJson = snapshot ? JSON.stringify(snapshot) : null;
 
-    // update version graph
-    if (!versionData) versionData = {refs: {}, history: {}};
-    versionData.refs[ref] = commit._id;
-    versionData.history[commit._id] = ancestors;
-    await versionDB.set(type + "/" + name, versionData);
-
-    // store the commit
-    let commitDB = this.__commitDB || await this._commitDB();
-    commit = await commitDB.set(commit._id, commit);
+    let commit = this._createCommit(
+      type, name, description, tags, metadata,
+      user, message, ancestors,
+      snapshot, snapshotJson, preview);
 
     // write snapshot to resource
     if (snapshot) {
@@ -221,6 +214,16 @@ export default class ObjectDB {
       if (res.canDealWithJSON) await res.writeJson(snapshot);
       else await res.write(snapshotJson);
     }
+
+    // store the commit
+    let commitDB = this.__commitDB || await this._commitDB();
+    commit = await commitDB.set(commit._id, commit);
+
+    // update version graph
+    if (!versionData) versionData = {refs: {}, history: {}};
+    versionData.refs[ref] = commit._id;
+    versionData.history[commit._id] = ancestors;
+    await versionDB.set(type + "/" + name, versionData);
 
     return commit;
   }
@@ -246,7 +249,7 @@ export default class ObjectDB {
     snapshot, snapshotJson, preview
   ) {
     if (!preview && snapshot && snapshot.preview) preview = snapshot.preview;
-    let commit = {
+    return this._createCommitFromSpec({
       name, type, timestamp: Date.now(),
       author: {
         name: user.name,
@@ -260,7 +263,16 @@ export default class ObjectDB {
       deleted: !snapshot,
       metadata,
       ancestors
-    }
+    });
+  }
+
+  _createCommitFromSpec(commit) {
+    if (!commit.name) throw new Error(`commit needs name`);
+    if (!commit.type) throw new Error(`commit needs type`);
+    if (!commit.author) throw new Error(`commit needs author`);
+    if (!commit.author.name) throw new Error(`commit needs author.name`);
+    if (!commit.timestamp) commit.timestamp = Date.now();
+    if (!commit.tags) commit.tags = [];
     let hashObj = obj.dissoc(commit, ["preview"]),
         commitHash = sha1(JSON.stringify(hashObj));
     return Object.assign(commit, {_id: commitHash});
