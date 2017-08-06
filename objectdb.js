@@ -309,9 +309,21 @@ export default class ObjectDB {
             views: {
               'nameWithMaxMinTimestamp_index': {
                 map: 'doc => emit(`${doc.type}\u0000${doc.name}`, doc.timestamp)',
-                reduce: "_stats"}}};
+                reduce: "_stats"}}
+          },
+          nameTypeFilter = {
+            _id: '_design/nameTypeFilter',
+            filters: {
+              'nameTypeFilter': `(doc, req) => {
+// console.log(nameTypeFilter, doc, req);
+debugger
+console.log("foooo?")
+                if (!req.query.typeNameMap) return true;
+return true;
+              }`}
+          };
 
-      await db.setDocuments([nameIndex, nameAndTimestampIndex, nameWithMaxMinTimestamp]);
+      await db.setDocuments([nameIndex, nameAndTimestampIndex, nameWithMaxMinTimestamp, nameTypeFilter]);
       await Promise.all([
         db.pouchdb.query('name_index', {stale: 'update_after'}),
         db.pouchdb.query('nameAndTimestamp_index', {stale: 'update_after'}),
@@ -389,7 +401,7 @@ export default class ObjectDB {
   async exportToDir(exportDir, nameAndTypes, copyResources = false, includeDeleted = false) {
 
     if (typeof exportDir === "string") exportDir = resource(exportDir);
-    
+
     let commitDB = this.__commitDB || await this._commitDB(),
         versionDB = this.__versionDB || await this._versionDB(),
         backupData = [];
@@ -415,7 +427,6 @@ export default class ObjectDB {
     }
 
     for (let {refs, history, currentExportDir, commits, name, type} of backupData) {
-console.log({refs, history, currentExportDir, commits, name, type})
       if (!includeDeleted)
         commits = commits.filter(ea => !ea.deleted);
 
@@ -533,6 +544,65 @@ console.log({refs, history, currentExportDir, commits, name, type})
     return this.commit(type, name, snap, commitSpec);
   }
 
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // synchronization / replication
+
+  async replication(method, options, remoteCommitDB, remoteVersionDB, toSnapshotLocation) {
+    if (method !== "replicateTo" && method !== "replicateFrom")
+      throw new Error(`Unknown replication method ${method}`);
+
+    let versionDB = this.__versionDB || await this._versionDB(),
+        commitDB = this.__commitDB || await this._commitDB(),
+        commitChanges = [], versionChanges = [],
+        fromResources = [], toResources = [],
+        fromSnapshotLocation = this.snapshotLocation,
+        commitReplication = commitDB[method](remoteCommitDB).on("change", change => commitChanges.push(change)),
+        versionReplication = versionDB[method](remoteVersionDB).on("change", change => versionChanges.push(change));
+
+    [versionReplication, commitReplication] =
+      await Promise.all([versionReplication, commitReplication]);
+
+    for (let {docs: commits} of commitChanges)
+      for (let commit of commits)
+        if (!commit._id.startsWith("_"))
+          fromResources.push(this.snapshotResourceFor(commit));
+
+    await promise.parallel(fromResources.map(res => () => {
+      let path = res.relativePathFrom(fromSnapshotLocation),
+          toResource = toSnapshotLocation.join(path);
+      toResources.push(toResource);
+      return res.copyTo(toResource);
+    }), 5);
+
+    if (method === "replicateFrom")
+      [fromResources, toResources] = [toResources, fromResources];
+
+    return {
+      fromResources, toResources,
+      commitChanges, versionChanges,
+      versionReplication, commitReplication
+    };
+  }
+
+  replicateTo(remoteCommitDB, remoteVersionDB, toSnapshotLocation, options) {
+    return new Synchronization(
+      this, remoteCommitDB, remoteVersionDB, toSnapshotLocation,
+      {live: false, method: "replicateTo", ...options}).start();
+  }
+
+  replicateFrom(remoteCommitDB, remoteVersionDB, toSnapshotLocation, options) {
+    return new Synchronization(
+      this, remoteCommitDB, remoteVersionDB, toSnapshotLocation,
+      {live: false, method: "replicateFrom", ...options}).start();
+  }
+
+  sync(remoteCommitDB, remoteVersionDB, toSnapshotLocation, options) {
+    return new Synchronization(
+      this, remoteCommitDB, remoteVersionDB, toSnapshotLocation,
+      {live: false, method: "sync", ...options}).start();
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // deletion
 
@@ -618,6 +688,179 @@ console.log({refs, history, currentExportDir, commits, name, type})
     }
   }
 }
+
+
+class Synchronization {
+
+  constructor(fromObjectDB, remoteCommitDB, remoteVersionDB, remoteLocation, options = {}) {
+    this.options = {live: false, method: "sync", ...options};
+    this.state = "not started";
+    this.fromObjectDB = fromObjectDB;
+    this.remoteCommitDB = remoteCommitDB;
+    this.remoteVersionDB = remoteVersionDB;
+    this.remoteLocation = remoteLocation;
+    this.deferred = promise.deferred();
+    this.conflicts = [];
+    this.changes = [];
+  }
+
+  get isSynchonizing() { return this.isPaused || this.isRunning; }
+  get isComplete() { return this.state === "complete"; }
+  get isRunning() { return this.state === "running"; }
+  get isPaused() { return this.state === "paused"; }
+
+  whenPaused() {
+    return Promise.resolve()
+      .then(() => promise.waitFor(() => this.isPaused || this.isComplete))
+      .then(() => this);
+  }
+
+  waitForIt() { return this.deferred.promise; }
+
+  start() {
+    if (!this.isSynchonizing)
+      this._startReplicationAndCopy().catch(err =>
+        console.error(`Error starting synchronization: `, err));
+    return this;
+  }
+
+  async _startReplicationAndCopy() {
+    let {
+          fromObjectDB,
+          remoteCommitDB,
+          remoteVersionDB,
+          remoteLocation,
+          options: {live, method}
+        } = this,
+
+        versionDB = fromObjectDB.__versionDB || await fromObjectDB._versionDB(),
+        commitDB = fromObjectDB.__commitDB || await fromObjectDB._commitDB(),
+        versionChangeListener,
+        fromSnapshotLocation = fromObjectDB.snapshotLocation,
+
+        commitReplication = commitDB[method](remoteCommitDB, {
+          live, retry: true, conflicts: true,
+          filter: 'nameTypeFilter/nameTypeFilter',
+          query_params: {type: 'marsupial'}
+        }),
+        versionReplication = versionDB[method](remoteVersionDB, {live, retry: true, conflicts: true}),
+
+        commitReplicationState = "not started",
+        versionReplicationState = "not started";
+
+    this.versionReplication = versionReplication;
+    this.commitReplication = commitReplication;
+
+    versionChangeListener = remoteVersionDB.pouchdb.changes({include_docs: true, live: true, conflicts: true});
+
+    versionChangeListener.on("change", change => {
+      let {id, changes, doc: {_conflicts: conflicts}} = change;
+      if (!conflicts) return;
+      console.log(`version conflict ${id}:`, changes, conflicts);
+      this.conflicts.push({id, changes, conflicts: conflicts})
+    });
+
+    commitReplication.on("change", async change => {
+      if (method === "replicateTo") change = {direction: "push", change}
+      else if (method === "replicateFrom") change = {direction: "pull", change};
+
+      let {direction, change: {ok, docs: commits, errors}} = change;
+
+      try {
+        let toCopy = [];
+        for (let commit of commits){
+          if (commit._id.startsWith("_")) continue;
+          this.changes.push(commit._id);
+          toCopy.push(snapshotPathFor(commit));
+        }
+
+        await promise.parallel(toCopy.map(path => () => {
+          let fromResource = (direction === "push" ? fromSnapshotLocation : remoteLocation).join(path),
+              toResource = (direction === "push" ? remoteLocation : fromSnapshotLocation).join(path);
+          // console.log(`${this} Copying ${fromResource.url} => ${toResource.url}`);
+          return fromResource.copyTo(toResource);
+        }), 5);
+      } catch (err) {
+        console.error(`error in commitReplication onChange`, err);
+      }
+
+    })
+    .on('paused', () => { commitReplicationState = "paused"; updateState(this); })
+    .on('active', () => { commitReplicationState = "active"; updateState(this); })
+    .on('error', err => console.error(`${this} commit replication error`, err))
+    .on('complete', info => {
+      commitReplicationState = "complete"; updateState(this);
+      let errors = method === "sync" ? info.push.errors.concat(info.pull.errors) : info.errors;
+      tryToResolve(this, errors);
+    });
+
+    versionReplication.on(`change`, change => {
+      // console.log(`version change`, System._nodeRequire("util").inspect(change, {depth: 5}));
+      // versionChanges.push(change);
+    })
+    .on('paused', () => { versionReplicationState = "paused"; updateState(this); })
+    .on('active', () => { versionReplicationState = "active"; updateState(this); })
+    .on('error', err => console.error(`${this} version replication error`, err))
+    .on('complete', info => {
+      versionReplicationState = "complete"; updateState(this);
+      let errors = method === "sync" ? info.push.errors.concat(info.pull.errors) : info.errors;
+      tryToResolve(this, errors);
+    });
+
+    this.state = "running";
+
+    return this;
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    function updateState(sync) {
+      if (versionReplicationState === "paused" && commitReplicationState === "paused")
+        return console.log(sync+"", sync.state = "paused");
+      if (versionReplicationState === "complete" && commitReplicationState === "complete")
+        return console.log(sync+"", sync.state = "complete");
+      return console.log(sync+"", sync.state = "running");
+    }
+
+    function tryToResolve(sync, errors) {
+      if (commitReplicationState !== "complete" || versionReplicationState !== "complete") return;
+      versionChangeListener.cancel();
+      let err;
+      if (errors.length) {
+        err = new Error(`Synchronization error:\n  ${errors.join("\n  ")}`);
+        err.errors = errors;
+      }
+      if (err) sync.deferred.reject(err);
+      else sync.deferred.resolve(sync);
+    }
+
+    function snapshotPathFor(commit) {
+      // content is sha1 hash
+      let first = commit.content.slice(0, 2),
+          rest = commit.content.slice(2);
+      return `${first}/${rest}.json`
+    }
+  }
+
+  async safeStop() {
+    if (this.state === "not started" || !this.isSynchonizing) return this;
+    await this.whenPaused();
+    return this.stop();
+  }
+
+  stop() {
+    if (this.state === "not started" || !this.isSynchonizing) return this;
+    this.commitReplication.cancel();
+    this.versionReplication.cancel();
+    return this;
+  }
+
+  toString() {
+    let {method, state, fromObjectDB: {name}} = this,
+        dir = method === "sync" ? "<=>" : method === "replicateTo" ? "=>" : "<=";
+    return `Synchronization(${state}: ${name} ${dir})`;
+  }
+}
+
 
 
 
@@ -806,7 +1049,7 @@ export var ObjectDBInterface = {
 
   async exists(args) {
     // side effect: false
-    // returns: {exists: BOOLEAN, commitId}    
+    // returns: {exists: BOOLEAN, commitId}
     let {db: dbName, type, name, ref} = checkArgs(args, {
           db: "string",
           type: "string",
@@ -1145,12 +1388,12 @@ export class ObjectDBHTTPInterface {
     // returns: [{dir, type, name, commits, history, snapshotDirs}]
     return this._POST("importFromResource", args);
   }
-  
+
   async delete(args) {
     // parameters: db, type, name, dryRun
     // returns: deletion spec
     return this._POST("delete", args);
   }
-  
-  
+
+
 }
