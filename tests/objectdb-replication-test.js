@@ -1,5 +1,5 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after,xit,xdescribe*/
-import { expect } from "mocha-es6";
+import { expect, chai } from "mocha-es6";
 import ObjectDB from "../objectdb.js";
 import { fillDB1 } from "./test-helper.js";
 import { promise } from "lively.lang";
@@ -17,6 +17,15 @@ let replicationLocation = resource("local://lively-morphic-objectdb-test/replica
 let snapshotLocation2 = resource("local://lively-morphic-objectdb-test/more-snapshots/");
 let pouchDBForCommits, pouchDBForHist;
 
+
+
+async function expectDBsHaveSameDocs(db1, db2) {
+  let docs1 = (await db1.getAll()).filter(ea => !ea._id.startsWith("_")),
+      docs2 = (await db2.getAll()).filter(ea => !ea._id.startsWith("_"))
+  expect(docs1).deep.members(docs2);
+}
+
+
 describe("replication", function() {
 
   this.timeout(20*1000);
@@ -29,7 +38,8 @@ describe("replication", function() {
       objectDB, snapshotLocation
     } = await fillDB1());
 
-    objectDB2 = ObjectDB.named("lively-morphic-objectdb-test-for-replication", {snapshotLocation});
+    objectDB2 = ObjectDB.named("lively-morphic-objectdb-test-for-replication",
+      {snapshotLocation});
     pouchDBForCommits = Database.ensureDB("objectdb-test-replication-commits");
     pouchDBForHist = Database.ensureDB("objectdb-test-replication-hist");
   });
@@ -45,13 +55,12 @@ describe("replication", function() {
   });
 
   it("syncs everything", async () => {
-    let replication = objectDB.replicateTo(
-      pouchDBForCommits, pouchDBForHist, replicationLocation);
+    let replication = objectDB.replicateTo(pouchDBForCommits, pouchDBForHist, replicationLocation);
     await replication.waitForIt();
 
-    expect(await objectDB.__commitDB.getAll()).deep.equals(await pouchDBForCommits.getAll());
-    expect(await objectDB.__versionDB.getAll()).deep.equals(await pouchDBForHist.getAll());
-
+    await expectDBsHaveSameDocs(objectDB.__commitDB, pouchDBForCommits);
+    await expectDBsHaveSameDocs(objectDB.__versionDB, pouchDBForHist);
+    
     let root = objectDB.snapshotLocation,
         origPaths = (await root.dirList()).map(ea => ea.relativePathFrom(root)),
         replicatedPaths = (await replicationLocation.dirList()).map(ea => ea.relativePathFrom(replicationLocation));
@@ -63,8 +72,8 @@ describe("replication", function() {
       pouchDBForCommits, pouchDBForHist, replicationLocation, {typesAndNames: [{type: "world", name: world2.name}]});
     await replication.waitForIt();
 
-    expect(await objectDB.__commitDB.getAll()).deep.equals(await pouchDBForCommits.getAll());
-    expect(await objectDB.__versionDB.getAll()).deep.equals(await pouchDBForHist.getAll());
+    await expectDBsHaveSameDocs(objectDB.__commitDB, pouchDBForCommits);
+    await expectDBsHaveSameDocs(objectDB.__versionDB, pouchDBForHist);
 
     let root = objectDB.snapshotLocation,
         origPaths = (await root.dirList()).map(ea => ea.relativePathFrom(root)),
@@ -77,8 +86,8 @@ describe("replication", function() {
         commit = await objectDB.commit("world", world1.name, {snap: "shot!"}, {user: user1, message: "fooo"}),
         rep2 = await objectDB.replicateTo(pouchDBForCommits, pouchDBForHist, replicationLocation).waitForIt();
 
-    expect(await objectDB.__commitDB.getAll()).deep.equals(await pouchDBForCommits.getAll());
-    expect(await objectDB.__versionDB.getAll()).deep.equals(await pouchDBForHist.getAll());
+    await expectDBsHaveSameDocs(objectDB.__commitDB, pouchDBForCommits);
+    await expectDBsHaveSameDocs(objectDB.__versionDB, pouchDBForHist);
 
     let root = objectDB.snapshotLocation,
         origPaths = (await root.dirList()).map(ea => ea.relativePathFrom(root)),
@@ -87,16 +96,19 @@ describe("replication", function() {
   });
 
   it("replicates from", async () => {
-    await objectDB.replicateTo(pouchDBForCommits, pouchDBForHist, replicationLocation).waitForIt();
-    let rep = await objectDB2.replicateFrom(pouchDBForCommits, pouchDBForHist, replicationLocation).waitForIt();
+    await objectDB.replicateTo(pouchDBForCommits, pouchDBForHist, replicationLocation)
+      .waitForIt();
+    let rep = await objectDB2.replicateFrom(
+      pouchDBForCommits, pouchDBForHist, replicationLocation).waitForIt();
 
-    expect((await objectDB.__commitDB.getAll()).filter(ea => !ea._id.startsWith("_")))
-      .deep.equals((await objectDB2.__commitDB.getAll()).filter(ea => !ea._id.startsWith("_")));
-    expect(await objectDB.__versionDB.getAll()).deep.equals(await objectDB2.__versionDB.getAll());
+    
+    await expectDBsHaveSameDocs(objectDB.__commitDB, objectDB2.__commitDB);
+    await expectDBsHaveSameDocs(objectDB.__versionDB, objectDB2.__versionDB);
 
     let root = objectDB2.snapshotLocation,
         origPaths = (await root.dirList()).map(ea => ea.relativePathFrom(root)),
-        replicatedPaths = (await replicationLocation.dirList()).map(ea => ea.relativePathFrom(replicationLocation));
+        replicatedPaths = (await replicationLocation.dirList()).map(ea =>
+                            ea.relativePathFrom(replicationLocation));
     expect(origPaths).equals(replicatedPaths);
   });
 
@@ -110,7 +122,8 @@ describe("replication", function() {
       let commit = await objectDB.commit("world", "foo", {snap: "shot!"}, {user: user1, message: "fooo"});
       await Promise.all([sync1.safeStop(), sync2.safeStop()]);
 
-      expect(await objectDB.getCommit(commit._id)).deep.equals(await objectDB2.getCommit(commit._id));
+      expect(await objectDB.getCommit(commit._id))
+        .deep.equals(await objectDB2.getCommit(commit._id));
       expect(await objectDB.snapshotResourceFor(commit).exists()).equals(true);
       expect(await objectDB2.snapshotResourceFor(commit).exists()).equals(true);
     });

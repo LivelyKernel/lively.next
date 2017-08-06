@@ -1,5 +1,5 @@
 import { resource } from "lively.resources";
-import { ObjectDB } from "lively.storage";
+import ObjectDB from "../objectdb.js";
 
 function createDummyObject() {
   return {name: "some dummy object", foo: {bar: 23}};

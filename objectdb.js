@@ -270,33 +270,76 @@ export default class ObjectDB {
 
 
   get _indexes() {
-    var nameIndex = {
-      _id: '_design/name_index',
-      views: {'name_index': {map: 'function (doc) { emit(`${doc.type}\u0000${doc.name}}`); }'}}},
-        nameAndTimestampIndex = {
-          _id: '_design/nameAndTimestamp_index',
-          views: {'nameAndTimestamp_index': {
-            map: "function (doc) { emit(`${doc.type}\u0000${doc.name}\u0000${doc.timestamp}}\u0000${doc._id}}`); }"}}},
-        nameWithMaxMinTimestamp = {
-          _id: '_design/nameWithMaxMinTimestamp_index',
-          views: {
-            'nameWithMaxMinTimestamp_index': {
-              map: 'doc => emit(`${doc.type}\u0000${doc.name}`, doc.timestamp)',
-              reduce: "_stats"}}
-        },
-        nameTypeFilter = {
-          _id: '_design/nameTypeFilter',
-          filters: {
-            'nameTypeFilter': `(doc, req) => {
-              if (doc._id[0] === "_") return true;
-              if (!req.query) return true;
-              
-              if (req.query.onlyIds && req.query.onlyIds[doc._id]) return true;
-              if (req.query.onlyTypesAndNames && req.query.onlyTypesAndNames[doc.type + "\\u0000" + doc.name]) return true;
-              return false;
-            }`}
-        };
-    return {nameTypeFilter, nameWithMaxMinTimestamp, nameAndTimestampIndex, nameIndex};
+    return {
+      nameIndex: {
+        _id: '_design/name_index',
+        version: 1,
+        views: {'name_index': {map: 'function (doc) { emit(`${doc.type}\u0000${doc.name}`); }'}}
+      },
+
+      nameAndTimestampIndex: {
+        _id: '_design/nameAndTimestamp_index',
+        version: 1,
+        views: {'nameAndTimestamp_index': {
+          map: "function (doc) { emit(`${doc.type}\u0000${doc.name}\u0000${doc.timestamp}\u0000${doc._id}`); }"}}
+      },
+
+      nameWithMaxMinTimestamp: {
+        _id: '_design/nameWithMaxMinTimestamp_index',
+        version: 1,
+        views: {
+          'nameWithMaxMinTimestamp_index': {
+            map: 'doc => emit(`${doc.type}\u0000${doc.name}`, doc.timestamp)',
+            reduce: "_stats"}
+        }
+      },
+
+      nameTypeFilter: {
+        _id: '_design/nameTypeFilter',
+        version: 1,
+        filters: {
+          'nameTypeFilter': `(doc, req) => {
+            if (doc._id[0] === "_") return true;
+            if (!req.query) return true;
+
+            if (req.query.onlyIds && req.query.onlyIds[doc._id]) return true;
+            if (req.query.onlyTypesAndNames && req.query.onlyTypesAndNames[doc.type + "\\u0000" + doc.name]) return true;
+            return false;
+          }`}
+      }
+    }
+  }
+
+  async _ensureDesignDocIn(pouchDB, designDoc, queryStale = false) {
+    try {
+      await pouchDB.put(designDoc);
+      console.log(`installed design doc ${designDoc._id}`);
+      doQueryStale();
+      return true;
+    } catch (err) {
+      if (err.status !== 409) throw err;
+      let {version, _rev} = await pouchDB.get(designDoc._id);
+      if (version && version === designDoc.version) {
+        console.log(`version of design doc ${designDoc._id} is up-to-date`);
+        return false;
+      }
+      designDoc._rev = _rev;
+      try {
+        await pouchDB.put(designDoc);
+        console.log(`installed new version of design doc ${designDoc._id}`);
+        doQueryStale();
+        return true;
+      } catch (err) {
+        if (err.status !== 409) throw err;
+        return this._ensureDesignDocIn(pouchDB, designDoc);
+      }
+    }
+
+    function doQueryStale() {
+      if (!queryStale) return;
+      let [_, name] = designDoc._id.split("/");
+      return pouchDB.query(name, {stale: 'update_after'});
+    }
   }
 
   async _commitDB() {
@@ -309,33 +352,19 @@ export default class ObjectDB {
     db = Database.ensureDB(dbName);
 
     // prepare indexes
-    let hasIndexes = await Promise.all([
-      db.has("_design/name_index"),
-      db.has("_design/nameAndTimestamp_index"),
-      db.has("_design/nameWithMaxMinTimestamp_index")
+    var {
+      nameTypeFilter,
+      nameWithMaxMinTimestamp,
+      nameAndTimestampIndex,
+      nameIndex
+    } = this._indexes;
+
+    await Promise.all([
+      this._ensureDesignDocIn(db.pouchdb, nameTypeFilter, false),
+      this._ensureDesignDocIn(db.pouchdb, nameAndTimestampIndex, true),
+      this._ensureDesignDocIn(db.pouchdb, nameWithMaxMinTimestamp, true),
+      this._ensureDesignDocIn(db.pouchdb, nameWithMaxMinTimestamp, true),
     ]);
-
-    if (!hasIndexes.every(Boolean)) {
-      console.log(`Preparing indexes for object storage DB ${dbName}`);
-
-      var {
-        nameTypeFilter,
-        nameWithMaxMinTimestamp,
-        nameAndTimestampIndex,
-        nameIndex
-      } = this._indexes;
-      await db.setDocuments([
-        nameIndex,
-        nameAndTimestampIndex,
-        nameWithMaxMinTimestamp,
-        nameTypeFilter
-      ]);
-      await Promise.all([
-        db.pouchdb.query('name_index', {stale: 'update_after'}),
-        db.pouchdb.query('nameAndTimestamp_index', {stale: 'update_after'}),
-        db.pouchdb.query("nameWithMaxMinTimestamp_index", {stale: 'update_after'}),
-      ]);
-    }
 
     return this.__commitDB = db;
   }
@@ -745,10 +774,8 @@ class Synchronization {
         versionChangeListener,
         fromSnapshotLocation = fromObjectDB.snapshotLocation;
 
-    if (!await remoteCommitDB.has('_design/nameTypeFilter')) {
-      var {nameTypeFilter} = fromObjectDB._indexes;
-      await remoteCommitDB.set('_design/nameTypeFilter', nameTypeFilter);
-    }
+    await fromObjectDB._ensureDesignDocIn(
+      remoteCommitDB.pouchdb, fromObjectDB._indexes.nameTypeFilter, false);
 
     let commitReplication = commitDB[method](remoteCommitDB, {
           live, retry,
