@@ -67,7 +67,6 @@
             evt.returnValue = msg;
             return msg;
           }, true);
-
           var isLocal = loc.search.includes("location=local"),
               worldNameMatch = decodeURIComponent(loc.pathname).match(/\/worlds\/(.+)/),
               worldName = worldNameMatch
@@ -76,21 +75,13 @@
               resource = isLocal
                 ? res("lively.storage://worlds/" + worldName)
                 : res(origin + "/" + "lively.morphic/worlds/" + worldName);
-          return resource.exists().then(function(exists) {
-            return {
-              exists: exists,
-              resource: resource,
-              showWorldLoadDialog: !worldNameMatch,
-              isLocal: isLocal
-            };
-          });
+          return {
+            resource: resource,
+            showWorldLoadDialog: !worldNameMatch,
+            isLocal: isLocal
+          };
         })
         .then(function(worldLocation) {
-          if (!worldLocation.exists) {
-            var msg = "No lively world exists at " + worldLocation.resource.url;
-            document.body.innerHTML = "<h1>" + msg + "</h1>";
-            throw new Error(msg);
-          }
           Promise.all([
             lively.modules.importPackage('lively.morphic'),
             lively.lang.promise.waitFor(function() { return loginDone; })
