@@ -111,7 +111,7 @@ div.text-layer span {
 /*-=- text -=-*/
 
 .Label span {
-  white-space: nowrap;
+  white-space: pre;
   float: left;
 }
 
