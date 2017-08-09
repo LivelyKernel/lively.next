@@ -89,7 +89,7 @@ export function copyMorph(morph) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import { createFiles } from "lively.resources";
-import { ensurePackage } from "lively.modules";
+import { ensurePackage, lookupPackage, semver } from "lively.modules";
 import ObjectPackage from "lively.classes/object-classes.js";
 import LoadingIndicator from "./components/loading-indicator.js";
 import { promise } from "lively.lang";
@@ -203,9 +203,31 @@ async function loadPackagesAndModulesOfSnapshot(snapshot) {
   // embedded package definitions
   if (snapshot.packages) {
     let packages = findPackagesInFileSpec(snapshot.packages);
+
     for (let {files, url} of packages) {
-      let r = await createFiles(url, files),
-          p = await ensurePackage(url);
+      // if a package with the same url already is loaded in the runtime then
+      // compare its version with the version of the package that gets loaded.  If
+      // the version to-load is older, keep the newer version.
+      // FIXME: ensure old objects continue to work!
+      let packageLookup = lookupPackage(url),
+          p = packageLookup && packageLookup.pkg;
+      if (p) {
+        let loadedVersion = p.version,
+            {version: versionInSpec} = JSON.parse(files["package.json"]);        
+        try {
+          if (versionInSpec && loadedVersion &&
+              semver.lte(versionInSpec, loadedVersion, true)) {
+            console.log(`[load morph] Package ${url} is loaded in version ${loadedVersion}`
+                      + ` which is newer than ${versionInSpec}. Will NOT load older variant.`);
+            continue;
+          }
+        } catch (err) {
+          console.warn(`Error in package version comparison: `, err);
+        }
+      }
+
+      let r = await createFiles(url, files);
+      p = await ensurePackage(url);
       await p.reload({forgetEnv: false, forgetDeps: false});
       // ensure object package instance
       ObjectPackage.withId(p.name);
