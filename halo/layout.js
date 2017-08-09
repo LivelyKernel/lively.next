@@ -946,7 +946,7 @@ export class ProportionalLayoutHalo extends Morph {
     let morphs = this.target.layoutableSubmorphs, submorph;
     if (this.env.eventDispatcher.isKeyPressed("Shift")) {
       let items = morphs.map(m => { return {isListItem: true, string: String(m), value: m}});
-      submorph = await $world.listPrompt("Select morph", items, {requester: this, onSelection: ea => ea.show()});
+      ({selected: [submorph]} = await $world.listPrompt("Select morph", items, {requester: this, onSelection: ea => ea.show()}));
     } else {
       submorph = await InteractiveMorphSelector.selectMorph(
         this.world(), this, target => morphs.includes(target));
@@ -1031,7 +1031,7 @@ export class ProportionalLayoutHalo extends Morph {
     connect(yAxis, 'checked', this, 'updateYAxisEnabled');
     connect(modifySubmorphSettingsButton, 'fire', this, 'chooseSubmorphToChangeLayoutSettings');
 
-    return [xAxis, yAxis, modifySubmorphSettingsButton];
+    return [modifySubmorphSettingsButton];
   }
 
 }
