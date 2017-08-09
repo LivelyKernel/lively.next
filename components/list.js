@@ -567,7 +567,7 @@ export class List extends Morph {
         }
 
         let style = {
-          fontSize,
+          fontSize, fontFamily, fontColor,
           padding: itemPadding
         }, itemMorph = itemMorphs[i];
 
