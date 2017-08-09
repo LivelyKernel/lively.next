@@ -263,8 +263,8 @@ export class ObjectEditor extends Morph {
     connect(chooseTargetButton, "fire", this, "execCommand", {converter: () => "choose target"});
 
     connect(classTree, "selection", this, "onClassTreeSelection");
-    connect(addButton, "fire", this, "interactivelyAddMethod");
-    connect(removeButton, "fire", this, "interactivelyRemoveMethodOrClass");
+    connect(addButton, "fire", this, "interactivelyAddObjectPackageAndMethod");
+    connect(removeButton, "fire", this, "execCommand", {converter: () => "remove method or class"});
     connect(forkPackageButton, "fire", this, "interactivelyForkPackage");
     connect(openInBrowserButton, "fire", this, "execCommand",
       {updater: function($upd) { $upd("open class in system browser", {klass: this.targetObj.selectedClass}); }});
@@ -666,48 +666,17 @@ export class ObjectEditor extends Morph {
       node.target.owner && isClass(node.target.owner) ? node.target.owner :
         null;
 
-    let items = [],
-        t = this.target,
-        pkg = ObjectPackage.lookupPackageForObject(t);
+    let items = [];
 
     if (klass) {
       items.push({command: "open browse snippet", target: this});
     }
 
-    if (klass && pkg && pkg.objectClass === klass) {
-      // FIXME!!!!
-      if (t.constructor === klass && klass.name !== "Morph") {
-        items.push([`remove ${klass.name}`, async () => {
-          let nextClass = withSuperclasses(t.constructor)[1],
-              {package: {name: packageName}} = klass[Symbol.for("lively-module-meta")],
-              really = await this.world().confirm(`Do you really want to make ${t} an instance of `
-                                                + `${nextClass.name} and remove class ${klass.name} `
-                                                + `and its package ${packageName}?`);
-          if (!really) return;
-          adoptObject(t, nextClass);
-          this.refresh();
-        }]);
-
-        items.push([`fork ${klass.name}`, async () => {
-          let nextClass = withSuperclasses(t.constructor)[1],
-              {package: {name: packageName}} = klass[Symbol.for("lively-module-meta")],
-              forkedName = await this.world().prompt("Enter a name for the forked class and its package", {
-                requester: this,
-                input: klass.name + "Fork",
-                historyId: "lively.morphic-object-editor-fork-names",
-                useLastInput: false
-              });
-
-          if (!forkedName) return;
-
-          adoptObject(t, nextClass);
-          let {baseURL, System} = pkg,
-              forkedPackage = await pkg.fork(forkedName, {baseURL, System});
-          await adoptObject(t, forkedPackage.objectClass);
-          await this.browse({target: t, selectedClass: forkedPackage.objectClass});
-        }]);
-
-      }
+    if (this.target.constructor === klass) {
+      let adoptByItems = [];
+      klass.name !== "Morph" && adoptByItems.push({alias: "by superclass", command: `adopt by superclass`, target: this});
+      adoptByItems.push({alias: "by custom class...", command: `adopt by another class`, target: this})
+      items.push(["adopt by...", adoptByItems]);
     }
 
     return this.world().openWorldMenu(evt, items);
@@ -760,15 +729,8 @@ export class ObjectEditor extends Morph {
       tree.scrollSelectionIntoView();
     }
 
-    let descr = RuntimeSourceDescriptor.for(klass),
-        parsed = await descr.ast,
-        methods = Path("body.body").get(parsed),
-        method = methods.find(({kind, key: {name}}) => {
-          if (name !== methodSpec.name) return false;
-          if (!methodSpec.kind || (methodSpec.kind !== "get" && methodSpec.kind !== "set"))
-            return true;
-          return methodSpec.kind === kind;
-        });
+    let method = await this._sourceDescriptor_of_class_findMethodNode(
+      klass, methodSpec.name, methodSpec.kind, methodSpec.static);
 
     this.state.selectedMethod = methodSpec;
 
@@ -824,20 +786,23 @@ export class ObjectEditor extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async doSave() {
-    let {selectedModule, selectedClass, selectedMethod} = this;
+    let {
+      selectedModule, selectedClass, selectedMethod,
+      ui: {sourceEditor}, state} = this;
 
     if (!selectedClass) {
       return {success: false, reason: "No class selected"}
     }
 
+    // Ask user what to do with undeclared variables. If this gets canceled we
+    // abort the save
     if (config.objectEditor.fixUndeclaredVarsOnSave) {
       let fixed = await this.execCommand("[javascript] fix undeclared variables");
       if (!fixed) return {success: false, reason: "Save canceled"};
     }
 
-    let editor = this.get("sourceEditor"),
-        descr = this.sourceDescriptorFor(selectedClass),
-        content = editor.textString,
+    let descr = this.sourceDescriptorFor(selectedClass),
+        content = sourceEditor.textString,
         parsed = lively.ast.parse(content);
 
     // ensure that the source is a class declaration
@@ -858,23 +823,31 @@ export class ObjectEditor extends Morph {
     // moduleChangeWarning is set when this browser gets notified that the
     // current module was changed elsewhere (onModuleChanged) and it also has
     // unsaved changes
-    if (this.state.sourceHash !== string.hashCode(content)
-     && this.state.moduleChangeWarning && this.state.moduleChangeWarning === selectedModule.id) {
+    let {sourceHash, moduleChangeWarning} = state,
+        sourceChanged = sourceHash !== string.hashCode(content);
+    if (sourceChanged && moduleChangeWarning === selectedModule.id) {
       var really = await this.world().confirm(
         `The module ${selectedModule.id} you are trying to save changed elsewhere!\nOverwrite those changes?`);
       if (!really) return {success: false, reason: "Save canceled"};
-      this.state.moduleChangeWarning = null;
+      state.moduleChangeWarning = null;
     }
 
     this.backupSourceInLocalStorage(content);
 
-    this.state.isSaving = true;
+    state.isSaving = true;
     try {
       await descr.changeSource(content);
-      await editor.saveExcursion(async () => {
+      await sourceEditor.saveExcursion(async () => {
         await this.refresh();
-        await this.updateSource(editor.textString, this.selectedModule.id);
+        await this.updateSource(sourceEditor.textString, selectedModule.id);
       });
+      if (isObjectClass(selectedClass) && sourceChanged) {
+        var pkg = descr.module.package(),
+            packageConfig = {...pkg.config, version: lively.modules.semver.inc(pkg.version, "prerelease", true)},
+            system = await this.editorPlugin.systemInterface(),
+            mod = system.getModule(pkg.url + "/package.json");
+        system.packageConfChange(JSON.stringify(packageConfig, null, 2), mod.id)
+      }
       return {success: true};
     } finally { this.state.isSaving = false; }
   }
@@ -886,7 +859,7 @@ export class ObjectEditor extends Morph {
     localStorage.setItem("oe helper", JSON.stringify(store))
   }
 
-  async interactivelyAddMethod() {
+  async interactivelyAddObjectPackageAndMethod() {
     try {
       // let input = await this.world().prompt("Enter method name",
       //                   {historyId: "object-editor-method-name-hist"});
@@ -917,35 +890,9 @@ export class ObjectEditor extends Morph {
   }
 
   async interactivelyRemoveMethodOrClass() {
-    $world.inform("work in progress");
-    // try {
-    //   // let input = await this.world().prompt("Enter method name",
-    //   //                   {historyId: "object-editor-method-name-hist"});
-    //   // if (!input) return;
-    //   let t = this.target,
-    //       pkg = ObjectPackage.lookupPackageForObject(t);
-    //
-    //   if (!pkg) {
-    //     let objPkgName = await this.world().prompt(
-    //       `No object package exists yet for object ${t}.\n`
-    //     + `Enter a name for a new package:`, {
-    //       historyId: "object-package-name-hist",
-    //       input: string.capitalize(t.name).replace(/\s/g, "-")
-    //     });
-    //
-    //     if (!objPkgName) { this.setStatusMessage("Canceled"); return; }
-    //     pkg = ObjectPackage.withId(objPkgName);
-    //     await pkg.adoptObject(t);
-    //   }
-    //
-    //   let {methodName} = await addScript(t, "function() {}", "newMethod");
-    //   await this.refresh();
-    //   await this.selectMethod(t.constructor, {name: methodName}, true, true);
-    //   this.focus();
-    // } catch (e) {
-    //   this.showError(e);
-    // }
-
+    let {selectedMethod, selectedClass} = this;
+    if (selectedMethod) return this.interactivelyRemoveMethod();
+    if (selectedClass) return this.interactivelyAdoptBySuperclass();
   }
 
   async interactivelyCreateObjectPackage() {
@@ -963,11 +910,101 @@ export class ObjectEditor extends Morph {
     }
   }
 
+  async interactivelyAdoptByClass() {
+    let system = this.editorPlugin.systemInterface();
+    let modules = await system.getModules()
+    let items = [];
+    for (let mod of modules) {
+      // mod = modules[0]
+      let pkg = await system.getPackageForModule(mod.name),
+          shortName = pkg ? pkg.name + "/" + system.shortModuleName(mod.name, pkg)
+                          : mod.name;
+
+  
+      let realModule = lively.modules.module(mod.name);
+      if (realModule.format() !== "esm" && realModule.format() !== "register")
+        continue;
+
+      let imports = (await realModule.imports()).map(ea => ea.local)
+      let klasses = obj.values(realModule.recorder).filter(ea =>
+          isClass(ea) && !imports.includes(ea.name) && withSuperclasses(ea).includes(Morph));
+
+      for (let klass of klasses) {
+        items.push({isListItem: true, string: `${shortName} ${klass.name}`, value: {module: mod, klass}});        
+      }
+      
+    }
+
+    let {selected: [klassAndModule]} = await $world.filterableListPrompt(
+      "From which class should the target object inherit?", items, {requester: this})
+
+    if (!klassAndModule) return;
+
+    let target = this.target;
+    adoptObject(target, klassAndModule.klass);
+    this.refresh();
+  }
+
+  async interactivelyAdoptBySuperclass() {    
+    let {target: t} = this,
+        klass = t.constructor;
+    if (klass === Morph) return;
+    let nextClass = withSuperclasses(t.constructor)[1],
+        {package: {name: packageName}} = klass[Symbol.for("lively-module-meta")],
+        really = await this.world().confirm(`Do you really want to make ${t} an instance of `
+                                            + `${nextClass.name} and remove class ${klass.name} `
+                                            + `and its package ${packageName}?`);
+    if (!really) return;
+    adoptObject(t, nextClass);
+    this.refresh();
+  }
+
   async interactivelyRemoveMethod() {
-    this.setStatusMessage("Not yet implemented")
+    let { selectedMethod, selectedClass } = this.state;
+    if (!selectedMethod) return;
+    let parsed = this.editorPlugin.parse().body[0],
+        methodNode = await this._sourceDescriptor_of_class_findMethodNode(
+          selectedClass, selectedMethod.name, selectedMethod.kind, selectedMethod.static, parsed);
+
+    if (!methodNode) {
+      this.showError(`Cannot find AST node for method ${selectedMethod.name}`);
+      return;
+    }
+
+    var really = await this.world().confirm(
+      `Really remove method ${selectedMethod.name}?`)
+    if (!really) return;
+
+    let ed = this.ui.sourceEditor,
+        range = {start: ed.indexToPosition(methodNode.start), end: ed.indexToPosition(methodNode.end)};
+    if (!ed.textInRange({start: {column: 0, row: range.start.row}, end: range.start}).trim()) {
+      range.start = ed.lineRange(range.start.row-1).end
+    }
+    ed.replace(range, "");
+    
+    await this.doSave();
   }
 
   async interactivelyForkPackage() {
+    let t = this.target,
+        klass = t.constructor,
+        nextClass = withSuperclasses(klass)[1],
+        {package: {name: packageName}} = klass[Symbol.for("lively-module-meta")],
+        forkedName = await this.world().prompt("Enter a name for the forked class and its package", {
+          requester: this,
+          input: klass.name + "Fork",
+          historyId: "lively.morphic-object-editor-fork-names",
+          useLastInput: false
+        });
+
+    if (!forkedName) return;
+
+    let pkg = ObjectPackage.lookupPackageForObject(t),
+        {baseURL, System} = pkg,
+        forkedPackage = await pkg.fork(forkedName, {baseURL, System});
+    await adoptObject(t, forkedPackage.objectClass);
+    await this.browse({target: t, selectedClass: forkedPackage.objectClass});
+
   }
 
   async interactivlyFixUndeclaredVariables() {
@@ -1144,7 +1181,7 @@ export class ObjectEditor extends Morph {
     let codeSnip = `$world.execCommand("open object editor", {`
     codeSnip += `target: ${t.generateReferenceExpression()}`;
     if (c) codeSnip += `, selectedClass: "${c.name}"`
-    if (c) codeSnip += `, selectedMethod: "${m.name}"`;
+    if (m && c) codeSnip += `, selectedMethod: "${m.name}"`;
     codeSnip += `});`;
 
     return codeSnip;
@@ -1166,7 +1203,7 @@ export class ObjectEditor extends Morph {
       {keys: "F3", command: "toggle showing imports"},
       {keys: {mac: "Command-S", win: "Ctrl-S"}, command: "save source"},
       {keys: {mac: "Command-Shift-=", win: "Ctrl-Shift-="}, command: "add method"},
-      {keys: {mac: "Command-Shift--", win: "Ctrl-Shift--"}, command: "remove method"},
+      {keys: {mac: "Command-Shift--", win: "Ctrl-Shift--"}, command: "remove method or class"},
       {keys: "Ctrl-Shift-R", command: "run selected method"},
       {keys: "Alt-R", command: "refresh"},
       {keys: {win: "Ctrl-B", mac: "Meta-B"}, command: "open class in system browser"},
@@ -1231,12 +1268,22 @@ export class ObjectEditor extends Morph {
 
       {
         name: "add method",
-        exec: async ed => { await ed.interactivelyAddMethod(); return true; }
+        exec: async ed => { await ed.interactivelyAddObjectPackageAndMethod(); return true; }
       },
 
       {
-        name: "remove method",
-        exec: async ed => { await ed.interactivelyRemoveMethod(); return true; }
+        name: "remove method or class",
+        exec: async ed => { await ed.interactivelyRemoveMethodOrClass(); return true; }
+      },
+
+      {
+        name: "adopt by superclass",
+        exec: async ed => { await ed.interactivelyAdoptBySuperclass(); return true; }
+      },
+
+      {
+        name: "adopt by another class",
+        exec: async ed => { await ed.interactivelyAdoptByClass(); return true; }
       },
 
       {
@@ -1359,6 +1406,20 @@ export class ObjectEditor extends Morph {
     ];
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  async _sourceDescriptor_of_class_findMethodNode(klass, methodName, methodKind, isClassMethod = false, ast) {
+    let descr = RuntimeSourceDescriptor.for(klass),
+        parsed = ast || await descr.ast,
+        methods = Path("body.body").get(parsed),
+        method = methods.find(({kind, static: itIsClassMethod, key: {name}}) => {          
+          if (name !== methodName || itIsClassMethod !== isClassMethod)
+            return false;
+          if (!methodKind || (methodKind !== "get" && methodKind !== "set"))
+            return true;
+          return methodKind === kind;
+        });
+    return method;
+  }
 }
 
 
