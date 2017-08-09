@@ -313,20 +313,20 @@ export default class ObjectDB {
   async _ensureDesignDocIn(pouchDB, designDoc, queryStale = false) {
     try {
       await pouchDB.put(designDoc);
-      console.log(`installed design doc ${designDoc._id}`);
+      console.log(`[pouchdb design doc] PouchDB("${pouchDB.name}") installed ${designDoc._id}`);
       doQueryStale();
       return true;
     } catch (err) {
       if (err.status !== 409) throw err;
       let {version, _rev} = await pouchDB.get(designDoc._id);
       if (version && version === designDoc.version) {
-        console.log(`version of design doc ${designDoc._id} is up-to-date`);
+        console.log(`[pouchdb design doc] PouchDB("${pouchDB.name}") up-to-date: ${designDoc._id}`);
         return false;
       }
       designDoc._rev = _rev;
       try {
         await pouchDB.put(designDoc);
-        console.log(`installed new version of design doc ${designDoc._id}`);
+        console.log(`[pouchdb design doc] PouchDB("${pouchDB.name}") new version: ${designDoc._id}`);
         doQueryStale();
         return true;
       } catch (err) {
