@@ -304,6 +304,7 @@ import {
   removePackage as _removePackage,
   reloadPackage as _reloadPackage,
   registerPackage as _registerPackage,
+  lookupPackage as _lookupPackage
 } from "./src/packages/package.js";
 
 function importPackage(packageURL) { return _importPackage(defaultSystem, packageURL); }
@@ -315,6 +316,8 @@ function getPackage(packageURL, isNormalized = false) { return _getPackage(defau
 function getPackageOfModule(moduleId) { return Package.forModuleId(defaultSystem, moduleId); }
 function ensurePackage(packageURL) { return _ensurePackage(defaultSystem, packageURL); }
 function applyPackageConfig(packageConfig, packageURL) { return _applyPackageConfig(defaultSystem, packageConfig, packageURL); }
+function lookupPackage(packageURL, isNormalized = false) { return _lookupPackage(defaultSystem, packageURL, isNormalized); }
+
 
 export {
   importPackage,
@@ -325,7 +328,8 @@ export {
   getPackage,
   getPackageOfModule,
   ensurePackage,
-  applyPackageConfig
+  applyPackageConfig,
+  lookupPackage
 };
 
 export { PackageRegistry } from "./src/packages/package-registry.js";

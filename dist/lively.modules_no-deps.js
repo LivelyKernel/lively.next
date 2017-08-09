@@ -4734,7 +4734,7 @@ function normalizePackageURL(System, packageURL) {
   return String(url).replace(/\/$/, "");
 }
 
-function lookupPackage(System, packageURL) {
+function lookupPackage$1(System, packageURL) {
   var isNormalized = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
   var registry = PackageRegistry$$1.ofSystem(System),
@@ -4746,7 +4746,7 @@ function lookupPackage(System, packageURL) {
 function ensurePackage$1(System, packageURL) {
   var isNormalized = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
-  var _lookupPackage = lookupPackage(System, packageURL, isNormalized),
+  var _lookupPackage = lookupPackage$1(System, packageURL, isNormalized),
       pkg = _lookupPackage.pkg,
       url = _lookupPackage.url,
       registry = _lookupPackage.registry;
@@ -4757,7 +4757,7 @@ function ensurePackage$1(System, packageURL) {
 function getPackage$1(System, packageURL) {
   var isNormalized = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
-  var _lookupPackage2 = lookupPackage(System, packageURL, isNormalized),
+  var _lookupPackage2 = lookupPackage$1(System, packageURL, isNormalized),
       pkg = _lookupPackage2.pkg,
       url = _lookupPackage2.url;
 
@@ -4777,7 +4777,7 @@ function importPackage$1(System, packageURL) {
 }
 
 function removePackage$2(System, packageURL) {
-  var _lookupPackage3 = lookupPackage(System, packageURL),
+  var _lookupPackage3 = lookupPackage$1(System, packageURL),
       pkg = _lookupPackage3.pkg,
       url = _lookupPackage3.url,
       registry = _lookupPackage3.registry;
@@ -6368,6 +6368,8 @@ var ModuleInterface = function () {
     this._evaluationsInProgress = 0;
     this._evalId = 1;
 
+    this.createdAt = this.lastModifiedAt = new Date();
+
     lively_notifications.subscribe("lively.modules/modulechanged", function (data) {
       if (data.module === _this.id) _this.reset();
     });
@@ -6876,6 +6878,7 @@ var ModuleInterface = function () {
           result = void 0;
 
       this.reset();
+      this.lastModifiedAt = new Date();
       return Promise.all([options.doSave && this.System.resource(id).write(newSource), options.doEval && moduleSourceChange$1(System, id, newSource, format, options).then(function (_result) {
         return result = _result;
       })]).then(function () {
@@ -9516,6 +9519,10 @@ function ensurePackage$$1(packageURL) {
 function applyPackageConfig(packageConfig, packageURL) {
   return applyConfig$1(exports.System, packageConfig, packageURL);
 }
+function lookupPackage$$1(packageURL) {
+  var isNormalized = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+  return lookupPackage$1(exports.System, packageURL, isNormalized);
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // changing modules
@@ -9572,6 +9579,7 @@ exports.getPackage = getPackage$$1;
 exports.getPackageOfModule = getPackageOfModule;
 exports.ensurePackage = ensurePackage$$1;
 exports.applyPackageConfig = applyPackageConfig;
+exports.lookupPackage = lookupPackage$$1;
 exports.moduleSourceChange = moduleSourceChange$$1;
 exports.requireMap = requireMap;
 exports.isHookInstalled = isHookInstalled;

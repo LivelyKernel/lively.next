@@ -80,6 +80,8 @@ class ModuleInterface {
     this._evaluationsInProgress = 0;
     this._evalId = 1;
 
+    this.createdAt = this.lastModifiedAt = new Date();
+
     subscribe("lively.modules/modulechanged", data => {
       if (data.module === this.id) this.reset();
     });
@@ -295,6 +297,7 @@ class ModuleInterface {
     options = {doSave: true, doEval: true, ...options};
     let {System, id} = this, format = this.format(), result;
     this.reset();
+    this.lastModifiedAt = new Date();
     return Promise.all([
       options.doSave && this.System.resource(id).write(newSource),
       options.doEval && moduleSourceChange(
