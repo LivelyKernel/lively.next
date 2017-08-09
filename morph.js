@@ -2669,7 +2669,7 @@ export class Image extends Morph {
   }
 
   setHeightKeepingRatio(h) {
-    this.width = h/this.ratio;
+    this.width = this.ratio*h;
     this.height = h;
   }
 
