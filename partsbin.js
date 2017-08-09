@@ -1,31 +1,49 @@
 // This is a prototype implementation of a file-system based partsbin...
 /* global System */
 import { resource } from "lively.resources";
-import {
-  createMorphSnapshot,
-  loadMorphFromSnapshot
-} from "lively.morphic/serialization.js";
+import { createMorphSnapshot } from "lively.morphic/serialization.js";
+import { MorphicDB } from "./morphicdb/index.js";
 
-export const defaultPartsbinFolder = System.decanonicalize("lively.morphic/parts/");
 
-function normalizePartsBinFolder(options = {}) {
-  let {partsbinFolder} = options;
-  if (!partsbinFolder || typeof partsbinFolder !== "string") {
-    options.partsbinFolder = defaultPartsbinFolder;
-    return;
-  }
-  if (!partsbinFolder.endsWith("/")) partsbinFolder += "/";
-  options.partsbinFolder = System.decanonicalize(partsbinFolder);
-  return options;
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// deprecated
+
+export function getAllPartResources(options) { return []; }
+
+
+function load(nameOrCommit, options = {}) {
+  // let {morphicDB} = PartsBinInterface.default;
+  let name;
+  if (typeof nameOrCommit === "string") name = nameOrCommit;
+  else name = nameOrCommit.name;
+  let morphicDB = options.morphicDB || MorphicDB.default;
+  return morphicDB.load("part", name);
+}
+
+export async function interactivelyLoadObjectFromPartsBinFolder(options = {}) {
+  let morphicDB = options.morphicDB || MorphicDB.default,
+      partSpecs = await morphicDB.latestCommits("part"),
+      items = partSpecs.map(ea => ({isListItem: true, string: ea.name, value: ea})),
+      {selected: [choice]} = await $world.filterableListPrompt(
+        "select part to load", items, {fuzzy: true});
+  return choice ? load(choice) : null;
+}
+
+export async function interactivelySaveObjectToPartsBinFolder(obj) {
+  var partName = await $world.prompt("Enter part name to publish object under", {
+              input: obj.name || "part-name",
+              historyId: "lively.partsbin-partname-publish-to-folder-input-hist",
+            });
+  if (!partName) throw "canceled";
+  return saveObjectToPartsbinFolder(obj, partName, {previewWidth: obj.width, previewHeight: obj.height});
 }
 
 export async function saveObjectToPartsbinFolder(obj, partName, options = {}) {
 
-  options = normalizePartsBinFolder({
+  options = {
     preferWindow: true,
-    partsbinFolder: defaultPartsbinFolder,
     ...options
-  });
+  }
 
   if (options.preferWindow) {
     var win = obj.getWindow();
@@ -57,45 +75,6 @@ export async function saveObjectToPartsbinFolder(obj, partName, options = {}) {
   return {partName, url: partResource.url}
 }
 
-export async function loadObjectFromPartsbinFolder(partName, options) {
-  let {partsbinFolder} = normalizePartsBinFolder({
-        partsbinFolder: defaultPartsbinFolder, ...options}),
-      snap = await resource(partsbinFolder).join(partName + ".json").readJson();
-  return loadMorphFromSnapshot(snap, options);
-}
-
-export async function interactivelySaveObjectToPartsBinFolder(obj) {
-  var partName = await $world.prompt("Enter part name to publish object under", {
-              input: obj.name || "part-name",
-              historyId: "lively.partsbin-partname-publish-to-folder-input-hist",
-            });
-  if (!partName) throw "canceled";
-  return saveObjectToPartsbinFolder(obj, partName, {previewWidth: obj.width, previewHeight: obj.height});
-}
-
-export async function getAllPartResources(options) {
-  let {partsbinFolder} = normalizePartsBinFolder({partsbinFolder: defaultPartsbinFolder, ...options});
-  return await resource(partsbinFolder).dirList(1, {exclude: ea => !ea.name().endsWith(".json")});
-}
-
-export async function interactivelyLoadObjectFromPartsBinFolder(options) {
-  let partResources = await getAllPartResources(options),
-      items = partResources.map(ea => {
-        let partName = ea.name().replace(/\.json$/, "");
-        return {
-          isListItem: true, string: partName, value: partName
-        }
-      }),
-      {selected: [choice]} = await $world.filterableListPrompt(
-                              "select part to load", items, {fuzzy: true});
-  if (!choice) throw "canceled";
-  return await loadObjectFromPartsbinFolder(choice);
-}
-
-export async function createNewObjectPackage(object, packageName, options) {
-  let {partsbinFolder} = normalizePartsBinFolder({partsbinFolder: defaultPartsbinFolder, ...options}),
-      other = await getAllPartResources(options),
-      existing = other.find(ea => ea.name() === packageName);
-  if (existing)
-    throw new Error(`An object package with the name ${packageName} already exists in the PartsBin directory ${partsbinFolder}`);  
+export async function loadObjectFromPartsbinFolder(partName, options = {}) {
+  return load(partName, options);
 }

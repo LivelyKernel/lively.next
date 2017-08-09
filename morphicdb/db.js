@@ -83,7 +83,7 @@ export default class MorphicDB {
   }
 
   async latestCommits(type = "world") {
-    // await MorphicDB.default.latestWorldCommits()
+    // await MorphicDB.default.latestCommits()
     await this.initializeIfNecessary();
     let {name: db} = this,
         ref = "HEAD", knownCommitIds = {};
