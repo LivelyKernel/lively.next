@@ -692,13 +692,19 @@ export class Morph {
     // rk 2017-02-04: FIXME remove the assign below once we are fully
     // transitioned to properties. Properties themselves set their default or
     // constructor value in initializeProperties
-    var dontAssign = ["env", "type", "submorphs", "bounds", "layout"],
+    let descriptors = Object.getOwnPropertyDescriptors(props),
+        myDescriptors = {},
+        dontAssign = {env: true, type: true, submorphs: true, bounds: true, layout: true},
         properties = this.propertiesAndPropertySettings().properties;
-    for (var key in properties) dontAssign.push(key);
-    Object.assign(this, obj.dissoc(props, dontAssign));
+    for (let key in descriptors)
+      if (!(key in dontAssign) && !(key in properties))
+        myDescriptors[key] = descriptors[key];
+    Object.defineProperties(this, myDescriptors);
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     if (props.layout) this.layout = props.layout;
+
+    if (typeof this.onLoad === "function") this.onLoad();
   }
 
   get __serialization_id_property__() { return "_id"; }
@@ -955,21 +961,26 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onChange(change) {
-    const anim = change.meta && change.meta.animation;
-    if (['position', 'rotation', 'scale', 'origin', 'reactsToPointer'].includes(change.prop)) {
-      this.onBoundsChanged(this.bounds())
-      this.updateTransform({[change.prop]: change.value});
-    }
-    if (change.prop == 'extent') {
-      this.onBoundsChanged(this.bounds())
-    }
-    if (change.prop == "layout") {
+    const anim = change.meta && change.meta.animation,
+          {prop, value} = change;
+
+    if ('position' === prop || 'rotation' === prop
+        || 'scale' === prop || 'origin' === prop
+        || 'reactsToPointer' === prop) {
+      this.onBoundsChanged(this.bounds());
+      this.updateTransform({[prop]: value});
+
+    } else  if (prop == 'extent') {
+      this.onBoundsChanged(this.bounds());
+
+    } else if (prop == "layout") {
       if (anim) {
-         change.value && change.value.attachAnimated(anim.duration, this, anim.easing);
+         value && value.attachAnimated(anim.duration, this, anim.easing);
       } else {
-         change.value && change.value.attach();
+         value && value.attach();
       }
     }
+
     this.layout && this.layout.onChange(change);
   }
 

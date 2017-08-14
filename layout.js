@@ -115,7 +115,8 @@ class Layout {
   }
 
   scheduleApply(submorph, animation, change = {}) {
-    this.onScheduleApply && this.onScheduleApply(submorph, animation, change);
+    if (typeof this.onScheduleApply === "function")
+      this.onScheduleApply(submorph, animation, change);
     if (this.active) return;
     if (!this.applyRequests) this.applyRequests = [];
     if (animation) this.lastAnim = animation;
@@ -143,7 +144,8 @@ class Layout {
         this.onSubmorphAdded(submorph, anim);
         break;
     }
-    if (["extent"].includes(prop) && !obj.equals(value, prevValue))
+    if (prop === "extent" && value && prevValue &&
+        (prevValue.x !== value.x || prevValue.y !== value.y))
       this.scheduleApply(submorph, anim);
   }
 
