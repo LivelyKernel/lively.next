@@ -3,7 +3,6 @@ import Database from "./database.js";
 import { resource } from "lively.resources";
 import { obj } from "lively.lang";
 import { promise } from "lively.lang";
-import { deferred } from "lively.lang/promise.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // sha1
@@ -12,6 +11,10 @@ import { deferred } from "lively.lang/promise.js";
 // License: MIT https://github.com/creationix/git-sha1/blob/b3474591e6834232df63b5cf9bb969185a54a04c/LICENSE
 const sha1 = (function sha1_setup(){function r(r){if(void 0===r)return o(!1);var e=o(!0);return e.update(r),e.digest()}function e(){var r=f.createHash("sha1");return{update:function(e){return r.update(e)},digest:function(){return r.digest("hex")}}}function t(r){function e(r){if("string"==typeof r)return t(r);var e=r.length;h+=8*e;for(var n=0;n<e;n++)o(r[n])}function t(r){var e=r.length;h+=8*e;for(var t=0;t<e;t++)o(r.charCodeAt(t))}function o(r){a[y]|=(255&r)<<g,g?g-=8:(y++,g=24),16===y&&u()}function f(){o(128),(y>14||14===y&&g<24)&&u(),y=14,g=24,o(0),o(0),o(h>0xffffffffff?h/1099511627776:0),o(h>4294967295?h/4294967296:0);for(var r=24;r>=0;r-=8)o(h>>r);return i(s)+i(c)+i(v)+i(p)+i(d)}function u(){for(var r=16;r<80;r++){var e=a[r-3]^a[r-8]^a[r-14]^a[r-16];a[r]=e<<1|e>>>31}var t,n,o=s,f=c,u=v,i=p,g=d;for(r=0;r<80;r++){r<20?(t=i^f&(u^i),n=1518500249):r<40?(t=f^u^i,n=1859775393):r<60?(t=f&u|i&(f|u),n=2400959708):(t=f^u^i,n=3395469782);var h=(o<<5|o>>>27)+t+g+n+(0|a[r]);g=i,i=u,u=f<<30|f>>>2,f=o,o=h}for(s=s+o|0,c=c+f|0,v=v+u|0,p=p+i|0,d=d+g|0,y=0,r=0;r<16;r++)a[r]=0}function i(r){for(var e="",t=28;t>=0;t-=4)e+=(r>>t&15).toString(16);return e}var a,s=1732584193,c=4023233417,v=2562383102,p=271733878,d=3285377520,y=0,g=24,h=0;return a=r?n:new Uint32Array(80),{update:e,digest:f}}var n,o,f;return"object"==typeof process&&"object"==typeof process.versions&&process.versions.node&&"renderer"!==process.__atom_type?(f="undefined"!=typeof System?System._nodeRequire("crypto"):require("crypto"),o=e):(n=new Uint32Array(80),o=t),r})();
 
+const hashRe = /^[0-9a-f]+$/i;
+function isHash(string) {
+  return typeof string === "string" && string.length === 40 && string.match(hashRe);
+}
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 // let db = await ObjectDB.find("test-object-db");
@@ -176,16 +179,18 @@ export default class ObjectDB {
 
   async commit(type, name, snapshot, commitSpec, preview, ref = "HEAD", expectedPrevVersion) {
     let {
-      user,
+      author,
       description = "no description",
       tags = [],
+      timestamp,
       message = "",
-      metadata
+      metadata,
+      preview: alternativePreview
     } = commitSpec;
 
     if (!type) throw new Error("object needs a type");
     if (!name) throw new Error("object needs a name");
-    if (!user) throw new Error(`Cannot commit ${type}/${name} without user`);
+    if (!author) throw new Error(`Cannot commit ${type}/${name} without user`);
 
     // Retrieve version graph for object. Check if the prev version requirement
     // is met and get the ancestors
@@ -199,30 +204,31 @@ export default class ObjectDB {
     }
 
     // Snapshot object and create commit.
-
-    let snapshotJson = snapshot ? JSON.stringify(snapshot) : null,
+    let snapshotIsHash = isHash(snapshot),
+        snapshotJson = snapshotIsHash ? null : snapshot ? JSON.stringify(snapshot) : null,
         commit = this._createCommit(
           type, name, description, tags, metadata,
-          user, message, ancestors,
-          snapshot, snapshotJson, preview);
+          author, timestamp, message, ancestors,
+          snapshotIsHash ? null : snapshot, snapshotJson,
+          preview || alternativePreview, snapshotIsHash ? snapshot : null);
+
+    // write snapshot to resource
+    if (snapshot && !snapshotIsHash) {
+      let res = this.snapshotResourceFor(commit);
+      await res.parent().ensureExistance();
+      if (res.canDealWithJSON) await res.writeJson(snapshot);
+      else await res.write(snapshotJson);
+    }
+
+    // store the commit
+    let commitDB = this.__commitDB || await this._commitDB();
+    commit = await commitDB.set(commit._id, commit);
 
     // update version graph
     if (!versionData) versionData = {refs: {}, history: {}};
     versionData.refs[ref] = commit._id;
     versionData.history[commit._id] = ancestors;
     await versionDB.set(type + "/" + name, versionData);
-
-    // store the commit
-    let commitDB = this.__commitDB || await this._commitDB();
-    commit = await commitDB.set(commit._id, commit);
-
-    // write snapshot to resource
-    if (snapshot) {
-      let res = this.snapshotResourceFor(commit);
-      await res.parent().ensureExistance();
-      if (res.canDealWithJSON) await res.writeJson(snapshot);
-      else await res.write(snapshotJson);
-    }
 
     return commit;
   }
@@ -243,31 +249,43 @@ export default class ObjectDB {
   }
 
   _createCommit(
-    type, name, description, tags, metadata, user,
-    message = "", ancestors = [],
-    snapshot, snapshotJson, preview
+    type, name, description, tags, metadata, author,
+    timestamp, message = "", ancestors = [],
+    snapshot, snapshotJson, preview, content
   ) {
     if (!preview && snapshot && snapshot.preview) preview = snapshot.preview;
-    let commit = {
-      name, type, timestamp: Date.now(),
+    return this._createCommitFromSpec({
+      name, type,
+      timestamp: timestamp || Date.now(),
       author: {
-        name: user.name,
-        email: user.email,
-        realm: user.realm
+        name: author.name,
+        email: author.email,
+        realm: author.realm
       },
-      tags: [], description,
+      tags, description, preview,
       message,
-      preview,
-      content: snapshotJson ? sha1(snapshotJson) : null,
-      deleted: !snapshot,
-      metadata,
-      ancestors
+      content: content || (snapshotJson && sha1(snapshotJson)) || null,
+      deleted: !content && !snapshot,
+      metadata, ancestors
+    }, true);
+  }
+
+  _createCommitFromSpec(commit, isHashed = false) {
+    if (!commit.name) throw new Error(`commit needs name`);
+    if (!commit.type) throw new Error(`commit needs type`);
+    if (!commit.author) throw new Error(`commit needs author`);
+    if (!commit.author.name) throw new Error(`commit needs author.name`);
+    if (!commit.timestamp) commit.timestamp = Date.now();
+    if (!commit.tags) commit.tags = [];
+
+    if (!isHashed && commit.content) {
+      isHashed = isHash(commit.content);
+      if (!isHashed) commit.content = sha1(commit.content);
     }
     let hashObj = obj.dissoc(commit, ["preview"]),
         commitHash = sha1(JSON.stringify(hashObj));
     return Object.assign(commit, {_id: commitHash});
   }
-
 
   get _indexes() {
     return {
@@ -1211,7 +1229,7 @@ export var ObjectDBInterface = {
           db: "string",
           type: "string", name: "string",
           ref: "string|undefined",
-          snapshot: "object",
+          snapshot: "object|string",
           preview: "string|undefined",
           commitSpec: "object",
           expectedParentCommit: "string|undefined"
@@ -1280,8 +1298,8 @@ export var ObjectDBInterface = {
     // side effect: true
     // returns: [{dir, type, name, commits, history, snapshotDirs}]
     // Example:
-    // let user = select($world.getCurrentUser(), ["name", "realm", "email"])
-    // let commitSpec = {user, description: "An empty world.", metadata: {belongsToCore: true}};
+    // let author = select($world.getCurrentUser(), ["name", "realm", "email"])
+    // let commitSpec = {author, description: "An empty world.", metadata: {belongsToCore: true}};
     // let result = ObjectDBInterface.importFromResource({
     //   db: "test-object-db",
     //   url: "lively.morphic/worlds/default.json",
