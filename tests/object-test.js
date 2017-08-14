@@ -1,4 +1,4 @@
-/*global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout*/
+/*global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout,System*/
 
 import { expect } from "mocha-es6";
 import { isObject, newKeyIn, sortKeysWithBeforeAndAfterConstraints, select, extend, inspect, equals, keys, isRegExp, isFunction, extract, isEmpty, deepCopy, inherit, values, merge, clone, isBoolean, dissoc, isString, isElement, isArray, deepMerge, isNumber, isUndefined, typeStringOf, safeToString, isMutableType, shortPrintStringOf, mergePropertyInHierarchy } from "../object.js";
@@ -304,11 +304,19 @@ describe('object', function() {
   });
 
   describe("dissoc", function() {
+
     it("does what it says", function() {
       var o = {a: 1, b: 2, c: 3}, result = dissoc(o, ["a", "c"]);
       expect(o).eql({a: 1, b: 2, c: 3})
       expect(result).eql({b: 2});
     });
+
+    it("deals with getters / setters", function() {
+      var o = {a: 1, get b() { return 23; }, get c() { return 24; }},
+          result = dissoc(o, ["a", "c"]);
+      expect(result.__lookupGetter__("b")).to.be.a("function");
+    });
+
   });
 
   describe("inherit", function() {

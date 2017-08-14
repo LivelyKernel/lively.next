@@ -3068,10 +3068,11 @@ function select(obj, keys) {
 }
 
 function dissoc(object, keys) {
-  var result = {};
-  for (var name in object) {
-    if (object.hasOwnProperty(name) && keys.indexOf(name) === -1) result[name] = object[name];
-  }return result;
+  object = object || {};
+  var descriptors = Object.getOwnPropertyDescriptors(object);
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i] in descriptors) delete descriptors[keys[i]];
+  }return Object.defineProperties({}, descriptors);
 }
 
 function addScript(object, funcOrString, optName, optMapping) {
