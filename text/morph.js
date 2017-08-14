@@ -1828,7 +1828,7 @@ export class Text extends Morph {
   fit() {
     let {viewState, fixedWidth, fixedHeight} = this;
     viewState._needsFit = false;
-    if ((fixedHeight && fixedWidth) || !this.textLayout /*not init'ed yet*/) return;
+    if ((fixedHeight && fixedWidth) || !this.textLayout /*not init'ed yet*/) return this;
     let textBounds = this.textBounds().outsetByRect(this.padding);
     if (!fixedHeight && this.height != textBounds.height) this.height = textBounds.height;
     if (!fixedWidth && this.width != textBounds.width) this.width = textBounds.width;
