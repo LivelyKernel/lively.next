@@ -2270,6 +2270,7 @@ export class Morph {
 
   onBeingDroppedOn(hand, recipient) {
     // called when `this` was dropped onto morph `recipient`
+    recipient.addMorph(this);
   }
 
   onHoverIn(evt) {}

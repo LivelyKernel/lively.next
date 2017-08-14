@@ -951,7 +951,6 @@ export class Hand extends Morph {
   dropMorphsOn(dropTarget) {
     this.grabbedMorphs.forEach(morph => {
       try {
-        dropTarget.addMorph(morph);
         let {pointerAndShadow} = this._grabbedMorphProperties.get(morph) || {}
         Object.assign(morph, pointerAndShadow);
         signal(this, "drop", morph);

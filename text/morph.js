@@ -2086,10 +2086,12 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onDrop(evt) {
-    let morphs = evt.hand.grabbedMorphs.slice();
+    let morphs = evt.hand.grabbedMorphs.filter(ea => ea.isLayoutable);
     super.onDrop(evt);
-    let textPos = this.textPositionFromPoint(this.localize(evt.hand.position));
-    this.insertText([morphs[0], null], textPos);
+    if (morphs[0]) {
+      let textPos = this.textPositionFromPoint(this.localize(evt.hand.position));
+      this.insertText([morphs[0], null], textPos);
+    }
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
