@@ -941,6 +941,27 @@ export class ProportionalLayoutHalo extends Morph {
     this.target.changeSettingsFor(submorph, {[axis]: policy}, true/*save*/);
   }
   
+  onSubmorphSettingsDragStart(evt, morphWithSettings) {
+    evt.stop();
+    let settings = this.target.settingsFor(morphWithSettings), descr = "";
+    for (let name in settings) descr += `${name}:${settings[name]} `;
+    let grabme = morph({type: "label", value: descr, isLayoutable: false});
+    grabme.wantsToBeDroppedOn = (dropTarget) => this.target.layoutableSubmorphs.includes(dropTarget);
+    grabme.onBeingDroppedOn = (hand, dropTarget) => {
+      grabme.remove()
+      let target = this.target.layoutableSubmorphs.includes(dropTarget) ? dropTarget : 
+                   evt.world.morphsContainingPoint(evt.hand.position).find(ea =>
+                                     this.target.layoutableSubmorphs.includes(ea))
+      if (target) {
+        this.updateSubmorphProportionalLayoutSettings({policy: settings.x, axis: "x", submorph: target});
+        this.updateSubmorphProportionalLayoutSettings({policy: settings.y, axis: "y", submorph: target});
+        target.show();
+        window.show("layout settings applied");
+      }
+    }
+    evt.hand.grab(grabme);
+  }
+
   async chooseSubmorphToChangeLayoutSettings() {
     /*global inspect*/
     let morphs = this.target.layoutableSubmorphs, submorph;
@@ -954,10 +975,11 @@ export class ProportionalLayoutHalo extends Morph {
 
     if (!submorph) return;
 
-    let controls = this.state.popover.get("controlContainer");
-    let configItems = controls.getAllNamed(/submorph config/);
-    let options = ["move", "resize", "scale", "fixed"],
+    let controls = this.state.popover.get("controlContainer"),
+        configItems = controls.getAllNamed(/submorph config/),
+        options = ["move", "resize", "scale", "fixed"],
         submorphSettings = this.target.settingsFor(submorph);
+
     if (!configItems.length) {
       controls.submorphs = [
         ...controls.submorphs,
@@ -975,7 +997,9 @@ export class ProportionalLayoutHalo extends Morph {
               values: options
             })
           ]
-        }, {
+        },
+
+        {
           name: 'submorph config Y-Axis policy',
           position: pt(0, this.height),
           fill: Color.transparent,
@@ -989,17 +1013,26 @@ export class ProportionalLayoutHalo extends Morph {
               values: options
             })
           ]
-        }
+        },
+
+        morph({
+          position: pt(0, this.height+20), draggable: true,
+          name: "dragme", type: "label", value: "drag me to copy",
+        })
       ];
     }
 
     let xSel = controls.getSubmorphNamed("x-axis policy selector"),
-        ySel = controls.getSubmorphNamed("y-axis policy selector");
+        ySel = controls.getSubmorphNamed("y-axis policy selector"),
+        drag = controls.getSubmorphNamed("dragme");
     disconnect(xSel, "selectedValue", this, "updateSubmorphProportionalLayoutSettings");
     disconnect(ySel, "selectedValue", this, "updateSubmorphProportionalLayoutSettings");
 
     xSel.selectedValue = submorphSettings.x;
     ySel.selectedValue = submorphSettings.y;
+
+    connect(drag, 'onDragStart', this, 'onSubmorphSettingsDragStart', {
+      updater: ($upd, evt) => $upd(evt, submorph), varMapping: {submorph}});
 
     connect(xSel, "selectedValue", this, "updateSubmorphProportionalLayoutSettings", {
       converter: policy => ({policy, axis: "x", submorph}), varMapping: {submorph}});
