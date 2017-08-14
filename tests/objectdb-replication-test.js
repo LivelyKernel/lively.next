@@ -10,7 +10,7 @@ import { Database } from "lively.storage";
 
 let world1, world2, part1,
     commit1, commit5, commit4, commit3, commit2,
-    user1, user2,
+    author1, author2,
     objectDB, objectDB2, snapshotLocation;
 
 let replicationLocation = resource("local://lively-morphic-objectdb-test/replicated-objects/");
@@ -34,7 +34,7 @@ describe("replication", function() {
     ({
       part1, world1, world2,
       commit1, commit5, commit4, commit3, commit2,
-      user1, user2,
+      author1, author2,
       objectDB, snapshotLocation
     } = await fillDB1());
 
@@ -83,7 +83,7 @@ describe("replication", function() {
 
   it("replicates new changes", async () => {
     let rep1 = await objectDB.replicateTo(pouchDBForCommits, pouchDBForHist, replicationLocation).waitForIt(),
-        commit = await objectDB.commit("world", world1.name, {snap: "shot!"}, {user: user1, message: "fooo"}),
+        commit = await objectDB.commit("world", world1.name, {snap: "shot!"}, {author: author1, message: "fooo"}),
         rep2 = await objectDB.replicateTo(pouchDBForCommits, pouchDBForHist, replicationLocation).waitForIt();
 
     await expectDBsHaveSameDocs(objectDB.__commitDB, pouchDBForCommits);
@@ -119,7 +119,7 @@ describe("replication", function() {
           sync2 = objectDB2.sync(pouchDBForCommits, pouchDBForHist, replicationLocation, {live: true});
 
       await Promise.all([sync1.whenPaused(), sync2.whenPaused()]);
-      let commit = await objectDB.commit("world", "foo", {snap: "shot!"}, {user: user1, message: "fooo"});
+      let commit = await objectDB.commit("world", "foo", {snap: "shot!"}, {author: author1, message: "fooo"});
       await Promise.all([sync1.safeStop(), sync2.safeStop()]);
 
       expect(await objectDB.getCommit(commit._id))
@@ -134,8 +134,8 @@ describe("replication", function() {
 
       await Promise.all([sync1.whenPaused(), sync2.whenPaused()]);
       let [commit1, commit2] = await Promise.all([
-        objectDB.commit("world", "foo", {snap: "shotX!"}, {user: user1, message: "fooo"}),
-        objectDB2.commit("world", "foo", {snap: "shotY!"}, {user: user1, message: "barr"})
+        objectDB.commit("world", "foo", {snap: "shotX!"}, {author: author1, message: "fooo"}),
+        objectDB2.commit("world", "foo", {snap: "shotY!"}, {author: author1, message: "barr"})
       ]);
       await Promise.all([sync1.safeStop(), sync2.safeStop()]);
 
@@ -144,13 +144,13 @@ describe("replication", function() {
     });
 
     it("conflict", async () => {
-      await objectDB.commit("world", "foo", {snap: "shot;"}, {user: user1, message: "first"});
+      await objectDB.commit("world", "foo", {snap: "shot;"}, {author: author1, message: "first"});
       await objectDB.sync(pouchDBForCommits, pouchDBForHist, replicationLocation).waitForIt();
       await objectDB2.sync(pouchDBForCommits, pouchDBForHist, replicationLocation).waitForIt();
 
       let [commit1, commit2] = await Promise.all([
-        objectDB.commit("world", "foo", {snap: "shotX!"}, {user: user1, message: "second A"}),
-        objectDB2.commit("world", "foo", {snap: "shotY!"}, {user: user1, message: "second B"})
+        objectDB.commit("world", "foo", {snap: "shotX!"}, {author: author1, message: "second A"}),
+        objectDB2.commit("world", "foo", {snap: "shotY!"}, {author: author1, message: "second B"})
       ]);
 
       let sync1 = objectDB.sync(pouchDBForCommits, pouchDBForHist, replicationLocation),

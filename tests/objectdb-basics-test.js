@@ -8,7 +8,7 @@ import { promise } from "lively.lang";
 
 let part1, world1, world2,
     commit1, commit5, commit4, commit3, commit2,
-    user1, user2,
+    author1, author2,
     objectDB, snapshotLocation;
 
 describe("empty ObjectDB", function() {
@@ -35,7 +35,7 @@ describe("basic API ObjectDB", function() {
     ({
       part1, world1, world2,
       commit1, commit5, commit4, commit3, commit2,
-      user1, user2,
+      author1, author2,
       objectDB, snapshotLocation
     } = await fillDB1());
   });
@@ -60,7 +60,7 @@ describe("basic API ObjectDB", function() {
 
     it("commits contains basics", () => {
       expect(commit1).containSubset({
-        author: {name: user1.name},
+        author: {name: author1.name},
         description: "no description",
         message: "",
         name: "objectdb test world", tags: []
@@ -168,7 +168,7 @@ describe("loading objects", function() {
     ({
       world1, world2,
       commit1, commit4, commit3, commit2,
-      user1, user2,
+      author1, author2,
       objectDB, snapshotLocation
     } = await fillDB2());
   });

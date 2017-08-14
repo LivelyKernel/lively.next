@@ -9,7 +9,7 @@ import { resource } from "lively.resources";
 
 let world1, world2,
     commit1, commit5, commit4, commit3, commit2,
-    user1, user2,
+    author1, author2,
     objectDB2, objectDB, snapshotLocation,
     exportDir = resource("local://objectdb-export-text/test1/"),
     exportLocation = resource("local://lively-morphic-objectdb-test/snapshots2/");
@@ -24,7 +24,7 @@ describe("export and import", function() {
     ({
       world1, world2,
       commit1, commit4, commit3, commit2,
-      user1, user2,
+      author1, author2,
       objectDB, snapshotLocation
     } = await fillDB2());
   });

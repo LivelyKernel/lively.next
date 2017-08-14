@@ -8,7 +8,7 @@ import { ObjectDBInterface } from "lively.storage";
 
 let world1, world2, part1,
     commit1, commit5, commit4, commit3, commit2,
-    user1, user2,
+    author1, author2,
     objectDB, snapshotLocation, dbName;
 
 
@@ -20,7 +20,7 @@ describe("interface test", function() {
     ({
       world1, world2, part1,
       commit1, commit4, commit5, commit3, commit2,
-      user1, user2,
+      author1, author2,
       objectDB, snapshotLocation
     } = await fillDB1());
     dbName = objectDB.name;
@@ -100,11 +100,11 @@ describe("interface test", function() {
     it("commits", async () => {
       let snapshot = {foo: {bar: 23}, x: 99, name: "another objectdb test world"}
       try {
-        await ObjectDBInterface.commit({db: dbName, type: "world", name: world2.name, expectedParentCommit: commit3._id, commitSpec: {user: user1}, snapshot});
+        await ObjectDBInterface.commit({db: dbName, type: "world", name: world2.name, expectedParentCommit: commit3._id, commitSpec: {author: author1}, snapshot});
         expect().assert(false, "allowing to cmmit with wrong prev commit");
       } catch (err) {}
 
-      let committed = await ObjectDBInterface.commit({db: dbName, type: "world", name: world2.name, expectedParentCommit: commit4._id, commitSpec: {user: user1}, snapshot});
+      let committed = await ObjectDBInterface.commit({db: dbName, type: "world", name: world2.name, expectedParentCommit: commit4._id, commitSpec: {author: author1}, snapshot});
     });
 
   });

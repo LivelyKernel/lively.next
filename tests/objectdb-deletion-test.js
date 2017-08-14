@@ -8,7 +8,7 @@ import { ObjectDBInterface } from "lively.storage";
 
 let world1, world2,
     commit1, commit5, commit4, commit3, commit2,
-    user1, user2,
+    author1, author2,
     objectDB, snapshotLocation;
 
 
@@ -20,7 +20,7 @@ describe("deletions in ObjectDB", function() {
     ({
       world1, world2,
       commit1, commit4, commit3, commit2,
-      user1, user2,
+      author1, author2,
       objectDB, snapshotLocation
     } = await fillDB2());
   });
@@ -132,7 +132,7 @@ describe("deletions in ObjectDB", function() {
     describe("object", async () => {
 
       it("marks object as deleted", async () => {
-        let commit = await objectDB.commit("world", world1.name, null, {user: user1, message: "deleted world1"})
+        let commit = await objectDB.commit("world", world1.name, null, {author: author1, message: "deleted world1"})
         expect(commit).has.property("deleted", true);
 
         expect(await objectDB.getLatestCommit("world", world1.name)).equals(null);

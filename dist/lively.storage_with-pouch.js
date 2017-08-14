@@ -32705,7 +32705,7 @@ function extend() {
     GLOBAL.atob = function(str) { return new Buffer(str, 'base64').toString() };
   (function() {
     this.lively = this.lively || {};
-(function (exports,_PouchDB,pouchdbAdapterMem,lively_resources,lively_lang,lively_lang_promise_js) {
+(function (exports,_PouchDB,pouchdbAdapterMem,lively_resources,lively_lang) {
 'use strict';
 
 _PouchDB = 'default' in _PouchDB ? _PouchDB['default'] : _PouchDB;
@@ -34298,6 +34298,10 @@ var sha1 = function sha1_setup() {
   }var n, o, f;return "object" == (typeof process === "undefined" ? "undefined" : _typeof(process)) && "object" == _typeof(process.versions) && process.versions.node && "renderer" !== process.__atom_type ? (f = "undefined" != typeof System ? System._nodeRequire("crypto") : require("crypto"), o = e) : (n = new Uint32Array(80), o = t), r;
 }();
 
+var hashRe = /^[0-9a-f]+$/i;
+function isHash(string) {
+  return typeof string === "string" && string.length === 40 && string.match(hashRe);
+}
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 // let db = await ObjectDB.find("test-object-db");
@@ -35005,13 +35009,13 @@ var ObjectDB = function () {
         var ref = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : "HEAD";
         var expectedPrevVersion = arguments[6];
 
-        var user, _commitSpec$descripti, description, _commitSpec$tags, tags, _commitSpec$message, message, metadata, versionDB, versionData, ancestor, ancestors, snapshotJson, commit, commitDB, res;
+        var author, _commitSpec$descripti, description, _commitSpec$tags, tags, timestamp, _commitSpec$message, message, metadata, alternativePreview, versionDB, versionData, ancestor, ancestors, snapshotIsHash, snapshotJson, commit, res, commitDB;
 
         return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
             switch (_context13.prev = _context13.next) {
               case 0:
-                user = commitSpec.user, _commitSpec$descripti = commitSpec.description, description = _commitSpec$descripti === undefined ? "no description" : _commitSpec$descripti, _commitSpec$tags = commitSpec.tags, tags = _commitSpec$tags === undefined ? [] : _commitSpec$tags, _commitSpec$message = commitSpec.message, message = _commitSpec$message === undefined ? "" : _commitSpec$message, metadata = commitSpec.metadata;
+                author = commitSpec.author, _commitSpec$descripti = commitSpec.description, description = _commitSpec$descripti === undefined ? "no description" : _commitSpec$descripti, _commitSpec$tags = commitSpec.tags, tags = _commitSpec$tags === undefined ? [] : _commitSpec$tags, timestamp = commitSpec.timestamp, _commitSpec$message = commitSpec.message, message = _commitSpec$message === undefined ? "" : _commitSpec$message, metadata = commitSpec.metadata, alternativePreview = commitSpec.preview;
 
                 if (type) {
                   _context13.next = 3;
@@ -35029,7 +35033,7 @@ var ObjectDB = function () {
                 throw new Error("object needs a name");
 
               case 5:
-                if (user) {
+                if (author) {
                   _context13.next = 7;
                   break;
                 }
@@ -35083,64 +35087,65 @@ var ObjectDB = function () {
               case 23:
 
                 // Snapshot object and create commit.
+                snapshotIsHash = isHash(snapshot), snapshotJson = snapshotIsHash ? null : snapshot ? JSON.stringify(snapshot) : null, commit = this._createCommit(type, name, description, tags, metadata, author, timestamp, message, ancestors, snapshotIsHash ? null : snapshot, snapshotJson, preview || alternativePreview, snapshotIsHash ? snapshot : null);
 
-                snapshotJson = snapshot ? JSON.stringify(snapshot) : null, commit = this._createCommit(type, name, description, tags, metadata, user, message, ancestors, snapshot, snapshotJson, preview);
+                // write snapshot to resource
 
-                // update version graph
-
-                if (!versionData) versionData = { refs: {}, history: {} };
-                versionData.refs[ref] = commit._id;
-                versionData.history[commit._id] = ancestors;
-                _context13.next = 29;
-                return versionDB.set(type + "/" + name, versionData);
-
-              case 29:
-                _context13.t1 = this.__commitDB;
-
-                if (_context13.t1) {
-                  _context13.next = 34;
-                  break;
-                }
-
-                _context13.next = 33;
-                return this._commitDB();
-
-              case 33:
-                _context13.t1 = _context13.sent;
-
-              case 34:
-                commitDB = _context13.t1;
-                _context13.next = 37;
-                return commitDB.set(commit._id, commit);
-
-              case 37:
-                commit = _context13.sent;
-
-                if (!snapshot) {
-                  _context13.next = 49;
+                if (!(snapshot && !snapshotIsHash)) {
+                  _context13.next = 35;
                   break;
                 }
 
                 res = this.snapshotResourceFor(commit);
-                _context13.next = 42;
+                _context13.next = 28;
                 return res.parent().ensureExistance();
 
-              case 42:
+              case 28:
                 if (!res.canDealWithJSON) {
-                  _context13.next = 47;
+                  _context13.next = 33;
                   break;
                 }
 
-                _context13.next = 45;
+                _context13.next = 31;
                 return res.writeJson(snapshot);
 
-              case 45:
-                _context13.next = 49;
+              case 31:
+                _context13.next = 35;
                 break;
 
-              case 47:
-                _context13.next = 49;
+              case 33:
+                _context13.next = 35;
                 return res.write(snapshotJson);
+
+              case 35:
+                _context13.t1 = this.__commitDB;
+
+                if (_context13.t1) {
+                  _context13.next = 40;
+                  break;
+                }
+
+                _context13.next = 39;
+                return this._commitDB();
+
+              case 39:
+                _context13.t1 = _context13.sent;
+
+              case 40:
+                commitDB = _context13.t1;
+                _context13.next = 43;
+                return commitDB.set(commit._id, commit);
+
+              case 43:
+                commit = _context13.sent;
+
+
+                // update version graph
+                if (!versionData) versionData = { refs: {}, history: {} };
+                versionData.refs[ref] = commit._id;
+                versionData.history[commit._id] = ancestors;
+                _context13.next = 49;
+                return versionDB.set(type + "/" + name, versionData);
 
               case 49:
                 return _context13.abrupt("return", commit);
@@ -35243,29 +35248,46 @@ var ObjectDB = function () {
     }()
   }, {
     key: "_createCommit",
-    value: function _createCommit(type, name, description, tags, metadata, user) {
-      var message = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : "";
-      var ancestors = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : [];
-      var snapshot = arguments[8];
-      var snapshotJson = arguments[9];
-      var preview = arguments[10];
+    value: function _createCommit(type, name, description, tags, metadata, author, timestamp) {
+      var message = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : "";
+      var ancestors = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : [];
+      var snapshot = arguments[9];
+      var snapshotJson = arguments[10];
+      var preview = arguments[11];
+      var content = arguments[12];
 
       if (!preview && snapshot && snapshot.preview) preview = snapshot.preview;
-      var commit = {
-        name: name, type: type, timestamp: Date.now(),
+      return this._createCommitFromSpec({
+        name: name, type: type,
+        timestamp: timestamp || Date.now(),
         author: {
-          name: user.name,
-          email: user.email,
-          realm: user.realm
+          name: author.name,
+          email: author.email,
+          realm: author.realm
         },
-        tags: [], description: description,
+        tags: tags, description: description, preview: preview,
         message: message,
-        preview: preview,
-        content: snapshotJson ? sha1(snapshotJson) : null,
-        deleted: !snapshot,
-        metadata: metadata,
-        ancestors: ancestors
-      };
+        content: content || snapshotJson && sha1(snapshotJson) || null,
+        deleted: !content && !snapshot,
+        metadata: metadata, ancestors: ancestors
+      }, true);
+    }
+  }, {
+    key: "_createCommitFromSpec",
+    value: function _createCommitFromSpec(commit) {
+      var isHashed = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+      if (!commit.name) throw new Error("commit needs name");
+      if (!commit.type) throw new Error("commit needs type");
+      if (!commit.author) throw new Error("commit needs author");
+      if (!commit.author.name) throw new Error("commit needs author.name");
+      if (!commit.timestamp) commit.timestamp = Date.now();
+      if (!commit.tags) commit.tags = [];
+
+      if (!isHashed && commit.content) {
+        isHashed = isHash(commit.content);
+        if (!isHashed) commit.content = sha1(commit.content);
+      }
       var hashObj = lively_lang.obj.dissoc(commit, ["preview"]),
           commitHash = sha1(JSON.stringify(hashObj));
       return Object.assign(commit, { _id: commitHash });
@@ -35363,7 +35385,7 @@ var ObjectDB = function () {
         }, _callee15, this, [[1, 9], [22, 30]]);
       }));
 
-      function _ensureDesignDocIn(_x43, _x44) {
+      function _ensureDesignDocIn(_x44, _x45) {
         return _ref20.apply(this, arguments);
       }
 
@@ -35465,7 +35487,7 @@ var ObjectDB = function () {
         }, _callee17, this);
       }));
 
-      function versionGraph(_x46, _x47) {
+      function versionGraph(_x47, _x48) {
         return _ref23.apply(this, arguments);
       }
 
@@ -35539,7 +35561,7 @@ var ObjectDB = function () {
         }, _callee18, this);
       }));
 
-      function _log(_x48, _x49) {
+      function _log(_x49, _x50) {
         return _ref24.apply(this, arguments);
       }
 
@@ -35607,7 +35629,7 @@ var ObjectDB = function () {
         }, _callee19, this);
       }));
 
-      function _findTimestampedVersionsOfObjectNamed(_x52) {
+      function _findTimestampedVersionsOfObjectNamed(_x53) {
         return _ref27.apply(this, arguments);
       }
 
@@ -36048,7 +36070,7 @@ var ObjectDB = function () {
         }, _callee21, this, [[21, 44, 48, 56], [49,, 51, 55], [61, 82, 86, 94], [87,, 89, 93], [97, 107, 111, 119], [112,, 114, 118]]);
       }));
 
-      function exportToDir(_x54, _x55) {
+      function exportToDir(_x55, _x56) {
         return _ref30.apply(this, arguments);
       }
 
@@ -36185,7 +36207,7 @@ var ObjectDB = function () {
         }, _callee22, this, [[13, 35, 39, 47], [40,, 42, 46]]);
       }));
 
-      function exportToSpecs(_x58) {
+      function exportToSpecs(_x59) {
         return _ref40.apply(this, arguments);
       }
 
@@ -36249,7 +36271,7 @@ var ObjectDB = function () {
             }, _callee23, this);
           }));
 
-          return function findImportDataIn(_x63) {
+          return function findImportDataIn(_x64) {
             return _ref45.apply(this, arguments);
           };
         }();
@@ -36353,7 +36375,7 @@ var ObjectDB = function () {
         }, _callee24, this, [[9, 23, 27, 35], [28,, 30, 34]]);
       }));
 
-      function importFromDir(_x60) {
+      function importFromDir(_x61) {
         return _ref44.apply(this, arguments);
       }
 
@@ -36523,7 +36545,7 @@ var ObjectDB = function () {
         }, _callee25, this, [[10, 24, 28, 36], [29,, 31, 35], [39, 50, 54, 62], [55,, 57, 61]]);
       }));
 
-      function importFromSpecs(_x64) {
+      function importFromSpecs(_x65) {
         return _ref48.apply(this, arguments);
       }
 
@@ -36614,7 +36636,7 @@ var ObjectDB = function () {
         }, _callee26, this);
       }));
 
-      function importFromSpec(_x67) {
+      function importFromSpec(_x68) {
         return _ref51.apply(this, arguments);
       }
 
@@ -36668,7 +36690,7 @@ var ObjectDB = function () {
         }, _callee27, this);
       }));
 
-      function importFromResource(_x70, _x71, _x72, _x73) {
+      function importFromResource(_x71, _x72, _x73, _x74) {
         return _ref52.apply(this, arguments);
       }
 
@@ -36873,7 +36895,7 @@ var ObjectDB = function () {
         }, _callee28, this, [[30, 59, 63, 71], [38, 42, 46, 54], [47,, 49, 53], [64,, 66, 70]]);
       }));
 
-      function replication(_x75, _x76, _x77, _x78, _x79) {
+      function replication(_x76, _x77, _x78, _x79, _x80) {
         return _ref53.apply(this, arguments);
       }
 
@@ -37046,7 +37068,7 @@ var ObjectDB = function () {
         }, _callee29, this, [[15, 19, 23, 31], [24,, 26, 30]]);
       }));
 
-      function _delete(_x80, _x81) {
+      function _delete(_x81, _x82) {
         return _ref59.apply(this, arguments);
       }
 
@@ -37226,7 +37248,7 @@ var ObjectDB = function () {
         }, _callee30, this);
       }));
 
-      function deleteCommit(_x83) {
+      function deleteCommit(_x84) {
         return _ref64.apply(this, arguments);
       }
 
@@ -37529,7 +37551,7 @@ var Synchronization = function () {
                     }, _callee31, _this3, [[2, 36], [7, 20, 24, 32], [25,, 27, 31]]);
                   }));
 
-                  return function (_x87) {
+                  return function (_x88) {
                     return _ref68.apply(this, arguments);
                   };
                 }()).on('paused', function () {
@@ -38490,7 +38512,7 @@ var ObjectDBInterface = {
                 db: "string",
                 type: "string", name: "string",
                 ref: "string|undefined",
-                snapshot: "object",
+                snapshot: "object|string",
                 preview: "string|undefined",
                 commitSpec: "object",
                 expectedParentCommit: "string|undefined"
@@ -38850,7 +38872,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee49, this);
       }));
 
-      function _processResponse(_x89) {
+      function _processResponse(_x90) {
         return _ref75.apply(this, arguments);
       }
 
@@ -38887,7 +38909,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee50, this);
       }));
 
-      function _GET(_x90) {
+      function _GET(_x91) {
         return _ref76.apply(this, arguments);
       }
 
@@ -38923,7 +38945,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee51, this);
       }));
 
-      function _POST(_x92) {
+      function _POST(_x93) {
         return _ref77.apply(this, arguments);
       }
 
@@ -38947,7 +38969,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee52, this);
       }));
 
-      function describe(_x94) {
+      function describe(_x95) {
         return _ref78.apply(this, arguments);
       }
 
@@ -38971,7 +38993,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee53, this);
       }));
 
-      function ensureDB(_x95) {
+      function ensureDB(_x96) {
         return _ref79.apply(this, arguments);
       }
 
@@ -38995,7 +39017,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee54, this);
       }));
 
-      function destroyDB(_x96) {
+      function destroyDB(_x97) {
         return _ref80.apply(this, arguments);
       }
 
@@ -39019,7 +39041,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee55, this);
       }));
 
-      function fetchCommits(_x97) {
+      function fetchCommits(_x98) {
         return _ref81.apply(this, arguments);
       }
 
@@ -39043,7 +39065,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee56, this);
       }));
 
-      function fetchVersionGraph(_x98) {
+      function fetchVersionGraph(_x99) {
         return _ref82.apply(this, arguments);
       }
 
@@ -39067,7 +39089,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee57, this);
       }));
 
-      function exists(_x99) {
+      function exists(_x100) {
         return _ref83.apply(this, arguments);
       }
 
@@ -39091,7 +39113,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee58, this);
       }));
 
-      function fetchLog(_x100) {
+      function fetchLog(_x101) {
         return _ref84.apply(this, arguments);
       }
 
@@ -39115,7 +39137,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee59, this);
       }));
 
-      function fetchSnapshot(_x101) {
+      function fetchSnapshot(_x102) {
         return _ref85.apply(this, arguments);
       }
 
@@ -39139,7 +39161,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee60, this);
       }));
 
-      function commit(_x102) {
+      function commit(_x103) {
         return _ref86.apply(this, arguments);
       }
 
@@ -39163,7 +39185,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee61, this);
       }));
 
-      function exportToSpecs(_x103) {
+      function exportToSpecs(_x104) {
         return _ref87.apply(this, arguments);
       }
 
@@ -39187,7 +39209,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee62, this);
       }));
 
-      function exportToDir(_x104) {
+      function exportToDir(_x105) {
         return _ref88.apply(this, arguments);
       }
 
@@ -39211,7 +39233,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee63, this);
       }));
 
-      function importFromDir(_x105) {
+      function importFromDir(_x106) {
         return _ref89.apply(this, arguments);
       }
 
@@ -39235,7 +39257,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee64, this);
       }));
 
-      function importFromSpecs(_x106) {
+      function importFromSpecs(_x107) {
         return _ref90.apply(this, arguments);
       }
 
@@ -39259,7 +39281,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee65, this);
       }));
 
-      function importFromResource(_x107) {
+      function importFromResource(_x108) {
         return _ref91.apply(this, arguments);
       }
 
@@ -39283,7 +39305,7 @@ var ObjectDBHTTPInterface = function () {
         }, _callee66, this);
       }));
 
-      function _delete(_x108) {
+      function _delete(_x109) {
         return _ref92.apply(this, arguments);
       }
 
@@ -39767,7 +39789,7 @@ exports.Database = Database;
 exports.ObjectDB = ObjectDB;
 exports.ObjectDBInterface = ObjectDBInterface;
 
-}((this.lively.storage = this.lively.storage || {}),PouchDB,pouchdbAdapterMem,lively.resources,lively.lang,lively_lang_promise_js));
+}((this.lively.storage = this.lively.storage || {}),PouchDB,pouchdbAdapterMem,lively.resources,lively.lang));
 
   }).call(GLOBAL);
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.storage;
