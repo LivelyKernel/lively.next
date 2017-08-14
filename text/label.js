@@ -183,6 +183,8 @@ export class Label extends Morph {
         }
       },
 
+      textShadow: {type: "String", isStyleProp: true, defaultValue: ""},
+
       textDecoration: {defaultValue: "none"},
 
       textStyleClasses: {
@@ -236,6 +238,7 @@ export class Label extends Morph {
       "textDecoration",
       "fontStyle",
       "fontWeight",
+      "textShadow",
       "fontColor",
       "fontSize",
       "fontFamily"
@@ -367,6 +370,7 @@ export class Label extends Morph {
           fontSize,
           fontStyle,
           fontWeight,
+          textShadow,
           textDecoration,
           textStyleClasses,
         } = this.textStyle,
@@ -384,6 +388,7 @@ export class Label extends Morph {
         },
         attrs = defaultAttributes(this, renderer);
 
+    if (textShadow) style.textShadow = textShadow;
     if (fontWeight !== "normal") style.fontWeight = fontWeight;
     if (fontStyle !== "normal") style.fontStyle = fontStyle;
     if (textDecoration !== "none") style.textDecoration = textDecoration;
@@ -402,6 +407,7 @@ export class Label extends Morph {
           fontFamily,
           fontStyle,
           fontWeight,
+          textShadow,
           textDecoration,
           textStyleClasses,
           textAlign
@@ -411,6 +417,7 @@ export class Label extends Morph {
     if (backgroundColor) style.backgroundColor = String(backgroundColor);
     if (fontFamily) style.fontFamily = fontFamily;
     if (fontColor) style.color = String(fontColor);
+    if (textShadow) style.textShadow = textShadow;
     if (fontWeight !== "normal") style.fontWeight = fontWeight;
     if (fontStyle !== "normal") style.fontStyle = fontStyle;
     if (textDecoration !== "none") style.textDecoration = textDecoration;
