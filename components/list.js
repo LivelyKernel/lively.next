@@ -330,6 +330,14 @@ export class List extends Morph {
         defaultValue: Rectangle.inset(3)
       },
 
+      itemBorderRadius: {
+        isStyleProp: true, defaultValue: 0,
+        set(value) {
+          this.setProperty("itemBorderRadius", value);
+          this.invalidateCache();
+        }
+      },
+
       itemPadding: {
         isStyleProp: true,
         defaultValue: Rectangle.inset(1),
@@ -545,7 +553,8 @@ export class List extends Morph {
             extent: {x: width, y: height},
             fontSize, fontFamily, fontColor,
             padding, itemPadding, selectionColor,
-            selectionFontColor, nonSelectionFontColor
+            selectionFontColor, nonSelectionFontColor,
+            itemBorderRadius
           } = this,
           additionalSpace = 2*height,
           padding = padding || Rectangle.inset(0),
@@ -567,8 +576,10 @@ export class List extends Morph {
         }
 
         let style = {
-          fontSize, fontFamily, fontColor,
-          padding: itemPadding
+          fontSize, fontFamily,
+          fontColor: nonSelectionFontColor || fontColor,
+          padding: itemPadding, borderRadius: itemBorderRadius || 0,
+          selectionColor
         }, itemMorph = itemMorphs[i];
 
         if (!itemMorph)
