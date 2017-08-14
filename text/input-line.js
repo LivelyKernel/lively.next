@@ -37,7 +37,7 @@ export default class InputLine extends Text {
       label: "What is your name? ",
       placeholder: "type your name in here",
       width: 300
-    }).openInWorld();
+    }).fit().openInWorld();
 
     connect(input, 'inputAccepted', input, 'remove');
     connect(input, 'inputAccepted', input.world(), 'setStatusMessage');
@@ -92,13 +92,6 @@ export default class InputLine extends Text {
       lineWrapping: {defaultValue: false},
       historyId:    {defaultValue: null},
       clearOnInput: {defaultValue: false},
-
-      height: {
-        after: ["padding", "textAndAttributes"],
-        initialize() {
-          this.height = this.defaultLineHeight + this.padding.top() + this.padding.bottom();
-        }
-      },
 
       label: {
         after: ["textAndAttributes", "extent", "padding", "submorphs"], defaultValue: "",
@@ -198,6 +191,10 @@ export default class InputLine extends Text {
   focus() {
     this.fixCursor();
     return super.focus();
+  }
+
+  fitToLineHeight() {
+    this.height = this.defaultLineHeight + this.padding.top() + this.padding.bottom();
   }
 
   updatePlaceholder() {
