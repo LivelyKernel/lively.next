@@ -1,13 +1,10 @@
 /*global System*/
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
-import { tree, date, Path, arr, string, obj } from "lively.lang";
+import { tree, Path, arr, string, obj } from "lively.lang";
 import { show, inspect, Text, config } from "./index.js";
 import KeyHandler from "./events/KeyHandler.js";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
-import { MorphicDB } from "./morphicdb/index.js";
-import { delay } from "lively.lang/promise.js";
-import LoadingIndicator from "./components/loading-indicator.js";
-import { pathForBrowserHistory } from "./world-loading.js";
+import { interactivelySaveWorld } from "./world-loading.js";
 
 
 var commands = [
@@ -593,9 +590,13 @@ var commands = [
   {
     name: "open PartsBin",
     exec: async world => {
-      var { loadObjectFromPartsbinFolder } = await System.import("lively.morphic/partsbin.js")
-      var pb = await loadObjectFromPartsbinFolder("PartsBin");
-      return pb.openInWorldNearHand();
+      var { loadPart } = await System.import("lively.morphic/partsbin.js")
+      var pb = await loadPart("PartsBin");
+      pb.openInWorldNearHand();
+      pb.targetMorph.selectedCategory = "*basics*";
+      pb.targetMorph.update();
+      pb.focus();
+      return pb;
     }
   },
 
@@ -951,83 +952,12 @@ var commands = [
 
   {
     name: "save world",
-    exec: async (world, args, _, evt) => {
+    exec: (world, args, _, evt) => {
       // in case there is another morph implementing save...
       var relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
       if (relayed) return relayed;
-
       args = {showSaveDialog: true, ...args};
-
-      let name = world.name, tags = [], description = "",
-          oldCommit = Path("metadata.commit").get(world),
-          db = MorphicDB.default;
-
-      if (args.showSaveDialog) {
-        let dialog = await loadObjectFromPartsbinFolder("save world dialog");
-        ({name, tags, description} = await world.openPrompt(dialog, {targetWorld: world}));
-        if (!name) return null;        
-      } else if (oldCommit) {
-        ({name, tags, description} = oldCommit);
-      }
-
-
-      var i = LoadingIndicator.open(`saving ${name}...`);
-      await delay(80);
-
-      try {
-        let snapshotOptions = {previewWidth: 200, previewHeight: 200, previewType: "png"},
-            ref = "HEAD",
-            oldName = oldCommit ? oldCommit.name : world.name,
-            expectedParentCommit;
-
-        if (oldName !== name) {
-          let {exists, commitId: existingCommitId} = await db.exists("world", name);
-          if (exists) {
-            let overwrite = await world.confirm(`A world "${name}" already exists, overwrite?`);
-            if (!overwrite) return;
-            expectedParentCommit = existingCommitId;
-          }
-          world.name = name;
-        } else {
-          expectedParentCommit = oldCommit ? oldCommit._id : undefined;
-        }
-
-        let commitSpec = {user: world.getCurrentUser(),
-                          message: "world save", tags, description},
-            commit = await db.snapshotAndCommit(
-              "world", name, world, snapshotOptions,
-              commitSpec, ref, expectedParentCommit);
-
-        // hist
-        if (window.history) {
-          let queryString = typeof document !== "undefined" ? document.location.search : "",
-              path = pathForBrowserHistory(name, queryString);
-          window.history.pushState({}, "lively.next", path);
-        }
-
-        world.setStatusMessage(`saved world ${name}`);
-        world.get("world-list") && world.get("world-list").onWorldSaved(name);
-
-        return commit;
-        
-
-      } catch (err) {
-        let [_, typeAndName, expectedVersion, actualVersion] = err.message.match(/Trying to store "([^\"]+)" on top of expected version ([^\s]+) but ref HEAD is of version ([^\s\!]+)/) || [];
-        if (expectedVersion && actualVersion) {
-          let [newerCommit] = await db.log(actualVersion, 1, /*includeCommits = */true),
-              {author: {name: authorName}, timestamp} = newerCommit,
-              overwriteQ = `The current version of world ${name} is not the most recent!\n`
-                  + `A newer version by ${authorName} was saved on `
-                  + `${date.format(new Date(timestamp), "yyyy-mm-dd HH:MM")}. Overwrite?`,
-              overwrite = await world.confirm(overwriteQ);
-          if (!overwrite) return;
-          world.changeMetaData("commit", newerCommit, /*serialize = */false, /*merge = */false);
-          return world.execCommand("save world", {...args, showSaveDialog: false});
-        }
-
-        console.error(err);
-        world.logError("Error saving world: " + err);
-      } finally { i.remove(); }
+      return interactivelySaveWorld(world, args);
     }
   },
 
