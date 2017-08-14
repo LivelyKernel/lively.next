@@ -769,6 +769,11 @@ export class World extends Morph {
     return pBar;
   }
 
+  async withProgressBarDo(doFn, opts) {
+    let pBar = await this.addProgressBar(opts);
+    try { return await doFn(pBar); } finally { pBar.remove(); }
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // dialogs
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
