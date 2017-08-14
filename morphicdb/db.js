@@ -3,6 +3,7 @@ import { ObjectDBHTTPInterface } from "lively.storage/objectdb.js";
 import { Database } from "lively.storage";
 import { loadMorphFromSnapshot, createMorphSnapshot } from "../serialization.js";
 import { resource } from "lively.resources";
+import { obj } from "lively.lang";
 
 /*
 
@@ -99,6 +100,12 @@ export default class MorphicDB {
   }
 
   async fetchSnapshot(type, name, commitIdOrCommit, ref) {
+    let firstArg = type;
+    if (arguments.length === 1 && firstArg.type && firstArg.name) {
+      type = firstArg.type;
+      name = firstArg.name;
+      commitIdOrCommit = firstArg._id;
+    }
     await this.initializeIfNecessary();
     let {name: db} = this;
     return this.httpDB.fetchSnapshot({db, type, name, ref, commit: commitIdOrCommit});
@@ -133,6 +140,15 @@ export default class MorphicDB {
   }
 
   async commit(type, name, snapshot, commitSpec, ref, expectedParentCommit) {
+    let firstArg = type;
+    if (arguments.length === 1 && firstArg.type && firstArg.name) {
+      type = firstArg.type;
+      name = firstArg.name;
+      snapshot = firstArg.snapshot || firstArg.content;
+      commitSpec = obj.dissoc(firstArg, ["snapshot", "_rev", "_id", "ancestors", "deleted"]);
+      expectedParentCommit = firstArg._id;
+    }
+      
     await this.initializeIfNecessary();
     let {name: db} = this;
     return this.httpDB.commit({
@@ -142,7 +158,7 @@ export default class MorphicDB {
       ref,
       expectedParentCommit,
       commitSpec,
-      snapshot /*, preview*/
+      snapshot
     });
   }
 
