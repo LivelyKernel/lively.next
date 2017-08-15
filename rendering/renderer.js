@@ -209,8 +209,8 @@ export class Renderer {
   renderCanvas(canvas) {
     const CanvasHook = function() {}
     CanvasHook.prototype.hook = function(node, prop, prev) {
-      if (canvas._canvas !== node)
-        canvas._canvas = node;    // remember HTML canvas node for drawing
+      let hasNewCanvas = canvas._canvas !== node;
+      canvas.afterRender(node, hasNewCanvas);
     }
     return h("div", {
       ...defaultAttributes(canvas, this),
