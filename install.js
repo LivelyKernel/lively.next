@@ -209,7 +209,7 @@ async function replicateObjectDB() {
 
   console.time("replication");
 
-  let { ObjectDB, Database } = await System.import("lively.storage");
+  let { ObjectDB, Database } = lively.storage;
 
   let db = ObjectDB.named("lively.morphic/objectdb/morphicdb", {
     snapshotLocation: resource(System.decanonicalize("lively.morphic/objectdb/morphicdb/snapshots/"))
