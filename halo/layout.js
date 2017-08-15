@@ -956,7 +956,7 @@ export class ProportionalLayoutHalo extends Morph {
         this.updateSubmorphProportionalLayoutSettings({policy: settings.x, axis: "x", submorph: target});
         this.updateSubmorphProportionalLayoutSettings({policy: settings.y, axis: "y", submorph: target});
         target.show();
-        window.show("layout settings applied");
+        $world.setStatusMessage("layout settings applied");
       }
     }
     evt.hand.grab(grabme);
