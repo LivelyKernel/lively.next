@@ -1,4 +1,4 @@
-/*global System*/
+/*global System,babel*/
 export { default as Resource } from "./src/resource.js";
 export { parseQuery } from "./src/helpers.js";
 import { resourceExtension as httpResourceExtension } from "./src/http-resource.js";
@@ -84,7 +84,7 @@ export async function ensureFetch() {
     }
   */
 
-  if ("fetch" in System.global) return Promise.resolve();
+  if ("fetch" in System.global && "Headers" in System.global) return Promise.resolve();
   var thisModuleId = System.decanonicalize("lively.resources"),
       fetchInterface;
   if (System.get("@system-env").node) {

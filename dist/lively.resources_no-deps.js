@@ -2922,7 +2922,7 @@ var resourceExtension$2 = {
   resourceClass: LocalResource
 };
 
-/*global System*/
+/*global System,babel*/
 var extensions = extensions || []; // [{name, matches, resourceClass}]
 
 registerExtension(resourceExtension$2);
@@ -3047,7 +3047,7 @@ var ensureFetch = function () {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
-            if (!("fetch" in System.global)) {
+            if (!("fetch" in System.global && "Headers" in System.global)) {
               _context2.next = 2;
               break;
             }
