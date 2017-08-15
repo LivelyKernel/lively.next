@@ -21,7 +21,6 @@ function isHash(string) {
 // db = objectDBs.get("lively.morphic/objectdb/morphicdb")
 // await db.objectStats()
 
-var debug = false;
 var objectDBs = objectDBs || new Map();
 
 export default class ObjectDB {
@@ -710,7 +709,7 @@ class Synchronization {
 
   constructor(fromObjectDB, remoteCommitDB, remoteVersionDB, remoteLocation, options = {}) {
     // replicationFilter: {onlyIds: {STRING: BOOL}, onlyTypesAndNames: {[type+"\u0000"+name]: BOOL}}
-    this.options = {live: false, method: "sync", replicationFilter: undefined, ...options};
+    this.options = {debug: false, live: false, method: "sync", replicationFilter: undefined, ...options};
     this.state = "not started";
     this.method = "";
     this.fromObjectDB = fromObjectDB;
@@ -749,7 +748,7 @@ class Synchronization {
           remoteCommitDB,
           remoteVersionDB,
           remoteLocation,
-          options: {live = false, retry = false, method, replicationFilter}
+          options: {debug, live = false, retry = false, method, replicationFilter}
         } = this,
 
         versionDB = fromObjectDB.__versionDB || await fromObjectDB._versionDB(),
