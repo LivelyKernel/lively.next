@@ -14,6 +14,10 @@ var resource = lively.resources.resource,
 
 export async function install(baseDir, dependenciesDir, verbose) {
 
+  var log = [],
+      hasUI = typeof $world !== "undefined",
+      errored = false;
+
   let step1_ensureDirectories = true,
       step2_setupFlatn = true,
       step3_cloneLivelyPackages = true,
@@ -23,9 +27,6 @@ export async function install(baseDir, dependenciesDir, verbose) {
       step7_setupAssets = true;
 
   try {
-    var log = [];
-
-    var hasUI = typeof $world !== "undefined";
 
     // FIXME
     if (false && hasUI) {
@@ -179,6 +180,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
                    + `Afterwards your first lively.next world is ready to run at http://localhost:9011/index.html`);
 
   } catch (e) {
+    errored = true;
     console.error("Error occurred during installation: " + e.stack);
     log.push(e.stack || e);
     throw e;
@@ -187,6 +189,8 @@ export async function install(baseDir, dependenciesDir, verbose) {
     resource(join(baseDir, "lively.installer.log")).write(log.join(""));
     pBar && pBar.remove();
     indicator && indicator.remove();
+
+    process.exit(errored ? 1 : 0);
   }
 }
 
@@ -235,10 +239,18 @@ async function replicateObjectDB(baseDir, packageMap) {
       remoteVersionDB = Database.ensureDB("https://sofa.lively-next.org/objectdb-morphicdb-version-graph"),
       toSnapshotLocation = resource("https://lively-next.org/lively.morphic/objectdb/morphicdb/snapshots/");
 
-  let sync = db.replicateFrom(remoteCommitDB, remoteVersionDB, toSnapshotLocation, {debug: false, retry: true, live: true});
+  try {
+    let sync = db.replicateFrom(remoteCommitDB, remoteVersionDB, toSnapshotLocation, {debug: false, retry: true, live: true});
+    
+    await sync.whenPaused();
+    await sync.safeStop();
+    await sync.waitForIt();
+    
+    await db.close();
+    await remoteVersionDB.close();
+    await remoteCommitDB.close();
 
-  await sync.whenPaused();
-  await sync.safeStop();
-  await sync.waitForIt();
-  console.timeEnd("replication");
+  } finally {
+    console.timeEnd("replication");
+  }
 }
