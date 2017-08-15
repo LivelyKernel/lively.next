@@ -117,7 +117,8 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step6_syncWithObjectDB) {
       console.log(`=> synchronizing with object database from lively-next.org...`);
-      await replicateObjectDB();
+      await setupSystem(baseDir);
+      await replicateObjectDB(baseDir, packageMap);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -205,21 +206,36 @@ async function safelyRemove(baseDir, file) {
   console.log(`>>> Moving old file ${file.url} to ${backupDir.url} <<<`);
 }
 
-async function replicateObjectDB() {
+function setupSystem(baseURL) {
+  let livelySystem = lively.modules.getSystem("lively", {baseURL});
+  lively.modules.changeSystem(livelySystem, true);
+  var registry = livelySystem["__lively.modules__packageRegistry"] = new lively.modules.PackageRegistry(livelySystem);
+  registry.packageBaseDirs = process.env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").map(ea => resource(`file://${ea}`));
+  registry.devPackageDirs = process.env.FLATN_DEV_PACKAGE_DIRS.split(":").map(ea => resource(`file://${ea}`));
+  return registry.update();
+}
 
+async function replicateObjectDB(baseDir, packageMap) {
   console.time("replication");
 
-  let { ObjectDB, Database } = lively.storage;
-
+  // FIXME...!
+  System._nodeRequire(packageMap.lookup("flatn").location + "/module-resolver.js")
+  let { ensureFetch, resource } = await lively.modules.importPackage(join(baseDir, "/lively.resources"));
+  await ensureFetch();
+    
+  let { ObjectDB, Database } = await lively.modules.importPackage(join(baseDir, "/lively.storage/"));
+  await resource(baseDir).join("lively.morphic/objectdb/morphicdb/snapshots/").ensureExistance();
+  await resource(baseDir).join("lively.morphic/objectdb/morphicdb-commits/").ensureExistance();
+  await resource(baseDir).join("lively.morphic/objectdb/morphicdb-version-graph/").ensureExistance();
   let db = ObjectDB.named("lively.morphic/objectdb/morphicdb", {
-    snapshotLocation: resource(System.decanonicalize("lively.morphic/objectdb/morphicdb/snapshots/"))
-  })
+    snapshotLocation: resource(System.decanonicalize(baseDir + "/lively.morphic/objectdb/morphicdb/snapshots/"))
+  });
 
   let remoteCommitDB = Database.ensureDB("https://sofa.lively-next.org/objectdb-morphicdb-commits"),
       remoteVersionDB = Database.ensureDB("https://sofa.lively-next.org/objectdb-morphicdb-version-graph"),
       toSnapshotLocation = resource("https://lively-next.org/lively.morphic/objectdb/morphicdb/snapshots/");
 
-  let sync = db.replicateFrom(remoteCommitDB, remoteVersionDB, toSnapshotLocation, {retry: true, live: true});
+  let sync = db.replicateFrom(remoteCommitDB, remoteVersionDB, toSnapshotLocation, {debug: false, retry: true, live: true});
 
   await sync.whenPaused();
   await sync.safeStop();
