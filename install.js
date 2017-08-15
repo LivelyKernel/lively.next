@@ -14,6 +14,14 @@ var resource = lively.resources.resource,
 
 export async function install(baseDir, dependenciesDir, verbose) {
 
+  let step1_ensureDirectories = true,
+      step2_setupFlatn = true,
+      step3_cloneLivelyPackages = true,
+      step4_installPackageDeps = true,
+      step5_runPackageInstallScripts = true,
+      step6_syncWithObjectDB = true,
+      step7_setupAssets = true;
+
   try {
     var log = [];
 
@@ -30,11 +38,13 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // reading package spec + init base dir
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    console.log("=> Ensuring existance of " + baseDir);
-    if (baseDir.startsWith("/")) baseDir = "file://" + baseDir;
-    if (dependenciesDir.startsWith("/")) dependenciesDir = "file://" + dependenciesDir;
-    await resource(baseDir).asDirectory().ensureExistance();
-    await resource(dependenciesDir).asDirectory().ensureExistance();
+    if (step1_ensureDirectories) {
+      console.log("=> Ensuring existance of " + baseDir);
+      if (baseDir.startsWith("/")) baseDir = "file://" + baseDir;
+      if (dependenciesDir.startsWith("/")) dependenciesDir = "file://" + dependenciesDir;
+      await resource(baseDir).asDirectory().ensureExistance();
+      await resource(dependenciesDir).asDirectory().ensureExistance();
+    }
 
     console.log("=> Reading package specs from " + packageSpecFile);
     var knownProjects = await readPackageSpec(packageSpecFile),
@@ -42,108 +52,119 @@ export async function install(baseDir, dependenciesDir, verbose) {
           new Package(join(baseDir, spec.name), spec, log).readConfig())),
         packageMap = await buildPackageMap([dependenciesDir], [], packages.map(ea => ea.directory));
 
-    console.log("=> Preparing flatn environment");
-    let flatnBinDir = join(packageMap.lookup("flatn").location, "bin"),
-        env = process.env;
-    if (!env.PATH.includes(flatnBinDir)) {
-      console.log(`Adding ${flatnBinDir} to PATH`);
-      env.PATH = flatnBinDir + ":" + env.PATH;
+    if (step2_setupFlatn) {
+      console.log("=> Preparing flatn environment");
+      let flatnBinDir = join(packageMap.lookup("flatn").location, "bin"),
+          env = process.env;
+      if (!env.PATH.includes(flatnBinDir)) {
+        console.log(`Adding ${flatnBinDir} to PATH`);
+        env.PATH = flatnBinDir + ":" + env.PATH;
+      }
+      if (env.FLATN_DEV_PACKAGE_DIRS !== packageMap.devPackageDirs.join(":")) {
+        console.log("Setting FLATN_DEV_PACKAGE_DIRS");
+        env.FLATN_DEV_PACKAGE_DIRS = packageMap.devPackageDirs.join(":");
+      }
+      if (env.FLATN_PACKAGE_COLLECTION_DIRS !== packageMap.packageCollectionDirs.join(":")) {
+        console.log("Setting FLATN_PACKAGE_COLLECTION_DIRS");
+        env.FLATN_PACKAGE_COLLECTION_DIRS = packageMap.packageCollectionDirs.join(":");
+      }
     }
-    if (env.FLATN_DEV_PACKAGE_DIRS !== packageMap.devPackageDirs.join(":")) {
-      console.log("Setting FLATN_DEV_PACKAGE_DIRS");
-      env.FLATN_DEV_PACKAGE_DIRS = packageMap.devPackageDirs.join(":");
-    }
-    if (env.FLATN_PACKAGE_COLLECTION_DIRS !== packageMap.packageCollectionDirs.join(":")) {
-      console.log("Setting FLATN_PACKAGE_COLLECTION_DIRS");
-      env.FLATN_PACKAGE_COLLECTION_DIRS = packageMap.packageCollectionDirs.join(":");
-    }
-
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // creating packages
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     var pBar = false && hasUI && $world.addProgressBar(), i;
 
-    console.log(`=> Installing and updating ${packages.length} packages`);
-    i = 0; for (let p of packages) {
-      if (pBar) pBar.setLabel(`updating ${p.name}`);
-      else console.log(`${p.name}`);
-      await p.installOrUpdate();
-      pBar && pBar.setValue(++i / packages.length);
+    if (step3_cloneLivelyPackages) {
+      console.log(`=> Installing and updating ${packages.length} packages`);
+      i = 0; for (let p of packages) {
+        if (pBar) pBar.setLabel(`updating ${p.name}`);
+        else console.log(`${p.name}`);
+        await p.installOrUpdate();
+        pBar && pBar.setValue(++i / packages.length);
+      }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // installing dependencies
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    console.log(`=> installing dependencies`);
-    for (let p of packages) {
-      console.log(`installing dependencies of ${p.name}`);
-      await installDependenciesOfPackage(
+    if (step4_installPackageDeps) {
+      console.log(`=> installing dependencies`);
+      for (let p of packages) {
+        console.log(`installing dependencies of ${p.name}`);
+        await installDependenciesOfPackage(
         p.directory, dependenciesDir, packageMap, ["dependencies"], verbose);
+      }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // build scripts
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    console.log(`=> running install scripts of ${packageMap.allPackages().length} packages`);
-
-    pBar && pBar.setValue(0)
-    i = 0; for (let p of packages) {
-      pBar && pBar.setLabel(`npm setup ${p.name}`);
-      console.log(`build ${p.name} and its dependencies`);
-      await buildPackage(p.directory, packageMap, ["dependencies"]);
-      pBar && pBar.setValue(++i / packages.length)
+    if (step5_runPackageInstallScripts) {
+      console.log(`=> running install scripts of ${packageMap.allPackages().length} packages`);
+      
+      pBar && pBar.setValue(0)
+      i = 0; for (let p of packages) {
+        pBar && pBar.setLabel(`npm setup ${p.name}`);
+        console.log(`build ${p.name} and its dependencies`);
+        await buildPackage(p.directory, packageMap, ["dependencies"]);
+        pBar && pBar.setValue(++i / packages.length)
+      }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // ObjectDB sync
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    console.log(`=> synchronizing with object database from lively-next.org...`);
-    await replicateObjectDB();
+    if (step6_syncWithObjectDB) {
+      console.log(`=> synchronizing with object database from lively-next.org...`);
+      await replicateObjectDB();
+    }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // initial world files
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    console.log(`=> setting up scripts and assets`);
+    if (step7_setupAssets) {
+      console.log(`=> setting up scripts and assets`);
       
-    // FIXME, this is old stuff...
-    let toRemove = [
-          "rebuild.sh",
-          "backup.sh",
-          "package.json",
-          "index.js",
-          "index.html",
-          "mirror.js",
-          "mirror.html",
-          "fix-links.js"],
-        toInstall = [
-          {path: "lively.installer/assets/config.js",      canBeLinked: true, overwrite: true},
-          {path: "lively.installer/assets/localconfig.js", canBeLinked: false, overwrite: false},
-          {path: "lively.installer/assets/start.sh",       canBeLinked: true, overwrite: true},
-          {path: "lively.installer/assets/update.sh",      canBeLinked: true, overwrite: true},
-          {path: "lively.installer/assets/config.js",      canBeLinked: true, overwrite: true},
-          {path: "lively.morphic/assets/favicon.ico",      canBeLinked: true, overwrite: true},
-        ];
-
-    for (let fn of toRemove)
-      await safelyRemove(resource(baseDir), resource(baseDir).join(fn));
-
-    for (let {path, overwrite, canBeLinked} of toInstall) {
-      let from = resource(baseDir).join(path),
-          to = resource(baseDir).join(from.name());
-      if (await to.exists()) {
-        if (!overwrite) continue;
-        if (await to.read() !== await from.read())
-          await safelyRemove(resource(baseDir), to);
+      // FIXME, this is old stuff...
+      let toRemove = [
+        "rebuild.sh",
+        "backup.sh",
+        "package.json",
+        "index.js",
+        "index.html",
+        "mirror.js",
+        "mirror.html",
+        "fix-links.js"],
+          toInstall = [
+            {path: "lively.installer/assets/config.js",      canBeLinked: true, overwrite: true},
+            {path: "lively.installer/assets/localconfig.js", canBeLinked: false, overwrite: false},
+            {path: "lively.installer/assets/start.sh",       canBeLinked: true, overwrite: true},
+            {path: "lively.installer/assets/update.sh",      canBeLinked: true, overwrite: true},
+            {path: "lively.installer/assets/config.js",      canBeLinked: true, overwrite: true},
+            {path: "lively.morphic/assets/favicon.ico",      canBeLinked: true, overwrite: true},
+          ];
+      
+      for (let fn of toRemove)
+        await safelyRemove(resource(baseDir), resource(baseDir).join(fn));
+      
+      for (let {path, overwrite, canBeLinked} of toInstall) {
+        let from = resource(baseDir).join(path),
+            to = resource(baseDir).join(from.name());
+        if (await to.exists()) {
+          if (!overwrite) continue;
+          if (await to.read() !== await from.read())
+            await safelyRemove(resource(baseDir), to);
+        }
+        if (!canBeLinked || process.platform === "win32") {
+          await from.copyTo(to);
+        } else {
+          await exec(`ln -sf ${from.path()} ${to.path()}`);
+        }
       }
-      if (!canBeLinked || process.platform === "win32") {
-        await from.copyTo(to);
-      } else {
-        await exec(`ln -sf ${from.path()} ${to.path()}`);
-      }
+      
+      await exec("chmod a+x start.sh update.sh", {cwd: resource(baseDir).path()});
     }
-
-    await exec("chmod a+x start.sh update.sh", {cwd: resource(baseDir).path()});
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
