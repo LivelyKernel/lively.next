@@ -1,4 +1,4 @@
-/*global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace*/
+/*global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace,System,global,process*/
 
 import Resource from "./resource.js";
 import { applyExclude } from "./helpers.js";
@@ -129,11 +129,14 @@ let binaryExtensions = ["3ds","3g2","3gp","7z","a","aac","adp","ai","aif","aiff"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+const isNode = typeof System !== "undefined" ? System.get("@system-env").node
+             : (typeof global !== "undefined" && typeof process !== "undefined");
 
 function defaultOrigin() {
   // FIXME nodejs usage???
   return document.location.origin;
 }
+
 
 function makeRequest(resource, method = "GET", body, headers = {}) {
   var url = resource.url,
@@ -169,6 +172,8 @@ export default class WebDAVResource extends Resource {
     this.headers = opts.headers || {};
     this.binary = this.isFile() ? binaryExtensions.includes(this.ext()) : false;
   }
+
+  get isHTTPResource() { return true; }
 
   join(path) {
     return Object.assign(
@@ -278,6 +283,49 @@ export default class WebDAVResource extends Resource {
       throw new Error(`Error in POST ${this.url}: ${text || res.statusText}`);
     } else return json || text;
   }
+
+  async copyTo(otherResource, ensureParent = true) {
+    if (this.isFile()) {
+      var toFile = otherResource.isFile() ? otherResource : otherResource.join(this.name());
+      // optimized copy, using pipes, for HTTP
+      if (isNode) {
+        if (toFile.isHTTPResource) return this._copyTo_file_nodejs_http(toFile, ensureParent);
+        if (toFile.isNodeJSFileResource) return this._copyTo_file_nodejs_fs(toFile, ensureParent);
+      }
+    }
+    return super.copyTo(otherResource, ensureParent);
+  }
+
+  async _copyFrom_file_nodejs_fs(fromFile, ensureParent = true) {
+    if (ensureParent) await this.parent().ensureExistance();
+    let error;
+    let stream = fromFile._createReadStream();
+    stream.on("error", err => error = err);
+    let toRes = await makeRequest(this, "PUT", stream);
+    if (error) throw error;
+    if (!toRes.ok) throw new Error(`copyTo: Cannot GET: ${toRes.statusText} ${toRes.status}`);
+    return this;
+  }
+
+  async _copyTo_file_nodejs_fs(toFile, ensureParent = true) {
+    if (ensureParent) await toFile.parent().ensureExistance();
+    let fromRes = await makeRequest(this, "GET");
+    if (!fromRes.ok) throw new Error(`copyTo: Cannot GET: ${fromRes.statusText} ${fromRes.status}`);
+    let error;
+    return new Promise((resolve, reject) =>
+      fromRes.body.pipe(toFile._createWriteStream())
+        .on("error", err => error = err)
+        .on("finish", () => error ? reject(error) : resolve(this)));
+  }
+
+  async _copyTo_file_nodejs_http(toFile, ensureParent = true) {
+    if (ensureParent) await toFile.parent().ensureExistance();
+    let fromRes = await makeRequest(this, "GET");
+    if (!fromRes.ok) throw new Error(`copyTo: Cannot GET: ${fromRes.statusText} ${fromRes.status}`)
+    let toRes = await makeRequest(toFile, "PUT", fromRes.body);
+    if (!fromRes.ok) throw new Error(`copyTo: Cannot PUT: ${toRes.statusText} ${toRes.status}`);
+  }
+
 }
 
 

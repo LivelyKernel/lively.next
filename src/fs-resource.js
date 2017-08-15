@@ -1,7 +1,7 @@
 import Resource from "./resource.js";
 import { applyExclude } from "./helpers.js";
 
-import { readFile, writeFile, exists, mkdir, rmdir, unlink, readdir, lstat, rename } from "fs";
+import { createWriteStream, createReadStream, readFile, writeFile, exists, mkdir, rmdir, unlink, readdir, lstat, rename } from "fs";
 
 function wrapInPromise(func) {
   return (...args) =>
@@ -21,6 +21,8 @@ const readFileP = wrapInPromise(readFile),
       renameP = wrapInPromise(rename);
 
 export default class NodeJSFileResource extends Resource {
+
+  get isNodeJSFileResource() { return true; }
 
   path() {
     return this.url.replace("file://", "");
@@ -127,6 +129,16 @@ export default class NodeJSFileResource extends Resource {
     return this._assignPropsFromStat(await this.stat());
   }
 
+  async copyTo(otherResource, ensureParent = true) {
+    if (this.isFile()) {
+      var toFile = otherResource.isFile() ? otherResource : otherResource.join(this.name());
+      // optimized copy, using pipes, for HTTP
+      if (toFile.isHTTPResource)
+        return toFile._copyFrom_file_nodejs_fs(this, ensureParent = true);
+    }
+    return super.copyTo(otherResource, ensureParent);
+  }
+
   _assignPropsFromStat(stat) {
     return this.assignProperties({
       lastModified: stat.mtime,
@@ -136,6 +148,9 @@ export default class NodeJSFileResource extends Resource {
       isLink: stat.isSymbolicLink()
     });
   }
+  
+  _createWriteStream() { return createWriteStream(this.path()); }
+  _createReadStream() { return createReadStream(this.path()); }
 }
 
 export var resourceExtension = {

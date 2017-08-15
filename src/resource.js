@@ -274,7 +274,6 @@ export default class Resource {
         () => Promise.resolve(
                 ea.isFile() && ea.copyTo(toResources[i], false)).then(next),
         () => Promise.resolve())();
-
     }
 
     return this;

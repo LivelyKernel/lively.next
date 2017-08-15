@@ -986,7 +986,7 @@ var Resource$$1 = function () {
   return Resource$$1;
 }();
 
-/*global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace*/
+/*global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace,System,global,process*/
 
 var XPathQuery = function () {
   function XPathQuery(expression) {
@@ -1114,6 +1114,7 @@ var binaryExtensions = ["3ds", "3g2", "3gp", "7z", "a", "aac", "adp", "ai", "aif
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+var isNode = typeof System !== "undefined" ? System.get("@system-env").node : typeof global !== "undefined" && typeof process !== "undefined";
 
 function defaultOrigin() {
   // FIXME nodejs usage???
@@ -1625,6 +1626,247 @@ var WebDAVResource = function (_Resource) {
 
       return post;
     }()
+  }, {
+    key: "copyTo",
+    value: function () {
+      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(otherResource) {
+        var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+        var toFile;
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+          while (1) {
+            switch (_context10.prev = _context10.next) {
+              case 0:
+                if (!this.isFile()) {
+                  _context10.next = 7;
+                  break;
+                }
+
+                toFile = otherResource.isFile() ? otherResource : otherResource.join(this.name());
+                // optimized copy, using pipes, for HTTP
+
+                if (!isNode) {
+                  _context10.next = 7;
+                  break;
+                }
+
+                if (!toFile.isHTTPResource) {
+                  _context10.next = 5;
+                  break;
+                }
+
+                return _context10.abrupt("return", this._copyTo_file_nodejs_http(toFile, ensureParent));
+
+              case 5:
+                if (!toFile.isNodeJSFileResource) {
+                  _context10.next = 7;
+                  break;
+                }
+
+                return _context10.abrupt("return", this._copyTo_file_nodejs_fs(toFile, ensureParent));
+
+              case 7:
+                return _context10.abrupt("return", get$1(WebDAVResource.prototype.__proto__ || Object.getPrototypeOf(WebDAVResource.prototype), "copyTo", this).call(this, otherResource, ensureParent));
+
+              case 8:
+              case "end":
+                return _context10.stop();
+            }
+          }
+        }, _callee10, this);
+      }));
+
+      function copyTo(_x10) {
+        return _ref10.apply(this, arguments);
+      }
+
+      return copyTo;
+    }()
+  }, {
+    key: "_copyFrom_file_nodejs_fs",
+    value: function () {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(fromFile) {
+        var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+        var error, stream, toRes;
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+          while (1) {
+            switch (_context11.prev = _context11.next) {
+              case 0:
+                if (!ensureParent) {
+                  _context11.next = 3;
+                  break;
+                }
+
+                _context11.next = 3;
+                return this.parent().ensureExistance();
+
+              case 3:
+                error = void 0;
+                stream = fromFile._createReadStream();
+
+                stream.on("error", function (err) {
+                  return error = err;
+                });
+                _context11.next = 8;
+                return makeRequest(this, "PUT", stream);
+
+              case 8:
+                toRes = _context11.sent;
+
+                if (!error) {
+                  _context11.next = 11;
+                  break;
+                }
+
+                throw error;
+
+              case 11:
+                if (toRes.ok) {
+                  _context11.next = 13;
+                  break;
+                }
+
+                throw new Error("copyTo: Cannot GET: " + toRes.statusText + " " + toRes.status);
+
+              case 13:
+                return _context11.abrupt("return", this);
+
+              case 14:
+              case "end":
+                return _context11.stop();
+            }
+          }
+        }, _callee11, this);
+      }));
+
+      function _copyFrom_file_nodejs_fs(_x12) {
+        return _ref11.apply(this, arguments);
+      }
+
+      return _copyFrom_file_nodejs_fs;
+    }()
+  }, {
+    key: "_copyTo_file_nodejs_fs",
+    value: function () {
+      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(toFile) {
+        var _this2 = this;
+
+        var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+        var fromRes, error;
+        return regeneratorRuntime.wrap(function _callee12$(_context12) {
+          while (1) {
+            switch (_context12.prev = _context12.next) {
+              case 0:
+                if (!ensureParent) {
+                  _context12.next = 3;
+                  break;
+                }
+
+                _context12.next = 3;
+                return toFile.parent().ensureExistance();
+
+              case 3:
+                _context12.next = 5;
+                return makeRequest(this, "GET");
+
+              case 5:
+                fromRes = _context12.sent;
+
+                if (fromRes.ok) {
+                  _context12.next = 8;
+                  break;
+                }
+
+                throw new Error("copyTo: Cannot GET: " + fromRes.statusText + " " + fromRes.status);
+
+              case 8:
+                error = void 0;
+                return _context12.abrupt("return", new Promise(function (resolve, reject) {
+                  return fromRes.body.pipe(toFile._createWriteStream()).on("error", function (err) {
+                    return error = err;
+                  }).on("finish", function () {
+                    return error ? reject(error) : resolve(_this2);
+                  });
+                }));
+
+              case 10:
+              case "end":
+                return _context12.stop();
+            }
+          }
+        }, _callee12, this);
+      }));
+
+      function _copyTo_file_nodejs_fs(_x14) {
+        return _ref12.apply(this, arguments);
+      }
+
+      return _copyTo_file_nodejs_fs;
+    }()
+  }, {
+    key: "_copyTo_file_nodejs_http",
+    value: function () {
+      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(toFile) {
+        var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+        var fromRes, toRes;
+        return regeneratorRuntime.wrap(function _callee13$(_context13) {
+          while (1) {
+            switch (_context13.prev = _context13.next) {
+              case 0:
+                if (!ensureParent) {
+                  _context13.next = 3;
+                  break;
+                }
+
+                _context13.next = 3;
+                return toFile.parent().ensureExistance();
+
+              case 3:
+                _context13.next = 5;
+                return makeRequest(this, "GET");
+
+              case 5:
+                fromRes = _context13.sent;
+
+                if (fromRes.ok) {
+                  _context13.next = 8;
+                  break;
+                }
+
+                throw new Error("copyTo: Cannot GET: " + fromRes.statusText + " " + fromRes.status);
+
+              case 8:
+                _context13.next = 10;
+                return makeRequest(toFile, "PUT", fromRes.body);
+
+              case 10:
+                toRes = _context13.sent;
+
+                if (fromRes.ok) {
+                  _context13.next = 13;
+                  break;
+                }
+
+                throw new Error("copyTo: Cannot PUT: " + toRes.statusText + " " + toRes.status);
+
+              case 13:
+              case "end":
+                return _context13.stop();
+            }
+          }
+        }, _callee13, this);
+      }));
+
+      function _copyTo_file_nodejs_http(_x16) {
+        return _ref13.apply(this, arguments);
+      }
+
+      return _copyTo_file_nodejs_http;
+    }()
+  }, {
+    key: "isHTTPResource",
+    get: function get() {
+      return true;
+    }
   }]);
   return WebDAVResource;
 }(Resource$$1);
@@ -2365,6 +2607,48 @@ var NodeJSFileResource = function (_Resource) {
       return readProperties;
     }()
   }, {
+    key: "copyTo",
+    value: function () {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(otherResource) {
+        var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+        var toFile;
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+          while (1) {
+            switch (_context11.prev = _context11.next) {
+              case 0:
+                if (!this.isFile()) {
+                  _context11.next = 4;
+                  break;
+                }
+
+                toFile = otherResource.isFile() ? otherResource : otherResource.join(this.name());
+                // optimized copy, using pipes, for HTTP
+
+                if (!toFile.isHTTPResource) {
+                  _context11.next = 4;
+                  break;
+                }
+
+                return _context11.abrupt("return", toFile._copyFrom_file_nodejs_fs(this, ensureParent = true));
+
+              case 4:
+                return _context11.abrupt("return", get$1(NodeJSFileResource.prototype.__proto__ || Object.getPrototypeOf(NodeJSFileResource.prototype), "copyTo", this).call(this, otherResource, ensureParent));
+
+              case 5:
+              case "end":
+                return _context11.stop();
+            }
+          }
+        }, _callee11, this);
+      }));
+
+      function copyTo(_x7) {
+        return _ref11.apply(this, arguments);
+      }
+
+      return copyTo;
+    }()
+  }, {
     key: "_assignPropsFromStat",
     value: function _assignPropsFromStat(stat) {
       return this.assignProperties({
@@ -2374,6 +2658,21 @@ var NodeJSFileResource = function (_Resource) {
         type: stat.isDirectory() ? "directory" : "file",
         isLink: stat.isSymbolicLink()
       });
+    }
+  }, {
+    key: "_createWriteStream",
+    value: function _createWriteStream() {
+      return fs.createWriteStream(this.path());
+    }
+  }, {
+    key: "_createReadStream",
+    value: function _createReadStream() {
+      return fs.createReadStream(this.path());
+    }
+  }, {
+    key: "isNodeJSFileResource",
+    get: function get() {
+      return true;
     }
   }]);
   return NodeJSFileResource;
