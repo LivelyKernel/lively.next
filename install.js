@@ -1,3 +1,4 @@
+/*global process,System*/
 import { exec } from "./shell-exec.js";
 import { join, getPackageSpec, readPackageSpec } from "./helpers.js";
 import { Package } from "./package.js";
@@ -95,6 +96,12 @@ export async function install(baseDir, dependenciesDir, verbose) {
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // ObjectDB sync
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    console.log(`=> synchronizing with object database from lively-next.org...`);
+    await replicateObjectDB();
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // initial world files
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     console.log(`=> setting up scripts and assets`);
@@ -175,4 +182,26 @@ async function safelyRemove(baseDir, file) {
   await file.rename(backupFile);
 
   console.log(`>>> Moving old file ${file.url} to ${backupDir.url} <<<`);
+}
+
+async function replicateObjectDB() {
+
+  console.time("replication");
+
+  let { ObjectDB, Database } = await System.import("lively.storage");
+
+  let db = ObjectDB.named("lively.morphic/objectdb/morphicdb", {
+    snapshotLocation: resource(System.decanonicalize("lively.morphic/objectdb/morphicdb/snapshots/"))
+  })
+
+  let remoteCommitDB = Database.ensureDB("https://sofa.lively-next.org/objectdb-morphicdb-commits"),
+      remoteVersionDB = Database.ensureDB("https://sofa.lively-next.org/objectdb-morphicdb-version-graph"),
+      toSnapshotLocation = resource("https://lively-next.org/lively.morphic/objectdb/morphicdb/snapshots/");
+
+  let sync = db.replicateFrom(remoteCommitDB, remoteVersionDB, toSnapshotLocation, {retry: true, live: true});
+
+  await sync.whenPaused();
+  await sync.safeStop();
+  await sync.waitForIt();
+  console.timeEnd("replication");
 }
