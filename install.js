@@ -226,6 +226,7 @@ async function replicateObjectDB(baseDir, packageMap) {
   System._nodeRequire(packageMap.lookup("flatn").location + "/module-resolver.js")
   let { ensureFetch, resource } = await lively.modules.importPackage(join(baseDir, "/lively.resources"));
   await ensureFetch();
+  if (!global.navigator) global.navigator = {};
     
   let { ObjectDB, Database } = await lively.modules.importPackage(join(baseDir, "/lively.storage/"));
   await resource(baseDir).join("lively.morphic/objectdb/morphicdb/snapshots/").ensureExistance();
