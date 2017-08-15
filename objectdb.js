@@ -386,6 +386,17 @@ export default class ObjectDB {
     return this.__commitDB = db;
   }
 
+  async close() {
+    if (this.__commitDB) {
+      await this.__commitDB.close();
+      this.__commitDB = null;
+    }
+    if (this.__versionDB) {
+      await this.__versionDB.close();
+      this.__versionDB = null;
+    }
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // versioning
 
