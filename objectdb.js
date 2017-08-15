@@ -21,6 +21,7 @@ function isHash(string) {
 // db = objectDBs.get("lively.morphic/objectdb/morphicdb")
 // await db.objectStats()
 
+var debug = false;
 var objectDBs = objectDBs || new Map();
 
 export default class ObjectDB {
@@ -304,25 +305,24 @@ export default class ObjectDB {
 
       nameWithMaxMinTimestamp: {
         _id: '_design/nameWithMaxMinTimestamp_index',
-        version: 1,
+        version: 2,
         views: {
           'nameWithMaxMinTimestamp_index': {
-            map: 'doc => emit(`${doc.type}\u0000${doc.name}`, doc.timestamp)',
+            map: 'function(doc) { emit(`${doc.type}\u0000${doc.name}`, doc.timestamp); }',
             reduce: "_stats"}
         }
       },
 
       nameTypeFilter: {
         _id: '_design/nameTypeFilter',
-        version: 1,
+        version: 4,
         filters: {
-          'nameTypeFilter': `(doc, req) => {
-            if (doc._id[0] === "_") return true;
-            if (!req.query) return true;
+          'nameTypeFilter': `function(doc, req) {
+            if (doc._id[0] === "_" || !req || !req.query) return true;
 
-            if (req.query.onlyIds && req.query.onlyIds[doc._id]) return true;
-            if (req.query.onlyTypesAndNames && req.query.onlyTypesAndNames[doc.type + "\\u0000" + doc.name]) return true;
-            return false;
+            if (req.query.onlyIds) return !!req.query.onlyIds[doc._id];
+            if (req.query.onlyTypesAndNames) return !!req.query.onlyTypesAndNames[doc.type + "\\u0000" + doc.name];
+            return true;
           }`}
       }
     }
@@ -601,43 +601,6 @@ export default class ObjectDB {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // synchronization / replication
 
-  async replication(method, options, remoteCommitDB, remoteVersionDB, toSnapshotLocation) {
-    if (method !== "replicateTo" && method !== "replicateFrom")
-      throw new Error(`Unknown replication method ${method}`);
-
-    let versionDB = this.__versionDB || await this._versionDB(),
-        commitDB = this.__commitDB || await this._commitDB(),
-        commitChanges = [], versionChanges = [],
-        fromResources = [], toResources = [],
-        fromSnapshotLocation = this.snapshotLocation,
-        commitReplication = commitDB[method](remoteCommitDB).on("change", change => commitChanges.push(change)),
-        versionReplication = versionDB[method](remoteVersionDB).on("change", change => versionChanges.push(change));
-
-    [versionReplication, commitReplication] =
-      await Promise.all([versionReplication, commitReplication]);
-
-    for (let {docs: commits} of commitChanges)
-      for (let commit of commits)
-        if (!commit._id.startsWith("_"))
-          fromResources.push(this.snapshotResourceFor(commit));
-
-    await promise.parallel(fromResources.map(res => () => {
-      let path = res.relativePathFrom(fromSnapshotLocation),
-          toResource = toSnapshotLocation.join(path);
-      toResources.push(toResource);
-      return res.copyTo(toResource);
-    }), 5);
-
-    if (method === "replicateFrom")
-      [fromResources, toResources] = [toResources, fromResources];
-
-    return {
-      fromResources, toResources,
-      commitChanges, versionChanges,
-      versionReplication, commitReplication
-    };
-  }
-
   replicateTo(remoteCommitDB, remoteVersionDB, toSnapshotLocation, options) {
     return new Synchronization(
       this, remoteCommitDB, remoteVersionDB, toSnapshotLocation,
@@ -749,6 +712,7 @@ class Synchronization {
     // replicationFilter: {onlyIds: {STRING: BOOL}, onlyTypesAndNames: {[type+"\u0000"+name]: BOOL}}
     this.options = {live: false, method: "sync", replicationFilter: undefined, ...options};
     this.state = "not started";
+    this.method = "";
     this.fromObjectDB = fromObjectDB;
     this.remoteCommitDB = remoteCommitDB;
     this.remoteVersionDB = remoteVersionDB;
@@ -756,6 +720,7 @@ class Synchronization {
     this.deferred = promise.deferred();
     this.conflicts = [];
     this.changes = [];
+    this.errors = [];
   }
 
   get isSynchonizing() { return this.isPaused || this.isRunning; }
@@ -789,8 +754,10 @@ class Synchronization {
 
         versionDB = fromObjectDB.__versionDB || await fromObjectDB._versionDB(),
         commitDB = fromObjectDB.__commitDB || await fromObjectDB._commitDB(),
-        versionChangeListener,
+        versionChangeListener, commitChangeListener,
         fromSnapshotLocation = fromObjectDB.snapshotLocation;
+
+    this.method = method;
 
     await fromObjectDB._ensureDesignDocIn(
       remoteCommitDB.pouchdb, fromObjectDB._indexes.nameTypeFilter, false);
@@ -802,20 +769,41 @@ class Synchronization {
           query_params: replicationFilter
         }),
         versionReplication = versionDB[method](remoteVersionDB, {live, retry, conflicts: true}),
+        snapshotReplication = {
+          copyCalls: 0,
+          copyCallsWaiting: 0,
+          nFilesToCopy: 0,
+          nFilesCopied: 0,
+          stopped: false,
+          isComplete() {
+            return this.stopped || (this.copyCalls <= 0 && this.copyCallsWaiting <= 0);
+          }
+        },
 
         commitReplicationState = "not started",
         versionReplicationState = "not started";
 
     this.versionReplication = versionReplication;
     this.commitReplication = commitReplication;
+    this.snapshotReplication = snapshotReplication;
 
+    commitChangeListener = remoteCommitDB.pouchdb.changes({include_docs: true, live: true, conflicts: true});
     versionChangeListener = remoteVersionDB.pouchdb.changes({include_docs: true, live: true, conflicts: true});
+
+    commitChangeListener.on("change", change => {
+      let {id, changes, doc: {_conflicts: conflicts}} = change;
+      debug && console.log(`commit changes ${id}:`, changes, conflicts);
+      if (!conflicts) return;
+      console.log(`commit conflict ${id}:`, changes, conflicts);
+      this.conflicts.push({db: "commits", id, changes, conflicts: conflicts})
+    });
 
     versionChangeListener.on("change", change => {
       let {id, changes, doc: {_conflicts: conflicts}} = change;
+      debug && console.log(`version changes ${id}:`, changes, conflicts);
       if (!conflicts) return;
       console.log(`version conflict ${id}:`, changes, conflicts);
-      this.conflicts.push({id, changes, conflicts: conflicts})
+      this.conflicts.push({db: "versions", id, changes, conflicts: conflicts})
     });
 
     commitReplication.on("change", async change => {
@@ -823,32 +811,84 @@ class Synchronization {
       else if (method === "replicateFrom") change = {direction: "pull", change};
 
       let {direction, change: {ok, docs: commits, errors}} = change;
+      console.log(`${this} ${direction === "push" ? "send" : "received"} ${commits.length} commits`);
 
+      var error;
       try {
         let toCopy = [];
-        for (let commit of commits){
+        for (let commit of commits) {
           if (commit._id.startsWith("_")) continue;
           this.changes.push(commit._id);
           toCopy.push(snapshotPathFor(commit));
         }
 
+        snapshotReplication.nFilesToCopy += toCopy.length;
+
+        if (snapshotReplication.copyCalls > 0) {
+          snapshotReplication.copyCallsWaiting++;
+          await promise.waitFor(() => snapshotReplication.copyCalls <= 0);
+          snapshotReplication.copyCallsWaiting--;
+        }
+        
+        snapshotReplication.copyCalls++; updateState(this);
+
+        console.log(`${this} copying ${toCopy.length} snapshots...`);
+
         await promise.parallel(toCopy.map(path => () => {
           let fromResource = (direction === "push" ? fromSnapshotLocation : remoteLocation).join(path),
               toResource = (direction === "push" ? remoteLocation : fromSnapshotLocation).join(path);
-          // console.log(`${this} Copying ${fromResource.url} => ${toResource.url}`);
-          return fromResource.copyTo(toResource);
+
+          if (snapshotReplication.stopped) {
+            console.warn(`${this} Stopping copying resources b/c synchronization ended (${snapshotReplication.copyCalls}, ${fromResource.url} => ${toResource.url})`);
+            return Promise.resolve();
+          }
+
+          return fromResource.exists().then(exists => {
+            if (!exists) {
+              console.warn(`Skip copying ${fromResource.url}, does not exist`);
+              return Promise.resolve();
+            }
+            debug && console.log(`${this} Copying ${fromResource.url} => ${toResource.url}`);
+            return tryCopy(0).then(result => {
+              snapshotReplication.nFilesCopied++;
+              if (!snapshotReplication.stopped && snapshotReplication.nFilesCopied % 10 === 0)
+                console.log(`${this} copied ${snapshotReplication.nFilesCopied} of ${snapshotReplication.nFilesToCopy} snapshots`);
+              return result;
+            });
+          })
+
+          function tryCopy(n = 0) {
+            return fromResource.copyTo(toResource).catch(err => {
+              if (n >= 5) throw err;
+              return tryCopy(n+1);
+            })
+          }
         }), 5);
+        console.log(`${this} sending files done`);
       } catch (err) {
         console.error(`error in commitReplication onChange`, err);
+        error = err;
+        throw err;
+      } finally {
+        snapshotReplication.copyCalls--;
+        updateState(this);
+        tryToResolve(this, error ? [error] : []);
       }
 
     })
-    .on('paused', () => { commitReplicationState = "paused"; updateState(this); })
-    .on('active', () => { commitReplicationState = "active"; updateState(this); })
+    .on('paused', () => {
+      commitReplicationState = "paused";
+      updateState(this);
+      debug && console.log(`${this} commit replication paused`);
+    })
+    .on('active', () => {
+      commitReplicationState = "active";
+      updateState(this);
+      debug && console.log(`${this} commit replication active`);
+    })
     .on('error', err => {
       commitReplicationState = "complete"; updateState(this);
       console.error(`${this} commit replication error`, err);
-      debugger;
       tryToResolve(this, [err]);
     })
     .on('complete', info => {
@@ -858,11 +898,23 @@ class Synchronization {
     });
 
     versionReplication.on(`change`, change => {
-      // console.log(`version change`, System._nodeRequire("util").inspect(change, {depth: 5}));
+      if (method === "replicateTo") change = {direction: "push", change}
+      else if (method === "replicateFrom") change = {direction: "pull", change};
+      let {direction, change: {ok, docs: hist, errors}} = change;
+      console.log(`${this} ${direction === "push" ? "send" : "received"} ${hist.length} histories`);
+
       // versionChanges.push(change);
     })
-    .on('paused', () => { versionReplicationState = "paused"; updateState(this); })
-    .on('active', () => { versionReplicationState = "active"; updateState(this); })
+    .on('paused', () => {
+      versionReplicationState = "paused";
+      updateState(this);
+      debug && console.log(`${this} version replication paused`);
+    })
+    .on('active', x => {
+      versionReplicationState = "active";
+      updateState(this);
+      debug && console.log(`${this} version replication active`, x);
+    })
     .on('error', err => {
       versionReplicationState = "complete"; updateState(this);
       console.error(`${this} version replication error`, err);
@@ -881,23 +933,29 @@ class Synchronization {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     function updateState(sync) {
-      if (versionReplicationState === "paused" && commitReplicationState === "paused")
-        return console.log(sync+"", sync.state = "paused");
-      if (versionReplicationState === "complete" && commitReplicationState === "complete")
-        return console.log(sync+"", sync.state = "complete");
-      return console.log(sync+"", sync.state = "running");
+      if (versionReplicationState === "paused" && commitReplicationState === "paused" && snapshotReplication.copyCalls <= 0 && snapshotReplication.copyCallsWaiting <= 0)
+        return sync.state = "paused";
+      if (versionReplicationState === "complete" && commitReplicationState === "complete" && snapshotReplication.isComplete())
+        return sync.state = "complete";
+      return sync.state = "running";
     }
 
     function tryToResolve(sync, errors) {
-      if (!errors.length && (commitReplicationState !== "complete" || versionReplicationState !== "complete")) return;
+      if (!errors.length && (commitReplicationState !== "complete"
+                     || versionReplicationState !== "complete"
+                     || !snapshotReplication.isComplete())) return;
       versionChangeListener.cancel();
       let err;
       if (errors.length) {
         sync.state = "complete";
+        sync.errors = errors;
         commitReplication.cancel();
         versionReplication.cancel();
         err = new Error(`Synchronization error:\n  ${errors.join("\n  ")}`);
         err.errors = errors;
+        console.log(`${sync} errored`);
+      } else {
+        console.log(`${sync} completed`);
       }
       if (err) sync.deferred.reject(err);
       else sync.deferred.resolve(sync);
@@ -921,12 +979,15 @@ class Synchronization {
     if (this.state === "not started" || !this.isSynchonizing) return this;
     this.commitReplication.cancel();
     this.versionReplication.cancel();
+    this.snapshotReplication.stopped = true;
     return this;
   }
 
   toString() {
     let {method, state, fromObjectDB: {name}} = this,
-        dir = method === "sync" ? "<=>" : method === "replicateTo" ? "=>" : "<=";
+        dir = method === "sync" ? "<=>" :
+              method === "replicateTo" ? "=>" :
+              method === "replicateFrom" ? "<=" : "??";
     return `Synchronization(${state}: ${name} ${dir})`;
   }
 }

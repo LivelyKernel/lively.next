@@ -383,10 +383,10 @@ export default class Database {
     return this.pouchdb.sync(otherDB, opts);
   }
 
-  async getConflicts() {
+  async getConflicts(opts) {
     let {rows} = await this.pouchdb.query(
       {map: `function(doc) { if (doc._conflicts) emit(doc._id); }`},
-      {reduce: false, include_docs: true, conflicts: true})
+      {reduce: false, include_docs: false, conflicts: true, ...opts})
     return rows.map(ea => ea.doc);
   }
 
