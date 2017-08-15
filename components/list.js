@@ -262,13 +262,13 @@ export class List extends Morph {
       ".List.dark": {
         fill: Color.transparent,
         hideScrollbars: true,
-        padding: Rectangle.inset(2, 0)
-      },
-      ".List.dark .ListItemMorph": {
+        padding: Rectangle.inset(2, 0),
         fontFamily: "Monaco, monospace",
         nonSelectionFontColor: Color.gray,
         selectionFontColor: Color.black,
         selectionColor: Color.gray.lighter(),
+      },
+      ".List.dark .ListItemMorph": {
       },
       ".List.default": {
         padding: Rectangle.inset(2, 0)
