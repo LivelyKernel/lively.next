@@ -83,12 +83,12 @@ export default class MorphicDB {
     return this.httpDB.destroyDB({db});
   }
 
-  async latestCommits(type = "world") {
+  async latestCommits(type = "world", includeDeleted = false) {
     // await MorphicDB.default.latestCommits()
     await this.initializeIfNecessary();
     let {name: db} = this,
         ref = "HEAD", knownCommitIds = {};
-    return this.httpDB.fetchCommits({db, type, ref, knownCommitIds});
+    return this.httpDB.fetchCommits({db, type, ref, knownCommitIds, includeDeleted});
   }
 
   async fetchCommit(type, name, ref) {
@@ -179,6 +179,12 @@ export default class MorphicDB {
     await this.initializeIfNecessary();
     let {name: db} = this;
     return this.httpDB.delete({db,type,name,dryRun});
+  }
+
+  async deleteCommit(commitId, dryRun = true) {
+    await this.initializeIfNecessary();
+    let {name: db} = this;
+    return this.httpDB.deleteCommit({db,commit: commitId, dryRun});
   }
 
 }
