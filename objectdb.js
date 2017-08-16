@@ -417,12 +417,12 @@ export default class ObjectDB {
   async versionGraph(type, objectName) {
     let versionDB = this.__versionDB || await this._versionDB(),
         graph = await versionDB.get(type + "/" + objectName);
-    return !graph || graph.deleted ? null : graph;
+    return !graph || graph.deleted || graph._deleted ? null : graph;
   }
 
   async _log(type, objectName, ref = "HEAD", limit = Infinity) {
     let data = await this.versionGraph(type, objectName);
-    if (!data || data.deleted) return [];
+    if (!data || data.deleted|| data._deleted) return [];
     let version = data.refs.HEAD, history = [];
     while (true) {
       if (history.includes(version))
@@ -668,7 +668,7 @@ export default class ObjectDB {
     // 3. history to delete
     let versionDB = this.__versionDB || await this._versionDB(),
         {_id, _rev} = await versionDB.get(type + "/" + name),
-        deletedHist = {_id, _rev, deleted: true}
+        deletedHist = {_id, _rev, _deleted: true}
 
 
     if (!dryRun) {
@@ -698,7 +698,7 @@ export default class ObjectDB {
     let versionDB = this.__versionDB || await this._versionDB(),
         objectDB = this.__commitDB || await this._commitDB(),
         {name, type, _id} = commit,
-        resources = [this.snapshotResourceFor(commit)],
+        resources = commit.deleted ? [] : [this.snapshotResourceFor(commit)],
         commitDeletions = [{...commit, _deleted: true}],
         hist = await versionDB.get(type + "/" + name);
 
@@ -707,7 +707,7 @@ export default class ObjectDB {
 
     let [ancestor] = hist.history[commit._id] || [];
     if (!ancestor && Object.keys(hist.history).length <= 1) {
-      hist.deleted = true;
+      hist._deleted = true;
     } else if (!ancestor) {
       throw new Error(`Cannot delete commit ${type}/${name}@${commit._id} b/c it has no ancestor but there are still other commits!`);
     } else {
@@ -1040,6 +1040,8 @@ class Synchronization {
 function checkArg(name, value, spec) {
   if (typeof value === "undefined" && typeof spec === "string" && !spec.includes("undefined"))
     throw new Error(`parameter ${name} is undefined`);
+  if (value === null && typeof spec === "string" && !spec.includes("null"))
+    throw new Error(`parameter ${name} is null`);
 
   if (typeof spec === "string") {
     let actualType = typeof value,
@@ -1189,7 +1191,7 @@ export var ObjectDBInterface = {
     let versions = await versionDB.getAll(versionQueryOpts), commitIds = [];
 
     for (let version of versions) {
-      if (version.deleted) continue;
+      if (version.deleted || version._deleted) continue;
       let {_id, refs} = version;
       ref = refsByTypeAndName[_id] || ref;
         let commitId = refs[ref];
