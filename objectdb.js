@@ -289,20 +289,20 @@ export default class ObjectDB {
 
   get _indexes() {
     return {
-      nameIndex: {
+      commitdb_nameIndex: {
         _id: '_design/name_index',
         version: 1,
         views: {'name_index': {map: 'function (doc) { emit(`${doc.type}\u0000${doc.name}`); }'}}
       },
 
-      nameAndTimestampIndex: {
+      commitdb_nameAndTimestampIndex: {
         _id: '_design/nameAndTimestamp_index',
         version: 1,
         views: {'nameAndTimestamp_index': {
           map: "function (doc) { emit(`${doc.type}\u0000${doc.name}\u0000${doc.timestamp}\u0000${doc._id}`); }"}}
       },
 
-      nameWithMaxMinTimestamp: {
+      commitdb_nameWithMaxMinTimestamp: {
         _id: '_design/nameWithMaxMinTimestamp_index',
         version: 2,
         views: {
@@ -312,15 +312,29 @@ export default class ObjectDB {
         }
       },
 
-      nameTypeFilter: {
+      commitdb_nameTypeFilter: {
         _id: '_design/nameTypeFilter',
-        version: 4,
+        version: 6,
         filters: {
           'nameTypeFilter': `function(doc, req) {
             if (doc._id[0] === "_" || !req || !req.query) return true;
 
             if (req.query.onlyIds) return !!req.query.onlyIds[doc._id];
-            if (req.query.onlyTypesAndNames) return !!req.query.onlyTypesAndNames[doc.type + "\\u0000" + doc.name];
+            if (req.query.onlyTypesAndNames)
+              return !!req.query.onlyTypesAndNames[doc.type + "/" + doc.name];
+            return true;
+          }`}
+      },
+
+      versiondb_nameTypeFilter: {
+        _id: '_design/nameTypeFilter',
+        version: 2,
+        filters: {
+          'nameTypeFilter': `function(doc, req) {
+            if (doc._id[0] === "_" || !req || !req.query) return true;
+
+            if (req.query.onlyIds) return !!req.query.onlyIds[doc._id];
+            if (req.query.onlyTypesAndNames) return !!req.query.onlyTypesAndNames[doc._id];
             return true;
           }`}
       }
@@ -370,17 +384,17 @@ export default class ObjectDB {
 
     // prepare indexes
     var {
-      nameTypeFilter,
-      nameWithMaxMinTimestamp,
-      nameAndTimestampIndex,
-      nameIndex
+      commitdb_nameTypeFilter,
+      commitdb_nameWithMaxMinTimestamp,
+      commitdb_nameAndTimestampIndex,
+      commitdb_nameIndex
     } = this._indexes;
 
     await Promise.all([
-      this._ensureDesignDocIn(db.pouchdb, nameTypeFilter, false),
-      this._ensureDesignDocIn(db.pouchdb, nameAndTimestampIndex, true),
-      this._ensureDesignDocIn(db.pouchdb, nameWithMaxMinTimestamp, true),
-      this._ensureDesignDocIn(db.pouchdb, nameWithMaxMinTimestamp, true),
+      this._ensureDesignDocIn(db.pouchdb, commitdb_nameTypeFilter, false),
+      this._ensureDesignDocIn(db.pouchdb, commitdb_nameAndTimestampIndex, true),
+      this._ensureDesignDocIn(db.pouchdb, commitdb_nameWithMaxMinTimestamp, true),
+      this._ensureDesignDocIn(db.pouchdb, commitdb_nameWithMaxMinTimestamp, true),
     ]);
 
     return this.__commitDB = db;
@@ -702,9 +716,9 @@ export default class ObjectDB {
     }
 
     if (!dryRun) {
-      await objectDB.setDocuments(commitDeletions);
       await versionDB.set(type + "/" + name, hist);
-      Promise.all(resources.map(ea => ea.remove()));
+      await objectDB.setDocuments(commitDeletions);
+      await Promise.all(resources.map(ea => ea.remove()));
     }
 
     return {
@@ -720,7 +734,11 @@ class Synchronization {
 
   constructor(fromObjectDB, remoteCommitDB, remoteVersionDB, remoteLocation, options = {}) {
     // replicationFilter: {onlyIds: {STRING: BOOL}, onlyTypesAndNames: {[type+"\u0000"+name]: BOOL}}
-    this.options = {debug: false, live: false, method: "sync", replicationFilter: undefined, ...options};
+    this.options = {
+      debug: false, live: false, method: "sync",
+      replicationFilter: undefined,
+      ...options
+    };
     this.state = "not started";
     this.method = "";
     this.fromObjectDB = fromObjectDB;
@@ -769,16 +787,26 @@ class Synchronization {
 
     this.method = method;
 
-    await fromObjectDB._ensureDesignDocIn(
-      remoteCommitDB.pouchdb, fromObjectDB._indexes.nameTypeFilter, false);
+    await fromObjectDB._ensureDesignDocIn(remoteCommitDB.pouchdb,
+      fromObjectDB._indexes.commitdb_nameTypeFilter, false);
+    await fromObjectDB._ensureDesignDocIn(remoteVersionDB.pouchdb,
+      fromObjectDB._indexes.versiondb_nameTypeFilter, false);
 
-    let commitReplication = commitDB[method](remoteCommitDB, {
+    let opts = {
           live, retry,
           // conflicts: true,
-          filter: 'nameTypeFilter/nameTypeFilter',
-          query_params: replicationFilter
-        }),
-        versionReplication = versionDB[method](remoteVersionDB, {live, retry, conflicts: true}),
+        }, commitOpts = {...opts}, versionOpts = {...opts};
+
+    if (replicationFilter) {
+      // opts.filter = 'nameTypeFilter/nameTypeFilter';
+      commitOpts.filter = eval(`(${fromObjectDB._indexes.commitdb_nameTypeFilter.filters.nameTypeFilter})`);
+      commitOpts.query_params = replicationFilter;
+      versionOpts.filter = eval(`(${fromObjectDB._indexes.versiondb_nameTypeFilter.filters.nameTypeFilter})`);
+      versionOpts.query_params = replicationFilter;
+    }
+
+    let commitReplication = commitDB[method](remoteCommitDB, commitOpts),
+        versionReplication = versionDB[method](remoteVersionDB, versionOpts),
         snapshotReplication = {
           copyCalls: 0,
           copyCallsWaiting: 0,
@@ -797,8 +825,10 @@ class Synchronization {
     this.commitReplication = commitReplication;
     this.snapshotReplication = snapshotReplication;
 
-    commitChangeListener = remoteCommitDB.pouchdb.changes({include_docs: true, live: true, conflicts: true});
-    versionChangeListener = remoteVersionDB.pouchdb.changes({include_docs: true, live: true, conflicts: true});
+    commitChangeListener = remoteCommitDB.pouchdb.changes({
+      include_docs: true, live: true, conflicts: true});
+    versionChangeListener = remoteVersionDB.pouchdb.changes({
+      include_docs: true, live: true, conflicts: true});
 
     commitChangeListener.on("change", change => {
       let {id, changes, doc: {_conflicts: conflicts}} = change;
@@ -839,7 +869,7 @@ class Synchronization {
           await promise.waitFor(() => snapshotReplication.copyCalls <= 0);
           snapshotReplication.copyCallsWaiting--;
         }
-        
+
         snapshotReplication.copyCalls++; updateState(this);
 
         console.log(`${this} copying ${toCopy.length} snapshots...`);

@@ -64,21 +64,24 @@ describe("replication", function() {
     let root = objectDB.snapshotLocation,
         origPaths = (await root.dirList()).map(ea => ea.relativePathFrom(root)),
         replicatedPaths = (await replicationLocation.dirList()).map(ea => ea.relativePathFrom(replicationLocation));
-    expect(origPaths).equals(replicatedPaths);
+    expect(origPaths.sort()).equals(replicatedPaths.sort());
   });
 
   it("replicates filtered", async () => {
     let replication = objectDB.replicateTo(
-      pouchDBForCommits, pouchDBForHist, replicationLocation, {typesAndNames: [{type: "world", name: world2.name}]});
+      pouchDBForCommits, pouchDBForHist, replicationLocation, {
+        replicationFilter: {onlyTypesAndNames: {["world/" + world2.name]: true}}});
     await replication.waitForIt();
 
-    await expectDBsHaveSameDocs(objectDB.__commitDB, pouchDBForCommits);
-    await expectDBsHaveSameDocs(objectDB.__versionDB, pouchDBForHist);
+    let commitReplicated = lively.lang.arr.uniq((await pouchDBForCommits.getAll()).map(ci => ci.name || ci._id)).sort();
+    expect(commitReplicated).equals(["_design/nameAndTimestamp_index", "_design/nameTypeFilter", "_design/nameWithMaxMinTimestamp_index", world2.name]);
+    let histReplicated = lively.lang.arr.uniq((await pouchDBForHist.getAll()).map(ci => ci._id)).sort()
+    expect(histReplicated).equals(["_design/nameTypeFilter", `world/${world2.name}`]);
 
     let root = objectDB.snapshotLocation,
-        origPaths = (await root.dirList()).map(ea => ea.relativePathFrom(root)),
-        replicatedPaths = (await replicationLocation.dirList()).map(ea => ea.relativePathFrom(replicationLocation));
-    expect(origPaths).equals(replicatedPaths);
+        expectedPaths = (await pouchDBForCommits.getAll()).filter(ea => !ea._id.startsWith("_")).map(ea => ea.content.slice(0,2) + "/").sort(),
+        replicatedPaths = (await replicationLocation.dirList()).map(ea => ea.relativePathFrom(replicationLocation)).sort();
+    expect(expectedPaths).equals(replicatedPaths);
   });
 
   it("replicates new changes", async () => {
@@ -120,6 +123,7 @@ describe("replication", function() {
 
       await Promise.all([sync1.whenPaused(), sync2.whenPaused()]);
       let commit = await objectDB.commit("world", "foo", {snap: "shot!"}, {author: author1, message: "fooo"});
+      await promise.delay(100)
       await Promise.all([sync1.safeStop(), sync2.safeStop()]);
 
       expect(await objectDB.getCommit(commit._id))
