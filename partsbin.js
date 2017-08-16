@@ -159,16 +159,26 @@ export async function interactivelySavePart(part, options = {}) {
     return commit;
 
   } catch (err) {
-    let [_, typeAndName, expectedVersion, actualVersion] = err.message.match(/Trying to store "([^\"]+)" on top of expected version ([^\s]+) but ref HEAD is of version ([^\s\!]+)/) || [];
-    if (expectedVersion && actualVersion) {
-      let [newerCommit] = await db.log(actualVersion, 1, /*includeCommits = */true),
+    let [_, typeAndName1, expectedVersion1, actualVersion1] = err.message.match(/Trying to store "([^\"]+)" on top of expected version ([^\s]+) but ref HEAD is of version ([^\s\!]+)/) || [];
+    if (expectedVersion1 && actualVersion1) {
+      let [newerCommit] = await db.log(actualVersion1, 1, /*includeCommits = */true),
           {author: {name: authorName}, timestamp} = newerCommit,
           overwriteQ = `The current version of part ${name} is not the most recent!\n`
-      + `A newer version by ${authorName} was saved on `
-      + `${date.format(new Date(timestamp), "yyyy-mm-dd HH:MM")}. Overwrite?`,
+                     + `A newer version by ${authorName} was saved on `
+                     + `${date.format(new Date(timestamp), "yyyy-mm-dd HH:MM")}. Overwrite?`,
           overwrite = await $world.confirm(overwriteQ);
       if (!overwrite) return null;
       actualPart.changeMetaData("commit", newerCommit, /*serialize = */false, /*merge = */false);
+      return interactivelySavePart(actualPart, {...options, showPublishDialog: false});
+    }
+
+    let [__, typeAndName2, expectedVersion2] = err.message.match(/Trying to store "([^\"]+)" on top of expected version ([^\s]+) but no version entry exists/) || [];
+    if (expectedVersion2) {
+      let overwriteQ = `Part ${name} no longer exist in the object database.\n`
+                     + `Do you still want to publish it?`,
+          overwrite = await $world.confirm(overwriteQ);
+      if (!overwrite) return null;
+      actualPart.changeMetaData("commit", null, /*serialize = */false, /*merge = */false);
       return interactivelySavePart(actualPart, {...options, showPublishDialog: false});
     }
 
