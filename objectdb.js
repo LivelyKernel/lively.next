@@ -1267,7 +1267,12 @@ export var ObjectDBInterface = {
     let startCommitId;
     if (commit) {
       startCommitId = commit;
-      if (!type || !name) ({type, name} = await db.getCommit(commit));
+      if (!type || !name) {
+        let realCommit = await db.getCommit(commit);
+        if (!realCommit)
+          throw new Error(`fetchLog: specified commit ${commit} but no commit with this id is in the database!`);
+        ({type, name} = realCommit);
+      }
     }
 
     let versionGraph = await db.versionGraph(type, name);
