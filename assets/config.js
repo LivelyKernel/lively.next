@@ -16,7 +16,8 @@ var config = {
       "lively.server/plugins/socketio.js",
       "lively.server/plugins/world-loading.js",
       "lively.server/plugins/file-upload.js",
-      "lively.server/plugins/objectdb.js"
+      "lively.server/plugins/objectdb.js",
+      "lively.server/plugins/subserver.js",
     ]
   }
 }
