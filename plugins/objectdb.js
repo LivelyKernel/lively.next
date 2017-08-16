@@ -1,5 +1,6 @@
 import { ObjectDBInterface } from "lively.storage";
 import { parseQuery } from "lively.resources";
+import { readBody } from "../util.js";
 
 // import LivelyServer from "../server.js";
 
@@ -7,24 +8,6 @@ import { parseQuery } from "lively.resources";
 // var s = LivelyServer.ensure({hostname: "0.0.0.0", port: "9011"})
 // s.findPlugin("objectdb")
 // s.addPlugin(new ObjectDBPlugin())
-
-
-async function readBody(req) {
-  if (req._body) return req._body;
-  return new Promise((resolve, reject) => {
-    var data = '';
-    req.on('data', d => data += d.toString());
-    req.on('end', () => {
-      try {
-        if (req.headers["content-type"] === "application/json")
-          data = JSON.parse(data);
-      } catch (err) {}
-      resolve(req._body = data);
-    });
-    req.on('error', err => reject(err));
-  });
-}
-
 
 
 export default class ObjectDBPlugin {
@@ -75,6 +58,7 @@ export default class ObjectDBPlugin {
             case "importFromSpecs":    return await this.importFromSpecs(req, res);
             case "importFromResource": return await this.importFromResource(req, res);
             case "delete":             return await this.delete(req, res);
+            case "deleteCommit":       return await this.deleteCommit(req, res);
           }
           break;
       }

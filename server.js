@@ -287,6 +287,60 @@ export default class LivelyServer {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // susbervers
+
+  async _getSubserverModuleAndInstance(pathToModule) {
+    let mod = lively.modules.module(pathToModule);
+    let exports = await mod.load();
+    if (!exports.default) throw new Error(`Subserver module is expected to have a default export`);
+    let SubserverClass = exports.default;
+    if (typeof SubserverClass !== "function") throw new Error(`Subserver export does not seem to be a class`);    
+    let subserver = new SubserverClass(),
+        id = subserver.pluginId;
+    subserver.isSubserver = true;
+    if (typeof id !== "string") throw new Error(`Subserver has no pluginId`);
+    return {module: mod, subserver}
+  }
+
+  async addSubservers(pathToModules) {
+    let subservers = await Promise.all(pathToModules.map(async ea => {
+      try {
+        let {module, subserver} = await this._getSubserverModuleAndInstance(ea);
+        return subserver;
+      } catch(err) { console.error(`Error starting subserver ${ea}`); }
+    }));
+    subservers = subservers.filter(Boolean);
+    this.addPlugins(subservers);
+    return subservers;
+  }
+
+  async addSubserver(pathToModule) {
+    let {module, subserver} = await this._getSubserverModuleAndInstance(pathToModule),
+        {pluginId} = subserver.pluginId;
+    try {
+      await this.addPlugin(subserver);
+    } catch (err) { this.removePlugin(pluginId); throw err; }
+    return subserver;
+  }
+
+  async removeSubserver(pathToModuleOrId) {
+    let pluginId, pathToModule,
+        plugin = this.plugins.find(ea => ea.pluginId === pathToModuleOrId);
+
+    if (plugin) {
+      let {package: p, pathInPackage} = plugin.constructor[Symbol.for("lively-module-meta")];
+      pathToModule = (p && p.name ? p.name + "/" : "") + pathInPackage
+    } else pathToModule = pathToModuleOrId
+
+    if (!lively.modules.isModuleLoaded(pathToModule)) return {removed: false, subserver: null};
+    let {module, subserver} = await this._getSubserverModuleAndInstance(pathToModule);
+    let found = this.findPlugin(subserver.pluginId);
+    if (!found) return {removed: false, subserver: null};
+    await this.removePlugin(subserver.pluginId);
+    return {removed: true, subserver};
+  }
+  
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   toString() {
     var {_state, hostname, port} = this;
