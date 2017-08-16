@@ -264,11 +264,11 @@ export class List extends Morph {
         hideScrollbars: true,
         padding: Rectangle.inset(2, 0),
         fontFamily: "Monaco, monospace",
+        selectionColor: Color.gray.lighter(),
       },
       ".List.dark .ListItemMorph": {
         selectionFontColor: Color.black,
         nonSelectionFontColor: Color.gray,
-        selectionColor: Color.gray.lighter(),
       },
       ".List.default": {
         padding: Rectangle.inset(2, 0)
