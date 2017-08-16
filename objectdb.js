@@ -1337,7 +1337,7 @@ export var ObjectDBInterface = {
           db: "string",
           type: "string", name: "string",
           ref: "string|undefined",
-          snapshot: "object|string",
+          snapshot: "object|string|undefined",
           preview: "string|undefined",
           commitSpec: "object",
           expectedParentCommit: "string|undefined"
@@ -1435,6 +1435,16 @@ export var ObjectDBInterface = {
         }), db = await ObjectDB.find(dbName);
 
     return db.delete(type, name, typeof dryRun === "undefined" || dryRun);
+  },
+
+  async deleteCommit(args) {
+    // side effect: true
+    // returns: deletion spec
+    let {db: dbName, commit, dryRun} = checkArgs(args, {
+          db: "string", commit: "string",
+          dryRun: "boolean|undefined"
+        }), db = await ObjectDB.find(dbName);
+    return db.deleteCommit(commit, typeof dryRun === "undefined" || dryRun)
   },
 
 }
@@ -1573,5 +1583,10 @@ export class ObjectDBHTTPInterface {
     return this._POST("delete", args);
   }
 
+  async deleteCommit(args) {
+    // parameters: db, commit, dryRun
+    // returns: deletion spec
+    return this._POST("deleteCommit", args);
+  }
 
 }
