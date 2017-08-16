@@ -859,7 +859,8 @@ class Synchronization {
         for (let commit of commits) {
           if (commit._id.startsWith("_")) continue;
           this.changes.push(commit._id);
-          toCopy.push(snapshotPathFor(commit));
+          let contentResource = snapshotPathFor(commit);
+          contentResource && toCopy.push(contentResource);
         }
 
         snapshotReplication.nFilesToCopy += toCopy.length;
@@ -883,26 +884,33 @@ class Synchronization {
             return Promise.resolve();
           }
 
-          return fromResource.exists().then(exists => {
-            if (!exists) {
-              console.warn(`Skip copying ${fromResource.url}, does not exist`);
+          return toResource.exists().then(toExists => {
+            if (toExists) {
+              console.log(`Skip copying to ${toResource.url}, already exist`);
               return Promise.resolve();
             }
-            debug && console.log(`${this} Copying ${fromResource.url} => ${toResource.url}`);
-            return tryCopy(0).then(result => {
-              snapshotReplication.nFilesCopied++;
-              if (!snapshotReplication.stopped && snapshotReplication.nFilesCopied % 10 === 0)
-                console.log(`${this} copied ${snapshotReplication.nFilesCopied} of ${snapshotReplication.nFilesToCopy} snapshots`);
-              return result;
-            });
-          })
-
-          function tryCopy(n = 0) {
-            return fromResource.copyTo(toResource).catch(err => {
-              if (n >= 5) throw err;
-              return tryCopy(n+1);
+  
+            return fromResource.exists().then(fromExists => {
+              if (!fromExists) {
+                console.warn(`Skip copying ${fromResource.url}, does not exist`);
+                return Promise.resolve();
+              }
+              debug && console.log(`${this} Copying ${fromResource.url} => ${toResource.url}`);
+              return tryCopy(0).then(result => {
+                snapshotReplication.nFilesCopied++;
+                if (!snapshotReplication.stopped && snapshotReplication.nFilesCopied % 10 === 0)
+                  console.log(`${this} copied ${snapshotReplication.nFilesCopied} of ${snapshotReplication.nFilesToCopy} snapshots`);
+                return result;
+              });
             })
-          }
+  
+            function tryCopy(n = 0) {
+              return fromResource.copyTo(toResource).catch(err => {
+                if (n >= 5) throw err;
+                return tryCopy(n+1);
+              })
+            }
+          })
         }), 5);
         console.log(`${this} sending files done`);
       } catch (err) {
@@ -1003,6 +1011,7 @@ class Synchronization {
 
     function snapshotPathFor(commit) {
       // content is sha1 hash
+      if (!commit.content) return null;
       let first = commit.content.slice(0, 2),
           rest = commit.content.slice(2);
       return `${first}/${rest}.json`
