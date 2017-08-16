@@ -263,4 +263,13 @@ sources.join("\n\n");
     res.end(payload);
   }
 
+  async deleteCommit(req, res) {
+    let {db, commit, dryRun} = await readBody(req),
+        result = await ObjectDBInterface.deleteCommit({db, commit, dryRun});
+    if (typeof result !== "object") result = {status: String(result)};
+    let payload = JSON.stringify(result);
+    res.writeHead(200, {"content-type": "application/json"});
+    res.end(payload);
+  }
+
 }
