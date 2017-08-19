@@ -804,10 +804,8 @@ var commands = [
           return browser.state.associatedSearchPanel.getWindow().activate();
       } else browser = null;
 
-      let { CodeSearcher } = await System.import("lively.morphic/ide/code-search.js"),
-          { localInterface } = await System.import("lively-system-interface");
-
-      let systemInterface = opts.systemInterface || (browser && browser.systemInterface);
+      let { localInterface } = await System.import("lively-system-interface"),
+          systemInterface = opts.systemInterface || (browser && browser.systemInterface);
       if (!systemInterface) {
         let ed = activeMorphs.find(ea =>
           ea.isText && ea.editorPlugin && ea.editorPlugin.isJSEditorPlugin);
@@ -815,12 +813,13 @@ var commands = [
         else systemInterface = localInterface;
       }
 
-      let searcher = CodeSearcher.inWindow({
-        title: "code search", extent: pt(800, 500),
-        targetBrowser: browser,
+      let searcher = await loadObjectFromPartsbinFolder("code search");
+      Object.assign(searcher.targetMorph, {
+        browser,
         input: opts.input,
         systemInterface
-      }).activate();
+      });
+      searcher.activate();
 
       if (browser) browser.state.associatedSearchPanel = searcher;
       return searcher;
