@@ -22,7 +22,7 @@ import { textAndAttributesWithSubRanges } from "./attributes.js";
 import { serializeMorph, deserializeMorph } from "../serialization.js";
 
 export class Text extends Morph {
-  
+
   static makeLabel(value, props) {
     return new Label({
       value,
@@ -1781,10 +1781,14 @@ export class Text extends Morph {
 
     // if we are close to the bottom, make sure bottom of char is visible:
     let corner = viewBounds.bottom() - charBounds.bottom() > 20 ? "bottomLeft" : "topLeft",
-        delta = charBounds[corner]().subPt(viewBounds.translateForInclusion(charBounds)[corner]());
+        delta = charBounds[corner]()
+          .subPt(viewBounds.translateForInclusion(charBounds)[corner]())
+          .addPt(offset);
 
-    this.scroll = this.scroll.addPt(delta).addPt(offset);
-    if (this.isFocused()) this.ensureKeyInputHelperAtCursor();
+    if (delta.x != 0 || delta.y != 0) {
+      this.scroll = this.scroll.addPt(delta).addPt(offset);
+      if (this.isFocused()) this.ensureKeyInputHelperAtCursor();
+    }
   }
 
   keepPosAtSameScrollOffsetWhile(doFn, pos = this.cursorPosition) {
@@ -1958,7 +1962,8 @@ export class Text extends Morph {
         if (!evt.isShiftDown()) {
           this.selection = {start: clickTextPos, end: clickTextPos};
         } else this.selection.lead = clickTextPos;
-      } else if (normedClickCount === 2) this.execCommand("select word", null, 1, evt);
+      }
+      else if (normedClickCount === 2) this.execCommand("select word", null, 1, evt);
       else if (normedClickCount === 3) this.execCommand("select line", null, 1, evt);
     }
     if (this.isFocused()) this.ensureKeyInputHelperAtCursor();
