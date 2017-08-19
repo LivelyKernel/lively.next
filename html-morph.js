@@ -67,7 +67,23 @@ export class HTMLMorph extends Morph {
       html: {
         initialize() { this.html = this.defaultHTML; },
         get() { return this.domNode.innerHTML; },
-        set(value) { this.domNode.innerHTML = value; }
+        set(value) {
+          this.domNode.innerHTML = value;          
+          // scripts won't execute using innerHTML...
+          if (value.includes("<script")) {
+            let scripts = this.domNode.querySelectorAll("script");
+            for (let script of scripts) {
+              let parent = script.parentNode;
+              script.remove()
+              let copdiedScript = document.createElement("script")
+              for (let {name, value} of script.attributes)
+                copdiedScript.setAttribute(name, value);
+              for (let n of script.childNodes)
+                copdiedScript.appendChild(n);
+              parent.appendChild(copdiedScript)
+            }
+          }
+        }
       },
 
       domNodeTagName: {readOnly: true, get() { return "div"; }},
