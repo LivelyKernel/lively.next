@@ -651,7 +651,7 @@ export default class Browser extends Window {
   whenModuleUpdated() { return this.state.moduleUpdateInProgress || Promise.resolve(); }
 
   async selectPackageNamed(pName) {
-    let p = await this.systemInterface.getPackage(pName);
+    let p = pName ? await this.systemInterface.getPackage(pName) : null;
     this.onPackageSelected(p);
     await this.whenPackageUpdated();
     return p;
@@ -665,7 +665,8 @@ export default class Browser extends Window {
     }
 
     try {
-      let {moduleList} = this.ui;
+      let {metaInfoText, moduleList} = this.ui;
+      metaInfoText.textString = "";
       if (!p) {
         moduleList.items = [];
         this.updateSource("");
