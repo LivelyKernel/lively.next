@@ -770,8 +770,16 @@ export class ObjectEditor extends Morph {
       selectedModule
     } = this;
 
+    
+    let p = lively.modules.getPackage(selectedClass[Symbol.for("lively-module-meta")].package.name)
+    
+    
     if (selectedClass) {
       title += ` - ${selectedClass.name}`;
+      if (isObjectClass(selectedClass)) {
+        let p = selectedClass[Symbol.for("lively-module-meta")].package;
+        if (p && p.version) title += "@" + p.version;
+      }
       if (selectedMethod) title += `>>${selectedMethod.name}`;
     } else if (selectedModule) {
       title += ` - ${selectedModule.shortName()}`;
