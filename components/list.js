@@ -45,7 +45,9 @@ class ListItemMorph extends Label {
   }
 
   displayItem(item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
-    let label = item.label || item.string || "no item.string";
+    let itemMorph = item.morph,
+        label = itemMorph ? "" : (item.label || item.string || "no item.string");
+
     if (item.annotation) this.valueAndAnnotation = {value: label, annotation: item.annotation};
     else if (typeof label === "string") this.textString = label;
     else this.value = label;
@@ -79,8 +81,14 @@ class ListItemMorph extends Label {
       // this is more correct but slower:
       // this.extent = pt(Math.max(goalWidth, this.textBounds().width), itemHeight);
       // this is faster:
-      this.extent = pt(goalWidth, itemHeight);
+      let width = itemMorph ? Math.max(itemMorph.width, goalWidth) : goalWidth,
+          height = itemHeight // itemMorph ? Math.max(itemMorph.height, itemHeight) : itemHeight;
+      this.extent = pt(width, height);
     }
+
+    if (itemMorph) this.addMorph(itemMorph);
+    else if (this.submorphs.length) this.submorphs = [];
+
     this.isSelected = isSelected;
   }
 
