@@ -356,7 +356,7 @@ export class World extends Morph {
 
     let {domEvt} = evt,
         {files, items} = domEvt.dataTransfer,
-        baseURL = document.origin;
+        baseURL = document.location.origin;
 
     if (files.length) {
       let user = this.getCurrentUser(),
