@@ -2,14 +2,13 @@
 /* global System */
 import { resource } from "lively.resources";
 import { createMorphSnapshot } from "lively.morphic/serialization.js";
-import { MorphicDB } from "./morphicdb/index.js";
-import { Path, date, promise, string } from "lively.lang";
+import { Path, date, promise } from "lively.lang";
 import { morph, HorizontalLayout, VerticalLayout } from "lively.morphic";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { connect } from "lively.bindings";
 import LoadingIndicator from "./components/loading-indicator.js";
-import { pathForBrowserHistory } from "./world-loading.js";
 import { emit } from "lively.notifications/index.js";
+import { SnapshotPackageHelper, default as MorphicDB } from "./morphicdb/db.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // deprecated
@@ -146,7 +145,7 @@ export async function interactivelySavePart(part, options = {}) {
           author: part.world().getCurrentUser(),
           message: "published", tags, description},
         commit = await savePart(part, name, options, commitSpec, ref, expectedParentCommit);
-    
+
     if (switchedToWindow) {
       if (actualPart.metadata) actualPart.metadata.commit = win.metadata.commit;
       else actualPart.metadata = {commit: win.metadata.commit};
@@ -254,15 +253,18 @@ export async function loadObjectFromPartsbinFolder(partName, options = {}) {
 
 export class SnapshotEditor {
 
-  constructor(commit, snapshot) {
+  constructor(commit, snapshot, db) {
     this.commit = commit;
     this.snapshot = snapshot;
+    this._db = db;
   }
+
+  get db() { return this._db || MorphicDB.default; }
 
   async saveModifiedSnapshot(newCommit, newSnapshot) {
     let {_id, name, type} = newCommit;
     if (!_id) throw new Error(`No id of commit, cannot save!`);
-    newCommit = await MorphicDB.default.commit(type, name, newSnapshot, newCommit, undefined, _id);
+    newCommit = await this.db.commit(type, name, newSnapshot, newCommit, undefined, _id);
     this.commit = newCommit;
     this.snapshot = newSnapshot;
     return newCommit;
@@ -301,7 +303,7 @@ export class SnapshotEditor {
 
       // fn that gets text editor and returns {saved: BOOLEAN, message: STRING}
       customSaveAction: async ed => {
-        let snap = snapshot || await MorphicDB.default.fetchSnapshot(undefined, undefined, _id),
+        let snap = snapshot || await this.db.fetchSnapshot(undefined, undefined, _id),
             oldContent = JSON.stringify(snap, null, 2);
         if (oldContent !== origContent) {
           let really = await $world.confirm("Content change since loading, save anyway");
@@ -318,71 +320,60 @@ export class SnapshotEditor {
       },
 
       customLoadContentAction: async (ed, url) => {
-        let snap = snapshot || await MorphicDB.default.fetchSnapshot(undefined, undefined, _id);
+        let snap = snapshot || await this.db.fetchSnapshot(undefined, undefined, _id);
         return {content: origContent = JSON.stringify(snap, null, 2), url: `${type}/${name}.json`}
       }
     });
-
   }
 
-
-  async interactivelyEditPackageCode(onSave) {
+  async interactivelyEditPackageCode(onSaveFn) {
     let {commit, snapshot} = this,
         {_id, author, name, type} = commit,
-        snap = snapshot || await MorphicDB.default.fetchSnapshot(undefined, undefined, _id),
-        filePaths = filesInPackages(snap.packages),
-        items = filePaths.map(path => {
-          let url = path.reduce((url, ea) => string.joinPath(url, ea));
-          return {isListItem: true, string: url, value: {path, url}}
-        })
+        snap = snapshot || await this.db.fetchSnapshot(undefined, undefined, _id),
+        files = new SnapshotPackageHelper(snap).filesInPackages(),
+        items = files.map(ea => ({isListItem: true, string: ea.url, value: ea})),
+        {selected: [file]} = await $world.filterableListPrompt("select file to edit",
+          items,  {historyId: "object-serialization-debugger-hist"});
 
-    let {selected: [choice]} = await $world.filterableListPrompt("select file to edit",
-      items,  {historyId: "object-serialization-debugger-hist"});
+    if (!file) return;
 
-    if (!choice) return;
+    return this.interactivelyEditFileInSnapshotPackage(commit, snapshot, file, onSaveFn);
+  }
 
-    let origContent = Path(choice.path).get(snap.packages),
+  async interactivelyEditFileInSnapshotPackage(file, onSaveFn, textPos) {
+    let {snapshot, commit: {_id, author, name, type}} = this,
+        snap = snapshot || await this.db.fetchSnapshot(undefined, undefined, _id),
+        origContent = file.get(snap),
         { default: TextEditor } = await System.import("lively.morphic/ide/text-editor.js");
 
-    TextEditor.openURL(`<${type}/${name} - ${choice.path.slice(1).join("/")}>`, {
+    let ed = TextEditor.openURL(`<${type}/${name} - ${file.path.slice(1).join("/")}>`, {
 
-      historyId: "object-serialization-debugger-editor",
+      historyId: "interactivelyEditFileInSnapshotPackage-hist",
 
       // fn that gets text editor and returns {saved: BOOLEAN, message: STRING}
       customSaveAction: async ed => {
-        let oldContent = Path(choice.path).get(snap.packages);
+        let oldContent = file.get(snap);
         if (oldContent !== origContent) {
           let really = await $world.confirm("Content change since loading, save anyway");
           if (!really) return {saved: false, message: "canceled"};
         }
-        Path(choice.path).set(snap.packages, ed.ui.contentText.textString);
-        commit = await this.interactivelySaveModifiedSnapshot(this.commit, snap);
-        let result = {commit, snapshot: snap, saved: true};
-        typeof onSave === "function" && onSave(result)
+        file.set(snap, ed.ui.contentText.textString);
+        this.commit = await this.interactivelySaveModifiedSnapshot(this.commit, snap);
+        let result = {commit: this.commit, snapshot: snap, saved: true};
+        typeof onSaveFn === "function" && onSaveFn(result)
         return result;
       },
 
       customLoadContentAction: (ed, url) => {
-        return {content: Path(choice.path).get(snap.packages), url: choice.url}
+        return {content: file.get(snap), url: file.url}
       }
 
     });
 
-    function filesInPackages() {
-      // returns array, that form js path to "files" inside snap.packages
-      let result = [];
-      lively.lang.tree.prewalk({obj: snap.packages, parents: []},
-        node => result.push(...Object.keys(node.obj)
-                            .map(key => typeof node.obj[key] === "string"
-                                 ? node.parents.concat(key) : null)
-                            .filter(Boolean)),
-        node => Object.keys(node.obj).map(key => typeof node.obj[key] === "object"
-                                          ? {parents: [...node.parents, key], obj: node.obj[key]}
-                                          : null)
-        .filter(Boolean))
-      return result;
-    }
+    
+    if (textPos) ed.whenRendered().then(() => ed.lineNumber = textPos.row);
 
+    return ed;
   }
 
 }

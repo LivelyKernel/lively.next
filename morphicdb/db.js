@@ -3,7 +3,7 @@ import { ObjectDBHTTPInterface } from "lively.storage/objectdb.js";
 import { Database } from "lively.storage";
 import { loadMorphFromSnapshot, createMorphSnapshot } from "../serialization.js";
 import { resource } from "lively.resources";
-import { obj } from "lively.lang";
+import { obj, Path, arr, string } from "lively.lang";
 
 /*
 
@@ -23,7 +23,8 @@ await versionDB.getAll()
 
 */
 var morphicDBs = morphicDBs || (morphicDBs = new Map());
-const defaultServerURL = (typeof document !== "undefined" ? document.origin : "http://localhost:9001") + "/objectdb/"
+const defaultServerURL = (typeof document !== "undefined" ?
+                          document.location.origin : "http://localhost:9001") + "/objectdb/"
 
 export default class MorphicDB {
 
@@ -185,6 +186,124 @@ export default class MorphicDB {
     await this.initializeIfNecessary();
     let {name: db} = this;
     return this.httpDB.deleteCommit({db,commit: commitId, dryRun});
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // search
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async codeSearchInPackages(stringOrRe, type = "part", onProgress, commitFilter) {
+    let commits = await this.latestCommits(type), found = [], i = 0;
+    if (typeof commitFilter === "function")
+      commits = commits.filter(commitFilter);
+    
+    for (let commit of commits) {
+      if (typeof onProgress === "function")
+        onProgress(commit.name, i++, commits.length);
+      let matches = await this._textSearchInSnapshotOfCommit(stringOrRe, commit)
+      if (matches.length) found.push(...matches);
+    }
+
+    return found;
+  }
+
+
+  async _textSearchInSnapshotOfCommit(stringOrRe, commit, optSnapshot) {
+    let {_id} = commit,
+        snapshot = optSnapshot || await this.fetchSnapshot(undefined, undefined, _id);
+    return new SnapshotPackageHelper(snapshot).textSearch(stringOrRe, commit)
+  }
+}
+
+
+export class SnapshotPackageHelper {
+
+  constructor(snapshot) {
+    this.snapshot = snapshot;
+  }
+
+  textSearch(stringOrRe, commit) {
+    // Example:
+    // let snapshot = await MorphicDB.default.fetchSnapshot("part", "PartsBin")
+    // let matches = new SnapshotPackageHelper(snapshot).textSearch("PartsBin")
+    // let matches = new SnapshotPackageHelper(snapshot).textSearch(/.{0,10}PartsBin.{0,10}/g)
+
+    let isRe = stringOrRe && stringOrRe instanceof RegExp, found = [];
+
+    if (!stringOrRe) return found;
+
+    for (let file of this.filesInPackages()) {
+      let source = file.get(this.snapshot);
+      let lineNoFn = string.lineIndexComputer(source);
+      let lineRanges = string.lineRanges(source);
+      
+      if (!isRe) {
+        let index = 0, offset = 0;
+        while ((index = source.indexOf(stringOrRe)) >= 0) {
+          let start = index+offset, end = start+stringOrRe.length;
+          let line = lineNoFn(start);
+          let lineString = source.slice(...lineRanges[line])
+          found.push({
+            match: stringOrRe,
+            start, end,
+            length: stringOrRe.length,
+            line, lineString,
+            commit, file
+          });
+          offset += index + stringOrRe.length;
+          source = source.slice(index + stringOrRe.length)
+        }
+      } else {
+        let matches = string.reMatches(source, stringOrRe);
+        if (matches.length)
+          found.push(...matches.map(ea => Object.assign(ea, {commit, file})))
+      }
+    }
+    
+    return found;
+  }
+
+  filesInPackages() {
+    // returns array, that form js path to "files" inside snap.packages
+    // Example:
+    // let snapshot = await MorphicDB.default.fetchSnapshot("part", "PartsBin")
+    // let files = new SnapshotPackageHelper(snapshot).filesInPackages()
+
+    let result = [];
+    for (let baseURL in this.snapshot.packages)
+      collectFiles(this.snapshot.packages[baseURL], [baseURL], baseURL, null, result);
+    return result;
+
+    function collectFiles(dirObj, path, url, currentPackage, result = []) {
+
+      if (dirObj["package.json"] && typeof dirObj["package.json"] === "string") {
+        try {
+          let packageConfig = JSON.parse(dirObj["package.json"]);
+          currentPackage = {url, path, name: packageConfig.name || arr.last(path)}
+        } catch (err) {}
+      }
+
+      let subDirs = [];
+
+      for (let fileName in dirObj) {
+        if (typeof dirObj[fileName] === "string") {
+          result.push({
+            path: path.concat(fileName),
+            url: string.joinPath(url, fileName),
+            package: currentPackage,
+            get(snapshot) { return Path(this.path).get(snapshot.packages); },
+            set(snapshot, content) { Path(this.path).set(snapshot.packages, content); }
+          })
+        } else subDirs.push(fileName);
+      }
+
+      subDirs.forEach(dirName =>
+        collectFiles(dirObj[dirName], path.concat(dirName), string.joinPath(url, dirName),
+                     currentPackage, result));
+
+      return result;
+    }
+
   }
 
 }
