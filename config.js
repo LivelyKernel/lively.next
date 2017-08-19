@@ -71,7 +71,8 @@ var config = {
       aliases: {
         "sh": "shell",
         "markdown": "md",
-        "javascript": "js"
+        "javascript": "js",
+        "htmlmixed": "html"
       }
     }
   },
