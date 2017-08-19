@@ -97,12 +97,14 @@ class ListItemMorph extends Label {
         method = clickCount === 2 ? "onItemMorphDoubleClicked" : "onItemMorphClicked";
     this.owner.owner[method](evt, this);
   }
-  onDragStart(evt){
-    this.owner.owner.onItemMorphDragged(evt,this)    
+
+  onDragStart(evt) {
+    let list = this.owner.owner;
+    if (!list.multiSelect || !list.multiSelectViaDrag)
+      list.onItemMorphDragged(evt, this);
   }
-  onDrag(evt){
-    
-  }
+
+  onDrag(evt) {}
 }
 
 var listCommands = [
@@ -293,7 +295,7 @@ export class List extends Morph {
 
       fill:            {defaultValue: Color.white},
       clipMode:        {defaultValue: "auto"},
-      
+
       selectionFontColor:    {isStyleProp: true, defaultValue: Color.white},
       selectionColor:        {isStyleProp: true, defaultValue: Color.blue},
       nonSelectionFontColor: {isStyleProp: true, defaultValue: Color.rgbHex("333")},
@@ -365,6 +367,16 @@ export class List extends Morph {
 
       multiSelect: {
         defaultValue: false
+      },
+
+      multiSelectWithSimpleClick: {
+        description: "Does a simple click toggle selections without deselecting?",
+        defaultValue: false,
+      },
+
+      multiSelectViaDrag: {
+        description: "Does dragging extend selection?",
+        defaultValue: true,
       },
 
       values: {
@@ -649,7 +661,7 @@ export class List extends Morph {
         indexes = [];
 
     if (this.multiSelect) {
-      if (evt.isCommandKey()) {
+      if (this.multiSelectWithSimpleClick || evt.isCommandKey()) {
 
         // deselect item
         if (isClickOnSelected) {
