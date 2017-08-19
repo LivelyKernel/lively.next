@@ -414,18 +414,27 @@ export class List extends Morph {
         get() { return this.listItemContainer.submorphs; }
       },
 
+      manualItemHeight: {type: "Boolean"},
+
       itemHeight: {
-        after: ["fontFamily", "fontSize", "itemPadding"], readOnly: true,
+        after: ["fontFamily", "fontSize", "itemPadding"],
+        defaultValue: 10,
+        set(val) {
+          this.setProperty("itemHeight", val);
+          this.manualItemHeight = typeof val === "number";
+        },
         get() {
-          if (this._itemHeight) return this._itemHeight;
+          let height = this.getProperty("itemHeight");
+          if (height) return height;
           var h = this.env.fontMetric.defaultLineHeight(
-            {fontFamily: this.fontFamily, fontSize: this.fontSize});
-          var padding = this.itemPadding;
+                {fontFamily: this.fontFamily, fontSize: this.fontSize}),
+              padding = this.itemPadding;
           if (padding) h += padding.top() + padding.bottom();
-          return this._itemHeight = h;
+          this.setProperty("itemHeight", h);
+          return h;
         }
       },
-      
+
       theme: {
         after: ['styleClasses'],
         defaultValue: 'default',
@@ -462,7 +471,8 @@ export class List extends Morph {
   }
 
   invalidateCache() {
-    delete this._itemHeight;
+    if (!this.manualItemHeight)
+      this.setProperty("itemHeight", null);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -659,10 +669,8 @@ export class List extends Morph {
     this.selectedIndexes = indexes;
   }
 
-  onItemMorphDragged(evt, itemMorph){
-    
-  }
-  
+  onItemMorphDragged(evt, itemMorph) {}
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // event handling
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -767,7 +775,7 @@ export class FilterableList extends Morph {
 
       fontFamily: {
         isStyleProp: true,
-        derived: true, after: ["submorphs"], 
+        derived: true, after: ["submorphs"],
         defaultValue: "Helvetica Neue, Arial, sans-serif",
         get() { return this.listMorph.fontFamily; },
         set(val) {
@@ -1106,7 +1114,7 @@ export class FilterableList extends Morph {
         name: "choose action",
         exec: async (morph) => {
           if (!morph.actions) return true;
-        
+
           let similarStyle = {...morph.style, extent: morph.extent};
           let chooser = new FilterableList(similarStyle);
           chooser.openInWorld(morph.globalPosition);
@@ -1123,7 +1131,7 @@ export class FilterableList extends Morph {
             }
           });
           connect(chooser, 'canceled', morph, 'selectedAction', {
-            converter: function(result) {                
+            converter: function(result) {
               this.targetObj.focus();
               this.disconnect();
               this.sourceObj.remove();
