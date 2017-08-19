@@ -442,6 +442,7 @@ export default class Renderer {
       if (clipMode)
         style.overflow = clipMode;
     }
+    style.overflow = "hidden";
 
     return h("div", textAttrs, children);
   }
