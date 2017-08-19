@@ -5,20 +5,23 @@ import { FilterableList, List } from "lively.morphic/components/list.js";
 import { LabeledCheckBox } from "lively.morphic/components/widgets.js";
 import LoadingIndicator from "lively.morphic/components/loading-indicator.js";
 import Browser from "./js/browser/index.js";
-import { connect } from 'lively.bindings';
+import { connect, noUpdate, disconnect } from 'lively.bindings';
 import { localInterface } from "lively-system-interface/index.js";
+import { MorphicDB } from "../morphicdb/index.js";
+import { SnapshotEditor } from "../partsbin.js";
 
 
 export async function doSearch(
   livelySystem, searchTerm,
-  excludedModules = [/systemjs-plugin-babel/],
+  excludedModules = [/systemjs-plugin-babel|.*\.min\.js|.*browserified[^\/]+js/],
   excludedPackages = [],
-  includeUnloaded = true
+  includeUnloaded = true,
+  caseSensitive = false
 ) {
   if (searchTerm.length <= 2) { return []; }
 
   var searchResult = await livelySystem.searchInAllPackages(
-                        searchTerm, {excludedModules, excludedPackages, includeUnloaded});
+    searchTerm, {caseSensitive, excludedModules, excludedPackages, includeUnloaded});
 
   var [errors, found] = arr.partition(searchResult, ({isError}) => isError)
 
@@ -63,46 +66,37 @@ export class CodeSearcher extends FilterableList {
       extent:     {defaultValue: pt(800,500)},
       fontFamily: {defaultValue: "Monaco, monospace"},
       fontSize:   {defaultValue: 12},
-      inputPadding: {defaultValue: Rectangle.inset(4,3)},
+      inputPadding: {defaultValue: Rectangle.inset(5)},
       itemPadding: {defaultValue: Rectangle.inset(4,2)},
       borderWidth: {defaultValue: 0},
-
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            "[name=searchInUnloadedModulesCheckbox] .Label": {
-              fontColor: Color.gray.darker()
-            },
-            ".List .ListItemMorph": {
-              fontFamily: "Monaco, monospace"
-            }
-          });
-        }
-      },
 
       historyId:  {defaultValue: "lively.morphic-code searcher"},
 
       submorphs: {
         initialize() {
           this.submorphs = [
-            Text.makeInputLine({
-              name: "input",
-              fixedHeight: false,
+            {
+              type: "input", name: "input",
               placeholder: 'Search Source Files',
-              padding: 5,
               fontColor: Color.gray.darker(),
-              defaultTextStyle: {fontSize: 20},
+              defaultTextStyle: {fontSize: 14},
               autofit: true,
               fill: Color.white.withA(.5)
-            }),
-            new List({
-              name: "list",
+            },
+            {
+              name: "list", type: "list",
               items: [],
               clipMode: "auto",
               borderTop: {width: 1, color: Color.gray}
-            })
+            }
           ];
         }
+      },
+
+      input: {
+        after: ["submorphs"], derived: true,
+        get() { return this.getSubmorphNamed("input").input; },
+        set(input) { this.getSubmorphNamed("input").input = input; }
       },
 
       browser: {
@@ -132,17 +126,6 @@ export class CodeSearcher extends FilterableList {
 
       },
 
-      searchInUnloadedModulesCheckbox: {
-        after: ["submorphs"], derived: true,
-        get() {
-          return this.getSubmorphNamed("searchInUnloadedModulesCheckbox") ||
-            this.addMorph(new LabeledCheckBox({
-                  checked: false, fill: Color.transparent,
-                  name: "searchInUnloadedModulesCheckbox",
-                  label: "search in unloaded modules"}))
-        }
-      },
-
       currentSearchTerm: {defaultValue: ""},
       currentFilters: {defaultValue: ""},
 
@@ -152,17 +135,26 @@ export class CodeSearcher extends FilterableList {
   constructor(props = {}) {
     if (props.targetBrowser) props.browser = props.targetBrowser;
     super(props);
-    connect(this, "accepted", this, "openBrowserForSelection");
-    connect(this.searchInUnloadedModulesCheckbox, "checked", this, "searchAgain");
+    this.reset();
   }
 
-  relayout() {
-    var input = this.getSubmorphNamed("input"),
-        cb = this.getSubmorphNamed("searchInUnloadedModulesCheckbox");
-    input.fontSize = 20;
-    input.extent = pt(this.width, 27);
-    super.relayout();
-    cb && (cb.rightCenter = input.rightCenter);
+  reset() {
+    this.currentSearchTerm = "";
+    connect(this, "accepted", this, "openSelection");
+    connect(this.get("search chooser"), 'selection', this, 'searchAgain');    
+    this.get("list").items = [];
+    this.get("input").input = "";
+    this.get("search chooser").items = [
+      "in loaded modules",
+      "in loaded and unloaded modules",
+      "in parts",
+      "in worlds",
+    ];
+    noUpdate(() => {
+      this.get("search chooser").selection = "in loaded modules";
+    });
+    this.getWindow().title = "code search";
+    // this.get("search chooser").listAlign = "bottom"
   }
 
   ensureIndicator(label) {
@@ -209,17 +201,40 @@ export class CodeSearcher extends FilterableList {
 
     var searchTerm = filterTokens.shift(),
         newSearch = searchTerm != this.currentSearchTerm;
+
     if (newSearch) {
       this.currentSearchTerm = searchTerm;
-      var includeUnloaded = this.getSubmorphNamed("searchInUnloadedModulesCheckbox").checked;
+
+      let searchType = this.get("search chooser").selection,
+          searchInModules = "in loaded modules" === searchType,
+          searchInAllModules = "in loaded and unloaded modules" === searchType,
+          searchInParts = "in parts" === searchType,
+          searchInWorlds = "in worlds" === searchType;
+
       this.ensureIndicator("searching...");
 
-      this.items = await doSearch(
-        this.systemInterface,
-        searchTerm,
-        undefined, /*excluded modules*/
-        config.ide.js.ignoredPackages,
-        includeUnloaded);
+      if (searchInModules || searchInAllModules) {
+        this.items = await doSearch(
+          this.systemInterface,
+          searchTerm,
+          undefined, /*excluded modules*/
+          config.ide.js.ignoredPackages,
+          !!searchInAllModules/*includeUnloaded*/);
+
+      } else if (searchInParts || searchInWorlds) {        
+        let pbar = await $world.addProgressBar({label: "morphicdb search"}),
+            type = searchInWorlds ? "world" : "part",
+            found = await MorphicDB.default.codeSearchInPackages(
+              searchTerm, type, (name, i, n) => Object.assign(pbar, {label: name, progress: i/n}));
+        pbar.remove();
+        this.items = found.map(ea => {
+          let inFile = ea.file.path.slice(1).reduce((url, ea) => string.joinPath(url, ea));
+          if (ea.lineString >= 300) ea.lineString = string.truncate(ea.lineString, 300);
+          ea.isMorphicDBFind = true;
+          return {isListItem: true, string: `[${ea.commit.type}/${ea.commit.name}] ${inFile}:${ea.line} ${ea.lineString}`, value: ea}
+        });
+      }
+
       this.removeIndicator();
       this.progressIndicator = null;
     }
@@ -231,6 +246,14 @@ export class CodeSearcher extends FilterableList {
         filterTokens.every(token => item.string.toLowerCase().includes(token)))
       this.get('list').items = filteredItems;
     }
+  }
+
+  async openSelection() {
+    let sel = this.selection;
+    if (!sel) return;
+
+    if (sel.isMorphicDBFind) return new SnapshotEditor(sel.commit).interactivelyEditFileInSnapshotPackage(sel.file, () => {}, {row: sel.line, column: 0});
+    return this.openBrowserForSelection();
   }
 
   async openBrowserForSelection() {
@@ -253,17 +276,32 @@ export class CodeSearcher extends FilterableList {
   }
 
   get commands() {
+    let chooser = this.get("search chooser");
     return super.commands.concat([
       {
         name: "toggle search in unloaded modules",
-        exec: () => { this.get("searchInUnloadedModulesCheckbox").trigger(); return true; }
+        exec: () => {
+          chooser.selection = chooser.selection === "in loaded modules" ?
+            "in loaded and unloaded modules" : "in loaded modules";
+          return true;
+        }
+      },
+      {
+        name: "toggle search in parts",
+        exec: () => { chooser.selection = "in parts"; return true; }
+      },
+      {
+        name: "toggle search in worlds",
+        exec: () => { chooser.selection = "in worlds"; return true; }
       }
     ]);
   }
 
   get keybindings() {
     return [
-      {keys: "Alt-L", command: "toggle search in unloaded modules"}
+      {keys: "F1", command: "toggle search in unloaded modules"},
+      {keys: "F2", command: "toggle search in parts"},
+      {keys: "F3", command: "toggle search in worlds"},
     ].concat(super.keybindings);
   }
 
