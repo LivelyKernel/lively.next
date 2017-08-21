@@ -1159,6 +1159,14 @@ export class Morph {
     return this.relativeBounds(this.owner);
   }
 
+  relativeSubmorphBounds() {
+    let bounds = this.innerBounds();
+    return this.submorphs.map(ea => {
+      let {width, height, x,y} = ea.bounds();
+      return rect(x/bounds.width, y/bounds.height, width/bounds.width, height/bounds.height);
+    });
+  }
+
   globalBounds() {
     return this.relativeBounds(this.world());
   }
@@ -2451,7 +2459,9 @@ return ;
   onAfterRender(node) {}
 
   whenRendered(maxChecks = 50) {
-    return this.env.whenRendered(this, maxChecks);
+    return this.env.whenRendered(this, maxChecks)
+      .then(() => true)
+      .catch(() => false);
   }
 
   render(renderer) {
