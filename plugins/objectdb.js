@@ -45,6 +45,8 @@ export default class ObjectDBPlugin {
             case "fetchLog":           return await this.fetchLog(req, res);
             case "fetchSnapshot":      return await this.fetchSnapshot(req, res);
             case "exportToSpecs":      return await this.exportToSpecs(req, res);
+            case "fetchConflicts":     return await this.fetchConflicts(req, res);
+            case "fetchDiff":          return await this.fetchDiff(req, res);
           }
           break;
 
@@ -59,6 +61,8 @@ export default class ObjectDBPlugin {
             case "importFromResource": return await this.importFromResource(req, res);
             case "delete":             return await this.delete(req, res);
             case "deleteCommit":       return await this.deleteCommit(req, res);
+            case "resolveConflict":    return await this.resolveConflict(req, res);
+            case "synchronize":        return await this.synchronize(req, res);
           }
           break;
       }
@@ -157,6 +161,42 @@ sources.join("\n\n");
           knownCommitIds,
           includeDeleted
         });
+    if (typeof result !== "object") result = {status: String(result)};
+    let payload = JSON.stringify(result);
+    res.writeHead(200, {"content-type": "application/json"});
+    res.end(payload);
+  }
+
+  async fetchConflicts(req, res) {
+    let {db, only, includeDocs} = parseQuery(req.url),
+        result = await ObjectDBInterface.fetchConflicts({db, only, includeDocs});
+    if (typeof result !== "object") result = {status: String(result)};
+    let payload = JSON.stringify(result);
+    res.writeHead(200, {"content-type": "application/json"});
+    res.end(payload);
+  }
+
+  async fetchDiff(req, res) {
+    let {db, otherDB} = parseQuery(req.url),
+        result = await ObjectDBInterface.fetchDiff({db, otherDB});
+    if (typeof result !== "object") result = {status: String(result)};
+    let payload = JSON.stringify(result);
+    res.writeHead(200, {"content-type": "application/json"});
+    res.end(payload);
+  }
+
+  async resolveConflict(req, res) {
+    let {db, id, kind, delete: del, resolved} = await readBody(req),
+        result = await ObjectDBInterface.resolveConflict({db, id, kind, delete: del, resolved});
+    if (typeof result !== "object") result = {status: String(result)};
+    let payload = JSON.stringify(result);
+    res.writeHead(200, {"content-type": "application/json"});
+    res.end(payload);
+  }
+
+  async synchronize(req, res) {
+    let {db, otherDB, otherDBSnapshotLocation, onlyTypesAndNames, method} = await readBody(req),
+        result = await ObjectDBInterface.synchronize({db, db, otherDB, otherDBSnapshotLocation, onlyTypesAndNames, method});
     if (typeof result !== "object") result = {status: String(result)};
     let payload = JSON.stringify(result);
     res.writeHead(200, {"content-type": "application/json"});
