@@ -100,11 +100,26 @@ class ListItemMorph extends Label {
 
   onDragStart(evt) {
     let list = this.owner.owner;
+    this._dragState = {sourceIsSelected: this.isSelected, source: this, itemsTouched: []}
     if (!list.multiSelect || !list.multiSelectViaDrag)
       list.onItemMorphDragged(evt, this);
   }
 
-  onDrag(evt) {}
+  onDrag(evt) {
+    let list = this.owner.owner;
+    if (list.multiSelect && list.multiSelectViaDrag) {
+      let below = evt.hand.morphBeneath(evt.position),
+          {selectedIndexes, itemMorphs} = list;
+      if (below === this || !itemMorphs.includes(below)) return;
+      if (this._dragState.sourceIsSelected && !below.isSelected) {
+        arr.pushIfNotIncluded(selectedIndexes, below.itemIndex);
+        list.selectedIndexes = selectedIndexes;
+      } else if (!this._dragState.sourceIsSelected && below.isSelected) {
+        arr.remove(selectedIndexes, below.itemIndex);
+        list.selectedIndexes = selectedIndexes;
+      }
+    }
+  }
 }
 
 var listCommands = [
@@ -424,7 +439,9 @@ export class List extends Morph {
         after: ["submorphs"], readOnly: true,
         get() {
           return this.getSubmorphNamed("listItemContainer") || this.addMorph({
-            name: "listItemContainer", fill: null, clipMode: "visible", halosEnabled: false
+            name: "listItemContainer", fill: null,
+            clipMode: "visible", halosEnabled: false,
+            acceptsDrops: false, draggable: false
           });
         }
       },
@@ -661,17 +678,7 @@ export class List extends Morph {
         indexes = [];
 
     if (this.multiSelect) {
-      if (this.multiSelectWithSimpleClick || evt.isCommandKey()) {
-
-        // deselect item
-        if (isClickOnSelected) {
-          indexes = selectedIndexes.filter(ea => ea != itemI);
-        } else {
-          // just add clicked item to selection list
-          indexes = [itemI].concat(selectedIndexes.filter(ea => ea != itemI))
-        }
-
-      } else if (evt.isShiftDown()) {
+      if (evt.isShiftDown()) {
 
         if (isClickOnSelected) {
           indexes = selectedIndexes.filter(ea => ea != itemI);
@@ -682,6 +689,16 @@ export class List extends Morph {
           indexes = added.concat(selectedIndexes.filter(ea => !added.includes(ea)))
         }
 
+      } else if (this.multiSelectWithSimpleClick || evt.isCommandKey()) {
+
+        // deselect item
+        if (isClickOnSelected) {
+          indexes = selectedIndexes.filter(ea => ea != itemI);
+        } else {
+          // just add clicked item to selection list
+          indexes = [itemI].concat(selectedIndexes.filter(ea => ea != itemI))
+        }
+
       } else indexes = [itemI];
 
     } else indexes = [itemI];
@@ -690,6 +707,12 @@ export class List extends Morph {
   }
 
   onItemMorphDragged(evt, itemMorph) {}
+
+  onDragStart(evt) {
+    if (!this.multiSelect || !this.multiSelectViaDrag) return
+  }
+
+  onDrag(evt) {}
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // event handling
