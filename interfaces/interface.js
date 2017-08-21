@@ -125,7 +125,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
           .then(function(result) {
             if (!result || typeof result === "string") return result;
             return JSON.stringify(result.isError ?
-              {isError: true, value: result.value.stack || String(result.value)} :
+              {isError: true, value: (result.value + "\\n" + result.value.stack) || String(result.value)} :
               result)
           });`,
         {
