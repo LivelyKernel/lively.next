@@ -189,7 +189,8 @@ export class World extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get focusedMorph() {
-    var focused = this.env.eventDispatcher.eventState.focusedMorph;
+    var dispatcher = this.env.eventDispatcher,
+        focused = dispatcher && dispatcher.eventState.focusedMorph;
     return focused && focused.world() === this ? focused : this;
   }
 
