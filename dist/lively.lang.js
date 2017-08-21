@@ -4432,6 +4432,28 @@ function findLineWithIndexInLineRanges(lineRanges, idx) {
   return -1;
 }
 
+function regexIndexOf(string, regex) {
+  var startpos = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+
+  var indexOf = this.substring(startpos || 0).search(regex);
+  return indexOf >= 0 ? indexOf + (startpos || 0) : indexOf;
+}
+
+function regexLastIndexOf(string, regex) {
+  var startpos = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : string.length;
+
+  regex = regex.global ? regex : new RegExp(regex.source, "g" + (regex.ignoreCase ? "i" : "") + (regex.multiLine ? "m" : ""));
+  var stringToWorkWith = this.substring(0, startpos + 1),
+      lastIndexOf = -1,
+      nextStop = 0,
+      result;
+  while ((result = regex.exec(stringToWorkWith)) != null) {
+    lastIndexOf = result.index;
+    regex.lastIndex = ++nextStop;
+  }
+  return lastIndexOf;
+}
+
 // -=-=-=-=-
 // diffing
 // -=-=-=-=-
@@ -4658,6 +4680,8 @@ var string = Object.freeze({
 	lineIndexComputer: lineIndexComputer,
 	lineNumberToIndexesComputer: lineNumberToIndexesComputer,
 	findLineWithIndexInLineRanges: findLineWithIndexInLineRanges,
+	regexIndexOf: regexIndexOf,
+	regexLastIndexOf: regexLastIndexOf,
 	lineRanges: lineRanges,
 	diff: diff,
 	empty: empty,

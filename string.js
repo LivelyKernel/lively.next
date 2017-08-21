@@ -885,6 +885,25 @@ function findLineWithIndexInLineRanges(lineRanges, idx) {
   return -1;
 }
 
+function regexIndexOf(string, regex, startpos = 0) {
+  var indexOf = this.substring(startpos || 0).search(regex);
+  return (indexOf >= 0) ? (indexOf + (startpos || 0)) : indexOf;
+}
+
+function regexLastIndexOf(string, regex, startpos = string.length) {
+  regex = (regex.global) ? regex :
+            new RegExp(regex.source, "g"
+                     + (regex.ignoreCase ? "i" : "")
+                     + (regex.multiLine ? "m" : ""));
+  var stringToWorkWith = this.substring(0, startpos + 1),
+      lastIndexOf = -1, nextStop = 0, result;
+  while((result = regex.exec(stringToWorkWith)) != null) {
+    lastIndexOf = result.index;
+    regex.lastIndex = ++nextStop;
+  }
+  return lastIndexOf;
+}
+
 // -=-=-=-=-
 // diffing
 // -=-=-=-=-
@@ -1122,6 +1141,8 @@ export {
   lineIndexComputer,
   lineNumberToIndexesComputer,
   findLineWithIndexInLineRanges,
+  regexIndexOf,
+  regexLastIndexOf,
   lineRanges,
   diff,
   empty,
