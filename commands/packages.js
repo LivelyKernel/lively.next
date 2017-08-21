@@ -1,3 +1,4 @@
+/*global URL*/
 import { parseJsonLikeObj } from "../helpers.js";
 import { arr } from "lively.lang";
 import { resource } from "lively.resources";
@@ -136,16 +137,24 @@ export async function interactivelyUnloadPackage(system, vmEditor, packageURL, w
 
 export async function interactivelyRemovePackage(system, requester, packageURL) {
   var world = requester.world(),
-      p = await system.getPackage(packageURL),
-      really = await world.confirm(`Really remove package ${p.name}??`);
+      p = await system.getPackage(packageURL);
+
+  if (!p) {
+    $world.inform(`No package "${packageURL}" found!`);
+    return;
+  }
+
+  let really = await world.confirm(`Really remove package ${p.name}??`);
 
   if (!really) throw "Canceled";
 
   system.removePackage(packageURL);
 
-  var really2 = await world.confirm(`Also remove directory ${p.name} including ${p.modules.length} modules?`);
+  var really2 = await world.confirm(
+    `Also remove directory ${p.name} including ${p.modules.length} modules?`);
   if (really2) {
-    var really3 = await world.confirm(`REALLY *remove* directory ${p.name}? No undo possible...`);
+    var really3 = await world.confirm(
+      `REALLY *remove* directory ${p.name}? No undo possible...`);
     if (really3) await system.resourceRemove(p.address);
   }
 }
