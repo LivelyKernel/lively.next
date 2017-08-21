@@ -386,12 +386,12 @@ export default class Database {
   async getConflicts(opts) {
     let {rows} = await this.pouchdb.query(
       {map: `function(doc) { if (doc._conflicts) emit(doc._id); }`},
-      {reduce: false, include_docs: false, conflicts: true, ...opts})
-    return rows.map(ea => ea.doc);
+      {reduce: false, include_docs: true, conflicts: true, ...opts})
+    return rows.map(ea => ({id: ea.id, doc: ea.doc}));
   }
 
   async resolveConflicts(id, resolveFn) {
-    let doc = await this.pouchdb.get("doc", {conflicts: true}),
+    let doc = await this.pouchdb.get(id, {conflicts: true}),
         query = doc._conflicts.map(rev => ({id, rev})),
         conflicted = await this.getDocuments(query),
         resolved = doc;
@@ -404,6 +404,30 @@ export default class Database {
     return resolved;
   }
 
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // diff
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  
+  async diffWith(otherDB) {  
+    let docs2 = await otherDB.docList(),
+        docs1 = await this.docList(),
+        map2 = docs2.reduce((all, ea) => Object.assign(all, {[ea.id]: ea.rev}), {}),
+        map1 = docs1.reduce((all, ea) => Object.assign(all, {[ea.id]: ea.rev}), {}),
+        inLeft = [], inRight = [], changed = [];    
+    for (let id in map2) {
+      let rev = map2[id];
+      let rev1 = map1[id];
+      if (!rev1) inRight.push({id, rev});
+      else if (rev != rev1) changed.push({right: {id, rev}, left: {id, rev: rev1}});
+    }    
+    for (let id in map1) {
+      let rev = map1[id];
+      let rev2 = map2[id];
+      if (!rev2) inLeft.push({id, rev});
+    }
+    return {inLeft, inRight, changed}
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // backup
