@@ -643,6 +643,77 @@ export default class ObjectDB {
       {method: "sync", ...options}).start();
   }
 
+  async getConflicts(includeDocs, only) {
+    let commitDB = this.__commitDB || await this._commitDB(),
+        versionDB = this.__versionDB || await this._versionDB();
+    return {
+        versionConflicts: await getConflicts(versionDB, "versions"),
+        commitConflicts: await await getConflicts(commitDB, "commits"),
+    }
+
+    async function getConflicts(db, kind) {
+      let conflicts = await db.getConflicts({include_docs: true});
+      return (await Promise.all(conflicts.map(async ea => {
+        let {id, doc} = ea, {_rev: rev, _conflicts: conflicts} = doc;
+        if (only && only[kind] && !only[kind][id]) return null;
+        if (includeDocs) {
+          let query = conflicts.map(rev => ({id, rev}));
+          conflicts = await db.getDocuments(query);
+        }
+        if (!includeDocs) doc = null;
+        else obj.dissoc(doc, ["_conflicts"]);
+        return {id, rev, conflicts, kind, doc};
+      }))).filter(Boolean);
+    }
+  }
+
+  async resolveConflict(arg) {
+    // {resolved, delete: del, kind, id}
+    let {resolved, delete: del, kind, id} = arg, db;
+    if (kind === "versions") {
+      db = this.__versionDB || await this._versionDB();
+    } else if (kind === "commits") {
+      db = this.__commitDB || await this._commitDB();
+    } else throw new Error(`Unknown conflict kind: ${kind}`);
+    await db.set(id, resolved);
+    await Promise.all(del.map(rev => db.pouchdb.remove(id, rev)))
+  }
+
+  async getDiff(remoteCommitDBOrName, remoteVersionDB) {
+    let remoteCommitDB = remoteCommitDBOrName;
+    if (typeof remoteCommitDBOrName === "string") {
+      remoteCommitDB = Database.ensureDB(`${remoteCommitDBOrName}-commits`);
+      remoteVersionDB = Database.ensureDB(`${remoteCommitDBOrName}-version-graph`);
+    }
+
+    let localCommitDB = this.__commitDB || await this._commitDB(),
+        localVersionDB = this.__versionDB || await this._versionDB(),
+        commitDiff = await localCommitDB.diffWith(remoteCommitDB),
+        versionDiff = await localVersionDB.diffWith(remoteVersionDB),
+        local = await Promise.all(versionDiff.inLeft.map(async ea => ({id: ea.id, doc: await localVersionDB.get(ea.id)}))),
+        remote = await Promise.all(versionDiff.inRight.map(async ea => ({id: ea.id, doc: await remoteVersionDB.get(ea.id)}))),
+        changed = await Promise.all(versionDiff.changed.map(async ea => ({...ea.left, docA: await localVersionDB.get(ea.left.id), docB: await remoteVersionDB.get(ea.right.id)}))),
+        localCommits = [], remoteCommits = [], changedCommits = [];
+
+    for (let ea of commitDiff.inLeft) localCommits.push(await localCommitDB.get(ea.id));
+    for (let ea of commitDiff.inRight) remoteCommits.push(await remoteCommitDB.get(ea.id));
+    for (let ea of commitDiff.changed) {
+      changedCommits.push(await localCommitDB.get(ea.left.id))
+      changedCommits.push(await remoteCommitDB.get(ea.right.id))
+    }
+
+    let localCommitTypeAndNames = localCommits.map(ea => obj.select(ea, ["_id", "name", "type"])),
+        remoteCommitTypeAndNames = remoteCommits.map(ea => obj.select(ea, ["_id", "name", "type"])),
+        changedCommitTypeAndNames = changedCommits.map(ea => obj.select(ea, ["_id", "name", "type"]));
+
+    return {
+      changed, remote, local,
+      changedCommitTypeAndNames,
+      remoteCommitTypeAndNames,
+      localCommitTypeAndNames
+    }
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // deletion
 
@@ -735,7 +806,7 @@ class Synchronization {
   constructor(fromObjectDB, remoteCommitDB, remoteVersionDB, remoteLocation, options = {}) {
     // replicationFilter: {onlyIds: {STRING: BOOL}, onlyTypesAndNames: {[type+"\u0000"+name]: BOOL}}
     this.options = {
-      debug: false, live: false, method: "sync",
+      debug: true, live: false, method: "sync",
       replicationFilter: undefined,
       ...options
     };
@@ -755,6 +826,23 @@ class Synchronization {
   get isComplete() { return this.state === "complete"; }
   get isRunning() { return this.state === "running"; }
   get isPaused() { return this.state === "paused"; }
+
+  get changesByTypeAndName() {
+    let changesByTypeAndName = {push: {}, pull: {}};
+    this.changes.forEach(ea => {
+      let {direction: dir, id, kind} = ea;
+      if (id[0] === "_") return;
+      let byTypeAndName;
+      if (kind === "versions") {
+        byTypeAndName = changesByTypeAndName[dir][id] || (changesByTypeAndName[dir][id] = []);
+      } else if (kind === "commits") {
+        let typeAndName = `${ea.type}/${ea.name}`;
+        byTypeAndName = changesByTypeAndName[dir][typeAndName] || (changesByTypeAndName[dir][typeAndName] = []);
+      }
+      byTypeAndName.push(ea)
+    });
+    return changesByTypeAndName;
+  }
 
   whenPaused() {
     return Promise.resolve()
@@ -858,7 +946,7 @@ class Synchronization {
         let toCopy = [];
         for (let commit of commits) {
           if (commit._id.startsWith("_")) continue;
-          this.changes.push(commit._id);
+          this.changes.push({direction, kind: "commits", id: commit._id, type: commit.type, name: commit.name});
           let contentResource = snapshotPathFor(commit);
           contentResource && toCopy.push(contentResource);
         }
@@ -889,7 +977,7 @@ class Synchronization {
               console.log(`Skip copying to ${toResource.url}, already exist`);
               return Promise.resolve();
             }
-  
+
             return fromResource.exists().then(fromExists => {
               if (!fromExists) {
                 console.warn(`Skip copying ${fromResource.url}, does not exist`);
@@ -903,7 +991,7 @@ class Synchronization {
                 return result;
               });
             })
-  
+
             function tryCopy(n = 0) {
               return fromResource.copyTo(toResource).catch(err => {
                 if (n >= 5) throw err;
@@ -948,8 +1036,13 @@ class Synchronization {
     versionReplication.on(`change`, change => {
       if (method === "replicateTo") change = {direction: "push", change}
       else if (method === "replicateFrom") change = {direction: "pull", change};
-      let {direction, change: {ok, docs: hist, errors}} = change;
-      console.log(`${this} ${direction === "push" ? "send" : "received"} ${hist.length} histories`);
+      let {direction, change: {ok, docs, errors}} = change;
+
+      debug && console.log(`${this} ${direction === "push" ? "send" : "received"} ${docs.length} histories`);
+
+      docs.forEach(doc => {
+        this.changes.push({direction, kind: "versions", id: doc._id});
+      })
 
       // versionChanges.push(change);
     })
@@ -1456,6 +1549,81 @@ export var ObjectDBInterface = {
     return db.deleteCommit(commit, typeof dryRun === "undefined" || dryRun)
   },
 
+  async fetchConflicts(args) {
+    // side effect: false
+    // returns: [{
+    //   commitConflicts: [{conflicts,doc,id,kind,rev}],
+    //   versionConflicts: [{conflicts,doc,id,kind,rev}]
+    // }]
+    // Returns conflicts in version and commit dbs.
+    let {
+          db: dbName, includeDocs, only
+        } = checkArgs(args, {
+        db: "string",
+        includeDocs: "boolean|undefined",
+        only: "object|undefined"
+      }), db = await ObjectDB.find(dbName)
+    return db.getConflicts(includeDocs, only);
+  },
+
+  async resolveConflict(args) {
+    // side effect: true
+    // returns: [{
+    let {
+          db: dbName, resolved, delete: del, kind, id
+        } = checkArgs(args, {
+        db: "string",
+        id: "string",
+        kind: "string",
+        delete: "Array",
+        resolved: "object"
+      }), db = await ObjectDB.find(dbName)
+    return db.resolveConflict({resolved, delete: del, kind, id});
+  },
+
+  async fetchDiff(args) {
+    // side effect: false
+    let {
+          db: dbName, otherDB
+        } = checkArgs(args, {
+        db: "string",
+        otherDB: "string",
+      }), db = await ObjectDB.find(dbName);
+    return db.getDiff(otherDB);
+  },
+
+  async synchronize(args) {
+    let {
+      db: dbName, otherDB, otherDBSnapshotLocation, onlyTypesAndNames, method
+    } = checkArgs(args, {
+      db: "string",
+      otherDB: "string",
+      otherDBSnapshotLocation: "string|undefined",
+      onlyTypesAndNames: "object|undefined",
+      method: "string|undefined",
+    }), db = await ObjectDB.find(dbName)
+
+    if (!otherDBSnapshotLocation)
+      otherDBSnapshotLocation = otherDB.replace(/\/$/, "") + "/" + "snapshots";
+    if (!method) method = "replicateTo";
+
+    let db1 = await ObjectDB.find(dbName),
+        db2 = await ObjectDB.named(otherDB, {snapshotLocation: otherDBSnapshotLocation}),
+        remoteCommitDB = await db2._commitDB(),
+        remoteVersionDB = await db2._versionDB(),
+        toSnapshotLocation = db2.snapshotLocation,
+        opts = {
+          replicationFilter: onlyTypesAndNames ? {onlyTypesAndNames} : undefined,
+          retry: true, live: true
+        },
+        rep = db1[method](remoteCommitDB, remoteVersionDB, toSnapshotLocation, opts);
+
+    await rep.whenPaused()
+    await rep.safeStop();
+    await rep.waitForIt()
+
+    return obj.select(rep, ["state", "method", "conflicts", "errors", "changesByTypeAndName"]);
+  }
 }
 
 
@@ -1467,10 +1635,9 @@ export var ObjectDBInterface = {
 
 export class ObjectDBHTTPInterface {
 
-  constructor(serverURL = document.origin + "/objectdb/") {
+  constructor(serverURL = document.location.origin + "/objectdb/") {
     this.serverURL = serverURL;
   }
-
 
   async _processResponse(res) {
     let contentType = res.headers.get("content-type"),
@@ -1478,7 +1645,7 @@ export class ObjectDBHTTPInterface {
     if (contentType === "application/json") {
       try { json = JSON.parse(answer); } catch (err) {}
     }
-    if (!res.ok || json.error) {
+    if (!res.ok || (json && json.error)) {
       throw new Error((json && json.error) || answer || res.statusText);
     }
     return json || answer;
@@ -1598,4 +1765,27 @@ export class ObjectDBHTTPInterface {
     return this._POST("deleteCommit", args);
   }
 
+  async fetchConflicts(args) {
+    // parameters: db, only, includeDocs
+    // returns: conflicts
+    return this._GET("fetchConflicts", args);
+  }
+
+  async resolveConflict(args) {
+    // parameters: db, id, kind, delete, resolved
+    // returns: conflicts
+    return this._POST("resolveConflict", args);
+  }
+
+  async fetchDiff(args) {
+    // parameters: db, otherDB
+    // returns: conflicts
+    return this._GET("fetchDiff", args);
+  }
+
+  async synchronize(args) {
+    // parameters: db: otherDB, otherDBSnapshotLocation, onlyTypesAndNames, method
+    // returns: ...
+    return this._POST("synchronize", args);
+  }
 }
