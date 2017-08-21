@@ -104,7 +104,8 @@ function startServer(serverMod, config) {
       serverConfig = {port, hostname, plugins: [], jsdav: {rootDirectory}};
   return Promise.all(
     config.plugins.map(path =>
-      livelySystem.import(path).then(mod =>
-        serverConfig.plugins.push(new mod.default(serverConfig))))
+      livelySystem.import(path)
+        .then(mod => serverConfig.plugins.push(new mod.default(serverConfig)))
+        .catch(err => { console.error(`Error loading plugin ${path}`); throw err; }))
   ).then(() => serverMod.start(serverConfig));
 }
