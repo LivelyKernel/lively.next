@@ -41,23 +41,21 @@ export default class MorphicDB {
     return db;
   }
 
-  constructor(name, {serverURL}) {
+  constructor(name, {snapshotLocation, serverURL}) {
     this.name = name;
     this.serverURL = serverURL;
+    this.snapshotLocation = snapshotLocation || `${name}/snapshots/`;
     this.httpDB = new ObjectDBHTTPInterface(serverURL);
     this._initialized = false;
-    this._cacheDB = new Database(this.name + "-cache");
   }
 
   __serialize__() {
-    let {name, serverURL} = this;
+    let {name, serverURL, snapshotLocation} = this;
     return {
-      __expr__: `MorphicDB.named("${name}", {serverURL: "${serverURL}"})`,
+      __expr__: `MorphicDB.named("${name}", {snapshotLocation: "${snapshotLocation}", serverURL: "${serverURL}"})`,
       bindings: {"lively.morphic/morphicdb.js": [{exported: "default", local: "MorphicDB"}]}
     }
   }
-
-  get snapshotLocation() { return `${this.name}/snapshots/`; }
 
   async initializeIfNecessary() {
     if (this._initialized) return;
@@ -176,6 +174,31 @@ export default class MorphicDB {
     return morph;
   }
 
+  async fetchDiff(otherDBName) {
+    await this.initializeIfNecessary();
+    let {name: db} = this;
+    return this.httpDB.fetchDiff({db, otherDB: otherDBName});    
+  }
+
+  async fetchConflicts(includeDocs, only) {
+    await this.initializeIfNecessary();
+    let {name: db} = this;
+    return this.httpDB.fetchConflicts({db, includeDocs, only});
+  }
+
+  async resolveConflict(resolved) {
+    // {id, kind, delete, resolved}
+    await this.initializeIfNecessary();
+    let {name: db} = this;
+    return this.httpDB.resolveConflict({db, ...resolved});
+  }
+
+  async synchronize({method, otherDB, otherDBSnapshotLocation, onlyTypesAndNames}) {
+    await this.initializeIfNecessary();
+    let {name: db} = this;
+    return this.httpDB.synchronize({db, method, otherDB, otherDBSnapshotLocation, onlyTypesAndNames});
+  }
+
   async delete(type, name, dryRun = true) {
     await this.initializeIfNecessary();
     let {name: db} = this;
@@ -206,7 +229,6 @@ export default class MorphicDB {
 
     return found;
   }
-
 
   async _textSearchInSnapshotOfCommit(stringOrRe, commit, optSnapshot) {
     let {_id} = commit,

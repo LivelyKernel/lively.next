@@ -70,8 +70,8 @@ export async function savePart(part, name, options, commitSpec, ref, expectedPar
         previewType: "png",
         ...options
       },
-      db = MorphicDB.default,
-      commit = await db.snapshotAndCommit(
+      morphicDB = options.morphicDB || MorphicDB.default,
+      commit = await morphicDB.snapshotAndCommit(
           "part", name, part, snapshotOptions,
           commitSpec, ref, expectedParentCommit);
 
@@ -92,7 +92,7 @@ export async function interactivelySavePart(part, options = {}) {
 
   let name = part.name, tags = [], description = "",
       oldCommit = Path("metadata.commit").get(part) || Path("metadata.commit").get(actualPart),
-      db = MorphicDB.default;
+      morphicDB = options.morphicDB || MorphicDB.default;
 
   if (!oldCommit) {
     oldCommit = {
@@ -121,7 +121,7 @@ export async function interactivelySavePart(part, options = {}) {
         expectedParentCommit;
 
     if (oldName !== name) {
-      let {exists, commitId: existingCommitId} = await db.exists("part", name);
+      let {exists, commitId: existingCommitId} = await morphicDB.exists("part", name);
       if (exists) {
         let overwrite = await $world.confirm(`A part "${name}" already exists, overwrite?`);
         if (!overwrite) return null;
@@ -160,7 +160,7 @@ export async function interactivelySavePart(part, options = {}) {
   } catch (err) {
     let [_, typeAndName1, expectedVersion1, actualVersion1] = err.message.match(/Trying to store "([^\"]+)" on top of expected version ([^\s]+) but ref HEAD is of version ([^\s\!]+)/) || [];
     if (expectedVersion1 && actualVersion1) {
-      let [newerCommit] = await db.log(actualVersion1, 1, /*includeCommits = */true),
+      let [newerCommit] = await morphicDB.log(actualVersion1, 1, /*includeCommits = */true),
           {author: {name: authorName}, timestamp} = newerCommit,
           overwriteQ = `The current version of part ${name} is not the most recent!\n`
                      + `A newer version by ${authorName} was saved on `
