@@ -375,13 +375,14 @@ var commands = [
           "Open workspace for...", workspaceLanguages));
         if (!language) return true;
       }
-      if (language === "text")
+
+      opts = {content: "", ...opts, mode: language, language};
+      var mod = workspaceModules[opts.language] || workspaceModules[alias[opts.language]];
+
+      if (language === "text" || !mod)
         return world.execCommand("open text window", opts);
 
-      opts = {content: "", ...opts, language};
-      var mod = workspaceModules[opts.language] || workspaceModules[alias[opts.language]],
-          { default: Workspace } = await System.import(mod);
-      console.log(opts)
+      let { default: Workspace } = await System.import(mod);
       return new Workspace({
         center: world.center,
         content: opts.content,
@@ -419,7 +420,16 @@ var commands = [
                   textAndAttributes, clipMode: "auto", name, extent});
       if (rangesAndStyles)
         text.setTextAttributesWithSortedRanges(rangesAndStyles);
+      if (mode) text.changeEditorMode(mode);
       return world.openInWindow(text, {title}).activate();
+    }
+  },
+
+  {
+    name: "merge and open in window",
+    exec: async (world, opts = {a: "", b: "", format: null, extent: pt(500,600)}) => {
+      let merger = await loadObjectFromPartsbinFolder("text merger");
+      return merger.targetMorph.open(opts.a, opts.b, opts);
     }
   },
 
@@ -432,7 +442,7 @@ var commands = [
       // $world.execCommand("diff and open in window", {a: "Hello\nworld", b: "Helo\nworld", format: "diffSentences"})
       // $world.execCommand("diff and open in window", {a: "Hello\nworld", b: "Helo\nworld", format: "patch"})
 
-      var {a,b,format} = opts;
+      var {a,b, format, extent} = opts;
       if (!format) var {a,b, format} = findFormat(a, b);
       else { a = String(a);  b = String(b); }
 
@@ -476,7 +486,7 @@ var commands = [
 
         var win = world.execCommand("open text window", opts),
             textMorph = win.targetMorph;
-        win.extent = pt(300, 200).maxPt(textMorph.textBounds().extent());
+        win.extent = extent || pt(300, 200).maxPt(textMorph.textBounds().extent());
 
         textMorph.textAndAttributes = content;
         if (plugin) textMorph.addPlugin(plugin);
@@ -487,9 +497,16 @@ var commands = [
   },
 
   {
+    name: 'merge workspaces',
+    exec: function(world, opts) {
+      return world.execCommand("diff workspace", {...opts, merge: true});
+    }
+  },
+
+  {
     name: 'diff workspaces',
     exec: async function(world, opts = {}) {
-      var {editor1, editor2} = opts;
+      var {editor1, editor2, merge} = opts;
 
       if (!editor1 || !editor2)
         var editors = world.withAllSubmorphsSelect(ea =>
@@ -499,23 +516,29 @@ var commands = [
       if (!editor2) editor2 = await selectMorph(arr.without(editors, editor1));
       if (!editor2) return world.setStatusMessage("Canceled");
 
-      return doDiff(editor1, editor2);
+      return merge ? doMerge(editor1, editor2) : doDiff(editor1, editor2);
 
       function doDiff(ed1, ed2) {
-        var p1 = ed1.pluginFind(ea => ea.evalEnvironment);
-        var fn1 = (p1 && p1.evalEnvironment.targetModule) || 'no file';
-        var p2 = ed2.pluginFind(ea => ea.evalEnvironment);
-        var fn2 = (p2 && p2.evalEnvironment.targetModule) || 'no file';
+        var p1 = ed1.pluginFind(ea => ea.evalEnvironment),
+            fn1 = (p1 && p1.evalEnvironment.targetModule) || 'no file',
+            p2 = ed2.pluginFind(ea => ea.evalEnvironment),
+            fn2 = (p2 && p2.evalEnvironment.targetModule) || 'no file';
         return world.execCommand("diff and open in window", {
           a: ed1.textString, b: ed2.textString,
           filenameA: fn1, filenameB: fn2
         })
       }
 
+      async function doMerge(ed1, ed2) {
+        let merger = await loadObjectFromPartsbinFolder("text merger");
+        return merger.targetMorph.open(ed1.textString, ed2.textString);
+      }
+
       async function selectMorph(morphs, thenDo) {
         var candidates = morphs.map(ea =>
           ({isListItem: true, value: ea, string: ea.name || String(ea)}));
-        var {selected: [choice]} = await world.filterableListPrompt("choose text: ", candidates, {onSelection: m => m && m.show()});
+        var {selected: [choice]} = await world.filterableListPrompt(
+          "choose text: ", candidates, {onSelection: m => m && m.show()});
         return choice;
       }
 
