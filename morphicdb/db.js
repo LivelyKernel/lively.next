@@ -133,7 +133,7 @@ export default class MorphicDB {
   async snapshotAndCommit(type, name, morph, snapshotOptions, commitSpec, ref, expectedParentCommit) {
     let snapshot = await createMorphSnapshot(morph, snapshotOptions),
         commit = await this.commit(type, name, snapshot, commitSpec, ref, expectedParentCommit);
-    morph.changeMetaData("commit", commit, /*serialize = */false, /*merge = */false);
+    morph.changeMetaData("commit", obj.dissoc(commit, ["preview"]), /*serialize = */true, /*merge = */false);
     
     return commit;
   }
@@ -170,7 +170,8 @@ export default class MorphicDB {
     }
     let snapshot = await this.fetchSnapshot(undefined, undefined, commit._id),
         morph = await loadMorphFromSnapshot(snapshot, loadOptions);
-    morph.changeMetaData("commit", commit, /*serialize = */false, /*merge = */false);
+    morph.changeMetaData("commit", obj.dissoc(commit, ["preview"]),
+      /*serialize = */true, /*merge = */false);
     return morph;
   }
 

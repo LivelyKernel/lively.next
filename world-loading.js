@@ -3,7 +3,7 @@ import { MorphicEnv } from "./index.js";
 import { loadWorldFromResource } from "./serialization.js";
 import { resource, registerExtension as registerResourceExension } from "lively.resources";
 import { MorphicDB } from "./morphicdb/index.js";
-import { Path, date, promise } from "lively.lang";
+import { Path, obj, date, promise } from "lively.lang";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import LoadingIndicator from "./components/loading-indicator.js";
 
@@ -205,7 +205,7 @@ export async function interactivelySaveWorld(world, options) {
       + `${date.format(new Date(timestamp), "yyyy-mm-dd HH:MM")}. Overwrite?`,
           overwrite = await world.confirm(overwriteQ);
       if (!overwrite) return null;
-      world.changeMetaData("commit", newerCommit, /*serialize = */false, /*merge = */false);
+      world.changeMetaData("commit", obj.dissoc(newerCommit, ["preview"]), /*serialize = */true, /*merge = */false);
       return interactivelySaveWorld(world, {...options, showSaveDialog: false});
     }
 

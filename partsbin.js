@@ -2,7 +2,7 @@
 /* global System */
 import { resource } from "lively.resources";
 import { createMorphSnapshot } from "lively.morphic/serialization.js";
-import { Path, date, promise } from "lively.lang";
+import { Path, obj, date, promise } from "lively.lang";
 import { morph, HorizontalLayout, VerticalLayout } from "lively.morphic";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { connect } from "lively.bindings";
@@ -18,19 +18,20 @@ export function getAllPartResources(options) { return []; }
 
 export async function loadPart(nameOrCommit, options = {}) {
   // let {morphicDB} = PartsBinInterface.default;
-  let name;
-  if (typeof nameOrCommit === "string") name = nameOrCommit;
-  else name = nameOrCommit.name;
-  let morphicDB = options.morphicDB || MorphicDB.default;
-  let part = await morphicDB.load("part", name);
+  let morphicDB = options.morphicDB || MorphicDB.default,
+      part = await morphicDB.load(
+        "part",
+        typeof nameOrCommit === "string" ? nameOrCommit : nameOrCommit.name,
+        options,
+        typeof nameOrCommit === "string" ? undefined : nameOrCommit);
 
   // when window is automatically published we need to make sure that metadata
   // is re-attached to actual part
-  if (part.isWindow && part.targetMorph && part.targetMorph.name === name) {
-    let target = part.targetMorph;
-    let commit = part.metadata && part.metadata.commit;
+  if (part.isWindow && part.targetMorph/* && part.targetMorph.name === name*/) {
+    let target = part.targetMorph,
+        commit = part.metadata && part.metadata.commit;
     if (commit) {
-      target.changeMetaData("commit", commit, /*serialize = */false, /*merge = */false);
+      target.changeMetaData("commit", commit, /*serialize = */true, /*merge = */false);
     }
   }
 
@@ -167,7 +168,8 @@ export async function interactivelySavePart(part, options = {}) {
                      + `${date.format(new Date(timestamp), "yyyy-mm-dd HH:MM")}. Overwrite?`,
           overwrite = await $world.confirm(overwriteQ);
       if (!overwrite) return null;
-      actualPart.changeMetaData("commit", newerCommit, /*serialize = */false, /*merge = */false);
+      let commitMetaData = obj.dissoc(newerCommit, ["preview"]);
+      actualPart.changeMetaData("commit", commitMetaData, /*serialize = */true, /*merge = */false);
       return interactivelySavePart(actualPart, {...options, showPublishDialog: false});
     }
 
@@ -177,7 +179,7 @@ export async function interactivelySavePart(part, options = {}) {
                      + `Do you still want to publish it?`,
           overwrite = await $world.confirm(overwriteQ);
       if (!overwrite) return null;
-      actualPart.changeMetaData("commit", null, /*serialize = */false, /*merge = */false);
+      actualPart.changeMetaData("commit", null, /*serialize = */true, /*merge = */false);
       return interactivelySavePart(actualPart, {...options, showPublishDialog: false});
     }
 
