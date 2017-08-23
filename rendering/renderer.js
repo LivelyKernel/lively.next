@@ -10,9 +10,10 @@ import {
   svgAttributes,
   renderMorph
 } from "./morphic-default.js";
-import { h } from "virtual-dom";
 import { Transform, pt } from "lively.graphics";
-import { diff, patch, create as createNode } from "virtual-dom";
+import { h, diff, patch, create as createNode } from "virtual-dom";
+
+const svgNs = "http://www.w3.org/2000/svg";
 
 export class Renderer {
 
@@ -247,36 +248,99 @@ export class Renderer {
   }
 
   // FIXME: The gradient handling is inconsistent to the way its handled in "vanilla" morphs
-
   renderPath(path) {
-    const vertices = h("path", {
-      namespace: "http://www.w3.org/2000/svg",
+    const {id, startMarker, endMarker, showControlPoints} = path;
+    var el = h("path", {
+      namespace: svgNs,
       id: "svg" + path.id,
       ...pathAttributes(path)
     });
-    return this.renderSvgMorph(path, vertices);
+
+    var markers;
+    if (startMarker) {
+      if (!startMarker.id) startMarker.id = "start-marker"
+      el.properties.attributes["marker-start"] = `url(#${startMarker.id})`;
+      markers = [];
+      markers.push(this._renderPath_Marker(path, startMarker));
+    }
+    if (endMarker) {
+      if (!endMarker.id) endMarker.id = "end-marker";
+      el.properties.attributes["marker-end"] = `url(#${endMarker.id})`;
+      if (!markers) markers = [];
+      markers.push(this._renderPath_Marker(path, endMarker));
+    }
+    
+    if (showControlPoints)
+      el = h("g", {namespace: svgNs}, [el, ...this._renderPath_ControlPoints(path)]);
+
+    return this.renderSvgMorph(path, el, markers);
   }
 
-  renderSvgMorph(morph, svg) {
-    const {
-            position,
-            filter,
-            display,
-            opacity,
-            transform,
-            transformOrigin,
-            cursor
-          } = defaultStyle(morph),
-          {width, height} = morph.innerBounds(),
-          defs = h("defs", {namespace: "http://www.w3.org/2000/svg"}, [
-            morph.fill && morph.fill.isGradient ?
-              [renderGradient(morph, "fill")] : null,
-            morph.borderColor && morph.borderColor.valueOf().isGradient ?
-              [renderGradient(morph, "borderColor")] : null
-          ]);
+  _renderPath_ControlPoints(path) {
+    let {origin: {x: ox,y: oy}, borderWidth} = path,
+        radius = borderWidth == 0 ? 6 : borderWidth * 2,
+        fill = "red";
+    if (typeof path.showControlPoints === "object") {
+      if (path.showControlPoints.fill)
+        fill = String(path.showControlPoints.fill);
+    }
+    return path.vertices.map((ea,i) =>
+      h("circle", {
+        namespace: svgNs,
+        style: {fill},
+        attributes: {
+          class: "path-control-point path-control-point-" + i,
+          cx: ea.x+ox, cy: ea.y+oy, r: radius,
+        },
+      }));
+  }
+  
+  _renderPath_Marker(path, markerSpec) {
+    return specTo_h_svg(markerSpec);
 
-    return h("div",
-      {
+    function specTo_h_svg(spec) {
+      let {tagName, id, children, style} = spec,
+          childNodes = children ? children.map(specTo_h_svg) : undefined;
+      return h(tagName, {
+        namespace: svgNs,
+        id, style,
+        attributes: obj.dissoc(spec, ["tagName", "id", "children", "style"])
+      }, childNodes);
+    }
+  }
+
+  renderSvgMorph(morph, svgEl, markers) {
+    let {position, filter, display, opacity,
+         transform, transformOrigin, cursor } = defaultStyle(morph),
+        {width, height} = morph.innerBounds(),
+        defs, svgElements = [];
+
+    if (morph.fill && morph.fill.isGradient) {
+      if (!defs) defs = [];
+      defs.push(renderGradient(morph, "fill"));
+    }
+    if (morph.borderColor && morph.borderColor.valueOf().isGradient) {
+      if (!defs) defs = [];
+      defs.push(renderGradient(morph, "borderColor"))
+    }
+    if (markers && markers.length) {
+      if (!defs) defs = [];
+      defs.push(...markers);
+      // h("svg", {
+      //   namespace: svgNs, version: "1.1",
+      //   style: {
+      //     position: "absolute",
+      //     // "pointer-events": controlPoints ? "" : "none",
+      //     overflow: "visible"
+      //   },
+      //   ...svgAttributes(morph)
+      // }, svgElements),      
+    }
+
+    if (defs) svgElements.push(h("defs", {namespace: svgNs}, defs));
+    svgElements.push(svgEl)
+
+    return h("div", {
         ...defaultAttributes(morph, this),
         style: {
           transform,
@@ -290,21 +354,16 @@ export class Renderer {
           filter,
           "pointer-events": morph.reactsToPointer ? "auto" : "none",
         }
-      },
-      [
-        h("svg",
-          {
-            namespace: "http://www.w3.org/2000/svg",
-            version: "1.1",
+      }, [
+        h("svg", {
+            namespace: svgNs, version: "1.1",
             style: {
               position: "absolute",
-              "pointer-events": "none",
+              // "pointer-events": controlPoints ? "" : "none",
               overflow: "visible"
             },
             ...svgAttributes(morph)
-          },
-          [defs, svg]
-        ),
+          }, svgElements),
         this.renderSubmorphs(morph)
       ]);
   }

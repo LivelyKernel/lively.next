@@ -97,34 +97,39 @@ export function addSvgAttributes(morph, style) {
   return style;
 }
 
-export function addPathAttributes(morph, style, fill = false) {
-  var vertices = morph.vertices.map(({x, y, controlPoints}) => ({controlPoints, ...morph.origin.addXY(x, y)})),
-      {x: startX, y: startY, controlPoints: {next: {x: startNextX, y: startNextY}}} = vertices[0],
-      startNext = pt(startX + startNextX, startY + startNextY),
-      {x: endX, y: endY, controlPoints: {previous: {x: endPrevX, y: endPrevY}}} = arr.last(vertices),
-      endPrev = pt(endX + endPrevX, endY + endPrevY),
-      interVertices = vertices.slice(1, -1),
+export function addPathAttributes(morph, style) {
+  let {id, origin: {x: ox, y: oy}, vertices, fill, borderColor, borderWidth} = morph,
+      d = "";
 
-      {id, fill, borderColor, borderWidth} = morph,
-      fill = morph.fill
-           ? morph.fill.isGradient ? "url(#gradient-fill" + id + ")" : fill.toString()
-           : "transparent",
-      stroke = borderColor.valueOf().isGradient
-        ? "url(#gradient-borderColor" + id + ")"
-        : borderColor.valueOf().toString(),
-      d = `M${startX}, ${startY} C `
-        + `${startNext.x}, ${startNext.y} `
-        + interVertices.map(({x, y, controlPoints: {previous: p, next: n}}) => {
-             return `${x + p.x},${y + p.y} ${x},${y} C ${x + n.x},${y + n.y}`;
-           }).join(" ")
-        + ` ${endPrev.x},${endPrev.y} ${endX},${endY}`;
+  {
+    let {x, y, controlPoints: {next: {x: startNextX, y: startNextY}}} = vertices[0];
+    x = x + ox; y = y + oy;
+    d = d + `M${x}, ${y} C ${x+startNextX}, ${y+startNextY} `
+  }
 
-  style["stroke-width"] = borderWidth.valueOf();
+  for (let i = 1; i < vertices.length-1; i++) {
+    let vertex = vertices[i];
+    let {x, y, controlPoints: {previous: p, next: n}} = vertex;
+    x = x + ox; y = y + oy;
+    d = d + `${x + p.x},${y + p.y} ${x},${y} C ${x + n.x},${y + n.y} `;
+  }
+
+  {
+    let {x, y, controlPoints: {previous: p}} = vertices[vertices.length-1];
+    x = x + ox; y = y + oy;
+    d = d + ` ${x+p.x},${y+p.y} ${x},${y}`;
+  }
+
   addSvgBorderStyle(morph, style);
-  style["paint-order"] = "stroke";
-  style.fill = fill;
-  style.stroke = stroke;
   style.d = d;
+  style["stroke-width"] = borderWidth.valueOf();
+  style["paint-order"] = "stroke";
+  style.fill = fill ?
+                fill.isGradient ? "url(#gradient-fill" + id + ")" : fill.toString() :
+                "transparent";
+  style.stroke = borderColor.valueOf().isGradient
+                  ? "url(#gradient-borderColor" + id + ")"
+                  : borderColor.valueOf().toString();
   return style;
 }
 

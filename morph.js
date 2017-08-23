@@ -13,6 +13,7 @@ import CommandHandler from "./CommandHandler.js";
 import KeyHandler, { findKeysForPlatform } from "./events/KeyHandler.js";
 import { TargetScript } from "./ticking.js";
 import { copyMorph } from "./serialization.js";
+import { Path as PropertyPath } from "lively.lang";
 import { isNumber, isString } from "lively.lang/object.js";
 import { capitalize } from "lively.lang/string.js";
 import { connect, signal } from "lively.bindings";
@@ -2971,8 +2972,11 @@ class PathPoint {
 }
 
 export class Path extends Morph {
+
   static get properties() {
+
     return {
+
       borderColor: {
         isStyleProp: true,
         type: "ColorGradient",
@@ -2990,6 +2994,9 @@ export class Path extends Morph {
           );
         }
       },
+
+      showControlPoints: {defaultValue: false},
+
       vertices: {
         defaultValue: [],
         type: "Vertices",
@@ -3000,7 +3007,10 @@ export class Path extends Morph {
           });
           this.setProperty("vertices", vs);
         }
-      }
+      },
+
+      startMarker: {defaultValue: null, type: "Object"},
+      endMarker: {defaultValue: null, type: "Object"}
     };
   }
 
@@ -3008,6 +3018,12 @@ export class Path extends Morph {
     super({...obj.dissoc(props, "origin")});
     this.adjustOrigin(props.origin || this.origin);
     this.position = props.position || this.position;
+    this.updateBounds(this.vertices);
+  }
+
+  __after_deserialize__(snapshot, objRef) {
+    super.__after_deserialize__(snapshot, objRef)
+    this.updateBounds(this.vertices);
   }
 
   get isPath() { return true; }
@@ -3019,18 +3035,25 @@ export class Path extends Morph {
   }
 
   updateBounds(vertices) {
-    const b = Rectangle.unionPts([
-      pt(0, 0),
-      ...arr.flatmap(vertices, ({position, controlPoints}) => {
-        var {next, previous} = controlPoints || {};
-        if (next) next = position.addPt(next);
-        if (previous) previous = position.addPt(previous);
-        return arr.compact([next, position, previous]);
-      })
-    ]);
+    if (this.adjustingVertices) return;
     this.adjustingVertices = true;
+    const {origin, extent: {x: w, y: h}} = this,
+          relOriginX = origin.x/w,
+          relOriginY = origin.y/h,
+          points = [];
+    for (let vertex of vertices) {
+      let {position, controlPoints} = vertex;
+      var {next, previous} = controlPoints || {};
+      if (next) next = position.addPt(next);
+      if (previous) previous = position.addPt(previous);
+      points.push(next, position, previous);
+    }
+    let b = Rectangle.unionPts(points),
+        offset = b.topLeft().addPt(origin);
+    vertices.forEach(ea => ea.moveBy(offset.negated()));
+    this.moveBy(this.getTransform().transformDirection(offset));
     this.extent = b.extent();
-    this.origin = b.topLeft().negated();
+    this.origin = pt(b.width*relOriginX, b.height*relOriginY);
     this.adjustingVertices = false;
   }
 
@@ -3074,16 +3097,48 @@ export class Path extends Morph {
   }
 
   addVertex(v, before = null) {
-    if (before) {
-      const insertIndex = this.vertices.indexOf(before);
-      this.vertices = this.vertices.splice(insertIndex, 0, v);
-    } else {
-      this.vertices = this.vertices.concat(v);
-    }
+    let {vertices} = this;
+    if (typeof before === "number") {
+      const insertIndex = vertices.indexOf(before);
+      vertices.splice(insertIndex, 0, v);
+    } else vertices.push(v);
+    this.vertices = vertices;
   }
 
   render(renderer) {
     return renderer.renderPath(this);
+  }
+
+  onDragStart(evt) {
+    let {domEvt: {target}} = evt,
+        cssClass = PropertyPath("attributes.class.value").get(target);
+    if (cssClass && cssClass.includes("path-control-point")) {
+      let [_, n] = cssClass.match(/path-control-point-([0-9]+)/);
+      this._controlPointDrag = {marker: target, n: Number(n)};
+    } else return super.onDragStart(evt);
+  }
+
+  onDrag(evt) {
+    if (!this._controlPointDrag) return super.onDrag(evt);
+    let {target, n} = this._controlPointDrag,
+        {vertices} = this;
+    if (vertices[n]) {
+      let delta = this.getInverseTransform().transformDirection(evt.state.dragDelta);
+      vertices[n].moveBy(delta);
+    }
+  }
+
+  onDragEnd(evt) {
+    if (this._controlPointDrag)
+      delete this._controlPointDrag;
+  }
+  
+  menuItems() {
+    return [
+      ["toggle control points", () => this.showControlPoints = !this.showControlPoints],
+      {isDivider: true},
+      ...super.menuItems()
+    ]
   }
 }
 

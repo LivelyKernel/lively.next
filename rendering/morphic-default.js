@@ -149,6 +149,16 @@ input:-moz-placeholder {
 input:placeholder {
   color: rgb(202, 202, 202);
 }
+
+/*-=- input elements -=-*/
+.Morph svg .path-control-point {
+  cursor: move; /* fallback if grab cursor is unsupported */
+  cursor: grab;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+  fill: red;
+}
+
 `;
 
 
