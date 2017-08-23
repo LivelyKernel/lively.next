@@ -498,6 +498,14 @@ export class ProportionalLayout extends Layout {
     }
   }
 
+  onSubmorphChange(submorph, change, x ,y) {
+    if (change.prop === "name") {
+      let settings = this.constructor.proportionalLayoutSettingsForMorphs.get(submorph);
+      if (settings) this.changeSettingsFor(submorph, settings, true);
+    }
+    return super.onSubmorphChange(submorph, change);
+  }
+
   settingsFor(morph) {
     // move, resize, scale, fixed
     let settings = this.constructor.proportionalLayoutSettingsForMorphs.get(morph);
