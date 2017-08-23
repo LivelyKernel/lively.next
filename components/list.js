@@ -856,6 +856,24 @@ export class FilterableList extends Morph {
         set(x) { this.listMorph.selectedIndex = x; }
       },
 
+      selectedIndexes: {
+        derived: true, after: ["submorphs"],
+        get() { return this.listMorph.selectedIndexes; },
+        set(x) { this.listMorph.selectedIndexes = x; }
+      },
+
+      selectedItems: {
+        derived: true, after: ["submorphs"],
+        get() { return this.listMorph.selectedItems; },
+        set(x) { this.listMorph.selectedItems = x; }
+      },
+
+      selections: {
+        derived: true, after: ["submorphs"],
+        get() { return this.listMorph.selections; },
+        set(x) { this.listMorph.selections = x; }
+      },
+
       fuzzy: {
         derived: true, after: ["filterFunction", "sortFunction"],
         set(fuzzy) {
