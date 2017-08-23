@@ -580,7 +580,7 @@ export class Morph {
             value ? obj.extract(value, ["top", "left", "right", "bottom"], (k, v) => {
               return obj.isArray(v) ? Color.fromTuple(v) : v
             }) : value
-          ); 
+          );
         }
       },
 
@@ -858,9 +858,15 @@ export class Morph {
     PropPath(path).withParentAndKeyDo(metadata, true, (parent, key) => {
       if (merge) parent[key] = {...parent[key], ...data};
       else parent[key] = data;
+      let dont = parent.__dont_serialize__;
       if (!serialize) {
-        let dont = parent.__dont_serialize__ || (parent.__dont_serialize__ = []);
+        if (!dont) dont = parent.__dont_serialize__ = []
         arr.pushIfNotIncluded(dont, key);
+      } else {
+        if (dont && dont.includes(key)) {
+          arr.remove(dont, key);
+          if (dont.length === 0) delete parent.__dont_serialize__;
+        }
       }
     });
     this.metadata = metadata;
@@ -2048,7 +2054,7 @@ export class Morph {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // morphic hierarchy / windows
 
-    items.push(['Publish...', async () => {      
+    items.push(['Publish...', async () => {
       try {
         let {interactivelySavePart} = await System.import("lively.morphic/partsbin.js"),
             commit = await interactivelySavePart(this, {
@@ -2063,7 +2069,7 @@ export class Morph {
         if (e != "canceled") world.showError(e);
       }
     }]);
-    
+
     items.push(['Open in...', [
       ['Window', () => { this.openInWindow(); }]
     ]]);
