@@ -268,7 +268,7 @@ var config = {
       {keys: {mac: 'Ctrl-C Ctrl-L'}, command: "lowercase"},
       {keys: {mac: 'Meta-Shift-L W t'}, command: "remove trailing whitespace"},
 
-      {keys: "Ctrl-Space", command: "toggle active mark"},
+      {keys: {mac: "Ctrl-Space"}, command: "toggle active mark"},
 
 
       {keys: {mac: 'Meta-Shift-L M O D E'}, command: "change editor mode"},
@@ -283,7 +283,7 @@ var config = {
       {keys: {windows: "Ctrl-.", mac: "Meta-."}, command: '[IyGotoChar] activate'},
       {keys: {windows: "Ctrl-,", mac: "Meta-,"}, command: {command: '[IyGotoChar] activate', args: {backwards: true}}},
 
-      {keys: "Alt-Shift-Space|Alt-Space|Meta-Shift-P", command: "text completion"},
+      {keys: {mac: "Alt-Shift-Space|Alt-Space|Meta-Shift-P", win: "Ctrl-Space|Ctrl-Shift-P"}, command: "text completion"},
 
       {keys: "Alt-Q", command: "fit text to column"},
 
@@ -322,7 +322,7 @@ var config = {
       {keys: {win: 'Ctrl--', mac: 'Meta--'}, command: "decrease font size"},
       {keys: "Alt-K", command: "set link of selection"},
       {keys: "Alt-O", command: "set doit of selection"},
-      {keys: "Alt-Shift-U", command: "reset text style"},
+      {keys: {mac: "Meta-\\", wind: "Ctrl-\\"}, command: "reset text style"},
       {keys: {mac: "Meta-Shift-L T U I", win: "Ctrl-Shift-L T U I"}, command: "open text attribute controls"},
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
