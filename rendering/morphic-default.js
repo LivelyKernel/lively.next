@@ -151,7 +151,7 @@ input:placeholder {
 }
 
 /*-=- input elements -=-*/
-.Morph svg .path-control-point {
+.Morph svg .path-point {
   cursor: move; /* fallback if grab cursor is unsupported */
   cursor: grab;
   cursor: -moz-grab;

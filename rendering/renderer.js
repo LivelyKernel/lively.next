@@ -144,7 +144,7 @@ export class Renderer {
       }
       if (!morphNode.parentNode)
         domNode.parentNode.appendChild(morphNode);
-    
+
       patch(morphNode, patches);
     }
 
@@ -259,48 +259,112 @@ export class Renderer {
     var markers;
     if (startMarker) {
       if (!startMarker.id) startMarker.id = "start-marker"
-      el.properties.attributes["marker-start"] = `url(#${startMarker.id})`;
+      el.properties.attributes["marker-start"] = `url(#${path.id}-${startMarker.id})`;
       markers = [];
       markers.push(this._renderPath_Marker(path, startMarker));
     }
     if (endMarker) {
       if (!endMarker.id) endMarker.id = "end-marker";
-      el.properties.attributes["marker-end"] = `url(#${endMarker.id})`;
+      el.properties.attributes["marker-end"] = `url(#${path.id}-${endMarker.id})`;
       if (!markers) markers = [];
       markers.push(this._renderPath_Marker(path, endMarker));
     }
-    
+
     if (showControlPoints)
       el = h("g", {namespace: svgNs}, [el, ...this._renderPath_ControlPoints(path)]);
 
     return this.renderSvgMorph(path, el, markers);
   }
 
-  _renderPath_ControlPoints(path) {
-    let {origin: {x: ox,y: oy}, borderWidth} = path,
-        radius = borderWidth == 0 ? 6 : borderWidth * 2,
-        fill = "red";
-    if (typeof path.showControlPoints === "object") {
-      if (path.showControlPoints.fill)
-        fill = String(path.showControlPoints.fill);
+  _renderPath_ControlPoints(path, style) {
+    let {
+          vertices,
+          borderWidth, showControlPoints, _controlPointDrag
+        } = path,
+        radius = borderWidth == 0 ? 6 : borderWidth + 2,
+        fill = "red",
+        rendered = [], i = 0;
+
+    if (typeof showControlPoints === "object") {
+      let {radius: r, fill: f} = showControlPoints;
+      if (f) fill = String(f);
+      if (typeof r === "number") radius = r;
     }
-    return path.vertices.map((ea,i) =>
-      h("circle", {
+
+    if (vertices.length) {
+
+      let i = 0, X, Y, left_cp;
+      {
+        let {x, y, controlPoints: {next: n}} = vertices[0],
+            merge = _controlPointDrag && _controlPointDrag.maybeMerge && _controlPointDrag.maybeMerge.includes(i);
+        X = x; Y = y;
+        rendered.push(circ(X, Y, i, merge));
+        left_cp = n;
+      }
+
+      for (i = 1; i < vertices.length-1; i++) {
+        let vertex = vertices[i],
+            {isSmooth, x, y, controlPoints: {previous: p, next: n}} = vertex,
+            merge = _controlPointDrag && _controlPointDrag.maybeMerge && _controlPointDrag.maybeMerge.includes(i);
+
+        if (isSmooth) {
+          rendered.push(
+            circ(x, y, i, merge),
+            circ(X + left_cp.x, Y + left_cp.y, i-1, false, "control-2", true),
+            circ(x + p.x, y + p.y, i, false, "control-1", true));
+        } else {
+          rendered.push(circ(x, y, i, merge));
+        }
+
+        X = x; Y = y
+        left_cp = n;
+      }
+
+      {
+        let {isSmooth, x, y, controlPoints: {previous: p}} = vertices[vertices.length-1],
+            merge = _controlPointDrag && _controlPointDrag.maybeMerge && _controlPointDrag.maybeMerge.includes(i);
+        if (isSmooth) {
+          rendered.push(
+            circ(x, y, i, merge),
+            circ(X + left_cp.x, Y + left_cp.y, i-1, false, "control-2", true),
+            circ(x + p.x, y + p.y, i, false, "control-1", true));
+        } else {
+          rendered.push(circ(x, y, i, merge));
+        }
+      }
+
+    }
+
+    return rendered;
+
+    function circ(cx, cy, n, merge, type, isCtrl) {
+      let r = merge ? 12 : Math.min(8, Math.max(3, radius)),
+          cssClass = "path-point path-point-" + n,
+          color = merge ? "orange" : fill;
+      if (typeof type === "string") cssClass += "-" + type;
+      if (isCtrl) r = Math.max(3, Math.ceil(r/2));
+      return isCtrl ? 
+        h("circle", {
         namespace: svgNs,
-        style: {fill},
-        attributes: {
-          class: "path-control-point path-control-point-" + i,
-          cx: ea.x+ox, cy: ea.y+oy, r: radius,
-        },
-      }));
+        style: {fill: "white", "stroke-width": 2, "stroke": color},
+        attributes: {class: cssClass, cx, cy, r},
+      }) : h("circle", {
+        namespace: svgNs,
+        style: {fill: color},
+        attributes: {class: cssClass, cx, cy, r},
+      });
+    }
   }
-  
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   _renderPath_Marker(path, markerSpec) {
     return specTo_h_svg(markerSpec);
 
     function specTo_h_svg(spec) {
       let {tagName, id, children, style} = spec,
           childNodes = children ? children.map(specTo_h_svg) : undefined;
+      if (id) id = path.id + "-" + id;
       return h(tagName, {
         namespace: svgNs,
         id, style,
@@ -334,7 +398,7 @@ export class Renderer {
       //     overflow: "visible"
       //   },
       //   ...svgAttributes(morph)
-      // }, svgElements),      
+      // }, svgElements),
     }
 
     if (defs) svgElements.push(h("defs", {namespace: svgNs}, defs));

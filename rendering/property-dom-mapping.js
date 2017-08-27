@@ -98,26 +98,33 @@ export function addSvgAttributes(morph, style) {
 }
 
 export function addPathAttributes(morph, style) {
-  let {id, origin: {x: ox, y: oy}, vertices, fill, borderColor, borderWidth} = morph,
+  let {id, vertices, fill, borderColor, borderWidth} = morph,
       d = "";
 
-  {
-    let {x, y, controlPoints: {next: {x: startNextX, y: startNextY}}} = vertices[0];
-    x = x + ox; y = y + oy;
-    d = d + `M${x}, ${y} C ${x+startNextX}, ${y+startNextY} `
-  }
-
-  for (let i = 1; i < vertices.length-1; i++) {
-    let vertex = vertices[i];
-    let {x, y, controlPoints: {previous: p, next: n}} = vertex;
-    x = x + ox; y = y + oy;
-    d = d + `${x + p.x},${y + p.y} ${x},${y} C ${x + n.x},${y + n.y} `;
-  }
-
-  {
-    let {x, y, controlPoints: {previous: p}} = vertices[vertices.length-1];
-    x = x + ox; y = y + oy;
-    d = d + ` ${x+p.x},${y+p.y} ${x},${y}`;
+  if (vertices.length) {
+    let X, Y, lastV;
+    {
+      let {x, y} = lastV = vertices[0];
+      X = x; Y = y;
+      d = d + `M${X},${Y} `
+    }
+  
+    for (let i = 1; i < vertices.length-1; i++) {
+      let vertex = vertices[i],
+          {isSmooth, x, y, controlPoints: {previous: p, next: n}} = vertex;
+      d = isSmooth ?
+        d + `C${X + lastV.controlPoints.next.x} ${Y + lastV.controlPoints.next.y}, ${x + p.x},${y + p.y} ${x},${y} ` :
+        d + `L${x},${y} `
+      lastV = vertex;
+      X = x; Y = y
+    }
+  
+    {
+      let {isSmooth, x, y, controlPoints: {previous: p}} = vertices[vertices.length-1];
+      d = isSmooth ?
+        d + `C${X + lastV.controlPoints.next.x} ${Y + lastV.controlPoints.next.y}, ${x+p.x},${y+p.y} ${x},${y}` :
+        d + `L${x},${y}`;
+    }
   }
 
   addSvgBorderStyle(morph, style);
