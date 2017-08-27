@@ -1538,7 +1538,7 @@ export class MorphHighlighter extends Morph {
       target: {
         readOnly: true, derived: true,
         get() {
-          return this.world().getMorphWithId(this.targetId);
+          return (this.world() || this.env.world).getMorphWithId(this.targetId);
         }
       }
     }

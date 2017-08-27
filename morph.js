@@ -711,7 +711,6 @@ export class Morph {
   get __serialization_id_property__() { return "_id"; }
 
   __deserialize__(snapshot, objRef) {
-    // inspect({snapshot, objRef})
     this._env = MorphicEnv.default(); // FIXME!
     this._rev = snapshot.rev;
     this._owner = null;
@@ -2105,8 +2104,8 @@ export class Morph {
     //     text.setFontSize(10);
     //   })}]);
 
-    let checked = Icon.makeLabel('check-square-o').textAndAttributes,
-        unchecked = Icon.makeLabel('square-o').textAndAttributes;
+    let checked = Icon.textAttribute('check-square-o'),
+        unchecked = Icon.textAttribute('square-o');
     unchecked[1].paddingRight = "7px";
     checked[1].paddingRight = "5px";
 
@@ -2114,7 +2113,6 @@ export class Morph {
       morphicMenuItems[1].push(
         [[...(this[propName] ? checked : unchecked), "  " + propName],
          () => this[propName] = !this[propName]]));
-
 
 
     items.push(["Fit to submorphs", async () => {

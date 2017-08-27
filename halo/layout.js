@@ -381,8 +381,8 @@ class CellGuide extends Morph {
   }
 
   menuItems() {
-    let checked = Icon.makeLabel('check-square-o').textAndAttributes,
-        unchecked = Icon.makeLabel('square-o').textAndAttributes;
+    let checked = Icon.textAttribute('check-square-o'),
+        unchecked = Icon.textAttribute('square-o');
     checked[1].textStyleClasses.push('annotation');
     unchecked[1].textStyleClasses.push('annotation');
     unchecked[1].paddingRight = "2px";
