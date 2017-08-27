@@ -160,11 +160,8 @@ export class Leash extends Path {
   
   static get properties() {
     return {
-      start: {},
-      end: {},
-      canConnectTo: {
-        defaultValue: m => true
-      },
+      start: {defaultValue: pt(0,0)}, end: {defaultValue: pt(0,0)},
+      canConnectTo: {defaultValue: m => true},
       reactsToPointer: {defaultValue: false},
       wantsDroppedMorphs: {defaultValue: false},
       direction: {
