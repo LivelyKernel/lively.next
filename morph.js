@@ -2649,17 +2649,18 @@ export class Image extends Morph {
 
       imageUrl: {
         isStyleProp: true,
-        after: ['extent'],
+        after: ['extent', 'autoResize'],
         defaultValue: System.decanonicalize("lively.morphic/lively-web-logo-small.svg"),
 
         set(url) {
           this.isLoaded = false;
           this.setProperty("imageUrl", url);
           this.setProperty("naturalExtent", null);
+          let autoResize = this.autoResize && !this._isDeserializing;
           this.whenLoaded().then(() => {
             if (this.imageUrl !== url) return;
             this.isLoaded = true;
-            this.autoResize && (this.extent = this.naturalExtent);
+            if (autoResize) this.extent = this.naturalExtent;
           });
         }
       },
