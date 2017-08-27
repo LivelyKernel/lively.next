@@ -1291,6 +1291,40 @@ export class Text extends Morph {
     }
   }
 
+  applyJsDiffPatch(patch) {
+    let self = this, changes = [], pos = 0, offset = 0;
+    for (let change of patch) {
+      if (change.removed) {
+        offset = remove(pos, pos + change.count, offset, changes);
+      } else if (change.added) {
+        offset = insert(pos, change.value, offset, changes);
+      }
+      pos += change.count;
+    }
+    return changes;
+
+    function remove(startI, endI, offset, changes) {
+      let start = self.indexToPosition(startI+offset),
+          end = self.indexToPosition(endI+offset)
+      changes.push(self.deleteText({start, end}));
+      return offset - (endI-startI);
+    }
+    function insert(atI, text, offset, changes) {
+      changes.push(self.insertText(text, self.indexToPosition(atI+offset)));
+      return offset;
+    }
+
+    // function applyChange({type, start, end, text}, source, offset) {
+    //   if (type === "delete") {
+    //     source = source.slice(0, start+offset) + source.slice(end+offset);
+    //     offset -= end-start;
+    //   } else if (type === "insert") {
+    //     source = source.slice(0, start+offset) + text + source.slice(start+offset)
+    //   }
+    //   return {source, offset};
+    // }
+  }
+
   modifyLines(startRow, endRow, modifyFn) {
     var lines = arr.range(startRow, endRow).map(row => this.getLine(row)),
         modifiedText = lines.map(modifyFn).join("\n") + "\n";
@@ -2816,15 +2850,11 @@ export class Text extends Morph {
       },
 
       async report() {
-        let jsDiff = await System.import(
-          "https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js"
-        ),
-            {default: DiffEditorPlugin} = await System.import(
-              "lively.morphic/ide/diff/editor-plugin.js"
-            ),
-            indent = 0;
+        let jsDiff = await System.import("jsdiff", System.decanonicalize("lively.morphic")),
+            {default: DiffEditorPlugin} = await System.import("lively.morphic/ide/diff/editor-plugin.js"),
+            indent = 0,
+            report = "", reportStyles = [], row = 0;
 
-        let report = "", reportStyles = [], row = 0;
         this.groups.forEach((group, groupN) => {
           report += `>>> group ${groupN + 1}\n`;
           row++;
