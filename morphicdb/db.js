@@ -161,7 +161,10 @@ export default class MorphicDB {
     });
   }
 
-  async load(type, name, loadOptions, commitIdOrCommit, ref) {
+  async load(typeOrCommit, name, loadOptions, commitIdOrCommit, ref) {
+    let type;
+    if (typeof typeOrCommit === "object") commitIdOrCommit = typeOrCommit;
+    else type = typeOrCommit;
     let commit = commitIdOrCommit;
     if (!commit) {
       commit = await this.fetchCommit(type, name, ref);
@@ -197,7 +200,10 @@ export default class MorphicDB {
   async synchronize({method, otherDB, otherDBSnapshotLocation, onlyTypesAndNames}) {
     await this.initializeIfNecessary();
     let {name: db} = this;
-    return this.httpDB.synchronize({db, method, otherDB, otherDBSnapshotLocation, onlyTypesAndNames});
+    return this.httpDB.synchronize({
+      db, method, otherDB,
+      otherDBSnapshotLocation, onlyTypesAndNames
+    });
   }
 
   async delete(type, name, dryRun = true) {

@@ -103,8 +103,9 @@ export async function interactivelySavePart(part, options = {}) {
   }
 
   if (showPublishDialog) {
-    let commit = await $world.openPrompt(await loadPart("publish part dialog"), {part})
-    if (!commit.name) return null;
+    let {db, commit} = await $world.openPrompt(await loadPart("publish part dialog"), {part})
+    if (!commit) return null;
+    if (db) options.morphicDB = morphicDB = db;
     ({name, tags, description} = commit);
   } else if (oldCommit) {
     ({name, tags, description} = oldCommit);
@@ -170,7 +171,7 @@ export async function interactivelySavePart(part, options = {}) {
       if (!overwrite) return null;
       let commitMetaData = obj.dissoc(newerCommit, ["preview"]);
       actualPart.changeMetaData("commit", commitMetaData, /*serialize = */true, /*merge = */false);
-      return interactivelySavePart(actualPart, {...options, showPublishDialog: false});
+      return interactivelySavePart(actualPart, {...options, morphicDB, showPublishDialog: false});
     }
 
     let [__, typeAndName2, expectedVersion2] = err.message.match(/Trying to store "([^\"]+)" on top of expected version ([^\s]+) but no version entry exists/) || [];
@@ -180,7 +181,7 @@ export async function interactivelySavePart(part, options = {}) {
           overwrite = await $world.confirm(overwriteQ);
       if (!overwrite) return null;
       actualPart.changeMetaData("commit", null, /*serialize = */true, /*merge = */false);
-      return interactivelySavePart(actualPart, {...options, showPublishDialog: false});
+      return interactivelySavePart(actualPart, {...options, morphicDB, showPublishDialog: false});
     }
 
     console.error(err);
