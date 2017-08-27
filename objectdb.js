@@ -508,11 +508,12 @@ export default class ObjectDB {
         commits = commits.filter(ea => !ea.deleted);
 
       let resourcesForCopy = copyResources ? commits.map(commit => {
+        if (commit.deleted || commit._deleted || !commit.content) return null
         delete commit._rev;
         let from = this.snapshotResourceFor(commit),
             to = currentExportDir.join(from.parent().name() + "/" + from.name());
         return {from, to};
-      }) : [];
+      }).filter(Boolean) : [];
 
       if (!copyResources) commits.forEach(commit => { delete commit._rev; });
       await currentExportDir.ensureExistance();
@@ -732,7 +733,8 @@ export default class ObjectDB {
 
     for (let {doc: commit} of rows) {
       // 2. resources to delete
-      resources.push(this.snapshotResourceFor(commit));
+      if (!commit.deleted && !commit._deleted && commit.content)
+        resources.push(this.snapshotResourceFor(commit));
       commitDeletions.push({...commit, _deleted: true});
     }
 
@@ -769,7 +771,8 @@ export default class ObjectDB {
     let versionDB = this.__versionDB || await this._versionDB(),
         objectDB = this.__commitDB || await this._commitDB(),
         {name, type, _id} = commit,
-        resources = commit.deleted ? [] : [this.snapshotResourceFor(commit)],
+        resources = (commit.deleted || commit._deleted || !commit.content) ?
+                     [] : [this.snapshotResourceFor(commit)],
         commitDeletions = [{...commit, _deleted: true}],
         hist = await versionDB.get(type + "/" + name);
 
@@ -806,7 +809,7 @@ class Synchronization {
   constructor(fromObjectDB, remoteCommitDB, remoteVersionDB, remoteLocation, options = {}) {
     // replicationFilter: {onlyIds: {STRING: BOOL}, onlyTypesAndNames: {[type+"\u0000"+name]: BOOL}}
     this.options = {
-      debug: true, live: false, method: "sync",
+      debug: false, live: false, method: "sync",
       replicationFilter: undefined,
       ...options
     };
@@ -974,7 +977,7 @@ class Synchronization {
 
           return toResource.exists().then(toExists => {
             if (toExists) {
-              console.log(`Skip copying to ${toResource.url}, already exist`);
+              debug && console.log(`Skip copying to ${toResource.url}, already exist`);
               return Promise.resolve();
             }
 
