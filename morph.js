@@ -2670,6 +2670,16 @@ export class Image extends Morph {
     }
   }
 
+  __deserialize__(snapshot, objRef) {
+    this._isDeserializing = true;
+    super.__deserialize__(snapshot, objRef);
+  }
+
+  __after_deserialize__(snapshot, ref) {
+    delete this._isDeserializing;
+    super.__after_deserialize__(snapshot, ref);
+  }
+
   get isImage() { return true }
 
   get ratio() { let {x, y} = this.naturalExtent; return x / y; }
@@ -2890,15 +2900,23 @@ class PathPoint {
 
   constructor(path, props = {}) {
     this.path = path;
-    Object.assign(this, obj.dissoc(props, "path"));
+    this._isSmooth = props.isSmooth || false;
+    this.x = props.position ? props.position.x : (props.x || 0);
+    this.y = props.position ? props.position.y : (props.y || 0);
+    this._controlPoints = props.controlPoints;
     connect(this, 'position', path, 'makeDirty');
     connect(this, 'controlPoints', path, 'makeDirty');
   }
 
-  get isSmooth() { return this._isSmooth; }
+  get isPathPoint() { return true; }
+
+  get isSmooth() { return this._isSmooth || false; }
   set isSmooth(smooth) {
-    this._isSmooth = smooth;
-    this.adaptControlPoints(smooth);
+    let changed = this._isSmooth !== smooth;
+    if (changed) {
+      this._isSmooth = smooth;
+      this.adaptControlPoints(smooth);
+    }
   }
 
   get position() { return pt(this.x, this.y)};
@@ -2950,22 +2968,27 @@ class PathPoint {
   get previousVertex() { return this.path.vertexBefore(this); }
 
   adaptControlPoints(smooth) {
-    var nextPos = this.nextVertex.position,
-        previousPos = this.previousVertex.position;
+    let {nextVertex, previousVertex, position, path} = this,
+        {vertices} = path,
+        i = vertices.indexOf(this),
+        isFirst = i === 0,
+        isLast = i === vertices.length-1,
+        previousPos = previousVertex ? previousVertex.position : position,
+        nextPos = nextVertex ? nextVertex.position : position;
     if (smooth) {
       const p = this.pointOnLine(
-        previousPos, nextPos, this.position, this.borderWidth);
+        previousPos, nextPos, position, path.borderWidth);
       this.controlPoints = {
-        next: p.subPt(previousPos),
-        previous: p.subPt(nextPos)
+        previous: isFirst ? pt(0,0) : p.subPt(nextPos),
+        next: p.subPt(previousPos)
       };
     } else {
       this.controlPoints = {
-        previous: previousPos.subPt(this.position).scaleBy(0.5),
-        next: nextPos.subPt(this.position).scaleBy(0.5)
+        previous: isFirst ? pt(0,0) : previousPos.subPt(position).scaleBy(0.5),
+        next: isLast ? pt(0,0) : nextPos.subPt(position).scaleBy(0.5)
       };
     }
-    this.path.onVertexChanged(this);
+    path.onVertexChanged(this);
   }
 }
 
@@ -2993,22 +3016,42 @@ export class Path extends Morph {
         }
       },
 
-      showControlPoints: {defaultValue: false},
+      showControlPoints: {
+        defaultValue: false
+      },
 
       vertices: {
         defaultValue: [],
+        after: ["isSmooth", 'borderWidth'],
         type: "Vertices",
         set(vs) {
-          vs = vs.map(v => {
-            let p = new PathPoint(this, {...v, borderWidth: this.borderWidth});
-            return p;
-          });
+          let {isSmooth} = this;
+          this._adjustingVertices = true;
+          vs = vs.map(v => v.isPathPoint ?
+            Object.assign(v, {path: this}) :
+            new PathPoint(this, {isSmooth, ...v}));
           this.setProperty("vertices", vs);
+          this._adjustingVertices = false;
+          this.updateBounds(vs);
         }
       },
 
       startMarker: {defaultValue: null, type: "Object"},
-      endMarker: {defaultValue: null, type: "Object"}
+      endMarker: {defaultValue: null, type: "Object"},
+
+      isSmooth: {
+        defaultValue: false,
+        type: "Boolean",
+        set(val) {
+          this.setProperty("isSmooth", val);
+          if (this.vertices) {
+            this._adjustingVertices = true;
+            this.vertices.forEach(ea => ea.isSmooth = val);
+            this._adjustingVertices = false;
+            this.updateBounds(this.vertices);
+          }
+        }
+      }
     };
   }
 
@@ -3032,40 +3075,47 @@ export class Path extends Morph {
     this.updateBounds(this.vertices);
   }
 
-  updateBounds(vertices) {
-    if (this.adjustingVertices) return;
-    this.adjustingVertices = true;
+  updateBounds(vertices = this.vertices) {
+    // vertices = this.vertices
+    if (!vertices.length) return;
+    if (this._adjustingVertices) return;
+    this._adjustingVertices = true;
     const {origin, extent: {x: w, y: h}} = this,
           relOriginX = origin.x/w,
           relOriginY = origin.y/h,
           points = [];
     for (let vertex of vertices) {
-      let {position, controlPoints} = vertex;
-      var {next, previous} = controlPoints || {};
-      if (next) next = position.addPt(next);
-      if (previous) previous = position.addPt(previous);
-      points.push(next, position, previous);
+      let {isSmooth, position, controlPoints} = vertex,
+          {next, previous} = controlPoints || {};
+      points.push(position);
+      if (isSmooth)
+        points.push(position.addPt(next), position.addPt(previous));
     }
     let b = Rectangle.unionPts(points),
-        offset = b.topLeft().addPt(origin);
+        newOrigin = pt(b.width*relOriginX, b.height*relOriginY),
+        offset = b.topLeft();
     vertices.forEach(ea => ea.moveBy(offset.negated()));
     this.moveBy(this.getTransform().transformDirection(offset));
     this.extent = b.extent();
-    this.origin = pt(b.width*relOriginX, b.height*relOriginY);
-    this.adjustingVertices = false;
+    this.origin = newOrigin;
+    this._adjustingVertices = false;
   }
 
   onChange(change) {
-    if (change.prop == "extent" && change.value && change.prevValue && !this.adjustingVertices)
-      this.adjustVertices(change.value.scaleByPt(change.prevValue.inverted()));
-    if (!this.adjustingOrigin && ["vertices", "borderWidthLeft"].includes(change.prop))
-      this.updateBounds(change.prop == "vertices" ? change.value : this.vertices);
+    let {prop, value, prevValue} = change,
+        { _adjustingVertices, _adjustingOrigin} = this;
+    if (prop == "extent" && value && prevValue && !_adjustingVertices)
+      this.adjustVertices(value.scaleByPt(prevValue.inverted()));
+    if (!_adjustingOrigin && prop === "vertices" || prop === "borderWidthLeft")
+      this.updateBounds(prop == "vertices" ? value : this.vertices);
+    if (!_adjustingVertices && prop === "origin")
+      this.updateBounds(this.vertices);
     super.onChange(change);
   }
 
   vertexBefore(v) {
     const i = this.vertices.indexOf(v) - 1;
-    return this.vertices[i > 0 ? i : this.vertices.length - 1];
+    return this.vertices[i >= 0 ? i : this.vertices.length - 1];
   }
 
   vertexAfter(v) {
@@ -3074,66 +3124,226 @@ export class Path extends Morph {
   }
 
   adjustVertices(delta) {
-    this.vertices && this.vertices.forEach(v => {
-        var {next, previous} = v.controlPoints;
-        next = next.scaleByPt(delta);
-        previous = previous.scaleByPt(delta);
-        v.position = v.position
-          .addPt(this.origin)
-          .scaleByPt(delta)
-          .subPt(this.origin);
-        v.controlPoints = {next, previous};
-      });
+    let {vertices} = this;
+    if (!vertices) return; /*init*/
+    vertices.forEach(v => {
+      var {next, previous} = v.controlPoints;
+      next = next.scaleByPt(delta);
+      previous = previous.scaleByPt(delta);
+      v.position = v.position
+        .addPt(this.origin)
+        .scaleByPt(delta)
+        .subPt(this.origin);
+      v.controlPoints = {next, previous};
+    });
   }
 
   adjustOrigin(newOrigin) {
-    this.adjustingOrigin = true;
-    this.vertices.forEach(v =>
-      v.position = this.origin.subPt(newOrigin).addXY(v.x, v.y));
+    this._adjustingOrigin = true;
+    let {vertices, origin} = this;
+    vertices.forEach(v =>
+      v.position = origin.subPt(newOrigin).addXY(v.x, v.y));
     super.adjustOrigin(newOrigin);
-    this.adjustingOrigin = false;
+    this._adjustingOrigin = false;
   }
 
   addVertex(v, before = null) {
-    let {vertices} = this;
-    if (typeof before === "number") {
-      const insertIndex = vertices.indexOf(before);
+    let {vertices} = this,
+        insertIndex = typeof before === "number" ? before :
+          before && before.isPathPoint ? vertices.indexOf(before) :
+           undefined;
+    if (typeof insertIndex === "number" && insertIndex > -1)
       vertices.splice(insertIndex, 0, v);
-    } else vertices.push(v);
+    else vertices.push(v);
     this.vertices = vertices;
+  }
+
+  addVertexCloseTo(point) {
+    // add a new vertext near point
+    let {
+          closest: {
+            length: closestLength, vertex: closestV
+          }, next
+        } = this.verticesCloseTo(point),
+        {length, point: insertionPoint} = this.findClosestPointOnPath(point, 10, 3),
+        insertBefore = length <= closestLength ? closestV : next ? next.vertex : null;
+    return this.addVertex(insertionPoint, insertBefore);
   }
 
   render(renderer) {
     return renderer.renderPath(this);
   }
 
+  get _pathNode() {
+    let node = this.env.renderer.getNodeForMorph(this);
+    return node && node.querySelector("#svg" + this.id);
+  }
+
+  verticesCloseTo(point, withLength = true) {
+    let {vertices} = this,
+        distsToVertices = [],
+        minDist = Infinity, minDistIndex = -1;
+
+    for (let i = 0; i < vertices.length; i++) {
+      let dist = vertices[i].position.dist(point);
+      distsToVertices.push(dist);
+      if (dist >= minDist) continue;
+      minDist = dist; minDistIndex = i;
+    }
+
+    let previous = minDistIndex === 0 ? null :
+          {index: minDistIndex-1, vertex: vertices[minDistIndex-1]},
+        next = minDistIndex === vertices.length-1 ? null :
+          {index: minDistIndex+1, vertex: vertices[minDistIndex+1]},
+        closest = {index: minDistIndex, vertex: vertices[minDistIndex]}
+
+    if (withLength) {
+      let {_pathNode} = this;
+      if (previous) {
+        let {length} = this.findClosestPointOnPath(
+          previous.vertex.position, 6, 3, _pathNode);
+        previous.length = length;
+      }
+      if (next) {
+        let {length} = this.findClosestPointOnPath(
+          next.vertex.position, 6, 3, _pathNode);
+        next.length = length;
+      }
+      {
+        let {length} = this.findClosestPointOnPath(
+          closest.vertex.position, 6, 3, _pathNode);
+        closest.length = length;
+      }
+    }
+
+    return {previous, next, closest};
+  }
+
+  findClosestPointOnPath(fromPoint, nSamples, iterations, pathNode) {
+    // fromPoint is a Point in local coordinates of this
+    // returns {length, point}
+    // length - absolute length of closes point on path
+    // point the closest point in local coords
+
+    if (!pathNode) {
+      let node = this.env.renderer.getNodeForMorph(this);
+      pathNode = node && node.querySelector("#svg" + this.id);
+    }
+
+    return pathNode ?
+      findClosestPointOnPath(pathNode, fromPoint, nSamples, iterations) :
+      {length: 0, point: fromPoint};
+
+    function findClosestPointOnPath(
+      pathNode, pos, nSamples = 10, iterations = 3,
+      fromLength = 0, toLength = pathNode.getTotalLength(), iteration = 0
+    ) {
+      let samples = samplePathPoints(pathNode, toLength, fromLength, nSamples),
+          minDist = Infinity, minIndex = -1;
+      for (let [point, atLength, i] of samples) {
+        let dist = pos.dist(point);
+        if (dist >= minDist) continue;
+        minDist = dist; minIndex = i;
+      }
+      
+      if (iteration >= iterations) {
+        let [point, length] = samples[minIndex];
+        return {point, length};
+      }
+      
+      fromLength = samples[Math.max(0, minIndex-1)][1];
+      toLength = samples[Math.min(samples.length-1, minIndex+1)][1];
+      
+      return findClosestPointOnPath(
+        pathNode, pos, nSamples, iterations,
+        fromLength, toLength, iteration+1);
+      
+      function samplePathPoints(pathNode, from, to, sampleSize) {
+        // 0 <= from, to <= pathNode.getTotalLength()
+        // returns list of points with length sampleSize
+        // including from, to
+        let points = [],
+            step = (to-from) / (sampleSize-1), i = 0;
+        points.push([Point.ensure(pathNode.getPointAtLength(from)), from, i]);
+        for (i = 1; i < sampleSize-1; i++) {
+          let length = from + (i*step);
+          points.push([Point.ensure(pathNode.getPointAtLength(length)), length, i]);
+        }
+        points.push([Point.ensure(pathNode.getPointAtLength(to)), to, i]);
+        return points;
+      }
+    }
+  }
+
   onDragStart(evt) {
     let {domEvt: {target}} = evt,
         cssClass = PropertyPath("attributes.class.value").get(target);
-    if (cssClass && cssClass.includes("path-control-point")) {
-      let [_, n] = cssClass.match(/path-control-point-([0-9]+)/);
+    if (cssClass && cssClass.includes("path-point")) {
+      let [_, n, ctrlN] = cssClass.match(/path-point-([0-9]+)(?:-control-([0-9]+))?$/);
       this._controlPointDrag = {marker: target, n: Number(n)};
+      if (ctrlN !== undefined) this._controlPointDrag.ctrlN = Number(ctrlN);
     } else return super.onDragStart(evt);
   }
 
   onDrag(evt) {
     if (!this._controlPointDrag) return super.onDrag(evt);
-    let {target, n} = this._controlPointDrag,
-        {vertices} = this;
-    if (vertices[n]) {
+    let {target, n, ctrlN} = this._controlPointDrag,
+        {vertices} = this,
+        v = vertices[n];
+    if (v) {
       let delta = this.getInverseTransform().transformDirection(evt.state.dragDelta);
-      vertices[n].moveBy(delta);
+      if (ctrlN === undefined) {
+        v.moveBy(delta);
+        let vp = vertices[n-1], vn = vertices[n+1];
+
+        // merge?
+        if (vp && vp.position.dist(v.position) < 10) {
+          this._controlPointDrag.maybeMerge = [n-1, n];
+        } else if (vn && vn.position.dist(v.position) < 10) {
+          this._controlPointDrag.maybeMerge = [n, n+1];
+        } else {
+          this._controlPointDrag.maybeMerge = undefined;
+        }
+      }
+      else if (ctrlN === 1) v.movePreviousControlPoint(delta);
+      else if (ctrlN === 2) v.moveNextControlPoint(delta);
     }
   }
 
   onDragEnd(evt) {
-    if (this._controlPointDrag)
+    let {vertices, _controlPointDrag} = this;
+    if (_controlPointDrag) {
+      let {maybeMerge} = _controlPointDrag;
       delete this._controlPointDrag;
+      if (maybeMerge) {
+        let [i, j] = maybeMerge,
+            v1 = vertices[i], v2 = vertices[j];
+        v1.controlPoints.next = v2.controlPoints.next;
+        vertices.splice(j, 1)
+        this.vertices = vertices;
+      }
+    }
   }
-  
+
+  onMouseDown(evt) {
+    var {state: {clickCount}} = evt,
+        double = clickCount === 2;
+
+    if (double) {
+      this.addVertexCloseTo(this.localize(evt.position));
+    }
+  }
+
   menuItems() {
+    let checked = Icon.textAttribute('check-square-o'),
+        unchecked = Icon.textAttribute('square-o');
+    unchecked[1].paddingRight = "7px";
+    checked[1].paddingRight = "5px";
     return [
-      ["toggle control points", () => this.showControlPoints = !this.showControlPoints],
+      [[...(this.showControlPoints ? checked : unchecked), " control points"],
+       () => this.showControlPoints = !this.showControlPoints],
+      [[...(this.isSmooth ? checked : unchecked), " smooth"],
+       () => this.isSmooth = !this.isSmooth],
       {isDivider: true},
       ...super.menuItems()
     ]
