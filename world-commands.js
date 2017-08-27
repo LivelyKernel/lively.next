@@ -436,8 +436,7 @@ var commands = [
       if (!format) var {a,b, format} = findFormat(a, b);
       else { a = String(a);  b = String(b); }
 
-      // import * as diff from "https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js"
-      var diff = await System.import("https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js"),
+      var diff = await System.import("jsdiff", System.decanonicalize("lively.morphic")),
           diffed = await diffInWindow(a, b, {fontFamily: "monospace", ...opts, format});
 
       return diffed;
