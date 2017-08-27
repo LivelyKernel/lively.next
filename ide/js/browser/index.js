@@ -120,13 +120,9 @@ export default class Browser extends Window {
   // initialization
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  constructor(props = {}) {
-    super(props);
-    this.targetMorph = this.build();
-    this.onLoad();
-  }
-
   reset() {
+    if (!this.targetMorph) this.targetMorph = this.build();
+
     this._inLayout = true;
 
     connect(this, 'extent', this, 'relayout');
