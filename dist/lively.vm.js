@@ -249,6 +249,7 @@ var toConsumableArray = function (arr$$1) {
   }
 };
 
+/*global System,global,Global,self,Node,ImageData*/
 function getGlobal() {
   if (typeof System !== "undefined") return System.global;
   if (typeof window !== "undefined") return window;
@@ -314,7 +315,18 @@ function printEvalResult(evalResult) {
       promiseStatus = evalResult.promiseStatus;
 
 
-  if (isError || value instanceof Error) return String(value.stack || value);
+  if (isError || value instanceof Error) {
+    var err = value,
+        stringified = String(err),
+        stack = err.stack || "";
+    if (stack && err.message !== err.stack) {
+      stack = String(stack);
+      var errInStackIdx = stack.indexOf(stringified);
+      if (errInStackIdx === 0) stack = stack.slice(stringified.length);
+      stringified += "\n" + stack;
+    }
+    return stringified;
+  }
 
   if (isPromise) {
     var status = lively_lang.string.print(promiseStatus),
@@ -817,7 +829,7 @@ function runEval$1(code, options, thenDo) {
     if (options.transpiler) code = options.transpiler(code, options.transpilerOptions);
     // console.log(code);
   } catch (e) {
-    console.warn(result.addWarning("lively.vm evalCodeTransform not working: " + (e.stack || e)));
+    console.warn(result.addWarning("lively.vm evalCodeTransform not working: " + e));
   }
 
   // 3. Now really run eval!
@@ -1198,7 +1210,7 @@ var EvalStrategy = function () {
   createClass(EvalStrategy, [{
     key: "runEval",
     value: function () {
-      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
+      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(source, options) {
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -1222,7 +1234,7 @@ var EvalStrategy = function () {
   }, {
     key: "keysOfObject",
     value: function () {
-      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
+      var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(prefix, options) {
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
@@ -1258,7 +1270,7 @@ var SimpleEvalStrategy = function (_EvalStrategy) {
   createClass(SimpleEvalStrategy, [{
     key: "runEval",
     value: function () {
-      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
+      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(source, options) {
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -1288,7 +1300,7 @@ var SimpleEvalStrategy = function (_EvalStrategy) {
   }, {
     key: "keysOfObject",
     value: function () {
-      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
+      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(prefix, options) {
         var _this2 = this;
 
         var result;
@@ -1343,7 +1355,7 @@ var LivelyVmEvalStrategy = function (_EvalStrategy2) {
   }, {
     key: "runEval",
     value: function () {
-      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
+      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(source, options) {
         var System;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
@@ -1372,7 +1384,7 @@ var LivelyVmEvalStrategy = function (_EvalStrategy2) {
   }, {
     key: "keysOfObject",
     value: function () {
-      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
+      var _ref6 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(prefix, options) {
         var result;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
@@ -1422,7 +1434,7 @@ var RemoteEvalStrategy = function (_LivelyVmEvalStrategy) {
   }, {
     key: "runEval",
     value: function () {
-      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(source, options) {
+      var _ref7 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(source, options) {
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
@@ -1446,7 +1458,7 @@ var RemoteEvalStrategy = function (_LivelyVmEvalStrategy) {
   }, {
     key: "keysOfObject",
     value: function () {
-      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(prefix, options) {
+      var _ref8 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(prefix, options) {
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
             switch (_context8.prev = _context8.next) {
@@ -1470,7 +1482,7 @@ var RemoteEvalStrategy = function (_LivelyVmEvalStrategy) {
   }, {
     key: "remoteEval",
     value: function () {
-      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(source, options) {
+      var _ref9 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(source, options) {
         var result;
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
           while (1) {
@@ -1506,7 +1518,7 @@ var RemoteEvalStrategy = function (_LivelyVmEvalStrategy) {
   }, {
     key: "basicRemoteEval",
     value: function () {
-      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(source, options) {
+      var _ref10 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(source, options) {
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
             switch (_context10.prev = _context10.next) {
@@ -1558,7 +1570,7 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
   }, {
     key: "basicRemoteEval",
     value: function () {
-      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(source, options) {
+      var _ref11 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(source, options) {
         var method;
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
@@ -1589,7 +1601,7 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
   }, {
     key: "basicRemoteEval_web",
     value: function () {
-      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(payload, url) {
+      var _ref12 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(payload, url) {
         var _ref13, _ref14, domain, crossDomain, res;
 
         return regeneratorRuntime.wrap(function _callee12$(_context12) {
@@ -1651,7 +1663,7 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
   }, {
     key: "basicRemoteEval_node",
     value: function () {
-      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(payload, url) {
+      var _ref15 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13(payload, url) {
         var urlParse, http, opts;
         return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
@@ -1712,7 +1724,7 @@ var L2LEvalStrategy = function (_RemoteEvalStrategy2) {
   createClass(L2LEvalStrategy, [{
     key: "basicRemoteEval",
     value: function () {
-      var _ref16 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(source, options) {
+      var _ref16 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14(source, options) {
         var l2lClient, targetId, _ref17, evalResult;
 
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
