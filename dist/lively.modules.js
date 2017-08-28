@@ -71782,7 +71782,7 @@ var ObjectDBInterface = {
     var _this9 = this;
 
     return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee45() {
-      var _checkArgs3, dbName, ref, type, typesAndNames, knownCommitIds, includeDeleted, db, commitDB, versionDB, versionQueryOpts, refsByTypeAndName, keys, _iteratorNormalCompletion17, _didIteratorError17, _iteratorError17, _iterator17, _step17, _ref74, _type2, name, _ref75, versions, commitIds, _iteratorNormalCompletion18, _didIteratorError18, _iteratorError18, _iterator18, _step18, version, _id, refs, commitId, commits;
+      var _checkArgs3, dbName, ref, type, typesAndNames, knownCommitIds, includeDeleted, filterFn, db, commitDB, versionDB, versionQueryOpts, refsByTypeAndName, keys, _iteratorNormalCompletion17, _didIteratorError17, _iteratorError17, _iterator17, _step17, _ref74, _type2, name, _ref75, versions, commitIds, _iteratorNormalCompletion18, _didIteratorError18, _iteratorError18, _iterator18, _step18, version, _id, refs, commitId, commits, fn, filteredCommits;
 
       return regeneratorRuntime.wrap(function _callee45$(_context46) {
         while (1) {
@@ -71794,7 +71794,8 @@ var ObjectDBInterface = {
                 type: "string|undefined",
                 typesAndNames: "Array|undefined",
                 knownCommitIds: "object|undefined",
-                includeDeleted: "boolean|undefined"
+                includeDeleted: "boolean|undefined",
+                filterFn: "string|undefined"
               });
               dbName = _checkArgs3.db;
               ref = _checkArgs3.ref;
@@ -71802,56 +71803,57 @@ var ObjectDBInterface = {
               typesAndNames = _checkArgs3.typesAndNames;
               knownCommitIds = _checkArgs3.knownCommitIds;
               includeDeleted = _checkArgs3.includeDeleted;
-              _context46.next = 9;
+              filterFn = _checkArgs3.filterFn;
+              _context46.next = 10;
               return ObjectDB.find(dbName);
 
-            case 9:
+            case 10:
               db = _context46.sent;
 
               if (!ref) ref = "HEAD";
 
               if (db) {
-                _context46.next = 13;
+                _context46.next = 14;
                 break;
               }
 
               throw new Error("db " + dbName + " does not exist");
 
-            case 13:
+            case 14:
               _context46.t0 = db.__commitDB;
 
               if (_context46.t0) {
-                _context46.next = 18;
+                _context46.next = 19;
                 break;
               }
 
-              _context46.next = 17;
+              _context46.next = 18;
               return db._commitDB();
 
-            case 17:
+            case 18:
               _context46.t0 = _context46.sent;
 
-            case 18:
+            case 19:
               commitDB = _context46.t0;
               _context46.t1 = db.__versionDB;
 
               if (_context46.t1) {
-                _context46.next = 24;
+                _context46.next = 25;
                 break;
               }
 
-              _context46.next = 23;
+              _context46.next = 24;
               return db._versionDB();
 
-            case 23:
+            case 24:
               _context46.t1 = _context46.sent;
 
-            case 24:
+            case 25:
               versionDB = _context46.t1;
               versionQueryOpts = {}, refsByTypeAndName = {};
 
               if (!typesAndNames) {
-                _context46.next = 49;
+                _context46.next = 50;
                 break;
               }
 
@@ -71859,7 +71861,7 @@ var ObjectDBInterface = {
               _iteratorNormalCompletion17 = true;
               _didIteratorError17 = false;
               _iteratorError17 = undefined;
-              _context46.prev = 31;
+              _context46.prev = 32;
 
               for (_iterator17 = typesAndNames[Symbol.iterator](); !(_iteratorNormalCompletion17 = (_step17 = _iterator17.next()).done); _iteratorNormalCompletion17 = true) {
                 _ref74 = _step17.value;
@@ -71869,78 +71871,78 @@ var ObjectDBInterface = {
                 if (_ref75) refsByTypeAndName[_type2 + "/" + name] = _ref75;
               }
 
-              _context46.next = 39;
+              _context46.next = 40;
               break;
 
-            case 35:
-              _context46.prev = 35;
-              _context46.t2 = _context46["catch"](31);
+            case 36:
+              _context46.prev = 36;
+              _context46.t2 = _context46["catch"](32);
               _didIteratorError17 = true;
               _iteratorError17 = _context46.t2;
 
-            case 39:
-              _context46.prev = 39;
+            case 40:
               _context46.prev = 40;
+              _context46.prev = 41;
 
               if (!_iteratorNormalCompletion17 && _iterator17.return) {
                 _iterator17.return();
               }
 
-            case 42:
-              _context46.prev = 42;
+            case 43:
+              _context46.prev = 43;
 
               if (!_didIteratorError17) {
-                _context46.next = 45;
+                _context46.next = 46;
                 break;
               }
 
               throw _iteratorError17;
 
-            case 45:
-              return _context46.finish(42);
-
             case 46:
-              return _context46.finish(39);
+              return _context46.finish(43);
 
             case 47:
-              _context46.next = 50;
+              return _context46.finish(40);
+
+            case 48:
+              _context46.next = 51;
               break;
 
-            case 49:
+            case 50:
               if (type) {
                 versionQueryOpts.startkey = type + "/\0\"";
                 versionQueryOpts.endkey = type + "/\uFFFF\"";
               }
 
-            case 50:
-              _context46.next = 52;
+            case 51:
+              _context46.next = 53;
               return versionDB.getAll(versionQueryOpts);
 
-            case 52:
+            case 53:
               versions = _context46.sent;
               commitIds = [];
               _iteratorNormalCompletion18 = true;
               _didIteratorError18 = false;
               _iteratorError18 = undefined;
-              _context46.prev = 57;
+              _context46.prev = 58;
               _iterator18 = versions[Symbol.iterator]();
 
-            case 59:
+            case 60:
               if (_iteratorNormalCompletion18 = (_step18 = _iterator18.next()).done) {
-                _context46.next = 70;
+                _context46.next = 71;
                 break;
               }
 
               version = _step18.value;
 
               if (!(version.deleted || version._deleted)) {
-                _context46.next = 63;
+                _context46.next = 64;
                 break;
               }
 
-              return _context46.abrupt("continue", 67);
+              return _context46.abrupt("continue", 68);
 
-            case 63:
+            case 64:
               _id = version._id, refs = version.refs;
 
               ref = refsByTypeAndName[_id] || ref;
@@ -71948,63 +71950,103 @@ var ObjectDBInterface = {
 
               if (commitId && !knownCommitIds || !knownCommitIds.hasOwnProperty(commitId)) commitIds.push(commitId);
 
-            case 67:
+            case 68:
               _iteratorNormalCompletion18 = true;
-              _context46.next = 59;
+              _context46.next = 60;
               break;
 
-            case 70:
-              _context46.next = 76;
+            case 71:
+              _context46.next = 77;
               break;
 
-            case 72:
-              _context46.prev = 72;
-              _context46.t3 = _context46["catch"](57);
+            case 73:
+              _context46.prev = 73;
+              _context46.t3 = _context46["catch"](58);
               _didIteratorError18 = true;
               _iteratorError18 = _context46.t3;
 
-            case 76:
-              _context46.prev = 76;
+            case 77:
               _context46.prev = 77;
+              _context46.prev = 78;
 
               if (!_iteratorNormalCompletion18 && _iterator18.return) {
                 _iterator18.return();
               }
 
-            case 79:
-              _context46.prev = 79;
+            case 80:
+              _context46.prev = 80;
 
               if (!_didIteratorError18) {
-                _context46.next = 82;
+                _context46.next = 83;
                 break;
               }
 
               throw _iteratorError18;
 
-            case 82:
-              return _context46.finish(79);
-
             case 83:
-              return _context46.finish(76);
+              return _context46.finish(80);
 
             case 84:
-              _context46.next = 86;
+              return _context46.finish(77);
+
+            case 85:
+              _context46.next = 87;
               return db.getCommitsWithIds(commitIds);
 
-            case 86:
+            case 87:
               commits = _context46.sent;
 
               if (!includeDeleted) commits = commits.filter(function (ea) {
                 return !ea.deleted;
               });
+
+              if (!filterFn) {
+                _context46.next = 105;
+                break;
+              }
+
+              _context46.prev = 90;
+              fn = eval("(" + filterFn + ")");
+
+              if (!(typeof fn !== "function")) {
+                _context46.next = 94;
+                break;
+              }
+
+              throw new Error(filterFn + " does not eval to a function!");
+
+            case 94:
+              filteredCommits = commits.filter(fn);
+
+              if (Array.isArray(filteredCommits)) {
+                _context46.next = 99;
+                break;
+              }
+
+              throw new Error(filterFn + " does not return an array!");
+
+            case 99:
+              commits = filteredCommits;
+
+            case 100:
+              _context46.next = 105;
+              break;
+
+            case 102:
+              _context46.prev = 102;
+              _context46.t4 = _context46["catch"](90);
+
+              console.error("fetchCommits filterFn failed:", _context46.t4);
+
+            case 105:
               return _context46.abrupt("return", commits);
 
-            case 89:
+            case 106:
             case "end":
               return _context46.stop();
           }
         }
-      }, _callee45, _this9, [[31, 35, 39, 47], [40,, 42, 46], [57, 72, 76, 84], [77,, 79, 83]]);
+      }, _callee45, _this9, [[32, 36, 40, 48], [41,, 43, 47], [58, 73, 77, 85], [78,, 80, 84], [90, 102]]);
     }))();
   },
   fetchVersionGraph: function fetchVersionGraph(args) {
@@ -73983,6 +74025,7 @@ var resourceExtension = {
 exports.Database = Database;
 exports.ObjectDB = ObjectDB;
 exports.ObjectDBInterface = ObjectDBInterface;
+exports.ObjectDBHTTPInterface = ObjectDBHTTPInterface;
 
 }((this.lively.storage = this.lively.storage || {}),PouchDB,pouchdbAdapterMem,lively.resources,lively.lang));
 
