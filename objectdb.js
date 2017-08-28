@@ -26,14 +26,14 @@ var objectDBs = objectDBs || new Map();
 export default class ObjectDB {
 
   static async dbList() {
-    let metaDB = Database.ensureDB("__internal__objectdb-meta");
+    let metaDB = Database.ensureDB("internal__objectdb-meta");
     return (await metaDB.getAll()).map(ea => ea._id);
   }
 
   static async find(name) {
     let found = objectDBs.get(name);
     if (found) return found;
-    let metaDB = Database.ensureDB("__internal__objectdb-meta"),
+    let metaDB = Database.ensureDB("internal__objectdb-meta"),
         meta = await metaDB.get(name);
     if (!meta) return;
     return this.named(name, meta);
@@ -52,7 +52,7 @@ export default class ObjectDB {
     let db = new this(name, options);
     objectDBs.set(name, db);
 
-    let metaDB = Database.ensureDB("__internal__objectdb-meta");
+    let metaDB = Database.ensureDB("internal__objectdb-meta");
     metaDB.set(name, {...options, snapshotLocation: options.snapshotLocation.url})
       .catch(err => console.error(`error writing objectdb meta:`, err));
 
@@ -75,7 +75,7 @@ export default class ObjectDB {
     if (versionDB) await versionDB.destroy();
     objectDBs.delete(this.name);
 
-    let metaDB = Database.ensureDB("__internal__objectdb-meta");
+    let metaDB = Database.ensureDB("internal__objectdb-meta");
     await metaDB.remove(this.name);
 
     // await this.snapshotLocation.remove()
