@@ -38,9 +38,9 @@ export default class SubserverPlugin {
     let files = await resource(dir).dirList(1, {exclude: ea => ea.ext() !== "js"});
     try {
       let subservers = await server.addSubservers(files.map(ea => ea.url));
-      console.log(`Started subservers ${subservers.map(ea => ea.pluginId).join(", ")}`);
+      console.log(`[subserver] Started ${subservers.map(ea => ea.pluginId).join(", ")}`);
     } catch (err) {
-      console.error(`Error starting subservers:\n${err}`);
+      console.error(`[subserver] Error starting subservers:\n${err}`);
       return;
     }
   }
@@ -61,17 +61,19 @@ export default class SubserverPlugin {
 
   async addSubserver(req, res, body) {
     if (!body.subserverModule) throw new Error("no body.subserverModule");
+    let action = body.action || "add"
     let subserver = await this.server.addSubserver(body.subserverModule);
-    console.log(subserver)
+    console.log(`[subserver] ${action} ${subserver.pluginId}`);
     successResponse(res, `added subserver ${subserver.pluginId}`, {id: subserver.pluginId});
   }
 
   async removeSubserver(req, res, body) {
-  if (!body.subserverModule && !body.id)
+    if (!body.subserverModule && !body.id)
       throw new Error("no body.subserverModule nor body.id");
     let {removed, subserver} = await this.server.removeSubserver(body.subserverModule || body.id),
         msg = removed ? `subserver ${subserver.pluginId} removed`
                       : `no such subserver installed`;
+    console.log(`[subserver] ${subserver.pluginId} removed`);
     successResponse(res, msg, {id: subserver ? subserver.pluginId : null});
   }
 
