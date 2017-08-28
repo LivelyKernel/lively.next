@@ -245,9 +245,9 @@ export default class Database {
     return this.update(id, _ => value, options);
   }
 
-  async get(id) {
+  async get(id, opts = {}) {
     // returns document with id
-    try { return await this.pouchdb.get(id); } catch (e) {
+    try { return await this.pouchdb.get(id, opts); } catch (e) {
       if (e.name === "not_found") return undefined;
       throw e;
     }
