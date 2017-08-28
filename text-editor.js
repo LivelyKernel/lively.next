@@ -4,6 +4,7 @@ import { pt, Rectangle, rect, Color } from "lively.graphics"
 import { connect, signal, once } from "lively.bindings"
 import { resource } from "lively.resources";
 import { guessTextModeName } from "./editor-plugin.js";
+import { InputLine } from "lively.components";
 
 // this.world().openInWindow(new TextEditor).activate()
 
@@ -108,7 +109,7 @@ export default class TextEditor extends Morph {
         after: ["historyId"],
         initialize() {
           this.submorphs = [
-            Text.makeInputLine({name: "urlInput", historyId: this.historyId}),
+            new InputLine({name: "urlInput", historyId: this.historyId}),
             {name: "loadButton", type: "button", label: "reload"},
             {name: "saveButton", type: "button", label: "save"},
             {name: "removeButton", type: "button", label: "remove"},

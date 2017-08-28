@@ -1,9 +1,8 @@
 /*global System,DOMParser*/
 import { promise } from "lively.lang";
 import { Color } from "lively.graphics";
-import { config } from "../../index.js";
+import { config, Text } from "lively.morphic";
 import EvalBackendChooser from "../js/eval-backend-ui.js";
-import { Text } from "../../text/morph.js";
 import HTMLEditorPlugin from "./editor-plugin.js";
 import JSWorkspace from "../js/workspace.js";
 

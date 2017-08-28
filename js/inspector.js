@@ -1143,6 +1143,7 @@ export default class Inspector extends Morph {
         }
         await tree.execCommand("uncollapse selected node");
       }
+      tree.selection = null;
     } catch (e) { this.showError(e); }
 
     this.startStepping(10,'refreshAllProperties');
@@ -1213,6 +1214,7 @@ export default class Inspector extends Morph {
     let newTarget = await InteractiveMorphSelector.selectMorph();
     this.toggleSelectionInstructions(false);
     if (newTarget) this.targetObject = newTarget;
+    
   }
 
   toggleSelectionInstructions(active) {

@@ -19,6 +19,7 @@ import { SvgStyleHalo } from "lively.halos/vertices.js";
 import { GradientEditor } from "./gradient-editor.js";
 import { ColorPickerField } from "./color-picker.js";
 import { NumberWidget } from "../value-widgets.js";
+import { showLayoutHaloFor } from "lively.halos/layout.js";
 
 const duration = 200;
 
@@ -436,8 +437,7 @@ export class LayoutPopover extends StylePopover {
 
   showLayoutHaloFor(morph) {
     this.clearLayoutHalo();
-    if (!morph || !morph.layout) return;
-    this.layoutHalo = $world.showLayoutHaloFor(morph);
+    this.layoutHalo = showLayoutHaloFor(morph);
   }
 
   clearLayoutHalo() {
@@ -482,7 +482,7 @@ export class LayoutPopover extends StylePopover {
   }
 
   gridLayoutOptions() {
-      const layout = this.container.halo,
+      const layout = this.container.layout,
             compensateOrigin = new widgets.LabeledCheckBox({
                 name: "compensateOrigin", label: 'Compensate Origin',
                 fill: Color.transparent,
@@ -492,12 +492,12 @@ export class LayoutPopover extends StylePopover {
                 name: "fitToCell", checked: layout.fitToCell});
       connect(compensateOrigin, "checked", layout, "compensateOrigin");
       connect(fitToCell, "checked", layout, "fitToCell");
-      connect(compensateOrigin, "checked", this, "alignWithTarget");
+      connect(compensateOrigin, "checked", this.layoutHalo, "alignWithTarget");
       return [compensateOrigin, fitToCell];
   }
 
   flexLayoutOptions() {
-    const layout = this.container.halo,
+    const layout = this.container.layout,
           spacing = new NumberWidget({
             fill: Color.white,
             borderWidth: 1,
@@ -521,9 +521,9 @@ export class LayoutPopover extends StylePopover {
             fill: Color.transparent,
             checked: layout.resizeSubmorphs
           });
-    connect(spacing, 'update', this, 'updateSpacing');
-    connect(autoResizeCb, "checked", this, "updateAutoResizePolicy");
-    connect(resizeSubmorphsCb, "checked", this, "updateResizeSubmorphsPolicy");
+    connect(spacing, 'update', this.layoutHalo, 'updateSpacing');
+    connect(autoResizeCb, "checked", this.layoutHalo, "updateAutoResizePolicy");
+    connect(resizeSubmorphsCb, "checked", this.layoutHalo, "updateResizeSubmorphsPolicy");
     return [
         autoResizeCb,
         resizeSubmorphsCb,
@@ -546,7 +546,7 @@ export class LayoutPopover extends StylePopover {
             borderColor: Color.gray,
             unit: "px"
           });
-    connect(spacing, 'update', this, 'updateSpacing');
+    connect(spacing, 'update', this.layoutHalo, 'updateSpacing');
     return [
       [
         {
@@ -571,7 +571,7 @@ export class LayoutPopover extends StylePopover {
   optionControls(halo) {
     // rms 31.7.17 not so nice, but fastest way I could come up with
     // to remove the circular dependency to lively.halos
-    switch (halo.constructor)  {
+    switch (halo.constructor.name)  {
       case 'GridLayoutHalo':
         return this.gridLayoutControls();
       case 'TilinLayoutHalo':
