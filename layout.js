@@ -13,6 +13,25 @@ import { arr } from "lively.lang";
 import { widgets, Menu } from "lively.components";
 import { connect } from "lively.bindings";
 
+export function showLayoutHaloFor(morph, pointerId) {
+  var halo;
+  if (morph.layout) {
+    switch(morph.layout.name()) {
+      case "Fill":
+      case "Vertical":
+      case "Horizontal":
+        halo = new FlexLayoutHalo(morph, pointerId).openInWorld(); break;
+      case "Tilinig":
+      case "CenteredTiling":
+        halo =  new TilingLayoutHalo(morph, pointerId).openInWorld(); break;
+      case "Grid":
+        halo = new GridLayoutHalo(morph, pointerId).openInWorld(); break;
+    }
+  }
+  halo && halo.alignWithTarget();
+  return halo;
+}
+
 class AxisHalo extends Morph {
 
   constructor({halo, targetAxis}) {

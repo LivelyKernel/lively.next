@@ -13,6 +13,7 @@ import { obj, promise, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
 import { ConnectionHalo } from "./fabrik.js";
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from "lively.morphic/drag-guides.js";
+import { showLayoutHaloFor } from "./layout.js";
 
 
 
@@ -1575,8 +1576,7 @@ export class MorphHighlighter extends Morph {
 
   show() {
     if (this.target.layout && this.showLayout) {
-      this.layoutHalo =
-        this.layoutHalo || this.world().showLayoutHaloFor(this.target, this.pointerId);
+      this.layoutHalo = this.layoutHalo || showLayoutHaloFor(this.target, this.pointerId);
       this.styleClasses = ['inactive'];
       this.alignWithHalo();
       if (this.halo.get("grab").hand.grabbedMorphs)

@@ -881,7 +881,7 @@ export class ConnectionHalo extends Morph {
     let addPinButton = morph({
       type: 'button',
       width: 110,
-      icon: Icon.makeLabel('plus'),
+      icon: 'plus',
       label: 'Add Pin...',
       styleClasses: ['controlButton'],
       padding: rect(4,5,4,1),
