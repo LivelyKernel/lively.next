@@ -38319,13 +38319,14 @@ var Database = function () {
     key: "get",
     value: function () {
       var _ref6 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(id) {
+        var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
                 _context5.prev = 0;
                 _context5.next = 3;
-                return this.pouchdb.get(id);
+                return this.pouchdb.get(id, opts);
 
               case 3:
                 return _context5.abrupt("return", _context5.sent);
@@ -38380,7 +38381,7 @@ var Database = function () {
         }, _callee6, this);
       }));
 
-      function has(_x15) {
+      function has(_x16) {
         return _ref7.apply(this, arguments);
       }
 
@@ -38404,7 +38405,7 @@ var Database = function () {
         }, _callee7, this);
       }));
 
-      function add(_x16) {
+      function add(_x17) {
         return _ref8.apply(this, arguments);
       }
 
@@ -38512,7 +38513,7 @@ var Database = function () {
         }, _callee10, this);
       }));
 
-      function revList(_x18) {
+      function revList(_x19) {
         return _ref12.apply(this, arguments);
       }
 
@@ -38559,7 +38560,7 @@ var Database = function () {
         }, _callee11, this);
       }));
 
-      function getAllRevisions(_x19) {
+      function getAllRevisions(_x20) {
         return _ref14.apply(this, arguments);
       }
 
@@ -38659,7 +38660,7 @@ var Database = function () {
         }, _callee13, this);
       }));
 
-      function setDocuments(_x22, _x23) {
+      function setDocuments(_x23, _x24) {
         return _ref17.apply(this, arguments);
       }
 
@@ -38738,7 +38739,7 @@ var Database = function () {
         }, _callee14, this);
       }));
 
-      function getDocuments(_x24) {
+      function getDocuments(_x25) {
         return _ref19.apply(this, arguments);
       }
 
@@ -38791,7 +38792,7 @@ var Database = function () {
         }, _callee15, this);
       }));
 
-      function remove(_x26, _x27, _x28) {
+      function remove(_x27, _x28, _x29) {
         return _ref21.apply(this, arguments);
       }
 
@@ -38888,7 +38889,7 @@ var Database = function () {
         }, _callee17, this);
       }));
 
-      function getConflicts(_x29) {
+      function getConflicts(_x30) {
         return _ref23.apply(this, arguments);
       }
 
@@ -39003,7 +39004,7 @@ var Database = function () {
         }, _callee18, this, [[11, 30, 34, 42], [35,, 37, 41]]);
       }));
 
-      function resolveConflicts(_x30, _x31) {
+      function resolveConflicts(_x31, _x32) {
         return _ref25.apply(this, arguments);
       }
 
@@ -39066,7 +39067,7 @@ var Database = function () {
         }, _callee19, this);
       }));
 
-      function diffWith(_x32) {
+      function diffWith(_x33) {
         return _ref26.apply(this, arguments);
       }
 
@@ -39218,7 +39219,7 @@ var Database = function () {
         }, _callee22, this);
       }));
 
-      function migrate(_x34) {
+      function migrate(_x35) {
         return _ref29.apply(this, arguments);
       }
 
@@ -39259,7 +39260,7 @@ var Database = function () {
         }, _callee23, this);
       }));
 
-      function loadDump(_x35) {
+      function loadDump(_x36) {
         return _ref30.apply(this, arguments);
       }
 
@@ -39351,7 +39352,7 @@ var ObjectDB = function () {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                metaDB = Database.ensureDB("__internal__objectdb-meta");
+                metaDB = Database.ensureDB("internal__objectdb-meta");
                 _context.next = 3;
                 return metaDB.getAll();
 
@@ -39395,7 +39396,7 @@ var ObjectDB = function () {
                 return _context2.abrupt("return", found);
 
               case 3:
-                metaDB = Database.ensureDB("__internal__objectdb-meta");
+                metaDB = Database.ensureDB("internal__objectdb-meta");
                 _context2.next = 6;
                 return metaDB.get(name);
 
@@ -39444,7 +39445,7 @@ var ObjectDB = function () {
       var db = new this(name, options);
       objectDBs.set(name, db);
 
-      var metaDB = Database.ensureDB("__internal__objectdb-meta");
+      var metaDB = Database.ensureDB("internal__objectdb-meta");
       metaDB.set(name, _extends({}, options, { snapshotLocation: options.snapshotLocation.url })).catch(function (err) {
         return console.error("error writing objectdb meta:", err);
       });
@@ -39496,7 +39497,7 @@ var ObjectDB = function () {
               case 8:
                 objectDBs.delete(this.name);
 
-                metaDB = Database.ensureDB("__internal__objectdb-meta");
+                metaDB = Database.ensureDB("internal__objectdb-meta");
                 _context3.next = 12;
                 return metaDB.remove(this.name);
 
