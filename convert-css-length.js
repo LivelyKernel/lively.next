@@ -1,3 +1,4 @@
+/*global System*/
 // adapted from convert-css-length
 // MIT licensed, Copyright (c) 2015 Kyle Mathews
 // https://github.com/KyleAMathews/convert-css-length/blob/master/LICENSE
@@ -15,7 +16,7 @@ var baseFontSize = "16px", parseUnit, unit, unitLess;
 
 if (System.get("@system-env").browser) {
   try {
-    var newBaseFontSize = cssLengthParser(16)(window.getComputedStyle(document.body).fontSize)
+    var newBaseFontSize = genericCssLengthParser(16)(window.getComputedStyle(document.body).fontSize)
     if (newBaseFontSize && newBaseFontSize.slice(0,3) !== "NaN")
       baseFontSize = newBaseFontSize
   } catch (e) {}
