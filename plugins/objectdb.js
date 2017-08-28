@@ -152,14 +152,15 @@ sources.join("\n\n");
   }
 
   async fetchCommits(req, res) {
-    let {db, ref, type, typesAndNames, knownCommitIds, includeDeleted} = parseQuery(req.url),
+    let {db, ref, type, typesAndNames, knownCommitIds, includeDeleted, filterFn} = parseQuery(req.url),
         result = await ObjectDBInterface.fetchCommits({
           db,
           ref,
           type,
           typesAndNames,
           knownCommitIds,
-          includeDeleted
+          includeDeleted,
+          filterFn
         });
     if (typeof result !== "object") result = {status: String(result)};
     let payload = JSON.stringify(result);
