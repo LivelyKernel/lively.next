@@ -2,19 +2,16 @@
 <html>
   <head>
     <title>lively.next</title>
+    <link href="/lively.morphic/web/dom-loading-indicator.css" rel="stylesheet">
   </head>
+
   <body style="margin: 0;">
 
-    <div id="dom-loading-indicator"
-         style="position: fixed; top: 50%; left: 50%;
-                margin-left: -160px; margin-top: -90px; z-index: 10;">
-      <div style="width: 320px; height: 220px; font-size: 30pt; border-radius: 10px;
-                  color: #ff7700; font-family: Helvetica Neue, Arial, sans-serif;
-                  padding: 10px; background: #666;">
+    <div id="dom-loading-indicator">
+      <div class="label">
          <center><b>Loading</b></center>
          <center id="dom-loading-status" style="font-size: 15pt;">...</center>
-         <div style="background-image: url(/lively.morphic/lively-web-logo-small-animate.svg);
-                     background-size: cover; height: 100%; margin-left: 110px; margin-top: 20px;"></div>
+         <div class="lively-logo"></div>
       </div>
     </div>
 
@@ -67,7 +64,6 @@
             evt.returnValue = msg;
             return msg;
           }, true);
-
           var isLocal = loc.search.includes("location=local"),
               worldNameMatch = decodeURIComponent(loc.pathname).match(/\/worlds\/(.+)/),
               worldName = worldNameMatch
@@ -76,21 +72,13 @@
               resource = isLocal
                 ? res("lively.storage://worlds/" + worldName)
                 : res(origin + "/" + "lively.morphic/worlds/" + worldName);
-          return resource.exists().then(function(exists) {
-            return {
-              exists: exists,
-              resource: resource,
-              showWorldLoadDialog: !worldNameMatch,
-              isLocal: isLocal
-            };
-          });
+          return {
+            resource: resource,
+            showWorldLoadDialog: !worldNameMatch,
+            isLocal: isLocal
+          };
         })
         .then(function(worldLocation) {
-          if (!worldLocation.exists) {
-            var msg = "No lively world exists at " + worldLocation.resource.url;
-            document.body.innerHTML = "<h1>" + msg + "</h1>";
-            throw new Error(msg);
-          }
           Promise.all([
             lively.modules.importPackage('lively.morphic'),
             lively.lang.promise.waitFor(function() { return loginDone; })

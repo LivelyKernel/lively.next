@@ -2,90 +2,29 @@
 <html>
   <head>
     <title>lively.next worlds</title>
-    <style>
-    .body {
-      width: 100%
-    }
-    .content {
-      font-family: Helvetica Neue, Verdana, sans-serif;
-      margin-left: auto;
-      margin-right: auto;
-      width: 70%;
-      /*max-width: 800px;*/
-    }
-
-    .world-preview {
-      position: relative;
-      display: inline-block;
-      margin: 5px;
-      border: 2px #d4d4d4;
-      border-radius: 8px;
-      box-sizing: border-box;
-      border-style: solid;
-    }
-
-    .image-title {
-      position: absolute;
-      bottom: 0;
-      width: 100%
-    }
-
-    .list {
-      display: flex;
-      justify-content: space-around;
-      flex-flow: wrap;
-    }
-
-    .user-flap {
-      position: fixed;
-      right: 10px;
-      top: 0;
-      background: rgba(255, 255, 255, 0.5);
-      height: 30px;
-      border-style: solid;
-      border-width: 0px 1px 1px;
-      border-color: rgb(255, 255, 255) rgb(204, 204, 204) rgb(204, 204, 204);
-      border-radius: 0px 0px 8px 8px;
-      cursor: pointer;      
-    }
-
-    .user-flap .label {
-      pointer-events: none;
-      font-family: sans-serif;
-      font-size: 12px;
-      font-famliy: Helvetica Neue, Verdana, Sans Serif;
-      font-weight: bold;
-      color: rgb(102, 102, 102);
-      padding: 4px;
-    }
-    </style>
+    <link href="/lively.morphic/web/dom-loading-indicator.css" rel="stylesheet">
+    <link href="/lively.morphic/web/static-world-listing.css" rel="stylesheet">
   </head>
 
   <body style="margin: 0;">
 
-    <div id="dom-loading-indicator"
-         style="position: fixed; top: 50%; left: 50%;
-                margin-left: -160px; margin-top: -90px; z-index: 10;">
-      <div style="width: 320px; height: 180px; font-size: 30pt; border-radius: 10px;
-                  color: #ff7700; font-family: Helvetica Neue, Arial, sans-serif;
-                  padding: 10px; background: #666;">
+    <div id="dom-loading-indicator">
+      <div class="label">
          <center><b>Loading</b></center>
-         <div style="background-image: url(/lively.morphic/lively-web-logo-small-animate.svg);
-                     background-size: cover; height: 100%; margin-left: 110px; margin-top: 20px;"></div>
+         <div class="lively-logo"></div>
       </div>
     </div>
-
     
     <div class="user-flap"><div class="label"><span></span></div></div>
 
     <div class="content">
       <div class="public-worlds">
         <center><h1>public worlds</h1></center>
-        <div class="list">none yet</div>
+        <div class="list"></div>
       </div>
-      <div class="local-worlds">
+      <div class="user-worlds">
         <center><h1>your worlds</h1></center>
-        <div class="list">none yet</div>
+        <div class="list"></div>
       </div>
     </div>
 
@@ -112,7 +51,7 @@
           userRegistry = lively.user.UserRegistry.current,
           userFlap = document.querySelector(".user-flap"),
           userFlapContent = document.querySelector(".user-flap span"),
-          user = currentUser();
+          user = currentUser(), update;
 
       if (loc.host !== "lively-next.org")
         document.title = `lively.next (${loc.host})`;
@@ -135,6 +74,7 @@
             user = _user;
             userFlapContent.textContent = user.name.startsWith("guest-") ? "guest" : user.name;
             loginDone = true;
+            if (typeof update === "function") update(user);
           })
           .catch(function(err) { console.error(err); });
       } else loginDone = true;
@@ -148,7 +88,7 @@
         })
         .then(function() { return lively.modules.registerPackage("lively.morphic"); })
         .then(function() { return lively.modules.module("lively.morphic/web/static-world-listing.js").load(); })
-        .then(function(m) { return m.run(); })
+        .then(function(m) { update = m.run; return m.run(user); })
         .catch(function(err) { console.error(err); });
 
       function currentUser() {

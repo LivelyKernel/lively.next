@@ -63,7 +63,7 @@ var config = {
     js: {
       ignoredPackages: [
         "lively.web", "no group",
-        url => url.includes("lively.next-node_modules") || url.includes("node_modules")
+        url => url.includes("lively.morphic/objectdb") || url.includes("lively.next-node_modules") || url.includes("node_modules")
       ]
     },
 
@@ -71,7 +71,8 @@ var config = {
       aliases: {
         "sh": "shell",
         "markdown": "md",
-        "javascript": "js"
+        "javascript": "js",
+        "htmlmixed": "html"
       }
     }
   },

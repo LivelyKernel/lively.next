@@ -631,13 +631,13 @@ export default class Browser extends Window {
     }
 
     if (textPosition) {
-      if (this.world()) await sourceEditor.whenRendered();
+      if (this.world()) await promise.delay(10);
       sourceEditor.cursorPosition = textPosition;
       sourceEditor.centerRow(textPosition.row);
     }
 
     if (scroll) {
-      if (this.world()) await sourceEditor.whenRendered();
+      if (this.world()) await promise.delay(10);
       sourceEditor.scroll = scroll;
     }
 
@@ -651,7 +651,7 @@ export default class Browser extends Window {
   whenModuleUpdated() { return this.state.moduleUpdateInProgress || Promise.resolve(); }
 
   async selectPackageNamed(pName) {
-    let p = await this.systemInterface.getPackage(pName);
+    let p = pName ? await this.systemInterface.getPackage(pName) : null;
     this.onPackageSelected(p);
     await this.whenPackageUpdated();
     return p;
@@ -665,7 +665,8 @@ export default class Browser extends Window {
     }
 
     try {
-      let {moduleList} = this.ui;
+      let {metaInfoText, moduleList} = this.ui;
+      metaInfoText.textString = "";
       if (!p) {
         moduleList.items = [];
         this.updateSource("");

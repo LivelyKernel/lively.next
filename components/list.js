@@ -45,7 +45,9 @@ class ListItemMorph extends Label {
   }
 
   displayItem(item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
-    let label = item.label || item.string || "no item.string";
+    let itemMorph = item.morph,
+        label = itemMorph ? "" : (item.label || item.string || "no item.string");
+
     if (item.annotation) this.valueAndAnnotation = {value: label, annotation: item.annotation};
     else if (typeof label === "string") this.textString = label;
     else this.value = label;
@@ -79,8 +81,14 @@ class ListItemMorph extends Label {
       // this is more correct but slower:
       // this.extent = pt(Math.max(goalWidth, this.textBounds().width), itemHeight);
       // this is faster:
-      this.extent = pt(goalWidth, itemHeight);
+      let width = itemMorph ? Math.max(itemMorph.width, goalWidth) : goalWidth,
+          height = itemHeight // itemMorph ? Math.max(itemMorph.height, itemHeight) : itemHeight;
+      this.extent = pt(width, height);
     }
+
+    if (itemMorph) this.addMorph(itemMorph);
+    else if (this.submorphs.length) this.submorphs = [];
+
     this.isSelected = isSelected;
   }
 
@@ -89,11 +97,28 @@ class ListItemMorph extends Label {
         method = clickCount === 2 ? "onItemMorphDoubleClicked" : "onItemMorphClicked";
     this.owner.owner[method](evt, this);
   }
-  onDragStart(evt){
-    this.owner.owner.onItemMorphDragged(evt,this)    
+
+  onDragStart(evt) {
+    let list = this.owner.owner;
+    this._dragState = {sourceIsSelected: this.isSelected, source: this, itemsTouched: []}
+    if (!list.multiSelect || !list.multiSelectViaDrag)
+      list.onItemMorphDragged(evt, this);
   }
-  onDrag(evt){
-    
+
+  onDrag(evt) {
+    let list = this.owner.owner;
+    if (list.multiSelect && list.multiSelectViaDrag) {
+      let below = evt.hand.morphBeneath(evt.position),
+          {selectedIndexes, itemMorphs} = list;
+      if (below === this || !itemMorphs.includes(below)) return;
+      if (this._dragState.sourceIsSelected && !below.isSelected) {
+        arr.pushIfNotIncluded(selectedIndexes, below.itemIndex);
+        list.selectedIndexes = selectedIndexes;
+      } else if (!this._dragState.sourceIsSelected && below.isSelected) {
+        arr.remove(selectedIndexes, below.itemIndex);
+        list.selectedIndexes = selectedIndexes;
+      }
+    }
   }
 }
 
@@ -264,11 +289,11 @@ export class List extends Morph {
         hideScrollbars: true,
         padding: Rectangle.inset(2, 0),
         fontFamily: "Monaco, monospace",
+        selectionColor: Color.gray.lighter(),
       },
       ".List.dark .ListItemMorph": {
         selectionFontColor: Color.black,
         nonSelectionFontColor: Color.gray,
-        selectionColor: Color.gray.lighter(),
       },
       ".List.default": {
         padding: Rectangle.inset(2, 0)
@@ -285,7 +310,7 @@ export class List extends Morph {
 
       fill:            {defaultValue: Color.white},
       clipMode:        {defaultValue: "auto"},
-      
+
       selectionFontColor:    {isStyleProp: true, defaultValue: Color.white},
       selectionColor:        {isStyleProp: true, defaultValue: Color.blue},
       nonSelectionFontColor: {isStyleProp: true, defaultValue: Color.rgbHex("333")},
@@ -359,6 +384,16 @@ export class List extends Morph {
         defaultValue: false
       },
 
+      multiSelectWithSimpleClick: {
+        description: "Does a simple click toggle selections without deselecting?",
+        defaultValue: false,
+      },
+
+      multiSelectViaDrag: {
+        description: "Does dragging extend selection?",
+        defaultValue: true,
+      },
+
       values: {
         after: ["items"], readOnly: true,
         get() { return this.items.map(ea => ea.value); }
@@ -404,7 +439,9 @@ export class List extends Morph {
         after: ["submorphs"], readOnly: true,
         get() {
           return this.getSubmorphNamed("listItemContainer") || this.addMorph({
-            name: "listItemContainer", fill: null, clipMode: "visible", halosEnabled: false
+            name: "listItemContainer", fill: null,
+            clipMode: "visible", halosEnabled: false,
+            acceptsDrops: false, draggable: false
           });
         }
       },
@@ -414,18 +451,27 @@ export class List extends Morph {
         get() { return this.listItemContainer.submorphs; }
       },
 
+      manualItemHeight: {type: "Boolean"},
+
       itemHeight: {
-        after: ["fontFamily", "fontSize", "itemPadding"], readOnly: true,
+        after: ["fontFamily", "fontSize", "itemPadding"],
+        defaultValue: 10,
+        set(val) {
+          this.setProperty("itemHeight", val);
+          this.manualItemHeight = typeof val === "number";
+        },
         get() {
-          if (this._itemHeight) return this._itemHeight;
+          let height = this.getProperty("itemHeight");
+          if (height) return height;
           var h = this.env.fontMetric.defaultLineHeight(
-            {fontFamily: this.fontFamily, fontSize: this.fontSize});
-          var padding = this.itemPadding;
+                {fontFamily: this.fontFamily, fontSize: this.fontSize}),
+              padding = this.itemPadding;
           if (padding) h += padding.top() + padding.bottom();
-          return this._itemHeight = h;
+          this.setProperty("itemHeight", h);
+          return h;
         }
       },
-      
+
       theme: {
         after: ['styleClasses'],
         defaultValue: 'default',
@@ -462,7 +508,8 @@ export class List extends Morph {
   }
 
   invalidateCache() {
-    delete this._itemHeight;
+    if (!this.manualItemHeight)
+      this.setProperty("itemHeight", null);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -631,17 +678,7 @@ export class List extends Morph {
         indexes = [];
 
     if (this.multiSelect) {
-      if (evt.isCommandKey()) {
-
-        // deselect item
-        if (isClickOnSelected) {
-          indexes = selectedIndexes.filter(ea => ea != itemI);
-        } else {
-          // just add clicked item to selection list
-          indexes = [itemI].concat(selectedIndexes.filter(ea => ea != itemI))
-        }
-
-      } else if (evt.isShiftDown()) {
+      if (evt.isShiftDown()) {
 
         if (isClickOnSelected) {
           indexes = selectedIndexes.filter(ea => ea != itemI);
@@ -652,6 +689,16 @@ export class List extends Morph {
           indexes = added.concat(selectedIndexes.filter(ea => !added.includes(ea)))
         }
 
+      } else if (this.multiSelectWithSimpleClick || evt.isCommandKey()) {
+
+        // deselect item
+        if (isClickOnSelected) {
+          indexes = selectedIndexes.filter(ea => ea != itemI);
+        } else {
+          // just add clicked item to selection list
+          indexes = [itemI].concat(selectedIndexes.filter(ea => ea != itemI))
+        }
+
       } else indexes = [itemI];
 
     } else indexes = [itemI];
@@ -659,10 +706,14 @@ export class List extends Morph {
     this.selectedIndexes = indexes;
   }
 
-  onItemMorphDragged(evt, itemMorph){
-    
+  onItemMorphDragged(evt, itemMorph) {}
+
+  onDragStart(evt) {
+    if (!this.multiSelect || !this.multiSelectViaDrag) return
   }
-  
+
+  onDrag(evt) {}
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // event handling
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -767,7 +818,7 @@ export class FilterableList extends Morph {
 
       fontFamily: {
         isStyleProp: true,
-        derived: true, after: ["submorphs"], 
+        derived: true, after: ["submorphs"],
         defaultValue: "Helvetica Neue, Arial, sans-serif",
         get() { return this.listMorph.fontFamily; },
         set(val) {
@@ -1106,7 +1157,7 @@ export class FilterableList extends Morph {
         name: "choose action",
         exec: async (morph) => {
           if (!morph.actions) return true;
-        
+
           let similarStyle = {...morph.style, extent: morph.extent};
           let chooser = new FilterableList(similarStyle);
           chooser.openInWorld(morph.globalPosition);
@@ -1123,7 +1174,7 @@ export class FilterableList extends Morph {
             }
           });
           connect(chooser, 'canceled', morph, 'selectedAction', {
-            converter: function(result) {                
+            converter: function(result) {
               this.targetObj.focus();
               this.disconnect();
               this.sourceObj.remove();

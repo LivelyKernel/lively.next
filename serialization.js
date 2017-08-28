@@ -59,7 +59,7 @@ export async function saveWorldToResource(world = World.defaultWorld(), toResour
 
   if (changeBrowserURL) {
     let histPath = encodeURI(options.pathForBrowserHistory
-                          || pathForBrowserHistory(toResource));
+                          || pathForBrowserHistory(toResource.path()));
     if (window.location.pathname !== histPath)
       window.history.pushState({}, "lively.next", histPath);
   }

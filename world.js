@@ -31,7 +31,7 @@ import { loadMorphFromSnapshot, loadWorldFromResource } from "./serialization.js
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import { uploadFile } from "./events/html-drop-handler.js";
 import worldCommands from "./world-commands.js";
-import { loadWorldFromURL, loadWorld } from "./world-loading.js";
+import { loadWorldFromURL, loadWorldFromDB, loadWorldFromCommit, loadWorld } from "./world-loading.js";
 import LoadingIndicator from "./components/loading-indicator.js";
 import { GradientEditor } from "./ide/styling/gradient-editor.js";
 
@@ -79,12 +79,20 @@ export class World extends Morph {
 
   static defaultWorld() { return MorphicEnv.default().world; }
 
-  static async loadWorldFromURL(url, oldWorld = this.defaultWorld(), options = {}) {
+  static loadWorldFromURL(url, oldWorld = this.defaultWorld(), options = {}) {
     return loadWorldFromURL(url, oldWorld, options);
   }
 
-  static async loadWorld(newWorld, oldWorld = this.defaultWorld(), options = {}) {
+  static loadWorld(newWorld, oldWorld = this.defaultWorld(), options = {}) {
     return loadWorld(newWorld, oldWorld, options);
+  }
+
+  static loadFromCommit(commitOrId, oldWorld = this.defaultWorld(), options = {}) {
+    return loadWorldFromCommit(commitOrId, oldWorld, options);
+  }
+
+  static loadFromDB(name, ref, oldWorld = this.defaultWorld(), options = {}) {
+    return loadWorldFromDB(name, ref, oldWorld, options);
   }
 
   constructor(props) {
@@ -348,7 +356,7 @@ export class World extends Morph {
 
     let {domEvt} = evt,
         {files, items} = domEvt.dataTransfer,
-        baseURL = document.origin;
+        baseURL = document.location.origin;
 
     if (files.length) {
       let user = this.getCurrentUser(),

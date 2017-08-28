@@ -32,7 +32,7 @@ function callMorphHTMLTransforms(morph, node, parents = []) {
 
 export function morphicStyles() {
   let styleLinks = Array.from(document.querySelectorAll("link"))
-        .map(ea => ea.outerHTML.replace(`href="${document.origin}`, `href="`)).join("\n"),
+        .map(ea => ea.outerHTML.replace(`href="${document.location.origin}`, `href="`)).join("\n"),
       styles = Array.from(document.querySelectorAll("style"))
         .map(ea => ea.outerHTML).join("\n")
         .replace(/white-space: pre[^\;]*;/g, "")

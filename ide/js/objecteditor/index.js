@@ -11,7 +11,7 @@ import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
 import ObjectPackage, { addScript, isObjectClass, isObjectClassFor } from "lively.classes/object-classes.js";
 import { chooseUnusedImports, interactivlyFixUndeclaredVariables, interactivelyChooseImports } from "../import-helper.js";
 import { module } from "lively.modules";
-import { interactivelySaveObjectToPartsBinFolder } from "../../../partsbin.js";
+import { interactivelySavePart } from "../../../partsbin.js";
 import { emit } from "lively.notifications/index.js";
 import { LinearGradient } from "lively.graphics/index.js";
 import { adoptObject } from "lively.classes/runtime.js";
@@ -770,8 +770,16 @@ export class ObjectEditor extends Morph {
       selectedModule
     } = this;
 
+    
+    let p = lively.modules.getPackage(selectedClass[Symbol.for("lively-module-meta")].package.name)
+    
+    
     if (selectedClass) {
       title += ` - ${selectedClass.name}`;
+      if (isObjectClass(selectedClass)) {
+        let p = selectedClass[Symbol.for("lively-module-meta")].package;
+        if (p && p.version) title += "@" + p.version;
+      }
       if (selectedMethod) title += `>>${selectedMethod.name}`;
     } else if (selectedModule) {
       title += ` - ${selectedModule.shortName()}`;
@@ -1370,9 +1378,12 @@ export class ObjectEditor extends Morph {
         name: "publish target to PartsBin",
         exec: async ed => {
           try {
-            let {partName, url} = await interactivelySaveObjectToPartsBinFolder(ed.target);
-            emit("lively.partsbin/partpublished", {partName, url});
-            this.setStatusMessage(`Published ${this.target} as ${partName}`, Color.green);
+            let commit = await interactivelySavePart(ed.target, {notifications: false, loadingIndicator: true});
+            this.setStatusMessage(
+              commit ?
+                `Published ${this.target} as ${commit.name}` :
+                `Failed to publish part ${ed.target}`,
+              commit ? Color.green : Color.red);
           } catch (e) {
             if (e === "canceled") this.setStatusMessage("canceled");
             else this.showError(e);

@@ -3,8 +3,8 @@ import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, Path, arr, string, obj } from "lively.lang";
 import { show, inspect, Text, config } from "./index.js";
 import KeyHandler from "./events/KeyHandler.js";
-import { saveWorldToResource, loadWorldFromResource } from "./serialization.js";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
+import { interactivelySaveWorld } from "./world-loading.js";
 
 
 var commands = [
@@ -361,7 +361,7 @@ var commands = [
   {
     name: "open workspace",
     exec: async (world, opts = {}) => {
-      var language = opts.language || "javascript",
+      var language = opts.language || opts.mode || "javascript",
           workspaceModules = {
             "javascript": "lively.morphic/ide/js/workspace.js",
             "shell": "lively.morphic/ide/shell/workspace.js",
@@ -375,13 +375,14 @@ var commands = [
           "Open workspace for...", workspaceLanguages));
         if (!language) return true;
       }
-      if (language === "text")
+
+      opts = {content: "", ...opts, mode: language, language};
+      var mod = workspaceModules[opts.language] || workspaceModules[alias[opts.language]];
+
+      if (language === "text" || !mod)
         return world.execCommand("open text window", opts);
 
-      opts = {content: "", ...opts, language};
-      var mod = workspaceModules[opts.language] || workspaceModules[alias[opts.language]],
-          { default: Workspace } = await System.import(mod);
-      console.log(opts)
+      let { default: Workspace } = await System.import(mod);
       return new Workspace({
         center: world.center,
         content: opts.content,
@@ -419,7 +420,16 @@ var commands = [
                   textAndAttributes, clipMode: "auto", name, extent});
       if (rangesAndStyles)
         text.setTextAttributesWithSortedRanges(rangesAndStyles);
+      if (mode) text.changeEditorMode(mode);
       return world.openInWindow(text, {title}).activate();
+    }
+  },
+
+  {
+    name: "merge and open in window",
+    exec: async (world, opts = {a: "", b: "", format: null, extent: pt(500,600)}) => {
+      let merger = await loadObjectFromPartsbinFolder("text merger");
+      return merger.targetMorph.open(opts.a, opts.b, opts);
     }
   },
 
@@ -432,7 +442,7 @@ var commands = [
       // $world.execCommand("diff and open in window", {a: "Hello\nworld", b: "Helo\nworld", format: "diffSentences"})
       // $world.execCommand("diff and open in window", {a: "Hello\nworld", b: "Helo\nworld", format: "patch"})
 
-      var {a,b,format} = opts;
+      var {a,b, format, extent} = opts;
       if (!format) var {a,b, format} = findFormat(a, b);
       else { a = String(a);  b = String(b); }
 
@@ -476,7 +486,7 @@ var commands = [
 
         var win = world.execCommand("open text window", opts),
             textMorph = win.targetMorph;
-        win.extent = pt(300, 200).maxPt(textMorph.textBounds().extent());
+        win.extent = extent || pt(300, 200).maxPt(textMorph.textBounds().extent());
 
         textMorph.textAndAttributes = content;
         if (plugin) textMorph.addPlugin(plugin);
@@ -487,9 +497,16 @@ var commands = [
   },
 
   {
+    name: 'merge workspaces',
+    exec: function(world, opts) {
+      return world.execCommand("diff workspace", {...opts, merge: true});
+    }
+  },
+
+  {
     name: 'diff workspaces',
     exec: async function(world, opts = {}) {
-      var {editor1, editor2} = opts;
+      var {editor1, editor2, merge} = opts;
 
       if (!editor1 || !editor2)
         var editors = world.withAllSubmorphsSelect(ea =>
@@ -499,23 +516,29 @@ var commands = [
       if (!editor2) editor2 = await selectMorph(arr.without(editors, editor1));
       if (!editor2) return world.setStatusMessage("Canceled");
 
-      return doDiff(editor1, editor2);
+      return merge ? doMerge(editor1, editor2) : doDiff(editor1, editor2);
 
       function doDiff(ed1, ed2) {
-        var p1 = ed1.pluginFind(ea => ea.evalEnvironment);
-        var fn1 = (p1 && p1.evalEnvironment.targetModule) || 'no file';
-        var p2 = ed2.pluginFind(ea => ea.evalEnvironment);
-        var fn2 = (p2 && p2.evalEnvironment.targetModule) || 'no file';
+        var p1 = ed1.pluginFind(ea => ea.evalEnvironment),
+            fn1 = (p1 && p1.evalEnvironment.targetModule) || 'no file',
+            p2 = ed2.pluginFind(ea => ea.evalEnvironment),
+            fn2 = (p2 && p2.evalEnvironment.targetModule) || 'no file';
         return world.execCommand("diff and open in window", {
           a: ed1.textString, b: ed2.textString,
           filenameA: fn1, filenameB: fn2
         })
       }
 
+      async function doMerge(ed1, ed2) {
+        let merger = await loadObjectFromPartsbinFolder("text merger");
+        return merger.targetMorph.open(ed1.textString, ed2.textString);
+      }
+
       async function selectMorph(morphs, thenDo) {
         var candidates = morphs.map(ea =>
           ({isListItem: true, value: ea, string: ea.name || String(ea)}));
-        var {selected: [choice]} = await world.filterableListPrompt("choose text: ", candidates, {onSelection: m => m && m.show()});
+        var {selected: [choice]} = await world.filterableListPrompt(
+          "choose text: ", candidates, {onSelection: m => m && m.show()});
         return choice;
       }
 
@@ -590,9 +613,13 @@ var commands = [
   {
     name: "open PartsBin",
     exec: async world => {
-      var { loadObjectFromPartsbinFolder } = await System.import("lively.morphic/partsbin.js")
-      var pb = await loadObjectFromPartsbinFolder("PartsBin");
-      return pb.openInWorldNearHand();
+      var { loadPart } = await System.import("lively.morphic/partsbin.js")
+      var pb = await loadPart("PartsBin");
+      pb.openInWorldNearHand();
+      pb.targetMorph.selectedCategory = "*basics*";
+      pb.targetMorph.update();
+      pb.focus();
+      return pb;
     }
   },
 
@@ -800,10 +827,8 @@ var commands = [
           return browser.state.associatedSearchPanel.getWindow().activate();
       } else browser = null;
 
-      let { CodeSearcher } = await System.import("lively.morphic/ide/code-search.js"),
-          { localInterface } = await System.import("lively-system-interface");
-
-      let systemInterface = opts.systemInterface || (browser && browser.systemInterface);
+      let { localInterface } = await System.import("lively-system-interface"),
+          systemInterface = opts.systemInterface || (browser && browser.systemInterface);
       if (!systemInterface) {
         let ed = activeMorphs.find(ea =>
           ea.isText && ea.editorPlugin && ea.editorPlugin.isJSEditorPlugin);
@@ -811,12 +836,13 @@ var commands = [
         else systemInterface = localInterface;
       }
 
-      let searcher = CodeSearcher.inWindow({
-        title: "code search", extent: pt(800, 500),
-        targetBrowser: browser,
+      let searcher = await loadObjectFromPartsbinFolder("code search");
+      Object.assign(searcher.targetMorph, {
+        browser,
         input: opts.input,
         systemInterface
-      }).activate();
+      });
+      searcher.activate();
 
       if (browser) browser.state.associatedSearchPanel = searcher;
       return searcher;
@@ -948,50 +974,37 @@ var commands = [
 
   {
     name: "save world",
-    exec: async (world, args, _, evt) => {
+    exec: (world, args, _, evt) => {
       // in case there is another morph implementing save...
       var relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
       if (relayed) return relayed;
-
-      let dialog = await loadObjectFromPartsbinFolder("save world dialog"),
-          {destination, name} = await $world.openPrompt(dialog, {targetWorld: world});
-
-      if (!name) return null;      
-
-      let url;
-      if (destination === "server")
-        url = System.decanonicalize(`lively.morphic/worlds/${name}.json`);
-      else if (destination === "local storage")
-        url = `lively.storage://worlds/${name}.json`;
-      else {
-        world.showError(new Error("Invalid destination: " + destination));
-        return null;
-      }
-
-      try {
-        await saveWorldToResource(world, url, {previewWidth: 200, previewHeight: 200, previewType: "png"});
-        world.setStatusMessage(`saved world to ${url}`);
-        world.get("world-list") && world.get("world-list").onWorldSaved(name);
-      } catch (err) {
-        $world.logError("Error saving world: " + err.stack);
-      }
+      args = {showSaveDialog: true, ...args};
+      return interactivelySaveWorld(world, args);
     }
   },
-  
+
   {
     name: "load world",
     exec: async (oldWorld, args = {}) => {
-      let {resource, world} = args;
-
-      if (!resource && !world) { // old world selection
-        let worldList = oldWorld.get("world-list") || await loadObjectFromPartsbinFolder("world-list");
-        return await worldList.bringToFront().alignInWorld(oldWorld).setLocationToLastChoiceOr("public");
-      }
-
+      // args: {
+      //   id: commitId
+      //   name: world name
+      //   ref: ref the world was committed on
+      //   world: the world morph to load
+      // }
+      let {id, commit, name, ref, world} = args;
       let World = oldWorld.constructor;
-      return resource ?
-        World.loadWorldFromURL(resource, oldWorld) :
-        World.loadWorld(world, oldWorld);
+
+      if (world) return World.loadWorld(world, oldWorld);
+      if (id || commit) return World.loadFromCommit(id || commit, oldWorld);
+      if (name) return World.loadFromDB(name, ref, oldWorld);
+
+      let worldList = oldWorld.get("world-list") || await loadObjectFromPartsbinFolder("world-list");
+      worldList.bringToFront().alignInWorld(oldWorld);
+      worldList.update();
+      worldList.focus();
+      return worldList;
+        
     }
   }
 
