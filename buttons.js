@@ -1,4 +1,4 @@
-import { Morph } from "lively.morphic";
+import { Morph, Icon } from "lively.morphic";
 import { Rectangle, LinearGradient, Color, pt } from "lively.graphics";
 import { signal } from "lively.bindings";
 
@@ -102,7 +102,9 @@ export class Button extends Morph {
       },
 
       icon: {
-        after: ['labelMorph'], derived: true, isStyleProp: true,
+        after: ['labelMorph'], 
+        derived: true, 
+        isStyleProp: true,
         showInInspector: true,
         type: "Icon", // "" -> no icon, else a valid font awesome icon code
         get() { return this.label[0]; },

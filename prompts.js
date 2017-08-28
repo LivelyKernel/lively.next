@@ -5,7 +5,7 @@ import { morph, Morph, StyleSheet, Text, GridLayout,
 import { arr, obj, promise } from "lively.lang";
 import { connect } from 'lively.bindings';
 
-import InputLine, { PasswordInputLine } from "./input-line.js"
+import { InputLine, PasswordInputLine } from "./input-line.js"
 import { List, FilterableList } from './list.js';
 
 const promptCommands = [];

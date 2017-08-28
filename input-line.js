@@ -4,7 +4,7 @@ import { Rectangle, rect, Color, pt } from "lively.graphics";
 import { connect, signal, disconnect } from "lively.bindings"; // for makeInputLine
 import { Text, Range } from "lively.morphic";
 
-export default class InputLine extends Text {
+export class InputLine extends Text {
 
 /*
 
