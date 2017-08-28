@@ -1,0 +1,26 @@
+#dom-loading-indicator {
+  position: fixed;
+  top: 50%; left: 50%;
+  margin-left: -160px;
+  margin-top: -90px;
+  z-index: 10;
+}
+
+#dom-loading-indicator .label {
+  width: 320px;
+  height: 200px;
+  font-size: 30pt;
+  border-radius: 10px;
+  color: #ff7700;
+  font-family: Helvetica Neue, Arial, sans-serif;
+  padding: 10px;
+  background: #666;
+}
+
+#dom-loading-indicator .lively-logo {
+  background-image: url(/lively.morphic/lively-web-logo-small-animate.svg);
+  background-size: cover;
+  height: 100%;
+  margin-left: 110px;
+  margin-top: 20px;
+}

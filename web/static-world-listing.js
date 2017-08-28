@@ -1,57 +1,59 @@
 // import { resource } from "lively.resources";
 const { resource } = lively.resources;
-import { promise } from "lively.lang";
+const { ObjectDBHTTPInterface } = lively.storage;
+const { promise } = lively.lang;
 
 let $ = sel => document.querySelector(sel);
 
-export async function run() {
+export async function run(user) {
   let i = $("#dom-loading-indicator");
   if (i) i.style.display = "none";
 
-  let publicResources = await worldResources("public");
-  if (publicResources.length) {
-    $(`.public-worlds .list`).innerHTML = "";
-    publicResources.forEach(ea => addPreview(ea, "public"));
+  $(`.public-worlds .list`).innerHTML = "";
+  $(`.user-worlds .list`).innerHTML = "";
+
+  let userName = (user && user.name) || "",
+      userWorldFound = false,
+      db = new ObjectDBHTTPInterface(),
+      commits = await db.fetchCommits({
+        db: "lively.morphic/objectdb/morphicdb",
+        type: "world",
+        filterFn: `(ea, i) => ea.tags.includes("front-page") || ea.author.name === "${userName}"`
+      });
+
+  for (let commit of commits) {
+    let {tags, author} = commit;
+    if (tags.includes("front-page")) addPreview(commit, "public");
+    if (author.name === userName) {
+      userWorldFound = true;
+      addPreview(commit, "user");
+      $(`.user-worlds`).style.display = "";
+    }
   }
   
-  let localResources = await worldResources("local");
-  if (localResources.length) {
-    $(`.local-worlds .list`).innerHTML = "";
-    localResources.forEach(ea => addPreview(ea, "local"));
-  }
+  if (!userWorldFound) $(`.user-worlds`).style.display = "none";
 }
 
 
-function worldResources(location) {
-  let urls = location === "public" ?
-    [System.decanonicalize("lively.morphic/worlds/")] :
-    location === "local" ? ["lively.storage://worlds/"] : []
-  return Promise.all(urls.map(ea => resource(ea)
-      .dirList(1,{exclude: ea => !ea.name().endsWith(".json")})))
-    .then(results => [].concat.apply([], results));
-}
-
-async function resourceFor(location, name) {
-  let url = location === "public" ?
-    System.decanonicalize("lively.morphic/worlds/") :
-    location === "local" ? "lively.storage://worlds/" : "UNNNNKNOWNNNN"
-  return resource(url).join(`${name}.json`)
-}
-
-async function addPreview(resource, location/*public,local*/) {
-  // let resource = (await this.worldResources())[0]
-
-  let snapshot = await resource.readJson(),
-      n = resource.name().replace(/\.json$/, "").replace(/%20/g, " "),
-      locationQuery = location === "local" ? `?location=${location}` : "";
-
-  $(`.${location}-worlds .list`).insertAdjacentHTML(
+async function addPreview(commit, type, dbName) {
+  let dbQuery = dbName ? `?db=${dbName}` : "",
+      {
+        name, author: {name: authorName},
+        preview, timestamp, description
+      } = commit,
+      date = lively.lang.date.format(new Date(timestamp), "yyyy-mm-dd HH:MM");
+  $(`.${type}-worlds .list`).insertAdjacentHTML(
     "beforeEnd",
-    `<a class="world-preview" href="/worlds/${n}${locationQuery}">
-      <img src="${snapshot.preview}"></img>
-      <div class="image-title">
-        <center>${n}</center>
+    `<a class="world-link" href="/worlds/${name}${dbQuery}">
+      <div class="world-preview">
+          <div class="image">
+            <img src="${preview}"></img>
+            <div class="world-name"><center>${name}</center></div>
+          </div>
+          <div class="description">
+            <div class="author">${authorName} ${date}</div>
+            <div class="description-text"><p>${description}</p></div>
+          </div>
       </div>
-    </a>`,
-  )
+    </a>`)
 }
