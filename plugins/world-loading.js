@@ -19,6 +19,11 @@ export default class WorldLoadingPlugin {
 
   resetHTMLCache() { this.cachedHTML = {}; }
 
+  readFile(path) {
+    let htmlResource = resource(System.baseURL).join("lively.morphic/web/" + path);
+    return htmlResource.read()
+  }
+
   async handleRequest(req, res, next) {
     let [url, query] = req.url.split("?");
     query = query ? "?" + query : "";
