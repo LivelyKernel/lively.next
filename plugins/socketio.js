@@ -1,5 +1,5 @@
 import { arr } from "lively.lang";
-import socketio from "socket.io";
+const socketio = System._nodeRequire("socket.io");
 
 export default class SocketioPlugin {
 
