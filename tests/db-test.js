@@ -182,10 +182,10 @@ describe("database replication", () => {
       expect(await db1.getConflicts()).equals([]);
       let conflicts = await db2.getConflicts();
       expect(conflicts).length(1);
-      let expected = conflicts[0]._rev === commit1._rev ?
-        {_conflicts: [commit2._rev],_id: "doc",_rev: commit1._rev} :
-        {_conflicts: [commit1._rev],_id: "doc",_rev: commit2._rev};
-      expect(conflicts).containSubset([expected])
+      let expected = conflicts[0].rev === commit1._rev ?
+        {conflicts: [commit2._rev], id: "doc", rev: commit1._rev} :
+        {conflicts: [commit1._rev], id: "doc", rev: commit2._rev};
+      expect(conflicts).containSubset([expected]);
     });
 
     it("resolves conflicts", async () => {

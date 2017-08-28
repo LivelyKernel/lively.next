@@ -387,7 +387,14 @@ export default class Database {
     let {rows} = await this.pouchdb.query(
       {map: `function(doc) { if (doc._conflicts) emit(doc._id); }`},
       {reduce: false, include_docs: true, conflicts: true, ...opts})
-    return rows.map(ea => ({id: ea.id, doc: ea.doc}));
+    return rows.map(ea => {
+      let result = {id: ea.id, rev: ea.doc._rev, doc: ea.doc};
+      if (ea.doc._conflicts) {
+        result.conflicts = ea.doc._conflicts;
+        delete ea.doc._conflicts;
+      }
+      return result;
+    });
   }
 
   async resolveConflicts(id, resolveFn) {

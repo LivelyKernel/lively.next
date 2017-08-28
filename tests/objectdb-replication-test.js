@@ -163,7 +163,10 @@ describe("replication", function() {
       await sync1.waitForIt(); await sync2.waitForIt();
 
       expect(sync1.conflicts).containSubset([{id: "world/foo"}]);
-      expect(sync1.changes).equals([commit1._id])
+      expect(sync1.changes).deep.members([
+        {id: commit1._id, direction: "push", kind: "commits", name: "foo", type: "world"},
+        {id: "world/foo", direction: "push", kind: "versions"},
+      ])
     });
 
   });

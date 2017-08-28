@@ -655,7 +655,7 @@ export default class ObjectDB {
     async function getConflicts(db, kind) {
       let conflicts = await db.getConflicts({include_docs: true});
       return (await Promise.all(conflicts.map(async ea => {
-        let {id, doc} = ea, {_rev: rev, _conflicts: conflicts} = doc;
+        let {id, rev, conflicts, doc} = ea;
         if (only && only[kind] && !only[kind][id]) return null;
         if (includeDocs) {
           let query = conflicts.map(rev => ({id, rev}));

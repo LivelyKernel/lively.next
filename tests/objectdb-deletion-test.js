@@ -35,7 +35,7 @@ describe("deletions in ObjectDB", function() {
 
     it("commits removed", async () => {
       let deleted = await objectDB.delete("world", world1.name, true/*dry run*/);
-      expect(deleted.history).containSubset({_id: "world/objectdb test world", deleted: true})
+      expect(deleted.history).containSubset({_id: "world/objectdb test world", _deleted: true})
       expect(deleted.history._rev).match(/^3-/);
       expect(deleted.commits).to.have.length(3);
       expect(deleted.resources.map(ea => ea.name())).equals(deleted.commits.map(ea => ea.content.slice(2)+".json"));
