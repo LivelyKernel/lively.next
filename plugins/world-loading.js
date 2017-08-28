@@ -39,8 +39,7 @@ export default class WorldLoadingPlugin {
     let htmlFile = url === "/worlds" || url === "/worlds/" ?
           "static-world-listing.html" : "morphic.html";
     if (!this.cachedHTML[htmlFile]) {
-      let htmlResource = resource(System.baseURL).join("lively.morphic/web/" + htmlFile);
-      this.cachedHTML[htmlFile] = await htmlResource.read();
+      this.cachedHTML[htmlFile] = await this.readFile(htmlFile);
     }
 
     res.setHeader('content-type', 'text/html');
