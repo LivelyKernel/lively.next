@@ -19,8 +19,8 @@ export async function install(baseDir, dependenciesDir, verbose) {
       errored = false;
 
   let step1_ensureDirectories = true,
-      step2_setupFlatn = true,
-      step3_cloneLivelyPackages = true,
+      step2_cloneLivelyPackages = true,
+      step3_setupFlatn = true,
       step4_installPackageDeps = true,
       step5_runPackageInstallScripts = true,
       step6_syncWithObjectDB = true,
@@ -50,10 +50,29 @@ export async function install(baseDir, dependenciesDir, verbose) {
     console.log("=> Reading package specs from " + packageSpecFile);
     var knownProjects = await readPackageSpec(packageSpecFile),
         packages = await Promise.all(knownProjects.map(spec =>
-          new Package(join(baseDir, spec.name), spec, log).readConfig())),
-        packageMap = await buildPackageMap([dependenciesDir], [], packages.map(ea => ea.directory));
+          new Package(join(baseDir, spec.name), spec, log).readConfig()));
 
-    if (step2_setupFlatn) {
+    
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // creating packages
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    var pBar = false && hasUI && $world.addProgressBar(), i;
+
+    if (step2_cloneLivelyPackages) {
+      console.log(`=> Installing and updating ${packages.length} packages`);
+      i = 0; for (let p of packages) {
+        if (pBar) pBar.setLabel(`updating ${p.name}`);
+        else console.log(`${p.name}`);
+        await p.installOrUpdate();
+        pBar && pBar.setValue(++i / packages.length);
+      }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // flatn setup
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    var packageMap = await buildPackageMap([dependenciesDir], [], packages.map(ea => ea.directory));
+    if (step3_setupFlatn) {
       console.log("=> Preparing flatn environment");
       let flatnBinDir = join(packageMap.lookup("flatn").location, "bin"),
           env = process.env;
@@ -72,21 +91,6 @@ export async function install(baseDir, dependenciesDir, verbose) {
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // creating packages
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    var pBar = false && hasUI && $world.addProgressBar(), i;
-
-    if (step3_cloneLivelyPackages) {
-      console.log(`=> Installing and updating ${packages.length} packages`);
-      i = 0; for (let p of packages) {
-        if (pBar) pBar.setLabel(`updating ${p.name}`);
-        else console.log(`${p.name}`);
-        await p.installOrUpdate();
-        pBar && pBar.setValue(++i / packages.length);
-      }
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // installing dependencies
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step4_installPackageDeps) {
@@ -94,7 +98,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
       for (let p of packages) {
         console.log(`installing dependencies of ${p.name}`);
         await installDependenciesOfPackage(
-        p.directory, dependenciesDir, packageMap, ["dependencies"], verbose);
+          p.directory, dependenciesDir, packageMap, ["dependencies"], verbose);
       }
     }
 
