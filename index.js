@@ -1,3 +1,4 @@
 export { default as Database } from "./database.js";
-export { default as ObjectDB, ObjectDBInterface } from "./objectdb.js";
-import "./storage-resource.js"; // to trigger resource extension
+export { default as ObjectDB, ObjectDBInterface, ObjectDBHTTPInterface } from "./objectdb.js";
+// to trigger resource extension
+import "./storage-resource.js";

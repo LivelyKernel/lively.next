@@ -1264,14 +1264,15 @@ export var ObjectDBInterface = {
     // Gets the lates commits from all objects specified in `typesAndNames`.
     let {
       db: dbName, ref, type,
-      typesAndNames, knownCommitIds, includeDeleted
+      typesAndNames, knownCommitIds, includeDeleted, filterFn
     } = checkArgs(args, {
       db: "string",
       ref: "string|undefined",
       type: "string|undefined",
       typesAndNames: "Array|undefined",
       knownCommitIds: "object|undefined",
-      includeDeleted: "boolean|undefined"
+      includeDeleted: "boolean|undefined",
+      filterFn: "string|undefined"
     }), db = await ObjectDB.find(dbName)
     if (!ref) ref = "HEAD";
 
@@ -1308,6 +1309,20 @@ export var ObjectDBInterface = {
     let commits = await db.getCommitsWithIds(commitIds);
     if (!includeDeleted)
       commits = commits.filter(ea => !ea.deleted);
+    if (filterFn) {
+      try {
+        let fn = eval(`(${filterFn})`);
+        if (typeof fn !== "function")
+          throw new Error(`${filterFn} does not eval to a function!`);
+        let filteredCommits = commits.filter(fn);
+        if (!Array.isArray(filteredCommits))
+          throw new Error(`${filterFn} does not return an array!`);
+        else commits = filteredCommits;
+      } catch (err) {
+        console.error(`fetchCommits filterFn failed:`, err)
+      }
+    }
+
     return commits;
   },
 
@@ -1691,7 +1706,7 @@ export class ObjectDBHTTPInterface {
   }
 
   async fetchCommits(args) {
-    // parameters: db, ref, type, typesAndNames, knownCommitIds, includeDeleted
+    // parameters: db, ref, type, typesAndNames, knownCommitIds, includeDeleted, filterFn
     // returns: [commits]
     return this._GET("fetchCommits", args);
   }
