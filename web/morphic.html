@@ -80,7 +80,7 @@
           };
         })
         .then(function(worldLocation) {
-          Promise.all([
+          return Promise.all([
             lively.modules.importPackage('lively.morphic'),
             lively.lang.promise.waitFor(function() { return loginDone; })
           ]).then(function(result) {
