@@ -80,10 +80,10 @@ var commands = [
   {
     name: "[HTML] render in iframe",
     exec: (text, args = {}) => {
-      let url, html, win = text.getWindow();
-      let iframeMorph = args.iframe
-        || (win && win.isHTMLWorkspace && win.target/*html workspace*/)
-        || text._iframeMorph;
+      let url, html, win = text.getWindow(),
+          iframeMorph = (args.iframe && args.iframe.isIFrameMorph ? args.iframe : null)
+                      || (win && win.isHTMLWorkspace && win.target/*html workspace*/)
+                      || text._iframeMorph;
       if (iframeMorph && !iframeMorph.isIFrameMorph) iframeMorph = null;
       if (!iframeMorph || !iframeMorph.world()) {
         iframeMorph = new IFrameMorph()
@@ -93,7 +93,7 @@ var commands = [
       }
 
       // is it a html workspace?
-      if (win && win.isHTMLWorkspace) url = win.file.url;
+      if (win && win.isHTMLWorkspace && win.file) url = win.file.url;
       // file editor?
       else if (text.owner && text.owner.isTextEditor) url = text.owner.location;
 
