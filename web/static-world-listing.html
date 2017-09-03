@@ -15,15 +15,24 @@
       </div>
     </div>
 
-    <div class="user-flap"><div class="label"><span></span></div></div>
+
+    <nav class="world-tabs">
+      <button class="public">public</button>
+      <button class="mine">mine</button>
+      <button class="latest">latest</button>
+      <button class="search">search...</button>
+
+      <div class="user-flap"><div class="label">logged in as:</div><div class="label"><span></span></div></div>
+    </nav>
+
+    <div class="hidden filter-worlds">
+      <input type="search" id="filter-button" name="filter"
+             placeholder="filter..." size="30">
+    </div>
+
 
     <div class="content">
-      <div class="public-worlds">
-        <center><h1>public worlds</h1></center>
-        <div class="list"></div>
-      </div>
-      <div class="user-worlds">
-        <center><h1>your worlds</h1></center>
+      <div class="worlds">
         <div class="list"></div>
       </div>
     </div>
@@ -44,21 +53,26 @@
     </script>
 
     <script>
-      var res = lively.resources.resource,
+      var $ = sel => document.querySelector(sel),
+          $$ = sel => document.querySelectorAll(sel),
+          res = lively.resources.resource,
           loc = document.location,
           origin = loc.origin,
           query = res(loc.href).query(),
           loginDone = false,
           userRegistry = lively.user.UserRegistry.current,
-          userFlap = document.querySelector(".user-flap"),
-          userFlapContent = document.querySelector(".user-flap span"),
+          userFlap = $(".user-flap"),
+          userFlapContent = $(".user-flap span"),
           user = currentUser(), update;
 
       if (loc.host !== "lively-next.org")
         document.title = `lively.next (${loc.host})`;
 
       {
-        userFlapContent.textContent = user.name.startsWith("guest-") ? "guest" : user.name;
+        userFlapContent.textContent = user.isGuestUser ? "guest" : user.name;
+        if (user.isGuestUser) {
+          $(".world-tabs button.mine").className += " hidden";
+        }
         userFlap.onclick = evt => {
           document.location = res(loc.href).withQuery({login: true}).url;
         }
@@ -89,7 +103,15 @@
         })
         .then(function() { return lively.modules.registerPackage("lively.morphic"); })
         .then(function() { return lively.modules.module("lively.morphic/web/static-world-listing.js").load(); })
-        .then(function(m) { update = m.run; return m.run(user); })
+        .then(function(m) {
+          $(".world-tabs button.search").onclick = () => m.showWorlds('search', user);
+          $(".world-tabs button.latest").onclick = () => m.showWorlds('latest', user);
+          $(".world-tabs button.mine").onclick = () => m.showWorlds('mine', user);
+          $(".world-tabs button.public").onclick = () => m.showWorlds('public', user);
+          $('.filter-worlds input').oninput = () => lively.lang.fun.debounceNamed("filter-worlds", 300, () => m.showWorlds('search', user))();
+          update = m.showWorldsLastChoice;          
+          return m.showWorldsLastChoice(user);
+        })
         .catch(function(err) { console.error(err); });
 
       function currentUser() {

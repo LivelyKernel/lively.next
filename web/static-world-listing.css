@@ -1,5 +1,6 @@
 .body {
-  width: 100%
+  width: 100%;
+  margin: 0;
 }
 
 a, a:-webkit-any-link {
@@ -15,6 +16,88 @@ a, a:-webkit-any-link {
 /*  max-width: 800px;*/
 }
 
+.hidden {
+  display: none !important;
+}
+
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+/* tabs */
+
+.world-tabs {
+  height: 1.6em;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  background-color: #eee;
+}
+
+.world-tabs button {
+  font-size: medium;
+  padding-left: 20px;
+  padding-right: 20px;
+  border: none;
+  background-color: #eee;
+  cursor: pointer;
+  outline: 0 !important;
+}
+
+.world-tabs button:hover {
+  background-color: #ccc;
+  color: white;
+}
+
+.world-tabs button.selected {
+  background-color: #888;
+  color: white;
+}
+
+.filter-worlds {
+  margin-top: 18px;
+  height: 1.6em;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.filter-worlds input {
+  padding: 12px;
+  font-size: medium;
+}
+
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+/* user flap */
+
+.user-flap {
+  position: absolute;
+  right: 5px;
+  height: 1.6em;
+  cursor: pointer;
+}
+
+.user-flap .label {
+  display: inline-block;
+  pointer-events: none;
+  font-family: sans-serif;
+  font-size: 12px;
+  font-famliy: Helvetica Neue, Verdana, Sans Serif;
+  font-weight: bold;
+  color: rgb(102, 102, 102);
+  padding: 4px;
+  margin-top: 3px;
+}
+
+
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+/* world listing */
+
+.list {
+  display: flex;
+  flex-flow: wrap;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
 
 .world-link {
   width: 350px;
@@ -48,7 +131,6 @@ a, a:-webkit-any-link {
   margin: 6px;
   display: flex;
   flex-direction: column;
-  text-align: right;
   align-items: flex-end;
 }
 
@@ -79,35 +161,4 @@ a, a:-webkit-any-link {
   text-align: center;
   bottom: 0;
   width: 100%
-}
-
-.list {
-  display: flex;
-  flex-flow: wrap;
-  justify-content: center;
-  align-items: center;
-}
-
-.user-flap {
-  position: fixed;
-  right: 10px;
-  top: 0;
-  background: rgba(255, 255, 255, 0.5);
-  height: 30px;
-  border-style: solid;
-  border-width: 0px 1px 1px;
-  border-color: rgb(255, 255, 255) rgb(204, 204, 204) rgb(204, 204, 204);
-  border-radius: 0px 0px 8px 8px;
-  cursor: pointer;      
-}
-
-.user-flap .label {
-  pointer-events: none;
-  font-family: sans-serif;
-  font-size: 12px;
-  font-famliy: Helvetica Neue, Verdana, Sans Serif;
-  font-weight: bold;
-  color: rgb(102, 102, 102);
-  padding: 4px;
-  margin-top: 3px;
 }
