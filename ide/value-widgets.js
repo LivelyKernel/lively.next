@@ -484,7 +484,7 @@ export class NumberWidget extends Morph {
             }),
             {
               type: "button",
-              name: "down", styleClasses: ['buttonStyle'],
+              name: "down", styleClasses: ['buttonStyle', 'TreeLabel'],
               label: Icon.makeLabel("sort-asc", {
                 rotation: Math.PI,
                 autofit: false, 
@@ -495,7 +495,7 @@ export class NumberWidget extends Morph {
             },
             {
               type: "button",
-              name: "up", styleClasses: ['buttonStyle'],
+              name: "up", styleClasses: ['buttonStyle', 'TreeLabel'],
               label: 
               Icon.makeLabel("sort-asc", {
                 autofit: false, 
