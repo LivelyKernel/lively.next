@@ -1,14 +1,14 @@
 /*global System*/
-import { Morph } from "lively.morphic/morph.js";
-import { pt, Rectangle, Color } from "lively.graphics/index.js";
 import { promise } from "lively.lang/index.js";
-import { morph, Icon, Menu, config } from "lively.morphic/index.js";
-import { adoptObject } from "lively.classes/runtime.js";
-import { connect, once, signal } from "lively.bindings/index.js";
-import { ClientUser } from "lively.user/index.js";
-import UserRegistry from "lively.user/client/user-registry.js";
 import { resource } from "lively.resources";
+import { pt, Rectangle, Color } from "lively.graphics/index.js";
+import { connect, once, signal } from "lively.bindings/index.js";
+import { morph, Icon, Menu, config } from "lively.morphic/index.js";
+import { Morph } from "lively.morphic/morph.js";
 import { loadMorphFromSnapshot, createMorphSnapshot } from "lively.morphic/serialization.js";
+import UserRegistry from "lively.user/client/user-registry.js";
+import { ClientUser } from "lively.user/index.js";
+import { loadPart } from "lively.morphic/partsbin.js";
 
 // adoptObject(that, UserInfoWidget) 
 // adoptObject(that, LoginWidget) 
@@ -53,7 +53,11 @@ export var UserUI = {
 
   showUserFlap(world = $world) {
     this.hideUserFlap(world);
-    return new UserFlap().open();
+    let flap = new UserFlap().open();
+    // FIXME
+    System.import("lively.2lively/client.js").then(m =>
+      flap.updateNetworkIndicator(m.default.default()))
+    return flap;
   },
 
   hideUserFlap(world = $world) {
@@ -483,7 +487,8 @@ export class UserFlap extends Morph {
     return {
       submorphs: {
         initialize() {
-          this.submorphs = [{
+          this.submorphs = [
+          {
             type: "label", name: "label",
             fontSize: 12,
             fontFamliy: "Helvetica Neue, Verdana, Sans Serif",
@@ -491,6 +496,7 @@ export class UserFlap extends Morph {
             padding: Rectangle.inset(4),
             reactsToPointer: false
           }, 
+
            Icon.makeLabel('user', {
              name: 'avatar', 
              fontColor: Color.black.withA(.3),
@@ -501,7 +507,15 @@ export class UserFlap extends Morph {
              borderColor: Color.black.withA(.3),
              extent: pt(20,20),
              borderRadius: 10
-           })];
+           }),
+
+            {
+              name: "network-indicator",
+              fill: Color.red, borderRadius: 5,
+              extent: pt(5,5), position: pt(5,8),
+              reactsToPointer: false
+            },
+          ];
         }
       },
 
@@ -524,7 +538,7 @@ export class UserFlap extends Morph {
 
   get isUserFlap() { return true; }
 
-  get isMaximized() { return this.submorphs.length > 2; }
+  get isMaximized() { return this.submorphs.length > 3; }
 
   open() {
     this.openInWorld();
@@ -555,9 +569,15 @@ export class UserFlap extends Morph {
     else this.topRight = pt(w - 10, 0);
   }
 
-  async minimize() { await this.showUser(this.currentUser(), true); }
+  async minimize() {
+    await this.showUser(this.currentUser(), true);
+    this.get("network-indicator").visible = true;
+  }
 
-  async maximize() { await this.showMenu(this.currentUser(), true); }
+  async maximize() {
+    this.get("network-indicator").visible = false;
+    await this.showMenu(this.currentUser(), true);
+  }
 
   async changeWidthAndHeight(newWidth, newHeight, animated) {
     if (animated) {
@@ -602,12 +622,18 @@ export class UserFlap extends Morph {
   async showMenu(user, animated = false) {
     let label = this.getSubmorphNamed("label"),
         avatar = this.getSubmorphNamed('avatar'),
+        openChatItem = ["open chat", async () => {
+          let chat = await loadPart("Lively Chat");
+          chat.openInWorld();
+        }],
         menu = Object.assign(Menu.forItems(
           user.isGuestUser ? [
+            openChatItem,
             ["login", () => { this.minimize(); this.showLogin(user); }],
           ] :
           [
             ["show user info", () => { this.minimize(); this.showUserInfo(user); }],
+            openChatItem,
             ["logout", async () => { await this.minimize(); this.logout(user); }],
           ]), {
             name: "menu",
@@ -626,4 +652,12 @@ export class UserFlap extends Morph {
       menu.width + 20, menu.height + 10, animated);
   }
 
+  updateNetworkIndicator(l2lClient) {
+    let color = "red";
+    if (l2lClient) {
+      if (l2lClient.isOnline()) color = "yellow";
+      if (l2lClient.isRegistered()) color = "green";
+    }
+    this.get("network-indicator").fill = Color[color];
+  }
 }
