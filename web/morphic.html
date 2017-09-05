@@ -92,9 +92,7 @@
               l2l: true,
               shell: true,
               worldLoadDialog: worldLocation.showWorldLoadDialog,
-              browserURL: "/worlds/"
-              + worldLocation.resource.name().replace(/\.json($|\?)/, "")
-              + (worldLocation.isLocal ? "?location=local" : ""),
+              browserURL: "/worlds/" + worldLocation.resource.name().replace(/\.json($|\?)/, "")
             });
           })
         })

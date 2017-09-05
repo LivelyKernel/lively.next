@@ -64,8 +64,26 @@ a, a:-webkit-any-link {
   font-size: medium;
 }
 
+.lively-next-logo {
+  position: absolute;
+  left: 5px;
+  height: 1.6em;
+}
+
+.lively-next-logo img {
+  height: 80%;
+  padding: 3px;
+}
+
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
 /* user flap */
+
+.user-flap {
+  position: absolute;
+  right: 5px;
+  height: 1.6em;
+  cursor: pointer;
+}
 
 .user-flap {
   position: absolute;
