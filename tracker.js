@@ -65,6 +65,7 @@ export default class L2LTracker extends L2LConnection {
   }
 
   getTrackerList() {
+    // .... this won't work.... !
     return Array.from(this.constructor._trackers).map(ea => ea[1])
   }
 

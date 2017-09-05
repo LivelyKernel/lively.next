@@ -163,7 +163,7 @@ export default class L2LConnection {
           ackFn = typeof lastArg === "function" ? lastArg : null;
       msg = msg === ackFn ? null : msg;
 
-      if (!msg || !msg.data || typeof msg.n !== "number" || !msg.sender) {
+      if (!msg || !msg.data || (typeof msg.n !== "number" && !msg.broadcast) || !msg.sender) {
         console.warn(`${self} received non-conformant message ${eventName}:`, arguments);
         typeof ackFn === "function" && ackFn({data: {error: "invalid l2l message"}});
         return;
@@ -179,6 +179,15 @@ export default class L2LConnection {
 
   dispatchL2LMessageToSelf(msg, socket, ackFn) {
     var selector = msg.action;
+
+    // for broadcasted messages order isn't enforced...
+    if (msg.broadcast) {
+      this.safeInvokeServiceHandler(selector, msg, ackFn, socket);
+      return;
+    }
+
+
+    // do he message ordering dance....
     try {
       var expectedN = this._incomingOrderNumberingBySenders.get(msg.sender) || 0,
           ignoreN = selector === "register" || "unregister";
@@ -197,20 +206,11 @@ export default class L2LConnection {
         return;
       }
 
-      if (typeof this.actions[selector] === "function") {
-        this.invokeServiceHandler(selector, msg, ackFn, socket)
-      } else {
-        if (!socket._events || !Object.keys(socket._events).includes(selector)) {
-          console.warn(`WARNING [${this}] Unhandled message: ${selector}`);
-          if (typeof ackFn === "function")
-            ackFn(this.prepareAnswerMessage(msg,
-              {isError: true, error: "message not understood: " + selector}))
-        }
-      }
+      this.safeInvokeServiceHandler(selector, msg, ackFn, socket);
 
       setTimeout(() => this.invokeOutOfOrderMessages(msg.sender), 0);
     } catch (e) {
-      console.error(`Error when handling ${selector}: ${e.stack || e}`);
+      console.error(`Error message ordering when handling ${selector}: ${e.stack || e}`);
       if (typeof ackFn === "function")
         ackFn(this.prepareAnswerMessage(msg,
           {isError: true, error: String(e.stack || e)}))
@@ -233,6 +233,26 @@ export default class L2LConnection {
     var msgN = this._outgoingOrderNumberingByTargets.get(oldId);
     this._outgoingOrderNumberingByTargets.delete(oldId);
     this._outgoingOrderNumberingByTargets.set(newId, msgN);
+  }
+
+  safeInvokeServiceHandler(selector, msg, ackFn, socket) {
+    try {
+      if (typeof this.actions[selector] === "function") {
+        this.invokeServiceHandler(selector, msg, ackFn, socket)
+      } else {
+        if (!socket._events || !Object.keys(socket._events).includes(selector)) {
+          console.warn(`WARNING [${this}] Unhandled message: ${selector}`);
+          if (typeof ackFn === "function")
+            ackFn(this.prepareAnswerMessage(msg,
+              {isError: true, error: "message not understood: " + selector}))
+        }
+      }
+    } catch (e) {
+      console.error(`Error when handling ${selector}: ${e.stack || e}`);
+      if (typeof ackFn === "function")
+        ackFn(this.prepareAnswerMessage(msg,
+          {isError: true, error: String(e.stack || e)}));
+    }
   }
 
   invokeServiceHandler(selector, msg, ackFn, socket) {

@@ -39,87 +39,106 @@ export var defaultActions = {
 
 export var defaultTrackerActions = {
 
-  async broadcast(tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) {
-    socket.broadcast.to(roomName).emit(broadcastMessage);
-    if (ackFn && typeof ackFn === 'function') ackFn({status: 'Message delivered to ' + roomName})
+  async "[broadcast] send"(tracker, {sender, data}, ackFn, socket) {
+    let {
+          action, broadcast, room, namespace,
+          isSystemBroadcast, isMultiServerBroadcast
+        } = data,
+        broadcasters = [];
+
+    if (isMultiServerBroadcast) {
+      // FIXME... this invites snowballing again... needs to be implemented differently...!
+      console.log(".......isMultiServerBroadcast")
+      let {id} = tracker, trackers = tracker.getTrackerList();
+      console.log(trackers)
+      broadcasters = trackers.map(ea =>
+        ea.id != id ? ea.io.nsps["/" + ea.namespace] : socket.broadcast);
+
+    } else {
+      if (isSystemBroadcast) namespace = tracker.namespace;
+      broadcasters.push(namespace ?
+        tracker.io.nsps["/" + namespace] :
+        socket.broadcast);
+    }
+
+    broadcasters.forEach(ea =>
+      ea.to(room).emit({
+        action, sender, broadcast: true,
+        data: broadcast}))
+
+    if (ackFn && typeof ackFn === 'function') {
+      let status = 'message broadcasted to ' + room;
+      if (namespace) status += " in namespace " + namespace;
+      if (broadcasters.length > 1)
+        status += " " + broadcasters.length + " trackers";
+      console.log(status);
+      ackFn({status});
+    }
   },
 
-  async systemBroadcast(tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) {
-    let io = tracker.io;
-    io.nsps["/" + tracker.namespace].to(roomName).emit(broadcastMessage)
-    if(ackFn && typeof ackFn === 'function'){ackFn({status: 'System Broadcast Message delivered to ' + roomName})}
+  async "[broadcast] join room"(tracker, {sender, data: {room}}, ackFn, socket) {
+    let status, joined = false,
+        rooms = tracker.io.nsps["/" + tracker.namespace].adapter.rooms,
+        isInRoom = rooms[room] && rooms[room].sockets && rooms[room].sockets[socket.id];
+
+    if (isInRoom) {
+      status = `${sender} already in ${room}`;
+
+    } else {
+      await new Promise((resolve, reject) =>
+        socket.join(room, err => err ? reject(err) : resolve()));
+      status = `${sender} joined ${room}`;
+      joined = true;
+    }
+    if (ackFn && typeof ackFn === "function") ackFn({status, joined});
   },
 
-  async multiServerBroadcast(tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket){
-    let id = tracker.id,
-        trackers = tracker.getTrackerList()
-    trackers.forEach(function(tracker){
-      var io = tracker.io;
-      if (tracker.id != id){
-        io.nsps["/" + tracker.namespace].to(roomName).emit(broadcastMessage)
-      } else {
-        socket.broadcast.to(roomName).emit(broadcastMessage)
-      }
-      if (ackFn && typeof ackFn === 'function'){ackFn({status: 'System Broadcast Message delivered to ' + roomName})}
-    })
+  async "[broadcast] leave room"(tracker, {sender, data: {room}}, ackFn, socket) {
+    let status, left = false,
+        rooms = tracker.io.nsps["/" + tracker.namespace].adapter.rooms,
+        isInRoom = rooms[room] && rooms[room].sockets && rooms[room].sockets[socket.id];
+
+    if (!isInRoom) {
+      status = `${sender} not in ${room}`;
+
+    } else {
+      await new Promise((resolve, reject) =>
+        socket.leave(room, err => err ? reject(err) : resolve()));
+      status = `${sender} left room ${room}`;
+      left = true;
+    }
+
+    console.log(status);
+    if (ackFn && typeof ackFn === "function") ackFn({left, status});
   },
 
-  async getClients(tracker, {trackerId},ackFn) {
+  "[broadcast] my rooms"(tracker, {}, ackFn, socket) {
+    ackFn(socket.rooms);
+  },
+
+  "[broadcast] all rooms"(tracker,{sender},ackFn,socket){
+    ackFn(tracker.io.nsps["/" + tracker.namespace].adapter.rooms);
+  },
+
+  "[broadcast] list room members"(tracker, {sender, data: {room}}, ackFn, socket) {
+    var {io} = tracker, contents;
+    if (!room) { ackFn({isError: true, error: "`room` paramerter missing!"}); return; }
+    contents = io.nsps["/" + tracker.namespace].adapter.rooms[room];
+    ackFn({
+      room,
+      sockets: contents ? contents.sockets : {},
+      length: contents ? contents.length : 0
+    });
+  },
+
+  getClients(tracker, {trackerId}, ackFn) {
     tracker.removeDisconnectedClients();
     ackFn(Array.from(tracker.clients));
-  },
-
-   async joinRoom(tracker, {sender, data: {roomName}}, ackFn, socket) {
-      await socket.join(roomName)
-      if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Joined ' + roomName})}
-      console.log(sender + ' joined room ' + roomName)
-  },
-  async leaveRoom(tracker, {sender, data: {roomName}}, ackFn, socket) {
-      socket.leave(roomName)
-      if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Left ' + roomName})}
-      console.log(sender + ' left room ' + roomName)
-  },
-  async clientRoomList(tracker, {}, ackFn, socket) {
-   (ackFn && (typeof ackFn == 'function')) ? ackFn(socket.rooms) : console.log('Error: missing or invalid ack function')
-
-  },
-  async getRoomList(tracker,{sender},ackFn,socket){
-    var io = tracker.io,
-    roomList = io.nsps["/" + tracker.namespace].adapter.rooms
-    ackFn({roomList, length: roomList.length})    
-  },
-  async listRoom(tracker, {sender, data: {roomName}}, ackFn, socket) {
-      var io = tracker.io
-      var contents
-      if (roomName){
-        contents = io.nsps["/" + tracker.namespace].adapter.rooms[roomName]
-        if(ackFn && typeof ackFn === 'function'){
-          if(contents){
-            ackFn({roomName: roomName, sockets: contents.sockets,length: contents.length})
-          } else {
-            ackFn({roomName: null, sockets: null, length: 0})
-          }
-        }
-
-      } else {
-        contents = io.nsps["/" + tracker.namespace].adapter.rooms
-        if(ackFn && typeof ackFn === 'function'){ackFn({roomList: contents})}
-      }
   }
 }
 
 
 export var defaultClientActions = {
-
-  async "getServers"(ackFn) {
-    if (!(ackFn && typeof ackFn =='function')){
-      console.log('Bad or Missing Ack Function')
-    }
-    var response = Array.from(LivelyServer.servers).map(function(ea){
-                      return ea[1]
-                   })
-    typeof ackFn === "function" && ackFn(response);
-  },
 
   async "getRoomList"({client,ackFn}){
     var result = client._socketioClient.rooms
@@ -169,4 +188,5 @@ export var defaultClientActions = {
     if (status !== "OK") console.warn(status);
     typeof ackFn === "function" && ackFn(status);
   }
+
 }

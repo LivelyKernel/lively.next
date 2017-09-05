@@ -1,8 +1,20 @@
-/*global Map,System*/
-import { promise, events, num } from "lively.lang";
-import ioClient from "socket.io-client";
+/*global Map,System,process*/
+import { promise, fun, obj, events, num } from "lively.lang";
 import L2LConnection from "./interface.js";
 import { defaultActions, defaultClientActions } from "./default-actions.js";
+
+let isNode = typeof System !== "undefined" ?
+  System.get("@system-env").node :
+  typeof process !== "undefined" && process.env;
+
+// FIXME!!
+// import ioClient from "socket.io-client";
+import _ioClient from "socket.io-client/dist/socket.io.js";
+var ioClient = _ioClient;
+if (isNode) {
+  ioClient = System._nodeRequire("socket.io-client");
+}
+
 
 const urlHelper = {
   isRoot: url => urlHelper.path(url) === "/",
@@ -28,10 +40,6 @@ const urlHelper = {
 }
 
 
-let isNode = typeof System !== "undefined" ?
-  System.get("@system-env").node :
-  typeof process !== "undefined" && process.env;
-
 function determineLocation() {
   if (typeof document !== "undefined" && document.location)
     return document.location.origin;
@@ -56,17 +64,25 @@ export default class L2LClient extends L2LConnection {
   }
 
   static forLivelyInBrowser(info) {
+    let hasInfo = !!info;
+    info = {type: "lively.morphic browser", ...info};
+
     let def = this.default();
-    if (def) return def;
-    
-    return L2LClient.ensure({
-      url: `${document.location.origin}/lively-socket.io`,
-      namespace: "l2l",
-      info: {
-        type: "lively.morphic browser",
-        ...info
-      }
-    });
+
+    if (!def) {    
+      return L2LClient.ensure({
+        url: `${document.location.origin}/lively-socket.io`,
+        namespace: "l2l", info
+      });
+    }
+
+    if (hasInfo && !obj.equals(def.info, info) && def.isRegistered()) {
+      def.info = info;
+      def.unregister().then(() => def.register())
+        .catch(err => console.error(`l2l re-register on info change errored: ` + err));
+    }
+
+    return def;    
   }
 
   static default() {
@@ -75,17 +91,30 @@ export default class L2LClient extends L2LConnection {
     return L2LClient.clients.get(key);
   }
 
-  static ensure(options = {}) {
-    // url specifies hostname + port + io path
-    // namespace is io namespace
-
+  static create(options = {}) {    
     let {
       debug = false,
-      url = null,
-      namespace = null,
+      url,
+      namespace,
       autoOpen = true,
       info = {}
     } = options;
+
+    if (!url) throw new Error("L2LClient needs server url!");
+
+    let origin = urlHelper.root(url).replace(/\/+$/, ""),
+        path = urlHelper.path(url),
+        client = new this(origin, path, namespace || "", info);
+
+    if (autoOpen) client.register();
+    client.debug = debug;
+    return client;
+  }
+
+  static ensure(options = {}) {
+    // url specifies hostname + port + io path
+    // namespace is io namespace
+    let {url, namespace} = options;
 
     if (!url) throw new Error("L2LClient needs server url!")
 
@@ -94,11 +123,9 @@ export default class L2LClient extends L2LConnection {
         key = this.clientKey(origin, path, namespace || ""),
         client = this.clients.get(key);
 
-    if (!client) {
-      client = new this(origin, path, namespace || "", info);
-      if (autoOpen) { client.register(); }
-      this.clients.set(key, client);
-    }
+    if (!client)
+      this.clients.set(key,
+        client = this.create({...options, url, namespace}));
 
     return client;
   }
@@ -225,6 +252,7 @@ export default class L2LClient extends L2LConnection {
 
     socket.on("reconnecting", () => {
       this.debug && console.log(`[${this}] reconnecting`, this._reconnectState);
+      this.emit("reconnecting", this);
       if (this._reconnectState.closed) {
         this._reconnectState.isReconnecting = false;
         this._reconnectState.isReconnectingViaSocketio = false;
@@ -388,6 +416,68 @@ export default class L2LClient extends L2LConnection {
         socket.emit(action, msg);
     });
   }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // broadcasting
+  joinRoom(room) {
+    return this.whenOnline().then(() =>
+      this.sendToAndWait(this.trackerId, "[broadcast] join room", {room}));
+  }
+
+  leaveRoom(room) {
+    return this.whenOnline().then(() =>
+      this.sendToAndWait(this.trackerId, "[broadcast] leave room", {room}));
+  }
+
+  broadcast(room, action, data, isSystemBroadcast = false, isMultiServerBroadcast = false) {
+    let broadcast = {action, room, broadcast: data};
+    if (isSystemBroadcast)
+      broadcast.isSystemBroadcast = true;
+    if (isMultiServerBroadcast)
+      broadcast.isMultiServerBroadcast = true;
+    return this.whenOnline().then(() =>
+      this.sendToAndWait(this.trackerId, "[broadcast] send", broadcast));
+  }
+
+  async listRoomMembers(room) {
+    let {data} = await this.sendToAndWait(this.trackerId, "[broadcast] list room members", {room});
+    return data;
+  }
+
+  async joinedRooms() {
+    let {data} = await this.sendToAndWait(this.trackerId, "[broadcast] my rooms", {});
+    return data;
+  }
+
+  async listRooms() {
+    let {data} = await this.sendToAndWait(this.trackerId, "[broadcast] all rooms", {});
+    return data;
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // user network related
+  async listPeers(force = false) {
+    if (!force && this._peersCached) return this._peersCached;
+    if (!this.isOnline()) return [];
+    setTimeout(() => { delete this._peersCached; }, 1000);
+    let {data} = await this.sendToAndWait(this.trackerId, "getClients", {});
+    return this._peersCached = data.map(([id, record]) => {
+      let {userRealm, userToken, location, type, world} = record.info || {},
+          peer = {...obj.dissoc(record, ["info"]), id, world, location, type}
+      if (userToken) {
+        if (lively.user) {
+          peer.user = lively.user.ClientUser.fromToken(userToken, userRealm);
+        } else {
+          peer.userToken = userToken
+          peer.userRealm = userRealm;
+        }
+      }
+      return peer;
+    });
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // debugging
 
   toString() {
     var {origin, path, namespace, id} = this,
