@@ -721,7 +721,8 @@ var commands = [
       for (let p of pkgs) {
         let excluded = (Path("lively.ide.exclude").get(p) || []).map(ea =>
                  ea.includes("*") ? new RegExp(ea.replace(/\*/g, ".*")): ea);
-        items.push(...(await systemInterface.resourcesOfPackage(p))
+        excluded.push(".git", "node_modules", ".module_cache");
+        items.push(...(await systemInterface.resourcesOfPackage(p, excluded))
           .filter(({url}) => !url.endsWith("/") && !excluded.some(ex => ex instanceof RegExp ? ex.test(url): url.includes(ex)))
           .sort((a, b) => {
             if (a.isLoaded && !b.isLoaded) return -1;

@@ -565,8 +565,9 @@ export default class Browser extends Window {
   async packageResources(p) {
     let excluded = (Path("lively.ide.exclude").get(p) || []).map(ea =>
              ea.includes("*") ? new RegExp(ea.replace(/\*/g, ".*")): ea);
+    excluded.push(".git", "node_modules", ".module_cache");
     try {
-      return (await this.systemInterface.resourcesOfPackage(p.address))
+      return (await this.systemInterface.resourcesOfPackage(p.address, excluded))
         .filter(({url}) => (url.endsWith(".js") || url.endsWith(".json"))
                         && !excluded.some(ex => ex instanceof RegExp ? ex.test(url): url.includes(ex)))
         .map((ea) => { ea.name = ea.url; return ea; });
