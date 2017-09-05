@@ -6,6 +6,8 @@ import { MorphicDB } from "./morphicdb/index.js";
 import { Path, obj, date, promise } from "lively.lang";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import LoadingIndicator from "./components/loading-indicator.js";
+import { subscribe } from "lively.notifications/index.js";
+import { Color } from "lively.graphics";
 
 
 export function pathForBrowserHistory(worldName, queryString) {
@@ -69,7 +71,7 @@ export async function loadWorld(newWorld, oldWorld, options = {}) {
 
   try {
 
-    let l2lClient = l2l && await setupLively2Lively();
+    let l2lClient = l2l && await setupLively2Lively(newWorld);
 
     if (l2lClient && shell) await setupLivelyShell({l2lClient});
 
@@ -129,11 +131,50 @@ async function setupLivelyShell(opts) {
   console.log(`[lively] lively.shell setup`);
 }
 
-async function setupLively2Lively() {
+async function setupLively2Lively(world) {
+  let user = world.getCurrentUser(),
+      info = {world: world.name};
+  if (user) {
+    info.userToken = user.token;
+    info.userRealm = user.realm;
+  }
+
   await lively.modules.importPackage("lively.2lively");
   let {default: L2LClient} = await lively.modules.module("lively.2lively/client.js").load(),
-      client = await L2LClient.forLivelyInBrowser();
-  console.log(`[lively] lively2lively client created ${client}`)
+      client = await L2LClient.forLivelyInBrowser(info);
+  console.log(`[lively] lively2lively client created ${client}`);
+
+  // FIXME... put this go somewhere else...?
+  if (!client._onUserChange) {
+    client._onUserChange = function(evt) {
+      console.log("user change evtn", evt)
+      if (client.isOnline() && evt.user) {
+        let {token: userToken, realm: userRealm} = evt.user;
+        client.info = {...client.info, userToken, userRealm};
+        client.unregister().then(() => client.register())
+          .then(() => console.log("re-registered after user change"));
+      }
+    }
+    lively.notifications.subscribe("lively.user/userchanged", client._onUserChange, System);
+
+    client.on("registered", () => {
+      let flap = world.get("user flap");
+      flap && flap.updateNetworkIndicator(client);
+    });
+    client.on("connected", () => {
+      let flap = world.get("user flap");
+      flap && flap.updateNetworkIndicator(client);
+    });
+    client.on("reconnecting", () => {
+      let flap = world.get("user flap");
+      flap && flap.updateNetworkIndicator(client);
+    });
+    client.on("disconnected", () => {
+      let flap = world.get("user flap");
+      flap && flap.updateNetworkIndicator(client);
+    });
+  }
+
   return client;
 }
 
