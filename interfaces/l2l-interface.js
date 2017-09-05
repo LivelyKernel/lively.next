@@ -3,22 +3,23 @@ import { RemoteCoreInterface } from "./interface.js";
 
 export class L2LCoreInterface extends RemoteCoreInterface {
 
-  constructor(targetId, targetInfo) {
+  constructor(targetId, peer) {
     super();
     this.targetId = targetId;
-    this.targetInfo = targetInfo;
+    this.peer = peer;
   }
 
   get name() { return `l2l ${this.targetId}`; }
 
   get description() {
-    let {targetId, targetInfo} = this,
+    let {targetId, peer} = this,
         id = targetId.slice(0,5),
         name = `l2l ${id}`;
-    if (targetInfo) {
-      let {location, type, userName} = targetInfo;
+    if (peer) {
+      let {location, type, user, world} = peer;
       if (type) name += `, ${type}`;
-      if (location) name += `, ${location.replace(/^https?:\/\//, "")}`;
+      if (location) name += `, ${location.replace(/^https?:\/\//, "")}${world ? "/" + world : ""}`;
+      if (user) name += `, ${user.name}`;
     }
     return name;
   }

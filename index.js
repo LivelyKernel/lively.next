@@ -144,4 +144,4 @@ export var localInterface = new Interface(new LocalCoreInterface());
 const httpInterfaces = {}
 export var serverInterfaceFor = url => httpInterfaces[url] || (httpInterfaces[url] = new Interface(new HTTPCoreInterface(url)));
 const l2lInterfaces = {};
-export var l2lInterfaceFor = (targetId, targetInfo) => httpInterfaces[targetId] || (httpInterfaces[targetId] = new Interface(new L2LCoreInterface(targetId, targetInfo)));
+export var l2lInterfaceFor = (targetId, peer) => l2lInterfaces[targetId] || (l2lInterfaces[targetId] = new Interface(new L2LCoreInterface(targetId, peer)));
