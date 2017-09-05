@@ -1001,10 +1001,6 @@ export class Morph {
     this.layout && this.layout.onSubmorphChange(submorph, change);
   }
 
-  onOwnerChange(newOwner) {
-
-  }
-
   get changes() { return this.env.changeManager.changesFor(this); }
   applyChange(change) { this.env.changeManager.apply(this, change); }
 
