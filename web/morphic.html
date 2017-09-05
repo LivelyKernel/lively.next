@@ -65,18 +65,14 @@
             evt.returnValue = msg;
             return msg;
           }, true);
-          var isLocal = loc.search.includes("location=local"),
-              worldNameMatch = decodeURIComponent(loc.pathname).match(/\/worlds\/(.+)/),
+          var worldNameMatch = decodeURIComponent(loc.pathname).match(/\/worlds\/(.+)/),
               worldName = worldNameMatch
                 ? worldNameMatch[1].replace(/(\.json)?($|\?.*)/, ".json$2")
                 : "default",
-              resource = isLocal
-                ? res("lively.storage://worlds/" + worldName)
-                : res(origin + "/" + "lively.morphic/worlds/" + worldName);
+              resource = res(origin + "/" + "lively.morphic/worlds/" + worldName);
           return {
             resource: resource,
             showWorldLoadDialog: !worldNameMatch,
-            isLocal: isLocal
           };
         })
         .then(function(worldLocation) {
