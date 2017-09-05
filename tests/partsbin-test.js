@@ -1,18 +1,20 @@
-/*global declare, it, describe, beforeEach, afterEach, before, after*/
+/*global declare, it, describe, beforeEach, afterEach, before, after,System*/
 import { expect } from "mocha-es6";
 import { pt, Color } from "lively.graphics";
-import { saveObjectToPartsbinFolder, loadObjectFromPartsbinFolder } from "../partsbin.js";
+import { saveObjectToPartsbinFolder, loadPart, savePart, loadObjectFromPartsbinFolder } from "../partsbin.js";
 import { morph, World, MorphicEnv, inspect } from "lively.morphic";
 import { resource } from "lively.resources";
 import { arr } from "lively.lang";
 import ObjectPackage, { addScript } from "lively.classes/object-classes.js";
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
+import { MorphicDB } from "../morphicdb/index.js";
 
 
-let partsbinFolder = "local://morphic-partsbin-tests/",
-    publishOpts = {partsbinFolder, addPreview: !System.get("@system-env").node},
-    env, packagesToRemove;
-let isNode = System.get("@system-env").node;
+let publishOpts = {addPreview: !System.get("@system-env").node},
+    env, packagesToRemove,
+    isNode = System.get("@system-env").node,
+    testDB;
+
 
 async function setup() {
   if (isNode) {
@@ -20,12 +22,19 @@ async function setup() {
     env.setWorld(new World({name: "world", extent: pt(300,300)}));
   }
   packagesToRemove = [];
+  
+  testDB = MorphicDB.named("lively.morphic/objectdb/partsbin-test-db", {
+    snapshotLocation: "lively.morphic/objectdb/partsbin-test-db/snapshots/",
+    serverURL: System.baseURL + "objectdb/"
+  });
+  publishOpts.morphicDB = testDB;
 }
 
 async function teardown() {
   isNode && MorphicEnv.popDefault().uninstall();
   await Promise.all(packagesToRemove.map(ea => ea.remove()));
-  await resource(partsbinFolder).remove();
+  await testDB.destroyDB();
+  await resource(System.decanonicalize(testDB.snapshotLocation)).parent().remove()
 }
 
 describe("partsbin", function () {
@@ -35,26 +44,27 @@ describe("partsbin", function () {
   beforeEach(setup);
   afterEach(teardown);
 
-  it("publishes part as file", async () => {
+  it("publishes part in db", async () => {
     var m = morph({name: "test-morph"}),
-        {partName, url} = await saveObjectToPartsbinFolder(m, m.name, publishOpts);
-    expect(partName).equals(m.name);
-    expect(url).equals(`${partsbinFolder}${m.name}.json`);
-    let files = await resource(partsbinFolder).dirList();
-    expect(arr.pluck(files, "url")).equals([url]);
+        commit = await savePart(m, m.name, publishOpts, {author: {name: "foo-user"}});
+    expect(commit.name).equals(m.name);
   });
 
   it("loads a part", async () => {
     let p = ObjectPackage.withId("package-for-loads-a-part-test");
     packagesToRemove.push(p);
 
-    var m = morph({name: "test-morph"}),
-        _ = await p.adoptObject(m),
-        _ = await addScript(m, () => 23, "foo"),
-        {partName} = await saveObjectToPartsbinFolder(m, m.name, publishOpts),
-        m2 = await loadObjectFromPartsbinFolder(partName, {partsbinFolder});
+    var m = morph({name: "test-morph"});
+    await p.adoptObject(m);
+    await addScript(m, () => 23, "foo");
+
+    var {name: partName} = await savePart(m, m.name, publishOpts, {author: {name: "foo-user"}}),
+        m2 = await loadPart(partName, {morphicDB: testDB});
     expect(m2.foo()).equals(23);
     expect(m2.id).not.equals(m.id);
+
+    expect(await testDB.latestCommits("part", /*includeDeleted = */true))
+      .containSubset([{name: partName}]);
   });
 
   it("loads most recent part state from file", async () => {
@@ -65,23 +75,22 @@ describe("partsbin", function () {
     var m = morph({name: "test-morph", fill: Color.red});
     await p.adoptObject(m);
     await addScript(m, () => 23, "foo");
-    var {url} = await saveObjectToPartsbinFolder(m, m.name, publishOpts),
-        version1 = await resource(url).read();
+    var commit = await savePart(m, m.name, publishOpts, {author: {name: "foo-user"}});
 
     // publish version 2
     m.fill = Color.yellow;
     await addScript(m, () => 24, "foo");
-    await saveObjectToPartsbinFolder(m, m.name, publishOpts);
+    await savePart(m, m.name, publishOpts, {author: {name: "foo-user"}});
 
-    var m2 = await loadObjectFromPartsbinFolder(m.name, {partsbinFolder});
+    var m2 = await loadPart(m.name, {morphicDB: testDB});
     expect(m2.fill).equals(Color.yellow);
     expect(m2.foo()).equals(24);
 
     // revert to version 1
-    await resource(url).write(version1);
-    var m3 = await loadObjectFromPartsbinFolder(m.name, {partsbinFolder});
+    await savePart(await testDB.load(commit), m.name, publishOpts, {author: {name: "foo-user"}})
+    var m3 = await loadPart(m.name, {morphicDB: testDB});
     expect(m3.fill).equals(Color.red, "state not that of version 1");
-    expect(m3.foo()).equals(23, "behavior not that of version 1");
+    expect(m3.foo()).equals(24, "behavior did not remain at the most recent version");
   });
 
 });

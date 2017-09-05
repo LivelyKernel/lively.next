@@ -48,7 +48,8 @@ describe("morph serialization", function() {
 
   it("uses onLoad function", () => {
     var m = new OnLoadTestMorph();
-    expect(m.onLoadCalled).equals(undefined, "onLoad called on construction");
+    expect(m.onLoadCalled).equals(true, "onLoad not called on construction");
+    m.onLoadCalled = false;
     expect(m.copy().onLoadCalled).equals(true, "onLoad not called on deserialization");
   });
 
