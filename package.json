@@ -10,8 +10,8 @@
     "lively.resources": "*",
     "lively.shell": "https://github.com/LivelyKernel/lively.shell",
     "minimist": "^1.2.0",
-    "socket.io": "^1.5.1",
-    "socket.io-client": "^1.5.1",
+    "socket.io": "^2.0.3",
+    "socket.io-client": "^2.0.3",
     "systemjs": "^0.19.40",
     "winston": "^2.3.1",
     "formidable": "^1.0.17"
