@@ -1,5 +1,5 @@
 /* global System */
-import { arr, promise } from "lively.lang";
+import { arr, Path, promise } from "lively.lang";
 import { pt } from "lively.graphics";
 import config from "../config.js";
 import TextInput from './TextInput.js';
@@ -12,12 +12,12 @@ import { cumulativeOffset } from "../rendering/dom-helper.js";
 const domEventsWeListenTo = [
   {type: 'pointerdown', capturing: false},
   {type: 'pointerup',   capturing: false},
-  {type: 'pointermove', capturing: false},
-  {type: 'pointerover', capturing: false},
-  {type: 'pointerout',  capturing: false},
+  {type: 'pointermove', capturing: false, passive: false},
+  {type: 'pointerover', capturing: false, passive: false},
+  {type: 'pointerout',  capturing: false, passive: false},
   {type: 'contextmenu', capturing: false},
-  {type: 'scroll',      capturing: true},
-  {type: 'wheel',       capturing: false},
+  {type: 'scroll',      capturing: true, passive: false},
+  {type: 'wheel',       capturing: false, passive: false},
 
   {type: "drag",      capturing: false},
   {type: "dragstart", capturing: false},
@@ -35,7 +35,7 @@ const eventsCausingImmediateRender = new Set([
 const globalDomEventsWeListenTo = [
   {type: 'resize', capturing: false, morphMethod: "onWindowResize"},
   {type: 'orientationchange', capturing: false, morphMethod: "onWindowResize"},
-  {type: 'scroll', capturing: false, morphMethod: "onWindowScroll"}
+  {type: 'scroll', capturing: false, passive: false, morphMethod: "onWindowScroll"}
 ];
 
 const typeToMethodMap = {
@@ -264,13 +264,15 @@ export default class EventDispatcher {
     domEventsWeListenTo.forEach(({type, capturing}) => {
       let fn = evt => this.dispatchDOMEvent(evt);
       this.handlerFunctions.push({node: emitter, type, fn, capturing});
-      emitter.addEventListener(type, fn, capturing);
+      let arg = capturing;
+      emitter.addEventListener(type, fn, arg);
     });
 
     globalEmitter.addEventListener && globalDomEventsWeListenTo.forEach(({type, capturing, morphMethod}) => {
       let fn = evt => this.dispatchDOMEvent(evt, this.world, morphMethod);
       this.handlerFunctions.push({node: globalEmitter, type, fn, capturing});
-      globalEmitter.addEventListener(type, fn, capturing);
+      let arg = capturing;
+      globalEmitter.addEventListener(type, fn, arg);
     });
 
     this.keyInputHelper = new TextInput(this).install(rootNode);
@@ -284,8 +286,10 @@ export default class EventDispatcher {
     this.installed = false;
 
     var handlerFunctions = this.handlerFunctions;
-    handlerFunctions.forEach(({node, type, fn, capturing}) =>
-      node.removeEventListener(type, fn, capturing));
+    handlerFunctions.forEach(({node, type, fn, capturing}) => {
+      let arg = capturing;
+      node.removeEventListener(type, fn, arg);
+    });
     handlerFunctions.length = 0;
 
     this.keyInputHelper && this.keyInputHelper.uninstall();
@@ -361,10 +365,12 @@ export default class EventDispatcher {
 
           let repeatedClick = false, prevClickCount = 0;
           if (state.prevClick) {
-            let { clickedOnMorph, clickedOnPosition, clickedAtTime, clickCount } = state.prevClick,
-              clickInterval = Date.now() - clickedAtTime;
-            repeatedClick = clickedOnMorph === targetMorph && clickInterval < config.repeatClickInterval;
-            prevClickCount = clickCount
+            let {clickedOnMorph, clickedOnPosition,
+                 clickedAtTime, clickCount } = state.prevClick,
+                clickInterval = Date.now() - clickedAtTime;
+            repeatedClick = clickedOnMorph === targetMorph
+                         && clickInterval < config.repeatClickInterval;
+            prevClickCount = clickCount;
           }
           state.clickCount = repeatedClick ? prevClickCount + 1 : 1;
         });
