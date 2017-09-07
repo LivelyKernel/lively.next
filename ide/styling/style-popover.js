@@ -68,13 +68,12 @@ export class Popover extends Morph {
       submorphs: {
         initialize() {
           this.submorphs = [
-            {
+            morph({
               type: "polygon",
               name: "arrow",
               borderColor: Color.transparent,
-              extent: pt(20,20),
-              vertices: [pt(-1, 0), pt(0, -0.5), pt(1, 0)]
-            },
+              vertices: [pt(-10, 0), pt(0, -15), pt(10, 0)]
+            }),
             {name: "body"},
           ];
         }
