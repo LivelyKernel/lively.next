@@ -45,6 +45,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
       if (dependenciesDir.startsWith("/")) dependenciesDir = "file://" + dependenciesDir;
       await resource(baseDir).asDirectory().ensureExistance();
       await resource(dependenciesDir).asDirectory().ensureExistance();
+      await resource(baseDir).join("custom-npm-modules/").ensureExistance();
     }
 
     console.log("=> Reading package specs from " + packageSpecFile);
