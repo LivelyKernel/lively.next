@@ -82,15 +82,17 @@ export async function interactiveConnectGivenSourceAndTarget(sourceObj, sourceAt
   targetObj.openMenu(items);
 }
 
-export async function interactivelyReEvaluateConnection(connection, prompt = "confirm connection", highlight, onConnect) {
+export async function interactivelyReEvaluateConnection(
+  connection, prompt = "confirm connection", highlight, onConnect
+) {
   let {
         sourceObj, sourceAttrName, targetObj, targetMethodName
       } = connection,
       converter = connection.getConverter(),
       updater = connection.getUpdater();
   return interactivelyEvaluateConnection({
-    sourceObj, sourceAttrName, targetObj, targetAttr: targetMethodName,
-    converter, updater, prompt, highlight, onConnect})
+    sourceObj, sourceAttr: sourceAttrName, targetObj, targetAttr: targetMethodName,
+    converter, updater, prompt, highlight, onConnect});
 }
 
 export async function interactivelyEvaluateConnection(opts) {
@@ -599,13 +601,13 @@ class ConnectionPin extends Morph {
     var connectionPoint = morph({type: "ellipse", styleClasses: ["occupiedPin"]}),
         removeButton = Icon.makeLabel('remove', {nativeCursor: 'pointer'}),
         description = morph({
-      type: "text", fill: Color.transparent,
-      readOnly: true, nativeCursor: 'pointer', padding: rect(0,1,0,0),
-      textAndAttributes: [
-        ...Icon.textAttribute("long-arrow-right"), "  ", null,
-        connection.targetMethodName, null
-      ],
-    })
+          type: "text", fill: Color.transparent,
+          readOnly: true, nativeCursor: 'pointer', padding: rect(0,1,0,0),
+          textAndAttributes: [
+            ...Icon.textAttribute("long-arrow-right"), "  ", null,
+            connection.targetMethodName, null
+          ],
+        })
     connect(description, 'onHoverIn', this, 'showConnection', {
       converter: () => ({connection, connectionPoint, description}),
       varMapping: {connection, connectionPoint, description}
