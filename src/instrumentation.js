@@ -1,4 +1,4 @@
-/*global System*/
+/*global System,process*/
 import { parse, nodes, isValidIdentifier } from "lively.ast";
 var { funcCall, member, literal } = nodes;
 import { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from "lively.vm";

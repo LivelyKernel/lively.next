@@ -76036,7 +76036,7 @@ var customTranslate = function () {
 // manually
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-/*global System*/
+/*global System,process*/
 var funcCall = lively_ast.nodes.funcCall;
 var member = lively_ast.nodes.member;
 var literal = lively_ast.nodes.literal;
@@ -78687,71 +78687,6 @@ var PackageRegistry$$1 = function () {
   return PackageRegistry$$1;
 }();
 
-// async updatePackageFromPackageJson(pkg, updateLatestPackage = true) {
-//   // for name or version changes
-//   return this.updatePackageFromConfig(
-//     pkg,
-//     await ensureResource(pkg.url).join("package.json").readJson(),
-//     updateLatestPackage);
-// }
-//
-// updatePackageFromConfig(pkg, config, updateLatestPackage = true) {
-//   // for name or version changes
-//   let {url: oldURL, name: oldName, version: oldVersion} = pkg,
-//       {name, version, dependencies, devDependencies, main, systemjs} = config;
-//   pkg.name = name;
-//   pkg.version = version;
-//   pkg.dependencies = dependencies || {};
-//   pkg.devDependencies = devDependencies || {};
-//   pkg.main = systemjs && systemjs.main || main || "index.js";
-//   pkg.systemjs = systemjs;
-//   return this.updatePackage(pkg, oldName, oldVersion, oldURL, updateLatestPackage)
-// }
-//
-// updatePackage(pkg, oldName, oldVersion, oldURL, updateLatestPackage = true) {
-//   // for name or version changes
-//
-//   let oldLocation = this.coversDirectory(ensureResource(oldURL));
-//   if (
-//     (oldName    && pkg.name === oldName) ||
-//     (oldVersion && pkg.version !== oldVersion) ||
-//     (oldURL     && pkg.url !== oldURL)
-//   ) {
-//     this.removePackage({name: oldName, version: oldVersion, url: oldURL}, false);
-//   }
-//
-//   let dir = ensureResource(pkg.url),
-//       known = this.coversDirectory(ensureResource(pkg.url));
-//   if (!known) {
-//     console.log(`[PackageRegistry>>updatePackage] adding ${pkg.url} to individualPackageDirs b/c it is not known`);
-//     if (oldLocation === "devPackageDirs") this.devPackageDirs.push(dir);
-//     else this.individualPackageDirs.push(dir);
-//   }
-//
-//   let {name, version} = pkg,
-//       {packageMap} = this,
-//       packageEntry = packageMap[name] ||
-//         (packageMap[name] = {versions: {}, latest: null});
-//   packageEntry.versions[version] = pkg;
-//
-//   if (updateLatestPackage) this._updateLatestPackages(pkg.name);
-//   this.resetByURL();
-// }
-
-
-//   async _internalAddPackageDir(dir, updateLatestPackage = false) {
-//   if (!dir.isDirectory()) return null;
-//   try {
-//     let config = await dir.join("package.json").readJson(),
-//         {name, version} = config,
-//         pkg = getPackage(this.System, dir.url);
-//     this.System.debug && console.log(`[lively.modules] package registry ${name}@${version} in ${dir.url}`);
-//     this.updatePackageFromConfig(pkg, config, updateLatestPackage);
-//     pkg.registerWithConfig(config);
-//     return pkg;
-//   } catch (err) { return null; }
-// }
-
 function normalizePackageURL(System, packageURL) {
   var allPackageURLs = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
 
@@ -78931,7 +78866,7 @@ var Package = function () {
     key: "toJSON",
     value: function toJSON() {
       var System = this.System,
-          jso = lively_lang.obj.select(this, ["url", "_name", "version", "map", "dependencies", "devDependencies", "main", "systemjs"]);
+          jso = lively_lang.obj.select(this, ["url", "_name", "version", "map", "dependencies", "devDependencies", "main", "systemjs", "lively"]);
 
       if (jso.url.startsWith(System.baseURL)) jso.url = jso.url.slice(System.baseURL.length).replace(/^\//, "");
       return jso;
@@ -78949,6 +78884,7 @@ var Package = function () {
       this.dependencies = jso.dependencies || {};
       this.devDependencies = jso.devDependencies || {};
       this.systemjs = jso.systemjs;
+      this.lively = jso.lively;
       if (!isURL(this.url)) this.url = join(System.baseURL, this.url);
       this.registerWithConfig();
       return this;
@@ -79819,6 +79755,7 @@ var Package = function () {
           devDependencies = this.devDependencies,
           main = this.main,
           systemjs = this.systemjs,
+          lively = this.lively,
           config = {
         name: name,
         version: version,
@@ -79828,6 +79765,7 @@ var Package = function () {
 
       if (main) config.main = main;
       if (systemjs) config.systemjs = systemjs;
+      if (lively) config.lively = lively;
       return config;
     }
   }]);
@@ -82215,6 +82153,7 @@ function wrapResource(System) {
   install(System, "resource", livelyProtocol);
 }
 
+/*global System,process*/
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 var isNode = System.get("@system-env").node;
@@ -82655,6 +82594,7 @@ function knownModuleNames(System) {
   return lively_lang.arr.uniq(fromSystem.concat(Object.keys(loadedModules$1(System))));
 }
 
+/*global System*/
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // lookup exports of modules
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

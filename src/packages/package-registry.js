@@ -308,8 +308,10 @@ export class PackageRegistry {
     return pathInPackage ? resource(p.url).join(pathInPackage).url : p.url;
   }
 
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // reading stuff in
+
   async update() {
 
     if (!this.isReady())
@@ -488,71 +490,3 @@ export class PackageRegistry {
   }
 
 }
-
-
-  // async updatePackageFromPackageJson(pkg, updateLatestPackage = true) {
-  //   // for name or version changes
-  //   return this.updatePackageFromConfig(
-  //     pkg,
-  //     await ensureResource(pkg.url).join("package.json").readJson(),
-  //     updateLatestPackage);
-  // }
-  //
-  // updatePackageFromConfig(pkg, config, updateLatestPackage = true) {
-  //   // for name or version changes
-  //   let {url: oldURL, name: oldName, version: oldVersion} = pkg,
-  //       {name, version, dependencies, devDependencies, main, systemjs} = config;
-  //   pkg.name = name;
-  //   pkg.version = version;
-  //   pkg.dependencies = dependencies || {};
-  //   pkg.devDependencies = devDependencies || {};
-  //   pkg.main = systemjs && systemjs.main || main || "index.js";
-  //   pkg.systemjs = systemjs;
-  //   return this.updatePackage(pkg, oldName, oldVersion, oldURL, updateLatestPackage)
-  // }
-  //
-  // updatePackage(pkg, oldName, oldVersion, oldURL, updateLatestPackage = true) {
-  //   // for name or version changes
-  //
-  //   let oldLocation = this.coversDirectory(ensureResource(oldURL));
-  //   if (
-  //     (oldName    && pkg.name === oldName) ||
-  //     (oldVersion && pkg.version !== oldVersion) ||
-  //     (oldURL     && pkg.url !== oldURL)
-  //   ) {
-  //     this.removePackage({name: oldName, version: oldVersion, url: oldURL}, false);
-  //   }
-  //
-  //   let dir = ensureResource(pkg.url),
-  //       known = this.coversDirectory(ensureResource(pkg.url));
-  //   if (!known) {
-  //     console.log(`[PackageRegistry>>updatePackage] adding ${pkg.url} to individualPackageDirs b/c it is not known`);
-  //     if (oldLocation === "devPackageDirs") this.devPackageDirs.push(dir);
-  //     else this.individualPackageDirs.push(dir);
-  //   }
-  //
-  //   let {name, version} = pkg,
-  //       {packageMap} = this,
-  //       packageEntry = packageMap[name] ||
-  //         (packageMap[name] = {versions: {}, latest: null});
-  //   packageEntry.versions[version] = pkg;
-  //
-  //   if (updateLatestPackage) this._updateLatestPackages(pkg.name);
-  //   this.resetByURL();
-  // }
-
-
-
-  //   async _internalAddPackageDir(dir, updateLatestPackage = false) {
-  //   if (!dir.isDirectory()) return null;
-  //   try {
-  //     let config = await dir.join("package.json").readJson(),
-  //         {name, version} = config,
-  //         pkg = getPackage(this.System, dir.url);
-  //     this.System.debug && console.log(`[lively.modules] package registry ${name}@${version} in ${dir.url}`);
-  //     this.updatePackageFromConfig(pkg, config, updateLatestPackage);
-  //     pkg.registerWithConfig(config);
-  //     return pkg;
-  //   } catch (err) { return null; }
-  // }
-

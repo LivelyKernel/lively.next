@@ -156,7 +156,8 @@ class Package {
           "dependencies",
           "devDependencies",
           "main",
-          "systemjs"
+          "systemjs",
+          "lively"
         ]);
     if (jso.url.startsWith(System.baseURL))
       jso.url = jso.url.slice(System.baseURL.length).replace(/^\//, "")
@@ -173,6 +174,7 @@ class Package {
     this.dependencies =    jso.dependencies || {};
     this.devDependencies = jso.devDependencies || {};
     this.systemjs =        jso.systemjs;
+    this.lively =          jso.lively;
     if (!isURL(this.url))
       this.url = join(System.baseURL, this.url);
     this.registerWithConfig();
@@ -220,16 +222,17 @@ class Package {
           version,
           dependencies,
           devDependencies,
-          main, systemjs
+          main, systemjs, lively
         } = this,
         config = {
           name: name,
           version: version,
           dependencies: dependencies || {},
-          devDependencies: devDependencies || {},
+          devDependencies: devDependencies || {}
         };
     if (main) config.main = main;
     if (systemjs) config.systemjs = systemjs;
+    if (lively) config.lively = lively;
     return config;
   }
 
