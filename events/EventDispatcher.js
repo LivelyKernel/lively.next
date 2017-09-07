@@ -199,6 +199,7 @@ export default class EventDispatcher {
     this.handlerFunctions = [];
     this.killRing = new KillRing(config.text.clipboardBufferLength);
     this.nodeMorphMap = new WeakMap();
+    this.timestampBase = Path("performance.timing.navigationStart").get(domEventEmitter) || 0;
 
     this.resetState();
   }
@@ -207,6 +208,7 @@ export default class EventDispatcher {
     // A place where info about previous events can be stored, e.g. for tracking
     // what was clicked on
     this.eventState = {
+      timeOfLastActivity: 0,
       focusedMorph: null,
       clickedOnPosition: null,
       clickedOnMorph: null,
@@ -589,10 +591,14 @@ export default class EventDispatcher {
   }
 
   dispatchDOMEvent(domEvt, targetMorph, morphMethod) {
-    let {world, eventState: state, nodeMorphMap} = this;
+    let {world, eventState: state, nodeMorphMap} = this,
+        {timeStamp, type} = domEvt;
 
-    if (!targetMorph && focusTargetingEvents.includes(domEvt.type)) {
+    state.timeOfLastActivity = this.timestampBase + timeStamp;
+    
+    if (!targetMorph && focusTargetingEvents.includes(type)) {
       targetMorph = state.focusedMorph || world;
+
     } else if (!targetMorph) {
       // search for the target node that represents a morph: Not all nodes with
       // event handlers might be rendered by morphs, e.g. in case of HTML morphs
@@ -615,7 +621,7 @@ export default class EventDispatcher {
     }
 
     if (!targetMorph) {
-      // console.warn(`No target morph when dispatching DOM event ${domEvt.type}`);
+      // console.warn(`No target morph when dispatching DOM event ${type}`);
       return;
     }
 
@@ -632,7 +638,7 @@ export default class EventDispatcher {
 
     if (world && world.needsRerender()) {
       let renderer = world.env.renderer;
-      if (eventsCausingImmediateRender.has(domEvt.type)) renderer.renderStep();
+      if (eventsCausingImmediateRender.has(type)) renderer.renderStep();
       else renderer.renderLater();
     }
   }
