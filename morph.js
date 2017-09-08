@@ -17,7 +17,6 @@ import { Path as PropertyPath } from "lively.lang";
 import { isNumber, isString } from "lively.lang/object.js";
 import { capitalize } from "lively.lang/string.js";
 import { connect, signal } from "lively.bindings";
-import { showAndSnapToGuides, removeSnapToGuidesOf } from "./halo/drag-guides.js";
 import { StylingVisitor } from "./sizzle.js";
 
 const defaultCommandHandler = new CommandHandler();
@@ -2323,12 +2322,14 @@ export class Morph {
     this.position = dragStartMorphPosition.addPt(absDragDelta);
   }
 
-  onDragEnd(evt) {
+  async onDragEnd(evt) {
+    let { removeSnapToGuidesOf } = await System.import("lively.halos/drag-guides.js");
     this.undoStop("drag-move");
     removeSnapToGuidesOf(this);
   }
 
-  onDrag(evt) {
+  async onDrag(evt) {
+    let {showAndSnapToGuides} = await System.import("lively.halos/drag-guides.js")
     let {dragStartMorphPosition, absDragDelta} = evt.state;
     this.position = dragStartMorphPosition.addPt(absDragDelta);
     showAndSnapToGuides(this, evt.isCtrlDown()/*show guides*/, evt.isCtrlDown()/*snap*/);
@@ -2531,7 +2532,7 @@ return ;
     // the render process is done
     if (this._dirty) return;
     this._dirty = true;
-    if (this.owner && this.visible) this.owner.makeDirty();
+    if (this.owner) this.owner.makeDirty();
   }
 
   needsRerender() { return this._dirty; }

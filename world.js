@@ -14,7 +14,7 @@ import {
   Window,
   Menu
 } from "./index.js";
-import { StatusMessage, StatusMessageForMorph } from './components/markers.js';
+import { StatusMessage, StatusMessageForMorph } from 'lively.halos/markers.js';
 import { TooltipViewer } from "./components/tooltips.js";
 
 import {

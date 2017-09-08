@@ -14,7 +14,7 @@ import { GridLayout } from "../../layout.js";
 import { NumberWidget, StringWidget, IconWidget, PaddingWidget, VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
 import { RichTextControl } from "../../text/ui.js";
 import { Point } from "lively.graphics/geometry-2d.js";
-import { MorphHighlighter, InteractiveMorphSelector } from "../../halo/morph.js";
+import { MorphHighlighter, InteractiveMorphSelector } from "lively.halos/morph.js";
 
 var inspectorCommands = [
 

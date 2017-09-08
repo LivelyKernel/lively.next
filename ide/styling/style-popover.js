@@ -10,7 +10,11 @@ import { Icons } from "../../components/icons.js";
 import KeyHandler from "../../events/KeyHandler.js";
 import { NumberWidget } from "../value-widgets.js";
 import { range, flatten } from "lively.lang/array.js";
-import { SvgStyleHalo } from "../../halo/vertices.js";
+import { SvgStyleHalo } from "lively.halos/vertices.js";
+import { FilterableList } from "../../components/list.js";
+import { TreeData, Tree } from "../../components/tree.js";
+import { isArray } from "lively.lang/object.js";
+import Window from "../../components/window.js";
 import { ProportionalLayout, GridLayout, TilingLayout, CustomLayout, HorizontalLayout, VerticalLayout } from "../../layout.js";
 
 const duration = 200;

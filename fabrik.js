@@ -1,4 +1,4 @@
-import { InteractiveMorphSelector, MorphHighlighter } from "./halo/morph.js";
+import { InteractiveMorphSelector, MorphHighlighter } from "lively.halos/morph.js";
 import { connect, signal, once } from "lively.bindings";
 import { Color, rect, pt } from "lively.graphics";
 import { showConnector } from "./components/markers.js";

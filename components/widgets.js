@@ -18,7 +18,7 @@ import {
 } from "lively.morphic";
 import {intersect, shape} from "svg-intersections";
 import {roundTo} from "lively.lang/number.js";
-import { MorphHighlighter } from "../halo/morph.js";
+import { MorphHighlighter } from "lively.halos/morph.js";
 
 class LeashEndpoint extends Ellipse {
 
