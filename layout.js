@@ -1,6 +1,5 @@
-/*global Sine*/
 import {
-  Ellipse, Icon,
+  Ellipse, Button, Icon,
   Morph,
   Path,
   Text,
@@ -11,26 +10,10 @@ import {
 import { Color, pt, rect, Rectangle } from "lively.graphics";
 import { arr } from "lively.lang";
 import { widgets, Menu } from "lively.components";
-import { connect } from "lively.bindings";
-
-export function showLayoutHaloFor(morph, pointerId) {
-  var halo;
-  if (morph.layout) {
-    switch(morph.layout.name()) {
-      case "Fill":
-      case "Vertical":
-      case "Horizontal":
-        halo = new FlexLayoutHalo(morph, pointerId).openInWorld(); break;
-      case "Tilinig":
-      case "CenteredTiling":
-        halo =  new TilingLayoutHalo(morph, pointerId).openInWorld(); break;
-      case "Grid":
-        halo = new GridLayoutHalo(morph, pointerId).openInWorld(); break;
-    }
-  }
-  halo && halo.alignWithTarget();
-  return halo;
-}
+import { connect, disconnect } from "lively.bindings";
+import { LabeledCheckBox, DropDownSelector } from "lively.morphic/components/widgets.js";
+import { NumberWidget } from "lively.morphic/ide/value-widgets.js";
+import { InteractiveMorphSelector } from "./morph.js";
 
 class AxisHalo extends Morph {
 
@@ -397,8 +380,8 @@ class CellGuide extends Morph {
   }
 
   menuItems() {
-    let checked = Icon.makeLabel('check-square-o').textAndAttributes,
-        unchecked = Icon.makeLabel('square-o').textAndAttributes;
+    let checked = Icon.textAttribute('check-square-o'),
+        unchecked = Icon.textAttribute('square-o');
     checked[1].textStyleClasses.push('annotation');
     unchecked[1].textStyleClasses.push('annotation');
     unchecked[1].paddingRight = "2px";
@@ -412,7 +395,7 @@ class CellGuide extends Morph {
         }]]],
       ["Align at...",
          ['center',  ...new Rectangle().sides, ...new Rectangle().corners].map(side => {
-           return [[side + "  ", null, ...(this.cellGroup.align == side ? checked : unchecked)],
+           return [[side + "  ", null, ...(this.cellGroup.align == side ? checked : unchecked)], 
                    () => this.cellGroup.align = side]
          })
       ],
@@ -425,7 +408,7 @@ class CellGuide extends Morph {
         }
       }]] : []);
   }
-
+  
 }
 
 export class GridLayoutHalo extends Morph {
@@ -463,6 +446,21 @@ export class GridLayoutHalo extends Morph {
       this.initGuides();
       this.alignWithTarget();
       this.focus();
+  }
+
+  optionControls() {
+      const layout = this.target,
+            compensateOrigin = new LabeledCheckBox({
+                name: "compensateOrigin", label: 'Compensate Origin',
+                fill: Color.transparent,
+                checked: layout.compensateOrigin}),
+            fitToCell = new LabeledCheckBox({
+              label: 'Resize Submorphs', fill: Color.transparent,
+                name: "fitToCell", checked: layout.fitToCell});
+      connect(compensateOrigin, "checked", layout, "compensateOrigin");
+      connect(fitToCell, "checked", layout, "fitToCell");
+      connect(compensateOrigin, "checked", this, "alignWithTarget");
+      return [compensateOrigin, fitToCell];
   }
 
   get isLayoutHalo() { return false }
@@ -687,7 +685,7 @@ export class TilingLayoutHalo extends Morph {
   };
 
   handleDrop(morph) {
-
+  
   }
 
   previewDrop(morphs) {
@@ -717,6 +715,38 @@ export class TilingLayoutHalo extends Morph {
     this.target.spacing = s;
   }
 
+  optionControls() {
+    const layout = this.target,
+          spacing = new NumberWidget({
+            min: 0,
+            number: layout.spacing,
+            padding: rect(5,3,0,0),
+            borderRadius: 3,
+            borderWidth: 1,
+            borderColor: Color.gray,
+            unit: "px"
+          });
+    connect(spacing, 'udpate', this, 'updateSpacing');
+    return [
+      [
+        {
+          type: "text",
+          textString: "Submorph Spacing",
+          padding: rect(0,5,5,5),
+          fill: Color.transparent,
+          fontColor: Color.gray.darker(),
+          readOnly: true
+        },
+        spacing
+      ]
+    ].map(x => {
+      return {
+        submorphs: x,
+        fill: Color.transparent,
+        layout: new HorizontalLayout({spacing: 3})
+      };
+    });
+  }
 
 }
 
@@ -742,38 +772,36 @@ export class FlexLayoutHalo extends Morph {
      this.removePreviews();
   }
 
-  handleDrop(morph) {
-
-  }
+  handleDrop(morph) {}
 
   previewDrop(morphs) {
-     const pulseDuration = 2000;
-     if (this.previews.length > 0) return;
-     this.previews = morphs.map(morph =>
-         this.container.addMorph({
-           isHaloItem: true,
-           position: this.container.localize(this.world().firstHand.position),
-           extent: morph.bounds().extent(),
-           fill: Color.orange.withA(.3),
-           borderColor: Color.orange,
-           borderWidth: 2,
-           opacity: 1,
-           borderStyle: "dashed",
-           async step() {
-              const easing = Sine.easeInOut;
-              await this.animate({opacity: .5, duration: pulseDuration / 2, easing})
-              await this.animate({opacity: 1, duration: pulseDuration / 2, easing});
-           }
-        }));
-     this.previews.forEach(p => {
-         p.step(); p.startStepping(pulseDuration, "step")
-     });
+    const pulseDuration = 2000;
+    if (this.previews.length > 0) return;
+    this.previews = morphs.map(morph => 
+    this.container.addMorph({
+      isHaloItem: true,
+      position: this.container.localize(this.world().firstHand.position),
+      extent: morph.bounds().extent(),
+      fill: Color.orange.withA(.3),
+      borderColor: Color.orange,
+      borderWidth: 2,
+      opacity: 1,
+      borderStyle: "dashed",
+      async step() {
+        const easing = Sine.easeInOut;
+        await this.animate({opacity: .5, duration: pulseDuration / 2, easing})
+        await this.animate({opacity: 1, duration: pulseDuration / 2, easing});
+      }
+    }));
+    this.previews.forEach(p => {
+      p.step(); p.startStepping(pulseDuration, "step")
+    });
   }
 
   remove() {
-     super.remove();
-     this.removePreviews();
-     return this;
+    super.remove();
+    this.removePreviews();
+    return this;
   }
 
   removePreviews() {
@@ -786,7 +814,7 @@ export class FlexLayoutHalo extends Morph {
   }
 
   alignWithTarget() {
-       this.setBounds(this.container.globalBounds());
+    this.setBounds(this.container.globalBounds());
   };
 
   get target() { return this.state.target }
@@ -810,6 +838,232 @@ export class FlexLayoutHalo extends Morph {
 
   updateSpacing(s) {
     this.target.spacing = s
+  }
+
+  optionControls() {
+    const layout = this.target,
+          alignmentSelector = layout.possibleAlignValues ? {
+            fill: Color.transparent, layout: new HorizontalLayout({spacing: 3, direction: "centered", align: "center"}),
+            submorphs: [
+              {type: "label", value: "align: "},
+              new DropDownSelector({
+                name: "alignment",
+                borderRadius: 2,
+                padding: 3,
+                selectedValue: layout.align,
+                values: layout.possibleAlignValues
+              })]
+          } : null,
+          directionSelector = layout.possibleDirectionValues ? {
+            fill: Color.transparent, layout: new HorizontalLayout({spacing: 3, direction: "centered", align: "center"}),
+            submorphs: [
+              {type: "label", value: "direction: "},
+              new DropDownSelector({
+                name: "direction",
+                borderRadius: 2,
+                padding: 3,
+                selectedValue: layout.direction,
+                values: layout.possibleDirectionValues
+              })
+            ]
+          } : null,
+          spacing = new NumberWidget({
+            fill: Color.white,
+            borderWidth: 1,
+            borderRadius: 4,
+            padding: rect(5,4,0,0),
+            borderColor: Color.gray,
+            min: 0,
+            number: layout.spacing,
+            unit: "px",
+          }),
+          autoResizeCb = new LabeledCheckBox({
+            name: "autoResize", label: 'Resize Container',
+            alignCheckBox: 'right',
+            fill: Color.transparent,
+            checked: layout.autoResize
+          }),
+          resizeSubmorphsCb = new LabeledCheckBox({
+            label: 'Resize Submorphs',
+            name: "resizeSubmorphs",
+            alignCheckBox: 'right',
+            fill: Color.transparent,
+            checked: layout.resizeSubmorphs
+          });
+
+    connect(spacing, 'update', this, 'updateSpacing');
+    connect(autoResizeCb, "checked", this, "updateAutoResizePolicy");
+    connect(resizeSubmorphsCb, "checked", this, "updateResizeSubmorphsPolicy");
+    alignmentSelector && connect(alignmentSelector.submorphs[1], "selectedValue", this, "updateAlignmentPolicy");
+    directionSelector && connect(directionSelector.submorphs[1], "selectedValue", this, "updateDirectionPolicy");
+
+    return [
+        autoResizeCb,
+        resizeSubmorphsCb,
+        ...[alignmentSelector, directionSelector].filter(Boolean),
+        {fill: Color.transparent, layout: new HorizontalLayout(),
+         submorphs: [
+           {type: 'label', value: 'Submorph Spacing', 
+            fontColor: Color.gray.darker(),
+            padding: rect(0,5,5,5)}, spacing]}
+    ];
+  }
+
+}
+
+
+export class ProportionalLayoutHalo extends Morph {
+
+  constructor(container, pointerId) {
+    super({
+      reactsToPointer: false,
+      isHaloItem: true,
+      styleClasses: ["Halo"],
+      fill: Color.transparent,
+      epiMorph: true
+    });
+    this.state = {container, pointerId, target: container.layout};
+    this.alignWithTarget();
+  }
+
+  handleDrop(morph) {}
+  onDrop(evt) { evt.hand.dropMorphsOn(this.container); }
+
+  alignWithTarget() {this.setBounds(this.container.globalBounds()); };
+
+  get target() { return this.state.target; }
+  get container() { return this.state.container; }
+
+  // updateDirectionPolicy(val) { this.target.direction = val; }
+
+  updateSubmorphProportionalLayoutSettings({policy, submorph, axis}) {
+    this.target.changeSettingsFor(submorph, {[axis]: policy}, true/*save*/);
+  }
+  
+  onSubmorphSettingsDragStart(evt, morphWithSettings) {
+    evt.stop();
+    let settings = this.target.settingsFor(morphWithSettings), descr = "";
+    for (let name in settings) descr += `${name}:${settings[name]} `;
+    let grabme = morph({type: "label", value: descr, isLayoutable: false});
+    grabme.wantsToBeDroppedOn = (dropTarget) => this.target.layoutableSubmorphs.includes(dropTarget);
+    grabme.onBeingDroppedOn = (hand, dropTarget) => {
+      grabme.remove()
+      let target = this.target.layoutableSubmorphs.includes(dropTarget) ? dropTarget : 
+                   evt.world.morphsContainingPoint(evt.hand.position).find(ea =>
+                                     this.target.layoutableSubmorphs.includes(ea))
+      if (target) {
+        this.updateSubmorphProportionalLayoutSettings({policy: settings.x, axis: "x", submorph: target});
+        this.updateSubmorphProportionalLayoutSettings({policy: settings.y, axis: "y", submorph: target});
+        target.show();
+        $world.setStatusMessage("layout settings applied");
+      }
+    }
+    evt.hand.grab(grabme);
+  }
+
+  async chooseSubmorphToChangeLayoutSettings() {
+    /*global inspect*/
+    let morphs = this.target.layoutableSubmorphs, submorph;
+    if (this.env.eventDispatcher.isKeyPressed("Shift")) {
+      let items = morphs.map(m => { return {isListItem: true, string: String(m), value: m}});
+      ({selected: [submorph]} = await $world.listPrompt("Select morph", items, {requester: this, onSelection: ea => ea.show()}));
+    } else {
+      submorph = await InteractiveMorphSelector.selectMorph(
+        this.world(), this, target => morphs.includes(target));
+    }
+
+    if (!submorph) return;
+
+    let controls = this.state.popover.get("controlContainer"),
+        configItems = controls.getAllNamed(/submorph config/),
+        options = ["move", "resize", "scale", "fixed"],
+        submorphSettings = this.target.settingsFor(submorph);
+
+    if (!configItems.length) {
+      controls.submorphs = [
+        ...controls.submorphs,
+        {
+          name: 'submorph config X-Axis policy',
+          position: pt(0, this.height),
+          fill: Color.transparent,
+          layout: new HorizontalLayout({spacing: 3, direction: "centered", align: "center"}),
+          submorphs: [
+            {type: 'label', value: "submorph X-Axis policy: "},
+            new DropDownSelector({
+              name: "x-axis policy selector",
+              borderRadius: 2, padding: 3,
+              selectedValue: submorphSettings.x,
+              values: options
+            })
+          ]
+        },
+
+        {
+          name: 'submorph config Y-Axis policy',
+          position: pt(0, this.height),
+          fill: Color.transparent,
+          layout: new HorizontalLayout({spacing: 3, direction: "centered", align: "center"}),
+          submorphs: [
+            {type: 'label', value: "submorph Y-Axis policy: "},
+            new DropDownSelector({
+              name: "y-axis policy selector",
+              borderRadius: 2, padding: 3,
+              selectedValue: submorphSettings.y,
+              values: options
+            })
+          ]
+        },
+
+        morph({
+          position: pt(0, this.height+20), draggable: true,
+          name: "dragme", type: "label", value: "drag me to copy",
+        })
+      ];
+    }
+
+    let xSel = controls.getSubmorphNamed("x-axis policy selector"),
+        ySel = controls.getSubmorphNamed("y-axis policy selector"),
+        drag = controls.getSubmorphNamed("dragme");
+    disconnect(xSel, "selectedValue", this, "updateSubmorphProportionalLayoutSettings");
+    disconnect(ySel, "selectedValue", this, "updateSubmorphProportionalLayoutSettings");
+
+    xSel.selectedValue = submorphSettings.x;
+    ySel.selectedValue = submorphSettings.y;
+
+    connect(drag, 'onDragStart', this, 'onSubmorphSettingsDragStart', {
+      updater: ($upd, evt) => $upd(evt, submorph), varMapping: {submorph}});
+
+    connect(xSel, "selectedValue", this, "updateSubmorphProportionalLayoutSettings", {
+      converter: policy => ({policy, axis: "x", submorph}), varMapping: {submorph}});
+    connect(ySel, "selectedValue", this, "updateSubmorphProportionalLayoutSettings", {
+      converter: policy => ({policy, axis: "y", submorph}), varMapping: {submorph}});
+  }
+
+  optionControls(popover) {
+    this.state.popover = popover;
+    const layout = this.target,
+          xAxis = new LabeledCheckBox({
+            name: "x-axis", label: 'X-Axis',
+            alignCheckBox: 'right',
+            fill: Color.transparent,
+            checked: layout.xAxisEnabled
+          }),
+          yAxis = new LabeledCheckBox({
+            name: "y-axis", label: 'Y-Axis',
+            alignCheckBox: 'right',
+            fill: Color.transparent,
+            checked: layout.yAxisEnabled
+          }),
+          modifySubmorphSettingsButton = new Button({
+            name: "modify submorph settings button",
+            label: [...Icon.textAttribute("crosshairs"), "\u00a0Change submorph settings", {marginLeft: "5px"}]
+          });
+
+    connect(xAxis, 'checked', this, 'updateXAxisEnabled');
+    connect(yAxis, 'checked', this, 'updateYAxisEnabled');
+    connect(modifySubmorphSettingsButton, 'fire', this, 'chooseSubmorphToChangeLayoutSettings');
+
+    return [modifySubmorphSettingsButton];
   }
 
 }

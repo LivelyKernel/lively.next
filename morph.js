@@ -12,11 +12,8 @@ import { Color, pt, rect, Rectangle, LinearGradient } from "lively.graphics";
 import { obj, promise, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
 import { ConnectionHalo } from "./fabrik.js";
-import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from "lively.morphic/drag-guides.js";
+import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from "./drag-guides.js";
 import { showLayoutHaloFor } from "./layout.js";
-
-
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // The halo morph controls a group of halo items, each of which can control or
@@ -803,7 +800,7 @@ class NameHaloItem extends HaloItem {
 
   alignInHalo() {
     arr.zip(this.targets(), this.nameHolders).map(([{target}, nh]) => {
-      nh.target = target;
+      nh.target = target; 
       nh.update()
     });
     var {x, y} = this.halo.innerBounds().bottomCenter().addPt(pt(0, 2));
@@ -982,7 +979,7 @@ class InspectHaloItem extends HaloItem {
   onMouseDown(evt) {
     this.halo.remove();
     (async () => {
-       var {default: Inspector} = await System.import("lively.ide/js/inspector.js");
+       var {default: Inspector} = await System.import("lively.morphic/ide/js/inspector.js");
        Inspector.openInWindow({targetObject: this.halo.target});
     })()
   }
@@ -1149,7 +1146,7 @@ class CopyHaloItem extends HaloItem {
   stop(hand) {
     var {halo} = this,
         dropTarget = hand.findDropTarget(
-          hand.position,
+          hand.position, 
           [halo.target],
           m => !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem)),
         undo = halo.target.undoInProgress;
@@ -1225,7 +1222,7 @@ class OriginHaloItem extends HaloItem {
   get tooltip() { return "Change the morph's origin"; }
 
   computePositionAtTarget() {
-    if (!this.world())
+    if (!this.world()) 
       return this.halo.borderBox.position.addPt(this.halo.target.origin);
     else
       return this.halo.localizePointFrom(pt(0, 0), this.halo.target);
@@ -1388,7 +1385,7 @@ class ResizeHandle extends HaloItem {
       this.startBounds,
       this.startOrigin
     );
-    this.halo.toggleDiagonal(shiftDown, corner);
+    this.halo.toggleDiagonal(shiftDown, corner);    
     this.updateAlignmentGuide(altDown);
 
 
@@ -1489,7 +1486,7 @@ class ConnectionsHaloItem extends HaloItem {
     });
     this.halo.remove();
   }
-
+  
 }
 
 
@@ -1514,7 +1511,7 @@ export class MorphHighlighter extends Morph {
           this.setProperty('highlightedSides', sides);
           this.alignWithHalo();
           this.submorphs = sides.map(side => {
-            return {type: 'ellipse', isHaloItem: true,
+            return {type: 'ellipse', isHaloItem: true, 
                     fill: Color.orange, center: this.innerBounds()[side]()}
           })
         }
@@ -1539,7 +1536,7 @@ export class MorphHighlighter extends Morph {
       target: {
         readOnly: true, derived: true,
         get() {
-          return this.world().getMorphWithId(this.targetId);
+          return (this.world() || this.env.world).getMorphWithId(this.targetId);
         }
       }
     }
@@ -1561,7 +1558,7 @@ export class MorphHighlighter extends Morph {
     store[morph.id].highlightedSides = highlightedSides;
     return store[morph.id];
   }
-
+  
   static interceptDrop(halo, target, morph) {
      var store = halo._morphHighlighters = halo._morphHighlighters || {};
      store && store[target.id].handleDrop(morph)
@@ -1576,20 +1573,24 @@ export class MorphHighlighter extends Morph {
 
   show() {
     if (this.target.layout && this.showLayout) {
-      this.layoutHalo = this.layoutHalo || showLayoutHaloFor(this.target, this.pointerId);
-      this.styleClasses = ['inactive'];
-      this.alignWithHalo();
-      if (this.halo.get("grab").hand.grabbedMorphs)
-        this.layoutHalo.previewDrop(this.halo.get("grab").hand.grabbedMorphs);
-    } else {
-      this.styleClasses = ['active'];
-      this.alignWithHalo();
+      this.layoutHalo =
+        this.layoutHalo || this.world().showLayoutHaloFor(this.target, this.pointerId);
+      if (this.layoutHalo.previewDrop) {
+        this.styleClasses = ['inactive'];
+        this.alignWithHalo();
+        if (this.halo.get("grab").hand.grabbedMorphs)
+          this.layoutHalo.previewDrop(this.halo.get("grab").hand.grabbedMorphs);
+        return;
+      }
     }
-  }
 
+    this.styleClasses = ['active'];
+    this.alignWithHalo();
+  }
+  
   handleDrop(morph) {
     this.layoutHalo && this.layoutHalo.handleDrop(morph);
-  }
+  } 
 
   deactivate() {
     if (this.layoutHalo) {
