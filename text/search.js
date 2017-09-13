@@ -88,7 +88,9 @@ export class TextSearcher {
       needle = String(needle);
       if (!caseSensitive) needle = needle.toLowerCase();
       var nLines = needle.split(this.doc.constructor.newline).length
-      search = this.stringSearch.bind(this, this.doc.lineStrings, needle, caseSensitive, nLines, inRange);
+      search = this.stringSearch.bind(this,
+        this.doc.lineStrings, needle, caseSensitive,
+        nLines, inRange);
     }
 
     var result = this.doc[backwards ? "scanBackward" : "scanForward"](start, search);
@@ -378,7 +380,7 @@ export class SearchWidget extends Morph {
       id.startsWith("search-highlight") && this.target.removeMarker(id));
   }
 
-  addSearchMarkers(found) {
+  addSearchMarkers(found, backwards = false, caseSensitive = false) {
     this.removeSearchMarkers();
 
     var {target: text, textMap} = this,
@@ -386,14 +388,23 @@ export class SearchWidget extends Morph {
         lines = text.document.lineStrings,
         i = 0,
         {maxCharsPerLine, fastHighlightLineCount} = config.codeEditor.search;
-    
+
     if (textMap && found.match.length >= 3 && lines.length < fastHighlightLineCount) {
       startRow = 0, endRow = lines.length-1;
     }
+
+    let stop = false,
+        ts = window.performance.now();
+
     for (var row = startRow; row <= endRow; row++) {
+      if (stop) break;
       var line = lines[row] || "";
       for (var col = 0; col < Math.min(line.length, maxCharsPerLine); col++) {
-        if (line.slice(col).toLowerCase().indexOf(found.match.toLowerCase()) === 0) {
+        if (window.performance.now() - ts > 300) { stop = true; break; }
+        let matched = caseSensitive ?
+           line.slice(col).indexOf(found.match) === 0 :
+           line.slice(col).toLowerCase().indexOf(found.match.toLowerCase()) === 0;
+        if (matched) {
           text.addMarker({
             id: "search-highlight-" + i++,
             range: {start: {row, column: col}, end: {row, column: col+found.match.length}},
@@ -408,7 +419,6 @@ export class SearchWidget extends Morph {
         }
       }
     }
-    
 
     var positionRange;
     if (this.state.backwards) {
