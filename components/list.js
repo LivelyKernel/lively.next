@@ -1252,24 +1252,36 @@ export class DropDownList extends Button {
       },
 
       selection: {
-        after: ["listMorph", 'items'],
+        after: ["listMorph", 'items'], derived: true,
+        get() {
+          return this.listMorph.selection;
+        },
         set(value) {
-          this.setProperty("selection", value);
+          let {listAlign, listMorph} = this;
+
           if (!value) {
-            this.listMorph.selection = null;
+            listMorph.selection = null;
             this.label = "";
+
           } else {
-            var item = this.listMorph.find(value);
+            let {items} = listMorph,
+                item = listMorph.find(value);
+            if (!item && typeof value === "string") {
+              item = items.find(ea => ea.string === value);
+            }
             if (!item) return;
+
             let label = item.label || [item.string, null];
             this.label = [
               ...label, " ", null,
               ...Icon.textAttribute(
-                "caret-" + (this.listAlign === "bottom" ?
+                "caret-" + (listAlign === "bottom" ?
                             "down" : "up"))
             ];
-            this.listMorph.selection = value;
+
+            listMorph.selectedIndex = items.indexOf(item);
           }
+          signal(this, "selection", listMorph.selection);
         }
       }
 
