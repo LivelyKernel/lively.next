@@ -1,9 +1,10 @@
-/*global show*/
+/*global show,System*/
 import { obj, promise, string } from "lively.lang";
 import { pt } from "lively.graphics";
 import { Morph } from "./index.js";
 import vdom from "virtual-dom";
 import { delay } from "lively.lang/promise.js";
+import { addOrChangeCSSDeclaration } from "./rendering/dom-helper.js";
 var { diff, patch, h, create: createElement } = vdom
 
 // see https://github.com/Matt-Esch/virtual-dom/blob/master/docs/widget.md
@@ -65,6 +66,7 @@ export class HTMLMorph extends Morph {
       extent: {defaultValue: pt(420, 330)},
 
       html: {
+        after: ["cssDeclaration"],
         initialize() { this.html = this.defaultHTML; },
         get() { return this.domNode.innerHTML; },
         set(value) {
@@ -116,8 +118,26 @@ export class HTMLMorph extends Morph {
       scrollExtent: {
         readOnly: true,
         get() { return pt(this.domNode.scrollWidth, this.domNode.scrollHeight); }
-      }
+      },
 
+      cssDeclaration: {
+        set(val) {
+          this.setProperty("cssDeclaration", val);
+          if (!val) {
+            let doc = this.env.domEnv.document,
+                style = doc.getElementById("css-for-" + this.id);
+            if (style) style.remove();
+          } else {
+            System.import("lively.morphic/ide/css/parser.js").then(css => {
+              let parsed = css.parse(val);
+              // prepend morph id to each rule so that css is scoped to morph
+              parsed.stylesheet.rules.forEach(r =>
+              r.selectors = r.selectors.map(ea => `#${this.id} ${ea}`));
+              addOrChangeCSSDeclaration("css-for-" + this.id, css.stringify(parsed));
+            }).catch(err => console.error(`Error setting cssDeclaration of ${this}: ${err}`));
+          }
+        }
+      }
     }
   }
 
@@ -172,7 +192,7 @@ iframeMorph.srcDoc = "fooo"
   static get properties() {
 
     return {
-    
+
       html: {
         initialize() {
           this.html = this.defaultHTML;
