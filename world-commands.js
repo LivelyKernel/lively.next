@@ -359,6 +359,39 @@ var commands = [
   },
 
   {
+    name: "[recovery] show last object editor saves",
+    exec: (world, opts) => {
+      return world.execCommand("[recovery] show last doits",
+        {...opts, logAccessFn: () => JSON.parse(localStorage["oe helper"]).saves});
+    }
+  },
+
+  {
+    name: "[recovery] show last doits",
+    description: "browse a list of your last doits",
+    exec: async (world, opts = {}) => {
+      let {logAccessFn} = opts;
+      if (!logAccessFn) logAccessFn = () => JSON.parse(localStorage["lively.next-js-ide-doitlog"]);
+      let log;
+      try { log = logAccessFn(); } catch (err) {};
+      if (!log) return world.inform("no log yet");
+      let items = log.map(ea => {
+        return {
+          isListItem: true,
+          string: ea.slice(0, 100).replace(/\n/g, "").trim(),
+          value: ea
+        }
+      })
+      let {selected} = await world.filterableListPrompt("select doit code", items);
+      if (selected) {
+        return world.execCommand("open workspace",
+          {content: selected, title: "logged doit", mode: "js"})
+      }
+      return true;
+    }
+  },
+
+  {
     name: "open workspace",
     exec: async (world, opts = {}) => {
       var language = opts.language || opts.mode || "javascript",
@@ -384,6 +417,7 @@ var commands = [
 
       let { default: Workspace } = await System.import(mod);
       return new Workspace({
+        title: opts.title || opts.language + " workspace",
         center: world.center,
         content: opts.content,
         target: opts.target,

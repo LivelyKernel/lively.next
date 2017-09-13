@@ -13,6 +13,7 @@ import { debounceNamed } from "lively.lang/function.js";
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // finds string / regexp matches in text morphs
 export class TextSearcher {
+
   constructor(morph) {
     this.morph = morph;
     this.STOP = {};
