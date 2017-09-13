@@ -1,20 +1,12 @@
 /*global Sine*/
-import {
-  Ellipse, Button, Icon,
-  Morph,
-  Path,
-  Text,
-  HorizontalLayout,
-  VerticalLayout,
-  morph,
-  Menu
-} from "../index.js";
-import { Color, pt, rect, Rectangle } from "lively.graphics";
 import { arr } from "lively.lang";
-import { LabeledCheckBox, DropDownSelector } from "../components/widgets.js";
 import { connect, disconnect } from "lively.bindings";
+import { Color, pt, rect, Rectangle } from "lively.graphics";
+import { Ellipse, Button, Icon, Morph, Path, Text, morph, Menu } from "../index.js";
+import { LabeledCheckBox, DropDownSelector } from "../components/widgets.js";
 import { NumberWidget } from "../ide/value-widgets.js";
 import { InteractiveMorphSelector } from "./morph.js";
+import { HorizontalLayout, VerticalLayout } from "../layout.js"
 
 class AxisHalo extends Morph {
 
