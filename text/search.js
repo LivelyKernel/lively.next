@@ -167,19 +167,19 @@ export class SearchWidget extends Morph {
               fontColor: Color.white
             },
             '.Button.replace': {
-              borderWidth: 2, borderColor: Color.white, 
+              borderWidth: 2, borderColor: Color.white,
               fill: Color.transparent
             },
             '.Button.replace [name=label]': {
               fontColor: Color.white,
             },
             '.InputLine [name=placeholder]': {
-              fontSize: 14,
+              fontSize: 12,
               fontFamily: "Monaco, monospace",
             },
             '.InputLine': {
               fill: Color.gray.withA(0.2),
-              fontSize: 14,
+              fontSize: 12,
               fontFamily: "Monaco, monospace",
               fontColor: Color.white,
               borderWidth: 1,
@@ -199,13 +199,18 @@ export class SearchWidget extends Morph {
               acceptButton: {resize: false},
               cancelButton: {resize: false}
             },
-            rows: [0, {fixed: 30, paddingTop: 5, paddingBottom: 2.5}, 
-                   1, {fixed: 30, paddingTop: 2.5, paddingBottom: 5}],
-            columns: [0, {paddingLeft: 5, paddingRight: 5}, 
-                      1, {fixed: 20}, 2, {fixed: 20}, 3, {fixed: 20}, 
-                      4, {fixed: 20}, 5, {fixed: 5}],
-            grid: [['searchInput', 'nextButton', 'prevButton', 'acceptButton', 'cancelButton', null],
-                   ['replaceInput', 'replaceButton', 'replaceButton', 'replaceButton', 'replaceButton', null]]  
+            rows: [0, {fixed: 28, paddingTop: 5, paddingBottom: 2.5},
+                   1, {fixed: 28, paddingTop: 2.5, paddingBottom: 5}],
+            columns: [0, {paddingLeft: 5, paddingRight: 5},
+                      1, {fixed: 25},
+                      2, {fixed: 25},
+                      3, {fixed: 5},
+                      4, {fixed: 25},
+                      5, {fixed: 25},
+                      6, {fixed: 5}
+                     ],
+            grid: [['searchInput', 'nextButton', 'prevButton', null, 'acceptButton', 'cancelButton', null],
+                   ['replaceInput', 'replaceButton', 'replaceButton', null, 'replaceAllButton', 'replaceAllButton', null]]
           })
         }
       },
@@ -213,8 +218,6 @@ export class SearchWidget extends Morph {
       submorphs: {
         after: ["extent"],
         initialize() {
-          let fontSize = 14, fontFamily = "Monaco, monospace";
-          
           this.submorphs = [
             new Button({
               name: "acceptButton",
@@ -252,7 +255,15 @@ export class SearchWidget extends Morph {
               styleClasses: ["replace"],
               name: "replaceButton",
               label: "replace",
-              extent: pt(80, 20)
+              fontSize: 10,
+              extent: pt(60, 17)
+            }),
+            new Button({
+              styleClasses: ["replace"],
+              name: "replaceAllButton",
+              label: "replace all",
+              fontSize: 10,
+              extent: pt(60, 17)
             })
           ];
         }
@@ -261,7 +272,7 @@ export class SearchWidget extends Morph {
       textMap: {
         after: ["submorphs"]
       }
-    
+
     }
   }
 
@@ -272,6 +283,7 @@ export class SearchWidget extends Morph {
     super(props);
 
     var replaceButton = this.getSubmorphNamed("replaceButton"),
+        replaceAllButton = this.getSubmorphNamed("replaceAllButton"),
         replaceInput = this.getSubmorphNamed("replaceInput"),
         searchInput = this.getSubmorphNamed("searchInput"),
         prevButton = this.getSubmorphNamed("prevButton"),
@@ -284,6 +296,7 @@ export class SearchWidget extends Morph {
     connect(prevButton, "fire", this, "execCommand", {converter: () => "search prev"});
     connect(searchInput, "inputChanged", this, "search");
     connect(replaceButton, "fire", this, "execCommand", {converter: () => "replace and go to next"});
+    connect(replaceAllButton, "fire", this, "execCommand", {converter: () => "replace all"});
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -563,6 +576,33 @@ export class SearchWidget extends Morph {
         exec: () => {
           this.execCommand("replace current search location with replace input");
           this.execCommand(this.state.backwards ? "search prev" : "search next");
+          return true;
+        }
+      },
+
+      {
+        name: "replace all",
+        exec: () => {
+          var search = Path("state.inProgress").get(this);
+          if (search.found) {
+            search = {...search, start: {row: 0, column: 0}}
+
+            var replacement = this.get("replaceInput").textString;
+            this.get("replaceInput").get("replaceInput").acceptInput(); // for history
+
+            let allMatches = new TextSearcher(this.target).searchForAll(search);
+
+            this.target.undoManager.group();
+            allMatches.forEach(found => {
+              let {range, match} = found;
+              if (search.needle instanceof RegExp) {
+                replacement = match.replace(search.needle, replacement);
+              }
+              this.target.replace(range, replacement, true, true, false);
+            })
+            this.target.undoManager.group();
+            this.acceptSearch();
+          }
           return true;
         }
       },
