@@ -15,6 +15,19 @@ function setEvalEnv(morph, newEnv) {
   return plugin.evalEnvironment;
 }
 
+function logDoit(code, opts) {
+  let maxLogLength = 50,
+      maxCodeLength = 120000,
+      log;
+  if (code.length > maxCodeLength) return;
+  try { log = JSON.parse(localStorage["lively.next-js-ide-doitlog"]); } catch (err) {}
+  if (!log) log = [];
+  if (!log.includes(code)) log.push(code);
+  if (log.length > maxLogLength)
+    log = log.slice(-maxLogLength);
+  try { localStorage["lively.next-js-ide-doitlog"] = JSON.stringify(log); } catch (err) {}
+}
+
 function doEval(
   morph,
   range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range,
@@ -23,7 +36,10 @@ function doEval(
 ) {
   var jsPlugin = morph.pluginFind(p => p.isJSEditorPlugin);
   if (!jsPlugin)
-    throw new Error(`doit not possible: cannot find js editor plugin of !${morph}`)
+    throw new Error(`doit not possible: cannot find js editor plugin of !${morph}`);
+  if (additionalOpts && additionalOpts.logDoit) {
+    logDoit(code, additionalOpts);
+  }
   return jsPlugin.runEval(code, additionalOpts);
 }
 
@@ -63,7 +79,7 @@ export var jsEditorCommands = [
       maybeSelectCommentOrLine(morph);
       var result, err;
       try {
-        opts = {...opts, inspect: true, inspectDepth: count};
+        opts = {...opts, logDoit: true, inspect: true, inspectDepth: count};
         result = await doEval(morph, undefined, opts);
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
@@ -82,7 +98,7 @@ export var jsEditorCommands = [
       // opts = {targetModule}
       var result, err;
       try {
-        result = await doEval(morph, {start: {row: 0, column: 0}, end: morph.documentEndPosition}, opts);
+        result = await doEval(morph, {start: {row: 0, column: 0}, end: morph.documentEndPosition}, {...opts, logDoit: true});
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
       err ?
@@ -100,7 +116,7 @@ export var jsEditorCommands = [
       maybeSelectCommentOrLine(morph);
       var result, err;
       try {
-        opts = {...opts, asString: true};
+        opts = {...opts, asString: true, logDoit: true};
         result = await doEval(morph, undefined, opts);
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
@@ -136,7 +152,7 @@ export var jsEditorCommands = [
       maybeSelectCommentOrLine(morph);
       var result, err;
       try {
-        opts = {...opts, inspect: true, inspectDepth: count};
+        opts = {...opts, inspect: true, inspectDepth: count, logDoit: true};
         result = await doEval(morph, undefined, opts);
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
