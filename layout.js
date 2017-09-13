@@ -330,7 +330,7 @@ export class VerticalLayout extends FloatLayout {
         maxWidth = 0;
 
     this.active = true;
-    layoutableSubmorphs.forEach(m => {
+    for (let m of layoutableSubmorphs) {
       let y = pos.y,
           x = align === "center" ? container.width/2 - m.width / 2 : pos.x
       if (animate) {
@@ -343,8 +343,8 @@ export class VerticalLayout extends FloatLayout {
       if (resizeSubmorphs)
         m.width = container.width - spacing*2
       maxWidth = Math.max(m.bounds().width, maxWidth);
-      m.layout && m.layout.forceLayout()
-    });
+      m.layout && m.layout.forceLayout();
+    }
 
     if (autoResize && layoutableSubmorphs.length > 0) {
       const newExtent = pt(maxWidth + 2 * spacing, pos.y);
@@ -402,7 +402,6 @@ export class HorizontalLayout extends FloatLayout {
     this.active = true;
     this.maxHeight = 0;
 
-
     var minExtent = this.computeMinContainerExtent(spacing, container, layoutableSubmorphs);
     if (!autoResize) minExtent = minExtent.maxPt(container.extent);
 
@@ -410,29 +409,34 @@ export class HorizontalLayout extends FloatLayout {
     if (direction === "rightToLeft") {
       startX = Math.max(0, container.width - minExtent.x);
     } else if (direction === "centered") {
-      startX = (container.width - minExtent.x)/2
+      let baseWidth = autoResize ? container.width - minExtent.x : minExtent.x,
+          submorphW = layoutableSubmorphs.length-1 * spacing;
+      for (let m of layoutableSubmorphs) submorphW = submorphW + m.width;
+      startX = minExtent.x / 2 - submorphW/2;
     }
 
     if (align === "top") {
       let top = spacing;
       layoutableSubmorphs.reduce((pos, m) => {
         this.changePropertyAnimated(m, "topLeft", pos, animate);
+        m.layout && m.layout.forceLayout();
         return m.topRight.addPt(pt(spacing, 0));
-        m.layout && m.layout.forceLayout()
       }, pt(Math.max(0, startX)+spacing, top));
+
     } else if (align === "bottom") {
       let bottom = minExtent.y + (autoResize ? spacing : -spacing);
       layoutableSubmorphs.reduce((pos, m) => {
         this.changePropertyAnimated(m, "bottomLeft", pos, animate);
+        m.layout && m.layout.forceLayout();
         return m.bottomRight.addPt(pt(spacing, 0));
-        m.layout && m.layout.forceLayout()
       }, pt(Math.max(0, startX)+spacing, bottom));
+
     } else {
-      let yCenter = minExtent.y/2 + (autoResize ? spacing : 0);
+      let yCenter = minExtent.y/2 + (autoResize ? spacing : 0);      
       layoutableSubmorphs.reduce((pos, m) => {
         this.changePropertyAnimated(m, "leftCenter", pos, animate);
+        m.layout && m.layout.forceLayout();
         return m.rightCenter.addPt(pt(spacing, 0));
-        m.layout && m.layout.forceLayout()
       }, pt(Math.max(0, startX)+spacing, yCenter));
     }
 
