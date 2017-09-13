@@ -1,8 +1,8 @@
 /*global target,connection*/
-import { Morph, Icon, config, Text, ShadowObject, GridLayout, TilingLayout, StyleSheet, CustomLayout, morph, HorizontalLayout, VerticalLayout } from "lively.morphic";
-import { ModeSelector, LabeledCheckBox, Leash, DropDownSelector, SearchField, CheckBox } from "../../components/widgets.js";
+import { Morph, config, Text, ShadowObject, morph, StyleSheet } from "lively.morphic";
+import { ModeSelector, DropDownSelector, SearchField, CheckBox } from "../../components/widgets.js";
 import { connect, signal } from "lively.bindings";
-import { arr, promise, string, obj } from "lively.lang";
+import { arr, string, obj } from "lively.lang";
 import { Color, rect, Rectangle, pt } from "lively.graphics";
 import { GradientEditor } from "./gradient-editor.js";
 import { ColorPickerField } from "./color-picker.js";
@@ -11,11 +11,7 @@ import KeyHandler from "../../events/KeyHandler.js";
 import { NumberWidget } from "../value-widgets.js";
 import { range, flatten } from "lively.lang/array.js";
 import { SvgStyleHalo } from "../../halo/vertices.js";
-import { FilterableList } from "../../components/list.js";
-import { TreeData, Tree } from "../../components/tree.js";
-import { isArray } from "lively.lang/object.js";
-import Window from "../../components/window.js";
-import { ProportionalLayout } from "../../layout.js";
+import { ProportionalLayout, GridLayout, TilingLayout, CustomLayout, HorizontalLayout, VerticalLayout } from "../../layout.js";
 
 const duration = 200;
 
