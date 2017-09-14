@@ -846,9 +846,9 @@ class Synchronization {
 
     if (replicationFilter) {
       // opts.filter = 'nameTypeFilter/nameTypeFilter';
-      commitOpts.filter = eval(`(${commitNameTypeFilter.filterF})`);
+      commitOpts.filter = eval(`(${commitNameTypeFilter.filterFn})`);
       commitOpts.query_params = replicationFilter;
-      versionOpts.filter = eval(`(${versionNameTypeFilter})`);
+      versionOpts.filter = eval(`(${versionNameTypeFilter.filterFn})`);
       versionOpts.query_params = replicationFilter;
     }
 
