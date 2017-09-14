@@ -600,6 +600,8 @@ export class ProportionalLayout extends Layout {
       
       if (moveX || moveY) m.moveBy(pt(moveX, moveY));
       if (resizeX || resizeY) m.extent = m.extent.addXY(resizeX, resizeY);
+
+      m.layout && m.layout.forceLayout();
     }
 
     // this.lastExtent = extent;
