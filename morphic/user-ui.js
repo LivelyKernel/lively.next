@@ -470,7 +470,7 @@ export class RegisterWidget extends UserWidget {
     if (error)
       return this.world().inform("Failed to register: " + error, {requester: this});
 
-    await notify(this, "registed");
+    await notify(this, "registered");
 
     this.displayUser(user);
     signal(this, "resolved", user);
