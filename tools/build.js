@@ -32,7 +32,7 @@ module.exports = Promise.resolve()
       moduleName: 'lively.l2l.L2LClient',
       globals: {
         "lively.lang": "lively.lang",
-        "socket.io-client": "io"
+        "socket.io-client/dist/socket.io.js": "io"
       },
     }))
 
@@ -48,7 +48,7 @@ var noDeps = `(function() {
 })();`;
 
 var complete = `(function() {
-  ${fs.readFileSync(require.resolve("socket.io-client/dist/socket.io.slim.min.js")).toString()}
+  ${fs.readFileSync(require.resolve("socket.io-client/dist/socket.io.slim.js")).toString()}
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;

@@ -4,15 +4,15 @@
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
 this.lively.l2l = this.lively.l2l || {};
-this.lively.l2l.L2LClient = (function (lively_lang,ioClient) {
+this.lively.l2l.L2LClient = (function (lively_lang,_ioClient) {
 'use strict';
 
-ioClient = 'default' in ioClient ? ioClient['default'] : ioClient;
+_ioClient = 'default' in _ioClient ? _ioClient['default'] : _ioClient;
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-  return typeof obj;
-} : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj$$1) {
+  return typeof obj$$1;
+} : function (obj$$1) {
+  return obj$$1 && typeof Symbol === "function" && obj$$1.constructor === Symbol && obj$$1 !== Symbol.prototype ? "symbol" : typeof obj$$1;
 };
 
 
@@ -261,7 +261,7 @@ var L2LConnection = function () {
   }, {
     key: "ping",
     value: function () {
-      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(target) {
+      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(target) {
         var t, _ref2, t2, t3;
 
         return regeneratorRuntime.wrap(function _callee$(_context) {
@@ -308,7 +308,7 @@ var L2LConnection = function () {
   }, {
     key: "sendAndWait",
     value: function () {
-      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(msg) {
+      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(msg) {
         var _this4 = this;
 
         var sendP, timeout, timeoutMs, answer;
@@ -460,7 +460,7 @@ var L2LConnection = function () {
             ackFn = typeof lastArg === "function" ? lastArg : null;
         msg = msg === ackFn ? null : msg;
 
-        if (!msg || !msg.data || typeof msg.n !== "number" || !msg.sender) {
+        if (!msg || !msg.data || typeof msg.n !== "number" && !msg.broadcast || !msg.sender) {
           console.warn(self + " received non-conformant message " + eventName + ":", arguments);
           typeof ackFn === "function" && ackFn({ data: { error: "invalid l2l message" } });
           return;
@@ -480,6 +480,14 @@ var L2LConnection = function () {
       var _this5 = this;
 
       var selector = msg.action;
+
+      // for broadcasted messages order isn't enforced...
+      if (msg.broadcast) {
+        this.safeInvokeServiceHandler(selector, msg, ackFn, socket);
+        return;
+      }
+
+      // do he message ordering dance....
       try {
         var expectedN = this._incomingOrderNumberingBySenders.get(msg.sender) || 0,
             ignoreN = selector === "register" || "unregister";
@@ -499,20 +507,13 @@ var L2LConnection = function () {
           return;
         }
 
-        if (typeof this.actions[selector] === "function") {
-          this.invokeServiceHandler(selector, msg, ackFn, socket);
-        } else {
-          if (!socket._events || !Object.keys(socket._events).includes(selector)) {
-            console.warn("WARNING [" + this + "] Unhandled message: " + selector);
-            if (typeof ackFn === "function") ackFn(this.prepareAnswerMessage(msg, { isError: true, error: "message not understood: " + selector }));
-          }
-        }
+        this.safeInvokeServiceHandler(selector, msg, ackFn, socket);
 
         setTimeout(function () {
           return _this5.invokeOutOfOrderMessages(msg.sender);
         }, 0);
       } catch (e) {
-        console.error("Error when handling " + selector + ": " + (e.stack || e));
+        console.error("Error message ordering when handling " + selector + ": " + (e.stack || e));
         if (typeof ackFn === "function") ackFn(this.prepareAnswerMessage(msg, { isError: true, error: String(e.stack || e) }));
       }
     }
@@ -541,6 +542,23 @@ var L2LConnection = function () {
       var msgN = this._outgoingOrderNumberingByTargets.get(oldId);
       this._outgoingOrderNumberingByTargets.delete(oldId);
       this._outgoingOrderNumberingByTargets.set(newId, msgN);
+    }
+  }, {
+    key: "safeInvokeServiceHandler",
+    value: function safeInvokeServiceHandler(selector, msg, ackFn, socket) {
+      try {
+        if (typeof this.actions[selector] === "function") {
+          this.invokeServiceHandler(selector, msg, ackFn, socket);
+        } else {
+          if (!socket._events || !Object.keys(socket._events).includes(selector)) {
+            console.warn("WARNING [" + this + "] Unhandled message: " + selector);
+            if (typeof ackFn === "function") ackFn(this.prepareAnswerMessage(msg, { isError: true, error: "message not understood: " + selector }));
+          }
+        }
+      } catch (e) {
+        console.error("Error when handling " + selector + ": " + (e.stack || e));
+        if (typeof ackFn === "function") ackFn(this.prepareAnswerMessage(msg, { isError: true, error: String(e.stack || e) }));
+      }
     }
   }, {
     key: "invokeServiceHandler",
@@ -661,42 +679,16 @@ var defaultActions = {
 
 
 var defaultClientActions = {
-  "getServers": function getServers(ackFn) {
-    var _this10 = this;
+  "getRoomList": function getRoomList(_ref11) {
+    var _this5 = this;
 
-    return asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
-      var response;
-      return regeneratorRuntime.wrap(function _callee9$(_context9) {
-        while (1) {
-          switch (_context9.prev = _context9.next) {
-            case 0:
-              if (!(ackFn && typeof ackFn == 'function')) {
-                console.log('Bad or Missing Ack Function');
-              }
-              response = Array.from(LivelyServer.servers).map(function (ea) {
-                return ea[1];
-              });
-
-              typeof ackFn === "function" && ackFn(response);
-
-            case 3:
-            case "end":
-              return _context9.stop();
-          }
-        }
-      }, _callee9, _this10);
-    }))();
-  },
-  "getRoomList": function getRoomList(_ref12) {
-    var _this11 = this;
-
-    var client = _ref12.client,
-        ackFn = _ref12.ackFn;
-    return asyncToGenerator(regeneratorRuntime.mark(function _callee10() {
+    var client = _ref11.client,
+        ackFn = _ref11.ackFn;
+    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
       var result;
-      return regeneratorRuntime.wrap(function _callee10$(_context10) {
+      return regeneratorRuntime.wrap(function _callee4$(_context4) {
         while (1) {
-          switch (_context10.prev = _context10.next) {
+          switch (_context4.prev = _context4.next) {
             case 0:
               result = client._socketioClient.rooms;
 
@@ -704,93 +696,93 @@ var defaultClientActions = {
 
             case 2:
             case "end":
-              return _context10.stop();
+              return _context4.stop();
           }
         }
-      }, _callee10, _this11);
+      }, _callee4, _this5);
     }))();
   },
-  "ask for": function askFor(tracker, _ref13, ackFn, socket) {
-    var sender = _ref13.sender,
-        query = _ref13.data.query;
+  "ask for": function askFor(tracker, _ref12, ackFn, socket) {
+    var sender = _ref12.sender,
+        query = _ref12.data.query;
 
-    var _this12 = this;
+    var _this6 = this;
 
-    return asyncToGenerator(regeneratorRuntime.mark(function _callee11() {
+    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
       var promptMethod, answer;
-      return regeneratorRuntime.wrap(function _callee11$(_context11) {
+      return regeneratorRuntime.wrap(function _callee5$(_context5) {
         while (1) {
-          switch (_context11.prev = _context11.next) {
+          switch (_context5.prev = _context5.next) {
             case 0:
               promptMethod = query.match(/password|sudo/i) ? 'passwordPrompt' : 'prompt';
-              _context11.next = 3;
+              _context5.next = 3;
               return $world[promptMethod](query);
 
             case 3:
-              answer = _context11.sent;
+              answer = _context5.sent;
 
               typeof ackFn === "function" && ackFn({ answer: answer });
-              tracker.debug && console.log("[" + _this12 + "] message 'ask for' from " + sender + ", query: " + query);
+              tracker.debug && console.log("[" + _this6 + "] message 'ask for' from " + sender + ", query: " + query);
 
             case 6:
             case "end":
-              return _context11.stop();
+              return _context5.stop();
           }
         }
-      }, _callee11, _this12);
+      }, _callee5, _this6);
     }))();
   },
-  "open editor": function openEditor(tracker, _ref14, ackFn, socket) {
-    var sender = _ref14.sender,
-        args = _ref14.data.args;
+  "open editor": function openEditor(tracker, _ref13, ackFn, socket) {
+    var sender = _ref13.sender,
+        args = _ref13.data.args;
 
-    var _this13 = this;
+    var _this7 = this;
 
-    return asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
+    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
       var status;
-      return regeneratorRuntime.wrap(function _callee12$(_context12) {
+      return regeneratorRuntime.wrap(function _callee6$(_context6) {
         while (1) {
-          switch (_context12.prev = _context12.next) {
+          switch (_context6.prev = _context6.next) {
             case 0:
               if (args.length) {
-                _context12.next = 3;
+                _context6.next = 3;
                 break;
               }
 
               ackFn({ error: 'no file specified' });
-              return _context12.abrupt("return");
+              return _context6.abrupt("return");
 
             case 3:
-              _context12.next = 5;
+              _context6.next = 5;
               return $world.execCommand("open file for EDITOR", { url: args[0] });
 
             case 5:
-              status = _context12.sent;
+              status = _context6.sent;
 
               typeof ackFn === "function" && ackFn(status === "aborted" ? { error: String(status) } : { status: status });
 
             case 7:
             case "end":
-              return _context12.stop();
+              return _context6.stop();
           }
         }
-      }, _callee12, _this13);
+      }, _callee6, _this7);
     }))();
   },
-  "changeWorkingDirectory": function changeWorkingDirectory(tracker, _ref15, ackFn, socket) {
-    var sender = _ref15.sender,
-        args = _ref15.data.args;
+  "changeWorkingDirectory": function changeWorkingDirectory(tracker, _ref14, ackFn, socket) {
+    var sender = _ref14.sender,
+        args = _ref14.data.args;
 
-    var _this14 = this;
+    var _this8 = this;
 
-    return asyncToGenerator(regeneratorRuntime.mark(function _callee13() {
-      var _ref16, _ref17, dir, commandMorphId, status, morph, shellPlugin;
+    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+      var _ref15, _ref16, dir, commandMorphId, status, morph, shellPlugin;
 
-      return regeneratorRuntime.wrap(function _callee13$(_context13) {
+      return regeneratorRuntime.wrap(function _callee7$(_context7) {
         while (1) {
-          switch (_context13.prev = _context13.next) {
+          switch (_context7.prev = _context7.next) {
             case 0:
-              _ref16 = args || [], _ref17 = slicedToArray(_ref16, 2), dir = _ref17[0], commandMorphId = _ref17[1];
+              _ref15 = args || [], _ref16 = slicedToArray(_ref15, 2), dir = _ref16[0], commandMorphId = _ref16[1];
               status = "OK";
 
 
@@ -819,15 +811,27 @@ var defaultClientActions = {
 
             case 5:
             case "end":
-              return _context13.stop();
+              return _context7.stop();
           }
         }
-      }, _callee13, _this14);
+      }, _callee7, _this8);
     }))();
   }
 };
 
-/*global Map,System*/
+/*global Map,System,process*/
+var isNode = typeof System !== "undefined" ? System.get("@system-env").node : typeof process !== "undefined" && process.env;
+
+// FIXME!!
+// import ioClient from "socket.io-client";
+var ioClient;
+if (isNode) {
+  var require = System._nodeRequire("module")._load;
+  ioClient = require("socket.io-client");
+} else {
+  ioClient = _ioClient;
+}
+
 var urlHelper = {
   isRoot: function isRoot(url) {
     return urlHelper.path(url) === "/";
@@ -853,8 +857,6 @@ var urlHelper = {
   }
 };
 
-var isNode = typeof System !== "undefined" ? System.get("@system-env").node : typeof process !== "undefined" && process.env;
-
 function determineLocation() {
   if (typeof document !== "undefined" && document.location) return document.location.origin;
 
@@ -876,16 +878,28 @@ var L2LClient = function (_L2LConnection) {
   }, {
     key: "forLivelyInBrowser",
     value: function forLivelyInBrowser(info) {
-      var def = this.default();
-      if (def) return def;
+      var hasInfo = !!info;
+      info = _extends({ type: "lively.morphic browser" }, info);
 
-      return L2LClient.ensure({
-        url: document.location.origin + "/lively-socket.io",
-        namespace: "l2l",
-        info: _extends({
-          type: "lively.morphic browser"
-        }, info)
-      });
+      var def = this.default();
+
+      if (!def) {
+        return L2LClient.ensure({
+          url: document.location.origin + "/lively-socket.io",
+          namespace: "l2l", info: info
+        });
+      }
+
+      if (hasInfo && !lively_lang.obj.equals(def.info, info) && def.isRegistered()) {
+        def.info = info;
+        def.unregister().then(function () {
+          return def.register();
+        }).catch(function (err) {
+          return console.error("l2l re-register on info change errored: " + err);
+        });
+      }
+
+      return def;
     }
   }, {
     key: "default",
@@ -895,19 +909,13 @@ var L2LClient = function (_L2LConnection) {
       return L2LClient.clients.get(key);
     }
   }, {
-    key: "ensure",
-    value: function ensure() {
+    key: "create",
+    value: function create() {
       var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-      // url specifies hostname + port + io path
-      // namespace is io namespace
-
       var _options$debug = options.debug,
           debug = _options$debug === undefined ? false : _options$debug,
-          _options$url = options.url,
-          url = _options$url === undefined ? null : _options$url,
-          _options$namespace = options.namespace,
-          namespace = _options$namespace === undefined ? null : _options$namespace,
+          url = options.url,
+          namespace = options.namespace,
           _options$autoOpen = options.autoOpen,
           autoOpen = _options$autoOpen === undefined ? true : _options$autoOpen,
           _options$info = options.info,
@@ -918,16 +926,31 @@ var L2LClient = function (_L2LConnection) {
 
       var origin = urlHelper.root(url).replace(/\/+$/, ""),
           path = urlHelper.path(url),
+          client = new this(origin, path, namespace || "", info);
+
+      if (autoOpen) client.register();
+      client.debug = debug;
+      return client;
+    }
+  }, {
+    key: "ensure",
+    value: function ensure() {
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+      // url specifies hostname + port + io path
+      // namespace is io namespace
+      var url = options.url,
+          namespace = options.namespace;
+
+
+      if (!url) throw new Error("L2LClient needs server url!");
+
+      var origin = urlHelper.root(url).replace(/\/+$/, ""),
+          path = urlHelper.path(url),
           key = this.clientKey(origin, path, namespace || ""),
           client = this.clients.get(key);
 
-      if (!client) {
-        client = new this(origin, path, namespace || "", info);
-        if (autoOpen) {
-          client.register();
-        }
-        this.clients.set(key, client);
-      }
+      if (!client) this.clients.set(key, client = this.create(_extends({}, options, { url: url, namespace: namespace })));
 
       return client;
     }
@@ -987,7 +1010,7 @@ var L2LClient = function (_L2LConnection) {
   }, {
     key: "open",
     value: function () {
-      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
         var _this2 = this;
 
         var url, opts, socket;
@@ -1094,6 +1117,7 @@ var L2LClient = function (_L2LConnection) {
 
                 socket.on("reconnecting", function () {
                   _this2.debug && console.log("[" + _this2 + "] reconnecting", _this2._reconnectState);
+                  _this2.emit("reconnecting", _this2);
                   if (_this2._reconnectState.closed) {
                     _this2._reconnectState.isReconnecting = false;
                     _this2._reconnectState.isReconnectingViaSocketio = false;
@@ -1140,7 +1164,7 @@ var L2LClient = function (_L2LConnection) {
   }, {
     key: "close",
     value: function () {
-      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+      var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
         var _this3 = this;
 
         var socket, reason;
@@ -1235,7 +1259,7 @@ var L2LClient = function (_L2LConnection) {
   }, {
     key: "register",
     value: function () {
-      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
         var _this4 = this;
 
         var answer, err, _err, _answer$data, trackerId, messageNumber, attempt, timeout;
@@ -1357,7 +1381,7 @@ var L2LClient = function (_L2LConnection) {
   }, {
     key: "unregister",
     value: function () {
-      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
         var trackerId;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
@@ -1437,6 +1461,227 @@ var L2LClient = function (_L2LConnection) {
         typeof ackFn === "function" ? socket.emit(action, msg, ackFn) : socket.emit(action, msg);
       });
     }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // broadcasting
+
+  }, {
+    key: "joinRoom",
+    value: function joinRoom(room) {
+      var _this7 = this;
+
+      return this.whenOnline().then(function () {
+        return _this7.sendToAndWait(_this7.trackerId, "[broadcast] join room", { room: room });
+      });
+    }
+  }, {
+    key: "leaveRoom",
+    value: function leaveRoom(room) {
+      var _this8 = this;
+
+      return this.whenOnline().then(function () {
+        return _this8.sendToAndWait(_this8.trackerId, "[broadcast] leave room", { room: room });
+      });
+    }
+  }, {
+    key: "broadcast",
+    value: function broadcast(room, action, data) {
+      var _this9 = this;
+
+      var isSystemBroadcast = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+      var isMultiServerBroadcast = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
+
+      var broadcast = { action: action, room: room, broadcast: data };
+      if (isSystemBroadcast) broadcast.isSystemBroadcast = true;
+      if (isMultiServerBroadcast) broadcast.isMultiServerBroadcast = true;
+      return this.whenOnline().then(function () {
+        return _this9.sendToAndWait(_this9.trackerId, "[broadcast] send", broadcast);
+      });
+    }
+  }, {
+    key: "listRoomMembers",
+    value: function () {
+      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(room) {
+        var _ref6, data;
+
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                _context5.next = 2;
+                return this.sendToAndWait(this.trackerId, "[broadcast] list room members", { room: room });
+
+              case 2:
+                _ref6 = _context5.sent;
+                data = _ref6.data;
+                return _context5.abrupt("return", data);
+
+              case 5:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function listRoomMembers(_x5) {
+        return _ref5.apply(this, arguments);
+      }
+
+      return listRoomMembers;
+    }()
+  }, {
+    key: "joinedRooms",
+    value: function () {
+      var _ref7 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+        var _ref8, data;
+
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                _context6.next = 2;
+                return this.sendToAndWait(this.trackerId, "[broadcast] my rooms", {});
+
+              case 2:
+                _ref8 = _context6.sent;
+                data = _ref8.data;
+                return _context6.abrupt("return", data);
+
+              case 5:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, this);
+      }));
+
+      function joinedRooms() {
+        return _ref7.apply(this, arguments);
+      }
+
+      return joinedRooms;
+    }()
+  }, {
+    key: "listRooms",
+    value: function () {
+      var _ref9 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+        var _ref10, data;
+
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                _context7.next = 2;
+                return this.sendToAndWait(this.trackerId, "[broadcast] all rooms", {});
+
+              case 2:
+                _ref10 = _context7.sent;
+                data = _ref10.data;
+                return _context7.abrupt("return", data);
+
+              case 5:
+              case "end":
+                return _context7.stop();
+            }
+          }
+        }, _callee7, this);
+      }));
+
+      function listRooms() {
+        return _ref9.apply(this, arguments);
+      }
+
+      return listRooms;
+    }()
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // user network related
+
+  }, {
+    key: "listPeers",
+    value: function () {
+      var _ref11 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+        var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+        var _peersCached, t, timeout, _ref12, data, sessions;
+
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+          while (1) {
+            switch (_context8.prev = _context8.next) {
+              case 0:
+                _peersCached = this._peersCached, t = Date.now(), timeout = 1000;
+
+                if (!(!force && _peersCached && t - _peersCached.timestamp < timeout)) {
+                  _context8.next = 3;
+                  break;
+                }
+
+                return _context8.abrupt("return", this._peersCached.sessions);
+
+              case 3:
+                if (this.isOnline()) {
+                  _context8.next = 5;
+                  break;
+                }
+
+                return _context8.abrupt("return", []);
+
+              case 5:
+                _context8.next = 7;
+                return this.sendToAndWait(this.trackerId, "getClients", {});
+
+              case 7:
+                _ref12 = _context8.sent;
+                data = _ref12.data;
+                sessions = data.map(function (_ref13) {
+                  var _ref14 = slicedToArray(_ref13, 2),
+                      id = _ref14[0],
+                      record = _ref14[1];
+
+                  var _ref15 = record.info || {},
+                      userRealm = _ref15.userRealm,
+                      userToken = _ref15.userToken,
+                      l2lUserToken = _ref15.l2lUserToken,
+                      location = _ref15.location,
+                      type = _ref15.type,
+                      world = _ref15.world,
+                      peer = _extends({}, lively_lang.obj.dissoc(record, ["info"]), { id: id, world: world, location: location, type: type });
+
+                  userToken = userToken || l2lUserToken;
+                  if (userToken) {
+                    if (lively.user) {
+                      peer.user = lively.user.ClientUser.fromToken(userToken, userRealm);
+                    } else {
+                      peer.userToken = userToken;
+                      peer.userRealm = userRealm;
+                    }
+                  }
+                  return peer;
+                });
+
+
+                this._peersCached = { timestamp: t, sessions: sessions };
+                return _context8.abrupt("return", sessions);
+
+              case 12:
+              case "end":
+                return _context8.stop();
+            }
+          }
+        }, _callee8, this);
+      }));
+
+      function listPeers() {
+        return _ref11.apply(this, arguments);
+      }
+
+      return listPeers;
+    }()
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // debugging
+
   }, {
     key: "toString",
     value: function toString() {
