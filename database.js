@@ -321,6 +321,39 @@ export default class Database {
     return results;
   }
 
+  async updateDocuments(documents, conflictFn, opts) {
+    // bulk set multiple documents at once.  If document already exists and doc
+    // to set does not have the right _rev, a conflict is created.  In this
+    // case, conflictFn(oldDoc, newDoc) is called. If it returns nullish, update
+    // is canceled, otherwise the return result will be used as a conflict
+    // resolution.  Resolved docs are retried recursively.
+    // returns {_id: updateResult, ...}
+    let results = await this.pouchdb.bulkDocs(documents, opts),
+        tryAgain = [], resolvedResults = {};
+    for (let i = 0; i < results.length; i++) {
+      let d = documents[i], result = results[i];
+      // if a conflict happens and document does not specify the exact revision
+      // then just overwrite old doc
+      resolvedResults[result._id || d._id] = result;
+      if (!result.ok && result.name === "conflict") {
+        let oldDoc = await this.get(d._id),
+            resolved = conflictFn(oldDoc, d);
+        if (resolved) {
+          if (!resolved._id) resolved._id = d._id;
+          if (!resolved._rev) resolved._rev = oldDoc._rev;
+          tryAgain.push(resolved);
+        }
+      }
+    }
+    if (tryAgain.length) {
+      resolvedResults = {
+        ...resolvedResults,
+        ...await this.updateDocuments(tryAgain, conflictFn, opts)
+      };
+    }
+    return resolvedResults;
+  }
+
   async getDocuments(idsAndRevs, options = {}) {
     // bulk get multiple documents at once
     // idsAndRevs = [{id, rev?}]
