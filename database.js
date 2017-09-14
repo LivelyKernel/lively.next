@@ -1,6 +1,7 @@
 /*global global,self,process,System,require*/
 import _PouchDB from "pouchdb";
 import pouchdbAdapterMem from "pouchdb-adapter-mem";
+import { Path } from "lively.lang";
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -531,25 +532,38 @@ export default class Database {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   createDesignDocs(specs) { return specs.map(this.createDesignDoc); }
 
-  createDesignDoc({name, mapFn, reduceFn, version = 1}) {
-    let doc = {_id: '_design/' + name, version, views: {}};
-    doc.views[name] = {map: mapFn.toString()};
-    if (reduceFn) doc.views[name].reduce = reduceFn.toString();
+  createDesignDoc({name, mapFn, reduceFn, filterFn, version = 1}) {
+    let doc = {_id: '_design/' + name, version};
+    if (filterFn) Path("filters." + name).set(doc, filterFn.toString(), true);
+    if (mapFn) Path("views." + name + ".map").set(doc, mapFn.toString(), true);
+    if (reduceFn) Path("views." + name + ".reduce").set(doc, reduceFn.toString(), true);
     return doc;
   }
 
-  addDesignDocs(specs) {
-    return this.updateDocuments(this.createDesignDocs(specs), (oldDoc, newDoc) => {
-      if (!oldDoc.hasOwnProperty("version")) return newDoc;
-      if (newDoc.hasOwnProperty("version") && newDoc.version > oldDoc.version) return newDoc;
-      return null;
-    });
+  async addDesignDocs(specs, queryStale = false) {
+    let docs = this.createDesignDocs(specs),
+        result = await this.updateDocuments(docs, (oldDoc, newDoc) => {
+          if (!oldDoc.hasOwnProperty("version")) return newDoc;
+          if (newDoc.hasOwnProperty("version") && newDoc.version > oldDoc.version) return newDoc;
+          return null;
+        });
+    if (queryStale) {
+      await Promise.all(docs.map(ea => this.designDocDoQueryStale(ea._id)))
+    }
+    return result;
   }
 
-  addDesignDoc({name, mapFn, reduceFn, version}) {
-    return this.set('_design/' + name, this.createDesignDoc({name, mapFn, reduceFn, version}));
+  async addDesignDoc({name, mapFn, reduceFn, version}, queryStale = false) {
+    let doc = this.createDesignDoc({name, mapFn, reduceFn, version}),
+        result = await this.set(doc._id, doc);
+    if (queryStale) await this.designDocDoQueryStale(doc._id);
+    return result;
   }
 
   removeDesignDoc(name) { return this.remove('_design/' + name); }
 
+  designDocDoQueryStale(designDocId) {
+    let [_, name] = designDocId.split("/");
+    return this.query(name, {stale: 'update_after'});
+  }
 }

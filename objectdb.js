@@ -287,91 +287,56 @@ export default class ObjectDB {
     return Object.assign(commit, {_id: commitHash});
   }
 
-  get _indexes() {
+  get _commitdb_indexes() {
 
-    return {
-      commitdb_nameIndex: {
-        _id: '_design/name_index',
+    return [
+      {
+        name: 'name_index',
+        version: 4,
+        mapFn: 'function (doc) { emit(doc.type + "\u0000" + doc.name); }'
+      },
+
+      {
+        name: 'nameAndTimestamp_index',
         version: 3,
-        views: {'name_index': {map: 'function (doc) { emit(doc.type + "\u0000" + doc.name); }'}}
+        mapFn: 'function (doc) { emit(doc.type + "\u0000" + doc.name + "\u0000" + doc.timestamp + "\u0000" + doc._id); }'
       },
 
-      commitdb_nameAndTimestampIndex: {
-        _id: '_design/nameAndTimestamp_index',
-        version: 2,
-        views: {'nameAndTimestamp_index': {
-          map: 'function (doc) { emit(doc.type + "\u0000" + doc.name + "\u0000" + doc.timestamp + "\u0000" + doc._id); }'}}
-      },
-
-      commitdb_nameWithMaxMinTimestamp: {
-        _id: '_design/nameWithMaxMinTimestamp_index',
+      {
+        name: 'nameWithMaxMinTimestamp_index',
         version: 3,
-        views: {
-          'nameWithMaxMinTimestamp_index': {
-            map: 'function(doc) { emit(doc.type + "\u0000" + doc.name, doc.timestamp); }',
-            reduce: "_stats"}
-        }
+        mapFn: 'function(doc) { emit(doc.type + "\u0000" + doc.name, doc.timestamp); }',
+        reduceFn: "_stats"
       },
 
-      commitdb_nameTypeFilter: {
-        _id: '_design/nameTypeFilter',
-        version: 6,
-        filters: {
-          'nameTypeFilter': `function(doc, req) {
-            if (doc._id[0] === "_" || !req || !req.query) return true;
-
-            if (req.query.onlyIds) return !!req.query.onlyIds[doc._id];
-            if (req.query.onlyTypesAndNames)
-              return !!req.query.onlyTypesAndNames[doc.type + "/" + doc.name];
-            return true;
-          }`}
-      },
-
-      versiondb_nameTypeFilter: {
-        _id: '_design/nameTypeFilter',
-        version: 2,
-        filters: {
-          'nameTypeFilter': `function(doc, req) {
-            if (doc._id[0] === "_" || !req || !req.query) return true;
-
-            if (req.query.onlyIds) return !!req.query.onlyIds[doc._id];
-            if (req.query.onlyTypesAndNames) return !!req.query.onlyTypesAndNames[doc._id];
-            return true;
-          }`}
+      {
+        name: 'nameTypeFilter',
+        version: 7,
+        filterFn: `function(doc, req) {
+          if (doc._id[0] === "_" || !req || !req.query) return true;
+          if (req.query.onlyIds) return !!req.query.onlyIds[doc._id];
+          if (req.query.onlyTypesAndNames)
+            return !!req.query.onlyTypesAndNames[doc.type + "/" + doc.name];
+          return true;
+        }`
       }
-    }
+
+    ];
   }
 
-  async _ensureDesignDocIn(pouchDB, designDoc, queryStale = false) {
-    try {
-      await pouchDB.put(designDoc);
-      console.log(`[pouchdb design doc] PouchDB("${pouchDB.name}") installed ${designDoc._id}`);
-      doQueryStale();
-      return true;
-    } catch (err) {
-      if (err.status !== 409) throw err;
-      let {version, _rev} = await pouchDB.get(designDoc._id);
-      if (version && version === designDoc.version) {
-        console.log(`[pouchdb design doc] PouchDB("${pouchDB.name}") up-to-date: ${designDoc._id}`);
-        return false;
+  get _versiondb_indexes() {      
+    return [
+      {
+        name: 'nameTypeFilter',
+        version: 3,
+        filterFn: `function(doc, req) {
+          if (doc._id[0] === "_" || !req || !req.query) return true;
+          if (req.query.onlyIds) return !!req.query.onlyIds[doc._id];
+          if (req.query.onlyTypesAndNames) return !!req.query.onlyTypesAndNames[doc._id];
+          return true;
+        }`
       }
-      designDoc._rev = _rev;
-      try {
-        await pouchDB.put(designDoc);
-        console.log(`[pouchdb design doc] PouchDB("${pouchDB.name}") new version: ${designDoc._id}`);
-        doQueryStale();
-        return true;
-      } catch (err) {
-        if (err.status !== 409) throw err;
-        return this._ensureDesignDocIn(pouchDB, designDoc);
-      }
-    }
-
-    function doQueryStale() {
-      if (!queryStale) return;
-      let [_, name] = designDoc._id.split("/");
-      return pouchDB.query(name, {stale: 'update_after'});
-    }
+    ]      
   }
 
   async _commitDB() {
@@ -384,19 +349,8 @@ export default class ObjectDB {
     db = Database.ensureDB(dbName);
 
     // prepare indexes
-    var {
-      commitdb_nameTypeFilter,
-      commitdb_nameWithMaxMinTimestamp,
-      commitdb_nameAndTimestampIndex,
-      commitdb_nameIndex
-    } = this._indexes;
 
-    await Promise.all([
-      this._ensureDesignDocIn(db.pouchdb, commitdb_nameTypeFilter, false),
-      this._ensureDesignDocIn(db.pouchdb, commitdb_nameAndTimestampIndex, true),
-      this._ensureDesignDocIn(db.pouchdb, commitdb_nameWithMaxMinTimestamp, true),
-      this._ensureDesignDocIn(db.pouchdb, commitdb_nameWithMaxMinTimestamp, true),
-    ]);
+    await db.addDesignDocs(this._commitdb_indexes);
 
     return this.__commitDB = db;
   }
@@ -463,13 +417,7 @@ export default class ObjectDB {
         db = Database.findDB(dbName);
     if (db) return this.__versionDB = db;
     db = Database.ensureDB(dbName);
-
-    // var typeAndNameIndex = {
-    //   _id: '_design/type_name_index',
-    //   views: {'name_index': {map: 'function (doc) { emit(`${doc.type}\u0000${doc.name}}`); }'}}};
-    // db.setDocuments([typeAndNameIndex]);
-    // await Promise.alll([db.pouchdb.query('type_name_index', {stale: 'update_after'})]);
-
+    await db.addDesignDocs(this._versiondb_indexes);
     return this.__versionDB = db;
   }
 
@@ -874,15 +822,22 @@ class Synchronization {
 
         versionDB = fromObjectDB.__versionDB || await fromObjectDB._versionDB(),
         commitDB = fromObjectDB.__commitDB || await fromObjectDB._commitDB(),
-        versionChangeListener, commitChangeListener,
-        fromSnapshotLocation = fromObjectDB.snapshotLocation;
+        {
+          _commitdb_indexes, _versiondb_indexes,
+          snapshotLocation: fromSnapshotLocation
+        } = fromObjectDB,
+        versionChangeListener, commitChangeListener;
 
     this.method = method;
 
-    await fromObjectDB._ensureDesignDocIn(remoteCommitDB.pouchdb,
-      fromObjectDB._indexes.commitdb_nameTypeFilter, false);
-    await fromObjectDB._ensureDesignDocIn(remoteVersionDB.pouchdb,
-      fromObjectDB._indexes.versiondb_nameTypeFilter, false);
+    let commitNameTypeFilter = _commitdb_indexes.find(ea => ea.name === 'nameTypeFilter'),
+        versionNameTypeFilter = _versiondb_indexes.find(ea => ea.name === 'nameTypeFilter');
+
+    console.log("adding commitNameTypeFilter")
+    await remoteCommitDB.addDesignDoc(commitNameTypeFilter);
+
+    console.log("adding versionNameTypeFilter")
+    await remoteVersionDB.addDesignDoc(versionNameTypeFilter);
 
     let opts = {
           live, retry,
@@ -891,9 +846,9 @@ class Synchronization {
 
     if (replicationFilter) {
       // opts.filter = 'nameTypeFilter/nameTypeFilter';
-      commitOpts.filter = eval(`(${fromObjectDB._indexes.commitdb_nameTypeFilter.filters.nameTypeFilter})`);
+      commitOpts.filter = eval(`(${commitNameTypeFilter.filterF})`);
       commitOpts.query_params = replicationFilter;
-      versionOpts.filter = eval(`(${fromObjectDB._indexes.versiondb_nameTypeFilter.filters.nameTypeFilter})`);
+      versionOpts.filter = eval(`(${versionNameTypeFilter})`);
       versionOpts.query_params = replicationFilter;
     }
 
