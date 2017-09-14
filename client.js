@@ -10,9 +10,12 @@ let isNode = typeof System !== "undefined" ?
 // FIXME!!
 // import ioClient from "socket.io-client";
 import _ioClient from "socket.io-client/dist/socket.io.js";
-var ioClient = _ioClient;
+var ioClient;
 if (isNode) {
-  ioClient = System._nodeRequire("socket.io-client");
+  let require = System._nodeRequire("module")._load;
+  ioClient = require("socket.io-client");
+} else {
+  ioClient = _ioClient;
 }
 
 
@@ -457,23 +460,33 @@ export default class L2LClient extends L2LConnection {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // user network related
   async listPeers(force = false) {
-    if (!force && this._peersCached) return this._peersCached;
+    let {_peersCached} = this,
+        t = Date.now(),
+        timeout = 1000;
+    
+    if (!force && _peersCached && t - _peersCached.timestamp < timeout)
+      return this._peersCached.sessions;
+
     if (!this.isOnline()) return [];
-    setTimeout(() => { delete this._peersCached; }, 1000);
-    let {data} = await this.sendToAndWait(this.trackerId, "getClients", {});
-    return this._peersCached = data.map(([id, record]) => {
-      let {userRealm, userToken, location, type, world} = record.info || {},
-          peer = {...obj.dissoc(record, ["info"]), id, world, location, type}
-      if (userToken) {
-        if (lively.user) {
-          peer.user = lively.user.ClientUser.fromToken(userToken, userRealm);
-        } else {
-          peer.userToken = userToken
-          peer.userRealm = userRealm;
-        }
-      }
-      return peer;
-    });
+
+    let {data} = await this.sendToAndWait(this.trackerId, "getClients", {}),
+        sessions = data.map(([id, record]) => {
+          let {userRealm, userToken, l2lUserToken, location, type, world} = record.info || {},
+              peer = {...obj.dissoc(record, ["info"]), id, world, location, type};
+          userToken = userToken || l2lUserToken;
+          if (userToken) {
+            if (lively.user) {
+              peer.user = lively.user.ClientUser.fromToken(userToken, userRealm);
+            } else {
+              peer.userToken = userToken;
+              peer.userRealm = userRealm;
+            }
+          }
+          return peer;
+        });
+
+    this._peersCached = {timestamp: t, sessions};
+    return sessions;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
