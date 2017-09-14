@@ -288,26 +288,27 @@ export default class ObjectDB {
   }
 
   get _indexes() {
+
     return {
       commitdb_nameIndex: {
         _id: '_design/name_index',
-        version: 1,
-        views: {'name_index': {map: 'function (doc) { emit(`${doc.type}\u0000${doc.name}`); }'}}
+        version: 3,
+        views: {'name_index': {map: 'function (doc) { emit(doc.type + "\u0000" + doc.name); }'}}
       },
 
       commitdb_nameAndTimestampIndex: {
         _id: '_design/nameAndTimestamp_index',
-        version: 1,
+        version: 2,
         views: {'nameAndTimestamp_index': {
-          map: "function (doc) { emit(`${doc.type}\u0000${doc.name}\u0000${doc.timestamp}\u0000${doc._id}`); }"}}
+          map: 'function (doc) { emit(doc.type + "\u0000" + doc.name + "\u0000" + doc.timestamp + "\u0000" + doc._id); }'}}
       },
 
       commitdb_nameWithMaxMinTimestamp: {
         _id: '_design/nameWithMaxMinTimestamp_index',
-        version: 2,
+        version: 3,
         views: {
           'nameWithMaxMinTimestamp_index': {
-            map: 'function(doc) { emit(`${doc.type}\u0000${doc.name}`, doc.timestamp); }',
+            map: 'function(doc) { emit(doc.type + "\u0000" + doc.name, doc.timestamp); }',
             reduce: "_stats"}
         }
       },
