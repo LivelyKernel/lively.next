@@ -393,7 +393,10 @@ var commands = [
 
   {
     name: "open workspace",
-    exec: async (world, opts = {}) => {
+    exec: async (world, opts = {}, _, evt) => {
+      var relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
+      if (relayed) return relayed;
+
       var language = opts.language || opts.mode || "javascript",
           workspaceModules = {
             "javascript": "lively.morphic/ide/js/workspace.js",
@@ -403,11 +406,14 @@ var commands = [
           },
           alias = {"js": "javascript"};
       if (opts.askForMode) {
-        let workspaceLanguages = Object.keys(workspaceModules);
+        let workspaceLanguages = Object.keys(workspaceModules).concat("javascript console");
         ({selected: [language]} = await world.filterableListPrompt(
           "Open workspace for...", workspaceLanguages));
         if (!language) return true;
       }
+
+      if (language === "javascript console")
+        return world.execCommand("open console", opts);
 
       opts = {content: "", ...opts, mode: language, language};
       var mod = workspaceModules[opts.language] || workspaceModules[alias[opts.language]];
@@ -423,6 +429,14 @@ var commands = [
         target: opts.target,
         systemInterface: opts.systemInterface || opts.backend
       }).activate();
+    }
+  },
+  
+  {
+    name: "open console",
+    exec: async (world, opts = {}) => {
+      let console = await loadObjectFromPartsbinFolder("Console");
+      return console.openInWorldNearHand();
     }
   },
 
