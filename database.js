@@ -525,4 +525,31 @@ export default class Database {
     await this.setDocuments(migrated);
     return {migrated: migrated.length, unchanged: unchanged.length};
   }
+  
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // design docs
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  createDesignDocs(specs) { return specs.map(this.createDesignDoc); }
+
+  createDesignDoc({name, mapFn, reduceFn, version = 1}) {
+    let doc = {_id: '_design/' + name, version, views: {}};
+    doc.views[name] = {map: mapFn.toString()};
+    if (reduceFn) doc.views[name].reduce = reduceFn.toString();
+    return doc;
+  }
+
+  addDesignDocs(specs) {
+    return this.updateDocuments(this.createDesignDocs(specs), (oldDoc, newDoc) => {
+      if (!oldDoc.hasOwnProperty("version")) return newDoc;
+      if (newDoc.hasOwnProperty("version") && newDoc.version > oldDoc.version) return newDoc;
+      return null;
+    });
+  }
+
+  addDesignDoc({name, mapFn, reduceFn, version}) {
+    return this.set('_design/' + name, this.createDesignDoc({name, mapFn, reduceFn, version}));
+  }
+
+  removeDesignDoc(name) { return this.remove('_design/' + name); }
+
 }
