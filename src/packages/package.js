@@ -144,6 +144,7 @@ class Package {
     this.devDependencies = config.devDependencies || {};
     this.main = config.main || "index.js";
     this.systemjs = config.systemjs;
+    this.lively = config.lively;
   }
 
   toJSON() {
@@ -185,9 +186,8 @@ class Package {
     return {
       ...obj.select(this, [
         "name", "main", "map", "meta",
-        "url", "address", "version"
+        "url", "address", "version", "lively"
       ]),
-      lively: this.config ? this.config.lively : undefined,
       modules: this.modules().map(m => {
         return {
           name: m.id,

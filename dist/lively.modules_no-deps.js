@@ -4822,6 +4822,7 @@ var Package = function () {
       this.devDependencies = config.devDependencies || {};
       this.main = config.main || "index.js";
       this.systemjs = config.systemjs;
+      this.lively = config.lively;
     }
   }, {
     key: "toJSON",
@@ -4853,8 +4854,7 @@ var Package = function () {
   }, {
     key: "asSpec",
     value: function asSpec() {
-      return _extends({}, lively_lang.obj.select(this, ["name", "main", "map", "meta", "url", "address", "version"]), {
-        lively: this.config ? this.config.lively : undefined,
+      return _extends({}, lively_lang.obj.select(this, ["name", "main", "map", "meta", "url", "address", "version", "lively"]), {
         modules: this.modules().map(function (m) {
           return {
             name: m.id,
