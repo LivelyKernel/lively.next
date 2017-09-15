@@ -239,7 +239,7 @@ export class Renderer {
           draggable: false,
           style: {
             "pointer-events": "none",
-            width: "100%", height: "100%",
+            width: "15px", height: "15px",
             position: "absolute"
           }
         }),
