@@ -1,7 +1,6 @@
 import { InteractiveMorphSelector, MorphHighlighter } from "lively.halos/morph.js";
 import { connect, signal, once } from "lively.bindings";
 import { Color, rect, pt } from "lively.graphics";
-import { showConnector } from "./components/markers.js";
 import { show, HorizontalLayout, Morph, VerticalLayout, StyleSheet, Icon, GridLayout, morph, Window } from "lively.morphic";
 import { TreeData, Tree } from "./components/tree.js";
 import { arr, obj } from "lively.lang";
@@ -11,8 +10,9 @@ import { max } from "lively.lang/array.js";
 import { hashCode } from "lively.lang/string.js";
 
 
-export function interactivelyShowConnection(connection) {
-  let {sourceObj, sourceAttrName, targetObj, targetMethodName} = connection;
+export async function interactivelyShowConnection(connection) {
+  let showConnection = await System.import("lively.halos/markers.js"),
+      {sourceObj, sourceAttrName, targetObj, targetMethodName} = connection;
   if (sourceObj.isMorph && targetObj.isMorph) {
     sourceObj.show();
     targetObj.show();
