@@ -7,7 +7,6 @@
   },
   "dependencies": {
     "bowser": "^1.4.1",
-    "dom-to-image": "^2.5.2",
     "gsap": "^1.19.0",
     "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
     "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
@@ -41,7 +40,7 @@
     "main": "index.js",
     "map": {
       "jsdiff": "./dist/jsdiff-3.0.0.js",
-      "dom-to-image": "dom-to-image/dist/dom-to-image.min.js",
+      "dom-to-image": "./dist/dom-to-image-2.6.0.min.js",
       "three.js": "three/build/three.js",
       "svg-intersections": "./dist/svg-intersections.js",
       "virtual-dom": "virtual-dom/dist/virtual-dom.js",

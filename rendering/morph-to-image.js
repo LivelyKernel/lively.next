@@ -22,7 +22,7 @@ import domToImage from "dom-to-image";
 
 */
 
-function fixNodejs(document, window) {  
+function fixNodejs(document, window) {
   // 2017-03-18 FIXME
   // The dom-to-image does not support nodejs or options for jsdom. For now we
   // install globals so that it works but it would be better to fix the lib...!
@@ -104,7 +104,7 @@ export async function renderMorphToDataURI(morph, opts = {}) {
   try {
     wrapper.style.overflow = "hidden"
     wrapper.style.width = "1px";
-    wrapper.style.height = "1px";    
+    wrapper.style.height = "1px";
     wrapper.style.position = "absolute";
 
     document.body.appendChild(wrapper);
@@ -123,7 +123,7 @@ export async function renderMorphToDataURI(morph, opts = {}) {
 
   } finally {
     wrapper.parentNode && wrapper.parentNode.removeChild(wrapper);
-    
+
     for (let [htmlMorph, {domNode, parentNode}] of htmlMorphRestoreMap) {
       if (domNode && parentNode && domNode.parentNode !== parentNode)
         parentNode.appendChild(domNode)
