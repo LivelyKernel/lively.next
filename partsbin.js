@@ -89,7 +89,9 @@ export async function interactivelySavePart(part, options = {}) {
     preferWindow = true
   } = options;
 
-  let switchedToWindow, windowMetadata, actualPart = part;
+  let switchedToWindow, windowMetadata,
+      actualPart = part,
+      world = part.world() || part.env.world;
 
   let name = part.name, tags = [], description = "",
       oldCommit = Path("metadata.commit").get(part) || Path("metadata.commit").get(actualPart),
@@ -97,13 +99,13 @@ export async function interactivelySavePart(part, options = {}) {
 
   if (!oldCommit) {
     oldCommit = {
-      type: "part", name: part.name, author: $world.getCurrentUser(),
+      type: "part", name: part.name, author: world.getCurrentUser(),
       tags: [], description: "no description"
     }
   }
 
   if (showPublishDialog) {
-    let {db, commit} = await $world.openPrompt(await loadPart("publish part dialog"), {part})
+    let {db, commit} = await world.openPrompt(await loadPart("publish part dialog"), {part})
     if (!commit) return null;
     if (db) options.morphicDB = morphicDB = db;
     ({name, tags, description} = commit);
@@ -125,7 +127,7 @@ export async function interactivelySavePart(part, options = {}) {
     if (oldName !== name) {
       let {exists, commitId: existingCommitId} = await morphicDB.exists("part", name);
       if (exists) {
-        let overwrite = await $world.confirm(`A part "${name}" already exists, overwrite?`);
+        let overwrite = await world.confirm(`A part "${name}" already exists, overwrite?`);
         if (!overwrite) return null;
         expectedParentCommit = existingCommitId;
       }
@@ -167,7 +169,7 @@ export async function interactivelySavePart(part, options = {}) {
           overwriteQ = `The current version of part ${name} is not the most recent!\n`
                      + `A newer version by ${authorName} was saved on `
                      + `${date.format(new Date(timestamp), "yyyy-mm-dd HH:MM")}. Overwrite?`,
-          overwrite = await $world.confirm(overwriteQ);
+          overwrite = await world.confirm(overwriteQ);
       if (!overwrite) return null;
       let commitMetaData = obj.dissoc(newerCommit, ["preview"]);
       actualPart.changeMetaData("commit", commitMetaData, /*serialize = */true, /*merge = */false);
@@ -178,14 +180,14 @@ export async function interactivelySavePart(part, options = {}) {
     if (expectedVersion2) {
       let overwriteQ = `Part ${name} no longer exist in the object database.\n`
                      + `Do you still want to publish it?`,
-          overwrite = await $world.confirm(overwriteQ);
+          overwrite = await world.confirm(overwriteQ);
       if (!overwrite) return null;
       actualPart.changeMetaData("commit", null, /*serialize = */true, /*merge = */false);
       return interactivelySavePart(actualPart, {...options, morphicDB, showPublishDialog: false});
     }
 
     console.error(err);
-    notifications && $world.logError("Error saving part: " + err);
+    notifications && world.logError("Error saving part: " + err);
     throw err;
 
   } finally { i && i.remove(); }
