@@ -260,7 +260,8 @@ export class Slider extends Morph {
       new Path({
         borderColor: Color.gray.darker(),
         borderWidth: 2,
-        vertices: [this.leftCenter.addXY(5, 0), this.rightCenter.addXY(-5, 0)]
+        vertices: [pt(0, 0), pt(this.width, 0)],
+        position: pt(0, this.height/2)
       }),
       {
         type: "ellipse",
