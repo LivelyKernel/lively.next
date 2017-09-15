@@ -448,10 +448,11 @@ export class Renderer {
         // goalHeight = height - (borderWidthTop + borderWidthBottom),
         goalWidth = width,
         goalHeight = height,
-        invTfm = new Transform(position.negated(), 0, pt(1/morph.scale,1/scale)),
+        safeScale = Math.max(0.1, 1/scale), // Chrome crashes with too small scaling
+        invTfm = new Transform(position.negated(), 0, pt(safeScale, safeScale)),
         bbox = invTfm.transformRectToRect(morph.bounds()),
         w = bbox.width, h = bbox.height,
-        ratio = Math.min(goalWidth/w, goalHeight/h),
+        ratio = Math.max(0.1, Math.min(goalWidth/w, goalHeight/h)),
         node = renderMorph(morph),
         tfm = new Transform(
           bbox.topLeft().negated().scaleBy(ratio).subPt(origin),
