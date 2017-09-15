@@ -1055,6 +1055,25 @@ var commands = [
       return worldList;
         
     }
+  },
+
+  {
+    name: "add external package dependency to object",
+    exec: async (world, opts = {}) => {
+      let object = opts.target || world,
+          externalPackages = (object.metadata && object.metadata.externalPackages) || [],
+          {list} = await world.editListPrompt(
+            "modify package dependencies of " + object, externalPackages);
+      if (!list) return;
+      if (!list.length) {
+        if (object.metadata)
+          delete object.metadata.externalPackages;
+      } else {
+        if (!object.metadata) object.metadata = {};
+        object.metadata.externalPackages = list;
+      }
+      return true;
+    }
   }
 
 ]

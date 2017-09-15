@@ -88,8 +88,8 @@ export function copyMorph(morph) {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+import { registerPackage, getPackage, ensurePackage, lookupPackage, semver } from "lively.modules";
 import { createFiles } from "lively.resources";
-import { ensurePackage, lookupPackage, semver } from "lively.modules";
 import ObjectPackage from "lively.classes/object-classes.js";
 import LoadingIndicator from "./components/loading-indicator.js";
 import { promise } from "lively.lang";
@@ -112,14 +112,38 @@ export async function createMorphSnapshot(aMorph, options = {}) {
     // 1. save object packages
     let packages = snapshot.packages = {},
         objects = snapshot.snapshot,
-        packagesToSave = [];
+        packagesToSave = [],
+        externalPackageMap = {},
+        externalPackagesFound = true;
     for (let id in objects) {
       let classInfo = objects[id]["lively.serializer-class-info"];
-      if (!classInfo || !classInfo.module || !classInfo.module.package) continue;
-      let p = lively.modules.getPackage(classInfo.module.package.name);
-      // if it's a "local" object package then save that as part of the snapshot
-      if (p.address.startsWith("local://")) packagesToSave.push(p);
+      if (classInfo && classInfo.module && classInfo.module.package) {
+        let p = getPackage(classInfo.module.package.name);
+        // if it's a "local" object package then save that as part of the snapshot
+        if (p.address.startsWith("local://")) packagesToSave.push(p);
+      }
+      let metadata = objects[id].props.metadata;
+      if (metadata) {
+        let externalPackages;
+        if (metadata.value.__ref__) {
+          let prop = objects[metadata.value.id];
+          if (prop.props.externalPackages)
+            externalPackages = prop.props.externalPackages.value;
+        } else {
+          externalPackages = metadata.externalPackages;
+        }
+        if (externalPackages) {
+          externalPackagesFound = true;
+        for (let i = 0; i < externalPackages.length; i++)
+          externalPackageMap[externalPackages[i]] = true;
+        }
+      }
     }
+
+    if (externalPackagesFound) {
+      snapshot.packagesToRegister = Object.keys(externalPackageMap);
+    }
+
     await Promise.all(
       packagesToSave.map(async p => {
         let root = resource(p.address).asDirectory(),
@@ -201,6 +225,14 @@ function findPackagesInFileSpec(files, path = []) {
 
 async function loadPackagesAndModulesOfSnapshot(snapshot) {
   // embedded package definitions
+  if (snapshot.packagesToRegister) {
+    for (let pName of snapshot.packagesToRegister) {
+      try { await registerPackage(pName); } catch (err) {
+        console.error(`Failed to register package ${pName}`);
+      }
+    }
+  }
+
   if (snapshot.packages) {
     let packages = findPackagesInFileSpec(snapshot.packages);
 
