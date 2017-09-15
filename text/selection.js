@@ -280,7 +280,7 @@ export class MultiSelection extends Selection {
 
   get selections() { return this._selections; }
   set selections(sels) {
-    let removed = this._selections.filter(ea => !sels.includes(ea));
+    let removed = this._selections ? this._selections.filter(ea => !sels.includes(ea)) : [];
     this._selections = sels;
     removed.forEach(ea => ea.uninstall());
   }
