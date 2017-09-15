@@ -15,16 +15,17 @@ function setEvalEnv(morph, newEnv) {
   return plugin.evalEnvironment;
 }
 
-function logDoit(code, opts) {
-  let maxLogLength = 50,
+function logDoit(source, opts = {}) {
+  let {time = Date.now()} = opts,
+      maxLogLength = 50,
       maxCodeLength = 120000,
       log;
-  if (code.length > maxCodeLength) return;
+  if (source.length > maxCodeLength) return;
   try { log = JSON.parse(localStorage["lively.next-js-ide-doitlog"]); } catch (err) {}
   if (!log) log = [];
-  if (!log.includes(code)) log.push(code);
-  if (log.length > maxLogLength)
-    log = log.slice(-maxLogLength);
+  if (log.some(ea => typeof ea === "string" ? ea === source : ea.source === source)) return;
+  log.push({source, time});
+  if (log.length > maxLogLength) log = log.slice(-maxLogLength);
   try { localStorage["lively.next-js-ide-doitlog"] = JSON.stringify(log); } catch (err) {}
 }
 

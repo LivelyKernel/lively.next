@@ -862,8 +862,9 @@ export class ObjectEditor extends Morph {
 
   backupSourceInLocalStorage(source) {
     var store = JSON.parse(localStorage.getItem("oe helper") || '{"saves": []}')
+    if (store.saves.some(ea => typeof ea === "string" ? ea === source : ea.source === source)) return;
     if (store.saves.length > 100) store.saves = store.saves.slice(40, 100);
-    store.saves.push(source);
+    store.saves.push({source, time: Date.now()});
     localStorage.setItem("oe helper", JSON.stringify(store))
   }
 

@@ -1,6 +1,6 @@
 /*global System*/
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
-import { tree, Path, arr, string, obj } from "lively.lang";
+import { tree, date, Path, arr, string, obj } from "lively.lang";
 import { show, inspect, Text, config } from "./index.js";
 import KeyHandler from "./events/KeyHandler.js";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
@@ -361,8 +361,11 @@ var commands = [
   {
     name: "[recovery] show last object editor saves",
     exec: (world, opts) => {
-      return world.execCommand("[recovery] show last doits",
-        {...opts, logAccessFn: () => JSON.parse(localStorage["oe helper"]).saves});
+      return world.execCommand("[recovery] show last doits", {
+        ...opts,
+        title: "logged ObjectEditor save",
+        logAccessFn: () => JSON.parse(localStorage["oe helper"]).saves
+      });
     }
   },
 
@@ -375,17 +378,24 @@ var commands = [
       let log;
       try { log = logAccessFn(); } catch (err) {};
       if (!log) return world.inform("no log yet");
-      let items = log.map(ea => {
-        return {
-          isListItem: true,
-          string: ea.slice(0, 100).replace(/\n/g, "").trim(),
-          value: ea
-        }
-      })
-      let {selected} = await world.filterableListPrompt("select doit code", items);
-      if (selected) {
+      let normalizedLog = arr.sortBy(log.map((ea, i) => {
+            let source = typeof ea === "string" ? ea : ea.source,
+                time = typeof ea === "string" ? i : (ea.time || i),
+                printedTime = date.format(new Date(time), "yy-mm-dd HH:MM");
+            return {time, source, printedTime}
+          }), ea => -ea.time),
+          items = normalizedLog.map((ea, i) => {
+            return {
+              isListItem: true,
+              string: `[${ea.printedTime}] ${ea.source.slice(0, 100).replace(/\n/g, "").trim()}`,
+              value: ea
+            }
+          }),
+          {selected: [coice]} = await world.filterableListPrompt("select doit code", items);
+      if (coice) {
+        let {source, time, printedTime} = coice;
         return world.execCommand("open workspace",
-          {content: selected, title: "logged doit", mode: "js"})
+          {title: "logged doit " + printedTime, mode: "js", ...opts, content: source})
       }
       return true;
     }
