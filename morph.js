@@ -2050,21 +2050,7 @@ export class Morph {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // morphic hierarchy / windows
 
-    items.push(['Publish...', async () => {
-      try {
-        let {interactivelySavePart} = await System.import("lively.morphic/partsbin.js"),
-            commit = await interactivelySavePart(this, {
-              notifications: false, loadingIndicator: true}),
-            world = this.world() || this.env.world;
-        world.setStatusMessage(
-          commit ?
-            `Published ${this} as ${commit.name}` :
-            `Failed to publish part ${this}`,
-          commit ? Color.green : Color.red);
-      } catch (e) {
-        if (e != "canceled") world.showError(e);
-      }
-    }]);
+    items.push(['Publish...', () => this.interactivelyPublish()]);
 
     items.push(['Open in...', [
       ['Window', () => { this.openInWindow(); }]
@@ -2438,6 +2424,21 @@ return ;
 
   copy() { return copyMorph(this); }
 
+  async interactivelyPublish() {
+    try {
+      let {interactivelySavePart} = await System.import("lively.morphic/partsbin.js"),
+          commit = await interactivelySavePart(this, {
+            notifications: false, loadingIndicator: true}),
+          world = this.world() || this.env.world;
+      world.setStatusMessage(
+      commit ?
+        `Published ${this} as ${commit.name}` :
+        `Failed to publish part ${this}`,
+        commit ? Color.green : Color.red);
+    } catch (e) {
+      if (e != "canceled") world.showError(e);
+    }
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // rendering
