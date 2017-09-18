@@ -278,6 +278,10 @@ export class MultiSelection extends Selection {
     this._selections = [new Selection(this.textMorph, range)];
   }
 
+  __deserialize__(snapshot, objRef) {
+    this._selections = [];
+  }
+
   get selections() { return this._selections; }
   set selections(sels) {
     let removed = this._selections ? this._selections.filter(ea => !sels.includes(ea)) : [];
