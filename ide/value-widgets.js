@@ -1,7 +1,7 @@
 import { Morph, Text, morph, Label, HorizontalLayout, 
         StyleSheet, Icon, GridLayout, config } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
-import { Color, LinearGradient, pt, rect } from "lively.graphics";
+import { Color, Rectangle, LinearGradient, pt, rect } from "lively.graphics";
 import { ValueScrubber } from "../components/widgets.js";
 import { FillPopover, TextPopover, IconPopover, RectanglePopover, ShadowPopover,
          PointPopover, VerticesPopover, LayoutPopover, Popover} from "./styling/style-popover.js";
@@ -465,7 +465,8 @@ export class NumberWidget extends Morph {
       layout: {
         initialize() {
           this.layout = new GridLayout({
-            columns: [1, {paddingLeft: 5, paddingRight: 5, fixed: 25}],
+            resizeSubmorphs: true,
+            columns: [1, {paddingLeft: 5, paddingRight: 0, fixed: 25}],
             grid: [["value", "up"], ["value", "down"]]
           });
           this.update(this.number);
@@ -485,22 +486,24 @@ export class NumberWidget extends Morph {
             {
               type: "button",
               name: "down", styleClasses: ['buttonStyle', 'TreeLabel'],
+              padding: rect(4,1,0,-1),
               label: Icon.makeLabel("sort-asc", {
                 rotation: Math.PI,
-                autofit: false, 
+                autofit: false,
+                padding: rect(0,0,0,-8),
                 fixedHeight: true, extent: pt(8,8),
-                padding: rect(1, 2, 0, 0), 
                 fontSize: 12
-              })
+              }).fit()
             },
             {
               type: "button",
               name: "up", styleClasses: ['buttonStyle', 'TreeLabel'],
-              label: 
-              Icon.makeLabel("sort-asc", {
+              padding: rect(4,0,0,2),
+              label: Icon.makeLabel("sort-asc", {
                 autofit: false, 
+                padding: rect(0,0,0,-9),
                 fixedHeight: true, extent: pt(8,8),
-                padding: rect(0, 2, 0, 0), fontSize: 12
+                fontSize: 12
               })
             }
           ];
@@ -508,6 +511,9 @@ export class NumberWidget extends Morph {
           connect(this.get("up"), "fire", this, "increment");
           connect(this.get("down"), "fire", this, "decrement");
           connect(this, 'number', this, 'relayout');
+          this.whenRendered().then(() => {
+            this.relayout();
+          })
         }
       }
     };
@@ -520,8 +526,6 @@ export class NumberWidget extends Morph {
         fill: Color.transparent,
         borderWidth: 0
       },
-      ".focused .Button": {visible: true},
-      ".unfocused .Button": {visible: false},
       ".PropertyInspector .Button.activeStyle [name=label]": {
         fontColor: Color.white.darker()
       },
@@ -531,8 +535,6 @@ export class NumberWidget extends Morph {
       ".NumberWidget": {
         clipMode: "hidden"
       },
-      "[name=down]": {padding: rect(0, -3)},
-      "[name=up]": {padding: rect(0, -5)},
       "[name=value]": {
         padding: this.padding,
         fill: Color.transparent,
@@ -550,6 +552,8 @@ export class NumberWidget extends Morph {
 
   relayout(fromScrubber) {
     if (!fromScrubber) this.get("value").value = this.number;
+    this.get('up').labelMorph.fit();
+    this.get("down").labelMorph.fit();
     this.layout.col(0).width = this.get('value').textBounds().width;
   }
 
