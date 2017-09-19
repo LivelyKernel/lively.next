@@ -2,7 +2,7 @@
 import { Color, rect, pt } from "lively.graphics";
 import { obj, arr, promise, string } from "lively.lang";
 import { connect, disconnectAll, signal, disconnect, once } from "lively.bindings";
-import { Morph, HorizontalLayout, morph, CustomLayout, Label, Icon, StyleSheet, config } from "lively.morphic";
+import { Morph, DropDownList, HorizontalLayout, morph, CustomLayout, Label, Icon, StyleSheet, config } from "lively.morphic";
 import { Tree, TreeData } from "lively.morphic/components/tree.js";
 
 import { isBoolean, isString, isNumber } from "lively.lang/object.js";
@@ -964,6 +964,7 @@ export default class Inspector extends Morph {
             codeEditor:       this.getSubmorphNamed("codeEditor"),
             terminalToggler:  this.getSubmorphNamed("terminal toggler"),
             fixImportButton:  this.getSubmorphNamed('fix import button'),
+            thisBindingSelector: this.getSubmorphNamed('this binding selector'),
             propertyTree:     this.getSubmorphNamed("propertyTree"),
             unknowns:         this.getSubmorphNamed("unknowns"),
             internals:        this.getSubmorphNamed("internals"),
@@ -1059,7 +1060,8 @@ export default class Inspector extends Morph {
         internals,
         searchField,
         codeEditor,
-        fixImportButton
+        fixImportButton,
+        thisBindingSelector
       }
     } = this;
 
@@ -1067,7 +1069,10 @@ export default class Inspector extends Morph {
     codeEditor.changeEditorMode("js").then(() =>
       codeEditor.evalEnvironment = {
         targetModule: "lively://lively.morphic/inspector",
-        get context() { return codeEditor.owner.selectedObject },
+        get context() { 
+          return thisBindingSelector.selection == 'selection' ? 
+              codeEditor.owner.selectedObject : codeEditor.owner.targetObject 
+        },
         format: "esm"
       }
     ).catch(err => $world.logError(err));
@@ -1080,6 +1085,7 @@ export default class Inspector extends Morph {
     connect(internals,       'trigger',     this, 'filterProperties');
     connect(searchField,     'searchInput', this, 'filterProperties');
     connect(this,            "extent",      this, "relayout");
+    connect(thisBindingSelector, 'selection', this, 'bindCodeEditorThis');
     connect(fixImportButton, 'fire',        codeEditor, 'execCommand', {
       updater: ($upd) => $upd(
         "[javascript] fix undeclared variables",
@@ -1166,11 +1172,14 @@ export default class Inspector extends Morph {
           ...config.codeEditor.defaultStyle,
           textString: ""
         },
+        rightArrow = Icon.makeLabel('long-arrow-right').textAndAttributes,
         searchBarBounds = rect(0,0,this.width, 30),
         searchField = new SearchField({
           styleClasses: ["idle"],
           name: "searchField",
         });
+
+    rightArrow[1].paddingTop = '2px';
 
     this.submorphs = [
       {
@@ -1204,7 +1213,20 @@ export default class Inspector extends Morph {
       {name: "codeEditor", ...textStyle},
       {
         name: 'fix import button', type: "button",
+        fill:  Color.black.withA(.5), 
+        fontColor: Color.white,
+        borderWidth: 0,
         label: "fix undeclared vars", extent: pt(100, 20)
+      },
+      {
+        name: 'this binding selector', type: DropDownList,
+        fill: Color.black.withA(.5),
+        fontColor: Color.white, borderWidth: 0,
+        selection: 'selection',
+        items: [{isListItem: true, value: 'target',
+                 label: ['this ', null, ...rightArrow, ' target', null]},
+               {isListItem: true, value: 'selection', 
+                label: ['this ', null, ...rightArrow, ' selection', null]}]
       }
     ];
   }
@@ -1335,6 +1357,7 @@ export default class Inspector extends Morph {
           fixImportButton,
           terminalToggler: toggler,
           propertyTree: tree,
+          thisBindingSelector,
           codeEditor
         }} = this,
         togglerBottomLeft = tree.bounds().insetBy(5).bottomLeft(),
@@ -1343,9 +1366,11 @@ export default class Inspector extends Morph {
     if (animated.duration) {
       toggler.animate({bottomLeft: togglerBottomLeft, ...animated})
       fixImportButton.animate({topRight: buttonTopRight, ...animated});
+      thisBindingSelector.animate({topRight: fixImportButton.bottomRight.addXY(0,5), ...animated});
     } else {
       toggler.bottomLeft = togglerBottomLeft;
       fixImportButton.topRight = buttonTopRight;
+      thisBindingSelector.topRight = fixImportButton.bottomRight.addXY(0,5);
     }
   }
 
