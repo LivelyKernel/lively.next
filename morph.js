@@ -19,6 +19,9 @@ import { capitalize } from "lively.lang/string.js";
 import { connect, signal } from "lively.bindings";
 import { StylingVisitor } from "./sizzle.js";
 
+// optional lively.halos imports 
+import {showAndSnapToGuides, removeSnapToGuidesOf} from "lively.halos/drag-guides.js";
+
 const defaultCommandHandler = new CommandHandler();
 
 export function newMorphId(classOrClassName) {
@@ -2322,14 +2325,14 @@ export class Morph {
     this.position = dragStartMorphPosition.addPt(absDragDelta);
   }
 
-  async onDragEnd(evt) {
-    let { removeSnapToGuidesOf } = await System.import("lively.halos/drag-guides.js");
+  onDragEnd(evt) {
+    if (!removeSnapToGuidesOf) return;
     this.undoStop("drag-move");
     removeSnapToGuidesOf(this);
   }
 
-  async onDrag(evt) {
-    let {showAndSnapToGuides} = await System.import("lively.halos/drag-guides.js")
+  onDrag(evt) {
+    if (!showAndSnapToGuides) return;
     let {dragStartMorphPosition, absDragDelta} = evt.state;
     this.position = dragStartMorphPosition.addPt(absDragDelta);
     showAndSnapToGuides(this, evt.isCtrlDown()/*show guides*/, evt.isCtrlDown()/*snap*/);

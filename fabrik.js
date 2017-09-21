@@ -9,14 +9,15 @@ import { isArray } from "lively.lang/object.js";
 import { max } from "lively.lang/array.js";
 import { hashCode } from "lively.lang/string.js";
 
+// optional lively.halos imports
+import {showConnector} from "lively.halos/markers.js"
 
-export async function interactivelyShowConnection(connection) {
-  let showConnection = await System.import("lively.halos/markers.js"),
-      {sourceObj, sourceAttrName, targetObj, targetMethodName} = connection;
+export function interactivelyShowConnection(connection) {
+  let {sourceObj, sourceAttrName, targetObj, targetMethodName} = connection;
   if (sourceObj.isMorph && targetObj.isMorph) {
     sourceObj.show();
     targetObj.show();
-    showConnector(sourceObj, targetObj);
+    showConnector && showConnector(sourceObj, targetObj);
   } else show(String(connection));
 }
 
