@@ -1,5 +1,12 @@
 /*global process,require,System*/
 
+let nodeVersion = process.versions.node;
+let majorVersion = Number(nodeVersion[0]);
+if (majorVersion < 7) {
+  console.error("nodejs version %s not supported by lively.next.  Please use at least nodejs 7.");
+  process.exit(1);
+}
+
 global.babel = require("./deps/babel.min.js");
 require("./deps/system.src.js");
 require("./deps/lively.modules.js");
