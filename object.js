@@ -32,6 +32,24 @@ function indent(str, indentString, depth) {
   return str;
 }
 
+
+var getOwnPropertyDescriptors = (typeof Object.prototype.getOwnPropertyDescriptors === "function") ?
+  Object.prototype.getOwnPropertyDescriptors :
+  function getOwnPropertyDescriptors(object) {
+    let descriptors = {};
+    for (let name in object) {
+      if (!Object.prototype.hasOwnProperty.call(object, name)) continue;
+      Object.defineProperty(descriptors, name, {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: Object.getOwnPropertyDescriptor(object, name)
+      });
+    }
+    return descriptors;
+  }
+
+
 // show-in-doc
 
 // -=-=-=-=-
@@ -125,10 +143,10 @@ function select(obj, keys) {
 
 function dissoc(object, keys) {
   object = object || {};
-  var descriptors = Object.getOwnPropertyDescriptors(object);
-  for (let i = 0; i < keys.length; i++)
-    if (keys[i] in descriptors)
-      delete descriptors[keys[i]];
+  var descriptors = getOwnPropertyDescriptors(object);
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i] in descriptors) delete descriptors[keys[i]];
+  }
   return Object.defineProperties({}, descriptors);
 }
 
