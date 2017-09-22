@@ -79,10 +79,9 @@
   }
 
   function setupPluginBabelTranspiler(features) {
-    var pluginBabelPath = System.get("@system-env").browser ?
-      findSystemJSPluginBabel_browser() : findSystemJSPluginBabel_node();
-
-    var babel = System.global.babel;
+    var isBrowser = !!System.get("@system-env").browser,
+        pluginBabelPath = isBrowser ? findSystemJSPluginBabel_browser() : findSystemJSPluginBabel_node(),
+        babel = System.global.babel;
 
     if (!pluginBabelPath && !babel) {
       console.error("[lively.modules] Could not find path to systemjs-plugin-babel nor a babel global! This will likely break lively.modules!");
@@ -99,7 +98,7 @@
       System.config({
         map: {
           'plugin-babel': pluginBabelPath + '/plugin-babel.js',
-          'systemjs-babel-build': pluginBabelPath + '/systemjs-babel-browser.js'
+          'systemjs-babel-build': pluginBabelPath + (isBrowser ? '/systemjs-babel-browser.js' : "/systemjs-babel-node.js")
         },
         transpiler: 'plugin-babel',
         babelOptions: Object.assign({
@@ -111,6 +110,7 @@
       });
     }
   }
+
 
 
   function featureTest() {
@@ -195,17 +195,25 @@
 
   function findSystemJSPluginBabel_node() {
     if (global.systemjsPluginBabel) return global.systemjsPluginBabel;
-    try {
-      var parent = require.cache[require.resolve("lively.modules")];
-      pluginBabelPath = require("module").Module._resolveFilename("systemjs-plugin-babel", parent)
+    var attempts = [attempt1, attempt2, attempt3]
+    for (var i = 0; i < attempts.length; i++)
+      try { return attempts[i](); } catch (err) {};
+    return null;
+
+    function attempt1() {
+      var parent = require.cache[require.resolve("lively.modules")],
+          pluginBabelPath = require("module").Module._resolveFilename("systemjs-plugin-babel", parent)
       if (pluginBabelPath) return require('path').dirname(pluginBabelPath);
-    } catch (e) {}
-    try {
+    }
+
+    function attempt2() {
       var pluginBabelPath = require.resolve("systemjs-plugin-babel");
       if (pluginBabelPath) return require('path').dirname(pluginBabelPath);
-    } catch (e) {}
-
-    return null;
+    }
+    function attempt3() {
+      var pluginBabelPath = require.resolve(require("path").join(__dirname, "systemjs-babel-node.js"));
+      if (pluginBabelPath) return require('path').dirname(pluginBabelPath);
+    }
   }
 
 })();

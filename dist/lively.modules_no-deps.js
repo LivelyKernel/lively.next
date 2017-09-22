@@ -1,5 +1,5 @@
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.modules/systemjs-init.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -81,10 +81,9 @@
   }
 
   function setupPluginBabelTranspiler(features) {
-    var pluginBabelPath = System.get("@system-env").browser ?
-      findSystemJSPluginBabel_browser() : findSystemJSPluginBabel_node();
-
-    var babel = System.global.babel;
+    var isBrowser = !!System.get("@system-env").browser,
+        pluginBabelPath = isBrowser ? findSystemJSPluginBabel_browser() : findSystemJSPluginBabel_node(),
+        babel = System.global.babel;
 
     if (!pluginBabelPath && !babel) {
       console.error("[lively.modules] Could not find path to systemjs-plugin-babel nor a babel global! This will likely break lively.modules!");
@@ -101,7 +100,7 @@
       System.config({
         map: {
           'plugin-babel': pluginBabelPath + '/plugin-babel.js',
-          'systemjs-babel-build': pluginBabelPath + '/systemjs-babel-browser.js'
+          'systemjs-babel-build': pluginBabelPath + (isBrowser ? '/systemjs-babel-browser.js' : "/systemjs-babel-node.js")
         },
         transpiler: 'plugin-babel',
         babelOptions: Object.assign({
@@ -113,6 +112,7 @@
       });
     }
   }
+
 
 
   function featureTest() {
@@ -197,27 +197,35 @@
 
   function findSystemJSPluginBabel_node() {
     if (global.systemjsPluginBabel) return global.systemjsPluginBabel;
-    try {
-      var parent = require.cache[require.resolve("lively.modules")];
-      pluginBabelPath = require("module").Module._resolveFilename("systemjs-plugin-babel", parent)
+    var attempts = [attempt1, attempt2, attempt3]
+    for (var i = 0; i < attempts.length; i++)
+      try { return attempts[i](); } catch (err) {};
+    return null;
+
+    function attempt1() {
+      var parent = require.cache[require.resolve("lively.modules")],
+          pluginBabelPath = require("module").Module._resolveFilename("systemjs-plugin-babel", parent)
       if (pluginBabelPath) return require('path').dirname(pluginBabelPath);
-    } catch (e) {}
-    try {
+    }
+
+    function attempt2() {
       var pluginBabelPath = require.resolve("systemjs-plugin-babel");
       if (pluginBabelPath) return require('path').dirname(pluginBabelPath);
-    } catch (e) {}
-
-    return null;
+    }
+    function attempt3() {
+      var pluginBabelPath = require.resolve(require("path").join(__dirname, "systemjs-babel-node.js"));
+      if (pluginBabelPath) return require('path').dirname(pluginBabelPath);
+    }
   }
 
 })();
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.modules/systemjs-init.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /home/lively/lively-web.org/lively.next/lively.next-node_modules/semver/5.3.0/semver.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.modules/node_modules/semver/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -783,7 +791,7 @@ function patch(a, loose) {
 
 exports.compare = compare;
 function compare(a, b, loose) {
-  return new SemVer(a, loose).compare(b);
+  return new SemVer(a, loose).compare(new SemVer(b, loose));
 }
 
 exports.compareLoose = compareLoose;
@@ -924,11 +932,59 @@ Comparator.prototype.test = function(version) {
   return cmp(version, this.operator, this.semver, this.loose);
 };
 
+Comparator.prototype.intersects = function(comp, loose) {
+  if (!(comp instanceof Comparator)) {
+    throw new TypeError('a Comparator is required');
+  }
+
+  var rangeTmp;
+
+  if (this.operator === '') {
+    rangeTmp = new Range(comp.value, loose);
+    return satisfies(this.value, rangeTmp, loose);
+  } else if (comp.operator === '') {
+    rangeTmp = new Range(this.value, loose);
+    return satisfies(comp.semver, rangeTmp, loose);
+  }
+
+  var sameDirectionIncreasing =
+    (this.operator === '>=' || this.operator === '>') &&
+    (comp.operator === '>=' || comp.operator === '>');
+  var sameDirectionDecreasing =
+    (this.operator === '<=' || this.operator === '<') &&
+    (comp.operator === '<=' || comp.operator === '<');
+  var sameSemVer = this.semver.version === comp.semver.version;
+  var differentDirectionsInclusive =
+    (this.operator === '>=' || this.operator === '<=') &&
+    (comp.operator === '>=' || comp.operator === '<=');
+  var oppositeDirectionsLessThan =
+    cmp(this.semver, '<', comp.semver, loose) &&
+    ((this.operator === '>=' || this.operator === '>') &&
+    (comp.operator === '<=' || comp.operator === '<'));
+  var oppositeDirectionsGreaterThan =
+    cmp(this.semver, '>', comp.semver, loose) &&
+    ((this.operator === '<=' || this.operator === '<') &&
+    (comp.operator === '>=' || comp.operator === '>'));
+
+  return sameDirectionIncreasing || sameDirectionDecreasing ||
+    (sameSemVer && differentDirectionsInclusive) ||
+    oppositeDirectionsLessThan || oppositeDirectionsGreaterThan;
+};
+
 
 exports.Range = Range;
 function Range(range, loose) {
-  if ((range instanceof Range) && range.loose === loose)
-    return range;
+  if (range instanceof Range) {
+    if (range.loose === loose) {
+      return range;
+    } else {
+      return new Range(range.raw, loose);
+    }
+  }
+
+  if (range instanceof Comparator) {
+    return new Range(range.value, loose);
+  }
 
   if (!(this instanceof Range))
     return new Range(range, loose);
@@ -1001,6 +1057,22 @@ Range.prototype.parseRange = function(range) {
   });
 
   return set;
+};
+
+Range.prototype.intersects = function(range, loose) {
+  if (!(range instanceof Range)) {
+    throw new TypeError('a Range is required');
+  }
+
+  return this.set.some(function(thisComparators) {
+    return thisComparators.every(function(thisComparator) {
+      return range.set.some(function(rangeComparators) {
+        return rangeComparators.every(function(rangeComparator) {
+          return thisComparator.intersects(rangeComparator, loose);
+        });
+      });
+    });
+  });
 };
 
 // Mostly just for testing and legacy API reasons
@@ -1307,20 +1379,42 @@ function satisfies(version, range, loose) {
 
 exports.maxSatisfying = maxSatisfying;
 function maxSatisfying(versions, range, loose) {
-  return versions.filter(function(version) {
-    return satisfies(version, range, loose);
-  }).sort(function(a, b) {
-    return rcompare(a, b, loose);
-  })[0] || null;
+  var max = null;
+  var maxSV = null;
+  try {
+    var rangeObj = new Range(range, loose);
+  } catch (er) {
+    return null;
+  }
+  versions.forEach(function (v) {
+    if (rangeObj.test(v)) { // satisfies(v, range, loose)
+      if (!max || maxSV.compare(v) === -1) { // compare(max, v, true)
+        max = v;
+        maxSV = new SemVer(max, loose);
+      }
+    }
+  })
+  return max;
 }
 
 exports.minSatisfying = minSatisfying;
 function minSatisfying(versions, range, loose) {
-  return versions.filter(function(version) {
-    return satisfies(version, range, loose);
-  }).sort(function(a, b) {
-    return compare(a, b, loose);
-  })[0] || null;
+  var min = null;
+  var minSV = null;
+  try {
+    var rangeObj = new Range(range, loose);
+  } catch (er) {
+    return null;
+  }
+  versions.forEach(function (v) {
+    if (rangeObj.test(v)) { // satisfies(v, range, loose)
+      if (!min || minSV.compare(v) === 1) { // compare(min, v, true)
+        min = v;
+        minSV = new SemVer(min, loose);
+      }
+    }
+  })
+  return min;
 }
 
 exports.validRange = validRange;
@@ -1422,7 +1516,14 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.next-node_modules/semver/5.3.0/semver.js
+exports.intersects = intersects;
+function intersects(r1, r2, loose) {
+  r1 = new Range(r1, loose)
+  r2 = new Range(r2, loose)
+  return r1.intersects(r2)
+}
+
+// INLINED END /Users/robert/Lively/lively-dev3/lively.modules/node_modules/semver/semver.js
 semver = exports;
 })({}, {});
 
