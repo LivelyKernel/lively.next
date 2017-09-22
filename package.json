@@ -1,6 +1,6 @@
 {
   "name": "doc-comments",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "Extract comments from JavaScript source code and generate API documentation.",
   "main": "index.js",
   "keywords": [
@@ -19,8 +19,8 @@
   },
   "homepage": "https://github.com/rksm/doc-comments",
   "dependencies": {
-    "lively.ast": "^0.2.19",
-    "lively.lang": "^0.4.16"
+    "lively.ast": "^0.9.0",
+    "lively.lang": "^1.0.0"
   },
   "scripts": {
     "doc": "node -e 'require(process.cwd())({files: [\"index.js\"]})'"
