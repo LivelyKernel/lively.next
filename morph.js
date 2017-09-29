@@ -2093,10 +2093,61 @@ export class Morph {
 
     if (this.startSteppingScripts) {
       steppingItems.push(["Start stepping", function(){self.startSteppingScripts()}])
+    } else {
+      steppingItems.push(["Start stepping", async () => {
+        
+        let items = [];
+        let {completions} = await lively.vm.completions.getCompletions(() => this, "")
+        
+        for (let methodsPerProto of completions) {
+          let [protoName, methods] = methodsPerProto;
+          for (let method of methods) {
+            if (method.startsWith("_") || method.startsWith("$")) continue;
+            let [_, selector, args] = method.match(/^([^\(]+)\(?([^\)]+)?\)?$/) || []
+            if (!selector || typeof this[selector] !== "function") continue;
+            items.push({
+              isListItem: true,
+              string: `${protoName} ${method}`,
+              value: {selector, args}
+            })
+          }
+        }
+        
+        let {selected: [choice]} = await $world.filterableListPrompt("Select method to start", items, {
+          requester: this,
+          historyId: "lively.morphic-start-stepping-chooser",
+        });
+        if (!choice) return;
+        
+        let time = await $world.prompt("Steptime in ms (how of the method will be called)?", {input: 100})
+        time = Number(time)
+        if (isNaN(time)) return;
+        
+        let args = [time, choice.selector];
+        if (choice.args) {
+          let evalEnvironment = {targetModule: "lively://lively.morphic-stepping-args/eval.js"},
+              _args = await $world.editPrompt("Arguments to pass", {
+                input: `[${choice.args}]`,
+                mode: "js",
+                evalEnvironment
+              }),
+              {value: _argsEvaled, isError} = await lively.vm.runEval(_args, evalEnvironment);
+          if (isError) {
+            $world.inform(`Error evaluating the arguments: ${_argsEvaled}`);
+            return;
+          }
+          if (Array.isArray(_argsEvaled))
+            args.push(..._argsEvaled);
+        }
+        
+        this.startStepping(...args);
+      }]);
     }
+
     if (this.tickingScripts.length != 0) {
       steppingItems.push(["Stop stepping", () => self.stopStepping()])
     }
+
     if (steppingItems.length != 0) {
       items.push(["Stepping", steppingItems])
     }
