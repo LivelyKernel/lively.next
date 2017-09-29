@@ -125,7 +125,7 @@ export async function createMorphSnapshot(aMorph, options = {}) {
       let metadata = objects[id].props.metadata;
       if (metadata) {
         let externalPackages;
-        if (metadata.value.__ref__) {
+        if (metadata.value && metadata.value.__ref__) {
           let prop = objects[metadata.value.id];
           if (prop.props.externalPackages)
             externalPackages = prop.props.externalPackages.value;
