@@ -132,6 +132,35 @@ export class PackageRegistry {
     }
   }
 
+  updateFromJSON(jso) {
+    let {packageMap} = this;
+    for (let pName in jso.packageMap) {
+      let spec = jso.packageMap[pName];
+
+      if (!packageMap[pName]) packageMap[pName] = {};
+
+      if (packageMap[pName].latest) {
+        if (semver.gt(spec.latest, packageMap[pName].latest))
+          packageMap[pName].latest = spec.latest;
+      } else packageMap[pName].latest;
+
+      if (!packageMap[pName].versions) packageMap[pName].versions = {};
+
+      let {System} = this, base = resource(System.baseURL);
+      for (let version in spec.versions) {
+        let pkgSpec = spec.versions[version],
+            url = pkgSpec.url;
+        if (!isAbsolute(url)) url = base.join(url).url;
+        let pkg = new Package.fromJSON(System, {...pkgSpec, url});
+        packageMap[pName].versions[version] = pkg;
+      }
+    }
+
+    this.resetByURL();
+    ModulePackageMapping.forSystem(System).clearCache();
+    return this;
+  }
+
   whenReady() { return this._readyPromise || Promise.resolve(); }
 
   isReady() { return !this._readyPromise; }
