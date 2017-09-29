@@ -128,16 +128,18 @@ export class Selection {
   }
 
   get text() { return this.textMorph.document.textInRange(this.range); }
+  set text(val) { this.replace(val); }
+
+  replace(text, extendTextAttributes, invalidateTextLayout, undoGroup) {
+    let {range, textMorph} = this,
+        reversed = this.isReverse();
+    this.range = textMorph.replace(range, text, extendTextAttributes, invalidateTextLayout, undoGroup);
+    if (reversed) this.reverse();
+    return this.range;
+  }
 
   get selectedRows() {
     return {first: this.start.row, last: this.end.row}
-  }
-
-  set text(val) {
-    let {range, textMorph} = this,
-        reversed = this.isReverse();
-    this.range = textMorph.replace(range, val);
-    if (reversed) this.reverse();
   }
 
   reverse() { this._isReverse = !this.isEmpty() && !this._isReverse; return this; }
