@@ -642,16 +642,14 @@ export default class EventDispatcher {
     });
     events.forEach(evt => this.dispatchEvent(evt, morphMethod));
 
-    if (world && world.needsRerender()) {
-      let renderer = world.env.renderer;
-      if (eventsCausingImmediateRender.has(type)) renderer.renderStep();
-      else renderer.renderLater();
+    if (world && world.needsRerender() && eventsCausingImmediateRender.has(type)) {
+      world.env.renderer.renderLater();
     }
   }
 
   simulateDOMEvents(...eventSpecs) {
-    var doc = (this.emitter.document || this.emitter.ownerDocument);
-    var events = [];
+    var doc = (this.emitter.document || this.emitter.ownerDocument), events = [];
+
     for (let spec of eventSpecs) {
       let {target, position, type} = spec;
 
