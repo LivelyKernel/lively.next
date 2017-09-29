@@ -38,11 +38,11 @@ function generateUnfolded(propName, members=['top', 'left', 'right', 'bottom'], 
       derived: true,
       generated: true,
       after: [propName],
-      get() { return this.getProperty(propName)[m] },
-      set(v) { this[propName] = {...this.getProperty(propName), [m]: v} }
-    }
+      get() { return this.getProperty(propName)[m]; },
+      set(v) { this[propName] = {...this.getProperty(propName), [m]: v}; }
+    };
   }
-  return propertyDeclarations
+  return propertyDeclarations;
 }
 
 export class Morph {
@@ -52,7 +52,7 @@ export class Morph {
       defaultGetter(key) { return this.getProperty(key); },
       defaultSetter(key, value) { this.setProperty(key, value); },
       valueStoreProperty: "_morphicState"
-    }
+    };
   }
 
   static get properties() {
@@ -487,7 +487,7 @@ export class Morph {
         defaultValue: {top: 0, bottom: 0, left: 0, right: 0, valueOf: () => 0},
         get() {
           let v = this.getProperty('borderWidth');
-          return {...v, valueOf: () => v.left }
+          return {...v, valueOf: () => v.left };
         },
         set(value) {
           if (isNumber(value)) {
@@ -509,7 +509,7 @@ export class Morph {
         defaultValue: {top: 0, bottom: 0, right: 0, left: 0, valueOf: () => 0},
         get() {
           let v = this.getProperty('borderRadius');
-          return {...v, valueOf: () => v.left }
+          return {...v, valueOf: () => v.left };
         },
         set(value) {
           if (!value) value = 0;
