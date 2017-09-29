@@ -72,7 +72,8 @@ var config = {
         "sh": "shell",
         "markdown": "md",
         "javascript": "js",
-        "htmlmixed": "html"
+        "htmlmixed": "html",
+        "haskell": "hs"
       }
     }
   },
