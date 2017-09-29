@@ -2236,19 +2236,47 @@ export class Morph {
   }
 
   sourceDataBindings() {
-    let props = this.propertiesAndPropertySettings().properties,
-        groupedProps = arr.groupByKey(Object.keys(props).map(
-          name => ({name, ...props[name]})), "group"),
+    let allProps = this.propertiesAndPropertySettings().properties,
+        groupedProps = arr.groupByKey(
+          Object.keys(allProps).map(name => {
+            let props = {name, ...allProps[name]};
+            // group "_..." is private, don't show
+            if (props.group && props.group.startsWith("_")) return null;
+            return props;
+          }).filter(Boolean), "group"),
         customOrder = ["core", "geometry", "interaction", "styling", "layouting"],
         sortedGroupedProps = [];
 
     customOrder.forEach(ea => sortedGroupedProps.push(groupedProps[ea]));
+
     arr.withoutAll(groupedProps.keys(), customOrder).forEach(
       ea => sortedGroupedProps.push(groupedProps[ea]));
+
     return sortedGroupedProps;
   }
 
-  targetDataBindings() { return this.sourceDataBindings(); }
+  targetDataBindings() {
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // builds a ["proto name", [metthod, ...]] list
+    let methodsByProto = [];
+    for (let proto = this;
+         proto !== Object.prototype;
+         proto = Object.getPrototypeOf(proto)) {
+      let protoName = proto === this ? String(this) : proto.constructor.name,
+          group = null,
+          descrs = Object.getOwnPropertyDescriptors(proto);
+      for (let prop in descrs) {
+        if (typeof descrs[prop].value !== "function"
+         || descrs[prop].value === proto.constructor) continue;
+        if (!group) group = [protoName, []];
+        group[1].push(prop);
+        }
+      if (group) methodsByProto.push(group);
+    }
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    return this.sourceDataBindings();
+  }
 
   connectMenuItems(actionFn) {
     // returns menu of source attributes that can be used for connection from this object.
