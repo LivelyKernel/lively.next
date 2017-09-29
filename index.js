@@ -24,7 +24,7 @@ import { Text } from "./text/morph.js";
 import { Label } from "./text/label.js";
 import { Button } from "./components/buttons.js";
 import { CheckBox, LabeledCheckBox } from "./components/widgets.js";
-import { List } from "./components/list.js";
+import { List, DropDownList } from "./components/list.js";
 import { HTMLMorph } from './html-morph.js';
 import Window from "./components/window.js";
 import InputLine from "./text/input-line.js";
@@ -36,22 +36,23 @@ export function morph(props = {}, opts = {restore: false}) {
     if (typeof props.type === "function") klass = props.type;
     else if (typeof props.type === "string")
       switch (props.type.toLowerCase()) {
-        case 'world':    klass = World; break;
-        case 'hand':     klass = Hand; break;
-        case 'image':    klass = Image; break;
-        case 'ellipse':  klass = Ellipse; break;
-        case 'triangle': klass = Triangle; break;
-        case 'path':     klass = Path; break;
-        case 'text':     klass = Text; break;
-        case 'input':    klass = InputLine; break;
-        case 'label':    klass = Label; break;
-        case 'list':     klass = List; break;
-        case 'button':   klass = Button; break;
-        case 'checkbox': klass = CheckBox; break;
+        case 'world':           klass = World; break;
+        case 'hand':            klass = Hand; break;
+        case 'image':           klass = Image; break;
+        case 'ellipse':         klass = Ellipse; break;
+        case 'triangle':        klass = Triangle; break;
+        case 'path':            klass = Path; break;
+        case 'text':            klass = Text; break;
+        case 'input':           klass = InputLine; break;
+        case 'label':           klass = Label; break;
+        case 'list':            klass = List; break;
+        case 'dropdownlist':    klass = DropDownList; break;
+        case 'button':          klass = Button; break;
+        case 'checkbox':        klass = CheckBox; break;
         case 'labeledcheckbox': klass = LabeledCheckBox; break;
-        case 'polygon':  klass = Polygon; break;
-        case 'line':     klass = LineMorph; break;
-        case 'html':     klass = HTMLMorph; break;
+        case 'polygon':         klass = Polygon; break;
+        case 'line':            klass = LineMorph; break;
+        case 'html':            klass = HTMLMorph; break;
       }
   }
 
