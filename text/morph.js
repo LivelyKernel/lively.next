@@ -58,8 +58,20 @@ export class Text extends Morph {
   }
 
   static get properties() {
+
     return {
+
+      clipMode: {
+        isStyleProp: true,
+        defaultValue: "visible",
+        set(value) {
+          this.setProperty("clipMode", value);
+          this.fixedWidth = this.fixedHeight = this.isClip();
+        }
+      },
+
       fontMetric: {
+        group: "_rendering",
         serialize: false,
         get() {
           return this.getProperty("fontMetric") || this.env.fontMetric;
@@ -67,6 +79,7 @@ export class Text extends Morph {
       },
 
       undoManager: {
+        group: "core",
         before: ["document"],
         initialize() {
           this.ensureUndoManager();
@@ -74,6 +87,7 @@ export class Text extends Morph {
       },
 
       textRenderer: {
+        group: "_rendering",
         after: ["viewState"],
         initialize() {
           this.textRenderer = new Renderer(this.env.domEnv);
@@ -81,6 +95,7 @@ export class Text extends Morph {
       },
 
       debug: {
+        group: "_debugging",
         isStyleProp: true,
         after: ["textRenderer", "textLayout"],
         defaultValue: false,
@@ -88,6 +103,7 @@ export class Text extends Morph {
       },
 
       defaultViewState: {
+        group: "_rendering",
         derived: true,
         readOnly: true,
         get() {
@@ -112,18 +128,21 @@ export class Text extends Morph {
       },
 
       viewState: {
+        group: "_rendering",
         initialize() {
           this.viewState = this.defaultViewState;
         }
       },
 
       embeddedMorphMap: {
+        group: "_rendering",
         initialize() {
           this.embeddedMorphMap = new Map();
         }
       },
 
       embeddedMorphs: {
+        group: "text",
         derived: true,
         readOnly: true,
         after: ["embeddedMorphMap"],
@@ -133,6 +152,7 @@ export class Text extends Morph {
       },
 
       textLayout: {
+        group: "_rendering",
         after: ["textRenderer"],
         initialize() {
           this.textLayout = new TextLayout(this);
@@ -140,6 +160,7 @@ export class Text extends Morph {
       },
 
       document: {
+        group: "text",
         initialize() {
           this.document = Document.fromString("", {
             maxLeafSize: 50,
@@ -154,14 +175,17 @@ export class Text extends Morph {
       draggable: {defaultValue: false},
 
       useSoftTabs: {
+        group: "text",
         isStyleProp: true,
         defaultValue: config.text.useSoftTabs !== undefined ? config.text.useSoftTabs : true
       },
       tabWidth: {
+        group: "text",
         isStyleProp: true,
         defaultValue: config.text.tabWidth || 2
       },
       tab: {
+        group: "text",
         isStyleProp: true,
         after: ["useSoftTabs", "tabWidth"],
         readOnly: true,
@@ -170,28 +194,22 @@ export class Text extends Morph {
         }
       },
 
-      clipMode: {
-        isStyleProp: true,
-        defaultValue: "visible",
-        set(value) {
-          this.setProperty("clipMode", value);
-          this.fixedWidth = this.fixedHeight = this.isClip();
-        }
-      },
-
       fixedWidth: {
+        group: "text",
         isStyleProp: true,
         after: ["clipMode", "viewState"],
         defaultValue: false
       },
 
       fixedHeight: {
+        group: "text",
         isStyleProp: true,
         after: ["clipMode", "viewState"],
         defaultValue: false
       },
 
       readOnly: {
+        group: "text",
         isStyleProp: true,
         defaultValue: false,
         set(value) {
@@ -201,6 +219,7 @@ export class Text extends Morph {
       },
 
       selectable: {
+        group: "selection",
         isStyleProp: true,
         after: ["selection"],
         defaultValue: true,
@@ -211,6 +230,7 @@ export class Text extends Morph {
       },
 
       padding: {
+        group: "styling",
         type: "Rectangle",
         isStyleProp: true,
         after: ["textLayout", "viewState"],
@@ -231,6 +251,7 @@ export class Text extends Morph {
       },
 
       highlightWhenFocused: {
+        group: "styling",
         defaultValue: false, after: ["haloShadow"],
         set(val) {
           this.setProperty("highlightWhenFocused", val);
@@ -249,6 +270,7 @@ export class Text extends Morph {
       // selection
 
       cursorPosition: {
+        group: "selection",
         derived: true,
         after: ["selection"],
         get() {
@@ -260,6 +282,7 @@ export class Text extends Morph {
       },
 
       selection: {
+        group: "selection",
         derived: true,
         after: ["document", "anchors"],
         get() {
@@ -281,6 +304,7 @@ export class Text extends Morph {
       },
 
       selections: {
+        group: "selection",
         derived: true,
         after: ["selection"],
         get() {
@@ -298,6 +322,7 @@ export class Text extends Morph {
       // content
 
       textString: {
+        group: "text",
         after: ["document"],
         derived: true,
         get() {
@@ -311,6 +336,7 @@ export class Text extends Morph {
       },
 
       value: {
+        group: "text",
         after: ["document"],
         derived: true,
         get() {
@@ -332,6 +358,7 @@ export class Text extends Morph {
       // default font styling
 
       textAndAttributes: {
+        group: "text",
         derived: true,
         after: ["document"],
         get() {
@@ -346,6 +373,7 @@ export class Text extends Morph {
       },
 
       defaultTextStyleProps: {
+        group: "_internal",
         readOnly: true,
         derived: true,
         get() {
@@ -354,6 +382,7 @@ export class Text extends Morph {
       },
 
       defaultTextStyle: {
+        group: "styling",
         after: ["viewState"],
         derived: true,
         get() {
@@ -365,6 +394,7 @@ export class Text extends Morph {
       },
 
       customizedTextStyle: {
+        group: "styling",
         readOnly: true,
         derived: true,
         get() {
@@ -382,6 +412,7 @@ export class Text extends Morph {
       nativeCursor: {defaultValue: "", isDefaultTextStyleProp: true},
 
       fontFamily: {
+        group: "text styling",
         type: "Enum",
         values: RichTextControl.basicFontItems().map(f => f.value),
         defaultValue: "Sans-Serif",
@@ -391,6 +422,7 @@ export class Text extends Morph {
       },
 
       fontSize: {
+        group: "text styling",
         type: "Number",
         min: 1,
         unit: "pt",
@@ -401,12 +433,14 @@ export class Text extends Morph {
       },
 
       selectionColor: {
+        group: "text styling",
         type: "Color",
         isStyleProp: true,
         after: ["defaultTextStyle"]
       },
 
       fontColor: {
+        group: "text styling",
         type: "Color",
         defaultValue: Color.black,
         isStyleProp: true,
@@ -415,6 +449,7 @@ export class Text extends Morph {
       },
 
       fontWeight: {
+        group: "text styling",
         type: "Enum",
         values: ["bold", "bolder", "light", "lighter"],
         defaultValue: "normal",
@@ -424,6 +459,7 @@ export class Text extends Morph {
       },
 
       fontStyle: {
+        group: "text styling",
         type: "Enum",
         values: ["normal", "italic", "oblique"],
         defaultValue: "normal",
@@ -433,6 +469,7 @@ export class Text extends Morph {
       },
 
       textDecoration: {
+        group: "text styling",
         type: "Enum",
         values: ['none', 'underline'],
         defaultValue: "none",
@@ -441,17 +478,20 @@ export class Text extends Morph {
         after: ["defaultTextStyle"]
       },
       textStyleClasses: {
+        group: "text styling",
         isStyleProp: true,
         isDefaultTextStyleProp: true,
         after: ["defaultTextStyle"]
       },
       backgroundColor: {
+        group: "text styling",
         type: "Color",
         isStyleProp: true,
         isDefaultTextStyleProp: true,
         after: ["defaultTextStyle"]
       },
       textAlign: {
+        group: "text styling",
         type: "Enum",
         values: ["center", "justify", "left", "right"],
         isStyleProp: true,
@@ -459,16 +499,19 @@ export class Text extends Morph {
         after: ["document", "defaultTextStyle", "viewState"]
       },
       lineHeight: {
+        group: "text styling",
         isStyleProp: true,
         isDefaultTextStyleProp: true,
         after: ["document", "defaultTextStyle", "viewState"]
       },
       letterSpacing: {
+        group: "text styling",
         isStyleProp: true,
         isDefaultTextStyleProp: true,
         after: ["document", "defaultTextStyle", "viewState"]
       },
       wordSpacing: {
+        group: "text styling",
         isStyleProp: true,
         isDefaultTextStyleProp: true,
         after: ["document", "defaultTextStyle", "viewState"]
@@ -482,6 +525,7 @@ export class Text extends Morph {
         // only-by-words: break lines at word boundaries. If not possible, line will be
         // wider than text
         // by-chars: Break line whenever character sequence reaches text width
+        group: "text",
         type: 'Enum',
         values: [false, true, 'by-words', 'anywhere', 'only-by-words', 'wider', 'by-chars'],
         isStyleProp: true,
@@ -492,6 +536,7 @@ export class Text extends Morph {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // anchors – positions in text that move when text is changed
       anchors: {
+        group: "core",
         defaultValue: [],
         set(anchors) {
           let newAnchors = arr.withoutAll(anchors, this.anchors),
@@ -504,12 +549,14 @@ export class Text extends Morph {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // markers
       markers: {
+        group: "core",
         defaultValue: []
       },
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // marks
       savedMarks: {
+        group: "core",
         defaultValue: [],
         after: ["anchors"],
         set(val) {
@@ -527,6 +574,7 @@ export class Text extends Morph {
       },
 
       activeMarkPosition: {
+        group: "_internal",
         after: ["activeMark"],
         derived: true,
         get() {
@@ -536,6 +584,7 @@ export class Text extends Morph {
       },
 
       activeMark: {
+        group: "core",
         after: ["anchors"],
         set(val) {
           if (val)
@@ -553,6 +602,7 @@ export class Text extends Morph {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // plugins
       plugins: {
+        group: "plugins",
         defaultValue: [],
         after: ["value"],
         set(plugins) {
@@ -564,6 +614,7 @@ export class Text extends Morph {
       },
 
       editorModeName: {
+        group: "plugins",
         derived: true, after: ["plugins"],
         get() {
           let p = this.editorPlugin;
@@ -1137,7 +1188,8 @@ export class Text extends Morph {
     textOrtextAndAttributes,
     extendTextAttributes = true,
     invalidateTextLayout = true,
-    undoGroup = true
+    undoGroup = true,
+    consistencyCheck = true
   ) {
     range = range.isRange ? range : new Range(range);
 
@@ -1175,8 +1227,7 @@ export class Text extends Morph {
         {inserted: insertedRange} = this.document.replace(
           range,
           textAndAttributes,
-          this.debug && this.debugHelper(this.debug)
-        );
+          this.debug && this.debugHelper(this.debug));
 
     this.addMethodCallChangeDoing(
       {
@@ -1191,7 +1242,7 @@ export class Text extends Morph {
       },
       () => {
         if (invalidateTextLayout) {
-          this.invalidateTextLayout(false, false,);
+          this.invalidateTextLayout(false, false);
           this.textLayout.resetLineCharBoundsCacheOfRange(this, insertedRange);
         }
         if (!eqPosition(range.end, insertedRange.end)) {
@@ -1212,12 +1263,11 @@ export class Text extends Morph {
           morphsInAddedText,
           insertedRange,
           textAndAttributes,
-          removedTextAndAttributes
-        );
+          removedTextAndAttributes);
 
-        this.consistencyCheck();
-      }
-    );
+        if (consistencyCheck)
+          this.consistencyCheck();
+      });
 
     undoGroup && this.undoManager.undoStop();
 
@@ -2912,7 +2962,6 @@ export class Text extends Morph {
   consistencyCheck() {
     // don't fix in debug mode
     if (this.debug) return this.document.consistencyCheck();
-
     try {
       return this.document.consistencyCheck();
     } catch (err) {
@@ -2933,4 +2982,5 @@ export class Text extends Morph {
       world ? world.logError(err) : console.error(err);
     }
   }
+
 }
