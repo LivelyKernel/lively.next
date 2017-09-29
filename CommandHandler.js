@@ -9,7 +9,7 @@ export default class CommandHandler {
 
   constructor() {
     this.history = [];
-    this.maxHistorySize = 300;
+    this.maxHistorySize = 1000;
   }
 
   addToHistory(cmdName) {
@@ -18,10 +18,11 @@ export default class CommandHandler {
       this.history.splice(0, this.history.length - this.maxHistorySize);
   }
 
-  printHistory() {
-    return this.history.map(({name, target: {string: targetName}, args, count}) =>
-      `${name} ${args ? printArg(args) : ""}${typeof count === "number" ? ` x${count}` : ""} ${targetName}`)
-        .join("\n");
+  printHistory() { return this.history.map(this.printCommand).join("\n"); }
+
+  printCommand(cmd) {
+    let {name, target: {string: targetName}, args, count, evt, keyCombo} = cmd;
+    return `"${name}" ${evt ? evt + " " : ""}${keyCombo ? keyCombo + " " : ""}${args ? printArg(args) : ""}${typeof count === "number" ? ` x${count}` : ""} ${targetName}`;
   }
 
   lookupCommand(commandOrName, morph) {
@@ -54,7 +55,17 @@ export default class CommandHandler {
       return null;
     }
 
-    name && this.addToHistory({name, target: {string: String(morph), id: morph.id}, args, count, time: Date.now()});
+    if (name) {
+      let evtType, keyCombo;
+      if (evt) {
+        evtType = evt.type;
+        if (evt.isKeyEvent) keyCombo = evt.keyCombo;
+      }
+      this.addToHistory({
+        name, target: {string: String(morph), id: morph.id},
+        args, count, time: Date.now(), evt: evtType, keyCombo
+      });
+    }
 
     var world = morph.world(), progressIndicator, result;
 
@@ -62,13 +73,13 @@ export default class CommandHandler {
       progressIndicator = LoadingIndicator.open(command.progressIndicator);
 
     if (typeof command.exec === "function") {
-        try {
-          result = command.exec(morph, args, command.handlesCount ? count : undefined, evt)
-        } catch(err) {
-          result = err;
-          var msg = `Error in interactive command ${name}: ${err.stack || err}`;
-          world ? world.logError(msg) : console.error(msg);
-        }
+      try {
+        result = command.exec(morph, args, command.handlesCount ? count : undefined, evt)
+      } catch(err) {
+        result = err;
+        var msg = `Error in interactive command ${name}: ${err.stack || err}`;
+        world ? world.logError(msg) : console.error(msg);
+      }
     } else {
       console.error(`command ${name} has no exec function!`);
     }
