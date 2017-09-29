@@ -140,6 +140,7 @@ export default class MorphicDB {
 
   async commit(type, name, snapshot, commitSpec, ref, expectedParentCommit) {
     let firstArg = type;
+    // commit with previous commit as first argument
     if (arguments.length === 1 && firstArg.type && firstArg.name) {
       type = firstArg.type;
       name = firstArg.name;
@@ -147,7 +148,7 @@ export default class MorphicDB {
       commitSpec = obj.dissoc(firstArg, ["snapshot", "_rev", "_id", "ancestors", "deleted"]);
       expectedParentCommit = firstArg._id;
     }
-      
+
     await this.initializeIfNecessary();
     let {name: db} = this;
     return this.httpDB.commit({
@@ -206,6 +207,10 @@ export default class MorphicDB {
     });
   }
 
+  async softDelete(typeOrPrevCommit, name, commitSpec, ref, expectedParentCommit) {
+    return this.commit(typeOrPrevCommit, name, undefined, commitSpec, ref, expectedParentCommit);
+  }
+  
   async delete(type, name, dryRun = true) {
     await this.initializeIfNecessary();
     let {name: db} = this;
