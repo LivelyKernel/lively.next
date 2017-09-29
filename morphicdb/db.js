@@ -41,6 +41,26 @@ export default class MorphicDB {
     return db;
   }
 
+  static async wellKnownMorphicDBs() {
+    let db = Database.ensureDB("lively.morphic/morphicdb/well-known-morphic-dbs"),
+        dbSpecs = await db.getAll(),
+        dbs = dbSpecs.reduce((all, {_id, name, serverURL, snapshotLocation}) =>
+          Object.assign(all, {[_id]: this.named(name, {serverURL, snapshotLocation})}), {});
+    if (!dbs.default) dbs.default = this.default;
+    return dbs;
+  }
+
+  static async addWellKnownMorphicDB(alias, morphicDB) {
+    let {name, snapshotLocation, serverURL} = morphicDB,
+        db = Database.ensureDB("lively.morphic/morphicdb/well-known-morphic-dbs");
+    await db.set(alias, {name, snapshotLocation, serverURL});
+  }
+
+  static async removeWellKnownMorphicDB(alias) {
+    let db = Database.ensureDB("lively.morphic/morphicdb/well-known-morphic-dbs");
+    await db.remove(alias);
+  }
+
   constructor(name, {snapshotLocation, serverURL}) {
     this.name = name;
     this.serverURL = serverURL;

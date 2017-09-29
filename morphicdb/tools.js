@@ -17,9 +17,13 @@ export class MorphicDBPrompt extends AbstractPrompt {
   }
 
   build(props = {}) {
-    let {serverURL, snapshotLocation, dbName, extent, historyId} = props;
+    let {serverURL, snapshotLocation, dbName, extent, historyId, alias} = props;
 
     this.submorphs = [
+      {
+        name: "alias label", type: "label", value: "alias",
+        fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray
+      },
       {
         name: "dbname label", type: "label", value: "db name",
         fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray
@@ -33,6 +37,11 @@ export class MorphicDBPrompt extends AbstractPrompt {
         fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray
       },
   
+      {
+        name: "alias input", type: "input",
+        historyId: historyId ? historyId + "-alias": null,
+        padding: Rectangle.inset(3), fontSize: 11
+      },
       {
         name: "dbname input", type: "input",
         historyId: historyId ? historyId + "-dbname": null,
@@ -58,11 +67,14 @@ export class MorphicDBPrompt extends AbstractPrompt {
         name: "cancel button", type: "button",
         label: "Cancel"
       }
-    ]
+    ];
+
     let [
+      aliasLabel,
       dbnameLabel,
       snapshotLocationLabel,
       serverUrlLabel,
+      aliasInput,
       dbnameInput,
       snapshotLocationInput,
       serverUrlInput,
@@ -70,6 +82,7 @@ export class MorphicDBPrompt extends AbstractPrompt {
       cancelButton,
     ] = this.submorphs;
 
+    if (alias) aliasInput.input = alias;
     if (dbName) dbnameInput.input = dbName;
     if (snapshotLocation) snapshotLocationInput.input = snapshotLocation;
     if (serverURL) serverUrlInput.input = serverURL;
@@ -77,11 +90,12 @@ export class MorphicDBPrompt extends AbstractPrompt {
     connect(okButton, 'fire', this, 'resolve');
     connect(cancelButton, 'fire', this, 'reject');
     this.extent = pt(600,128);
-    this.initLayout();
+    this.initLayout(!!alias);
     if (extent) this.extent = extent;
   }
 
   resolve() {
+    let aliasInput = this.get("alias input");
     let dbnameInput = this.get("dbname input");
     let snapshotLocationInput = this.get("snapshot location input");
     let serverUrlInput = this.get("server url input");
@@ -89,6 +103,7 @@ export class MorphicDBPrompt extends AbstractPrompt {
     snapshotLocationInput.acceptInput();
     dbnameInput.acceptInput();
     super.resolve({
+      alias: aliasInput.input,
       dbName: dbnameInput.input,
       snapshotLocation: snapshotLocationInput.input,
       serverURL: serverUrlInput.input,
@@ -97,25 +112,33 @@ export class MorphicDBPrompt extends AbstractPrompt {
   }
   reject() { super.resolve({status: "rejected"}); }
 
-  initLayout() {
+  initLayout(showAlias = false) {
     let bounds = this.innerBounds(),
         relBounds = [
-          rect(0.0171875,0.0546875,0.1512109375,0.171875),
-          rect(0.0171875,0.25,0.22075520833333334,0.171875),
-          rect(0.0171875,0.44921875,0.1608984375,0.171875),
-          rect(0.2337760416666667,0.0546875,0.7558333333333334,0.15625),
-          rect(0.2337760416666667,0.265625,0.7558333333333334,0.15625),
-          rect(0.2337760416666667,0.47265625,0.7558333333333334,0.15625),
-          rect(0.23,0.78125,0.25,0.15625),
-          rect(0.5175,0.78125,0.25,0.15625)
+          rect(0.02,0.05,0.15,0.19),
+          rect(0.02,0.23,0.22,0.19),
+          rect(0.02,0.42,0.16,0.19),
+          rect(0.02,0.60,0.16,0.19),
+          rect(0.23,0.05,0.76,0.15),
+          rect(0.23,0.23,0.76,0.15),
+          rect(0.23,0.42,0.76,0.15),
+          rect(0.23,0.60,0.76,0.15),
+          rect(0.31,0.79,0.18,0.17),
+          rect(0.51,0.80,0.18,0.16)
         ],
         realBounds = bounds.divide(relBounds);
+    if (!showAlias) {
+      relBounds.splice(3, 1);
+      relBounds.splice(7, 1);
+    }
     this.submorphs.map((ea, i) => ea.setBounds(realBounds[i]));
     this.layout = new ProportionalLayout({
       submorphSettings: [
+        ["alias label", "fixed"],
         ["server url label", "fixed"],
         ["snapshot location label", "fixed"],
         ["dbname label", "fixed"],
+        ["alias input", {x: "resize", y: "fixed"}],
         ["server url input", {x: "resize", y: "fixed"}],
         ["snapshot location input", {x: "resize", y: "fixed"}],
         ["dbname input", {x: "resize", y: "fixed"}],
