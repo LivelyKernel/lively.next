@@ -82,7 +82,7 @@ export var jsEditorCommands = [
       try {
         opts = {...opts, logDoit: true, inspect: true, inspectDepth: count};
         result = await doEval(morph, undefined, opts);
-        err = result.isError ? result.value : null;
+        err = result.error ? result.error : result.isError ? result.value : null;
       } catch (e) { err = e; }
       err ?
         morph.showError(err) :
@@ -100,7 +100,7 @@ export var jsEditorCommands = [
       var result, err;
       try {
         result = await doEval(morph, {start: {row: 0, column: 0}, end: morph.documentEndPosition}, {...opts, logDoit: true});
-        err = result.isError ? result.value : null;
+        err = result.error ? result.error : result.isError ? result.value : null;
       } catch (e) { err = e; }
       err ?
         morph.showError(err) :
@@ -119,7 +119,7 @@ export var jsEditorCommands = [
       try {
         opts = {...opts, asString: true, logDoit: true};
         result = await doEval(morph, undefined, opts);
-        err = result.isError ? result.value : null;
+        err = result.error ? result.error : result.isError ? result.value : null;
       } catch (e) { err = e; }
       morph.selection.collapseToEnd();
       // morph.insertTextAndSelect(err ? err.stack || String(err) : String(result.value));
@@ -138,7 +138,7 @@ export var jsEditorCommands = [
       var result, err;
       try {
         result = await doEval(morph, undefined, opts);
-        err = result.isError ? result.value : null;
+        err = result.error ? result.error : result.isError ? result.value : null;
       } catch (e) { err = e; }
       Inspector.openInWindow({targetObject: err ? err : result.value});
       return result;
@@ -155,7 +155,7 @@ export var jsEditorCommands = [
       try {
         opts = {...opts, inspect: true, inspectDepth: count, logDoit: true};
         result = await doEval(morph, undefined, opts);
-        err = result.isError ? result.value : null;
+        err = result.error ? result.error : result.isError ? result.value : null;
       } catch (e) { err = e; }
       morph.selection.collapseToEnd();
       morph.insertTextAndSelect(result.value);
@@ -186,7 +186,7 @@ export var jsEditorCommands = [
 
       try {
         result = await doEval(ed, null, env, source);
-        err = result.isError ? result.value : null;
+        err = result.error ? result.error : result.isError ? result.value : null;
       } catch (e) { err = e; }
 
       err ?
