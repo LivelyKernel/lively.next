@@ -1,3 +1,4 @@
+/*global System*/
 import { arr, string } from "lively.lang";
 
 const classMetaForSerializationProp = "lively.serializer-class-info",
@@ -5,8 +6,8 @@ const classMetaForSerializationProp = "lively.serializer-class-info",
 
 export default class ClassHelper {
 
-  static get moduleMetaInClassProp() { return moduleMetaInClassProp }
-  static get classMetaForSerializationProp() { return classMetaForSerializationProp }
+  static get moduleMetaInClassProp() { return moduleMetaInClassProp; }
+  static get classMetaForSerializationProp() { return classMetaForSerializationProp; }
 
   get classNameProperty() { return '__LivelyClassName__'; }
   get sourceModuleNameProperty() { return '__SourceModuleName__'; }
@@ -33,6 +34,11 @@ export default class ClassHelper {
 
     var moduleMeta = realObj.constructor[moduleMetaInClassProp];
     if (className === "Object" && !moduleMeta) return;
+    // Errrr FIXME
+    if (moduleMeta) {
+      delete moduleMeta.lastChange;
+      delete moduleMeta.lastSuperclassChange;
+    }
     snapshot[classMetaForSerializationProp] = {className, module: moduleMeta};
   }
 
