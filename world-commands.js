@@ -74,6 +74,22 @@ var commands = [
       return cmd ? cmd.target.execCommand(cmd.command, args, count) : true;
     }
   },
+  
+  {
+    name: "show command history",
+    exec: (world, args) => {
+      let handler = world.commandHandler,
+          items = arr.sortBy(handler.history, ea => -ea.time).map(cmd => {
+            return {
+              isListItem: true,
+              string: handler.printCommand(cmd),
+              value: cmd
+            }
+          });
+      $world.editListPrompt("select commands", items, {multiSelect: true});
+      return true;
+    }
+  },
 
   {
     name: "show halo for focused morph",
