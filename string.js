@@ -1045,6 +1045,47 @@ var times = features.repeat ?
     return count < 1 ? '' : new Array(count + 1).join(s);
   };
 
+function longestCommonSubstring(a, b) {
+  // Example:
+  // longestCommonSubstring("bar foo barrr", "hello fooo world");
+  // => {indexA: 3, indexB: 5, length: 4, string: " foo"}
+
+  let lcs = [];
+  for (let i = 0; i < a.length; i++) {
+    lcs[i] = [];
+    for (let j = 0; j < b.length; j++)
+      lcs[i][j] = 0;
+  }
+
+  // if B is null then LCS of A, B =0
+  for (let i = 0; i < a.length; i++) lcs[i][0] = 0;
+
+  // fill the rest of the matrix
+  for (let i=1; i < a.length; i++){
+    for (let j = 1; j < b.length; j++){
+      lcs[i][j] = a[i - 1] == b[j - 1] ?
+        lcs[i - 1][j - 1] + 1 : 0;
+    }
+  }
+
+  let maxLength = -1, indexA = -1, indexB = -1;
+  for (let i = 0; i < a.length; i++) {
+    for (let j = 0; j < b.length; j++) {
+      let length = lcs[i][j];
+      if (maxLength < length) {
+        maxLength = length;
+        indexA = i-length;
+        indexB = j-length;
+      }
+    }
+  }
+
+  return {
+    length: maxLength, indexA, indexB,
+    string: maxLength > 0 ? a.slice(indexA, indexA + maxLength) : ""
+  }
+}
+
 function applyChange(string, change) {
   // change is of the form
   // `{start: Number, end: Number, lines: [String], action: "insert"|"remove"}`
@@ -1161,7 +1202,8 @@ export {
   succ,
   digitValue,
   times,
+  longestCommonSubstring,
   applyChange,
   applyChanges,
-  levenshtein,
+  levenshtein
 }

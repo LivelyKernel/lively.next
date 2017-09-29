@@ -4605,6 +4605,49 @@ var times = features.repeat ? function (s, count$$1) {
   return count$$1 < 1 ? '' : new Array(count$$1 + 1).join(s);
 };
 
+function longestCommonSubstring(a, b) {
+  // Example:
+  // longestCommonSubstring("bar foo barrr", "hello fooo world");
+  // => {indexA: 3, indexB: 5, length: 4, string: " foo"}
+
+  var lcs = [];
+  for (var i = 0; i < a.length; i++) {
+    lcs[i] = [];
+    for (var j = 0; j < b.length; j++) {
+      lcs[i][j] = 0;
+    }
+  }
+
+  // if B is null then LCS of A, B =0
+  for (var _i = 0; _i < a.length; _i++) {
+    lcs[_i][0] = 0;
+  } // fill the rest of the matrix
+  for (var _i2 = 1; _i2 < a.length; _i2++) {
+    for (var _j = 1; _j < b.length; _j++) {
+      lcs[_i2][_j] = a[_i2 - 1] == b[_j - 1] ? lcs[_i2 - 1][_j - 1] + 1 : 0;
+    }
+  }
+
+  var maxLength = -1,
+      indexA = -1,
+      indexB = -1;
+  for (var _i3 = 0; _i3 < a.length; _i3++) {
+    for (var _j2 = 0; _j2 < b.length; _j2++) {
+      var length = lcs[_i3][_j2];
+      if (maxLength < length) {
+        maxLength = length;
+        indexA = _i3 - length;
+        indexB = _j2 - length;
+      }
+    }
+  }
+
+  return {
+    length: maxLength, indexA: indexA, indexB: indexB,
+    string: maxLength > 0 ? a.slice(indexA, indexA + maxLength) : ""
+  };
+}
+
 function applyChange(string, change) {
   // change is of the form
   // `{start: Number, end: Number, lines: [String], action: "insert"|"remove"}`
@@ -4715,6 +4758,7 @@ var string = Object.freeze({
 	succ: succ,
 	digitValue: digitValue,
 	times: times,
+	longestCommonSubstring: longestCommonSubstring,
 	applyChange: applyChange,
 	applyChanges: applyChanges,
 	levenshtein: levenshtein
