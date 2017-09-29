@@ -136,7 +136,10 @@ export class Event {
   }
 
   rightMouseButtonPressed() {
-    return this.domEvt ? (this.domEvt.buttons || 0) & 2 : false;
+    // return this.domEvt ? (this.domEvt.buttons || 0) & 2 : false;
+    return bowser.firefox ?
+      (this.domEvt.which === 3 || this.domEvt.buttons === 2) :
+      this.domEvt.which === 3 || this.domEvt.buttons === 2
   }
 
   middleMouseButtonPressed() {
@@ -172,6 +175,7 @@ export class KeyEvent extends Event {
     Object.assign(this, Keys.canonicalizeEvent(domEvt));
   }
 
+  get isKeyEvent() { return true; }
 }
 
 export class SimulatedDOMEvent {
