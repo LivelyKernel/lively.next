@@ -992,23 +992,28 @@ var commands = [
   {
     name: "insertstring",
     exec: function(morph, args = {string: null, undoGroup: false}) {
+      var {string, undoGroup} = args, isValid = typeof string === "string" && string.length;
+      if (!isValid)
+        console.warn(`command insertstring called with not string value`);
+      if (morph.rejectsInput() || !isValid)
+        return false;
       morph.saveActiveMarkAndDeactivate();
-      var {string, undoGroup} = args,
-          isValid = typeof string === "string" && string.length;
-      if (!isValid) console.warn(`command insertstring called with not string value`);
-      if (morph.rejectsInput() || !isValid) return false;
-
-      if (
-        morph.editorPlugin &&
-        typeof morph.editorPlugin.cmd_insertstring === "function" &&
-        morph.editorPlugin.cmd_insertstring(string)
-      ) return true;
-
+      if (morph.editorPlugin && typeof morph.editorPlugin.cmd_insertstring === "function" && morph.editorPlugin.cmd_insertstring(string))
+        return true;
       let sel = morph.selection, isDelete = !sel.isEmpty();
-      if (isDelete) morph.undoManager.group();
-      sel.text = string;
+      if (isDelete)
+        morph.undoManager.group();
+
+      // rk 2017-09-23 This is a test to make simple text input "snappier"...
+      let pos = sel.lead,
+          quickInsert = string.length === 1 && string !== "\n" && pos.column > 0,
+          consistencyCheck = !quickInsert;
+      // .... test end!
+
+      sel.replace(string, true, true, true, consistencyCheck);
       sel.collapseToEnd();
-      if (isDelete) morph.undoManager.group();
+      if (isDelete)
+        morph.undoManager.group();
       if (undoGroup) {
         if (!/^[\s\.,\?\+=]+$/.test(string) && typeof undoGroup === "number")
           morph.undoManager.groupLater(undoGroup);
