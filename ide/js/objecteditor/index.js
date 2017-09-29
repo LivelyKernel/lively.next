@@ -394,7 +394,7 @@ export class ObjectEditor extends Morph {
     return [
       {name: "objectCommands",
        fill: Color.transparent, reactsToPointer: false,
-       layout: new HorizontalLayout({direction: "centered", spacing: 2}),
+       layout: new HorizontalLayout({direction: "centered", spacing: 2, autoResize: false}),
        submorphs: [
          {...topBtnStyle, name: "inspectObjectButton", fontSize: 14, label: Icon.textAttribute("gears"), tooltip: "open object inspector"},
          {...topBtnStyle, name: "publishButton", fontSize: 14, label: Icon.textAttribute("cloud-upload"), tooltip: "publish object to PartsBin"},
@@ -407,7 +407,7 @@ export class ObjectEditor extends Morph {
 
       {name: "classAndMethodControls",
        width: 100,
-       layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
+       layout: new HorizontalLayout({direction: "centered", spacing: 2, autoResize: false}), submorphs: [
          {...btnStyle, name: "addButton", label: Icon.textAttribute("plus"), tooltip: "add a new method"},
          {...btnStyle, name: "removeButton", label: Icon.textAttribute("minus"), tooltip: "remove a method or class"},
          {...btnStyle, name: "forkPackageButton", label: Icon.textAttribute("code-fork"), tooltip: "fork package"},
