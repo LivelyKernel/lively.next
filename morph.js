@@ -2038,7 +2038,8 @@ export class Morph {
   }
 
   openMenu(items, optEvt) {
-    return items && items.length ? this.world().openWorldMenu(optEvt, items) : null;
+    let world = this.world();
+    return items && items.length && world ? world.openWorldMenu(optEvt, items) : null;
   }
 
   menuItems() {
