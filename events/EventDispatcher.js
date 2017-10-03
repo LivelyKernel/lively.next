@@ -311,7 +311,7 @@ export default class EventDispatcher {
         eventTargets = [targetMorph].concat(targetMorph.ownerChain()),
         touch        = domEvt.pointerType === 'touch',
         pointerId    = domEvt.pointerId,
-        hand         = pointerId ? this.world.handForPointerId(pointerId) : this.world.firstHand,
+        hand         = typeof pointerId === "number" ? this.world.handForPointerId(pointerId) : this.world.firstHand,
         halo         = pointerId && !touch ? this.world.haloForPointerId(pointerId) : null,
         layoutHalo   = pointerId && !touch ? this.world.layoutHaloForPointerId(pointerId) : null,
         klass        = keyLikeEvents.includes(type) ? KeyEvent : Event,
