@@ -93,6 +93,9 @@ export async function loadWorld(newWorld, oldWorld, options = {}) {
 
     newWorld.showsUserFlap = showUserFlap;
 
+    if (oldWorld)
+      oldWorld.onUnload();
+
     return newWorld;
   } catch (e) {
     console.error(`Error loading world: `, e);

@@ -634,6 +634,23 @@ export class World extends Morph {
   get keybindings() { return super.keybindings.concat(config.globalKeyBindings); }
   set keybindings(x) { super.keybindings = x }
 
+  onBeforeUnload(evt) {
+    // called when browser window is closed
+    return this.onUnload(evt);
+  }
+
+  onUnload(evt) {
+    // world is deactivated, either b/c a different world is loaded or the
+    // browser window is closed
+    // var confirmationMessage = "\o/";
+    // e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
+    // return confirmationMessage;              // Gecko, WebKit, Chrome <34
+    this.submorphs.forEach(ea => {
+      if (typeof ea.onWorldUnload === "function")
+        ea.onWorldUnload(evt)
+    });
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // halos
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -35,7 +35,8 @@ const eventsCausingImmediateRender = new Set([
 const globalDomEventsWeListenTo = [
   {type: 'resize', capturing: false, morphMethod: "onWindowResize"},
   {type: 'orientationchange', capturing: false, morphMethod: "onWindowResize"},
-  {type: 'scroll', capturing: false, passive: false, morphMethod: "onWindowScroll"}
+  {type: 'scroll', capturing: false, passive: false, morphMethod: "onWindowScroll"},
+  {type: 'beforeunload', capturing: false, passive: false, morphMethod: "onBeforeUnload"}
 ];
 
 const typeToMethodMap = {
