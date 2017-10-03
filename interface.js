@@ -97,8 +97,8 @@ export default class L2LConnection {
     return this.send({target, action, data}, ackFn)
   }
 
-  sendToAndWait(target, action, data) {
-    return this.sendAndWait({target, action, data});
+  sendToAndWait(target, action, data, opts) {
+    return this.sendAndWait({target, action, data, ...opts});
   }
 
   prepareSend(msg, ackFn) {
