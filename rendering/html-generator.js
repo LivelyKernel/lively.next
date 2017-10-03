@@ -73,7 +73,9 @@ export async function generateHTML(morph, htmlResource, options = {}) {
   }
 
   let morphHtml = `<div class="exported-morph-container ${htmlClassName}"`
-                + `    style="max-width: ${containerWidth || root.style.width};`
+                + `    style="background-image: ${options.backgroundColor ? 
+                                   options.backgroundColor.toCSSString() : 'None'};
+                              max-width: ${containerWidth || root.style.width};`
                 + `           height: ${containerHeight || root.style.height};">`
                 + `${root.outerHTML}\n</div>`, html;
 
@@ -83,7 +85,7 @@ export async function generateHTML(morph, htmlResource, options = {}) {
   } else {    
     html = `<head><title>lively.next</title><meta charset="UTF-8">`;
     if (addStyles) html += morphicStyles();
-    html += `</head><body>\n` + morphHtml + "</body>"
+    html += `</head><body style="margin: 0;">\n` + morphHtml + "</body>"
   }
 
   html = await tidyHtml(html);
