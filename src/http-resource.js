@@ -171,6 +171,8 @@ export default class WebDAVResource extends Resource {
     this.useCors = opts.hasOwnProperty("useCors") ? opts.useCors : false;
     this.headers = opts.headers || {};
     this.binary = this.isFile() ? binaryExtensions.includes(this.ext()) : false;
+    this.errorOnHTTPStatusCodes = opts.hasOwnProperty("errorOnHTTPStatusCodes") ?
+                                    opts.errorOnHTTPStatusCodes : true;
   }
 
   get isHTTPResource() { return true; }
@@ -186,9 +188,11 @@ export default class WebDAVResource extends Resource {
       new this.constructor(this.url, {headers: this.headers, useCors: this.useCors, useProxy: true})
   }
 
+  noErrorOnHTTPStatusCodes() { this.errorOnHTTPStatusCodes = false; return this; }
+
   async read() {
     var res = await makeRequest(this);
-    if (!res.ok)
+    if (!res.ok && this.errorOnHTTPStatusCodes)
       throw new Error(`Cannot read ${this.url}: ${res.statusText} ${res.status}`);
     if (!this.binary) return res.text();
     if (this.binary === "blob") return res.blob()
@@ -200,7 +204,7 @@ export default class WebDAVResource extends Resource {
   async write(content) {
     if (!this.isFile()) throw new Error(`Cannot write a non-file: ${this.url}`);
     var res = await makeRequest(this, "PUT", content);
-    if (!res.ok)
+    if (!res.ok && this.errorOnHTTPStatusCodes)
       throw new Error(`Cannot write ${this.url}: ${res.statusText} ${res.status}`);
     return this;
   }
@@ -208,7 +212,7 @@ export default class WebDAVResource extends Resource {
   async mkdir() {
     if (this.isFile()) throw new Error(`Cannot mkdir on a file: ${this.url}`);
     var res = await makeRequest(this, "MKCOL");
-    if (!res.ok)
+    if (!res.ok && this.errorOnHTTPStatusCodes)
       throw new Error(`Cannot create directory ${this.url}: ${res.statusText} ${res.status}`);
     return this;
   }
@@ -231,7 +235,8 @@ export default class WebDAVResource extends Resource {
         // 'Depth': String(depth)
       });
 
-    if (!res.ok) throw new Error(`Error in dirList for ${this.url}: ${res.statusText}`);
+    if (!res.ok && this.errorOnHTTPStatusCodes)
+      throw new Error(`Error in dirList for ${this.url}: ${res.statusText}`);
     let xmlString = await res.text(),
         root = this.root();
     // list of properties for all resources in the multistatus list
@@ -279,7 +284,7 @@ export default class WebDAVResource extends Resource {
     if (text && res.headers.get("content-type") === "application/json") {
       try { json = JSON.parse(text); } catch (err) {}
     }
-    if (!res.ok) {
+    if (!res.ok && this.errorOnHTTPStatusCodes) {
       throw new Error(`Error in POST ${this.url}: ${text || res.statusText}`);
     } else return json || text;
   }
@@ -303,14 +308,16 @@ export default class WebDAVResource extends Resource {
     stream.on("error", err => error = err);
     let toRes = await makeRequest(this, "PUT", stream);
     if (error) throw error;
-    if (!toRes.ok) throw new Error(`copyTo: Cannot GET: ${toRes.statusText} ${toRes.status}`);
+    if (!toRes.ok && this.errorOnHTTPStatusCodes)
+      throw new Error(`copyTo: Cannot GET: ${toRes.statusText} ${toRes.status}`);
     return this;
   }
 
   async _copyTo_file_nodejs_fs(toFile, ensureParent = true) {
     if (ensureParent) await toFile.parent().ensureExistance();
     let fromRes = await makeRequest(this, "GET");
-    if (!fromRes.ok) throw new Error(`copyTo: Cannot GET: ${fromRes.statusText} ${fromRes.status}`);
+    if (!fromRes.ok && this.errorOnHTTPStatusCodes)
+      throw new Error(`copyTo: Cannot GET: ${fromRes.statusText} ${fromRes.status}`);
     let error;
     return new Promise((resolve, reject) =>
       fromRes.body.pipe(toFile._createWriteStream())
@@ -321,9 +328,11 @@ export default class WebDAVResource extends Resource {
   async _copyTo_file_nodejs_http(toFile, ensureParent = true) {
     if (ensureParent) await toFile.parent().ensureExistance();
     let fromRes = await makeRequest(this, "GET");
-    if (!fromRes.ok) throw new Error(`copyTo: Cannot GET: ${fromRes.statusText} ${fromRes.status}`)
+    if (!fromRes.ok && this.errorOnHTTPStatusCodes)
+      throw new Error(`copyTo: Cannot GET: ${fromRes.statusText} ${fromRes.status}`)
     let toRes = await makeRequest(toFile, "PUT", fromRes.body);
-    if (!fromRes.ok) throw new Error(`copyTo: Cannot PUT: ${toRes.statusText} ${toRes.status}`);
+    if (!fromRes.ok && this.errorOnHTTPStatusCodes)
+      throw new Error(`copyTo: Cannot PUT: ${toRes.statusText} ${toRes.status}`);
   }
 
 }

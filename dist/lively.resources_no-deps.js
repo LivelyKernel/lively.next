@@ -572,7 +572,7 @@ var Resource$$1 = function () {
   }, {
     key: "ensureExistance",
     value: function () {
-      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee(optionalContent) {
+      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(optionalContent) {
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -629,7 +629,7 @@ var Resource$$1 = function () {
   }, {
     key: "copyTo",
     value: function () {
-      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(otherResource) {
+      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(otherResource) {
         var _this2 = this;
 
         var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
@@ -727,7 +727,7 @@ var Resource$$1 = function () {
   }, {
     key: "rename",
     value: function () {
-      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(otherResource) {
+      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(otherResource) {
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -767,7 +767,7 @@ var Resource$$1 = function () {
   }, {
     key: "read",
     value: function () {
-      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+      var _ref6 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
@@ -790,7 +790,7 @@ var Resource$$1 = function () {
   }, {
     key: "write",
     value: function () {
-      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+      var _ref7 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
@@ -813,7 +813,7 @@ var Resource$$1 = function () {
   }, {
     key: "mkdir",
     value: function () {
-      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
+      var _ref8 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
@@ -836,7 +836,7 @@ var Resource$$1 = function () {
   }, {
     key: "exists",
     value: function () {
-      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
+      var _ref9 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
@@ -859,7 +859,7 @@ var Resource$$1 = function () {
   }, {
     key: "remove",
     value: function () {
-      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+      var _ref10 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
             switch (_context8.prev = _context8.next) {
@@ -882,7 +882,7 @@ var Resource$$1 = function () {
   }, {
     key: "dirList",
     value: function () {
-      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(depth, opts) {
+      var _ref11 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(depth, opts) {
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
           while (1) {
             switch (_context9.prev = _context9.next) {
@@ -905,7 +905,7 @@ var Resource$$1 = function () {
   }, {
     key: "readProperties",
     value: function () {
-      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(opts) {
+      var _ref12 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(opts) {
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
             switch (_context10.prev = _context10.next) {
@@ -935,7 +935,7 @@ var Resource$$1 = function () {
   }, {
     key: "readJson",
     value: function () {
-      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(obj) {
+      var _ref13 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(obj) {
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
             switch (_context11.prev = _context11.next) {
@@ -1165,6 +1165,7 @@ var WebDAVResource = function (_Resource) {
     _this.useCors = opts.hasOwnProperty("useCors") ? opts.useCors : false;
     _this.headers = opts.headers || {};
     _this.binary = _this.isFile() ? binaryExtensions.includes(_this.ext()) : false;
+    _this.errorOnHTTPStatusCodes = opts.hasOwnProperty("errorOnHTTPStatusCodes") ? opts.errorOnHTTPStatusCodes : true;
     return _this;
   }
 
@@ -1179,9 +1180,14 @@ var WebDAVResource = function (_Resource) {
       return this.useProxy ? this : new this.constructor(this.url, { headers: this.headers, useCors: this.useCors, useProxy: true });
     }
   }, {
+    key: "noErrorOnHTTPStatusCodes",
+    value: function noErrorOnHTTPStatusCodes() {
+      this.errorOnHTTPStatusCodes = false;return this;
+    }
+  }, {
     key: "read",
     value: function () {
-      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
         var res;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -1193,7 +1199,7 @@ var WebDAVResource = function (_Resource) {
               case 2:
                 res = _context.sent;
 
-                if (res.ok) {
+                if (!(!res.ok && this.errorOnHTTPStatusCodes)) {
                   _context.next = 5;
                   break;
                 }
@@ -1252,7 +1258,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "write",
     value: function () {
-      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(content) {
+      var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(content) {
         var res;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
@@ -1272,7 +1278,7 @@ var WebDAVResource = function (_Resource) {
               case 4:
                 res = _context2.sent;
 
-                if (res.ok) {
+                if (!(!res.ok && this.errorOnHTTPStatusCodes)) {
                   _context2.next = 7;
                   break;
                 }
@@ -1299,7 +1305,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "mkdir",
     value: function () {
-      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
         var res;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
@@ -1319,7 +1325,7 @@ var WebDAVResource = function (_Resource) {
               case 4:
                 res = _context3.sent;
 
-                if (res.ok) {
+                if (!(!res.ok && this.errorOnHTTPStatusCodes)) {
                   _context3.next = 7;
                   break;
                 }
@@ -1346,7 +1352,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "exists",
     value: function () {
-      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
@@ -1387,7 +1393,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "remove",
     value: function () {
-      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
@@ -1415,7 +1421,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "_propfind",
     value: function () {
-      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
+      var _ref6 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
         var res, xmlString, root;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
@@ -1432,7 +1438,7 @@ var WebDAVResource = function (_Resource) {
               case 2:
                 res = _context6.sent;
 
-                if (res.ok) {
+                if (!(!res.ok && this.errorOnHTTPStatusCodes)) {
                   _context6.next = 5;
                   break;
                 }
@@ -1467,7 +1473,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "dirList",
     value: function () {
-      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
+      var _ref7 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
         var depth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         var exclude, resources, self, subResources, subCollections;
@@ -1537,7 +1543,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "readProperties",
     value: function () {
-      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(opts) {
+      var _ref8 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(opts) {
         var props;
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
@@ -1567,7 +1573,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "post",
     value: function () {
-      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
+      var _ref9 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
         var body = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
         var res, text, json;
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
@@ -1602,7 +1608,7 @@ var WebDAVResource = function (_Resource) {
                   } catch (err) {}
                 }
 
-                if (res.ok) {
+                if (!(!res.ok && this.errorOnHTTPStatusCodes)) {
                   _context9.next = 19;
                   break;
                 }
@@ -1629,7 +1635,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "copyTo",
     value: function () {
-      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(otherResource) {
+      var _ref10 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(otherResource) {
         var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         var toFile;
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
@@ -1684,7 +1690,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "_copyFrom_file_nodejs_fs",
     value: function () {
-      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(fromFile) {
+      var _ref11 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(fromFile) {
         var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         var error, stream, toRes;
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
@@ -1720,7 +1726,7 @@ var WebDAVResource = function (_Resource) {
                 throw error;
 
               case 11:
-                if (toRes.ok) {
+                if (!(!toRes.ok && this.errorOnHTTPStatusCodes)) {
                   _context11.next = 13;
                   break;
                 }
@@ -1747,7 +1753,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "_copyTo_file_nodejs_fs",
     value: function () {
-      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(toFile) {
+      var _ref12 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(toFile) {
         var _this2 = this;
 
         var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
@@ -1771,7 +1777,7 @@ var WebDAVResource = function (_Resource) {
               case 5:
                 fromRes = _context12.sent;
 
-                if (fromRes.ok) {
+                if (!(!fromRes.ok && this.errorOnHTTPStatusCodes)) {
                   _context12.next = 8;
                   break;
                 }
@@ -1805,7 +1811,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "_copyTo_file_nodejs_http",
     value: function () {
-      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(toFile) {
+      var _ref13 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13(toFile) {
         var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         var fromRes, toRes;
         return regeneratorRuntime.wrap(function _callee13$(_context13) {
@@ -1827,7 +1833,7 @@ var WebDAVResource = function (_Resource) {
               case 5:
                 fromRes = _context13.sent;
 
-                if (fromRes.ok) {
+                if (!(!fromRes.ok && this.errorOnHTTPStatusCodes)) {
                   _context13.next = 8;
                   break;
                 }
@@ -1841,7 +1847,7 @@ var WebDAVResource = function (_Resource) {
               case 10:
                 toRes = _context13.sent;
 
-                if (fromRes.ok) {
+                if (!(!fromRes.ok && this.errorOnHTTPStatusCodes)) {
                   _context13.next = 13;
                   break;
                 }
@@ -1925,7 +1931,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "stat",
     value: function () {
-      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -1949,7 +1955,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "read",
     value: function () {
-      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+      var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
@@ -1973,7 +1979,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "write",
     value: function () {
-      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(content) {
+      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(content) {
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -2009,7 +2015,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "mkdir",
     value: function () {
-      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(content) {
+      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(content) {
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
@@ -2045,7 +2051,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "exists",
     value: function () {
-      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
@@ -2069,7 +2075,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "dirList",
     value: function () {
-      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
+      var _ref6 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
         var depth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
@@ -2204,7 +2210,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "isEmptyDirectory",
     value: function () {
-      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
+      var _ref7 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
@@ -2233,7 +2239,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "rename",
     value: function () {
-      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(toResource) {
+      var _ref8 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(toResource) {
         var files, dirs, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, subR, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, subdir, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, file;
 
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
@@ -2462,7 +2468,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "remove",
     value: function () {
-      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
+      var _ref9 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
         var _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, subResource;
 
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
@@ -2579,7 +2585,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "readProperties",
     value: function () {
-      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(opts) {
+      var _ref10 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(opts) {
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
             switch (_context10.prev = _context10.next) {
@@ -2609,7 +2615,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "copyTo",
     value: function () {
-      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(otherResource) {
+      var _ref11 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(otherResource) {
         var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         var toFile;
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
@@ -2939,7 +2945,7 @@ function resource(url, opts) {
 }
 
 var createFiles = function () {
-  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(baseDir, fileSpec, opts) {
+  var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(baseDir, fileSpec, opts) {
     var base, name, _resource;
 
     return regeneratorRuntime.wrap(function _callee$(_context) {
@@ -3041,7 +3047,7 @@ function loadViaScript(url, onLoadCb) {
 }
 
 var ensureFetch = function () {
-  var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+  var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
     var thisModuleId, fetchInterface, moduleId;
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
