@@ -290,6 +290,8 @@ export class List extends Morph {
         padding: Rectangle.inset(2, 0),
         fontFamily: "Monaco, monospace",
         selectionColor: Color.gray.lighter(),
+        selectionFontColor: Color.black,
+        nonSelectionFontColor: Color.gray,
       },
       ".List.dark .ListItemMorph": {
         selectionFontColor: Color.black,
@@ -297,10 +299,7 @@ export class List extends Morph {
       },
       ".List.default": {
         padding: Rectangle.inset(2, 0)
-      },
-      // ".List.default .ListItemMorph": {
-      //   fontFamily: "Monaco, monospace",
-      // }
+      }
     });
   }
 
@@ -626,6 +625,8 @@ export class List extends Morph {
           fontSize, fontFamily,
           fontColor: nonSelectionFontColor || fontColor,
           padding: itemPadding, borderRadius: itemBorderRadius || 0,
+          selectionFontColor,
+          nonSelectionFontColor,
           selectionColor
         }, itemMorph = itemMorphs[i];
 
