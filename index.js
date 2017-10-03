@@ -311,7 +311,8 @@ class AttributeConnection {
     }
 
     // save so that it can be restored
-    sourceObj[this.privateAttrName(methodName)] = origMethod;
+    sourceObj.hasOwnProperty(methodName)
+      sourceObj[this.privateAttrName(methodName)] = origMethod;
     sourceObj[methodName] = function connectionWrapper() {
       if (this.attributeConnections === undefined)
           throw new Error('[lively.bindings] Something is wrong with connection source object, it has no attributeConnections');
@@ -341,8 +342,10 @@ class AttributeConnection {
 
     if (srcObj.__lookupGetter__(realAttrName)) {
       delete srcObj[realAttrName];
-      srcObj[realAttrName] = srcObj[helperAttrName];
-      delete srcObj[helperAttrName];
+      if (srcObj.hasOwnProperty(helperAttrName)) {
+        srcObj[realAttrName] = srcObj[helperAttrName];
+        delete srcObj[helperAttrName];
+      }
     } else if(srcObj[realAttrName] && srcObj[realAttrName].isConnectionWrapper) {
       srcObj[realAttrName] = srcObj[realAttrName].originalFunction
     }
@@ -467,20 +470,21 @@ function disconnect(sourceObj, attrName, targetObj, targetMethodName) {
 
   if (!sourceObj.attributeConnections) return;
 
-  sourceObj.attributeConnections.slice().forEach(function(con) {
+  for (let con of sourceObj.attributeConnections.slice()) {
     if (con.getSourceAttrName() == attrName
-    &&  con.getTargetObj() === targetObj
-    &&  con.getTargetMethodName() == targetMethodName) con.disconnect(); });
+        && con.getTargetObj() === targetObj
+        && con.getTargetMethodName() == targetMethodName)
+          con.disconnect();
+  }
 
-  if (typeof sourceObj['onDisconnect'] == 'function') {
+  if (typeof sourceObj.onDisconnect == 'function')
     sourceObj.onDisconnect(attrName, targetObj, targetMethodName);
-  };
 }
 
 function disconnectAll(sourceObj) {
-  while (sourceObj.attributeConnections && sourceObj.attributeConnections.length > 0) {
-    sourceObj.attributeConnections[0].disconnect();
-  }
+  let con;
+  while (sourceObj.attributeConnections && (con = sourceObj.attributeConnections[0]))
+    con.disconnect();
 }
 
 function once(sourceObj, attrName, targetObj, targetMethodName, spec) {
