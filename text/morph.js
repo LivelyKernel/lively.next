@@ -451,7 +451,7 @@ export class Text extends Morph {
       fontWeight: {
         group: "text styling",
         type: "Enum",
-        values: ["bold", "bolder", "light", "lighter"],
+        values: ["bold", "bolder", "light", "lighter", "normal"],
         defaultValue: "normal",
         isStyleProp: true,
         isDefaultTextStyleProp: true,
