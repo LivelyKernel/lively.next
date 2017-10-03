@@ -216,6 +216,13 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
   // system related
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  livelySystemAccessor(varName = "livelySystem") {
+    return `var ${varName} = (typeof lively !== "undefined" && lively.systemInterface)
+      || System.get(System.decanonicalize("lively-system-interface"))
+      || (typeof lively !== "undefined" && lively.modules && await lively.modules.importPackage("lively-system-interface"));
+    if (!${varName}) throw new Error("lively-system-interface not available!");`;
+  }
+
   normalizeSync(name, parentName, isPlugin) {
     return this.runEvalAndStringify(`lively.modules.System.decanonicalize(${JSON.stringify(name)}, ${JSON.stringify(parentName)}, ${isPlugin})`);
   }
@@ -240,8 +247,8 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
     options = {excluded: [], ...options};
     options.excluded = options.excluded.map(String);
     return this.runEvalAndStringify(`
-      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface")),
-          options = ${JSON.stringify(options)};
+      ${this.livelySystemAccessor()};
+      var options = ${JSON.stringify(options)};
       options.excluded = options.excluded.map(ea => {
         let evaled = lively.vm.syncEval(ea).value;
         return typeof evaled === "function" ? evaled : ea;
@@ -252,7 +259,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
 
   getPackageForModule(moduleId) {
     return this.runEvalAndStringify(`
-      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface"));
+      ${this.livelySystemAccessor()};
       await livelySystem.localInterface.getPackageForModule(${JSON.stringify(moduleId)})`);
   }
 
@@ -286,14 +293,14 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
 
   packageConfChange(source, confFile) {
     return this.runEvalAndStringify(`
-      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface"));
+      ${this.livelySystemAccessor()};
       await livelySystem.localInterface.packageConfChange(${JSON.stringify(source)}, ${JSON.stringify(confFile)})`);
   }
 
   async resourcesOfPackage(packageOrAddress, exclude = [".git", "node_modules", ".module_cache", "lively.next-node_modules"]) {
     if (packageOrAddress.address) packageOrAddress = packageOrAddress.address;
     return this.runEvalAndStringify(`
-      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface"));
+      ${this.livelySystemAccessor()};
       await livelySystem.localInterface.resourcesOfPackage(${JSON.stringify(packageOrAddress)}, ${JSON.stringify(exclude)});`);
   }
 
@@ -333,7 +340,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
 
   keyValueListOfVariablesInModule(moduleName, sourceOrAst) {
     return this.runEvalAndStringify(`
-      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface"));
+      ${this.livelySystemAccessor()};
       await livelySystem.localInterface.keyValueListOfVariablesInModule(${JSON.stringify(moduleName)}, ${JSON.stringify(sourceOrAst)})`);
   }
 
@@ -349,7 +356,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
 
   exportsOfModules(options) {
     return this.runEvalAndStringify(`
-      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface"));
+      ${this.livelySystemAccessor()};
       await livelySystem.localInterface.exportsOfModules(${JSON.stringify(options)})`);
   }
 
@@ -358,7 +365,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   searchInPackage(packageURL, searchString, options) {
     return this.runEvalAndStringify(`
-      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface"));
+      ${this.livelySystemAccessor()};
       await livelySystem.localInterface.searchInPackage(${JSON.stringify(packageURL)}, ${JSON.stringify(searchString)}, ${JSON.stringify(options)})`);
   }
 
@@ -369,8 +376,8 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
 
   async loadMochaTestFile(file, testsByFile = []) {
     return this.runEvalAndStringify(`
-      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface")),
-          {testsByFile} = await livelySystem.localInterface.loadMochaTestFile(${JSON.stringify(file)}, ${JSON.stringify(testsByFile)}), result;
+      ${this.livelySystemAccessor()};
+      var {testsByFile} = await livelySystem.localInterface.loadMochaTestFile(${JSON.stringify(file)}, ${JSON.stringify(testsByFile)}), result;
       result = {testsByFile}`);
   }
 
@@ -379,10 +386,9 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
       grep = {isRegExp: true, value:  String(grep).replace(/^\/|\/$/g, "")};
     return this.runEvalAndStringify(`
       var grep = ${JSON.stringify(grep)};
-      if (grep && grep.isRegExp)
-        grep = new RegExp(grep.value);
-      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface")),
-          {testsByFile, isError, value: error} = await livelySystem.localInterface.runMochaTests(grep, ${JSON.stringify(testsByFile || [])}), result;
+      if (grep && grep.isRegExp) grep = new RegExp(grep.value);
+      ${this.livelySystemAccessor()};
+      var {testsByFile, isError, value: error} = await livelySystem.localInterface.runMochaTests(grep, ${JSON.stringify(testsByFile || [])}), result;
       error = error ? String(error.stack || error) : null;
       if (testsByFile) {
         testsByFile.forEach(ea =>
