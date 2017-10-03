@@ -367,10 +367,13 @@ export class ObjectRef {
       return ref;
     }
 
-    if (typeof id !== "string")
+    let idType = typeof id;
+    if (idType === "number") { id = String(id); idType = "string"; }
+    if (idType !== "string") {
       throw new Error(`Error snapshoting ${realObj}: `
                     + `id is not a string but ${id} `
-                    + `(serialization path: ${path.join(".")})`)
+                    + `(serialization path: ${path.join(".")})`);
+    }
 
     let serialized = pool.plugin_serializeObject(realObj, false, serializedObjMap, path);
     if (serialized) {
@@ -432,7 +435,7 @@ export class ObjectRef {
 
     if (this.realObj) return this;
 
-    debugDeserialization && console.log(`[deserialize] ${path.join(".")}`);
+    debugDeserialization && console.log(`[deserialize] ${this.id} (via ${path.join(".")})`);
 
     let snapshot = serializedObjMap[this.id];
     if (!snapshot) {
