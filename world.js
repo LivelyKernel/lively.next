@@ -663,7 +663,13 @@ export class World extends Morph {
 
   async showHaloFor(target, pointerId = this.firstHand && this.firstHand.pointerId, focus = true) {
     var {default: Halo} = await System.import("lively.morphic/halo/morph.js"),
-        halo = this.addMorph(new Halo({pointerId, target}));
+        halo;
+    if (typeof target.createHalo === "function") {
+      halo = target.createHalo(Halo, pointerId);
+    } else {
+      halo = new Halo({pointerId, target});
+    }
+    this.addMorph(halo);
     if (focus) halo.focus()
     return halo;
   }
