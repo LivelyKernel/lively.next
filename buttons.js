@@ -16,17 +16,17 @@ export class Button extends Morph {
       borderWidth: {defaultValue: 1},
       borderRadius: {defaultValue: 5},
       nativeCursor: {defaultValue: "pointer"},
+
       fill: {
         defaultValue: new LinearGradient({
           stops: [
             {offset: 0, color: Color.white},
             {offset: 1, color: Color.rgb(236, 240, 241)}
-          ],
-          vector: 0
-        })
-    },
+          ], vector: 0})
+      },
 
       deactivated: {
+        group: "button",
         defaultValue: false,
         set(val) {
           this.setProperty("deactivated", val);
@@ -36,16 +36,18 @@ export class Button extends Morph {
       },
 
       pressed: {
+        group: "_internal",
         defaultValue: null,
         set(val) {
           let oldVal = this.getProperty("pressed");
           this.setProperty("pressed", val);
-          let realFill = (!val && oldVal && oldVal.originalFill) || this.defaultProperty("fill");
-          this.fill = val ? realFill.darker() : realFill;
+          let realFill = (!val && oldVal && oldVal.originalFill);
+          this.fill = val && realFill ? realFill.darker() : realFill;
         }
       },
 
       fontSize: {
+        group: "button styling",
         type: "Number", min: 4, isStyleProp: true, defaultValue: 12,
         after: ['labelMorph'],
         set(s) {
@@ -55,6 +57,7 @@ export class Button extends Morph {
       },
 
       fontColor: {
+        group: "button styling",
         isStyleProp: true, defaultValue: Color.almostBlack, after: ['labelMorph'],
         set(c) {
           this.setProperty('fontColor', c);
@@ -63,6 +66,7 @@ export class Button extends Morph {
       },
 
       labelMorph: {
+        group: "_internal",
         after: ["submorphs"],
         initialize() {
           this.labelMorph = this.addMorph({
@@ -80,7 +84,29 @@ export class Button extends Morph {
         }
       },
 
+      labelWithTextAttributes: {
+        group: "_internal",
+        after: ["labelMorph"], derived: true,
+        get() { return this.labelMorph.textAndAttributes; },
+        set(val) { this.labelMorph.textAndAttributes = val; }
+      },
+
+      icon: {
+        group: "button",
+        after: ['labelMorph'], derived: true, isStyleProp: true,
+        showInInspector: true,
+        type: "Icon", // "" -> no icon, else a valid font awesome icon code
+        get() { return this.label[0]; },
+        set(iconNameOrCode) {
+          try {
+            if (Array.isArray(iconNameOrCode)) this.label = iconNameOrCode;
+            else this.label = Icon.textAttribute(iconNameOrCode);
+          } catch (err) {}
+        }
+      },
+
       label: {
+        group: "button",
         after: ["labelMorph"],
         isStyleProp: true,
         type: "RichText", // this includes an attributes Array
@@ -92,35 +118,15 @@ export class Button extends Morph {
             this.setProperty('label', stringOrAttributesOrMorph)
             this.labelMorph.value = stringOrAttributesOrMorph;
           }
+          this.labelMorph.fit();
         }
       },
 
-      labelWithTextAttributes: {
-        after: ["labelMorph"], derived: true,
-        get() { return this.labelMorph.textAndAttributes; },
-        set(val) { this.labelMorph.textAndAttributes = val; }
-      },
+      fire: {
+        group: "button", derived: true, readOnly: true, isSignal: true
+      }
 
-      icon: {
-        after: ['labelMorph'], 
-        derived: true, 
-        isStyleProp: true,
-        showInInspector: true,
-        type: "Icon", // "" -> no icon, else a valid font awesome icon code
-        get() { return this.label[0]; },
-        set(iconNameOrCode) {
-          try {
-            if (Array.isArray(iconNameOrCode)) this.label = iconNameOrCode;
-            else this.label = Icon.textAttribute(iconNameOrCode);
-          } catch (err) {}
-        }
-      },
     }
-  }
-
-  constructor(props) {
-    super(props);
-    this.relayout();
   }
 
   get isButton() { return true }
@@ -131,11 +137,13 @@ export class Button extends Morph {
 
   onChange(change) {
     let {prop} = change;
-    switch (prop) {
-      case 'extent':
-      case 'padding':
-      case 'fontSize':
-      case 'fontFamily': this.relayout();
+    if (this.label/*don't call too early*/) {
+      switch (prop) {
+        case 'extent':
+        case 'padding':
+        case 'fontSize':
+        case 'fontFamily': this.relayout();
+      }
     }
     return super.onChange(change);
   }

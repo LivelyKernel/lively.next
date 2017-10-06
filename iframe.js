@@ -57,33 +57,33 @@ export class IFrameMorph extends HTMLMorph {
 
   static get properties() {
     return {
-    
+
       iframe: {
         after: ["domNode"], readOnly: true,
         get() { return this.domNode; }
       },
-    
+
       innerWindow: {
         after: ["iframe"], readOnly: true,
         get() { return this.iframe.contentWindow; }
       },
-    
+
       innerWorld: {
         after: ["innerWindow"], readOnly: true,
         get() { return this.innerWindow.$world; }
       },
-    
-    
+
+
       src: {
         after: ["domNode"],
         set(src) { this.changeSrc(src, null); }
       },
-    
+
       srcdoc: {
         after: ["domNode"],
         set(srcdoc) { this.changeSrc(null, srcdoc); }
       },
-    
+
       domNode: {
         get() {
           if (!this._domNode) {

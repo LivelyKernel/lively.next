@@ -6,7 +6,6 @@ import { Morph, config, morph, StyleSheet } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 import { zip } from "lively.lang/array.js";
 
-
 /*
 
 This module provides a tree widget to display hierarchical data. The tree data passed to the tree can be arbitrary and should be wrapped into a TreeData object. Besides the main tree structure this object receives a function to extract a name from a tree node
@@ -90,7 +89,7 @@ export class TreeNode extends Morph {
           l.value = val;
           this.displayedMorph = l;
         }
-      }, 
+      },
 
       displayedMorph: {
         after: ["submorphs", "toggle"], derived: true,
@@ -200,14 +199,13 @@ export class TreeNode extends Morph {
 
     var toggle = this.getSubmorphNamed("toggle"), displayedMorph;
 
-    if (!isCollapsable && toggle) {
-      toggle.visible = false;
-    } else {
-      toggle && (toggle.visible = true);
+    if (toggle){
+      toggle.visible = this.isCollapsable;
+      toggle.position = pt(padl, padt)
     }
     if (displayedNode && displayedNode.isMorph) {
       displayedMorph = this.displayedMorph = displayedNode;
-      displayedMorph.layout && displayedMorph.layout.forceLayout(); 
+      displayedMorph.layout && displayedMorph.layout.forceLayout();
     } else {
       let {label} = this;
       displayedMorph = this.displayedMorph = label;
@@ -224,8 +222,9 @@ export class TreeNode extends Morph {
     if (node) node.isSelected = isSelected;
 
     displayedMorph.position = pt(defaultToggleWidth + padl + 3, padt);
+
     this.extent = displayedMorph.bounds().extent().addXY(defaultToggleWidth + 3 + padl + padr, padb);
-    
+
     this.myNode = node;
     if (this.myNode) this.myNode.renderedNode = this;
   }
@@ -401,7 +400,7 @@ export class Tree extends Morph {
       ".TreeNode .PropertyControl": {
         fontSize: this.fontSize,
         fontColor: this.fontColor
-      },      
+      },
       ".TreeNode .TreeLabel": {
         fontSize: this.fontSize
       },
@@ -1158,9 +1157,9 @@ var treeCommands = [
           title = treeMorph.getWindow() ?
           "printed " + treeMorph.getWindow().title :
       treeMorph.name;
-      
+
       return treeMorph.world().execCommand("open text window", {
-        title, content, name: title, 
+        title, content, name: title,
         fontFamily: config.codeEditor.defaultStyle.fontFamily
       });
     }

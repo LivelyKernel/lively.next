@@ -5,12 +5,7 @@ import { Label, Icon, morph, Morph,
         HorizontalLayout, ShadowObject, StyleSheet } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 
-export const windowCommands = [{
-  name: 'create window',
-  exec(world, args) => new Window(args)
-}];
-
-export class Window extends Morph {
+export default class Window extends Morph {
 
   static get styleSheet() {
     let windowButtonSize = pt(13, 13);

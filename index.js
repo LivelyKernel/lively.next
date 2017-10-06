@@ -9,36 +9,9 @@ import * as widgets from './widgets.js';
 
 import {Button} from './buttons.js';
 import {List, FilterableList} from './list.js';
-import {InputLine, PasswordInputLine} from './input-line.js';
+import {InputLine, PasswordInputLine} from 'lively.morphic/text/input-line.js';
 import {menuCommands} from './menus.js';
 import {Window, windowCommands} from './window.js';
 import {LoadingIndicator, loadingIndicatorCommands} from './loading-indicator.js';
 
 export {LoadingIndicator, Window, prompts, widgets, InputLine, PasswordInputLine};
-
-import { registerMorphClass, Tooltip } from 'lively.morphic';
-import worldCommands from 'lively.morphic/world-commands.js';
-
-let classMapping = {
-  button:     Button,
-  list:       List,
-  input:      InputLine,
-  checkbox:   widgets.CheckBox,
-  labeledcheckbox: widgets.LabeledCheckBox,
-  window:     Window
-};
-
-import {promise} from 'lively.lang';
-
-promise.waitFor(() => registerMorphClass).then(() => {
-  // install world commands
-  worldCommands.push(
-    ...menuCommands,
-    ...prompts.promptCommands,
-    ...windowCommands,
-    ...loadingIndicatorCommands);
-
-  for (let klass in classMapping) {
-    registerMorphClass(klass, classMapping[klass]);
-  }
-});

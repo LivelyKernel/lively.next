@@ -10,16 +10,9 @@ import { Button } from "./buttons.js"
 // var i = LoadingIndicator.open("test")
 // i.remove()
 
-export const loadingIndicatorCommands = [{
-  name: 'open loading indicator',
-  exec: (world, info) => {
-    return LoadingIndicator.open(info);
-  }
-}]
-
 const imageUrl = System.decanonicalize("lively.morphic/") + "lively-web-logo-small-animate.svg";
 
-export class LoadingIndicator extends Morph {
+export default class LoadingIndicator extends Morph {
 
   static get styleSheet() {
     return new StyleSheet({
@@ -103,12 +96,12 @@ export class LoadingIndicator extends Morph {
               styleClasses: ["center-text"]
             },
             {
-              type: Button,
+              type: "button",
               name: "closeButton",
               label: Icon.textAttribute("times")
             }
           ];
- 
+
         }
       }
     }

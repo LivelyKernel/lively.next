@@ -2,12 +2,6 @@ import { Label, config, Morph } from "lively.morphic";
 import { arr, obj, promise, fun } from "lively.lang";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 
-
-export const menuCommands = [{
-  name: 'open menu at hand',
-  exec: (world, {items, hand}) => Menu.openAtHand(items, {hand})
-}];
-
 export class MenuDivider extends Morph {
 
   static get properties() {

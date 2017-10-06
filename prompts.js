@@ -1,14 +1,12 @@
 /*global System*/
 import { Rectangle, Color, pt } from 'lively.graphics';
-import { morph, Morph, StyleSheet, Text, GridLayout, 
+import { morph, Morph, StyleSheet, Text, GridLayout,
           Icon, HorizontalLayout } from 'lively.morphic';
+import { InputLine, PasswordInputLine } from "lively.morphic/text/input-line.js"
 import { arr, obj, promise } from "lively.lang";
 import { connect } from 'lively.bindings';
 
-import { InputLine, PasswordInputLine } from "./input-line.js"
 import { List, FilterableList } from './list.js';
-
-const promptCommands = [];
 
 export class AbstractPrompt extends Morph {
 
@@ -112,7 +110,7 @@ export class AbstractPrompt extends Morph {
   async transitionTo(otherPrompt, duration = 300) {
     // assumes to be working with prompts opened in world
     let morphBox = morph({
-      fill: this.fill, 
+      fill: this.fill,
       borderRadius: this.borderRadius,
     });
     otherPrompt.opacity = 0;
@@ -181,12 +179,6 @@ export class InformPrompt extends AbstractPrompt {
 
 }
 
-promptCommands.push({name: 'create inform prompt', 
-   exec: (world, args) => {
-     return new InformPrompt(args);
-   }
-  })
-
 
 export class ConfirmPrompt extends AbstractPrompt {
 
@@ -205,7 +197,7 @@ export class ConfirmPrompt extends AbstractPrompt {
       name: "cancel button", type: "button",
       label: "Cancel"
     });
-    
+
     connect(okButton, 'fire', this, 'resolve');
     connect(cancelButton, 'fire', this, 'reject');
     this.initLayout();
@@ -236,14 +228,6 @@ export class ConfirmPrompt extends AbstractPrompt {
      });
   }
 }
-
-promptCommands.push(
-  {name: 'create confirm prompt', 
-   exec: (world, args) => {
-     return new ConfirmPrompt(args);
-   }
-  }
-)
 
 
 export class MultipleChoicePrompt extends AbstractPrompt {
@@ -293,7 +277,7 @@ export class MultipleChoicePrompt extends AbstractPrompt {
     this.layout = new GridLayout({
        fitToCell: true,
        columns: [0, {paddingLeft: 5, paddingRight: 5}],
-       rows: label ? [0, {height: label.height, fixed: true}, 
+       rows: label ? [0, {height: label.height, fixed: true},
                       1, {paddingBottom: 5}] : [0, {paddingBottom: 5}],
        grid: label ?
                [["label"],
@@ -313,15 +297,9 @@ export class MultipleChoicePrompt extends AbstractPrompt {
     }
     return super.onKeyDown(evt);
   }
-}
 
-promptCommands.push(
-  {name: 'create multiple choice prompt', 
-   exec: (world, args) => {
-     return new MultipleChoicePrompt(args);
-   }
-  }
-)
+
+}
 
 export class TextPrompt extends AbstractPrompt {
 
@@ -338,8 +316,7 @@ export class TextPrompt extends AbstractPrompt {
       name: "label", type: "label", value: label
     });
 
-    var inputLine = this.addMorph(morph({
-      type: "input",
+    var inputLine = this.addMorph(Text.makeInputLine({
       historyId,
       highlightWhenFocused: false,
       name: "input", textString: input || "",
@@ -365,7 +342,7 @@ export class TextPrompt extends AbstractPrompt {
     connect(this.getSubmorphNamed("cancel button"), 'fire', this, 'reject');
 
     this.initLayout();
-    
+
     inputLine.gotoDocumentEnd();
     inputLine.scrollCursorIntoView();
   }
@@ -403,14 +380,6 @@ export class TextPrompt extends AbstractPrompt {
 
   focus() { this.getSubmorphNamed("input").focus(); }
 }
-
-promptCommands.push(
-  {name: 'create text prompt', 
-   exec: (world, args) => {
-     return new TextPrompt(args);
-   }
-  }
-)
 
 export class EditPrompt extends AbstractPrompt {
 
@@ -470,7 +439,7 @@ export class EditPrompt extends AbstractPrompt {
     connect(this.getSubmorphNamed("cancel button"), 'fire', this, 'reject');
 
     this.initLayout();
-    
+
     inputEditor.gotoDocumentEnd();
     inputEditor.scrollCursorIntoView();
   }
@@ -562,7 +531,7 @@ export class EditPrompt extends AbstractPrompt {
           return true;
         }
       },
-    
+
       {
         name: "history forward",
         exec: (_, arg) => {
@@ -582,14 +551,6 @@ export class EditPrompt extends AbstractPrompt {
 
   focus() { this.getSubmorphNamed("editor").focus(); }
 }
-
-promptCommands.push(
-  {name: 'create edit prompt', 
-   exec: (world, args) => {
-     return new EditPrompt(args);
-   }
-  }
-)
 
 export class PasswordPrompt extends AbstractPrompt {
 
@@ -637,13 +598,6 @@ export class PasswordPrompt extends AbstractPrompt {
   }
 }
 
-promptCommands.push(
-  {name: 'create password prompt', 
-   exec: (world, args) => {
-     return new PasswordPrompt(args);
-   }
-  }
-);
 
 export class ListPrompt extends AbstractPrompt {
 
@@ -766,13 +720,6 @@ export class ListPrompt extends AbstractPrompt {
 
 }
 
-promptCommands.push(
-  {name: 'create list prompt', 
-   exec: (world, args) => {
-     return new ListPrompt(args);
-   }
-  }
-)
 
 export class EditListPrompt extends ListPrompt {
 
@@ -795,7 +742,7 @@ export class EditListPrompt extends ListPrompt {
           type: 'button',
           label: Icon.makeLabel("minus", {fontSize: 12})
         });
-        
+
     connect(addBtn, 'fire', this, 'addItemToList');
     connect(rmBtn, 'fire', this, 'removeSelectedItemsFromList');
 
@@ -875,12 +822,3 @@ export class EditListPrompt extends ListPrompt {
 
   reject() { return this.answer.resolve({list: [], selections: [], status: "canceled"}); }
 }
-
-promptCommands.push({
-  name: 'create edit list prompt', 
-  exec: (world, args) => {
-     return new EditListPrompt(args);
-   }
-})
-
-export {promptCommands};
