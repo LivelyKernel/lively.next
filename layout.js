@@ -1,3 +1,4 @@
+/*global Sine*/
 import {
   Ellipse, Button, Icon,
   Morph,
@@ -9,9 +10,9 @@ import {
 } from "lively.morphic";
 import { Color, pt, rect, Rectangle } from "lively.graphics";
 import { arr } from "lively.lang";
-import { widgets, Menu } from "lively.components";
 import { connect, disconnect } from "lively.bindings";
 import { LabeledCheckBox, DropDownSelector } from "lively.morphic/components/widgets.js";
+import { Menu } from "lively.morphic/components/menus.js";
 import { NumberWidget } from "lively.morphic/ide/value-widgets.js";
 import { InteractiveMorphSelector } from "./morph.js";
 

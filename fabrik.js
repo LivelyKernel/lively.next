@@ -6,9 +6,8 @@ import { arr, obj } from "lively.lang";
 import { isArray } from "lively.lang/object.js";
 import { max } from "lively.lang/array.js";
 import { hashCode } from "lively.lang/string.js";
-import { TreeData, Tree } from "lively.components";
-import { LabeledCheckBox, SearchField } from "lively.components/widgets.js";
-
+import { TreeData, Tree } from "lively.morphic/components/tree.js";
+import { LabeledCheckBox, SearchField } from "lively.morphic/components/widgets.js";
 import { showConnector, Leash } from "./markers.js";
 import { InteractiveMorphSelector, MorphHighlighter } from "./morph.js";
 

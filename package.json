@@ -12,8 +12,7 @@
     "lively.components": "https://github.com/LivelyKernel/lively.components",
     "lively.lang": "^1.0.0"
   },
-  "devDependencies": {},
-  "systemjs": {
-    "main": "index.js"
+  "scripts": {
+    "test": "mocha-es6 tests/*-test.js"
   }
 }

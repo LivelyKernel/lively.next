@@ -1,14 +1,9 @@
-import {
-  Morph,
-  Path, StyleSheet
-} from "lively.morphic";
+import { Morph, Path, StyleSheet } from "lively.morphic";
 import { pathAttributes } from "lively.morphic/rendering/morphic-default.js";
-
 import { Color, pt } from "lively.graphics";
 import { intersect, shape, bezier } from 'svg-intersections';
 import { arr } from "lively.lang";
 import { connect } from "lively.bindings";
-
 import { Leash } from "./markers.js";
 
 intersect.plugin(bezier);

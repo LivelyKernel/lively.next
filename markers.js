@@ -1,8 +1,17 @@
 /* global Element, Node */
-import {obj, arr, string} from "lively.lang";
-import {pt, Color, Point, Rectangle, rect} from "lively.graphics";
-import {morph, Path, Ellipse, Icon, StyleSheet, Morph, MorphicEnv, ShadowObject} from "lively.morphic";
-import {connect, disconnect} from "lively.bindings";
+import { obj, arr, string } from "lively.lang";
+import { pt, Color, Point, Rectangle, rect } from "lively.graphics";
+import {
+  morph,
+  Path,
+  Ellipse,
+  Icon,
+  StyleSheet,
+  Morph,
+  MorphicEnv,
+  ShadowObject
+} from "lively.morphic";
+import { connect, disconnect } from "lively.bindings";
 import { MorphHighlighter } from "./morph.js";
 import { Leash } from "lively.morphic/components/widgets.js";
 
