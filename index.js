@@ -12,6 +12,6 @@ import {List, FilterableList} from './list.js';
 import {InputLine, PasswordInputLine} from 'lively.morphic/text/input-line.js';
 import {menuCommands} from './menus.js';
 import {Window, windowCommands} from './window.js';
-import {LoadingIndicator, loadingIndicatorCommands} from './loading-indicator.js';
+import LoadingIndicator from './loading-indicator.js';
 
 export {LoadingIndicator, Window, prompts, widgets, InputLine, PasswordInputLine};
