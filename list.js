@@ -742,7 +742,6 @@ export class List extends Morph {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import { connect } from "lively.bindings";
-import { CustomLayout } from "../layout.js";
 
 export class FilterableList extends Morph {
 
