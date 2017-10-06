@@ -930,7 +930,6 @@ export default class Browser extends Window {
           tests = testsFromSource(ast || sourceEditor.textString);
       hasTests = tests && tests.length;
     }
-debugger;
     runTestsInModuleButton.visible = runTestsInModuleButton.isLayoutable = !!hasTests;
   }
 

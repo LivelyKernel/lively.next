@@ -123,9 +123,9 @@ For now only a simple default theme...
         rootMorph.withAllSubmorphsDo(m => {
           if (m.styleSheets && m.styleSheets.length > 0) {
             m.styleSheets.forEach(ss => {
-              for (let rule in obj.dissoc(ss.rules, ['_rev'])) 
+              for (let rule in obj.dissoc(ss.rules, ['_rev']))
                 ss.rules[rule] = ss.unwrapFoldedProps(ss.rules[rule]);
-            }) 
+            })
           }
         });
       return idAndSnapshot;
@@ -158,8 +158,8 @@ For now only a simple default theme...
             ['lively.morphic/halo', 'lively.halos'],
             ['lively.morphic/components/markers.js', 'lively.halos']
             // ['lively.morphic/components/loading-indicator.js', 'lively.components', imports => `\{${imports}\}`],
-            // ['lively.morphic/text/input-line.js', 'lively.components', imports => `\{${imports}\}`], 
-            // ['lively.morphic/components', 'lively.components'], 
+            // ['lively.morphic/text/input-line.js', 'lively.components', imports => `\{${imports}\}`],
+            // ['lively.morphic/components', 'lively.components'],
             // ['lively.morphic/ide', 'lively.ide'],
           ];
       for (let mod in modules) {
@@ -170,13 +170,13 @@ For now only a simple default theme...
                  match = importMatcher.exec(moduleSource);
              if (match) {
                moduleSource = moduleSource.replace(
-                  importMatcher, 
+                  importMatcher,
                  'import ' + importTfm(match[2]) + 'from \"' + replacement
                );
-             }            
+             }
           } else {
              let re = new RegExp(prefix, 'g');
-             moduleSource = moduleSource.replace(re, replacement);  
+             moduleSource = moduleSource.replace(re, replacement);
           }
         }
         modules[mod]["index.js"] = moduleSource;
