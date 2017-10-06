@@ -14,7 +14,7 @@ import {
   Window,
   Menu
 } from "./index.js";
-import { StatusMessage, StatusMessageForMorph } from './components/markers.js';
+import { StatusMessage, StatusMessageForMorph } from 'lively.halos/markers.js';
 import { TooltipViewer } from "./components/tooltips.js";
 
 import {
@@ -34,6 +34,9 @@ import worldCommands from "./world-commands.js";
 import { loadWorldFromURL, loadWorldFromDB, loadWorldFromCommit, loadWorld } from "./world-loading.js";
 import LoadingIndicator from "./components/loading-indicator.js";
 import { GradientEditor } from "./ide/styling/gradient-editor.js";
+
+// optional lively.halos import
+import Halo from "lively.halos/morph.js";
 
 export class World extends Morph {
 
@@ -661,9 +664,9 @@ export class World extends Morph {
     return this.submorphs.find(m => m.isHalo && m.state && m.state.pointerId === pointerId);
   }
 
-  async showHaloFor(target, pointerId = this.firstHand && this.firstHand.pointerId, focus = true) {
-    var {default: Halo} = await System.import("lively.morphic/halo/morph.js"),
-        halo;
+  showHaloFor(target, pointerId = this.firstHand && this.firstHand.pointerId, focus = true) {
+    var halo;
+    if (!Halo) return;
     if (typeof target.createHalo === "function") {
       halo = target.createHalo(Halo, pointerId);
     } else {
@@ -674,8 +677,8 @@ export class World extends Morph {
     return halo;
   }
 
-  async showHaloForSelection(selection, pointerId) {
-    return selection.length > 0 && await this.showHaloFor(selection, pointerId);
+  showHaloForSelection(selection, pointerId) {
+    return selection.length > 0 && this.showHaloFor(selection, pointerId);
   }
 
   layoutHaloForPointerId(pointerId = this.firstHand && this.firstHand.pointerId) {

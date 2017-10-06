@@ -4,7 +4,7 @@ import {
   GridLayoutHalo, ProportionalLayoutHalo,
   FlexLayoutHalo,
   TilingLayoutHalo
-} from "./halo/layout.js";
+} from "lively.halos/layout.js";
 import { isNumber } from "lively.lang/object.js";
 import { sortBy, flatmap } from "lively.lang/array.js";
 import { once } from "lively.bindings";

@@ -77,7 +77,7 @@ State management of the style sheets has changes substantially, moving all of th
         let { props } = snapshot[id];
         if (!props || !props.styleSheets) continue;
         if (!props.styleSheets.value) props.styleSheets.value = [];
-        props.styleSheets.value = props.styleSheets.value.filter(ea => {
+        props.styleSheets.value = props.styleSheets.value && props.styleSheets.value.filter(ea => {
           let styleSheet = snapshot[ea.id],
               rules = styleSheet.props.rules,
               rulesObj = snapshot[rules.value.id];
@@ -123,9 +123,9 @@ For now only a simple default theme...
         rootMorph.withAllSubmorphsDo(m => {
           if (m.styleSheets && m.styleSheets.length > 0) {
             m.styleSheets.forEach(ss => {
-              for (let rule in obj.dissoc(ss.rules, ['_rev'])) 
+              for (let rule in obj.dissoc(ss.rules, ['_rev']))
                 ss.rules[rule] = ss.unwrapFoldedProps(ss.rules[rule]);
-            }) 
+            })
           }
         });
       return idAndSnapshot;
@@ -142,6 +142,55 @@ For now only a simple default theme...
         if (!klass) continue;
         if (klass.className === "StyleSheet") {
           klass.module.pathInPackage = "style-sheets.js";
+        }
+      }
+      return idAndSnapshot;
+    }
+  },
+
+  {
+    date: "2017-07-26",
+    name: "components, ide, and halo extraction",
+    snapshotConverter: idAndSnapshot => {
+      let {snapshot, packages} = idAndSnapshot,
+          modules = (packages && packages["local://lively-object-modules/"]) || {},
+          nameToPackages = [
+            ['lively.morphic/halo', 'lively.halos'],
+            ['lively.morphic/components/markers.js', 'lively.halos']
+            // ['lively.morphic/components/loading-indicator.js', 'lively.components', imports => `\{${imports}\}`],
+            // ['lively.morphic/text/input-line.js', 'lively.components', imports => `\{${imports}\}`],
+            // ['lively.morphic/components', 'lively.components'],
+            // ['lively.morphic/ide', 'lively.ide'],
+          ];
+      for (let mod in modules) {
+        var moduleSource = modules[mod]["index.js"];
+        for (let [prefix, replacement, importTfm] of nameToPackages) {
+          if (importTfm) {
+             let importMatcher = new RegExp( '(import\\s)(.*)(\\sfrom \\"' + prefix + ")", 'g'),
+                 match = importMatcher.exec(moduleSource);
+             if (match) {
+               moduleSource = moduleSource.replace(
+                  importMatcher,
+                 'import ' + importTfm(match[2]) + 'from \"' + replacement
+               );
+             }
+          } else {
+             let re = new RegExp(prefix, 'g');
+             moduleSource = moduleSource.replace(re, replacement);
+          }
+        }
+        modules[mod]["index.js"] = moduleSource;
+      }
+      for (let key in snapshot) {
+        let serialized = snapshot[key], klass = serialized["lively.serializer-class-info"];
+        if (!klass || !klass.module) continue;
+        let p = klass.module.package.name + "/" + klass.module.pathInPackage;
+        for (let [prefix, replacement] of nameToPackages) {
+          if (p.includes(prefix)) {
+            klass.module.package.name = replacement;
+            klass.module.package.version = '0.1.0';
+            klass.module.pathInPackage = p.substring(p.indexOf(prefix) + prefix.length + 1) || "index.js";
+          }
         }
       }
       return idAndSnapshot;

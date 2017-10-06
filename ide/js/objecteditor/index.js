@@ -15,7 +15,7 @@ import { interactivelySavePart } from "../../../partsbin.js";
 import { emit } from "lively.notifications/index.js";
 import { LinearGradient } from "lively.graphics/index.js";
 import { adoptObject } from "lively.classes/runtime.js";
-import { InteractiveMorphSelector } from "../../../halo/morph.js";
+import { InteractiveMorphSelector } from "lively.halos/morph.js";
 
 
 // var oe = ObjectEditor.open({target: this})
