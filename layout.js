@@ -11,8 +11,8 @@ import {
 import { Color, pt, rect, Rectangle } from "lively.graphics";
 import { arr } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
-import { LabeledCheckBox, DropDownSelector } from "lively.morphic/components/widgets.js";
-import { Menu } from "lively.morphic/components/menus.js";
+import { LabeledCheckBox, DropDownSelector } from "lively.components/widgets.js";
+import { Menu } from "lively.components/menus.js";
 import { NumberWidget } from "lively.morphic/ide/value-widgets.js";
 import { InteractiveMorphSelector } from "./morph.js";
 
@@ -396,7 +396,7 @@ class CellGuide extends Morph {
         }]]],
       ["Align at...",
          ['center',  ...new Rectangle().sides, ...new Rectangle().corners].map(side => {
-           return [[side + "  ", null, ...(this.cellGroup.align == side ? checked : unchecked)], 
+           return [[side + "  ", null, ...(this.cellGroup.align == side ? checked : unchecked)],
                    () => this.cellGroup.align = side]
          })
       ],
@@ -409,7 +409,7 @@ class CellGuide extends Morph {
         }
       }]] : []);
   }
-  
+
 }
 
 export class GridLayoutHalo extends Morph {
@@ -686,7 +686,7 @@ export class TilingLayoutHalo extends Morph {
   };
 
   handleDrop(morph) {
-  
+
   }
 
   previewDrop(morphs) {
@@ -778,7 +778,7 @@ export class FlexLayoutHalo extends Morph {
   previewDrop(morphs) {
     const pulseDuration = 2000;
     if (this.previews.length > 0) return;
-    this.previews = morphs.map(morph => 
+    this.previews = morphs.map(morph =>
     this.container.addMorph({
       isHaloItem: true,
       position: this.container.localize(this.world().firstHand.position),
@@ -904,7 +904,7 @@ export class FlexLayoutHalo extends Morph {
         ...[alignmentSelector, directionSelector].filter(Boolean),
         {fill: Color.transparent, layout: new HorizontalLayout(),
          submorphs: [
-           {type: 'label', value: 'Submorph Spacing', 
+           {type: 'label', value: 'Submorph Spacing',
             fontColor: Color.gray.darker(),
             padding: rect(0,5,5,5)}, spacing]}
     ];
@@ -940,7 +940,7 @@ export class ProportionalLayoutHalo extends Morph {
   updateSubmorphProportionalLayoutSettings({policy, submorph, axis}) {
     this.target.changeSettingsFor(submorph, {[axis]: policy}, true/*save*/);
   }
-  
+
   onSubmorphSettingsDragStart(evt, morphWithSettings) {
     evt.stop();
     let settings = this.target.settingsFor(morphWithSettings), descr = "";
@@ -949,7 +949,7 @@ export class ProportionalLayoutHalo extends Morph {
     grabme.wantsToBeDroppedOn = (dropTarget) => this.target.layoutableSubmorphs.includes(dropTarget);
     grabme.onBeingDroppedOn = (hand, dropTarget) => {
       grabme.remove()
-      let target = this.target.layoutableSubmorphs.includes(dropTarget) ? dropTarget : 
+      let target = this.target.layoutableSubmorphs.includes(dropTarget) ? dropTarget :
                    evt.world.morphsContainingPoint(evt.hand.position).find(ea =>
                                      this.target.layoutableSubmorphs.includes(ea))
       if (target) {

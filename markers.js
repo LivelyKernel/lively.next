@@ -13,7 +13,7 @@ import {
 } from "lively.morphic";
 import { connect, disconnect } from "lively.bindings";
 import { MorphHighlighter } from "./morph.js";
-import { Leash } from "lively.morphic/components/widgets.js";
+import { Leash } from "lively.components/widgets.js";
 
 export function show(target) {
   var world = MorphicEnv.default().world;
@@ -421,7 +421,7 @@ export function showConnector(morph1, morph2, delay = 3000) {
       midPoint = p1.lineTo(p2).sampleN(2)[1];
 
   let path = $world.addMorph(new Leash({
-    vertices: [midPoint, midPoint], borderWidth: 2, 
+    vertices: [midPoint, midPoint], borderWidth: 2,
     endpointStyle: {fill: Color.red}, borderColor: Color.red
   }))
   path.animate({vertices: [p1, p2], duration: 400});
