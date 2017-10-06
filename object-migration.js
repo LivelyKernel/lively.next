@@ -156,10 +156,12 @@ For now only a simple default theme...
           modules = (packages && packages["local://lively-object-modules/"]) || {},
           nameToPackages = [
             ['lively.morphic/halo', 'lively.halos'],
-            ['lively.morphic/components/markers.js', 'lively.halos']
-            // ['lively.morphic/components/loading-indicator.js', 'lively.components', imports => `\{${imports}\}`],
-            // ['lively.morphic/text/input-line.js', 'lively.components', imports => `\{${imports}\}`],
-            // ['lively.morphic/components', 'lively.components'],
+            ['lively.morphic/components/markers.js', 'lively.halos'],
+            ['lively.morphic/components/icons.js', 'lively.morphic'],
+            ['lively.morphic/components/loading-indicator.js', 'lively.components', imports => `\{${imports}\}`],
+            //['lively.morphic/text/input-line.js', 'lively.components', imports => `\{${imports}\}`],
+            ['lively.morphic/components', 'lively.components'],
+            ['lively.components/markers.js', 'lively.halos']
             // ['lively.morphic/ide', 'lively.ide'],
           ];
       for (let mod in modules) {
@@ -190,6 +192,7 @@ For now only a simple default theme...
             klass.module.package.name = replacement;
             klass.module.package.version = '0.1.0';
             klass.module.pathInPackage = p.substring(p.indexOf(prefix) + prefix.length + 1) || "index.js";
+            break;
           }
         }
       }
