@@ -5969,21 +5969,22 @@ function sortByReference(depGraph, startNode) {
       groups = [];
 
   while (seen.length !== all$$1.length) {
-    var depsRemaining = withoutAll(all$$1, seen).reduce(function (depsRemaining, node) {
+    var remainingNodes = withoutAll(all$$1, seen);
+    if (!remainingNodes.length) break;
+
+    var depsRemaining = remainingNodes.reduce(function (depsRemaining, node) {
       depsRemaining[node] = withoutAll(depGraph[node] || [], seen).length;
       return depsRemaining;
     }, {}),
-        min$$1 = withoutAll(all$$1, seen).reduce(function (minNode, node) {
+        min$$1 = remainingNodes.reduce(function (minNode, node) {
       return depsRemaining[node] <= depsRemaining[minNode] ? node : minNode;
-    });
+    }, all$$1[0]);
 
     if (depsRemaining[min$$1] === 0) {
       groups.push(Object.keys(depsRemaining).filter(function (key) {
         return depsRemaining[key] === 0;
       }));
-    } else {
-      groups.push([min$$1]);
-    }
+    } else groups.push([min$$1]);
 
     seen = flatten(groups);
   }

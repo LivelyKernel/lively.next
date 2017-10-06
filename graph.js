@@ -159,18 +159,19 @@ function sortByReference(depGraph, startNode) {
       seen = [], groups = [];
 
   while (seen.length !== all.length) {
-    var depsRemaining = withoutAll(all, seen).reduce(function(depsRemaining, node) {
+    var remainingNodes = withoutAll(all, seen);
+    if (!remainingNodes.length) break;
+
+    var depsRemaining = remainingNodes.reduce((depsRemaining, node) => {
           depsRemaining[node] = withoutAll(depGraph[node] || [], seen).length;
           return depsRemaining;
         }, {}),
-        min = withoutAll(all, seen)
-          .reduce(function(minNode, node) { return depsRemaining[node] <= depsRemaining[minNode] ? node : minNode; });
+        min = remainingNodes.reduce((minNode, node) =>
+          depsRemaining[node] <= depsRemaining[minNode] ? node : minNode, all[0]);
 
     if (depsRemaining[min] === 0) {
-      groups.push(Object.keys(depsRemaining).filter(function(key) { return depsRemaining[key] === 0; }));
-    } else {
-      groups.push([min]);
-    }
+      groups.push(Object.keys(depsRemaining).filter(key => depsRemaining[key] === 0));
+    } else groups.push([min]);
 
     seen = flatten(groups);
   }
