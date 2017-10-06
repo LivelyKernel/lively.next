@@ -9,7 +9,7 @@ import { connect } from "lively.bindings";
 import EvalBackendChooser from "./js/eval-backend-ui.js";
 
 import "mocha-es6";
-import LoadingIndicator from "../components/loading-indicator.js";
+import LoadingIndicator from "lively.components/loading-indicator.js";
 import JavaScriptEditorPlugin from "./js/editor-plugin.js";
 
 var jsDiff;
@@ -504,7 +504,7 @@ export default class TestRunner extends HTMLMorph {
         tests = state.loadedTests || [],
         runningTest = tests.find(test => test.state === "running"),
         renderedFiles = [];
-        
+
         for (let test of tests) {
           renderedFiles.push(
             (await this.renderFile(test.file, test.tests, collapsed))
@@ -729,4 +729,3 @@ export default class TestRunner extends HTMLMorph {
 //     })
 //     .catch(err => this.showError(err));
 // });
-

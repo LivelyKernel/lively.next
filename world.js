@@ -15,7 +15,7 @@ import {
   Menu
 } from "./index.js";
 import { StatusMessage, StatusMessageForMorph } from 'lively.halos/markers.js';
-import { TooltipViewer } from "./components/tooltips.js";
+import { TooltipViewer } from "./tooltips.js";
 
 import {
   InformPrompt,
@@ -26,13 +26,13 @@ import {
   PasswordPrompt,
   ListPrompt,
   EditListPrompt
-} from "./components/prompts.js";
+} from "lively.components/prompts.js";
 import { loadMorphFromSnapshot, loadWorldFromResource } from "./serialization.js";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import { uploadFile } from "./events/html-drop-handler.js";
 import worldCommands from "./world-commands.js";
 import { loadWorldFromURL, loadWorldFromDB, loadWorldFromCommit, loadWorld } from "./world-loading.js";
-import LoadingIndicator from "./components/loading-indicator.js";
+import LoadingIndicator from "lively.components/loading-indicator.js";
 import { GradientEditor } from "./ide/styling/gradient-editor.js";
 
 // optional lively.halos import

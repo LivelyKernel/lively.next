@@ -1,5 +1,5 @@
 import { show, Window, Morph, Label, Text } from "lively.morphic"
-import { Tree, TreeData } from "lively.morphic/components/tree.js"
+import { Tree, TreeData } from "lively.components/tree.js"
 import TextEditor from "lively.morphic/ide/text-editor.js"
 
 import { arr, fun, promise, num, date, string } from "lively.lang"
@@ -488,7 +488,7 @@ export default class HTTPFileBrowser extends Morph {
         },
         set(viewState) {
           this.ui.fileTree.applyViewState(viewState, resource => resource.url);
-        }          
+        }
       }
     }
   }

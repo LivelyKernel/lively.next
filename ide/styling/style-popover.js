@@ -1,20 +1,20 @@
 /*global target,connection*/
 import { Morph, config, Text, ShadowObject, morph, StyleSheet } from "lively.morphic";
-import { ModeSelector, DropDownSelector, SearchField, CheckBox } from "../../components/widgets.js";
+import { ModeSelector, DropDownSelector, SearchField, CheckBox } from "lively.components/widgets.js";
 import { connect, signal } from "lively.bindings";
 import { arr, string, obj } from "lively.lang";
 import { Color, rect, Rectangle, pt } from "lively.graphics";
 import { GradientEditor } from "./gradient-editor.js";
 import { ColorPickerField } from "./color-picker.js";
-import { Icons } from "../../components/icons.js";
+import { Icons } from "lively.morphic/text/icons.js";
 import KeyHandler from "../../events/KeyHandler.js";
 import { NumberWidget } from "../value-widgets.js";
 import { range, flatten } from "lively.lang/array.js";
 import { SvgStyleHalo } from "lively.halos/vertices.js";
-import { FilterableList } from "../../components/list.js";
-import { TreeData, Tree } from "../../components/tree.js";
+import { FilterableList } from "lively.components/list.js";
+import { TreeData, Tree } from "lively.components/tree.js";
 import { isArray } from "lively.lang/object.js";
-import Window from "../../components/window.js";
+import Window from "lively.components/window.js";
 import { ProportionalLayout, GridLayout, TilingLayout, CustomLayout, HorizontalLayout, VerticalLayout } from "../../layout.js";
 
 const duration = 200;
@@ -125,7 +125,7 @@ export class Popover extends Morph {
         borderColor: Color.gray
       },
       "[name=arrow]": {
-        fill: this.popoverColor.isGradient ? 
+        fill: this.popoverColor.isGradient ?
           this.popoverColor.stops[0].color : this.popoverColor,
         dropShadow: {blur: 3, color: Color.black.withA(0.4)},
         draggable: false
@@ -141,7 +141,7 @@ export class Popover extends Morph {
 }
 
 class SelectableControl extends Morph {
-  
+
   static get properties() {
     return {
       target: {
@@ -154,8 +154,8 @@ class SelectableControl extends Morph {
         initialize() {
           this.layout = new VerticalLayout({
             spacing: 10, autoResize: true,
-            layoutOrder: function(m) { 
-              return this.container.submorphs.indexOf(m) 
+            layoutOrder: function(m) {
+              return this.container.submorphs.indexOf(m)
             }
           });
         }
@@ -173,10 +173,10 @@ class SelectableControl extends Morph {
           connect(modeSelector, "switchLabel", this, "select");
           this.select(this.selectableControls[this.selectedControl]);
         }
-      }    
+      }
     };
   }
-  
+
   async select(cmd) {
     if (!this.target) return;
     const control = await this.target.execCommand(cmd),
@@ -228,7 +228,7 @@ class ToggledControl extends Morph {
           this.toggle(this.checked);
           connect(toggler, "toggle", this, "toggle");
         }
-      }    
+      }
     }
   }
 
@@ -241,7 +241,7 @@ class ToggledControl extends Morph {
     this.animate({submorphs, duration});
     if (valueControl) valueControl.animate({opacity: 1, duration});
   }
-  
+
 }
 
 class StylePopover extends Popover {
@@ -256,7 +256,7 @@ class StylePopover extends Popover {
           this.setupConnections();
         }
       }
-    }  
+    }
   }
 
   setupConnections() {
@@ -267,7 +267,7 @@ class StylePopover extends Popover {
     // return an array of control elements
     return [];
   }
-  
+
 }
 
 export class IconPopover extends StylePopover {
@@ -328,7 +328,7 @@ export class IconPopover extends StylePopover {
           })
         ]
       }
-    ];  
+    ];
   }
 
   setupConnections() {
@@ -336,7 +336,7 @@ export class IconPopover extends StylePopover {
     connect(searchInput, "searchInput", this, "filterIcons");
     connect(iconList, "onMouseUp", this, "iconSelectClick");
   }
-  
+
   iconAsTextAttributes(filterFn) {
     let iconNames = Object.keys(Icons);
     if (filterFn) iconNames = iconNames.filter(filterFn);
@@ -353,7 +353,7 @@ export class IconPopover extends StylePopover {
       this.ui.searchInput.matches(name.toLowerCase())
     );
   }
-  
+
   iconSelectClick(evt) {
     // let iconList = this.get("icon-list");
     let textPos = this.ui.iconList.textPositionFromPoint(evt.positionIn(this.ui.iconList)),
@@ -383,7 +383,7 @@ export class LayoutPopover extends StylePopover {
       popoverColor: {defaultValue: Color.gray.lighter()}
     }
   }
-  
+
   getLayoutObjects() {
     return [
       null,
@@ -409,7 +409,7 @@ export class LayoutPopover extends StylePopover {
           layoutOrder: function(m) {
             return this.container.submorphs.indexOf(m);
           }
-        }),      
+        }),
       submorphs: [this.layoutPicker(), this.layoutControls()]
     }];
   }
@@ -549,8 +549,8 @@ export class FillPopover extends StylePopover {
         }
       }
     ]);
-  }  
-  
+  }
+
   controls() {
     if (!this.gradientEnabled) {
       return [
@@ -565,7 +565,7 @@ export class FillPopover extends StylePopover {
           ]
         }
       ];
-    }    
+    }
     let selectedControl = this.fillValue && this.fillValue.isGradient ? "Gradient" : "Fill";
     return [
       new SelectableControl({
@@ -577,7 +577,7 @@ export class FillPopover extends StylePopover {
           Gradient: 'switch to gradient'
         }
       })
-    ];  
+    ];
   }
 }
 
@@ -589,8 +589,8 @@ export class ShadowPopover extends StylePopover {
       cachedShadow: {defaultValue: new ShadowObject({})},
       popoverColor: {defaultValue: Color.gray.lighter()}
     }
-  }  
-  
+  }
+
   controls() {
     let selectedValue = (this.shadowValue ? (this.shadowValue.inset ? 'Inset Shadow' : "Drop Shadow") : 'No Shadow');
     var shadowSelector,
@@ -651,7 +651,7 @@ export class ShadowPopover extends StylePopover {
     });
     connect(blurInspector, "update", this, "updateShadow", {converter: blur => ({blur})});
     connect(angleSlider, "update", this, "updateShadow", {converter: rotation => ({rotation})});
-    
+
     return new Morph({
       layout: new GridLayout({
         autoAssign: false,
@@ -706,7 +706,7 @@ export class ShadowPopover extends StylePopover {
       duration: 300
     })
   }
-  
+
   updateShadow(args) {
     let {color, spread, blur, distance, rotation, inset} = this.shadowValue,
         shadow = {color, spread, blur, distance, rotation, inset, ...args};
@@ -717,7 +717,7 @@ export class ShadowPopover extends StylePopover {
     if (this.shadowValue) this.cachedShadow = this.shadowValue;
     this.shadowValue = shadowActive && this.cachedShadow;
   }
-  
+
 }
 
 const milimeter = 'https://upload.wikimedia.org/wikipedia/commons/c/c8/Millimeterpapier_10_x_10_cm.svg';
@@ -767,7 +767,7 @@ export class PointPopover extends StylePopover {
   showPointValue() {
     this.getSubmorphNamed('point value view').animate({opacity: 1, duration: 200})
   }
-  
+
   controls() {
     var scroller, grabber,
         controls =  [morph({
@@ -830,11 +830,11 @@ export class PointPopover extends StylePopover {
     connect(scroller, 'onScroll', this, 'refineResolution');
     return controls;
   }
-  
+
 }
 
 export class VerticesPopover extends StylePopover {
-  
+
   static get properties() {
     return {
       pathOrPolygon: {},
@@ -903,7 +903,7 @@ export class VerticesPopover extends StylePopover {
           fontWeight: "bold",
           fill: Color.transparent,
         },
-        '.inactive': {opacity: .5}, 
+        '.inactive': {opacity: .5},
         ".modeBox": {borderRadius: 5, nativeCursor: "pointer"},
         ".addMode": {fill: Color.rgb(39, 174, 96)},
         ".deleteMode": {fill: Color.rgb(231, 76, 60)},
@@ -922,7 +922,7 @@ export class VerticesPopover extends StylePopover {
         styleClasses: this.commandToMorphClasses(cmd.command),
         layout: new HorizontalLayout({spacing: 5}),
         submorphs: [
-          {type: "label", value: doc, 
+          {type: "label", value: doc,
            reactsToPointer: false, styleClasses: ["modeLabel"]},
           {
             type: "label",
@@ -949,7 +949,7 @@ export class VerticesPopover extends StylePopover {
       "delete vertices": ["modeBox", "deleteMode"],
       "transform vertices": ["modeBox", "transformMode"]
     }[cmd.name];
-  } 
+  }
 }
 
 export class RectanglePopover extends StylePopover {
@@ -1054,5 +1054,5 @@ export class TextPopover extends StylePopover {
       {keys: {mac: "Command-S", win: "Ctrl-S"}, command: "save string"}
     ]);
   }
-  
+
 }

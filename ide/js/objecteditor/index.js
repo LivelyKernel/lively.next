@@ -4,8 +4,8 @@ import { Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
 import { pt, Color } from "lively.graphics";
 import JavaScriptEditorPlugin from "../editor-plugin.js";
 import { withSuperclasses, lexicalClassMembers, isClass } from "lively.classes/util.js";
-import { Icon } from "lively.morphic/components/icons.js";
-import { TreeData, Tree } from "lively.morphic/components/tree.js";
+import { Icon } from "lively.morphic/text/icons.js";
+import { TreeData, Tree } from "lively.components/tree.js";
 import { connect } from "lively.bindings";
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
 import ObjectPackage, { addScript, isObjectClass, isObjectClassFor } from "lively.classes/object-classes.js";
@@ -770,10 +770,10 @@ export class ObjectEditor extends Morph {
       selectedModule
     } = this;
 
-    
+
     let p = lively.modules.getPackage(selectedClass[Symbol.for("lively-module-meta")].package.name)
-    
-    
+
+
     if (selectedClass) {
       title += ` - ${selectedClass.name}`;
       if (isObjectClass(selectedClass)) {
@@ -929,7 +929,7 @@ export class ObjectEditor extends Morph {
           shortName = pkg ? pkg.name + "/" + system.shortModuleName(mod.name, pkg)
                           : mod.name;
 
-  
+
       let realModule = lively.modules.module(mod.name);
       if (realModule.format() !== "esm" && realModule.format() !== "register")
         continue;
@@ -939,9 +939,9 @@ export class ObjectEditor extends Morph {
           isClass(ea) && !imports.includes(ea.name) && withSuperclasses(ea).includes(Morph));
 
       for (let klass of klasses) {
-        items.push({isListItem: true, string: `${shortName} ${klass.name}`, value: {module: mod, klass}});        
+        items.push({isListItem: true, string: `${shortName} ${klass.name}`, value: {module: mod, klass}});
       }
-      
+
     }
 
     let {selected: [klassAndModule]} = await $world.filterableListPrompt(
@@ -954,7 +954,7 @@ export class ObjectEditor extends Morph {
     this.refresh();
   }
 
-  async interactivelyAdoptBySuperclass() {    
+  async interactivelyAdoptBySuperclass() {
     let {target: t} = this,
         klass = t.constructor;
     if (klass === Morph) return;
@@ -990,7 +990,7 @@ export class ObjectEditor extends Morph {
       range.start = ed.lineRange(range.start.row-1).end
     }
     ed.replace(range, "");
-    
+
     await this.doSave();
   }
 
@@ -1050,7 +1050,7 @@ export class ObjectEditor extends Morph {
           varEnd -= classStart;
           let range = {
             start: sourceEditor.indexToPosition(varStart),
-            end: sourceEditor.indexToPosition(varEnd)};      
+            end: sourceEditor.indexToPosition(varEnd)};
           sourceEditor.selection = range;
           sourceEditor.centerRange(range);
         }
@@ -1423,7 +1423,7 @@ export class ObjectEditor extends Morph {
     let descr = RuntimeSourceDescriptor.for(klass),
         parsed = ast || await descr.ast,
         methods = Path("body.body").get(parsed),
-        method = methods.find(({kind, static: itIsClassMethod, key: {name}}) => {          
+        method = methods.find(({kind, static: itIsClassMethod, key: {name}}) => {
           if (name !== methodName || itIsClassMethod !== isClassMethod)
             return false;
           if (!methodKind || (methodKind !== "get" && methodKind !== "set"))
@@ -1498,7 +1498,7 @@ class ImportController extends Morph {
       ]});
     this.layout.row(1).fixed = 30;
     this.applyLayoutIfNeeded();
-    
+
     // FIXME
     [this.get("openButton"),
      this.get("cleanupButton"),

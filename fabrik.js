@@ -2,9 +2,9 @@ import { InteractiveMorphSelector, MorphHighlighter } from "lively.halos/morph.j
 import { connect, signal, once } from "lively.bindings";
 import { Color, rect, pt } from "lively.graphics";
 import { show, HorizontalLayout, Morph, VerticalLayout, StyleSheet, Icon, GridLayout, morph, Window } from "lively.morphic";
-import { TreeData, Tree } from "./components/tree.js";
+import { TreeData, Tree } from "lively.components/tree.js";
 import { arr, obj } from "lively.lang";
-import { Leash, LabeledCheckBox, SearchField } from "./components/widgets.js";
+import { Leash, LabeledCheckBox, SearchField } from "lively.components/widgets.js";
 import { isArray } from "lively.lang/object.js";
 import { max } from "lively.lang/array.js";
 import { hashCode } from "lively.lang/string.js";

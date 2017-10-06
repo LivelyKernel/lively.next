@@ -10,11 +10,11 @@ export * from "./layout.js";
 export { StyleSheet } from "./style-sheets.js";
 export { show } from "lively.halos/markers.js"
 export { ShadowObject } from "./rendering/morphic-default.js";
-export { Button } from "./components/buttons.js";
-export { Menu } from "./components/menus.js";
-export * from "./components/tooltips.js";
-export { Icon } from "./components/icons.js";
-export * from "./components/list.js";
+export { Button } from "lively.components/buttons.js";
+export { Menu } from "lively.components/menus.js";
+export * from "./tooltips.js";
+export { Icon } from "./text/icons.js";
+export * from "lively.components/list.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -22,11 +22,11 @@ import { World, Hand } from "./world.js";
 import { Morph, Image, Ellipse, Triangle, Path, Polygon, LineMorph } from "./morph.js";
 import { Text } from "./text/morph.js";
 import { Label } from "./text/label.js";
-import { Button } from "./components/buttons.js";
-import { CheckBox, LabeledCheckBox } from "./components/widgets.js";
-import { List, DropDownList } from "./components/list.js";
+import { Button } from "lively.components/buttons.js";
+import { CheckBox, LabeledCheckBox } from "lively.components/widgets.js";
+import { List, DropDownList } from "lively.components/list.js";
 import { HTMLMorph } from './html-morph.js';
-import Window from "./components/window.js";
+import Window from "lively.components/window.js";
 import InputLine from "./text/input-line.js";
 export { Window };
 

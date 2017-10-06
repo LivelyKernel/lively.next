@@ -1,8 +1,8 @@
-import { Morph, Text, morph, Label, HorizontalLayout, 
+import { Morph, Text, morph, Label, HorizontalLayout,
         StyleSheet, Icon, GridLayout, config } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 import { Color, Rectangle, LinearGradient, pt, rect } from "lively.graphics";
-import { ValueScrubber } from "../components/widgets.js";
+import { ValueScrubber } from "lively.components/widgets.js";
 import { FillPopover, TextPopover, IconPopover, RectanglePopover, ShadowPopover,
          PointPopover, VerticesPopover, LayoutPopover, Popover} from "./styling/style-popover.js";
 import { num, obj } from "lively.lang";
@@ -24,7 +24,7 @@ of these existing and/or add their own for new types of values as they please.
 
 */
 
-/* 
+/*
 
   About Context Sensitive Widgets:
 
@@ -42,7 +42,7 @@ of these existing and/or add their own for new types of values as they please.
 */
 
 class ContextSensitiveWidget extends Morph {
-  
+
   static get properties() {
     return {
       fill: {defaultValue: Color.transparent},
@@ -54,15 +54,15 @@ class ContextSensitiveWidget extends Morph {
       context: {/* a certain morph that the inspected property is assigned to */}
     }
   }
-  
+
 }
 
 class ShortcutWidget extends ContextSensitiveWidget {
-  
+
   static get properties() {
     return {
       title: {
-        defaultValue: 'No Title', /* Name denoting the shortcut */ 
+        defaultValue: 'No Title', /* Name denoting the shortcut */
         after: ['submorphs'],
         set(t) {
           this.setProperty('title', t);
@@ -76,11 +76,11 @@ class ShortcutWidget extends ContextSensitiveWidget {
             Icon.makeLabel('arrow-right', {
               styleClasses: ['TreeLabel'],
               fontSize: 15, padding: rect(1,1,4,1)}),
-            {type: "label", value: this.title, fontSize: 14, 
+            {type: "label", value: this.title, fontSize: 14,
              styleClasses: ['TreeLabel'],
              fontWeight: 'bold',
              name: 'valueString', opacity: .8,
-             borderRadius: 5, padding: rect(0,1,0,0), 
+             borderRadius: 5, padding: rect(0,1,0,0),
              nativeCursor: 'pointer', fontSize: 12,
              borderWidth: 0}
           ];
@@ -96,8 +96,8 @@ class ShortcutWidget extends ContextSensitiveWidget {
   async openPopover() {
     /* provide a tool for editing the property at hand */
   }
-  
-} 
+
+}
 
 export class VerticesWidget extends ShortcutWidget {
 
@@ -113,8 +113,8 @@ export class VerticesWidget extends ShortcutWidget {
      connect(editor, 'vertices', this, 'vertices');
      signal(this, "openWidget", editor);
   }
-  
-} 
+
+}
 
 export class StyleSheetWidget extends ShortcutWidget {
 
@@ -123,7 +123,7 @@ export class StyleSheetWidget extends ShortcutWidget {
       title: {defaultValue: 'Edit Style Sheets'}
     }
   }
-  
+
   async openPopover() {
     let editor = new Popover({
       popoverColor: LinearGradient.create({0: Color.gray.lighter(), 1: Color.gray}),
@@ -132,7 +132,7 @@ export class StyleSheetWidget extends ShortcutWidget {
     await editor.fadeIntoWorld(this.globalBounds().center());
     connect(editor, "fadeOut", editor.targetMorph, "closeOpenWidget");
     signal(this, "openWidget", editor);
-  }  
+  }
 }
 
 export class LayoutWidget extends ShortcutWidget {
@@ -142,7 +142,7 @@ export class LayoutWidget extends ShortcutWidget {
       title: {
         after: ['submorphs'],
         initialize() {
-          this.title = this.context && this.context.layout ? 
+          this.title = this.context && this.context.layout ?
             'Configure ' + this.context.layout.name() + ' Layout' : 'No Layout';
         }
       }
@@ -150,7 +150,7 @@ export class LayoutWidget extends ShortcutWidget {
   }
 
   layoutChanged() {
-    this.title = this.context.layout ? 
+    this.title = this.context.layout ?
             'Configure ' + this.context.layout.name() + ' Layout' : 'No Layout';
   }
 
@@ -160,7 +160,7 @@ export class LayoutWidget extends ShortcutWidget {
     connect(editor, 'layoutChanged', this, 'layoutChanged');
     signal(this, "openWidget", editor);
   }
-  
+
 }
 
 // these can exist outside of a certain morph context
@@ -209,7 +209,7 @@ export class ColorWidget extends Morph {
         initialize() {
           connect(this, "color", this, "relayout", {
             converter: (next, prev) => {
-              return (prev && prev.isColor) != (next && next.isColor) 
+              return (prev && prev.isColor) != (next && next.isColor)
             }
           });
           this.relayout(true);
@@ -224,11 +224,11 @@ export class ColorWidget extends Morph {
         this.submorphs = this.renderNoColor();
         return;
       }
-      this.submorphs = this.color.isGradient ? 
-        this.renderGradientValue() : this.renderColorValue(); 
+      this.submorphs = this.color.isGradient ?
+        this.renderGradientValue() : this.renderColorValue();
     } else {
       if (!this.color) return;
-      this.color.isGradient ? 
+      this.color.isGradient ?
         this.updateGradientValue() : this.updateColorValue();
     }
   }
@@ -246,7 +246,7 @@ export class ColorWidget extends Morph {
         stopLabel.value = (offset * 100).toFixed() + "%" + (i < gradient.stops.length - 1 ? "," : "");
       }
     } else {
-      this.submorphs = this.renderGradientValue(); 
+      this.submorphs = this.renderGradientValue();
     }
   }
 
@@ -269,7 +269,7 @@ export class ColorWidget extends Morph {
 
   updateColorValue() {
      this.getSubmorphNamed('color box').fill = this.color;
-     this.getSubmorphNamed('valueString').value = obj.safeToString(this.color);  
+     this.getSubmorphNamed('valueString').value = obj.safeToString(this.color);
   }
 
   renderNoColor() {
@@ -341,7 +341,7 @@ export class ColorWidget extends Morph {
           ? num.toDegrees(gradient.vectorAsAngle()).toFixed() + "°,"
           : ""
       }
-    ];    
+    ];
     for (let i in gradient.stops) {
       var {color, offset} = gradient.stops[i];
       stops.push({
@@ -377,8 +377,8 @@ export class ColorWidget extends Morph {
       fillValue: this.color,
       title: "Fill Control",
       gradientEnabled: this.gradientEnabled
-    });  
-    editor.position = pt(0);    
+    });
+    editor.position = pt(0);
     await editor.fadeIntoWorld(this.globalBounds().center());
     connect(editor, "fillValue", this, "update");
     signal(this, "openWidget", editor);
@@ -500,7 +500,7 @@ export class NumberWidget extends Morph {
               name: "up", styleClasses: ['buttonStyle', 'TreeLabel'],
               padding: rect(4,0,0,2),
               label: Icon.makeLabel("sort-asc", {
-                autofit: false, 
+                autofit: false,
                 padding: rect(0,0,0,-9),
                 fixedHeight: true, extent: pt(8,8),
                 fontSize: 12
@@ -670,7 +670,7 @@ export class ShadowWidget extends Morph {
        value: `, ${blur}px, ${distance}px, ${spread}px)`}
     ];
   }
-  
+
 }
 
 export class PointWidget extends Label {
@@ -685,16 +685,16 @@ export class PointWidget extends Label {
         set(p) {
           let fontColor = Color.rgbHex("#0086b3");
           this.setProperty('pointValue', p);
-          this.textAndAttributes = ['pt(', {}, 
-                                     p.x.toFixed(), {fontColor}, 
-                                     ',', {}, 
+          this.textAndAttributes = ['pt(', {},
+                                     p.x.toFixed(), {fontColor},
+                                     ',', {},
                                      p.y.toFixed(), {fontColor}, ')', {}];
           this.fixedWidth = true;
           this.fixedHeight = true;
           this.height = 20;
           this.width = this.textString.length * this.fontSize;
         }
-      }    
+      }
     }
   }
 
@@ -708,7 +708,7 @@ export class PointWidget extends Label {
     connect(editor, 'pointValue', this, 'pointValue');
     signal(this, "openWidget", editor);
   }
-  
+
 }
 
 export class PaddingWidget extends Label {
@@ -727,7 +727,7 @@ export class PaddingWidget extends Label {
       }
     }
   }
-  
+
   onMouseDown(evt) {
     this.openPopover();
   }
@@ -762,7 +762,7 @@ export class IconWidget extends Label {
   onMouseDown(evt) {
     this.openPopover();
   }
-  
+
   async openPopover() {
     let iconPicker = new IconPopover();
     await iconPicker.fadeIntoWorld(this.globalBounds().center());
@@ -771,7 +771,7 @@ export class IconWidget extends Label {
     }, varMapping: {Icon}});
     signal(this, 'openWidget', iconPicker);
   }
-  
+
 }
 
 export class StringWidget extends InputLine {

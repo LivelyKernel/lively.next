@@ -3,7 +3,7 @@
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { MorphicEnv } from "../index.js";
 import { morph } from "../index.js";
-import { Menu } from 'lively.morphic/components/menus.js';
+import { Menu } from 'lively.components/menus.js';
 import { expect } from "mocha-es6";
 import { promise } from "lively.lang";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
@@ -68,23 +68,23 @@ describe("menus", () => {
     expect(menu.submenu.items[0].label).equals('bar', 'sub menu is wrong');
   });
 
-  
+
   it("transform menu bounds for visibility", function() {
     var ownerBounds = new Rectangle(0,0, 300, 100),
         menuBounds, result, expected;
-  
+
     // nothing to do when rect opens in visible range
     menuBounds = new Rectangle(0,0, 30, 20);
     expected = menuBounds;
     result = Menu.prototype.moveBoundsForVisibility(menuBounds, ownerBounds)
     expect(result).equals(result, 1);
-  
+
     // move bounds left besides opening point (hand) so that no accidental clicks occur
     menuBounds = new Rectangle(290,0, 30, 20);
     expected = new Rectangle(260,0, 30, 20);
     result = Menu.prototype.moveBoundsForVisibility(menuBounds, ownerBounds)
     expect(result).equals(result, 2);
-  
+
     // if bottom of menu would be lower than bottom of visble bounds, translate it
     menuBounds = new Rectangle(0,90, 30, 20);
     expected = menuBounds.translatedBy(pt(0,-10));

@@ -4,8 +4,8 @@ import { obj, promise, Path } from "lively.lang";
 import { Morph, config, GridLayout, StyleSheet, Text } from "../index.js";
 import { lessPosition, minPosition, maxPosition } from "./position.js";
 import { occurStartCommand } from "./occur.js";
-import { Icon } from "../components/icons.js";
-import { Button } from "../components/buttons.js";
+import { Icon } from "./icons.js";
+import { Button } from "lively.components/buttons.js";
 import TextMap from "./map.js";
 import { delay } from "lively.lang/promise.js";
 import { debounceNamed } from "lively.lang/function.js";
@@ -439,11 +439,11 @@ export class SearchWidget extends Morph {
         [this.state.backwards ? "border-left" : "border-right"]: "3px red solid",
       }
     });
-    
+
     textMap && textMap.update();
   }
 
-  addSearchMarkersForPreview(found, noCursor = true) {    
+  addSearchMarkersForPreview(found, noCursor = true) {
     if (!found) return;
     this.addSearchMarkers(found);
     noCursor && this.target.removeMarker("search-highlight-cursor");
@@ -466,8 +466,8 @@ export class SearchWidget extends Morph {
       selectionRange: sel.range,
       selectionReverse: sel.isReverse()
     }
-    
-    
+
+
     if (state.last && state.last.found) {
       // FIXME...! noUpdate etc
       disconnect(inputMorph, "inputChanged", this, "search");

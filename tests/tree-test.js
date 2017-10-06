@@ -1,6 +1,6 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
 import { morph,  World, MorphicEnv } from "../index.js";
-import { Tree, TreeData } from "lively.morphic/components/tree.js";
+import { Tree, TreeData } from "lively.components/tree.js";
 import { expect } from "mocha-es6";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { arr } from "lively.lang";

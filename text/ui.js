@@ -3,10 +3,8 @@ import { fun, arr } from "lively.lang"
 import { show, HorizontalLayout, VerticalLayout, DropDownList, inspect, morph, Morph } from "../index.js";
 import { pt, LinearGradient, Rectangle, Color } from "lively.graphics";
 import { connect, noUpdate } from "lively.bindings"
-import { Icon } from "lively.morphic/components/icons.js";
+import { Icon } from "./icons.js";
 import { loadObjectFromPartsbinFolder } from "../partsbin.js";
-// import { LabeledCheckBox } from "../components/widgets.js";
-
 
 const cachedControls = new WeakMap();
 

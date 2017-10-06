@@ -6,7 +6,7 @@ import {ColorPicker} from "./color-picker.js";
 import {Morph, Image, VerticalLayout, GridLayout,
         Text, Path, HorizontalLayout, Ellipse, morph} from "../../index.js";
 import {num, obj, arr} from "lively.lang";
-import {Icon} from "lively.morphic/components/icons.js";
+import {Icon} from "lively.morphic/text/icons.js";
 import {StyleSheet} from "../../style-sheets.js";
 import {connect, signal, once} from "lively.bindings";
 import { Popover } from "./style-popover.js";
@@ -285,7 +285,7 @@ class StopControlHead extends Morph {
       }
       paletteField.fill = this.stopColor = gradient.stops[this.index].color;
    }
-   
+
    onHoverIn() {
       const color = this.targetProperty.stops[this.index].color;
       this.palette = this.palette || new Popover({
@@ -297,23 +297,23 @@ class StopControlHead extends Morph {
       this.picker.color = color;
       this.scheduleExpand();
    }
-           
+
    onHoverOut() {
       this.scheduleShrink();
    }
-   
+
    scheduleExpand() {
       if (this.queue.pop()) return;
       this.queue.push(this.expand);
       this.dequeue();
    }
-           
+
    scheduleShrink() {
       if (this.queue.pop()) return;
       this.queue.push(this.shrink);
       this.dequeue();
    }
-   
+
    async dequeue() {
       if (this.queueActive) return;
       this.queueActive = true;
@@ -322,7 +322,7 @@ class StopControlHead extends Morph {
       }
       this.queueActive = false;
    }
-           
+
    async expand() {
       if (this.submorphs.length > 1) return;
       const palette = this.get("paletteField");
@@ -330,12 +330,12 @@ class StopControlHead extends Morph {
       this.submorphs = [this.closeButton(), palette, this.pickerField()];
       palette.animate({extent: pt(15,15), duration: 200});
       await this.animate({
-        layout: new HorizontalLayout({spacing: 3}), 
+        layout: new HorizontalLayout({spacing: 3}),
         center: pt(-1,-15), duration: 200
       });
       this.stopVisualizer.gradientEditor.update();
    }
-           
+
    async shrink() {
       if (this.submorphs.length < 3) return;
       const oldCenter = this.center,
@@ -345,16 +345,16 @@ class StopControlHead extends Morph {
       palette.animate({extent: pt(10,10), duration: 200});
       this.layout = null; close.remove(); picker.remove();
       await this.animate({
-        layout: new HorizontalLayout({spacing: 3}), 
+        layout: new HorizontalLayout({spacing: 3}),
         center: oldCenter, duration: 200
       });
    }
-           
+
    onWidgetClosed() {
        this.palette = this.picker = null;
        this.shrink();
    }
-   
+
    closeButton() {
       return new Morph({
          name: "close",
@@ -366,11 +366,11 @@ class StopControlHead extends Morph {
              this.stopVisualizer.removeStop(this.index) && this.remove();
           }})]})
    }
-           
+
    updateColor(color) {
        this.stopVisualizer.updateStop(this.index, {color});
    }
-           
+
    openColorWidget(name) {
        this.stopVisualizer.stopControls.forEach(c => c.head.closeAllWidgets());
        this[name].topLeft = pt(0, 0);
@@ -393,16 +393,16 @@ class StopControlHead extends Morph {
      }
     }, 100);
    }
-   
+
    closeColorWidget(name) {
       this[name] && this[name].remove();
    }
-           
+
    closeAllWidgets() {
       this.closeColorWidget('palette');
       this.closeColorWidget('picker');
    }
-   
+
    paletteField(extent) {
        const stopControl = this,
              paletteField = morph({
@@ -410,20 +410,20 @@ class StopControlHead extends Morph {
           styleClasses: ['paletteField'],
        });
      connect(
-       paletteField, 'onMouseDown', 
+       paletteField, 'onMouseDown',
        this, 'openColorWidget', {
          converter: () => 'palette'
        }
      );
      return paletteField;
    }
-           
+
    pickerField() {
        let pickerField = new Image({
           name: "pickerField",
           styleClasses: ['pickerField']
        });
-      connect(pickerField, 'onMouseDown', 
+      connect(pickerField, 'onMouseDown',
               this, 'openColorWidget', {
         converter: () => 'picker'
       });
@@ -450,7 +450,7 @@ class GradientStopVisualizer extends Morph {
              this.submorphs = [{
                  type: "label", name: "instruction", value: "Select Gradient Type",
                  visible: !(this.targetProperty && this.targetProperty.isGradient)
-             }, {name: "stopControlPreview", visible: false, 
+             }, {name: "stopControlPreview", visible: false,
                  submorphs: [Icon.makeLabel("plus-circle", {name: "addStopLabel"})]
              }];
             }
@@ -463,9 +463,9 @@ class GradientStopVisualizer extends Morph {
     this.get("instruction").animate({opacity: 0, visible: false, duration: 300});
     this.renderStopControls(gradient)
   }
-  
+
   onHoverOut() { this.toggleStopPreview(false) }
-  
+
   onMouseMove(evt) {
     const pos = evt.positionIn(this),
           absOffset = pos.x;
@@ -476,7 +476,7 @@ class GradientStopVisualizer extends Morph {
        this.get("stopControlPreview").position = pt(absOffset, 0);
     }
   }
-  
+
   onMouseDown(evt) {
     if (!this.get("stopControlPreview").visible) return;
     var   offset = evt.positionIn(this).x / this.width,
@@ -484,12 +484,12 @@ class GradientStopVisualizer extends Morph {
     idx = idx < 0 ? this.targetProperty.stops.length - 1 : idx;
     this.insertStop(idx, offset);
   }
-  
+
   toggleStopPreview(visible) {
     if (!this.get("instruction").visible)
       this.get("stopControlPreview").visible = visible
   }
-  
+
   removeStop(idx) {
       const gradient = this.targetProperty;
       if (gradient.stops.length > 2) {
@@ -500,20 +500,20 @@ class GradientStopVisualizer extends Morph {
          return false;
       }
   }
-  
+
   insertStop(idx, offset) {
       const gradient = this.targetProperty,
             color = gradient.stops[idx].color;
       arr.pushAt(gradient.stops, {offset, color}, idx);
       this.targetProperty = gradient;
    }
-   
+
    updateStop(idx, props) {
       const gradient = this.targetProperty;
       gradient.stops[idx] = {...gradient.stops[idx], ...props};
       this.targetProperty = gradient;
    }
-   
+
    renderStopControls(gradient) {
       if (!this.stopControls || this.stopControls.length != gradient.stops.length) {
          const [instructions, preview] = this.submorphs;
@@ -525,7 +525,7 @@ class GradientStopVisualizer extends Morph {
       }
      arr.invoke(this.stopControls, "update", gradient);
    }
-   
+
 }
 
 class GradientStopControl extends Morph {
@@ -558,7 +558,7 @@ class GradientStopControl extends Morph {
                         .addPt(pt(5,0))
    this.head.update(gradient);
   }
-          
+
   onDragStart(evt) {
      this.nativeCursor = '-webkit-grabbing';
      this.stopVisualizer.nativeCursor = '-webkit-grabbing';
@@ -566,7 +566,7 @@ class GradientStopControl extends Morph {
         type: 'text', styleClasses: ['Tooltip'], padding: 3
      })).openInWorld(evt.hand.position.addPt(pt(10,10)));
   }
-          
+
   onDrag(evt) {
      const absOffset = this.position.x - 5 + evt.state.dragDelta.x,
            offset = Math.max(0, Math.min(1, absOffset / (this.stopVisualizer.width - 10)));
@@ -574,7 +574,7 @@ class GradientStopControl extends Morph {
      this.offsetView.textString = (offset * 100).toFixed(2) + "%"
      this.offsetView.position = evt.hand.position.addPt(pt(10,10));
   }
-          
+
   onDragEnd() {
      this.nativeCursor = '-webkit-grab';
      this.stopVisualizer.nativeCursor = 'auto';
@@ -595,7 +595,7 @@ class FocusHandle extends Ellipse {
   relayout() {
      this.center = this.gradientHandle.innerBounds().center();
   }
-  
+
   onDragStart(evt) {
      this.tfm = this.gradientHandle.target.getGlobalTransform().inverse();
      this.focusView = this.addMorph(new Text({
@@ -604,7 +604,7 @@ class FocusHandle extends Ellipse {
      this.focusView.rotation = 0;
      this.focusView.scale = 1;
   }
-  
+
   onDrag(evt) {
      const {x,y} = evt.state.dragDelta,
            gh = this.gradientHandle,
@@ -615,7 +615,7 @@ class FocusHandle extends Ellipse {
      gh.target.makeDirty();
      gh.relayout();
   }
-  
+
   onDragEnd(evt) {
      this.focusView.remove();
   }
@@ -641,14 +641,14 @@ class BoundsHandle extends Ellipse {
      this.center = this.gradientHandle.innerBounds().partNamed(this.side);
      this.scale = 1 / this.gradientHandle.target.getGlobalTransform().getScale();
   }
-  
+
   onDragStart(evt) {
     this.boundsView = this.addMorph(new Text({
       type: 'text', styleClasses: ['propertyView']
     })).openInWorld(evt.hand.position.addPt(pt(10,10)));
     this.boundsView.rotation = 0;
   }
-  
+
   onDrag(evt) {
     var gh = this.gradientHandle,
         g = gh.target.fill,
@@ -659,11 +659,11 @@ class BoundsHandle extends Ellipse {
     gh.target.makeDirty()
     gh.relayout();
   }
-  
+
   onDragEnd(evt) {
     this.boundsView.remove()
   }
-  
+
 }
 
 export class GradientFocusHandle extends Ellipse {
@@ -746,7 +746,7 @@ export class GradientFocusHandle extends Ellipse {
        this.rotation = this.target.rotation;
        this.scale = this.target.scale;
        this.borderWidth = 2 / this.scale;
-       if (this.owner) 
+       if (this.owner)
           this.center = this.owner.localizePointFrom(this.target.extent.scaleByPt(focus), this.target);
     }
 

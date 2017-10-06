@@ -1,4 +1,4 @@
-import { Canvas } from "lively.morphic/components/canvas.js";
+import { Canvas } from "lively.components/canvas.js";
 import { connect, disconnect } from "lively.bindings/index.js";
 import { debounceNamed, throttleNamed } from "lively.lang/function.js";
 import { delay } from "lively.lang/promise.js";
@@ -36,7 +36,7 @@ export default class TextMap extends Canvas {
     // this.openInWorld()
     // this.update()
     // this.remove()
-    
+
     // this.attachTo(that);
     // this.detachFromCurrentTextMorph()
     // this.update()
@@ -168,7 +168,7 @@ export default class TextMap extends Canvas {
     textMorph.scrollPositionIntoView({row, column: 0});
     delay(100).then(() => this.update());
   }
-  
+
   onDrag(evt) {
     this.onMouseDown(evt);
   }

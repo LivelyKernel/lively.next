@@ -74,7 +74,7 @@ var commands = [
       return cmd ? cmd.target.execCommand(cmd.command, args, count) : true;
     }
   },
-  
+
   {
     name: "show command history",
     exec: (world, args) => {
@@ -457,7 +457,7 @@ var commands = [
       }).activate();
     }
   },
-  
+
   {
     name: "open console",
     exec: async (world, opts = {}) => {
@@ -717,7 +717,7 @@ var commands = [
   {
     name: "open object drawer",
     exec: async world => {
-      var { default: ObjectDrawer } = await System.import("lively.morphic/components/object-drawer.js")
+      var { default: ObjectDrawer } = await System.import("lively.components/object-drawer.js")
       return new ObjectDrawer().openInWorldNearHand();
     }
   },
@@ -1079,7 +1079,7 @@ var commands = [
       worldList.update();
       worldList.focus();
       return worldList;
-        
+
     }
   },
 
