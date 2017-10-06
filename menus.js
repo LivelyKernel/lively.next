@@ -5,9 +5,7 @@ import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 
 export const menuCommands = [{
   name: 'open menu at hand',
-  exec: (world, {items, hand}) => {
-     return Menu.openAtHand(items, {hand})
-  }
+  exec: (world, {items, hand}) => Menu.openAtHand(items, {hand})
 }];
 
 export class MenuDivider extends Morph {

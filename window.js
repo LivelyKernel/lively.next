@@ -1,15 +1,13 @@
 /* global Expo */
 import { arr, string } from "lively.lang";
 import { pt, LinearGradient, rect, Color, Rectangle } from "lively.graphics";
-import { Label, Icon, morph, Morph, 
+import { Label, Icon, morph, Morph,
         HorizontalLayout, ShadowObject, StyleSheet } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 
 export const windowCommands = [{
   name: 'create window',
-  exec(world, args) {
-    return new Window(args)
-  }
+  exec(world, args) => new Window(args)
 }];
 
 export class Window extends Morph {
