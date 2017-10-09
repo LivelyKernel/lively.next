@@ -1,6 +1,7 @@
 import { Label, config, Morph } from "lively.morphic";
 import { arr, obj, promise, fun } from "lively.lang";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
+import { show } from "lively.halos/markers.js";
 
 export class MenuDivider extends Morph {
 
