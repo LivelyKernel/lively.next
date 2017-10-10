@@ -926,9 +926,14 @@ export default class Browser extends Window {
     var { runTestsInModuleButton, sourceEditor, moduleCommands } = this.ui,
         hasTests = false;
     if (this.editorPlugin.isJSEditorPlugin) {
+      try {
       var ast = this.editorPlugin.getNavigator().ensureAST(sourceEditor),
           tests = testsFromSource(ast || sourceEditor.textString);
       hasTests = tests && tests.length;
+      } catch (err) {
+        console.warn(`sytem browser updateTestUI: ${err}`);
+        hasTests = false;
+      }
     }
     runTestsInModuleButton.visible = runTestsInModuleButton.isLayoutable = !!hasTests;
   }
