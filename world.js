@@ -36,7 +36,7 @@ import LoadingIndicator from "./components/loading-indicator.js";
 import { GradientEditor } from "./ide/styling/gradient-editor.js";
 
 // optional lively.halos import
-import Halo from "lively.halos/morph.js";
+import Halo, { MorphHighlighter } from "lively.halos/morph.js";
 
 export class World extends Morph {
 
@@ -687,6 +687,14 @@ export class World extends Morph {
 
   showLayoutHaloFor(morph, pointerId = this.firstHand && this.firstHand.pointerId) {
     return this.addMorph(morph.layout.inspect(pointerId));
+  }
+
+  highlightMorph(highlightOwner, morph, showLayout = false, highlightedSides = []) {
+    return MorphHighlighter.for(highlightOwner, morph, showLayout, highlightedSides);
+  }
+
+  removeHighlighters(highlightOwner = this) {
+    return MorphHighlighter.removeHighlighters(highlightOwner);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
