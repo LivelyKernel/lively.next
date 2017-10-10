@@ -9,10 +9,10 @@ import { Leash } from "./markers.js";
 intersect.plugin(bezier);
 
 function pointOnLine(a, b, pos, bw) {
-   var v0 = pt(a.x, a.y), v1 = pt(b.x, b.y),
-       l = v1.subPt(v0), ln = l.scaleBy(1/l.r()),
-       dot = v1.subPt(pos).dotProduct(ln);
-   return v1.subPt(ln.scaleBy(Math.max(1,Math.min(dot, l.r())))).addXY(bw,bw);
+  var v0 = pt(a.x, a.y), v1 = pt(b.x, b.y),
+      l = v1.subPt(v0), ln = l.scaleBy(1/l.r()),
+      dot = v1.subPt(pos).dotProduct(ln);
+  return v1.subPt(ln.scaleBy(Math.max(1,Math.min(dot, l.r())))).addXY(bw,bw);
 }
 
 class VertexHandle extends Morph {
@@ -36,7 +36,7 @@ class VertexHandle extends Morph {
 
   update() {
     const bw = this.halo.target.borderWidth || 2,
-      {x, y} = this.halo.target.vertices[this.index];
+          {x, y} = this.halo.target.vertices[this.index];
     this.position = pt(x + bw, y + bw);
     
     const [bc, ac] = this.submorphs,
@@ -119,14 +119,14 @@ class VertexHandle extends Morph {
       }
     });    
     connect(next, 'onEndpointDrag', this, 'update', {updater: ($upd, evt) => {
-        let p = evt.state.endpoint;
-        if (p.index == 1) {
-          this.targetObj.vertex.moveNextControlPoint(
-            p.getGlobalTransform().inverse().transformDirection(evt.state.dragDelta)
-          );
-          $upd();
-        }    
-      }
+      let p = evt.state.endpoint;
+      if (p.index == 1) {
+        this.targetObj.vertex.moveNextControlPoint(
+          p.getGlobalTransform().inverse().transformDirection(evt.state.dragDelta)
+        );
+        $upd();
+      }    
+    }
     });
     return points;
   }
@@ -135,10 +135,10 @@ class VertexHandle extends Morph {
     this.halo.deselectVertexHandles();
     this.select();
     switch (this.halo.vertexMode) {
-      case "delete": this.removeVertex(); break;
-      case "transform":
-        if (evt.state.clickCount > 1) this.transformVertex();
-        break;
+    case "delete": this.removeVertex(); break;
+    case "transform":
+      if (evt.state.clickCount > 1) this.transformVertex();
+      break;
     }
   }
 
@@ -169,21 +169,21 @@ class VertexHandle extends Morph {
     return this.vertices[this.index];
   }
 
-   get nextVertex() {
+  get nextVertex() {
     return this.vertices[this.index < this.vertices.length - 1 ? this.index + 1 : 0];
-   }
+  }
 
-   get previousVertex() {
+  get previousVertex() {
     return this.vertices[this.index > 0 ? this.index - 1 : this.vertices.length - 1];
-   }
+  }
 
-   showControlPoints() {
-    this.submorphs.forEach(controlPoint => controlPoint.visible = true)
-   }
+  showControlPoints() {
+    this.submorphs.forEach(controlPoint => controlPoint.visible = true);
+  }
 
-   hideControlPoints() {
-    this.submorphs.forEach(controlPoint => controlPoint.visible = false)
-   }
+  hideControlPoints() {
+    this.submorphs.forEach(controlPoint => controlPoint.visible = false);
+  }
 
   removeVertex() {
     const vs = this.halo.target.vertices;

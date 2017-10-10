@@ -1,11 +1,17 @@
-import { connect, signal, once } from "lively.bindings";
+import { arr } from "lively.lang";
+import { connect, once } from "lively.bindings";
 import { Color, rect, pt } from "lively.graphics";
-import { show, HorizontalLayout, Morph, VerticalLayout,
-         StyleSheet, Icon, GridLayout, morph, Window } from "lively.morphic";
-import { arr, obj } from "lively.lang";
-import { isArray } from "lively.lang/object.js";
-import { max } from "lively.lang/array.js";
-import { hashCode } from "lively.lang/string.js";
+import {
+  show,
+  HorizontalLayout,
+  Morph,
+  VerticalLayout,
+  StyleSheet,
+  Icon,
+  GridLayout,
+  morph,
+  Window
+} from "lively.morphic";
 import { TreeData, Tree } from "lively.components/tree.js";
 import { LabeledCheckBox, SearchField } from "lively.components/widgets.js";
 import { showConnector, Leash } from "./markers.js";
@@ -37,14 +43,14 @@ export function printConnectionElements(
   converter, updater
 ) {
   let source = `connect(sourceObj, '${sourceAttr}', targetObj, '${targetAttr}'`;
-  if (converter || updater) source += ", {\n"
-  if (converter) source += `  converter: ${converter}`
-  if (converter && updater) source += ","
-  if (converter) source += "\n"
-  if (updater) source += `  updater: ${updater}\n`
-  if (converter || updater) source += "}"
-  source += ");"
-  return source
+  if (converter || updater) source += ", {\n";
+  if (converter) source += `  converter: ${converter}`;
+  if (converter && updater) source += ",";
+  if (converter) source += "\n";
+  if (updater) source += `  updater: ${updater}\n`;
+  if (converter || updater) source += "}";
+  source += ");";
+  return source;
 }
 
 
@@ -63,20 +69,20 @@ export async function interactiveConnectGivenSourceAndTarget(sourceObj, sourceAt
 
   let items = bindings.map(
     group => [group[0].group || "uncategorized",
-              group.map(ea => [
-                ea.name, () => interactivelyEvaluateConnection(
-                  {sourceObj, sourceAttr, targetObj, targetAttr: ea.name, onConnect})])]);
+      group.map(ea => [
+        ea.name, () => interactivelyEvaluateConnection(
+          {sourceObj, sourceAttr, targetObj, targetAttr: ea.name, onConnect})])]);
 
 
-    items.push(["custom...", async () => {
-      let targetAttr = await world.prompt("Enter custom connection point", {
-            requester: targetObj,
-            historyId: "lively.morphic-custom-connection-points",
-            useLastInput: true
-          })
-      if (targetAttr) interactivelyEvaluateConnection(
-        {sourceObj, sourceAttr, targetObj, targetAttr, onConnect});
-    }]);
+  items.push(["custom...", async () => {
+    let targetAttr = await world.prompt("Enter custom connection point", {
+      requester: targetObj,
+      historyId: "lively.morphic-custom-connection-points",
+      useLastInput: true
+    });
+    if (targetAttr) interactivelyEvaluateConnection(
+      {sourceObj, sourceAttr, targetObj, targetAttr, onConnect});
+  }]);
 
 
   targetObj.openMenu(items);
@@ -110,7 +116,7 @@ export async function interactivelyEvaluateConnection(opts) {
       input = printConnectionElements(sourceObj, sourceAttr, targetObj, targetAttr, converter, updater);
   Object.assign(lively.modules.module(targetModule).recorder, {
     sourceObj, targetObj, connect, once
-  })
+  });
   let source = await $world.editPrompt(prompt, {
     input, historyId: "lively.bindings-interactive-morph-connect", mode: "js",
     evalEnvironment,
@@ -160,7 +166,7 @@ class ConnectionTreeData extends TreeData {
   constructor(morph) {
     let connections = morph.attributeConnections || [], treeData = this;
     function unwrap([name, childrenOrPin]) {
-      if (isArray(childrenOrPin)) {
+      if (Array.isArray(childrenOrPin)) {
         let children = childrenOrPin.map(unwrap);
         return {
           type: "category",
@@ -171,7 +177,7 @@ class ConnectionTreeData extends TreeData {
       }
       let connectionsWithName = connections.filter(c => c.sourceAttrName == name);
       return new ConnectionNode({
-        type: !!connectionsWithName.length ? "connectedPin" : "sourceAttr",
+        type: connectionsWithName.length ? "connectedPin" : "sourceAttr",
         name, treeData, target: morph,
         visible: !!connectionsWithName.length,
         priority: connectionsWithName.length,
@@ -197,13 +203,13 @@ class ConnectionTreeData extends TreeData {
   display(node) {
     if (node._cached) return node._cached;
     if (node.type == 'category') {
-      return node._cached = node.name
+      return node._cached = node.name;
     } else {
       return node.display();
     }
   }
 
-  isLeaf(node) { return !node.children }
+  isLeaf(node) { return !node.children; }
   isCollapsed(node) { return node.isCollapsed; }
   collapse(node, bool) { node.isCollapsed = bool; }
   getChildren(node) {
@@ -237,10 +243,10 @@ export class ConnectionInspector extends Window {
             addConnectionButton: this.get('addConnection'),
             searchInput: this.get('searchInput'),
             showAllToggle: this.get('filter')
-          }
+          };
         }
       }
-    }
+    };
   }
 
   updateStyleSheet() {
@@ -278,13 +284,13 @@ export class ConnectionInspector extends Window {
   build() {
     let width = 200,
         tree = new Tree({
-            name: "connectionTree",
-            extent: pt(width, 300),
-            selectionColor: Color.transparent,
-            selectionFontColor: Color.black,
-            layout: new VerticalLayout({spacing: 2, autoResize: false}),
-            treeData: this.getConnectionData()
-          });
+          name: "connectionTree",
+          extent: pt(width, 300),
+          selectionColor: Color.transparent,
+          selectionFontColor: Color.black,
+          layout: new VerticalLayout({spacing: 2, autoResize: false}),
+          treeData: this.getConnectionData()
+        });
     this.whenRendered().then(() => {
       this.width = Math.max(tree.nodeItemContainer.bounds().width + 5, width);
       let l = new Leash({
@@ -301,40 +307,40 @@ export class ConnectionInspector extends Window {
       connect(this, 'close', l, 'remove');
     });
     return morph({
-        name: "controls",
-        reactsToPointer: false,
-        fill: Color.transparent,
-        extent: pt(tree.nodeItemContainer.bounds().width, 300),
-        layout: new GridLayout({
-          autoAssign: false,
-          grid: [
-            [null, "searchInput", null],
-            [null, 'filter', 'filter'],
-            ["connectionTree", "connectionTree", "connectionTree"]
-          ],
-          columns: [0, {fixed: 5}, 2, {fixed: 5}],
-          rows: [0, {fixed: 30, paddingTop: 5, paddingBottom: 5},
-                 1, {fixed: 23}]
+      name: "controls",
+      reactsToPointer: false,
+      fill: Color.transparent,
+      extent: pt(tree.nodeItemContainer.bounds().width, 300),
+      layout: new GridLayout({
+        autoAssign: false,
+        grid: [
+          [null, "searchInput", null],
+          [null, 'filter', 'filter'],
+          ["connectionTree", "connectionTree", "connectionTree"]
+        ],
+        columns: [0, {fixed: 5}, 2, {fixed: 5}],
+        rows: [0, {fixed: 30, paddingTop: 5, paddingBottom: 5},
+          1, {fixed: 23}]
+      }),
+      submorphs: [
+        new SearchField({
+          name: "searchInput",
+          width,
+          placeHolder: "Filter Connection Points"
         }),
-        submorphs: [
-          new SearchField({
-            name: "searchInput",
-            width,
-            placeHolder: "Filter Connection Points"
-          }),
-          new LabeledCheckBox({
-            name: 'filter',
-            fill: Color.transparent,
-            label: 'Show all Attributes'
-          }),
-          tree
-        ]
-      });
+        new LabeledCheckBox({
+          name: 'filter',
+          fill: Color.transparent,
+          label: 'Show all Attributes'
+        }),
+        tree
+      ]
+    });
   }
 
   setupConnections() {
     let {connectionTree, addConnectionButton,
-         showAllToggle, resizer, searchInput} = this.ui;
+      showAllToggle, resizer, searchInput} = this.ui;
     connect(this, "fadeOut", this, "hideConnection");
     connect(connectionTree.treeData, "update", this, "refreshTreeView");
     connect(showAllToggle, 'checked', this, 'refreshTreeView', {converter: () => false});
@@ -348,12 +354,12 @@ export class ConnectionInspector extends Window {
 
   refreshTreeView(newData) {
     let {connectionTree, searchInput, showAllToggle} = this.ui,
-        td = !!newData ? newData : connectionTree.treeData;
+        td = newData ? newData : connectionTree.treeData;
     td.uncollapseAll(() => true);
     td.filter(({depth, node}) => {
       if (node.type == 'category' || node.name == 'root') return true;
-      if (!!searchInput.textString)
-        return searchInput.matches(node.name)
+      if (searchInput.textString)
+        return searchInput.matches(node.name);
       return (showAllToggle.active && showAllToggle.checked) || !!node.connections.length;
     });
     connectionTree.treeData = td;
@@ -456,7 +462,7 @@ class ConnectionPin extends Morph {
           this.update();
         }
       }
-    }
+    };
   }
 
   async update(duration = 0) {
@@ -474,14 +480,14 @@ class ConnectionPin extends Morph {
         this.styleClasses = styleClasses;
       }
       if (world) {
-          this.initPos = this.position;
-          let pos = world
-            .visibleBounds()
-            .insetBy(5)
-            .translateForInclusion(this.globalBounds())
-            .topLeft();
-          duration ? this.animate({globalPosition: pos, duration}) : (this.globalPosition = pos);
-        }
+        this.initPos = this.position;
+        let pos = world
+          .visibleBounds()
+          .insetBy(5)
+          .translateForInclusion(this.globalBounds())
+          .topLeft();
+        duration ? this.animate({globalPosition: pos, duration}) : (this.globalPosition = pos);
+      }
     } else {
       let styleClasses = [...arr.without(this.styleClasses, 'expanded'), 'collapsed'];
       if (this.initPos)
@@ -509,24 +515,24 @@ class ConnectionPin extends Morph {
 
   getAlignmentProps() {
     switch(this.orientation) {
-       case 'right':
-         return {leftCenter: this.innerBounds().rightCenter().addXY(5,0)}
-       case 'bottom':
-         return {
-           rotation: Math.PI / 2,
-           topCenter: this.innerBounds().bottomCenter().addXY(0,5)
-         }
-       case 'left':
-         return {
-           rightCenter: this.innerBounds().leftCenter().addXY(-5,0)
-         }
+    case 'right':
+      return {leftCenter: this.innerBounds().rightCenter().addXY(5,0)};
+    case 'bottom':
+      return {
+        rotation: Math.PI / 2,
+        topCenter: this.innerBounds().bottomCenter().addXY(0,5)
+      };
+    case 'left':
+      return {
+        rightCenter: this.innerBounds().leftCenter().addXY(-5,0)
+      };
     }
   }
 
   displayVacant() {
     var l, p;
     l = morph({type: 'label', value: this.propertyName,
-               submorphs: [p = this.renderVacantPin()]})
+      submorphs: [p = this.renderVacantPin()]});
     l.fit();
     p.leftCenter = l.innerBounds().rightCenter().addXY(5,0);
     return this._cached = l;
@@ -554,13 +560,13 @@ class ConnectionPin extends Morph {
         });
     connect(connector.endPoint, "onDragStart", this, "startConnecting", {
       updater: function($upd) {
-        $upd(connector, connectorPin)
+        $upd(connector, connectorPin);
       },
       varMapping: {connector, connectorPin}
     });
     connect(connector.endPoint, "onDragEnd", this, "stopConnecting", {
       updater: function($upd) {
-        $upd(connector, connectorPin)},
+        $upd(connector, connectorPin);},
       varMapping: {connector, connectorPin}
     });
     return connectorPin;
@@ -586,9 +592,9 @@ class ConnectionPin extends Morph {
           [null, null, null, this.renderVacantPin()]
         ],
         columns: [0, {paddingLeft: 5, fixed: nameLabel.textBounds().width + 15},
-                  1, {fixed: 15 + (longestTargetMethod.length * 9)},
-                  2, {fixed: 15},
-                  3, {fixed: 20}]
+          1, {fixed: 15 + (longestTargetMethod.length * 9)},
+          2, {fixed: 15},
+          3, {fixed: 20}]
       })
     });
     this._cached.layout.col(2).align = 'rightCenter';
@@ -607,7 +613,7 @@ class ConnectionPin extends Morph {
             ...Icon.textAttribute("long-arrow-right"), "  ", null,
             connection.targetMethodName, null
           ],
-        })
+        });
     connect(description, 'onHoverIn', this, 'showConnection', {
       converter: () => ({connection, connectionPoint, description}),
       varMapping: {connection, connectionPoint, description}
@@ -642,15 +648,15 @@ class ConnectionPin extends Morph {
     // fixme: the attachment points of the leashes should be parametrized...
     leash.startPoint.attachTo(m1, orientation + 'Center');
     if (m2.isMorph) {
-       leash.endPoint.attachTo(m2, m2.globalBounds()
-          .partNameNearest(sides, m1.globalPosition));
+      leash.endPoint.attachTo(m2, m2.globalBounds()
+        .partNameNearest(sides, m1.globalPosition));
     } else {
-       let visualPointer = morph({
-         type: 'label', value: m2.toString(),
-         styleClasses: ['Tooltip'] , padding: rect(8,4)
-       }).openInWorld(m1.globalBounds().rightCenter().addXY(100, 0));
-       once(leash, 'remove', visualPointer, 'remove');
-       leash.endPoint.attachTo(visualPointer, 'leftCenter');
+      let visualPointer = morph({
+        type: 'label', value: m2.toString(),
+        styleClasses: ['Tooltip'] , padding: rect(8,4)
+      }).openInWorld(m1.globalBounds().rightCenter().addXY(100, 0));
+      once(leash, 'remove', visualPointer, 'remove');
+      leash.endPoint.attachTo(visualPointer, 'leftCenter');
     }
     return leash;
   }
@@ -693,7 +699,7 @@ class ConnectionPin extends Morph {
   removeConnection(connection) {
     connection.disconnect();
     this.connections = (this.target.attributeConnections || [])
-                          .filter(c => c.sourceAttrName == this.propertyName);
+      .filter(c => c.sourceAttrName == this.propertyName);
     this.focus();
     this.update();
   }
@@ -707,10 +713,10 @@ class ConnectionPin extends Morph {
 
   async stopConnecting(connectorLeash, connectorPin) {
     let {startPoint, endPoint} = connectorLeash,
-         self = this,
-         sourceObj = this.target,
-         sourceAttr = this.propertyName,
-         targetObj = endPoint.connectedMorph;
+        self = this,
+        sourceObj = this.target,
+        sourceAttr = this.propertyName,
+        targetObj = endPoint.connectedMorph;
     if (targetObj)
       interactiveConnectGivenSourceAndTarget(sourceObj, sourceAttr, targetObj, cleanup);
     cleanup();
@@ -731,7 +737,7 @@ class ConnectionPin extends Morph {
   async showAllConnections(active) {
     this.previewConnections(false);
     this.expanded = active;
-    this.update(200)
+    this.update(200);
   }
 
   previewConnections(active) {
@@ -759,7 +765,7 @@ class ConnectionPin extends Morph {
   }
 
   onMouseDown(evt) {
-     !this.expanded && this.collapsible && this.showAllConnections(true);
+    !this.expanded && this.collapsible && this.showAllConnections(true);
   }
 
   onBlur(evt) {
@@ -772,7 +778,7 @@ class ConnectionPin extends Morph {
   }
 
   onFocusLost() {
-     !this.connectingInProgress && this.collapsible && this.showAllConnections(false);
+    !this.connectingInProgress && this.collapsible && this.showAllConnections(false);
   }
 
 }
@@ -832,7 +838,7 @@ export class ConnectionHalo extends Morph {
             '.controlButton .Label': {
               fontColor: Color.white
             }
-          })
+          });
         }
       },
 
@@ -843,13 +849,13 @@ export class ConnectionHalo extends Morph {
           this.whenRendered().then(() => this.alignWithTarget());
         }
       }
-    }
+    };
   }
 
   alignWithTarget() {
     if (!this.world()) return;
     let visibleBounds = this.world().visibleBounds().insetBy(100);
-    this.setBounds(this.target.globalBounds().intersection(visibleBounds))
+    this.setBounds(this.target.globalBounds().intersection(visibleBounds));
     this.placeConnectionPins();
   }
 
@@ -857,7 +863,7 @@ export class ConnectionHalo extends Morph {
     // add close button
     let closeButton = Icon.makeLabel('close', {
       styleClasses: ['controlButton'],
-            padding: rect(6,4,4,4),
+      padding: rect(6,4,4,4),
     });
     // add create new pin button
     let addPinButton = morph({
@@ -884,7 +890,7 @@ export class ConnectionHalo extends Morph {
     // });
   }
 
- interactivelyAddPin() {
+  interactivelyAddPin() {
     let menuItems = this.target.connectMenuItems(async (name, target, spec) => {
       if (name === "custom...") {
         name = await this.world().prompt("Enter custom connection point", {
@@ -898,18 +904,18 @@ export class ConnectionHalo extends Morph {
       this.placeConnectionPins();
     });
 
-   this.target.openMenu(menuItems);
+    this.target.openMenu(menuItems);
   }
 
   getPlacementPoints() {
     return [
       ...this.innerBounds().translatedBy(pt(-8,-8)).leftEdge().sample(20)
-             .reverse().map(p => [p, 'left']),
+        .reverse().map(p => [p, 'left']),
       ...this.innerBounds().translatedBy(pt(-8,-8)).bottomEdge().sample(20)
-             .reverse().map(p => [p, 'bottom']),
+        .reverse().map(p => [p, 'bottom']),
       ...this.innerBounds().translatedBy(pt(-8,-8)).rightEdge().sample(20)
-             .reverse().map(p => [p, 'right']),
-    ]
+        .reverse().map(p => [p, 'right']),
+    ];
   }
 
   placeConnectionPins() {
@@ -928,7 +934,7 @@ export class ConnectionHalo extends Morph {
 
     Object.keys(pinsAndConnections).map((sourceName) => {
       if (!placementPoints.length) placementPoints = this.getPlacementPoints();
-      let [center, orientation] = placementPoints.pop()
+      let [center, orientation] = placementPoints.pop();
       this.addMorphBack(
         new ConnectionPin({
           expanded: false,

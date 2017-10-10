@@ -13,7 +13,6 @@ import { obj, promise, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
 import { ConnectionHalo } from "lively.morphic/fabrik.js";
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from "./drag-guides.js";
-import { showLayoutHaloFor } from "./layout.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // The halo morph controls a group of halo items, each of which can control or
@@ -24,7 +23,6 @@ export default class Halo extends Morph {
     return {
       fill: {defaultValue: Color.transparent},
       resizeOnly: {defaultValue: false},
-      target: {},
       pointerId: {},
       submorphs: {
         after: ["target"],
@@ -40,9 +38,7 @@ export default class Halo extends Morph {
         }
       },
       target: {
-        get() {
-          return this.state ? this.state.target : null;
-        },
+        get() { return this.state ? this.state.target : null; },
         set(t) {
           let isUpdate = !!this.state.target;
           this.detachFromTarget();
@@ -69,14 +65,14 @@ export default class Halo extends Morph {
         7, {fixed: 36, paddingTop: 10}
       ],
       grid: [
-          ["menu",   null,   "grab", null,  "drag", null,   "close"  ],
-          [null,     null,   null,   null,  null,   null,   null     ],
-          ["copy",   null,   null,   null,  null,   null,   "edit"   ],
-          [null,     null,   null,   null,  null,   null,   null     ],
-          ["connections",  null,   null,   null,  null,   null,   "inspect"],
-          [null,     null,   null,   null,  null,   null,   null     ],
-          ["rotate", null,   null,   null,  null,   null,   "resize" ],
-          [null,     "name", "name", "name","name", "name", null     ]]});
+        ["menu",   null,   "grab", null,  "drag", null,   "close"  ],
+        [null,     null,   null,   null,  null,   null,   null     ],
+        ["copy",   null,   null,   null,  null,   null,   "edit"   ],
+        [null,     null,   null,   null,  null,   null,   null     ],
+        ["connections",  null,   null,   null,  null,   null,   "inspect"],
+        [null,     null,   null,   null,  null,   null,   null     ],
+        ["rotate", null,   null,   null,  null,   null,   "resize" ],
+        [null,     "name", "name", "name","name", "name", null     ]]});
 
     layout.col(1).row(7).group.align = "center";
     layout.col(1).row(7).group.resize = false;
@@ -103,9 +99,9 @@ export default class Halo extends Morph {
 
   get isEpiMorph() { return true; }
 
-  get isHaloItem() { return true }
+  get isHaloItem() { return true; }
 
-  get isHalo() { return true }
+  get isHalo() { return true; }
 
   get borderBox() {
     return this.getSubmorphNamed("border-box") || this.addMorphBack(morph({
@@ -169,7 +165,7 @@ export default class Halo extends Morph {
 
   detachFromTarget() {
     var {target} = this;
-    if (!target) return
+    if (!target) return;
     disconnect(target, "onChange", this, "alignWithTarget");
     if (target instanceof MultiSelectionTarget) {
       target.modifiesSelectedMorphs = false;
@@ -220,7 +216,7 @@ export default class Halo extends Morph {
   async addMorphToSelection(morph) {
     const world = this.world(),
           currentTargets = this.target.isMorphSelection ?
-                             this.target.selectedMorphs : [this.target];
+            this.target.selectedMorphs : [this.target];
     this.remove();
     return await world.showHaloForSelection([...currentTargets, morph], this.state.pointerId);
   }
@@ -326,12 +322,12 @@ export default class Halo extends Morph {
 
     var {x,y,width, height } = this.target.globalBounds(),
         bounds = this.localize(pt(x,y))
-                     .extent(pt(width, height))
-                     .scaleRectTo(this.innerBounds()),
+          .extent(pt(width, height))
+          .scaleRectTo(this.innerBounds()),
         vertices = {topLeft: [pt(width, height), pt(0,0)],
-                    topRight: [pt(0, height), pt(width, 0)],
-                    bottomRight: [pt(0,0), pt(width, height)],
-                    bottomLeft: [pt(width, 0), pt(0, height)]};
+          topRight: [pt(0, height), pt(width, 0)],
+          bottomRight: [pt(0,0), pt(width, height)],
+          bottomLeft: [pt(width, 0), pt(0, height)]};
 
     if (diagonal) { diagonal.setBounds(bounds); return; }
 
@@ -395,17 +391,17 @@ export default class Halo extends Morph {
       const actualMorph = this.target.isMorphSelection ?
         this.target.morphBeneath(evt.position) : this.morphBeneath(evt.position);
       this.isAlreadySelected(actualMorph) ?
-          this.removeMorphFromSelection(actualMorph) :
-          this.addMorphToSelection(actualMorph);
+        this.removeMorphFromSelection(actualMorph) :
+        this.addMorphToSelection(actualMorph);
       return;
     }
     if (target == this.borderBox && evt.isCommandKey()) {
       // cycle to the next morph below at the point we clicked
-     var morphsBelow = evt.world
-           .morphsContainingPoint(evt.position)
-           .filter(ea => ea.halosEnabled),
-         morphsBelowHaloMorph = morphsBelow.slice(morphsBelow.indexOf(this.target) + 1),
-         newTarget = morphsBelowHaloMorph[0] || morphsBelow[0] || evt.world;
+      var morphsBelow = evt.world
+            .morphsContainingPoint(evt.position)
+            .filter(ea => ea.halosEnabled),
+          morphsBelowHaloMorph = morphsBelow.slice(morphsBelow.indexOf(this.target) + 1),
+          newTarget = morphsBelowHaloMorph[0] || morphsBelow[0] || evt.world;
       newTarget && evt.world.showHaloFor(newTarget, evt.domEvt.pointerId);
       this.remove();
     }
@@ -476,7 +472,7 @@ class HaloPropertyDisplay extends Text {
       fontSize:     {defaultValue: 12},
       fontColor:    {defaultValue: Color.white},
       position:     {defaultValue: this.defaultPosition}
-    }
+    };
   }
 
   get isHaloItem() { return false; }
@@ -510,10 +506,10 @@ class MultiSelectionTarget extends Morph {
       visible:                {defaultValue: false},
       modifiesSelectedMorphs: {defaultValue: false},
       selectedMorphs:         {defaultValue: []},
-    }
+    };
   }
 
-  get isHaloItem() { return true }
+  get isHaloItem() { return true; }
   get isMorphSelection() { return true; }
 
   selectsMorph(morph) { return this.selectedMorphs.includes(morph); }
@@ -574,10 +570,10 @@ class MultiSelectionTarget extends Morph {
     super.onChange(change);
     if (!this.modifiesSelectedMorphs) return;
     switch (change.prop) {
-      case "extent": this.updateExtent(change); break;
-      case "scale": this.updateScale(change); break;
-      case "position": this.updatePosition(change); break;
-      case "rotation": this.updateRotation(change); break;
+    case "extent": this.updateExtent(change); break;
+    case "scale": this.updateScale(change); break;
+    case "position": this.updatePosition(change); break;
+    case "rotation": this.updateRotation(change); break;
     }
     return change;
   }
@@ -599,7 +595,7 @@ class HaloItem extends Morph {
       grabbable:    {defaultValue: false},
       extent:       {defaultValue: pt(24,24)},
       halo:         {},
-    }
+    };
   }
 
   static for(halo) {
@@ -607,7 +603,7 @@ class HaloItem extends Morph {
   }
 
   get isEpiMorph() { return true; }
-  get isHaloItem() { return true };
+  get isHaloItem() { return true; }
 
   menuItems() { return []; }
 
@@ -644,7 +640,7 @@ class NameHolder extends Morph {
           connect(this.nameHolder, 'onBlur', this, 'accept');
         }
       }
-    }
+    };
 
   }
 
@@ -726,7 +722,7 @@ class NameHaloItem extends HaloItem {
       fill: {defaultValue: Color.gray.withA(0.7)},
       borderColor: {defaultValue: Color.green},
       layout: {initialize() { this.layout = new HorizontalLayout({spacing: 0}); }},
-    }
+    };
   }
 
   constructor(props) {
@@ -768,7 +764,7 @@ class NameHaloItem extends HaloItem {
       return;
     this.halo.changingName = active;
     if (active) {
-      this.nameHolders.forEach(nh => nh != nameHolder && nh.deactivate())
+      this.nameHolders.forEach(nh => nh != nameHolder && nh.deactivate());
       this.borderWidth = 3;
       this.addMorph(this.validityIndicator);
       setTimeout(() => nameHolder.nameHolder.selectAll());
@@ -801,7 +797,7 @@ class NameHaloItem extends HaloItem {
   alignInHalo() {
     arr.zip(this.targets(), this.nameHolders).map(([{target}, nh]) => {
       nh.target = target; 
-      nh.update()
+      nh.update();
     });
     var {x, y} = this.halo.innerBounds().bottomCenter().addPt(pt(0, 2));
     this.topCenter = pt(Math.max(x, 30), Math.max(y, 80));
@@ -853,7 +849,7 @@ class GrabHaloItem extends HaloItem {
       name: {defaultValue: "grab"},
       styleClasses: {defaultValue: ["fa", "fa-hand-rock-o"]},
       tooltip: {defaultValue: "Grab the morph"}
-    }
+    };
   }
 
   valueForPropertyDisplay() {
@@ -878,7 +874,7 @@ class GrabHaloItem extends HaloItem {
     this.hand = hand;
     halo.target.onGrab({hand, isShiftDown: () => false});
     halo.state.activeButton = this;
-    this.opacity = .3
+    this.opacity = .3;
   }
 
   update() {
@@ -904,11 +900,11 @@ class GrabHaloItem extends HaloItem {
   }
 
   onDragStart(evt) {
-    this.init(evt.hand)
+    this.init(evt.hand);
   }
 
   onDragEnd(evt) {
-    this.stop(evt.hand)
+    this.stop(evt.hand);
   }
 
 }
@@ -962,9 +958,9 @@ class DragHaloItem extends HaloItem {
         5/*eps*/, 500/*maxDist*/);
   }
 
-  onDragStart(evt) { this.init() }
+  onDragStart(evt) { this.init(); }
   onDrag(evt) { this.update(evt.state.dragDelta, evt.isAltDown(), evt.isCtrlDown()); }
-  onDragEnd(evt) { this.stop() }
+  onDragEnd(evt) { this.stop(); }
   onKeyUp(evt) { this.updateAlignmentGuide(false); }
 }
 
@@ -979,9 +975,9 @@ class InspectHaloItem extends HaloItem {
   onMouseDown(evt) {
     this.halo.remove();
     (async () => {
-       var {default: Inspector} = await System.import("lively.morphic/ide/js/inspector.js");
-       Inspector.openInWindow({targetObject: this.halo.target});
-    })()
+      var {default: Inspector} = await System.import("lively.morphic/ide/js/inspector.js");
+      Inspector.openInWindow({targetObject: this.halo.target});
+    })();
   }
 
 }
@@ -1039,7 +1035,7 @@ class RotateHaloItem extends HaloItem {
   update(angleToTarget) {
     this.scaleGauge = null;
     var newRotation = this.initRotation + (angleToTarget - this.angle);
-    newRotation = num.toRadians(num.detent(num.toDegrees(newRotation), 10, 45))
+    newRotation = num.toRadians(num.detent(num.toDegrees(newRotation), 10, 45));
     this.halo.target.rotation = newRotation;
     this.halo.toggleRotationIndicator(true, this);
   }
@@ -1122,7 +1118,7 @@ class CopyHaloItem extends HaloItem {
     if (isMultiSelection) {
       // FIXME! haaaaack
       let copies = target.selectedMorphs.map(ea => world.addMorph(ea.copy())),
-          positions = copies.map(ea => {ea.name += ' copy'; return ea.position});
+          positions = copies.map(ea => {ea.name += ' copy'; return ea.position;});
       copies[0].undoStart("copy-halo");
       world.addMorph(halo);
       halo.refocus(copies);
@@ -1156,7 +1152,7 @@ class CopyHaloItem extends HaloItem {
     halo.alignWithTarget();
   }
 
-  onDragStart(evt) { this.init(evt.hand) }
+  onDragStart(evt) { this.init(evt.hand); }
   onDragEnd(evt) { this.stop(evt.hand); }
 
   async onMouseUp(evt) {
@@ -1183,11 +1179,11 @@ class CopyHaloItem extends HaloItem {
       for (let m of morphsToCopy) {
         let snap = await createMorphSnapshot(m, {addPreview: false, testLoad: false});
         snap.copyMeta = {offset: m.worldPoint(pt(0,0)).subPt(origin)};
-        snapshots.push(snap)
+        snapshots.push(snap);
         html += m.renderPreview();
       }
 
-      html += "</body></html>"
+      html += "</body></html>";
 
       let data = JSON.stringify(snapshots);
 
@@ -1414,7 +1410,7 @@ class ResizeHandle extends HaloItem {
 
   updateAlignmentGuide(active) {
     var mesh = this.halo.getSubmorphNamed("mesh");
-    if (!active) { mesh && mesh.remove(); return; };
+    if (!active) { mesh && mesh.remove(); return; }
     let {x,y} = this.halo.target.extent,
         offset = pt(x % 10, y % 10);
     mesh = this.halo.getMesh(this.globalPosition.addPt(this.extent.scaleBy(.5)), offset);
@@ -1445,7 +1441,7 @@ class MenuHaloItem extends HaloItem {
 class ConnectionsHaloItem extends HaloItem {
   
   static get connectionHaloMap() {
-    return this._connectionHaloMap || (this._connectionHaloMap = new WeakMap())
+    return this._connectionHaloMap || (this._connectionHaloMap = new WeakMap());
   }
 
   static removeHalosFor(morph) {
@@ -1476,7 +1472,7 @@ class ConnectionsHaloItem extends HaloItem {
       },
       tooltip: {defaultValue: "Manage this morph's connections"},
       draggable: {defaultValue: false}
-    }
+    };
   }
 
   async onMouseDown(evt) {
@@ -1512,8 +1508,8 @@ export class MorphHighlighter extends Morph {
           this.alignWithHalo();
           this.submorphs = sides.map(side => {
             return {type: 'ellipse', isHaloItem: true, 
-                    fill: Color.orange, center: this.innerBounds()[side]()}
-          })
+              fill: Color.orange, center: this.innerBounds()[side]()};
+          });
         }
       },
       showLayout: {defaultValue: false},
@@ -1521,15 +1517,15 @@ export class MorphHighlighter extends Morph {
         initialize() {
           this.styleSheets = new StyleSheet({
             '.inactive': {
-               opacity: 0,
+              opacity: 0,
             },
             '.active': {
-               fill: Color.orange.withA(0.3),
-               opacity: 1,
-               borderWidth: 2,
+              fill: Color.orange.withA(0.3),
+              opacity: 1,
+              borderWidth: 2,
               borderColor: Color.orange
             }
-          })
+          });
         }
       },
       targetId: {},
@@ -1539,7 +1535,7 @@ export class MorphHighlighter extends Morph {
           return (this.world() || this.env.world).getMorphWithId(this.targetId);
         }
       }
-    }
+    };
   }
 
   static removeHighlighters(halo=$world) {
@@ -1560,8 +1556,8 @@ export class MorphHighlighter extends Morph {
   }
   
   static interceptDrop(halo, target, morph) {
-     var store = halo._morphHighlighters = halo._morphHighlighters || {};
-     store && store[target.id].handleDrop(morph)
+    var store = halo._morphHighlighters = halo._morphHighlighters || {};
+    store && store[target.id].handleDrop(morph);
   }
 
   alignWithHalo() {

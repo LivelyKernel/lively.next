@@ -1,7 +1,6 @@
-import { debounceNamed } from "lively.lang/function.js";
-import { pt, rect, Transform, Rectangle, Color } from "lively.graphics";
-import { detent } from "lively.lang/number.js";
-import { show, morph } from "lively.morphic";
+import { fun } from "lively.lang";
+import { pt, Color } from "lively.graphics";
+import { morph } from "lively.morphic";
 
 const cachedGuideLines = new WeakMap();
 
@@ -22,7 +21,7 @@ export function showAndSnapToGuides(target, showGuides = true, snap = true, eps 
       world = owner.world(),
       tfm = owner.getGlobalTransform(),
       morphsForGuides = target.owner.submorphs.filter(ea =>
-          ea !== target && !ea.isEpiMorph && ea.visible && ea.reactsToPointer),
+        ea !== target && !ea.isEpiMorph && ea.visible && ea.reactsToPointer),
       fromEdges = ["left", "top", "right", "bottom", "hCenter", "vCenter"],
       toEdges = ["left", "top", "right", "bottom", "hCenter", "vCenter"],
       aligned = findAlignedMorphs(target, morphsForGuides, eps, maxDist, fromEdges, toEdges),
@@ -132,16 +131,16 @@ export function showAndSnapToGuides(target, showGuides = true, snap = true, eps 
       if (snap && !maxHPriority && (dir === "right" || dir === "left")) {
         maxHPriority = 10;
 
-        let sign = dir === "right" ? -1 : 1
-        dragOffsetX = (foundSimilarDist.dist - (targetR || targetL).dist) * sign
+        let sign = dir === "right" ? -1 : 1;
+        dragOffsetX = (foundSimilarDist.dist - (targetR || targetL).dist) * sign;
         startXa += dragOffsetX;
         endXa += dragOffsetX;
       }
 
       if (snap && !maxVPriority && (dir === "top" || dir === "bottom")) {
         maxVPriority = 10;
-        let sign = dir === "top" ? -1 : 1
-        dragOffsetY = ((targetT || targetB).dist - foundSimilarDist.dist) * sign
+        let sign = dir === "top" ? -1 : 1;
+        dragOffsetY = ((targetT || targetB).dist - foundSimilarDist.dist) * sign;
         startYa += dragOffsetY;
         endYa += dragOffsetY;
       }
@@ -194,7 +193,7 @@ export function showAndSnapToGuides(target, showGuides = true, snap = true, eps 
     // dragGuides.splice(i, dragGuides.length-i).forEach(ea => ea.remove());
     dragGuides.slice(i).forEach(ea => ea.remove());
 
-    debounceNamed(target.id + "-drag-guides-cleanup", 1300, () => {
+    fun.debounceNamed(target.id + "-drag-guides-cleanup", 1300, () => {
       let dragGuides = cachedGuideLines.get(target);
       if (!dragGuides) return;
       dragGuides.forEach(ea => ea.remove());
@@ -221,7 +220,7 @@ export function showAndSnapToResizeGuides(
       world = owner.world(),
       tfm = owner.getGlobalTransform(),
       morphsForGuides = target.owner.submorphs.filter(ea =>
-          ea !== target && !ea.isEpiMorph && ea.visible && ea.reactsToPointer),
+        ea !== target && !ea.isEpiMorph && ea.visible && ea.reactsToPointer),
       axis = (sides.includes("left") || sides.includes("right") ? "x" : "") + (sides.includes("top") || sides.includes("bottom") ? "y" : ""),
       similarExtents = findMorphsWithSimilarWidthOrHeight(target, axis, morphsForGuides, eps, maxDist),
       widthPriority = -Infinity, heightPriority = -Infinity,
@@ -257,24 +256,24 @@ export function showAndSnapToResizeGuides(
             guideType: similarIn, priority,
             start: tfm.transformPoint(
               similarIn === "width"
-              ? pt(refPointsA.left, refPointsA.top+refPointsA.height/2)
-              : pt(refPointsA.left+refPointsA.width/2, refPointsA.top)),
+                ? pt(refPointsA.left, refPointsA.top+refPointsA.height/2)
+                : pt(refPointsA.left+refPointsA.width/2, refPointsA.top)),
             end: tfm.transformPoint(
               similarIn === "width"
-              ? pt(refPointsA.right, refPointsA.top+refPointsA.height/2)
-              : pt(refPointsA.left+refPointsA.width/2, refPointsA.bottom)),
+                ? pt(refPointsA.right, refPointsA.top+refPointsA.height/2)
+                : pt(refPointsA.left+refPointsA.width/2, refPointsA.bottom)),
           },
           specB = {
             ...specA,
             start: tfm.transformPoint(
               similarIn === "width"
-              ? pt(refPointsB.left, refPointsB.top+refPointsB.height/2)
-              : pt(refPointsB.left+refPointsB.width/2, refPointsB.top)),
+                ? pt(refPointsB.left, refPointsB.top+refPointsB.height/2)
+                : pt(refPointsB.left+refPointsB.width/2, refPointsB.top)),
             end: tfm.transformPoint(
               similarIn === "width"
-              ? pt(refPointsB.right, refPointsB.top+refPointsB.height/2)
-              : pt(refPointsB.left+refPointsB.width/2, refPointsB.bottom)),
-          }
+                ? pt(refPointsB.right, refPointsB.top+refPointsB.height/2)
+                : pt(refPointsB.left+refPointsB.width/2, refPointsB.bottom)),
+          };
       guideSpecs.push(specA, specB);
     }
 
@@ -282,63 +281,63 @@ export function showAndSnapToResizeGuides(
   
   // if (!guideSpecs.length) {
   
-    let fromEdges = sides, toEdges,
-        aligned = findAlignedMorphs(target, morphsForGuides, eps, maxDist, fromEdges, toEdges);
+  let fromEdges = sides, toEdges,
+      aligned = findAlignedMorphs(target, morphsForGuides, eps, maxDist, fromEdges, toEdges);
 
-    if (aligned) {
-      for (let [m, {horizontal, vertical}] of aligned) {
+  if (aligned) {
+    for (let [m, {horizontal, vertical}] of aligned) {
         
-        for (let {delta, edgeA, edgeAVal, edgeB, refPointsA, refPointsB, edgeBVal, maxDist} of horizontal) {
+      for (let {delta, edgeA, edgeAVal, edgeB, refPointsA, refPointsB, edgeBVal, maxDist} of horizontal) {
           
-          let priority = Math.ceil(eps - delta),
-              top = Math.min(refPointsA.top, refPointsB.top),
-              bottom = Math.max(refPointsA.bottom, refPointsB.bottom);
+        let priority = Math.ceil(eps - delta),
+            top = Math.min(refPointsA.top, refPointsB.top),
+            bottom = Math.max(refPointsA.bottom, refPointsB.bottom);
           
-          if (maxDist > eps) priority -= eps/2;
+        if (maxDist > eps) priority -= eps/2;
           
-          if (maxHPriority < priority) {
-            maxHPriority = priority;
-            if (sides.includes("left")) offsetLeft = -(edgeBVal - edgeAVal);
-            if (sides.includes("right")) offsetRight = +(edgeBVal - edgeAVal);
-          }
-          
-          guideSpecs.push({
-            type: "line",
-            epiMorph: true,
-            height: 2,
-            start: tfm.transformPoint(pt(edgeBVal, top)),
-            end: tfm.transformPoint(pt(edgeBVal, bottom)),
-            fill: guideColor,
-            guideType: "h", priority
-          });
+        if (maxHPriority < priority) {
+          maxHPriority = priority;
+          if (sides.includes("left")) offsetLeft = -(edgeBVal - edgeAVal);
+          if (sides.includes("right")) offsetRight = +(edgeBVal - edgeAVal);
         }
+          
+        guideSpecs.push({
+          type: "line",
+          epiMorph: true,
+          height: 2,
+          start: tfm.transformPoint(pt(edgeBVal, top)),
+          end: tfm.transformPoint(pt(edgeBVal, bottom)),
+          fill: guideColor,
+          guideType: "h", priority
+        });
+      }
         
-        for (let {delta, edgeA, edgeAVal, edgeB, refPointsA, refPointsB, edgeBVal, maxDist} of vertical) {
-          let priority = Math.ceil(eps - delta),
-              left = Math.min(refPointsA.left, refPointsB.left),
-              right = Math.max(refPointsA.right, refPointsB.right);
+      for (let {delta, edgeA, edgeAVal, edgeB, refPointsA, refPointsB, edgeBVal, maxDist} of vertical) {
+        let priority = Math.ceil(eps - delta),
+            left = Math.min(refPointsA.left, refPointsB.left),
+            right = Math.max(refPointsA.right, refPointsB.right);
           
-          if (maxDist > eps) priority -= eps/2;
+        if (maxDist > eps) priority -= eps/2;
           
-          if (maxVPriority < priority && Math.abs(edgeBVal - edgeAVal) <= eps) {
-            maxVPriority = priority;
-            // offsetHeight = offsetHeight + edgeBVal - edgeAVal;
-            if (sides.includes("top")) offsetTop = edgeBVal - edgeAVal;
-            if (sides.includes("bottom")) offsetBottom = edgeBVal - edgeAVal;
-          }
-          
-          guideSpecs.push({
-            type: "line",
-            epiMorph: true,
-            height: 2,
-            start: tfm.transformPoint(pt(left, edgeBVal)),
-            end: tfm.transformPoint(pt(right, edgeBVal)),
-            fill: guideColor,
-            guideType: "v", priority
-          });
+        if (maxVPriority < priority && Math.abs(edgeBVal - edgeAVal) <= eps) {
+          maxVPriority = priority;
+          // offsetHeight = offsetHeight + edgeBVal - edgeAVal;
+          if (sides.includes("top")) offsetTop = edgeBVal - edgeAVal;
+          if (sides.includes("bottom")) offsetBottom = edgeBVal - edgeAVal;
         }
+          
+        guideSpecs.push({
+          type: "line",
+          epiMorph: true,
+          height: 2,
+          start: tfm.transformPoint(pt(left, edgeBVal)),
+          end: tfm.transformPoint(pt(right, edgeBVal)),
+          fill: guideColor,
+          guideType: "v", priority
+        });
       }
     }
+  }
   // }
 
   // snap
@@ -376,7 +375,7 @@ export function showAndSnapToResizeGuides(
     // dragGuides.splice(i, dragGuides.length-i).forEach(ea => ea.remove());
     dragGuides.slice(i).forEach(ea => ea.remove());
 
-    debounceNamed(target.id + "-drag-guides-cleanup", 1300, () => {
+    fun.debounceNamed(target.id + "-drag-guides-cleanup", 1300, () => {
       let dragGuides = cachedGuideLines.get(target);
       if (!dragGuides) return;
       dragGuides.forEach(ea => ea.remove());
@@ -585,7 +584,7 @@ function closest(i/*morphIndex*/, morphs, refPoints, lefts, rights, tops, bottom
     if (overlappingProjected && lefts[i] > rights[j] || rights[i] < lefts[j]) continue;
     closestB = {index: j, dist: tops[j] - b, refPointsA: refPoints[i], refPointsB: refPoints[j]};
   }
-  return {l: closestL, r: closestR, t: closestT, b: closestB}
+  return {l: closestL, r: closestR, t: closestT, b: closestB};
 }
 
 function computeClosestMorphs(morphs) {

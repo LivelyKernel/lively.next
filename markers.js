@@ -1,10 +1,8 @@
 /* global Element, Node */
-import { obj, arr, string } from "lively.lang";
-import { pt, Color, Point, Rectangle, rect } from "lively.graphics";
+import { obj, string } from "lively.lang";
+import { pt, Color, Rectangle, rect } from "lively.graphics";
 import {
   morph,
-  Path,
-  Ellipse,
   Icon,
   StyleSheet,
   Morph,
@@ -12,7 +10,6 @@ import {
   ShadowObject
 } from "lively.morphic";
 import { connect, disconnect } from "lively.bindings";
-import { MorphHighlighter } from "./morph.js";
 import { Leash } from "lively.components/widgets.js";
 
 export function show(target) {
@@ -168,10 +165,10 @@ export class StatusMessage extends Morph {
         fontFamily: "Monaco, 'DejaVu Sans Mono', monospace"
       },
       ".StatusMessage .Button": {
-         borderRadius: 15
+        borderRadius: 15
       },
       ".StatusMessage .Button.activeStyle": {
-         fill: Color.white
+        fill: Color.white
       }
     });
   }
@@ -408,7 +405,7 @@ function showLine(world, line, delay = 3000) {
         border: {width: 1, color: Color.red},
         width: vec.fastR(),
         height: 0
-      })
+      });
   if (delay) setTimeout(() => path.fadeOut(), delay);
   return path;
 }
@@ -423,7 +420,7 @@ export function showConnector(morph1, morph2, delay = 3000) {
   let path = $world.addMorph(new Leash({
     vertices: [midPoint, midPoint], borderWidth: 2,
     endpointStyle: {fill: Color.red}, borderColor: Color.red
-  }))
+  }));
   path.animate({vertices: [p1, p2], duration: 400});
   if (delay) setTimeout(() => path.fadeOut(), delay);
   return path;
