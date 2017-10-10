@@ -669,7 +669,7 @@ class ConnectionPin extends Morph {
   }
 
   hideConnection({connection, connectionPoint, description}) {
-    description.fontColor = Color.black;
+    description.fontColor = Color.white;
     connectionPoint.fill = Color.white;
     if (this.connectionIndicator) this.connectionIndicator.remove();
     MorphHighlighter.removeHighlighters();
