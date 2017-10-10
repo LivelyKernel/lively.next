@@ -2515,13 +2515,11 @@ return ;
             notifications: false, loadingIndicator: true}),
           world = this.world() || this.env.world;
       world.setStatusMessage(
-      commit ?
-        `Published ${this} as ${commit.name}` :
-        `Failed to publish part ${this}`,
-        commit ? Color.green : Color.red);
-    } catch (e) {
-      if (e != "canceled") world.showError(e);
-    }
+        commit ?
+          `Published ${this} as ${commit.name}` :
+          `Failed to publish part ${this}`,
+          commit ? Color.green : Color.red);
+    } catch (e) { e != "canceled" && world.showError(e); }
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
