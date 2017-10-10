@@ -44,9 +44,9 @@ export class RichTextControl extends Morph {
     if (!ctrl) {
       ctrl = new RichTextControl();
       cachedControls.set(textMorph, ctrl);
-      ctrl.focusOn(textMorph, true);
-      ctrl.alwaysTargetFocusedMorph();
-    } else ctrl.update();
+    }
+    ctrl.focusOn(textMorph, true);
+    ctrl.alwaysTargetFocusedMorph();
     ctrl.alignAtTarget();
     if (!ctrl.world()) textMorph.world().addMorph(ctrl);
     return ctrl;
@@ -196,10 +196,15 @@ export class RichTextControl extends Morph {
         ensure() {
           let existing = this.getSubmorphNamed("text align tabs");
           if (existing) return existing;
-          let pre = this.addMorph({name: "text align tabs", width: 120, height: 24});
-          loadObjectFromPartsbinFolder("tab-buttons").then(tabs => {
-            pre.replaceWith(tabs);
-            tabs.owner.addMorphBack(tabs);
+          loadObjectFromPartsbinFolder("tab-buttons").then(tabButtons => {
+            let tabsAndPlaceHolders = this.getAllNamed("text align tabs"), tabs, pos;
+            for (let ea of tabsAndPlaceHolders) {
+              if (ea.constructor.name === "TabButtons") tabs = ea;
+              else ea.remove();
+            }
+            if (tabs) return; // guard multiple loads
+            tabs = tabButtons;
+            this.addMorphBack(tabs);
             connect(tabs, "activeTab", this, "changeTextAlign");
             connect(tabs, "extent", this, "relayout");
             Object.assign(tabs, {
@@ -210,9 +215,10 @@ export class RichTextControl extends Morph {
                 {name: "justify", label: Icon.textAttribute("align-justify")}
               ],
               name: "text align tabs"
-            })
+            });
+            this.relayout();
           }).catch(err => this.showError(err));
-          return pre;
+          return this.addMorph({name: "text align tabs", width: 120, height: 24});
         }
 
       }
