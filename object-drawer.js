@@ -1,37 +1,38 @@
 import { arr } from "lively.lang";
 import { pt, Point, Color, Rectangle } from "lively.graphics";
 import { Morph, Polygon } from "lively.morphic";
-import { RichTextControl } from "lively.morphic/text/ui.js"
-import { Tree, TreeData } from "./tree.js"
-import { connect } from "lively.bindings"
-import { Leash } from "./widgets.js"
+import { RichTextControl } from "lively.morphic/text/ui.js";
+import { Tree, TreeData } from "./tree.js";
+import { connect } from "lively.bindings";
+import { Leash } from "./widgets.js";
 
 export class DummyTreeData extends TreeData {
-  display(node) { return node.name }
-  isCollapsed(node) { return node.isCollapsed }
+  display(node) { return node.name; }
+  isCollapsed(node) { return node.isCollapsed; }
   collapse(node, bool) { node.isCollapsed = bool; }
-  getChildren(node) { return node.isLeaf ? null : node.isCollapsed ? [] : node.children }
-  isLeaf(node) { return node.isLeaf }
+  getChildren(node) { return node.isLeaf ? null : node.isCollapsed ? [] : node.children; }
+  isLeaf(node) { return node.isLeaf; }
 }
 
 export default class ObjectDrawer extends Morph {
 
   constructor(props) {
-    this.n = 8;
+    let n = 8;
     super({
       name: "object-drawer",
       position: pt(20, 20),
-      extent: pt(this.n * (140 + 10) + 15, 140),
+      extent: pt(n * (140 + 10) + 15, 140),
       fill: Color.white,
       borderWidth: 1,
       borderColor: Color.gray,
       ...props
     });
+    this.n = n;
     this.setup();
   }
 
   onDrag(evt) {
-    var target = lively.lang.arr.intersect(this.submorphs, this.world().morphsContainingPoint(evt.position))[0];
+    var target = arr.intersect(this.submorphs, this.world().morphsContainingPoint(evt.position))[0];
     if (!target) return super.onDrag(evt);
 
     evt.stop();
@@ -55,7 +56,7 @@ export default class ObjectDrawer extends Morph {
   setup() {
     // this.setup();
 
-    this.removeAllMorphs()
+    this.removeAllMorphs();
 
     var n = this.n,
         margin = pt(5,5),
@@ -110,7 +111,7 @@ export default class ObjectDrawer extends Morph {
             p = Point.polar(r,a);
         if (n % 2 == 0) p = p.scaleBy(0.39);
         return p.addPt(center);
-      })
+      });
     }
 
     var r = 65;
@@ -141,7 +142,7 @@ export default class ObjectDrawer extends Morph {
       init() {
         this.grabbable = false;
         this.readOnly = false;
-        connect(this, "selectionChange", RichTextControl, "openDebouncedFor", {converter: sel => sel.textMorph})
+        connect(this, "selectionChange", RichTextControl, "openDebouncedFor", {converter: sel => sel.textMorph});
       }
     });
 
@@ -179,7 +180,7 @@ export default class ObjectDrawer extends Morph {
 
     (async () => {
       await list.whenRendered();
-      list.listItemContainer.withAllSubmorphsDo(ea => ea.reactsToPointer = false)
+      list.listItemContainer.withAllSubmorphsDo(ea => ea.reactsToPointer = false);
     })();
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -195,11 +196,11 @@ export default class ObjectDrawer extends Morph {
         {name: "child 1", isLeaf: true},
         {name: "child 2", isLeaf: false, isCollapsed: true, children: [{name: "child 2 - 1", isLeaf: true}]},
         {name: "child 3", isLeaf: false,
-         isCollapsed: false,
-         children: [
-           {name: "child 3 - 1", isLeaf: true},
-           {name: "child 3 - 2", isLeaf: true}
-         ]},
+          isCollapsed: false,
+          children: [
+            {name: "child 3 - 1", isLeaf: true},
+            {name: "child 3 - 2", isLeaf: true}
+          ]},
         {name: "child 4", isLeaf: true},
       ]
     });
@@ -214,14 +215,14 @@ export default class ObjectDrawer extends Morph {
         this.grabbable = false;
         this.submorphs = [
           {name: "nodeItemContainer", extent: this.extent,
-           fill: null, grabbable: false, clipMode: "visible"}]
-        this.update()
+            fill: null, grabbable: false, clipMode: "visible"}];
+        this.update();
       }
     }));
 
     (async () => {
       await tree.whenRendered();
-      tree.nodeItemContainer.withAllSubmorphsDo(ea => ea.reactsToPointer = false)
+      tree.nodeItemContainer.withAllSubmorphsDo(ea => ea.reactsToPointer = false);
     })();
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -231,7 +232,7 @@ export default class ObjectDrawer extends Morph {
 
     this.addMorph(new Leash({
       position: pos, start: pt(0,0), end: pt(100,100),
-      init() { this.vertices = [pt(0,0), pt(100,100)] }
+      init() { this.vertices = [pt(0,0), pt(100,100)]; }
     }));
 
     this.width = arr.last(this.submorphs).right + 10;
@@ -240,6 +241,6 @@ export default class ObjectDrawer extends Morph {
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    this.submorphs.forEach(ea => ea.reactsToPointer = false)
+    this.submorphs.forEach(ea => ea.reactsToPointer = false);
   }
 }

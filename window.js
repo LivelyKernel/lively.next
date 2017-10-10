@@ -1,8 +1,13 @@
 /* global Expo */
-import { arr, string } from "lively.lang";
-import { pt, LinearGradient, rect, Color, Rectangle } from "lively.graphics";
-import { Label, Icon, morph, Morph,
-        HorizontalLayout, ShadowObject, StyleSheet } from "lively.morphic";
+import { arr } from "lively.lang";
+import { pt, Color, Rectangle } from "lively.graphics";
+import {
+  Label,
+  morph,
+  Morph,
+  HorizontalLayout,
+  StyleSheet
+} from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 
 export default class Window extends Morph {
@@ -25,7 +30,6 @@ export default class Window extends Morph {
       },
       ".Window .buttonGroup .windowButton": {
         borderRadius: 14,
-        extent: windowButtonSize,
         fill: Color.transparent,
         nativeCursor: 'pointer',
         extent: pt(15,13)
@@ -42,9 +46,9 @@ export default class Window extends Morph {
       ".Window .minimizeButton .Label.highlight": {
         fontColor: Color.rgb(224, 177, 77),
       },
-        ".Window.active .minimizeButton .Label.default": {
-           fontColor: Color.rgb(255, 190, 6)
-        },
+      ".Window.active .minimizeButton .Label.default": {
+        fontColor: Color.rgb(255, 190, 6)
+      },
       ".Window .windowMenuButton .Label.highlight": {
         fontColor: Color.rgb(40,116,166),
       },
@@ -150,7 +154,7 @@ export default class Window extends Morph {
 
   fixControls() {
     let title = this.title;
-    lively.lang.arr.invoke(this.controls, "remove");
+    arr.invoke(this.controls, "remove");
     this.propertiesAndPropertySettings()
       .properties.controls.initialize.call(this);
     this.title = title;
@@ -210,7 +214,7 @@ export default class Window extends Morph {
     if (!world) return;
     let bounds = this.globalBounds();
     if (bounds.top() < world.innerBounds().top())
-      this.moveBy(pt(0, world.innerBounds().top() - bounds.top()))
+      this.moveBy(pt(0, world.innerBounds().top() - bounds.top()));
   }
 
   getControls() {
@@ -321,7 +325,7 @@ export default class Window extends Morph {
       this.minimizedBounds = bounds;
       this.targetMorph.visible = true;
       this.animate({bounds: nonMinizedBounds || bounds,
-                    styleClasses: ['neutral', 'active'], duration, easing});
+        styleClasses: ['neutral', 'active'], duration, easing});
       collapseButton.tooltip = "collapse window";
     } else {
       this.minimized = true;
@@ -334,7 +338,7 @@ export default class Window extends Morph {
       this.minimizedBounds = minimizedBounds;
       collapseButton.tooltip = "uncollapse window";
       await this.animate({styleClasses: ['minimized', 'active'],
-                          bounds: minimizedBounds, duration, easing});
+        bounds: minimizedBounds, duration, easing});
       this.targetMorph.visible = false;
     }
     this.resizer().visible = !this.minimized;
@@ -398,7 +402,7 @@ export default class Window extends Morph {
     }
 
     this.removeStyleClass('inactive');
-    this.addStyleClass('active')
+    this.addStyleClass('active');
 
     if (!this.world()) this.openInWorldNearHand();
     else this.bringToFront();
@@ -417,7 +421,7 @@ export default class Window extends Morph {
   deactivate() {
     if (this.styleClasses.includes('inactive')) return;
     this.removeStyleClass('active');
-    this.addStyleClass('inactive')
+    this.addStyleClass('inactive');
     this.titleLabel().fontWeight = "normal";
     this.relayoutWindowControls();
   }
@@ -441,13 +445,13 @@ export default class Window extends Morph {
         exec: async (win, args = {}) =>  {
           let title = args.title ||
             (await win.world().prompt("Enter new title", {
-                input: win.title,
-                historyId: "lively.morphic-window-title-hist"
-              }));
+              input: win.title,
+              historyId: "lively.morphic-window-title-hist"
+            }));
           if (title) win.title = title;
           return true;
         }
       }
-    ])
+    ]);
   }
 }

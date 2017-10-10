@@ -31,7 +31,7 @@ export class Canvas extends Morph {
         get() { return this.preserveContents && this.toDataURI(); },
         set(s) { this.withContextDo(() => this.fromDataURI(s)); },
       },
-     }
+    };
   }
 
   //get canvasBounds() { return this._canvas && this.canvasExtent.extentAsRectangle(); }
@@ -75,24 +75,24 @@ export class Canvas extends Morph {
       const contents = this.context.getImageData(0, 0, w, h);
       this.__canvas_init__ = () => {
         this.context.putImageData(contents, 0, 0);
-      }
+      };
     }
   }
 
   clear(color) {
     const ctx = this.context;
     if (ctx) {
-        const {width: w, height: h} = this._canvas;
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        if (color) {
-          if (color.toCSSString) color = color.toCSSString();
-          ctx.fillStyle = color;
-          ctx.fillRect(0, 0, w, h);
-        } else {
-          ctx.clearRect(0, 0, w, h);
-        }
-        ctx.restore();
+      const {width: w, height: h} = this._canvas;
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      if (color) {
+        if (color.toCSSString) color = color.toCSSString();
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, w, h);
+      } else {
+        ctx.clearRect(0, 0, w, h);
+      }
+      ctx.restore();
     }
   }
 
@@ -111,7 +111,7 @@ export class Canvas extends Morph {
       this._canvas.width = img.width;
       this._canvas.height = img.height;
       this.context.drawImage(img, 0, 0);
-    }
+    };
     img.src = uri;
   }
 
@@ -142,7 +142,7 @@ export class Canvas extends Morph {
     return {
       imageData,
       bounds: rect(minX, minY, maxX - minX + 1, maxY - minY + 1),
-    }
+    };
   }
 
   trimNonTransparent() {

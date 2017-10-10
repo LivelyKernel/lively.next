@@ -1,8 +1,8 @@
 /*global System*/
 import { Rectangle, Color, pt } from 'lively.graphics';
 import { morph, Morph, StyleSheet, Text, GridLayout,
-          Icon, HorizontalLayout } from 'lively.morphic';
-import { InputLine, PasswordInputLine } from "lively.morphic/text/input-line.js"
+  Icon, HorizontalLayout } from 'lively.morphic';
+import { InputLine, PasswordInputLine } from "lively.morphic/text/input-line.js";
 import { arr, obj, promise } from "lively.lang";
 import { connect } from 'lively.bindings';
 
@@ -59,7 +59,7 @@ export class AbstractPrompt extends Morph {
           });
         }
       }
-    }
+    };
   }
 
   constructor(props = {}) {
@@ -69,8 +69,8 @@ export class AbstractPrompt extends Morph {
     if (props.keybindings) this.addKeyBindings(props.keybindings);
   }
 
-  get isEpiMorph() { return true }
-  get isPrompt() { return true }
+  get isEpiMorph() { return true; }
+  get isPrompt() { return true; }
 
   get label() { return this.getSubmorphNamed("label").textString; }
   set label(label) { this.getSubmorphNamed("label").textString = label; }
@@ -97,7 +97,7 @@ export class AbstractPrompt extends Morph {
     return super.keybindings.concat([
       {keys: "Enter", command: "resolve"},
       {keys: "Escape", command: "reject"},
-    ])
+    ]);
   }
 
   get commands() {
@@ -128,7 +128,7 @@ export class AbstractPrompt extends Morph {
       morphBox.animate({bounds: otherPrompt.bounds(), duration});
       await otherPrompt.animate({scale: 1, opacity: 1, duration});
       otherPrompt.fill = morphBox.fill;
-      morphBox.remove()
+      morphBox.remove();
       this.remove();
     });
   }
@@ -153,22 +153,22 @@ export class InformPrompt extends AbstractPrompt {
   }
 
   initLayout() {
-     const label = this.getSubmorphNamed("label");
-     label.fit();
-     this.width = Math.max(label.width + 10, this.width);
-     this.height = label.height + 30;
-     const l = this.layout = new GridLayout({
-        columns: [
-          0, {paddingLeft: 5},
-          1, {fixed: 100},
-          2, {paddingRight: 5}
-        ],
-        rows: [
-          1, {paddingBottom: 5, fixed: 30},
-        ],
-        grid: [["label", "label", "label"],
-               [null, "ok button", null]]
-     });
+    const label = this.getSubmorphNamed("label");
+    label.fit();
+    this.width = Math.max(label.width + 10, this.width);
+    this.height = label.height + 30;
+    const l = this.layout = new GridLayout({
+      columns: [
+        0, {paddingLeft: 5},
+        1, {fixed: 100},
+        2, {paddingRight: 5}
+      ],
+      rows: [
+        1, {paddingBottom: 5, fixed: 30},
+      ],
+      grid: [["label", "label", "label"],
+        [null, "ok button", null]]
+    });
   }
 
   get keybindings() {
@@ -207,25 +207,25 @@ export class ConfirmPrompt extends AbstractPrompt {
   reject() { super.resolve(false); }
 
   initLayout() {
-     // fixme: layout should be able to let one morph
-     //         define the overall width of the container
-     const label = this.getSubmorphNamed("label");
-     label.fit();
-     this.width = Math.max(this.width, label.width + 10);
-     this.height = label.height + 30;
-     const l = this.layout = new GridLayout({
-       columns: [
-         0, {paddingLeft: 5},
-         1, {paddingRight: 2.5, fixed: 60},
-         2, {paddingLeft: 2.5, fixed: 60},
-         3, {paddingRight: 5}
-       ],
-       rows: [
-         1, {paddingBottom: 5, fixed: 30}
-       ],
-       grid: [["label", "label", "label", "label"],
-              [null, "ok button", "cancel button", null]]
-     });
+    // fixme: layout should be able to let one morph
+    //         define the overall width of the container
+    const label = this.getSubmorphNamed("label");
+    label.fit();
+    this.width = Math.max(this.width, label.width + 10);
+    this.height = label.height + 30;
+    const l = this.layout = new GridLayout({
+      columns: [
+        0, {paddingLeft: 5},
+        1, {paddingRight: 2.5, fixed: 60},
+        2, {paddingLeft: 2.5, fixed: 60},
+        3, {paddingRight: 5}
+      ],
+      rows: [
+        1, {paddingBottom: 5, fixed: 30}
+      ],
+      grid: [["label", "label", "label", "label"],
+        [null, "ok button", "cancel button", null]]
+    });
   }
 }
 
@@ -245,7 +245,7 @@ export class MultipleChoicePrompt extends AbstractPrompt {
       name: 'choices',
       fill: Color.transparent,
       layout: new HorizontalLayout({spacing: 5, direction: 'centered'})
-    })
+    });
 
     choices.forEach((choice, i) => {
       var btn = choidesContainer.addMorph({
@@ -266,7 +266,7 @@ export class MultipleChoicePrompt extends AbstractPrompt {
     var label = this.getSubmorphNamed("label");
     label && label.fit();
     var buttons = this.get('choices').submorphs.filter(({isButton}) => isButton);
-    buttons.forEach(ea => ea.fit())
+    buttons.forEach(ea => ea.fit());
 
     this.width = Math.max(
       label ? label.width + 10 : 0,
@@ -275,14 +275,14 @@ export class MultipleChoicePrompt extends AbstractPrompt {
     this.height = buttons[0].height + label.height + 10;
 
     this.layout = new GridLayout({
-       fitToCell: true,
-       columns: [0, {paddingLeft: 5, paddingRight: 5}],
-       rows: label ? [0, {height: label.height, fixed: true},
-                      1, {paddingBottom: 5}] : [0, {paddingBottom: 5}],
-       grid: label ?
-               [["label"],
-                ['choices']] :
-               [['choices']],
+      fitToCell: true,
+      columns: [0, {paddingLeft: 5, paddingRight: 5}],
+      rows: label ? [0, {height: label.height, fixed: true},
+        1, {paddingBottom: 5}] : [0, {paddingBottom: 5}],
+      grid: label ?
+        [["label"],
+          ['choices']] :
+        [['choices']],
     });
   }
 
@@ -291,7 +291,7 @@ export class MultipleChoicePrompt extends AbstractPrompt {
       var n = Number(evt.keyCombo)-1;
       var btn = this.getSubmorphNamed("button " + n);
       if (btn) {
-        btn.trigger()
+        btn.trigger();
         return evt.stop();
       }
     }
@@ -326,7 +326,7 @@ export class TextPrompt extends AbstractPrompt {
     }));
 
     if (historyId && useLastInput) {
-      var lastInput = arr.last(inputLine.inputHistory.items)
+      var lastInput = arr.last(inputLine.inputHistory.items);
       if (lastInput) inputLine.textString = lastInput;
     }
 
@@ -392,7 +392,7 @@ export class EditPrompt extends AbstractPrompt {
   static get properties() {
     return {
       extent: {defaultValue: pt(500, 300)},
-    }
+    };
   }
 
   get maxWidth() { return this.env.world.visibleBounds().width - 20; }
@@ -480,7 +480,7 @@ export class EditPrompt extends AbstractPrompt {
       hist.items.push(content);
       while (hist.items.length > hist.items.max) hist.items.shift();
       hist.index = hist.items.length;
-      InputLine.setHistory(this.historyId, hist)
+      InputLine.setHistory(this.historyId, hist);
     }
     return super.resolve(content);
   }
@@ -492,7 +492,7 @@ export class EditPrompt extends AbstractPrompt {
       {keys: "Alt-P|Alt-Up", command: "history back"},
       {keys: "Alt-N|Alt-Down", command: "history forward"},
       {keys: "Alt-H", command: "browse history"},
-    ]
+    ];
   }
 
   get commands() {
@@ -575,26 +575,26 @@ export class PasswordPrompt extends AbstractPrompt {
     connect(this.get("cancel button"), 'fire', this, 'reject');
 
     this.layout = new GridLayout({
-       rows: [
-         1, {paddingBottom: 5},
-         2, {paddingBottom: 5}
-       ],
-       columns: [
-         0, {paddingLeft: 5, paddingRight: 2.5},
-         1, {fixed: 100},
-         2, {paddingLeft: 2.5, paddingRight: 5, fixed: 100}
-       ],
-       grid: [["label", "label", "label"],
-              ["input", "input", "input"],
-              [null,    "ok button", "cancel button"]]
-     });
+      rows: [
+        1, {paddingBottom: 5},
+        2, {paddingBottom: 5}
+      ],
+      columns: [
+        0, {paddingLeft: 5, paddingRight: 2.5},
+        1, {fixed: 100},
+        2, {paddingLeft: 2.5, paddingRight: 5, fixed: 100}
+      ],
+      grid: [["label", "label", "label"],
+        ["input", "input", "input"],
+        [null,    "ok button", "cancel button"]]
+    });
   }
 
   resolve() { super.resolve(this.get("input").acceptInput()); }
 
   focus() {
     let i = this.get("input");
-    i.whenRendered().then(() => i.focus())
+    i.whenRendered().then(() => i.focus());
   }
 }
 
@@ -618,20 +618,20 @@ export class ListPrompt extends AbstractPrompt {
   }
 
   build({label,
-         listFontSize,
-         listFontFamily,
-         labelFontSize,
-         labelFontFamily,
-         filterable,
-         padding,
-         itemPadding,
-         extent,
-         multiSelect,
-         historyId,
-         useLastInput,
-         fuzzy, filterFunction, sortFunction,
-         actions, selectedAction, theme
-   }) {
+    listFontSize,
+    listFontFamily,
+    labelFontSize,
+    labelFontFamily,
+    filterable,
+    padding,
+    itemPadding,
+    extent,
+    multiSelect,
+    historyId,
+    useLastInput,
+    fuzzy, filterFunction, sortFunction,
+    actions, selectedAction, theme
+  }) {
 
     this.extent = extent || pt(500,400);
     labelFontFamily = labelFontFamily || "Helvetica Neue, Arial, sans-serif";
@@ -643,7 +643,7 @@ export class ListPrompt extends AbstractPrompt {
       name: "label", type: "label", value: label,
       fill: null, padding: Rectangle.inset(3),
       fontSize: labelFontSize, fontFamily: labelFontFamily, fontColor: Color.gray
-    }
+    };
 
     title = this.addMorph(title);
     this.width = Math.max(this.width, title.textBounds().width + 10);
@@ -656,7 +656,7 @@ export class ListPrompt extends AbstractPrompt {
       fontSize: listFontSize, fontFamily: listFontFamily,
       padding, itemPadding, inputPadding: Rectangle.inset(10,2),
       theme: 'dark'
-    }
+    };
 
     if (filterable && fuzzy) listProps.fuzzy = fuzzy;
     if (filterable && typeof filterFunction === "function")
@@ -681,25 +681,25 @@ export class ListPrompt extends AbstractPrompt {
     connect(this.get("cancel button"), 'fire', this, 'reject');
 
     this.layout = new GridLayout({
-       rows: [
-         0, {fixed: 30},
-         1, {paddingBottom: 10},
-         2, {fixed: 30, paddingBottom: 5}
-       ],
-       columns: [
-         0, {paddingLeft: 5},
-         1, {fixed: 100, paddingRight: 5},
-         2, {fixed: 100, paddingRight: 5}
-       ],
-       grid: [["label", "label", "label"],
-              ["list", "list", "list"],
-              [null,"ok button", "cancel button"]]
-     });
+      rows: [
+        0, {fixed: 30},
+        1, {paddingBottom: 10},
+        2, {fixed: 30, paddingBottom: 5}
+      ],
+      columns: [
+        0, {paddingLeft: 5},
+        1, {fixed: 100, paddingRight: 5},
+        2, {fixed: 100, paddingRight: 5}
+      ],
+      grid: [["label", "label", "label"],
+        ["list", "list", "list"],
+        [null,"ok button", "cancel button"]]
+    });
 
-     if (filterable) {
-       connect(this.get("list"), 'accepted', this, 'resolve');
-       connect(this.get("list"), 'canceled', this, 'reject');
-     }
+    if (filterable) {
+      connect(this.get("list"), 'accepted', this, 'resolve');
+      connect(this.get("list"), 'canceled', this, 'reject');
+    }
   }
 
   resolve(arg) {
@@ -747,27 +747,27 @@ export class EditListPrompt extends ListPrompt {
     connect(rmBtn, 'fire', this, 'removeSelectedItemsFromList');
 
     this.layout = new GridLayout({
-        autoAssign: false,
-        columns: [
-          0, {paddingLeft: 5, paddingRight: 5},
-          3, {paddingRight: 5},
-          4, {paddingRight: 5}
-        ],
-        rows: [
-          0, {fixed: 30, paddingTop: 5, paddingBottom: 5},
-          1, {paddingBottom: 2},
-          2, {fixed: 30, paddingBottom: 5}
-        ],
-        grid: [["label", "label", "label", "label", "label"],
-               ["list", "list", "list", "list", "list"],
-               ["add item button", "remove item button", null, "ok button", "cancel button"]]
-     });
+      autoAssign: false,
+      columns: [
+        0, {paddingLeft: 5, paddingRight: 5},
+        3, {paddingRight: 5},
+        4, {paddingRight: 5}
+      ],
+      rows: [
+        0, {fixed: 30, paddingTop: 5, paddingBottom: 5},
+        1, {paddingBottom: 2},
+        2, {fixed: 30, paddingBottom: 5}
+      ],
+      grid: [["label", "label", "label", "label", "label"],
+        ["list", "list", "list", "list", "list"],
+        ["add item button", "remove item button", null, "ok button", "cancel button"]]
+    });
   }
 
   async removeSelectedItemsFromList() {
     var list = this.get("list"),
         selectAfterwards = list.selectedItems.length != 1 ?
-      -1 : list.selectedIndex === 0 ? 0 : list.selectedIndex-1;
+          -1 : list.selectedIndex === 0 ? 0 : list.selectedIndex-1;
     list.items = arr.withoutAll(list.items, list.selectedItems);
     if (selectAfterwards < 0) list.selection = null;
     else list.selectedIndex = selectAfterwards;
@@ -795,7 +795,7 @@ export class EditListPrompt extends ListPrompt {
       {keys: 'Ctrl-G', command: "deselect"},
       {keys: 'Shift-=|+', command: "add item to list"},
       {keys: 'Delete|-|Backspace', command: "remove item from list"},
-    ])
+    ]);
   }
 
   get commands() {

@@ -1,27 +1,25 @@
-import {obj, string, num, arr, properties} from "lively.lang";
-import {pt, Color, Rectangle, rect} from "lively.graphics";
-import {signal, connect, disconnect} from "lively.bindings";
+import { obj, string, num, arr, properties } from "lively.lang";
+import { pt, Color, Rectangle, rect } from "lively.graphics";
+import { signal, connect, disconnect } from "lively.bindings";
 import {
-  Morph, morph, ShadowObject, CustomLayout,
-  Button,
-  List,
+  Morph,
+  morph,
   Text,
   GridLayout,
   HorizontalLayout,
   StyleSheet,
   Path,
   Ellipse,
-  config,
   Label,
   Tooltip,
   Icon
 } from "lively.morphic";
-import {intersect, shape} from "svg-intersections";
-import {roundTo} from "lively.lang/number.js";
+import { intersect, shape } from "svg-intersections";
+import { roundTo } from "lively.lang/number.js";
 
 class LeashEndpoint extends Ellipse {
 
-  get dragTriggerDistance() { return this.connectedMorph ? 20 : 0 }
+  get dragTriggerDistance() { return this.connectedMorph ? 20 : 0; }
 
   onDragStart(evt) {
     let {lastDragPosition, clickedOnPosition} = evt.state;
@@ -32,7 +30,7 @@ class LeashEndpoint extends Ellipse {
 
   canConnectTo(m) {
     return !m.isWorld && !m.isHaloItem && this.leash.canConnectTo(m)
-            && !m.isHighlighter && !m.ownerChain().some(m => m.isHaloItem)
+            && !m.isHighlighter && !m.ownerChain().some(m => m.isHaloItem);
   }
 
   onDrag(evt) {
@@ -47,11 +45,11 @@ class LeashEndpoint extends Ellipse {
       if (this.possibleTarget != m && this.highlighter) this.highlighter.deactivate();
       this.possibleTarget = m;
       if (this.possibleTarget) {
-         this.closestSide = this.possibleTarget
-        .globalBounds()
-        .partNameNearest(obj.keys(Leash.connectionPoints), this.globalPosition);
-      this.highlighter = MorphHighlighter.for($world, this.possibleTarget, false, [this.closestSide]);
-      this.highlighter.show();
+        this.closestSide = this.possibleTarget
+          .globalBounds()
+          .partNameNearest(obj.keys(Leash.connectionPoints), this.globalPosition);
+        this.highlighter = $world.highlightMorph($world, this.possibleTarget, false, [this.closestSide]);
+        this.highlighter.show();
       }
     }
     evt.state.endpoint = this;
@@ -59,7 +57,7 @@ class LeashEndpoint extends Ellipse {
   }
 
   onDragEnd() {
-    MorphHighlighter.removeHighlighters();
+    $world.removeHighlighters();
     if (this.possibleTarget && this.closestSide) {
       this.attachTo(this.possibleTarget, this.closestSide);
     }
@@ -100,11 +98,9 @@ class LeashEndpoint extends Ellipse {
   }
 
   relayout(change) {
-    var anim;
     const {x, y} = this.vertex.position, bw = this.leash.borderWidth;
-    //this.extent = this.pt((2*bw), (2 * bw));
-    if (anim = change && change.meta.animation) {
-      this.animate({center: pt(x + bw, y + bw), duration: anim.duration})
+    if (change && change.meta && change.meta.animation) {
+      this.animate({center: pt(x + bw, y + bw), duration: change.duration});
     } else {
       this.center = pt(x + bw, y + bw);
     }
@@ -154,7 +150,7 @@ export class Leash extends Path {
       leftCenter: pt(-1, 0),
       topRight: pt(1, -1),
       center: pt(0, 0)
-    }
+    };
   }
 
   static get properties() {
@@ -164,9 +160,9 @@ export class Leash extends Path {
       reactsToPointer: {defaultValue: false},
       wantsDroppedMorphs: {defaultValue: false},
       direction: {
-         type: 'Enum',
-         values: ['unidirectional', 'outward', 'inward'],
-         defaultValue: 'unidirectional'
+        type: 'Enum',
+        values: ['unidirectional', 'outward', 'inward'],
+        defaultValue: 'unidirectional'
       },
       endpointStyle: {
         isStyleProp: true,
@@ -193,7 +189,7 @@ export class Leash extends Path {
             (this.endPoint = this.endpoint(1))
           ];
           connect(this, "onChange", this, "relayout");
-          this.updateEndpointStyles()
+          this.updateEndpointStyles();
         }
       }
     };
@@ -612,19 +608,19 @@ export class ModeSelector extends Morph {
     return arr.zip(keys, values).map(([name, value]) => {
       const tooltip = tooltips[name],
             label = morph({
-        name: name + "Label",
-        styleClasses: ["label"],
-        type: "label",
-        value: name,
-        autofit: true,
-        ...(tooltip && {tooltip})
-      });
+              name: name + "Label",
+              styleClasses: ["label"],
+              type: "label",
+              value: name,
+              autofit: true,
+              ...(tooltip && {tooltip})
+            });
       connect(label, 'onMouseDown', this, 'update', {
         updater: function($upd) {
-          $upd(name, value)
+          $upd(name, value);
         },
         varMapping: {name, value}
-      })
+      });
       return label;
     });
   }
@@ -682,7 +678,7 @@ export class DropDownSelector extends Morph {
           this.build();
         }
       }
-    }
+    };
   }
 
   updateStyleSheet(args) {
@@ -817,7 +813,7 @@ export class SearchField extends Text {
       },
       layout: {
         initialize() {
-          this.layout = new HorizontalLayout({direction: 'rightToLeft'})
+          this.layout = new HorizontalLayout({direction: 'rightToLeft'});
         }
       },
       fuzzy: {
@@ -831,7 +827,7 @@ export class SearchField extends Text {
             if (this.filterFunction === this.fuzzyFilterFunction)
               this.filterFunction = this.defaultFilterFunction;
           } else  {
-            if (!this.sortFunction) this.sortFunction = this.fuzzySortFunction
+            if (!this.sortFunction) this.sortFunction = this.fuzzySortFunction;
             if (this.filterFunction == this.defaultFilterFunction)
               this.filterFunction = this.fuzzyFilterFunction;
           }
@@ -855,8 +851,8 @@ export class SearchField extends Text {
         get() {
           return this._defaultFilterFunction
               || (this._defaultFilterFunction = (parsedInput, item) =>
-                    parsedInput.lowercasedTokens.every(token =>
-                      item.string.toLowerCase().includes(token)));
+                parsedInput.lowercasedTokens.every(token =>
+                  item.string.toLowerCase().includes(token)));
         }
       },
 
@@ -873,8 +869,8 @@ export class SearchField extends Text {
                   else if (fuzzyValue.includes(t)) base -= 5;
                 });
                 return arr.sum(parsedInput.lowercasedTokens.map(token =>
-                  string.levenshtein(fuzzyValue.toLowerCase(), token))) + base
-              })
+                  string.levenshtein(fuzzyValue.toLowerCase(), token))) + base;
+              });
         }
       },
 
@@ -882,21 +878,21 @@ export class SearchField extends Text {
         get() {
           return this._fuzzyFilterFunction
               || (this._fuzzyFilterFunction = (parsedInput, item) => {
-            var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
-            var tokens = parsedInput.lowercasedTokens;
-            if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
-            // "fuzzy" match against item.string or another prop of item
-            var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
-            return arr.sum(parsedInput.lowercasedTokens.map(token =>
-                    string.levenshtein(fuzzyValue, token))) <= 3;
-          });
+                var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
+                var tokens = parsedInput.lowercasedTokens;
+                if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
+                // "fuzzy" match against item.string or another prop of item
+                var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
+                return arr.sum(parsedInput.lowercasedTokens.map(token =>
+                  string.levenshtein(fuzzyValue, token))) <= 3;
+              });
         }
       },
       placeHolder: {defaultValue: 'Search'},
       submorphs: {
         after: ['placeHolder'],
         initialize() {
-           this.submorphs = [
+          this.submorphs = [
             {
               type: "label",
               name: 'placeholder',
@@ -917,16 +913,16 @@ export class SearchField extends Text {
               fontColor: Color.gray,
               nativeCursor: 'pointer'
             })
-           ];
-           connect(this.get('placeholder icon'), 'onMouseDown', this, 'clearInput');
+          ];
+          connect(this.get('placeholder icon'), 'onMouseDown', this, 'clearInput');
         }
       }
-    }
+    };
   }
 
   parseInput() {
     var filterText = this.textString,
-      // parser that allows escapes
+        // parser that allows escapes
         parsed = Array.from(filterText).reduce(
           (state, char) => {
             // filterText = "foo bar\\ x"
@@ -975,7 +971,7 @@ export class SearchField extends Text {
   }
 
   onBlur(evt) {
-    super.onBlur(evt)
+    super.onBlur(evt);
     this.active = false;
     this.get('placeholder').visible = !this.textString;
     this.animate({styleClasses: ["idle"], duration: 300});

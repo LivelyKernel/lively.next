@@ -1,6 +1,6 @@
 import { Label, config, Morph } from "lively.morphic";
-import { arr, obj, promise, fun } from "lively.lang";
-import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
+import { obj, fun } from "lively.lang";
+import { pt, Color, Rectangle } from "lively.graphics";
 import { show } from "lively.halos/markers.js";
 
 export class MenuDivider extends Morph {
@@ -11,7 +11,7 @@ export class MenuDivider extends Morph {
       fill: {defaultValue: Color.gray.lighter()},
       extent: {defaultValue: pt(100, 5)},
       reactsToPointer: {defaultValue: false}
-    }
+    };
   }
 
 }
@@ -75,7 +75,7 @@ export class MenuItem extends Label {
     this.owner.itemMorphs.forEach(ea => ea !== this && (ea.selected = false));
     this.selected = true;
     if (this.submenu)
-      this.owner.openSubMenuDelayed(evt, this, this.submenu)
+      this.owner.openSubMenuDelayed(evt, this, this.submenu);
   }
 
   onHoverOut(evt) {
@@ -93,7 +93,7 @@ export class MenuItem extends Label {
     if (this.submenu) return;
     try {
       if (typeof this.action !== "function")
-        throw new Error(`Menu item ${this.textString} has no executable action!`)
+        throw new Error(`Menu item ${this.textString} has no executable action!`);
       this.action();
     } catch (err) {
       var w = this.world();
@@ -124,7 +124,7 @@ export class Menu extends Morph {
         pos = hand ? hand.position : pt(0,0);
     if (menu.titleMorph) pos = pos.addXY(0, -menu.titleMorph.height);
     menu.openInWorld(pos);
-    menu.offsetForWorld(pos)
+    menu.offsetForWorld(pos);
     return menu;
   }
 
@@ -133,7 +133,7 @@ export class Menu extends Morph {
       dropShadow: {
         initialize() {
           if (config.fastShadows || !this.ownerMenu) {
-             this.dropShadow = true;
+            this.dropShadow = true;
           }
         }
       },
@@ -202,16 +202,16 @@ export class Menu extends Morph {
   onChange(change) {
     let {prop, selector} = change;
     switch (prop) {
-      case "itemPadding":
-      case "fontSize":
-      case "fontFamily": this.updateMorphs(); break;
+    case "itemPadding":
+    case "fontSize":
+    case "fontFamily": this.updateMorphs(); break;
     }
     super.onChange(change);
   }
 
   async remove() {
     await this.animate({opacity: 0, duration: 300});
-    super.remove()
+    super.remove();
   }
 
   ensureItem(item) {
@@ -255,10 +255,10 @@ export class Menu extends Morph {
       if (!command || !target) return invalidItem;
       if (showKeyShortcuts === undefined) showKeyShortcuts = true;
       var keys = !showKeyShortcuts ?
-          null :
-          typeof showKeyShortcuts === "string" ?
-            showKeyShortcuts :
-            target.keysForCommand(command),
+            null :
+            typeof showKeyShortcuts === "string" ?
+              showKeyShortcuts :
+              target.keysForCommand(command),
           label = alias || command,
           annotation = keys ? [`\t${keys}`, {fontSize: "70%"}] : ["", {}];
       return {string: label, annotation, action: () => target.execCommand(command, args)};
@@ -299,10 +299,10 @@ export class Menu extends Morph {
         isDivider ?
           new MenuDivider({position: pos}) :
           new MenuItem({
-             label: label || string, annotation,
-             action, submenu,
-             position: pos,
-             ...defaultStyle
+            label: label || string, annotation,
+            action, submenu,
+            position: pos,
+            ...defaultStyle
           }));
       pos = itemMorph.bottomLeft;
       maxWidth = Math.max(itemMorph.width, maxWidth);
@@ -415,10 +415,10 @@ export class Menu extends Morph {
     // should fit into, when there are multiple submenus force one direction with forceDirection
     if (!direction) {
       direction = mainMenuItemBnds.right() + subMenuBnds.width > visibleBounds.right() ?
-          'left' : 'right';
+        'left' : 'right';
     }
 
-    var extent = subMenuBnds.extent()
+    var extent = subMenuBnds.extent();
     if (direction === 'left') {
       subMenuBnds = mainMenuItemBnds.topLeft().addXY(-extent.x, 0).extent(extent);
     } else {
@@ -426,13 +426,13 @@ export class Menu extends Morph {
     }
 
     if (subMenuBnds.bottom() > visibleBounds.bottom()) {
-      var deltaY = -1 * (subMenuBnds.bottom() - visibleBounds.bottom());
+      let deltaY = -1 * (subMenuBnds.bottom() - visibleBounds.bottom());
       subMenuBnds = subMenuBnds.translatedBy(pt(0, deltaY));
     }
 
     // if it overlaps at the top move the bounds so that it aligns woitht he top
     if (subMenuBnds.top() < visibleBounds.top()) {
-      var deltaY = visibleBounds.top() - subMenuBnds.top();
+      let deltaY = visibleBounds.top() - subMenuBnds.top();
       subMenuBnds = subMenuBnds.translatedBy(pt(0, deltaY));
     }
 
@@ -468,10 +468,10 @@ export class Menu extends Morph {
   offsetForWorld(pos) {
     var bounds = this.innerBounds().translatedBy(pos);
     if (this.owner.visibleBounds) {
-        var worldBounds = this.owner.visibleBounds();
-        bounds = this.clipForVisibility(
-            this.moveBoundsForVisibility(bounds, worldBounds),
-            worldBounds);
+      var worldBounds = this.owner.visibleBounds();
+      bounds = this.clipForVisibility(
+        this.moveBoundsForVisibility(bounds, worldBounds),
+        worldBounds);
     }
     this.setBounds(bounds);
   }

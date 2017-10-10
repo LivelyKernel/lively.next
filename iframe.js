@@ -1,4 +1,4 @@
-import { obj, promise } from "lively.lang";
+import { promise } from "lively.lang";
 import { HTMLMorph } from "lively.morphic";
 "format esm";
 
@@ -25,15 +25,15 @@ export class IFrameMorph extends HTMLMorph {
     var el = textMorph.env.renderer.getNodeForMorph(textMorph),
         im = IFrameMorph.open({srcdoc: el.outerHTML});
 
-    await im.whenLoaded()
+    await im.whenLoaded();
 
-    var doc = im.innerWindow.document
+    var doc = im.innerWindow.document;
     doc.body.style.whiteSpace = "normal";
-    doc.body.style.margin = "0.5cm"
+    doc.body.style.margin = "0.5cm";
 
     doc.querySelector(".Text").style.width = "100%";
     doc.querySelector(".Text").style.overflow = "visible";
-    doc.querySelectorAll(".marker-layer-part").forEach(ea => ea.parentNode.removeChild(ea))
+    doc.querySelectorAll(".marker-layer-part").forEach(ea => ea.parentNode.removeChild(ea));
 
     var textLayer = doc.querySelector(".text-layer");
     textLayer.style.whiteSpace = "pre-wrap";
@@ -87,16 +87,16 @@ export class IFrameMorph extends HTMLMorph {
       domNode: {
         get() {
           if (!this._domNode) {
-            this._domNode = this.document.createElement("iframe")
+            this._domNode = this.document.createElement("iframe");
             this._domNode.setAttribute("style", "position: absolute; width: 100%; height: 100%;");
             this._domNode.setAttribute("allowfullscreen", true);
           }
-          return this._domNode
+          return this._domNode;
         },
         set(node) { return this._domNode = node; }
       }
 
-    }
+    };
 
   }
   constructor(props) {
@@ -107,18 +107,18 @@ export class IFrameMorph extends HTMLMorph {
   changeSrc(src, srcDoc) {
     var {iframe, _loadPromise: p} = this;
     if (p && !p.loaded) p.reject();
-    this._loadPromise = promise.deferred()
+    this._loadPromise = promise.deferred();
     this._loadPromise.loaded = false;
     iframe.onload = evt => {
       this._loadPromise.loaded = true;
-      this._loadPromise.resolve(evt)
+      this._loadPromise.resolve(evt);
     };
     var val = src || srcDoc,
         set = src ? "src" : "srcdoc",
         remove = src ? "srcdoc" : "src";
     this.addValueChange(remove, null);
     this.addValueChange(set, val);
-    iframe.removeAttribute(remove)
+    iframe.removeAttribute(remove);
     iframe.setAttribute(set, val);
     this._loadPromise[set] = val;
   }

@@ -1,8 +1,7 @@
-import { CustomLayout, Morph, GridLayout, Text, StyleSheet, Label, Icon, morph } from "lively.morphic";
+import { CustomLayout, Morph, Text, StyleSheet, Label, Icon, morph } from "lively.morphic";
 import { pt, LinearGradient, Color, Rectangle, rect } from "lively.graphics";
-import { arr, Path, string, obj } from "lively.lang";
+import { arr, Path, string } from "lively.lang";
 import { signal, once } from "lively.bindings";
-
 import { Button } from "./buttons.js";
 
 function asItem(obj) {
@@ -42,7 +41,7 @@ class ListItemMorph extends Label {
           return this.isSelected ? this.selectionFontColor : this.nonSelectionFontColor;
         }
       }
-    }
+    };
   }
 
   displayItem(item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
@@ -83,7 +82,7 @@ class ListItemMorph extends Label {
       // this.extent = pt(Math.max(goalWidth, this.textBounds().width), itemHeight);
       // this is faster:
       let width = itemMorph ? Math.max(itemMorph.width, goalWidth) : goalWidth,
-          height = itemHeight // itemMorph ? Math.max(itemMorph.height, itemHeight) : itemHeight;
+          height = itemHeight; // itemMorph ? Math.max(itemMorph.height, itemHeight) : itemHeight;
       this.extent = pt(width, height);
     }
 
@@ -101,7 +100,7 @@ class ListItemMorph extends Label {
 
   onDragStart(evt) {
     let list = this.owner.owner;
-    this._dragState = {sourceIsSelected: this.isSelected, source: this, itemsTouched: []}
+    this._dragState = {sourceIsSelected: this.isSelected, source: this, itemsTouched: []};
     if (!list.multiSelect || !list.multiSelectViaDrag)
       list.onItemMorphDragged(evt, this);
   }
@@ -138,7 +137,7 @@ var listCommands = [
     name: "page down",
     exec: (list) => {
       var index = list.selectedIndex,
-          newIndex = Math.min(list.items.length-1, index + Math.round(list.height / list.itemHeight))
+          newIndex = Math.min(list.items.length-1, index + Math.round(list.height / list.itemHeight));
       list.gotoIndex(newIndex);
       return true;
     }
@@ -179,9 +178,9 @@ var listCommands = [
       else {
         var up = list.indexUp(current);
         if (selected.includes(current) && selected.includes(up)) {
-          list.selectedIndexes = selected.filter(ea => ea !== current)
+          list.selectedIndexes = selected.filter(ea => ea !== current);
         } else {
-          list.selectedIndexes = [up].concat(selected.filter(ea => ea !== up))
+          list.selectedIndexes = [up].concat(selected.filter(ea => ea !== up));
         }
       }
       return true;
@@ -198,9 +197,9 @@ var listCommands = [
       var current = selected[0],
           down = list.indexDown(current);
       if (selected.includes(current) && selected.includes(down)) {
-        list.selectedIndexes = selected.filter(ea => ea !== current)
+        list.selectedIndexes = selected.filter(ea => ea !== current);
       } else {
-        list.selectedIndexes = [down].concat(selected.filter(ea => ea !== down))
+        list.selectedIndexes = [down].concat(selected.filter(ea => ea !== down));
       }
       return true;
     }
@@ -263,7 +262,7 @@ var listCommands = [
 
             if (label) {
               if (typeof label === "string") result += label;
-              else result += label.map((text, i) => i%2==0? text: "").join("")
+              else result += label.map((text, i) => i%2==0? text: "").join("");
             } else if (string) result += string;
 
             if (annotation) {
@@ -482,7 +481,7 @@ export class List extends Morph {
         }
       },
 
-    }
+    };
   }
 
   constructor(props = {}) {
@@ -526,8 +525,8 @@ export class List extends Morph {
   addItem(item) { return this.addItemAt(item); }
 
   addItemAt(item, index = this.items.length) {
-    var items = this.items,
-        index = Math.min(items.length, Math.max(0, index));
+    var items = this.items;
+    index = Math.min(items.length, Math.max(0, index));
     items.splice(index, 0, asItem(item));
 
     this.addMethodCallChangeDoing({
@@ -546,7 +545,7 @@ export class List extends Morph {
   removeItem(itemOrValue) {
     var item = this.find(itemOrValue),
         items = this.items,
-        index = items.indexOf(item)
+        index = items.indexOf(item);
     if (index === -1) return;
 
     items.splice(index, 1);
@@ -580,7 +579,7 @@ export class List extends Morph {
   }
 
   indexDown(index = this.selectedIndex) {
-    index = typeof index === "number" ? index : -1
+    index = typeof index === "number" ? index : -1;
     return (index + 1) % this.items.length;
   }
 
@@ -623,13 +622,13 @@ export class List extends Morph {
         }
 
         let style = {
-          fontSize, fontFamily,
-          fontColor: nonSelectionFontColor || fontColor,
-          padding: itemPadding, borderRadius: itemBorderRadius || 0,
-          selectionFontColor,
-          nonSelectionFontColor,
-          selectionColor
-        }, itemMorph = itemMorphs[i];
+              fontSize, fontFamily,
+              fontColor: nonSelectionFontColor || fontColor,
+              padding: itemPadding, borderRadius: itemBorderRadius || 0,
+              selectionFontColor,
+              nonSelectionFontColor,
+              selectionColor
+            }, itemMorph = itemMorphs[i];
 
         if (!itemMorph)
           itemMorph = itemMorphs[i] = listItemContainer.addMorph(new ListItemMorph(style));
@@ -661,11 +660,11 @@ export class List extends Morph {
     var {itemHeight, width, scroll, scrollbarOffset} = this,
         itemBounds = new Rectangle(0, idx*itemHeight, width, itemHeight),
         visibleBounds = this.innerBounds().insetByRect(this.padding).translatedBy(scroll),
-        offsetX = 0, offsetY = 0
+        offsetX = 0, offsetY = 0;
     if (itemBounds.bottom() > visibleBounds.bottom() - scrollbarOffset.y)
-      offsetY = itemBounds.bottom() - (visibleBounds.bottom() - scrollbarOffset.y)
+      offsetY = itemBounds.bottom() - (visibleBounds.bottom() - scrollbarOffset.y);
     if (itemBounds.top() < visibleBounds.top())
-      offsetY = itemBounds.top() - visibleBounds.top()
+      offsetY = itemBounds.top() - visibleBounds.top();
     this.scroll = scroll.addXY(offsetX, offsetY);
   }
 
@@ -688,7 +687,7 @@ export class List extends Morph {
           // select from last selected to clicked item
           var from = selectedIndexes[0],
               added = typeof from === "number" ? arr.range(itemI, from) : [itemI];
-          indexes = added.concat(selectedIndexes.filter(ea => !added.includes(ea)))
+          indexes = added.concat(selectedIndexes.filter(ea => !added.includes(ea)));
         }
 
       } else if (this.multiSelectWithSimpleClick || evt.isCommandKey()) {
@@ -698,7 +697,7 @@ export class List extends Morph {
           indexes = selectedIndexes.filter(ea => ea != itemI);
         } else {
           // just add clicked item to selection list
-          indexes = [itemI].concat(selectedIndexes.filter(ea => ea != itemI))
+          indexes = [itemI].concat(selectedIndexes.filter(ea => ea != itemI));
         }
 
       } else indexes = [itemI];
@@ -711,7 +710,7 @@ export class List extends Morph {
   onItemMorphDragged(evt, itemMorph) {}
 
   onDragStart(evt) {
-    if (!this.multiSelect || !this.multiSelectViaDrag) return
+    if (!this.multiSelect || !this.multiSelectViaDrag) return;
   }
 
   onDrag(evt) {}
@@ -784,11 +783,11 @@ export class FilterableList extends Morph {
       submorphs: {
         initialize() {
           let input = Text.makeInputLine({
-              name: "input",
-              highlightWhenFocused: false,
-              fixedHeight: false,
-              autofit: false
-            });
+            name: "input",
+            highlightWhenFocused: false,
+            fixedHeight: false,
+            autofit: false
+          });
           this.submorphs = [
             input,
             new morph({name: 'padding', fill: Color.transparent, height: 5}),
@@ -804,7 +803,7 @@ export class FilterableList extends Morph {
 
       paddingMorph: {
         derived: true, readOnly: true, after: ['submorphs'],
-        get() { return this.getSubmorphNamed('padding') }
+        get() { return this.getSubmorphNamed('padding'); }
       },
 
       listMorph: {
@@ -937,7 +936,7 @@ export class FilterableList extends Morph {
             if (this.filterFunction === this.fuzzyFilterFunction)
               this.filterFunction = this.defaultFilterFunction;
           } else  {
-            if (!this.sortFunction) this.sortFunction = this.fuzzySortFunction
+            if (!this.sortFunction) this.sortFunction = this.fuzzySortFunction;
             if (this.filterFunction == this.defaultFilterFunction)
               this.filterFunction = this.fuzzyFilterFunction;
           }
@@ -961,8 +960,8 @@ export class FilterableList extends Morph {
         get() {
           return this._defaultFilterFunction
               || (this._defaultFilterFunction = (parsedInput, item) =>
-                    parsedInput.lowercasedTokens.every(token =>
-                      item.string.toLowerCase().includes(token)));
+                parsedInput.lowercasedTokens.every(token =>
+                  item.string.toLowerCase().includes(token)));
         }
       },
 
@@ -979,8 +978,8 @@ export class FilterableList extends Morph {
                   else if (fuzzyValue.includes(t)) base -= 5;
                 });
                 return arr.sum(parsedInput.lowercasedTokens.map(token =>
-                  string.levenshtein(fuzzyValue.toLowerCase(), token))) + base
-              })
+                  string.levenshtein(fuzzyValue.toLowerCase(), token))) + base;
+              });
         }
       },
 
@@ -988,14 +987,14 @@ export class FilterableList extends Morph {
         get() {
           return this._fuzzyFilterFunction
               || (this._fuzzyFilterFunction = (parsedInput, item) => {
-            var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
-            var tokens = parsedInput.lowercasedTokens;
-            if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
-            // "fuzzy" match against item.string or another prop of item
-            var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
-            return arr.sum(parsedInput.lowercasedTokens.map(token =>
-                    string.levenshtein(fuzzyValue, token))) <= 3;
-          });
+                var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
+                var tokens = parsedInput.lowercasedTokens;
+                if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
+                // "fuzzy" match against item.string or another prop of item
+                var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
+                return arr.sum(parsedInput.lowercasedTokens.map(token =>
+                  string.levenshtein(fuzzyValue, token))) <= 3;
+              });
         }
       },
 
@@ -1004,7 +1003,7 @@ export class FilterableList extends Morph {
       },
 
       actions: {}
-    }
+    };
 
   }
 
@@ -1070,7 +1069,7 @@ export class FilterableList extends Morph {
           state.escaped = false;
           return state;
         }), {tokens: [], current: "", escaped: false, spaceSeen: false});
-    parsed.current && parsed.tokens.push(parsed.current)
+    parsed.current && parsed.tokens.push(parsed.current);
     var lowercasedTokens = parsed.tokens.map(ea => ea.toLowerCase());
     return {tokens: parsed.tokens, lowercasedTokens, input: filterText};
   }
@@ -1104,7 +1103,7 @@ export class FilterableList extends Morph {
       selected: list.selections,
       action: this.selectedAction,
       status: "accepted",
-    }
+    };
     signal(this, "accepted", result);
     return result;
   }
@@ -1125,7 +1124,7 @@ export class FilterableList extends Morph {
       ...arr.range(0, 8).map(n => {
         return {
           keys: "Alt-" + (n+1),
-          command: {command: "choose action and accept input", args: {actionNo: n}}}
+          command: {command: "choose action and accept input", args: {actionNo: n}}};
       })
     ].concat(super.keybindings);
   }
@@ -1171,7 +1170,7 @@ export class FilterableList extends Morph {
               this.targetObj.focus();
               this.disconnect();
               this.sourceObj.remove();
-              return result.selected[0]
+              return result.selected[0];
             }
           });
           connect(chooser, 'canceled', morph, 'selectedAction', {
@@ -1179,7 +1178,7 @@ export class FilterableList extends Morph {
               this.targetObj.focus();
               this.disconnect();
               this.sourceObj.remove();
-              return this.targetObj.selectedAction
+              return this.targetObj.selectedAction;
             }
           });
           chooser.focus();
@@ -1277,7 +1276,7 @@ export class DropDownList extends Button {
               ...label, " ", null,
               ...Icon.textAttribute(
                 "caret-" + (listAlign === "bottom" ?
-                            "down" : "up"))
+                  "down" : "up"))
             ];
 
             listMorph.selectedIndex = items.indexOf(item);
@@ -1286,7 +1285,7 @@ export class DropDownList extends Button {
         }
       }
 
-    }
+    };
 
   }
 
@@ -1303,7 +1302,7 @@ export class DropDownList extends Button {
           focused = this.world() && this.world().focusedMorph;
       if (list !== focused
       &&  !list.withAllSubmorphsDetect(m => m == focused))
-         list.fadeOut(200);
+        list.fadeOut(200);
     }, 100);
   }
 

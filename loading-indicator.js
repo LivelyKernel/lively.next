@@ -1,16 +1,9 @@
 /* global System */
 import { promise } from "lively.lang";
-import { Icon, Morph, StyleSheet, Image, Text } from "lively.morphic";
+import { Icon, Morph, StyleSheet, Image } from "lively.morphic";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { connect } from "lively.bindings";
 
-import { Button } from "./buttons.js"
-
-
-// var i = LoadingIndicator.open("test")
-// i.remove()
-
-const imageUrl = System.decanonicalize("lively.morphic/") + "lively-web-logo-small-animate.svg";
 
 export default class LoadingIndicator extends Morph {
 
@@ -60,8 +53,6 @@ export default class LoadingIndicator extends Morph {
   static get properties() {
     return {
       fill:       {defaultValue: Color.black.withA(.6)},
-      fontSize:   {defaultValue: 16},
-      fontFamily: {defaultValue: "Arial"},
       name:       {defaultValue: "LoadingIndicator"},
       borderRadius: {defaultValue: 10},
       label: {
@@ -71,22 +62,28 @@ export default class LoadingIndicator extends Morph {
       },
 
       fontFamily: {
+        defaultValue: "Arial",
         derived: true, after: ["submorphs"],
         get() { return this.getSubmorphNamed("label").fontFamily; },
         set(val) { this.getSubmorphNamed("label").fontFamily = val; }
       },
 
       fontSize: {
+        defaultValue: 16,
         derived: true, after: ["submorphs"],
         get() { return this.getSubmorphNamed("label").fontSize; },
         set(val) { this.getSubmorphNamed("label").fontSize = val; }
+      },
+
+      loadingImage: {
+        defaultValue: System.decanonicalize("lively.morphic/") + "lively-web-logo-small-animate.svg"
       },
 
       submorphs: {
         initialize() {
           this.submorphs = [
             new Image({
-              imageUrl,
+              imageUrl: this.loadingImage,
               name: "spinner"
             }),
             {
@@ -104,7 +101,7 @@ export default class LoadingIndicator extends Morph {
 
         }
       }
-    }
+    };
   }
 
   constructor(props = {}) {
@@ -119,7 +116,7 @@ export default class LoadingIndicator extends Morph {
     this.get("closeButton").fit();
   }
 
-  get isEpiMorph() { return true }
+  get isEpiMorph() { return true; }
 
   updateLabel() {
     var center = this.center; this.relayout();

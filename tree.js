@@ -2,7 +2,7 @@
 import { arr, fun, obj, tree, string, promise } from "lively.lang";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { Label } from "lively.morphic/text/label.js";
-import { Morph, config, morph, StyleSheet } from "lively.morphic";
+import { Morph, config, StyleSheet } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 import { zip } from "lively.lang/array.js";
 
@@ -172,7 +172,7 @@ export class TreeNode extends Morph {
         }
       },
 
-    }
+    };
   }
 
   constructor(props = {}) {
@@ -201,7 +201,7 @@ export class TreeNode extends Morph {
 
     if (toggle){
       toggle.visible = this.isCollapsable;
-      toggle.position = pt(padl, padt)
+      toggle.position = pt(padl, padt);
     }
     if (displayedNode && displayedNode.isMorph) {
       displayedMorph = this.displayedMorph = displayedNode;
@@ -245,7 +245,7 @@ export class TreeNode extends Morph {
   }
 
   onContextMenu(evt) {
-    this.owner.owner.contextMenuForNode(this, evt)
+    this.owner.owner.contextMenuForNode(this, evt);
   }
 
   onMouseDown(evt) {
@@ -263,17 +263,17 @@ export class TreeNode extends Morph {
 
   select() {
     let {tree, myNode} = this;
-    tree && (tree.selection = myNode)
+    tree && (tree.selection = myNode);
     signal(this, "selected", myNode);
   }
 
   highlight() {
-   if (this.displayedMorph.highlight) return this.displayedMorph.highlight();
-   if (this.highlighter) this.highlighter.remove();
-   const hl = this.highlighter = this.addMorph(this.displayedMorph.copy());
-   hl.fontWeight = "bold", hl.fontColor = Color.orange;
-   hl.reactsToPointer = false;
-   hl.fadeOut(2000);
+    if (this.displayedMorph.highlight) return this.displayedMorph.highlight();
+    if (this.highlighter) this.highlighter.remove();
+    const hl = this.highlighter = this.addMorph(this.displayedMorph.copy());
+    hl.fontWeight = "bold", hl.fontColor = Color.orange;
+    hl.reactsToPointer = false;
+    hl.fadeOut(2000);
   }
 
 }
@@ -392,7 +392,7 @@ export class Tree extends Morph {
         get() { return this.nodeItemContainer.submorphs.slice(); }
       }
 
-    }
+    };
   }
 
   updateStyleSheet() {
@@ -440,7 +440,7 @@ export class Tree extends Morph {
       fontSize: this.fontSize,
       fontWeight: this.fontWeight,
       autofit: !this.resizeNodes
-    }
+    };
   }
 
   get defaultNodeHeight() {
@@ -475,17 +475,17 @@ export class Tree extends Morph {
 
     this.withMetaDo({isLayoutAction: true}, () => {
       let {
-        treeData,
-        padding,
-        scroll: {y: scrollY},
-        extent,
-        additionalRenderSpace,
-        defaultNodeMorphTextBounds,
-        resizeNodes,
-        nodeMorphs,
-        nodeItemContainer: container,
-        selection
-      } = this,
+            treeData,
+            padding,
+            scroll: {y: scrollY},
+            extent,
+            additionalRenderSpace,
+            defaultNodeMorphTextBounds,
+            resizeNodes,
+            nodeMorphs,
+            nodeItemContainer: container,
+            selection
+          } = this,
           {
             width: defaultCharWidth,
             height: defaultNodeHeight,
@@ -616,7 +616,7 @@ export class Tree extends Morph {
       selectionId: selId,
       collapsedMap,
       scroll: this.scroll
-    }
+    };
   }
 
   async applyViewState(viewState, nodeIdFn) {
@@ -665,14 +665,14 @@ export class Tree extends Morph {
   async uncollapse(node = this.selection) {
     if (!node || !this.treeData.isCollapsed(node)) return;
     await this.onNodeCollapseChanged({node, isCollapsed: false});
-    this.update()
+    this.update();
     return node;
   }
 
   async collapse(node = this.selection) {
     if (!node || this.treeData.isCollapsed(node)) return;
     await this.onNodeCollapseChanged({node, isCollapsed: true});
-    this.update()
+    this.update();
     return node;
   }
 
@@ -708,17 +708,17 @@ export class Tree extends Morph {
 
     if (how === "into view") {
       if (lineBounds.bottom() > visibleBounds.bottom())
-        offsetY = lineBounds.bottom() - visibleBounds.bottom()
+        offsetY = lineBounds.bottom() - visibleBounds.bottom();
       if (lineBounds.top() < visibleBounds.top())
-        offsetY = lineBounds.top() - visibleBounds.top()
+        offsetY = lineBounds.top() - visibleBounds.top();
     } else {
       offsetX = -scroll.x;
       if (how === "top")
-        offsetY = visibleBounds.top() - lineBounds.top()
+        offsetY = visibleBounds.top() - lineBounds.top();
       else if (how === "center")
         offsetY = lineBounds.leftCenter().y - visibleBounds.leftCenter().y;
       else if (how === "bottom")
-        offsetY = visibleBounds.bottom() - lineBounds.bottom()
+        offsetY = visibleBounds.bottom() - lineBounds.bottom();
     }
 
     this.scroll = scroll.addXY(offsetX, offsetY);
@@ -803,7 +803,7 @@ export class TreeData {
 
   safeDisplay(node) {
     try { return this.display(node); }
-    catch (e) { return `[TreeData] Error when trying to display node: ${e}`}
+    catch (e) { return `[TreeData] Error when trying to display node: ${e}`;}
   }
 
   nodeToString(node) {
@@ -830,7 +830,7 @@ export class TreeData {
   }
 
   asListWithIndexAndDepth(filterFn = false) {
-    var nodesWithIndex = []
+    var nodesWithIndex = [];
     tree.prewalk(this.root,
       (node, i, depth) => nodesWithIndex.push({node, depth, i}),
       (node) => this.getChildrenIfUncollapsed(node));
@@ -839,7 +839,7 @@ export class TreeData {
 
   pathOf(node) {
     var path = [];
-    while (node) { path.unshift(node); node = this.parentNode(node); };
+    while (node) { path.unshift(node); node = this.parentNode(node); }
     return path;
   }
 
@@ -954,7 +954,7 @@ var treeCommands = [
       var {scroll} = tree,
           y = tree.padding.top(),
           targetY = scroll.y,
-          newIndex = tree.lineHeightCache.findIndex(h => targetY <= (y += h))
+          newIndex = tree.lineHeightCache.findIndex(h => targetY <= (y += h));
       newIndex--; // ignore root
       tree.gotoIndex(Math.max(1, newIndex));
       return true;
@@ -1015,7 +1015,7 @@ var treeCommands = [
     name: "goto parent",
     exec: tree => {
       if (tree.selection) {
-        tree.selection = tree.treeData.parentNode(tree.selection)
+        tree.selection = tree.treeData.parentNode(tree.selection);
         tree.scrollSelectionIntoView();
       }
       return true;
@@ -1028,7 +1028,7 @@ var treeCommands = [
       var sel = tree.selection;
       if (!sel) return true;
       if (!tree.treeData.isCollapsed(sel))
-        await tree.onNodeCollapseChanged({node: tree.selection, isCollapsed: true})
+        await tree.onNodeCollapseChanged({node: tree.selection, isCollapsed: true});
       else {
         tree.selection = tree.treeData.parentNode(sel);
         tree.scrollSelectionIntoView();
@@ -1041,7 +1041,7 @@ var treeCommands = [
     name: "uncollapse selected node",
     exec: async tree => {
       if (tree.selection)
-        await tree.onNodeCollapseChanged({node: tree.selection, isCollapsed: false})
+        await tree.onNodeCollapseChanged({node: tree.selection, isCollapsed: false});
       return true;
     }
   },
@@ -1052,14 +1052,14 @@ var treeCommands = [
 
       var doCollapse = opts.what === "collapse";
       var td = treeMorph.treeData;
-      var nodesToChange
+      var nodesToChange;
 
       if (doCollapse) {
         // find all the parent nodes of the nodes deepest in the tree below the
         // selected node and collapse those
         if (td.isCollapsed(treeMorph.selection)) return true;
 
-        var startNode = td.parentNode(treeMorph.selection)
+        var startNode = td.parentNode(treeMorph.selection);
         var maxDepth = -1;
         tree.prewalk(startNode,
           (node, i, depth) => {
@@ -1071,7 +1071,7 @@ var treeCommands = [
             if (depth === maxDepth)
               arr.pushIfNotIncluded(nodesToChange, td.parentNode(node));
           },
-          td.getChildrenIfUncollapsed.bind(td))
+          td.getChildrenIfUncollapsed.bind(td));
 
       } else {
         // find the non-leaf nodes below the selection that are at the same
@@ -1087,7 +1087,7 @@ var treeCommands = [
         }
       }
 
-      await collapseOrUncollapse(nodesToChange, doCollapse)
+      await collapseOrUncollapse(nodesToChange, doCollapse);
 
       treeMorph.scrollSelectionIntoView();
 
@@ -1155,8 +1155,8 @@ var treeCommands = [
       var td = treeMorph.treeData,
           content = string.printTree(td.root, td.nodeToString.bind(td), td.getChildrenIfUncollapsed.bind(td)),
           title = treeMorph.getWindow() ?
-          "printed " + treeMorph.getWindow().title :
-      treeMorph.name;
+            "printed " + treeMorph.getWindow().title :
+            treeMorph.name;
 
       return treeMorph.world().execCommand("open text window", {
         title, content, name: title,
@@ -1165,4 +1165,4 @@ var treeCommands = [
     }
   }
 
-]
+];

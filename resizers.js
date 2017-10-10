@@ -10,7 +10,7 @@ export class VerticalResizer extends Morph {
       scalingLeft: {defaultValue: []},
       scalingRight: {defualtValue: []},
       minWidth: {defaultValue: 20}
-    }
+    };
   }
 
   onDrag(evt) {
@@ -51,16 +51,16 @@ export class VerticalResizer extends Morph {
 
     var morphsForPosChange = this.fixed.concat(this.scalingRight);
     morphsForPosChange.forEach(m => {
-        var pos = m.position;
-        m.position = pt(pos.x + deltaX, pos.y);
+      var pos = m.position;
+      m.position = pt(pos.x + deltaX, pos.y);
     });
     this.scalingLeft.forEach(m => {
-        var ext = m.extent;
-        m.extent = pt(ext.x + deltaX, ext.y);
+      var ext = m.extent;
+      m.extent = pt(ext.x + deltaX, ext.y);
     });
     this.scalingRight.forEach(m => {
-        var ext = m.extent;
-        m.extent = pt(ext.x - deltaX, ext.y);
+      var ext = m.extent;
+      m.extent = pt(ext.x - deltaX, ext.y);
     });
     this.position = this.position.addPt(pt(deltaX, 0));
   }
@@ -88,7 +88,7 @@ export class HorizontalResizer extends Morph {
       scalingBelow: {defaultValue: []},
       scalingAbove: {defaultValue: []},
       minHeight: {defaultValue: 20}
-    }
+    };
   }
 
   onDrag(evt) {
