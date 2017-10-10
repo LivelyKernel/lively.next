@@ -1,4 +1,4 @@
-import { obj, string, num, arr, properties, num } from "lively.lang";
+import { obj, string, num, arr, properties } from "lively.lang";
 import { pt, Color, Rectangle, rect } from "lively.graphics";
 import { signal, connect, disconnect } from "lively.bindings";
 import {

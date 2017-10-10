@@ -15,7 +15,7 @@
   },
   "systemjs": {
     "map": {
-      "svg-intersections": "./dist/svg-intersections.js"
+      "svg-intersections": "lively.morphic/dist/svg-intersections.js"
     }
   }
 }
