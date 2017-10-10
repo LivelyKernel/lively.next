@@ -5,14 +5,20 @@
   "license": "MIT",
   "dependencies": {
     "lively.lang": "^1.0.18",
-    "lively.modules": "^0.8.18",
     "lively.morphic": "^0.1.0",
-    "lively.bindings": "^0.1.2"
+    "lively.bindings": "^0.1.2",
+    "lively.halos": "^0.1.0",
+    "svg-intersections": "0.2.5"
   },
   "devDependencies": {
     "mocha-es6": "*"
   },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js"
+  },
+  "systemjs": {
+    "map": {
+      "svg-intersections": "lively.morphic/dist/svg-intersections.js"
+    }
   }
 }
