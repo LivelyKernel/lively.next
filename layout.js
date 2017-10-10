@@ -327,21 +327,27 @@ export class VerticalLayout extends FloatLayout {
           layoutableSubmorphs
         } = this,
         pos = pt(spacing, spacing),
+        containerWidth = container.width,
+        submorphWidth = containerWidth - spacing*2,
         maxWidth = 0;
 
     this.active = true;
     for (let m of layoutableSubmorphs) {
-      let y = pos.y,
-          x = align === "center" ? container.width/2 - m.width / 2 : pos.x
-      if (animate) {
-        const {duration, easing} = animate;
-        m.animate({topLeft: pt(x, y), duration, easing});
-      } else {
-        m.topLeft = pt(x, y);
+      let {x: oldX, y: oldY} = m.position,
+          {x: oldWidth} = m.extent,
+          y = pos.y,
+          x = align === "center" ? containerWidth/2 - oldWidth / 2 : pos.x
+      if (oldX !== x || oldY !== y) {
+        if (animate) {
+          const {duration, easing} = animate;
+          m.animate({topLeft: pt(x, y), duration, easing});
+        } else {
+          m.topLeft = pt(x, y);
+        }
       }
       pos = m.bottomLeft.addPt(pt(0, spacing));
-      if (resizeSubmorphs)
-        m.width = container.width - spacing*2
+      if (resizeSubmorphs && oldWidth !== submorphWidth)
+        m.width = submorphWidth;
       maxWidth = Math.max(m.bounds().width, maxWidth);
       m.layout && m.layout.forceLayout();
     }
