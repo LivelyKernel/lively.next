@@ -3,7 +3,7 @@ import { Rectangle, Color } from "lively.graphics";
 import { Morph } from "../index.js";
 import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js";
 import { h } from "virtual-dom";
-import { Icon, Icons } from "../components/icons.js";
+import { Icon, Icons } from "./icons.js";
 import { signal } from "lively.bindings";
 
 import { splitTextAndAttributesIntoLines } from "./attributes.js";

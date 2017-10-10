@@ -1,7 +1,7 @@
 /*global System*/
 import { arr, string } from 'lively.lang';
 import { pt } from 'lively.graphics';
-import LoadingIndicator from "../../components/loading-indicator.js";
+import LoadingIndicator from "lively.components/loading-indicator.js";
 import { config } from "lively.morphic";
 import { ImportInjector, GlobalInjector, ImportRemover } from "lively.modules/src/import-modification.js";
 import module from "lively.modules/src/module.js";
@@ -254,7 +254,7 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
       let {start, end} = undeclared,
           range = {
             start: textMorph.indexToPosition(start),
-            end: textMorph.indexToPosition(end)};      
+            end: textMorph.indexToPosition(end)};
       textMorph.selection = range;
       textMorph.centerRange(range);
     };

@@ -5,7 +5,7 @@ import { resource, registerExtension as registerResourceExension } from "lively.
 import { MorphicDB } from "./morphicdb/index.js";
 import { Path, obj, date, promise } from "lively.lang";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
-import LoadingIndicator from "./components/loading-indicator.js";
+import LoadingIndicator from "lively.components/loading-indicator.js";
 import { subscribe } from "lively.notifications/index.js";
 import { Color } from "lively.graphics";
 

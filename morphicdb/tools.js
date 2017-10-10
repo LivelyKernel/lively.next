@@ -1,4 +1,4 @@
-import { AbstractPrompt } from "lively.morphic/components/prompts.js";
+import { AbstractPrompt } from "lively.components/prompts.js";
 import { Rectangle, pt, rect, Color } from "lively.graphics";
 import { connect } from "lively.bindings";
 import { ProportionalLayout } from "lively.morphic";
@@ -36,7 +36,7 @@ export class MorphicDBPrompt extends AbstractPrompt {
         name: "server url label", type: "label", value: "server url",
         fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray
       },
-  
+
       {
         name: "alias input", type: "input",
         historyId: historyId ? historyId + "-alias": null,

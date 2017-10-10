@@ -91,7 +91,7 @@ export function copyMorph(morph) {
 import { registerPackage, getPackage, ensurePackage, lookupPackage, semver } from "lively.modules";
 import { createFiles } from "lively.resources";
 import ObjectPackage from "lively.classes/object-classes.js";
-import LoadingIndicator from "./components/loading-indicator.js";
+import LoadingIndicator from "lively.components/loading-indicator.js";
 import { promise } from "lively.lang";
 import { migrations } from "./object-migration.js";
 import { ObjectMigrationPlugin } from "lively.serializer2/plugins.js";
@@ -245,7 +245,7 @@ async function loadPackagesAndModulesOfSnapshot(snapshot) {
           p = packageLookup && packageLookup.pkg;
       if (p) {
         let loadedVersion = p.version,
-            {version: versionInSpec} = JSON.parse(files["package.json"]);        
+            {version: versionInSpec} = JSON.parse(files["package.json"]);
         try {
           if (versionInSpec && loadedVersion &&
               semver.lte(versionInSpec, loadedVersion, true)) {

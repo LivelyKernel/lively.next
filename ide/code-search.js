@@ -1,9 +1,9 @@
 import { fun, arr, obj, string } from 'lively.lang';
 import { pt, rect, LinearGradient, Color, Rectangle } from "lively.graphics";
 import { config, StyleSheet, Text, show, Window } from '../index.js';
-import { FilterableList, List } from "lively.morphic/components/list.js";
-import { LabeledCheckBox } from "lively.morphic/components/widgets.js";
-import LoadingIndicator from "lively.morphic/components/loading-indicator.js";
+import { FilterableList, List } from "lively.components/list.js";
+import { LabeledCheckBox } from "lively.components/widgets.js";
+import LoadingIndicator from "lively.components/loading-indicator.js";
 import Browser from "./js/browser/index.js";
 import { connect, noUpdate, disconnect } from 'lively.bindings';
 import { localInterface } from "lively-system-interface/index.js";
@@ -141,7 +141,7 @@ export class CodeSearcher extends FilterableList {
   reset() {
     this.currentSearchTerm = "";
     connect(this, "accepted", this, "openSelection");
-    connect(this.get("search chooser"), 'selection', this, 'searchAgain');    
+    connect(this.get("search chooser"), 'selection', this, 'searchAgain');
     this.get("list").items = [];
     this.get("input").input = "";
     this.get("search chooser").items = [
@@ -221,7 +221,7 @@ export class CodeSearcher extends FilterableList {
           config.ide.js.ignoredPackages,
           !!searchInAllModules/*includeUnloaded*/);
 
-      } else if (searchInParts || searchInWorlds) {        
+      } else if (searchInParts || searchInWorlds) {
         let pbar = await $world.addProgressBar({label: "morphicdb search"}),
             type = searchInWorlds ? "world" : "part",
             found = await MorphicDB.default.codeSearchInPackages(

@@ -6,7 +6,7 @@ import {
 } from "../../index.js";
 import {pt, Rectangle, Color, LinearGradient, rect} from "lively.graphics";
 import {signal, once, connect, disconnect} from "lively.bindings";
-import {Slider} from "../../components/widgets.js";
+import {Slider} from "lively.components/widgets.js";
 import { obj } from "lively.lang";
 import {ColorPalette} from "./color-palette.js";
 import { StyleSheet } from '../../style-sheets.js';
@@ -31,7 +31,7 @@ export class ColorPickerField extends Morph {
         initialize() {
           this.styleSheets = new StyleSheet({
             '.ColorPickerField': {
-              extent: pt(70,30), 
+              extent: pt(70,30),
               layout: new HorizontalLayout(),
               borderRadius: 5, fill: Color.gray, clipMode: "hidden",
               borderWidth: 1, borderColor: Color.gray.darker(),
@@ -42,7 +42,7 @@ export class ColorPickerField extends Morph {
               fill: Color.transparent,
               position: pt(3, 3),
             }
-          })  
+          })
         }
       },
       submorphs: {
@@ -108,7 +108,7 @@ export class ColorPickerField extends Morph {
       }
      }
    }
-  
+
    onKeyDown(evt) {
       if (evt.key == "Escape") {
          this.picker && this.picker.remove();
@@ -139,16 +139,16 @@ export class ColorPickerField extends Morph {
       this.palette ||
       new Popover({
         position: pt(0,0),
-        name: "Color Palette", 
+        name: "Color Palette",
         targetMorph: new ColorPalette({color: this.colorValue})
       });
     connect(p.targetMorph, "color", this, "update");
-    p.isLayoutable = false; 
+    p.isLayoutable = false;
     this.palette = await p.fadeIntoWorld(this.globalBounds().insetBy(10).bottomCenter());
     this.removePicker();
     once(p, 'remove', p, 'topLeft', {converter: () => pt(0,0), varMapping: {pt}});
   }
-  
+
    removePalette() {
      this.palette && this.palette.remove();
    }
@@ -240,11 +240,11 @@ class FieldPicker extends Morph {
      this.pickerPosition = evt.positionIn(this);
      signal(this, 'pickerPosition', this.pickerPosition);
    }
-   
+
    onDrag(evt) {
      this.pickerPosition = evt.positionIn(this);
    }
-   
+
    relayout() {
      const bounds = this.innerBounds();
      this.getSubmorphNamed('hue').setBounds(bounds);
@@ -257,7 +257,7 @@ class ColorPropertyView extends Text {
 
   static get properties() {
     return {
-       update: {}, 
+       update: {},
        value: {
          derived: [true],
          set(v) {
@@ -276,22 +276,22 @@ class ColorPropertyView extends Text {
        selectionColor: {defaultValue: Color.gray.darker()}
     }
   }
-  
+
   onFocus() {
     this.get('keyLabel').styleClasses = ['key', ...!this.readOnly ? ['large', 'active'] : []];
     this.styleClasses = [...!this.readOnly ? ['editable', 'active'] : [], 'value'];
     this.selection.cursorBlinkStart();
   }
-  
+
   onBlur() {
     this.get('keyLabel').styleClasses = [!this.readOnly && 'large', 'key'];
     this.styleClasses = [!this.readOnly && 'editable', 'value'];
     this.selection.uninstall();
   }
-  
+
   onKeyDown(evt) {
     if ("Enter" == evt.keyCombo && !this.readOnly) {
-       this.owner.focus(); 
+       this.owner.focus();
        evt.stop();
        signal(this, 'updateValue', this.value);
     } else {
@@ -342,12 +342,12 @@ class HuePicker extends Morph {
         }
       }
     }
-  } 
+  }
 
   onMouseDown(evt) {
      this.sliderPosition = pt(0, evt.positionIn(this).y);
   }
-  
+
   onDrag(evt) {
      this.sliderPosition = pt(0, evt.positionIn(this).y);
   }
@@ -356,7 +356,7 @@ class HuePicker extends Morph {
     this.hue = colorPicker.hue;
     this.get('slider').center = this.sliderPosition;
   }
-  
+
 }
 
 class ColorDetails extends Morph {
@@ -378,7 +378,7 @@ class ColorDetails extends Morph {
             fill: this.color,
           },
           this.hashViewer(),
-          {type: 'label', name: 'R', 
+          {type: 'label', name: 'R',
            autofit: true,
            padding: rect(10,0,0,0),
            styleClasses: ['ColorPropertyView']}];
@@ -388,7 +388,7 @@ class ColorDetails extends Morph {
     }
   }
 
-   update({color}) { 
+   update({color}) {
      const [r, g, b] = color.toTuple8Bit(),
            [h, s, v] = color.toHSB();
      this.get('colorViewer').fill = color;
@@ -475,7 +475,7 @@ export class ColorPicker extends Window {
         },
       },
       saturation: {
-      
+
       },
       brightness: {
         set(b) {
@@ -532,12 +532,12 @@ export class ColorPicker extends Window {
          this.close();
      }
   }
-  
+
   close() {
      super.close();
      signal(this, 'close');
   }
-  
+
   update() {
      this.get('field picker').update(this);
      this.get('hue picker').update(this);
@@ -550,7 +550,7 @@ export class ColorPicker extends Window {
      //      the picker's color.
      signal(this, "color", this.color);
   }
-  
+
   colorPalette() {
     let colorDetails = this.colorDetails(),
         fieldPicker = this.fieldPicker(),
@@ -564,8 +564,8 @@ export class ColorPicker extends Window {
           layout: new GridLayout({
             autoAssign: false,
             rows: [1, {fixed: 30}],
-            columns: [0, {paddingLeft: 10}, 
-                      1, {fixed: 55, paddingLeft: 10, paddingRight: 5}, 
+            columns: [0, {paddingLeft: 10},
+                      1, {fixed: 55, paddingLeft: 10, paddingRight: 5},
                       2, {fixed: 100}],
             groups: {"field picker": {alignedProperty: 'position'},
                      "hue picker": {alignedProperty: 'position'}},
@@ -578,7 +578,7 @@ export class ColorPicker extends Window {
     connect(huePicker, 'hue', this, 'hue');
     return colorPalette;
   }
-  
+
   alphaSlider() {
     return {
       name: "alphaSlider",
@@ -603,19 +603,19 @@ export class ColorPicker extends Window {
       ]
     };
   }
-  
+
   fieldPicker() {
     return new FieldPicker({
-        name: 'field picker', 
+        name: 'field picker',
         saturation: this.saturation,
         brightness: this.brightness
       });
   }
-  
+
   huePicker() {
     return new HuePicker({name: "hue picker", hue: this.hue});
   }
-  
+
   colorDetails() {
     return new ColorDetails({name: "details", color: this.color})
   }

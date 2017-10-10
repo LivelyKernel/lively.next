@@ -6,7 +6,7 @@ import { Path, obj, date, promise } from "lively.lang";
 import { morph, HorizontalLayout, VerticalLayout } from "lively.morphic";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { connect } from "lively.bindings";
-import LoadingIndicator from "./components/loading-indicator.js";
+import LoadingIndicator from "lively.components/loading-indicator.js";
 import { emit } from "lively.notifications/index.js";
 import { SnapshotPackageHelper, default as MorphicDB } from "./morphicdb/db.js";
 
@@ -375,7 +375,7 @@ export class SnapshotEditor {
 
     });
 
-    
+
     if (textPos) ed.whenRendered().then(() => ed.lineNumber = textPos.row);
 
     return ed;

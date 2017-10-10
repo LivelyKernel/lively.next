@@ -5,7 +5,7 @@ import { Sizzle, SizzleVisitor, SizzleExpression } from "./sizzle.js";
 import { ShadowObject, CustomLayout, Button, Text, Icon, HorizontalLayout, morph, Morph, config} from "./index.js";
 import { Color, pt, rect } from "lively.graphics";
 import { connect, once, signal, disconnect } from "lively.bindings";
-import { TreeData, Tree } from "./components/tree.js";
+import { TreeData, Tree } from "lively.components/tree.js";
 import { PropertyControl } from "./ide/js/inspector.js";
 import { safeToString } from "lively.lang/object.js";
 import { LinearGradient } from "lively.graphics/color.js";
@@ -69,7 +69,7 @@ class StyleRuleDraft extends Morph {
       }
     };
   }
-  
+
   compileRule() {
     let ruleInput = this.getSubmorphNamed('ruleInput');
     ruleInput.textString = ruleInput.textString.replace(/\r?\n|\r/g, '');
@@ -570,7 +570,7 @@ class StyleSheetData extends TreeData {
   }
 
   get globalPropertySettings() { return this.editor.globalPropertySettings }
-  
+
   parseStyleSheet(styleSheet) {
     return {type: 'sheet',
             isCollapsed: true,
@@ -687,14 +687,14 @@ class StyleSheetData extends TreeData {
   }
 
   updateRule(node) {
-    let {styleSheet, rule, key: prop, foldedProperty, value, spec, 
+    let {styleSheet, rule, key: prop, foldedProperty, value, spec,
          children, parent} = node;
     let props = styleSheet.rules[rule];
     if (foldedProperty) {
       value = {...props[foldedProperty], [prop]: value};
       styleSheet.setRule(rule, props ? {...props, [foldedProperty]: value} : {});
-      // update the node for the foldedProperty display   
-      parent && parent.displayedMorph && signal(parent.displayedMorph, 'update', value);     
+      // update the node for the foldedProperty display
+      parent && parent.displayedMorph && signal(parent.displayedMorph, 'update', value);
     } else {
       styleSheet.setRule(rule, props ? {...props, [prop]: value} : {});
       signal(node.displayedMorph, "update", styleSheet.rules[rule][prop]);
@@ -712,7 +712,7 @@ class StyleSheetData extends TreeData {
     let {spec, styleSheet, rule, key, value} = node,
         children = [];
     for (let m of spec.foldable) {
-      children.push({type: "property", foldedProperty: key, styleSheet, 
+      children.push({type: "property", foldedProperty: key, styleSheet,
                      spec: obj.dissoc(spec, 'foldable'),
                      value: value[m], key: m, rule, parent: node})
     }
@@ -781,7 +781,7 @@ class StyleSheetData extends TreeData {
           let draft = node.displayedMorph = new StyleRuleDraft(node);
           connect(draft, "cancel", this, "removeRuleDraft", {
             updater: function($upd) {
-              $upd(node); 
+              $upd(node);
             },
             varMapping: {node}
           });
@@ -1082,7 +1082,7 @@ export class StyleSheetEditor extends Morph {
               name: "propertyTree",
               bounds, treeData: td,
             }),
-            {name: 'resizer', 
+            {name: 'resizer',
              fill: Color.transparent,
              nativeCursor: 'nwse-resize'}
           ];
@@ -1204,7 +1204,7 @@ export class StyleSheet {
     for (let rule in this.rules) {
       ar[rule] = [this, rule];
     }
-    return ar;    
+    return ar;
   }
 
   applyRule(rule, morph) {
