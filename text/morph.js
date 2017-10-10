@@ -1924,18 +1924,16 @@ export class Text extends Morph {
   }
 
   fitIfNeeded() {
-    if (this.viewState._needsFit) {
-      this.fit();
-    }
+    if (this.viewState._needsFit) this.fit();
   }
 
   get defaultLineHeight() {
     var p = this.padding;
-    return (
-      p.top() +
-      p.bottom() +
-      this.fontMetric.defaultLineHeight({fontSize: this.fontSize, fontFamily: this.fontFamily})
-    );
+    return p.top() + p.bottom() +
+      this.fontMetric.defaultLineHeight({
+        fontSize: this.fontSize,
+        fontFamily: this.fontFamily
+      });
   }
 
   columnInWrappedLine(textPos) {

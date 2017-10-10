@@ -122,7 +122,7 @@ export default class TextLayout {
 
     morph.viewState._textLayoutStale = false;
 
-    debug && debug.log(`estimateLineHeights, ${nMeasured}/${lines.length} updated`)
+    debug && debug.log(`estimateLineHeights, ${nMeasured}/${lines.length} updated, force: ${force}`)
   }
 
   defaultCharExtent(morph) {
