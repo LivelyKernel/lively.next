@@ -4,7 +4,6 @@ import { pt, Rectangle, Color } from "lively.graphics";
 import { Label } from "lively.morphic/text/label.js";
 import { Morph, config, StyleSheet } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
-import { zip } from "lively.lang/array.js";
 
 /*
 
@@ -894,7 +893,7 @@ export class TreeData {
         aList = this.asListWithIndexAndDepth(),
         bList = treeData.asListWithIndexAndDepth();
     if (aList.length != bList.length) return [];
-    for (var [a, b] of zip(aList, bList)) {
+    for (var [a, b] of arr.zip(aList, bList)) {
       if (!obj.equals(a.node.value, b && b.node.value)) changedNodes.push([a.node, b.node]);
     }
     return changedNodes;

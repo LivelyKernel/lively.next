@@ -1,4 +1,4 @@
-import { obj, string, num, arr, properties } from "lively.lang";
+import { obj, string, num, arr, properties, num } from "lively.lang";
 import { pt, Color, Rectangle, rect } from "lively.graphics";
 import { signal, connect, disconnect } from "lively.bindings";
 import {
@@ -15,7 +15,7 @@ import {
   Icon
 } from "lively.morphic";
 import { intersect, shape } from "svg-intersections";
-import { roundTo } from "lively.lang/number.js";
+
 
 class LeashEndpoint extends Ellipse {
 
@@ -268,7 +268,7 @@ export class Slider extends Morph {
         extent: pt(15, 15),
         nativeCursor: "-webkit-grab",
         getValue: () => {
-          return roundTo(this.target[this.property], 0.01);
+          return num.roundTo(this.target[this.property], 0.01);
         },
         onDragStart(evt) {
           this.valueView = new Tooltip({description: this.getValue()}).openInWorld(
@@ -300,7 +300,7 @@ export class Slider extends Morph {
 
   onSlide(slideHandle, delta) {
     const oldValue = this.target[this.property],
-          newValue = roundTo(oldValue + delta.x / this.width, 0.01);
+          newValue = num.roundTo(oldValue + delta.x / this.width, 0.01);
     this.target[this.property] = Math.max(this.min, Math.min(this.max, newValue));
     this.update();
   }
