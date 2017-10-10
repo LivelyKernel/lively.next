@@ -311,7 +311,7 @@ class AttributeConnection {
     }
 
     // save so that it can be restored
-    sourceObj.hasOwnProperty(methodName)
+    if (sourceObj.hasOwnProperty(methodName))
       sourceObj[this.privateAttrName(methodName)] = origMethod;
     sourceObj[methodName] = function connectionWrapper() {
       if (this.attributeConnections === undefined)
@@ -343,7 +343,7 @@ class AttributeConnection {
     if (srcObj.__lookupGetter__(realAttrName)) {
       delete srcObj[realAttrName];
       if (srcObj.hasOwnProperty(helperAttrName)) {
-        srcObj[realAttrName] = srcObj[helperAttrName];
+        try { srcObj[realAttrName] = srcObj[helperAttrName]; } catch (err) {}
         delete srcObj[helperAttrName];
       }
     } else if(srcObj[realAttrName] && srcObj[realAttrName].isConnectionWrapper) {
