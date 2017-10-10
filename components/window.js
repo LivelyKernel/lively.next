@@ -304,10 +304,13 @@ export default class Window extends Morph {
       name: "resizer",
       nativeCursor: "nwse-resize",
       extent: pt(20, 20),
+      origin: pt(20,20),
       fill: Color.transparent,
       bottomRight: this.extent
     });
+    connect(resizer, "onDragStart", resizer, "scale", {converter: evt => 10});
     connect(resizer, "onDrag", win, "resizeBy", {converter: evt => evt.state.dragDelta});
+    connect(resizer, "onDragEnd", resizer, "scale", {converter: evt => 1});
     return resizer;
   }
 
