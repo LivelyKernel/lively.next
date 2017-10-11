@@ -6,6 +6,7 @@
     "url": "https://github.com/LivelyKernel/lively.ide"
   },
   "dependencies": {
+    "lively.morphic": "https://github.com/LivelyKernel/lively.morphic",
     "lively.components": "https://github.com/LivelyKernel/lively.components",
     "lively.bindings":   "https://github.com/LivelyKernel/lively.bindings",
     "lively.graphics":   "https://github.com/LivelyKernel/lively.graphics",
