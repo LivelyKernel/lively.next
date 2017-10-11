@@ -7,6 +7,11 @@ for why it wouldn't work on Windows but we might have left a few of the wrong
 slashes around. If you want to make the installer working for Windows you get a
 cookie!!
 
+## Requirements
+
+- MacOS or Linux
+- node.js version 7 or newer
+- git
 
 ## Usage
 
