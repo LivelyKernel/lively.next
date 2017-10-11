@@ -150,7 +150,8 @@ class InspectionNode {
         isCollapsed, // wether or not the node is dispalying its child nodes,
         children = [],
         isSelected = false,
-        visible = true
+        visible = true,
+        draggable = true
       }) {
     this.priority = priority;
     this.key = key;
@@ -182,7 +183,7 @@ class InspectionNode {
 
   display() {
     let {keyString, valueString} = this;
-    return this._propertyWidget || (this._propertyWidget = `${keyString}: ${valueString}`);
+    return this._propertyWidget || (this._propertyWidget = new DraggableTreeLabel({value: `${keyString}: ${valueString}`}));
   }
 
 }
@@ -296,38 +297,27 @@ class PropertyNode extends InspectionNode {
   }
 
   display() {
-    let {keyString, valueString, target, value, spec} = this;
-    if (this._propertyWidget) {
-      // recycle widget
-      if (typeof this._propertyWidget == 'string') return this._propertyWidget;
-      this._propertyWidget.keyString = keyString;
-      this._propertyWidget.valueString = valueString;
-      return this._propertyWidget;
-    } else {
-      // create a new widget
-      this._propertyWidget = PropertyControl.render({
-        target,
-        keyString,
-        valueString,
-        value,
-        spec,
-        node: this
-      });
+    let {_propertyWidget: w, keyString, valueString, target, value, spec} = this;
 
-      if (this._propertyWidget) {
-        if (!this.isInternalProperty && !spec.readOnly) {
-          connect(this._propertyWidget, "propertyValue", this, "refreshProperty", {
-            updater: function($upd, val) {
-              $upd(val, true);
-            }
-          });
-          connect(this._propertyWidget, "openWidget", this.root, "onWidgetOpened", {
-            converter: function(widget) { return {widget, node: this.sourceObj}; }
-          });
-        }
-      }
+    if (w) { // recycle widget
+      if (typeof w == 'string') return w;
+      w.keyString = keyString;
+      w.valueString = valueString;
+      return w;
     }
-    return this._propertyWidget || super.display();
+
+    // create a new widget
+    w = this._propertyWidget = PropertyControl.render({
+      target, keyString, valueString, value, spec, node: this});
+
+    if (!this.isInternalProperty && !spec.readOnly) {
+      connect(w, "propertyValue", this, "refreshProperty", {
+        updater: ($upd, val) => $upd(val, true)});
+      connect(w, "openWidget", this.root, "onWidgetOpened", {
+        converter: widget => ({widget, node: this.sourceObj})});
+    }
+
+    return w;
   }
 }
 
@@ -405,6 +395,7 @@ class DraggedProp extends Morph {
   static get properties() {
     return {
       control: {},
+      sourceObject: {},
       borderColor: {defaultValue: Color.rgb(169,204,227)},
       fill: {defaultValue: Color.rgb(235, 245, 251).withA(.8)},
       borderWidth: {defaultValue: 2},
@@ -412,23 +403,43 @@ class DraggedProp extends Morph {
       submorphs: {
         after: ['control'],
         initialize() {
-          this.submorphs = [this.control];
+          let {control} = this;
+          if (!control) return this.submorphs = [];
           this.height = 22;
-          this.control.top = 0;
-          this.control.fontSize = 14;
-          this.control.relayout();
-          this.width = this.control.width + 20;
+          this.submorphs = [control];
+          control.top = 0;
+          control.fontSize = 14;
+          if (typeof control.relayout === "function")
+            control.relayout();
+          this.width = control.width + 20;
           this.adjustOrigin(pt(10,10));
         }
       }
     }
   }
 
-  applyToTarget() {
-    let {keyString, propertyValue} = this.control;
+  applyToTarget(evt) {
+    let {currentTarget: target, control} = this;
     this.remove();
-    MorphHighlighter.removeHighlighters($world);
-    if (this.currentTarget) this.currentTarget[keyString] = propertyValue;
+    MorphHighlighter.removeHighlighters(evt.world);
+    if (!target) return;
+
+    if (!target.isText || target.editorModeName !== "js") {
+      // normal apply prop
+      if (control.hasOwnProperty("propertyValue"))
+        target[control.keyString] = control.propertyValue;
+      return;
+    }
+
+    // rk 2017-10-01 FIXME this is a hack to get droppable code in...
+    // this needs to go somewhere else and needs a better UI, at least
+    let editor = target,
+        toObject = editor.evalEnvironment.context,
+        textPos = editor.textPositionFromPoint(editor.localize(evt.position)),
+        expr = this.sourceObject.generateReferenceExpression({fromMorph: toObject});
+    if (control.keyString) expr += "." + control.keyString;
+    editor.insertTextAndSelect(expr, textPos);
+    editor.focus();
   }
 
   update(handPosition) {
@@ -447,37 +458,58 @@ class DraggedProp extends Morph {
   }
 }
 
-export class PropertyControl extends Label {
+class DraggableTreeLabel extends Label {
 
   static get properties() {
     return {
-      control: {
-        after: ['submorphs'],
-        derived: true,
-        get() {
-          return this.submorphs[0] || false;
-        },
-        set(c) {
-          this.submorphs = [c];
-        }
-      },
       styleClasses: {defaultValue: ['TreeLabel']},
       draggable: {defaultValue: true},
       nativeCursor: {defaultValue: '-webkit-grab'},
+      keyString: {},
+      valueString: {},
+      fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
+      fill:  {defaultValue: Color.transparent},
+      padding: {defaultValue: rect(0,0,10,0)}
+    }
+  }
+
+  get inspector() { return this.owner.tree.owner; }
+
+  onDragStart(evt) {
+    this.draggedProp = new DraggedProp({
+      sourceObject: this.inspector.targetObject,
+      control: this.copy()
+    });
+    this.draggedProp.openInWorld();
+    connect(evt.hand, 'position', this.draggedProp, 'update');
+  }
+
+  onDrag(evt) {}
+
+  onDragEnd(evt) {
+    disconnect(evt.hand, 'position', this.draggedProp, 'update');
+    this.draggedProp.applyToTarget(evt);
+  }
+
+}
+
+export class PropertyControl extends DraggableTreeLabel {
+
+  static get properties() {
+    return {
       root: {},
       keyString: {},
       valueString: {},
       propertyValue: {},
-      fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
-      fill:  {defaultValue: Color.transparent},
-      padding: {defaultValue: rect(0,0,10,0)},
+      control: {
+        after: ['submorphs'],
+        derived: true,
+        get() { return this.submorphs[0] || false; },
+        set(c) { this.submorphs = [c]; }
+      },
       layout: {
         initialize() {
-          this.layout = new CustomLayout({
-            relayout: (self) => {
-              self.relayout();
-            }
-          });
+          this.layout = new CustomLayout({relayout: (self) => { self.relayout(); }});
         }
       },
       submorphs: {
@@ -509,7 +541,10 @@ export class PropertyControl extends Label {
   static render(args) {
     let propertyControl = this.baseControl(args);
 
-    if (!args.spec.type) args.spec = {...args.spec, type: this.inferType(args)}; // non mutating
+    if (!args.spec.type) args.spec = {
+      ...args.spec,
+      type: this.inferType(args)
+    }; // non mutating
 
     if (args.spec.foldable) {
       propertyControl.asFoldable(args.spec.foldable);
@@ -547,6 +582,8 @@ export class PropertyControl extends Label {
         propertyControl.renderRectangleControl(args); break;
       case "Boolean":
         propertyControl.renderBooleanControl(args); break;
+      default:
+        propertyControl.renderItSomehow(args);
     }
 
     if (propertyControl.control) {
@@ -555,7 +592,7 @@ export class PropertyControl extends Label {
       return propertyControl;
     }
 
-    return false;
+    return propertyControl;
   }
 
   renderValueSelector(propertyControl, selectedValue, values) {
@@ -647,6 +684,7 @@ export class PropertyControl extends Label {
     connect(node, "isSelected", this.control, "isSelected");
     return this;
   }
+
   renderRichTextControl(args) {
 
   }
@@ -753,17 +791,9 @@ export class PropertyControl extends Label {
     return this;
   }
 
-  onDragStart(evt) {
-    this.draggedProp = new DraggedProp({control: this.copy()});
-    this.draggedProp.openInWorld();
-    connect(evt.hand, 'position', this.draggedProp, 'update');
-  }
-
-  onDrag(evt) {}
-
-  onDragEnd(evt) {
-    disconnect(evt.hand, 'position', this.draggedProp, 'update');
-    this.draggedProp.applyToTarget();
+  renderItSomehow(args) {
+    this.value += " " + args.valueString;
+    return this;
   }
 
   relayout() {
@@ -813,9 +843,7 @@ class InspectorTreeData extends TreeData {
     return new this({key: "inspectee", value: {inspectee: obj}, isCollapsed: true});
   }
 
-  display(node) {
-    return node.display();
-  }
+  display(node) { return node.display(); }
 
   isCollapsed(node) { return node.isCollapsed; }
 
@@ -963,6 +991,7 @@ export default class Inspector extends Morph {
             codeEditor:       this.getSubmorphNamed("codeEditor"),
             terminalToggler:  this.getSubmorphNamed("terminal toggler"),
             fixImportButton:  this.getSubmorphNamed('fix import button'),
+            thisBindingSelector: this.getSubmorphNamed('this binding selector'),
             propertyTree:     this.getSubmorphNamed("propertyTree"),
             unknowns:         this.getSubmorphNamed("unknowns"),
             internals:        this.getSubmorphNamed("internals"),
@@ -1058,7 +1087,8 @@ export default class Inspector extends Morph {
         internals,
         searchField,
         codeEditor,
-        fixImportButton
+        fixImportButton,
+        thisBindingSelector
       }
     } = this;
 
@@ -1066,7 +1096,10 @@ export default class Inspector extends Morph {
     codeEditor.changeEditorMode("js").then(() =>
       codeEditor.evalEnvironment = {
         targetModule: "lively://lively.morphic/inspector",
-        get context() { return codeEditor.owner.selectedObject },
+        get context() {
+          return thisBindingSelector.selection == 'selection' ?
+              codeEditor.owner.selectedObject : codeEditor.owner.targetObject
+        },
         format: "esm"
       }
     ).catch(err => $world.logError(err));
@@ -1079,6 +1112,7 @@ export default class Inspector extends Morph {
     connect(internals,       'trigger',     this, 'filterProperties');
     connect(searchField,     'searchInput', this, 'filterProperties');
     connect(this,            "extent",      this, "relayout");
+    connect(thisBindingSelector, 'selection', this, 'bindCodeEditorThis');
     connect(fixImportButton, 'fire',        codeEditor, 'execCommand', {
       updater: ($upd) => $upd(
         "[javascript] fix undeclared variables",
@@ -1143,7 +1177,6 @@ export default class Inspector extends Morph {
         }
         await tree.execCommand("uncollapse selected node");
       }
-      tree.selection = null;
     } catch (e) { this.showError(e); }
 
     this.startStepping(10,'refreshAllProperties');
@@ -1166,11 +1199,14 @@ export default class Inspector extends Morph {
           ...config.codeEditor.defaultStyle,
           textString: ""
         },
+        rightArrow = Icon.makeLabel('long-arrow-right').textAndAttributes,
         searchBarBounds = rect(0,0,this.width, 30),
         searchField = new SearchField({
           styleClasses: ["idle"],
           name: "searchField",
         });
+
+    rightArrow[1].paddingTop = '2px';
 
     this.submorphs = [
       {
@@ -1204,17 +1240,34 @@ export default class Inspector extends Morph {
       {name: "codeEditor", ...textStyle},
       {
         name: 'fix import button', type: "button",
+        fill:  Color.black.withA(.5),
+        fontColor: Color.white,
+        borderWidth: 0,
         label: "fix undeclared vars", extent: pt(100, 20)
+      },
+      {
+        name: 'this binding selector', type: DropDownList,
+        fill: Color.black.withA(.5),
+        fontColor: Color.white, borderWidth: 0,
+        selection: 'selection',
+        items: [{isListItem: true, value: 'target',
+                 label: ['this ', null, ...rightArrow, ' target', null]},
+               {isListItem: true, value: 'selection',
+                label: ['this ', null, ...rightArrow, ' selection', null]}]
       }
     ];
   }
 
   async selectTarget() {
-    this.toggleSelectionInstructions(true);
-    let newTarget = await InteractiveMorphSelector.selectMorph();
-    this.toggleSelectionInstructions(false);
+    var newTarget;
+    if (this.env.eventDispatcher.isKeyPressed("Shift")) {
+      [newTarget] = await $world.execCommand("select morph", {justReturn: true});
+    } else {
+      this.toggleSelectionInstructions(true);
+      newTarget = await InteractiveMorphSelector.selectMorph();
+      this.toggleSelectionInstructions(false);
+    }
     if (newTarget) this.targetObject = newTarget;
-    
   }
 
   toggleSelectionInstructions(active) {
@@ -1331,6 +1384,7 @@ export default class Inspector extends Morph {
           fixImportButton,
           terminalToggler: toggler,
           propertyTree: tree,
+          thisBindingSelector,
           codeEditor
         }} = this,
         togglerBottomLeft = tree.bounds().insetBy(5).bottomLeft(),
@@ -1339,9 +1393,11 @@ export default class Inspector extends Morph {
     if (animated.duration) {
       toggler.animate({bottomLeft: togglerBottomLeft, ...animated})
       fixImportButton.animate({topRight: buttonTopRight, ...animated});
+      thisBindingSelector.animate({topRight: fixImportButton.bottomRight.addXY(0,5), ...animated});
     } else {
       toggler.bottomLeft = togglerBottomLeft;
       fixImportButton.topRight = buttonTopRight;
+      thisBindingSelector.topRight = fixImportButton.bottomRight.addXY(0,5);
     }
   }
 

@@ -7,14 +7,19 @@ import { widgets, InputLine } from "lively.components";
 
 import { FillPopover, TextPopover, IconPopover, RectanglePopover, ShadowPopover, PointPopover, VerticesPopover, LayoutPopover, Popover } from "./styling/style-popover.js";
 import { StyleSheetEditor } from "./styling/style-sheet-editor.js";
+
 /*
 
-Value Widgets are the default visual elements in lively.morphic to modify certain
-types of values via direct manipulation.
-The idea is to make frequently reappearing types of values within the morphic system (such as Points, Gradients, Colors etc...) easily recognizable by the user in various different context (i.e. tools).
-The widgets are designed to be easily embeddable into a variety of different context both in a programmatic and visual (that is aesthetic) way.
+Value Widgets are the default visual elements in lively.morphic to modify
+certain types of values via direct manipulation. The idea is to make frequently
+reappearing types of values within the morphic system (such as Points,
+Gradients, Colors etc...) easily recognizable by the user in various different
+context (i.e. tools). The widgets are designed to be easily embeddable into a
+variety of different context both in a programmatic and visual (that is
+aesthetic) way.
 
-Developers conceiving new tools in lively are therefore encouraged to make use of these existing and/or add their own for new types of values as they please.
+Developers conceiving new tools in lively are therefore encouraged to make use
+of these existing and/or add their own for new types of values as they please.
 
 */
 
@@ -22,8 +27,16 @@ Developers conceiving new tools in lively are therefore encouraged to make use o
 
   About Context Sensitive Widgets:
 
-  It so happens that some properties of morphs can not be inspected in a meaningful way without taking into account to which morph the current property belongs to.
-  Take for instance the example of the layout property: Parametrizing layouts in a visual ways often requires us to directly interact with the morph the layout is attached to. For instance adding and removing morphs to and from cells of a GridLayout can not be done via direct manipulation without referring top a concrete morph instance that the GridLayout is attached to. Though these types of properties are (fortnunately rare), the widgets that modify these properties require a certain context (that is a morph) they can bind the change requests by the user.
+  It so happens that some properties of morphs can not be inspected in a
+  meaningful way without taking into account to which morph the current
+  property belongs to.   Take for instance the example of the layout property:
+  Parametrizing layouts in a visual ways often requires us to directly interact
+  with the morph the layout is attached to. For instance adding and removing
+  morphs to and from cells of a GridLayout can not be done via direct
+  manipulation without referring top a concrete morph instance that the
+  GridLayout is attached to. Though these types of properties are (fortnunately
+  rare), the widgets that modify these properties require a certain context
+  (that is a morph) they can bind the change requests by the user.
 
 */
 
@@ -323,7 +336,6 @@ export class ColorWidget extends Morph {
       {
         type: "label",
         padding: rect(0, 0, 5, 0),
-        styleClasses: ['TreeLabel'],
         value: gradient.type == 'linearGradient'
           ? num.toDegrees(gradient.vectorAsAngle()).toFixed() + "°,"
           : ""
@@ -343,7 +355,7 @@ export class ColorWidget extends Morph {
         ]
       });
       stops.push({
-        type: "label", styleClasses: ['TreeLabel'],
+        type: "label",
         padding: rect(0,0,5,0),
         value: (offset * 100).toFixed() + "%" + (i < gradient.stops.length - 1 ? ',' : '')
       });
@@ -452,7 +464,8 @@ export class NumberWidget extends Morph {
       layout: {
         initialize() {
           this.layout = new GridLayout({
-            columns: [1, {paddingLeft: 5, paddingRight: 5, fixed: 25}],
+            resizeSubmorphs: true,
+            columns: [1, {paddingLeft: 5, paddingRight: 0, fixed: 25}],
             grid: [["value", "up"], ["value", "down"]]
           });
           this.update(this.number);
@@ -462,7 +475,7 @@ export class NumberWidget extends Morph {
         after: ["number", "min", "max"],
         initialize() {
           this.submorphs = [
-            new widgets.ValueScrubber({
+            new ValueScrubber({
               name: "value",
               value: this.number,
               floatingPoint: this.floatingPoint,
@@ -471,23 +484,25 @@ export class NumberWidget extends Morph {
             }),
             {
               type: "button",
-              name: "down", styleClasses: ['buttonStyle'],
+              name: "down", styleClasses: ['buttonStyle', 'TreeLabel'],
+              padding: rect(4,1,0,-1),
               label: Icon.makeLabel("sort-asc", {
                 rotation: Math.PI,
                 autofit: false,
+                padding: rect(0,0,0,-8),
                 fixedHeight: true, extent: pt(8,8),
-                padding: rect(1, 2, 0, 0),
                 fontSize: 12
-              })
+              }).fit()
             },
             {
               type: "button",
-              name: "up", styleClasses: ['buttonStyle'],
-              label:
-              Icon.makeLabel("sort-asc", {
+              name: "up", styleClasses: ['buttonStyle', 'TreeLabel'],
+              padding: rect(4,0,0,2),
+              label: Icon.makeLabel("sort-asc", {
                 autofit: false,
+                padding: rect(0,0,0,-9),
                 fixedHeight: true, extent: pt(8,8),
-                padding: rect(0, 2, 0, 0), fontSize: 12
+                fontSize: 12
               })
             }
           ];
@@ -495,6 +510,9 @@ export class NumberWidget extends Morph {
           connect(this.get("up"), "fire", this, "increment");
           connect(this.get("down"), "fire", this, "decrement");
           connect(this, 'number', this, 'relayout');
+          this.whenRendered().then(() => {
+            this.relayout();
+          })
         }
       }
     };
@@ -507,8 +525,6 @@ export class NumberWidget extends Morph {
         fill: Color.transparent,
         borderWidth: 0
       },
-      ".focused .Button": {visible: true},
-      ".unfocused .Button": {visible: false},
       ".PropertyInspector .Button.activeStyle [name=label]": {
         fontColor: Color.white.darker()
       },
@@ -518,8 +534,6 @@ export class NumberWidget extends Morph {
       ".NumberWidget": {
         clipMode: "hidden"
       },
-      "[name=down]": {padding: rect(0, -3)},
-      "[name=up]": {padding: rect(0, -5)},
       "[name=value]": {
         padding: this.padding,
         fill: Color.transparent,
@@ -537,6 +551,8 @@ export class NumberWidget extends Morph {
 
   relayout(fromScrubber) {
     if (!fromScrubber) this.get("value").value = this.number;
+    this.get('up').labelMorph.fit();
+    this.get("down").labelMorph.fit();
     this.layout.col(0).width = this.get('value').textBounds().width;
   }
 
