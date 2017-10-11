@@ -13,7 +13,7 @@ import { arr } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
 import { LabeledCheckBox, DropDownSelector } from "lively.components/widgets.js";
 import { Menu } from "lively.components/menus.js";
-import { NumberWidget } from "lively.morphic/ide/value-widgets.js";
+import { NumberWidget } from "lively.ide/value-widgets.js";
 import { InteractiveMorphSelector } from "./morph.js";
 
 class AxisHalo extends Morph {
