@@ -2,7 +2,7 @@
 import { expect } from "mocha-es6";
 
 import { arr } from "lively.lang";
-import { FilePatch, FilePatchHunk } from "lively.morphic/ide/diff/file-patch.js";
+import { FilePatch, FilePatchHunk } from "lively.ide/diff/file-patch.js";
 
 describe("diff and patch", () => {
 
@@ -29,7 +29,7 @@ describe("diff and patch", () => {
     expect(patch.hunks[0]).equals(patch.hunkForRow(8));
     expect(patch.hunks[1]).equals(patch.hunkForRow(9));
   });
-  
+
   it("returns hunk for row of multiple patched", function() {
     var patchString = "diff --git a/test.txt b/test.txt\n"
                     + "index e42fd89..581f1fd 100644\n"
@@ -64,7 +64,7 @@ describe("diff and patch", () => {
     expect(patches[1]).equals(FilePatch.hunkOrPatchForRow(patches, 15));
     expect(patches[1].hunks[0]).equals(FilePatch.hunkOrPatchForRow(patches, 30));
   });
-  
+
   it("get line of file", function() {
     var patchString = "diff --git a/test.txt b/test.txt\n"
             + "index e42fd89..581f1fd 100644\n"
@@ -212,7 +212,7 @@ describe("diff and patch", () => {
         + " har har har";
     expect(expected).equals(result, 'too long');
   });
-  
+
   it("create patch from selected rows", function() {
     var patchString = "diff --git a/test.txt b/test.txt\n"
             + "--- a/test.txt\n"
@@ -619,9 +619,9 @@ describe("unified diff", () => {
 +/*global System*/
  xxx
 -
-+  
++
  yyy
- 
+
    zzz
 `;
   expect("reads patch", () => {

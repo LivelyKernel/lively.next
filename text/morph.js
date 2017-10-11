@@ -921,7 +921,7 @@ export class Text extends Morph {
     // let modeName = "js"
     modeName = config.ide.modes.aliases[modeName] || modeName;
     let isAbsURL = /^[^:\\]+:\/\//.test(modeName),
-        url = isAbsURL ? modeName : `lively.morphic/ide/${modeName}/editor-plugin.js`;
+        url = isAbsURL ? modeName : `lively.ide/${modeName}/editor-plugin.js`;
     if (!await lively.modules.doesModuleExist(url)) return null;
     let {default: Mode} = await lively.modules.module(url).load();
     return Mode;
@@ -2569,7 +2569,7 @@ export class Text extends Morph {
         let {scrollTop, scrollLeft} = node;
         signal(this, "viewChanged", {prop: "scroll", value: pt(scrollLeft, scrollTop)})
       }
-      
+
     }
   }
 
@@ -2904,7 +2904,7 @@ export class Text extends Morph {
 
       async report() {
         let jsDiff = await System.import("jsdiff", System.decanonicalize("lively.morphic")),
-            {default: DiffEditorPlugin} = await System.import("lively.morphic/ide/diff/editor-plugin.js"),
+            {default: DiffEditorPlugin} = await System.import("lively.ide/diff/editor-plugin.js"),
             indent = 0,
             report = "", reportStyles = [], row = 0;
 

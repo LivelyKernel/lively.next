@@ -6,7 +6,7 @@ import { ShadowObject, CustomLayout, Button, Text, Icon, HorizontalLayout, morph
 import { Color, pt, rect } from "lively.graphics";
 import { connect, once, signal, disconnect } from "lively.bindings";
 import { TreeData, Tree } from "lively.components/tree.js";
-import { PropertyControl } from "./ide/js/inspector.js";
+import { PropertyControl } from "lively.ide/js/inspector.js";
 import { safeToString } from "lively.lang/object.js";
 import { LinearGradient } from "lively.graphics/color.js";
 import { CompletionController } from "./text/completion.js";

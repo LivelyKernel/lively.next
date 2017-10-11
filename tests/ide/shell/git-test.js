@@ -1,7 +1,7 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { expect } from "mocha-es6";
 
-import { parseCommand } from "lively.morphic/ide/shell/shell-interface.js";
+import { parseCommand } from "lively.ide/shell/shell-interface.js";
 
 describe("git", () => {
 
@@ -12,20 +12,20 @@ describe("git", () => {
 });
 
 //     setUp: function(run) {
-//       
+//
 //       this.origRunCommandsThenDo = git.runCommandsThenDo;
-// 
+//
 //     var self = this;
 //     self.commandOutputs = [];
-// 
+//
 //     git.runCommandsThenDo = function (commands, options, thenDo) {
 //         if (typeof options === "function") {
 //           thenDo = options; options = null;
 //         }
 //         options = options || {};
-//     
+//
 //         var defaultOptions = ['--no-pager'];
-//     
+//
 //         commands = commands.map(function(cmd, i) {
 //           if (cmd.gitCommand) {
 //             if (Object.isArray(cmd.gitCommand)) cmd.gitCommand = cmd.gitCommand.join(' ');
@@ -37,25 +37,25 @@ describe("git", () => {
 //           cmd.result = self.commandOutputs[i];
 //           return cmd;
 //         });
-//         
+//
 //         var result = commands.reduce(function(results, cmd) {
 //           results['cmd' + cmd.name.capitalize()] = cmd;
 //           results[cmd.name] = cmd.result;
 //           return results;
 //         }, {});
-//     
+//
 //         thenDo && thenDo(null, result);
 //       }
-// 
+//
 //       this.onTearDown(function() {
 //         git.runCommandsThenDo = this.origRunCommandsThenDo;
 //       });
-//       
+//
 //       run();
 //     },
-// 
+//
 //     tearDown: function() {},
-// 
+//
 //     assertCommandsMatch: function(specs, commands) {
 //       if (specs.length !== commands.length) this.assert(false, lively.lang.string.format("Unequal number of epxected and real commands: %s vs %s"), specs.length, commands.length);
 //       specs.forEach(function(spec, i) {
@@ -70,7 +70,7 @@ describe("git", () => {
 //     },
 // },
 // 'testing', {
-// 
+//
 //     testFileStatus: function() {
 //       var err, result;
 //       var expected = [
@@ -80,22 +80,22 @@ describe("git", () => {
 //         {change: "modfied", fileName: "file-c", status: "unstaged"},
 //         {change: "added",   fileName: "file-d", status: "staged"},
 //         {change: "",        fileName: "file-e", status: "untracked"}];
-// 
-//       this.commandOutputs = [      
+//
+//       this.commandOutputs = [
 //           "D  file-a\n"
 //         + "MM file-b\n"
 //         + " M file-c\n"
 //         + "A  file-d\n"
 //         + "?? file-e\n"
 //       ];
-// 
+//
 //       git.fileStatus(function(_err, fileObjects) { err = _err; result = fileObjects; });
-// 
+//
 //       this.waitFor(function() { return !!err || !!result; }, 10, function() {
 //         err && this.assert(false, String(err.stack));
 //         this.assertMatches(expected, result);
 //         this.done();
 //       })
 //     }
-// 
+//
 // });

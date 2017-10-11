@@ -19,7 +19,7 @@ import { capitalize } from "lively.lang/string.js";
 import { connect, signal } from "lively.bindings";
 import { StylingVisitor } from "./sizzle.js";
 
-// optional lively.halos imports 
+// optional lively.halos imports
 import {showAndSnapToGuides, removeSnapToGuidesOf} from "lively.halos/drag-guides.js";
 
 const defaultCommandHandler = new CommandHandler();
@@ -2098,10 +2098,10 @@ export class Morph {
       steppingItems.push(["Start stepping", function(){self.startSteppingScripts()}])
     } else {
       steppingItems.push(["Start stepping", async () => {
-        
+
         let items = [];
         let {completions} = await lively.vm.completions.getCompletions(() => this, "")
-        
+
         for (let methodsPerProto of completions) {
           let [protoName, methods] = methodsPerProto;
           for (let method of methods) {
@@ -2115,17 +2115,17 @@ export class Morph {
             })
           }
         }
-        
+
         let {selected: [choice]} = await $world.filterableListPrompt("Select method to start", items, {
           requester: this,
           historyId: "lively.morphic-start-stepping-chooser",
         });
         if (!choice) return;
-        
+
         let time = await $world.prompt("Steptime in ms (how of the method will be called)?", {input: 100})
         time = Number(time)
         if (isNaN(time)) return;
-        
+
         let args = [time, choice.selector];
         if (choice.args) {
           let evalEnvironment = {targetModule: "lively://lively.morphic-stepping-args/eval.js"},
@@ -2142,7 +2142,7 @@ export class Morph {
           if (Array.isArray(_argsEvaled))
             args.push(..._argsEvaled);
         }
-        
+
         this.startStepping(...args);
       }]);
     }
@@ -2894,7 +2894,7 @@ export class Image extends Morph {
     if (!['gif', 'jpeg', 'png', 'tiff'].includes(type)) type = 'gif';
     if (!urlString.startsWith('http'))
       urlString = location.origin + "/" + urlString;
-    let {runCommand} = await System.import("lively.morphic/ide/shell/shell-interface"),
+    let {runCommand} = await System.import("lively.ide/shell/shell-interface"),
         cmd = 'curl --silent "' + urlString + '" | openssl base64',
         {stdout} = await runCommand(cmd).whenDone();
     return this.loadUrl('data:image/' + type + ';base64,' + stdout, false);
@@ -3357,19 +3357,19 @@ export class Path extends Morph {
         if (dist >= minDist) continue;
         minDist = dist; minIndex = i;
       }
-      
+
       if (iteration >= iterations) {
         let [point, length] = samples[minIndex];
         return {point, length};
       }
-      
+
       fromLength = samples[Math.max(0, minIndex-1)][1];
       toLength = samples[Math.min(samples.length-1, minIndex+1)][1];
-      
+
       return findClosestPointOnPath(
         pathNode, pos, nSamples, iterations,
         fromLength, toLength, iteration+1);
-      
+
       function samplePathPoints(pathNode, from, to, sampleSize) {
         // 0 <= from, to <= pathNode.getTotalLength()
         // returns list of points with length sampleSize

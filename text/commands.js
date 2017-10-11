@@ -4,7 +4,7 @@ import { chain, arr, string, date } from "lively.lang";
 import { pt } from "lively.graphics";
 import { Range } from "./range.js"
 import { eqPosition } from "./position.js";
-import { indentLines } from "../ide/editor-modes.js";
+import { indentLines } from "lively.ide/editor-modes.js";
 
 var commands = [
 
@@ -687,7 +687,7 @@ var commands = [
     exec: function(morph) {
       var sel = morph.selection;
       // Now selects word, line, body, or matching brackets
-      let indexPair = morph.selectMatchingBrackets(morph.textString, 
+      let indexPair = morph.selectMatchingBrackets(morph.textString,
                           morph.positionToIndex(sel.lead));
       if (indexPair) sel.range = {start: indexPair[0], end: indexPair[1] + 1}
       return true;
@@ -1028,7 +1028,7 @@ var commands = [
     name: "toggle line wrapping",
     scrollCursorIntoView: false,
     multiSelectAction: "single",
-    exec: function(morph) {      
+    exec: function(morph) {
       morph.keepPosAtSameScrollOffsetWhile(() =>
         morph.lineWrapping = morph.lineWrapping
           ? false : morph.fontMetric.isProportional(morph.fontFamily)
@@ -1212,7 +1212,7 @@ var usefulEditorCommands = [
         return true;
       }
 
-      var {spellCheckWord} = await System.import("lively.morphic/ide/shell/spell-checker.js");
+      var {spellCheckWord} = await System.import("lively.ide/shell/spell-checker.js");
       var suggestions = await spellCheckWord(word.string)
 
       if (!suggestions.length) {
@@ -1241,7 +1241,7 @@ var usefulEditorCommands = [
           options = !input || input.length === 0 ? {} : {stdin: input},
           cmdString = await ed.world().prompt('Enter shell command to run on region.',
                               {historyId: 'lively.ide.execShellCommand'}),
-          {runCommand} = await System.import("lively.morphic/ide/shell/shell-interface.js")
+          {runCommand} = await System.import("lively.ide/shell/shell-interface.js")
       if (!cmdString) return ed.setStatusMessage('No command entered, aborting...!')
       var cmd = runCommand(cmdString, options);
       try {
@@ -1271,7 +1271,7 @@ var usefulEditorCommands = [
           url = parts[0].match(/^file|http/) ? `${parts.shift()}:${parts.shift()}` : parts.shift();
       if (parts[0].match(/^[0-9]+$/)) url += ":" + parts.shift();
 
-      var { default: TextEditor } = await System.import("lively.morphic/ide/text-editor.js"),
+      var { default: TextEditor } = await System.import("lively.ide/text-editor.js"),
           textEd = TextEditor.openInWindow();
       textEd.location = url;
       return textEd;

@@ -3,8 +3,8 @@ import { expect } from "mocha-es6";
 
 import { arr } from "lively.lang";
 import { Text } from "lively.morphic";
-import DiffNavigator from "lively.morphic/ide/diff/navigator.js";
-import { DiffEditorPlugin } from "lively.morphic/ide/diff/editor-plugin.js";
+import DiffNavigator from "lively.ide/diff/navigator.js";
+import { DiffEditorPlugin } from "lively.ide/diff/editor-plugin.js";
 
 var editor;
 

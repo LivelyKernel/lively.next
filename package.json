@@ -14,6 +14,7 @@
     "lively.components": "https://github.com/LivelyKernel/lively.components",
     "lively.lang": "^1.0.0",
     "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
+    "lively.ide": "https://github.com/LivelyKernel/lively.ide",
     "pepjs": "^0.4.3",
     "prismjs": "^1.6.0",
     "svg-intersections": "0.2.5",
@@ -47,7 +48,6 @@
       "svg-intersections": "./dist/svg-intersections.js",
       "virtual-dom": "virtual-dom/dist/virtual-dom.js",
       "bowser": "bowser/bowser.js",
-      "prettier": "./ide/js/prettier.min.js",
       "prism": "prismjs/prism.js",
       "prism-json": "prismjs/components/prism-json.js",
       "gsap": {

@@ -33,7 +33,7 @@ import { uploadFile } from "./events/html-drop-handler.js";
 import worldCommands from "./world-commands.js";
 import { loadWorldFromURL, loadWorldFromDB, loadWorldFromCommit, loadWorld } from "./world-loading.js";
 import LoadingIndicator from "lively.components/loading-indicator.js";
-import { GradientEditor } from "./ide/styling/gradient-editor.js";
+import { GradientEditor } from "lively.ide/styling/gradient-editor.js";
 
 // optional lively.halos import
 import Halo, { MorphHighlighter } from "lively.halos/morph.js";

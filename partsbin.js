@@ -300,7 +300,7 @@ export class SnapshotEditor {
   async interactivelyEditSnapshotJSON(onSave) {
     let {commit, snapshot} = this,
         {_id, name, type, author} = commit, origContent,
-        { default: TextEditor } = await System.import("lively.morphic/ide/text-editor.js");
+        { default: TextEditor } = await System.import("lively.ide/text-editor.js");
 
     TextEditor.openURL(`<${type}/${name}>`, {
 
@@ -349,7 +349,7 @@ export class SnapshotEditor {
     let {snapshot, commit: {_id, author, name, type}} = this,
         snap = snapshot || await this.db.fetchSnapshot(undefined, undefined, _id),
         origContent = file.get(snap),
-        { default: TextEditor } = await System.import("lively.morphic/ide/text-editor.js");
+        { default: TextEditor } = await System.import("lively.ide/text-editor.js");
 
     let ed = TextEditor.openURL(`<${type}/${name} - ${file.path.slice(1).join("/")}>`, {
 

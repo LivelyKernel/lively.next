@@ -1,4 +1,4 @@
-import { tidyHtml } from "../ide/html/editor-plugin.js";
+import { tidyHtml } from "lively.ide/html/editor-plugin.js";
 import { IFrameMorph, show } from "lively.morphic";
 import { create as createNode } from "virtual-dom";
 
@@ -11,18 +11,18 @@ export function morphToNode(morph, renderer = morph.env.renderer) {
 
 function callMorphHTMLTransforms(morph, node, parents = []) {
   let morphNode = node.id === morph.id ? node : node.querySelector("#" + morph.id);
-  
+
   // FIXME... in this case simply ignore???
   if (!morphNode)
     throw new Error(`Cannot find node for morph ${morph}`);
-  
+
   morph.submorphs.forEach(ea => callMorphHTMLTransforms(ea, morphNode, parents.concat(morph)));
 
   morphNode.className += " " + morph.name.replace(/[\s|"]/g, "-");
 
   if (typeof morph.htmlExport_transformNode === "function") {
     let newNode = morph.htmlExport_transformNode(morphNode);
-    
+
     if (newNode !== morphNode && morphNode.parentNode)
       morphNode.parentNode.replaceChild(newNode, morphNode);
     return newNode;
@@ -73,7 +73,7 @@ export async function generateHTML(morph, htmlResource, options = {}) {
   }
 
   let morphHtml = `<div class="exported-morph-container ${htmlClassName}"`
-                + `    style="background-image: ${options.backgroundColor ? 
+                + `    style="background-image: ${options.backgroundColor ?
                                    options.backgroundColor.toCSSString() : 'None'};
                               max-width: ${containerWidth || root.style.width};`
                 + `           height: ${containerHeight || root.style.height};">`
@@ -82,7 +82,7 @@ export async function generateHTML(morph, htmlResource, options = {}) {
   if (isFragment) {
     html = addStyles ? morphicStyles() + morphHtml : morphHtml;
 
-  } else {    
+  } else {
     html = `<head><title>lively.next</title><meta charset="UTF-8">`;
     if (addStyles) html += morphicStyles();
     html += `</head><body style="margin: 0;">\n` + morphHtml + "</body>"

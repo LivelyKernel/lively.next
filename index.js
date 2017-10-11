@@ -63,7 +63,7 @@ export function morph(props = {}, opts = {restore: false}) {
 
 async function lazyInspect(obj) {
   // lazy load
-  var {inspect: realInspect} = await System.import("lively.morphic/ide/js/inspector.js")
+  var {inspect: realInspect} = await System.import("lively.ide/js/inspector.js")
   inspect = realInspect;
   return realInspect(obj);
 }

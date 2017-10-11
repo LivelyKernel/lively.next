@@ -70,7 +70,7 @@ export class HTMLMorph extends Morph {
         initialize() { this.html = this.defaultHTML; },
         get() { return this.domNode.innerHTML; },
         set(value) {
-          this.domNode.innerHTML = value;          
+          this.domNode.innerHTML = value;
           // scripts won't execute using innerHTML...
           if (value.includes("<script")) {
             let scripts = this.domNode.querySelectorAll("script");
@@ -128,7 +128,7 @@ export class HTMLMorph extends Morph {
                 style = doc.getElementById("css-for-" + this.id);
             if (style) style.remove();
           } else {
-            System.import("lively.morphic/ide/css/parser.js").then(css => {
+            System.import("lively.ide/css/parser.js").then(css => {
               let parsed = css.parse(val);
               // prepend morph id to each rule so that css is scoped to morph
               parsed.stylesheet.rules.forEach(r =>
