@@ -40,9 +40,9 @@ export default class Halo extends Morph {
       target: {
         get() { return this.state ? this.state.target : null; },
         set(t) {
+          if (!this.state) this.state = {};
           let isUpdate = !!this.state.target;
           this.detachFromTarget();
-          if (!this.state) this.state = {};
           t = this.prepareTarget(t);
           this.state.target = t;
           isUpdate && this.alignWithTarget();
