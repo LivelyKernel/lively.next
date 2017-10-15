@@ -161,8 +161,8 @@ For now only a simple default theme...
             ['lively.morphic/components/loading-indicator.js', 'lively.components', imports => `\{${imports}\}`],
             //['lively.morphic/text/input-line.js', 'lively.components', imports => `\{${imports}\}`],
             ['lively.morphic/components', 'lively.components'],
-            ['lively.components/markers.js', 'lively.halos']
-            // ['lively.morphic/ide', 'lively.ide'],
+            ['lively.components/markers.js', 'lively.halos'],
+            ['lively.morphic/ide', 'lively.ide']
           ];
       for (let mod in modules) {
         var moduleSource = modules[mod]["index.js"];
