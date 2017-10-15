@@ -28,7 +28,7 @@ import { List, DropDownList } from "lively.components/list.js";
 import { HTMLMorph } from './html-morph.js';
 import Window from "lively.components/window.js";
 import InputLine from "./text/input-line.js";
-export { Window };
+export { Window, InputLine };
 
 export function morph(props = {}, opts = {restore: false}) {
   var klass = Morph;
