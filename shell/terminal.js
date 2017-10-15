@@ -4,11 +4,10 @@ import { arr, obj } from "lively.lang";
 import { defaultDirectory } from "./shell-interface.js";
 import ClientCommand from "lively.shell/client-command.js";
 import { GridLayout } from "lively.morphic/layout.js";
-import { Morph, Text, World, config } from "lively.morphic";
+import { Morph, Text, World, config, InputLine } from "lively.morphic";
 import ShellEditorPlugin from "./editor-plugin.js";
 import DiffEditorPlugin from "../diff/editor-plugin.js";
 import { guessTextModeName } from "../editor-plugin.js";
-import { InputLine } from "lively.components";
 
 // var t = Terminal.runCommand("ls")
 // var t = Terminal.open()

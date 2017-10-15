@@ -1,9 +1,9 @@
-import { Morph, config, Text, Icon, GridLayout, StyleSheet, morph } from "lively.morphic";
+import { Morph, config, Text, Icon, GridLayout, StyleSheet, morph, InputLine } from "lively.morphic";
 import { Color, Rectangle, pt } from "lively.graphics";
 import { connect, disconnect } from "lively.bindings";
 import { promise, Path } from "lively.lang";
 
-import { Button, InputLine } from "lively.components";
+import { Button } from "lively.components";
 import { occurStartCommand } from "lively.morphic/text/occur.js";
 import TextMap from './map.js';
 
