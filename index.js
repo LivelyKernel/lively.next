@@ -9,39 +9,3 @@ import { snippetCommands } from "./text/snippets.js";
 
 export {RichTextControl};
 
-async function lazyInspect(obj) {
-  // lazy load
-  var {inspect: realInspect} = await System.import("lively.ide/js/inspector.js")
-  inspect = realInspect;
-  return realInspect(obj);
-}
-
-export var inspect = lazyInspect;
-
-export const ideCommands = [
-  {
-  name: "open object inspector",
-  exec: async (world, args = {target: null}) => {
-      if (!args.target) {
-        world.setStatusMessage("no target for Inspector");
-        return null;
-      }
-      return inspect(args.target);
-    }
-  },
-  {
-    name: "install global inspect and show",
-    exec: world => {
-      window.show = show;
-      window.inspect = inspect;
-      world.setStatusMessage(`inspect() and show() are now globally available`);
-      return true;
-    }
-  }
-];
-
-textCommands.push(...arr.filter([...completionCommands, ...snippetCommands], haloCmd =>
-  !textCommands.find(worldCmd => worldCmd.name == haloCmd.name)))
-
-worldCommands.push(...arr.filter([...ideCommands], haloCmd =>
-  !worldCommands.find(worldCmd => worldCmd.name == haloCmd.name)))

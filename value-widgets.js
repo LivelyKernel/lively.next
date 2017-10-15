@@ -1,12 +1,21 @@
-import { Morph, Text, morph, Label, HorizontalLayout,
-        StyleSheet, Icon, GridLayout, config } from "lively.morphic";
+import {
+  Morph,
+  morph,
+  Label,
+  HorizontalLayout,
+  StyleSheet,
+  Icon,
+  GridLayout,
+  config,
+  InputLine
+} from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 import { Color, LinearGradient, pt, rect } from "lively.graphics";
 import { num, obj } from "lively.lang";
-import { widgets, InputLine } from "lively.components";
 
-import { FillPopover, TextPopover, IconPopover, RectanglePopover, ShadowPopover, PointPopover, VerticesPopover, LayoutPopover, Popover } from "./styling/style-popover.js";
+import { FillPopover, IconPopover, RectanglePopover, ShadowPopover, PointPopover, VerticesPopover, LayoutPopover, Popover } from "./styling/style-popover.js";
 import { StyleSheetEditor } from "./styling/style-sheet-editor.js";
+import { ValueScrubber } from "lively.components/widgets.js";
 
 /*
 

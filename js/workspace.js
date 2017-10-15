@@ -1,12 +1,12 @@
 /*global System*/
 import { arr, obj } from "lively.lang";
 import { pt, Point, Color, Rectangle } from "lively.graphics";
-import { config, Icon, Text} from "lively.morphic";
+import { config, Icon, Text, InputLine } from "lively.morphic";
 import JavaScriptEditorPlugin from "./editor-plugin.js";
 import EvalBackendChooser from "./eval-backend-ui.js";
 import { connect, once, noUpdate } from "lively.bindings";
 import { resource } from "lively.resources";
-import { InputLine, Window} from 'lively.components';
+import { Window } from 'lively.components';
 
 export default class Workspace extends Window {
 

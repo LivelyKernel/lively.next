@@ -1,10 +1,9 @@
-import { show, Morph, morph, Text, config } from "lively.morphic"
+import { show, Morph, morph, Text, config, InputLine } from "lively.morphic"
 import { obj, arr, num, fun, promise } from "lively.lang"
 import { pt, Rectangle, rect, Color } from "lively.graphics"
 import { connect, signal, once } from "lively.bindings"
 import { resource } from "lively.resources";
 import { guessTextModeName } from "./editor-plugin.js";
-import { InputLine } from "lively.components";
 
 // this.world().openInWindow(new TextEditor).activate()
 

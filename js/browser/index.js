@@ -1,9 +1,22 @@
-import { Color, rect, LinearGradient, pt, Rectangle } from "lively.graphics";
+import { Color, rect, pt, Rectangle } from "lively.graphics";
 import { arr, Path, obj, fun, promise, string } from "lively.lang";
-import { connect, disconnect, noUpdate } from "lively.bindings";
-import { Icon, morph, StyleSheet, show, Label, HorizontalLayout, GridLayout, config } from "lively.morphic";
-import { HorizontalResizer, Tree, TreeData, InputLine,
-         Window, Button, DropDownList, List } from "lively.components";
+import { connect } from "lively.bindings";
+import {
+  Icon,
+  morph,
+  StyleSheet,
+  HorizontalLayout,
+  GridLayout,
+  config
+} from "lively.morphic";
+import {
+  HorizontalResizer,
+  Tree,
+  TreeData,
+  Window,
+  Button,
+  List
+} from "lively.components";
 
 // lively.ide
 import JSONEditorPlugin from "../../json/editor-plugin.js";
