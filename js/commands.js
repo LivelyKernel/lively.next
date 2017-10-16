@@ -2,7 +2,6 @@
 import { arr, string } from "lively.lang";
 import { show } from "lively.morphic";
 import { Range } from "lively.morphic/text/range.js";
-import Inspector from "./inspector.js";
 
 function getEvalEnv(morph) {
   var plugin = morph.pluginFind(p => p.isJSEditorPlugin);
@@ -15,153 +14,8 @@ function setEvalEnv(morph, newEnv) {
   return plugin.evalEnvironment;
 }
 
-function logDoit(source, opts = {}) {
-  let {time = Date.now()} = opts,
-      maxLogLength = 50,
-      maxCodeLength = 120000,
-      log;
-  if (source.length > maxCodeLength) return;
-  try { log = JSON.parse(localStorage["lively.next-js-ide-doitlog"]); } catch (err) {}
-  if (!log) log = [];
-  if (log.some(ea => typeof ea === "string" ? ea === source : ea.source === source)) return;
-  log.push({source, time});
-  if (log.length > maxLogLength) log = log.slice(-maxLogLength);
-  try { localStorage["lively.next-js-ide-doitlog"] = JSON.stringify(log); } catch (err) {}
-}
-
-function doEval(
-  morph,
-  range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range,
-  additionalOpts,
-  code = morph.textInRange(range)
-) {
-  var jsPlugin = morph.pluginFind(p => p.isJSEditorPlugin);
-  if (!jsPlugin)
-    throw new Error(`doit not possible: cannot find js editor plugin of !${morph}`);
-  if (additionalOpts && additionalOpts.logDoit) {
-    logDoit(code, additionalOpts);
-  }
-  return jsPlugin.runEval(code, additionalOpts);
-}
-
-function maybeSelectCommentOrLine(morph) {
-  // Dan's famous selection behvior! Here it goes...
-  /*   If you click to the right of '//' in the following...
-  'wrong' // 'try this'.slice(4)  //should print 'this'
-  'http://zork'.slice(7)          //should print 'zork'
-  */
-  // If click is in comment, just select that part
-  var sel = morph.selection,
-      {row, column} = sel.lead,
-      text = morph.selectionOrLineString();
-
-  if (!sel.isEmpty()) return;
-
-  // text now equals the text of the current line, now look for JS comment
-  var idx = text.indexOf("//");
-  if (idx === -1                          // Didn't find '//' comment
-      || column < idx                 // the click was before the comment
-      || (idx>0 && (":\""+"'").indexOf(text[idx-1]) >=0)    // weird cases
-  ) { morph.selectLine(row); return; }
-
-  // Select and return the text between the comment slashes and end of method
-  sel.range = {start: {row, column: idx + 2}, end: {row, column: text.length}};
-}
-
-
 
 export var jsEditorCommands = [
-
-  {
-    name: "doit",
-    doc: "Evaluates the selecte code or the current line and report the result",
-    exec: async function(morph, opts, count = 1) {
-      // opts = {targetModule}
-      maybeSelectCommentOrLine(morph);
-      var result, err;
-      try {
-        opts = {...opts, logDoit: true, inspect: true, inspectDepth: count};
-        result = await doEval(morph, undefined, opts);
-        err = result.error ? result.error : result.isError ? result.value : null;
-      } catch (e) { err = e; }
-      err ?
-        morph.showError(err) :
-        morph.setStatusMessage(string.truncate(result.value, 1000));
-      return result;
-    }
-  },
-
-  {
-    name: "eval all",
-    doc: "Evaluates the entire text contents",
-    scrollCursorIntoView: false,
-    exec: async function(morph, opts) {
-      // opts = {targetModule}
-      var result, err;
-      try {
-        result = await doEval(morph, {start: {row: 0, column: 0}, end: morph.documentEndPosition}, {...opts, logDoit: true});
-        err = result.error ? result.error : result.isError ? result.value : null;
-      } catch (e) { err = e; }
-      err ?
-        morph.showError(err) :
-        morph.setStatusMessage(String(result.value));
-      return result;
-    }
-  },
-
-  {
-    name: "printit",
-    doc: "Evaluates selected code or the current line and inserts the result in a printed representation",
-    exec: async function(morph, opts) {
-      // opts = {targetModule}
-      maybeSelectCommentOrLine(morph);
-      var result, err;
-      try {
-        opts = {...opts, asString: true, logDoit: true};
-        result = await doEval(morph, undefined, opts);
-        err = result.error ? result.error : result.isError ? result.value : null;
-      } catch (e) { err = e; }
-      morph.selection.collapseToEnd();
-      // morph.insertTextAndSelect(err ? err.stack || String(err) : String(result.value));
-      morph.insertTextAndSelect(
-        err ? String(err) + (err.stack ? "\n" + err.stack : "") :
-          String(result.value));
-      return result;
-    }
-  },
-
-  {
-    name: "inspectit",
-    doc: "Evaluates the expression and opens an inspector widget on the resulting object.",
-    exec: async function(morph, opts) {
-      maybeSelectCommentOrLine(morph);
-      var result, err;
-      try {
-        result = await doEval(morph, undefined, opts);
-        err = result.error ? result.error : result.isError ? result.value : null;
-      } catch (e) { err = e; }
-      Inspector.openInWindow({targetObject: err ? err : result.value});
-      return result;
-    }
-  },
-
-  {
-    name: "print inspectit",
-    doc: "Prints a representation of the object showing it's properties. The count argument defines how deep (recursively) objects will be printed.",
-    handlesCount: true,
-    exec: async function(morph, opts, count = 1) {
-      maybeSelectCommentOrLine(morph);
-      var result, err;
-      try {
-        opts = {...opts, inspect: true, inspectDepth: count, logDoit: true};
-        result = await doEval(morph, undefined, opts);
-        err = result.error ? result.error : result.isError ? result.value : null;
-      } catch (e) { err = e; }
-      morph.selection.collapseToEnd();
-      morph.insertTextAndSelect(result.value);
-      return result;
-    }
-  },
 
   {
     name: "undefine variable",
@@ -185,7 +39,7 @@ export var jsEditorCommands = [
           result, err;
 
       try {
-        result = await doEval(ed, null, env, source);
+        result = await ed.doEval(null, env, source);
         err = result.error ? result.error : result.isError ? result.value : null;
       } catch (e) { err = e; }
 
