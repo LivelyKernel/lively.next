@@ -108,7 +108,7 @@ export default class TextEditor extends Morph {
         after: ["historyId"],
         initialize() {
           this.submorphs = [
-            new InputLine({name: "urlInput", historyId: this.historyId}),
+            Text.makeInputLine({name: "urlInput", historyId: this.historyId}),
             {name: "loadButton", type: "button", label: "reload"},
             {name: "saveButton", type: "button", label: "save"},
             {name: "removeButton", type: "button", label: "remove"},

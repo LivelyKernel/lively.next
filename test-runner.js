@@ -503,7 +503,7 @@ export default class TestRunner extends HTMLMorph {
         tests = state.loadedTests || [],
         runningTest = tests.find(test => test.state === "running"),
         renderedFiles = [];
-        
+
         for (let test of tests) {
           renderedFiles.push(
             (await this.renderFile(test.file, test.tests, collapsed))
@@ -728,4 +728,3 @@ export default class TestRunner extends HTMLMorph {
 //     })
 //     .catch(err => this.showError(err));
 // });
-

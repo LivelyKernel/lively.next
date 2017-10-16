@@ -762,7 +762,8 @@ if (counter++ > 100000) throw new Error("endless");
     indent: function(state, textAfter) {
       if (state.tokenize == tokenComment) return passIndent;
       if (state.tokenize != tokenBase) return 0;
-      var firstChar = textAfter && textAfter.charAt(0), lexical = state.lexical, top
+      var firstChar = textAfter && textAfter.charAt(0), lexical = state.lexical, top;
+
       // Kludge to prevent 'maybelse' from blocking lexical scope pops
       if (!/^\s*else\b/.test(textAfter)) for (var i = state.cc.length - 1; i >= 0; --i) {
         var c = state.cc[i];

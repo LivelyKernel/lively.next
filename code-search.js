@@ -1,10 +1,13 @@
 import { fun, arr, obj, string } from 'lively.lang';
-import { pt, rect, LinearGradient, Color, Rectangle } from "lively.graphics";
-import { config, StyleSheet, Text, show, morph } from 'lively.morphic';
+import { pt, Color, Rectangle } from "lively.graphics";
+import { config, show } from "lively.morphic";
 import { connect, noUpdate } from 'lively.bindings';
 import { localInterface } from "lively-system-interface/index.js";
-import { widgets, LoadingIndicator,
-         Window, FilterableList, List} from "lively.components";
+import {
+  LoadingIndicator,
+  Window,
+  FilterableList
+} from "lively.components";
 import Browser from "./js/browser/index.js";
 import { MorphicDB } from "lively.morphic/morphicdb/index.js";
 import { SnapshotEditor } from "lively.morphic/partsbin.js";

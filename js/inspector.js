@@ -1,19 +1,19 @@
 /*global Map, Power4*/
 import { Color, rect, pt } from "lively.graphics";
-import { Point } from "lively.graphics/geometry-2d.js";
+
 import { last } from "lively.lang/array.js";
 import { obj, arr, promise, string } from "lively.lang";
-import { connect, disconnectAll, signal, disconnect, once } from "lively.bindings";
+import { connect, signal, disconnect, once } from "lively.bindings";
 import { Morph, GridLayout, HorizontalLayout, morph, CustomLayout, Label, Icon, StyleSheet, config } from "lively.morphic";
 import { isBoolean, isString, isNumber } from "lively.lang/object.js";
-import { Tree, TreeData } from "lively.components";
+import { Tree, DropDownList, TreeData } from "lively.components";
 import { DropDownSelector, SearchField, LabeledCheckBox } from "lively.components/widgets.js";
 import { MorphHighlighter, InteractiveMorphSelector } from "lively.halos/morph.js";
 
 import { NumberWidget, StringWidget, IconWidget, PaddingWidget,
          VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget,
          BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
-import { RichTextControl } from "../text/ui.js";
+
 
 var inspectorCommands = [
 

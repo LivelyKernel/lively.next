@@ -1,25 +1,39 @@
 /*global target,connection*/
-import { Morph, Icon, config, Text, ShadowObject, GridLayout,
-         TilingLayout, StyleSheet, CustomLayout, morph,
-         HorizontalLayout, VerticalLayout, Icons } from "lively.morphic";
+import {
+  Morph,
+  ProportionalLayout,
+  config,
+  Text,
+  ShadowObject,
+  GridLayout,
+  TilingLayout,
+  StyleSheet,
+  CustomLayout,
+  morph,
+  HorizontalLayout,
+  VerticalLayout,
+  Icons
+} from "lively.morphic";
 import KeyHandler from "lively.morphic/events/KeyHandler.js";
 
 import { connect, signal } from "lively.bindings";
-import { arr, promise, string, obj } from "lively.lang";
+import { arr, string, obj } from "lively.lang";
 import { Color, rect, Rectangle, pt } from "lively.graphics";
 import { range, flatten } from "lively.lang/array.js";
-import { isArray } from "lively.lang/object.js";
 
-import { FilterableList, TreeData, Tree, Window, widgets } from 'lively.components'
-import { ModeSelector, LabeledCheckBox, DropDownSelector,
-         SearchField, CheckBox } from 'lively.components/widgets.js';
+import {
+  ModeSelector,
+  DropDownSelector,
+  SearchField,
+  CheckBox
+} from "lively.components/widgets.js";
 
 import { SvgStyleHalo } from "lively.halos/vertices.js";
 
 import { GradientEditor } from "./gradient-editor.js";
 import { ColorPickerField } from "./color-picker.js";
 import { NumberWidget } from "../value-widgets.js";
-import { showLayoutHaloFor } from "lively.halos/layout.js";
+
 
 const duration = 200;
 
@@ -72,13 +86,12 @@ export class Popover extends Morph {
       submorphs: {
         initialize() {
           this.submorphs = [
-            {
+            morph({
               type: "polygon",
               name: "arrow",
               borderColor: Color.transparent,
-              extent: pt(20,20),
-              vertices: [pt(-1, 0), pt(0, -0.5), pt(1, 0)]
-            },
+              vertices: [pt(-10, 0), pt(0, -15), pt(10, 0)]
+            }),
             {name: "body"},
           ];
         }
@@ -395,6 +408,7 @@ export class LayoutPopover extends StylePopover {
       new HorizontalLayout({autoResize: false}),
       new VerticalLayout({autoResize: false}),
       new TilingLayout(),
+      new ProportionalLayout(),
       new GridLayout({grid: [[null], [null], [null]]})
     ];
   }
@@ -423,7 +437,7 @@ export class LayoutPopover extends StylePopover {
     if (this.layoutHalo) {
       this.getSubmorphNamed("controlContainer").animate({
         isLayoutable: true,
-        submorphs: this.optionControls(this.layoutHalo),
+        submorphs: this.layoutHalo.optionControls(this),
         duration: 300
       });
     } else {
@@ -437,7 +451,8 @@ export class LayoutPopover extends StylePopover {
 
   showLayoutHaloFor(morph) {
     this.clearLayoutHalo();
-    this.layoutHalo = showLayoutHaloFor(morph);
+    if (!morph || !morph.layout) return;
+    this.layoutHalo = $world.showLayoutHaloFor(morph);
   }
 
   clearLayoutHalo() {
@@ -481,114 +496,13 @@ export class LayoutPopover extends StylePopover {
     return layoutSelector;
   }
 
-  gridLayoutOptions() {
-      const layout = this.container.layout,
-            compensateOrigin = new widgets.LabeledCheckBox({
-                name: "compensateOrigin", label: 'Compensate Origin',
-                fill: Color.transparent,
-                checked: layout.compensateOrigin}),
-            fitToCell = new widgets.LabeledCheckBox({
-              label: 'Resize Submorphs', fill: Color.transparent,
-                name: "fitToCell", checked: layout.fitToCell});
-      connect(compensateOrigin, "checked", layout, "compensateOrigin");
-      connect(fitToCell, "checked", layout, "fitToCell");
-      connect(compensateOrigin, "checked", this.layoutHalo, "alignWithTarget");
-      return [compensateOrigin, fitToCell];
-  }
-
-  flexLayoutOptions() {
-    const layout = this.container.layout,
-          spacing = new NumberWidget({
-            fill: Color.white,
-            borderWidth: 1,
-            borderRadius: 4,
-            padding: rect(5,4,0,0),
-            borderColor: Color.gray,
-            min: 0,
-            number: layout.spacing,
-            unit: "px",
-          }),
-          autoResizeCb = new widgets.LabeledCheckBox({
-            name: "autoResize", label: 'Resize Container',
-            alignCheckBox: 'right',
-            fill: Color.transparent,
-            checked: layout.autoResize
-          }),
-          resizeSubmorphsCb = new widgets.LabeledCheckBox({
-            label: 'Resize Submorphs',
-            name: "resizeSubmorphs",
-            alignCheckBox: 'right',
-            fill: Color.transparent,
-            checked: layout.resizeSubmorphs
-          });
-    connect(spacing, 'update', this.layoutHalo, 'updateSpacing');
-    connect(autoResizeCb, "checked", this.layoutHalo, "updateAutoResizePolicy");
-    connect(resizeSubmorphsCb, "checked", this.layoutHalo, "updateResizeSubmorphsPolicy");
-    return [
-        autoResizeCb,
-        resizeSubmorphsCb,
-        {fill: Color.transparent, layout: new HorizontalLayout(),
-         submorphs: [
-           {type: 'label', value: 'Submorph Spacing',
-            fontColor: Color.gray.darker(),
-            padding: rect(0,5,5,5)}, spacing]}
-    ];
-  }
-
-  tilingLayoutOptions() {
-    const layout = this.container.layout,
-          spacing = new NumberWidget({
-            min: 0,
-            number: layout.spacing,
-            padding: rect(5,3,0,0),
-            borderRadius: 3,
-            borderWidth: 1,
-            borderColor: Color.gray,
-            unit: "px"
-          });
-    connect(spacing, 'update', this.layoutHalo, 'updateSpacing');
-    return [
-      [
-        {
-          type: "text",
-          textString: "Submorph Spacing",
-          padding: rect(0,5,5,5),
-          fill: Color.transparent,
-          fontColor: Color.gray.darker(),
-          readOnly: true
-        },
-        spacing
-      ]
-    ].map(x => {
-      return {
-        submorphs: x,
-        fill: Color.transparent,
-        layout: new HorizontalLayout({spacing: 3})
-      };
-    });
-  }
-
-  optionControls(halo) {
-    // rms 31.7.17 not so nice, but fastest way I could come up with
-    // to remove the circular dependency to lively.halos
-    switch (halo.constructor.name)  {
-      case 'GridLayoutHalo':
-        return this.gridLayoutControls();
-      case 'TilinLayoutHalo':
-        return this.tilingLayoutOptions();
-      case 'FlexLayoutHalo':
-        return this.flexLayoutOptions();
-    }
-    
-  }
-
   layoutControls() {
     return {
       name: 'controlContainer',
       fill: Color.transparent,
       layout: new VerticalLayout(),
       isLayoutable: !!this.layoutHalo,
-      submorphs: this.layoutHalo ? this.optionControls(this.layoutHalo) : []
+      submorphs: this.layoutHalo ? this.layoutHalo.optionControls(this) : []
     };
   }
 }

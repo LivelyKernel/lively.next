@@ -1,7 +1,7 @@
 /*global System*/
 import { arr, string } from "lively.lang";
-import { show } from "lively.halos/markers.js";
-import { Range } from "lively.morphic";
+import { show } from "lively.morphic";
+import { Range } from "lively.morphic/text/range.js";
 import Inspector from "./inspector.js";
 
 function getEvalEnv(morph) {
@@ -15,6 +15,20 @@ function setEvalEnv(morph, newEnv) {
   return plugin.evalEnvironment;
 }
 
+function logDoit(source, opts = {}) {
+  let {time = Date.now()} = opts,
+      maxLogLength = 50,
+      maxCodeLength = 120000,
+      log;
+  if (source.length > maxCodeLength) return;
+  try { log = JSON.parse(localStorage["lively.next-js-ide-doitlog"]); } catch (err) {}
+  if (!log) log = [];
+  if (log.some(ea => typeof ea === "string" ? ea === source : ea.source === source)) return;
+  log.push({source, time});
+  if (log.length > maxLogLength) log = log.slice(-maxLogLength);
+  try { localStorage["lively.next-js-ide-doitlog"] = JSON.stringify(log); } catch (err) {}
+}
+
 function doEval(
   morph,
   range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range,
@@ -23,7 +37,10 @@ function doEval(
 ) {
   var jsPlugin = morph.pluginFind(p => p.isJSEditorPlugin);
   if (!jsPlugin)
-    throw new Error(`doit not possible: cannot find js editor plugin of !${morph}`)
+    throw new Error(`doit not possible: cannot find js editor plugin of !${morph}`);
+  if (additionalOpts && additionalOpts.logDoit) {
+    logDoit(code, additionalOpts);
+  }
   return jsPlugin.runEval(code, additionalOpts);
 }
 
@@ -63,9 +80,9 @@ export var jsEditorCommands = [
       maybeSelectCommentOrLine(morph);
       var result, err;
       try {
-        opts = {...opts, inspect: true, inspectDepth: count};
+        opts = {...opts, logDoit: true, inspect: true, inspectDepth: count};
         result = await doEval(morph, undefined, opts);
-        err = result.isError ? result.value : null;
+        err = result.error ? result.error : result.isError ? result.value : null;
       } catch (e) { err = e; }
       err ?
         morph.showError(err) :
@@ -82,8 +99,8 @@ export var jsEditorCommands = [
       // opts = {targetModule}
       var result, err;
       try {
-        result = await doEval(morph, {start: {row: 0, column: 0}, end: morph.documentEndPosition}, opts);
-        err = result.isError ? result.value : null;
+        result = await doEval(morph, {start: {row: 0, column: 0}, end: morph.documentEndPosition}, {...opts, logDoit: true});
+        err = result.error ? result.error : result.isError ? result.value : null;
       } catch (e) { err = e; }
       err ?
         morph.showError(err) :
@@ -100,9 +117,9 @@ export var jsEditorCommands = [
       maybeSelectCommentOrLine(morph);
       var result, err;
       try {
-        opts = {...opts, asString: true};
+        opts = {...opts, asString: true, logDoit: true};
         result = await doEval(morph, undefined, opts);
-        err = result.isError ? result.value : null;
+        err = result.error ? result.error : result.isError ? result.value : null;
       } catch (e) { err = e; }
       morph.selection.collapseToEnd();
       // morph.insertTextAndSelect(err ? err.stack || String(err) : String(result.value));
@@ -121,7 +138,7 @@ export var jsEditorCommands = [
       var result, err;
       try {
         result = await doEval(morph, undefined, opts);
-        err = result.isError ? result.value : null;
+        err = result.error ? result.error : result.isError ? result.value : null;
       } catch (e) { err = e; }
       Inspector.openInWindow({targetObject: err ? err : result.value});
       return result;
@@ -136,9 +153,9 @@ export var jsEditorCommands = [
       maybeSelectCommentOrLine(morph);
       var result, err;
       try {
-        opts = {...opts, inspect: true, inspectDepth: count};
+        opts = {...opts, inspect: true, inspectDepth: count, logDoit: true};
         result = await doEval(morph, undefined, opts);
-        err = result.isError ? result.value : null;
+        err = result.error ? result.error : result.isError ? result.value : null;
       } catch (e) { err = e; }
       morph.selection.collapseToEnd();
       morph.insertTextAndSelect(result.value);
@@ -169,7 +186,7 @@ export var jsEditorCommands = [
 
       try {
         result = await doEval(ed, null, env, source);
-        err = result.isError ? result.value : null;
+        err = result.error ? result.error : result.isError ? result.value : null;
       } catch (e) { err = e; }
 
       err ?
@@ -317,92 +334,44 @@ export var jsIdeCommands = [
     name: "[javascript] auto format code",
     handlesCount: true,
     exec: async (text, opts, count) => {
-      show(count);
-
       let margin = 7 * (text.width / 100),
           printWidth = count ? count : Math.floor(text.width / text.defaultCharExtent().width);
 
       opts = {
         printWidth,
         tabWidth: 2,
+        useTabs: false,
         bracketSpacing: false,
         ...opts
       };
 
       let module = lively.modules.module,
           prettierURL = System.normalizeSync("prettier", System.normalizeSync("lively.ide")),
-          prettier = await module(prettierURL).load({format: "global",instrument: false}),
+          prettier = await module(prettierURL).load({format: "global", instrument: false}),
           {findNodeByAstIndex} = await module("lively.ast/lib/acorn-extension.js").load(),
           {parse, printAst, withMozillaAstDo} = await module("lively.ast").load(),
           {nodesAt} = await module("lively.ast/lib/query.js").load(),
-          format = prettier.format;
-      prettifyRange(text);
+          jsdiff = await System.import("jsdiff", System.decanonicalize("lively.morphic"));
+
+      let range = text.selection.isEmpty() ? text.documentRange : text.selection.range,
+          rangeStart = text.positionToIndex(range.start),
+          rangeEnd = text.positionToIndex(range.end),
+          formatted = prettier.format(text.textString, {
+            ...opts,
+            rangeStart,
+            rangeEnd,
+            parser: (text, parsers, options) =>
+              parse(text, {allowReturnOutsideFunction: true})
+          });
+
+      text.undoManager.group();
+      let diff = jsdiff.diffChars(text.textString, formatted);
+      text.applyJsDiffPatch(diff);
+      text.selection.text = fixPrettified(text.selection.text);
+      text.undoManager.group();
       return true;
 
-      function prettifyRange(textMorph, range = textMorph.selection.range) {
-        var {start, end} = range,
-            source = textMorph.textString,
-            parsed = parse(source, {addAstIndex: true}),
-
-            // find the ast nodes that are at start / end of the range
-            startI = textMorph.positionToIndex(start),
-            endI = textMorph.positionToIndex(end),
-            commonNode = arr.intersect(nodesAt(startI, parsed), nodesAt(endI, parsed))
-                          .reverse().find(ea => ea.body && ea.start < startI && ea.end < endI)
-                      || parsed,
-            statements = commonNode.body.body || commonNode.body,
-            affectedNodes = arr.takeWhile(
-                              arr.dropWhile(statements, ea => ea.start < startI),
-                              ea => ea.end <= endI),
-            startNode = affectedNodes[0] || arr.last(nodesAt(startI, parsed)),
-            endNode = arr.last(affectedNodes) || arr.last(nodesAt(endI, parsed)),
-
-            // prettier does throw away empty statements, make the ast indexes
-            // fit so we can find start/end node in prettified source
-            fixedStartAstIndex = startNode.astIndex,
-            fixedEndAstIndex = endNode.astIndex,
-            _ = withMozillaAstDo(parsed, {}, (next, node) => {
-              if (node.type === "EmptyStatement") {
-                if (node.astIndex < fixedStartAstIndex) {
-                  fixedStartAstIndex--; fixedEndAstIndex--; }
-                else if (node.astIndex < fixedEndAstIndex) {
-                  fixedEndAstIndex--; }
-              }
-              next();
-            }),
-
-            prettySource = fixPrettified(format(source, opts)),
-            prettyParsed = parse(prettySource, {addAstIndex: true}),
-
-            // ...find the same ast nodes in the prettified source...
-            prettyStartNode = findNodeByAstIndex(prettyParsed, fixedStartAstIndex),
-            prettyEndNode = findNodeByAstIndex(prettyParsed, fixedEndAstIndex),
-
-            // ...and go from those nodes to the start and and row in the orig source
-            // text and prettified source text
-            origStartRow = textMorph.indexToPosition(startNode.start).row,
-            origEndRow = textMorph.indexToPosition(endNode.end).row,
-            prettyLines = string.lines(prettySource),
-            lineIndexComputer = string.lineIndexComputer(prettySource),
-            prettyStartRow = lineIndexComputer(prettyStartNode.start),
-            prettyEndRow = lineIndexComputer(prettyEndNode.end),
-
-            // Now replace the lines designated by the selection range
-            replacementLines = prettyLines.slice(prettyStartRow, prettyEndRow+1),
-            replacementRange = {
-              start: {column: 0, row: origStartRow},
-              end: {column: 0, row: origEndRow + 1}
-            };
-
-
-        textMorph.undoManager.group()
-        let newRange = textMorph.replace(replacementRange, replacementLines.join("\n") + "\n");
-        textMorph.undoManager.group()
-        textMorph.selection = newRange;
-      }
-
       function fixPrettified(source) {
-        // prettify has it's issues...
         return fixVarDeclIndentation(source);
       }
 
@@ -411,7 +380,7 @@ export var jsIdeCommands = [
         // fixVarDeclIndentation("var foo = 23,\nbar;")
         //   => "var foo = 23,\n    bar;"
 
-        if (!parsed) parsed = parse(src);
+        if (!parsed) parsed = parse(src, {allowReturnOutsideFunction: true});
 
         // visitor to find variable declarations
         let ranges = string.lineRanges(src),
@@ -463,9 +432,8 @@ export var jsIdeCommands = [
 
         return src;
       }
-
-
     }
+
   }
 
 ];

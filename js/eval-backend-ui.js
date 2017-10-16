@@ -102,17 +102,18 @@ export class EvalBackendButton extends Button {
     if (!this.currentBackendName || !this.currentBackendName.startsWith("l2l")) return;
 
     // only for l2l connection
-    let {currentBackend: {coreInterface: {targetId: id, targetInfo: info}}} = this,
+    let {currentBackend: {coreInterface: {targetId: id, peer}}} = this,
         l2lBackends = await this.evalbackendChooser.l2lEvalBackends();
 
     if (l2lBackends.some(ea => ea.coreInterface.targetId === id)) return;
 
     let similar;
-    if (info && info.type) {
+    if (peer && peer.type) {
       similar = l2lBackends.find(ea => {
-        if (!ea.coreInterface.targetInfo) return false;
-        if (ea.coreInterface.targetInfo.type !== info.type) return false;
-        if (info.user) return ea.coreInterface.targetInfo.user === info.user;
+        if (!ea.coreInterface.peer) return false;
+        if (ea.coreInterface.peer.type !== peer.type) return false;
+        if (peer.user && peer.user.name && ea.coreInterface.peer.user)
+          return ea.coreInterface.peer.user.name === peer.user.name;
         return true;
       });
     }
@@ -208,25 +209,26 @@ export default class EvalBackendChooser {
 
   async l2lEvalBackends() {
     let l2lClient = L2LClient.forLivelyInBrowser(),
-        {data: clients} = await new Promise((resolve, reject) =>
-          l2lClient.sendTo(l2lClient.trackerId, "getClients", {}, resolve));
-    clients = clients.filter(ea => ea[0] !== l2lClient.id)
-    return await Promise.all(clients.map(async ([id, {info}]) => {
-      if (!info) info = {};
-      if (!info.known) {
-        Promise.resolve().then(async () => {
-          let source = `let isNode = typeof System !== "undefined"`
-                     + `  ? System.get("@system-env").node`
-                     + `  : typeof require !== "undefined" && typeof process !== "undefined"`
-                     + `      ? require("os").hostname()`
-                     + `      : String(document.location.href);`,
-              {data: {value: location}} = await l2lClient.sendToAndWait(
-                                            id, "remote-eval", {source});
-          info.location = location;
-          info.known = true;
-        });
-      }
-      return l2lInterfaceFor(id, info);
+        peers = await l2lClient.listPeers();
+
+    peers = peers.filter(ea => ea.id !== l2lClient.id);
+
+    return await Promise.all(peers.map(async ea => {
+      // if (!info) info = {};
+      // if (!info.known) {
+      //   Promise.resolve().then(async () => {
+      //     let source = `let isNode = typeof System !== "undefined"`
+      //                + `  ? System.get("@system-env").node`
+      //                + `  : typeof require !== "undefined" && typeof process !== "undefined"`
+      //                + `      ? require("os").hostname()`
+      //                + `      : String(document.location.href);`,
+      //         {data: {value: location}} = await l2lClient.sendToAndWait(
+      //                                       id, "remote-eval", {source});
+      //     info.location = location;
+      //     info.known = true;
+      //   });
+      // }
+      return l2lInterfaceFor(ea.id, ea);
     }));
   }
 

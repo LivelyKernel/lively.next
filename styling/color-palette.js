@@ -30,7 +30,7 @@ class ColorPaletteField extends Morph {
       }
     }
   }
-  
+
   onHoverIn() {
     if (!this.color) return;
     const [h,s,b] = this.color.toHSB();
@@ -42,7 +42,7 @@ class ColorPaletteField extends Morph {
   onMouseDown() {
     signal(this, "updateColor", this.color);
   }
-   
+
 }
 
 class ColorHarmonyField extends Morph {
@@ -69,8 +69,8 @@ class ColorHarmonyField extends Morph {
              let [h,s,b] = this.color.toHSB();
              this.submorphs = [
                 new Morph({fill: this.color, extent: pt(80, 50)}),
-                new Text({textString: `${h.toFixed()}, ${s.toFixed(2)}, ${b.toFixed(2)}`, 
-                          fill: Color.transparent, fontColor: Color.gray.darker(), 
+                new Text({textString: `${h.toFixed()}, ${s.toFixed(2)}, ${b.toFixed(2)}`,
+                          fill: Color.transparent, fontColor: Color.gray.darker(),
                           bottomLeft: pt(0,50)})
              ];
            }
@@ -81,7 +81,7 @@ class ColorHarmonyField extends Morph {
   onMouseDown() {
     signal(this, "updateColor", this.color);
   }
-  
+
 }
 
 class HarmonyDisplay extends Morph {
@@ -102,7 +102,7 @@ class HarmonyDisplay extends Morph {
       });
     }
   }
-  
+
 }
 
 class PivotColorControl extends Ellipse {
@@ -170,7 +170,7 @@ class HarmonyVisualizer extends Image {
          pivotControl.center = Point.polar(50 * saturation, angle);
      }
   }
-  
+
 }
 
 class HarmonyPalette extends Morph {
@@ -184,10 +184,10 @@ class HarmonyPalette extends Morph {
         after: ['harmony'],
         initialize() {
           this.submorphs = [
-             new HarmonyDisplay({name: "harmonies"}), 
+             new HarmonyDisplay({name: "harmonies"}),
              this.harmonyControl()]
         }
-      } 
+      }
     }
   }
 
@@ -200,7 +200,7 @@ class HarmonyPalette extends Morph {
     this.get('harmony visualizer').update(colorPalette);
     this.updateInProgress = false;
   }
- 
+
   harmonyControl() {
     var selector,
         controls = new Morph({
@@ -289,8 +289,8 @@ export class ColorPalette extends Morph {
             this.submorphs = [this.fillTypeSelector(), this.paletteView()];
             this.pivotColor = Color.hsb(h,s,1);
             connect(
-              this.get('paletteView'), 'extent', 
-              this.get('fillTypeSelector'), 'width', 
+              this.get('paletteView'), 'extent',
+              this.get('fillTypeSelector'), 'width',
               {converter: ({x}) => x}
             )
             connect(this.get('harmony palette'), 'harmony', this, 'harmony');
@@ -383,7 +383,7 @@ export class ColorPalette extends Morph {
         center: pt(8, 8),
         extent: pt(12, 12)
       }
-    });   
+    });
    }
 
    isHaloItem() { return true }
@@ -401,7 +401,7 @@ export class ColorPalette extends Morph {
       return {
         name: "paletteView",
         submorphs: [
-           this.solidColorPalette(), 
+           this.solidColorPalette(),
            new HarmonyPalette({name: "harmony palette", isLayoutable: false,
                                visible: false, draggable: false})]
       }

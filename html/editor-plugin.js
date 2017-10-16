@@ -1,22 +1,18 @@
-import { IFrameMorph } from "lively.components";
-import { arr, string } from "lively.lang";
-import { Color } from "lively.graphics";
-import { localInterface, systemInterfaceNamed } from "lively-system-interface";
-
 import EditorPlugin from "../editor-plugin.js";
 import "./mode.js"
 import { getMode } from "../editor-modes.js";
 import { completers as jsCompleters } from "../js/completers.js";
-import { snippets as jsSnippets } from "../js/snippets.js";
 import {
   jsIdeCommands,
-  jsEditorCommands,
-  astEditorCommands as jsAstEditorCommands
+  jsEditorCommands
 } from "../js/commands.js";
-import { runCommand } from "../shell/shell-interface.js";
+import { localInterface, systemInterfaceNamed } from "lively-system-interface";
 import HTMLNavigator from "./navigator.js";
 import HTMLChecker from "./checker.js";
-import parse5 from "./parse5.browserified.js";
+import parse5 from "../html/parse5.browserified.js";
+import { IFrameMorph } from "lively.morphic";
+import { string } from "lively.lang";
+import { Color } from "lively.graphics";
 
 // export async function tidyHtml(htmlSrc) {
 //   let {stdout} = await runCommand("tidy --indent", {stdin: htmlSrc}).whenDone();
@@ -78,10 +74,10 @@ var commands = [
   {
     name: "[HTML] render in iframe",
     exec: (text, args = {}) => {
-      let url, html, win = text.getWindow();
-      let iframeMorph = args.iframe
-        || (win && win.isHTMLWorkspace && win.target/*html workspace*/)
-        || text._iframeMorph;
+      let url, html, win = text.getWindow(),
+          iframeMorph = (args.iframe && args.iframe.isIFrameMorph ? args.iframe : null)
+                      || (win && win.isHTMLWorkspace && win.target/*html workspace*/)
+                      || text._iframeMorph;
       if (iframeMorph && !iframeMorph.isIFrameMorph) iframeMorph = null;
       if (!iframeMorph || !iframeMorph.world()) {
         iframeMorph = new IFrameMorph()
@@ -91,7 +87,7 @@ var commands = [
       }
 
       // is it a html workspace?
-      if (win && win.isHTMLWorkspace) url = win.file.url;
+      if (win && win.isHTMLWorkspace && win.file) url = win.file.url;
       // file editor?
       else if (text.owner && text.owner.isTextEditor) url = text.owner.location;
 

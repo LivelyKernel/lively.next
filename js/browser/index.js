@@ -2,24 +2,18 @@ import { Color, rect, pt, Rectangle } from "lively.graphics";
 import { arr, Path, obj, fun, promise, string } from "lively.lang";
 import { connect } from "lively.bindings";
 import {
-  Icon,
   morph,
   StyleSheet,
   HorizontalLayout,
   GridLayout,
-  config
-} from "lively.morphic";
-import {
-  HorizontalResizer,
-  Tree,
-  TreeData,
+  config,
   Window,
-  Button,
-  List
-} from "lively.components";
+  Icon
+} from "lively.morphic";
+import { HorizontalResizer } from "lively.components/resizers.js";
+import { Tree, TreeData } from "lively.components/tree.js"
 
-// lively.ide
-import JSONEditorPlugin from "../../json/editor-plugin.js";
+import JSONEditorPlugin from "lively.ide/json/editor-plugin.js";
 import JavaScriptEditorPlugin from "../editor-plugin.js";
 import EvalBackendChooser from "../eval-backend-ui.js";
 import browserCommands from "./commands.js";
@@ -113,7 +107,7 @@ export default class Browser extends Window {
           return this.editorPlugin.systemInterface();
         },
         set(systemInterface) {
-          this.editorPlugin.setSystemInterface(systemInterface);
+          this.editorPlugin.setSystemInterfaceNamed(systemInterface)
         }
       },
 
@@ -132,13 +126,9 @@ export default class Browser extends Window {
   // initialization
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  constructor(props = {}) {
-    super(props);
-    this.targetMorph = this.build();
-    this.onLoad();
-  }
-
   reset() {
+    if (!this.targetMorph) this.targetMorph = this.build();
+
     this._inLayout = true;
 
     connect(this, 'extent', this, 'relayout');
@@ -164,7 +154,7 @@ export default class Browser extends Window {
     connect(historyBackwardButton, 'fire', this, 'execCommand', {converter: () => "browser history backward"});
     connect(historyForwardButton,  'fire', this, 'execCommand', {converter: () => "browser history forward"});
     connect(browseHistoryButton,   'fire', this, 'execCommand', {converter: () => "browser history browse"});
-    connect(browseModulesButton,   'fire', this, 'execCommand', {converter: () => "choose and browse package resources"});
+    connect(browseModulesButton,   'fire', this, 'execCommand', {converter: () => "choose and browse module"});
     connect(addPackageButton,      'fire', this, 'execCommand', {converter: () => "add package"});
     connect(removePackageButton,   'fire', this, 'execCommand', {converter: () => "remove package"});
     connect(addModuleButton,       'fire', this, 'execCommand', {converter: () => "load or add module"});
@@ -283,12 +273,12 @@ export default class Browser extends Window {
         },
 
         btnStyle = {
-          type: Button,
+          type: "button",
           styleClasses: ['default']
         },
 
         btnDarkStyle = {
-          type: Button,
+          type: "button",
           styleClasses: ['dark'],
         },
 
@@ -320,15 +310,16 @@ export default class Browser extends Window {
           bounds,
           submorphs: [
 
-            {name: "moduleList", bounds: moduleListBounds, type: List, ...style,
+            {name: "moduleList", bounds: moduleListBounds, type: "list", ...style,
              borderRight: {color: Color.gray, width: 1}},
 
             new Tree({name: "codeEntityTree", treeData: new CodeDefTreeData([]),
              bounds: codeEntityTreeBounds, ...style}),
 
             {name: "moduleCommands", bounds: moduleCommandBoxBounds,
-             layout: new HorizontalLayout({spacing: 2, autoResize: false, direction: "rightToLeft"}),
+             layout: new HorizontalLayout({spacing: 2, autoResize: true, direction: "rightToLeft"}),
              borderRight: {color: Color.gray, width: 1},
+             reactsToPointer: false,
              fill: Color.transparent,
               submorphs: [
                {...btnDarkStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
@@ -580,8 +571,9 @@ export default class Browser extends Window {
   async packageResources(p) {
     let excluded = (Path("lively.ide.exclude").get(p) || []).map(ea =>
              ea.includes("*") ? new RegExp(ea.replace(/\*/g, ".*")): ea);
+    excluded.push(".git", "node_modules", ".module_cache");
     try {
-      return (await this.systemInterface.resourcesOfPackage(p.address))
+      return (await this.systemInterface.resourcesOfPackage(p.address, excluded))
         .filter(({url}) => (url.endsWith(".js") || url.endsWith(".json"))
                         && !excluded.some(ex => ex instanceof RegExp ? ex.test(url): url.includes(ex)))
         .map((ea) => { ea.name = ea.url; return ea; });
@@ -597,16 +589,16 @@ export default class Browser extends Window {
     // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
 
     let {
-      packageName,
-      moduleName,
-      textPosition,
-      codeEntity,
-      scroll,
-      codeEntityTreeScroll,
-      moduleListScroll,
-      systemInterface
-    } = browseSpec,
-      {sourceEditor, codeEntityTree, moduleList} = this.ui;
+          packageName,
+          moduleName,
+          textPosition,
+          codeEntity,
+          scroll,
+          codeEntityTreeScroll,
+          moduleListScroll,
+          systemInterface
+        } = browseSpec,
+        {sourceEditor, codeEntityTree, moduleList} = this.ui;
 
     if (optSystemInterface || systemInterface) {
       this.systemInterface = optSystemInterface || systemInterface;
@@ -646,13 +638,13 @@ export default class Browser extends Window {
     }
 
     if (textPosition) {
-      if (this.world()) await sourceEditor.whenRendered();
+      if (this.world()) await promise.delay(10);
       sourceEditor.cursorPosition = textPosition;
       sourceEditor.centerRow(textPosition.row);
     }
 
     if (scroll) {
-      if (this.world()) await sourceEditor.whenRendered();
+      if (this.world()) await promise.delay(10);
       sourceEditor.scroll = scroll;
     }
 
@@ -666,7 +658,7 @@ export default class Browser extends Window {
   whenModuleUpdated() { return this.state.moduleUpdateInProgress || Promise.resolve(); }
 
   async selectPackageNamed(pName) {
-    let p = await this.systemInterface.getPackage(pName);
+    let p = pName ? await this.systemInterface.getPackage(pName) : null;
     this.onPackageSelected(p);
     await this.whenPackageUpdated();
     return p;
@@ -680,7 +672,8 @@ export default class Browser extends Window {
     }
 
     try {
-      let {moduleList} = this.ui;
+      let {metaInfoText, moduleList} = this.ui;
+      metaInfoText.textString = "";
       if (!p) {
         moduleList.items = [];
         this.updateSource("");
@@ -939,11 +932,15 @@ export default class Browser extends Window {
     var { runTestsInModuleButton, sourceEditor, moduleCommands } = this.ui,
         hasTests = false;
     if (this.editorPlugin.isJSEditorPlugin) {
+      try {
       var ast = this.editorPlugin.getNavigator().ensureAST(sourceEditor),
           tests = testsFromSource(ast || sourceEditor.textString);
       hasTests = tests && tests.length;
+      } catch (err) {
+        console.warn(`sytem browser updateTestUI: ${err}`);
+        hasTests = false;
+      }
     }
-
     runTestsInModuleButton.visible = runTestsInModuleButton.isLayoutable = !!hasTests;
   }
 

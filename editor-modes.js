@@ -425,7 +425,7 @@ export var modeInfo = [
   {name: "CQL", mime: "text/x-cassandra", mode: "sql", ext: ["cql"]},
   {name: "D", mime: "text/x-d", mode: "d", ext: ["d"]},
   {name: "Dart", mimes: ["application/dart", "text/x-dart"], mode: "dart", ext: ["dart"]},
-  {name: "diff", mime: "text/x-diff", mode: "diff", ext: ["diff", "patch"]},
+  {name: "diff", mime: "text/x-diff", mode: "diff", ext: ["diff", "patch"], contentTest: text => text.match(/^diff --.* a\//m)},
   {name: "Django", mime: "text/x-django", mode: "django"},
   {name: "Dockerfile", mime: "text/x-dockerfile", mode: "dockerfile", file: /^Dockerfile$/},
   {name: "DTD", mime: "application/xml-dtd", mode: "dtd", ext: ["dtd"]},
@@ -462,7 +462,7 @@ export var modeInfo = [
   {name: "Java Server Pages", mime: "application/x-jsp", mode: "htmlembedded", ext: ["jsp"], alias: ["jsp"]},
   {name: "JavaScript", mimes: ["text/javascript", "text/ecmascript", "application/javascript", "application/x-javascript", "application/ecmascript"],
    mode: "javascript", ext: ["js"], alias: ["ecmascript", "js", "node"]},
-  {name: "JSON", mimes: ["application/json", "application/x-json"], mode: "javascript", ext: ["json", "map"], alias: ["json5"]},
+  {name: "JSON", mimes: ["application/json", "application/x-json"], mode: "json", ext: ["json", "map"], alias: ["json5"]},
   {name: "JSON-LD", mime: "application/ld+json", mode: "javascript", ext: ["jsonld"], alias: ["jsonld"]},
   {name: "JSX", mime: "text/jsx", mode: "jsx", ext: ["jsx"]},
   {name: "Jinja2", mime: "null", mode: "jinja2"},
@@ -512,7 +512,7 @@ export var modeInfo = [
   {name: "Scala", mime: "text/x-scala", mode: "clike", ext: ["scala"]},
   {name: "Scheme", mime: "text/x-scheme", mode: "scheme", ext: ["scm", "ss"]},
   {name: "SCSS", mime: "text/x-scss", mode: "css", ext: ["scss"]},
-  {name: "Shell", mime: "text/x-sh", mode: "shell", ext: ["sh", "ksh", "bash"], alias: ["bash", "sh", "zsh"], file: /^PKGBUILD$/},
+  {name: "Shell", mime: "text/x-sh", mode: "shell", ext: ["sh", "ksh", "bash"], alias: ["bash", "sh", "zsh"], file: /^PKGBUILD|\.bash(rc|_profile)|\.profile$/, contentTest: text => text.match(/#!\//m)},
   {name: "Sieve", mime: "application/sieve", mode: "sieve", ext: ["siv", "sieve"]},
   {name: "Slim", mimes: ["text/x-slim", "application/x-slim"], mode: "slim", ext: ["slim"]},
   {name: "Smalltalk", mime: "text/x-stsrc", mode: "smalltalk", ext: ["st"]},
@@ -595,7 +595,6 @@ export function findModeByFileName(filename) {
 }
 
 export function findModeByName(name) {
-console.log(name)
   name = name.toLowerCase();
   for (var i = 0; i < modeInfo.length; i++) {
     var info = modeInfo[i];
