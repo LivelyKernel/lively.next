@@ -73,7 +73,8 @@ var config = {
         "markdown": "md",
         "javascript": "js",
         "htmlmixed": "html",
-        "haskell": "hs"
+        "haskell": "hs",
+        "python": "py"
       }
     }
   },

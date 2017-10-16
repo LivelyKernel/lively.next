@@ -428,6 +428,7 @@ var commands = [
             "javascript": "lively.ide/js/workspace.js",
             "shell": "lively.ide/shell/workspace.js",
             "html": "lively.ide/html/workspace.js",
+            "py": "lively.ide/py/workspace.js",
             "text": null
           },
           alias = {"js": "javascript"};
