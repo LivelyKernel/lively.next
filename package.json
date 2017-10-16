@@ -7,7 +7,7 @@
     "lively.lang": "^1.0.18",
     "lively.morphic": "^0.1.0",
     "lively.bindings": "^0.1.2",
-    "lively.halos": "^0.1.0",
+    "lively.halos": "https://github.com/LivelyKernel/lively.halos",
     "svg-intersections": "0.2.5"
   },
   "devDependencies": {
