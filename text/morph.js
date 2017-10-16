@@ -2827,6 +2827,58 @@ export class Text extends Morph {
     (this.evalEnvironment || {}).context = c;
   }
 
+  logDoit(source, opts = {}) {
+    let {time = Date.now()} = opts,
+        maxLogLength = 50,
+        maxCodeLength = 120000,
+        log;
+    if (source.length > maxCodeLength) return;
+    try { log = JSON.parse(localStorage["lively.next-js-ide-doitlog"]); } catch (err) {}
+    if (!log) log = [];
+    if (log.some(ea => typeof ea === "string" ? ea === source : ea.source === source)) return;
+    log.push({source, time});
+    if (log.length > maxLogLength) log = log.slice(-maxLogLength);
+    try { localStorage["lively.next-js-ide-doitlog"] = JSON.stringify(log); } catch (err) {}
+  }
+
+  doEval(
+   range = this.selection.isEmpty() ? this.lineRange() : this.selection.range,
+   additionalOpts,
+   code = this.textInRange(range)
+  ) {
+    var plugin = this.pluginFind(p => p.isEditorPlugin && typeof p.runEval === "function");
+    if (!plugin)
+      throw new Error(`doit not possible: cannot find js editor plugin of !${this}`);
+    if (additionalOpts && additionalOpts.logDoit) {
+      this.logDoit(code, additionalOpts);
+    }
+    return plugin.runEval(code, additionalOpts);
+  }
+
+  maybeSelectCommentOrLine() {
+    // Dan's famous selection behvior! Here it goes...
+    /*   If you click to the right of '//' in the following...
+    'wrong' // 'try this'.slice(4)  //should print 'this'
+    'http://zork'.slice(7)          //should print 'zork'
+    */
+    // If click is in comment, just select that part
+    var sel = this.selection,
+        {row, column} = sel.lead,
+        text = this.selectionOrLineString();
+
+    if (!sel.isEmpty()) return;
+
+    // text now equals the text of the current line, now look for JS comment
+    var idx = text.indexOf('//');
+    if (idx === -1                          // Didn't find '//' comment
+        || column < idx                 // the click was before the comment
+        || (idx>0 && (':"'+"'").indexOf(text[idx-1]) >=0)    // weird cases
+       ) { this.selectLine(row); return }
+
+    // Select and return the text between the comment slashes and end of method
+    sel.range = {start: {row, column: idx + 2}, end: {row, column: text.length}};
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // controls
   openRichTextControl() {

@@ -1372,6 +1372,9 @@ commands.push(...navCommands);
 import { commands as codeCommands } from "./generic-code-commands.js";
 commands.push(...codeCommands);
 
+import { codeEvaluationCommands } from "./code-evaluation-commands.js";
+commands.push(...codeEvaluationCommands);
+
 import { commands as richTextCommands } from "./rich-text-commands.js";
 commands.push(...richTextCommands);
 
