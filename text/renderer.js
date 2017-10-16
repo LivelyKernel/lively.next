@@ -200,7 +200,7 @@ AfterTextRenderHook.prototype.updateLineHeightOfNode = function(morph, docLine, 
 
   if (docLine.height === 0 || docLine.hasEstimatedExtent) {
     var {height: nodeHeight, width: nodeWidth} = lineNode.getBoundingClientRect();
-    if (nodeHeight && nodeWidth && docLine.height !== nodeHeight || docLine.width !== nodeWidth) {
+    if (nodeHeight && nodeWidth && (docLine.height !== nodeHeight || docLine.width !== nodeWidth)) {
       // console.log(`[${docLine.row}] ${nodeHeight} vs ${docLine.height}`)
       docLine.changeExtent(nodeWidth, nodeHeight, false);
       morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
