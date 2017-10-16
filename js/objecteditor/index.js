@@ -1,5 +1,5 @@
 /*global System,localStorage*/
-import { arr, obj, t, Path, string, fun } from "lively.lang";
+import { arr, obj, t, Path, string, fun, promise } from "lively.lang";
 import { Icon, Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
 import { pt, Color } from "lively.graphics";
 import JavaScriptEditorPlugin from "../editor-plugin.js";
@@ -9,7 +9,8 @@ import { connect } from "lively.bindings";
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
 import ObjectPackage, { addScript, isObjectClass } from "lively.classes/object-classes.js";
 import { chooseUnusedImports, interactivlyFixUndeclaredVariables, interactivelyChooseImports } from "../import-helper.js";
-import { module } from "lively.modules";
+import { module, getPackage, semver } from "lively.modules";
+import { parse } from "lively.ast";
 import { interactivelySavePart } from "lively.morphic/partsbin.js";
 
 import { LinearGradient } from "lively.graphics/index.js";
@@ -51,7 +52,7 @@ class ClassTreeData extends TreeData {
     if (!node) return "empty";
 
     if (node.isRoot)
-      return node.target.name || node.target.id || "root object"
+      return node.target.name || node.target.id || "root object";
 
     // class
     if (isClass(node.target))
@@ -73,7 +74,7 @@ class ClassTreeData extends TreeData {
     if (node.isRoot) {
       if (node.children) return node.children;
       var classes = arr.without(withSuperclasses(node.target), Object).reverse();
-      return node.children = classes.map(klass => ({target: klass, isCollapsed: true}))
+      return node.children = classes.map(klass => ({target: klass, isCollapsed: true}));
     }
 
     if (isClass(node.target)) {
@@ -146,7 +147,7 @@ export class ObjectEditor extends Morph {
             target: null,
             selectedClass: null,
             selectedMethod: null
-          }
+          };
         }
       },
 
@@ -167,7 +168,7 @@ export class ObjectEditor extends Morph {
       },
 
       target: {
-        after: ["editorPlugin", "state"], after: ["submorphs"],
+        after: ["submorphs"],
         set(obj) { this.selectTarget(obj); }
       },
 
@@ -189,7 +190,7 @@ export class ObjectEditor extends Morph {
         get() { return this.state.selectedMethod; }
       }
 
-    }
+    };
 
   }
 
@@ -219,7 +220,7 @@ export class ObjectEditor extends Morph {
       sourceEditor:        this.getSubmorphNamed("sourceEditor"),
       toggleImportsButton: this.getSubmorphNamed("toggleImportsButton"),
       classAndMethodControls: this.getSubmorphNamed("classAndMethodControls"),
-    }
+    };
   }
 
   reset() {
@@ -283,7 +284,7 @@ export class ObjectEditor extends Morph {
     this.applyLayoutIfNeeded();
 
     [inspectObjectButton, publishButton, chooseTargetButton,
-     removeButton,addButton,forkPackageButton, openInBrowserButton
+      removeButton,addButton,forkPackageButton, openInBrowserButton
     ].forEach(ea => ea.extent = pt(26,24));
   }
 
@@ -300,7 +301,7 @@ export class ObjectEditor extends Morph {
 
     // remove unncessary state
     var ref = pool.ref(sourceEditor),
-        props = ref.currentSnapshot.props;;
+        props = ref.currentSnapshot.props;
     if (props.textAndAttributes) props.textAndAttributes.value = [];
     if (props.attributeConnections) props.attributeConnections.value = [];
     if (props.plugins) props.plugins.value = [];
@@ -336,7 +337,7 @@ export class ObjectEditor extends Morph {
         classTreeScroll: classTree.scroll,
         backend
       }
-    }
+    };
 
   }
 
@@ -392,41 +393,41 @@ export class ObjectEditor extends Morph {
 
     return [
       {name: "objectCommands",
-       fill: Color.transparent, reactsToPointer: false,
-       layout: new HorizontalLayout({direction: "centered", spacing: 2, autoResize: false}),
-       submorphs: [
-         {...topBtnStyle, name: "inspectObjectButton", fontSize: 14, label: Icon.textAttribute("gears"), tooltip: "open object inspector"},
-         {...topBtnStyle, name: "publishButton", fontSize: 14, label: Icon.textAttribute("cloud-upload"), tooltip: "publish object to PartsBin"},
-         {...topBtnStyle, name: "chooseTargetButton", fontSize: 14, label: Icon.textAttribute("crosshairs"), tooltip: "select another target"},
-       ]},
+        fill: Color.transparent, reactsToPointer: false,
+        layout: new HorizontalLayout({direction: "centered", spacing: 2, autoResize: false}),
+        submorphs: [
+          {...topBtnStyle, name: "inspectObjectButton", fontSize: 14, label: Icon.textAttribute("gears"), tooltip: "open object inspector"},
+          {...topBtnStyle, name: "publishButton", fontSize: 14, label: Icon.textAttribute("cloud-upload"), tooltip: "publish object to PartsBin"},
+          {...topBtnStyle, name: "chooseTargetButton", fontSize: 14, label: Icon.textAttribute("crosshairs"), tooltip: "select another target"},
+        ]},
 
       {type: Tree, name: "classTree", treeData: new ClassTreeData(null),
-       borderTop: {width: 1, color: Color.gray},
-       borderBottom: {width: 1, color: Color.gray}},
+        borderTop: {width: 1, color: Color.gray},
+        borderBottom: {width: 1, color: Color.gray}},
 
       {name: "classAndMethodControls",
-       width: 100,
-       layout: new HorizontalLayout({direction: "centered", spacing: 2, autoResize: false}), submorphs: [
-         {...btnStyle, name: "addButton", label: Icon.textAttribute("plus"), tooltip: "add a new method"},
-         {...btnStyle, name: "removeButton", label: Icon.textAttribute("minus"), tooltip: "remove a method or class"},
-         {...btnStyle, name: "forkPackageButton", label: Icon.textAttribute("code-fork"), tooltip: "fork package"},
-         {...btnStyle, name: "openInBrowserButton", label: Icon.textAttribute("external-link"), tooltip: "open selected class in system browser"},
-       ]},
+        width: 100,
+        layout: new HorizontalLayout({direction: "centered", spacing: 2, autoResize: false}), submorphs: [
+          {...btnStyle, name: "addButton", label: Icon.textAttribute("plus"), tooltip: "add a new method"},
+          {...btnStyle, name: "removeButton", label: Icon.textAttribute("minus"), tooltip: "remove a method or class"},
+          {...btnStyle, name: "forkPackageButton", label: Icon.textAttribute("code-fork"), tooltip: "fork package"},
+          {...btnStyle, name: "openInBrowserButton", label: Icon.textAttribute("external-link"), tooltip: "open selected class in system browser"},
+        ]},
 
       {name: "sourceEditor", ...textStyle},
 
       {name: "sourceEditorControls",
-       borderLeft: {width: 1, color: Color.gray},
-       borderRight: {width: 1, color: Color.gray},
-       layout: new GridLayout({
+        borderLeft: {width: 1, color: Color.gray},
+        borderRight: {width: 1, color: Color.gray},
+        layout: new GridLayout({
           rows: [0, {paddingTop: 2, paddingBottom: 2}],
           columns: [
             1, {paddingRight: 1, fixed: 30},
             2, {paddingLeft: 1, fixed: 30},
             4, {paddingRight: 2, fixed: 74}
-           ],
-          grid: [[null, 'saveButton', 'runMethodButton', null, 'toggleImportsButton']]}),
-       submorphs: [
+          ],
+          grid: [[null, "saveButton", "runMethodButton", null, "toggleImportsButton"]]}),
+        submorphs: [
           {...btnStyle, name: "saveButton", fontSize: 18, label: Icon.makeLabel("save"), tooltip: "save"},
           {...btnStyle, name: "runMethodButton", fontSize: 18, label: Icon.makeLabel("play-circle-o"), tooltip: "execute selected method"},
           {...btnStyle, name: "toggleImportsButton", label: "imports", tooltip: "toggle showing imports", isLayoutable: false, bottomRight: pt(1000, 50)}
@@ -442,20 +443,20 @@ export class ObjectEditor extends Morph {
     var expandedWidth = Math.min(300, Math.max(200, this.get("importsList").listItemContainer.width)),
         enable = !this.isShowingImports(),
         newWidth = enable ? expandedWidth : -expandedWidth,
-        column = this.layout.grid.col(2)
+        column = this.layout.grid.col(2);
     this.layout.disable();
     column.width += newWidth;
     column.before.width -= newWidth;
     this.layout.enable(timeout ? {duration: timeout} : null);
     (enable ? this.ui.importsList : this.ui.sourceEditor).focus();
-    return lively.lang.promise.delay(timeout);
+    return promise.delay(timeout);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // accessing
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  get isObjectEditor() { return true }
+  get isObjectEditor() { return true; }
 
   async systemInterface() {
     var livelySystem = await System.import("lively-system-interface"),
@@ -491,18 +492,18 @@ export class ObjectEditor extends Morph {
 
   async refresh(keepCursor = false) {
     var {
-        state: {selectedClass, selectedMethod},
-        ui: {sourceEditor: ed, classTree: tree}
-      } = this,
-      oldPos = ed.cursorPosition;
+          state: {selectedClass, selectedMethod},
+          ui: {sourceEditor: ed, classTree: tree}
+        } = this,
+        oldPos = ed.cursorPosition;
 
     await tree.maintainViewStateWhile(
       () => this.selectTarget(this.target),
       node => node.target ?
-                node.target.name
+        node.target.name
                   + node.target.kind
                   + (node.target.owner ? `.${node.target.owner.name}` : "") :
-                node.name);
+        node.name);
 
     if (selectedClass && selectedMethod && !tree.selection) {
       // method rename, old selectedMethod does no longer exist
@@ -537,7 +538,7 @@ export class ObjectEditor extends Morph {
   }
 
   indicateUnsavedChanges() {
-    Object.assign(this.ui.sourceEditor, {border: {width: 1, color: Color.red}})
+    Object.assign(this.ui.sourceEditor, {border: {width: 1, color: Color.red}});
   }
 
   indicateNoUnsavedChanges() {
@@ -614,7 +615,7 @@ export class ObjectEditor extends Morph {
     if (selectedClass && selectedMethod) await this.selectMethod(selectedClass, selectedMethod, false);
     else if (selectedClass) await this.selectClass(selectedClass);
 
-    var {classTree, sourceEditor} = this.ui
+    var {classTree, sourceEditor} = this.ui;
     if (scroll) sourceEditor.scroll = scroll;
     if (textPosition) sourceEditor.cursorPosition = textPosition;
     if (classTreeScroll) classTree.scroll = classTreeScroll;
@@ -673,8 +674,8 @@ export class ObjectEditor extends Morph {
 
     if (this.target.constructor === klass) {
       let adoptByItems = [];
-      klass.name !== "Morph" && adoptByItems.push({alias: "by superclass", command: `adopt by superclass`, target: this});
-      adoptByItems.push({alias: "by custom class...", command: `adopt by another class`, target: this})
+      klass.name !== "Morph" && adoptByItems.push({alias: "by superclass", command: "adopt by superclass", target: this});
+      adoptByItems.push({alias: "by custom class...", command: "adopt by another class", target: this});
       items.push(["adopt by...", adoptByItems]);
     }
 
@@ -714,7 +715,7 @@ export class ObjectEditor extends Morph {
 
     if (klass && !methodSpec && isClass(klass.owner)) {
       methodSpec = klass;
-      klass = klass.owner
+      klass = klass.owner;
     }
 
     var tree = this.ui.classTree;
@@ -743,7 +744,7 @@ export class ObjectEditor extends Morph {
 
     var ed = this.get("sourceEditor"),
         cursorPos = ed.indexToPosition(putCursorInBody ?
-          method.value.body.start+1 : method.key.start)
+          method.value.body.start+1 : method.key.start);
     ed.cursorPosition = cursorPos;
     this.world() && await ed.whenRendered();
     ed.scrollCursorIntoView();
@@ -752,8 +753,8 @@ export class ObjectEditor extends Morph {
       var methodRange = {
         start: ed.indexToPosition(method.start),
         end: ed.indexToPosition(method.end)
-      }
-      ed.flash(methodRange, {id: 'method', time: 1000, fill: Color.rgb(200,235,255)});
+      };
+      ed.flash(methodRange, {id: "method", time: 1000, fill: Color.rgb(200,235,255)});
       ed.centerRange(methodRange);
       // ed.alignRowAtTop(undefined, pt(0, -20))
     }
@@ -762,7 +763,7 @@ export class ObjectEditor extends Morph {
   updateTitle() {
     let win = this.getWindow();
     if (!win) return;
-    let title = "ObjectEditor"
+    let title = "ObjectEditor";
     let {
       selectedClass,
       selectedMethod,
@@ -770,7 +771,7 @@ export class ObjectEditor extends Morph {
     } = this;
 
 
-    let p = lively.modules.getPackage(selectedClass[Symbol.for("lively-module-meta")].package.name)
+    let p = getPackage(selectedClass[Symbol.for("lively-module-meta")].package.name);
 
 
     if (selectedClass) {
@@ -798,7 +799,7 @@ export class ObjectEditor extends Morph {
       ui: {sourceEditor}, state} = this;
 
     if (!selectedClass) {
-      return {success: false, reason: "No class selected"}
+      return {success: false, reason: "No class selected"};
     }
 
     // Ask user what to do with undeclared variables. If this gets canceled we
@@ -810,7 +811,7 @@ export class ObjectEditor extends Morph {
 
     let descr = this.sourceDescriptorFor(selectedClass),
         content = sourceEditor.textString,
-        parsed = lively.ast.parse(content);
+        parsed = parse(content);
 
     // ensure that the source is a class declaration
     if (parsed.body.length !== 1 || parsed.body[0].type !== "ClassDeclaration") {
@@ -850,21 +851,21 @@ export class ObjectEditor extends Morph {
       });
       if (isObjectClass(selectedClass) && sourceChanged) {
         var pkg = descr.module.package(),
-            packageConfig = {...pkg.config, version: lively.modules.semver.inc(pkg.version, "prerelease", true)},
+            packageConfig = {...pkg.config, version: semver.inc(pkg.version, "prerelease", true)},
             system = await this.editorPlugin.systemInterface(),
             mod = system.getModule(pkg.url + "/package.json");
-        system.packageConfChange(JSON.stringify(packageConfig, null, 2), mod.id)
+        system.packageConfChange(JSON.stringify(packageConfig, null, 2), mod.id);
       }
       return {success: true};
     } finally { this.state.isSaving = false; }
   }
 
   backupSourceInLocalStorage(source) {
-    var store = JSON.parse(localStorage.getItem("oe helper") || '{"saves": []}')
+    var store = JSON.parse(localStorage.getItem("oe helper") || "{\"saves\": []}");
     if (store.saves.some(ea => typeof ea === "string" ? ea === source : ea.source === source)) return;
     if (store.saves.length > 100) store.saves = store.saves.slice(40, 100);
     store.saves.push({source, time: Date.now()});
-    localStorage.setItem("oe helper", JSON.stringify(store))
+    localStorage.setItem("oe helper", JSON.stringify(store));
   }
 
   async interactivelyAddObjectPackageAndMethod() {
@@ -878,10 +879,10 @@ export class ObjectEditor extends Morph {
       if (!pkg) {
         let objPkgName = await this.world().prompt(
           `No object package exists yet for object ${t}.\n`
-        + `Enter a name for a new package:`, {
-          historyId: "object-package-name-hist",
-          input: string.capitalize(t.name).replace(/\s+(.)/g, (_, match) => match.toUpperCase())
-        });
+        + "Enter a name for a new package:", {
+            historyId: "object-package-name-hist",
+            input: string.capitalize(t.name).replace(/\s+(.)/g, (_, match) => match.toUpperCase())
+          });
 
         if (!objPkgName) { this.setStatusMessage("Canceled"); return; }
         pkg = ObjectPackage.withId(objPkgName);
@@ -906,7 +907,7 @@ export class ObjectEditor extends Morph {
   async interactivelyCreateObjectPackage() {
     try {
       let input = await this.world().prompt(`Creating an package definition for ${this.target}.\nPlease enter a name for the package:`,
-                    {historyId: "object-package-creation-name-hist"});
+        {historyId: "object-package-creation-name-hist"});
       // if (!input) return;
       // let input = "newMethod",
       //     {methodName} = await addScript(this.target, "function() {}", input);
@@ -920,22 +921,22 @@ export class ObjectEditor extends Morph {
 
   async interactivelyAdoptByClass() {
     let system = this.editorPlugin.systemInterface();
-    let modules = await system.getModules()
+    let modules = await system.getModules();
     let items = [];
     for (let mod of modules) {
       // mod = modules[0]
       let pkg = await system.getPackageForModule(mod.name),
           shortName = pkg ? pkg.name + "/" + system.shortModuleName(mod.name, pkg)
-                          : mod.name;
+            : mod.name;
 
 
-      let realModule = lively.modules.module(mod.name);
+      let realModule = module(mod.name);
       if (realModule.format() !== "esm" && realModule.format() !== "register")
         continue;
 
-      let imports = (await realModule.imports()).map(ea => ea.local)
+      let imports = (await realModule.imports()).map(ea => ea.local);
       let klasses = obj.values(realModule.recorder).filter(ea =>
-          isClass(ea) && !imports.includes(ea.name) && withSuperclasses(ea).includes(Morph));
+        isClass(ea) && !imports.includes(ea.name) && withSuperclasses(ea).includes(Morph));
 
       for (let klass of klasses) {
         items.push({isListItem: true, string: `${shortName} ${klass.name}`, value: {module: mod, klass}});
@@ -944,7 +945,7 @@ export class ObjectEditor extends Morph {
     }
 
     let {selected: [klassAndModule]} = await $world.filterableListPrompt(
-      "From which class should the target object inherit?", items, {requester: this})
+      "From which class should the target object inherit?", items, {requester: this});
 
     if (!klassAndModule) return;
 
@@ -980,13 +981,13 @@ export class ObjectEditor extends Morph {
     }
 
     var really = await this.world().confirm(
-      `Really remove method ${selectedMethod.name}?`)
+      `Really remove method ${selectedMethod.name}?`);
     if (!really) return;
 
     let ed = this.ui.sourceEditor,
         range = {start: ed.indexToPosition(methodNode.start), end: ed.indexToPosition(methodNode.end)};
     if (!ed.textInRange({start: {column: 0, row: range.start.row}, end: range.start}).trim()) {
-      range.start = ed.lineRange(range.start.row-1).end
+      range.start = ed.lineRange(range.start.row-1).end;
     }
     ed.replace(range, "");
 
@@ -1112,10 +1113,10 @@ export class ObjectEditor extends Morph {
       var sels = this.get("importsList").selections;
       if (!sels || !sels.length) return;
       var really = await this.world().confirm(
-        "Really remove imports \n" + arr.pluck(sels, "local").join("\n") + "?")
+        "Really remove imports \n" + arr.pluck(sels, "local").join("\n") + "?");
       if (!really) return;
       var m = this.selectedModule;
-      var origSource = await m.source()
+      var origSource = await m.source();
       await m.removeImports(sels);
       this.get("importsList").selection = null;
     }
@@ -1186,11 +1187,11 @@ export class ObjectEditor extends Morph {
         mod = this.selectedModule,
         t = this.target;
 
-    let codeSnip = `$world.execCommand("open object editor", {`
+    let codeSnip = "$world.execCommand(\"open object editor\", {";
     codeSnip += `target: ${t.generateReferenceExpression()}`;
-    if (c) codeSnip += `, selectedClass: "${c.name}"`
+    if (c) codeSnip += `, selectedClass: "${c.name}"`;
     if (m && c) codeSnip += `, selectedMethod: "${m.name}"`;
-    codeSnip += `});`;
+    codeSnip += "});";
 
     return codeSnip;
   }
@@ -1306,7 +1307,7 @@ export class ObjectEditor extends Morph {
           var tree = ed.getSubmorphNamed("classTree"),
               td = tree.treeData,
               classNodes = td.getChildren(td.root).slice(),
-              items = lively.lang.arr.flatmap(classNodes.reverse(), node => {
+              items = arr.flatmap(classNodes.reverse(), node => {
                 var klass = node.target,
                     methods = td.getChildren(node);
 
@@ -1333,8 +1334,8 @@ export class ObjectEditor extends Morph {
               });
 
           var {selected: [choice]} = await ed.world().filterableListPrompt(
-                                      "select class or method", items,
-                                      {historyId: "lively.morphic-object-editor-jump-def-hist"});
+            "select class or method", items,
+            {historyId: "lively.morphic-object-editor-jump-def-hist"});
 
           if (choice) {
             await ed[choice.selector](choice.node.target);
@@ -1411,8 +1412,8 @@ export class ObjectEditor extends Morph {
       {
         name: "open browse snippet",
         exec: oe =>
-        oe.world().execCommand("open workspace",
-          {content: oe.browseSnippetForSelection(), language: "javascript"})
+          oe.world().execCommand("open workspace",
+            {content: oe.browseSnippetForSelection(), language: "javascript"})
       }
     ];
   }
@@ -1451,7 +1452,7 @@ class ImportController extends Morph {
           this.setProperty("module", id);
         }
       }
-    }
+    };
   }
 
   constructor(props) {
@@ -1483,12 +1484,12 @@ class ImportController extends Morph {
       {...listStyle, name: "importsList", multiSelect: true, borderBottom: {width: 1, color: Color.gray}},
       {name: "buttons", layout: new HorizontalLayout({direction: "centered", spacing: 2}),
         submorphs: [
-        {...btnStyle, name: "addImportButton", label: Icon.makeLabel("plus"), tooltip: "add new import"},
-        {...btnStyle, name: "removeImportButton", label: Icon.makeLabel("minus"), tooltip: "remove selected import(s)"},
-        {...btnStyle, name: "cleanupButton", label: "cleanup", tooltip: "remove unused imports"},
-        {...btnStyle, name: "openButton", label: "open", tooltip: "open selected module"}
-      ]},
-    ]
+          {...btnStyle, name: "addImportButton", label: Icon.makeLabel("plus"), tooltip: "add new import"},
+          {...btnStyle, name: "removeImportButton", label: Icon.makeLabel("minus"), tooltip: "remove selected import(s)"},
+          {...btnStyle, name: "cleanupButton", label: "cleanup", tooltip: "remove unused imports"},
+          {...btnStyle, name: "openButton", label: "open", tooltip: "open selected module"}
+        ]},
+    ];
 
     this.layout = new GridLayout({
       grid: [
@@ -1500,9 +1501,9 @@ class ImportController extends Morph {
 
     // FIXME
     [this.get("openButton"),
-     this.get("cleanupButton"),
-     this.get("removeImportButton"),
-     this.get("addImportButton")].forEach(btn => btn.extent = btnStyle.extent)
+      this.get("cleanupButton"),
+      this.get("removeImportButton"),
+      this.get("addImportButton")].forEach(btn => btn.extent = btnStyle.extent);
   }
 
   async updateImports() {
@@ -1519,7 +1520,7 @@ class ImportController extends Morph {
           if (alias) label.push(`${ea.imported} as `, {});
           label.push(alias || ea.local || "??????", {fontWeight: "bold"});
           label.push(` from ${ea.fromModule}`);
-          return {isListItem: true, value: ea, label}
+          return {isListItem: true, value: ea, label};
         });
 
     this.getSubmorphNamed("importsList").items = items;
@@ -1546,7 +1547,7 @@ class ImportController extends Morph {
         return this.world().execCommand("open browser",
           {moduleName: fromModule, codeEntity: local});
       }
-    }]
+    }];
   }
 
 }

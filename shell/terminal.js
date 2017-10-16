@@ -1,10 +1,9 @@
-import { pt, Rectangle, rect, Color } from "lively.graphics"
-import { connect, disconnect } from "lively.bindings";
+import { pt, Rectangle, Color } from "lively.graphics";
+import { connect } from "lively.bindings";
 import { arr, obj } from "lively.lang";
 import { defaultDirectory } from "./shell-interface.js";
-import ClientCommand from "lively.shell/client-command.js";
 import { GridLayout } from "lively.morphic/layout.js";
-import { Morph, Text, World, config, InputLine } from "lively.morphic";
+import { Morph, World, config, InputLine } from "lively.morphic";
 import ShellEditorPlugin from "./editor-plugin.js";
 import DiffEditorPlugin from "../diff/editor-plugin.js";
 import { guessTextModeName } from "../editor-plugin.js";
@@ -89,8 +88,8 @@ export default class Terminal extends Morph {
           connect(input, "inputAccepted", this, "execCommand",
             {updater: ($upd, command) => $upd("[shell terminal] run command or send input", {command})});
 
-          connect(this, 'extent', changeCwdButton, 'topRight', {converter: ext => ext.withY(0)});
-          connect(changeCwdButton, 'fire', this, 'execCommand', {converter: () => "[shell] change working directory"});
+          connect(this, "extent", changeCwdButton, "topRight", {converter: ext => ext.withY(0)});
+          connect(changeCwdButton, "fire", this, "execCommand", {converter: () => "[shell] change working directory"});
 
           this.layout = new GridLayout({grid: [["output"], ["input"]]});
           this.layout.row(1).fixed = 25;
@@ -115,12 +114,12 @@ export default class Terminal extends Morph {
           this.shellPlugin.command = cmd;
           cmd.stdout && this.addOutput(cmd.stdout);
           cmd.stdout && this.addOutput(cmd.stderr);
-          connect(cmd, 'stdout', this, 'addOutput');
-          connect(cmd, 'stderr', this, 'addOutput');
-          connect(cmd, 'error', this, 'addOutput');
-          connect(cmd, 'pid', this, 'updateWindowTitle');
-          connect(cmd, 'close', this, 'updateWindowTitle');
-          connect(cmd, 'close', this, 'updateTextMode');
+          connect(cmd, "stdout", this, "addOutput");
+          connect(cmd, "stderr", this, "addOutput");
+          connect(cmd, "error", this, "addOutput");
+          connect(cmd, "pid", this, "updateWindowTitle");
+          connect(cmd, "close", this, "updateWindowTitle");
+          connect(cmd, "close", this, "updateTextMode");
           this.updateWindowTitle();
           this.updateTextMode();
         }
@@ -139,7 +138,7 @@ export default class Terminal extends Morph {
               p = i.pluginFind(ea => ea.isShellEditorPlugin);
           if (p) return p;
           p = i.addPlugin(new ShellEditorPlugin());
-          connect(p, 'cwd', this.ui.changeCwdButton, 'label');
+          connect(p, "cwd", this.ui.changeCwdButton, "label");
           return p;
         }
       },
@@ -149,7 +148,7 @@ export default class Terminal extends Morph {
         set(val) { this.ui.input.input = val; },
         get() { return this.ui.input.input; }
       }
-    }
+    };
   }
 
   constructor(props) {
@@ -186,7 +185,7 @@ export default class Terminal extends Morph {
       value: {
         cwd: this.cwd
       }
-    }
+    };
   }
 
   onLoad(_, snapshot) {
@@ -201,7 +200,7 @@ export default class Terminal extends Morph {
   get defaultStyle() {
     return {
       ...config.codeEditor.defaultStyle
-    }
+    };
   }
 
   focus() {
@@ -252,7 +251,7 @@ export default class Terminal extends Morph {
       {
         name: "focus input",
         exec: term => {
-          term.lastFocused = "input"
+          term.lastFocused = "input";
           var m = term.ui.input;
           m.show(); m.focus(); return true;
         }

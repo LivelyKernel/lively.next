@@ -1,7 +1,7 @@
 /*global System*/
 
 function buildEvalOpts(morph, additionalOpts) {
-  let p = morph.plugins.find(p => p.isJSEditorPlugin)
+  let p = morph.plugins.find(p => p.isJSEditorPlugin);
   return p.sanatizedJsEnv(additionalOpts);
 }
 
@@ -15,7 +15,7 @@ export class ModuleTopLevelVarCompleter {
     if (!endpoint) return [];
 
     var opts = buildEvalOpts(textMorph),
-        m = opts.targetModule, names
+        m = opts.targetModule, names;
 
     if (endpoint.name !== "local") {
       var result = await endpoint.runEval(`
@@ -30,7 +30,7 @@ export class ModuleTopLevelVarCompleter {
           result = JSON.stringify(Object.getOwnPropertyNames(G));
         }
         result;
-      `, {targetModule: "lively://module-recorder-completer"})
+      `, {targetModule: "lively://module-recorder-completer"});
       if (result.isError) return [];
       names = JSON.parse(result.value);
 
@@ -76,7 +76,7 @@ export class DynamicJavaScriptCompleter {
       trailing = completion.slice(completion.indexOf("("));
       completion = completion.slice(0, completion.indexOf("("));
     }
-    return `["${completion.replace(/\"/g, '\\"')}"]${trailing}`;
+    return `["${completion.replace(/\"/g, "\\\"")}"]${trailing}`;
   }
 
   async compute(textMorph) {
@@ -92,15 +92,15 @@ export class DynamicJavaScriptCompleter {
     if (!endpoint) return [];
 
     var opts = buildEvalOpts(textMorph),
-      {
-        isError,
-        value: err,
-        completions,
-        prefix
-      } = await endpoint.dynamicCompletionsForPrefix(opts.targetModule, roughPrefix, opts);
+        {
+          isError,
+          value: err,
+          completions,
+          prefix
+        } = await endpoint.dynamicCompletionsForPrefix(opts.targetModule, roughPrefix, opts);
 
     if (isError) {
-      console.warn(`javascript completer encountered error: ${err.stack || err}`)
+      console.warn(`javascript completer encountered error: ${err.stack || err}`);
       return [];
     }
 
@@ -120,12 +120,12 @@ export class DynamicJavaScriptCompleter {
                         {start: before, end} : {start, end};
                   textMorph.replace(range, this.wrapInBrackets(ea));
                 },
-            }
+            };
           })), []);
 
     // assign priority:
     processed.forEach((ea,i) => Object.assign(ea, {priority: priority+processed.length-i}));
-    return processed
+    return processed;
   }
 
 }
@@ -202,12 +202,12 @@ const keywords = [
   "document",
   "requestAnimationFrame",
   "cancelAnimationFrame",
-]
+];
 
 export class JavaScriptKeywordCompleter {
 
   compute(textMorph, prefix) {
-    return keywords.map(ea => ({completion: ea, priority: 0}))
+    return keywords.map(ea => ({completion: ea, priority: 0}));
   }
 
 }
@@ -218,4 +218,4 @@ export var completers = [
   new DynamicJavaScriptCompleter(),
   new JavaScriptKeywordCompleter(),
   new ModuleTopLevelVarCompleter()
-]
+];

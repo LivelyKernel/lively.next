@@ -1,9 +1,9 @@
 /*global System*/
-import { arr, obj } from "lively.lang"
-import { query, parse } from "lively.ast";
+import { arr, obj, chain, fun } from "lively.lang";
+import { query, parse, acorn } from "lively.ast";
 import { pt } from "lively.graphics";
 import { addOrChangeCSSDeclaration } from "lively.morphic/rendering/dom-helper.js";
-import { show, HTMLMorph } from "lively.morphic"
+import { HTMLMorph } from "lively.morphic";
 import { connect } from "lively.bindings";
 import EvalBackendChooser from "./js/eval-backend-ui.js";
 
@@ -17,17 +17,17 @@ var jsDiff;
 })();
 
 export async function findTestModulesInPackage(systemInterface, packageOrUrl) {
-  var resources = await systemInterface.resourcesOfPackage(packageOrUrl)
+  var resources = await systemInterface.resourcesOfPackage(packageOrUrl);
   return Promise.all(
     resources.map(async ({url}) => {
       if (!url.endsWith(".js")) return null;
       var source = await systemInterface.moduleRead(url), parsed;
-      try { parsed = parse(source) } catch (err) { return null; }
+      try { parsed = parse(source); } catch (err) { return null; }
       let hasMochaImports = query.imports(query.scopes(parsed)).some(({fromModule}) =>
-            fromModule.includes("mocha-es6"));
+        fromModule.includes("mocha-es6"));
       if (!hasMochaImports) return null;
       try { return testsFromSource(source).length ? url : null; } catch (e) { return null; }
-    })).then(tests => tests.filter(Boolean))
+    })).then(tests => tests.filter(Boolean));
 }
 
 export function testsFromSource(sourceOrAst) {
@@ -37,28 +37,27 @@ export function testsFromSource(sourceOrAst) {
   //  {fullTitle: "completion finds inherited props", node: {/*...*/}, type: "test"},
   //  {fullTitle: "completion of resolved promise", node: {/*...*/}, type: "test"}]
 
-  var testStack = [], testsAndSuites = [],
-      {parse} = System.get(System.decanonicalize("lively.ast")), ast;
+  var testStack = [], testsAndSuites = [], parsed;
 
   try {
-    ast = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
+    parsed = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
   } catch (err) { return testsAndSuites; }
 
-  lively.ast.acorn.walk.recursive(ast, {}, {
+  acorn.walk.recursive(parsed, {}, {
     CallExpression: (node, state, c) => {
       if (node.callee.name && node.callee.name.match(/describe|it/) && node.arguments.length >= 2) {
         var spec = {
           title: node.arguments[0].value,
           type: node.callee.name.match(/describe/) ? "suite" : "test"
-        }
+        };
         testStack.push(spec);
         var recorded = {fullTitle: arr.pluck(testStack, "title").join(" "), type: spec.type, node: node};
         testsAndSuites.push(recorded);
       }
-      lively.ast.acorn.walk.base.CallExpression(node, state, c);
-      if (spec) testStack.pop()
+      acorn.walk.base.CallExpression(node, state, c);
+      if (spec) testStack.pop();
     }
-  }, ({...lively.ast.acorn.walk.base, SpreadProperty: function (node, st, c) {}}));
+  }, ({...acorn.walk.base, SpreadProperty: function (node, st, c) {}}));
 
   return testsAndSuites;
 }
@@ -82,13 +81,13 @@ export function testsFromMocha(mocha) {
       title: suite.title,
       file: suite.file,
       depth, type: "suite"}]
-    .concat((suite.tests || []).map(({title, file, type}) => ({
-      state: "", duration: -1,
-      parent: suiteFullTitle,
-      fullTitle: (suiteFullTitle + " " + title).trim(),
-      title, file, depth: depth, type})))
-    .concat(...(suite.suites || []).map(suite =>
-      _buildTestList(suite, suiteFullTitle, depth+1)));
+      .concat((suite.tests || []).map(({title, file, type}) => ({
+        state: "", duration: -1,
+        parent: suiteFullTitle,
+        fullTitle: (suiteFullTitle + " " + title).trim(),
+        title, file, depth: depth, type})))
+      .concat(...(suite.suites || []).map(suite =>
+        _buildTestList(suite, suiteFullTitle, depth+1)));
   }
 }
 
@@ -191,7 +190,7 @@ const testRunnerCSS = `.mocha-test-runner {
 
 .mocha-test-runner .duration.very-slow {
   color: red;
-}`
+}`;
 
 
 export default class TestRunner extends HTMLMorph {
@@ -220,13 +219,13 @@ export default class TestRunner extends HTMLMorph {
           this.get("eval backend button").updateFromTarget();
         }
       }
-    }
+    };
   }
 
   constructor(props) {
     super({name: "test runner", clipMode: "auto", ...props});
     this.reset();
-    connect(this, 'extent', this, 'relayout');
+    connect(this, "extent", this, "relayout");
   }
 
   reset() {
@@ -242,7 +241,7 @@ export default class TestRunner extends HTMLMorph {
       grep: null,
       loadedTests: [],
       collapsedSuites: {}
-    }
+    };
 
     this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(this, null));
     this.update();
@@ -277,7 +276,7 @@ export default class TestRunner extends HTMLMorph {
 
       var tests = testsFromSource(ed.textString),
           target = tests.find(ea => ea.fullTitle === test.fullTitle);
-      if (!target) throw new Error(`Cannot find test ${test.fullTitle} in file ${file}`)
+      if (!target) throw new Error(`Cannot find test ${test.fullTitle} in file ${file}`);
 
       ed.selection = ed.astNodeRange(target.node);
       ed.centerRow(ed.selection.start.row);
@@ -320,8 +319,8 @@ export default class TestRunner extends HTMLMorph {
     if (newTest) {
       newTest.tests = newTest.tests.map(t =>
         t.fullTitle.match(grep) ?
-        t :
-        test.tests.find(prevT => prevT.fullTitle === t.fullTitle) || t);
+          t :
+          test.tests.find(prevT => prevT.fullTitle === t.fullTitle) || t);
       this.update();
     }
 
@@ -353,12 +352,12 @@ export default class TestRunner extends HTMLMorph {
 
     try {
       var result = await this.systemInterface.runMochaTests(
-                    grep, testRecords,
-                    () => this.update(),
-                    (err, when) => this.showError(`Error during ${when}: ${err}`));
+        grep, testRecords,
+        () => this.update(),
+        (err, when) => this.showError(`Error during ${when}: ${err}`));
 
       if (result && result.isError)
-        throw new Error(result.value.stack || result.value)
+        throw new Error(result.value.stack || result.value);
 
       if (!result || !result.testsByFile)
         throw new Error(`No test results when runnin tests of ${files}`);
@@ -375,7 +374,7 @@ export default class TestRunner extends HTMLMorph {
     var testModuleURLs = await findTestModulesInPackage(this.systemInterface, packageURL),
         results = [];
     for (let url of testModuleURLs)
-      results.push(await this.runTestFile(url))
+      results.push(await this.runTestFile(url));
     return results;
   }
 
@@ -385,7 +384,7 @@ export default class TestRunner extends HTMLMorph {
 
   collapseAll() {
     this.state.collapsedSuites = {};
-    lively.lang.chain(this.state.loadedTests)
+    chain(this.state.loadedTests)
       .pluck("tests").flatten().filter(ea => ea.type === "suite" && ea.fullTitle)
       .forEach(suite => this.state.collapsedSuites[suite.fullTitle] = true);
     arr.pluck(this.state.loadedTests, "file")
@@ -394,9 +393,9 @@ export default class TestRunner extends HTMLMorph {
   }
 
   collapseToggle() {
-     var sel = Object.keys(this.state.collapsedSuites).length === 0 ?
-      "collapseAll" : "uncollapseAll"
-     this[sel]();
+    var sel = Object.keys(this.state.collapsedSuites).length === 0 ?
+      "collapseAll" : "uncollapseAll";
+    this[sel]();
   }
 
   uncollapseAll() {
@@ -435,7 +434,7 @@ export default class TestRunner extends HTMLMorph {
             t.type === "suite" && t.depth >= 1 && (collapsed[t.fullTitle] = true));
         } else {
           if (testsOfFile) testsOfFile.tests.forEach(t =>
-            t.type === "suite" && t.fullTitle.indexOf(target) === 0 && (collapsed[t.fullTitle] = true))
+            t.type === "suite" && t.fullTitle.indexOf(target) === 0 && (collapsed[t.fullTitle] = true));
         }
       }
     }
@@ -458,7 +457,7 @@ export default class TestRunner extends HTMLMorph {
 
     if (printed && test.error.actual && test.error.expected) {
       this.world().execCommand("diff and open in window",
-        {a: test.error.actual, b: test.error.expected, title: test.fullTitle})
+        {a: test.error.actual, b: test.error.expected, title: test.fullTitle});
     } else {
       var win = this.world().execCommand("open text window",
         {title: test.fullTitle, content: test.error + "\n" + test.error.stack});
@@ -485,7 +484,7 @@ export default class TestRunner extends HTMLMorph {
 
   update() {
     return new Promise((resolve, reject) => {
-      lively.lang.fun.throttleNamed(
+      fun.throttleNamed(
         this.id + "-update", 100,
         () => resolve(this.renderTests(this.state)))();
     });
@@ -504,16 +503,16 @@ export default class TestRunner extends HTMLMorph {
         runningTest = tests.find(test => test.state === "running"),
         renderedFiles = [];
 
-        for (let test of tests) {
-          renderedFiles.push(
-            (await this.renderFile(test.file, test.tests, collapsed))
+    for (let test of tests) {
+      renderedFiles.push(
+        (await this.renderFile(test.file, test.tests, collapsed))
             + test.tests.slice(1/*except root suite*/)
-               .map(ea =>
-                 ea.type === "test" ?
-                   this.renderTest(ea, test.tests, test.file, collapsed) :
-                   this.renderSuite(ea, test.tests, test.file, collapsed))
-               .join("\n"))
-        }
+              .map(ea =>
+                ea.type === "test" ?
+                  this.renderTest(ea, test.tests, test.file, collapsed) :
+                  this.renderSuite(ea, test.tests, test.file, collapsed))
+              .join("\n"));
+    }
 
     this.html = `
        <div class="controls">
@@ -553,7 +552,7 @@ export default class TestRunner extends HTMLMorph {
                 style="margin-left: ${depthOffset+10}px;"
                 >${this.renderError(test)}
               </div>
-            </div>`
+            </div>`;
   }
 
 
@@ -563,7 +562,7 @@ export default class TestRunner extends HTMLMorph {
           ea.type === "test" && ea.fullTitle.indexOf(suite.fullTitle) === 0),
         duration = arr.sum(arr.compact(myTests.map(ea => ea.duration))),
         state = (myTests||[]).some(t => t.state === "failed") ?
-        "failed" : (myTests.every(t => t.state === "succeeded") ? "succeeded" : ""),
+          "failed" : (myTests.every(t => t.state === "succeeded") ? "succeeded" : ""),
         classes = ["suite", state],
         relatedCollapsed = collapsed.filter(ea => id.indexOf(ea) === 0),
         parentCollapsed = collapsed.includes(file) || (relatedCollapsed||[]).some(ea => ea.length < id.length),
@@ -584,7 +583,7 @@ export default class TestRunner extends HTMLMorph {
               <input
                 type="button" class="run-button" value="run"
                 onmouseup="${this.htmlRef}.runSuite('${id}')"></input>
-            </div>`
+            </div>`;
   }
 
   async renderFile(file, testsAndSuites, collapsed) {
@@ -614,7 +613,7 @@ export default class TestRunner extends HTMLMorph {
               <input
                 type="button" class="remove-button" value="✗"
                 onmouseup="${this.htmlRef}.removeTestFile('${id}')"></input>
-            </div>`
+            </div>`;
   }
 
   renderError(test) {
@@ -639,8 +638,8 @@ export default class TestRunner extends HTMLMorph {
           return arr.last(result) === "  ..." ? result : result.concat("  ...\n");
         if (line.added) return result.concat("+ " + line.value.replace(/\n?$/, "\n"));
         if (line.removed) return result.concat("- " + line.value.replace(/\n?$/, "\n"));
-        return result.concat("???\n")
-      }, []).join("")
+        return result.concat("???\n");
+      }, []).join("");
     }
 
   }
@@ -649,7 +648,7 @@ export default class TestRunner extends HTMLMorph {
     return !error.expected || !error.actual ? null : {
       expected: tryPrint(error.expected),
       actual: tryPrint(error.actual)
-    }
+    };
 
     function tryPrint(o) {
       if (typeof o === "function") return String(o);
@@ -688,7 +687,7 @@ export default class TestRunner extends HTMLMorph {
             string: nameInPackage,
             value: {url, nameInPackage: url.slice(pkg.url.length)},
             isListItem: true
-          }
+          };
         }),
         {selected} = await $world.filterableListPrompt("Load tests", testItems, {
           requester: this,
@@ -699,32 +698,9 @@ export default class TestRunner extends HTMLMorph {
     let i = LoadingIndicator.open("running tests");
     try {
       for (let {url, nameInPackage} of selected) {
-        i.label = `Running ${nameInPackage}`
+        i.label = `Running ${nameInPackage}`;
         await this.runTestFile(url);
       }
     } finally { i.remove(); }
   }
 }
-
-
-
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-// // changed at Sun Jun 26 2016 19:14:13 GMT-0700 (PDT) by robertkrahn
-// this.addScript(function runTestsOfPackage(packageAddress) {
-//   var ed = this.get("editor");
-//   return Promise.resolve(this.systemInterface().getPackage(packageAddress)).then(p => {
-//       if (!p) return Promise.reject(new Error("Cannot find package " + packageAddress));
-//       return lively.lang.promise.chain(
-//         p.modules.map(mod =>
-//         () =>  mod.name.match(/\.js$/) && Promise.resolve(this.systemInterface().moduleRead(mod.name))
-//                 .then(source => {
-//                   var parsed = lively.ast.parse(source)
-//                   var isMochaTest = parsed && parsed.body.some(stmt => lively.lookup("expression.callee.name", stmt) === "describe");
-//                   // isMochaTest && show(mod.name)
-//                   return isMochaTest ? this.runTest(mod.name): null
-//                 })))
-//     })
-//     .catch(err => this.showError(err));
-// });

@@ -9,7 +9,7 @@ export var astEditorCommands = [
     name: "spawn command from selection",
     exec: (ed) => {
       var text = ed.selectionOrLineString();
-      ClientCommand
+      ClientCommand;
       return true;
     }
   }
@@ -17,11 +17,11 @@ export var astEditorCommands = [
 ];
 
 export var shellCommands = [{
-  name: 'run command',
+  name: "run command",
   exec: async (ctx, cmd) => {
     return await runCommand(cmd);
   }
-}]
+}];
 
 lively.modules.module("lively.ide/shell/editor-plugin.js")
   .reload({reloadDeps: false, resetEnv: false});

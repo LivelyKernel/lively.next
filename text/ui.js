@@ -1,10 +1,17 @@
 /*global System,WeakMap*/
-import { fun, arr } from "lively.lang"
-import { show, Text, HorizontalLayout, VerticalLayout, 
-         inspect, morph, Morph, Icon, loadObjectFromPartsbinFolder } from "lively.morphic";
-import { pt, LinearGradient, Rectangle, Color } from "lively.graphics";
-import { connect, noUpdate } from "lively.bindings"
-
+import { fun, arr } from "lively.lang";
+import {
+  Text,
+  HorizontalLayout,
+  VerticalLayout,
+  morph,
+  Morph,
+  Icon,
+  loadObjectFromPartsbinFolder
+} from "lively.morphic";
+import { pt, Rectangle, Color } from "lively.graphics";
+import { connect, noUpdate } from "lively.bindings";
+import { ColorPicker } from "../styling/color-picker.js";
 import { DropDownList } from "lively.components";
 
 
@@ -27,7 +34,7 @@ export class RichTextControl extends Morph {
 
     fun.debounceNamed(textMorph.id+"openRichTextControl", 600, () => {
       var ctrl = cachedControls.get(textMorph);
-      if (selection.isEmpty()) { ctrl && ctrl.removeFocus(); return }
+      if (selection.isEmpty()) { ctrl && ctrl.removeFocus(); return; }
       if (!ctrl || !ctrl.world()) {
         ctrl = new RichTextControl();
         cachedControls.set(textMorph, ctrl);
@@ -76,7 +83,7 @@ export class RichTextControl extends Morph {
           ]
         }
       }
-    }
+    };
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -210,13 +217,13 @@ export class RichTextControl extends Morph {
                 {name: "justify", label: Icon.textAttribute("align-justify")}
               ],
               name: "text align tabs"
-            })
+            });
           }).catch(err => this.showError(err));
           return pre;
         }
 
       }
-    }
+    };
   }
 
   ensureCloseButton() {
@@ -239,7 +246,7 @@ export class RichTextControl extends Morph {
       type: "button", borderRadius: 5, padding: Rectangle.inset(0),
       extent: pt(20,22),
       grabbable: false, draggable: false,
-    }
+    };
   }
 
   getOrAddButton(spec, connectTo) {
@@ -258,7 +265,7 @@ export class RichTextControl extends Morph {
     // this.submorphs[0].show()
     // this.relayout();
 
-    let defaultSpec = this.defaultSpec
+    let defaultSpec = this.defaultSpec;
 
     this.removeAllMorphs();
 
@@ -269,7 +276,7 @@ export class RichTextControl extends Morph {
       for (let spec of uiSpec.rows[row]) {
         if (typeof spec === "string") spec = {name: spec};
         if (!defaultSpec[spec.name]) continue;
-        spec = {...defaultSpec[spec.name], ...spec}
+        spec = {...defaultSpec[spec.name], ...spec};
         if (typeof spec.ensure === "function") spec.ensure.call(this, spec);
         else if (spec.type === "button") this.getOrAddButton({name: spec.name, ...spec.props}, spec.action);
       }
@@ -309,7 +316,7 @@ export class RichTextControl extends Morph {
         ["copy style button", "paste style button", "clear style button"],
         // ["configure button"],
       ]
-    }
+    };
   }
 
   alignAtTarget(animated = !!this.world()) {
@@ -319,23 +326,23 @@ export class RichTextControl extends Morph {
         w = target.world() || $world,
         bounds = this.globalBounds(),
         targetBounds = target.selection.isEmpty()
-                     ? target.globalBounds()
-                     : target.getGlobalTransform().transformRectToRect(
-                         target.selectionBounds().translatedBy(
-                           target.scroll.negated())),
+          ? target.globalBounds()
+          : target.getGlobalTransform().transformRectToRect(
+            target.selectionBounds().translatedBy(
+              target.scroll.negated())),
         delta = targetBounds.bottomCenter().subPt(bounds.topCenter()),
         translated = w.visibleBounds().translateForInclusion(bounds.translatedBy(delta)),
         realDelta = translated.topLeft().subPt(bounds.topLeft()),
         newPos = this.position.addPt(realDelta);
-    if (animated) this.animate({duration: 300, position: newPos})
+    if (animated) this.animate({duration: 300, position: newPos});
     else this.position = newPos;
   }
 
   removeFocus() {
-   if (this.autoRemove && this.target) {
-     this.remove();
-     this.target = null;
-   }
+    if (this.autoRemove && this.target) {
+      this.remove();
+      this.target = null;
+    }
   }
 
   focusOn(textMorph, align = true) {
@@ -377,14 +384,14 @@ export class RichTextControl extends Morph {
       for (let spec of uiSpec.rows[row]) {
         if (typeof spec === "string") spec = {name: spec};
         if (!defaultSpec[spec.name]) continue;
-        spec = {...defaultSpec[spec.name], ...spec}
+        spec = {...defaultSpec[spec.name], ...spec};
         let m;
         if (typeof spec.ensure === "function") m = spec.ensure.call(this, spec);
         else if (spec.type === "button") m = this.getOrAddButton(spec, spec.action);
         else continue;
         morphs.push(m);
         rowWidth += m.width + offset;
-        rowHeight = Math.max(rowHeight, m.height)
+        rowHeight = Math.max(rowHeight, m.height);
       }
       rowWidths[row] = rowWidth;
       rowHeights[row] = rowHeight;
@@ -420,8 +427,8 @@ export class RichTextControl extends Morph {
         sel = target.selection;
     if (sel.isEmpty()) {
       target[name] = typeof valueOrFn === "function"
-                      ? valueOrFn(target[name])
-                      : valueOrFn
+        ? valueOrFn(target[name])
+        : valueOrFn;
     } else {
       target.undoManager.group();
       target.changeStyleProperty(name,
@@ -572,16 +579,16 @@ export class RichTextControl extends Morph {
   copyStyle() {
     let {target} = this,
         style = target.selection.isEmpty() ?
-                  target.defaultTextStyle :
-                  target.getStyleInRange(target.selection),
+          target.defaultTextStyle :
+          target.getStyleInRange(target.selection),
         styleString = JSON.stringify(style, null, 2);
     this.constructor.copiedStyle = style;
 
     this.getSubmorphNamed("paste style button").tooltip = "paste style\n" + styleString;
 
     this.env.eventDispatcher.doCopyWithMimeTypes([
-      {type: 'text/plain', data: styleString},
-      {type: 'application/morphic-text-style', styleString}
+      {type: "text/plain", data: styleString},
+      {type: "application/morphic-text-style", styleString}
     ]).then(() => this.setStatusMessage(`Copied style\n${styleString}`))
       .catch(err => this.showError(err));
 
@@ -628,19 +635,19 @@ export class RichTextControl extends Morph {
           ]
         });
     config.center = this.innerBounds().center();
-    connect(config.getSubmorphNamed("OK button"), 'fire', this, 'configureAccepted');
-    connect(config.getSubmorphNamed("cancel button"), 'fire', this, 'configureCanceled');
+    connect(config.getSubmorphNamed("OK button"), "fire", this, "configureAccepted");
+    connect(config.getSubmorphNamed("cancel button"), "fire", this, "configureCanceled");
   }
 
   configureAccepted() {
-    let panel = this.getSubmorphNamed("config panel")
+    let panel = this.getSubmorphNamed("config panel");
     if (!panel) return;
     panel.remove();
     let cbs = panel.submorphs.filter(ea => ea.constructor.name === "LabeledCheckBox");
   }
 
   configureCanceled() {
-    let panel = this.getSubmorphNamed("config panel")
+    let panel = this.getSubmorphNamed("config panel");
     if (panel) panel.remove();
   }
 

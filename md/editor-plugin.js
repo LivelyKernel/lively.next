@@ -1,6 +1,6 @@
 import EditorPlugin from "../editor-plugin.js";
 
-import "./mode.js"
+import "./mode.js";
 import { getMode, tokenizeDocument } from "../editor-modes.js";
 import { arr } from "lively.lang";
 
@@ -18,7 +18,7 @@ var commands = [
       return true;
     }
   }
-]
+];
 
 export default class MarkdownEditorPlugin extends EditorPlugin {
 
@@ -26,7 +26,7 @@ export default class MarkdownEditorPlugin extends EditorPlugin {
 
   static get mode() { return getMode({}, {name: "markdown"}); }
 
-  get isMarkdownEditorPlugin() { return true }
+  get isMarkdownEditorPlugin() { return true; }
 
   getCommands(otherCommands) { return otherCommands.concat(commands); }
 

@@ -1,11 +1,10 @@
-import { show, Window, Morph, Label, Text, InputLine } from "lively.morphic"
-import { Tree, TreeData } from "lively.components"
-import { arr, fun, promise, num, date, string } from "lively.lang"
-import { pt, Rectangle, rect, Color } from "lively.graphics"
-import { connect, signal, once } from "lively.bindings"
+import { Morph, Label, InputLine } from "lively.morphic";
+import { Tree, TreeData } from "lively.components";
+import { arr, promise, num, date, string } from "lively.lang";
+import { pt, Rectangle, Color } from "lively.graphics";
+import { connect } from "lively.bindings";
 import { resource } from "lively.resources";
-
-import TextEditor from "./text-editor.js"
+import TextEditor from "./text-editor.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // this.world().openInWindow(HTTPFileBrowser.forLocation(document.location.origin)).activate()
@@ -29,7 +28,7 @@ var browserCommands = [
         browser.world().openInWindow(newBrowser, {position}).activate();
         return newBrowser.whenFinishedLoading()
           .then(() => newBrowser.ui.fileTree.applyViewState(viewState, ({resource: {url}}) => url))
-          .then(() => newBrowser)
+          .then(() => newBrowser);
 
       } else if (sel.isDirectory()) {
         browser.execCommand("set location to selection");
@@ -76,7 +75,7 @@ var browserCommands = [
       var currentLoc = browser.location;
       if (currentLoc.isRoot()) return true;
       await browser.keepFileTreeStateWhile(async () => {
-        await browser.openLocation(currentLoc.parent())
+        await browser.openLocation(currentLoc.parent());
         browser.selectedFile = currentLoc;
         await browser.ui.fileTree.execCommand("uncollapse selected node");
       });
@@ -91,7 +90,7 @@ var browserCommands = [
 
       if (browser.selectedFile) {
         var fnText = browser.get("selectedFileName");
-        fnText.selectAll()
+        fnText.selectAll();
         fnText.execCommand("manual clipboard copy");
       }
       return true;
@@ -163,7 +162,7 @@ var browserCommands = [
         browser.world().inform("add file canceled");
       } else {
         var res = resource(newFile);
-        if (res.isDirectory()) res = res.asFile()
+        if (res.isDirectory()) res = res.asFile();
         await res.ensureExistance("");
         await browser.execCommand("refresh contents");
         browser.selectedFile = res;
@@ -190,12 +189,12 @@ var browserCommands = [
               i = browser.ui.fileTree.selectedIndex;
           await res.remove();
           await browser.execCommand("refresh contents");
-          await browser.whenFinishedLoading()
+          await browser.whenFinishedLoading();
           browser.ui.fileTree.selectedIndex = i;
         } else {
           browser.world().inform("delete canceled");
         }
-      })()
+      })();
     }
   },
 
@@ -246,7 +245,7 @@ var browserCommands = [
           return true;
         }
 
-      })()
+      })();
     }
   },
 
@@ -256,7 +255,7 @@ var browserCommands = [
     exec: async (browser, _, count) => {
       var opts = {exclude: browser.excludeFiles || []},
           loc = browser.location,
-          items = (await loc.dirList(count || 'infinity', opts)).map(ea => ({
+          items = (await loc.dirList(count || "infinity", opts)).map(ea => ({
             isListItem: true,
             string: ea.url.slice(loc.url.length),
             value: ea.url
@@ -264,7 +263,7 @@ var browserCommands = [
           {selected: [targetURL]} = await browser.world().filterableListPrompt(
             "Choose module to open", items, {
               historyId: "lively.ide/http-file-browser-find-file",
-              requester: browser, width: 700, multiSelect: false})
+              requester: browser, width: 700, multiSelect: false});
 
       if (!targetURL) {
         browser.setStatusMessage("Canceled");
@@ -291,12 +290,12 @@ class HTTPFileBrowserNode extends TreeData {
         {lastModified, size} = resource,
         datePrinted = lastModified ?
           date.format(lastModified, "yyyy-mm-dd HH:MM:ss") : " ".repeat(col1Size),
-        sizePrinted = size ? num.humanReadableByteSize(size) : ""
+        sizePrinted = size ? num.humanReadableByteSize(size) : "";
 
     return [
       resource.name(), null,
       `\t${sizePrinted} ${datePrinted}`, {fontSize: "70%", textStyleClasses: ["annotation"]}
-    ]
+    ];
   }
 
   isCollapsed({isCollapsed}) { return isCollapsed; }
@@ -306,10 +305,10 @@ class HTTPFileBrowserNode extends TreeData {
     if (node === this.root) bool = false;
     if (!bool && !node.subResources) {
       let exclude = this.root.browser.excludeFiles || [],
-          [dirs, files] = arr.partition(await node.resource.dirList(1, {exclude}), ea => ea.isDirectory())
+          [dirs, files] = arr.partition(await node.resource.dirList(1, {exclude}), ea => ea.isDirectory());
       dirs = arr.sortBy(dirs, ea => ea.name().toLowerCase());
       files = arr.sortBy(files, ea => ea.name().toLowerCase());
-      node.subNodes = dirs.concat(files).map(res => ({isCollapsed: true, resource: res}))
+      node.subNodes = dirs.concat(files).map(res => ({isCollapsed: true, resource: res}));
     }
     node.isCollapsed = bool;
   }
@@ -319,16 +318,16 @@ class HTTPFileBrowserNode extends TreeData {
         result = !resource ? [] : !resource.isDirectory() ? null : isCollapsed ? [] : subNodes || [];
     // cache for faster parent lookup
     result && result.forEach(n => this.parentMap.set(n, parent));
-    return result
+    return result;
   }
 
-  isLeaf({resource}) { return resource ? !resource.isDirectory() : true }
+  isLeaf({resource}) { return resource ? !resource.isDirectory() : true; }
 }
 
 export default class HTTPFileBrowser extends Morph {
 
   static forLocation(urlOrResource, props) {
-    var browser = new this(props)
+    var browser = new this(props);
     browser.location = urlOrResource;
     return browser;
   }
@@ -356,7 +355,7 @@ export default class HTTPFileBrowser extends Morph {
           var btnStyle = {
             type: "button", borderRadius: 5, padding: Rectangle.inset(0),
             fontSize: 12, grabbable: false, draggable: false
-          }
+          };
 
           this.submorphs = [
             new Tree({
@@ -406,14 +405,14 @@ export default class HTTPFileBrowser extends Morph {
             deleteFileButton
           } = this.ui;
 
-          connect(this, 'extent', this, 'relayout');
-          connect(locationInput, 'inputAccepted', this, 'onLocationChanged');
-          connect(fileTree, 'selection', this, 'showSelectedFile');
+          connect(this, "extent", this, "relayout");
+          connect(locationInput, "inputAccepted", this, "onLocationChanged");
+          connect(fileTree, "selection", this, "showSelectedFile");
 
-          connect(searchButton,       'fire', this, 'execCommand', {converter: () => "find file and select"});
-          connect(reloadButton,       'fire', this, 'execCommand', {converter: () => "refresh contents"});
-          connect(filterButton,       'fire', this, 'execCommand', {converter: () => "set file filter"});
-          connect(openFileButton,     'fire', this, 'execCommand', {converter: () => "open selected file"});
+          connect(searchButton,       "fire", this, "execCommand", {converter: () => "find file and select"});
+          connect(reloadButton,       "fire", this, "execCommand", {converter: () => "refresh contents"});
+          connect(filterButton,       "fire", this, "execCommand", {converter: () => "set file filter"});
+          connect(openFileButton,     "fire", this, "execCommand", {converter: () => "open selected file"});
           connect(renameFileButton,   "fire", this, "execCommand", {converter: () => "rename file"});
           connect(deleteFileButton,   "fire", this, "execCommand", {converter: () => "delete file or directory"});
           connect(addFileButton,      "fire", this, "execCommand", {converter: () => "add file"});
@@ -471,7 +470,7 @@ export default class HTTPFileBrowser extends Morph {
           } else {
             var res = typeof urlOrResource === "string" ?
               resource(urlOrResource) : urlOrResource;
-            var node = this.ui.fileTree.nodes.find(({resource}) => resource.url === res.url)
+            var node = this.ui.fileTree.nodes.find(({resource}) => resource.url === res.url);
             this.ui.fileTree.selection = node;
           }
           this.ui.fileTree.focus();
@@ -487,7 +486,7 @@ export default class HTTPFileBrowser extends Morph {
           this.ui.fileTree.applyViewState(viewState, resource => resource.url);
         }
       }
-    }
+    };
   }
 
   get isFileBrowser() { return true; }
@@ -509,13 +508,13 @@ export default class HTTPFileBrowser extends Morph {
           fileTree,
         } = this.ui,
         topButtons =      [searchButton,
-                           filterButton,
-                           reloadButton],
+          filterButton,
+          reloadButton],
         bottomButtons =   [openFileButton,
-                           addFileButton,
-                           addDirectoryButton,
-                           renameFileButton,
-                           deleteFileButton],
+          addFileButton,
+          addDirectoryButton,
+          renameFileButton,
+          deleteFileButton],
         nButtons = 5,
         locationInputHeight = 20,
         selectedFileNameHeight = 20,
@@ -530,7 +529,7 @@ export default class HTTPFileBrowser extends Morph {
       topButtons[i].topLeft = topButtons[i-1].topRight;
 
     fileTree.topLeft = locationInput.bottomLeft;
-    fileTree.extent = pt(this.width, this.height - locationInputHeight - selectedFileNameHeight - buttonHeight)
+    fileTree.extent = pt(this.width, this.height - locationInputHeight - selectedFileNameHeight - buttonHeight);
     selectedFileName.topLeft = fileTree.bottomLeft;
     selectedFileName.extent = pt(this.width, selectedFileNameHeight);
 
@@ -578,7 +577,7 @@ export default class HTTPFileBrowser extends Morph {
       browser: this,
       resource: loc,
       isCollapsed: true,
-    }
+    };
     var win = this.getWindow();
     if (win) win.title = "file browser – " + url;
     await this.ui.fileTree.uncollapse(treeData.root);
@@ -589,7 +588,7 @@ export default class HTTPFileBrowser extends Morph {
   keepFileTreeStateWhile(whileFn) {
     return this.ui.fileTree.maintainViewStateWhile(() =>
       whileFn.call(this),
-      ({resource: {url}}) => url);
+    ({resource: {url}}) => url);
   }
 
   focus() {

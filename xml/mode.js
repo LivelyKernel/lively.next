@@ -5,41 +5,41 @@ import { passIndent, defineMode, defineMIME, mimeModes } from "../editor-modes.j
 
 const defaultConfig = {
   indentUnit: 2
-}
+};
 
 const htmlConfig = {
-  autoSelfClosers: {'area': true, 'base': true, 'br': true, 'col': true, 'command': true,
-                    'embed': true, 'frame': true, 'hr': true, 'img': true, 'input': true,
-                    'keygen': true, 'link': true, 'meta': true, 'param': true, 'source': true,
-                    'track': true, 'wbr': true, 'menuitem': true},
-  implicitlyClosed: {'dd': true, 'li': true, 'optgroup': true, 'option': true, 'p': true,
-                     'rp': true, 'rt': true, 'tbody': true, 'td': true, 'tfoot': true,
-                     'th': true, 'tr': true},
+  autoSelfClosers: {"area": true, "base": true, "br": true, "col": true, "command": true,
+    "embed": true, "frame": true, "hr": true, "img": true, "input": true,
+    "keygen": true, "link": true, "meta": true, "param": true, "source": true,
+    "track": true, "wbr": true, "menuitem": true},
+  implicitlyClosed: {"dd": true, "li": true, "optgroup": true, "option": true, "p": true,
+    "rp": true, "rt": true, "tbody": true, "td": true, "tfoot": true,
+    "th": true, "tr": true},
   contextGrabbers: {
-    'dd': {'dd': true, 'dt': true},
-    'dt': {'dd': true, 'dt': true},
-    'li': {'li': true},
-    'option': {'option': true, 'optgroup': true},
-    'optgroup': {'optgroup': true},
-    'p': {'address': true, 'article': true, 'aside': true, 'blockquote': true, 'dir': true,
-          'div': true, 'dl': true, 'fieldset': true, 'footer': true, 'form': true,
-          'h1': true, 'h2': true, 'h3': true, 'h4': true, 'h5': true, 'h6': true,
-          'header': true, 'hgroup': true, 'hr': true, 'menu': true, 'nav': true, 'ol': true,
-          'p': true, 'pre': true, 'section': true, 'table': true, 'ul': true},
-    'rp': {'rp': true, 'rt': true},
-    'rt': {'rp': true, 'rt': true},
-    'tbody': {'tbody': true, 'tfoot': true},
-    'td': {'td': true, 'th': true},
-    'tfoot': {'tbody': true},
-    'th': {'td': true, 'th': true},
-    'thead': {'tbody': true, 'tfoot': true},
-    'tr': {'tr': true}
+    "dd": {"dd": true, "dt": true},
+    "dt": {"dd": true, "dt": true},
+    "li": {"li": true},
+    "option": {"option": true, "optgroup": true},
+    "optgroup": {"optgroup": true},
+    "p": {"address": true, "article": true, "aside": true, "blockquote": true, "dir": true,
+      "div": true, "dl": true, "fieldset": true, "footer": true, "form": true,
+      "h1": true, "h2": true, "h3": true, "h4": true, "h5": true, "h6": true,
+      "header": true, "hgroup": true, "hr": true, "menu": true, "nav": true, "ol": true,
+      "p": true, "pre": true, "section": true, "table": true, "ul": true},
+    "rp": {"rp": true, "rt": true},
+    "rt": {"rp": true, "rt": true},
+    "tbody": {"tbody": true, "tfoot": true},
+    "td": {"td": true, "th": true},
+    "tfoot": {"tbody": true},
+    "th": {"td": true, "th": true},
+    "thead": {"tbody": true, "tfoot": true},
+    "tr": {"tr": true}
   },
   doNotIndent: {"pre": true},
   allowUnquoted: true,
   allowMissing: true,
   caseFold: true
-}
+};
 
 const xmlConfig = {
   autoSelfClosers: {},
@@ -49,15 +49,15 @@ const xmlConfig = {
   allowUnquoted: false,
   allowMissing: false,
   caseFold: false
-}
+};
 
 
 defineMode("xml", function createMode(editorConf, config_) {
   var {indentUnit} = {...defaultConfig, ...editorConf};
   var config = {};
-  var defaults = config_.htmlMode ? htmlConfig : xmlConfig
-  for (var prop in defaults) config[prop] = defaults[prop]
-  for (var prop in config_) config[prop] = config_[prop]
+  var defaults = config_.htmlMode ? htmlConfig : xmlConfig;
+  for (var prop in defaults) config[prop] = defaults[prop];
+  for (var prop in config_) config[prop] = config_[prop];
 
   // Return variables for tokenizers
   var type, setStyle;
@@ -298,12 +298,12 @@ defineMode("xml", function createMode(editorConf, config_) {
   return {
     startState: function(baseIndent) {
       var state = {tokenize: inText,
-                   state: baseState,
-                   indented: baseIndent || 0,
-                   tagName: null, tagStart: null,
-                   context: null}
-      if (baseIndent != null) state.baseIndent = baseIndent
-      return state
+        state: baseState,
+        indented: baseIndent || 0,
+        tagName: null, tagStart: null,
+        context: null};
+      if (baseIndent != null) state.baseIndent = baseIndent;
+      return state;
     },
 
     token: function(stream, state) {
@@ -378,7 +378,7 @@ defineMode("xml", function createMode(editorConf, config_) {
 
     skipAttribute: function(state) {
       if (state.state == attrValueState)
-        state.state = attrState
+        state.state = attrState;
     }
   };
 });

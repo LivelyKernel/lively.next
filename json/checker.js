@@ -13,9 +13,9 @@ export default class JSONChecker {
   onDocumentChange(change, textMorph, jsPlugin) {
     try {
       JSON.parse(textMorph.textString);
-      textMorph.removeMarker("js-syntax-error")
+      textMorph.removeMarker("js-syntax-error");
     } catch (err) {
-      if (!(err instanceof SyntaxError)) throw err
+      if (!(err instanceof SyntaxError)) throw err;
 
       var pos;
 

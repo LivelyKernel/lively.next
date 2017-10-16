@@ -1,7 +1,7 @@
-import { show, Morph, morph, Text, config, InputLine } from "lively.morphic"
-import { obj, arr, num, fun, promise } from "lively.lang"
-import { pt, Rectangle, rect, Color } from "lively.graphics"
-import { connect, signal, once } from "lively.bindings"
+import { Morph, Text, config } from "lively.morphic";
+import { num, promise } from "lively.lang";
+import { pt, Color } from "lively.graphics";
+import { connect, signal, once } from "lively.bindings";
 import { resource } from "lively.resources";
 import { guessTextModeName } from "./editor-plugin.js";
 
@@ -34,9 +34,9 @@ const editorCommands = [
       try {
         let result = await action(textEditor);
         if (result.saved) {
-          textEditor.setStatusMessage(result.message || `saved`, Color.green);
+          textEditor.setStatusMessage(result.message || "saved", Color.green);
           signal(textEditor, "contentSaved");
-        } else textEditor.setStatusMessage(result.message || `not saved`);
+        } else textEditor.setStatusMessage(result.message || "not saved");
       } catch (e) {
         textEditor.showError(`Error saving: ${e.stack || e}`);
       }
@@ -75,18 +75,18 @@ const editorCommands = [
 export default class TextEditor extends Morph {
 
   static openURL(url, props) {
-    return this.openInWindow({location: url, ...props})
+    return this.openInWindow({location: url, ...props});
   }
 
   static openAsEDITOR(file, props) {
     // returns "saved" or "aborted"
     var editor = this.openURL(file, props);
     return new Promise((resolve, reject) => {
-      once(editor, 'contentSaved', resolve, 'call', {
+      once(editor, "contentSaved", resolve, "call", {
         updater: function($upd) { $upd(null, "saved"); this.sourceObj.close(); }
       });
-      once(editor, 'closed', resolve, 'call', {updater: $upd => $upd(null, "aborted")});
-    })
+      once(editor, "closed", resolve, "call", {updater: $upd => $upd(null, "aborted")});
+    });
   }
 
   static openInWindow(props) {
@@ -117,13 +117,13 @@ export default class TextEditor extends Morph {
               name: "contentText", type: "text",
               lineWrapping: false
             }
-          ]
+          ];
           var {urlInput, loadButton, saveButton, removeButton, contentText} = this.ui;
-          connect(this, 'extent', this, 'relayout');
-          connect(urlInput, 'inputAccepted', this, 'location');
-          connect(loadButton, 'fire', this, 'execCommand', {converter: () => "load file"});
-          connect(saveButton, 'fire', this, 'execCommand', {converter: () => "save file"});
-          connect(removeButton, 'fire', this, 'execCommand', {converter: () => "remove file"});        }
+          connect(this, "extent", this, "relayout");
+          connect(urlInput, "inputAccepted", this, "location");
+          connect(loadButton, "fire", this, "execCommand", {converter: () => "load file"});
+          connect(saveButton, "fire", this, "execCommand", {converter: () => "save file"});
+          connect(removeButton, "fire", this, "execCommand", {converter: () => "remove file"});        }
       },
 
       ui: {
@@ -169,7 +169,7 @@ export default class TextEditor extends Morph {
             var ed = this.ui.contentText;
             ed.cursorPosition = {row, column: 0};
             ed.centerRow(row);
-          })
+          });
         }
       },
 
@@ -180,7 +180,7 @@ export default class TextEditor extends Morph {
       customLoadContentAction: {
         // fn that gets text editor and url returns content string
       }
-    }
+    };
   }
 
   constructor(props) {
@@ -222,7 +222,7 @@ export default class TextEditor extends Morph {
       url = input.slice(0, colonIndex);
     }
 
-    return {lineNumber, url}
+    return {lineNumber, url};
   }
 
   async showFileContent(url) {
@@ -274,9 +274,9 @@ export default class TextEditor extends Morph {
     let f = textEditor.locationResource;
     if (f) {
       await f.write(textEditor.ui.contentText.textString);
-      return {saved: true}
+      return {saved: true};
     }
-    return {saved: false, message: "No file selected"}
+    return {saved: false, message: "No file selected"};
   }
 
   focus() {

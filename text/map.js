@@ -19,7 +19,7 @@ export default class TextMap extends Canvas {
       relativeBoundsInTextMorph: {},
       extent: {defaultValue: pt(60, 50)},
       markers: {}
-    }
+    };
   }
 
   onChange(change) {
@@ -44,9 +44,9 @@ export default class TextMap extends Canvas {
   attachTo(textMorph, add = false) {
     if (this.textMorph) this.detachFrom(this.textMorph);
     this.textMorph = textMorph;
-    connect(textMorph, 'viewChange', this, 'updateDebounced');
-    connect(textMorph, 'textChange', this, 'updateDebounced');
-    connect(textMorph, 'selectionChange', this, 'updateDebounced');
+    connect(textMorph, "viewChange", this, "updateDebounced");
+    connect(textMorph, "textChange", this, "updateDebounced");
+    connect(textMorph, "selectionChange", this, "updateDebounced");
 
     if (add) {
       this.textMorph.addMorph(this);
@@ -57,7 +57,7 @@ export default class TextMap extends Canvas {
   }
 
   detachFromCurrentTextMorph() {
-    this.detachFrom(this.textMorph)
+    this.detachFrom(this.textMorph);
     this.textMorph = null;
   }
 
@@ -79,7 +79,7 @@ export default class TextMap extends Canvas {
         {document: doc} = textMorph,
         heightPerLine = Math.min(2, height / doc.lines.length),
         widthPerChar = .5;
-    return {width, height, heightPerLine, widthPerChar}
+    return {width, height, heightPerLine, widthPerChar};
   }
 
   update() {
@@ -108,12 +108,12 @@ export default class TextMap extends Canvas {
     // draw the lines
     let x = 0, y = 0;
     ctx.beginPath();
-    ctx.lineWidth = Math.max(1, heightPerLine-.3)
-    ctx.strokeStyle = "gray"
+    ctx.lineWidth = Math.max(1, heightPerLine-.3);
+    ctx.strokeStyle = "gray";
     for (let line of doc.lines) {
       let text = line.text;
       let length = text.length;
-      let lengthNoTrailingSpace = text.trimLeft().length
+      let lengthNoTrailingSpace = text.trimLeft().length;
       let x = (length - lengthNoTrailingSpace);
       ctx.moveTo(x, y);
       ctx.lineTo(x + lengthNoTrailingSpace*widthPerChar, y);
@@ -122,15 +122,15 @@ export default class TextMap extends Canvas {
       x = 0;
       y += heightPerLine;
     }
-    ctx.stroke()
+    ctx.stroke();
 
     ctx.beginPath();
-    ctx.strokeStyle = "black"
+    ctx.strokeStyle = "black";
     ctx.moveTo(0, startRow*heightPerLine);
     ctx.lineTo(width, startRow*heightPerLine);
     ctx.moveTo(0, endRow*heightPerLine);
     ctx.lineTo(width, endRow*heightPerLine);
-    ctx.stroke()
+    ctx.stroke();
 
     // ctx.fillStyle = "rgba(255,255,255,0.6)";
     // ctx.fillRect(0, startRow*heightPerLine, width, endRow*heightPerLine-startRow*heightPerLine);
@@ -160,8 +160,8 @@ export default class TextMap extends Canvas {
 
   onMouseDown(evt) {
     let {textMorph, measure: {width, height, heightPerLine}} = this;
- // evt = this.LastEvent;
-// this.LastEvent = evt;
+    // evt = this.LastEvent;
+    // this.LastEvent = evt;
     let pos = evt.positionIn(this),
         row = Math.round(pos.y/heightPerLine);
     textMorph.scrollPositionIntoView({row, column: 0});

@@ -1,11 +1,10 @@
-import { Morph, config, Text, Icon, GridLayout, StyleSheet, morph, InputLine } from "lively.morphic";
+import { Morph, config, Icon, GridLayout, StyleSheet, morph, InputLine } from "lively.morphic";
 import { Color, Rectangle, pt } from "lively.graphics";
 import { connect, disconnect } from "lively.bindings";
-import { promise, Path } from "lively.lang";
-
+import { Path } from "lively.lang";
 import { Button } from "lively.components";
 import { occurStartCommand } from "lively.morphic/text/occur.js";
-import TextMap from './map.js';
+import TextMap from "./map.js";
 
 export class SearchWidget extends Morph {
 
@@ -187,13 +186,13 @@ export class SearchWidget extends Morph {
       }
     };
 
-    textMap: {
-      after: ["submorphs"];
+    {
+      ["submorphs"];
     }
   }
 
   constructor(props = {}) {
-    if (props.targetText) props.target = props.targetText
+    if (props.targetText) props.target = props.targetText;
     if (!props.target) throw new Error("SearchWidget needs a target text morph!");
 
     super(props);
@@ -220,7 +219,7 @@ export class SearchWidget extends Morph {
       position: null,
       inProgress: null,
       last: null
-    }
+    };
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -367,7 +366,7 @@ export class SearchWidget extends Morph {
       position: sel.lead,
       selectionRange: sel.range,
       selectionReverse: sel.isReverse()
-    }
+    };
 
 
     if (state.last && state.last.found) {
@@ -418,10 +417,10 @@ export class SearchWidget extends Morph {
     let textMap = this.textMap = new TextMap();
     textMap.attachTo(this.target);
     textMap.isLayoutable = false;
-    this.addMorph(textMap)
+    this.addMorph(textMap);
     textMap.topRight = this.innerBounds().bottomRight();
-    textMap.height = this.target.height - this.height - 10
-    textMap.update()
+    textMap.height = this.target.height - this.height - 10;
+    textMap.update();
     return textMap;
   }
 
@@ -442,7 +441,7 @@ export class SearchWidget extends Morph {
       {keys: "Escape|Ctrl-G", command: "cancel search"},
       {keys: {win: "Ctrl-F|Ctrl-S|Ctrl-G", mac: "Meta-F|Ctrl-S|Meta-G"}, command: "search next"},
       {keys: {win: "Ctrl-Shift-F|Ctrl-R|Ctrl-Shift-G", mac: "Meta-Shift-F|Ctrl-R|Meta-Shift-G"}, command: "search prev"}
-    ]
+    ];
   }
 
   get commands() {
@@ -461,9 +460,9 @@ export class SearchWidget extends Morph {
         name: "accept search or replace and go to next",
         exec: (_, args, count) => {
           return this.execCommand(
-              this.get("replaceInput").isFocused() ?
-                "replace and go to next" :
-                "accept search", args, count);
+            this.get("replaceInput").isFocused() ?
+              "replace and go to next" :
+              "accept search", args, count);
         }
       },
 
@@ -516,7 +515,7 @@ export class SearchWidget extends Morph {
           return true;
         }
       },
-    ]
+    ];
   }
 
 }

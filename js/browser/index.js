@@ -11,7 +11,7 @@ import {
   Icon
 } from "lively.morphic";
 import { HorizontalResizer } from "lively.components/resizers.js";
-import { Tree, TreeData } from "lively.components/tree.js"
+import { Tree, TreeData } from "lively.components/tree.js";
 
 import JSONEditorPlugin from "lively.ide/json/editor-plugin.js";
 import JavaScriptEditorPlugin from "../editor-plugin.js";
@@ -33,13 +33,13 @@ class CodeDefTreeData extends TreeData {
 
   constructor(defs) {
     // defs come from lively.ast.categorizer.findDecls()
-    this.defs = defs;
-    defs.forEach(ea => ea.children && (ea.isCollapsed = true))
+    defs.forEach(ea => ea.children && (ea.isCollapsed = true));
     super({
       name: "root",
       isCollapsed: false,
       children: defs.filter(ea => !ea.parent)
     });
+    this.defs = defs;
   }
 
   display(node) {
@@ -48,7 +48,7 @@ class CodeDefTreeData extends TreeData {
     if (node.type === "class-instance-setter") string = "set " + string;
     return string;
   }
-  isLeaf(node) { return !node.children }
+  isLeaf(node) { return !node.children; }
   isCollapsed(node) { return node.isCollapsed; }
   collapse(node, bool) { node.isCollapsed = bool; }
   getChildren(node) {
@@ -107,7 +107,7 @@ export default class Browser extends Window {
           return this.editorPlugin.systemInterface();
         },
         set(systemInterface) {
-          this.editorPlugin.setSystemInterfaceNamed(systemInterface)
+          this.editorPlugin.setSystemInterfaceNamed(systemInterface);
         }
       },
 
@@ -119,7 +119,7 @@ export default class Browser extends Window {
           return this.get("sourceEditor").pluginFind(p => p.isEditorPlugin);
         }
       }
-    }
+    };
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -131,7 +131,7 @@ export default class Browser extends Window {
 
     this._inLayout = true;
 
-    connect(this, 'extent', this, 'relayout');
+    connect(this, "extent", this, "relayout");
 
     var {
       moduleList, sourceEditor,
@@ -150,21 +150,21 @@ export default class Browser extends Window {
       codeEntityTree
     } = this.ui;
 
-    connect(searchButton,          'fire', this, 'execCommand', {converter: () => "open code search"});
-    connect(historyBackwardButton, 'fire', this, 'execCommand', {converter: () => "browser history backward"});
-    connect(historyForwardButton,  'fire', this, 'execCommand', {converter: () => "browser history forward"});
-    connect(browseHistoryButton,   'fire', this, 'execCommand', {converter: () => "browser history browse"});
-    connect(browseModulesButton,   'fire', this, 'execCommand', {converter: () => "choose and browse module"});
-    connect(addPackageButton,      'fire', this, 'execCommand', {converter: () => "add package"});
-    connect(removePackageButton,   'fire', this, 'execCommand', {converter: () => "remove package"});
-    connect(addModuleButton,       'fire', this, 'execCommand', {converter: () => "load or add module"});
-    connect(removeModuleButton,    'fire', this, 'execCommand', {converter: () => "remove module"});
-    connect(runTestsInModuleButton,'fire', this, 'execCommand', {converter: () => "run all tests in module"});
-    connect(runTestsInPackageButton,'fire', this, 'execCommand', {converter: () => "run all tests in package"});
-    connect(codeEntityJumpButton,   'fire', this, 'execCommand', {converter: () => "jump to codeentity"});
+    connect(searchButton,          "fire", this, "execCommand", {converter: () => "open code search"});
+    connect(historyBackwardButton, "fire", this, "execCommand", {converter: () => "browser history backward"});
+    connect(historyForwardButton,  "fire", this, "execCommand", {converter: () => "browser history forward"});
+    connect(browseHistoryButton,   "fire", this, "execCommand", {converter: () => "browser history browse"});
+    connect(browseModulesButton,   "fire", this, "execCommand", {converter: () => "choose and browse module"});
+    connect(addPackageButton,      "fire", this, "execCommand", {converter: () => "add package"});
+    connect(removePackageButton,   "fire", this, "execCommand", {converter: () => "remove package"});
+    connect(addModuleButton,       "fire", this, "execCommand", {converter: () => "load or add module"});
+    connect(removeModuleButton,    "fire", this, "execCommand", {converter: () => "remove module"});
+    connect(runTestsInModuleButton,"fire", this, "execCommand", {converter: () => "run all tests in module"});
+    connect(runTestsInPackageButton,"fire", this, "execCommand", {converter: () => "run all tests in package"});
+    connect(codeEntityJumpButton,   "fire", this, "execCommand", {converter: () => "jump to codeentity"});
 
-    connect(moduleList, 'selection', this, 'onModuleSelected');
-    connect(codeEntityTree, 'selection', this, 'onCodeEntitySelected');
+    connect(moduleList, "selection", this, "onModuleSelected");
+    connect(codeEntityTree, "selection", this, "onCodeEntitySelected");
 
     connect(sourceEditor, "textChange", this, "updateUnsavedChangeIndicatorDebounced");
 
@@ -227,7 +227,7 @@ export default class Browser extends Window {
         codeEntityTreeScroll: codeEntityTree.scroll,
         moduleListScroll: moduleList.scroll,
       }
-    }
+    };
   }
 
   async onLoad() {
@@ -241,7 +241,7 @@ export default class Browser extends Window {
       history: {left: [], right: [], navigationInProgress: null}
     };
     this.reset();
-    var ed = this.ui.sourceEditor
+    var ed = this.ui.sourceEditor;
     if (!ed.plugins.length)
       ed.addPlugin(new JavaScriptEditorPlugin(config.codeEditor.defaultTheme));
 
@@ -274,12 +274,12 @@ export default class Browser extends Window {
 
         btnStyle = {
           type: "button",
-          styleClasses: ['default']
+          styleClasses: ["default"]
         },
 
         btnDarkStyle = {
           type: "button",
-          styleClasses: ['dark'],
+          styleClasses: ["dark"],
         },
 
         bounds = this.targetMorphBounds(),
@@ -311,28 +311,28 @@ export default class Browser extends Window {
           submorphs: [
 
             {name: "moduleList", bounds: moduleListBounds, type: "list", ...style,
-             borderRight: {color: Color.gray, width: 1}},
+              borderRight: {color: Color.gray, width: 1}},
 
             new Tree({name: "codeEntityTree", treeData: new CodeDefTreeData([]),
-             bounds: codeEntityTreeBounds, ...style}),
+              bounds: codeEntityTreeBounds, ...style}),
 
             {name: "moduleCommands", bounds: moduleCommandBoxBounds,
-             layout: new HorizontalLayout({spacing: 2, autoResize: true, direction: "rightToLeft"}),
-             borderRight: {color: Color.gray, width: 1},
-             reactsToPointer: false,
-             fill: Color.transparent,
+              layout: new HorizontalLayout({spacing: 2, autoResize: true, direction: "rightToLeft"}),
+              borderRight: {color: Color.gray, width: 1},
+              reactsToPointer: false,
+              fill: Color.transparent,
               submorphs: [
-               {...btnDarkStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
-               {...btnDarkStyle, name: "removeModuleButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
-               {...btnDarkStyle, name: "runTestsInModuleButton", label: "run tests", tooltip: "run tests", visible: false}
-             ]},
+                {...btnDarkStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
+                {...btnDarkStyle, name: "removeModuleButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
+                {...btnDarkStyle, name: "runTestsInModuleButton", label: "run tests", tooltip: "run tests", visible: false}
+              ]},
 
-             {name: "codeEntityCommands", bounds: codeEntityCommandBoxBounds,
+            {name: "codeEntityCommands", bounds: codeEntityCommandBoxBounds,
               layout: new HorizontalLayout({spacing: 2, autoResize: false, direction: "rightToLeft"}),
               fill: Color.transparent,
               submorphs: [
-               {...btnDarkStyle, name: "codeEntityJumpButton", label: Icon.makeLabel("search"), tooltip: "search for code entity"},
-             ]},
+                {...btnDarkStyle, name: "codeEntityJumpButton", label: Icon.makeLabel("search"), tooltip: "search for code entity"},
+              ]},
 
             new HorizontalResizer({name: "hresizer", bounds: resizerBounds}),
 
@@ -348,38 +348,38 @@ export default class Browser extends Window {
             {name: "sourceEditor", bounds: sourceEditorBounds, ...textStyle},
 
             {name: "browserCommands", bounds: browserCommandsBounds,
-             layout: new GridLayout({
+              layout: new GridLayout({
                 grid: [["commands", null, "eval backend button", null]],
                 rows: [0, {paddingBottom: 2}],
                 columns: [0, {paddingLeft: 2}, 2, {fixed: 100}, 3, {fixed: 5}],
                 groups: {commands: {resize: false}}
-             }),
-             fill: Color.transparent,
-             reactsToPointer: false,
-             borderBottom: {color: Color.gray, width: 1},
-             submorphs: [
-               {name: "commands", layout: new HorizontalLayout({
-                   spacing: 2, autoResize: false, layoutOrder: function(m) {
-                     return this.container.submorphs.indexOf(m)
-                   }}),
+              }),
+              fill: Color.transparent,
+              reactsToPointer: false,
+              borderBottom: {color: Color.gray, width: 1},
+              submorphs: [
+                {name: "commands", layout: new HorizontalLayout({
+                  spacing: 2, autoResize: false, layoutOrder: function(m) {
+                    return this.container.submorphs.indexOf(m);
+                  }}),
                 fill: Color.transparent,
                 submorphs: [
-                 {...btnStyle, name: "historyBackwardButton", label: Icon.makeLabel("step-backward"), tooltip: "back in browse history"},
-                 {...btnStyle, name: "browseHistoryButton", label: Icon.makeLabel("history"), tooltip: "show browse history"},
-                 {...btnStyle, name: "historyForwardButton", label: Icon.makeLabel("step-forward"), tooltip: "forward in browse history"},
+                  {...btnStyle, name: "historyBackwardButton", label: Icon.makeLabel("step-backward"), tooltip: "back in browse history"},
+                  {...btnStyle, name: "browseHistoryButton", label: Icon.makeLabel("history"), tooltip: "show browse history"},
+                  {...btnStyle, name: "historyForwardButton", label: Icon.makeLabel("step-forward"), tooltip: "forward in browse history"},
 
-                 {extent: pt(10,18), fill: Color.transparent},
+                  {extent: pt(10,18), fill: Color.transparent},
 
-                 {...btnStyle, name: "searchButton", label: Icon.makeLabel("search"), tooltip: "code search"},
-                 {...btnStyle, name: "browseModulesButton", label: Icon.makeLabel("navicon"), tooltip: "list all modules"},
+                  {...btnStyle, name: "searchButton", label: Icon.makeLabel("search"), tooltip: "code search"},
+                  {...btnStyle, name: "browseModulesButton", label: Icon.makeLabel("navicon"), tooltip: "list all modules"},
 
-                 {extent: pt(10,18), fill: Color.transparent},
+                  {extent: pt(10,18), fill: Color.transparent},
 
-                 {...btnStyle, name: "addPackageButton", label: Icon.makeLabel("plus"), tooltip: "add package"},
-                 {...btnStyle, name: "removePackageButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
-                 {...btnStyle, name: "runTestsInPackageButton", label: "run tests", tooltip: "run tests"}
+                  {...btnStyle, name: "addPackageButton", label: Icon.makeLabel("plus"), tooltip: "add package"},
+                  {...btnStyle, name: "removePackageButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
+                  {...btnStyle, name: "runTestsInPackageButton", label: "run tests", tooltip: "run tests"}
 
-                 ]},
+                ]},
                 EvalBackendChooser.default.ensureEvalBackendDropdown(this, "local")]}
           ]
         });
@@ -487,7 +487,7 @@ export default class Browser extends Window {
       metaInfoText:          this.getSubmorphNamed("metaInfoText"),
       sourceEditor:          this.getSubmorphNamed("sourceEditor"),
       evalBackendList:       this.getSubmorphNamed("eval backend button")
-    }
+    };
   }
 
   get selectedModule() { return this.get("moduleList").selection; }
@@ -509,7 +509,7 @@ export default class Browser extends Window {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   updateSource(source, cursorPos) {
-    var ed = this.get("sourceEditor")
+    var ed = this.get("sourceEditor");
     if (ed.textString != source) ed.textString = source;
     this.state.sourceHash = string.hashCode(source);
     this.indicateNoUnsavedChanges();
@@ -570,7 +570,7 @@ export default class Browser extends Window {
 
   async packageResources(p) {
     let excluded = (Path("lively.ide.exclude").get(p) || []).map(ea =>
-             ea.includes("*") ? new RegExp(ea.replace(/\*/g, ".*")): ea);
+      ea.includes("*") ? new RegExp(ea.replace(/\*/g, ".*")): ea);
     excluded.push(".git", "node_modules", ".module_cache");
     try {
       return (await this.systemInterface.resourcesOfPackage(p.address, excluded))
@@ -722,7 +722,7 @@ export default class Browser extends Window {
                 isLoaded, name: url, nameInPackage, url,
                 package: p ? p.url : null,
               }
-            }
+            };
         list.addItem(item);
         m = list.selection = item.value;
       }
@@ -765,11 +765,11 @@ export default class Browser extends Window {
 
     if (!pack) {
       this.showError(new Error("Browser>>onModuleSelected called but no package selected!" + m));
-      return
+      return;
     }
 
     if (!this.state.moduleUpdateInProgress) {
-      var deferred = promise.deferred()
+      var deferred = promise.deferred();
       this.state.moduleUpdateInProgress = deferred.promise;
     }
 
@@ -841,8 +841,8 @@ export default class Browser extends Window {
     // combine these?!
     var Mode = JavaScriptEditorPlugin;
     switch (ext) {
-      case 'js': /*default*/break;
-      case 'json': Mode = JSONEditorPlugin; break;
+    case "js": /*default*/break;
+    case "json": Mode = JSONEditorPlugin; break;
     }
 
     // switch text mode
@@ -866,9 +866,9 @@ export default class Browser extends Window {
     if (!entity) return;
     var { sourceEditor } = this.ui,
         start = sourceEditor.indexToPosition(entity.node.start),
-        end = sourceEditor.indexToPosition(entity.node.end)
+        end = sourceEditor.indexToPosition(entity.node.end);
     sourceEditor.cursorPosition = start;
-    sourceEditor.flash({start, end}, {id: 'codeentity', time: 1000, fill: Color.rgb(200,235,255)});
+    sourceEditor.flash({start, end}, {id: "codeentity", time: 1000, fill: Color.rgb(200,235,255)});
     if (this.world()) await sourceEditor.whenRendered();
     sourceEditor.centerRange({start, end});
   }
@@ -890,10 +890,10 @@ export default class Browser extends Window {
     if (typeof spec === "string") spec = {name: spec};
     var {codeEntityTree} = this.ui, td = codeEntityTree.treeData,
         def = this.findCodeEntity(spec),
-        path = []; while (def) { path.unshift(def); def = def.parent; };
+        path = []; while (def) { path.unshift(def); def = def.parent; }
     await codeEntityTree.selectPath(path);
     codeEntityTree.centerSelection();
-    return def
+    return def;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -908,9 +908,9 @@ export default class Browser extends Window {
       if (!a.isLoaded && b.isLoaded) return 1;
       if (a.nameInPackage.toLowerCase() < b.nameInPackage.toLowerCase()) return -1;
       if (a.nameInPackage.toLowerCase() == b.nameInPackage.toLowerCase()) return 0;
-      return 1
+      return 1;
     })
-    .map(m => ({string: m.nameInPackage + (m.isLoaded ? "" : " [not loaded]"), value: m, isListItem: true}));
+      .map(m => ({string: m.nameInPackage + (m.isLoaded ? "" : " [not loaded]"), value: m, isListItem: true}));
 
     await this.get("moduleList").whenRendered();
   }
@@ -933,9 +933,9 @@ export default class Browser extends Window {
         hasTests = false;
     if (this.editorPlugin.isJSEditorPlugin) {
       try {
-      var ast = this.editorPlugin.getNavigator().ensureAST(sourceEditor),
-          tests = testsFromSource(ast || sourceEditor.textString);
-      hasTests = tests && tests.length;
+        var ast = this.editorPlugin.getNavigator().ensureAST(sourceEditor),
+            tests = testsFromSource(ast || sourceEditor.textString);
+        hasTests = tests && tests.length;
       } catch (err) {
         console.warn(`sytem browser updateTestUI: ${err}`);
         hasTests = false;
@@ -1097,7 +1097,7 @@ export default class Browser extends Window {
       // codeEntity: this.get("codeStructureList").selection,
       cursor: ed.cursorPosition,
       scroll: ed.scroll
-    }
+    };
   }
 
   historyRecord(addToRight = false) {
@@ -1288,23 +1288,23 @@ export default class Browser extends Window {
         c = this.selectedCodeEntity,
         sysI = this.systemInterface;
 
-    let codeSnip = `$world.execCommand("open browser", {`
+    let codeSnip = "$world.execCommand(\"open browser\", {";
     if (m) {
       if (m) codeSnip += `moduleName: "${p.name}/${m.nameInPackage}"`;
     } else {
       if (p) codeSnip += `packageName: "${p.name}"`;
     }
     if (c) {
-      let codeEntities = this.get("codeEntityTree").nodes
+      let codeEntities = this.get("codeEntityTree").nodes;
       let needsDeDup = codeEntities.filter(ea => ea.name === c.name).length > 1;
       if (needsDeDup)
-        codeSnip += `, codeEntity: ${JSON.stringify(obj.select(c, ["name", "type"]))}`
+        codeSnip += `, codeEntity: ${JSON.stringify(obj.select(c, ["name", "type"]))}`;
       else
-        codeSnip += `, codeEntity: "${c.name}"`
+        codeSnip += `, codeEntity: "${c.name}"`;
     }
 
-    if (sysI.name !== "local") codeSnip += `, systemInterface: "${sysI.name}"`
-    codeSnip += `});`;
+    if (sysI.name !== "local") codeSnip += `, systemInterface: "${sysI.name}"`;
+    codeSnip += "});";
 
     return codeSnip;
   }
@@ -1316,6 +1316,6 @@ export default class Browser extends Window {
     return [
       p && {command: "open browse snippet", target: this},
       m && {command: "open selected module in text editor", target: this},
-    ].filter(Boolean)
+    ].filter(Boolean);
   }
 }

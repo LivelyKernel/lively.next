@@ -1,11 +1,10 @@
 /*global localStorage*/
-import { pt, LinearGradient, Point, Color, Rectangle } from "lively.graphics";
-import { arr, obj, string } from "lively.lang";
-import { connect, noUpdate } from "lively.bindings";
+import { pt, LinearGradient, Color } from "lively.graphics";
+import { arr, string } from "lively.lang";
+import { connect } from "lively.bindings";
 import { config, StyleSheet } from "lively.morphic";
 import L2LClient from "lively.2lively/client.js";
 import { serverInterfaceFor, localInterface, l2lInterfaceFor } from "lively-system-interface";
-
 import { Button, DropDownList } from "lively.components";
 
 export class EvalBackendButton extends Button {
@@ -53,7 +52,7 @@ export class EvalBackendButton extends Button {
       fontSize: {defaultValue: 10},
       extent: {defaultValue: pt(120, 20)},
       target: {}
-    }
+    };
   }
 
   async trigger() {
@@ -162,7 +161,7 @@ class EvalBackendList extends DropDownList {
           });
         }
       }
-    }
+    };
   }
 
   setAndSelectBackend(backend) {}
@@ -189,7 +188,7 @@ export default class EvalBackendChooser {
   }
 
   set customBackends(backends) {
-      // localStorage["lively.morphic-ide/js/EvalBackendChooser-history"] =  JSON.stringify(["http://localhost:9011/eval"]);
+    // localStorage["lively.morphic-ide/js/EvalBackendChooser-history"] =  JSON.stringify(["http://localhost:9011/eval"]);
     backends = backends.filter(ea => !!ea && ea !== "local" && ea !== "edit...");
     try {
       localStorage["lively.morphic-ide/js/EvalBackendChooser-history"] =  JSON.stringify(backends);
@@ -251,7 +250,7 @@ export default class EvalBackendChooser {
     });
     setTimeout(() => btn.updateFromTarget(), 0);
 
-    connect(btn, 'currentBackend', this, 'changeEvalBackend', {
+    connect(btn, "currentBackend", this, "changeEvalBackend", {
       updater: function($upd, choice) { $upd(choice, this.sourceObj.target); }
     });
 
@@ -269,7 +268,7 @@ export default class EvalBackendChooser {
 
   async changeEvalBackend(choice, requester/*morph*/) {
     if (!requester) {
-      console.warn(`Called EvalBackendChooser.changeEvalBackend without requester!`);
+      console.warn("Called EvalBackendChooser.changeEvalBackend without requester!");
       return;
     }
     try {
@@ -286,12 +285,12 @@ export default class EvalBackendChooser {
 
   activateEvalBackendCommand(requester) {
     return {
-        name: "activate eval backend dropdown list",
-        exec: () => {
-          var btn = requester.getSubmorphNamed("eval backend button");
-          btn && btn.trigger();
-          return true;
-        }
+      name: "activate eval backend dropdown list",
+      exec: () => {
+        var btn = requester.getSubmorphNamed("eval backend button");
+        btn && btn.trigger();
+        return true;
       }
+    };
   }
 }

@@ -1,5 +1,5 @@
-import { arr, obj } from "lively.lang";
-import { connect, disconnect, signal } from "lively.bindings";
+import { arr } from "lively.lang";
+import { connect, signal } from "lively.bindings";
 import { Color, pt } from "lively.graphics";
 import { localInterface } from "lively-system-interface";
 import { commit, branch, localBranchesOf, gitHubBranches } from "lively.changesets";
@@ -194,7 +194,7 @@ class CommitNode extends Morph {
   }
   
   avatar(commit) {
-    const hash = lively.lang.string.md5(commit.author.email),
+    const hash = string.md5(commit.author.email),
           imageUrl = `https://www.gravatar.com/avatar/${hash}?s=32`;
     return {
       type: "image",
@@ -210,9 +210,9 @@ class CommitNode extends Morph {
   }
 
   description(commit, selected) {
-    const date = new Date(commit.author.date.seconds * 1000),
-          relDate = lively.lang.date.relativeTo(date, new Date()),
-          msg = lively.lang.string.truncate(commit.message.replace(/\n/g, ' '), 20),
+    const d = new Date(commit.author.date.seconds * 1000),
+          relDate = date.relativeTo(d, new Date()),
+          msg = string.truncate(commit.message.replace(/\n/g, " "), 20),
           from = { row: 0, column: 0 },
           to = { row: 1, column: 0 };
     return {
@@ -238,10 +238,10 @@ class CommitNode extends Morph {
   }
   
   commitTooltip(commit) {
-    const date = new Date(commit.author.date.seconds * 1000),
-          humanDate = lively.lang.date.format(date),
-          relDate = lively.lang.date.relativeTo(date, new Date());
-    return `${commit.message}\n${commit.hash}\n\n${commit.author.name} (${commit.author.email})\n${relDate} ago (${humanDate})`
+    const d = new Date(commit.author.date.seconds * 1000),
+          humanDate = date.format(d),
+          relDate = date.relativeTo(d, new Date());
+    return `${commit.message}\n${commit.hash}\n\n${commit.author.name} (${commit.author.email})\n${relDate} ago (${humanDate})`;
   }
   
   onMouseDown(evt) {
@@ -371,9 +371,9 @@ export default class VersionControl extends Window {
     const m = morph({
       fill: Color.white,
       layout: new GridLayoutWithPadding(
-              [["packageList", "commitTree"],
-               ["filePanel", "commitPanel"],
-               ["fileList", "sourceEditor"]]),
+        [["packageList", "commitTree"],
+          ["filePanel", "commitPanel"],
+          ["fileList", "sourceEditor"]]),
       submorphs: [
         {name: "packageList", type: "list", ...style},
         {name: "commitTree", type: CommitTree, ...style},
@@ -479,12 +479,12 @@ export default class VersionControl extends Window {
   
   async enableGitHub() {
     let token = getGitHubToken();
-    if (token !== '<secret>') return;
+    if (token !== "<secret>") return;
     token = await this.world().prompt(
       "Please enter your Personal Access Token for interacting with GitHub", {
-      historyId: 'lively.changesets/github-access-token',
-      useLastInput: true
-    });
+        historyId: "lively.changesets/github-access-token",
+        useLastInput: true
+      });
     setGitHubToken(token);
   }
   

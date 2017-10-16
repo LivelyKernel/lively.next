@@ -6,7 +6,7 @@ import Inspector from "./inspector.js";
 
 function getEvalEnv(morph) {
   var plugin = morph.pluginFind(p => p.isJSEditorPlugin);
-  return plugin ? plugin.evalEnvironment : null
+  return plugin ? plugin.evalEnvironment : null;
 }
 
 function setEvalEnv(morph, newEnv) {
@@ -58,11 +58,11 @@ function maybeSelectCommentOrLine(morph) {
   if (!sel.isEmpty()) return;
 
   // text now equals the text of the current line, now look for JS comment
-  var idx = text.indexOf('//');
+  var idx = text.indexOf("//");
   if (idx === -1                          // Didn't find '//' comment
       || column < idx                 // the click was before the comment
-      || (idx>0 && (':"'+"'").indexOf(text[idx-1]) >=0)    // weird cases
-      ) { morph.selectLine(row); return }
+      || (idx>0 && (":\""+"'").indexOf(text[idx-1]) >=0)    // weird cases
+  ) { morph.selectLine(row); return; }
 
   // Select and return the text between the comment slashes and end of method
   sel.range = {start: {row, column: idx + 2}, end: {row, column: text.length}};
@@ -125,7 +125,7 @@ export var jsEditorCommands = [
       // morph.insertTextAndSelect(err ? err.stack || String(err) : String(result.value));
       morph.insertTextAndSelect(
         err ? String(err) + (err.stack ? "\n" + err.stack : "") :
-        String(result.value));
+          String(result.value));
       return result;
     }
   },
@@ -174,9 +174,9 @@ export var jsEditorCommands = [
         var nav = ed.pluginInvokeFirst("getNavigator"),
             parsed = nav.ensureAST(ed),
             node = lively.ast.query.nodesAt(ed.positionToIndex(position), parsed)
-                    .reverse().find(ea => ea.type === "Identifier");
+              .reverse().find(ea => ea.type === "Identifier");
         if (!node) { ed.showError(new Error("no identifier found!")); return true; }
-        varName = node.name
+        varName = node.name;
       }
 
       // this.pluginFind(p => p.isJSEditorPlugin).sanatizedJsEnv()
@@ -209,7 +209,7 @@ export var jsEditorCommands = [
       if (selected) {
         var reset = selected === "reset";
         text.doitContext = reset ? null : selected;
-        text.setStatusMessage(reset ? "doitContext is now\n" + selected : "doitContext reset")
+        text.setStatusMessage(reset ? "doitContext is now\n" + selected : "doitContext reset");
       }
       return true;
     }
@@ -310,14 +310,14 @@ export var jsIdeCommands = [
         await System.import("lively.ide/js/import-helper.js");
       var status = await cleanupUnusedImports(text, opts);
       text.setStatusMessage(status);
-      return true
+      return true;
     }
   },
 
   {
     name: "[javascript] eslint report",
     exec: async text => {
-      var { default: ESLinter } = await System.import("lively.ide/js/eslint/lively-interface.js")
+      var { default: ESLinter } = await System.import("lively.ide/js/eslint/lively-interface.js");
       try { return ESLinter.reportOnMorph(text); } catch(e) { text.showError(e); }
     }
   },
@@ -325,7 +325,7 @@ export var jsIdeCommands = [
   {
     name: "[javascript] eslint preview fixes",
     exec: async text => {
-      var { default: ESLinter } = await System.import("lively.ide/js/eslint/lively-interface.js")
+      var { default: ESLinter } = await System.import("lively.ide/js/eslint/lively-interface.js");
       try { return ESLinter.previewFixesOnMorph(text); } catch(e) { text.showError(e); }
     }
   },
@@ -415,7 +415,7 @@ export var jsIdeCommands = [
             }
           }
           return superVisitVariableDeclaration.call(v, node, state, path);
-        }
+        };
 
         // visit!
         v.accept(parsed, {}, []);
@@ -466,8 +466,8 @@ export var astEditorCommands = [
       ed.selection = {
         start: ed.indexToPosition(found.decl.start),
         end: ed.indexToPosition(found.decl.end)
-      }
-      ed.scrollCursorIntoView()
+      };
+      ed.scrollCursorIntoView();
       return true;
     }
   },
@@ -476,14 +476,14 @@ export var astEditorCommands = [
     name: "selectSymbolReferenceOrDeclarationNext",
     readOnly: true,
     multiSelectAction: "single",
-    exec: function(ed) { ed.execCommand('selectSymbolReferenceOrDeclaration', {direction: 'next'}); }
+    exec: function(ed) { ed.execCommand("selectSymbolReferenceOrDeclaration", {direction: "next"}); }
   },
 
   {
     name: "selectSymbolReferenceOrDeclarationPrev",
     readOnly: true,
     multiSelectAction: "single",
-    exec: function(ed) { ed.execCommand('selectSymbolReferenceOrDeclaration', {direction: 'prev'}); }
+    exec: function(ed) { ed.execCommand("selectSymbolReferenceOrDeclaration", {direction: "prev"}); }
   },
 
   {
@@ -503,19 +503,19 @@ export var astEditorCommands = [
       // 3. map the AST ref / decl nodes to actual text ranges
       var sel = ed.selection,
           ranges = found.refs.map(({start, end}) => Range.fromPositions(iToP(ed, start), iToP(ed, end)))
-              .concat(found.decl ?
-                Range.fromPositions(iToP(ed, found.decl.start), iToP(ed, found.decl.end)): [])
-              // .filter(range => !sel.ranges.some(otherRange => range.equals(otherRange)))
-              .sort(Range.compare);
+            .concat(found.decl ?
+              Range.fromPositions(iToP(ed, found.decl.start), iToP(ed, found.decl.end)): [])
+            // .filter(range => !sel.ranges.some(otherRange => range.equals(otherRange)))
+            .sort(Range.compare);
 
       if (!ranges.length) return true;
 
       // do we want to select all ranges or jsut the next/prev one?
       var currentRangeIdx = ranges.map(String).indexOf(String(sel.range));
-      if (args.direction === 'next' || args.direction === 'prev') {
+      if (args.direction === "next" || args.direction === "prev") {
         if (currentRangeIdx === -1 && ranges.length) ranges = [ranges[0]];
         else {
-          var nextIdx = currentRangeIdx + (args.direction === 'next' ? 1 : -1);
+          var nextIdx = currentRangeIdx + (args.direction === "next" ? 1 : -1);
           if (nextIdx < 0) nextIdx = ranges.length-1;
           else if (nextIdx >= ranges.length) nextIdx = 0;
           ranges = [ranges[nextIdx]];

@@ -21,7 +21,7 @@ import {
   l2lInterfaceFor
 } from "lively-system-interface";
 
-import "./mode.js"
+import "./mode.js";
 import { getMode } from "../editor-modes.js";
 
 
@@ -32,12 +32,12 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
   static get mode() { return getMode({}, {name: "javascript"}); }
 
   constructor() {
-    super()
+    super();
     this.checker = new JavaScriptChecker();
-    this.evalEnvironment = {format: "esm", targetModule: null, context: null}
+    this.evalEnvironment = {format: "esm", targetModule: null, context: null};
   }
 
-  get isJSEditorPlugin() { return true }
+  get isJSEditorPlugin() { return true; }
 
   attach(editor) {
     super.attach(editor);
@@ -65,7 +65,7 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
   getKeyBindings(other) {
     return [
       ...other,
-      {keys: 'Shift-Tab',   command: {command: "[javascript] auto format code"}},
+      {keys: "Shift-Tab",   command: {command: "[javascript] auto format code"}},
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // ide related
       {keys: "Ctrl-C E", command: "[javascript] list errors and warnings"},
@@ -75,7 +75,7 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
       {keys: {mac: "Meta-Shift-L M O D E", win: "Ctrl-Shift-L M O D E"}, command: "change editor mode"},
       {keys: "Ctrl-C I", command: "[javascript] inject import"},
       {keys: "Ctrl-C C I", command: "[javascript] fix undeclared variables"}
-    ]
+    ];
   }
 
   async getMenuItems(items) {
@@ -92,9 +92,9 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
 
     if (this.evalEnvironment.targetModule)
       jsItems.push(
-        {command: "[javascript] inject import", alias: `add import`, target: editor},
-        {command: "[javascript] fix undeclared variables", alias: `fix undeclared variables`, target: editor},
-        {command: "[javascript] remove unused imports", alias: `remove unused imports`, target: editor});
+        {command: "[javascript] inject import", alias: "add import", target: editor},
+        {command: "[javascript] fix undeclared variables", alias: "fix undeclared variables", target: editor},
+        {command: "[javascript] remove unused imports", alias: "remove unused imports", target: editor});
 
     var nav = this.getNavigator();
     var ref = nav.resolveIdentifierAt(editor, editor.cursorPosition);
@@ -111,7 +111,7 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
         alias: `code search for "${string.truncate(text, 30)}"`,
         target: editor.world(),
         args: {input: text, backend: this.backend()}
-      })
+      });
     }
 
     jsItems.push({isDivider: true});

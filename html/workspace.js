@@ -46,12 +46,12 @@ export default class Workspace extends JSWorkspace {
 
       evalbackendButton: {
         derived: true, readOnly: true, after: ["targetMorph"],
-        get() { this.getSubmorphNamed("eval backend button") },
+        get() { this.getSubmorphNamed("eval backend button"); },
         initialize() {
           this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(this, "local"));
         }
       }
-    }
+    };
   }
 
   get isHTMLWorkspace() { return true; }
@@ -69,7 +69,7 @@ export default class Workspace extends JSWorkspace {
     // injects lively script
     let scripts = Array.from(this.parse(html).querySelectorAll("script"));
     if (!scripts.some(ea => ea.src.includes("livelify-web.js"))) {
-      let script = `<script src="/livelify-web.js"></script>`,
+      let script = "<script src=\"/livelify-web.js\"></script>",
           bodyEnd = html.indexOf("</body>");
       if (bodyEnd > -1) {
         html = html.slice(0, bodyEnd) + script + html.slice(bodyEnd);
@@ -122,7 +122,7 @@ export default class Workspace extends JSWorkspace {
 
           try {
             await workspace.saveDocumentHTML(html);
-            workspace.setStatusMessage(`HTML applied`, Color.green);
+            workspace.setStatusMessage("HTML applied", Color.green);
           } catch (err) { workspace.showError(err); }
           return workspace;
         }

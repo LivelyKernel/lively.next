@@ -1,11 +1,11 @@
 /*global localStorage*/
-import { arr } from "lively.lang";
+import { arr, string } from "lively.lang";
 import { signal } from "lively.bindings";
 import EditorPlugin from "../editor-plugin.js";
 import { defaultDirectory, runCommand } from "./shell-interface.js";
 import { shellCompleters } from "./completers.js";
 
-import "./mode.js"
+import "./mode.js";
 import { getMode } from "../editor-modes.js";
 
 var defaultDir;
@@ -19,13 +19,13 @@ export default class ShellEditorPlugin extends EditorPlugin {
   static get mode() { return getMode({}, {name: "shell"}); }
 
   constructor() {
-    super()
-    this.state = {cwd:  defaultDir, command: null}
+    super();
+    this.state = {cwd:  defaultDir, command: null};
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // editor plugin related
-  get isShellEditorPlugin() { return true }
+  get isShellEditorPlugin() { return true; }
 
   get options() { return this.state; }
   set options(o) { return this.state = Object.assign(this.state, o); }
@@ -84,8 +84,8 @@ export default class ShellEditorPlugin extends EditorPlugin {
 
     var part1 = "Shell Workspace",
         part2 = this.command && this.command.isRunning() ?
-                  ` (running ${this.command.pid})` : "",
-        part3 = !this.cwd ? "" : ` - ${lively.lang.string.truncateLeft(this.cwd, 35)}`
+          ` (running ${this.command.pid})` : "",
+        part3 = !this.cwd ? "" : ` - ${string.truncateLeft(this.cwd, 35)}`;
 
     win.title = [part1, part2, part3].join("");
   }
@@ -110,8 +110,8 @@ export default class ShellEditorPlugin extends EditorPlugin {
               var {start} = sel;
               sel.collapseToEnd();
               ed.insertText(out);
-              sel.range = {start, end: ed.cursorPosition}
-            }
+              sel.range = {start, end: ed.cursorPosition};
+            };
             cmd.on("stdout", insert);
             cmd.on("stderr", insert);
           }
@@ -123,8 +123,8 @@ export default class ShellEditorPlugin extends EditorPlugin {
           this.updateWindowTitle();
 
           if (opts.printit) {
-            cmd.removeListener("stdout", insert)
-            cmd.removeListener("stderr", insert)
+            cmd.removeListener("stdout", insert);
+            cmd.removeListener("stderr", insert);
           } else {
             ed.setStatusMessage(cmd.output.trim());
           }
@@ -152,7 +152,7 @@ export default class ShellEditorPlugin extends EditorPlugin {
         name: "[shell] change working directory",
         exec: async () => { await this.changeCwdInteractively(); return true; }
       }
-    ].concat(otherCommands)
+    ].concat(otherCommands);
   }
 
   getKeyBindings(otherKeybindings) {
@@ -166,7 +166,7 @@ export default class ShellEditorPlugin extends EditorPlugin {
   getSnippets(otherSnippets) {
     return otherSnippets.concat([
       ["findjs", "find ${0:.} \\( -name ${1:excluded} \\) -prune -o -iname '*.js' -type f -print0 | xargs -0 grep -nH ${2:what}"]
-    ])
+    ]);
   }
 
   getCompleters(completers) {

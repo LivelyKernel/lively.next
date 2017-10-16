@@ -4,7 +4,7 @@ import KeyHandler from "lively.morphic/events/KeyHandler.js";
 import { Range } from "lively.morphic/text/range.js";
 
 function addIndexToTextPos(textMorph, textPos, index) {
-  return textMorph.indexToPosition(textMorph.positionToIndex(textPos) + index)
+  return textMorph.indexToPosition(textMorph.positionToIndex(textPos) + index);
 }
 
 export class Snippet {
@@ -16,7 +16,7 @@ export class Snippet {
     this.resetExpansionState();
   }
 
-  get isTextSnippet() { return true }
+  get isTextSnippet() { return true; }
 
   attach(textMorph) {
     if (!this.isExpanding) return;
@@ -46,7 +46,7 @@ export class Snippet {
       if (startAnchor) m.removeAnchor(startAnchor);
       if (endAnchor) m.removeAnchor(endAnchor);
       if (marker) m.removeMarker(marker);
-      steps.forEach(({anchor}) => m.removeAnchor(anchor))
+      steps.forEach(({anchor}) => m.removeAnchor(anchor));
     }
 
     this.expansionState = {stepIndex: -1, steps: [], isExpanding: false, startMarker: null, endMarker: null};
@@ -58,7 +58,7 @@ export class Snippet {
 
   createExpansionSteps(expansion) {
     var steps = [],
-        matches = lively.lang.string.reMatches(expansion, /\$[0-9]+|\$\{[0-9]+:[^\}]*\}/g),
+        matches = string.reMatches(expansion, /\$[0-9]+|\$\{[0-9]+:[^\}]*\}/g),
         offset = 0;
 
     matches.forEach(({start, end, match}) => {
@@ -68,7 +68,7 @@ export class Snippet {
         n = Number(nString);
         prefill = _prefill;
       } else {
-        n = Number(match.replace(/^\$/, ""))
+        n = Number(match.replace(/^\$/, ""));
       }
       expansion = expansion.slice(0, start-offset) + prefill + expansion.slice(end-offset);
       steps[n] = {index: start-offset, prefill, anchor: null};
@@ -96,7 +96,7 @@ export class Snippet {
     var {expansion, steps} = this.createExpansionSteps(expansion);
 
     if (this.trigger)
-      sel.growLeft(this.trigger.length)
+      sel.growLeft(this.trigger.length);
 
     sel.text = expansion;
     var {start, end} = sel;
@@ -145,7 +145,7 @@ export class Snippet {
     var sel = m.selection;
     var {anchor: {position: stepPosition}, prefill} = steps[stepIndex];
     sel.lead = sel.anchor = stepPosition;
-    sel.growRight(prefill.length)
+    sel.growRight(prefill.length);
     this.expansionState.stepIndex++;
     if (this.expansionState.stepIndex >= steps.length) {
       this.resetExpansionState();
@@ -176,20 +176,20 @@ export class Snippet {
         name: "[snippet] cancel expansion",
         exec: (textMorph) => { this.resetExpansionState(); return true; }
       }
-    ])
+    ]);
   }
 
   getKeyHandlers(handlers) {
     return handlers.concat(
-            KeyHandler.withBindings([
-              {keys: 'Tab', command: "[snippet] next expansion step"},
-              {keys: 'Escape', command: "[snippet] cancel expansion"},
-            ]));
+      KeyHandler.withBindings([
+        {keys: "Tab", command: "[snippet] next expansion step"},
+        {keys: "Escape", command: "[snippet] cancel expansion"},
+      ]));
   }
 }
 
 export const snippetCommands = [{
-  name: 'get snippets',
+  name: "get snippets",
   exec: (textMorph) => {
     return textMorph.pluginCollect("getSnippets", []).map(snippet => {
       if (snippet.isTextSnippet) return snippet;
@@ -197,4 +197,4 @@ export const snippetCommands = [{
       return new Snippet({trigger, expansion});
     });
   }
-}]
+}];

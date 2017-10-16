@@ -28,9 +28,9 @@ export default class JavaScriptChecker {
             style: warnStyle,
             range: {start, end},
             type: "js-undeclared-var"
-          })
+          });
         });
-    prevMarkers.slice(newMarkers.length).forEach(ea => morph.removeMarker(ea))
+    prevMarkers.slice(newMarkers.length).forEach(ea => morph.removeMarker(ea));
 
     // 3. "errors" such as syntax errors
     if (parsed.parseError) {

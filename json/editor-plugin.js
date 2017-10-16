@@ -9,10 +9,10 @@ export default class JSONEditorPlugin extends JavaScriptEditorPlugin {
   static get mode() { return getMode({}, {name: "javascript", json: true}); }
 
   constructor() {
-    super()
+    super();
     this.checker = new JSONChecker();
   }
 
-  get isJSONEditorPlugin() { return true }
+  get isJSONEditorPlugin() { return true; }
 
 }

@@ -4,43 +4,43 @@ export var snippets = [
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // # typeof tests
-  ["typef", 'typeof ${0:object} === "function"$1'],
-  ["types", 'typeof ${0:object} === "string"$1'],
-  ["typen", 'typeof ${0:object} === "number"$1'],
-  ["typeu", 'typeof ${0:object} === "undefined"$1'],
-  ["typenu", 'typeof ${0:object} !== "undefined"$1'],
+  ["typef", "typeof ${0:object} === \"function\"$1"],
+  ["types", "typeof ${0:object} === \"string\"$1"],
+  ["typen", "typeof ${0:object} === \"number\"$1"],
+  ["typeu", "typeof ${0:object} === \"undefined\"$1"],
+  ["typenu", "typeof ${0:object} !== \"undefined\"$1"],
 
-// ["afun", ],
-// async function ${1?:functionName}(${2}) {${0}}
-// ["afn", ],
-// async function(${1}) {${0}}
-// ["af", ],
-// async ${1:(${2:arg})} => ${0}
-// ["fun*", ],
-// function* ${1?:functionName}(${2}) {${0}}
-// ["fn*", ],
-// regex /((=)\s*|(:)\s*|(\()|\b)/fn\*/
-// function*($2) {${0:$TM_SELECTED_TEXT}}${M2?;}${M3?,}
+  // ["afun", ],
+  // async function ${1?:functionName}(${2}) {${0}}
+  // ["afn", ],
+  // async function(${1}) {${0}}
+  // ["af", ],
+  // async ${1:(${2:arg})} => ${0}
+  // ["fun*", ],
+  // function* ${1?:functionName}(${2}) {${0}}
+  // ["fn*", ],
+  // regex /((=)\s*|(:)\s*|(\()|\b)/fn\*/
+  // function*($2) {${0:$TM_SELECTED_TEXT}}${M2?;}${M3?,}
 
-  ["import", 'import { ${0:name} } from "${1:module}";'],
-  ["importd", 'import ${0:name} from "${1:module}";'],
-  ["import*", 'import * as ${0:name} from "${1:module}";'],
+  ["import", "import { ${0:name} } from \"${1:module}\";"],
+  ["importd", "import ${0:name} from \"${1:module}\";"],
+  ["import*", "import * as ${0:name} from \"${1:module}\";"],
 
-// ["export", ],
-// regex /\b/expo?r?t?/
-// export { ${0:name} };
-// # strings
-// ["$", ],
-// \${${0:code}}
-// ["destr_assign", ],
-// regex /(var|let|const)(\s+)?/{\s*/}?/
-// ${M1?:var}${M2?: }{${1:prop}} = ${0:expr}
+  // ["export", ],
+  // regex /\b/expo?r?t?/
+  // export { ${0:name} };
+  // # strings
+  // ["$", ],
+  // \${${0:code}}
+  // ["destr_assign", ],
+  // regex /(var|let|const)(\s+)?/{\s*/}?/
+  // ${M1?:var}${M2?: }{${1:prop}} = ${0:expr}
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // classes
 
-  ["subclass", 'class ${0:name} extends ${1:base} {\n  constructor(${2:args}) {\n    super(${3:args})\n    $4\n  }\n}'],
-  ["class", 'class ${0:name} {\n  constructor(${1:args}) {\n    $2\n  }\n}'],
+  ["subclass", "class ${0:name} extends ${1:base} {\n  constructor(${2:args}) {\n    super(${3:args})\n    $4\n  }\n}"],
+  ["class", "class ${0:name} {\n  constructor(${1:args}) {\n    $2\n  }\n}"],
 
   // control flow
   ["switch", `switch (\${0:expression}) {
@@ -58,13 +58,13 @@ export var snippets = [
   ["do", "do {${1:/* code */}} while (${0:/* condition */});"],
 
 
-  ["fori", 'for (let ${0:prop} in ${1:obj}) {\n  ${2:obj[prop]}\n}'],
-  ["foro", 'for (let ${0:value} of ${1:iterable}) {\n  ${2:value}\n}'],
+  ["fori", "for (let ${0:prop} in ${1:obj}) {\n  ${2:obj[prop]}\n}"],
+  ["foro", "for (let ${0:value} of ${1:iterable}) {\n  ${2:value}\n}"],
 
 
-  ["for-", 'for (let ${0:i} = ${1:list}.length; ${2:i}--; ) {\n  $3\n}'],
+  ["for-", "for (let ${0:i} = ${1:list}.length; ${2:i}--; ) {\n  $3\n}"],
 
-  ["for", 'for (let ${0:i} = 0; ${1:i} < ${3:list}.length; ${2:i}++) {\n  $4\n}'],
+  ["for", "for (let ${0:i} = 0; ${1:i} < ${3:list}.length; ${2:i}++) {\n  $4\n}"],
 
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -80,7 +80,7 @@ export var snippets = [
   ["last", "arr.last(${0:list})"],
   ["pluck", "arr.pluck(${0:list}, \"${1:key}\")"],
   ["sortBy", "arr.sortBy(${0:list}, ($1) => $2)"],
-  ["join", 'join("\\n")'],
+  ["join", "join(\"\\n\")"],
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // # addScript
@@ -109,7 +109,7 @@ export var snippets = [
   ["withA", "withAllSubmorphsDo(ea => { return ${0:ea}; })"],
   ["$w", "$world"],
   ["$m", "$morph('${0:name}')"],
-  ["get", 'get("${0:name}")'],
+  ["get", "get(\"${0:name}\")"],
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // string stuff
@@ -122,7 +122,7 @@ export var snippets = [
   ["ce", "console.error($0)"],
   ["s", "show(`$0`);"],
 
-  ["l2lC", 'import L2LClient from "lively.2lively/client.js";\nlet l2lClient = L2LClient.default();$0'],
+  ["l2lC", "import L2LClient from \"lively.2lively/client.js\";\nlet l2lClient = L2LClient.default();$0"],
 
   // functions
   ["fun", "function ${0:functionName}($1) {$2}"],
@@ -131,7 +131,7 @@ export var snippets = [
 
   ["aw", "await $0"],
 
-]
+];
 
 // # setTimeout function
 // snippet setTimeout

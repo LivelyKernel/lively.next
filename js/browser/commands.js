@@ -3,7 +3,7 @@ import { extractTestDescriptors } from "mocha-es6/test-analysis.js";
 import { loadTestModuleAndExtractTestState } from "mocha-es6";
 
 function isTestModule(m, source) {
-  return m && source.match(/import.*['"]mocha(-es6)?['"]/) && source.match(/it\(['"]/)
+  return m && source.match(/import.*['"]mocha(-es6)?['"]/) && source.match(/it\(['"]/);
 }
 
 export default function browserCommands(browser) {
@@ -55,14 +55,14 @@ export default function browserCommands(browser) {
                   `${type}`, {fontSize: "70%", textStyleClasses: ["annotation"]}
                 ],
                 value: def
-              }
+              };
             }),
             {selected: [choice]} = await browser.world().filterableListPrompt(
-                                    "Select item", items,
-                                    {
-                                      preselect: currentIdx,
-                                      historyId: "js-browser-codeentity-jump-hist"
-                                    });
+              "Select item", items,
+              {
+                preselect: currentIdx,
+                historyId: "js-browser-codeentity-jump-hist"
+              });
         if (choice) {
           browser.ui.sourceEditor.saveMark();
           browser.selectCodeEntity(choice);
@@ -99,7 +99,7 @@ export default function browserCommands(browser) {
               `${"\u2002".repeat(depth-1)}${fullTitle}`, null,
               `line ${row} ${type}`, {fontSize: "70%", textStyleClasses: ["annotation"]}
             ]
-          })
+          });
         }
         let {selected: [choice]} = await browser.world().filterableListPrompt(
           `tests of ${m.nameInPackage}`, items, {
@@ -118,7 +118,7 @@ export default function browserCommands(browser) {
 
     {
       name: "browser history browse",
-      async exec: browser => {
+      exec: async browser => {
         var {left, right} = browser.state.history,
             current = arr.last(left),
             currentIdx = left.indexOf(current);
@@ -129,10 +129,10 @@ export default function browserCommands(browser) {
             loc.package ? loc.package.name || loc.package.address :
               "strange location",
           value: loc
-        }))
+        }));
 
         var {selected: [choice]} = await browser.world().filterableListPrompt(
-                                    "Jumpt to location", items, {preselect: currentIdx});
+          "Jumpt to location", items, {preselect: currentIdx});
         if (choice) {
           if (left.includes(choice)) {
             browser.state.history.left = left.slice(0, left.indexOf(choice) + 1);
@@ -197,7 +197,7 @@ export default function browserCommands(browser) {
 
         mods.forEach(({name, error}) =>
           error ? browser.showError(`Error while loading module ${name}: ${error.stack || error}`) :
-                  browser.setStatusMessage(`Module ${name} loaded`))
+            browser.setStatusMessage(`Module ${name} loaded`));
         await browser.updateModuleList(p);
         mods.length && browser.selectModuleNamed(mods[0].name);
         return true;
@@ -286,22 +286,22 @@ export default function browserCommands(browser) {
 
         var items = packages.map(ea => {
           return {
-                isListItem: true,
-                label: [
-                  `${ea.name}`, null,
-                  `${ea.url}`, {fontSize: "70%", textStyleClasses: ["annotation"]},
-                ],
-                value: ea
-              }
+            isListItem: true,
+            label: [
+              `${ea.name}`, null,
+              `${ea.url}`, {fontSize: "70%", textStyleClasses: ["annotation"]},
+            ],
+            value: ea
+          };
         });
 
         var {selected} = await browser.world().filterableListPrompt("Choose package(s)", items, {
           multiselect: true,
           historyId: "lively.ide.js-browser-choose-package-for-showing-export-imports-hist"
-        })
+        });
 
-        await Promise.all(selected.map(ea => system.showExportsAndImportsOf(ea.url)))
-        return true
+        await Promise.all(selected.map(ea => system.showExportsAndImportsOf(ea.url)));
+        return true;
       }
     },
 
@@ -331,22 +331,22 @@ export default function browserCommands(browser) {
     {
       name: "run all tests in package",
       exec: async browser => {
-         var p = browser.selectedPackage;
-         if (!p) return browser.world().inform("No package selected", {requester: browser});
-         var results = await runTestsInPackage(browser, p.name);
-         browser.focus();
-         return results;
+        var p = browser.selectedPackage;
+        if (!p) return browser.world().inform("No package selected", {requester: browser});
+        var results = await runTestsInPackage(browser, p.name);
+        browser.focus();
+        return results;
       }
     },
 
     {
       name: "run all tests in module",
       exec: async browser => {
-         var m = browser.selectedModule;
-          if (!m) return browser.world().inform("No module selected", {requester: browser});
-         var results = await runTestsInModule(browser, m.name, null);
-         browser.focus();
-         return results;
+        var m = browser.selectedModule;
+        if (!m) return browser.world().inform("No module selected", {requester: browser});
+        var results = await runTestsInModule(browser, m.name, null);
+        browser.focus();
+        return results;
       }
     },
 
@@ -369,61 +369,61 @@ export default function browserCommands(browser) {
           fullTitle: arr.pluck(testDescriptors, "title").join(" "),
           type: arr.last(testDescriptors).type,
           file: m.name
+        };
+
+        var results = await runTestsInModule(browser, m.name, spec);
+        browser.focus();
+        return results;
+      }
+    },
+
+    {
+      name: "run setup code of tests (before and beforeEach)",
+      exec: async (browser, args = {what: "setup"}) => {
+
+        var m = browser.selectedModule;
+        if (!m) return browser.world().inform("No module selected", {requester: browser});
+
+
+        var ed = browser.get("sourceEditor"),
+            testDescriptors = await extractTestDescriptors(
+              ed.textString, ed.document.positionToIndex(ed.cursorPosition));
+
+        if (!testDescriptors || !testDescriptors.length)
+          return browser.world().inform(
+            "No test at " + JSON.stringify(ed.cursorPosition),
+            {requester: browser});
+
+        // the stringified body of all before(() => ...) or after(() => ...) calls
+        var what = (args && args.what) || "setup", // or: teardown
+            prop = what === "setup" ? "setupCalls" : "teardownCalls",
+            nCalls = 0,
+            beforeCode = arr.flatmap(testDescriptors, descr => {
+              return descr[prop].map((beforeFn, i) => {
+                nCalls++;
+                return `await ((${lively.ast.stringify(beforeFn)})());`;
+              });
+            }).join("\n");
+
+        try {
+          await browser.systemInterface.runEval(beforeCode, {...ed.evalEnvironment});
+          browser.setStatusMessage(`Executed ${nCalls} test ${what} functions`);
+        } catch (e) {
+          browser.showError(new Error(`Error when running ${what} calls of test:\n${e.stack}`));
         }
 
-         var results = await runTestsInModule(browser, m.name, spec);
-         browser.focus();
-         return results;
-       }
-     },
+        return true;
+      }
+    },
 
-     {
-       name: "run setup code of tests (before and beforeEach)",
-       exec: async (browser, args = {what: "setup"}) => {
-
-          var m = browser.selectedModule;
-          if (!m) return browser.world().inform("No module selected", {requester: browser});
-
-
-          var ed = browser.get("sourceEditor"),
-              testDescriptors = await extractTestDescriptors(
-                ed.textString, ed.document.positionToIndex(ed.cursorPosition));
-
-          if (!testDescriptors || !testDescriptors.length)
-            return browser.world().inform(
-              "No test at " + JSON.stringify(ed.cursorPosition),
-              {requester: browser});
-
-          // the stringified body of all before(() => ...) or after(() => ...) calls
-          var what = (args && args.what) || "setup", // or: teardown
-              prop = what === "setup" ? "setupCalls" : "teardownCalls",
-              nCalls = 0,
-              beforeCode = arr.flatmap(testDescriptors, descr => {
-                return descr[prop].map((beforeFn, i) => {
-                  nCalls++;
-                  return `await ((${lively.ast.stringify(beforeFn)})());`
-                })
-              }).join("\n");
-
-          try {
-            await browser.systemInterface.runEval(beforeCode, {...ed.evalEnvironment});
-            browser.setStatusMessage(`Executed ${nCalls} test ${what} functions`);
-          } catch (e) {
-            browser.showError(new Error(`Error when running ${what} calls of test:\n${e.stack}`));
-          }
-
-          return true;
-       }
-     },
-
-     {
-       name: "run teardown code of tests (after and afterEach)",
-        exec: async (browser) =>
-          browser.execCommand(
-            "run setup code of tests (before and beforeEach)",
-            {what: "teardown"})
-     }
-  ]
+    {
+      name: "run teardown code of tests (after and afterEach)",
+      exec: async (browser) =>
+        browser.execCommand(
+          "run setup code of tests (before and beforeEach)",
+          {what: "teardown"})
+    }
+  ];
 
 
   function focusList(list) {
@@ -431,7 +431,7 @@ export default function browserCommands(browser) {
     list.update();
     list.show();
     list.focus();
-    return list
+    return list;
   }
 
   async function runTestsInModule(browser, moduleName, spec) {

@@ -1,10 +1,8 @@
-import { arr, obj } from "lively.lang";
+import { string } from "lively.lang";
 import { connect } from "lively.bindings";
-import { pt, Point, Color, Rectangle } from "lively.graphics";
+import { pt, Rectangle } from "lively.graphics";
 import { config, morph } from "lively.morphic";
-
-import {Window} from "lively.components";
-
+import { Window } from "lively.components";
 import ShellEditorPlugin from "./editor-plugin.js";
 import Terminal from "./terminal.js";
 
@@ -49,14 +47,14 @@ export default class Workspace extends Window {
               || this.targetMorph.addPlugin(new ShellEditorPlugin());
         }
       }
-    }
+    };
   }
 
   constructor(props) {
     super(props);
     var btn = this.addMorph(this.ensureCwdButton(this.shellPlugin.cwd));
-    connect(this.shellPlugin, 'cwd', btn, 'label',
-      {converter: cwd => lively.lang.string.truncateLeft(cwd, 50)});
+    connect(this.shellPlugin, "cwd", btn, "label",
+      {converter: cwd => string.truncateLeft(cwd, 50)});
   }
 
   onLoad(_, snapshot) {
@@ -85,18 +83,18 @@ export default class Workspace extends Window {
       value: {
         cwd: this.cwd
       }
-    }
+    };
   }
 
   ensureCwdButton(cwd) {
-    var btn = this.getSubmorphNamed("changeCwdButton")
-     if (btn) return btn;
-     btn = morph({
+    var btn = this.getSubmorphNamed("changeCwdButton");
+    if (btn) return btn;
+    btn = morph({
       type: "button", name: "changeCwdButton",
       padding: Rectangle.inset(4,2),
       label: cwd || "...", extent: pt(60,20), borderRadius: 3
     });
-    connect(btn, 'fire', this, 'execCommand', {converter: () => "[shell] change working directory"});
+    connect(btn, "fire", this, "execCommand", {converter: () => "[shell] change working directory"});
     return btn;
   }
 
@@ -112,7 +110,7 @@ export default class Workspace extends Window {
 
   get keybindings() {
     return [
-      {keys: {mac: "Meta-Shift-O", win: "Ctrl-Shift-O"}, command: "[shell] open running command in terminal"}]
+      {keys: {mac: "Meta-Shift-O", win: "Ctrl-Shift-O"}, command: "[shell] open running command in terminal"}];
   }
 
   get commands() {
@@ -124,7 +122,7 @@ export default class Workspace extends Window {
           var [front, back] = workspace.title.split("-");
           workspace.title = workspace.shellPlugin.cwd ?
             `${front.trim()} - ${workspace.shellPlugin.cwd}` :
-            `${front.trim()}`
+            `${front.trim()}`;
         }
       },
       
@@ -141,6 +139,6 @@ export default class Workspace extends Window {
           return Terminal.forCommand(command, {cwd});
         }
       }
-    ]
+    ];
   }
 }

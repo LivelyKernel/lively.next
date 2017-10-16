@@ -1,12 +1,11 @@
 /*global System*/
-import { arr, obj } from "lively.lang";
-import { pt, Point, Color, Rectangle } from "lively.graphics";
-import { config, Icon, Text, InputLine } from "lively.morphic";
+import { arr } from "lively.lang";
+import { pt, Color } from "lively.graphics";
+import { config, Text, InputLine } from "lively.morphic";
 import JavaScriptEditorPlugin from "./editor-plugin.js";
 import EvalBackendChooser from "./eval-backend-ui.js";
-import { connect, once, noUpdate } from "lively.bindings";
 import { resource } from "lively.resources";
-import { Window } from 'lively.components';
+import { Window } from "lively.components";
 
 export default class Workspace extends Window {
 
@@ -47,7 +46,7 @@ export default class Workspace extends Window {
           this.jsPlugin.evalEnvironment = {
             targetModule: "lively://lively.next-workspace/" + ed.id,
             context: ed, format: "esm"
-          }
+          };
           let sys = this.jsPlugin.systemInterface();
           this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(
             this, sys ? sys.name : "local"));
@@ -69,7 +68,7 @@ export default class Workspace extends Window {
           this.setProperty("file", file);
         }
       }
-    }
+    };
   }
 
   async openWindowMenu() {
@@ -82,7 +81,7 @@ export default class Workspace extends Window {
         }
       ],
       {isDivider: true},
-      ['Set Workspace File...', () => this.execCommand("[workspace] query for file")],
+      ["Set Workspace File...", () => this.execCommand("[workspace] query for file")],
       ...(await this.targetMorph.menuItems())
     ];
     this.targetMorph.world().openMenu(menuItems);

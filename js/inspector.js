@@ -1,4 +1,4 @@
-/*global Map, Power4*/
+/*global Map*/
 import { Color, rect, pt } from "lively.graphics";
 
 import { obj, arr, promise, string } from "lively.lang";
@@ -9,29 +9,29 @@ import { DropDownSelector, SearchField, LabeledCheckBox } from "lively.component
 import { MorphHighlighter, InteractiveMorphSelector } from "lively.halos/morph.js";
 
 import { NumberWidget, StringWidget, IconWidget, PaddingWidget,
-         VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget,
-         BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
+  VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget,
+  BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
 
 
 var inspectorCommands = [
 
- {
-   name: "focus codeEditor",
-   exec: inspector => {
-     inspector.get("codeEditor").show();
-     inspector.get("codeEditor").focus();
-     return true;
-   }
- },
+  {
+    name: "focus codeEditor",
+    exec: inspector => {
+      inspector.get("codeEditor").show();
+      inspector.get("codeEditor").focus();
+      return true;
+    }
+  },
 
- {
-   name: "focus propertyTree",
-   exec: inspector => {
-     inspector.get("propertyTree").show();
-     inspector.get("propertyTree").focus();
-     return true;
-   }
- }
+  {
+    name: "focus propertyTree",
+    exec: inspector => {
+      inspector.get("propertyTree").show();
+      inspector.get("propertyTree").focus();
+      return true;
+    }
+  }
 
 ];
 
@@ -50,7 +50,7 @@ var symMatcher = /^Symbol\((.*)\)$/,
         .reduce((map, ea) => map.set(Symbol[ea], "Symbol." + ea), new Map()))();
 function printSymbol(sym) {
   if (Symbol.keyFor(sym)) return `Symbol.for("${Symbol.keyFor(sym)}")`;
-  if (knownSymbols.get(sym)) return knownSymbols.get(sym)
+  if (knownSymbols.get(sym)) return knownSymbols.get(sym);
   var matched = String(sym).match(symMatcher);
   return String(sym);
 }
@@ -73,9 +73,9 @@ function printValue(value) {
     var printed = string.print(value);
     if (tooLong) printed = printed.slice(0, -1) + ", ...]";
     result = printed;
-      } else {
-        result = string.print(value);
-    }
+  } else {
+    result = string.print(value);
+  }
   result = result.replace(/\n/g, "");
   return result;
 }
@@ -106,7 +106,7 @@ var defaultPropertyOptions = {
   includeSymbols: true,
   sort: true,
   sortFunction: (target, props) => Array.isArray(target) ? props : props.sort(defaultSort)
-}
+};
 
 /*
 
@@ -139,18 +139,18 @@ class InspectionNode {
      so they do not store a target that they poll or propagate changes from and to. */
 
   constructor({
-        root, // the tree data object that serves as the root of the node tree
-        priority, // order inside the tree
-        key, //property on the object
-        keyString, //a printed version of the property, sometimes different to key i.e. [INTERNAL] ...
-        value, //the value of the inspected datafield
-        valueString, // the value of the datafield printed safely to a string
-        isCollapsed, // wether or not the node is dispalying its child nodes,
-        children = [],
-        isSelected = false,
-        visible = true,
-        draggable = true
-      }) {
+    root, // the tree data object that serves as the root of the node tree
+    priority, // order inside the tree
+    key, //property on the object
+    keyString, //a printed version of the property, sometimes different to key i.e. [INTERNAL] ...
+    value, //the value of the inspected datafield
+    valueString, // the value of the datafield printed safely to a string
+    isCollapsed, // wether or not the node is dispalying its child nodes,
+    children = [],
+    isSelected = false,
+    visible = true,
+    draggable = true
+  }) {
     this.priority = priority;
     this.key = key;
     this.keyString = keyString || String(key);
@@ -167,7 +167,7 @@ class InspectionNode {
     return [];
   }
 
-  get isInspectionNode() { return true }
+  get isInspectionNode() { return true; }
 
   static for(node, root = null) {
     // if is morph -> MorphContext
@@ -188,7 +188,7 @@ class InspectionNode {
 
 class MorphNode extends InspectionNode {
 
-    /* Used for properties that store a morph as a value and thereby
+  /* Used for properties that store a morph as a value and thereby
        give rise to a new target context that subsequent properties need
        to be mapped against:
 
@@ -214,7 +214,7 @@ class MorphNode extends InspectionNode {
   getSubNode(nodeArgs) {
     let spec = this.propertyInfo[nodeArgs.key] || {};
     if (nodeArgs.value && nodeArgs.value.isMorph)
-       return new MorphNode({...nodeArgs, root: this.root})
+      return new MorphNode({...nodeArgs, root: this.root});
     return new PropertyNode({
       ...nodeArgs,
       root: this.root,
@@ -244,20 +244,20 @@ class PropertyNode extends InspectionNode {
   }
 
   __deserialize__(snapshot, objRef) {
-    this.spec = {}
+    this.spec = {};
   }
 
   get isFoldable() {
-    return !!this.spec.foldable
+    return !!this.spec.foldable;
   }
 
   get isInternalProperty() {
-     return this.keyString == 'id' || this.keyString.includes('internal');
+    return this.keyString == "id" || this.keyString.includes("internal");
   }
 
   getSubNode(nodeArgs) {
     if (this.isFoldable) {
-      return this.getFoldedContext(nodeArgs)
+      return this.getFoldedContext(nodeArgs);
     }
     return super.getSubNode(nodeArgs);
   }
@@ -268,18 +268,18 @@ class PropertyNode extends InspectionNode {
       root: this.root,
       target: this.target,
       foldableNode: this,
-      spec: obj.dissoc(this.spec, ['foldable'])
+      spec: obj.dissoc(this.spec, ["foldable"])
     });
   }
 
   refreshProperty(v, updateTarget = false) {
     if (updateTarget) this.target[this.key] = v;
     this.value = this.target[this.key];
-    if (typeof this._propertyWidget == 'string') {
+    if (typeof this._propertyWidget == "string") {
       this._propertyWidget = `${this.keyString}: ${this.valueString = printValue(v)}`;
       if (this.renderedNode) this.renderedNode.labelValue = this._propertyWidget;
     } else {
-      signal(this._propertyWidget, 'update', this.value);
+      signal(this._propertyWidget, "update", this.value);
       if (!updateTarget) {
         this._propertyWidget.highlight();
       }
@@ -289,7 +289,7 @@ class PropertyNode extends InspectionNode {
     if (this.isFoldable) {
       for (let m in this.foldedNodes) {
         this.foldedNodes[m].value = this.value[m];
-        signal(this.foldedNodes[m]._propertyWidget, 'update', this.value[m])
+        signal(this.foldedNodes[m]._propertyWidget, "update", this.value[m]);
       }
     }
   }
@@ -298,7 +298,7 @@ class PropertyNode extends InspectionNode {
     let {_propertyWidget: w, keyString, valueString, target, value, spec} = this;
 
     if (w) { // recycle widget
-      if (typeof w == 'string') return w;
+      if (typeof w == "string") return w;
       w.keyString = keyString;
       w.valueString = valueString;
       return w;
@@ -399,7 +399,7 @@ class DraggedProp extends Morph {
       borderWidth: {defaultValue: 2},
       borderRadius: {defaultValue: 4},
       submorphs: {
-        after: ['control'],
+        after: ["control"],
         initialize() {
           let {control} = this;
           if (!control) return this.submorphs = [];
@@ -413,7 +413,7 @@ class DraggedProp extends Morph {
           this.adjustOrigin(pt(10,10));
         }
       }
-    }
+    };
   }
 
   applyToTarget(evt) {
@@ -460,15 +460,15 @@ class DraggableTreeLabel extends Label {
 
   static get properties() {
     return {
-      styleClasses: {defaultValue: ['TreeLabel']},
+      styleClasses: {defaultValue: ["TreeLabel"]},
       draggable: {defaultValue: true},
-      nativeCursor: {defaultValue: '-webkit-grab'},
+      nativeCursor: {defaultValue: "-webkit-grab"},
       keyString: {},
       valueString: {},
       fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
       fill:  {defaultValue: Color.transparent},
       padding: {defaultValue: rect(0,0,10,0)}
-    }
+    };
   }
 
   get inspector() { return this.owner.tree.owner; }
@@ -479,13 +479,13 @@ class DraggableTreeLabel extends Label {
       control: this.copy()
     });
     this.draggedProp.openInWorld();
-    connect(evt.hand, 'position', this.draggedProp, 'update');
+    connect(evt.hand, "position", this.draggedProp, "update");
   }
 
   onDrag(evt) {}
 
   onDragEnd(evt) {
-    disconnect(evt.hand, 'position', this.draggedProp, 'update');
+    disconnect(evt.hand, "position", this.draggedProp, "update");
     this.draggedProp.applyToTarget(evt);
   }
 
@@ -500,7 +500,7 @@ export class PropertyControl extends DraggableTreeLabel {
       valueString: {},
       propertyValue: {},
       control: {
-        after: ['submorphs'],
+        after: ["submorphs"],
         derived: true,
         get() { return this.submorphs[0] || false; },
         set(c) { this.submorphs = [c]; }
@@ -516,24 +516,24 @@ export class PropertyControl extends DraggableTreeLabel {
           this.submorphs = [];
         }
       }
-    }
+    };
   }
 
   static inferType({keyString, value}) {
     if (value && (value.isColor || value.isGradient)) {
-      return 'Color'
+      return "Color";
     } else if (value && value.isPoint) {
-      return 'Point'
+      return "Point";
     } else if (obj.isBoolean(value)) {
-      return 'Boolean'
+      return "Boolean";
     } else if (obj.isNumber(value)) {
-      return 'Number'
+      return "Number";
     } else if (obj.isString(value)) {
-      return 'String'
+      return "String";
     } else if (value && value.isRectangle) {
-      return 'Rectangle'
+      return "Rectangle";
     }
-    return false
+    return false;
   }
 
   static render(args) {
@@ -549,39 +549,39 @@ export class PropertyControl extends DraggableTreeLabel {
     }
 
     switch (args.spec.type) {
-        // 12.6.17
-        // rms: not sure wether a string based spec is that effective in the long run
-        //      it may require too much dedicated maintenance
-      case "Icon":
-        propertyControl.renderIconControl(args); break;
-      case "Color":
-        propertyControl.renderColorControl(args); break;
-      case "ColorGradient":
-        propertyControl.renderColorControl(args, true); break;
-      case "Number":
-        propertyControl.renderNumberControl(args); break;
-      case "String":
-        propertyControl.renderStringControl(args); break;
-      case "RichText":
-        propertyControl.renderStringControl(args); break;
-      case "Layout":
-        propertyControl.renderLayoutControl(args); break;
-      case "Enum":
-        propertyControl.renderEnumControl(args); break;
-      case "Vertices":
-        propertyControl.renderVertexControl(args); break;
-      case "Shadow":
-        propertyControl.renderShadowControl(args); break;
-      case "Point":
-        propertyControl.renderPointControl(args); break;
-      case "StyleSheets":
-        propertyControl.renderStyleSheetControl(args); break;
-      case "Rectangle":
-        propertyControl.renderRectangleControl(args); break;
-      case "Boolean":
-        propertyControl.renderBooleanControl(args); break;
-      default:
-        propertyControl.renderItSomehow(args);
+    // 12.6.17
+    // rms: not sure wether a string based spec is that effective in the long run
+    //      it may require too much dedicated maintenance
+    case "Icon":
+      propertyControl.renderIconControl(args); break;
+    case "Color":
+      propertyControl.renderColorControl(args); break;
+    case "ColorGradient":
+      propertyControl.renderColorControl(args, true); break;
+    case "Number":
+      propertyControl.renderNumberControl(args); break;
+    case "String":
+      propertyControl.renderStringControl(args); break;
+    case "RichText":
+      propertyControl.renderStringControl(args); break;
+    case "Layout":
+      propertyControl.renderLayoutControl(args); break;
+    case "Enum":
+      propertyControl.renderEnumControl(args); break;
+    case "Vertices":
+      propertyControl.renderVertexControl(args); break;
+    case "Shadow":
+      propertyControl.renderShadowControl(args); break;
+    case "Point":
+      propertyControl.renderPointControl(args); break;
+    case "StyleSheets":
+      propertyControl.renderStyleSheetControl(args); break;
+    case "Rectangle":
+      propertyControl.renderRectangleControl(args); break;
+    case "Boolean":
+      propertyControl.renderBooleanControl(args); break;
+    default:
+      propertyControl.renderItSomehow(args);
     }
 
     if (propertyControl.control) {
@@ -598,7 +598,7 @@ export class PropertyControl extends DraggableTreeLabel {
       opacity: 0.8,
       fill: Color.white.withA(0.5),
       name: "valueString",
-      styleClasses: ['TreeLabel'],
+      styleClasses: ["TreeLabel"],
       selectedValue,
       values
     });
@@ -607,7 +607,7 @@ export class PropertyControl extends DraggableTreeLabel {
         if (this.targetObj.propertyValue != val) $upd(val);
       }
     });
-    connect(propertyControl, 'update', propertyControl.control, 'selectedValue', {
+    connect(propertyControl, "update", propertyControl.control, "selectedValue", {
       updater: function ($upd, val) {
         val = (val && val.valueOf) ? val.valueOf() : val;
         if (this.targetObj.propertyValue != val) $upd(val);
@@ -625,26 +625,26 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   toggleMultiValuePlaceholder(active) {
-     this.multiValuePlaceholder = this.multiValuePlaceholder || this.addMorph({
-        fill: Color.transparent,
-        layout: new HorizontalLayout({spacing: 3}),
-        name: 'multi value placeholder',
-        nativeCursor: 'pointer',
-        submorphs: arr.range(0,2).map(i => ({
-          type: 'ellipse',
-          fill: Color.gray.withA(.5),
-          reactsToPointer: false,
-          extent: pt(7,7)
-        }))
-      });
+    this.multiValuePlaceholder = this.multiValuePlaceholder || this.addMorph({
+      fill: Color.transparent,
+      layout: new HorizontalLayout({spacing: 3}),
+      name: "multi value placeholder",
+      nativeCursor: "pointer",
+      submorphs: arr.range(0,2).map(i => ({
+        type: "ellipse",
+        fill: Color.gray.withA(.5),
+        reactsToPointer: false,
+        extent: pt(7,7)
+      }))
+    });
     if (active) {
-      connect(this.multiValuePlaceholder, 'onMouseDown', this, 'propertyValue', {
+      connect(this.multiValuePlaceholder, "onMouseDown", this, "propertyValue", {
         converter: function() { return this.targetObj.propertyValue.valueOf(); }
       });
       this.control.opacity = 0;
       this.multiValuePlaceholder.visible = true;
     } else {
-      disconnect(this.multiValuePlaceholder, 'onMouseDown', this, 'propertyValue');
+      disconnect(this.multiValuePlaceholder, "onMouseDown", this, "propertyValue");
       this.control.opacity = 1;
       this.multiValuePlaceholder.visible = false;
     }
@@ -654,12 +654,12 @@ export class PropertyControl extends DraggableTreeLabel {
     if (!this.foldableProperties) return;
     this.toggleMultiValuePlaceholder(
       !arr.every(this.foldableProperties.map(p => newValue[p]),
-                 v => obj.equals(v, newValue && newValue.valueOf())));
+        v => obj.equals(v, newValue && newValue.valueOf())));
   }
 
   asFoldable(foldableProperties) {
     this.foldableProperties = foldableProperties;
-    connect(this, 'update', this, 'toggleFoldableValue');
+    connect(this, "update", this, "toggleFoldableValue");
   }
 
   renderEnumControl({value, spec: {values}}) {
@@ -667,7 +667,7 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   renderIconControl({value}) {
-    this.control = new IconWidget({name: 'valueString', iconValue: value});
+    this.control = new IconWidget({name: "valueString", iconValue: value});
     connect(this.control, "iconValue", this, "propertyValue");
     return this;
   }
@@ -676,7 +676,7 @@ export class PropertyControl extends DraggableTreeLabel {
     this.control = new StringWidget({
       name: "valueString",
       stringValue: value,
-      readOnly: keyString == 'id'
+      readOnly: keyString == "id"
     });
     connect(this.control, "stringValue", this, "propertyValue");
     connect(node, "isSelected", this.control, "isSelected");
@@ -688,7 +688,7 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   renderRectangleControl({value}) {
-    this.control = new PaddingWidget({name: 'valueString', rectangle: value});
+    this.control = new PaddingWidget({name: "valueString", rectangle: value});
     connect(this.control, "rectangle", this, "propertyValue");
     return this;
   }
@@ -740,8 +740,8 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   renderShadowControl(args) {
-    this.control = new ShadowWidget({name: 'valueString', shadowValue: args.value});
-    connect(this.control, 'update', this, 'propertyValue');
+    this.control = new ShadowWidget({name: "valueString", shadowValue: args.value});
+    connect(this.control, "update", this, "propertyValue");
     connect(this, "update", this.control, "shadowValue", {
       updater: function($upd, val) {
         val = (val && val.valueOf ? val.valueOf() : val) || null;
@@ -759,7 +759,7 @@ export class PropertyControl extends DraggableTreeLabel {
   renderPointControl(args) {
     this.control = new PointWidget({name: "valueString", pointValue: args.value});
     connect(this.control, "pointValue", this, "propertyValue");
-    connect(this, 'update', this.control, 'pointValue', {
+    connect(this, "update", this.control, "pointValue", {
       updater: function ($upd, val) {
         val = val && val.valueOf ? val.valueOf() : val;
         if (!this.targetObj.pointValue.equals(val)) $upd(val);
@@ -780,7 +780,7 @@ export class PropertyControl extends DraggableTreeLabel {
       gradientEnabled
     });
     connect(this.control, "update", this, "propertyValue");
-    connect(this, 'update', this.control, 'color', {
+    connect(this, "update", this.control, "color", {
       updater: function ($upd, val) {
         val = (val && val.valueOf )? val.valueOf() : val;
         if (!this.targetObj.color.equals(val)) $upd(val);
@@ -807,16 +807,16 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   toString() {
-    return `${this.keyString}: ${this.valueString}`
+    return `${this.keyString}: ${this.valueString}`;
   }
 
   highlight() {
-   if (this.highlighter) this.highlighter.remove();
-   const hl = this.highlighter = this.addMorph(({type: 'label', name: 'valueString', value: this.keyString}))
-   hl.isLayoutable = false;
-   hl.fontWeight = "bold", hl.fontColor = Color.orange;
-   hl.reactsToPointer = false;
-   hl.fadeOut(2000);
+    if (this.highlighter) this.highlighter.remove();
+    const hl = this.highlighter = this.addMorph(({type: "label", name: "valueString", value: this.keyString}));
+    hl.isLayoutable = false;
+    hl.fontWeight = "bold", hl.fontColor = Color.orange;
+    hl.reactsToPointer = false;
+    hl.fadeOut(2000);
   }
 }
 
@@ -826,15 +826,15 @@ class InspectorTreeData extends TreeData {
   constructor(args) {
     super(args);
     if (!this.root.isInspectionNode)
-       this.root = InspectionNode.for(this.root, this);
+      this.root = InspectionNode.for(this.root, this);
   }
 
   get __only_serialize__() {
-    return ['root'];
+    return ["root"];
   }
 
   asListWithIndexAndDepth(filtered = true) {
-    return super.asListWithIndexAndDepth(({node}) => filtered ? node.visible : true);;
+    return super.asListWithIndexAndDepth(({node}) => filtered ? node.visible : true);
   }
 
   static forObject(obj) {
@@ -937,7 +937,7 @@ export default class Inspector extends Morph {
 
       _serializableTarget: {defaultValue: null},
       openWidget: {
-        type: 'Morph'
+        type: "Morph"
       },
 
       targetObject: {
@@ -960,7 +960,7 @@ export default class Inspector extends Morph {
         readOnly: true, derived: true,
         get() {
           var sel = this.ui.propertyTree.selection;
-          return sel ? sel.value : this.targetObject
+          return sel ? sel.value : this.targetObject;
         }
       },
 
@@ -971,13 +971,13 @@ export default class Inspector extends Morph {
         initialize() {
           this.layout = new GridLayout({
             manualUpdate: true,
-            grid: [['searchBar'],
-                   ['propertyTree'],
-                   ['resizer'],
-                   ['codeEditor']],
+            grid: [["searchBar"],
+              ["propertyTree"],
+              ["resizer"],
+              ["codeEditor"]],
             rows: [0, {fixed: 30},
-                   2, {fixed: 1},
-                   3, {height: 0}]
+              2, {fixed: 1},
+              3, {height: 0}]
           });
         }
       },
@@ -988,8 +988,8 @@ export default class Inspector extends Morph {
           return {
             codeEditor:       this.getSubmorphNamed("codeEditor"),
             terminalToggler:  this.getSubmorphNamed("terminal toggler"),
-            fixImportButton:  this.getSubmorphNamed('fix import button'),
-            thisBindingSelector: this.getSubmorphNamed('this binding selector'),
+            fixImportButton:  this.getSubmorphNamed("fix import button"),
+            thisBindingSelector: this.getSubmorphNamed("this binding selector"),
             propertyTree:     this.getSubmorphNamed("propertyTree"),
             unknowns:         this.getSubmorphNamed("unknowns"),
             internals:        this.getSubmorphNamed("internals"),
@@ -997,7 +997,7 @@ export default class Inspector extends Morph {
             searchBar:        this.getSubmorphNamed("searchBar"),
             searchField:      this.getSubmorphNamed("searchField"),
             resizer:          this.getSubmorphNamed("resizer")
-          }
+          };
         }
       },
 
@@ -1029,7 +1029,7 @@ export default class Inspector extends Morph {
               fill: Color.white,
               padding: rect(5,1,5,1),
               borderRadius: 4,
-              fontWeight: 'bold'
+              fontWeight: "bold"
             },
             "[name=searchBar]": {
               fill: Color.transparent,
@@ -1095,23 +1095,23 @@ export default class Inspector extends Morph {
       codeEditor.evalEnvironment = {
         targetModule: "lively://lively.morphic/inspector",
         get context() {
-          return thisBindingSelector.selection == 'selection' ?
-              codeEditor.owner.selectedObject : codeEditor.owner.targetObject
+          return thisBindingSelector.selection == "selection" ?
+            codeEditor.owner.selectedObject : codeEditor.owner.targetObject;
         },
         format: "esm"
       }
     ).catch(err => $world.logError(err));
 
-    connect(targetPicker,    'onMouseDown', this, 'selectTarget');
-    connect(propertyTree,    'onScroll',    this, 'repositionOpenWidget');
-    connect(resizer,         'onDrag',      this, 'adjustProportions');
-    connect(terminalToggler, 'onMouseDown', this, 'toggleCodeEditor');
-    connect(unknowns,        'trigger',     this, 'filterProperties');
-    connect(internals,       'trigger',     this, 'filterProperties');
-    connect(searchField,     'searchInput', this, 'filterProperties');
+    connect(targetPicker,    "onMouseDown", this, "selectTarget");
+    connect(propertyTree,    "onScroll",    this, "repositionOpenWidget");
+    connect(resizer,         "onDrag",      this, "adjustProportions");
+    connect(terminalToggler, "onMouseDown", this, "toggleCodeEditor");
+    connect(unknowns,        "trigger",     this, "filterProperties");
+    connect(internals,       "trigger",     this, "filterProperties");
+    connect(searchField,     "searchInput", this, "filterProperties");
     connect(this,            "extent",      this, "relayout");
-    connect(thisBindingSelector, 'selection', this, 'bindCodeEditorThis');
-    connect(fixImportButton, 'fire',        codeEditor, 'execCommand', {
+    connect(thisBindingSelector, "selection", this, "bindCodeEditorThis");
+    connect(fixImportButton, "fire",        codeEditor, "execCommand", {
       updater: ($upd) => $upd(
         "[javascript] fix undeclared variables",
         {autoApplyIfSingleChoice: true})});
@@ -1131,8 +1131,8 @@ export default class Inspector extends Morph {
       this.repositionOpenWidget();
     }
     this.lastChange = change;
-    this.lastSubmorphs = printValue(this.targetObject && this.targetObject.submorphs)
-    this.refreshTreeView()
+    this.lastSubmorphs = printValue(this.targetObject && this.targetObject.submorphs);
+    this.refreshTreeView();
   }
 
   refreshTreeView() {
@@ -1144,7 +1144,7 @@ export default class Inspector extends Morph {
         v = this.targetObject[node.key];
       }
       if (!obj.equals(v, node.value) && node.refreshProperty) {
-         node.refreshProperty(v);
+        node.refreshProperty(v);
       }
     });
   }
@@ -1177,7 +1177,7 @@ export default class Inspector extends Morph {
       }
     } catch (e) { this.showError(e); }
 
-    this.startStepping(10,'refreshAllProperties');
+    this.startStepping(10,"refreshAllProperties");
     this.updateInProgress = null;
   }
 
@@ -1197,14 +1197,14 @@ export default class Inspector extends Morph {
           ...config.codeEditor.defaultStyle,
           textString: ""
         },
-        rightArrow = Icon.makeLabel('long-arrow-right').textAndAttributes,
+        rightArrow = Icon.makeLabel("long-arrow-right").textAndAttributes,
         searchBarBounds = rect(0,0,this.width, 30),
         searchField = new SearchField({
           styleClasses: ["idle"],
           name: "searchField",
         });
 
-    rightArrow[1].paddingTop = '2px';
+    rightArrow[1].paddingTop = "2px";
 
     this.submorphs = [
       {
@@ -1214,14 +1214,14 @@ export default class Inspector extends Morph {
           grid: [["searchField", "targetPicker", "internals", "unknowns"]],
           rows: [0, {paddingTop: 5, paddingBottom: 3}],
           columns: [0, {paddingLeft: 5, paddingRight: 5},
-                    1, {fixed: 25},
-                    2, {fixed: 75}, 3, {fixed: 80}]
+            1, {fixed: 25},
+            2, {fixed: 75}, 3, {fixed: 80}]
         }),
         height: 30,
         submorphs: [
           searchField,
-          Icon.makeLabel('crosshairs', {name: 'targetPicker',
-                                        tooltip: 'Change Inspection Target'}),
+          Icon.makeLabel("crosshairs", {name: "targetPicker",
+            tooltip: "Change Inspection Target"}),
           new LabeledCheckBox({label: "Internals", name: "internals"}),
           new LabeledCheckBox({label: "Unknowns", name: "unknowns"})
         ]
@@ -1230,28 +1230,28 @@ export default class Inspector extends Morph {
         name: "propertyTree", ...this.treeStyle,
         treeData: InspectorTreeData.forObject(null)
       }),
-      Icon.makeLabel('keyboard-o', {
-        name: 'terminal toggler',
-        styleClasses: ['toggle', 'inactive']
+      Icon.makeLabel("keyboard-o", {
+        name: "terminal toggler",
+        styleClasses: ["toggle", "inactive"]
       }),
       {name: "resizer"},
       {name: "codeEditor", ...textStyle},
       {
-        name: 'fix import button', type: "button",
+        name: "fix import button", type: "button",
         fill:  Color.black.withA(.5),
         fontColor: Color.white,
         borderWidth: 0,
         label: "fix undeclared vars", extent: pt(100, 20)
       },
       {
-        name: 'this binding selector', type: DropDownList,
+        name: "this binding selector", type: DropDownList,
         fill: Color.black.withA(.5),
         fontColor: Color.white, borderWidth: 0,
-        selection: 'selection',
-        items: [{isListItem: true, value: 'target',
-                 label: ['this ', null, ...rightArrow, ' target', null]},
-               {isListItem: true, value: 'selection',
-                label: ['this ', null, ...rightArrow, ' selection', null]}]
+        selection: "selection",
+        items: [{isListItem: true, value: "target",
+          label: ["this ", null, ...rightArrow, " target", null]},
+        {isListItem: true, value: "selection",
+          label: ["this ", null, ...rightArrow, " selection", null]}]
       }
     ];
   }
@@ -1299,7 +1299,7 @@ export default class Inspector extends Morph {
 
   closeOpenWidget() {
     this.openWidget.close();
-    disconnect(this.getWindow(), 'bringToFront', this.openWidget, 'openInWorld');
+    disconnect(this.getWindow(), "bringToFront", this.openWidget, "openInWorld");
   }
 
   onWidgetOpened({node, widget}) {
@@ -1309,7 +1309,7 @@ export default class Inspector extends Morph {
     this.focusedNode = node;
     this.openWidget = widget;
     once(this.ui.propertyTree, "onMouseDown", this, "closeOpenWidget");
-    connect(this.getWindow(), 'bringToFront', widget, 'openInWorld', {
+    connect(this.getWindow(), "bringToFront", widget, "openInWorld", {
       converter: () => widget.globalPosition, varMapping: {widget}
     });
   }
@@ -1320,7 +1320,7 @@ export default class Inspector extends Morph {
           x = Math.min(pos.x, this.globalBounds().center().x),
           treeBounds = this.ui.propertyTree.globalBounds();
       if (pos.y < treeBounds.top()) {
-        pos = treeBounds.topCenter().withX(x)
+        pos = treeBounds.topCenter().withX(x);
       } else if (treeBounds.bottom() - 20 < pos.y) {
         pos = treeBounds.bottomCenter().addXY(0, -20).withX(x);
       }
@@ -1344,10 +1344,10 @@ export default class Inspector extends Morph {
     layout.disable();
     if (!bool) {
       this.codeEditorHeight = layout.row(3).height;
-      terminalToggler.styleClasses = ['inactive', 'toggle'];
+      terminalToggler.styleClasses = ["inactive", "toggle"];
       layout.row(3).height = layout.row(2).height = 0;
     } else {
-      terminalToggler.styleClasses = ['active', 'toggle'];
+      terminalToggler.styleClasses = ["active", "toggle"];
       layout.row(3).height = this.codeEditorHeight || 180;
       layout.row(2).height = 5;
     }
@@ -1366,14 +1366,14 @@ export default class Inspector extends Morph {
         tree = this.ui.propertyTree;
     if (!this.originalTreeData)
       this.originalTreeData = tree.treeData;
-    disconnect(tree.treeData, 'onWidgetOpened', this, 'onWidgetOpened');
+    disconnect(tree.treeData, "onWidgetOpened", this, "onWidgetOpened");
     this.originalTreeData.filter({
-       maxDepth: 2, showUnknown: this.ui.unknowns.checked,
-       showInternal: this.ui.internals.checked,
-       iterator: (node) => searchField.matches(node.key)
+      maxDepth: 2, showUnknown: this.ui.unknowns.checked,
+      showInternal: this.ui.internals.checked,
+      iterator: (node) => searchField.matches(node.key)
     });
     tree.treeData = this.originalTreeData;
-    connect(tree.treeData, 'onWidgetOpened', this, 'onWidgetOpened');
+    connect(tree.treeData, "onWidgetOpened", this, "onWidgetOpened");
   }
 
   async relayout(animated={}) {
@@ -1389,7 +1389,7 @@ export default class Inspector extends Morph {
         buttonTopRight = codeEditor.bounds().insetBy(5).topRight();
 
     if (animated.duration) {
-      toggler.animate({bottomLeft: togglerBottomLeft, ...animated})
+      toggler.animate({bottomLeft: togglerBottomLeft, ...animated});
       fixImportButton.animate({topRight: buttonTopRight, ...animated});
       thisBindingSelector.animate({topRight: fixImportButton.bottomRight.addXY(0,5), ...animated});
     } else {
