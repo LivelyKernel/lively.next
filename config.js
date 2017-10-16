@@ -286,6 +286,7 @@ var config = {
       {keys: {windows: "Ctrl-,", mac: "Meta-,"}, command: {command: '[IyGotoChar] activate', args: {backwards: true}}},
 
       {keys: {mac: "Alt-Shift-Space|Alt-Space|Meta-Shift-P", win: "Ctrl-Space|Ctrl-Shift-P"}, command: "text completion"},
+      {keys: "÷|Alt-/", command: "text completion first match"},
 
       {keys: "Alt-Q", command: "fit text to column"},
 

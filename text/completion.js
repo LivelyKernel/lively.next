@@ -15,10 +15,10 @@ export class WordCompleter {
     var words = [],
         completions = [],
         lines = textMorph.document.lineStrings,
-        row = textMorph.cursorPosition.row,
+        {row, column} = textMorph.cursorPosition,
         basePriority = 1000;
 
-    for (var i = row; i >= 0; i--)
+    for (var i = row-1; i >= 0; i--)
       for (var word of lines[i].split(/[^0-9a-z@_]+/i)) {
         if (!word || words.includes(word) || word === prefix) continue;
         words.push(word);
@@ -86,11 +86,85 @@ export class CompletionController {
     return {items, maxCol}
   }
 
+  async computeSortedCompletions(prefix, mustStartWithPrefix = false) {
+    let parsedInput = {tokens: [prefix], lowercasedTokens: [prefix], input: prefix},
+        completions = await this.computeCompletions(prefix),
+        completionsFiltered = arr.sortBy(
+          completions.items.filter(item => this.filterFunction(parsedInput, item, mustStartWithPrefix)),
+          item => this.sortFunction(parsedInput, item));
+    return completionsFiltered;    
+  }
+
+  async _printCompletions(prefix) {
+    // for debugging
+    let table = (await this.computeSortedCompletions(prefix)).map(ea => {
+      return {
+        completion: ea.value.completion,
+        priority: ea.value.priority,
+        maxP: ea.value.highestPriority,
+        sortVal: ea._cache[prefix].sortVal,
+        lev: JSON.stringify(ea._cache[prefix].levenshtein),
+      }
+    })
+    return string.printTable(lively.lang.grid.tableFromObjects(table));
+  }
+
   prefix() {
     let m = this.textMorph,
         sel = m.selection,
         roughPrefix = sel.isEmpty() ? m.getLine(sel.lead.row).slice(0, sel.lead.column) : sel.text;
     return roughPrefix.match(/[a-z0-9@_]*$/i)[0];
+  }
+
+  filterFunction(parsedInput, item, mustStartWithPrefix = false) {
+    if (!item._cache) item._cache = {};
+    var {tokens, lowercasedTokens: lTokens, input} = parsedInput,
+        cache = item._cache[input] || (item._cache[input] = {})
+    if (cache.hasOwnProperty("filtered")) return cache.filtered;
+
+    var compl = item.value.completion.replace(/\([^\)]*\)$/, ""),
+        lCompl = compl.toLowerCase();
+
+
+    if (mustStartWithPrefix && tokens[0] && !compl.startsWith(tokens[0])) {
+      return cache.filtered = false;
+    }
+
+    if (lTokens.every(token => lCompl.includes(token))) return true;
+    // "fuzzy" match
+    var levCache = cache.levenshtein || (cache.levenshtein = {}),
+        filtered = mustStartWithPrefix || arr.sum(parsedInput.lowercasedTokens.map(token =>
+          levCache[token] || (levCache[token] = string.levenshtein(lCompl, token)))) <= 3;
+    return cache.filtered = filtered;
+  }
+
+  sortFunction(parsedInput, item) {
+    // Preioritize those completions that are close to the input. We also
+    // want to consider the static priority of the item itself but adjust it
+    // across the priority of all items
+    if (!item._cache) item._cache = {};
+    var cache = item._cache[parsedInput.input] || (item._cache[parsedInput.input] = {})
+    if (cache.hasOwnProperty("sortVal")) return cache.sortVal;
+
+    var cache = item._cache[parsedInput.input] = {},
+        {highestPriority, completion, priority} = item.value ,
+        completion = completion.replace(/\([^\)]*\)$/, "").toLowerCase();
+
+    var boosted = 0;
+    parsedInput.lowercasedTokens.forEach(t => {
+      if (completion.startsWith(t)) boosted += 12;
+      else if (t.length >= 3 && completion.includes(t)) boosted += 5;
+    });
+
+    var n = String(highestPriority).length-2,
+        adjustedPriority = (priority || (boosted ? highestPriority : 0)) / 10**n,
+        base = -adjustedPriority - boosted;
+
+    var levCache = cache.levenshtein || (cache.levenshtein = {}),
+        lev = arr.sum(parsedInput.lowercasedTokens.map(token =>
+          levCache[token] || (levCache[token] = string.levenshtein(completion, token))));
+    if (boosted) lev /= 2;
+    return cache.sortVal = lev + base;
   }
 
   positionForMenu() {
@@ -155,31 +229,8 @@ export class CompletionController {
       border: {width: 0, color: Color.gray},
       inputPadding: Rectangle.inset(0, 2),
 
-      filterFunction: (parsedInput, item) => {
-        var tokens = parsedInput.lowercasedTokens;
-        if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
-        // "fuzzy" match
-        var completion = item.value.completion.replace(/\([^\)]*\)$/, "").toLowerCase();
-        return arr.sum(parsedInput.lowercasedTokens.map(token =>
-                string.levenshtein(completion, token))) <= 3;
-      },
-
-      sortFunction: (parsedInput, item) => {
-        // Preioritize those completions that are close to the input. We also
-        // want to consider the static priority of the item itself but adjust it
-        // across the priority of all items
-        var {highestPriority, completion, priority} = item.value,
-            completion = completion.replace(/\([^\)]*\)$/, "").toLowerCase(),
-            n = String(highestPriority).length-2,
-            adjustedPriority = priority / 10**n,
-            base = -adjustedPriority;
-        parsedInput.lowercasedTokens.forEach(t => {
-          if (completion.startsWith(t)) base -= 12;
-          else if (completion.includes(t)) base -= 5;
-        });
-        return arr.sum(parsedInput.lowercasedTokens.map(token =>
-          string.levenshtein(completion.toLowerCase(), token))) + base
-      }
+      filterFunction: this.filterFunction,
+      sortFunction: this.sortFunction
     }
   }
 
@@ -191,7 +242,7 @@ export class CompletionController {
         prefix = spec.input,
         mask = menu.addMorph({
           name: 'prefix mask',
-          bounds: input.textBounds() 
+          bounds: input.textBounds()
         }, input);
 
     connect(input, 'textString', mask, 'setBounds', {
@@ -219,7 +270,12 @@ export class CompletionController {
     var world = this.textMorph.world();
     world.addMorph(menu);
 
-    list.dropShadow = new ShadowObject({rotation: 45, distance: 2, blur: 2, color: Color.gray.darker()});
+    list.dropShadow = new ShadowObject({
+      rotation: 45,
+      distance: 2,
+      blur: 2,
+      color: Color.gray.darker()
+    });
     list.fill = Color.white.withA(0.85);
     list.addStyleClass("hiddenScrollbar");
 
@@ -237,6 +293,12 @@ export class CompletionController {
       menu.moveBy(pt(2, 0));
     }
     return menu;
+  }
+
+  async autoInsertBestMatchingCompletion(prefix, completionMustStartWithPrefix = true, customInsertionFn) {
+    let [completion] = await this.computeSortedCompletions(prefix, completionMustStartWithPrefix);
+    if (completion)
+      this.insertCompletion(completion.value.completion, prefix, customInsertionFn);
   }
 
   insertCompletion(completion, prefix, customInsertionFn) {
@@ -259,13 +321,28 @@ export class CompletionController {
 }
 
 
-export var completionCommands = [{
-  name: "text completion",
-  handlesCount: true, // to ignore and not open multiple lists
-  multiSelectAction: "single",
-  async exec(morph, opts, count) {
-    var completer = new CompletionController(morph, defaultCompleters);
-    await completer.openCompletionList();
-    return true;
-  }
-}];
+export var completionCommands = [
+  
+  {
+    name: "text completion",
+    handlesCount: true, // to ignore and not open multiple lists
+    multiSelectAction: "single",
+    async exec(morph, opts, count) {
+      var completer = new CompletionController(morph, defaultCompleters);
+      await completer.openCompletionList();
+      return true;
+    }
+  },
+
+  {
+    name: "text completion first match",
+    handlesCount: true, // to ignore and not open multiple lists
+    multiSelectAction: "single",
+    async exec(morph, opts, count) {
+      var completer = new CompletionController(morph, defaultCompleters);
+      await completer.autoInsertBestMatchingCompletion(completer.prefix());
+      return true;
+    }
+  },
+
+];
