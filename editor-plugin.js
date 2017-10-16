@@ -24,7 +24,7 @@ export function guessTextModeName(contentOrEditor, filename = "", hint) {
     if (contentOrEditor.document.stringSize > maxTextSize) return null;
   }
 
-  if (typeof contentOrEditor === "string") peekString = contentOrEditor.slice(0, 1000)
+  if (typeof contentOrEditor === "string") peekString = contentOrEditor.slice(0, 1000);
   else for (let line of contentOrEditor.document.lines) {
     let {stringSize, text} = line, nl = true;
     if (size+stringSize > maxSize) { nl = false; stringSize = maxSize - size; }
@@ -44,7 +44,7 @@ export function guessTextModeName(contentOrEditor, filename = "", hint) {
     if (ext)
       for (let eaExt of ext)
         if (eaExt === fileExt)
-          return mode
+          return mode;
   }
 
   return hint;
@@ -56,7 +56,7 @@ function rangedToken(row, startColumn, endColumn, token, mode) {
     start: {row, column: startColumn},
     end: {row, column: endColumn},
     token, mode
-  }
+  };
 }
 
 
@@ -90,7 +90,7 @@ export default class EditorPlugin {
 
   __deserialize__() { this.mode = this.constructor.mode; }
 
-  get isEditorPlugin() { return true }
+  get isEditorPlugin() { return true; }
 
   get shortName() { return this.constructor.shortName; }
 
@@ -109,7 +109,7 @@ export default class EditorPlugin {
 
   onViewChange() {
     // this.requestHighlight();
-    let {firstVisibleRow, lastVisibleRow} = this.textMorph.viewState
+    let {firstVisibleRow, lastVisibleRow} = this.textMorph.viewState;
     this.requestHighlight();
   }
 
@@ -123,9 +123,9 @@ export default class EditorPlugin {
       else { row = 0; column = 0; }
       if (!validMarker || row < validMarker.row
        || (row === validMarker.row && column < validMarker.column)) {
-         row = Math.max(0, row);
-         this._tokenizerValidBefore = {row, column};
-       }
+        row = Math.max(0, row);
+        this._tokenizerValidBefore = {row, column};
+      }
     }
     this.requestHighlight();
   }
@@ -190,7 +190,7 @@ export default class EditorPlugin {
               toCol = end.column;
           }
           visitFn(name, state, row, fromCol, toCol, stream, line, mode);
-        }
+        };
     visitDocumentTokens(mode, doc, start.row, end.row, null, newLineFn, recordFn);
   }
 
@@ -203,7 +203,7 @@ export default class EditorPlugin {
   }
 
   tokensOfRow(row) {
-    let to = this.textMorph.getLine(row).length
+    let to = this.textMorph.getLine(row).length;
     return this.tokensInRange({start: {row, column: 0}, end: {row: row, column: to}});
   }
 
@@ -228,7 +228,7 @@ export default class EditorPlugin {
   }
 
   toString() {
-    return `${this.constructor.name}(${this.textMorph})`
+    return `${this.constructor.name}(${this.textMorph})`;
   }
 
   // interactive command hooks
@@ -274,7 +274,7 @@ export default class EditorPlugin {
       "\"": "\"",
       "'": "'",
       "`": "`",
-    }
+    };
   }
 
   get closePairs() {
@@ -285,7 +285,7 @@ export default class EditorPlugin {
       "\"": "\"",
       "'": "'",
       "`": "`",
-    }
+    };
   }
 
   cmd_insertstring(string) {
@@ -319,7 +319,7 @@ export default class EditorPlugin {
     // to find the matching opening pair part. If this can be found we do not
     // insert anything, just jump over the char
     if (right in closePairs && string === right) {
-       sel.goRight(1); return true;
+      sel.goRight(1); return true;
     }
 
     // Normal close, not matching, just insert default

@@ -13,7 +13,7 @@ import DiffTokenizer from "./tokenizer.js";
 export default class DiffNavigator {
 
   ensureAST(ed) {
-    return new DiffTokenizer().tokenize(ed.textString).tokens
+    return new DiffTokenizer().tokenize(ed.textString).tokens;
   }
 
   tokenStateAt(ed, pos = ed.cursorPosition) {
@@ -76,7 +76,7 @@ export default class DiffNavigator {
     var target;
     if (!hunkStart) target = patchStart;
     else if (!patchStart) target = hunkStart;
-    else if (hunkStart.row > patchStart.row) target = hunkStart
+    else if (hunkStart.row > patchStart.row) target = hunkStart;
     else target = patchStart;
     ed.cursorPosition = target;
     ed.scrollCursorIntoView();
@@ -124,7 +124,7 @@ export default class DiffNavigator {
       if (tokenStart.hunk === tokenEnd.hunk)
         return patches[tokenStart.patch].hunks[tokenStart.hunk];
 
-    return patches[tokenStart.patch]
+    return patches[tokenStart.patch];
   }
 
   findContainingHunkOrPatchRange(ed, startingRange) {
@@ -137,52 +137,15 @@ export default class DiffNavigator {
   }
 
   expandRegion(ed, src, ast, expandState) {
-
     var newRange = this.findContainingHunkOrPatchRange(ed, ed.selection.range);
-    if (!newRange) return expandState;
-
-    return {
-        range: [
-          ed.positionToIndex(newRange.start),
-          ed.positionToIndex(newRange.end)],
-        prev: expandState
-    }
-
-    var startIdx = expandState.range[0];
-    var endIdx = expandState.range[1];
-    var start = ed.indexToPosition(startIdx);
-    var end = ed.indexToPosition(endIdx);
-    var newExpandRange = [];
-
-    ed.saveExcursion(function(reset) {
-      ed.selection.collapse();
-
-      ed.cursorPosition = start;
-      this.backwardSexp(ed);
-      newExpandRange[0] = ed.positionToIndex(ed.cursorPosition);
-      ed.cursorPosition = end;
-      this.forwardSexp(ed);
-      newExpandRange[1] = ed.positionToIndex(ed.cursorPosition);
-      reset();
-    }.bind(this));
-
-    if (startIdx === endIdx) {
-      // ...
-    } else {
-      if (newExpandRange[0] < startIdx) newExpandRange[1] = endIdx;
-      else if (newExpandRange[1] > endIdx) newExpandRange[0] = startIdx;
-      else return expandState;
-    }
-
-    return {
-        range: newExpandRange,
-        prev: expandState
-    }
-
+    return newRange ? {
+      range: [ed.positionToIndex(newRange.start), ed.positionToIndex(newRange.end)],
+      prev: expandState
+    } : expandState;
   }
 
   contractRegion(ed, src, ast, expandState) {
     return expandState.prev || expandState;
   }
 
-};
+}

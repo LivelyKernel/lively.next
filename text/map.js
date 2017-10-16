@@ -1,7 +1,6 @@
 import { Canvas } from "lively.components/canvas.js";
 import { connect, disconnect } from "lively.bindings";
-import { debounceNamed, throttleNamed } from "lively.lang/function.js";
-import { delay } from "lively.lang/promise.js";
+import { fun, promise } from "lively.lang";
 import { pt, Color } from "lively.graphics";
 
 export default class TextMap extends Canvas {
@@ -72,7 +71,7 @@ export default class TextMap extends Canvas {
     if (this.owner === this.textMorph) {
       this.topRight = this.textMorph.innerBounds().topRight().addPt(this.textMorph.scroll);
     }
-    throttleNamed("update-" + this.id, 100, () => this.update())();
+    fun.throttleNamed("update-" + this.id, 100, () => this.update())();
   }
 
   get measure() {
@@ -166,7 +165,7 @@ export default class TextMap extends Canvas {
     let pos = evt.positionIn(this),
         row = Math.round(pos.y/heightPerLine);
     textMorph.scrollPositionIntoView({row, column: 0});
-    delay(100).then(() => this.update());
+    promise.delay(100).then(() => this.update());
   }
 
   onDrag(evt) {

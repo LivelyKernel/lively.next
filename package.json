@@ -6,41 +6,30 @@
     "url": "https://github.com/LivelyKernel/lively.ide"
   },
   "dependencies": {
-    "lively.morphic": "https://github.com/LivelyKernel/lively.morphic",
-    "lively.components": "https://github.com/LivelyKernel/lively.components",
-    "lively.bindings":   "https://github.com/LivelyKernel/lively.bindings",
-    "lively.graphics":   "https://github.com/LivelyKernel/lively.graphics",
-    "lively.halos":      "https://github.com/LivelyKernel/lively.halos",
-    "lively.lang": "^1.0.0",
-    "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
-    "prismjs": "^1.6.0"
+    "lively-system-interface": "https://github.com/LivelyKernel/lively-system-interface",
+    "lively.2lively":          "https://github.com/LivelyKernel/lively.2lively",
+    "lively.ast":              "https://github.com/LivelyKernel/lively.ast",
+    "lively.bindings":         "https://github.com/LivelyKernel/lively.bindings",
+    "lively.changesets":       "https://github.com/LivelyKernel/lively.changesets",
+    "lively.classes":          "https://github.com/LivelyKernel/lively.classes",
+    "lively.components":       "https://github.com/LivelyKernel/lively.components",
+    "lively.graphics":         "https://github.com/LivelyKernel/lively.graphics",
+    "lively.halos":            "https://github.com/LivelyKernel/lively.halos",
+    "lively.ide":              "https://github.com/LivelyKernel/lively.ide",
+    "lively.modules":          "https://github.com/LivelyKernel/lively.modules",
+    "lively.morphic":          "https://github.com/LivelyKernel/lively.morphic",
+    "lively.notifications":    "https://github.com/LivelyKernel/lively.notifications",
+    "lively.resources":        "https://github.com/LivelyKernel/lively.resources",
+    "lively.shell":            "https://github.com/LivelyKernel/lively.shell",
+    "lively.lang": "^1.0.0"
   },
   "devDependencies": {
-    "babel-plugin-external-helpers": "^6.8.0",
-    "babel-plugin-syntax-object-rest-spread": "^6.13.0",
-    "babel-plugin-transform-async-to-generator": "^6.16.0",
-    "babel-plugin-transform-object-rest-spread": "^6.16.0",
-    "babel-plugin-transform-exponentiation-operator": "6.22.0",
-    "babel-preset-es2015": "^6.16.0",
-    "babel-preset-es2015-rollup": "^1.1.1",
-    "babel-regenerator-runtime": "^6.5.0",
-    "doc-comments": "^0.1.4",
-    "lively.classes": "*",
-    "lively.source-transform": "*",
-    "mocha-es6": "^0.5",
-    "rollup": "^0.36.1",
-    "rollup-plugin-babel": "^2.6.1"
+    "mocha-es6": "^0.5"
   },
   "systemjs": {
-    "main": "index.js",
-    "map": {
-      "prettier": "./js/prettier.min.js",
-      "prism": "prismjs/prism.js",
-      "prism-json": "prismjs/components/prism-json.js"
-    }
+    "map": {"prettier": "./js/prettier.min.js"}
   },
   "scripts": {
-    "build": "node tools/build.js",
     "test": "mocha-es6 tests/{,diff/,js/,shell/}*-test.js"
   }
 }

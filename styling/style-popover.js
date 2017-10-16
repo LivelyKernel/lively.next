@@ -19,7 +19,6 @@ import KeyHandler from "lively.morphic/events/KeyHandler.js";
 import { connect, signal } from "lively.bindings";
 import { arr, string, obj } from "lively.lang";
 import { Color, rect, Rectangle, pt } from "lively.graphics";
-import { range, flatten } from "lively.lang/array.js";
 
 import {
   ModeSelector,
@@ -675,7 +674,7 @@ export class ShadowPopover extends StylePopover {
         autoAssign: false,
         fitToCell: false,
         columns: [0, {paddingLeft: 1}],
-        rows: flatten(range(0, 3).map(i => [i, {paddingBottom: 5}]), 1),
+        rows: arr.flatten(arr.range(0, 3).map(i => [i, {paddingBottom: 5}]), 1),
         grid: [
           ["spreadLabel", null, "spreadSlider"],
           ["distanceLabel", null, "distanceSlider"],

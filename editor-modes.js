@@ -12,19 +12,19 @@ export var modes = modes || {};
 export var passIndent = {}; // return in indent to pass
 
 export function copyState(mode, state) {
-  if (state === true) return state
-  if (mode.copyState) return mode.copyState(state)
-  let nstate = {}
+  if (state === true) return state;
+  if (mode.copyState) return mode.copyState(state);
+  let nstate = {};
   for (let n in state) {
-    let val = state[n]
-    if (val instanceof Array) val = val.concat([])
-    nstate[n] = val
+    let val = state[n];
+    if (val instanceof Array) val = val.concat([]);
+    nstate[n] = val;
   }
-  return nstate
+  return nstate;
 }
 
 export function startState(mode, a1, a2) {
-  return mode.startState ? mode.startState(a1, a2) : true
+  return mode.startState ? mode.startState(a1, a2) : true;
 }
 
 export function defineMode(name, setupFn) {
@@ -35,26 +35,26 @@ export function defineMode(name, setupFn) {
 // string, return a mode config object.
 export function resolveMode(spec) {
   if (typeof spec == "string" && mimeModes.hasOwnProperty(spec)) {
-    spec = mimeModes[spec]
+    spec = mimeModes[spec];
   } else if (spec && typeof spec.name == "string" && mimeModes.hasOwnProperty(spec.name)) {
-    let found = mimeModes[spec.name]
-    if (typeof found == "string") found = {name: found}
+    let found = mimeModes[spec.name];
+    if (typeof found == "string") found = {name: found};
     spec = Object.assign({}, found, spec);
-    spec.name = found.name
+    spec.name = found.name;
   } else if (typeof spec == "string" && /^[\w\-]+\/[\w\-]+\+xml$/.test(spec)) {
-    return resolveMode("application/xml")
+    return resolveMode("application/xml");
   } else if (typeof spec == "string" && /^[\w\-]+\/[\w\-]+\+json$/.test(spec)) {
-    return resolveMode("application/json")
+    return resolveMode("application/json");
   }
-  if (typeof spec == "string") return {name: spec}
-  else return spec || {name: "null"}
+  if (typeof spec == "string") return {name: spec};
+  else return spec || {name: "null"};
 }
 
 export function getMode(editorConfig, spec) {
   spec = resolveMode(spec);
   if (typeof spec === "string") spec = {name: spec};
   if (!spec.name)
-    throw new Error("parserConfig does not have a name of the mode to get")
+    throw new Error("parserConfig does not have a name of the mode to get");
   let mode = modes[spec.name];
   if (!mode)
     throw new Error(`mode ${spec.name} not known`);
@@ -66,14 +66,14 @@ export function getMode(editorConfig, spec) {
 // Given a mode and a state (for that mode), find the inner mode and
 // state at the position that the state refers to.
 export function innerMode(mode, state) {
-  let info
+  let info;
   while (mode.innerMode) {
-    info = mode.innerMode(state)
-    if (!info || info.mode == mode) break
-    state = info.state
-    mode = info.mode
+    info = mode.innerMode(state);
+    if (!info || info.mode == mode) break;
+    state = info.state;
+    mode = info.mode;
   }
-  return info || {mode: mode, state: state}
+  return info || {mode: mode, state: state};
 }
 
 export var mimeModes = {};
@@ -94,7 +94,7 @@ export function indentLines(textMorph, mode, fromRow, toRow, how, aggressive, op
   let validBeforePos = textMorph.editorPlugin._tokenizerValidBefore;
   if (validBeforePos && validBeforePos.row >= fromRow) validBeforePos.row = fromRow-1;
   let {lines, state: _startState} = linesToTokenize(
-                                    textMorph.document, fromRow, toRow, validBeforePos);
+    textMorph.document, fromRow, toRow, validBeforePos);
   if (!lines.length) return false;
   var state = !_startState ? startState(mode) : copyState(mode, _startState);
   for (let i = 0; i < lines.length; i++) {
@@ -115,44 +115,44 @@ function indentLine(textMorph, mode, line, stateBefore, how, aggressive, options
     tabSize: 2,
     ignoreFollowingText: false,
     ...options
-  }
+  };
 
-  if (how == null) how = "add"
+  if (how == null) how = "add";
   if (how == "smart") {
     // Fall back to "prev" when the mode doesn't have an indentation
     // method.
-    if (!mode.indent) how = "prev"
+    if (!mode.indent) how = "prev";
   }
 
   let tabSize = options.tabSize,
       lineText = line.text,
-      curSpace = countColumn(lineText, null, tabSize)
-  if (line.modeState) line.modeState = null
-  let curSpaceString = lineText.match(/^\s*/)[0], indentation
+      curSpace = countColumn(lineText, null, tabSize);
+  if (line.modeState) line.modeState = null;
+  let curSpaceString = lineText.match(/^\s*/)[0], indentation;
   if (!aggressive && !/\S/.test(lineText)) {
-    indentation = 0
-    how = "not"
+    indentation = 0;
+    how = "not";
   } else if (how == "smart") {
-    indentation = mode.indent(stateBefore, options.ignoreFollowingText ? "" : lineText.slice(curSpaceString.length), lineText)
+    indentation = mode.indent(stateBefore, options.ignoreFollowingText ? "" : lineText.slice(curSpaceString.length), lineText);
     if (indentation == passIndent || indentation > 150) {
       if (!aggressive) return;
-      how = "prev"
+      how = "prev";
     }
   }
 
   if (how == "prev") {
     if (line.row > 0) indentation = countColumn(line.prevLine().text, null, tabSize);
-    else indentation = 0
+    else indentation = 0;
   } else if (how == "add") {
-    indentation = curSpace + options.indentUnit
+    indentation = curSpace + options.indentUnit;
   } else if (how == "subtract") {
-    indentation = curSpace - options.indentUnit
+    indentation = curSpace - options.indentUnit;
   } else if (typeof how == "number") {
-    indentation = curSpace + how
+    indentation = curSpace + how;
   }
-  indentation = Math.max(0, indentation)
+  indentation = Math.max(0, indentation);
 
-  let indentString = "", pos = 0
+  let indentString = "", pos = 0;
   if (options.indentWithTabs)
     for (let i = Math.floor(indentation / tabSize); i; --i) {
       pos += tabSize;
@@ -178,13 +178,13 @@ function tokenizeLines(mode, lines, _startState, newLineFn, recordFn) {
   var state = !_startState ? startState(mode) : copyState(mode, _startState);
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i];
-    newLineFn(line)
+    newLineFn(line);
     state = tokenizeLine(mode, line, state, recordFn);
   }
 }
 
 function tokenizeLine(mode, line, state, recordFn) {
-  let {text} = line
+  let {text} = line;
   if (!text) return state;
   let stream = new StringStream(text, 2/*indent...FIXME*/);
   state = line.modeState = typeof mode.copyState === "function"
@@ -209,7 +209,7 @@ function printTokens(tokens) {
         token = tokens[i+2],
         content = tokens[i+3],
         mode = tokens[i+4];
-    report += `${from} => ${to} ${token} ${content} ${mode.name}\n`
+    report += `${from} => ${to} ${token} ${content} ${mode.name}\n`;
   }
   return report;
 }
@@ -230,9 +230,9 @@ export function tokenizeDocument(mode, document, fromRow, toRow, validBeforePos)
   var tokens = [], current, lines,
       newLineFn = line => tokens.push(current = []),
       recordFn = (name, state, from, to, stream, line, mode) =>
-                    current.push(from, to, name,
-                                 stream.current(),
-                                 state.localMode || mode);
+        current.push(from, to, name,
+          stream.current(),
+          state.localMode || mode);
   try {
     lines = visitDocumentTokens(
       mode, document, fromRow, toRow, validBeforePos, newLineFn, recordFn);
@@ -259,7 +259,7 @@ function linesToTokenize(document, fromRow, toRow, validBeforePos) {
   while ((nextLine = line.prevLine()) && linesBefore++ < 50) {
     line = nextLine;
     if (line.modeState) { startState = line.modeState; break; }
-    lines.unshift(line)
+    lines.unshift(line);
   }
 
   // if modeState not found try to find the line with the smallest indent to start
@@ -268,7 +268,7 @@ function linesToTokenize(document, fromRow, toRow, validBeforePos) {
     while ((nextLine = line.prevLine()) && linesBefore++ < 100) {
       line = nextLine;
       if (line.modeState) { startState = line.modeState; break; }
-      lines.unshift(line)
+      lines.unshift(line);
       let indent = lineText.match(/^\s*/)[0].length;
       if (indent === 0) break;
       if (indent < minIndent) {
@@ -301,16 +301,16 @@ function linesToTokenize(document, fromRow, toRow, validBeforePos) {
 // Used mostly to find indentation.
 export function countColumn(string, end, tabSize, startIndex, startValue) {
   if (end == null) {
-    end = string.search(/[^\s\u00a0]/)
-    if (end == -1) end = string.length
+    end = string.search(/[^\s\u00a0]/);
+    if (end == -1) end = string.length;
   }
   for (let i = startIndex || 0, n = startValue || 0;;) {
-    let nextTab = string.indexOf("\t", i)
+    let nextTab = string.indexOf("\t", i);
     if (nextTab < 0 || nextTab >= end)
-      return n + (end - i)
-    n += nextTab - i
-    n += tabSize - (n % tabSize)
-    i = nextTab + 1
+      return n + (end - i);
+    n += nextTab - i;
+    n += tabSize - (n % tabSize);
+    i = nextTab + 1;
   }
 }
 
@@ -326,74 +326,74 @@ class StringStream {
   }
 
   reset(string = "", tabSize = 2) {
-    this.pos = this.start = 0
+    this.pos = this.start = 0;
     this.string = string;
     this.tabSize = tabSize;
-    this.lastColumnPos = this.lastColumnValue = 0
-    this.lineStart = 0
+    this.lastColumnPos = this.lastColumnValue = 0;
+    this.lineStart = 0;
   }
 
-  eol() {return this.pos >= this.string.length}
-  sol() {return this.pos == this.lineStart}
-  peek() {return this.string.charAt(this.pos) || undefined}
+  eol() {return this.pos >= this.string.length;}
+  sol() {return this.pos == this.lineStart;}
+  peek() {return this.string.charAt(this.pos) || undefined;}
   next() {
     if (this.pos < this.string.length)
-      return this.string.charAt(this.pos++)
+      return this.string.charAt(this.pos++);
   }
   eat(match) {
-    let ch = this.string.charAt(this.pos)
-    let ok
-    if (typeof match == "string") ok = ch == match
-    else ok = ch && (match.test ? match.test(ch) : match(ch))
-    if (ok) {++this.pos; return ch}
+    let ch = this.string.charAt(this.pos);
+    let ok;
+    if (typeof match == "string") ok = ch == match;
+    else ok = ch && (match.test ? match.test(ch) : match(ch));
+    if (ok) {++this.pos; return ch;}
   }
   eatWhile(match) {
-    let start = this.pos
+    let start = this.pos;
     while (this.eat(match)){}
-    return this.pos > start
+    return this.pos > start;
   }
   eatSpace() {
-    let start = this.pos
-    while (/[\s\u00a0]/.test(this.string.charAt(this.pos))) ++this.pos
-    return this.pos > start
+    let start = this.pos;
+    while (/[\s\u00a0]/.test(this.string.charAt(this.pos))) ++this.pos;
+    return this.pos > start;
   }
-  skipToEnd() {this.pos = this.string.length}
+  skipToEnd() {this.pos = this.string.length;}
   skipTo(ch) {
-    let found = this.string.indexOf(ch, this.pos)
-    if (found > -1) {this.pos = found; return true}
+    let found = this.string.indexOf(ch, this.pos);
+    if (found > -1) {this.pos = found; return true;}
   }
-  backUp(n) {this.pos -= n}
+  backUp(n) {this.pos -= n;}
   column() {
     if (this.lastColumnPos < this.start) {
-      this.lastColumnValue = countColumn(this.string, this.start, this.tabSize, this.lastColumnPos, this.lastColumnValue)
-      this.lastColumnPos = this.start
+      this.lastColumnValue = countColumn(this.string, this.start, this.tabSize, this.lastColumnPos, this.lastColumnValue);
+      this.lastColumnPos = this.start;
     }
-    return this.lastColumnValue - (this.lineStart ? countColumn(this.string, this.lineStart, this.tabSize) : 0)
+    return this.lastColumnValue - (this.lineStart ? countColumn(this.string, this.lineStart, this.tabSize) : 0);
   }
   indentation() {
     return countColumn(this.string, null, this.tabSize) -
-      (this.lineStart ? countColumn(this.string, this.lineStart, this.tabSize) : 0)
+      (this.lineStart ? countColumn(this.string, this.lineStart, this.tabSize) : 0);
   }
   match(pattern, consume, caseInsensitive) {
     if (typeof pattern == "string") {
-      let cased = str => caseInsensitive ? str.toLowerCase() : str
-      let substr = this.string.substr(this.pos, pattern.length)
+      let cased = str => caseInsensitive ? str.toLowerCase() : str;
+      let substr = this.string.substr(this.pos, pattern.length);
       if (cased(substr) == cased(pattern)) {
-        if (consume !== false) this.pos += pattern.length
-        return true
+        if (consume !== false) this.pos += pattern.length;
+        return true;
       }
     } else {
-      let match = this.string.slice(this.pos).match(pattern)
-      if (match && match.index > 0) return null
-      if (match && consume !== false) this.pos += match[0].length
-      return match
+      let match = this.string.slice(this.pos).match(pattern);
+      if (match && match.index > 0) return null;
+      if (match && consume !== false) this.pos += match[0].length;
+      return match;
     }
   }
-  current(){return this.string.slice(this.start, this.pos)}
+  current(){return this.string.slice(this.start, this.pos);}
   hideFirstChars(n, inner) {
-    this.lineStart += n
-    try { return inner() }
-    finally { this.lineStart -= n }
+    this.lineStart += n;
+    try { return inner(); }
+    finally { this.lineStart -= n; }
   }
 }
 
@@ -461,7 +461,7 @@ export var modeInfo = [
   {name: "Java", mime: "text/x-java", mode: "clike", ext: ["java"]},
   {name: "Java Server Pages", mime: "application/x-jsp", mode: "htmlembedded", ext: ["jsp"], alias: ["jsp"]},
   {name: "JavaScript", mimes: ["text/javascript", "text/ecmascript", "application/javascript", "application/x-javascript", "application/ecmascript"],
-   mode: "javascript", ext: ["js"], alias: ["ecmascript", "js", "node"]},
+    mode: "javascript", ext: ["js"], alias: ["ecmascript", "js", "node"]},
   {name: "JSON", mimes: ["application/json", "application/x-json"], mode: "json", ext: ["json", "map"], alias: ["json5"]},
   {name: "JSON-LD", mime: "application/ld+json", mode: "javascript", ext: ["jsonld"], alias: ["jsonld"]},
   {name: "JSX", mime: "text/jsx", mode: "jsx", ext: ["jsx"]},
@@ -483,7 +483,7 @@ export var modeInfo = [
   {name: "Nginx", mime: "text/x-nginx-conf", mode: "nginx", file: /nginx.*\.conf$/i},
   {name: "NSIS", mime: "text/x-nsis", mode: "nsis", ext: ["nsh", "nsi"]},
   {name: "NTriples", mimes: ["application/n-triples", "application/n-quads", "text/n-triples"],
-   mode: "ntriples", ext: ["nt", "nq"]},
+    mode: "ntriples", ext: ["nt", "nq"]},
   {name: "Objective C", mime: "text/x-objectivec", mode: "clike", ext: ["m", "mm"], alias: ["objective-c", "objc"]},
   {name: "OCaml", mime: "text/x-ocaml", mode: "mllike", ext: ["ml", "mli", "mll", "mly"]},
   {name: "Octave", mime: "text/x-octave", mode: "octave", ext: ["m"]},
@@ -572,8 +572,8 @@ export function findModeByMIME(mime) {
     if (info.mimes) for (var j = 0; j < info.mimes.length; j++)
       if (info.mimes[j] == mime) return info;
   }
-  if (/\+xml$/.test(mime)) return findModeByMIME("application/xml")
-  if (/\+json$/.test(mime)) return findModeByMIME("application/json")
+  if (/\+xml$/.test(mime)) return findModeByMIME("application/xml");
+  if (/\+json$/.test(mime)) return findModeByMIME("application/json");
 }
 
 export function findModeByExtension(ext) {

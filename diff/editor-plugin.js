@@ -7,8 +7,8 @@ import DiffNavigator from "./navigator.js";
 import DiffTokenizer from "./tokenizer.js";
 import { FilePatch } from "./file-patch.js";
 import EditorPlugin from "../editor-plugin.js";
-import { runCommand } from "../shell/shell-interface.js"
-import * as git from "../shell/git.js"
+import { runCommand } from "../shell/shell-interface.js";
+import * as git from "../shell/git.js";
 
 // that.plugins = [new DiffEditorPlugin()]
 
@@ -23,7 +23,7 @@ export default class DiffEditorPlugin extends EditorPlugin {
     this.patches = [];
   }
 
-  get isDiffEditorPlugin() { return true }
+  get isDiffEditorPlugin() { return true; }
 
   get cwd() {
     // a hack for now... get cwd for commands
@@ -129,7 +129,7 @@ export default class DiffEditorPlugin extends EditorPlugin {
     return {
       patch, hunk,
       cursorOffsetInHunk: hunk ? pos.row - hunk.tokens[0].start.row : 0
-    }
+    };
   }
 
   getMenuItems(items) {
@@ -231,7 +231,7 @@ var commands = [
       try {
         await git.commit({cwd: mode.cwd});
         ed.setStatusMessage("Commit successful");
-      } catch (e) { ed.showError(e) }
+      } catch (e) { ed.showError(e); }
       return true;
     }
   },
@@ -343,5 +343,5 @@ async function patchApplySelection(ed, action, options) {
   options = {dryRun: false, ...options};
   var {commands, patches} = await git.applyPatchesFromEditor(action, ed, options);
   ed.setStatusMessage(string.capitalize(action) + "\n" + arr.invoke(patches, "createPatchString").join("\n"));
-  return {commands, patches}
+  return {commands, patches};
 }

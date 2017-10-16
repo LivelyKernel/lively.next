@@ -1,7 +1,7 @@
 /*global inspect*/
 // FIXME proper dependency to lively.ast
 
-import { last } from "lively.lang/array.js";
+import { arr } from "lively.lang";
 
 function nodesAt(index, node, result = []) {
   if (!node) return result;
@@ -28,7 +28,7 @@ function nodesAt(index, node, result = []) {
 }
 
 function expandOnToken(ed, t, prevExpandState) {
-  return {range: [posToIdx(ed, t.start), posToIdx(ed, t.end)], prev: prevExpandState}
+  return {range: [posToIdx(ed, t.start), posToIdx(ed, t.end)], prev: prevExpandState};
 }
 
 function tokenPosition(ed, row, token) {
@@ -36,7 +36,7 @@ function tokenPosition(ed, row, token) {
   return {
     tokenStart: offset + token.start,
     tokenEnd: offset + token.start + token.value.length
-  }
+  };
 }
 
 function posToIdx(ed, pos) { return ed.positionToIndex(pos); }
@@ -54,7 +54,7 @@ export default class HTMLNavigator {
 
   rangesForStartAndEndTag(ed, pos, ast) {
     let index = posToIdx(ed, ed.cursorPosition),
-        node = last(nodesAt(index, ast));
+        node = arr.last(nodesAt(index, ast));
     if (!node) return null;
     let {startTag, endTag} = node.__location;
     if (!startTag) return null;
@@ -67,7 +67,7 @@ export default class HTMLNavigator {
         start: idxToPos(ed, endTag.startOffset),
         end: idxToPos(ed, endTag.endOffset),
       } : null
-    }
+    };
   }
 
   // -=-=-=-=-=-=-
@@ -96,27 +96,27 @@ export default class HTMLNavigator {
 
   _forwardSexp(ed, fromIndex) {
     let ast = ed.editorPlugin.parse(),
-        node = last(nodesAt(fromIndex, ast));
+        node = arr.last(nodesAt(fromIndex, ast));
     return (node && node.__location.endOffset) || fromIndex;
   }
   _backwardSexp(ed, fromIndex) {
     let ast = ed.editorPlugin.parse(),
-        node = last(nodesAt(fromIndex, ast));
+        node = arr.last(nodesAt(fromIndex, ast));
     if (!node) return fromIndex;
     if (node.__location.startOffset === fromIndex)
-      node = last(nodesAt(fromIndex-1, ast));
+      node = arr.last(nodesAt(fromIndex-1, ast));
     return (node && node.__location.startOffset) || fromIndex;
   }
   _forwardDownSexp(ed, fromIndex) {
     let ast = ed.editorPlugin.parse(),
-        node = last(nodesAt(fromIndex, ast));
+        node = arr.last(nodesAt(fromIndex, ast));
     return (node && node.childNodes && node.childNodes[0]
          && node.childNodes[0].__location && node.childNodes[0].__location.startOffset)
         || fromIndex;
   }
   _backwardUpSexp(ed, fromIndex) {
     let ast = ed.editorPlugin.parse(),
-        node = last(nodesAt(fromIndex, ast).slice(0, -1));
+        node = arr.last(nodesAt(fromIndex, ast).slice(0, -1));
     return (node && node.__location.startOffset) || fromIndex;
   }
 
@@ -125,28 +125,28 @@ export default class HTMLNavigator {
   // -=-=-=-=-=-=-
 
   expandRegion(ed, src, ast, expandState) {
-      // use token if no selection
+    // use token if no selection
 
-      var [from, to] = expandState.range,
-          hasSelection = from !== to,
-          p = ed.indexToPosition(from),
-          token = ed.tokenAt(p);
+    var [from, to] = expandState.range,
+        hasSelection = from !== to,
+        p = ed.indexToPosition(from),
+        token = ed.tokenAt(p);
 
-      if (!hasSelection && token && token.start.column + 1 < token.end.column)
-        return expandOnToken(ed, token, expandState);
+    if (!hasSelection && token && token.start.column + 1 < token.end.column)
+      return expandOnToken(ed, token, expandState);
 
-      let containingNode = hasSelection
-        ? lively.lang.arr.intersect(nodesAt(from, ast), nodesAt(to, ast))
-            .reverse()
-            .find(ea => {
-              let l = ea.__location;
-              return l && l.startOffset < from || l.endOffset > to;
-            })
-        : last(nodesAt(from, ast));
-      if (!containingNode) return expandState;
-      let {startOffset, endOffset} = containingNode.__location
+    let containingNode = hasSelection
+      ? lively.lang.arr.intersect(nodesAt(from, ast), nodesAt(to, ast))
+        .reverse()
+        .find(ea => {
+          let l = ea.__location;
+          return l && l.startOffset < from || l.endOffset > to;
+        })
+      : arr.last(nodesAt(from, ast));
+    if (!containingNode) return expandState;
+    let {startOffset, endOffset} = containingNode.__location;
 
-      return {range: [startOffset, endOffset], prev: expandState};
+    return {range: [startOffset, endOffset], prev: expandState};
   }
 
   contractRegion(ed, src, ast, expandState) {

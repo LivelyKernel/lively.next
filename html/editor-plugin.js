@@ -1,5 +1,5 @@
 import EditorPlugin from "../editor-plugin.js";
-import "./mode.js"
+import "./mode.js";
 import { getMode } from "../editor-modes.js";
 import { completers as jsCompleters } from "../js/completers.js";
 import {
@@ -80,7 +80,7 @@ var commands = [
                       || text._iframeMorph;
       if (iframeMorph && !iframeMorph.isIFrameMorph) iframeMorph = null;
       if (!iframeMorph || !iframeMorph.world()) {
-        iframeMorph = new IFrameMorph()
+        iframeMorph = new IFrameMorph();
         iframeMorph.openInWindow({title: "rendered HTML"});
         if (win && win.isHTMLWorkspace) win.target = iframeMorph;
         else text._iframeMorph = iframeMorph;
@@ -120,13 +120,13 @@ var commands = [
                 preview,
                 {startOffset, endOffset} = n.__location || {};
             if (typeof startOffset !== "number") {
-              preview = " [virtual]"
+              preview = " [virtual]";
             } else {
               if (startOffset <= currentIndex &&
                   currentIndex <= endOffset) currentNodeIndex = counter;
               preview = n.nodeName === "#text"
                 ? n.value.trim() || "<empty>"
-              : src.slice(startOffset, endOffset).replace(/\n/g, "");
+                : src.slice(startOffset, endOffset).replace(/\n/g, "");
             }
             counter++;
 
@@ -148,7 +148,7 @@ var commands = [
                   maxWidth: 180
                 }
               ]
-            }
+            };
           }), choice;
 
       await editor.saveExcursion(async () => {
@@ -157,11 +157,11 @@ var commands = [
             onSelection: node => {
               if (!node.__location) return;
               let {startOffset, endOffset} = node.__location;
-              editor.removeMarker('selected tag');
+              editor.removeMarker("selected tag");
               editor.flash({
                 start: editor.indexToPosition(startOffset),
                 end: editor.indexToPosition(endOffset),
-              }, {id: 'selected tag', time: 1000, fill: Color.rgb(200,235,255)});
+              }, {id: "selected tag", time: 1000, fill: Color.rgb(200,235,255)});
             },
             preselect: currentNodeIndex,
             historyId: "lively.morphic-ide-html-select-html-node"
@@ -183,7 +183,7 @@ var commands = [
         editor.selection = {
           end: editor.indexToPosition(startOffset),
           start: editor.indexToPosition(endOffset),
-        }
+        };
         editor.scrollCursorIntoView();
       }
       return choice;
@@ -202,7 +202,7 @@ var commands = [
     }
 
   }
-]
+];
 
 export default class HTMLEditorPlugin extends EditorPlugin {
 
@@ -211,13 +211,13 @@ export default class HTMLEditorPlugin extends EditorPlugin {
   static get mode() { return getMode({}, {name: "htmlmixed"}); }
 
   constructor() {
-    super()
+    super();
     this.checker = new HTMLChecker();
-    this.evalEnvironment = {format: "esm", targetModule: "lively://lively.next-html-workspace", context: null}
+    this.evalEnvironment = {format: "esm", targetModule: "lively://lively.next-html-workspace", context: null};
   }
 
-  get isHTMLEditorPlugin() { return true }
-  get isJSEditorPlugin() { return true }
+  get isHTMLEditorPlugin() { return true; }
+  get isJSEditorPlugin() { return true; }
 
   cmd_insertstring(string) {
     let {textMorph: morph} = this,
@@ -229,7 +229,7 @@ export default class HTMLEditorPlugin extends EditorPlugin {
       let pos = {...morph.cursorPosition};
       if (!handled) {
         morph.insertText(">", pos);
-        pos.column++
+        pos.column++;
         handled = true;
       }
 
@@ -252,8 +252,8 @@ export default class HTMLEditorPlugin extends EditorPlugin {
       let {row, column} = morph.cursorPosition,
           lineString = morph.getLine(row);
       if ("<>" === lineString.slice(column-1, column+1)) {
-        morph.insertText("</>", {row, column: column+1})
-        morph.selection.addRange({start: {row, column: column+3}, end: {row, column: column+3}})
+        morph.insertText("</>", {row, column: column+1});
+        morph.selection.addRange({start: {row, column: column+3}, end: {row, column: column+3}});
         morph.selection.selections = lively.lang.arr.rotate(morph.selection.selections, -1);
       }
     }
@@ -262,14 +262,14 @@ export default class HTMLEditorPlugin extends EditorPlugin {
   }
 
   get openPairs() {
-    return {...super.openPairs, "<": ">"}
+    return {...super.openPairs, "<": ">"};
   }
 
   get closePairs() {
-    return {...super.closePairs, ">": "<"}
+    return {...super.closePairs, ">": "<"};
   }
 
-  getNavigator(otherCommands) { return new HTMLNavigator(); }
+  getNavigator() { return new HTMLNavigator(); }
 
   // getSnippets() {
   //   return jsSnippets.map(([trigger, expansion]) =>

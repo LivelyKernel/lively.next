@@ -16,11 +16,11 @@ export default class DiffTokenizer {
         string: patch.headerLines.join("\n") + "\n",
         type: "diff-file-header",
         start, end
-      }
+      };
       tokens.push(token); patch.tokens = [token];
       start = end;
 
-      let hunkI = 0
+      let hunkI = 0;
       for (let hunk of patch.hunks) {
         // hunk header
         end = {column: 0, row: start.row + 1};
@@ -29,8 +29,8 @@ export default class DiffTokenizer {
           string: hunk.header + "\n",
           type: "diff-hunk-header",
           start, end
-        }
-        tokens.push(token); patch.tokens.push(token); hunk.tokens = [token]
+        };
+        tokens.push(token); patch.tokens.push(token); hunk.tokens = [token];
         start = end;
 
         // hunk lines
@@ -42,11 +42,11 @@ export default class DiffTokenizer {
             string: line + "\n",
             type,
             start, end
-          }
+          };
           tokens.push(token); patch.tokens.push(token); hunk.tokens.push(token);
           start = end;
         }
-        hunkI++
+        hunkI++;
       }
       patchI++;
     }

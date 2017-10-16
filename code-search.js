@@ -1,7 +1,7 @@
-import { fun, arr, obj, string } from 'lively.lang';
+import { fun, arr, obj, string } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { config, show } from "lively.morphic";
-import { connect, noUpdate } from 'lively.bindings';
+import { connect, noUpdate } from "lively.bindings";
 import { localInterface } from "lively-system-interface/index.js";
 import {
   LoadingIndicator,
@@ -14,7 +14,7 @@ import { SnapshotEditor } from "lively.morphic/partsbin.js";
 
 export async function doSearch(
   livelySystem, searchTerm,
-  excludedModules = [/systemjs-plugin-babel|.*\.min\.js|.*browserified[^\/]+js/],
+  excludedModules = [/systemjs-plugin-babel|.*\.min\.js|.*browserified[^/]+js/],
   excludedPackages = [],
   includeUnloaded = true,
   caseSensitive = false
@@ -24,7 +24,7 @@ export async function doSearch(
   var searchResult = await livelySystem.searchInAllPackages(
     searchTerm, {caseSensitive, excludedModules, excludedPackages, includeUnloaded});
 
-  var [errors, found] = arr.partition(searchResult, ({isError}) => isError)
+  var [errors, found] = arr.partition(searchResult, ({isError}) => isError);
 
   if (errors.length) {
     show(`Errors in search results:\n${arr.pluck(errors, "value").join("\n")}`);
@@ -38,7 +38,7 @@ export async function doSearch(
       value: ea,
       get string() {
         return nameAndLine + ea.lineString;
-             //+ string.pad(, result.maxModuleNameLength - nameAndLine.length, true);
+        //+ string.pad(, result.maxModuleNameLength - nameAndLine.length, true);
       }
     });
     return result;
@@ -56,7 +56,7 @@ export class CodeSearcher extends FilterableList {
           extent: searcher.extent.addXY(0, 25),
           targetMorph: searcher
         });
-    connect(win, 'windowActivated', searcher, 'onWindowActivated');
+    connect(win, "windowActivated", searcher, "onWindowActivated");
     return win;
   }
 
@@ -78,7 +78,7 @@ export class CodeSearcher extends FilterableList {
           this.submorphs = [
             {
               type: "input", name: "input",
-              placeholder: 'Search Source Files',
+              placeholder: "Search Source Files",
               fontColor: Color.gray.darker(),
               defaultTextStyle: {fontSize: 14},
               autofit: true,
@@ -130,7 +130,7 @@ export class CodeSearcher extends FilterableList {
       currentSearchTerm: {defaultValue: ""},
       currentFilters: {defaultValue: ""},
 
-    }
+    };
   }
 
   constructor(props = {}) {
@@ -142,7 +142,7 @@ export class CodeSearcher extends FilterableList {
   reset() {
     this.currentSearchTerm = "";
     connect(this, "accepted", this, "openSelection");
-    connect(this.get("search chooser"), 'selection', this, 'searchAgain');
+    connect(this.get("search chooser"), "selection", this, "searchAgain");
     this.get("list").items = [];
     this.get("input").input = "";
     this.get("search chooser").items = [
@@ -172,7 +172,7 @@ export class CodeSearcher extends FilterableList {
   }
 
   updateFilter() {
-    var searchInput = this.get('input').textString;
+    var searchInput = this.get("input").textString;
     if (searchInput.length <= 2) return;
 
     this.ensureIndicator("input...");
@@ -232,7 +232,7 @@ export class CodeSearcher extends FilterableList {
           let inFile = ea.file.path.slice(1).reduce((url, ea) => string.joinPath(url, ea));
           if (ea.lineString >= 300) ea.lineString = string.truncate(ea.lineString, 300);
           ea.isMorphicDBFind = true;
-          return {isListItem: true, string: `[${ea.commit.type}/${ea.commit.name}] ${inFile}:${ea.line} ${ea.lineString}`, value: ea}
+          return {isListItem: true, string: `[${ea.commit.type}/${ea.commit.name}] ${inFile}:${ea.line} ${ea.lineString}`, value: ea};
         });
       }
 
@@ -244,8 +244,8 @@ export class CodeSearcher extends FilterableList {
     if (newSearch || this.currentFilters !== filterTokens.join("+")) {
       this.currentFilters = filterTokens.join("+");
       var filteredItems = this.items.filter(item =>
-        filterTokens.every(token => item.string.toLowerCase().includes(token)))
-      this.get('list').items = filteredItems;
+        filterTokens.every(token => item.string.toLowerCase().includes(token)));
+      this.get("list").items = filteredItems;
     }
   }
 
@@ -264,10 +264,10 @@ export class CodeSearcher extends FilterableList {
         browseSpec = {
           packageName, moduleName: pathInPackage,
           textPosition: {column, row: line-1}
-        },
-        browser = await Browser.browse(
-          browseSpec, browserOrProps || {},
-          browser ? browser.systemInterface : this.systemInterface);
+        };
+    browser = await Browser.browse(
+      browseSpec, browserOrProps || {},
+      browser ? browser.systemInterface : this.systemInterface);
     browser.associatedSearchPanel = this;
     return browser.activate();
   }

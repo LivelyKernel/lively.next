@@ -1,11 +1,9 @@
 /*global Map, Power4*/
 import { Color, rect, pt } from "lively.graphics";
 
-import { last } from "lively.lang/array.js";
 import { obj, arr, promise, string } from "lively.lang";
 import { connect, signal, disconnect, once } from "lively.bindings";
 import { Morph, GridLayout, HorizontalLayout, morph, CustomLayout, Label, Icon, StyleSheet, config } from "lively.morphic";
-import { isBoolean, isString, isNumber } from "lively.lang/object.js";
 import { Tree, DropDownList, TreeData } from "lively.components";
 import { DropDownSelector, SearchField, LabeledCheckBox } from "lively.components/widgets.js";
 import { MorphHighlighter, InteractiveMorphSelector } from "lively.halos/morph.js";
@@ -526,11 +524,11 @@ export class PropertyControl extends DraggableTreeLabel {
       return 'Color'
     } else if (value && value.isPoint) {
       return 'Point'
-    } else if (isBoolean(value)) {
+    } else if (obj.isBoolean(value)) {
       return 'Boolean'
-    } else if (isNumber(value)) {
+    } else if (obj.isNumber(value)) {
       return 'Number'
-    } else if (isString(value)) {
+    } else if (obj.isString(value)) {
       return 'String'
     } else if (value && value.isRectangle) {
       return 'Rectangle'
@@ -1126,7 +1124,7 @@ export default class Inspector extends Morph {
       this.lastStyleSheetProps = this.targetObject._styleSheetProps;
       return;
     }
-    let change = last(this.targetObject.env.changeManager.changesFor(this.targetObject));
+    let change = arr.last(this.targetObject.env.changeManager.changesFor(this.targetObject));
     if (change == this.lastChange && this.lastSubmorphs == printValue(this.targetObject && this.targetObject.submorphs))
       return;
     if (this.focusedNode && this.focusedNode.keyString == change.prop) {

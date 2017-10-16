@@ -58,58 +58,58 @@ export class FilePatch {
     return Object.assign(new this.constructor(), this);
   }
 
-  get isFilePatch() { return true }
+  get isFilePatch() { return true; }
 
   read(patchStringOrLines) {
-      // simple parser for unified patch format;
+    // simple parser for unified patch format;
 
-      this.lines = Array.isArray(patchStringOrLines) ?
-        patchStringOrLines : string.lines(patchStringOrLines);
+    this.lines = Array.isArray(patchStringOrLines) ?
+      patchStringOrLines : string.lines(patchStringOrLines);
 
-      var lines = this.lines.slice(),
-          line, hunks = this.hunks,
-          pathOriginal, pathChanged;
-      if (lines[lines.length-1] === '') lines.pop();
+    var lines = this.lines.slice(),
+        line, hunks = this.hunks,
+        pathOriginal, pathChanged;
+    if (lines[lines.length-1] === "") lines.pop();
 
-      // 1: parse header
-      // line 0 like: "diff --git a/test.txt b/test.txt\n". Also support
-      // directly parse hunks if we see no header.
+    // 1: parse header
+    // line 0 like: "diff --git a/test.txt b/test.txt\n". Also support
+    // directly parse hunks if we see no header.
 
-      var headerLines = this.headerLines = arr.takeWhile(
-        lines, (line) => !line.startsWith("---"));
+    var headerLines = this.headerLines = arr.takeWhile(
+      lines, (line) => !line.startsWith("---"));
 
-      if (headerLines.length && !headerLines[0].match(/^index/i))
-        this.command = headerLines[0];
+    if (headerLines.length && !headerLines[0].match(/^index/i))
+      this.command = headerLines[0];
 
-      lines = lines.slice(headerLines.length);
-      var [headerFileA, headerFileB] = lines; // extract files from first hunk
+    lines = lines.slice(headerLines.length);
+    var [headerFileA, headerFileB] = lines; // extract files from first hunk
 
-      if (headerFileA && headerFileA.startsWith("---")) {
-        var [_, name] = headerFileA.match(/^---\s*([^\s]+)/);
-        this.pathOriginal = name;
-        this.fileNameA = name.replace(/^a\//, "");
-        headerLines.push(headerFileA)
-      }
+    if (headerFileA && headerFileA.startsWith("---")) {
+      var [_, name] = headerFileA.match(/^---\s*([^\s]+)/);
+      this.pathOriginal = name;
+      this.fileNameA = name.replace(/^a\//, "");
+      headerLines.push(headerFileA);
+    }
 
-      if (headerFileB && headerFileB.startsWith("+++")) {
-        var [_, name] = headerFileB.match(/^\+\+\+\s*([^\s]+)/);
-        this.pathChanged = name;
-        this.fileNameB = name.replace(/^b\//, "");
-        headerLines.push(headerFileB);
-      }
+    if (headerFileB && headerFileB.startsWith("+++")) {
+      var [_, name] = headerFileB.match(/^\+\+\+\s*([^\s]+)/);
+      this.pathChanged = name;
+      this.fileNameB = name.replace(/^b\//, "");
+      headerLines.push(headerFileB);
+    }
 
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // parse hunks
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // parse hunks
 
-      while (lines.length > 0) {
-        var hunk = FilePatchHunk.read(lines, pathOriginal, pathChanged);
-        pathOriginal = hunk.pathOriginal;
-        pathChanged = hunk.pathChanged;
-        hunk.patch = this;
-        hunks.push(hunk);
-      }
+    while (lines.length > 0) {
+      var hunk = FilePatchHunk.read(lines, pathOriginal, pathChanged);
+      pathOriginal = hunk.pathOriginal;
+      pathChanged = hunk.pathChanged;
+      hunk.patch = this;
+      hunks.push(hunk);
+    }
 
-      return this;
+    return this;
   }
 
   reverse() {
@@ -117,13 +117,13 @@ export class FilePatch {
   }
 
   createPatchStringHeader(reverse) {
-    return arr.takeWhile(this.headerLines, line => !line.startsWith("---")).join('\n');
+    return arr.takeWhile(this.headerLines, line => !line.startsWith("---")).join("\n");
   }
 
   createPatchString(reverse) {
-    return this.createPatchStringHeader(reverse) + '\n'
-         + this.hunks.map((hunk, i) => hunk.createPatchString(reverse, i === 0)).join('\n')
-         + "\n"
+    return this.createPatchStringHeader(reverse) + "\n"
+         + this.hunks.map((hunk, i) => hunk.createPatchString(reverse, i === 0)).join("\n")
+         + "\n";
   }
 
   createPatchStringFromRows(startRow, endRow, forReverseApply) {
@@ -143,7 +143,7 @@ export class FilePatch {
           return patch;
         }).filter(Boolean);
     return hunkPatches.length === 0 ? null :
-      this.createPatchStringHeader() + '\n' + hunkPatches.join('\n') + '\n';
+      this.createPatchStringHeader() + "\n" + hunkPatches.join("\n") + "\n";
   }
 
   changesByLines() {
@@ -159,19 +159,19 @@ export class FilePatch {
       var startAddition = change.lineNoAdded-1,
           removed = change.removed.replace(/\n$/, ""),
           noLinesRemoved = removed ? string.lines(removed).length : 0,
-          reallyRemoved = patchedLines.slice(startAddition, startAddition+noLinesRemoved).join('\n');
+          reallyRemoved = patchedLines.slice(startAddition, startAddition+noLinesRemoved).join("\n");
 
       if (removed !== reallyRemoved) {
-          var msg = string.format("Change %s not matching: Expected \"%s\", got \"%s\"",
-                                   i+1, removed, reallyRemoved);
-          throw new Error(msg);
+        var msg = string.format("Change %s not matching: Expected \"%s\", got \"%s\"",
+          i+1, removed, reallyRemoved);
+        throw new Error(msg);
       }
 
       var added = change.added ? change.added : "",
           endAddition = startAddition + noLinesRemoved,
           result = patchedLines.slice(0, startAddition)
-                      .concat(added ? string.lines(added.replace(/\n$/, "")) : [])
-                      .concat(patchedLines.slice(endAddition));
+            .concat(added ? string.lines(added.replace(/\n$/, "")) : [])
+            .concat(patchedLines.slice(endAddition));
 
       // show("%o", result.slice(startAddition-10, endAddition+10));
       return result;
@@ -209,7 +209,7 @@ export class FilePatchHunk {
     this.lines = [];
   }
 
-  get isFilePatchHunk() { return true }
+  get isFilePatchHunk() { return true; }
 
   read(lines, optPathOriginal, optPathChanged) {
     this.pathOriginal = optPathOriginal || "";
@@ -235,7 +235,7 @@ export class FilePatchHunk {
 
     // position in file, like @@ -781,7 +781,7 @@ ...
     var headerMatch = line.match(/^@@\s*-([0-9]+),?([0-9]*)\s*\+([0-9]+),?([0-9]*)\s*@@/);
-    console.assert(headerMatch, 'hunk header ' + line);
+    console.assert(headerMatch, "hunk header " + line);
     this.header = headerMatch[0];
     this.originalLine = Number(headerMatch[1]);
     this.originalLength = Number(headerMatch[2]);
@@ -292,38 +292,38 @@ export class FilePatchHunk {
         header, copyOp = forReverseApply ? "+" : "-";
 
     var selection = this.lines.reduce(function(akk, line, i) {
-        if (akk.atEnd) return akk;
-        i++; // compensate for header
-        if (i < startRow) {
-            switch (line[0]) {
-                case    '+':
-                case    '-': origLine = origLine + akk.lines.length;
-                             changedLine = changedLine + akk.lines.length;
-                             changedLength = 0; origLength = 0;
-                             akk.lines = [];
-                             return akk;
-                case    ' ': changedLength++; origLength++; break;
-            }
-        } else if (i > endRow) {
-            switch (line[0]) {
-                case    ' ': changedLength++; origLength++; break;
-                default    : akk.atEnd = true; return akk;
-            }
-        } else {
-            switch (line[0]) {
-                case ' ': changedLength++; origLength++; break;
-                case '-': origLength++; break;
-                case '+': changedLength++; break;
-            }
+      if (akk.atEnd) return akk;
+      i++; // compensate for header
+      if (i < startRow) {
+        switch (line[0]) {
+        case    "+":
+        case    "-": origLine = origLine + akk.lines.length;
+          changedLine = changedLine + akk.lines.length;
+          changedLength = 0; origLength = 0;
+          akk.lines = [];
+          return akk;
+        case    " ": changedLength++; origLength++; break;
         }
-        if (forReverseApply) {
-          switch (line[0]) {
-              case '-': line = "+" + line.slice(1); break;
-              case '+': line = "-" + line.slice(1); break;
-          }
+      } else if (i > endRow) {
+        switch (line[0]) {
+        case    " ": changedLength++; origLength++; break;
+        default    : akk.atEnd = true; return akk;
         }
-        akk.lines.push(line);
-        return akk;
+      } else {
+        switch (line[0]) {
+        case " ": changedLength++; origLength++; break;
+        case "-": origLength++; break;
+        case "+": changedLength++; break;
+        }
+      }
+      if (forReverseApply) {
+        switch (line[0]) {
+        case "-": line = "+" + line.slice(1); break;
+        case "+": line = "-" + line.slice(1); break;
+        }
+      }
+      akk.lines.push(line);
+      return akk;
     }, {atEnd: false, lines: []});
 
     var lines = selection.lines;
@@ -336,9 +336,9 @@ export class FilePatchHunk {
                  + "+++ " + (forReverseApply ? this.pathOriginal : this.pathChanged)
                  + "\n";
     }
-    header = string.format('%s@@ -%s,%s +%s,%s @@',
-        fileHeader, origLine, origLength, changedLine, changedLength);
-    return [header].concat(lines).join('\n');
+    header = string.format("%s@@ -%s,%s +%s,%s @@",
+      fileHeader, origLine, origLength, changedLine, changedLength);
+    return [header].concat(lines).join("\n");
   }
 
   changesByLines() {
@@ -348,23 +348,23 @@ export class FilePatchHunk {
         lineDiff = 0,
         result =  this.lines.reduce((result, line, i) => {
           if (line[0] === " ") {
-              if (result.current) {
-                result.changes.push(result.current);
-                result.current = null;
-              }
-              return result;
-          };
+            if (result.current) {
+              result.changes.push(result.current);
+              result.current = null;
+            }
+            return result;
+          }
 
           var change = result.current
                    || (result.current = {
-                        lineNoAdded: baseLineAdded+i+lineDiff,
-                        lineNoRemoved: baseLineRemoved+i+lineDiff,
-                        added: "", removed: ""});
+                     lineNoAdded: baseLineAdded+i+lineDiff,
+                     lineNoRemoved: baseLineRemoved+i+lineDiff,
+                     added: "", removed: ""});
 
           if (line[0] === "+") { change.added += line.slice(1) + "\n"; lineDiff++; }
           else if (line[0] === "-") { change.removed += line.slice(1) + "\n"; lineDiff--; }
           return result;
-      }, {changes: [], current: null});
+        }, {changes: [], current: null});
     if (result.current) result.changes.push(result.current);
     return result.changes;
   }
@@ -374,7 +374,7 @@ export class FilePatchHunk {
     // file does it translate?
     return offset <= 0 ? this.changedLine -1 : this.lines.slice(0, offset).reduce((lineNo, line) => {
       var c = line[0];
-      return (c === '+' || c === ' ') ? lineNo + 1 : lineNo;
+      return (c === "+" || c === " ") ? lineNo + 1 : lineNo;
     }, this.changedLine-2);
   }
 
@@ -391,7 +391,7 @@ export class FilePatchHunk {
       this.originalLine + "," + this.originalLength;
     var add = reverse ?
       this.originalLine + "," + this.originalLength :
-      this.changedLine + "," + this.changedLength
+      this.changedLine + "," + this.changedLength;
     return string.format("%s@@ -%s +%s @@", fileHeader, sub, add);
   }
 
@@ -399,9 +399,9 @@ export class FilePatchHunk {
     return (reverse ?
       this.lines.map(function(line) {
         switch (line[0]) {
-          case ' ': return line;
-          case '+': return "-" + line.slice(1);
-          case '-': return "+" + line.slice(1);
+        case " ": return line;
+        case "+": return "-" + line.slice(1);
+        case "-": return "+" + line.slice(1);
         }
       }) : this.lines).join("\n");
   }
