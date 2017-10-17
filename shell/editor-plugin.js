@@ -44,7 +44,6 @@ export default class ShellEditorPlugin extends EditorPlugin {
 
   async changeCwdInteractively() {
     var cwd = this.cwd,
-        dirs = this.knownCwds,
         dirs = arr.uniq([cwd].concat(defaultDir, ...this.knownCwds)).filter(Boolean),
         {status, list: newDirs, selections: [choice]} = await this.textMorph.world().editListPrompt(
           "Choose working directory:", dirs, {

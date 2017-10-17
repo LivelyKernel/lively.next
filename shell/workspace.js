@@ -54,7 +54,7 @@ export default class Workspace extends Window {
     super(props);
     var btn = this.addMorph(this.ensureCwdButton(this.shellPlugin.cwd));
     connect(this.shellPlugin, "cwd", btn, "label",
-      {converter: cwd => string.truncateLeft(cwd, 50)});
+      {converter: cwd => lively.lang.string.truncateLeft(cwd, 50)});
   }
 
   onLoad(_, snapshot) {
