@@ -1,6 +1,6 @@
 import { pt, Point, Color, Rectangle } from "lively.graphics";
-import { config, morph } from "../../index.js";
-import Window from "lively.components/window.js";
+import { config, morph } from "lively.morphic";
+import { Window } from "lively.components";
 
 export default class Workspace extends Window {
 

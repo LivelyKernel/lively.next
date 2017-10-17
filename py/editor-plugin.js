@@ -1,6 +1,6 @@
 /*global System*/
-import EditorPlugin from "../editor-plugin.js";
 import "./mode.js"
+import EditorPlugin from "../editor-plugin.js";
 import { getMode } from "../editor-modes.js";
 import { PyEvaluator } from "./eval.js";
 import { completers } from "./completers.js";

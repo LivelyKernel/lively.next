@@ -1,5 +1,4 @@
 /*global System*/
-// import { string, arr } from "lively.lang";
 
 export var commands = [
 
