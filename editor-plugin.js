@@ -254,18 +254,6 @@ export default class EditorPlugin {
     return true;
   }
 
-  cmd_delete_backwards() {
-    var {textMorph: morph, openPairs} = this,
-        sel = morph.selection,
-        line = morph.getLine(sel.end.row),
-        left = line[sel.end.column-1],
-        right = line[sel.end.column];
-    if (sel.isEmpty() && left in openPairs && right === openPairs[left]) {
-      sel.growRight(1); sel.growLeft(1);
-    }
-    return false;
-  }
-
   get openPairs() {
     return {
       "{": "}",
@@ -288,13 +276,25 @@ export default class EditorPlugin {
     };
   }
 
+  cmd_delete_backwards() {
+    var {textMorph: morph, openPairs} = this,
+        sel = morph.selection,
+        line = morph.getLine(sel.end.row),
+        left = line[sel.end.column-1],
+        right = line[sel.end.column];
+    if (morph.autoInsertPairs && sel.isEmpty() && left in openPairs && right === openPairs[left]) {
+      sel.growRight(1); sel.growLeft(1);
+    }
+    return false;
+  }
+
   cmd_insertstring(string) {
     var {openPairs, closePairs, textMorph: morph} = this,
         sel = morph.selection,
         sels = sel.isMultiSelection ? sel.selections : [sel],
         offsetColumn = 0,
-        isOpen = string in openPairs,
-        isClose = string in closePairs;
+        isOpen = morph.autoInsertPairs && string in openPairs,
+        isClose = morph.autoInsertPairs && string in closePairs;
 
     if (!isOpen && !isClose) return false;
 
