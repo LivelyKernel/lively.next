@@ -12,7 +12,7 @@ import {
   astEditorCommands
 } from "./commands.js";
 
-import EditorPlugin from "../editor-plugin.js";
+import { CodeMirrorEnabledEditorPlugin } from "../editor-plugin.js";
 import { Snippet } from "../text/snippets.js";
 
 import {
@@ -22,14 +22,8 @@ import {
 } from "lively-system-interface";
 
 import "./mode.js";
-import { getMode } from "../editor-modes.js";
 
-
-export default class JavaScriptEditorPlugin extends EditorPlugin {
-
-  static get shortName() { return "js"; }
-
-  static get mode() { return getMode({}, {name: "javascript"}); }
+export default class JavaScriptEditorPlugin extends CodeMirrorEnabledEditorPlugin {
 
   constructor() {
     super();
@@ -38,6 +32,8 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
   }
 
   get isJSEditorPlugin() { return true; }
+  get shortName() { return "js"; }
+  get longName() { return "javascript"; }
 
   attach(editor) {
     super.attach(editor);

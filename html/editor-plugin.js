@@ -1,4 +1,4 @@
-import EditorPlugin from "../editor-plugin.js";
+import { CodeMirrorEnabledEditorPlugin } from "../editor-plugin.js";
 import "./mode.js";
 import { getMode } from "../editor-modes.js";
 import { completers as jsCompleters } from "../js/completers.js";
@@ -204,11 +204,7 @@ var commands = [
   }
 ];
 
-export default class HTMLEditorPlugin extends EditorPlugin {
-
-  static get shortName() { return "html"; }
-
-  static get mode() { return getMode({}, {name: "htmlmixed"}); }
+export default class HTMLEditorPlugin extends CodeMirrorEnabledEditorPlugin {
 
   constructor() {
     super();
@@ -218,6 +214,8 @@ export default class HTMLEditorPlugin extends EditorPlugin {
 
   get isHTMLEditorPlugin() { return true; }
   get isJSEditorPlugin() { return true; }
+  get shortName() { return "html"; }
+  get longName() { return "htmlmixed"; }
 
   cmd_insertstring(string) {
     let {textMorph: morph} = this,

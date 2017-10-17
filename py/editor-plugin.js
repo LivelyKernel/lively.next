@@ -1,25 +1,24 @@
 /*global System*/
 import "./mode.js"
-import EditorPlugin from "../editor-plugin.js";
-import { getMode } from "../editor-modes.js";
+import { CodeMirrorEnabledEditorPlugin } from "../editor-plugin.js";
 import { PyEvaluator } from "./eval.js";
 import { completers } from "./completers.js";
 import { commands } from "./commands.js";
+import { config } from "lively.morphic";
 
 
-export default class PythonEditorPlugin extends EditorPlugin {
-
-  static get shortName() { return "py"; }
-
-  static get mode() { return getMode({}, {name: "python"}); }
+export default class PythonEditorPlugin extends CodeMirrorEnabledEditorPlugin {
 
   constructor() {
-    super()
+    super();
     // this.checker = new JavaScriptChecker();
-    this.evalEnvironment = {targetModule: null, context: null}
+    this.evalEnvironment = {targetModule: null, context: null};
   }
 
   get isPythonEditorPlugin() { return true }
+
+  get shortName() { return "py"; }
+  get longName() { return "python"; }
 
   attach(editor) {
     super.attach(editor);

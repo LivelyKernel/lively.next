@@ -1,14 +1,11 @@
-import EditorPlugin from "../editor-plugin.js";
-
+import { CodeMirrorEnabledEditorPlugin } from "../editor-plugin.js";
 import "./mode.js";
 import { getMode } from "../editor-modes.js";
 
 
-export default class CSSEditorPlugin extends EditorPlugin {
+export default class CSSEditorPlugin extends CodeMirrorEnabledEditorPlugin {
 
-  static get shortName() { return "css"; }
-
-  static get mode() { return getMode({}, {name: "css"}); }
+  get shortName() { return "css"; }
 
   get isCSSEditorPlugin() { return true; }
 }

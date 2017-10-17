@@ -1,4 +1,4 @@
-import EditorPlugin from "../editor-plugin.js";
+import { CodeMirrorEnabledEditorPlugin } from "../editor-plugin.js";
 
 import "./mode.js";
 import { getMode, tokenizeDocument } from "../editor-modes.js";
@@ -20,13 +20,12 @@ var commands = [
   }
 ];
 
-export default class MarkdownEditorPlugin extends EditorPlugin {
-
-  static get shortName() { return "md"; }
-
-  static get mode() { return getMode({}, {name: "markdown"}); }
+export default class MarkdownEditorPlugin extends CodeMirrorEnabledEditorPlugin {
 
   get isMarkdownEditorPlugin() { return true; }
+  get shortName() { return "md"; }
+  get longName() { return "markdown"; }
+
   get openPairs() {
     return {
       "{": "}",
@@ -74,7 +73,7 @@ export default class MarkdownEditorPlugin extends EditorPlugin {
 
     if (lines.length) {
       let row = lines[0].row,
-          attributes = [];  
+          attributes = [];
       for (let i = 0; i < tokens.length; row++, i++) {
         let lineTokens = tokens[i];
         for (let i = 0; i < lineTokens.length; i = i+5) {
@@ -94,7 +93,7 @@ export default class MarkdownEditorPlugin extends EditorPlugin {
             style);
         }
       }
-      textMorph.setTextAttributesWithSortedRanges(attributes);    
+      textMorph.setTextAttributesWithSortedRanges(attributes);
       this._tokenizerValidBefore = {row: arr.last(lines).row+1, column: 0};
     }
 
@@ -102,4 +101,3 @@ export default class MarkdownEditorPlugin extends EditorPlugin {
       this.checker.onDocumentChange({}, textMorph, this);
   }
 }
-

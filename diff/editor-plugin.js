@@ -14,8 +14,6 @@ import * as git from "../shell/git.js";
 
 export default class DiffEditorPlugin extends EditorPlugin {
 
-  static get shortName() { return "diff"; }
-
   constructor() {
     super();
     this.tokenizer = new DiffTokenizer();
@@ -24,6 +22,8 @@ export default class DiffEditorPlugin extends EditorPlugin {
   }
 
   get isDiffEditorPlugin() { return true; }
+
+  get shortName() { return "diff"; }
 
   get cwd() {
     // a hack for now... get cwd for commands

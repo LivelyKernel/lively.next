@@ -10,6 +10,7 @@ import { connect, disconnect } from "lively.bindings";
 import DefaultTheme from "./themes/default.js";
 
 import { tokenizeDocument, modeInfo, visitDocumentTokens } from "./editor-modes.js";
+import { getMode } from "./editor-modes.js";
 
 export function guessTextModeName(contentOrEditor, filename = "", hint) {
 
@@ -74,25 +75,19 @@ function rangedToken(row, startColumn, endColumn, token, mode) {
 
 export default class EditorPlugin {
 
-  static get shortName() { return null; /*override*/}
-
-  static get mode() { return null; /*override*/}
-
   constructor() {
     this.theme = DefaultTheme.instance;
     this.checker = null;
-    this.mode = this.constructor.mode;
     this._ast = null;
     this._tokens = [];
     this._tokenizerValidBefore = null;
     this.__dont_serialize__ = ["mode", "_ast", "_tokens", "_tokenizerValidBefore"];
   }
 
-  __deserialize__() { this.mode = this.constructor.mode; }
-
   get isEditorPlugin() { return true; }
 
-  get shortName() { return this.constructor.shortName; }
+  get shortName() { return null; /*override*/}
+  get longName() { return this.shortName; }
 
   attach(editor) {
     this.textMorph = editor;
@@ -332,6 +327,39 @@ export default class EditorPlugin {
     morph.undoManager.group(undo);
     sel.goLeft(1);
     return true;
+  }
+
+}
+
+export class CodeMirrorEnabledEditorPlugin extends EditorPlugin {
+
+  constructor() {
+    super();
+    this.mode = null;
+  }
+
+  attach(editor) {
+    this.mode = this.codeMirrorMode(editor);
+    return super.attach(editor);
+  }
+
+
+  __deserialize__() {
+    this.mode = this.textMorph ? this.codeMirrorMode(this.textMorph) : null;
+  }
+
+  defaultCodeMirrorModeConfig(textMorph) {
+    return {
+      indentWithTabs: !textMorph.useSoftTabs,
+      indentUnit: textMorph.tabWidth,
+      tabSize: 4/*width of the tab character*/,
+    }
+  }
+
+  codeMirrorMode(textMorph) {
+    let config = this.defaultCodeMirrorModeConfig(textMorph),
+        name = this.longName;
+    return getMode(config, {name});
   }
 
 }

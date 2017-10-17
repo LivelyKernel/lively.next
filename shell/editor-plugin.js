@@ -1,22 +1,17 @@
 /*global localStorage*/
 import { arr, string } from "lively.lang";
 import { signal } from "lively.bindings";
-import EditorPlugin from "../editor-plugin.js";
+import { CodeMirrorEnabledEditorPlugin } from "../editor-plugin.js";
 import { defaultDirectory, runCommand } from "./shell-interface.js";
 import { shellCompleters } from "./completers.js";
 
 import "./mode.js";
-import { getMode } from "../editor-modes.js";
 
 var defaultDir;
 Promise.resolve(defaultDirectory()).then(dir => defaultDir = dir);
 
 
-export default class ShellEditorPlugin extends EditorPlugin {
-
-  static get shortName() { return "shell"; }
-
-  static get mode() { return getMode({}, {name: "shell"}); }
+export default class ShellEditorPlugin extends CodeMirrorEnabledEditorPlugin {
 
   constructor() {
     super();
@@ -26,6 +21,7 @@ export default class ShellEditorPlugin extends EditorPlugin {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // editor plugin related
   get isShellEditorPlugin() { return true; }
+  get shortName() { return "shell"; }
 
   get options() { return this.state; }
   set options(o) { return this.state = Object.assign(this.state, o); }

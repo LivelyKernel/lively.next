@@ -110,9 +110,9 @@ function indentLine(textMorph, mode, line, stateBefore, how, aggressive, options
   let textDocument = textMorph.document;
 
   options = {
-    indentWithTabs: false,
-    indentUnit: 2,
-    tabSize: 2,
+    indentWithTabs: !textMorph.useSoftTabs,
+    indentUnit: textMorph.tabWidth,
+    tabSize: 4/*width of the tab character*/,
     ignoreFollowingText: false,
     ...options
   };
