@@ -431,7 +431,9 @@ var commands = [
             "py": "lively.ide/py/workspace.js",
             "text": null
           },
-          alias = {"js": "javascript"};
+          alias = Object.keys(config.ide.modes.aliases).reduce((inverted, ea) =>
+            Object.assign(inverted, {[config.ide.modes.aliases[ea]]: ea}), {});
+
       if (opts.askForMode) {
         let workspaceLanguages = Object.keys(workspaceModules).concat("javascript console");
         ({selected: [language]} = await world.filterableListPrompt(
@@ -484,15 +486,16 @@ var commands = [
     name: "open text window",
     exec: (world, opts = {}) => {
       var {title, extent, content, mode, name, rangesAndStyles} = opts;
-
       title = title ||  "text window";
       content = content ||  "";
       extent = extent || pt(500, 400);
       name = name || "text workspace";
-      let textAndAttributes = typeof content === "string" ? [content, null] : content;
-      let text = new Text({padding: Rectangle.inset(3),
-                  ...obj.dissoc(opts, ["title", "content"]),
-                  textAndAttributes, clipMode: "auto", name, extent});
+      let textAndAttributes = typeof content === "string" ? [content, null] : content,
+          text = new Text({
+            padding: Rectangle.inset(3),
+            ...obj.dissoc(opts, ["title", "content"]),
+            textAndAttributes, clipMode: "auto", name, extent
+          });
       if (rangesAndStyles)
         text.setTextAttributesWithSortedRanges(rangesAndStyles);
       if (mode) text.changeEditorMode(mode);

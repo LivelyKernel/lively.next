@@ -201,7 +201,8 @@ var commands = [
     scrollCursorIntoView: false,
     exec: function(morph) {
       morph.undoManager.group();
-      morph.withSelectedLinesDo((line, range) => morph.insertText(morph.tab, range.start));
+      morph.withSelectedLinesDo((line, range) =>
+        morph.insertText(morph.tab, range.start));
       morph.undoManager.group();
       return true;
     }
@@ -212,10 +213,10 @@ var commands = [
     scrollCursorIntoView: false,
     exec: function(morph) {
       morph.undoManager.group();
-      morph.withSelectedLinesDo((line, range) => {
-        if (line.startsWith(morph.tab))
-          morph.deleteText({start: range.start, end: {row: range.start.row, column: morph.tab.length}})
-      });
+      morph.withSelectedLinesDo((line, range) =>
+          line.startsWith(morph.tab) && morph.deleteText({
+            start: range.start,
+            end: {row: range.start.row, column: morph.tab.length}}));
       morph.undoManager.group();
       return true;
     }
