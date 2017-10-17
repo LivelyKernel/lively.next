@@ -27,6 +27,25 @@ export default class MarkdownEditorPlugin extends EditorPlugin {
   static get mode() { return getMode({}, {name: "markdown"}); }
 
   get isMarkdownEditorPlugin() { return true; }
+  get openPairs() {
+    return {
+      "{": "}",
+      "[": "]",
+      "(": ")",
+      "\"": "\"",
+      "'": "'"
+    };
+  }
+
+  get closePairs() {
+    return {
+      "}": "{",
+      "]": "[",
+      ")": "(",
+      "\"": "\"",
+      "'": "'",
+    };
+  }
 
   getCommands(otherCommands) { return otherCommands.concat(commands); }
 
