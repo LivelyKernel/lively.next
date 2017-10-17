@@ -189,9 +189,12 @@ export class Text extends Morph {
         isStyleProp: true,
         after: ["useSoftTabs", "tabWidth"],
         readOnly: true,
-        get() {
-          return this.useSoftTabs ? " ".repeat(this.tabWidth) : "\t";
-        }
+        get() { return this.useSoftTabs ? " ".repeat(this.tabWidth) : "\t"; }
+      },
+
+      autoInsertPairs: {
+        group: "text",
+        defaultValue: true
       },
 
       fixedWidth: {
