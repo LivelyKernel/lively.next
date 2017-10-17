@@ -21,8 +21,8 @@ export default class PythonEditorPlugin extends CodeMirrorEnabledEditorPlugin {
   get longName() { return "python"; }
 
   attach(editor) {
+    editor.tabWidth = 4;
     super.attach(editor);
-    // this.evalEnvironment.context = editor;
   }
 
   detach(editor) {
