@@ -1309,7 +1309,7 @@ var usefulEditorCommands = [
     async exec(ed) {
       let filter = url => !url.endsWith("ide/editor-plugin.js")
                         && url.endsWith("editor-plugin.js"),
-          results = await lively.modules.getPackage("lively.morphic").resources(filter),
+          results = await lively.modules.getPackage("lively.ide").resources(filter),
           {shortName: current} = ed.editorPlugin || {},
           currentIndex = 0,
           items = ["<no mode>"].concat(results.map((ea, i) => {
