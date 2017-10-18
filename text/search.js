@@ -1,5 +1,5 @@
 import { Rectangle, rect, pt, Color } from "lively.graphics";
-import { connect, disconnect } from "lively.bindings"
+import { connect, once, disconnect } from "lively.bindings"
 import { obj, promise, Path } from "lively.lang";
 import { Morph, config, GridLayout, StyleSheet, Text } from "../index.js";
 import { lessPosition, minPosition, maxPosition } from "./position.js";
@@ -456,6 +456,8 @@ export class SearchWidget extends Morph {
     if (!world) return;
     this.openInWorld(world.visibleBounds().center(), world);
     this.topRight = text.globalBounds().insetBy(5).topRight();
+    
+    if (text.getWindow()) once(text.getWindow(), 'remove', this, 'remove');
 
     var inputMorph = this.get("searchInput");
     var {scroll, selection: sel} = text;
@@ -517,15 +519,15 @@ export class SearchWidget extends Morph {
     textMap.attachTo(this.target);
     textMap.isLayoutable = false;
     this.addMorph(textMap)
-    textMap.topRight = this.innerBounds().bottomRight();
-    textMap.height = this.target.height - this.height - 10
-    textMap.update()
+    textMap.topRight = this.innerBounds().bottomRight().addXY(0,5);
+    textMap.height = this.target.height - this.height - 15
+    textMap.update();
     return textMap;
   }
 
   removeTextMap() {
     if (this.textMap) {
-      this.textMap.remove();
+      this.textMap.remove()
       this.textMap.detachFromCurrentTextMorph();
       this.textMap = null;
     }
