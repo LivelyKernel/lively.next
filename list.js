@@ -92,12 +92,6 @@ class ListItemMorph extends Label {
     this.isSelected = isSelected;
   }
 
-  onMouseDown(evt) {
-    var {state: {clickCount}} = evt,
-        method = clickCount === 2 ? "onItemMorphDoubleClicked" : "onItemMorphClicked";
-    this.owner.owner[method](evt, this);
-  }
-
   onDragStart(evt) {
     let list = this.owner.owner;
     this._dragState = {sourceIsSelected: this.isSelected, source: this, itemsTouched: []};
@@ -293,6 +287,9 @@ export class List extends Morph {
         selectionFontColor: Color.black,
         nonSelectionFontColor: Color.gray,
       },
+      "[name=scrollbar]": {
+        fill: Color.transparent
+      },
       ".List.dark .ListItemMorph": {
         selectionFontColor: Color.black,
         nonSelectionFontColor: Color.gray,
@@ -308,7 +305,7 @@ export class List extends Morph {
     return {
 
       fill:            {defaultValue: Color.white},
-      clipMode:        {defaultValue: "auto"},
+      clipMode:        {defaultValue: 'hidden'},
 
       selectionFontColor:    {isStyleProp: true, defaultValue: Color.white},
       selectionColor:        {isStyleProp: true, defaultValue: Color.blue},
@@ -316,6 +313,21 @@ export class List extends Morph {
       fontColor:             {isStyleProp: true, defaultValue: Color.rgbHex("333")},
 
       styleClasses: {defaultValue: ['default']},
+
+      itemScroll: {
+        /*
+          We need to use a different property name for the list scroll,
+          since the default scroll property is already rendered as a div
+          with overflow hidden|scroll which we do not want since we implement
+          the scroll for ourselves.
+        */
+        derived: true,
+        after: ['submorphs'],
+        get() { return this.scroller ? this.scroller.scroll : pt(0,0) },
+        set(s) {
+          if (this.scroller) this.scroller.scroll = s;
+        }
+      },
 
       styleSheets: {
         initialize() {
@@ -434,20 +446,34 @@ export class List extends Morph {
         get() { return this.selectedIndexes.map(i => this.items[i]); }
       },
 
+      submorphs: {
+       initialize() {
+         this.setupUI();
+       }
+     },
+
       listItemContainer: {
         after: ["submorphs"], readOnly: true,
         get() {
-          return this.getSubmorphNamed("listItemContainer") || this.addMorph({
-            name: "listItemContainer", fill: null,
-            clipMode: "visible", halosEnabled: false,
-            acceptsDrops: false, draggable: false
-          });
+          return this.getSubmorphNamed("listItemContainer");
         }
       },
 
       itemMorphs: {
         after: ["submorphs"], readOnly: true,
         get() { return this.listItemContainer.submorphs; }
+      },
+
+      scrollBar: {
+        after: ['submorphs'], readOnly: true,
+        get() { return this.getSubmorphNamed('scrollbar') }
+      },
+
+      scroller: {
+        after: ['submorphs'], readOnly: true,
+        get() { 
+          return this.getSubmorphNamed('scroller');
+        }
       },
 
       manualItemHeight: {type: "Boolean"},
@@ -490,6 +516,25 @@ export class List extends Morph {
     this.update();
   }
 
+  setupUI() {
+    this.submorphs = [
+       morph({
+        name: "listItemContainer", fill: Color.transparent,
+        clipMode: "hidden", halosEnabled: false,
+        acceptsDrops: false, draggable: false
+      }),
+       morph({
+        name: "scroller", fill: Color.transparent,
+        clipMode: "scroll",
+        submorphs: [{
+          name: 'scrollbar'
+        }]
+      })
+     ];
+     connect(this.scroller, 'scroll', this, 'update');
+     connect(this.scroller, 'onMouseDown', this, 'clickOnItem')
+  }
+
   get isList() { return true; }
 
   onChange(change) {
@@ -500,6 +545,13 @@ export class List extends Morph {
      || prop === "itemPadding"
      || prop === "items") this.update();
     return super.onChange(change);
+  }
+
+  clickOnItem(evt) {
+    let item = this.scroller.morphBeneath(evt.positionIn(this.world()).subPt(this.scroll));
+    var {state: {clickCount}} = evt,
+        method = clickCount === 2 ? "onItemMorphDoubleClicked" : "onItemMorphClicked";
+    this[method](evt, item);
   }
 
   get connections() {
@@ -588,26 +640,26 @@ export class List extends Morph {
 
   update() {
     var items = this.items;
-    if (!items) return; // pre-initialize
+    if (!items || !this.scroller) return; // pre-initialize
 
     this.dontRecordChangesWhile(() => {
       var {
             itemHeight,
             itemMorphs, listItemContainer,
             selectedIndexes,
-            scroll: {x: left, y: top},
             extent: {x: width, y: height},
             fontSize, fontFamily, fontColor,
             padding, itemPadding, selectionColor,
             selectionFontColor, nonSelectionFontColor,
-            itemBorderRadius
+            itemBorderRadius, scrollBar, scroller
           } = this,
-          additionalSpace = 2*height,
+          {scroll: {x: left, y: top}} = scroller,
           padding = padding || Rectangle.inset(0),
-          padTop = padding.top(), padLeft = padding.left(),
+          padTop = padding.top() , padLeft = padding.left(),
           padBottom = padding.bottom(), padRight = padding.right(),
-          firstItemIndex = Math.max(0, Math.floor((top + padTop - additionalSpace) / itemHeight)),
-          lastItemIndex = Math.min(items.length, Math.ceil((top + height + padTop + additionalSpace) / itemHeight)),
+          scrollOffset =  -(top % itemHeight),
+          firstItemIndex = Math.max(0, Math.floor((top) / itemHeight)),
+          lastItemIndex = Math.min(items.length, Math.ceil((top + height) / itemHeight)),
           maxWidth = 0,
           goalWidth = this.width - (padLeft + padRight);
 
@@ -632,11 +684,10 @@ export class List extends Morph {
 
         if (!itemMorph)
           itemMorph = itemMorphs[i] = listItemContainer.addMorph(new ListItemMorph(style));
-
         itemMorph.displayItem(
           item, itemIndex,
           goalWidth, itemHeight,
-          pt(0, 0+itemHeight*itemIndex),
+          pt(0, scrollOffset + itemHeight * (itemIndex - firstItemIndex)),
           selectedIndexes.includes(itemIndex),
           style);
 
@@ -645,9 +696,11 @@ export class List extends Morph {
 
       itemMorphs.slice(lastItemIndex-firstItemIndex).forEach(ea => ea.remove());
 
-      listItemContainer.position = pt(padLeft, padTop);
-      listItemContainer.extent = pt(
-        maxWidth,
+      listItemContainer.setBounds(pt(padLeft, padTop).extent(this.extent));
+      scroller.extent = this.extent;
+      scrollBar.left = maxWidth - 1;
+      scrollBar.extent = pt(
+        1,
         Math.max(padTop + padBottom + itemHeight * items.length, this.height));
     });
   }
@@ -657,18 +710,16 @@ export class List extends Morph {
   }
 
   scrollIndexIntoView(idx) {
-    var {itemHeight, width, scroll, scrollbarOffset} = this,
+    var {itemHeight, width, itemScroll, scrollbarOffset} = this,
         itemBounds = new Rectangle(0, idx*itemHeight, width, itemHeight),
-        visibleBounds = this.innerBounds().insetByRect(this.padding).translatedBy(scroll),
+        visibleBounds = this.innerBounds().insetByRect(this.padding).translatedBy(itemScroll),
         offsetX = 0, offsetY = 0;
     if (itemBounds.bottom() > visibleBounds.bottom() - scrollbarOffset.y)
       offsetY = itemBounds.bottom() - (visibleBounds.bottom() - scrollbarOffset.y);
     if (itemBounds.top() < visibleBounds.top())
       offsetY = itemBounds.top() - visibleBounds.top();
-    this.scroll = scroll.addXY(offsetX, offsetY);
+    this.itemScroll = itemScroll.addXY(offsetX, offsetY);
   }
-
-  onScroll() { this.update(); }
 
   onItemMorphDoubleClicked(evt, itemMorph) {}
 
