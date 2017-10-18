@@ -231,7 +231,7 @@ export class World extends Morph {
         removeLayoutHalo = evt.layoutHalo && !evt.targetMorphs.find(morph => morph.isHaloItem),
         addHalo = (!evt.halo || removeHalo) && haloTarget;
     if (removeLayoutHalo) evt.layoutHalo.remove();
-    if (removeHalo) evt.halo.remove();
+    if (removeHalo) this.removeHalo(evt.halo);
     if (addHalo) { evt.stop(); this.showHaloFor(haloTarget, evt.domEvt.pointerId); return; }
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -267,7 +267,7 @@ export class World extends Morph {
         removeLayoutHalo = evt.layoutHalo && !evt.targetMorphs.find(morph => morph.isHaloItem),
         addHalo = (!evt.halo || removeHalo) && haloTarget;
     if (removeLayoutHalo) evt.layoutHalo.remove();
-    if (removeHalo) evt.halo.remove();
+    if (removeHalo) this.removeHalo(evt.halo);
     if (addHalo) { evt.stop(); this.showHaloFor(haloTarget, evt.domEvt.pointerId); return; }
   }
 
@@ -679,6 +679,14 @@ export class World extends Morph {
 
   showHaloForSelection(selection, pointerId) {
     return selection.length > 0 && this.showHaloFor(selection, pointerId);
+  }
+
+  removeHalo(halo) {
+    if (halo.target !== this && typeof halo.target.removeHalo === "function") {
+      halo.target.removeHalo(halo);
+    } else {
+      halo.remove();
+    }
   }
 
   layoutHaloForPointerId(pointerId = this.firstHand && this.firstHand.pointerId) {
