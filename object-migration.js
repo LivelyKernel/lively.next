@@ -64,6 +64,7 @@ morph breaks old windows without it.
       return idAndSnapshot;
     }
   },
+  
 
   {
     date: "2017-05-03",
@@ -198,6 +199,29 @@ For now only a simple default theme...
       }
       return idAndSnapshot;
     }
-  }
+  },
+
+  {
+    date: "2017-10-16",
+    name: 'change scroll implementation of list items',
+    objectConverter: (idAndSnapshot, pool) => {
+      let {snapshot, id} = idAndSnapshot,
+           rootMorph = pool.refForId(id).realObj;
+      rootMorph && rootMorph.withAllSubmorphsDo(m => {
+         if (m.isList && m.setupUI) {
+          m.addMorph({
+            name: "scroller", fill: Color.transparent,
+            clipMode: "scroll",
+            submorphs: [{
+              name: 'scrollbar'
+            }]
+          });
+          connect(m.scroller, 'scroll', m, 'update');
+          connect(m.scroller, 'onMouseDown', m, 'clickOnItem')
+         } 
+      });
+      return idAndSnapshot;
+    }
+  },
 
 ];
