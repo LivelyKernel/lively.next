@@ -2,7 +2,7 @@
 import { Rectangle, Color, pt } from 'lively.graphics';
 import { morph, Morph, StyleSheet, Text, GridLayout,
   Icon, HorizontalLayout } from 'lively.morphic';
-import { InputLine, PasswordInputLine } from "lively.morphic/text/input-line.js";
+import InputLine, { PasswordInputLine } from "lively.morphic/text/input-line.js";
 import { arr, obj, promise } from "lively.lang";
 import { connect } from 'lively.bindings';
 
