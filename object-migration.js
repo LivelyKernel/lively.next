@@ -208,17 +208,8 @@ For now only a simple default theme...
       let {snapshot, id} = idAndSnapshot,
            rootMorph = pool.refForId(id).realObj;
       rootMorph && rootMorph.withAllSubmorphsDo(m => {
-         if (m.isList && m.setupUI) {
-          m.addMorph({
-            name: "scroller", fill: Color.transparent,
-            clipMode: "scroll",
-            submorphs: [{
-              name: 'scrollbar'
-            }]
-          });
-          connect(m.scroller, 'scroll', m, 'update');
-          connect(m.scroller, 'onMouseDown', m, 'clickOnItem')
-         } 
+        if (m.isList && typeof m.initializeSubmorphs === "function")
+          m.initializeSubmorphs();
       });
       return idAndSnapshot;
     }
