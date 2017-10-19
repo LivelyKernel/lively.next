@@ -673,7 +673,7 @@ function initializeClass(constructorFunc, superclassSpec) {
       // won't get defined correctly when loaded first. See
       // https://github.com/LivelyKernel/lively.modules/issues/27 for more details
     };if (superclassSpec && superclassSpec.referencedAs) {
-      if (klass[moduleSubscribeToToplevelChangesSym]) {
+      if (klass.hasOwnProperty(moduleSubscribeToToplevelChangesSym)) {
         currentModule.unsubscribeFromToplevelDefinitionChanges(klass[moduleSubscribeToToplevelChangesSym]);
       }
       klass[moduleSubscribeToToplevelChangesSym] = currentModule.subscribeToToplevelDefinitionChanges(function (name, val) {
@@ -848,9 +848,8 @@ function replaceSuper(node, state, path, options) {
   var currentMethod = state.currentMethod;
 
   if (!currentMethod) {
-    console.warn("[lively.classes] Trying to transform es6 class but got super call outside a method! " + lively_ast.stringify(node) + " in " + path.join(".")
+    console.warn("[lively.classes] Trying to transform es6 class but got super call outside a method! " + lively_ast.stringify(node) + " in " + path.join("."));
     // return node;
-    );
   }
 
   var _path$slice = path.slice(-2),

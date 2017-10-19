@@ -17,7 +17,9 @@ var  {
 
 let spec = {
   "module1.js": "import {B} from './module2.js'; export class A { constructor() { this.x = 3; } }",
-  "module2.js": "import {A} from './module1.js'; export class B extends A {}"
+  "module2.js": "import {A} from './module1.js'; export class B extends A {}",
+  "module3.js": "import {D} from './module4.js'; export class C { constructor() { this.x = 3; } }",
+  "module4.js": "import {C} from './module3.js'; export class D extends C {}; export class E extends D {}"
 }
 
 let testDir = resource("local://classesinmoduletest/")
@@ -32,6 +34,8 @@ describe("circular module deps", function() {
     await testDir.remove()
     await module(testDir.join("module1.js").url).unload();
     await module(testDir.join("module2.js").url).unload();
+    await module(testDir.join("module3.js").url).unload();
+    await module(testDir.join("module4.js").url).unload();
   });
 
   it("constructor method of superclass that gets loaded later works", async () => {
@@ -40,6 +44,14 @@ describe("circular module deps", function() {
     expect(B.prototype[Symbol.for("lively-instance-initialize")])
       .equals(A.prototype[Symbol.for("lively-instance-initialize")]);
     expect(new B().x).equals(3);
+  });
+
+  it("two classes", async () => {
+    let { C } = await module(testDir.join("module3.js").url).load(),
+        { D } = await module(testDir.join("module4.js").url).load();
+    expect(D.prototype[Symbol.for("lively-instance-initialize")])
+      .equals(C.prototype[Symbol.for("lively-instance-initialize")]);
+    expect(new D().x).equals(3);
   });
 
 });

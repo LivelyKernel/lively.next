@@ -198,7 +198,7 @@ export function initializeClass(
     // won't get defined correctly when loaded first. See
     // https://github.com/LivelyKernel/lively.modules/issues/27 for more details
     if (superclassSpec && superclassSpec.referencedAs) {
-      if (klass[moduleSubscribeToToplevelChangesSym]) {
+      if (klass.hasOwnProperty(moduleSubscribeToToplevelChangesSym)) {
         currentModule.unsubscribeFromToplevelDefinitionChanges(
           klass[moduleSubscribeToToplevelChangesSym]);
       }
