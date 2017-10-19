@@ -1,5 +1,5 @@
 /* global System */
-import { arr, Path, promise } from "lively.lang";
+import { arr, fun, Path, promise } from "lively.lang";
 import { pt } from "lively.graphics";
 import config from "../config.js";
 import TextInput from './TextInput.js';
@@ -533,6 +533,24 @@ export default class EventDispatcher {
       case "scroll":
         events = [new Event(type, domEvt, this, [targetMorph], hand, halo, layoutHalo)
           .onDispatch(() => {
+
+            // Here we install a debouncer for letting the renderer know when it is
+            // safe to update the DOM for scroll values without interrupting
+            // the browser internal scroll.
+            // See MorphAfterRenderHook>>updateScroll in rendering/morphic-default.js and
+            // https://github.com/LivelyKernel/lively.morphic/issues/88
+            // for more info
+            let scrollInProgress = !!state.scroll.interactiveScrollInProgress;
+            if (!scrollInProgress) {
+              var {promise: p, resolve} = promise.deferred();
+              state.scroll.interactiveScrollInProgress = p;
+              p.debounce = fun.debounce(250, () => {
+                state.scroll.interactiveScrollInProgress = null;
+                resolve();
+              });
+            }
+            state.scroll.interactiveScrollInProgress.debounce();
+
             var {scrollLeft: newX, scrollTop: newY} = domEvt.target,
                 {x, y} = targetMorph.scroll;
             if (x !== newX || y !== newY) targetMorph.scroll = pt(newX, newY);

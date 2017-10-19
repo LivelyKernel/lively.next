@@ -585,11 +585,16 @@ MorphAfterRenderHook.prototype.hook = function(node, propertyName, previousValue
   setTimeout(() => this.hook(node, propertyName, previousValue, attempt), 20*attempt)
 }
 MorphAfterRenderHook.prototype.updateScroll = function(morph, node) {
-  // interactiveScrollInProgress: see morph.onMouseWheel
+  // If there is a scroll in progress (e.g. the user scrolled the morph via
+  // trackpad), we register that via onScroll event handlers and update the scroll
+  // prperty of the morph.  However, while the scroll is ongoing, we will not set
+  // the scrollLeft/scrollTop DOM element attributes b/c that would interfere with
+  // "smooth" scrolling and appear jerky.
+  // evt.state.scroll.interactiveScrollInProgress promise is used for tracking
+  // that.
   var { interactiveScrollInProgress } = morph.env.eventDispatcher.eventState.scroll;
   if (interactiveScrollInProgress)
-    return interactiveScrollInProgress.then(() => this.updateScroll(morph,node));
-
+    return interactiveScrollInProgress.then(() => this.updateScroll(morph, node));
   if (node) {
     const {x, y} = morph.scroll;
     // prevent interference with bounce back animation
@@ -628,13 +633,6 @@ export function defaultAttributes(morph, renderer) {
                 morph.styleClasses.concat("hiddenScrollbar") :
                 morph.styleClasses).join(" "),
     draggable: false,
-
-    // rk 2016-09-13: scroll issues: just setting the scroll on the DOM node
-    // doesn't work b/c of https://github.com/Matt-Esch/virtual-dom/issues/338
-    // check the pull request mentioned in the issue, once that's merged we
-    // might be able to remove the hook
-    scrollLeft: morph.scroll.x,
-    scrollTop: morph.scroll.y,
     "morph-after-render-hook": new MorphAfterRenderHook(morph, renderer)
   };
 }
