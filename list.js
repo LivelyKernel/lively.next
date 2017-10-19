@@ -116,6 +116,27 @@ class ListItemMorph extends Label {
   }
 }
 
+class ListScroller extends Morph {
+  
+  static get properties() {
+    return {
+      name: {defaultValue: "scroller"},
+      fill: {defaultValue: Color.transparent},
+      clipMode: {defaultValue: "auto"},
+      scrollbar: {
+        derived: true, readOnly: true, after: ['submorphs'],
+        get() { return this.submorphs[0]; }
+      },
+      submorphs: {
+        initialize() { this.submorphs = [{name: 'scrollbar'}]; }
+      }
+    }
+  }
+  
+  onScroll(evt) { return this.owner.update(); }
+  onMouseDown(evt) { return this.owner.clickOnItem(evt); }
+}
+
 var listCommands = [
   {
     name: "page up",
@@ -324,9 +345,7 @@ export class List extends Morph {
         derived: true,
         after: ['submorphs'],
         get() { return this.scroller ? this.scroller.scroll : pt(0,0) },
-        set(s) {
-          if (this.scroller) this.scroller.scroll = s;
-        }
+        set(s) { if (this.scroller) this.scroller.scroll = s; }
       },
 
       styleSheets: {
@@ -447,16 +466,12 @@ export class List extends Morph {
       },
 
       submorphs: {
-       initialize() {
-         this.setupUI();
-       }
-     },
+        initialize() { this.initializeSubmorphs(); }
+      },
 
       listItemContainer: {
         after: ["submorphs"], readOnly: true,
-        get() {
-          return this.getSubmorphNamed("listItemContainer");
-        }
+        get() { return this.getSubmorphNamed("listItemContainer"); }
       },
 
       itemMorphs: {
@@ -516,23 +531,20 @@ export class List extends Morph {
     this.update();
   }
 
-  setupUI() {
-    this.submorphs = [
-       morph({
-        name: "listItemContainer", fill: Color.transparent,
-        clipMode: "hidden", halosEnabled: false,
-        acceptsDrops: false, draggable: false
-      }),
-       morph({
-        name: "scroller", fill: Color.transparent,
-        clipMode: "scroll",
-        submorphs: [{
-          name: 'scrollbar'
-        }]
-      })
-     ];
-     connect(this.scroller, 'scroll', this, 'update');
-     connect(this.scroller, 'onMouseDown', this, 'clickOnItem')
+  initializeSubmorphs() {
+    let submorphs = this.submorphs || (this.submorphs = []), container, scroller;
+    for (let i = 0; i < submorphs.length; i++) {
+      switch (submorphs[i].name) {
+        case "listItemContainer": container = submorphs[i]; break;
+        case "scroller": scroller = submorphs[i]; break;
+      }
+    }
+    if (!container) this.addMorph({
+      name: "listItemContainer", fill: Color.transparent,
+      clipMode: "hidden", halosEnabled: false,
+      acceptsDrops: false, draggable: false
+    });
+    if (!scroller) this.addMorph(new ListScroller({name: "scroller"}));
   }
 
   get isList() { return true; }
