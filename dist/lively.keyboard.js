@@ -508,10 +508,9 @@ var Keys = {
       meta: "metaKey",
       command: "metaKey",
       cmd: "metaKey"
-    };
 
-    // input event
-    if (keyMods[0] === "input" && keyMods.length === 2) {
+      // input event
+    };if (keyMods[0] === "input" && keyMods.length === 2) {
       spec.keyCombo = keyCombo;
       spec.key = keyMods[1];
       return spec;
@@ -1162,7 +1161,7 @@ var DOMInputCapture = function () {
       textareaNode.setAttribute("spellcheck", false);
       textareaNode.className = "lively-text-input";
       textareaNode.value = "";
-      doc.body.insertBefore(textareaNode, newRootNode.firstChild);
+      newRootNode.insertBefore(textareaNode, newRootNode.firstChild);
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // event handlers

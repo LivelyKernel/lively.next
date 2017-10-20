@@ -47,7 +47,6 @@ export default class DOMInputCapture {
 
     var textareaNode = domState.textareaNode = doc.createElement("textarea");
 
-
     textareaNode.setAttribute("style", `
       position: absolute;
       /*extent cannot be 0, input won't work correctly in Chrome 52.0*/
@@ -81,7 +80,7 @@ export default class DOMInputCapture {
     textareaNode.setAttribute("spellcheck", false);
     textareaNode.className = "lively-text-input";
     textareaNode.value = "";
-    doc.body.insertBefore(textareaNode, newRootNode.firstChild);
+    newRootNode.insertBefore(textareaNode, newRootNode.firstChild);
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // event handlers
