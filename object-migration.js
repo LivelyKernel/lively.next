@@ -205,12 +205,12 @@ For now only a simple default theme...
     date: "2017-10-16",
     name: 'change scroll implementation of list items',
     objectConverter: (idAndSnapshot, pool) => {
-      let {snapshot, id} = idAndSnapshot,
-           rootMorph = pool.refForId(id).realObj;
-      rootMorph && rootMorph.withAllSubmorphsDo(m => {
-        if (m.isList && typeof m.initializeSubmorphs === "function")
-          m.initializeSubmorphs();
-      });
+      for (let ref of pool.objectRefs()) {
+        let {realObj} = ref;
+        if (!realObj.isList || typeof realObj.initializeSubmorphs !== "function")
+          continue;
+        realObj.initializeSubmorphs();
+      }
       return idAndSnapshot;
     }
   },
