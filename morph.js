@@ -170,6 +170,8 @@ export default class Halo extends Morph {
     if (target instanceof MultiSelectionTarget) {
       target.modifiesSelectedMorphs = false;
       target.remove();
+    } else if (typeof target.detachedHalo === "function") {
+      target.detachedHalo(this);
     }
   }
 
