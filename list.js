@@ -821,6 +821,9 @@ export class FilterableList extends Morph {
         fontColor: Color.gray.darker(),
         padding: rect(10, 2)
       },
+      ".FilterableList.dark [name=input] [name=placeholder]": {
+        fontColor: Color.gray.darker().withA(.7)
+      },
       ".FilterableList.default [name=input]": {
         borderWidth: 0,
         borderColor: Color.gray
