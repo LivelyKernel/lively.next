@@ -618,12 +618,20 @@ export class ProportionalLayout extends Layout {
 
 export class TilingLayout extends Layout {
 
+  constructor(props = {}) {
+    super(props);
+    this._axis = props.axis || 'row'
+  }
+  
   name() { return "Tiling" }
   description() { return "Make the submorphs fill their owner, inserting breaks to defer intersecting the bounds as much as possible." }
 
   inspect(pointerId) {
     return new TilingLayoutHalo(this.container, pointerId);
   }
+
+  get axis() { return this._axis }
+  set axis(a) { this._axis = a; this.apply() }
 
   get spacing() { return this._spacing; }
   set spacing(offset) { this._spacing = offset; this.apply(); }
@@ -633,17 +641,22 @@ export class TilingLayout extends Layout {
     this.active = true;
     super.apply(animate);
     var width = this.getOptimalWidth(this.container),
+        widthAccessor = this.axis == "row" ? 'left' : 'top', heightAccessor = this.axis == "row" ? 'top' : 'left', 
+        normalizedWidthAccessor = this.axis == "row" ? 'x' : 'y', 
+        normalizedHeightAccessor = this.axis == "row" ? 'y' : 'x',
         currentRowHeight = 0,
-        currentRowWidth = this.border.left,
+        currentRowWidth = this.border[widthAccessor],
         {spacing, layoutableSubmorphs} = this,
-        previousRowHeight = spacing + this.border.top,
+        previousRowHeight = spacing + this.border[heightAccessor],
         i = 0,
         rowSwitch = true;
 
     while (i < layoutableSubmorphs.length) {
       var submorphExtent = layoutableSubmorphs[i].extent, newPos;
-      if (rowSwitch || currentRowWidth + submorphExtent.x + 2 * spacing <= width) {
-        newPos = pt(currentRowWidth + spacing, previousRowHeight);
+      if (rowSwitch || currentRowWidth + submorphExtent[normalizedWidthAccessor] + 2 * spacing <= width) {
+        newPos = this.axis == 'row' ? 
+          pt(currentRowWidth + spacing, previousRowHeight) : 
+          pt(previousRowHeight, currentRowWidth + spacing);
         rowSwitch = false;
         if (animate) {
           const {duration, easing} = animate;
@@ -651,12 +664,12 @@ export class TilingLayout extends Layout {
         } else {
           layoutableSubmorphs[i].position = newPos;
         }
-        currentRowHeight = Math.max(currentRowHeight, submorphExtent.y);
-        currentRowWidth += spacing + submorphExtent.x;
+        currentRowHeight = Math.max(currentRowHeight, submorphExtent[normalizedHeightAccessor]);
+        currentRowWidth += spacing + submorphExtent[normalizedWidthAccessor];
         i++;
       } else {
         previousRowHeight += spacing + currentRowHeight;
-        currentRowWidth = this.border.left;
+        currentRowWidth = this.border[widthAccessor];
         currentRowHeight = 0;
         rowSwitch = true;
       }
@@ -676,8 +689,10 @@ export class TilingLayout extends Layout {
   }
 
   getOptimalWidth(container) {
-    var width = container.width - this.border.left - this.border.right,
-        maxSubmorphWidth = this.getMinWidth();
+    var width = this.axis == 'row' ? 
+                   container.width - this.border.left - this.border.right :
+                   container.height - this.border.top - this.border.bottom,
+        maxSubmorphWidth = this.axis == 'row' ? this.getMinWidth() : this.getMinHeight();
     return Math.max(width, maxSubmorphWidth);
   }
 
