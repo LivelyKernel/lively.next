@@ -410,10 +410,14 @@ export class Label extends Morph {
           textShadow,
           textDecoration,
           textStyleClasses,
-          textAlign
+          textAlign,
+          float,
+          display
         } = chunkStyle,
         style = {},
         attrs = {style};
+    if (float) style.float = float;
+    if (display) style.display = display;
     if (backgroundColor) style.backgroundColor = String(backgroundColor);
     if (fontFamily) style.fontFamily = fontFamily;
     if (fontColor) style.color = String(fontColor);

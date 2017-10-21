@@ -2173,11 +2173,11 @@ export class Morph {
     let checked = Icon.textAttribute('check-square-o'),
         unchecked = Icon.textAttribute('square-o');
     unchecked[1].paddingRight = "7px";
-    checked[1].paddingRight = "5px";
+    Object.assign(checked[1], {paddingRight: "5px", float: 'none', display: 'inline'});
 
     ['grabbable', 'draggable', 'acceptsDrops', 'halosEnabled'].forEach(propName =>
       morphicMenuItems[1].push(
-        [[...(this[propName] ? checked : unchecked), "  " + propName],
+        [[...(this[propName] ? checked : unchecked),  propName, {float: 'none'}],
          () => this[propName] = !this[propName]]));
 
 
