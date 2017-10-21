@@ -7,7 +7,7 @@ import { DropDownSelector, ModeSelector, Slider } from "lively.components/widget
 import { connect, signal } from "lively.bindings";
 import { num, arr } from "lively.lang";
 
-const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
+const WHEEL_URL = '/lively.ide/assets/color-wheel.png'
 
 const duration = 200;
 
@@ -334,14 +334,24 @@ export class ColorPalette extends Morph {
       ".ColorPalette [name=paletteView]": {
         clipMode: "hidden",
         fill: Color.transparent,
-        layout: new VerticalLayout()
+        layout: new VerticalLayout({
+          resizeContainer: false,
+          layoutOrder(m) {
+            return this.container.submorphs.indexOf(m);
+          }
+        })
       },
       ".ColorPalette [name=solidColorPalette]": {
         fill: Color.transparent,
-        layout: new VerticalLayout({resizeContainer: false})
+        layout: new VerticalLayout({
+          layoutOrder(m) {
+            return this.container.submorphs.indexOf(m);
+          },
+          resizeContainer: false})
       },
       ".ColorPalette [name=paletteContainer]": {
         layout: new TilingLayout({
+          axis: 'column',
           layoutOrder(m) {
             return this.container.submorphs.indexOf(m);
           }
@@ -453,11 +463,10 @@ export class ColorPalette extends Morph {
 
    getPalette(colors, mod) {
        const cols = Math.max(Math.ceil(colors.length / mod), 15),
-             height = cols * this.colorFieldWidth,
-             width =  mod * this.colorFieldWidth,
+             width = cols * this.colorFieldWidth,
+             height =  mod * this.colorFieldWidth,
              paddedColors = [...colors, ...arr.withN((cols * mod) - colors.length, null)];
        return {width, height, name: "paletteContainer",
-               rotation: num.toRadians(90),
                submorphs: paddedColors.map(c => {
                   let field = new ColorPaletteField({color: c && Color.rgbHex(c)});
                   connect(field, 'updateColor', this, 'color');
