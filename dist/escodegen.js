@@ -36,7 +36,7 @@
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v7.7.4',
+        version: 'v8.2.1',
         browser: true,
         env: {},
         argv: [],
@@ -88,13 +88,14 @@
         BitwiseSHIFT: 10,
         Additive: 11,
         Multiplicative: 12,
-        Unary: 13,
-        Postfix: 14,
-        Call: 15,
-        New: 16,
-        TaggedTemplate: 17,
-        Member: 18,
-        Primary: 19
+        Exponentiation: 13,
+        Unary: 14,
+        Postfix: 15,
+        Call: 16,
+        New: 17,
+        TaggedTemplate: 18,
+        Member: 19,
+        Primary: 20
       };
       BinaryPrecedence = {
         '||': Precedence.LogicalOR,
@@ -121,7 +122,8 @@
         '-': Precedence.Additive,
         '*': Precedence.Multiplicative,
         '%': Precedence.Multiplicative,
-        '/': Precedence.Multiplicative
+        '/': Precedence.Multiplicative,
+        '**': Precedence.Exponentiation
       };
       var F_ALLOW_IN = 1, F_ALLOW_CALL = 1 << 1, F_ALLOW_UNPARATH_NEW = 1 << 2, F_FUNC_BODY = 1 << 3, F_DIRECTIVE_CTX = 1 << 4, F_SEMICOLON_OPT = 1 << 5;
       var F_XJS_NOINDENT = 1 << 8, F_XJS_NOPAREN = 1 << 9;
@@ -2071,8 +2073,9 @@
           return this.Literal(expr, precedence, flags);
         },
         JSXText: function (expr, precedence, flags) {
-          if (expr.hasOwnProperty('raw'))
+          if (expr.hasOwnProperty('raw')) {
             return expr.raw;
+          }
           return String(expr.value);
         },
         JSXAttribute: function (expr, precedence, flags) {
@@ -2389,6 +2392,7 @@
       'optionalDependencies': { 'source-map': '~0.2.0' },
       'devDependencies': {
         'acorn': '^2.7.0',
+        'acorn-babel': '^0.11.1-38',
         'bluebird': '^2.3.11',
         'bower-registry-client': '^0.2.1',
         'chai': '^1.10.0',
