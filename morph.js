@@ -887,16 +887,16 @@ class GrabHaloItem extends HaloItem {
     this.halo.alignWithTarget();
   }
 
-  stop(hand) {
+  stop(evt) {
     let {halo, prevDropTarget} = this,
         undo = halo.target.undoInProgress,
-        dropTarget = hand.findDropTarget(
-          hand.position,
+        dropTarget = evt.hand.findDropTarget(
+          evt.hand.position,
           [halo.target],
           m => !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem));
     MorphHighlighter.interceptDrop(halo, dropTarget, halo.target);
     undo.addTarget(dropTarget);
-    dropTarget.onDrop({hand});
+    dropTarget.onDrop(evt);
     halo.state.activeButton = null;
     halo.alignWithTarget();
     halo.toggleMorphHighlighter(false, prevDropTarget);
@@ -910,7 +910,7 @@ class GrabHaloItem extends HaloItem {
   }
 
   onDragEnd(evt) {
-    this.stop(evt.hand);
+    this.stop(evt);
   }
 
 }
