@@ -9,7 +9,7 @@ export function incName(name) {
 }
 
 export function findUniqJsName(name, boundNames = []) {
-  name = toJsIdentifier(name);
+  name = toJsIdentifier(name, true);
   while (boundNames.includes(name)) name = incName(name);
   return name;
 }
