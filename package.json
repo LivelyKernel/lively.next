@@ -27,7 +27,9 @@
     "mocha-es6": "^0.5"
   },
   "systemjs": {
-    "map": {"prettier": "./js/prettier.min.js"}
+    "map": {
+      "prettier": "./js/prettier.1.7.4.js"
+    }
   },
   "scripts": {
     "test": "mocha-es6 tests/{,diff/,js/,shell/}*-test.js"
