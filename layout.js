@@ -715,8 +715,18 @@ export class TilingLayoutHalo extends Morph {
     this.target.spacing = s;
   }
 
+  updateAxis(a) {
+    this.target.axis = a;
+  }
+
   optionControls() {
     const layout = this.target,
+          axisControl = new DropDownSelector({
+            borderRadius: 2,
+            padding: 3,
+            selectedValue: layout.axis,
+            values: ['row', 'column']
+          }),
           spacing = new NumberWidget({
             min: 0,
             number: layout.spacing,
@@ -727,6 +737,7 @@ export class TilingLayoutHalo extends Morph {
             unit: "px"
           });
     connect(spacing, 'udpate', this, 'updateSpacing');
+    connect(axisControl, 'update', this, 'updateAxis');
     return [
       [
         {
@@ -738,6 +749,17 @@ export class TilingLayoutHalo extends Morph {
           readOnly: true
         },
         spacing
+      ],
+      [
+        {
+          type: "text",
+          textString: "Tiling Axis",
+          padding: rect(0,5,5,5),
+          fill: Color.transparent,
+          fontColor: Color.gray.darker(),
+          readOnly: true
+        },
+        axisControl
       ]
     ].map(x => {
       return {
