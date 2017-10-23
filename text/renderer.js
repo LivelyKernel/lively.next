@@ -116,7 +116,7 @@ function installCSS(domEnv) {
       font-variant-ligatures: contextual;
     }
 
-    .line .Morph {
+    .line > .Morph {
       display: inline-block !important;
       vertical-align: middle !important;
     }
