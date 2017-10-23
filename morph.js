@@ -1638,12 +1638,15 @@ export class InteractiveMorphSelector {
 
   scanForTargetAt(pos) {
     this.selectorMorph.center = pos;
-    var target = this.selectorMorph.morphBeneath(pos);
+    var target = this.selectorMorph.morphBeneath(pos), hiddenMorph;
     let {possibleTarget, controllingMorph, filterFn, world, morphHighlighter} = this;
     if (morphHighlighter == target) {
       target = morphHighlighter.morphBeneath(pos);
     } else if (target && target.isEpiMorph) {
       target = target.morphBeneath(pos);
+    }
+    while (hiddenMorph = [target, ...target.ownerChain()].find(m => !m.visible)) {
+      target = hiddenMorph = hiddenMorph.morphBeneath(pos);
     }
     if (target != possibleTarget
         && (!controllingMorph
