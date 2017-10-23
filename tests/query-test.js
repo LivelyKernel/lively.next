@@ -215,10 +215,11 @@ describe('query', function() {
 
       it("findReferencesAndDeclsInScope find vars", function() {
         var parsed = parse("var x = 3, y = 4;\nvar z = function() { y + y + (function(y) { y+1 })(); }");
-        expect(query.findReferencesAndDeclsInScope(query.scopes(parsed), "y"))
-          .to.containSubset([{end:12,name:"y",start:11,type:"Identifier"},
-                             {end:40,name:"y",start:39,type:"Identifier"},
-                             {end:44,name:"y",start:43,type:"Identifier"}]);
+        expect(query.findReferencesAndDeclsInScope(query.scopes(parsed), "y")).deep.equals([
+          {name:"y", start:11, end:12, type:"Identifier"},
+          {name:"y", start:39, end:40, type:"Identifier"},
+          {name:"y", start:43, end:44, type:"Identifier"}
+        ]);
       });
 
       it("findReferencesAndDeclsInScope finds this", function() {
