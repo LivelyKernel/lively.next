@@ -407,6 +407,10 @@ export default class Halo extends Morph {
       newTarget && evt.world.showHaloFor(newTarget, evt.domEvt.pointerId);
       this.remove();
     }
+    if (target == this && evt.isCommandKey()) {
+      let newTarget = this.morphBeneath(evt.position);
+      evt.world.showHaloFor(newTarget, evt.domEvt.pointerId)
+    }
     if (target == this) this.remove();
   }
 
