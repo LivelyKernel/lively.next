@@ -648,16 +648,21 @@ export default class Renderer {
       return [this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth)];
 
     // single line -> one rectangle
-    if (Math.abs(startPos.y - endPos.y) <= 3)
+    if (start.row == end.row) {
       return [
-        this.selectionLayerPart(startPos, endPos.addXY(0, endLineHeight), selectionColor),
-        this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth)]
+        this.selectionLayerPart(
+          startPos.withY(Math.min(startPos.y, endPos.y)), 
+          endPos.addXY(0, endLineHeight), selectionColor),
+          this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth
+        )
+      ]
+    }
 
     let endPosLine1 = pt(morph.width, startPos.y + leadLineHeight),
         startPosLine2 = pt(0, endPosLine1.y);
 
     // two lines -> two rectangles
-    if (Math.abs(endBounds.y+endBounds.height - startBounds.y) / leadLineHeight <= 2) {
+    if (Math.abs(start.row - end.row) < 2) {
       return [
         this.selectionLayerPart(startPos, endPosLine1, selectionColor),
         this.selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight), selectionColor),
