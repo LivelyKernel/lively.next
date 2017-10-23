@@ -126,7 +126,7 @@ export default class JavaScriptNavigator {
         scope = decl ?
           query.scopeAtIndex(parsed, decl.start) :
           query.scopeAtIndex(parsed, pos),
-        refs = query.findReferencesAndDeclsInScope(scope, id.name).filter(ea => ea !== decl);
+        {refs} = query.findReferencesAndDeclsInScope(scope, id.name);
 
     return {parsed, scope, id, name: id.name, decl, refs};
   }
