@@ -37,16 +37,13 @@ describe("freezer bundle", function () {
     await baseDir.remove();
   });
 
-  it("bundles simple package", async () => {
+  it("reads dependencies of simple package", async () => {
     await buildPackage1();
-    let p  = new FreezerPackage("package1", null, baseDir.join("package1/"))
-    await p.readConfig();
-    let packages = {[p.qualifiedName]: p};
-    
-    let b = new Bundle(packages)
-    await b.build("file1.js", "package1");
+    let packages = await FreezerPackage.buildPackageMap([baseDir.join("package1/")]),
+        bundle = new Bundle(packages);
+    await bundle.build("file1.js", "package1");
 
-    expect(b.report().trim()).equals([
+    expect(bundle.report().trim()).equals([
       `package1@1/file1.js`,
       `  => y`,
       `  <= package1@1/file2.js x`,
@@ -54,5 +51,22 @@ describe("freezer bundle", function () {
       `package1@1/file2.js`,
       `  => x`
     ].join("\n"));
+  });
+
+  describe("source transform", () => {
+
+    it("transforms module into function", async () => {
+      await buildPackage1();
+      let packages = await FreezerPackage.buildPackageMap([baseDir.join("package1/")]),
+          bundle = new Bundle(packages);
+      await bundle.build("file1.js", "package1");
+
+      expect(bundle.entryModule.transformToModuleFunction()).equals(
+`function package1_1_file1_js(__imports__, __exports__) {
+__exports__.__defineGetter__("y", () => y); var y = package1_1_file2_js.x + 2;
+
+}`);
+
+    })
   });
 });

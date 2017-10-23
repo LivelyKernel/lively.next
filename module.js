@@ -1,6 +1,7 @@
 import { resource } from "lively.resources";
-import { parse, query } from "lively.ast";
+import { parse, stringify, transform, nodes, query } from "lively.ast";
 import { findUniqJsName } from "./util.js";
+import { arr } from "lively.lang";
 
 export default class FreezerModule {
 
@@ -62,7 +63,7 @@ export default class FreezerModule {
     let parsed, scope, rawImports,
         exports = [], rawExports, source,
         dependencies = {};
-  
+
     try {
       source = await this.source();
       parsed = parse(source, {addAstIndex: true});
@@ -70,13 +71,13 @@ export default class FreezerModule {
       rawImports = query.imports(scope);
       rawExports = query.exports(scope);
     } catch (err) { throw new Error(`Error parsing ${this.name}: ${err.stack}`); }
-  
+
     for (let i of rawImports) {
       let {fromModule, imported, local, node} = i,
           dep = dependencies[fromModule] || (dependencies[fromModule] = {imports: []});
       dep.imports.push({imported, local, node});
     }
-  
+
     for (let e of rawExports) {
       let {fromModule, imported, exported, local, node} = e;
       if (fromModule) {
@@ -85,7 +86,7 @@ export default class FreezerModule {
       }
       exports.push({exported, local});
     }
-  
+
     this.rawDependencies = dependencies;
     this.parsed = parsed;
     this.scope = scope;
@@ -104,7 +105,7 @@ export default class FreezerModule {
 
     let {rawDependencies, scope, dependencies} = this;
         // boundNames = query.declarationsOfScope(scope).map(ea => ea.name);
-  
+
     for (let localName in rawDependencies) {
       let {imports} = rawDependencies[localName];
 
@@ -113,14 +114,118 @@ export default class FreezerModule {
         isExternal, isPackageImport
       } = bundle.resolveModuleImport(this, localName);
 
-console.log(`${this.qualifiedName} => ${localName} ${otherModule.package && otherModule.package.name} ${otherModule.name}`)
-
       this.addDependency(otherModule, {imports, localName, isExternal, isPackageImport});
-
-      // boundNames.push(dep.varName = findUniqJsName(localName, boundNames));
     }
-  
+
     return this
+  }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // transform
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  computeImportReplacements() {
+    let replacements = [], locals = [], moduleJSIdentifiers = [];
+    for (let [depModule, {imports}] of this.dependencies) {
+      let varName = depModule.findUniqJsName(moduleJSIdentifiers);
+      moduleJSIdentifiers.push(varName);
+      locals.push(varName);
+      for (let imported of imports) {
+        let {refs, decls} = query.findReferencesAndDeclsInScope(query.scopes(this.parsed), imported.local);
+        for (let ref of refs) {
+          replacements.push({
+            target: ref,
+            replacementFunc: (node, source, wasChanged) =>
+              [nodes.member(nodes.id(varName), ref.name)]
+          });
+        }
+      }
+    }
+    return {locals, replacements};
+  }
+
+  exportTransformSpecs() {
+    let exported = [];
+
+    for (let node of this.parsed.body) {
+      let {type, declaration, specifiers} = node;
+      if (type !== "ExportNamedDeclaration" && type !== "ExportDefaultDeclaration")
+        continue;
+
+      let exportTransform = {node, replacementFunc: () => [], ids: []};
+      exported.push(exportTransform);
+
+      if (type === "ExportNamedDeclaration" && declaration) {
+        // exportTransform.replacementFunc = (node, source, wasChanged) => [node.declaration];
+        exportTransform.replacementFunc = (node, source, wasChanged) =>
+          source.replace(/^(\s*)export\s+/, (_, indent) => indent);
+        switch (declaration.type) {
+          case 'VariableDeclaration':
+            for (let id of query.helpers.declIds(declaration.declarations.map(ea => ea.id))) {
+              exportTransform.ids.push({local: id, exported: id});
+            }
+            break;
+          case 'ClassDeclaration': case 'FunctionDeclaration':
+            exportTransform.ids.push({local: declaration.id, exported: declaration.id});
+            break;
+        }
+        continue;
+      }
+
+      if (type === "ExportNamedDeclaration" && specifiers) {
+        for (let {local, exported} of specifiers)
+          exportTransform.ids.push({local, exported});
+        continue;
+      }
+
+      if (type === "ExportDefaultDeclaration" && declaration) {
+        exportTransform.replacementFunc = (node, source, wasChanged) =>
+          source.replace(/^(\s*)export\s+default\s+/, (_, indent) => indent);
+        let local;
+        switch (declaration.type) {
+          case 'Identifier': local = declaration; break;
+          case 'ClassDeclaration': case 'FunctionDeclaration': local = declaration.id; break;
+          default:
+            throw new Error(`Strange default export declaration: ${declaration.type}`);
+        }
+        exportTransform.ids.push({local, exported: {type: "Identifier", name: "default"}});
+        continue;
+      }
+    }
+
+    return exported;
+  }
+
+  transformToModuleFunction() {
+    let {replacements: importReplacements, locals: imported} = this.computeImportReplacements(),
+        exportTransformData = this.exportTransformSpecs();
+
+    let replaced = transform.replaceNodes([
+
+          // replace references of imported objects with import transform var names
+          ...importReplacements,
+
+          // remove import decls completely
+          ...this.parsed.body.filter(ea => ea.type === "ImportDeclaration")
+                                .map(target => ({target, replacementFunc: () => []})),
+
+          // remove exports
+          ...exportTransformData.map(({node: target, replacementFunc}) => ({target, replacementFunc}))
+        ], this._source);
+
+    let exportGetters = arr.flatmap(exportTransformData, ({ids}) =>
+      ids.map(({local, exported}) =>
+        nodes.exprStmt(
+          nodes.funcCall(
+            nodes.member("__exports__", "__defineGetter__"),
+            nodes.literal(exported.name),
+            nodes.funcExpr({arrow: true, expression: true}, [], local)))));
+
+    return `function ${this.findUniqJsName([])}(__imports__, __exports__) {\n`
+         + `${exportGetters.map(stringify).join("\n")}`
+         + `${replaced.source}\n`
+         + `\n}`;
   }
 
 }
