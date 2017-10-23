@@ -2181,6 +2181,7 @@ export class Text extends Morph {
     if (morphs[0]) {
       let textPos = this.textPositionFromPoint(this.localize(evt.hand.position));
       this.insertText([morphs[0], null], textPos);
+      morphs[0].opacity = evt.state.originalOpacity || 1;
     }
   }
 
@@ -2257,7 +2258,10 @@ export class Text extends Morph {
     };
 
     let grabbed = evt.hand.grabbedMorphs[0];
-    if (grabbed) { grabbed.opacity = .3; }
+    if (grabbed) { 
+      evt.state.originalOpacity = grabbed.opacity;
+      grabbed.opacity = .3;
+    }
 
     // build a "drop grid" of the visible lines
 
@@ -2333,7 +2337,7 @@ export class Text extends Morph {
   onDropHoverOut(evt) {
     let grabbed = evt.hand.grabbedMorphs[0];
     if (grabbed) {
-      grabbed.opacity = 1;
+      grabbed.opacity = evt.state.originalOpacity || 1;
     }
 
     let dropHoverCache = evt.state.dropHover;
