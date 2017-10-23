@@ -757,6 +757,21 @@ export class Text extends Morph {
     if (textChange) signal(this, "textChange", change);
     if (viewChange) signal(this, "viewChange", change);
   }
+  
+  onSubmorphChange(change, submorph) {
+    super.onSubmorphChange(change, submorph);
+    let {prop, prevValue} = change;
+    if (this.embeddedMorphMap.get(submorph)) {
+      if (prop == 'position' && !this._correctingPosition) {
+        this._correctingPosition = true;
+        submorph.position = prevValue;
+        this._correctingPosition = false;
+      }
+      if (prop == 'extent') {
+        this.invalidateTextLayout(true, true);
+      }
+    }
+  }
 
   removeMorph(morph) {
     let {embeddedMorphMap} = this;

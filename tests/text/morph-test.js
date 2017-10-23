@@ -743,4 +743,16 @@ describeInBrowser("morph inside textAndAttributes", () => {
     expect(m.position).equals(oldPos, "4");
   });
 
+  it("position of embedded morph is enforced", () => {
+    sut.insertText([m, null, "\n", null], {column: 0, row: 1});
+    m.moveBy(pt(100,100));
+    expect(m.position).equals(sut.charBoundsFromTextPosition({column: 0, row: 1}).topLeft());
+  })
+
+  it("layout is updated on morph resize", () => {
+    sut.insertText([m, null, "\n", null], {column: 0, row: 1});
+    m.resizeBy(pt(100,100));
+    expect(m.extent).equals(sut.charBoundsFromTextPosition({column: 0, row: 1}).extent());
+  })
+
 });
