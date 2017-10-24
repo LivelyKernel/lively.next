@@ -1,4 +1,6 @@
 import { resource } from "lively.resources";
+import { isURL } from "lively.modules/src/url-helpers.js";
+import { join, parent } from "lively.resources/src/helpers.js";
 import { parse, stringify, transform, nodes, query } from "lively.ast";
 import { findUniqJsName } from "./util.js";
 import { arr } from "lively.lang";
@@ -97,7 +99,7 @@ export default class FreezerModule {
     return this;
   }
 
-  async prepareBundling(bundle) {
+  async resolveImports(bundle) {
     // 1. try to resolve the "from" part of local imports
     // 2. find local var names for object capturing imports
 
@@ -107,17 +109,54 @@ export default class FreezerModule {
         // boundNames = query.declarationsOfScope(scope).map(ea => ea.name);
 
     for (let localName in rawDependencies) {
-      let {imports} = rawDependencies[localName];
-
-      let {
-        module: otherModule,
-        isExternal, isPackageImport
-      } = bundle.resolveModuleImport(this, localName);
-
+      let {imports} = rawDependencies[localName],
+          {
+            module: otherModule,
+            isExternal, isPackageImport
+          } = this.resolveImport(localName, bundle);
       this.addDependency(otherModule, {imports, localName, isExternal, isPackageImport});
     }
 
-    return this
+    return this;
+  }
+
+  resolveImport(localName, bundle) {
+    if (isURL(localName)) {
+      return {
+        isExternal: true,
+        module: bundle.findModuleWithId(localName)
+             || bundle.addModule(new FreezerModule(localName, null, localName))
+      };
+    }
+
+    if (localName.startsWith(".")) {
+      if (!this.package) throw new Error("local module needs package!");
+      let name = join(parent(this.name), localName);
+      return {
+        isExternal: false,
+        module: bundle.findModuleInPackageWithName(this.package, name)
+             || bundle.addModule(new FreezerModule(name, this.package))
+      };
+    }
+
+    let packageName = localName.includes("/") ? localName.slice(0, localName.indexOf.includes("/")) : localName,
+        nameInPackage = localName.slice(packageName.length),
+        packageSpec = bundle.findPackage(packageName),
+        isExternal = true,
+        isPackageImport = !nameInPackage;
+
+    if (!packageSpec)
+      throw new Error(`Cannot resolve package ${packageName}`);
+
+    if (isPackageImport) {
+      nameInPackage = packageSpec.main || (packageSpec.systemjs && packageSpec.systemjs.main) || "index.js"
+    }
+
+    return {
+      isExternal, isPackageImport,
+      module: bundle.findModuleInPackageWithName(packageSpec, nameInPackage)
+           || bundle.addModule(new FreezerModule(nameInPackage, packageSpec))
+    };
   }
 
 

@@ -1,7 +1,4 @@
 import FreezerModule from "./module.js";
-import { resource } from "lively.resources";
-import { join, parent } from "lively.resources/src/helpers.js";
-import { isURL } from "lively.modules/src/url-helpers.js";
 import { obj } from "lively.lang";
 
 export default class Bundle {
@@ -13,7 +10,7 @@ export default class Bundle {
     this.entryModule = null;
   }
 
-  async build(moduleName, packageName) {
+  async resolveDependenciesStartFrom(moduleName, packageName) {
     let packageSpec = this.findPackage(packageName),
         entryModule =  this.findModuleInPackageWithName(packageSpec, moduleName)
                     || this.addModule(new FreezerModule(moduleName, packageSpec));
@@ -21,20 +18,19 @@ export default class Bundle {
     this.entryModule = entryModule;
 
     let seen = {}, unresolved = [entryModule];
-    
+
     while (unresolved.length) {
       let next = unresolved.shift();
       if (seen[next.qualifiedName]) continue;
       seen[next.qualifiedName] = true;
 
-      await next.prepareBundling(this);
+      await next.resolveImports(this);
 
       this.modules[next.qualifiedName] = next;
 
       for (let [mod, {isExternal}] of next.dependencies)
-        if (!isExternal && !seen[mod.qualifiedName]) {
+        if (!isExternal && !seen[mod.qualifiedName])
           unresolved.push(mod);
-        }
     }
 
     return this;
@@ -62,48 +58,6 @@ export default class Bundle {
     return module;
   }
 
-  resolveModuleImport(fromModule, localName) {
-    // FIXME: move module resolution somewhere else?!
-
-    if (isURL(localName)) {
-      return {
-        isExternal: true,
-        module: this.findModuleWithId(localName)
-             || this.addModule(new FreezerModule(localName, null, localName))
-      };
-    }
-
-    if (localName.startsWith(".")) {
-      if (!fromModule.package) throw new Error("local module needs package!");
-      let name = join(parent(fromModule.name), localName);
-      return {
-        isExternal: false,
-        module: this.findModuleInPackageWithName(fromModule.package, name)
-             || this.addModule(new FreezerModule(name, fromModule.package))
-      };
-    }
-
-    let packageName = localName.includes("/") ? localName.slice(0, localName.indexOf.includes("/")) : localName,
-        nameInPackage = localName.slice(packageName.length),
-        packageSpec = this.findPackage(packageName),
-        isExternal = true,
-        isPackageImport = !nameInPackage;
-
-    if (!packageSpec)
-      throw new Error(`Cannot resolve package ${packageName}`);
-
-    if (isPackageImport) {
-      nameInPackage = packageSpec.main || (packageSpec.systemjs && packageSpec.systemjs.main) || "index.js"
-    }
-
-    return {
-      isExternal, isPackageImport,
-      module: this.findModuleInPackageWithName(packageSpec, nameInPackage)
-           || this.addModule(new FreezerModule(nameInPackage, packageSpec))
-    };
-  }
-
-
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // report / debugging
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -111,7 +65,7 @@ export default class Bundle {
   report() {
     let seen = {}, unreported = [this.entryModule],
         report = "";
-  
+
     while (unreported.length) {
       let next = unreported.shift();
       if (seen[next.qualifiedName]) continue;
@@ -125,7 +79,7 @@ export default class Bundle {
       report += "\n\n"
       unreported.push(...Array.from(next.dependencies.keys()).filter(ea => !seen[ea.qualifiedName]));
     }
-  
+
     return report;
   }
 
