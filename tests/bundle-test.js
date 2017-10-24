@@ -52,12 +52,6 @@ describe("bundler", function () {
       let bundle = new Bundle(packages);
       await bundle.resolveDependenciesStartFrom("file1.js", "package1");
 
-      expect(bundle.entryModule.transformToModuleFunction()).equals(
-`function package1_1_file1_js(__imports__, __exports__) {
-__exports__.__defineGetter__("y", () => y); var y = package1_1_file2_js.x + 2;
-
-}`);
-
       expect(bundle.entryModule.transformToRegisterFormat()).equals(
 `System.register("package1@1/file1.js", ["package1@1/file2.js"], function(_export, _context) {
   "use strict";
