@@ -466,7 +466,7 @@ export class List extends Morph {
       },
 
       submorphs: {
-        initialize() { this.initializeSubmorphs(); }
+        initialize(submorphs) { this.initializeSubmorphs(submorphs); }
       },
 
       listItemContainer: {
@@ -531,8 +531,10 @@ export class List extends Morph {
     this.update();
   }
 
-  initializeSubmorphs() {
-    let submorphs = this.submorphs || (this.submorphs = []), container, scroller;
+  initializeSubmorphs(submorphs) {
+    let container, scroller;
+    submorphs = submorphs || this.submorphs || [];
+    if (!this.submorphs) this.submorphs = submorphs;
     for (let i = 0; i < submorphs.length; i++) {
       switch (submorphs[i].name) {
         case "listItemContainer": container = submorphs[i]; break;
