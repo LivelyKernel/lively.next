@@ -1,5 +1,5 @@
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -658,9 +658,9 @@
   typeof self === "object" ? self : this
 );
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.lang/dist/lively.lang.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
 
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -3616,6 +3616,20 @@ function indent$1(str, indentString, depth) {
   return str;
 }
 
+var getOwnPropertyDescriptors = typeof Object.prototype.getOwnPropertyDescriptors === "function" ? Object.prototype.getOwnPropertyDescriptors : function getOwnPropertyDescriptors(object) {
+  var descriptors = {};
+  for (var name in object) {
+    if (!Object.prototype.hasOwnProperty.call(object, name)) continue;
+    Object.defineProperty(descriptors, name, {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value: Object.getOwnPropertyDescriptor(object, name)
+    });
+  }
+  return descriptors;
+};
+
 // show-in-doc
 
 // -=-=-=-=-
@@ -3732,10 +3746,11 @@ function select(obj, keys) {
 
 function dissoc(object, keys) {
   object = object || {};
-  var descriptors = Object.getOwnPropertyDescriptors(object);
+  var descriptors = getOwnPropertyDescriptors(object);
   for (var i = 0; i < keys.length; i++) {
     if (keys[i] in descriptors) delete descriptors[keys[i]];
-  }return Object.defineProperties({}, descriptors);
+  }
+  return Object.defineProperties({}, descriptors);
 }
 
 function addScript(object, funcOrString, optName, optMapping) {
@@ -5253,6 +5268,49 @@ var times = features.repeat ? function (s, count$$1) {
   return count$$1 < 1 ? '' : new Array(count$$1 + 1).join(s);
 };
 
+function longestCommonSubstring(a, b) {
+  // Example:
+  // longestCommonSubstring("bar foo barrr", "hello fooo world");
+  // => {indexA: 3, indexB: 5, length: 4, string: " foo"}
+
+  var lcs = [];
+  for (var i = 0; i < a.length; i++) {
+    lcs[i] = [];
+    for (var j = 0; j < b.length; j++) {
+      lcs[i][j] = 0;
+    }
+  }
+
+  // if B is null then LCS of A, B =0
+  for (var _i = 0; _i < a.length; _i++) {
+    lcs[_i][0] = 0;
+  } // fill the rest of the matrix
+  for (var _i2 = 1; _i2 < a.length; _i2++) {
+    for (var _j = 1; _j < b.length; _j++) {
+      lcs[_i2][_j] = a[_i2 - 1] == b[_j - 1] ? lcs[_i2 - 1][_j - 1] + 1 : 0;
+    }
+  }
+
+  var maxLength = -1,
+      indexA = -1,
+      indexB = -1;
+  for (var _i3 = 0; _i3 < a.length; _i3++) {
+    for (var _j2 = 0; _j2 < b.length; _j2++) {
+      var length = lcs[_i3][_j2];
+      if (maxLength < length) {
+        maxLength = length;
+        indexA = _i3 - length;
+        indexB = _j2 - length;
+      }
+    }
+  }
+
+  return {
+    length: maxLength, indexA: indexA, indexB: indexB,
+    string: maxLength > 0 ? a.slice(indexA, indexA + maxLength) : ""
+  };
+}
+
 function applyChange(string, change) {
   // change is of the form
   // `{start: Number, end: Number, lines: [String], action: "insert"|"remove"}`
@@ -5363,6 +5421,7 @@ var string = Object.freeze({
 	succ: succ,
 	digitValue: digitValue,
 	times: times,
+	longestCommonSubstring: longestCommonSubstring,
 	applyChange: applyChange,
 	applyChanges: applyChanges,
 	levenshtein: levenshtein
@@ -6568,30 +6627,89 @@ function sortByReference(depGraph, startNode) {
   // sortByReference(depGraph, "a");
   // // => [["c"], ["b"], ["a"]]
 
-  var all$$1 = [startNode].concat(hull(depGraph, startNode)),
-      seen = [],
-      groups = [];
 
-  while (seen.length !== all$$1.length) {
-    var depsRemaining = withoutAll(all$$1, seen).reduce(function (depsRemaining, node) {
-      depsRemaining[node] = withoutAll(depGraph[node] || [], seen).length;
-      return depsRemaining;
-    }, {}),
-        min$$1 = withoutAll(all$$1, seen).reduce(function (minNode, node) {
-      return depsRemaining[node] <= depsRemaining[minNode] ? node : minNode;
-    });
-
-    if (depsRemaining[min$$1] === 0) {
-      groups.push(Object.keys(depsRemaining).filter(function (key) {
-        return depsRemaining[key] === 0;
-      }));
-    } else {
-      groups.push([min$$1]);
+  // establish unique list of keys
+  var remaining = [],
+      remainingSeen = {},
+      uniqDepGraph = {};
+  for (var _key2 in depGraph) {
+    if (!remainingSeen.hasOwnProperty(_key2)) {
+      remainingSeen[_key2] = true;
+      remaining.push(_key2);
     }
+    var deps = depGraph[_key2],
+        uniqDeps = {};
+    if (deps) {
+      uniqDepGraph[_key2] = [];
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
 
-    seen = flatten(groups);
+      try {
+        for (var _iterator = deps[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var dep = _step.value;
+
+          if (uniqDeps.hasOwnProperty(dep) || _key2 === dep) continue;
+          uniqDeps[dep] = true;
+          uniqDepGraph[_key2].push(dep);
+          if (!remainingSeen.hasOwnProperty(dep)) {
+            remainingSeen[dep] = true;
+            remaining.push(dep);
+          }
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+    }
   }
 
+  // for each iteration find the keys with the minimum number of dependencies
+  // and add them to the result group list
+  var groups = [];
+  while (remaining.length) {
+    var minDepCount = Infinity,
+        minKeys = [],
+        minKeyIndexes = [];
+
+    var _loop = function _loop() {
+      key = remaining[i];
+
+      var deps = uniqDepGraph[key] || [];
+      if (deps.length > minDepCount) return "continue";
+      if (deps.length === minDepCount && !minKeys.some(function (ea) {
+        return deps.includes(ea);
+      })) {
+        minKeys.push(key);
+        minKeyIndexes.push(i);
+        return "continue";
+      }
+      minDepCount = deps.length;
+      minKeys = [key];
+      minKeyIndexes = [i];
+    };
+
+    for (var i = 0; i < remaining.length; i++) {
+      var key;
+
+      var _ret = _loop();
+
+      if (_ret === "continue") continue;
+    }
+    for (var i = minKeyIndexes.length; i--;) {
+      remaining.splice(minKeyIndexes[i], 1);
+    }groups.push(minKeys);
+  }
   return groups;
 }
 
@@ -8533,9 +8651,9 @@ exports.uninstallGlobals = uninstallGlobals;
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.lang;
 })();
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.lang/dist/lively.lang.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.notifications/dist/lively.notifications.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -8693,9 +8811,9 @@ exports.stopLogging = stopLogging;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /home/lively/lively-web.org/lively.next/lively.notifications/dist/lively.notifications.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.ast/dist/lively.ast.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -14883,7 +15001,7 @@ module.exports = function(acorn) {
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v7.7.4',
+        version: 'v8.2.1',
         browser: true,
         env: {},
         argv: [],
@@ -14935,13 +15053,14 @@ module.exports = function(acorn) {
         BitwiseSHIFT: 10,
         Additive: 11,
         Multiplicative: 12,
-        Unary: 13,
-        Postfix: 14,
-        Call: 15,
-        New: 16,
-        TaggedTemplate: 17,
-        Member: 18,
-        Primary: 19
+        Exponentiation: 13,
+        Unary: 14,
+        Postfix: 15,
+        Call: 16,
+        New: 17,
+        TaggedTemplate: 18,
+        Member: 19,
+        Primary: 20
       };
       BinaryPrecedence = {
         '||': Precedence.LogicalOR,
@@ -14968,7 +15087,8 @@ module.exports = function(acorn) {
         '-': Precedence.Additive,
         '*': Precedence.Multiplicative,
         '%': Precedence.Multiplicative,
-        '/': Precedence.Multiplicative
+        '/': Precedence.Multiplicative,
+        '**': Precedence.Exponentiation
       };
       var F_ALLOW_IN = 1, F_ALLOW_CALL = 1 << 1, F_ALLOW_UNPARATH_NEW = 1 << 2, F_FUNC_BODY = 1 << 3, F_DIRECTIVE_CTX = 1 << 4, F_SEMICOLON_OPT = 1 << 5;
       var F_XJS_NOINDENT = 1 << 8, F_XJS_NOPAREN = 1 << 9;
@@ -16918,8 +17038,9 @@ module.exports = function(acorn) {
           return this.Literal(expr, precedence, flags);
         },
         JSXText: function (expr, precedence, flags) {
-          if (expr.hasOwnProperty('raw'))
+          if (expr.hasOwnProperty('raw')) {
             return expr.raw;
+          }
           return String(expr.value);
         },
         JSXAttribute: function (expr, precedence, flags) {
@@ -17236,6 +17357,7 @@ module.exports = function(acorn) {
       'optionalDependencies': { 'source-map': '~0.2.0' },
       'devDependencies': {
         'acorn': '^2.7.0',
+        'acorn-babel': '^0.11.1-38',
         'bluebird': '^2.3.11',
         'bower-registry-client': '^0.2.1',
         'chai': '^1.10.0',
@@ -21768,10 +21890,10 @@ var ScopeVisitor = function (_Visitor3) {
       scope.importSpecifierPaths.push(path);
 
       var visitor = this;
-      // // imported is of types Identifier
+      // imported is of types Identifier
       // node["imported"] = visitor.accept(node["imported"], scope, path.concat(["imported"]));
       // local is of types Identifier
-      node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+      // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
       return node;
     }
   }, {
@@ -22957,7 +23079,7 @@ function funcExpr(_ref) {
     type: (arrow ? "Arrow" : "") + "FunctionExpression",
     id: funcId ? typeof funcId === "string" ? id(funcId) : funcId : undefined,
     params: params,
-    body: { body: statements, type: "BlockStatement" },
+    body: expression && statements.length === 1 ? statements[0] : { body: statements, type: "BlockStatement" },
     expression: expression || false,
     generator: generator || false
   };
@@ -23162,64 +23284,196 @@ var nodes = Object.freeze({
 
 var helpers = {
   declIds: function declIds(nodes) {
-    var result = [];
+    var result = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+
     for (var i = 0; i < nodes.length; i++) {
       var node = nodes[i];
       if (!node) continue;else if (node.type === "Identifier") result.push(node);else if (node.type === "RestElement") result.push(node.argument);
       // AssignmentPattern: default arg like function(local = defaultVal) {}
-      else if (node.type === "AssignmentPattern") result.push.apply(result, toConsumableArray(helpers.declIds([node.left])));else if (node.type === "ObjectPattern") {
+      else if (node.type === "AssignmentPattern") helpers.declIds([node.left], result);else if (node.type === "ObjectPattern") {
           for (var j = 0; j < node.properties.length; j++) {
             var prop = node.properties[j];
-            result.push.apply(result, toConsumableArray(helpers.declIds([prop.value || prop])));
+            helpers.declIds([prop.value || prop], result);
           }
-        } else if (node.type === "ArrayPattern") result.push.apply(result, toConsumableArray(helpers.declIds(node.elements)));
+        } else if (node.type === "ArrayPattern") helpers.declIds(node.elements, result);
     }
     return result;
   },
   varDecls: function varDecls(scope) {
-    return lively_lang.arr.flatmap(scope.varDecls, function (varDecl) {
-      return lively_lang.arr.flatmap(varDecl.declarations, function (decl) {
-        return helpers.declIds([decl.id]).map(function (id) {
-          return [decl, id];
-        });
-      });
-    });
+    var result = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+      for (var _iterator = scope.varDecls[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var varDecl = _step.value;
+        var _iteratorNormalCompletion2 = true;
+        var _didIteratorError2 = false;
+        var _iteratorError2 = undefined;
+
+        try {
+          for (var _iterator2 = varDecl.declarations[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+            var decl = _step2.value;
+            var _iteratorNormalCompletion3 = true;
+            var _didIteratorError3 = false;
+            var _iteratorError3 = undefined;
+
+            try {
+              for (var _iterator3 = helpers.declIds([decl.id])[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                var id = _step3.value;
+
+                result.push([decl, id]);
+              }
+            } catch (err) {
+              _didIteratorError3 = true;
+              _iteratorError3 = err;
+            } finally {
+              try {
+                if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                  _iterator3.return();
+                }
+              } finally {
+                if (_didIteratorError3) {
+                  throw _iteratorError3;
+                }
+              }
+            }
+          }
+        } catch (err) {
+          _didIteratorError2 = true;
+          _iteratorError2 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion2 && _iterator2.return) {
+              _iterator2.return();
+            }
+          } finally {
+            if (_didIteratorError2) {
+              throw _iteratorError2;
+            }
+          }
+        }
+      }
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion && _iterator.return) {
+          _iterator.return();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
+      }
+    }
+
+    return result;
   },
   varDeclIds: function varDeclIds(scope) {
-    return helpers.declIds(scope.varDecls.reduce(function (all, ea) {
-      all.push.apply(all, ea.declarations);return all;
-    }, []).map(function (ea) {
-      return ea.id;
-    }));
+    var result = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+    var _iteratorNormalCompletion4 = true;
+    var _didIteratorError4 = false;
+    var _iteratorError4 = undefined;
+
+    try {
+      for (var _iterator4 = scope.varDecls[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+        var varDecl = _step4.value;
+        var _iteratorNormalCompletion5 = true;
+        var _didIteratorError5 = false;
+        var _iteratorError5 = undefined;
+
+        try {
+          for (var _iterator5 = varDecl.declarations[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+            var decl = _step5.value;
+
+            helpers.declIds([decl.id], result);
+          }
+        } catch (err) {
+          _didIteratorError5 = true;
+          _iteratorError5 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion5 && _iterator5.return) {
+              _iterator5.return();
+            }
+          } finally {
+            if (_didIteratorError5) {
+              throw _iteratorError5;
+            }
+          }
+        }
+      }
+    } catch (err) {
+      _didIteratorError4 = true;
+      _iteratorError4 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion4 && _iterator4.return) {
+          _iterator4.return();
+        }
+      } finally {
+        if (_didIteratorError4) {
+          throw _iteratorError4;
+        }
+      }
+    }
+
+    return result;
   },
   objPropertiesAsList: function objPropertiesAsList(objExpr, path, onlyLeafs) {
+    var result = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+
     // takes an obj expr like {x: 23, y: [{z: 4}]} an returns the key and value
     // nodes as a list
-    return lively_lang.arr.flatmap(objExpr.properties, function (prop) {
-      var key = prop.key.name;
-      // var result = [{key: path.concat([key]), value: prop.value}];
-      var result = [];
-      var thisNode = { key: path.concat([key]), value: prop.value };
-      switch (prop.value.type) {
-        case "ArrayExpression":case "ArrayPattern":
-          if (!onlyLeafs) result.push(thisNode);
-          result = result.concat(lively_lang.arr.flatmap(prop.value.elements, function (el, i) {
-            return helpers.objPropertiesAsList(el, path.concat([key, i]), onlyLeafs);
-          }));
-          break;
-        case "ObjectExpression":case "ObjectPattern":
-          if (!onlyLeafs) result.push(thisNode);
-          result = result.concat(helpers.objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
-          break;
-        case "AssignmentPattern":
-          if (!onlyLeafs) result.push(thisNode);
-          result = result.concat(helpers.objPropertiesAsList(prop.left, path.concat([key]), onlyLeafs));
-          break;
-        default:
-          result.push(thisNode);
+    var _iteratorNormalCompletion6 = true;
+    var _didIteratorError6 = false;
+    var _iteratorError6 = undefined;
+
+    try {
+      for (var _iterator6 = objExpr.properties[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+        var prop = _step6.value;
+
+        var key = prop.key.name,
+            thisNode = { key: path.concat([key]), value: prop.value };
+        switch (prop.value.type) {
+          case "ArrayExpression":case "ArrayPattern":
+            if (!onlyLeafs) result.push(thisNode);
+            for (var i = 0; i < prop.value.elements.length; i++) {
+              var el = prop.value.elements[i];
+              helpers.objPropertiesAsList(el, path.concat([key, i]), onlyLeafs, result);
+            }
+            break;
+          case "ObjectExpression":case "ObjectPattern":
+            if (!onlyLeafs) result.push(thisNode);
+            helpers.objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs, result);
+            break;
+          case "AssignmentPattern":
+            if (!onlyLeafs) result.push(thisNode);
+            helpers.objPropertiesAsList(prop.left, path.concat([key]), onlyLeafs, result);
+            break;
+          default:
+            result.push(thisNode);
+        }
       }
-      return result;
-    });
+    } catch (err) {
+      _didIteratorError6 = true;
+      _iteratorError6 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion6 && _iterator6.return) {
+          _iterator6.return();
+        }
+      } finally {
+        if (_didIteratorError6) {
+          throw _iteratorError6;
+        }
+      }
+    }
+
+    return result;
   },
   isDeclaration: function isDeclaration(node) {
     return node.type === "FunctionDeclaration" || node.type === "VariableDeclaration" || node.type === "ClassDeclaration";
@@ -23287,12 +23541,21 @@ function nodesInScopeOf(node) {
 }
 
 function declarationsOfScope(scope, includeOuter) {
+  var result = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+
   // returns Identifier nodes
-  return (includeOuter && scope.node.id && scope.node.id.name ? [scope.node.id] : []).concat(helpers.declIds(scope.params)).concat(scope.funcDecls.map(function (ea) {
+  if (includeOuter && scope.node.id && scope.node.id.name) result.push(scope.node.id);
+  helpers.declIds(scope.params, result);
+  result.push.apply(result, toConsumableArray(scope.funcDecls.map(function (ea) {
     return ea.id;
-  })).concat(helpers.varDeclIds(scope)).concat(scope.catches).concat(scope.classDecls.map(function (ea) {
+  })));
+  helpers.varDeclIds(scope, result);
+  result.push.apply(result, toConsumableArray(scope.catches));
+  result.push.apply(result, toConsumableArray(scope.classDecls.map(function (ea) {
     return ea.id;
-  })).concat(scope.importSpecifiers);
+  })));
+  result.push.apply(result, toConsumableArray(scope.importSpecifiers));
+  return result;
 }
 
 function declarationsWithIdsOfScope(scope) {
@@ -23309,16 +23572,94 @@ function declarationsWithIdsOfScope(scope) {
 }
 
 function _declaredVarNames(scope, useComments) {
-  return lively_lang.arr.pluck(declarationsOfScope(scope, true), 'name').concat(!useComments ? [] : _findJsLintGlobalDeclarations(scope.node.type === 'Program' ? scope.node : scope.node.body));
+  var result = [];
+  var _iteratorNormalCompletion7 = true;
+  var _didIteratorError7 = false;
+  var _iteratorError7 = undefined;
+
+  try {
+    for (var _iterator7 = declarationsOfScope(scope, true)[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+      var decl = _step7.value;
+
+      result.push(decl.name);
+    }
+  } catch (err) {
+    _didIteratorError7 = true;
+    _iteratorError7 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion7 && _iterator7.return) {
+        _iterator7.return();
+      }
+    } finally {
+      if (_didIteratorError7) {
+        throw _iteratorError7;
+      }
+    }
+  }
+
+  if (useComments) {
+    _findJsLintGlobalDeclarations(scope.node.type === 'Program' ? scope.node : scope.node.body, result);
+  }
+  return result;
 }
 
+var globalDeclRe = /^\s*global\s*/;
 function _findJsLintGlobalDeclarations(node) {
-  if (!node || !node.comments) return [];
-  return lively_lang.arr.flatten(node.comments.filter(function (ea) {
-    return ea.text.trim().match(/^global/);
-  }).map(function (ea) {
-    return lively_lang.arr.invoke(ea.text.replace(/^\s*global\s*/, '').split(','), 'trim');
-  }));
+  var result = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+
+  if (!node || !node.comments) return result;
+  var _iteratorNormalCompletion8 = true;
+  var _didIteratorError8 = false;
+  var _iteratorError8 = undefined;
+
+  try {
+    for (var _iterator8 = node.comments[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+      var comment = _step8.value;
+
+      var text = comment.text.trim();
+      if (!text.startsWith("global")) continue;
+      var _iteratorNormalCompletion9 = true;
+      var _didIteratorError9 = false;
+      var _iteratorError9 = undefined;
+
+      try {
+        for (var _iterator9 = text.replace(globalDeclRe, '').split(',')[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+          var globalDecl = _step9.value;
+
+          result.push(globalDecl.trim());
+        }
+      } catch (err) {
+        _didIteratorError9 = true;
+        _iteratorError9 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion9 && _iterator9.return) {
+            _iterator9.return();
+          }
+        } finally {
+          if (_didIteratorError9) {
+            throw _iteratorError9;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    _didIteratorError8 = true;
+    _iteratorError8 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion8 && _iterator8.return) {
+        _iterator8.return();
+      }
+    } finally {
+      if (_didIteratorError8) {
+        throw _iteratorError8;
+      }
+    }
+  }
+
+  return result;
 }
 
 function topLevelFuncDecls(parsed) {
@@ -23367,13 +23708,13 @@ function resolveReferences(scope) {
 }
 
 function refWithDeclAt(pos, scope) {
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
+  var _iteratorNormalCompletion10 = true;
+  var _didIteratorError10 = false;
+  var _iteratorError10 = undefined;
 
   try {
-    for (var _iterator = scope.resolvedRefMap.values()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-      var ref = _step.value;
+    for (var _iterator10 = scope.resolvedRefMap.values()[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
+      var ref = _step10.value;
       var _ref$ref = ref.ref,
           start = _ref$ref.start,
           end = _ref$ref.end;
@@ -23381,16 +23722,16 @@ function refWithDeclAt(pos, scope) {
       if (start <= pos && pos <= end) return ref;
     }
   } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
+    _didIteratorError10 = true;
+    _iteratorError10 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion && _iterator.return) {
-        _iterator.return();
+      if (!_iteratorNormalCompletion10 && _iterator10.return) {
+        _iterator10.return();
       }
     } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
+      if (_didIteratorError10) {
+        throw _iteratorError10;
       }
     }
   }
@@ -23454,27 +23795,199 @@ function findNodesIncludingLines(parsed, code, lines, options) {
   });
 }
 
+function __varDeclIdsFor(scope, name) {
+  var result = [];
+  var _iteratorNormalCompletion11 = true;
+  var _didIteratorError11 = false;
+  var _iteratorError11 = undefined;
+
+  try {
+    for (var _iterator11 = scope.params[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
+      var ea = _step11.value;
+      if (ea.name === name) result.push(ea);
+    }
+  } catch (err) {
+    _didIteratorError11 = true;
+    _iteratorError11 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion11 && _iterator11.return) {
+        _iterator11.return();
+      }
+    } finally {
+      if (_didIteratorError11) {
+        throw _iteratorError11;
+      }
+    }
+  }
+
+  var _iteratorNormalCompletion12 = true;
+  var _didIteratorError12 = false;
+  var _iteratorError12 = undefined;
+
+  try {
+    for (var _iterator12 = scope.funcDecls[Symbol.iterator](), _step12; !(_iteratorNormalCompletion12 = (_step12 = _iterator12.next()).done); _iteratorNormalCompletion12 = true) {
+      var ea = _step12.value;
+      if (ea.id.name === name) result.push(ea.id);
+    }
+  } catch (err) {
+    _didIteratorError12 = true;
+    _iteratorError12 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion12 && _iterator12.return) {
+        _iterator12.return();
+      }
+    } finally {
+      if (_didIteratorError12) {
+        throw _iteratorError12;
+      }
+    }
+  }
+
+  var _iteratorNormalCompletion13 = true;
+  var _didIteratorError13 = false;
+  var _iteratorError13 = undefined;
+
+  try {
+    for (var _iterator13 = scope.classDecls[Symbol.iterator](), _step13; !(_iteratorNormalCompletion13 = (_step13 = _iterator13.next()).done); _iteratorNormalCompletion13 = true) {
+      var ea = _step13.value;
+      if (ea.id.name === name) result.push(ea.id);
+    }
+  } catch (err) {
+    _didIteratorError13 = true;
+    _iteratorError13 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion13 && _iterator13.return) {
+        _iterator13.return();
+      }
+    } finally {
+      if (_didIteratorError13) {
+        throw _iteratorError13;
+      }
+    }
+  }
+
+  var _iteratorNormalCompletion14 = true;
+  var _didIteratorError14 = false;
+  var _iteratorError14 = undefined;
+
+  try {
+    for (var _iterator14 = scope.importSpecifiers[Symbol.iterator](), _step14; !(_iteratorNormalCompletion14 = (_step14 = _iterator14.next()).done); _iteratorNormalCompletion14 = true) {
+      var ea = _step14.value;
+      if (ea.name === name) result.push(ea);
+    }
+  } catch (err) {
+    _didIteratorError14 = true;
+    _iteratorError14 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion14 && _iterator14.return) {
+        _iterator14.return();
+      }
+    } finally {
+      if (_didIteratorError14) {
+        throw _iteratorError14;
+      }
+    }
+  }
+
+  var _iteratorNormalCompletion15 = true;
+  var _didIteratorError15 = false;
+  var _iteratorError15 = undefined;
+
+  try {
+    for (var _iterator15 = helpers.varDeclIds(scope)[Symbol.iterator](), _step15; !(_iteratorNormalCompletion15 = (_step15 = _iterator15.next()).done); _iteratorNormalCompletion15 = true) {
+      var ea = _step15.value;
+      if (ea.name === name) result.push(ea);
+    }
+  } catch (err) {
+    _didIteratorError15 = true;
+    _iteratorError15 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion15 && _iterator15.return) {
+        _iterator15.return();
+      }
+    } finally {
+      if (_didIteratorError15) {
+        throw _iteratorError15;
+      }
+    }
+  }
+
+  return result;
+}
+
 function findReferencesAndDeclsInScope(scope, name) {
+  var _result$decls;
+
+  var startingScope = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+  var result = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { refs: [], decls: [] };
+
   if (name === "this") {
-    return scope.thisRefs;
+    var _result$refs;
+
+    (_result$refs = result.refs).push.apply(_result$refs, toConsumableArray(scope.thisRefs));
+    return result;
   }
 
-  return lively_lang.arr.flatten( // all references
-  lively_lang.tree.map(scope, function (scope) {
-    return scope.refs.concat(varDeclIdsOf(scope)).filter(function (ref) {
-      return ref.name === name;
-    });
-  }, function (s) {
-    return s.subScopes.filter(function (subScope) {
-      return varDeclIdsOf(subScope).every(function (id) {
-        return id.name !== name;
-      });
-    });
-  }));
+  var decls = __varDeclIdsFor(scope, name);
+  if (!startingScope && decls.length) return result; // name shadowed in sub-scope
 
-  function varDeclIdsOf(scope) {
-    return scope.params.concat(lively_lang.arr.pluck(scope.funcDecls, 'id')).concat(lively_lang.arr.pluck(scope.classDecls, 'id')).concat(helpers.varDeclIds(scope));
+  var _iteratorNormalCompletion16 = true;
+  var _didIteratorError16 = false;
+  var _iteratorError16 = undefined;
+
+  try {
+    for (var _iterator16 = scope.refs[Symbol.iterator](), _step16; !(_iteratorNormalCompletion16 = (_step16 = _iterator16.next()).done); _iteratorNormalCompletion16 = true) {
+      var ref = _step16.value;
+      if (ref.name === name) result.refs.push(ref);
+    }
+  } catch (err) {
+    _didIteratorError16 = true;
+    _iteratorError16 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion16 && _iterator16.return) {
+        _iterator16.return();
+      }
+    } finally {
+      if (_didIteratorError16) {
+        throw _iteratorError16;
+      }
+    }
   }
+
+  (_result$decls = result.decls).push.apply(_result$decls, toConsumableArray(decls));
+
+  var _iteratorNormalCompletion17 = true;
+  var _didIteratorError17 = false;
+  var _iteratorError17 = undefined;
+
+  try {
+    for (var _iterator17 = scope.subScopes[Symbol.iterator](), _step17; !(_iteratorNormalCompletion17 = (_step17 = _iterator17.next()).done); _iteratorNormalCompletion17 = true) {
+      var subScope = _step17.value;
+
+      findReferencesAndDeclsInScope(subScope, name, false, result);
+    }
+  } catch (err) {
+    _didIteratorError17 = true;
+    _iteratorError17 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion17 && _iterator17.return) {
+        _iterator17.return();
+      }
+    } finally {
+      if (_didIteratorError17) {
+        throw _iteratorError17;
+      }
+    }
+  }
+
+  return result;
 }
 
 function findDeclarationClosestToIndex(parsed, name, index) {
@@ -23799,7 +24312,7 @@ function replaceNode(target, replacementFunc, sourceOrChanges) {
   // parameters:
   //   - target: ast node
   //   - replacementFunc that gets this node and its source snippet
-  //     handed and should produce a new ast node.
+  //     handed and should produce a new ast node or source code.
   //   - sourceOrChanges: If its a string -- the source code to rewrite
   //                      If its and object -- {changes: ARRAY, source: STRING}
 
@@ -23828,7 +24341,7 @@ function replaceNode(target, replacementFunc, sourceOrChanges) {
 
   var source = sourceChanges.source,
       replacement = replacementFunc(target, source.slice(pos.start, pos.end), insideChangedBefore),
-      replacementSource = Array.isArray(replacement) ? replacement.map(_node2string).join('\n' + _findIndentAt(source, pos.start)) : replacementSource = _node2string(replacement);
+      replacementSource = typeof replacement === "string" ? replacement : Array.isArray(replacement) ? replacement.map(_node2string).join('\n' + _findIndentAt(source, pos.start)) : replacementSource = _node2string(replacement);
 
   var changes = [{ type: 'del', pos: pos.start, length: pos.end - pos.start }, { type: 'add', pos: pos.start, string: replacementSource }];
 
@@ -23879,6 +24392,38 @@ function replace(astOrSource, targetNode, replacementFunc, options) {
   return replaceNode(targetNode, replacementFunc, source);
 }
 
+function __findVarDecls(scope) {
+  var varDecls = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+
+  varDecls.push.apply(varDecls, toConsumableArray(scope.varDecls));
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = scope.subScopes[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var subScope = _step.value;
+
+      __findVarDecls(subScope, varDecls);
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
+  return varDecls;
+}
+
 function oneDeclaratorPerVarDecl(astOrSource) {
   // exports.transform.oneDeclaratorPerVarDecl(
   //    "var x = 3, y = (function() { var y = 3, x = 2; })(); ").source
@@ -23886,29 +24431,49 @@ function oneDeclaratorPerVarDecl(astOrSource) {
   var parsed = (typeof astOrSource === "undefined" ? "undefined" : _typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
       source = typeof astOrSource === 'string' ? astOrSource : parsed.source || _node2string(parsed),
       scope = scopes(parsed),
-      varDecls = function findVarDecls(scope) {
-    return lively_lang.arr.flatten(scope.varDecls.concat(scope.subScopes.map(findVarDecls)));
-  }(scope);
+      varDecls = __findVarDecls(scope);
 
-  var targetsAndReplacements = varDecls.map(function (decl) {
-    return {
-      target: decl,
-      replacementFunc: function replacementFunc(declNode, s, wasChanged) {
-        if (wasChanged) {
-          // reparse node if necessary, e.g. if init was changed before like in
-          // var x = (function() { var y = ... })();
-          declNode = parse(s).body[0];
+  var targetsAndReplacements = [];
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = varDecls[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var decl = _step2.value;
+
+      targetsAndReplacements.push({
+        target: decl,
+        replacementFunc: function replacementFunc(declNode, s, wasChanged) {
+          if (wasChanged) {
+            // reparse node if necessary, e.g. if init was changed before like in
+            // var x = (function() { var y = ... })();
+            declNode = parse(s).body[0];
+          }
+
+          return declNode.declarations.map(function (ea) {
+            return {
+              type: "VariableDeclaration",
+              kind: "var", declarations: [ea]
+            };
+          });
         }
-
-        return declNode.declarations.map(function (ea) {
-          return {
-            type: "VariableDeclaration",
-            kind: "var", declarations: [ea]
-          };
-        });
+      });
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
       }
-    };
-  });
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
 
   return replaceNodes(targetsAndReplacements, source);
 }
@@ -23917,38 +24482,101 @@ function oneDeclaratorForVarsInDestructoring(astOrSource) {
   var parsed = (typeof astOrSource === "undefined" ? "undefined" : _typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
       source = typeof astOrSource === 'string' ? astOrSource : parsed.source || _node2string(parsed),
       scope = scopes(parsed),
-      varDecls = function findVarDecls(scope) {
-    return lively_lang.arr.flatten(scope.varDecls.concat(scope.subScopes.map(findVarDecls)));
-  }(scope);
+      varDecls = __findVarDecls(scope),
+      targetsAndReplacements = [];
 
-  var targetsAndReplacements = varDecls.map(function (decl) {
-    return {
-      target: decl,
-      replacementFunc: function replacementFunc(declNode, s, wasChanged) {
-        if (wasChanged) {
-          // reparse node if necessary, e.g. if init was changed before like in
-          // var x = (function() { var y = ... })();
-          declNode = parse(s).body[0];
+  var _iteratorNormalCompletion3 = true;
+  var _didIteratorError3 = false;
+  var _iteratorError3 = undefined;
+
+  try {
+    for (var _iterator3 = varDecls[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+      var decl = _step3.value;
+
+      targetsAndReplacements.push({
+        target: decl,
+        replacementFunc: function replacementFunc(declNode, s, wasChanged) {
+          if (wasChanged) {
+            // reparse node if necessary, e.g. if init was changed before like in
+            // var x = (function() { var y = ... })();
+            declNode = parse(s).body[0];
+          }
+
+          var nodes = [];
+          var _iteratorNormalCompletion4 = true;
+          var _didIteratorError4 = false;
+          var _iteratorError4 = undefined;
+
+          try {
+            for (var _iterator4 = declNode.declarations[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+              var _declNode = _step4.value;
+
+              var extractedId = { type: "Identifier", name: "__temp" },
+                  extractedInit = {
+                type: "VariableDeclaration", kind: "var",
+                declarations: [{ type: "VariableDeclarator", id: extractedId, init: _declNode.init }]
+              };
+              nodes.push(extractedInit);
+
+              var _iteratorNormalCompletion5 = true;
+              var _didIteratorError5 = false;
+              var _iteratorError5 = undefined;
+
+              try {
+                for (var _iterator5 = helpers.objPropertiesAsList(_declNode.id, [], false)[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                  var _ref2 = _step5.value;
+                  var keyPath = _ref2.key;
+
+                  nodes.push(varDecl(keyPath[keyPath.length - 2], memberChain.apply(undefined, [extractedId.name].concat(toConsumableArray(keyPath))), "var"));
+                }
+              } catch (err) {
+                _didIteratorError5 = true;
+                _iteratorError5 = err;
+              } finally {
+                try {
+                  if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                    _iterator5.return();
+                  }
+                } finally {
+                  if (_didIteratorError5) {
+                    throw _iteratorError5;
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            _didIteratorError4 = true;
+            _iteratorError4 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                _iterator4.return();
+              }
+            } finally {
+              if (_didIteratorError4) {
+                throw _iteratorError4;
+              }
+            }
+          }
+
+          return nodes;
         }
-
-        return lively_lang.arr.flatmap(declNode.declarations, function (declNode) {
-          var extractedId = { type: "Identifier", name: "__temp" },
-              extractedInit = {
-            type: "VariableDeclaration", kind: "var",
-            declarations: [{ type: "VariableDeclarator", id: extractedId, init: declNode.init }]
-          };
-
-          var propDecls = helpers.objPropertiesAsList(declNode.id, [], false).map(function (ea) {
-            return ea.key;
-          }).map(function (keyPath) {
-            return varDecl(lively_lang.arr.last(keyPath), memberChain.apply(undefined, [extractedId.name].concat(toConsumableArray(keyPath))), "var");
-          });
-
-          return [extractedInit].concat(propDecls);
-        });
+      });
+    }
+  } catch (err) {
+    _didIteratorError3 = true;
+    _iteratorError3 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion3 && _iterator3.return) {
+        _iterator3.return();
       }
-    };
-  });
+    } finally {
+      if (_didIteratorError3) {
+        throw _iteratorError3;
+      }
+    }
+  }
 
   return replaceNodes(targetsAndReplacements, source);
 }
@@ -23958,12 +24586,10 @@ function returnLastStatement(source, opts) {
 
   var parsed = parse(source, opts),
       last = lively_lang.arr.last(parsed.body);
-  if (last.type === "ExpressionStatement") {
-    parsed.body.splice(parsed.body.length - 1, 1, returnStmt(last.expression));
-    return opts.asAST ? parsed : stringify(parsed);
-  } else {
-    return opts.asAST ? parsed : source;
-  }
+  if (last.type !== "ExpressionStatement") return opts.asAST ? parsed : source;
+
+  parsed.body.splice(parsed.body.length - 1, 1, returnStmt(last.expression));
+  return opts.asAST ? parsed : stringify(parsed);
 }
 
 function wrapInFunction(code, opts) {
@@ -24004,9 +24630,9 @@ function wrapInStartEndCall(parsed, options) {
 
   // 1. Hoist func decls outside the actual eval start - end code. The async /
   // generator transforms require this!
-  funcDecls.forEach(function (_ref) {
-    var node = _ref.node,
-        path = _ref.path;
+  funcDecls.forEach(function (_ref3) {
+    var node = _ref3.node,
+        path = _ref3.path;
 
     lively_lang.Path(path).set(parsed, exprStmt(node.id));
     outerBody.push(node);
@@ -24670,9 +25296,9 @@ exports.fuzzyParse = fuzzyParse;
   if (__define_suckz__) { GLOBAL.define = __define_suckz__; }
 })();
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.ast/dist/lively.ast.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.classes/dist/lively.classes.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -25348,7 +25974,7 @@ function initializeClass(constructorFunc, superclassSpec) {
       // won't get defined correctly when loaded first. See
       // https://github.com/LivelyKernel/lively.modules/issues/27 for more details
     };if (superclassSpec && superclassSpec.referencedAs) {
-      if (klass[moduleSubscribeToToplevelChangesSym]) {
+      if (klass.hasOwnProperty(moduleSubscribeToToplevelChangesSym)) {
         currentModule.unsubscribeFromToplevelDefinitionChanges(klass[moduleSubscribeToToplevelChangesSym]);
       }
       klass[moduleSubscribeToToplevelChangesSym] = currentModule.subscribeToToplevelDefinitionChanges(function (name, val) {
@@ -25523,9 +26149,8 @@ function replaceSuper(node, state, path, options) {
   var currentMethod = state.currentMethod;
 
   if (!currentMethod) {
-    console.warn("[lively.classes] Trying to transform es6 class but got super call outside a method! " + lively_ast.stringify(node) + " in " + path.join(".")
+    console.warn("[lively.classes] Trying to transform es6 class but got super call outside a method! " + lively_ast.stringify(node) + " in " + path.join("."));
     // return node;
-    );
   }
 
   var _path$slice = path.slice(-2),
@@ -25724,9 +26349,9 @@ exports.classToFunctionTransform = classToFunctionTransform;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /home/lively/lively-web.org/lively.next/lively.classes/dist/lively.classes.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.source-transform/dist/lively.source-transform.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -26690,7 +27315,7 @@ exports.stringifyFunctionWithoutToplevelRecorder = stringifyFunctionWithoutTople
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.sourceTransform;
 })();
-// INLINED END /home/lively/lively-web.org/lively.next/lively.source-transform/dist/lively.source-transform.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -27077,13 +27702,12 @@ var printInspectEvalValue = function () {
       values.push(next.value);
     }
     var printed = values.map(function (ea) {
-      return hasEntries ? printInspect(ea[0], 1) + ": " + printInspect(ea[1], 1) : printInspect(ea, 2);
+      return hasEntries ? String(ea[0]) + ": " + String(ea[1]) : printInspect(ea, 2);
     }).join(", ");
     return name + "(" + open + printed + close + ")";
   }
 
   function inspectPrinter(val, ignore, continueInspectFn) {
-
     if (!val) return ignore;
     if ((typeof val === "undefined" ? "undefined" : _typeof(val)) === "symbol") return printSymbol(val);
     if (typeof val === "string") return lively_lang.string.print(lively_lang.string.truncate(val, maxStringLength));
@@ -27895,6 +28519,7 @@ function evalEnd(System, code, options, result) {
   return result;
 }
 
+/*global System*/
 var EvalStrategy = function () {
   function EvalStrategy() {
     classCallCheck(this, EvalStrategy);
@@ -27903,7 +28528,7 @@ var EvalStrategy = function () {
   createClass(EvalStrategy, [{
     key: "runEval",
     value: function () {
-      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(source, options) {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -27927,7 +28552,7 @@ var EvalStrategy = function () {
   }, {
     key: "keysOfObject",
     value: function () {
-      var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(prefix, options) {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
@@ -27963,7 +28588,7 @@ var SimpleEvalStrategy = function (_EvalStrategy) {
   createClass(SimpleEvalStrategy, [{
     key: "runEval",
     value: function () {
-      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(source, options) {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -27993,7 +28618,7 @@ var SimpleEvalStrategy = function (_EvalStrategy) {
   }, {
     key: "keysOfObject",
     value: function () {
-      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(prefix, options) {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
         var _this2 = this;
 
         var result;
@@ -28048,7 +28673,7 @@ var LivelyVmEvalStrategy = function (_EvalStrategy2) {
   }, {
     key: "runEval",
     value: function () {
-      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(source, options) {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
         var System;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
@@ -28077,7 +28702,7 @@ var LivelyVmEvalStrategy = function (_EvalStrategy2) {
   }, {
     key: "keysOfObject",
     value: function () {
-      var _ref6 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(prefix, options) {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
         var result;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
@@ -28127,7 +28752,7 @@ var RemoteEvalStrategy = function (_LivelyVmEvalStrategy) {
   }, {
     key: "runEval",
     value: function () {
-      var _ref7 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(source, options) {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(source, options) {
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
@@ -28151,7 +28776,7 @@ var RemoteEvalStrategy = function (_LivelyVmEvalStrategy) {
   }, {
     key: "keysOfObject",
     value: function () {
-      var _ref8 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(prefix, options) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(prefix, options) {
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
             switch (_context8.prev = _context8.next) {
@@ -28175,7 +28800,7 @@ var RemoteEvalStrategy = function (_LivelyVmEvalStrategy) {
   }, {
     key: "remoteEval",
     value: function () {
-      var _ref9 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(source, options) {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(source, options) {
         var result;
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
           while (1) {
@@ -28211,7 +28836,7 @@ var RemoteEvalStrategy = function (_LivelyVmEvalStrategy) {
   }, {
     key: "basicRemoteEval",
     value: function () {
-      var _ref10 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(source, options) {
+      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(source, options) {
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
             switch (_context10.prev = _context10.next) {
@@ -28263,7 +28888,7 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
   }, {
     key: "basicRemoteEval",
     value: function () {
-      var _ref11 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(source, options) {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(source, options) {
         var method;
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
@@ -28294,7 +28919,7 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
   }, {
     key: "basicRemoteEval_web",
     value: function () {
-      var _ref12 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(payload, url) {
+      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(payload, url) {
         var _ref13, _ref14, domain, crossDomain, res;
 
         return regeneratorRuntime.wrap(function _callee12$(_context12) {
@@ -28356,13 +28981,13 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
   }, {
     key: "basicRemoteEval_node",
     value: function () {
-      var _ref15 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13(payload, url) {
+      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(payload, url) {
         var urlParse, http, opts;
         return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
             switch (_context13.prev = _context13.next) {
               case 0:
-                urlParse = System._nodeRequire("url").parse, http = System._nodeRequire("http"), opts = Object.assign({ method: payload.method || "GET" }, urlParse(url));
+                urlParse = System._nodeRequire("url").parse, http = System._nodeRequire(url.startsWith("https:") ? "https" : "http"), opts = Object.assign({ method: payload.method || "GET" }, urlParse(url));
                 return _context13.abrupt("return", new Promise(function (resolve, reject) {
                   var request = http.request(opts, function (res) {
                     res.setEncoding('utf8');
@@ -28417,7 +29042,7 @@ var L2LEvalStrategy = function (_RemoteEvalStrategy2) {
   createClass(L2LEvalStrategy, [{
     key: "basicRemoteEval",
     value: function () {
-      var _ref16 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14(source, options) {
+      var _ref16 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(source, options) {
         var l2lClient, targetId, _ref17, evalResult;
 
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
