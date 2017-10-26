@@ -1,11 +1,14 @@
+/*global global,self,__VERSION_PLACEHOLDER__*/
 import FreezerModule from "./module.js";
-import { obj } from "lively.lang";
+import { obj, graph, arr } from "lively.lang";
+import { version } from "./package.json";
+import { runtimeDefinition } from "./runtime.js";
 
 export default class Bundle {
 
-  constructor(packages) {
+  constructor(packageSet) {
     this.modules = {};
-    this.packages = packages;
+    this.packages = packageSet;
     this.graph = {};
     this.entryModule = null;
   }
@@ -57,6 +60,42 @@ export default class Bundle {
     this.modules[module.qualifiedName] = module;
     return module;
   }
+
+
+  buildGraph(module, graph = {}, moduleNameMap = {}) {
+    if (graph[module.qualifiedName]) return graph;
+    moduleNameMap[module.qualifiedName] = module;
+    let entries = graph[module.qualifiedName] = []
+    for (let dep of module.dependencies.keys()) {
+      entries.push(dep.qualifiedName)
+      this.buildGraph(dep, graph, moduleNameMap);
+    }
+    return {graph: graph, moduleNameMap};
+  }
+
+  standalone(opts = {}) {
+    let {
+          ensureSystem = true,
+          executable = true,
+          runtimeGlobal = "lively.FreezerRuntime"
+        } = opts,
+        entry = this.entryModule,
+        g = this.buildGraph(entry),
+        moduleOrder = arr.flatten(graph.sortByReference(g.graph, entry.qualifiedName)),
+        modules = moduleOrder.map(qName => g.moduleNameMap[qName]).filter(ea => !ea.isExcluded),
+        moduleSource = modules.map(ea => ea.transformToRegisterFormat({runtimeGlobal})).join("\n\n");
+
+    if (ensureSystem) {
+      let runtimeSrc = String(runtimeDefinition)
+                        .replace(/var version/, `var version = "${version}"`)
+                        .replace(/lively\.FreezerRuntime/g, runtimeGlobal)
+      moduleSource = `(${runtimeSrc})();\n${moduleSource}`
+    }
+    if (executable) moduleSource += `\n${runtimeGlobal}.load("${entry.qualifiedName}");\n`;
+
+    return moduleSource;
+  }
+
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // report / debugging
