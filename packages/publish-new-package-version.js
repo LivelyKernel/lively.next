@@ -1,7 +1,7 @@
 // publishNewVersion().then(newVersion => show(newVersion)).catch(show.curry("%s"))
 
-import { defaultDirectory, runCommand } from "lively.morphic/ide/shell/shell-interface.js";
-import Terminal from "lively.morphic/ide/shell/terminal.js";
+import { defaultDirectory, runCommand } from "lively.ide/shell/shell-interface.js";
+import Terminal from "lively.ide/shell/terminal.js";
 import { resource } from "lively.resources";
 import { World } from "lively.morphic";
 
