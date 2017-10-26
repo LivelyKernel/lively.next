@@ -407,11 +407,15 @@ var commands = [
               value: ea
             }
           }),
-          {selected: [coice]} = await world.filterableListPrompt("select doit code", items);
-      if (coice) {
-        let {source, time, printedTime} = coice;
+          {selected: coices} = await world.filterableListPrompt("select doit code", items, {multiSelect: true});
+      if (coices.length) {
+        let sources = [];
+        for (let coice of coices) {
+          let {source, printedTime} = coice;
+          sources.push(`// ${printedTime}\n${source}`);
+        }
         return world.execCommand("open workspace",
-          {title: "logged doit " + printedTime, mode: "js", ...opts, content: source})
+          {title: "logged doits", mode: "js", ...opts, content: sources.join("\n\n")});
       }
       return true;
     }
