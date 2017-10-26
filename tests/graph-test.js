@@ -59,6 +59,17 @@ describe('graph', function() {
       expect(sortByReference(depGraph, "a")).to.eql([["c"], ["b"], ["a"]]);
     });
 
+    it("puts keys with zero deps in same group", () => {
+      expect(sortByReference({a: ["b"], c: ["b"], b: []}, "a")).to.eql([["b"], ["a", "c"]]);
+      expect(sortByReference({a: ["b"], c: ["d"], b: [], d: []}, "a")).to.eql([["b", "d"], ["a", "c"]]);
+      expect(sortByReference({a: ["c", "d"], b: ["c", "d"], c: ["d"], d: []}, "a")).to.eql([["d"], ["c"], ["a", "b"]]);
+    });
+
+    it("breaks cycles", () => {
+      expect(sortByReference({a: ["b"], b: ["a"]}, "a")).to.eql([["b"], ["a"]]);
+      expect(sortByReference({a: ["a"]}, "a")).to.eql([["a"]]);
+    });
+
   });
 
 });

@@ -5964,31 +5964,89 @@ function sortByReference(depGraph, startNode) {
   // sortByReference(depGraph, "a");
   // // => [["c"], ["b"], ["a"]]
 
-  var all$$1 = [startNode].concat(hull(depGraph, startNode)),
-      seen = [],
-      groups = [];
 
-  while (seen.length !== all$$1.length) {
-    var remainingNodes = withoutAll(all$$1, seen);
-    if (!remainingNodes.length) break;
+  // establish unique list of keys
+  var remaining = [],
+      remainingSeen = {},
+      uniqDepGraph = {};
+  for (var _key2 in depGraph) {
+    if (!remainingSeen.hasOwnProperty(_key2)) {
+      remainingSeen[_key2] = true;
+      remaining.push(_key2);
+    }
+    var deps = depGraph[_key2],
+        uniqDeps = {};
+    if (deps) {
+      uniqDepGraph[_key2] = [];
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
 
-    var depsRemaining = remainingNodes.reduce(function (depsRemaining, node) {
-      depsRemaining[node] = withoutAll(depGraph[node] || [], seen).length;
-      return depsRemaining;
-    }, {}),
-        min$$1 = remainingNodes.reduce(function (minNode, node) {
-      return depsRemaining[node] <= depsRemaining[minNode] ? node : minNode;
-    }, all$$1[0]);
+      try {
+        for (var _iterator = deps[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var dep = _step.value;
 
-    if (depsRemaining[min$$1] === 0) {
-      groups.push(Object.keys(depsRemaining).filter(function (key) {
-        return depsRemaining[key] === 0;
-      }));
-    } else groups.push([min$$1]);
-
-    seen = flatten(groups);
+          if (uniqDeps.hasOwnProperty(dep) || _key2 === dep) continue;
+          uniqDeps[dep] = true;
+          uniqDepGraph[_key2].push(dep);
+          if (!remainingSeen.hasOwnProperty(dep)) {
+            remainingSeen[dep] = true;
+            remaining.push(dep);
+          }
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+    }
   }
 
+  // for each iteration find the keys with the minimum number of dependencies
+  // and add them to the result group list
+  var groups = [];
+  while (remaining.length) {
+    var minDepCount = Infinity,
+        minKeys = [],
+        minKeyIndexes = [];
+
+    var _loop = function _loop() {
+      key = remaining[i];
+
+      var deps = uniqDepGraph[key] || [];
+      if (deps.length > minDepCount) return "continue";
+      if (deps.length === minDepCount && !minKeys.some(function (ea) {
+        return deps.includes(ea);
+      })) {
+        minKeys.push(key);
+        minKeyIndexes.push(i);
+        return "continue";
+      }
+      minDepCount = deps.length;
+      minKeys = [key];
+      minKeyIndexes = [i];
+    };
+
+    for (var i = 0; i < remaining.length; i++) {
+      var key;
+
+      var _ret = _loop();
+
+      if (_ret === "continue") continue;
+    }
+    for (var i = minKeyIndexes.length; i--;) {
+      remaining.splice(minKeyIndexes[i], 1);
+    }groups.push(minKeys);
+  }
   return groups;
 }
 

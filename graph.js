@@ -155,29 +155,55 @@ function sortByReference(depGraph, startNode) {
   // sortByReference(depGraph, "a");
   // // => [["c"], ["b"], ["a"]]
 
-  var all = [startNode].concat(hull(depGraph, startNode)),
-      seen = [], groups = [];
 
-  while (seen.length !== all.length) {
-    var remainingNodes = withoutAll(all, seen);
-    if (!remainingNodes.length) break;
-
-    var depsRemaining = remainingNodes.reduce((depsRemaining, node) => {
-          depsRemaining[node] = withoutAll(depGraph[node] || [], seen).length;
-          return depsRemaining;
-        }, {}),
-        min = remainingNodes.reduce((minNode, node) =>
-          depsRemaining[node] <= depsRemaining[minNode] ? node : minNode, all[0]);
-
-    if (depsRemaining[min] === 0) {
-      groups.push(Object.keys(depsRemaining).filter(key => depsRemaining[key] === 0));
-    } else groups.push([min]);
-
-    seen = flatten(groups);
+  // establish unique list of keys
+  var remaining = [], remainingSeen = {}, uniqDepGraph = {};
+  for (let key in depGraph) {
+    if (!remainingSeen.hasOwnProperty(key)) {
+      remainingSeen[key] = true;
+      remaining.push(key);
+    }
+    var deps = depGraph[key], uniqDeps = {};
+    if (deps) {
+      uniqDepGraph[key] = [];
+      for (let dep of deps) {
+        if (uniqDeps.hasOwnProperty(dep) || key === dep) continue;
+        uniqDeps[dep] = true;
+        uniqDepGraph[key].push(dep);
+        if (!remainingSeen.hasOwnProperty(dep)) {
+          remainingSeen[dep] = true;
+          remaining.push(dep);
+        }
+      }
+    }
   }
 
+  // for each iteration find the keys with the minimum number of dependencies
+  // and add them to the result group list
+  var groups = [];
+  while (remaining.length) {
+    var minDepCount = Infinity, minKeys = [], minKeyIndexes = [];
+    for (var i = 0; i < remaining.length; i++) {
+      var key = remaining[i];
+      let deps = uniqDepGraph[key] || [];
+      if (deps.length > minDepCount) continue;
+      if (deps.length === minDepCount && !minKeys.some(ea => deps.includes(ea))) {
+        minKeys.push(key);
+        minKeyIndexes.push(i);
+        continue;
+      }
+      minDepCount = deps.length;
+      minKeys = [key];
+      minKeyIndexes = [i];
+    }
+    for (var i = minKeyIndexes.length; i--; )
+      remaining.splice(minKeyIndexes[i], 1);
+    groups.push(minKeys);
+  }
   return groups;
 }
+
+
 
 function reduce(doFunc, graph, rootNode, carryOver, ignore, context) {
   // Starts with `rootNode` and visits all (in)directly related nodes, calling
