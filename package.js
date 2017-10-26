@@ -2,20 +2,20 @@ import { resource } from "lively.resources";
 
 export default class FreezerPackage {
 
-  static async buildPackageMap(packageDirs) {
+  static async buildPackageMap(packageSpecs) {
     let packages = {};
-    for (let dir of packageDirs) {
-      let p  = new FreezerPackage(null, null, dir)
-      await p.readConfig();
+    for (let name in packageSpecs) {
+      let spec = packageSpecs[name];
+      let p  = new FreezerPackage(spec)
+      if (p.path && !p.isExcluded) await p.readConfig();
       packages[p.qualifiedName] = p;
     }
     return packages;
   }
 
-  constructor(name, version, path) {
-    this.name = name;
-    this.version = version;
-    this.path = path;
+  constructor(opts = {}) {
+    let {name, version, path, isExcluded = false} = opts;
+    Object.assign(this, {name, version, path, isExcluded});
     this.reset();
   }
 
@@ -25,7 +25,7 @@ export default class FreezerPackage {
 
   get resource() { return resource(this.path).asDirectory(); }
 
-  get qualifiedName() { return `${this.name}@${this.version}`; }
+  get qualifiedName() { return this.version ? `${this.name}@${this.version}` : this.name; }
 
   get id() { return resource(this.path).asFile().url; }
   

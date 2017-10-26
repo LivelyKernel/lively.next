@@ -28,8 +28,8 @@ export default class Bundle {
 
       this.modules[next.qualifiedName] = next;
 
-      for (let [mod, {isExternal}] of next.dependencies)
-        if (!isExternal && !seen[mod.qualifiedName])
+      for (let [mod, _] of next.dependencies)
+        if (!seen[mod.qualifiedName] && !mod.isExcluded)
           unresolved.push(mod);
     }
 

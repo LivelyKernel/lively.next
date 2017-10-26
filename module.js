@@ -56,6 +56,10 @@ export default class FreezerModule {
     return findUniqJsName(this.qualifiedName, boundNames);
   }
 
+  get isExcluded() {
+    return !this.package || this.package.isExcluded;
+  }
+
   get resource() {
     let {package: p} = this;
     if (this.package) return p ? p.resource.join(this.name) : resource(this.id);
@@ -116,11 +120,8 @@ export default class FreezerModule {
 
     for (let localName in rawDependencies) {
       let {imports} = rawDependencies[localName],
-          {
-            module: otherModule,
-            isExternal, isPackageImport
-          } = this.resolveImport(localName, bundle);
-      this.addDependency(otherModule, {imports, localName, isExternal, isPackageImport});
+          {module: otherModule, isPackageImport} = this.resolveImport(localName, bundle);
+      this.addDependency(otherModule, {imports, localName, isPackageImport});
     }
 
     return this;
@@ -129,7 +130,6 @@ export default class FreezerModule {
   resolveImport(localName, bundle) {
     if (isURL(localName)) {
       return {
-        isExternal: true,
         module: bundle.findModuleWithId(localName)
              || bundle.addModule(new FreezerModule(localName, null, localName))
       };
@@ -139,27 +139,34 @@ export default class FreezerModule {
       if (!this.package) throw new Error("local module needs package!");
       let name = join(parent(this.name), localName);
       return {
-        isExternal: false,
         module: bundle.findModuleInPackageWithName(this.package, name)
              || bundle.addModule(new FreezerModule(name, this.package))
       };
     }
 
-    let packageName = localName.includes("/") ? localName.slice(0, localName.indexOf.includes("/")) : localName,
+    let packageName = localName.includes("/") ?
+                       localName.slice(0, localName.indexOf.includes("/")) :
+                       localName,
         nameInPackage = localName.slice(packageName.length),
         packageSpec = bundle.findPackage(packageName),
-        isExternal = true,
         isPackageImport = !nameInPackage;
 
-    if (!packageSpec)
-      throw new Error(`Cannot resolve package ${packageName}`);
+    // if (!packageSpec)
+    //   throw new Error(`Cannot resolve package ${packageName}`);
 
-    if (isPackageImport) {
+    if (!packageSpec){
+      return {
+        isPackageImport,
+        module: bundle.findModuleWithId(localName)
+        || bundle.addModule(new FreezerModule(localName, null, localName))
+      }
+    }
+    if (isPackageImport && packageSpec) {
       nameInPackage = packageSpec.main || (packageSpec.systemjs && packageSpec.systemjs.main) || "index.js"
     }
 
     return {
-      isExternal, isPackageImport,
+      isPackageImport,
       module: bundle.findModuleInPackageWithName(packageSpec, nameInPackage)
            || bundle.addModule(new FreezerModule(nameInPackage, packageSpec))
     };
@@ -171,19 +178,25 @@ export default class FreezerModule {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   registerTranformsOfImports() {
-    let declsForImports = [], setters = [], qualifiedDependencyNames = [];
+    let topLevelIds = [], setters = [], qualifiedDependencyNames = [];
     for (let [depModule, {imports}] of this.dependencies) {
       // FIXME what if a toplevel var of `this` has the same name as the generated varName?
       let varName = depModule.findUniqJsName([]),
           setterStmts = [];
       qualifiedDependencyNames.push(depModule.qualifiedName);
       for (let i of imports) {
-        setterStmts.push(nodes.exprStmt(nodes.assign(i.local, nodes.member(nodes.id(varName), i.imported))));
-        declsForImports.push(nodes.varDecl(i.local));
+        let importedName = i.local || i.exported;
+        setterStmts.push(nodes.exprStmt(nodes.assign(importedName, nodes.member(nodes.id(varName), i.imported))));
+        topLevelIds.push(nodes.id(importedName));
       }
       setters.push(nodes.funcExpr({}, [nodes.id(varName)], ...setterStmts))
     }
-    return {declsForImports, setters, qualifiedDependencyNames};
+    let topLevelDecl = topLevelIds.length ? {
+      type: "VariableDeclaration",
+      kind: "var",
+      declarations: topLevelIds.map(ea => ({type: "VariableDeclarator", id: ea, init: null}))
+    } : null;
+    return {topLevelDecl, setters, qualifiedDependencyNames};
   }
 
   registerTranformsOfExports() {
@@ -208,23 +221,24 @@ export default class FreezerModule {
                   exports = ids.map(id => exportCall(id.name, id)).join("\n")                  
               return source + "\n" + exports;
             }
-            for (let id of query.helpers.declIds(declaration.declarations.map(ea => ea.id)))
-              exportTransform.ids.push({local: id, exported: id});
+            // for (let id of query.helpers.declIds(declaration.declarations.map(ea => ea.id)))
+            //   exportTransform.ids.push({local: id, exported: id});
             break;
 
           case 'ClassDeclaration': case 'FunctionDeclaration':
             exportTransform.replacementFunc = (node, source, wasChanged) =>
                 source.replace(/^(\s*)export\s+/, "") + "\n"
-              + exportCall(node.declaration.id.name, node.declaration.id)
-            exportTransform.ids.push({local: declaration.id, exported: declaration.id});
+              + exportCall(node.declaration.id.name, node.declaration.id);
             break;
         }
         continue;
       }
 
       if (type === "ExportNamedDeclaration" && specifiers) {
-        for (let {local, exported} of specifiers)
-          exportTransform.ids.push({local, exported});
+        if (node.source) {
+          for (let {local, exported} of specifiers)
+            exportTransform.ids.push({local, exported});
+        }
         continue;
       }
 
@@ -234,15 +248,13 @@ export default class FreezerModule {
 
           case 'Identifier':
             exportTransform.replacementFunc = (node, source, wasChanged) =>
-                source.replace(/^(\s*)export\s+default\s+/, "") + "\n"
-              + exportCall("default", node)
+              source.replace(/^export\s+default\s+/, "") + "\n" + exportCall("default", node.declaration);
             local = declaration;
             break;
 
           case 'ClassDeclaration': case 'FunctionDeclaration':
             exportTransform.replacementFunc = (node, source, wasChanged) =>
-                source.replace(/^(\s*)export\s+default\s+/, "")
-              + exportCall("default", node.id)
+              source.replace(/^export\s+default\s+/, "") + exportCall("default", node.declaration.id);
             local = declaration.id;
             break;
 
@@ -250,7 +262,6 @@ export default class FreezerModule {
             throw new Error(`Strange default export declaration: ${declaration.type}`);
         }
 
-        exportTransform.ids.push({local, exported: {type: "Identifier", name: "default"}});
         continue;
       }
     }
@@ -258,29 +269,35 @@ export default class FreezerModule {
     return exported;
   }
   
-  transformToRegisterFormat() {
-    let {declsForImports, setters, qualifiedDependencyNames} = this.registerTranformsOfImports(),
+  transformToRegisterFormat(opts = {}) {
+    let {runtimeGlobal = "System"} = opts,
+        {topLevelDecl, setters, qualifiedDependencyNames} = this.registerTranformsOfImports(),
         exportTransformData = this.registerTranformsOfExports(),
+        additionalExports = [],
         replaced = transform.replaceNodes([
           // remove import decls completely
           ...this.parsed.body.filter(ea => ea.type === "ImportDeclaration")
                                 .map(target => ({target, replacementFunc: () => []})),
 
           // // remove exports
-          ...exportTransformData.map(({node: target, replacementFunc}) => ({target, replacementFunc}))
+          ...exportTransformData.map(({node: target, replacementFunc, ids}) => {
+            additionalExports.push(...ids.map(ea => exportCall(ea.exported.name, ea.exported)))
+            return {target, replacementFunc}
+          })
         ], this._source);
 
-    return `System.register("${this.qualifiedName}", `
+    return `${runtimeGlobal}.register("${this.qualifiedName}", `
          + `[${qualifiedDependencyNames.map(ea => `"${ea}"`).join(", ")}], `
          + `function(_export, _context) {\n`
          + `  "use strict";\n`
-         + `  ${declsForImports.map(stringify)}\n`
+         + (topLevelDecl ? `  ${stringify(topLevelDecl)}\n` : "")
          + `  return {\n`
          + `    setters: [\n`
          + `${string.indent(setters.map(stringify).join(",\n"), "  ", 3)}\n`
          + `    ],\n`
          + `    execute: function() {\n`
-         + `${string.indent(replaced.source, "  ", 3)}\n`
+         + `${string.indent(replaced.source.trim(), "  ", 3)}\n`
+         + (additionalExports.length ? `${string.indent(additionalExports.join("\n"), "  ", 3)}\n` : "")
          + `    }\n`
          + `  }\n`
          + `});`
