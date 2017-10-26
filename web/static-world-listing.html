@@ -82,21 +82,25 @@
         }
       }
 
-      if (!userRegistry.hasUserStored() || query.login) {
-        res(`${origin}/lively.user/html/html-ui.fragment`).read()
-          .then(function(content) {
-            document.body.insertAdjacentHTML("beforeend", content);
-            return lively.resources.loadViaScript("/lively.user/html/html-ui.js");
-          })
-          .then(function() { return lively.user.html.openUserUI(); })
-          .then(function(_user) {
-            user = _user;
-            userFlapContent.textContent = user.name.startsWith("guest-") ? "guest" : user.name;
-            loginDone = true;
-            if (typeof update === "function") update(user);
-          })
-          .catch(function(err) { console.error(err); });
-      } else loginDone = true;
+      if (userRegistry.hasUserStored() && !query.login) {
+        loginDone = true;
+      } else {
+        var login = query.nologin ?
+          userRegistry.login(lively.user.ClientUser.guest) :  
+          res(`${origin}/lively.user/html/html-ui.fragment`).read()
+            .then(function(content) {
+              document.body.insertAdjacentHTML("beforeend", content);
+              return lively.resources.loadViaScript("/lively.user/html/html-ui.js");
+            })
+            .then(function() { return lively.user.html.openUserUI(); })
+        login.then(function(_user) {
+          user = _user;
+          userFlapContent.textContent = user.name.startsWith("guest-") ? "guest" : user.name;
+          loginDone = true;
+          if (typeof update === "function") update(user);
+        })
+        .catch(function(err) { console.error(err); });
+      }
 
       polyfills()
         .then(function() { return res(origin).join("package-registry.json").readJson(); })
