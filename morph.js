@@ -62,9 +62,12 @@ export class Morph {
 
       name: {
         group: "core",
-        initialize() {
-          let className = this.constructor.name;
-          this.name = (string.startsWithVowel(className) ? "an" : "a") + className;
+        initialize(name) {
+          if (!name) {
+            let className = this.constructor.name;
+            name = (string.startsWithVowel(className) ? "an" : "a") + className;
+          }
+          this.name = name;
         }
       },
 
