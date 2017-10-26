@@ -1,15 +1,24 @@
 /*global describe, it, beforeEach, afterEach,xit*/
 import { expect } from "mocha-es6";
 
-import { connect, once, noUpdate, callWhenPathNotNull, disconnectAll, disconnect, signal } from "lively.bindings";
+import {
+  connect,
+  once,
+  noUpdate,
+  callWhenPathNotNull,
+  disconnectAll,
+  disconnect,
+  signal
+} from "lively.bindings";
 
 describe("connect", () => {
 
   it("attribute to attribute connection", function() {
-    var obj1 = {}, obj2 = {};
-    connect(obj1, 'x', obj2, 'y');
+    var obj1 = {},
+        obj2 = {};
+    connect(obj1, "x", obj2, "y");
     obj1.x = 2;
-    expect(obj2.y).equals(2, 'connection not working');
+    expect(obj2.y).equals(2, "connection not working");
   });
 
   it("attribute to method connection", function() {

@@ -1,6 +1,6 @@
 import { string, arr, Closure } from "lively.lang";
 
-export { connect, disconnect, disconnectAll, once, signal, noUpdate }
+export { connect, disconnect, disconnectAll, once, signal, noUpdate };
 
 class AttributeConnection {
 
