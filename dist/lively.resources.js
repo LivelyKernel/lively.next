@@ -935,13 +935,91 @@ function parseQuery(url) {
   return query;
 }
 
-var slashEndRe = /\/+$/;
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var slashEndRe$1 = /\/+$/;
 var slashStartRe = /^\/+/;
-var protocolRe = /^[a-z0-9-_\.]+:/;
-var slashslashRe = /^\/\/[^\/]+/;
+var urlRe = /^([^:\/]+):\/\/([^\/]*)(.*)/;
 var pathDotRe = /\/\.\//g;
 var pathDoubleDotRe = /\/[^\/]+\/\.\./;
 var pathDoubleSlashRe = /(^|[^:])[\/]+/g;
+
+function withRelativePartsResolved$1(inputPath) {
+  var path = inputPath,
+      result = path;
+
+  // /foo/../bar --> /bar
+  do {
+    path = result;
+    result = path.replace(pathDoubleDotRe, '');
+  } while (result != path);
+
+  // foo//bar --> foo/bar
+  result = result.replace(pathDoubleSlashRe, '$1/');
+
+  // foo/./bar --> foo/bar
+  result = result.replace(pathDotRe, '/');
+
+  return result;
+}
+
+function _relativePathBetween_checkPathes(path1, path2) {
+  if (path1.startsWith("/")) path1 = path1.slice(1);
+  if (path2.startsWith("/")) path2 = path2.slice(1);
+  var paths1 = path1.split('/'),
+      paths2 = path2.split('/');
+  for (var i = 0; i < paths2.length; i++) {
+    if (!paths1[i] || paths1[i] != paths2[i]) break;
+  } // now that's some JavaScript FOO
+  var result = '../'.repeat(Math.max(0, paths2.length - i - 1)) + paths1.splice(i, paths1.length).join('/');
+  return result;
+}
+
+// pathA = "http://foo/bar/"
+// pathB = "http://foo/bar/oink/baz.js";
+
+function relativePathBetween(pathA, pathB) {
+  // produces the relative path to get from `pathA` to `pathB`
+  // Example:
+  //   relativePathBetween("/foo/bar/", "/foo/baz.js"); // => ../baz.js
+  var urlMatchA = pathA.match(urlRe),
+      urlMatchB = pathB.match(urlRe),
+      protocolA = void 0,
+      domainA = void 0,
+      protocolB = void 0,
+      domainB = void 0,
+      compatible = true;
+  if (urlMatchA && !urlMatchB || !urlMatchA && urlMatchB) compatible = false;
+  if (urlMatchA && urlMatchB) {
+    protocolA = urlMatchA[1];
+    domainA = urlMatchA[2];
+    protocolB = urlMatchB[1];
+    domainB = urlMatchB[2];
+    if (protocolA !== protocolB) compatible = false;else if (domainA !== domainB) compatible = false;else {
+      pathA = urlMatchA[3];pathB = urlMatchB[3];
+    }
+  }
+  if (!compatible) throw new Error("[relativePathBetween] incompatible paths: " + pathA + " vs. " + pathB);
+  pathA = withRelativePartsResolved$1(pathA);
+  pathB = withRelativePartsResolved$1(pathB);
+  if (pathA == pathB) return '';
+  var relPath = _relativePathBetween_checkPathes(pathB, pathA);
+  if (!relPath) throw new Error('pathname differs in relativePathFrom ' + pathA + ' vs ' + pathB);
+  return relPath;
+}
+
+function join$1(pathA, pathB) {
+  return withRelativePartsResolved$1(pathA.replace(slashEndRe$1, "") + "/" + pathB.replace(slashStartRe, ""));
+}
+
+function parent$1(path) {
+  if (!path.startsWith("/")) return "";
+  return path.replace(slashEndRe$1, "").split("/").slice(0, -1).join("/") + "/";
+}
+
+var slashEndRe = /\/+$/;
+var protocolRe = /^[a-z0-9-_\.]+:/;
+var slashslashRe = /^\/\/[^\/]+/;
 
 function nyi(obj, name) {
   throw new Error(name + " for " + obj.constructor.name + " not yet implemented");
@@ -1067,7 +1145,7 @@ var Resource$$1 = function () {
     key: "parent",
     value: function parent() {
       if (this.isRoot()) return null;
-      return this.newResource(this.url.replace(slashEndRe, "").split("/").slice(0, -1).join("/") + "/");
+      return this.isRoot() ? null : this.newResource(this.url.replace(slashEndRe, "").split("/").slice(0, -1).join("/") + "/");
     }
   }, {
     key: "parents",
@@ -1128,51 +1206,20 @@ var Resource$$1 = function () {
     key: "withRelativePartsResolved",
     value: function withRelativePartsResolved() {
       var path = this.path(),
-          result = path;
-      // /foo/../bar --> /bar
-      do {
-        path = result;
-        result = path.replace(pathDoubleDotRe, '');
-      } while (result != path);
-
-      // foo//bar --> foo/bar
-      result = result.replace(pathDoubleSlashRe, '$1/');
-      // foo/./bar --> foo/bar
-      result = result.replace(pathDotRe, '/');
-      if (result === this.path()) return this;
+          result = withRelativePartsResolved$1(path);
+      if (result === path) return this;
       if (result.startsWith("/")) result = result.slice(1);
       return this.newResource(this.root().url + result);
     }
   }, {
     key: "relativePathFrom",
     value: function relativePathFrom(fromResource) {
-      if (fromResource.root().url != this.root().url) throw new Error('hostname differs in relativePathFrom ' + fromResource + ' vs ' + this);
-
-      var myPath = this.withRelativePartsResolved().path(),
-          otherPath = fromResource.withRelativePartsResolved().path();
-      if (myPath == otherPath) return '';
-      var relPath = checkPathes(myPath, otherPath);
-      if (!relPath) throw new Error('pathname differs in relativePathFrom ' + fromResource + ' vs ' + this);
-      return relPath;
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-      function checkPathes(path1, path2) {
-        var paths1 = path1.split('/'),
-            paths2 = path2.split('/');
-        paths1.shift();
-        paths2.shift();
-        for (var i = 0; i < paths2.length; i++) {
-          if (!paths1[i] || paths1[i] != paths2[i]) break;
-        } // now that's some JavaScript FOO
-        var result = '../'.repeat(Math.max(0, paths2.length - i - 1)) + paths1.splice(i, paths1.length).join('/');
-        return result;
-      }
+      return relativePathBetween(fromResource.url, this.url);
     }
   }, {
     key: "join",
     value: function join(path) {
-      return this.newResource(this.url.replace(slashEndRe, "") + "/" + path.replace(slashStartRe, ""));
+      return this.newResource(join$1(this.url, path));
     }
   }, {
     key: "withPath",
@@ -1230,7 +1277,7 @@ var Resource$$1 = function () {
   }, {
     key: "ensureExistance",
     value: function () {
-      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(optionalContent) {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee(optionalContent) {
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -1287,7 +1334,7 @@ var Resource$$1 = function () {
   }, {
     key: "copyTo",
     value: function () {
-      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(otherResource) {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(otherResource) {
         var _this2 = this;
 
         var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
@@ -1385,7 +1432,7 @@ var Resource$$1 = function () {
   }, {
     key: "rename",
     value: function () {
-      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(otherResource) {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(otherResource) {
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -1425,7 +1472,7 @@ var Resource$$1 = function () {
   }, {
     key: "read",
     value: function () {
-      var _ref6 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
@@ -1448,7 +1495,7 @@ var Resource$$1 = function () {
   }, {
     key: "write",
     value: function () {
-      var _ref7 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
@@ -1471,7 +1518,7 @@ var Resource$$1 = function () {
   }, {
     key: "mkdir",
     value: function () {
-      var _ref8 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
@@ -1494,7 +1541,7 @@ var Resource$$1 = function () {
   }, {
     key: "exists",
     value: function () {
-      var _ref9 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
@@ -1517,7 +1564,7 @@ var Resource$$1 = function () {
   }, {
     key: "remove",
     value: function () {
-      var _ref10 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
             switch (_context8.prev = _context8.next) {
@@ -1540,7 +1587,7 @@ var Resource$$1 = function () {
   }, {
     key: "dirList",
     value: function () {
-      var _ref11 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(depth, opts) {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(depth, opts) {
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
           while (1) {
             switch (_context9.prev = _context9.next) {
@@ -1563,7 +1610,7 @@ var Resource$$1 = function () {
   }, {
     key: "readProperties",
     value: function () {
-      var _ref12 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(opts) {
+      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(opts) {
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
             switch (_context10.prev = _context10.next) {
@@ -1593,7 +1640,7 @@ var Resource$$1 = function () {
   }, {
     key: "readJson",
     value: function () {
-      var _ref13 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(obj) {
+      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(obj) {
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
             switch (_context11.prev = _context11.next) {
@@ -1845,7 +1892,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "read",
     value: function () {
-      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
         var res;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -1916,7 +1963,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "write",
     value: function () {
-      var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(content) {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(content) {
         var res;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
@@ -1963,7 +2010,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "mkdir",
     value: function () {
-      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
         var res;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
@@ -2010,7 +2057,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "exists",
     value: function () {
-      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
@@ -2051,7 +2098,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "remove",
     value: function () {
-      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
@@ -2079,7 +2126,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "_propfind",
     value: function () {
-      var _ref6 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
         var res, xmlString, root;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
@@ -2131,7 +2178,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "dirList",
     value: function () {
-      var _ref7 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
         var depth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         var exclude, resources, self, subResources, subCollections;
@@ -2201,7 +2248,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "readProperties",
     value: function () {
-      var _ref8 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(opts) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(opts) {
         var props;
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
@@ -2231,7 +2278,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "post",
     value: function () {
-      var _ref9 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
         var body = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
         var res, text, json;
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
@@ -2293,7 +2340,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "copyTo",
     value: function () {
-      var _ref10 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(otherResource) {
+      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(otherResource) {
         var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         var toFile;
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
@@ -2348,7 +2395,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "_copyFrom_file_nodejs_fs",
     value: function () {
-      var _ref11 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(fromFile) {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(fromFile) {
         var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         var error, stream, toRes;
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
@@ -2411,7 +2458,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "_copyTo_file_nodejs_fs",
     value: function () {
-      var _ref12 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(toFile) {
+      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(toFile) {
         var _this2 = this;
 
         var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
@@ -2469,7 +2516,7 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "_copyTo_file_nodejs_http",
     value: function () {
-      var _ref13 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13(toFile) {
+      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(toFile) {
         var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         var fromRes, toRes;
         return regeneratorRuntime.wrap(function _callee13$(_context13) {
@@ -2589,7 +2636,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "stat",
     value: function () {
-      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -2613,7 +2660,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "read",
     value: function () {
-      var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
@@ -2637,7 +2684,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "write",
     value: function () {
-      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(content) {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(content) {
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -2673,7 +2720,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "mkdir",
     value: function () {
-      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(content) {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(content) {
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
@@ -2709,7 +2756,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "exists",
     value: function () {
-      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
@@ -2733,7 +2780,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "dirList",
     value: function () {
-      var _ref6 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
         var depth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
@@ -2868,7 +2915,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "isEmptyDirectory",
     value: function () {
-      var _ref7 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
@@ -2897,7 +2944,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "rename",
     value: function () {
-      var _ref8 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(toResource) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(toResource) {
         var files, dirs, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, subR, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, subdir, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, file;
 
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
@@ -3126,7 +3173,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "remove",
     value: function () {
-      var _ref9 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
         var _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, subResource;
 
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
@@ -3243,7 +3290,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "readProperties",
     value: function () {
-      var _ref10 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(opts) {
+      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(opts) {
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
             switch (_context10.prev = _context10.next) {
@@ -3273,7 +3320,7 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "copyTo",
     value: function () {
-      var _ref11 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(otherResource) {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(otherResource) {
         var ensureParent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         var toFile;
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
@@ -3603,7 +3650,7 @@ function resource(url, opts) {
 }
 
 var createFiles = function () {
-  var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(baseDir, fileSpec, opts) {
+  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(baseDir, fileSpec, opts) {
     var base, name, _resource;
 
     return regeneratorRuntime.wrap(function _callee$(_context) {
@@ -3705,7 +3752,7 @@ function loadViaScript(url, onLoadCb) {
 }
 
 var ensureFetch = function () {
-  var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+  var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
     var thisModuleId, fetchInterface, moduleId;
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {

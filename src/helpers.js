@@ -54,3 +54,96 @@ export function parseQuery(url) {
   }
   return query;
 }
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+const slashEndRe = /\/+$/,
+      slashStartRe = /^\/+/,
+      protocolRe = /^[a-z0-9-_\.]+:/,
+      urlRe = /^([^:\/]+):\/\/([^\/]*)(.*)/,
+      slashslashRe = /^\/\/[^\/]+/,
+      // for resolve path:
+      pathDotRe = /\/\.\//g,
+      pathDoubleDotRe = /\/[^\/]+\/\.\./,
+      pathDoubleSlashRe = /(^|[^:])[\/]+/g;
+
+
+export function withRelativePartsResolved(inputPath) {
+  let path = inputPath, result = path;
+
+  // /foo/../bar --> /bar
+  do {
+    path = result;
+    result = path.replace(pathDoubleDotRe, '');
+  } while (result != path);
+
+  // foo//bar --> foo/bar
+  result = result.replace(pathDoubleSlashRe, '$1/');
+
+  // foo/./bar --> foo/bar
+  result = result.replace(pathDotRe, '/');
+
+  return result;
+}
+
+function _relativePathBetween_checkPathes(path1, path2) {
+  if (path1.startsWith("/")) path1 = path1.slice(1);
+  if (path2.startsWith("/")) path2 = path2.slice(1);
+  var paths1 = path1.split('/'),
+      paths2 = path2.split('/');
+  for (var i = 0; i < paths2.length; i++)
+    if (!paths1[i] || (paths1[i] != paths2[i])) break;
+  // now that's some JavaScript FOO
+  var result = '../'.repeat(Math.max(0, paths2.length - i - 1))
+             + paths1.splice(i, paths1.length).join('/');
+  return result;
+}
+
+// pathA = "http://foo/bar/"
+// pathB = "http://foo/bar/oink/baz.js";
+
+export function relativePathBetween(pathA, pathB) {
+  // produces the relative path to get from `pathA` to `pathB`
+  // Example:
+  //   relativePathBetween("/foo/bar/", "/foo/baz.js"); // => ../baz.js
+  let urlMatchA = pathA.match(urlRe),
+      urlMatchB = pathB.match(urlRe),
+      protocolA, domainA, protocolB, domainB,
+      compatible = true;
+  if ((urlMatchA && !urlMatchB) || (!urlMatchA && urlMatchB)) compatible = false;
+  if (urlMatchA && urlMatchB) {
+    protocolA = urlMatchA[1];
+    domainA = urlMatchA[2];
+    protocolB = urlMatchB[1];
+    domainB = urlMatchB[2];
+    if (protocolA !== protocolB) compatible = false;
+    else if (domainA !== domainB) compatible = false;
+    else { pathA = urlMatchA[3]; pathB = urlMatchB[3]; }
+  }
+  if (!compatible)
+    throw new Error(`[relativePathBetween] incompatible paths: ${pathA} vs. ${pathB}`);
+  pathA = withRelativePartsResolved(pathA);
+  pathB = withRelativePartsResolved(pathB);
+  if (pathA == pathB) return '';
+  var relPath = _relativePathBetween_checkPathes(pathB, pathA);
+  if (!relPath)
+    throw new Error('pathname differs in relativePathFrom ' + pathA + ' vs ' + pathB);
+  return relPath;
+}
+
+export function join(pathA, pathB) {
+  return withRelativePartsResolved(pathA.replace(slashEndRe, "") + "/" + pathB.replace(slashStartRe, ""));
+}
+
+
+export function parent(path) {
+  if (!path.startsWith("/")) return "";
+  return path.replace(slashEndRe, "").split("/").slice(0,-1).join("/") + "/";
+}
+
+export function parents(path) {
+  var result = [], p = parent(path);
+  while (p) { result.unshift(p); p = parent(p); if (p === "/") break; }
+  return result;
+}

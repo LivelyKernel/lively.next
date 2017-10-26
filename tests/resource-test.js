@@ -4,6 +4,7 @@ import { expect } from "mocha-es6";
 
 import { resource, createFiles, registerExtension, unregisterExtension } from "../index.js";
 import Resource from "../src/resource.js";
+import { relativePathBetween } from "../src/helpers.js";
 
 var dir = System.normalizeSync("lively.resources/tests/"),
     testProjectDir = dir + "temp-for-tests/",
@@ -284,6 +285,29 @@ describe("url operations", () => {
 
     var a = resource('http://www.foo.org/bar/');
     expect(a.relativePathFrom(a)).equals("", "identity");
+  });
+  
+  it("relativePathBetween", () => {
+
+    expect(relativePathBetween("http://foo/bar/", "http://foo/bar/oink/baz.js"))
+      .equals("oink/baz.js");
+    expect(relativePathBetween("http://foo/bar/baz.js", "http://foo/bar/oink/baz.js"))
+      .equals("oink/baz.js");
+    expect(relativePathBetween("http://foo/bar/zork/", "http://foo/bar/oink/baz.js"))
+      .equals("../oink/baz.js");
+
+    expect(relativePathBetween('http://www.foo.org/', 'http://www.foo.org/test/bar/baz'))
+        .equals('test/bar/baz')
+    expect(relativePathBetween('http://www.foo.org', 'http://www.foo.org/test/bar/baz'))
+        .equals('test/bar/baz')
+
+    expect(() => relativePathBetween('http://foo.org/', 'http://foo.com/')).throws();
+
+    var a = "http://northwestern.itsapirateslife.net:9001/core/lively/bootstrap.js",
+        b = "http://northwestern.itsapirateslife.net:9001//questions/Worlds/unknown_user_1434404507629_original.html?autosave=true";
+    expect(relativePathBetween(b, a)).equals("../../core/lively/bootstrap.js")
+
+    expect(relativePathBetween('http://www.foo.org/bar/', 'http://www.foo.org/bar/')).equals("", "identity");
   });
 
 });

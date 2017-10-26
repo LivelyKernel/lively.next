@@ -1,14 +1,9 @@
 import { resource } from "../index.js";
-import { parseQuery } from "./helpers.js";
+import { parseQuery, withRelativePartsResolved, relativePathBetween, join } from "./helpers.js";
 
 const slashEndRe = /\/+$/,
-      slashStartRe = /^\/+/,
       protocolRe = /^[a-z0-9-_\.]+:/,
-      slashslashRe = /^\/\/[^\/]+/,
-      // for resolve path:
-      pathDotRe = /\/\.\//g,
-      pathDoubleDotRe = /\/[^\/]+\/\.\./,
-      pathDoubleSlashRe = /(^|[^:])[\/]+/g;
+      slashslashRe = /^\/\/[^\/]+/;
 
 function nyi(obj, name) {
   throw new Error(`${name} for ${obj.constructor.name} not yet implemented`);
@@ -109,7 +104,8 @@ export default class Resource {
 
   parent() {
     if (this.isRoot()) return null;
-    return this.newResource(this.url.replace(slashEndRe, "").split("/").slice(0,-1).join("/") + "/");
+    return this.isRoot() ? null :
+      this.newResource(this.url.replace(slashEndRe, "").split("/").slice(0, -1).join("/") + "/");
   }
 
   parents() {
@@ -151,54 +147,17 @@ export default class Resource {
   }
 
   withRelativePartsResolved() {
-    let path = this.path(),
-        result = path;
-    // /foo/../bar --> /bar
-    do {
-      path = result;
-      result = path.replace(pathDoubleDotRe, '');
-    } while (result != path);
-
-    // foo//bar --> foo/bar
-    result = result.replace(pathDoubleSlashRe, '$1/');
-    // foo/./bar --> foo/bar
-    result = result.replace(pathDotRe, '/');
-    if (result === this.path()) return this;
+    let path = this.path(), result = withRelativePartsResolved(path);
+    if (result === path) return this;
     if (result.startsWith("/")) result = result.slice(1);
     return this.newResource(this.root().url + result);
   }
 
   relativePathFrom(fromResource) {
-    if (fromResource.root().url != this.root().url)
-        throw new Error('hostname differs in relativePathFrom ' + fromResource + ' vs ' + this);
-
-    var myPath = this.withRelativePartsResolved().path(),
-        otherPath = fromResource.withRelativePartsResolved().path();
-    if (myPath == otherPath) return '';
-    var relPath = checkPathes(myPath, otherPath);
-    if (!relPath)
-        throw new Error('pathname differs in relativePathFrom ' + fromResource + ' vs ' + this);
-    return relPath;
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    function checkPathes(path1, path2) {
-      var paths1 = path1.split('/'),
-          paths2 = path2.split('/');
-      paths1.shift();
-      paths2.shift();
-      for (var i = 0; i < paths2.length; i++)
-          if (!paths1[i] || (paths1[i] != paths2[i])) break;
-      // now that's some JavaScript FOO
-      var result = '../'.repeat(Math.max(0, paths2.length - i - 1))
-                 + paths1.splice(i, paths1.length).join('/');
-      return result;
-    }
+    return relativePathBetween(fromResource.url, this.url);
   }
 
-  join(path) {
-    return this.newResource(this.url.replace(slashEndRe, "") + "/" + path.replace(slashStartRe, ""));
-  }
+  join(path) { return this.newResource(join(this.url, path)); }
 
   withPath(path) {
     var root = this.isRoot() ? this : this.root();
