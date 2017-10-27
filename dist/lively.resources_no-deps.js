@@ -280,7 +280,7 @@ function parseQuery(url) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 var slashEndRe$1 = /\/+$/;
-var slashStartRe = /^\/+/;
+var slashStartRe$1 = /^\/+/;
 var urlRe = /^([^:\/]+):\/\/([^\/]*)(.*)/;
 var pathDotRe = /\/\.\//g;
 var pathDoubleDotRe = /\/[^\/]+\/\.\./;
@@ -351,7 +351,7 @@ function relativePathBetween(pathA, pathB) {
 }
 
 function join$1(pathA, pathB) {
-  return withRelativePartsResolved$1(pathA.replace(slashEndRe$1, "") + "/" + pathB.replace(slashStartRe, ""));
+  return withRelativePartsResolved$1(pathA.replace(slashEndRe$1, "") + "/" + pathB.replace(slashStartRe$1, ""));
 }
 
 function parent$1(path) {
@@ -360,6 +360,7 @@ function parent$1(path) {
 }
 
 var slashEndRe = /\/+$/;
+var slashStartRe = /^\/+/;
 var protocolRe = /^[a-z0-9-_\.]+:/;
 var slashslashRe = /^\/\/[^\/]+/;
 
@@ -486,7 +487,6 @@ var Resource$$1 = function () {
   }, {
     key: "parent",
     value: function parent() {
-      if (this.isRoot()) return null;
       return this.isRoot() ? null : this.newResource(this.url.replace(slashEndRe, "").split("/").slice(0, -1).join("/") + "/");
     }
   }, {
@@ -559,15 +559,15 @@ var Resource$$1 = function () {
       return relativePathBetween(fromResource.url, this.url);
     }
   }, {
-    key: "join",
-    value: function join(path) {
-      return this.newResource(join$1(this.url, path));
-    }
-  }, {
     key: "withPath",
     value: function withPath(path) {
       var root = this.isRoot() ? this : this.root();
       return root.join(path);
+    }
+  }, {
+    key: "join",
+    value: function join$1(path) {
+      return this.newResource(this.url.replace(slashEndRe, "") + "/" + path.replace(slashStartRe, ""));
     }
   }, {
     key: "isRoot",

@@ -2,6 +2,7 @@ import { resource } from "../index.js";
 import { parseQuery, withRelativePartsResolved, relativePathBetween, join } from "./helpers.js";
 
 const slashEndRe = /\/+$/,
+      slashStartRe = /^\/+/,
       protocolRe = /^[a-z0-9-_\.]+:/,
       slashslashRe = /^\/\/[^\/]+/;
 
@@ -103,7 +104,6 @@ export default class Resource {
   }
 
   parent() {
-    if (this.isRoot()) return null;
     return this.isRoot() ? null :
       this.newResource(this.url.replace(slashEndRe, "").split("/").slice(0, -1).join("/") + "/");
   }
@@ -157,11 +157,13 @@ export default class Resource {
     return relativePathBetween(fromResource.url, this.url);
   }
 
-  join(path) { return this.newResource(join(this.url, path)); }
-
   withPath(path) {
     var root = this.isRoot() ? this : this.root();
-    return root.join(path)
+    return root.join(path);
+  }
+
+  join(path) {
+    return this.newResource(this.url.replace(slashEndRe, "") + "/" + path.replace(slashStartRe, ""));
   }
 
   isRoot() { return this.path() === "/" }
