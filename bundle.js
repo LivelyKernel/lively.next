@@ -1,8 +1,9 @@
 /*global global,self,__VERSION_PLACEHOLDER__*/
 import FreezerModule from "./module.js";
-import { obj, graph, arr } from "lively.lang";
+import { obj, num, graph, arr } from "lively.lang";
 import { version } from "./package.json";
 import { runtimeDefinition } from "./runtime.js";
+import { join } from "lively.resources/src/helpers.js";
 
 export default class Bundle {
 
@@ -13,10 +14,25 @@ export default class Bundle {
     this.entryModule = null;
   }
 
-  async resolveDependenciesStartFrom(moduleName, packageName) {
-    let packageSpec = this.findPackage(packageName),
-        entryModule =  this.findModuleInPackageWithName(packageSpec, moduleName)
-                    || this.addModule(new FreezerModule(moduleName, packageSpec));
+  async resolveDependenciesStartFrom(moduleNameOrId, packageName) {
+    let packageSpec, entryModule;
+    if (packageName) {
+      packageSpec = this.findPackage(packageName);
+    } else {
+      entryModule = this.findModuleWithId(moduleNameOrId);
+      if (entryModule) packageSpec = entryModule.package;
+      else {
+        let [_, pName, moduleName] = moduleNameOrId.match(/^([^\/]+)\/(.*)/);
+        if (pName) {
+          packageSpec = this.findPackage(pName);
+          moduleNameOrId = moduleName;
+        }
+      }
+    }
+    if (!entryModule) {
+      entryModule =  this.findModuleInPackageWithName(packageSpec, moduleNameOrId)
+                  || this.addModule(new FreezerModule(moduleNameOrId, packageSpec));
+    }
 
     this.entryModule = entryModule;
 
@@ -44,12 +60,21 @@ export default class Bundle {
   // package / module specifics
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  normalizeModuleName(name) {
+    // references a package?
+    let p = this.findPackage(name);
+    if (p) return join(p.qualifiedName, p.main);
+    let m = this.findModuleWithId(name);
+    if (m) return m.qualifiedName;
+    return null;
+  }
+
   findPackage(name) {
-    return obj.values(this.packages).find(ea => ea.name === name);
+    return obj.values(this.packages).find(ea => ea.name === name || ea.qualifiedName === name);
   }
 
   findModuleWithId(id) {
-    return obj.values(this.modules).find(ea => ea._id === id);
+    return obj.values(this.modules).find(ea => ea._id === id || ea.qualifiedName === id);
   }
 
   findModuleInPackageWithName(fromModulePackage, name) {
@@ -73,25 +98,35 @@ export default class Bundle {
     return {graph: graph, moduleNameMap};
   }
 
-  standalone(opts = {}) {
+  async standalone(opts = {}) {
     let {
-          ensureSystem = true,
-          executable = true,
-          runtimeGlobal = "lively.FreezerRuntime"
-        } = opts,
-        entry = this.entryModule,
+          addRuntime = false,
+          isExecutable = false,
+          runtimeGlobal = "lively.FreezerRuntime",
+          entryModule: entryId
+        } = opts;
+
+    if (!entryId && !this.entryModule)
+      throw new Error(`Needs entry module`);
+
+    if (entryId) {
+      await this.resolveDependenciesStartFrom(entryId);
+    }
+
+    let entry = this.entryModule,
         g = this.buildGraph(entry),
         moduleOrder = arr.flatten(graph.sortByReference(g.graph, entry.qualifiedName)),
         modules = moduleOrder.map(qName => g.moduleNameMap[qName]).filter(ea => !ea.isExcluded),
         moduleSource = modules.map(ea => ea.transformToRegisterFormat({runtimeGlobal})).join("\n\n");
 
-    if (ensureSystem) {
+    if (addRuntime) {
       let runtimeSrc = String(runtimeDefinition)
                         .replace(/var version/, `var version = "${version}"`)
                         .replace(/lively\.FreezerRuntime/g, runtimeGlobal)
       moduleSource = `(${runtimeSrc})();\n${moduleSource}`
     }
-    if (executable) moduleSource += `\n${runtimeGlobal}.load("${entry.qualifiedName}");\n`;
+
+    if (isExecutable) moduleSource += `\n${runtimeGlobal}.load("${entry.qualifiedName}");\n`;
 
     return moduleSource;
   }
@@ -109,7 +144,8 @@ export default class Bundle {
       let next = unreported.shift();
       if (seen[next.qualifiedName]) continue;
       seen[next.qualifiedName] = true;
-      report += `${next.qualifiedName}`;
+      report += `${next.qualifiedName}`
+      if (next._source) report += ` (${num.humanReadableByteSize(next._source.length)})`;
       if (next.exports.length)
         report += `\n  => ${next.exports.map(ea => `${ea.exported}${ea.local && ea.exported !== ea.local ? ` (${ea.local})` : ""}`).join(", ")}`;
       let deps = Array.from(next.dependencies.keys());
@@ -122,4 +158,15 @@ export default class Bundle {
     return report;
   }
 
+  excludedModules() {    
+    let missing = {};
+    for (let modName in this.modules) {
+      let mod = this.modules[modName];
+      if (!mod.dependencies) continue;
+      for (let dep of mod.dependencies.keys())
+        if (dep.isExcluded || !this.modules[dep.qualifiedName])
+          missing[dep.qualifiedName] = true
+    }
+    return Object.keys(missing);
+  }
 }

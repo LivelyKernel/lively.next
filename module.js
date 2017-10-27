@@ -42,12 +42,12 @@ export default class FreezerModule {
 
   get id() {
     if (this._id) return this._id;
-    if (this.package) return this.package.id + "/" + this.name;
+    if (this.package) return join(this.package.id, this.name);
     throw new Error(`id: Needs package or _id! (${this.name})`);
   }
 
   get qualifiedName() {
-    if (this.package) return this.package.qualifiedName + "/" + this.name;
+    if (this.package) return join(this.package.qualifiedName, this.name);
     if (this.id) return this.id;
     throw new Error(`qualifiedName: Needs package or id!`);
   }
@@ -145,14 +145,11 @@ export default class FreezerModule {
     }
 
     let packageName = localName.includes("/") ?
-                       localName.slice(0, localName.indexOf.includes("/")) :
+                       localName.slice(0, localName.includes("/")) :
                        localName,
         nameInPackage = localName.slice(packageName.length),
         packageSpec = bundle.findPackage(packageName),
         isPackageImport = !nameInPackage;
-
-    // if (!packageSpec)
-    //   throw new Error(`Cannot resolve package ${packageName}`);
 
     if (!packageSpec){
       return {
@@ -179,23 +176,45 @@ export default class FreezerModule {
 
   registerTranformsOfImports() {
     let topLevelIds = [], setters = [], qualifiedDependencyNames = [];
+
     for (let [depModule, {imports}] of this.dependencies) {
+      qualifiedDependencyNames.push(depModule.qualifiedName);
+
       // FIXME what if a toplevel var of `this` has the same name as the generated varName?
       let varName = depModule.findUniqJsName([]),
           setterStmts = [];
-      qualifiedDependencyNames.push(depModule.qualifiedName);
+
       for (let i of imports) {
-        let importedName = i.local || i.exported;
-        setterStmts.push(nodes.exprStmt(nodes.assign(importedName, nodes.member(nodes.id(varName), i.imported))));
-        topLevelIds.push(nodes.id(importedName));
+        let {node: {type}, imported, local, exported} = i;
+
+        if (type === "ExportAllDeclaration") { // export * from "foo"
+          setterStmts.push(nodes.exprStmt(nodes.funcCall("_export", nodes.id(varName))));
+          continue;
+        }
+
+        if (exported) { // export { x } from "foo"
+          setterStmts.push(nodes.exprStmt(nodes.funcCall("_export", nodes.literal(exported), nodes.member(nodes.id(varName), imported))));
+          continue;
+        }
+
+        if (local)
+          topLevelIds.push(nodes.id(local));
+        if (imported === "*") {
+          setterStmts.push(nodes.exprStmt(nodes.assign(local, nodes.id(varName))));
+        } else {
+          if (imported && local)
+            setterStmts.push(nodes.exprStmt(nodes.assign(local, nodes.member(nodes.id(varName), imported))));
+        }
       }
       setters.push(nodes.funcExpr({}, [nodes.id(varName)], ...setterStmts))
     }
+
     let topLevelDecl = topLevelIds.length ? {
       type: "VariableDeclaration",
       kind: "var",
       declarations: topLevelIds.map(ea => ({type: "VariableDeclarator", id: ea, init: null}))
     } : null;
+
     return {topLevelDecl, setters, qualifiedDependencyNames};
   }
 
@@ -204,8 +223,7 @@ export default class FreezerModule {
 
     for (let node of this.parsed.body) {
       let {type, declaration, specifiers} = node;
-      if (type !== "ExportNamedDeclaration" && type !== "ExportDefaultDeclaration")
-        continue;
+      if (!type.match(/^Export.*Declaration$/)) continue;
 
       let exportTransform = {node, replacementFunc: () => [], ids: []};
       exported.push(exportTransform);
@@ -235,33 +253,33 @@ export default class FreezerModule {
       }
 
       if (type === "ExportNamedDeclaration" && specifiers) {
-        if (node.source) {
-          for (let {local, exported} of specifiers)
-            exportTransform.ids.push({local, exported});
-        }
+        if (node.source) continue; // not for re-exports, those are handled in setter
+        for (let {local, exported} of specifiers)
+          exportTransform.ids.push({local, exported});
         continue;
       }
 
       if (type === "ExportDefaultDeclaration" && declaration) {
-        let local;
         switch (declaration.type) {
 
           case 'Identifier':
             exportTransform.replacementFunc = (node, source, wasChanged) =>
               source.replace(/^export\s+default\s+/, "") + "\n" + exportCall("default", node.declaration);
-            local = declaration;
             break;
 
           case 'ClassDeclaration': case 'FunctionDeclaration':
             exportTransform.replacementFunc = (node, source, wasChanged) =>
               source.replace(/^export\s+default\s+/, "") + exportCall("default", node.declaration.id);
-            local = declaration.id;
             break;
 
           default:
             throw new Error(`Strange default export declaration: ${declaration.type}`);
         }
 
+        continue;
+      }
+
+      if (type === "ExportAllDeclaration") {
         continue;
       }
     }
@@ -281,7 +299,7 @@ export default class FreezerModule {
 
           // // remove exports
           ...exportTransformData.map(({node: target, replacementFunc, ids}) => {
-            additionalExports.push(...ids.map(ea => exportCall(ea.exported.name, ea.exported)))
+            additionalExports.push(...ids.map(ea => exportCall(ea.exported.name, ea.local)))
             return {target, replacementFunc}
           })
         ], this._source);

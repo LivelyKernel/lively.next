@@ -28,7 +28,16 @@ export default class FreezerPackage {
   get qualifiedName() { return this.version ? `${this.name}@${this.version}` : this.name; }
 
   get id() { return resource(this.path).asFile().url; }
-  
+
+  get main() {
+    let {_config: c} = this;
+    if (c) {
+      if (c.systemjs && c.systemjs.main) return c.systemjs.main;
+      if (c.main) return c.main;
+    }
+    return "index.js";
+  }
+
   async readConfig() {
     let config = await this.resource.join("package.json").readJson();
     this.version = config.version;
