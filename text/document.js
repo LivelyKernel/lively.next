@@ -1441,11 +1441,12 @@ export default class Document {
 
     let result = first;
     for (let i = 1; i < lines.length-1; i++) {
-      result[result.length-2] = result[result.length-2] + newline;
+      if (typeof result[result.length-2] === 'string')
+        result[result.length-2] = result[result.length-2] + newline;
       concatTextAndAttributes(result, lines[i].textAndAttributes, true);
     }
-
-    result[result.length-2] = result[result.length-2] + newline;
+    if (typeof result[result.length-2] === 'string')
+      result[result.length-2] = result[result.length-2] + newline;
     concatTextAndAttributes(result, last, true);
     return joinTextAttributes(result, "");
   }
