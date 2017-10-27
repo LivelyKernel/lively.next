@@ -760,11 +760,12 @@ export class Text extends Morph {
   
   onSubmorphChange(change, submorph) {
     super.onSubmorphChange(change, submorph);
-    let {prop, prevValue} = change;
+    let {prop} = change;
     if (this.embeddedMorphMap.get(submorph)) {
       if (prop == 'position' && !this._correctingPosition) {
         this._correctingPosition = true;
-        submorph.position = prevValue;
+        let morphAnchor = this.embeddedMorphMap.get(submorph).anchor;
+        morphAnchor.position = morphAnchor.position // trigger update
         this._correctingPosition = false;
       }
       if (prop == 'extent') {
