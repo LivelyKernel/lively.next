@@ -85,12 +85,16 @@ export default class TextLayout {
       if (!force && line.height > 0) continue;
 
       nMeasured++;
-      var textAttributes = line.textAttributes, styles = [];
+      var textAttributes = line.textAndAttributes, styles = [], inlineMorph;
 
       // find all styles that apply to line
       if (!textAttributes || !textAttributes.length) styles.push(defaultTextStyle);
-      else for (var j = 0; j < textAttributes.length; j++)
-        styles.push({...defaultTextStyle, ...textAttributes[j]});
+      else for (var j = 0; j < textAttributes.length; j += 2) {
+        inlineMorph = textAttributes[j]
+        if (inlineMorph && inlineMorph.isMorph)
+           inlineMorph.position = this.pixelPositionFor(morph, {row: i , column: j / 2});
+        styles.push({...defaultTextStyle, ...textAttributes[j + 1]});
+      }
 
       // measure default char widths and heights
       var measureCount = styles.length, // for avg width
@@ -253,6 +257,16 @@ export default class TextLayout {
 
     this.lineCharBoundsCache.set(line, charBounds);
     return charBounds;
+  }
+
+  computeMaxBoundsForLineSelection(morph, selection) {
+    var {start, end} = selection,
+        end = end.row == start.row ? end : {row: end.row, column: -1},
+        textLayout = morph.textLayout,
+        charBoundsInSelection = textLayout.charBoundsOfRow(morph, start.row),
+        charBoundsInSelection = end.column < 0 ? charBoundsInSelection.slice(start.column) : charBoundsInSelection.slice(start.column, end.column),
+        maxCol = start.column + (charBoundsInSelection ? charBoundsInSelection.indexOf(arr.max(charBoundsInSelection, b => b.height)) : 0);
+    return textLayout.boundsFor(morph, {row: start.row, column: maxCol});
   }
 
   boundsFor(morph, docPos) {

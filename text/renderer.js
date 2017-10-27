@@ -118,7 +118,7 @@ function installCSS(domEnv) {
 
     .line > .Morph {
       display: inline-block !important;
-      vertical-align: middle !important;
+      vertical-align: top !important;
     }
 
     blockquote {
@@ -529,7 +529,7 @@ export default class Renderer {
         content, attr,
         fontSize, fontFamily, fontWeight, fontStyle, textDecoration, fontColor,
         backgroundColor, nativeCursor, textStyleClasses, link,
-        tagname, nodeStyle, nodeAttrs,
+        tagname, nodeStyle, nodeAttrs, paddingRight, paddingLeft, paddingTop, paddingBottom,
         lineHeight, textAlign, wordSpacing, letterSpacing, quote, nested;
 
     if (size > 0) {
@@ -547,7 +547,7 @@ export default class Renderer {
 
         if (!attr) { renderedChunks.push(content); continue; }
 
-        fontSize =         attr.fontSize;
+        fontSize =         obj.isString(attr.fontSize) ? attr.fontSize : attr.fontSize + 'px';
         fontFamily =       attr.fontFamily;
         fontWeight =       attr.fontWeight;
         fontStyle =        attr.fontStyle;
@@ -561,6 +561,10 @@ export default class Renderer {
         textAlign =        attr.textAlign || textAlign;
         wordSpacing =      attr.wordSpacing || wordSpacing;
         letterSpacing =    attr.letterSpacing || letterSpacing;
+        paddingRight =     attr.paddingRight;
+        paddingLeft =      attr.paddingLeft;
+        paddingTop =       attr.paddingTop;
+        paddingBottom =    attr.paddingBottom;
         quote =            attr.quote || quote;
 
         tagname = "span";
@@ -573,7 +577,7 @@ export default class Renderer {
           nodeAttrs.target = "_blank";
         }
 
-        if (fontSize) nodeStyle.fontSize               = fontSize + "px";
+        if (fontSize) nodeStyle.fontSize               = fontSize;
         if (fontFamily) nodeStyle.fontFamily           = fontFamily;
         if (fontWeight) nodeStyle.fontWeight           = fontWeight;
         if (fontStyle) nodeStyle.fontStyle             = fontStyle;
@@ -581,6 +585,10 @@ export default class Renderer {
         if (fontColor) nodeStyle.color                 = String(fontColor);
         if (backgroundColor) nodeStyle.backgroundColor = String(backgroundColor);
         if (nativeCursor) nodeStyle.cursor             = nativeCursor;
+        if (paddingRight) nodeStyle.paddingRight       = paddingRight;
+        if (paddingLeft)  nodeStyle.paddingLeft        = paddingLeft;
+        if (paddingTop) nodeStyle.paddingTop           = paddingTop;
+        if (paddingBottom) nodeStyle.paddingBottom     = paddingBottom;
 
         if (textStyleClasses && textStyleClasses.length)
           nodeAttrs.className = textStyleClasses.join(" ");
@@ -632,15 +640,18 @@ export default class Renderer {
     let {textLayout} = morph;
 
     var {start, end, lead, cursorVisible, selectionColor} = selection,
+
         isReverse           = selection.isReverse(),
         {document}          = morph,
         startBounds         = textLayout.boundsFor(morph, start),
+        maxBounds           = textLayout.computeMaxBoundsForLineSelection(morph, selection),
         endBounds           = textLayout.boundsFor(morph, end),
-        startPos            = pt(startBounds.x, startBounds.y),
+        startPos            = pt(startBounds.x, maxBounds.y),
         endPos              = pt(endBounds.x, endBounds.y),
         leadLineHeight      = startBounds.height,
+        maxLineHeight       = maxBounds.height,
         endLineHeight       = endBounds.height,
-        cursorPos           = isReverse ? startPos : endPos,
+        cursorPos           = isReverse ? pt(startBounds.x, startBounds.y) : endPos,
         cursorHeight        = isReverse ? leadLineHeight : endLineHeight;
 
     // collapsed selection -> cursor
@@ -648,21 +659,18 @@ export default class Renderer {
       return [this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth)];
 
     // single line -> one rectangle
-    if (start.row == end.row) {
+    if (Math.abs((startBounds.y + leadLineHeight) - (endBounds.y + endLineHeight)) < 5) {
       return [
-        this.selectionLayerPart(
-          startPos.withY(Math.min(startPos.y, endPos.y)), 
-          endPos.addXY(0, endLineHeight), selectionColor),
-          this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth
-        )
+        this.selectionLayerPart(startPos, endPos.withY(maxBounds.y + maxLineHeight), selectionColor),
+        this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth)
       ]
     }
 
-    let endPosLine1 = pt(morph.width, startPos.y + leadLineHeight),
+    let endPosLine1 = pt(morph.width, maxBounds.y + maxLineHeight),
         startPosLine2 = pt(0, endPosLine1.y);
 
     // two lines -> two rectangles
-    if (Math.abs(start.row - end.row) < 2) {
+    if (Math.abs((startBounds.y + leadLineHeight) - (endBounds.y)) < 5) {
       return [
         this.selectionLayerPart(startPos, endPosLine1, selectionColor),
         this.selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight), selectionColor),
