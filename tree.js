@@ -2,7 +2,7 @@
 import { arr, fun, obj, tree, string, promise } from "lively.lang";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { Label } from "lively.morphic/text/label.js";
-import { Morph, config, StyleSheet } from "lively.morphic";
+import { Morph, Text, config, StyleSheet } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 
 /*
@@ -39,246 +39,7 @@ var treeMorph = new Tree({
 
 */
 
-export class TreeNode extends Morph {
-
-  static get properties() {
-    return {
-
-      myNode: {},
-
-      styleClasses: {defaultValue: ['deselected']},
-
-      tree: {
-        derived: true, readOnly: true,
-        get() { var o = this.owner; return o ? o.owner : null; }
-      },
-
-      toggle: {
-        after: ["submorphs"], derived: true, readOnly: true,
-        get() {
-          return this.getSubmorphNamed("toggle") || (this.addMorph({
-            type: Label, name: "toggle",
-            fill: null, textString: this.isCollapsed ? "\uf196" : "\uf147",
-            fontSize: this.fontSize-3,
-            textStyleClasses: ["fa"],
-            styleClasses: ['TreeLabel'],
-            fontFamily: "FontAwesome",
-            padding: Rectangle.inset(2),
-            nativeCursor: "pointer"
-          }));
-        }
-      },
-
-      label: {
-        after: ["submorphs"], derived: true, readOnly: true,
-        get() {
-          return this.getSubmorphNamed("label") || this.addMorph({
-            type: Label, name: "label", autofit: false, styleClasses: ['TreeLabel'],
-            fontSize: this.fontSize, fontWeight: this.fontWeight, fontFamily: this.fontFamily,
-            fill: null
-          });
-        }
-      },
-
-      labelValue: {
-        after: ["label"], derived: true,
-        get() { var l = this.label; return l.owner ? l.value : ""; },
-        set(val) {
-          var l = this.label;
-          l.value = val;
-          this.displayedMorph = l;
-        }
-      },
-
-      displayedMorph: {
-        after: ["submorphs", "toggle"], derived: true,
-        get() { return arr.without(this.submorphs, this.getSubmorphNamed("toggle"))[0]; },
-        set(m) {
-          var prev = this.displayedMorph;
-          if (m != this.label) this.label.value = '';
-          this.submorphs = arr.uniq(arr.compact([this.getSubmorphNamed('toggle'), this.label, m]));
-        }
-      },
-
-      padding: {
-        defaultValue: Rectangle.inset(4, 2),
-        after: ["label", "toggle", 'displayedMorph'],
-      },
-
-      fontFamily: {
-        after: ["label", "toggle", 'displayedMorph'],
-        set(fontFamily) {
-          this.setProperty("fontFamily", fontFamily);
-          (this.displayedMorph || this.label).fontFamily = fontFamily;
-        }
-      },
-
-      fontSize: {
-        after: ["toggle", 'displayedMorph'],
-        set(fontSize) {
-          this.setProperty("fontSize", fontSize);
-          (this.displayedMorph || this.label).fontSize = fontSize;
-          var toggle = this.getSubmorphNamed("toggle");
-          if (toggle) toggle.fontSize = fontSize;
-        }
-      },
-
-      fontColor: {
-        after: ["toggle", 'displayedMorph'],
-        defaultValue: Color.black,
-        set(fontColor) {
-          this.setProperty("fontColor", fontColor);
-          (this.displayedMorph || this.label).fontColor = fontColor;
-          var toggle = this.getSubmorphNamed("toggle");
-          if (toggle) toggle.fontColor = fontColor;
-        }
-      },
-
-      fontWeight: {
-        after: ['displayedMorph', "toggle"],
-        set(fontWeight) {
-          this.setProperty("fontWeight", fontWeight);
-          (this.displayedMorph || this.label).fontWeight = fontWeight;
-          var toggle = this.getSubmorphNamed("toggle");
-          if (toggle) toggle.fontWeight = fontWeight;
-        }
-      },
-
-      isCollapsed: {
-        defaultValue: false,
-        set(bool) {
-          let {isCollapsed, tree, myNode} = this;
-          if (isCollapsed === bool) return;
-          this.setProperty("isCollapsed", bool);
-          var toggle = this.getSubmorphNamed("toggle");
-          toggle && (toggle.textString = bool ? "\uf196" : "\uf147");
-          if (myNode) {
-            let payload = {node: myNode, isCollapsed: bool};
-            signal(this, "collapseChanged", payload);
-            tree && tree.onNodeCollapseChanged(payload);
-          }
-        }
-      },
-
-      isCollapsable: {
-        defaultValue: false,
-        set(bool) {
-          this.setProperty("isCollapsable", bool);
-          var toggle = this.getSubmorphNamed("toggle");
-          if (!bool && toggle) toggle.visible = false;
-          if (bool && !toggle) this.toggle.visible = true;
-          this.relayout();
-        }
-      },
-
-    };
-  }
-
-  constructor(props = {}) {
-    super(props);
-    this.relayout();
-  }
-
-  displayNode(displayedNode, node, pos, defaultToggleWidth, goalWidth, isSelected, isCollapsable, isCollapsed) {
-    if (this.myNode) this.myNode.renderedNode = null;
-    this.myNode = null;
-
-    this.position = pos;
-
-    this.isCollapsable = isCollapsable;
-    this.isCollapsed = isCollapsed;
-
-    let padding = this.padding, padl = 0, padr = 0, padt = 0, padb = 0;
-    if (padding) {
-      padl = padding.left();
-      padt = padding.top();
-      padr = padding.right();
-      padb = padding.bottom();
-    }
-
-    var toggle = this.getSubmorphNamed("toggle"), displayedMorph;
-
-    if (toggle){
-      toggle.visible = this.isCollapsable;
-      toggle.position = pt(padl, padt);
-    }
-    if (displayedNode && displayedNode.isMorph) {
-      displayedMorph = this.displayedMorph = displayedNode;
-      displayedMorph.layout && displayedMorph.layout.forceLayout();
-    } else {
-      let {label} = this;
-      displayedMorph = this.displayedMorph = label;
-      this.labelValue = displayedNode;
-      displayedMorph.fit();
-      if (goalWidth) {
-        displayedMorph.width = Math.max(
-          displayedMorph.textBounds().width,
-          goalWidth - defaultToggleWidth);
-      }
-    }
-
-    this.styleClasses = isSelected ? ["selected"] : ["deselected"];
-    if (node) node.isSelected = isSelected;
-
-    displayedMorph.position = pt(defaultToggleWidth + padl + 3, padt);
-
-    this.extent = displayedMorph.bounds().extent().addXY(defaultToggleWidth + 3 + padl + padr, padb);
-
-    this.myNode = node;
-    if (this.myNode) this.myNode.renderedNode = this;
-  }
-
-  relayout() {
-    var { label } = this;
-    var toggle = this.getSubmorphNamed("toggle");
-    label.owner && label.fit();
-    if (toggle) {
-      toggle.fit();
-      var bounds = toggle.textBounds();
-      this.height = Math.max(bounds.height, this.height);
-      // this.padding = Rectangle.inset(bounds.width+4, 1, 1, 1);
-      toggle.leftCenter = pt(1,this.height/2);
-    } else {
-      // this.padding = Rectangle.inset(1);
-    }
-  }
-
-  onContextMenu(evt) {
-    this.owner.owner.contextMenuForNode(this, evt);
-  }
-
-  onMouseDown(evt) {
-    if (!evt.leftMouseButtonPressed() || evt.isCtrlDown()) return;
-
-    var toggle = this.getSubmorphNamed("toggle");
-    if (toggle && evt.state.clickedOnMorph === toggle) {
-      this.toggleCollapse();
-    } else {
-      this.select();
-    }
-  }
-
-  toggleCollapse() { this.isCollapsed = !this.isCollapsed; }
-
-  select() {
-    let {tree, myNode} = this;
-    tree && (tree.selection = myNode);
-    signal(this, "selected", myNode);
-  }
-
-  highlight() {
-    if (this.displayedMorph.highlight) return this.displayedMorph.highlight();
-    if (this.highlighter) this.highlighter.remove();
-    const hl = this.highlighter = this.addMorph(this.displayedMorph.copy());
-    hl.fontWeight = "bold", hl.fontColor = Color.orange;
-    hl.reactsToPointer = false;
-    hl.fadeOut(2000);
-  }
-
-}
-
-
-export class Tree extends Morph {
+export class Tree extends Text {
 
   static get properties() {
 
@@ -289,8 +50,15 @@ export class Tree extends Morph {
           this.updateStyleSheet();
         }
       },
+      fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
+      nativeCursor: {defaultValue: 'auto'},
+      selectable: {defaultValue: false},
+      readOnly: {defaultValue: true},
+      fixedWidth: {defaultValue: true},
+      fixedHeight: {defaultValue: true},
+      lineHeight: {defaultValue: 1.3},
       clipMode: {defaultValue: "auto"},
-      padding: {defaultValue: Rectangle.inset(2)},
+      padding: {defaultValue: Rectangle.inset(3)},
 
       additionalRenderSpace: { // render a little more than is seen
         defaultValue: 140
@@ -302,17 +70,14 @@ export class Tree extends Morph {
       },
 
       treeData: {
+        after: ['selection'],
         set(val) { this.setProperty("treeData", val); this.resetCache(); this.update(); }
       },
 
-      selection: {
-        set(sel) { this.setProperty("selection", sel); this.update(); }
-      },
-
       selectedIndex: {
-        derived: true, after: ["selection", "nodes"],
-        get() { return this.selection ? this.nodes.indexOf(this.selection) : -1; },
-        set(i) { this.selection = this.nodes[i]; }
+        derived: true, after: ["selectedNode", "nodes"],
+        get() { return this.selectedNode ? this.nodes.indexOf(this.selectedNode) : -1; },
+        set(i) { this.selectedNode = this.nodes[i]; }
       },
 
       nodes: {
@@ -320,31 +85,16 @@ export class Tree extends Morph {
         get() { return this.treeData.asList(); },
       },
 
+      selectedNode: {
+        set(sel) { this.setProperty("selectedNode", sel); this.update(); }
+      },
+
       selectedNodeAndSiblings: {
-        readOnly: true, derived: true, after: ["selection", "treeData"],
+        readOnly: true, derived: true, after: ["selectedNode", "treeData"],
         get() {
-          return this.selection ?
-            this.treeData.nodeWithSiblings(this.selection) : [];
+          return this.selectedNode ?
+            this.treeData.nodeWithSiblings(this.selectedNode) : [];
         },
-      },
-
-      fontFamily: {
-        defaultValue: config.codeEditor.defaultStyle.fontFamily,
-        set(fontFamily) { this.setProperty("fontFamily", fontFamily); this.update(); }
-      },
-
-      fontSize: {
-        defaultValue: 12,
-        set(fontSize) { this.setProperty("fontSize", fontSize); this.update(); }
-      },
-
-      fontColor: {
-        defaultValue: Color.almostBlack,
-        set(fontColor) { this.setProperty("fontColor", fontColor); this.update(); }
-      },
-
-      fontWeight: {
-        set(fontWeight) { this.setProperty("fontWeight", fontWeight); this.update(); }
       },
 
       selectionColor: {
@@ -371,19 +121,9 @@ export class Tree extends Morph {
         }
       },
 
-      submorphs: {
-        initialize() {
-          this.submorphs = [{
-            name: "nodeItemContainer",
-            extent: this.extent, fill: null,
-            draggable: false, grabbable: false, clipMode: "visible"
-          }];
-        }
-      },
-
       nodeItemContainer: {
         derived: true, readOnly: true, after: ["submorphs"],
-        get() { return this.submorphs[0]; },
+        get() { return this; },
       },
 
       nodeMorphs: {
@@ -442,31 +182,11 @@ export class Tree extends Morph {
     };
   }
 
-  get defaultNodeHeight() {
-    return this.defaultNodeMorphTextBounds.height;
-  }
-
-  get defaultNodeMorphTextBounds() {
-    if (this._cachedNodeMorphBounds) return this._cachedNodeMorphBounds;
-    var nodeMorph = new TreeNode(this.nodeStyle);
-    nodeMorph.displayNode("x", null, pt(0,0), 0, 0, false, true, true);
-    var {width, height} = nodeMorph,
-        {width: toggleWidth, height: toggleHeight} = nodeMorph.toggle;
-    toggleWidth += nodeMorph.toggle.padding.right();
-    return this._cachedNodeMorphBounds = {width, height, toggleHeight, toggleWidth};
-  }
-
-  get lineHeightCache() {
-    if (!this._lineHeightCache) this.update();
-    return this._lineHeightCache;
-  }
-
   lineBounds(idx) {
-    var lineHeightCache = this._lineHeightCache,
-        y = arr.sum(lineHeightCache.slice(0,idx)) + this.padding.top(),
-        height = lineHeightCache[idx] || this.defaultNodeHeight,
-        {width} = this;
-    return new Rectangle(this.padding.left(), y, width, height);
+    var charBounds = this.textLayout.charBoundsOfRow(this, idx),
+        tl = Rectangle.fromLiteral(arr.first(charBounds)).topLeft(),
+        br = Rectangle.fromLiteral(arr.last(charBounds)).bottomRight();
+    return Rectangle.fromAny(tl, br)
   }
 
   update() {
@@ -476,135 +196,86 @@ export class Tree extends Morph {
       let {
             treeData,
             padding,
-            scroll: {y: scrollY},
             extent,
             additionalRenderSpace,
-            defaultNodeMorphTextBounds,
             resizeNodes,
             nodeMorphs,
-            nodeItemContainer: container,
-            selection
+            selectedNode
           } = this,
-          {
-            width: defaultCharWidth,
-            height: defaultNodeHeight,
-            toggleWidth
-          } = defaultNodeMorphTextBounds,
-          visibleBottom = scrollY + extent.y + additionalRenderSpace,
-          visibleTop = scrollY - additionalRenderSpace,
-          nodes = treeData.asListWithIndexAndDepth(),
-          i = 1,
-          y = padding.top(),
-          x = padding.left(),
-          goalWidth = resizeNodes ? extent.x - (padding.left() + padding.right()) : null,
-          maxWidth = 0;
+          toggleWidth = this.fontSize * 1.3,
+          nodes = treeData.asListWithIndexAndDepth();
 
-      let dummyNodeMorph = new TreeNode(this.nodeStyle),
-          lineHeightCache = this._lineHeightCache || (this._lineHeightCache = [0 /*root*/]);
-
-      // skip not visible notes out of scroll bounds
+      if (!nodes.length) return;
+      var containerTextAndAttributes = arr.genN(8 * (nodes.length - 1), () => null), 
+          i = 1, j, isSelected;
       for (; i < nodes.length; i++) {
-        var height;
-        if (lineHeightCache[i]) {
-          height = lineHeightCache[i];
+        j = 8 * (i - 1);
+        isSelected = this.selectedIndex == i;
+        // indent 
+        containerTextAndAttributes[j] = " ";
+        containerTextAndAttributes[j + 1] = {
+          fontColor: Color.transparent, 
+          textStyleClasses: ['fa'],
+          paddingRight: (toggleWidth * (nodes[i].depth - 1)) + 'px'
+        };
+        // toggle
+        containerTextAndAttributes[j + 3] = {
+          fontColor: Color.transparent, 
+          textStyleClasses: ['fa'],
+          paddingTop: (this.fontSize / 10) + 'px',
+          paddingRight: (this.fontSize / 8) + 'px'
+        };
+        if (!treeData.isLeaf(nodes[i].node)) {
+           containerTextAndAttributes[j + 2] = treeData.isCollapsed(nodes[i].node) ? " \uf196 " : " \uf147 "; 
+           Object.assign(
+              containerTextAndAttributes[j + 3], {
+                nativeCursor: 'pointer',
+                ...(isSelected ? {
+                    fontColor: this.selectionFontColor
+                  } : {
+                    fontColor: this.nonSelectionFontColor
+                  })
+           })
         } else {
-          var node = nodes[i].node, displayed = treeData.safeDisplay(node);
-          if (typeof displayed === "string") {
-            height = defaultNodeHeight;
-            maxWidth = Math.max(maxWidth, displayed.length * defaultCharWidth);
-          } else {
-            dummyNodeMorph.displayNode(
-              displayed,
-              null,
-              pt(x + (toggleWidth + 4) * (nodes[i].depth - 1), y),
-              toggleWidth,
-              goalWidth,
-              false,
-              true,
-              true
-            );
-
-            height = dummyNodeMorph.height;
-            maxWidth = Math.max(maxWidth, dummyNodeMorph.width);
-          }
-          lineHeightCache[i] = height;
+           containerTextAndAttributes[j + 2] = "     "; 
         }
-        if (y + height >= visibleTop) break;
-        y += height;
-      }
-
-      this.dontRecordChangesWhile(() => {
-        // render visible nodes
-        for (; i < nodes.length; i++) {
-          if (y >= visibleBottom) break;
-          var nodeMorph = nodeMorphs.shift();
-          if (!nodeMorph) {
-            nodeMorph = container.addMorph(new TreeNode(this.nodeStyle));
+        // node
+        let displayedNode = treeData.safeDisplay(nodes[i].node);
+        if (displayedNode.isMorph) {
+          if (displayedNode._capturedProps)
+                Object.assign(displayedNode, displayedNode._capturedProps);
+          if (isSelected) {
+            displayedNode._capturedProps  = obj.select(displayedNode,['fontColor']);
+            displayedNode.fontColor = this.selectionFontColor;
           }
-
-          var node = nodes[i].node;
-          nodeMorph.displayNode(
-            treeData.safeDisplay(node),
-            node,
-            pt(x + (toggleWidth + 4) * (nodes[i].depth - 1), y),
-            toggleWidth,
-            goalWidth,
-            node === selection,
-            !treeData.isLeaf(node),
-            treeData.isCollapsed(node)
-          );
-
-          var height = nodeMorph.height;
-          lineHeightCache[i] = height;
-          maxWidth = Math.max(maxWidth, nodeMorph.width);
-
-          y += height;
         }
 
-        nodeMorphs.forEach(ea => ea.remove()); // remove invisible left overs
-      });
-
-      for (; i < nodes.length; i++) {
-        var height;
-        if (lineHeightCache[i]) {
-          height = lineHeightCache[i];
+        containerTextAndAttributes[j + 4] = displayedNode;
+        if (arr.isArray(displayedNode)) {
+          containerTextAndAttributes[j + 5] = []
         } else {
-          var node = nodes[i].node, displayed = treeData.safeDisplay(node), height;
-          if (typeof displayed === "string") {
-            height = defaultNodeHeight;
-            maxWidth = Math.max(maxWidth, displayed.length * defaultCharWidth);
-          } else {
-            dummyNodeMorph.displayNode(
-              displayed,
-              null,
-              pt(x + (toggleWidth + 4) * (nodes[i].depth - 1), y),
-              toggleWidth,
-              goalWidth,
-              false,
-              true,
-              true
-            );
-            height = dummyNodeMorph.height;
-            maxWidth = Math.max(maxWidth, dummyNodeMorph.width);
-          }
-          lineHeightCache[i] = height;
+          containerTextAndAttributes[j + 5] = {};
         }
-        y += height;
+        containerTextAndAttributes[j + 6] = '\n';
+        containerTextAndAttributes[j + 7] = {};
       }
-
-      if (lineHeightCache.length > i) lineHeightCache.splice(i, lineHeightCache.length - i);
-
-      // resize container to allow scrolling
-      container.extent = pt(maxWidth, y + padding.bottom());
-
-      dummyNodeMorph.remove();
+      this.replace({start: {row: 0, column: 0}, end: this.documentEndPosition}, 
+                    nodes.length > 1 ? arr.flatten(containerTextAndAttributes) : [],
+                    false);
+      this.cursorPosition = {row: 0, column: 0};
+      if (this.selectedIndex > -1 && (this.selection.row + 1) != this.selectedIndex) {
+        this.selectLine(this.selectedIndex - 1);
+        this.selection.growLeft(-1)
+        this.addTextAttribute({fontColor: this.selectionFontColor});
+      }
     });
   }
+  
   buildViewState(nodeIdFn) {
     if (typeof nodeIdFn !== "function")
       nodeIdFn = node => node;
 
-    var selId = this.selection ? nodeIdFn(this.selection) : null,
+    var selId = this.selectedNode ? nodeIdFn(this.selectedNode) : null,
         collapsedMap = new Map();
 
     tree.prewalk(this.treeData.root,
@@ -661,66 +332,41 @@ export class Tree extends Morph {
     } catch (e) { this.showError(e); }
   }
 
-  async uncollapse(node = this.selection) {
+  async uncollapse(node = this.selectedNode) {
     if (!node || !this.treeData.isCollapsed(node)) return;
     await this.onNodeCollapseChanged({node, isCollapsed: false});
     this.update();
     return node;
   }
 
-  async collapse(node = this.selection) {
+  async collapse(node = this.selectedNode) {
     if (!node || this.treeData.isCollapsed(node)) return;
     await this.onNodeCollapseChanged({node, isCollapsed: true});
     this.update();
     return node;
   }
 
-  selectedPath() { return this.treeData.pathOf(this.selection); }
+  selectedPath() { return this.treeData.pathOf(this.selectedNode); }
 
-  async selectPath(path) { return this.selection = await this.treeData.followPath(path); }
+  async selectPath(path) { return this.selectedNode = await this.treeData.followPath(path); }
 
   gotoIndex(i) {
-    this.selection = this.nodes[i];
+    this.selectedNode = this.nodes[i];
     this.scrollIndexIntoView(i);
   }
 
-  onScroll() {
-    fun.throttleNamed("onScroll-update-" + this.id, 100, () => { this.update(); })();
-  }
-
   scrollSelectionIntoView() {
-    this.selection && this.scrollIndexIntoView(this.selectedIndex);
+    this.selectedNode && this.scrollIndexIntoView(this.selectedIndex);
   }
 
   scrollIndexIntoView(idx) { this.scrollToIndex(idx, "into view"); }
 
   centerSelection() {
-    this.selection && this.scrollToIndex(this.selectedIndex, "center");
+    this.selectedNode && this.scrollToIndex(this.selectedIndex, "center");
   }
 
-  scrollToIndex(idx, how = "into view") {
-    // how = "into view"|"top"|"bottom"|"center"
-
-    var {scroll} = this, offsetX = 0, offsetY = 0,
-        lineBounds = this.lineBounds(idx),
-        visibleBounds = this.innerBounds().translatedBy(scroll);
-
-    if (how === "into view") {
-      if (lineBounds.bottom() > visibleBounds.bottom())
-        offsetY = lineBounds.bottom() - visibleBounds.bottom();
-      if (lineBounds.top() < visibleBounds.top())
-        offsetY = lineBounds.top() - visibleBounds.top();
-    } else {
-      offsetX = -scroll.x;
-      if (how === "top")
-        offsetY = visibleBounds.top() - lineBounds.top();
-      else if (how === "center")
-        offsetY = lineBounds.leftCenter().y - visibleBounds.leftCenter().y;
-      else if (how === "bottom")
-        offsetY = visibleBounds.bottom() - lineBounds.bottom();
-    }
-
-    this.scroll = scroll.addXY(offsetX, offsetY);
+  scrollToIndex(idx) {
+    this.scrollPositionIntoView({row: idx - 1, column: 0});
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -737,6 +383,21 @@ export class Tree extends Morph {
     // to not steal keys from inner morphs
     if (f.isText && !f.readOnly) return;
     return super.onKeyDown(evt);
+  }
+  
+  onMouseDown(evt) {
+    //super.onMouseDown(evt);
+    let {row, column} = this.textPositionFromPoint(evt.positionIn(this)),
+        clickedNode = this.nodes[row + 1];
+    if (!clickedNode) return;
+    if (!this.treeData.isLeaf(clickedNode) && column < 4) {
+      clickedNode.isCollapsed ? 
+        this.uncollapse(clickedNode) : 
+        this.collapse(clickedNode);
+    } else {
+      if (this.selectedIndex != row + 1)
+         this.selectedIndex = row + 1;
+    }
   }
 
   get keybindings() {
@@ -763,7 +424,8 @@ export class Tree extends Morph {
       {keys: "Alt-N", command: "goto next sibling"},
       {keys: "Alt-P", command: "goto prev sibling"},
       {keys: "Alt-U", command: "goto parent"},
-    ].concat(super.keybindings);
+    ]
+      //.concat(super.keybindings);
   }
 
   get commands() {
@@ -939,7 +601,7 @@ var treeCommands = [
           items = td.asList().map((ea, i) => ({isListItem: true, string: lines[i], value: ea})),
           {selected: [node]} = await tree.world().filterableListPrompt("Select item", items);
       if (node) {
-        tree.selection = node;
+        tree.selectedNode = node;
         tree.scrollSelectionIntoView();
       }
       return true;
@@ -988,9 +650,9 @@ var treeCommands = [
     name: "goto next sibling",
     exec: tree => {
       var withSiblings = tree.selectedNodeAndSiblings,
-          next = withSiblings[withSiblings.indexOf(tree.selection)+1];
+          next = withSiblings[withSiblings.indexOf(tree.selectedNode)+1];
       if (next) {
-        tree.selection = next;
+        tree.selectedNode = next;
         tree.scrollSelectionIntoView();
       }
       return true;
@@ -1001,9 +663,9 @@ var treeCommands = [
     name: "goto prev sibling",
     exec: tree => {
       var withSiblings = tree.selectedNodeAndSiblings,
-          next = withSiblings[withSiblings.indexOf(tree.selection)-1];
+          next = withSiblings[withSiblings.indexOf(tree.selectedNode)-1];
       if (next) {
-        tree.selection = next;
+        tree.selectedNode = next;
         tree.scrollSelectionIntoView();
       }
       return true;
@@ -1013,8 +675,8 @@ var treeCommands = [
   {
     name: "goto parent",
     exec: tree => {
-      if (tree.selection) {
-        tree.selection = tree.treeData.parentNode(tree.selection);
+      if (tree.selectedNode) {
+        tree.selectedNode = tree.treeData.parentNode(tree.selectedNode);
         tree.scrollSelectionIntoView();
       }
       return true;
@@ -1024,12 +686,12 @@ var treeCommands = [
   {
     name: "collapse selected node",
     exec: async tree => {
-      var sel = tree.selection;
+      var sel = tree.selectedNode;
       if (!sel) return true;
       if (!tree.treeData.isCollapsed(sel))
-        await tree.onNodeCollapseChanged({node: tree.selection, isCollapsed: true});
+        await tree.onNodeCollapseChanged({node: tree.selectedNode, isCollapsed: true});
       else {
-        tree.selection = tree.treeData.parentNode(sel);
+        tree.selectedNode = tree.treeData.parentNode(sel);
         tree.scrollSelectionIntoView();
       }
       return true;
@@ -1039,8 +701,8 @@ var treeCommands = [
   {
     name: "uncollapse selected node",
     exec: async tree => {
-      if (tree.selection)
-        await tree.onNodeCollapseChanged({node: tree.selection, isCollapsed: false});
+      if (tree.selectedNode)
+        await tree.onNodeCollapseChanged({node: tree.selectedNode, isCollapsed: false});
       return true;
     }
   },
@@ -1056,9 +718,9 @@ var treeCommands = [
       if (doCollapse) {
         // find all the parent nodes of the nodes deepest in the tree below the
         // selected node and collapse those
-        if (td.isCollapsed(treeMorph.selection)) return true;
+        if (td.isCollapsed(treeMorph.selectedNode)) return true;
 
-        var startNode = td.parentNode(treeMorph.selection);
+        var startNode = td.parentNode(treeMorph.selectedNode);
         var maxDepth = -1;
         tree.prewalk(startNode,
           (node, i, depth) => {
@@ -1076,7 +738,7 @@ var treeCommands = [
         // find the non-leaf nodes below the selection that are at the same
         // depth and at least one of those non-leaf nodes is collapsed:
         // uncollapse all collapsed of this set
-        var parents = arr.compact([td.parentNode(treeMorph.selection)]);
+        var parents = arr.compact([td.parentNode(treeMorph.selectedNode)]);
         while (true) {
           if (!parents.length) break;
           nodesToChange = arr.flatmap(parents, n => allNonLeafChildren(n));
@@ -1109,7 +771,7 @@ var treeCommands = [
       var nodes = treeMorph.nodes,
           index = treeMorph.selectedIndex;
       if (index <= 1) index = nodes.length;
-      treeMorph.selection = nodes[index-1];
+      treeMorph.selectedNode = nodes[index-1];
       treeMorph.scrollSelectionIntoView();
       return true;
     }
@@ -1121,7 +783,7 @@ var treeCommands = [
       var nodes = tree.nodes,
           index = tree.selectedIndex;
       if (index <= -1 ||  index >= nodes.length-1) index = 0;
-      tree.selection = nodes[index+1];
+      tree.selectedNode = nodes[index+1];
       tree.scrollSelectionIntoView();
       return true;
     }
@@ -1130,7 +792,7 @@ var treeCommands = [
   {
     name: "realign top-bottom-center",
     exec: tree => {
-      if (!tree.selection) return;
+      if (!tree.selectedNode) return;
       var {padding, selectedIndex: idx, scroll: {x: scrollX, y: scrollY}} = tree,
           lineBounds = tree.lineBounds(idx),
           pos = lineBounds.topLeft(),
