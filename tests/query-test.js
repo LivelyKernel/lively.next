@@ -215,19 +215,25 @@ describe('query', function() {
 
       it("findReferencesAndDeclsInScope find vars", function() {
         var parsed = parse("var x = 3, y = 4;\nvar z = function() { y + y + (function(y) { y+1 })(); }");
-        expect(query.findReferencesAndDeclsInScope(query.scopes(parsed), "y")).deep.equals([
-          {name:"y", start:11, end:12, type:"Identifier"},
-          {name:"y", start:39, end:40, type:"Identifier"},
-          {name:"y", start:43, end:44, type:"Identifier"}
-        ]);
+        expect(query.findReferencesAndDeclsInScope(query.scopes(parsed), "y")).deep.equals({
+          decls: [
+            {name:"y", start:11, end:12, type:"Identifier"},
+          ],
+          refs: [
+            {name:"y", start:39, end:40, type:"Identifier"},
+            {name:"y", start:43, end:44, type:"Identifier"}
+          ]
+        });
       });
 
       it("findReferencesAndDeclsInScope finds this", function() {
         var parsed = parse("this.bar = 23; var x = function() { this.foo(this.zork, function() { this.bark }); };"),
             scope = query.scopes(parsed).subScopes[0];
-        expect(query.findReferencesAndDeclsInScope(scope, "this"))
-          .to.containSubset([{end: 40,start: 36, type: "ThisExpression"},
-                             {end: 49,start: 45, type: "ThisExpression"}]);
+        expect(query.findReferencesAndDeclsInScope(scope, "this")).to.containSubset({
+          decls: [],
+          refs: [{end: 40,start: 36, type: "ThisExpression"},
+                 {end: 49,start: 45, type: "ThisExpression"}]
+        });
       });
 
     });
