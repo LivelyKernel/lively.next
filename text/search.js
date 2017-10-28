@@ -243,13 +243,13 @@ export class SearchWidget extends Morph {
               styleClasses: ["nav"]
             }).fit(),
             Text.makeInputLine({
-              name: "searchInput", clipMode: "visible",
+              name: "searchInput", clipMode: "hidden",
               width: this.width, height: 20,
               placeholder: "search input",
               historyId: "lively.morphic-text search"
             }),
             Text.makeInputLine({
-              name: "replaceInput", clipMode: "visible",
+              name: "replaceInput", clipMode: "hidden",
               width: this.width, height: 20,
               placeholder: "replace input",
               historyId: "lively.morphic-text replace"
