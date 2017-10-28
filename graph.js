@@ -157,7 +157,7 @@ function sortByReference(depGraph, startNode) {
 
 
   // establish unique list of keys
-  var remaining = [], remainingSeen = {}, uniqDepGraph = {};
+  var remaining = [], remainingSeen = {}, uniqDepGraph = {}, inverseDepGraph = {};
   for (let key in depGraph) {
     if (!remainingSeen.hasOwnProperty(key)) {
       remainingSeen[key] = true;
@@ -168,6 +168,8 @@ function sortByReference(depGraph, startNode) {
       uniqDepGraph[key] = [];
       for (let dep of deps) {
         if (uniqDeps.hasOwnProperty(dep) || key === dep) continue;
+        let inverse = inverseDepGraph[dep] || (inverseDepGraph[dep] = []);
+        if (!inverse.includes(key)) inverse.push(key);
         uniqDeps[dep] = true;
         uniqDepGraph[key].push(dep);
         if (!remainingSeen.hasOwnProperty(dep)) {
@@ -182,23 +184,34 @@ function sortByReference(depGraph, startNode) {
   // and add them to the result group list
   var groups = [];
   while (remaining.length) {
-    var minDepCount = Infinity, minKeys = [], minKeyIndexes = [];
+    var minDepCount = Infinity, minKeys = [], minKeyIndexes = [], affectedKeys = [];
     for (var i = 0; i < remaining.length; i++) {
       var key = remaining[i];
       let deps = uniqDepGraph[key] || [];
       if (deps.length > minDepCount) continue;
-      if (deps.length === minDepCount && !minKeys.some(ea => deps.includes(ea))) {
+
+      // if (deps.length === minDepCount && !minKeys.some(ea => deps.includes(ea))) {
+      if (deps.length === minDepCount && !deps.some(ea => minKeys.includes(ea))) {
         minKeys.push(key);
         minKeyIndexes.push(i);
+        affectedKeys.push(...inverseDepGraph[key] || []);
         continue;
       }
       minDepCount = deps.length;
       minKeys = [key];
       minKeyIndexes = [i];
+      affectedKeys = (inverseDepGraph[key] || []).slice();
     }
-    for (var i = minKeyIndexes.length; i--; )
+    for (var i = minKeyIndexes.length; i--;) {
+      var key = remaining[minKeyIndexes[i]];
+      inverseDepGraph[key] = [];
       remaining.splice(minKeyIndexes[i], 1);
+    }
+    for (var key of affectedKeys) {
+      uniqDepGraph[key] = uniqDepGraph[key].filter(ea => !minKeys.includes(ea));
+    }
     groups.push(minKeys);
+    
   }
   return groups;
 }

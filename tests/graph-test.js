@@ -70,6 +70,14 @@ describe('graph', function() {
       expect(sortByReference({a: ["a"]}, "a")).to.eql([["a"]]);
     });
 
+    it("won't get confused in more complex cases'", () => {
+      // example from a bug
+      expect(sortByReference({
+        "a": ["a1", "a3"], "a1": ["a2"], "a3": ["b"], "a2": ["b"],
+        "b": ["b_3","b_1","b_2"], "b_1": ["b_2"], "b_2": [], "b_3": []
+      }, "a")).to.eql([["b_3", "b_2"], ["b_1"], ["b"], ["a3", "a2"], ["a1"], ["a"]]);
+    });
+
   });
 
 });

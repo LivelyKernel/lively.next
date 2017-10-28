@@ -5968,7 +5968,8 @@ function sortByReference(depGraph, startNode) {
   // establish unique list of keys
   var remaining = [],
       remainingSeen = {},
-      uniqDepGraph = {};
+      uniqDepGraph = {},
+      inverseDepGraph = {};
   for (var _key2 in depGraph) {
     if (!remainingSeen.hasOwnProperty(_key2)) {
       remainingSeen[_key2] = true;
@@ -5987,6 +5988,8 @@ function sortByReference(depGraph, startNode) {
           var dep = _step.value;
 
           if (uniqDeps.hasOwnProperty(dep) || _key2 === dep) continue;
+          var inverse = inverseDepGraph[dep] || (inverseDepGraph[dep] = []);
+          if (!inverse.includes(_key2)) inverse.push(_key2);
           uniqDeps[dep] = true;
           uniqDepGraph[_key2].push(dep);
           if (!remainingSeen.hasOwnProperty(dep)) {
@@ -6017,35 +6020,62 @@ function sortByReference(depGraph, startNode) {
   while (remaining.length) {
     var minDepCount = Infinity,
         minKeys = [],
-        minKeyIndexes = [];
+        minKeyIndexes = [],
+        affectedKeys = [];
+    for (var i = 0; i < remaining.length; i++) {
+      var key = remaining[i];
+      var _deps = uniqDepGraph[key] || [];
+      if (_deps.length > minDepCount) continue;
 
-    var _loop = function _loop() {
-      key = remaining[i];
-
-      var deps = uniqDepGraph[key] || [];
-      if (deps.length > minDepCount) return "continue";
-      if (deps.length === minDepCount && !minKeys.some(function (ea) {
-        return deps.includes(ea);
+      // if (deps.length === minDepCount && !minKeys.some(ea => deps.includes(ea))) {
+      if (_deps.length === minDepCount && !_deps.some(function (ea) {
+        return minKeys.includes(ea);
       })) {
+        var _affectedKeys;
+
         minKeys.push(key);
         minKeyIndexes.push(i);
-        return "continue";
+        (_affectedKeys = affectedKeys).push.apply(_affectedKeys, toConsumableArray(inverseDepGraph[key] || []));
+        continue;
       }
-      minDepCount = deps.length;
+      minDepCount = _deps.length;
       minKeys = [key];
       minKeyIndexes = [i];
-    };
-
-    for (var i = 0; i < remaining.length; i++) {
-      var key;
-
-      var _ret = _loop();
-
-      if (_ret === "continue") continue;
+      affectedKeys = (inverseDepGraph[key] || []).slice();
     }
     for (var i = minKeyIndexes.length; i--;) {
+      var key = remaining[minKeyIndexes[i]];
+      inverseDepGraph[key] = [];
       remaining.splice(minKeyIndexes[i], 1);
-    }groups.push(minKeys);
+    }
+    var _iteratorNormalCompletion2 = true;
+    var _didIteratorError2 = false;
+    var _iteratorError2 = undefined;
+
+    try {
+      for (var _iterator2 = affectedKeys[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        var key = _step2.value;
+
+        uniqDepGraph[key] = uniqDepGraph[key].filter(function (ea) {
+          return !minKeys.includes(ea);
+        });
+      }
+    } catch (err) {
+      _didIteratorError2 = true;
+      _iteratorError2 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion2 && _iterator2.return) {
+          _iterator2.return();
+        }
+      } finally {
+        if (_didIteratorError2) {
+          throw _iteratorError2;
+        }
+      }
+    }
+
+    groups.push(minKeys);
   }
   return groups;
 }
