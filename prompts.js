@@ -427,10 +427,10 @@ export class EditPrompt extends AbstractPrompt {
     //   if (lastInput) inputLine.textString = lastInput;
     // }
 
-    var inputWidth = inputEditor.textBounds().width;
+    var inputWidth = inputEditor.textBounds().width + 50;
     // if the input string we pre-fill is wide than we try to make it fit
     if (inputWidth > this.width-25)
-      this.width = Math.min(this.maxWidth, inputWidth+25);
+      this.width = Math.min(this.maxWidth, inputWidth+125);
 
     this.addMorph({name: "ok button", type: "button", label: "OK", styleClasses: ['ok']});
     this.addMorph({name: "cancel button", type: "button", label: "Cancel", styleClasses: ['cancel']});
