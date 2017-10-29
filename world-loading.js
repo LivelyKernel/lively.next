@@ -221,11 +221,18 @@ export async function interactivelySaveWorld(world, options) {
       expectedParentCommit = oldCommit ? oldCommit._id : undefined;
     }
 
-    let commitSpec = {author: world.getCurrentUser(),
-                      message: "world save", tags, description},
+    i.remove();
+
+    let commitSpec = {
+          author: world.getCurrentUser(),
+          message: "world save",
+          tags, description
+        },
         commit = await db.snapshotAndCommit(
           "world", name, world, snapshotOptions,
           commitSpec, ref, expectedParentCommit);
+
+    i.openInWorld();
 
     // hist
     if (window.history) {
