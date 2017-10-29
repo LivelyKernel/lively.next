@@ -65,7 +65,7 @@ export async function interactiveConnectGivenSourceAndTarget(sourceObj, sourceAt
   let items = bindings.map(
     group => [group[0].group || "uncategorized",
               group.map(ea => [
-                ea.name, () => interactivelyEvaluateConnection(
+                ea.signature || ea.name, () => interactivelyEvaluateConnection(
                   {sourceObj, sourceAttr, targetObj, targetAttr: ea.name, onConnect})])]);
 
 

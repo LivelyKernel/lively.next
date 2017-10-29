@@ -2265,23 +2265,28 @@ export class Morph {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // builds a ["proto name", [metthod, ...]] list
     let methodsByProto = [];
-    for (let proto = this;
-         proto !== Object.prototype;
-         proto = Object.getPrototypeOf(proto)) {
+    for (let proto = this; proto !== Object.prototype;) {
       let protoName = proto === this ? String(this) : proto.constructor.name,
           group = null,
-          descrs = Object.getOwnPropertyDescriptors(proto);
+          descrs = Object.getOwnPropertyDescriptors(proto),
+          nextProto = Object.getPrototypeOf(proto);
       for (let prop in descrs) {
-        if (typeof descrs[prop].value !== "function"
-         || descrs[prop].value === proto.constructor) continue;
-        if (!group) group = [protoName, []];
-        group[1].push(prop);
-        }
+        let val = descrs[prop].value;
+        if (typeof val !== "function" || val === proto.constructor) continue;
+        if (prop.startsWith("$") || prop.startsWith("_")) continue;
+        
+        if (!group) group = [];
+        let args = lively.lang.fun.argumentNames(val);
+        group.push({group: protoName + " methods", signature: `${prop}(${args.join(", ")})`, name: prop})
+      }
+      
       if (group) methodsByProto.push(group);
+      proto = nextProto;
     }
+
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    return this.sourceDataBindings();
+    return this.sourceDataBindings().concat(methodsByProto);
   }
 
   connectMenuItems(actionFn) {
