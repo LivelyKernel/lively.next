@@ -403,10 +403,12 @@ export class List extends Morph {
       },
 
       items: {
-        defaultValue: [], after: ["submorphs"],
+        group: "list", defaultValue: [], after: ["submorphs"],
         set(items) {
           this.setProperty("items", items.map(asItem));
           this.update();
+          if (this.attributeConnections)
+            signal(this, "values", this.values);
         }
       },
 
@@ -425,18 +427,18 @@ export class List extends Morph {
       },
 
       values: {
-        after: ["items"], readOnly: true,
+        group: "list", after: ["items"], readOnly: true,
         get() { return this.items.map(ea => ea.value); }
       },
 
       selectedIndex: {
+        group: "list",
         defaultValue: [], after: ["selectedIndexes"],
         get() { return this.selectedIndexes[0]; },
         set(i) { return this.selectedIndexes = typeof i === "number" ? [i] : []; }
       },
 
       selectedIndexes: {
-        after: ["items"],
         get() { return this.getProperty("selectedIndexes") || []; },
         set(indexes) {
           var maxLength = this.items.length;
@@ -449,12 +451,14 @@ export class List extends Morph {
       },
 
       selection: {
+        group: "list",
         after: ["selections"],
         get() { return this.selections[0]; },
         set(itemOrValue) { this.selections = [itemOrValue]; }
       },
 
       selections: {
+        group: "list",
         after: ["selectedIndexes"],
         get() { return this.selectedIndexes.map(i => this.items[i] && this.items[i].value); },
         set(sels) { this.selectedIndexes = sels.map(ea => this.findIndex(ea)); }
