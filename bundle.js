@@ -1,5 +1,5 @@
 /*global global,self,__VERSION_PLACEHOLDER__*/
-import FreezerModule from "./module.js";
+import { Module } from "./module.js";
 import { obj, num, graph, arr } from "lively.lang";
 import { version } from "./package.json";
 import { runtimeDefinition } from "./runtime.js";
@@ -31,7 +31,7 @@ export default class Bundle {
     }
     if (!entryModule) {
       entryModule =  this.findModuleInPackageWithName(packageSpec, moduleNameOrId)
-                  || this.addModule(new FreezerModule(moduleNameOrId, packageSpec));
+                  || this.addModule(Module.create({name: moduleNameOrId, package: packageSpec}));
     }
 
     this.entryModule = entryModule;
@@ -42,6 +42,8 @@ export default class Bundle {
       let next = unresolved.shift();
       if (seen[next.qualifiedName]) continue;
       seen[next.qualifiedName] = true;
+
+      // console.log(`Resolving ${next.qualifiedName}`);
 
       await next.resolveImports(this);
 
@@ -104,7 +106,12 @@ export default class Bundle {
           isExecutable = false,
           runtimeGlobal = "lively.FreezerRuntime",
           entryModule: entryId
-        } = opts;
+        } = opts,
+        cacheKey = [runtimeGlobal, isExecutable, addRuntime, entryId].join("-");
+
+    if (this._standaloneCached && this._standaloneCacheKey === cacheKey) {
+      return this._standaloneCached;
+    }
 
     if (!entryId && !this.entryModule)
       throw new Error(`Needs entry module`);
@@ -128,7 +135,8 @@ export default class Bundle {
 
     if (isExecutable) moduleSource += `\n${runtimeGlobal}.load("${entry.qualifiedName}");\n`;
 
-    return moduleSource;
+    this._standaloneCacheKey = cacheKey;
+    return this._standaloneCached = moduleSource;
   }
 
 
@@ -136,9 +144,40 @@ export default class Bundle {
   // report / debugging
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  reportModuleSizes() {
+    let seen = {}, unreported = [this.entryModule], report = "";
+
+    let recorded = [];
+    while (unreported.length) {
+      let next = unreported.shift();
+      if (seen[next.qualifiedName]) continue;
+      seen[next.qualifiedName] = true;
+      if (next._source) recorded.push({module: next, size: next._source.length});
+      unreported.push(...Array.from(next.dependencies.keys()).filter(ea => !seen[ea.qualifiedName]));
+    }
+
+    if (this._standaloneCached) {
+      report += `complete: ${num.humanReadableByteSize(this._standaloneCached.length)}\n\n`
+    }
+
+    report += arr.sortBy(recorded, ea => ea.size)
+      .map(ea => `${num.humanReadableByteSize(ea.size)}\t${ea.module.qualifiedName}`)
+      .join("\n");
+
+    return report;
+  }
+
   report() {
-    let seen = {}, unreported = [this.entryModule],
-        report = "";
+    let seen = {}, unreported = [this.entryModule], report = "";
+
+    if (this._standaloneCached) {
+      report += `standalone size: ${num.humanReadableByteSize(this._standaloneCached.length)}\n\n`
+    }
+
+    let excludedModules = this.excludedModules();
+    if (excludedModules.length) {
+      report += `external modules:\n  ${excludedModules.join("\n  ")}\n\n`
+    }
 
     while (unreported.length) {
       let next = unreported.shift();
@@ -153,6 +192,27 @@ export default class Bundle {
         report += "\n  " + deps.map(dep => `<= ${dep.qualifiedName} ${next.dependencies.get(dep).imports.map(({imported, local, exported}) => `${imported}${(local || exported) !== imported ? ` (${local || exported})` : ""}`).join(", ")}`).join("\n  ");
       report += "\n\n"
       unreported.push(...Array.from(next.dependencies.keys()).filter(ea => !seen[ea.qualifiedName]));
+    }
+
+    return report;
+  }
+  
+  shortReport() {
+    let report = "";
+
+    if (this._standaloneCached) {
+      report += `standalone size: ${num.humanReadableByteSize(this._standaloneCached.length)}\n\n`
+    }
+
+    let excludedModules = this.excludedModules();
+    if (excludedModules.length) {
+      let externalPackages = lively.lang.arr.uniq(excludedModules.map(name => {
+        let mod = this.findModuleWithId(name);
+        if (mod.package) return mod.package.qualifiedName;
+        return mod.id.split("/")[0];
+      })).sort();
+      
+      report += `external packages:\n  ${externalPackages.join("\n  ")}\n\n`
     }
 
     return report;

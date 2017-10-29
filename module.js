@@ -11,25 +11,41 @@ function exportCall(exportName, id) {
       nodes.funcCall(nodes.id("_export"), nodes.literal(exportName), id)))
 }
 
-export default class FreezerModule {
+export class Module {
 
-  constructor(name, _package, id) {
+  static registerExt(ext, klass) {
+    if (!this.extensions) this.extensions = {};
+    this.extensions[ext] = klass;
+  }
+
+  static create(opts = {}) {
+    var {name, id} = opts, _;
+    if (!name && id) {
+      [_, name] = id.match(/\/([^\/]+$)/) || [, id];
+    }
+
+    if (!name) throw new Error("Module needs name!");
+
+    let [_2, ext] = name.match(/\.([^\.]+)$/) || [],
+        klass = (this.extensions && this.extensions[ext]) || JSModule;
+    if (!klass) throw new Error(`No class found for ${name}`);
+
+    return new klass(opts);
+  }
+
+  constructor(opts = {}) {
+    var {name, id, package: p} = opts;
+    this._name = name;
     this._id = id;
-    this.name = name;
-    this.package = _package;
+    this._package = p;
     this.reset();
   }
 
   reset() {
-    this._source = null;
-    this.rawDependencies = null;
-    this.rawExports = null;
-    this.rawImports = null;
-    this.parsed = null;
-    this.scope = null;
-    this.exports = [];
+    this._content = null;
     this.dependencies = new Map();
     this.dependents = new Set();
+    this.exports = [];
   }
 
   addDependency(otherModule, importSpec) {
@@ -39,6 +55,10 @@ export default class FreezerModule {
   }
 
   addDependent(otherModule) { this.dependents.add(otherModule); }
+
+  get name() { return this._name; }
+
+  get package() { return this._package; }
 
   get id() {
     if (this._id) return this._id;
@@ -52,7 +72,7 @@ export default class FreezerModule {
     throw new Error(`qualifiedName: Needs package or id!`);
   }
 
-  findUniqJsName(boundNames = []) {
+  nameAsUniqueJSIdentifier(boundNames = []) {
     return findUniqJsName(this.qualifiedName, boundNames);
   }
 
@@ -69,9 +89,48 @@ export default class FreezerModule {
     return this._source || (this._source = await this.resource.read());
   }
 
-  async parse() {
-    if (this._parsed) return this;
+  parse() { throw new Error("Implement me!"); }
+  async resolveImports(bundle) { await this.parse(); return this; }
+  transformToRegisterFormat(opts) {  throw new Error("Implement me!"); }
+}
 
+export class JSONModule extends Module {
+
+  async parse() {
+    try {
+      let source = await this.source();
+      this.json = JSON.parse(source);
+    } catch (err) { throw new Error(`Error reading JSON ${this.qualifiedName}: ${err.stack}`); }
+  }
+
+  transformToRegisterFormat(opts = {}) {
+    let {json} = this, exports = [];
+    if (typeof json === "object" && !Array.isArray(json))
+      exports.push(...Object.keys(json));
+
+    let {runtimeGlobal} = opts;
+
+    if (!runtimeGlobal) throw new Error("No runtimeGlobal name defined!");
+
+    return `${runtimeGlobal}.register("${this.qualifiedName}", [], function(_export, _context) {\n`
+         + `  "use strict";\n`
+         + `  return {\n`
+         + `    setters: [],\n`
+         + `    execute: function() {\n`
+         + string.indent(`var json = ${JSON.stringify(json)}`, "  ", 3) + ";\n"
+         + `      _export("default", json);\n`
+         + (exports.length ? `      ${exports.map(ea => `_export("${ea}", json["${ea}"]);`).join("\n      ")}` : "")
+         + `    }\n`
+         + `  }\n`
+         + `});`
+  }
+
+}
+
+
+export class JSModule extends Module {
+
+  async parse() {
     let parsed, scope, rawImports,
         exports = [], rawExports, source,
         dependencies = {};
@@ -115,9 +174,7 @@ export default class FreezerModule {
 
     await this.parse();
 
-    let {rawDependencies, scope, dependencies} = this;
-        // boundNames = query.declarationsOfScope(scope).map(ea => ea.name);
-
+    let {rawDependencies} = this;
     for (let localName in rawDependencies) {
       let {imports} = rawDependencies[localName],
           {module: otherModule, isPackageImport} = this.resolveImport(localName, bundle);
@@ -131,7 +188,7 @@ export default class FreezerModule {
     if (isURL(localName)) {
       return {
         module: bundle.findModuleWithId(localName)
-             || bundle.addModule(new FreezerModule(localName, null, localName))
+             || bundle.addModule(Module.create({name: localName, id: localName, package: null}))
       };
     }
 
@@ -140,7 +197,7 @@ export default class FreezerModule {
       let name = join(parent(this.name), localName);
       return {
         module: bundle.findModuleInPackageWithName(this.package, name)
-             || bundle.addModule(new FreezerModule(name, this.package))
+             || bundle.addModule(bundle.addModule(Module.create({name, package: this.package})))
       };
     }
 
@@ -155,7 +212,7 @@ export default class FreezerModule {
       return {
         isPackageImport,
         module: bundle.findModuleWithId(localName)
-        || bundle.addModule(new FreezerModule(localName, null, localName))
+             || bundle.addModule(bundle.addModule(Module.create({name: localName, id: localName, package: null})))
       }
     }
     if (isPackageImport && packageSpec) {
@@ -165,7 +222,7 @@ export default class FreezerModule {
     return {
       isPackageImport,
       module: bundle.findModuleInPackageWithName(packageSpec, nameInPackage)
-           || bundle.addModule(new FreezerModule(nameInPackage, packageSpec))
+           || bundle.addModule(bundle.addModule(Module.create({name: nameInPackage, package: packageSpec})))
     };
   }
 
@@ -181,7 +238,7 @@ export default class FreezerModule {
       qualifiedDependencyNames.push(depModule.qualifiedName);
 
       // FIXME what if a toplevel var of `this` has the same name as the generated varName?
-      let varName = depModule.findUniqJsName([]),
+      let varName = depModule.nameAsUniqueJSIdentifier([]),
           setterStmts = [];
 
       for (let i of imports) {
@@ -236,7 +293,7 @@ export default class FreezerModule {
             exportTransform.replacementFunc = (node, source, wasChanged) => {
               source = source.replace(/^(\s*)export\s+/, "");
               let ids = query.helpers.declIds(node.declaration.declarations.map(ea => ea.id)),
-                  exports = ids.map(id => exportCall(id.name, id)).join("\n")                  
+                  exports = ids.map(id => exportCall(id.name, id)).join("\n")
               return source + "\n" + exports;
             }
             // for (let id of query.helpers.declIds(declaration.declarations.map(ea => ea.id)))
@@ -286,7 +343,7 @@ export default class FreezerModule {
 
     return exported;
   }
-  
+
   transformToRegisterFormat(opts = {}) {
     let {runtimeGlobal = "System"} = opts,
         {topLevelDecl, setters, qualifiedDependencyNames} = this.registerTranformsOfImports(),
@@ -322,3 +379,7 @@ export default class FreezerModule {
   }
 
 }
+
+
+Module.registerExt("js", JSModule);
+Module.registerExt("json", JSONModule);
