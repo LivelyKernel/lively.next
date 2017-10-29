@@ -118,5 +118,9 @@
   {
     "name": "lively.ide",
     "repoURL": "https://github.com/LivelyKernel/lively.ide"
+  },
+  {
+    "name": "lively.headless",
+    "repoURL": "https://github.com/LivelyKernel/lively.headless"
   }
 ]

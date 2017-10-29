@@ -18,6 +18,7 @@ var config = {
       "lively.server/plugins/file-upload.js",
       "lively.server/plugins/objectdb.js",
       "lively.server/plugins/subserver.js",
+      "lively.headless/subserver.js",
     ]
   }
 }
