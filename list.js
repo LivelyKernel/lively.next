@@ -486,9 +486,7 @@ export class List extends Morph {
 
       scroller: {
         after: ['submorphs'], readOnly: true,
-        get() { 
-          return this.getSubmorphNamed('scroller');
-        }
+        get() {  return this.getSubmorphNamed('scroller'); }
       },
 
       manualItemHeight: {type: "Boolean"},
@@ -547,6 +545,7 @@ export class List extends Morph {
       acceptsDrops: false, draggable: false
     });
     if (!scroller) this.addMorph(new ListScroller({name: "scroller"}));
+    if (container || scroller) this.update();
   }
 
   get isList() { return true; }
