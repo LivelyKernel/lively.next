@@ -109,8 +109,8 @@ export async function interactivelyEvaluateConnection(opts) {
         targetModule
       },
       input = printConnectionElements(sourceObj, sourceAttr, targetObj, targetAttr, converter, updater);
-  Object.assign(lively.modules.module(targetModule).recorder, {
-    sourceObj, targetObj, connect, once
+  Object.assign(lively.modules.module(targetModule).recorder,
+    {sourceObj, targetObj, connect, once, [sourceAttr]: sourceObj[sourceAttr]
   })
   let source = await $world.editPrompt(prompt, {
     input, historyId: "lively.bindings-interactive-morph-connect", mode: "js",
