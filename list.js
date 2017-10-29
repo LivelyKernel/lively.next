@@ -544,7 +544,7 @@ export class List extends Morph {
       clipMode: "hidden", halosEnabled: false,
       acceptsDrops: false, draggable: false
     });
-    if (!scroller) this.addMorph(new ListScroller({name: "scroller"}));
+    if (!scroller) this.addMorph(new ListScroller({halosEnabled: false, name: "scroller"}));
     if (container || scroller) this.update();
   }
 
