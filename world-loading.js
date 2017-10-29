@@ -185,7 +185,7 @@ async function setupLively2Lively(world) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export async function interactivelySaveWorld(world, options) {
-  options = {showSaveDialog: true, ...options};
+  options = {showSaveDialog: true, confirmOverwrite: true, ...options};
 
   let name = world.name, tags = [], description = "",
       oldCommit = Path("metadata.commit").get(world),
@@ -209,7 +209,7 @@ export async function interactivelySaveWorld(world, options) {
         oldName = oldCommit ? oldCommit.name : world.name,
         expectedParentCommit;
 
-    if (oldName !== name) {
+    if (oldName !== name && options.confirmOverwrite) {
       let {exists, commitId: existingCommitId} = await db.exists("world", name);
       if (exists) {
         let overwrite = await world.confirm(`A world "${name}" already exists, overwrite?`);
@@ -249,12 +249,15 @@ export async function interactivelySaveWorld(world, options) {
   } catch (err) {
     let [_, typeAndName, expectedVersion, actualVersion] = err.message.match(/Trying to store "([^\"]+)" on top of expected version ([^\s]+) but ref HEAD is of version ([^\s\!]+)/) || [];
     if (expectedVersion && actualVersion) {
-      let [newerCommit] = await db.log(actualVersion, 1, /*includeCommits = */true),
-          {author: {name: authorName}, timestamp} = newerCommit,
-          overwriteQ = `The current version of world ${name} is not the most recent!\n`
-      + `A newer version by ${authorName} was saved on `
-      + `${date.format(new Date(timestamp), "yyyy-mm-dd HH:MM")}. Overwrite?`,
-          overwrite = await world.confirm(overwriteQ);
+      let [newerCommit] = await db.log(actualVersion, 1, /*includeCommits = */true);
+      let overwrite = true;
+      if (options.confirmOverwrite) {
+        let {author: {name: authorName}, timestamp} = newerCommit,
+            overwriteQ = `The current version of world ${name} is not the most recent!\n`
+                       + `A newer version by ${authorName} was saved on `
+                       + `${date.format(new Date(timestamp), "yyyy-mm-dd HH:MM")}. Overwrite?`;
+        overwrite = await world.confirm(overwriteQ);        
+      }
       if (!overwrite) return null;
       world.changeMetaData("commit", obj.dissoc(newerCommit, ["preview"]), /*serialize = */true, /*merge = */false);
       return interactivelySaveWorld(world, {...options, showSaveDialog: false});

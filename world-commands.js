@@ -1061,7 +1061,7 @@ var commands = [
       // in case there is another morph implementing save...
       var relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
       if (relayed) return relayed;
-      args = {showSaveDialog: true, ...args};
+      args = {confirmOverwrite: true, showSaveDialog: true, ...args};
       return interactivelySaveWorld(world, args);
     }
   },
