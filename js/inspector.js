@@ -90,6 +90,11 @@ function propertyNamesOf(obj) {
   return keys;
 }
 
+function isMultiValue(foldableValue, propNames) {
+    return !arr.every(propNames.map(p => foldableValue[p]),
+        v => obj.equals(v, foldableValue && foldableValue.valueOf()))
+  }
+
 function defaultSort(a, b) {
   if (a.hasOwnProperty("priority") || b.hasOwnProperty("priority")) {
     let aP = a.priority || 0, bP = b.priority || 0;
@@ -247,6 +252,14 @@ class PropertyNode extends InspectionNode {
     this.spec = {};
   }
 
+  get interactive() {
+    return this._interactive;
+  }
+
+  set interactive(b) {
+    this._interactive = b;
+  }
+
   get isFoldable() {
     return !!this.spec.foldable;
   }
@@ -275,21 +288,19 @@ class PropertyNode extends InspectionNode {
   refreshProperty(v, updateTarget = false) {
     if (updateTarget) this.target[this.key] = v;
     this.value = this.target[this.key];
-    if (typeof this._propertyWidget == "string") {
-      this._propertyWidget = `${this.keyString}: ${this.valueString = printValue(v)}`;
-      if (this.renderedNode) this.renderedNode.labelValue = this._propertyWidget;
-    } else {
-      signal(this._propertyWidget, "update", this.value);
+    this._propertyWidget && signal(this._propertyWidget, "update", this.value);
+    if (this.interactive) {
       if (!updateTarget) {
         this._propertyWidget.highlight();
       }
+    } else {
+      this.valueString = printValue(v);
     }
-    if (this.renderedNode)
-      this.renderedNode.width = this._propertyWidget.bounds().width + this.renderedNode.toggle.width + 3;
     if (this.isFoldable) {
       for (let m in this.foldedNodes) {
         this.foldedNodes[m].value = this.value[m];
-        signal(this.foldedNodes[m]._propertyWidget, "update", this.value[m]);
+        this.foldedNodes[m].valueString = printValue(this.value[m]);
+        this.foldedNodes[m]._propertyWidget && signal(this.foldedNodes[m]._propertyWidget, 'update', this.value[m]);
       }
     }
   }
@@ -297,8 +308,11 @@ class PropertyNode extends InspectionNode {
   display() {
     let {_propertyWidget: w, keyString, valueString, target, value, spec} = this;
 
+    if (!this.interactive && !(spec.foldable && isMultiValue(value, spec.foldable)))
+      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+             ` ${spec.foldable ? value.valueOf() : valueString}`, {fontColor: Color.darkGray}];
+    
     if (w) { // recycle widget
-      if (typeof w == "string") return w;
       w.keyString = keyString;
       w.valueString = valueString;
       return w;
@@ -306,7 +320,7 @@ class PropertyNode extends InspectionNode {
 
     // create a new widget
     w = this._propertyWidget = PropertyControl.render({
-      target, keyString, valueString, value, spec, node: this});
+        target, keyString, valueString, value, spec, node: this});
 
     if (!this.isInternalProperty && !spec.readOnly) {
       connect(w, "propertyValue", this, "refreshProperty", {
@@ -441,9 +455,12 @@ class DraggedProp extends Morph {
   }
 
   update(handPosition) {
-    let target = this.morphBeneath(handPosition);
+    var target = this.morphBeneath(handPosition), hiddenMorph;
     if (target == this.morphHighlighter) {
-      target = this.morphHighlighter.morphBeneath(handPosition);
+      target = target.morphBeneath(handPosition);
+    }
+    while (hiddenMorph = [target, ...target.ownerChain()].find(m => !m.visible)) {
+      target = hiddenMorph = hiddenMorph.morphBeneath(handPosition);
     }
     if (target != this.currentTarget) {
       this.currentTarget = target;
@@ -471,7 +488,7 @@ class DraggableTreeLabel extends Label {
     };
   }
 
-  get inspector() { return this.owner.tree.owner; }
+  get inspector() { return this.owner.owner.owner; }
 
   onDragStart(evt) {
     this.draggedProp = new DraggedProp({
@@ -652,9 +669,7 @@ export class PropertyControl extends DraggableTreeLabel {
 
   toggleFoldableValue(newValue) {
     if (!this.foldableProperties) return;
-    this.toggleMultiValuePlaceholder(
-      !arr.every(this.foldableProperties.map(p => newValue[p]),
-        v => obj.equals(v, newValue && newValue.valueOf())));
+    this.toggleMultiValuePlaceholder(isMultiValue(newValue, this.foldableProperties));
   }
 
   asFoldable(foldableProperties) {
@@ -795,11 +810,13 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   relayout() {
-    this.fit();
+    this.fit();    
     if (this.control) {
-      this.control.leftCenter = this.textBounds().rightCenter();
+      this.control.topLeft = this.textBounds().topRight().addXY(-2,0);
       this.width = this.textBounds().width + this.control.bounds().width;
     }
+
+    this.height = 18;
 
     if (this.multiValuePlaceholder) {
       this.multiValuePlaceholder.leftCenter = this.textBounds().rightCenter();
@@ -866,7 +883,6 @@ class InspectorTreeData extends TreeData {
     );
     this.asListWithIndexAndDepth(false).forEach(({node, depth}) => {
       if (depth == 0) return (node.visible = true);
-      if (depth > maxDepth) return (node.visible = false);
       if (!showUnknown && node.keyString && node.keyString.includes("UNKNOWN PROPERTY")) return (node.visible = false);
       if (!showInternal && node.keyString && node.keyString.includes("internal")) return (node.visible = false);
       if (node.value && node.value.submorphs) return (node.visible = true);
@@ -889,8 +905,22 @@ export default class Inspector extends Morph {
 
   onWindowClose() {
     this.stopStepping();
-    //disconnect(this.targetObject, 'onChange', this, 'refreshAllProperties');
     this.openWidget && this.closeOpenWidget();
+  }
+
+  onMouseMove(evt) {
+    let tree = this.ui.propertyTree,
+        loc = tree.textPositionFromPoint(evt.positionIn(tree)),
+        node;
+    if (loc && (node = tree.nodes[loc.row + 1])) {
+      if (node.interactive || this.lastInteractive == node) return;
+      if (this.lastInteractive) {
+        this.lastInteractive.interactive = false;  
+      }
+      this.lastInteractive = node;
+      node.interactive = true;
+      tree.update();
+    }
   }
 
   __after_deserialize__() {
@@ -959,7 +989,7 @@ export default class Inspector extends Morph {
       selectedObject: {
         readOnly: true, derived: true,
         get() {
-          var sel = this.ui.propertyTree.selection;
+          var sel = this.ui.propertyTree.selectedNode;
           return sel ? sel.value : this.targetObject;
         }
       },
@@ -1049,7 +1079,13 @@ export default class Inspector extends Morph {
             },
             "[name=valueString]": {
               fontFamily: config.codeEditor.defaultStyle.fontFamily,
-              fontSize: 15
+              fontSize: 14
+            },
+            "[name=propertyTree] .DraggableTreeLabel": {
+              fontSize: 14
+            },
+            "[name=propertyTree]": {
+              fontSize: 14
             },
             ".toggle": {
               nativeCursor: "pointer",
@@ -1089,7 +1125,6 @@ export default class Inspector extends Morph {
         thisBindingSelector
       }
     } = this;
-
     // FIXME? how to specify that directly??
     codeEditor.changeEditorMode("js").then(() =>
       codeEditor.evalEnvironment = {
@@ -1147,6 +1182,7 @@ export default class Inspector extends Morph {
         node.refreshProperty(v);
       }
     });
+    this.ui.propertyTree.update();
   }
 
   get isInspector() { return true; }
@@ -1367,12 +1403,12 @@ export default class Inspector extends Morph {
     if (!this.originalTreeData)
       this.originalTreeData = tree.treeData;
     disconnect(tree.treeData, "onWidgetOpened", this, "onWidgetOpened");
-    this.originalTreeData.filter({
+    tree.treeData.filter({
       maxDepth: 2, showUnknown: this.ui.unknowns.checked,
       showInternal: this.ui.internals.checked,
       iterator: (node) => searchField.matches(node.key)
     });
-    tree.treeData = this.originalTreeData;
+    tree.update();
     connect(tree.treeData, "onWidgetOpened", this, "onWidgetOpened");
   }
 
