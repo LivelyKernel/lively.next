@@ -164,7 +164,7 @@ export default class Browser extends Window {
     connect(codeEntityJumpButton,   "fire", this, "execCommand", {converter: () => "jump to codeentity"});
 
     connect(moduleList, "selection", this, "onModuleSelected");
-    connect(codeEntityTree, "selection", this, "onCodeEntitySelected");
+    connect(codeEntityTree, "selectedNode", this, "onCodeEntitySelected");
 
     connect(sourceEditor, "textChange", this, "updateUnsavedChangeIndicatorDebounced");
 
