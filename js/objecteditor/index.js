@@ -262,7 +262,7 @@ export class ObjectEditor extends Morph {
     connect(publishButton, "fire", this, "execCommand", {converter: () => "publish target to PartsBin"});
     connect(chooseTargetButton, "fire", this, "execCommand", {converter: () => "choose target"});
 
-    connect(classTree, "selection", this, "onClassTreeSelection");
+    connect(classTree, "selectedNode", this, "onClassTreeSelection");
     connect(addButton, "fire", this, "interactivelyAddObjectPackageAndMethod");
     connect(removeButton, "fire", this, "execCommand", {converter: () => "remove method or class"});
     connect(forkPackageButton, "fire", this, "interactivelyForkPackage");
@@ -402,6 +402,7 @@ export class ObjectEditor extends Morph {
         ]},
 
       {type: Tree, name: "classTree", treeData: new ClassTreeData(null),
+        ...listStyle,
         borderTop: {width: 1, color: Color.gray},
         borderBottom: {width: 1, color: Color.gray}},
 
