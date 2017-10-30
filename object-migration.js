@@ -215,4 +215,23 @@ For now only a simple default theme...
     }
   },
 
+  {
+    date: "2017-10-30",
+    name: 'change implementation of tree',
+    snapshotConverter: idAndSnapshot => {
+      let {snapshot} = idAndSnapshot;
+       // remove the nodeItemContainer from the tree submorphs, such that
+       // they do not get initialized at all.
+       // reconstruction of the tree rendering should happen automatically
+      for (let key in snapshot) {
+        let serialized = snapshot[key], klass = serialized["lively.serializer-class-info"];
+        if (!klass || !klass.module) continue;
+        if (klass.className == 'Tree') serialized.props.submorphs.value = [];
+        if (klass.className == 'TreeNode') delete snapshot[key];
+        if (serialized.props.name == 'nodeItemContainer') delete snapshot[key];
+      }
+      return idAndSnapshot;
+    }
+  }
+
 ];
