@@ -294,7 +294,8 @@ class HTTPFileBrowserNode extends TreeData {
 
     return [
       resource.name(), null,
-      `\t${sizePrinted} ${datePrinted}`, {fontSize: "70%", textStyleClasses: ["annotation"]}
+      `\t${sizePrinted} ${datePrinted}`, {
+        paddingTop: "3px", fontColor: Color.darkGray, fontSize: "70%", textStyleClasses: ["annotation"]}
     ];
   }
 
