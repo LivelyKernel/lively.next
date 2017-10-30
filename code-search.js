@@ -161,7 +161,7 @@ export class CodeSearcher extends FilterableList {
   ensureIndicator(label) {
     if (!this.progressIndicator) {
       this.progressIndicator = this.addMorph(LoadingIndicator.open());
-      this.progressIndicator.center = this.center;
+      this.progressIndicator.center = this.getWindow().innerBounds().center();
     }
     this.progressIndicator.label = label;
   }
