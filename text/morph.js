@@ -1519,6 +1519,12 @@ export class Text extends Morph {
     // console.log(textAttributesAndRanges)
     this.document.setTextAttributesWithSortedRanges(textAttributesAndRanges);
     this.consistencyCheck();
+    let i = 0;
+    while (i < textAttributesAndRanges.length) {
+       this.onAttributesChanged(textAttributesAndRanges[i])
+       i += 2;
+    }
+    //this.invalidateTextLayout(true, true);
     // FIXME only update affected range!
     // this.onAttributesChanged({start: {row: 0, column: 0}, end: this.documentEndPosition});
   }

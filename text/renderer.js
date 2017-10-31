@@ -547,7 +547,7 @@ export default class Renderer {
 
         if (!attr) { renderedChunks.push(content); continue; }
 
-        fontSize =         obj.isString(attr.fontSize) ? attr.fontSize : attr.fontSize + 'px';
+        fontSize =         attr.fontSize && (obj.isString(attr.fontSize) ? attr.fontSize : attr.fontSize + 'px');
         fontFamily =       attr.fontFamily;
         fontWeight =       attr.fontWeight;
         fontStyle =        attr.fontStyle;
