@@ -190,6 +190,7 @@ export class CodeSearcher extends FilterableList {
     this.getSubmorphNamed("list").items = [];
     this.currentSearchTerm = "";
     this.searchAndUpdate(needle);
+    this.get('search chooser').right = this.width - 5;
   }
 
   async searchAndUpdate(searchInput) {
