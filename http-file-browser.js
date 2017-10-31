@@ -462,7 +462,7 @@ export default class HTTPFileBrowser extends Morph {
       selectedFile: {
         derived: true, after: ["submorphs"],
         get() {
-          var sel = this.ui.fileTree.selection;
+          var sel = this.ui.fileTree.selectedNode;
           return sel ? sel.resource : null;
         },
         set(urlOrResource) {
