@@ -1337,11 +1337,11 @@ export default class Inspector extends Morph {
     disconnect(this.getWindow(), "bringToFront", this.openWidget, "openInWorld");
   }
 
-  onWidgetOpened({node, widget}) {
+  onWidgetOpened({widget}) {
     if (this.openWidget) {
       this.openWidget.fadeOut();
     }
-    this.focusedNode = node;
+    this.focusedNode = this.ui.propertyTree.selectedNode;
     this.openWidget = widget;
     once(this.ui.propertyTree, "onMouseDown", this, "closeOpenWidget");
     connect(this.getWindow(), "bringToFront", widget, "openInWorld", {
@@ -1350,14 +1350,17 @@ export default class Inspector extends Morph {
   }
 
   repositionOpenWidget(evt) {
-    if (this.openWidget) {
-      let pos = this.focusedNode.control.globalBounds().center(),
-          x = Math.min(pos.x, this.globalBounds().center().x),
-          treeBounds = this.ui.propertyTree.globalBounds();
+    if (this.openWidget && this.focusedNode) {
+      let {propertyTree} = this.ui,
+          pos = propertyTree.worldPoint(
+                  propertyTree.textLayout.pixelPositionFor(
+                    propertyTree, {column: 0, row: propertyTree.selectedIndex - 1})).addPt(propertyTree.scroll.negated()),
+          treeBounds = propertyTree.globalBounds();
+      pos.x = this.globalBounds().center().x
       if (pos.y < treeBounds.top()) {
-        pos = treeBounds.topCenter().withX(x);
+        pos = treeBounds.topCenter();
       } else if (treeBounds.bottom() - 20 < pos.y) {
-        pos = treeBounds.bottomCenter().addXY(0, -20).withX(x);
+        pos = treeBounds.bottomCenter().addXY(0, -20);
       }
       this.openWidget.animate({position: pos, duration: 200});
     }
