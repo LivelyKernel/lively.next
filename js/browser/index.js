@@ -167,6 +167,7 @@ export default class Browser extends Window {
     connect(codeEntityTree, "selectedNode", this, "onCodeEntitySelected");
 
     connect(sourceEditor, "textChange", this, "updateUnsavedChangeIndicatorDebounced");
+    connect(sourceEditor, 'onMouseDown', this, 'updateFocusedCodeEntity');
 
     moduleList.selection = null;
     moduleList.items = [];
@@ -812,7 +813,7 @@ export default class Browser extends Window {
       await this.updateCodeEntities(m);
       await this.updateTestUI(m);
 
-      this.ui.metaInfoText.textString = `[${pack.name}] ${m.nameInPackage} (${pack.url})`;
+//      this.ui.metaInfoText.textString = `[${pack.name}] ${m.nameInPackage} (${pack.url})`;
       this.ui.metaInfoText.textAndAttributes = [
         `[${pack.name}]`,
         {
@@ -822,7 +823,8 @@ export default class Browser extends Window {
         },
         " ", null,
         m.nameInPackage, {},
-        ` (${await system.moduleFormat(m.url)} format)`, {}
+        ` (${await system.moduleFormat(m.url)} format)`, {},
+        " - ", null
       ];
 
     } finally {
@@ -862,9 +864,21 @@ export default class Browser extends Window {
 
   }
 
+  updateFocusedCodeEntity() {
+     let { sourceEditor, metaInfoText, codeEntityTree } = this.ui,
+          cursorIdx = sourceEditor.positionToIndex(sourceEditor.cursorPosition),
+          {parent, name} = arr.last(codeEntityTree.treeData.defs.filter(
+            ({node: {start, end}}) => start < cursorIdx && cursorIdx < end)) || {}
+    if (name) {
+      metaInfoText.replace(
+      {start: {row: 0, column: 0}, end: metaInfoText.documentEndPosition}, 
+      [...metaInfoText.textAndAttributes.slice(0,6), ` ${parent ? parent.name + ">>" : ""}${name}`], false, {});
+    }
+  }
+
   async onCodeEntitySelected(entity) {
     if (!entity) return;
-    var { sourceEditor } = this.ui,
+    var { sourceEditor, metaInfoText } = this.ui,
         start = sourceEditor.indexToPosition(entity.node.start),
         end = sourceEditor.indexToPosition(entity.node.end);
     sourceEditor.cursorPosition = start;
