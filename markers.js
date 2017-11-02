@@ -2,7 +2,7 @@
 import { obj, string } from "lively.lang";
 import { pt, Color, Rectangle, rect } from "lively.graphics";
 import {
-  morph,
+  morph, Path,
   Icon,
   StyleSheet,
   Morph,
@@ -10,7 +10,6 @@ import {
   ShadowObject
 } from "lively.morphic";
 import { connect, disconnect } from "lively.bindings";
-import { Leash } from "lively.components/widgets.js";
 
 export function show(target) {
   var world = MorphicEnv.default().world;
@@ -415,13 +414,30 @@ export function showConnector(morph1, morph2, delay = 3000) {
 
   let p1 = morph1.owner.worldPoint(morph1.center),
       p2 = morph2.owner.worldPoint(morph2.center),
-      midPoint = p1.lineTo(p2).sampleN(2)[1];
+      midPoint = p1.lineTo(p2).sampleN(2)[1],
+      marker = {
+        tagName: 'marker',
+        markerHeight: 5,
+        markerWidth: 5,
+        orient: "auto",
+        refX: 1,
+        refY: 5,
+        viewBox: '0 0 10 10',
+        children: [{
+          tagName: 'circle',
+          stroke: Color.red,
+          fill: Color.red,
+          cx: 5, cy: 5,
+          r: 4         
+        }]
+      }
 
-  let path = $world.addMorph(new Leash({
-    vertices: [midPoint, midPoint], borderWidth: 2,
-    endpointStyle: {fill: Color.red}, borderColor: Color.red
+  let path = $world.addMorph(new Path({
+    position: midPoint,
+    vertices: [pt(0), pt(0)], borderWidth: 2,
+    startMarker: marker, endMarker: marker, borderColor: Color.red
   }));
-  path.animate({vertices: [p1, p2], duration: 400});
+  path.animate({vertices: [p1.subPt(midPoint), p2.subPt(midPoint)], duration: 400});
   if (delay) setTimeout(() => path.fadeOut(), delay);
   return path;
 }
