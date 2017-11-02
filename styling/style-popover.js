@@ -12,7 +12,6 @@ import {
   morph,
   HorizontalLayout,
   VerticalLayout,
-  Icons
 } from "lively.morphic";
 import KeyHandler from "lively.morphic/events/KeyHandler.js";
 
@@ -32,6 +31,7 @@ import { SvgStyleHalo } from "lively.halos/vertices.js";
 import { GradientEditor } from "./gradient-editor.js";
 import { ColorPickerField } from "./color-picker.js";
 import { NumberWidget } from "../value-widgets.js";
+import { Icons } from "lively.morphic/text/icons.js";
 
 
 const duration = 200;
