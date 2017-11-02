@@ -1,6 +1,6 @@
 import { InteractiveMorphSelector, MorphHighlighter } from "lively.halos/morph.js";
 import { connect, signal, once } from "lively.bindings";
-import { Color, rect, pt } from "lively.graphics";
+import { Color, Rectangle, rect, pt } from "lively.graphics";
 import { show, HorizontalLayout, Morph, VerticalLayout, StyleSheet, Icon, GridLayout, morph, Window } from "lively.morphic";
 import { TreeData, Tree } from "lively.components/tree.js";
 import { arr, obj } from "lively.lang";
@@ -79,8 +79,7 @@ export async function interactiveConnectGivenSourceAndTarget(sourceObj, sourceAt
         {sourceObj, sourceAttr, targetObj, targetAttr, onConnect});
     }]);
 
-
-  targetObj.openMenu(items);
+  targetObj.openMenu(items).addStyleClass('Halo');
 }
 
 export async function interactivelyReEvaluateConnection(
@@ -290,6 +289,7 @@ export class ConnectionInspector extends Window {
       this.width = Math.max(tree.nodeItemContainer.bounds().width + 5, width);
       let l = new Leash({
         isSmooth: true,
+        styleClasses: ['Halo'],
         endpointStyle: {
           start: {fill: Color.black},
           end: {fill: Color.transparent}
@@ -377,8 +377,7 @@ class ConnectionPin extends Morph {
         initialize() {
           this.styleSheets = new StyleSheet({
             ".ConnectionPin.collapsed": {
-              fill: Color.rgb(133, 193, 233),
-              borderColor: Color.rgb(27, 79, 114),
+              fill: Color.transparent,
               extent: pt(15, 15),
               borderRadius: 15
             },
@@ -437,13 +436,13 @@ class ConnectionPin extends Morph {
               borderRadius: 10,
               fontWeight: "bold",
               fontStyle: "italic",
-              fontColor: Color.gray.darker()
+              fontColor: Color.gray.darker(),
+              nativeCursor: 'pointer'
             }
           });
         }
       },
       nativeCursor: {defaultValue: 'pointer'},
-      borderWidth: {defaultValue: 2},
       expanded: {defaultValue: true},
       collapsible: {defaultValue: false},
       draggable: {defaultValue: false},
@@ -461,8 +460,10 @@ class ConnectionPin extends Morph {
   }
 
   async update(duration = 0) {
-    let world = this.world();
-    this.connectionControl = this.connections.length > 0 ? this.displayConnected() : this.displayVacant();
+    let world = this.world(),
+        isConnected = this.connections.length > 0;
+    this.connectionControl = isConnected ? 
+        this.displayConnected() : this.displayVacant();
 
     if (this.expanded) {
       this.submorphs = [this.connectionControl];
@@ -474,23 +475,11 @@ class ConnectionPin extends Morph {
       } else {
         this.styleClasses = styleClasses;
       }
-      if (world) {
-          this.initPos = this.position;
-          let pos = world
-            .visibleBounds()
-            .insetBy(5)
-            .translateForInclusion(this.globalBounds())
-            .topLeft();
-          duration ? this.animate({globalPosition: pos, duration}) : (this.globalPosition = pos);
-        }
     } else {
       let styleClasses = [...arr.without(this.styleClasses, 'expanded'), 'collapsed'];
-      if (this.initPos)
-        duration ?
-          this.animate({position: this.initPos, duration}) : (this.position = this.initPos);
       if (duration) {
-        this.submorphs[0].animate({scale: 0, duration});
-        await this.animate({styleClasses, duration});
+        this.animate({styleClasses, duration});
+        await this.submorphs[0].animate({scale: 0, duration});
       } else {
         this.styleClasses = styleClasses;
       }
@@ -501,35 +490,20 @@ class ConnectionPin extends Morph {
           styleClasses: ['propertyName'],
           value: this.propertyName,
           opacity: duration ? 0 : 1,
-          ...this.getAlignmentProps()
         })
       ];
       l.animate({opacity: 1, duration});
     }
   }
 
-  getAlignmentProps() {
-    switch(this.orientation) {
-       case 'right':
-         return {leftCenter: this.innerBounds().rightCenter().addXY(5,0)}
-       case 'bottom':
-         return {
-           rotation: Math.PI / 2,
-           topCenter: this.innerBounds().bottomCenter().addXY(0,5)
-         }
-       case 'left':
-         return {
-           rightCenter: this.innerBounds().leftCenter().addXY(-5,0)
-         }
-    }
-  }
-
   displayVacant() {
     var l, p;
-    l = morph({type: 'label', value: this.propertyName,
-               submorphs: [p = this.renderVacantPin()]})
+    l = morph({type: 'text', styleClasses: ['connectionPin'], 
+               fontColor: Color.white, padding: 5, //fontSize: 14,
+               textAndAttributes: [this.propertyName, {paddingRight: '20px'}],
+                submorphs: [p = this.renderVacantPin()]});
     l.fit();
-    p.leftCenter = l.innerBounds().rightCenter().addXY(5,0);
+    p.rightCenter = l.rightCenter.addXY(-7,1);
     return this._cached = l;
   }
 
@@ -541,6 +515,7 @@ class ConnectionPin extends Morph {
           submorphs: [
             (connector = new Leash({
               opacity: 0,
+              styleClasses: ['Halo'],
               isSmooth: true,
               borderColor: Color.gray.darker(),
               endpointStyle: {fill: Color.gray.darker()},
@@ -575,7 +550,7 @@ class ConnectionPin extends Morph {
     var nameLabel, longestLabel;
     this._cached = morph({
       styleClasses: ["connectionPin"],
-      extent: pt(100, 20 + (this.connections.length * 15)),
+      extent: pt(100, 20 + (this.connections.length * 16)),
       layout: new GridLayout({
         fitToCell: false,
         grid: [
@@ -587,7 +562,7 @@ class ConnectionPin extends Morph {
           [null, null, null, this.renderVacantPin()]
         ],
         columns: [0, {paddingLeft: 5, fixed: nameLabel.textBounds().width + 15},
-                  1, {fixed: 15 + (longestTargetMethod.length * 9)},
+                  1, {fixed: 15 + morph({type: 'label', value: longestTargetMethod}).textBounds().width + 15},
                   2, {fixed: 15},
                   3, {fixed: 20}]
       })
@@ -633,6 +608,7 @@ class ConnectionPin extends Morph {
     let sides = rect(0).sides.concat(rect(0).corners),
         leash = existingLeash || new Leash({
           isSmooth: true,
+          styleClasses: ['Halo'],
           borderColor: Color.orange,
           endpointStyle: {
             start: {fill: Color.transparent, nativeCursor: "auto"},
@@ -643,13 +619,22 @@ class ConnectionPin extends Morph {
     // fixme: the attachment points of the leashes should be parametrized...
     leash.startPoint.attachTo(m1, orientation + 'Center');
     if (m2.isMorph) {
-       leash.endPoint.attachTo(m2, m2.globalBounds()
-          .partNameNearest(sides, m1.globalPosition));
+       var nearestPart = m2.globalBounds().partNameNearest(sides, m1.globalPosition);
+       if (m1.globalPosition.equals(m2.globalBounds().partNamed(nearestPart))) {
+         // pick another part, that is not exactly the same
+         nearestPart = m2.globalBounds().partNameNearest(arr.without(sides, nearestPart), m1.globalPosition);
+       }
+       leash.endPoint.attachTo(m2, nearestPart);
     } else {
-       let visualPointer = morph({
-         type: 'label', value: m2.toString(),
-         styleClasses: ['Tooltip'] , padding: rect(8,4)
-       }).openInWorld(m1.globalBounds().rightCenter().addXY(100, 0));
+       let virtualNodePos = m1.globalBounds().topRight().addPt(pt(100,0)),
+            visualPointer = morph({
+             type: 'label', value: m2.toString(),
+             styleClasses: ['Tooltip'] , padding: rect(8,4)
+           }).openInWorld(virtualNodePos);
+       visualPointer.position = this.world().bounds().translateForInclusion(visualPointer.bounds()).topLeft();
+       if (visualPointer.bounds().intersection(this.globalBounds()).area() > 0) {
+         visualPointer.top = this.owner.globalBounds().insetBy(-20).bottom();
+       }
        once(leash, 'remove', visualPointer, 'remove');
        leash.endPoint.attachTo(visualPointer, 'leftCenter');
     }
@@ -670,7 +655,7 @@ class ConnectionPin extends Morph {
 
   hideConnection({connection, connectionPoint, description}) {
     description.fontColor = Color.white;
-    connectionPoint.fill = Color.white;
+    connectionPoint.fill = Color.white.withA(.8);
     if (this.connectionIndicator) this.connectionIndicator.remove();
     MorphHighlighter.removeHighlighters();
   }
@@ -761,6 +746,7 @@ class ConnectionPin extends Morph {
 
   onMouseDown(evt) {
      !this.expanded && this.collapsible && this.showAllConnections(true);
+            this.focus();
   }
 
   onBlur(evt) {
@@ -768,6 +754,8 @@ class ConnectionPin extends Morph {
       let focused = this.world() && this.world().focusedMorph;
       if (this !== focused && !this.withAllSubmorphsDetect(m => m == focused)) {
         this.onFocusLost();
+      } else {
+        console.log('refocus')
       }
     }, 100);
   }
@@ -803,7 +791,11 @@ export class ConnectionHalo extends Morph {
       epiMorph: {defaultValue: true},
       reactsToPointer: {defaultValue: false},
       fill: {defaultValue: Color.transparent},
-
+      styleClasses: {defaultValue: ['Halo']},
+      borderWidth: {defaultValue: 2},
+      borderColor: {defaultValue: Color.red},
+      borderRadius: {defaultValue: 5},
+      borderStyle: {defaultValue: 'dashed'},
       target: {
         set(t) {
           if (!t.isMorph)
@@ -821,17 +813,16 @@ export class ConnectionHalo extends Morph {
         initialize() {
           this.styleSheets = new StyleSheet({
             ".controlButton": {
-              fill: Color.black.withA(0.7),
+              fill: Color.gray.withA(.7),
               borderRadius: 20,
               fontSize: 15,
-              fontColor: Color.white,
+              fontColor: Color.darkGray.darker(),
               borderWidth: 2,
               nativeCursor: 'pointer',
-              borderColor: Color.white,
-              dropShadow: true,
+              borderColor: Color.transparent
             },
             '.controlButton .Label': {
-              fontColor: Color.white
+              fontColor: Color.darkGray.darker()
             }
           })
         }
@@ -858,31 +849,29 @@ export class ConnectionHalo extends Morph {
     // add close button
     let closeButton = Icon.makeLabel('close', {
       styleClasses: ['controlButton'],
-            padding: rect(6,4,4,4),
+      padding: rect(6,4,4,4),
     });
+    let [plusIcon, plusAttrs] = Icon.makeLabel('plus').textAndAttributes;
+    plusAttrs.paddingTop = '1px';
     // add create new pin button
     let addPinButton = morph({
       type: 'button',
       width: 110,
-      label: [...Icon.textAttribute('plus'), 'Add Pin...', {}],
+      label: [plusIcon, plusAttrs, ' Add Pin...', {}],
       styleClasses: ['controlButton'],
-      padding: rect(4,5,4,1),
+      padding: rect(4,4,4,1),
     });
 
     this.addMorph({
       fill: Color.transparent,
       name: 'control wrapper',
       bottomCenter: this.innerBounds().insetBy(-10).topCenter(),
-      layout: new HorizontalLayout(),
+      layout: new HorizontalLayout({spacing: 2}),
       submorphs: [addPinButton, closeButton]
     });
 
     connect(closeButton, 'onMouseDown', this, 'remove');
     connect(addPinButton, 'onMouseDown', this, 'interactivelyAddPin');
-    // connect(addPinButton, 'onMouseDown', this.target, 'openMenu', {
-    //   converter: () => /*global target*/ target.connectMenuItems(),
-    //   varMapping: {target: this.target}
-    // });
   }
 
  interactivelyAddPin() {
@@ -899,15 +888,13 @@ export class ConnectionHalo extends Morph {
       this.placeConnectionPins();
     });
 
-   this.target.openMenu(menuItems);
+   this.target.openMenu(menuItems).addStyleClass('Halo');
   }
 
   getPlacementPoints() {
     return [
       ...this.innerBounds().translatedBy(pt(-8,-8)).leftEdge().sample(20)
              .reverse().map(p => [p, 'left']),
-      ...this.innerBounds().translatedBy(pt(-8,-8)).bottomEdge().sample(20)
-             .reverse().map(p => [p, 'bottom']),
       ...this.innerBounds().translatedBy(pt(-8,-8)).rightEdge().sample(20)
              .reverse().map(p => [p, 'right']),
     ]
@@ -916,7 +903,11 @@ export class ConnectionHalo extends Morph {
   placeConnectionPins() {
     var placementPoints = this.getPlacementPoints(),
         sides = rect(0).sides.concat(rect(0).corners);
-    this.submorphs = [];
+    this.submorphs = [this.rightContainer = morph({
+       fill: Color.transparent, layout: new VerticalLayout({spacing: 3, resizeContainer: true})
+    }), this.leftContainer = morph({
+       fill: Color.transparent, layout: new VerticalLayout({spacing: 3, resizeContainer: true})      
+    })];
     this.initControls();
 
     let pinsAndConnections = this.visiblePins.reduce(
@@ -930,7 +921,7 @@ export class ConnectionHalo extends Morph {
     Object.keys(pinsAndConnections).map((sourceName) => {
       if (!placementPoints.length) placementPoints = this.getPlacementPoints();
       let [center, orientation] = placementPoints.pop()
-      this.addMorphBack(
+      this[orientation + 'Container'].addMorphBack(
         new ConnectionPin({
           expanded: false,
           styleClasses: ['dark'],
@@ -940,8 +931,10 @@ export class ConnectionHalo extends Morph {
           collapsible: true,
           orientation
         })
-      ).position = center;
+      )
     });
+    this.rightContainer.topLeft = this.innerBounds().topRight();
+    this.leftContainer.topRight = this.innerBounds().topLeft();
   }
 
 }
