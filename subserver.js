@@ -7,10 +7,7 @@ var _l2lClient;
 class HeadlessL2l {
 
   constructor(opts = {}) {
-    var {
-      hostname = "localhost",
-      port = 9011
-    } = opts;
+    var {hostname = "localhost", port = 9011} = opts;
     this.port = port;
     this.hostname = hostname;
     this.l2lClient = null;
@@ -28,27 +25,22 @@ class HeadlessL2l {
       }));
     }
 
-    ["[lively.headless] open page",
-     "[lively.headless] dispose page",
-     "[lively.headless] screenshot",
-     "[lively.headless] list pages",
-     "[lively.headless] save world"].forEach(sel =>
-                          l2lClient.addService(sel,
-                             (tracker, msg, ackFn, socket) =>
-                               this[sel](tracker, msg, ackFn, socket)));
-
-    await Promise.all([
-      l2lClient.whenRegistered()
-        .then(() => console.log("headless-broker ready"))
-        .catch(err => console.error(`headless-broker failed...!`))
-    ]);
+    let services = Object.getOwnPropertyNames(HeadlessL2l.prototype)
+      .filter(ea => ea.startsWith("[lively.headless]"));
+    services.forEach(sel =>
+      l2lClient.addService(sel,
+         (tracker, msg, ackFn, socket) =>
+           this[sel](tracker, msg, ackFn, socket)));
+    
+    await l2lClient.whenRegistered(null)
+      .then(() => console.log("headless-broker ready"))
+      .catch(err => console.error(`headless-broker failed...!`));
 
     return this;
   }
 
   async teardown() {
-    let {l2lClient} = this;
-    if (l2lClient) l2lClient.remove();
+    if (this.l2lClient) this.l2lClient.remove();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -91,8 +83,7 @@ class HeadlessL2l {
   }
 
   async "[lively.headless] screenshot"(tracker, msg, ackFn, socket) {
-    let {id} = msg.data;
-    let sess = await HeadlessSession.findSessionById(id);
+    let {id} = msg.data, sess = await HeadlessSession.findSessionById(id);
     if (!sess) return ackFn({error: `Cannot find session ${id}`});
     try {
       let data = await sess.screenshot()
@@ -115,9 +106,12 @@ export default class LivelyHeadless {
 
   get pluginId() { return "lively.headless" }
 
+  get after() { return ["l2l"]; }
+
   async setup(livelyServer) {
     // import LivelyServer from "lively.server/server.js";
     // let livelyServer = LivelyServer.servers.values().next().value
+    // livelyServer.findPlugin("lively.headless").broker
     let {hostname, port} = livelyServer;
     this.broker = await new HeadlessL2l({hostname, port}).setup()
       .catch(err => console.error(`Error starting headless broker: `, err));

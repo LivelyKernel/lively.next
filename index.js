@@ -6,7 +6,7 @@ import { transform } from "lively.ast";
 
 // let puppeteer = System._nodeRequire("puppeteer");
 let packagePath = System.decanonicalize("lively.headless/").replace("file://", "");
-let puppeteer = System._nodeRequire(packagePath + "/node_modules/puppeteer");
+let puppeteer = System._nodeRequire("puppeteer");
 
 
 var headlessSessions = headlessSessions || new Set();
@@ -56,9 +56,9 @@ export class HeadlessSession {
   async ensureBrowser() {
     return this.constructor.browser
        || (this.constructor.browser = await puppeteer.launch({
-        // headless: false,
         userDataDir: packagePath + "chrome-data-dir",
-        args: ["--disk-cache-dir", packagePath + "chrome-chache-dir"]
+        // headless: false,
+        // args: ["--disk-cache-dir", packagePath + "chrome-cache-dir"]
     }));
   }
 
