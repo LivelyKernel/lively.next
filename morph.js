@@ -605,7 +605,8 @@ class HaloItem extends Morph {
   }
 
   static for(halo) {
-    return halo.getSubmorphNamed(this.morphName) || halo.addMorph(new this({halo, name: this.morphName}));
+    return halo.getSubmorphNamed(this.morphName)
+        || halo.addMorph(new this({halo, name: this.morphName}));
   }
 
   get isEpiMorph() { return true; }
@@ -881,10 +882,7 @@ class GrabHaloItem extends HaloItem {
     halo.target.onGrab({hand, isShiftDown: () => false});
     halo.state.activeButton = this;
     this.opacity = .3;
-  }
-
-  update() {
-    this.halo.alignWithTarget();
+    connect(hand, 'update', this, 'update');
   }
 
   stop(evt) {
@@ -894,6 +892,7 @@ class GrabHaloItem extends HaloItem {
           evt.hand.position,
           [halo.target],
           m => !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem));
+    disconnect(evt.hand, 'update', this, 'update');
     MorphHighlighter.interceptDrop(halo, dropTarget, halo.target);
     undo.addTarget(dropTarget);
     dropTarget.onDrop(evt);
@@ -905,13 +904,9 @@ class GrabHaloItem extends HaloItem {
     this.opacity = 1;
   }
 
-  onDragStart(evt) {
-    this.init(evt.hand);
-  }
-
-  onDragEnd(evt) {
-    this.stop(evt);
-  }
+  update() { this.halo.alignWithTarget(); }
+  onDragStart(evt) { this.init(evt.hand); }
+  onDragEnd(evt) { this.stop(evt); }
 
 }
 
@@ -1120,6 +1115,7 @@ class CopyHaloItem extends HaloItem {
         isMultiSelection = target instanceof MultiSelectionTarget;
     halo.remove();
 
+    connect(hand, "update", this, "update");
 
     if (isMultiSelection) {
       // FIXME! haaaaack
@@ -1152,6 +1148,7 @@ class CopyHaloItem extends HaloItem {
           [halo.target],
           m => !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem)),
         undo = halo.target.undoInProgress;
+    disconnect(hand, "update", this, "update");
     undo.addTarget(dropTarget);
     hand.dropMorphsOn(dropTarget);
     halo.target.undoStop("copy-halo");
@@ -1160,6 +1157,7 @@ class CopyHaloItem extends HaloItem {
 
   onDragStart(evt) { this.init(evt.hand); }
   onDragEnd(evt) { this.stop(evt.hand); }
+  update() { this.halo.alignWithTarget(); }
 
   async onMouseUp(evt) {
     evt.stop();
@@ -1563,7 +1561,7 @@ export class MorphHighlighter extends Morph {
 
   static interceptDrop(halo, target, morph) {
     var store = halo._morphHighlighters = halo._morphHighlighters || {};
-    store && store[target.id].handleDrop(morph);
+    store && store[target.id] && store[target.id].handleDrop(morph);
   }
 
   alignWithHalo() {
