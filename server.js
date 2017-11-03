@@ -72,14 +72,14 @@ export default class LivelyServer {
   // lifetime
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  whenStarted(timeout = 1000) {
+  whenStarted(timeout = 30*1000) {
     return promise.waitFor(timeout, () => this.isListening()).then(() => this);
   }
 
-  whenClosed(timeout = 1000, callback) {
+  whenClosed(timeout = 30*1000, callback) {
     if (!callback && typeof timeout === "function") {
       callback = timeout;
-      timeout = 1000;
+      timeout = 30*1000;
     }
     return promise.waitFor(timeout, () => this.isClosed()).then(() => {
       if (typeof callback === "function") callback();
@@ -198,7 +198,7 @@ export default class LivelyServer {
         if (typeof p.setOptions === "function" && this.options.hasOwnProperty(p.pluginId))
           p.setOptions(this.options[p.pluginId])
         if (typeof p.setup === "function")
-        	 await promise.timeout(300, Promise.resolve(p.setup(this)));
+        	 await promise.timeout(10*1000, Promise.resolve(p.setup(this)));
       } catch (e) {
        console.error(`Error in setup of plugin ${p.pluginId}:\n${e.stack}`)
       }
