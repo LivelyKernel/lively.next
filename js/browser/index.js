@@ -813,8 +813,8 @@ export default class Browser extends Window {
       await this.updateCodeEntities(m);
       await this.updateTestUI(m);
 
-//      this.ui.metaInfoText.textString = `[${pack.name}] ${m.nameInPackage} (${pack.url})`;
-      this.ui.metaInfoText.textAndAttributes = [
+      this.ui.metaInfoText.replace(
+        {start: {row: 0, column: 0}, end: this.ui.metaInfoText.documentEndPosition}, [
         `[${pack.name}]`,
         {
           nativeCursor: "pointer",
@@ -825,7 +825,7 @@ export default class Browser extends Window {
         m.nameInPackage, {},
         ` (${await system.moduleFormat(m.url)} format)`, {},
         " - ", null
-      ];
+      ], false);
 
     } finally {
       if (deferred) {
@@ -872,7 +872,7 @@ export default class Browser extends Window {
     if (name) {
       metaInfoText.replace(
       {start: {row: 0, column: 0}, end: metaInfoText.documentEndPosition}, 
-      [...metaInfoText.textAndAttributes.slice(0,6), ` ${parent ? parent.name + ">>" : ""}${name}`], false, {});
+      [...metaInfoText.textAndAttributes.slice(0,6), ` ${parent ? parent.name + ">>" : ""}${name}`], false);
     }
   }
 
