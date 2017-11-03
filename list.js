@@ -302,7 +302,7 @@ export class List extends Morph {
       ".List.dark": {
         fill: Color.transparent,
         hideScrollbars: true,
-        padding: Rectangle.inset(2, 0),
+        padding: Rectangle.inset(2, 2, 0, 0),
         fontFamily: "Monaco, monospace",
         selectionColor: Color.gray.lighter(),
         selectionFontColor: Color.black,
@@ -316,7 +316,7 @@ export class List extends Morph {
         nonSelectionFontColor: Color.gray,
       },
       ".List.default": {
-        padding: Rectangle.inset(2, 0)
+        padding: Rectangle.inset(2, 2, 0, 0)
       }
     });
   }
@@ -539,8 +539,8 @@ export class List extends Morph {
     if (!this.submorphs) this.submorphs = submorphs;
     for (let i = 0; i < submorphs.length; i++) {
       switch (submorphs[i].name) {
-        case "listItemContainer": container = submorphs[i]; break;
-        case "scroller": scroller = submorphs[i]; break;
+        case "listItemContainer": container = submorphs[i]; continue;
+        case "scroller": scroller = submorphs[i]; continue;
       }
     }
     if (!container) this.addMorph({
@@ -1284,9 +1284,18 @@ export class DropDownList extends Button {
             ".DropDownList [name=dropDownList]": {
               fontSize: 12,
               fontFamily: "Helvetica Neue, Arial, sans-serif",
-              fontColor: Color.black,
               borderWidth: 1,
               borderColor: Color.gray
+            },
+            ".DropDownList.dark [name=dropDownList]": {
+              fontColor: Color.white,
+              nonSelectionFontColor: Color.white,
+              selectionColor: Color.gray,
+              selectionFontColor: Color.black,
+              fill: Color.black.withA(.7),
+              padding: rect(2,2,0,-2),
+              borderRadius: 2,
+              borderWidth: 0
             },
             ".Button.activeStyle": {
               fill: new LinearGradient({
