@@ -962,7 +962,6 @@ export class Hand extends Morph {
 
   update(evt) {
     this.position = evt.position;
-    this.carriesMorphs() && evt.halo && evt.halo.grabHalo().update();
   }
 
   async cancelGrab(animate = true, causingEvent) {
