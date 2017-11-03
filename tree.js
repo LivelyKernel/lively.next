@@ -86,7 +86,10 @@ export class Tree extends Text {
       },
 
       selectedNode: {
-        set(sel) { this.setProperty("selectedNode", sel); this.update(); }
+        set(sel) { 
+          this.setProperty("selectedNode", sel); 
+          this.update(); 
+        }
       },
 
       selectedNodeAndSiblings: {
@@ -211,6 +214,7 @@ export class Tree extends Text {
       for (; i < nodes.length; i++) {
         j = 8 * (i - 1);
         isSelected = this.selectedIndex == i;
+        nodes[i].node.isSelected = isSelected;
         // indent 
         containerTextAndAttributes[j] = " ";
         containerTextAndAttributes[j + 1] = {

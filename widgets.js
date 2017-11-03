@@ -662,6 +662,13 @@ export class DropDownSelector extends Morph {
       fontFamily: {isStyleProp: true, defaultValue: 'Sans-Serif'},
       border: {defaultValue: {radius: 3, color: Color.gray.darker(), style: "solid"}},
       padding: {defaultValue: 1},
+      isSelected: {
+        defaultValue: "false",
+        set(v) {
+          this.setProperty("isSelected", v);
+          this.fontColor = v ? Color.white : Color.black;
+        }
+      },
       layout: {
         initialize() {
           this.layout = new HorizontalLayout({spacing: this.padding});
