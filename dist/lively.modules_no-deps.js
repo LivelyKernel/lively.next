@@ -6314,6 +6314,8 @@ var doesModuleExist$1 = function () {
   };
 }();
 
+var globalProps = { initialized: false, descriptors: {} };
+
 // ModuleInterface is primarily used to provide an API that integrates the System
 // loader state with lively.modules extensions.
 // It does not hold any mutable state.
@@ -7962,34 +7964,45 @@ var ModuleInterface = function () {
       return this._recorder = v;
     },
     get: function get() {
-      var _Object$create;
+      var _babelHelpers$extends;
 
       if (this._recorder) return this._recorder;
 
       var S = this.System,
           self = this;
 
-      return this._recorder = Object.create(S.global, (_Object$create = {
+      if (!globalProps.initialized) {
+        globalProps.initialized = true;
+        for (var prop in S.global) {
+          if (S.global.__lookupGetter__(prop)) globalProps.descriptors[prop] = {
+            value: undefined,
+            configurable: true,
+            writable: true
+          };
+        }
+      }
+
+      return this._recorder = Object.create(S.global, _extends({}, globalProps.descriptors, (_babelHelpers$extends = {
 
         System: { configurable: true, writable: true, value: S },
 
         __currentLivelyModule: { value: self }
 
-      }, defineProperty(_Object$create, lively_vm.defaultClassToFunctionConverterName, {
+      }, defineProperty(_babelHelpers$extends, lively_vm.defaultClassToFunctionConverterName, {
         configurable: true, writable: true,
         value: lively_classes.runtime.initializeClass
-      }), defineProperty(_Object$create, this.varDefinitionCallbackName, {
+      }), defineProperty(_babelHelpers$extends, this.varDefinitionCallbackName, {
         value: function value(name, kind, _value, recorder, meta) {
           meta = meta || {};
           meta.kind = kind;
           return self.define(name, _value, false /*signalChangeImmediately*/, meta);
         }
 
-      }), defineProperty(_Object$create, "_moduleExport", {
+      }), defineProperty(_babelHelpers$extends, "_moduleExport", {
         value: function value(name, val) {
           scheduleModuleExportsChange(S, self.id, name, val, true /*add export*/);
         }
-      }), defineProperty(_Object$create, "_moduleImport", {
+      }), defineProperty(_babelHelpers$extends, "_moduleImport", {
         value: function value(depName, key) {
           var depId = S.decanonicalize(depName, self.id),
               depExports = S.get(depId);
@@ -8013,7 +8026,7 @@ var ModuleInterface = function () {
 
           return depExports[key];
         }
-      }), _Object$create));
+      }), _babelHelpers$extends)));
     }
   }, {
     key: "varDefinitionCallbackName",

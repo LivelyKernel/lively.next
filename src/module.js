@@ -52,6 +52,10 @@ export async function doesModuleExist(System, name, isNormalized = false) {
     System.resource(id).exists() : await p.hasResource(id);
 }
 
+
+const globalProps = {initialized: false, descriptors: {}};
+
+
 // ModuleInterface is primarily used to provide an API that integrates the System
 // loader state with lively.modules extensions.
 // It does not hold any mutable state.
@@ -396,7 +400,21 @@ class ModuleInterface {
 
     const S = this.System, self = this;
 
+    if (!globalProps.initialized) {
+      globalProps.initialized = true;
+      for (let prop in S.global) {
+        if (S.global.__lookupGetter__(prop))
+          globalProps.descriptors[prop] = {
+            value: undefined,
+            configurable: true,
+            writable: true
+          };
+      }
+    }
+
     return this._recorder = Object.create(S.global, {
+
+      ...globalProps.descriptors,
 
       System: {configurable: true, writable: true, value: S},
 
