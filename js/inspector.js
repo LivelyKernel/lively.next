@@ -307,13 +307,20 @@ class PropertyNode extends InspectionNode {
   display() {
     let {_propertyWidget: w, keyString, valueString, target, value, spec} = this;
 
-    if (!this.interactive && !(spec.foldable && isMultiValue(value, spec.foldable)))
-      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
-             ` ${spec.foldable ? value.valueOf() : valueString}`, {fontColor: Color.darkGray}];
-    
+    if (!this.interactive
+        && !(spec.foldable && isMultiValue(value, spec.foldable))
+       // && !['Color', 'ColorGradient'].includes(spec.type)
+       ) {
+      return PropertyControl.render({
+        target, keyString, valueString, 
+        value, spec, node: this, fastRender: true
+      });
+    }
+
     if (w) { // recycle widget
       w.keyString = keyString;
       w.valueString = valueString;
+      w.control && (w.control.isSelected = this.isSelected);
       return w;
     }
 
@@ -553,51 +560,47 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static render(args) {
-    let propertyControl = this.baseControl(args);
+    let propertyControl;
 
     if (!args.spec.type) args.spec = {
       ...args.spec,
       type: this.inferType(args)
     }; // non mutating
 
-    if (args.spec.foldable) {
-      propertyControl.asFoldable(args.spec.foldable);
-    }
-
     switch (args.spec.type) {
-    // 12.6.17
-    // rms: not sure wether a string based spec is that effective in the long run
-    //      it may require too much dedicated maintenance
-    case "Icon":
-      propertyControl.renderIconControl(args); break;
-    case "Color":
-      propertyControl.renderColorControl(args); break;
-    case "ColorGradient":
-      propertyControl.renderColorControl(args, true); break;
-    case "Number":
-      propertyControl.renderNumberControl(args); break;
-    case "String":
-      propertyControl.renderStringControl(args); break;
-    case "RichText":
-      propertyControl.renderStringControl(args); break;
-    case "Layout":
-      propertyControl.renderLayoutControl(args); break;
-    case "Enum":
-      propertyControl.renderEnumControl(args); break;
-    case "Vertices":
-      propertyControl.renderVertexControl(args); break;
-    case "Shadow":
-      propertyControl.renderShadowControl(args); break;
-    case "Point":
-      propertyControl.renderPointControl(args); break;
-    case "StyleSheets":
-      propertyControl.renderStyleSheetControl(args); break;
-    case "Rectangle":
-      propertyControl.renderRectangleControl(args); break;
-    case "Boolean":
-      propertyControl.renderBooleanControl(args); break;
-    default:
-      propertyControl.renderItSomehow(args);
+      // 12.6.17
+      // rms: not sure wether a string based spec is that effective in the long run
+      //      it may require too much dedicated maintenance
+      case "Icon":
+        propertyControl = this.renderIconControl(args); break;
+      case "Color":
+        propertyControl = this.renderColorControl(args); break;
+      case "ColorGradient":
+        propertyControl = this.renderColorControl(args, true); break;
+      case "Number":
+        propertyControl = this.renderNumberControl(args); break;
+      case "String":
+        propertyControl = this.renderStringControl(args); break;
+      case "RichText":
+        propertyControl = this.renderStringControl(args); break;
+      case "Layout":
+        propertyControl = this.renderLayoutControl(args); break;
+      case "Enum":
+        propertyControl = this.renderEnumControl(args); break;
+      case "Vertices":
+        propertyControl = this.renderVertexControl(args); break;
+      case "Shadow":
+        propertyControl = this.renderShadowControl(args); break;
+      case "Point":
+        propertyControl = this.renderPointControl(args); break;
+      case "StyleSheets":
+        propertyControl = this.renderStyleSheetControl(args); break;
+      case "Rectangle":
+        propertyControl = this.renderRectangleControl(args); break;
+      case "Boolean":
+        propertyControl = this.renderBooleanControl(args); break;
+      default:
+        propertyControl = this.renderItSomehow(args);
     }
 
     if (propertyControl.control) {
@@ -616,6 +619,7 @@ export class PropertyControl extends DraggableTreeLabel {
       name: "valueString",
       styleClasses: ["TreeLabel"],
       selectedValue,
+      padding: 0,
       values
     });
     connect(propertyControl.control, "update", propertyControl, "propertyValue", {
@@ -632,12 +636,16 @@ export class PropertyControl extends DraggableTreeLabel {
     return propertyControl;
   }
 
-  static baseControl({keyString, valueString, value}) {
-    return new this({
+  static baseControl({keyString, valueString, value, spec}) {
+    let propertyControl = new this({
       keyString,
       valueString,
       propertyValue: value
     });
+    if (spec.foldable) {
+      propertyControl.asFoldable(spec.foldable);
+    }
+    return propertyControl;
   }
 
   toggleMultiValuePlaceholder(active) {
@@ -676,60 +684,102 @@ export class PropertyControl extends DraggableTreeLabel {
     connect(this, "update", this, "toggleFoldableValue");
   }
 
-  renderEnumControl({value, spec: {values}}) {
-    return this.renderValueSelector(this, value && value.valueOf ? value.valueOf() : value, values);
+  static renderEnumControl(args) {
+    let propertyControl,
+        {fastRender, value, spec: {values}, valueString, keyString} = args;
+    if (fastRender) {
+      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+              ` ${value ? (value.valueOf ? value.valueOf() : value) : 'Not set'}`, {fontColor: Color.darkGray.darker()}]
+    }
+    propertyControl = this.baseControl(args);
+    return propertyControl.renderValueSelector(propertyControl, value && value.valueOf ? value.valueOf() : value, values);
   }
 
-  renderIconControl({value}) {
-    this.control = new IconWidget({name: "valueString", iconValue: value});
-    connect(this.control, "iconValue", this, "propertyValue");
-    return this;
+  static renderIconControl(args) {
+    let propertyControl,
+        {value, fastRender, keyString, valueString} = args;
+    if (fastRender) {
+      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+              ` ${valueString}`, {fontColor: Color.darkGray}];
+    }
+    propertyControl = this.baseControl(args);
+    propertyControl.control = new IconWidget({name: "valueString", iconValue: value});
+    connect(propertyControl.control, "iconValue", propertyControl, "propertyValue");
+    return propertyControl;
   }
 
-  renderStringControl({value, node, keyString}) {
-    this.control = new StringWidget({
+  static renderStringControl(args) {
+    let propertyControl,
+        {value, fastRender, keyString, valueString, node} = args;
+    if (fastRender) {
+      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+              ` ${value}`, {fontColor: Color.blue, paddingTop: '1px'}];
+    }
+    propertyControl = this.baseControl(args);
+    propertyControl.control = new StringWidget({
       name: "valueString",
-      stringValue: value,
+      stringValue: value || "",
       readOnly: keyString == "id"
     });
-    connect(this.control, "stringValue", this, "propertyValue");
-    connect(node, "isSelected", this.control, "isSelected");
-    return this;
+    connect(propertyControl.control, "stringValue", propertyControl, "propertyValue");
+    connect(node, "isSelected", propertyControl.control, "isSelected");
+    return propertyControl;
   }
 
-  renderRichTextControl(args) {
-
+  static renderRectangleControl(args) {
+    let propertyControl,
+        {value, fastRender, keyString, valueString} = args;
+    if (fastRender) {
+      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+              ` ${valueString}`, {fontColor: Color.black}];
+    }
+    propertyControl = this.baseControl(args);
+    propertyControl.control = new PaddingWidget({name: "valueString", rectangle: value});
+    connect(propertyControl.control, "rectangle", propertyControl, "propertyValue");
+    return propertyControl;
   }
 
-  renderRectangleControl({value}) {
-    this.control = new PaddingWidget({name: "valueString", rectangle: value});
-    connect(this.control, "rectangle", this, "propertyValue");
-    return this;
+  static renderVertexControl(args) {
+    let propertyControl,
+        {target, valueString, keyString, fastRender} = args;
+    if (fastRender) {
+      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+              ` ${valueString}`, {fontColor: Color.black}]
+    }
+    propertyControl = this.baseControl(args);
+    propertyControl.control = new VerticesWidget({context: target});
+    connect(propertyControl.control, "vertices", propertyControl, "propertyValue");
+    return propertyControl;
   }
 
-  renderVertexControl({target}) {
-    this.control = new VerticesWidget({context: target});
-    connect(this.control, "vertices", this, "propertyValue");
-    return this;
+  static renderBooleanControl(args) {
+    let propertyControl, {value, keyString, valueString, fastRender} = args;
+    if (fastRender) {
+       return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+               ` ${valueString}`, {fontColor: value ? Color.green : Color.red}]
+    }
+    propertyControl = this.baseControl(args);
+    propertyControl.control = new BooleanWidget({name: "valueString", boolean: value});
+    connect(propertyControl.control, "boolean", propertyControl, "propertyValue");
+    return propertyControl;
   }
 
-  renderBooleanControl(args) {
-    this.control = new BooleanWidget({
-      name: "valueString",
-      boolean: args.value
-    });
-    connect(this.control, "boolean", this, "propertyValue");
-    return this;
-  }
-
-  renderNumberControl({value, spec, keyString}) {
+  static renderNumberControl(args) {
+    let propertyControl, {value, spec, keyString, valueString, fastRender} = args;
     var baseFactor = .5, floatingPoint = spec.isFloat;
+    
+    if (fastRender) {
+      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+             ` ${value != undefined && (value.valueOf ? value.valueOf() : value.valueString)}`, 
+              {fontColor: NumberWidget.properties.fontColor.defaultValue}]
+    }
     if ("max" in spec && "min" in spec
         && spec.min != -Infinity && spec.max != Infinity) {
       baseFactor = (spec.max - spec.min) / 100;
       floatingPoint = true;
     }
-    this.control = new NumberWidget({
+    propertyControl = this.baseControl(args);
+    propertyControl.control = new NumberWidget({
       name: "valueString",
       baseFactor,
       extent: pt(50,17),
@@ -743,69 +793,111 @@ export class PropertyControl extends DraggableTreeLabel {
       ...("max" in spec ? {max: spec.max} : {}),
       ...("min" in spec ? {min: spec.min} : {})
     });
-    connect(this.control, "update", this, "propertyValue");
-    connect(this, "update", this.control, "number", {
+    connect(propertyControl.control, "update", propertyControl, "propertyValue");
+    connect(propertyControl, "update", propertyControl.control, "number", {
       updater: function($upd, val) {
         val = (val && val.valueOf ? val.valueOf() : val) || 0;
         if (this.targetObj.number != val) $upd(val);
       }
     });
-    return this;
+    return propertyControl;
   }
 
-  renderShadowControl(args) {
-    this.control = new ShadowWidget({name: "valueString", shadowValue: args.value});
-    connect(this.control, "update", this, "propertyValue");
-    connect(this, "update", this.control, "shadowValue", {
+  static renderShadowControl(args) {
+    let propertyControl, {fastRender, keyString, valueString, value} = args;
+    if (fastRender) {
+      // FIXME: actually display name of shadow
+       return [`${keyString}:`, {nativeCursor: "-webkit-grab", paddingRight: '6pt'}, 
+               `${value ? valueString : 'No Shadow'}`, {fontColor: Color.darkGray.darker()}]
+    }
+    propertyControl = this.baseControl(args);
+    propertyControl.control = new ShadowWidget({name: "valueString", shadowValue: args.value});
+    connect(propertyControl.control, "update", propertyControl, "propertyValue");
+    connect(propertyControl, "update", propertyControl.control, "shadowValue", {
       updater: function($upd, val) {
         val = (val && val.valueOf ? val.valueOf() : val) || null;
         if (this.targetObj.shadowValue != val) $upd(val);
       }
     });
-    return this;
+    return propertyControl;
   }
 
-  renderStyleSheetControl({target}) {
-    this.control = new StyleSheetWidget({context: target});
-    return this;
+  static renderStyleSheetControl(args) {
+    let propertyControl, {target, fastRender, valueString, keyString} = args;
+    if (fastRender) {
+      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+               ` ${valueString}`, {fontColor: Color.black}]
+    }
+    propertyControl = this.baseControl(args);
+    propertyControl.control = new StyleSheetWidget({context: target});
+    return propertyControl;
   }
 
-  renderPointControl(args) {
-    this.control = new PointWidget({name: "valueString", pointValue: args.value});
-    connect(this.control, "pointValue", this, "propertyValue");
-    connect(this, "update", this.control, "pointValue", {
+  static renderPointControl(args) {
+    let propertyControl, {fastRender, keyString, valueString, value} = args,
+        numberColor = NumberWidget.properties.fontColor.defaultValue;
+    if (fastRender) {
+      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+              ` pt(`, {}, 
+              `${value.x}`, {fontColor: numberColor},
+              ',', {}, `${value.y}`, {fontColor: numberColor}, ')', {}]
+    }
+    propertyControl = this.baseControl(args);
+    propertyControl.control = new PointWidget({name: "valueString", pointValue: args.value});
+    connect(propertyControl.control, "pointValue", propertyControl, "propertyValue");
+    connect(propertyControl, "update", propertyControl.control, "pointValue", {
       updater: function ($upd, val) {
         val = val && val.valueOf ? val.valueOf() : val;
         if (!this.targetObj.pointValue.equals(val)) $upd(val);
       }
     });
-    return this;
+    return propertyControl;
   }
 
-  renderLayoutControl({target}) {
-    this.control = new LayoutWidget({context: target});
-    connect(this.control, "layoutChanged", this, "propertyValue");
-    return this;
+  static renderLayoutControl(args) {
+    let propertyControl, {target, fastRender, valueString, keyString, value} = args;
+    if (fastRender) {
+      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+               ` ${value ? valueString : 'No Layout'}`, {fontColor: Color.black}];
+    }
+    propertyControl = this.baseControl(args);
+    propertyControl.control = new LayoutWidget({context: target});
+    connect(propertyControl.control, "layoutChanged", propertyControl, "propertyValue");
+    return propertyControl;
   }
 
-  renderColorControl(args, gradientEnabled = false) {
-    this.control = new ColorWidget({
+  static renderColorControl(args) {
+    let propertyControl, {node, gradientEnabled, fastRender, 
+                          valueString, keyString, value} = args;
+    if (fastRender) {
+      return [`${keyString}:`, {nativeCursor: "-webkit-grab", paddingRight: '23px'},
+               `${value ? (value.valueOf ? value.valueOf() : valueString) : 'No Color'}`, {
+                 fontColor: Color.darkGray}]
+    } 
+    propertyControl = this.baseControl(args);
+    propertyControl.control = new ColorWidget({
       color: (args.value && args.value.valueOf) ? args.value.valueOf() : args.value,
       gradientEnabled
     });
-    connect(this.control, "update", this, "propertyValue");
-    connect(this, "update", this.control, "color", {
+    connect(propertyControl.control, "update", propertyControl, "propertyValue");
+    connect(propertyControl, "update", propertyControl.control, "color", {
       updater: function ($upd, val) {
         val = (val && val.valueOf )? val.valueOf() : val;
         if (!this.targetObj.color.equals(val)) $upd(val);
       }
     });
-    return this;
+    return propertyControl;
   }
 
-  renderItSomehow(args) {
-    this.value += " " + args.valueString;
-    return this;
+  static renderItSomehow(args) {
+    let propertyControl, {fastRender, keyString, valueString} = args;
+    if (fastRender) {
+      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+              ` ${valueString}`, {fontColor: Color.black}]
+    }
+    propertyControl = this.baseControl(args);
+    propertyControl.value += " " + args.valueString;
+    return propertyControl;
   }
 
   relayout() {

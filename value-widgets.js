@@ -179,20 +179,32 @@ export class ColorWidget extends Morph {
     return {
       layout: {
         initialize() {
-          this.layout = new HorizontalLayout({direction: "centered", spacing: 1});
+          this.layout = new HorizontalLayout({direction: "centered"});
         }
       },
       color: {defaultValue: Color.blue},
       gradientEnabled: {defaultValue: false},
       fontSize: {defaultValue: 14},
+      isSelected: {
+        set(selected) {
+          if (this.getProperty('isSelected') != selected) {
+             selected ? this.addStyleClass('selected') : this.removeStyleClass('selected');
+             this.setProperty('isSelected', selected);
+          }
+        }
+      },
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
+            ".ColorWidget.selected .Label": {
+              fontColor: Color.white
+            },
             ".ColorWidget .Label": {
               opacity:.6,
               nativeCursor: "pointer",
               fontFamily: config.codeEditor.defaultStyle.fontFamily,
               fontSize: this.fontSize,
+              padding: 0
             },
             ".colorValue": {
               nativeCursor: "pointer",
@@ -451,6 +463,14 @@ export class NumberWidget extends Morph {
           this.updateStyleSheet();
         }
       },
+      isSelected: {
+        set(selected) {
+          if (this.getProperty('isSelected') != selected) {
+             selected ? this.addStyleClass('selected') : this.removeStyleClass('selected');
+             this.setProperty('isSelected', selected);
+          }
+        }
+      },
       fontFamily: {
         defaultValue: "Sans-Serif",
         set(v) {
@@ -498,7 +518,7 @@ export class NumberWidget extends Morph {
               label: Icon.makeLabel("sort-asc", {
                 rotation: Math.PI,
                 autofit: false,
-                padding: rect(0,0,0,-8),
+                padding: rect(3,0,0,-8),
                 fixedHeight: true, extent: pt(8,8),
                 fontSize: 12
               }).fit()
@@ -542,6 +562,9 @@ export class NumberWidget extends Morph {
       },
       ".NumberWidget": {
         clipMode: "hidden"
+      },
+      ".selected .Label": {
+        fontColor: Color.white
       },
       "[name=value]": {
         padding: this.padding,
@@ -685,6 +708,13 @@ export class PointWidget extends Label {
 
   static get properties() {
     return {
+      isSelected: {
+        defaultValue: "false",
+        set(v) {
+          this.setProperty("isSelected", v);
+          this.fontColor = v ? Color.white : Color.blue;
+        }
+      },
       fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
       nativeCursor: {defaultValue: "pointer"},
       styleClasses: {defaultValue: ["TreeLabel"]}, // in order to be highlighted in tree
@@ -726,6 +756,13 @@ export class PaddingWidget extends Label {
       nativeCursor: {defaultValue: "pointer"},
       styleClasses: {defaultValue: ["TreeLabel"]},
       fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
+      isSelected: {
+        defaultValue: "false",
+        set(v) {
+          this.setProperty("isSelected", v);
+          this.fontColor = v ? Color.white : Color.blue;
+        }
+      },
       rectangle: {
         defaultValue: rect(0),
         set(r) {
@@ -794,7 +831,7 @@ export class StringWidget extends InputLine {
       borderStyle: {defaultValue: "dashed"},
       borderRadius: {defaultValue: 4},
       borderWidth: {defaultValue: 1},
-      padding: {defaultValue: rect(5,0,5,0)},
+      padding: {defaultValue: rect(0,0,0,0)},
       fixedWidth:   {defaultValue: false},
       fixedHeight:   {defaultValue: false},
       stringValue: {
