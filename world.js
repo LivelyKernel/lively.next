@@ -686,7 +686,15 @@ export class World extends Morph {
   }
 
   showLayoutHaloFor(morph, pointerId = this.firstHand && this.firstHand.pointerId) {
-    return this.addMorph(morph.layout.inspect(pointerId));
+    let world = this,
+        ownerInWorld = morph === world ? null :
+                                  morph.owner === world ? morph :
+                                  morph.ownerChain().slice(-2)[0],
+        insertionIndex = ownerInWorld ?
+                          world.submorphs.indexOf(ownerInWorld) + 1 :
+                          world.submorphs.length,
+        overlay = morph.layout.inspect(pointerId);
+    return this.addMorphAt(overlay, insertionIndex);
   }
 
   highlightMorph(highlightOwner, morph, showLayout = false, highlightedSides = []) {
