@@ -13,7 +13,16 @@ import { connect, signal } from "lively.bindings";
 import { Color, LinearGradient, pt, rect } from "lively.graphics";
 import { num, obj } from "lively.lang";
 
-import { FillPopover, IconPopover, RectanglePopover, ShadowPopover, PointPopover, VerticesPopover, LayoutPopover, Popover } from "./styling/style-popover.js";
+import {
+  FillPopover,
+  IconPopover,
+  RectanglePopover,
+  ShadowPopover,
+  PointPopover,
+  VerticesPopover,
+  LayoutPopover,
+  Popover
+} from "./styling/style-popover.js";
 import { StyleSheetEditor } from "./styling/style-sheet-editor.js";
 import { ValueScrubber } from "lively.components/widgets.js";
 

@@ -1,6 +1,6 @@
 /*global target,connection*/
 import {
-  Morph,
+  Morph, Icon,
   ProportionalLayout,
   config,
   Text,
@@ -37,6 +37,7 @@ import { Icons } from "lively.morphic/text/icons.js";
 const duration = 200;
 
 export class Popover extends Morph {
+
   static get properties() {
     return {
       popoverColor: {
@@ -46,6 +47,7 @@ export class Popover extends Morph {
           this.updateStyleSheet();
         }
       },
+
       targetMorph: {
         derived: true,
         after: ['submorphs'],
@@ -60,46 +62,59 @@ export class Popover extends Morph {
             }
           ]
         },
-        get() {
-          return this.get('body').submorphs[0];
-        },
+        get() { return this.get('body').submorphs[0]; },
         set(m) {
           this.get('body').addMorph(m);
           this.relayout();
         }
       },
+
       styleSheets: {
         initialize() {
           this.updateStyleSheet();
         }
       },
+
       layout: {
         initialize() {
           this.layout = new CustomLayout({
-            relayout: function(self, animated) {
-              self.relayout(animated);
-            }
-          })
+            relayout(self, animated) { self.relayout(animated); }
+          });
         }
       },
+
       submorphs: {
         initialize() {
           this.submorphs = [
-            morph({
+            {
               type: "polygon",
               name: "arrow",
               borderColor: Color.transparent,
               vertices: [pt(-10, 0), pt(0, -15), pt(10, 0)]
-            }),
+            },
             {name: "body"},
+            {
+              name: "close button",
+              type: "button",
+              label: Object.assign(Icon.makeLabel("times-circle"), {fontSize: 18}),
+              tooltip: "close",
+              fill: null,
+              extent: pt(16,16),
+              borderColor: Color.transparent,
+            }
           ];
+          let [_1, _2, btn] = this.submorphs;
+          connect(btn, 'fire', this, 'close');
         }
       }
     };
   }
 
   relayout(animated) {
-    let body = this.get("body"), arrow = this.get("arrow"), offset = arrow.height;
+    let body = this.get("body"),
+        arrow = this.get("arrow"),
+        closeBtn = this.get("close button"),
+        offset = arrow.height;
     if (body.extent == this.extent) return;
     if (animated) {
       this.animate({
@@ -113,6 +128,7 @@ export class Popover extends Morph {
       this.origin = pt(this.width / 2, -offset);
       body.topCenter = pt(0, offset);
       arrow.bottomCenter = pt(0, offset);
+      closeBtn.topRight = body.topRight.addXY(8, -8);
     }
   }
 
@@ -418,40 +434,38 @@ export class LayoutPopover extends StylePopover {
   }
 
   controls() {
-    this.showLayoutHaloFor(this.container)
-    return [{
-      fill: Color.transparent,
+    this.showLayoutHaloFor(this.container);
+    return [
+      {
+        fill: Color.transparent,
         layout: new VerticalLayout({
           spacing: 5,
           layoutOrder: function(m) {
             return this.container.submorphs.indexOf(m);
           }
         }),
-      submorphs: [this.layoutPicker(), this.layoutControls()]
-    }];
+        submorphs: [this.layoutPicker(), this.layoutControls()]
+      }];
   }
 
   updateControls() {
     this.get('Layout Type').relayout();
-    if (this.layoutHalo) {
-      this.getSubmorphNamed("controlContainer").animate({
-        isLayoutable: true,
-        submorphs: this.layoutHalo.optionControls(this),
-        duration: 300
-      });
-    } else {
-      this.getSubmorphNamed("controlContainer").animate({
-        isLayoutable: false,
-        extent: pt(0, 0), submorphs: [],
-        duration: 300
-      });
-    }
+    this.getSubmorphNamed("controlContainer").animate(this.layoutHalo ? {
+      isLayoutable: true,
+      submorphs: this.layoutHalo.optionControls(this),
+      duration: 300
+    } : {
+      isLayoutable: false,
+      extent: pt(0, 0), submorphs: [],
+      duration: 300
+    });
   }
 
   showLayoutHaloFor(morph) {
     this.clearLayoutHalo();
     if (!morph || !morph.layout) return;
-    this.layoutHalo = $world.showLayoutHaloFor(morph);
+    let world = morph.world() || morph.env.world;
+    this.layoutHalo = world.showLayoutHaloFor(morph);
   }
 
   clearLayoutHalo() {
@@ -480,17 +494,15 @@ export class LayoutPopover extends StylePopover {
 
   layoutPicker() {
     const items = this.getLayoutObjects().map(l => {
-      return {
-        [this.getLayoutName(l)]: l
-      };
+      return {[this.getLayoutName(l)]: l};
     });
     let layoutSelector = this.get("Layout Type") || new DropDownSelector({
-            name: "Layout Type",
-            borderRadius: 2, padding: 3,
-            getCurrentValue: () => this.getCurrentLayoutName(),
-            selectedValue: this.container.layout,
-            values: obj.merge(items)
-          });
+      name: "Layout Type",
+      borderRadius: 2, padding: 3,
+      getCurrentValue: () => this.getCurrentLayoutName(),
+      selectedValue: this.container.layout,
+      values: obj.merge(items)
+    });
     connect(layoutSelector, 'selectedValue', this, 'applyLayout');
     return layoutSelector;
   }
@@ -633,32 +645,32 @@ export class ShadowPopover extends StylePopover {
 
   shadowControls() {
     let value = this.shadowValue,
-          distanceInspector = new NumberWidget({
-      min: 0,
-      name: "distanceSlider",
-      number: value.distance,
-      unit: "px"
-    }),
-          angleSlider = new NumberWidget({
-            name: "angleSlider",
-            min: 0,
-            max: 360,
-            number: value.rotation
-          }),
-          spreadInspector = new NumberWidget({
-            name: "spreadSlider",
-            min: 0,
-            number: value.spread
-          }),
-          blurInspector = new NumberWidget({
-            name: "blurSlider",
-            min: 0,
-            number: value.blur
-          }),
-          colorField = new ColorPickerField({
-            name: "colorPicker",
-            colorValue: value.color
-          });
+        distanceInspector = new NumberWidget({
+          min: 0,
+          name: "distanceSlider",
+          number: value.distance,
+          unit: "px"
+        }),
+        angleSlider = new NumberWidget({
+          name: "angleSlider",
+          min: 0,
+          max: 360,
+          number: value.rotation
+        }),
+        spreadInspector = new NumberWidget({
+          name: "spreadSlider",
+          min: 0,
+          number: value.spread
+        }),
+        blurInspector = new NumberWidget({
+          name: "blurSlider",
+          min: 0,
+          number: value.blur
+        }),
+        colorField = new ColorPickerField({
+          name: "colorPicker",
+          colorValue: value.color
+        });
     connect(colorField, "colorValue", this, "updateShadow", {converter: color => ({color})});
     connect(this, 'onMouseDown', colorField, 'removeWidgets');
     connect(this, 'close', colorField, 'remove');
