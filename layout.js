@@ -620,10 +620,12 @@ export class TilingLayout extends Layout {
 
   constructor(props = {}) {
     super(props);
-    this._axis = props.axis || 'row'
+    this._axis = props.axis || 'row';
+    this._align = props.align || 'left';
   }
   
   name() { return "Tiling" }
+
   description() { return "Make the submorphs fill their owner, inserting breaks to defer intersecting the bounds as much as possible." }
 
   inspect(pointerId) {
@@ -633,66 +635,95 @@ export class TilingLayout extends Layout {
   get axis() { return this._axis }
   set axis(a) { this._axis = a; this.apply() }
 
+  get align() { return this._align }
+  set align(a) { this._align = a; this.apply() }
+
   get spacing() { return this._spacing; }
   set spacing(offset) { this._spacing = offset; this.apply(); }
 
   apply(animate = false) {
     if (this.active || !this.container) return;
+
     this.active = true;
     super.apply(animate);
-    var width = this.getOptimalWidth(this.container),
-        widthAccessor = this.axis == "row" ? 'left' : 'top', heightAccessor = this.axis == "row" ? 'top' : 'left', 
-        normalizedWidthAccessor = this.axis == "row" ? 'x' : 'y', 
-        normalizedHeightAccessor = this.axis == "row" ? 'y' : 'x',
-        currentRowHeight = 0,
-        currentRowWidth = this.border[widthAccessor],
-        {spacing, layoutableSubmorphs} = this,
-        previousRowHeight = spacing + this.border[heightAccessor],
-        i = 0,
-        rowSwitch = true;
 
-    while (i < layoutableSubmorphs.length) {
-      var submorphExtent = layoutableSubmorphs[i].extent, newPos;
-      if (rowSwitch || currentRowWidth + submorphExtent[normalizedWidthAccessor] + 2 * spacing <= width) {
-        newPos = this.axis == 'row' ? 
-          pt(currentRowWidth + spacing, previousRowHeight) : 
-          pt(previousRowHeight, currentRowWidth + spacing);
-        rowSwitch = false;
+    let {container, axis, align, border, spacing, layoutableSubmorphs} = this,
+        width = this.getOptimalWidth(container),
+        isHorizontal = axis == "row",
+        widthAccessor = isHorizontal ? 'left' : 'top',
+        heightAccessor = isHorizontal ? 'top' : 'left', 
+        normalizedWidthAccessor = isHorizontal ? 'x' : 'y', 
+        normalizedHeightAccessor = isHorizontal ? 'y' : 'x',
+        currentRowHeight = 0,
+        previousRowHeight = spacing + border[heightAccessor];
+
+    while (layoutableSubmorphs.length) {
+
+      var remainingWidth = width - spacing,
+          rowMorphs = arr.takeWhile(layoutableSubmorphs, m => {
+            var ext = m.extent,
+                newWidth = remainingWidth - (ext[normalizedWidthAccessor] + spacing);
+            if (newWidth < 0) return false;
+            remainingWidth = newWidth;
+            return true;
+          });
+
+      if (rowMorphs.length) layoutableSubmorphs.splice(0, rowMorphs.length);
+      else {
+        rowMorphs = [layoutableSubmorphs.shift()]
+        remainingWidth = 0;
+      }
+
+      var pos;
+
+      if (isHorizontal) {
+        pos = "center" === align ?
+          pt(remainingWidth/2 + spacing + border[widthAccessor], previousRowHeight) :
+          pt(spacing, previousRowHeight);
+
+      } else {
+        pos = "center" === align ?
+          pt(previousRowHeight, remainingWidth/2 + spacing + border[widthAccessor]) :
+          pt(previousRowHeight, spacing);
+      }
+
+      for (let m of rowMorphs) {
         if (animate) {
           const {duration, easing} = animate;
-          layoutableSubmorphs[i].animate({position: newPos, duration, easing});
+          m.animate({position: pos, duration, easing});
         } else {
-          layoutableSubmorphs[i].position = newPos;
+          m.position = pos;
         }
-        currentRowHeight = Math.max(currentRowHeight, submorphExtent[normalizedHeightAccessor]);
-        currentRowWidth += spacing + submorphExtent[normalizedWidthAccessor];
-        i++;
-      } else {
-        previousRowHeight += spacing + currentRowHeight;
-        currentRowWidth = this.border[widthAccessor];
-        currentRowHeight = 0;
-        rowSwitch = true;
+        pos = isHorizontal ?
+          pos.addXY(spacing + m.extent[normalizedWidthAccessor], 0) :
+          pos.addXY(0, spacing + m.extent[normalizedWidthAccessor]);
+        currentRowHeight = Math.max(currentRowHeight, m.extent[normalizedHeightAccessor]);
       }
+
+      previousRowHeight += spacing + currentRowHeight;
     }
 
     this.active = false;
   }
 
   getMinWidth() {
-    return this.layoutableSubmorphs.reduce((s, e) => (e.extent.x > s) ? e.extent.x : s, 0) +
-          this.border.left + this.border.right;
+    var {layoutableSubmorphs, border: {left, right}} = this;
+    return layoutableSubmorphs.reduce((s, m) =>
+      (m.width > s) ? m.width : s, 0) + left + right;
   }
 
   getMinHeight() {
-    return this.layoutableSubmorphs.reduce((s, e) => (e.extent.y > s) ? e.extent.y : s, 0) +
-          this.border.top + this.border.bottom;
+    var {layoutableSubmorphs, border: {top, bottom}} = this;
+    return layoutableSubmorphs.reduce((s, e) =>
+      (e.height > s) ? e.height : s, 0) + top + bottom;
   }
 
   getOptimalWidth(container) {
-    var width = this.axis == 'row' ? 
-                   container.width - this.border.left - this.border.right :
-                   container.height - this.border.top - this.border.bottom,
-        maxSubmorphWidth = this.axis == 'row' ? this.getMinWidth() : this.getMinHeight();
+    var {axis, border: {left, top, right, bottom}} = this,
+        width = axis == 'row' ? 
+                   container.width - left - right :
+                   container.height - top - bottom,
+        maxSubmorphWidth = axis == 'row' ? this.getMinWidth() : this.getMinHeight();
     return Math.max(width, maxSubmorphWidth);
   }
 

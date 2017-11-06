@@ -75,6 +75,10 @@ textarea.lively-text-input.debug {
   z-index: 2;
 }
 
+.TilingLayoutHalo {
+  z-index: auto;
+}
+
 .HaloItem:not(.NameHaloItem) {
   /*FIXME: we shouldn't need to hardcode the size...*/
   line-height: 24px !important;
