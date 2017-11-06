@@ -310,8 +310,8 @@ export class ObjectEditor extends Morph {
     if (props.savedMarks) props.savedMarks.value = [];
 
     var ref = pool.ref(classTree);
-    if (ref.currentSnapshot.props.selection)
-      ref.currentSnapshot.props.selection.value = null;
+    if (ref.currentSnapshot.props.selectedNode)
+      ref.currentSnapshot.props.selectedNode.value = null;
     var ref = pool.ref(classTree.nodeItemContainer);
     if (ref.currentSnapshot.props.submorphs)
       ref.currentSnapshot.props.submorphs.value = [];
@@ -506,7 +506,7 @@ export class ObjectEditor extends Morph {
                   + (node.target.owner ? `.${node.target.owner.name}` : "") :
         node.name);
 
-    if (selectedClass && selectedMethod && !tree.selection) {
+    if (selectedClass && selectedMethod && !tree.selectedNode) {
       // method rename, old selectedMethod does no longer exist
       await this.selectClass(selectedClass);
     }
@@ -690,9 +690,9 @@ export class ObjectEditor extends Morph {
       klass = this.classChainOfTarget().find(ea => ea.name === klass);
     }
 
-    if (!tree.selection || tree.selection.target !== klass) {
+    if (!tree.selectedNode || tree.selectedNode.target !== klass) {
       let node = tree.nodes.find(ea => !ea.isRoot && ea.target === klass);
-      tree.selection = node;
+      tree.selectedNode = node;
     }
 
     let descr = this.sourceDescriptorFor(klass);
@@ -720,13 +720,13 @@ export class ObjectEditor extends Morph {
     }
 
     var tree = this.ui.classTree;
-    if (this.state.selectedClass !== klass || !tree.selection)
+    if (this.state.selectedClass !== klass || !tree.selectedNode)
       await this.selectClass(klass);
 
-    await tree.uncollapse(tree.selection);
-    if (!tree.selection || tree.selection.target !== methodSpec) {
+    await tree.uncollapse(tree.selectedNode);
+    if (!tree.selectedNode || tree.selectedNode.target !== methodSpec) {
       var node = tree.nodes.find(ea => ea.target.owner === klass && ea.target.name === methodSpec.name);
-      tree.selection = node;
+      tree.selectedNode = node;
       tree.scrollSelectionIntoView();
     }
 
