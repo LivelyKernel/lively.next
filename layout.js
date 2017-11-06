@@ -711,13 +711,9 @@ export class TilingLayoutHalo extends Morph {
     });
   }
 
-  updateSpacing(s) {
-    this.target.spacing = s;
-  }
-
-  updateAxis(a) {
-    this.target.axis = a;
-  }
+  updateSpacing(s) { this.target.spacing = s; }
+  updateAxis(a) { this.target.axis = a; }
+  updateAlign(a) { this.target.align = a; }
 
   optionControls() {
     const layout = this.target,
@@ -726,6 +722,12 @@ export class TilingLayoutHalo extends Morph {
             padding: 3,
             selectedValue: layout.axis,
             values: ['row', 'column']
+          }),
+          alignControl = new DropDownSelector({
+            borderRadius: 2,
+            padding: 3,
+            selectedValue: layout.align,
+            values: ['left', 'center']
           }),
           spacing = new NumberWidget({
             min: 0,
@@ -736,38 +738,21 @@ export class TilingLayoutHalo extends Morph {
             borderColor: Color.gray,
             unit: "px"
           });
-    connect(spacing, 'udpate', this, 'updateSpacing');
+    connect(spacing, 'update', this, 'updateSpacing');
+    connect(alignControl, 'update', this, 'updateAlign');
     connect(axisControl, 'update', this, 'updateAxis');
+    let lineSpec = {
+      type: "text",
+      padding: rect(0,5,5,5),
+      fill: Color.transparent,
+      fontColor: Color.gray.darker(),
+      readOnly: true
+    };
     return [
-      [
-        {
-          type: "text",
-          textString: "Submorph Spacing",
-          padding: rect(0,5,5,5),
-          fill: Color.transparent,
-          fontColor: Color.gray.darker(),
-          readOnly: true
-        },
-        spacing
-      ],
-      [
-        {
-          type: "text",
-          textString: "Tiling Axis",
-          padding: rect(0,5,5,5),
-          fill: Color.transparent,
-          fontColor: Color.gray.darker(),
-          readOnly: true
-        },
-        axisControl
-      ]
-    ].map(x => {
-      return {
-        submorphs: x,
-        fill: Color.transparent,
-        layout: new HorizontalLayout({spacing: 3})
-      };
-    });
+      [{...lineSpec, textString: "Submorph Spacing"}, spacing],
+      [{...lineSpec, textString: "Tiling Align"}, alignControl],
+      [{...lineSpec, textString: "Tiling Axis"}, axisControl]
+    ].map(x => ({submorphs: x, fill: null, layout: new HorizontalLayout({spacing: 3})}));
   }
 
 }
@@ -984,11 +969,11 @@ export class ProportionalLayoutHalo extends Morph {
   }
 
   async chooseSubmorphToChangeLayoutSettings() {
-    /*global inspect*/
     let morphs = this.target.layoutableSubmorphs, submorph;
     if (this.env.eventDispatcher.isKeyPressed("Shift")) {
-      let items = morphs.map(m => { return {isListItem: true, string: String(m), value: m};});
-      ({selected: [submorph]} = await $world.listPrompt("Select morph", items, {requester: this, onSelection: ea => ea.show()}));
+      let items = morphs.map(m => ({isListItem: true, string: String(m), value: m}));
+      ({selected: [submorph]} = await $world.listPrompt(
+        "Select morph", items, {requester: this, onSelection: ea => ea.show()}));
     } else {
       submorph = await InteractiveMorphSelector.selectMorph(
         this.world(), this, target => morphs.includes(target));
