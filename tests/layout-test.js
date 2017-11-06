@@ -1,7 +1,7 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
 import { expect } from "mocha-es6";
 import { Morph, morph, VerticalLayout, HorizontalLayout, TilingLayout, GridLayout, MorphicEnv } from "../index.js";
-import { pt, Color, rect } from "lively.graphics";
+import { pt, Point, Color, rect } from "lively.graphics";
 import { arr } from "lively.lang";
 import { ProportionalLayout } from "../layout.js";
 
@@ -169,6 +169,42 @@ describe("layout", () => {
       expect(m3.position).equals(m2.topRight);
     });
 
+    describe("variations", () => {
+
+      let container;
+      beforeEach(() => {
+        container = morph({fill: Color.random(), extent: pt(300, 200), clipMode: "hidden"})
+        container.submorphs = arr.range(0, 20).map(_ => morph({fill: Color.random(), extent: Point.random(pt(100, 20)).maxPt(pt(20,20))}));
+      });
+
+      it("axis: row", () => {
+        container.layout = new TilingLayout({spacing: 5, axis: "row"});
+        let rows = arr.groupBy(container.submorphs, m => m.position.y).toArray().map(row => arr.sortBy(row, ea => ea.position.x));
+        rows.slice(0, -1).forEach(row => expect(row.length).gt(1));
+        expect(rows[0][0].position).deep.equals(pt(5, 5), "first morph pos");
+        for (let i = 0; i < rows.length; i++) {
+          for (let j = 0; j < rows[i].length-1; j++) {
+            let [a, b] = rows[i].slice(j);
+            expect(a.topRight.addXY(5,0)).deep.equals(b.topLeft, `layout: row ${j}, col ${j}`)
+          }
+        }
+      });
+
+      it("axis: row, align: center", () => {
+        container.layout = new TilingLayout({spacing: 10, axis: "row", align: "center"});;
+        let rows = arr.groupBy(container.submorphs, m => m.position.y).toArray().map(row => arr.sortBy(row, ea => ea.position.x));
+        rows.slice(0, -1).forEach(row => expect(row.length).gt(1));
+        for (let i = 0; i < rows.length; i++) {
+          expect(rows[i][0].left).equals(container.width-arr.last(rows[i]).right);
+          for (let j = 0; j < rows[i].length-1; j++) {
+            let [a, b] = rows[i].slice(j);
+            expect(a.topRight.addXY(10,0)).deep.equals(b.topLeft, `layout: row ${j}, col ${j}`)
+          }
+        }
+      });
+
+    });
+    
   });
   
   describe("layout cells", () => {
