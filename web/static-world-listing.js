@@ -58,7 +58,7 @@ export async function showWorlds(loc, user) {
     if (!user) loc = "public"
     else {
       let userName = user.name;
-      filterFn = `(ea, i) => true`;
+      filterFn = `(ea, i) => !ea.tags.includes("hidden")`;
     }
   }
 
