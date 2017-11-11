@@ -69,20 +69,21 @@ export async function injectImportsIntoText(textMorph, imports, opts) {
         pos = textMorph.cursorPosition,
         before = textMorph.getLine(pos.row).slice(0, pos.col);
     textMorph.selection.text = source;
-    if (!gotoImport) textMorph.scrollCursorIntoView();
+    if (!gotoImport) {
+      textMorph.scrollCursorIntoView();
+      textMorph.focus();
+    }
   }
 
   if (recordUndo) textMorph.undoManager.group();
 
   // 5. select changes in import statements
   if (gotoImport) {
-    if (ranges.length) {
-      textMorph.selection = arr.last(ranges);
-      textMorph.scrollCursorIntoView();
-    } else {
-      textMorph.selection = {start: pos, end: textMorph.indexToPosition(to)};
-      textMorph.scrollCursorIntoView();
-    }
+    textMorph.selection = ranges.length ?
+      arr.last(ranges) :
+      {start: pos, end: textMorph.indexToPosition(to)};
+    textMorph.scrollCursorIntoView();
+    textMorph.focus();    
   }
 
   return {ranges};
