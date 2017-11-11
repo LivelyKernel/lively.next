@@ -1,5 +1,6 @@
 /*global System*/
 import { Rectangle, Color } from "lively.graphics";
+import bowser from "bowser";
 
 if (typeof $world !== "undefined") {
   $world.withAllSubmorphsDo(ea =>
@@ -354,7 +355,7 @@ var config = {
     defaultStyle: {
       fontFamily: "Monaco, Inconsolata, monospace",
       padding: Rectangle.inset(4, 2, 4, 2),
-      fontSize: 12,
+      fontSize: bowser.mac ? 12 : 16,
       clipMode: "auto",
     }
   },
