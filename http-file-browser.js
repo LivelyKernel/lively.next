@@ -408,7 +408,7 @@ export default class HTTPFileBrowser extends Morph {
 
           connect(this, "extent", this, "relayout");
           connect(locationInput, "inputAccepted", this, "onLocationChanged");
-          connect(fileTree, "selection", this, "showSelectedFile");
+          connect(fileTree, "selectedNode", this, "showSelectedFile");
 
           connect(searchButton,       "fire", this, "execCommand", {converter: () => "find file and select"});
           connect(reloadButton,       "fire", this, "execCommand", {converter: () => "refresh contents"});
@@ -467,12 +467,12 @@ export default class HTTPFileBrowser extends Morph {
         },
         set(urlOrResource) {
           if (!urlOrResource) {
-            this.ui.fileTree.selection = null;
+            this.ui.fileTree.selectedNode = null;
           } else {
             var res = typeof urlOrResource === "string" ?
               resource(urlOrResource) : urlOrResource;
             var node = this.ui.fileTree.nodes.find(({resource}) => resource.url === res.url);
-            this.ui.fileTree.selection = node;
+            this.ui.fileTree.selectedNode = node;
           }
           this.ui.fileTree.focus();
         }
@@ -592,13 +592,9 @@ export default class HTTPFileBrowser extends Morph {
     ({resource: {url}}) => url);
   }
 
-  focus() {
-    this.ui.fileTree.focus();
-  }
+  focus() { this.ui.fileTree.focus(); }
 
-  get commands() {
-    return browserCommands.concat(super.commands);
-  }
+  get commands() { return browserCommands.concat(super.commands); }
 
   get keybindings() {
     return [
