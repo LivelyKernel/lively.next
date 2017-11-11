@@ -56,7 +56,7 @@ export class Tree extends Text {
       readOnly: {defaultValue: true},
       fixedWidth: {defaultValue: true},
       fixedHeight: {defaultValue: true},
-      lineHeight: {defaultValue: 1.3},
+      lineHeight: {defaultValue: 1.5},
       clipMode: {defaultValue: "auto"},
       padding: {defaultValue: Rectangle.inset(3)},
 
