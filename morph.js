@@ -1104,6 +1104,8 @@ class RotateHaloItem extends HaloItem {
 }
 
 
+const nameNumberRe = /(.+)([0-9]+)$/;
+
 class CopyHaloItem extends HaloItem {
 
   static get morphName() { return "copy"; }
@@ -1120,7 +1122,7 @@ class CopyHaloItem extends HaloItem {
     if (isMultiSelection) {
       // FIXME! haaaaack
       let copies = target.selectedMorphs.map(ea => world.addMorph(ea.copy())),
-          positions = copies.map(ea => {ea.name += ' copy'; return ea.position;});
+          positions = copies.map(ea => {ea.name = findNewName(target, ea.name); return ea.position;});
       copies[0].undoStart("copy-halo");
       world.addMorph(halo);
       halo.refocus(copies);
@@ -1132,12 +1134,22 @@ class CopyHaloItem extends HaloItem {
     } else {
       let pos = target.globalPosition,
           copy = world.addMorph(target.copy());
-      copy.name += ' copy';
+      copy.name = findNewName(target, target.name);
       copy.globalPosition = pos;
       copy.undoStart("copy-halo");
       hand.grab(copy);
       world.addMorph(halo);
       halo.refocus(copy);
+    }
+
+    function findNewName(originalMorph, name) {
+      if (!name.match(nameNumberRe)) return name + "1";
+      return name.replace(nameNumberRe, (_, name, num) => {
+        if (!num) num = "0";
+        let n = Number(num);
+        while (originalMorph.get(name + ++n)) {}
+        return name + n;
+      });
     }
   }
 
