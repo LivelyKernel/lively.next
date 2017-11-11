@@ -462,6 +462,7 @@ class DraggedProp extends Morph {
 
   update(handPosition) {
     var target = this.morphBeneath(handPosition), hiddenMorph;
+    if (!target) return;
     if (target == this.morphHighlighter) {
       target = target.morphBeneath(handPosition);
     }
