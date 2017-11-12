@@ -1,4 +1,4 @@
-import { pt, rect } from "lively.graphics";
+import { pt, Rectangle, rect } from "lively.graphics";
 import { arr, Closure, num, grid, obj } from "lively.lang";
 import {
   GridLayoutHalo, ProportionalLayoutHalo,
@@ -13,11 +13,10 @@ import { once } from "lively.bindings";
 class Layout {
 
   constructor(args = {}) {
-    let {spacing, border, container, manualUpdate,
+    let {spacing, padding, border, container, manualUpdate,
          autoResize, ignore, onScheduleApply, layoutOrder} = args;
     this.applyRequests = [];
     this.border = {top: 0, left: 0, right: 0, bottom: 0, ...border};
-    this.spacing = spacing || 0;
     this.ignore = ignore || [];
     this.lastBoundsExtent = this.container && this.container.bounds().extent();
     this.active = false;
@@ -29,6 +28,8 @@ class Layout {
       this.layoutOrder = layoutOrder;
       this.layoutOrderSource = JSON.stringify(String(layoutOrder));
     }
+    this.spacing = spacing || 0;
+    this._padding = !padding ? null : typeof padding === "number" ? Rectangle.inset(padding) : padding;
   }
 
   attach() {
@@ -46,6 +47,15 @@ class Layout {
   enable(animation) {
     this.active = false;
     this.scheduleApply(null, animation);
+  }
+
+  get padding() { return this._padding; }
+  set padding(padding) {
+    if (typeof padding === "number") {
+      padding = Rectangle.inset(padding);
+    }
+    this._padding = padding;
+    this.apply();
   }
 
   boundsChanged(container) {
@@ -231,6 +241,7 @@ export class FillLayout extends Layout {
     this.morphs = config.morphs || [];
     this.fixedHeight = config.fixedHeight;
     this.fixedWidth = config.fixedWidth;
+    this._spacing = 0;
   }
 
   name() { return "Fill" }
@@ -324,11 +335,16 @@ export class VerticalLayout extends FloatLayout {
           resizeSubmorphs,
           spacing,
           align,
-          layoutableSubmorphs
+          layoutableSubmorphs,
+          padding
         } = this,
-        pos = pt(spacing, spacing),
+        padLeft = padding ? padding.left() : 0,
+        padRight = padding ? padding.right() : 0,
+        padTop = padding ? padding.top() : 0,
+        padBottom = padding ? padding.bottom() : 0,
+        pos = pt(padLeft + spacing, padTop + spacing),
         containerWidth = container.width,
-        submorphWidth = containerWidth - spacing*2,
+        submorphWidth = containerWidth - spacing*2 - padLeft - padRight,
         maxWidth = 0;
 
     this.active = true;
@@ -353,7 +369,7 @@ export class VerticalLayout extends FloatLayout {
     }
 
     if (autoResize && layoutableSubmorphs.length > 0) {
-      const newExtent = pt(maxWidth + 2 * spacing, pos.y);
+      const newExtent = pt(maxWidth + 2 * spacing + padLeft + padRight, padBottom + pos.y);
       if (animate) {
         const {duration, easing} = animate;
         this.container.animate({extent: newExtent, duration, easing});
