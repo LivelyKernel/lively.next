@@ -474,7 +474,7 @@ export default class L2LClient extends L2LConnection {
           let {userRealm, userToken, l2lUserToken, location, type, world} = record.info || {},
               peer = {...obj.dissoc(record, ["info"]), id, world, location, type};
           userToken = userToken || l2lUserToken;
-          if (userToken) {
+          if (userToken && userToken !== "null") {
             if (lively.user) {
               peer.user = lively.user.ClientUser.fromToken(userToken, userRealm);
             } else {
