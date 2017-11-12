@@ -55,6 +55,7 @@ export default class ObjectDBPlugin {
             case "ensureDB":           return await this.ensureDB(req, res);
             case "destroyDB":          return await this.destroyDB(req, res);
             case "commit":             return await this.commit(req, res);
+            case "revert":             return await this.revert(req, res);
             case "exportToDir":        return await this.exportToDir(req, res);
             case "importFromDir":      return await this.importFromDir(req, res);
             case "importFromSpecs":    return await this.importFromSpecs(req, res);
@@ -255,6 +256,15 @@ sources.join("\n\n");
   async commit(req, res) {
     let {db, type, name, ref, expectedParentCommit, commitSpec, snapshot, preview} = await readBody(req),
         result = await ObjectDBInterface.commit({db, type, name, ref, expectedParentCommit, commitSpec, snapshot, preview});
+    if (typeof result !== "object") result = {status: String(result)};
+    let payload = JSON.stringify(result);
+    res.writeHead(200, {"content-type": "application/json"});
+    res.end(payload);
+  }
+
+  async revert(req, res) {
+    let {db, type, name, ref, toCommitId} = await readBody(req),
+        result = await ObjectDBInterface.revert({db, type, name, ref, toCommitId});
     if (typeof result !== "object") result = {status: String(result)};
     let payload = JSON.stringify(result);
     res.writeHead(200, {"content-type": "application/json"});
