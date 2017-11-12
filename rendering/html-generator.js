@@ -1,6 +1,7 @@
 import { tidyHtml } from "lively.ide/html/editor-plugin.js";
 import { IFrameMorph, show } from "lively.morphic";
 import { create as createNode } from "virtual-dom";
+import { tree } from "lively.lang";
 
 export function morphToNode(morph, renderer = morph.env.renderer) {
   let vNode = morph.render(renderer),
@@ -65,11 +66,11 @@ export async function generateHTML(morph, htmlResource, options = {}) {
   root.style.transform = "";
 
   if (removeTargetFromLinks) {
-    lively.lang.tree.postwalk(root, (node) => {
+    tree.postwalk(root, (node) => {
       if (String(node.tagName).toLowerCase() !== "a") return;
       if (node.target === "_blank" && !node.getAttribute("href").startsWith("http"))
         node.setAttribute("target", "");
-    }, n => n.childNodes)
+    }, n => n.childNodes);
   }
 
   let morphHtml = `<div class="exported-morph-container ${htmlClassName}"`
@@ -77,7 +78,7 @@ export async function generateHTML(morph, htmlResource, options = {}) {
                                    options.backgroundColor.toCSSString() : 'None'};
                               max-width: ${containerWidth || root.style.width};`
                 + `           height: ${containerHeight || root.style.height};">`
-                + `${root.outerHTML}\n</div>`, html;
+                + `${root.outerHTML.replace(/position: absolute;/, "")}\n</div>`, html;
 
   if (isFragment) {
     html = addStyles ? morphicStyles() + morphHtml : morphHtml;
