@@ -185,15 +185,17 @@ async function setupLively2Lively(world) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export async function interactivelySaveWorld(world, options) {
-  options = {showSaveDialog: true, confirmOverwrite: true, ...options};
+  options = {showSaveDialog: true, useExpectedCommit: true, errorOnMissingExpectedCommit: false, confirmOverwrite: true, ...options};
 
   let name = world.name, tags = [], description = "",
       oldCommit = Path("metadata.commit").get(world),
-      db = MorphicDB.default;
+      db = options.morphicdb || MorphicDB.default;
 
   if (options.showSaveDialog) {
-    let dialog = await loadObjectFromPartsbinFolder("save world dialog");
-    ({name, tags, description} = await world.openPrompt(dialog, {targetWorld: world}));
+    let dialog = await loadObjectFromPartsbinFolder("save world dialog"),
+        {commit, db: dialogDB} = await world.openPrompt(dialog, {targetWorld: world});
+    if (dialogDB) db = dialogDB;
+    ({name, tags, description} = commit);
     if (!name) return null;
   } else if (oldCommit) {
     ({name, tags, description} = oldCommit);
@@ -209,16 +211,18 @@ export async function interactivelySaveWorld(world, options) {
         oldName = oldCommit ? oldCommit.name : world.name,
         expectedParentCommit;
 
-    if (oldName !== name && options.confirmOverwrite) {
-      let {exists, commitId: existingCommitId} = await db.exists("world", name);
-      if (exists) {
-        let overwrite = await world.confirm(`A world "${name}" already exists, overwrite?`);
-        if (!overwrite) return null;
-        expectedParentCommit = existingCommitId;
+    if (options.useExpectedCommit) {
+      if (oldName !== name && options.confirmOverwrite) {
+        let {exists, commitId: existingCommitId} = await db.exists("world", name);
+        if (exists) {
+          let overwrite = await world.confirm(`A world "${name}" already exists, overwrite?`);
+          if (!overwrite) return null;
+          expectedParentCommit = existingCommitId;
+        }
+        world.name = name;
+      } else {
+        expectedParentCommit = oldCommit ? oldCommit._id : undefined;
       }
-      world.name = name;
-    } else {
-      expectedParentCommit = oldCommit ? oldCommit._id : undefined;
     }
 
     i.remove();
@@ -247,6 +251,11 @@ export async function interactivelySaveWorld(world, options) {
     return commit;
 
   } catch (err) {
+
+    if (err.message.includes("but no version entry exists") && !options.errorOnMissingExpectedCommit) {
+      return interactivelySaveWorld(world, {...options, morphicdb: db, useExpectedCommit: false, showSaveDialog: false});
+    }
+
     let [_, typeAndName, expectedVersion, actualVersion] = err.message.match(/Trying to store "([^\"]+)" on top of expected version ([^\s]+) but ref HEAD is of version ([^\s\!]+)/) || [];
     if (expectedVersion && actualVersion) {
       let [newerCommit] = await db.log(actualVersion, 1, /*includeCommits = */true);
@@ -260,7 +269,7 @@ export async function interactivelySaveWorld(world, options) {
       }
       if (!overwrite) return null;
       world.changeMetaData("commit", obj.dissoc(newerCommit, ["preview"]), /*serialize = */true, /*merge = */false);
-      return interactivelySaveWorld(world, {...options, showSaveDialog: false});
+      return interactivelySaveWorld(world, {...options, morphicdb: db, showSaveDialog: false});
     }
 
     console.error(err);
