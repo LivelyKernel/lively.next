@@ -33,7 +33,8 @@ export default class NodeJSFileResource extends Resource {
   }
 
   async read() {
-    return readFileP(this.path()).then(String);
+    let readP = readFileP(this.path());
+    return this.binary ? readP : readP.then(String);
   }
 
   async write(content) {
