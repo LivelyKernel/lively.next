@@ -36,7 +36,6 @@ export function morphicStyles() {
         .map(ea => ea.outerHTML.replace(`href="${document.location.origin}`, `href="`)).join("\n"),
       styles = Array.from(document.querySelectorAll("style"))
         .map(ea => ea.outerHTML).join("\n")
-        .replace(/white-space: pre[^\;]*;/g, "")
         .replace(/[^\s]*user-select: none;/g, "");
   return `${styles}\n${styleLinks}`;
 }
@@ -89,9 +88,8 @@ export async function generateHTML(morph, htmlResource, options = {}) {
     html += `</head><body style="margin: 0;">\n` + morphHtml + "</body>"
   }
 
-  html = await tidyHtml(html);
-  if (htmlResource)
-    await htmlResource.write(html);
+  if (htmlResource) await htmlResource.write(html);
+
   return html;
 }
 
