@@ -482,17 +482,21 @@ export default class Database {
     return db;
   }
 
-  async dump() {
+  async dump(opts = {}) {
     // similar format to pouchd.dump but no stream.
     // see https://github.com/nolanlawson/pouchdb-replication-stream/blob/master/lib/index.js#L27
-    let {name, pouchdb} = this,
+    let {filterFn, name: alias, type, dbInfo} = opts,
+        {name: myName, pouchdb} = this,
+        name = alias || myName,
         header = {
           name,
-          db_type: pouchdb.type(),
+          db_type: type || pouchdb.type(),
           start_time: new Date().toJSON(),
-          db_info: await pouchdb.info()
+          db_info: {...await pouchdb.info(), db_name: name, ...dbInfo}
         },
         docs = await this.getAll({attachments: true});
+    if (typeof filterFn === "function")
+      docs = filterFn(docs, header);
     return {header, docs};
   }
 
