@@ -25,7 +25,7 @@ import { Popover } from "./style-popover.js";
 import {ColorPalette} from "./color-palette.js";
 import {ColorPicker} from "./color-picker.js";
 
-const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
+const WHEEL_URL = '/lively.ide/assets/color-wheel.png';
 
 class GradientTypeSelector extends Morph {
 
@@ -271,7 +271,10 @@ export class GradientEditor extends Morph {
   }
 
   gradientEditor() {
-    return new GradientStopVisualizer({name: "gradientEditor", gradientEditor: this});
+    return morph({
+      fill: null, clipMode: 'hidden', extent: pt(190,80), 
+      submorphs: [new GradientStopVisualizer({
+        position: pt(5,30), name: "gradientEditor", gradientEditor: this})]});
   }
 }
 
@@ -339,20 +342,28 @@ class StopControlHead extends Morph {
 
    async expand() {
       if (this.submorphs.length > 1) return;
-      const palette = this.get("paletteField");
+      let palette = this.get("paletteField"), ge;
+      var center = pt(2,-14);
       this.layout = null;
       this.submorphs = [this.closeButton(), palette, this.pickerField()];
       palette.animate({extent: pt(15,15), duration: 200});
-      await this.animate({
+      this.animate({
         layout: new HorizontalLayout({spacing: 3}),
-        center: pt(-1,-15), duration: 200
+        center, duration: 200
       });
+      // if clipped by owner move into view accordingly
+      ge = this.get('gradientEditor');
+      let {x: leftDistance, width} = this.transformRectToMorph(ge, this.innerBounds()),
+          rightDistance = leftDistance + width - ge.width;
+      if (leftDistance < 0) center = center.addXY(-leftDistance, 0);
+      if (rightDistance > 0) center = center.addXY(-rightDistance, 0);
+      await this.animate({center, duration: 200})
       this.stopVisualizer.gradientEditor.update();
    }
 
    async shrink() {
       if (this.submorphs.length < 3) return;
-      const oldCenter = this.center,
+      const oldCenter = pt(2,-14),
             [close, palette, picker] = [
               this.get("close"), this.get("paletteField"), this.get("pickerField")
             ];

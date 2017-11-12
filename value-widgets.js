@@ -63,6 +63,13 @@ class ContextSensitiveWidget extends Morph {
   static get properties() {
     return {
       fill: {defaultValue: Color.transparent},
+      isSelected: {
+        defaultValue: "false",
+        set(v) {
+          this.setProperty("isSelected", v);
+          this.fontColor = v ? Color.white : Color.black;
+        }
+      },
       layout: {
         initialize() {
           this.layout = new HorizontalLayout();
@@ -721,7 +728,7 @@ export class PointWidget extends Label {
         defaultValue: "false",
         set(v) {
           this.setProperty("isSelected", v);
-          this.fontColor = v ? Color.white : Color.blue;
+          this.fontColor = v ? Color.white : Color.black;
         }
       },
       fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},

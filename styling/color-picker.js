@@ -15,7 +15,7 @@ import {ColorPalette} from "./color-palette.js";
 import { Popover } from "./style-popover.js";
 import { Slider } from "lively.components/widgets.js";
 
-const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
+const WHEEL_URL = '/lively.ide/assets/color-wheel.png'
 
 export class ColorPickerField extends Morph {
 
