@@ -3,8 +3,8 @@
 
 var PouchDB = (function() {
   var exports = {}, module = {exports: exports};
-// INLINED /home/lively/lively-web.org/lively.next/lively.storage/node_modules/pouchdb/dist/pouchdb.js
-// PouchDB 6.3.4
+// INLINED /Users/robert/Lively/lively-dev2/lively.storage/node_modules/pouchdb/dist/pouchdb.js
+// PouchDB 6.3.2
 // 
 // (c) 2012-2017 Dale Harvey and the PouchDB team
 // PouchDB may be freely distributed under the Apache license, version 2.0.
@@ -2171,16 +2171,6 @@ process.umask = function() { return 0; };
 }));
 
 },{}],11:[function(_dereq_,module,exports){
-var v1 = _dereq_(14);
-var v4 = _dereq_(15);
-
-var uuid = v4;
-uuid.v1 = v1;
-uuid.v4 = v4;
-
-module.exports = uuid;
-
-},{"14":14,"15":15}],12:[function(_dereq_,module,exports){
 /**
  * Convert array of 16 byte values to UUID string format of the form:
  * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
@@ -2205,7 +2195,7 @@ function bytesToUuid(buf, offset) {
 
 module.exports = bytesToUuid;
 
-},{}],13:[function(_dereq_,module,exports){
+},{}],12:[function(_dereq_,module,exports){
 (function (global){
 // Unique ID creation requires a high quality random # generator.  In the
 // browser this is a little complicated due to unknown quality of Math.random()
@@ -2242,111 +2232,9 @@ if (!rng) {
 module.exports = rng;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],14:[function(_dereq_,module,exports){
-var rng = _dereq_(13);
-var bytesToUuid = _dereq_(12);
-
-// **`v1()` - Generate time-based UUID**
-//
-// Inspired by https://github.com/LiosK/UUID.js
-// and http://docs.python.org/library/uuid.html
-
-// random #'s we need to init node and clockseq
-var _seedBytes = rng();
-
-// Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
-var _nodeId = [
-  _seedBytes[0] | 0x01,
-  _seedBytes[1], _seedBytes[2], _seedBytes[3], _seedBytes[4], _seedBytes[5]
-];
-
-// Per 4.2.2, randomize (14 bit) clockseq
-var _clockseq = (_seedBytes[6] << 8 | _seedBytes[7]) & 0x3fff;
-
-// Previous uuid creation time
-var _lastMSecs = 0, _lastNSecs = 0;
-
-// See https://github.com/broofa/node-uuid for API details
-function v1(options, buf, offset) {
-  var i = buf && offset || 0;
-  var b = buf || [];
-
-  options = options || {};
-
-  var clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq;
-
-  // UUID timestamps are 100 nano-second units since the Gregorian epoch,
-  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
-  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
-  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
-  var msecs = options.msecs !== undefined ? options.msecs : new Date().getTime();
-
-  // Per 4.2.1.2, use count of uuid's generated during the current clock
-  // cycle to simulate higher resolution clock
-  var nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1;
-
-  // Time since last uuid creation (in msecs)
-  var dt = (msecs - _lastMSecs) + (nsecs - _lastNSecs)/10000;
-
-  // Per 4.2.1.2, Bump clockseq on clock regression
-  if (dt < 0 && options.clockseq === undefined) {
-    clockseq = clockseq + 1 & 0x3fff;
-  }
-
-  // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
-  // time interval
-  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
-    nsecs = 0;
-  }
-
-  // Per 4.2.1.2 Throw error if too many uuids are requested
-  if (nsecs >= 10000) {
-    throw new Error('uuid.v1(): Can\'t create more than 10M uuids/sec');
-  }
-
-  _lastMSecs = msecs;
-  _lastNSecs = nsecs;
-  _clockseq = clockseq;
-
-  // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
-  msecs += 12219292800000;
-
-  // `time_low`
-  var tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
-  b[i++] = tl >>> 24 & 0xff;
-  b[i++] = tl >>> 16 & 0xff;
-  b[i++] = tl >>> 8 & 0xff;
-  b[i++] = tl & 0xff;
-
-  // `time_mid`
-  var tmh = (msecs / 0x100000000 * 10000) & 0xfffffff;
-  b[i++] = tmh >>> 8 & 0xff;
-  b[i++] = tmh & 0xff;
-
-  // `time_high_and_version`
-  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
-  b[i++] = tmh >>> 16 & 0xff;
-
-  // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
-  b[i++] = clockseq >>> 8 | 0x80;
-
-  // `clock_seq_low`
-  b[i++] = clockseq & 0xff;
-
-  // `node`
-  var node = options.node || _nodeId;
-  for (var n = 0; n < 6; ++n) {
-    b[i + n] = node[n];
-  }
-
-  return buf ? buf : bytesToUuid(b);
-}
-
-module.exports = v1;
-
-},{"12":12,"13":13}],15:[function(_dereq_,module,exports){
-var rng = _dereq_(13);
-var bytesToUuid = _dereq_(12);
+},{}],13:[function(_dereq_,module,exports){
+var rng = _dereq_(12);
+var bytesToUuid = _dereq_(11);
 
 function v4(options, buf, offset) {
   var i = buf && offset || 0;
@@ -2375,7 +2263,7 @@ function v4(options, buf, offset) {
 
 module.exports = v4;
 
-},{"12":12,"13":13}],16:[function(_dereq_,module,exports){
+},{"11":11,"12":12}],14:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -2550,21 +2438,21 @@ exports.parse = function (str) {
   }
 };
 
-},{}],17:[function(_dereq_,module,exports){
+},{}],15:[function(_dereq_,module,exports){
 (function (global){
 'use strict';
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-var uuidV4 = _interopDefault(_dereq_(11));
 var lie = _interopDefault(_dereq_(7));
 var getArguments = _interopDefault(_dereq_(1));
 var events = _dereq_(4);
 var inherits = _interopDefault(_dereq_(6));
 var nextTick = _interopDefault(_dereq_(5));
+var v4 = _interopDefault(_dereq_(13));
 var debug = _interopDefault(_dereq_(2));
 var Md5 = _interopDefault(_dereq_(10));
-var vuvuzela = _interopDefault(_dereq_(16));
+var vuvuzela = _interopDefault(_dereq_(14));
 
 /* istanbul ignore next */
 var PouchPromise$1 = typeof Promise === 'function' ? Promise : lie;
@@ -3543,10 +3431,10 @@ function tryAndPut(db, doc, diffFun) {
 }
 
 function rev() {
-  return uuidV4.v4().replace(/-/g, '').toLowerCase();
+  return v4().replace(/-/g, '').toLowerCase();
 }
 
-var uuid = uuidV4.v4;
+var uuid = v4;
 
 // We fetch all leafs of the revision tree, and sort them based on tree length
 // and whether they were deleted, undeleted documents with the longest revision
@@ -5415,7 +5303,7 @@ PouchDB$5.defaults = function (defaultOpts) {
 };
 
 // managed automatically by set-version.js
-var version = "6.3.4";
+var version = "6.3.2";
 
 function debugPouch(PouchDB) {
   PouchDB.debug = debug;
@@ -14741,9 +14629,9 @@ PouchDB$5.plugin(IDBPouch)
 module.exports = PouchDB$5;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"1":1,"10":10,"11":11,"16":16,"2":2,"4":4,"5":5,"6":6,"7":7}]},{},[17])(17)
+},{"1":1,"10":10,"13":13,"14":14,"2":2,"4":4,"5":5,"6":6,"7":7}]},{},[15])(15)
 });
-// INLINED END /home/lively/lively-web.org/lively.next/lively.storage/node_modules/pouchdb/dist/pouchdb.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.storage/node_modules/pouchdb/dist/pouchdb.js
   return module.exports;
 })();
 
@@ -14751,449 +14639,6 @@ var pouchdbAdapterMem = (function() {
   var exports = {}, module = {exports: exports};
 // INLINED undefined
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.pouchdbAdapterMemory = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-(function (process){
-/* Copyright (c) 2017 Rod Vagg, MIT License */
-
-function AbstractChainedBatch (db) {
-  this._db         = db
-  this._operations = []
-  this._written    = false
-}
-
-AbstractChainedBatch.prototype._serializeKey = function (key) {
-  return this._db._serializeKey(key)
-}
-
-AbstractChainedBatch.prototype._serializeValue = function (value) {
-  return this._db._serializeValue(value)
-}
-
-AbstractChainedBatch.prototype._checkWritten = function () {
-  if (this._written)
-    throw new Error('write() already called on this batch')
-}
-
-AbstractChainedBatch.prototype.put = function (key, value) {
-  this._checkWritten()
-
-  var err = this._db._checkKey(key, 'key', this._db._isBuffer)
-  if (err)
-    throw err
-
-  key = this._serializeKey(key)
-  value = this._serializeValue(value)
-
-  if (typeof this._put == 'function' )
-    this._put(key, value)
-  else
-    this._operations.push({ type: 'put', key: key, value: value })
-
-  return this
-}
-
-AbstractChainedBatch.prototype.del = function (key) {
-  this._checkWritten()
-
-  var err = this._db._checkKey(key, 'key', this._db._isBuffer)
-  if (err) throw err
-
-  key = this._serializeKey(key)
-
-  if (typeof this._del == 'function' )
-    this._del(key)
-  else
-    this._operations.push({ type: 'del', key: key })
-
-  return this
-}
-
-AbstractChainedBatch.prototype.clear = function () {
-  this._checkWritten()
-
-  this._operations = []
-
-  if (typeof this._clear == 'function' )
-    this._clear()
-
-  return this
-}
-
-AbstractChainedBatch.prototype.write = function (options, callback) {
-  this._checkWritten()
-
-  if (typeof options == 'function')
-    callback = options
-  if (typeof callback != 'function')
-    throw new Error('write() requires a callback argument')
-  if (typeof options != 'object')
-    options = {}
-
-  this._written = true
-
-  if (typeof this._write == 'function' )
-    return this._write(callback)
-
-  if (typeof this._db._batch == 'function')
-    return this._db._batch(this._operations, options, callback)
-
-  process.nextTick(callback)
-}
-
-module.exports = AbstractChainedBatch
-
-}).call(this,require('_process'))
-},{"_process":73}],2:[function(require,module,exports){
-(function (process){
-/* Copyright (c) 2017 Rod Vagg, MIT License */
-
-function AbstractIterator (db) {
-  this.db = db
-  this._ended = false
-  this._nexting = false
-}
-
-AbstractIterator.prototype.next = function (callback) {
-  var self = this
-
-  if (typeof callback != 'function')
-    throw new Error('next() requires a callback argument')
-
-  if (self._ended)
-    return callback(new Error('cannot call next() after end()'))
-  if (self._nexting)
-    return callback(new Error('cannot call next() before previous next() has completed'))
-
-  self._nexting = true
-  if (typeof self._next == 'function') {
-    return self._next(function () {
-      self._nexting = false
-      callback.apply(null, arguments)
-    })
-  }
-
-  process.nextTick(function () {
-    self._nexting = false
-    callback()
-  })
-}
-
-AbstractIterator.prototype.end = function (callback) {
-  if (typeof callback != 'function')
-    throw new Error('end() requires a callback argument')
-
-  if (this._ended)
-    return callback(new Error('end() already called on iterator'))
-
-  this._ended = true
-
-  if (typeof this._end == 'function')
-    return this._end(callback)
-
-  process.nextTick(callback)
-}
-
-module.exports = AbstractIterator
-
-}).call(this,require('_process'))
-},{"_process":73}],3:[function(require,module,exports){
-(function (Buffer,process){
-/* Copyright (c) 2017 Rod Vagg, MIT License */
-
-var xtend                = require('xtend')
-  , AbstractIterator     = require('./abstract-iterator')
-  , AbstractChainedBatch = require('./abstract-chained-batch')
-
-function AbstractLevelDOWN (location) {
-  if (!arguments.length || location === undefined)
-    throw new Error('constructor requires at least a location argument')
-
-  if (typeof location != 'string')
-    throw new Error('constructor requires a location string argument')
-
-  this.location = location
-  this.status = 'new'
-}
-
-AbstractLevelDOWN.prototype.open = function (options, callback) {
-  var self      = this
-    , oldStatus = this.status
-
-  if (typeof options == 'function')
-    callback = options
-
-  if (typeof callback != 'function')
-    throw new Error('open() requires a callback argument')
-
-  if (typeof options != 'object')
-    options = {}
-
-  options.createIfMissing = options.createIfMissing != false
-  options.errorIfExists = !!options.errorIfExists
-
-  if (typeof this._open == 'function') {
-    this.status = 'opening'
-    this._open(options, function (err) {
-      if (err) {
-        self.status = oldStatus
-        return callback(err)
-      }
-      self.status = 'open'
-      callback()
-    })
-  } else {
-    this.status = 'open'
-    process.nextTick(callback)
-  }
-}
-
-AbstractLevelDOWN.prototype.close = function (callback) {
-  var self      = this
-    , oldStatus = this.status
-
-  if (typeof callback != 'function')
-    throw new Error('close() requires a callback argument')
-
-  if (typeof this._close == 'function') {
-    this.status = 'closing'
-    this._close(function (err) {
-      if (err) {
-        self.status = oldStatus
-        return callback(err)
-      }
-      self.status = 'closed'
-      callback()
-    })
-  } else {
-    this.status = 'closed'
-    process.nextTick(callback)
-  }
-}
-
-AbstractLevelDOWN.prototype.get = function (key, options, callback) {
-  var err
-
-  if (typeof options == 'function')
-    callback = options
-
-  if (typeof callback != 'function')
-    throw new Error('get() requires a callback argument')
-
-  if (err = this._checkKey(key, 'key'))
-    return callback(err)
-
-  key = this._serializeKey(key)
-
-  if (typeof options != 'object')
-    options = {}
-
-  options.asBuffer = options.asBuffer != false
-
-  if (typeof this._get == 'function')
-    return this._get(key, options, callback)
-
-  process.nextTick(function () { callback(new Error('NotFound')) })
-}
-
-AbstractLevelDOWN.prototype.put = function (key, value, options, callback) {
-  var err
-
-  if (typeof options == 'function')
-    callback = options
-
-  if (typeof callback != 'function')
-    throw new Error('put() requires a callback argument')
-
-  if (err = this._checkKey(key, 'key'))
-    return callback(err)
-
-  key = this._serializeKey(key)
-  value = this._serializeValue(value)
-
-  if (typeof options != 'object')
-    options = {}
-
-  if (typeof this._put == 'function')
-    return this._put(key, value, options, callback)
-
-  process.nextTick(callback)
-}
-
-AbstractLevelDOWN.prototype.del = function (key, options, callback) {
-  var err
-
-  if (typeof options == 'function')
-    callback = options
-
-  if (typeof callback != 'function')
-    throw new Error('del() requires a callback argument')
-
-  if (err = this._checkKey(key, 'key'))
-    return callback(err)
-
-  key = this._serializeKey(key)
-
-  if (typeof options != 'object')
-    options = {}
-
-  if (typeof this._del == 'function')
-    return this._del(key, options, callback)
-
-  process.nextTick(callback)
-}
-
-AbstractLevelDOWN.prototype.batch = function (array, options, callback) {
-  if (!arguments.length)
-    return this._chainedBatch()
-
-  if (typeof options == 'function')
-    callback = options
-
-  if (typeof array == 'function')
-    callback = array
-
-  if (typeof callback != 'function')
-    throw new Error('batch(array) requires a callback argument')
-
-  if (!Array.isArray(array))
-    return callback(new Error('batch(array) requires an array argument'))
-
-  if (!options || typeof options != 'object')
-    options = {}
-
-  var i = 0
-    , l = array.length
-    , e
-    , err
-
-  for (; i < l; i++) {
-    e = array[i]
-    if (typeof e != 'object')
-      continue
-
-    if (err = this._checkKey(e.type, 'type'))
-      return callback(err)
-
-    if (err = this._checkKey(e.key, 'key'))
-      return callback(err)
-  }
-
-  if (typeof this._batch == 'function')
-    return this._batch(array, options, callback)
-
-  process.nextTick(callback)
-}
-
-//TODO: remove from here, not a necessary primitive
-AbstractLevelDOWN.prototype.approximateSize = function (start, end, callback) {
-  if (   start == null
-      || end == null
-      || typeof start == 'function'
-      || typeof end == 'function') {
-    throw new Error('approximateSize() requires valid `start`, `end` and `callback` arguments')
-  }
-
-  if (typeof callback != 'function')
-    throw new Error('approximateSize() requires a callback argument')
-
-  start = this._serializeKey(start)
-  end = this._serializeKey(end)
-
-  if (typeof this._approximateSize == 'function')
-    return this._approximateSize(start, end, callback)
-
-  process.nextTick(function () {
-    callback(null, 0)
-  })
-}
-
-AbstractLevelDOWN.prototype._setupIteratorOptions = function (options) {
-  var self = this
-
-  options = xtend(options)
-
-  ;[ 'start', 'end', 'gt', 'gte', 'lt', 'lte' ].forEach(function (o) {
-    if (options[o] && self._isBuffer(options[o]) && options[o].length === 0)
-      delete options[o]
-  })
-
-  options.reverse = !!options.reverse
-  options.keys = options.keys != false
-  options.values = options.values != false
-  options.limit = 'limit' in options ? options.limit : -1
-  options.keyAsBuffer = options.keyAsBuffer != false
-  options.valueAsBuffer = options.valueAsBuffer != false
-
-  return options
-}
-
-AbstractLevelDOWN.prototype.iterator = function (options) {
-  if (typeof options != 'object')
-    options = {}
-
-  options = this._setupIteratorOptions(options)
-
-  if (typeof this._iterator == 'function')
-    return this._iterator(options)
-
-  return new AbstractIterator(this)
-}
-
-AbstractLevelDOWN.prototype._chainedBatch = function () {
-  return new AbstractChainedBatch(this)
-}
-
-AbstractLevelDOWN.prototype._isBuffer = function (obj) {
-  return Buffer.isBuffer(obj)
-}
-
-AbstractLevelDOWN.prototype._serializeKey = function (key) {
-  return this._isBuffer(key)
-    ? key
-    : String(key)
-}
-
-AbstractLevelDOWN.prototype._serializeValue = function (value) {
-  return this._isBuffer(value) || process.browser || value == null
-    ? value
-    : String(value)
-}
-
-AbstractLevelDOWN.prototype._checkKey = function (obj, type) {
-  if (obj === null || obj === undefined)
-    return new Error(type + ' cannot be `null` or `undefined`')
-
-  if (this._isBuffer(obj) && obj.length === 0)
-    return new Error(type + ' cannot be an empty Buffer')
-  else if (String(obj) === '')
-    return new Error(type + ' cannot be an empty String')
-}
-
-module.exports = AbstractLevelDOWN
-
-}).call(this,{"isBuffer":require("../is-buffer/index.js")},require('_process'))
-},{"../is-buffer/index.js":26,"./abstract-chained-batch":1,"./abstract-iterator":2,"_process":73,"xtend":131}],4:[function(require,module,exports){
-exports.AbstractLevelDOWN    = require('./abstract-leveldown')
-exports.AbstractIterator     = require('./abstract-iterator')
-exports.AbstractChainedBatch = require('./abstract-chained-batch')
-exports.isLevelDOWN          = require('./is-leveldown')
-
-},{"./abstract-chained-batch":1,"./abstract-iterator":2,"./abstract-leveldown":3,"./is-leveldown":5}],5:[function(require,module,exports){
-var AbstractLevelDOWN = require('./abstract-leveldown')
-
-function isLevelDOWN (db) {
-  if (!db || typeof db !== 'object')
-    return false
-  return Object.keys(AbstractLevelDOWN.prototype).filter(function (name) {
-    // TODO remove approximateSize check when method is gone
-    return name[0] != '_' && name != 'approximateSize'
-  }).every(function (name) {
-    return typeof db[name] == 'function'
-  })
-}
-
-module.exports = isLevelDOWN
-
-},{"./abstract-leveldown":3}],6:[function(require,module,exports){
 'use strict';
 
 module.exports = argsArray;
@@ -15213,7 +14658,7 @@ function argsArray(fun) {
     }
   };
 }
-},{}],7:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -15329,9 +14774,9 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],8:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 
-},{}],9:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 (function (Buffer){
 var isArrayBuffer = require('is-array-buffer-x')
 
@@ -15400,7 +14845,7 @@ function bufferFrom (value, encodingOrOffset, length) {
 module.exports = bufferFrom
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":10,"is-array-buffer-x":25}],10:[function(require,module,exports){
+},{"buffer":5,"is-array-buffer-x":25}],5:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -15507,7 +14952,7 @@ function from (value, encodingOrOffset, length) {
     throw new TypeError('"value" argument must not be a number')
   }
 
-  if (isArrayBuffer(value)) {
+  if (value instanceof ArrayBuffer) {
     return fromArrayBuffer(value, encodingOrOffset, length)
   }
 
@@ -15767,7 +15212,7 @@ function byteLength (string, encoding) {
   if (Buffer.isBuffer(string)) {
     return string.length
   }
-  if (isArrayBufferView(string) || isArrayBuffer(string)) {
+  if (isArrayBufferView(string) || string instanceof ArrayBuffer) {
     return string.byteLength
   }
   if (typeof string !== 'string') {
@@ -17099,14 +16544,6 @@ function blitBuffer (src, dst, offset, length) {
   return i
 }
 
-// ArrayBuffers from another context (i.e. an iframe) do not pass the `instanceof` check
-// but they should be treated as valid. See: https://github.com/feross/buffer/issues/166
-function isArrayBuffer (obj) {
-  return obj instanceof ArrayBuffer ||
-    (obj != null && obj.constructor != null && obj.constructor.name === 'ArrayBuffer' &&
-      typeof obj.byteLength === 'number')
-}
-
 // Node 0.10 supports `ArrayBuffer` but lacks `ArrayBuffer.isView`
 function isArrayBufferView (obj) {
   return (typeof ArrayBuffer.isView === 'function') && ArrayBuffer.isView(obj)
@@ -17116,7 +16553,7 @@ function numberIsNaN (obj) {
   return obj !== obj // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":7,"ieee754":22}],11:[function(require,module,exports){
+},{"base64-js":2,"ieee754":22}],6:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -17227,7 +16664,7 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":26}],12:[function(require,module,exports){
+},{"../../is-buffer/index.js":26}],7:[function(require,module,exports){
 var util = require('util')
   , AbstractIterator = require('abstract-leveldown').AbstractIterator
 
@@ -17263,7 +16700,7 @@ DeferredIterator.prototype._operation = function (method, args) {
 
 module.exports = DeferredIterator;
 
-},{"abstract-leveldown":4,"util":122}],13:[function(require,module,exports){
+},{"abstract-leveldown":12,"util":114}],8:[function(require,module,exports){
 (function (Buffer,process){
 var util              = require('util')
   , AbstractLevelDOWN = require('abstract-leveldown').AbstractLevelDOWN
@@ -17323,7 +16760,441 @@ module.exports                  = DeferredLevelDOWN
 module.exports.DeferredIterator = DeferredIterator
 
 }).call(this,{"isBuffer":require("../is-buffer/index.js")},require('_process'))
-},{"../is-buffer/index.js":26,"./deferred-iterator":12,"_process":73,"abstract-leveldown":4,"util":122}],14:[function(require,module,exports){
+},{"../is-buffer/index.js":26,"./deferred-iterator":7,"_process":70,"abstract-leveldown":12,"util":114}],9:[function(require,module,exports){
+(function (process){
+/* Copyright (c) 2013 Rod Vagg, MIT License */
+
+function AbstractChainedBatch (db) {
+  this._db         = db
+  this._operations = []
+  this._written    = false
+}
+
+AbstractChainedBatch.prototype._checkWritten = function () {
+  if (this._written)
+    throw new Error('write() already called on this batch')
+}
+
+AbstractChainedBatch.prototype.put = function (key, value) {
+  this._checkWritten()
+
+  var err = this._db._checkKey(key, 'key', this._db._isBuffer)
+  if (err)
+    throw err
+
+  if (!this._db._isBuffer(key)) key = String(key)
+  if (!this._db._isBuffer(value)) value = String(value)
+
+  if (typeof this._put == 'function' )
+    this._put(key, value)
+  else
+    this._operations.push({ type: 'put', key: key, value: value })
+
+  return this
+}
+
+AbstractChainedBatch.prototype.del = function (key) {
+  this._checkWritten()
+
+  var err = this._db._checkKey(key, 'key', this._db._isBuffer)
+  if (err) throw err
+
+  if (!this._db._isBuffer(key)) key = String(key)
+
+  if (typeof this._del == 'function' )
+    this._del(key)
+  else
+    this._operations.push({ type: 'del', key: key })
+
+  return this
+}
+
+AbstractChainedBatch.prototype.clear = function () {
+  this._checkWritten()
+
+  this._operations = []
+
+  if (typeof this._clear == 'function' )
+    this._clear()
+
+  return this
+}
+
+AbstractChainedBatch.prototype.write = function (options, callback) {
+  this._checkWritten()
+
+  if (typeof options == 'function')
+    callback = options
+  if (typeof callback != 'function')
+    throw new Error('write() requires a callback argument')
+  if (typeof options != 'object')
+    options = {}
+
+  this._written = true
+
+  if (typeof this._write == 'function' )
+    return this._write(callback)
+
+  if (typeof this._db._batch == 'function')
+    return this._db._batch(this._operations, options, callback)
+
+  process.nextTick(callback)
+}
+
+module.exports = AbstractChainedBatch
+}).call(this,require('_process'))
+},{"_process":70}],10:[function(require,module,exports){
+(function (process){
+/* Copyright (c) 2013 Rod Vagg, MIT License */
+
+function AbstractIterator (db) {
+  this.db = db
+  this._ended = false
+  this._nexting = false
+}
+
+AbstractIterator.prototype.next = function (callback) {
+  var self = this
+
+  if (typeof callback != 'function')
+    throw new Error('next() requires a callback argument')
+
+  if (self._ended)
+    return callback(new Error('cannot call next() after end()'))
+  if (self._nexting)
+    return callback(new Error('cannot call next() before previous next() has completed'))
+
+  self._nexting = true
+  if (typeof self._next == 'function') {
+    return self._next(function () {
+      self._nexting = false
+      callback.apply(null, arguments)
+    })
+  }
+
+  process.nextTick(function () {
+    self._nexting = false
+    callback()
+  })
+}
+
+AbstractIterator.prototype.end = function (callback) {
+  if (typeof callback != 'function')
+    throw new Error('end() requires a callback argument')
+
+  if (this._ended)
+    return callback(new Error('end() already called on iterator'))
+
+  this._ended = true
+
+  if (typeof this._end == 'function')
+    return this._end(callback)
+
+  process.nextTick(callback)
+}
+
+module.exports = AbstractIterator
+
+}).call(this,require('_process'))
+},{"_process":70}],11:[function(require,module,exports){
+(function (Buffer,process){
+/* Copyright (c) 2013 Rod Vagg, MIT License */
+
+var xtend                = require('xtend')
+  , AbstractIterator     = require('./abstract-iterator')
+  , AbstractChainedBatch = require('./abstract-chained-batch')
+
+function AbstractLevelDOWN (location) {
+  if (!arguments.length || location === undefined)
+    throw new Error('constructor requires at least a location argument')
+
+  if (typeof location != 'string')
+    throw new Error('constructor requires a location string argument')
+
+  this.location = location
+  this.status = 'new'
+}
+
+AbstractLevelDOWN.prototype.open = function (options, callback) {
+  var self      = this
+    , oldStatus = this.status
+
+  if (typeof options == 'function')
+    callback = options
+
+  if (typeof callback != 'function')
+    throw new Error('open() requires a callback argument')
+
+  if (typeof options != 'object')
+    options = {}
+
+  options.createIfMissing = options.createIfMissing != false
+  options.errorIfExists = !!options.errorIfExists
+
+  if (typeof this._open == 'function') {
+    this.status = 'opening'
+    this._open(options, function (err) {
+      if (err) {
+        self.status = oldStatus
+        return callback(err)
+      }
+      self.status = 'open'
+      callback()
+    })
+  } else {
+    this.status = 'open'
+    process.nextTick(callback)
+  }
+}
+
+AbstractLevelDOWN.prototype.close = function (callback) {
+  var self      = this
+    , oldStatus = this.status
+
+  if (typeof callback != 'function')
+    throw new Error('close() requires a callback argument')
+
+  if (typeof this._close == 'function') {
+    this.status = 'closing'
+    this._close(function (err) {
+      if (err) {
+        self.status = oldStatus
+        return callback(err)
+      }
+      self.status = 'closed'
+      callback()
+    })
+  } else {
+    this.status = 'closed'
+    process.nextTick(callback)
+  }
+}
+
+AbstractLevelDOWN.prototype.get = function (key, options, callback) {
+  var err
+
+  if (typeof options == 'function')
+    callback = options
+
+  if (typeof callback != 'function')
+    throw new Error('get() requires a callback argument')
+
+  if (err = this._checkKey(key, 'key', this._isBuffer))
+    return callback(err)
+
+  if (!this._isBuffer(key))
+    key = String(key)
+
+  if (typeof options != 'object')
+    options = {}
+
+  options.asBuffer = options.asBuffer != false
+
+  if (typeof this._get == 'function')
+    return this._get(key, options, callback)
+
+  process.nextTick(function () { callback(new Error('NotFound')) })
+}
+
+AbstractLevelDOWN.prototype.put = function (key, value, options, callback) {
+  var err
+
+  if (typeof options == 'function')
+    callback = options
+
+  if (typeof callback != 'function')
+    throw new Error('put() requires a callback argument')
+
+  if (err = this._checkKey(key, 'key', this._isBuffer))
+    return callback(err)
+
+  if (!this._isBuffer(key))
+    key = String(key)
+
+  // coerce value to string in node, don't touch it in browser
+  // (indexeddb can store any JS type)
+  if (value != null && !this._isBuffer(value) && !process.browser)
+    value = String(value)
+
+  if (typeof options != 'object')
+    options = {}
+
+  if (typeof this._put == 'function')
+    return this._put(key, value, options, callback)
+
+  process.nextTick(callback)
+}
+
+AbstractLevelDOWN.prototype.del = function (key, options, callback) {
+  var err
+
+  if (typeof options == 'function')
+    callback = options
+
+  if (typeof callback != 'function')
+    throw new Error('del() requires a callback argument')
+
+  if (err = this._checkKey(key, 'key', this._isBuffer))
+    return callback(err)
+
+  if (!this._isBuffer(key))
+    key = String(key)
+
+  if (typeof options != 'object')
+    options = {}
+
+  if (typeof this._del == 'function')
+    return this._del(key, options, callback)
+
+  process.nextTick(callback)
+}
+
+AbstractLevelDOWN.prototype.batch = function (array, options, callback) {
+  if (!arguments.length)
+    return this._chainedBatch()
+
+  if (typeof options == 'function')
+    callback = options
+
+  if (typeof array == 'function')
+    callback = array
+
+  if (typeof callback != 'function')
+    throw new Error('batch(array) requires a callback argument')
+
+  if (!Array.isArray(array))
+    return callback(new Error('batch(array) requires an array argument'))
+
+  if (!options || typeof options != 'object')
+    options = {}
+
+  var i = 0
+    , l = array.length
+    , e
+    , err
+
+  for (; i < l; i++) {
+    e = array[i]
+    if (typeof e != 'object')
+      continue
+
+    if (err = this._checkKey(e.type, 'type', this._isBuffer))
+      return callback(err)
+
+    if (err = this._checkKey(e.key, 'key', this._isBuffer))
+      return callback(err)
+  }
+
+  if (typeof this._batch == 'function')
+    return this._batch(array, options, callback)
+
+  process.nextTick(callback)
+}
+
+//TODO: remove from here, not a necessary primitive
+AbstractLevelDOWN.prototype.approximateSize = function (start, end, callback) {
+  if (   start == null
+      || end == null
+      || typeof start == 'function'
+      || typeof end == 'function') {
+    throw new Error('approximateSize() requires valid `start`, `end` and `callback` arguments')
+  }
+
+  if (typeof callback != 'function')
+    throw new Error('approximateSize() requires a callback argument')
+
+  if (!this._isBuffer(start))
+    start = String(start)
+
+  if (!this._isBuffer(end))
+    end = String(end)
+
+  if (typeof this._approximateSize == 'function')
+    return this._approximateSize(start, end, callback)
+
+  process.nextTick(function () {
+    callback(null, 0)
+  })
+}
+
+AbstractLevelDOWN.prototype._setupIteratorOptions = function (options) {
+  var self = this
+
+  options = xtend(options)
+
+  ;[ 'start', 'end', 'gt', 'gte', 'lt', 'lte' ].forEach(function (o) {
+    if (options[o] && self._isBuffer(options[o]) && options[o].length === 0)
+      delete options[o]
+  })
+
+  options.reverse = !!options.reverse
+  options.keys = options.keys != false
+  options.values = options.values != false
+  options.limit = 'limit' in options ? options.limit : -1
+  options.keyAsBuffer = options.keyAsBuffer != false
+  options.valueAsBuffer = options.valueAsBuffer != false
+
+  return options
+}
+
+AbstractLevelDOWN.prototype.iterator = function (options) {
+  if (typeof options != 'object')
+    options = {}
+
+  options = this._setupIteratorOptions(options)
+
+  if (typeof this._iterator == 'function')
+    return this._iterator(options)
+
+  return new AbstractIterator(this)
+}
+
+AbstractLevelDOWN.prototype._chainedBatch = function () {
+  return new AbstractChainedBatch(this)
+}
+
+AbstractLevelDOWN.prototype._isBuffer = function (obj) {
+  return Buffer.isBuffer(obj)
+}
+
+AbstractLevelDOWN.prototype._checkKey = function (obj, type) {
+
+  if (obj === null || obj === undefined)
+    return new Error(type + ' cannot be `null` or `undefined`')
+
+  if (this._isBuffer(obj)) {
+    if (obj.length === 0)
+      return new Error(type + ' cannot be an empty Buffer')
+  } else if (String(obj) === '')
+    return new Error(type + ' cannot be an empty String')
+}
+
+module.exports = AbstractLevelDOWN
+
+}).call(this,{"isBuffer":require("../../../is-buffer/index.js")},require('_process'))
+},{"../../../is-buffer/index.js":26,"./abstract-chained-batch":9,"./abstract-iterator":10,"_process":70,"xtend":120}],12:[function(require,module,exports){
+exports.AbstractLevelDOWN    = require('./abstract-leveldown')
+exports.AbstractIterator     = require('./abstract-iterator')
+exports.AbstractChainedBatch = require('./abstract-chained-batch')
+exports.isLevelDOWN          = require('./is-leveldown')
+
+},{"./abstract-chained-batch":9,"./abstract-iterator":10,"./abstract-leveldown":11,"./is-leveldown":13}],13:[function(require,module,exports){
+var AbstractLevelDOWN = require('./abstract-leveldown')
+
+function isLevelDOWN (db) {
+  if (!db || typeof db !== 'object')
+    return false
+  return Object.keys(AbstractLevelDOWN.prototype).filter(function (name) {
+    // TODO remove approximateSize check when method is gone
+    return name[0] != '_' && name != 'approximateSize'
+  }).every(function (name) {
+    return typeof db[name] == 'function'
+  })
+}
+
+module.exports = isLevelDOWN
+
+},{"./abstract-leveldown":11}],14:[function(require,module,exports){
 /**
  * Copyright (c) 2013 Petka Antonov
  * 
@@ -19565,7 +19436,7 @@ if (typeof Object.create === 'function') {
 },{}],25:[function(require,module,exports){
 /**
  * @file Detect whether or not an object is an ArrayBuffer.
- * @version 1.4.0
+ * @version 1.3.0
  * @author Xotic750 <Xotic750@gmail.com>
  * @copyright  Xotic750
  * @license {@link <https://opensource.org/licenses/MIT> MIT}
@@ -19628,7 +19499,7 @@ module.exports = function isArrayBuffer(object) {
   return false;
 };
 
-},{"has-to-string-tag-x":21,"is-object-like-x":28,"to-string-tag-x":114}],26:[function(require,module,exports){
+},{"has-to-string-tag-x":21,"is-object-like-x":28,"to-string-tag-x":110}],26:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -19654,7 +19525,7 @@ function isSlowBuffer (obj) {
 },{}],27:[function(require,module,exports){
 /**
  * @file Determine whether a given value is a function object.
- * @version 3.1.0
+ * @version 1.4.0
  * @author Xotic750 <Xotic750@gmail.com>
  * @copyright  Xotic750
  * @license {@link <https://opensource.org/licenses/MIT> MIT}
@@ -19667,28 +19538,21 @@ var fToString = Function.prototype.toString;
 var toStringTag = require('to-string-tag-x');
 var hasToStringTag = require('has-to-string-tag-x');
 var isPrimitive = require('is-primitive');
-var normalise = require('normalize-space-x');
-var deComment = require('replace-comments-x');
 var funcTag = '[object Function]';
 var genTag = '[object GeneratorFunction]';
 var asyncTag = '[object AsyncFunction]';
 
-var hasNativeClass = true;
-try {
-  // eslint-disable-next-line no-new-func
-  Function('"use strict"; return class My {};')();
-} catch (ignore) {
-  hasNativeClass = false;
-}
-
-var ctrRx = /^class /;
+var constructorRegex = /^\s*class /;
 var isES6ClassFn = function isES6ClassFunc(value) {
   try {
-    return ctrRx.test(normalise(deComment(fToString.call(value), ' ')));
+    var fnStr = fToString.call(value);
+    var singleStripped = fnStr.replace(/\/\/.*\n/g, '');
+    var multiStripped = singleStripped.replace(/\/\*[.\s\S]*\*\//g, '');
+    var spaceStripped = multiStripped.replace(/\n/mg, ' ').replace(/ {2}/g, ' ');
+    return constructorRegex.test(spaceStripped);
   } catch (ignore) {}
 
-  // not a function
-  return false;
+  return false; // not a function
 };
 
 /**
@@ -19696,14 +19560,12 @@ var isES6ClassFn = function isES6ClassFunc(value) {
  *
  * @private
  * @param {*} value - The value to check.
- * @param {boolean} allowClass - Whether to filter ES6 classes.
  * @returns {boolean} Returns `true` if `value` is correctly classified,
  * else `false`.
  */
-
-var tryFuncToString = function funcToString(value, allowClass) {
+var tryFuncToString = function funcToString(value) {
   try {
-    if (hasNativeClass && allowClass === false && isES6ClassFn(value)) {
+    if (isES6ClassFn(value)) {
       return false;
     }
 
@@ -19718,7 +19580,6 @@ var tryFuncToString = function funcToString(value, allowClass) {
  * Checks if `value` is classified as a `Function` object.
  *
  * @param {*} value - The value to check.
- * @param {boolean} [allowClass=false] - Whether to filter ES6 classes.
  * @returns {boolean} Returns `true` if `value` is correctly classified,
  * else `false`.
  * @example
@@ -19733,9 +19594,8 @@ var tryFuncToString = function funcToString(value, allowClass) {
  * isFunction(new Function ()); // true
  * isFunction(function* test1() {}); // true
  * isFunction(function test2(a, b) {}); // true
- * isFunction(async function test3() {}); // true
+ - isFunction(async function test3() {}); // true
  * isFunction(class Test {}); // false
- * isFunction(class Test {}, true); // true
  * isFunction((x, y) => {return this;}); // true
  */
 module.exports = function isFunction(value) {
@@ -19743,12 +19603,11 @@ module.exports = function isFunction(value) {
     return false;
   }
 
-  var allowClass = arguments.length > 0 ? Boolean(arguments[1]) : false;
   if (hasToStringTag) {
-    return tryFuncToString(value, allowClass);
+    return tryFuncToString(value);
   }
 
-  if (hasNativeClass && allowClass === false && isES6ClassFn(value)) {
+  if (isES6ClassFn(value)) {
     return false;
   }
 
@@ -19756,10 +19615,10 @@ module.exports = function isFunction(value) {
   return strTag === funcTag || strTag === genTag || strTag === asyncTag;
 };
 
-},{"has-to-string-tag-x":21,"is-primitive":29,"normalize-space-x":59,"replace-comments-x":82,"to-string-tag-x":114}],28:[function(require,module,exports){
+},{"has-to-string-tag-x":21,"is-primitive":29,"to-string-tag-x":110}],28:[function(require,module,exports){
 /**
  * @file Determine if a value is object like.
- * @version 1.5.0
+ * @version 1.3.0
  * @author Xotic750 <Xotic750@gmail.com>
  * @copyright  Xotic750
  * @license {@link <https://opensource.org/licenses/MIT> MIT}
@@ -19793,7 +19652,7 @@ var isPrimitive = require('is-primitive');
  * // => false
  */
 module.exports = function isObjectLike(value) {
-  return isPrimitive(value) === false && isFunction(value, true) === false;
+  return isPrimitive(value) === false && isFunction(value) === false;
 };
 
 },{"is-function-x":27,"is-primitive":29}],29:[function(require,module,exports){
@@ -19812,64 +19671,13 @@ module.exports = function isPrimitive(value) {
 };
 
 },{}],30:[function(require,module,exports){
-'use strict';
-
-var strValue = String.prototype.valueOf;
-var tryStringObject = function tryStringObject(value) {
-	try {
-		strValue.call(value);
-		return true;
-	} catch (e) {
-		return false;
-	}
-};
-var toStr = Object.prototype.toString;
-var strClass = '[object String]';
-var hasToStringTag = typeof Symbol === 'function' && typeof Symbol.toStringTag === 'symbol';
-
-module.exports = function isString(value) {
-	if (typeof value === 'string') { return true; }
-	if (typeof value !== 'object') { return false; }
-	return hasToStringTag ? tryStringObject(value) : toStr.call(value) === strClass;
-};
-
-},{}],31:[function(require,module,exports){
-'use strict';
-
-var toStr = Object.prototype.toString;
-var hasSymbols = typeof Symbol === 'function' && typeof Symbol() === 'symbol';
-
-if (hasSymbols) {
-	var symToStr = Symbol.prototype.toString;
-	var symStringRegex = /^Symbol\(.*\)$/;
-	var isSymbolObject = function isSymbolObject(value) {
-		if (typeof value.valueOf() !== 'symbol') { return false; }
-		return symStringRegex.test(symToStr.call(value));
-	};
-	module.exports = function isSymbol(value) {
-		if (typeof value === 'symbol') { return true; }
-		if (toStr.call(value) !== '[object Symbol]') { return false; }
-		try {
-			return isSymbolObject(value);
-		} catch (e) {
-			return false;
-		}
-	};
-} else {
-	module.exports = function isSymbol(value) {
-		// this environment does not support Symbols.
-		return false;
-	};
-}
-
-},{}],32:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],33:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var encodings = require('./lib/encodings');
 
 module.exports = Codec;
@@ -19977,7 +19785,7 @@ Codec.prototype.valueAsBuffer = function(opts){
 };
 
 
-},{"./lib/encodings":34}],34:[function(require,module,exports){
+},{"./lib/encodings":32}],32:[function(require,module,exports){
 (function (Buffer){
 
 exports.utf8 = exports['utf-8'] = {
@@ -20063,8 +19871,8 @@ function isBinary(data){
 
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":10}],35:[function(require,module,exports){
-/* Copyright (c) 2012-2017 LevelUP contributors
+},{"buffer":5}],33:[function(require,module,exports){
+/* Copyright (c) 2012-2015 LevelUP contributors
  * See list at <https://github.com/rvagg/node-levelup#contributing>
  * MIT License
  * <https://github.com/rvagg/node-levelup/blob/master/LICENSE.md>
@@ -20087,7 +19895,7 @@ module.exports = {
   , EncodingError       : createError('EncodingError', LevelUPError)
 }
 
-},{"errno":16}],36:[function(require,module,exports){
+},{"errno":16}],34:[function(require,module,exports){
 var inherits = require('inherits');
 var Readable = require('readable-stream').Readable;
 var extend = require('xtend');
@@ -20145,7 +19953,7 @@ ReadStream.prototype._cleanup = function(){
 };
 
 
-},{"inherits":24,"level-errors":35,"readable-stream":81,"xtend":131}],37:[function(require,module,exports){
+},{"inherits":24,"level-errors":33,"readable-stream":78,"xtend":120}],35:[function(require,module,exports){
 /* Copyright (c) 2012-2016 LevelUP contributors
  * See list at <https://github.com/level/levelup#contributing>
  * MIT License
@@ -20230,7 +20038,7 @@ Batch.prototype.write = function (callback) {
 
 module.exports = Batch
 
-},{"./util":39,"level-errors":35}],38:[function(require,module,exports){
+},{"./util":37,"level-errors":33}],36:[function(require,module,exports){
 (function (process){
 /* Copyright (c) 2012-2016 LevelUP contributors
  * See list at <https://github.com/level/levelup#contributing>
@@ -20639,7 +20447,7 @@ module.exports.repair  = deprecate(
 
 
 }).call(this,require('_process'))
-},{"./batch":37,"./leveldown":8,"./util":39,"_process":73,"deferred-leveldown":13,"events":18,"level-codec":40,"level-errors":35,"level-iterator-stream":36,"prr":74,"util":122,"xtend":131}],39:[function(require,module,exports){
+},{"./batch":35,"./leveldown":3,"./util":37,"_process":70,"deferred-leveldown":8,"events":18,"level-codec":38,"level-errors":33,"level-iterator-stream":34,"prr":71,"util":114,"xtend":120}],37:[function(require,module,exports){
 /* Copyright (c) 2012-2016 LevelUP contributors
  * See list at <https://github.com/level/levelup#contributing>
  * MIT License
@@ -20678,9 +20486,9 @@ module.exports = {
   , isDefined       : isDefined
 }
 
-},{"xtend":131}],40:[function(require,module,exports){
-arguments[4][33][0].apply(exports,arguments)
-},{"./lib/encodings":41,"dup":33}],41:[function(require,module,exports){
+},{"xtend":120}],38:[function(require,module,exports){
+arguments[4][31][0].apply(exports,arguments)
+},{"./lib/encodings":39,"dup":31}],39:[function(require,module,exports){
 (function (Buffer){
 
 exports.utf8 = exports['utf-8'] = {
@@ -20760,7 +20568,7 @@ function isBinary(data){
 
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":10}],42:[function(require,module,exports){
+},{"buffer":5}],40:[function(require,module,exports){
 'use strict';
 var immediate = require('immediate');
 
@@ -21015,7 +20823,7 @@ function race(iterable) {
   }
 }
 
-},{"immediate":23}],43:[function(require,module,exports){
+},{"immediate":23}],41:[function(require,module,exports){
 /**
  * lodash 3.0.0 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
@@ -21047,7 +20855,7 @@ function isNull(value) {
 
 module.exports = isNull;
 
-},{}],44:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 (function (Buffer){
 
 exports.compare = function (a, b) {
@@ -21220,10 +21028,10 @@ exports.filter = function (range, compare) {
 
 
 }).call(this,{"isBuffer":require("../is-buffer/index.js")})
-},{"../is-buffer/index.js":26}],45:[function(require,module,exports){
+},{"../is-buffer/index.js":26}],43:[function(require,module,exports){
 module.exports = require('immediate')
 
-},{"immediate":52}],46:[function(require,module,exports){
+},{"immediate":50}],44:[function(require,module,exports){
 (function (Buffer){
 var inherits          = require('inherits')
   , AbstractLevelDOWN = require('abstract-leveldown').AbstractLevelDOWN
@@ -21455,423 +21263,17 @@ MemDOWN.destroy = function (name, callback) {
 module.exports = MemDOWN
 
 }).call(this,require("buffer").Buffer)
-},{"./immediate":45,"abstract-leveldown":50,"buffer":10,"functional-red-black-tree":19,"inherits":24,"ltgt":58}],47:[function(require,module,exports){
-(function (process){
-/* Copyright (c) 2013 Rod Vagg, MIT License */
-
-function AbstractChainedBatch (db) {
-  this._db         = db
-  this._operations = []
-  this._written    = false
-}
-
-AbstractChainedBatch.prototype._checkWritten = function () {
-  if (this._written)
-    throw new Error('write() already called on this batch')
-}
-
-AbstractChainedBatch.prototype.put = function (key, value) {
-  this._checkWritten()
-
-  var err = this._db._checkKey(key, 'key', this._db._isBuffer)
-  if (err)
-    throw err
-
-  if (!this._db._isBuffer(key)) key = String(key)
-  if (!this._db._isBuffer(value)) value = String(value)
-
-  if (typeof this._put == 'function' )
-    this._put(key, value)
-  else
-    this._operations.push({ type: 'put', key: key, value: value })
-
-  return this
-}
-
-AbstractChainedBatch.prototype.del = function (key) {
-  this._checkWritten()
-
-  var err = this._db._checkKey(key, 'key', this._db._isBuffer)
-  if (err) throw err
-
-  if (!this._db._isBuffer(key)) key = String(key)
-
-  if (typeof this._del == 'function' )
-    this._del(key)
-  else
-    this._operations.push({ type: 'del', key: key })
-
-  return this
-}
-
-AbstractChainedBatch.prototype.clear = function () {
-  this._checkWritten()
-
-  this._operations = []
-
-  if (typeof this._clear == 'function' )
-    this._clear()
-
-  return this
-}
-
-AbstractChainedBatch.prototype.write = function (options, callback) {
-  this._checkWritten()
-
-  if (typeof options == 'function')
-    callback = options
-  if (typeof callback != 'function')
-    throw new Error('write() requires a callback argument')
-  if (typeof options != 'object')
-    options = {}
-
-  this._written = true
-
-  if (typeof this._write == 'function' )
-    return this._write(callback)
-
-  if (typeof this._db._batch == 'function')
-    return this._db._batch(this._operations, options, callback)
-
-  process.nextTick(callback)
-}
-
-module.exports = AbstractChainedBatch
-}).call(this,require('_process'))
-},{"_process":73}],48:[function(require,module,exports){
-(function (process){
-/* Copyright (c) 2013 Rod Vagg, MIT License */
-
-function AbstractIterator (db) {
-  this.db = db
-  this._ended = false
-  this._nexting = false
-}
-
-AbstractIterator.prototype.next = function (callback) {
-  var self = this
-
-  if (typeof callback != 'function')
-    throw new Error('next() requires a callback argument')
-
-  if (self._ended)
-    return callback(new Error('cannot call next() after end()'))
-  if (self._nexting)
-    return callback(new Error('cannot call next() before previous next() has completed'))
-
-  self._nexting = true
-  if (typeof self._next == 'function') {
-    return self._next(function () {
-      self._nexting = false
-      callback.apply(null, arguments)
-    })
-  }
-
-  process.nextTick(function () {
-    self._nexting = false
-    callback()
-  })
-}
-
-AbstractIterator.prototype.end = function (callback) {
-  if (typeof callback != 'function')
-    throw new Error('end() requires a callback argument')
-
-  if (this._ended)
-    return callback(new Error('end() already called on iterator'))
-
-  this._ended = true
-
-  if (typeof this._end == 'function')
-    return this._end(callback)
-
-  process.nextTick(callback)
-}
-
-module.exports = AbstractIterator
-
-}).call(this,require('_process'))
-},{"_process":73}],49:[function(require,module,exports){
-(function (Buffer,process){
-/* Copyright (c) 2013 Rod Vagg, MIT License */
-
-var xtend                = require('xtend')
-  , AbstractIterator     = require('./abstract-iterator')
-  , AbstractChainedBatch = require('./abstract-chained-batch')
-
-function AbstractLevelDOWN (location) {
-  if (!arguments.length || location === undefined)
-    throw new Error('constructor requires at least a location argument')
-
-  if (typeof location != 'string')
-    throw new Error('constructor requires a location string argument')
-
-  this.location = location
-  this.status = 'new'
-}
-
-AbstractLevelDOWN.prototype.open = function (options, callback) {
-  var self      = this
-    , oldStatus = this.status
-
-  if (typeof options == 'function')
-    callback = options
-
-  if (typeof callback != 'function')
-    throw new Error('open() requires a callback argument')
-
-  if (typeof options != 'object')
-    options = {}
-
-  options.createIfMissing = options.createIfMissing != false
-  options.errorIfExists = !!options.errorIfExists
-
-  if (typeof this._open == 'function') {
-    this.status = 'opening'
-    this._open(options, function (err) {
-      if (err) {
-        self.status = oldStatus
-        return callback(err)
-      }
-      self.status = 'open'
-      callback()
-    })
-  } else {
-    this.status = 'open'
-    process.nextTick(callback)
-  }
-}
-
-AbstractLevelDOWN.prototype.close = function (callback) {
-  var self      = this
-    , oldStatus = this.status
-
-  if (typeof callback != 'function')
-    throw new Error('close() requires a callback argument')
-
-  if (typeof this._close == 'function') {
-    this.status = 'closing'
-    this._close(function (err) {
-      if (err) {
-        self.status = oldStatus
-        return callback(err)
-      }
-      self.status = 'closed'
-      callback()
-    })
-  } else {
-    this.status = 'closed'
-    process.nextTick(callback)
-  }
-}
-
-AbstractLevelDOWN.prototype.get = function (key, options, callback) {
-  var err
-
-  if (typeof options == 'function')
-    callback = options
-
-  if (typeof callback != 'function')
-    throw new Error('get() requires a callback argument')
-
-  if (err = this._checkKey(key, 'key', this._isBuffer))
-    return callback(err)
-
-  if (!this._isBuffer(key))
-    key = String(key)
-
-  if (typeof options != 'object')
-    options = {}
-
-  options.asBuffer = options.asBuffer != false
-
-  if (typeof this._get == 'function')
-    return this._get(key, options, callback)
-
-  process.nextTick(function () { callback(new Error('NotFound')) })
-}
-
-AbstractLevelDOWN.prototype.put = function (key, value, options, callback) {
-  var err
-
-  if (typeof options == 'function')
-    callback = options
-
-  if (typeof callback != 'function')
-    throw new Error('put() requires a callback argument')
-
-  if (err = this._checkKey(key, 'key', this._isBuffer))
-    return callback(err)
-
-  if (!this._isBuffer(key))
-    key = String(key)
-
-  // coerce value to string in node, don't touch it in browser
-  // (indexeddb can store any JS type)
-  if (value != null && !this._isBuffer(value) && !process.browser)
-    value = String(value)
-
-  if (typeof options != 'object')
-    options = {}
-
-  if (typeof this._put == 'function')
-    return this._put(key, value, options, callback)
-
-  process.nextTick(callback)
-}
-
-AbstractLevelDOWN.prototype.del = function (key, options, callback) {
-  var err
-
-  if (typeof options == 'function')
-    callback = options
-
-  if (typeof callback != 'function')
-    throw new Error('del() requires a callback argument')
-
-  if (err = this._checkKey(key, 'key', this._isBuffer))
-    return callback(err)
-
-  if (!this._isBuffer(key))
-    key = String(key)
-
-  if (typeof options != 'object')
-    options = {}
-
-  if (typeof this._del == 'function')
-    return this._del(key, options, callback)
-
-  process.nextTick(callback)
-}
-
-AbstractLevelDOWN.prototype.batch = function (array, options, callback) {
-  if (!arguments.length)
-    return this._chainedBatch()
-
-  if (typeof options == 'function')
-    callback = options
-
-  if (typeof array == 'function')
-    callback = array
-
-  if (typeof callback != 'function')
-    throw new Error('batch(array) requires a callback argument')
-
-  if (!Array.isArray(array))
-    return callback(new Error('batch(array) requires an array argument'))
-
-  if (!options || typeof options != 'object')
-    options = {}
-
-  var i = 0
-    , l = array.length
-    , e
-    , err
-
-  for (; i < l; i++) {
-    e = array[i]
-    if (typeof e != 'object')
-      continue
-
-    if (err = this._checkKey(e.type, 'type', this._isBuffer))
-      return callback(err)
-
-    if (err = this._checkKey(e.key, 'key', this._isBuffer))
-      return callback(err)
-  }
-
-  if (typeof this._batch == 'function')
-    return this._batch(array, options, callback)
-
-  process.nextTick(callback)
-}
-
-//TODO: remove from here, not a necessary primitive
-AbstractLevelDOWN.prototype.approximateSize = function (start, end, callback) {
-  if (   start == null
-      || end == null
-      || typeof start == 'function'
-      || typeof end == 'function') {
-    throw new Error('approximateSize() requires valid `start`, `end` and `callback` arguments')
-  }
-
-  if (typeof callback != 'function')
-    throw new Error('approximateSize() requires a callback argument')
-
-  if (!this._isBuffer(start))
-    start = String(start)
-
-  if (!this._isBuffer(end))
-    end = String(end)
-
-  if (typeof this._approximateSize == 'function')
-    return this._approximateSize(start, end, callback)
-
-  process.nextTick(function () {
-    callback(null, 0)
-  })
-}
-
-AbstractLevelDOWN.prototype._setupIteratorOptions = function (options) {
-  var self = this
-
-  options = xtend(options)
-
-  ;[ 'start', 'end', 'gt', 'gte', 'lt', 'lte' ].forEach(function (o) {
-    if (options[o] && self._isBuffer(options[o]) && options[o].length === 0)
-      delete options[o]
-  })
-
-  options.reverse = !!options.reverse
-  options.keys = options.keys != false
-  options.values = options.values != false
-  options.limit = 'limit' in options ? options.limit : -1
-  options.keyAsBuffer = options.keyAsBuffer != false
-  options.valueAsBuffer = options.valueAsBuffer != false
-
-  return options
-}
-
-AbstractLevelDOWN.prototype.iterator = function (options) {
-  if (typeof options != 'object')
-    options = {}
-
-  options = this._setupIteratorOptions(options)
-
-  if (typeof this._iterator == 'function')
-    return this._iterator(options)
-
-  return new AbstractIterator(this)
-}
-
-AbstractLevelDOWN.prototype._chainedBatch = function () {
-  return new AbstractChainedBatch(this)
-}
-
-AbstractLevelDOWN.prototype._isBuffer = function (obj) {
-  return Buffer.isBuffer(obj)
-}
-
-AbstractLevelDOWN.prototype._checkKey = function (obj, type) {
-
-  if (obj === null || obj === undefined)
-    return new Error(type + ' cannot be `null` or `undefined`')
-
-  if (this._isBuffer(obj)) {
-    if (obj.length === 0)
-      return new Error(type + ' cannot be an empty Buffer')
-  } else if (String(obj) === '')
-    return new Error(type + ' cannot be an empty String')
-}
-
-module.exports = AbstractLevelDOWN
-
-}).call(this,{"isBuffer":require("../../../is-buffer/index.js")},require('_process'))
-},{"../../../is-buffer/index.js":26,"./abstract-chained-batch":47,"./abstract-iterator":48,"_process":73,"xtend":131}],50:[function(require,module,exports){
-arguments[4][4][0].apply(exports,arguments)
-},{"./abstract-chained-batch":47,"./abstract-iterator":48,"./abstract-leveldown":49,"./is-leveldown":51,"dup":4}],51:[function(require,module,exports){
-arguments[4][5][0].apply(exports,arguments)
-},{"./abstract-leveldown":49,"dup":5}],52:[function(require,module,exports){
+},{"./immediate":43,"abstract-leveldown":48,"buffer":5,"functional-red-black-tree":19,"inherits":24,"ltgt":56}],45:[function(require,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"_process":70,"dup":9}],46:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"_process":70,"dup":10}],47:[function(require,module,exports){
+arguments[4][11][0].apply(exports,arguments)
+},{"../../../is-buffer/index.js":26,"./abstract-chained-batch":45,"./abstract-iterator":46,"_process":70,"dup":11,"xtend":120}],48:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"./abstract-chained-batch":45,"./abstract-iterator":46,"./abstract-leveldown":47,"./is-leveldown":49,"dup":12}],49:[function(require,module,exports){
+arguments[4][13][0].apply(exports,arguments)
+},{"./abstract-leveldown":47,"dup":13}],50:[function(require,module,exports){
 'use strict';
 var types = [
   require('./nextTick'),
@@ -21969,7 +21371,7 @@ function immediate(task) {
   }
 }
 
-},{"./messageChannel":53,"./mutation.js":54,"./nextTick":55,"./stateChange":56,"./timeout":57}],53:[function(require,module,exports){
+},{"./messageChannel":51,"./mutation.js":52,"./nextTick":53,"./stateChange":54,"./timeout":55}],51:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -21990,7 +21392,7 @@ exports.install = function (func) {
   };
 };
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],54:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 (function (global){
 'use strict';
 //based off rsvp https://github.com/tildeio/rsvp.js
@@ -22015,7 +21417,7 @@ exports.install = function (handle) {
   };
 };
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],55:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 (function (process){
 'use strict';
 exports.test = function () {
@@ -22030,7 +21432,7 @@ exports.install = function (func) {
 };
 
 }).call(this,require('_process'))
-},{"_process":73}],56:[function(require,module,exports){
+},{"_process":70}],54:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -22057,7 +21459,7 @@ exports.install = function (handle) {
   };
 };
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],57:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 'use strict';
 exports.test = function () {
   return true;
@@ -22068,7 +21470,7 @@ exports.install = function (t) {
     setTimeout(t, 0);
   };
 };
-},{}],58:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 (function (Buffer){
 
 exports.compare = function (a, b) {
@@ -22223,38 +21625,7 @@ exports.filter = function (range, compare) {
 
 
 }).call(this,{"isBuffer":require("../../../is-buffer/index.js")})
-},{"../../../is-buffer/index.js":26}],59:[function(require,module,exports){
-/**
- * @file Trims and replaces sequences of whitespace characters by a single space.
- * @version 1.3.2
- * @author Xotic750 <Xotic750@gmail.com>
- * @copyright  Xotic750
- * @license {@link <https://opensource.org/licenses/MIT> MIT}
- * @module normalize-space-x
- */
-
-'use strict';
-
-var trim = require('trim-x');
-var reNormalize = new RegExp('[' + require('white-space-x').string + ']+', 'g');
-
-/**
- * This method strips leading and trailing white-space from a string,
- * replaces sequences of whitespace characters by a single space,
- * and returns the resulting string.
- *
- * @param {string} string - The string to be normalized.
- * @returns {string} The normalized string.
- * @example
- * var normalizeSpace = require('normalize-space-x');
- *
- * normalizeSpace(' \t\na \t\nb \t\n') === 'a b'; // true
- */
-module.exports = function normalizeSpace(string) {
-  return trim(string).replace(reNormalize, ' ');
-};
-
-},{"trim-x":118,"white-space-x":130}],60:[function(require,module,exports){
+},{"../../../is-buffer/index.js":26}],57:[function(require,module,exports){
 'use strict';
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
@@ -23808,7 +23179,7 @@ function LevelPouch(opts, callback) {
 
 module.exports = LevelPouch;
 
-},{"argsarray":6,"buffer-from":9,"double-ended-queue":14,"levelup":38,"pouchdb-adapter-utils":63,"pouchdb-binary-utils":64,"pouchdb-collections":65,"pouchdb-errors":66,"pouchdb-json":67,"pouchdb-md5":68,"pouchdb-merge":69,"pouchdb-promise":61,"pouchdb-utils":70,"sublevel-pouchdb":101,"through2":113}],61:[function(require,module,exports){
+},{"argsarray":1,"buffer-from":4,"double-ended-queue":14,"levelup":36,"pouchdb-adapter-utils":60,"pouchdb-binary-utils":61,"pouchdb-collections":62,"pouchdb-errors":63,"pouchdb-json":64,"pouchdb-md5":65,"pouchdb-merge":66,"pouchdb-promise":58,"pouchdb-utils":67,"sublevel-pouchdb":97,"through2":109}],58:[function(require,module,exports){
 'use strict';
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
@@ -23820,7 +23191,7 @@ var PouchPromise = typeof Promise === 'function' ? Promise : lie;
 
 module.exports = PouchPromise;
 
-},{"lie":42}],62:[function(require,module,exports){
+},{"lie":40}],59:[function(require,module,exports){
 'use strict';
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
@@ -23849,7 +23220,7 @@ var index = function (PouchDB) {
 
 module.exports = index;
 
-},{"memdown":46,"pouchdb-adapter-leveldb-core":60,"pouchdb-utils":70}],63:[function(require,module,exports){
+},{"memdown":44,"pouchdb-adapter-leveldb-core":57,"pouchdb-utils":67}],60:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -24288,7 +23659,7 @@ exports.preprocessAttachments = preprocessAttachments;
 exports.processDocs = processDocs;
 exports.updateDoc = updateDoc;
 
-},{"pouchdb-binary-utils":64,"pouchdb-collections":65,"pouchdb-errors":66,"pouchdb-md5":68,"pouchdb-merge":69,"pouchdb-utils":70}],64:[function(require,module,exports){
+},{"pouchdb-binary-utils":61,"pouchdb-collections":62,"pouchdb-errors":63,"pouchdb-md5":65,"pouchdb-merge":66,"pouchdb-utils":67}],61:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -24428,7 +23799,7 @@ exports.readAsArrayBuffer = readAsArrayBuffer;
 exports.readAsBinaryString = readAsBinaryString;
 exports.typedBuffer = typedBuffer;
 
-},{}],65:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -24528,7 +23899,7 @@ function supportsMapAndSet() {
   }
 }
 
-},{}],66:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -24655,7 +24026,7 @@ exports.INVALID_URL = INVALID_URL;
 exports.createError = createError;
 exports.generateErrorFromResponse = generateErrorFromResponse;
 
-},{"inherits":24}],67:[function(require,module,exports){
+},{"inherits":24}],64:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -24688,7 +24059,7 @@ function safeJsonStringify(json) {
 exports.safeJsonParse = safeJsonParse;
 exports.safeJsonStringify = safeJsonStringify;
 
-},{"vuvuzela":129}],68:[function(require,module,exports){
+},{"vuvuzela":119}],65:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -24775,7 +24146,7 @@ exports.binaryMd5 = binaryMd5;
 exports.stringMd5 = stringMd5;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"pouchdb-binary-utils":64,"spark-md5":84}],69:[function(require,module,exports){
+},{"pouchdb-binary-utils":61,"spark-md5":80}],66:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -25252,14 +24623,13 @@ exports.traverseRevTree = traverseRevTree;
 exports.winningRev = winningRev;
 exports.latest = latest;
 
-},{}],70:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-var uuidV4 = _interopDefault(require('uuid'));
 var Promise = _interopDefault(require('pouchdb-promise'));
 var getArguments = _interopDefault(require('argsarray'));
 var pouchdbCollections = require('pouchdb-collections');
@@ -25267,6 +24637,7 @@ var events = require('events');
 var inherits = _interopDefault(require('inherits'));
 var immediate = _interopDefault(require('immediate'));
 var pouchdbErrors = require('pouchdb-errors');
+var v4 = _interopDefault(require('uuid/v4'));
 
 function isBinaryObject(object) {
   return (typeof ArrayBuffer !== 'undefined' && object instanceof ArrayBuffer) ||
@@ -26061,10 +25432,10 @@ function tryAndPut(db, doc, diffFun) {
 }
 
 function rev() {
-  return uuidV4.v4().replace(/-/g, '').toLowerCase();
+  return v4().replace(/-/g, '').toLowerCase();
 }
 
-var uuid = uuidV4.v4;
+var uuid = v4;
 
 exports.adapterFun = adapterFun;
 exports.assign = assign$1;
@@ -26095,9 +25466,9 @@ exports.toPromise = toPromise;
 exports.upsert = upsert;
 exports.uuid = uuid;
 
-},{"argsarray":6,"events":18,"immediate":23,"inherits":24,"pouchdb-collections":65,"pouchdb-errors":66,"pouchdb-promise":71,"uuid":123}],71:[function(require,module,exports){
-arguments[4][61][0].apply(exports,arguments)
-},{"dup":61,"lie":42}],72:[function(require,module,exports){
+},{"argsarray":1,"events":18,"immediate":23,"inherits":24,"pouchdb-collections":62,"pouchdb-errors":63,"pouchdb-promise":68,"uuid/v4":117}],68:[function(require,module,exports){
+arguments[4][58][0].apply(exports,arguments)
+},{"dup":58,"lie":40}],69:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -26144,7 +25515,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 }).call(this,require('_process'))
-},{"_process":73}],73:[function(require,module,exports){
+},{"_process":70}],70:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -26330,9 +25701,9 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],74:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],75:[function(require,module,exports){
+},{"dup":17}],72:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -26425,7 +25796,7 @@ function forEach (xs, f) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_readable":77,"./_stream_writable":79,"_process":73,"core-util-is":11,"inherits":24}],76:[function(require,module,exports){
+},{"./_stream_readable":74,"./_stream_writable":76,"_process":70,"core-util-is":6,"inherits":24}],73:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -26473,7 +25844,7 @@ PassThrough.prototype._transform = function(chunk, encoding, cb) {
   cb(null, chunk);
 };
 
-},{"./_stream_transform":78,"core-util-is":11,"inherits":24}],77:[function(require,module,exports){
+},{"./_stream_transform":75,"core-util-is":6,"inherits":24}],74:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -27459,7 +26830,7 @@ function indexOf (xs, x) {
 }
 
 }).call(this,require('_process'))
-},{"_process":73,"buffer":10,"core-util-is":11,"events":18,"inherits":24,"isarray":80,"stream":85,"string_decoder/":100}],78:[function(require,module,exports){
+},{"_process":70,"buffer":5,"core-util-is":6,"events":18,"inherits":24,"isarray":77,"stream":81,"string_decoder/":96}],75:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -27671,7 +27042,7 @@ function done(stream, er) {
   return stream.push(null);
 }
 
-},{"./_stream_duplex":75,"core-util-is":11,"inherits":24}],79:[function(require,module,exports){
+},{"./_stream_duplex":72,"core-util-is":6,"inherits":24}],76:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -28061,12 +27432,12 @@ function endWritable(stream, state, cb) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_duplex":75,"_process":73,"buffer":10,"core-util-is":11,"inherits":24,"stream":85}],80:[function(require,module,exports){
+},{"./_stream_duplex":72,"_process":70,"buffer":5,"core-util-is":6,"inherits":24,"stream":81}],77:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],81:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 var Stream = require('stream'); // hack to fix a circular dependency issue when used with browserify
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Stream = Stream;
@@ -28076,41 +27447,7 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":75,"./lib/_stream_passthrough.js":76,"./lib/_stream_readable.js":77,"./lib/_stream_transform.js":78,"./lib/_stream_writable.js":79,"stream":85}],82:[function(require,module,exports){
-/**
- * @file Replace the comments in a string.
- * @version 1.0.1
- * @author Xotic750 <Xotic750@gmail.com>
- * @copyright  Xotic750
- * @license {@link <https://opensource.org/licenses/MIT> MIT}
- * @module replace-comments-x
- */
-
-'use strict';
-
-var isString = require('is-string');
-var STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
-
-var $replaceComments = function replaceComments(string) {
-  var replacement = arguments.length > 1 && isString(arguments[1]) ? arguments[1] : '';
-  return isString(string) ? string.replace(STRIP_COMMENTS, replacement) : '';
-};
-
-/**
- * This method replaces comments in a string.
- *
- * @param {string} string - The string to be stripped.
- * @param {string} [replacement] - The string to be used as a replacement.
- * @returns {string} The new string with the comments replaced.
- * @example
- * var replaceComments = require('replace-comments-x');
- *
- * replaceComments(test;/* test * /, ''), // 'test;'
- * replaceComments(test; // test, ''), // 'test;'
- */
-module.exports = $replaceComments;
-
-},{"is-string":30}],83:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":72,"./lib/_stream_passthrough.js":73,"./lib/_stream_readable.js":74,"./lib/_stream_transform.js":75,"./lib/_stream_writable.js":76,"stream":81}],79:[function(require,module,exports){
 /* eslint-disable node/no-deprecated-api */
 var buffer = require('buffer')
 var Buffer = buffer.Buffer
@@ -28174,7 +27511,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
   return buffer.SlowBuffer(size)
 }
 
-},{"buffer":10}],84:[function(require,module,exports){
+},{"buffer":5}],80:[function(require,module,exports){
 (function (factory) {
     if (typeof exports === 'object') {
         // Node/CommonJS
@@ -28927,7 +28264,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
     return SparkMD5;
 }));
 
-},{}],85:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -29056,10 +28393,10 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":18,"inherits":24,"readable-stream/duplex.js":86,"readable-stream/passthrough.js":95,"readable-stream/readable.js":96,"readable-stream/transform.js":97,"readable-stream/writable.js":98}],86:[function(require,module,exports){
+},{"events":18,"inherits":24,"readable-stream/duplex.js":82,"readable-stream/passthrough.js":91,"readable-stream/readable.js":92,"readable-stream/transform.js":93,"readable-stream/writable.js":94}],82:[function(require,module,exports){
 module.exports = require('./lib/_stream_duplex.js');
 
-},{"./lib/_stream_duplex.js":87}],87:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":83}],83:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -29184,7 +28521,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":89,"./_stream_writable":91,"core-util-is":11,"inherits":24,"process-nextick-args":72}],88:[function(require,module,exports){
+},{"./_stream_readable":85,"./_stream_writable":87,"core-util-is":6,"inherits":24,"process-nextick-args":69}],84:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -29232,7 +28569,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":90,"core-util-is":11,"inherits":24}],89:[function(require,module,exports){
+},{"./_stream_transform":86,"core-util-is":6,"inherits":24}],85:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -30242,7 +29579,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./_stream_duplex":87,"./internal/streams/BufferList":92,"./internal/streams/destroy":93,"./internal/streams/stream":94,"_process":73,"core-util-is":11,"events":18,"inherits":24,"isarray":32,"process-nextick-args":72,"safe-buffer":83,"string_decoder/":99,"util":8}],90:[function(require,module,exports){
+},{"./_stream_duplex":83,"./internal/streams/BufferList":88,"./internal/streams/destroy":89,"./internal/streams/stream":90,"_process":70,"core-util-is":6,"events":18,"inherits":24,"isarray":30,"process-nextick-args":69,"safe-buffer":79,"string_decoder/":95,"util":3}],86:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -30457,7 +29794,7 @@ function done(stream, er, data) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":87,"core-util-is":11,"inherits":24}],91:[function(require,module,exports){
+},{"./_stream_duplex":83,"core-util-is":6,"inherits":24}],87:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -31124,7 +30461,7 @@ Writable.prototype._destroy = function (err, cb) {
   cb(err);
 };
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./_stream_duplex":87,"./internal/streams/destroy":93,"./internal/streams/stream":94,"_process":73,"core-util-is":11,"inherits":24,"process-nextick-args":72,"safe-buffer":83,"util-deprecate":119}],92:[function(require,module,exports){
+},{"./_stream_duplex":83,"./internal/streams/destroy":89,"./internal/streams/stream":90,"_process":70,"core-util-is":6,"inherits":24,"process-nextick-args":69,"safe-buffer":79,"util-deprecate":111}],88:[function(require,module,exports){
 'use strict';
 
 /*<replacement>*/
@@ -31199,7 +30536,7 @@ module.exports = function () {
 
   return BufferList;
 }();
-},{"safe-buffer":83}],93:[function(require,module,exports){
+},{"safe-buffer":79}],89:[function(require,module,exports){
 'use strict';
 
 /*<replacement>*/
@@ -31272,13 +30609,13 @@ module.exports = {
   destroy: destroy,
   undestroy: undestroy
 };
-},{"process-nextick-args":72}],94:[function(require,module,exports){
+},{"process-nextick-args":69}],90:[function(require,module,exports){
 module.exports = require('events').EventEmitter;
 
-},{"events":18}],95:[function(require,module,exports){
+},{"events":18}],91:[function(require,module,exports){
 module.exports = require('./readable').PassThrough
 
-},{"./readable":96}],96:[function(require,module,exports){
+},{"./readable":92}],92:[function(require,module,exports){
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Stream = exports;
 exports.Readable = exports;
@@ -31287,13 +30624,13 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":87,"./lib/_stream_passthrough.js":88,"./lib/_stream_readable.js":89,"./lib/_stream_transform.js":90,"./lib/_stream_writable.js":91}],97:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":83,"./lib/_stream_passthrough.js":84,"./lib/_stream_readable.js":85,"./lib/_stream_transform.js":86,"./lib/_stream_writable.js":87}],93:[function(require,module,exports){
 module.exports = require('./readable').Transform
 
-},{"./readable":96}],98:[function(require,module,exports){
+},{"./readable":92}],94:[function(require,module,exports){
 module.exports = require('./lib/_stream_writable.js');
 
-},{"./lib/_stream_writable.js":91}],99:[function(require,module,exports){
+},{"./lib/_stream_writable.js":87}],95:[function(require,module,exports){
 'use strict';
 
 var Buffer = require('safe-buffer').Buffer;
@@ -31566,7 +30903,7 @@ function simpleWrite(buf) {
 function simpleEnd(buf) {
   return buf && buf.length ? this.write(buf) : '';
 }
-},{"safe-buffer":83}],100:[function(require,module,exports){
+},{"safe-buffer":79}],96:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -31789,7 +31126,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":10}],101:[function(require,module,exports){
+},{"buffer":5}],97:[function(require,module,exports){
 'use strict';
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
@@ -32181,29 +31518,29 @@ function sublevelPouch(db) {
 
 module.exports = sublevelPouch;
 
-},{"events":18,"inherits":24,"level-codec":33,"ltgt":44,"readable-stream":81}],102:[function(require,module,exports){
+},{"events":18,"inherits":24,"level-codec":31,"ltgt":42,"readable-stream":78}],98:[function(require,module,exports){
+arguments[4][83][0].apply(exports,arguments)
+},{"./_stream_readable":100,"./_stream_writable":102,"core-util-is":6,"dup":83,"inherits":24,"process-nextick-args":69}],99:[function(require,module,exports){
+arguments[4][84][0].apply(exports,arguments)
+},{"./_stream_transform":101,"core-util-is":6,"dup":84,"inherits":24}],100:[function(require,module,exports){
+arguments[4][85][0].apply(exports,arguments)
+},{"./_stream_duplex":98,"./internal/streams/BufferList":103,"./internal/streams/destroy":104,"./internal/streams/stream":105,"_process":70,"core-util-is":6,"dup":85,"events":18,"inherits":24,"isarray":30,"process-nextick-args":69,"safe-buffer":79,"string_decoder/":108,"util":3}],101:[function(require,module,exports){
+arguments[4][86][0].apply(exports,arguments)
+},{"./_stream_duplex":98,"core-util-is":6,"dup":86,"inherits":24}],102:[function(require,module,exports){
 arguments[4][87][0].apply(exports,arguments)
-},{"./_stream_readable":104,"./_stream_writable":106,"core-util-is":11,"dup":87,"inherits":24,"process-nextick-args":72}],103:[function(require,module,exports){
+},{"./_stream_duplex":98,"./internal/streams/destroy":104,"./internal/streams/stream":105,"_process":70,"core-util-is":6,"dup":87,"inherits":24,"process-nextick-args":69,"safe-buffer":79,"util-deprecate":111}],103:[function(require,module,exports){
 arguments[4][88][0].apply(exports,arguments)
-},{"./_stream_transform":105,"core-util-is":11,"dup":88,"inherits":24}],104:[function(require,module,exports){
+},{"dup":88,"safe-buffer":79}],104:[function(require,module,exports){
 arguments[4][89][0].apply(exports,arguments)
-},{"./_stream_duplex":102,"./internal/streams/BufferList":107,"./internal/streams/destroy":108,"./internal/streams/stream":109,"_process":73,"core-util-is":11,"dup":89,"events":18,"inherits":24,"isarray":32,"process-nextick-args":72,"safe-buffer":83,"string_decoder/":112,"util":8}],105:[function(require,module,exports){
+},{"dup":89,"process-nextick-args":69}],105:[function(require,module,exports){
 arguments[4][90][0].apply(exports,arguments)
-},{"./_stream_duplex":102,"core-util-is":11,"dup":90,"inherits":24}],106:[function(require,module,exports){
-arguments[4][91][0].apply(exports,arguments)
-},{"./_stream_duplex":102,"./internal/streams/destroy":108,"./internal/streams/stream":109,"_process":73,"core-util-is":11,"dup":91,"inherits":24,"process-nextick-args":72,"safe-buffer":83,"util-deprecate":119}],107:[function(require,module,exports){
+},{"dup":90,"events":18}],106:[function(require,module,exports){
 arguments[4][92][0].apply(exports,arguments)
-},{"dup":92,"safe-buffer":83}],108:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":98,"./lib/_stream_passthrough.js":99,"./lib/_stream_readable.js":100,"./lib/_stream_transform.js":101,"./lib/_stream_writable.js":102,"dup":92}],107:[function(require,module,exports){
 arguments[4][93][0].apply(exports,arguments)
-},{"dup":93,"process-nextick-args":72}],109:[function(require,module,exports){
-arguments[4][94][0].apply(exports,arguments)
-},{"dup":94,"events":18}],110:[function(require,module,exports){
-arguments[4][96][0].apply(exports,arguments)
-},{"./lib/_stream_duplex.js":102,"./lib/_stream_passthrough.js":103,"./lib/_stream_readable.js":104,"./lib/_stream_transform.js":105,"./lib/_stream_writable.js":106,"dup":96}],111:[function(require,module,exports){
-arguments[4][97][0].apply(exports,arguments)
-},{"./readable":110,"dup":97}],112:[function(require,module,exports){
-arguments[4][99][0].apply(exports,arguments)
-},{"dup":99,"safe-buffer":83}],113:[function(require,module,exports){
+},{"./readable":106,"dup":93}],108:[function(require,module,exports){
+arguments[4][95][0].apply(exports,arguments)
+},{"dup":95,"safe-buffer":79}],109:[function(require,module,exports){
 (function (process){
 var Transform = require('readable-stream/transform')
   , inherits  = require('util').inherits
@@ -32303,7 +31640,7 @@ module.exports.obj = through2(function (options, transform, flush) {
 })
 
 }).call(this,require('_process'))
-},{"_process":73,"readable-stream/transform":111,"util":122,"xtend":131}],114:[function(require,module,exports){
+},{"_process":70,"readable-stream/transform":107,"util":114,"xtend":120}],110:[function(require,module,exports){
 /**
  * @file Get an object's ES6 @@toStringTag.
  * @see {@link http://www.ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring|19.1.3.6 Object.prototype.toString ( )}
@@ -32344,134 +31681,7 @@ module.exports = function toStringTag(value) {
   return toStr.call(value);
 };
 
-},{"lodash.isnull":43,"validate.io-undefined":128}],115:[function(require,module,exports){
-/**
- * @file ES6-compliant shim for ToString.
- * @see {@link http://www.ecma-international.org/ecma-262/6.0/#sec-tostring|7.1.12 ToString ( argument )}
- * @version 1.4.0
- * @author Xotic750 <Xotic750@gmail.com>
- * @copyright  Xotic750
- * @license {@link <https://opensource.org/licenses/MIT> MIT}
- * @module to-string-x
- */
-
-'use strict';
-
-var isSymbol = require('is-symbol');
-
-/**
- * The abstract operation ToString converts argument to a value of type String.
- *
- * @param {*} value - The value to convert to a string.
- * @throws {TypeError} If `value` is a Symbol.
- * @returns {string} The converted value.
- * @example
- * var $toString = require('to-string-x');
- *
- * $toString(); // 'undefined'
- * $toString(null); // 'null'
- * $toString('abc'); // 'abc'
- * $toString(true); // 'true'
- * $toString(Symbol('foo')); // TypeError
- * $toString(Symbol.iterator); // TypeError
- * $toString(Object(Symbol.iterator)); // TypeError
- */
-module.exports = function ToString(value) {
-  if (isSymbol(value)) {
-    throw new TypeError('Cannot convert a Symbol value to a string');
-  }
-
-  return String(value);
-};
-
-},{"is-symbol":31}],116:[function(require,module,exports){
-/**
- * @file This method removes whitespace from the left end of a string.
- * @version 1.3.3
- * @author Xotic750 <Xotic750@gmail.com>
- * @copyright  Xotic750
- * @license {@link <https://opensource.org/licenses/MIT> MIT}
- * @module trim-left-x
- */
-
-'use strict';
-
-var $toString = require('to-string-x');
-var reLeft = new RegExp('^[' + require('white-space-x').string + ']+');
-
-/**
- * This method removes whitespace from the left end of a string.
- *
- * @param {string} string - The string to trim the left end whitespace from.
- * @returns {undefined|string} The left trimmed string.
- * @example
- * var trimLeft = require('trim-left-x');
- *
- * trimLeft(' \t\na \t\n') === 'a \t\n'; // true
- */
-module.exports = function trimLeft(string) {
-  return $toString(string).replace(reLeft, '');
-};
-
-},{"to-string-x":115,"white-space-x":130}],117:[function(require,module,exports){
-/**
- * @file This method removes whitespace from the right end of a string.
- * @version 1.3.2
- * @author Xotic750 <Xotic750@gmail.com>
- * @copyright  Xotic750
- * @license {@link <https://opensource.org/licenses/MIT> MIT}
- * @module trim-right-x
- */
-
-'use strict';
-
-var $toString = require('to-string-x');
-var reRight = new RegExp('[' + require('white-space-x').string + ']+$');
-
-/**
- * This method removes whitespace from the right end of a string.
- *
- * @param {string} string - The string to trim the right end whitespace from.
- * @returns {undefined|string} The right trimmed string.
- * @example
- * var trimRight = require('trim-right-x');
- *
- * trimRight(' \t\na \t\n') === ' \t\na'; // true
- */
-module.exports = function trimRight(string) {
-  return $toString(string).replace(reRight, '');
-};
-
-},{"to-string-x":115,"white-space-x":130}],118:[function(require,module,exports){
-/**
- * @file This method removes whitespace from the left and right end of a string.
- * @version 1.0.2
- * @author Xotic750 <Xotic750@gmail.com>
- * @copyright  Xotic750
- * @license {@link <https://opensource.org/licenses/MIT> MIT}
- * @module trim-x
- */
-
-'use strict';
-
-var trimLeft = require('trim-left-x');
-var trimRight = require('trim-right-x');
-
-/**
- * This method removes whitespace from the left and right end of a string.
- *
- * @param {string} string - The string to trim the whitespace from.
- * @returns {undefined|string} The trimmed string.
- * @example
- * var trim = require('trim-x');
- *
- * trim(' \t\na \t\n') === 'a'; // true
- */
-module.exports = function trim(string) {
-  return trimLeft(trimRight(string));
-};
-
-},{"trim-left-x":116,"trim-right-x":117}],119:[function(require,module,exports){
+},{"lodash.isnull":41,"validate.io-undefined":118}],111:[function(require,module,exports){
 (function (global){
 
 /**
@@ -32542,16 +31752,16 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],120:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 arguments[4][24][0].apply(exports,arguments)
-},{"dup":24}],121:[function(require,module,exports){
+},{"dup":24}],113:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],122:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -33141,17 +32351,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":121,"_process":73,"inherits":120}],123:[function(require,module,exports){
-var v1 = require('./v1');
-var v4 = require('./v4');
-
-var uuid = v4;
-uuid.v1 = v1;
-uuid.v4 = v4;
-
-module.exports = uuid;
-
-},{"./v1":126,"./v4":127}],124:[function(require,module,exports){
+},{"./support/isBuffer":113,"_process":70,"inherits":112}],115:[function(require,module,exports){
 /**
  * Convert array of 16 byte values to UUID string format of the form:
  * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
@@ -33176,7 +32376,7 @@ function bytesToUuid(buf, offset) {
 
 module.exports = bytesToUuid;
 
-},{}],125:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 (function (global){
 // Unique ID creation requires a high quality random # generator.  In the
 // browser this is a little complicated due to unknown quality of Math.random()
@@ -33213,109 +32413,7 @@ if (!rng) {
 module.exports = rng;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],126:[function(require,module,exports){
-var rng = require('./lib/rng');
-var bytesToUuid = require('./lib/bytesToUuid');
-
-// **`v1()` - Generate time-based UUID**
-//
-// Inspired by https://github.com/LiosK/UUID.js
-// and http://docs.python.org/library/uuid.html
-
-// random #'s we need to init node and clockseq
-var _seedBytes = rng();
-
-// Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
-var _nodeId = [
-  _seedBytes[0] | 0x01,
-  _seedBytes[1], _seedBytes[2], _seedBytes[3], _seedBytes[4], _seedBytes[5]
-];
-
-// Per 4.2.2, randomize (14 bit) clockseq
-var _clockseq = (_seedBytes[6] << 8 | _seedBytes[7]) & 0x3fff;
-
-// Previous uuid creation time
-var _lastMSecs = 0, _lastNSecs = 0;
-
-// See https://github.com/broofa/node-uuid for API details
-function v1(options, buf, offset) {
-  var i = buf && offset || 0;
-  var b = buf || [];
-
-  options = options || {};
-
-  var clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq;
-
-  // UUID timestamps are 100 nano-second units since the Gregorian epoch,
-  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
-  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
-  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
-  var msecs = options.msecs !== undefined ? options.msecs : new Date().getTime();
-
-  // Per 4.2.1.2, use count of uuid's generated during the current clock
-  // cycle to simulate higher resolution clock
-  var nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1;
-
-  // Time since last uuid creation (in msecs)
-  var dt = (msecs - _lastMSecs) + (nsecs - _lastNSecs)/10000;
-
-  // Per 4.2.1.2, Bump clockseq on clock regression
-  if (dt < 0 && options.clockseq === undefined) {
-    clockseq = clockseq + 1 & 0x3fff;
-  }
-
-  // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
-  // time interval
-  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
-    nsecs = 0;
-  }
-
-  // Per 4.2.1.2 Throw error if too many uuids are requested
-  if (nsecs >= 10000) {
-    throw new Error('uuid.v1(): Can\'t create more than 10M uuids/sec');
-  }
-
-  _lastMSecs = msecs;
-  _lastNSecs = nsecs;
-  _clockseq = clockseq;
-
-  // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
-  msecs += 12219292800000;
-
-  // `time_low`
-  var tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
-  b[i++] = tl >>> 24 & 0xff;
-  b[i++] = tl >>> 16 & 0xff;
-  b[i++] = tl >>> 8 & 0xff;
-  b[i++] = tl & 0xff;
-
-  // `time_mid`
-  var tmh = (msecs / 0x100000000 * 10000) & 0xfffffff;
-  b[i++] = tmh >>> 8 & 0xff;
-  b[i++] = tmh & 0xff;
-
-  // `time_high_and_version`
-  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
-  b[i++] = tmh >>> 16 & 0xff;
-
-  // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
-  b[i++] = clockseq >>> 8 | 0x80;
-
-  // `clock_seq_low`
-  b[i++] = clockseq & 0xff;
-
-  // `node`
-  var node = options.node || _nodeId;
-  for (var n = 0; n < 6; ++n) {
-    b[i + n] = node[n];
-  }
-
-  return buf ? buf : bytesToUuid(b);
-}
-
-module.exports = v1;
-
-},{"./lib/bytesToUuid":124,"./lib/rng":125}],127:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 var rng = require('./lib/rng');
 var bytesToUuid = require('./lib/bytesToUuid');
 
@@ -33346,7 +32444,7 @@ function v4(options, buf, offset) {
 
 module.exports = v4;
 
-},{"./lib/bytesToUuid":124,"./lib/rng":125}],128:[function(require,module,exports){
+},{"./lib/bytesToUuid":115,"./lib/rng":116}],118:[function(require,module,exports){
 /**
 *
 *	VALIDATE: undefined
@@ -33393,7 +32491,7 @@ function isUndefined( value ) {
 
 module.exports = isUndefined;
 
-},{}],129:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 'use strict';
 
 /**
@@ -33568,227 +32666,7 @@ exports.parse = function (str) {
   }
 };
 
-},{}],130:[function(require,module,exports){
-/**
- * @file List of ECMAScript5 white space characters.
- * @version 2.0.2
- * @author Xotic750 <Xotic750@gmail.com>
- * @copyright  Xotic750
- * @license {@link <https://opensource.org/licenses/MIT> MIT}
- * @module white-space-x
- */
-
-'use strict';
-
-/**
- * An array of the ES5 whitespace char codes, string, and their descriptions.
- *
- * @name list
- * @type Array.<Object>
- * @example
- * var whiteSpace = require('white-space-x');
- * whiteSpaces.list.foreach(function (item) {
- *   console.log(lib.description, item.code, item.string);
- * });
- */
-var list = [
-  {
-    code: 0x0009,
-    description: 'Tab',
-    string: '\u0009'
-  },
-  {
-    code: 0x000a,
-    description: 'Line Feed',
-    string: '\u000a'
-  },
-  {
-    code: 0x000b,
-    description: 'Vertical Tab',
-    string: '\u000b'
-  },
-  {
-    code: 0x000c,
-    description: 'Form Feed',
-    string: '\u000c'
-  },
-  {
-    code: 0x000d,
-    description: 'Carriage Return',
-    string: '\u000d'
-  },
-  {
-    code: 0x0020,
-    description: 'Space',
-    string: '\u0020'
-  },
-  /*
-  {
-    code: 0x0085,
-    description: 'Next line - Not ES5 whitespace',
-    string: '\u0085'
-  }
-  */
-  {
-    code: 0x00a0,
-    description: 'No-break space',
-    string: '\u00a0'
-  },
-  {
-    code: 0x1680,
-    description: 'Ogham space mark',
-    string: '\u1680'
-  },
-  {
-    code: 0x180e,
-    description: 'Mongolian vowel separator',
-    string: '\u180e'
-  },
-  {
-    code: 0x2000,
-    description: 'En quad',
-    string: '\u2000'
-  },
-  {
-    code: 0x2001,
-    description: 'Em quad',
-    string: '\u2001'
-  },
-  {
-    code: 0x2002,
-    description: 'En space',
-    string: '\u2002'
-  },
-  {
-    code: 0x2003,
-    description: 'Em space',
-    string: '\u2003'
-  },
-  {
-    code: 0x2004,
-    description: 'Three-per-em space',
-    string: '\u2004'
-  },
-  {
-    code: 0x2005,
-    description: 'Four-per-em space',
-    string: '\u2005'
-  },
-  {
-    code: 0x2006,
-    description: 'Six-per-em space',
-    string: '\u2006'
-  },
-  {
-    code: 0x2007,
-    description: 'Figure space',
-    string: '\u2007'
-  },
-  {
-    code: 0x2008,
-    description: 'Punctuation space',
-    string: '\u2008'
-  },
-  {
-    code: 0x2009,
-    description: 'Thin space',
-    string: '\u2009'
-  },
-  {
-    code: 0x200a,
-    description: 'Hair space',
-    string: '\u200a'
-  },
-  /*
-  {
-    code: 0x200b,
-    description: 'Zero width space - Not ES5 whitespace',
-    string: '\u200b'
-  },
-  */
-  {
-    code: 0x2028,
-    description: 'Line separator',
-    string: '\u2028'
-  },
-  {
-    code: 0x2029,
-    description: 'Paragraph separator',
-    string: '\u2029'
-  },
-  {
-    code: 0x202f,
-    description: 'Narrow no-break space',
-    string: '\u202f'
-  },
-  {
-    code: 0x205f,
-    description: 'Medium mathematical space',
-    string: '\u205f'
-  },
-  {
-    code: 0x3000,
-    description: 'Ideographic space',
-    string: '\u3000'
-  },
-  {
-    code: 0xfeff,
-    description: 'Byte Order Mark',
-    string: '\ufeff'
-  }
-];
-
-var string = '';
-var length = list.length;
-for (var i = 0; i < length; i += 1) {
-  string += list[i].string;
-}
-
-/**
- * A string of the ES5 whitespace characters.
- *
- * @name string
- * @type string
- * @example
- * var whiteSpace = require('white-space-x');
- * var characters = [
- *   '\u0009',
- *   '\u000a',
- *   '\u000b',
- *   '\u000c',
- *   '\u000d',
- *   '\u0020',
- *   '\u00a0',
- *   '\u1680',
- *   '\u180e',
- *   '\u2000',
- *   '\u2001',
- *   '\u2002',
- *   '\u2003',
- *   '\u2004',
- *   '\u2005',
- *   '\u2006',
- *   '\u2007',
- *   '\u2008',
- *   '\u2009',
- *   '\u200a',
- *   '\u2028',
- *   '\u2029',
- *   '\u202f',
- *   '\u205f',
- *   '\u3000',
- *   '\ufeff'
- * ];
- * var ws = characters.join('');
- * var re1 = new RegExp('^[' + whiteSpace.string + ']+$)');
- * re1.test(ws); // true
- */
-module.exports = {
-  list: list,
-  string: string
-};
-
-},{}],131:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -33809,7 +32687,7 @@ function extend() {
     return target
 }
 
-},{}]},{},[62])(62)
+},{}]},{},[59])(59)
 });
 // INLINED END undefined
   return module.exports;
@@ -34577,7 +33455,7 @@ var Database = function () {
   }, {
     key: "knowsDB",
     value: function () {
-      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(dbName) {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(dbName) {
         var db, docCount;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -34674,7 +33552,7 @@ var Database = function () {
   }, {
     key: "update",
     value: function () {
-      var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(_id, updateFn, options) {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(_id, updateFn, options) {
         var updateAttempt = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
 
         var _options, _options$ensure, ensure, _options$retryOnConfl, retryOnConflict, _options$maxUpdateAtt, maxUpdateAttempts, getOpts, db, lastDoc, newDoc, _ref3, id, rev;
@@ -34782,7 +33660,7 @@ var Database = function () {
   }, {
     key: "mixin",
     value: function () {
-      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(_id, _mixin, options) {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(_id, _mixin, options) {
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -34808,7 +33686,7 @@ var Database = function () {
   }, {
     key: "set",
     value: function () {
-      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(id, value, options) {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(id, value, options) {
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
@@ -34834,7 +33712,7 @@ var Database = function () {
   }, {
     key: "get",
     value: function () {
-      var _ref6 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(id) {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(id) {
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
@@ -34878,7 +33756,7 @@ var Database = function () {
   }, {
     key: "has",
     value: function () {
-      var _ref7 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(id) {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(id) {
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
@@ -34906,7 +33784,7 @@ var Database = function () {
   }, {
     key: "add",
     value: function () {
-      var _ref8 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(doc) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(doc) {
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
@@ -34930,7 +33808,7 @@ var Database = function () {
   }, {
     key: "docList",
     value: function () {
-      var _ref9 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
         var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         var _ref10, rows, result, i, _rows$i, id, rev;
@@ -34971,7 +33849,7 @@ var Database = function () {
   }, {
     key: "docCount",
     value: function () {
-      var _ref11 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
         var entries;
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
           while (1) {
@@ -35001,7 +33879,7 @@ var Database = function () {
   }, {
     key: "revList",
     value: function () {
-      var _ref12 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(id) {
+      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(id) {
         var _ref13, _id, _ref13$_revisions, start, ids;
 
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
@@ -35038,7 +33916,7 @@ var Database = function () {
   }, {
     key: "getAllRevisions",
     value: function () {
-      var _ref14 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(id) {
+      var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(id) {
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
         var _options$skip, skip, _options$limit, limit, revs, query;
@@ -35085,7 +33963,7 @@ var Database = function () {
   }, {
     key: "getAll",
     value: function () {
-      var _ref15 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12() {
+      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         var _ref16, rows;
@@ -35121,7 +33999,7 @@ var Database = function () {
   }, {
     key: "setDocuments",
     value: function () {
-      var _ref17 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13(documents, opts) {
+      var _ref17 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(documents, opts) {
         var results, i, d, result, _ref18, id, rev;
 
         return regeneratorRuntime.wrap(function _callee13$(_context13) {
@@ -35185,7 +34063,7 @@ var Database = function () {
   }, {
     key: "updateDocuments",
     value: function () {
-      var _ref19 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14(documents, conflictFn, opts) {
+      var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(documents, conflictFn, opts) {
         var results, tryAgain, resolvedResults, i, d, result, oldDoc, resolved;
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
@@ -35271,7 +34149,7 @@ var Database = function () {
   }, {
     key: "getDocuments",
     value: function () {
-      var _ref20 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee15(idsAndRevs) {
+      var _ref20 = asyncToGenerator(regeneratorRuntime.mark(function _callee15(idsAndRevs) {
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
         var _options$ignoreErrors, ignoreErrors, _ref21, results, result, i, _results$i, docs, id, j, d;
@@ -35360,7 +34238,7 @@ var Database = function () {
   }, {
     key: "remove",
     value: function () {
-      var _ref22 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16(_id, _rev, options) {
+      var _ref22 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(_id, _rev, options) {
         var arg;
         return regeneratorRuntime.wrap(function _callee16$(_context16) {
           while (1) {
@@ -35403,7 +34281,7 @@ var Database = function () {
   }, {
     key: "removeAll",
     value: function () {
-      var _ref23 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17() {
+      var _ref23 = asyncToGenerator(regeneratorRuntime.mark(function _callee17() {
         var db, docs;
         return regeneratorRuntime.wrap(function _callee17$(_context17) {
           while (1) {
@@ -35466,7 +34344,7 @@ var Database = function () {
   }, {
     key: "getConflicts",
     value: function () {
-      var _ref24 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18(opts) {
+      var _ref24 = asyncToGenerator(regeneratorRuntime.mark(function _callee18(opts) {
         var _ref25, rows;
 
         return regeneratorRuntime.wrap(function _callee18$(_context18) {
@@ -35505,7 +34383,7 @@ var Database = function () {
   }, {
     key: "resolveConflicts",
     value: function () {
-      var _ref26 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19(id, resolveFn) {
+      var _ref26 = asyncToGenerator(regeneratorRuntime.mark(function _callee19(id, resolveFn) {
         var doc, query, conflicted, resolved, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, conflictedDoc;
 
         return regeneratorRuntime.wrap(function _callee19$(_context19) {
@@ -35625,7 +34503,7 @@ var Database = function () {
   }, {
     key: "diffWith",
     value: function () {
-      var _ref27 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee20(otherDB) {
+      var _ref27 = asyncToGenerator(regeneratorRuntime.mark(function _callee20(otherDB) {
         var docs2, docs1, map2, map1, inLeft, inRight, changed, id, rev, rev1, _id2, _rev2, rev2;
 
         return regeneratorRuntime.wrap(function _callee20$(_context20) {
@@ -35688,36 +34566,49 @@ var Database = function () {
   }, {
     key: "dump",
     value: function () {
-      var _ref28 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee21() {
-        var name, pouchdb, header, docs;
+      var _ref28 = asyncToGenerator(regeneratorRuntime.mark(function _callee21() {
+        var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+        var filterFn, alias, type, dbInfo, myName, pouchdb, name, header, docs;
         return regeneratorRuntime.wrap(function _callee21$(_context21) {
           while (1) {
             switch (_context21.prev = _context21.next) {
               case 0:
-                name = this.name;
+                filterFn = opts.filterFn;
+                alias = opts.name;
+                type = opts.type;
+                dbInfo = opts.dbInfo;
+                myName = this.name;
                 pouchdb = this.pouchdb;
+                name = alias || myName;
                 _context21.t0 = name;
-                _context21.t1 = pouchdb.type();
+                _context21.t1 = type || pouchdb.type();
                 _context21.t2 = new Date().toJSON();
-                _context21.next = 7;
+                _context21.t3 = babelHelpers$1;
+                _context21.t4 = {};
+                _context21.next = 14;
                 return pouchdb.info();
 
-              case 7:
-                _context21.t3 = _context21.sent;
+              case 14:
+                _context21.t5 = _context21.sent;
+                _context21.t6 = { db_name: name };
+                _context21.t7 = dbInfo;
+                _context21.t8 = _context21.t3.extends.call(_context21.t3, _context21.t4, _context21.t5, _context21.t6, _context21.t7);
                 header = {
                   name: _context21.t0,
                   db_type: _context21.t1,
                   start_time: _context21.t2,
-                  db_info: _context21.t3
+                  db_info: _context21.t8
                 };
-                _context21.next = 11;
+                _context21.next = 21;
                 return this.getAll({ attachments: true });
 
-              case 11:
+              case 21:
                 docs = _context21.sent;
+
+                if (typeof filterFn === "function") docs = filterFn(docs, header);
                 return _context21.abrupt("return", { header: header, docs: docs });
 
-              case 13:
+              case 24:
               case "end":
                 return _context21.stop();
             }
@@ -35734,7 +34625,7 @@ var Database = function () {
   }, {
     key: "backup",
     value: function () {
-      var _ref29 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee22() {
+      var _ref29 = asyncToGenerator(regeneratorRuntime.mark(function _callee22() {
         var backupNo = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
         var name, backupDB;
         return regeneratorRuntime.wrap(function _callee22$(_context22) {
@@ -35770,7 +34661,7 @@ var Database = function () {
   }, {
     key: "migrate",
     value: function () {
-      var _ref30 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee23(migrationFn) {
+      var _ref30 = asyncToGenerator(regeneratorRuntime.mark(function _callee23(migrationFn) {
         var docs, migrated, unchanged, i, doc, migratedDoc;
         return regeneratorRuntime.wrap(function _callee23$(_context23) {
           while (1) {
@@ -35826,7 +34717,7 @@ var Database = function () {
         }, _callee23, this);
       }));
 
-      function migrate(_x38) {
+      function migrate(_x39) {
         return _ref30.apply(this, arguments);
       }
 
@@ -35861,7 +34752,7 @@ var Database = function () {
   }, {
     key: "addDesignDocs",
     value: function () {
-      var _ref32 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee24(specs) {
+      var _ref32 = asyncToGenerator(regeneratorRuntime.mark(function _callee24(specs) {
         var _this = this;
 
         var queryStale = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
@@ -35902,7 +34793,7 @@ var Database = function () {
         }, _callee24, this);
       }));
 
-      function addDesignDocs(_x39) {
+      function addDesignDocs(_x40) {
         return _ref32.apply(this, arguments);
       }
 
@@ -35911,7 +34802,7 @@ var Database = function () {
   }, {
     key: "addDesignDoc",
     value: function () {
-      var _ref33 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee25(_ref34) {
+      var _ref33 = asyncToGenerator(regeneratorRuntime.mark(function _callee25(_ref34) {
         var name = _ref34.name,
             mapFn = _ref34.mapFn,
             reduceFn = _ref34.reduceFn,
@@ -35948,7 +34839,7 @@ var Database = function () {
         }, _callee25, this);
       }));
 
-      function addDesignDoc(_x41) {
+      function addDesignDoc(_x42) {
         return _ref33.apply(this, arguments);
       }
 
@@ -35982,7 +34873,7 @@ var Database = function () {
   }], [{
     key: "loadDump",
     value: function () {
-      var _ref35 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee26(dump) {
+      var _ref35 = asyncToGenerator(regeneratorRuntime.mark(function _callee26(dump) {
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         var header, docs, name, db;
         return regeneratorRuntime.wrap(function _callee26$(_context26) {
@@ -36004,7 +34895,7 @@ var Database = function () {
         }, _callee26, this);
       }));
 
-      function loadDump(_x43) {
+      function loadDump(_x44) {
         return _ref35.apply(this, arguments);
       }
 
@@ -36090,7 +34981,7 @@ var ObjectDB = function () {
   createClass(ObjectDB, null, [{
     key: "dbList",
     value: function () {
-      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
         var metaDB;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -36124,7 +35015,7 @@ var ObjectDB = function () {
   }, {
     key: "find",
     value: function () {
-      var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(name) {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(name) {
         var found, metaDB, meta;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
@@ -36211,7 +35102,7 @@ var ObjectDB = function () {
   createClass(ObjectDB, [{
     key: "destroy",
     value: function () {
-      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
         var commitDB, versionDB, metaDB;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
@@ -36274,7 +35165,7 @@ var ObjectDB = function () {
   }, {
     key: "snapshotObject",
     value: function () {
-      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(type, name, object, snapshotOptions, commitSpec, preview, ref, expectedPrevVersion) {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(type, name, object, snapshotOptions, commitSpec, preview, ref, expectedPrevVersion) {
         var serializeFn, snapshot;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
@@ -36310,7 +35201,7 @@ var ObjectDB = function () {
   }, {
     key: "loadObject",
     value: function () {
-      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(type, name, loadOptions, commitIdOrCommit, ref) {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(type, name, loadOptions, commitIdOrCommit, ref) {
         var snapshot, deserializeFn;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
@@ -36350,7 +35241,7 @@ var ObjectDB = function () {
   }, {
     key: "has",
     value: function () {
-      var _ref6 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(type, name) {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(type, name) {
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
@@ -36378,7 +35269,7 @@ var ObjectDB = function () {
   }, {
     key: "objects",
     value: function () {
-      var _ref7 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(optType) {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(optType) {
         var stats, result, type;
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
@@ -36421,7 +35312,7 @@ var ObjectDB = function () {
   }, {
     key: "objectStats",
     value: function () {
-      var _ref8 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(objectType, objectName) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(objectType, objectName) {
         var statsByType, commitDB, queryOpts, _ref9, rows, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _ref11, objectTypeAndName, _ref11$value, count, newest, oldest, _objectTypeAndName$sp, _objectTypeAndName$sp2, type, _objectName, statsOfType;
 
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
@@ -36554,7 +35445,7 @@ var ObjectDB = function () {
   }, {
     key: "getCommits",
     value: function () {
-      var _ref12 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(type, objectName) {
+      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(type, objectName) {
         var ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "HEAD";
         var limit = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : Infinity;
         var history, commitDB, commits;
@@ -36617,7 +35508,7 @@ var ObjectDB = function () {
   }, {
     key: "getCommit",
     value: function () {
-      var _ref13 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(commitId) {
+      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(commitId) {
         var commitDB;
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
@@ -36657,7 +35548,7 @@ var ObjectDB = function () {
   }, {
     key: "getCommitsWithIds",
     value: function () {
-      var _ref14 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(commitIds) {
+      var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(commitIds) {
         var commitDB;
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
@@ -36707,7 +35598,7 @@ var ObjectDB = function () {
   }, {
     key: "getLatestCommit",
     value: function () {
-      var _ref15 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(type, objectName) {
+      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(type, objectName) {
         var ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "HEAD";
         var includeDeleted = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
 
@@ -36781,7 +35672,7 @@ var ObjectDB = function () {
   }, {
     key: "commit",
     value: function () {
-      var _ref18 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13(type, name, snapshot, commitSpec, preview) {
+      var _ref18 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(type, name, snapshot, commitSpec, preview) {
         var ref = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : "HEAD";
         var expectedPrevVersion = arguments[6];
 
@@ -36943,7 +35834,7 @@ var ObjectDB = function () {
   }, {
     key: "loadSnapshot",
     value: function () {
-      var _ref19 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14(type, name, commitOrId) {
+      var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(type, name, commitOrId) {
         var ref = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : "HEAD";
         var commit, commitDB;
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
@@ -37071,7 +35962,7 @@ var ObjectDB = function () {
   }, {
     key: "_commitDB",
     value: function () {
-      var _ref20 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee15() {
+      var _ref20 = asyncToGenerator(regeneratorRuntime.mark(function _callee15() {
         var dbName, db;
         return regeneratorRuntime.wrap(function _callee15$(_context15) {
           while (1) {
@@ -37123,7 +36014,7 @@ var ObjectDB = function () {
   }, {
     key: "close",
     value: function () {
-      var _ref21 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16() {
+      var _ref21 = asyncToGenerator(regeneratorRuntime.mark(function _callee16() {
         return regeneratorRuntime.wrap(function _callee16$(_context16) {
           while (1) {
             switch (_context16.prev = _context16.next) {
@@ -37172,7 +36063,7 @@ var ObjectDB = function () {
   }, {
     key: "versionGraph",
     value: function () {
-      var _ref22 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17(type, objectName) {
+      var _ref22 = asyncToGenerator(regeneratorRuntime.mark(function _callee17(type, objectName) {
         var versionDB, graph;
         return regeneratorRuntime.wrap(function _callee17$(_context17) {
           while (1) {
@@ -37217,7 +36108,7 @@ var ObjectDB = function () {
   }, {
     key: "_log",
     value: function () {
-      var _ref23 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18(type, objectName) {
+      var _ref23 = asyncToGenerator(regeneratorRuntime.mark(function _callee18(type, objectName) {
         var ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "HEAD";
         var limit = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : Infinity;
 
@@ -37291,7 +36182,7 @@ var ObjectDB = function () {
   }, {
     key: "_findTimestampedVersionsOfObjectNamed",
     value: function () {
-      var _ref26 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19(objectName) {
+      var _ref26 = asyncToGenerator(regeneratorRuntime.mark(function _callee19(objectName) {
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
         var _options$include_docs, include_docs, _options$descending, descending, _options$startTime, startTime, _options$endTime, endTime, startkey, endkey, objectDB, _ref27, rows;
@@ -37359,7 +36250,7 @@ var ObjectDB = function () {
   }, {
     key: "_versionDB",
     value: function () {
-      var _ref28 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee20() {
+      var _ref28 = asyncToGenerator(regeneratorRuntime.mark(function _callee20() {
         var dbName, db;
         return regeneratorRuntime.wrap(function _callee20$(_context20) {
           while (1) {
@@ -37411,7 +36302,7 @@ var ObjectDB = function () {
   }, {
     key: "exportToDir",
     value: function () {
-      var _ref29 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee21(exportDir, nameAndTypes) {
+      var _ref29 = asyncToGenerator(regeneratorRuntime.mark(function _callee21(exportDir, nameAndTypes) {
         var _this = this;
 
         var copyResources = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
@@ -37627,7 +36518,7 @@ var ObjectDB = function () {
                 _didIteratorError4 = false;
                 _iteratorError4 = undefined;
                 _context22.prev = 97;
-                _loop = /*#__PURE__*/regeneratorRuntime.mark(function _loop() {
+                _loop = regeneratorRuntime.mark(function _loop() {
                   var _ref36, refs, history, currentExportDir, commits, name, type, resourcesForCopy, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, _ref38, from, to;
 
                   return regeneratorRuntime.wrap(function _loop$(_context21) {
@@ -37798,7 +36689,7 @@ var ObjectDB = function () {
   }, {
     key: "exportToSpecs",
     value: function () {
-      var _ref39 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee22(nameAndTypes) {
+      var _ref39 = asyncToGenerator(regeneratorRuntime.mark(function _callee22(nameAndTypes) {
         var includeDeleted = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
         var specs, stats, type, name, _iteratorNormalCompletion6, _didIteratorError6, _iteratorError6, _iterator6, _step6, _ref41, _name, _type, _ref42, refs, history, commitIds, commits;
@@ -37935,13 +36826,13 @@ var ObjectDB = function () {
   }, {
     key: "importFromDir",
     value: function () {
-      var _ref43 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee24(importDir) {
+      var _ref43 = asyncToGenerator(regeneratorRuntime.mark(function _callee24(importDir) {
         var overwrite = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         var findImportDataIn = function () {
-          var _ref44 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee23(dir) {
+          var _ref44 = asyncToGenerator(regeneratorRuntime.mark(function _callee23(dir) {
             var _ref45, _ref46, _ref46$, type, name, commits, history, snapshotDirs;
 
             return regeneratorRuntime.wrap(function _callee23$(_context24) {
@@ -38103,7 +36994,7 @@ var ObjectDB = function () {
   }, {
     key: "importFromSpecs",
     value: function () {
-      var _ref47 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee25(specs) {
+      var _ref47 = asyncToGenerator(regeneratorRuntime.mark(function _callee25(specs) {
         var overwrite = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var copyResources = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
@@ -38273,7 +37164,7 @@ var ObjectDB = function () {
   }, {
     key: "importFromSpec",
     value: function () {
-      var _ref50 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee26(spec) {
+      var _ref50 = asyncToGenerator(regeneratorRuntime.mark(function _callee26(spec) {
         var overwrite = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var copyResources = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
         var versionDB, commitDB, snapshotLocation, type, name, commits, history, snapshotDirs;
@@ -38364,7 +37255,7 @@ var ObjectDB = function () {
   }, {
     key: "importFromResource",
     value: function () {
-      var _ref51 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee27(type, name, resource$$1, commitSpec) {
+      var _ref51 = asyncToGenerator(regeneratorRuntime.mark(function _callee27(type, name, resource$$1, commitSpec) {
         var purgeHistory = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
         var snap;
         return regeneratorRuntime.wrap(function _callee27$(_context28) {
@@ -38437,9 +37328,9 @@ var ObjectDB = function () {
   }, {
     key: "getConflicts",
     value: function () {
-      var _ref52 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee30(includeDocs, only) {
+      var _ref52 = asyncToGenerator(regeneratorRuntime.mark(function _callee30(includeDocs, only) {
         var getConflicts = function () {
-          var _ref53 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee29(db, kind) {
+          var _ref53 = asyncToGenerator(regeneratorRuntime.mark(function _callee29(db, kind) {
             var _this2 = this;
 
             var conflicts;
@@ -38454,7 +37345,7 @@ var ObjectDB = function () {
                     conflicts = _context30.sent;
                     _context30.next = 5;
                     return Promise.all(conflicts.map(function () {
-                      var _ref54 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee28(ea) {
+                      var _ref54 = asyncToGenerator(regeneratorRuntime.mark(function _callee28(ea) {
                         var id, rev, conflicts, doc, query;
                         return regeneratorRuntime.wrap(function _callee28$(_context29) {
                           while (1) {
@@ -38589,7 +37480,7 @@ var ObjectDB = function () {
   }, {
     key: "resolveConflict",
     value: function () {
-      var _ref55 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee31(arg) {
+      var _ref55 = asyncToGenerator(regeneratorRuntime.mark(function _callee31(arg) {
         var resolved, del, kind, id, db;
         return regeneratorRuntime.wrap(function _callee31$(_context32) {
           while (1) {
@@ -38675,7 +37566,7 @@ var ObjectDB = function () {
   }, {
     key: "getDiff",
     value: function () {
-      var _ref56 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee35(remoteCommitDBOrName, remoteVersionDB) {
+      var _ref56 = asyncToGenerator(regeneratorRuntime.mark(function _callee35(remoteCommitDBOrName, remoteVersionDB) {
         var _this3 = this;
 
         var remoteCommitDB, localCommitDB, localVersionDB, commitDiff, versionDiff, local, remote, changed, localCommits, remoteCommits, changedCommits, _iteratorNormalCompletion10, _didIteratorError10, _iteratorError10, _iterator10, _step10, ea, _iteratorNormalCompletion11, _didIteratorError11, _iteratorError11, _iterator11, _step11, _ea, _iteratorNormalCompletion12, _didIteratorError12, _iteratorError12, _iterator12, _step12, _ea2, localCommitTypeAndNames, remoteCommitTypeAndNames, changedCommitTypeAndNames;
@@ -38733,7 +37624,7 @@ var ObjectDB = function () {
                 versionDiff = _context36.sent;
                 _context36.next = 22;
                 return Promise.all(versionDiff.inLeft.map(function () {
-                  var _ref57 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee32(ea) {
+                  var _ref57 = asyncToGenerator(regeneratorRuntime.mark(function _callee32(ea) {
                     return regeneratorRuntime.wrap(function _callee32$(_context33) {
                       while (1) {
                         switch (_context33.prev = _context33.next) {
@@ -38766,7 +37657,7 @@ var ObjectDB = function () {
                 local = _context36.sent;
                 _context36.next = 25;
                 return Promise.all(versionDiff.inRight.map(function () {
-                  var _ref58 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee33(ea) {
+                  var _ref58 = asyncToGenerator(regeneratorRuntime.mark(function _callee33(ea) {
                     return regeneratorRuntime.wrap(function _callee33$(_context34) {
                       while (1) {
                         switch (_context34.prev = _context34.next) {
@@ -38799,7 +37690,7 @@ var ObjectDB = function () {
                 remote = _context36.sent;
                 _context36.next = 28;
                 return Promise.all(versionDiff.changed.map(function () {
-                  var _ref59 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee34(ea) {
+                  var _ref59 = asyncToGenerator(regeneratorRuntime.mark(function _callee34(ea) {
                     return regeneratorRuntime.wrap(function _callee34$(_context35) {
                       while (1) {
                         switch (_context35.prev = _context35.next) {
@@ -39071,7 +37962,7 @@ var ObjectDB = function () {
   }, {
     key: "delete",
     value: function () {
-      var _ref60 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee36(type, name) {
+      var _ref60 = asyncToGenerator(regeneratorRuntime.mark(function _callee36(type, name) {
         var dryRun = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
         var resources, commitDeletions, objectDB, opts, _ref61, rows, _iteratorNormalCompletion13, _didIteratorError13, _iteratorError13, _iterator13, _step13, _ref64, commit, versionDB, _ref63, _id, _rev, deletedHist;
@@ -39225,7 +38116,7 @@ var ObjectDB = function () {
   }, {
     key: "deleteCommit",
     value: function () {
-      var _ref65 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee37(commitOrId) {
+      var _ref65 = asyncToGenerator(regeneratorRuntime.mark(function _callee37(commitOrId) {
         var dryRun = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         var ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "HEAD";
 
@@ -39490,7 +38381,7 @@ var Synchronization = function () {
   }, {
     key: "_startReplicationAndCopy",
     value: function () {
-      var _ref68 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee39() {
+      var _ref68 = asyncToGenerator(regeneratorRuntime.mark(function _callee39() {
         var _this5 = this;
 
         var fromObjectDB, remoteCommitDB, remoteVersionDB, remoteLocation, _options, debug, _options$live, live, _options$retry, retry, method, replicationFilter, versionDB, commitDB, _commitdb_indexes, _versiondb_indexes, fromSnapshotLocation, versionChangeListener, commitChangeListener, commitNameTypeFilter, versionNameTypeFilter, opts, commitOpts, versionOpts, commitReplication, versionReplication, snapshotReplication, commitReplicationState, versionReplicationState, updateState, tryToResolve, snapshotPathFor;
@@ -39658,7 +38549,7 @@ var Synchronization = function () {
                 });
 
                 commitReplication.on("change", function () {
-                  var _ref69 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee38(change) {
+                  var _ref69 = asyncToGenerator(regeneratorRuntime.mark(function _callee38(change) {
                     var _change, direction, _change$change, ok, commits, errors, error, toCopy, _iteratorNormalCompletion14, _didIteratorError14, _iteratorError14, _iterator14, _step14, commit, contentResource;
 
                     return regeneratorRuntime.wrap(function _callee38$(_context39) {
@@ -39868,6 +38759,7 @@ var Synchronization = function () {
                   debug && console.log(_this5 + " " + (direction === "push" ? "send" : "received") + " " + docs.length + " histories");
 
                   docs.forEach(function (doc) {
+                    if (doc._id.startsWith("_")) return;
                     _this5.changes.push({ direction: direction, kind: "versions", id: doc._id });
                   });
 
@@ -39911,7 +38803,7 @@ var Synchronization = function () {
   }, {
     key: "safeStop",
     value: function () {
-      var _ref70 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee40() {
+      var _ref70 = asyncToGenerator(regeneratorRuntime.mark(function _callee40() {
         return regeneratorRuntime.wrap(function _callee40$(_context41) {
           while (1) {
             switch (_context41.prev = _context41.next) {
@@ -40042,7 +38934,7 @@ var ObjectDBInterface = {
   describe: function describe(method) {
     var _this6 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee41() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee41() {
       var src, parsed, entities, methodNameAndParametersAndDescription;
       return regeneratorRuntime.wrap(function _callee41$(_context42) {
         while (1) {
@@ -40173,7 +39065,7 @@ var ObjectDBInterface = {
   ensureDB: function ensureDB(args) {
     var _this7 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee42() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee42() {
       var _checkArgs, dbName, snapshotLocation, db;
 
       return regeneratorRuntime.wrap(function _callee42$(_context43) {
@@ -40214,7 +39106,7 @@ var ObjectDBInterface = {
   destroyDB: function destroyDB(args) {
     var _this8 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee43() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee43() {
       var _checkArgs2, dbName, db;
 
       return regeneratorRuntime.wrap(function _callee43$(_context44) {
@@ -40254,7 +39146,7 @@ var ObjectDBInterface = {
   fetchCommits: function fetchCommits(args) {
     var _this9 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee44() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee44() {
       var _checkArgs3, dbName, ref, type, typesAndNames, knownCommitIds, includeDeleted, filterFn, db, commitDB, versionDB, versionQueryOpts, refsByTypeAndName, keys, _iteratorNormalCompletion17, _didIteratorError17, _iteratorError17, _iterator17, _step17, _ref72, _type2, name, _ref73, versions, commitIds, _iteratorNormalCompletion18, _didIteratorError18, _iteratorError18, _iterator18, _step18, version, _id, refs, commitId, commits, fn, filteredCommits;
 
       return regeneratorRuntime.wrap(function _callee44$(_context45) {
@@ -40402,7 +39294,7 @@ var ObjectDBInterface = {
 
             case 60:
               if (_iteratorNormalCompletion18 = (_step18 = _iterator18.next()).done) {
-                _context45.next = 71;
+                _context45.next = 73;
                 break;
               }
 
@@ -40413,60 +39305,68 @@ var ObjectDBInterface = {
                 break;
               }
 
-              return _context45.abrupt("continue", 68);
+              return _context45.abrupt("continue", 70);
 
             case 64:
               _id = version._id, refs = version.refs;
 
+              if (!_id.startsWith("_")) {
+                _context45.next = 67;
+                break;
+              }
+
+              return _context45.abrupt("continue", 70);
+
+            case 67:
               ref = refsByTypeAndName[_id] || ref;
               commitId = refs[ref];
 
               if (commitId && !knownCommitIds || !knownCommitIds.hasOwnProperty(commitId)) commitIds.push(commitId);
 
-            case 68:
+            case 70:
               _iteratorNormalCompletion18 = true;
               _context45.next = 60;
               break;
 
-            case 71:
-              _context45.next = 77;
+            case 73:
+              _context45.next = 79;
               break;
 
-            case 73:
-              _context45.prev = 73;
+            case 75:
+              _context45.prev = 75;
               _context45.t3 = _context45["catch"](58);
               _didIteratorError18 = true;
               _iteratorError18 = _context45.t3;
 
-            case 77:
-              _context45.prev = 77;
-              _context45.prev = 78;
+            case 79:
+              _context45.prev = 79;
+              _context45.prev = 80;
 
               if (!_iteratorNormalCompletion18 && _iterator18.return) {
                 _iterator18.return();
               }
 
-            case 80:
-              _context45.prev = 80;
+            case 82:
+              _context45.prev = 82;
 
               if (!_didIteratorError18) {
-                _context45.next = 83;
+                _context45.next = 85;
                 break;
               }
 
               throw _iteratorError18;
 
-            case 83:
-              return _context45.finish(80);
-
-            case 84:
-              return _context45.finish(77);
-
             case 85:
-              _context45.next = 87;
-              return db.getCommitsWithIds(commitIds);
+              return _context45.finish(82);
+
+            case 86:
+              return _context45.finish(79);
 
             case 87:
+              _context45.next = 89;
+              return db.getCommitsWithIds(commitIds);
+
+            case 89:
               commits = _context45.sent;
 
               if (!includeDeleted) commits = commits.filter(function (ea) {
@@ -40474,58 +39374,58 @@ var ObjectDBInterface = {
               });
 
               if (!filterFn) {
-                _context45.next = 105;
+                _context45.next = 107;
                 break;
               }
 
-              _context45.prev = 90;
+              _context45.prev = 92;
               fn = eval("(" + filterFn + ")");
 
               if (!(typeof fn !== "function")) {
-                _context45.next = 94;
+                _context45.next = 96;
                 break;
               }
 
               throw new Error(filterFn + " does not eval to a function!");
 
-            case 94:
+            case 96:
               filteredCommits = commits.filter(fn);
 
               if (Array.isArray(filteredCommits)) {
-                _context45.next = 99;
+                _context45.next = 101;
                 break;
               }
 
               throw new Error(filterFn + " does not return an array!");
 
-            case 99:
+            case 101:
               commits = filteredCommits;
 
-            case 100:
-              _context45.next = 105;
+            case 102:
+              _context45.next = 107;
               break;
 
-            case 102:
-              _context45.prev = 102;
-              _context45.t4 = _context45["catch"](90);
+            case 104:
+              _context45.prev = 104;
+              _context45.t4 = _context45["catch"](92);
 
               console.error("fetchCommits filterFn failed:", _context45.t4);
 
-            case 105:
+            case 107:
               return _context45.abrupt("return", commits);
 
-            case 106:
+            case 108:
             case "end":
               return _context45.stop();
           }
         }
-      }, _callee44, _this9, [[32, 36, 40, 48], [41,, 43, 47], [58, 73, 77, 85], [78,, 80, 84], [90, 102]]);
+      }, _callee44, _this9, [[32, 36, 40, 48], [41,, 43, 47], [58, 75, 79, 87], [80,, 82, 86], [92, 104]]);
     }))();
   },
   fetchVersionGraph: function fetchVersionGraph(args) {
     var _this10 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee45() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee45() {
       var _checkArgs4, dbName, type, name, db, _ref74, refs, history;
 
       return regeneratorRuntime.wrap(function _callee45$(_context46) {
@@ -40574,7 +39474,7 @@ var ObjectDBInterface = {
   exists: function exists(args) {
     var _this11 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee46() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee46() {
       var _checkArgs5, dbName, type, name, ref, db, hist, commit;
 
       return regeneratorRuntime.wrap(function _callee46$(_context47) {
@@ -40634,7 +39534,7 @@ var ObjectDBInterface = {
   fetchLog: function fetchLog(args) {
     var _this12 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee47() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee47() {
       var _checkArgs6, dbName, type, name, ref, commit, limit, includeCommits, knownCommitIds, db, defaultRef, startCommitId, realCommit, versionGraph, refs, history, currentCommit, result, ancestors, _ancestors;
 
       return regeneratorRuntime.wrap(function _callee47$(_context48) {
@@ -40783,7 +39683,7 @@ var ObjectDBInterface = {
   fetchSnapshot: function fetchSnapshot(args) {
     var _this13 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee48() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee48() {
       var _checkArgs7, dbName, type, name, ref, commitId, db, defaultRef, versionGraph, commit;
 
       return regeneratorRuntime.wrap(function _callee48$(_context49) {
@@ -40878,7 +39778,7 @@ var ObjectDBInterface = {
   commit: function commit(args) {
     var _this14 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee49() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee49() {
       var _checkArgs8, dbName, type, name, ref, expectedParentCommit, commitSpec, snapshot, preview, db;
 
       return regeneratorRuntime.wrap(function _callee49$(_context50) {
@@ -40923,7 +39823,7 @@ var ObjectDBInterface = {
   exportToSpecs: function exportToSpecs(args) {
     var _this15 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee50() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee50() {
       var _checkArgs9, dbName, nameAndTypes, db;
 
       return regeneratorRuntime.wrap(function _callee50$(_context51) {
@@ -40964,7 +39864,7 @@ var ObjectDBInterface = {
   exportToDir: function exportToDir(args) {
     var _this16 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee51() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee51() {
       var _checkArgs10, dbName, url, nameAndTypes, copyResources, includeDeleted, db, exportDir;
 
       return regeneratorRuntime.wrap(function _callee51$(_context52) {
@@ -41016,7 +39916,7 @@ var ObjectDBInterface = {
   importFromDir: function importFromDir(args) {
     var _this17 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee52() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee52() {
       var _checkArgs11, dbName, url, overwrite, copyResources, db, importDir;
 
       return regeneratorRuntime.wrap(function _callee52$(_context53) {
@@ -41065,7 +39965,7 @@ var ObjectDBInterface = {
   importFromSpecs: function importFromSpecs(args) {
     var _this18 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee53() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee53() {
       var _checkArgs12, dbName, specs, overwrite, copyResources, db;
 
       return regeneratorRuntime.wrap(function _callee53$(_context54) {
@@ -41109,7 +40009,7 @@ var ObjectDBInterface = {
   importFromResource: function importFromResource(args) {
     var _this19 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee54() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee54() {
       var _checkArgs13, dbName, type, name, url, commitSpec, purgeHistory, db, res;
 
       return regeneratorRuntime.wrap(function _callee54$(_context55) {
@@ -41162,7 +40062,7 @@ var ObjectDBInterface = {
   delete: function _delete(args) {
     var _this20 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee55() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee55() {
       var _checkArgs14, dbName, type, name, dryRun, db;
 
       return regeneratorRuntime.wrap(function _callee55$(_context56) {
@@ -41195,7 +40095,7 @@ var ObjectDBInterface = {
   deleteCommit: function deleteCommit(args) {
     var _this21 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee56() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee56() {
       var _checkArgs15, dbName, commit, dryRun, db;
 
       return regeneratorRuntime.wrap(function _callee56$(_context57) {
@@ -41227,7 +40127,7 @@ var ObjectDBInterface = {
   fetchConflicts: function fetchConflicts(args) {
     var _this22 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee57() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee57() {
       var _checkArgs16, dbName, includeDocs, only, db;
 
       return regeneratorRuntime.wrap(function _callee57$(_context58) {
@@ -41260,7 +40160,7 @@ var ObjectDBInterface = {
   resolveConflict: function resolveConflict(args) {
     var _this23 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee58() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee58() {
       var _checkArgs17, dbName, resolved, del, kind, id, db;
 
       return regeneratorRuntime.wrap(function _callee58$(_context59) {
@@ -41297,7 +40197,7 @@ var ObjectDBInterface = {
   fetchDiff: function fetchDiff(args) {
     var _this24 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee59() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee59() {
       var _checkArgs18, dbName, otherDB, db;
 
       return regeneratorRuntime.wrap(function _callee59$(_context60) {
@@ -41328,7 +40228,7 @@ var ObjectDBInterface = {
   synchronize: function synchronize(args) {
     var _this25 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee60() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee60() {
       var _checkArgs19, dbName, otherDB, otherDBSnapshotLocation, onlyTypesAndNames, method, db, db1, db2, remoteCommitDB, remoteVersionDB, toSnapshotLocation, opts, rep;
 
       return regeneratorRuntime.wrap(function _callee60$(_context61) {
@@ -41424,7 +40324,7 @@ var ObjectDBHTTPInterface = function () {
   createClass(ObjectDBHTTPInterface, [{
     key: "_processResponse",
     value: function () {
-      var _ref75 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee61(res) {
+      var _ref75 = asyncToGenerator(regeneratorRuntime.mark(function _callee61(res) {
         var contentType, answer, json;
         return regeneratorRuntime.wrap(function _callee61$(_context62) {
           while (1) {
@@ -41471,7 +40371,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "_GET",
     value: function () {
-      var _ref76 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee62(action) {
+      var _ref76 = asyncToGenerator(regeneratorRuntime.mark(function _callee62(action) {
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         var query, url;
         return regeneratorRuntime.wrap(function _callee62$(_context63) {
@@ -41508,7 +40408,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "_POST",
     value: function () {
-      var _ref77 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee63(action) {
+      var _ref77 = asyncToGenerator(regeneratorRuntime.mark(function _callee63(action) {
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         var url;
         return regeneratorRuntime.wrap(function _callee63$(_context64) {
@@ -41544,7 +40444,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "describe",
     value: function () {
-      var _ref78 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee64(args) {
+      var _ref78 = asyncToGenerator(regeneratorRuntime.mark(function _callee64(args) {
         return regeneratorRuntime.wrap(function _callee64$(_context65) {
           while (1) {
             switch (_context65.prev = _context65.next) {
@@ -41568,7 +40468,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "ensureDB",
     value: function () {
-      var _ref79 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee65(args) {
+      var _ref79 = asyncToGenerator(regeneratorRuntime.mark(function _callee65(args) {
         return regeneratorRuntime.wrap(function _callee65$(_context66) {
           while (1) {
             switch (_context66.prev = _context66.next) {
@@ -41592,7 +40492,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "destroyDB",
     value: function () {
-      var _ref80 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee66(args) {
+      var _ref80 = asyncToGenerator(regeneratorRuntime.mark(function _callee66(args) {
         return regeneratorRuntime.wrap(function _callee66$(_context67) {
           while (1) {
             switch (_context67.prev = _context67.next) {
@@ -41616,7 +40516,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "fetchCommits",
     value: function () {
-      var _ref81 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee67(args) {
+      var _ref81 = asyncToGenerator(regeneratorRuntime.mark(function _callee67(args) {
         return regeneratorRuntime.wrap(function _callee67$(_context68) {
           while (1) {
             switch (_context68.prev = _context68.next) {
@@ -41640,7 +40540,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "fetchVersionGraph",
     value: function () {
-      var _ref82 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee68(args) {
+      var _ref82 = asyncToGenerator(regeneratorRuntime.mark(function _callee68(args) {
         return regeneratorRuntime.wrap(function _callee68$(_context69) {
           while (1) {
             switch (_context69.prev = _context69.next) {
@@ -41664,7 +40564,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "exists",
     value: function () {
-      var _ref83 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee69(args) {
+      var _ref83 = asyncToGenerator(regeneratorRuntime.mark(function _callee69(args) {
         return regeneratorRuntime.wrap(function _callee69$(_context70) {
           while (1) {
             switch (_context70.prev = _context70.next) {
@@ -41688,7 +40588,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "fetchLog",
     value: function () {
-      var _ref84 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee70(args) {
+      var _ref84 = asyncToGenerator(regeneratorRuntime.mark(function _callee70(args) {
         return regeneratorRuntime.wrap(function _callee70$(_context71) {
           while (1) {
             switch (_context71.prev = _context71.next) {
@@ -41712,7 +40612,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "fetchSnapshot",
     value: function () {
-      var _ref85 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee71(args) {
+      var _ref85 = asyncToGenerator(regeneratorRuntime.mark(function _callee71(args) {
         return regeneratorRuntime.wrap(function _callee71$(_context72) {
           while (1) {
             switch (_context72.prev = _context72.next) {
@@ -41736,7 +40636,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "commit",
     value: function () {
-      var _ref86 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee72(args) {
+      var _ref86 = asyncToGenerator(regeneratorRuntime.mark(function _callee72(args) {
         return regeneratorRuntime.wrap(function _callee72$(_context73) {
           while (1) {
             switch (_context73.prev = _context73.next) {
@@ -41760,7 +40660,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "exportToSpecs",
     value: function () {
-      var _ref87 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee73(args) {
+      var _ref87 = asyncToGenerator(regeneratorRuntime.mark(function _callee73(args) {
         return regeneratorRuntime.wrap(function _callee73$(_context74) {
           while (1) {
             switch (_context74.prev = _context74.next) {
@@ -41784,7 +40684,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "exportToDir",
     value: function () {
-      var _ref88 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee74(args) {
+      var _ref88 = asyncToGenerator(regeneratorRuntime.mark(function _callee74(args) {
         return regeneratorRuntime.wrap(function _callee74$(_context75) {
           while (1) {
             switch (_context75.prev = _context75.next) {
@@ -41808,7 +40708,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "importFromDir",
     value: function () {
-      var _ref89 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee75(args) {
+      var _ref89 = asyncToGenerator(regeneratorRuntime.mark(function _callee75(args) {
         return regeneratorRuntime.wrap(function _callee75$(_context76) {
           while (1) {
             switch (_context76.prev = _context76.next) {
@@ -41832,7 +40732,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "importFromSpecs",
     value: function () {
-      var _ref90 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee76(args) {
+      var _ref90 = asyncToGenerator(regeneratorRuntime.mark(function _callee76(args) {
         return regeneratorRuntime.wrap(function _callee76$(_context77) {
           while (1) {
             switch (_context77.prev = _context77.next) {
@@ -41856,7 +40756,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "importFromResource",
     value: function () {
-      var _ref91 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee77(args) {
+      var _ref91 = asyncToGenerator(regeneratorRuntime.mark(function _callee77(args) {
         return regeneratorRuntime.wrap(function _callee77$(_context78) {
           while (1) {
             switch (_context78.prev = _context78.next) {
@@ -41880,7 +40780,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "delete",
     value: function () {
-      var _ref92 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee78(args) {
+      var _ref92 = asyncToGenerator(regeneratorRuntime.mark(function _callee78(args) {
         return regeneratorRuntime.wrap(function _callee78$(_context79) {
           while (1) {
             switch (_context79.prev = _context79.next) {
@@ -41904,7 +40804,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "deleteCommit",
     value: function () {
-      var _ref93 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee79(args) {
+      var _ref93 = asyncToGenerator(regeneratorRuntime.mark(function _callee79(args) {
         return regeneratorRuntime.wrap(function _callee79$(_context80) {
           while (1) {
             switch (_context80.prev = _context80.next) {
@@ -41928,7 +40828,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "fetchConflicts",
     value: function () {
-      var _ref94 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee80(args) {
+      var _ref94 = asyncToGenerator(regeneratorRuntime.mark(function _callee80(args) {
         return regeneratorRuntime.wrap(function _callee80$(_context81) {
           while (1) {
             switch (_context81.prev = _context81.next) {
@@ -41952,7 +40852,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "resolveConflict",
     value: function () {
-      var _ref95 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee81(args) {
+      var _ref95 = asyncToGenerator(regeneratorRuntime.mark(function _callee81(args) {
         return regeneratorRuntime.wrap(function _callee81$(_context82) {
           while (1) {
             switch (_context82.prev = _context82.next) {
@@ -41976,7 +40876,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "fetchDiff",
     value: function () {
-      var _ref96 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee82(args) {
+      var _ref96 = asyncToGenerator(regeneratorRuntime.mark(function _callee82(args) {
         return regeneratorRuntime.wrap(function _callee82$(_context83) {
           while (1) {
             switch (_context83.prev = _context83.next) {
@@ -42000,7 +40900,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "synchronize",
     value: function () {
-      var _ref97 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee83(args) {
+      var _ref97 = asyncToGenerator(regeneratorRuntime.mark(function _callee83(args) {
         return regeneratorRuntime.wrap(function _callee83$(_context84) {
           while (1) {
             switch (_context84.prev = _context84.next) {
@@ -42065,7 +40965,7 @@ var LivelyStorageResource = function (_Resource) {
   createClass(LivelyStorageResource, [{
     key: "read",
     value: function () {
-      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
         var file, content;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -42097,7 +40997,7 @@ var LivelyStorageResource = function (_Resource) {
   }, {
     key: "readJson",
     value: function () {
-      var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
         var content;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
@@ -42127,7 +41027,7 @@ var LivelyStorageResource = function (_Resource) {
   }, {
     key: "write",
     value: function () {
-      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(content) {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(content) {
         var _this3 = this;
 
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
@@ -42196,7 +41096,7 @@ var LivelyStorageResource = function (_Resource) {
   }, {
     key: "mkdir",
     value: function () {
-      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
         var spec, t;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
@@ -42268,7 +41168,7 @@ var LivelyStorageResource = function (_Resource) {
   }, {
     key: "exists",
     value: function () {
-      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
@@ -42307,7 +41207,7 @@ var LivelyStorageResource = function (_Resource) {
   }, {
     key: "remove",
     value: function () {
-      var _ref6 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
         var thisPath, db, matching;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
@@ -42354,7 +41254,7 @@ var LivelyStorageResource = function (_Resource) {
   }, {
     key: "dirList",
     value: function () {
-      var _ref8 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
         var _this4 = this;
 
         var depth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;

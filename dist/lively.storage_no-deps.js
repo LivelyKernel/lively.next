@@ -760,7 +760,7 @@ var Database = function () {
   }, {
     key: "knowsDB",
     value: function () {
-      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(dbName) {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(dbName) {
         var db, docCount;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -857,7 +857,7 @@ var Database = function () {
   }, {
     key: "update",
     value: function () {
-      var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(_id, updateFn, options) {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(_id, updateFn, options) {
         var updateAttempt = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
 
         var _options, _options$ensure, ensure, _options$retryOnConfl, retryOnConflict, _options$maxUpdateAtt, maxUpdateAttempts, getOpts, db, lastDoc, newDoc, _ref3, id, rev;
@@ -965,7 +965,7 @@ var Database = function () {
   }, {
     key: "mixin",
     value: function () {
-      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(_id, _mixin, options) {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(_id, _mixin, options) {
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -991,7 +991,7 @@ var Database = function () {
   }, {
     key: "set",
     value: function () {
-      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(id, value, options) {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(id, value, options) {
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
@@ -1017,7 +1017,7 @@ var Database = function () {
   }, {
     key: "get",
     value: function () {
-      var _ref6 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(id) {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(id) {
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
@@ -1061,7 +1061,7 @@ var Database = function () {
   }, {
     key: "has",
     value: function () {
-      var _ref7 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(id) {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(id) {
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
@@ -1089,7 +1089,7 @@ var Database = function () {
   }, {
     key: "add",
     value: function () {
-      var _ref8 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(doc) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(doc) {
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
@@ -1113,7 +1113,7 @@ var Database = function () {
   }, {
     key: "docList",
     value: function () {
-      var _ref9 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
         var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         var _ref10, rows, result, i, _rows$i, id, rev;
@@ -1154,7 +1154,7 @@ var Database = function () {
   }, {
     key: "docCount",
     value: function () {
-      var _ref11 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
         var entries;
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
           while (1) {
@@ -1184,7 +1184,7 @@ var Database = function () {
   }, {
     key: "revList",
     value: function () {
-      var _ref12 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(id) {
+      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(id) {
         var _ref13, _id, _ref13$_revisions, start, ids;
 
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
@@ -1221,7 +1221,7 @@ var Database = function () {
   }, {
     key: "getAllRevisions",
     value: function () {
-      var _ref14 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(id) {
+      var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(id) {
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
         var _options$skip, skip, _options$limit, limit, revs, query;
@@ -1268,7 +1268,7 @@ var Database = function () {
   }, {
     key: "getAll",
     value: function () {
-      var _ref15 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12() {
+      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         var _ref16, rows;
@@ -1304,7 +1304,7 @@ var Database = function () {
   }, {
     key: "setDocuments",
     value: function () {
-      var _ref17 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13(documents, opts) {
+      var _ref17 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(documents, opts) {
         var results, i, d, result, _ref18, id, rev;
 
         return regeneratorRuntime.wrap(function _callee13$(_context13) {
@@ -1368,7 +1368,7 @@ var Database = function () {
   }, {
     key: "updateDocuments",
     value: function () {
-      var _ref19 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14(documents, conflictFn, opts) {
+      var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(documents, conflictFn, opts) {
         var results, tryAgain, resolvedResults, i, d, result, oldDoc, resolved;
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
@@ -1454,7 +1454,7 @@ var Database = function () {
   }, {
     key: "getDocuments",
     value: function () {
-      var _ref20 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee15(idsAndRevs) {
+      var _ref20 = asyncToGenerator(regeneratorRuntime.mark(function _callee15(idsAndRevs) {
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
         var _options$ignoreErrors, ignoreErrors, _ref21, results, result, i, _results$i, docs, id, j, d;
@@ -1543,7 +1543,7 @@ var Database = function () {
   }, {
     key: "remove",
     value: function () {
-      var _ref22 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16(_id, _rev, options) {
+      var _ref22 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(_id, _rev, options) {
         var arg;
         return regeneratorRuntime.wrap(function _callee16$(_context16) {
           while (1) {
@@ -1586,7 +1586,7 @@ var Database = function () {
   }, {
     key: "removeAll",
     value: function () {
-      var _ref23 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17() {
+      var _ref23 = asyncToGenerator(regeneratorRuntime.mark(function _callee17() {
         var db, docs;
         return regeneratorRuntime.wrap(function _callee17$(_context17) {
           while (1) {
@@ -1649,7 +1649,7 @@ var Database = function () {
   }, {
     key: "getConflicts",
     value: function () {
-      var _ref24 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18(opts) {
+      var _ref24 = asyncToGenerator(regeneratorRuntime.mark(function _callee18(opts) {
         var _ref25, rows;
 
         return regeneratorRuntime.wrap(function _callee18$(_context18) {
@@ -1688,7 +1688,7 @@ var Database = function () {
   }, {
     key: "resolveConflicts",
     value: function () {
-      var _ref26 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19(id, resolveFn) {
+      var _ref26 = asyncToGenerator(regeneratorRuntime.mark(function _callee19(id, resolveFn) {
         var doc, query, conflicted, resolved, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, conflictedDoc;
 
         return regeneratorRuntime.wrap(function _callee19$(_context19) {
@@ -1808,7 +1808,7 @@ var Database = function () {
   }, {
     key: "diffWith",
     value: function () {
-      var _ref27 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee20(otherDB) {
+      var _ref27 = asyncToGenerator(regeneratorRuntime.mark(function _callee20(otherDB) {
         var docs2, docs1, map2, map1, inLeft, inRight, changed, id, rev, rev1, _id2, _rev2, rev2;
 
         return regeneratorRuntime.wrap(function _callee20$(_context20) {
@@ -1871,36 +1871,49 @@ var Database = function () {
   }, {
     key: "dump",
     value: function () {
-      var _ref28 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee21() {
-        var name, pouchdb, header, docs;
+      var _ref28 = asyncToGenerator(regeneratorRuntime.mark(function _callee21() {
+        var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+        var filterFn, alias, type, dbInfo, myName, pouchdb, name, header, docs;
         return regeneratorRuntime.wrap(function _callee21$(_context21) {
           while (1) {
             switch (_context21.prev = _context21.next) {
               case 0:
-                name = this.name;
+                filterFn = opts.filterFn;
+                alias = opts.name;
+                type = opts.type;
+                dbInfo = opts.dbInfo;
+                myName = this.name;
                 pouchdb = this.pouchdb;
+                name = alias || myName;
                 _context21.t0 = name;
-                _context21.t1 = pouchdb.type();
+                _context21.t1 = type || pouchdb.type();
                 _context21.t2 = new Date().toJSON();
-                _context21.next = 7;
+                _context21.t3 = babelHelpers$1;
+                _context21.t4 = {};
+                _context21.next = 14;
                 return pouchdb.info();
 
-              case 7:
-                _context21.t3 = _context21.sent;
+              case 14:
+                _context21.t5 = _context21.sent;
+                _context21.t6 = { db_name: name };
+                _context21.t7 = dbInfo;
+                _context21.t8 = _context21.t3.extends.call(_context21.t3, _context21.t4, _context21.t5, _context21.t6, _context21.t7);
                 header = {
                   name: _context21.t0,
                   db_type: _context21.t1,
                   start_time: _context21.t2,
-                  db_info: _context21.t3
+                  db_info: _context21.t8
                 };
-                _context21.next = 11;
+                _context21.next = 21;
                 return this.getAll({ attachments: true });
 
-              case 11:
+              case 21:
                 docs = _context21.sent;
+
+                if (typeof filterFn === "function") docs = filterFn(docs, header);
                 return _context21.abrupt("return", { header: header, docs: docs });
 
-              case 13:
+              case 24:
               case "end":
                 return _context21.stop();
             }
@@ -1917,7 +1930,7 @@ var Database = function () {
   }, {
     key: "backup",
     value: function () {
-      var _ref29 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee22() {
+      var _ref29 = asyncToGenerator(regeneratorRuntime.mark(function _callee22() {
         var backupNo = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
         var name, backupDB;
         return regeneratorRuntime.wrap(function _callee22$(_context22) {
@@ -1953,7 +1966,7 @@ var Database = function () {
   }, {
     key: "migrate",
     value: function () {
-      var _ref30 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee23(migrationFn) {
+      var _ref30 = asyncToGenerator(regeneratorRuntime.mark(function _callee23(migrationFn) {
         var docs, migrated, unchanged, i, doc, migratedDoc;
         return regeneratorRuntime.wrap(function _callee23$(_context23) {
           while (1) {
@@ -2009,7 +2022,7 @@ var Database = function () {
         }, _callee23, this);
       }));
 
-      function migrate(_x38) {
+      function migrate(_x39) {
         return _ref30.apply(this, arguments);
       }
 
@@ -2044,7 +2057,7 @@ var Database = function () {
   }, {
     key: "addDesignDocs",
     value: function () {
-      var _ref32 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee24(specs) {
+      var _ref32 = asyncToGenerator(regeneratorRuntime.mark(function _callee24(specs) {
         var _this = this;
 
         var queryStale = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
@@ -2085,7 +2098,7 @@ var Database = function () {
         }, _callee24, this);
       }));
 
-      function addDesignDocs(_x39) {
+      function addDesignDocs(_x40) {
         return _ref32.apply(this, arguments);
       }
 
@@ -2094,7 +2107,7 @@ var Database = function () {
   }, {
     key: "addDesignDoc",
     value: function () {
-      var _ref33 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee25(_ref34) {
+      var _ref33 = asyncToGenerator(regeneratorRuntime.mark(function _callee25(_ref34) {
         var name = _ref34.name,
             mapFn = _ref34.mapFn,
             reduceFn = _ref34.reduceFn,
@@ -2131,7 +2144,7 @@ var Database = function () {
         }, _callee25, this);
       }));
 
-      function addDesignDoc(_x41) {
+      function addDesignDoc(_x42) {
         return _ref33.apply(this, arguments);
       }
 
@@ -2165,7 +2178,7 @@ var Database = function () {
   }], [{
     key: "loadDump",
     value: function () {
-      var _ref35 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee26(dump) {
+      var _ref35 = asyncToGenerator(regeneratorRuntime.mark(function _callee26(dump) {
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         var header, docs, name, db;
         return regeneratorRuntime.wrap(function _callee26$(_context26) {
@@ -2187,7 +2200,7 @@ var Database = function () {
         }, _callee26, this);
       }));
 
-      function loadDump(_x43) {
+      function loadDump(_x44) {
         return _ref35.apply(this, arguments);
       }
 
@@ -2273,7 +2286,7 @@ var ObjectDB = function () {
   createClass(ObjectDB, null, [{
     key: "dbList",
     value: function () {
-      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
         var metaDB;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -2307,7 +2320,7 @@ var ObjectDB = function () {
   }, {
     key: "find",
     value: function () {
-      var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(name) {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(name) {
         var found, metaDB, meta;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
@@ -2394,7 +2407,7 @@ var ObjectDB = function () {
   createClass(ObjectDB, [{
     key: "destroy",
     value: function () {
-      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
         var commitDB, versionDB, metaDB;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
@@ -2457,7 +2470,7 @@ var ObjectDB = function () {
   }, {
     key: "snapshotObject",
     value: function () {
-      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(type, name, object, snapshotOptions, commitSpec, preview, ref, expectedPrevVersion) {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(type, name, object, snapshotOptions, commitSpec, preview, ref, expectedPrevVersion) {
         var serializeFn, snapshot;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
@@ -2493,7 +2506,7 @@ var ObjectDB = function () {
   }, {
     key: "loadObject",
     value: function () {
-      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(type, name, loadOptions, commitIdOrCommit, ref) {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(type, name, loadOptions, commitIdOrCommit, ref) {
         var snapshot, deserializeFn;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
@@ -2533,7 +2546,7 @@ var ObjectDB = function () {
   }, {
     key: "has",
     value: function () {
-      var _ref6 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(type, name) {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(type, name) {
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
@@ -2561,7 +2574,7 @@ var ObjectDB = function () {
   }, {
     key: "objects",
     value: function () {
-      var _ref7 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(optType) {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(optType) {
         var stats, result, type;
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
@@ -2604,7 +2617,7 @@ var ObjectDB = function () {
   }, {
     key: "objectStats",
     value: function () {
-      var _ref8 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(objectType, objectName) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(objectType, objectName) {
         var statsByType, commitDB, queryOpts, _ref9, rows, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _ref11, objectTypeAndName, _ref11$value, count, newest, oldest, _objectTypeAndName$sp, _objectTypeAndName$sp2, type, _objectName, statsOfType;
 
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
@@ -2737,7 +2750,7 @@ var ObjectDB = function () {
   }, {
     key: "getCommits",
     value: function () {
-      var _ref12 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(type, objectName) {
+      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(type, objectName) {
         var ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "HEAD";
         var limit = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : Infinity;
         var history, commitDB, commits;
@@ -2800,7 +2813,7 @@ var ObjectDB = function () {
   }, {
     key: "getCommit",
     value: function () {
-      var _ref13 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(commitId) {
+      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(commitId) {
         var commitDB;
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
@@ -2840,7 +2853,7 @@ var ObjectDB = function () {
   }, {
     key: "getCommitsWithIds",
     value: function () {
-      var _ref14 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(commitIds) {
+      var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(commitIds) {
         var commitDB;
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
@@ -2890,7 +2903,7 @@ var ObjectDB = function () {
   }, {
     key: "getLatestCommit",
     value: function () {
-      var _ref15 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(type, objectName) {
+      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(type, objectName) {
         var ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "HEAD";
         var includeDeleted = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
 
@@ -2964,7 +2977,7 @@ var ObjectDB = function () {
   }, {
     key: "commit",
     value: function () {
-      var _ref18 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee13(type, name, snapshot, commitSpec, preview) {
+      var _ref18 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(type, name, snapshot, commitSpec, preview) {
         var ref = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : "HEAD";
         var expectedPrevVersion = arguments[6];
 
@@ -3126,7 +3139,7 @@ var ObjectDB = function () {
   }, {
     key: "loadSnapshot",
     value: function () {
-      var _ref19 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee14(type, name, commitOrId) {
+      var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(type, name, commitOrId) {
         var ref = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : "HEAD";
         var commit, commitDB;
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
@@ -3254,7 +3267,7 @@ var ObjectDB = function () {
   }, {
     key: "_commitDB",
     value: function () {
-      var _ref20 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee15() {
+      var _ref20 = asyncToGenerator(regeneratorRuntime.mark(function _callee15() {
         var dbName, db;
         return regeneratorRuntime.wrap(function _callee15$(_context15) {
           while (1) {
@@ -3306,7 +3319,7 @@ var ObjectDB = function () {
   }, {
     key: "close",
     value: function () {
-      var _ref21 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee16() {
+      var _ref21 = asyncToGenerator(regeneratorRuntime.mark(function _callee16() {
         return regeneratorRuntime.wrap(function _callee16$(_context16) {
           while (1) {
             switch (_context16.prev = _context16.next) {
@@ -3355,7 +3368,7 @@ var ObjectDB = function () {
   }, {
     key: "versionGraph",
     value: function () {
-      var _ref22 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee17(type, objectName) {
+      var _ref22 = asyncToGenerator(regeneratorRuntime.mark(function _callee17(type, objectName) {
         var versionDB, graph;
         return regeneratorRuntime.wrap(function _callee17$(_context17) {
           while (1) {
@@ -3400,7 +3413,7 @@ var ObjectDB = function () {
   }, {
     key: "_log",
     value: function () {
-      var _ref23 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee18(type, objectName) {
+      var _ref23 = asyncToGenerator(regeneratorRuntime.mark(function _callee18(type, objectName) {
         var ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "HEAD";
         var limit = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : Infinity;
 
@@ -3474,7 +3487,7 @@ var ObjectDB = function () {
   }, {
     key: "_findTimestampedVersionsOfObjectNamed",
     value: function () {
-      var _ref26 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee19(objectName) {
+      var _ref26 = asyncToGenerator(regeneratorRuntime.mark(function _callee19(objectName) {
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
         var _options$include_docs, include_docs, _options$descending, descending, _options$startTime, startTime, _options$endTime, endTime, startkey, endkey, objectDB, _ref27, rows;
@@ -3542,7 +3555,7 @@ var ObjectDB = function () {
   }, {
     key: "_versionDB",
     value: function () {
-      var _ref28 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee20() {
+      var _ref28 = asyncToGenerator(regeneratorRuntime.mark(function _callee20() {
         var dbName, db;
         return regeneratorRuntime.wrap(function _callee20$(_context20) {
           while (1) {
@@ -3594,7 +3607,7 @@ var ObjectDB = function () {
   }, {
     key: "exportToDir",
     value: function () {
-      var _ref29 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee21(exportDir, nameAndTypes) {
+      var _ref29 = asyncToGenerator(regeneratorRuntime.mark(function _callee21(exportDir, nameAndTypes) {
         var _this = this;
 
         var copyResources = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
@@ -3810,7 +3823,7 @@ var ObjectDB = function () {
                 _didIteratorError4 = false;
                 _iteratorError4 = undefined;
                 _context22.prev = 97;
-                _loop = /*#__PURE__*/regeneratorRuntime.mark(function _loop() {
+                _loop = regeneratorRuntime.mark(function _loop() {
                   var _ref36, refs, history, currentExportDir, commits, name, type, resourcesForCopy, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, _ref38, from, to;
 
                   return regeneratorRuntime.wrap(function _loop$(_context21) {
@@ -3981,7 +3994,7 @@ var ObjectDB = function () {
   }, {
     key: "exportToSpecs",
     value: function () {
-      var _ref39 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee22(nameAndTypes) {
+      var _ref39 = asyncToGenerator(regeneratorRuntime.mark(function _callee22(nameAndTypes) {
         var includeDeleted = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
         var specs, stats, type, name, _iteratorNormalCompletion6, _didIteratorError6, _iteratorError6, _iterator6, _step6, _ref41, _name, _type, _ref42, refs, history, commitIds, commits;
@@ -4118,13 +4131,13 @@ var ObjectDB = function () {
   }, {
     key: "importFromDir",
     value: function () {
-      var _ref43 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee24(importDir) {
+      var _ref43 = asyncToGenerator(regeneratorRuntime.mark(function _callee24(importDir) {
         var overwrite = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         var findImportDataIn = function () {
-          var _ref44 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee23(dir) {
+          var _ref44 = asyncToGenerator(regeneratorRuntime.mark(function _callee23(dir) {
             var _ref45, _ref46, _ref46$, type, name, commits, history, snapshotDirs;
 
             return regeneratorRuntime.wrap(function _callee23$(_context24) {
@@ -4286,7 +4299,7 @@ var ObjectDB = function () {
   }, {
     key: "importFromSpecs",
     value: function () {
-      var _ref47 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee25(specs) {
+      var _ref47 = asyncToGenerator(regeneratorRuntime.mark(function _callee25(specs) {
         var overwrite = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var copyResources = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
@@ -4456,7 +4469,7 @@ var ObjectDB = function () {
   }, {
     key: "importFromSpec",
     value: function () {
-      var _ref50 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee26(spec) {
+      var _ref50 = asyncToGenerator(regeneratorRuntime.mark(function _callee26(spec) {
         var overwrite = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var copyResources = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
         var versionDB, commitDB, snapshotLocation, type, name, commits, history, snapshotDirs;
@@ -4547,7 +4560,7 @@ var ObjectDB = function () {
   }, {
     key: "importFromResource",
     value: function () {
-      var _ref51 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee27(type, name, resource$$1, commitSpec) {
+      var _ref51 = asyncToGenerator(regeneratorRuntime.mark(function _callee27(type, name, resource$$1, commitSpec) {
         var purgeHistory = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
         var snap;
         return regeneratorRuntime.wrap(function _callee27$(_context28) {
@@ -4620,9 +4633,9 @@ var ObjectDB = function () {
   }, {
     key: "getConflicts",
     value: function () {
-      var _ref52 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee30(includeDocs, only) {
+      var _ref52 = asyncToGenerator(regeneratorRuntime.mark(function _callee30(includeDocs, only) {
         var getConflicts = function () {
-          var _ref53 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee29(db, kind) {
+          var _ref53 = asyncToGenerator(regeneratorRuntime.mark(function _callee29(db, kind) {
             var _this2 = this;
 
             var conflicts;
@@ -4637,7 +4650,7 @@ var ObjectDB = function () {
                     conflicts = _context30.sent;
                     _context30.next = 5;
                     return Promise.all(conflicts.map(function () {
-                      var _ref54 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee28(ea) {
+                      var _ref54 = asyncToGenerator(regeneratorRuntime.mark(function _callee28(ea) {
                         var id, rev, conflicts, doc, query;
                         return regeneratorRuntime.wrap(function _callee28$(_context29) {
                           while (1) {
@@ -4772,7 +4785,7 @@ var ObjectDB = function () {
   }, {
     key: "resolveConflict",
     value: function () {
-      var _ref55 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee31(arg) {
+      var _ref55 = asyncToGenerator(regeneratorRuntime.mark(function _callee31(arg) {
         var resolved, del, kind, id, db;
         return regeneratorRuntime.wrap(function _callee31$(_context32) {
           while (1) {
@@ -4858,7 +4871,7 @@ var ObjectDB = function () {
   }, {
     key: "getDiff",
     value: function () {
-      var _ref56 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee35(remoteCommitDBOrName, remoteVersionDB) {
+      var _ref56 = asyncToGenerator(regeneratorRuntime.mark(function _callee35(remoteCommitDBOrName, remoteVersionDB) {
         var _this3 = this;
 
         var remoteCommitDB, localCommitDB, localVersionDB, commitDiff, versionDiff, local, remote, changed, localCommits, remoteCommits, changedCommits, _iteratorNormalCompletion10, _didIteratorError10, _iteratorError10, _iterator10, _step10, ea, _iteratorNormalCompletion11, _didIteratorError11, _iteratorError11, _iterator11, _step11, _ea, _iteratorNormalCompletion12, _didIteratorError12, _iteratorError12, _iterator12, _step12, _ea2, localCommitTypeAndNames, remoteCommitTypeAndNames, changedCommitTypeAndNames;
@@ -4916,7 +4929,7 @@ var ObjectDB = function () {
                 versionDiff = _context36.sent;
                 _context36.next = 22;
                 return Promise.all(versionDiff.inLeft.map(function () {
-                  var _ref57 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee32(ea) {
+                  var _ref57 = asyncToGenerator(regeneratorRuntime.mark(function _callee32(ea) {
                     return regeneratorRuntime.wrap(function _callee32$(_context33) {
                       while (1) {
                         switch (_context33.prev = _context33.next) {
@@ -4949,7 +4962,7 @@ var ObjectDB = function () {
                 local = _context36.sent;
                 _context36.next = 25;
                 return Promise.all(versionDiff.inRight.map(function () {
-                  var _ref58 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee33(ea) {
+                  var _ref58 = asyncToGenerator(regeneratorRuntime.mark(function _callee33(ea) {
                     return regeneratorRuntime.wrap(function _callee33$(_context34) {
                       while (1) {
                         switch (_context34.prev = _context34.next) {
@@ -4982,7 +4995,7 @@ var ObjectDB = function () {
                 remote = _context36.sent;
                 _context36.next = 28;
                 return Promise.all(versionDiff.changed.map(function () {
-                  var _ref59 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee34(ea) {
+                  var _ref59 = asyncToGenerator(regeneratorRuntime.mark(function _callee34(ea) {
                     return regeneratorRuntime.wrap(function _callee34$(_context35) {
                       while (1) {
                         switch (_context35.prev = _context35.next) {
@@ -5254,7 +5267,7 @@ var ObjectDB = function () {
   }, {
     key: "delete",
     value: function () {
-      var _ref60 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee36(type, name) {
+      var _ref60 = asyncToGenerator(regeneratorRuntime.mark(function _callee36(type, name) {
         var dryRun = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
         var resources, commitDeletions, objectDB, opts, _ref61, rows, _iteratorNormalCompletion13, _didIteratorError13, _iteratorError13, _iterator13, _step13, _ref64, commit, versionDB, _ref63, _id, _rev, deletedHist;
@@ -5408,7 +5421,7 @@ var ObjectDB = function () {
   }, {
     key: "deleteCommit",
     value: function () {
-      var _ref65 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee37(commitOrId) {
+      var _ref65 = asyncToGenerator(regeneratorRuntime.mark(function _callee37(commitOrId) {
         var dryRun = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         var ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "HEAD";
 
@@ -5673,7 +5686,7 @@ var Synchronization = function () {
   }, {
     key: "_startReplicationAndCopy",
     value: function () {
-      var _ref68 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee39() {
+      var _ref68 = asyncToGenerator(regeneratorRuntime.mark(function _callee39() {
         var _this5 = this;
 
         var fromObjectDB, remoteCommitDB, remoteVersionDB, remoteLocation, _options, debug, _options$live, live, _options$retry, retry, method, replicationFilter, versionDB, commitDB, _commitdb_indexes, _versiondb_indexes, fromSnapshotLocation, versionChangeListener, commitChangeListener, commitNameTypeFilter, versionNameTypeFilter, opts, commitOpts, versionOpts, commitReplication, versionReplication, snapshotReplication, commitReplicationState, versionReplicationState, updateState, tryToResolve, snapshotPathFor;
@@ -5841,7 +5854,7 @@ var Synchronization = function () {
                 });
 
                 commitReplication.on("change", function () {
-                  var _ref69 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee38(change) {
+                  var _ref69 = asyncToGenerator(regeneratorRuntime.mark(function _callee38(change) {
                     var _change, direction, _change$change, ok, commits, errors, error, toCopy, _iteratorNormalCompletion14, _didIteratorError14, _iteratorError14, _iterator14, _step14, commit, contentResource;
 
                     return regeneratorRuntime.wrap(function _callee38$(_context39) {
@@ -6051,6 +6064,7 @@ var Synchronization = function () {
                   debug && console.log(_this5 + " " + (direction === "push" ? "send" : "received") + " " + docs.length + " histories");
 
                   docs.forEach(function (doc) {
+                    if (doc._id.startsWith("_")) return;
                     _this5.changes.push({ direction: direction, kind: "versions", id: doc._id });
                   });
 
@@ -6094,7 +6108,7 @@ var Synchronization = function () {
   }, {
     key: "safeStop",
     value: function () {
-      var _ref70 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee40() {
+      var _ref70 = asyncToGenerator(regeneratorRuntime.mark(function _callee40() {
         return regeneratorRuntime.wrap(function _callee40$(_context41) {
           while (1) {
             switch (_context41.prev = _context41.next) {
@@ -6225,7 +6239,7 @@ var ObjectDBInterface = {
   describe: function describe(method) {
     var _this6 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee41() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee41() {
       var src, parsed, entities, methodNameAndParametersAndDescription;
       return regeneratorRuntime.wrap(function _callee41$(_context42) {
         while (1) {
@@ -6356,7 +6370,7 @@ var ObjectDBInterface = {
   ensureDB: function ensureDB(args) {
     var _this7 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee42() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee42() {
       var _checkArgs, dbName, snapshotLocation, db;
 
       return regeneratorRuntime.wrap(function _callee42$(_context43) {
@@ -6397,7 +6411,7 @@ var ObjectDBInterface = {
   destroyDB: function destroyDB(args) {
     var _this8 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee43() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee43() {
       var _checkArgs2, dbName, db;
 
       return regeneratorRuntime.wrap(function _callee43$(_context44) {
@@ -6437,7 +6451,7 @@ var ObjectDBInterface = {
   fetchCommits: function fetchCommits(args) {
     var _this9 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee44() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee44() {
       var _checkArgs3, dbName, ref, type, typesAndNames, knownCommitIds, includeDeleted, filterFn, db, commitDB, versionDB, versionQueryOpts, refsByTypeAndName, keys, _iteratorNormalCompletion17, _didIteratorError17, _iteratorError17, _iterator17, _step17, _ref72, _type2, name, _ref73, versions, commitIds, _iteratorNormalCompletion18, _didIteratorError18, _iteratorError18, _iterator18, _step18, version, _id, refs, commitId, commits, fn, filteredCommits;
 
       return regeneratorRuntime.wrap(function _callee44$(_context45) {
@@ -6585,7 +6599,7 @@ var ObjectDBInterface = {
 
             case 60:
               if (_iteratorNormalCompletion18 = (_step18 = _iterator18.next()).done) {
-                _context45.next = 71;
+                _context45.next = 73;
                 break;
               }
 
@@ -6596,60 +6610,68 @@ var ObjectDBInterface = {
                 break;
               }
 
-              return _context45.abrupt("continue", 68);
+              return _context45.abrupt("continue", 70);
 
             case 64:
               _id = version._id, refs = version.refs;
 
+              if (!_id.startsWith("_")) {
+                _context45.next = 67;
+                break;
+              }
+
+              return _context45.abrupt("continue", 70);
+
+            case 67:
               ref = refsByTypeAndName[_id] || ref;
               commitId = refs[ref];
 
               if (commitId && !knownCommitIds || !knownCommitIds.hasOwnProperty(commitId)) commitIds.push(commitId);
 
-            case 68:
+            case 70:
               _iteratorNormalCompletion18 = true;
               _context45.next = 60;
               break;
 
-            case 71:
-              _context45.next = 77;
+            case 73:
+              _context45.next = 79;
               break;
 
-            case 73:
-              _context45.prev = 73;
+            case 75:
+              _context45.prev = 75;
               _context45.t3 = _context45["catch"](58);
               _didIteratorError18 = true;
               _iteratorError18 = _context45.t3;
 
-            case 77:
-              _context45.prev = 77;
-              _context45.prev = 78;
+            case 79:
+              _context45.prev = 79;
+              _context45.prev = 80;
 
               if (!_iteratorNormalCompletion18 && _iterator18.return) {
                 _iterator18.return();
               }
 
-            case 80:
-              _context45.prev = 80;
+            case 82:
+              _context45.prev = 82;
 
               if (!_didIteratorError18) {
-                _context45.next = 83;
+                _context45.next = 85;
                 break;
               }
 
               throw _iteratorError18;
 
-            case 83:
-              return _context45.finish(80);
-
-            case 84:
-              return _context45.finish(77);
-
             case 85:
-              _context45.next = 87;
-              return db.getCommitsWithIds(commitIds);
+              return _context45.finish(82);
+
+            case 86:
+              return _context45.finish(79);
 
             case 87:
+              _context45.next = 89;
+              return db.getCommitsWithIds(commitIds);
+
+            case 89:
               commits = _context45.sent;
 
               if (!includeDeleted) commits = commits.filter(function (ea) {
@@ -6657,58 +6679,58 @@ var ObjectDBInterface = {
               });
 
               if (!filterFn) {
-                _context45.next = 105;
+                _context45.next = 107;
                 break;
               }
 
-              _context45.prev = 90;
+              _context45.prev = 92;
               fn = eval("(" + filterFn + ")");
 
               if (!(typeof fn !== "function")) {
-                _context45.next = 94;
+                _context45.next = 96;
                 break;
               }
 
               throw new Error(filterFn + " does not eval to a function!");
 
-            case 94:
+            case 96:
               filteredCommits = commits.filter(fn);
 
               if (Array.isArray(filteredCommits)) {
-                _context45.next = 99;
+                _context45.next = 101;
                 break;
               }
 
               throw new Error(filterFn + " does not return an array!");
 
-            case 99:
+            case 101:
               commits = filteredCommits;
 
-            case 100:
-              _context45.next = 105;
+            case 102:
+              _context45.next = 107;
               break;
 
-            case 102:
-              _context45.prev = 102;
-              _context45.t4 = _context45["catch"](90);
+            case 104:
+              _context45.prev = 104;
+              _context45.t4 = _context45["catch"](92);
 
               console.error("fetchCommits filterFn failed:", _context45.t4);
 
-            case 105:
+            case 107:
               return _context45.abrupt("return", commits);
 
-            case 106:
+            case 108:
             case "end":
               return _context45.stop();
           }
         }
-      }, _callee44, _this9, [[32, 36, 40, 48], [41,, 43, 47], [58, 73, 77, 85], [78,, 80, 84], [90, 102]]);
+      }, _callee44, _this9, [[32, 36, 40, 48], [41,, 43, 47], [58, 75, 79, 87], [80,, 82, 86], [92, 104]]);
     }))();
   },
   fetchVersionGraph: function fetchVersionGraph(args) {
     var _this10 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee45() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee45() {
       var _checkArgs4, dbName, type, name, db, _ref74, refs, history;
 
       return regeneratorRuntime.wrap(function _callee45$(_context46) {
@@ -6757,7 +6779,7 @@ var ObjectDBInterface = {
   exists: function exists(args) {
     var _this11 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee46() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee46() {
       var _checkArgs5, dbName, type, name, ref, db, hist, commit;
 
       return regeneratorRuntime.wrap(function _callee46$(_context47) {
@@ -6817,7 +6839,7 @@ var ObjectDBInterface = {
   fetchLog: function fetchLog(args) {
     var _this12 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee47() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee47() {
       var _checkArgs6, dbName, type, name, ref, commit, limit, includeCommits, knownCommitIds, db, defaultRef, startCommitId, realCommit, versionGraph, refs, history, currentCommit, result, ancestors, _ancestors;
 
       return regeneratorRuntime.wrap(function _callee47$(_context48) {
@@ -6966,7 +6988,7 @@ var ObjectDBInterface = {
   fetchSnapshot: function fetchSnapshot(args) {
     var _this13 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee48() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee48() {
       var _checkArgs7, dbName, type, name, ref, commitId, db, defaultRef, versionGraph, commit;
 
       return regeneratorRuntime.wrap(function _callee48$(_context49) {
@@ -7061,7 +7083,7 @@ var ObjectDBInterface = {
   commit: function commit(args) {
     var _this14 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee49() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee49() {
       var _checkArgs8, dbName, type, name, ref, expectedParentCommit, commitSpec, snapshot, preview, db;
 
       return regeneratorRuntime.wrap(function _callee49$(_context50) {
@@ -7106,7 +7128,7 @@ var ObjectDBInterface = {
   exportToSpecs: function exportToSpecs(args) {
     var _this15 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee50() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee50() {
       var _checkArgs9, dbName, nameAndTypes, db;
 
       return regeneratorRuntime.wrap(function _callee50$(_context51) {
@@ -7147,7 +7169,7 @@ var ObjectDBInterface = {
   exportToDir: function exportToDir(args) {
     var _this16 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee51() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee51() {
       var _checkArgs10, dbName, url, nameAndTypes, copyResources, includeDeleted, db, exportDir;
 
       return regeneratorRuntime.wrap(function _callee51$(_context52) {
@@ -7199,7 +7221,7 @@ var ObjectDBInterface = {
   importFromDir: function importFromDir(args) {
     var _this17 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee52() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee52() {
       var _checkArgs11, dbName, url, overwrite, copyResources, db, importDir;
 
       return regeneratorRuntime.wrap(function _callee52$(_context53) {
@@ -7248,7 +7270,7 @@ var ObjectDBInterface = {
   importFromSpecs: function importFromSpecs(args) {
     var _this18 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee53() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee53() {
       var _checkArgs12, dbName, specs, overwrite, copyResources, db;
 
       return regeneratorRuntime.wrap(function _callee53$(_context54) {
@@ -7292,7 +7314,7 @@ var ObjectDBInterface = {
   importFromResource: function importFromResource(args) {
     var _this19 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee54() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee54() {
       var _checkArgs13, dbName, type, name, url, commitSpec, purgeHistory, db, res;
 
       return regeneratorRuntime.wrap(function _callee54$(_context55) {
@@ -7345,7 +7367,7 @@ var ObjectDBInterface = {
   delete: function _delete(args) {
     var _this20 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee55() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee55() {
       var _checkArgs14, dbName, type, name, dryRun, db;
 
       return regeneratorRuntime.wrap(function _callee55$(_context56) {
@@ -7378,7 +7400,7 @@ var ObjectDBInterface = {
   deleteCommit: function deleteCommit(args) {
     var _this21 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee56() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee56() {
       var _checkArgs15, dbName, commit, dryRun, db;
 
       return regeneratorRuntime.wrap(function _callee56$(_context57) {
@@ -7410,7 +7432,7 @@ var ObjectDBInterface = {
   fetchConflicts: function fetchConflicts(args) {
     var _this22 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee57() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee57() {
       var _checkArgs16, dbName, includeDocs, only, db;
 
       return regeneratorRuntime.wrap(function _callee57$(_context58) {
@@ -7443,7 +7465,7 @@ var ObjectDBInterface = {
   resolveConflict: function resolveConflict(args) {
     var _this23 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee58() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee58() {
       var _checkArgs17, dbName, resolved, del, kind, id, db;
 
       return regeneratorRuntime.wrap(function _callee58$(_context59) {
@@ -7480,7 +7502,7 @@ var ObjectDBInterface = {
   fetchDiff: function fetchDiff(args) {
     var _this24 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee59() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee59() {
       var _checkArgs18, dbName, otherDB, db;
 
       return regeneratorRuntime.wrap(function _callee59$(_context60) {
@@ -7511,7 +7533,7 @@ var ObjectDBInterface = {
   synchronize: function synchronize(args) {
     var _this25 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee60() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee60() {
       var _checkArgs19, dbName, otherDB, otherDBSnapshotLocation, onlyTypesAndNames, method, db, db1, db2, remoteCommitDB, remoteVersionDB, toSnapshotLocation, opts, rep;
 
       return regeneratorRuntime.wrap(function _callee60$(_context61) {
@@ -7607,7 +7629,7 @@ var ObjectDBHTTPInterface = function () {
   createClass(ObjectDBHTTPInterface, [{
     key: "_processResponse",
     value: function () {
-      var _ref75 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee61(res) {
+      var _ref75 = asyncToGenerator(regeneratorRuntime.mark(function _callee61(res) {
         var contentType, answer, json;
         return regeneratorRuntime.wrap(function _callee61$(_context62) {
           while (1) {
@@ -7654,7 +7676,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "_GET",
     value: function () {
-      var _ref76 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee62(action) {
+      var _ref76 = asyncToGenerator(regeneratorRuntime.mark(function _callee62(action) {
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         var query, url;
         return regeneratorRuntime.wrap(function _callee62$(_context63) {
@@ -7691,7 +7713,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "_POST",
     value: function () {
-      var _ref77 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee63(action) {
+      var _ref77 = asyncToGenerator(regeneratorRuntime.mark(function _callee63(action) {
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         var url;
         return regeneratorRuntime.wrap(function _callee63$(_context64) {
@@ -7727,7 +7749,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "describe",
     value: function () {
-      var _ref78 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee64(args) {
+      var _ref78 = asyncToGenerator(regeneratorRuntime.mark(function _callee64(args) {
         return regeneratorRuntime.wrap(function _callee64$(_context65) {
           while (1) {
             switch (_context65.prev = _context65.next) {
@@ -7751,7 +7773,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "ensureDB",
     value: function () {
-      var _ref79 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee65(args) {
+      var _ref79 = asyncToGenerator(regeneratorRuntime.mark(function _callee65(args) {
         return regeneratorRuntime.wrap(function _callee65$(_context66) {
           while (1) {
             switch (_context66.prev = _context66.next) {
@@ -7775,7 +7797,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "destroyDB",
     value: function () {
-      var _ref80 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee66(args) {
+      var _ref80 = asyncToGenerator(regeneratorRuntime.mark(function _callee66(args) {
         return regeneratorRuntime.wrap(function _callee66$(_context67) {
           while (1) {
             switch (_context67.prev = _context67.next) {
@@ -7799,7 +7821,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "fetchCommits",
     value: function () {
-      var _ref81 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee67(args) {
+      var _ref81 = asyncToGenerator(regeneratorRuntime.mark(function _callee67(args) {
         return regeneratorRuntime.wrap(function _callee67$(_context68) {
           while (1) {
             switch (_context68.prev = _context68.next) {
@@ -7823,7 +7845,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "fetchVersionGraph",
     value: function () {
-      var _ref82 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee68(args) {
+      var _ref82 = asyncToGenerator(regeneratorRuntime.mark(function _callee68(args) {
         return regeneratorRuntime.wrap(function _callee68$(_context69) {
           while (1) {
             switch (_context69.prev = _context69.next) {
@@ -7847,7 +7869,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "exists",
     value: function () {
-      var _ref83 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee69(args) {
+      var _ref83 = asyncToGenerator(regeneratorRuntime.mark(function _callee69(args) {
         return regeneratorRuntime.wrap(function _callee69$(_context70) {
           while (1) {
             switch (_context70.prev = _context70.next) {
@@ -7871,7 +7893,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "fetchLog",
     value: function () {
-      var _ref84 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee70(args) {
+      var _ref84 = asyncToGenerator(regeneratorRuntime.mark(function _callee70(args) {
         return regeneratorRuntime.wrap(function _callee70$(_context71) {
           while (1) {
             switch (_context71.prev = _context71.next) {
@@ -7895,7 +7917,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "fetchSnapshot",
     value: function () {
-      var _ref85 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee71(args) {
+      var _ref85 = asyncToGenerator(regeneratorRuntime.mark(function _callee71(args) {
         return regeneratorRuntime.wrap(function _callee71$(_context72) {
           while (1) {
             switch (_context72.prev = _context72.next) {
@@ -7919,7 +7941,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "commit",
     value: function () {
-      var _ref86 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee72(args) {
+      var _ref86 = asyncToGenerator(regeneratorRuntime.mark(function _callee72(args) {
         return regeneratorRuntime.wrap(function _callee72$(_context73) {
           while (1) {
             switch (_context73.prev = _context73.next) {
@@ -7943,7 +7965,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "exportToSpecs",
     value: function () {
-      var _ref87 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee73(args) {
+      var _ref87 = asyncToGenerator(regeneratorRuntime.mark(function _callee73(args) {
         return regeneratorRuntime.wrap(function _callee73$(_context74) {
           while (1) {
             switch (_context74.prev = _context74.next) {
@@ -7967,7 +7989,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "exportToDir",
     value: function () {
-      var _ref88 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee74(args) {
+      var _ref88 = asyncToGenerator(regeneratorRuntime.mark(function _callee74(args) {
         return regeneratorRuntime.wrap(function _callee74$(_context75) {
           while (1) {
             switch (_context75.prev = _context75.next) {
@@ -7991,7 +8013,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "importFromDir",
     value: function () {
-      var _ref89 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee75(args) {
+      var _ref89 = asyncToGenerator(regeneratorRuntime.mark(function _callee75(args) {
         return regeneratorRuntime.wrap(function _callee75$(_context76) {
           while (1) {
             switch (_context76.prev = _context76.next) {
@@ -8015,7 +8037,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "importFromSpecs",
     value: function () {
-      var _ref90 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee76(args) {
+      var _ref90 = asyncToGenerator(regeneratorRuntime.mark(function _callee76(args) {
         return regeneratorRuntime.wrap(function _callee76$(_context77) {
           while (1) {
             switch (_context77.prev = _context77.next) {
@@ -8039,7 +8061,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "importFromResource",
     value: function () {
-      var _ref91 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee77(args) {
+      var _ref91 = asyncToGenerator(regeneratorRuntime.mark(function _callee77(args) {
         return regeneratorRuntime.wrap(function _callee77$(_context78) {
           while (1) {
             switch (_context78.prev = _context78.next) {
@@ -8063,7 +8085,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "delete",
     value: function () {
-      var _ref92 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee78(args) {
+      var _ref92 = asyncToGenerator(regeneratorRuntime.mark(function _callee78(args) {
         return regeneratorRuntime.wrap(function _callee78$(_context79) {
           while (1) {
             switch (_context79.prev = _context79.next) {
@@ -8087,7 +8109,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "deleteCommit",
     value: function () {
-      var _ref93 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee79(args) {
+      var _ref93 = asyncToGenerator(regeneratorRuntime.mark(function _callee79(args) {
         return regeneratorRuntime.wrap(function _callee79$(_context80) {
           while (1) {
             switch (_context80.prev = _context80.next) {
@@ -8111,7 +8133,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "fetchConflicts",
     value: function () {
-      var _ref94 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee80(args) {
+      var _ref94 = asyncToGenerator(regeneratorRuntime.mark(function _callee80(args) {
         return regeneratorRuntime.wrap(function _callee80$(_context81) {
           while (1) {
             switch (_context81.prev = _context81.next) {
@@ -8135,7 +8157,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "resolveConflict",
     value: function () {
-      var _ref95 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee81(args) {
+      var _ref95 = asyncToGenerator(regeneratorRuntime.mark(function _callee81(args) {
         return regeneratorRuntime.wrap(function _callee81$(_context82) {
           while (1) {
             switch (_context82.prev = _context82.next) {
@@ -8159,7 +8181,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "fetchDiff",
     value: function () {
-      var _ref96 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee82(args) {
+      var _ref96 = asyncToGenerator(regeneratorRuntime.mark(function _callee82(args) {
         return regeneratorRuntime.wrap(function _callee82$(_context83) {
           while (1) {
             switch (_context83.prev = _context83.next) {
@@ -8183,7 +8205,7 @@ var ObjectDBHTTPInterface = function () {
   }, {
     key: "synchronize",
     value: function () {
-      var _ref97 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee83(args) {
+      var _ref97 = asyncToGenerator(regeneratorRuntime.mark(function _callee83(args) {
         return regeneratorRuntime.wrap(function _callee83$(_context84) {
           while (1) {
             switch (_context84.prev = _context84.next) {
@@ -8248,7 +8270,7 @@ var LivelyStorageResource = function (_Resource) {
   createClass(LivelyStorageResource, [{
     key: "read",
     value: function () {
-      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
         var file, content;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -8280,7 +8302,7 @@ var LivelyStorageResource = function (_Resource) {
   }, {
     key: "readJson",
     value: function () {
-      var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
         var content;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
@@ -8310,7 +8332,7 @@ var LivelyStorageResource = function (_Resource) {
   }, {
     key: "write",
     value: function () {
-      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(content) {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(content) {
         var _this3 = this;
 
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
@@ -8379,7 +8401,7 @@ var LivelyStorageResource = function (_Resource) {
   }, {
     key: "mkdir",
     value: function () {
-      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
         var spec, t;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
@@ -8451,7 +8473,7 @@ var LivelyStorageResource = function (_Resource) {
   }, {
     key: "exists",
     value: function () {
-      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
@@ -8490,7 +8512,7 @@ var LivelyStorageResource = function (_Resource) {
   }, {
     key: "remove",
     value: function () {
-      var _ref6 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
         var thisPath, db, matching;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
@@ -8537,7 +8559,7 @@ var LivelyStorageResource = function (_Resource) {
   }, {
     key: "dirList",
     value: function () {
-      var _ref8 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
         var _this4 = this;
 
         var depth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;

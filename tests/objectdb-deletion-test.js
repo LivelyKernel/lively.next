@@ -137,6 +137,7 @@ describe("deletions in ObjectDB", function() {
 
         expect(await objectDB.getLatestCommit("world", world1.name)).equals(null);
         expect(await objectDB.getLatestCommit("world", world1.name, "HEAD", true)).not.equals(null);
+
         expect(arr.pluck(await ObjectDBInterface.fetchCommits({db: objectDB.name}), "name"))
           .equals(["other objectdb test world"])
         expect(arr.pluck(await ObjectDBInterface.fetchCommits({db: objectDB.name, includeDeleted: true}), "name"))

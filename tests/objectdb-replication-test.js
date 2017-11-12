@@ -60,7 +60,7 @@ describe("replication", function() {
 
     await expectDBsHaveSameDocs(objectDB.__commitDB, pouchDBForCommits);
     await expectDBsHaveSameDocs(objectDB.__versionDB, pouchDBForHist);
-    
+
     let root = objectDB.snapshotLocation,
         origPaths = (await root.dirList()).map(ea => ea.relativePathFrom(root)),
         replicatedPaths = (await replicationLocation.dirList()).map(ea => ea.relativePathFrom(replicationLocation));
@@ -74,7 +74,7 @@ describe("replication", function() {
     await replication.waitForIt();
 
     let commitReplicated = lively.lang.arr.uniq((await pouchDBForCommits.getAll()).map(ci => ci.name || ci._id)).sort();
-    expect(commitReplicated).equals(["_design/nameAndTimestamp_index", "_design/nameTypeFilter", "_design/nameWithMaxMinTimestamp_index", world2.name]);
+    expect(commitReplicated).equals(["_design/nameAndTimestamp_index", "_design/nameTypeFilter", "_design/nameWithMaxMinTimestamp_index", "_design/name_index", world2.name]);
     let histReplicated = lively.lang.arr.uniq((await pouchDBForHist.getAll()).map(ci => ci._id)).sort()
     expect(histReplicated).equals(["_design/nameTypeFilter", `world/${world2.name}`]);
 
@@ -104,7 +104,7 @@ describe("replication", function() {
     let rep = await objectDB2.replicateFrom(
       pouchDBForCommits, pouchDBForHist, replicationLocation).waitForIt();
 
-    
+
     await expectDBsHaveSameDocs(objectDB.__commitDB, objectDB2.__commitDB);
     await expectDBsHaveSameDocs(objectDB.__versionDB, objectDB2.__versionDB);
 
@@ -166,7 +166,7 @@ describe("replication", function() {
       expect(sync1.changes).deep.members([
         {id: commit1._id, direction: "push", kind: "commits", name: "foo", type: "world"},
         {id: "world/foo", direction: "push", kind: "versions"},
-      ])
+      ]);
     });
 
   });

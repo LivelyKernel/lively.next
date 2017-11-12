@@ -1000,8 +1000,9 @@ class Synchronization {
       debug && console.log(`${this} ${direction === "push" ? "send" : "received"} ${docs.length} histories`);
 
       docs.forEach(doc => {
+        if (doc._id.startsWith("_")) return;
         this.changes.push({direction, kind: "versions", id: doc._id});
-      })
+      });
 
       // versionChanges.push(change);
     })
@@ -1250,13 +1251,14 @@ export var ObjectDBInterface = {
       versionQueryOpts.startkey = `${type}/\u0000"`;
       versionQueryOpts.endkey = `${type}/\uffff"`;
     }
-    let versions = await versionDB.getAll(versionQueryOpts), commitIds = [];
 
+    let versions = await versionDB.getAll(versionQueryOpts), commitIds = [];
     for (let version of versions) {
       if (version.deleted || version._deleted) continue;
       let {_id, refs} = version;
+      if (_id.startsWith("_")) continue;
       ref = refsByTypeAndName[_id] || ref;
-        let commitId = refs[ref];
+      let commitId = refs[ref];
       if (commitId && !knownCommitIds
        || !knownCommitIds.hasOwnProperty(commitId))
         commitIds.push(commitId);
