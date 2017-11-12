@@ -248,6 +248,15 @@ export default class ObjectDB {
     return this.snapshotResourceFor(commit).readJson();
   }
 
+  async revert(type, name, ref, toCommitId) {
+    let versionDB = this.__versionDB || await this._versionDB(),
+        history = await versionDB.get(type + "/" + name);
+    history.refs[ref || "HEAD"] = toCommitId;
+    delete history.deleted;
+    await versionDB.set(`${type}/${name}`, history);
+    return history;
+  }
+
   _createCommit(
     type, name, description, tags, metadata, author,
     timestamp, message = "", ancestors = [],
@@ -1404,6 +1413,22 @@ export var ObjectDBInterface = {
     return db.loadSnapshot(undefined, undefined, commit);
   },
 
+  async revert(args) {
+    // side effect: true
+    // returns: hist
+    let {
+          db: dbName, type, name, ref, toCommitId
+        } = checkArgs(args, {
+          db: "string",
+          type: "string", name: "string",
+          ref: "string|undefined",
+          toCommitId: "string",
+        }), db = await ObjectDB.find(dbName);
+
+    if (!ref) ref = "HEAD";
+    return db.revert(type, name, ref, toCommitId);
+  },
+
   async commit(args) {
     // side effect: true
     // returns: commit
@@ -1691,6 +1716,12 @@ export class ObjectDBHTTPInterface {
     // parameters: db, type, name, ref, commit
     // returns: object
     return this._GET("fetchSnapshot", args);
+  }
+
+  async revert(args) {
+    // parameters: db, type, name, toCommitId, ref
+    // returns: hist
+    return this._POST("revert", args);
   }
 
   async commit(args) {
