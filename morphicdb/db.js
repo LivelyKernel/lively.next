@@ -150,6 +150,12 @@ export default class MorphicDB {
     return this.httpDB.fetchLog({db, commit, limit, includeCommits, knownCommitIds});
   }
 
+  async revert(type, name, toCommitId, ref = "HEAD") {
+    await this.initializeIfNecessary();
+    let {name: db} = this;
+    return this.httpDB.revert({db, type, name, toCommitId, ref});
+  }
+
   async snapshotAndCommit(type, name, morph, snapshotOptions, commitSpec, ref, expectedParentCommit) {
     let snapshot = await createMorphSnapshot(morph, snapshotOptions),
         commit = await this.commit(type, name, snapshot, commitSpec, ref, expectedParentCommit);
