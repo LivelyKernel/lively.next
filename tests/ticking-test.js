@@ -18,10 +18,24 @@ describe("ticking scripts", function() {
   });
 
 
+  afterEach(() => aMorph.stopStepping());
+
   it("morph startStepping", async () => {
     aMorph.startStepping(50, "moveBy", pt(1,1));
     await promise.delay(230);
-    expect(aMorph.position.x).within(10+3, 10+5)
+    expect(aMorph.position.x).within(10+3, 10+5);
+  });
+
+  it("stop from within stepped script", async () => {
+    aMorph.counter = 0;
+    aMorph.step = function() {
+      this.counter++;
+      this.stopStepping();
+    }
+    aMorph.startStepping(10, "step");
+    await promise.delay(50);    
+    expect(aMorph.counter).equals(1);
+    expect(aMorph.tickingScripts).equals([]);
   });
 
   it("morph stepping with arg", async function() {
@@ -62,9 +76,10 @@ describe("ticking scripts", function() {
   describe("FunctionScript", () => {
 
     it("startAndStopTicking", async function() {
-      var n = 0, script = new FunctionScript(function() { script.stop(); n++; });
+      var n = 0, script = new FunctionScript(function() { n++; });
       script.startTicking(10);
       await promise.delay(40);
+      script.stop();
       expect(n).within(2, 4, 'Script not run');
     });
 

@@ -1,3 +1,5 @@
+/*global System*/
+
 class Script {
 
   constructor() {
@@ -19,7 +21,7 @@ class Script {
 
   tick() {
     try {
-      this.execute()
+      this.execute();
     } catch(e) {
       console.error('Error executing script ' + this + ': ' + e + '\n' + e.stack);
       return;
@@ -39,6 +41,7 @@ class Script {
   stop() {
     var sel = this.type === "setTimeout" ? "clearTimeout" : "cancelAnimationFrame";
     this.global[sel](this.currentTimeout);
+    this.stopped = true;
   }
 
   resume(ms = this.tickTime) {
