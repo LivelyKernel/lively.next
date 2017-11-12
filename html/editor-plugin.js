@@ -22,7 +22,12 @@ import { Color } from "lively.graphics";
 
 
 export async function tidyHtml(htmlSrc) {
-  let {default: beautify} = await lively.modules.module("lively.ide/html/js-beautify-html.1.6.15.js").load({format: "global"});
+  let beautify;
+  try {
+    ({default: beautify} = await lively.modules.module("lively.ide/html/js-beautify-html.1.6.15.js").load({format: "global"}));
+  } catch (err) {
+    ({default: beautify} = await lively.modules.module("lively.ide/html/js-beautify-html.1.6.15.js").load({format: "global"}));
+  }
   return beautify(htmlSrc);
 }
 
