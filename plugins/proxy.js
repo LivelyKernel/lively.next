@@ -1,3 +1,4 @@
+/*global System*/
 import LivelyServer from "../server.js";
 var { createProxy } = System._nodeRequire("http-proxy")
 
@@ -20,8 +21,9 @@ var content = await res.text(); content.slice(0,200)
 // var server = LivelyServer.servers.get("0.0.0.0:9011")
 // var p = server.findPlugin("proxy")
 
-var proxyURLRe = /^\/proxy(-ssl)?\/([^\/]+)/,
-    redirectRe = /^201|30(1|2|7|8)$/;
+const proxyURLRe = /^\/proxy(-ssl)?\/([^\/]+)/,
+      redirectRe = /^201|30(1|2|7|8)$/,
+      debug = false;
 
 export default class ProxyPlugin {
 
@@ -73,7 +75,13 @@ export default class ProxyPlugin {
     // for custom responses on "proxyRes" see
     // https://github.com/nodejitsu/node-http-proxy/pull/850
 
-    proxy.on('proxyRes', function (proxyRes, req, res) {
+    debug && proxy.on('proxyReq', function(proxyReq, req, res, options) {
+      console.log(`[lively.server proxy] <proxy request>`)
+      console.log(req.headers)
+      console.log(`[lively.server proxy] </proxy request>`)
+    });
+
+    debug && proxy.on('proxyRes', function (proxyRes, req, res) {
       var {statusMessage, statusCode, headers} = proxyRes;
       console.log(`[lively.server proxy] <proxy response>`)
       console.log(`=> ${proxyRes.req.path} ${JSON.stringify(proxyRes.req._headers, true, 2)}`)
@@ -84,7 +92,8 @@ export default class ProxyPlugin {
     console.log(`[lively.server proxy] Proxying request to ${opts.target}`);
 
     proxy.web(req, res, opts, function(e) {
-      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      debug && console.warn(`[lively.server proxy] Error ${e}`);
+      res.writeHead(500, {'Content-Type': 'text/plain'});
       res.end("Error in proxy: " + String(e));
     });
 
