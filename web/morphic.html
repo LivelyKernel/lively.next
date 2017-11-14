@@ -16,6 +16,18 @@
       </div>
     </div>
 
+    <script>
+      (function reportWorldLoad() {
+        fetch("/report-world-load", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            message: `started loading ${document.location.pathname}`
+          })
+        }).catch(err => console.warn(`report-world-load failed: ${err}`));
+      })();
+    </script>
+
     <script src="/lively.morphic/web/console.js"></script>
     <script src="/lively.next-node_modules/babel-standalone/babel.js"></script>
     <script src="/lively.next-node_modules/systemjs/dist/system.src.js"></script>

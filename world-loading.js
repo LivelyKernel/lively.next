@@ -1,4 +1,4 @@
-/*global System*/
+/*global System,fetch*/
 import { MorphicEnv } from "./index.js";
 import { loadWorldFromResource } from "./serialization.js";
 import { resource, registerExtension as registerResourceExension } from "lively.resources";
@@ -150,7 +150,6 @@ async function setupLively2Lively(world) {
   // FIXME... put this go somewhere else...?
   if (!client._onUserChange) {
     client._onUserChange = function(evt) {
-      console.log("user change evtn", evt)
       if (client.isOnline() && evt.user) {
         let {token: userToken, realm: userRealm} = evt.user;
         client.info = {...client.info, userToken, userRealm};
@@ -160,9 +159,14 @@ async function setupLively2Lively(world) {
     }
     lively.notifications.subscribe("lively.user/userchanged", client._onUserChange, System);
 
+    client.once("registered", () => {
+      reportWorldLoad(world, user);
+    });
+
     client.on("registered", () => {
       let flap = world.get("user flap");
       flap && flap.updateNetworkIndicator(client);
+      
     });
     client.on("connected", () => {
       let flap = world.get("user flap");
@@ -176,7 +180,8 @@ async function setupLively2Lively(world) {
       let flap = world.get("user flap");
       flap && flap.updateNetworkIndicator(client);
     });
-  }
+
+  } else reportWorldLoad(world, user);
 
   return client;
 }
@@ -276,4 +281,14 @@ export async function interactivelySaveWorld(world, options) {
     world.logError("Error saving world: " + err);
   } finally { i.remove(); }
 
+}
+
+function reportWorldLoad(world, user) {
+  fetch("/report-world-load", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      message: `${user ? `${user.name} (${user.token.slice(0,5)})` : "strange user"} logged in at ${world.name}`
+    })
+  }).catch(err => console.warn(`report-world-load failed: ${err}`));
 }
