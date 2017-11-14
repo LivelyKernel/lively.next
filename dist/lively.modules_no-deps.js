@@ -3566,6 +3566,8 @@ var PackageConfiguration = function () {
       if (sysConfig.packageConfigPaths) System.packageConfigPaths = lively_lang.arr.uniq(System.packageConfigPaths.concat(sysConfig.packageConfigPaths));
       if (sysConfig.packages) // packages is normaly not support locally in a package.json
         System.config({ packages: sysConfig.packages });
+      if (sysConfig.globalmap) System.config({ map: sysConfig.globalmap });
+      if (sysConfig.babelOptions) System.config({ babelOptions: sysConfig.babelOptions });
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

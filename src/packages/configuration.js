@@ -68,7 +68,11 @@ export default class PackageConfiguration {
     if (sysConfig.packageConfigPaths)
       System.packageConfigPaths = arr.uniq(System.packageConfigPaths.concat(sysConfig.packageConfigPaths));
     if (sysConfig.packages) // packages is normaly not support locally in a package.json
-      System.config({packages: sysConfig.packages})
+      System.config({packages: sysConfig.packages});
+    if (sysConfig.globalmap)
+      System.config({map: sysConfig.globalmap});
+    if (sysConfig.babelOptions)
+      System.config({babelOptions: sysConfig.babelOptions});
   }
 
 
