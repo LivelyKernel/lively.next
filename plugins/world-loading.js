@@ -3,6 +3,7 @@ import LivelyServer from "../server.js";
 import { resource } from "lively.resources";
 import { ObjectDB } from "lively.storage";
 import { parse as parseUrl } from "url";
+import { readBody } from "../util.js";
 
 const minute = 1000*60;
 const useCache = true;
@@ -114,6 +115,16 @@ export default class WorldLoadingPlugin {
           return;
         }
       }
+
+    } else if (url === "/report-world-load" && req.method.toUpperCase() === "POST") {
+      let {message} = await readBody(req),
+          ip = req.headers['x-forwarded-for'] || 
+                req.connection.remoteAddress || 
+                req.socket.remoteAddress ||
+                req.connection.socket.remoteAddress;
+      console.log(`[report-world-load] ${message} ${ip}`);
+      res.end();
+      return;
 
     } else if (url.startsWith("/worlds")) {
 
