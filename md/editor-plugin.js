@@ -4,17 +4,34 @@ import "./mode.js";
 import { getMode, tokenizeDocument } from "../editor-modes.js";
 import { arr } from "lively.lang";
 
-// import * as marked from "https://raw.githubusercontent.com/chjj/marked/master/lib/marked.js"
+import marked from "https://raw.githubusercontent.com/chjj/marked/master/lib/marked.js"
+import { loadPart } from "lively.morphic/partsbin.js";
 
 var commands = [
 
   {
-    name: "convert to html",
+    name: "[markdown] convert to html",
     exec: async (mdText, opts = {}) => {
-      // var mdMorph = new MarkdownMorph({markdown: mdText.textString});
-      // this.world().openInWindow(mdMorph).openInWorld().activate()
-      $world.inform("not yet implemented");
+      let htmlMorph = mdText._htmlMorph;
+      if (!htmlMorph) {
+        htmlMorph = mdText._htmlMorph = await loadPart("html-morph");
+        htmlMorph.clipMode = "auto";
+        if (!htmlMorph.world())
+          htmlMorph.openInWindow({title: "markdown of " + mdText.name}).activate();
+      }
 
+      marked.setOptions({
+        renderer: new marked.Renderer(),
+        gfm: true,
+        tables: true,
+        breaks: true,
+        pedantic: false,
+        sanitize: false,
+        smartLists: true,
+        smartypants: false,
+        ...opts
+      });
+      htmlMorph.html = marked(mdText.textString);
       return true;
     }
   }
@@ -48,9 +65,18 @@ export default class MarkdownEditorPlugin extends CodeMirrorEnabledEditorPlugin 
 
   getCommands(otherCommands) { return otherCommands.concat(commands); }
 
-  getKeyBindings(other) { return other; }
+  getKeyBindings(other) {
+    return other.concat([
+      {keys: "Alt-G", command: "[markdown] convert to html"}
+    ]);
+  }
 
-  async getMenuItems(items) { return items; }
+  async getMenuItems(items) {
+    return [
+      {command: "[markdown] convert to html", alias: "convert to html", target: this.textMorph},
+      {isDivider: true},
+    ].concat(items);
+  }
 
 
   highlight() {
