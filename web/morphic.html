@@ -20,11 +20,16 @@
 
     <script>
       (function reportWorldLoad() {
+        var loadId = "";
+        for (var i = 0; i < 5; i++)
+          loadId += String.fromCharCode(97+Math.floor(Math.random()*25));
+        window._livelyLoadId = loadId;
+        window._livelyLoadStart = Date.now();
         fetch("/report-world-load", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({
-            message: `started loading ${document.location.pathname}`
+            message: `started loading ${document.location.pathname} [${loadId}]`
           })
         }).catch(err => console.warn(`report-world-load failed: ${err}`));
       })();
@@ -33,6 +38,7 @@
     <script src="/lively.morphic/web/console.js"></script>
     <script src="/lively.next-node_modules/babel-standalone/babel.js"></script>
     <script src="/lively.next-node_modules/systemjs/dist/system.src.js"></script>
+    <script>System.config({baseURL: origin});</script>
     <script src="/lively.modules/dist/lively.modules.js"></script>
 
     <script>
@@ -43,12 +49,20 @@
         console.log(...arguments);
         status.innerText = [...arguments].join(" ");
       }
-      var res = lively.resources.resource,
+      var resource = lively.resources.resource,
           loc = document.location,
           origin = loc.origin,
-          query = res(loc.href).query(),
-          loginDone = false, worldLoaded = false,
-          loadingIndicator = document.getElementById("dom-loading-indicator");
+          query = resource(loc.href).query(),
+          loadingIndicator = document.getElementById("dom-loading-indicator"),
+          worldNameMatch = decodeURIComponent(loc.pathname).match(/\/worlds\/(.+)/),
+          worldName = worldNameMatch
+            ? worldNameMatch[1].replace(/(\.json)?($|\?.*)/, ".json$2")
+            : "default",
+          res = resource(origin + "/" + "lively.morphic/worlds/" + worldName),
+          loginDone = false,
+          worldLoaded = false,
+          isBenchmark = worldNameMatch[1].startsWith("morph benchmark")/*FIXME!!!2017-11-15*/,
+          doBootstrap = !query.quickload && !isBenchmark;
 
       lively.lang.promise.waitFor(function() { return !!lively.user; }).then(function() {
         var userRegistry = lively.user.UserRegistry.current;
@@ -56,11 +70,10 @@
           loginDone = true;
           return;
         }
-        if (query.nologin) {
-          return userRegistry.login(lively.user.ClientUser.guest)
-            .then(function(user) { loginDone = true; });
+        if (query.nologin || isBenchmark) {
+          return userRegistry.login(lively.user.ClientUser.guest).then(function(user) { loginDone = true; });
         }
-        res(`${origin}/lively.user/html/html-ui.fragment`).read()
+        resource(`${origin}/lively.user/html/html-ui.fragment`).read()
           .then(function(content) {
             document.body.insertAdjacentHTML("beforeend", content);
             loadingIndicator.style.display = "none";
@@ -76,25 +89,29 @@
 
       Promise.resolve()
         .then(polyfills)
-        .then(bootstrapLivelySystem)
-        .then(function() { return lively.modules.registerPackage('lively.2lively'); })
+        .then(function() { return (doBootstrap) ? bootstrapLivelySystem() : fastPrepLivelySystem(); })
+        .then(function() {
+          let t = Date.now() - window._livelyLoadStart;
+          log(`...lively systems are ready`);
+          console.log(`load time ${t}ms`);
+        })
+        .then(function() {
+          log("Loading lively.2lively...");
+          return lively.modules.registerPackage('lively.2lively');
+        })
         .then(function() {
           window.addEventListener('beforeunload', function(evt) {
             var msg = "Really?";
             evt.returnValue = msg;
             return msg;
           }, true);
-          var worldNameMatch = decodeURIComponent(loc.pathname).match(/\/worlds\/(.+)/),
-              worldName = worldNameMatch
-                ? worldNameMatch[1].replace(/(\.json)?($|\?.*)/, ".json$2")
-                : "default",
-              resource = res(origin + "/" + "lively.morphic/worlds/" + worldName);
           return {
-            resource: resource,
+            resource: res,
             showWorldLoadDialog: !worldNameMatch,
           };
         })
         .then(function(worldLocation) {
+          log("Loading lively.morphic...");
           return Promise.all([
             lively.modules.importPackage('lively.morphic'),
             lively.lang.promise.waitFor(function() { return loginDone; })
@@ -111,7 +128,12 @@
             });
           })
         })
-        .then(function() { worldLoaded = true; log("...lively.morphic world created"); })
+        .then(function() {
+          worldLoaded = true;
+          let t = Date.now() - window._livelyLoadStart;
+          log(`...lively.morphic world ready`);
+          console.log(`load time ${t}ms`);
+        })
         .catch(function(err) {
           //if (err.originalErr) err = err.originalErr;  // do not hide vital information!
           console.error(err);
@@ -125,8 +147,18 @@
           document.body.appendChild(pre);
         });
 
-      function bootstrapLivelySystem() {
+      function fastPrepLivelySystem() {
+        return Promise.resolve()
+          .then(function() { log("starting fast system preparation..."); })
+          .then(function() { return lively.resources.resource(origin).join("package-registry.json").readJson(); })
+          .then(function (packageCached) {
+            System["__lively.modules__packageRegistry"] = lively.modules.PackageRegistry.fromJSON(System, packageCached);
+            return System;
+          })
+          .then(function() { return lively.resources.loadViaScript("/lively.user/dist/lively.user-client.js"); });
+      }
 
+      function bootstrapLivelySystem() {
         // for loading an instrumented version of the packages comprising the lively.system
         return Promise.resolve()
           .then(function() { log("starting bootstrap process..."); })
@@ -187,8 +219,6 @@
             return importPackageAndDo(
               "lively.storage",
               function(m) { lively.storage = m; })})
-
-          .then(function() { log("...lively systems are ready!"); });
       }
 
       function importPackageAndDo(packageURL, doFunc) {
