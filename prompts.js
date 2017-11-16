@@ -388,7 +388,6 @@ export class EditPrompt extends AbstractPrompt {
     this.editorPlugin.evalEnvironment
   }
 
-
   static get properties() {
     return {
       extent: {defaultValue: pt(500, 300)},
@@ -403,8 +402,6 @@ export class EditPrompt extends AbstractPrompt {
       name: "label", type: "label", value: label
     });
 
-    this.width = title.textBounds().width;
-
     if (!textStyle) textStyle = {};
     if (mode && !textStyle.fontFamily) textStyle.fontFamily = "Monaco, monospace";
 
@@ -416,16 +413,11 @@ export class EditPrompt extends AbstractPrompt {
       padding: Rectangle.inset(8,4), fixedHeight: false,
       ...textStyle
     }));
+
     inputEditor.changeEditorMode(mode).then(() => {
       if (evalEnvironment && inputEditor.editorPlugin)
         Object.assign(inputEditor.editorPlugin.evalEnvironment, evalEnvironment);
     });
-
-
-    // if (historyId && useLastInput) {
-    //   var lastInput = arr.last(inputLine.inputHistory.items)
-    //   if (lastInput) inputLine.textString = lastInput;
-    // }
 
     var inputWidth = inputEditor.textBounds().width + 50;
     // if the input string we pre-fill is wide than we try to make it fit
@@ -452,7 +444,7 @@ export class EditPrompt extends AbstractPrompt {
 
     const minWidth = Math.max(editor.textBounds().width+20, label.width);
     if (this.width < minWidth)
-      this.width = Math.min(this.maxWidth, minWidth + 10);
+      this.width = Math.min(this.maxWidth, minWidth + 20);
 
     const l = this.layout = new GridLayout({
       columns: [
