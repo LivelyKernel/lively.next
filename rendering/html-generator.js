@@ -114,6 +114,15 @@ export async function generateHTML(morph, htmlResource, options = {}) {
 
   if (htmlResource) await htmlResource.write(html);
 
+  // FIXME cleanup for HTML morphs... they "disappear"
+  let htmlMorphs = [];
+  htmlMorphs.push(...morph.withAllSubmorphsSelect(ea => ea.isHTMLMorph));
+  htmlMorphs.forEach(ea => {
+    let o = ea.owner, i = o.submorphs.indexOf(ea);
+    ea.remove();
+    setTimeout(() => o.addMorphAt(ea, i), 0)
+  });
+  
   return html;
 }
 
