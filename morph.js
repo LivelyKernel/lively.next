@@ -886,7 +886,8 @@ export class Morph {
   }
 
   edit(opts) {
-    return this.env.world.execCommand("open object editor", {...opts, target: this});
+    return this.env.world.execCommand("open object editor", {
+      className: this.constructor.name, ...opts, target: this});
   }
 
   inspect(opts) {
