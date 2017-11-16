@@ -284,11 +284,12 @@ export async function interactivelySaveWorld(world, options) {
 }
 
 function reportWorldLoad(world, user) {
+  let userId = user ? `${user.name} (${(user.token || "").slice(0,5)})` : "---";
   fetch("/report-world-load", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
-      message: `${user ? `${user.name} (${user.token.slice(0,5)})` : "strange user"} logged in at ${world.name}`
+      message: `${userId} logged in at ${world.name} [${window._livelyLoadId}]`
     })
   }).catch(err => console.warn(`report-world-load failed: ${err}`));
 }
