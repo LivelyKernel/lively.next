@@ -120,13 +120,9 @@ div.text-layer span {
 }
 
 .Text .annotation {
-/*  vertical-align: middle;
-  height: 100%;*/
-  /*vertical align*/
-  float: right;
-  position: relative;
-  top: 50%;
   text-align: right;
+  position: absolute;
+  right: 0;
 }
 
 .Label .annotation {
