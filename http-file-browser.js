@@ -295,7 +295,9 @@ class HTTPFileBrowserNode extends TreeData {
     return [
       resource.name(), null,
       `\t${sizePrinted} ${datePrinted}`, {
-        paddingTop: "3px", fontColor: Color.darkGray, fontSize: "70%", textStyleClasses: ["annotation"]}
+        paddingTop: "3px", fontColor: Color.darkGray,
+        fontSize: "70%", textStyleClasses: ["annotation"]
+      }
     ];
   }
 
@@ -366,6 +368,8 @@ export default class HTTPFileBrowser extends Morph {
                 resource: null,
                 isCollapsed: true,
               }),
+              lineHeight: 1.6,
+              fontSize: 14,
               resizeNodes: true/*for right align size + date*/,
               fill: Color.white, border: {color: Color.gray, width: 1},
               padding: Rectangle.inset(4)
