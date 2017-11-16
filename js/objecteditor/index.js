@@ -103,8 +103,8 @@ export class ObjectEditor extends Morph {
     let {
       title,
       target,
-      selectedClass,
-      selectedMethod,
+      className: selectedClass,
+      methodName: selectedMethod,
       textPosition,
       scroll,
       classTreeScroll,
@@ -114,6 +114,7 @@ export class ObjectEditor extends Morph {
     var ed = new this(obj.dissoc(options, "title", "class", "method")),
         winOpts = {name: "ObjectEditor window", title: options.title || "ObjectEditor"},
         win = (await ed.openInWindow(winOpts)).activate();
+    await win.whenRendered();
     if (target) ed.browse({
       title,
       target,
@@ -750,13 +751,13 @@ export class ObjectEditor extends Morph {
     this.world() && await ed.whenRendered();
     ed.scrollCursorIntoView();
 
+    var methodRange = {
+      start: ed.indexToPosition(method.start),
+      end: ed.indexToPosition(method.end)
+    };
+    ed.centerRange(methodRange);
     if (highlight) {
-      var methodRange = {
-        start: ed.indexToPosition(method.start),
-        end: ed.indexToPosition(method.end)
-      };
       ed.flash(methodRange, {id: "method", time: 1000, fill: Color.rgb(200,235,255)});
-      ed.centerRange(methodRange);
       // ed.alignRowAtTop(undefined, pt(0, -20))
     }
   }
