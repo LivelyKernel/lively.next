@@ -1,5 +1,4 @@
 /*global System,Buffer*/
-import LivelyServer from "../server.js";
 import { resource } from "lively.resources";
 import { ObjectDB } from "lively.storage";
 import { parse as parseUrl } from "url";
@@ -7,6 +6,15 @@ import { readBody } from "../util.js";
 
 const minute = 1000*60;
 const useCache = true;
+
+/*
+
+import LivelyServer from "../server.js";
+let s = LivelyServer.servers.values().next().value;
+let p = s.findPlugin("world-loading");
+p.resetHTMLCache();
+
+*/
 
 export default class WorldLoadingPlugin {
 
