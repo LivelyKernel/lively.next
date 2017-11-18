@@ -677,6 +677,12 @@ export class TilingLayoutHalo extends Morph {
     this.alignWithTarget();
   }
 
+  remove() {
+    super.remove();
+    this.removePreviews();
+    return this;
+  }
+
   get container() { return this.state.container; }
   get target() { return this.state.target; }
 
@@ -686,6 +692,10 @@ export class TilingLayoutHalo extends Morph {
 
   handleDrop(morph) {
 
+  }
+
+  removePreviews() {
+    this.previews.forEach(p => p.remove());
   }
 
   previewDrop(morphs) {
@@ -769,14 +779,6 @@ export class FlexLayoutHalo extends Morph {
     });
     this.state = {container, pointerId, target: container.layout};
     this.alignWithTarget();
-  }
-
-  onHoverIn(evt) {
-    if (evt.hand.grabbedMorphs.length > 0) this.previewDrop(evt.hand.grabbedMorphs);
-  }
-
-  onHoverOut(evt) {
-    this.removePreviews();
   }
 
   handleDrop(morph) {}
