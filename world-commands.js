@@ -433,6 +433,7 @@ var commands = [
             "shell": "lively.ide/shell/workspace.js",
             "html": "lively.ide/html/workspace.js",
             "py": "lively.ide/py/workspace.js",
+            "md": "lively.ide/md/workspace.js",
             "text": null
           },
           alias = Object.keys(config.ide.modes.aliases).reduce((inverted, ea) =>
@@ -1057,12 +1058,22 @@ var commands = [
 
   {
     name: "save world",
-    exec: (world, args, _, evt) => {
+    exec: async (world, args, _, evt) => {
       // in case there is another morph implementing save...
       var relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
       if (relayed) return relayed;
       args = {confirmOverwrite: true, showSaveDialog: true, ...args};
-      return interactivelySaveWorld(world, args);
+      let focused = world.focusedMorph,
+          saved = await interactivelySaveWorld(world, args);
+      if (focused && focused.focus());
+      return saved;
+    }
+  },
+
+  {
+    name: "save this world",
+    exec: (world, args, _, evt) => {
+      return world.execCommand("save world", {confirmOverwrite: true, ...args, showSaveDialog: false});
     }
   },
 

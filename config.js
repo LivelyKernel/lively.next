@@ -86,6 +86,7 @@ var config = {
     {keys: {mac: 'Meta-Shift-Z', win: 'Ctrl-Shift-Z'}, command: "redo"},
     {keys: "Alt-X", command: "run command"},
     {keys: {mac: 'Meta-S', win: 'Ctrl-S'}, command: "save world"},
+    {keys: 'Meta-Shift-L s a v e', command: "save this world"},
 
     {keys: "Meta-H", command: "show halo for focused morph"},
     {keys: "Meta-Shift-L C O P Y", command: "copy morph"},
