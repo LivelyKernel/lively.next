@@ -107,6 +107,9 @@ var commands = [
 
 
 export var defaultMarkdownOptions = {
+  html: true,
+  linkify: true,
+  typographer: true,
   linkedCSS: {"github-markdown": "/lively.ide/md/github-markdown.css"},
   markdownWrapperTemplate: `<div class="markdown-body" style="margin: 5px">\n%s\n</div>`,
   addSourceLineMapping: true,

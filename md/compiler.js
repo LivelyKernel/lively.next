@@ -102,7 +102,7 @@ function addSourceLineMappingPlugin(md, options = {}) {
     var mdLine, htmlLine;
     if (tokens[idx].map && tokens[idx].level === 0) {
       var [mdLine, htmlLine] = tokens[idx].map;
-      tokens[idx].attrJoin('class', 'line');
+      tokens[idx].attrJoin('class', 'markdown-line-marker');
       tokens[idx].attrSet('data-mdline', String(mdLine));
       tokens[idx].attrSet('data-htmlline', String(htmlLine));
     }

@@ -17,7 +17,8 @@ import {
 
 defineMode("markdown", function(cmCfg, modeCfg) {
 
-  var htmlMode = findModeByName("html") || getMode(cmCfg, "text/html");
+  var htmlMode = getMode(cmCfg, "text/html");
+  // var htmlMode = findModeByName("html") || getMode(cmCfg, "text/html");
   var htmlModeMissing = htmlMode.name == "null"
 
   // function _getMode(name) {
@@ -796,7 +797,10 @@ defineMode("markdown", function(cmCfg, modeCfg) {
     getType: getType,
 
     closeBrackets: "()[]{}''\"\"``",
-    fold: "markdown"
+    fold: "markdown",
+
+    blockCommentStart: "<!--",
+    blockCommentEnd: "-->"
   };
   return mode;
 }, "xml");

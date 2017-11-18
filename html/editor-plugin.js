@@ -1,6 +1,5 @@
 import { CodeMirrorEnabledEditorPlugin } from "../editor-plugin.js";
 import "./mode.js";
-import { getMode } from "../editor-modes.js";
 import { completers as jsCompleters } from "../js/completers.js";
 import {
   jsIdeCommands,

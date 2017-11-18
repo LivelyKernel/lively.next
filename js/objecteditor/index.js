@@ -660,9 +660,8 @@ export class ObjectEditor extends Morph {
     this.selectMethod(parentNode.target, node.target, isClick);
   }
 
-  contextMenuForClassTree({nodeMorph, evt}) {
+  contextMenuForClassTree({node, evt}) {
     evt.stop();
-    let node = nodeMorph && nodeMorph.myNode;
     if (!node || !node.target) return;
     let klass = isClass(node.target) ? node.target :
       node.target.owner && isClass(node.target.owner) ? node.target.owner :
