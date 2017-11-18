@@ -49,7 +49,7 @@ export class AbstractCoreInterface {
   async getModules() {
     return arr.flatmap(await this.getPackages(), ea => ea.modules);
   }
-  
+
   async getModule(name) {
     return (await this.getModules()).find(ea => ea.name === name);
   }

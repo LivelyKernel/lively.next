@@ -1,3 +1,4 @@
+/*global URL*/
 import { obj, arr } from "lively.lang";
 import { resource } from "lively.resources";
 
@@ -174,20 +175,22 @@ async function _createAndLoadModules(system, fullnames) {
   return results;
 }
 
+function modulesInPackage_defaultExclude(res) {
+  if ([".git", "node_modules", ".optimized-loading-cache", ".module_cache"].includes(res.name())) {
+    return true;
+  }
+  return false;
+}
+
 export async function modulesInPackage(system, packageName) {
   const p = await system.getPackage(packageName);
   if (!p || !p.address.match(/^http/)) {
     throw new Error(`Cannot load package ${packageName}`);
   }
-  function exclude(res) {
-    if ([".git", "node_modules", ".optimized-loading-cache", ".module_cache"].includes(res.name())) {
-      return true;
-    }
-    return false;
-  }
 
-  const res = resource(new URL(p.address)),
-        found = (await res.dirList(5, {exclude})).map(ea => ea.url)
-  return found.filter(f => f.match(/\.js$/))
-              .map(m => system.getModule(m));
+  const res = resource(p.address), found = [];
+  for (let {url} of await res.dirList(5, {exclude: modulesInPackage_defaultExclude}))
+    if (url.match(/\.js$/) && system.isModuleLoaded(url, true/*isNormalized*/))
+      found.push(system.getModule(url))
+  return found;
 }
