@@ -15,6 +15,13 @@ export function withSuperclasses(klass) {
   return classes;
 }
 
+export function inheritsFrom(klass, maybeSuperclass) {
+  do {
+    if (klass === maybeSuperclass) return true;
+  } while (klass = klass[superclassSymbol]);
+  return false;
+}
+
 export function changeClass(obj, newClass) {
   if (obj.constructor === newClass
    && obj.__proto__ === newClass.prototype) return obj;
