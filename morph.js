@@ -138,7 +138,7 @@ export default class Halo extends Morph {
   }
 
   alignWithTarget() {
-    if (this.active) return;
+    if (this.active || !this.target) return;
     const targetBounds = this.target.globalBounds(),
           worldBounds = this.target.world().visibleBounds(),
           {x, y, width, height} = targetBounds.intersection(worldBounds);
@@ -747,6 +747,7 @@ class NameHaloItem extends HaloItem {
   }
 
   targets() {
+    if (!this.halo.target) return [];
     return this.halo.target.isMorphSelection
       ? this.halo.target.selectedMorphs.map(target => {
         return {target, highlightOnHover: true};
@@ -853,7 +854,6 @@ class GrabHaloItem extends HaloItem {
 
   static get properties() {
     return {
-      name: {defaultValue: "grab"},
       styleClasses: {defaultValue: ["fa", "fa-hand-rock-o"]},
       tooltip: {defaultValue: "Grab the morph"}
     };
@@ -913,9 +913,14 @@ class GrabHaloItem extends HaloItem {
 
 class DragHaloItem extends HaloItem {
 
-  static get morphName() { return "drag"; }
-  get tooltip() { return "Change the morph's position. Press (alt) while dragging to align the morph's position along a grid."; }
-  get styleClasses() { return [...super.styleClasses, "fa", "fa-arrows"]; }
+  static get morphName() { return 'drag' }
+  
+  static get properties() {
+    return {
+      styleClasses: { defaultValue: ["fa", "fa-arrows"] },
+      tooltip: {defaultValue: "Change the morph's position. Press (alt) while dragging to align the morph's position along a grid."}
+    } 
+  }
 
   valueForPropertyDisplay() { return this.halo.target.position; }
 
@@ -969,9 +974,14 @@ class DragHaloItem extends HaloItem {
 class InspectHaloItem extends HaloItem {
 
   static get morphName() { return "inspect"; }
-  get styleClasses() { return [...super.styleClasses, "fa", "fa-gears"]; }
-  get draggable() { return false; }
-  get tooltip() { return "Inspect the morph's local state"; }
+
+  static get properties() {
+    return {
+      tooltip: {defaultValue: "Inspect the morph's local state" },
+      draggable: {defaultValue: false},
+      styleClasses: {defaultValue: ["fa", "fa-gears"]}
+    }
+  }
 
   onMouseDown(evt) {
     this.halo.remove();
@@ -987,9 +997,14 @@ class InspectHaloItem extends HaloItem {
 class EditHaloItem extends HaloItem {
 
   static get morphName() { return "edit"; }
-  get styleClasses() { return [...super.styleClasses, "fa", "fa-wrench"]; }
-  get draggable() { return false; }
-  get tooltip() { return "Edit the morph's definition"; }
+
+  static get properties() {
+    return {
+      tooltip: {defaultValue: "Edit the morph's definition" },
+      draggable: {defaultValue: false},
+      styleClasses: {defaultValue: ["fa", "fa-wrench"]}
+    }
+  }
 
   onMouseDown(evt) {
     this.halo.world().execCommand("open object editor", {target: this.halo.target});
@@ -1109,8 +1124,13 @@ const nameNumberRe = /(.+)([0-9]+)$/;
 class CopyHaloItem extends HaloItem {
 
   static get morphName() { return "copy"; }
-  get tooltip() { return "Copy morph"; }
-  get styleClasses() { return [...super.styleClasses, "fa", "fa-clone"]; }
+
+  static get properties() {
+    return {
+      tooltip: {defaultValue: "Copy morph" },
+      styleClasses: {defaultValue: ["fa", "fa-clone"] }
+    }
+  }
 
   init(hand) {
     let {halo} = this, {target} = halo, world = halo.world(),
@@ -1309,6 +1329,7 @@ class ResizeHandle extends HaloItem {
   }
 
   static resizersFor(halo) {
+    if (!halo.target) return [];
     var globalRot =  halo.target.getGlobalTransform().getRotation();
     return this.getResizeParts(globalRot)
       .map(([[corner, deltaMask, originDelta], [nativeCursor, location]]) =>
@@ -1441,9 +1462,13 @@ class MenuHaloItem extends HaloItem {
 
   static get morphName() { return "menu"; }
 
-  get styleClasses() { return [...super.styleClasses, "fa", "fa-navicon"]; }
-  get draggable() { return false; }
-  get tooltip() { return "Opens the morph menu"; }
+  static get properties() {
+    return {
+      draggable: {defaultValue: false},
+      tooltip: {defaultValue: "Opens the morph menu" },
+      styleClasses: {defaultValue: ["fa", "fa-navicon"]}
+    }
+  }
 
   async onMouseDown(evt) {
     let target = this.halo.target;
