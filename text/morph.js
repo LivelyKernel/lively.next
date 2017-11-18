@@ -1256,7 +1256,7 @@ export class Text extends Morph {
         undo: {
           target: this,
           selector: "replace",
-          args: [insertedRange, removedTextAndAttributes]
+          args: [insertedRange, removedTextAndAttributes, false]
         }
       },
       () => {
@@ -1382,16 +1382,45 @@ export class Text extends Morph {
       changes.push(self.insertText(text, self.indexToPosition(atI+offset)));
       return offset;
     }
+  }
 
-    // function applyChange({type, start, end, text}, source, offset) {
-    //   if (type === "delete") {
-    //     source = source.slice(0, start+offset) + source.slice(end+offset);
-    //     offset -= end-start;
-    //   } else if (type === "insert") {
-    //     source = source.slice(0, start+offset) + text + source.slice(start+offset)
-    //   }
-    //   return {source, offset};
-    // }
+  applyTextChanges(changes, offset = 0, extendTextAttributes = true, invalidateTextLayout) {
+    // format:
+    // [
+    //   ["remove", {row, column}, {row, column}],
+    //   ["insert", {row, column}, "string"],
+    // ]
+
+    var changed = [];
+    for (let [type, start, endOrText] of changes) {
+
+      // 1. Apply offset
+      if (offset) {
+        var startIndex = typeof start === "number" ? start : this.positionToIndex(start);
+        start = startIndex + offset;
+        if (endOrText && (typeof endOrText !== "string" && !Array.isArray(endOrText))) {
+          var endIndex = typeof endOrText === "number" ? endOrText : this.positionToIndex(endOrText);
+          endOrText = endIndex + offset;
+        }
+        start = startIndex + offset;
+      }
+
+      var startPos = typeof start === "number" ? this.indexToPosition(start) : start;
+
+      switch (type) {
+        case 'delete': case 'remove':
+          var endPos = typeof endOrText === "number" ? this.indexToPosition(endOrText) : endOrText;
+          changed.push(this.deleteText({start: startPos, end: endPos}, invalidateTextLayout));
+          break;
+        case 'insert':
+          changed.push(this.insertText(endOrText, startPos, extendTextAttributes, invalidateTextLayout));
+          break;          
+        default:
+          console.warn(`[applyTextChanges] unknown type: ${type}`);
+      }
+    }
+
+    return changed;
   }
 
   modifyLines(startRow, endRow, modifyFn) {

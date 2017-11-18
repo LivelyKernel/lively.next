@@ -81,6 +81,23 @@ describeInBrowser("text attributes", () => {
     expect(t.textAttributeAtPoint(pt(3,3))).deep.equals(attr);
   });
 
+  describe("bulk changes", () => {
+
+    it("applyTextChanges", () => {
+      var t = text("abcdef");
+      t.applyTextChanges(
+        [["insert", 0, "Hello\nWorld"],
+         ["remove", 5, 8],
+         ["insert", 5, "\n"]]);
+      expect(t.textString).equals(`Hello\nrldabcdef`);
+      t.applyTextChanges([["insert", {row: 1, column: 1}, "xxx"]])
+      expect(t.textString).equals(`Hello\nrxxxldabcdef`);
+      t.applyTextChanges([["delete", {row: 0, column: 6}, {row: 2, column: 0}]])
+      expect(t.textString).equals("Hello");
+    });
+
+  });
+
   describe("text range styling", () => {
 
     it("creates text attributes", () => {
@@ -97,7 +114,7 @@ describeInBrowser("text attributes", () => {
     it("resets text attributes in range", () => {
       sut.setStyleInRange({fontSize: 40}, range(0,1,0,3));
       sut.resetStyleInRange(range(0,1,0,2));
-      expect(sut.textAndAttributes).deep.equals(["hello", null]);
+      expect(sut.textAndAttributes).deep.equals(["he", null, "l", {fontSize: 40}, "lo", null]);
     });
 
     it("style attributes are cleaned up / coalesced", () => {
