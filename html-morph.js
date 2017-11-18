@@ -131,8 +131,9 @@ export class HTMLMorph extends Morph {
             System.import("lively.ide/css/parser.js").then(css => {
               let parsed = css.parse(val);
               // prepend morph id to each rule so that css is scoped to morph
-              parsed.stylesheet.rules.forEach(r =>
-              r.selectors = r.selectors.map(ea => `#${this.id} ${ea}`));
+              parsed.stylesheet.rules.forEach(r => {
+                if (r.selectors) r.selectors = r.selectors.map(ea => `#${this.id} ${ea}`);
+              });
               addOrChangeCSSDeclaration("css-for-" + this.id, css.stringify(parsed));
             }).catch(err => console.error(`Error setting cssDeclaration of ${this}: ${err}`));
           }
