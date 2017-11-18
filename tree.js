@@ -377,8 +377,8 @@ export class Tree extends Text {
   // event handling
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  contextMenuForNode(nodeMorph, evt) {
-    signal(this, "contextMenuRequested", {nodeMorph, evt});
+  contextMenuForNode(node, evt) {
+    signal(this, "contextMenuRequested", {node, evt});
   }
 
   onKeyDown(evt) {
@@ -402,6 +402,15 @@ export class Tree extends Text {
       if (this.selectedIndex != row + 1)
          this.selectedIndex = row + 1;
     }
+  }
+
+  onContextMenu(evt) {
+    if (evt.targetMorph !== this) return;
+    evt.stop();
+    let {row, column} = this.textPositionFromPoint(evt.positionIn(this)),
+        clickedNode = this.nodes[row + 1];
+    if (!clickedNode) return;
+    this.contextMenuForNode(clickedNode, evt);
   }
 
   get keybindings() {
