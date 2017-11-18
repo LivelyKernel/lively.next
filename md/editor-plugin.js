@@ -1,37 +1,71 @@
 import { CodeMirrorEnabledEditorPlugin } from "../editor-plugin.js";
 
 import "./mode.js";
-import { getMode, tokenizeDocument } from "../editor-modes.js";
-import { arr } from "lively.lang";
+import { tokenizeDocument } from "../editor-modes.js";
+import { arr, string } from "lively.lang";
 
 import marked from "https://raw.githubusercontent.com/chjj/marked/master/lib/marked.js"
 import { loadPart } from "lively.morphic/partsbin.js";
+import { addOrChangeLinkedCSS } from "lively.morphic/rendering/dom-helper.js";
+import { mdCompiler } from "./compiler.js";
+import MarkdownNavigator from "./navigator.js";
 
 var commands = [
 
   {
     name: "[markdown] convert to html",
     exec: async (mdText, opts = {}) => {
-      let htmlMorph = mdText._htmlMorph;
-      if (!htmlMorph) {
-        htmlMorph = mdText._htmlMorph = await loadPart("html-morph");
-        htmlMorph.clipMode = "auto";
-        if (!htmlMorph.world())
-          htmlMorph.openInWindow({title: "markdown of " + mdText.name}).activate();
+      return mdCompiler.compileMorphToHTMLAndOpen(mdText, opts)
+    }
+  },
+
+  {
+    name: "[markdown] scroll to cursor position in preview",
+    exec: async (mdText, opts = {}) => {
+
+let headings = mdCompiler.parseHeadings(mdText.textString);
+let heading = mdCompiler.headingOfLine(headings, mdText.cursorPosition.row);
+let range = mdCompiler.rangeOfHeading(mdText.textString, headings, heading)
+let srcInRange = mdText.textInRange(range.range)
+      let html = mdCompiler.compileToHTML(srcInRange, {addMarkdownBodyDiv: false})
+
+      let preview = mdText._htmlMorph
+      preview.html.indexOf(html)
+
+    }
+  },
+
+  {
+    name: "[markdown] goto heading",
+    exec: async (mdText, opts = {}) => {
+      let {row} = mdText.cursorPosition;
+      let headings = mdCompiler.parseHeadings(mdText.textString);
+
+      if (!headings.length) return true;
+
+      let nextHeadingI = row >= arr.last(headings).line ? headings.length : headings.findIndex(ea => ea.line > row);
+      if (nextHeadingI === -1) nextHeadingI = 0;
+      
+      let items = headings.map(ea => {
+        return {
+          isListItem: true,
+          string: ea.line + ":" + string.indent(ea.string, " ", ea.depth),
+          value: ea
+        }
+      });
+
+      let {selected: [choice]} = await mdText.world().filterableListPrompt(
+        "jump to heading", items, {
+          requester: mdText,
+          preselect: nextHeadingI-1,
+          multiSelect: false
+        });
+
+      if (choice) {
+        mdText.saveMark();
+        mdText.cursorPosition = {row: choice.line, column: 0};
       }
 
-      marked.setOptions({
-        renderer: new marked.Renderer(),
-        gfm: true,
-        tables: true,
-        breaks: true,
-        pedantic: false,
-        sanitize: false,
-        smartLists: true,
-        smartypants: false,
-        ...opts
-      });
-      htmlMorph.html = marked(mdText.textString);
       return true;
     }
   }
@@ -42,6 +76,8 @@ export default class MarkdownEditorPlugin extends CodeMirrorEnabledEditorPlugin 
   get isMarkdownEditorPlugin() { return true; }
   get shortName() { return "md"; }
   get longName() { return "markdown"; }
+
+  getNavigator() { return new MarkdownNavigator(); }
 
   get openPairs() {
     return {
@@ -67,17 +103,18 @@ export default class MarkdownEditorPlugin extends CodeMirrorEnabledEditorPlugin 
 
   getKeyBindings(other) {
     return other.concat([
-      {keys: "Alt-G", command: "[markdown] convert to html"}
+      {keys: "Alt-G", command: "[markdown] convert to html"},
+      {keys: "Alt-J", command: "[markdown] goto heading"},
     ]);
   }
 
   async getMenuItems(items) {
     return [
       {command: "[markdown] convert to html", alias: "convert to html", target: this.textMorph},
+      {command: "[markdown] goto heading", alias: "goto heading", target: this.textMorph},
       {isDivider: true},
     ].concat(items);
   }
-
 
   highlight() {
     // 2017-07-20 rkrk: FIXME, currently need to re-implement b/c codemirror md
