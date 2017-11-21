@@ -307,10 +307,7 @@ class PropertyNode extends InspectionNode {
   display() {
     let {_propertyWidget: w, keyString, valueString, target, value, spec} = this;
 
-    if (!this.interactive
-        && !(spec.foldable && isMultiValue(value, spec.foldable))
-       // && !['Color', 'ColorGradient'].includes(spec.type)
-       ) {
+    if (!this.interactive && !(spec.foldable && isMultiValue(value, spec.foldable))) {
       return PropertyControl.render({
         target, keyString, valueString, 
         value, spec, node: this, fastRender: true
@@ -577,7 +574,7 @@ export class PropertyControl extends DraggableTreeLabel {
       case "Color":
         propertyControl = this.renderColorControl(args); break;
       case "ColorGradient":
-        propertyControl = this.renderColorControl(args, true); break;
+        propertyControl = this.renderColorControl({...args, gradientEnabled: true}); break;
       case "Number":
         propertyControl = this.renderNumberControl(args); break;
       case "String":
@@ -967,7 +964,31 @@ class InspectorTreeData extends TreeData {
       });
     }
   }
-  getChildren(node) { return node.children; }
+
+  partitionedChildren(nodes) {
+    let partitionSize = 25,
+        numPartitions = nodes.length / partitionSize,
+        partitions = [];
+    for (let i = 0; i < numPartitions; i++) {
+      let partition = nodes.slice(i * partitionSize, (i + 1) * partitionSize);
+      partitions.push(new InspectionNode({
+        keyString: `[${i * partitionSize}-${(i + 1) * partitionSize}]`,
+        valueString: '...',
+        value: partition,
+        children: partition,
+        isCollapsed: true
+      }))
+    }
+    return partitions;
+  }
+  
+  getChildren(node) {
+    if (node.children && node.children.length > 100) {
+      return node._childGenerator || (node._childGenerator = this.partitionedChildren(node.children))
+    } else {
+      return node.children;
+    }    
+  }
 
   isLeaf(node) { return obj.isPrimitive(node.value); }
 
