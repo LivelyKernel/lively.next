@@ -1430,11 +1430,13 @@ export class Morph {
      return this;
   }
 
-  async fadeIntoWorld(pos, duration=300, origin=this.innerBounds().topCenter()) {
-      const w = new Morph({extent: this.extent, opacity: 0, scale: 0,
-                           fill: Color.transparent, submorphs: [this]}),
+  async fadeIntoWorld(pos, duration=300, origin=this.bounds().extent().scaleByPt(pt(.5,0))) {
+      const w = new Morph({extent: this.bounds().extent(), opacity: 0, scale: 0,
+                           fill: Color.red}),
             world = this.env.world;
-      w.openInWorldNearHand();
+      w.addMorph(this);
+      this.topLeft = pt(0,0)
+      w.openInWorld();
       w.adjustOrigin(origin);
       w.position = pos || world.visibleBounds().center();
       await w.animate({opacity: 1, scale: 1, duration});
