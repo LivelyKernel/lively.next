@@ -128,8 +128,9 @@ export class Label extends Morph {
         set(value) {
           if (!value) value = Rectangle.inset(0);
           this._cachedTextBounds = null;
+          let previousPadding = this.padding;
           this.setProperty("padding", typeof value === "number" ? Rectangle.inset(value) : value);
-          if (this.autofit) this._needsFit = true;
+          if (this.autofit && !previousPadding.equals(value)) this._needsFit = true;
         }
       },
 
@@ -140,8 +141,9 @@ export class Label extends Morph {
         defaultValue: "Sans-Serif",
         set(fontFamily) {
           this._cachedTextBounds = null;
+          let previousFontFamily = this.fontFamily;
           this.setProperty("fontFamily", fontFamily);
-          if (this.autofit) this._needsFit = true;
+          if (this.autofit && previousFontFamily != fontFamily) this._needsFit = true;
         }
       },
 
@@ -152,8 +154,9 @@ export class Label extends Morph {
         defaultValue: 12,
         set(fontSize) {
           this._cachedTextBounds = null;
+          let previousFontSize = this.fontSize;
           this.setProperty("fontSize", fontSize);
-          if (this.autofit) this._needsFit = true;
+          if (this.autofit && fontSize != previousFontSize) this._needsFit = true;
         }
       },
 
@@ -166,8 +169,9 @@ export class Label extends Morph {
         defaultValue: "normal",
         set(fontWeight) {
           this._cachedTextBounds = null;
+          let previousFontWeight = this.fontWeight;
           this.setProperty("fontWeight", fontWeight);
-          if (this.autofit) this._needsFit = true;
+          if (this.autofit && previousFontWeight != fontWeight) this._needsFit = true;
         }
       },
 
@@ -178,8 +182,9 @@ export class Label extends Morph {
         defaultValue: "normal",
         set(fontStyle) {
           this._cachedTextBounds = null;
+          let previousFontStyle = this.fontStyle;
           this.setProperty("fontStyle", fontStyle);
-          if (this.autofit) this._needsFit = true;
+          if (this.autofit && previousFontStyle != fontStyle) this._needsFit = true;
         }
       },
 
