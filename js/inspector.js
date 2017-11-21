@@ -959,6 +959,8 @@ class InspectorTreeData extends TreeData {
     if (bool || this.isLeaf(node)) return;
 
     if (!node.children.length) {
+      // if number of children is large, we only render them in batches,
+      // that can be expanded selectively by the user
       node.children = propertiesOf(node).map(node => {
         this.parentMap.set(node, node);
         return node;
