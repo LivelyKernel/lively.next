@@ -1302,7 +1302,7 @@ export class Text extends Morph {
     let {embeddedMorphMap} = this;
     for (let i = 0; i < removedTextAndAttributes.length; i = i + 2) {
       let content = removedTextAndAttributes[i];
-      if (content.isMorph) {
+      if (content.isMorph && !morphsInAddedText.includes(content)) {
         if (embeddedMorphMap) {
           let existing = embeddedMorphMap.get(content);
           if (existing && existing.anchor) {
