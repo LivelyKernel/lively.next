@@ -82,6 +82,9 @@ export default class Browser extends Window {
               fontSize: 10,
               padding: rect(1,1,1,1)
             },
+            ".Button.default": {
+              padding: rect(5,3,0,0)
+            },
             ".Button.dark [name=label]": {
               fontColor: Color.white,
               fontSize: 10
@@ -378,7 +381,7 @@ export default class Browser extends Window {
 
                   {...btnStyle, name: "addPackageButton", label: Icon.makeLabel("plus"), tooltip: "add package"},
                   {...btnStyle, name: "removePackageButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
-                  {...btnStyle, name: "runTestsInPackageButton", label: "run tests", tooltip: "run tests"}
+                  {...btnStyle, name: "runTestsInPackageButton", label: "run tests", tooltip: "run tests", styleClasses: [], fontSize: 10, padding: rect(5,3,0,0)}
 
                 ]},
                 EvalBackendChooser.default.ensureEvalBackendDropdown(this, "local")]}
