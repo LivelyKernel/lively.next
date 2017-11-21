@@ -260,16 +260,12 @@ export default class Halo extends Morph {
           delta.x * x,
           delta.y * y,
           delta.x * width,
-          delta.y * height),
-        oldPosition = this.target.position;
+          delta.y * height);
     this.active = true;
     this.target.setBounds(bounds.insetByRect(offsetRect));
     if (this.target.isPolygon || this.target.isPath) {
       // refrain from adjusting origin
       this.target.moveBy(this.target.origin.negated());
-    } else {
-      this.target.origin = origin.addPt({x: -offsetRect.x, y: -offsetRect.y});
-      this.target.position = oldPosition;
     }
     this.active = false;
     this.alignWithTarget();
@@ -1389,9 +1385,9 @@ class ResizeHandle extends HaloItem {
   }
 
   init(startPos, proportional = false) {
-    const {position, extent} = this.halo.target;
+    let {origin, position, extent} = this.halo.target;
     this.startPos = startPos;
-    this.startBounds = position.extent(extent);
+    this.startBounds = position.subPt(origin).extent(extent);
     this.startOrigin = this.halo.target.origin;
     this.savedLayout = this.halo.layout;
     this.halo.layout = null;
@@ -1405,7 +1401,6 @@ class ResizeHandle extends HaloItem {
 
   update(currentPos, shiftDown = false, altDown = false, ctrlDown = false) {
     var {corner, tfm, startPos, halo: {target}} = this,
-        oldPosition = target.position,
         {x, y} = startPos.subPt(currentPos),
         delta = tfm.transformDirection(pt(x, y));
     if (altDown) {
