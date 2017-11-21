@@ -472,7 +472,13 @@ export class TreeData {
   isLeaf(node) { throw new Error("Not yet implemented"); }
 
   getChildrenIfUncollapsed(node) {
-    return this.isCollapsed(node) ? [] : this.getChildren(node);
+    if (this.isCollapsed(node)) return []
+    let children = this.getChildren(node);
+    if (children && children.length > 100) {
+      return [...children.slice(0, 100), {name: '...'}]
+    } else {
+      return children;
+    }
   }
 
   safeDisplay(node) {
