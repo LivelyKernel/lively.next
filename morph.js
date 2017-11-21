@@ -1134,17 +1134,17 @@ export class Morph {
   adjustOrigin(newOrigin) {
     var oldOrigin = this.origin,
         oldPos = this.globalBounds().topLeft();
-    this.origin = newOrigin;
+    this.origin = newOrigin.roundTo(1);
     this.submorphs.forEach((m) =>
-      m.position = m.position.subPt(newOrigin.subPt(oldOrigin)));
+      m.position = m.position.subPt(newOrigin.subPt(oldOrigin).roundTo(1)));
     var newPos = this.globalBounds().topLeft(),
         globalDelta = oldPos.subPt(newPos)
     this.globalPosition = this.globalPosition.addPt(globalDelta);
   }
 
   setBounds(bounds) {
-    this.position = bounds.topLeft().addPt(this.origin);
     this.extent = bounds.extent();
+    this.position = bounds.topLeft().addPt(this.origin);
   }
 
   innerBounds() {
@@ -1432,7 +1432,7 @@ export class Morph {
 
   async fadeIntoWorld(pos, duration=300, origin=this.bounds().extent().scaleByPt(pt(.5,0))) {
       const w = new Morph({extent: this.bounds().extent(), opacity: 0, scale: 0,
-                           fill: Color.red}),
+                           fill: Color.transparent}),
             world = this.env.world;
       w.addMorph(this);
       this.topLeft = pt(0,0)
@@ -2466,11 +2466,11 @@ export class Morph {
   copy() { return copyMorph(this); }
 
   async interactivelyPublish() {
-    let world = this.world() || this.env.world;
     try {
       let {interactivelySavePart} = await System.import("lively.morphic/partsbin.js"),
           commit = await interactivelySavePart(this, {
-            notifications: false, loadingIndicator: true});
+            notifications: false, loadingIndicator: true}),
+          world = this.world() || this.env.world;
       world.setStatusMessage(
         commit ?
           `Published ${this} as ${commit.name}` :
