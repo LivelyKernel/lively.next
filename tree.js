@@ -53,6 +53,7 @@ export class Tree extends Text {
       fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
       nativeCursor: {defaultValue: 'auto'},
       selectable: {defaultValue: false},
+      acceptsDrops: {defaultValue: false},
       readOnly: {defaultValue: true},
       fixedWidth: {defaultValue: true},
       fixedHeight: {defaultValue: true},
@@ -473,12 +474,7 @@ export class TreeData {
 
   getChildrenIfUncollapsed(node) {
     if (this.isCollapsed(node)) return []
-    let children = this.getChildren(node);
-    if (children && children.length > 100) {
-      return [...children.slice(0, 100), {name: '...'}]
-    } else {
-      return children;
-    }
+    return this.getChildren(node);
   }
 
   safeDisplay(node) {
