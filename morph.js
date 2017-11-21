@@ -158,7 +158,7 @@ export default class Halo extends Morph {
     }
     this.nameHalo().alignInHalo();
     this.ensureResizeHandles().forEach(h => h.alignInHalo());
-    !this.resizeOnly && this.originHalo().alignInHalo();
+    !this.resizeOnly && this.whenRendered().then(() => this.originHalo().alignInHalo());
     this.layout && this.layout.enable();
     return this;
   }
