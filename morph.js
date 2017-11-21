@@ -186,7 +186,15 @@ export class Morph {
 
       extent:   {
         group: "geometry",
-        type: 'Point', isStyleProp: true, defaultValue: pt(10, 10)
+        type: 'Point', isStyleProp: true, defaultValue: pt(10, 10),
+        set(ext) {
+          let priorExtent = this.extent;
+          this.setProperty('extent', ext);
+          if (!this.origin.equals(pt(0, 0))) {  // Adjust origin, especially for ellipses
+            var scalePt = pt(ext.x/priorExtent.x, ext.y/priorExtent.y);
+            this.adjustOrigin(this.origin.scaleByPt(scalePt));
+          }
+        }
       },
 
       width: {

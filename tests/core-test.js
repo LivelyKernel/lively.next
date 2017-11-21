@@ -421,6 +421,12 @@ describe("geometric transformations", () => {
     expect(pt(150,150)).equals(morph2.worldPoint(pt(0,0)));
   });
 
+  it("preserves the relative position of the origin when resized", function() {
+    var m1 = morph({origin: pt(50,50), extent: pt(100,100)});
+    m1.resizeBy(pt(100,100));
+    expect(m1.origin).equals(pt(100,100));
+  })
+
 });
 
 
