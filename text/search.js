@@ -210,7 +210,7 @@ export class SearchWidget extends Morph {
                       3, {fixed: 5},
                       4, {fixed: 25},
                       5, {fixed: 25},
-                      6, {fixed: 5}
+                      6, {fixed: 10}
                      ],
             grid: [['searchInput', 'nextButton', 'prevButton', null, 'acceptButton', 'cancelButton', null],
                    ['replaceInput', 'replaceButton', 'replaceButton', null, 'replaceAllButton', 'replaceAllButton', null]]
