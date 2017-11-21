@@ -186,6 +186,7 @@ class InspectionNode {
 
   display() {
     let {keyString, valueString} = this;
+    if (!this.interactive) return `${keyString}: ${valueString}`;
     return this._propertyWidget || (this._propertyWidget = new DraggableTreeLabel({value: `${keyString}: ${valueString}`}));
   }
 
@@ -966,7 +967,7 @@ class InspectorTreeData extends TreeData {
   }
 
   partitionedChildren(nodes) {
-    let partitionSize = 25,
+    let partitionSize = 250,
         numPartitions = nodes.length / partitionSize,
         partitions = [];
     for (let i = 0; i < numPartitions; i++) {
@@ -983,7 +984,7 @@ class InspectorTreeData extends TreeData {
   }
   
   getChildren(node) {
-    if (node.children && node.children.length > 100) {
+    if (node.children && node.children.filter(c => c.visible).length > 1000) {
       return node._childGenerator || (node._childGenerator = this.partitionedChildren(node.children))
     } else {
       return node.children;
@@ -1259,6 +1260,7 @@ export default class Inspector extends Morph {
     connect(unknowns,        "trigger",     this, "filterProperties");
     connect(internals,       "trigger",     this, "filterProperties");
     connect(searchField,     "searchInput", this, "filterProperties");
+    connect(propertyTree,    "onNodeCollapseChanged", this, 'filterProperties');
     connect(this,            "extent",      this, "relayout");
     connect(thisBindingSelector, "selection", this, "bindCodeEditorThis");
     connect(fixImportButton, "fire",        codeEditor, "execCommand", {
