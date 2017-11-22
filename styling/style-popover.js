@@ -115,7 +115,7 @@ export class Popover extends Morph {
         arrow = this.get("arrow"),
         closeBtn = this.get("close button"),
         offset = arrow.height;
-    if (body.extent == this.extent) return;
+    if (body.extent.equals(this.extent)) return;
     if (animated) {
       this.animate({
         origin: pt(body.width / 2, -offset),
@@ -167,7 +167,6 @@ export class Popover extends Morph {
   }
 
   close() {
-    this.openInWorld(this.position);
     this.fadeOut(300);
   }
 
