@@ -3,9 +3,9 @@ import { Color, Line, Point, pt, rect, Rectangle, Transform } from "lively.graph
 import { string, obj, arr, num, promise, tree, fun, Path as PropPath } from "lively.lang";
 import {
   renderRootMorph,
-  AnimationQueue,
   ShadowObject
 } from "./rendering/morphic-default.js";
+import { AnimationQueue } from "./rendering/animations.js";
 import { morph, Icon, show } from "./index.js";
 import { MorphicEnv } from "./env.js";
 import config from "./config.js";
@@ -1134,9 +1134,9 @@ export class Morph {
   adjustOrigin(newOrigin) {
     var oldOrigin = this.origin,
         oldPos = this.globalBounds().topLeft();
-    this.origin = newOrigin.roundTo(1);
+    this.origin = newOrigin;
     this.submorphs.forEach((m) =>
-      m.position = m.position.subPt(newOrigin.subPt(oldOrigin).roundTo(1)));
+      m.position = m.position.subPt(newOrigin.subPt(oldOrigin)));
     var newPos = this.globalBounds().topLeft(),
         globalDelta = oldPos.subPt(newPos)
     this.globalPosition = this.globalPosition.addPt(globalDelta);
@@ -1430,14 +1430,13 @@ export class Morph {
      return this;
   }
 
-  async fadeIntoWorld(pos, duration=300, origin=this.bounds().extent().scaleByPt(pt(.5,0))) {
-      const w = new Morph({extent: this.bounds().extent(), opacity: 0, scale: 0,
+  async fadeIntoWorld(pos, duration=300) {
+      const w = new Morph({opacity: 0, scale: 0,
                            fill: Color.transparent}),
             world = this.env.world;
       w.addMorph(this);
       this.topLeft = pt(0,0)
       w.openInWorld();
-      w.adjustOrigin(origin);
       w.position = pos || world.visibleBounds().center();
       await w.animate({opacity: 1, scale: 1, duration});
       world.addMorph(this);

@@ -1,5 +1,3 @@
-/*global Power4*/
-/* globals Power4 */
 import { arr, tree, obj } from "lively.lang";
 import { Sizzle, SizzleVisitor, SizzleExpression } from "./sizzle.js";
 import { ShadowObject, CustomLayout, Button, Text, Icon, HorizontalLayout, morph, Morph, config} from "./index.js";
@@ -337,7 +335,7 @@ class DroppableStyleSheet extends Morph {
        this.openInWorld(this.globalPosition);
        this.animate({
           opacity: 0, position: this.initPos,
-          duration: 300, easing: Power4.easeOut
+          duration: 300, easing: 'ease-out'
        });
        this.remove();
     }
