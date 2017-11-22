@@ -148,7 +148,7 @@ class BuildProcess {
 
   hasBuiltScripts(scripts) {
     return scripts && Object.keys(scripts).some(scriptName =>
-      ["preinstall", "install", "postinstall"].includes(scriptName));
+      ["prepare", "preinstall", "install", "postinstall"].includes(scriptName));
   }
 
   async build(packageSpec) {

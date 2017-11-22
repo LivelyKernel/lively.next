@@ -273,7 +273,7 @@ function gitSpecFromVersion(version = "") {
   return {
     branch: githubBranch, gitURL,
     versionInFileName: gitURL.replace(/[:\/\+#]/g, "_") + "_" + githubBranch
-  }
+  };
 }
 
 module.exports.gitClone = gitClone;
@@ -1012,7 +1012,7 @@ async function packageDownload(name, range, destinationDir, verbose, attempt = 0
 
     // download package to tmp location
     let tmp = resource("file://" + tmpdir()).join("package_install_tmp/");
-    await tmp.ensureExistance()
+    await tmp.ensureExistance();
 
     let pathSpec = pathForNameAndVersion(name, range, destinationDir.path()),
         downloadDir = pathSpec.gitURL
@@ -1242,7 +1242,7 @@ class BuildProcess {
 
   hasBuiltScripts(scripts) {
     return scripts && Object.keys(scripts).some(scriptName =>
-      ["preinstall", "install", "postinstall"].includes(scriptName));
+      ["prepare", "preinstall", "install", "postinstall"].includes(scriptName));
   }
 
   async build(packageSpec) {

@@ -3,8 +3,8 @@ import { join as j } from "path";
 import { tmpdir } from "os";
 import { gitClone, npmDownloadArchive, untar, gitSpecFromVersion } from "./util.js";
 import { PackageSpec } from "./package-map.js";
-import semver from "./deps/semver.min.js"
-import { resource } from "./deps/lively.resources.js"
+import semver from "./deps/semver.min.js";
+import { resource } from "./deps/lively.resources.js";
 
 export {
   packageDownload
@@ -46,7 +46,7 @@ async function packageDownload(name, range, destinationDir, verbose, attempt = 0
 
     // download package to tmp location
     let tmp = resource("file://" + tmpdir()).join("package_install_tmp/");
-    await tmp.ensureExistance()
+    await tmp.ensureExistance();
 
     let pathSpec = pathForNameAndVersion(name, range, destinationDir.path()),
         downloadDir = pathSpec.gitURL

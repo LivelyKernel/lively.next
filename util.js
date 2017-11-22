@@ -272,7 +272,7 @@ function gitSpecFromVersion(version = "") {
   return {
     branch: githubBranch, gitURL,
     versionInFileName: gitURL.replace(/[:\/\+#]/g, "_") + "_" + githubBranch
-  }
+  };
 }
 
 export {
