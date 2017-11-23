@@ -93,7 +93,7 @@ The name and location of the `node_module` folder cannot be customized.
 
 #### yarn
 
-The [yarn package](https://yarnpkg.com/) manager is an alternative to npm.  It uses a local cache to avoid downloading dependencies multiple times and on install links the dependencies required by the projects into `node_modules` folders.  This avoids having mutliple copies of one dependency in the system and wasting space.  To find the exact location of a particular package, one still needs to follow the nodejs module lookup algorithm.
+The [yarn package](https://yarnpkg.com/) manager is an alternative to npm.  Through parallelization it is faster than npm but by default follows the same directory organization as npm.
 
 Yarn has an option to [install flat dependencies](https://yarnpkg.com/en/docs/cli/install#toc-yarn-install-flat).  However, in the case of version conflicts, the user has to specify a resolution that picks one of the conflicting versions.  This can potentially lead to runtime issues as packages have to use the wrong version of their dependencies.
 
