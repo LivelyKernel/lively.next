@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { gitSpecFromVersion } from "./util.js";
-import { resource } from "./deps/lively.resources.js"
-import semver from "./deps/semver.min.js"
+import { resource } from "./deps/lively.resources.js";
+import semver from "./deps/semver.min.js";
 
 /*
 
@@ -292,11 +292,14 @@ class PackageMap {
     // ...
 
     let found = [];
-    for (let dir of packageCollectionDirs)
-      if (fs_exists(dir))
-        for (let packageDir of fs_dirList(dir))
-          for (let versionDir of fs_dirList(packageDir))
-            found.push(...this._discoverPackagesInPackageDir(versionDir, seen));
+    for (let dir of packageCollectionDirs) {
+      if (!fs_exists(dir)) continue;
+      for (let packageDir of fs_dirList(dir)) {
+        if (!fs_isDirectory(packageDir)) continue;
+        for (let versionDir of fs_dirList(packageDir))
+          found.push(...this._discoverPackagesInPackageDir(versionDir, seen));
+      }
+    }
     return found;
   }
 
@@ -420,12 +423,14 @@ class AsyncPackageMap extends PackageMap {
   ) {
     let found = [];
     for (let dir of packageCollectionDirs) {
-      if (await dir.exists())
-        for (let packageDir of await dir.dirList())
-          for (let versionDir of await packageDir.dirList())
-            found.push(...await this._discoverPackagesInPackageDir(versionDir, seen));
+      if (!await dir.exists()) continue;
+      for (let packageDir of await dir.dirList()) {
+        if (!packageDir.isDirectory()) continue;
+        for (let versionDir of await packageDir.dirList())
+          found.push(...await this._discoverPackagesInPackageDir(versionDir, seen));
+      }
     }
-    return found
+    return found;
   }
 
   async _discoverPackagesInPackageDir(
