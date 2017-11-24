@@ -1,7 +1,6 @@
 # flatn [![Build Status](https://travis-ci.org/rksm/flatn.svg?branch=master)](https://travis-ci.org/rksm/flatn)
 
-
-flat node dependencies (flatn) is a nodejs package organizer that supports flat file system structures for nodejs package dependencies.  It is compatible with npm and provides an alternative for workflows where npm falls short.
+flat node dependencies (flatn) is a nodejs package organizer that supports flat directory structures for nodejs package dependencies.  flatn was created to allow npm packages being used together with [SystemJS](https://github.com/systemjs/systemjs) and [lively.modules](https://github.com/LivelyKernel/lively.modules) while maintaining compatibility with [node.js modules](https://nodejs.org/docs/latest/api/modules.html) at the same time.
 
 flatn installs packages into one or multiple directories and tells nodejs how to resolve packages in there so normal `require(...)` statements work.
 
@@ -93,15 +92,20 @@ The name and location of the `node_module` folder cannot be customized.
 
 #### yarn
 
-The [yarn package](https://yarnpkg.com/) manager is an alternative to npm.  Through parallelization it is faster than npm but by default follows the same directory organization as npm.
+The [yarn package](https://yarnpkg.com/) manager is an alternative to npm but follows the same directory organization. 
 
 Yarn has an option to [install flat dependencies](https://yarnpkg.com/en/docs/cli/install#toc-yarn-install-flat).  However, in the case of version conflicts, the user has to specify a resolution that picks one of the conflicting versions.  This can potentially lead to runtime issues as packages have to use the wrong version of their dependencies.
 
-The name and location of the `node_module` folder cannot be customized (but there is a [PR].
+Yarn 1.0 added a feature called [workspaces](https://yarnpkg.com/blog/2017/08/02/introducing-workspaces/): Similarly to [lerna (see below)](#Lerna) it avoids installing the same dependencies for hierarchically organized packages, specifically packages extracted from monorepos.  Unlike flatn, this requires the packages under development to be layed out hierarchically.  This is reasonable for splitting up functionality across sub-packages but requires at least one "entry" package.  Workspaces then create `node_modules` folders similarly to the Lerna approach.  In comparison, flatn allows to loosely combine packages under development even if they have no "hierarchical relationship".
+
+#### Lerna
+
+[Lerna](https://github.com/lerna/lerna) is a tool for managing multi-package mono repositories and builds on top of npm and yarn.  Lerna can optionally reduce the file system overhead of package dependencies by [hoisting](https://github.com/lerna/lerna/blob/master/doc/hoist.md) dependencies when generating directories for the multiple packages extracted from the mono repo.  Hoisting occurs using node_modules folders and requires packages to be nested into each other. flatn in comparison works well without requiring development packages to be structured in a certain way and can place the dependencies anywhere in the file system (i.e. a folder outside of the development package structure).
 
 #### flatn
 
 flatn uses a different strategy by allowing a fully custom location or multiple locations for package dependencies.  Those dependencies can then be shared by local packages.  No symlinking happens but the [node.js runtime is extended](https://github.com/rksm/flatn/blob/master/module-resolver.js) to lookup the dependencies in the right location.  Additionally, flatn provides an option to specify development packages that are then made known to the runtime similarly and that are not constrained by their version specifiers.
+
 
 ### Example
 
