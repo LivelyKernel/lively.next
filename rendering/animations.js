@@ -1,12 +1,14 @@
 import "web-animations-js";
-import { quadInOut, quadIn, quadOut } from 'web-animation-eases';
-import { obj, properties, arr } from "lively.lang";
-import { LinearGradient, pt, RadialGradient, rect } from "lively.graphics";
-import { pad, camelize } from "lively.lang/string.js";
-import { styleProps, addPathAttributes, addSvgAttributes } from "./property-dom-mapping.js";
+import SVG from "svgjs";
+import "svg.easing.js";
+import "svg.pathmorphing.js";
+import {quadInOut, quadIn, quadOut} from "web-animation-eases";
+import {obj, properties, arr} from "lively.lang";
+import {LinearGradient, pt, RadialGradient, rect} from "lively.graphics";
+import {pad, camelize} from "lively.lang/string.js";
+import {styleProps, addPathAttributes, addSvgAttributes} from "./property-dom-mapping.js";
 
 export class AnimationQueue {
-
   constructor(morph) {
     this.morph = morph;
     this.animations = [];
@@ -17,7 +19,9 @@ export class AnimationQueue {
     return l > 0 ? obj.merge(this.animations.map(a => a.getAnimationProps(type)[0])) : {};
   }
 
-  get animationsActive() { return true }
+  get animationsActive() {
+    return true;
+  }
 
   registerAnimation(config) {
     const anim = new PropertyAnimation(this, this.morph, config);
@@ -27,20 +31,22 @@ export class AnimationQueue {
         this.animations.push(anim);
         return anim;
       }
-    })
+    });
   }
 
-  startAnimationsFor(node) { this.animations.forEach(anim => anim.start(node)); }
-  startSvgAnimationsFor(svgNode, type) { this.animations.forEach(anim => anim.startSvg(svgNode, type)) }
+  startAnimationsFor(node) {
+    this.animations.forEach(anim => anim.start(node));
+  }
+  startSvgAnimationsFor(svgNode, type) {
+    this.animations.forEach(anim => anim.startSvg(svgNode, type));
+  }
 
   removeAnimation(animation) {
     arr.remove(this.animations, animation);
   }
-
 }
 
 export class PropertyAnimation {
-
   constructor(queue, morph, config) {
     this.queue = queue;
     this.morph = morph;
@@ -50,24 +56,20 @@ export class PropertyAnimation {
   }
 
   get propsToCapture() {
-     // GSAP has troubles with interpolating between some properties,
-     // which requires us to do some magic in order to let the animations
-     // play nicely. This usually involves that we capture the original
-     // value of a property, before it was animated
-     return ['fill', 'origin']
+    return ["fill", "origin"];
   }
 
   asPromise() {
-     return new Promise((resolve, reject) => {
-         this.resolvePromise = () => {
-              this.onFinish(this);
-              if (this.subAnimations) {
-                 this.subAnimations.then(resolve);
-              } else {
-                 resolve(this.morph);
-              }
-         }
-     })
+    return new Promise((resolve, reject) => {
+      this.resolvePromise = () => {
+        this.onFinish(this);
+        if (this.subAnimations) {
+          this.subAnimations.then(resolve);
+        } else {
+          resolve(this.morph);
+        }
+      };
+    });
   }
 
   finish() {
@@ -76,68 +78,76 @@ export class PropertyAnimation {
   }
 
   convertGradients(config) {
-    // FIXME: Support proper gradient animation for svg morphs
     if (this.morph.isSvgMorph && config.fill) {
       this.morph.fill = config.fill;
-      return obj.dissoc(config, ['fill']);
+      return obj.dissoc(config, ["fill"]);
     }
     if (config.fill && config.fill.isGradient && this.morph.fill.isGradient) {
-      // linear -> radial
-        var fillBefore = this.morph.fill,
-            fillAfter = config.fill,
-            d = config.duration || 1000;
-        if (fillBefore.type == "linearGradient" && fillAfter.type == "radialGradient") {
-            this.subAnimation = (async () => {
-              await this.morph.animate({
-                  fill: new LinearGradient({...fillBefore, vector: rect(0,0,0,1)}),
-                  duration: d  / 2, easing: quadIn});
-              this.morph.fill = new RadialGradient({
-                     stops: fillBefore.stops,
-                     focus: pt(.5,0),
-                     bounds: rect(0,0, this.morph.width * 100, this.morph.height * 2)})
-              await this.morph.animate({
-                    fill: fillAfter,
-                    duration: d / 2,
-                    easing: quadOut});
-              return this.morph;
-            })()
-            return obj.dissoc(config, ['fill']);
-        }
-        // radial -> linear
-        if (fillBefore.type == "radialGradient" && fillAfter.type == "linearGradient") {
-           // fix easing
-            this.subAnimations = (async () => {
-              await this.morph.animate({fill: new RadialGradient({
-                     stops: fillBefore.stops,
-                     focus: pt(.5,0),
-                     bounds: rect(0,0, this.morph.width * 100, this.morph.height * 2),
-                     }),
-                     duration: d / 2, easing: quadIn})
-              this.morph.fill = new LinearGradient({...fillBefore, vector: rect(0,0,0,1)});
-              await this.morph.animate({
-                    fill: fillAfter,
-                    duration: d / 2,
-                    easing: quadOut});
-              return this.morph;
-            })();
-            return obj.dissoc(config, ['fill']);
-        }
+      var fillBefore = this.morph.fill,
+          fillAfter = config.fill,
+          d = config.duration || 1000;
+      if (fillBefore.type == "linearGradient" && fillAfter.type == "radialGradient") {
+        this.subAnimation = (async () => {
+          await this.morph.animate({
+            fill: new LinearGradient({...fillBefore, vector: rect(0, 0, 0, 1)}),
+            duration: d / 2,
+            easing: quadIn
+          });
+          this.morph.fill = new RadialGradient({
+            stops: fillBefore.stops,
+            focus: pt(0.5, 0),
+            bounds: rect(0, 0, this.morph.width * 100, this.morph.height * 2)
+          });
+          await this.morph.animate({
+            fill: fillAfter,
+            duration: d / 2,
+            easing: quadOut
+          });
+          return this.morph;
+        })();
+        return obj.dissoc(config, ["fill"]);
+      }
+      if (fillBefore.type == "radialGradient" && fillAfter.type == "linearGradient") {
+        this.subAnimations = (async () => {
+          await this.morph.animate({
+            fill: new RadialGradient({
+              stops: fillBefore.stops,
+              focus: pt(0.5, 0),
+              bounds: rect(0, 0, this.morph.width * 100, this.morph.height * 2)
+            }),
+            duration: d / 2,
+            easing: quadIn
+          });
+          this.morph.fill = new LinearGradient({...fillBefore, vector: rect(0, 0, 0, 1)});
+          await this.morph.animate({
+            fill: fillAfter,
+            duration: d / 2,
+            easing: quadOut
+          });
+          return this.morph;
+        })();
+        return obj.dissoc(config, ["fill"]);
+      }
     }
     return config;
   }
 
   convertBounds(config) {
     var {bounds, origin, rotation, scale, layout, fill} = config,
-         origin = origin || this.morph.origin,
-         rotation = rotation || this.morph.rotation,
-         scale = scale || this.morph.scale;
+        origin = origin || this.morph.origin,
+        rotation = rotation || this.morph.rotation,
+        scale = scale || this.morph.scale;
     if (bounds) {
-      return {...obj.dissoc(config, ["bounds"]),
-              origin, rotation, scale,
-              position: bounds.topLeft().addPt(origin),
-              extent: bounds.extent()};
+      return {
+        ...obj.dissoc(config, ["bounds"]),
+        origin,
+        rotation,
+        scale,
+        position: bounds.topLeft().addPt(origin),
+        extent: bounds.extent()
+      };
     } else {
-      return config
+      return config;
     }
   }
 
@@ -146,100 +156,104 @@ export class PropertyAnimation {
   }
 
   get affectsMorph() {
-    return properties.any(this.animatedProps, (animatedProps, prop) => !obj.equals(animatedProps[prop], this.morph[prop]));
+    return properties.any(
+      this.animatedProps,
+      (animatedProps, prop) => !obj.equals(animatedProps[prop], this.morph[prop])
+    );
   }
 
   get animatedProps() {
     return obj.dissoc(this.config, ["easing", "onFinish", "duration"]);
   }
 
-  get easing() { return this.config.easing || quadInOut }
-  get onFinish() { return this.config.onFinish || (() => {})}
-  setonFinish(cb) { this.config.onFinish = cb }
-  get duration() { return this.config.duration || 1000 }
-
+  get easing() {
+    return this.config.easing || quadInOut;
+  }
+  get onFinish() {
+    return this.config.onFinish || (() => {});
+  }
+  setonFinish(cb) {
+    this.config.onFinish = cb;
+  }
+  get duration() {
+    return this.config.duration || 1000;
+  }
 
   getChangedProps(before, after) {
     const unchangedProps = [];
     for (var prop in before) {
       if (obj.equals(after[prop], before[prop])) {
-         unchangedProps.push(prop);
+        unchangedProps.push(prop);
       }
     }
-    return [obj.dissoc(before, unchangedProps),
-            obj.dissoc(after, unchangedProps)];
+    return [obj.dissoc(before, unchangedProps), obj.dissoc(after, unchangedProps)];
   }
 
   getAnimationProps(type) {
     const [before, after] = this.getChangedProps(this.beforeProps[type], this.afterProps[type]),
           {fill: fillBefore} = this.capturedProperties,
           {fill: fillAfter} = this.morph;
-    // FIXME: properly interpolate vertices if there are control points added removed....
-    // if (before.d) {
-    //     // var before_d = before.d.splitBy(" "), after_d = after.d.splitBy(" ");
-    //     // repeat last element until points are of equal number
-    // }
-    // if (before.points) {
-    //     // var before_points = before.points.splitBy(" "), after_points = after.points.splitBy(" ");
-    //     // repeat last element until points are of equal number
-    // }
     if (fillBefore && fillAfter) {
-      // gradient -> gradient
       if (fillBefore.isGradient && fillAfter.isGradient) {
-        // first tween radial gradient into 180deg approximation, then set fillBefore to approximate linear gradient
-        // linear -> linear && radial -> radial
         const numStops = Math.max(fillAfter.stops.length, fillBefore.stops.length),
               beforeStops = pad(fillBefore.stops, numStops),
               beforeGradient = new fillBefore.__proto__.constructor({
-                  ...fillBefore,
-                  vector: fillBefore.vector && fillBefore.vectorAsAngle() + .00001,
-                  stops: beforeStops}).toString(),
+                ...fillBefore,
+                vector: fillBefore.vector && fillBefore.vectorAsAngle() + 0.00001,
+                stops: beforeStops
+              }).toString(),
               afterStops = pad(fillAfter.stops, numStops),
               afterGradient = new fillAfter.__proto__.constructor({
-                  ...fillAfter,
-                  vector: fillAfter.vector && fillAfter.vectorAsAngle(),
-                  stops: afterStops}).toString();
+                ...fillAfter,
+                vector: fillAfter.vector && fillAfter.vectorAsAngle(),
+                stops: afterStops
+              }).toString();
         before.backgroundImage = beforeGradient;
         after.backgroundImage = afterGradient;
       }
-      // solid -> gradient
       if (fillBefore.isColor && fillAfter.isGradient) {
         const gradientClass = fillAfter.__proto__.constructor,
               stops = fillAfter.stops,
               solidGradient = new gradientClass({
-                  ...fillAfter,
-                  vector: fillAfter.g && fillAfter.vectorAsAngle() + .00001,
-                  stops: stops.map(({offset}) => { return {color: fillBefore, offset}})}).toString()
-        delete before['background'];
-        delete after['background'];
+                ...fillAfter,
+                vector: fillAfter.g && fillAfter.vectorAsAngle() + 0.00001,
+                stops: stops.map(({offset}) => {
+                  return {color: fillBefore, offset};
+                })
+              }).toString();
+        delete before["background"];
+        delete after["background"];
         before.backgroundImage = solidGradient;
       }
-      // gradient -> solid
       if (fillBefore.isGradient && fillAfter.isColor) {
         const g = fillBefore,
               gradientClass = g.__proto__.constructor,
               stops = g.stops,
               originalGradient = new gradientClass({
-                  ...g,
-                  vector: g.vector && g.vectorAsAngle() + 0.001,
-                  stops: g.stops}).toString(),
+                ...g,
+                vector: g.vector && g.vectorAsAngle() + 0.001,
+                stops: g.stops
+              }).toString(),
               solidGradient = new gradientClass({
-                  ...g,
-                  vector: g.vector && g.vectorAsAngle(),
-                  stops: stops.map(({offset}) => { return {color: fillAfter, offset}})}).toString()
-        delete after['background'];
-        delete before['background'];
+                ...g,
+                vector: g.vector && g.vectorAsAngle(),
+                stops: stops.map(({offset}) => {
+                  return {color: fillAfter, offset};
+                })
+              }).toString();
+        delete after["background"];
+        delete before["background"];
         after.backgroundImage = solidGradient;
         before.backgroundImage = originalGradient;
       }
     }
-    return [obj.isEmpty(before) ? false : before, obj.isEmpty(after) ? false : after]
+    return [obj.isEmpty(before) ? false : before, obj.isEmpty(after) ? false : after];
   }
 
   gatherAnimationProps() {
     let {morph} = this,
         {isSvgMorph, isPath, isPolygon} = morph,
-        props = {}
+        props = {};
     props.css = styleProps(this.morph);
     if (isSvgMorph) props.svg = addSvgAttributes(morph, {});
     if (isPath) props.path = addPathAttributes(morph, {});
@@ -254,11 +268,30 @@ export class PropertyAnimation {
   }
 
   startSvg(svgNode, type) {
-     if (this.needsAnimation[type]) {
-       this.needsAnimation[type] = false;
-       const [before, after] = this.getAnimationProps(type);
-       this.tween(svgNode, {attr: before}, {attr: after}, false);
-     }
+    if (this.needsAnimation[type]) {
+      this.needsAnimation[type] = false;
+      const [before, after] = this.getAnimationProps(type);
+      if (before && after) {
+        var node = SVG.adopt(svgNode).animate(this.duration, "quadInOut");
+        for (let prop in after) {
+          if (prop == "d") {
+            node = node.plot(after.d);
+            continue;
+          }
+          if (prop == "viewBox") {
+            node = node.viewbox(...after.viewBox.split(" ").map(parseFloat));
+            continue;
+          }
+          node = node.attr(prop, after[prop]);
+        }
+        node.afterAll(() => {
+          this.finish();
+          this.morph.makeDirty();
+        });
+      } else {
+         this.finish();
+      }
+    }
   }
 
   start(node) {
@@ -269,36 +302,42 @@ export class PropertyAnimation {
       if (this.config.origin) {
         let b = this.capturedProperties.origin,
             a = this.config.origin;
-        this.tween(node.childNodes[0], {
-          transform: `translate3d(${b.x}px, ${b.y}px, 0px)`
-        },{
-          transform: `translate3d(${a.x}px, ${a.y}px, 0px)`
-       });
+        this.tween(
+          node.childNodes[0],
+          {
+            transform: `translate3d(${b.x}px, ${b.y}px, 0px)`
+          },
+          {
+            transform: `translate3d(${a.x}px, ${a.y}px, 0px)`
+          }
+        );
       }
     }
   }
 
-  tween(node, before, after, remove=true) {
-      let onComplete = () => {
-         if (!remove) return;
-         this.finish();
-         this.morph.makeDirty();
-      };
-      if (before && after) {
-        let camelBefore = {}, camelAfter = {};
-        for (let k in before) camelBefore[camelize(k)] = before[k];
-        for (let k in after) camelAfter[camelize(k)] = after[k];
-        let anim = node.animate([camelBefore, camelAfter],
-                  {duration: this.duration,
-                   easing: "ease-in-out",
-                   fill: 'forwards',
-                   composite: 'replace'});
-        anim.onfinish = () => {
-          onComplete();
-          setTimeout(() => anim.cancel(), 200); // seems to be called to early
-       }
-      } else {
+  tween(node, before, after, remove = true) {
+    let onComplete = () => {
+      if (!remove) return;
+      this.finish();
+      this.morph.makeDirty();
+    };
+    if (before && after) {
+      let camelBefore = {},
+          camelAfter = {};
+      for (let k in before) camelBefore[camelize(k)] = before[k];
+      for (let k in after) camelAfter[camelize(k)] = after[k];
+      let anim = node.animate([camelBefore, camelAfter], {
+        duration: this.duration,
+        easing: "ease-in-out",
+        fill: "forwards",
+        composite: "replace"
+      });
+      anim.onfinish = () => {
         onComplete();
-      }
+        setTimeout(() => anim.cancel(), 200);
+      };
+    } else {
+      onComplete();
+    }
   }
 }

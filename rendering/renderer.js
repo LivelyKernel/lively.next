@@ -401,9 +401,9 @@ export class Renderer {
       // }, svgElements),
     }
 
-    if (defs) svgElements.push(h("defs", {namespace: svgNs}, defs));
     svgElements.push(svgEl)
-
+    if (defs) svgElements.push(h("defs", {namespace: svgNs}, defs));    
+    
     return h("div", {
         ...defaultAttributes(morph, this),
         style: {

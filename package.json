@@ -8,7 +8,9 @@
   "dependencies": {
     "bowser": "^1.4.1",
     "web-animations-js": "^2.3.1",
-    "web-animation-eases": "^0.1.0",
+    "svg.easing.js": "^1.0.0",
+    "svg.pathmorphing.js": "^0.1.1",
+    "svgjs": "^2.6.2",
     "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
     "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
     "lively.halos": "https://github.com/LivelyKernel/lively.halos",
@@ -51,11 +53,7 @@
       "bowser": "bowser/bowser.js",
       "prism": "prismjs/prism.js",
       "prism-json": "prismjs/components/prism-json.js",
-      "webfontloader": "webfontloader/1.6.28/webfontloader.js",
-      "gsap-css": {
-        "~node": "gsap/src/minified/plugins/CSSPlugin.min.js",
-        "node": "@empty"
-      }
+      "webfontloader": "webfontloader/1.6.28/webfontloader.js"
     },
     "meta": {
       "virtual-dom/dist/virtual-dom.js": {
@@ -64,9 +62,6 @@
       "bowser/bowser.js": {
         "format": "global",
         "exports": "bowser"
-      },
-      "gsap/src/minified/*": {
-        "format": "global"
       }
     }
   },

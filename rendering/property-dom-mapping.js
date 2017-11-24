@@ -1,6 +1,6 @@
 import { config } from "lively.morphic";
 import { pt } from "lively.graphics";
-import { arr } from "lively.lang";
+import { arr, num, string } from "lively.lang";
 // addPathAttributes
 // addStyleProps
 // addSvgAttributes
@@ -106,15 +106,15 @@ export function addPathAttributes(morph, style) {
     {
       let {x, y} = lastV = vertices[0];
       X = x; Y = y;
-      d = d + `M${X},${Y} `
+      d = d + `M ${X} ${Y} `
     }
   
     for (let i = 1; i < vertices.length-1; i++) {
       let vertex = vertices[i],
           {isSmooth, x, y, controlPoints: {previous: p, next: n}} = vertex;
       d = isSmooth ?
-        d + `C${X + lastV.controlPoints.next.x} ${Y + lastV.controlPoints.next.y}, ${x + p.x},${y + p.y} ${x},${y} ` :
-        d + `L${x},${y} `
+        d + `C ${X + lastV.controlPoints.next.x} ${Y + lastV.controlPoints.next.y} ${x + p.x} ${y + p.y} ${x} ${y} ` :
+        d + `L ${x} ${y} `
       lastV = vertex;
       X = x; Y = y
     }
@@ -122,8 +122,8 @@ export function addPathAttributes(morph, style) {
     {
       let {isSmooth, x, y, controlPoints: {previous: p}} = vertices[vertices.length-1];
       d = isSmooth ?
-        d + `C${X + lastV.controlPoints.next.x} ${Y + lastV.controlPoints.next.y}, ${x+p.x},${y+p.y} ${x},${y}` :
-        d + `L${x},${y}`;
+        d + `C ${X + lastV.controlPoints.next.x} ${Y + lastV.controlPoints.next.y} ${x+p.x} ${y+p.y} ${x} ${y}` :
+        d + `L ${x} ${y}`;
     }
   }
 
