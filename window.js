@@ -396,6 +396,7 @@ export default class Window extends Morph {
 
   activate(evt) {
     if (this.isActive()) {
+      this.bringToFront();
       this.focus(evt);
       return this;
     }
