@@ -1430,14 +1430,14 @@ export class Morph {
      return this;
   }
 
-  async fadeIntoWorld(pos, duration=300) {
+  async fadeIntoWorld(pos=world.visibleBounds().center(), duration=300) {
       const w = new Morph({opacity: 0, scale: 0,
                            fill: Color.transparent}),
             world = this.env.world;
-      w.addMorph(this);
-      this.topLeft = pt(0,0)
       w.openInWorld();
-      w.position = pos || world.visibleBounds().center();
+      w.addMorph(this);
+      this.position = w.extent.scaleBy(.5);
+      w.center = pos
       await w.animate({opacity: 1, scale: 1, duration});
       world.addMorph(this);
       w.remove();
