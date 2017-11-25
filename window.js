@@ -1,4 +1,3 @@
-/* global Expo */
 import { arr } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import {
@@ -318,7 +317,7 @@ export default class Window extends Morph {
         bounds = this.bounds(),
         duration = 100,
         collapseButton = this.getSubmorphNamed("minimize"),
-        easing = Expo.easeOut;
+        easing = 'ease-out';
 
     if (minimized) {
       this.minimized = false;
@@ -345,7 +344,7 @@ export default class Window extends Morph {
   }
 
   toggleMaximize() {
-    var easing = Expo.easeOut, duration = 100;
+    var easing = 'ease-out', duration = 100;
     if (this.maximized) {
       this.animate({bounds: this.nonMaximizedBounds, duration, easing});
       this.resizer().bottomRight = this.extent;
