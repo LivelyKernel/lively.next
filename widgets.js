@@ -974,6 +974,10 @@ export class SearchField extends Text {
     let inputChange = change.selector === "replace",
         validInput = this.isFocused() && this.textString;
     if (this.get('placeholder icon')) this.get('placeholder icon').visible = !!this.textString;
+    if (this.textString.includes('\n')) {
+      this.textString = this.textString.replace('\n', '');
+      this.owner.focus();
+    }
     this.active && inputChange && signal(this, "searchInput", this.parseInput());
   }
 
