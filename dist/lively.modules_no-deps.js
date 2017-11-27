@@ -6232,7 +6232,7 @@ var ImportRemover = function () {
 }();
 
 function ensureParent(currentModule, name, parent) {
-  if (!parent) return parent;
+  if (parent) return parent;
 
   var id = currentModule.id,
       System = currentModule.System,

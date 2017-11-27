@@ -1,7 +1,7 @@
 import { resource } from "lively.resources";
 
 function ensureParent(currentModule, name, parent) {
-  if (!parent) return parent;
+  if (parent) return parent;
   let {id, System} = currentModule,
       module = System._nodeRequire("module");
   if (id.startsWith("file://")) id = id.replace("file://", "");
