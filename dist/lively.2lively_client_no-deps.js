@@ -261,7 +261,7 @@ var L2LConnection = function () {
   }, {
     key: "ping",
     value: function () {
-      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(target) {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(target) {
         var t, _ref2, t2, t3;
 
         return regeneratorRuntime.wrap(function _callee$(_context) {
@@ -308,7 +308,7 @@ var L2LConnection = function () {
   }, {
     key: "sendAndWait",
     value: function () {
-      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(msg) {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(msg) {
         var _this4 = this;
 
         var sendP, timeout, timeoutMs, answer;
@@ -382,8 +382,8 @@ var L2LConnection = function () {
     }
   }, {
     key: "sendToAndWait",
-    value: function sendToAndWait(target, action, data) {
-      return this.sendAndWait({ target: target, action: action, data: data });
+    value: function sendToAndWait(target, action, data, opts) {
+      return this.sendAndWait(_extends({ target: target, action: action, data: data }, opts));
     }
   }, {
     key: "prepareSend",
@@ -684,7 +684,7 @@ var defaultClientActions = {
 
     var client = _ref11.client,
         ackFn = _ref11.ackFn;
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
       var result;
       return regeneratorRuntime.wrap(function _callee4$(_context4) {
         while (1) {
@@ -708,7 +708,7 @@ var defaultClientActions = {
 
     var _this6 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
       var promptMethod, answer;
       return regeneratorRuntime.wrap(function _callee5$(_context5) {
         while (1) {
@@ -738,7 +738,7 @@ var defaultClientActions = {
 
     var _this7 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
       var status;
       return regeneratorRuntime.wrap(function _callee6$(_context6) {
         while (1) {
@@ -775,7 +775,7 @@ var defaultClientActions = {
 
     var _this8 = this;
 
-    return asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
       var _ref15, _ref16, dir, commandMorphId, status, morph, shellPlugin;
 
       return regeneratorRuntime.wrap(function _callee7$(_context7) {
@@ -825,7 +825,7 @@ var isNode = typeof System !== "undefined" ? System.get("@system-env").node : ty
 // FIXME!!
 // import ioClient from "socket.io-client";
 var ioClient;
-if (isNode) {
+if (typeof _ioClient === "undefined" && isNode) {
   var require = System._nodeRequire("module")._load;
   ioClient = require("socket.io-client");
 } else {
@@ -1010,7 +1010,7 @@ var L2LClient = function (_L2LConnection) {
   }, {
     key: "open",
     value: function () {
-      var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
         var _this2 = this;
 
         var url, opts, socket;
@@ -1164,7 +1164,7 @@ var L2LClient = function (_L2LConnection) {
   }, {
     key: "close",
     value: function () {
-      var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
         var _this3 = this;
 
         var socket, reason;
@@ -1259,7 +1259,7 @@ var L2LClient = function (_L2LConnection) {
   }, {
     key: "register",
     value: function () {
-      var _ref3 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
         var _this4 = this;
 
         var answer, err, _err, _answer$data, trackerId, messageNumber, attempt, timeout;
@@ -1381,7 +1381,7 @@ var L2LClient = function (_L2LConnection) {
   }, {
     key: "unregister",
     value: function () {
-      var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
         var trackerId;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
@@ -1501,7 +1501,7 @@ var L2LClient = function (_L2LConnection) {
   }, {
     key: "listRoomMembers",
     value: function () {
-      var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(room) {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(room) {
         var _ref6, data;
 
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
@@ -1533,7 +1533,7 @@ var L2LClient = function (_L2LConnection) {
   }, {
     key: "joinedRooms",
     value: function () {
-      var _ref7 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
         var _ref8, data;
 
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
@@ -1565,7 +1565,7 @@ var L2LClient = function (_L2LConnection) {
   }, {
     key: "listRooms",
     value: function () {
-      var _ref9 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
         var _ref10, data;
 
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
@@ -1601,7 +1601,7 @@ var L2LClient = function (_L2LConnection) {
   }, {
     key: "listPeers",
     value: function () {
-      var _ref11 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
         var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
         var _peersCached, t, timeout, _ref12, data, sessions;
@@ -1649,7 +1649,7 @@ var L2LClient = function (_L2LConnection) {
                       peer = _extends({}, lively_lang.obj.dissoc(record, ["info"]), { id: id, world: world, location: location, type: type });
 
                   userToken = userToken || l2lUserToken;
-                  if (userToken) {
+                  if (userToken && userToken !== "null") {
                     if (lively.user) {
                       peer.user = lively.user.ClientUser.fromToken(userToken, userRealm);
                     } else {

@@ -11,7 +11,7 @@ let isNode = typeof System !== "undefined" ?
 // import ioClient from "socket.io-client";
 import _ioClient from "socket.io-client/dist/socket.io.js";
 var ioClient;
-if (isNode) {
+if (typeof _ioClient === "undefined" && isNode) {
   let require = System._nodeRequire("module")._load;
   ioClient = require("socket.io-client");
 } else {
