@@ -5,7 +5,7 @@ import {
   renderRootMorph,
   ShadowObject
 } from "./rendering/morphic-default.js";
-import { AnimationQueue } from "./rendering/animations.js";
+import { AnimationQueue, easings } from "./rendering/animations.js";
 import { morph, Icon, show } from "./index.js";
 import { MorphicEnv } from "./env.js";
 import config from "./config.js";
@@ -1419,7 +1419,7 @@ export class Morph {
   }
 
   async fadeOut(duration=1000) {
-    await this.animate({opacity: 0, duration, easing: "easeOut"});
+    await this.animate({opacity: 0, duration, easing: easings.outQuad});
     this.remove();
     this.opacity = 1;
   }

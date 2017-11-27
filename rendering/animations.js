@@ -2,7 +2,6 @@ import "web-animations-js";
 import SVG from "svgjs";
 import "svg.easing.js";
 import "svg.pathmorphing.js";
-import {quadInOut, quadIn, quadOut} from "web-animation-eases";
 import {obj, properties, arr} from "lively.lang";
 import {LinearGradient, pt, RadialGradient, rect} from "lively.graphics";
 import {pad, camelize} from "lively.lang/string.js";
@@ -120,7 +119,7 @@ export class PropertyAnimation {
           await this.morph.animate({
             fill: new LinearGradient({...fillBefore, vector: rect(0, 0, 0, 1)}),
             duration: d / 2,
-            easing: quadIn
+            easing: easings.inQuad
           });
           this.morph.fill = new RadialGradient({
             stops: fillBefore.stops,
@@ -130,7 +129,7 @@ export class PropertyAnimation {
           await this.morph.animate({
             fill: fillAfter,
             duration: d / 2,
-            easing: quadOut
+            easing: easings.outQuad
           });
           return this.morph;
         })();
@@ -145,13 +144,13 @@ export class PropertyAnimation {
               bounds: rect(0, 0, this.morph.width * 100, this.morph.height * 2)
             }),
             duration: d / 2,
-            easing: quadIn
+            easing: easings.inQuad
           });
           this.morph.fill = new LinearGradient({...fillBefore, vector: rect(0, 0, 0, 1)});
           await this.morph.animate({
             fill: fillAfter,
             duration: d / 2,
-            easing: quadOut
+            easing: easings.outQuad
           });
           return this.morph;
         })();
@@ -196,7 +195,7 @@ export class PropertyAnimation {
   }
 
   get easing() {
-    return this.config.easing || quadInOut;
+    return this.config.easing || easings.inOutQuad;
   }
   get onFinish() {
     return this.config.onFinish || (() => {});
@@ -357,7 +356,7 @@ export class PropertyAnimation {
       for (let k in after) camelAfter[camelize(k)] = after[k];
       let anim = node.animate([camelBefore, camelAfter], {
         duration: this.duration,
-        easing: easings.inOutQuad,
+        easing: this.easing,
         fill: "forwards",
         composite: "replace"
       });

@@ -8,6 +8,7 @@ import { PropertyControl } from "lively.ide/js/inspector.js";
 import { safeToString } from "lively.lang/object.js";
 import { LinearGradient } from "lively.graphics/color.js";
 import { CompletionController } from "./text/completion.js";
+import { easings } from "./rendering/animations.js";
 
 // TOOLING
 
@@ -335,7 +336,7 @@ class DroppableStyleSheet extends Morph {
        this.openInWorld(this.globalPosition);
        this.animate({
           opacity: 0, position: this.initPos,
-          duration: 300, easing: 'ease-out'
+          duration: 300, easing: easings.outQuad
        });
        this.remove();
     }
