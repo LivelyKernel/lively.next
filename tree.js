@@ -257,13 +257,23 @@ export class Tree extends Text {
 
         containerTextAndAttributes[j + 4] = displayedNode;
         if (arr.isArray(displayedNode)) {
+          if (isSelected) {
+            for (let k=1; k < displayedNode.length; k += 2) {
+              let attr = displayedNode[k] || {};
+              attr.fontColor = this.selectionFontColor;
+              displayedNode[k] = attr;
+            }
+          }
           containerTextAndAttributes[j + 5] = []
         } else {
-          containerTextAndAttributes[j + 5] = {};
+          containerTextAndAttributes[j + 5] = {
+            fontColor: isSelected ? this.selectionFontColor : this.fontColor
+          };
         }
         containerTextAndAttributes[j + 6] = '\n';
         containerTextAndAttributes[j + 7] = {};
       }
+      this.lastNumberOfNodes = nodes.length;
       this.replace({start: {row: 0, column: 0}, end: this.documentEndPosition}, 
                     nodes.length > 1 ? arr.flatten(containerTextAndAttributes) : [],
                     false);
@@ -271,7 +281,6 @@ export class Tree extends Text {
       if (this.selectedIndex > -1 && (this.selection.row + 1) != this.selectedIndex) {
         this.selectLine(this.selectedIndex - 1);
         this.selection.growLeft(-1)
-        this.addTextAttribute({fontColor: this.selectionFontColor});
       }
     });
   }
