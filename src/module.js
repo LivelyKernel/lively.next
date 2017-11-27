@@ -10,6 +10,7 @@ import { emit, subscribe } from "lively.notifications";
 import { defaultClassToFunctionConverterName } from "lively.vm";
 import { runtime as classRuntime } from "lively.classes";
 import { ImportInjector, GlobalInjector, ImportRemover } from "./import-modification.js";
+import { _require, _resolve } from "./nodejs.js";
 
 export var detectModuleFormat = (function() {
   const esmFormatCommentRegExp = /['"]format (esm|es6)['"];/,
@@ -411,10 +412,19 @@ class ModuleInterface {
           };
       }
     }
+    
+    const nodejsDescriptors = {};
+    if (S.get("@system-env").node) {
+      // support for require
+      var require = _require.bind(null, this);
+      require.resolve = _resolve.bind(null, this);
+      nodejsDescriptors.require = {configurable: true, writable: true, value: require};
+    }
 
     return this._recorder = Object.create(S.global, {
 
       ...globalProps.descriptors,
+      ...nodejsDescriptors,
 
       System: {configurable: true, writable: true, value: S},
 
@@ -431,7 +441,6 @@ class ModuleInterface {
           meta.kind = kind;
           return self.define(name, value, false/*signalChangeImmediately*/, meta);
         }
-
       },
 
       _moduleExport: {

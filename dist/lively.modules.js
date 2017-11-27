@@ -80119,6 +80119,40 @@ var ImportRemover = function () {
   return ImportRemover;
 }();
 
+function ensureParent(currentModule, name, parent) {
+  if (!parent) return parent;
+  var module = System._nodeRequire("module"),
+      _currentModule$id = currentModule.id,
+      id = _currentModule$id.id,
+      System = _currentModule$id.System;
+
+  if (id.startsWith("file://")) id = id.replace("file://", "");
+  parent = module.Module._cache[id];
+  if (parent) return parent;
+  parent = { id: id, paths: [] };
+  var p = currentModule.package();
+  if (p) {
+    parent.paths.push(lively_resources.resource(p.url).join("node_modules/").path());
+  }
+  return parent;
+}
+
+function _require(currentModule, name, parent) {
+  parent = ensureParent(currentModule, name);
+  var System = currentModule.id.System,
+      module = System._nodeRequire("module");
+
+  return module._load(name, parent);
+}
+
+function _resolve(currentModule, name, parent) {
+  parent = ensureParent(currentModule, name);
+  var System = currentModule.id.System,
+      module = System._nodeRequire("module");
+
+  return module._resolveFilename(name, parent);
+}
+
 var detectModuleFormat = function () {
   var esmFormatCommentRegExp = /['"]format (esm|es6)['"];/,
       cjsFormatCommentRegExp = /['"]format cjs['"];/,
@@ -81872,7 +81906,15 @@ var ModuleInterface = function () {
         }
       }
 
-      return this._recorder = Object.create(S.global, _extends({}, globalProps.descriptors, (_babelHelpers$extends = {
+      var nodejsDescriptors = {};
+      if (S.get("@system-env").node) {
+        // support for require
+        var require = _require.bind(null, this);
+        require.resolve = _resolve.bind(null, this);
+        nodejsDescriptors.require = { configurable: true, writable: true, value: require };
+      }
+
+      return this._recorder = Object.create(S.global, _extends({}, globalProps.descriptors, nodejsDescriptors, (_babelHelpers$extends = {
 
         System: { configurable: true, writable: true, value: S },
 
@@ -81887,7 +81929,6 @@ var ModuleInterface = function () {
           meta.kind = kind;
           return self.define(name, _value, false /*signalChangeImmediately*/, meta);
         }
-
       }), defineProperty(_babelHelpers$extends, "_moduleExport", {
         value: function value(name, val) {
           scheduleModuleExportsChange(S, self.id, name, val, true /*add export*/);
