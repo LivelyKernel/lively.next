@@ -2,6 +2,7 @@
   "name": "lively.resources",
   "version": "0.1.33",
   "repository": "https://github.com/LivelyKernel/lively.resources",
+  "main": "dist/lively.resources.js",
   "systemjs": {
     "main": "index.js",
     "map": {
