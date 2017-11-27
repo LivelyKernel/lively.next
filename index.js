@@ -37,6 +37,21 @@ export async function createFiles(baseDir, fileSpec, opts) {
   return base;
 }
 
+export async function createFileSpec(baseDir, depth = "infinity", opts) {
+  let files = await baseDir.dirList(depth, opts), spec = {};
+  for (let file of files) {
+    let content = file.isDirectory() ? {} : await file.read(),
+        path = file.asFile().relativePathFrom(baseDir).split("/"),
+        parentDir = spec;
+    for (let pathPart of path.slice(0, -1)) {
+      if (!parentDir[pathPart]) parentDir[pathPart] = {};
+      parentDir = parentDir[pathPart];
+    }
+    parentDir[path[path.length-1]] = content;
+  }
+  return spec;
+}
+
 export function loadViaScript(url, onLoadCb) {
   // load JS code by inserting a <script src="..." /> tag into the
   // DOM. This allows cross domain script loading and JSONP
@@ -70,9 +85,9 @@ export function loadViaScript(url, onLoadCb) {
 }
 
 export async function ensureFetch() {
-  /*  
+  /*
     Usage like
-  
+
     if (typeof fetch === "undefined" && typeof lively !== "undefined" && lively.resources) {
       console.log("Installing fetch polyfill...")
       lively.resources.ensureFetch().then(function() {
@@ -96,7 +111,7 @@ export async function ensureFetch() {
     }
   } else {
     fetchInterface = await System.import("fetch-ponyfill", thisModuleId)
-  } 
+  }
   Object.assign(System.global, fetchInterface())
 }
 
