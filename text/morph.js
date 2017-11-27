@@ -732,6 +732,7 @@ export class Text extends Morph {
           /* rms 27.11.17: A change in the extent only constitutes 
              a hard layout change if the width changes, line wrapping 
              is enabled and we have a fixed width of the morph */
+          softLayoutChange = true;
           hardLayoutChange = wraps && change.prevValue.x != change.value.x;        
           break;
         case "wordSpacing":
