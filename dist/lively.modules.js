@@ -80121,10 +80121,10 @@ var ImportRemover = function () {
 
 function ensureParent(currentModule, name, parent) {
   if (!parent) return parent;
-  var module = System._nodeRequire("module"),
-      _currentModule$id = currentModule.id,
-      id = _currentModule$id.id,
-      System = _currentModule$id.System;
+
+  var id = currentModule.id,
+      System = currentModule.System,
+      module = System._nodeRequire("module");
 
   if (id.startsWith("file://")) id = id.replace("file://", "");
   parent = module.Module._cache[id];
@@ -80139,7 +80139,7 @@ function ensureParent(currentModule, name, parent) {
 
 function _require(currentModule, name, parent) {
   parent = ensureParent(currentModule, name);
-  var System = currentModule.id.System,
+  var System = currentModule.System,
       module = System._nodeRequire("module");
 
   return module._load(name, parent);
@@ -80147,7 +80147,7 @@ function _require(currentModule, name, parent) {
 
 function _resolve(currentModule, name, parent) {
   parent = ensureParent(currentModule, name);
-  var System = currentModule.id.System,
+  var System = currentModule.System,
       module = System._nodeRequire("module");
 
   return module._resolveFilename(name, parent);
