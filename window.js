@@ -8,6 +8,7 @@ import {
   StyleSheet
 } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
+import { easings } from "lively.morphic/rendering/animations.js";
 
 export default class Window extends Morph {
 
@@ -317,7 +318,7 @@ export default class Window extends Morph {
         bounds = this.bounds(),
         duration = 100,
         collapseButton = this.getSubmorphNamed("minimize"),
-        easing = 'ease-out';
+        easing = easings.outQuad;
 
     if (minimized) {
       this.minimized = false;
@@ -344,7 +345,7 @@ export default class Window extends Morph {
   }
 
   toggleMaximize() {
-    var easing = 'ease-out', duration = 100;
+    var easing = easings.outQuad, duration = 100;
     if (this.maximized) {
       this.animate({bounds: this.nonMaximizedBounds, duration, easing});
       this.resizer().bottomRight = this.extent;
