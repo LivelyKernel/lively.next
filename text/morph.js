@@ -723,11 +723,17 @@ export class Text extends Morph {
 
     if (selector) {
       textChange = selector === "replace";
-
+      hardLayoutChange = selector === 'addTextAttribute';
     } else {
       switch (prop) {
         case 'scroll': viewChange = true; scrollChange = true; break;
-        case 'extent': viewChange = true;
+        case 'extent': 
+          viewChange = true; 
+          /* rms 27.11.17: A change in the extent only constitutes 
+             a hard layout change if the width changes, line wrapping 
+             is enabled and we have a fixed width of the morph */
+          hardLayoutChange = wraps && change.prevValue.x != change.value.x;        
+          break;
         case "wordSpacing":
         case "letterSpacing":
         case "tabWidth": if (wraps) hardLayoutChange = true; break;
