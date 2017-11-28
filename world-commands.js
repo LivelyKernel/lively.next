@@ -453,7 +453,7 @@ var commands = [
       var mod = workspaceModules[opts.language] || workspaceModules[alias[opts.language]];
 
       if (language === "text" || !mod)
-        return world.execCommand("open text window", opts);
+        return world.execCommand("open text window", {...config.codeEditor.modes.text, ...opts});
 
       let { default: Workspace } = await System.import(mod);
       return new Workspace({

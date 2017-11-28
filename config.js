@@ -358,6 +358,10 @@ var config = {
       padding: Rectangle.inset(4, 2, 4, 2),
       fontSize: bowser.mac ? 12 : 16,
       clipMode: "auto",
+    },
+
+    modes: {
+      text: {style: {}}
     }
   },
 
