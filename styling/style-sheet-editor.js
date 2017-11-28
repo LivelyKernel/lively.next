@@ -1,4 +1,3 @@
-/*global Power4*/
 import { Color, LinearGradient, rect, pt } from "lively.graphics";
 import { connect, once, disconnect, signal } from "lively.bindings";
 import { arr, obj } from "lively.lang";
@@ -8,8 +7,7 @@ import { TreeData, Tree, Button } from "lively.components";
 
 import { PropertyControl } from "../js/inspector.js";
 import { CompletionController } from "../text/completion.js";
-
-/* globals Power4 */
+import { easings } from "lively.morphic/rendering/animations.js";
 
 // TOOLING
 
@@ -337,7 +335,7 @@ class DroppableStyleSheet extends Morph {
        this.openInWorld(this.globalPosition);
        this.animate({
           opacity: 0, position: this.initPos,
-          duration: 300, easing: Power4.easeOut
+          duration: 300, easing: easings.outQuad
        });
        this.remove();
     }
