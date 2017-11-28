@@ -61,7 +61,8 @@
           loginDone = false,
           worldLoaded = false,
           isBenchmark = worldNameMatch[1].startsWith("morph benchmark")/*FIXME!!!2017-11-15*/,
-          doBootstrap = !query.quickload && !isBenchmark;
+          doBootstrap = !query.quickload && !isBenchmark,
+          askBeforeQuit = 'askBeforeQuit' in query ? !!query.askBeforeQuit : true;
 
       lively.lang.promise.waitFor(function() { return !!lively.user; }).then(function() {
         var userRegistry = lively.user.UserRegistry.current;
@@ -99,11 +100,13 @@
           return lively.modules.registerPackage('lively.2lively');
         })
         .then(function() {
-          window.addEventListener('beforeunload', function(evt) {
-            var msg = "Really?";
-            evt.returnValue = msg;
-            return msg;
-          }, true);
+          if (askBeforeQuit) {
+            window.addEventListener('beforeunload', function(evt) {
+              var msg = "Really?";
+              evt.returnValue = msg;
+              return msg;
+            }, true);
+          }
           return {
             resource: res,
             showWorldLoadDialog: !worldNameMatch,
