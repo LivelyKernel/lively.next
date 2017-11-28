@@ -24,7 +24,7 @@ acornObjectSpreadSrc =
 /* <<< acorn-object-spread/inject.js >>> */
 (function(acorn) {
   var module = {exports: {}};
-  ${fs.readFileSync(require.resolve("acorn-object-spread/inject.js")).toString().replace(/let /g, "var ")}
+  ${fs.readFileSync(require.resolve("acorn5-object-spread/inject.js")).toString().replace(/let /g, "var ")}
   module.exports(acorn);
 })(this.acorn);`,
 
