@@ -945,7 +945,9 @@ Visitor.prototype.visitFunctionBody = function visitFunctionBody(node, state, pa
 Visitor.prototype.visitFunctionDeclaration = function visitFunctionDeclaration(node, state, path) {
   var visitor = this;
   // id is of types Identifier
-  node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
   // params is a list with types Pattern
   var newElements = [];
   for (var i = 0; i < node["params"].length; i++) {
@@ -985,7 +987,9 @@ Visitor.prototype.visitForOfStatement = function visitForOfStatement(node, state
 Visitor.prototype.visitClassDeclaration = function visitClassDeclaration(node, state, path) {
   var visitor = this;
   // id is of types Identifier
-  node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
   // superClass is of types Expression
   if (node["superClass"]) {
     node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
@@ -1000,3 +1004,5 @@ Visitor.prototype.visitJSXIdentifier = function visitJSXIdentifier(node, state, 
 }
 
 // >>>>>>>>>>>>> END OF AUTO GENERATED CODE >>>>>>>>>>>>>
+
+export default Visitor;
