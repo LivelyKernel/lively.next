@@ -2066,7 +2066,10 @@ export class Morph {
   menuItems() {
     var world = this.world(),
         items = [], self = this;
-
+        //If reset exists and is a function, it will add it as the first option in the menu list
+        if (this.reset && typeof this.reset == 'function'){
+          items.push(['Reset',()=>{this.reset()}])
+        }
     // items.push(['Select all submorphs', function(evt) { self.world().setSelectedMorphs(self.submorphs.clone()); }]);
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
