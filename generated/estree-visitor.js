@@ -1,5 +1,5 @@
 // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-// Generated on 17-07-23 16:45 PDT
+// Generated on 17-11-28 13:01 PST
 function Visitor() {}
 Visitor.prototype.accept = function accept(node, state, path) {
   if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
@@ -11,6 +11,7 @@ Visitor.prototype.accept = function accept(node, state, path) {
     case "Program": return this.visitProgram(node, state, path);
     case "Function": return this.visitFunction(node, state, path);
     case "Statement": return this.visitStatement(node, state, path);
+    case "Directive": return this.visitDirective(node, state, path);
     case "SwitchCase": return this.visitSwitchCase(node, state, path);
     case "CatchClause": return this.visitCatchClause(node, state, path);
     case "VariableDeclarator": return this.visitVariableDeclarator(node, state, path);
@@ -31,6 +32,8 @@ Visitor.prototype.accept = function accept(node, state, path) {
     case "JSXBoundaryElement": return this.visitJSXBoundaryElement(node, state, path);
     case "JSXAttribute": return this.visitJSXAttribute(node, state, path);
     case "JSXText": return this.visitJSXText(node, state, path);
+    case "JSXOpeningFragment": return this.visitJSXOpeningFragment(node, state, path);
+    case "JSXClosingFragment": return this.visitJSXClosingFragment(node, state, path);
     case "Identifier": return this.visitIdentifier(node, state, path);
     case "Literal": return this.visitLiteral(node, state, path);
     case "ExpressionStatement": return this.visitExpressionStatement(node, state, path);
@@ -91,7 +94,9 @@ Visitor.prototype.accept = function accept(node, state, path) {
     case "JSXClosingElement": return this.visitJSXClosingElement(node, state, path);
     case "JSXSpreadAttribute": return this.visitJSXSpreadAttribute(node, state, path);
     case "JSXElement": return this.visitJSXElement(node, state, path);
+    case "JSXFragment": return this.visitJSXFragment(node, state, path);
     case "RegExpLiteral": return this.visitRegExpLiteral(node, state, path);
+    case "FunctionBody": return this.visitFunctionBody(node, state, path);
     case "FunctionDeclaration": return this.visitFunctionDeclaration(node, state, path);
     case "VariableDeclaration": return this.visitVariableDeclaration(node, state, path);
     case "ForOfStatement": return this.visitForOfStatement(node, state, path);
@@ -144,12 +149,18 @@ Visitor.prototype.visitFunction = function visitFunction(node, state, path) {
     else newElements.push(acceptedNodes);
   }
   node["params"] = newElements;
-  // body is of types BlockStatement
+  // body is of types FunctionBody
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
   return node;
 }
 Visitor.prototype.visitStatement = function visitStatement(node, state, path) {
   var visitor = this;
+  return node;
+}
+Visitor.prototype.visitDirective = function visitDirective(node, state, path) {
+  var visitor = this;
+  // expression is of types Literal
+  node["expression"] = visitor.accept(node["expression"], state, path.concat(["expression"]));
   return node;
 }
 Visitor.prototype.visitSwitchCase = function visitSwitchCase(node, state, path) {
@@ -288,13 +299,21 @@ Visitor.prototype.visitJSXAttribute = function visitJSXAttribute(node, state, pa
   var visitor = this;
   // name is of types JSXIdentifier, JSXNamespacedName
   node["name"] = visitor.accept(node["name"], state, path.concat(["name"]));
-  // value is of types Literal, JSXExpressionContainer, JSXElement
+  // value is of types Literal, JSXExpressionContainer, JSXElement, JSXFragment
   if (node["value"]) {
     node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
   }
   return node;
 }
 Visitor.prototype.visitJSXText = function visitJSXText(node, state, path) {
+  var visitor = this;
+  return node;
+}
+Visitor.prototype.visitJSXOpeningFragment = function visitJSXOpeningFragment(node, state, path) {
+  var visitor = this;
+  return node;
+}
+Visitor.prototype.visitJSXClosingFragment = function visitJSXClosingFragment(node, state, path) {
   var visitor = this;
   return node;
 }
@@ -515,7 +534,7 @@ Visitor.prototype.visitFunctionExpression = function visitFunctionExpression(nod
     else newElements.push(acceptedNodes);
   }
   node["params"] = newElements;
-  // body is of types BlockStatement
+  // body is of types FunctionBody
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
   return node;
 }
@@ -618,7 +637,7 @@ Visitor.prototype.visitSequenceExpression = function visitSequenceExpression(nod
 }
 Visitor.prototype.visitArrowFunctionExpression = function visitArrowFunctionExpression(node, state, path) {
   var visitor = this;
-  // body is of types BlockStatement, Expression
+  // body is of types FunctionBody, Expression
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
   // id is of types Identifier
   if (node["id"]) {
@@ -874,7 +893,7 @@ Visitor.prototype.visitJSXElement = function visitJSXElement(node, state, path) 
   var visitor = this;
   // openingElement is of types JSXOpeningElement
   node["openingElement"] = visitor.accept(node["openingElement"], state, path.concat(["openingElement"]));
-  // children is a list with types JSXText, JSXExpressionContainer, JSXSpreadChild, JSXElement
+  // children is a list with types JSXText, JSXExpressionContainer, JSXSpreadChild, JSXElement, JSXFragment
   var newElements = [];
   for (var i = 0; i < node["children"].length; i++) {
     var ea = node["children"][i];
@@ -889,8 +908,38 @@ Visitor.prototype.visitJSXElement = function visitJSXElement(node, state, path) 
   }
   return node;
 }
+Visitor.prototype.visitJSXFragment = function visitJSXFragment(node, state, path) {
+  var visitor = this;
+  // openingFragment is of types JSXOpeningFragment
+  node["openingFragment"] = visitor.accept(node["openingFragment"], state, path.concat(["openingFragment"]));
+  // children is a list with types JSXText, JSXExpressionContainer, JSXSpreadChild, JSXElement, JSXFragment
+  var newElements = [];
+  for (var i = 0; i < node["children"].length; i++) {
+    var ea = node["children"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["children", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["children"] = newElements;
+  // closingFragment is of types JSXClosingFragment
+  node["closingFragment"] = visitor.accept(node["closingFragment"], state, path.concat(["closingFragment"]));
+  return node;
+}
 Visitor.prototype.visitRegExpLiteral = function visitRegExpLiteral(node, state, path) {
   var visitor = this;
+  return node;
+}
+Visitor.prototype.visitFunctionBody = function visitFunctionBody(node, state, path) {
+  var visitor = this;
+  // body is a list with types Directive, Statement
+  var newElements = [];
+  for (var i = 0; i < node["body"].length; i++) {
+    var ea = node["body"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["body"] = newElements;
   return node;
 }
 Visitor.prototype.visitFunctionDeclaration = function visitFunctionDeclaration(node, state, path) {
@@ -906,7 +955,7 @@ Visitor.prototype.visitFunctionDeclaration = function visitFunctionDeclaration(n
     else newElements.push(acceptedNodes);
   }
   node["params"] = newElements;
-  // body is of types BlockStatement
+  // body is of types FunctionBody
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
   return node;
 }
@@ -951,5 +1000,3 @@ Visitor.prototype.visitJSXIdentifier = function visitJSXIdentifier(node, state, 
 }
 
 // >>>>>>>>>>>>> END OF AUTO GENERATED CODE >>>>>>>>>>>>>
-
-export default Visitor;
