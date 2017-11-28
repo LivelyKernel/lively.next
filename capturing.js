@@ -458,7 +458,7 @@ function replaceClassDecls(parsed, options) {
 
   for (var i = parsed.body.length - 1; i >= 0; i--) {
     var stmt = parsed.body[i];
-    if (topLevel.classDecls.includes(stmt))
+    if (stmt.id && topLevel.classDecls.includes(stmt))
       parsed.body.splice(i+1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
   }
   return parsed;
@@ -542,7 +542,8 @@ function insertDeclarationsForExports(parsed, options) {
   var topLevel = topLevelDeclsAndRefs(parsed), body = [];
   for (var i = 0; i < parsed.body.length; i++) {
     var stmt = parsed.body[i];
-    if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration && stmt.declaration.type.indexOf("Declaration") === -1) {
+
+    if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration && !stmt.declaration.type.includes("Declaration") && (stmt.declaration.type === "Identifier" || stmt.declaration.id)) {
       body = body.concat([
         varDeclOrAssignment(parsed, {
           type: "VariableDeclarator",
@@ -551,17 +552,19 @@ function insertDeclarationsForExports(parsed, options) {
         }),
         stmt
       ]);
+
     } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length || stmt.source) {
       body.push(stmt)
+
     } else {
       body = body.concat(stmt.specifiers.map(specifier =>
-       arr.include(topLevel.declaredNames, specifier.local.name) ?
-       null :
-        varDeclOrAssignment(parsed, {
-          type: "VariableDeclarator",
-          id: specifier.local,
-          init: member(options.captureObj, specifier.local)
-        })).filter(Boolean)).concat(stmt);
+                           topLevel.declaredNames.includes(specifier.local.name) ?
+                             null :
+                              varDeclOrAssignment(parsed, {
+                                type: "VariableDeclarator",
+                                id: specifier.local,
+                                init: member(options.captureObj, specifier.local)
+                              })).filter(Boolean)).concat(stmt);
     }
   }
 
@@ -680,7 +683,7 @@ function putFunctionDeclsInFront(parsed, options) {
 
   for (var i = funcDecls.length; i--; ) {
     var decl = funcDecls[i];
-    if (!shouldDeclBeCaptured(decl, options)) continue;
+    if (!decl.id || !shouldDeclBeCaptured(decl, options)) continue;
 
     var parentPath = scope.funcDeclPaths[i].slice(0,-1),
       // ge the parent so we can replace the original function:
@@ -727,7 +730,7 @@ function computeDefRanges(parsed, options) {
   var topLevel = topLevelDeclsAndRefs(parsed);
   return chain(topLevel.scope.varDecls)
     .pluck("declarations").flatten().value()
-    .concat(topLevel.scope.funcDecls)
+    .concat(topLevel.scope.funcDecls.filter(ea => ea.id))
     .reduce((defs, decl) => {
       if (!defs[decl.id.name]) defs[decl.id.name] = []
       defs[decl.id.name].push({type: decl.type, start: decl.start, end: decl.end});

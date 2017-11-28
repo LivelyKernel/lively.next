@@ -337,8 +337,10 @@ describe("ast.capturing", function() {
                + "_rec.a = destructured_1$0$b$c[0];");
       
       testVarTfm("captures rest prop",
-                 "var {...rest, a, b} = foo;",
+                 "var {a, b, ...rest} = foo;",
                  `var destructured_1 = _rec.foo;\n`
+               + `_rec.a = destructured_1.a;\n`
+               + `_rec.b = destructured_1.b;\n`
                + `var rest = {};\n`
                + `_rec.rest = rest;\n`
                + `(function () {\n`
@@ -349,9 +351,7 @@ describe("ast.capturing", function() {
                + `      continue;\n`
                + `    rest[__key] = destructured_1[__key];\n`
                + `  }\n`
-               + `}());\n`
-               + `_rec.a = destructured_1.a;\n`
-               + `_rec.b = destructured_1.b;`);
+               + `}());`);
     });
 
     describe("async", () => {
@@ -525,6 +525,10 @@ describe("ast.capturing", function() {
                  {classToFunction: null},
                  "export default class Foo {};",
                  'export default class Foo {\n}\n_rec.Foo = Foo;\n;');
+
+      testVarTfm("export default expression",
+                 "export default foo(1, 2, 3);",
+                 'export default _rec.foo(1, 2, 3);');
 
       testVarTfm("re-export * import",
                  'import * as completions from "./lib/completions.js";\n'
