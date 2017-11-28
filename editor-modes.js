@@ -50,6 +50,7 @@ export function resolveMode(spec) {
   else return spec || {name: "null"};
 }
 
+
 export function getMode(editorConfig, spec) {
   spec = resolveMode(spec);
   if (typeof spec === "string") spec = {name: spec};
@@ -57,7 +58,7 @@ export function getMode(editorConfig, spec) {
     throw new Error("parserConfig does not have a name of the mode to get");
   let mode = modes[spec.name];
   if (!mode)
-    throw new Error(`mode ${spec.name} not known`);
+    return getMode(editorConfig, "text/plain")
 
   editorConfig = {indentUnit: 2, ...editorConfig};
   return Object.assign(mode(editorConfig, spec), {name: spec.name});
@@ -563,6 +564,10 @@ for (var i = 0; i < modeInfo.length; i++) {
   var info = modeInfo[i];
   if (info.mimes) info.mime = info.mimes[0];
 }
+
+// minimal mode
+defineMode("null", function () { return ({token: function (stream) { return stream.skipToEnd(); }}); })
+defineMIME("text/plain", "null");
 
 export function findModeByMIME(mime) {
   mime = mime.toLowerCase();
