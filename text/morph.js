@@ -1984,9 +1984,17 @@ export class Text extends Morph {
     let {viewState, fixedWidth, fixedHeight} = this;
     viewState._needsFit = false;
     if ((fixedHeight && fixedWidth) || !this.textLayout /*not init'ed yet*/) return this;
-    let textBounds = this.textBounds().outsetByRect(this.padding);
-    if (!fixedHeight && this.height != textBounds.height) this.height = textBounds.height;
-    if (!fixedWidth && this.width != textBounds.width) this.width = textBounds.width;
+    let textBounds = this.textBounds().outsetByRect(this.padding),
+          resize = () => {
+            if (!fixedHeight && this.height != textBounds.height) this.height = textBounds.height
+            if (!fixedWidth && this.width != textBounds.width) this.width = textBounds.width;
+          }
+    if (this.document.lines.find(l => l.hasEstimatedExtent)) {
+      this.whenRendered().then(resize)
+    } else {
+      resize();
+    }
+    
     return this;
   }
 
