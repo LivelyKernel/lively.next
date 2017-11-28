@@ -359,6 +359,10 @@ class MarkdownEditor extends Morph {
     }
   }
 
+  onFocus() {
+    this.mdEditorMorph.focus();
+  }
+
   reset() {
     connect(this.get("edit css button"), 'fire', this, 'editCSS');
     connect(this.get("link scroll checkbox"), 'checked', this, 'linkScroll');
