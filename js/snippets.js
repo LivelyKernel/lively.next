@@ -72,6 +72,7 @@ export var snippets = [
   ["Prom", "new Promise((resolve, reject) => {$0})"],
   ["keys", "Object.keys($0)"],
   ["assign", "Object.assign(${0:dest}, ${1:source})"],
+  ["stringi", "JSON.stringify(${0:object})"],
 
   ["forE", "forEach(${0:ea} => $1)"],
   ["map", "map(${0:ea} => $1)"],
