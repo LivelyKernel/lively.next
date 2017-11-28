@@ -37,7 +37,8 @@ export function concatAttributePair(text1, attr1, text2, attr2, seperator = "") 
   // concatAttributePair("hello", null, "world", null) => ["helloworld", null]
   // concatAttributePair("hello", null, "world", {foo: 23}) => ["hello", null, "world", {foo: 23}]
   // concatAttributePair("hello", {foo: 23}, "world", {foo: 23}) => ["helloworld", {foo: 23}]
-  // concatAttributePair({}, {foo: 23}, "world", {foo: 23})
+  // concatAttributePair({}, {foo: 23}, "world", {foo: 23}) =>  [{}, {foo: 23}, "world", {foo: 23}]
+  // concatAttributePair({}, {foo: 23}, {}, {foo: 23}) =>  [{}, {foo: 23}, {}, {foo: 23}]
   let isObj1 = typeof text1 !== "string",
       isObj2 = typeof text2 !== "string",
       hasObj = isObj1 || isObj2;
@@ -46,11 +47,9 @@ export function concatAttributePair(text1, attr1, text2, attr2, seperator = "") 
     let result = [];
     if (isObj1) {
       result.push(text1, attr1)
-      if (seperator) result.push(seperator, attr1);
     } else result.push(text1 + seperator, attr1);
     if (isObj2) {
       result.push(text2, attr2)
-      if (seperator) result.push(seperator, attr2);
     } else result.push(text2 + seperator, attr2);
     return result;
   }

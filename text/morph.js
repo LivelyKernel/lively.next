@@ -670,7 +670,7 @@ export class Text extends Morph {
     if (center !== undefined) this.center = center;
   }
 
-  __deserialize__(snapshot, objRef) {
+  __deserialize__(snapshot, objRef, pool) {
     super.__deserialize__(snapshot, objRef);
 
     this.viewState = this.defaultViewState;
@@ -703,8 +703,14 @@ export class Text extends Morph {
     };
     snapshot.props.textAndAttributes = {
       key: "textAndAttributes",
-      verbatim: true,
-      value: this.textAndAttributes
+      value: this.textAndAttributes.map(m => { 
+          if (!m) return m; 
+          if (m.isMorph) return pool.ref(m).asRefForSerializedObjMap();
+          if (obj.isObject(m)) return pool.expressionSerializer.exprStringEncode({
+            __expr__: `(${JSON.stringify(m)})`
+          })
+          return m;
+      })
     };
   }
 
