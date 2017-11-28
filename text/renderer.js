@@ -222,13 +222,19 @@ AfterTextRenderHook.prototype.updateExtentsOfLines = function(textlayerNode) {
 
   viewState.dom_nodes = [];
   viewState.dom_nodeFirstRow = 0;
-
   viewState.textWidth = textlayerNode.scrollWidth;
-  let lineNodes = Array.from(textlayerNode.getElementsByClassName("line")),
-      firstLineNode = lineNodes[0],
-      lastLineNode = lineNodes[lineNodes.length-1];
+  
+  let lineNodes = textlayerNode.children,
+      i = 0, 
+      firstLineNode;
 
-  if (!firstLineNode) return;
+  while (i < lineNodes.length && lineNodes[i].className != 'line') i++;
+  
+  if (i < lineNodes.length) {
+    firstLineNode = lineNodes[i];
+  } else {
+    return;
+  }
 
   let ds = firstLineNode.dataset,
       row = Number(ds ? ds.row : firstLineNode.getAttribute("data-row"));
@@ -237,7 +243,7 @@ AfterTextRenderHook.prototype.updateExtentsOfLines = function(textlayerNode) {
   let actualTextHeight = 0,
       line = morph.document.getLine(row);
 
-  for (let i = 0; i < lineNodes.length; i++) {
+  for (; i < lineNodes.length; i++) {
     let node = lineNodes[i];
     viewState.dom_nodes.push(node);
     if (line) {
