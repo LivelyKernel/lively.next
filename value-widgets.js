@@ -94,6 +94,12 @@ class ShortcutWidget extends ContextSensitiveWidget {
         }
       },
       nativeCursor: {defaultValue: "pointer"},
+      fontColor: {
+        derived: true,
+        set(c) {
+          this.submorphs.forEach(m => m.fontColor = c);
+        }
+      },
       submorphs: {
         initialize() {
           this.submorphs = [
@@ -604,14 +610,6 @@ export class NumberWidget extends Morph {
     this.layout.col(0).width = this.get("value").textBounds().width;
   }
 
-  onHoverIn(evt) {
-    this.animate({styleClasses: ["focused"]});
-  }
-
-  onHoverOut(evt) {
-    this.animate({styleClasses: ["unfocused"]});
-  }
-
   increment() {
     if (this.max != undefined && this.number >= this.max) return;
     this.update(this.number + 1, false);
@@ -638,6 +636,19 @@ export class ShadowWidget extends Morph {
       fill: {defaultValue: Color.transparent},
       nativeCursor: {defaultValue: "pointer"},
       fontSize: {defaultValue: 12},
+      fontColor: {
+        derived: true,
+        set(c) {
+          this.submorphs.forEach(m => m.fontColor = c);
+        }
+      },
+      isSelected: {
+        defaultValue: false,
+        set(v) {
+          this.setProperty("isSelected", v);
+          this.fontColor = v ? Color.white : Color.black;
+        }
+      },
       layout: {
         initialize() {
           this.layout = new HorizontalLayout();
@@ -874,7 +885,7 @@ export class StringWidget extends InputLine {
 
   truncate(s) {
     if (s.length > 200) {
-      return s.slice(1, 20) + "...";
+      return s.slice(0, 20) + "...";
     } else {
       return s;
     }
