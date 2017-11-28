@@ -508,7 +508,7 @@ function replaceClassDecls(parsed, options) {
 
   for (var i = parsed.body.length - 1; i >= 0; i--) {
     var stmt = parsed.body[i];
-    if (topLevel.classDecls.includes(stmt)) parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
+    if (stmt.id && topLevel.classDecls.includes(stmt)) parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
   }
   return parsed;
 }
@@ -581,7 +581,8 @@ function insertDeclarationsForExports(parsed, options) {
       body = [];
   for (var i = 0; i < parsed.body.length; i++) {
     var stmt = parsed.body[i];
-    if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration && stmt.declaration.type.indexOf("Declaration") === -1) {
+
+    if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration && !stmt.declaration.type.includes("Declaration") && (stmt.declaration.type === "Identifier" || stmt.declaration.id)) {
       body = body.concat([varDeclOrAssignment(parsed, {
         type: "VariableDeclarator",
         id: stmt.declaration,
@@ -591,7 +592,7 @@ function insertDeclarationsForExports(parsed, options) {
       body.push(stmt);
     } else {
       body = body.concat(stmt.specifiers.map(function (specifier) {
-        return lively_lang.arr.include(topLevel.declaredNames, specifier.local.name) ? null : varDeclOrAssignment(parsed, {
+        return topLevel.declaredNames.includes(specifier.local.name) ? null : varDeclOrAssignment(parsed, {
           type: "VariableDeclarator",
           id: specifier.local,
           init: member(options.captureObj, specifier.local)
@@ -689,7 +690,7 @@ function putFunctionDeclsInFront(parsed, options) {
 
   for (var i = funcDecls.length; i--;) {
     var decl = funcDecls[i];
-    if (!shouldDeclBeCaptured(decl, options)) continue;
+    if (!decl.id || !shouldDeclBeCaptured(decl, options)) continue;
 
     var parentPath = scope.funcDeclPaths[i].slice(0, -1),
 
@@ -728,7 +729,9 @@ function putFunctionDeclsInFront(parsed, options) {
 
 function computeDefRanges(parsed, options) {
   var topLevel = topLevelDeclsAndRefs(parsed);
-  return lively_lang.chain(topLevel.scope.varDecls).pluck("declarations").flatten().value().concat(topLevel.scope.funcDecls).reduce(function (defs, decl) {
+  return lively_lang.chain(topLevel.scope.varDecls).pluck("declarations").flatten().value().concat(topLevel.scope.funcDecls.filter(function (ea) {
+    return ea.id;
+  })).reduce(function (defs, decl) {
     if (!defs[decl.id.name]) defs[decl.id.name] = [];
     defs[decl.id.name].push({ type: decl.type, start: decl.start, end: decl.end });
     return defs;
@@ -924,7 +927,7 @@ function declarationWrapperCall(declarationWrapperNode, declNode, varNameLiteral
     if (evalId !== undefined) keyVals.push("evalId", lively_ast.nodes.literal(evalId));
     if (sourceAccessorName) keyVals.push("moduleSource", lively_ast.nodes.id(sourceAccessorName));
     if (addMeta) {
-      return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder, lively_ast.nodes.objectLiteral(keyVals /*meta node*/));
+      return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder, lively_ast.nodes.objectLiteral(keyVals) /*meta node*/);
     }
   }
 
