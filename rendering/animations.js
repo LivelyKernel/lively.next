@@ -275,6 +275,11 @@ export class PropertyAnimation {
         before.backgroundImage = originalGradient;
       }
     }
+    // ensure that before and after props both have the same keys
+    for (let key of arr.union(obj.keys(before), obj.keys(after))) {
+      if (!key in before) before[key] = after[key];
+      if (!key in after) after[key] = before[key];
+    }
     return [obj.isEmpty(before) ? false : before, obj.isEmpty(after) ? false : after];
   }
 

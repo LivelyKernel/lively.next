@@ -1,5 +1,5 @@
 import { config } from "lively.morphic";
-import { pt } from "lively.graphics";
+import { pt, Color } from "lively.graphics";
 import { arr, num, string } from "lively.lang";
 // addPathAttributes
 // addStyleProps
@@ -63,7 +63,10 @@ function addBorder(morph, style) {
 
 function addFill(morph, style) {
   let {fill} = morph;
-  if (!fill) return;
+  if (!fill) {
+    style.background = Color.transparent.toString()
+    return;
+  }
   if (fill.isGradient) style.backgroundImage = fill.toString()
   else style.background = fill.toString();
 }
