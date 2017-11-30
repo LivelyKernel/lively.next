@@ -230,7 +230,8 @@ export function textAndAttributesWithSubRanges(start, textAndAttributes) {
       ranges = [], textAndAttributesIntoLines = [];
   for (let lineTextAndAttributes of splitTextAndAttributesIntoLines(textAndAttributes)) {
     for (let i = 0; i < lineTextAndAttributes.length; i=i+2) {
-      let endColumn = column + lineTextAndAttributes[i].length;
+      let part = lineTextAndAttributes[i],
+          endColumn = column + (typeof part == 'string' ? part.length : 1);
       ranges.push({start: {row, column}, end: {row, column: endColumn}});
       textAndAttributesIntoLines.push(lineTextAndAttributes[i], lineTextAndAttributes[i+1]);
       column = endColumn;
