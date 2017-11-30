@@ -93,6 +93,12 @@ class ShortcutWidget extends ContextSensitiveWidget {
           this.getSubmorphNamed("valueString").value = t;
         }
       },
+      fontColor: {
+        set(c) {
+          this.setProperty('fontColor', c);
+          this.submorphs.forEach(m => { m.fontColor = c })
+        }
+      },
       nativeCursor: {defaultValue: "pointer"},
       fontColor: {
         derived: true,
@@ -110,7 +116,7 @@ class ShortcutWidget extends ContextSensitiveWidget {
               styleClasses: ["TreeLabel"],
               fontWeight: "bold",
               name: "valueString", opacity: .8,
-              borderRadius: 5, padding: rect(0,1,0,0),
+              borderRadius: 5, padding: rect(0,0,0,2),
               nativeCursor: "pointer", fontSize: 12,
               borderWidth: 0}
           ];
@@ -185,7 +191,7 @@ export class LayoutWidget extends ShortcutWidget {
   }
 
   async openPopover() {
-    let editor = new LayoutPopover({container: this.context, position: pt(0)});
+    let editor = new LayoutPopover({container: this.context});
     await editor.fadeIntoWorld(this.globalBounds().center());
     connect(editor, "layoutChanged", this, "layoutChanged");
     signal(this, "openWidget", editor);
@@ -210,7 +216,14 @@ export class ColorWidget extends Morph {
       isSelected: {
         set(selected) {
           if (this.getProperty('isSelected') != selected) {
-             selected ? this.addStyleClass('selected') : this.removeStyleClass('selected');
+             // fixme: style sheets should restore the initial value, once a rule no longer applies
+             if (selected) {
+               this.addStyleClass('selected');
+               this.removeStyleClass('unselected');
+             } else {               
+               this.removeStyleClass('selected');
+               this.addStyleClass('unselected');
+             }
              this.setProperty('isSelected', selected);
           }
         }
@@ -220,6 +233,9 @@ export class ColorWidget extends Morph {
           this.styleSheets = new StyleSheet({
             ".ColorWidget.selected .Label": {
               fontColor: Color.white
+            },
+            ".ColorWidget.unselected .Label": {
+              fontColor: Color.black
             },
             ".ColorWidget .Label": {
               opacity:.6,
@@ -420,7 +436,6 @@ export class ColorWidget extends Morph {
       title: "Fill Control",
       gradientEnabled: this.gradientEnabled
     });
-    editor.position = pt(0);
     await editor.fadeIntoWorld(this.globalBounds().center());
     connect(editor, "fillValue", this, "update");
     signal(this, "openWidget", editor);
@@ -488,7 +503,14 @@ export class NumberWidget extends Morph {
       isSelected: {
         set(selected) {
           if (this.getProperty('isSelected') != selected) {
-             selected ? this.addStyleClass('selected') : this.removeStyleClass('selected');
+             // fixme: style sheets should restore the initial value, once a rule no longer applies
+             if (selected) {
+               this.addStyleClass('selected');
+               this.removeStyleClass('unselected');
+             } else {               
+               this.removeStyleClass('selected');
+               this.addStyleClass('unselected');
+             }
              this.setProperty('isSelected', selected);
           }
         }
@@ -588,6 +610,9 @@ export class NumberWidget extends Morph {
       ".selected .Label": {
         fontColor: Color.white
       },
+      '.unselected .Label': {
+        fontColor: Color.black
+      },
       "[name=value]": {
         padding: this.padding,
         fill: Color.transparent,
@@ -667,7 +692,7 @@ export class ShadowWidget extends Morph {
   }
 
   async openPopover() {
-    let shadowEditor = new ShadowPopover({shadowValue: this.shadowValue, position: pt(0)});
+    let shadowEditor = new ShadowPopover({shadowValue: this.shadowValue});
     await shadowEditor.fadeIntoWorld(this.globalBounds().center());
     connect(shadowEditor, "shadowValue", this, "shadowValue");
     connect(this, "shadowValue", this, "update");
@@ -787,7 +812,7 @@ export class PaddingWidget extends Label {
         defaultValue: "false",
         set(v) {
           this.setProperty("isSelected", v);
-          this.fontColor = v ? Color.white : Color.blue;
+          this.fontColor = v ? Color.white : Color.black;
         }
       },
       rectangle: {
