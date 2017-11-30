@@ -58,9 +58,9 @@ export class Label extends Morph {
         set(value) {
           if (!Array.isArray(value)) value = [String(value), {}];
           if (value.length === 0) value = ["", {}];
-          this._cachedTextBounds = null;
+          let prevValue = this.textAndAttributes;
           this.setProperty("textAndAttributes", value);
-          if (this.autofit) this._needsFit = true;
+          if (this.autofit && !arr.equals(prevValue, value)) this.invalidateTextLayout();
           signal(this, "value", value);
         }
       },
@@ -127,10 +127,9 @@ export class Label extends Morph {
         initialize(value) { this.padding = value; /*for num -> rect conversion*/},
         set(value) {
           if (!value) value = Rectangle.inset(0);
-          this._cachedTextBounds = null;
           let previousPadding = this.padding;
           this.setProperty("padding", typeof value === "number" ? Rectangle.inset(value) : value);
-          if (this.autofit && !previousPadding.equals(value)) this._needsFit = true;
+          if (this.autofit && !previousPadding.equals(value)) this.invalidateTextLayout();
         }
       },
 
@@ -140,10 +139,9 @@ export class Label extends Morph {
         values: RichTextControl.basicFontItems().map(f => f.value),
         defaultValue: "Sans-Serif",
         set(fontFamily) {
-          this._cachedTextBounds = null;
           let previousFontFamily = this.fontFamily;
           this.setProperty("fontFamily", fontFamily);
-          if (this.autofit && previousFontFamily != fontFamily) this._needsFit = true;
+          if (this.autofit && previousFontFamily != fontFamily) this.invalidateTextLayout()
         }
       },
 
@@ -153,10 +151,9 @@ export class Label extends Morph {
         isStyleProp: true,
         defaultValue: 12,
         set(fontSize) {
-          this._cachedTextBounds = null;
           let previousFontSize = this.fontSize;
           this.setProperty("fontSize", fontSize);
-          if (this.autofit && fontSize != previousFontSize) this._needsFit = true;
+          if (this.autofit && fontSize != previousFontSize) this.invalidateTextLayout();
         }
       },
 
@@ -168,10 +165,9 @@ export class Label extends Morph {
         isStyleProp: true,
         defaultValue: "normal",
         set(fontWeight) {
-          this._cachedTextBounds = null;
           let previousFontWeight = this.fontWeight;
           this.setProperty("fontWeight", fontWeight);
-          if (this.autofit && previousFontWeight != fontWeight) this._needsFit = true;
+          if (this.autofit && previousFontWeight != fontWeight) this.invalidateTextLayout();
         }
       },
 
@@ -181,10 +177,9 @@ export class Label extends Morph {
         isStyleProp: true,
         defaultValue: "normal",
         set(fontStyle) {
-          this._cachedTextBounds = null;
           let previousFontStyle = this.fontStyle;
           this.setProperty("fontStyle", fontStyle);
-          if (this.autofit && previousFontStyle != fontStyle) this._needsFit = true;
+          if (this.autofit && previousFontStyle != fontStyle) this.invalidateTextLayout();
         }
       },
 
@@ -195,9 +190,8 @@ export class Label extends Morph {
       textStyleClasses: {
         defaultValue: undefined,
         set(textStyleClasses) {
-          this._cachedTextBounds = null;
           this.setProperty("textStyleClasses", textStyleClasses);
-          if (this.autofit) this._needsFit = true;
+          if (this.autofit) this.invalidateTextLayout();
         }
       }
 
@@ -233,6 +227,20 @@ export class Label extends Morph {
     if (topRight !== undefined) this.topRight = topRight;
     if (topLeft !== undefined) this.topLeft = topLeft;
     if (center !== undefined) this.center = center;
+  }
+
+  __additionally_serialize__(snapshot, objRef, pool, addFn) {
+    super.__additionally_serialize__(snapshot, objRef, pool, addFn);
+    this.fit();
+    snapshot._cachedTextBounds = this._cachedTextBounds && this._cachedTextBounds.toTuple();
+  }
+
+  __after_deserialize__(snapshot, objRef) {
+    super.__after_deserialize__(snapshot, objRef);
+    if (snapshot._cachedTextBounds) {
+      this.__after_called__ = true;
+      this._cachedTextBounds =  Rectangle.fromTuple(snapshot._cachedTextBounds);
+    }
   }
 
   get isLabel() { return true }
