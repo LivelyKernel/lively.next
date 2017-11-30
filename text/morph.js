@@ -340,7 +340,7 @@ export class Text extends Morph {
 
       value: {
         group: "text",
-        after: ["document"],
+        after: ["document", "embeddedMorphMap"],
         derived: true,
         get() {
           var {textAndAttributes} = this;
@@ -681,6 +681,18 @@ export class Text extends Morph {
     this.ensureUndoManager();
   }
 
+  __after_deserialize__(snapshot, objRef) {
+    super.__after_deserialize__(snapshot, objRef);
+    if (!snapshot._cachedLineExtents) return;
+    this.whenRendered().then(() => {
+      for (let i = 0; i < this.document.lines.length; i++) {
+        let [width, height] = snapshot._cachedLineExtents[i];
+        this.document.lines[i].changeExtent(width, height);
+        this.fit();
+      }
+    });
+  }
+
   get __only_serialize__() {
     return arr.withoutAll(super.__only_serialize__, [
       "document",
@@ -688,7 +700,8 @@ export class Text extends Morph {
       "viewState",
       "undoManager",
       "markers",
-      "textLayout"
+      "textLayout",
+      "embeddedMorphMap"
     ]);
   }
 
@@ -712,6 +725,7 @@ export class Text extends Morph {
           return m;
       })
     };
+    snapshot._cachedLineExtents = this.document.lines.map(l => [l.width, l.height]);
   }
 
   get isText() {
@@ -775,14 +789,8 @@ export class Text extends Morph {
     super.onSubmorphChange(change, submorph);
     let {prop} = change;
     if (this.embeddedMorphMap.get(submorph)) {
-      if (prop == 'position' && !this._correctingPosition) {
-        this._correctingPosition = true;
-        let morphAnchor = this.embeddedMorphMap.get(submorph).anchor;
-        morphAnchor.position = morphAnchor.position // trigger update
-        this._correctingPosition = false;
-      }
-      if (prop == 'extent') {
-        this.invalidateTextLayout(true, true);
+      if (prop == 'position' || prop == 'extent') {
+        this.invalidateTextLayout(prop == 'extent' || prop == 'extent');
       }
     }
   }
@@ -1343,7 +1351,8 @@ export class Text extends Morph {
           let anchor = this.addAnchor({id: "embedded-" + morph.id, ...start});
           connect(anchor, "position", morph, "position", {
             converter: function(textPos) {
-              return this.targetObj.owner.charBoundsFromTextPosition(textPos).topLeft();
+              let tm = this.targetObj.owner;
+              return tm ? tm.charBoundsFromTextPosition(textPos).topLeft() : this.targetObj.position;
             }
           }).update(anchor.position);
           embeddedMorphMap.set(morph, {anchor});
@@ -1988,6 +1997,10 @@ export class Text extends Morph {
           resize = () => {
             if (!fixedHeight && this.height != textBounds.height) this.height = textBounds.height
             if (!fixedWidth && this.width != textBounds.width) this.width = textBounds.width;
+            this.embeddedMorphs.forEach(submorph => {
+              let a = this.embeddedMorphMap.get(submorph).anchor;
+              a.position = a.position;
+            })
           }
     if (this.document.lines.find(l => l.hasEstimatedExtent)) {
       this.whenRendered().then(resize)

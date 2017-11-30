@@ -59,8 +59,11 @@ export default class TextLayout {
       if (!debug.debugTextLayout) debug = false;
     }
 
-    // fast and exact version for small texts:
-    if (!debug && morph.lineCount() < 10 && morph.document.stringSize < 3000) {
+    // fast and exact version for small texts and no fontFamily inside textAndAttributes:
+    if (!debug
+        && morph.lineCount() < 10 
+        && morph.document.stringSize < 3000 
+        && !arr.any(morph.textAndAttributes, attr => attr && attr.fontFamily != undefined)) {
       var directRenderLineFn = textRenderer.directRenderLineFn(morph),
           linesBounds = fontMetric.manuallyComputeBoundsOfLines(
             morph, lines, 0, 0, {
