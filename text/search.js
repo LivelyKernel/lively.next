@@ -327,6 +327,8 @@ export class SearchWidget extends Morph {
 
   focus() {
     this.get("searchInput").focus();
+    this.whenRendered().then(() => 
+      this.get("searchInput").invalidateTextLayout(true, true));
   }
 
   cleanup() {
@@ -478,8 +480,8 @@ export class SearchWidget extends Morph {
       this.addSearchMarkersForPreview(state.last.found);
     }
 
-    inputMorph.selectAll();
     this.focus();
+    inputMorph.selectAll();
   }
 
   advance(backwards) {
