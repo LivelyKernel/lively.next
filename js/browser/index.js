@@ -506,7 +506,7 @@ export default class Browser extends Window {
     this.selectPackageNamed(!p ? null : typeof p === "string" ? p : p.url || p.address);
   }
 
-  get selectedCodeEntity() { return  this.ui.codeEntityTree.selection; }
+  get selectedCodeEntity() { return this.ui.codeEntityTree.selectedNode; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // source changes
