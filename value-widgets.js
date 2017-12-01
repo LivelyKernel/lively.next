@@ -201,7 +201,7 @@ export class LayoutWidget extends ShortcutWidget {
 
 // these can exist outside of a certain morph context
 
-export class ColorWidget extends Morph {
+export class ColorWidget extends ContextSensitiveWidget {
 
   static get properties() {
     return {
@@ -432,6 +432,7 @@ export class ColorWidget extends Morph {
 
   async openFillEditor() {
     let editor = new FillPopover({
+      handleMorph: this.context,
       fillValue: this.color,
       title: "Fill Control",
       gradientEnabled: this.gradientEnabled

@@ -92,6 +92,7 @@ class GradientTypeSelector extends Morph {
 export class GradientEditor extends Morph {
   static get properties() {
     return {
+      handleMorph: {},
       gradientValue: {
         set(v) {
           if (!(v && v.isGradient)) {
@@ -195,19 +196,17 @@ export class GradientEditor extends Morph {
     });
   }
   async selectRadialGradient() {
-    this.gradientClass = RadialGradient;
     this.get("linearMode").borderColor = Color.gray.darker();
     this.get("radialMode").borderColor = Color.orange;
-    await this.applyGradient(this.gradientClass);
-    await this.updateGradientHandles(this.gradientClass);
+    await this.applyGradient(RadialGradient);
+    await this.updateGradientHandles();
   }
 
   async selectLinearGradient() {
-    this.gradientClass = LinearGradient;
     this.get("radialMode").borderColor = Color.gray.darker();
     this.get("linearMode").borderColor = Color.orange;
-    await this.applyGradient(this.gradientClass);
-    await this.updateGradientHandles(this.gradientClass);
+    await this.applyGradient(LinearGradient);
+    await this.updateGradientHandles();
   }
 
   async applyGradient(gradientClass) {
@@ -234,11 +233,12 @@ export class GradientEditor extends Morph {
     this.updateGradientHandles();
   }
 
-  async updateGradientHandles(gradientClass = this.gradientClass) {
+  async updateGradientHandles() {
     // gradient handles need to be requested from the user of
     // a gradient editor. It is not the responsibility of
     // the gradient editor to know of the target at hand.
-    const duration = 300;
+    const duration = 300,
+          gradientClass = this.gradientValue.__proto__.constructor;
     if (!this.handleMorph) return;
     this.gradientHandle && (await this.gradientHandle.fadeOut(duration));
     if (gradientClass == RadialGradient) {
@@ -248,6 +248,7 @@ export class GradientEditor extends Morph {
     }
     if (this.gradientHandle) {
       signal(this, "openHandle", this.gradientHandle);
+      this.gradientHandle.relayout();
       this.gradientHandle.opacity = 0;
       this.gradientHandle.animate({opacity: 1, duration});
     }
@@ -267,7 +268,7 @@ export class GradientEditor extends Morph {
     connect(this, "gradientValue", this, "update");
     this.update(this.gradientValue);
     selector.update(this.gradientValue);
-    this.gradientValue && this.updateGradientHandles(this.gradientValue.__proto__.constructor);
+    this.gradientValue && this.updateGradientHandles();
   }
 
   gradientEditor() {
@@ -342,22 +343,21 @@ class StopControlHead extends Morph {
 
    async expand() {
       if (this.submorphs.length > 1) return;
-      let palette = this.get("paletteField"), ge;
+      let palette = this.get("paletteField"), duration = 100, ge;
       var center = pt(2,-14);
       this.layout = null;
       this.submorphs = [this.closeButton(), palette, this.pickerField()];
-      palette.animate({extent: pt(15,15), duration: 200});
+      palette.animate({extent: pt(15,15), duration});
       this.animate({
-        layout: new HorizontalLayout({spacing: 3}),
-        center, duration: 200
+        layout: new HorizontalLayout({spacing: 3}), duration
       });
       // if clipped by owner move into view accordingly
       ge = this.get('gradientEditor');
       let {x: leftDistance, width} = this.transformRectToMorph(ge, this.innerBounds()),
           rightDistance = leftDistance + width - ge.width;
-      if (leftDistance < 0) center = center.addXY(-leftDistance, 0);
-      if (rightDistance > 0) center = center.addXY(-rightDistance, 0);
-      await this.animate({center, duration: 200})
+      if (leftDistance < this.width / 2) center = center.addXY((this.width / 3) - leftDistance, 0);
+      if (rightDistance > this.width / 2) center = center.addXY((this.width / 3) - rightDistance, 0);
+      await this.animate({center, duration})
       this.stopVisualizer.gradientEditor.update();
    }
 
@@ -828,6 +828,8 @@ class GradientDirectionHandle extends Ellipse {
   static get properties() {
     return {
       target: {},
+      origin: {defaultValue: pt(25, 25)},
+      extent: {defaultValue: pt(50, 50)},
       styleSheets: {
         initialize() {
           this.styleSheets = this.styler;
@@ -847,9 +849,7 @@ class GradientDirectionHandle extends Ellipse {
       '.GradientDirectionHandle': {
         borderColor: Color.orange,
         fill: Color.transparent,
-        borderWidth: 1,
-        origin: pt(25, 25),
-        extent: pt(50, 50)
+        borderWidth: 1
       },
       '.GradientDirectionHandle .RotationPoint': {
         fill: Color.orange,

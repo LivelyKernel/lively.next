@@ -117,11 +117,9 @@ export class Popover extends Morph {
         offset = arrow.height;
     if (body.extent.equals(this.extent)) return;
     if (animated) {
-      this.animate({extent: body.extent, duration});
       body.animate({topCenter: pt(0, offset), duration});
       closeBtn.animate({topRight: body.topRight.addXY(8, -8), duration});
     } else {
-      this.extent = body.extent;
       body.topCenter = pt(0, offset);
       closeBtn.topRight = body.topRight.addXY(8, -8);
     }
@@ -524,6 +522,10 @@ export class FillPopover extends StylePopover {
       gradientEnabled: {defaultValue: true},
       fillValue: {defaultValue: Color.blue},
       popoverColor: {defaultValue: Color.gray.lighter()},
+      handleMorph: {},
+      openHandles: {
+        defaultValue: []
+      },
       ui: {
         get() {
           return {
@@ -536,10 +538,23 @@ export class FillPopover extends StylePopover {
     }
   }
 
+  openHandle(handle) {
+    handle.openInWorld();
+    this.openHandles.push(handle);
+  }
+
+  close() {
+    super.close();
+    this.openHandles.forEach(h => h.remove());
+  }
+
   setupConnections() {
     let {fillSelector, colorField, gradientEditor} = this.ui;
     fillSelector && connect(this, 'fillValue', fillSelector, 'value');
-    gradientEditor && connect(gradientEditor, 'gradientValue', this, 'fillValue');
+    if (gradientEditor) {
+      connect(gradientEditor, 'gradientValue', this, 'fillValue');
+      connect(gradientEditor, 'openHandle', this, 'openHandle');
+    }
     if (colorField) {
       connect(this, 'close', colorField, 'remove');
       connect(colorField, 'update', this, 'fillValue');
@@ -571,6 +586,7 @@ export class FillPopover extends StylePopover {
           });
           g.whenRendered().then(() => {
             this.setupConnections();
+            this.handleMorph && g.showGradientHandlesOn(this.handleMorph)
             g.update();
           });
           return g;
@@ -774,7 +790,7 @@ export class PointPopover extends StylePopover {
     let m = this.getSubmorphNamed('mesh'),
         pv = this.getSubmorphNamed('point value view');
     m.origin = m.innerBounds().center().addXY(4,1);
-    m.position = this.innerBounds().center();
+    m.position = this.get('body').innerBounds().center();
     m.scale = this.resolution;
     this.getSubmorphNamed('resolution view').value = "Resolution: " + this.resolution.toFixed(2) + 'x';
     pv.value = obj.safeToString(this.pointValue);

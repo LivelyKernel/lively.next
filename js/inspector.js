@@ -867,7 +867,7 @@ export class PropertyControl extends DraggableTreeLabel {
 
   static renderColorControl(args) {
     let propertyControl, {node, gradientEnabled, fastRender, 
-                          valueString, keyString, value} = args;
+                          valueString, keyString, value, target} = args;
     if (fastRender) {
       return [`${keyString}:`, {nativeCursor: "-webkit-grab", paddingRight: '23px'},
                `${value ? (value.valueOf ? value.valueOf() : valueString) : 'No Color'}`, {
@@ -876,7 +876,7 @@ export class PropertyControl extends DraggableTreeLabel {
     propertyControl = this.baseControl(args);
     propertyControl.control = new ColorWidget({
       color: (args.value && args.value.valueOf) ? args.value.valueOf() : args.value,
-      gradientEnabled
+      gradientEnabled, context: target
     });
     connect(propertyControl.control, "update", propertyControl, "propertyValue");
     connect(propertyControl, "update", propertyControl.control, "color", {
