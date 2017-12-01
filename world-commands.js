@@ -434,6 +434,7 @@ var commands = [
             "html": "lively.ide/html/workspace.js",
             "py": "lively.ide/py/workspace.js",
             "md": "lively.ide/md/workspace.js",
+            "sql": "lively.ide/sql/workspace.js",
             "text": null
           },
           alias = Object.keys(config.ide.modes.aliases).reduce((inverted, ea) =>
