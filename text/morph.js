@@ -736,7 +736,7 @@ export class Text extends Morph {
   }
 
   onChange(change) {
-    let {prop, selector} = change,
+    let {prop, selector, meta} = change,
         wraps = this.lineWrapping,
         textChange = false,
         viewChange = false,
@@ -756,7 +756,7 @@ export class Text extends Morph {
              a hard layout change if the width changes, line wrapping 
              is enabled and we have a fixed width of the morph */
           softLayoutChange = true;
-          hardLayoutChange = wraps && change.prevValue.x != change.value.x;        
+          hardLayoutChange = wraps && (change.prevValue.x != change.value.x);
           break;
         case "wordSpacing":
         case "letterSpacing":
@@ -776,16 +776,27 @@ export class Text extends Morph {
     }
 
     super.onChange(change);
+    
+    let updateTextEngine = () => {
 
-    if (scrollChange) this.viewState.wasScrolled = true;
+      if (scrollChange) this.viewState.wasScrolled = true;
+      
+      if (hardLayoutChange || softLayoutChange) {
+        this.invalidateTextLayout(
+          hardLayoutChange /*reset char bounds*/,
+          hardLayoutChange /*reset line heights*/);
+      }
+  
+      if (textChange) signal(this, "textChange", change);
+      if (viewChange) signal(this, "viewChange", change);
+    }
 
-    if (hardLayoutChange || softLayoutChange)
-      this.invalidateTextLayout(
-        hardLayoutChange /*reset char bounds*/,
-        hardLayoutChange /*reset line heights*/);
-
-    if (textChange) signal(this, "textChange", change);
-    if (viewChange) signal(this, "viewChange", change);
+    // if there is an animation in progress, we need to wait until that
+    // is finished animating, so that our dom measurement is not fucked up.
+    if (meta.animation)
+      promise.delay(meta.animation.duration).then(updateTextEngine)
+    else
+      updateTextEngine();
   }
   
   onSubmorphChange(change, submorph) {
