@@ -3,7 +3,7 @@ import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, date, Path, arr, string, obj } from "lively.lang";
 import { show, inspect, Text, config } from "./index.js";
 import KeyHandler from "./events/KeyHandler.js";
-import { loadObjectFromPartsbinFolder } from "./partsbin.js";
+import { loadObjectFromPartsbinFolder, loadPart } from "./partsbin.js";
 import { interactivelySaveWorld } from "./world-loading.js";
 
 
@@ -1003,6 +1003,14 @@ var commands = [
           { url, lineNumber } = opts;
       // "saved" || "aborted"
       return  await TextEditor.openAsEDITOR(url, {});
+    }
+  },
+
+  {
+    name: "open subserver controller",
+    exec: async (world, opts) => {
+      let controller = await loadPart("subserver controller");
+      return controller.openInWorld();
     }
   },
 
