@@ -1,5 +1,5 @@
 /*global Map*/
-import { Color, rect, pt } from "lively.graphics";
+import { Color, Rectangle, rect, pt } from "lively.graphics";
 
 import { obj, arr, promise, string } from "lively.lang";
 import { connect, signal, disconnect, once } from "lively.bindings";
@@ -712,7 +712,7 @@ export class PropertyControl extends DraggableTreeLabel {
         {value, fastRender, keyString, valueString, node} = args;
     if (fastRender) {
       return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
-              ` ${value}`, {fontColor: Color.blue, paddingTop: '1px'}];
+              ` ${value.length > 200 ? value.slice(0, 20) + '...' : value}`, {fontColor: Color.blue, paddingTop: '1px'}];
     }
     propertyControl = this.baseControl(args);
     propertyControl.control = new StringWidget({
@@ -1393,13 +1393,15 @@ export default class Inspector extends Morph {
         name: "fix import button", type: "button",
         fill:  Color.black.withA(.5),
         fontColor: Color.white,
-        borderWidth: 0,
+        borderWidth: 0, visible: false,
         label: "fix undeclared vars", extent: pt(100, 20)
       },
       {
         name: "this binding selector", type: DropDownList,
         fill: Color.black.withA(.5),
+        padding: Rectangle.inset(3),
         fontColor: Color.white, borderWidth: 0,
+        visible: false,
         selection: "selection",
         items: [{isListItem: true, value: "target",
           label: ["this ", null, ...rightArrow, " target", null]},
@@ -1461,6 +1463,7 @@ export default class Inspector extends Morph {
     }
     this.focusedNode = this.ui.propertyTree.selectedNode;
     this.openWidget = widget;
+    once(widget, 'close', this, 'closeOpenWidget');
     once(this.ui.propertyTree, "onMouseDown", this, "closeOpenWidget");
     connect(this.getWindow(), "bringToFront", widget, "openInWorld", {
       converter: () => widget.globalPosition, varMapping: {widget}
@@ -1470,9 +1473,8 @@ export default class Inspector extends Morph {
   repositionOpenWidget(evt) {
     if (this.openWidget && this.focusedNode) {
       let {propertyTree} = this.ui,
-          pos = propertyTree.worldPoint(
-                  propertyTree.textLayout.pixelPositionFor(
-                    propertyTree, {column: 0, row: propertyTree.selectedIndex - 1})).addPt(propertyTree.scroll.negated()),
+          {height, x, y} = propertyTree.textLayout.boundsFor(propertyTree, {column: 0, row: propertyTree.selectedIndex - 1}),
+          pos = propertyTree.worldPoint(pt(x,y + height/2)).addPt(propertyTree.scroll.negated()),
           treeBounds = propertyTree.globalBounds();
       pos.x = this.globalBounds().center().x
       if (pos.y < treeBounds.top()) {
@@ -1480,7 +1482,7 @@ export default class Inspector extends Morph {
       } else if (treeBounds.bottom() - 20 < pos.y) {
         pos = treeBounds.bottomCenter().addXY(0, -20);
       }
-      this.openWidget.animate({position: pos, duration: 200});
+      this.openWidget.position = pos;
     }
   }
 
@@ -1491,25 +1493,33 @@ export default class Inspector extends Morph {
 
   isEditorVisible() { return this.ui.codeEditor.height > 10; }
 
-  makeEditorVisible(bool) {
-    if (bool === this.isEditorVisible()) return;
+  makeEditorVisible(show) {
+    if (show === this.isEditorVisible()) return;
     let {
       extent: prevExtent, layout,
-      ui: {terminalToggler, codeEditor}
-    } = this;
+      ui: {terminalToggler, codeEditor, 
+           thisBindingSelector, fixImportButton}
+    } = this, duration = 200;
     layout.disable();
-    if (!bool) {
-      this.codeEditorHeight = layout.row(3).height;
-      terminalToggler.styleClasses = ["inactive", "toggle"];
-      layout.row(3).height = layout.row(2).height = 0;
-    } else {
+    if (show) {
       terminalToggler.styleClasses = ["active", "toggle"];
       layout.row(3).height = this.codeEditorHeight || 180;
       layout.row(2).height = 5;
+      fixImportButton.opacity = thisBindingSelector.opacity = 0;
+      fixImportButton.visible = thisBindingSelector.visible = true;
+      fixImportButton.animate({opacity: 1, duration});
+      thisBindingSelector.animate({opacity: 1, duration});
+    } else {
+      this.codeEditorHeight = layout.row(3).height;
+      terminalToggler.styleClasses = ["inactive", "toggle"];
+      layout.row(3).height = layout.row(2).height = 0;
+      fixImportButton.opacity = thisBindingSelector.opacity = 1;
+      fixImportButton.animate({visible: false, opacity: 0, duration});
+      thisBindingSelector.animate({visible: false, opacity: 0, duration});
     }
     this.extent = prevExtent;
-    layout.enable({duration: 300});
-    this.relayout({duration: 300});
+    layout.enable({duration});
+    this.relayout({duration});
     codeEditor.focus();
   }
 
@@ -1542,16 +1552,17 @@ export default class Inspector extends Morph {
           codeEditor
         }} = this,
         togglerBottomLeft = tree.bounds().insetBy(5).bottomLeft(),
-        buttonTopRight = codeEditor.bounds().insetBy(5).topRight();
+        importBottomRight = tree.bounds().insetBy(5).bottomRight(),
+        bindingBottomRight = importBottomRight.subXY(fixImportButton.width + 10, 0);
 
     if (animated.duration) {
       toggler.animate({bottomLeft: togglerBottomLeft, ...animated});
-      fixImportButton.animate({topRight: buttonTopRight, ...animated});
-      thisBindingSelector.animate({topRight: fixImportButton.bottomRight.addXY(0,5), ...animated});
+      fixImportButton.animate({bottomRight: importBottomRight, ...animated});
+      thisBindingSelector.animate({bottomRight: bindingBottomRight, ...animated});
     } else {
       toggler.bottomLeft = togglerBottomLeft;
-      fixImportButton.topRight = buttonTopRight;
-      thisBindingSelector.topRight = fixImportButton.bottomRight.addXY(0,5);
+      fixImportButton.bottomRight = importBottomRight;
+      thisBindingSelector.bottomRight = bindingBottomRight;
     }
   }
 
