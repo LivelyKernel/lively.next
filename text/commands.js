@@ -259,6 +259,19 @@ var commands = [
         morph.execCommand("indent according to mode");
     }
   },
+  
+  {
+    name: "browse snippets",
+    scrollCursorIntoView: true,
+    exec: async function(morph) {
+      let items = morph.snippets.map(ea =>
+        ({isListItem: true, string: `${ea.trigger} - ${ea.expansion}`, value: ea}));
+      let {selected: [snippet]} = await morph.world().filterableListPrompt(
+        "select snippet", items, {requester: morph})
+      if (snippet) snippet.expandAtCursor(morph);
+      return true;
+    }
+  },
 
   {
     name: "transpose chars",
