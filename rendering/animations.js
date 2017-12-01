@@ -55,15 +55,24 @@ export class AnimationQueue {
     const anim = new PropertyAnimation(this, this.morph, config);
     return this.morph.withMetaDo({animation: anim}, () => {
       if (!this.animations.find(a => a.equals(anim)) && anim.affectsMorph) {
-        anim.assignProps();
-        this.animations.push(anim);
-        return anim;
+        let mergeable;
+        if (mergeable = this.animations.find(a => a.duration == anim.duration)) {
+          mergeable.mergeWith(anim);
+          return mergeable;
+        } else {
+          anim.assignProps();
+          this.animations.push(anim);
+          return anim; 
+        }
       }
     });
   }
 
   startAnimationsFor(node) {
-    this.animations.forEach(anim => anim.start(node));
+    for (let i = 0; i < this.animations.length; i++) {
+      let anim = this.animations[i];
+      anim.start(node);
+    }
   }
   startSvgAnimationsFor(svgNode, type) {
     this.animations.forEach(anim => anim.startSvg(svgNode, type));
@@ -189,6 +198,11 @@ export class PropertyAnimation {
 
   equals(animation) {
     return obj.equals(this.animatedProps, animation.animatedProps);
+  }
+
+  mergeWith(animation) {
+    Object.assign(this.morph, animation.animatedProps);
+    this.afterProps = this.gatherAnimationProps();
   }
 
   get affectsMorph() {
