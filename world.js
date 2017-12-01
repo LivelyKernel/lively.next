@@ -781,9 +781,7 @@ export class World extends Morph {
 
   openStatusMessage(statusMessage, delay) {
     // $world.setStatusMessage("test", Color.green)
-
     this.addMorph(statusMessage);
-
     if (statusMessage.slidable) {
       var messages = this.visibleStatusMessages();
       for (let m of messages) {
@@ -793,7 +791,7 @@ export class World extends Morph {
         arr.remove(messages, m);
       }
 
-      messages.forEach(async msg => {
+      arr.without(messages, statusMessage).forEach(async msg => {
         if(!msg.isMaximized && msg.slidable) {
           msg.slideTo(msg.position.addPt(pt(0, -statusMessage.extent.y - 10)))
         }
