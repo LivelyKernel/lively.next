@@ -802,9 +802,11 @@ export class Text extends Morph {
   onSubmorphChange(change, submorph) {
     super.onSubmorphChange(change, submorph);
     let {prop} = change;
-    if (this.embeddedMorphMap.get(submorph)) {
+    if (this.embeddedMorphMap.get(submorph) && !this._positioningSubmorphs) {
       if (prop == 'position' || prop == 'extent') {
+        this._positioningSubmorphs = true;
         this.invalidateTextLayout(prop == 'extent' || prop == 'extent');
+        this._positioningSubmorphs = false;
       }
     }
   }
