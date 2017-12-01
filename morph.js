@@ -1430,7 +1430,7 @@ export class Morph {
      return this;
   }
 
-  async fadeIntoWorld(pos=world.visibleBounds().center(), duration=300) {
+  async fadeIntoWorld(pos=$world.visibleBounds().center(), duration=200) {
       const w = new Morph({opacity: 0, scale: 0,
                            fill: Color.transparent}),
             world = this.env.world;
@@ -1438,6 +1438,7 @@ export class Morph {
       w.addMorph(this);
       this.position = w.extent.scaleBy(.5);
       w.center = pos
+      w.scale = .8;
       await w.animate({opacity: 1, scale: 1, duration});
       world.addMorph(this);
       w.remove();
