@@ -163,13 +163,15 @@ export class Renderer {
   }
 
   renderSelectedSubmorphs(morph, submorphs) {
-    let {borderWidthLeft, borderWidthTop, origin: {x: oX, y: oY}} = morph;
+    let {borderWidthLeft, borderWidthTop, origin: {x: oX, y: oY}} = morph,
+        i = submorphs.length - 1, renderedSubmorphs = new Array(i + 1);
+    for (; i >= 0; i--) renderedSubmorphs[i] = this.render(submorphs[i]);
     return h("div", {
       style: {
         position: "absolute",
         transform: `translate(${oX - borderWidthLeft}px,${oY - borderWidthTop}px)`
       }
-    }, submorphs.map(m => this.render(m)));
+    }, renderedSubmorphs);
   }
 
   renderWorld(world) {
