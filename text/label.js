@@ -238,7 +238,8 @@ export class Label extends Morph {
   __after_deserialize__(snapshot, objRef) {
     super.__after_deserialize__(snapshot, objRef);
     if (snapshot._cachedTextBounds) {
-      this.__after_called__ = true;
+      // change meta data to indicate that morph is being reconstructed      
+      this.changeMetaData('deserializeInfo', {recoveredTextBounds: true});
       this._cachedTextBounds =  Rectangle.fromTuple(snapshot._cachedTextBounds);
     }
   }

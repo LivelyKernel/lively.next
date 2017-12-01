@@ -403,12 +403,19 @@ ${((height / 2) - (bh / height) * (height / 2)) + (y * height) - (height / 2)})`
                         "stop-color": stop.color.toString()}})));
 }
 
+
 function initDOMState(renderer, world) {
   renderer.rootNode.appendChild(renderer.domNode);
   renderer.ensureDefaultCSS()
     .then(() => promise.delay(500))
     .then(() => world.env.fontMetric && world.env.fontMetric.reset())
-    .then(() => world.withAllSubmorphsDo(ea => (ea.isText || ea.isLabel) && ea.forceRerender()))
+    .then(() => world.withAllSubmorphsDo(ea => {
+        if (ea.isText || ea.isLabel) {
+          let {serializationInfo} = ea.metadata || {};
+          if (serializationInfo && serializationInfo.recoveredTextBounds) return;
+          ea.forceRerender();
+        }
+     }))
     .catch(err => console.error(err));
 }
 

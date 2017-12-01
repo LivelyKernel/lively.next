@@ -683,14 +683,17 @@ export class Text extends Morph {
 
   __after_deserialize__(snapshot, objRef) {
     super.__after_deserialize__(snapshot, objRef);
-    if (!snapshot._cachedLineExtents) return;
-    this.whenRendered().then(() => {
-      for (let i = 0; i < this.document.lines.length; i++) {
-        let [width, height] = snapshot._cachedLineExtents[i];
-        this.document.lines[i].changeExtent(width, height);
-        this.fit();
-      }
-    });
+    if (snapshot._cachedLineExtents) {
+      // change meta data to reflecdt that morph is reconstructed
+      this.changeMetaData('deserializeInfo', {recoveredTextBounds: true});
+      this.whenRendered().then(() => {
+        for (let i = 0; i < this.document.lines.length; i++) {
+          let [width, height] = snapshot._cachedLineExtents[i];
+          this.document.lines[i].changeExtent(width, height);
+          this.fit();
+        }
+      });
+    }
   }
 
   get __only_serialize__() {
