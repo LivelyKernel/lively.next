@@ -4,8 +4,13 @@ import "svg.easing.js";
 import "svg.pathmorphing.js";
 import {obj, properties, arr} from "lively.lang";
 import {LinearGradient, pt, RadialGradient, rect} from "lively.graphics";
-import {pad, camelize} from "lively.lang/string.js";
+import {camelize} from "lively.lang/string.js";
 import {styleProps, addPathAttributes, addSvgAttributes} from "./property-dom-mapping.js";
+
+// move to lively.lang
+function pad(array, n, getPadElement = arr.last) {
+   return [...array, ...(new Array(Math.max(n - array.length, 0)).fill(getPadElement(array)))]
+}
 
 /*rms 27.11.17: Taken from https://css-tricks.com/snippets/sass/easing-map-get-function/ */
 
@@ -56,7 +61,7 @@ export class AnimationQueue {
     return this.morph.withMetaDo({animation: anim}, () => {
       if (!this.animations.find(a => a.equals(anim)) && anim.affectsMorph) {
         let mergeable;
-        if (mergeable = this.animations.find(a => a.duration == anim.duration)) {
+        if (mergeable = this.animations.find(a => a.canMerge(anim))) {
           mergeable.mergeWith(anim);
           return mergeable;
         } else {
@@ -200,8 +205,13 @@ export class PropertyAnimation {
     return obj.equals(this.animatedProps, animation.animatedProps);
   }
 
+  canMerge(animation) {
+    return this.easing == animation.easing && this.duration == animation.duration;
+  }
+
   mergeWith(animation) {
     Object.assign(this.morph, animation.animatedProps);
+    Object.assign(this.config, animation.config);
     this.afterProps = this.gatherAnimationProps();
   }
 

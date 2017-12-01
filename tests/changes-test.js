@@ -5,7 +5,7 @@ import { GroupChange } from "../changes.js";
 import { expect } from "mocha-es6";
 import { pt, Color } from "lively.graphics";
 import { num, arr } from "lively.lang";
-import { PropertyAnimation } from "../rendering/morphic-default.js";
+import { PropertyAnimation } from "../rendering/animations.js";
 
 var env;
 
@@ -206,6 +206,17 @@ describe("changes", function () {
       expect(anim.affectsMorph).to.be.false;
       q.registerAnimation(a);
       expect(q.animations.length).equals(0);
+    })
+
+    it("merges animations that have the same duration", () => {
+      var m = morph({extent: pt(10,20), fill: Color.red}),
+          q = m._animationQueue,
+          config1 = {extent: pt(40,40), duration: 200},
+          config2 = {position: pt(50,50), duration: 200};
+      q.registerAnimation(config1);
+      q.registerAnimation(config2);
+      expect(q.animations.length).equals(1);
+      expect(q.animations[0].animatedProps).deep.equals({extent: pt(40,40), position: pt(50,50)});
     })
     
   })

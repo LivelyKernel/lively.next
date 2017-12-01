@@ -5,11 +5,6 @@ import { config } from "../index.js";
 import { styleProps, addSvgAttributes, addPathAttributes } from "./property-dom-mapping.js"
 import { h } from "virtual-dom";
 
-// move to lively.lang
-function pad(array, n, getPadElement = arr.last) {
-   return [...array, ...(new Array(Math.max(n - array.length, 0)).fill(getPadElement(array)))]
-}
-
 // await $world.env.renderer.ensureDefaultCSS()
 export const defaultCSS = `
 
