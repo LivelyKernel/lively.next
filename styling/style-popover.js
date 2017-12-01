@@ -117,17 +117,12 @@ export class Popover extends Morph {
         offset = arrow.height;
     if (body.extent.equals(this.extent)) return;
     if (animated) {
-      this.animate({
-        origin: pt(body.width / 2, -offset),
-        extent: body.extent,
-        duration
-      });
-      body.animate({position: pt(-body.width / 2, offset), duration});
+      this.animate({extent: body.extent, duration});
+      body.animate({topCenter: pt(0, offset), duration});
+      closeBtn.animate({topRight: body.topRight.addXY(8, -8), duration});
     } else {
       this.extent = body.extent;
-      this.origin = pt(this.width / 2, -offset);
       body.topCenter = pt(0, offset);
-      arrow.bottomCenter = pt(0, offset);
       closeBtn.topRight = body.topRight.addXY(8, -8);
     }
   }
@@ -214,6 +209,11 @@ class SelectableControl extends Morph {
     const control = await this.target.execCommand(cmd),
           selector = this.get("modeSelector");
     control.opacity = 0;
+    if (this.lastLabel) {
+       let lr = selector.submorphs.indexOf(this.lastLabel) < selector.submorphs.indexOf(selector.currentLabel);
+       control.topLeft = selector.bottomLeft.addXY(lr ? 20 : -20,10);
+    }
+    this.lastLabel = selector.currentLabel;
     this.animate({submorphs: [selector, control], duration});
     control.animate({opacity: 1, duration});
   }
