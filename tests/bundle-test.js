@@ -28,11 +28,11 @@ let expectedPackage1File1Code = `System.register("package1@1/file1.js", ["packag
   var x;
   return {
     setters: [
-      function (package1_1_file2_js) {
-        x = package1_1_file2_js.x;
+      function (package1_at_1_forwardslash_file2_period_js) {
+        x = package1_at_1_forwardslash_file2_period_js.x;
       },
-      function (package1_1_file3_js) {
-        _export("z", package1_1_file3_js.z);
+      function (package1_at_1_forwardslash_file3_period_js) {
+        _export("z", package1_at_1_forwardslash_file3_period_js.z);
       }
     ],
     execute: function() {
@@ -90,19 +90,20 @@ package1@1/file3.js (18B)
 
     it("into function", async () => {
       await bundle.resolveDependenciesStartFrom("file1.js", "package1");
+      expectedPackage1File1Code
       expect(bundle.entryModule.transformToRegisterFormat()).equals(expectedPackage1File1Code);
     });
 
     it("star import", async () => {
       await bundle.resolveDependenciesStartFrom("file_star_import.js", "package1");
       expect(bundle.entryModule.transformToRegisterFormat())
-        .contains('x = package1_1_file1_js;')
+        .contains('x = package1_at_1_forwardslash_file1_period_js;');
     });
 
     it("star export", async () => {
       await bundle.resolveDependenciesStartFrom("file_star_export.js", "package1");
       expect(bundle.entryModule.transformToRegisterFormat())
-        .contains('_export(package1_1_file1_js);')
+        .contains("_export(package1_at_1_forwardslash_file1_period_js);")
     });
 
   });
