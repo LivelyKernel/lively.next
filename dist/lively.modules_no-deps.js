@@ -6349,7 +6349,7 @@ function _require(currentModule, name, parent) {
   var System = currentModule.System,
       module = System._nodeRequire("module");
 
-  if (name.startsWith(".")) name = relative(module, name);
+  if (name.startsWith(".")) name = relative(currentModule, name);
   return module._load(name, parent);
 }
 
@@ -6358,7 +6358,7 @@ function _resolve(currentModule, name, parent) {
   var System = currentModule.System,
       module = System._nodeRequire("module");
 
-  if (name.startsWith(".")) name = relative(module, name);
+  if (name.startsWith(".")) name = relative(currentModule, name);
   return module._resolveFilename(name, parent);
 }
 

@@ -23,7 +23,7 @@ export function _require(currentModule, name, parent) {
   parent = ensureParent(currentModule, name);
   let {System} = currentModule,
       module = System._nodeRequire("module");
-  if (name.startsWith(".")) name = relative(module, name);
+  if (name.startsWith(".")) name = relative(currentModule, name);
   return module._load(name, parent);
 }
 
@@ -31,6 +31,6 @@ export function _resolve(currentModule, name, parent) {
   parent = ensureParent(currentModule, name);
   let {System} = currentModule,
       module = System._nodeRequire("module");
-  if (name.startsWith(".")) name = relative(module, name);
+  if (name.startsWith(".")) name = relative(currentModule, name);
   return module._resolveFilename(name, parent);
 }
