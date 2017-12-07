@@ -50,10 +50,14 @@
       "three.js": "three/build/three.js",
       "svg-intersections": "./dist/svg-intersections.js",
       "virtual-dom": "virtual-dom/dist/virtual-dom.js",
-      "bowser": "bowser/bowser.js",
+      "bowser": "bowser/bowser.min.js",
       "prism": "prismjs/prism.js",
       "prism-json": "prismjs/components/prism-json.js",
-      "webfontloader": "webfontloader/1.6.28/webfontloader.js"
+      "webfontloader": "webfontloader/1.6.28/webfontloader.js",
+      "web-animations-js": "web-animations-js/web-animations.min.js",
+      "svgjs": "svgjs/dist/svg.js",
+      "svg.easing.js": "svg.easing.js/svg.easing.js",
+      "svg.pathmorphing.js": "svg.pathmorphing.js/dist/svg.pathmorphing.js"
     },
     "meta": {
       "virtual-dom/dist/virtual-dom.js": {

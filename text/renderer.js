@@ -1,7 +1,7 @@
 /*global global,System*/
 import { fun, arr, obj } from "lively.lang";
 import { pt, Rectangle } from "lively.graphics";
-import { h } from "virtual-dom/dist/virtual-dom.js";
+import { h } from "virtual-dom";
 import { defaultAttributes, defaultStyle } from "../rendering/morphic-default.js";
 import { addOrChangeCSSDeclaration } from "../rendering/dom-helper.js";
 import { inspect, show } from "lively.morphic";
