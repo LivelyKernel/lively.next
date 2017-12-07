@@ -161,6 +161,3 @@ export var commands = [
     }
   }
 ]
-
-lively.modules.module("lively.morphic/text/commands.js").reload({reloadDeps: false, resetEnv: false});
-lively.modules.module("lively.morphic/text/morph.js").reload({reloadDeps: false, resetEnv: false});

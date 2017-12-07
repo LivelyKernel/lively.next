@@ -178,5 +178,3 @@ export var multiSelectCommands = [
 
 ];
 
-// await lively.modules.module("lively.morphic/text/commands.js").reload({reloadDeps: false, resetEnv: false});
-//await  lively.modules.module("lively.morphic/text/morph.js").reload({reloadDeps: false, resetEnv: false});
