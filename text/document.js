@@ -1819,8 +1819,9 @@ export default class Document {
     for (let i = 0; i < length-1; i++) {
       let lineTextAndAttributes = textAndAttributesByLine[i];
       if (!lineTextAndAttributes.length) lineTextAndAttributes = ["", null];
-      lineTextAndAttributes[lineTextAndAttributes.length-2] =
-        lineTextAndAttributes[lineTextAndAttributes.length-2] + "\n";
+      if (typeof lineTextAndAttributes[lineTextAndAttributes.length-2] == 'string')
+         lineTextAndAttributes[lineTextAndAttributes.length-2] = 
+            lineTextAndAttributes[lineTextAndAttributes.length-2] + "\n";
       textAndAttributesForInsert.push(...lineTextAndAttributes);
     }
     textAndAttributesForInsert.push(...textAndAttributesByLine[length-1]);
