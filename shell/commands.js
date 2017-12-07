@@ -22,6 +22,3 @@ export var shellCommands = [{
     return await runCommand(cmd);
   }
 }];
-
-lively.modules.module("lively.ide/shell/editor-plugin.js")
-  .reload({reloadDeps: false, resetEnv: false});
