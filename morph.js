@@ -980,10 +980,18 @@ class InspectHaloItem extends HaloItem {
   }
 
   onMouseDown(evt) {
-    this.halo.remove();
     (async () => {
-      var {default: Inspector} = await System.import("lively.ide/js/inspector.js");
-      Inspector.openInWindow({targetObject: this.halo.target});
+      var {default: Inspector} = await System.import("lively.ide/js/inspector.js"),
+           existing = this.world().getSubmorphsByStyleClassName('Inspector')
+                                  .find(i => i.targetObject == this.halo.target);
+      if (existing) {
+        let win = existing.getWindow();
+        win.minimized = false;
+        win.animate({center: this.world().visibleBounds().center(), duration: 200})
+      } else {
+        Inspector.openInWindow({targetObject: this.halo.target});
+      }
+      this.halo.remove();
     })();
   }
 
@@ -1003,7 +1011,15 @@ class EditHaloItem extends HaloItem {
   }
 
   onMouseDown(evt) {
-    this.halo.world().execCommand("open object editor", {target: this.halo.target});
+    let existing = this.world().getSubmorphsByStyleClassName('ObjectEditor')
+                       .find(oe => oe.target == this.halo.target);
+    if (existing) {
+      let win = existing.getWindow();
+      win.minimized = false;
+      win.animate({center: this.world().visibleBounds().center(), duration: 200});
+    } else {
+      this.halo.world().execCommand("open object editor", {target: this.halo.target}); 
+    }
     this.halo.remove();
   }
 }
