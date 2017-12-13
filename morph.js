@@ -1,12 +1,12 @@
 /*global System,Uint8Array,Blob,location*/
 import { Color, Line, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
-import { string, obj, arr, num, promise, tree, fun, Path as PropPath } from "lively.lang";
+import { string, obj, arr, num, promise, tree, Path as PropPath } from "lively.lang";
 import {
   renderRootMorph,
   ShadowObject
 } from "./rendering/morphic-default.js";
 import { AnimationQueue, easings } from "./rendering/animations.js";
-import { morph, Icon, show } from "./index.js";
+import { morph, Icon } from "./index.js";
 import { MorphicEnv } from "./env.js";
 import config from "./config.js";
 import CommandHandler from "./CommandHandler.js";
@@ -21,6 +21,7 @@ import { StylingVisitor } from "./sizzle.js";
 
 // optional lively.halos imports
 import {showAndSnapToGuides, removeSnapToGuidesOf} from "lively.halos/drag-guides.js";
+import { show } from "lively.halos";
 
 const defaultCommandHandler = new CommandHandler();
 

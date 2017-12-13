@@ -206,6 +206,7 @@ export default class InputLine extends Text {
     }
 
     let textB = this.textBounds();
+    placeholder.fontSize = this.fontSize;
     placeholder.leftCenter = this.label.length
                            ? textB.rightCenter().addXY(0, this.borderWidth)
                            : textB.leftCenter().withX(0);

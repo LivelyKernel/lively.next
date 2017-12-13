@@ -8,7 +8,6 @@ export * from "./html-morph.js";
 export * from "./env.js";
 export * from "./layout.js";
 export { StyleSheet } from "./style-sheets.js";
-export { show } from "lively.halos/markers.js"
 export { ShadowObject } from "./rendering/morphic-default.js";
 export { Button } from "lively.components/buttons.js";
 export { Menu } from "lively.components/menus.js";

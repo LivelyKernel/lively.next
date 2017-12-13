@@ -1,4 +1,3 @@
-import { show } from "../index.js";
 import Keys from "./Keys.js";
 import bowser from "bowser";
 import config from "../config.js";

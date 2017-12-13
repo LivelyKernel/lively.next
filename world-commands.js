@@ -1,11 +1,11 @@
 /*global System*/
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, date, Path, arr, string, obj } from "lively.lang";
-import { show, inspect, Text, config } from "./index.js";
+import { inspect, Text, config } from "./index.js";
 import KeyHandler from "./events/KeyHandler.js";
 import { loadObjectFromPartsbinFolder, loadPart } from "./partsbin.js";
 import { interactivelySaveWorld } from "./world-loading.js";
-
+import { show } from "lively.halos/markers.js";
 
 var commands = [
 
