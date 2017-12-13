@@ -140,7 +140,12 @@ export default class Window extends Morph {
       minimizedBounds: {serialize: false},
       nonMinizedBounds: {},
       nonMaximizedBounds: {},
-      minimized: {},
+      minimized: {
+        set(isMinimized) {
+          this.setProperty('minimized', isMinimized);
+          this.toggleMinimize();
+        }
+      },
       maximized: {}
     };
   }
@@ -255,7 +260,11 @@ export default class Window extends Morph {
           })
         ]
       });
-    connect(minimizeButton, "onMouseDown", this, "toggleMinimize");
+    connect(minimizeButton, "onMouseDown", this, "minimized", {
+      updater: function($upd) {
+        $upd(!this.targetObj.minimized)
+      }
+    });
 
     if (this.resizable) {
       var windowMenuButton =
@@ -320,15 +329,13 @@ export default class Window extends Morph {
         collapseButton = this.getSubmorphNamed("minimize"),
         easing = easings.outQuad;
 
-    if (minimized) {
-      this.minimized = false;
+    if (!minimized) {
       this.minimizedBounds = bounds;
       this.targetMorph.visible = true;
       this.animate({bounds: nonMinizedBounds || bounds,
         styleClasses: ['neutral', 'active'], duration, easing});
       collapseButton.tooltip = "collapse window";
     } else {
-      this.minimized = true;
       this.nonMinizedBounds = bounds;
       var minimizedBounds = this.minimizedBounds || bounds.withExtent(pt(width, 28)),
           labelBounds = this.titleLabel().textBounds(),
