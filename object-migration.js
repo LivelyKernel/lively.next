@@ -2,7 +2,7 @@ import { Color, rect, pt } from "lively.graphics";
 import { morph, Icon } from "lively.morphic";
 import { removeUnreachableObjects } from "lively.serializer2/snapshot-navigation.js";
 import { obj } from "lively.lang";
-import { connect } from "lively.bindings";
+import { connect, disconnectAll } from "lively.bindings";
 
 export var migrations = [
 
@@ -59,6 +59,13 @@ morph breaks old windows without it.
            || !win.get("button wrapper").submorphs.some(m => m.name === "window menu button")) {
             win.fixControls();
           }
+          win.minimizedBounds = null;
+          disconnectAll(win.get('minimize'));
+          connect(win.get('minimize'), "onMouseDown", win, "minimized", {
+            updater: function($upd) {
+              $upd(!this.targetObj.minimized)
+            }
+          });
 
         });
       return idAndSnapshot;
