@@ -15,6 +15,7 @@ import { LabeledCheckBox, DropDownSelector } from "lively.components/widgets.js"
 import { Menu } from "lively.components/menus.js";
 import { NumberWidget } from "lively.ide/value-widgets.js";
 import { InteractiveMorphSelector } from "./morph.js";
+import { easings } from "lively.morphic/rendering/animations.js";
 
 class AxisHalo extends Morph {
 
@@ -711,7 +712,7 @@ export class TilingLayoutHalo extends Morph {
         opacity: 1,
         borderStyle: "dashed",
         async step() {
-          const easing = Sine.easeInOut;
+          const easing = easings.inOutQuad;
           await this.animate({opacity: .5, duration: pulseDuration / 2, easing});
           await this.animate({opacity: 1, duration: pulseDuration / 2, easing});
         }
@@ -797,7 +798,7 @@ export class FlexLayoutHalo extends Morph {
         opacity: 1,
         borderStyle: "dashed",
         async step() {
-          const easing = Sine.easeInOut;
+          const easing = easings.inOutQuad;
           await this.animate({opacity: .5, duration: pulseDuration / 2, easing});
           await this.animate({opacity: 1, duration: pulseDuration / 2, easing});
         }
