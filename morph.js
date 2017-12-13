@@ -158,7 +158,7 @@ export default class Halo extends Morph {
     }
     this.nameHalo().alignInHalo();
     this.ensureResizeHandles().forEach(h => h.alignInHalo());
-    !this.resizeOnly && this.whenRendered().then(() => this.originHalo().alignInHalo());
+    if (!this.resizeOnly) this.originHalo().alignInHalo();
     this.layout && this.layout.enable();
     return this;
   }
@@ -1250,10 +1250,9 @@ class OriginHaloItem extends HaloItem {
   get tooltip() { return "Change the morph's origin"; }
 
   computePositionAtTarget() {
-    if (!this.world())
-      return this.halo.borderBox.position.addPt(this.halo.target.origin);
-    else
-      return this.halo.localizePointFrom(pt(0, 0), this.halo.target);
+    let topLeft = this.halo.target.globalBounds().topLeft(),
+        localizedOrigin = this.halo.target.worldPoint(pt(0)).subPt(topLeft);
+    return this.halo.borderBox.position.addPt(localizedOrigin);
   }
 
   alignInHalo() {
