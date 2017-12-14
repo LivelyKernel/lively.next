@@ -36,7 +36,7 @@ const majorAndMinorVersionRe = /\.[^\.]+$/; // x.y.z => x.y
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export { ObjectRef, ObjectPool } from "./object-pool.js";
-export { requiredModulesOfSnapshot } from "./snapshot-navigation.js";
+export { requiredModulesOfSnapshot, removeUnreachableObjects } from "./snapshot-navigation.js";
 
 export function serialize(obj, options) {
   options = normalizeOptions(options);

@@ -8,11 +8,11 @@ var targetFile = "dist/lively.serializer2.js";
 
 module.exports = Promise.resolve()
   .then(() => rollup.rollup({
-    entry: "index.js",
+    entry: "./index.js",
     plugins: [babel({
       exclude: 'node_modules/**', sourceMap: false,
       "presets": [["es2015", {modules: false}]],
-      "plugins": ['transform-async-to-generator', "syntax-object-rest-spread", "transform-object-rest-spread", "external-helpers"],
+      "plugins": [["inline-json-import", {}], 'transform-async-to-generator', "syntax-object-rest-spread", "transform-object-rest-spread", "external-helpers"],
       babelrc: false
     })]
   }))
