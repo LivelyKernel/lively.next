@@ -1,16 +1,13 @@
-import { InteractiveMorphSelector, MorphHighlighter } from "lively.halos/morph.js";
-import { connect, signal, once } from "lively.bindings";
-import { Color, Rectangle, rect, pt } from "lively.graphics";
+import { connect, once } from "lively.bindings";
+import { Color, rect, pt } from "lively.graphics";
+import { arr, obj } from "lively.lang";
 import { show, HorizontalLayout, Morph, VerticalLayout, StyleSheet, Icon, GridLayout, morph, Window } from "lively.morphic";
 import { TreeData, Tree } from "lively.components/tree.js";
-import { arr, obj } from "lively.lang";
 import { Leash, LabeledCheckBox, SearchField } from "lively.components/widgets.js";
-import { isArray } from "lively.lang/object.js";
-import { max } from "lively.lang/array.js";
-import { hashCode } from "lively.lang/string.js";
 
 // optional lively.halos imports
 import {showConnector} from "lively.halos/markers.js"
+import { InteractiveMorphSelector, MorphHighlighter } from "lively.halos/morph.js";
 
 export function interactivelyShowConnection(connection) {
   let {sourceObj, sourceAttrName, targetObj, targetMethodName} = connection;
@@ -160,7 +157,7 @@ class ConnectionTreeData extends TreeData {
   constructor(morph) {
     let connections = morph.attributeConnections || [], treeData = this;
     function unwrap([name, childrenOrPin]) {
-      if (isArray(childrenOrPin)) {
+      if (obj.isArray(childrenOrPin)) {
         let children = childrenOrPin.map(unwrap);
         return {
           type: "category",

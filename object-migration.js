@@ -1,6 +1,6 @@
 import { Color, rect, pt } from "lively.graphics";
 import { morph, Icon } from "lively.morphic";
-import { removeUnreachableObjects } from "lively.serializer2/snapshot-navigation.js";
+import { removeUnreachableObjects } from "lively.serializer2";
 import { obj } from "lively.lang";
 import { connect, disconnectAll } from "lively.bindings";
 

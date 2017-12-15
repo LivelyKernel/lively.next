@@ -1,12 +1,11 @@
 import { pt, Rectangle, rect } from "lively.graphics";
 import { arr, Closure, num, grid, obj } from "lively.lang";
 import {
-  GridLayoutHalo, ProportionalLayoutHalo,
+  GridLayoutHalo, 
+  ProportionalLayoutHalo,
   FlexLayoutHalo,
   TilingLayoutHalo
 } from "lively.halos/layout.js";
-import { isNumber } from "lively.lang/object.js";
-import { sortBy, flatmap } from "lively.lang/array.js";
 import { once } from "lively.bindings";
 
 
@@ -69,7 +68,7 @@ class Layout {
   get layoutableSubmorphs() {
     if (!this.layoutOrder)
       this.layoutOrder = Closure.fromSource(JSON.parse(this.layoutOrderSource)).recreateFunc();
-    return sortBy(
+    return arr.sortBy(
       this.container.submorphs.filter(
         m => m.isLayoutable && !this.ignore.includes(m.name)),
       m => this.layoutOrder(m));
@@ -577,7 +576,7 @@ export class ProportionalLayout extends Layout {
     } else if (typeof selector === "string") {
       morphs = container.submorphs.filter(ea => ea.name === selector);
     } else if (Array.isArray(selector)) {
-      morphs = flatmap(selector, sel => this._morphsMatchingSelector(container, sel));
+      morphs = arr.flatmap(selector, sel => this._morphsMatchingSelector(container, sel));
     }
     return morphs;
   }
@@ -974,7 +973,7 @@ class LayoutAxis {
   get fixed() { return this.origin.fixed[this.dimension] }
   set fixed(active) {
     var newLength, containerLength;
-    if (isNumber(active)) {
+    if (obj.isNumber(active)) {
       newLength = active;
       active = true;
     }

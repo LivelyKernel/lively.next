@@ -1,5 +1,4 @@
 import { obj, string, arr } from "lively.lang";
-import { pushIfNotIncluded } from "lively.lang/array.js";
 
 export class SizzleExpression {
 

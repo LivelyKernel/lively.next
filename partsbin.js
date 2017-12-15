@@ -1,7 +1,6 @@
 // This is a prototype implementation of a file-system based partsbin...
 /* global System */
 import { resource } from "lively.resources";
-import { createMorphSnapshot } from "lively.morphic/serialization.js";
 import { Path, obj, date, promise } from "lively.lang";
 import { morph, HorizontalLayout, VerticalLayout } from "lively.morphic";
 import { pt, Color, Rectangle } from "lively.graphics";
@@ -9,6 +8,7 @@ import { connect } from "lively.bindings";
 import LoadingIndicator from "lively.components/loading-indicator.js";
 import { emit } from "lively.notifications/index.js";
 import { SnapshotPackageHelper, default as MorphicDB } from "./morphicdb/db.js";
+import { createMorphSnapshot } from "./serialization.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // deprecated

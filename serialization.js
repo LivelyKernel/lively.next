@@ -90,12 +90,13 @@ export function copyMorph(morph) {
 
 import { registerPackage, getPackage, ensurePackage, lookupPackage, semver } from "lively.modules";
 import { createFiles } from "lively.resources";
-import ObjectPackage from "lively.classes/object-classes.js";
 import LoadingIndicator from "lively.components/loading-indicator.js";
 import { promise } from "lively.lang";
 import { migrations } from "./object-migration.js";
-import { ObjectMigrationPlugin } from "lively.serializer2/plugins.js";
 
+import ObjectPackage from "lively.classes/object-classes.js";
+
+const objectScriptingEnabled = !!ObjectPackage;
 
 export async function createMorphSnapshot(aMorph, options = {}) {
   const isNode = System.get("@system-env").node;
@@ -266,7 +267,7 @@ async function loadPackagesAndModulesOfSnapshot(snapshot) {
       p = await ensurePackage(url);
       await p.reload({forgetEnv: false, forgetDeps: false});
       // ensure object package instance
-      ObjectPackage.withId(p.name);
+      objectScriptingEnabled && ObjectPackage.withId(p.name);
     }
   }
 

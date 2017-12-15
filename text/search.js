@@ -1,14 +1,12 @@
-import { Rectangle, rect, pt, Color } from "lively.graphics";
+import { Rectangle, pt, Color } from "lively.graphics";
 import { connect, once, disconnect } from "lively.bindings"
-import { obj, promise, Path } from "lively.lang";
+import { Path } from "lively.lang";
+import { Button } from "lively.components/buttons.js";
 import { Morph, config, GridLayout, StyleSheet, Text } from "../index.js";
 import { lessPosition, minPosition, maxPosition } from "./position.js";
 import { occurStartCommand } from "./occur.js";
 import { Icon } from "./icons.js";
-import { Button } from "lively.components/buttons.js";
 import TextMap from "./map.js";
-import { delay } from "lively.lang/promise.js";
-import { debounceNamed } from "lively.lang/function.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // finds string / regexp matches in text morphs

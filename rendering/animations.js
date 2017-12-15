@@ -1,10 +1,10 @@
+/*global SVG*/
 import "web-animations-js";
-import SVG from "svgjs";
+import "svgjs";
 import "svg.easing.js";
 import "svg.pathmorphing.js";
-import {obj, properties, arr} from "lively.lang";
+import {obj, properties, arr, string} from "lively.lang";
 import {LinearGradient, pt, RadialGradient, rect} from "lively.graphics";
-import {camelize} from "lively.lang/string.js";
 import {styleProps, addPathAttributes, addSvgAttributes} from "./property-dom-mapping.js";
 
 // move to lively.lang
@@ -389,8 +389,8 @@ export class PropertyAnimation {
     if (before && after) {
       let camelBefore = {},
           camelAfter = {};
-      for (let k in before) camelBefore[camelize(k)] = before[k];
-      for (let k in after) camelAfter[camelize(k)] = after[k];
+      for (let k in before) camelBefore[string.camelize(k)] = before[k];
+      for (let k in after) camelAfter[string.camelize(k)] = after[k];
       let anim = node.animate([camelBefore, camelAfter], {
         duration: this.duration,
         easing: this.easing,

@@ -3,7 +3,6 @@ import { obj, promise, string } from "lively.lang";
 import { pt } from "lively.graphics";
 import { Morph } from "./index.js";
 import vdom from "virtual-dom";
-import { delay } from "lively.lang/promise.js";
 import { addOrChangeCSSDeclaration } from "./rendering/dom-helper.js";
 var { diff, patch, h, create: createElement } = vdom
 
@@ -226,7 +225,7 @@ iframeMorph.srcDoc = "fooo"
         set(val) {
           this.iframe.removeAttribute("src");
           this.iframe.srcdoc = val;
-          this._whenLoaded = this.whenRendered().then(() => delay(20));
+          this._whenLoaded = this.whenRendered().then(() => promise.delay(20));
         }
       },
 

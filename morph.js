@@ -1,6 +1,7 @@
 /*global System,Uint8Array,Blob,location*/
 import { Color, Line, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
-import { string, obj, arr, num, promise, tree, Path as PropPath } from "lively.lang";
+import { string, obj, arr, num, promise, tree, Path as PropertyPath } from "lively.lang";
+import { connect, signal } from "lively.bindings";
 import {
   renderRootMorph,
   ShadowObject
@@ -13,10 +14,6 @@ import CommandHandler from "./CommandHandler.js";
 import KeyHandler, { findKeysForPlatform } from "./events/KeyHandler.js";
 import { TargetScript } from "./ticking.js";
 import { copyMorph } from "./serialization.js";
-import { Path as PropertyPath } from "lively.lang";
-import { isNumber, isString } from "lively.lang/object.js";
-import { capitalize } from "lively.lang/string.js";
-import { connect, signal } from "lively.bindings";
 import { StylingVisitor } from "./sizzle.js";
 
 // optional lively.halos imports
@@ -36,7 +33,7 @@ function generateUnfolded(propName, members=['top', 'left', 'right', 'bottom'], 
   // generate the accessors for members of a folded property
   let propertyDeclarations = {};
   for (let m of members) {
-    propertyDeclarations[propName + capitalize(m)] = {
+    propertyDeclarations[propName + string.capitalize(m)] = {
       group,
       derived: true,
       generated: true,
@@ -504,7 +501,7 @@ export class Morph {
           return {...v, valueOf: () => v.left };
         },
         set(value) {
-          if (isNumber(value)) {
+          if (obj.isNumber(value)) {
              var left = value, right = value, top = value, bottom = value;
              value = {left, right, top, bottom};
           }
@@ -527,7 +524,7 @@ export class Morph {
         },
         set(value) {
           if (!value) value = 0;
-          if (isNumber(value)) {
+          if (obj.isNumber(value)) {
              var left = value, right = value, top = value, bottom = value;
              value = {left, right, top, bottom};
           }
@@ -561,7 +558,7 @@ export class Morph {
           return {...v, valueOf: () => v.left}
         },
         set(value) {
-          if (isString(value)) {
+          if (obj.isString(value)) {
              var left = value, right = value, top = value, bottom = value;
              value = {left, right, top, bottom};
           }
@@ -869,7 +866,7 @@ export class Morph {
   changeMetaData(path, data, serialize = true, merge = true) {
     let {metadata} = this;
     if (!metadata) metadata = {};
-    PropPath(path).withParentAndKeyDo(metadata, true, (parent, key) => {
+    PropertyPath(path).withParentAndKeyDo(metadata, true, (parent, key) => {
       if (merge) parent[key] = {...parent[key], ...data};
       else parent[key] = data;
       let dont = parent.__dont_serialize__;
