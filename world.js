@@ -501,6 +501,17 @@ export class World extends Morph {
     }
   }
 
+  // file download serving
+
+  serveFileAsDownload(fileString, {fileName = 'file.txt', type = 'text/plain'} = {}) {
+    var a = window.document.createElement('a');
+    a.href = window.URL.createObjectURL(new Blob([fileString], {type}));
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // menu
   menuItems() {
