@@ -1,14 +1,23 @@
 /* global System */
 import { promise } from "lively.lang";
-import { Icon, Morph, StyleSheet, Image } from "lively.morphic";
+import { Icon, morph, Morph, StyleSheet, Image } from "lively.morphic";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { connect } from "lively.bindings";
-
 
 export default class LoadingIndicator extends Morph {
 
   static get styleSheet() {
     return new StyleSheet({
+      ".LoadingIndicator [name=progressBar]": {
+        clipMode: 'hidden',
+        height: 4,
+        borderRadius: 4,
+        fill: Color.gray.darker()
+      },
+      ".LoadingIndicator [name=progressBar] [name=progress]": {
+        height: 4,
+        fill: Color.orange
+      },
       ".LoadingIndicator [name=spinner]": {
         fill: Color.transparent,
         extent: pt(100, 104),
@@ -47,7 +56,7 @@ export default class LoadingIndicator extends Morph {
   static async runFn(fn, label, props) {
     var i = this.open(label, props);
     await i.whenRendered();
-    try { return await fn(); } finally { i.remove(); }
+    try { return await fn(i); } finally { i.remove(); }
   }
 
   static get properties() {
@@ -55,6 +64,13 @@ export default class LoadingIndicator extends Morph {
       fill:       {defaultValue: Color.black.withA(.6)},
       name:       {defaultValue: "LoadingIndicator"},
       borderRadius: {defaultValue: 10},
+      styleClasses: {defaultValue: ['Halo']},
+      progress: {
+        defaultValue: false,
+        set(p) {
+          this.animateProgress(p);
+        }
+      },
       label: {
         derived: true, after: ["submorphs"],
         get() { return this.getSubmorphNamed("label").value; },
@@ -123,17 +139,30 @@ export default class LoadingIndicator extends Morph {
     this.center = center;
   }
 
+  animateProgress(p /* between 0-1*/) {
+    let pb = this.get('progressBar') || this.addMorph({
+      name: 'progressBar', submorphs: [{name: 'progress', width: 0}]
+    })
+    pb.get('progress').animate({width: p * pb.width, duration: 300});
+    this.relayout();
+  }
+
   relayout() {
     var padding = Rectangle.inset(20, 12),
-        [spinner, label, closeButton] = this.submorphs,
+        [spinner, label, closeButton, progressBar] = this.submorphs,
         w = Math.max(spinner.width, label.width, 120) + padding.left() + padding.right(),
-        h = spinner.height + label.height + padding.top() + padding.bottom();
+        h = ((progressBar && progressBar.height + 5) || 0 )
+            + spinner.height + label.height + padding.top() + padding.bottom();
     this.extent = pt(w,h);
     spinner.topCenter = this.innerBounds().topCenter().addXY(0, padding.top());
     label.topCenter = spinner.bottomCenter.addXY(0, 4);
+    if (progressBar) {
+      progressBar.topCenter = label.bottomCenter.addXY(0, 4);
+      progressBar.width = this.width - 20;
+    }
     closeButton.right = w;
   }
-
+  
   onHoverIn(evt) { this.get("closeButton").visible = true; }
   onHoverOut(evt) { this.get("closeButton").visible = false; }
 }
