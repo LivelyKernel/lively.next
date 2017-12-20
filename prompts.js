@@ -322,7 +322,7 @@ export class TextPrompt extends AbstractPrompt {
       name: "input", textString: input || "",
       borderWidth: 0, borderRadius: 20, fill: Color.rgbHex("#DDD"),
       fontSize: 14, fontColor: Color.rgbHex("#666"),
-      padding: Rectangle.inset(10,5), fixedHeight: false
+      padding: Rectangle.inset(5,5), fixedHeight: false
     }));
 
     if (historyId && useLastInput) {
@@ -593,7 +593,7 @@ export class PasswordPrompt extends AbstractPrompt {
 
 export class ListPrompt extends AbstractPrompt {
 
-  async static example() {
+  static async example() {
     await $world.listPrompt("hello", [1,2,3,4], {multiSelect: true});
   }
 
@@ -715,7 +715,7 @@ export class ListPrompt extends AbstractPrompt {
 
 export class EditListPrompt extends ListPrompt {
 
-  async static example() {
+  static async example() {
     await $world.editListPrompt("hello", [1,2,3,4], {multiSelect: true});
   }
 
