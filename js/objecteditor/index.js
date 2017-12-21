@@ -16,6 +16,7 @@ import { interactivelySavePart } from "lively.morphic/partsbin.js";
 import { LinearGradient } from "lively.graphics/index.js";
 import { adoptObject } from "lively.classes/runtime.js";
 import { InteractiveMorphSelector } from "lively.halos/morph.js";
+import { interactivelyFreezePart } from "lively.freezer/part.js";
 
 
 // var oe = ObjectEditor.open({target: this})
@@ -203,6 +204,7 @@ export class ObjectEditor extends Morph {
 
   get ui() {
     return {
+      freezeButton:        this.getSubmorphNamed("freezeMorphButton"),
       addImportButton:     this.getSubmorphNamed("addImportButton"),
       addButton:           this.getSubmorphNamed("addButton"),
       removeButton:        this.getSubmorphNamed("removeButton"),
@@ -256,12 +258,14 @@ export class ObjectEditor extends Morph {
       saveButton,
       sourceEditor,
       toggleImportsButton,
-      classAndMethodControls
+      classAndMethodControls,
+      freezeButton
     } = this.ui;
 
     connect(inspectObjectButton, "fire", this, "execCommand", {converter: () => "open object inspector for target"});
     connect(publishButton, "fire", this, "execCommand", {converter: () => "publish target to PartsBin"});
     connect(chooseTargetButton, "fire", this, "execCommand", {converter: () => "choose target"});
+    connect(freezeButton, 'fire', this, 'execCommand', {converter: () => "freeze target"});
 
     connect(classTree, "selectedNode", this, "onClassTreeSelection");
     connect(addButton, "fire", this, "interactivelyAddObjectPackageAndMethod");
@@ -400,6 +404,7 @@ export class ObjectEditor extends Morph {
           {...topBtnStyle, name: "inspectObjectButton", fontSize: 14, label: Icon.textAttribute("gears"), tooltip: "open object inspector"},
           {...topBtnStyle, name: "publishButton", fontSize: 14, label: Icon.textAttribute("cloud-upload"), tooltip: "publish object to PartsBin"},
           {...topBtnStyle, name: "chooseTargetButton", fontSize: 14, label: Icon.textAttribute("crosshairs"), tooltip: "select another target"},
+          {...topBtnStyle, name: "freezeMorphButton", fontSize: 14, label: Icon.textAttribute("snowflake-o"), tooltip: "export a static version of target"}
         ]},
 
       {type: Tree, name: "classTree", treeData: new ClassTreeData(null),
@@ -1373,6 +1378,19 @@ export class ObjectEditor extends Morph {
         name: "open object inspector for target",
         exec: async ed => {
           return ed.world().execCommand("open object inspector", {target: ed.target});
+        }
+      },
+
+      {
+        name: 'freeze target',
+        exec: async ed => {
+          try {
+            let frozenFileString = await interactivelyFreezePart(ed.target, {notifications: false, loadingIndicator: true});
+            this.world().serveFileAsDownload(frozenFileString, {fileName: ed.target.name + ".js", type: 'application/javascript'});
+          } catch(e) {
+            if (e === "canceled") this.setStatusMessage("canceled");
+            else this.showError(e);
+          }
         }
       },
 
