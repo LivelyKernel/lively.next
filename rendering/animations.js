@@ -1,12 +1,11 @@
-/*global SVG*/
+/*global SVG, System*/
+import {obj, properties, arr, string} from "lively.lang";
+import {LinearGradient, pt, RadialGradient, rect} from "lively.graphics";
+import {styleProps, addPathAttributes, addSvgAttributes} from "./property-dom-mapping.js";
 import "web-animations-js";
 import "svgjs";
 import "svg.easing.js";
 import "svg.pathmorphing.js";
-import {obj, properties, arr, string} from "lively.lang";
-import {LinearGradient, pt, RadialGradient, rect} from "lively.graphics";
-import {styleProps, addPathAttributes, addSvgAttributes} from "./property-dom-mapping.js";
-
 // move to lively.lang
 function pad(array, n, getPadElement = arr.last) {
    return [...array, ...(new Array(Math.max(n - array.length, 0)).fill(getPadElement(array)))]

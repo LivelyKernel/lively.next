@@ -169,7 +169,12 @@ export class Renderer {
     return h("div", {
       style: {
         position: "absolute",
-        transform: `translate(${oX - borderWidthLeft}px,${oY - borderWidthTop}px)`
+        transform: `translate(${oX - borderWidthLeft}px,${oY - borderWidthTop}px)`,
+        ...(morph.isPolygon ? {
+          height: '100%', width: '100%',
+          overflow: morph.clipMode,
+          clipPath: `url(#clipPath${morph.id})`
+        } : {})
       }
     }, renderedSubmorphs);
   }
@@ -256,9 +261,12 @@ export class Renderer {
       namespace: svgNs,
       id: "svg" + path.id,
       ...pathAttributes(path)
-    });
+    }), clipPath = h("clipPath", {
+      namespace: svgNs,
+      id: "clipPath" + path.id
+    }, el);
 
-    var markers;
+    var markers = [clipPath];
     if (startMarker) {
       if (!startMarker.id) startMarker.id = "start-marker"
       el.properties.attributes["marker-start"] = `url(#${path.id}-${startMarker.id})`;
@@ -272,10 +280,11 @@ export class Renderer {
       markers.push(this._renderPath_Marker(path, endMarker));
     }
 
+    let controlPoints;
     if (showControlPoints)
-      el = h("g", {namespace: svgNs}, [el, ...this._renderPath_ControlPoints(path)]);
+      controlPoints = h("g", {namespace: svgNs}, this._renderPath_ControlPoints(path));
 
-    return this.renderSvgMorph(path, el, markers);
+    return this.renderSvgMorph(path, el, markers, controlPoints);
   }
 
   _renderPath_ControlPoints(path, style) {
@@ -375,9 +384,9 @@ export class Renderer {
     }
   }
 
-  renderSvgMorph(morph, svgEl, markers) {
+  renderSvgMorph(morph, svgEl, markers, controlPoints = []) {
     let {position, filter, display, opacity,
-         transform, transformOrigin, cursor } = defaultStyle(morph),
+         transform, transformOrigin, cursor, overflow} = defaultStyle(morph),
         {width, height} = morph.innerBounds(),
         defs, svgElements = [];
 
@@ -430,7 +439,14 @@ export class Renderer {
             },
             ...svgAttributes(morph)
           }, svgElements),
-        this.renderSubmorphs(morph)
+        this.renderSubmorphs(morph),
+        h("svg", {
+            namespace: svgNs, version: "1.1",
+            style: {
+              position: "absolute",
+              overflow: "visible"
+            }
+          }, controlPoints),
       ]);
   }
 
