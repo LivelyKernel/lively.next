@@ -397,3 +397,17 @@ export { cjs };
 // semver
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 export { default as semver } from "semver";
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// object scripting capabilities
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+import { ImportInjector } from './src/import-modification.js';
+const scripting = {
+  module: _module, 
+  ensurePackage: _ensurePackage, 
+  registerPackage: _registerPackage, 
+  importPackage: _importPackage, 
+  lookupPackage: _lookupPackage,
+  ImportInjector
+};
+export { scripting };
