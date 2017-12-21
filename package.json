@@ -12,6 +12,7 @@
   "systemjs": {
     "main": "./index.js",
     "map": {
+      "semver": "semver/semver.js",
       "fs": {
         "node": "@node/fs",
         "~node": "@empty"
