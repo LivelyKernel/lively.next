@@ -4,7 +4,7 @@ import { connect } from "lively.bindings";
 import {
   morph,
   StyleSheet,
-  HorizontalLayout,
+  HorizontalLayout, 
   GridLayout,
   config,
   Window,
@@ -349,7 +349,10 @@ export default class Browser extends Window {
               borderWidth: 1,
               readOnly: false
             },
-            {name: "sourceEditor", bounds: sourceEditorBounds, ...textStyle},
+            {name: "sourceEditor", bounds: sourceEditorBounds, 
+             borderRadius: Rectangle.inset(7,0,7,7),
+             borderWidthLeft: 3,
+             ...textStyle},
 
             {name: "browserCommands", bounds: browserCommandsBounds,
               layout: new GridLayout({
