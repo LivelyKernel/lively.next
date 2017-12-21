@@ -4,6 +4,7 @@ import { pt } from "lively.graphics";
 import { LoadingIndicator } from "lively.components";
 import { config } from "lively.morphic";
 import { ImportInjector, GlobalInjector, ImportRemover } from "lively.modules/src/import-modification.js";
+import { callService, ProgressMonitor } from "../service-worker.js";
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -99,18 +100,26 @@ export async function interactivelyInjectImportIntoText(textMorph, opts) {
   if (!jsPlugin)
     throw new Error(`cannot find js plugin of ${textMorph}`);
   var choices = await interactivelyChooseImports(
-    await jsPlugin.systemInterface(), {world: textMorph.world()});
+    await jsPlugin.systemInterface(), {
+      world: textMorph.world(), progress: opts.progress
+    });
   return choices ? injectImportsIntoText(textMorph, choices, opts) : null;
 }
 
 
 export async function interactivelyChooseImports(livelySystem, opts) {
   opts = {System: System, world: $world, ...opts};
-
-  // 1. gather all exorts
+  // 1. gather all exports
   var exports = await LoadingIndicator.runFn(
-    () => livelySystem.exportsOfModules(
-      {excludedPackages: config.ide.js.ignoredPackages}), "computing imports...");
+    (li) => callService("exportsOfModules", {
+        excludedPackages: config.ide.js.ignoredPackages,
+        livelySystem, progress: new ProgressMonitor({
+          handlers: [(stepName, progress) => {
+            li.progress = progress;
+            li.label = stepName;
+          }]
+        })
+    }), "computing imports...");
 
   // 2. Ask what to import + generate insertions
   var choices = await ExportPrompt.run(opts.world, exports);
