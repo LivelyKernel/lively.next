@@ -220,8 +220,8 @@ export function prepareCodeForCustomCompile(System, source, moduleId, module, de
         recorderName,
         dontTransform,
         varDefinitionCallbackName,
-      } = module,
-      embedOriginalCode = true;
+        embedOriginalCode = true
+      } = module;
   sourceAccessorName = embedOriginalCode ? sourceAccessorName : undefined;
 
   let options = {
@@ -265,7 +265,7 @@ export function prepareCodeForCustomCompile(System, source, moduleId, module, de
   }
 }
 
-function prepareTranslatedCodeForSetterCapture(System, source, moduleId, module, options, debug) {
+export function prepareTranslatedCodeForSetterCapture(System, source, moduleId, module, options, debug) {
   source = String(source);
   var tfmOptions = {
         ...options,
