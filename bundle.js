@@ -1,6 +1,6 @@
 /*global global,self,__VERSION_PLACEHOLDER__*/
-import { Module } from "./module.js";
-import { obj, num, graph, arr } from "lively.lang";
+import { Module, StandaloneModule } from "./module.js";
+import { obj, fun, num, graph, arr } from "lively.lang";
 import { version } from "./package.json";
 import { runtimeDefinition } from "./runtime.js";
 import { join } from "lively.resources/src/helpers.js";
@@ -14,7 +14,7 @@ export default class Bundle {
     this.entryModule = null;
   }
 
-  async resolveDependenciesStartFrom(moduleNameOrId, packageName) {
+  async resolveDependenciesStartFrom(moduleNameOrId, packageName, progress) {
     let packageSpec, entryModule;
     if (packageName) {
       packageSpec = this.findPackage(packageName);
@@ -38,21 +38,47 @@ export default class Bundle {
 
     let seen = {}, unresolved = [entryModule];
 
+    progress && progress.step('Ordering Modules...', .2);
+
     while (unresolved.length) {
       let next = unresolved.shift();
       if (seen[next.qualifiedName]) continue;
       seen[next.qualifiedName] = true;
 
-      // console.log(`Resolving ${next.qualifiedName}`);
-
       await next.resolveImports(this);
 
       this.modules[next.qualifiedName] = next;
 
-      for (let [mod, _] of next.dependencies)
+      for (let [mod, _] of next.dependencies) {
         if (!seen[mod.qualifiedName] && !mod.isExcluded)
           unresolved.push(mod);
+      }
     }
+
+    progress && progress.step('Inline Standalone Modules...', .4);
+
+    // check if modules can be removed, and replaced by standalone packages
+    for (let packageName in this.packages) {
+      let pkg = this.packages[packageName];
+      if (pkg.canBeReplaceByStandalone(this)) {
+        let index = 'local://' + this.normalizeModuleName(pkg.qualifiedName),
+            indexModule = this.modules[index],
+            standalone = new StandaloneModule({name: indexModule.name, id: indexModule.qualifiedName.replace('local://', ''), package: indexModule.package});
+        indexModule.dependents.forEach(d => {
+          //swap out index reference
+          let v = d.dependencies.get(indexModule);
+          d.dependencies.delete(indexModule)
+          d.dependencies.set(standalone, v);
+        })
+        pkg.getModules(this).forEach(m => delete this.modules[m.qualifiedName]) // remove all others
+        // alter source for index module
+        // fixme: populate recorder to make module system happy
+        standalone._source = `module.exports = window.${pkg.standaloneGlobal}`;
+        this.modules[index] = standalone;
+      }
+    }
+
+    // check further if other standalone modules, can be removed, since they ahve been pre initialized by the runtime
 
     return this;
   }
@@ -88,7 +114,6 @@ export default class Bundle {
     return module;
   }
 
-
   buildGraph(module, graph = {}, moduleNameMap = {}) {
     if (graph[module.qualifiedName]) return graph;
     moduleNameMap[module.qualifiedName] = module;
@@ -102,10 +127,13 @@ export default class Bundle {
 
   async standalone(opts = {}) {
     let {
+          clearExcludedModules = false,
+          livelyTranspilation = false,
           addRuntime = false,
           isExecutable = false,
           runtimeGlobal = "lively.FreezerRuntime",
-          entryModule: entryId
+          entryModule: entryId,
+          progress
         } = opts,
         cacheKey = [runtimeGlobal, isExecutable, addRuntime, entryId].join("-");
 
@@ -117,14 +145,23 @@ export default class Bundle {
       throw new Error(`Needs entry module`);
 
     if (entryId) {
-      await this.resolveDependenciesStartFrom(entryId);
+      progress && progress.step('start resolving deps...', 0);
+      await this.resolveDependenciesStartFrom(entryId, null, progress);
     }
 
-    let entry = this.entryModule,
-        g = this.buildGraph(entry),
-        moduleOrder = arr.flatten(graph.sortByReference(g.graph, entry.qualifiedName)),
+    let entry = this.entryModule;
+    progress && progress.step('building graph...', .5);
+    let g = this.buildGraph(entry);
+    progress && progress.step('sorting by reference...', .5);
+    let moduleOrder = arr.flatten(graph.sortByReference(g.graph, entry.qualifiedName)),
         modules = moduleOrder.map(qName => g.moduleNameMap[qName]).filter(ea => !ea.isExcluded),
-        moduleSource = modules.map(ea => ea.transformToRegisterFormat({runtimeGlobal})).join("\n\n");
+        progressLogger = i => progress.step(`Transforming modules ${(i / modules.length * 100).toFixed()}%`, .5 + (i / modules.length * .5));
+    var moduleSource = '';
+    for (let i = 0; i < modules.length; i++) {
+      if (progress) progressLogger(i);
+      moduleSource += modules[i].transformToRegisterFormat({
+          runtimeGlobal, clearExcludedModules, livelyTranspilation}) + "\n\n";
+    }
 
     if (addRuntime) {
       let runtimeSrc = String(runtimeDefinition)
@@ -133,7 +170,9 @@ export default class Bundle {
       moduleSource = `(${runtimeSrc})();\n${moduleSource}`
     }
 
-    if (isExecutable) moduleSource += `\n${runtimeGlobal}.load("${entry.qualifiedName}");\n`;
+    if (isExecutable) { 
+      moduleSource += `\n${runtimeGlobal}.load("${entry.qualifiedName}");\n`;
+    }
 
     this._standaloneCacheKey = cacheKey;
     return this._standaloneCached = moduleSource;

@@ -14,8 +14,8 @@ export default class FreezerPackage {
   }
 
   constructor(opts = {}) {
-    let {name, version, path, isExcluded = false} = opts;
-    Object.assign(this, {name, version, path, isExcluded});
+    let {name, version, path, isExcluded = false, standaloneGlobal = false} = opts;
+    Object.assign(this, {name, version, path, isExcluded, standaloneGlobal});
     this.reset();
   }
 
@@ -31,11 +31,13 @@ export default class FreezerPackage {
 
   get main() {
     let {_config: c} = this;
+    var main;
     if (c) {
-      if (c.systemjs && c.systemjs.main) return c.systemjs.main;
-      if (c.main) return c.main;
+      if (c.systemjs && c.systemjs.main) main = c.systemjs.main;
+      else if (c.main) main = c.main;
+      if (main && !main.match(/\.[^\/\.]+/)) main += ".js";
     }
-    return "index.js";
+    return main || "index.js";
   }
 
   async readConfig() {
@@ -43,5 +45,27 @@ export default class FreezerPackage {
     this.version = config.version;
     this.name = config.name;
     this._config = config;
+  }
+
+  getModules(bundle) {
+    return Object.values(bundle.modules).filter(m => m.package === this)
+  }
+
+  canBeReplaceByStandalone(bundle) {
+    // if in the current bundle, all dependents of my modules which are NOT also part of a standalone
+    // package, are referncing my exports via main, then I can be replace by a static global variable
+    // which allows me to be removed from the part runtime during standalon() compilation
+    let externalModules = [], index = 'local://' + bundle.normalizeModuleName(this.qualifiedName);
+    if (!this.standaloneGlobal) return false;
+    for (let m of this.getModules(bundle)) {
+      if (m.qualifiedName == index) continue; // skip index
+      externalModules.push(...[...m.dependents].filter(m => m.package != this && m.package && !m.package.standaloneGlobal))
+    }
+    if (externalModules.length > 0) {
+      console.log(`Can not standalone ${this.name} because of following dependents: `, externalModules);
+      return false;
+    } else {
+      return true;
+    }
   }
 }

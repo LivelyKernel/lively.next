@@ -1,1 +1,1 @@
-/*global System*/
+export var info = "import via sub modules";

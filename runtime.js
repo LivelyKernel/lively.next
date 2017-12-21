@@ -1,4 +1,4 @@
-/*global self,global*/
+/*global self,global,System,origin*/
 
 /*
 
@@ -11,7 +11,7 @@ export function runtimeDefinition() {
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   if (typeof G.lively !== "object") G.lively = {};
-  var version, registry = {};
+  var version, registry = {}, globalModules = {};
 
   if (G.lively.FreezerRuntime) {
     let [myMajor, myMinor, myPatch] = version.split(".").map(Number),
@@ -24,8 +24,27 @@ export function runtimeDefinition() {
     registry = G.lively.FreezerRuntime.registry;
   }
 
+  lively.modules.installHook('decanonicalize',  (proceed, name, parent, isPlugin) => {
+    // this decanonicalize forces all modules to contain version numbers (if not provided)
+    // and to start with the local:// prefix.
+    // This only applies to modules, that is all .js file that are requested in this context.
+    // assets such as .css files etc, keep their usual decanonicalization
+    // is global id?
+    if (G.lively.FreezerRuntime.globalModules[name]) return name;
+    name = name.replace("lively-object-modules/", "");
+    // includes local prefix?
+    name = name.includes('local://') ? name : 'local://' + name;
+    // includes package version? 
+    if (!name.match(/\@\S*\//)) {
+       let [packageName, ...rest] = name.replace('local://', '').split('/'),
+           version = Object.keys(G.lively.FreezerRuntime.registry).find(k => k.includes(packageName)).match(/\@[\d|\.|\-|\~]*\//)[0]
+       name = "local://" + packageName + version + rest.join('/') 
+    } 
+    return name;
+  });
+
   G.lively.FreezerRuntime = {
-    version, registry,
+    version, registry, globalModules,
     get(moduleId) { return this.registry[moduleId]; },
     set(moduleId, module) { return this.registry[moduleId] = module; },
     add(id, dependencies = [], exports = {}, executed = false) {
@@ -60,24 +79,37 @@ export function runtimeDefinition() {
           });
       module.execute = body.execute;
       module.setters = body.setters;
+      // how to actually propagate module information inside system?
+      window.System._loader.modules[id] = {module: module.exports};
       return module;
     },
     updateImports(module) {
       for (let i = 0; i < module.dependencies.length; i++) {
         let depName = module.dependencies[i],
-            mod = this.resolveSync(depName, module.id);
-        module.setters[i](mod.exports);
+            mod = depName != '@empty' && this.resolveSync(depName, module.id);
+        mod && module.setters[i](mod.exports);
+      }
+      if (Object.entries(window.System.get("@lively-env").moduleEnv(module.id).recorder)
+                .some(([k, v]) => !module.emptyImports.has(k) && v === undefined))
+        module.executed = false;
+    },
+    updateDependent(module, dependentModule) {
+      for (let i = 0; i < dependentModule.dependencies.length; i++) {
+        let depName = dependentModule.dependencies[i];
+        if (depName != '@empty' && module == this.resolveSync(depName, dependentModule.id)) {
+           dependentModule.setters[i](module.exports);
+        }
       }
     },
-    sortForLoad(entry) {
-      let g = {}, r = lively.FreezerRuntime.registry
-      for (let modName in r) g[modName] = r[modName].dependencies;
-      return linearizeGraph(g, entry);
-      function linearizeGraph(depGraph, startNode) {
-        // establish unique list of keys
-        var remaining = [], remainingSeen = {}, uniqDepGraph = {}, inverseDepGraph = {};
-        for (let key in depGraph) {
-          if (!remainingSeen.hasOwnProperty(key)) { remainingSeen[key] = true; remaining.push(key); }
+    computeUniqDepGraphs(depGraph) {
+      var dependencies = [], remainingSeen = {}, uniqDepGraph = {"@empty": []}, inverseDepGraph = {"@empty": []};
+      if (!depGraph) {
+        let g = {}, r = lively.FreezerRuntime.registry
+        for (let modName in r) g[modName] = r[modName].dependencies;
+        depGraph = g;
+      }
+      for (let key in depGraph) {
+          if (!remainingSeen.hasOwnProperty(key)) { remainingSeen[key] = true; dependencies.push(key); }
           var deps = depGraph[key], uniqDeps = {};
           if (deps) {
             uniqDepGraph[key] = [];
@@ -89,54 +121,247 @@ export function runtimeDefinition() {
               uniqDepGraph[key].push(dep);
               if (!remainingSeen.hasOwnProperty(dep)) {
                 remainingSeen[dep] = true;
-                remaining.push(dep);
+                dependencies.push(dep);
               }
             }
           }
         }
-        // for each iteration find the keys with the minimum number of dependencies
-        // and add them to the result group list
-        var groups = [];
-        while (remaining.length) {
+      return {uniqDepGraph, inverseDepGraph, dependencies}
+    },
+    sortForLoad(entry) {
+      const debug = false;
+      // establish unique list of keys
+      var {dependencies: remaining, uniqDepGraph, inverseDepGraph} = this.computeUniqDepGraphs(),
+           groups = [], packages = {}, moduleId;
+      function getPackageName(m) {
+        return m.split('/')[0];
+      }
+      function getPackageRefs(m) {
+        return (uniqDepGraph[moduleId] || []).filter(m => !isGlobalModule(m)).map(d => getPackageName(d));
+      }
+      function isGlobalModule(m) {
+        return m == '@empty' || !!lively.FreezerRuntime.globalModules[m];
+      }
+      // this should just be pre computed once for each package
+      function reachable(m, id, seen = new Set()) {
+        if (m == id) return true;
+        if (uniqDepGraph[m]) {
+          return uniqDepGraph[m].includes(id) || 
+                 uniqDepGraph[m].some(m => !seen.has(m) && reachable(m, id, new Set([...seen, ...uniqDepGraph[m]])))
+        }
+        return false;
+      }
+      for (let i = remaining.length; i--;) {
+        moduleId = remaining[i];
+        if (isGlobalModule(moduleId)) {
+          // 0.) exclude all global modules
+          groups.push(moduleId);
+        } else {
+          // 1.) identify packages
+          let packageId = getPackageName(moduleId)
+          // only add module to package, if reachable from index.js
+          if (!reachable(packageId + '/index.js', moduleId)) continue;
+          if (packages[packageId]) {
+            packages[packageId].modules.push(moduleId);
+            packages[packageId].deps.push(...getPackageRefs(moduleId));
+          } else {
+            packages[packageId] = {
+              modules: [moduleId], 
+              deps: getPackageRefs(moduleId)
+            };
+          }
+        }
+        remaining.splice(i, 1);
+      }
+
+      let detachedModules = remaining; // these are modules part of a package, yet not reachable via index;
+
+      // free floating modules are worth excluding at this stage, since they can confuse the static load order for packages
+
+      debug && console.log('unreachable from package index: ', detachedModules);
+      
+      // 2.) try to order package partitions such that their dependencies are satisfied
+      for (var p in packages) {
+        packages[p].deps = new Set(packages[p].deps.filter(d => d != p)) 
+      }
+      
+      debug && console.log('Identified packages: ', packages);
+      
+      function haveBeenDeclared(deps, ...declared) {
+        return deps.filter(dep => dep != '@empty' && !dep.includes('/index.js'))
+                   .every(d => declared.some(dcls => dcls.includes(d)))
+      }
+      
+      remaining = Object.keys(packages);
+      let orderedPackages = [];
+      while (remaining.length) {
+        var minDepCount = Infinity, minKeys = [], minKeyIndexes = [], affectedKeys = [];
+        for (var i = 0; i < remaining.length; i++) {
+          var key = remaining[i];
+          let deps = [...packages[key].deps];
+          if (deps.length > minDepCount) continue;
+          if (deps.length === minDepCount && haveBeenDeclared(deps, orderedPackages, minKeys))
+          {
+            minKeys.push(key);
+            minKeyIndexes.push(i);
+            continue;
+          }
+          minDepCount = deps.length;
+          if (!haveBeenDeclared(deps, orderedPackages, minKeys)) continue;
+          minKeys = [key];
+          minKeyIndexes = [i];
+        }
+        if (minKeys.length == 0) break; // this means that the remaining modules contain a cycle somewhere
+        for (var i = minKeyIndexes.length; i--;) {
+          var key = remaining[minKeyIndexes[i]];
+          remaining.splice(minKeyIndexes[i], 1); 
+        } 
+        orderedPackages.push(...minKeys);
+      }
+      debug && console.log('could not sort: ', remaining)
+
+      let unsortablePackages = remaining;
+
+      // the remaining packages will be sorted by breaking up package bounds together with the non reachable packages
+      
+      //orderedPackages.push(...remaining);
+      
+      debug && console.log('Sorting Packages in order: ', orderedPackages);
+      
+      // 3.) sort packages in isolation
+      // for each iteration find the keys with the minimum number of dependencies
+      // and add them to the result group list
+      var packageModules
+      for (var packageId of orderedPackages) {
+        packageModules = packages[packageId].modules;
+        while (packageModules.length) {
           var minDepCount = Infinity, minKeys = [], minKeyIndexes = [], affectedKeys = [];
-          for (var i = 0; i < remaining.length; i++) {
-            var key = remaining[i];
+          for (var i = 0; i < packageModules.length; i++) {
+            var key = packageModules[i];
             let deps = uniqDepGraph[key] || [];
             if (deps.length > minDepCount) continue;
-      
-            // if (deps.length === minDepCount && !minKeys.some(ea => deps.includes(ea))) {
-            if (deps.length === minDepCount && !deps.some(ea => minKeys.includes(ea))) {
+            if (deps.length === minDepCount && haveBeenDeclared(deps, groups, minKeys))
+            {
               minKeys.push(key);
               minKeyIndexes.push(i);
               affectedKeys.push(...inverseDepGraph[key] || []);
               continue;
             }
             minDepCount = deps.length;
+            if (!haveBeenDeclared(deps, groups, minKeys)) continue;
             minKeys = [key];
             minKeyIndexes = [i];
             affectedKeys = (inverseDepGraph[key] || []).slice();
           }
+          if (minKeys.length == 0) break; // this means that the remaining modules contain a cycle somewhere
           for (var i = minKeyIndexes.length; i--;) {
-            var key = remaining[minKeyIndexes[i]];
+            var key = packageModules[minKeyIndexes[i]];
             inverseDepGraph[key] = [];
-            remaining.splice(minKeyIndexes[i], 1);
+            packageModules.splice(minKeyIndexes[i], 1); 
           }
           for (var key of affectedKeys) {
             uniqDepGraph[key] = uniqDepGraph[key].filter(ea => !minKeys.includes(ea));
           }
           groups.push(...minKeys);
         }
-        return groups;
+        debug && console.log(packageId + ' could not order modules ', packageModules);
+        groups.push(...packageModules); // insert them anyway and let async load hanlde those things later in the game
       }
+      
+      // return groups;
+
+      // 4.) attempt to sort the unsortable packages together with the free standing modules
+
+      // var groups = [];
+      // 
+      // function haveBeenDeclared(deps, ...declared) {
+      //   return deps.every(d => declared.some(dcls => dcls.includes(d)))
+      // }
+      // 
+      
+      remaining = detachedModules;
+      for (var packageId of unsortablePackages) {
+        remaining.push(...packages[packageId].modules)
+      }
+
+      debug && console.log('sorting remaining: ', remaining);
+      
+      while (remaining.length) {
+        var minDepCount = Infinity, minKeys = [], minKeyIndexes = [], affectedKeys = [];
+        for (var i = 0; i < remaining.length; i++) {
+          var key = remaining[i];
+          let deps = uniqDepGraph[key] || [];
+          if (deps.length > minDepCount) continue;
+          if (deps.length === minDepCount && haveBeenDeclared(deps, groups, minKeys))
+          {
+            minKeys.push(key);
+            minKeyIndexes.push(i);
+            affectedKeys.push(...inverseDepGraph[key] || []);
+            continue;
+          }
+          minDepCount = deps.length;
+          if (!haveBeenDeclared(deps, groups, minKeys)) continue;
+          minKeys = [key];
+          minKeyIndexes = [i];
+          affectedKeys = (inverseDepGraph[key] || []).slice();
+        }
+        if (minKeys.length == 0) break; // this means that the remaining modules contain a cycle somewhere
+        for (var i = minKeyIndexes.length; i--;) {
+          var key = remaining[minKeyIndexes[i]];
+          inverseDepGraph[key] = [];
+          remaining.splice(minKeyIndexes[i], 1); 
+        }
+        for (var key of affectedKeys) {
+          uniqDepGraph[key] = uniqDepGraph[key].filter(ea => !minKeys.includes(ea));
+        }
+        groups.push(...minKeys);
+      }
+      
+      debug && console.log('totally unsortable and probably cyclic: ', remaining)
+
+      let asyncModules = []
+      for (let key in groups) {
+        if ((uniqDepGraph[key] || []).length) asyncModules.push(key);
+      }
+
+      console.log('async modules due to preserved module structures: ', [...asyncModules, ...remaining]);
+      
+      return [groups, remaining];
     },
 
     load(moduleId) {
-      let modulesToLoad = this.sortForLoad(moduleId);
-      for (let modName of modulesToLoad) {
-        let m = this.get(modName);
-        if (!m || m.executed) continue;
-        this.updateImports(m);
-        m.execute();
+      let [syncLoad, cyclicLoad] = this.sortForLoad(moduleId),
+          {inverseDepGraph} = this.computeUniqDepGraphs(),
+          modulesToLoad = [...syncLoad, ...cyclicLoad],
+          failedModules = [],
+          maxAttempts = 5,
+          updateDependents = (m) => {
+            let dependents = inverseDepGraph[m.id] || [];
+            dependents.forEach(dependent => {
+              let dm = this.get(dependent);
+              try {
+                this.updateDependent(m, dm);
+              } catch (e) {
+                m.executed = false
+              }
+            });
+          },
+          loadModules = (modulesToLoad) => {
+        for (let modName of modulesToLoad) {
+          let m = this.get(modName);
+          if (!m || m.executed) continue;
+          m.executed = true;
+          try {
+            this.updateImports(m);
+            m.execute();
+          } catch (e) {
+            m.executed = false;
+          }
+          updateDependents(m);
+        }
+      }
+      for (let i = 0; modulesToLoad.some(m => this.get(m) && !this.get(m).executed) && i < maxAttempts; i++) {
+         loadModules(modulesToLoad);
       }
       return this.get(moduleId).exports;
       

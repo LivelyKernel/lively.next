@@ -1,9 +1,13 @@
+/*global System,origin*/
 import { resource } from "lively.resources";
 import { isURL } from "lively.modules/src/url-helpers.js";
 import { join, parent } from "lively.resources/src/helpers.js";
 import { parse, stringify, transform, nodes, query } from "lively.ast";
 import { findUniqJsName } from "./util.js";
-import { arr, string } from "lively.lang";
+import { string } from "lively.lang";
+import { isString } from "lively.lang/object.js";
+import { prepareCodeForCustomCompile, prepareTranslatedCodeForSetterCapture } from "lively.modules/src/instrumentation.js";
+import { module } from "lively.modules/index.js";
 
 function exportCall(exportName, id) {
   return stringify(
@@ -38,6 +42,7 @@ export class Module {
     this._name = name;
     this._id = id;
     this._package = p;
+    this._evalId = 1;
     this.reset();
   }
 
@@ -49,8 +54,10 @@ export class Module {
   }
 
   addDependency(otherModule, importSpec) {
-    this.dependencies.set(otherModule, importSpec);
-    otherModule.addDependent(this);
+    if (![...this.dependencies.keys()].find(m => m.id == otherModule.id)) {
+       this.dependencies.set(otherModule, importSpec);
+       otherModule.addDependent(this);
+    }
     return otherModule;
   }
 
@@ -67,8 +74,8 @@ export class Module {
   }
 
   get qualifiedName() {
-    if (this.package) return join(this.package.qualifiedName, this.name);
-    if (this.id) return this.id;
+    if (this.package) return 'local://' + join(this.package.qualifiedName, this.name);
+    if (this.id) return 'local://' + this.id;
     throw new Error(`qualifiedName: Needs package or id!`);
   }
 
@@ -82,7 +89,7 @@ export class Module {
 
   get resource() {
     let {package: p} = this;
-    if (this.package) return p ? p.resource.join(this.name) : resource(this.id);
+    return p ? p.resource.join(this.name) : resource(this.id);
   }
 
   async source() {
@@ -92,6 +99,75 @@ export class Module {
   parse() { throw new Error("Implement me!"); }
   async resolveImports(bundle) { await this.parse(); return this; }
   transformToRegisterFormat(opts) {  throw new Error("Implement me!"); }
+}
+
+export class StandaloneModule extends Module {
+  
+  async parse() { await this.source() }
+
+  wrapStandalone(source, runtimeGlobal) {
+    return `(function(module, exports = {}, require = () => {}) {\n${source}\n})(${runtimeGlobal}.globalModules["${this.qualifiedName}"] = {exports: {}})`;
+  }
+
+  get qualifiedName() {
+    if (this.id) return 'local://' + this.id.replace(System.baseURL, "");
+    throw new Error(`qualifiedName: Needs package or id!`);
+  }
+  
+  transformToRegisterFormat(opts) {
+    let {_source: source} = this, exports = [],
+        {runtimeGlobal} = opts;
+
+    if (!runtimeGlobal) throw new Error("No runtimeGlobal name defined!");
+
+    return `\n${this.wrapStandalone(source, runtimeGlobal)}\n`
+         + `${runtimeGlobal}.register("${this.qualifiedName}", [], function(_export, _context) {\n`
+         + `  "use strict";\n`
+         + `  return {\n`
+         + `    setters: [],\n`
+         + `    execute: function() {\n`
+         + `      let exports = ${runtimeGlobal}.globalModules["${this.qualifiedName}"].exports;\n`
+         + `      if (typeof exports == 'function') {\n`
+         + `         _export("default", exports);\n`
+         + `      } else {\n`
+         + `        Object.assign(System.get("@lively-env").moduleEnv("${this.qualifiedName}").recorder, exports);\n`
+         + `        for (let exp in exports) _export(exp, exports[exp]);\n`
+         + `        if (!exports['default']) _export('default', exports);\n`
+         + `      }\n`
+         + `    }\n`
+         + `  }\n`
+         + `});`
+  }
+
+  get isExcluded() {
+    return false
+  }
+    
+}
+
+class EmptyModule extends Module {
+
+  parse() { }
+  
+  transformToRegisterFormat(opts) { }
+
+  get isEmpty() { return true }
+
+  get qualifiedName() {
+    return '@empty';
+  }
+  
+  get id() {
+    return '@empty';
+  }
+
+  get isExcluded() {
+    return false
+  }
+  
+  async source() {
+     return "()"
+  }
 }
 
 export class JSONModule extends Module {
@@ -185,6 +261,7 @@ export class JSModule extends Module {
   }
 
   resolveImport(localName, bundle) {
+    
     if (isURL(localName)) {
       return {
         module: bundle.findModuleWithId(localName)
@@ -202,21 +279,49 @@ export class JSModule extends Module {
     }
 
     let packageName = localName.includes("/") ?
-                       localName.slice(0, localName.includes("/")) :
+                       localName.slice(0, localName.indexOf("/")) :
                        localName,
         nameInPackage = localName.slice(packageName.length),
         packageSpec = bundle.findPackage(packageName),
         isPackageImport = !nameInPackage;
 
     if (!packageSpec){
+      var id;
+      if (this.package) {
+        let {_config: c} = this.package;
+        if (c && c.systemjs && c.systemjs.map) {
+          let remappedName = c.systemjs.map[localName];
+          if (remappedName) {
+            if (remappedName["~node"] == '@empty')
+              return {
+                isPackageImport,
+                module: bundle.findModuleWithId('@empty') || bundle.addModule(bundle.addModule(new EmptyModule()))
+              }
+            if (remappedName.startsWith(".")) {
+              id = join(this.package.path, remappedName);
+            } else {
+              id = System.decanonicalize(remappedName);
+            }
+            // assume that remappings point to standalone modules
+            return {
+              isPackageImport,
+              module: bundle.findModuleWithId(id)
+                   || bundle.addModule(bundle.addModule(new StandaloneModule({name: localName, id, package: null})))
+            }
+          }
+        }
+      }
+      if (!id) id = System.decanonicalize(localName);
       return {
         isPackageImport,
-        module: bundle.findModuleWithId(localName)
-             || bundle.addModule(bundle.addModule(Module.create({name: localName, id: localName, package: null})))
+        module: bundle.findModuleWithId(id)
+             || bundle.addModule(bundle.addModule(Module.create({name: localName, id, package: null})))
       }
     }
     if (isPackageImport && packageSpec) {
-      nameInPackage = packageSpec.main || (packageSpec.systemjs && packageSpec.systemjs.main) || "index.js"
+      nameInPackage = packageSpec.main || (packageSpec.systemjs && packageSpec.systemjs.main) || "/index.js"
+      nameInPackage = nameInPackage.replace('./', '/');
+      if (!string.startsWith(nameInPackage, '/')) nameInPackage = '/' + nameInPackage;
     }
 
     return {
@@ -231,19 +336,27 @@ export class JSModule extends Module {
   // transform
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  registerTranformsOfImports() {
-    let topLevelIds = [], setters = [], qualifiedDependencyNames = [];
+  registerTranformsOfImports(clearExcludedModules = false) {
+    let topLevelIds = [], setters = [], qualifiedDependencyNames = new Map(), undefinedTopLevelVars = [];
 
     for (let [depModule, {imports}] of this.dependencies) {
-      qualifiedDependencyNames.push(depModule.qualifiedName);
+      if (clearExcludedModules && depModule.isExcluded) {
+        depModule = new EmptyModule();
+      }
 
       // FIXME what if a toplevel var of `this` has the same name as the generated varName?
       let varName = depModule.nameAsUniqueJSIdentifier([]),
           setterStmts = [];
 
       for (let i of imports) {
-        let {node: {type}, imported, local, exported} = i;
+        let {node: {type, astIndex}, imported, local, exported} = i,
+            id = depModule.qualifiedName;
 
+        if (!qualifiedDependencyNames.has(id))
+          qualifiedDependencyNames.set(id, astIndex);
+        else
+          qualifiedDependencyNames.set(id, Math.min(qualifiedDependencyNames.get(id), astIndex));
+        
         if (type === "ExportAllDeclaration") { // export * from "foo"
           setterStmts.push(nodes.exprStmt(nodes.funcCall("_export", nodes.id(varName))));
           continue;
@@ -254,8 +367,10 @@ export class JSModule extends Module {
           continue;
         }
 
-        if (local)
+        if (local) {
           topLevelIds.push(nodes.id(local));
+          if (depModule.isEmpty) undefinedTopLevelVars.push(local);
+        }
         if (imported === "*") {
           setterStmts.push(nodes.exprStmt(nodes.assign(local, nodes.id(varName))));
         } else {
@@ -272,7 +387,10 @@ export class JSModule extends Module {
       declarations: topLevelIds.map(ea => ({type: "VariableDeclarator", id: ea, init: null}))
     } : null;
 
-    return {topLevelDecl, setters, qualifiedDependencyNames};
+    return {topLevelDecl, setters, undefinedTopLevelVars,
+            qualifiedDependencyNames: [...qualifiedDependencyNames.entries()]
+                                           .sort((a,b) => a[1] - b[1])
+                                           .map((([d, _]) => d))};
   }
 
   registerTranformsOfExports() {
@@ -302,7 +420,7 @@ export class JSModule extends Module {
 
           case 'ClassDeclaration': case 'FunctionDeclaration':
             exportTransform.replacementFunc = (node, source, wasChanged) =>
-                source.replace(/^(\s*)export\s+/, "") + "\n"
+                source.replace(/^(\s*)export\s+/, ``) + "\n"
               + exportCall(node.declaration.id.name, node.declaration.id);
             break;
         }
@@ -344,28 +462,49 @@ export class JSModule extends Module {
     return exported;
   }
 
+  transformToLivelyModulesFormat() {
+    // mock the module
+    if (this._cachedLivelyModule) return this._cachedLivelyModule;
+    let mod = module(this.qualifiedName),
+        localId = this.id == '@empty' ? this.id : (this.qualifiedName);
+    mod.recorderName = "__lvVarRecorder";
+    mod.embedOriginalCode = false;
+    var {options, source} = prepareCodeForCustomCompile(System, this._source, localId, mod);
+    mod.embedOriginalCode = true;
+    let Transpiler = System.get('lively.transpiler').default;
+    source = new Transpiler(System, localId, {}).transpileModule(source, {})
+    source = prepareTranslatedCodeForSetterCapture(System, source, localId, mod, options);
+    return this._cachedLivelyModule = source.split("defVar_" + this.id).join("defVar_" + localId);
+  }
+
   transformToRegisterFormat(opts = {}) {
-    let {runtimeGlobal = "System"} = opts,
-        {topLevelDecl, setters, qualifiedDependencyNames} = this.registerTranformsOfImports(),
-        exportTransformData = this.registerTranformsOfExports(),
-        additionalExports = [],
-        replaced = transform.replaceNodes([
+    let {runtimeGlobal = "System", clearExcludedModules = false, livelyTranspilation = false} = opts,
+        {topLevelDecl, setters, qualifiedDependencyNames, undefinedTopLevelVars} = this.registerTranformsOfImports(clearExcludedModules),
+        undefinedVarArray = `[${undefinedTopLevelVars.map(v => `"${v}"`).join(', ')}]`,
+        undefinedDeclaration = `lively.FreezerRuntime.registry["${this.qualifiedName}"].emptyImports = new Set(${undefinedVarArray});`,
+        topLevelVarNames = topLevelDecl && topLevelDecl.declarations.map(ea => ea.id.name),
+        transpiledSource;
+    if (livelyTranspilation) {
+      let s = this.transformToLivelyModulesFormat();
+      transpiledSource = s.slice(s.indexOf('function (_export, _context)'), s.length - 2)
+                          .replace(`"use strict";`,  `"use strict";\n  ${undefinedDeclaration}`);
+    } else {
+      let exportTransformData = this.registerTranformsOfExports(),
+          additionalExports = [],
+          replaced = transform.replaceNodes([
           // remove import decls completely
           ...this.parsed.body.filter(ea => ea.type === "ImportDeclaration")
-                                .map(target => ({target, replacementFunc: () => []})),
-
-          // // remove exports
+                              .map(target => ({target, replacementFunc: () => []})),
+          // remove exports
           ...exportTransformData.map(({node: target, replacementFunc, ids}) => {
             additionalExports.push(...ids.map(ea => exportCall(ea.exported.name, ea.local)))
             return {target, replacementFunc}
           })
         ], this._source);
-
-    return `${runtimeGlobal}.register("${this.qualifiedName}", `
-         + `[${qualifiedDependencyNames.map(ea => `"${ea}"`).join(", ")}], `
-         + `function(_export, _context) {\n`
+        transpiledSource = `function(_export, _context) {\n`
          + `  "use strict";\n`
          + (topLevelDecl ? `  ${stringify(topLevelDecl)}\n` : "")
+         + `${undefinedDeclaration}\n` 
          + `  return {\n`
          + `    setters: [\n`
          + `${string.indent(setters.map(stringify).join(",\n"), "  ", 3)}\n`
@@ -375,7 +514,13 @@ export class JSModule extends Module {
          + (additionalExports.length ? `${string.indent(additionalExports.join("\n"), "  ", 3)}\n` : "")
          + `    }\n`
          + `  }\n`
-         + `});`
+         + `}` 
+    }
+
+    return `${runtimeGlobal}.register("${this.qualifiedName}", `
+         + `[${qualifiedDependencyNames.map(ea => `"${ea}"`).join(", ")}], `
+         +  transpiledSource
+         + `);`
   }
 
 }
