@@ -813,7 +813,7 @@ class ModuleInterface {
         isLoaded: this.isLoaded(),
         length,
         line, column: i - lineStart,
-        lineString: src.slice(lineStart, lineEnd)
+        lineString: (lineEnd - lineStart > 1000) ? `...${src.slice(i - 10, i + 100)}...` : src.slice(lineStart, lineEnd)
       };
       j++;
     }
