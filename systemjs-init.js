@@ -1,3 +1,4 @@
+/*global System,Babel,global,require,__dirname,self*/
 "format global";
 (function configure() {
 
@@ -114,7 +115,7 @@
 
 
   function featureTest() {
-    var isBrowser = System.get("@system-env").browser;
+    var isBrowser = System.get("@system-env").browser || typeof self !== 'undefined';
 
     // "feature test": we assume if the browser supports async/await it will also
     // support other es6/7/8 features we care about. In this case only use the

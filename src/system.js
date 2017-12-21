@@ -1,4 +1,4 @@
-/*global System,process*/
+/*global System,process,self,WorkerGlobalScope*/
 import { arr, obj, promise } from 'lively.lang';
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 import module from "./module.js";
@@ -97,6 +97,13 @@ function prepareSystem(System, config) {
   System.useModuleTranslationCache = useModuleTranslationCache;
 
   System.set("@lively-env", System.newModule(livelySystemEnv(System)));
+
+  let isWorker = typeof WorkerGlobalScope !== 'undefined';
+
+  if (isWorker) {
+    System.set("@system-env",
+      System.newModule({...System.get("@system-env"), browser: true, worker: true}));
+  }
 
   let isElectron =
     typeof process !== "undefined" &&
