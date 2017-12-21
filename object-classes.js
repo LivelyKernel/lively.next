@@ -1,13 +1,14 @@
+/*global System*/
 import { string, Path, arr } from "lively.lang";
 import { parse, isValidIdentifier, stringify, parseFunction } from "lively.ast";
 import { resource } from "lively.resources";
 import { runEval } from "lively.vm";
+import { scripting, ExportLookup } from "lively.modules";
+const {ensurePackage, registerPackage, importPackage, 
+       lookupPackage, module, ImportInjector} = scripting;
+
 import { RuntimeSourceDescriptor } from "./source-descriptors.js";
-import { ensurePackage, registerPackage, importPackage, lookupPackage } from "lively.modules/src/packages/package.js";
-import module from "lively.modules/src/module.js";
 import { toJsIdentifier } from "./util.js";
-import { ImportInjector } from "lively.modules/src/import-modification.js";
-import ExportLookup from "lively.modules/src/export-lookup.js";
 import { adoptObject } from "./runtime.js";
 
 const objectPackageSym = Symbol.for("lively-object-package-data"),

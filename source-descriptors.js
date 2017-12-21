@@ -1,7 +1,8 @@
+/*global System*/
 import { string, arr } from "lively.lang";
-import module from "lively.modules/src/module.js";
 import { parse, query } from "lively.ast";
 import { runEval } from "lively.vm";
+import { scripting } from "lively.modules";
 
 const objMetaSym = Symbol.for("lively-object-meta"),
       moduleSym = Symbol.for("lively-module-meta"),
@@ -157,7 +158,7 @@ export class RuntimeSourceDescriptor {
 
     var {package: {name: pName}, pathInPackage: mName} = obj[moduleSym],
         mId = mName.includes("://") ? mName : pName + "/" + mName,
-        m = module(System, mId);
+        m = scripting.module(System, mId);
 
     if (!m._source && this.moduleSource)
       m.setSource(this.moduleSource);
