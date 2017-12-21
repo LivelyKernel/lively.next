@@ -1,3 +1,4 @@
+/*global System,self*/
 import { fun, arr, obj, string } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { config, show } from "lively.morphic";
@@ -11,18 +12,34 @@ import {
 import Browser from "./js/browser/index.js";
 import { MorphicDB } from "lively.morphic/morphicdb/index.js";
 import { SnapshotEditor } from "lively.morphic/partsbin.js";
+import { worker } from "lively.lang";
+import { serialize } from "lively.serializer2";
+import { plugins, allPlugins } from "lively.serializer2/plugins.js";
+import { callService, ProgressMonitor } from "./service-worker.js";
 
 export async function doSearch(
   livelySystem, searchTerm,
   excludedModules = [/systemjs-plugin-babel|.*\.min\.js|.*browserified[^/]+js/],
   excludedPackages = [],
   includeUnloaded = true,
-  caseSensitive = false
+  caseSensitive = false,
+  progress
 ) {
   if (searchTerm.length <= 2) { return []; }
 
+  if (!System.get('@system-env').worker) {
+    return await callService("doSearch", {
+      livelySystem, searchTerm,
+      excludedModules,
+      excludedPackages,
+      includeUnloaded,
+      caseSensitive,
+      progress
+    })
+  }
+
   var searchResult = await livelySystem.searchInAllPackages(
-    searchTerm, {caseSensitive, excludedModules, excludedPackages, includeUnloaded});
+    searchTerm, {caseSensitive, excludedModules, excludedPackages, includeUnloaded, progress});
 
   var [errors, found] = arr.partition(searchResult, ({isError}) => isError);
 
@@ -62,7 +79,6 @@ export class CodeSearcher extends FilterableList {
 
   static get properties() {
     return {
-
       fill:       {defaultValue: Color.transparent},
       extent:     {defaultValue: pt(800,500)},
       fontFamily: {defaultValue: "Monaco, monospace"},
@@ -139,6 +155,10 @@ export class CodeSearcher extends FilterableList {
     this.reset();
   }
 
+  onLoad() {
+    this.reset();
+  }
+
   reset() {
     this.currentSearchTerm = "";
     connect(this, "accepted", this, "openSelection");
@@ -154,17 +174,18 @@ export class CodeSearcher extends FilterableList {
     noUpdate(() => {
       this.get("search chooser").selection = "in loaded modules";
     });
-    this.getWindow().title = "code search";
+    this.getWindow() && (this.getWindow().title = "code search");
     // this.get("search chooser").listAlign = "bottom"
   }
 
-  ensureIndicator(label) {
+  ensureIndicator(label, progress) {
     if (!this.progressIndicator) {
       let win = this.getWindow();
       this.progressIndicator = this.addMorph(LoadingIndicator.open());
       if (win) this.progressIndicator.center = win.innerBounds().center();
     }
     this.progressIndicator.label = label;
+    if (progress) this.progressIndicator.progress = progress;
   }
 
   removeIndicator() {
@@ -191,10 +212,10 @@ export class CodeSearcher extends FilterableList {
     this.getSubmorphNamed("list").items = [];
     this.currentSearchTerm = "";
     this.searchAndUpdate(needle);
-    this.get('search chooser').right = this.width - 5;
   }
 
   async searchAndUpdate(searchInput) {
+    this.get('search chooser').right = this.width - 5;
     this.get("input").acceptInput(); // for history
     var filterTokens = searchInput.split(/\s+/).filter(ea => !!ea);
 
@@ -216,13 +237,24 @@ export class CodeSearcher extends FilterableList {
 
       this.ensureIndicator("searching...");
 
+      let progressMonitor = new ProgressMonitor({
+        handlers: {
+          loadingIndicatorUpdater: (step, percentage) => {
+            this.ensureIndicator(step, percentage);
+          }
+        }
+      })
+
       if (searchInModules || searchInAllModules) {
         this.items = await doSearch(
           this.systemInterface,
           searchTerm,
           undefined, /*excluded modules*/
           config.ide.js.ignoredPackages,
-          !!searchInAllModules/*includeUnloaded*/);
+          !!searchInAllModules/*includeUnloaded*/,
+          false,
+          progressMonitor
+        );
 
       } else if (searchInParts || searchInWorlds) {
         let pbar = await $world.addProgressBar({label: "morphicdb search"}),
