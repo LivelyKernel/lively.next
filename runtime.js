@@ -8,6 +8,15 @@ export const initializeSymbol       = Symbol.for("lively-instance-initialize"),
              objMetaSymbol          = Symbol.for("lively-object-meta"),
              moduleSubscribeToToplevelChangesSym = Symbol.for("lively-klass-changes-subscriber");
 
+export function getClassHierarchy(klass) {
+  var curr = klass, hierarchy = [];
+  do {
+    hierarchy.push(curr)
+    curr = curr[superclassSymbol];
+  } while (curr && curr.name)
+  return hierarchy.map(c => c.name).join('->');
+}
+
 const constructorArgMatcher = /\([^\\)]*\)/;
 
 const defaultPropertyDescriptorForGetterSetter = {

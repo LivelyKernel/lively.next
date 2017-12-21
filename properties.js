@@ -48,7 +48,8 @@
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import { obj } from "lively.lang";
+import { obj} from "lively.lang";
+import { getClassHierarchy } from "./runtime.js";
 
 const defaultPropertiesSettingKey = "propertySettings",
       defaultPropertiesKey = "properties",
@@ -69,7 +70,7 @@ export function prepareClassForManagedPropertiesAfterCreation(klass) {
   if (!hasManagedProperties(klass)) return;
 
   var {properties, propertySettings} = propertiesAndSettingsInHierarchyOf(klass);
-  klass[propertiesAndSettingsCacheSym] = {properties, propertySettings};
+  klass[propertiesAndSettingsCacheSym] = {properties, propertySettings, classHierarchy: getClassHierarchy(klass)};
   if (!properties || typeof properties !== "object") {
     console.warn(`Class ${klass.name} indicates it has managed properties but its `
                + `properties accessor (${defaultPropertiesKey}) does not return `
@@ -95,29 +96,30 @@ function prepareClassForProperties(klass, propertySettings, properties) {
 
     // ... define a getter to the property for the outside world...
     var hasGetter = myProto.hasOwnProperty(key) && myProto.__lookupGetter__(key);
-    if (!hasGetter) {
+    if (!hasGetter || hasGetter._wasGenerated) {
       var getter = descriptor.get
                 || (typeof defaultGetter === "function" && function() { return defaultGetter.call(this, key); })
                 || function() { return this[valueStoreProperty][key]; };
+      getter._wasGenerated = true;
       myProto.__defineGetter__(key, getter);
     }
 
     // ...define a setter if necessary
     var hasSetter = myProto.hasOwnProperty(key) && myProto.__lookupSetter__(key);
-    if (!hasSetter) {
+    if (!hasSetter || hasSetter._wasGenerated) {
       var descrHasSetter = descriptor.hasOwnProperty("set"),
           setterNeeded = descrHasSetter || !descriptor.readOnly;
       if (setterNeeded) {
         var setter = descriptor.set
                   || (typeof defaultSetter === "function" && function(val) { defaultSetter.call(this, key, val); })
                   || function(val) { this[valueStoreProperty][key] = val; };
+        setter._wasGenerated = true;
         myProto.__defineSetter__(key, setter);
       }
     }
 
   });
 }
-
 
 function ensurePropertyInitializer(klass) {
   // when we inherit from "conventional classes" those don't have an
@@ -128,9 +130,21 @@ function ensurePropertyInitializer(klass) {
     configurable: true,
     writable: true,
     value: function() {
-      var klass = this.constructor;
-      return klass[propertiesAndSettingsCacheSym]
-          || propertiesAndSettingsInHierarchyOf(klass);
+      var klass = this.constructor,
+          cached = klass[propertiesAndSettingsCacheSym];
+      if (cached) {
+        if (cached.classHierarchy != getClassHierarchy(klass)) {
+           let {properties, propertySettings} = propertiesAndSettingsInHierarchyOf(klass);
+           klass[propertiesAndSettingsCacheSym] = {
+             properties, propertySettings,
+             classHierarchy: getClassHierarchy(klass)
+           };
+           prepareClassForProperties(klass, propertySettings, properties);
+        } else {
+          return cached;
+        }
+      }
+      return klass[propertiesAndSettingsCacheSym] || propertiesAndSettingsInHierarchyOf(klass);
     }
   });
   Object.defineProperty(klass.prototype, "initializeProperties", {
