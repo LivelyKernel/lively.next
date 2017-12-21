@@ -77,6 +77,7 @@ function printValue(value) {
     result = string.print(value);
   }
   result = result.replace(/\n/g, "");
+  if (result.length > 500) result = result.slice(0, 20) + `...[${result.length - 20} CHARS]"`;
   return result;
 }
 
