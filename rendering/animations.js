@@ -337,6 +337,13 @@ export class PropertyAnimation {
       const [before, after] = this.getAnimationProps(type);
       if (before && after) {
         var node = SVG.adopt(svgNode).animate(this.duration, "quadInOut");
+        if (type == 'svg') {
+            let clipPath = node.target().defs().children()[0].children()[0];
+            if (clipPath) {
+               let [_, clipProps] = this.getAnimationProps('path');
+               clipProps.d && clipPath.animate(this.duration, "quadInOut").plot(clipProps.d);
+            }
+        }
         for (let prop in after) {
           if (prop == "d") {
             node = node.plot(after.d);
