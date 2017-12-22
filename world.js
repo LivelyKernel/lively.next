@@ -37,6 +37,7 @@ import LoadingIndicator from "lively.components/loading-indicator.js";
 import { StatusMessage, StatusMessageForMorph } from 'lively.halos/markers.js';
 import { GradientEditor } from "lively.ide/styling/gradient-editor.js";
 import Halo, { MorphHighlighter } from "lively.halos/morph.js";
+import "lively.ide/service-worker.js"; // ensure worker active
 
 export class World extends Morph {
 
