@@ -14,7 +14,7 @@ class Layout {
   constructor(args = {}) {
     let {spacing, padding, border, container, manualUpdate,
          autoResize, ignore, onScheduleApply, layoutOrder} = args;
-    this.applyRequests = [];
+    this.applyRequests = false;
     this.border = {top: 0, left: 0, right: 0, bottom: 0, ...border};
     this.ignore = ignore || [];
     this.lastBoundsExtent = this.container && this.container.bounds().extent();
@@ -111,8 +111,8 @@ class Layout {
   }
 
   forceLayout() {
-    if (this.applyRequests && this.applyRequests.length > 0) {
-      this.applyRequests = [];
+    if (this.applyRequests) {
+      this.applyRequests = false;
       if (this.noLayoutActionNeeded) return;
       this.refreshBoundsCache();
       this.container.withMetaDo({
@@ -123,13 +123,23 @@ class Layout {
     }
   }
 
+  forceLayoutsInNextLevel() {
+    function forceLayouts(m) {
+      if (m.layout)
+        m.layout.forceLayout();
+      else
+        m.submorphs.forEach(forceLayouts);
+    }
+
+    this.layoutableSubmorphs.forEach(forceLayouts)
+  }
+
   scheduleApply(submorph, animation, change = {}) {
     if (typeof this.onScheduleApply === "function")
       this.onScheduleApply(submorph, animation, change);
     if (this.active) return;
-    if (!this.applyRequests) this.applyRequests = [];
     if (animation) this.lastAnim = animation;
-    this.applyRequests.push({submorph, animation, change});
+    this.applyRequests = true;//{submorph, animation, change};
   }
 
   onSubmorphResized(submorph, change) {
@@ -364,8 +374,9 @@ export class VerticalLayout extends FloatLayout {
       if (resizeSubmorphs && oldWidth !== submorphWidth)
         m.width = submorphWidth;
       maxWidth = Math.max(m.bounds().width, maxWidth);
-      m.layout && m.layout.forceLayout();
     }
+
+    this.forceLayoutsInNextLevel();
 
     if (autoResize && layoutableSubmorphs.length > 0) {
       const newExtent = pt(maxWidth + 2 * spacing + padLeft + padRight, padBottom + pos.y);
@@ -440,25 +451,24 @@ export class HorizontalLayout extends FloatLayout {
       let top = spacing;
       layoutableSubmorphs.reduce((pos, m) => {
         this.changePropertyAnimated(m, "topLeft", pos, animate);
-        m.layout && m.layout.forceLayout();
         return m.topRight.addPt(pt(spacing, 0));
       }, pt(Math.max(0, startX)+spacing, top));
+      this.forceLayoutsInNextLevel();
 
     } else if (align === "bottom") {
       let bottom = minExtent.y + (autoResize ? spacing : -spacing);
       layoutableSubmorphs.reduce((pos, m) => {
         this.changePropertyAnimated(m, "bottomLeft", pos, animate);
-        m.layout && m.layout.forceLayout();
         return m.bottomRight.addPt(pt(spacing, 0));
       }, pt(Math.max(0, startX)+spacing, bottom));
-
+       this.forceLayoutsInNextLevel();
     } else {
       let yCenter = minExtent.y/2 + (autoResize ? spacing : 0);      
       layoutableSubmorphs.reduce((pos, m) => {
         this.changePropertyAnimated(m, "leftCenter", pos, animate);
-        m.layout && m.layout.forceLayout();
         return m.rightCenter.addPt(pt(spacing, 0));
       }, pt(Math.max(0, startX)+spacing, yCenter));
+      this.forceLayoutsInNextLevel();
     }
 
     if (autoResize) {
@@ -622,8 +632,9 @@ export class ProportionalLayout extends Layout {
       if (moveX || moveY) m.moveBy(pt(moveX, moveY));
       if (resizeX || resizeY) m.extent = m.extent.addXY(resizeX, resizeY);
 
-      m.layout && m.layout.forceLayout();
     }
+
+    this.forceLayoutsInNextLevel();
 
     // this.lastExtent = extent;
     this.active = false;
@@ -847,12 +858,11 @@ export class CellGroup {
           duration,
           easing
         });
-        if (target.layout) target.layout.forceLayout();
       } else {
         if (this.resize) target.extent = bounds.extent();
         target[this.alignedProperty || this.align] = bounds[this.align]().addPt(offset);
-        if (target.layout) target.layout.forceLayout();
       }
+      this.layout.forceLayoutsInNextLevel();
     }
   }
 

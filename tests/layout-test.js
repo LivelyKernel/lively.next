@@ -784,12 +784,12 @@ describe("layout", () => {
 
     it("schedules layout updates on submorph change", () => {
       var b = m.get('B'), c = m.get('C'), d = m.get('D'), a = m;
-      expect(a.layout.applyRequests).is.empty
+      expect(a.layout.applyRequests).is.false
       expect(c.layout.layoutableSubmorphBounds[0]).equals(d.bounds());
       d.extent = pt(20, 20);
-      expect(a.layout.applyRequests.length).equals(1);
-      expect(b.layout.applyRequests.length).equals(1);
-      expect(c.layout.applyRequests.length).equals(1);
+      expect(a.layout.applyRequests).equals(true);
+      expect(b.layout.applyRequests).equals(true);
+      expect(c.layout.applyRequests).equals(true);
       expect(b.layout.boundsChanged(b)).is.true;
       expect(b.layout.submorphBoundsChanged).is.true;
       expect(c.layout.boundsChanged(c)).is.true;
