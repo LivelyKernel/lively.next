@@ -1,3 +1,4 @@
+/*global System*/
 import { promise, arr } from "lively.lang";
 import { Rectangle } from "lively.graphics";
 
@@ -152,9 +153,12 @@ export function addOrChangeLinkedCSS(id, url, doc = document) {
     link.setAttribute('id', id);
     doc.head.appendChild(link);
   }
-  link.setAttribute('href', url);
-  var loaded = false; link.onload = () => loaded = true;
-  return promise.waitFor(() => !!loaded && link);
+  if (link.getAttribute('href') !== url) {
+    link.setAttribute('href', url);
+    var loaded = false; link.onload = () => loaded = true;
+    return promise.waitFor(() => !!loaded && link);
+  }
+  return Promise.resolve();
 }
 
 
