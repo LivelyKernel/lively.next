@@ -216,6 +216,10 @@ export default class MarkdownEditorPlugin extends CodeMirrorEnabledEditorPlugin 
 
   render(opts) {
     opts = opts ? {...this._markdownOptions, ...opts} : this._markdownOptions;
+    if (opts.linkedCSS) {
+      for (let id in opts.linkedCSS)
+        addOrChangeLinkedCSS(id, opts.linkedCSS[id]);
+    }
     let markdownSource = this.textMorph.textString;
     return mdCompiler.compileToHTML(markdownSource, opts);
   }

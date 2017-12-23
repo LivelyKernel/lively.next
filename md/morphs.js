@@ -56,8 +56,8 @@ export class MarkdownPreviewMorph extends HTMLMorph {
   reset() {
     this.disconnectMarkdownScrollToHTMLScroll();
     this.disconnectHTMLScrollToMarkdownScroll();
-    this.connectMarkdownScrollToHTMLScroll();
-    this.connectHTMLScrollToMarkdownScroll();
+    this.connectMarkdownScrollToHTMLScroll(true);
+    this.connectHTMLScrollToMarkdownScroll(true);
     // this.attributeConnections
     // this.markdownEditor.attributeConnections
 
@@ -67,10 +67,13 @@ export class MarkdownPreviewMorph extends HTMLMorph {
   // scroll syncing
 
   ___() {
+    // this.debug = true;
+    // this.debug = false;
 this.markdownToHTMLPositionMap.map((ea, i) => `${i}: ${Math.round(ea)}`).join("\n")
   }
 
   smoothScrollStart(morph, scrollToY, scrollDeltaY, startTime = Date.now()) {
+    this.debug && console.log("[smoothScroll] start", scrollToY);
     // basically a queue for scroll processing
     if (!this._smoothScroll) this._smoothScroll = [];
     for (let i = this._smoothScroll.length; i--;) {
@@ -83,6 +86,7 @@ this.markdownToHTMLPositionMap.map((ea, i) => `${i}: ${Math.round(ea)}`).join("\
 
   smoothScrollStep() {
     if (!this._smoothScroll) {
+      this.debug && console.log("[smoothScroll] stop");
       this.stopSteppingScriptNamed("smoothScrollStep");
       return;
     }
@@ -99,6 +103,8 @@ this.markdownToHTMLPositionMap.map((ea, i) => `${i}: ${Math.round(ea)}`).join("\
       
       if (node.scrollTop > scrollToY) scrollDeltaY = -scrollDeltaY;
       node.scrollTop = node.scrollTop + scrollDeltaY;
+
+      this.debug && console.log("[smoothScroll] step", node.scrollTop + scrollDeltaY);
     }
 
     if (!this._smoothScroll.length) this._smoothScroll = null;
@@ -150,7 +156,7 @@ this.markdownToHTMLPositionMap.map((ea, i) => `${i}: ${Math.round(ea)}`).join("\
         nRowsVisible = endRow - startRow,
         centerRow = Math.round(startRow + (endRow-startRow)/2),
         {markdownToHTMLPositionMap} = this,
-        debug = false,
+        debug = this.debug,
         targetRow;
 
     // ramp up to center row
@@ -219,15 +225,11 @@ this.markdownToHTMLPositionMap.map((ea, i) => `${i}: ${Math.round(ea)}`).join("\
   }
 
   syncHTMLScrollToMarkdownScrollDebounced(editor) {
-    fun.throttleNamed("syncHTMLScrollToMarkdownScrollDebounced" + this.id, 100, () => {
-      this.syncHTMLScrollToMarkdownScroll(editor);
-    })();
+    requestAnimationFrame(() => this.syncHTMLScrollToMarkdownScroll(editor));
   }
 
   syncMarkdownScrollToHTMLScrollDebounced(editor) {
-    fun.throttleNamed("syncMarkdownScrollToHTMLScrollDebounced" + this.id, 100, () => {
-      this.syncMarkdownScrollToHTMLScroll(editor);
-    })();
+    requestAnimationFrame(() => this.syncMarkdownScrollToHTMLScroll(editor));
   }
 
   htmlScrollToMarkdownScrollConnections() {
@@ -290,6 +292,7 @@ this.markdownToHTMLPositionMap.map((ea, i) => `${i}: ${Math.round(ea)}`).join("\
     }
 
     this._smoothScroll = null;
+    this.submorphs = [];
     // this.submorphs = this.computeMarkdownToHTMLPositionMap().map((ea, i) => {
     //   return {width: this.width, height: 3, top: ea, fill: Color.orange,
     //                 submorphs: [{type: "text", textString: String(i)}]}
@@ -300,7 +303,7 @@ this.markdownToHTMLPositionMap.map((ea, i) => `${i}: ${Math.round(ea)}`).join("\
 
 }
 
-class MarkdownEditor extends Morph {
+export class MarkdownEditor extends Morph {
 
   static get properties() {
 
