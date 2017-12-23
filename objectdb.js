@@ -826,7 +826,14 @@ class Synchronization {
           remoteCommitDB,
           remoteVersionDB,
           remoteLocation,
-          options: {debug, live = false, retry = false, method, replicationFilter}
+          options: {
+            debug,
+            live = false,
+            retry = false,
+            method,
+            replicationFilter,
+            pushDesignDocToRemote = false
+          }
         } = this,
 
         versionDB = fromObjectDB.__versionDB || await fromObjectDB._versionDB(),
@@ -842,11 +849,12 @@ class Synchronization {
     let commitNameTypeFilter = _commitdb_indexes.find(ea => ea.name === 'nameTypeFilter'),
         versionNameTypeFilter = _versiondb_indexes.find(ea => ea.name === 'nameTypeFilter');
 
-    console.log("adding commitNameTypeFilter")
-    await remoteCommitDB.addDesignDoc(commitNameTypeFilter);
-
-    console.log("adding versionNameTypeFilter")
-    await remoteVersionDB.addDesignDoc(versionNameTypeFilter);
+    if (pushDesignDocToRemote) {
+      console.log("adding commitNameTypeFilter")
+      await remoteCommitDB.addDesignDoc(commitNameTypeFilter);      
+      console.log("adding versionNameTypeFilter")
+      await remoteVersionDB.addDesignDoc(versionNameTypeFilter);
+    }
 
     let opts = {
           live, retry,

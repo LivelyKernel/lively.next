@@ -41897,7 +41897,7 @@ var Synchronization = function () {
       var _ref69 = asyncToGenerator(regeneratorRuntime.mark(function _callee40() {
         var _this5 = this;
 
-        var fromObjectDB, remoteCommitDB, remoteVersionDB, remoteLocation, _options, debug, _options$live, live, _options$retry, retry, method, replicationFilter, versionDB, commitDB, _commitdb_indexes, _versiondb_indexes, fromSnapshotLocation, versionChangeListener, commitChangeListener, commitNameTypeFilter, versionNameTypeFilter, opts, commitOpts, versionOpts, commitReplication, versionReplication, snapshotReplication, commitReplicationState, versionReplicationState, updateState, tryToResolve, snapshotPathFor;
+        var fromObjectDB, remoteCommitDB, remoteVersionDB, remoteLocation, _options, debug, _options$live, live, _options$retry, retry, method, replicationFilter, _options$pushDesignDo, pushDesignDocToRemote, versionDB, commitDB, _commitdb_indexes, _versiondb_indexes, fromSnapshotLocation, versionChangeListener, commitChangeListener, commitNameTypeFilter, versionNameTypeFilter, opts, commitOpts, versionOpts, commitReplication, versionReplication, snapshotReplication, commitReplicationState, versionReplicationState, updateState, tryToResolve, snapshotPathFor;
 
         return regeneratorRuntime.wrap(function _callee40$(_context41) {
           while (1) {
@@ -41947,35 +41947,37 @@ var Synchronization = function () {
                 retry = _options$retry === undefined ? false : _options$retry;
                 method = _options.method;
                 replicationFilter = _options.replicationFilter;
+                _options$pushDesignDo = _options.pushDesignDocToRemote;
+                pushDesignDocToRemote = _options$pushDesignDo === undefined ? false : _options$pushDesignDo;
                 _context41.t0 = fromObjectDB.__versionDB;
 
                 if (_context41.t0) {
-                  _context41.next = 20;
+                  _context41.next = 22;
                   break;
                 }
 
-                _context41.next = 19;
+                _context41.next = 21;
                 return fromObjectDB._versionDB();
 
-              case 19:
+              case 21:
                 _context41.t0 = _context41.sent;
 
-              case 20:
+              case 22:
                 versionDB = _context41.t0;
                 _context41.t1 = fromObjectDB.__commitDB;
 
                 if (_context41.t1) {
-                  _context41.next = 26;
+                  _context41.next = 28;
                   break;
                 }
 
-                _context41.next = 25;
+                _context41.next = 27;
                 return fromObjectDB._commitDB();
 
-              case 25:
+              case 27:
                 _context41.t1 = _context41.sent;
 
-              case 26:
+              case 28:
                 commitDB = _context41.t1;
                 _commitdb_indexes = fromObjectDB._commitdb_indexes;
                 _versiondb_indexes = fromObjectDB._versiondb_indexes;
@@ -41992,18 +41994,21 @@ var Synchronization = function () {
                   return ea.name === 'nameTypeFilter';
                 });
 
+                if (!pushDesignDocToRemote) {
+                  _context41.next = 43;
+                  break;
+                }
 
                 console.log("adding commitNameTypeFilter");
-                _context41.next = 37;
+                _context41.next = 40;
                 return remoteCommitDB.addDesignDoc(commitNameTypeFilter);
 
-              case 37:
-
+              case 40:
                 console.log("adding versionNameTypeFilter");
-                _context41.next = 40;
+                _context41.next = 43;
                 return remoteVersionDB.addDesignDoc(versionNameTypeFilter);
 
-              case 40:
+              case 43:
                 opts = {
                   live: live, retry: retry
                   // conflicts: true,
@@ -42299,7 +42304,7 @@ var Synchronization = function () {
 
                 return _context41.abrupt("return", this);
 
-              case 54:
+              case 57:
               case "end":
                 return _context41.stop();
             }
