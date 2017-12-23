@@ -44,7 +44,7 @@ export class SQLEvaluator {
         result = await r.post({connectionString, query, args});
     if (result.error) return {isError: !!result.error, value: result.error};
     if (result.rows) return {value: string.printTable(grid.tableFromObjects(result.rows))};
-    if (result.output) return {value: result.output};
+    if (typeof result.output === "string") return {value: result.output};
     return {value: result};
   }
 

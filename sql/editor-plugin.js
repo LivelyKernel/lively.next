@@ -1,10 +1,18 @@
 import { CodeMirrorEnabledEditorPlugin } from "../editor-plugin.js";
 import "./mode.js";
-import { obj, string, grid } from "lively.lang";
+import { obj, arr, string, grid } from "lively.lang";
 import { resource } from "lively.resources";
 import { SQLEvaluator } from "./eval.js";
 import { Snippet } from "../text/snippets.js";
 import { snippets as sqlSnippets } from "./snippets.js";
+
+
+const connectionStringRe = /([a-z_\-0-9]+):\/\/(?:([^@:]+)(?::(.*))?@)?([^:\/]+)(?::([0-9]+))?\/?([^\/]*)/i;
+function parseConnectionString(url) {
+  // parseConnectionString("postgresql://robert@localhost:5432/test")
+  let [_, scheme, user, password, host, port, dbname] = url.match(connectionStringRe);
+  return {scheme, user, password, host, port, dbname};
+}
 
 
 // await SQLConnect.connect();
@@ -13,7 +21,7 @@ import { snippets as sqlSnippets } from "./snippets.js";
 
 class SQLConnect {
 
-  static connect() { return new this().interactivelyPromptForConnection(); }
+  static connect(knownConnections) { return new this().interactivelyPromptForConnection(knownConnections); }
   static current() { return new this().lastConnection(); }
   static connections() { return new this().knownConnections(); }
 
@@ -41,20 +49,20 @@ class SQLConnect {
     return connectionString ? this.addConnection(connectionString) : null;
   }
 
-  async interactivelyPromptForConnection() {
-    let connections = this.knownConnections(),
+  async interactivelyPromptForConnection(additionalKnownConnections = []) {
+    let connections = arr.uniq([...additionalKnownConnections, ...this.knownConnections()]),
         items = connections.map(ea => ({isListItem: true, string: ea, value: ea}));
-    items.unshift("add...");
     let preselect = connections.indexOf(this.lastConnection()) + 1;
     if (preselect === -1) preselect = 0;
-    let {selected: [choice]} = await $world.filterableListPrompt("select SQL connections", items, {
+    let {list, status, selections: [choice]} = await $world.editListPrompt("select SQL connections", items, {
       preselect,
       historyId: "lively-ide-sql-connections",
     });
-    if (!choice) return null;
-    if (choice === "add...") return this.interactivelyAddConnection();
+    if (status === "canceled") return;
+    localStorage["lively.ide-sql-connections"] = JSON.stringify(list);
     return choice;
   }
+
 }
 
 
@@ -87,7 +95,8 @@ export default class SQLEditorPlugin extends CodeMirrorEnabledEditorPlugin {
       {
         name: "[sql] connect",
         exec: async () => {
-          this.evalEnvironment.connectionString = await SQLConnect.connect();
+          let knownConnections = [this.evalEnvironment.connectionString].filter(Boolean);
+          this.evalEnvironment.connectionString = await SQLConnect.connect(knownConnections);
           return true;
         }
       },
