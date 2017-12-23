@@ -957,10 +957,10 @@ var commands = [
     progressIndicator: "opening file browser...",
     exec: async (world, opts = {}) => {
       var { default: HTTPFileBrowser } = await System.import("lively.ide/http-file-browser.js"),
-          { location, file } = opts;
+          { location, url, file } = opts;
       var browser = file ?
         HTTPFileBrowser.forFile(file, location) :
-        HTTPFileBrowser.forLocation(location || document.location.origin);
+        HTTPFileBrowser.forLocation(url || location || document.location.origin);
       return world.openInWindow(browser).activate();
     }
   },
