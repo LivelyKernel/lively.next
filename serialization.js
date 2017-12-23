@@ -223,6 +223,10 @@ function findPackagesInFileSpec(files, path = []) {
   return result;
 }
 
+export function packagesOfSnapshot(snapshot) {
+  return findPackagesInFileSpec(snapshot.packages)
+}
+
 async function loadPackagesAndModulesOfSnapshot(snapshot) {
   // embedded package definitions
   if (snapshot.packagesToRegister) {
@@ -234,7 +238,7 @@ async function loadPackagesAndModulesOfSnapshot(snapshot) {
   }
 
   if (snapshot.packages) {
-    let packages = findPackagesInFileSpec(snapshot.packages);
+    let packages = packagesOfSnapshot(snapshot);
 
     for (let {files, url} of packages) {
       // if a package with the same url already is loaded in the runtime then
