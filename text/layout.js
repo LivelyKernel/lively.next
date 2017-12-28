@@ -263,12 +263,23 @@ export default class TextLayout {
   }
 
   computeMaxBoundsForLineSelection(morph, selection) {
+    /*
+      Computes the biggest character bounds of a selection with respect
+      to a single line. If a selection that spans multiple lines is provided,
+      the selection is reduced to the full remainder of the first line selected.
+      If the selection is a single line, yet spans multiple lines due to line wrapping,
+      again, only the items within the first line are taken into account.
+    */
     var {start, end} = selection,
-        end = end.row == start.row ? end : {row: end.row, column: -1},
         textLayout = morph.textLayout,
+        end = morph.lineWrapping ? textLayout.rangesOfWrappedLine(morph, start.row)[0].end : end,
+        end = end.row == start.row ? end : {row: end.row, column: -1},
         charBoundsInSelection = textLayout.charBoundsOfRow(morph, start.row),
-        charBoundsInSelection = end.column < 0 ? charBoundsInSelection.slice(start.column) : charBoundsInSelection.slice(start.column, end.column),
-        maxCol = start.column + (charBoundsInSelection ? charBoundsInSelection.indexOf(arr.max(charBoundsInSelection, b => b.height)) : 0);
+        charBoundsInSelection = end.column < 0 ? 
+                                 charBoundsInSelection.slice(start.column) : 
+                                 charBoundsInSelection.slice(start.column, end.column),
+        maxCol = start.column + (charBoundsInSelection ? 
+                                 charBoundsInSelection.indexOf(arr.max(charBoundsInSelection, b => b.height)) : 0);
     return textLayout.boundsFor(morph, {row: start.row, column: maxCol});
   }
 
