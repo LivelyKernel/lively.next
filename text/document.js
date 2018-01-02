@@ -1564,10 +1564,14 @@ export default class Document {
     if (column > lineLength) {
       debug && debug.log(`filling up insertion column at ${row}/${column}: ${column - lineLength}`);
       let fill = " ".repeat(column - lineLength);
-      if (firstInsertionLine.length)
-        firstInsertionLine[0] = fill + firstInsertionLine[0];
-      else
+      if (firstInsertionLine.length) {
+        if (typeof firstInsertionLine[0] == 'string')
+           firstInsertionLine[0] = fill + firstInsertionLine[0];
+        else
+           firstInsertionLine.unshift(fill, null);
+      } else {
         firstInsertionLine.push(fill, null);
+      }
     }
 
     let [before, after] = splitTextAndAttributesAt(line.textAndAttributes, column);
