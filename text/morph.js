@@ -1,6 +1,6 @@
 /*global System,Map,WeakMap*/
 import { config, morph, Morph } from "lively.morphic";
-import { Rectangle, rect, Color, pt } from "lively.graphics";
+import { Rectangle, Point, rect, Color, pt } from "lively.graphics";
 import { Selection, MultiSelection } from "./selection.js";
 import { string, obj, fun, promise, arr } from "lively.lang";
 import Document, {objectReplacementChar} from "./document.js";
@@ -20,6 +20,8 @@ import commands from "./commands.js";
 import { RichTextControl } from "./ui.js";
 import { textAndAttributesWithSubRanges } from "./attributes.js";
 import { serializeMorph, deserializeMorph } from "../serialization.js";
+import { shape, intersect } from "svg-intersections";
+import { addPathAttributes, getSvgVertices } from "../rendering/property-dom-mapping.js";
 
 export class Text extends Morph {
 
@@ -131,6 +133,13 @@ export class Text extends Morph {
         group: "_rendering",
         initialize() {
           this.viewState = this.defaultViewState;
+        }
+      },
+
+      displacingMorphMap: {
+        group: '_rendering',
+        initialize() {
+          this.displacingMorphMap = new Map();  
         }
       },
 
@@ -786,7 +795,7 @@ export class Text extends Morph {
           hardLayoutChange /*reset char bounds*/,
           hardLayoutChange /*reset line heights*/);
       }
-  
+
       if (textChange) signal(this, "textChange", change);
       if (viewChange) signal(this, "viewChange", change);
     }
@@ -801,9 +810,19 @@ export class Text extends Morph {
   
   onSubmorphChange(change, submorph) {
     super.onSubmorphChange(change, submorph);
-    let {prop} = change;
+    let {prop} = change,
+        isGeometricTransform = prop == 'position' ||
+                               prop == 'extent' || 
+                               prop == 'scale' || 
+                               prop == 'rotation';
+    
+    if (this.displacingMorphMap.get(submorph) && isGeometricTransform) {
+       this._intersectionShapeCache.delete(submorph);
+       this.updateTextDisplacementFor(submorph)
+       this.viewState._needsFit = false;
+    }
     if (this.embeddedMorphMap.get(submorph) && !this._positioningSubmorphs) {
-      if (prop == 'position' || prop == 'extent') {
+      if (isGeometricTransform) {
         this._positioningSubmorphs = true;
         this.invalidateTextLayout(prop == 'extent' || prop == 'extent');
         this._positioningSubmorphs = false;
@@ -811,17 +830,138 @@ export class Text extends Morph {
     }
   }
 
-  removeMorph(morph) {
-    let {embeddedMorphMap} = this;
+  removeMorph(morph, invalidateTextLayout = true) {
+    let {embeddedMorphMap, displacingMorphMap} = this;
+    if (displacingMorphMap && displacingMorphMap.has(morph)) {
+      this.toggleTextWrappingAround(morph, false);
+    }
     if (embeddedMorphMap && embeddedMorphMap.has(morph)) {
       let {anchor} = embeddedMorphMap.get(morph);
       if (anchor) {
         let {position: {row, column}} = anchor;
-        this.replace({start: {row, column}, end: {row, column: column + 1}}, []);
+        this.replace({start: {row, column}, end: {row, column: column + 1}}, [], 
+                     true, invalidateTextLayout);
+        this.replace
       }
       embeddedMorphMap.delete(morph);
     }
     return super.removeMorph(morph);
+  }
+
+  toggleTextWrappingAround(submorph, wrapActive) {
+    /*
+      There are three ways to embedd morphs into a text morph:
+      1.- the plain submorph, where the submorph floats above the text
+      2.- the embedded morph, where the submorph is inline with the text, treated like
+          another character
+      3.- plain submorphs that wrap the text of the text morph depending on their shape (float around)
+      This function is for toggling the 3rd way on a given submorph. If the given submorph is found to
+      be currently inline with the text, it is removed from the text and added again as a plain submorph with
+      wrapping enabled/disabled;      
+    */
+    if (wrapActive) {
+      if (this.displacingMorphMap.has(submorph)) return;
+      if (this.embeddedMorphMap.has(submorph)) {
+        this.addMorph(submorph.remove());
+      }
+      this.displacingMorphMap.set(submorph, []);
+      this.updateTextDisplacementFor(submorph);
+      submorph.moveBy(pt(1,1));
+    } else {
+      let displacementMorphs = this.displacingMorphMap.get(submorph);
+      if (displacementMorphs) {
+        this._displacing = true;
+        displacementMorphs.forEach(dm => this.removeMorph(dm));
+        this._displacing = false;
+        this.displacingMorphMap.delete(submorph);
+      }
+    }
+  }
+
+  updateTextDisplacementFor(submorph) {
+    if (this._displacing) return;
+    this._displacing = true;
+    let morphs = this.displacingMorphMap.get(submorph),
+        rects = this.computeDisplacementRectsFor(submorph).values(), 
+        curr = [];
+
+    morphs.forEach(m => this.removeMorph(m, false));
+    this.textLayout.resetLineCharBoundsCacheOfRange(this, submorph._displacementRange);
+    var prevTop;
+    for (let bounds of rects) {
+      let m = morphs.shift() || morph({
+            visible: true,
+            reactsToPointer: false,
+            isDisplacementMorph: true
+          }),
+          pos = this.textLayout.textPositionFromPoint(this, bounds.leftCenter());
+      m.setBounds(bounds);
+      this.insertText([m, {}], pos);
+      if (prevTop == m.top) {
+        m.remove()
+        continue;
+      }
+      prevTop = m.top;
+      curr.push(m);
+    }
+    morphs.forEach(m => this.removeMorph(m, false));
+    this.displacingMorphMap.set(submorph, curr);
+    this._displacing = false;
+  }
+
+  computeDisplacementRectsFor(submorph) {
+    // check what line ranges are overlapped by the morph
+    let tl = this.textLayout,
+        startPos = tl.textPositionFromPoint(this, submorph.topLeft),
+        endPos = tl.textPositionFromPoint(this, submorph.bottomLeft),
+        lineRanges = [],
+        bufferDist = 15,
+        computeIntersectionShape = (submorph) => {
+          if (submorph.isPath) {
+            return shape("path", {d: getSvgVertices(submorph.vertices.map(v => {
+              return {controlPoints: v.controlPoints, 
+                      ...pt(v.x, v.y).matrixTransform(submorph.getTransform())}
+            }))});
+          } else if (submorph.constructor.name == 'Ellipse') {
+            return shape('ellipse', {
+              cx: submorph.center.x,
+              cy: submorph.center.y,        
+              rx: submorph.width / 2,
+              ry: submorph.height / 2
+            })
+          } else {
+            return shape('rect', {
+              x: submorph.left, y: submorph.top, 
+              width: submorph.width, height: submorph.height,
+              rx: submorph.borderRadiusTop, ry: submorph.borderRadiusLeft
+            })
+          }
+        };
+
+    submorph._displacementRange = Range.fromPositions(startPos, endPos);
+    
+    for (let row = startPos.row; row < endPos.row + 1; row++) {
+      lineRanges.push(...tl.rangesOfWrappedLine(this, row))
+    }
+    if (!this._intersectionShapeCache) this._intersectionShapeCache = new Map();
+    let hit = this._intersectionShapeCache.get(submorph),
+        intersectionShape = hit || computeIntersectionShape(submorph);
+    this._intersectionShapeCache.set(submorph, intersectionShape);
+   
+    var width = this.width, extrusionMap = new Map();
+    for (let r of lineRanges) {
+      let {height, y} = tl.computeMaxBoundsForLineSelection(this, r),
+          lineRect = shape("rect", {width, height, x: 0, y}),
+          is = intersect(lineRect, intersectionShape);
+      if (is.points.length < 1) continue;
+      let displacementRect = Rectangle.unionPts(is.points.map(Point.fromLiteral))
+      displacementRect.y = y;
+      displacementRect.height = height;
+      displacementRect.x -= bufferDist;
+      displacementRect.width += 2 * bufferDist;
+      extrusionMap.set(r, displacementRect); 
+    }
+    return extrusionMap;
   }
 
   rejectsInput() {
@@ -1821,7 +1961,7 @@ export class Text extends Morph {
       nextRow = nextRange.start.row;
       let charBounds = this.textLayout
         .charBoundsOfRow(this, nextRow)
-        .slice(nextRange.start.column, nextRange.end.column);
+        .slice(nextRange.start.column, nextRange.end.column + 1);
       nextCol = nextRange.start.column + columnInCharBoundsClosestToX(charBounds, goalX);
     }
 
@@ -2010,14 +2150,18 @@ export class Text extends Morph {
     viewState._needsFit = false;
     if ((fixedHeight && fixedWidth) || !this.textLayout /*not init'ed yet*/) return this;
     let textBounds = this.textBounds().outsetByRect(this.padding),
-          resize = () => {
+        resize = () => {
             if (!fixedHeight && this.height != textBounds.height) this.height = textBounds.height
             if (!fixedWidth && this.width != textBounds.width) this.width = textBounds.width;
             this.embeddedMorphs.forEach(submorph => {
               let a = this.embeddedMorphMap.get(submorph).anchor;
               a.position = a.position;
-            })
+            });
           }
+    this.displacingMorphMap && this.displacingMorphMap.forEach((_, m) => {
+      this.updateTextDisplacementFor(m)
+    });
+    viewState._needsFit = false;
     if (this.document.lines.find(l => l.hasEstimatedExtent)) {
       this.whenRendered().then(resize)
     } else {
@@ -2586,6 +2730,10 @@ export class Text extends Morph {
         for (let i = 0; i < textAndAttributes.length; i= i+2) {
           let content = textAndAttributes[i];
           if (!content.isMorph) continue;
+          if (content.isDisplacementMorph) {
+            textAndAttributes[i] = '';
+            continue;
+          }
           let snap = copyMap[i] = serializeMorph(textAndAttributes[i]);
           textAndAttributes[i] = deserializeMorph(snap, {reinitializeIds: true});
         }
