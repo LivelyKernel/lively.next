@@ -111,7 +111,14 @@ export async function interactivelyChooseImports(livelySystem, opts) {
   opts = {System: System, world: $world, ...opts};
   // 1. gather all exports
   var exports = await LoadingIndicator.runFn(
-    (li) => callService("exportsOfModules", {
+    (li) => {
+      let progress = new ProgressMonitor({
+          handlers: [(stepName, progress) => {
+            li.progress = progress;
+            li.label = stepName;
+          }]
+        });
+      config.ide.workerEnabled ? callService("exportsOfModules", {
         excludedPackages: config.ide.js.ignoredPackages,
         livelySystem, progress: new ProgressMonitor({
           handlers: [(stepName, progress) => {
@@ -119,7 +126,11 @@ export async function interactivelyChooseImports(livelySystem, opts) {
             li.label = stepName;
           }]
         })
-    }), "computing imports...");
+       }) : livelySystem.exportsOfModules({
+         excludedPackages: config.ide.js.ignoredPackages,
+         progress
+      })
+    }, "computing imports...");
 
   // 2. Ask what to import + generate insertions
   var choices = await ExportPrompt.run(opts.world, exports);

@@ -27,7 +27,7 @@ export async function doSearch(
 ) {
   if (searchTerm.length <= 2) { return []; }
 
-  if (!System.get('@system-env').worker) {
+  if (!System.get('@system-env').worker && config.ide.workerEnabled) {
     return await callService("doSearch", {
       livelySystem, searchTerm,
       excludedModules,
