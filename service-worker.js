@@ -8,7 +8,27 @@ import { config } from "lively.morphic";
 
 !System.get('@system-env').worker 
 && !System.get('@lively-worker') 
-&& System.set('@lively-worker', System.newModule(initWorker()));
+&& startWorker();
+
+async function startWorker() {
+  System.set('@lively-worker', System.newModule(initWorker()));
+  var res;
+  do {
+    await promise.delay(1000);
+    let objectPackages = {};
+    for (let key in System._loader.modules) {
+      if (key.includes('local://') || key.includes('lively://')) {
+        // fetch modules that are initialized dynamically and do not
+        // yet adhere to a well defined module versioning convention
+        objectPackages[key] = module(key)._source;
+      }
+    }
+    res = await callService('ensureModules', {
+       loadedModules: Object.keys(System._loader.modules).filter(url => !url.includes('@')),
+       sources: objectPackages
+    }, false);
+  } while (res.error) 
+}
 
 /* 
   System.get('@lively-worker').close(() => {
@@ -32,53 +52,55 @@ function initWorker() {
    await lively.lang.promise.waitFor(5000, () => self.initialized);
    await System.import('lively-system-interface');
    await System.import('lively.ide/service-worker.js');
+   let {resource} = await System.import('lively.resources'),
+       {module, registerPackage} = await System.import('lively.modules');
+   async function coldImport(moduleId, source) {
+      // cold import
+      let rec = resource(moduleId);
+      if (!await rec.exists() && rec.localBackend) {
+        // fetch source from indexDB and store it inside db;
+        if (!source)
+           source = (await System._livelyModulesTranslationCache
+                                 .fetchStoredModuleSource(moduleId) || {}).source;
+        if (source)
+          await rec.write(source);
+        else {
+          console.log('No source available for ', moduleId);
+        }
+      }
+     try {
+        if (moduleId.includes('/package.json'))
+          registerPackage(moduleId.replace('/package.json', ''));
+        await module(moduleId).source() // no need for evaluation              
+     } catch(e) {
+       
+     }
+   }
    self.messenger.addServices({
-     tokenizeDocument: async function(msg, messenger) {
-       let {deserialize, serialize} = await System.import('lively.serializer2'),
-           {tokenizeDocument} = await System.import('lively.ide/editor-modes.js'),
-           {document, fromRow, toRow, validBeforePos} = deserialize(msg.data),
-           {Text} = await System.import('lively.morphic/text/morph.js'),
-           dummyText = new Text({textString: document});
-       await dummyText.changeEditorMode('js');
-       messenger.answer(msg, serialize(tokenizeDocument(dummyText.editorPlugin.mode, dummyText.document, fromRow, toRow, validBeforePos)));
+     ensureModules: async function(msg, messenger) {
+        let {loadedModules, sources = {}} = msg.data;
+        for (let moduleId of loadedModules) {
+          if (!System._loader.modules[moduleId]) {
+             await coldImport(moduleId, sources[moduleId]);
+          }
+        }
+        messenger.answer(msg, true)
      },
      updateModule: async function(msg, messenger) {
        let {module} = await System.import('lively.modules');
        let {module: moduleId, newSource} = msg.data;
        if (!System._loader.modules[moduleId]) {
-          messenger.sendTo(
-             messenger.id(), 'loadModule', 
-            {module: moduleId, source: newSource},
-            () => messenger.answer(msg, true))       
+          await coldImport(moduleId, newSource);
+          messenger.answer(msg, true)      
        } else {
           await module(moduleId).changeSource(newSource) 
           messenger.answer(msg, true);
        }
      },
      loadModule: async function(msg, messenger) {
-       let {resource} = await System.import('lively.resources'),
-           {module, loadedModules, registerPackage} = await System.import('lively.modules'),
-           {module: moduleId, source} = msg.data;
-       if (!loadedModules[moduleId]) {
-          // cold import
-          let rec = resource(moduleId);
-          if (!await rec.exists() && rec.localBackend) {
-            // fetch source from indexDB and store it inside db;
-            if (!source)
-               source = (await System._livelyModulesTranslationCache.fetchStoredModuleSource(moduleId) || {}).source;
-            if (source)
-              await rec.write(source);
-            else {
-              console.log('No source available for ', moduleId);
-            }
-          }
-         try {
-            if (moduleId.includes('/package.json'))
-              registerPackage(moduleId.replace('/package.json', ''));
-            await module(moduleId).source() // no need for evaluation              
-         } catch(e) {
-           
-         }
+       let {module: moduleId, source} = msg.data;
+       if (!System._loader.modules[moduleId]) {
+          await coldImport(moduleId);
        }
        messenger.answer(msg, true);
      },
@@ -88,14 +110,20 @@ function initWorker() {
            {resource} = await System.import('lively.resources'),
            {snapshot, path, progress} = deserialize(msg.data),
            frozenPart = await FreezerPart.fromSnapshot(JSON.parse(snapshot));
-       messenger.answer(msg, await frozenPart.standalone({progress: progress && progress.asWorkerEndpoint(msg)}));
+       messenger.answer(msg, await frozenPart.standalone({
+         progress: progress && progress.asWorkerEndpoint(msg)}));
      },
      exportsOfModules: async function(msg, messenger) {
        let {localInterface} = await System.import('lively-system-interface'),
            {deserialize} = await System.import('lively.serializer2'),
-           {livelySystem = localInterface, excludedPackages = [], progress} = deserialize(msg.data);
+           {livelySystem = localInterface, 
+            excludedPackages = [], 
+            progress} = deserialize(msg.data);
+       await lively.lang.promise.waitFor(5000, () => !self.loadingModules);
        messenger.answer(msg, await livelySystem.exportsOfModules({
-         excludedPackages, progress: progress && progress.asWorkerEndpoint(msg)}))
+         excludedPackages, 
+         progress: progress && progress.asWorkerEndpoint(msg)
+       }))
      },
      doSearch: async function (msg, messenger) {
        let {deserialize} = await System.import('lively.serializer2'),
@@ -107,7 +135,7 @@ function initWorker() {
            includeUnloaded, caseSensitive, progress && progress.asWorkerEndpoint(msg));
          messenger.answer(msg, res);
      }
-   })
+   });
   }).split('__lvVarRecorder.').join('') + ')()', () => {});
 
   subscribe("lively.modules/moduleloaded", async (evt) => {
