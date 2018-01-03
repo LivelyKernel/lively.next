@@ -1483,7 +1483,7 @@ export default class Inspector extends Morph {
       } else if (treeBounds.bottom() - 20 < pos.y) {
         pos = treeBounds.bottomCenter().addXY(0, -20);
       }
-      this.openWidget.position = pos;
+      this.openWidget.top = pos.y;
     }
   }
 
