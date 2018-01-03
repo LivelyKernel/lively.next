@@ -499,7 +499,14 @@ function insertCapturesForExportDeclarations(parsed, options) {
     if ((stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration")
      || !stmt.declaration) {
        /*...*/
-
+     } else if (stmt.type === 'ExportDefaultDeclaration' && stmt.declaration.type === 'Literal') {
+       // default export of an unnamed primitive value, i.e.
+       // "export default "foo"", "export default 27;"
+        var decl = stmt.declaration,
+            assignVal = decl.raw,
+            refId = generateUniqueName(topLevelDeclsAndRefs(parsed).declaredNames, "$" + decl.raw.split('"').join(''));
+        stmt.declaration = id(refId);
+        arr.pushAt(body, assignExpr(options.captureObj, refId, decl.raw, false), body.indexOf(stmt));
      } else if (stmt.declaration.declarations) {
       body.push(...stmt.declaration.declarations.map(decl => {
         var assignVal = decl.id;

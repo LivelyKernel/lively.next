@@ -678,6 +678,10 @@ describe("declarations", () => {
               {declarationWrapper: {name: "_define", type: "Identifier"}, ...opts}));
   }
 
+  it("wraps literals that are exported as defaults", () => {
+    expect(rewriteWithWrapper('export default 32')).equals("_rec.$32 = 32;\nvar $32 = _rec.$32;\nexport default $32;");
+  });
+
   it("can be wrapped in define call", () => {
     expect(rewriteWithWrapper("var x = 23;")).equals("_rec.x = _define(\"x\", \"var\", 23, _rec);");
   });
