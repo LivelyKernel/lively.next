@@ -61,12 +61,17 @@ var config = {
 
   ide: {
 
+    workerEnabled: true,
+
     js: {
       ignoredPackages: [
         "lively.web", "no group",
         url => url.includes("lively.morphic/objectdb") || 
                url.includes("lively.next-node_modules") || 
-               url.includes("node_modules") || url.includes('mocha-es6')
+               url.includes("node_modules") || 
+               url.includes("custom-npm-modules") ||
+               url.includes('mocha-es6') ||
+               url.includes('test-resources/es6')
       ]
     },
 
