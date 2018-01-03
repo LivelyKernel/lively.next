@@ -122,6 +122,14 @@ class ModuleInterface {
   }
 
   setSource(source) {
+    /* rms 3.1.17: There appear to be situations where the module system tries to
+       set the source to the transformed form instead of the original ES6 format.
+       I have not traced down the reason for this, but this check will prevent that
+       a module's transformed source will be set to its original source by scanning
+       the source string for the recorder and sourceAccessor variables.      */
+    if(this.sourceAccessorName && this.recorderName &&
+      source.includes('var ' + this.recorderName) && source.includes('var ' + this.sourceAccessorName))
+      return;
     if (this._source === source) return;
     this.reset();
     this._source = source;
