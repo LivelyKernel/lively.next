@@ -1,5 +1,5 @@
 /*global System,inspect*/
-import { ObjectDBHTTPInterface } from "lively.storage/objectdb.js";
+import { ObjectDBHTTPInterface } from "lively.storage";
 import { Database } from "lively.storage";
 import { loadMorphFromSnapshot, createMorphSnapshot } from "../serialization.js";
 import { resource } from "lively.resources";
