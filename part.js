@@ -11,6 +11,7 @@ import { runEval } from "lively.vm";
 import { callService, ProgressMonitor } from "lively.ide/service-worker.js";
 import { LoadingIndicator } from "lively.components";
 import { allPlugins, LeakDetectorPlugin, plugins } from "lively.serializer2/plugins.js";
+import { config } from "lively.morphic";
 
 export async function interactivelyFreezePart(part, opts) {
   var li = LoadingIndicator.open("Freezing target...", {center: $world.visibleBounds().center()}),
@@ -40,10 +41,13 @@ export async function interactivelyFreezePart(part, opts) {
          li.progress = progress;
        }]
       }),
-      {file, warnings} = await callService('freezeSnapshot', {
+      args = {
         snapshot: JSON.stringify(snap),
         progress: progressMonitor
-      });
+      },
+      {file, warnings} = config.ide.workerEnabled ? 
+                  await callService('freezeSnapshot', args) : 
+                  await freezeSnapshot(args);
   if (warnings.absoluteURLDetected) {
     // We discovered that the following morphs reference resources via an absolute path.
     // This can be problematic when the frozen part will be deployed on a different host
@@ -66,6 +70,10 @@ export async function interactivelyFreezePart(part, opts) {
   }
   li.remove();
   return file;
+}
+
+async function freezeSnapshot(snapshot, progress) {
+  await FreezerPart.fromSnapshot(JSON.parse(snapshot)).standalone({progress});
 }
 
 export class FreezerPart {
