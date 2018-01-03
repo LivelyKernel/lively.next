@@ -200,7 +200,7 @@ export async function interactivelySaveWorld(world, options) {
     let dialog = await loadObjectFromPartsbinFolder("save world dialog"),
         {commit, db: dialogDB} = await world.openPrompt(dialog, {targetWorld: world});
     if (dialogDB) db = dialogDB;
-    ({name, tags, description} = commit);
+    ({name, tags, description} = commit || {});
     if (!name) return null;
   } else if (oldCommit) {
     ({name, tags, description} = oldCommit);
