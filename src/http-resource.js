@@ -152,7 +152,7 @@ function makeRequest(resource, method = "GET", body, headers = {}) {
       "x-lively-proxy-request": url
     });
 
-    url = defaultOrigin();
+    url = resource.proxyDomain || defaultOrigin();
   }
 
   if (useCors) fetchOpts.mode = "cors"
@@ -168,6 +168,7 @@ export default class WebDAVResource extends Resource {
   constructor(url, opts = {}) {
     super(url, opts);
     this.useProxy = opts.hasOwnProperty("useProxy") ? opts.useProxy : false;
+    this.proxyDomain = opts.proxyDomain || undefined;
     this.useCors = opts.hasOwnProperty("useCors") ? opts.useCors : false;
     this.headers = opts.headers || {};
     this.binary = this.isFile() ? binaryExtensions.includes(this.ext()) : false;
@@ -180,12 +181,12 @@ export default class WebDAVResource extends Resource {
   join(path) {
     return Object.assign(
       super.join(path),
-      {headers: this.headers, useCors: this.useCors, useProxy: this.useProxy});
+      {headers: this.headers, useCors: this.useCors, useProxy: this.useProxy, proxyDomain: this.proxyDomain});
   }
 
   makeProxied() {
     return this.useProxy ? this :
-      new this.constructor(this.url, {headers: this.headers, useCors: this.useCors, useProxy: true})
+      new this.constructor(this.url, {headers: this.headers, useCors: this.useCors, useProxy: true, proxyDomain: this.proxyDomain})
   }
 
   noErrorOnHTTPStatusCodes() { this.errorOnHTTPStatusCodes = false; return this; }
