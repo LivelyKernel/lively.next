@@ -118,7 +118,7 @@ export async function interactivelyChooseImports(livelySystem, opts) {
             li.label = stepName;
           }]
         });
-      config.ide.workerEnabled ? callService("exportsOfModules", {
+      return config.ide.workerEnabled ? callService("exportsOfModules", {
         excludedPackages: config.ide.js.ignoredPackages,
         livelySystem, progress: new ProgressMonitor({
           handlers: [(stepName, progress) => {
