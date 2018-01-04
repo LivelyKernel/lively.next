@@ -2,7 +2,6 @@
   "name": "lively.freezer",
   "version": "0.1.0",
   "dependencies": {
-     "uglifyjs": "3.2.1",
      "babel-standalone": "^6.21.1-0"
   },
   "systemjs": {
