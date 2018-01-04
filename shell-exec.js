@@ -1,3 +1,4 @@
+/*global System*/
 import { exec as node_exec } from "child_process";
 
 export async function exec(cmdString, opts) {
@@ -16,7 +17,7 @@ export async function exec(cmdString, opts) {
       stdout: stdout };
     opts.log.push(cmd.output);
   } else {
-    let { runCommand } = await System.import("lively.morphic/ide/shell/shell-interface.js");
+    let { runCommand } = await System.import("lively.ide/shell/shell-interface.js");
     var cmd = await runCommand(cmdString, {cwd: opts.cwd});
     if (opts.log) {
       cmd.on("stdout", out => opts.log.push(out));

@@ -1,12 +1,14 @@
+/*global System,$$world*/
 "format esm";
 
 import { join } from "./helpers.js";
 import { Package } from "./package.js";
 import { TextFlow } from "./morphic-helpers.js";
 import { resource } from "lively.resources";
-import { runCommand } from "../lively.morphic/ide/shell/shell-interface.js";
-import Terminal from "../lively.morphic/ide/shell/terminal.js";
+import { runCommand } from "../lively.ide/shell/shell-interface.js";
+import Terminal from "../lively.ide/shell/terminal.js";
 import { pt } from "lively.graphics";
+import { arr } from "lively.lang";
 
 
 var packageSpecFile = System.decanonicalize("lively.installer/packages-config.json");
