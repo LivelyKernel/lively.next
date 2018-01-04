@@ -546,7 +546,14 @@ function insertCapturesForExportDeclarations(parsed, options) {
     // capture: "export default function foo () {};", "export var x = 23, y = 3;"
     if (stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration" || !stmt.declaration) {
       /*...*/
-
+    } else if (stmt.type === 'ExportDefaultDeclaration' && stmt.declaration.type === 'Literal') {
+      // default export of an unnamed primitive value, i.e.
+      // "export default "foo"", "export default 27;"
+      var decl = stmt.declaration,
+          assignVal = decl.raw,
+          refId = generateUniqueName(topLevelDeclsAndRefs(parsed).declaredNames, "$" + decl.raw.split('"').join(''));
+      stmt.declaration = id(refId);
+      lively_lang.arr.pushAt(body, assignExpr(options.captureObj, refId, decl.raw, false), body.indexOf(stmt));
     } else if (stmt.declaration.declarations) {
       body.push.apply(body, toConsumableArray(stmt.declaration.declarations.map(function (decl) {
         var assignVal = decl.id;
