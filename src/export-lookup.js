@@ -3,7 +3,7 @@
 // lookup exports of modules
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import { arr, fun, obj } from "lively.lang";
+import { arr, obj } from "lively.lang";
 import { subscribe, unsubscribe } from "lively.notifications";
 import module from "./module.js";
 
@@ -105,7 +105,7 @@ export default class ExportLookup {
     await Promise.all(
       mods.map((moduleId, i) => {
         if (options.progress) progressLogger(i);
-        this.rawExportsOfModule(moduleId, options, exportsByModule).then(
+        return this.rawExportsOfModule(moduleId, options, exportsByModule).then(
           result => (result ? (exportsByModule[moduleId] = result) : null))}));
 
     return exportsByModule;
