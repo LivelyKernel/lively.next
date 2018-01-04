@@ -122,5 +122,9 @@
   {
     "name": "lively.headless",
     "repoURL": "https://github.com/LivelyKernel/lively.headless"
+  },
+  {
+    "name": "lively.freezer",
+    "repoURL": "https://github.com/LivelyKernel/lively.freezer"
   }
 ]
