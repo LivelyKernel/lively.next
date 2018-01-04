@@ -1,5 +1,6 @@
 
 // INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
+/*global System,Babel,global,require,__dirname,self*/
 "format global";
 (function configure() {
 
@@ -116,7 +117,7 @@
 
 
   function featureTest() {
-    var isBrowser = System.get("@system-env").browser;
+    var isBrowser = System.get("@system-env").browser || typeof self !== 'undefined';
 
     // "feature test": we assume if the browser supports async/await it will also
     // support other es6/7/8 features we care about. In this case only use the
@@ -2728,7 +2729,8 @@ function prepareCodeForCustomCompile(System, source, moduleId, module, debug) {
       recorderName = module.recorderName,
       dontTransform = module.dontTransform,
       varDefinitionCallbackName = module.varDefinitionCallbackName,
-      embedOriginalCode = true;
+      _module$embedOriginal = module.embedOriginalCode,
+      embedOriginalCode = _module$embedOriginal === undefined ? true : _module$embedOriginal;
 
   sourceAccessorName = embedOriginalCode ? sourceAccessorName : undefined;
 
@@ -8049,7 +8051,7 @@ var ModuleInterface = function () {
                   isLoaded: this.isLoaded(),
                   length: length,
                   line: line, column: i - lineStart,
-                  lineString: src.slice(lineStart, lineEnd)
+                  lineString: lineEnd - lineStart > 1000 ? "..." + src.slice(i - 10, i + 100) + "..." : src.slice(lineStart, lineEnd)
                 };
                 j++;
 
@@ -8306,7 +8308,7 @@ function wrapResource(System) {
   install(System, "resource", livelyProtocol);
 }
 
-/*global System,process*/
+/*global System,process,self,WorkerGlobalScope*/
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 var isNode = System.get("@system-env").node;
@@ -8406,6 +8408,12 @@ function prepareSystem(System, config) {
   System.useModuleTranslationCache = useModuleTranslationCache;
 
   System.set("@lively-env", System.newModule(livelySystemEnv(System)));
+
+  var isWorker = typeof WorkerGlobalScope !== 'undefined';
+
+  if (isWorker) {
+    System.set("@system-env", System.newModule(_extends({}, System.get("@system-env"), { browser: true, worker: true })));
+  }
 
   var isElectron = typeof process !== "undefined" && process.versions && process.versions.electron;
 
@@ -8919,16 +8927,19 @@ var ExportLookup = function () {
       var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(options) {
         var _this3 = this;
 
-        var System, livelyEnv, mods, cache, exportsByModule;
+        var System, livelyEnv, mods, cache, exportsByModule, progressLogger;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
                 options = options || {};
-                System = this.System, livelyEnv = System.get("@lively-env") || {}, mods = Object.keys(livelyEnv.loadedModules || {}), cache = this.exportByModuleCache, exportsByModule = {};
+                System = this.System, livelyEnv = System.get("@lively-env") || {}, mods = Object.keys(livelyEnv.loadedModules || {}), cache = this.exportByModuleCache, exportsByModule = {}, progressLogger = function progressLogger(i) {
+                  if (i % 50 < 1) options.progress.step("Scanning ...", i / mods.length);
+                };
                 _context3.next = 4;
-                return Promise.all(mods.map(function (moduleId) {
-                  return _this3.rawExportsOfModule(moduleId, options, exportsByModule).then(function (result) {
+                return Promise.all(mods.map(function (moduleId, i) {
+                  if (options.progress) progressLogger(i);
+                  _this3.rawExportsOfModule(moduleId, options, exportsByModule).then(function (result) {
                     return result ? exportsByModule[moduleId] = result : null;
                   });
                 }));
@@ -9692,6 +9703,17 @@ function unwrapModuleLoad$$1() {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // cjs
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// object scripting capabilities
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+var scripting = {
+  module: module$2,
+  ensurePackage: ensurePackage$1,
+  registerPackage: registerPackage$1,
+  importPackage: importPackage$1,
+  lookupPackage: lookupPackage$1,
+  ImportInjector: ImportInjector
+};
 
 exports.getSystem = getSystem;
 exports.removeSystem = removeSystem;
@@ -9720,6 +9742,7 @@ exports.removeHook = removeHook;
 exports.wrapModuleLoad = wrapModuleLoad$$1;
 exports.unwrapModuleLoad = unwrapModuleLoad$$1;
 exports.cjs = dependencies;
+exports.scripting = scripting;
 exports.PackageRegistry = PackageRegistry$$1;
 exports.ExportLookup = ExportLookup;
 exports.semver = semver;
