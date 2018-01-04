@@ -184,7 +184,8 @@ export default class WebDAVResource extends Resource {
       {headers: this.headers, useCors: this.useCors, useProxy: this.useProxy, proxyDomain: this.proxyDomain});
   }
 
-  makeProxied() {
+  makeProxied(proxyDomain) {
+    if (proxyDomain !== undefined) this.proxyDomain = proxyDomain;
     return this.useProxy ? this :
       new this.constructor(this.url, {headers: this.headers, useCors: this.useCors, useProxy: true, proxyDomain: this.proxyDomain})
   }
