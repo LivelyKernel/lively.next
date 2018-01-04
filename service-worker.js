@@ -6,7 +6,8 @@ import { subscribe } from "lively.notifications/index.js";
 import { module } from "lively.modules/index.js";
 import { config } from "lively.morphic";
 
-!System.get('@system-env').worker 
+!System.get('@system-env').worker
+&& config.ide.workerEnabled
 && !System.get('@lively-worker') 
 && startWorker();
 
