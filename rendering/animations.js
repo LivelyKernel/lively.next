@@ -40,6 +40,15 @@ export const easings = {
   inOutBack:  'cubic-bezier(0.680, -0.550, 0.265, 1.550)'
 }
 
+function convertToSvgEasing(easing) {
+  for (let k in easings) {
+    if (easings[k] !== easing) continue;
+    if (k.includes('inOut')) return k.replace('inOut', '').toLowerCase() + 'InOut';
+    if (k.includes('out')) return k.replace('out', '').toLowerCase() + 'Out';
+    if (k.includes('in')) return k.replace('in', '').toLowerCase() + 'In';
+  }
+}
+
 export class AnimationQueue {
   constructor(morph) {
     this.morph = morph;
@@ -336,12 +345,12 @@ export class PropertyAnimation {
       this.needsAnimation[type] = false;
       const [before, after] = this.getAnimationProps(type);
       if (before && after) {
-        var node = SVG.adopt(svgNode).animate(this.duration, "quadInOut");
+        var node = SVG.adopt(svgNode).animate(this.duration, convertToSvgEasing(this.easing));
         if (type == 'svg') {
             let clipPath = node.target().defs().children()[0].children()[0];
             if (clipPath) {
                let [_, clipProps] = this.getAnimationProps('path');
-               clipProps.d && clipPath.animate(this.duration, "quadInOut").plot(clipProps.d);
+               clipProps.d && clipPath.animate(this.duration, convertToSvgEasing(this.easing)).plot(clipProps.d);
             }
         }
         for (let prop in after) {
