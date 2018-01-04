@@ -2653,6 +2653,16 @@ export class Ellipse extends Morph {
   // cut the corners so that a rectangle becomes an ellipse
   static get properties() {
     return {
+      borderRadius: {
+        get() { 
+          return {
+            top: this.borderRadiusTop,
+            right: this.borderRadiusRight,
+            left: this.borderRadiusLeft,
+            bottom: this.borderRadiusBottom
+          }
+        }
+      },
       borderRadiusLeft:   {get() { return this.height; }, set() {}},
       borderRadiusRight:  {get() { return this.height; }, set() {}},
       borderRadiusTop:    {get() { return this.width; }, set() {}},
