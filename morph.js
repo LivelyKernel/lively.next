@@ -2343,16 +2343,14 @@ export class Morph {
   }
 
   onDragEnd(evt) {
-    if (!removeSnapToGuidesOf) return;
     this.undoStop("drag-move");
-    removeSnapToGuidesOf(this);
+    removeSnapToGuidesOf && removeSnapToGuidesOf(this);
   }
 
   onDrag(evt) {
-    if (!showAndSnapToGuides) return;
     let {dragStartMorphPosition, absDragDelta} = evt.state;
     this.position = dragStartMorphPosition.addPt(absDragDelta);
-    showAndSnapToGuides(this, evt.isCtrlDown()/*show guides*/, evt.isCtrlDown()/*snap*/);
+    showAndSnapToGuides && showAndSnapToGuides(this, evt.isCtrlDown()/*show guides*/, evt.isCtrlDown()/*snap*/);
   }
 
   onGrab(evt) {
