@@ -671,8 +671,8 @@ export default class Renderer {
       ]
     }
 
-    let endPosLine1 = pt(morph.width, maxBounds.y + maxLineHeight),
-        startPosLine2 = pt(0, endPosLine1.y);
+    let endPosLine1 = pt(morph.width - morph.padding.right(), maxBounds.y + maxLineHeight),
+        startPosLine2 = pt(morph.padding.left(), endPosLine1.y);
 
     // two lines -> two rectangles
     if (Math.abs((startBounds.y + leadLineHeight) - (endBounds.y)) < 5) {
@@ -682,8 +682,8 @@ export default class Renderer {
         this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth)];
     }
 
-    let endPosMiddle = pt(morph.width, endPos.y),
-        startPosLast = pt(0, endPos.y);
+    let endPosMiddle = pt(morph.width - morph.padding.right(), endPos.y),
+        startPosLast = pt(morph.padding.left(), endPos.y);
 
     // 3+ lines -> three rectangles
     return [
