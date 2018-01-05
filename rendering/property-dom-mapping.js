@@ -100,38 +100,42 @@ export function addSvgAttributes(morph, style) {
   return style;
 }
 
+export function getSvgVertices(vertices) {
+  let X, Y, lastV;
+  var d = '';
+  {
+    let {x, y} = lastV = vertices[0];
+    X = x; Y = y;
+    d = d + `M ${X} ${Y} `
+  }
+
+  for (let i = 1; i < vertices.length-1; i++) {
+    let vertex = vertices[i],
+        {isSmooth, x, y, controlPoints: {previous: p, next: n}} = vertex;
+    d = isSmooth ?
+      d + `C ${X + lastV.controlPoints.next.x} ${Y + lastV.controlPoints.next.y} ${x + p.x} ${y + p.y} ${x} ${y} ` :
+      d + `L ${x} ${y} `
+    lastV = vertex;
+    X = x; Y = y
+  }
+
+  {
+    let {isSmooth, x, y, controlPoints: {previous: p}} = vertices[vertices.length-1];
+    d = isSmooth ?
+      d + `C ${X + lastV.controlPoints.next.x} ${Y + lastV.controlPoints.next.y} ${x+p.x} ${y+p.y} ${x} ${y}` :
+      d + `L ${x} ${y}`;
+  }
+  return d;
+}
+
 export function addPathAttributes(morph, style) {
-  let {id, vertices, fill, borderColor, borderWidth} = morph,
-      d = "";
+  let {id, vertices, fill, borderColor, borderWidth} = morph;
 
   if (vertices.length) {
-    let X, Y, lastV;
-    {
-      let {x, y} = lastV = vertices[0];
-      X = x; Y = y;
-      d = d + `M ${X} ${Y} `
-    }
-  
-    for (let i = 1; i < vertices.length-1; i++) {
-      let vertex = vertices[i],
-          {isSmooth, x, y, controlPoints: {previous: p, next: n}} = vertex;
-      d = isSmooth ?
-        d + `C ${X + lastV.controlPoints.next.x} ${Y + lastV.controlPoints.next.y} ${x + p.x} ${y + p.y} ${x} ${y} ` :
-        d + `L ${x} ${y} `
-      lastV = vertex;
-      X = x; Y = y
-    }
-  
-    {
-      let {isSmooth, x, y, controlPoints: {previous: p}} = vertices[vertices.length-1];
-      d = isSmooth ?
-        d + `C ${X + lastV.controlPoints.next.x} ${Y + lastV.controlPoints.next.y} ${x+p.x} ${y+p.y} ${x} ${y}` :
-        d + `L ${x} ${y}`;
-    }
+    style.d = getSvgVertices(vertices)
   }
 
   addSvgBorderStyle(morph, style);
-  style.d = d;
   style["stroke-width"] = borderWidth.valueOf();
   style["paint-order"] = "stroke";
   style.fill = fill ?
