@@ -3152,6 +3152,15 @@ export class Path extends Morph {
     this.updateBounds(this.vertices);
   }
 
+  copyVertices() {
+    return this.vertices.map(v => ({
+      x: v.x, 
+      y: v.y, 
+      isSmooth: v.isSmooth,
+      controlPoints: obj.deepCopy(v.controlPoints)
+    }));
+  }
+
   updateBounds(vertices = this.vertices) {
     // vertices = this.vertices
     if (!vertices.length) return;
