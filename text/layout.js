@@ -272,12 +272,14 @@ export default class TextLayout {
     */
     var {start, end} = selection,
         textLayout = morph.textLayout,
-        end = morph.lineWrapping ? textLayout.rangesOfWrappedLine(morph, start.row)[0].end : end,
+        end = morph.lineWrapping ? 
+                      textLayout.rangesOfWrappedLine(morph, start.row)
+                                .find(r => r.containsPosition(start)).end : end,
         end = end.row == start.row ? end : {row: end.row, column: -1},
         charBoundsInSelection = textLayout.charBoundsOfRow(morph, start.row),
         charBoundsInSelection = end.column < 0 ? 
                                  charBoundsInSelection.slice(start.column) : 
-                                 charBoundsInSelection.slice(start.column, end.column),
+                                 charBoundsInSelection.slice(start.column, end.column + 1),
         maxCol = start.column + (charBoundsInSelection ? 
                                  charBoundsInSelection.indexOf(arr.max(charBoundsInSelection, b => b.height)) : 0);
     return textLayout.boundsFor(morph, {row: start.row, column: maxCol});
