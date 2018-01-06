@@ -61,10 +61,6 @@ export class Tree extends Text {
       clipMode: {defaultValue: "auto"},
       padding: {defaultValue: Rectangle.inset(3)},
 
-      additionalRenderSpace: { // render a little more than is seen
-        defaultValue: 140
-      },
-
       resizeNodes: {
         defaultValue: false,
         set(val) { this.setProperty("resizeNodes", val); this.resetCache(); this.update(); }
@@ -99,14 +95,6 @@ export class Tree extends Text {
           return this.selectedNode ?
             this.treeData.nodeWithSiblings(this.selectedNode) : [];
         },
-      },
-
-      selectionColor: {
-        defaultValue: Color.blue,
-        set(c) {
-          this.setProperty('selectionColor', c);
-          this.updateStyleSheet();
-        }
       },
 
       selectionFontColor: {
@@ -171,6 +159,7 @@ export class Tree extends Text {
     this.resetCache();
     this.update();
     connect(this, 'extent', this, 'update');
+    this.selectionColor = props.selectionColor || Color.blue;
   }
 
   resetCache() { this._lineHeightCache = null; }
@@ -201,7 +190,6 @@ export class Tree extends Text {
             treeData,
             padding,
             extent,
-            additionalRenderSpace,
             resizeNodes,
             nodeMorphs,
             selectedNode
@@ -219,6 +207,7 @@ export class Tree extends Text {
         // indent 
         containerTextAndAttributes[j] = " ";
         containerTextAndAttributes[j + 1] = {
+          fontSize: this.fontSize * 1.3,
           fontColor: Color.transparent, 
           textStyleClasses: ['fa'],
           paddingRight: (toggleWidth * (nodes[i].depth - 1)) + 'px'
@@ -273,14 +262,19 @@ export class Tree extends Text {
         containerTextAndAttributes[j + 6] = '\n';
         containerTextAndAttributes[j + 7] = {};
       }
+      containerTextAndAttributes.push(' ', {
+        fontSize: this.fontSize * 1.3,
+        textStyleClasses: ['fa']
+      });
+      this.document.replace(
+         {start: {row: 0, column: 0}, 
+          end: this.documentEndPosition}, 
+          nodes.length > 1 ? arr.flatten(containerTextAndAttributes) : [],
+          false);
       this.lastNumberOfNodes = nodes.length;
-      this.replace({start: {row: 0, column: 0}, end: this.documentEndPosition}, 
-                    nodes.length > 1 ? arr.flatten(containerTextAndAttributes) : [],
-                    false);
       this.cursorPosition = {row: 0, column: 0};
       if (this.selectedIndex > -1 && (this.selection.row + 1) != this.selectedIndex) {
-        this.selectLine(this.selectedIndex - 1);
-        this.selection.growLeft(-1)
+        this.selectLine(this.selectedIndex - 1, true);
       }
     });
   }
