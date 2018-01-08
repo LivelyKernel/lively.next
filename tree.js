@@ -182,7 +182,7 @@ export class Tree extends Text {
     return Rectangle.fromAny(tl, br)
   }
 
-  update() {
+  update(force) {
     if (!this.treeData || !this.nodeItemContainer) return;
 
     this.withMetaDo({isLayoutAction: true}, () => {
@@ -195,86 +195,106 @@ export class Tree extends Text {
             selectedNode
           } = this,
           toggleWidth = this.fontSize * 1.3,
-          nodes = treeData.asListWithIndexAndDepth();
-
-      if (!nodes.length) return;
-      var containerTextAndAttributes = arr.genN(8 * (nodes.length - 1), () => null), 
-          i = 1, j, isSelected;
-      for (; i < nodes.length; i++) {
-        j = 8 * (i - 1);
-        isSelected = this.selectedIndex == i;
-        nodes[i].node.isSelected = isSelected;
-        // indent 
-        containerTextAndAttributes[j] = " ";
-        containerTextAndAttributes[j + 1] = {
-          fontSize: this.fontSize * 1.3,
-          fontColor: Color.transparent, 
-          textStyleClasses: ['fa'],
-          paddingRight: (toggleWidth * (nodes[i].depth - 1)) + 'px'
-        };
-        // toggle
-        containerTextAndAttributes[j + 3] = {
-          fontColor: Color.transparent, 
-          textStyleClasses: ['fa'],
-          paddingTop: (this.fontSize / 10) + 'px',
-          paddingRight: (this.fontSize / 8) + 'px'
-        };
-        if (!treeData.isLeaf(nodes[i].node)) {
-           containerTextAndAttributes[j + 2] = treeData.isCollapsed(nodes[i].node) ? " \uf196 " : " \uf147 "; 
-           Object.assign(
-              containerTextAndAttributes[j + 3], {
-                nativeCursor: 'pointer',
-                ...(isSelected ? {
-                    fontColor: this.selectionFontColor
-                  } : {
-                    fontColor: this.nonSelectionFontColor
-                  })
-           })
-        } else {
-           containerTextAndAttributes[j + 2] = "     "; 
-        }
-        // node
-        let displayedNode = treeData.safeDisplay(nodes[i].node);
-        if (displayedNode.isMorph) {
-          if (displayedNode._capturedProps)
-                Object.assign(displayedNode, displayedNode._capturedProps);
-          if (isSelected) {
-            displayedNode._capturedProps  = obj.select(displayedNode,['fontColor']);
-            displayedNode.fontColor = this.selectionFontColor;
-          }
-        }
-
-        containerTextAndAttributes[j + 4] = displayedNode;
-        if (arr.isArray(displayedNode)) {
-          if (isSelected) {
-            for (let k=1; k < displayedNode.length; k += 2) {
-              let attr = displayedNode[k] || {};
-              attr.fontColor = this.selectionFontColor;
-              displayedNode[k] = attr;
+          nodes = treeData.asListWithIndexAndDepth(),
+          computeNewAttributes = (nodes) => {
+            if (!nodes.length) return [];
+            var containerTextAndAttributes = arr.genN(8 * (nodes.length - 1), () => null), 
+                i = 1, j, isSelected;
+            for (; i < nodes.length; i++) {
+              j = 8 * (i - 1);
+              isSelected = this.selectedIndex == i;
+              nodes[i].node.isSelected = isSelected;
+              // indent 
+              containerTextAndAttributes[j] = " ";
+              containerTextAndAttributes[j + 1] = {
+                fontSize: this.fontSize * 1.3,
+                fontColor: Color.transparent, 
+                textStyleClasses: ['fa'],
+                paddingRight: (toggleWidth * (nodes[i].depth - 1)) + 'px'
+              };
+              // toggle
+              containerTextAndAttributes[j + 3] = {
+                fontColor: Color.transparent, 
+                textStyleClasses: ['fa'],
+                paddingTop: (this.fontSize / 10) + 'px',
+                paddingRight: (this.fontSize / 8) + 'px'
+              };
+              if (!treeData.isLeaf(nodes[i].node)) {
+                 containerTextAndAttributes[j + 2] = treeData.isCollapsed(nodes[i].node) ? " \uf196 " : " \uf147 "; 
+                 Object.assign(
+                    containerTextAndAttributes[j + 3], {
+                      nativeCursor: 'pointer',
+                      fontColor: this.fontColor
+                 })
+              } else {
+                 containerTextAndAttributes[j + 2] = "     "; 
+              }
+              // node
+              let displayedNode = treeData.safeDisplay(nodes[i].node);
+              if (displayedNode.isMorph) {
+                if (displayedNode._capturedProps)
+                      Object.assign(displayedNode, displayedNode._capturedProps);
+                if (isSelected) {
+                  displayedNode._capturedProps  = obj.select(displayedNode,['fontColor']);
+                }
+              }
+      
+              containerTextAndAttributes[j + 4] = displayedNode;
+              if (arr.isArray(displayedNode)) {
+                containerTextAndAttributes[j + 5] = []
+              } else {
+                containerTextAndAttributes[j + 5] = {
+                  fontColor: this.fontColor
+                };
+              }
+              containerTextAndAttributes[j + 6] = '\n';
+              containerTextAndAttributes[j + 7] = {};
             }
-          }
-          containerTextAndAttributes[j + 5] = []
-        } else {
-          containerTextAndAttributes[j + 5] = {
-            fontColor: isSelected ? this.selectionFontColor : this.fontColor
+            containerTextAndAttributes.push(' ', {
+              fontSize: this.fontSize * 1.3,
+              textStyleClasses: ['fa']
+            });
+            return nodes.length > 1 ? arr.flatten(containerTextAndAttributes) : []
           };
+      
+      var row, attrs;
+      if (this.lastNumberOfNodes !== nodes.length || force) {
+        this.replace(
+           {start: {row: 0, column: 0}, 
+            end: this.documentEndPosition}, 
+            computeNewAttributes(nodes),
+            false, false);
+      } else if (this._lastSelectedIndex) {
+        // since we did not refresh the tree, we still need
+        // to ensure that the attributes of the previously
+        // selected line are recovered
+        row = this._lastSelectedIndex - 1,
+        attrs = this.document.getTextAndAttributesOfLine(row);
+        for (let i = 1; i < attrs.length; i += 2) {
+          let fontColor = this._originalColor[i];
+          if (attrs[i]) 
+            attrs[i].fontColor = fontColor;
+          else
+            attrs[i] = {fontColor}
         }
-        containerTextAndAttributes[j + 6] = '\n';
-        containerTextAndAttributes[j + 7] = {};
+        this.document.setTextAndAttributesOfLine(row, attrs)
       }
-      containerTextAndAttributes.push(' ', {
-        fontSize: this.fontSize * 1.3,
-        textStyleClasses: ['fa']
-      });
-      this.document.replace(
-         {start: {row: 0, column: 0}, 
-          end: this.documentEndPosition}, 
-          nodes.length > 1 ? arr.flatten(containerTextAndAttributes) : [],
-          false);
       this.lastNumberOfNodes = nodes.length;
       this.cursorPosition = {row: 0, column: 0};
-      if (this.selectedIndex > -1 && (this.selection.row + 1) != this.selectedIndex) {
-        this.selectLine(this.selectedIndex - 1, true);
+      if (this.selectedIndex > -1) {
+        row = this.selectedIndex - 1,
+        attrs = this.document.getTextAndAttributesOfLine(row);
+        this._originalColor = new Array(attrs.length);
+        for (let i = 1; i < attrs.length; i += 2) {
+          this._originalColor[i] = attrs[i] ? attrs[i].fontColor : null
+          if (attrs[i])
+            attrs[i].fontColor = this.selectionFontColor;
+          else
+            attrs[i] = {fontColor: this.selectionFontColor};
+        }
+        this.document.setTextAndAttributesOfLine(row, attrs)
+        this.selectLine(row, true);
+        this._lastSelectedIndex = this.selectedIndex;
       }
     });
   }
@@ -308,14 +328,13 @@ export class Tree extends Text {
       var nodes = this.nodes;
       if (i >= nodes.length) break;
       var id = nodeIdFn(nodes[i]);
-      if (selectionId === id) newSelIndex = i;
+      if (selectionId === id) newSelIndex = i + 1;
       if (collapsedMap.has(id) && !collapsedMap.get(id))
         await this.treeData.collapse(nodes[i], false);
       i++;
     }
-
-    this.update();
     this.selectedIndex = newSelIndex;
+    this.update();
     this.scroll = scroll;
     this.scrollSelectionIntoView();
     await promise.delay(0);
