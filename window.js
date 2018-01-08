@@ -331,7 +331,7 @@ export default class Window extends Morph {
 
     if (!minimized) {
       this.minimizedBounds = bounds;
-      this.targetMorph.visible = true;
+      this.targetMorph && (this.targetMorph.visible = true);
       this.animate({bounds: nonMinizedBounds || bounds,
         styleClasses: ['neutral', 'active'], duration, easing});
       collapseButton.tooltip = "collapse window";
@@ -346,24 +346,9 @@ export default class Window extends Morph {
       collapseButton.tooltip = "uncollapse window";
       await this.animate({styleClasses: ['minimized', 'active'],
         bounds: minimizedBounds, duration, easing});
-      this.targetMorph.visible = false;
+      this.targetMorph && (this.targetMorph.visible = false);
     }
     this.resizer().visible = !this.minimized;
-  }
-
-  toggleMaximize() {
-    var easing = easings.outQuad, duration = 100;
-    if (this.maximized) {
-      this.animate({bounds: this.nonMaximizedBounds, duration, easing});
-      this.resizer().bottomRight = this.extent;
-      this.maximized = false;
-    } else {
-      this.nonMaximizedBounds = this.bounds();
-      this.animate({bounds: this.world().visibleBounds().insetBy(5), duration, easing});
-      this.resizer().visible = true;
-      this.maximized = true;
-      this.minimized = false;
-    }
   }
 
   close() {
