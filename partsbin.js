@@ -342,7 +342,7 @@ export class SnapshotEditor {
 
     if (!file) return;
 
-    return this.interactivelyEditFileInSnapshotPackage(commit, snapshot, file, onSaveFn);
+    return this.interactivelyEditFileInSnapshotPackage(file, onSaveFn);
   }
 
   async interactivelyEditFileInSnapshotPackage(file, onSaveFn, textPos) {
