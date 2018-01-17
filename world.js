@@ -48,6 +48,8 @@ export class World extends Morph {
         doc: "how the world behaves on window size changes 'elastic': resizes to window extent, 'static': leaves its extent unchanged",
         defaultValue: 'elastic',
         after: ["clipMode"],
+        type: 'Enum',
+        values: ['static', 'elastic'],
         set(val) {
           this.setProperty("resizePolicy", val);
           this.clipMode = val === "static" ? "visible" : "hidden";
