@@ -173,7 +173,7 @@ export class Renderer {
         ...(morph.isPolygon ? {
           height: '100%', width: '100%',
           overflow: morph.clipMode,
-          clipPath: `url(#clipPath${morph.id})`
+          [  navigator.userAgent.includes('AppleWebKit') ? '-webkit-clip-path' : 'clip-path']: `url(#clipPath${morph.id})`
         } : {})
       }
     }, renderedSubmorphs);
