@@ -347,7 +347,7 @@ export class PropertyAnimation {
       if (before && after) {
         var node = SVG.adopt(svgNode).animate(this.duration, convertToSvgEasing(this.easing));
         if (type == 'svg') {
-            let clipPath = node.target().defs().children()[0].children()[0];
+            let clipPath = node.target().defs().children().find(n => n.type == 'clipPath').children()[0];
             if (clipPath) {
                let [_, clipProps] = this.getAnimationProps('path');
                clipProps.d && clipPath.animate(this.duration, convertToSvgEasing(this.easing)).plot(clipProps.d);
