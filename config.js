@@ -61,7 +61,7 @@ var config = {
 
   ide: {
 
-    workerEnabled: true,
+    workerEnabled: false,
 
     js: {
       ignoredPackages: [
