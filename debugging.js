@@ -2,7 +2,7 @@ import { fun, obj, arr, num, string, graph, Path } from "lively.lang";
 
 import { ObjectPool } from "lively.serializer2";
 import {
-  lookupPath, modifyProperty,
+  lookupPath, referencesAndClassNamesOfId, modifyProperty,
   removeUnreachableObjects,
   referenceGraph,
   findPathFromToId
@@ -13,6 +13,7 @@ import { HTMLMorph, inspect } from "lively.morphic";
 /*
 import { serializeMorph, deserializeMorph } from "lively.morphic/serialization.js";
 import { resource } from "lively.resources";
+import { arr } from "lively.lang"
 
 let snap = await resource("lively.storage://worlds/convert image previews.json").readJson()
 let r = resource(System.decanonicalize("lively.morphic/parts/IconPicker.json"))
@@ -93,10 +94,23 @@ i.findIdReferencePathFromToId(ids[0], ids[1]);
 // var viz = await ObjectGraphVisualizer.renderSnapshotAndOpen(snap.snapshot)
 */
 
+
+
+
 export class SnapshotInspector {
 
   static forSnapshot(snapshot) {
     return new this(snapshot).processSnapshot();
+  }
+
+  static forPoolAndSnapshot(snapshot, pool) {
+    return new this(snapshot).processPool(pool);
+  }
+
+  static checkForLeaks(pool) {
+    let inspector = new this().processPool(pool),
+        counts = inspector.referenceCounts(),
+        conns = (this.classes.AttributeConnection || {}).objects || [];
   }
 
   constructor(snapshot) {
@@ -106,9 +120,15 @@ export class SnapshotInspector {
   }
 
   processSnapshot() {
-    var {classes, snapshot, expressions} = this;
+    var {snapshot} = this;
     if (snapshot.snapshot) snapshot = snapshot.snapshot;
     let pool = ObjectPool.fromSnapshot(snapshot);
+    return this.processPool(pool);
+  }
+
+  processPool(pool) {
+    let {expressions, classes} = this;
+    this.pool = pool;
 
     pool.objectRefs().forEach(ref => {
       let snap = ref.currentSnapshot,
@@ -141,7 +161,7 @@ export class SnapshotInspector {
       });
 
     });
-
+    
     return this;
   }
 

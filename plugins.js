@@ -1,4 +1,5 @@
-import { obj, arr } from "lively.lang";
+import { obj, graph, arr } from "lively.lang";
+import { SnapshotInspector } from "./debugging.js";
 
 /*
 
@@ -10,7 +11,7 @@ serialization process
 beforeSerialization(pool, realObj)
   Called before serialization starts
 
-afterSerialization(pool, realObj, snapshot)
+afterSerialization(pool, snapshot, realObj)
   Called after serialization ended
 
 serializeObject(realObj, isProperty, pool, serializedObjMap, path)
@@ -218,6 +219,33 @@ class LivelyClassPropertiesPlugin {
   }
 }
 
+export class LeakDetectorPlugin {
+  
+  afterSerialization(pool, snapshot, realObj) {
+    let i = SnapshotInspector.forPoolAndSnapshot(snapshot, pool),
+        weakRefs = new Set([...(i.classes.AttributeConnection || {objects: []}).objects, 
+                            ...(i.classes["{source, target}"] || {objects: []}).objects,
+                            ...(i.classes["{_rev, source, target}"] || {objects: []}).objects].map(c => c[0])),
+        G = i.referenceGraph(), invG = graph.invert(G),
+        memoryLeaks = arr.compact(
+                      arr.flatten(Object.entries(invG)
+                         .filter(([id, c]) => 
+                             c.length < 3 
+                             && snapshot.id != id 
+                             && !weakRefs.has(id) 
+                             && c.every(r => weakRefs.has(r)))
+                         .map(([id]) => {
+                           let subgraph = graph.subgraphReachableBy(G, id), obj = pool.resolveToObj(id);
+                           if (Object.keys(subgraph).length > 1)
+                              return arr.compact(invG[id].map(ref => {
+                                let conn = pool.resolveToObj(ref);
+                                if (conn.constructor.name === 'AttributeConnection') return conn
+                              })).map(conn => ({conn, obj}))
+                          })));
+     if (memoryLeaks.length > 0) this.memoryLeaks = memoryLeaks;
+    return snapshot;
+  }
+}
 
 export var plugins = {
   livelyClassPropertiesPlugin: new LivelyClassPropertiesPlugin(),

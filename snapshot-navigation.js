@@ -55,7 +55,7 @@ function referencesInArray(snapshot, arr, optPath) {
 }
 
 
-function referencesAndClassNamesOfId(snapshot, id) {
+export function referencesAndClassNamesOfId(snapshot, id) {
   // given an id, the regObj behind it is taken and for all its references a list is assembled
   // [id:ClassName]
   return referencesOfId(snapshot, id).map(id =>

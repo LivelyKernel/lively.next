@@ -1,8 +1,9 @@
-import { arr, obj, string } from "lively.lang";
+import { arr, graph, obj, string } from "lively.lang";
 import { isPrimitive } from "./util.js";
 import ClassHelper from "./class-helper.js";
 import ExpressionSerializer from "./plugins/expression-serializer.js";
 import { allPlugins } from "./plugins.js";
+import { SnapshotInspector } from "./debugging.js";
 
 
 /*
@@ -74,7 +75,7 @@ export class ObjectPool {
   }
 
   constructor(options) {
-    this.options = {ignoreClassNotFound: true, idPropertyName: "id", ...options};
+    this.options = {checkForLeaks: false, ignoreClassNotFound: true, idPropertyName: "id", ...options};
     this.reset()
   }
 
@@ -409,12 +410,13 @@ export class ObjectRef {
   snapshotProperty(sourceObjId, value, path, serializedObjMap, pool) {
     // returns the value to serialize, i.e. what to put into the snapshot object
 
-    if (typeof value === "function") return undefined; // FIXME
-
     if (isPrimitive(value)) return value; // stored as is
 
     let serialized = pool.plugin_serializeObject(value, true, serializedObjMap, path);
+
     if (serialized) return serialized;
+
+    if (typeof value === "function") return undefined; // FIXME
 
     if (Array.isArray(value))
       return value.map((ea, i) =>
