@@ -522,6 +522,13 @@ export class PropertyControl extends DraggableTreeLabel {
       keyString: {},
       valueString: {},
       propertyValue: {},
+      isSelected: {
+        after: ['submorphs'],
+        set(b) {
+          this.setProperty('isSelected', b);
+          if (this.control) this.control.isSelected = b;  
+        }
+      },
       control: {
         after: ["submorphs"],
         derived: true,
@@ -1036,7 +1043,7 @@ export default class Inspector extends Morph {
       }
       this.lastInteractive = node;
       node.interactive = true;
-      tree.update();
+      tree.update(true);
     }
   }
 
