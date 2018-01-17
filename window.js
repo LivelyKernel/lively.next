@@ -323,6 +323,7 @@ export default class Window extends Morph {
   }
 
   async toggleMinimize() {
+    if (!this.targetMorph) return;
     let {nonMinizedBounds, minimized, width} = this,
         bounds = this.bounds(),
         duration = 100,
