@@ -72,8 +72,8 @@ export async function interactivelyFreezePart(part, opts) {
   return file;
 }
 
-async function freezeSnapshot(snapshot, progress) {
-  await FreezerPart.fromSnapshot(JSON.parse(snapshot)).standalone({progress});
+async function freezeSnapshot({snapshot, progress}) {
+  return await (await FreezerPart.fromSnapshot(JSON.parse(snapshot))).standalone({progress});
 }
 
 export class FreezerPart {
@@ -231,7 +231,7 @@ export class FreezerPart {
   async standalone(opts = {}) {
     return {
      warnings: this.warnings,
-     file: await resource(System.baseURL + 'lively.freezer/runtime-dependencies.js').read() +
+     file: await resource(System.baseURL + 'lively.freezer/runtime-deps.min.js').read() +
            `\nlively.partData = ${JSON.stringify(this.partData)};\n\n` +
            await this.bundle.standalone({
               livelyTranspilation: true,
