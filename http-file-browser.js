@@ -287,15 +287,25 @@ class HTTPFileBrowserNode extends TreeData {
 
   display({resource}) {
     var col1Size = 19, col2Size = 8,
+        ft = this.root.browser.ui.fileTree,
         {lastModified, size} = resource,
         datePrinted = lastModified ?
           date.format(lastModified, "yyyy-mm-dd HH:MM:ss") : " ".repeat(col1Size),
-        sizePrinted = size ? num.humanReadableByteSize(size) : "";
+        sizePrinted = size ? num.humanReadableByteSize(size) : "",
+        displayedName = resource.name(),
+        renderedLength = ft.fontMetric.sizeFor(ft.defaultTextStyle, displayedName, true).width,
+        avgCharLength = renderedLength / displayedName.length;
 
+    if (renderedLength > ft.width - 200) {
+      let charsToRemove = (renderedLength - (ft.width - 200)) / avgCharLength;
+      if (charsToRemove >= 1) displayedName = displayedName.slice(0, -charsToRemove) + '...';
+    }
+      
     return [
-      resource.name(), null,
+      displayedName, null,
       `\t${sizePrinted} ${datePrinted}`, {
         paddingTop: "3px", fontColor: Color.darkGray,
+        transparency: "50%",
         fontSize: "70%", textStyleClasses: ["annotation"]
       }
     ];
