@@ -4,7 +4,7 @@ import { Color, pt } from "lively.graphics";
 import { intersect, shape, bezier } from 'svg-intersections';
 import { arr } from "lively.lang";
 import { connect } from "lively.bindings";
-import { Leash } from "./markers.js";
+import { Leash } from "lively.components/widgets.js";
 
 intersect.plugin(bezier);
 
