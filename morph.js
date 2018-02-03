@@ -1211,6 +1211,7 @@ export class Morph {
   align(p1, p2) { return this.moveBy(p2.subPt(p1)); }
   moveBy(delta) {
     this.position = this.position.addPt(delta);
+    return this;
   }
   rotateBy(delta) { this.rotation += delta; }
   resizeBy(delta) { this.extent = this.extent.addPt(delta); }
@@ -3000,6 +3001,7 @@ class PathPoint {
   moveBy(delta) {
     this.position = this.position.addPt(delta);
     this.path.onVertexChanged(this);
+    return this;
   }
 
   get controlPoints() {
