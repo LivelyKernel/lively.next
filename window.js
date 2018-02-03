@@ -143,7 +143,7 @@ export default class Window extends Morph {
       minimized: {
         set(isMinimized) {
           this.setProperty('minimized', isMinimized);
-          this.toggleMinimize();
+          this.applyMinimize();
         }
       },
       maximized: {}
@@ -322,7 +322,9 @@ export default class Window extends Morph {
     return resizer;
   }
 
-  async toggleMinimize() {
+  async toggleMinimize() { this.minimized = !this.minimized; }
+
+  async applyMinimize() {
     if (!this.targetMorph) return;
     let {nonMinizedBounds, minimized, width} = this,
         bounds = this.bounds(),
