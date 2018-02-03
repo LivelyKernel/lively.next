@@ -1,13 +1,11 @@
 import { pt, rect, Color } from "lively.graphics";
-import { Morph } from "lively.morphic";
+import { Morph, Image } from "lively.morphic";
 import { connect } from "lively.bindings";
 
 
 /*
-
-This module provides a canvas widget to display pixel-based data.
-
-*/
+ * This module provides a canvas widget to display pixel-based data.
+ */
 
 export class Canvas extends Morph {
   static get properties() {
@@ -156,5 +154,90 @@ export class Canvas extends Morph {
     if (!bounds.extent().equals(this.extent)) {
       this.extent = bounds.extent();
     }
+  }
+
+  finishDraw(style = {}) {
+    // Convenience method.  This just takes care of the 
+    // housekeeping of actually drawing the finished path
+    // if fill is true, fill the path.
+    let c = this.context,
+        color = style.color || "rgba(0,0,0,0.6)",
+        width = style.width || 4,
+        fill = style.fill, // default false
+        fillColor = style.fillColor || color;
+    if (color.toCSSString) color = color.toCSSString();
+    c.strokeStyle = color;
+    c.lineWidth = width;
+    c.stroke();
+    c.closePath();
+    if (fill) {
+      c.fillStyle = fillColor
+      c.fill()
+    }
+  }
+
+  line(from, to, style = {}) {
+    // draw a line from from to to, where both from and to are
+    // points.
+    // this.line(pt(0,0), pt(20,20))
+    let c = this.context
+    c.beginPath()
+    c.moveTo(from.x, from.y);
+    c.lineTo(to.x, to.y);
+    this.finishDraw(style)
+  }
+
+  testLine() {
+    this.line(pt(0,0), pt(20,20));
+  }
+
+  arc(center, radius, startTheta, endTheta, counterClockwise = false, style = {}) {
+    let c = this.context
+    c.beginPath()
+    c.arc(center.x, center.y, radius, startTheta, endTheta, counterClockwise);
+    this.finishDraw(style)
+  }
+
+  polygon(vertices, style={}) {
+    // draw a polygon, given n points as vertices
+    // this.polygon([pt(0,0), pt(20,20), pt(0, 20)], {fill: true, fillColor:Color.green})
+    let c = this.context
+    c.beginPath()
+    c.moveTo(vertices[0].x, vertices[0].y)
+    for (var i = 0; i < vertices.length; i++) {
+      c.lineTo(vertices[i].x, vertices[i].y)
+    }
+    c.lineTo(vertices[0].x, vertices[0].y)
+    this.finishDraw(style)
+  }
+
+  testPolygon() {
+    this.polygon([pt(0,0), pt(20,20), pt(0, 20)], {fill: true, fillColor:Color.green});
+  }
+
+  text(textString, atPt, style={}) {
+    // write textString at atPt as guided by style
+    // this.text('Hello World', this.extent.scaleBy(0.5), {angle:Math.PI/4, color:"red", align:'center', font:'30px Comic Sans MS'})
+    // this.text('Hello World', this.extent.scaleBy(0.5), {color:"red", align:'center', font:'30px Comic Sans MS'})
+    // this.text('Hello World', this.extent.scaleBy(0.5))
+    let ctx = this.context,
+        color = style.color || "black",
+        font = style.font || "14px Arial",
+        align = style.align || "start",
+        baseline = style.baseline || "bottom"
+    ctx.save()
+    ctx.font = font;
+    ctx.fillStyle = color;
+    ctx.textAlign = align;
+    ctx.textBaseline = baseline
+    if (style.angle && !isNaN(style.angle)) {
+      ctx.translate(atPt.x, atPt.y)
+      ctx.rotate(style.angle)
+      ctx.translate(-atPt.x, -atPt.y)
+    }
+    // window.alert(atPt)
+    ctx.fillText(textString, atPt.x, atPt.y)
+    ctx.restore() 
+    // console.log(ctx)
   }
 }
