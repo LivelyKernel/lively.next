@@ -390,6 +390,7 @@ export class Renderer {
   renderSvgMorph(morph, svgEl, markers, controlPoints = []) {
     let {position, filter, display, opacity,
          transform, transformOrigin, cursor, overflow} = defaultStyle(morph),
+        svgAttrs = svgAttributes(morph),
         {width, height} = morph.innerBounds(),
         defs, svgElements = [];
 
@@ -440,7 +441,7 @@ export class Renderer {
               // "pointer-events": controlPoints ? "" : "none",
               overflow: "visible"
             },
-            ...svgAttributes(morph)
+            ...svgAttrs
           }, svgElements),
         this.renderSubmorphs(morph),
         h("svg", {
@@ -448,7 +449,8 @@ export class Renderer {
             style: {
               position: "absolute",
               overflow: "visible"
-            }
+            },
+            ...svgAttrs
           }, controlPoints),
       ]);
   }
