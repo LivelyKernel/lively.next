@@ -12,6 +12,7 @@ import {
 } from "./morphic-default.js";
 import { Transform, pt } from "lively.graphics";
 import { h, diff, patch, create as createNode } from "virtual-dom";
+import { getSvgVertices } from "./property-dom-mapping.js";
 
 const svgNs = "http://www.w3.org/2000/svg";
 
@@ -173,7 +174,9 @@ export class Renderer {
         ...(morph.isPolygon ? {
           height: '100%', width: '100%',
           overflow: morph.clipMode,
-          [  navigator.userAgent.includes('AppleWebKit') ? '-webkit-clip-path' : 'clip-path']: `url(#clipPath${morph.id})`
+          ...(morph.clipMode !== 'visible' ? {
+            [navigator.userAgent.includes('AppleWebKit') ? '-webkit-clip-path' : 'clip-path']: `url(#clipPath${morph.id})`
+          } : {})
         } : {})
       }
     }, renderedSubmorphs);
@@ -264,7 +267,7 @@ export class Renderer {
     }), clipPath = h("clipPath", {
       namespace: svgNs,
       id: "clipPath" + path.id
-    }, el);
+    }, h("path", {namespace: svgNs, attributes: {d: getSvgVertices(path.vertices.map(v => v.translatedBy(path.origin.negated())))}}));
 
     var markers = [clipPath];
     if (startMarker) {
