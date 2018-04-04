@@ -208,12 +208,23 @@ export class Renderer {
   }
 
   renderImage(image) {
+    let url = image.imageUrl;
+    if (url.startsWith('data:')) {
+      let dataPos = url.indexOf(',');
+      let header = url.substring(5, dataPos);
+      let [mimeType, encoding] = header.split(';');
+      let data = url.substring(dataPos + 1);
+      if (encoding !== 'base64') {
+        url = string.createDataURI(data, mimeType);
+      }
+    }
+
     return h("div", {
       ...defaultAttributes(image, this),
         style: defaultStyle(image)
       }, [
         h("img", {
-          src: image.imageUrl,
+          src: url,
           draggable: false,
           style: {
             "pointer-events": "none",
