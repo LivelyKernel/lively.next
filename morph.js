@@ -1110,8 +1110,8 @@ export class Morph {
   scrollUp(n) { this.scrollDown(-n*50); }
   scrollLeft(n) { this.scroll = this.scroll.addXY(n, 0); }
   scrollRight(n) { this.scrollLeft(-n); }
-  scrollPageDown(n) { this.scrollDown(this.height); }
-  scrollPageUp(n) { this.scrollUp(this.height*2); }
+  scrollPageDown() { this.scrollDown(this.height); }
+  scrollPageUp() { this.scrollUp(this.height); }
 
   static get styleClasses() {
     // we statically determine default style classes based on the Morph
