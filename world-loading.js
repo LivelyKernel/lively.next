@@ -65,11 +65,10 @@ export async function loadWorld(newWorld, oldWorld, options = {}) {
 
   env = env || (oldWorld ? oldWorld.env : MorphicEnv.default());
 
-  let doc = env.domEnv.document || document,
-      nativeLoadingIndicator = doc.getElementById("dom-loading-indicator");
+  let doc = env.domEnv.document || document;
+  let nativeLoadingIndicator = doc.getElementById("dom-loading-indicator");
 
   try {
-
     let l2lClient = l2l && await setupLively2Lively(newWorld);
 
     if (l2lClient && shell) await setupLivelyShell({l2lClient});
