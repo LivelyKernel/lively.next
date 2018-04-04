@@ -2748,6 +2748,10 @@ export class Image extends Morph {
         }
       },
 
+      fill: {
+        defaultValue: Color.transparent
+      },
+
       naturalExtent: {defaultValue: null},
       isLoaded: {defaultValue: false, serialize: false},
       autoResize: {defaultValue: false}
