@@ -3504,7 +3504,7 @@ export class LineMorph extends Morph {
         defaultValue: Line.fromCoords(0, 0, 0, 0),
         set(val) {
           this.setProperty("line", val);
-          this.update();
+          this.update(val);
         }
       },
       start: {
@@ -3522,7 +3522,9 @@ export class LineMorph extends Morph {
         get(val) { return this.start; },
         set(val) {
           let delta = val.subPt(this.start);
+          var rotation = this.rotation;
           this.line = new Line(val, this.end.addPt(delta));
+          this.rotation = rotation;
         }
       }
     }
@@ -3539,6 +3541,7 @@ export class LineMorph extends Morph {
     this.setProperty("position", this.position.addPt(line.perpendicularLine(0, height, "cc").toVector()))
     this.width = vec.fastR();
     this.rotation = vec.theta();
+    this.vec = vec;
     this._isUpdating = false;
   }
 }
