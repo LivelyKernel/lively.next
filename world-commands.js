@@ -746,7 +746,7 @@ var commands = [
   },
 
   {
-    name: "open object editor",
+    name: 'open object editor',
     exec: async function(world, args = {
       target: null,
       selectedClass: null,
@@ -754,12 +754,10 @@ var commands = [
       evalEnvironment: null
     }) {
       if (!args.target) {
-        world.setStatusMessage("no target for ObjectEditor");
+        world.setStatusMessage('No target for ObjectEditor');
         return null;
       }
-      var { ObjectEditor } = await System.import(
-            "lively.ide/js/objecteditor/index.js"),
-          { target, className, methodName } = args;
+      let { ObjectEditor } = await System.import('lively.ide/js/objecteditor/index.js');
       return await ObjectEditor.open(args);
     }
   },
