@@ -383,6 +383,28 @@ function toQueryParams(s, separator) {
   return hash;
 }
 
+function base64EncodeUnicode(str) {
+  // [https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#The_Unicode_Problem]()
+  // Base64 encode a unicode string
+  // First we use encodeURIComponent to get percent-encoded UTF-8,
+  // then we convert the percent encodings into raw bytes which
+  // can be fed into btoa.
+  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+    function toSolidBytes(match, p1) {
+      return String.fromCharCode('0x' + p1);
+    }
+  ));
+}
+
+function base64DecodeUnicode(str) {
+  // [https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#The_Unicode_Problem]()
+  // Decode a base64 encoded string to a unicode string
+  // Going backwards: from bytestream, to percent-encoding, to original string.
+  return decodeURIComponent(atob(str).split('').map(function(c) {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-
 // file system path support
 // -=-=-=-=-=-=-=-=-=-=-=-=-
@@ -444,7 +466,7 @@ function createDataURI(content, mimeType) {
   // Example:
   //   window.open(string.createDataURI('<h1>test</h1>', 'text/html'));
   mimeType = mimeType || "text/plain";
-  return "data:" + mimeType + ";base64," + btoa(content);
+  return "data:" + mimeType + ";base64," + base64EncodeUnicode(content);
 }
 
 function hashCode(s) {
@@ -460,7 +482,7 @@ function hashCode(s) {
   return hash;
 }
 
-function md5 (string) {
+function md5(string) {
   // © Joseph Myers [http://www.myersdaily.org/joseph/javascript/md5-text.html]()
   // Example:
   //   string.md5("foo") // => "acbd18db4cc2f85cedef654fccc4a4d8"
@@ -1168,6 +1190,8 @@ export {
   tokens,
   tableize,
   unescapeCharacterEntities,
+  base64EncodeUnicode,
+  base64DecodeUnicode,
   toQueryParams,
   normalizePath,
   joinPath,
