@@ -338,7 +338,7 @@ export class Morph {
         group: "core",
         defaultValue: [],
         after: ["isLayoutable", "origin", "position", "rotation", "scale"],
-        get() { return (this.getProperty("submorphs") || []).slice(); },
+        get() { return (this.getProperty("submorphs") || []).concat(); },
         set(newSubmorphs) {
           let {layout} = this,
               activateLayout = layout && layout.isEnabled();
