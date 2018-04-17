@@ -21,7 +21,7 @@ function tmpdir() {
   if (done) {
     if (!isOnOtherDevice) return nodeTmpdir();
     if (!customTmpDirExists) {
-      console.log(`[flatn] using custom tmp dir: ${customTmpDir}`);
+      // console.log(`[flatn] using custom tmp dir: ${customTmpDir}`);
       if (!existsSync(customTmpDir))
         mkdirSync(customTmpDir);
       crossDeviceTest.customTmpDirExists = true;
