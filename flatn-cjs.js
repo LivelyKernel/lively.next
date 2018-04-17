@@ -1,14 +1,45 @@
 // >>> file:///Users/robert/Lively/lively-dev2/flatn/util.js
-/*global process, require, module*/
+/*global process, require, module, __filename*/
 
 var { exec } = require("child_process");
 var { join: j } = require("path");
-var { tmpdir } = require("os");
+var { basename } = require("path");
+var { mkdirSync } = require("fs");
+var { symlinkSync } = require("fs");
+var { tmpdir: nodeTmpdir } = require("os");
 var { resource } = require("./deps/lively.resources.js");
+
+var crossDeviceTest = {
+  done: false,
+  isOnOtherDevice: undefined,
+  customTmpDirExists: false,
+  customTmpDir: j(process.cwd(), "tmp")
+};
+function tmpdir() {
+  const { done, isOnOtherDevice, customTmpDirExists, customTmpDir } = crossDeviceTest;
+  if (done) {
+    if (!isOnOtherDevice) return nodeTmpdir();
+    if (!customTmpDirExists) {
+      console.log(`[flatn] using custom tmp dir: ${customTmpDir}`);
+      mkdirSync(customTmpDir);
+      crossDeviceTest.customTmpDirExists = true;
+    }
+    return customTmpDir
+  }
+
+  crossDeviceTest.done = true;
+  try {
+    symlinkSync(__filename), j(nodeTmpdir(), basename(__filename));
+    crossDeviceTest.isOnOtherDevice = false;
+  } catch (err) {
+    crossDeviceTest.isOnOtherDevice = true;
+  }
+  return tmpdir();
+}
 
 function maybeFileResource(url) {
   if (typeof url === "string" && url.startsWith("/"))
-      url = "file://" + url;
+    url = "file://" + url;
   return url.isResource ? url : resource(url);
 }
 
@@ -19,8 +50,8 @@ async function npmSearchForVersions(pname, range = "*") {
   try {
     // pname = pname.replace(/\@/g, "_40");
     pname = pname.replace(/\//g, "%2f");
-    let {name, version, dist: {shasum, tarball}} = await resource(`http://registry.npmjs.org/${pname}/${range}`).readJson();
-    return {name, version, tarball};
+    let { name, version, dist: { shasum, tarball } } = await resource(`http://registry.npmjs.org/${pname}/${range}`).readJson();
+    return { name, version, tarball };
   } catch (err) {
     console.error(err);
     throw new Error(`Cannot find npm package for ${pname}@${range}`);
@@ -29,9 +60,9 @@ async function npmSearchForVersions(pname, range = "*") {
 
 async function npmDownloadArchive(pname, range, destinationDir) {
   destinationDir = maybeFileResource(destinationDir);
-  let {version, name, tarball: archiveURL} = await npmSearchForVersions(pname, range);
+  let { version, name, tarball: archiveURL } = await npmSearchForVersions(pname, range);
   let nameForArchive = name.replace(/\//g, "%2f");
-  let archive=`${nameForArchive}-${version}.tgz`;
+  let archive = `${nameForArchive}-${version}.tgz`;
 
   if (!archiveURL) {
     archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`;
@@ -39,7 +70,7 @@ async function npmDownloadArchive(pname, range, destinationDir) {
   console.log(`[flatn] downloading ${name}@${range} - ${archiveURL}`);
   let downloadedArchive = destinationDir.join(archive);
   await resource(archiveURL).beBinary().copyTo(downloadedArchive);
-  return {downloadedArchive, name, version};
+  return { downloadedArchive, name, version };
 }
 
 
@@ -71,7 +102,7 @@ async function untar(downloadedArchive, targetDir, name) {
       await untarDir.join(name).remove();
     } catch (err) {
       // sometimes remove above errors with EPERM...
-      await x(`rm -rf "${name}"`, {cwd: untarDir.path()});
+      await x(`rm -rf "${name}"`, { cwd: untarDir.path() });
     }
   }
 
@@ -87,8 +118,8 @@ async function untar(downloadedArchive, targetDir, name) {
   }
 
   await x(`mkdir "${name}" && `
-        + `tar xzf "${downloadedArchive.path()}" ${fixGnuTar}--strip-components 1 -C "${name}" && `
-        + `rm "${downloadedArchive.path()}"`, {cwd: untarDir.path()});
+    + `tar xzf "${downloadedArchive.path()}" ${fixGnuTar}--strip-components 1 -C "${name}" && `
+    + `rm "${downloadedArchive.path()}"`, { cwd: untarDir.path() });
 
   await targetDir.join(name).asDirectory().remove();
   await targetDir.join(name).asDirectory().ensureExistance();
@@ -116,10 +147,10 @@ async function gitClone(gitURL, intoDir, branch = "master") {
   let destPath = tmp ? tmp.path() : intoDir.parent().path();
   try {
     try {
-      await x(`git clone --single-branch -b "${branch}" "${gitURL}" "${name}"`, {cwd: destPath});
+      await x(`git clone --single-branch -b "${branch}" "${gitURL}" "${name}"`, { cwd: destPath });
     } catch (err) {
       // specific shas can't be cloned, so do it manually:
-      await x(`git clone "${gitURL}" "${name}" && cd ${name} && git reset --hard "${branch}" `, {cwd: destPath});
+      await x(`git clone "${gitURL}" "${name}" && cd ${name} && git reset --hard "${branch}" `, { cwd: destPath });
     }
   } catch (err) {
     throw new Error(`git clone of ${gitURL} branch ${branch} into ${destPath} failed:\n${err}`);
@@ -257,9 +288,9 @@ var npmFallbackEnv = {
 // gitSpecFromVersion("rksm/flatn#commit-ish")
 function gitSpecFromVersion(version = "") {
   let gitMatch = version.match(/^([^:]+:\/\/[^#]+)(?:#(.+))?/),
-      [_1, gitRepo, gitBranch] = gitMatch || [],
-      githubMatch = version.match(/^(?:github:)?([^\/]+)\/([^#\/]+)(?:#(.+))?/),
-      [_2, githubUser, githubRepo, githubBranch] = githubMatch || [];
+    [_1, gitRepo, gitBranch] = gitMatch || [],
+    githubMatch = version.match(/^(?:github:)?([^\/]+)\/([^#\/]+)(?:#(.+))?/),
+    [_2, githubUser, githubRepo, githubBranch] = githubMatch || [];
   if (!githubMatch && !gitMatch) return null;
 
   if (!githubMatch)
@@ -283,6 +314,7 @@ module.exports.npmSearchForVersions = npmSearchForVersions;
 module.exports.x = x;
 module.exports.npmFallbackEnv = npmFallbackEnv;
 module.exports.gitSpecFromVersion = gitSpecFromVersion;
+module.exports.tmpdir = tmpdir;
 // <<< file:///Users/robert/Lively/lively-dev2/flatn/util.js
 
 // >>> file:///Users/robert/Lively/lively-dev2/flatn/package-map.js
@@ -970,7 +1002,7 @@ function graphvizDeps({deps, packages, resolvedVersions}) {
 // >>> file:///Users/robert/Lively/lively-dev2/flatn/download.js
 /*global require, module*/
 var { join: j } = require("path");
-var { tmpdir } = require("os");
+
 
 
 
@@ -984,7 +1016,7 @@ module.exports.packageDownload = packageDownload;
 
 function maybeFileResource(url) {
   if (typeof url === "string" && url.startsWith("/"))
-      url = "file://" + url;
+    url = "file://" + url;
   return url.isResource ? url : resource(url);
 }
 
@@ -997,8 +1029,8 @@ function pathForNameAndVersion(name, version, destinationDir) {
 
   // "git clone -b my-branch git@github.com:user/myproject.git"
   return gitSpec ?
-    Object.assign({}, gitSpec, {location: null, name, version: gitSpec.gitURL}) :
-    {location: null, name, version};
+    Object.assign({}, gitSpec, { location: null, name, version: gitSpec.gitURL }) :
+    { location: null, name, version };
 }
 
 
@@ -1020,9 +1052,9 @@ async function packageDownload(name, range, destinationDir, verbose, attempt = 0
     await tmp.ensureExistance();
 
     let pathSpec = pathForNameAndVersion(name, range, destinationDir.path()),
-        downloadDir = pathSpec.gitURL
-          ? await packageDownloadViaGit(pathSpec, tmp, verbose)
-          : await packageDownloadViaNpm(name, range, tmp, verbose);
+      downloadDir = pathSpec.gitURL
+        ? await packageDownloadViaGit(pathSpec, tmp, verbose)
+        : await packageDownloadViaNpm(name, range, tmp, verbose);
 
 
     let packageJSON = downloadDir.join("package.json"), config;
@@ -1037,7 +1069,7 @@ async function packageDownload(name, range, destinationDir, verbose, attempt = 0
     } else {
       let dirName = config.name.replace(/\//g, "__SLASH__") + "/" + config.version;
       packageDir = destinationDir.join(dirName).asDirectory();
-      pathSpec = Object.assign({}, pathSpec, {location: packageDir});
+      pathSpec = Object.assign({}, pathSpec, { location: packageDir });
     }
 
     await addNpmSpecificConfigAdditions(
@@ -1046,7 +1078,7 @@ async function packageDownload(name, range, destinationDir, verbose, attempt = 0
     await downloadDir.rename(packageDir);
 
     let packageSpec = PackageSpec.fromDir(packageDir.path());
-    packageSpec.writeLvInfo(Object.assign({build: false}, pathSpec));
+    packageSpec.writeLvInfo(Object.assign({ build: false }, pathSpec));
 
     return packageSpec;
 
@@ -1056,12 +1088,12 @@ async function packageDownload(name, range, destinationDir, verbose, attempt = 0
       throw err;
     }
     console.log(`[flatn] retrying download of ${name}@${range}`);
-    return packageDownload(name, range, destinationDir, verbose, attempt+1);
+    return packageDownload(name, range, destinationDir, verbose, attempt + 1);
   }
 }
 
 
-async function packageDownloadViaGit({gitURL: url, name, branch}, targetDir, verbose) {
+async function packageDownloadViaGit({ gitURL: url, name, branch }, targetDir, verbose) {
   // packageNameAndRepo like "lively.modules@https://github.com/LivelyKernel/lively.modules"
   branch = branch || "master"
   url = url.replace(/#[^#]+$/, "");
@@ -1085,13 +1117,13 @@ function addNpmSpecificConfigAdditions(configFile, config, name, version, gitURL
   // specification of it and the official stance is that it is npm internal but
   // some packages depend on that. In order to allow npm scripts like install to
   // work smoothly we add a subset of those props here.
-    let _id = gitURL ?
-          `${name}@${version}` :
-          `${config.name}@${config.version}`,
-        _from = gitURL ?
-          `${config.name}@${gitURL}` :
-          `${config.name}@${semver.validRange(version)}`;
-    return configFile.writeJson(Object.assign({_id, _from}, config), true);
+  let _id = gitURL ?
+    `${name}@${version}` :
+    `${config.name}@${config.version}`,
+    _from = gitURL ?
+      `${config.name}@${gitURL}` :
+      `${config.name}@${semver.validRange(version)}`;
+  return configFile.writeJson(Object.assign({ _id, _from }, config), true);
 }
 // <<< file:///Users/robert/Lively/lively-dev2/flatn/download.js
 
@@ -1099,17 +1131,17 @@ function addNpmSpecificConfigAdditions(configFile, config, name, version, gitURL
 /*global System,process,global,require,module,__dirname*/
 var { join: j } = require("path");
 var fs = require("fs");
-var { tmpdir } = require("os");
+
 var { execSync } = require("child_process");
 
 
 
 
 var dir = typeof __dirname !== "undefined"
-        ? __dirname
-        : System.decanonicalize("flatn/").replace("file://", ""),
-      helperBinDir = j(dir, "bin"),
-      nodeCentralPackageBin = j(helperBinDir, "node");
+  ? __dirname
+  : System.decanonicalize("flatn/").replace("file://", ""),
+  helperBinDir = j(dir, "bin"),
+  nodeCentralPackageBin = j(helperBinDir, "node");
 
 var _npmEnv;
 function npmEnv() {
@@ -1117,7 +1149,7 @@ function npmEnv() {
     let cacheFile = j(tmpdir(), "npm-env.json"), env = {};
     if (fs.existsSync(cacheFile)) {
       let cached = JSON.parse(String(fs.readFileSync(cacheFile)))
-      if (Date.now() - cached.time < 1000*60) return cached.env;
+      if (Date.now() - cached.time < 1000 * 60) return cached.env;
     }
     try {
       var dir = j(tmpdir(), "npm-test-env-project");
@@ -1130,7 +1162,7 @@ function npmEnv() {
           env[ea] = process.env[ea];
       });
       env = Object.assign({},
-        JSON.parse(String(execSync(`npm --silent run print-env`, {cwd: dir, env: Object.assign({}, process.env, {PATH})}))),
+        JSON.parse(String(execSync(`npm --silent run print-env`, { cwd: dir, env: Object.assign({}, process.env, { PATH }) }))),
         env);
       for (let key in env)
         if (!key.toLowerCase().startsWith("npm") || key.toLowerCase().startsWith("npm_package"))
@@ -1143,9 +1175,9 @@ function npmEnv() {
         fs.unlinkSync(j(dir, "package.json"));
         fs.unlinkSync(j(dir, "print-env.js"));
         fs.rmdirSync(dir);
-      } catch (err) {}
+      } catch (err) { }
     }
-    fs.writeFileSync(cacheFile, JSON.stringify({time: Date.now(), env}));
+    fs.writeFileSync(cacheFile, JSON.stringify({ time: Date.now(), env }));
     return env;
   })());
 }
@@ -1169,7 +1201,7 @@ function npmCreateEnvVars(configObj, env = {}, path = "npm_package") {
 function linkBins(packageSpecs, linkState = {}, verbose = false) {
   let linkLocation = j(tmpdir(), "npm-helper-bin-dir");
   if (!fs.existsSync(linkLocation)) fs.mkdirSync(linkLocation);
-  packageSpecs.forEach(({bin, location}) => {
+  packageSpecs.forEach(({ bin, location }) => {
     if (location.startsWith("file://"))
       location = location.replace(/^file:\/\//, "")
     if (!bin) return;
@@ -1180,7 +1212,7 @@ function linkBins(packageSpecs, linkState = {}, verbose = false) {
         // fs.existsSync follows links, so broken links won't be reported as existing
         fs.lstatSync(j(linkLocation, linkName));
         fs.unlinkSync(j(linkLocation, linkName));
-      } catch (err) {}
+      } catch (err) { }
       verbose && console.log(`[flatn build] linking ${j(location, realFile)} => ${j(linkLocation, linkName)}`)
       fs.symlinkSync(j(location, realFile), j(linkLocation, linkName));
     }
@@ -1209,8 +1241,8 @@ class BuildProcess {
   async run() {
 
     // let {buildStages, packageMap} = build
-    let {buildStages, packageMap} = this,
-        i = 1, n = buildStages.length;
+    let { buildStages, packageMap } = this,
+      i = 1, n = buildStages.length;
 
     this.verbose && console.log(`[flatn] Running build stage ${i++}/${n}`)
 
@@ -1221,13 +1253,13 @@ class BuildProcess {
         this.verbose && buildStages.length && console.log(`[flatn] Running build stage ${i++}/${n}`);
         continue;
       }
-      
+
       let next = stage[0],
-          atIndex = next.lastIndexOf("@");
+        atIndex = next.lastIndexOf("@");
       if (atIndex === -1) atIndex = next.length;
       let name = next.slice(0, atIndex),
-          version = next.slice(atIndex+1),
-          packageSpec = packageMap.lookup(name, version);
+        version = next.slice(atIndex + 1),
+        packageSpec = packageMap.lookup(name, version);
       if (!packageSpec) throw new Error(`[flatn build] package ${next} cannot be found in package map, skipping its build`);
 
       await this.build(packageSpec);
@@ -1235,12 +1267,12 @@ class BuildProcess {
     }
   }
 
-  normalizeScripts({scripts, location}) {
+  normalizeScripts({ scripts, location }) {
     if (!scripts || !scripts.install) {
       let hasBindingGyp = fs.existsSync(j(location, "binding.gyp"));
       if (hasBindingGyp) {
-        scripts = Object.assign({install: "node-gyp rebuild"}, scripts)
-      }    
+        scripts = Object.assign({ install: "node-gyp rebuild" }, scripts)
+      }
     }
     return scripts;
   }
@@ -1264,10 +1296,10 @@ class BuildProcess {
       let scripts = this.normalizeScripts(packageSpec);
       if (this.hasBuiltScripts(scripts)) {
         console.log(`[flatn] ${packageSpec.name} build starting`);
-        await this.runScript(scripts, "preinstall",  packageSpec, env);
-        await this.runScript(scripts, "install",     packageSpec, env);
+        await this.runScript(scripts, "preinstall", packageSpec, env);
+        await this.runScript(scripts, "install", packageSpec, env);
         await this.runScript(scripts, "postinstall", packageSpec, env);
-        await packageSpec.changeLvInfo(info => Object.assign({}, info, {build: true}));
+        await packageSpec.changeLvInfo(info => Object.assign({}, info, { build: true }));
         console.log(`[flatn] ${packageSpec.name} build done`);
       }
     }
@@ -1275,7 +1307,7 @@ class BuildProcess {
     this.builtPackages.push(packageSpec);
   }
 
-  async runScript(scripts, scriptName, {name, location}, env) {
+  async runScript(scripts, scriptName, { name, location }, env) {
     if (!scripts || !scripts[scriptName]) return false;
     this.verbose && console.log(`[flatn] build ${name}: running ${scriptName}`);
 

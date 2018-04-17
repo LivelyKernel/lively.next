@@ -1,16 +1,16 @@
 /*global System,process,global,require,module,__dirname*/
 import { join as j } from "path";
 import fs from "fs";
-import { tmpdir } from "os";
+import { tmpdir } from "./util.js";
 import { execSync } from "child_process";
 import { buildStages } from "./dependencies.js";
 import { x, npmFallbackEnv } from "./util.js";
 
 const dir = typeof __dirname !== "undefined"
-        ? __dirname
-        : System.decanonicalize("flatn/").replace("file://", ""),
-      helperBinDir = j(dir, "bin"),
-      nodeCentralPackageBin = j(helperBinDir, "node");
+  ? __dirname
+  : System.decanonicalize("flatn/").replace("file://", ""),
+  helperBinDir = j(dir, "bin"),
+  nodeCentralPackageBin = j(helperBinDir, "node");
 
 let _npmEnv;
 function npmEnv() {
@@ -18,7 +18,7 @@ function npmEnv() {
     let cacheFile = j(tmpdir(), "npm-env.json"), env = {};
     if (fs.existsSync(cacheFile)) {
       let cached = JSON.parse(String(fs.readFileSync(cacheFile)))
-      if (Date.now() - cached.time < 1000*60) return cached.env;
+      if (Date.now() - cached.time < 1000 * 60) return cached.env;
     }
     try {
       var dir = j(tmpdir(), "npm-test-env-project");
@@ -31,7 +31,7 @@ function npmEnv() {
           env[ea] = process.env[ea];
       });
       env = Object.assign({},
-        JSON.parse(String(execSync(`npm --silent run print-env`, {cwd: dir, env: Object.assign({}, process.env, {PATH})}))),
+        JSON.parse(String(execSync(`npm --silent run print-env`, { cwd: dir, env: Object.assign({}, process.env, { PATH }) }))),
         env);
       for (let key in env)
         if (!key.toLowerCase().startsWith("npm") || key.toLowerCase().startsWith("npm_package"))
@@ -44,9 +44,9 @@ function npmEnv() {
         fs.unlinkSync(j(dir, "package.json"));
         fs.unlinkSync(j(dir, "print-env.js"));
         fs.rmdirSync(dir);
-      } catch (err) {}
+      } catch (err) { }
     }
-    fs.writeFileSync(cacheFile, JSON.stringify({time: Date.now(), env}));
+    fs.writeFileSync(cacheFile, JSON.stringify({ time: Date.now(), env }));
     return env;
   })());
 }
@@ -70,7 +70,7 @@ function npmCreateEnvVars(configObj, env = {}, path = "npm_package") {
 function linkBins(packageSpecs, linkState = {}, verbose = false) {
   let linkLocation = j(tmpdir(), "npm-helper-bin-dir");
   if (!fs.existsSync(linkLocation)) fs.mkdirSync(linkLocation);
-  packageSpecs.forEach(({bin, location}) => {
+  packageSpecs.forEach(({ bin, location }) => {
     if (location.startsWith("file://"))
       location = location.replace(/^file:\/\//, "")
     if (!bin) return;
@@ -81,7 +81,7 @@ function linkBins(packageSpecs, linkState = {}, verbose = false) {
         // fs.existsSync follows links, so broken links won't be reported as existing
         fs.lstatSync(j(linkLocation, linkName));
         fs.unlinkSync(j(linkLocation, linkName));
-      } catch (err) {}
+      } catch (err) { }
       verbose && console.log(`[flatn build] linking ${j(location, realFile)} => ${j(linkLocation, linkName)}`)
       fs.symlinkSync(j(location, realFile), j(linkLocation, linkName));
     }
@@ -110,8 +110,8 @@ class BuildProcess {
   async run() {
 
     // let {buildStages, packageMap} = build
-    let {buildStages, packageMap} = this,
-        i = 1, n = buildStages.length;
+    let { buildStages, packageMap } = this,
+      i = 1, n = buildStages.length;
 
     this.verbose && console.log(`[flatn] Running build stage ${i++}/${n}`)
 
@@ -122,13 +122,13 @@ class BuildProcess {
         this.verbose && buildStages.length && console.log(`[flatn] Running build stage ${i++}/${n}`);
         continue;
       }
-      
+
       let next = stage[0],
-          atIndex = next.lastIndexOf("@");
+        atIndex = next.lastIndexOf("@");
       if (atIndex === -1) atIndex = next.length;
       let name = next.slice(0, atIndex),
-          version = next.slice(atIndex+1),
-          packageSpec = packageMap.lookup(name, version);
+        version = next.slice(atIndex + 1),
+        packageSpec = packageMap.lookup(name, version);
       if (!packageSpec) throw new Error(`[flatn build] package ${next} cannot be found in package map, skipping its build`);
 
       await this.build(packageSpec);
@@ -136,12 +136,12 @@ class BuildProcess {
     }
   }
 
-  normalizeScripts({scripts, location}) {
+  normalizeScripts({ scripts, location }) {
     if (!scripts || !scripts.install) {
       let hasBindingGyp = fs.existsSync(j(location, "binding.gyp"));
       if (hasBindingGyp) {
-        scripts = Object.assign({install: "node-gyp rebuild"}, scripts)
-      }    
+        scripts = Object.assign({ install: "node-gyp rebuild" }, scripts)
+      }
     }
     return scripts;
   }
@@ -165,10 +165,10 @@ class BuildProcess {
       let scripts = this.normalizeScripts(packageSpec);
       if (this.hasBuiltScripts(scripts)) {
         console.log(`[flatn] ${packageSpec.name} build starting`);
-        await this.runScript(scripts, "preinstall",  packageSpec, env);
-        await this.runScript(scripts, "install",     packageSpec, env);
+        await this.runScript(scripts, "preinstall", packageSpec, env);
+        await this.runScript(scripts, "install", packageSpec, env);
         await this.runScript(scripts, "postinstall", packageSpec, env);
-        await packageSpec.changeLvInfo(info => Object.assign({}, info, {build: true}));
+        await packageSpec.changeLvInfo(info => Object.assign({}, info, { build: true }));
         console.log(`[flatn] ${packageSpec.name} build done`);
       }
     }
@@ -176,7 +176,7 @@ class BuildProcess {
     this.builtPackages.push(packageSpec);
   }
 
-  async runScript(scripts, scriptName, {name, location}, env) {
+  async runScript(scripts, scriptName, { name, location }, env) {
     if (!scripts || !scripts[scriptName]) return false;
     this.verbose && console.log(`[flatn] build ${name}: running ${scriptName}`);
 

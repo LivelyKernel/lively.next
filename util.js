@@ -1,13 +1,42 @@
-/*global process, require, module*/
+/*global process, require, module, __filename*/
 
 import { exec } from "child_process";
-import { join as j } from "path";
-import { tmpdir } from "os";
+import { join as j, basename } from "path";
+import { mkdirSync, symlinkSync } from "fs";
+import { tmpdir as nodeTmpdir } from "os";
 import { resource } from "./deps/lively.resources.js";
+
+const crossDeviceTest = {
+  done: false,
+  isOnOtherDevice: undefined,
+  customTmpDirExists: false,
+  customTmpDir: j(process.cwd(), "tmp")
+};
+function tmpdir() {
+  const { done, isOnOtherDevice, customTmpDirExists, customTmpDir } = crossDeviceTest;
+  if (done) {
+    if (!isOnOtherDevice) return nodeTmpdir();
+    if (!customTmpDirExists) {
+      console.log(`[flatn] using custom tmp dir: ${customTmpDir}`);
+      mkdirSync(customTmpDir);
+      crossDeviceTest.customTmpDirExists = true;
+    }
+    return customTmpDir
+  }
+
+  crossDeviceTest.done = true;
+  try {
+    symlinkSync(__filename), j(nodeTmpdir(), basename(__filename));
+    crossDeviceTest.isOnOtherDevice = false;
+  } catch (err) {
+    crossDeviceTest.isOnOtherDevice = true;
+  }
+  return tmpdir();
+}
 
 function maybeFileResource(url) {
   if (typeof url === "string" && url.startsWith("/"))
-      url = "file://" + url;
+    url = "file://" + url;
   return url.isResource ? url : resource(url);
 }
 
@@ -18,8 +47,8 @@ async function npmSearchForVersions(pname, range = "*") {
   try {
     // pname = pname.replace(/\@/g, "_40");
     pname = pname.replace(/\//g, "%2f");
-    let {name, version, dist: {shasum, tarball}} = await resource(`http://registry.npmjs.org/${pname}/${range}`).readJson();
-    return {name, version, tarball};
+    let { name, version, dist: { shasum, tarball } } = await resource(`http://registry.npmjs.org/${pname}/${range}`).readJson();
+    return { name, version, tarball };
   } catch (err) {
     console.error(err);
     throw new Error(`Cannot find npm package for ${pname}@${range}`);
@@ -28,9 +57,9 @@ async function npmSearchForVersions(pname, range = "*") {
 
 async function npmDownloadArchive(pname, range, destinationDir) {
   destinationDir = maybeFileResource(destinationDir);
-  let {version, name, tarball: archiveURL} = await npmSearchForVersions(pname, range);
+  let { version, name, tarball: archiveURL } = await npmSearchForVersions(pname, range);
   let nameForArchive = name.replace(/\//g, "%2f");
-  let archive=`${nameForArchive}-${version}.tgz`;
+  let archive = `${nameForArchive}-${version}.tgz`;
 
   if (!archiveURL) {
     archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`;
@@ -38,7 +67,7 @@ async function npmDownloadArchive(pname, range, destinationDir) {
   console.log(`[flatn] downloading ${name}@${range} - ${archiveURL}`);
   let downloadedArchive = destinationDir.join(archive);
   await resource(archiveURL).beBinary().copyTo(downloadedArchive);
-  return {downloadedArchive, name, version};
+  return { downloadedArchive, name, version };
 }
 
 
@@ -70,7 +99,7 @@ async function untar(downloadedArchive, targetDir, name) {
       await untarDir.join(name).remove();
     } catch (err) {
       // sometimes remove above errors with EPERM...
-      await x(`rm -rf "${name}"`, {cwd: untarDir.path()});
+      await x(`rm -rf "${name}"`, { cwd: untarDir.path() });
     }
   }
 
@@ -86,8 +115,8 @@ async function untar(downloadedArchive, targetDir, name) {
   }
 
   await x(`mkdir "${name}" && `
-        + `tar xzf "${downloadedArchive.path()}" ${fixGnuTar}--strip-components 1 -C "${name}" && `
-        + `rm "${downloadedArchive.path()}"`, {cwd: untarDir.path()});
+    + `tar xzf "${downloadedArchive.path()}" ${fixGnuTar}--strip-components 1 -C "${name}" && `
+    + `rm "${downloadedArchive.path()}"`, { cwd: untarDir.path() });
 
   await targetDir.join(name).asDirectory().remove();
   await targetDir.join(name).asDirectory().ensureExistance();
@@ -115,10 +144,10 @@ async function gitClone(gitURL, intoDir, branch = "master") {
   let destPath = tmp ? tmp.path() : intoDir.parent().path();
   try {
     try {
-      await x(`git clone --single-branch -b "${branch}" "${gitURL}" "${name}"`, {cwd: destPath});
+      await x(`git clone --single-branch -b "${branch}" "${gitURL}" "${name}"`, { cwd: destPath });
     } catch (err) {
       // specific shas can't be cloned, so do it manually:
-      await x(`git clone "${gitURL}" "${name}" && cd ${name} && git reset --hard "${branch}" `, {cwd: destPath});
+      await x(`git clone "${gitURL}" "${name}" && cd ${name} && git reset --hard "${branch}" `, { cwd: destPath });
     }
   } catch (err) {
     throw new Error(`git clone of ${gitURL} branch ${branch} into ${destPath} failed:\n${err}`);
@@ -256,9 +285,9 @@ const npmFallbackEnv = {
 // gitSpecFromVersion("rksm/flatn#commit-ish")
 function gitSpecFromVersion(version = "") {
   let gitMatch = version.match(/^([^:]+:\/\/[^#]+)(?:#(.+))?/),
-      [_1, gitRepo, gitBranch] = gitMatch || [],
-      githubMatch = version.match(/^(?:github:)?([^\/]+)\/([^#\/]+)(?:#(.+))?/),
-      [_2, githubUser, githubRepo, githubBranch] = githubMatch || [];
+    [_1, gitRepo, gitBranch] = gitMatch || [],
+    githubMatch = version.match(/^(?:github:)?([^\/]+)\/([^#\/]+)(?:#(.+))?/),
+    [_2, githubUser, githubRepo, githubBranch] = githubMatch || [];
   if (!githubMatch && !gitMatch) return null;
 
   if (!githubMatch)
@@ -282,5 +311,6 @@ export {
   npmSearchForVersions,
   x,
   npmFallbackEnv,
-  gitSpecFromVersion
+  gitSpecFromVersion,
+  tmpdir
 };

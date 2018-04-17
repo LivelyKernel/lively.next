@@ -1,6 +1,6 @@
 /*global require, module*/
 import { join as j } from "path";
-import { tmpdir } from "os";
+import { tmpdir } from "./util.js";
 import { gitClone, npmDownloadArchive, untar, gitSpecFromVersion } from "./util.js";
 import { PackageSpec } from "./package-map.js";
 import semver from "./deps/semver.min.js";
@@ -13,7 +13,7 @@ export {
 
 function maybeFileResource(url) {
   if (typeof url === "string" && url.startsWith("/"))
-      url = "file://" + url;
+    url = "file://" + url;
   return url.isResource ? url : resource(url);
 }
 
@@ -26,8 +26,8 @@ function pathForNameAndVersion(name, version, destinationDir) {
 
   // "git clone -b my-branch git@github.com:user/myproject.git"
   return gitSpec ?
-    Object.assign({}, gitSpec, {location: null, name, version: gitSpec.gitURL}) :
-    {location: null, name, version};
+    Object.assign({}, gitSpec, { location: null, name, version: gitSpec.gitURL }) :
+    { location: null, name, version };
 }
 
 
@@ -49,9 +49,9 @@ async function packageDownload(name, range, destinationDir, verbose, attempt = 0
     await tmp.ensureExistance();
 
     let pathSpec = pathForNameAndVersion(name, range, destinationDir.path()),
-        downloadDir = pathSpec.gitURL
-          ? await packageDownloadViaGit(pathSpec, tmp, verbose)
-          : await packageDownloadViaNpm(name, range, tmp, verbose);
+      downloadDir = pathSpec.gitURL
+        ? await packageDownloadViaGit(pathSpec, tmp, verbose)
+        : await packageDownloadViaNpm(name, range, tmp, verbose);
 
 
     let packageJSON = downloadDir.join("package.json"), config;
@@ -66,7 +66,7 @@ async function packageDownload(name, range, destinationDir, verbose, attempt = 0
     } else {
       let dirName = config.name.replace(/\//g, "__SLASH__") + "/" + config.version;
       packageDir = destinationDir.join(dirName).asDirectory();
-      pathSpec = Object.assign({}, pathSpec, {location: packageDir});
+      pathSpec = Object.assign({}, pathSpec, { location: packageDir });
     }
 
     await addNpmSpecificConfigAdditions(
@@ -75,7 +75,7 @@ async function packageDownload(name, range, destinationDir, verbose, attempt = 0
     await downloadDir.rename(packageDir);
 
     let packageSpec = PackageSpec.fromDir(packageDir.path());
-    packageSpec.writeLvInfo(Object.assign({build: false}, pathSpec));
+    packageSpec.writeLvInfo(Object.assign({ build: false }, pathSpec));
 
     return packageSpec;
 
@@ -85,12 +85,12 @@ async function packageDownload(name, range, destinationDir, verbose, attempt = 0
       throw err;
     }
     console.log(`[flatn] retrying download of ${name}@${range}`);
-    return packageDownload(name, range, destinationDir, verbose, attempt+1);
+    return packageDownload(name, range, destinationDir, verbose, attempt + 1);
   }
 }
 
 
-async function packageDownloadViaGit({gitURL: url, name, branch}, targetDir, verbose) {
+async function packageDownloadViaGit({ gitURL: url, name, branch }, targetDir, verbose) {
   // packageNameAndRepo like "lively.modules@https://github.com/LivelyKernel/lively.modules"
   branch = branch || "master"
   url = url.replace(/#[^#]+$/, "");
@@ -114,11 +114,11 @@ function addNpmSpecificConfigAdditions(configFile, config, name, version, gitURL
   // specification of it and the official stance is that it is npm internal but
   // some packages depend on that. In order to allow npm scripts like install to
   // work smoothly we add a subset of those props here.
-    let _id = gitURL ?
-          `${name}@${version}` :
-          `${config.name}@${config.version}`,
-        _from = gitURL ?
-          `${config.name}@${gitURL}` :
-          `${config.name}@${semver.validRange(version)}`;
-    return configFile.writeJson(Object.assign({_id, _from}, config), true);
+  let _id = gitURL ?
+    `${name}@${version}` :
+    `${config.name}@${config.version}`,
+    _from = gitURL ?
+      `${config.name}@${gitURL}` :
+      `${config.name}@${semver.validRange(version)}`;
+  return configFile.writeJson(Object.assign({ _id, _from }, config), true);
 }
