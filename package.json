@@ -10,7 +10,9 @@
     "flatn_node": "./bin/node",
     "flatn_env": "./bin/flatn_env"
   },
-  "dependencies": {},
+  "dependencies": {
+    "node-gyp": "3.6.2"
+  },
   "systemjs": {
     "meta": {
       "./deps/lively.resources.js": {
