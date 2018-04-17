@@ -80,8 +80,8 @@ function fs_write(location, content) {
 }
 
 function fs_readJson(location) {
-  if (location.isResource) return location.readJson();
-  return JSON.parse(String(fs_read(location)));
+  if (location.isResource) return location.exists().then(exists => exists ? location.readJson() : null);
+  return fs.existsSync(location) ? JSON.parse(String(fs_read(location))) : null;
 }
 
 function fs_writeJson(location, jso) {
@@ -109,7 +109,7 @@ class PackageMap {
   static ensure(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
     let key = this.keyFor(packageCollectionDirs, individualPackageDirs, devPackageDirs);
     return this.cache[key] || (this.cache[key] = this.build(
-                                 packageCollectionDirs, individualPackageDirs, devPackageDirs));
+      packageCollectionDirs, individualPackageDirs, devPackageDirs));
   }
 
   static build(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
@@ -158,7 +158,7 @@ class PackageMap {
   }
 
   coversDirectory(dir) {
-    let {packageCollectionDirs, devPackageDirs, individualPackageDirs} = this;
+    let { packageCollectionDirs, devPackageDirs, individualPackageDirs } = this;
 
     if (individualPackageDirs.some(ea => equalLocation(ea, dir))) return "individualPackageDirs";
     if (devPackageDirs.some(ea => equalLocation(ea, dir))) return "devPackageDirs";
@@ -184,9 +184,9 @@ class PackageMap {
       }) : isPackageSpecIncluded();
 
     function isPackageSpecIncluded() {
-      let {location, name, version} = packageSpec,
-          {packageCollectionDirs, devPackageDirs, individualPackageDirs} = self,
-          isCovered = self.coversDirectory(location);
+      let { location, name, version } = packageSpec,
+        { packageCollectionDirs, devPackageDirs, individualPackageDirs } = self,
+        isCovered = self.coversDirectory(location);
 
       if (["devPackageDirs", "individualPackageDirs", "packageCollectionDirs"].includes(isCovered))
         return false;
@@ -221,19 +221,19 @@ class PackageMap {
     );
 
     let pkgMap = {},
-        byPackageNames = {},
-        seen = {packageDirs: {}, collectionDirs: {}};
+      byPackageNames = {},
+      seen = { packageDirs: {}, collectionDirs: {} };
 
     // 1. find all the packages in collection dirs and separate package dirs;
     for (let p of this._discoverPackagesInCollectionDirs(packageCollectionDirs, seen)) {
-      let {name, version} = p;
+      let { name, version } = p;
       pkgMap[`${name}@${version}`] = p;
       (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
     }
 
     for (let dir of individualPackageDirs)
       for (let p of this._discoverPackagesInPackageDir(dir, seen)) {
-        let {name, version} = p;
+        let { name, version } = p;
         pkgMap[`${name}@${version}`] = p;
         (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
       }
@@ -242,7 +242,7 @@ class PackageMap {
 
     for (let dir of devPackageDirs)
       for (let p of this._discoverPackagesInPackageDir(dir, seen)) {
-        let {name, version} = p;
+        let { name, version } = p;
         pkgMap[`${name}`] = p;
         p.isDevPackage = true;
         let versionsOfPackage = byPackageNames[name] || (byPackageNames[name] = []);
@@ -267,19 +267,19 @@ class PackageMap {
     // repo then if the git commit matches.  Additionally dev packages are
     // supported.  If a dev package with `name` is found it always matches
 
-    let gitSpec = gitSpecFromVersion(versionRange || "");    
+    let gitSpec = gitSpecFromVersion(versionRange || "");
     if (!gitSpec && versionRange) {
       try {
         // parse stuff like "3001.0001.0000-dev-harmony-fb" into "3001.1.0-dev-harmony-fb"
         versionRange = new semver.Range(versionRange, true).toString();
-      } catch(err) {}
-    }    
+      } catch (err) { }
+    }
     return this.findPackage((key, pkg) => pkg.matches(name, versionRange, gitSpec));
   }
 
   _discoverPackagesInCollectionDirs(
     packageCollectionDirs,
-    seen = {packageDirs: {}, collectionDirs: {}}
+    seen = { packageDirs: {}, collectionDirs: {} }
   ) {
     // package collection dir structure is like
     // packages
@@ -305,13 +305,13 @@ class PackageMap {
 
   _discoverPackagesInPackageDir(
     packageDir,
-    seen = {packageDirs: {}, collectionDirs: {}}
+    seen = { packageDirs: {}, collectionDirs: {} }
   ) {
     let spec = fs_exists(packageDir) && PackageSpec.fromDir(packageDir);
     if (!spec) return [];
 
     let found = [spec],
-        {location, flatn_package_dirs} = spec;
+      { location, flatn_package_dirs } = spec;
 
     if (flatn_package_dirs) {
       for (let dir of flatn_package_dirs) {
@@ -362,7 +362,8 @@ class AsyncPackageMap extends PackageMap {
 
     let resolve, reject;
     this._readyPromise = new Promise((_resolve, _reject) => {
-      resolve = _resolve; reject = _reject; });
+      resolve = _resolve; reject = _reject;
+    });
 
     try {
 
@@ -373,19 +374,19 @@ class AsyncPackageMap extends PackageMap {
       );
 
       let pkgMap = {},
-          byPackageNames = {},
-          seen = {packageDirs: {}, collectionDirs: {}};
+        byPackageNames = {},
+        seen = { packageDirs: {}, collectionDirs: {} };
 
       // 1. find all the packages in collection dirs and separate package dirs;
       for (let p of await this._discoverPackagesInCollectionDirs(packageCollectionDirs, seen)) {
-        let {name, version} = p;
+        let { name, version } = p;
         pkgMap[`${name}@${version}`] = p;
         (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
       }
 
       for (let dir of individualPackageDirs)
         for (let p of await this._discoverPackagesInPackageDir(dir, seen)) {
-          let {name, version} = p;
+          let { name, version } = p;
           pkgMap[`${name}@${version}`] = p;
           (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
         }
@@ -394,7 +395,7 @@ class AsyncPackageMap extends PackageMap {
 
       for (let dir of devPackageDirs)
         for (let p of await this._discoverPackagesInPackageDir(dir, seen)) {
-          let {name, version} = p;
+          let { name, version } = p;
           pkgMap[`${name}`] = p;
           p.isDevPackage = true;
           let versionsOfPackage = byPackageNames[name] || (byPackageNames[name] = []);
@@ -419,7 +420,7 @@ class AsyncPackageMap extends PackageMap {
 
   async _discoverPackagesInCollectionDirs(
     packageCollectionDirs,
-    seen = {packageDirs: {}, collectionDirs: {}}
+    seen = { packageDirs: {}, collectionDirs: {} }
   ) {
     let found = [];
     for (let dir of packageCollectionDirs) {
@@ -435,12 +436,12 @@ class AsyncPackageMap extends PackageMap {
 
   async _discoverPackagesInPackageDir(
     packageDir,
-    seen = {packageDirs: {}, collectionDirs: {}}
+    seen = { packageDirs: {}, collectionDirs: {} }
   ) {
     let spec = await packageDir.exists() && await PackageSpec.fromDir(packageDir);
     if (!spec) return [];
     let found = [spec],
-        {location, flatn_package_dirs} = spec;
+      { location, flatn_package_dirs } = spec;
 
     location = ensureResource(location);
 
@@ -470,7 +471,7 @@ class PackageSpec {
 
   static fromDir(packageDir) {
     let spec = new this(packageDir),
-        read = spec.read();
+      read = spec.read();
     return read instanceof Promise
       ? read.then(read => (read ? spec : null))
       : read ? spec : null;
@@ -497,7 +498,7 @@ class PackageSpec {
 
   matches(pName, versionRange, gitSpec) {
     // does this package spec match the package pName@versionRange?
-    let {name, version, isDevPackage} = this;
+    let { name, version, isDevPackage } = this;
 
     if (name !== pName) return false;
 
@@ -505,7 +506,7 @@ class PackageSpec {
 
     if (gitSpec && (gitSpec.versionInFileName === version
       || this.versionInFileName === gitSpec.versionInFileName)) {
-       return true
+      return true
     }
 
     if (semver.parse(version || "", true) && semver.satisfies(version, versionRange, true))
@@ -516,8 +517,8 @@ class PackageSpec {
 
   read() {
     let self = this,
-        packageDir = this.location,
-        configFile = join(packageDir, "package.json");
+      packageDir = this.location,
+      configFile = join(packageDir, "package.json");
 
     if (!fs_isDirectory(packageDir)) return false;
 
@@ -540,7 +541,7 @@ class PackageSpec {
 
       if (bin) {
         // npm allows bin to just be a string, it is then mapped to the package name
-        bin = typeof bin === "string" ? {[name]: bin} : Object.assign({}, bin);
+        bin = typeof bin === "string" ? { [name]: bin } : Object.assign({}, bin);
       }
 
       Object.assign(self, {
@@ -556,15 +557,22 @@ class PackageSpec {
 
     function step4(info) {
       if (info) {
-        let {branch, gitURL, versionInFileName} = info;
-        Object.assign(self, {branch, gitURL, versionInFileName});
+        let { branch, gitURL, versionInFileName } = info;
+        Object.assign(self, { branch, gitURL, versionInFileName });
       }
       return true;
     }
   }
 
   readConfig() {
-    return fs_readJson(join(this.location, "package.json"));
+    const config = fs_readJson(join(this.location, "package.json"));
+    return config instanceof Promise ?
+      config.then(ensureConfig) : ensureConfig(config);
+    function ensureConfig(config) {
+      if (config) return config;
+      const { name, version } = this;
+      return { name, version };
+    }
   }
 
   readLvInfo() {
@@ -573,7 +581,7 @@ class PackageSpec {
       let read = fs_readJson(infoF);
       return read instanceof Promise ?
         read.catch(err => null) : read;
-    } catch (err) {}
+    } catch (err) { }
     return null;
   }
 

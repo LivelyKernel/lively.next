@@ -14,7 +14,7 @@ import node_fetch from "./deps/node-fetch.js";
 if (!global.fetch) {
   Object.assign(
     global,
-    {fetch: node_fetch.default},
+    { fetch: node_fetch.default },
     ["Response", "Headers", "Request"].reduce((all, name) =>
       Object.assign(all, node_fetch[name]), {}));
 }
@@ -90,10 +90,10 @@ async function buildPackage(
   let packageSpec = typeof packageSpecOrDir === "string"
     ? PackageSpec.fromDir(packageSpecOrDir)
     : packageSpecOrDir,
-      packageMap = Array.isArray(packageMapOrDirs)
-        ? buildPackageMap(packageMapOrDirs)
-        : packageMapOrDirs,
-      {name, version} = packageSpec;
+    packageMap = Array.isArray(packageMapOrDirs)
+      ? buildPackageMap(packageMapOrDirs)
+      : packageMapOrDirs,
+    { name, version } = packageSpec;
   return await BuildProcess.for(packageSpec, packageMap, dependencyFields, forceBuild).run();
 }
 
@@ -120,18 +120,18 @@ async function installPackage(
   if (!fs.existsSync(destinationDir))
     fs.mkdirSync(destinationDir);
 
-    let atIndex = pNameAndVersion.lastIndexOf("@");
-    if (atIndex === -1) atIndex = pNameAndVersion.length;
-    let name = pNameAndVersion.slice(0, atIndex),
-        version = pNameAndVersion.slice(atIndex+1),
-        queue = [[name, version]],
-        seen = {},
-        newPackages = [],
-        installedNew = 0;
+  let atIndex = pNameAndVersion.lastIndexOf("@");
+  if (atIndex === -1) atIndex = pNameAndVersion.length;
+  let name = pNameAndVersion.slice(0, atIndex),
+    version = pNameAndVersion.slice(atIndex + 1),
+    queue = [[name, version]],
+    seen = {},
+    newPackages = [],
+    installedNew = 0;
 
   while (queue.length) {
     let [name, version] = queue.shift(),
-        installed = packageMap.lookup(name, version);
+      installed = packageMap.lookup(name, version);
 
     if (!installed) {
       (verbose || debug) && console.log(`[flatn] installing package ${name}@${version}`);
@@ -150,8 +150,8 @@ async function installPackage(
 
 
     let deps = Object.assign({},
-          dependencyFields.reduce((map, key) =>
-            Object.assign(map, installed[key]), {}));
+      dependencyFields.reduce((map, key) =>
+        Object.assign(map, installed[key]), {}));
 
     for (let name in deps) {
       let nameAndVersion = `${name}@${deps[name]}`;
@@ -164,7 +164,7 @@ async function installPackage(
   if (newPackages.length > 0)
     console.log(`[flatn] installed ${newPackages.length} new packages into ${destinationDir}`);
 
-  return {packageMap, newPackages};
+  return { packageMap, newPackages };
 }
 
 
@@ -189,15 +189,15 @@ function addDependencyToPackage(
     ? PackageSpec.fromDir(packageSpecOrDir)
     : packageSpecOrDir;
 
-  let {location} = packageSpec;
+  let { location } = packageSpec;
 
   if (!packageSpec[dependencyField]) packageSpec[dependencyField] = {};
-  
+
   let atIndex = depNameAndRange.lastIndexOf("@");
   if (atIndex === -1) atIndex = depNameAndRange.length;
   let depName = depNameAndRange.slice(0, atIndex),
-      depVersionRange = depNameAndRange.slice(atIndex+1),
-      depVersion = packageSpec[dependencyField][depName];
+    depVersionRange = depNameAndRange.slice(atIndex + 1),
+    depVersion = packageSpec[dependencyField][depName];
 
   return installPackage(
     depNameAndRange,
@@ -217,7 +217,9 @@ function addDependencyToPackage(
     if (dep) {
       if (!depVersion || !semver.parse(depVersion, true) || !semver.satisfies(depVersion, depVersionRange, true)) {
         packageSpec[dependencyField][depName] = depVersionRange;
-        let config = JSON.parse(String(fs.readFileSync(j(location, "package.json"))));
+        let config = fs.existsSync(j(location, "package.json")) ?
+          JSON.parse(String(fs.readFileSync(j(location, "package.json")))) :
+          { name: depName, version: dep.version };
         if (!config[dependencyField]) config[dependencyField] = {}
         config[dependencyField][depName] = depVersionRange;
         fs.writeFileSync(j(location, "package.json"), JSON.stringify(config, null, 2));
@@ -249,19 +251,19 @@ async function installDependenciesOfPackage(
     : packageSpecOrDir;
 
   if (!packageSpec)
-    throw new Error(`Cannot resolve package: ${inspect(packageSpec, {depth: 0})}`);
+    throw new Error(`Cannot resolve package: ${inspect(packageSpec, { depth: 0 })}`);
 
   if (!dirToInstallDependenciesInto) dirToInstallDependenciesInto = dirname(packageSpec.location);
   if (!dependencyFields) dependencyFields = ["dependencies"];
 
   let deps = Object.assign({},
-        dependencyFields.reduce((map, key) => Object.assign(map, packageSpec[key]), {})),
-      depNameAndVersions = [],
-      newPackages = [];
+    dependencyFields.reduce((map, key) => Object.assign(map, packageSpec[key]), {})),
+    depNameAndVersions = [],
+    newPackages = [];
 
   for (let name in deps) {
     let newPackagesSoFar = newPackages;
-    ({packageMap, newPackages} = await installPackage(
+    ({ packageMap, newPackages } = await installPackage(
       `${name}@${deps[name]}`,
       dirToInstallDependenciesInto,
       packageMap,
@@ -275,5 +277,5 @@ async function installDependenciesOfPackage(
   if ((verbose || debug) && !newPackages.length)
     console.log(`[flatn] no new packages need to be installed for ${packageSpec.name}`);
 
-  return {packageMap, newPackages};
+  return { packageMap, newPackages };
 }

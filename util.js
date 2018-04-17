@@ -2,7 +2,7 @@
 
 import { exec } from "child_process";
 import { join as j, basename } from "path";
-import { mkdirSync, symlinkSync } from "fs";
+import { mkdirSync, symlinkSync, existsSync } from "fs";
 import { tmpdir as nodeTmpdir } from "os";
 import { resource } from "./deps/lively.resources.js";
 
@@ -18,7 +18,8 @@ function tmpdir() {
     if (!isOnOtherDevice) return nodeTmpdir();
     if (!customTmpDirExists) {
       console.log(`[flatn] using custom tmp dir: ${customTmpDir}`);
-      mkdirSync(customTmpDir);
+      if (!existsSync(customTmpDir))
+        mkdirSync(customTmpDir);
       crossDeviceTest.customTmpDirExists = true;
     }
     return customTmpDir
@@ -153,7 +154,7 @@ async function gitClone(gitURL, intoDir, branch = "master") {
     throw new Error(`git clone of ${gitURL} branch ${branch} into ${destPath} failed:\n${err}`);
   }
 
-  if (tmp) await tmp.join(name + "/").rename(intoDir);
+  if (tmp) await x(`mv ${tmp.join(name).path()} ${intoDir.asFile().path()}`);
 }
 
 

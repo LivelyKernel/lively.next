@@ -41,7 +41,8 @@ function npmEnv() {
       env = {};
     } finally {
       try {
-        fs.unlinkSync(j(dir, "package.json"));
+        if (fs.existsSync(j(dir, "package.json")))
+          fs.unlinkSync(j(dir, "package.json"));
         fs.unlinkSync(j(dir, "print-env.js"));
         fs.rmdirSync(dir);
       } catch (err) { }

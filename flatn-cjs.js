@@ -6,6 +6,7 @@ var { join: j } = require("path");
 var { basename } = require("path");
 var { mkdirSync } = require("fs");
 var { symlinkSync } = require("fs");
+var { existsSync } = require("fs");
 var { tmpdir: nodeTmpdir } = require("os");
 var { resource } = require("./deps/lively.resources.js");
 
@@ -21,7 +22,8 @@ function tmpdir() {
     if (!isOnOtherDevice) return nodeTmpdir();
     if (!customTmpDirExists) {
       console.log(`[flatn] using custom tmp dir: ${customTmpDir}`);
-      mkdirSync(customTmpDir);
+      if (!existsSync(customTmpDir))
+        mkdirSync(customTmpDir);
       crossDeviceTest.customTmpDirExists = true;
     }
     return customTmpDir
@@ -156,7 +158,7 @@ async function gitClone(gitURL, intoDir, branch = "master") {
     throw new Error(`git clone of ${gitURL} branch ${branch} into ${destPath} failed:\n${err}`);
   }
 
-  if (tmp) await tmp.join(name + "/").rename(intoDir);
+  if (tmp) await x(`mv ${tmp.join(name).path()} ${intoDir.asFile().path()}`);
 }
 
 
@@ -400,8 +402,8 @@ function fs_write(location, content) {
 }
 
 function fs_readJson(location) {
-  if (location.isResource) return location.readJson();
-  return JSON.parse(String(fs_read(location)));
+  if (location.isResource) return location.exists().then(exists => exists ? location.readJson() : null);
+  return fs.existsSync(location) ? JSON.parse(String(fs_read(location))) : null;
 }
 
 function fs_writeJson(location, jso) {
@@ -429,7 +431,7 @@ class PackageMap {
   static ensure(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
     let key = this.keyFor(packageCollectionDirs, individualPackageDirs, devPackageDirs);
     return this.cache[key] || (this.cache[key] = this.build(
-                                 packageCollectionDirs, individualPackageDirs, devPackageDirs));
+      packageCollectionDirs, individualPackageDirs, devPackageDirs));
   }
 
   static build(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
@@ -478,7 +480,7 @@ class PackageMap {
   }
 
   coversDirectory(dir) {
-    let {packageCollectionDirs, devPackageDirs, individualPackageDirs} = this;
+    let { packageCollectionDirs, devPackageDirs, individualPackageDirs } = this;
 
     if (individualPackageDirs.some(ea => equalLocation(ea, dir))) return "individualPackageDirs";
     if (devPackageDirs.some(ea => equalLocation(ea, dir))) return "devPackageDirs";
@@ -504,9 +506,9 @@ class PackageMap {
       }) : isPackageSpecIncluded();
 
     function isPackageSpecIncluded() {
-      let {location, name, version} = packageSpec,
-          {packageCollectionDirs, devPackageDirs, individualPackageDirs} = self,
-          isCovered = self.coversDirectory(location);
+      let { location, name, version } = packageSpec,
+        { packageCollectionDirs, devPackageDirs, individualPackageDirs } = self,
+        isCovered = self.coversDirectory(location);
 
       if (["devPackageDirs", "individualPackageDirs", "packageCollectionDirs"].includes(isCovered))
         return false;
@@ -541,19 +543,19 @@ class PackageMap {
     );
 
     let pkgMap = {},
-        byPackageNames = {},
-        seen = {packageDirs: {}, collectionDirs: {}};
+      byPackageNames = {},
+      seen = { packageDirs: {}, collectionDirs: {} };
 
     // 1. find all the packages in collection dirs and separate package dirs;
     for (let p of this._discoverPackagesInCollectionDirs(packageCollectionDirs, seen)) {
-      let {name, version} = p;
+      let { name, version } = p;
       pkgMap[`${name}@${version}`] = p;
       (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
     }
 
     for (let dir of individualPackageDirs)
       for (let p of this._discoverPackagesInPackageDir(dir, seen)) {
-        let {name, version} = p;
+        let { name, version } = p;
         pkgMap[`${name}@${version}`] = p;
         (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
       }
@@ -562,7 +564,7 @@ class PackageMap {
 
     for (let dir of devPackageDirs)
       for (let p of this._discoverPackagesInPackageDir(dir, seen)) {
-        let {name, version} = p;
+        let { name, version } = p;
         pkgMap[`${name}`] = p;
         p.isDevPackage = true;
         let versionsOfPackage = byPackageNames[name] || (byPackageNames[name] = []);
@@ -587,19 +589,19 @@ class PackageMap {
     // repo then if the git commit matches.  Additionally dev packages are
     // supported.  If a dev package with `name` is found it always matches
 
-    let gitSpec = gitSpecFromVersion(versionRange || "");    
+    let gitSpec = gitSpecFromVersion(versionRange || "");
     if (!gitSpec && versionRange) {
       try {
         // parse stuff like "3001.0001.0000-dev-harmony-fb" into "3001.1.0-dev-harmony-fb"
         versionRange = new semver.Range(versionRange, true).toString();
-      } catch(err) {}
-    }    
+      } catch (err) { }
+    }
     return this.findPackage((key, pkg) => pkg.matches(name, versionRange, gitSpec));
   }
 
   _discoverPackagesInCollectionDirs(
     packageCollectionDirs,
-    seen = {packageDirs: {}, collectionDirs: {}}
+    seen = { packageDirs: {}, collectionDirs: {} }
   ) {
     // package collection dir structure is like
     // packages
@@ -625,13 +627,13 @@ class PackageMap {
 
   _discoverPackagesInPackageDir(
     packageDir,
-    seen = {packageDirs: {}, collectionDirs: {}}
+    seen = { packageDirs: {}, collectionDirs: {} }
   ) {
     let spec = fs_exists(packageDir) && PackageSpec.fromDir(packageDir);
     if (!spec) return [];
 
     let found = [spec],
-        {location, flatn_package_dirs} = spec;
+      { location, flatn_package_dirs } = spec;
 
     if (flatn_package_dirs) {
       for (let dir of flatn_package_dirs) {
@@ -682,7 +684,8 @@ class AsyncPackageMap extends PackageMap {
 
     let resolve, reject;
     this._readyPromise = new Promise((_resolve, _reject) => {
-      resolve = _resolve; reject = _reject; });
+      resolve = _resolve; reject = _reject;
+    });
 
     try {
 
@@ -693,19 +696,19 @@ class AsyncPackageMap extends PackageMap {
       );
 
       let pkgMap = {},
-          byPackageNames = {},
-          seen = {packageDirs: {}, collectionDirs: {}};
+        byPackageNames = {},
+        seen = { packageDirs: {}, collectionDirs: {} };
 
       // 1. find all the packages in collection dirs and separate package dirs;
       for (let p of await this._discoverPackagesInCollectionDirs(packageCollectionDirs, seen)) {
-        let {name, version} = p;
+        let { name, version } = p;
         pkgMap[`${name}@${version}`] = p;
         (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
       }
 
       for (let dir of individualPackageDirs)
         for (let p of await this._discoverPackagesInPackageDir(dir, seen)) {
-          let {name, version} = p;
+          let { name, version } = p;
           pkgMap[`${name}@${version}`] = p;
           (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
         }
@@ -714,7 +717,7 @@ class AsyncPackageMap extends PackageMap {
 
       for (let dir of devPackageDirs)
         for (let p of await this._discoverPackagesInPackageDir(dir, seen)) {
-          let {name, version} = p;
+          let { name, version } = p;
           pkgMap[`${name}`] = p;
           p.isDevPackage = true;
           let versionsOfPackage = byPackageNames[name] || (byPackageNames[name] = []);
@@ -739,7 +742,7 @@ class AsyncPackageMap extends PackageMap {
 
   async _discoverPackagesInCollectionDirs(
     packageCollectionDirs,
-    seen = {packageDirs: {}, collectionDirs: {}}
+    seen = { packageDirs: {}, collectionDirs: {} }
   ) {
     let found = [];
     for (let dir of packageCollectionDirs) {
@@ -755,12 +758,12 @@ class AsyncPackageMap extends PackageMap {
 
   async _discoverPackagesInPackageDir(
     packageDir,
-    seen = {packageDirs: {}, collectionDirs: {}}
+    seen = { packageDirs: {}, collectionDirs: {} }
   ) {
     let spec = await packageDir.exists() && await PackageSpec.fromDir(packageDir);
     if (!spec) return [];
     let found = [spec],
-        {location, flatn_package_dirs} = spec;
+      { location, flatn_package_dirs } = spec;
 
     location = ensureResource(location);
 
@@ -790,7 +793,7 @@ class PackageSpec {
 
   static fromDir(packageDir) {
     let spec = new this(packageDir),
-        read = spec.read();
+      read = spec.read();
     return read instanceof Promise
       ? read.then(read => (read ? spec : null))
       : read ? spec : null;
@@ -817,7 +820,7 @@ class PackageSpec {
 
   matches(pName, versionRange, gitSpec) {
     // does this package spec match the package pName@versionRange?
-    let {name, version, isDevPackage} = this;
+    let { name, version, isDevPackage } = this;
 
     if (name !== pName) return false;
 
@@ -825,7 +828,7 @@ class PackageSpec {
 
     if (gitSpec && (gitSpec.versionInFileName === version
       || this.versionInFileName === gitSpec.versionInFileName)) {
-       return true
+      return true
     }
 
     if (semver.parse(version || "", true) && semver.satisfies(version, versionRange, true))
@@ -836,8 +839,8 @@ class PackageSpec {
 
   read() {
     let self = this,
-        packageDir = this.location,
-        configFile = join(packageDir, "package.json");
+      packageDir = this.location,
+      configFile = join(packageDir, "package.json");
 
     if (!fs_isDirectory(packageDir)) return false;
 
@@ -860,7 +863,7 @@ class PackageSpec {
 
       if (bin) {
         // npm allows bin to just be a string, it is then mapped to the package name
-        bin = typeof bin === "string" ? {[name]: bin} : Object.assign({}, bin);
+        bin = typeof bin === "string" ? { [name]: bin } : Object.assign({}, bin);
       }
 
       Object.assign(self, {
@@ -876,15 +879,22 @@ class PackageSpec {
 
     function step4(info) {
       if (info) {
-        let {branch, gitURL, versionInFileName} = info;
-        Object.assign(self, {branch, gitURL, versionInFileName});
+        let { branch, gitURL, versionInFileName } = info;
+        Object.assign(self, { branch, gitURL, versionInFileName });
       }
       return true;
     }
   }
 
   readConfig() {
-    return fs_readJson(join(this.location, "package.json"));
+    const config = fs_readJson(join(this.location, "package.json"));
+    return config instanceof Promise ?
+      config.then(ensureConfig) : ensureConfig(config);
+    function ensureConfig(config) {
+      if (config) return config;
+      const { name, version } = this;
+      return { name, version };
+    }
   }
 
   readLvInfo() {
@@ -893,7 +903,7 @@ class PackageSpec {
       let read = fs_readJson(infoF);
       return read instanceof Promise ?
         read.catch(err => null) : read;
-    } catch (err) {}
+    } catch (err) { }
     return null;
   }
 
@@ -1008,6 +1018,7 @@ var { join: j } = require("path");
 
 
 
+
 var semver = require("./deps/semver.min.js");
 var { resource } = require("./deps/lively.resources.js");
 
@@ -1075,7 +1086,8 @@ async function packageDownload(name, range, destinationDir, verbose, attempt = 0
     await addNpmSpecificConfigAdditions(
       packageJSON, config, name, range, pathSpec.gitURL);
 
-    await downloadDir.rename(packageDir);
+    await packageDir.parent().ensureExistance();
+    await x(`mv ${downloadDir.asFile().path()} ${packageDir.asFile().path()}`);
 
     let packageSpec = PackageSpec.fromDir(packageDir.path());
     packageSpec.writeLvInfo(Object.assign({ build: false }, pathSpec));
@@ -1172,7 +1184,8 @@ function npmEnv() {
       env = {};
     } finally {
       try {
-        fs.unlinkSync(j(dir, "package.json"));
+        if (fs.existsSync(j(dir, "package.json")))
+          fs.unlinkSync(j(dir, "package.json"));
         fs.unlinkSync(j(dir, "print-env.js"));
         fs.rmdirSync(dir);
       } catch (err) { }
@@ -1371,7 +1384,7 @@ var node_fetch = require("./deps/node-fetch.js");
 if (!global.fetch) {
   Object.assign(
     global,
-    {fetch: node_fetch.default},
+    { fetch: node_fetch.default },
     ["Response", "Headers", "Request"].reduce((all, name) =>
       Object.assign(all, node_fetch[name]), {}));
 }
@@ -1445,10 +1458,10 @@ async function buildPackage(
   let packageSpec = typeof packageSpecOrDir === "string"
     ? PackageSpec.fromDir(packageSpecOrDir)
     : packageSpecOrDir,
-      packageMap = Array.isArray(packageMapOrDirs)
-        ? buildPackageMap(packageMapOrDirs)
-        : packageMapOrDirs,
-      {name, version} = packageSpec;
+    packageMap = Array.isArray(packageMapOrDirs)
+      ? buildPackageMap(packageMapOrDirs)
+      : packageMapOrDirs,
+    { name, version } = packageSpec;
   return await BuildProcess.for(packageSpec, packageMap, dependencyFields, forceBuild).run();
 }
 
@@ -1475,18 +1488,18 @@ async function installPackage(
   if (!fs.existsSync(destinationDir))
     fs.mkdirSync(destinationDir);
 
-    let atIndex = pNameAndVersion.lastIndexOf("@");
-    if (atIndex === -1) atIndex = pNameAndVersion.length;
-    let name = pNameAndVersion.slice(0, atIndex),
-        version = pNameAndVersion.slice(atIndex+1),
-        queue = [[name, version]],
-        seen = {},
-        newPackages = [],
-        installedNew = 0;
+  let atIndex = pNameAndVersion.lastIndexOf("@");
+  if (atIndex === -1) atIndex = pNameAndVersion.length;
+  let name = pNameAndVersion.slice(0, atIndex),
+    version = pNameAndVersion.slice(atIndex + 1),
+    queue = [[name, version]],
+    seen = {},
+    newPackages = [],
+    installedNew = 0;
 
   while (queue.length) {
     let [name, version] = queue.shift(),
-        installed = packageMap.lookup(name, version);
+      installed = packageMap.lookup(name, version);
 
     if (!installed) {
       (verbose || debug) && console.log(`[flatn] installing package ${name}@${version}`);
@@ -1505,8 +1518,8 @@ async function installPackage(
 
 
     let deps = Object.assign({},
-          dependencyFields.reduce((map, key) =>
-            Object.assign(map, installed[key]), {}));
+      dependencyFields.reduce((map, key) =>
+        Object.assign(map, installed[key]), {}));
 
     for (let name in deps) {
       let nameAndVersion = `${name}@${deps[name]}`;
@@ -1519,7 +1532,7 @@ async function installPackage(
   if (newPackages.length > 0)
     console.log(`[flatn] installed ${newPackages.length} new packages into ${destinationDir}`);
 
-  return {packageMap, newPackages};
+  return { packageMap, newPackages };
 }
 
 
@@ -1544,15 +1557,15 @@ function addDependencyToPackage(
     ? PackageSpec.fromDir(packageSpecOrDir)
     : packageSpecOrDir;
 
-  let {location} = packageSpec;
+  let { location } = packageSpec;
 
   if (!packageSpec[dependencyField]) packageSpec[dependencyField] = {};
-  
+
   let atIndex = depNameAndRange.lastIndexOf("@");
   if (atIndex === -1) atIndex = depNameAndRange.length;
   let depName = depNameAndRange.slice(0, atIndex),
-      depVersionRange = depNameAndRange.slice(atIndex+1),
-      depVersion = packageSpec[dependencyField][depName];
+    depVersionRange = depNameAndRange.slice(atIndex + 1),
+    depVersion = packageSpec[dependencyField][depName];
 
   return installPackage(
     depNameAndRange,
@@ -1572,7 +1585,9 @@ function addDependencyToPackage(
     if (dep) {
       if (!depVersion || !semver.parse(depVersion, true) || !semver.satisfies(depVersion, depVersionRange, true)) {
         packageSpec[dependencyField][depName] = depVersionRange;
-        let config = JSON.parse(String(fs.readFileSync(j(location, "package.json"))));
+        let config = fs.existsSync(j(location, "package.json")) ?
+          JSON.parse(String(fs.readFileSync(j(location, "package.json")))) :
+          { name: depName, version: dep.version };
         if (!config[dependencyField]) config[dependencyField] = {}
         config[dependencyField][depName] = depVersionRange;
         fs.writeFileSync(j(location, "package.json"), JSON.stringify(config, null, 2));
@@ -1604,19 +1619,19 @@ async function installDependenciesOfPackage(
     : packageSpecOrDir;
 
   if (!packageSpec)
-    throw new Error(`Cannot resolve package: ${inspect(packageSpec, {depth: 0})}`);
+    throw new Error(`Cannot resolve package: ${inspect(packageSpec, { depth: 0 })}`);
 
   if (!dirToInstallDependenciesInto) dirToInstallDependenciesInto = dirname(packageSpec.location);
   if (!dependencyFields) dependencyFields = ["dependencies"];
 
   let deps = Object.assign({},
-        dependencyFields.reduce((map, key) => Object.assign(map, packageSpec[key]), {})),
-      depNameAndVersions = [],
-      newPackages = [];
+    dependencyFields.reduce((map, key) => Object.assign(map, packageSpec[key]), {})),
+    depNameAndVersions = [],
+    newPackages = [];
 
   for (let name in deps) {
     let newPackagesSoFar = newPackages;
-    ({packageMap, newPackages} = await installPackage(
+    ({ packageMap, newPackages } = await installPackage(
       `${name}@${deps[name]}`,
       dirToInstallDependenciesInto,
       packageMap,
@@ -1630,6 +1645,6 @@ async function installDependenciesOfPackage(
   if ((verbose || debug) && !newPackages.length)
     console.log(`[flatn] no new packages need to be installed for ${packageSpec.name}`);
 
-  return {packageMap, newPackages};
+  return { packageMap, newPackages };
 }
 // <<< file:///Users/robert/Lively/lively-dev2/flatn/index.js

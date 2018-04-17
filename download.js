@@ -1,6 +1,6 @@
 /*global require, module*/
 import { join as j } from "path";
-import { tmpdir } from "./util.js";
+import { tmpdir, x } from "./util.js";
 import { gitClone, npmDownloadArchive, untar, gitSpecFromVersion } from "./util.js";
 import { PackageSpec } from "./package-map.js";
 import semver from "./deps/semver.min.js";
@@ -72,7 +72,8 @@ async function packageDownload(name, range, destinationDir, verbose, attempt = 0
     await addNpmSpecificConfigAdditions(
       packageJSON, config, name, range, pathSpec.gitURL);
 
-    await downloadDir.rename(packageDir);
+    await packageDir.parent().ensureExistance();
+    await x(`mv ${downloadDir.asFile().path()} ${packageDir.asFile().path()}`);
 
     let packageSpec = PackageSpec.fromDir(packageDir.path());
     packageSpec.writeLvInfo(Object.assign({ build: false }, pathSpec));
