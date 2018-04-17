@@ -119,13 +119,19 @@ async function untar(downloadedArchive, targetDir, name) {
     }
   }
 
-  await x(`mkdir "${name}" && `
-    + `tar xzf "${downloadedArchive.path()}" ${fixGnuTar}--strip-components 1 -C "${name}" && `
-    + `rm "${downloadedArchive.path()}"`, { cwd: untarDir.path() });
+  try {
+    let cmd = `mkdir "${name}" && `
+      + `tar xzf "${downloadedArchive.path()}" ${fixGnuTar}--strip-components 1 -C "${name}" && `
+      + `rm "${downloadedArchive.path()}"`
+    await x(cmd, { verbose: false, cwd: untarDir.path() });
+  } catch (err) {
+    try { await x(`rm -rf ${untarDir.path()}`) } catch (err) { }
+  } finally {
+    try { await targetDir.join(name).asDirectory().remove(); } catch (err) { }
+  }
 
-  await targetDir.join(name).asDirectory().remove();
-  await targetDir.join(name).asDirectory().ensureExistance();
-  return untarDir.join(name).asDirectory().rename(targetDir.join(name).asDirectory());
+  await x(`mv ${untarDir.join(name).path()} ${targetDir.join(name).path()}`, {});
+  return targetDir.join(name).asDirectory();
 }
 
 
