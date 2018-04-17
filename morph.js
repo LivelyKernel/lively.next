@@ -2472,11 +2472,11 @@ export class Morph {
   copy() { return copyMorph(this); }
 
   async interactivelyPublish() {
+    let world = this.world() || this.env.world;
     try {
-      let {interactivelySavePart} = await System.import("lively.morphic/partsbin.js"),
-          commit = await interactivelySavePart(this, {
-            notifications: false, loadingIndicator: true}),
-          world = this.world() || this.env.world;
+      let {interactivelySavePart} = await System.import("lively.morphic/partsbin.js");
+      let commit = await interactivelySavePart(this, {
+        notifications: false, loadingIndicator: true});
       world.setStatusMessage(
         commit ?
           `Published ${this} as ${commit.name}` :
