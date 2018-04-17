@@ -798,7 +798,7 @@ function asScriptOf(f, obj, optName, optMapping) {
         // FIXME super is supposed to be static
         return Object.getPrototypeOf(obj)[name].apply(obj, arguments);
       } catch (e) {
-        if (typeof $world !== undefined) $world.logError(e, 'Error in $super call')
+        if (typeof $world !== "undefined") $world.logError(e, 'Error in $super call')
         else console.error('Error in $super call: ' + e + '\n' + e.stack);
         return null;
       }
