@@ -908,7 +908,7 @@ export class Text extends Morph {
     this.displacingMorphMap.set(submorph, curr);
     this._displacing = false;
   }
-
+  
   computeDisplacementRectsFor(submorph) {
     // check what line ranges are overlapped by the morph
     let tl = this.textLayout,
@@ -918,10 +918,7 @@ export class Text extends Morph {
         bufferDist = 15,
         computeIntersectionShape = (submorph) => {
           if (submorph.isPath) {
-            return shape("path", {d: getSvgVertices(submorph.vertices.map(v => {
-              return {controlPoints: v.controlPoints, 
-                      ...pt(v.x, v.y).matrixTransform(submorph.getTransform())}
-            }))});
+            return shape("path", {d: getSvgVertices(submorph.vertices)});
           } else if (submorph.constructor.name == 'Ellipse') {
             return shape('ellipse', {
               cx: submorph.center.x,

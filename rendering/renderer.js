@@ -259,7 +259,8 @@ export class Renderer {
 
   // FIXME: The gradient handling is inconsistent to the way its handled in "vanilla" morphs
   renderPath(path) {
-    const {id, startMarker, endMarker, showControlPoints} = path;
+    const {id, startMarker, endMarker, showControlPoints, origin} = path;
+    const d = getSvgVertices(path.vertices);
     var el = h("path", {
       namespace: svgNs,
       id: "svg" + path.id,
@@ -267,7 +268,7 @@ export class Renderer {
     }), clipPath = h("clipPath", {
       namespace: svgNs,
       id: "clipPath" + path.id
-    }, h("path", {namespace: svgNs, attributes: {d: getSvgVertices(path.vertices.map(v => v.translatedBy(path.origin.negated())))}}));
+    }, h("path", {namespace: svgNs, attributes: { d }}));
 
     var markers = [clipPath];
     if (startMarker) {

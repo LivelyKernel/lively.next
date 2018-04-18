@@ -104,14 +104,15 @@ export function getSvgVertices(vertices) {
   let X, Y, lastV;
   var d = '';
   {
-    let {x, y} = lastV = vertices[0];
+    let {x, y} = lastV = vertices[0].position;
     X = x; Y = y;
     d = d + `M ${X} ${Y} `
   }
 
   for (let i = 1; i < vertices.length-1; i++) {
     let vertex = vertices[i],
-        {isSmooth, x, y, controlPoints: {previous: p, next: n}} = vertex;
+        {x, y} = vertex.position,
+        {isSmooth, controlPoints: {previous: p, next: n}} = vertex;
     d = isSmooth ?
       d + `C ${X + lastV.controlPoints.next.x} ${Y + lastV.controlPoints.next.y} ${x + p.x} ${y + p.y} ${x} ${y} ` :
       d + `L ${x} ${y} `
