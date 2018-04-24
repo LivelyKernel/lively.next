@@ -1,4 +1,4 @@
-/*global require, Worker, URL, webkitURL, Blob, BlobBuilder, process, require*/
+/*global, require, Worker, URL, webkitURL, Blob, BlobBuilder, process, require,self,global,remoteWorker,postMessage,XMLHttpRequest,__FUNCTIONDECLARATIONS__,initBrowserGlobals,loadDependenciesBrowser,initOnMessageHandler,initWorkerInterface,initWorkerMessenger,loadDependenciesNodejs,importScripts*/
 
 
 /*
@@ -196,7 +196,7 @@ var BrowserWorker = {
       WorkerSetup.initOnMessageHandler,
       WorkerSetup.initWorkerInterface,
       WorkerSetup.initWorkerMessenger
-    ].join('\n'));
+    ].join('\n')).split('__lvVarRecorder.').join('');
     var workerCode = '(' + workerSetupCode + ')();';
     var worker = new Worker(makeDataURI(workerCode));
     init(options, worker);
