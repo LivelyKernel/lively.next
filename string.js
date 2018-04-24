@@ -976,7 +976,7 @@ function capitalize(s) {
 function camelCaseString(s) {
   // Spaces to camels, including first char
   // Example: camelCaseString("foo bar baz") // => "FooBarBaz"
-  return s.split(" ").invoke('capitalize').join("")
+  return s.split(" ").map(capitalize).join("")
 }
 
 function camelize(s) {
