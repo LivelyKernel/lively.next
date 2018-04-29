@@ -10,7 +10,7 @@ import { events, obj } from "lively.lang";
 // type Emitter = {isRecording: boolean, isLogging: boolean, ... }
 // type Env = {emitter: Emitter, notifications: Notifications}
 
-let env;
+let env = null;
 
 function getEnv(_System) { // System? -> Env
   if (_System === undefined) {
