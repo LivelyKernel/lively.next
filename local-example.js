@@ -3,7 +3,7 @@ import { morph, MorphicEnv, EventDispatcher } from "lively.morphic";
 import Master from "lively.mirror/master.js";
 import Client from "lively.mirror/client.js";
 import { createDOMEnvironment } from "lively.morphic/rendering/dom-helper.js";
-import Workspace from "lively.morphic/ide/js/workspace.js";
+import Workspace from "lively.ide/js/workspace.js";
 
 async function buildMasterWorld(spec = {type: "world", name: "world", extent: pt(300, 300)}, pos = pt(0, 0)) {
   var morphicEnv = new MorphicEnv(await createDOMEnvironment()), world = morph({...spec, env: morphicEnv});
