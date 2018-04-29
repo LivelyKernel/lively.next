@@ -235,8 +235,9 @@ export class Point {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  toString() {
-    return string.format("pt(%1.f,%1.f)", this.x, this.y);
+  toString(truncate = true) {
+    return truncate ? string.format("pt(%1.f,%1.f)", this.x, this.y) : 
+                      string.format("pt(%10.f,%10.f)", this.x, this.y);
   }
 
   inspect() { return JSON.stringify(this); }
@@ -245,7 +246,7 @@ export class Point {
   // serialization
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   __serialize__() {
-    return {__expr__: this.toString(), bindings: {"lively.graphics/geometry-2d.js": ["pt"]}}
+    return {__expr__: this.toString(false), bindings: {"lively.graphics/geometry-2d.js": ["pt"]}}
   }
 }
 
