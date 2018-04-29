@@ -1,4 +1,4 @@
-/*global System,process,self,WorkerGlobalScope*/
+/*global System,process,self,WorkerGlobalScope,location*/
 import { arr, obj, promise } from 'lively.lang';
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 import module from "./module.js";
@@ -102,7 +102,7 @@ function prepareSystem(System, config) {
 
   if (isWorker) {
     System.set("@system-env",
-      System.newModule({...System.get("@system-env"), browser: true, worker: true}));
+      System.newModule({...System.get("@system-env"), browser: true, worker: true, location}));
   }
 
   let isElectron =

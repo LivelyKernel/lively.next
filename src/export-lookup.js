@@ -100,7 +100,8 @@ export default class ExportLookup {
         cache = this.exportByModuleCache,
         exportsByModule = {},
         progressLogger = i => {
-          if (i % 50 < 1) options.progress.step("Scanning ...", i / mods.length)
+          if (i % 50 < 1 && options.progress.step) 
+            options.progress.step("Scanning ...", i / mods.length)
         };
     await Promise.all(
       mods.map((moduleId, i) => {
