@@ -1,3 +1,4 @@
+/*global System*/
 import {
   interactivelyCreatePackage,
   interactivelyLoadPackage,
@@ -84,10 +85,15 @@ export class Interface {
   }
 
   async searchInAllPackages(searchTerm, options = {}) {
+    let pm = options.progress;
+    pm && pm.step('Fetching Packages...', 0)
     var packages = await this.coreInterface.getPackages({excluded: options.excludedPackages}),
         results = [];
-    for (let {url} of packages) {
+    pm && pm.step('Fetching Packages...', .1)
+    for (let i = 0; i < packages.length; i++) {
+      let {url} = packages[i];
       if (!url || url === "no group"/*FIXME*/) continue;
+      pm && pm.step(url.replace(System.baseURL, '').slice(0, 20), .1 + (.9 * (i / packages.length)));
       try {
         var packageResults = await this.coreInterface.searchInPackage(url, searchTerm, options)
         results = results.concat(packageResults);

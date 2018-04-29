@@ -6,7 +6,7 @@ import * as vm from "lively.vm";
 
 import { loadMochaTestFile, runMochaTests } from "../commands/mocha-tests.js";
 import { parseJsonLikeObj } from "../helpers.js";
-import { AbstractCoreInterface } from "./interface";
+import { AbstractCoreInterface } from "./interface.js";
 
 export class LocalCoreInterface extends AbstractCoreInterface {
 
