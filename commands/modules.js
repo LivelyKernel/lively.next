@@ -103,9 +103,9 @@ async function _searchForExistingFiles(requester, rootURL, p) {
 
 async function _searchForExistingFilesManually(requester, rootURL, p) {
   var choice = await requester.world().multipleChoicePrompt(
-    "Create new module or load an existing one?", {choices: ["create", "load"]})
-  if (choice === "create") return "[create new module]";
-  if (choice === "load") {
+    "Add Module", {choices: ["Create New Module", "Load Existing Module"]})
+  if (choice === "Create New Module") return "[create new module]";
+  if (choice === "Load Existing Module") {
     var result = await requester.world().prompt("URL of module?", {
       input: rootURL,
       historyId: "lively.vm._searchForExistingFilesManually.url-of-module"
