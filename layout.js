@@ -437,9 +437,11 @@ export class HorizontalLayout extends FloatLayout {
     var minExtent = this.computeMinContainerExtent(spacing, container, layoutableSubmorphs);
     if (!autoResize) minExtent = minExtent.maxPt(container.extent);
 
-    var startX = 0;
+    var startX = 0, rightToLeft = false;
     if (direction === "rightToLeft") {
-      startX = Math.max(0, container.width - minExtent.x);
+      rightToLeft = true;
+      layoutableSubmorphs = layoutableSubmorphs.reverse();
+      startX = Math.max(0, container.width);
     } else if (direction === "centered") {
       let baseWidth = autoResize ? container.width - minExtent.x : minExtent.x,
           submorphW = layoutableSubmorphs.length-1 * spacing;
@@ -449,17 +451,18 @@ export class HorizontalLayout extends FloatLayout {
 
     if (align === "top") {
       let top = spacing;
+      if (rightToLeft) spacing = -spacing;
       layoutableSubmorphs.reduce((pos, m) => {
-        this.changePropertyAnimated(m, "topLeft", pos, animate);
-        return m.topRight.addPt(pt(spacing, 0));
-      }, pt(Math.max(0, startX)+spacing, top));
+        this.changePropertyAnimated(m, rightToLeft ? "topRight" : "topLeft", pos, animate);
+        return rightToLeft ? m.topLeft.addPt(pt(spacing, 0)) : m.topRight.addPt(pt(spacing, 0));
+      }, pt(Math.max(0, startX) + spacing, top));
       this.forceLayoutsInNextLevel();
 
     } else if (align === "bottom") {
       let bottom = minExtent.y + (autoResize ? spacing : -spacing);
       layoutableSubmorphs.reduce((pos, m) => {
-        this.changePropertyAnimated(m, "bottomLeft", pos, animate);
-        return m.bottomRight.addPt(pt(spacing, 0));
+        this.changePropertyAnimated(m, rightToLeft ? "bottomRight" : "bottomLeft", pos, animate);
+        return rightToLeft ? m.bottomLeft.subPt(pt(spacing, 0)) : m.bottomRight.addPt(pt(spacing, 0));
       }, pt(Math.max(0, startX)+spacing, bottom));
        this.forceLayoutsInNextLevel();
     } else {
@@ -727,6 +730,7 @@ export class TilingLayout extends Layout {
       }
 
       previousRowHeight += spacing + currentRowHeight;
+      currentRowHeight = 0;
     }
 
     this.active = false;
