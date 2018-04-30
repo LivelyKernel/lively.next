@@ -417,8 +417,20 @@ export class PasswordInputLine extends HTMLMorph {
         set(x) {}
       },
 
+      haloShadow: {
+        readOnly: true,
+        get(){
+           return {
+             blur: 10,
+             color: Color.rgb(52,152,219),
+             distance: 0,
+             rotation: 45
+           } 
+         }
+      },
+
       domNodeTagName: {readOnly: true, get() { return "input"; }},
-      domNodeStyle: {readOnly: true, get() { return ""; }},
+      domNodeStyle: {readOnly: true, get() { return "background: grey"; }},
 
       input: {
         derived: true, after: ["domNode"],
@@ -499,12 +511,27 @@ export class PasswordInputLine extends HTMLMorph {
     this.domNode && this.domNode.focus();
   }
 
+  onFocus(evt) {
+    super.onFocus(evt);
+    this.animate({
+      dropShadow: this.haloShadow, duration: 200
+    });
+  }
+
+  onBlur(evt) {
+    super.onBlur(evt);
+    this.animate({
+      dropShadow: null, duration: 200
+    })
+  }
+
   acceptInput() { var i = this.input; signal(this, "inputAccepted", i); return i; }
   onInputChanged(change) { signal(this, "inputChanged", change); }
 
   async updateHtml(input) {
     // await this.updateHtml(this.input)
-    let {fontSize, fontFamily, padding, placeholder} = this,
+    let {fontSize, fontFamily, padding, placeholder, 
+         fill = Color.white, borderRadius } = this,
         padt = padding.top(),
         padr = padding.right(),
         padb = padding.bottom(),
@@ -517,6 +544,9 @@ export class PasswordInputLine extends HTMLMorph {
       height: `calc(100% - ${padt}px - ${padb}px)`,
       width: `calc(100% - ${padl}px - ${padr}px)`,
       "border-width": 0,
+      outline: "none",
+      "border-radius": `${borderRadius.valueOf()}px`,
+      background: fill.toString(),
       padding: `${padt}px ${padr}px ${padb}px ${padl}px`,
       "font-size": `${fontSize}px`,
       "font-family": `${fontFamily}`
