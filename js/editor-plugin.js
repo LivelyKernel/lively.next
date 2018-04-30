@@ -51,7 +51,7 @@ export default class JavaScriptEditorPlugin extends CodeMirrorEnabledEditorPlugi
 
   getCommands(otherCommands) {
     return [
-      ...otherCommands,
+      ...super.getCommands(otherCommands),
       ...jsIdeCommands,
       ...jsEditorCommands,
       ...astEditorCommands

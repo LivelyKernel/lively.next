@@ -9,8 +9,8 @@ import { connect, disconnect } from "lively.bindings";
 
 import DefaultTheme from "./themes/default.js";
 
-import { tokenizeDocument, modeInfo, visitDocumentTokens } from "./editor-modes.js";
-import { getMode } from "./editor-modes.js";
+import { tokenizeDocument, modeInfo, visitDocumentTokens, getMode } from "./editor-modes.js";
+import { completionCommands } from "./text/completion.js";
 
 export function guessTextModeName(contentOrEditor, filename = "", hint) {
 
@@ -210,6 +210,10 @@ export default class EditorPlugin {
         return token;
     }
     return null;
+  }
+  
+  getCommands(otherCommands) {
+    return otherCommands.concat(completionCommands)
   }
 
   getComment() {
