@@ -1,9 +1,9 @@
 /*global System*/
-import { promise } from "lively.lang/index.js";
+import { promise } from "lively.lang";
 import { resource } from "lively.resources";
-import { pt, Rectangle, Color } from "lively.graphics/index.js";
-import { connect, once, signal } from "lively.bindings/index.js";
-import { morph, Icon, Menu, config } from "lively.morphic/index.js";
+import { pt, Rectangle, Color } from "lively.graphics";
+import { connect, once, signal } from "lively.bindings";
+import { morph, Icon, Menu, config } from "lively.morphic";
 import { Morph } from "lively.morphic/morph.js";
 import { loadMorphFromSnapshot, createMorphSnapshot } from "lively.morphic/serialization.js";
 import UserRegistry from "lively.user/client/user-registry.js";
@@ -584,7 +584,7 @@ export class UserFlap extends Morph {
       await this.animate({
         position: this.position.addXY(this.width - newWidth, 0),
         extent: pt(newWidth, newHeight),
-        duration: 500
+        duration: 200
       });
     }
     else {
@@ -604,7 +604,7 @@ export class UserFlap extends Morph {
     label.value = [userName, {fontColor: Color.gray.darker()}];
     label.fit();
     avatar.fit();
-    if (menu && animated) menu.animate({opacity: 0, duration: 500});
+    if (menu && animated) menu.animate({opacity: 0, duration: 200});
     await this.changeWidthAndHeight(label.width + 20 + avatar.width, label.height, animated);
     label.leftCenter = this.innerBounds().insetBy(10).leftCenter();
     avatar.leftCenter = label.rightCenter;
@@ -647,7 +647,7 @@ export class UserFlap extends Morph {
     avatar.visible = false;
     label.visible = false;
     this.addMorph(menu);
-    if (animated) menu.animate({opacity: 1, duration: 500});
+    if (animated) menu.animate({opacity: 1, duration: 200});
     await this.changeWidthAndHeight(
       menu.width + 20, menu.height + 10, animated);
   }
