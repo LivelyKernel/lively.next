@@ -1371,9 +1371,6 @@ commands.push(...usefulEditorCommands);
 import { activate as iyGotoCharActivate } from "./iy-goto-char.js"
 commands.push(iyGotoCharActivate);
 
-import { completionCommands } from "./completion.js"
-commands.push(...completionCommands);
-
 import { searchCommands } from "./search.js"
 commands.push(...searchCommands);
 

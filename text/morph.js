@@ -16,10 +16,6 @@ import { UndoManager } from "../undo.js";
 import { TextSearcher } from "./search.js";
 import TextLayout from "./layout.js";
 import Renderer, { extractHTMLFromTextMorph } from "./renderer.js";
-// there are IDE specific commands such as the completion which should
-// not be added if the morph is not supposed to be used in
-// an IDE context at all. find a way to differentiate here (i.e. flag or just
-// not initializing the commands for vanilla use of the text morph at all?)
 import commands from "./commands.js";
 import { RichTextControl } from "./ui.js";
 import { textAndAttributesWithSubRanges } from "./attributes.js";
