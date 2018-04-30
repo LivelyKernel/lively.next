@@ -54,6 +54,7 @@ export default class Halo extends Morph {
   initLayout() {
     var layout = this.layout = new GridLayout({
       autoAssign: false,
+      fitToCell: false,
       columns: [
         0, {fixed: 36, paddingRight: 10},
         2, {fixed: 26}, 4, {fixed: 26},
@@ -140,7 +141,7 @@ export default class Halo extends Morph {
   alignWithTarget() {
     if (this.active || !this.target) return;
     const targetBounds = this.target.globalBounds(),
-          worldBounds = this.target.world().visibleBounds(),
+          worldBounds = (this.target.world() || $world).visibleBounds(),
           {x, y, width, height} = targetBounds.intersection(worldBounds);
     this.layout && this.layout.disable();
     this.setBounds(targetBounds.insetBy(-36).intersection(worldBounds));
@@ -630,7 +631,7 @@ class NameHolder extends Morph {
       forceUniqueName: {defaultValue: false},
       layout:    {
         after: ["nameHolder"],
-        initialize() { this.layout = new HorizontalLayout({spacing: 7}); }
+        initialize() { this.layout = new HorizontalLayout({ resizeContainer: true, spacing: 7}); }
       },
       nameHolder: {
         after: ["submorphs"],
@@ -692,7 +693,7 @@ class NameHolder extends Morph {
 
   update() {
     this.nameHolder.textString = this.target.name;
-    this.nameHolder.fit();
+    this.whenRendered().then(() => this.nameHolder.fit());
   }
 
   activate() {
@@ -724,7 +725,13 @@ class NameHaloItem extends HaloItem {
       borderRadius: {defaultValue: 15},
       fill: {defaultValue: Color.gray.withA(0.7)},
       borderColor: {defaultValue: Color.green},
-      layout: {initialize() { this.layout = new HorizontalLayout({spacing: 0}); }},
+      layout: {
+        initialize() {
+          this.layout = new HorizontalLayout({
+            resizeContainer: true, spacing: 0
+          }); 
+        }
+      },
     };
   }
 
