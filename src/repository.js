@@ -1,5 +1,3 @@
-// await lively.modules.module("https://lively-next.org/js-git-browser/js-git-browser.js").unload()
-
 import { mixins, promisify } from "../dist/js-git-browser.js"
 import JsGitWebDAVFs from "./js-git-webdav-fs.js";
 
@@ -28,7 +26,7 @@ export default class WebDAVRepository {
 // let repo = new WebDAVRepository("https://lively-next.org/lively.morphic/.git/")
 // await repo.master
 
-// import { runCommand } from "lively.morphic/ide/shell/shell-interface.js";
+// import { runCommand } from "lively.ide/shell/shell-interface.js";
 // import { arr, num } from "lively.lang";
 // import { Database } from "lively.storage";
 // 
