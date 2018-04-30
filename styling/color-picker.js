@@ -146,7 +146,8 @@ export class ColorPickerField extends Morph {
       });
     connect(p.targetMorph, "color", this, "update");
     p.isLayoutable = false;
-    this.palette = await p.fadeIntoWorld(this.globalBounds().insetBy(10).bottomCenter());
+    this.palette = await p.fadeIntoWorld(
+       this.get('paletteButton').globalBounds().center());
     this.removePicker();
     once(p, 'remove', p, 'topLeft', {converter: () => pt(0,0), varMapping: {pt}});
   }

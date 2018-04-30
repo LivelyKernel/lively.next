@@ -813,6 +813,7 @@ export class PointPopover extends StylePopover {
   }
 
   controls() {
+    this.extent = pt(200,200);
     var scroller, grabber,
         controls =  [morph({
       extent: pt(200,200),

@@ -232,10 +232,10 @@ export default function browserCommands(browser) {
       name: "add package",
       exec: async (browser) => {
         var what = await browser.world().multipleChoicePrompt(
-          "Create a new package or load an existing one?",
-          {choices: ["create", "load", "cancel"]});
+          "Add Package",
+          {choices: ["Create New Package", "Load Existing Package", "Cancel"]});
 
-        if (!what || what === "cancel") {
+        if (!what || what === "Cancel") {
           browser.world().inform("Canceled add package");
           return true;
         }
@@ -243,7 +243,7 @@ export default function browserCommands(browser) {
         var pkg;
         try {
           var system = browser.systemInterface;
-          pkg = what === "create" ?
+          pkg = what === "Create New Package" ?
             await system.interactivelyCreatePackage(browser) :
             await system.interactivelyLoadPackage(
               browser, browser.selectedPackage ? browser.selectedPackage.address : null);
