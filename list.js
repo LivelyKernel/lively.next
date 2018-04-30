@@ -1,4 +1,4 @@
-import { CustomLayout, Morph, Text, StyleSheet, Label, Icon, morph } from "lively.morphic";
+import { CustomLayout, VerticalLayout, Morph, Text, StyleSheet, Label, Icon, morph } from "lively.morphic";
 import { pt, LinearGradient, Color, Rectangle, rect } from "lively.graphics";
 import { arr, Path, string } from "lively.lang";
 import { signal, once } from "lively.bindings";
@@ -911,6 +911,7 @@ export class FilterableList extends Morph {
 
       fontSize: {
         isStyleProp: true,
+        group: "styling",
         derived: true, after: ["submorphs"], defaultValue: 11,
         get() { return this.listMorph.fontSize; },
         set(val) {
@@ -1100,14 +1101,13 @@ export class FilterableList extends Morph {
 
   relayout() {
     let {listMorph, inputMorph, paddingMorph, borderWidth: offset} = this;
-    inputMorph.fitIfNeeded();
     inputMorph.topLeft = pt(offset, offset);
     inputMorph.width = listMorph.width = this.width - 2*offset;
     if (paddingMorph) {
       paddingMorph.topLeft = inputMorph.bottomLeft;
     }
     listMorph.position = paddingMorph ? paddingMorph.bottomLeft : inputMorph.bottomLeft;
-    listMorph.height = this.height -listMorph.top - offset;
+    listMorph.height = this.height - listMorph.top - offset;
   }
 
   focus() { this.get("input").focus(); }

@@ -1,6 +1,6 @@
 /*global System*/
-import { Rectangle, Color, pt } from 'lively.graphics';
-import { morph, Morph, StyleSheet, Text, GridLayout,
+import { Rectangle, rect, Color, pt } from 'lively.graphics';
+import { morph, VerticalLayout, Morph, StyleSheet, Text, GridLayout,
   Icon, HorizontalLayout } from 'lively.morphic';
 import InputLine, { PasswordInputLine } from "lively.morphic/text/input-line.js";
 import { arr, obj, promise } from "lively.lang";
@@ -16,13 +16,23 @@ export class AbstractPrompt extends Morph {
       extent: {defaultValue: pt(300,80)},
       borderRadius: {defaultValue: 5},
       dropShadow: {initialize() { this.dopShadow = true; }},
-
+      clipMode: {defaultValue: 'hidden'},
       _isActive: {defaultValue: false},
       autoRemove: {defaultValue: true},
       answer: {defaultValue: null, derived: true},
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
+            "[name=promptTitle]": {
+              fontWeight: 'bold',
+              textAlign: 'center',
+              fill: null, 
+              padding: Rectangle.inset(3),
+              fontSize: 14, 
+              fontColor: Color.gray,
+              fixedHeight: true,
+              height: 20
+            },
             ".Button": {borderRadius: 15},
             ".Button.standard": {
               borderWidth: 2,
@@ -72,8 +82,8 @@ export class AbstractPrompt extends Morph {
   get isEpiMorph() { return true; }
   get isPrompt() { return true; }
 
-  get label() { return this.getSubmorphNamed("label").textString; }
-  set label(label) { this.getSubmorphNamed("label").textString = label; }
+  get label() { return this.getSubmorphNamed("promptTitle").textString; }
+  set label(label) { this.getSubmorphNamed("promptTitle").textString = label; }
 
   resolve(arg) { return this.answer.resolve(arg); }
   reject(reason = undefined) { return this.answer.resolve(reason); }
@@ -110,26 +120,35 @@ export class AbstractPrompt extends Morph {
   async transitionTo(otherPrompt, duration = 300) {
     // assumes to be working with prompts opened in world
     let morphBox = morph({
-      fill: this.fill,
-      borderRadius: this.borderRadius,
-    });
+          fill: this.fill,
+          borderRadius: this.borderRadius,
+        }),
+        scaler = morph({
+          fill: null, origin: pt(5,5)
+        });
     otherPrompt.opacity = 0;
     otherPrompt.fill = Color.transparent;
-    otherPrompt.scale = otherPrompt.width / this.width;
     otherPrompt.openInWorld();
     this.fill = Color.transparent;
     $world.addMorph(morphBox, this);
     morphBox.setBounds(this.bounds());
 
-    otherPrompt.center = morphBox.center = this.center;
+    scaler.openInWorld();
+    scaler.addMorph(otherPrompt);
+    otherPrompt.center = scaler.origin;
+    scaler.center = morphBox.center = this.center;
+    scaler.scale = otherPrompt.width / this.width;
 
     morphBox.whenRendered().then(async () => {
       this.animate({scale: this.width / otherPrompt.width, opacity: 0, duration});
-      morphBox.animate({bounds: otherPrompt.bounds(), duration});
-      await otherPrompt.animate({scale: 1, opacity: 1, duration});
+      otherPrompt.animate({opacity: 1, duration});
+      scaler.animate({scale: 1, duration});
+      await morphBox.animate({bounds: scaler.bounds(), duration});
       otherPrompt.fill = morphBox.fill;
+      $world.addMorph(otherPrompt);
       morphBox.remove();
       this.remove();
+      scaler.remove();
     });
   }
 
@@ -141,8 +160,7 @@ export class InformPrompt extends AbstractPrompt {
   build(props = {}) {
     var {label} = props;
     this.addMorph({
-      name: "label", type: "label", value: props.label,
-      fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray
+      name: "promptTitle", type: "text", value: props.label
     });
     let okButton = this.addMorph({
       styleClasses: ['ok'],
@@ -153,22 +171,14 @@ export class InformPrompt extends AbstractPrompt {
   }
 
   initLayout() {
-    const label = this.getSubmorphNamed("label");
+    const label = this.getSubmorphNamed("promptTitle");
     label.fit();
-    this.width = Math.max(label.width + 10, this.width);
     this.height = label.height + 30;
-    const l = this.layout = new GridLayout({
-      columns: [
-        0, {paddingLeft: 5},
-        1, {fixed: 100},
-        2, {paddingRight: 5}
-      ],
-      rows: [
-        1, {paddingBottom: 5, fixed: 30},
-      ],
-      grid: [["label", "label", "label"],
-        [null, "ok button", null]]
+    this.get('ok button').extent = pt(100,25);
+    this.layout = new VerticalLayout({
+      align: "center", spacing: 5
     });
+    this.whenRendered().then(() => this.layout.apply())
   }
 
   get keybindings() {
@@ -184,8 +194,7 @@ export class ConfirmPrompt extends AbstractPrompt {
 
   build(props) {
     this.addMorph({
-      name: "label", type: "label", value: props.label,
-      fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray
+      name: "promptTitle", type: "text", value: props.label
     });
     let okButton = this.addMorph({
       styleClasses: ['ok'],
@@ -201,6 +210,9 @@ export class ConfirmPrompt extends AbstractPrompt {
     connect(okButton, 'fire', this, 'resolve');
     connect(cancelButton, 'fire', this, 'reject');
     this.initLayout();
+    this.whenRendered().then(() => {
+      this.width = this.get('promptTitle').textBounds().width + 20;
+    })
   }
 
   resolve() { super.resolve(true); }
@@ -221,9 +233,10 @@ export class ConfirmPrompt extends AbstractPrompt {
         3, {paddingRight: 5}
       ],
       rows: [
+        0, {fixed: 30},
         1, {paddingBottom: 5, fixed: 30}
       ],
-      grid: [["label", "label", "label", "label"],
+      grid: [["promptTitle", "promptTitle", "promptTitle", "promptTitle"],
         [null, "ok button", "cancel button", null]]
     });
   }
@@ -236,15 +249,15 @@ export class MultipleChoicePrompt extends AbstractPrompt {
     var {label, choices} = props;
     if (label)
       this.addMorph({
-        name: "label", type: "label", value: label,
-        fill: null, padding: Rectangle.inset(3),
-        fontSize: 14, fontColor: Color.gray
+        name: "promptTitle", type: "text", value: label,
       });
 
     let choidesContainer = this.addMorph({
       name: 'choices',
       fill: Color.transparent,
-      layout: new HorizontalLayout({spacing: 5, direction: 'centered'})
+      layout: new VerticalLayout({spacing: 5, 
+                                  resizeSubmorphs: true,
+                                  direction: 'centered'})
     });
 
     choices.forEach((choice, i) => {
@@ -263,27 +276,28 @@ export class MultipleChoicePrompt extends AbstractPrompt {
   initLayout() {
     // fixme: layout should be able to let one morph
     //         define the overall width of the container
-    var label = this.getSubmorphNamed("label");
+    var label = this.getSubmorphNamed("promptTitle"),
+        choices = this.get('choices');
     label && label.fit();
-    var buttons = this.get('choices').submorphs.filter(({isButton}) => isButton);
+    var buttons = choices.submorphs.filter(({isButton}) => isButton);
     buttons.forEach(ea => ea.fit());
-
-    this.width = Math.max(
-      label ? label.width + 10 : 0,
-      buttons.reduce((width, ea) => width + ea.width + 10, 0));
-
-    this.height = buttons[0].height + label.height + 10;
 
     this.layout = new GridLayout({
       fitToCell: true,
       columns: [0, {paddingLeft: 5, paddingRight: 5}],
-      rows: label ? [0, {height: label.height, fixed: true},
-        1, {paddingBottom: 5}] : [0, {paddingBottom: 5}],
+      rows: label ? [0, {height: 20, fixed: true},
+        1, {paddingBottom: 10}] : [0, {paddingBottom: 10}],
       grid: label ?
-        [["label"],
+        [["promptTitle"],
           ['choices']] :
         [['choices']],
     });
+
+    this.width = Math.max(
+      label ? label.width : 0,
+      choices.bounds().width);
+
+    this.height = choices.bounds().height + label.height;
   }
 
   onKeyDown(evt) {
@@ -312,8 +326,7 @@ export class TextPrompt extends AbstractPrompt {
 
   build({label, input, historyId, useLastInput}) {
     this.addMorph({
-      fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray,
-      name: "label", type: "label", value: label
+      name: "promptTitle", type: "text", value: label
     });
 
     var inputLine = this.addMorph(Text.makeInputLine({
@@ -351,7 +364,7 @@ export class TextPrompt extends AbstractPrompt {
 
   initLayout() {
     // this.initLayout();
-    const label = this.getSubmorphNamed("label"),
+    const label = this.getSubmorphNamed("promptTitle"),
           input = this.getSubmorphNamed("input");
     label.fit();
 
@@ -366,12 +379,12 @@ export class TextPrompt extends AbstractPrompt {
         3, {paddingRight: 5}
       ],
       rows: [
-        0, {fixed: label.height, paddingBottom: 2.5},
+        0, {fixed: 25, paddingBottom: 2.5},
         1, {fixed: input.height},
         2, {fixed: 35, paddingTop: 5, paddingBottom: 5},
       ],
       grid: [
-        ["label","label", "label", "label"],
+        ["promptTitle", "promptTitle", "promptTitle", "promptTitle"],
         ["input", "input", "input", "input"],
         [null, "ok button", "cancel button", null]
       ]
@@ -399,7 +412,7 @@ export class EditPrompt extends AbstractPrompt {
   build({label, input, historyId, useLastInput, mode, textStyle, evalEnvironment}) {
     let title = this.addMorph({
       fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray,
-      name: "label", type: "label", value: label
+      name: "promptTitle", type: "label", value: label
     });
 
     if (!textStyle) textStyle = {};
@@ -438,7 +451,7 @@ export class EditPrompt extends AbstractPrompt {
 
   initLayout() {
     // this.initLayout();
-    const label = this.getSubmorphNamed("label"),
+    const label = this.getSubmorphNamed("promptTitle"),
           editor = this.getSubmorphNamed("editor");
     label.fit();
 
@@ -457,7 +470,7 @@ export class EditPrompt extends AbstractPrompt {
         2, {paddingTop: 5, paddingBottom: 5, fixed: 35},
       ],
       grid: [
-        ["label", "label", "label"],
+        ["promptTitle", "promptTitle", "promptTitle"],
         ["editor", "editor", "editor"],
         [null, "ok button", "cancel button"]
       ]
@@ -550,14 +563,16 @@ export class PasswordPrompt extends AbstractPrompt {
 
   build({label, placeholder}) {
     let title = this.addMorph({
-      fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray,
-      name: "label", type: "label", value: label
+      name: "promptTitle", type: "text", value: label
     });
 
     this.width = Math.max(this.width, title.textBounds().width + 10);
 
     var passwordInput = this.addMorph(new PasswordInputLine({
-      name: "input", placeholder: placeholder || "", borderWidth: 0
+      fontSize: 20, name: "input", borderRadius: 20, 
+      fill: Color.rgbHex("#DDD"),
+      padding: rect(5,10,2,-2),
+      placeholder: placeholder || "", borderWidth: 0
     }));
 
     this.addMorph({name: "ok button", type: "button", label: "OK", styleClasses: ['ok']});
@@ -568,17 +583,18 @@ export class PasswordPrompt extends AbstractPrompt {
 
     this.layout = new GridLayout({
       rows: [
+        0, {fixed: 25},
         1, {paddingBottom: 5},
         2, {paddingBottom: 5}
       ],
       columns: [
-        0, {paddingLeft: 5, paddingRight: 2.5},
-        1, {fixed: 100},
-        2, {paddingLeft: 2.5, paddingRight: 5, fixed: 100}
+        0, {height: 20, paddingLeft: 5, paddingRight: 2.5, min: 50},
+        //1, {fixed: 100},
+        1, {paddingLeft: 2.5, paddingRight: 5, min: 50}
       ],
-      grid: [["label", "label", "label"],
-        ["input", "input", "input"],
-        [null,    "ok button", "cancel button"]]
+      grid: [["promptTitle", "promptTitle"],
+        ["input", "input"],
+        ["ok button", "cancel button"]]
     });
   }
 
@@ -589,7 +605,6 @@ export class PasswordPrompt extends AbstractPrompt {
     i.whenRendered().then(() => i.focus());
   }
 }
-
 
 export class ListPrompt extends AbstractPrompt {
 
@@ -632,9 +647,7 @@ export class ListPrompt extends AbstractPrompt {
     listFontSize = listFontSize || 12;
 
     var title = {
-      name: "label", type: "label", value: label,
-      fill: null, padding: Rectangle.inset(3),
-      fontSize: labelFontSize, fontFamily: labelFontFamily, fontColor: Color.gray
+      name: "promptTitle", type: "text", value: label
     };
 
     title = this.addMorph(title);
@@ -674,7 +687,7 @@ export class ListPrompt extends AbstractPrompt {
 
     this.layout = new GridLayout({
       rows: [
-        0, {fixed: 30},
+        0, {fixed: 25},
         1, {paddingBottom: 10},
         2, {fixed: 30, paddingBottom: 5}
       ],
@@ -683,9 +696,11 @@ export class ListPrompt extends AbstractPrompt {
         1, {fixed: 100, paddingRight: 5},
         2, {fixed: 100, paddingRight: 5}
       ],
-      grid: [["label", "label", "label"],
+      grid: [
+        ["promptTitle", "promptTitle", "promptTitle"],
         ["list", "list", "list"],
-        [null,"ok button", "cancel button"]]
+        [null,"ok button", "cancel button"]
+      ]
     });
 
     if (filterable) {
@@ -750,7 +765,7 @@ export class EditListPrompt extends ListPrompt {
         1, {paddingBottom: 2},
         2, {fixed: 30, paddingBottom: 5}
       ],
-      grid: [["label", "label", "label", "label", "label"],
+      grid: [["promptTitle", "promptTitle", "promptTitle", "promptTitle", "promptTitle"],
         ["list", "list", "list", "list", "list"],
         ["add item button", "remove item button", null, "ok button", "cancel button"]]
     });
