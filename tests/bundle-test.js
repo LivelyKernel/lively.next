@@ -3,6 +3,18 @@ import { expect } from "mocha-es6";
 import { createFiles, resource } from "lively.resources";
 import FreezerPackage from "../package.js";
 import Bundle from "../bundle.js";
+import { MorphicEnv, morph, World } from "lively.morphic";
+import { createDOMEnvironment } from "lively.morphic/rendering/dom-helper.js";
+import { pt } from "lively.graphics";
+import MorphicDB from "lively.morphic/morphicdb/db.js";
+import { savePart, loadPart } from "lively.morphic/partsbin.js";
+import ObjectPackage, { addScript } from "lively.classes/object-classes.js";
+import { serialize, requiredModulesOfSnapshot, deserialize } from "lively.serializer2";
+import { obj, arr } from "lively.lang";
+import { getPackage, module } from "lively.modules/index.js";
+import { Package } from "lively.modules/src/packages/package.js";
+import { serializeMorph } from "lively.morphic/serialization.js";
+import FreezerPart from "../part.js";
 
 function buildPackage1() {
   return createFiles(baseDir, {
@@ -16,6 +28,44 @@ function buildPackage1() {
       "file_package_import.js": "import { version } from './package.json'; export { version };"
     }
   });
+}
+
+let publishOpts = {addPreview: !System.get("@system-env").node},
+    env, packagesToRemove,
+    isNode = System.get("@system-env").node,
+    testDB, partToFreeze, partPackage;
+
+async function setupDB() {
+  if (isNode) {
+    env = MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()));
+    env.setWorld(new World({name: "world", extent: pt(300,300)}));
+  }
+  packagesToRemove = [];
+  
+  testDB = MorphicDB.named("lively.morphic/objectdb/partsbin-test-db", {
+    snapshotLocation: "lively.morphic/objectdb/partsbin-test-db/snapshots/",
+    serverURL: System.baseURL + "objectdb/"
+  });
+  publishOpts.morphicDB = testDB;
+
+  // publish dummy parts
+  await savePart(morph({name: 'rudolph'}), 'rudolph', publishOpts, {author: {name: "foo-user"}})
+  await savePart(morph({name: 'wichtel'}), 'wichtel', publishOpts, {author: {name: "foo-user"}})
+  partToFreeze = morph({name: "santa clause", submorphs: [
+              await loadPart('rudolph', {morphicDB: testDB}),
+              await loadPart('wichtel', {morphicDB: testDB})]});
+  partPackage = ObjectPackage.withId("package-for-loads-a-part-test");
+  packagesToRemove.push(partPackage);
+  await partPackage.adoptObject(partToFreeze);
+  await addScript(partToFreeze, () => 23, "foo");
+  await savePart(partToFreeze, partToFreeze.name, publishOpts, {author: {name: "foo-user"}})
+}
+
+async function teardownDB() {
+  isNode && MorphicEnv.popDefault().uninstall();
+  await Promise.all(packagesToRemove.map(ea => ea.remove()));
+  await testDB.destroyDB();
+  await resource(System.decanonicalize(testDB.snapshotLocation)).parent().remove()
 }
 
 let baseDir = resource("local://freezer-tests/"),
@@ -90,7 +140,6 @@ package1@1/file3.js (18B)
 
     it("into function", async () => {
       await bundle.resolveDependenciesStartFrom("file1.js", "package1");
-      expectedPackage1File1Code
       expect(bundle.entryModule.transformToRegisterFormat()).equals(expectedPackage1File1Code);
     });
 
@@ -105,6 +154,19 @@ package1@1/file3.js (18B)
       expect(bundle.entryModule.transformToRegisterFormat())
         .contains("_export(package1_at_1_forwardslash_file1_period_js);")
     });
+
+    it("part export", async () => {
+      //await setupDB();
+
+      // let frozenPart = await FreezerPart.fromMorph(partToFreeze),
+      //     reconstructed = await eval(await frozenPart.standalone()).frozenPart;
+      // 
+      // expect(reconstructed).not.to.to.null;
+      // expect(reconstructed.name).equals('santa clause');
+      // expect(reconstructed.foo).not.to.be.null;
+
+      //await teardownDB();
+    })
 
   });
 
