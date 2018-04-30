@@ -16,12 +16,16 @@ import { UndoManager } from "../undo.js";
 import { TextSearcher } from "./search.js";
 import TextLayout from "./layout.js";
 import Renderer, { extractHTMLFromTextMorph } from "./renderer.js";
+// there are IDE specific commands such as the completion which should
+// not be added if the morph is not supposed to be used in
+// an IDE context at all. find a way to differentiate here (i.e. flag or just
+// not initializing the commands for vanilla use of the text morph at all?)
 import commands from "./commands.js";
 import { RichTextControl } from "./ui.js";
 import { textAndAttributesWithSubRanges } from "./attributes.js";
 import { serializeMorph, deserializeMorph } from "../serialization.js";
 import { shape, intersect } from "svg-intersections";
-import { addPathAttributes, getSvgVertices } from "../rendering/property-dom-mapping.js";
+import { getSvgVertices } from "../rendering/property-dom-mapping.js";
 
 export class Text extends Morph {
 
@@ -751,11 +755,13 @@ export class Text extends Morph {
         viewChange = false,
         softLayoutChange = false,
         hardLayoutChange = false,
-        scrollChange = false;
+        scrollChange = false,
+        displacementChange = false;
 
     if (selector) {
       textChange = selector === "replace";
       hardLayoutChange = selector === 'addTextAttribute';
+      this._displacementChange = !this._displacing && textChange;
     } else {
       switch (prop) {
         case 'scroll': viewChange = true; scrollChange = true; break;
@@ -766,6 +772,7 @@ export class Text extends Morph {
              is enabled and we have a fixed width of the morph */
           softLayoutChange = true;
           hardLayoutChange = wraps && (change.prevValue.x != change.value.x);
+          this._displacementChange = hardLayoutChange;
           break;
         case "wordSpacing":
         case "letterSpacing":
@@ -796,6 +803,13 @@ export class Text extends Morph {
           hardLayoutChange /*reset line heights*/);
       }
 
+      if (this._displacementChange) {
+        this._displacementChange = false;
+        // this.displacingMorphMap.forEach((_, m) => {
+        //   this.updateTextDisplacementFor(m);
+        // });
+      }
+
       if (textChange) signal(this, "textChange", change);
       if (viewChange) signal(this, "viewChange", change);
     }
@@ -815,16 +829,23 @@ export class Text extends Morph {
                                prop == 'extent' || 
                                prop == 'scale' || 
                                prop == 'rotation';
-    
-    if (this.displacingMorphMap.get(submorph) && isGeometricTransform) {
-       this._intersectionShapeCache.delete(submorph);
-       this.updateTextDisplacementFor(submorph)
-       this.viewState._needsFit = false;
+    if (!submorph.isDisplacementMorph 
+        && this.displacingMorphMap.get(submorph) 
+        && isGeometricTransform) {
+       [...this.displacingMorphMap.keys()]
+           .filter(m => m.top >= submorph.top)
+           .forEach(m => {
+         this._intersectionShapeCache && this._intersectionShapeCache.delete(m);
+         this.updateTextDisplacementFor(m)
+       })
     }
-    if (this.embeddedMorphMap.get(submorph) && !this._positioningSubmorphs) {
-      if (isGeometricTransform) {
+    if (!submorph.isDisplacementMorph 
+        && this.embeddedMorphMap.get(submorph) 
+        && !this._positioningSubmorphs 
+        && isGeometricTransform) {
+      if (!obj.equals(change.prevValue, change.value)) {
         this._positioningSubmorphs = true;
-        this.invalidateTextLayout(prop == 'extent' || prop == 'extent');
+        this.invalidateTextLayout(prop != 'position' , prop != 'position');
         this._positioningSubmorphs = false;
       }
     }
@@ -854,9 +875,11 @@ export class Text extends Morph {
       1.- the plain submorph, where the submorph floats above the text
       2.- the embedded morph, where the submorph is inline with the text, treated like
           another character
-      3.- plain submorphs that wrap the text of the text morph depending on their shape (float around)
-      This function is for toggling the 3rd way on a given submorph. If the given submorph is found to
-      be currently inline with the text, it is removed from the text and added again as a plain submorph with
+      3.- plain submorphs that wrap the text of the text morph depending 
+          on their shape (float around)
+      This function is for toggling the 3rd way on a given submorph. 
+      If the given submorph is found to be currently inline with the text, 
+      it is removed from the text and added again as a plain submorph with
       wrapping enabled/disabled;      
     */
     if (wrapActive) {
@@ -866,7 +889,6 @@ export class Text extends Morph {
       }
       this.displacingMorphMap.set(submorph, []);
       this.updateTextDisplacementFor(submorph);
-      submorph.moveBy(pt(1,1));
     } else {
       let displacementMorphs = this.displacingMorphMap.get(submorph);
       if (displacementMorphs) {
@@ -897,6 +919,7 @@ export class Text extends Morph {
           pos = this.textLayout.textPositionFromPoint(this, bounds.leftCenter());
       m.setBounds(bounds);
       this.insertText([m, {}], pos);
+      this.viewState._needsFit = false;
       if (prevTop == m.top) {
         m.remove()
         continue;
@@ -2150,14 +2173,18 @@ export class Text extends Morph {
         resize = () => {
             if (!fixedHeight && this.height != textBounds.height) this.height = textBounds.height
             if (!fixedWidth && this.width != textBounds.width) this.width = textBounds.width;
+            // if (this._displacementChange) {
+            //   debugger;
+            //   this._displacementChange = false;
+            //   this.displacingMorphMap.forEach((_, m) => {
+            //     this.updateTextDisplacementFor(m);
+            //   });
+            // }
             this.embeddedMorphs.forEach(submorph => {
               let a = this.embeddedMorphMap.get(submorph).anchor;
               a.position = a.position;
             });
           }
-    this.displacingMorphMap && this.displacingMorphMap.forEach((_, m) => {
-      this.updateTextDisplacementFor(m)
-    });
     viewState._needsFit = false;
     if (this.document.lines.find(l => l.hasEstimatedExtent)) {
       this.whenRendered().then(resize)
@@ -2796,7 +2823,6 @@ export class Text extends Morph {
     super.onFocus(evt);
     this.makeDirty();
     this.selection.cursorBlinkStart();
-    this.dropShadow
     this.highlightWhenFocused && this.animate({
       dropShadow: this.haloShadow || this.propertiesAndPropertySettings().properties.haloShadow.defaultValue,
       duration: 200
