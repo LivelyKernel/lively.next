@@ -37,7 +37,6 @@ async function startWorker() {
     // also synchronize modules of the worker
    });
 */
-
 function initWorker() {
   let w = worker.create({
     workerId: '@lively-worker',
@@ -101,7 +100,7 @@ function initWorker() {
      loadModule: async function(msg, messenger) {
        let {module: moduleId, source} = msg.data;
        if (!System._loader.modules[moduleId]) {
-          await coldImport(moduleId);
+          await coldImport(moduleId, source);
        }
        messenger.answer(msg, true);
      },
@@ -197,6 +196,8 @@ export class ProgressMonitor {
   }
   
 }
+
+// fixme: handle case when executed on remote eval server
 
 export class WorkerProgressMonitor extends ProgressMonitor {
 
