@@ -85,6 +85,7 @@ export class Tree extends Text {
       selectedNode: {
         set(sel) { 
           this.setProperty("selectedNode", sel); 
+          signal(this, 'selectedNode', this.selectedNode);
           this.update(); 
         }
       },
@@ -294,10 +295,12 @@ export class Tree extends Text {
             nodeMorphs,
             selectedNode
           } = this,
-          nodes = treeData.asListWithIndexAndDepth();
+          nodes = treeData.asListWithIndexAndDepth(),
+          treeDataRestructured = this.treeData !== this.lastTreeData || 
+                                 this.lastNumberOfNodes !== nodes.length;
       
       var row, attrs;
-      if (this.lastNumberOfNodes !== nodes.length || force) {
+      if (treeDataRestructured || force) {
         this.replace(
            {start: {row: 0, column: 0}, 
             end: this.documentEndPosition}, 
@@ -306,6 +309,7 @@ export class Tree extends Text {
       } else if (this._lastSelectedIndex) {
         this.recoverOriginalLine(this._lastSelectedIndex - 1);
       }
+      this.lastTreeData = this.treeData;
       this.lastNumberOfNodes = nodes.length;
       this.cursorPosition = {row: 0, column: 0};
       if (this.selectedIndex > -1) {
