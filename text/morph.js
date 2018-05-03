@@ -1,5 +1,5 @@
 /*global System,Map,WeakMap*/
-import { config, morph, Morph, basicFontItems } from "lively.morphic";
+import { config, morph, Morph } from "lively.morphic";
 import { Rectangle, Point, rect, Color, pt } from "lively.graphics";
 import { Selection, MultiSelection } from "./selection.js";
 import { string, obj, fun, promise, arr } from "lively.lang";
@@ -427,7 +427,7 @@ export class Text extends Morph {
       fontFamily: {
         group: "text styling",
         type: "Enum",
-        values: basicFontItems().map(f => f.value),
+        values: config.basicFontItems,
         defaultValue: "Sans-Serif",
         isStyleProp: true,
         isDefaultTextStyleProp: true,

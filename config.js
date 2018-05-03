@@ -170,6 +170,19 @@ var config = {
   ],
 
   text: {
+    basicFontItems: [
+      "Sans-serif",
+      "serif",
+      "Monospace",
+      "Arial Black",
+      "Arial Narrow",
+      "Comic Sans MS",
+      "Garamond",
+      "Tahoma",
+      "Trebuchet MS",
+      "Verdana",
+      "custom..."
+    ],
     cursorBlinkPeriod: .5,
     useSoftTabs: true,
     tabWidth: 2,

@@ -1,10 +1,11 @@
 import { obj, arr, string, properties } from "lively.lang";
+import { Morph, config } from "lively.morphic";
 import { Rectangle, Color } from "lively.graphics";
-import { Morph, basicFontItems } from "../index.js";
-import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js";
-import { h } from "virtual-dom";
-import { Icon, Icons } from "./icons.js";
 import { signal } from "lively.bindings";
+import { h } from "virtual-dom";
+
+import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js";
+import { Icon, Icons } from "./icons.js";
 
 import { splitTextAndAttributesIntoLines } from "./attributes.js";
 
@@ -135,7 +136,7 @@ export class Label extends Morph {
       fontFamily: {
         isStyleProp: true,
         type: "Enum",
-        values: basicFontItems().map(f => f.value),
+        values: config.text.basicFontItems,
         defaultValue: "Sans-Serif",
         set(fontFamily) {
           let previousFontFamily = this.fontFamily;

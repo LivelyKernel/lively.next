@@ -4,7 +4,6 @@ import { chain, arr, string, date } from "lively.lang";
 import { pt } from "lively.graphics";
 import { Range } from "./range.js"
 import { eqPosition } from "./position.js";
-import { indentLines } from "lively.ide/editor-modes.js";
 
 var commands = [
 
@@ -224,7 +223,7 @@ var commands = [
 
   {
     name: "indent according to mode",
-    exec(morph, args = {}) {
+    exec: async (morph, args = {}) => {
       let mode = morph.editorPlugin && morph.editorPlugin.mode;
       if (!mode) return true;
       let firstRow, lastRow,
@@ -236,6 +235,8 @@ var commands = [
          firstRow = lastRow = morph.cursorPosition.row;
       else
         ({first: firstRow, last: lastRow} = morph.selection.selectedRows);
+      // move this command to lively.ide
+      let { indentLines } = await System.import("lively.ide/editor-modes.js");
 
       undo && morph.undoManager.group();
       indentLines(morph, mode, firstRow, lastRow, "smart", true, args);
