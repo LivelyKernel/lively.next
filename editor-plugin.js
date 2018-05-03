@@ -11,6 +11,11 @@ import DefaultTheme from "./themes/default.js";
 
 import { tokenizeDocument, modeInfo, visitDocumentTokens, getMode } from "./editor-modes.js";
 import { completionCommands } from "./text/completion.js";
+import { multiSelectCommands } from "./text/multi-select-commands.js";
+import { commands as navCommands } from "./text/code-navigation-commands.js";
+import { commands as codeCommands } from "./text/generic-code-commands.js";
+import { codeEvaluationCommands } from "./text/code-evaluation-commands.js";
+import { commands as richTextCommands } from "./text/rich-text-commands.js";
 
 export function guessTextModeName(contentOrEditor, filename = "", hint) {
 
@@ -213,7 +218,15 @@ export default class EditorPlugin {
   }
   
   getCommands(otherCommands) {
-    return otherCommands.concat(completionCommands)
+    return [
+      ...otherCommands,
+      ...completionCommands,
+      ...multiSelectCommands,
+      ...navCommands,
+      ...codeCommands,
+      ...codeEvaluationCommands,
+      ...richTextCommands
+    ]
   }
 
   getComment() {

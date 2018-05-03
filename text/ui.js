@@ -1,18 +1,20 @@
 /*global System,WeakMap*/
 import { fun, arr } from "lively.lang";
 import {
-  Text,
+  Text, config,
   HorizontalLayout,
   VerticalLayout,
   morph,
   Morph,
   Icon,
-  loadObjectFromPartsbinFolder
 } from "lively.morphic";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { connect, noUpdate } from "lively.bindings";
 import { ColorPicker } from "../styling/color-picker.js";
 import { DropDownList } from "lively.components";
+
+// FIXME: this is something that should be in its own package, probably
+import { loadObjectFromPartsbinFolder } from "lively.morphic/partsbin.js";
 
 
 const cachedControls = new WeakMap();
@@ -180,7 +182,8 @@ export class RichTextControl extends Morph {
         ensure() {
           let existing = this.getSubmorphNamed("font button");
           if (existing) return existing;
-          let fontItems = Text.basicFontItems();
+          let fontItems = config.text.basicFontItems.map(ea =>
+              ({isListItem: true, label: [ea, {fontFamily: ea}], value: ea}));;
           let {extent} = this.btnStyle;
           let btn = this.addMorph(new DropDownList({
             selection: fontItems[0], items: fontItems,
@@ -436,22 +439,6 @@ export class RichTextControl extends Morph {
           ? valueOrFn(oldVal) : valueOrFn);
       target.undoManager.group();
     }
-  }
-
-  static basicFontItems() {
-    return [
-      "Sans-serif",
-      "serif",
-      "Monospace",
-      "Arial Black",
-      "Arial Narrow",
-      "Comic Sans MS",
-      "Garamond",
-      "Tahoma",
-      "Trebuchet MS",
-      "Verdana",
-      "custom..."
-    ].map(ea => ({isListItem: true, label: [ea, {fontFamily: ea}], value: ea}));
   }
 
   async changeFont(fontFamily) {
