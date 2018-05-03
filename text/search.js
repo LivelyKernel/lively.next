@@ -267,6 +267,8 @@ export class SearchWidget extends Morph {
               extent: pt(60, 17)
             })
           ];
+          connect(this.get('searchInput'), 'onBlur', this, 'onBlur');
+          connect(this.get('replaceInput'), 'onBlur', this, 'onBlur');
         }
       },
 
@@ -327,6 +329,20 @@ export class SearchWidget extends Morph {
     this.get("searchInput").focus();
     this.whenRendered().then(() => 
       this.get("searchInput").invalidateTextLayout(true, true));
+  }
+
+  onBlur(evt) {
+    setTimeout(() => {
+      let focusedMorph = this.world().focusedMorph;
+      if (!this.withAllSubmorphsDetect(m => m.isFocused())) {
+          this.cancelSearch();
+          return;
+      }
+      if (this.get('searchInput') != focusedMorph &&
+          this.get('replaceInput') != focusedMorph) {
+        this.get('searchInput').focus();  
+      }
+    });
   }
 
   cleanup() {
