@@ -1374,21 +1374,6 @@ commands.push(iyGotoCharActivate);
 import { searchCommands } from "./search.js"
 commands.push(...searchCommands);
 
-import { multiSelectCommands } from "./multi-select-commands.js";
-commands.push(...multiSelectCommands);
-
-import { commands as navCommands } from "./code-navigation-commands.js";
-commands.push(...navCommands);
-
-import { commands as codeCommands } from "./generic-code-commands.js";
-commands.push(...codeCommands);
-
-import { codeEvaluationCommands } from "./code-evaluation-commands.js";
-commands.push(...codeEvaluationCommands);
-
-import { commands as richTextCommands } from "./rich-text-commands.js";
-commands.push(...richTextCommands);
-
 export default commands;
 
 // lively.modules.module("lively.morphic/text/morph.js").reload({reloadDeps: false, resetEnv: false});

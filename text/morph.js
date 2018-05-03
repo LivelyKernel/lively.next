@@ -1,5 +1,5 @@
 /*global System,Map,WeakMap*/
-import { config, morph, Morph } from "lively.morphic";
+import { config, morph, Morph, basicFontItems } from "lively.morphic";
 import { Rectangle, Point, rect, Color, pt } from "lively.graphics";
 import { Selection, MultiSelection } from "./selection.js";
 import { string, obj, fun, promise, arr } from "lively.lang";
@@ -17,7 +17,6 @@ import { TextSearcher } from "./search.js";
 import TextLayout from "./layout.js";
 import Renderer, { extractHTMLFromTextMorph } from "./renderer.js";
 import commands from "./commands.js";
-import { RichTextControl } from "./ui.js";
 import { textAndAttributesWithSubRanges } from "./attributes.js";
 import { serializeMorph, deserializeMorph } from "../serialization.js";
 import { shape, intersect } from "svg-intersections";
@@ -58,6 +57,8 @@ export class Text extends Morph {
       if (properties[prop].isDefaultTextStyleProp) styleProps.push(prop);
     return (this._defaultTextStyleProps = styleProps);
   }
+
+
 
   static get properties() {
 
@@ -426,7 +427,7 @@ export class Text extends Morph {
       fontFamily: {
         group: "text styling",
         type: "Enum",
-        values: RichTextControl.basicFontItems().map(f => f.value),
+        values: basicFontItems().map(f => f.value),
         defaultValue: "Sans-Serif",
         isStyleProp: true,
         isDefaultTextStyleProp: true,
@@ -3152,12 +3153,6 @@ export class Text extends Morph {
 
     // Select and return the text between the comment slashes and end of method
     sel.range = {start: {row, column: idx + 2}, end: {row, column: text.length}};
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // controls
-  openRichTextControl() {
-    return RichTextControl.openDebouncedFor(this);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
