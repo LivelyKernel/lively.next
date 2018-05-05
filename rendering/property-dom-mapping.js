@@ -104,7 +104,8 @@ export function getSvgVertices(vertices) {
   let X, Y, lastV;
   var d = '';
   {
-    let {x, y} = lastV = vertices[0].position;
+    lastV = vertices[0];
+    let {x, y} = lastV.position;
     X = x; Y = y;
     d = d + `M ${X} ${Y} `
   }
