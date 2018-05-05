@@ -19,8 +19,8 @@ import Renderer, { extractHTMLFromTextMorph } from "./renderer.js";
 import commands from "./commands.js";
 import { textAndAttributesWithSubRanges } from "./attributes.js";
 import { serializeMorph, deserializeMorph } from "../serialization.js";
-import { shape, intersect } from "svg-intersections";
 import { getSvgVertices } from "../rendering/property-dom-mapping.js";
+import { Shapes, Intersection } from 'kld-intersections';
 
 export class Text extends Morph {
 
@@ -938,20 +938,17 @@ export class Text extends Morph {
         bufferDist = 15,
         computeIntersectionShape = (submorph) => {
           if (submorph.isPath) {
-            return shape("path", {d: getSvgVertices(submorph.vertices)});
+            return Shapes.path(getSvgVertices(submorph.vertices));
           } else if (submorph.constructor.name == 'Ellipse') {
-            return shape('ellipse', {
-              cx: submorph.center.x,
-              cy: submorph.center.y,        
-              rx: submorph.width / 2,
-              ry: submorph.height / 2
-            })
+            return Shapes.ellipse(
+              submorph.center.x,
+              submorph.center.y,        
+              submorph.width / 2,
+              submorph.height / 2)
           } else {
-            return shape('rect', {
-              x: submorph.left, y: submorph.top, 
-              width: submorph.width, height: submorph.height,
-              rx: submorph.borderRadiusTop, ry: submorph.borderRadiusLeft
-            })
+            return Shapes.rectangle(
+              submorph.left, submorph.top, 
+              submorph.width, submorph.height)
           }
         };
 
@@ -968,8 +965,8 @@ export class Text extends Morph {
     var width = this.width, extrusionMap = new Map();
     for (let r of lineRanges) {
       let {height, y} = tl.computeMaxBoundsForLineSelection(this, r),
-          lineRect = shape("rect", {width, height, x: 0, y}),
-          is = intersect(lineRect, intersectionShape);
+          lineRect = Shapes.rectangle(width, height, 0, y),
+          is = Intersection.intersect(lineRect, intersectionShape);
       if (is.points.length < 1) continue;
       let displacementRect = Rectangle.unionPts(is.points.map(Point.fromLiteral))
       displacementRect.y = y;

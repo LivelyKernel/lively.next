@@ -20,7 +20,7 @@
     "lively.ide": "https://github.com/LivelyKernel/lively.ide",
     "pepjs": "^0.4.3",
     "prismjs": "^1.6.0",
-    "svg-intersections": "0.2.5",
+    "kld-intersections": "0.4.1",
     "three": "^0.84.0",
     "virtual-dom": "^2.1.1",
     "jsdom": "^9.4.0",
@@ -40,15 +40,16 @@
     "lively.source-transform": "*",
     "mocha-es6": "^0.5",
     "rollup": "^0.36.1",
-    "rollup-plugin-babel": "^2.6.1"
+    "rollup-plugin-babel": "^2.6.1",
+    "rollup-plugin-uglify": "^0.3.1" 
   },
   "systemjs": {
     "main": "index.js",
     "map": {
-      "jsdiff": "./dist/jsdiff-3.0.0.js",
-      "dom-to-image": "./dist/dom-to-image-2.6.0.min.js",
+      "jsdiff": "./lib/jsdiff-3.0.0.js",
+      "dom-to-image": "./lib/dom-to-image-2.6.0.min.js",
       "three.js": "three/build/three.js",
-      "svg-intersections": "./dist/svg-intersections.js",
+      "kld-intersections": "./lib/kld-intersections.min.js",
       "virtual-dom": "virtual-dom/dist/virtual-dom.js",
       "bowser": "bowser/bowser.min.js",
       "prism": "prismjs/prism.js",
