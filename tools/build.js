@@ -4,6 +4,7 @@ var fs = require("fs");
 var path = require("path");
 var rollup = require('rollup');
 var babel = require('rollup-plugin-babel');
+var uglifyjs = require('uglify-es');
 
 var targetFile = "dist/lively.bindings.js";
 
@@ -45,5 +46,6 @@ module.exports = Promise.resolve()
   // 4. inject dependencies
   .then(source => {
     fs.writeFileSync(targetFile, source);
+    fs.writeFileSync(targetFile.replace('.js', '.min.js'), uglifyjs.minify(source).code);
   })
   .catch(err => { console.error(err.stack || err); throw err; })
