@@ -2,7 +2,7 @@ import { string, arr, Closure } from "lively.lang";
 
 export { connect, disconnect, disconnectAll, once, signal, noUpdate };
 
-class AttributeConnection {
+export class AttributeConnection {
 
   constructor(source, sourceProp, target, targetProp, spec) {
     this.init(source, sourceProp, target, targetProp, spec);
