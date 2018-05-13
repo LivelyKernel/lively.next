@@ -4,6 +4,7 @@ var fs = require("fs"),
     path = require("path"),
     rollup = require('rollup'),
     babel = require('rollup-plugin-babel'),
+    uglifyjs = require('uglify-es'),
     targetFileNoDeps = "dist/lively.storage_no-deps.js",
     targetFileWithPouch = "dist/lively.storage_with-pouch.js",
     targetFileComplete = "dist/lively.storage.js";
@@ -119,6 +120,9 @@ ${withPouch}
     fs.writeFileSync(targetFileNoDeps, sources.noDeps);
     fs.writeFileSync(targetFileWithPouch, sources.withPouch);
     fs.writeFileSync(targetFileComplete, sources.complete);
+    fs.writeFileSync(targetFileNoDeps.replace('.js', '.min.js'), uglifyjs.minify(sources.noDeps).code);
+    fs.writeFileSync(targetFileWithPouch.replace('.js', '.min.js'), uglifyjs.minify(sources.withPouch).code);
+    fs.writeFileSync(targetFileComplete.replace('.js', '.min.js'), uglifyjs.minify(sources.complete).code);
   })
   .then(() => console.log(`lively.storage bundled into ${process.cwd()} ${targetFileComplete}, ${targetFileNoDeps}, and ${targetFileWithPouch}`))
   .catch(err => { console.error(err.stack || err); throw err; });

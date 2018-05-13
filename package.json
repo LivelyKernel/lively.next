@@ -34,9 +34,11 @@
     "babel-regenerator-runtime": "^6.5.0",
     "browserify": "^14.1.0",
     "mocha-es6": "^0.5",
-    "pouchdb-adapter-memory": "6.1.2",
+    "pouchdb-adapter-memory": "^6.4.3",
     "rollup": "^0.36.1",
-    "rollup-plugin-babel": "^2.7.1"
+    "rollup-plugin-babel": "^2.7.1",
+    "loaderify": "^0.1.5",
+    "uglify-es":  "^3.3.9"
   },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
