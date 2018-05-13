@@ -8,7 +8,6 @@ var uglify = require("uglify-es");
 
 var targetFile1 = "dist/lively.modules_no-deps.js";
 var targetFile2 = "dist/lively.modules.js";
-var targetFile3 = "dist/lively.modules.min.js";
 
 var placeholderSrc = "throw new Error('Not yet read')";
 
@@ -38,7 +37,12 @@ module.exports = Promise.resolve()
         exclude: 'node_modules/**',
         sourceMap: true,
         babelrc: false,
-        plugins: ['transform-async-to-generator', "syntax-object-rest-spread", "transform-object-rest-spread", "external-helpers"],
+        plugins: [
+          'transform-async-to-generator', 
+          "syntax-object-rest-spread",
+          "transform-object-rest-spread",
+          "external-helpers"
+        ],
         presets: [["es2015", {"modules": false}]]
       })
     ]
@@ -112,8 +116,17 @@ ${parts[key].source}
   .then(sources => {
     fs.writeFileSync(targetFile1, sources.noDeps);
     fs.writeFileSync(targetFile2, sources.complete);
-    let minified = uglify.minify(sources.complete, {});
-    if (minified.error) throw minified.error;
-    fs.writeFileSync(targetFile3, minified.code);
+    fs.writeFileSync(
+      targetFile1.replace('.js', '.min.js'), 
+      uglify.minify(sources.complete, {
+        output: { ascii_only: true }
+      }).code
+    );
+    fs.writeFileSync(
+      targetFile2.replace('.js', '.min.js'), 
+      uglify.minify(sources.noDeps, {
+        output: { ascii_only: true }
+      }).code
+    );
   })
   .catch(err => { console.error(err.stack || err); throw err; });

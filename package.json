@@ -48,6 +48,6 @@
     "mocha-es6": "^0.5",
     "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.6.1",
-    "uglify-js": "github:mishoo/UglifyJS2#harmony"
+    "uglify-es": "^3.3.9"
   }
 }
