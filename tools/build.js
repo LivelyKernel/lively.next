@@ -4,9 +4,11 @@ var fs = require("fs");
 var path = require("path");
 var rollup = require('rollup');
 var babel = require('rollup-plugin-babel');
+var uglifyjs = require('uglify-es');
 var targetFile = "dist/lively.graphics.js";
+var noDepsFile = "dist/lively.graphics-no_deps.js";
 
-livelyLangSource = fs.readFileSync(require.resolve("lively.lang/dist/lively.lang.js"))
+var livelyLangSource = fs.readFileSync(require.resolve("lively.lang/dist/lively.lang.js"))
 
 module.exports = Promise.resolve()
   .then(() => rollup.rollup({
@@ -30,19 +32,24 @@ module.exports = Promise.resolve()
 
   // 3. massage code a little
   .then(bundled => {
-    return `(function() {
+    return {
+noDeps: bundled.code,
+complete: `(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   ${livelyLangSource}
   ${bundled.code}
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.graphics;
-})();`;
+})();`};
   })
 
   // 4. create files
-  .then(source => {
-    fs.writeFileSync(targetFile, source);
+  .then(({noDeps, complete}) => {
+    fs.writeFileSync(targetFile, complete);
+    fs.writeFileSync(targetFile.replace('.js', '.min.js'), uglifyjs.minify(complete).code);
+    fs.writeFileSync(noDepsFile, noDeps);
+    fs.writeFileSync(noDepsFile.replace('.js', '.min.js'), uglifyjs.minify(noDeps).code);
   })
 
   .catch(err => console.error(err));
