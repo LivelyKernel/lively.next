@@ -1,10 +1,13 @@
-/*global require, process*/
+/*global require, process, module*/
 
 var fs = require("fs");
 var path = require("path");
 var rollup = require('rollup');
 var babel = require('rollup-plugin-babel');
+var uglifyjs = require('uglify-es');
+
 var targetFile = "dist/lively.serializer2.js";
+var minified = "dist/lively.serializer2.min.js";
 
 module.exports = Promise.resolve()
   .then(() => rollup.rollup({
@@ -21,7 +24,12 @@ module.exports = Promise.resolve()
       format: 'iife',
       moduleName: 'lively.serializer2',
       globals: {
-        "lively.lang": "lively.lang"
+        "lively.graphics": "lively.graphics",
+        "lively.lang": "lively.lang",
+        "lively.morphic": "{HTMLMorph: null}",
+        "lively.bindings": "lively.bindings",
+        "https://cdn.rawgit.com/cytoscape/cytoscape.js/v2.7.15/dist/cytoscape.js": "{default: null}",
+        "https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.0.5/cytoscape-cose-bilkent.js": "{default: null}"
       }
     }))
 
@@ -39,6 +47,7 @@ module.exports = Promise.resolve()
   // 4. create files
   .then(source => {
     fs.writeFileSync(targetFile, source);
+    fs.writeFileSync(minified, uglifyjs.minify(source).code);
   })
 
   .catch(err => console.error(err));
