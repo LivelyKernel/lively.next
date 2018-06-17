@@ -134,6 +134,7 @@ export class Menu extends Morph {
         initialize() {
           if (config.fastShadows || !this.ownerMenu) {
             this.dropShadow = true;
+            this.dropShadow.fast = false;
           }
         }
       },

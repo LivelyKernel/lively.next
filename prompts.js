@@ -1,8 +1,7 @@
 /*global System*/
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { morph, VerticalLayout, Morph, StyleSheet, Text, GridLayout,
-  Icon, HorizontalLayout } from 'lively.morphic';
-import InputLine, { PasswordInputLine } from "lively.morphic/text/input-line.js";
+  Icon, HorizontalLayout, InputLine, PasswordInputLine } from 'lively.morphic';
 import { arr, obj, promise } from "lively.lang";
 import { connect } from 'lively.bindings';
 
@@ -31,7 +30,8 @@ export class AbstractPrompt extends Morph {
               fontSize: 14, 
               fontColor: Color.gray,
               fixedHeight: true,
-              height: 20
+              height: 20,
+              clipMode: 'visible'
             },
             ".Button": {borderRadius: 15},
             ".Button.standard": {
@@ -189,7 +189,6 @@ export class InformPrompt extends AbstractPrompt {
 
 }
 
-
 export class ConfirmPrompt extends AbstractPrompt {
 
   build(props) {
@@ -210,9 +209,6 @@ export class ConfirmPrompt extends AbstractPrompt {
     connect(okButton, 'fire', this, 'resolve');
     connect(cancelButton, 'fire', this, 'reject');
     this.initLayout();
-    this.whenRendered().then(() => {
-      this.width = this.get('promptTitle').textBounds().width + 20;
-    })
   }
 
   resolve() { super.resolve(true); }
@@ -221,24 +217,27 @@ export class ConfirmPrompt extends AbstractPrompt {
   initLayout() {
     // fixme: layout should be able to let one morph
     //         define the overall width of the container
-    const label = this.getSubmorphNamed("label");
-    label.fit();
-    this.width = Math.max(this.width, label.width + 10);
-    this.height = label.height + 30;
-    const l = this.layout = new GridLayout({
-      columns: [
-        0, {paddingLeft: 5},
-        1, {paddingRight: 2.5, fixed: 60},
-        2, {paddingLeft: 2.5, fixed: 60},
-        3, {paddingRight: 5}
-      ],
-      rows: [
-        0, {fixed: 30},
-        1, {paddingBottom: 5, fixed: 30}
-      ],
-      grid: [["promptTitle", "promptTitle", "promptTitle", "promptTitle"],
-        [null, "ok button", "cancel button", null]]
-    });
+    const label = this.getSubmorphNamed("promptTitle");
+    this.opacity = 0;
+    this.whenRendered().then(() => {
+      this.width = Math.max(125, label.textBounds().width) + 10;
+      this.layout = new GridLayout({
+        columns: [
+          0, {paddingLeft: 5},
+          1, {paddingRight: 2.5, fixed: 60},
+          2, {paddingLeft: 2.5, fixed: 60},
+          3, {paddingRight: 5}
+        ],
+        rows: [
+          0, {fixed: label.textBounds().height + 10},
+          1, {paddingBottom: 5, fixed: 30}
+        ],
+        grid: [["promptTitle", "promptTitle", "promptTitle", "promptTitle"],
+          [null, "ok button", "cancel button", null]]
+      });
+      this.height = label.textBounds().height + 40;
+      this.opacity = 1;
+    })
   }
 }
 
@@ -354,7 +353,8 @@ export class TextPrompt extends AbstractPrompt {
     connect(this.getSubmorphNamed("ok button"), 'fire', this, 'resolve');
     connect(this.getSubmorphNamed("cancel button"), 'fire', this, 'reject');
 
-    this.initLayout();
+    this.opacity = 0;
+    this.whenRendered().then(() => this.initLayout());
 
     inputLine.gotoDocumentEnd();
     inputLine.scrollCursorIntoView();
@@ -368,8 +368,11 @@ export class TextPrompt extends AbstractPrompt {
           input = this.getSubmorphNamed("input");
     label.fit();
 
-    const goalWidth = Math.max(input.textBounds().width+20, label.width);
-    this.width = Math.min(this.maxWidth, goalWidth + 10);
+    this.whenRendered().then(() => {
+      const goalWidth = Math.max(input.textBounds().width, label.textBounds().width) + 20;
+      this.width = Math.min(this.maxWidth, goalWidth);
+      this.opacity = 1;
+    });
 
     const l = this.layout = new GridLayout({
       columns: [
@@ -379,7 +382,7 @@ export class TextPrompt extends AbstractPrompt {
         3, {paddingRight: 5}
       ],
       rows: [
-        0, {fixed: 25, paddingBottom: 2.5},
+        0, {fixed: label.textBounds().height + 5, paddingBottom: 5},
         1, {fixed: input.height},
         2, {fixed: 35, paddingTop: 5, paddingBottom: 5},
       ],
@@ -442,8 +445,9 @@ export class EditPrompt extends AbstractPrompt {
 
     connect(this.getSubmorphNamed("ok button"), 'fire', this, 'resolve');
     connect(this.getSubmorphNamed("cancel button"), 'fire', this, 'reject');
+    
 
-    this.initLayout();
+    this.whenRendered().then(() => this.initLayout());
 
     inputEditor.gotoDocumentEnd();
     inputEditor.scrollCursorIntoView();

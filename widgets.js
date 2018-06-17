@@ -14,7 +14,8 @@ import {
   Tooltip,
   Icon
 } from "lively.morphic";
-import { intersect, shape } from "svg-intersections";
+
+import { Shapes, Intersection } from 'kld-intersections';
 
 
 class LeashEndpoint extends Ellipse {
@@ -62,7 +63,7 @@ class LeashEndpoint extends Ellipse {
       this.attachTo(this.possibleTarget, this.closestSide);
     }
   }
-
+  
   getConnectionPoint() {
     const {isPath, isPolygon, vertices, origin} = this.connectedMorph,
           gb = this.connectedMorph.globalBounds();
@@ -71,9 +72,9 @@ class LeashEndpoint extends Ellipse {
             ib = Rectangle.unionPts(vs),
             side = ib[this.attachedSide](),
             center = ib.center().addPt(ib.center().subPt(side)),
-            line = shape("line", {x1: side.x, y1: side.y, x2: center.x, y2: center.y}),
-            path = shape("polyline", {points: vs.map(({x, y}) => `${x},${y}`).join(" ")}),
-            {x, y} = arr.min(intersect(path, line).points, ({x, y}) => pt(x, y).dist(side));
+            line = Shapes.line(side.x, side.y, center.x, center.y),
+            path = Shapes.polyline(arr.flatten(vs.map(({x, y}) => [x,y]))),
+            {x, y} = arr.min(Intersection.intersect(path, line).points, ({x, y}) => pt(x, y).dist(side));
       return pt(x, y).addPt(gb.topLeft());
     } else {
       return gb[this.attachedSide]();

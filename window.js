@@ -67,6 +67,7 @@ export default class Window extends Morph {
       ".Window.inactive": {
         fill: Color.lightGray.lighter(),
         dropShadow: {
+          fast: true,
           rotation: 90,
           distance: 8,
           blur: 10,
@@ -76,6 +77,7 @@ export default class Window extends Morph {
       ".Window.active": {
         fill: Color.lightGray,
         dropShadow: {
+          fast: true,
           rotation: 90,
           distance: 8,
           blur: 35,

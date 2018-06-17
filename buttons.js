@@ -39,7 +39,7 @@ export class Button extends Morph {
         set(val) {
           let oldVal = this.getProperty("pressed");
           this.setProperty("pressed", val);
-          let realFill = (!val && oldVal && oldVal.originalFill);
+          let realFill = (!val && oldVal && oldVal.originalFill) || this.fill;
           this.fill = val && realFill ? realFill.darker() : realFill;
         }
       },
@@ -177,7 +177,7 @@ export class Button extends Morph {
       if (minHeight > this.height) this.height = minHeight;
       if (minWidth > this.width) this.width = minWidth;
       let innerPadding = this.innerBounds().insetByRect(padding);
-      label.center = innerPadding.center();
+      label.center = innerPadding.center().subPt(this.origin)
     } finally { this._relayouting = false; }
   }
 
