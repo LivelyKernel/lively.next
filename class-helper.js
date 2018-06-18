@@ -69,7 +69,17 @@ export default class ClassHelper {
         let packagePath = System.decanonicalize(m.package.name.replace(/\/*$/, "/"));
         moduleId = string.joinPath(packagePath, moduleId);
       }
-
+      /*
+        fixme: A clean solution would be, if the module system itself would be aware of a
+        'fast load' mode, where the module exports are taken from global module objects ie.
+         lively.morphic, lively.lang etc... this would obleviate the check for the
+         FreezerRuntime here         
+      */
+      if (lively.FreezerRuntime) {
+        let mod = lively.FreezerRuntime.get(moduleId) || lively.FreezerRuntime.fetchStandaloneFor(moduleId),
+            klass = mod && mod.exports[meta.className]; 
+        if (klass) return klass;
+      }
       let livelyEnv = System.get("@lively-env"),
           realModule = livelyEnv.moduleEnv(moduleId) || livelyEnv.moduleEnv(m.pathInPackage);
       if (!realModule)

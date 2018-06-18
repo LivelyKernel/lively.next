@@ -112,9 +112,18 @@ export default class ExpressionSerializer {
         let modName = mods[i],
             vars = bindings[modName],
             exports = System.get(System.decanonicalize(modName));
-        if (!exports)
-          throw new Error(`[lively.serializer] expression eval: bindings specify to import ${modName} but this module is not loaded!\nSource: ${source}`);
-
+        if (!exports && lively.FreezerRuntime) {
+          // try to fetch if global is defined
+          let mod = lively.FreezerRuntime.fetchStandaloneFor(modName);
+          if (mod) exports = mod.exports;
+        }
+        if (!exports) {
+          throw new Error(`[lively.serializer] expression eval: bindings specify to import ${
+             modName
+          } but this module is not loaded!\nSource: ${
+             source
+          }`);
+        }
         for (let j = 0; j < vars.length; j++) {
           let varName = vars[j], local, exported;
           if (typeof varName === "string") {
