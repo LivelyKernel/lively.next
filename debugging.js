@@ -1,6 +1,8 @@
+/*global System*/
 import { fun, obj, arr, num, string, graph, Path } from "lively.lang";
+import { HTMLMorph, inspect } from "lively.morphic";
 
-import { ObjectPool } from "lively.serializer2";
+import { ObjectPool } from "./index.js";
 import {
   lookupPath, referencesAndClassNamesOfId, modifyProperty,
   removeUnreachableObjects,
@@ -8,7 +10,6 @@ import {
   findPathFromToId
 } from "./snapshot-navigation.js";
 import ClassHelper from "./class-helper.js";
-import { HTMLMorph, inspect } from "lively.morphic";
 
 /*
 import { serializeMorph, deserializeMorph } from "lively.morphic/serialization.js";
@@ -362,10 +363,7 @@ export class SnapshotInspector {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import cytoscape from "https://cdn.rawgit.com/cytoscape/cytoscape.js/v2.7.15/dist/cytoscape.js";
-import coseBilkentLayout from "https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.0.5/cytoscape-cose-bilkent.js";
 import { connect } from "lively.bindings";
-coseBilkentLayout(cytoscape);
 
 export class ObjectGraphVisualizer extends HTMLMorph {
 
@@ -471,7 +469,11 @@ export class ObjectGraphVisualizer extends HTMLMorph {
       return {group: "edges", data: {source: id, target: id2}};
     }));
 
+    const cytoscape = await System.import("https://cdn.rawgit.com/cytoscape/cytoscape.js/v2.7.15/dist/cytoscape.js"),
+          coseBilkentLayout = await System.import("https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.0.5/cytoscape-cose-bilkent.js");
 
+    if (cytoscape && coseBilkentLayout) coseBilkentLayout(cytoscape);
+    
     var cy = this.state.cy = cytoscape({
       // container: iframeMorph.innerWindow.document.body,
       container: this.domNode,
