@@ -5,6 +5,7 @@ import { join as j, basename } from "path";
 import { mkdirSync, symlinkSync, existsSync } from "fs";
 import { tmpdir as nodeTmpdir } from "os";
 import { resource } from "./deps/lively.resources.js";
+import semver from 'semver';
 
 const crossDeviceTest = {
   done: false,
@@ -48,7 +49,10 @@ async function npmSearchForVersions(pname, range = "*") {
   try {
     // pname = pname.replace(/\@/g, "_40");
     pname = pname.replace(/\//g, "%2f");
-    let { name, version, dist: { shasum, tarball } } = await resource(`http://registry.npmjs.org/${pname}/${range}`).readJson();
+    // rms 18.6.18: npmjs.org seems to have dropped semver version resolution, so we do it by hand now
+    const { versions } = await resource(`http://registry.npmjs.org/${pname}/`).readJson(),
+          version = semver.minSatisfying(Object.keys(versions), range),
+          { name, dist: { shasum, tarball } } = versions[version];
     return { name, version, tarball };
   } catch (err) {
     console.error(err);
