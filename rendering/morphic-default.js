@@ -257,6 +257,7 @@ export function defaultStyle(morph) {
 
   if (clipMode !== "visible") {
     domStyle.overflow = clipMode;
+    domStyle['-webkit-overflow-scrolling'] = 'touch';
     // Fix for Chrome scroll issue, see
     // https://github.com/noraesae/perfect-scrollbar/issues/612
     // https://developers.google.com/web/updates/2016/04/scroll-anchoring
