@@ -1,16 +1,18 @@
 /*global require, process*/
 
-var systemjs = require('systemjs');
 var lang = require('lively.lang');
 var ast = require('../../lively.ast');
 var classes = require('lively.classes');
 var fs = require("fs");
 var path = require("path");
 var rollup = require('rollup');
+var uglifyjs = require('uglify-es');
 var babel = require('rollup-plugin-babel');
+
 
 var targetFile1 = "dist/lively.morphic_no-deps.js";
 var targetFile2 = "dist/lively.morphic.js";
+var targetFile1Min = "dist/lively.morphic_no-deps.min.js";
 
 var placeholderSrc = "throw new Error('Not yet read')";
 
@@ -19,11 +21,13 @@ var parts = {
   "lively.graphics":         {source: placeholderSrc, path: require.resolve('lively.graphics/dist/lively.graphics.js')},
   "lively.serializer2":      {source: placeholderSrc, path: require.resolve('lively.serializer2/dist/lively.serializer2.js')},
   "lively.bindings":         {source: placeholderSrc, path: require.resolve('lively.bindings/dist/lively.bindings.js')},
-  "virtual-dom":             {source: placeholderSrc, path: require.resolve('virtual-dom/dist/virtual-dom.js')},
-  "gsap":                    {source: placeholderSrc, path: require.resolve('gsap/src/minified/TweenMax.min.js')},
+  "virtual-dom":             {source: placeholderSrc, path: require.resolve('virtual-dom/dist/virtual-dom.min.js')},
   "bowser":                  {source: placeholderSrc, path: require.resolve('bowser')},
-  "svg-intersections":       {source: placeholderSrc, path: "dist/svg-intersections.js"},
-  // "jsdom":                   {source: placeholderSrc, path: require.resolve("dist/jsdom.js")}
+  "kld-intersections":       {source: placeholderSrc, path: require.resolve("lively.morphic/lib/kld-intersections.min.js")},
+  "svgjs":                   {source: placeholderSrc, path: require.resolve('svgjs')},
+  "svg.easing.js":           {source: placeholderSrc, path: require.resolve('svg.easing.js')},
+  "svg.pathmorphing.js":     {source: placeholderSrc, path: require.resolve('svg.pathmorphing.js')},
+  "web-animations-js":       {source: placeholderSrc, path: require.resolve('web-animations-js')}
 }
 // output format - 'amd', 'cjs', 'es6', 'iife', 'umd'
 
@@ -99,12 +103,9 @@ module.exports = Promise.resolve()
     });
 })
   .then(bundle => {
-    return bundle.generate({
-      format: 'iife',
-      moduleName: 'lively.morphic',
-      globals: {
+      const globals = {
         "bowser": "bowser",
-        "gsap": "TweenMax",
+        "web-animations-js": "{}",
         "virtual-dom": "virtualDom",
         "lively.lang": "lively.lang",
         "lively.bindings": "lively.bindings",
@@ -113,29 +114,74 @@ module.exports = Promise.resolve()
         "lively.morphic": "lively.morphic",
         "lively.resources": "lively.resources",
         "lively.notifications": "lively.notifications",
-        "svg-intersections": "svgIntersections",
-        "lively.morphic/list.js": "lively.morphic" 
-      }
-    })
+        "lively.storage": "lively.storage",
+        "lively.modules": "lively.modules", 
+        "kld-intersections": "kldIntersections",
+        // this is a temporary solution to make the runtime work for now
+        "lively.halos": "{}",
+        "lively.halos/morph.js": "{}",
+        "lively.halos/drag-guides.js": "{}",
+        "lively.halos/markers.js": "{}",
+        "lively.halos/layout.js": "{}",
+        
+        "lively.ide/styling/gradient-editor.js": "{}",
+        "lively.ide/service-worker.js": "{}",
+        
+        'lively.components': '{}',
+        'lively.components/prompts.js': "{}",
+        "lively.components/loading-indicator.js": "{}",
+        "lively.components/canvas.js": "{}",
+        'lively.components/buttons.js': "{}",
+        'lively.components/menus.js': "{}", 
+        'lively.components/list.js': "{}",
+        'lively.components/widgets.js': "{}",
+        "svgjs": "{}",
+        "svg.easing.js": "{}",
+        "svg.pathmorphing.js": "{}",
+      };
+      return bundle.generate({
+         format: 'iife',
+         name: 'lively.morphic',
+         moduleName: 'lively.morphic',
+         globals: globals,
+       });
   })
 
+  // remove kld intersections from core module
+
+  // remove bowser?
+
   // 3. massage code a little
-  .then(bundled => {
+  .then((bundled)=> {
     console.log("massging code...")
-    var source = bundled.code;
-    var noDeps = `
-${parts["gsap"].source}\n
-${parts["svg-intersections"].source}\n
+    var origSource = bundled.code;
+     // remove the mangling that rollup performs
+    let varName, m, mangled = [];
+    while (m = origSource.match(/^var \S*\$1 = function \(/m)) {
+      varName = m[0].replace('var ', '').replace(' = function (', '');
+      m = varName.replace('$$1', '').replace('$1', '');
+      origSource = origSource.replace(new RegExp(varName.replace(/\$/g, '\\$'), 'g'), () => m);
+      mangled.push(varName);
+    }
+
+  //console.log(mangled);
+  
+    var wrapInOwnDeps = (source) => `
 (function() {
+  ${parts["kld-intersections"].source}\n
   ${parts["bowser"].source}
   ${parts["virtual-dom"].source}
+  ${parts["web-animations-js"].source}
+  ${parts["svgjs"].source}
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   System.global._classRecorder = {};
-  ${insertForwardDeclarations(source)}
+  ${source}
   if (typeof module !== "undefined" && typeof require === "function") module.exports = GLOBAL.lively.modules;
 })();`;
+
+    var noDeps = wrapInOwnDeps(origSource);
 
     var complete = [
       "lively.lang",
@@ -157,4 +203,6 @@ ${parts[key].source}
     console.log("writing files...")
     fs.writeFileSync(targetFile1, sources.noDeps);
     fs.writeFileSync(targetFile2, sources.complete);
-  })
+    fs.writeFileSync(targetFile1.replace('.js', '.min.js'), uglifyjs.minify(sources.noDeps, {keep_fnames: true}).code); 
+    fs.writeFileSync(targetFile2.replace('.js', '.min.js'), uglifyjs.minify(sources.complete, {keep_fnames: true}).code); 
+})
