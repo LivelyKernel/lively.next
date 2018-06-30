@@ -31,26 +31,49 @@ export function runtimeDefinition() {
     // assets such as .css files etc, keep their usual decanonicalization
     // is global id?
     if (G.lively.FreezerRuntime.globalModules[name]) return name;
-    name = name.replace("lively-object-modules/", "");
+    // check if this is a submodule of a global module, that can be 
+    let localName = name.replace("lively-object-modules/", "").replace(G.System.baseURL, '');
     // includes local prefix?
-    name = name.includes('local://') ? name : 'local://' + name;
+    localName = localName.includes('local://') ? localName : 'local://' + localName;
     // includes package version? 
-    if (!name.match(/\@\S*\//)) {
-       let [packageName, ...rest] = name.replace('local://', '').split('/'),
-           version = Object.keys(G.lively.FreezerRuntime.registry).find(k => k.includes(packageName)).match(/\@[\d|\.|\-|\~]*\//)[0]
-       name = "local://" + packageName + version + rest.join('/') 
+    // this fucks up if there are packages wich share a prefix in their naming
+    if (!localName.match(/\@\S*\//)) {
+       let [packageName, ...rest] = localName.replace('local://', '').split('/'),
+           pkg = Object.keys(G.lively.FreezerRuntime.registry).find(k => 
+                        k.replace('local://', '').split('@')[0] == packageName),
+           version = pkg && pkg.match(/\@[\d|\.|\-|\~]*\//)[0];
+       if (!pkg) return proceed(name, parent, isPlugin);
+       // return pkg;
+       localName =  "local://" + packageName + version + rest;
     } 
-    return name;
+    return localName;
   });
 
   G.lively.FreezerRuntime = {
     version, registry, globalModules,
-    get(moduleId) { return this.registry[moduleId]; },
+    get(moduleId) { 
+      return this.registry[moduleId]; 
+    },
     set(moduleId, module) { return this.registry[moduleId] = module; },
     add(id, dependencies = [], exports = {}, executed = false) {
       let module = {id, dependencies, executed, exports, execute: () => {}, setters: []};
       this.set(id, module);
       return module;
+    },
+    loadObjectFromPartsbinFolder(name) {
+      return G.lively.morphic.MorphicDB.default.fetchSnapshot('part', name).then(snapshot => {
+         return G.lively.morphic.loadMorphFromSnapshot(
+           snapshot, {
+             onDeserializationStart: false, 
+             migrations: []
+           })
+        });
+    },
+    fetchStandaloneFor(name) {
+      for (let glob in this.globalModules) {
+         if (name.match(glob.replace("local://", "").replace(/\@.*\//, "/").replace("/index.js", "")))
+            return this.globalModules[glob];
+      }
     },
     resolveSync(name, parentName) {
       let mod = this.get(name);
@@ -65,6 +88,8 @@ export function runtimeDefinition() {
         let obj = G.System.get(G.System.decanonicalize(name, parentName));
         if (obj) return {executed: true, exports: obj, dependencies: []};
       }
+      mod = this.fetchStandaloneFor(name);
+      if (mod) return mod;
       throw new Error(`Module ${name} cannot be found in lively.freezer bundle!`)
     },
     register(id, dependencies, defineFn) {
@@ -355,6 +380,7 @@ export function runtimeDefinition() {
             this.updateImports(m);
             m.execute();
           } catch (e) {
+            console.error(e);
             m.executed = false;
           }
           updateDependents(m);
