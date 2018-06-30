@@ -3,10 +3,10 @@ import { expect } from "mocha-es6";
 
 import Keys from "../events/Keys.js";
 let {
-  keyComboToEventSpec: event,
+  keyComboToEventSpec: evt,
   computeHashIdOfEvent: hash,
   eventToKeyCombo: stringify,
-  canonicalizeKeyCombo: canonicalize
+  canonicalizeKeyCombo: canonicalize,
 } = Keys;
 
 describe("Keys", () => {
@@ -14,51 +14,51 @@ describe("Keys", () => {
   describe("key string -> event", () => {
     
     it("char", () =>
-      expect(event("a"))
+      expect(evt("a"))
         .containSubset({isModified: false, key: "a", shiftKey: false}))
 
     it("upper case char", () =>
-      expect(event("A"))
+      expect(evt("A"))
         .containSubset({isModified: false, key: "A", shiftKey: false}))
 
     it("shifted", () =>
-      expect(event("Shift-a"))
+      expect(evt("Shift-a"))
         .containSubset({isModified: true, key: "A", shiftKey: true}))
 
     it("esc key", () =>
-      expect(event("Esc"))
+      expect(evt("Esc"))
         .containSubset({isModified: false, key: "Escape", shiftKey: false, isFunctionKey: true}))
 
     it("modified esc key", () =>
-      expect(event("Shift-Alt-Esc"))
+      expect(evt("Shift-Alt-Esc"))
         .containSubset({isModified: true, isFunctionKey: true, key: "Escape", shiftKey: true, altKey: true}))
 
     it("function key", () =>
-      expect(event("F1"))
+      expect(evt("F1"))
         .containSubset({isModified: false, isFunctionKey: true, key: "F1"}))
 
     it("meta key", () =>
-      expect(event("cmd"))
+      expect(evt("cmd"))
         .containSubset({isModified: true, isFunctionKey: false, key: "Meta", metaKey: true}))
 
     it("modified function key", () =>
-      expect(event("cmd-F1"))
+      expect(evt("cmd-F1"))
         .containSubset({isModified: true, isFunctionKey: true, key: "F1", metaKey: true}))
 
     it("space", () =>
-      expect(event(" "))
+      expect(evt(" "))
         .containSubset({isModified: false, isFunctionKey: true, key: " ", keyCombo: "Space"}))
 
     it("modified space", () =>
-      expect(event("Alt- "))
+      expect(evt("Alt- "))
         .containSubset({isModified: true, isFunctionKey: true, key: " ", altKey: true}))
 
     it("just modified", () =>
-      expect(event("Shift"))
+      expect(evt("Shift"))
         .containSubset({isModified: true, isFunctionKey: false, key: "Shift", shiftKey: true}))
 
     it("just modified 2", () =>
-      expect(event("Ctrl-Shift"))
+      expect(evt("Ctrl-Shift"))
         .containSubset({isModified: true, isFunctionKey: false, key: "Shift", shiftKey: true, ctrlKey: true}))
 
   });
@@ -66,18 +66,18 @@ describe("Keys", () => {
 
   describe("modifier hash", () => {
 
-    it("non modified (space)", () => expect(hash(event(" "))).equals(0));
-    it("non modified (char)", () =>  expect(hash(event("a"))).equals(-1));
-    it("enter", () =>                expect(hash(event("Enter"))).equals(0));
-    it("single modifier 1", () =>    expect(hash(event("alt-a"))).equals(2));
-    it("single modifier 2", () =>    expect(hash(event("shift-a"))).equals(4));
-    it("single modifier 3", () =>    expect(hash(event("cmd-a"))).equals(8));
-    it("single modifier 4", () =>    expect(hash(event("ctrl-a"))).equals(1));
-    it("shift+cmd", () =>            expect(hash(event("shift-cmd-a"))).equals(12));
-    it("ctrl+shift 1", () =>         expect(hash(event("ctrl-shift-a"))).equals(5));
-    it("ctrl+shift 2", () =>         expect(hash(event("ctrl-shift-a"))).equals(5));
-    it("only modifier 1", () =>      expect(hash(event("ctrl"))).equals(1));
-    it("only modifier 2", () =>      expect(hash(event("ctrl-shift"))).equals(5));
+    it("non modified (space)", () => expect(hash(evt(" "))).equals(0));
+    it("non modified (char)", () =>  expect(hash(evt("a"))).equals(-1));
+    it("enter", () =>                expect(hash(evt("Enter"))).equals(0));
+    it("single modifier 1", () =>    expect(hash(evt("alt-a"))).equals(2));
+    it("single modifier 2", () =>    expect(hash(evt("shift-a"))).equals(4));
+    it("single modifier 3", () =>    expect(hash(evt("cmd-a"))).equals(8));
+    it("single modifier 4", () =>    expect(hash(evt("ctrl-a"))).equals(1));
+    it("shift+cmd", () =>            expect(hash(evt("shift-cmd-a"))).equals(12));
+    it("ctrl+shift 1", () =>         expect(hash(evt("ctrl-shift-a"))).equals(5));
+    it("ctrl+shift 2", () =>         expect(hash(evt("ctrl-shift-a"))).equals(5));
+    it("only modifier 1", () =>      expect(hash(evt("ctrl"))).equals(1));
+    it("only modifier 2", () =>      expect(hash(evt("ctrl-shift"))).equals(5));
 
   });
 
@@ -93,12 +93,12 @@ describe("Keys", () => {
 
   describe("evt => key string", () => {
     
-    it("char", () =>                expect(stringify(event("s"))).equals("input-s"));
-    it("modified + shifted", () =>  expect(stringify(event("Shift-cmd-s"))).equals("Meta-Shift-S"));
-    it("modified", () =>            expect(stringify(event("Command-s"))).equals("Meta-S"));
-    it("ctrl+meta", () =>           expect(stringify(event("ctrl-Command-s"))).equals("Ctrl-Meta-S"));
-    it("only modified", () =>       expect(stringify(event("alt"))).equals("Alt"));
-    it("only modifier again", () => expect(stringify(event("Alt"))).equals("Alt"));
+    it("char", () =>                expect(stringify(evt("s"))).equals("input-s"));
+    it("modified + shifted", () =>  expect(stringify(evt("Shift-cmd-s"))).equals("Meta-Shift-S"));
+    it("modified", () =>            expect(stringify(evt("Command-s"))).equals("Meta-S"));
+    it("ctrl+meta", () =>           expect(stringify(evt("ctrl-Command-s"))).equals("Ctrl-Meta-S"));
+    it("only modified", () =>       expect(stringify(evt("alt"))).equals("Alt"));
+    it("only modifier again", () => expect(stringify(evt("Alt"))).equals("Alt"));
 
   });
 
