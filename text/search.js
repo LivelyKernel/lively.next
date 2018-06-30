@@ -332,8 +332,10 @@ export class SearchWidget extends Morph {
   }
 
   onBlur(evt) {
+    let world = this.world();
+    if (!world) return;
     setTimeout(() => {
-      let focusedMorph = this.world().focusedMorph;
+      let focusedMorph = world.focusedMorph;
       if (!this.withAllSubmorphsDetect(m => m.isFocused())) {
           this.cancelSearch();
           return;

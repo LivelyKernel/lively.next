@@ -277,7 +277,7 @@ AfterTextRenderHook.prototype.hook = function(node, propName, prevValue) {
 
 
 
-export default class Renderer {
+export default class TextRenderer {
 
   constructor(domEnv) {
     if (!domEnv) {
@@ -552,7 +552,7 @@ export default class Renderer {
         if (typeof content !== "string") {
           renderedChunks.push(
             content.isMorph
-              ? this.renderEmbeddedSubmorph(h, renderer, content)
+              ? this.renderEmbeddedSubmorph(h, renderer, content, attr)
               : objectReplacementChar);
           continue;
         }
@@ -630,12 +630,18 @@ export default class Renderer {
     return node;
   }
 
-  renderEmbeddedSubmorph(h, renderer, morph) {
+  renderEmbeddedSubmorph(h, renderer, morph, attr) {
     let rendered;
+    attr = attr || {};
     if (renderer) {
       rendered = renderer.render(morph);
       rendered.properties.style.position = "relative";
       rendered.properties.style.transform = "";
+      // fixme:  this addition screws up the bounds computation of the embedded submorph
+      if (attr.paddingTop) rendered.properties.style.marginTop = attr.paddingTop;
+      if (attr.paddingLeft) rendered.properties.style.marginLeft= attr.paddingLeft;
+      if (attr.paddingRight) rendered.properties.style.marginRight = attr.paddingRight;
+      if (attr.paddingBottom) rendered.properties.style.marginBottom = attr.paddingBottom;
       return rendered;
     }
     let {extent, styleClasses} = morph,
@@ -654,7 +660,7 @@ export default class Renderer {
     var {start, end, lead, cursorVisible, selectionColor} = selection,
 
         isReverse           = selection.isReverse(),
-        {document}          = morph,
+        {document, cursorColor} = morph,
         startBounds         = textLayout.boundsFor(morph, start),
         maxBounds           = textLayout.computeMaxBoundsForLineSelection(morph, selection),
         endBounds           = textLayout.boundsFor(morph, end),
@@ -668,13 +674,13 @@ export default class Renderer {
 
     // collapsed selection -> cursor
     if (selection.isEmpty())
-      return [this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth)];
+      return [this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth, cursorColor)];
 
     // single line -> one rectangle
     if (Math.abs((startBounds.y + leadLineHeight) - (endBounds.y + endLineHeight)) < 5) {
       return [
         this.selectionLayerPart(startPos, endPos.withY(maxBounds.y + maxLineHeight), selectionColor),
-        this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth)
+        this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth, cursorColor)
       ]
     }
 
@@ -686,7 +692,7 @@ export default class Renderer {
       return [
         this.selectionLayerPart(startPos, endPosLine1, selectionColor),
         this.selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight), selectionColor),
-        this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth)];
+        this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth, cursorColor)];
     }
 
     let endPosMiddle = pt(morph.width - morph.padding.right(), endPos.y),
@@ -697,7 +703,7 @@ export default class Renderer {
       this.selectionLayerPart(startPos, endPosLine1, selectionColor),
       this.selectionLayerPart(startPosLine2, endPosMiddle, selectionColor),
       this.selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight), selectionColor),
-      this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth)];
+      this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth, cursorColor)];
 
   }
 
@@ -712,13 +718,14 @@ export default class Renderer {
     })
   }
 
-  cursor(pos, height, visible, diminished, width) {
+  cursor(pos, height, visible, diminished, width, color) {
     return h('div', {
       className: "newtext-cursor" + (diminished ? " diminished" : ""),
       style: {
         left: pos.x-Math.ceil(width/2) + "px", top: pos.y + "px",
         width: width + "px", height: height + "px",
-        display: visible ? "" : "none"
+        display: visible ? "" : "none",
+        background: color || "black"
       }
     }/*, "\u00a0"*/);
   }

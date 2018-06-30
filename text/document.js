@@ -103,12 +103,12 @@ class TreeNode {
       report.push({error: `Sum of child stringSize is not stringSIze of ${this}: ${sumChildrenStringSize} != ${stringSize}`});
 
     var sumChildrenHeight = arr.sum(arr.pluck(children, "height"));
-    if (sumChildrenHeight != height)
+    if (Number.parseInt(sumChildrenHeight) != Number.parseInt(height))
       report.push({error: `Sum of child Height is not Height of ${this}: ${sumChildrenHeight} != ${height}`});
 
 
     var maxWidth = children.length ? Math.max.apply(null, arr.pluck(children, "width")) : 0;
-    if (maxWidth != width)
+    if (Number.parseInt(maxWidth) != Number.parseInt(width))
       report.push({error: `max width of children of ${this} is not node width: ${maxWidth} != ${width}`});
 
     var max = isLeaf ? maxLeafSize : maxNodeSize,
@@ -1821,9 +1821,13 @@ export default class Document {
     for (let i = 0; i < length-1; i++) {
       let lineTextAndAttributes = textAndAttributesByLine[i];
       if (!lineTextAndAttributes.length) lineTextAndAttributes = ["", null];
-      if (typeof lineTextAndAttributes[lineTextAndAttributes.length-2] == 'string')
+      if (typeof lineTextAndAttributes[lineTextAndAttributes.length-2] == 'string') {
          lineTextAndAttributes[lineTextAndAttributes.length-2] = 
-            lineTextAndAttributes[lineTextAndAttributes.length-2] + "\n";
+            lineTextAndAttributes[lineTextAndAttributes.length-2] + newline;
+      } else {
+        // we need to add a newline string
+        lineTextAndAttributes.push(newline, null)
+      }
       textAndAttributesForInsert.push(...lineTextAndAttributes);
     }
     textAndAttributesForInsert.push(...textAndAttributesByLine[length-1]);

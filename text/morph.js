@@ -36,6 +36,9 @@ export class Text extends Morph {
   }
 
   static makeInputLine(props) {
+    // hack to break up the cyclic dependency for now  without having to
+    // update the imports all over the place
+    const InputLine = (module('lively.morphic').recorder.InputLine || lively.morphic.InputLine);
     return new InputLine(props);
   }
 
@@ -698,7 +701,7 @@ export class Text extends Morph {
       // change meta data to reflecdt that morph is reconstructed
       this.changeMetaData('deserializeInfo', {recoveredTextBounds: true});
       this.whenRendered().then(() => {
-        for (let i = 0; i < this.document.lines.length; i++) {
+        for (let i = 0; i < Math.min(snapshot._cachedLineExtents.length, this.document.lines.length); i++) {
           let [width, height] = snapshot._cachedLineExtents[i];
           this.document.lines[i].changeExtent(width, height);
           this.fit();
@@ -1523,7 +1526,7 @@ export class Text extends Morph {
           connect(anchor, "position", morph, "position", {
             converter: function(textPos) {
               let tm = this.targetObj.owner;
-              return tm ? tm.charBoundsFromTextPosition(textPos).topLeft() : this.targetObj.position;
+              return tm ? tm.charBoundsFromTextPosition(textPos).topLeft().subPt(tm.origin) : this.targetObj.position;
             }
           }).update(anchor.position);
           embeddedMorphMap.set(morph, {anchor});
