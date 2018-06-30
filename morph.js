@@ -2973,7 +2973,7 @@ export class Image extends Morph {
   }
 }
 
-class PathPoint {
+export class PathPoint {
 
   constructor(path, props = {}) {
     this.path = path;
@@ -3003,6 +3003,19 @@ class PathPoint {
     this.position = this.position.addPt(delta);
     this.path.onVertexChanged(this);
     return this;
+  }
+
+  __serialize__() {
+    return {
+      __expr__: `({
+         position: ${this.position.toString(false)},
+         isSmooth: ${this.isSmooth},
+         controlPoints: {
+           next: ${this.controlPoints.next.toString(false)},
+           previous: ${this.controlPoints.previous.toString(false)}
+         }
+      })`.replace(/[\n|\s]/g, ''), 
+      bindings: {"lively.graphics/geometry-2d.js": ["pt"]}}
   }
 
   get controlPoints() {
@@ -3101,6 +3114,7 @@ export class Path extends Morph {
       vertices: {
         defaultValue: [],
         after: ["isSmooth", 'borderWidth'],
+        before: ['extent', 'origin'],
         type: "Vertices",
         set(vs) {
           let {isSmooth} = this;
@@ -3263,7 +3277,7 @@ export class Path extends Morph {
 
   get _pathNode() {
     let node = this.env.renderer.getNodeForMorph(this);
-    return node && node.querySelector("#svg" + this.id);
+    return node && node.querySelector("#svg" + string.regExpEscape(this.id));
   }
 
   verticesCloseTo(point, withLength = true) {
@@ -3314,7 +3328,7 @@ export class Path extends Morph {
 
     if (!pathNode) {
       let node = this.env.renderer.getNodeForMorph(this);
-      pathNode = node && node.querySelector("#svg" + this.id);
+      pathNode = node && node.querySelector("#svg" + string.regExpEscape(this.id));
     }
 
     return pathNode ?
