@@ -109,9 +109,11 @@ export class PropertyAnimation {
     return ["fill", "origin"];
   }
 
+  
+
   asPromise() {
-    return new Promise((resolve, reject) => {
-      this.resolvePromise = () => {
+    return this._promise || (this._promise = new Promise((resolve, reject) => {
+      this.resolveCallback = () => {
         this.onFinish(this);
         if (this.subAnimations) {
           this.subAnimations.then(resolve);
@@ -119,7 +121,7 @@ export class PropertyAnimation {
           resolve(this.morph);
         }
       };
-    });
+    }));
   }
 
   finish() {
@@ -132,7 +134,7 @@ export class PropertyAnimation {
           this.morph.withAllSubmorphsDo(m => m.isText && m.invalidateTextLayout(true, true)));
     }
     this.queue.removeAnimation(this);
-    this.resolvePromise ? this.resolvePromise() : this.onFinish();
+    this.resolveCallback ? this.resolveCallback() : this.onFinish();
   }
 
   convertGradients(config) {
