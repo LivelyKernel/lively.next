@@ -13,6 +13,9 @@ class CustomVNode {
     this.morph = morph;
     this.renderer = renderer;
     this.morphVtree = null;
+    // this is needed to ensure that virtual dom can correctly
+    // identify this node when morph hierarchies change
+    this.key = `custom-${morph.id}`;
   }
 
   get type() { return "Widget"; }
@@ -31,7 +34,7 @@ class CustomVNode {
     var domNode = createElement(this.renderMorph(), this.renderer.domEnvironment);
     // here we replace the placeholder node with our custom node, this only
     // needs to happen when we create the DOM node for the entire morph
-    domNode.replaceChild(this.morph.domNode, domNode.childNodes[0]);
+    domNode.childNodes[0].appendChild(this.morph.domNode);
     return domNode;
   }
 
@@ -46,7 +49,9 @@ class CustomVNode {
     return null;
   }
 
-  destroy(domNode) { console.log(`[HTMLMorph] node of ${this} gets removed from DOM`); }
+  destroy(domNode) { 
+    console.log(`[HTMLMorph] node of ${this.morph.name} gets removed from DOM`); 
+  }
 }
 
 // Usage:
