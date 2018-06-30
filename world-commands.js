@@ -11,7 +11,7 @@ var commands = [
 
   {
     name: "undo",
-    exec: world => {
+    exec: function(world) {
       if (
         world.focusedMorph &&
         world.focusedMorph !== world &&
@@ -24,7 +24,7 @@ var commands = [
 
   {
     name: "redo",
-    exec: world => {
+    exec: function(world) {
       if (
         world.focusedMorph &&
         world.focusedMorph !== world &&
@@ -635,7 +635,7 @@ var commands = [
 
       let {selected: [choice]} = await $world.filterableListPrompt("search workspaces", [], {
         historyId: "lively.morphic-ide-search-workspaces-hist",
-        customize: listPrompt => {
+        customize: function(listPrompt) {
           listPrompt.getSubmorphNamed("list").updateFilter = function() {
             var parsed = this.parseInput();
             if (parsed.input.length < 3) return;
@@ -696,7 +696,7 @@ var commands = [
 
   {
     name: "open PartsBin",
-    exec: async world => {
+    exec: async function(world) {
       var { loadPart } = await System.import("lively.morphic/partsbin.js")
       var pb = await loadPart("PartsBin");
       pb.openInWorldNearHand();
@@ -709,7 +709,7 @@ var commands = [
 
   {
     name: "load object from PartsBin",
-    exec: async (world, opts = {}) => {
+    exec: async function(world, opts = {}) {
       let part, {name, open = true} = opts;
       if (name) {
         let {loadObjectFromPartsbinFolder} = await System.import("lively.morphic/partsbin.js");
@@ -726,7 +726,7 @@ var commands = [
 
   {
     name: "open object drawer",
-    exec: async world => {
+    exec: async function(world) {
       var { default: ObjectDrawer } = await System.import("lively.components/object-drawer.js")
       return new ObjectDrawer().openInWorldNearHand();
     }
@@ -734,7 +734,11 @@ var commands = [
 
   {
     name: "open object editor",
-    exec: async (world, args = {target: null, selectedClass: null, selectedMethod: null}) => {
+    exec: async function(world, args = {
+      target: null,
+      selectedClass: null,
+      selectedMethod: null
+    }) {
       if (!args.target) {
         world.setStatusMessage("no target for ObjectEditor");
         return null;

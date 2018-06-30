@@ -11,6 +11,7 @@
     "svg.easing.js": "^1.0.0",
     "svg.pathmorphing.js": "^0.1.1",
     "svgjs": "^2.6.2",
+    "lively.modules": "https://github.com/LivelyKernel/lively.modules",
     "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
     "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
     "lively.halos": "https://github.com/LivelyKernel/lively.halos",
@@ -39,9 +40,9 @@
     "lively.classes": "*",
     "lively.source-transform": "*",
     "mocha-es6": "^0.5",
-    "rollup": "^0.36.1",
+    "rollup": "0.36.4",
     "rollup-plugin-babel": "^2.6.1",
-    "rollup-plugin-uglify": "^0.3.1" 
+    "uglify-es": "^3.3.9"
   },
   "systemjs": {
     "main": "index.js",

@@ -1,9 +1,6 @@
-import { arr, tree, obj } from "lively.lang";
-import { Color, pt, rect, LinearGradient } from "lively.graphics";
-import { connect, once, signal, disconnect } from "lively.bindings";
-import { easings } from "./rendering/animations.js";
-import { Sizzle, SizzleVisitor, SizzleExpression } from "./sizzle.js";
-import { ShadowObject, CustomLayout, Button, Text, Icon, HorizontalLayout, morph, Morph, config} from "./index.js";
+import { arr, obj } from "lively.lang";
+import { rect } from "lively.graphics";
+import { ShadowObject, morph } from "./index.js";
 
 // THE MODEL
 

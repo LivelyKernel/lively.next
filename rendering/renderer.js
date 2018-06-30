@@ -1,5 +1,5 @@
 /*global System,WeakMap*/
-import { promise, arr, tree, obj, num } from "lively.lang";
+import { promise, arr, tree, obj, num, string } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
 import {
   defaultStyle,
@@ -52,8 +52,8 @@ export class Renderer {
     return promise.waitFor(3000, () => this.domNode.ownerDocument)
       .then(doc => Promise.all([
         addOrChangeCSSDeclaration("lively-morphic-css", defaultCSS, doc),
-        addOrChangeLinkedCSS("lively-font-awesome", System.decanonicalize("lively.morphic/assets/font-awesome/css/font-awesome.css"), doc),
-        addOrChangeLinkedCSS("lively-font-inconsolata", System.decanonicalize("lively.morphic/assets/inconsolata/inconsolata.css"), doc)]));
+        addOrChangeLinkedCSS("lively-font-awesome", "/lively.morphic/assets/font-awesome/css/font-awesome.css", doc),
+        addOrChangeLinkedCSS("lively-font-inconsolata", "/lively.morphic/assets/inconsolata/inconsolata.css", doc)]));
   }
 
   startRenderWorldLoop() {
@@ -92,7 +92,7 @@ export class Renderer {
     // return this.domNode.ownerDocument.getElementById(morph.id);
 
     // test, for scoped lookup, fixing the issue mentioned above
-    return this.domNode ? this.domNode.querySelector("#" + morph.id) : null;
+    return this.domNode ? this.domNode.querySelector("#" + string.regExpEscape(morph.id)) : null;
   }
 
   getMorphForNode(node) {
@@ -101,16 +101,16 @@ export class Renderer {
       null;
   }
 
-  render(x) {
-    if (!x.needsRerender()) {
-      var renderedTree = this.renderMap.get(x);
+  render(morph) {
+    if (!morph.needsRerender()) {
+      var renderedTree = this.renderMap.get(morph);
       if (renderedTree) return renderedTree;
     }
 
-    x.aboutToRender(this);
+    morph.aboutToRender(this);
 
-    var tree = x.render(this);
-    this.renderMap.set(x, tree);
+    var tree = morph.render(this);
+    this.renderMap.set(morph, tree);
     return tree;
   }
 
@@ -267,8 +267,8 @@ export class Renderer {
       ...pathAttributes(path)
     }), clipPath = h("clipPath", {
       namespace: svgNs,
-      id: "clipPath" + path.id
-    }, h("path", {namespace: svgNs, attributes: { d }}));
+      id: "clipPath" + path.id,
+    }, h("path", {namespace: svgNs, attributes: { d, fill: "white" }}));
 
     var markers = [clipPath];
     if (startMarker) {
@@ -458,12 +458,16 @@ export class Renderer {
 
   renderPreview(morph, opts) {
     // Creates a DOM node that is a "preview" of the morph, i.e. a
-    // representation that looks like the morph but doesn't morphic behavior
+    // representation that looks like the morph but doesn't have morphic behavior
     // attached
+
+    // include the css and fonts into the preview as well, to serve as a server side pre
+    // rendering to speed up loading times of frozen parts
 
     // FIXME doesn't work with scale yet...!
 
-    let {width = 100, height = 100, center = true, asNode = false} = opts,
+    let {width = 100, height = 100, center = true, 
+         asNode = false, includeStyles = false, disableScroll = false} = opts,
         {
           borderWidthLeft, borderWidthTop, borderWidthBottom, borderWidthRight,
           scale, position, origin, rotation
