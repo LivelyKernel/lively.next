@@ -1592,7 +1592,7 @@ export class Morph {
 
   worldPoint(p) {
     var world = this.world(), {x,y} = p
-    return world ? this.transformPointToMorph(world, pt(x,y)) : p;
+    return world ? this.transformPointToMorph(world, pt(x,y)) : p.addPt(this.position);
   }
 
   transformToMorph(other) {
