@@ -1,7 +1,7 @@
 import { rect, pt, Color } from "lively.graphics";
 import { connect } from "lively.bindings";
-import { Button, morph } from "lively.morphic";
-"format esm";
+import { morph } from "lively.morphic";
+import { Button } from "lively.components/buttons.js";
 
 export class TextFlow {
 
