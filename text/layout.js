@@ -47,6 +47,7 @@ export default class TextLayout {
           clipMode, textAlign, padding, lineWrapping,
           debug
         } = morph,
+        transform = morph.getGlobalTransform(),
         paddingLeft = padding.left(),
         paddingRight = padding.right(),
         paddingTop = padding.top(),
@@ -68,7 +69,7 @@ export default class TextLayout {
           linesBounds = fontMetric.manuallyComputeBoundsOfLines(
             morph, lines, 0, 0, {
               defaultTextStyle, width: morphWidth, height: morphHeight,
-              clipMode, lineWrapping, textAlign,
+              clipMode, lineWrapping, textAlign, transform,
               paddingLeft, paddingRight, paddingTop, paddingBottom
             }, directRenderTextLayerFn, directRenderLineFn);
       for (var i = 0; i < lines.length; i++) {
@@ -95,7 +96,7 @@ export default class TextLayout {
       else for (var j = 0; j < textAttributes.length; j += 2) {
         inlineMorph = textAttributes[j]
         if (inlineMorph && inlineMorph.isMorph)
-           inlineMorph.position = this.pixelPositionFor(morph, {row: i , column: j / 2});
+           inlineMorph.position = this.pixelPositionFor(morph, {row: i , column: j / 2}).subPt(morph.origin);
         styles.push({...defaultTextStyle, ...textAttributes[j + 1]});
       }
 
@@ -106,7 +107,7 @@ export default class TextLayout {
       for (var h = 0; h < measureCount; h++) {
         var {width, height} = fontMetric.defaultCharExtent(morph, {
           defaultTextStyle: styles[h],
-          width: 1000,
+          width: 1000, transform,
           paddingBottom, paddingTop, paddingRight, paddingLeft
         }, directRenderTextLayerFn);
         charHeight = Math.max(height, charHeight);
@@ -134,8 +135,9 @@ export default class TextLayout {
 
   defaultCharExtent(morph) {
     let {textRenderer, fontMetric, defaultTextStyle} = morph,
+        transform = morph.getGlobalTransform(),
         directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph);
-    return fontMetric.defaultCharExtent(morph, {defaultTextStyle, width: 1000}, directRenderTextLayerFn);
+    return fontMetric.defaultCharExtent(morph, {transform, defaultTextStyle, width: 1000}, directRenderTextLayerFn);
   }
 
   textBounds(morph) {
@@ -246,6 +248,7 @@ export default class TextLayout {
           extent: {x: width, y: height},
           clipMode, textAlign, padding, lineWrapping
         } = morph,
+        transform = morph.getGlobalTransform(),
         paddingLeft = padding.left(),
         paddingRight = padding.right(),
         paddingTop = padding.top(),
@@ -255,9 +258,8 @@ export default class TextLayout {
         charBounds = fontMetric.manuallyComputeCharBoundsOfLine(
           morph, line, 0, 0, {
             defaultTextStyle, width, height, clipMode, lineWrapping, textAlign,
-            paddingLeft, paddingRight, paddingTop, paddingBottom
+            paddingLeft, paddingRight, paddingTop, paddingBottom, transform
           }, directRenderTextLayerFn, directRenderLineFn);
-
     this.lineCharBoundsCache.set(line, charBounds);
     return charBounds;
   }
@@ -305,22 +307,21 @@ export default class TextLayout {
       console.warn(`Cannot compute bounds for line ${row}/${column}`);
       bounds = new Rectangle(0, 0, 0, 0);
     }
-
     let {document: doc, padding} = morph;
     bounds.x = bounds.x + padding.left();
-    bounds.y = bounds.y + padding.top() + doc.computeVerticalOffsetOf(row);
+    bounds.y = bounds.y + doc.computeVerticalOffsetOf(row) + padding.top();
 
     return bounds;
   }
 
   pixelPositionFor(morph, docPos) {
     var { x, y } = this.boundsFor(morph, docPos);
-    return pt(x, y);
+    return pt(x, y).addPt(morph.origin);
   }
 
   textPositionFromPoint(morph, point) {
-    let {x, y} = point,
-        {document: doc, padding} = morph,
+    let {x, y} = point.addPt(morph.origin),
+        {document: doc, padding, origin} = morph,
         padL = padding.left(),
         padT = padding.top();
 

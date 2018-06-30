@@ -83,12 +83,16 @@ export default class FontMetric {
   }
 
   measure(style, text) {
-    var { fontFamily, fontSize, fontWeight, fontStyle, textDecoration, textStyleClasses } = style,
+    var { fontFamily, fontSize, fontWeight, 
+          fontStyle, textDecoration, 
+          textStyleClasses, transform 
+        } = style,
         el = this.element,
         rect = null;
+    if (transform) transform = transform.inverse();
     el.textContent = text;
     Object.assign(el.style, {
-      fontFamily, fontWeight, fontStyle, textDecoration,
+      fontFamily, fontWeight, fontStyle, textDecoration, transform: transform,
       fontSize: fontSize + "px",
     })
     el.className = textStyleClasses ? textStyleClasses.join(" ") : "";
@@ -240,6 +244,7 @@ function textlayerNodeForFontMeasure(morph) {
   if (text_layer_node && !fontmetric_text_layer_node && text_layer_node.parentNode)
     fontmetric_text_layer_node = morph.viewState.fontmetric_text_layer_node =
       text_layer_node.parentNode.querySelector(".newtext-text-layer.font-measure");
+  
   return fontmetric_text_layer_node;
 }
 
@@ -496,14 +501,21 @@ class DOMTextMeasure {
       } else { root.appendChild(textNode); }
     }
 
+    const tfm = morph.getGlobalTransform().inverse();
+    if (morph.env.renderer && morph.env.renderer.getNodeForMorph(morph) && 
+        (tfm.getScale() != 1 || tfm.getRotation() != 0)) {
+      tfm.e = tfm.f = 0;
+      textNode.style.transform = tfm.toString();
+    }
+
     let layerBounds = textNode.getBoundingClientRect();
     textNodeOffsetLeft = layerBounds.left;
     textNodeOffsetTop = layerBounds.top;
 
     try {
       return doFn(textNode, textNodeOffsetLeft, textNodeOffsetTop);
-
     } finally {
+      textNode.style.transform = '';
       if (!this.debug && this.textlayerNodeCacheCount > this.maxTextlayerNodeCacheCount) {
         let toRemove = Math.ceil(this.maxTextlayerNodeCacheCount/2), node;
         while (toRemove-- && (node = root.childNodes[0])) {
