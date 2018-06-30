@@ -167,10 +167,10 @@ For now only a simple default theme...
             ['lively.morphic/components/markers.js', 'lively.halos'],
             ['lively.morphic/components/icons.js', 'lively.morphic'],
             ['lively.morphic/components/loading-indicator.js', 'lively.components', imports => `\{${imports}\}`],
-            //['lively.morphic/text/input-line.js', 'lively.components', imports => `\{${imports}\}`],
             ['lively.morphic/components', 'lively.components'],
             ['lively.components/markers.js', 'lively.halos'],
-            ['lively.morphic/ide', 'lively.ide']
+            ['lively.morphic/ide', 'lively.ide'],
+            ['lively.morphic/text/ui.js', 'lively.ide', null, 'text/ui.js']
           ];
       for (let mod in modules) {
         var moduleSource = modules[mod]["index.js"];
@@ -195,11 +195,11 @@ For now only a simple default theme...
         let serialized = snapshot[key], klass = serialized["lively.serializer-class-info"];
         if (!klass || !klass.module) continue;
         let p = klass.module.package.name + "/" + klass.module.pathInPackage;
-        for (let [prefix, replacement] of nameToPackages) {
+        for (let [prefix, replacement, tfm, pathInPackage] of nameToPackages) {
           if (p.includes(prefix)) {
             klass.module.package.name = replacement;
             klass.module.package.version = '0.1.0';
-            klass.module.pathInPackage = p.substring(p.indexOf(prefix) + prefix.length + 1) || "index.js";
+            klass.module.pathInPackage = pathInPackage || p.substring(p.indexOf(prefix) + prefix.length + 1) || "index.js";
             break;
           }
         }
