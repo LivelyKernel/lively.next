@@ -4,16 +4,18 @@ export * from "./morph.js";
 export * from "./world.js";
 export * from "./text/morph.js";
 export * from "./text/label.js";
+export * from "./text/anchors.js";
 export * from "./html-morph.js";
 export * from "./env.js";
 export * from "./layout.js";
 export { StyleSheet } from "./style-sheets.js";
 export { ShadowObject } from "./rendering/morphic-default.js";
-export { Button } from "lively.components/buttons.js";
-export { Menu } from "lively.components/menus.js";
+export { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./rendering/dom-helper.js";
+export { easings } from "./rendering/animations.js";
 export * from "./tooltips.js";
 export { Icon } from "./text/icons.js";
-export * from "lively.components/list.js";
+export { loadMorphFromSnapshot } from './serialization.js'
+export * from './morphicdb/index.js'
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -21,13 +23,13 @@ import { World, Hand } from "./world.js";
 import { Morph, Image, Ellipse, Triangle, Path, Polygon, LineMorph } from "./morph.js";
 import { Text } from "./text/morph.js";
 import { Label } from "./text/label.js";
+import { HTMLMorph } from './html-morph.js';
+import InputLine, { PasswordInputLine } from "./text/input-line.js";
+export { InputLine, PasswordInputLine };
+
 import { Button } from "lively.components/buttons.js";
 import { CheckBox, LabeledCheckBox } from "lively.components/widgets.js";
 import { List, DropDownList } from "lively.components/list.js";
-import { HTMLMorph } from './html-morph.js';
-import Window from "lively.components/window.js";
-import InputLine from "./text/input-line.js";
-export { Window, InputLine };
 
 export function morph(props = {}, opts = {restore: false}) {
   var klass = Morph;
@@ -45,13 +47,14 @@ export function morph(props = {}, opts = {restore: false}) {
         case 'input':           klass = InputLine; break;
         case 'label':           klass = Label; break;
         case 'list':            klass = List; break;
+        case 'polygon':         klass = Polygon; break;
+        case 'line':            klass = LineMorph; break;
+        case 'html':            klass = HTMLMorph; break;
+        // lively.components, find a way to extract these in the future
         case 'dropdownlist':    klass = DropDownList; break;
         case 'button':          klass = Button; break;
         case 'checkbox':        klass = CheckBox; break;
         case 'labeledcheckbox': klass = LabeledCheckBox; break;
-        case 'polygon':         klass = Polygon; break;
-        case 'line':            klass = LineMorph; break;
-        case 'html':            klass = HTMLMorph; break;
       }
   }
 
