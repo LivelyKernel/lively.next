@@ -24,8 +24,11 @@ export function serializeMorph(m, options) {
   return serialize(m, normalizeOptions(options));
 }
 
-export function deserializeMorph(idAndSnapshot, options) {
-  return deserializeWithMigrations(idAndSnapshot, migrations, normalizeOptions(options));
+export function deserializeMorph(idAndSnapshot, options={}) {
+  return deserializeWithMigrations(
+    idAndSnapshot, 
+    options.migrations || migrations,
+    normalizeOptions(options));
 }
 
 
@@ -67,6 +70,7 @@ export async function saveWorldToResource(world = World.defaultWorld(), toResour
   // pretty printing bloats 2x!
   let i;
   if (showIndicator) {
+    const { LoadingIndicator } = await System.import("lively.components/loading-indicator.js");
     i = LoadingIndicator.open(typeof showIndicator === "string" ?
       showIndicator : "Snapshotting...");
     await i.whenRendered(); await promise.delay(100);
@@ -90,13 +94,10 @@ export function copyMorph(morph) {
 
 import { registerPackage, getPackage, ensurePackage, lookupPackage, semver } from "lively.modules";
 import { createFiles } from "lively.resources";
-import LoadingIndicator from "lively.components/loading-indicator.js";
 import { promise } from "lively.lang";
 import { migrations } from "./object-migration.js";
 
-import ObjectPackage from "lively.classes/object-classes.js";
-
-const objectScriptingEnabled = !!ObjectPackage;
+let objectScriptingEnabled = false;
 
 export async function createMorphSnapshot(aMorph, options = {}) {
   const isNode = System.get("@system-env").node;
@@ -228,7 +229,7 @@ export function packagesOfSnapshot(snapshot) {
   return findPackagesInFileSpec(snapshot.packages)
 }
 
-async function loadPackagesAndModulesOfSnapshot(snapshot) {
+export async function loadPackagesAndModulesOfSnapshot(snapshot) {
   // embedded package definitions
   if (snapshot.packagesToRegister) {
     for (let pName of snapshot.packagesToRegister) {
@@ -267,6 +268,8 @@ async function loadPackagesAndModulesOfSnapshot(snapshot) {
       p = await ensurePackage(url);
       await p.reload({forgetEnv: false, forgetDeps: false});
       // ensure object package instance
+      const { default: ObjectPackage } = await System.import("lively.classes/object-classes.js");
+      objectScriptingEnabled = !!ObjectPackage;
       objectScriptingEnabled && ObjectPackage.withId(p.name);
     }
   }
