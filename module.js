@@ -4,7 +4,7 @@ import { isURL } from "lively.modules/src/url-helpers.js";
 import { join, parent } from "lively.resources/src/helpers.js";
 import { parse, stringify, transform, nodes, query } from "lively.ast";
 import { findUniqJsName } from "./util.js";
-import { string } from "lively.lang";
+import { string, arr } from "lively.lang";
 import { isString } from "lively.lang/object.js";
 import { prepareCodeForCustomCompile, prepareTranslatedCodeForSetterCapture } from "lively.modules/src/instrumentation.js";
 import { module } from "lively.modules/index.js";
@@ -99,6 +99,14 @@ export class Module {
   parse() { throw new Error("Implement me!"); }
   async resolveImports(bundle) { await this.parse(); return this; }
   transformToRegisterFormat(opts) {  throw new Error("Implement me!"); }
+  
+  getDependenciesLocatedIn(pkg) {
+    return [...this.dependencies.keys()].filter(m => m.package == pkg);
+  }
+
+  getDependentsOutsideOfPackage(pkg) {
+    return [...this.dependents].filter(m => !!m.package && m.package != pkg && !m.package.standaloneGlobal)
+  }
 }
 
 export class StandaloneModule extends Module {
@@ -106,7 +114,11 @@ export class StandaloneModule extends Module {
   async parse() { await this.source() }
 
   wrapStandalone(source, runtimeGlobal) {
-    return `(function(module, exports = {}, require = () => {}) {\n${source}\n})(${runtimeGlobal}.globalModules["${this.qualifiedName}"] = {exports: {}})`;
+    const pkg = this.package;
+    // this needs to create the corresponding package as well
+    return `(function(module, exports = {}, require = () => {}) {
+             ${source}
+           })(${runtimeGlobal}.globalModules["${this.qualifiedName}"] = {exports: {}})`;
   }
 
   get qualifiedName() {
@@ -253,19 +265,18 @@ export class JSModule extends Module {
     let {rawDependencies} = this;
     for (let localName in rawDependencies) {
       let {imports} = rawDependencies[localName],
-          {module: otherModule, isPackageImport} = this.resolveImport(localName, bundle);
+          {module: otherModule, isPackageImport} = this.resolveImport(localName, bundle, imports);
       this.addDependency(otherModule, {imports, localName, isPackageImport});
     }
 
     return this;
   }
 
-  resolveImport(localName, bundle) {
-    
+  resolveImport(localName, bundle, imports) {
     if (isURL(localName)) {
       return {
         module: bundle.findModuleWithId(localName)
-             || bundle.addModule(Module.create({name: localName, id: localName, package: null}))
+             || bundle.addModule(new StandaloneModule({name: localName, id: localName, package: null}))
       };
     }
 
@@ -295,7 +306,7 @@ export class JSModule extends Module {
             if (remappedName["~node"] == '@empty')
               return {
                 isPackageImport,
-                module: bundle.findModuleWithId('@empty') || bundle.addModule(bundle.addModule(new EmptyModule()))
+                module: bundle.findModuleWithId('@empty') || bundle.addModule((new EmptyModule()))
               }
             if (remappedName.startsWith(".")) {
               id = join(this.package.path, remappedName);
@@ -306,7 +317,7 @@ export class JSModule extends Module {
             return {
               isPackageImport,
               module: bundle.findModuleWithId(id)
-                   || bundle.addModule(bundle.addModule(new StandaloneModule({name: localName, id, package: null})))
+                   || bundle.addModule(new StandaloneModule({name: localName, id, package: null}))
             }
           }
         }
@@ -323,14 +334,12 @@ export class JSModule extends Module {
       nameInPackage = nameInPackage.replace('./', '/');
       if (!string.startsWith(nameInPackage, '/')) nameInPackage = '/' + nameInPackage;
     }
-
     return {
       isPackageImport,
       module: bundle.findModuleInPackageWithName(packageSpec, nameInPackage)
            || bundle.addModule(bundle.addModule(Module.create({name: nameInPackage, package: packageSpec})))
     };
   }
-
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // transform

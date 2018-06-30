@@ -15,6 +15,13 @@ export default class Bundle {
   }
 
   async resolveDependenciesStartFrom(moduleNameOrId, packageName, progress) {
+
+    // in order to preserve as much standalone (fast loading) modules as possible
+    // we try to reduce an import of a package's module from an external module
+    // to an import via index (in case that exists).
+    // By that way, we can still refrain from using the asynchronously loaded package
+    // and replace the module by its minified version.
+    
     let packageSpec, entryModule;
     if (packageName) {
       packageSpec = this.findPackage(packageName);
@@ -58,18 +65,25 @@ export default class Bundle {
     progress && progress.step('Inline Standalone Modules...', .4);
 
     // check if modules can be removed, and replaced by standalone packages
+
     for (let packageName in this.packages) {
       let pkg = this.packages[packageName];
-      if (pkg.canBeReplaceByStandalone(this)) {
+      if (pkg.standaloneGlobal && 
+          (pkg.canBeReplacedByStandalone(this) || pkg.tryToEnforceStandalone(this))) {
         let index = 'local://' + this.normalizeModuleName(pkg.qualifiedName),
             indexModule = this.modules[index],
-            standalone = new StandaloneModule({name: indexModule.name, id: indexModule.qualifiedName.replace('local://', ''), package: indexModule.package});
+            standalone = new StandaloneModule({
+              name: indexModule.name,
+              id: indexModule.qualifiedName.replace('local://', ''),
+              package: indexModule.package
+            });
         indexModule.dependents.forEach(d => {
           //swap out index reference
           let v = d.dependencies.get(indexModule);
-          d.dependencies.delete(indexModule)
+          d.dependencies.delete(indexModule);
           d.dependencies.set(standalone, v);
         })
+        console.log('deleting', pkg.getModules(this).map(m => m.qualifiedName));
         pkg.getModules(this).forEach(m => delete this.modules[m.qualifiedName]) // remove all others
         // alter source for index module
         // fixme: populate recorder to make module system happy
@@ -119,6 +133,11 @@ export default class Bundle {
     moduleNameMap[module.qualifiedName] = module;
     let entries = graph[module.qualifiedName] = []
     for (let dep of module.dependencies.keys()) {
+      if (!this.modules[dep.qualifiedName]) {
+        // ensure that the corresponding standalone is in the graph
+        dep = this.findModuleInPackageWithName(dep._package, '/index.js');
+        if (!dep) continue;
+      }
       entries.push(dep.qualifiedName)
       this.buildGraph(dep, graph, moduleNameMap);
     }
@@ -148,7 +167,6 @@ export default class Bundle {
       progress && progress.step('start resolving deps...', 0);
       await this.resolveDependenciesStartFrom(entryId, null, progress);
     }
-
     let entry = this.entryModule;
     progress && progress.step('building graph...', .5);
     let g = this.buildGraph(entry);
