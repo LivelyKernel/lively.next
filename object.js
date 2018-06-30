@@ -245,7 +245,8 @@ function inspect(object, options, depth) {
   //   printFunctionSource: BOOLEAN,
   //   escapeKeys: BOOLEAN,
   //   maxDepth: NUMBER,
-  //   customPrinter: FUNCTION
+  //   customPrinter: FUNCTION,
+  //   maxNumberOfKeys: NUMBER
   // }
   options = options || {};
   depth = depth || 0;
@@ -285,7 +286,7 @@ function inspect(object, options, depth) {
   if (isArray) {
     printedProps = object.map(function(ea) { return inspect(ea, options, depth + 1); });
   } else {
-    printedProps = Object.keys(object)
+    const propsToPrint = Object.keys(object)
       .sort(function(a, b) {
         var aIsFunc = typeof object[a] === 'function',
             bIsFunc = typeof object[b] === 'function';
@@ -295,13 +296,19 @@ function inspect(object, options, depth) {
           return 0;
         }
         return aIsFunc ? 1 : -1;
-      })
-      .map(function(key, i) {
-        if (isArray) inspect(object[key], options, depth + 1);
-        var printedVal = inspect(object[key], options, depth + 1);
-        return options.escapeKeys ?
-          JSON.stringify(key) : key + ": " + printedVal;
       });
+    for (let i = 0; i<propsToPrint.length; i++) {
+      if (i > (options.maxNumberOfKeys || Infinity)) {
+        const hiddenEntryCount = propsToPrint.length - i;
+        printedProps.push(`...${hiddenEntryCount} hidden ${hiddenEntryCount > 1 ? 'entries' : 'entry'}...`)
+        break;
+      }
+      const key = propsToPrint[i];
+      if (isArray) inspect(object[key], options, depth + 1);
+      var printedVal = inspect(object[key], options, depth + 1);
+      printedProps.push(options.escapeKeys ?
+          JSON.stringify(key) : key + ": " + printedVal);
+    }
   }
 
   if (printedProps.length === 0) { return openBr + closeBr; }
