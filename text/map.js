@@ -1,5 +1,5 @@
 import { Canvas } from "lively.components/canvas.js";
-import { connect } from "lively.bindings/index.js";
+import { connect } from "lively.bindings";
 import { fun, promise } from 'lively.lang';
 import { pt, Color } from "lively.graphics";
 

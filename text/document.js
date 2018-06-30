@@ -230,13 +230,12 @@ class InnerTreeNode extends TreeNode {
       lineSpec.parent = this;
       return lineSpec;
     }
-
     let textAndAttributes = isString ?
           [lineSpec, null] :
           lineSpec.textAndAttributes || [lineSpec.text|| "", null],
         width = isString ? 0 : lineSpec.width || 0,
         height = isString ? 0 : lineSpec.height || 0;
-
+    
     return new Line({parent: this, width, height, textAndAttributes});
   }
 
@@ -901,7 +900,6 @@ export class Line extends TreeNode {
     let {parent, text, height} = this,
         deltaLength = (newText.length+1) - (text.length+1),
         deltaHeight = 0;
-
     // tokenizer invalidation
     if (this.modeState && this.modeState._string !== newText)
       this.modeState = null;

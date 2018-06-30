@@ -1,5 +1,5 @@
 import { obj, arr, string, properties } from "lively.lang";
-import { Morph, config } from "lively.morphic";
+import { Morph, config } from "../index.js";
 import { Rectangle, Color } from "lively.graphics";
 import { signal } from "lively.bindings";
 import { h } from "virtual-dom";

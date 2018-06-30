@@ -198,7 +198,14 @@ AfterTextRenderHook.prototype.reset = function(morph) {
 AfterTextRenderHook.prototype.updateLineHeightOfNode = function(morph, docLine, lineNode) {
 
   if (docLine.height === 0 || docLine.hasEstimatedExtent) {
-    var {height: nodeHeight, width: nodeWidth} = lineNode.getBoundingClientRect();
+    
+    const tfm = morph.getGlobalTransform().inverse();
+    tfm.e = tfm.f = 0;
+    if (tfm.getScale() != 1 || tfm.getRotation() != 0) {
+      lineNode.style.transform = tfm.toString()
+    }
+    const {height: nodeHeight, width: nodeWidth} = lineNode.getBoundingClientRect();
+    lineNode.style.transform = '';
     if (nodeHeight && nodeWidth && (docLine.height !== nodeHeight || docLine.width !== nodeWidth)) {
       // console.log(`[${docLine.row}] ${nodeHeight} vs ${docLine.height}`)
       docLine.changeExtent(nodeWidth, nodeHeight, false);

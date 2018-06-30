@@ -1,16 +1,18 @@
 /*global System,Map,WeakMap*/
-import { config, morph, Morph } from "lively.morphic";
 import { Rectangle, Point, rect, Color, pt } from "lively.graphics";
-import { Selection, MultiSelection } from "./selection.js";
 import { string, obj, fun, promise, arr } from "lively.lang";
-import Document, {objectReplacementChar} from "./document.js";
 import { signal, connect, disconnect } from "lively.bindings";
+import { Shapes, Intersection } from 'kld-intersections';
+import { module } from "lively.modules";
+
+import { config, morph, Morph } from "../index.js";
+import { Selection, MultiSelection } from "./selection.js";
+import Document, {objectReplacementChar} from "./document.js";
 import { Anchor } from "./anchors.js";
 import { Range } from "./range.js";
 import { eqPosition, lessPosition } from "./position.js";
 import KeyHandler from "../events/KeyHandler.js";
 import { Label } from "./label.js";
-import InputLine from "./input-line.js";
 import { Snippet } from "./snippets.js";
 import { UndoManager } from "../undo.js";
 import { TextSearcher } from "./search.js";
@@ -20,7 +22,6 @@ import commands from "./commands.js";
 import { textAndAttributesWithSubRanges } from "./attributes.js";
 import { serializeMorph, deserializeMorph } from "../serialization.js";
 import { getSvgVertices } from "../rendering/property-dom-mapping.js";
-import { Shapes, Intersection } from 'kld-intersections';
 
 export class Text extends Morph {
 
@@ -2209,6 +2210,7 @@ export class Text extends Morph {
   }
 
   textPositionFromPoint(point) {
+    // localized Point
     return this.textLayout.textPositionFromPoint(this, point);
   }
 
@@ -2644,7 +2646,7 @@ export class Text extends Morph {
       },
       {
         command: "open text attribute controls",
-        alias: "edit text attribtues",
+        alias: "edit text attributes",
         target: this
       },
       {isDivider: true},

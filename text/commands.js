@@ -23,7 +23,11 @@ var commands = [
     doc: "attempts to copy selection via browser interface",
     scrollCursorIntoView: false,
     multiSelectAction: "single",
-    exec: (morph, opts = {collapseSelection: true, delete: false, dontTryNativeClipboard: false}) => {
+    exec: function (morph, opts = {
+      collapseSelection: true,
+      delete: false,
+      dontTryNativeClipboard: false
+    }) {
       var sel = morph.selection,
           fullText = sel.text,
           collapseSelection = opts.hasOwnProperty("collapseSelection") ?
@@ -120,7 +124,7 @@ var commands = [
 
   {
     name: "browse clipboard",
-    exec: async (morph) => {
+    exec: async function(morph) {
       var {pointer, buffer} = morph.env.eventDispatcher.killRing,
           items = buffer.map(value => ({isListItem: true, string: string.truncate(value, 80).replace(/\n/g, ""), value})),
           {selected} = await morph.world().filterableListPrompt(
@@ -293,7 +297,7 @@ var commands = [
     name: "cycle selection contents",
     documentation: "If there are multiple selections, will take the text of the first one and replace the second one with it, the text of the second will replace the third, the last selection contents will replace the contents of the first.",
     multiSelectAction: "single",
-    exec(ed) {
+    exec: function (ed) {
       let sels = ed.selection.selections;
       ed.undoManager.group();
       sels.reduce((newContent, sel) => {
@@ -885,7 +889,7 @@ var commands = [
       name: "fit text to column",
       handlesCount: true,
       multiSelectAction: "forEach",
-      exec: (morph, opts, count) => {
+      exec: function(morph, opts, count) {
 
         // Takes a selection or the current line and will insert line breaks so
         // that all selected lines are not longer than printMarginColumn or the
@@ -940,7 +944,7 @@ var commands = [
 
   {
     name: "lowercase",
-    exec: (morph) => {
+    exec: function(morph) {
       morph.undoManager.group();
       if (morph.selection.isEmpty()) morph.selection = morph.wordAt().range;
       morph.selection.text = morph.selection.text.toLowerCase();
@@ -951,7 +955,7 @@ var commands = [
 
   {
     name: "remove trailing whitespace",
-    exec: (morph) => {
+    exec: function(morph) {
       morph.undoManager.group();
       var i = 0;
       morph.withLinesDo(0, morph.documentEndPosition.row, (line, range) =>
@@ -964,7 +968,7 @@ var commands = [
 
   {
     name: "uppercase",
-    exec: (morph) => {
+    exec: function(morph) {
       morph.undoManager.group();
       if (morph.selection.isEmpty()) morph.selection = morph.wordAt().range;
       morph.selection.text = morph.selection.text.toUpperCase();
@@ -1321,7 +1325,7 @@ var usefulEditorCommands = [
 
   {
     name: "change editor mode",
-    async exec(ed) {
+    exec: async function(ed) {
       let filter = url => !url.endsWith("ide/editor-plugin.js")
                         && url.endsWith("editor-plugin.js"),
           results = await lively.modules.getPackage("lively.ide").resources(filter),
@@ -1359,7 +1363,7 @@ var usefulEditorCommands = [
 
   {
     name: "report token at cursor",
-    async exec(morph) {
+    exec: async function(morph) {
       let {token, start, end} = morph.tokenAt(morph.cursorPosition) || {};
       morph.setStatusMessage(token ? `${token} ${start.column} => ${end.column}` : "no token");
       return true;
