@@ -169,6 +169,7 @@ export class Morph {
 
       reactsToPointer: {
         group: "interaction",
+        isStyleProp: true,
         defaultValue: true
       },
 
