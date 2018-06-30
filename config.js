@@ -43,8 +43,7 @@ var config = {
      images. To date (25.7.17) this options still seems to be burdensome for browsers.
      Only reccomended for demos and presentations, not productive use.
   */
-  fastShadows: false,
-  defaultShadow: {distance: 18, blur: 6, color: Color.darkGray.withA(.5), spread: 2},
+  defaultShadow: {fast: true, distance: 18, blur: 30, color: Color.black.withA(.2), spread: 0},
   undoLevels: 20,
   halosEnabled: true,
   altClickDefinesThat: true,

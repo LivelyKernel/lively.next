@@ -85,7 +85,7 @@ function addShadowStyle(morph, style) {
   if (morph.isSvgMorph || morph.isImage) { style.filter = shadowCss(morph); return; }
 
   let {dropShadow} = morph
-  if (config.fastShadows || (dropShadow && dropShadow.inset)) {
+  if ((dropShadow && dropShadow.fast) || (dropShadow && dropShadow.inset)) {
     style.boxShadow = dropShadow ? dropShadow.toCss() : "none"
   } else {
     style.filter = dropShadow ? dropShadow.toFilterCss() : "none"

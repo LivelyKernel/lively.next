@@ -4,6 +4,7 @@ import { Color, RadialGradient, pt, Point, LinearGradient, rect } from "lively.g
 import { config } from "../index.js";
 import { styleProps, addSvgAttributes, addPathAttributes } from "./property-dom-mapping.js"
 import { h } from "virtual-dom";
+import bowser from 'bowser';
 
 // await $world.env.renderer.ensureDefaultCSS()
 export const defaultCSS = `
@@ -169,7 +170,7 @@ export class ShadowObject {
   
   constructor(args) {
     if (obj.isBoolean(args)) args = config.defaultShadow;
-    const {rotation, distance, blur, color, morph, inset, spread} = args;
+    const {rotation, distance, blur, color, morph, inset, spread, fast} = args;
     this.rotation = obj.isNumber(rotation) ? rotation : 45; // in degrees
     this.distance = obj.isNumber(distance) ? distance : 2;
     this.blur = obj.isNumber(blur) ? blur : 6;
@@ -177,6 +178,7 @@ export class ShadowObject {
     this.spread = spread || 0;
     this.color = color || Color.gray.darker();
     this.morph = morph;
+    this.fast = fast;
   }
   
   get distance() { return this._distance }
@@ -221,9 +223,9 @@ export class ShadowObject {
   get isShadowObject() { return true; }
 
   toCss() {
-    let {distance, rotation, color, inset, blur} = this,
+    let {distance, rotation, color, inset, blur, spread} = this,
         {x, y} = Point.polar(distance, num.toRadians(rotation));
-    return `${inset ? 'inset' : ''} ${color.toString()} ${x}px ${y}px ${blur}px ${this.spread}px`
+    return `${inset ? 'inset' : ''} ${color.toString()} ${x}px ${y}px ${blur}px ${spread}px`
   }
 
   toJson() {
@@ -238,9 +240,10 @@ export class ShadowObject {
   }
 
   toFilterCss() {
-    let {distance, rotation, blur, color} = this,
+    let {distance, rotation, blur, color, spread} = this,
         {x, y} = Point.polar(distance, num.toRadians(rotation));
-    return `drop-shadow(${x}px ${y}px ${blur / 2}px ${color.toString()})`;
+    blur = bowser.name == 'Chrome' ? blur / 3 : blur / 2;
+    return `drop-shadow(${x}px ${y}px ${blur}px ${color.toString()})`;
   }
 
 }
