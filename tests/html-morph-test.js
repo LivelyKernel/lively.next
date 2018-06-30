@@ -1,4 +1,4 @@
-/*global declare, it, describe, beforeEach, afterEach, before, after*/
+/*global declare, it, describe, beforeEach, afterEach, before, after,System*/
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { MorphicEnv } from "../index.js";
@@ -26,11 +26,11 @@ describe("html morph", function () {
     var m = world.addMorph(new HTMLMorph({html: "<div>This is a <h2>test</h2></div>", env}));
     await m.whenRendered();
     expect(m.domNode.innerHTML).equals("<div>This is a <h2>test</h2></div>", "initial rendering wrong");
-    expect(m.domNode.parentNode).equals(env.renderer.getNodeForMorph(m), "rendered node not child node of morph node");
+    expect(m.domNode.parentNode).equals(env.renderer.getNodeForMorph(m).children[0], "rendered node not child node of morph node");
     var node = m.domNode;
     m.position = pt(10,20);
     expect(m.domNode).equals(node, "node not the same after morph change");
-    expect(m.domNode.parentNode).equals(env.renderer.getNodeForMorph(m), "custom node child node of morph node after change");
+    expect(m.domNode.parentNode).equals(env.renderer.getNodeForMorph(m).children[0], "custom node child node of morph node after change");
   });
 
 });
