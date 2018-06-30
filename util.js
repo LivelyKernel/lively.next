@@ -35,18 +35,21 @@ export async function gzip(blob, inflate = true) {
       .find(coreInterface => coreInterface instanceof RemoteCoreInterface),
       res = await remoteInterface.runEvalAndStringify(`
         let { gzip } = await System.import('lively.freezer/util.js');
-        await gzip(${JSON.stringify(inflate ? blob : btoa(blob))}, ${inflate});`);
-      if (inflate) {
-        // if we instructed the server to compress, it sends the response in
-        // base64, which we have to convert to utf8 such that we can
-        // write it to a file again.
-        return atob(res);
-      }
+        await gzip(${
+           JSON.stringify(blob) //JSON.stringify(inflate ? blob : btoa(blob))
+        }, ${inflate});`);
+      // if (inflate) {
+      //   // if we instructed the server to compress, it sends the response in
+      //   // base64, which we have to convert to utf8 such that we can
+      //   // write it to a file again.
+      //   return atob(res);
+      // }
       return res;
   }
   let zlib = await System.import('zlib');
   let gzipFunc = (inflate ? zlib.gzipSync : zlib.gunzipSync);
   blob = inflate ? blob : new Buffer(blob, 'base64');
   let compressed = gzipFunc(blob);
-  return compressed.toString(inflate ? 'base64' : 'utf8');
+  return compressed.toString('utf8');
+  //return compressed.toString(inflate ? 'base64' : 'utf8');
 }
