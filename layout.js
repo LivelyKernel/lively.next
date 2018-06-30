@@ -13,7 +13,8 @@ class Layout {
 
   constructor(args = {}) {
     let {spacing, padding, border, container, manualUpdate,
-         autoResize, ignore, onScheduleApply, layoutOrder} = args;
+         autoResize, ignore, onScheduleApply, layoutOrder,
+         reactToSubmorphAnimations } = args;
     this.applyRequests = false;
     this.border = {top: 0, left: 0, right: 0, bottom: 0, ...border};
     this.ignore = ignore || [];
@@ -21,6 +22,7 @@ class Layout {
     this.active = false;
     this.container = container;
     this.manualUpdate = manualUpdate;
+    this.reactToSubmorphAnimations = reactToSubmorphAnimations || false;
     this.autoResize = autoResize != undefined ? autoResize : true;
     this.onScheduleApply = onScheduleApply || ((submorph, animation ,change) => {});
     if (layoutOrder) {
@@ -110,6 +112,8 @@ class Layout {
             && !this.extentChanged(this.container)
   }
 
+  get __dont_serialize__() { return ['lastAnim', 'animationPromise'] }
+
   forceLayout() {
     if (this.applyRequests) {
       this.applyRequests = false;
@@ -143,7 +147,7 @@ class Layout {
   }
 
   onSubmorphResized(submorph, change) {
-    this.scheduleApply(submorph, change.meta.animation, change)
+    this.scheduleApply(submorph, this.reactToSubmorphAnimations && change.meta.animation, change)
   }
   onSubmorphAdded(submorph, animation) {
     this.scheduleApply(submorph, animation)
@@ -153,7 +157,7 @@ class Layout {
   }
 
   onChange({selector, args, prop, value, prevValue, meta}) {
-    const anim = meta && meta.animation,
+    const anim = this.reactToSubmorphAnimations && meta && meta.animation,
           submorph = args && args[0];
     switch (selector) {
       case "removeMorph":
@@ -175,7 +179,7 @@ class Layout {
 
   onSubmorphChange(submorph, change) {
     if (change.meta && change.meta.isLayoutAction)
-      return this.scheduleApply(submorph, change.meta.animation)
+      return this.scheduleApply(submorph, this.reactToSubmorphAnimation && change.meta.animation)
     if (this.affectsLayout(submorph, change)) {
        this.onSubmorphResized(submorph, change);
     }
@@ -184,7 +188,7 @@ class Layout {
   changePropertyAnimated(target, propName, value, animate) {
     if (animate) {
       var {duration, easing} = animate;
-      target.animate({[propName]: value, duration, easing});
+      this.animationPromise = target.animate({[propName]: value, duration, easing});
     } else {
       target[propName] = value;
     }
@@ -423,7 +427,7 @@ export class HorizontalLayout extends FloatLayout {
   get spacing() { return this._spacing; }
   set spacing(offset) { this._spacing = offset; this.apply(); }
 
-  apply(animate = false) {
+  async apply(animate = false) {
     if (this.active || !this.container || !this.container.submorphs.length) return;
 
     var { direction, align, spacing, container, autoResize, layoutableSubmorphs } = this;
@@ -488,6 +492,7 @@ export class HorizontalLayout extends FloatLayout {
     }
     this.lastBoundsExtent = this.container.bounds().extent();
     this.active = false;
+    return this.animationPromise;
   }
 
   computeMinContainerExtent(spacing, container, layoutableSubmorphs) {
