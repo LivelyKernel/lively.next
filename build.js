@@ -9,6 +9,10 @@ var uglifyjs = require('uglify-es');
 var targetFile = "dist/lively.serializer2.js";
 var minified = "dist/lively.serializer2.min.js";
 
+if (!fs.existsSync('./dist')) {
+  fs.mkdirSync('./dist');
+}
+
 module.exports = Promise.resolve()
   .then(() => rollup.rollup({
     entry: "./index.js",
