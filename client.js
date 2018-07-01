@@ -5,8 +5,8 @@ import {
 import {
   VNode, patch as applyPatch, VText,
   create as createElement,
-} from "./node_modules/virtual-dom/dist/virtual-dom.js";
-import { fromJson as vdomFromJson } from "./node_modules/vdom-as-json/dist/vdom-as-json.js";
+} from "virtual-dom";
+import { fromJson as vdomFromJson } from "vdom-as-json";
 
 import EventCollector from "./client-events.js";
 import L2LClient from "lively.2lively/client.js";
@@ -181,6 +181,7 @@ export default class Client {
   patch(patch, useOptimizedPatchFormat) {
     if (!this.initialized)
       throw new Error("[lively.mirror client] trying to apply patch but client wasn't rendered yet");
+    debugger;
     if (useOptimizedPatchFormat) {
       replaceUndefinedPlaceholderWithUndefined(patch);
       applySerializedPatch(this.rootNode.childNodes[0], patch);

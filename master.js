@@ -2,14 +2,14 @@ import {
   serialize as serializePatch
 } from "./vdom-serialized-patch-browserified.js";
 
-import { diff, VNode, VText } from "./node_modules/virtual-dom/dist/virtual-dom.js";
+import { diff, VNode, VText } from "virtual-dom";
 
 import L2LClient from "lively.2lively/client.js";
 import { promise, obj, tree } from "lively.lang";
 import { inspect, show } from "lively.morphic";
 import { replaceUndefinedWithPlaceholder } from "./helper.js";
 
-import vdomAsJSON from "./node_modules/vdom-as-json/dist/vdom-as-json.js";
+import vdomAsJSON from "vdom-as-json";
 
 const debug = true,
       useOptimizedPatchFormat = true;

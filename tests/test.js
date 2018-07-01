@@ -5,7 +5,7 @@ import Client from "../client.js";
 
 import {
   h, create as createElement, diff, patch
-} from "../node_modules/virtual-dom/dist/virtual-dom.js";
+} from "virtual-dom";
 
 import {
   serialize as serializePatch, patch as patchSerialized
