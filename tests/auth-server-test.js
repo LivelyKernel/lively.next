@@ -72,13 +72,13 @@ describe("auth server", function () {
     it("with non-existing users", async () => {
       var {data, statusCode} = await req("/login", "POST", {name: "foo", password: "bar"});
       expect(statusCode).equals(400, "1");
-      expect(data).deep.equals({error: `/login failed, no user "foo"`});
+      expect(data).deep.equals({error: `no user "foo"`});
     });
 
     it("with wrong password", async () => {
       var {data} = await req("/login", "POST", {name: "test-user-1", password: "bar"});
       expect(data).deep.equals(
-        {error: "/login failed, password for \"test-user-1\" does not match"});
+        {error: "password for \"test-user-1\" does not match"});
     });
 
     it("with correct user and password", async () => {
@@ -100,7 +100,7 @@ describe("auth server", function () {
       var {data, statusCode} = await req("/register", "POST", {name: "test-user-1", password: "foo"});
       expect(statusCode).equals(400, "1");
       expect(data).containSubset({
-        error: "/register failed, A user with the name \"test-user-1\" is already registered!"
+        error: "A user with the name \"test-user-1\" is already registered!"
       });
     });
 
@@ -156,7 +156,7 @@ describe("auth server", function () {
       var {data} = await req("/check-password", "POST", {token: user.token, password: "bar"});
       expect(data).containSubset({status: false});
       var {data} = await req("/check-password", "POST", {name: "test-user-1", password: "bar"});
-      expect(data).containSubset({error: "/check-password failed, invalid request, need token and password"});
+      expect(data).containSubset({error: "invalid request, need token and password"});
     });
 
     it("verify correct token", async () => {
