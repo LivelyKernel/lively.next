@@ -880,7 +880,7 @@ class GrabHaloItem extends HaloItem {
   init(hand) {
     let {halo} = this;
     var undo = halo.target.undoStart("grab-halo");
-    undo.addTarget(halo.target.owner);
+    undo && undo.addTarget(halo.target.owner);
     this.hand = hand;
     halo.target.onGrab({hand, isShiftDown: () => false});
     halo.state.activeButton = this;
@@ -1697,13 +1697,18 @@ export class InteractiveMorphSelector {
     } else if (target && target.isEpiMorph) {
       target = target.morphBeneath(pos);
     }
-    while (hiddenMorph = [target, ...target.ownerChain()].find(m => !m.visible)) {
+    while (target && (hiddenMorph = [target, ...target.ownerChain()].find(m => { 
+             return !m.visible
+      }))) {
       target = hiddenMorph = hiddenMorph.morphBeneath(pos);
     }
+    if (target && filterFn && !filterFn(target)) {
+      target && target.ownerChain().find(filterFn); 
+    }
+    if (!target) return;
     if (target != possibleTarget
         && (!controllingMorph
-         || !target.ownerChain().includes(controllingMorph.getWindow()))
-        && (!filterFn || filterFn(target))) {
+         || !target.ownerChain().includes(controllingMorph.getWindow()))) {
       if (morphHighlighter) morphHighlighter.deactivate();
       this.possibleTarget = possibleTarget = target;
       if (possibleTarget && !possibleTarget.isWorld) {

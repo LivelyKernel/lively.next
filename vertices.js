@@ -1,12 +1,12 @@
 import { Morph, Path, StyleSheet } from "lively.morphic";
 import { pathAttributes } from "lively.morphic/rendering/morphic-default.js";
 import { Color, pt } from "lively.graphics";
-import { intersect, shape, bezier } from 'svg-intersections';
+import { Intersection, Shapes } from 'kld-intersections';
 import { arr } from "lively.lang";
 import { connect } from "lively.bindings";
 import { Leash } from "lively.components/widgets.js";
 
-intersect.plugin(bezier);
+//intersect.plugin(bezier);
 
 function pointOnLine(a, b, pos, bw) {
   var v0 = pt(a.x, a.y), v1 = pt(b.x, b.y),
@@ -288,7 +288,7 @@ export class SvgStyleHalo extends Path {
 
   intersectionShape() {
     const bw = this.target.borderWidth, o = this.target.origin;
-    return shape("path", {d: pathAttributes(this.target).attributes.d});
+    return Shapes.path(pathAttributes(this.target).attributes.d);
   }
 
   initShape() {

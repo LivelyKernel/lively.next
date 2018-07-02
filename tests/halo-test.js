@@ -6,7 +6,7 @@ import { pt, Color, Rectangle } from "lively.graphics";
 import { num, promise, fun } from "lively.lang";
 import { show } from "../index.js";
 
-var describInBrowser = System.get("@system-env").browser ? describe :
+var describeInBrowser = System.get("@system-env").browser ? describe :
   (title, fn) => { console.warn(`Test ${title} is currently only supported in a browser`); return xdescribe(title, fn); }
 
 var world, submorph1, submorph2, submorph3, eventDispatcher;
@@ -33,7 +33,7 @@ function closeToPoint(p1,p2) {
 }
 
 
-describInBrowser("halos", function() {
+describeInBrowser("halos", function() {
 
   this.timeout(10*1000);
 

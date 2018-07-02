@@ -1,6 +1,6 @@
 /*global Sine*/
 import {
-  Ellipse, Button, Icon,
+  Ellipse, Icon,
   Morph,
   Path,
   Text,
@@ -12,6 +12,7 @@ import { Color, pt, rect, Rectangle } from "lively.graphics";
 import { arr } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
 import { LabeledCheckBox, DropDownSelector } from "lively.components/widgets.js";
+import { Button } from "lively.components/buttons.js";
 import { Menu } from "lively.components/menus.js";
 import { NumberWidget } from "lively.ide/value-widgets.js";
 import { InteractiveMorphSelector } from "./morph.js";
@@ -396,7 +397,7 @@ class CellGuide extends Morph {
         }]]],
       ["Align at...",
         ['center',  ...new Rectangle().sides, ...new Rectangle().corners].map(side => {
-          return [[side + "  ", null, ...(this.cellGroup.align == side ? checked : unchecked)],
+          return [[side, {paddingRight: '2px'}, ...(this.cellGroup.align == side ? checked : unchecked), "  ", null],
             () => this.cellGroup.align = side];
         })
       ],
