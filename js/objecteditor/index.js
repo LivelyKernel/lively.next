@@ -427,6 +427,7 @@ export class ObjectEditor extends Morph {
         borderLeft: {width: 1, color: Color.gray},
         borderRight: {width: 1, color: Color.gray},
         layout: new GridLayout({
+          reactToSubmorphAnimations: true,
           rows: [0, {paddingTop: 2, paddingBottom: 2}],
           columns: [
             1, {paddingRight: 1, fixed: 30},

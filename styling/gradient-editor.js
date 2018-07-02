@@ -613,7 +613,8 @@ class FocusHandle extends Ellipse {
     return {
       gradientHandle: {},
       styleClasses: {defaultValue: ['focusHandle']},
-      extent: pt(20,20)
+      extent: {defaultValue: pt(20,20)},
+      fill: {defaultValue: Color.orange}
     }
   }
 

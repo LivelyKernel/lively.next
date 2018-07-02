@@ -696,10 +696,12 @@ export class PropertyControl extends DraggableTreeLabel {
         {fastRender, value, spec: {values}, valueString, keyString} = args;
     if (fastRender) {
       return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
-              ` ${value ? (value.valueOf ? value.valueOf() : value) : 'Not set'}`, {fontColor: Color.darkGray.darker()}]
+              ` ${value ? (value.valueOf ? value.valueOf() : value) : 'Not set'}`, 
+              {fontColor: Color.darkGray.darker()}]
     }
     propertyControl = this.baseControl(args);
-    return propertyControl.renderValueSelector(propertyControl, value && value.valueOf ? value.valueOf() : value, values);
+    return propertyControl.renderValueSelector(propertyControl, 
+      value && value.valueOf ? value.valueOf() : value, values);
   }
 
   static renderIconControl(args) {

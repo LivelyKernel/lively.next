@@ -65,7 +65,7 @@ export class Popover extends Morph {
         get() { return this.get('body').submorphs[0]; },
         set(m) {
           this.get('body').addMorph(m);
-          this.relayout();
+          this.whenRendered().then(() => this.relayout());
         }
       },
 
@@ -78,6 +78,7 @@ export class Popover extends Morph {
       layout: {
         initialize() {
           this.layout = new CustomLayout({
+            reactToSubmorphAnimations: true,
             relayout(self, animated) { self.relayout(animated); }
           });
         }
@@ -89,6 +90,7 @@ export class Popover extends Morph {
             {
               type: "polygon",
               name: "arrow",
+              topCenter: pt(0,0),
               borderColor: Color.transparent,
               vertices: [pt(-10, 0), pt(0, -15), pt(10, 0)]
             },
@@ -115,7 +117,8 @@ export class Popover extends Morph {
         arrow = this.get("arrow"),
         closeBtn = this.get("close button"),
         offset = arrow.height;
-    if (body.extent.equals(this.extent)) return;
+    //arrow.topCenter = pt(0,0);
+    //if (body.extent.equals(this.extent)) return;
     if (animated) {
       body.animate({topCenter: pt(0, offset), duration});
       closeBtn.animate({topRight: body.topRight.addXY(8, -8), duration});
@@ -128,13 +131,14 @@ export class Popover extends Morph {
   updateStyleSheet() {
     this.styleSheets = new StyleSheet({
       ".Popover": {
-        dropShadow: true,
+        //dropShadow: true,
         fill: Color.transparent,
         borderRadius: 4
       },
       "[name=body]": {
-        layout: new VerticalLayout({resizeContainer: true}),
+        layout: new VerticalLayout({resizeContainer: true, reactToSubmorphAnimations: true}),
         fill: this.popoverColor,
+        dropShadow: true,
         borderRadius: 4,
         clipMode: "hidden"
       },
@@ -752,8 +756,8 @@ export class ShadowPopover extends StylePopover {
   }
 
   updateShadow(args) {
-    let {color, spread, blur, distance, rotation, inset} = this.shadowValue,
-        shadow = {color, spread, blur, distance, rotation, inset, ...args};
+    let {color, spread, blur, distance, rotation, inset, fast} = this.shadowValue,
+        shadow = {fast, color, spread, blur, distance, rotation, inset, ...args};
     this.shadowValue = new ShadowObject(shadow);
   }
 
@@ -1010,7 +1014,7 @@ export class RectanglePopover extends StylePopover {
     return [
       {
         fill: Color.transparent,
-        extent: pt(120, 100),
+        extent: pt(120, 110),
         layout: new GridLayout({
           grid: [
             ["top", "top scrubber"],
@@ -1018,8 +1022,11 @@ export class RectanglePopover extends StylePopover {
             ["left", "left scrubber"],
             ["bottom", "bottom scrubber"]
           ],
-          columns: [0, {paddingLeft: 2}, 1, {paddingRight: 2, fixed: true, width: 40}],
-          rows: arr.flatten(arr.range(0, 3).map(i => [i, {paddingTop: 2, paddingBottom: 2}]))
+          columns: [0, {paddingLeft: 4}, 1, {paddingRight: 4, fixed: true, width: 40}],
+          rows: arr.flatten(arr.range(0, 3).map(i => [i, {
+             paddingTop: i == 0 ? 4 : 2, 
+             paddingBottom: i == 3 ? 4 : 2
+          }]))
         }),
         submorphs: arr.flatten(
           ["top", "right", "bottom", "left"].map(side => {

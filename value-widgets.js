@@ -832,6 +832,7 @@ export class PaddingWidget extends Label {
 
   async openPopover() {
     let editor = new RectanglePopover({rectangle: this.rectangle});
+    editor.relayout();
     await editor.fadeIntoWorld(this.globalBounds().center());
     connect(editor, "rectangle", this, "rectangle");
     signal(this, "openWidget", editor);
