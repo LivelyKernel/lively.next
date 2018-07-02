@@ -5,14 +5,10 @@ import { once, signal } from "lively.bindings";
 import {
   Morph,
   Tooltip,
-  List,
-  FilterableList,
   Image,
   inspect,
   config,
   MorphicEnv,
-  Window,
-  Menu
 } from "./index.js";
 import { TooltipViewer } from "./tooltips.js";
 
@@ -32,12 +28,13 @@ import { uploadFile } from "./events/html-drop-handler.js";
 import worldCommands from "./world-commands.js";
 import { loadWorldFromURL, loadWorldFromDB, loadWorldFromCommit, loadWorld } from "./world-loading.js";
 import LoadingIndicator from "lively.components/loading-indicator.js";
-
 // optional ide and halos imports, may be undefined (e.g. in frozen packages)
 import { StatusMessage, StatusMessageForMorph } from 'lively.halos/markers.js';
 import { GradientEditor } from "lively.ide/styling/gradient-editor.js";
 import Halo, { MorphHighlighter } from "lively.halos/morph.js";
-import "lively.ide/service-worker.js"; // ensure worker active
+import "lively.ide/service-worker.js";
+import { Window, List, FilterableList, Menu } from "lively.components";
+ // ensure worker active
 
 export class World extends Morph {
 
@@ -69,14 +66,15 @@ export class World extends Morph {
       styleSheets: {
         initialize() {
           this.styleSheets = arr.compact([
-            StatusMessage && StatusMessage.styleSheet,
-            Window.styleSheet,
-            FilterableList.styleSheet,
-            List.styleSheet,
-            LoadingIndicator.styleSheet,
-            GradientEditor && GradientEditor.styleSheet,
-            Tooltip.styleSheet
-          ]);
+            // fix these imports from IDE
+            StatusMessage,
+            GradientEditor,
+            Window,
+            FilterableList,
+            List,
+            LoadingIndicator,
+            Tooltip
+          ]).map(klass => klass.styleSheet).filter(Boolean);
         }
       }
 
@@ -341,7 +339,7 @@ export class World extends Morph {
       this._cachedDragIndicator = loadObjectFromPartsbinFolder("upload-indicator");
     let i = await this._cachedDragIndicator;
     if (!i.world()) i.openInWorld();
-    fun.debounceNamed("remove-uploadd-indicator", 1000, () => {
+    fun.debounceNamed("remove-upload-indicator", 1000, () => {
       this.nativeDrop_removeUploadIndicator();
     })();
   }
@@ -445,7 +443,11 @@ export class World extends Morph {
                 autoResize: true,
                 name: ea.name
               });
-              img.whenLoaded().then(() => img.openInWorld());
+              img.whenLoaded().then(() => {
+                img.extent = img.naturalExtent.scaleBy(.8 * this.visibleBounds().height / img.height);
+                img.openInWorld();
+                img.center = this.visibleBounds().center();
+              });
             });
           }
         }
@@ -496,6 +498,7 @@ export class World extends Morph {
         if (upload) {
           let uploadedMorph = await uploadFile(f, f.type);
           uploadedMorph && uploadedMorph.openInWorld();
+          uploadedMorph.center = this.visibleBounds().center();
         }
       } else if (item.kind === "string") {
         // show({kind: item.kind, type: item.type})
@@ -845,7 +848,7 @@ export class World extends Morph {
 
     promptMorph.openInWorldNear(
       opts.requester ?
-        visBounds.constrainPt(opts.requester.globalBounds().center()) :
+        visBounds.intersection(opts.requester.globalBounds()).center() :
         visBounds.center(), this);
 
     if (promptMorph.height > visBounds.height)
@@ -942,7 +945,7 @@ export class Hand extends Morph {
   static get properties() {
     return {
       fill: {defaultValue: Color.orange},
-      extent: {defaultValue: pt(4,4)},
+      extent: {defaultValue: pt(1,1)},
       reactsToPointer: {defaultValue: false},
       _grabbedMorphProperties: {
         serialize: false,
@@ -950,6 +953,7 @@ export class Hand extends Morph {
       }
     }
   }
+  
   constructor(pointerId) {
     super({pointerId});
   }
@@ -1039,7 +1043,8 @@ export class Hand extends Morph {
               m.acceptsDrops && !grabbedMorphs.includes(m)
               && grabbedMorphs.every(ea => ea.wantsToBeDroppedOn(m)) &&
               optFilterFn(m, i)
-          : m => !this.isAncestorOf(m) && m.acceptsDrops;
+          : m => !this.isAncestorOf(m) && m.acceptsDrops &&
+            grabbedMorphs.every(ea => ea.wantsToBeDroppedOn(m));
     return morphs.find(filterFn);
   }
 
