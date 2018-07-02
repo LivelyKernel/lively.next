@@ -62,7 +62,6 @@ describe('l2l broadcast', function() {
   });
 
   it('can connect to default room', async () => {
-    // FIXME... too low level...!?
     var namespace = '/l2l-test',
         id = client1.socketId,
         contents = io.nsps[namespace].adapter.rooms['defaultRoom'];
@@ -92,7 +91,7 @@ describe('l2l broadcast', function() {
   it('client can exit room correctly', async() => {
     await client1.joinRoom('testRoom');
 
-    var {data} = await client1.listRoomMembers("testRoom");
+    var data = await client1.listRoomMembers("testRoom");
     expect(data).deep.equals({
       length: 1,
       room: "testRoom",
@@ -101,7 +100,7 @@ describe('l2l broadcast', function() {
 
     await client1.leaveRoom("testRoom");
 
-    var {data} = await client1.listRoomMembers("testRoom");
+    var data = await client1.listRoomMembers("testRoom");
     expect(data).deep.equals({length: 0, room: "testRoom", sockets: {}});
   });
 
@@ -123,7 +122,7 @@ describe('l2l broadcast', function() {
 
       client1.broadcast('testRoom', "test", {payload: "test for broadcast message"});
 
-      await promise.waitFor(200, () => client2Received.length);
+      await promise.waitFor(1000, () => client2Received.length);
 
       expect(client1Received).deep.equals([]);
 
@@ -138,7 +137,7 @@ describe('l2l broadcast', function() {
   });
 
 
-  xdescribe("multi server", () => {
+  describe("multi server", () => {
 
     var debug = false,
         port2 = 9008, port3 = 9007,
@@ -202,7 +201,9 @@ describe('l2l broadcast', function() {
     });
 
     it('send broadcast message from server to server without sending to himself',async() =>{
-
+      await promise.waitFor(1000, () => (client3.trackerId), {});
+      await promise.waitFor(1000, () => (client4.trackerId), {});
+      
       expect(client3.trackerId == testServer2.findPlugin("Lively2LivelyPlugin").l2lTracker.id)
         .equals(true, "Expect Client 3 to connect to Tracker 2");
 
@@ -218,9 +219,9 @@ describe('l2l broadcast', function() {
 
       // Others should receive
       await promise.waitFor(200, () => (client4Received.length > 0), {});
-      expect(client4Received).deep.equals([{foo: 23}]);
+      expect(client4Received[0].data).deep.equals({payload: "test for broadcast message"});
       await promise.waitFor(200, () => (client1Received.length > 0), {});
-      expect(client1Received).deep.equals([{bar: 24}]);
+      expect(client1Received[0].data).deep.equals({payload: "test for broadcast message"});
     });
 
   });

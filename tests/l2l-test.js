@@ -175,12 +175,9 @@ describe('l2l', function() {
 
   });
 
-  xit('client gets list of all trackers', async () => {
-    // FIXME...!
-    var trackers = tracker.getTrackerList()
-    console.log(trackers.length)
-    expect(trackers.length).greaterThan(0)
-    return;
+  it('client gets list of all trackers', async () => {
+    var trackers = tracker.getTrackerList();
+    expect(trackers.length).greaterThan(0);
   });
 
   describe("client-to-client", () => {

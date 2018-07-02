@@ -165,7 +165,7 @@ export default class L2LClient extends L2LConnection {
 
   get socket() { return this._socketioClient; }
 
-  get socketId() { return this.socket ? `${this.namespace}#${this.socket.id}` : null; }
+  get socketId() { return this.socket ? this.socket.id : null; }
 
   isOnline() {
     return this.socket && this.socket.connected;

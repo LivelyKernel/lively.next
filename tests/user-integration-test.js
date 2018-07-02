@@ -36,6 +36,9 @@ async function startTracker(server) {
 
 xdescribe('l2l user integration', function() {
 
+  // rms 3.7.18: This seems to be a stub, since there is no authserver that can be found in the
+  //             codebase as of right now.
+
   this.timeout(5000);
 
   before(async () => {
@@ -72,7 +75,7 @@ xdescribe('l2l user integration', function() {
   });
 
 
-  it('Ensure anonymous user is created on init without options', async ()=>{
+  it('Ensure anonymous user is created on init without options', async () => {
     await promise.delay(100);
     expect(client1.user).to.be.an('object',"user object not present");
     expect(client1.user.name).equals('anonymous',"Username not created as anonymous")
