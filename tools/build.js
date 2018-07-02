@@ -1,4 +1,4 @@
-/*global require, process*/
+/*global require, process, module*/
 
 var fs = require("fs"),
     path = require("path"),
@@ -6,6 +6,10 @@ var fs = require("fs"),
     babel = require('rollup-plugin-babel');
 
 var targetFile = "dist/lively.user-client.js";
+
+if (!fs.existsSync('./dist')) {
+  fs.mkdirSync('./dist');
+}
 
 module.exports = Promise.resolve()
   .then(() => rollup.rollup({
