@@ -81,8 +81,14 @@ export class DynamicJavaScriptCompleter {
 
   async compute(textMorph) {
     let sel = textMorph.selection,
-        roughPrefix = sel.isEmpty() ?
-          textMorph.getLine(sel.lead.row).slice(0, sel.lead.column) : sel.text;
+        roughPrefix;
+
+    if (sel.isEmpty()) {
+       roughPrefix = textMorph.getLine(sel.lead.row);
+       roughPrefix = roughPrefix.slice(roughPrefix.lastIndexOf(':') + 1, sel.lead.column);
+    } else {
+       roughPrefix = sel.text.slice(Math.max(0, sel.text.indexOf(':')), 0); 
+    }
 
     if (!this.isValidPrefix(roughPrefix)) return [];
 
