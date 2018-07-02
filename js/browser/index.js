@@ -321,7 +321,7 @@ export default class Browser extends Window {
               bounds: codeEntityTreeBounds, ...style}),
 
             {name: "moduleCommands", bounds: moduleCommandBoxBounds,
-              layout: new HorizontalLayout({spacing: 2, autoResize: true, direction: "rightToLeft"}),
+              layout: new HorizontalLayout({spacing: 2, autoResize: false, direction: "rightToLeft"}),
               borderRight: {color: Color.gray, width: 1},
               reactsToPointer: false,
               fill: Color.transparent,
