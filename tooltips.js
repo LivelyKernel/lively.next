@@ -1,10 +1,14 @@
 import { Color } from "lively.graphics";
-import { Morph, StyleSheet, Label, HorizontalLayout, config } from "lively.morphic";
+import { Morph, StyleSheet, Label, HorizontalLayout, config } from "./index.js";
 
 export class TooltipViewer {
 
   constructor(world) {
-    this.currenMorph = world;
+    this.currentMorph = world;
+  }
+
+  get __dont_serialialize__() {
+    return ['currentTooltip', 'currentMorph']; 
   }
 
   notPartOfCurrentTooltip(newTarget) {
