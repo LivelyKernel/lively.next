@@ -6,7 +6,7 @@ import { GridLayout } from "lively.morphic/layout.js";
 import { Morph, World, config, InputLine } from "lively.morphic";
 import ShellEditorPlugin from "./editor-plugin.js";
 import DiffEditorPlugin from "../diff/editor-plugin.js";
-import { guessTextModeName } from "../editor-plugin.js";
+import EditorPlugin, { guessTextModeName } from "../editor-plugin.js";
 
 // var t = Terminal.runCommand("ls")
 // var t = Terminal.open()
@@ -71,7 +71,7 @@ export default class Terminal extends Morph {
               clearOnInput: true,
               historyId: "lively.shell-terminal-input-history",
               border: {width: 1, color: Color.gray},
-              plugins: [new ShellEditorPlugin()],
+              plugins: [new ShellEditorPlugin(), new EditorPlugin()],
               clipMode: "hidden",
               // ...props
             }),

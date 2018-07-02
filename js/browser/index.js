@@ -7,9 +7,9 @@ import {
   HorizontalLayout, 
   GridLayout,
   config,
-  Window,
   Icon
 } from "lively.morphic";
+import Window from "lively.components/window.js";
 import { HorizontalResizer } from "lively.components/resizers.js";
 import { Tree, TreeData } from "lively.components/tree.js";
 

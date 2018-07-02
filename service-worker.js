@@ -2,8 +2,8 @@
 import { allPlugins } from "lively.serializer2/plugins.js";
 import { serialize, deserialize } from "lively.serializer2";
 import { obj, string, properties, worker, promise } from "lively.lang";
-import { subscribe } from "lively.notifications/index.js";
-import { module } from "lively.modules/index.js";
+import { subscribe } from "lively.notifications";
+import { module } from "lively.modules";
 import { config } from "lively.morphic";
 
 !System.get('@system-env').worker
