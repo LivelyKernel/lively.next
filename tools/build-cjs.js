@@ -1,8 +1,10 @@
-import { module } from "lively.modules";
-import { getPackage } from "lively.modules";
-import { resource } from "lively.resources";
-import { arr } from "lively.lang";
-import { query } from "lively.ast";
+var System = require('systemjs');
+var { resource } = require("../deps/lively.resources");
+var { arr } = require("lively.lang");
+var { query } = require("../deps/lively.ast");
+var { getPackage, importPackage, module } = require("lively.modules");
+
+build();
 
 let files = [
   "util.js",
@@ -14,13 +16,15 @@ let files = [
 ]
 
 // await p.reload()
-
-let pkg = getPackage("flatn"),
-    bundledSource = await bundleToCjs(pkg, files),
-    dist = resource(pkg.url).join(`flatn-cjs.js`);
-await dist.parent().ensureExistance();
-await dist.write(bundledSource);
-
+async function build() {
+  let pkg = await importPackage(".");
+  pkg = getPackage('flatn');
+  let bundledSource = await bundleToCjs(pkg, files),
+      dist = resource(pkg.url).join(`flatn-cjs.js`);
+  await dist.parent().ensureExistance();
+  await dist.write(bundledSource);
+  process.exit();
+}
 
 // let m = module(pkg.url + "/" + files[1])
 // toCjsSource(m, await m.imports(), await m.exports(), await m.source(), files.map(ea => module(pkg.url + "/" + ea)))
@@ -42,6 +46,7 @@ async function bundleToCjs(pkg, bundleFiles) {
 }
 
 function toCjsSource(module, itsImports, itsExports, itsSource, itsAst, modulesInBundle) {
+  console.log(module.id);
   let moduleIds = modulesInBundle.map(ea => ea.id);
 
   let otherReplacements = query.topLevelDeclsAndRefs(itsAst).varDecls.map(ea => {
