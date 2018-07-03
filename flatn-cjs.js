@@ -55,7 +55,9 @@ async function npmSearchForVersions(pname, range = "*") {
     pname = pname.replace(/\//g, "%2f");
     // rms 18.6.18: npmjs.org seems to have dropped semver version resolution, so we do it by hand now
     const { versions } = await resource(`http://registry.npmjs.org/${pname}/`).readJson(),
-          version = semver.minSatisfying(Object.keys(versions), range),
+          version = pname == 'graceful-fs' ? 
+                       semver.maxSatisfying(Object.keys(versions), range, true) :
+                       semver.minSatisfying(Object.keys(versions), range, true),
           { name, dist: { shasum, tarball } } = versions[version];
     return { name, version, tarball };
   } catch (err) {
@@ -73,7 +75,7 @@ async function npmDownloadArchive(pname, range, destinationDir) {
   if (!archiveURL) {
     archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`;
   }
-  console.log(`[flatn] downloading ${name}@${range} - ${archiveURL}`);
+  console.log(`[flatn] downloading ${name}@${version} - ${archiveURL}`);
   let downloadedArchive = destinationDir.join(archive);
   await resource(archiveURL).beBinary().copyTo(downloadedArchive);
   return { downloadedArchive, name, version };
