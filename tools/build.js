@@ -18,6 +18,10 @@ var parts = {
   "babel-regenerator":       {source: placeholderSrc, path: require.resolve("babel-regenerator-runtime/runtime.js")}
 }
 
+if (!fs.existsSync('./dist')) {
+  fs.mkdirSync('./dist');
+}
+
 var partsSourceRead = Promise.all(
   Object.keys(parts).map(function(name) {
     if (parts[name].path)

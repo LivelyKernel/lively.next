@@ -20,8 +20,7 @@
   "dependencies": {
     "lively.lang": "^1.0.0",
     "lively.resources": "^0.1.18",
-    "pouchdb": "6.1.2",
-    "pouchdb-find": "^0.10.5"
+    "pouchdb": "6.1.2"
   },
   "devDependencies": {
     "babel-core": "^6.16.0",
@@ -34,7 +33,7 @@
     "babel-regenerator-runtime": "^6.5.0",
     "browserify": "^14.1.0",
     "mocha-es6": "^0.5",
-    "pouchdb-adapter-memory": "^6.4.3",
+    "pouchdb-adapter-memory": "6.1.2",
     "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.7.1",
     "loaderify": "^0.1.5",
@@ -49,8 +48,7 @@
     "main": "index.js",
     "map": {
       "pouchdb": "pouchdb/dist/pouchdb.js",
-      "pouchdb-adapter-mem": "./dist/pouchdb-adapter-mem.js",
-      "pouchdb-find": "pouchdb-find/dist/pouchdb.find.js"
+      "pouchdb-adapter-mem": "./dist/pouchdb-adapter-mem.js"
     }
   }
 }
