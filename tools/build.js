@@ -7,6 +7,10 @@ var babel = require('rollup-plugin-babel');
 
 var targetFile = "dist/lively.source-transform.js";
 
+if (!fs.existsSync('./dist')) {
+  fs.mkdirSync('./dist');
+}
+
 // output format - 'amd', 'cjs', 'es6', 'iife', 'umd'
 module.exports = Promise.resolve()
 
