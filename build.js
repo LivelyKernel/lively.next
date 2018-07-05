@@ -10,6 +10,10 @@ var targetFile2 = "dist/lively.resources.js";
 
 var regeneratorSource = fs.readFileSync(require.resolve("babel-regenerator-runtime/runtime.js"));
 
+if (!fs.existsSync('./dist')) {
+  fs.mkdirSync('./dist');
+}
+
 module.exports = Promise.resolve()
   .then(() => rollup.rollup({
     entry: "index.js",
