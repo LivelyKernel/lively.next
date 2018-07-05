@@ -1,12 +1,15 @@
 /*global require, process*/
 
 var fs = require("fs");
-var path = require("path");
 var rollup = require('rollup');
 var babel = require('rollup-plugin-babel');
 var uglify = require("uglify-es");
 
 var targetFile1 = "dist/lively-system-interface-only-local.js";
+
+if (!fs.existsSync('./dist')) {
+  fs.mkdirSync('./dist');
+}
 
 module.exports = Promise.resolve()
   .then(() => rollup.rollup({
