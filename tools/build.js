@@ -1,7 +1,6 @@
 /*global require, process*/
 
 var fs = require("fs");
-var path = require("path");
 var rollup = require('rollup');
 var babel = require('rollup-plugin-babel');
 var uglifyjs = require('uglify-es');
@@ -9,6 +8,10 @@ var targetFile = "dist/lively.graphics.js";
 var noDepsFile = "dist/lively.graphics-no_deps.js";
 
 var livelyLangSource = fs.readFileSync(require.resolve("lively.lang/dist/lively.lang.js"))
+
+if (!fs.existsSync('./dist')) {
+  fs.mkdirSync('./dist');
+}
 
 module.exports = Promise.resolve()
   .then(() => rollup.rollup({

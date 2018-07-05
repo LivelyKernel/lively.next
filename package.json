@@ -10,7 +10,7 @@
   },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
-    "build": "node build.js"
+    "build": "node tools/build.js"
   },
   "devDependencies": {
     "mocha-es6": "^0.5",
