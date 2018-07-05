@@ -7,6 +7,10 @@ var babel = require('rollup-plugin-babel');
 
 var targetFile = "dist/lively.classes.js";
 
+if (!fs.existsSync('./dist')) {
+  fs.mkdirSync('./dist');
+}
+
 // output format - 'amd', 'cjs', 'es6', 'iife', 'umd'
 module.exports = Promise.resolve()
 
