@@ -9,6 +9,10 @@ var fs = require("fs"),
 var targetFile = "dist/lively.lang.js",
     targetFileMin = "dist/lively.lang.min.js";
 
+if (!fs.existsSync('./dist')) {
+  fs.mkdirSync('./dist');
+}
+
 module.exports = Promise.resolve()
   .then(() => rollup.rollup({
     entry: "index.js",
