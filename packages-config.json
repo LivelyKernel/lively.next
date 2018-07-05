@@ -24,20 +24,20 @@
     "repoURL": "https://github.com/LivelyKernel/lively.vm"
   },
   {
-    "name": "lively.modules",
-    "repoURL": "https://github.com/LivelyKernel/lively.modules"
-  },
-  {
-    "name": "mocha-es6",
-    "repoURL": "https://github.com/rksm/mocha-es6"
-  },
-  {
     "name": "lively.resources",
     "repoURL": "https://github.com/LivelyKernel/lively.resources"
   },
   {
     "name": "lively.storage",
     "repoURL": "https://github.com/LivelyKernel/lively.storage"
+  },
+  {
+    "name": "lively.modules",
+    "repoURL": "https://github.com/LivelyKernel/lively.modules"
+  },
+  {
+    "name": "mocha-es6",
+    "repoURL": "https://github.com/rksm/mocha-es6"
   },
   {
     "name": "lively-system-interface",

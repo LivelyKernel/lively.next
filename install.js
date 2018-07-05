@@ -16,7 +16,9 @@ export async function install(baseDir, dependenciesDir, verbose) {
 
   var log = [],
       hasUI = typeof $world !== "undefined",
-      errored = false;
+      errored = false,
+      devDependenciesDir;
+
 
   let step1_ensureDirectories = true,
       step2_cloneLivelyPackages = true,
@@ -24,7 +26,8 @@ export async function install(baseDir, dependenciesDir, verbose) {
       step4_installPackageDeps = true,
       step5_runPackageInstallScripts = true,
       step6_syncWithObjectDB = true,
-      step7_setupAssets = true;
+      step7_setupAssets = true,
+      step8_runPackageBuildScripts = true;
 
   try {
 
@@ -43,8 +46,10 @@ export async function install(baseDir, dependenciesDir, verbose) {
       console.log("=> Ensuring existance of " + baseDir);
       if (baseDir.startsWith("/")) baseDir = "file://" + baseDir;
       if (dependenciesDir.startsWith("/")) dependenciesDir = "file://" + dependenciesDir;
+      devDependenciesDir = join(baseDir, 'dev-deps');
       await resource(baseDir).asDirectory().ensureExistance();
       await resource(dependenciesDir).asDirectory().ensureExistance();
+      await resource(devDependenciesDir).asDirectory().ensureExistance();
       await resource(baseDir).join("custom-npm-modules/").ensureExistance();
     }
 
@@ -72,7 +77,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // flatn setup
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    var packageMap = await buildPackageMap([dependenciesDir], [], packages.map(ea => ea.directory));
+    var packageMap = await buildPackageMap([dependenciesDir, devDependenciesDir], [], packages.map(ea => ea.directory));
     if (step3_setupFlatn) {
       console.log("=> Preparing flatn environment");
       let flatnBinDir = join(packageMap.lookup("flatn").location, "bin"),
@@ -108,12 +113,30 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step5_runPackageInstallScripts) {
       console.log(`=> running install scripts of ${packageMap.allPackages().length} packages`);
-      
+
       pBar && pBar.setValue(0)
       i = 0; for (let p of packages) {
         pBar && pBar.setLabel(`npm setup ${p.name}`);
         console.log(`build ${p.name} and its dependencies`);
         await buildPackage(p.directory, packageMap, ["dependencies"]);
+        pBar && pBar.setValue(++i / packages.length)
+      }
+    }
+
+    if (step8_runPackageBuildScripts) {
+      let env = process.env, status;
+      pBar && pBar.setValue(0)
+      i = 0; for (let p of packages) {
+        if (p.config.scripts && p.config.scripts.build) {
+          pBar && pBar.setLabel(`npm build ${p.name}`);
+          await installDependenciesOfPackage(
+            p.directory, devDependenciesDir, packageMap, ["devDependencies"], verbose);
+          console.log(`compiling ${p.name}`);
+          status = await exec('npm run build', {cwd: p.directory});
+          if (status.code) {
+            console.log(status.output)
+          }
+        }
         pBar && pBar.setValue(++i / packages.length)
       }
     }
