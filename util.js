@@ -5,7 +5,7 @@ import { join as j, basename } from "path";
 import { mkdirSync, symlinkSync, existsSync } from "fs";
 import { tmpdir as nodeTmpdir } from "os";
 import { resource } from "./deps/lively.resources.js";
-import semver from 'semver';
+import semver from "./deps/semver.min.js";
 
 const crossDeviceTest = {
   done: false,

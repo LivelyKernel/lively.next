@@ -1,4 +1,4 @@
-// >>> file:///Users/robin.schreiber/Development/lively.next/flatn/util.js
+// >>> file:///Users/robin.schreiber/Development/clean-lively.next/flatn/util.js
 /*global process, require, module, __filename*/
 
 var { exec } = require("child_process");
@@ -9,7 +9,7 @@ var { symlinkSync } = require("fs");
 var { existsSync } = require("fs");
 var { tmpdir: nodeTmpdir } = require("os");
 var { resource } = require("./deps/lively.resources.js");
-var semver = require("semver");
+var semver = require("./deps/semver.min.js");
 
 var crossDeviceTest = {
   done: false,
@@ -329,9 +329,9 @@ module.exports.x = x;
 module.exports.npmFallbackEnv = npmFallbackEnv;
 module.exports.gitSpecFromVersion = gitSpecFromVersion;
 module.exports.tmpdir = tmpdir;
-// <<< file:///Users/robin.schreiber/Development/lively.next/flatn/util.js
+// <<< file:///Users/robin.schreiber/Development/clean-lively.next/flatn/util.js
 
-// >>> file:///Users/robin.schreiber/Development/lively.next/flatn/package-map.js
+// >>> file:///Users/robin.schreiber/Development/clean-lively.next/flatn/package-map.js
 var fs = require("fs");
 var path = require("path");
 
@@ -936,9 +936,9 @@ class PackageSpec {
 module.exports.PackageMap = PackageMap;
 module.exports.AsyncPackageMap = AsyncPackageMap;
 module.exports.PackageSpec = PackageSpec;
-// <<< file:///Users/robin.schreiber/Development/lively.next/flatn/package-map.js
+// <<< file:///Users/robin.schreiber/Development/clean-lively.next/flatn/package-map.js
 
-// >>> file:///Users/robin.schreiber/Development/lively.next/flatn/dependencies.js
+// >>> file:///Users/robin.schreiber/Development/clean-lively.next/flatn/dependencies.js
 var { graph } = require("./deps/lively.lang.min.js");
 
 module.exports.buildStages = buildStages;
@@ -1019,9 +1019,9 @@ function graphvizDeps({deps, packages, resolvedVersions}) {
   graph += "\n}\n";
   return graph;
 }
-// <<< file:///Users/robin.schreiber/Development/lively.next/flatn/dependencies.js
+// <<< file:///Users/robin.schreiber/Development/clean-lively.next/flatn/dependencies.js
 
-// >>> file:///Users/robin.schreiber/Development/lively.next/flatn/download.js
+// >>> file:///Users/robin.schreiber/Development/clean-lively.next/flatn/download.js
 /*global require, module*/
 var { join: j } = require("path");
 
@@ -1149,9 +1149,9 @@ function addNpmSpecificConfigAdditions(configFile, config, name, version, gitURL
       `${config.name}@${semver.validRange(version)}`;
   return configFile.writeJson(Object.assign({ _id, _from }, config), true);
 }
-// <<< file:///Users/robin.schreiber/Development/lively.next/flatn/download.js
+// <<< file:///Users/robin.schreiber/Development/clean-lively.next/flatn/download.js
 
-// >>> file:///Users/robin.schreiber/Development/lively.next/flatn/build.js
+// >>> file:///Users/robin.schreiber/Development/clean-lively.next/flatn/build.js
 /*global System,process,global,require,module,__dirname*/
 var { join: j } = require("path");
 var fs = require("fs");
@@ -1372,9 +1372,9 @@ class BuildProcess {
 }
 
 module.exports.BuildProcess = BuildProcess;
-// <<< file:///Users/robin.schreiber/Development/lively.next/flatn/build.js
+// <<< file:///Users/robin.schreiber/Development/clean-lively.next/flatn/build.js
 
-// >>> file:///Users/robin.schreiber/Development/lively.next/flatn/index.js
+// >>> file:///Users/robin.schreiber/Development/clean-lively.next/flatn/index.js
 /*global require, module,process*/
 
 
@@ -1659,4 +1659,4 @@ async function installDependenciesOfPackage(
 
   return { packageMap, newPackages };
 }
-// <<< file:///Users/robin.schreiber/Development/lively.next/flatn/index.js
+// <<< file:///Users/robin.schreiber/Development/clean-lively.next/flatn/index.js
