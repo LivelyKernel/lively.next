@@ -12,6 +12,10 @@ var escodegenSource, acornSource, astSource;
 
 // output format - 'amd', 'cjs', 'es6', 'iife', 'umd'
 
+if (!fs.existsSync('./dist')) {
+  fs.mkdirSync('./dist');
+}
+
 module.exports = Promise.resolve()
   // 1. make sure deps are build
   .then(() => require("./build-acorn.js"))
