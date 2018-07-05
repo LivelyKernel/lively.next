@@ -8,6 +8,10 @@ var uglifyjs = require('uglify-es');
 
 var targetFile = "dist/lively.bindings.js";
 
+if (!fs.existsSync('./dist')) {
+  fs.mkdirSync('./dist');
+}
+
 // output format - 'amd', 'cjs', 'es6', 'iife', 'umd'
 module.exports = Promise.resolve()
 
