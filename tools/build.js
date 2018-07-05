@@ -1,7 +1,6 @@
 /*global require, process*/
 
 var fs = require("fs");
-var path = require("path");
 var rollup = require('rollup');
 var babel = require('rollup-plugin-babel');
 var uglify = require("uglify-js");
@@ -10,6 +9,10 @@ var targetFileNode = "dist/lively.2lively_client.node.js";
 var targetFile = "dist/lively.2lively_client.js";
 var targetFileMin = "dist/lively.2lively_client.min.js";
 var targetFileNoDeps = "dist/lively.2lively_client_no-deps.js";
+
+if (!fs.existsSync('./dist')) {
+  fs.mkdirSync('./dist');
+}
 
 async function httpGET(url) {
   let http = require(url.match(/^https:/) ? "https" : "http");
