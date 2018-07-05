@@ -3,6 +3,7 @@ import { promise } from "lively.lang";
 import { Icon, morph, Morph, StyleSheet, Image } from "lively.morphic";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { connect } from "lively.bindings";
+import bowser from 'bowser';
 
 export default class LoadingIndicator extends Morph {
 
@@ -20,7 +21,6 @@ export default class LoadingIndicator extends Morph {
       },
       ".LoadingIndicator [name=spinner]": {
         fill: Color.transparent,
-        extent: pt(100, 104),
         position: pt(0, 0),
         halosEnabled: false
       },
@@ -97,8 +97,10 @@ export default class LoadingIndicator extends Morph {
 
       submorphs: {
         initialize() {
+          let spinner;
           this.submorphs = [
-            new Image({
+            spinner = new Image({
+              extent: pt(100, 104),
               imageUrl: this.loadingImage,
               name: "spinner"
             }),
@@ -114,7 +116,11 @@ export default class LoadingIndicator extends Morph {
               label: Icon.textAttribute("times")
             }
           ];
-
+          if (bowser.name == 'Firefox') {
+            spinner.extent = pt(55,55);
+            spinner.origin = pt(25,25);
+            spinner.scale = 2;
+          }
         }
       }
     };
@@ -152,7 +158,7 @@ export default class LoadingIndicator extends Morph {
         [spinner, label, closeButton, progressBar] = this.submorphs,
         w = Math.max(spinner.width, label.width, 120) + padding.left() + padding.right(),
         h = ((progressBar && progressBar.height + 5) || 0 )
-            + spinner.height + label.height + padding.top() + padding.bottom();
+            + spinner.bounds().height + label.height + padding.top() + padding.bottom();
     this.extent = pt(w,h);
     spinner.topCenter = this.innerBounds().topCenter().addXY(0, padding.top());
     label.topCenter = spinner.bottomCenter.addXY(0, 4);
