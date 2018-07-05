@@ -18,12 +18,6 @@ if (!fs.existsSync('./dist')) {
 
 module.exports = Promise.resolve()
   // 1. make sure deps are build
-  .then(() => require("./build-acorn.js"))
-  .then(() => require("./build-escodegen.js"))
-  .then(() => {
-    escodegenSource = fs.readFileSync(escodegenBundle);
-    acornSource = fs.readFileSync(acornBundle);
-  })
 
   // 2. bundle local esm modules
   .then(() => rollup.rollup({
@@ -51,6 +45,15 @@ module.exports = Promise.resolve()
 
   // 3. inject dependencies
   .then(bundled => astSource = bundled.code)
+  .then(() => require("./build-acorn.js"))
+  .then(() => {
+    acornSource = fs.readFileSync(acornBundle);
+  })
+  .then(bundled => fs.writeFileSync(targetFile, combineSources()))
+  .then(() => require("./build-escodegen.js"))
+  .then(() => {
+    escodegenSource = fs.readFileSync(escodegenBundle);
+  })
   .then(() => fs.writeFileSync(targetFile, combineSources()))
   .then(() => console.log(`lively.ast bundled into ${process.cwd()}/${targetFile}`))
   .catch(err => { console.error(err.stack || err); throw err; })
@@ -66,7 +69,7 @@ function combineSources() {
   (function() {
     var module = undefined, require = undefined, define = undefined;
     ${acornSource};
-    ${escodegenSource};
+    ${escodegenSource || 'GLOBAL.escodegen = {escodegen: {}}'};
   })();
   (function() {
     ${astSource}
