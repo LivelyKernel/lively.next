@@ -31,6 +31,10 @@ var parts = {
 }
 // output format - 'amd', 'cjs', 'es6', 'iife', 'umd'
 
+if (!fs.existsSync('./dist')) {
+  fs.mkdirSync('./dist');
+}
+
 function escapeRegExp(str) {
   return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
   }
