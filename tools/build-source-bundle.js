@@ -6,8 +6,8 @@ var rollup = require('rollup');
 var babel = require('rollup-plugin-babel');
 var uglify = require("uglify-es");
 
-var targetFile1 = "dist/lively.modules_no-deps.js";
-var targetFile2 = "dist/lively.modules.js";
+var standaloneFile = "dist/lively.modules.js";
+var noDepsFile = "dist/lively.modules_no-deps.js";
 
 var placeholderSrc = "throw new Error('Not yet read')";
 
@@ -22,7 +22,7 @@ var parts = {
   "lively.resources":        {source: placeholderSrc, path: require.resolve("lively.resources/dist/lively.resources_no-deps.js")},
   "lively.storage":          {source: placeholderSrc, path: require.resolve("lively.storage/dist/lively.storage_with-pouch.js")},
   "systemjs-init":           {source: placeholderSrc, path: path.join(__dirname, "../systemjs-init.js")},
-  "babel-regenerator":       {source: placeholderSrc, path: require.resolve("babel-regenerator-runtime/runtime.js")}
+  "babel-regenerator":       {source: placeholderSrc, path: require.resolve("babel-regenerator-runtime")}
 }
 
 if (!fs.existsSync('./dist')) {
@@ -118,16 +118,16 @@ ${parts[key].source}
 
   // 4. create files
   .then(sources => {
-    fs.writeFileSync(targetFile1, sources.noDeps);
-    fs.writeFileSync(targetFile2, sources.complete);
+    fs.writeFileSync(noDepsFile, sources.noDeps);
+    fs.writeFileSync(standaloneFile, sources.complete);
     fs.writeFileSync(
-      targetFile1.replace('.js', '.min.js'), 
+      standaloneFile.replace('.js', '.min.js'), 
       uglify.minify(sources.complete, {
         output: { ascii_only: true }
       }).code
     );
     fs.writeFileSync(
-      targetFile2.replace('.js', '.min.js'), 
+      noDepsFile.replace('.js', '.min.js'), 
       uglify.minify(sources.noDeps, {
         output: { ascii_only: true }
       }).code
