@@ -21,7 +21,7 @@ var parts = {
   "lively.graphics":         {source: placeholderSrc, path: require.resolve('lively.graphics/dist/lively.graphics.js')},
   "lively.serializer2":      {source: placeholderSrc, path: require.resolve('lively.serializer2/dist/lively.serializer2.js')},
   "lively.bindings":         {source: placeholderSrc, path: require.resolve('lively.bindings/dist/lively.bindings.js')},
-  "virtual-dom":             {source: placeholderSrc, path: require.resolve('virtual-dom/dist/virtual-dom.min.js')},
+  "virtual-dom":             {source: placeholderSrc, path: require.resolve('virtual-dom/dist/virtual-dom.js')},
   "bowser":                  {source: placeholderSrc, path: require.resolve('bowser')},
   "kld-intersections":       {source: placeholderSrc, path: require.resolve("lively.morphic/lib/kld-intersections.min.js")},
   "svgjs":                   {source: placeholderSrc, path: require.resolve('svgjs')},
@@ -171,12 +171,12 @@ module.exports = Promise.resolve()
   //console.log(mangled);
   
     var wrapInOwnDeps = (source) => `
+${parts["web-animations-js"].source}\n
 (function() {
   ${parts["kld-intersections"].source}\n
-  ${parts["bowser"].source}
-  ${parts["virtual-dom"].source}
-  ${parts["web-animations-js"].source}
-  ${parts["svgjs"].source}
+  ${parts["bowser"].source}\n
+  ${parts["virtual-dom"].source}\n
+  ${parts["svgjs"].source}\n
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
