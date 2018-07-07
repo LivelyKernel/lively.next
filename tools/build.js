@@ -66,7 +66,7 @@ var noDeps = `(function() {
 
 var node = `(function() {
   var module = {exports: {}}, exports = module.exports;
-  ${fs.readFileSync("/Users/robert/Lively/lively-dev2/socket.io/examples/webpack-build/dist/socket.io-client.node.js")}
+  ${fs.readFileSync(require.resolve("socket.io-client/dist/socket.io.js"))}
   global.io = module.exports;
 })();
 (function() {
