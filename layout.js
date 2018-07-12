@@ -365,13 +365,22 @@ export class VerticalLayout extends FloatLayout {
       let {x: oldX, y: oldY} = m.position,
           {x: oldWidth} = m.extent,
           y = pos.y,
-          x = align === "center" ? containerWidth/2 - oldWidth / 2 : pos.x
+          x = pos.x,
+          accessor = 'topLeft';
+      if (align == 'center') {
+        accessor = 'topCenter';
+        x = containerWidth / 2;
+      }
+      if (align == 'right') {
+        accessor = 'topRight';
+        x = containerWidth - padRight - spacing;
+      }
       if (oldX !== x || oldY !== y) {
         if (animate) {
           const {duration, easing} = animate;
-          m.animate({topLeft: pt(x, y), duration, easing});
+          m.animate({[accessor]: pt(x, y), duration, easing});
         } else {
-          m.topLeft = pt(x, y);
+          m[accessor] = pt(x, y);
         }
       }
       pos = m.bottomLeft.addPt(pt(0, spacing));
