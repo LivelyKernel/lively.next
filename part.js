@@ -99,7 +99,7 @@ export class FreezerPart {
   }
 
   async getRequiredModulesFromSnapshot(snap, name, includeDynamicParts=false) {
-    var imports = requiredModulesOfSnapshot(snap),
+    var imports = requiredModulesOfSnapshot(snap), // do this after the replacement of calls
         dynamicPartImports = [];
     for (let m of imports) {
        const partsBinLoadCalls = /loadObjectFromPartsbinFolder\((\S*)\)/g,
@@ -220,9 +220,9 @@ export class FreezerPart {
       ...opts
     });
 
-    body = body.replace(/__lvVarRecorder\.loadObjectFromPartsbinFolder\(\S*\)/g, (load) => {
-      return 'lively.FreezerRuntime' + load.replace('__lvVarRecorder', '');
-    });
+    // body = body.replace(/__lvVarRecorder\.loadObjectFromPartsbinFolder\(\S*\)/g, (load) => {
+    //   return 'lively.FreezerRuntime' + load.replace('__lvVarRecorder', '');
+    // });
 
     if (opts.includeRuntime) {
       runtime = await resource(System.baseURL + 'lively.freezer/runtime-deps.js').read();
