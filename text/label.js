@@ -443,7 +443,7 @@ export class Label extends Morph {
     if (textStyleClasses && textStyleClasses.length)
       attrs.className = textStyleClasses.join(" ");
 
-    var lengthAttrs = ["fontSize", "width", "height", "maxWidth", "maxHeight", "top", "left", "padding", "paddingLeft", "paddingRight", "paddingBottom", "paddingTop"];
+    var lengthAttrs = ["fontSize", "width", "height", "maxWidth", "maxHeight", "top", "left", "padding", "paddingLeft", "paddingRight", "paddingBottom", "paddingTop", "marginTop", "marginRight", "marginLeft", "marginBottom"];
     for (var i = 0; i < lengthAttrs.length; i++) {
       var name = lengthAttrs[i];
       if (!chunkStyle.hasOwnProperty(name)) continue;
