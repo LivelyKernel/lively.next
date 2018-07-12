@@ -6,18 +6,6 @@
     <meta content="utf-8" http-equiv="encoding">
     <!--META-->
     <link href="/lively.morphic/web/dom-loading-indicator.css" rel="stylesheet">
-  </head>
-
-  <body style="margin: 0;">
-
-    <div id="dom-loading-indicator">
-      <div class="label">
-         <center><b>Loading</b></center>
-         <center id="dom-loading-status" style="font-size: 15pt;">...</center>
-         <div class="lively-logo"></div>
-      </div>
-    </div>
-
     <script>
       (function reportWorldLoad() {
         var loadId = "";
@@ -40,6 +28,17 @@
     <script src="/lively.next-node_modules/systemjs/dist/system.src.js"></script>
     <script>System.config({baseURL: origin});</script>
     <script src="/lively.modules/dist/lively.modules.js"></script>
+  </head>
+
+  <body style="margin: 0;">
+
+    <div id="dom-loading-indicator">
+      <div class="label">
+         <center><b>Loading</b></center>
+         <center id="dom-loading-status" style="font-size: 15pt;">...</center>
+         <div class="lively-logo"></div>
+      </div>
+    </div>
 
     <script>
       if (document.location.host !== "lively-next.org")
