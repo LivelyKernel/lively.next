@@ -63,9 +63,10 @@ export async function generateHTML(morph, htmlResource, options = {}) {
         container: containerOpts,
         removeTargetFromLinks = true,
         addMetaTags,
+        addScripts,
         appendHTML
       } = options,
-      {width: containerWidth, height: containerHeight} = containerOpts || {},
+      {width: containerWidth, height: containerHeight, id: containerId} = containerOpts || {},
       root = morphToNode(morph),
       htmlClassName = `html-${morph.name.replace(/[\s|"]/g, "-")}`;
 
@@ -80,6 +81,7 @@ export async function generateHTML(morph, htmlResource, options = {}) {
   }
 
   let morphHtml = `<div class="exported-morph-container ${htmlClassName}"`
+                + (containerId ? ` id="${containerId}" ` : '')
                 + `    style="background-image: ${options.backgroundColor ?
                                    options.backgroundColor.toCSSString() : 'None'};
                               max-width: ${containerWidth || root.style.width};`
@@ -92,7 +94,9 @@ export async function generateHTML(morph, htmlResource, options = {}) {
     if (appendHTML) html += appendHTML;
 
   } else {
-    html = `<head><title>lively.next</title><meta charset="UTF-8">`;
+    html = `<head><title>lively.next</title>
+     <meta content="utf-8" http-equiv="encoding">
+     <meta content="text/html;charset=utf-8" http-equiv="Content-Type">`;
     if (addMetaTags) {
       let metaTags = typeof addMetaTags === "function" ?
                       addMetaTags(morph, htmlResource, options) :
@@ -107,6 +111,7 @@ export async function generateHTML(morph, htmlResource, options = {}) {
       html += "\n" + tagMarkup.join("\n")
     }
     if (addStyles) html += morphicStyles();
+    if (addScripts) html += addScripts;
     html += `</head><body style="margin: 0; ">\n` + morphHtml + "\n";
     if (appendHTML) html += appendHTML + "\n";
     html += "</body>"
