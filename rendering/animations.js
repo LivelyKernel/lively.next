@@ -261,8 +261,16 @@ export class PropertyAnimation {
 
   getAnimationProps(type) {
     const [before, after] = this.getChangedProps(this.beforeProps[type], this.afterProps[type]),
-          {fill: fillBefore} = this.capturedProperties,
-          {fill: fillAfter} = this.morph;
+          {fill: fillBefore, dropShadow: shadowBefore} = this.capturedProperties,
+          {fill: fillAfter, dropShadow: shadowAfter} = this.morph;
+    if (before.filter == 'none' && after.boxShadow) {
+      delete before.filter;
+      before.boxShadow = 'none';
+    }
+    if (after.filter == 'none' && before.boxShadow) {
+      delete after.filter;
+      after.boxShadow = 'none';
+    }
     if (fillBefore && fillAfter) {
       if (fillBefore.isGradient && fillAfter.isGradient) {
         const numStops = Math.max(fillAfter.stops.length, fillBefore.stops.length),
