@@ -938,6 +938,11 @@ export class World extends Morph {
     return this.openPrompt(new EditListPrompt({
       label, multiSelect: true, items, padding: Rectangle.inset(3), ...opts}), opts);
   }
+
+  showLoadingIndicatorFor(requester, label) {
+     return this.addMorph(LoadingIndicator.open(label, { center: requester.globalBounds().center() }))
+  }
+
 }
 
 export class Hand extends Morph {
