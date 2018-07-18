@@ -85,6 +85,7 @@ export class Package {
       await exec(`mv .temp-lively-clone-helper/.git .git; rm -rf .temp-lively-clone-helper`, {cwd: this.directory});
     }
     var {output} = await exec(`git status`, {cwd: this.directory})
+    await this.readConfig();
     return output;
   }
 
