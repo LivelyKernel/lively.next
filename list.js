@@ -533,6 +533,11 @@ export class List extends Morph {
     this.update();
   }
 
+  __additionally_serialize__(snapshot, ref, pool, addFn){
+    super.__additionally_serialize__(snapshot, ref, pool, addFn);
+    this.whenRendered().then(() => this.update())
+  }
+
   initializeSubmorphs(submorphs) {
     let container, scroller;
     submorphs = submorphs || this.submorphs || [];
