@@ -1,23 +1,24 @@
 /*global System*/
 import { resource, createFiles } from 'lively.resources';
-import { requiredModulesOfSnapshot, serialize } from "lively.serializer2";
+import { requiredModulesOfSnapshot, removeUnreachableObjects, serialize } from "lively.serializer2";
 import { serializeMorph, loadPackagesAndModulesOfSnapshot, deserializeMorph } from "lively.morphic/serialization.js";
 import { arr } from "lively.lang";
 import { module } from "lively.modules/index.js";
 import Bundle from "./bundle.js";
 import FreezerPackage from "./package.js";
-import { loadPart, loadObjectFromPartsbinFolder } from "lively.morphic/partsbin.js";
+import { loadPart, SnapshotEditor, loadObjectFromPartsbinFolder } from "lively.morphic/partsbin.js";
 import { runEval } from "lively.vm";
 import { callService, ProgressMonitor } from "lively.ide/service-worker.js";
 import { LoadingIndicator } from "lively.components";
 import { allPlugins, LeakDetectorPlugin, plugins } from "lively.serializer2/plugins.js";
 import { config, MorphicDB } from "lively.morphic";
+import { SnapshotInspector } from "lively.serializer2/debugging.js";
 
 export async function interactivelyFreezePart(part, opts) {
   var li = LoadingIndicator.open("Freezing target...", {center: $world.visibleBounds().center()}),
       leakDetector = new LeakDetectorPlugin(),
-      snap = serialize(part, {plugins: [...allPlugins, leakDetector]});
-  if (leakDetector.memoryLeaks) {
+      snap = serialize(part, {plugins: [...allPlugins, leakDetector]}); // do not serialize ad hoc, fetch from db
+  if (opts.checkForLeaks && leakDetector.memoryLeaks) {
     // We discovered that the follwing objects are solely referenced via attribute connections
     // and nowhere else in the part. In most cases this is a strong indication for unintended
     // references to morphs, which leads to an unnessecary bloat of the serialized part.
@@ -72,8 +73,15 @@ export async function interactivelyFreezePart(part, opts) {
   return file;
 }
 
-async function freezeSnapshot({snapshot, progress}, opts) {
-  return await (await FreezerPart.fromSnapshot(JSON.parse(snapshot), opts)).standalone({progress, includeRuntime: opts.includeRuntime});
+export async function freezeSnapshot({snapshot, progress}, opts) {
+  // remove the metadata props
+  const snap = JSON.parse(snapshot);
+  Object.values(snap.snapshot).forEach(m => delete m.props.metadata);
+  removeUnreachableObjects([snap.id], snap.snapshot);
+  SnapshotInspector.forSnapshot(snap).openSummary();
+  return await (await FreezerPart.fromSnapshot(snap, opts)).standalone({
+      progress, includeRuntime: opts.includeRuntime
+  });
 }
 
 export class FreezerPart {
