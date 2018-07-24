@@ -81,7 +81,8 @@ export default class TextInput {
     textareaNode.setAttribute("spellcheck", false);
     textareaNode.className = "lively-text-input";
     textareaNode.value = "";
-    newRootNode.insertBefore(textareaNode, newRootNode.firstChild);
+    if (!(bowser.tablet || bowser.mobile))
+      newRootNode.insertBefore(textareaNode, newRootNode.firstChild);
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // event handlers

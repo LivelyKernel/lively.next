@@ -6,6 +6,7 @@ import TextInput from './TextInput.js';
 import KillRing from './KillRing.js';
 import { Event, KeyEvent, SimulatedDOMEvent, keyLikeEvents } from './Event.js';
 import { cumulativeOffset } from "../rendering/dom-helper.js";
+import bowser from 'bowser';
 
 // note: keydown, keyup, cut, copy, paste, compositionstart, compositionend,
 // compositionupdate, input are listened to by the text input helper
@@ -542,12 +543,14 @@ export default class EventDispatcher {
             // for more info
             let scrollInProgress = !!state.scroll.interactiveScrollInProgress;
             if (!scrollInProgress) {
-              var {promise: p, resolve} = promise.deferred();
+              var {promise: p, resolve} = promise.deferred(),
+                  delay = bowser.name == 'Firefox' ? 500 : 250;
               state.scroll.interactiveScrollInProgress = p;
-              p.debounce = fun.debounce(250, () => {
+              p.debounce = fun.debounce(delay, () => {
                 state.scroll.interactiveScrollInProgress = null;
                 resolve();
               });
+              
             }
             state.scroll.interactiveScrollInProgress.debounce();
 
