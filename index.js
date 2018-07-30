@@ -9,7 +9,7 @@ export class AttributeConnection {
   }
 
   init(source, sourceProp, target, targetProp, spec) {
-    this.doNotSerialize = ['isActive', 'converter', 'updater'];
+    this.doNotSerialize = ['isActive', 'converter', 'updater', 'varMapping'];
     this.sourceObj = source;
     this.sourceAttrName = sourceProp;
     this.targetObj = target;
@@ -49,7 +49,16 @@ export class AttributeConnection {
     return this;
   }
 
+  __additionally_serialize__(snapshot, ref, pool, addFn) {
+    if (!arr.equals(arr.without(Object.keys(this.varMapping), '_rev'), ['source', 'target'])) {
+       addFn('varMapping', this.varMapping);
+    } else if (snapshot.props.varMapping) {
+       delete snapshot.props.varMapping;
+    }
+  }
+
   __after_deserialize__(snapshot, objRef) {
+    if (!this.varMapping) this.varMapping = {source: this.sourceObj, target: this.targetObj};
     this.connect();
   }
   
