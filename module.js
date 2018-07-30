@@ -499,7 +499,7 @@ export class JSModule extends Module {
           additionalExports = [],
           tfmOpts = {
             classHolder: {type: "Identifier", name: "__rec"},
-            functionNode: {type: "Identifier", name: "lively.classes.runtime.initializeClass"}},
+            functionNode: {type: "Identifier", name: "System.initializeClass"}},
           replaced = transform.replaceNodes([
           // remove import decls completely
           ...this.parsed.body.filter(ea => ea.type === "ImportDeclaration")

@@ -29,7 +29,8 @@ export function runtimeDefinition() {
     options: {},
     // this is for lively.serializer2 locateClass()
     moduleEnv(id) {
-      return this.get(id);
+      const m = System.get(id) || System.fetchStandaloneFor(id);
+      return {recorder: m.recorder || m.exports};
     }
   };
   globalModules["@system-env"] = {executed: true, browser: true}
@@ -359,6 +360,13 @@ export function runtimeDefinition() {
       console.log('async modules due to preserved module structures: ', [...asyncModules, ...remaining]);
       
       return [groups, remaining];
+    },
+
+    initializeClass(constructorFunc, superclassSpec, instanceMethods = [], classMethods = [], classHolder = {}, currentModule, sourceLoc) {
+      if (typeof superclassSpec == 'undefined') throw Error('Superclass can not be undefined!');
+      G.System.initializeClass._get = G.lively.classes.runtime.initializeClass._get;
+      G.System.initializeClass._set = G.lively.classes.runtime.initializeClass._set;
+      return lively.classes.runtime.initializeClass(constructorFunc, superclassSpec, instanceMethods, classMethods, classHolder, currentModule, sourceLoc);
     },
 
     load(moduleId) {
