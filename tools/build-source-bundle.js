@@ -35,49 +35,6 @@ if (!fs.existsSync('./dist')) {
   fs.mkdirSync('./dist');
 }
 
-function escapeRegExp(str) {
-  return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
-  }
-
-function insertForwardDeclarations(source) {
-   const vars = {
-      LoadingIndicator: "Morph$$1",
-      ListItemMorph: "Label$$1",
-      "DropDownList$$1": "Button$$1"},
-         exportedNames = {
-            LoadingIndicator: 'LoadingIndicator',
-            ListItemMorph: 'ListItemMorph',
-            "DropDownList$$1": 'DropDownList'
-         };
-   for (var v in vars) {
-    console.log('replacing ' + v);
-    source = source.replace(`var ${v}`, () => `exports.${exportedNames[v]} = ${v}`);
-     var re = new RegExp(`${escapeRegExp(v)} = function \(.*\) \{\[\\s\\S\]*?\}\\(${escapeRegExp(vars[v])}\\);`),
-         fn = source.match(re),
-         fn = fn ? fn[0] : "",
-         args = /\(\s*([^)]+?)\s*\)/.exec(fn);
-      if (!fn) {
-         console.log('could not replace ', v);
-         continue;
-     }
-      if (args[1]) {
-        var superClasses = args[1].split(/\s*,\s*/);
-        if (superClasses.length > 0) console.log("Inserting check for ", superClasses[0]);
-        var instfn = fn.replace('inherits', `
-              inherits`);
-        source = source.replace(fn, () => `(function ${v}_Builder() { 
-              if (${v}) return ${v};
-              if (!${vars[v]}) {
-                 setTimeout(${v}_Builder, 0);
-                 return;
-              }
-        ${instfn}})()`);
-        source = source.replace(`exports.${exportedNames[v]} = ${v};`, "");
-      }
-   }
-   return Object.keys(vars).length > 0 ? "var " + Object.keys(vars).join(',') + ";\n" + source : source;
-}
-
 const opts = {classHolder: {type: "Identifier", name: "_classRecorder"}, functionNode: {type: "Identifier", name: "lively.classes.runtime.initializeClass"}};
 
 module.exports = Promise.resolve()
