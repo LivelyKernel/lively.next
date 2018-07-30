@@ -754,7 +754,7 @@ export class Morph {
       if (
         descr.readOnly ||
         descr.derived ||
-        this[key] === defaults[key] ||
+        obj.equals(this[key], defaults[key]) ||
         (descr.hasOwnProperty("serialize") && !descr.serialize)
       ) continue;
       propsToSerialize.push(key);
@@ -764,8 +764,9 @@ export class Morph {
 
   __additionally_serialize__(snapshot, ref, pool, addFn) {
     // remove epi morphs
-    if (!this.isEpiMorph) {
-      let submorphs = snapshot.props.submorphs.value;
+    let submorphs = snapshot.props.submorphs;
+    if (submorphs && !this.isEpiMorph) {
+      submorphs = submorphs.value;
       for (let i = submorphs.length; i--; ) {
         let {id} = submorphs[i];
         if (pool.refForId(id).realObj.isEpiMorph)
@@ -2241,11 +2242,11 @@ export class Morph {
     if (!this.attributeConnections || !this.attributeConnections.length) return null;
     return this.attributeConnections.map(c => [String(c), [
       ["show", async () => {
-        let { interactivelyShowConnection } = await System.import("lively.morphic/fabrik.js");
+        let { interactivelyShowConnection } = await System.import("lively.ide/fabrik.js");
         interactivelyShowConnection(c);
       }],
       ["edit", async () => {
-        let { interactivelyReEvaluateConnection } = await System.import("lively.morphic/fabrik.js");
+        let { interactivelyReEvaluateConnection } = await System.import("lively.ide/fabrik.js");
         interactivelyReEvaluateConnection(c)
       }],
       ["disconnect", () => { c.disconnect(); $world.setStatusMessage("disconnected " + c)}]
@@ -2313,7 +2314,7 @@ export class Morph {
             group.map(ea => [
               ea.name, actionFn ? () => actionFn(ea.name, this, ea) : async () => {
                 let { interactiveConnectGivenSource } =
-                   await System.import("lively.morphic/fabrik.js");
+                   await System.import("lively.ide/fabrik.js");
                 interactiveConnectGivenSource(this, ea.name);
               }
             ])]);
@@ -2323,7 +2324,7 @@ export class Morph {
       () => actionFn("custom...", this, null) :
       async () => {
         let { interactiveConnectGivenSource } =
-             await System.import("lively.morphic/fabrik.js"),
+             await System.import("lively.ide/fabrik.js"),
             attr = await w.prompt("Enter custom connection point", {
               requester: this,
               historyId: "lively.morphic-custom-connection-points",
