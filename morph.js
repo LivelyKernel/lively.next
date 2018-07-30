@@ -11,7 +11,7 @@ import { createMorphSnapshot } from "lively.morphic/serialization.js";
 import { Color, pt, rect, Rectangle, LinearGradient } from "lively.graphics";
 import { obj, promise, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
-import { ConnectionHalo } from "lively.morphic/fabrik.js";
+import { ConnectionHalo } from "lively.ide/fabrik.js";
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from "./drag-guides.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
