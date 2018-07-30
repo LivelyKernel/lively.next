@@ -18,7 +18,7 @@ export default class TextLayout {
 
   resetLineCharBoundsCache(morph) {
     this.lineCharBoundsCache = new WeakMap();
-    if (morph) {
+    if (morph && !morph._isDeserializing) {
       this.estimateLineHeights(morph);
       morph.makeDirty();
     }

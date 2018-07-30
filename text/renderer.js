@@ -306,7 +306,7 @@ export default class TextRenderer {
   }
 
   renderMorph(morph, renderer) {
-    var cursorWidth = morph.fontSize <= 11 ? 2 : 3,
+    var cursorWidth = morph.fontSize <= 12 ? 2 : 3,
         selectionLayer = [];
 
     // Make sure all lines have a height, at least estimated

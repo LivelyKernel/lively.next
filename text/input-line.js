@@ -141,7 +141,8 @@ export default class InputLine extends Text {
               placeholder.value = val;
             }
           }
-          this.updatePlaceholder();
+          //this.updatePlaceholder();
+          this.whenRendered().then(() => this.updatePlaceholder());
         }
       }
     }
@@ -151,7 +152,6 @@ export default class InputLine extends Text {
     super(props);
     connect(this, 'textChange', this, 'onInputChanged');
     connect(this, 'selectionChange', this, 'fixCursor');
-    this.updatePlaceholder();
   }
 
   onChange(change) {

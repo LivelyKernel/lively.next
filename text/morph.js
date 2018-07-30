@@ -3,7 +3,6 @@ import { Rectangle, Point, rect, Color, pt } from "lively.graphics";
 import { string, obj, fun, promise, arr } from "lively.lang";
 import { signal, connect, disconnect } from "lively.bindings";
 import { Shapes, Intersection } from 'kld-intersections';
-import { module } from "lively.modules";
 
 import { config, morph, Morph } from "../index.js";
 import { Selection, MultiSelection } from "./selection.js";
@@ -38,7 +37,7 @@ export class Text extends Morph {
   static makeInputLine(props) {
     // hack to break up the cyclic dependency for now  without having to
     // update the imports all over the place
-    const InputLine = (module('lively.morphic').recorder.InputLine || lively.morphic.InputLine);
+    const InputLine = (lively.morphic ? lively.morphic.InputLine : lively.modules.module('lively.morphic').recorder.InputLine);
     return new InputLine(props);
   }
 
@@ -686,19 +685,38 @@ export class Text extends Morph {
 
   __deserialize__(snapshot, objRef, pool) {
     super.__deserialize__(snapshot, objRef);
-
+    
     this.viewState = this.defaultViewState;
     this.markers = [];
     this.textRenderer = new Renderer(this.env.domEnv);
     this.textLayout = new TextLayout(this);
     this.changeDocument(Document.fromString(""));
     this.ensureUndoManager();
+    this._isDeserializing = true;
   }
 
   __after_deserialize__(snapshot, objRef) {
     super.__after_deserialize__(snapshot, objRef);
+    let lines, line, cacheEntry;
+    if (snapshot._cachedLineCharBounds) {
+       this.changeMetaData('deserializeInfo', {recoveredLineCharBounds: true});
+       lines = snapshot._cachedLineCharBounds;
+       for (let row = 0; row < lines.length; row++) {
+         if (line = lines[row]) {
+           cacheEntry = [];
+           this.textLayout.lineCharBoundsCache.set(this.document.getLine(row), cacheEntry);
+           for (let i = 0; i < line.length; i += 4) {
+             cacheEntry.push({
+               height: line[i],
+               width: line[i + 1],
+               x: line[i + 2],
+               y: line[i + 3],
+             });
+           }
+         }
+       }
+    }
     if (snapshot._cachedLineExtents) {
-      // change meta data to reflecdt that morph is reconstructed
       this.changeMetaData('deserializeInfo', {recoveredTextBounds: true});
       this.whenRendered().then(() => {
         for (let i = 0; i < Math.min(snapshot._cachedLineExtents.length, this.document.lines.length); i++) {
@@ -708,6 +726,7 @@ export class Text extends Morph {
         }
       });
     }
+    this._isDeserializing = false;
   }
 
   get __only_serialize__() {
@@ -743,6 +762,13 @@ export class Text extends Morph {
       })
     };
     snapshot._cachedLineExtents = this.document.lines.map(l => [l.width, l.height]);
+    snapshot._cachedLineCharBounds = this.document.lines.map(l => {
+      const hit = this.textLayout.lineCharBoundsCache.get(l);
+      if (hit) {
+         return arr.flatten(hit.map(({height, width, x, y}) => [height, width, x, y]))
+      }
+      return null;
+    });
   }
 
   get isText() {
@@ -814,7 +840,7 @@ export class Text extends Morph {
       if (textChange) signal(this, "textChange", change);
       if (viewChange) signal(this, "viewChange", change);
     }
-
+    
     // if there is an animation in progress, we need to wait until that
     // is finished animating, so that our dom measurement is not fucked up.
     if (meta.animation)
@@ -1165,6 +1191,7 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   invalidateTextLayout(resetCharBoundsCache = false, resetLineHeights = false) {
+    if (this._isDeserializing) return;
     let vs = this.viewState;
     if (!vs) return;
     if (!this.fixedWidth || !this.fixedHeight) vs._needsFit = true;
@@ -2293,8 +2320,8 @@ export class Text extends Morph {
   // FIXME move this to somewhere else?
 
   evalEnvForDoit(doit/*from attribute.doit*/) {
-    let moduleId = `lively://text-doit/${this.id}`,
-        mod = lively.modules.module(moduleId);
+    let moduleId = `lively://text-doit/${this.id}`;
+    lively.modules.module(moduleId); // initialize module
     return {
       context: doit.context || this,
       format: "esm",
