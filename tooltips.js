@@ -7,7 +7,7 @@ export class TooltipViewer {
     this.currentMorph = world;
   }
 
-  get __dont_serialialize__() {
+  get __dont_serialize__() {
     return ['currentTooltip', 'currentMorph']; 
   }
 
