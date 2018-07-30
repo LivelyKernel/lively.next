@@ -164,7 +164,8 @@ export class FreezerPart {
         // recorder, or we will have some unexpected crashes at runtime, when the freezer runtime will
         // attempt to replace some of the submodules by the standalone package.
         root = arr.uniq(imports.map(path => `import "${path}"`)).join('\n')
-                    + `\nimport { World, MorphicEnv, loadMorphFromSnapshot} from "lively.morphic";
+                    + `\nimport { World, MorphicEnv } from "lively.morphic";
+                       import { deserialize } from 'lively.serializer2';
                        import { resource } from 'lively.resources';
                        import { promise } from 'lively.lang';
                        import {pt} from "lively.graphics";
@@ -175,9 +176,7 @@ export class FreezerPart {
                           MorphicEnv.default().setWorld(world);
                        }
                        export async function renderFrozenPart() {
-                          let obj = (await loadMorphFromSnapshot(window.lively.partData["${name}"], 
-                                                      {onDeserializationStart: false, 
-                                                       migrations: []}));
+                          let obj = deserialize(window.lively.partData["${name}"]);
                           window.$world.height = obj.height;
                           obj.openInWorld();
                           obj.top = 0;
@@ -220,9 +219,8 @@ export class FreezerPart {
   async standalone(opts = {}) {
     let runtime = '',
         body = await this.bundle.standalone({
-      livelyTranspilation: true,
+      livelyTranspilation: false,
       clearExcludedModules: true,
-      addRuntime: true,
       isExecutable: true,
       entryModule: this.entryModule + '/index.js',
       ...opts
@@ -241,7 +239,7 @@ export class FreezerPart {
      file: runtime +
            `\nlively.partData = ${ JSON.stringify(this.partData) };\n\n` +
            body + 
-           `${this.runtimeGlobal}.get(System.decanonicalize("${this.entryModule + '/index.js'}")).exports.renderFrozenPart()`
+           `${this.runtimeGlobal}.get(${this.runtimeGlobal}.decanonicalize("${this.entryModule + '/index.js'}")).exports.renderFrozenPart()`
     }
   }
 }

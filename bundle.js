@@ -181,13 +181,6 @@ export default class Bundle {
           runtimeGlobal, clearExcludedModules, livelyTranspilation}) + "\n\n";
     }
 
-    if (addRuntime) {
-      let runtimeSrc = String(runtimeDefinition)
-                        .replace(/var version/, `var version = "${version}"`)
-                        .replace(/lively\.FreezerRuntime/g, runtimeGlobal)
-      moduleSource = `(${runtimeSrc})();\n${moduleSource}`
-    }
-
     if (isExecutable) { 
       moduleSource += `\n${runtimeGlobal}.load("${entry.qualifiedName}");\n`;
     }

@@ -24,41 +24,52 @@ export function runtimeDefinition() {
     registry = G.lively.FreezerRuntime.registry;
   }
 
-  lively.modules.installHook('decanonicalize',  (proceed, name, parent, isPlugin) => {
-    // this decanonicalize forces all modules to contain version numbers (if not provided)
-    // and to start with the local:// prefix.
-    // This only applies to modules, that is all .js file that are requested in this context.
-    // assets such as .css files etc, keep their usual decanonicalization
-    // is global id?
-    if (G.lively.FreezerRuntime.globalModules[name]) return name;
-    // check if this is a submodule of a global module, that can be 
-    let localName = name.replace("lively-object-modules/", "").replace(G.System.baseURL, '');
-    // includes local prefix?
-    localName = localName.includes('local://') ? localName : 'local://' + localName;
-    // includes package version? 
-    // this fucks up if there are packages wich share a prefix in their naming
-    if (!localName.match(/\@\S*\//)) {
-       let [packageName, ...rest] = localName.replace('local://', '').split('/'),
-           pkg = Object.keys(G.lively.FreezerRuntime.registry).find(k => 
-                        k.replace('local://', '').split('@')[0] == packageName),
-           version = pkg && pkg.match(/\@[\d|\.|\-|\~]*\//)[0];
-       if (!pkg) return proceed(name, parent, isPlugin);
-       // return pkg;
-       localName =  "local://" + packageName + version + rest;
-    } 
-    return localName;
-  });
-
+  globalModules["@lively-env"] = {
+    executed: true, 
+    options: {},
+    // this is for lively.serializer2 locateClass()
+    moduleEnv(id) {
+      return this.get(id);
+    }
+  };
+  globalModules["@system-env"] = {executed: true, browser: true}
+  
   G.lively.FreezerRuntime = {
+    global: window,
     version, registry, globalModules,
-    get(moduleId) { 
+    get(moduleId) {
+      if (moduleId && moduleId.startsWith('@')) return this.globalModules[moduleId];
       return this.registry[moduleId]; 
     },
     set(moduleId, module) { return this.registry[moduleId] = module; },
     add(id, dependencies = [], exports = {}, executed = false) {
-      let module = {id, dependencies, executed, exports, execute: () => {}, setters: []};
+      let module = {id, dependencies, executed, exports, execute: function () {}, setters: []};
       this.set(id, module);
       return module;
+    },
+    decanonicalize(name) {
+      // this decanonicalize forces all modules to contain version numbers (if not provided)
+      // and to start with the local:// prefix.
+      // This only applies to modules, that is all .js file that are requested in this context.
+      // assets such as .css files etc, keep their usual decanonicalization
+      // is global id?
+      if (G.lively.FreezerRuntime.globalModules[name]) return name;
+      // check if this is a submodule of a global module, that can be 
+      let localName = name.replace("lively-object-modules/", "").replace(G.System.baseURL, '');
+      // includes local prefix?
+      localName = localName.includes('local://') ? localName : 'local://' + localName;
+      // includes package version? 
+      // this fucks up if there are packages wich share a prefix in their naming
+      if (!localName.match(/\@\S*\//)) {
+         let [packageName, ...rest] = localName.replace('local://', '').split('/'),
+             pkg = Object.keys(G.lively.FreezerRuntime.registry).find(k => 
+                          k.replace('local://', '').split('@')[0] == packageName),
+             version = pkg && pkg.match(/\@[\d|\.|\-|\~]*\//)[0];
+         //if (!pkg) return proceed(name, parent, isPlugin);
+         // return pkg;
+         localName =  "local://" + packageName + version + rest;
+      } 
+      return localName;
     },
     loadObjectFromPartsbinFolder(name) {
       return G.lively.morphic.MorphicDB.default.fetchSnapshot('part', name).then(snapshot => {
@@ -84,10 +95,8 @@ export function runtimeDefinition() {
         while (obj && parts.length) obj = obj[parts.shift()];
         if (obj) return {executed: true, exports: obj, dependencies: []};
       }
-      if (G.System) {
-        let obj = G.System.get(G.System.decanonicalize(name, parentName));
-        if (obj) return {executed: true, exports: obj, dependencies: []};
-      }
+      let obj = this.get(this.decanonicalize(name, parentName));
+      if (obj) return {executed: true, exports: obj, dependencies: []};
       mod = this.fetchStandaloneFor(name);
       if (mod) return mod;
       throw new Error(`Module ${name} cannot be found in lively.freezer bundle!`)
@@ -105,18 +114,16 @@ export function runtimeDefinition() {
       module.execute = body.execute;
       module.setters = body.setters;
       // how to actually propagate module information inside system?
-      window.System._loader.modules[id] = {module: module.exports};
+      // window.System._loader.modules[id] = {module: module.exports};
       return module;
     },
     updateImports(module) {
+      if (!module.dependencies) return;
       for (let i = 0; i < module.dependencies.length; i++) {
         let depName = module.dependencies[i],
             mod = depName != '@empty' && this.resolveSync(depName, module.id);
         mod && module.setters[i](mod.exports);
       }
-      if (Object.entries(window.System.get("@lively-env").moduleEnv(module.id).recorder)
-                .some(([k, v]) => !module.emptyImports.has(k) && v === undefined))
-        module.executed = false;
     },
     updateDependent(module, dependentModule) {
       for (let i = 0; i < dependentModule.dependencies.length; i++) {
@@ -390,23 +397,7 @@ export function runtimeDefinition() {
          loadModules(modulesToLoad);
       }
       return this.get(moduleId).exports;
-      
-      // let entry = this.resolveSync(moduleId);
-      // let moduleList = [entry], modulesToImport = [];
-      // while (moduleList.length) {
-      //   let next = moduleList.shift();
-      //   if (next.executed) continue;
-      //   modulesToImport.unshift(next);
-      //   for (let depId of next.dependencies) {
-      //     let depMod = this.resolveSync(depId, next.id);
-      //     if (!depMod.executed) moduleList.push(depMod);
-      //   }
-      // }
-      // for (let m of modulesToImport) {
-      //   this.updateImports(m);
-      //   m.execute();
-      // }
-      // return entry.exports;
     }
-  }
+  };
+  G.System = G.lively.FreezerRuntime;
 }

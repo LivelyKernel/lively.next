@@ -8,6 +8,8 @@ import { string, arr } from "lively.lang";
 import { isString } from "lively.lang/object.js";
 import { prepareCodeForCustomCompile, prepareTranslatedCodeForSetterCapture } from "lively.modules/src/instrumentation.js";
 import { module } from "lively.modules/index.js";
+import { classToFunctionTransform } from "lively.classes";
+import { rewriteToCaptureTopLevelVariables } from "lively.source-transform/capturing.js";
 
 function exportCall(exportName, id) {
   return stringify(
@@ -142,7 +144,6 @@ export class StandaloneModule extends Module {
          + `      if (typeof exports == 'function') {\n`
          + `         _export("default", exports);\n`
          + `      } else {\n`
-         + `        Object.assign(System.get("@lively-env").moduleEnv("${this.qualifiedName}").recorder, exports);\n`
          + `        for (let exp in exports) _export(exp, exports[exp]);\n`
          + `        if (!exports['default']) _export('default', exports);\n`
          + `      }\n`
@@ -346,7 +347,7 @@ export class JSModule extends Module {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   registerTranformsOfImports(clearExcludedModules = false) {
-    let topLevelIds = [], setters = [], qualifiedDependencyNames = new Map(), undefinedTopLevelVars = [];
+    let topLevelIds = [], setters = [], qualifiedDependencyNames = [], undefinedTopLevelVars = [];
 
     for (let [depModule, {imports}] of this.dependencies) {
       if (clearExcludedModules && depModule.isExcluded) {
@@ -355,16 +356,13 @@ export class JSModule extends Module {
 
       // FIXME what if a toplevel var of `this` has the same name as the generated varName?
       let varName = depModule.nameAsUniqueJSIdentifier([]),
+          id = depModule.qualifiedName,
           setterStmts = [];
+      
+      qualifiedDependencyNames.push(id);
 
       for (let i of imports) {
-        let {node: {type, astIndex}, imported, local, exported} = i,
-            id = depModule.qualifiedName;
-
-        if (!qualifiedDependencyNames.has(id))
-          qualifiedDependencyNames.set(id, astIndex);
-        else
-          qualifiedDependencyNames.set(id, Math.min(qualifiedDependencyNames.get(id), astIndex));
+        let {node: {type, astIndex}, imported, local, exported} = i;
         
         if (type === "ExportAllDeclaration") { // export * from "foo"
           setterStmts.push(nodes.exprStmt(nodes.funcCall("_export", nodes.id(varName))));
@@ -387,6 +385,7 @@ export class JSModule extends Module {
             setterStmts.push(nodes.exprStmt(nodes.assign(local, nodes.member(nodes.id(varName), imported))));
         }
       }
+      
       setters.push(nodes.funcExpr({}, [nodes.id(varName)], ...setterStmts))
     }
 
@@ -395,11 +394,9 @@ export class JSModule extends Module {
       kind: "var",
       declarations: topLevelIds.map(ea => ({type: "VariableDeclarator", id: ea, init: null}))
     } : null;
-
+   // ensure that setters and dep names are in sync
     return {topLevelDecl, setters, undefinedTopLevelVars,
-            qualifiedDependencyNames: [...qualifiedDependencyNames.entries()]
-                                           .sort((a,b) => a[1] - b[1])
-                                           .map((([d, _]) => d))};
+            qualifiedDependencyNames};
   }
 
   registerTranformsOfExports() {
@@ -500,6 +497,9 @@ export class JSModule extends Module {
     } else {
       let exportTransformData = this.registerTranformsOfExports(),
           additionalExports = [],
+          tfmOpts = {
+            classHolder: {type: "Identifier", name: "__rec"},
+            functionNode: {type: "Identifier", name: "lively.classes.runtime.initializeClass"}},
           replaced = transform.replaceNodes([
           // remove import decls completely
           ...this.parsed.body.filter(ea => ea.type === "ImportDeclaration")
@@ -510,6 +510,11 @@ export class JSModule extends Module {
             return {target, replacementFunc}
           })
         ], this._source);
+        replaced = stringify(rewriteToCaptureTopLevelVariables(parse(replaced.source), {type: "Identifier", name: "__rec"}, {
+          classToFunction: tfmOpts,
+          es6ExportFuncId: '_export',
+          ignoreUndeclaredExcept: []
+        }));
         transpiledSource = `function(_export, _context) {\n`
          + `  "use strict";\n`
          + (topLevelDecl ? `  ${stringify(topLevelDecl)}\n` : "")
@@ -519,7 +524,9 @@ export class JSModule extends Module {
          + `${string.indent(setters.map(stringify).join(",\n"), "  ", 3)}\n`
          + `    ],\n`
          + `    execute: function() {\n`
-         + `${string.indent(replaced.source.trim(), "  ", 3)}\n`
+         + `const __rec = System.get("${this.qualifiedName}").recorder = {};\n`
+         + topLevelVarNames.map(id => `__rec.${id} = ${id};`).join('\n')
+         + `${string.indent(replaced.trim(), "  ", 3)}\n`
          + (additionalExports.length ? `${string.indent(additionalExports.join("\n"), "  ", 3)}\n` : "")
          + `    }\n`
          + `  }\n`
