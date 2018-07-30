@@ -1,4 +1,4 @@
-/*global declare, it, describe, beforeEach, afterEach, before, after*/
+/*global declare, it, describe, beforeEach, afterEach, before, after,System*/
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { morph, MorphicEnv } from "../index.js";
 import { expect } from "mocha-es6";
@@ -124,10 +124,13 @@ describe("rendering", function () {
 
     it("clip morph can specify scroll", async () => {
       submorph1.clipMode = "auto";
+      await submorph1.whenRendered();
       submorph2.extent = pt(200,200);
       submorph1.scroll = pt(40, 50);
       await submorph1.whenRendered();
+      await promise.delay(1000);
       var node = env.renderer.getNodeForMorph(submorph1);
+      expect(node.style.overflow).equals('auto');
       expect(node.scrollLeft).equals(40);
       expect(node.scrollTop).equals(50);
     });
@@ -149,8 +152,10 @@ describe("rendering", function () {
       // ref: https://github.com/LivelyKernel/lively.morphic/issues/55
 
       world.submorphs = [
-        {position: pt(  0, 0), extent: pt(100,100), submorphs: [{position: pt(75,75), extent: pt(125,125)}], fill: Color.blue, clipMode: "auto", scroll: pt(50,50)},
-        {position: pt(100, 0), extent: pt(100,100), submorphs: [{position: pt(75,75), extent: pt(125,125)}], fill: Color.green, clipMode: "auto", scroll: pt(50,50)}];
+        {position: pt(  0, 0), extent: pt(100,100),
+         submorphs: [{position: pt(75,75), extent: pt(125,125)}], fill: Color.blue, clipMode: "auto", scroll: pt(50,50)},
+        {position: pt(100, 0), extent: pt(100,100),
+         submorphs: [{position: pt(75,75), extent: pt(125,125)}], fill: Color.green, clipMode: "auto", scroll: pt(50,50)}];
       var [m1, m2] = world.submorphs;
       await promise.delay(50);
 
