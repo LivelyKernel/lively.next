@@ -128,7 +128,7 @@ describe("class properties", () => {
     await System.import(testModule);
   });
 
-  afterEach(async () => lively.modules.module(testModule).unload());
+  afterEach(async () => System.get(testModule).unload());
 
   it("it can ignore properties and initializes them", async () => {
     var {Foo} = System.get(testModule),

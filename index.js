@@ -3,6 +3,7 @@ import { ObjectPool } from "./object-pool.js";
 import { version as serializerVersion } from "./package.json";
 import { removeUnreachableObjects } from "./snapshot-navigation.js";
 import { allPlugins } from "./plugins.js";
+import semver from 'semver';
 
 function normalizeOptions(options) {
   options = {plugins: allPlugins, reinitializeIds: false, ...options};
@@ -53,8 +54,8 @@ export function serialize(obj, options) {
 
 export function deserialize(idAndSnapshot, options) {
   options = normalizeOptions(options);
-  let {id, snapshot, requiredVersion} = idAndSnapshot;
-  if (requiredVersion && !lively.modules.semver.satisfies(serializerVersion, requiredVersion))
+  let {requiredVersion} = idAndSnapshot;
+  if (requiredVersion && !semver.satisfies(serializerVersion, requiredVersion))
     console.warn(`[lively.serializer deserialization] snapshot requires version `
                + `${requiredVersion} but serializer has incompatible version `
                + `${serializerVersion}. Deserialization might fail...!`);

@@ -221,7 +221,6 @@ describe("marshalling", () => {
     });
 
     it("bindings via object import", async () => {
-      // lively.modules.module("lively.serializer2/tests/test-resources/module1.js").unload()
       await System.import("lively.serializer2/tests/test-resources/module1.js");
       var exprObj = {
             n: 1, __serialize__() {
@@ -236,7 +235,6 @@ describe("marshalling", () => {
     });
 
     it("finds required modules", async () => {
-      // lively.modules.module("lively.serializer2/tests/test-resources/module1.js").unload()
       await System.import("lively.serializer2/tests/test-resources/module1.js");
 
       var exprObj = {
