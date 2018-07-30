@@ -22,7 +22,7 @@ var parts = {
   "lively.serializer2":      {source: placeholderSrc, path: require.resolve('lively.serializer2/dist/lively.serializer2.js')},
   "lively.bindings":         {source: placeholderSrc, path: require.resolve('lively.bindings/dist/lively.bindings.js')},
   "virtual-dom":             {source: placeholderSrc, path: require.resolve('virtual-dom/dist/virtual-dom.js')},
-  "bowser":                  {source: placeholderSrc, path: require.resolve('bowser')},
+  "bowser":                  {source: placeholderSrc, path: require.resolve('bowser/bowser.min.js')},
   "kld-intersections":       {source: placeholderSrc, path: require.resolve("lively.morphic/lib/kld-intersections.min.js")},
   "svgjs":                   {source: placeholderSrc, path: require.resolve('svgjs')},
   "svg.easing.js":           {source: placeholderSrc, path: require.resolve('svg.easing.js')},

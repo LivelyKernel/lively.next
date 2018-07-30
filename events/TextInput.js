@@ -72,8 +72,9 @@ export default class TextInput {
       /*with pre-line chrome inserts &nbsp; instead of space*/
       white-space: pre!important;`);
 
-    if (bowser.tablet || bowser.mobile)
+    if (bowser.tablet || bowser.mobile) {
       textareaNode.setAttribute("x-palm-disable-auto-cap", true);
+    }
 
     textareaNode.setAttribute("wrap", "off");
     textareaNode.setAttribute("autocorrect", "off");
@@ -81,8 +82,12 @@ export default class TextInput {
     textareaNode.setAttribute("spellcheck", false);
     textareaNode.className = "lively-text-input";
     textareaNode.value = "";
-    if (!(bowser.tablet || bowser.mobile))
-      newRootNode.insertBefore(textareaNode, newRootNode.firstChild);
+    newRootNode.insertBefore(textareaNode, newRootNode.firstChild);
+
+    if (bowser.tablet || bowser.mobile) {
+      textareaNode.setAttribute('disabled', true);
+      textareaNode.style.setProperty('transform', 'scale(0)');
+    }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // event handlers
@@ -151,6 +156,23 @@ export default class TextInput {
   focus(morph, world) {
     var node = this.domState.textareaNode;
     if (!node) return;
+
+    if (bowser.tablet || bowser.mobile) {
+       /*
+        On mobile we can not simply focus arbitrarliy, but only
+        when a morph that accepts actual text input is focused
+
+        In order to not get fucked over by the accompanying zoom
+        effect in mobile browsers, we need to adjust the position
+        of the textNode accordingly
+      */
+      if (morph && morph.isText && !morph.readOnly) {
+        node.removeAttribute('disabled');
+      } else if (morph && !morph.isText) {
+        node.setAttribute('disabled', true);
+      }
+    }
+    
     node.ownerDocument.activeElement !== node && node.focus();
 
     if (bowser.firefox) // FF needs an extra invitation...
@@ -166,6 +188,10 @@ export default class TextInput {
 
   blur() {
     var node = this.domState.textareaNode;
+    if (bowser.tablet || bowser.mobile) {
+       node.setAttribute('disabled', true);
+    }
+
     node && node.blur();
   }
 
@@ -243,10 +269,15 @@ export default class TextInput {
   }
 
   onTextAreaBlur(evt) {
+    /*
+      On mobile browsers, the continuous capturing of keyboard events
+      causes the keyboard to show up at all times. We therefore disable
+      this behavior for either mobile or tablets
+    */
     setTimeout(() => {
       var {textareaNode, rootNode} = this.domState || {};
       if (rootNode && document.activeElement === rootNode)
-        textareaNode && textareaNode.focus();
+        !(bowser.mobile || bowser.tablet) && textareaNode && textareaNode.focus();
     });
   }
 
