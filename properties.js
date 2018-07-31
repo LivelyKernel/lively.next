@@ -67,8 +67,6 @@ function hasManagedProperties(klass) {
 }
 
 export function prepareClassForManagedPropertiesAfterCreation(klass) {
-  if (!hasManagedProperties(klass)) return;
-
   var {properties, propertySettings} = propertiesAndSettingsInHierarchyOf(klass);
   klass[propertiesAndSettingsCacheSym] = {properties, propertySettings, classHierarchy: getClassHierarchy(klass)};
   if (!properties || typeof properties !== "object") {
