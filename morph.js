@@ -365,6 +365,7 @@ export class Morph {
       scroll: {
         group: "geometry",
         defaultValue: pt(0, 0),
+        after: ['clipMode', 'submorphs'],
         type: 'Point',
         set({x, y}) {
           if (!this.isClip()) return;
