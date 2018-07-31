@@ -173,7 +173,7 @@ export class FreezerPart {
                           let world = window.$world = window.$$world = new World({
                             name: "world", extent: pt(window.innerWidth, window.innerHeight)
                           });
-                          MorphicEnv.default().setWorld(world);
+                          MorphicEnv.default().setWorldRenderedOn(world, document.body, window.prerenderNode);
                        }
                        export async function renderFrozenPart() {
                           let obj = deserialize(window.lively.partData["${name}"]);
