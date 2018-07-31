@@ -107,18 +107,19 @@ export class MorphicEnv {
     return this.setWorldRenderedOn(world, this.domEnv.document.body);
   }
 
-  setWorldRenderedOn(world, rootNode) {
+  setWorldRenderedOn(world, rootNode, domNode = null) {
     if (!world || !world.isWorld)
       throw new Error(`world object does not look like a morphic world`);
 
     if (this._waitForDOMEnv) {
-      return this._waitForDOMEnv.then(() => this.setWorldRenderedOn(world, rootNode));
+      return this._waitForDOMEnv.then(() => this.setWorldRenderedOn(world, rootNode, domNode));
     }
 
     this.deleteHistory();
     this.uninstallWorldRelated();
     this.world = world;
     this.renderer = new Renderer(world, rootNode, this.domEnv);
+    this.renderer.domNode = domNode;
     this.eventDispatcher = new EventDispatcher(this.domEnv.window, world).install(rootNode);
     world.resumeSteppingAll();
     if (this.isDefault()) this.domEnv.window.$world = world;
@@ -173,6 +174,11 @@ export class MorphicEnv {
     }
     return targets;
   }
+
+  cleanupCaches() {
+    this.world.withAllSubmorphsDo(m => m._pathDependants = m._pathDependants.filter(m => m.world()));
+  }
+  
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // history

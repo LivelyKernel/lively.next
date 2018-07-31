@@ -7,10 +7,6 @@
   },
   "dependencies": {
     "bowser": "^1.4.1",
-    "web-animations-js": "^2.3.1",
-    "svg.easing.js": "^1.0.0",
-    "svg.pathmorphing.js": "^0.1.1",
-    "svgjs": "^2.6.2",
     "lively.modules": "https://github.com/LivelyKernel/lively.modules",
     "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
     "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
@@ -24,6 +20,8 @@
     "kld-intersections": "0.4.1",
     "three": "^0.84.0",
     "virtual-dom": "^2.1.1",
+    "vdom-parser": "^1.4.1",
+    "animejs": "^2.2.0",
     "jsdom": "^9.4.0",
     "webfontloader": "^1.6.28"
   },
@@ -55,11 +53,7 @@
       "bowser": "bowser/bowser.min.js",
       "prism": "prismjs/prism.js",
       "prism-json": "prismjs/components/prism-json.js",
-      "webfontloader": "webfontloader/1.6.28/webfontloader.js",
-      "web-animations-js": "web-animations-js/web-animations.min.js",
-      "svgjs": "svgjs/dist/svg.js",
-      "svg.easing.js": "svg.easing.js/svg.easing.js",
-      "svg.pathmorphing.js": "svg.pathmorphing.js/dist/svg.pathmorphing.js"
+      "webfontloader": "webfontloader/1.6.28/webfontloader.js"
     },
     "meta": {
       "virtual-dom/dist/virtual-dom.js": {

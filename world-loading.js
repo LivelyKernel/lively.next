@@ -6,8 +6,6 @@ import { MorphicDB } from "./morphicdb/index.js";
 import { Path, obj, date, promise } from "lively.lang";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import LoadingIndicator from "lively.components/loading-indicator.js";
-import { subscribe } from "lively.notifications";
-import { Color } from "lively.graphics";
 
 
 export function pathForBrowserHistory(worldName, queryString) {

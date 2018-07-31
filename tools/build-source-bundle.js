@@ -22,6 +22,7 @@ var parts = {
   "lively.serializer2":      {source: placeholderSrc, path: require.resolve('lively.serializer2/dist/lively.serializer2.js')},
   "lively.bindings":         {source: placeholderSrc, path: require.resolve('lively.bindings/dist/lively.bindings.js')},
   "virtual-dom":             {source: placeholderSrc, path: require.resolve('virtual-dom/dist/virtual-dom.js')},
+  "vdom-parser":             {source: placeholderSrc, path: require.resolve('vdom-parser/dist.js')},
   "bowser":                  {source: placeholderSrc, path: require.resolve('bowser/bowser.min.js')},
   "kld-intersections":       {source: placeholderSrc, path: require.resolve("lively.morphic/lib/kld-intersections.min.js")},
   "svgjs":                   {source: placeholderSrc, path: require.resolve('svgjs')},
@@ -65,6 +66,7 @@ module.exports = Promise.resolve()
 })
   .then(bundle => {
       const globals = {
+        "vdom-parser": "vdomParser",
         "bowser": "bowser",
         "web-animations-js": "{}",
         "virtual-dom": "virtualDom",
@@ -133,6 +135,7 @@ ${parts["web-animations-js"].source}\n
   ${parts["kld-intersections"].source}\n
   ${parts["bowser"].source}\n
   ${parts["virtual-dom"].source}\n
+  ${parts['vdom-parser'].source}\n
   ${parts["svgjs"].source}\n
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :

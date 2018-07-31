@@ -1,4 +1,5 @@
 /*global System,WeakMap*/
+import { h, diff, patch, create as createNode } from "virtual-dom";
 import { promise, arr, tree, obj, num, string } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
 import {
@@ -11,7 +12,6 @@ import {
   renderMorph
 } from "./morphic-default.js";
 import { Transform, pt } from "lively.graphics";
-import { h, diff, patch, create as createNode } from "virtual-dom";
 import { getSvgVertices } from "./property-dom-mapping.js";
 
 const svgNs = "http://www.w3.org/2000/svg";

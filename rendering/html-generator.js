@@ -66,6 +66,7 @@ export async function generateHTML(morph, htmlResource, options = {}) {
         addScripts,
         appendHTML
       } = options,
+      renderFreeStanding = containerOpts == false,
       {width: containerWidth, height: containerHeight, id: containerId} = containerOpts || {},
       root = morphToNode(morph),
       htmlClassName = `html-${morph.name.replace(/[\s|"]/g, "-")}`;
@@ -80,13 +81,13 @@ export async function generateHTML(morph, htmlResource, options = {}) {
     }, n => n.childNodes);
   }
 
-  let morphHtml = `<div class="exported-morph-container ${htmlClassName}"`
-                + (containerId ? ` id="${containerId}" ` : '')
-                + `    style="background-image: ${options.backgroundColor ?
-                                   options.backgroundColor.toCSSString() : 'None'};
-                              max-width: ${containerWidth || root.style.width};`
-                + `           height: ${containerHeight || root.style.height};">`
-                + `${root.outerHTML.replace(/position: absolute;/, "")}\n</div>`, html;
+  let morphHtml = root.outerHTML, html;
+  
+  if (!renderFreeStanding) {
+    morphHtml = `<div class="exported-morph-container ${htmlClassName}"`
+                + (containerId ? ` id="${containerId}" ` : '') + `>`
+                + `${morphHtml}\n</div>`;
+  }
 
   if (isFragment) {
     html = addStyles ? morphicStyles() + morphHtml : morphHtml;

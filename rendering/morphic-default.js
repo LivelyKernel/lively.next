@@ -1,9 +1,9 @@
-import { diff, patch, create as createNode } from "virtual-dom";
+import { h, diff, patch, create as createNode } from "virtual-dom";
+import parser from "vdom-parser";
 import { num, obj, arr, properties, promise } from "lively.lang";
 import { Color, RadialGradient, pt, Point, LinearGradient, rect } from "lively.graphics";
 import { config } from "../index.js";
 import { styleProps, addSvgAttributes, addPathAttributes } from "./property-dom-mapping.js"
-import { h } from "virtual-dom";
 import bowser from 'bowser';
 
 // await $world.env.renderer.ensureDefaultCSS()
@@ -428,10 +428,16 @@ export function renderMorph(morph, renderer = morph.env.renderer) {
 export function renderRootMorph(world, renderer) {
   if (!world.needsRerender()) return;
 
-  var tree = renderer.renderMap.get(world) || renderer.render(world),
-      newTree = renderer.render(world),
-      patches = diff(tree, newTree),
-      domNode = renderer.domNode || (renderer.domNode = createNode(tree, renderer.domEnvironment));
+  var hydrated = false,
+      domNode = renderer.domNode,
+      tree = renderer.renderMap.get(world) || (domNode && (hydrated = true) && parser(domNode)) || renderer.render(world),
+      newTree = renderer.render(world);
+
+  if (hydrated) tree.key = newTree.key;
+  
+  var patches = diff(tree, newTree);
+  
+  domNode = domNode || (renderer.domNode = createNode(tree, renderer.domEnvironment));
 
   if (!domNode.parentNode) initDOMState(renderer, world);
 
