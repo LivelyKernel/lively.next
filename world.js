@@ -443,9 +443,10 @@ export class World extends Morph {
                 autoResize: true,
                 name: ea.name
               });
-              img.whenLoaded().then(() => {
+              img.whenLoaded().then(async () => {
                 img.extent = img.naturalExtent.scaleBy(.8 * this.visibleBounds().height / img.height);
                 img.openInWorld();
+                await img.whenRendered();
                 img.center = this.visibleBounds().center();
               });
             });
