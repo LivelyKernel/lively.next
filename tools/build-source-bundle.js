@@ -24,11 +24,9 @@ var parts = {
   "virtual-dom":             {source: placeholderSrc, path: require.resolve('virtual-dom/dist/virtual-dom.js')},
   "vdom-parser":             {source: placeholderSrc, path: require.resolve('vdom-parser/dist.js')},
   "bowser":                  {source: placeholderSrc, path: require.resolve('bowser/bowser.min.js')},
-  "kld-intersections":       {source: placeholderSrc, path: require.resolve("lively.morphic/lib/kld-intersections.min.js")},
-  "svgjs":                   {source: placeholderSrc, path: require.resolve('svgjs')},
-  "svg.easing.js":           {source: placeholderSrc, path: require.resolve('svg.easing.js')},
-  "svg.pathmorphing.js":     {source: placeholderSrc, path: require.resolve('svg.pathmorphing.js')},
-  "web-animations-js":       {source: placeholderSrc, path: require.resolve('web-animations-js')}
+  "web-animations-js":       {source: placeholderSrc, path: require.resolve('web-animations-js')},
+  "bezier-easing":           {source: placeholderSrc, path: require.resolve('bezier-easing/dist/bezier-easing.min.js')},
+  "flubber":                 {source: placeholderSrc, path: require.resolve('flubber')},
 }
 // output format - 'amd', 'cjs', 'es6', 'iife', 'umd'
 
@@ -68,6 +66,8 @@ module.exports = Promise.resolve()
       const globals = {
         "vdom-parser": "vdomParser",
         "bowser": "bowser",
+        "bezier-easing": "BezierEasing",
+        "flubber": "flubber",
         "web-animations-js": "{}",
         "virtual-dom": "virtualDom",
         "lively.lang": "lively.lang",
@@ -132,17 +132,17 @@ module.exports = Promise.resolve()
     var wrapInOwnDeps = (source) => `
 ${parts["web-animations-js"].source}\n
 (function() {
-  ${parts["kld-intersections"].source}\n
   ${parts["bowser"].source}\n
   ${parts["virtual-dom"].source}\n
   ${parts['vdom-parser'].source}\n
-  ${parts["svgjs"].source}\n
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
+  GLOBAL.bezier = {default: (function() { var module = {}; ${parts['bezier-easing'].source} return module})().exports};
+  (function() { var exports = {}; ${parts['flubber'].source} return exports})()
   System.global._classRecorder = {};
   ${source}
-  if (typeof module !== "undefined" && typeof require === "function") module.exports = GLOBAL.lively.modules;
+  if (typeof module !== "undefined" && typeof require === "function") module.exports = GLOBAL.lively.morphic;
 })();`;
 
     var noDeps = wrapInOwnDeps(origSource);
