@@ -1,8 +1,7 @@
-/*global System,Map,WeakMap*/
+/*global System,Map,WeakMap,Shapes,Intersection*/
 import { Rectangle, Point, rect, Color, pt } from "lively.graphics";
 import { string, obj, fun, promise, arr } from "lively.lang";
 import { signal, connect, disconnect } from "lively.bindings";
-import { Shapes, Intersection } from 'kld-intersections';
 
 import { config, morph, Morph } from "../index.js";
 import { Selection, MultiSelection } from "./selection.js";
@@ -2732,7 +2731,7 @@ export class Text extends Morph {
   }
 
   onKeyDown(evt) {
-    if (this.compositionRange) return;
+    if (this.compositionRange || evt.targetMorph != this) return;
     this.selection.cursorBlinkStart();
     KeyHandler.invokeKeyHandlers(this, evt, true /*no input evts*/);
   }
