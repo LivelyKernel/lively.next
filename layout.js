@@ -521,11 +521,6 @@ export class HorizontalLayout extends FloatLayout {
 
 export class ProportionalLayout extends Layout {
 
-  static get proportionalLayoutSettingsForMorphs() {
-    return this._proportionalLayoutSettingsForMorphs 
-      || (this._proportionalLayoutSettingsForMorphs = new WeakMap());
-  }
-
   name() { return "Proportional" }
   description() { return "Resizes, scales, and moves morphs according to their original position." }
 
@@ -537,22 +532,27 @@ export class ProportionalLayout extends Layout {
   constructor(args) {
     super(args);
     this.extentDelta = pt(0,0);
+    this.proportionalLayoutSettingsForMorphs = new WeakMap();
     this.submorphSettings = (args && args.submorphSettings) || [];
   }
 
+  get __dont_serialize__() { return [...super.__dont_serialize__, 'extentDelta', 'lastExtent'] }
+
   __after_deserialize__(snapshot, ref) {
     let {_submorphSettings, container} = this,
-        map = this.constructor.proportionalLayoutSettingsForMorphs;
+        map = this.proportionalLayoutSettingsForMorphs || new WeakMap();
+    this.extentDelta = pt(0,0);
     if (!_submorphSettings || !container) return;
     for (let [ident, setting] of _submorphSettings) {
       let [morph] = this._morphsMatchingSelector(container, ident);
       morph && map.set(morph, setting);
     }
+    this.proportionalLayoutSettingsForMorphs = map;
   }
 
   onSubmorphChange(submorph, change, x ,y) {
     if (change.prop === "name") {
-      let settings = this.constructor.proportionalLayoutSettingsForMorphs.get(submorph);
+      let settings = this.proportionalLayoutSettingsForMorphs.get(submorph);
       if (settings) this.changeSettingsFor(submorph, settings, true);
     }
     return super.onSubmorphChange(submorph, change);
@@ -560,13 +560,13 @@ export class ProportionalLayout extends Layout {
 
   settingsFor(morph) {
     // move, resize, scale, fixed
-    let settings = this.constructor.proportionalLayoutSettingsForMorphs.get(morph);
+    let settings = this.proportionalLayoutSettingsForMorphs.get(morph);
     return settings || {x: "scale", y: "scale"};
   }
 
   changeSettingsFor(morph, mergin, save = false) {
     if (typeof mergin === "string") mergin = {x: mergin, y: mergin};
-    this.constructor.proportionalLayoutSettingsForMorphs
+    this.proportionalLayoutSettingsForMorphs
       .set(morph, {...this.settingsFor(morph), ...mergin});
     if (save) {
       let settings = this.submorphSettings.filter(ea => ea[0] !== morph.name);
