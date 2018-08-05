@@ -1,15 +1,11 @@
 /*global SVG, System*/
-import {obj, properties, arr, string} from "lively.lang";
-import {LinearGradient, pt, RadialGradient, rect} from "lively.graphics";
+import {obj, num, promise, properties, arr, string} from "lively.lang";
+import {LinearGradient, Color, pt, RadialGradient, rect} from "lively.graphics";
 import {styleProps, addPathAttributes, addSvgAttributes} from "./property-dom-mapping.js";
+import { renderGradient } from "./morphic-default.js";
+import { interpolate as flubberInterpolate } from 'flubber';
+import Bezier from 'bezier-easing';
 import "web-animations-js";
-import "svgjs";
-import "svg.easing.js";
-import "svg.pathmorphing.js";
-// move to lively.lang
-function pad(array, n, getPadElement = arr.last) {
-   return [...array, ...(new Array(Math.max(n - array.length, 0)).fill(getPadElement(array)))]
-}
 
 /*rms 27.11.17: Taken from https://css-tricks.com/snippets/sass/easing-map-get-function/ */
 
@@ -30,14 +26,14 @@ export const easings = {
   outExpo:     'cubic-bezier(0.190,  1.000, 0.220, 1.000)',
   outCirc:     'cubic-bezier(0.075,  0.820, 0.165, 1.000)',
   outBack:     'cubic-bezier(0.175,  0.885, 0.320, 1.275)',
-  inOutQuad:  'cubic-bezier(0.455,  0.030, 0.515, 0.955)',
-  inOutCubic: 'cubic-bezier(0.645,  0.045, 0.355, 1.000)',
-  inOutQuart: 'cubic-bezier(0.770,  0.000, 0.175, 1.000)',
-  inOutQint: 'cubic-bezier(0.860,  0.000, 0.070, 1.000)',
-  inOutSine:  'cubic-bezier(0.445,  0.050, 0.550, 0.950)',
-  inOutExpo:  'cubic-bezier(1.000,  0.000, 0.000, 1.000)',
-  inOutCirc:  'cubic-bezier(0.785,  0.135, 0.150, 0.860)',
-  inOutBack:  'cubic-bezier(0.680, -0.550, 0.265, 1.550)'
+  inOutQuad:   'cubic-bezier(0.455,  0.030, 0.515, 0.955)',
+  inOutCubic:  'cubic-bezier(0.645,  0.045, 0.355, 1.000)',
+  inOutQuart:  'cubic-bezier(0.770,  0.000, 0.175, 1.000)',
+  inOutQint:   'cubic-bezier(0.860,  0.000, 0.070, 1.000)',
+  inOutSine:   'cubic-bezier(0.445,  0.050, 0.550, 0.950)',
+  inOutExpo:   'cubic-bezier(1.000,  0.000, 0.000, 1.000)',
+  inOutCirc:   'cubic-bezier(0.785,  0.135, 0.150, 0.860)',
+  inOutBack:   'cubic-bezier(0.680, -0.550, 0.265, 1.550)'
 }
 
 function convertToSvgEasing(easing) {
@@ -97,19 +93,22 @@ export class AnimationQueue {
 }
 
 export class PropertyAnimation {
+  
   constructor(queue, morph, config) {
     this.queue = queue;
     this.morph = morph;
-    this.config = this.convertGradients(this.convertBounds(config));
-    this.needsAnimation = {svg: morph.isSvgMorph, path: morph.isPath, polygon: morph.isPolygon};
+    this.config = this.convertBounds(config);
+    this.needsAnimation = {
+      svg: morph.isSvgMorph,
+      path: morph.isPath,
+      // polygon: morph.isPolygon
+    };
     this.capturedProperties = obj.select(this.morph, this.propsToCapture);
   }
 
   get propsToCapture() {
     return ["fill", "origin"];
   }
-
-  
 
   asPromise() {
     return this._promise || (this._promise = new Promise((resolve, reject) => {
@@ -124,7 +123,7 @@ export class PropertyAnimation {
     }));
   }
 
-  finish() {
+  finish(type) {
     if (this.config.scale) {
       // when we have been performing a scale animation,
       // there is a possibility that some of the text morphs
@@ -133,63 +132,11 @@ export class PropertyAnimation {
       this.morph.whenRendered().then(() => 
           this.morph.withAllSubmorphsDo(m => m.isText && m.invalidateTextLayout(true, true)));
     }
-    this.queue.removeAnimation(this);
+    this.needsAnimation[type] = false;
+    if (!arr.any(Object.values(this.needsAnimation), Boolean)) {
+      this.queue.removeAnimation(this);
+    }
     this.resolveCallback ? this.resolveCallback() : this.onFinish();
-  }
-
-  convertGradients(config) {
-    if (this.morph.isSvgMorph && config.fill) {
-      this.morph.fill = config.fill;
-      return obj.dissoc(config, ["fill"]);
-    }
-    if (config.fill && config.fill.isGradient && this.morph.fill.isGradient) {
-      var fillBefore = this.morph.fill,
-          fillAfter = config.fill,
-          d = config.duration || 1000;
-      if (fillBefore.type == "linearGradient" && fillAfter.type == "radialGradient") {
-        this.subAnimation = (async () => {
-          await this.morph.animate({
-            fill: new LinearGradient({...fillBefore, vector: rect(0, 0, 0, 1)}),
-            duration: d / 2,
-            easing: easings.inQuad
-          });
-          this.morph.fill = new RadialGradient({
-            stops: fillBefore.stops,
-            focus: pt(0.5, 0),
-            bounds: rect(0, 0, this.morph.width * 100, this.morph.height * 2)
-          });
-          await this.morph.animate({
-            fill: fillAfter,
-            duration: d / 2,
-            easing: easings.outQuad
-          });
-          return this.morph;
-        })();
-        return obj.dissoc(config, ["fill"]);
-      }
-      if (fillBefore.type == "radialGradient" && fillAfter.type == "linearGradient") {
-        this.subAnimations = (async () => {
-          await this.morph.animate({
-            fill: new RadialGradient({
-              stops: fillBefore.stops,
-              focus: pt(0.5, 0),
-              bounds: rect(0, 0, this.morph.width * 100, this.morph.height * 2)
-            }),
-            duration: d / 2,
-            easing: easings.inQuad
-          });
-          this.morph.fill = new LinearGradient({...fillBefore, vector: rect(0, 0, 0, 1)});
-          await this.morph.animate({
-            fill: fillAfter,
-            duration: d / 2,
-            easing: easings.outQuad
-          });
-          return this.morph;
-        })();
-        return obj.dissoc(config, ["fill"]);
-      }
-    }
-    return config;
   }
 
   convertBounds(config) {
@@ -226,7 +173,7 @@ export class PropertyAnimation {
   }
 
   get affectsMorph() {
-    return properties.any(
+    return !!this.config.customTween || properties.any(
       this.animatedProps,
       (animatedProps, prop) => !obj.equals(animatedProps[prop], this.morph[prop])
     );
@@ -260,9 +207,16 @@ export class PropertyAnimation {
   }
 
   getAnimationProps(type) {
-    const [before, after] = this.getChangedProps(this.beforeProps[type], this.afterProps[type]),
-          {fill: fillBefore, dropShadow: shadowBefore} = this.capturedProperties,
-          {fill: fillAfter, dropShadow: shadowAfter} = this.morph;
+    let [before, after] = this.getChangedProps(this.beforeProps[type], this.afterProps[type]),
+        {fill: fillBefore, dropShadow: shadowBefore} = this.capturedProperties,
+        {fill: fillAfter, dropShadow: shadowAfter, isPolygon} = this.morph;
+    if (isPolygon && type == 'css') {
+      fillBefore = fillAfter = false;
+      delete before['background'];
+      delete after['background'];
+      delete before['backgroundImage'];
+      delete after['backgroundImage'];
+    }
     if (before.filter == 'none' && after.boxShadow) {
       delete before.filter;
       before.boxShadow = 'none';
@@ -271,59 +225,8 @@ export class PropertyAnimation {
       delete after.filter;
       after.boxShadow = 'none';
     }
-    if (fillBefore && fillAfter) {
-      if (fillBefore.isGradient && fillAfter.isGradient) {
-        const numStops = Math.max(fillAfter.stops.length, fillBefore.stops.length),
-              beforeStops = pad(fillBefore.stops, numStops),
-              beforeGradient = new fillBefore.__proto__.constructor({
-                ...fillBefore,
-                vector: fillBefore.vector && fillBefore.vectorAsAngle() + 0.00001,
-                stops: beforeStops
-              }).toString(),
-              afterStops = pad(fillAfter.stops, numStops),
-              afterGradient = new fillAfter.__proto__.constructor({
-                ...fillAfter,
-                vector: fillAfter.vector && fillAfter.vectorAsAngle(),
-                stops: afterStops
-              }).toString();
-        before.backgroundImage = beforeGradient;
-        after.backgroundImage = afterGradient;
-      }
-      if (fillBefore.isColor && fillAfter.isGradient) {
-        const gradientClass = fillAfter.__proto__.constructor,
-              stops = fillAfter.stops,
-              solidGradient = new gradientClass({
-                ...fillAfter,
-                vector: fillAfter.g && fillAfter.vectorAsAngle() + 0.00001,
-                stops: stops.map(({offset}) => {
-                  return {color: fillBefore, offset};
-                })
-              }).toString();
-        delete before["background"];
-        delete after["background"];
-        before.backgroundImage = solidGradient;
-      }
-      if (fillBefore.isGradient && fillAfter.isColor) {
-        const g = fillBefore,
-              gradientClass = g.__proto__.constructor,
-              stops = g.stops,
-              originalGradient = new gradientClass({
-                ...g,
-                vector: g.vector && g.vectorAsAngle() + 0.001,
-                stops: g.stops
-              }).toString(),
-              solidGradient = new gradientClass({
-                ...g,
-                vector: g.vector && g.vectorAsAngle(),
-                stops: stops.map(({offset}) => {
-                  return {color: fillAfter, offset};
-                })
-              }).toString();
-        delete after["background"];
-        delete before["background"];
-        after.backgroundImage = solidGradient;
-        before.backgroundImage = originalGradient;
-      }
+    if (fillBefore && fillAfter && (fillBefore.isGradient || fillAfter.isGradient)) {
+      this.tweenGradient = this.interpolate('gradient', fillBefore, fillAfter);
     }
     // ensure that before and after props both have the same keys
     for (let key of arr.union(obj.keys(before), obj.keys(after))) {
@@ -350,37 +253,61 @@ export class PropertyAnimation {
     this.afterProps = this.gatherAnimationProps();
   }
 
+  // problem: when we animate the fill, the css animation consumes 
+  // the animation too early such that the svg animation
+  // can not take its turn
+
+  interpolate(attr, v1, v2) {
+    switch (attr) {
+       case "scrollTop":
+       case "scrollLeft":
+         return i => num.interpolate(i, v1, v2);
+       case 'd':
+         return flubberInterpolate(v1, v2);
+       case 'stroke-width':
+         return i => num.interpolate(i, v1, v2);
+       case 'stroke':
+       case 'gradient':
+        return i => v1.interpolate(i, v2, this.morph.bounds());
+       case 'fill':
+         v1 = Color.fromTuple(Color.parse(v1));
+         v2 = Color.fromTuple(Color.parse(v2));
+         return i => v1.interpolate(i, v2);
+    }
+  }
+
   startSvg(svgNode, type) {
     if (this.needsAnimation[type]) {
       this.needsAnimation[type] = false;
-      const [before, after] = this.getAnimationProps(type);
-      if (before && after) {
-        var node = SVG.adopt(svgNode).animate(this.duration, convertToSvgEasing(this.easing));
-        if (type == 'svg') {
-            let clipPath = node.target().defs().children().find(n => n.type == 'clipPath').children()[0];
-            if (clipPath) {
-               let [_, clipProps] = this.getAnimationProps('path');
-               clipProps.d && clipPath.animate(this.duration, convertToSvgEasing(this.easing)).plot(clipProps.d);
-            }
-        }
-        for (let prop in after) {
-          if (prop == "d") {
-            node = node.plot(after.d);
-            continue;
+      const [before, after] = this.getAnimationProps(type),
+            params = {},
+            easingFn = Bezier(...eval(`([${this.easing.match(/\((.*)\)/)[1]}])`));
+      for (let k in before) params[k] = this.interpolate(k, before[k], after[k]);
+      let startTime,
+          draw = (time) => {
+          var t;
+          if (!startTime) {
+            startTime = time;
           }
-          if (prop == "viewBox") {
-            node = node.viewbox(...after.viewBox.split(" ").map(parseFloat));
-            continue;
+          t = time - startTime;
+          // Next iteration 
+          if (t / 1000 > 1) return this.finish(type);
+          for (let k in params) {
+             if (!params[k]) continue;
+             svgNode.setAttribute(k, params[k](easingFn(t / 1000))) 
           }
-          node = node.attr(prop, after[prop]);
+          if (this.tweenGradient) {
+             const v = this.tweenGradient(easingFn(t / 1000));
+             if (v.isGradient) {
+               // fixme: renderGradient is passed wrong params and returns a virtual node not a real one
+                svgNode.getElementsByTagName('linearGradient')[0].replaceWith(renderGradient(this.morph, v))
+             } else {
+                svgNode.setAttribute(k, v);
+             }
+           }
+          requestAnimationFrame(draw);
         }
-        node.afterAll(() => {
-          this.finish();
-          this.morph.makeDirty();
-        });
-      } else {
-         this.finish();
-      }
+      requestAnimationFrame(draw);
     }
   }
 
@@ -406,11 +333,76 @@ export class PropertyAnimation {
   }
 
   tween(node, before, after, remove = true) {
+    let scroll = this.animatedProps.scroll,
+        customTween = this.config.customTween,
+        removalScheduled = false;
     let onComplete = () => {
       if (!remove) return;
-      this.finish();
+      this.finish('css');
       this.morph.makeDirty();
     };
+    if (customTween) {
+        let startTime,
+           easingFn = Bezier(...eval(`([${this.easing.match(/\((.*)\)/)[1]}])`)),
+           draw = (time) => {
+          var t;
+          if (!startTime) {
+            startTime = time;
+          }
+          t = time - startTime;
+          // Next iteration 
+          if (t / this.duration >= 1) return this.finish('css');
+          customTween(easingFn(t / this.duration));
+          requestAnimationFrame(draw);
+        }
+        requestAnimationFrame(draw);
+        removalScheduled = true;
+    }
+    if (scroll) {
+       // perform own custom scroll animation, just like
+       // we perfrom custom path transform animation
+       // also perform custom gradient interpolation if we morph
+       // across gradient fills with this custom method      
+       let startTime,
+           interpolateScrollX = this.interpolate('scrollLeft', node.scrollTop, scroll.x),
+           interpolateScrollY = this.interpolate('scrollTop', node.scrollTop, scroll.y),
+           easingFn = Bezier(...eval(`([${this.easing.match(/\((.*)\)/)[1]}])`)),
+           draw = (time) => {
+          var t;
+          if (!startTime) {
+            startTime = time;
+          }
+          t = time - startTime;
+          // Next iteration 
+          if (t / this.duration >= 1) return this.finish('css');
+          node.scrollTop = interpolateScrollY(easingFn(t / this.duration));
+          node.scrollLeft = interpolateScrollX(easingFn(t / this.duration)); 
+          requestAnimationFrame(draw);
+        }
+        requestAnimationFrame(draw);
+        removalScheduled = true;
+    }
+    if (this.tweenGradient && !this.morph.isPolygon) {
+      let startTime,
+          easingFn = Bezier(...eval(`([${this.easing.match(/\((.*)\)/)[1]}])`)),
+          draw = (time) => {
+          var t;
+          if (!startTime) {
+            startTime = time;
+          }
+          t = time - startTime;
+          // Next iteration 
+          if (t / this.duration >= 1) return this.finish('css');
+          node.style.setProperty('background-image', this.tweenGradient(easingFn(t / this.duration)));
+          requestAnimationFrame(draw);
+        }
+        delete before.backgroundImage;
+        delete after.backgroundImage;
+        requestAnimationFrame(draw);
+        removalScheduled = true;
+    } else if (this.tweenGradient) {
+      removalScheduled = true;
+    }
     if (before && after) {
       let camelBefore = {},
           camelAfter = {};
@@ -426,8 +418,8 @@ export class PropertyAnimation {
         onComplete();
         setTimeout(() => anim.cancel(), 200);
       };
-    } else {
-      onComplete();
+      removalScheduled = true;
     }
+    if (!removalScheduled) onComplete();
   }
 }

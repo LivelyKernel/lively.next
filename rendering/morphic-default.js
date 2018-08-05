@@ -314,6 +314,9 @@ MorphAfterRenderHook.prototype.updateScroll = function(morph, node) {
     return interactiveScrollInProgress.then(() => this.updateScroll(morph, node));
   if (node) {
     const {x, y} = morph.scroll;
+
+    if (morph._animationQueue.animations.find(anim => anim.animatedProps.scroll)) return
+    
     // prevent interference with bounce back animation
     node.scrollTop !== y && (node.scrollTop = y);
     node.scrollLeft !== x && (node.scrollLeft = x);

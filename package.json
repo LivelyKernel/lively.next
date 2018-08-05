@@ -16,14 +16,14 @@
     "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
     "lively.ide": "https://github.com/LivelyKernel/lively.ide",
     "pepjs": "^0.4.3",
+    "jsdom": "^9.4.0",
+    "webfontloader": "^1.6.28",
     "prismjs": "^1.6.0",
-    "kld-intersections": "0.4.1",
-    "three": "^0.84.0",
     "virtual-dom": "^2.1.1",
     "vdom-parser": "^1.4.1",
-    "animejs": "^2.2.0",
-    "jsdom": "^9.4.0",
-    "webfontloader": "^1.6.28"
+    "web-animations-js": "^2.3.1",
+    "flubber": "^0.4.2",
+    "bezier-easing": "^2.1.0"
   },
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.8.0",
@@ -47,8 +47,6 @@
     "map": {
       "jsdiff": "./lib/jsdiff-3.0.0.js",
       "dom-to-image": "./lib/dom-to-image-2.6.0.min.js",
-      "three.js": "three/build/three.js",
-      "kld-intersections": "./lib/kld-intersections.min.js",
       "virtual-dom": "virtual-dom/dist/virtual-dom.js",
       "bowser": "bowser/bowser.min.js",
       "prism": "prismjs/prism.js",
