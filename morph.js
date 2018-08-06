@@ -3187,13 +3187,13 @@ export class Path extends Morph {
           relOriginX = origin.x/w,
           relOriginY = origin.y/h,
           points = [];
-    for (let vertex of vertices) {
+    vertices.forEach((vertex, i) => {
       let {isSmooth, position, controlPoints} = vertex,
           {next, previous} = controlPoints || {};
       points.push(position);
-      if (isSmooth)
+      if (isSmooth && i > 0 && i < vertices.length - 1)
         points.push(position.addPt(next), position.addPt(previous));
-    }
+    });
     let b = Rectangle.unionPts(points),
         newOrigin = pt(b.width*relOriginX, b.height*relOriginY),
         offset = b.topLeft();
