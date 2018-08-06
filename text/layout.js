@@ -93,10 +93,14 @@ export default class TextLayout {
 
       // find all styles that apply to line
       if (!textAttributes || !textAttributes.length) styles.push(defaultTextStyle);
-      else for (var j = 0; j < textAttributes.length; j += 2) {
+      else for (var j = 0, column=0; j < textAttributes.length; j += 2) {
         inlineMorph = textAttributes[j]
-        if (inlineMorph && inlineMorph.isMorph)
-           inlineMorph.position = this.pixelPositionFor(morph, {row: i , column: j / 2}).subPt(morph.origin);
+        if (inlineMorph && inlineMorph.isMorph) {
+           inlineMorph.position = this.pixelPositionFor(morph, {row: i , column}).subPt(morph.origin);
+           column++;
+        } else if (inlineMorph) {
+           column += inlineMorph.length
+        }
         styles.push({...defaultTextStyle, ...textAttributes[j + 1]});
       }
 
