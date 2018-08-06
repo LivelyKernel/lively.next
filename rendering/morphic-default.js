@@ -310,8 +310,9 @@ MorphAfterRenderHook.prototype.updateScroll = function(morph, node) {
   // evt.state.scroll.interactiveScrollInProgress promise is used for tracking
   // that.
   var { interactiveScrollInProgress } = morph.env.eventDispatcher.eventState.scroll;
-  if (interactiveScrollInProgress)
+  if (interactiveScrollInProgress) {
     return interactiveScrollInProgress.then(() => this.updateScroll(morph, node));
+  }
   if (node) {
     const {x, y} = morph.scroll;
 
@@ -371,14 +372,14 @@ export function pathAttributes(path) {
   return {animation, attributes};
 }
 
-export function renderGradient(morph, prop) {
-  const gradient = morph[prop].valueOf(),
-        {bounds, focus, vector, stops} = gradient,
-        {extent: {x: width, y: height}} = morph,
+export function renderGradient(id, extent, gradient) {
+  gradient = gradient.valueOf();
+  const {bounds, focus, vector, stops} = gradient,
+        {x: width, y: height} = extent,
         props = {
           namespace: "http://www.w3.org/2000/svg",
           attributes: {
-            id: "gradient-" + prop + morph.id,
+            id: "gradient-" + id,
             gradientUnits: "userSpaceOnUse",
             r: "50%"
           }

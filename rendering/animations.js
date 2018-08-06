@@ -1,11 +1,11 @@
 /*global SVG, System*/
-import {obj, num, promise, properties, arr, string} from "lively.lang";
-import {LinearGradient, Color, pt, RadialGradient, rect} from "lively.graphics";
+import { obj, fun, num, properties, arr, string } from "lively.lang";
+import { Color } from "lively.graphics";
 import {styleProps, addPathAttributes, addSvgAttributes} from "./property-dom-mapping.js";
-import { renderGradient } from "./morphic-default.js";
 import { interpolate as flubberInterpolate } from 'flubber';
 import Bezier from 'bezier-easing';
 import "web-animations-js";
+
 
 /*rms 27.11.17: Taken from https://css-tricks.com/snippets/sass/easing-map-get-function/ */
 
@@ -97,6 +97,15 @@ export class PropertyAnimation {
   constructor(queue, morph, config) {
     this.queue = queue;
     this.morph = morph;
+    if (morph.isPath && config.fill) {
+        const fillBefore = morph.fill, fillAfter = config.fill;
+        config.customTween = fun.compose(p => {
+          morph.fill = fillBefore.interpolate(p, fillAfter);
+          return p;
+       }, config.customTween || (p => {}));
+       delete config.fill;
+       morph.fill = fillBefore;
+    }
     this.config = this.convertBounds(config);
     this.needsAnimation = {
       svg: morph.isSvgMorph,
@@ -226,7 +235,7 @@ export class PropertyAnimation {
       after.boxShadow = 'none';
     }
     if (fillBefore && fillAfter && (fillBefore.isGradient || fillAfter.isGradient)) {
-      this.tweenGradient = this.interpolate('gradient', fillBefore, fillAfter);
+      this.tweenGradient = this.interpolate('gradient', fillBefore, fillAfter); 
     }
     // ensure that before and after props both have the same keys
     for (let key of arr.union(obj.keys(before), obj.keys(after))) {
@@ -267,11 +276,12 @@ export class PropertyAnimation {
        case 'stroke-width':
          return i => num.interpolate(i, v1, v2);
        case 'stroke':
+        return i => Color.fromString(v1).interpolate(i, Color.fromString(v2), this.morph.bounds());
        case 'gradient':
         return i => v1.interpolate(i, v2, this.morph.bounds());
        case 'fill':
-         v1 = Color.fromTuple(Color.parse(v1));
-         v2 = Color.fromTuple(Color.parse(v2));
+         v1 = Color.fromString(v1);
+         v2 = Color.fromString(v2);
          return i => v1.interpolate(i, v2);
     }
   }
@@ -291,20 +301,11 @@ export class PropertyAnimation {
           }
           t = time - startTime;
           // Next iteration 
-          if (t / 1000 > 1) return this.finish(type);
+          if (t / this.duration > 1) return this.finish(type);
           for (let k in params) {
              if (!params[k]) continue;
-             svgNode.setAttribute(k, params[k](easingFn(t / 1000))) 
+             svgNode.setAttribute(k, params[k](easingFn(t / this.duration))) 
           }
-          if (this.tweenGradient) {
-             const v = this.tweenGradient(easingFn(t / 1000));
-             if (v.isGradient) {
-               // fixme: renderGradient is passed wrong params and returns a virtual node not a real one
-                svgNode.getElementsByTagName('linearGradient')[0].replaceWith(renderGradient(this.morph, v))
-             } else {
-                svgNode.setAttribute(k, v);
-             }
-           }
           requestAnimationFrame(draw);
         }
       requestAnimationFrame(draw);

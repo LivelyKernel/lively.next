@@ -1,6 +1,6 @@
 /*global System,WeakMap*/
 import { h, diff, patch, create as createNode } from "virtual-dom";
-import { promise, arr, tree, obj, num, string } from "lively.lang";
+import { promise, arr, tree, obj, string } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
 import {
   defaultStyle,
@@ -397,24 +397,15 @@ export class Renderer {
 
     if (morph.fill && morph.fill.isGradient) {
       if (!defs) defs = [];
-      defs.push(renderGradient(morph, "fill"));
+      defs.push(renderGradient("fill" + morph.id, morph.extent, morph.fill));
     }
     if (morph.borderColor && morph.borderColor.valueOf().isGradient) {
       if (!defs) defs = [];
-      defs.push(renderGradient(morph, "borderColor"))
+      defs.push(renderGradient("borderColor" + morph.id, morph.extent, morph.borderColor))
     }
     if (markers && markers.length) {
       if (!defs) defs = [];
       defs.push(...markers);
-      // h("svg", {
-      //   namespace: svgNs, version: "1.1",
-      //   style: {
-      //     position: "absolute",
-      //     // "pointer-events": controlPoints ? "" : "none",
-      //     overflow: "visible"
-      //   },
-      //   ...svgAttributes(morph)
-      // }, svgElements),
     }
 
     svgElements.push(svgEl)

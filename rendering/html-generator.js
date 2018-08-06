@@ -113,7 +113,7 @@ export async function generateHTML(morph, htmlResource, options = {}) {
     }
     if (addStyles) html += morphicStyles();
     if (addScripts) html += addScripts;
-    html += `</head><body style="margin: 0; ">\n` + morphHtml + "\n";
+    html += `</head><body style="margin: 0; overflow: hidden; width: 100%; height: 100%;">\n` + morphHtml + "\n";
     if (appendHTML) html += appendHTML + "\n";
     html += "</body>"
   }
