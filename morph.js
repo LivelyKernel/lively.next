@@ -1684,10 +1684,10 @@ export class Morph {
     return new Transform(this.transformToMorph(newOwner));
   }
 
-  localizePointFrom(pt, otherMorph) {
+  localizePointFrom({x, y}, otherMorph) {
     // map local point to owner coordinates
     try {
-      return otherMorph.transformPointToMorph(this, pt);
+      return otherMorph.transformPointToMorph(this, pt(x, y));
     } catch (er) {
       console.warn("problem " + er + " in localizePointFrom");
       return pt;
