@@ -1,6 +1,6 @@
 import { Morph, Label, InputLine } from "lively.morphic";
 import { Tree, TreeData } from "lively.components";
-import { arr, promise, num, date, string } from "lively.lang";
+import { arr, fun, promise, num, date, string } from "lively.lang";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { connect } from "lively.bindings";
 import { resource } from "lively.resources";
@@ -391,7 +391,7 @@ export default class HTTPFileBrowser extends Morph {
             }),
 
             {
-              type: "text", name: "selectedFileName",
+              type: "label", name: "selectedFileName",
               fontSize: 14, fontFamily: "Inconsolata, monospace",
               readOnly: true, clipMode: "hidden"
             },
@@ -567,7 +567,7 @@ export default class HTTPFileBrowser extends Morph {
   }
 
   showSelectedFile() {
-    let sel = this.selectedFile;
+    let sel = this.selectedFile;       
     this.get("selectedFileName").textString =  sel ? sel.url : "";
   }
 
