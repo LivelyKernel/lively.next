@@ -116,15 +116,20 @@ export class Popover extends Morph {
     let body = this.get("body"),
         arrow = this.get("arrow"),
         closeBtn = this.get("close button"),
-        offset = arrow.height;
-    //arrow.topCenter = pt(0,0);
-    //if (body.extent.equals(this.extent)) return;
+        offset = arrow.height,
+        padding = 8;
+
     if (animated) {
-      body.animate({topCenter: pt(0, offset), duration});
-      closeBtn.animate({topRight: body.topRight.addXY(8, -8), duration});
+      body.animate({
+        extent: body.submorphBounds().extent(), 
+        topCenter: pt(0, offset),
+        duration
+      });
+      closeBtn.animate({topRight: body.topRight.addXY(padding, -padding), duration});
     } else {
+      body.extent = body.submorphBounds().extent();
       body.topCenter = pt(0, offset);
-      closeBtn.topRight = body.topRight.addXY(8, -8);
+      closeBtn.topRight = body.topRight.addXY(padding, -padding);
     }
   }
 

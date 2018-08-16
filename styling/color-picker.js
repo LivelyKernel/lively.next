@@ -128,7 +128,7 @@ export class ColorPickerField extends Morph {
     const p = this.picker || new ColorPicker({color: this.colorValue});
     p.position = pt(0, -p.height / 2);
     connect(p, "color", this, "update");
-    this.picker = await p.fadeIntoWorld(this.globalBounds().bottomCenter());
+    this.picker = p.openInWorld(this.globalBounds().bottomCenter());
     this.removePalette();
   }
 
@@ -146,7 +146,7 @@ export class ColorPickerField extends Morph {
       });
     connect(p.targetMorph, "color", this, "update");
     p.isLayoutable = false;
-    this.palette = await p.fadeIntoWorld(
+    this.palette = await p.openInWorld(
        this.get('paletteButton').globalBounds().center());
     this.removePicker();
     once(p, 'remove', p, 'topLeft', {converter: () => pt(0,0), varMapping: {pt}});

@@ -6,6 +6,7 @@ import { Morph, CustomLayout, VerticalLayout, HorizontalLayout,
 import { DropDownSelector, ModeSelector, Slider } from "lively.components/widgets.js";
 import { connect, signal } from "lively.bindings";
 import { num, arr } from "lively.lang";
+import { SnapLayout } from "lively.morphic/layout.js";
 
 const WHEEL_URL = '/lively.ide/assets/color-wheel.png'
 
@@ -334,11 +335,8 @@ export class ColorPalette extends Morph {
       ".ColorPalette [name=paletteView]": {
         clipMode: "hidden",
         fill: Color.transparent,
-        layout: new VerticalLayout({
-          resizeContainer: false,
-          layoutOrder(m) {
-            return this.container.submorphs.indexOf(m);
-          }
+        layout: new SnapLayout({
+          
         })
       },
       ".ColorPalette [name=solidColorPalette]": {
@@ -347,7 +345,8 @@ export class ColorPalette extends Morph {
           layoutOrder(m) {
             return this.container.submorphs.indexOf(m);
           },
-          resizeContainer: false})
+          resizeContainer: false
+        })
       },
       ".ColorPalette [name=paletteContainer]": {
         layout: new TilingLayout({
