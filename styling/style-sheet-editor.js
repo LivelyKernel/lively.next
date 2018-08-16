@@ -9,8 +9,6 @@ import { PropertyControl } from "../js/inspector.js";
 import { CompletionController } from "../text/completion.js";
 import { easings } from "lively.morphic/rendering/animations.js";
 
-// TOOLING
-
 function validRule(rule) {
     let expr = new SizzleExpression(rule, $world);
     return !expr.compileError
@@ -209,7 +207,7 @@ class PropertyDraft extends Morph {
         new StylePropCompleter(this.globalPropertySettings)
       ]);
       let menu = await this.completion.openCompletionList();
-      menu.moveBy(pt(-2,-2));
+      menu.moveBy(pt(-3,-2));
       connect(menu.inputMorph, 'onBlur', this, 'completionClosed');
     }
   }
@@ -269,6 +267,7 @@ class PropertyDraft extends Morph {
     });
     this.reset();
   }
+  
   reset() {
     this.get('key input').textString = 'name';
     this.get('key input').styleClasses = ['empty'];
@@ -401,12 +400,16 @@ class StyleSheetControl extends Morph {
   onNameInput(evt) {
     if (evt.key == 'Enter') {
       this.focus();
+      this.finishRename();
     }
   }
 
   startNameInput() {
     this.get('name').textString = '';
     this.get('name').styleClasses = [];
+    if (this.isDraft) {
+      
+    }
   }
 
   submit() {
@@ -432,14 +435,18 @@ class StyleSheetControl extends Morph {
       nameInput.styleClasses = ['empty'];
       once(nameInput, 'onMouseDown', this, 'startNameInput');
     }
+    connect(this.get('name'), 'onKeyDown', this, 'onNameInput');
     connect(this.get('finish rename'), 'onMouseDown', this, 'finishRename');
   }
 
   finishRename() {
+    const nameInput = this.get('name'),
+          finishButton = this.get('finish rename');
     this.focus();
-    this.value.name = this.get('name').textString;
-    this.get('name').reactsToPointer = false;
-    this.get('finish rename').replaceWith(this.renameButton);
+    nameInput.textString = nameInput.textString.replace('\n', '');
+    this.value = nameInput.textString;
+    nameInput.reactsToPointer = false;
+    if (finishButton) finishButton.replaceWith(this.renameButton);
   }
 
   removeStyleSheet() {
@@ -482,9 +489,19 @@ class StyleRuleControl extends Morph {
               type: "checkbox",
               scale: 0.9,
               checked: !props || !props._deactivated
-            }
+            },
+            Icon.makeLabel("close", {
+              padding: rect(10,0,0,0),
+              fontSize: 20,
+              fontColor: Color.black.withA(.5),
+              nativeCursor: 'pointer',
+              tooltip: "Remove Rule",
+              name: "rule remover",
+              visible: false
+            })
           ];
-          connect(this.getSubmorphNamed("rule toggler"), "trigger", this, "toggleRule");
+          connect(this.getSubmorphNamed("rule toggler"), "toggle", this, "toggleRule");
+          connect(this.getSubmorphNamed("rule remover"), "onMouseDown", this, "removeRule");
           connect(ruleInput, 'onFocus', this, 'editRule');
           connect(ruleInput, 'onKeyDown', this, 'onRuleEdit');
           connect(ruleInput, 'onBlur', this, 'compileRule');
@@ -527,18 +544,19 @@ class StyleRuleControl extends Morph {
     } else {
       this.toggleError(false);
       this.styleSheet.setRule(matcher, this.styleSheet.rules[this.key]);
-      this.styleSheet.removeRule(this.rule);
+      if (matcher != this.key) this.styleSheet.removeRule(this.key);
       this.key = matcher;
     }
     this.removeStyleClass('hover');
   }
 
-  toggleRule() {
-    this.styleSheet.toggleRule(this.key);
+  toggleRule(active) {
+    this.styleSheet.toggleRule(this.key, active);
   }
 
   onHoverIn(evt) {
     if (this.styleClasses.includes('error')) return;
+    this.getSubmorphNamed('rule remover').visible = true;
     this.highlighters = new Sizzle(this.styleSheet.context)
       .select(this.key)
       .filter(m => ![m, ...m.ownerChain()].includes(this.getWindow()))
@@ -546,6 +564,7 @@ class StyleRuleControl extends Morph {
   }
 
   onHoverOut(evt) {
+    this.getSubmorphNamed('rule remover').visible = false;
     arr.invoke(this.highlighters, 'remove');
   }
 
@@ -664,6 +683,13 @@ class StyleSheetData extends TreeData {
     this.updateRule(node);
   }
 
+  removeRule(args) {
+    args.styleSheet.removeRule(args.key);
+    let rules = this.root.children.find(n => n.value == args.styleSheet).children;
+    arr.remove(rules, rules.find(n => n == args));
+    signal(this, 'update');
+  }
+
   addRule(args) {
     let rules = this.root.children.find(n => n.value == args.styleSheet).children;
     arr.remove(rules, rules.find(n => n.type == 'new-rule'));
@@ -680,8 +706,10 @@ class StyleSheetData extends TreeData {
       },
       -1
     );
-    signal(this, 'update');
-    this.updateRule(args);
+    this.editor.whenRendered().then(() => {
+      this.updateRule(args);
+      signal(this, 'update');
+    });
   }
 
   updateRule(node) {
@@ -732,19 +760,47 @@ class StyleSheetData extends TreeData {
             value,
             key: prop
           };
-      node.children = spec.foldable ? this.getFoldedMembers(node) : [];
+      node.children = spec.foldable ? this.getFoldedMembers(node) : false;
       children.push(node);
     }
     return [...children, {type: "prop-adder", styleSheet, rule}];
   }
 
+  removeStyledProperty(args) {
+     let { rule, key, styleSheet} = args,
+         props = styleSheet.rules[rule];
+     styleSheet.setRule(rule, props ? obj.dissoc(props, [key]) : {});
+     let rules = this.root.children.find(n => n.value == styleSheet).children;
+     arr.remove(rules.find(n => n.value == rule).children, [args]);
+     signal(this, 'update');
+  }
+
   renderProperty(node) {
     if (node.displayedMorph) return node.displayedMorph;
-    var control = PropertyControl.render({
-       target: node.styleSheet, value: node.value, spec: node.spec,
-       valueString: node.value.toString(), keyString: node.key});
+    var control, 
+        remover = Icon.makeLabel("close", {
+          padding: rect(5,2,0,0),
+          fontSize: 20,
+          fontColor: Color.black.withA(.5),
+          nativeCursor: 'pointer',
+          tooltip: "Remove Property Style",
+          name: "style remover",
+          visible: false
+        }),
+        wrapper = morph({
+      fill: null,
+      layout: new HorizontalLayout(),
+      submorphs: [
+        (control = PropertyControl.render({
+         target: node.styleSheet, value: node.value, spec: node.spec,
+         valueString: node.value.toString(), keyString: node.key})) || 
+        Text.makeLabel(`${node.key}: ${obj.safeToString(node.value)}`),
+        remover]});
     if (control) {
-      node.displayedMorph = control;
+      node.displayedMorph = wrapper;
+      connect(remover, 'onMouseDown', this, "removeStyledProperty", {converter: () => node, varMapping: { node }});
+      connect(wrapper, 'onHoverIn', remover, 'visible', {converter: () => true});
+      connect(wrapper, 'onHoverOut', remover, 'visible', {converter: () => false});
       connect(control, "propertyValue", this, "updateRule", {
         converter: v => {
           return {...node, value: v};
@@ -756,7 +812,7 @@ class StyleSheetData extends TreeData {
         varMapping: {node}
       });
     }
-    return control ? node.displayedMorph : `${node.key}: ${obj.safeToString(node.value)}`;
+    return node.displayedMorph;
   }
 
   display(node) {
@@ -771,6 +827,10 @@ class StyleSheetData extends TreeData {
       case "rule":
         if (!node.displayedMorph) {
           let ruleControl = node.displayedMorph = new StyleRuleControl(node);
+          connect(ruleControl, "removeRule", this, "removeRule", {
+            converter: () => node,
+            varMapping: {node}
+          });
         }
         return node.displayedMorph;
       case "new-rule":
@@ -879,7 +939,9 @@ export class StyleSheetEditor extends Morph {
       ".Tree": {
         draggable: false,
         fill: Color.transparent,
-        fontColor: Color.rgbHex("5499c7")
+        fontColor: Color.rgbHex("5499c7"),
+        selectionFontColor: Color.rgbHex("5499c7"),
+        lineHeight: 2
       },
       ".TreeNode": {
         fill: Color.transparent
@@ -894,7 +956,6 @@ export class StyleSheetEditor extends Morph {
       },
       ".StyleSheetEditor": {
         fill: Color.transparent,
-        extent: pt(200, 300)
       },
       ".StyleRuleDraft .Text": {
         fontSize: 14,
@@ -916,6 +977,7 @@ export class StyleSheetEditor extends Morph {
         padding: rect(0, 0, 5, 0),
         autofit: true,
         borderWidth: 1,
+        lineHeight: 1,
         fontSize: 14,
         fontFamily: config.codeEditor.defaultStyle.fontFamily,
         borderColor: Color.transparent,
@@ -956,11 +1018,14 @@ export class StyleSheetEditor extends Morph {
         nativeCursor: "pointer",
         fontColor: Color.rgbHex("5499c7")
       },
+      ".PropertyControl": {
+        fontSize: 14,
+        lineHeight: 1.2
+      },
       // property control
       ".createProp": {
         fill: Color.transparent,
         layout: new HorizontalLayout(),
-        extent: pt(0, 18)
       },
       ".createProp .Text": {
         fill: Color.transparent,
@@ -978,7 +1043,6 @@ export class StyleSheetEditor extends Morph {
         fontFamily: config.codeEditor.defaultStyle.fontFamily,
         fontColor: Color.black,
         autofit: true,
-        extent: pt(10, 15),
         padding: rect(0, 0, 5, 0),
         fontSize: 14
       },
@@ -995,20 +1059,21 @@ export class StyleSheetEditor extends Morph {
         nativeCursor: "pointer",
         fill: Color.transparent,
         opacity: 0.5,
-        extent: pt(0, 21),
         layout: new HorizontalLayout({spacing: 4})
       },
       // style sheet control
       ".StyleSheetControl .Label": {
         fontSize: 14,
         padding: rect(0, 0, 5, 0),
-        autofit: true
+        autofit: true,
+        lineHeight: 1
       },
       ".StyleSheetControl .Text": {
         fontSize: 14,
         padding: rect(0, 0, 5, 0),
         fontColor: Color.rgbHex("5499c7"),
-        fill: Color.transparent
+        fill: Color.transparent,
+        lineHeight: 1
       },
       ".StyleSheetControl.draft": {
         fill: Color.rgbHex("d4e6f1").withA(.5),
@@ -1021,7 +1086,6 @@ export class StyleSheetEditor extends Morph {
       ".StyleSheetControl": {
         layout: new HorizontalLayout({spacing: 4}),
         borderWidth: 1,
-        extent: pt(0, 22),
         borderColor: Color.rgbHex("5499c7"),
         borderRadius: 4
       }
@@ -1040,7 +1104,7 @@ export class StyleSheetEditor extends Morph {
         //after: ['rule'],
         initialize() {
           this.styledClasses = arr.union(
-               [Morph, Text, Button],
+               [Morph, Text, Button, Tree],
                // new Sizzle($world).select(this.rule)
                //     .map(m => m.constructor)
             []);
@@ -1088,7 +1152,7 @@ export class StyleSheetEditor extends Morph {
           tree.keyhandlers[0].unbindKey('Left');
           connect(td, 'onWidgetOpened', this, 'onWidgetOpened');
           connect(td, 'update', tree, 'update');
-          connect(this.get('resizer'), 'onDrag', this, 'resizeBy', {
+          connect(this.get('resizer'), 'onDrag', this.get('propertyTree'), 'resizeBy', {
             converter: (evt) => evt.state.dragDelta
           })
           tree.update();
@@ -1117,8 +1181,8 @@ export class StyleSheetEditor extends Morph {
   relayout() {
     let tree = this.get('propertyTree'),
         treeItemBounds = tree.nodeItemContainer.bounds();
-    this.height = Math.min(treeItemBounds.height, 300);
-    this.width = tree.width = treeItemBounds.width + 10;
+    this.height = treeItemBounds.height;
+    this.width = treeItemBounds.width + 10;
     tree.height = this.height;
     this.get('resizer').bottomRight = this.extent;
   }
