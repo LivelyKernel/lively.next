@@ -855,8 +855,7 @@ export class Text extends Morph {
                                prop == 'extent' || 
                                prop == 'scale' || 
                                prop == 'rotation';
-    if (!submorph.isDisplacementMorph 
-        && this.displacingMorphMap.get(submorph) 
+    if (this.displacingMorphMap.get(submorph) 
         && isGeometricTransform) {
        [...this.displacingMorphMap.keys()]
            .filter(m => m.top >= submorph.top)
@@ -865,13 +864,22 @@ export class Text extends Morph {
          this.updateTextDisplacementFor(m)
        })
     }
-    if (!submorph.isDisplacementMorph 
-        && this.embeddedMorphMap.get(submorph) 
+
+    const {anchor: submorphAnchor} = this.embeddedMorphMap.get(submorph) || {};
+    if (submorphAnchor
         && !this._positioningSubmorphs 
         && isGeometricTransform) {
-      if (!obj.equals(change.prevValue, change.value)) {
+      const currentBounds = submorph.bounds(),
+            lastBounds = submorph._lastBounds,
+            row = submorphAnchor.position.row,
+            line = this.document.getLine(row);
+      if (!lastBounds || currentBounds.bottom() != lastBounds.bottom()) {
         this._positioningSubmorphs = true;
-        this.invalidateTextLayout(prop != 'position' , prop != 'position');
+        submorph._lastBounds = currentBounds;
+        // update the height of the current line
+        this.textLayout.estimateExtentOfLine(this, line);
+        this.textLayout.resetLineCharBoundsCacheOfRow(morph, row);
+        [...this.embeddedMorphMap.entries()].forEach(([m, {anchor}]) => anchor.position = anchor.position);
         this._positioningSubmorphs = false;
       }
     }
