@@ -67,11 +67,12 @@ export default class CommandHandler {
       });
     }
 
-    var world = morph.world(), progressIndicator, result;
-
+    var world = morph.world(), result;
+    
+    if (this.progressIndicator) this.progressIndicator.remove();
     if (typeof command.progressIndicator === "string")
-      progressIndicator = LoadingIndicator.open(command.progressIndicator);
-
+       this.progressIndicator = LoadingIndicator.open(command.progressIndicator);
+    
     if (typeof command.exec === "function") {
       try {
         result = command.exec(morph, args, command.handlesCount ? count : undefined, evt)
@@ -91,10 +92,9 @@ export default class CommandHandler {
         world ? world.logError(msg) : console.error(msg);
         throw err;
       });
-
-      progressIndicator && promise.finally(result, () => progressIndicator.remove());
+      this.progressIndicator && promise.finally(result, () => this.progressIndicator.remove());
     } else {
-      progressIndicator && progressIndicator.remove();
+      this.progressIndicator && this.progressIndicator.remove();
     }
 
     // handle count by repeating command
