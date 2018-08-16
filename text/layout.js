@@ -38,6 +38,62 @@ export default class TextLayout {
     for (let row = range.start.row; row <= range.end.row; row++)
       this.resetLineCharBoundsCacheOfRow(morph, row);
   }
+  
+  estimateExtentOfLine(morph, line, transform = morph.getGlobalTransform()) {
+    var { 
+           fontMetric, lineWrapping, 
+           extent: {x: morphWidth, y: morphHeight},
+           padding, textRenderer, debug, defaultTextStyle
+        } = morph,
+        paddingLeft = padding.left(),
+        paddingRight = padding.right(),
+        paddingTop = padding.top(),
+        paddingBottom = padding.bottom(),
+        directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph),
+        textAttributes = line.textAndAttributes, styles = [], inlineMorph;
+
+      morphWidth = morphWidth - paddingLeft - paddingRight;
+
+      // find all styles that apply to line
+      if (!textAttributes || !textAttributes.length) styles.push(defaultTextStyle);
+      else for (var j = 0, column=0; j < textAttributes.length; j += 2) {
+        inlineMorph = textAttributes[j]
+        if (inlineMorph && inlineMorph.isMorph) {
+           inlineMorph.position = this.pixelPositionFor(morph, {row: line.row , column}).subPt(morph.origin);
+           column++;
+        } else if (inlineMorph) {
+           column += inlineMorph.length
+        }
+        styles.push({...defaultTextStyle, ...textAttributes[j + 1]});
+      }
+
+      // measure default char widths and heights
+      var measureCount = styles.length, // for avg width
+          charWidthSum = 0,
+          charHeight = 0;
+      for (var h = 0; h < measureCount; h++) {
+        var {width, height} = fontMetric.defaultCharExtent(morph, {
+          defaultTextStyle: styles[h],
+          width: 1000, transform,
+          paddingBottom, paddingTop, paddingRight, paddingLeft
+        }, directRenderTextLayerFn);
+        charHeight = Math.max(height, charHeight);
+        charWidthSum = charWidthSum + width;
+      }
+
+      var estimatedHeight = charHeight,
+          charCount = line.text.length || 1,
+          charWidth = Math.round(charWidthSum / measureCount),
+          unwrappedWidth = charCount * charWidth,
+          estimatedWidth = !lineWrapping ? unwrappedWidth : Math.min(unwrappedWidth, morphWidth);
+      if (lineWrapping) {
+        var charsPerline = Math.max(3, morphWidth / charWidth),
+            wrappedLineCount = Math.ceil(charCount / charsPerline) || 1,
+            estimatedHeight = Math.round(wrappedLineCount * charHeight);
+      }
+      debug && console.log(`${line.row}: ${line.height} => ${estimatedHeight}`)
+      line.changeExtent(estimatedWidth, estimatedHeight, true);
+  }
 
   estimateLineHeights(morph, force) {
     let {
@@ -81,55 +137,13 @@ export default class TextLayout {
 
     var nMeasured = 0;
 
-    morphWidth = morphWidth - paddingLeft - paddingRight;
-
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i];
       
       if (!force && line.height > 0) continue;
 
       nMeasured++;
-      var textAttributes = line.textAndAttributes, styles = [], inlineMorph;
-
-      // find all styles that apply to line
-      if (!textAttributes || !textAttributes.length) styles.push(defaultTextStyle);
-      else for (var j = 0, column=0; j < textAttributes.length; j += 2) {
-        inlineMorph = textAttributes[j]
-        if (inlineMorph && inlineMorph.isMorph) {
-           inlineMorph.position = this.pixelPositionFor(morph, {row: i , column}).subPt(morph.origin);
-           column++;
-        } else if (inlineMorph) {
-           column += inlineMorph.length
-        }
-        styles.push({...defaultTextStyle, ...textAttributes[j + 1]});
-      }
-
-      // measure default char widths and heights
-      var measureCount = styles.length, // for avg width
-          charWidthSum = 0,
-          charHeight = 0;
-      for (var h = 0; h < measureCount; h++) {
-        var {width, height} = fontMetric.defaultCharExtent(morph, {
-          defaultTextStyle: styles[h],
-          width: 1000, transform,
-          paddingBottom, paddingTop, paddingRight, paddingLeft
-        }, directRenderTextLayerFn);
-        charHeight = Math.max(height, charHeight);
-        charWidthSum = charWidthSum + width;
-      }
-
-      var estimatedHeight = charHeight,
-          charCount = line.text.length || 1,
-          charWidth = Math.round(charWidthSum / measureCount),
-          unwrappedWidth = charCount * charWidth,
-          estimatedWidth = !lineWrapping ? unwrappedWidth : Math.min(unwrappedWidth, morphWidth);
-      if (lineWrapping) {
-        var charsPerline = Math.max(3, morphWidth / charWidth),
-            wrappedLineCount = Math.ceil(charCount / charsPerline) || 1,
-            estimatedHeight = Math.round(wrappedLineCount * charHeight);
-      }
-      debug && debug.log(`${line.row}: ${line.height} => ${estimatedHeight}`)
-      line.changeExtent(estimatedWidth, estimatedHeight, true);
+      this.estimateExtentOfLine(morph, line, transform);
     }
 
     morph.viewState._textLayoutStale = false;
@@ -319,8 +333,7 @@ export default class TextLayout {
   }
 
   pixelPositionFor(morph, docPos) {
-    var { x, y } = this.boundsFor(morph, docPos);
-    return pt(x, y).addPt(morph.origin);
+    return this.boundsFor(morph, docPos).topLeft();
   }
 
   textPositionFromPoint(morph, point) {
