@@ -28,6 +28,8 @@ import "mocha-es6/index.js";
 import { findDecls } from "lively.ast/lib/code-categorizer.js";
 import { testsFromSource } from "../../test-runner.js";
 import { module } from "lively.modules/index.js";
+import DarkTheme from "../../themes/dark.js";
+import DefaultTheme from "../../themes/default.js";
 
 class CodeDefTreeData extends TreeData {
 
@@ -344,10 +346,12 @@ export default class Browser extends Window {
               name: "metaInfoText",
               bounds: metaInfoBounds,
               ...textStyle,
+              type: 'label',
+              autofit: false,
+              fill: Color.white,
               fontSize: config.codeEditor.defaultStyle.fontSize - 2,
               clipMode: "hidden",
-              borderWidth: 1,
-              readOnly: false
+              borderWidth: 1
             },
             {name: "sourceEditor", bounds: sourceEditorBounds, 
              borderRadius: Rectangle.inset(7,0,7,7),
@@ -471,7 +475,7 @@ export default class Browser extends Window {
   get isBrowser() { return true; }
 
   get ui() {
-    return {
+    return this._ui || (this._ui = {
       container:             this.targetMorph,
       addModuleButton:       this.getSubmorphNamed("addModuleButton"),
       addPackageButton:      this.getSubmorphNamed("addPackageButton"),
@@ -494,12 +498,12 @@ export default class Browser extends Window {
       metaInfoText:          this.getSubmorphNamed("metaInfoText"),
       sourceEditor:          this.getSubmorphNamed("sourceEditor"),
       evalBackendList:       this.getSubmorphNamed("eval backend button")
-    };
+    });
   }
 
-  get selectedModule() { return this.get("moduleList").selection; }
+  get selectedModule() { return this.ui.moduleList.selection; }
   set selectedModule(m) {
-    var mlist = this.get("moduleList");
+    var mlist = this.ui.moduleList;
     if (!m) mlist.selection = null;
     else this.selectModuleNamed(typeof m === "string" ? m : m.name || m.id);
   }
@@ -516,7 +520,7 @@ export default class Browser extends Window {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   updateSource(source, cursorPos) {
-    var ed = this.get("sourceEditor");
+    var ed = this.ui.sourceEditor;
     if (ed.textString != source) ed.textString = source;
     this.state.sourceHash = string.hashCode(source);
     this.indicateNoUnsavedChanges();
@@ -525,17 +529,17 @@ export default class Browser extends Window {
   }
 
   indicateUnsavedChanges() {
-    Object.assign(this.get("sourceEditor"),
+    Object.assign(this.ui.sourceEditor,
       {border: {width: 2, color: Color.red}});
   }
 
   indicateNoUnsavedChanges() {
-    Object.assign(this.get("sourceEditor"),
+    Object.assign(this.ui.sourceEditor,
       {border: {width: 2, color: Color.transparent}});
   }
 
   hasUnsavedChanges() {
-    return this.state.sourceHash !== string.hashCode(this.get("sourceEditor").textString);
+    return this.state.sourceHash !== string.hashCode(this.ui.sourceEditor.textString);
   }
 
   updateUnsavedChangeIndicatorDebounced() {
@@ -558,6 +562,7 @@ export default class Browser extends Window {
         mod = selectedModule && selectedModule.nameInPackage;
     if (newRemote !== oldSystemInterface.name) {
       this.editorPlugin.setSystemInterfaceNamed(newRemote);
+      await this.toggleWindowStyle();
       this.reset();
       let {systemInterface: newSystemInterface} = this;
       let packages = await newSystemInterface.getPackages(),
@@ -573,6 +578,18 @@ export default class Browser extends Window {
       }
       this.relayout();
     }
+  }
+
+  async toggleWindowStyle() {
+    if ((await this.editorPlugin.runEval("System.get('@system-env').node")).value) {
+      this.addStyleClass('node');
+      this.editorPlugin.theme = DarkTheme.instance;
+    } else {
+      this.removeStyleClass('node');
+      this.editorPlugin.theme = DefaultTheme.instance;
+    }
+    this.editorPlugin.highlight();
+    this.relayout();
   }
 
   async packageResources(p) {
@@ -612,6 +629,8 @@ export default class Browser extends Window {
       if (this.ui.evalBackendList)
         await this.ui.evalBackendList.updateFromTarget();
     }
+
+    await this.toggleWindowStyle();
 
     if (packageName) {
       await this.selectPackageNamed(packageName);
@@ -819,8 +838,7 @@ export default class Browser extends Window {
       await this.updateCodeEntities(m);
       await this.updateTestUI(m);
 
-      this.ui.metaInfoText.replace(
-        {start: {row: 0, column: 0}, end: this.ui.metaInfoText.documentEndPosition}, [
+      this.ui.metaInfoText.textAndAttributes = [
         `[${pack.name}]`,
         {
           nativeCursor: "pointer",
@@ -831,7 +849,7 @@ export default class Browser extends Window {
         m.nameInPackage, {},
         ` (${await system.moduleFormat(m.url)} format)`, {},
         " - ", null
-      ], false);
+      ];
 
     } finally {
       if (deferred) {
@@ -856,15 +874,15 @@ export default class Browser extends Window {
     // switch text mode
     if (this.editorPlugin.constructor !== Mode) {
       var env = this.editorPlugin.evalEnvironment;
-      this.get("sourceEditor").removePlugin(this.editorPlugin);
-      this.get("sourceEditor").addPlugin(new Mode(config.codeEditor.defaultTheme));
+      this.ui.sourceEditor.removePlugin(this.editorPlugin);
+      this.ui.sourceEditor.addPlugin(new Mode(config.codeEditor.defaultTheme));
       Object.assign(this.editorPlugin.evalEnvironment, env);
       this.editorPlugin.highlight();
     }
 
     Object.assign(this.editorPlugin.evalEnvironment, {
       targetModule: module.name,
-      context: this.get("sourceEditor"),
+      context: this.ui.sourceEditor,
       format
     });
 
@@ -876,9 +894,9 @@ export default class Browser extends Window {
           {parent, name} = arr.last(codeEntityTree.treeData.defs.filter(
             ({node: {start, end}}) => start < cursorIdx && cursorIdx < end)) || {}
     if (name) {
-      metaInfoText.replace(
-      {start: {row: 0, column: 0}, end: metaInfoText.documentEndPosition}, 
-      [...metaInfoText.textAndAttributes.slice(0,6), ` ${parent ? parent.name + ">>" : ""}${name}`], false);
+      metaInfoText.textAndAttributes = [
+        ...metaInfoText.textAndAttributes.slice(0,6), 
+        ` ${parent ? parent.name + ">>" : ""}${name}`];
     }
   }
 
@@ -932,7 +950,7 @@ export default class Browser extends Window {
     })
       .map(m => ({string: m.nameInPackage + (m.isLoaded ? "" : " [not loaded]"), value: m, isListItem: true}));
 
-    await this.get("moduleList").whenRendered();
+    await this.ui.moduleList.whenRendered();
   }
 
   updateCodeEntities(mod) {
@@ -1169,7 +1187,7 @@ export default class Browser extends Window {
     hstate.navigationInProgress = navPromise;
 
     try {
-      var ed = this.get("sourceEditor");
+      var ed = this.ui.sourceEditor;
       // var loc = hstate.left[0]
 
       await this.whenPackageUpdated();
@@ -1201,12 +1219,12 @@ export default class Browser extends Window {
     if (!selectedPackage) return;
     if (!m.package() || m.package().address !== selectedPackage.address) return;
 
-    var mInList = this.get("moduleList").values.find(ea => ea.url === m.id);
+    var mInList = this.ui.moduleList.values.find(ea => ea.url === m.id);
     if (selectedModule && selectedModule.url === m.id && mInList) {
       if (this.hasUnsavedChanges()) {
         this.addModuleChangeWarning(m.id);
         this.state.sourceHash = string.hashCode(await m.source());
-      } else await this.get("sourceEditor").saveExcursion(() => this.onModuleSelected(mInList));
+      } else await this.ui.sourceEditor.saveExcursion(() => this.onModuleSelected(mInList));
 
     }
   }
@@ -1221,17 +1239,17 @@ export default class Browser extends Window {
       return;
 
     // add new module to list
-    var mInList = this.get("moduleList").values.find(ea => ea.url === m.id);
+    var mInList = this.ui.moduleList.values.find(ea => ea.url === m.id);
     if (!mInList) {
       await this.updateModuleList();
-      mInList = this.get("moduleList").values.find(ea => ea.url === m.id);
+      mInList = this.ui.moduleList.values.find(ea => ea.url === m.id);
     }
 
     if (selectedModule && selectedModule.url === m.id && mInList) {
       if (this.hasUnsavedChanges()) {
         this.addModuleChangeWarning(m.id);
         this.state.sourceHash = string.hashCode(await m.source());
-      } else await this.get("sourceEditor").saveExcursion(() => this.onModuleSelected(mInList));
+      } else await this.ui.sourceEditor.saveExcursion(() => this.onModuleSelected(mInList));
     }
   }
 
@@ -1315,7 +1333,7 @@ export default class Browser extends Window {
       if (p) codeSnip += `packageName: "${p.name}"`;
     }
     if (c) {
-      let codeEntities = this.get("codeEntityTree").nodes;
+      let codeEntities = this.ui.codeEntityTree.nodes;
       let needsDeDup = codeEntities.filter(ea => ea.name === c.name).length > 1;
       if (needsDeDup)
         codeSnip += `, codeEntity: ${JSON.stringify(obj.select(c, ["name", "type"]))}`;
