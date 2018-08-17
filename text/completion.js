@@ -179,7 +179,7 @@ export class CompletionController {
 
   async completionListSpec() {
     let m = this.textMorph,
-        {fontSize, fontFamily} = m,
+        {fontSize, fontFamily, fontColor} = m,
         position = this.positionForMenu(),
         prefix = this.prefix(),
         {items, maxCol} = await this.computeCompletions(prefix),
@@ -215,11 +215,22 @@ export class CompletionController {
         "[name=input]": {
           fill: Color.transparent
         },
-        ".ListItemMorph": {
+        ".List": {
+          dropShadow: new ShadowObject({
+            rotation: 45,
+            distance: 2,
+            blur: 2,
+            color: Color.gray.darker()
+          }),
+          fontColor,
+        },
+        ".List .ListItemMorph": {
           fontFamily,
-          fontSize
+          fontSize,
+          fontColor
         }
       }),      
+      fontColor,
       fontFamily, fontSize,
       position: bounds.topLeft(),
       extent: bounds.extent(),
@@ -229,7 +240,6 @@ export class CompletionController {
       fill: Color.transparent,
       border: {width: 0, color: Color.gray},
       inputPadding: Rectangle.inset(0, 2),
-
       filterFunction: this.filterFunction,
       sortFunction: this.sortFunction
     }
@@ -250,15 +260,17 @@ export class CompletionController {
 
   async openCompletionList() {
     let spec = await this.completionListSpec(),
+        { theme } = this.textMorph.pluginFind(p => p.theme) || {},
         menu = new FilterableList(spec),
         input = menu.inputMorph,
         list = menu.listMorph,
         prefix = spec.input,
         mask = menu.addMorph({
           name: 'prefix mask',
+          fill: Color.transparent,
           bounds: input.textBounds()
         }, input);
-
+    input.fontColor = this.textMorph.fontColor;
     connect(input, 'textString', mask, 'setBounds', {
       converter: () => input.textBounds(),
       varMapping: {input}
@@ -287,14 +299,13 @@ export class CompletionController {
     var world = this.textMorph.world();
     world.addMorph(menu);
 
-    list.dropShadow = new ShadowObject({
-      rotation: 45,
-      distance: 2,
-      blur: 2,
-      color: Color.gray.darker()
-    });
-    list.fill = Color.white.withA(0.85);
+    // fixme: the styling of the completion menu should be defined by the theme itself
     list.addStyleClass("hiddenScrollbar");
+    list.fill = Color.white.withA(0.85);
+    if (theme && theme.constructor.name == 'DarkTheme') {
+      list.styleClasses = ['dark'];
+      list.fill = Color.black.withA(0.7);
+    }
 
     input.height = list.itemHeight;
     input.fixedHeight = true;
