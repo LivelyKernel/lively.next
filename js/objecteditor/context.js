@@ -58,10 +58,12 @@ export default class ObjectEditorContext {
     return this;
   }
   
-  refresh() {
+  async refresh() {
     const td = new ClassTreeData(this.target.constructor);
-    td.uncollapseAll((n) => td.getChildren(n)); // class trees have a max depth of 2
-    td.asList().forEach(n => !n.isRoot && td.collapse(n, true));
+    await td.uncollapseAll((n) => td.getChildren(n)); // class trees have a max depth of 2
+    for (let n of td.asList()) { 
+      if (!n.isRoot) await td.collapse(n, true);
+    }
     this.classTreeData = td;
     // never really used....
     this.evalEnvironment = {
@@ -85,14 +87,14 @@ export default class ObjectEditorContext {
     this.selectedClassName = await this.withContextDo(ctx => ctx.selectedClassName);
   }
 
-  selectLocalTarget(target, editor) {
+  async selectLocalTarget(target, editor) {
     this.target = target;
     this.selectedClass = null;
     this.selectedMethod = null;
-    this.refresh()
+    await this.refresh()
     if (editor)
       Object.assign(editor.editorPlugin.evalEnvironment, this.evalEnvironment);
-    this.selectClass(target.constructor.name);
+    await this.selectClass(target.constructor.name);
     return this;
   }
 
@@ -100,23 +102,22 @@ export default class ObjectEditorContext {
     // setup a bidirectional l2l connection
     let peerId = L2LClient.default().id;
     let res = await evalEnvironment.systemInterface.runEval(`
-      (async () => {
        const { default: ObjectEditorContext} = await System.import("lively.ide/js/objecteditor/context.js");
        const t = (() => ${code})();
        const ctx = await ObjectEditorContext.for(t);
        const id = await ctx.connectToEditor("${peerId}", "${editor.id}");
        const targetModule = ctx.selectedModule.id;
-       return {targetModule, id};
-      })()
+       const res =  {targetModule, id};
+       res;
     `, evalEnvironment);
     if (res.isError) {
       throw Error(res);
     }
-    this.remoteContextId = this.target = res.promisedValue.id;
+    this.remoteContextId = this.target = res.value.id;
     this.evalEnvironment = {
       context: `System.get('@lively-env').objectEditContexts["${this.remoteContextId}"].target`,
       systemInterface: evalEnvironment.systemInterface,
-      targetModule: res.promisedValue.targetModule,
+      targetModule: res.value.targetModule,
       format: "esm"
     };
     this.selectedClassName = await this.withContextDo(ctx => ctx.selectedClassName);
@@ -163,24 +164,21 @@ export default class ObjectEditorContext {
     source = this.stringifySource(source, varMapping);
     // clean the source of the corder name
     let evalStr = `
-          (async () => {
-            let { serialize } = await System.import('lively.serializer2');
-            let __eval_res__ = await ${source};
-            if (!obj.isArray(__eval_res__) && obj.isObject(__eval_res__))
-              __eval_res__ = serialize(__eval_res__);
-            return __eval_res__;
-          })();
+          let { serialize } = await System.import('lively.serializer2');
+          let __eval_res__ = await ${source};
+          if (!obj.isArray(__eval_res__) && obj.isObject(__eval_res__))
+            __eval_res__ = serialize(__eval_res__);
+          __eval_res__;
         `,
         context = this.remoteContextId ? `System.get('@lively-env').objectEditContexts["${this.remoteContextId}"]` : this,
         res = await this.evalEnvironment.systemInterface.runEval(evalStr,{
            targetModule: "https://lively-next.org/lively.ide/js/objecteditor/context.js",
-           context,
-           wrapInStartEndCall: false
+           context
         });
     if (res.isError) {
-      throw Error(res.promisedValue)
+      throw Error(res.value)
     }
-    res = res.promisedValue;
+    res = res.value;
     if (!obj.isArray(res) && obj.isObject(res)) return deserialize(res);
     return res;
   }

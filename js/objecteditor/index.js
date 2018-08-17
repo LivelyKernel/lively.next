@@ -389,10 +389,11 @@ export class ObjectEditor extends Morph {
     this.context = await ObjectEditorContext.for(target, this, evalEnvironment);
     if (await this.withContextDo(ctx => !ctx.target.isMorph)) this.ui.publishButton.disable();
     else this.ui.publishButton.enable();
-    if (await this.withContextDo(ctx => !ctx.target.constructor[Symbol.for("lively-module-meta")].package.name)) this.ui.openInBrowserButton.disable();
+    if (await this.withContextDo(ctx => !ctx.target.constructor[Symbol.for("lively-module-meta")].package.name))
+       this.ui.openInBrowserButton.disable();
     else this.ui.openInBrowserButton.enable();
     this.ui.classTree.treeData = await this.withContextDo(ctx => ctx.classTreeData);
-    this.selectClass(this.context.selectedClassName)
+    await this.selectClass(this.context.selectedClassName)
     // toggle the node style
     if ((await this.editorPlugin.runEval("System.get('@system-env').node")).value) {
       this.getWindow().addStyleClass('node');
@@ -423,7 +424,7 @@ export class ObjectEditor extends Morph {
         className: ctx.selectedClass && ctx.selectedClass.name,
         methodName: ctx.selectedMethod && ctx.selectedMethod.name
       };
-      ctx.refresh();
+      await ctx.refresh();
       res.treeData = ctx.classTreeData;
       return res;
     });
@@ -477,7 +478,7 @@ export class ObjectEditor extends Morph {
       ed.textString = source;
     Object.assign(this.editorPlugin.evalEnvironment, {targetModule, format});
     const hashCode = string.hashCode(source);
-    this.withContextDo((ctx) => {
+    await this.withContextDo((ctx) => {
        ctx.moduleChangeWarning = null;
        ctx.sourceHash = hashCode;
     }, { hashCode });
@@ -515,7 +516,7 @@ export class ObjectEditor extends Morph {
     const ed = this.ui.sourceEditor;
     if (await this.hasUnsavedChanges()) {
       if (string.hashCode(ed.textString) !== string.hashCode(newClassSource)) {
-        this.withContextDo((ctx) => ctx.addModuleChangeWarning());
+        await this.withContextDo((ctx) => ctx.addModuleChangeWarning());
         return;
       }
     }
@@ -524,7 +525,7 @@ export class ObjectEditor extends Morph {
 
   async onModuleChanged(evt) {
     if (!this.context || this.context.isRemote) return;
-    let newClassSource = this.context.onModuleChanged(evt);
+    let newClassSource = await this.context.onModuleChanged(evt);
     if (newClassSource) this.reactToModuleChange(newClassSource)
   }
 
@@ -624,7 +625,7 @@ export class ObjectEditor extends Morph {
 
   async selectClass(klass) {
     let tree = this.ui.classTree;
-    this.context.selectClass(klass.name || klass);
+    await this.context.selectClass(klass.name || klass);
     let descr = await this.withContextDo((ctx) => {
       const descr = ctx.sourceDescriptorFor(ctx.selectedClass);
       return {
@@ -640,11 +641,9 @@ export class ObjectEditor extends Morph {
         this.ui.forkPackageButton.enable();
     else this.ui.forkPackageButton.disable();
 
-    this.updateTitle();
-
-    // make the importController work with names only
-    this.ui.importController.module = descr.moduleId;
-
+    await this.updateTitle();
+    await this.ui.importController.setModule(descr.moduleId)
+    
     if (!tree.selectedNode || tree.selectedNode.target !== klass) {
       let node = tree.nodes.find(ea => !ea.isRoot && ea.isClass && ea.name === klass);
       tree.selectedNode = node;
@@ -661,7 +660,7 @@ export class ObjectEditor extends Morph {
       return;
     }
 
-    this.updateTitle();
+    await this.updateTitle();
 
     var tree = this.ui.classTree,
         differentClassSelected = await this.withContextDo(ctx => 
@@ -990,7 +989,7 @@ export class ObjectEditor extends Morph {
       return await interactivlyFixUndeclaredVariables(sourceEditor, {
         requester: sourceEditor,
         sourceUpdater: async (type, arg) => {
-          this.withContextDo(async (ctx) => {
+          await this.withContextDo(async (ctx) => {
             const descr = ctx.sourceDescriptorFor(ctx.selectedClass),
                   m = descr.module;
             if (type === "import") await m.addImports(arg);
@@ -1081,12 +1080,11 @@ export class ObjectEditor extends Morph {
       })
       this.showError(e);
     } finally {
-      await this.withContextDo(async (ctx) => {
-         await promise.waitFor(1000, () => ctx.moduleChangeWarning);
-         ctx.isSaving = false
-      });
       await importController.updateImports();
       await this.updateKnownGlobals();
+      await this.withContextDo(async (ctx) => {
+         ctx.isSaving = false
+      });
       sourceEditor.focus();
     }
   }
@@ -1253,12 +1251,14 @@ export class ObjectEditor extends Morph {
       {
         name: "refresh",
         exec: async ed => {
-          var klass = ed.state.selectedClass;
-          if (klass) {
-            var descr = ed.sourceDescriptorFor(klass);
-            descr.module.reset();
-            descr.reset();
-          }
+          await ed.withContextDo(ctx => {
+            var klass = ctx.selectedClass;
+            if (klass) {
+              var descr = ctx.sourceDescriptorFor(klass);
+              descr.module.reset();
+              descr.reset();
+            }  
+          })
           await ed.refresh(true);
           ed.setStatusMessage("reloaded");
           return true;
@@ -1463,9 +1463,13 @@ class ImportController extends Morph {
   constructor(props) {
     super(props);
     this.build();
-    connect(this, "module", this, "updateImports");
     connect(this.get('openButton'), "fire", this, "execCommand", {
       converter: () => "open selected module in system browser"});
+  }
+
+  async setModule(moduleId) {
+    this.module = moduleId;
+    await this.updateImports();
   }
 
   build() {
