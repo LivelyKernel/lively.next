@@ -6,6 +6,8 @@ import JavaScriptEditorPlugin from "./editor-plugin.js";
 import EvalBackendChooser from "./eval-backend-ui.js";
 import { resource } from "lively.resources";
 import { Window } from "lively.components";
+import DefaultTheme from "../themes/default.js";
+import DarkTheme from "../themes/dark.js";
 
 export default class Workspace extends Window {
 
@@ -91,8 +93,17 @@ export default class Workspace extends Window {
     this.jsPlugin.requestHighlight();
   }
 
-  setEvalBackend(choice) {
+  async setEvalBackend(choice) {
     this.jsPlugin.setSystemInterfaceNamed(choice);
+    if ((await this.jsPlugin.runEval("System.get('@system-env').node")).value) {
+      this.addStyleClass('node');
+      this.jsPlugin.theme = DarkTheme.instance;
+    } else {
+      this.removeStyleClass('node');
+      this.jsPlugin.theme = DefaultTheme.instance;
+    }
+    this.getSubmorphNamed('editor').textString = this.getSubmorphNamed('editor').textString;
+    this.jsPlugin.highlight()
   }
 
   relayoutWindowControls() {
