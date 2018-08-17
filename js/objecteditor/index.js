@@ -1,102 +1,27 @@
-/*global System,localStorage*/
+/*global System*/
+/*global System,localStorage */
 import { arr, obj, t, Path, string, fun, promise } from "lively.lang";
-import { Icon, Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
+import { Icon, StyleSheet, Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
 import { pt, Color } from "lively.graphics";
 import JavaScriptEditorPlugin from "../editor-plugin.js";
-import { withSuperclasses, lexicalClassMembers, isClass } from "lively.classes/util.js";
-import { TreeData, Tree } from "lively.components";
+import { withSuperclasses, isClass } from "lively.classes/util.js";
+import { Tree } from "lively.components";
 import { connect } from "lively.bindings";
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
-import ObjectPackage, { addScript, isObjectClass } from "lively.classes/object-classes.js";
+import ObjectPackage, { isObjectClass } from "lively.classes/object-classes.js";
 import { chooseUnusedImports, interactivlyFixUndeclaredVariables, interactivelyChooseImports } from "../import-helper.js";
-import { module, getPackage, semver } from "lively.modules";
+import { module } from "lively.modules";
 import { parse } from "lively.ast";
 import { interactivelySavePart } from "lively.morphic/partsbin.js";
-
+import * as livelySystem from 'lively-system-interface';
 import { LinearGradient } from "lively.graphics/index.js";
 import { adoptObject } from "lively.classes/runtime.js";
 import { InteractiveMorphSelector } from "lively.halos/morph.js";
 import { interactivelyFreezePart } from "lively.freezer/part.js";
-
-
-// var oe = ObjectEditor.open({target: this})
-
-// var tree = oe.get("classTree");
-// tree.treeData = new ClassTreeData(this.constructor);
-// var td = oe.get("classTree").treeData
-// oe.remove()
-
-// td.getChildren(td.root)
-// td.collapse(td.getChildren(td.root)[0], false)
-// tree.update()
-// td.isCollapsed(td.getChildren(td.root)[2])
-// tree.onNodeCollapseChanged(td.root)
-
-// var x = new ClassTreeData(this.constructor)
-// x.getChildren(x.root)
-// x.getChildren(x.getChildren(x.root)[1])
-
-// tree.selection = x.getChildren(x.root)[2]
-
-class ClassTreeData extends TreeData {
-
-  constructor(target) {
-    super({
-      target,
-      name: "root",
-      isRoot: true,
-      isCollapsed: false
-    });
-  }
-
-  display(node) {
-    if (!node) return "empty";
-
-    if (node.isRoot)
-      return node.target.name || node.target.id || "root object";
-
-    // class
-    if (isClass(node.target))
-      return node.target.name;
-
-    // method
-
-    return node.name || "no name";
-  }
-
-  isLeaf(node) { if (!node) return true; return !node.isRoot && !isClass(node.target); }
-  isCollapsed(node) { return !node || node.isCollapsed; }
-  collapse(node, bool) { node && (node.isCollapsed = bool); }
-
-  getChildren(node) {
-    if (!node) return [];
-    // if (node.isCollapsed) return [];
-
-    if (node.isRoot) {
-      if (node.children) return node.children;
-      var classes = arr.without(withSuperclasses(node.target), Object).reverse();
-      return node.children = classes.map(klass => ({target: klass, isCollapsed: true}));
-    }
-
-    if (isClass(node.target)) {
-      try {
-        return node.children
-          || (node.children = lexicalClassMembers(node.target).map(ea => {
-            var {static: _static, name, kind} = ea;
-            var prefix = "";
-            if (_static) prefix += "static ";
-            if (kind === "get") prefix += "get ";
-            if (kind === "set") prefix += "set ";
-            return {name: prefix + name, target: ea};
-          }));
-      } catch (e) { $world.showError(e); return node.children = []; }
-    }
-
-    return [];
-  }
-
-}
-
+import ClassTreeData from './classTree.js';
+import ObjectEditorContext from "./context.js";
+import DarkTheme from "../../themes/dark.js";
+import DefaultTheme from "../../themes/default.js";
 
 export class ObjectEditor extends Morph {
 
@@ -104,27 +29,27 @@ export class ObjectEditor extends Morph {
     let {
       title,
       target,
-      className: selectedClass,
-      methodName: selectedMethod,
+      className,
+      methodName,
       textPosition,
       scroll,
       classTreeScroll,
-      backend
+      evalEnvironment
     } = options;
 
-    var ed = new this(obj.dissoc(options, "title", "class", "method")),
+    var ed = new this(obj.dissoc(options, "title", "class", "method", "target", "evalEnvironment")),
         winOpts = {name: "ObjectEditor window", title: options.title || "ObjectEditor"},
         win = (await ed.openInWindow(winOpts)).activate();
     await win.whenRendered();
     if (target) ed.browse({
       title,
       target,
-      selectedClass,
-      selectedMethod,
+      className,
+      methodName,
       textPosition,
       scroll,
       classTreeScroll,
-      backend
+      evalEnvironment
     });
     return win;
   }
@@ -141,22 +66,57 @@ export class ObjectEditor extends Morph {
       reactsToPointer: {defaultValue: false},
       name: {defaultValue: "object-editor"},
 
-      state: {
-        serialize: false,
-        initialize() {
-          this.state = {
-            isSaving: false,
-            target: null,
-            selectedClass: null,
-            selectedMethod: null
-          };
-        }
-      },
+      context: {},
 
-      backend: {
-        after: ["editorPlugin"], derived: true,
-        get() { return this.editorPlugin.evalEnvironment.remote || "local"; },
-        set(remote) { this.editorPlugin.evalEnvironment.remote = remote; }
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+          ".listing": {
+            // borderWidth: 1, borderColor: Color.gray,
+            fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"
+          },
+          ".Text": {
+            borderLeft: {width: 1, color: Color.gray},
+            borderRight: {width: 1, color: Color.gray},
+            borderBottom: {width: 1, color: Color.gray},
+          },
+          ".Button.plain": {
+            extent: pt(26,24),
+            fontSize: 14
+          },
+  
+          ".Button.flat": {
+            fill: Color.white,
+            border: {color: Color.lightGray, style: "solid", radius: 5},
+            nativeCursor: "pointer",
+            extent: pt(26,24),
+            fontSize: 14
+          },
+           "[name=sourceEditor]": {
+             lineWrapping: "by-chars",
+             ...config.codeEditor.defaultStyle,
+           },
+           "[name=classTree]": {
+             borderRight: {width: 0},
+             borderTop: {width: 1, color: Color.gray},
+             borderBottom: {width: 1, color: Color.gray}
+           },
+           "[name=objectCommands]": {
+             fill: Color.transparent
+           },
+           "[name=classAndMethodControls]": {
+             fill: Color.transparent
+           },
+           "[name=importController]": {
+             fill: Color.transparent
+           },
+            "[name=sourceEditorControls]": {
+             fill: Color.transparent,
+             borderLeft: {width: 1, color: Color.gray},
+             borderRight: {width: 1, color: Color.gray},
+           }
+          });
+        }
       },
 
       editorPlugin: {
@@ -170,26 +130,9 @@ export class ObjectEditor extends Morph {
       },
 
       target: {
-        after: ["submorphs"],
-        set(obj) { this.selectTarget(obj); }
-      },
-
-      selectedModule: {
-        derived: true, readOnly: true, after: ["target"],
-        get() {
-          var mid = this.editorPlugin.evalEnvironment.targetModule;
-          return mid ? module(mid) : null;
+        get() { 
+          return this.context.target
         }
-      },
-
-      selectedClass: {
-        derived: true, readOnly: true, after: ["state"],
-        get() { return this.state.selectedClass; }
-      },
-
-      selectedMethod: {
-        derived: true, readOnly: true, after: ["state"],
-        get() { return this.state.selectedMethod; }
       }
 
     };
@@ -203,8 +146,7 @@ export class ObjectEditor extends Morph {
   }
 
   get ui() {
-    return {
-      freezeButton:        this.getSubmorphNamed("freezeMorphButton"),
+    return this._ui = this._ui || {
       addImportButton:     this.getSubmorphNamed("addImportButton"),
       addButton:           this.getSubmorphNamed("addButton"),
       removeButton:        this.getSubmorphNamed("removeButton"),
@@ -238,9 +180,6 @@ export class ObjectEditor extends Morph {
     l.col(2).fixed = 1;
     l.row(0).fixed = 28;
     l.row(2).fixed = 30;
-    // var oe = ObjectEditor.open({target: this})
-
-    // l.col(2).fixed = 100; l.row(0).paddingTop = 1; l.row(0).paddingBottom = 1;
 
     let {
       addImportButton,
@@ -258,14 +197,12 @@ export class ObjectEditor extends Morph {
       saveButton,
       sourceEditor,
       toggleImportsButton,
-      classAndMethodControls,
-      freezeButton
+      classAndMethodControls
     } = this.ui;
 
     connect(inspectObjectButton, "fire", this, "execCommand", {converter: () => "open object inspector for target"});
     connect(publishButton, "fire", this, "execCommand", {converter: () => "publish target to PartsBin"});
     connect(chooseTargetButton, "fire", this, "execCommand", {converter: () => "choose target"});
-    connect(freezeButton, 'fire', this, 'execCommand', {converter: () => "freeze target"});
 
     connect(classTree, "selectedNode", this, "onClassTreeSelection");
     connect(addButton, "fire", this, "interactivelyAddObjectPackageAndMethod");
@@ -298,10 +235,8 @@ export class ObjectEditor extends Morph {
 
     var {
       ui: {sourceEditor, importsList, classTree},
-      backend,
-      selectedClass,
-      selectedMethod,
-      target
+      context: { selectedClassName: className, selectedMethodName: methodName },
+      editorPlugin: { evalEnvironment }
     } = this;
 
     // remove unncessary state
@@ -331,27 +266,34 @@ export class ObjectEditor extends Morph {
     if (ref.currentSnapshot.props.selection)
       ref.currentSnapshot.props.selection.value = null;
 
+    evalEnvironment.backend = evalEnvironment.systemInterface.coreInterface.url || 'local';
     // save essential state
     snapshot.props._serializedState = {
       verbatim: true,
       value: {
-        selectedClass: selectedClass ? selectedClass.name : null,
-        selectedMethod: selectedMethod ? selectedMethod.name : null,
+        className,
+        methodName,
         textPosition: sourceEditor.cursorPosition,
         scroll: sourceEditor.scroll,
         classTreeScroll: classTree.scroll,
-        backend
+        evalEnvironment
       }
     };
 
+  }
+
+  onWindowClose() {
+    this.context.dispose();
   }
 
   async onLoad() {
     this.reset();
     if (this._serializedState) {
       var s = this._serializedState;
+      s.evalEnvironment.systemInterface = s.evalEnvironment.backend == 'local' ? 
+        livelySystem.localInterface : livelySystem.serverInterfaceFor(s.evalEnvironment.backend); 
       delete this._serializedState;
-      await this.browse(s);
+      await this.browse({ target: this.target, ...s});
     }
   }
 
@@ -363,54 +305,23 @@ export class ObjectEditor extends Morph {
   }
 
   build() {
-    var listStyle = {
-          // borderWidth: 1, borderColor: Color.gray,
-          fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"
-        },
 
-        textStyle = {
-          borderLeft: {width: 1, color: Color.gray},
-          borderRight: {width: 1, color: Color.gray},
-          borderBottom: {width: 1, color: Color.gray},
-          lineWrapping: "by-chars",
-          type: "text",
-          ...config.codeEditor.defaultStyle,
-        },
-
-        topBtnStyle = {
-          type: "button",
-          fill: new LinearGradient({
-            stops: [
-              {offset: 0, color: Color.white},
-              {offset: 1, color: new Color.rgb(236,240,241)}]}),
-          border: {color: Color.gray, style: "solid", radius: 5},
-          nativeCursor: "pointer",
-          extent: pt(26,24),
-        },
-
-        btnStyle = {
-          type: "button",
-          fill: Color.white,
-          border: {color: Color.lightGray, style: "solid", radius: 5},
-          nativeCursor: "pointer",
-          extent: pt(26,24),
-        };
+    const topBtnStyle = { type: 'Button', styleClasses: ['plain'] },
+          btnStyle = { type: 'Button', styleClasses: ['plain'] },
+          listStyle = { styleClasses: ['listing'] },
+          textStyle = { type: 'Text' };
 
     return [
       {name: "objectCommands",
-        fill: Color.transparent, reactsToPointer: false,
+        reactsToPointer: false,
         layout: new HorizontalLayout({direction: "centered", spacing: 2, autoResize: false}),
         submorphs: [
-          {...topBtnStyle, name: "inspectObjectButton", fontSize: 14, label: Icon.textAttribute("gears"), tooltip: "open object inspector"},
-          {...topBtnStyle, name: "publishButton", fontSize: 14, label: Icon.textAttribute("cloud-upload"), tooltip: "publish object to PartsBin"},
-          {...topBtnStyle, name: "chooseTargetButton", fontSize: 14, label: Icon.textAttribute("crosshairs"), tooltip: "select another target"},
-          {...topBtnStyle, name: "freezeMorphButton", fontSize: 14, label: Icon.textAttribute("snowflake-o"), tooltip: "export a static version of target"}
+          {...topBtnStyle, name: "inspectObjectButton", label: Icon.textAttribute("gears"), tooltip: "open object inspector"},
+          {...topBtnStyle, name: "publishButton", label: Icon.textAttribute("cloud-upload"), tooltip: "publish object to PartsBin"},
+          {...topBtnStyle, name: "chooseTargetButton", label: Icon.textAttribute("crosshairs"), tooltip: "select another target"}
         ]},
 
-      {type: Tree, name: "classTree", treeData: new ClassTreeData(null),
-        ...listStyle,
-        borderTop: {width: 1, color: Color.gray},
-        borderBottom: {width: 1, color: Color.gray}},
+      { type: Tree, name: "classTree", treeData: new ClassTreeData(null), ...listStyle },
 
       {name: "classAndMethodControls",
         width: 100,
@@ -424,31 +335,29 @@ export class ObjectEditor extends Morph {
       {name: "sourceEditor", ...textStyle},
 
       {name: "sourceEditorControls",
-        borderLeft: {width: 1, color: Color.gray},
-        borderRight: {width: 1, color: Color.gray},
         layout: new GridLayout({
           reactToSubmorphAnimations: true,
-          rows: [0, {paddingTop: 2, paddingBottom: 2}],
+          rows: [0, {paddingTop: 2, paddingBottom: 3}],
           columns: [
             1, {paddingRight: 1, fixed: 30},
             2, {paddingLeft: 1, fixed: 30},
-            4, {paddingRight: 2, fixed: 74}
+            4, {paddingRight: 4, fixed: 74}
           ],
           grid: [[null, "saveButton", "runMethodButton", null, "toggleImportsButton"]]}),
         submorphs: [
-          {...btnStyle, name: "saveButton", fontSize: 18, label: Icon.makeLabel("save"), tooltip: "save"},
-          {...btnStyle, name: "runMethodButton", fontSize: 18, label: Icon.makeLabel("play-circle-o"), tooltip: "execute selected method"},
-          {...btnStyle, name: "toggleImportsButton", label: "imports", tooltip: "toggle showing imports", isLayoutable: false, bottomRight: pt(1000, 50)}
+          {...btnStyle, name: "saveButton", label: Icon.makeLabel("save"), tooltip: "save"},
+          {...btnStyle, name: "runMethodButton", label: Icon.makeLabel("play-circle-o"), tooltip: "execute selected method"},
+          {...btnStyle, name: "toggleImportsButton", label: "imports", tooltip: "toggle showing imports"}
         ]},
 
-      new ImportController({name: "importController"})
+      new ImportController({name: "importController" })
     ];
   }
 
   isShowingImports() { return this.get("importsList").width > 10; }
 
   toggleShowingImports(timeout = 300/*ms*/) {
-    var expandedWidth = Math.min(300, Math.max(200, this.get("importsList").listItemContainer.width)),
+    var expandedWidth = Math.min(300, Math.max(200, this.ui.importsList.listItemContainer.width)),
         enable = !this.isShowingImports(),
         newWidth = enable ? expandedWidth : -expandedWidth,
         column = this.layout.grid.col(2);
@@ -466,12 +375,8 @@ export class ObjectEditor extends Morph {
 
   get isObjectEditor() { return true; }
 
-  async systemInterface() {
-    var livelySystem = await System.import("lively-system-interface"),
-        remote = this.backend;
-    return !remote || remote === "local" ?
-      livelySystem.localInterface :
-      livelySystem.serverInterfaceFor(remote);
+  get systemInterface() {
+    return this.editorPlugin.evalEnvironment.systemInterface;
   }
 
   sourceDescriptorFor(klass) { return RuntimeSourceDescriptor.for(klass); }
@@ -480,69 +385,103 @@ export class ObjectEditor extends Morph {
     return withSuperclasses(this.target.constructor);
   }
 
-  selectTarget(t) {
-    this.setProperty("target", t);
-    this.state.selectedClass = null;
-    this.state.selectedMethod = null;
-    this.ui.classTree.treeData = new ClassTreeData(t.constructor);
-
-    Object.assign(this.editorPlugin.evalEnvironment, {
-      context: this.target,
-      format: "esm"
-    });
-
-    return this.selectClass(t.constructor);
+  async selectTarget(target, evalEnvironment) {
+    this.context = await ObjectEditorContext.for(target, this, evalEnvironment);
+    if (await this.withContextDo(ctx => !ctx.target.isMorph)) this.ui.publishButton.disable();
+    else this.ui.publishButton.enable();
+    if (await this.withContextDo(ctx => !ctx.target.constructor[Symbol.for("lively-module-meta")].package.name)) this.ui.openInBrowserButton.disable();
+    else this.ui.openInBrowserButton.enable();
+    this.ui.classTree.treeData = await this.withContextDo(ctx => ctx.classTreeData);
+    this.selectClass(this.context.selectedClassName)
+    // toggle the node style
+    if ((await this.editorPlugin.runEval("System.get('@system-env').node")).value) {
+      this.getWindow().addStyleClass('node');
+      this.editorPlugin.theme = DarkTheme.instance;
+    } else {
+      this.getWindow().removeStyleClass('node');
+      this.editorPlugin.theme = DefaultTheme.instance;
+    }
+    this.editorPlugin.highlight()
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // update
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  async withContextDo(fn, varMapping) {
+    return await this.context.withContextDo(fn, varMapping);
+  }
+
   async refresh(keepCursor = false) {
     var {
-          state: {selectedClass, selectedMethod},
           ui: {sourceEditor: ed, classTree: tree}
         } = this,
         oldPos = ed.cursorPosition;
 
+    let {className, methodName, treeData} = await this.withContextDo(async (ctx) => {
+      let res = {
+        className: ctx.selectedClass && ctx.selectedClass.name,
+        methodName: ctx.selectedMethod && ctx.selectedMethod.name
+      };
+      ctx.refresh();
+      res.treeData = ctx.classTreeData;
+      return res;
+    });
+    
     await tree.maintainViewStateWhile(
-      () => this.selectTarget(this.target),
+      () => tree.treeData = treeData,
       node => node.target ?
         node.target.name
                   + node.target.kind
                   + (node.target.owner ? `.${node.target.owner.name}` : "") :
         node.name);
 
-    if (selectedClass && selectedMethod && !tree.selectedNode) {
-      // method rename, old selectedMethod does no longer exist
-      await this.selectClass(selectedClass);
+    if (className && methodName && !tree.selectedNode) {
+       // method rename, old selectedMethod does no longer exist
+       await this.selectClass(className);
     }
 
     if (keepCursor) ed.cursorPosition = oldPos;
   }
 
   async updateKnownGlobals() {
-    let declaredNames = [],
-        klass = this.selectedClass;
+    const declaredNames = await this.withContextDo(async (ctx) => {
+      let declaredNames = [],
+          klass = ctx.selectedClass;
+    
+      if (klass) {
+        let descr = ctx.sourceDescriptorFor(klass);
+        ({declaredNames} = await descr.declaredAndUndeclaredNames);
+      }
 
-    if (klass) {
-      let descr = this.sourceDescriptorFor(klass);
-      ({declaredNames} = await descr.declaredAndUndeclaredNames);
-    }
+      Object.assign(ctx.evalEnvironment, {knownGlobals: declaredNames});
+    
+      return declaredNames;
+    });
+    // keep both evaluation environments in sync
     Object.assign(this.editorPlugin.evalEnvironment, {knownGlobals: declaredNames});
     this.editorPlugin.highlight();
   }
 
   async updateSource(source, targetModule = "lively://object-editor/" + this.id) {
-    let ed = this.get("sourceEditor"),
-        system = await this.systemInterface(),
-        format = (await system.moduleFormat(targetModule)) || "esm";
+    let ed = this.ui.sourceEditor,
+        format = await this.withContextDo(async (ctx) => {
+          let { systemInterface: system }  = ctx.evalEnvironment;
+              format = (await system.moduleFormat(targetModule)) || "esm";
+          Object.assign(ctx.evalEnvironment, {targetModule, format});
+          return format;
+        }, {
+          targetModule
+        });
     if (ed.textString != source)
       ed.textString = source;
     Object.assign(this.editorPlugin.evalEnvironment, {targetModule, format});
-    this.state.sourceHash = string.hashCode(source);
+    const hashCode = string.hashCode(source);
+    this.withContextDo((ctx) => {
+       ctx.moduleChangeWarning = null;
+       ctx.sourceHash = hashCode;
+    }, { hashCode });
     this.indicateNoUnsavedChanges();
-    this.state.moduleChangeWarning = null;
   }
 
   indicateUnsavedChanges() {
@@ -553,8 +492,8 @@ export class ObjectEditor extends Morph {
     Object.assign(this.ui.sourceEditor, {border: {width: 1, color: Color.gray}});
   }
 
-  hasUnsavedChanges() {
-    return this.state.sourceHash !== string.hashCode(this.ui.sourceEditor.textString);
+  async hasUnsavedChanges() {
+    return (await this.withContextDo(ctx => ctx.sourceHash)) !== string.hashCode(this.ui.sourceEditor.textString);
   }
 
   updateUnsavedChangeIndicatorDebounced() {
@@ -562,42 +501,35 @@ export class ObjectEditor extends Morph {
       () => this.updateUnsavedChangeIndicator())();
   }
 
-  updateUnsavedChangeIndicator() {
-    this[this.hasUnsavedChanges() ? "indicateUnsavedChanges" : "indicateNoUnsavedChanges"]();
+  async updateUnsavedChangeIndicator() {
+    this[(await this.hasUnsavedChanges()) ? "indicateUnsavedChanges" : "indicateNoUnsavedChanges"]();
   }
 
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // system events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  async onModuleChanged(evt) {
-    if (this.state.isSaving) return;
+  // this moves completely into the context
 
-    var m = module(evt.module),
-        {selectedModule, selectedClass} = this,
-        ed = this.get("sourceEditor");
-
-    if (!selectedModule || selectedModule.id !== m.id)
-      return;
-
-    if (this.hasUnsavedChanges()) {
-      var newClassSource = await this.sourceDescriptorFor(selectedClass).source;
+  async reactToModuleChange(newClassSource) {
+    const ed = this.ui.sourceEditor;
+    if (await this.hasUnsavedChanges()) {
       if (string.hashCode(ed.textString) !== string.hashCode(newClassSource)) {
-        this.addModuleChangeWarning(m.id);
-        this.state.sourceHash = string.hashCode(newClassSource);
+        this.withContextDo((ctx) => ctx.addModuleChangeWarning());
         return;
       }
     }
-
     await this.refresh(true);
+  }
+
+  async onModuleChanged(evt) {
+    if (!this.context || this.context.isRemote) return;
+    let newClassSource = this.context.onModuleChanged(evt);
+    if (newClassSource) this.reactToModuleChange(newClassSource)
   }
 
   onModuleLoaded(evt) {
     this.onModuleChanged(evt);
-  }
-
-  addModuleChangeWarning(mid) {
-    this.state.moduleChangeWarning = mid;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -606,22 +538,22 @@ export class ObjectEditor extends Morph {
 
   async browse(spec) {
     let {
-      target,
-      selectedClass,
-      selectedMethod,
+      target, // can be string
+      className,
+      methodName,
       textPosition,
       scroll,
       classTreeScroll,
-      backend
+      evalEnvironment
     } = spec;
 
-    if (backend !== this.backend) this.backend = backend;
+    if (target) await this.selectTarget(target, evalEnvironment);
 
-    if (target) await this.selectTarget(this.target);
-
-    if (selectedMethod && !selectedClass) selectedClass = this.target.constructor;
-    if (selectedClass && selectedMethod) await this.selectMethod(selectedClass, selectedMethod, false);
-    else if (selectedClass) await this.selectClass(selectedClass);
+    if (!className) className = await this.withContextDo((ctx) => {
+      return ctx.selectedClass.name
+    })
+    if (className && methodName) await this.selectMethod(className, methodName, false);
+    else if (className) await this.selectClass(className);
 
     var {classTree, sourceEditor} = this.ui;
     if (scroll) sourceEditor.scroll = scroll;
@@ -631,23 +563,24 @@ export class ObjectEditor extends Morph {
     return this;
   }
 
-  browseSpec(complete = true) {
+  async browseSpec(complete = true) {
     let {
-      target,
-      selectedClass,
-      selectedMethod,
-      backend,
       ui: {
         classTree: {scroll: classTreeScroll},
         sourceEditor: {scroll, cursorPosition: textPosition}
       }
-    } = this;
+    } = this,
+      { className, methodName } = await this.withContextDo(ctx => {
+        let className = ctx.selectedClass && ctx.selectedClass.name,
+            methodName = ctx.selectedMethod && ctx.selectedMethod.name;
+        return { className, methodName }
+      });
 
     return {
-      target,
-      selectedClass,
-      selectedMethod,
-      backend,
+      target: this.context.target,
+      className,
+      methodName,
+      evalEnvironment: this.context.evalEnvironment,
       ...complete ? {scroll, textPosition, classTreeScroll} : {}
     };
   }
@@ -655,7 +588,7 @@ export class ObjectEditor extends Morph {
   onClassTreeSelection(node) {
     if (!node) { return; }
 
-    if (isClass(node.target)) {
+    if (obj.isString(node.target) || isClass(node.target)) {
       this.selectClass(node.target);
       return;
     }
@@ -671,7 +604,7 @@ export class ObjectEditor extends Morph {
     if (!node || !node.target) return;
     let klass = isClass(node.target) ? node.target :
       node.target.owner && isClass(node.target.owner) ? node.target.owner :
-        null;
+        obj.isString(node.target) ? node.target : null;
 
     let items = [];
 
@@ -679,7 +612,7 @@ export class ObjectEditor extends Morph {
       items.push({command: "open browse snippet", target: this});
     }
 
-    if (this.target.constructor === klass) {
+    if (this.selectedClass === klass) {
       let adoptByItems = [];
       klass.name !== "Morph" && adoptByItems.push({alias: "by superclass", command: "adopt by superclass", target: this});
       adoptByItems.push({alias: "by custom class...", command: "adopt by another class", target: this});
@@ -691,107 +624,87 @@ export class ObjectEditor extends Morph {
 
   async selectClass(klass) {
     let tree = this.ui.classTree;
+    this.context.selectClass(klass.name || klass);
+    let descr = await this.withContextDo((ctx) => {
+      const descr = ctx.sourceDescriptorFor(ctx.selectedClass);
+      return {
+        source: descr.source,
+        moduleId: descr.module.id,
+      }
+    })
 
-    if (typeof klass === "string") {
-      klass = this.classChainOfTarget().find(ea => ea.name === klass);
-    }
-
-    if (!tree.selectedNode || tree.selectedNode.target !== klass) {
-      let node = tree.nodes.find(ea => !ea.isRoot && ea.target === klass);
-      tree.selectedNode = node;
-    }
-
-    let descr = this.sourceDescriptorFor(klass);
-    await this.updateSource(await descr.source, descr.module.id);
-
-    this.state.selectedMethod = null;
-    this.state.selectedClass = klass;
-
-    this.ui.importController.module = descr.module;
+    await this.updateSource(await descr.source, descr.moduleId);
     await this.updateKnownGlobals();
 
-    if (isObjectClass(klass)) this.ui.forkPackageButton.enable();
+    if (await this.withContextDo((ctx) => isObjectClass(ctx.selectedClass)))
+        this.ui.forkPackageButton.enable();
     else this.ui.forkPackageButton.disable();
 
     this.updateTitle();
+
+    // make the importController work with names only
+    this.ui.importController.module = descr.moduleId;
+
+    if (!tree.selectedNode || tree.selectedNode.target !== klass) {
+      let node = tree.nodes.find(ea => !ea.isRoot && ea.isClass && ea.name === klass);
+      tree.selectedNode = node;
+    }
   }
 
-  async selectMethod(klass, methodSpec, highlight = true, putCursorInBody = false) {
-    if (typeof methodSpec === "string") methodSpec = {name: methodSpec};
-    if (typeof klass === "string") klass = this.classChainOfTarget().find(ea => ea.name === klass);
-
-    if (klass && !methodSpec && isClass(klass.owner)) {
-      methodSpec = klass;
-      klass = klass.owner;
-    }
-
-    var tree = this.ui.classTree;
-    if (this.state.selectedClass !== klass || !tree.selectedNode)
-      await this.selectClass(klass);
-
-    await tree.uncollapse(tree.selectedNode);
-    if (!tree.selectedNode || tree.selectedNode.target !== methodSpec) {
-      var node = tree.nodes.find(ea => ea.target.owner === klass && ea.target.name === methodSpec.name);
-      tree.selectedNode = node;
-      tree.scrollSelectionIntoView();
-    }
-
-    let method = await this._sourceDescriptor_of_class_findMethodNode(
-      klass, methodSpec.name, methodSpec.kind, methodSpec.static);
-
-    this.state.selectedMethod = methodSpec;
-
-    this.updateTitle();
-
-    if (!method) {
+  async selectMethod(klass, methodSpec, highlight = true, putCursorInBody = false) { 
+    const className = klass.name || klass;
+    if (!methodSpec.name) methodSpec = {name: methodSpec};
+    const methodNode = await this.context.selectMethod(className, methodSpec);
+    
+    if (!methodNode) {
       this.setStatusMessage(`Cannot find method ${methodSpec.name}`);
       return;
     }
 
+    this.updateTitle();
 
-    var ed = this.get("sourceEditor"),
+    var tree = this.ui.classTree,
+        differentClassSelected = await this.withContextDo(ctx => 
+           ctx.selectedClass.name !== className, { className });
+    if (differentClassSelected || !tree.selectedNode)
+      await this.selectClass(klass);
+    
+    await tree.uncollapse(tree.selectedNode);
+    if (!tree.selectedNode || tree.selectedNode.target !== methodSpec) {
+      var node = tree.nodes.find(ea => 
+         !ea.isClass && 
+         !ea.isRoot &&
+         ea.target.owner === klass && 
+         ea.target.name === methodSpec.name);
+      tree.selectedNode = node;
+      tree.scrollSelectionIntoView();
+    }
+
+    var ed = this.ui.sourceEditor,
         cursorPos = ed.indexToPosition(putCursorInBody ?
-          method.value.body.start+1 : method.key.start);
+          methodNode.value.body.start+1 : methodNode.key.start);
     ed.cursorPosition = cursorPos;
     this.world() && await ed.whenRendered();
     ed.scrollCursorIntoView();
 
     var methodRange = {
-      start: ed.indexToPosition(method.start),
-      end: ed.indexToPosition(method.end)
+      start: ed.indexToPosition(methodNode.start),
+      end: ed.indexToPosition(methodNode.end)
     };
     ed.centerRange(methodRange);
     if (highlight) {
-      ed.flash(methodRange, {id: "method", time: 1000, fill: Color.rgb(200,235,255)});
-      // ed.alignRowAtTop(undefined, pt(0, -20))
+      ed.flash(methodRange, {id: "method", time: 1000, fill: ed.selectionColor});
     }
+    this.selectedMethodName = methodSpec.name;
   }
 
-  updateTitle() {
+  async updateTitle() {
     let win = this.getWindow();
     if (!win) return;
     let title = "ObjectEditor";
-    let {
-      selectedClass,
-      selectedMethod,
-      selectedModule
-    } = this;
-
-
-    let p = getPackage(selectedClass[Symbol.for("lively-module-meta")].package.name);
-
-
-    if (selectedClass) {
-      title += ` - ${selectedClass.name}`;
-      if (isObjectClass(selectedClass)) {
-        let p = selectedClass[Symbol.for("lively-module-meta")].package;
-        if (p && p.version) title += "@" + p.version;
-      }
-      if (selectedMethod) title += `>>${selectedMethod.name}`;
-    } else if (selectedModule) {
-      title += ` - ${selectedModule.shortName()}`;
-    }
-
+    title += await this.withContextDo((ctx) => ctx.getTitle());
+    let url = this.systemInterface.coreInterface.url;
+    title += url ? ` [${url}]` : '';
     win.title = title;
     win.relayoutWindowControls();
   }
@@ -801,13 +714,9 @@ export class ObjectEditor extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async doSave() {
-    let {
-      selectedModule, selectedClass, selectedMethod,
-      ui: {sourceEditor}, state} = this;
-
-    if (!selectedClass) {
-      return {success: false, reason: "No class selected"};
-    }
+    let {ui: {sourceEditor}} = this;
+    if (await this.withContextDo((ctx) => !ctx.selectedClass))
+       return {success: false, reason: "No class selected"};
 
     // Ask user what to do with undeclared variables. If this gets canceled we
     // abort the save
@@ -816,55 +725,75 @@ export class ObjectEditor extends Morph {
       if (!fixed) return {success: false, reason: "Save canceled"};
     }
 
-    let descr = this.sourceDescriptorFor(selectedClass),
-        content = sourceEditor.textString,
-        parsed = parse(content);
+    let content = sourceEditor.textString;
+    content = await this.withContextDo((ctx) => {
+      let {
+        selectedModule, selectedClass, selectedMethod,
+      } = ctx;
+  
+      let descr = this.sourceDescriptorFor(selectedClass),
+          parsed = parse(content);
+  
+      // ensure that the source is a class declaration
+      if (parsed.body.length !== 1 || parsed.body[0].type !== "ClassDeclaration") {
+        return {
+          success: false,
+          reason: `Code is expected to contain the class definition of ${selectedClass}, aborting save.`
+        };
+      }
+  
+      // we do not support renaming classes by changing the source (yet?)
+      let classDecl = parsed.body[0],
+          className = content.slice(classDecl.id.start, classDecl.id.end);
+      if (className !== selectedClass.name) {
+        content = content.slice(0, classDecl.id.start) + selectedClass.name + content.slice(classDecl.id.end);
+      }
+      return content;
+    }, {
+      content
+    });
 
-    // ensure that the source is a class declaration
-    if (parsed.body.length !== 1 || parsed.body[0].type !== "ClassDeclaration") {
+    const editorSourceHash = string.hashCode(content),
+          {sourceChanged, outsideChangeWarning, selectedModuleId} = await this.withContextDo((ctx) => {
+      // moduleChangeWarning is set when the context gets notified that the
+      // current module was changed elsewhere (onModuleChanged) and it also has
+      // unsaved changes
+      let {sourceHash, moduleChangeWarning, selectedModule} = ctx,
+          sourceChanged = sourceHash !== editorSourceHash
       return {
-        success: false,
-        reason: `Code is expected to contain the class definition of ${selectedClass}, aborting save.`
-      };
-    }
+        selectedModuleId: selectedModule.id,
+        sourceChanged, 
+        outsideChangeWarning: moduleChangeWarning === selectedModule.id}
+    }, {
+      editorSourceHash
+    });
 
-    // we do not support renaming classes by changing the source (yet?)
-    let classDecl = parsed.body[0],
-        className = content.slice(classDecl.id.start, classDecl.id.end);
-    if (className !== selectedClass.name) {
-      content = content.slice(0, classDecl.id.start) + selectedClass.name + content.slice(classDecl.id.end);
-    }
-
-    // moduleChangeWarning is set when this browser gets notified that the
-    // current module was changed elsewhere (onModuleChanged) and it also has
-    // unsaved changes
-    let {sourceHash, moduleChangeWarning} = state,
-        sourceChanged = sourceHash !== string.hashCode(content);
-    if (sourceChanged && moduleChangeWarning === selectedModule.id) {
+    if (sourceChanged && outsideChangeWarning) {
       var really = await this.world().confirm(
-        `The module ${selectedModule.id} you are trying to save changed elsewhere!\nOverwrite those changes?`);
+        `The module ${selectedModuleId} you are trying to save changed elsewhere!\nOverwrite those changes?`);
       if (!really) return {success: false, reason: "Save canceled"};
-      state.moduleChangeWarning = null;
+      await this.withContextDo(ctx => ctx.moduleChangeWarning = null)
     }
 
     this.backupSourceInLocalStorage(content);
 
-    state.isSaving = true;
-    try {
-      await descr.changeSource(content);
-      await sourceEditor.saveExcursion(async () => {
-        await this.refresh();
-        await this.updateSource(sourceEditor.textString, selectedModule.id);
-      });
-      if (isObjectClass(selectedClass) && sourceChanged) {
-        var pkg = descr.module.package(),
-            packageConfig = {...pkg.config, version: semver.inc(pkg.version, "prerelease", true)},
-            system = await this.editorPlugin.systemInterface(),
-            mod = system.getModule(pkg.url + "/package.json");
-        system.packageConfChange(JSON.stringify(packageConfig, null, 2), mod.id);
-      }
+     try {
+        await this.withContextDo(async (ctx) => {
+           ctx.isSaving = true;
+           await this.sourceDescriptorFor(ctx.selectedClass).changeSource(content);
+        }, {content})
+       await sourceEditor.saveExcursion(async () => {
+         await this.refresh();
+         await this.updateSource(sourceEditor.textString, selectedModuleId);
+       });
+       await this.withContextDo((ctx) => {
+         ctx.updatePackageConfig(sourceChanged);   
+       }, { sourceChanged });
       return {success: true};
-    } finally { this.state.isSaving = false; }
+     } finally { 
+       await this.withContextDo(ctx => ctx.isSaving = false);
+     }
+ 
   }
 
   backupSourceInLocalStorage(source) {
@@ -876,29 +805,38 @@ export class ObjectEditor extends Morph {
   }
 
   async interactivelyAddObjectPackageAndMethod() {
+    let objPkgName, className, methodName, stringifiedTarget;
     try {
-      // let input = await this.world().prompt("Enter method name",
-      //                   {historyId: "object-editor-method-name-hist"});
-      // if (!input) return;
-      let t = this.target,
-          pkg = ObjectPackage.lookupPackageForObject(t);
-
-      if (!pkg) {
-        let objPkgName = await this.world().prompt(
-          `No object package exists yet for object ${t}.\n`
+      ({ objPkgName, className, stringifiedTarget } = await this.withContextDo((ctx) => {
+        const pkg = ObjectPackage.lookupPackageForObject(ctx.target);
+        return { 
+          objPkgName: pkg && pkg.id,
+          className: ctx.target.constructor.name, 
+          stringifiedTarget: ctx.target.toString() }
+      }));
+      
+      if (!objPkgName) {
+        objPkgName = await this.world().prompt(
+          `No object package exists yet for object ${stringifiedTarget}.\n`
         + "Enter a name for a new package:", {
             historyId: "object-package-name-hist",
-            input: string.capitalize(t.name).replace(/\s+(.)/g, (_, match) => match.toUpperCase())
+            input: string.capitalize(className).replace(/\s+(.)/g, (_, match) => match.toUpperCase())
           });
 
         if (!objPkgName) { this.setStatusMessage("Canceled"); return; }
-        pkg = ObjectPackage.withId(objPkgName);
-        await pkg.adoptObject(t);
+        await this.withContextDo(async (ctx) => {
+           const pkg = ObjectPackage.withId(objPkgName);
+           await pkg.adoptObject(ctx.target);
+        }, {objPkgName});
       }
-
-      let {methodName} = await addScript(t, "function() {}", "newMethod");
+      ({ className, methodName} = await this.withContextDo(async ctx => {
+        const {methodName} = await ctx.addNewMethod();
+        return {
+          methodName, className: ctx.target.constructor.name
+        }
+      }));
       await this.refresh();
-      await this.selectMethod(t.constructor, {name: methodName}, true, true);
+      await this.selectMethod(className, methodName, true, true);
       this.focus();
     } catch (e) {
       this.showError(e);
@@ -906,89 +844,103 @@ export class ObjectEditor extends Morph {
   }
 
   async interactivelyRemoveMethodOrClass() {
-    let {selectedMethod, selectedClass} = this;
+    let {selectedMethod, selectedClass} = await this.withContextDo(ctx => ({
+      selectedMethod: ctx.selectedMethod.name,
+      selectedClass: ctx.selectedClass.name
+    }));
     if (selectedMethod) return this.interactivelyRemoveMethod();
     if (selectedClass) return this.interactivelyAdoptBySuperclass();
   }
 
-  async interactivelyCreateObjectPackage() {
-    try {
-      let input = await this.world().prompt(`Creating an package definition for ${this.target}.\nPlease enter a name for the package:`,
-        {historyId: "object-package-creation-name-hist"});
-      // if (!input) return;
-      // let input = "newMethod",
-      //     {methodName} = await addScript(this.target, "function() {}", input);
-      // await this.refresh();
-      // await this.selectMethod(this.target.constructor, {name: methodName}, true, true);
-      // this.focus();
-    } catch (e) {
-      this.showError(e);
-    }
-  }
-
   async interactivelyAdoptByClass() {
-    let system = this.editorPlugin.systemInterface();
-    let modules = await system.getModules();
-    let items = [];
-    for (let mod of modules) {
-      // mod = modules[0]
-      let pkg = await system.getPackageForModule(mod.name),
-          shortName = pkg ? pkg.name + "/" + system.shortModuleName(mod.name, pkg)
-            : mod.name;
+    let items = await this.withContextDo(async (ctx) => {
+      let { systemInterface: system } = ctx.evalEnvironemnt;
+      let modules = await system.getModules();
 
-
-      let realModule = module(mod.name);
-      if (realModule.format() !== "esm" && realModule.format() !== "register")
-        continue;
-
-      let imports = (await realModule.imports()).map(ea => ea.local);
-      let klasses = obj.values(realModule.recorder).filter(ea =>
-        isClass(ea) && !imports.includes(ea.name) && withSuperclasses(ea).includes(Morph));
-
-      for (let klass of klasses) {
-        items.push({isListItem: true, string: `${shortName} ${klass.name}`, value: {module: mod, klass}});
+      let items = [];
+      for (let mod of modules) {
+        // mod = modules[0]
+        let pkg = await system.getPackageForModule(mod.name),
+            shortName = pkg ? pkg.name + "/" + system.shortModuleName(mod.name, pkg)
+              : mod.name;
+  
+  
+        let realModule = module(mod.name);
+        if (realModule.format() !== "esm" && realModule.format() !== "register")
+          continue;
+  
+        let imports = (await realModule.imports()).map(ea => ea.local);
+        let klasses = obj.values(realModule.recorder).filter(ea =>
+          isClass(ea) && !imports.includes(ea.name) && withSuperclasses(ea).includes(Morph));
+  
+        for (let klass of klasses) {
+          items.push({
+            isListItem: true, string: `${shortName} ${klass.name}`, 
+            value: {moduleName: mod.name, className: klass.name}});
+        }
+        return items;
       }
-
-    }
+    });
 
     let {selected: [klassAndModule]} = await $world.filterableListPrompt(
       "From which class should the target object inherit?", items, {requester: this});
 
     if (!klassAndModule) return;
 
-    let target = this.target;
-    adoptObject(target, klassAndModule.klass);
+    await this.withContextDo((ctx) => {
+      const { moduleName, className } = klassAndModule,
+             klass = module(moduleName).recorder[className];
+      adoptObject(ctx.target, klass);
+    }, {
+      klassAndModule
+    })
     this.refresh();
   }
 
   async interactivelyAdoptBySuperclass() {
-    let {target: t} = this,
-        klass = t.constructor;
-    if (klass === Morph) return;
-    let nextClass = withSuperclasses(t.constructor)[1],
-        {package: {name: packageName}} = klass[Symbol.for("lively-module-meta")],
-        really = await this.world().confirm(`Do you really want to make ${t} an instance of `
-                                            + `${nextClass.name} and remove class ${klass.name} `
+    const {nextClassName, className, packageName} = await this.withContextDo((ctx) => {
+      let {target: t} = this,
+           klass = t.constructor;
+      if (klass === Morph) return {}; // this is a weird exception but makes sense in general
+      let nextClass = withSuperclasses(t.constructor)[1],
+          {package: {name: packageName}} = klass[Symbol.for("lively-module-meta")];
+      return {
+        packageName, nextClassName: nextClass.name, className: klass.name
+      }  
+    });
+    if (nextClassName) {
+      const really = await this.world().confirm(`Do you really want to make ${t} an instance of `
+                                            + `${nextClassName} and remove class ${className} `
                                             + `and its package ${packageName}?`);
-    if (!really) return;
-    adoptObject(t, nextClass);
-    this.refresh();
+      if (!really) return;
+      await this.withContextDo((ctx) => {
+         adoptObject(t, withSuperclasses(ctx.target.constructor)[1]);
+      });
+      this.refresh(); 
+    }
   }
 
   async interactivelyRemoveMethod() {
-    let { selectedMethod, selectedClass } = this.state;
-    if (!selectedMethod) return;
-    let parsed = this.editorPlugin.parse().body[0],
-        methodNode = await this._sourceDescriptor_of_class_findMethodNode(
-          selectedClass, selectedMethod.name, selectedMethod.kind, selectedMethod.static, parsed);
+    if (await this.withContextDo(ctx => !ctx.selectedMethod)) return;
+    let parsed = this.editorPlugin.parse().body[0];
+    let {methodNode, selectedMethodName} = await this.withContextDo(async (ctx) => {
+      let { selectedMethod, selectedClass } = ctx;
+      return {
+        selectedMethodName: selectedMethod.name,
+        methodNode: await ctx._sourceDescriptor_of_class_findMethodNode(
+            selectedClass, selectedMethod.name, selectedMethod.kind, selectedMethod.static, parsed)
+      };
+    }, { parsed });
+
+    if (!selectedMethodName) return; 
 
     if (!methodNode) {
-      this.showError(`Cannot find AST node for method ${selectedMethod.name}`);
+      this.showError(`Cannot find AST node for method ${selectedMethodName}`);
       return;
     }
 
     var really = await this.world().confirm(
-      `Really remove method ${selectedMethod.name}?`);
+      `Really remove method ${selectedMethodName}?`);
     if (!really) return;
 
     let ed = this.ui.sourceEditor,
@@ -1002,56 +954,67 @@ export class ObjectEditor extends Morph {
   }
 
   async interactivelyForkPackage() {
-    let t = this.target,
-        klass = t.constructor,
-        nextClass = withSuperclasses(klass)[1],
-        {package: {name: packageName}} = klass[Symbol.for("lively-module-meta")],
-        forkedName = await this.world().prompt("Enter a name for the forked class and its package", {
+    let forkedName = await this.world().prompt("Enter a name for the forked class and its package", {
           requester: this,
-          input: klass.name + "Fork",
+          input: await this.withContextDo(ctx => ctx.target.constructor.name) + "Fork",
           historyId: "lively.morphic-object-editor-fork-names",
           useLastInput: false
         });
-
     if (!forkedName) return;
-
-    let pkg = ObjectPackage.lookupPackageForObject(t),
-        {baseURL, System} = pkg,
-        forkedPackage = await pkg.fork(forkedName, {baseURL, System});
-    await adoptObject(t, forkedPackage.objectClass);
-    await this.browse({target: t, selectedClass: forkedPackage.objectClass});
+    let newClassName = await this.withContextDo(async (ctx) => {
+      await ctx.forkPackage(forkedName);
+    }, { forkedName });
+    await this.browse({target: this.context.target, selectedClass: newClassName });
 
   }
 
   async interactivlyFixUndeclaredVariables() {
     try {
-      let {state: {selectedClass, selectedMethod}, ui: {sourceEditor}} = this;
-      if (!selectedClass) {
+      let { ui: {sourceEditor}} = this;
+      if (!await this.withContextDo(ctx => ctx.selectedClass && ctx.selectedClass.name)) {
         this.showError(new Error("No class selected"));
         return null;
       }
 
-      let descr = this.sourceDescriptorFor(selectedClass),
-          m = descr.module,
-          origSource = descr.moduleSource;
+      let content = sourceEditor.textString,
+          { moduleId, origSource } = await this.withContextDo((ctx) => {
+        const {selectedClass, selectedMethod} = ctx;
+        let descr = ctx.sourceDescriptorFor(selectedClass),
+            m = descr.module,
+            origSource = descr.moduleSource;
 
-      this.state.isSaving = true;
+        ctx.isSaving = true;
+        return { moduleId: m.id, origSource }
+      });
 
       return await interactivlyFixUndeclaredVariables(sourceEditor, {
         requester: sourceEditor,
         sourceUpdater: async (type, arg) => {
-          if (type === "import") await m.addImports(arg);
-          else if (type === "global") await m.addGlobalDeclaration(arg);
-          else throw new Error(`Cannot handle fixUndeclaredVar type ${type}`);
-          descr.resetIfChanged();
+          this.withContextDo(async (ctx) => {
+            const descr = ctx.sourceDescriptorFor(ctx.selectedClass),
+                  m = descr.module;
+            if (type === "import") await m.addImports(arg);
+            else if (type === "global") await m.addGlobalDeclaration(arg);
+            else throw new Error(`Cannot handle fixUndeclaredVar type ${type}`);
+            descr.resetIfChanged();
+          })
           await this.ui.importController.updateImports();
           await this.updateKnownGlobals();
         },
-        sourceRetriever: () => descr._modifiedSource(sourceEditor.textString).moduleSource,
-        highlightUndeclared: undeclaredVar => {
+        sourceRetriever: async () => this.withContextDo((ctx) => {
+          const descr = ctx.sourceDescriptorFor(ctx.selectedClass);
+          descr._modifiedSource(content).moduleSource
+        }, {
+          content: sourceEditor.textString
+        }),
+        highlightUndeclared: async undeclaredVar => {
           // start,end index into module source, compensate
           let {start: varStart, end: varEnd} = undeclaredVar,
-              {sourceLocation: {start: classStart, end: classEnd}} = descr;
+              { classStart, classEnd } = await this.withContextDo((ctx) => {
+                const descr = ctx.sourceDescriptorFor(ctx.selectedClass),
+                      {sourceLocation: {start: classStart, end: classEnd}} = descr;
+                return { classStart, classEnd }
+              });
           if (varStart < classStart || varEnd > classEnd) return;
           varStart -= classStart;
           varEnd -= classStart;
@@ -1064,11 +1027,14 @@ export class ObjectEditor extends Morph {
       });
 
     } catch (e) {
-      origSource && await m.changeSource(origSource);
+      await this.withContextDo(async () => 
+         origSource && await module(moduleId).changeSource(origSource), {
+            moduleId, origSource
+         });
       this.showError(e);
       return null;
     } finally {
-      this.state.isSaving = false;
+      await this.withContextDo(ctx => ctx.isSaving = false)
       await this.ui.importController.updateImports();
       await this.updateKnownGlobals();
       this.ui.sourceEditor.focus();
@@ -1076,14 +1042,14 @@ export class ObjectEditor extends Morph {
   }
 
   async interactivelyAddImport() {
-    let {
-      selectedClass, selectedMethod, selectedModule, state,
+    let origSource, {
       ui: {importController, sourceEditor},
       editorPlugin
     } = this;
 
     try {
-      if (!selectedClass) {
+      
+      if (await this.withContextDo(ctx => !ctx.selectedClass)) {
         this.showError(new Error("No class selected"));
         return;
       }
@@ -1093,10 +1059,14 @@ export class ObjectEditor extends Morph {
       if (!choices) return null;
 
       // FIXME move this into system interface!
-      var origSource = await selectedModule.source();
-
-      state.isSaving = true;
-      await selectedModule.addImports(choices);
+      origSource = await this.withContextDo(async (ctx) => {
+        const origSource = await ctx.selectedModule.source();
+        ctx.isSaving = true;
+        await ctx.selectedModule.addImports(choices);
+        return origSource;
+      }, {
+        choices
+      })
 
       let insertions = choices.map(({local, exported}) =>
         exported === "default" ? local : exported);
@@ -1105,10 +1075,16 @@ export class ObjectEditor extends Morph {
         sourceEditor.cursorPosition);
 
     } catch (e) {
-      origSource && await selectedModule.changeSource(origSource);
+      await this.withContextDo(async (ctx) => 
+         origSource && await ctx.selectedModule.changeSource(origSource), {
+        origSource  
+      })
       this.showError(e);
     } finally {
-      state.isSaving = false;
+      await this.withContextDo(async (ctx) => {
+         await promise.waitFor(1000, () => ctx.moduleChangeWarning);
+         ctx.isSaving = false
+      });
       await importController.updateImports();
       await this.updateKnownGlobals();
       sourceEditor.focus();
@@ -1116,74 +1092,101 @@ export class ObjectEditor extends Morph {
   }
 
   async interactivelyRemoveImport() {
-    try {
-      var sels = this.get("importsList").selections;
-      if (!sels || !sels.length) return;
-      var really = await this.world().confirm(
-        "Really remove imports \n" + arr.pluck(sels, "local").join("\n") + "?");
-      if (!really) return;
-      var m = this.selectedModule;
-      var origSource = await m.source();
-      await m.removeImports(sels);
-      this.get("importsList").selection = null;
-    }
-    catch (e) {
-      origSource && await m.changeSource(origSource);
-      this.showError(e);
-    }
-    finally {
-      await this.get("importController").updateImports();
-      await this.updateKnownGlobals();
-      this.get("sourceEditor").focus();
-    }
+    var sels = this.ui.importsList.selections;
+    if (!sels || !sels.length) return;
+    var really = await this.world().confirm(
+      "Really remove imports \n" + arr.pluck(sels, "local").join("\n") + "?");
+    if (!really) return;
+    const error = await this.withContextDo(async (ctx) => {
+      try {
+        var m = ctx.selectedModule;
+        var origSource = await m.source();
+        await m.removeImports(sels); 
+        return false;
+      } catch(e) {
+        origSource && await m.changeSource(origSource);
+        return e;
+      }
+    }, { sels });
+    this.ui.importsList.selection = null;
+    if (error) this.showError(error);
+    await this.ui.importController.updateImports();
+    await this.updateKnownGlobals();
+    this.ui.sourceEditor.focus();
   }
 
   async interactivelyRemoveUnusedImports() {
     try {
-      var m = this.selectedModule,
-          origSource = await m.source(),
-          toRemove = await chooseUnusedImports(await m.source());
+      const origSource = await this.withContextDo(async ctx => {
+            return await ctx.selectedModule.source();
+          }),
+           toRemove = await chooseUnusedImports(origSource);
 
       if (!toRemove || !toRemove.changes || !toRemove.changes.length) {
         this.setStatusMessage("Nothing to remove");
         return;
       }
 
-      await m.removeImports(toRemove.removedImports);
+      await this.withContextDo((ctx) => {
+        ctx.selectedModule.removeImports(toRemove.removedImports)
+      }, { toRemove });
       this.setStatusMessage("Imports removed");
     } catch (e) {
-      origSource && await m.changeSource(origSource);
-      this.showError(e);
+      origSource && await this.withContextDo(ctx => 
+        ctx.selectedModule.changeSource(origSource), {
+        origSource
+      });
+      this.setStatusMessage(e.toString());
+      return;
     }
-    finally {
-      await this.get("importController").updateImports();
-      await this.updateKnownGlobals();
-      this.get("sourceEditor").focus();
-    }
+    await this.ui.importController.updateImports();
+    await this.updateKnownGlobals();
+    this.ui.sourceEditor.focus();
   }
 
   async interactivelyRunSelectedMethod(opts = {}) {
-    var { selectedMethod } = this.state,
-        {silent = false} = opts;
+    const { statusMessage } = await this.withContextDo(async (ctx) => {
+      var selectedMethod = ctx.selectedMethod;
 
-    if (!selectedMethod) {
-      !silent && this.setStatusMessage("no message selected");
-      return;
-    }
-
-    if (typeof this.target[selectedMethod.name] !== "function") {
-      !silent && this.setStatusMessage(`${selectedMethod.name} is not a method of ${this.target}`);
-      return;
-    }
-
-    try {
-      var result = await this.target[selectedMethod.name]();
-      if (!silent) {
+      if (!selectedMethod) {
+        return { statusMessage: "no message selected" };
+      }
+  
+      if (typeof ctx.target[selectedMethod.name] !== "function") {
+        return { statusMessage: `${selectedMethod.name} is not a method of ${this.target}` };
+      }
+  
+      try {
+        var result = await ctx.target[selectedMethod.name]();
         var msg = `Running ${selectedMethod.name}`;
         if (typeof result !== "undefined") msg += `, returns ${result}`;
-        this.setStatusMessage(msg);
+        return { statusMessage: msg }
+      } catch (e) { 
+        return { statusMessage: e.toString()}
       }
-    } catch (e) { !silent && this.showError(e); }
+    });
+    if (statusMessage && !opts.silent) this.setStatusMessage(statusMessage);
+  }
+
+  async browseClass(klass) {
+    let className, moduleName;
+    if (klass) {
+       ({ name: className, module: {id: moduleName} } = this.context.sourceDescriptorFor(klass));
+    } else {
+      ({ className, moduleName } = await this.withContextDo(ctx => {
+        if (!ctx.selectedClass) return {};
+        const desc = ctx.sourceDescriptorFor(ctx.selectedClass);
+        return {
+          className: desc.name,
+          moduleName: desc.module.id
+        }
+      }));
+    }
+    if (moduleName && className)
+      return this.world().execCommand("open browser",
+        {moduleName, codeEntity: {name: className}, systemInterface: this.systemInterface});
+    this.setStatusMessage("No class specified"); return true;
+
   }
 
   browseSnippetForSelection() {
@@ -1239,12 +1242,12 @@ export class ObjectEditor extends Morph {
 
       {
         name: "focus class tree",
-        exec: ed => { var m = ed.get("classTree"); m.show(); m.focus(); return true; }
+        exec: ed => { var m = ed.ui.classTree; m.show(); m.focus(); return true; }
       },
 
       {
         name: "focus code editor",
-        exec: ed => { var m = ed.get("sourceEditor"); m.show(); m.focus(); return true; }
+        exec: ed => { var m = ed.ui.sourceEditor; m.show(); m.focus(); return true; }
       },
 
       {
@@ -1311,7 +1314,7 @@ export class ObjectEditor extends Morph {
         name: "jump to definition",
         exec: async ed => {
 
-          var tree = ed.getSubmorphNamed("classTree"),
+          var tree = ed.ui.classTree,
               td = tree.treeData,
               classNodes = td.getChildren(td.root).slice(),
               items = arr.flatmap(classNodes.reverse(), node => {
@@ -1346,7 +1349,7 @@ export class ObjectEditor extends Morph {
 
           if (choice) {
             await ed[choice.selector](choice.node.target);
-            ed.getSubmorphNamed("sourceEditor").focus();
+            ed.ui.sourceEditor.focus();
             tree.scrollSelectionIntoView();
           }
           return true;
@@ -1367,11 +1370,7 @@ export class ObjectEditor extends Morph {
       {
         name: "open class in system browser",
         exec: async (ed, opts = {klass: null}) => {
-          var klass = opts.klass || this.state.selectedClass;
-          if (!klass) { ed.setStatusMessage("No class specified"); return true; }
-          var descr = ed.sourceDescriptorFor(klass);
-          return ed.world().execCommand("open browser",
-            {moduleName: descr.module.id, codeEntity: {name: klass.name}});
+          return ed.browseClass(opts.klass);
         }
       },
 
@@ -1386,7 +1385,7 @@ export class ObjectEditor extends Morph {
         name: 'freeze target',
         exec: async ed => {
           try {
-            let frozenFileString = await interactivelyFreezePart(ed.target, {notifications: false, loadingIndicator: true});
+            let frozenFileString = await interactivelyFreezePart(ed.target, {notifications: false, loadingIndicator: true, checkForLeaks: true});
             this.world().serveFileAsDownload(frozenFileString, {fileName: ed.target.name + ".js", type: 'application/javascript'});
           } catch(e) {
             if (e === "canceled") this.setStatusMessage("canceled");
@@ -1417,11 +1416,14 @@ export class ObjectEditor extends Morph {
         exec: async ed => {
           /*global inspect*/
           if (ed.env.eventDispatcher.isKeyPressed("Shift")) {
-            var [selected] = await $world.execCommand("select morph", {justReturn: true});
-            if (selected) ed.target = selected;
+            var [selected] = await $world.execCommand("select morph", {
+              justReturn: true, 
+              root: [ed.target, ...ed.target.ownerChain()].find(m => m.owner.isWorld)
+            });
+            if (selected) ed.selectTarget(selected);
           } else {
             let selected = await InteractiveMorphSelector.selectMorph(ed.world());
-            if (selected) ed.target = selected;
+            if (selected) ed.selectTarget(selected);
           }
 
           ed.focus();
@@ -1437,36 +1439,19 @@ export class ObjectEditor extends Morph {
       }
     ];
   }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  async _sourceDescriptor_of_class_findMethodNode(klass, methodName, methodKind, isClassMethod = false, ast) {
-    let descr = RuntimeSourceDescriptor.for(klass),
-        parsed = ast || await descr.ast,
-        methods = Path("body.body").get(parsed),
-        method = methods.find(({kind, static: itIsClassMethod, key: {name}}) => {
-          if (name !== methodName || itIsClassMethod !== isClassMethod)
-            return false;
-          if (!methodKind || (methodKind !== "get" && methodKind !== "set"))
-            return true;
-          return methodKind === kind;
-        });
-    return method;
-  }
 }
 
-
-// new ImportController().openInWorld()
 class ImportController extends Morph {
 
   static get properties() {
     return {
       extent: {defaultValue: pt(300,600)},
-
-      module: {
+      systemInterface: {
         get() {
-          let id = this.getProperty("module");
-          return id ? module(id) : null;
-        },
+          return this.get('object-editor').systemInterface;
+        }
+      },
+      module: {
         set(moduleOrId) {
           var id = !moduleOrId ? null : typeof moduleOrId === "string" ? moduleOrId : moduleOrId.id;
           this.setProperty("module", id);
@@ -1479,7 +1464,7 @@ class ImportController extends Morph {
     super(props);
     this.build();
     connect(this, "module", this, "updateImports");
-    connect(this.getSubmorphNamed("openButton"), "fire", this, "execCommand", {
+    connect(this.get('openButton'), "fire", this, "execCommand", {
       converter: () => "open selected module in system browser"});
   }
 
@@ -1493,16 +1478,12 @@ class ImportController extends Morph {
 
         btnStyle = {
           type: "button",
-          fontSize: 10,
-          fill: Color.white,
-          border: {color: Color.lightGray, style: "solid", radius: 5},
-          nativeCursor: "pointer",
           extent: pt(26,24),
         };
 
     this.submorphs = [
       {...listStyle, name: "importsList", multiSelect: true, borderBottom: {width: 1, color: Color.gray}},
-      {name: "buttons", layout: new HorizontalLayout({direction: "centered", spacing: 2}),
+      {name: "buttons", fill: Color.transparent, layout: new HorizontalLayout({direction: "centered", spacing: 2}),
         submorphs: [
           {...btnStyle, name: "addImportButton", label: Icon.makeLabel("plus"), tooltip: "add new import"},
           {...btnStyle, name: "removeImportButton", label: Icon.makeLabel("minus"), tooltip: "remove selected import(s)"},
@@ -1527,21 +1508,25 @@ class ImportController extends Morph {
   }
 
   async updateImports() {
-    let {module} = this;
-    if (!module) {
-      this.getSubmorphNamed("importsList").items = [];
-      return;
-    }
+    // this needs to be done within the context, since there
+    // currently is no remote tracking of module objects
+    let items = await this.get('object-editor').withContextDo(async (ctx) => {
+      let module = await ctx.selectedModule;
+      if (!module) {
+        return [];
+      }
 
-    let imports = await module.imports(),
-        items = imports.map(ea => {
-          var label = [];
-          var alias = ea.local !== ea.imported && ea.imported !== "default" ? ea.local : null;
-          if (alias) label.push(`${ea.imported} as `, {});
-          label.push(alias || ea.local || "??????", {fontWeight: "bold"});
-          label.push(` from ${ea.fromModule}`);
-          return {isListItem: true, value: ea, label};
-        });
+      let imports = await module.imports(),
+          items = imports.map(ea => {
+            var label = [];
+            var alias = ea.local !== ea.imported && ea.imported !== "default" ? ea.local : null;
+            if (alias) label.push(`${ea.imported} as `, {});
+            label.push(alias || ea.local || "??????", {fontWeight: "bold"});
+            label.push(` from ${ea.fromModule}`);
+            return {isListItem: true, value: ea, label};
+          });
+       return items;
+    }); 
 
     this.getSubmorphNamed("importsList").items = items;
   }
@@ -1563,7 +1548,7 @@ class ImportController extends Morph {
         }
         let {fromModule, local} = importSpec || {};
         if (fromModule.startsWith("."))
-          fromModule = System.decanonicalize(fromModule, this.module.id);
+          fromModule = System.decanonicalize(fromModule, this.module);
         return this.world().execCommand("open browser",
           {moduleName: fromModule, codeEntity: local});
       }
