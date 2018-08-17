@@ -178,6 +178,7 @@ export default class JavaScriptEditorPlugin extends CodeMirrorEnabledEditorPlugi
     }
     let parsed = parser.fuzzyParse(src, options);
     parsed._astType = astType;
+    this._ast = parsed;
     return parsed;
   }
 

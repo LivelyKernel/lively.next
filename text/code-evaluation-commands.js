@@ -62,16 +62,48 @@ export var codeEvaluationCommands = [
   },
 
   {
+    name: "editit",
+    doc: "Evaluates the expression and opens an object editor on the resulting object.",
+    exec: async function(morph, opts) {
+      morph.maybeSelectCommentOrLine();
+      var result, err, target = morph.textInRange(morph.selection),
+          evalEnvironment = morph.evalEnvironment || {},
+          jsPlugin = morph.pluginFind(p => p.isEditorPlugin && typeof p.runEval === "function");
+      if (!evalEnvironment.systemInterface) 
+        evalEnvironment.systemInterface = jsPlugin.systemInterface(opts);
+      if ("local" === evalEnvironment.systemInterface.name) {
+        try {
+          // enhance the objet editor to track remote t
+          result = await morph.doEval(undefined, opts);
+          err = result.error ? result.error : result.isError ? result.value : null;
+          target = result.value
+        } catch (e) { err = e; }
+      }
+      morph.world().execCommand("open object editor", {target, evalEnvironment});
+      return result;
+    }
+  },
+
+  {
     name: "inspectit",
     doc: "Evaluates the expression and opens an inspector widget on the resulting object.",
     exec: async function(morph, opts) {
       morph.maybeSelectCommentOrLine();
-      var result, err;
-      try {
-        result = await morph.doEval(undefined, opts);
-        err = result.error ? result.error : result.isError ? result.value : null;
-      } catch (e) { err = e; }
-      Inspector.openInWindow({targetObject: err ? err : result.value});
+      var result, err, target = morph.textInRange(morph.selection),
+          evalEnvironment = morph.evalEnvironment || {},
+          jsPlugin = morph.pluginFind(p => p.isEditorPlugin && typeof p.runEval === "function");
+      if (!evalEnvironment.systemInterface) evalEnvironment.systemInterface = jsPlugin.systemInterface(opts);
+      if ("local" === evalEnvironment.systemInterface.name) {
+        try {
+          // enhance the objet editor to track remote t
+          result = await morph.doEval(undefined, opts);
+          err = result.error ? result.error : result.isError ? result.value : null;
+          target = result.value
+        } catch (e) { err = e; }
+        Inspector.openInWindow({targetObject: err ? err : target});
+      } else {
+        Inspector.openInWindow({remoteTarget: { code: target, evalEnvironment }});
+      }
       return result;
     }
   },
