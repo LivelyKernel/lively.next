@@ -1555,15 +1555,24 @@ export class Text extends Morph {
         let {start} = ranges[i];
 
         if (morph.owner !== this) this.addMorph(morph);
-        if (embeddedMorphMap && !embeddedMorphMap.has(morph)) {
-          let anchor = this.addAnchor({id: "embedded-" + morph.id, ...start});
-          connect(anchor, "position", morph, "position", {
-            converter: function(textPos) {
-              let tm = this.targetObj.owner;
-              return tm ? tm.charBoundsFromTextPosition(textPos).topLeft().subPt(tm.origin) : this.targetObj.position;
-            }
-          }).update(anchor.position);
-          embeddedMorphMap.set(morph, {anchor});
+        // anchor are not able to move correctly, if we replace text and attributes
+        // with new positions of the morphs, which may be arbitrary (oftentimes not possible
+        // to infer the movement). We therefore need to replace these anchor at all times
+        
+        if (embeddedMorphMap) {
+           if (embeddedMorphMap.has(morph)) {
+              embeddedMorphMap.get(morph).anchor.position = start;
+              continue;
+           }
+           let anchor = this.addAnchor({id: "embedded-" + morph.id, ...start});
+            connect(anchor, "position", morph, "position", {
+              converter: function(textPos) {
+                let tm = this.targetObj.owner,
+                    embeddedMorph = this.targetObj;
+                return tm ? tm.charBoundsFromTextPosition(textPos).topLeft().subPt(tm.origin) : embeddedMorph.position;
+              }
+            }).update(anchor.position);
+            embeddedMorphMap.set(morph, {anchor});
         }
       }
 
