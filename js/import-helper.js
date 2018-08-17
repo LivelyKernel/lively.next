@@ -279,7 +279,7 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
       textMorph.centerRange(range);
     };
 
-  var allUndeclared = updateUndeclared(), changes = [];
+  var allUndeclared = await updateUndeclared(), changes = [];
   if (!allUndeclared.length) return changes;
   ignore = ignore.slice();
 
@@ -301,7 +301,7 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
   var canceled = false;
 
   while (true) {
-    updateUndeclared(); if (!allUndeclared.length) break;
+    await updateUndeclared(); if (!allUndeclared.length) break;
 
     let undeclared = allUndeclared[0],
         {name} = undeclared,
@@ -310,7 +310,7 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
           imports.map(ea => ({isListItem: true, value: ea, label: labelForExport(ea)}))),
         choice;
 
-    highlightUndeclared(undeclared);
+    await highlightUndeclared(undeclared);
     if (autoApplyIfSingleChoice && imports.length === 1) {
       choice = imports[0];
 
@@ -354,8 +354,8 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
 
   return canceled ? null : changes;
 
-  function updateUndeclared() {
-    return allUndeclared = undeclaredVariables(sourceRetriever(), knownGlobals)
+  async function updateUndeclared() {
+    return allUndeclared = undeclaredVariables(await sourceRetriever(), knownGlobals)
       .filter(ea => !ignore.includes(ea.name));
   }
 }
