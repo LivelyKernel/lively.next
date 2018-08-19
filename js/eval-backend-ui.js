@@ -181,7 +181,7 @@ export default class EvalBackendChooser {
     var stored = [];
     try {
       let stringified = localStorage["lively.morphic-ide/js/EvalBackendChooser-history"],
-          stored = JSON.parse(stringified);
+          stored = stringified ? JSON.parse(stringified) : [];
       return stored.map(ea => ea.startsWith("http") ? serverInterfaceFor(ea) : null).filter(Boolean);
     } catch (e) {}
     return stored || [];

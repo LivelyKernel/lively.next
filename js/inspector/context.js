@@ -244,14 +244,12 @@ export class RemoteInspectionTree extends InspectionTree {
     
     delegateId = `lively://inspector-${inspector.id}`;
 
-    let { promisedValue: proxy } = (await evalEnvironment.systemInterface.runEval(`
-      (async () => {
+    let { value: proxy } = await evalEnvironment.systemInterface.runEval(`
        const { InspectionTree } = await System.import("lively.ide/js/inspector/context.js");
        const t = (() => ${code})();
        const tree = InspectionTree.forObject(t);
-       return tree.asRemoteDelegate("${delegateId}");
-      })()
-    `, evalEnvironment));
+       tree.asRemoteDelegate("${delegateId}");
+    `, evalEnvironment);
 
     return { delegateId, evalEnvironment, proxy }
   }
