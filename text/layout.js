@@ -38,6 +38,12 @@ export default class TextLayout {
     for (let row = range.start.row; row <= range.end.row; row++)
       this.resetLineCharBoundsCacheOfRow(morph, row);
   }
+
+  estimateLineHeightsInRange(morph, range) {
+    let doc = morph.document, transform = morph.getGlobalTransform();
+    for (let row = range.start.row; row <= range.end.row; row++)
+      this.resetLineCharBoundsCacheOfRow(morph, doc.getLine(row), transform);
+  }
   
   estimateExtentOfLine(morph, line, transform = morph.getGlobalTransform()) {
     var { 

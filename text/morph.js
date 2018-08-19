@@ -454,6 +454,14 @@ export class Text extends Morph {
         after: ["defaultTextStyle"]
       },
 
+      cursorColor: {
+        group: "text styling",
+        type: "Color",
+        isStyleProp: true,
+        after: ["defaultTextStyle"],
+        defaultValue: Color.black
+      },
+
       fontColor: {
         group: "text styling",
         type: "Color",
@@ -1513,6 +1521,8 @@ export class Text extends Morph {
           insertedRange,
           textAndAttributes,
           removedTextAndAttributes);
+
+        this.textLayout.estimateLineHeights(this, false);
         
         if (consistencyCheck)
           this.consistencyCheck();

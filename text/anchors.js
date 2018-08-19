@@ -18,7 +18,7 @@ export class Anchor {
 
   onDelete(range) {
     // move this anchor according to the text removal of range
-
+    if (this.id =='embedded-stylesheetcontrol_399CA2B6_4F7E_4658_905F_9356FF3D25B6') debugger;
     // Deleted range to the right, ignore
     if (lessEqPosition(this.position, range.start)) return false;
 
@@ -44,7 +44,7 @@ export class Anchor {
 
   onInsert(range) {
     // maybe push anchor to the right...
-
+    if (this.id =='embedded-stylesheetcontrol_399CA2B6_4F7E_4658_905F_9356FF3D25B6') debugger;
     // insertion happened after anchor => ignore
     if (lessPosition(this.position, range.start)) return false;
 
