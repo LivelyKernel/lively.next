@@ -796,29 +796,20 @@ export class SearchField extends Text {
     return {
       fixedWidth: {defaultValue: true},
       styleSheets: {
+        after: ['selectedFontColor', 'idleFontColor'],
         initialize() {
-          this.styleSheets = new StyleSheet({
-            ".SearchField": {
-              borderRadius: 15,
-              borderWidth: 1,
-              borderColor: Color.gray,
-              padding: rect(6, 3, 0, 0),
-              clipMode: 'hidden'
-            },
-            ".idle": {
-              fontColor: Color.gray.darker()
-            },
-            ".selected": {
-              fontColor: Color.black,
-              dropShadow: {
-                blur: 6,
-                color: Color.rgb(52, 152, 219),
-                distance: 0
-              }
-            }
-          });
+          this.updateStyleSheet();
         }
       },
+      selectedFontColor: { 
+        isStyleProp: true,
+        defaultValue: Color.black
+      },
+      idleFontColor: { 
+        isStyleProp: true,
+        defaultValue: Color.gray
+      },
+      borderColor: { defaultValue: Color.gray },
       layout: {
         initialize() {
           this.layout = new HorizontalLayout({direction: 'rightToLeft'});
@@ -905,10 +896,8 @@ export class SearchField extends Text {
               type: "label",
               name: 'placeholder',
               isLayoutable: false,
-              opacity: .3,
               value: this.placeHolder,
               reactsToPointer: false,
-              padding: rect(6, 4, 0, 0)
             },
             Icon.makeLabel("times-circle", {
               padding: rect(2,4,3,0),
@@ -926,6 +915,33 @@ export class SearchField extends Text {
         }
       }
     };
+  }
+
+  updateStyleSheet() {
+    this.styleSheets = new StyleSheet({
+      ".SearchField": {
+        borderRadius: 15,
+        borderWidth: 1,
+        padding: rect(6, 3, 0, 0),
+        clipMode: 'hidden'
+      },
+      ".SearchField [name=placeholder]": {
+        padding: rect(6, 4, 0, 0),
+        fontColor: this.selectedFontColor,
+        opacity: .3
+      },
+      ".SearchField.idle": {
+        fontColor: this.idleFontColor
+      },
+      ".SearchField.selected": {
+        fontColor: this.selectedFontColor,
+        dropShadow: {
+          blur: 6,
+          color: Color.rgb(52, 152, 219),
+          distance: 0
+        }
+      }
+    });
   }
 
   parseInput() {
@@ -980,6 +996,8 @@ export class SearchField extends Text {
       this.owner.focus();
     }
     this.active && inputChange && signal(this, "searchInput", this.parseInput());
+    if (['idleFontColor', 'selectedFontColor'].includes(change.prop))
+       this.updateStyleSheet();
   }
 
   onBlur(evt) {

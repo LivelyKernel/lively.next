@@ -1,5 +1,5 @@
 import { arr } from "lively.lang";
-import { pt, Color, Rectangle } from "lively.graphics";
+import { pt, LinearGradient, Color, Rectangle } from "lively.graphics";
 import {
   Label,
   morph,
@@ -11,6 +11,68 @@ import { connect, signal } from "lively.bindings";
 import { easings } from "lively.morphic/rendering/animations.js";
 
 export default class Window extends Morph {
+
+  static get nodeStyleSheet() {
+    return new StyleSheet({
+      ".node .LabeledCheckBox .Label": {
+        "fontColor": Color.rgb(214,219,223)
+      },
+      ".node .List": {
+        "borderColor": Color.rgb(133,146,158),
+        "fill": Color.rgb(86,101,115),
+        "fontColor": Color.rgb(174,182,191),
+        "nonSelectionFontColor": Color.rgb(214,219,223),
+        "selectionColor": Color.rgb(174,182,191),
+        "selectionFontColor": Color.rgb(52,73,94)
+      },
+      ".node .SearchField": {
+        "fill": Color.rgb(93,109,126),
+        "selectedFontColor": Color.rgb(213,216,220)
+      },
+      ".node .Text": {
+        "borderColor": Color.rgb(171,178,185),
+        "fontColor": Color.rgb(214,219,223),
+        "selectionColor": Color.rgba(212,230,241,0.16)
+      },
+      ".node .Tree": {
+        "borderColor": Color.rgb(133,146,158),
+        "fill": Color.rgb(86,101,115),
+        "selectionColor": Color.rgb(174,182,191),
+        "selectionFontColor": Color.rgb(52,73,94)
+      },
+      ".node [name=metaInfoText]": {
+        "fill": Color.rgb(86,101,115),
+        "fontColor": Color.rgb(214,219,223)
+      },
+      ".node.active": {
+        "borderColor": Color.rgb(93,109,126),
+        "fill": Color.rgb(33,47,61)
+      },
+      ".node.active .Button": {
+        "borderColor": Color.rgb(52,73,94),
+        "fill": new LinearGradient({stops: [{offset: 0, color: Color.rgb(127,140,141)}, {offset: 1, color: Color.rgb(97,106,107)}], vector: 0}),
+        "fontColor": Color.rgb(253,254,254),
+        "opacity": 1
+      },
+      ".node.active .windowTitleLabel": {
+        "fontColor": Color.rgb(174,182,191)
+      },
+      ".node.inactive": {
+        "fill": Color.rgb(171,178,185)
+      },
+      ".node.inactive .Button": {
+        "fill": new LinearGradient({stops: [{offset: 0, color: Color.rgb(52,73,94)}, {offset: 1, color: Color.rgb(33,47,60)}], vector: 0}),
+        "fontColor": Color.rgb(235,237,239),
+        "opacity": 0.3
+      },
+      ".node.inactive .Label": {
+        "fontColor": Color.rgb(234,236,238)
+      },
+      ".node.inactive .windowTitleLabel": {
+        "fontColor": Color.rgb(234,236,238)
+      }
+    })
+  }
 
   static get styleSheet() {
     let windowButtonSize = pt(13, 13);
@@ -337,8 +399,11 @@ export default class Window extends Morph {
     if (!minimized) {
       this.minimizedBounds = bounds;
       this.targetMorph && (this.targetMorph.visible = true);
-      this.animate({bounds: nonMinizedBounds || bounds,
-        styleClasses: ['neutral', 'active'], duration, easing});
+      this.animate({
+        bounds: nonMinizedBounds || bounds,
+        styleClasses: ['neutral', 'active', ...arr.without(this.styleClasses, 'minimzed')], 
+        duration, easing
+      });
       collapseButton.tooltip = "collapse window";
     } else {
       this.nonMinizedBounds = bounds;
@@ -349,7 +414,7 @@ export default class Window extends Morph {
         minimizedBounds = minimizedBounds.withWidth(labelBounds.width + buttonOffset + 5);
       this.minimizedBounds = minimizedBounds;
       collapseButton.tooltip = "uncollapse window";
-      await this.animate({styleClasses: ['minimized', 'active'],
+      await this.animate({styleClasses: ['minimized', 'active', ...arr.without(this.styleClasses, 'neutral')],
         bounds: minimizedBounds, duration, easing});
       this.targetMorph && (this.targetMorph.visible = false);
     }

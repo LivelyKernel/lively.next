@@ -30,7 +30,6 @@ export class AbstractPrompt extends Morph {
               fontSize: 14, 
               fontColor: Color.gray,
               fixedHeight: true,
-              height: 20,
               clipMode: 'visible'
             },
             ".Button": {borderRadius: 15},
@@ -57,6 +56,9 @@ export class AbstractPrompt extends Morph {
             ".Button.standard [name=label]": {
               fontStyle: "bold",
               fontColor: Color.white
+            },
+            ".List": {
+              fill: Color.transparent,
             },
             ".Button.cancel [name=label]": {
               fontColor: Color.red.lighter(),
