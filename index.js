@@ -273,7 +273,7 @@ export class AttributeConnection {
 
     var {sourceObj, sourceAttrName} = this,
         newAttrName = this.privateAttrName(sourceAttrName);
-
+    
     if (sourceObj[newAttrName]) {
       console.warn('newAttrName ' + newAttrName + ' already exists.' +
              'Are there already other connections?');
@@ -319,9 +319,15 @@ export class AttributeConnection {
       throw new Error('addConnectionWrapper didnt get a method to wrap');
     }
 
+    let getOriginal, isOwnProperty;
+
     // save so that it can be restored
-    if (sourceObj.hasOwnProperty(methodName))
+    if (isOwnProperty = sourceObj.hasOwnProperty(methodName)) {
       sourceObj[this.privateAttrName(methodName)] = origMethod;
+      getOriginal = () => origMethod;
+    } else {
+      getOriginal = () => Object.getPrototypeOf(sourceObj)[methodName];
+    }
     sourceObj[methodName] = function connectionWrapper() {
       if (this.attributeConnections === undefined)
           throw new Error('[lively.bindings] Something is wrong with connection source object, it has no attributeConnections');
@@ -335,9 +341,13 @@ export class AttributeConnection {
       return result;
     };
 
+    sourceObj[methodName].isOwnProperty = isOwnProperty;
     sourceObj[methodName].isWrapped = true;
     sourceObj[methodName].isConnectionWrapper = true;
-    sourceObj[methodName].originalFunction = origMethod; // for getOriginal()
+    Object.defineProperty(sourceObj[methodName], 'originalFunction', {
+      get: getOriginal
+    });
+    sourceObj[methodName].toString = () => `<Wrapped ${getOriginal()}>`
   }
 
   removeSourceObjGetterAndSetter() {
@@ -356,7 +366,9 @@ export class AttributeConnection {
         delete srcObj[helperAttrName];
       }
     } else if(srcObj[realAttrName] && srcObj[realAttrName].isConnectionWrapper) {
-      srcObj[realAttrName] = srcObj[realAttrName].originalFunction
+      delete srcObj[realAttrName];
+      if (!srcObj[realAttrName]) // only restore for scripts, non-scripts are restored via prototype chain
+          srcObj[realAttrName] = srcObj[realAttrName].originalFunction
     }
 
     if (srcObj.doNotSerialize && srcObj.doNotSerialize.includes(helperAttrName)) {
