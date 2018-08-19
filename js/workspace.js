@@ -94,15 +94,23 @@ export default class Workspace extends Window {
   }
 
   async setEvalBackend(choice) {
+    const duration = 300;
     this.jsPlugin.setSystemInterfaceNamed(choice);
+    let styleClasses, theme;
     if ((await this.jsPlugin.runEval("System.get('@system-env').node")).value) {
-      this.addStyleClass('node');
-      this.jsPlugin.theme = DarkTheme.instance;
+      styleClasses = [...this.styleClasses, 'node']
+      theme = DarkTheme.instance;
     } else {
-      this.removeStyleClass('node');
-      this.jsPlugin.theme = DefaultTheme.instance;
+      styleClasses = arr.without(this.styleClasses, 'node')
+      theme = DefaultTheme.instance;
     }
+    this.animate({ duration, styleClasses });
+    this.jsPlugin.theme = theme;
     this.getSubmorphNamed('editor').textString = this.getSubmorphNamed('editor').textString;
+    await this.get('editor').animate({
+      fill: this.jsPlugin.theme.background,
+      duration
+    })
     this.jsPlugin.highlight()
   }
 

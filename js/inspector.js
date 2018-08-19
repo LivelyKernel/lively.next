@@ -768,8 +768,9 @@ export default class Inspector extends Morph {
               fill: Color.transparent
             },
             "[name=targetPicker]": {
-              fontSize: 18,
-              padding: rect(2, 2),
+              fontSize: 15,
+              borderRadius: 20,
+              //padding: rect(0, 0),
               nativeCursor: "pointer"
             },
             "[name=resizer]": {
@@ -923,17 +924,28 @@ export default class Inspector extends Morph {
     this.updateInProgress = null;
   }
 
-  async toggleWindowStyle() {
-    const editorPlugin = this.ui.codeEditor.pluginFind(p => p.runEval);
+  async toggleWindowStyle(animated = true) {
+    let duration = 300, theme, styleClasses,
+        editorPlugin = this.ui.codeEditor.pluginFind(p => p.runEval), 
+        window = this.getWindow();
     if ((await editorPlugin.runEval("System.get('@system-env').node")).value) {
-      this.getWindow().addStyleClass('node');
-      editorPlugin.theme = DarkTheme.instance;
+      styleClasses = [...arr.without(window.styleClasses, 'local'), 'node'];
+      theme = DarkTheme.instance;
     } else {
-      this.getWindow().removeStyleClass('node');
-      editorPlugin.theme = DefaultTheme.instance;
+      styleClasses = ['local', ...arr.without(window.styleClasses, 'node')];
+      theme = DefaultTheme.instance;
     }
+    editorPlugin.theme = theme;
+    if (animated) {
+      window.animate({ duration, styleClasses });
+      this.ui.codeEditor.animate({
+        fill: theme.background, duration
+      });
+    } else {
+      window.styleClasses = styleClasses;
+    }
+    this.ui.codeEditor.textString = this.ui.sourceEditor.textString; 
     editorPlugin.highlight();
-    this.relayout();
   }
 
   isUpdating() { return !!this.updateInProgress; }
@@ -968,17 +980,21 @@ export default class Inspector extends Morph {
           manualUpdate: true,
           grid: [["searchField", "targetPicker", "internals", "unknowns"]],
           rows: [0, {paddingTop: 5, paddingBottom: 3}],
-          columns: [0, {paddingLeft: 5, paddingRight: 5},
-            1, {fixed: 25},
-            2, {fixed: 75}, 3, {fixed: 80}]
+          columns: [0, {paddingLeft: 5, paddingRight: 2},
+            1, {fixed: 22},
+            2, {fixed: 75}, 
+            3, {fixed: 80}]
         }),
         height: 30,
         submorphs: [
           searchField,
-          Icon.makeLabel("crosshairs", {
+          {
+            type: 'button',
             name: "targetPicker",
-            styleClasses: ['instructionLabel'],
-            tooltip: "Change Inspection Target"}),
+            tooltip: "Change Inspection Target",
+            label: Icon.makeLabel("crosshairs")
+          }
+          ,
           new LabeledCheckBox({label: "Internals", name: "internals"}),
           new LabeledCheckBox({label: "Unknowns", name: "unknowns"})
         ]

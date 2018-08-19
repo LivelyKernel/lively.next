@@ -80,6 +80,18 @@ export default class Browser extends Window {
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
+            "[name=moduleList]": {
+              borderColor: Color.gray,
+              borderWidthRight: 1,
+            },
+            ".node [name=metaInfoText]": {
+              fill: Color.rgb(86, 101, 115),
+              fontColor: Color.rgb(214, 219, 223)
+            },
+            ".local [name=metaInfoText]": {
+              fill: Color.white,
+              fontColor: Color.black
+            },
             ".Button.default [name=label]": {
               fontSize: 10,
               padding: rect(1,1,1,1)
@@ -95,6 +107,7 @@ export default class Browser extends Window {
               fill: Color.gray,
             },
             ".Button.dark": {
+              fontColor: Color.white,
               fill: Color.black.withA(0.5),
               borderWidth: 0,
               borderRadius: 5,
@@ -316,8 +329,7 @@ export default class Browser extends Window {
           bounds,
           submorphs: [
 
-            {name: "moduleList", bounds: moduleListBounds, type: "list", ...style,
-              borderRight: {color: Color.gray, width: 1}},
+            {name: "moduleList", bounds: moduleListBounds, type: "list", ...style },
 
             new Tree({name: "codeEntityTree", treeData: new CodeDefTreeData([]),
               bounds: codeEntityTreeBounds, ...style}),
@@ -580,13 +592,23 @@ export default class Browser extends Window {
     }
   }
 
-  async toggleWindowStyle() {
+  async toggleWindowStyle(animated = true) {
+    let duration = 300, theme, styleClasses;
     if ((await this.editorPlugin.runEval("System.get('@system-env').node")).value) {
-      this.addStyleClass('node');
-      this.editorPlugin.theme = DarkTheme.instance;
+      styleClasses = [...arr.without(this.styleClasses, 'local'), 'node'];
+      theme = DarkTheme.instance;
     } else {
-      this.removeStyleClass('node');
-      this.editorPlugin.theme = DefaultTheme.instance;
+      styleClasses = ['local', ...arr.without(this.styleClasses, 'node')];
+      theme = DefaultTheme.instance;
+    }
+    this.editorPlugin.theme = theme;
+    if (animated) {
+      this.animate({ duration, styleClasses });
+      this.ui.sourceEditor.animate({
+        fill: theme.background, duration
+      });
+    } else {
+      this.styleClasses = styleClasses;
     }
     this.editorPlugin.highlight();
     this.relayout();
@@ -630,7 +652,7 @@ export default class Browser extends Window {
         await this.ui.evalBackendList.updateFromTarget();
     }
 
-    await this.toggleWindowStyle();
+    await this.toggleWindowStyle(false);
 
     if (packageName) {
       await this.selectPackageNamed(packageName);

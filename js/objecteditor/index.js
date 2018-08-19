@@ -385,6 +385,28 @@ export class ObjectEditor extends Morph {
     return withSuperclasses(this.target.constructor);
   }
 
+  async toggleWindowStyle(animated = true) {
+    let duration = 300, theme, styleClasses, window = this.getWindow();
+    if ((await this.editorPlugin.runEval("System.get('@system-env').node")).value) {
+      styleClasses = [...arr.without(window.styleClasses, 'local'), 'node'];
+      theme = DarkTheme.instance;
+    } else {
+      styleClasses = ['local', ...arr.without(window.styleClasses, 'node')];
+      theme = DefaultTheme.instance;
+    }
+    this.editorPlugin.theme = theme;
+    if (animated) {
+      window.animate({ duration, styleClasses });
+      this.ui.sourceEditor.animate({
+        fill: theme.background, duration
+      });
+    } else {
+      window.styleClasses = styleClasses;
+    }
+    this.ui.sourceEditor.textString = this.ui.sourceEditor.textString; 
+    this.editorPlugin.highlight();
+  }
+
   async selectTarget(target, evalEnvironment) {
     this.context = await ObjectEditorContext.for(target, this, evalEnvironment);
     if (await this.withContextDo(ctx => !ctx.target.isMorph)) this.ui.publishButton.disable();
@@ -395,14 +417,7 @@ export class ObjectEditor extends Morph {
     this.ui.classTree.treeData = await this.withContextDo(ctx => ctx.classTreeData);
     await this.selectClass(this.context.selectedClassName)
     // toggle the node style
-    if ((await this.editorPlugin.runEval("System.get('@system-env').node")).value) {
-      this.getWindow().addStyleClass('node');
-      this.editorPlugin.theme = DarkTheme.instance;
-    } else {
-      this.getWindow().removeStyleClass('node');
-      this.editorPlugin.theme = DefaultTheme.instance;
-    }
-    this.editorPlugin.highlight()
+    this.toggleWindowStyle();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
