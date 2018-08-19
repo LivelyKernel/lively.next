@@ -126,6 +126,7 @@ export class SearchWidget extends Morph {
       fill:         {defaultValue: Color.black.withA(.6)},
 
       target: {},
+      state: {},
 
       input: {
         after: ["submorphs"],
