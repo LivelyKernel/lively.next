@@ -233,8 +233,15 @@ For now only a simple default theme...
       for (let key in snapshot) {
         let serialized = snapshot[key], klass = serialized["lively.serializer-class-info"];
         if (!klass || !klass.module) continue;
-        if (klass.className == 'Tree') serialized.props.submorphs.value = [];
+        if (klass.className == 'Tree' && serialized.props.submorphs)
+           serialized.props.submorphs.value = [];
         if (klass.className == 'TreeNode') delete snapshot[key];
+        if (klass.className == 'InspectorTreeData') {
+          delete snapshot[key];
+        }
+        if (['PropertyNode', 'InspectionNode', 'MorphNode', 'FoldedNode'].includes(klass.className)) {
+          klass.module.pathInPackage = 'js/inspector/context.js';
+        }
         if (serialized.props.name == 'nodeItemContainer') delete snapshot[key];
       }
       return idAndSnapshot;
