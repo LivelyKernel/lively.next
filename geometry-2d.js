@@ -197,6 +197,10 @@ export class Point {
     return pt(x1 + (t * x21), y1 + (t * y21));
   }
 
+  interpolate(i, p) {
+    return Point.polar(num.interpolate(i, this.r(), p.r()), num.interpolate(i, this.theta(), p.theta()));
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // polar coordinates
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -618,6 +622,14 @@ export class Rectangle {
   outsetByRect(r) {
     return new Rectangle(this.x - r.left(), this.y - r.top(), this.width +
         (r.left() + r.right()), this.height + (r.top() + r.bottom()));
+  }
+
+  interpolate(i, r) {
+    const tl1 = this.topLeft(),
+          br1 = this.bottomRight(),
+          tl2 = r.topLeft(),
+          br2 = r.bottomRight();
+    return Rectangle.fromAny(tl1.interpolate(i, tl2), br1.interpolate(i, br2));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

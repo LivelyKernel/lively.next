@@ -1,10 +1,15 @@
-import { num, arr } from "lively.lang";
+import { num, obj, arr } from "lively.lang";
 import { parse } from "./color-parser.js";
+// import { parse as parseGradient } from './gradient-parser.js';
 import { Rectangle, rect, pt, Point } from "./geometry-2d.js";
 
 function floor(x) { return Math.floor(x*255.99) };
 
 const rgbaRegex = new RegExp('\\s*rgba?\\s*\\(\\s*(\\d+)(%?)\\s*,\\s*(\\d+)(%?)\\s*,\\s*(\\d+)(%?)\\s*(?:,\\s*([0-9\\.]+)\\s*)?\\)\\s*');
+
+function pad(array, n, getPadElement = arr.last) {
+   return [...array, ...(new Array(Math.max(n - array.length, 0)).fill(getPadElement(array)))]
+}
 
 class ColorHarmony {
 
@@ -285,7 +290,15 @@ export class Color {
     return recursion > 1 ? result.lighter(recursion - 1) : result;
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  interpolate(p, other) {
+    if (other.isGradient) {
+      return other.interpolate((1 - p), this)
+    }
+    other = obj.isArray(other) ? other : other.toTuple();
+    return Color.fromTuple(this.toTuple().map((v, k) => num.interpolate(p, v, other[k])));
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // printing
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   toString() {
@@ -401,6 +414,17 @@ class Gradient {
     return new this({stops: parsedStops})
   }
 
+  static parse(str) {
+    if (str.startsWith('radial-gradient')) {
+      return RadialGradient.parse(str);
+    }
+    if (str.startsWith('linear-gradient')) {
+      return LinearGradient.parse(str);
+    }
+    // fallback to color
+    return Color.fromTuple(Color.parse(str));
+  }
+
   constructor(stops) {
     this.stops = stops ? stops.map(s => s) : [];
   }
@@ -426,10 +450,30 @@ class Gradient {
 
   get isGradient() { return true }
 
+  interpolateStops(i, stops) {
+    const ownStops = pad(this.stops, stops.length),
+          otherStops = pad(stops, this.stops.length),
+          interpolatedStops = [];
+    let idx, c1, c2, off1, off2;
+    for (idx = 0; idx < ownStops.length; idx++) {
+      ({color: c1, offset: off1} = ownStops[idx]);
+      ({color: c2, offset: off2} = otherStops[idx]);  
+      interpolatedStops.push({
+        color: c1.interpolate(i, c2),
+        offset: num.interpolate(i, off1, off2)
+      })
+    }
+    return interpolatedStops;
+  }
+
 }
 
 export class LinearGradient extends Gradient {
 
+  static parse(str) {
+    const params = str.match(/\((.*)\)/)[1].split(',');
+  }
+  
   constructor({stops, vector} = {}) {
     super(stops);
     this.vector = vector;
@@ -440,14 +484,13 @@ export class LinearGradient extends Gradient {
   get vectors() {
       return {
         northsouth: rect(pt(0, 0), pt(0, 1)),
-        northeast:    rect(pt(1, 0), pt(0, 1)),
-        westeast:    rect(pt(1, 0), pt(0, 0)),
-        southeast:    rect(pt(1, 1), pt(0, 0)),
+        northeast:  rect(pt(1, 0), pt(0, 1)),
+        westeast:   rect(pt(1, 0), pt(0, 0)),
+        southeast:  rect(pt(1, 1), pt(0, 0)),
         southnorth: rect(pt(0, 1), pt(0, 0)),
-        southwest:    rect(pt(0, 1), pt(1, 0)),  // Down and to the left
-        eastwest:    rect(pt(0, 0), pt(1, 0)),
-
-        northwest:    rect(pt(0, 0), pt(1, 1))
+        southwest:  rect(pt(0, 1), pt(1, 0)),  // Down and to the left
+        eastwest:   rect(pt(0, 0), pt(1, 0)),
+        northwest:  rect(pt(0, 0), pt(1, 1))
     }
   }
 
@@ -471,6 +514,44 @@ export class LinearGradient extends Gradient {
 
   lighter(n) { return new this.constructor({stops: this.getStopsLighter(n), vector: this.vector}) }
   darker() { return new this.constructor({stops: this.getStopsDarker(), vector: this.vector}) }
+  
+  interpolate(i, other, target = {width: 1000, height: 1000}) {
+    if (other.isColor) {
+      other = new LinearGradient({
+        vector: this.vector,
+        stops: this.stops.map(({offset}) => {
+          return {color: other, offset};
+        })
+      });
+    }
+
+    if (other.type == "radialGradient") {
+      // fancy trans gradient interpolation
+      if (i < .5) {
+        return new LinearGradient({
+          vector: this.vector.interpolate(i, rect(0, 0, 0, 1)), 
+          // use monochrome stops instead
+          stops: this.interpolateStops(i, other.stops.map(({color, offset}, i) => {
+            return {color, offset: 1};
+          }))
+        })
+      }
+      if (i >= .5) {
+        return new RadialGradient({
+          stops: this.interpolateStops(i, other.stops),
+          focus: pt(.5, 0).interpolate(i, other.focus),
+          bounds: rect(0, 0, target.width * 100, target.height * 2).interpolate(i, other.bounds),
+        }); 
+      }
+    }
+
+    // else we just simply interpolate between the stops
+    return new LinearGradient({
+      stops: this.interpolateStops(i, other.stops),
+      vector: this.vector.interpolate(i, other.vector), 
+    })
+
+  }
 
   toCSSString() {
     // default webkit way of defining gradients
@@ -490,6 +571,10 @@ export class LinearGradient extends Gradient {
 
 export class RadialGradient extends Gradient {
 
+  static parse(str) {
+    const params = str.match(/\((.*)\)/)[1].split(',');
+  }
+
   constructor({stops, focus, bounds} = {}) {
     super(stops);
     this.focus = focus || pt(0.5, 0.5);
@@ -502,7 +587,29 @@ export class RadialGradient extends Gradient {
 
   lighter(n) { return new this.constructor({stops: this.getStopsLighter(n), focus: this.focus, bounds: this.bounds}) }
   darker() { return new this.constructor({stops: this.getStopsDarker(), focus: this.focus, bounds: this.bounds}) }
-
+  
+  interpolate(i, other, target = {height: 1000, width: 1000}) {
+    if (other.isColor) {
+      other = new RadialGradient({
+        vector: this.vector,
+        bounds: this.bounds,
+        stops: this.stops.map(({offset}) => {
+          return {color: other, offset};
+        })
+      });
+    }
+    
+    if (other.type == "linearGradient") {
+      return other.interpolate(1 - i, this, target); 
+    }
+    // plain radial to radial tweening
+    return new RadialGradient({
+      bounds: this.bounds.interpolate(i, other.bounds),
+      stops: this.interpolateStops(i, other.stops),
+      focus: this.focus.interpolate(i, other.focus)
+    });
+  }
+  
   toCSSString() {
     const innerCircle = this.focus.scaleBy(100.0),
           ext = this.bounds.extent();
