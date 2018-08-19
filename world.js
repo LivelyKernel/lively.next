@@ -66,7 +66,6 @@ export class World extends Morph {
       styleSheets: {
         initialize() {
           this.styleSheets = arr.compact([
-            // fix these imports from IDE
             StatusMessage,
             GradientEditor,
             Window,
@@ -74,7 +73,7 @@ export class World extends Morph {
             List,
             LoadingIndicator,
             Tooltip
-          ]).map(klass => klass.styleSheet).filter(Boolean);
+          ].map(klass => klass && klass.styleSheet)).concat(Window.nodeStyleSheet);
         }
       }
 
