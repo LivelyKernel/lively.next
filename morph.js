@@ -1345,9 +1345,8 @@ export class Morph {
       submorph._owner = this;
       submorph._cachedPaths = {};
       if (tfm) submorph.setTransform(tfm);
-      this._morphicState["submorphs"] = submorphs;
-
       submorph.requestStyling();
+      this._morphicState["submorphs"] = submorphs;
 
       this._submorphOrderChanged = true;
       this.makeDirty();

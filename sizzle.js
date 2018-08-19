@@ -1,4 +1,4 @@
-import { obj, string, arr } from "lively.lang";
+import { obj, properties, string, arr } from "lively.lang";
 
 export class SizzleExpression {
 
@@ -36,22 +36,27 @@ export class SizzleExpression {
   }
 
   startMatching() { 
+    this.animated = false;
     this.active = true;
   }
 
   matches(morph) {
     if (this.context == morph) this.startMatching();
     if (!this.active) return false;
-    var matcherIdx = (morph.owner && this.matchStacks[morph.owner.id]) || 0;
-    if (this.compiledRule[matcherIdx].matches(morph)) {
+    var {idx: matcherIdx, revoked, applied, animated } = (morph.owner && this.matchStacks[morph.owner.id]) || {idx: 0},
+        match = this.compiledRule[matcherIdx].matches(morph); 
+    if (match.applied || match.revoked) {
+      match.revoked = match.revoked || revoked;
+      match.applied = !match.revoked && (match.applied || applied);
+      match.animated = match.animated || animated;
       if (matcherIdx < this.compiledRule.length - 1) {
-        this.matchStacks[morph.id] = matcherIdx + 1;
+        this.matchStacks[morph.id] = {idx: matcherIdx + 1, ...match};
       } else {
-        this.matchStacks[morph.id] = matcherIdx;
-        return true;
+        this.matchStacks[morph.id] = {idx: matcherIdx, ...match}; // this is needed to prevent further matching of submorphs
+        return match;
       }
     } else {
-      this.matchStacks[morph.id] = matcherIdx;
+      this.matchStacks[morph.id] = {idx: matcherIdx, revoked, applied, animated };
       return false;
     }
   }
@@ -94,7 +99,8 @@ class NameMatcher extends Matcher {
   }
 
   matches(morph) {
-    return morph.name == this.token;
+    // name changes are not tracked
+    return {applied: morph.name == this.token, revoked: false, animated: false};
   }
   
 }
@@ -116,7 +122,18 @@ class ClassMatcher extends Matcher {
   }
 
   matches(morph) {
-    return arr.every(this.token, sc => morph.styleClasses.includes(sc));
+    const { 
+         removed, added, animation 
+      } = morph._animatedStyleClasses || {removed: [], added: []},
+      applied = arr.every(this.token, sc => morph.styleClasses.includes(sc)),
+      revoked = !applied && arr.every(this.token, sc => [...morph.styleClasses, ...removed].includes(sc));
+    // first test if classes match ignoring the added and removed
+    // these are the "unchanged"
+    return {
+      applied,
+      revoked,
+      animated: animation
+    }
   }
 
 }
@@ -130,7 +147,8 @@ class IdMatcher extends Matcher {
   }
 
   matches(morph) {
-    return morph.id == this.token;
+    // ids can not be revoked or animated
+    return {applied: morph.id == this.token, revoked: false, animated: false};
   }
   
 }
@@ -219,7 +237,7 @@ export class SizzleVisitor {
   visit(morph) {
 
     if (!morph) {
-      this.ownerChain = [(morph = this.rootMorph)];
+      morph = this.rootMorph;
       this.morphExpressions = [];
       for (let id in this.expressionCache) {
         for (let expr in this.expressionCache[id]) {
@@ -229,38 +247,49 @@ export class SizzleVisitor {
     }
 
     let exprsToValues = this.retrieveExpressions(morph), 
-        matchingValues = [];
+        matchingValues = {apply: [], revoke: []};
 
+    // add expressions to scope
     exprsToValues && this.morphExpressions.push([morph, exprsToValues]);
 
-    for (let [context, exprsToValues] of this.morphExpressions) {
-      let cache = this.expressionCache[context.id] || {};
+    // populate the matchingValues by checking what of
+    // the morphExpressions inside the current scope apply
+    for (let [rootMorph, exprsToValues] of this.morphExpressions) {
+      let cache = this.expressionCache[rootMorph.id] || {};
       if (obj.isArray(exprsToValues)) {
         exprsToValues.forEach(ev => 
-          this.matchExpressions(context, morph, ev, cache, matchingValues)
+          this.matchExpressions(rootMorph, morph, ev, cache, matchingValues)
         );
       } else {
-        this.matchExpressions(context, morph, exprsToValues, cache, matchingValues);
+        this.matchExpressions(rootMorph, morph, exprsToValues, cache, matchingValues);
       }
-      this.expressionCache[context.id] = cache;
+      this.expressionCache[rootMorph.id] = cache;
     }
+
+    this.getChildren(morph).forEach(m => {
+      this.visit(m);
+    });
 
     this.visitMorph(morph, matchingValues);
 
-    this.getChildren(morph).forEach(m => {
-      this.ownerChain.push(m);
-      this.visit(m);
-      this.ownerChain.pop();
-    });
-    
+    // remove expressions from scope
     exprsToValues && this.morphExpressions.pop();
   }
 
-  matchExpressions(ctx, morph, exprsToValues, exprCache, valueContainer) {
+  matchExpressions(rootMorph, morph, exprsToValues, exprCache, valueContainer) {
     for (let expr in exprsToValues) {
-      let compiledExpr = exprCache[expr] || SizzleExpression.compile(expr, ctx);
+      let match, value, compiledExpr = exprCache[expr] || SizzleExpression.compile(expr, rootMorph);
       if (!compiledExpr.compileError) {
-        if (compiledExpr.matches(morph)) valueContainer.push(exprsToValues[expr]);
+        // determine wether the expression matched due to a style class that has been animated
+        match = compiledExpr.matches(morph) || {};
+        if (match.applied) {
+          valueContainer.apply.push(value = exprsToValues[expr]);
+        }
+        if (match.revoked) {
+          valueContainer.revoke.push(value = exprsToValues[expr]);
+        }
+        if (match.animated) { value.animated = match.animated }
+        // else we did not match before and dont match right now, so ignore
       }
       exprCache[expr] = compiledExpr;
     }
@@ -279,33 +308,45 @@ export class StylingVisitor extends SizzleVisitor {
     return morph.styleSheets.map(ss => ss.applicableRules());
   }
 
-  visitMorph(morph, styleSheetsToApply) {
+  visitMorph(morph, styleSheetPatches) {
     if (!morph._wantsStyling) return;
-    // is there a way to prevent rendering while these changes are happening?
-    //Object.assign(morph, this.retainedProps[morph.id] || {});
     let retained = this.retainedProps[morph.id] || {},
-        prevAppliedRules = obj.keys(retained),
-        changedProps = {};
-    var ruleProps;
-    for (let [ss, rule] of styleSheetsToApply) {
-      Object.assign(changedProps, ruleProps = ss.applyRule(rule, morph));
-      arr.remove(prevAppliedRules, rule);
-      if (retained[rule]) {
-        for (let prop in retained[rule]) {
-          if (prop in changedProps) continue;
-          morph[prop] = retained[rule][prop];
-        }
-      }
-      retained[rule] = ruleProps;
+        styledProps = {};
+    var capturedPropValues;
+
+    // the first time we start styling the morph, we capture all the styled properties
+    morph._appliedRules = [];
+    for (let {styleSheet, rule, animated} of styleSheetPatches.apply) {
+      // changed props and styledProps!
+      morph._appliedRules.push([styleSheet, rule]);
+      capturedPropValues = styleSheet.applyRule(rule, morph, animated)
+      Object.assign(styledProps, capturedPropValues);
+      retained = { ...capturedPropValues, ...retained };
     }
     // the rules that are no longer applied are reset back to the values
     // they were at when the style was applied initially, given that the current value
     // coincides with the rules value
-    for (let rule of prevAppliedRules) {
-      Object.assign(morph, obj.dissoc(retained[rule], obj.keys(changedProps)));
-      delete retained[rule];
-    }
     
+    for (let {styleSheet, rule, animated} of styleSheetPatches.revoke) {
+        let restored = obj.dissoc(obj.select(retained, obj.keys(styleSheet.rules[rule])), obj.keys(styledProps));
+        if (animated) {
+          morph.animate({
+            ...restored, duration: animated.duration, easing: animated.easing
+          });
+        } else {
+          Object.assign(morph, restored);
+        }
+        Object.assign(styledProps, restored);
+    }
+    // the remaining rules which used to be applied but no longer are and were not revoked via an animation
+    const propsToRevert = obj.dissoc(retained, obj.keys(styledProps));
+    Object.assign(morph, propsToRevert);
+    retained = obj.dissoc(retained, obj.keys(propsToRevert));
+    // once applied, a retained prop is removed, to not infer with the
+    // custom setting of properties on morphs
+
+    delete morph._animatedStyleClasses
+    morph._styledProps = styledProps;
     this.retainedProps[morph.id] = retained;
     morph._wantsStyling = false;
   }

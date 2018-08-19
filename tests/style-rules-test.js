@@ -11,6 +11,7 @@ class TestVisitor extends SizzleVisitor {
 
   constructor(context, expr) {
     super(context);
+    this.actions = {};
     this.sizzleExpression = expr;
   }
   
@@ -19,8 +20,9 @@ class TestVisitor extends SizzleVisitor {
     return morph.owner ? false : {[this.sizzleExpression]: true};
   }
 
-  visitMorph(morph, matching) {
-    morph.matched = matching.length > 0;
+  visitMorph(morph, {apply, revoke}) {
+    this.actions[morph.name] = {apply, revoke};
+    morph.matched = apply.length > 0;
   }
 
   getChildren(morph) {
@@ -45,6 +47,7 @@ describe("Sizzle", () => {
         }
       ]
     });
+
     new TestVisitor(m, '.root.child .Label').visit()
     expect(m.get('L').matched).to.be.true;
     expect(new Sizzle(m).select('.root.child .Label')).to.not.be.empty;
@@ -267,6 +270,7 @@ describe("Style Rules", function() {
           ".alice": {extent: pt(30, 30)}
         })
       ],
+      name: 'C',
       styleClasses: ["root"],
       submorphs: [
         {
@@ -281,13 +285,15 @@ describe("Style Rules", function() {
         }
       ]
     });
+    
     let v = new StylingVisitor(hierarchy);
     v.visit();
+    console.log(JSON.parse(JSON.stringify(v.retainedProps)));
     sheet.setRule('.bob', {fill: Color.red});
     sheet.removeRule('.alice');
     v.visit()
 
-    expect(hierarchy.get('A').position).equals(pt(0,0));
+    expect(hierarchy.get('A').extent).equals(pt(10,10));
     expect(hierarchy.get('B').position).equals(pt(0,0));
     expect(hierarchy.get('B').fill).equals(Color.red);
   });
@@ -301,6 +307,7 @@ describe("Style Rules", function() {
           ".alice": {extent: pt(30, 30)}
         })
       ],
+      name: 'C',
       styleClasses: ["root"],
       submorphs: [
         {
@@ -320,13 +327,14 @@ describe("Style Rules", function() {
     
     let v = new StylingVisitor(hierarchy);
     v.visit();
-
     expect(hierarchy.get('A').extent).equals(pt(30,30))
-    // the StylingVisitor remembers the overridden values for each morph
     hierarchy.get('A').removeStyleClass('alice');
+    sheet.toggleRule('.root', false);
+    debugger;
     v.visit();
 
-    expect(hierarchy.get('A').extent).equals(pt(10,10))
+    expect(hierarchy.get('A').extent).equals(pt(10,10));
+    expect(hierarchy.get('C').position).equals(pt(0,0));
   })
   
 });

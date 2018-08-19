@@ -1,6 +1,7 @@
 import { arr, obj } from "lively.lang";
 import { rect } from "lively.graphics";
 import { ShadowObject, morph } from "./index.js";
+import { printNested, printTree, print } from "lively.lang/string.js";
 
 // THE MODEL
 
@@ -56,38 +57,78 @@ export class StyleSheet {
     this.context.requestStyling();
   }
 
-  toggleRule(rule) {
-    this.rules[rule]._deactivated = !this.rules[rule]._deactivated;
+  toggleRule(rule, active) {
+    this.rules[rule]._deactivated = !active;
     this.context.requestStyling();
   }
 
   applicableRules() {
     let ar = {};
     for (let rule in this.rules) {
-      ar[rule] = [this, rule];
+      ar[rule] = {styleSheet: this, rule};
     }
     return ar;
   }
 
-  applyRule(rule, morph) {
-    var props = {}, rule = this.rules[rule];
-    if (rule._deactivated) return;
-    props = obj.dissoc(rule, ['_deactivated']);
-    if ("layout" in props) {
-      let layout = props.layout.copy();
-      layout.container = morph;
-      props.layout = layout;
+  //this.toJSExpr()
+
+  toJSExpr() {
+    const customPrinter = (v, ignore, continueInspectFn) => {
+      if (v && v.isColor) {
+        return v.toJSExpr();
+      }
+      if (v && v.isGradient) {
+        return v.toJSExpr(); 
+      }
+      if (v && v.isPoint) {
+        return v.toString();
+      }
+      if (v) {
+        let { top, left, right, bottom } = v;
+        if (arr.all([top, left, right, bottom], (a) => a && obj.equals(a, v.top))) {
+          return continueInspectFn(v.top);
+        }
+      }
+      if (v && obj.keys(v).includes("_rev"))
+        return continueInspectFn(obj.dissoc(v, ['_rev', '_deactivated']));
+      return ignore;
     }
-    if ("dropShadow" in props) {
-      props.dropShadow = new ShadowObject(props.dropShadow);
-      props.dropShadow.morph = morph;
-    }
-    if ("padding" in props) {
-      props.padding = props.padding.isRect ?
-        props.padding : rect(props.padding, props.padding);
-    }
-    let prevValues = obj.select(morph, obj.keys(rule))
-    Object.assign(morph, props);
-    return prevValues;
+    return `new StyleSheet(${obj.inspect(this.rules, {customPrinter, escapeKeys: true})})`
+  }
+
+  applyRule(rule, morph, anim) {
+    var props = this.rules[rule];
+    if (props._deactivated) return {};
+    props = obj.dissoc(props, ['_deactivated']);
+    return morph.withMetaDo({styleSheetChange: true}, () => {
+      if ("layout" in props) {
+        let layout = props.layout.copy();
+        layout.container = morph;
+        props.layout = layout;
+      }
+      if ("dropShadow" in props) {
+        props.dropShadow = new ShadowObject(props.dropShadow);
+        props.dropShadow.morph = morph;
+      }
+      if ("padding" in props) {
+        props.padding = props.padding.isRect ?
+          props.padding : rect(props.padding, props.padding);
+      }
+      let changedProps = obj.keys(props).filter(key => !obj.equals(morph[key], props[key])),
+          newProps = obj.select(props, changedProps),
+          {properties} = morph.propertiesAndPropertySettings(),
+          prevValues = {};
+      for (let key in props) {
+         prevValues[key] = (properties[key] && properties[key].defaultValue) || morph[key];
+      }
+      if (anim) {
+        morph.animate({
+          ...newProps, duration: anim.duration, easing: anim.easing
+        });
+      } else {
+        Object.assign(morph, newProps);
+      }
+      return prevValues;
+    });
   }
 }
