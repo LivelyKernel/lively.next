@@ -308,15 +308,7 @@ export default class TextRenderer {
   renderMorph(morph, renderer) {
     var cursorWidth = morph.fontSize <= 12 ? 2 : 3,
         selectionLayer = [];
-
-    // Make sure all lines have a height, at least estimated
-    // FIXME that's pretty expensive as it hits all lines but actually only
-    // those that have no height attached need to be updated... This can be
-    // probably solved better by immediately re-computing an estimated height on
-    // line changes... or in height getter...
-
-    morph.textLayout.estimateLineHeights(morph, false);
-
+    
     let sel = morph.selection;
     if (morph.inMultiSelectMode()) {
       let sels = sel.selections, i = 0;

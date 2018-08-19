@@ -823,7 +823,7 @@ export class Text extends Morph {
 
       if (scrollChange) this.viewState.wasScrolled = true;
       
-      if (hardLayoutChange || softLayoutChange) {
+      if (hardLayoutChange || (softLayoutChange && !meta.styleSheetChange)) {
         this.invalidateTextLayout(
           hardLayoutChange /*reset char bounds*/,
           hardLayoutChange /*reset line heights*/);
@@ -849,6 +849,7 @@ export class Text extends Morph {
   }
   
   onSubmorphChange(change, submorph) {
+    if (change.meta && change.meta.styleSheetChange) return;
     super.onSubmorphChange(change, submorph);
     let {prop} = change,
         isGeometricTransform = prop == 'position' ||
@@ -1512,7 +1513,7 @@ export class Text extends Morph {
           insertedRange,
           textAndAttributes,
           removedTextAndAttributes);
-
+        
         if (consistencyCheck)
           this.consistencyCheck();
       });
@@ -2214,13 +2215,6 @@ export class Text extends Morph {
         resize = () => {
             if (!fixedHeight && this.height != textBounds.height) this.height = textBounds.height
             if (!fixedWidth && this.width != textBounds.width) this.width = textBounds.width;
-            // if (this._displacementChange) {
-            //   debugger;
-            //   this._displacementChange = false;
-            //   this.displacingMorphMap.forEach((_, m) => {
-            //     this.updateTextDisplacementFor(m);
-            //   });
-            // }
             this.embeddedMorphs.forEach(submorph => {
               let a = this.embeddedMorphMap.get(submorph).anchor;
               a.position = a.position;
@@ -2880,7 +2874,7 @@ export class Text extends Morph {
     });
     super.onBlur(evt);
   }
-
+  
   onScroll(evt) {
     if (this.isFocused()) this.ensureKeyInputHelperAtCursor();
     // FIXME rk 2017-07-25: quick hack to make text map work
