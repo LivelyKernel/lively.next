@@ -50,6 +50,9 @@ export class Tree extends Text {
           this.updateStyleSheet();
         }
       },
+      selectionColor: {
+        defaultValue: Color.blue,
+      },
       fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
       nativeCursor: {defaultValue: 'auto'},
       selectable: {defaultValue: false},
@@ -99,18 +102,18 @@ export class Tree extends Text {
       },
 
       selectionFontColor: {
+        isStyleProp: true,
         defaultValue: Color.white,
         set(c) {
           this.setProperty('selectionFontColor', c);
-          this.updateStyleSheet();
         }
       },
 
       nonSelectionFontColor: {
+        isStyleProp: true,
         defaultValue: Color.rgbHex('333'),
         set(c) {
           this.setProperty('nonSelectionFontColor', c);
-          this.updateStyleSheet();
         }
       },
 
@@ -161,6 +164,15 @@ export class Tree extends Text {
     this.update();
     connect(this, 'extent', this, 'update');
     this.selectionColor = props.selectionColor || Color.blue;
+  }
+
+  onChange(change) {
+    super.onChange(change);
+    if (['fontSize', 'fontColor', 'selectionColor', 
+         'nonSelectionFontColor', 'selectionFontColor'].includes(change.prop)) {
+      this.updateStyleSheet();
+      this.update(true);
+    }
   }
 
   resetCache() { this._lineHeightCache = null; }
@@ -284,6 +296,9 @@ export class Tree extends Text {
   }
 
   update(force) {
+    // fixme: this method should only be used in cases, where the tree data is replaced.
+    //        When collapsing/uncollapsing nodes, we should insert, remove ranges of the text
+    //        which makes for a faster rendering of the tree.
     if (!this.treeData || !this.nodeItemContainer) return;
 
     this.withMetaDo({isLayoutAction: true}, () => {
@@ -306,6 +321,7 @@ export class Tree extends Text {
             end: this.documentEndPosition}, 
             this.computeTreeAttributes(nodes),
             false, false);
+        this.invalidateTextLayout(true, true);
       } else if (this._lastSelectedIndex) {
         this.recoverOriginalLine(this._lastSelectedIndex - 1);
       }
@@ -374,21 +390,20 @@ export class Tree extends Text {
     this.resetCache();
     try {
       await this.treeData.collapse(node, isCollapsed);
-      this.update();
+      signal(this, 'nodeCollapseChanged');
+      this.update(); // this perform cut/paste of the node contents instead of a brute force update
     } catch (e) { this.showError(e); }
   }
 
   async uncollapse(node = this.selectedNode) {
     if (!node || !this.treeData.isCollapsed(node)) return;
     await this.onNodeCollapseChanged({node, isCollapsed: false});
-    this.update();
     return node;
   }
 
   async collapse(node = this.selectedNode) {
     if (!node || this.treeData.isCollapsed(node)) return;
     await this.onNodeCollapseChanged({node, isCollapsed: true});
-    this.update();
     return node;
   }
 
@@ -431,13 +446,13 @@ export class Tree extends Text {
     return super.onKeyDown(evt);
   }
   
-  onMouseDown(evt) {
+  async onMouseDown(evt) {
     //super.onMouseDown(evt);
     let {row, column} = this.textPositionFromPoint(evt.positionIn(this)),
         clickedNode = this.nodes[row + 1];
     if (!clickedNode) return;
     if (!this.treeData.isLeaf(clickedNode) && column < 4) {
-      clickedNode.isCollapsed ? 
+      await clickedNode.isCollapsed ? 
         this.uncollapse(clickedNode) : 
         this.collapse(clickedNode);
     } else {
@@ -631,12 +646,12 @@ export class TreeData {
     }
   }
 
-  uncollapseAll(iterator, depth=0, node) {
-    if (!node) return this.uncollapseAll(iterator, depth, this.root);
+  async uncollapseAll(iterator, depth=0, node) {
+    if (!node) return await this.uncollapseAll(iterator, depth, this.root);
     if (iterator(node, depth)) {
-      node.isCollapsed && this.collapse(node, false);
+      node.isCollapsed && await this.collapse(node, false);
       for (let i in node.children) {
-        this.uncollapseAll(iterator, depth + 1, node.children[i]);
+        await this.uncollapseAll(iterator, depth + 1, node.children[i]);
       }
     }
   }
