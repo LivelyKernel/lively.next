@@ -300,7 +300,6 @@ export class List extends Morph {
   static get styleSheet() {
     return new StyleSheet({
       ".List.dark": {
-        fill: Color.transparent,
         hideScrollbars: true,
         padding: Rectangle.inset(2, 2, 0, 0),
         fontFamily: "Monaco, monospace",
@@ -558,14 +557,14 @@ export class List extends Morph {
   }
 
   get isList() { return true; }
-
+  
   onChange(change) {
     var {prop} = change;
-    if (prop === "fontFamily"
-     || prop === "fontSize"
-     || prop === "padding"
-     || prop === "itemPadding"
-     || prop === "items") this.update();
+    var styleProps = [
+      "fontFamily", "fontColor", "fontSize", "padding",
+      "selectionFontColor", "selectionColor",
+      "nonSelectionFontColor", "itemPadding", "items"];
+    if (styleProps.includes(prop)) this.update();
     return super.onChange(change);
   }
 
@@ -1409,6 +1408,7 @@ export class DropDownList extends Button {
       once(list, 'onItemMorphClicked', this, 'toggleList');
       // once(list, 'onBlur', this, 'removeWhenFocusLost');
       list.focus();
+      list.whenRendered(() => list.submorphs[0].submorphs.forEach(m => m.fit()))
     }
   }
 
