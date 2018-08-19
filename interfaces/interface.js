@@ -1,5 +1,5 @@
 import { parseJsonLikeObj } from "../helpers.js";
-import { arr, obj } from "lively.lang";
+import { arr, Closure, obj } from "lively.lang";
 import { resource } from "lively.resources";
 import { transform } from "lively.ast";
 import { module } from "lively.modules";
@@ -166,11 +166,13 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async dynamicCompletionsForPrefix(moduleName, prefix, options) {
+    const contextFetch = obj.isString(options.context) ? options.context : false;
     options = obj.dissoc(options, ["systemInterface", "System", "context"]);
     var src = `
       var prefix = ${JSON.stringify(prefix)},
-          opts = ${JSON.stringify(options)},
-          evalFn = code => lively.vm.runEval(code, opts);
+          opts = ${JSON.stringify(options)};
+      opts.context = ${contextFetch};
+      var evalFn = code => lively.vm.runEval(code, opts);
       if (typeof System === "undefined") delete opts.targetModule;
       lively.vm.completions.getCompletions(evalFn, prefix).then(function(result) {
         if (result.isError) throw result.value;
@@ -356,8 +358,12 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
 
   exportsOfModules(options) {
     return this.runEvalAndStringify(`
-      ${this.livelySystemAccessor()};
-      await livelySystem.localInterface.exportsOfModules(${JSON.stringify(options)})`);
+      ${this.livelySystemAccessor()}
+      const options = ${JSON.stringify(options)};
+      options.excludedPackages = [${
+         options.excludedPackages.map(k => 
+            (typeof k === 'function') ? k.toString() : JSON.stringify(k) ).join(',')}]
+      await livelySystem.localInterface.exportsOfModules(options)`);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
