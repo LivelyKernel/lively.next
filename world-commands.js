@@ -121,9 +121,11 @@ var commands = [
     exec: async (world, opts = {root: world, justReturn: false, filterFn: null, prependItems: [], prompt: null}) => {
       var filterFn = opts.filterFn || (() => true),
           i = 0,
+          {default: ObjectPackage} = await System.import("lively.classes/object-classes.js"),
           items = arr.compact(tree.map(opts.root || world,
             (m, depth) => {
               if (!filterFn(m)) return null;
+              const isObjectPackage = !!ObjectPackage.lookupPackageForObject(m);
               return {
                 isListItem: true,
                 label: [
@@ -131,7 +133,14 @@ var commands = [
                     fontSize: "80%",
                     textStyleClasses: ["v-center-text"],
                     paddingRight: "10px"
-                  }, `${m}`, null],
+                  }, `${m}`, {
+                    fontWeight: isObjectPackage ? 'bolder' : 'normal',
+                    fontStyle: isObjectPackage ? 'normal' : 'italic',
+                    fontFamily: 'Inconsolata',
+                    fontSize: 16
+                  }, isObjectPackage ? " [Object Class]" : "", {
+                    opacity: .5
+                  }],
                 value: m
               }
             },
@@ -141,7 +150,12 @@ var commands = [
             opts.prompt || "Choose morph",
             (opts.prependItems || []).concat(items),
             {historyId: "lively.morphic-select morph",
-             onSelection: sel => sel && sel.show && sel.show(),
+             onSelection: sel => {
+               if (this.lastSelectionHalo) this.lastSelectionHalo.remove();
+               if (sel && sel.show) {
+                 this.lastSelectionHalo = sel.show();
+               }
+             },
              selectedAction: "show halo",
              actions});
 
@@ -737,7 +751,8 @@ var commands = [
     exec: async function(world, args = {
       target: null,
       selectedClass: null,
-      selectedMethod: null
+      selectedMethod: null,
+      evalEnvironment: null
     }) {
       if (!args.target) {
         world.setStatusMessage("no target for ObjectEditor");
