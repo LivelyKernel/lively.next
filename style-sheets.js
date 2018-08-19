@@ -1,7 +1,7 @@
 import { arr, obj } from "lively.lang";
 import { rect } from "lively.graphics";
 import { ShadowObject, morph } from "./index.js";
-import { printNested, printTree, print } from "lively.lang/string.js";
+
 
 // THE MODEL
 

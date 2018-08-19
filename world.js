@@ -73,7 +73,7 @@ export class World extends Morph {
             List,
             LoadingIndicator,
             Tooltip
-          ].map(klass => klass && klass.styleSheet)).concat(Window.nodeStyleSheet);
+          ].map(klass => klass && klass.styleSheet).concat(Window && Window.nodeStyleSheet));
         }
       }
 
