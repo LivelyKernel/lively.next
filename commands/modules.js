@@ -60,8 +60,9 @@ export async function interactivelyRemoveModule(system, requester, moduleName) {
 
 export async function interactivelyAddModule(system, requester, relatedPackageOrModuleName) {
 
-  var root = new URL((await system.getConfig()).baseURL);
-
+  var root = new URL((await system.getConfig()).baseURL),
+      world = requester.world();
+  
   if (relatedPackageOrModuleName) {
     var p = (await system.getPackage(relatedPackageOrModuleName))
          || (await system.getPackageForModule(relatedPackageOrModuleName))
@@ -71,7 +72,7 @@ export async function interactivelyAddModule(system, requester, relatedPackageOr
   var candidates = await _searchForExistingFiles(requester, String(root), p);
 
   if (candidates.includes("[create new module]")) {
-    var fullname = await _askForModuleName(system, relatedPackageOrModuleName || String(root), requester.world());
+    var fullname = await _askForModuleName(system, relatedPackageOrModuleName || String(root), world);
     candidates = [fullname];
   }
 
@@ -116,6 +117,8 @@ async function _searchForExistingFilesManually(requester, rootURL, p) {
 }
 
 async function _searchForExistingFilesWeb(requester, rootURL, p) {
+  let world = requester.world(), loadingIndicator;
+  
   function exclude(resource) {
     var name = resource.name();
     if ([".git", "node_modules", ".optimized-loading-cache", ".module_cache"].includes(resource.name()))
@@ -125,6 +128,10 @@ async function _searchForExistingFilesWeb(requester, rootURL, p) {
       if (modules.includes(resource.url)) return true;
     }
     return false;
+  }
+
+  if (world) {
+    loadingIndicator = world.showLoadingIndicatorFor(requester, 'Loading existing modules...');
   }
   
   var found = await (await resource(rootURL).dirList(5, {exclude})).map(ea => ea.url),
@@ -141,12 +148,12 @@ async function _searchForExistingFilesWeb(requester, rootURL, p) {
             name;
           return {isListItem: true, string: shortName, value: name};
         })),
-
-      answer = await requester.world().filterableListPrompt("What module to load?", candidates, {
-        filterLabel: "filter: ",
-        multiselect: true,
-        ...(requester ? {extent: requester.bounds().extent().withY(400)} : {})
-      });
+      answer = await Promise.resolve(loadingIndicator && loadingIndicator.remove()).then(() => 
+        requester.world().filterableListPrompt("What module to load?", candidates, {
+          filterLabel: "filter: ",
+          multiselect: true,
+          ...(requester ? {extent: requester.bounds().extent().withY(400)} : {})
+        }));
 
   if (!answer || answer.status === "canceled" || !answer.selected.length)
     throw "Canceled";
