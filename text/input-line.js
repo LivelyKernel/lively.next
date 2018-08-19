@@ -141,8 +141,7 @@ export default class InputLine extends Text {
               placeholder.value = val;
             }
           }
-          //this.updatePlaceholder();
-          this.whenRendered().then(() => this.updatePlaceholder());
+          this.updatePlaceholder();
         }
       }
     }
@@ -205,7 +204,7 @@ export default class InputLine extends Text {
       return;
     }
 
-    let textB = this.textBounds();
+    let textB = this.innerBounds();
     placeholder.fontSize = this.fontSize;
     placeholder.leftCenter = this.label.length
                            ? textB.rightCenter().addXY(0, this.borderWidth)
