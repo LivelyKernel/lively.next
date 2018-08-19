@@ -894,7 +894,7 @@ export default class Inspector extends Morph {
   async prepareForNewTargetObject(target, remote = false) {
     if (this.isUpdating()) await this.whenUpdated();
 
-    var {promise: p, resolve} = promise.deferred();
+    var {promise: p, resolve} = promise.deferred(), animated = !!this.target;
     this.updateInProgress = p;
     try {
       var td = remote ? 
@@ -917,7 +917,7 @@ export default class Inspector extends Morph {
         }
         await tree.execCommand("uncollapse selected node");
       }
-      this.toggleWindowStyle();
+      this.toggleWindowStyle(animated);
     } catch (e) { this.showError(e); }
 
     this.startStepping(10,"refreshAllProperties");
@@ -944,7 +944,7 @@ export default class Inspector extends Morph {
     } else {
       window.styleClasses = styleClasses;
     }
-    this.ui.codeEditor.textString = this.ui.sourceEditor.textString; 
+    this.ui.codeEditor.textString = this.ui.codeEditor.textString; 
     editorPlugin.highlight();
   }
 

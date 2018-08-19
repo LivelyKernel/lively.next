@@ -16,6 +16,7 @@ import { commands as navCommands } from "./text/code-navigation-commands.js";
 import { commands as codeCommands } from "./text/generic-code-commands.js";
 import { codeEvaluationCommands } from "./text/code-evaluation-commands.js";
 import { commands as richTextCommands } from "./text/rich-text-commands.js";
+import { Color } from "lively.graphics";
 
 export function guessTextModeName(contentOrEditor, filename = "", hint) {
 
@@ -141,6 +142,7 @@ export default class EditorPlugin {
     if (!theme || !textMorph || !textMorph.document || !mode) return;
 
     textMorph.fill = theme.background;
+    textMorph.cursorColor = theme.cursorColor || Color.black;
 
     let {firstVisibleRow, lastVisibleRow} = textMorph.viewState,
         {lines, tokens} = tokenizeDocument(

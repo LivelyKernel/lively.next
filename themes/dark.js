@@ -6,6 +6,8 @@ class DarkTheme {
 
   get background() { return Color.rgb(44,62,80); }
 
+  get cursorColor() { return Color.gray }
+
   get default() { return {fontColor: "#abb2bf"}; }
 
   get header()        { return {fontSize: "110%", fontColor: "#6b94ee"}; }
