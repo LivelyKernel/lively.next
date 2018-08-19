@@ -68,7 +68,7 @@ export class Canvas extends Morph {
   }
 
   onExtentChanged() {
-    if (this._canvas && this.preserveContents) {
+    if (this._canvas && this.preserveContents && this.context.getImageData) {
       const {width: w, height: h} = this._canvas;
       const contents = this.context.getImageData(0, 0, w, h);
       this.__canvas_init__ = () => {
