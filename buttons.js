@@ -29,7 +29,7 @@ export class Button extends Morph {
         set(val) {
           this.setProperty("deactivated", val);
           this.nativeCursor = val ? "not-allowed" : "pointer";
-          this.labelMorph.opacity = val ? 0.6 : 1;
+          this.labelMorph.opacity = val ? 0.3 : 1;
         }
       },
 
