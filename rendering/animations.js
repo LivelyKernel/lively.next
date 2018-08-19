@@ -218,8 +218,8 @@ export class PropertyAnimation {
   getAnimationProps(type) {
     let [before, after] = this.getChangedProps(this.beforeProps[type], this.afterProps[type]),
         {fill: fillBefore, dropShadow: shadowBefore} = this.capturedProperties,
-        {fill: fillAfter, dropShadow: shadowAfter, isPolygon} = this.morph;
-    if (isPolygon && type == 'css') {
+        {fill: fillAfter, dropShadow: shadowAfter} = this.config;
+    if (this.morph.isPolygon && type == 'css') {
       fillBefore = fillAfter = false;
       delete before['background'];
       delete after['background'];
@@ -235,6 +235,10 @@ export class PropertyAnimation {
       after.boxShadow = 'none';
     }
     if (fillBefore && fillAfter && (fillBefore.isGradient || fillAfter.isGradient)) {
+      delete before['background'];
+      delete after['background'];
+      delete before['backgroundImage'];
+      delete after['backgroundImage'];
       this.tweenGradient = this.interpolate('gradient', fillBefore, fillAfter); 
     }
     // ensure that before and after props both have the same keys
@@ -257,14 +261,18 @@ export class PropertyAnimation {
   }
 
   assignProps() {
+    const styleClassesBefore = this.morph.styleClasses;
     this.beforeProps = this.gatherAnimationProps();
     Object.assign(this.morph, this.animatedProps);
     this.afterProps = this.gatherAnimationProps();
+    if (this.config.styleClasses) { 
+      this.morph._animatedStyleClasses = { 
+        removed: arr.withoutAll(styleClassesBefore, this.morph.styleClasses),
+        added: arr.withoutAll(this.morph.styleClasses, styleClassesBefore),
+        animation: this
+      };
+    }
   }
-
-  // problem: when we animate the fill, the css animation consumes 
-  // the animation too early such that the svg animation
-  // can not take its turn
 
   interpolate(attr, v1, v2) {
     switch (attr) {
@@ -353,7 +361,8 @@ export class PropertyAnimation {
           t = time - startTime;
           // Next iteration 
           if (t / this.duration >= 1) return this.finish('css');
-          customTween(easingFn(t / this.duration));
+          this.morph.dontRecordChangesWhile(() =>
+             customTween(easingFn(t / this.duration)));
           requestAnimationFrame(draw);
         }
         requestAnimationFrame(draw);
