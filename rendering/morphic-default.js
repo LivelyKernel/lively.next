@@ -301,7 +301,7 @@ MorphAfterRenderHook.prototype.hook = function(node, propertyName, previousValue
   attempt++;
   setTimeout(() => this.hook(node, propertyName, previousValue, attempt), 20*attempt)
 }
-MorphAfterRenderHook.prototype.updateScroll = function(morph, node) {
+MorphAfterRenderHook.prototype.updateScroll = function(morph, node, fromScroll) {
   // If there is a scroll in progress (e.g. the user scrolled the morph via
   // trackpad), we register that via onScroll event handlers and update the scroll
   // prperty of the morph.  However, while the scroll is ongoing, we will not set
@@ -310,17 +310,21 @@ MorphAfterRenderHook.prototype.updateScroll = function(morph, node) {
   // evt.state.scroll.interactiveScrollInProgress promise is used for tracking
   // that.
   var { interactiveScrollInProgress } = morph.env.eventDispatcher.eventState.scroll;
-  if (interactiveScrollInProgress) {
-    return interactiveScrollInProgress.then(() => this.updateScroll(morph, node));
+  if (node && interactiveScrollInProgress) {
+    return interactiveScrollInProgress.then(() => this.updateScroll(morph, node, true)); // scheduled more then once!!
   }
   if (node) {
     const {x, y} = morph.scroll;
 
     if (morph._animationQueue.animations.find(anim => anim.animatedProps.scroll)) return
-    
-    // prevent interference with bounce back animation
+
+    //prevent interference with bounce back animation
     node.scrollTop !== y && (node.scrollTop = y);
     node.scrollLeft !== x && (node.scrollLeft = x);
+    !fromScroll && requestAnimationFrame(() => {
+      node.scrollTop !== y && (node.scrollTop = y);
+      node.scrollLeft !== x && (node.scrollLeft = x);
+    }, morph.id);
   }
 }
 MorphAfterRenderHook.prototype.updateScrollOfSubmorphs = function(morph, renderer) {
