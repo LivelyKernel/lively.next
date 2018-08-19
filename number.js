@@ -174,6 +174,8 @@ function backoff(attempt, base = 5/*ms*/, cap = 30000/*ms*/) {
   return Math.min(cap, base + (Math.random() * (sleep*3-base)));
 }
 
+function interpolate(i, a, b) { return a + (i * (b - a)) }
+
 export {
   random,
   normalRandom,
@@ -190,5 +192,6 @@ export {
   detent,
   toDegrees,
   toRadians,
-  backoff
+  backoff,
+  interpolate
 }
