@@ -306,8 +306,8 @@ function inspect(object, options, depth) {
       const key = propsToPrint[i];
       if (isArray) inspect(object[key], options, depth + 1);
       var printedVal = inspect(object[key], options, depth + 1);
-      printedProps.push(options.escapeKeys ?
-          JSON.stringify(key) : key + ": " + printedVal);
+      printedProps.push((options.escapeKeys ?
+          JSON.stringify(key) : key) + ": " + printedVal);
     }
   }
 
