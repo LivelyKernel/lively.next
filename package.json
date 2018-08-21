@@ -8,7 +8,8 @@
     "lively.morphic": "^0.1.0",
     "lively.bindings": "^0.1.2",
     "lively.halos": "https://github.com/LivelyKernel/lively.halos",
-    "svg-intersections": "0.2.5"
+    "svg-intersections": "0.2.5",
+    "kld-intersections": "4.1" 
   },
   "devDependencies": {
     "mocha-es6": "*"
