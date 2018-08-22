@@ -429,7 +429,7 @@ export class Text extends Morph {
       fontFamily: {
         group: "text styling",
         type: "Enum",
-        values: config.basicFontItems,
+        values: config.text.basicFontItems,
         defaultValue: "Sans-Serif",
         isStyleProp: true,
         isDefaultTextStyleProp: true,
