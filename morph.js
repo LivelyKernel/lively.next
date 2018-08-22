@@ -2991,9 +2991,15 @@ export class PathPoint {
     this._isSmooth = props.isSmooth || false;
     this.x = props.position ? props.position.x : (props.x || 0);
     this.y = props.position ? props.position.y : (props.y || 0);
-    this.controlPoints = props.controlPoints;
-    connect(this, 'position', path, 'makeDirty');
-    connect(this, 'controlPoints', path, 'makeDirty');
+    this._controlPoints = props.controlPoints;
+  }
+
+  get __dont_serialize__() {
+    return [
+      'attributeConnections',
+      '$$controlPoints', '$$position',
+      'doNotCopyProperties', 'doNotSerialize'
+    ];
   }
 
   get isPathPoint() { return true; }
@@ -3008,7 +3014,11 @@ export class PathPoint {
   }
 
   get position() { return pt(this.x, this.y)};
-  set position({x,y}) { this.x = x; this.y = y; }
+  set position({x,y}) {
+    this.x = x;
+    this.y = y;
+    this.path.makeDirty();
+  }
 
   moveBy(delta) {
     this.position = this.position.addPt(delta);
@@ -3041,6 +3051,8 @@ export class PathPoint {
     // ensure points
     let { next, previous } = cps;
     this._controlPoints = { next: next ? Point.fromLiteral(next) : pt(0,0), previous: previous ? Point.fromLiteral(previous) : pt(0,0) }; }
+    this.path.makeDirty();
+  }
 
   moveNextControlPoint(delta) {
     this.moveControlPoint("next", delta);
