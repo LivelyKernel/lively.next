@@ -357,7 +357,6 @@ export class World extends Morph {
     /*global show, inspect*/
     this.nativeDrop_removeUploadIndicator();
 
-
     let {domEvt} = evt,
         {files, items} = domEvt.dataTransfer,
         baseURL = document.location.origin;

@@ -63,9 +63,7 @@ export class Text extends Morph {
 
 
   static get properties() {
-
     return {
-
       clipMode: {
         isStyleProp: true,
         defaultValue: "visible",
@@ -191,11 +189,13 @@ export class Text extends Morph {
         isStyleProp: true,
         defaultValue: config.text.useSoftTabs !== undefined ? config.text.useSoftTabs : true
       },
+
       tabWidth: {
         group: "text",
         isStyleProp: true,
         defaultValue: config.text.tabWidth || 2
       },
+
       tab: {
         group: "text",
         isStyleProp: true,
