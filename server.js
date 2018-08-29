@@ -1,13 +1,13 @@
-/* global origin */
+/* global origin, System */
 import { HeadlessSession } from "lively.headless";
 import zlib from 'zlib';
+import fs from 'fs';
 import urlParser from "url";
 import { obj } from "lively.lang";
 import L2LClient from "lively.2lively/client.js";
 import { ObjectDB } from "lively.storage";
-import LivelyServer from "lively.server/server.js";
-import { fun } from "lively.lang";
-import uglify from 'uglify-es';
+import { join } from "path";
+const packagePath = System.decanonicalize("lively.headless/").replace("file://", "");
 
 var l2lClient;
 var containers = containers || {};
@@ -18,7 +18,9 @@ export default class FrozenPartsLoader {
 
   get pluginId() { return "FrozenPartsLoader" }
 
-  setup(livelyServer) {
+  get before() { return ['jsdav', "lib-lookup"] }
+  
+  async setup(livelyServer) {
     if (!l2lClient) {
       let {hostname, port} = livelyServer
       l2lClient = this.l2lClient = L2LClient.ensure({
@@ -28,9 +30,9 @@ export default class FrozenPartsLoader {
           location: "server"
         }
       });
+      this.fsRootDir = livelyServer.options.jsdav.rootDirectory;
       l2lClient.options.ackTimeout = 1000*60*3;
     }
-    
     
     ["[freezer] register part",
      "[freezer] update part",
@@ -46,39 +48,39 @@ export default class FrozenPartsLoader {
   async handleRequest(req, res, next) {
     if (!req.url.startsWith("/subserver/FrozenPartsLoader")) return next();
 
-    let [_, id, op] = req.url.split("/subserver/FrozenPartsLoader")[1].split('/'),
+    let [_, id, ...op] = req.url.split("/subserver/FrozenPartsLoader")[1].split('/'),
         container = containers[id];
 
-    if (container && op == 'load.js') {
+    if (container && op.join('/').endsWith('load.js')) {
+      let userAgent = op[0];
+      if (userAgent == 'mobile') container = containers[id + '.mobile'] || container;
+      if (userAgent == 'tablet') container = containers[id + '.tablet'] || container;
       res.writeHead(200, {'Content-Type': 'application/javascript; charset=utf-8', 'Content-Encoding': 'gzip'});
       res.end(container._cachedScript);
       return;      
     }
 
-
-    if (container && op && op.includes('prerender')) {
+    if (container && op.join('/').includes('prerender')) {
+      let userAgent = 'default';
       let {height, width, pathname} = urlParser.parse(req.url, true).query;
-      if (width < 600 && containers[id + '.mobile']) {
-        // try to fetch the mobile version if present: {id}-mobile
-        // hacky but works for now
-        container = containers[id + '.mobile'];
-        pathname = pathname.replace(id, id + '.mobile');
-      }
-
-      if (width > 600 && width < 1024 && containers[id + '.tablet']) {
-        // try to fetch the mobile version if present: {id}-mobile
-        // hacky but works for now
-        container = containers[id + '.tablet'];
-        pathname = pathname.replace(id, id + '.tablet');
-      }
+      if (width < 600) userAgent = 'mobile';
+      if (width > 600 && width < 1024) userAgent = 'tablet';
       res.writeHead(200, {'Content-Type': 'text/html'});
       try {
-        lastReq = await this.prerender(container, width, height, pathname);
+        lastReq = await this.prerender(id, width, height, pathname, userAgent);
       } catch (e) {
         res.end(e.message);
         return;
       }
       res.end(lastReq);
+      return;
+    }
+
+    if (container && op.length > 1) {
+      let newPath = join(this.fsRootDir, ...op);
+      newPath = newPath.split('?')[0];
+      req.url = req.url.replace('/subserver/FrozenPartsLoader/' + id, '');
+      next(); // pass on request to jsdav
       return;
     }
 
@@ -107,83 +109,58 @@ export default class FrozenPartsLoader {
     res.end(`Did not find part for ${id}!`);
   }
 
-  async prerender(container, width, height, pathname) {
-    const addScripts = `
-        <style>
-          #prerender {
-             position: absolute
-          }
-        </style> 
-        <script>
-          lively = {};
-          System = {};
-        </script>
-        <script id="system" src="/lively.freezer/runtime-deps.js" defer></script>
-        <script id="loader" src="${pathname}/load.js" defer></script>
-        <script>
-          history.replaceState(null, '', (new URL(location.href)).searchParams.get('pathname'));
-          document.querySelector('#system').addEventListener('load', function() {
-              window.prerenderNode = document.getElementById("${await container.runEval('$world.id')}");
-          });
-          document.querySelector('#loader').addEventListener('load', function() {
-              System.baseURL = origin;
-              if (!("PointerEvent" in window))
-                lively.resources.loadViaScript(\`\${origin}/lively.next-node_modules/pepjs/dist/pep.js\`);
-              if (!("fetch" in window))
-                lively.resources.loadViaScript(\`//cdnjs.cloudflare.com/ajax/libs/fetch/1.0.0/fetch.js\`);
-          });
-         </script>`,
-         morphHtml = await container.runEval(`
-       const { generateHTML } = await System.import('lively.morphic/rendering/html-generator.js'),
-              part = $world.submorphs[0];
-       $world.dontRecordChangesWhile(() => {
-         part.width = ${width};
-         part.height = ${height};
-         $world.width = ${width};
-         $world.height = ${height};
-       });
-       await $world.whenRendered();
-       $world.dontRecordChangesWhile(() => {
-         if (part.onWorldResize) part.onWorldResize();
-       });
-       await $world.whenRendered();
-       await generateHTML($world, {
-          container: false,
-          addMetaTags: [{
-            name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1"
-          }],
-          addScripts: ${JSON.stringify(addScripts)}});`);
+  async ensureHeadless() {
+    if (this.headlessSession) return this.headlessSession;
+    this.headlessSession = await HeadlessSession.open("http://localhost:9011/worlds/default?nologin", (sess) =>
+      sess.runEval("typeof $world !== 'undefined'"));
+    return this.headlessSession;
+  }
 
-    return morphHtml;
+  async prerender(id, width, height, pathname, userAgent) {
+    let container;
+     if (userAgent == 'tablet' && containers[id + '.tablet']) {
+        container = containers[id + '.tablet'];
+     } else if (userAgent == 'mobile' && containers[id + '.mobile']) {
+        container = containers[id + '.mobile'];
+     } else {
+        container = containers[id];
+     }
+     return await this.runEval(container, `
+       const { prerender } = await System.import('lively.freezer/prerender.js');
+       await prerender(${JSON.stringify(container._commit)}, ${width}, ${height}, "${pathname}", "${userAgent}");
+     `);
+  }
+
+  async screenshot(container, screenshotPath) {
+    if (!screenshotPath) screenshotPath = packagePath + "screenshots/test.png";
+    await this.runEval(container, `
+       const { show } = await System.import('lively.freezer/prerender.js');
+       await show(${JSON.stringify(container._commit)});
+    `);
+    await this.headlessSession.page.setViewport({
+        width: 800, height: 800
+    });
+    return this.headlessSession.screenshot(screenshotPath);
+  }
+
+  async runEval(container, expr) {
+    const sess = await this.ensureHeadless(),
+          res = sess.runEval(expr);
+    container.status = sess.status;
+    container.error = sess.error;
+    return res;    
   }
 
   async refresh(container) {
-    HeadlessSession.list().filter(s => !Object.values(containers).includes(s)).map(m => m.dispose());
-    const script = await container.runEval(`
-      const { Morph, MorphicDB } = await System.import("lively.morphic/index.js"),
-            { loadMorphFromSnapshot } = await System.import("lively.morphic/serialization.js"),
-            { freezeSnapshot } = await System.import("lively.freezer/part.js"),
-            snapshot = await MorphicDB.default.fetchSnapshot(${JSON.stringify(container._commit)}),
-            part = await loadMorphFromSnapshot(snapshot),
-            {file: body} = await freezeSnapshot({
-              snapshot: JSON.stringify(snapshot)
-            }, {
-              notifications: false,
-              loadingIndicator: false,
-              includeRuntime: false,
-              addRuntime: false,
-              includeDynamicParts: true
-            });
-      $world.submorphs = [];
-      part.openInWorld();
-      part.left = part.top = 0;
-      part.extent = $world.extent;
-      body;
+    const script = await this.runEval(container, `
+        const { refresh } = await System.import('lively.freezer/prerender.js');
+        await refresh(${JSON.stringify(container._commit)});
     `);
+
     // store frozen version gzipped in server side cache
     container._cachedScript = zlib.gzipSync(script);
     // capture current screenshot
-    container._preview = await container.screenshot();
+    container._preview = await this.screenshot(container);
   }
 
   async configure(container, commit, autoUpdate, dbName) {
@@ -196,6 +173,13 @@ export default class FrozenPartsLoader {
        const db = await ObjectDB.find(dbName);
        container._commit = await db.getLatestCommit('part', commit.name)
     }
+  }
+
+  async close(container) {
+    await this.runEval(container, `
+       const { dispose } = await System.import('lively.freezer/prerender.js');
+       dispose(${JSON.stringify(container._commit)});
+    `);
   }
 
   getConfig(id) {
@@ -212,7 +196,7 @@ export default class FrozenPartsLoader {
       id, preview, error, state, commit, dbName, timestamp, autoUpdate
     }
   }
-
+  
   // l2l services
 
   async "[freezer] register part"(tracker, {sender, data: {commit, id, autoUpdate, dbName}}, ackFn, socket) {
@@ -223,13 +207,7 @@ export default class FrozenPartsLoader {
       if (containers[id]) {
         throw Error("Id already taken! Please choose another identifier for this deployment.")
       }
-      const tester = sess => sess.runEval("typeof $world !== 'undefined'"),
-            container = await HeadlessSession.open("http://localhost:9011/worlds/default?nologin", tester);
-      // use this format for proper screenshots
-      containers[id] = container;
-      await container.page.setViewport({
-        width: 800, height: 800
-      });
+      let container = containers[id] = {};
       await this.configure(container, commit, autoUpdate, dbName || defaultDB);
       await this.refresh(container);
     } catch (e) {
@@ -260,7 +238,7 @@ export default class FrozenPartsLoader {
   }
 
   async "[freezer] remove part"(tracker, {sender, data: {id}}, ackFn, socket) {
-    await containers[id].dispose();
+    await this.close(containers[id]);
     delete containers[id];
     typeof ackFn === "function" && ackFn({success: true, status: "OK"})
   }
