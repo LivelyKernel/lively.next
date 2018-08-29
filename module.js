@@ -120,6 +120,7 @@ export class StandaloneModule extends Module {
     // this needs to create the corresponding package as well
     return `(function(module, exports = {}, require = () => {}) {
              ${source}
+             if (lively.lang.obj.isEmpty(module.exports)) module.exports = exports;
            })(${runtimeGlobal}.globalModules["${this.qualifiedName}"] = {exports: {}})`;
   }
 
@@ -525,7 +526,7 @@ export class JSModule extends Module {
          + `    ],\n`
          + `    execute: function() {\n`
          + `const __rec = System.get("${this.qualifiedName}").recorder = {};\n`
-         + topLevelVarNames.map(id => `__rec.${id} = ${id};`).join('\n')
+         + (topLevelVarNames || []).map(id => `__rec.${id} = ${id};`).join('\n')
          + `${string.indent(replaced.trim(), "  ", 3)}\n`
          + (additionalExports.length ? `${string.indent(additionalExports.join("\n"), "  ", 3)}\n` : "")
          + `    }\n`
