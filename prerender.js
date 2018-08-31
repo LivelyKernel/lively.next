@@ -19,10 +19,10 @@ export function show(commit) {
   return part;
 }
 
-export async function refresh(commit) {
+export async function refresh(commit, freeze=true) {
   const snapshot = await MorphicDB.default.fetchSnapshot(commit),
         part = await loadMorphFromSnapshot(snapshot),
-        {file: body} = await freezeSnapshot({
+        {file: body} = freeze ? await freezeSnapshot({
           snapshot: JSON.stringify(snapshot)
         }, {
           notifications: false,
@@ -30,7 +30,7 @@ export async function refresh(commit) {
           includeRuntime: false,
           addRuntime: false,
           includeDynamicParts: true
-        });
+        }) : { file: false };
   // add this to the dictionary of managed commit
   if (!prerenderedParts) prerenderedParts = {};
   prerenderedParts[commit.name] = part;

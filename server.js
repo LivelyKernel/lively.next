@@ -37,12 +37,25 @@ export default class FrozenPartsLoader {
     ["[freezer] register part",
      "[freezer] update part",
      "[freezer] remove part",
-     "[freezer] status"
+     "[freezer] status",
+     "[freezer] refresh",
+     "[freezer] metrics"
     ].forEach(sel => l2lClient.addService(sel, this[sel].bind(this)));
 
     l2lClient.whenRegistered()
       .then(() => console.log("freezer service ready"))
       .catch(err => console.error(`freezer initialization failed`, err))
+  }
+
+  async refreshSession() {
+    // over time pupeteer starts using up a lot of memory
+    // this call restarts the pupeteer instance and
+    // reinitializes the frozen parts
+    await this.headlessSession.dispose();
+    this.headlessSession = false;
+    for (let container of Object.values(containers)) {
+      await this.restart(container);
+    }
   }
 
   async handleRequest(req, res, next) {
@@ -151,6 +164,13 @@ export default class FrozenPartsLoader {
     return res;    
   }
 
+  async restart(container) {
+    await this.runEval(container, `
+        const { refresh } = await System.import('lively.freezer/prerender.js');
+        await refresh(${JSON.stringify(container._commit)}, false);
+    `);
+  }
+
   async refresh(container) {
     const script = await this.runEval(container, `
         const { refresh } = await System.import('lively.freezer/prerender.js');
@@ -199,6 +219,18 @@ export default class FrozenPartsLoader {
   
   // l2l services
 
+  async "[freezer] refresh"(tracker, {sender, data}, ackFn, socket) {
+    try {
+      await this.refreshSession();
+    } catch(e) {
+      typeof ackFn === "function" && ackFn({
+        error: e.message
+      });
+      return;
+    }
+    typeof ackFn === "function" && ackFn({success: true, status: "OK"});
+  }
+
   async "[freezer] register part"(tracker, {sender, data: {commit, id, autoUpdate, dbName}}, ackFn, socket) {
     // register part entry (partName, id=[defaults to Part name])
     // fire up a headless lively (turn off change tracking)
@@ -242,10 +274,21 @@ export default class FrozenPartsLoader {
     delete containers[id];
     typeof ackFn === "function" && ackFn({success: true, status: "OK"})
   }
+
+  async "[freezer] metrics"(tracker, {sender, data}, ackFn, socket) {
+    let res;
+    try {
+      res = await this.headlessSession.page.getMetrics();
+    } catch (e) {
+      typeof ackFn === "function" && ackFn({error: e.message});
+      return;
+    }
+    typeof ackFn === "function" && ackFn(res)
+  }
   
   async "[freezer] status"(tracker, {sender, data: {id}}, ackFn, socket) {
     // return a status overview of all running instances or of single id
-    let res;
+    let res, mem;
     try {
       res = id ? this.getConfig(id) : obj.keys(containers).map(c => this.getConfig(c));
       //enter = 'hello'
