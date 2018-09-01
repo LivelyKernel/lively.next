@@ -707,7 +707,7 @@ export class ObjectEditor extends Morph {
     };
     ed.centerRange(methodRange);
     if (highlight) {
-      ed.flash(methodRange, {id: "method", time: 1000, fill: ed.selectionColor});
+      ed.flash(methodRange, {id: "method", time: 1000, fill: ed.selectionColor || Color.blue.withA(.2)});
     }
     this.selectedMethodName = methodSpec.name;
   }
@@ -868,9 +868,8 @@ export class ObjectEditor extends Morph {
 
   async interactivelyAdoptByClass() {
     let items = await this.withContextDo(async (ctx) => {
-      let { systemInterface: system } = ctx.evalEnvironemnt;
+      let { systemInterface: system } = ctx.evalEnvironment;
       let modules = await system.getModules();
-
       let items = [];
       for (let mod of modules) {
         // mod = modules[0]
@@ -884,16 +883,18 @@ export class ObjectEditor extends Morph {
           continue;
   
         let imports = (await realModule.imports()).map(ea => ea.local);
+        const { Morph } = ctx.target.isMorph ? await System.import('lively.morphic') : {};
         let klasses = obj.values(realModule.recorder).filter(ea =>
-          isClass(ea) && !imports.includes(ea.name) && withSuperclasses(ea).includes(Morph));
+          isClass(ea) && !imports.includes(ea.name) && 
+          (ctx.target.isMorph ? withSuperclasses(ea).includes(Morph) : true));
   
         for (let klass of klasses) {
           items.push({
             isListItem: true, string: `${shortName} ${klass.name}`, 
             value: {moduleName: mod.name, className: klass.name}});
         }
-        return items;
       }
+      return items;
     });
 
     let {selected: [klassAndModule]} = await $world.filterableListPrompt(
@@ -983,6 +984,7 @@ export class ObjectEditor extends Morph {
   }
 
   async interactivlyFixUndeclaredVariables() {
+    let moduleId, origSource, content;
     try {
       let { ui: {sourceEditor}} = this;
       if (!await this.withContextDo(ctx => ctx.selectedClass && ctx.selectedClass.name)) {
@@ -990,8 +992,8 @@ export class ObjectEditor extends Morph {
         return null;
       }
 
-      let content = sourceEditor.textString,
-          { moduleId, origSource } = await this.withContextDo((ctx) => {
+      content = sourceEditor.textString;
+      ({ moduleId, origSource } = await this.withContextDo((ctx) => {
         const {selectedClass, selectedMethod} = ctx;
         let descr = ctx.sourceDescriptorFor(selectedClass),
             m = descr.module,
@@ -999,7 +1001,7 @@ export class ObjectEditor extends Morph {
 
         ctx.isSaving = true;
         return { moduleId: m.id, origSource }
-      });
+      }));
 
       return await interactivlyFixUndeclaredVariables(sourceEditor, {
         requester: sourceEditor,
@@ -1011,13 +1013,13 @@ export class ObjectEditor extends Morph {
             else if (type === "global") await m.addGlobalDeclaration(arg);
             else throw new Error(`Cannot handle fixUndeclaredVar type ${type}`);
             descr.resetIfChanged();
-          })
+          }, { type, arg })
           await this.ui.importController.updateImports();
           await this.updateKnownGlobals();
         },
         sourceRetriever: async () => this.withContextDo((ctx) => {
           const descr = ctx.sourceDescriptorFor(ctx.selectedClass);
-          descr._modifiedSource(content).moduleSource
+          return descr._modifiedSource(content).moduleSource
         }, {
           content: sourceEditor.textString
         }),
