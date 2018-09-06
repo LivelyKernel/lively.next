@@ -16,6 +16,7 @@ export function styleProps(morph) {
   addBorderRadius(morph, style);
   addShadowStyle(morph, style);
   if (morph.opacity != null) style.opacity = morph.opacity;
+  if (morph.draggable) style['touch-action'] = 'none';
   return style;
 }
 
