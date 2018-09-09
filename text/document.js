@@ -1368,12 +1368,12 @@ export default class Document {
         if (end.row > row) {
           // range isn't done yet, and we break here so i doesn't get
           // incremented since we need range again for the following row(s)
-          result.push(text.slice(col, maxCol), attr);
+          result.push(attr.embeddedMorph || text.slice(col, maxCol), attr);
           col = maxCol;
           break;
         }
 
-        col < end.column && result.push(text.slice(col, end.column), attr);
+        col < end.column && result.push(attr.embeddedMorph || text.slice(col, end.column), attr);
         col = end.column;
       }
 
