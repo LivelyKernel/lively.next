@@ -320,7 +320,7 @@ export default class ObjectDB {
 
       {
         name: 'nameTypeFilter',
-        version: 7,
+        version: 9,
         filterFn: `function(doc, req) {
           if (doc._id[0] === "_" || !req || !req.query) return true;
           if (req.query.onlyIds) return !!req.query.onlyIds[doc._id];
@@ -328,6 +328,11 @@ export default class ObjectDB {
             return !!req.query.onlyTypesAndNames[doc.type + "/" + doc.name];
           return true;
         }`
+      },
+      {
+        name: 'conflict_index',
+        version: 4,
+        mapFn: `function(doc) { if (doc._conflicts) emit(doc._id); }`
       }
 
     ];
@@ -344,6 +349,11 @@ export default class ObjectDB {
           if (req.query.onlyTypesAndNames) return !!req.query.onlyTypesAndNames[doc._id];
           return true;
         }`
+      },
+      {
+        name: 'conflict_index',
+        version: 4,
+        mapFn: `function(doc) { if (doc._conflicts) emit(doc._id); }`
       }
     ]      
   }
