@@ -102,7 +102,7 @@ export default class Closure {
   parameterNames(methodString) {
     // ignore-in-doc
 
-    if (typeof lively !== "undefined" && lively.ast) {
+    if (typeof lively !== "undefined" && lively.ast && lively.ast.parseFunction) {
       return (lively.ast.parseFunction(methodString).params || []).map(function(ea) {
         if (ea.type === "Identifier") return ea.name;
         if (ea.left && ea.left.type === "Identifier") return ea.left.name;
