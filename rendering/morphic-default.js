@@ -242,7 +242,7 @@ export class ShadowObject {
   toFilterCss() {
     let {distance, rotation, blur, color, spread} = this,
         {x, y} = Point.polar(distance, num.toRadians(rotation));
-    blur = bowser.name == 'Chrome' ? blur / 3 : blur / 2;
+    blur = bowser.chrome ? blur / 3 : blur / 2;
     return `drop-shadow(${x}px ${y}px ${blur}px ${color.toString()})`;
   }
 
@@ -407,7 +407,8 @@ ${((height / 2) - (bh / height) * (height / 2)) + (y * height) - (height / 2)})`
                       {namespace: "http://www.w3.org/2000/svg",
                        attributes:
                        {offset: (stop.offset * 100) + "%",
-                        "stop-color": stop.color.toString()}})));
+                        "stop-opacity": stop.color.a,
+                        "stop-color": stop.color.withA(1).toString()}})));
 }
 
 
