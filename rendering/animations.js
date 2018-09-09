@@ -1,5 +1,5 @@
 /*global SVG, System*/
-import { obj, fun, num, properties, arr, string } from "lively.lang";
+import { obj, promise, fun, num, properties, arr, string } from "lively.lang";
 import { Color } from "lively.graphics";
 import {styleProps, addPathAttributes, addSvgAttributes} from "./property-dom-mapping.js";
 import { interpolate as flubberInterpolate } from 'flubber';
@@ -374,21 +374,29 @@ export class PropertyAnimation {
        // also perform custom gradient interpolation if we morph
        // across gradient fills with this custom method      
        let startTime,
+           scrollState = this.morph.env.eventDispatcher.eventState,
+           { promise: p, resolve } = promise.deferred(),
            interpolateScrollX = this.interpolate('scrollLeft', node.scrollTop, scroll.x),
            interpolateScrollY = this.interpolate('scrollTop', node.scrollTop, scroll.y),
            easingFn = Bezier(...eval(`([${this.easing.match(/\((.*)\)/)[1]}])`)),
            draw = (time) => {
-          var t;
+          var t, x;
           if (!startTime) {
             startTime = time;
           }
           t = time - startTime;
-          // Next iteration 
-          if (t / this.duration >= 1) return this.finish('css');
-          node.scrollTop = interpolateScrollY(easingFn(t / this.duration));
-          node.scrollLeft = interpolateScrollX(easingFn(t / this.duration)); 
+          x = Math.min(1, t / this.duration);
+          // Next iteration
+          node.scrollTop = interpolateScrollY(easingFn(x));
+          node.scrollLeft = interpolateScrollX(easingFn(x)); 
+          if (t / this.duration >= 1) {
+            scrollState.scroll.interactiveScrollInProgress = null;
+            resolve();
+            return this.finish('css');
+          }
           requestAnimationFrame(draw);
         }
+        p.debounce = () => {};
         requestAnimationFrame(draw);
         removalScheduled = true;
     }
