@@ -174,14 +174,19 @@ export class ObjectPool {
     return {id, snapshot};
   }
 
-  readSnapshot(snapshot) {
+  readSnapshot(snapshot, rootId) {
     // populates object pool with object refs read from the dead snapshot
     if (snapshot.hasOwnProperty("id")) {
       throw new Error(`readSnapshot expects simple serialized object map, not id-snapshot pair!`)
     }
-    for (var i = 0, ids = Object.keys(snapshot); i < ids.length; i++)
-      if (!this.resolveToObj(ids[i]))
-        ObjectRef.fromSnapshot(ids[i], snapshot, this, [], this.idPropertyName);
+    if (this.options.skipMigrations) {
+      // just recreate the root for now;
+      ObjectRef.fromSnapshot(rootId, snapshot, this, [], this.idPropertyName);
+    } else {
+      for (var i = 0, ids = Object.keys(snapshot); i < ids.length; i++)
+        if (!this.resolveToObj(ids[i]))
+          ObjectRef.fromSnapshot(ids[i], snapshot, this, [], this.idPropertyName);
+    }
     return this;
   }
 
@@ -190,7 +195,7 @@ export class ObjectPool {
     if (!idAndSnapshot.hasOwnProperty("snapshot")) throw new Error("idAndSnapshot does not have snapshot");
     idAndSnapshot = this.plugin_beforeDeserialization(idAndSnapshot);
     let {id, snapshot} = idAndSnapshot;
-    this.readSnapshot(snapshot);
+    this.readSnapshot(snapshot, id);
     this.plugin_afterDeserialization(idAndSnapshot);
     return this.resolveToObj(id);
   }
