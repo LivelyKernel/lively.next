@@ -6,7 +6,7 @@ import { allPlugins } from "./plugins.js";
 import semver from 'semver';
 
 function normalizeOptions(options) {
-  options = {plugins: allPlugins, reinitializeIds: false, ...options};
+  options = {plugins: allPlugins, reinitializeIds: false, skipMigrations: true, ...options};
   if (options.reinitializeIds && typeof options.reinitializeIds !== "function")
     throw new Error(`serializer option 'reinitializeIds' needs to be a function(id, ref) => id`)
   return options;
@@ -65,6 +65,7 @@ export function deserialize(idAndSnapshot, options) {
 
 export function deserializeWithMigrations(idAndSnapshot, migrations, options) {
   options = normalizeOptions(options);
+  if (migrations.length) options.skipMigrations = false;
   let objPool = options.objPool || (options.objPool = new ObjectPool(options)),
       {before, after} = normalizeMigrations(migrations),
       wait;
