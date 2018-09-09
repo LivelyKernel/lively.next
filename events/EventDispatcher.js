@@ -279,7 +279,11 @@ export default class EventDispatcher {
 
     this.keyInputHelper = new TextInput(this).install(rootNode);
 
-    rootNode.setAttribute("touch-action", "none");  // handle touch ourselves
+    // rms 6.9.18: In order for us to handle touch events ourselves,
+    //             we need to pass this undocumented touch-action attribute as "none"
+    //             to the body of the document, since iOS does not support the
+    //             CSS property touch-action.
+    rootNode.setAttribute("touch-action", "none");
 
     return this;
   }
