@@ -3160,6 +3160,20 @@ export class Path extends Morph {
     this.updateBounds(this.vertices);
   }
 
+  __additionally_serialize__(snapshot, ref, pool, addFn) {
+    super.__additionally_serialize__(snapshot, ref, pool, addFn);
+    let c = this.borderColor.valueOf();
+    if (!c) return;
+    snapshot.props.borderColor = {
+      key: 'borderColor',
+      value: pool.expressionSerializer.exprStringEncode({
+        __expr__: c.toJSExpr(),
+        bindings: {"lively.graphics/geometry-2d.js": ['pt', 'rect'],
+                   "lively.graphics/color.js": ["Color", c.constructor.name]}
+      })
+    }
+  }
+
   get isPath() { return true; }
   get isSvgMorph() { return true }
 
