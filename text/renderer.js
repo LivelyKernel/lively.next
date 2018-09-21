@@ -460,30 +460,36 @@ export default class TextRenderer {
           document: doc,
           clipMode
         } = morph,
+        node = renderer.getNodeForMorph(morph),
         padRight = padLeft + padWidth,
         padBottom = padTop + padHeight,
         scrollTop = scroll.y,
         scrollHeight = height,
         lastLineNo = doc.rowCount-1,
         textHeight = doc.height,
-        clips = clipMode !== "visible";
+        clips = clipMode !== "visible",
+        delta = scroll.y - ((node && node._lastScrollTop) || scroll.y),
+        down = 0 < delta,
+        up = 0 > delta,
+        bufferSpace = 500,
+        buffer = {top: (up || delta == 0) ? bufferSpace : 0, bottom: (down || delta == 0) ? bufferSpace : 0}; 
+         // in order to avoid blank spaces we prerender nodes that arent yet visible
 
-    // figure out where the visible area of the text starts / ends in terms of
-    // visible lines
-
+    if (node) node._lastScrollTop = scroll.y;
+    
     let {
       line: startLine,
       offset: startOffset,
       y: heightBefore,
       row: startRow
-    } = doc.findLineByVerticalOffset(clips ? Math.max(0, clips ? scrollTop - padTop : 0) : 0)
+    } = doc.findLineByVerticalOffset(clips ? Math.max(0, clips ? scrollTop - padTop - buffer.top : 0) : 0)
      || {row: 0, y: 0, offset: 0, line: doc.getLine(0)};
 
     let {
       line: endLine,
       offset: endLineOffset,
       row: endRow
-    } = doc.findLineByVerticalOffset(clips ? Math.min(textHeight, (scrollTop - padTop) + scrollHeight) : textHeight)
+    } = doc.findLineByVerticalOffset(clips ? Math.min(textHeight, (scrollTop - padTop + buffer.bottom) + scrollHeight) : textHeight)
      || {row: lastLineNo, offset: 0, y: 0, line: doc.getLine(lastLineNo)};
 
     let firstVisibleRow = clips ? startRow : 0,
@@ -611,7 +617,7 @@ export default class TextRenderer {
     if (wordSpacing) lineStyle.wordSpacing = wordSpacing;
 
     let node = h(lineTag,
-      {className: "line", style: lineStyle, dataset: {row: line.row}},
+      {className: "line", key: line.row, style: lineStyle, dataset: {row: line.row}},
       renderedChunks);
 
     if (quote) {
