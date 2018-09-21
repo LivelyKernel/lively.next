@@ -450,6 +450,7 @@ export class Text extends Morph {
       selectionColor: {
         group: "text styling",
         type: "Color",
+        defaultValue: Color.rgba(212,230,241,0.8),
         isStyleProp: true,
         after: ["defaultTextStyle"]
       },
@@ -757,14 +758,30 @@ export class Text extends Morph {
         ? this.selection.ranges
         : [this.selection.range]).map(ea => obj.select(ea, ["start", "end"]))
     };
+
     snapshot.props.textAndAttributes = {
       key: "textAndAttributes",
       value: this.textAndAttributes.map(m => { 
           if (!m) return m; 
           if (m.isMorph) return pool.ref(m).asRefForSerializedObjMap();
-          if (obj.isObject(m)) return pool.expressionSerializer.exprStringEncode({
-            __expr__: `(${JSON.stringify(m)})`
-          })
+          if (obj.isObject(m)) {
+            let bindings = {},
+                stringified = JSON.stringify(m, (k, v) => {
+                  if (v && v.__serialize__) {
+                    v = v.__serialize__();
+                    Object.assign(bindings, v.bindings);
+                    return "->" + v.__expr__
+                  }
+                  return v;
+            });
+            stringified = stringified.replace(/\"->.*\"/g, (m) => {
+              return m.slice(3, -1)
+            });
+            return pool.expressionSerializer.exprStringEncode({
+              __expr__: `(${stringified})`, // incorporate the bindings of each of the sub expressions
+              bindings
+            });
+          }
           return m;
       })
     };
