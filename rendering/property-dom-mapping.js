@@ -16,14 +16,14 @@ export function styleProps(morph) {
   addBorderRadius(morph, style);
   addShadowStyle(morph, style);
   if (morph.opacity != null) style.opacity = morph.opacity;
-  if (morph.draggable) style['touch-action'] = 'none';
+  if (morph.draggable && !morph.isWorld) style['touch-action'] = 'none';
   return style;
 }
 
 
 function addTransform(morph, style) {
   let {position, origin, scale, rotation} = morph;
-  style.transform = `translate3d(${Math.round(position.x - origin.x)}px, ${Math.round(position.y - origin.y)}px, 0px) rotate(${rotation.toFixed(2)}rad) scale(${scale.toFixed(2)},${scale.toFixed(2)})`;
+  style.transform = `translate(${Math.round(position.x - origin.x)}px, ${Math.round(position.y - origin.y)}px) rotate(${rotation.toFixed(2)}rad) scale(${scale.toFixed(2)},${scale.toFixed(2)})`;
 }
 
 function addTransformOrigin(morph, style) {

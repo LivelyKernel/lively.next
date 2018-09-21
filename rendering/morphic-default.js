@@ -41,7 +41,7 @@ textarea.lively-text-input.debug {
 .Morph {
   outline: none;
   /*for aliasing issue in chrome: http://stackoverflow.com/questions/6492027/css-transform-jagged-edges-in-chrome*/
-  -webkit-backface-visibility: hidden;
+  /* -webkit-backface-visibility: hidden; */
 
   /*include border size in extent of element*/
   box-sizing: border-box;
@@ -319,6 +319,8 @@ MorphAfterRenderHook.prototype.updateScroll = function(morph, node, fromScroll) 
     if (morph._animationQueue.animations.find(anim => anim.animatedProps.scroll)) return
 
     //prevent interference with bounce back animation
+
+    // this is only there to immediately respoond in the view to a setScroll
     node.scrollTop !== y && (node.scrollTop = y);
     node.scrollLeft !== x && (node.scrollLeft = x);
     !fromScroll && requestAnimationFrame(() => {

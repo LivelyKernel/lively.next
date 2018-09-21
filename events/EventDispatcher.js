@@ -283,7 +283,7 @@ export default class EventDispatcher {
     //             we need to pass this undocumented touch-action attribute as "none"
     //             to the body of the document, since iOS does not support the
     //             CSS property touch-action.
-    rootNode.setAttribute("touch-action", "none");
+    if (bowser.ios) rootNode.setAttribute("touch-action", "none");
 
     return this;
   }
