@@ -63,7 +63,8 @@ export class AnimationQueue {
   registerAnimation(config) {
     const anim = new PropertyAnimation(this, this.morph, config);
     return this.morph.withMetaDo({animation: anim}, () => {
-      if (!this.animations.find(a => a.equals(anim)) && anim.affectsMorph) {
+      let existing = this.animations.find(a => a.equals(anim)) && anim.affectsMorph;
+      if (!existing) {
         let mergeable;
         if (mergeable = this.animations.find(a => a.canMerge(anim))) {
           mergeable.mergeWith(anim);
@@ -74,6 +75,7 @@ export class AnimationQueue {
           return anim; 
         }
       }
+      return existing;
     });
   }
 
@@ -144,8 +146,8 @@ export class PropertyAnimation {
     this.needsAnimation[type] = false;
     if (!arr.any(Object.values(this.needsAnimation), Boolean)) {
       this.queue.removeAnimation(this);
+      this.resolveCallback ? this.resolveCallback() : this.onFinish();
     }
-    this.resolveCallback ? this.resolveCallback() : this.onFinish();
   }
 
   convertBounds(config) {

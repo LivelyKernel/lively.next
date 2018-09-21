@@ -1076,7 +1076,10 @@ export class Morph {
       anim && anim.finish();
       return Promise.resolve(this);
     }
-    return anim ? anim.asPromise() : Promise.resolve(this);
+    if (anim) {
+      return await anim.asPromise();
+    }
+    return Promise.resolve(this);
   }
 
   isClip() { return this.clipMode !== "visible"; }
