@@ -64,7 +64,8 @@ export async function generateHTML(morph, htmlResource, options = {}) {
         removeTargetFromLinks = true,
         addMetaTags,
         addScripts,
-        appendHTML
+        appendHTML,
+        title = 'lively.next'
       } = options,
       renderFreeStanding = containerOpts == false,
       {width: containerWidth, height: containerHeight, id: containerId} = containerOpts || {},
@@ -95,7 +96,7 @@ export async function generateHTML(morph, htmlResource, options = {}) {
     if (appendHTML) html += appendHTML;
 
   } else {
-    html = `<head><title>lively.next</title>
+    html = `<head><title>${title}</title>
      <meta content="utf-8" http-equiv="encoding">
      <meta content="text/html;charset=utf-8" http-equiv="Content-Type">`;
     if (addMetaTags) {
