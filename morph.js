@@ -19,6 +19,7 @@ import { StylingVisitor } from "./sizzle.js";
 // optional lively.halos imports
 import {showAndSnapToGuides, removeSnapToGuidesOf} from "lively.halos/drag-guides.js";
 import { show } from "lively.halos";
+import { copy, ExpressionSerializer } from "lively.serializer2";
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -2984,7 +2985,7 @@ export class PathPoint {
     this._isSmooth = props.isSmooth || false;
     this.x = props.position ? props.position.x : (props.x || 0);
     this.y = props.position ? props.position.y : (props.y || 0);
-    this._controlPoints = props.controlPoints;
+    this.controlPoints = props.controlPoints;
     connect(this, 'position', path, 'makeDirty');
     connect(this, 'controlPoints', path, 'makeDirty');
   }
@@ -3009,6 +3010,11 @@ export class PathPoint {
     return this;
   }
 
+  copy() {
+    let e = new ExpressionSerializer()
+    return new PathPoint(this.path, e.deserializeExprObj(this.__serialize__()));
+  }
+
   __serialize__() {
     return {
       __expr__: `({
@@ -3025,7 +3031,10 @@ export class PathPoint {
   get controlPoints() {
     return this._controlPoints || {next: pt(0, 0), previous: pt(0, 0)};
   }
-  set controlPoints(cps) { this._controlPoints = cps; }
+  set controlPoints(cps = {}) { 
+    // ensure points
+    let { next, previous } = cps;
+    this._controlPoints = { next: next ? Point.fromLiteral(next) : pt(0,0), previous: previous ? Point.fromLiteral(previous) : pt(0,0) }; }
 
   moveNextControlPoint(delta) {
     this.moveControlPoint("next", delta);
@@ -3186,12 +3195,7 @@ export class Path extends Morph {
   }
 
   copyVertices() {
-    return this.vertices.map(v => ({
-      x: v.x, 
-      y: v.y, 
-      isSmooth: v.isSmooth,
-      controlPoints: obj.deepCopy(v.controlPoints)
-    }));
+    return this.vertices.map(v => v.copy());
   }
 
   updateBounds(vertices = this.vertices) {
