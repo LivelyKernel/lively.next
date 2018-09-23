@@ -92,7 +92,15 @@ export class Renderer {
     // return this.domNode.ownerDocument.getElementById(morph.id);
 
     // test, for scoped lookup, fixing the issue mentioned above
-    return this.domNode ? this.domNode.querySelector("#" + string.regExpEscape(morph.id)) : null;
+    let id = "#" + string.regExpEscape(morph.id),
+        node = this.domNode && this.domNode.querySelector(id);
+    if (node) return node;
+    // we also need to lookup fixed morphs which are covered by this renderer
+    for (let fixedNode of this.fixedMorphNodeMap.values()) {
+      node = fixedNode.querySelector(id);
+      if (node) return node;
+    }
+    return null;
   }
 
   getMorphForNode(node) {
