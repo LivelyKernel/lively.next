@@ -6,6 +6,7 @@ import { MorphicDB } from "./morphicdb/index.js";
 import { Path, obj, date, promise } from "lively.lang";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import LoadingIndicator from "lively.components/loading-indicator.js";
+import { Color } from "lively.graphics";
 
 
 export function pathForBrowserHistory(worldName, queryString) {
@@ -204,8 +205,7 @@ export async function interactivelySaveWorld(world, options) {
     ({name, tags, description} = oldCommit);
   }
 
-
-  var i = LoadingIndicator.open(`saving ${name}...`);
+  let i = LoadingIndicator.open(`saving ${name}...`);
   await promise.delay(80);
 
   try {
@@ -218,7 +218,7 @@ export async function interactivelySaveWorld(world, options) {
       if (oldName !== name && options.confirmOverwrite) {
         let {exists, commitId: existingCommitId} = await db.exists("world", name);
         if (exists) {
-          let overwrite = await world.confirm(`A world "${name}" already exists, overwrite?`);
+          let overwrite = await world.confirm(`A world "${name}" already exists, overwrite?`, {styleClasses: ['Halo'], fill: Color.rgba(0,0,0,0.8)});
           if (!overwrite) return null;
           expectedParentCommit = existingCommitId;
         }
