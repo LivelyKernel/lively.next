@@ -810,7 +810,11 @@ export class TilingLayout extends Layout {
     return Math.max(width, maxSubmorphWidth);
   }
 
-  layoutOrder(aMorph) { return aMorph.top; }
+  layoutOrder(morph) {
+    // the following creates a drop zone that is 15 pixels tall.
+    // allows for horizontal reordering.
+    return (morph.top - morph.top % 15) * 1000000 + morph.left;
+  }
 
 }
 
