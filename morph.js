@@ -2862,18 +2862,27 @@ export class Image extends Morph {
   }
 
   async convertToBase64() {
-    // this.imageUrl = "http://blog.openclassrooms.com/en/wp-content/uploads/sites/4/2015/11/hello-world-v02.jpg"
     // await this.convertToBase64();
-    var urlString = this.imageUrl,
-        type = urlString.slice(urlString.lastIndexOf('.') + 1, urlString.length).toLowerCase();
-    if (type == 'jpg') type = 'jpeg';
-    if (!['gif', 'jpeg', 'png', 'tiff'].includes(type)) type = 'gif';
-    if (!urlString.startsWith('http'))
-      urlString = location.origin + "/" + urlString;
-    let {runCommand} = await System.import("lively.ide/shell/shell-interface"),
-        cmd = 'curl --silent "' + urlString + '" | openssl base64',
-        {stdout} = await runCommand(cmd).whenDone();
-    return this.loadUrl('data:image/' + type + ';base64,' + stdout, false);
+    let urlString = this.imageUrl;
+    let type = urlString.slice(urlString.lastIndexOf('.') + 1, urlString.length).toLowerCase();
+
+    if (type === 'jpg') {
+      type = 'jpeg';
+    } else if (type === 'svg') {
+      type = 'svg+xml';
+    }
+    if (!['gif', 'jpeg', 'png', 'tiff', 'svg+xml'].includes(type)) {
+      type = 'gif';
+    }
+
+    if (!urlString.startsWith('http')) {
+      urlString = `${location.origin}/${urlString}`;
+    }
+
+    let {runCommand} = await System.import('lively.ide/shell/shell-interface');
+    let cmd = `curl --silent "${urlString}" | openssl base64`;
+    let {stdout} = await runCommand(cmd).whenDone();
+    return this.loadUrl(`data:image/${type};base64,${stdout}`, false);
   }
 
   downloadImage() {
