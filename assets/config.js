@@ -19,6 +19,7 @@ var config = {
       "lively.server/plugins/objectdb.js",
       "lively.server/plugins/subserver.js",
       "lively.headless/subserver.js",
+      "lively.freezer/server.js"
     ]
   }
 }
