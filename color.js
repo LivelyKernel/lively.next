@@ -563,9 +563,8 @@ export class LinearGradient extends Gradient {
   }
   
   toJSExpr() {
-    let stops = this.stops.map(ea => `{offset: ${ea.offset}, color: ${ea.color.toJSExpr()}}`).join(", "),
-        vector = num.toDegrees(this.vectorAsAngle()) - 90;
-    return `new LinearGradient({stops: [${stops}], vector: ${vector}})`;
+    let stops = this.stops.map(ea => `{offset: ${ea.offset}, color: ${ea.color.toJSExpr()}}`).join(", ");
+    return `new LinearGradient({stops: [${stops}], vector: ${this.vector}})`;
   }
 }
 
