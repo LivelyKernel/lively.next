@@ -84,3 +84,5 @@ export function deserializeWithMigrations(idAndSnapshot, migrations, options) {
 export function copy(obj, options) {
   return deserialize(serialize(obj, options), options);
 }
+import { default as ExpressionSerializer } from "./plugins/expression-serializer.js"
+export { ExpressionSerializer };
