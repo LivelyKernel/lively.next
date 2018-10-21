@@ -63,7 +63,7 @@ export class AnimationQueue {
   registerAnimation(config) {
     const anim = new PropertyAnimation(this, this.morph, config);
     return this.morph.withMetaDo({animation: anim}, () => {
-      let existing = this.animations.find(a => a.equals(anim)) && anim.affectsMorph;
+      let existing = anim.affectsMorph && this.animations.find(a => a.equals(anim));
       if (!existing) {
         let mergeable;
         if (mergeable = this.animations.find(a => a.canMerge(anim))) {
