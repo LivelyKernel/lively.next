@@ -45,6 +45,10 @@ function convertToSvgEasing(easing) {
   }
 }
 
+export function stringToEasing(easingString) {
+  return Bezier(...eval(`([${easingString.match(/\((.*)\)/)[1]}])`));
+}
+
 export class AnimationQueue {
   constructor(morph) {
     this.morph = morph;
@@ -237,10 +241,6 @@ export class PropertyAnimation {
       after.boxShadow = 'none';
     }
     if (fillBefore && fillAfter && (fillBefore.isGradient || fillAfter.isGradient)) {
-      delete before['background'];
-      delete after['background'];
-      delete before['backgroundImage'];
-      delete after['backgroundImage'];
       this.tweenGradient = this.interpolate('gradient', fillBefore, fillAfter); 
     }
     // ensure that before and after props both have the same keys
@@ -301,7 +301,7 @@ export class PropertyAnimation {
       this.needsAnimation[type] = false;
       const [before, after] = this.getAnimationProps(type),
             params = {},
-            easingFn = Bezier(...eval(`([${this.easing.match(/\((.*)\)/)[1]}])`));
+            easingFn = stringToEasing(this.easing);
       for (let k in before) params[k] = this.interpolate(k, before[k], after[k]);
       let startTime,
           draw = (time) => {
@@ -354,17 +354,18 @@ export class PropertyAnimation {
     };
     if (customTween) {
         let startTime,
-           easingFn = Bezier(...eval(`([${this.easing.match(/\((.*)\)/)[1]}])`)),
+           easingFn = stringToEasing(this.easing),
            draw = (time) => {
-          var t;
+          var t, p;
           if (!startTime) {
             startTime = time;
           }
           t = time - startTime;
+          p = Math.min(1, t / this.duration);
           // Next iteration 
-          if (t / this.duration >= 1) return this.finish('css');
           this.morph.dontRecordChangesWhile(() =>
-             customTween(easingFn(t / this.duration)));
+             customTween(easingFn(p)));
+          if (p >= 1) return this.finish('css');
           requestAnimationFrame(draw);
         }
         requestAnimationFrame(draw);
@@ -380,7 +381,7 @@ export class PropertyAnimation {
            { promise: p, resolve } = promise.deferred(),
            interpolateScrollX = this.interpolate('scrollLeft', node.scrollTop, scroll.x),
            interpolateScrollY = this.interpolate('scrollTop', node.scrollTop, scroll.y),
-           easingFn = Bezier(...eval(`([${this.easing.match(/\((.*)\)/)[1]}])`)),
+           easingFn = stringToEasing(this.easing),
            draw = (time) => {
           var t, x;
           if (!startTime) {
@@ -404,7 +405,7 @@ export class PropertyAnimation {
     }
     if (this.tweenGradient && !this.morph.isPolygon) {
       let startTime,
-          easingFn = Bezier(...eval(`([${this.easing.match(/\((.*)\)/)[1]}])`)),
+          easingFn = stringToEasing(this.easing),
           draw = (time) => {
           var t;
           if (!startTime) {
@@ -418,6 +419,8 @@ export class PropertyAnimation {
         }
         delete before.backgroundImage;
         delete after.backgroundImage;
+        delete before.background;
+        delete after.background;
         requestAnimationFrame(draw);
         removalScheduled = true;
     } else if (this.tweenGradient) {
