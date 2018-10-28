@@ -298,7 +298,10 @@ export default class DOMInputCapture {
 
   onTextareaInput(evt) {
     if (this.inputState.composition) return;
-    if (!evt.data) evt.data = this.readValue();
+    if (!evt.data) {
+      const data = this.readValue();
+      evt.__defineGetter__('data', () => data);
+    }
     this.resetValue();
     this.eventDispatcher.dispatchDOMEvent(evt);
   }
