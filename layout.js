@@ -493,6 +493,19 @@ export class HorizontalLayout extends FloatLayout {
       startX = minExtent.x / 2 - submorphW/2;
     }
 
+    if (autoResize) {
+      var w = 0;
+      if (direction === "centered") {
+        var leftOffset = layoutableSubmorphs[0].left;
+        w = arr.last(layoutableSubmorphs).right + leftOffset
+      } else  {
+        w = arr.last(layoutableSubmorphs).right + spacing;
+      }
+    
+      var newExtent = pt(Math.max(minExtent.x, w), minExtent.y + 2 * spacing);
+      this.changePropertyAnimated(container, "extent", newExtent, animate);
+    }
+
     if (align === "top") {
       let top = spacing;
       layoutableSubmorphs.reduce((pos, m) => {
@@ -509,7 +522,7 @@ export class HorizontalLayout extends FloatLayout {
       }, pt(Math.max(0, startX) + spacing, bottom));
        this.forceLayoutsInNextLevel();
     } else { // centered
-      let yCenter = container.height/2 + (autoResize ? spacing : 0);      
+      let yCenter = container.height/2;      
       layoutableSubmorphs.reduce((pos, m) => {
         this.changePropertyAnimated(m, rightToLeft ? "rightCenter" : "leftCenter", pos, animate);
         return rightToLeft ? m.leftCenter.subPt(pt(spacing, 0)) : m.rightCenter.addPt(pt(spacing, 0));
@@ -517,18 +530,6 @@ export class HorizontalLayout extends FloatLayout {
       this.forceLayoutsInNextLevel();
     }
 
-    if (autoResize) {
-      var w = 0;
-      if (direction === "centered") {
-        var leftOffset = layoutableSubmorphs[0].left;
-        w = arr.last(layoutableSubmorphs).right + leftOffset
-      } else  {
-        w = arr.last(layoutableSubmorphs).right + spacing;
-      }
-    
-      var newExtent = pt(Math.max(minExtent.x, w), minExtent.y + 2 * spacing);
-      this.changePropertyAnimated(container, "extent", newExtent, animate);
-    }
     this.lastBoundsExtent = this.container.bounds().extent();
     this.active = false;
     return this.animationPromise;
