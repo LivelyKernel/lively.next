@@ -55,6 +55,10 @@ textarea.lively-text-input.debug {
   user-select: none;
 }
 
+.Morph img {
+  -moz-user-select: none;
+}
+
 .Tooltip {
   z-index: 3;
 }
@@ -111,6 +115,7 @@ div.text-layer span {
 .Label span {
   white-space: pre;
   float: left;
+  -moz-user-select: none;
 }
 
 .Text .annotation {

@@ -336,6 +336,7 @@ export default class TextRenderer {
         ...defaultAttributes(morph, renderer),
         style: {
           ...defaultStyle(morph),
+          "-moz-user-select": "none",
           cursor: morph.nativeCursor === "auto" ?
             (morph.readOnly ? "default" : "text") :
             morph.nativeCursor
