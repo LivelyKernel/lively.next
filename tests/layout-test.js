@@ -81,6 +81,7 @@ describe("layout", () => {
     });
 
     it("adjusts width to widest item", () => {
+      m.layout.resizeSubmorphs = new VerticalLayout({resizeSubmorphs: true});
       const maxWidth = arr.max(m.submorphs.map( m => m.width ));
       expect(m.width).equals(maxWidth);
     });
