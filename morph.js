@@ -2491,7 +2491,6 @@ export class Morph {
     // reset by aboutToRender() which then transitions the morph to the
     // _rendering = true state. This gets reset in MorphAfterRenderHook when
     // the render process is done
-    if (this._dirty) return;
     this._dirty = true;
     if (this.owner) this.owner.makeDirty();
   }
