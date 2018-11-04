@@ -735,6 +735,9 @@ export class Text extends Morph {
       });
     }
     this._isDeserializing = false;
+    this.whenRendered().then(() => {
+       this.embeddedMorphs.forEach(m => m.top = 0);
+    })
   }
 
   get __only_serialize__() {
@@ -869,13 +872,20 @@ export class Text extends Morph {
     // is finished animating, so that our dom measurement is not fucked up.
     if (meta.animation)
       promise.delay(meta.animation.duration).then(updateTextEngine)
-    else
-      updateTextEngine();
+    else if (prop == 'extent') {
+       this.whenRendered().then(updateTextEngine);
+    } else {
+       updateTextEngine(); 
+    }
   }
   
-  onSubmorphChange(change, submorph) {
+  async onSubmorphChange(change, submorph) {
     if (change.meta && change.meta.styleSheetChange) return;
     super.onSubmorphChange(change, submorph);
+    if (change.meta.animation) {
+      await change.meta.animation.asPromise();
+    }
+    if (this._positioningSubmorph === submorph) return;
     let {prop} = change,
         isGeometricTransform = prop == 'position' ||
                                prop == 'extent' || 
@@ -890,23 +900,32 @@ export class Text extends Morph {
          this.updateTextDisplacementFor(m)
        })
     }
-
+    
     const {anchor: submorphAnchor} = this.embeddedMorphMap.get(submorph) || {};
     if (submorphAnchor
-        && !this._positioningSubmorphs 
         && isGeometricTransform) {
       const currentBounds = submorph.bounds(),
             lastBounds = submorph._lastBounds,
             row = submorphAnchor.position.row,
             line = this.document.getLine(row);
-      if (!lastBounds || currentBounds.bottom() != lastBounds.bottom()) {
-        this._positioningSubmorphs = true;
+      if (!lastBounds || 
+          lastBounds.height != currentBounds.height ||
+          lastBounds.bottom() != currentBounds.bottom()) {
         submorph._lastBounds = currentBounds;
         // update the height of the current line
-        this.textLayout.estimateExtentOfLine(this, line);
-        this.textLayout.resetLineCharBoundsCacheOfRow(morph, row);
-        [...this.embeddedMorphMap.entries()].forEach(([m, {anchor}]) => anchor.position = anchor.position);
-        this._positioningSubmorphs = false;
+        if (!lastBounds || lastBounds.height != currentBounds.height) {
+           this.textLayout.estimateExtentOfLine(this, line);
+           this.textLayout.resetLineCharBoundsCacheOfRow(morph, row);
+        }
+        await submorph.whenRendered(); 
+        let submorphAnchors = arr.sortBy([...this.embeddedMorphMap.entries()], x => x[1].anchor.position.row);
+        for (let [m, {anchor}] of submorphAnchors) {
+           if (anchor.position.row >= row) {
+             this._positioningSubmorph = m;
+             anchor.position = anchor.position;
+             this._positioningSubmorph = null;
+           }
+        };
       }
     }
   }
@@ -1576,6 +1595,7 @@ export class Text extends Morph {
         insertedRange.start,
         newTextAndAttributes
       );
+
       for (let i = 0; i < ranges.length; i++) {
         let morph = textAndAttributes[i * 2];
         if (!morph.isMorph) continue;
