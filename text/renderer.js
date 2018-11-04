@@ -261,7 +261,7 @@ AfterTextRenderHook.prototype.updateExtentsOfLines = function(textlayerNode) {
   if (this.needsRerender) {
     morph.fitIfNeeded();
     morph.makeDirty();
-  } else morph._dirty = false;
+  } else morph._dirty = !!morph.submorphs.find(m => m.needsRerender());
 }
 
 AfterTextRenderHook.prototype.hook = function(node, propName, prevValue) {
