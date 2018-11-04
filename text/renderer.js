@@ -585,7 +585,7 @@ export default class TextRenderer {
         if (link) {
           tagname = "a";
           nodeAttrs.href = link;
-          nodeAttrs.target = "_blank";
+          if (link && link.startsWith('http')) nodeAttrs.target = "_blank";
         }
 
         if (fontSize) nodeStyle.fontSize               = fontSize;
