@@ -715,7 +715,6 @@ var commands = [
       var pb = await loadPart("PartsBin");
       pb.openInWorldNearHand();
       pb.targetMorph.selectedCategory = "*basics*";
-      pb.targetMorph.update();
       pb.focus();
       return pb;
     }
