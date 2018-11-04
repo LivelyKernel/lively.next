@@ -178,7 +178,7 @@ export default class TextInput {
     if (bowser.firefox) // FF needs an extra invitation...
       Promise.resolve().then(() => node.ownerDocument.activeElement !== node && node.focus());
 
-    if (morph && morph.isText) {
+    if (morph && morph.isText && morph.focusable) {
       // need this even if node === activeElement
       // to bring up virtual keyboard on iPad
       node.focus();
@@ -292,7 +292,10 @@ export default class TextInput {
 
   onInput(evt) {
     if (this.inputState.composition) return;
-    if (!evt.data) evt.data = this.readValue();
+    if (!evt.data) {
+      const data = this.readValue();
+      evt.__defineGetter__('data', () => data);
+    }
     this.resetValue();
     this.eventDispatcher.dispatchDOMEvent(evt);
   }
