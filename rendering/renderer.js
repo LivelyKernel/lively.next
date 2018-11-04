@@ -178,7 +178,7 @@ export class Renderer {
     return h("div", {
       style: {
         position: "absolute",
-        transform: `translate(${oX - borderWidthLeft}px,${oY - borderWidthTop}px)`,
+        transform: `translate(${oX - (morph.isPath ? 0 : borderWidthLeft)}px,${oY - (morph.isPath ? 0 : borderWidthTop)}px)`,
         ...(morph.isPolygon ? {
           height: '100%', width: '100%',
           overflow: morph.clipMode,
@@ -218,6 +218,7 @@ export class Renderer {
           style: {
             "pointer-events": "none",
             position: "absolute",
+            left: 0,
             width: "100%", height: "100%"
           }
         }),
