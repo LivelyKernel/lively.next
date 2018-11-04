@@ -103,7 +103,6 @@ textarea.lively-text-input.debug {
 .v-center-text {
   position: relative;
   top: 50%;
-  transform: translateY(-50%);
 }
 
 div.text-layer span {
@@ -131,7 +130,6 @@ div.text-layer span {
   float: right;
   position: relative;
   top: 50%;
-  transform: translateY(-50%);
   text-align: right;
 }
 

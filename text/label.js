@@ -289,8 +289,8 @@ export class Label extends Morph {
       ({width, height} = fm.sizeFor(style, text));
     }
     return new Rectangle(0,0,
-      padding.left() + padding.right() + width,
-      padding.top() + padding.bottom() + height);
+      Math.ceil(padding.left() + padding.right() + width),
+      Math.ceil(padding.top() + padding.bottom() + height));
   }
 
   textBoundsAllChunks() {
@@ -335,8 +335,8 @@ export class Label extends Morph {
     }
 
     return new Rectangle(0,0,
-      padding.left() + padding.right() + width,
-      padding.top() + padding.bottom() + height);
+      Math.ceil(padding.left() + padding.right() + width),
+      Math.ceil(padding.top() + padding.bottom() + height));
   }
 
   invalidateTextLayout() {
@@ -394,10 +394,6 @@ export class Label extends Morph {
           fontSize: typeof fontSize === "number" ? fontSize + "px" : fontSize,
           color: fontColor ? String(fontColor) : "transparent",
           position: "absolute",
-          paddingLeft: padding.left() + "px",
-          paddingRight: padding.right() + "px",
-          paddingTop: padding.top() + "px",
-          paddingBottom: padding.bottom() + "px",
           cursor: this.nativeCursor
         },
         attrs = defaultAttributes(this, renderer);
@@ -410,7 +406,17 @@ export class Label extends Morph {
       attrs.className = (attrs.className || "") + " " + textStyleClasses.join(" ");
     attrs.style = {...defaultStyle(this), ...style};
 
-    return h("div", attrs, [...renderedText, renderer.renderSubmorphs(this)]);
+    return h("div", attrs, [
+      h('div', {
+        style: {
+          position: 'absolute',
+          paddingLeft: padding.left() + "px",
+          paddingRight: padding.right() + "px",
+          paddingTop: padding.top() + "px",
+          paddingBottom: padding.bottom() + "px",
+          width: `calc(100% - ${padding.left()}px - ${padding.right()}px)`
+        }
+      }, renderedText), renderer.renderSubmorphs(this)]);
   }
 
   renderChunk(text, chunkStyle) {
@@ -426,7 +432,8 @@ export class Label extends Morph {
           textStyleClasses,
           textAlign,
           float,
-          display
+          display,
+          lineHeight
         } = chunkStyle,
         style = {},
         attrs = {style};
@@ -440,6 +447,7 @@ export class Label extends Morph {
     if (fontStyle !== "normal") style.fontStyle = fontStyle;
     if (textDecoration !== "none") style.textDecoration = textDecoration;
     if (textAlign) style.textAlign = textAlign;
+    if (lineHeight) style.lineHeight = lineHeight;
     if (textStyleClasses && textStyleClasses.length)
       attrs.className = textStyleClasses.join(" ");
 
