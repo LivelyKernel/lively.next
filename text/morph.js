@@ -770,12 +770,12 @@ export class Text extends Morph {
                   if (v && v.__serialize__) {
                     v = v.__serialize__();
                     Object.assign(bindings, v.bindings);
-                    return "->" + v.__expr__
+                    return "->" + `[${v.__expr__}]`
                   }
                   return v;
             });
-            stringified = stringified.replace(/\"->.*\"/g, (m) => {
-              return m.slice(3, -1)
+            stringified = stringified.replace(/\"->\[.*\]\"/g, (m) => {
+              return m.slice(4, -2)
             });
             return pool.expressionSerializer.exprStringEncode({
               __expr__: `(${stringified})`, // incorporate the bindings of each of the sub expressions
