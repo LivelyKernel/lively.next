@@ -228,8 +228,6 @@ export async function interactivelySaveWorld(world, options) {
       }
     }
 
-    i.remove();
-
     let commitSpec = {
           author: world.getCurrentUser(),
           message: "world save",
@@ -238,8 +236,6 @@ export async function interactivelySaveWorld(world, options) {
         commit = await db.snapshotAndCommit(
           "world", name, world, snapshotOptions,
           commitSpec, ref, expectedParentCommit);
-
-    i.openInWorld();
 
     // hist
     if (window.history) {
