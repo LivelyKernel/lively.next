@@ -13,6 +13,8 @@ import { LoadingIndicator } from "lively.components";
 import { allPlugins, LeakDetectorPlugin, plugins } from "lively.serializer2/plugins.js";
 import { config, MorphicDB } from "lively.morphic";
 import { SnapshotInspector } from "lively.serializer2/debugging.js";
+import { parse, BaseVisitor } from "lively.ast";
+import { AllNodesVisitor } from "lively.ast/lib/visitors.js";
 
 export async function interactivelyFreezePart(part, opts) {
   var li = LoadingIndicator.open("Freezing target...", {center: $world.visibleBounds().center()}),
@@ -110,14 +112,17 @@ export class FreezerPart {
     var imports = requiredModulesOfSnapshot(snap), // do this after the replacement of calls
         dynamicPartImports = [];
     for (let m of imports) {
-       const partsBinLoadCalls = /loadObjectFromPartsbinFolder\((\S*)\)/g,
-             partModuleSource = (await lively.modules.module(m).source()),
+       const partModuleSource = (await lively.modules.module(m).source()),
+             parsedModuleSource = parse(partModuleSource),
              dynamicPartLoads = [];
        let callSite;
-       while (callSite = partsBinLoadCalls.exec(partModuleSource)) {
-         dynamicPartLoads.push(callSite[1].slice(1, -1));
-       } 
+       AllNodesVisitor.run(parsedModuleSource, (node, path) => {
+         if (node.type == 'CallExpression' && node.callee.name == 'loadObjectFromPartsbinFolder') {
+            dynamicPartLoads.push(node.arguments[0].value);
+         }
+       }); 
          // try to resolve them
+       console.log(m, dynamicPartLoads);
        for (let partName of dynamicPartLoads) {
          let dynamicPart = await MorphicDB.default.fetchSnapshot('part', partName);
          if (dynamicPart) {
@@ -176,10 +181,14 @@ export class FreezerPart {
                           MorphicEnv.default().setWorldRenderedOn(world, document.body, window.prerenderNode);
                        }
                        export async function renderFrozenPart() {
-                          let obj = deserialize(window.lively.partData["${name}"]);
-                          window.$world.height = obj.height;
-                          obj.openInWorld();
-                          obj.top = 0;
+                          window.$world.dontRecordChangesWhile(() => {
+                            let obj = deserialize(window.lively.partData["${name}"], {
+                               reinitializeIds: function(id) { return id }
+                            });
+                            window.$world.height = obj.height;
+                            obj.openInWorld();
+                            obj.top = 0;
+                          });
                        }`;
 
     await createFiles(localDir, {
@@ -233,13 +242,13 @@ export class FreezerPart {
     if (opts.includeRuntime) {
       runtime = await resource(System.baseURL + 'lively.freezer/runtime-deps.js').read();
     }
-    
+
     return {
      warnings: this.warnings,
      file: runtime +
            `\nlively.partData = ${ JSON.stringify(this.partData) };\n\n` +
            body + 
-           `${this.runtimeGlobal}.get(${this.runtimeGlobal}.decanonicalize("${this.entryModule + '/index.js'}")).exports.renderFrozenPart()`
+           `${this.runtimeGlobal}.get(${this.runtimeGlobal}.decanonicalize("${this.entryModule + '/index.js'}")).exports.renderFrozenPart();`
     }
   }
 }
