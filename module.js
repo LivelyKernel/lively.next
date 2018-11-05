@@ -10,6 +10,7 @@ import { prepareCodeForCustomCompile, prepareTranslatedCodeForSetterCapture } fr
 import { module } from "lively.modules/index.js";
 import { classToFunctionTransform } from "lively.classes";
 import { rewriteToCaptureTopLevelVariables } from "lively.source-transform/capturing.js";
+import objectSpreadTransform from "lively.ast/lib/object-spread-transform.js";
 
 function exportCall(exportName, id) {
   return stringify(
@@ -117,10 +118,14 @@ export class StandaloneModule extends Module {
 
   wrapStandalone(source, runtimeGlobal) {
     const pkg = this.package;
-    // this needs to create the corresponding package as well
     return `(function(module, exports = {}, require = () => {}) {
-             ${source}
+             // try to simulate node.js context
+             const exec = function(exports, require) { ${source} };
+             exec(exports, require);
              if (lively.lang.obj.isEmpty(module.exports)) module.exports = exports;
+             if (lively.lang.obj.isEmpty(module.exports)) {
+                exec(); // try to run as global
+             }
            })(${runtimeGlobal}.globalModules["${this.qualifiedName}"] = {exports: {}})`;
   }
 
@@ -500,6 +505,7 @@ export class JSModule extends Module {
           additionalExports = [],
           tfmOpts = {
             classHolder: {type: "Identifier", name: "__rec"},
+            currentModuleAccessor: {type: "Identifier", name: "__mod"},
             functionNode: {type: "Identifier", name: "System.initializeClass"}},
           replaced = transform.replaceNodes([
           // remove import decls completely
@@ -511,11 +517,11 @@ export class JSModule extends Module {
             return {target, replacementFunc}
           })
         ], this._source);
-        replaced = stringify(rewriteToCaptureTopLevelVariables(parse(replaced.source), {type: "Identifier", name: "__rec"}, {
+        replaced = stringify(objectSpreadTransform(rewriteToCaptureTopLevelVariables(parse(replaced.source), {type: "Identifier", name: "__rec"}, {
           classToFunction: tfmOpts,
           es6ExportFuncId: '_export',
           ignoreUndeclaredExcept: []
-        }));
+        })));
         transpiledSource = `function(_export, _context) {\n`
          + `  "use strict";\n`
          + (topLevelDecl ? `  ${stringify(topLevelDecl)}\n` : "")
@@ -525,7 +531,8 @@ export class JSModule extends Module {
          + `${string.indent(setters.map(stringify).join(",\n"), "  ", 3)}\n`
          + `    ],\n`
          + `    execute: function() {\n`
-         + `const __rec = System.get("${this.qualifiedName}").recorder = {};\n`
+         + `const __mod = System.get("${this.qualifiedName}");\n`
+         + `const __rec = __mod.recorder = {};\n`
          + (topLevelVarNames || []).map(id => `__rec.${id} = ${id};`).join('\n')
          + `${string.indent(replaced.trim(), "  ", 3)}\n`
          + (additionalExports.length ? `${string.indent(additionalExports.join("\n"), "  ", 3)}\n` : "")
