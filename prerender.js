@@ -12,10 +12,12 @@ export function dispose(commit) {
 export function show(commit) {
   // remove other parts from the world, show and resize the selected commit
   const part = prerenderedParts[commit.name];
-  $world.submorphs = [];
-  part.openInWorld();
-  part.left = part.top = 0;
-  part.extent = $world.extent;
+  part.dontRecordChangesWhile(() => {
+    $world.submorphs = [];
+    part.openInWorld();
+    part.left = part.top = 0;
+    part.extent = $world.extent;
+  });
   return part;
 }
 
@@ -83,4 +85,4 @@ export async function prerender(commit, width, height, pathname, userAgent) {
         name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1"
       }],
       addScripts});
-}
+}  $world.env.changeManager.reset();
