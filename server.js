@@ -3,7 +3,7 @@ import { HeadlessSession } from "lively.headless";
 import zlib from 'zlib';
 import fs from 'fs';
 import urlParser from "url";
-import { obj } from "lively.lang";
+import { obj, date } from "lively.lang";
 import L2LClient from "lively.2lively/client.js";
 import { ObjectDB } from "lively.storage";
 import { join } from "path";
@@ -14,11 +14,19 @@ var containers = containers || {};
 var defaultDB = 'lively.morphic/objectdb/morphicdb';
 
 var lastReq;
+
+const noScriptTag = `
+<noscript>
+   <meta http-equiv="refresh" content="0;url=/noscript.html">
+</noscript>
+`
 export default class FrozenPartsLoader {
 
   get pluginId() { return "FrozenPartsLoader" }
 
   get before() { return ['jsdav', "lib-lookup"] }
+
+  get production() { return true }
   
   async setup(livelyServer) {
     if (!l2lClient) {
@@ -51,7 +59,7 @@ export default class FrozenPartsLoader {
     // over time pupeteer starts using up a lot of memory
     // this call restarts the pupeteer instance and
     // reinitializes the frozen parts
-    await this.headlessSession.dispose();
+    this.headlessSession && await this.headlessSession.dispose();
     this.headlessSession = false;
     for (let container of Object.values(containers)) {
       await this.restart(container);
@@ -61,26 +69,33 @@ export default class FrozenPartsLoader {
   async handleRequest(req, res, next) {
     if (!req.url.startsWith("/subserver/FrozenPartsLoader")) return next();
 
-    let [_, id, ...op] = req.url.split("/subserver/FrozenPartsLoader")[1].split('/'),
+    let sanitizedUrl = req.url.split('//').join('/');
+    let [_, id, ...op] = sanitizedUrl.split("/subserver/FrozenPartsLoader")[1].split('/'),
         container = containers[id];
-
     if (container && op.join('/').endsWith('load.js')) {
-      let userAgent = op[0];
+      let userAgent = op.slice(-2)[0];
       if (userAgent == 'mobile') container = containers[id + '.mobile'] || container;
-      if (userAgent == 'tablet') container = containers[id + '.tablet'] || container;
-      res.writeHead(200, {'Content-Type': 'application/javascript; charset=utf-8', 'Content-Encoding': 'gzip'});
+      if (userAgent == 'tablet') container = containers[id + '.tablet'] || containers[id + '.mobile'] || container;
+      res.writeHead(200, {
+        'Content-Type': 'application/javascript; charset=utf-8', 
+        'Content-Encoding': 'gzip', 
+        'Vary': 'Accept-Encoding',
+        'Cache-Control':' max-age=31536000',
+        'Last-Modified': container._lastChange.toGMTString()
+      });
       res.end(container._cachedScript);
       return;      
     }
 
     if (container && op.join('/').includes('prerender')) {
       let userAgent = 'default';
-      let {height, width, pathname} = urlParser.parse(req.url, true).query;
+      let {height, width, pathname} = urlParser.parse(sanitizedUrl, true).query;
       if (width < 600) userAgent = 'mobile';
-      if (width > 600 && width < 1024) userAgent = 'tablet';
+      if (width >= 600 && width < 1024) userAgent = 'tablet';
       res.writeHead(200, {'Content-Type': 'text/html'});
       try {
         lastReq = await this.prerender(id, width, height, pathname, userAgent);
+        lastReq = '<!DOCTYPE html>\n' + lastReq; 
       } catch (e) {
         res.end(e.message);
         return;
@@ -89,17 +104,46 @@ export default class FrozenPartsLoader {
       return;
     }
 
-    if (container && op.length > 1) {
+    if (container && op.length > 0) {
       let newPath = join(this.fsRootDir, ...op);
       newPath = newPath.split('?')[0];
-      req.url = req.url.replace('/subserver/FrozenPartsLoader/' + id, '');
-      next(); // pass on request to jsdav
-      return;
+      if (newPath != this.fsRootDir) {
+        req.url = sanitizedUrl.replace('/subserver/FrozenPartsLoader/' + id, '');
+        // fixme: dynamically create whitelist for each part, only grant access to all defined resources
+        let whitelist = [...(this.production ? [] : [
+                           'lively.lang', 
+                           'lively.notifications',
+                           'lively.classes',
+                           'lively.resources',
+                           'lively.storage',
+                           'lively.bindings',
+                           'lively.graphics',
+                           'lively.serializer2']),
+                         'users',
+                         'noscript.html',
+                         'objectdb',
+                         'lively.freezer',
+                         'resources', 
+                         'lively.morphic', 
+                         'subserver/MailService', 
+                         'lively.next-node_modules'];
+        if (whitelist.find(dir => req.url.startsWith('/' + dir))) {
+          console.log(req.url);
+          next(); // pass on request to jsdav
+        } else {
+          res.writeHead(403, {'Content-Type': 'text/plain'});
+          res.end();
+        }
+        return;
+      }
     }
 
     if (container) {
       // fixme: turn this into a proper transitioning not altering the URL
       const partsLoader = function () {
+        if (!window.location.origin) {
+          window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+        }
         var w = document.documentElement.clientWidth;
         var h = document.documentElement.clientHeight || window.innerHeight ;
         var path = document.location.pathname;
@@ -107,13 +151,15 @@ export default class FrozenPartsLoader {
             path = path.slice(0, path.length - 1)
         }
         var query = `/prerender?height=${h}&width=${w}&pathname=${path}`;
-        var red = window.origin + path + query; 
+        var red = window.location.origin + path + query; 
         document.location.replace(red);
       };
 
       res.writeHead(200, {'Content-Type': 'text/html'});
-      res.end(`<html><head>
+      res.end(`<!DOCTYPE html><html><head>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  ${noScriptTag}
 <script>(${partsLoader})()</script></head><body style="height: 100%; width: 100%;"></body></html>`);
       return;
     }
@@ -131,16 +177,16 @@ export default class FrozenPartsLoader {
 
   async prerender(id, width, height, pathname, userAgent) {
     let container;
-     if (userAgent == 'tablet' && containers[id + '.tablet']) {
-        container = containers[id + '.tablet'];
-     } else if (userAgent == 'mobile' && containers[id + '.mobile']) {
-        container = containers[id + '.mobile'];
+     if (userAgent == 'tablet') {
+        container = containers[id + '.tablet'] || containers[id + '.mobile'] || containers[id];
+     } else if (userAgent == 'mobile') {
+        container = containers[id + '.mobile'] || containers[id];
      } else {
         container = containers[id];
      }
      return await this.runEval(container, `
        const { prerender } = await System.import('lively.freezer/prerender.js');
-       await prerender(${JSON.stringify(container._commit)}, ${width}, ${height}, "${pathname}", "${userAgent}");
+       await prerender(${JSON.stringify(container._commit)}, ${width}, ${height}, "${pathname}", "${userAgent}", ${container._lastChange.getTime()}, ${this.production});
      `);
   }
 
@@ -181,6 +227,7 @@ export default class FrozenPartsLoader {
     container._cachedScript = zlib.gzipSync(script);
     // capture current screenshot
     container._preview = await this.screenshot(container);
+    container._lastChange = new Date();
   }
 
   async configure(container, commit, autoUpdate, dbName) {
@@ -278,7 +325,7 @@ export default class FrozenPartsLoader {
   async "[freezer] metrics"(tracker, {sender, data}, ackFn, socket) {
     let res;
     try {
-      res = await this.headlessSession.page.getMetrics();
+      res = this.headlessSession ? await this.headlessSession.page.getMetrics() : {JSHeapTotalSize: 0};
     } catch (e) {
       typeof ackFn === "function" && ackFn({error: e.message});
       return;
