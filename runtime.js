@@ -29,7 +29,7 @@ export function runtimeDefinition() {
     options: {},
     // this is for lively.serializer2 locateClass()
     moduleEnv(id) {
-      const m = System.get(id) || System.fetchStandaloneFor(id);
+      const m = System.get(id) || System.fetchStandaloneFor(id) || System.get(id + 'index.js');
       return {recorder: m.recorder || m.exports};
     }
   };
@@ -44,7 +44,7 @@ export function runtimeDefinition() {
     },
     set(moduleId, module) { return this.registry[moduleId] = module; },
     add(id, dependencies = [], exports = {}, executed = false) {
-      let module = {id, dependencies, executed, exports, execute: function () {}, setters: []};
+      let module = {id, dependencies, executed, exports, execute: function () {}, setters: [], package: function () { }};
       this.set(id, module);
       return module;
     },
@@ -395,7 +395,6 @@ export function runtimeDefinition() {
             this.updateImports(m);
             m.execute();
           } catch (e) {
-            console.error(e);
             m.executed = false;
           }
           updateDependents(m);
