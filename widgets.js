@@ -812,7 +812,7 @@ export class SearchField extends Text {
       borderColor: { defaultValue: Color.gray },
       layout: {
         initialize() {
-          this.layout = new HorizontalLayout({direction: 'rightToLeft'});
+          this.layout = new HorizontalLayout({autoResize: false, direction: 'rightToLeft'});
         }
       },
       fuzzy: {
