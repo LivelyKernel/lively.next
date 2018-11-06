@@ -32,6 +32,7 @@ module.exports = Promise.resolve()
       moduleName: 'lively.bindings',
       globals: {
         "lively.lang": "lively.lang",
+        "lively.source-transform": 'lively.sourceTransform',
         "module": "typeof module !== 'undefined' ? module.constructor : {}"
       },
     }))
