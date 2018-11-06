@@ -118,6 +118,7 @@ export default class FrozenPartsLoader {
                            'lively.storage',
                            'lively.bindings',
                            'lively.graphics',
+                           'lively.source-transform',
                            'lively.serializer2']),
                          'users',
                          'noscript.html',

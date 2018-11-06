@@ -85,15 +85,13 @@ export async function prerender(commit, width, height, pathname, userAgent, time
             `<script id="system" src="/lively.freezer/runtime-deps.js" defer></script>` :
             `<script src="/lively.freezer/semver.browser.js"></script>
              <script src="/lively.freezer/static-runtime.js"></script>
-             <script>
-                runtimeDefinition();
-             </script>
              <script src="/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js"></script>
+             <script>
+                lively.ast = {query: {}, acorn: {}, nodes: {}, BaseVisitor: function() {}};
+             </script>
+             <script src="/lively.source-transform/dist/lively.source-transform.js"></script>
              <script src="/lively.lang/dist/lively.lang.js"></script>
              <script src="/lively.notifications/dist/lively.notifications.js"></script>
-             <script>
-                lively.ast = {acorn: {}, nodes: {}, BaseVisitor: function() {}};
-             </script>
              <script src="/lively.classes/dist/lively.classes.js"></script>
              <script src="/lively.resources/dist/lively.resources.js"></script>
              <script src="/lively.storage/dist/lively.storage_with-pouch.js"></script>

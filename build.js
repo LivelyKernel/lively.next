@@ -12,21 +12,24 @@ semver = exports;
 })({}, {});
 `;
 
+
+var runtimeSource = `(${uglifyjs.minify(fs.readFileSync(require.resolve('lively.freezer/runtime.js')).toString()).code.slice(0,-1).replace('export ', '')})()`;
+
 var res =  [
 uglifyjs.minify(semverSourcePatched).code,
-`(${uglifyjs.minify(fs.readFileSync(require.resolve('lively.freezer/runtime.js')).toString()).code.slice(0,-1).replace('export ', '')})()`,  
+runtimeSource,  
 uglifyjs.minify(fs.readFileSync(require.resolve('babel-regenerator-runtime')).toString()).code,
 "//LIVELY.LANG",
 fs.readFileSync(require.resolve('lively.lang/dist/lively.lang.min.js')), 
 "//LIVELY.NOTIFICATIONS",
 uglifyjs.minify(fs.readFileSync(require.resolve('lively.notifications')).toString()).code,
 "//LIVELY.AST",
-"lively.ast = {acorn: {}, nodes: {}, BaseVisitor: function() {}};",
+"lively.ast = {query: {}, acorn: {}, nodes: {}, BaseVisitor: function() {}};",
 //uglifyjs.minify(fs.readFileSync(require.resolve('lively.ast')).toString()).code,
 "//LIVELY.CLASSES",
 uglifyjs.minify(fs.readFileSync(require.resolve('lively.classes')).toString()).code,
 "//LIVELY.SOURCE-TRANSFORM",
-//uglifyjs.minify(fs.readFileSync(require.resolve('lively.source-transform')).toString()).code,
+uglifyjs.minify(fs.readFileSync(require.resolve('lively.source-transform')).toString()).code,
 "//LIVELY.VM",
 //uglifyjs.minify(fs.readFileSync(require.resolve('lively.vm')).toString()).code,
 "//LIVELY.RESOURCES",
@@ -48,3 +51,4 @@ uglifyjs.minify(fs.readFileSync(require.resolve('lively.freezer/deps/fetch.umd.j
 ].join('\n');
 
 fs.writeFileSync('./runtime-deps.js', res);
+fs.writeFileSync('./static-runtime.js', runtimeSource);
