@@ -1,4 +1,4 @@
-import { CustomLayout, VerticalLayout, Morph, Text, StyleSheet, Label, Icon, morph } from "lively.morphic";
+import { CustomLayout, Morph, Text, StyleSheet, Label, Icon, morph } from "lively.morphic";
 import { pt, LinearGradient, Color, Rectangle, rect } from "lively.graphics";
 import { arr, Path, string } from "lively.lang";
 import { signal, once } from "lively.bindings";
@@ -1385,7 +1385,8 @@ export class DropDownList extends Button {
       let list = this.listMorph,
           focused = this.world() && this.world().focusedMorph;
       if (list !== focused
-      &&  !list.withAllSubmorphsDetect(m => m == focused))
+          && list.world()
+          && !list.withAllSubmorphsDetect(m => m == focused))
         list.fadeOut(200);
     }, 100);
   }
@@ -1406,7 +1407,7 @@ export class DropDownList extends Button {
         list.topLeft = this.innerBounds().bottomLeft();
       }
       once(list, 'onItemMorphClicked', this, 'toggleList');
-      // once(list, 'onBlur', this, 'removeWhenFocusLost');
+      once(list, 'onBlur', this, 'removeWhenFocusLost');
       list.focus();
       list.whenRendered(() => list.submorphs[0].submorphs.forEach(m => m.fit()))
     }
