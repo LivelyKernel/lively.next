@@ -3,6 +3,7 @@ import Database from "./database.js";
 import { resource } from "lively.resources";
 import { obj } from "lively.lang";
 import { promise } from "lively.lang";
+import { arr } from "lively.lang";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // sha1
@@ -660,12 +661,14 @@ export default class ObjectDB {
         commitDiff = await localCommitDB.diffWith(remoteCommitDB),
         versionDiff = await localVersionDB.diffWith(remoteVersionDB),
         local = await Promise.all(versionDiff.inLeft.map(async ea => ({id: ea.id, doc: await localVersionDB.get(ea.id)}))),
-        remote = await Promise.all(versionDiff.inRight.map(async ea => ({id: ea.id, doc: await remoteVersionDB.get(ea.id)}))),
+        allRemoteVersions = arr.groupBy(await remoteVersionDB.getAll(), d => d._id),
+        remote = await Promise.all(versionDiff.inRight.map(async ea => ({id: ea.id, doc: allRemoteVersions[ea.id]}))),
         changed = await Promise.all(versionDiff.changed.map(async ea => ({...ea.left, docA: await localVersionDB.get(ea.left.id), docB: await remoteVersionDB.get(ea.right.id)}))),
+        allRemoteCommits = arr.groupBy(await remoteCommitDB.getAll(), d => d._id),
         localCommits = [], remoteCommits = [], changedCommits = [];
 
     for (let ea of commitDiff.inLeft) localCommits.push(await localCommitDB.get(ea.id));
-    for (let ea of commitDiff.inRight) remoteCommits.push(await remoteCommitDB.get(ea.id));
+    for (let ea of commitDiff.inRight) remoteCommits.push(await allRemoteCommits[ea.id]);
     for (let ea of commitDiff.changed) {
       changedCommits.push(await localCommitDB.get(ea.left.id))
       changedCommits.push(await remoteCommitDB.get(ea.right.id))
