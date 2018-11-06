@@ -66,6 +66,7 @@ export class AnimationQueue {
 
   registerAnimation(config) {
     const anim = new PropertyAnimation(this, this.morph, config);
+    this.morph.makeDirty();
     return this.morph.withMetaDo({animation: anim}, () => {
       let existing = anim.affectsMorph && this.animations.find(a => a.equals(anim));
       if (!existing) {
@@ -182,8 +183,14 @@ export class PropertyAnimation {
   }
 
   mergeWith(animation) {
+    let origCustomTween = this.config.customTween,
+        customTween = (p) => {
+      origCustomTween && origCustomTween(p);
+      animation.customTween && animation.config.customTween(p);
+    }
     Object.assign(this.morph, animation.animatedProps);
     Object.assign(this.config, animation.config);
+    this.config.customTween = customTween;
     this.afterProps = this.gatherAnimationProps();
   }
 
