@@ -1,4 +1,5 @@
 import { string, arr, Closure } from "lively.lang";
+import { stringifyFunctionWithoutToplevelRecorder } from "lively.source-transform";
 
 export { connect, disconnect, disconnectAll, once, signal, noUpdate };
 
@@ -58,7 +59,9 @@ export class AttributeConnection {
   }
 
   __after_deserialize__(snapshot, objRef) {
-    if (!this.varMapping) this.varMapping = {source: this.sourceObj, target: this.targetObj};
+    if (!this.varMapping) this.varMapping = {};
+    this.varMapping.source = this.sourceObj;
+    this.varMapping.target = this.targetObj;
     this.connect();
   }
   
@@ -116,7 +119,7 @@ export class AttributeConnection {
 
   setUpdater(funcOrSource) {
     delete this.updater;
-    return this.updaterString = funcOrSource ? String(funcOrSource) : null;
+    return this.updaterString = funcOrSource ? stringifyFunctionWithoutToplevelRecorder(funcOrSource) : null;
   }
 
   getSpec() {
