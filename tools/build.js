@@ -28,7 +28,10 @@ module.exports = Promise.resolve()
   .then(bundle =>
     bundle.generate({
       format: 'iife',
-      moduleName: 'lively.lang'
+      moduleName: 'lively.lang',
+      globals: {
+        "lively.source-transform": 'lively.sourceTransform',
+      }
     }))
 
   .then(bundled => fs.writeFileSync(targetFile, fixSource(bundled.code)))

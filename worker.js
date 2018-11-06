@@ -10,6 +10,7 @@ import { makeEmitter } from "./events.js";
 import { newUUID } from "./string.js";
 import { waitFor } from "./function.js";
 import { create as messengerCreate } from "./messenger.js";
+import { stringifyFunctionWithoutToplevelRecorder } from "lively.source-transform";
 
 var isNodejs = typeof require !== 'undefined' && typeof process !== 'undefined';
 
@@ -196,8 +197,8 @@ var BrowserWorker = {
       WorkerSetup.initOnMessageHandler,
       WorkerSetup.initWorkerInterface,
       WorkerSetup.initWorkerMessenger
-    ].join('\n')).split('__lvVarRecorder.').join('');
-    var workerCode = '(' + workerSetupCode + ')();';
+    ].join('\n'));
+    var workerCode = '(' + stringifyFunctionWithoutToplevelRecorder(workerSetupCode) + ')();';
     var worker = new Worker(makeDataURI(workerCode));
     init(options, worker);
     return worker;
