@@ -33,6 +33,7 @@ module.exports = Promise.resolve()
         "lively.lang": "lively.lang",
         "lively.ast": "lively.ast",
         "lively.classes": "lively.classes",
+        "lively.source-transform": "lively.sourceTransform",
         "module": "typeof module !== 'undefined' ? module.constructor : {}"
       },
     }))
@@ -44,7 +45,7 @@ module.exports = Promise.resolve()
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
-  if (typeof lively.lang === "undefined") GLOBAL.livey.lang = {};
+  if (typeof lively.lang === "undefined") GLOBAL.lively.lang = {};
 })();
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :

@@ -13,6 +13,14 @@ export function stringifyFunctionWithoutToplevelRecorder(
   // when run in toplevel scope
   if (typeof funcOrSourceOrAst === "function")
     funcOrSourceOrAst = String(funcOrSourceOrAst);
+
+  if (lively.FreezerRuntime) {
+    // rms 6.11.18: We currently try to not load lively.ast within the freezer context since it increases the payload
+    //     of the core dependencies quite substantially. In turn perform a less sophisticated but mostly working
+    //     find and replace of the recorder    
+    return funcOrSourceOrAst.split(varRecorderName).join('');
+  }
+  
   var parsed = typeof funcOrSourceOrAst === "string" ?
         parseFunction(funcOrSourceOrAst) : funcOrSourceOrAst,
       replaced = ReplaceVisitor.run(parsed, (node) => {
