@@ -81,9 +81,11 @@ export async function freezeSnapshot({snapshot, progress}, opts) {
   Object.values(snap.snapshot).forEach(m => delete m.props.metadata);
   removeUnreachableObjects([snap.id], snap.snapshot);
   SnapshotInspector.forSnapshot(snap).openSummary();
-  return await (await FreezerPart.fromSnapshot(snap, opts)).standalone({
+  let res = await (await FreezerPart.fromSnapshot(snap, opts)).standalone({
       progress, includeRuntime: opts.includeRuntime
   });
+  debugger;
+  return res;
 }
 
 export class FreezerPart {
@@ -122,10 +124,10 @@ export class FreezerPart {
          }
        }); 
          // try to resolve them
-       console.log(m, dynamicPartLoads);
        for (let partName of dynamicPartLoads) {
          let dynamicPart = await MorphicDB.default.fetchSnapshot('part', partName);
-         if (dynamicPart) {
+         if (dynamicPart) {             
+           this.dynamicParts[partName] = dynamicPart;
            if (includeDynamicParts) {
              // load the packages of the part, if they are not loaded
              await loadPackagesAndModulesOfSnapshot(dynamicPart);
@@ -214,6 +216,7 @@ export class FreezerPart {
 
   async freezeSnapshot(snap, {includeDynamicParts = false} = {}) {
     this.warnings = {};
+    this.dynamicParts = {};
     let frozenPartPackageName = "frozen-" + snap.snapshot[snap.id]["lively.serializer-class-info"].className,
         imports = await this.getRequiredModulesFromSnapshot(snap, frozenPartPackageName, includeDynamicParts),
         packageMap = await this.computePackageMapForSnapshotAndImports(snap, imports, frozenPartPackageName);
@@ -244,6 +247,7 @@ export class FreezerPart {
     }
 
     return {
+     dynamicParts: this.dynamicParts,
      warnings: this.warnings,
      file: runtime +
            `\nlively.partData = ${ JSON.stringify(this.partData) };\n\n` +

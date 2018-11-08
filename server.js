@@ -7,13 +7,35 @@ import { obj, date } from "lively.lang";
 import L2LClient from "lively.2lively/client.js";
 import { ObjectDB } from "lively.storage";
 import { join } from "path";
+import { resource } from "lively.resources";
 const packagePath = System.decanonicalize("lively.headless/").replace("file://", "");
 
 var l2lClient;
+// store containers inside directory instead
 var containers = containers || {};
 var defaultDB = 'lively.morphic/objectdb/morphicdb';
 
 var lastReq;
+
+// {
+//   cachedScript.js
+//   preview.png
+//   dynamicParts/
+//   config.json {
+//   _autoUpdate: true, 
+//   _commit: {/*...*/},
+//   _dbName: "lively.morphic/objectdb/morphicdb", // dynamicParts/ populated during build process
+//   }
+//   _lastChange: {/*...*/}, // synthesized from folder file timestamps
+//   _timestamp: {/*...*/}, // synthesized from folder timestamp
+//     
+//   error: null, // just a state variable held in memory not needed for folder structure
+//   status: undefined // likewise
+// }
+
+// r = resource(System.decanonicalize('lively.freezer/dynamicParts/'))
+
+// containers.robin.dynamicParts
 
 const noScriptTag = `
 <noscript>
@@ -41,7 +63,7 @@ export default class FrozenPartsLoader {
       this.fsRootDir = livelyServer.options.jsdav.rootDirectory;
       l2lClient.options.ackTimeout = 1000*60*3;
     }
-    
+   
     ["[freezer] register part",
      "[freezer] update part",
      "[freezer] remove part",
@@ -49,6 +71,9 @@ export default class FrozenPartsLoader {
      "[freezer] refresh",
      "[freezer] metrics"
     ].forEach(sel => l2lClient.addService(sel, this[sel].bind(this)));
+
+    console.log('reading buckets from filesystem...');
+    await this.readBucketsFromFS();
 
     l2lClient.whenRegistered()
       .then(() => console.log("freezer service ready"))
@@ -83,7 +108,7 @@ export default class FrozenPartsLoader {
         'Cache-Control':' max-age=31536000',
         'Last-Modified': container._lastChange.toGMTString()
       });
-      res.end(container._cachedScript);
+      res.end(container._compressedScript);
       return;      
     }
 
@@ -185,10 +210,11 @@ export default class FrozenPartsLoader {
      } else {
         container = containers[id];
      }
-     return await this.runEval(container, `
+     let html = await this.runEval(container, `
        const { prerender } = await System.import('lively.freezer/prerender.js');
        await prerender(${JSON.stringify(container._commit)}, ${width}, ${height}, "${pathname}", "${userAgent}", ${container._lastChange.getTime()}, ${this.production});
      `);
+     return html.replace(`dynamicPartsDir = "/lively.freezer/frozenParts/$id/dynamicParts/";`, `dynamicPartsDir = "/lively.freezer/frozenParts/${id}/dynamicParts/";`);
   }
 
   async screenshot(container, screenshotPath) {
@@ -219,13 +245,15 @@ export default class FrozenPartsLoader {
   }
 
   async refresh(container) {
-    const script = await this.runEval(container, `
+    const { body: script, dynamicParts } = await this.runEval(container, `
         const { refresh } = await System.import('lively.freezer/prerender.js');
         await refresh(${JSON.stringify(container._commit)});
     `);
 
+    container._dynamicParts = dynamicParts;
+    container._script = script;
     // store frozen version gzipped in server side cache
-    container._cachedScript = zlib.gzipSync(script);
+    container._compressedScript = zlib.gzipSync(script);
     // capture current screenshot
     container._preview = await this.screenshot(container);
     container._lastChange = new Date();
@@ -264,6 +292,42 @@ export default class FrozenPartsLoader {
       id, preview, error, state, commit, dbName, timestamp, autoUpdate
     }
   }
+
+  async readBucketsFromFS() {
+    // populate the container mapping with the information stored inside the file system
+    let bucketDir = resource(System.decanonicalize('lively.freezer/frozenParts/'));
+    if (!await bucketDir.exists()) return false;
+    for (let bucket of await bucketDir.dirList()) {
+      let container = containers[bucket.name()] = {},
+          { commit, autoUpdate, dbName } = await bucket.join('config.json').readJson();
+      await this.configure(container, commit, autoUpdate, dbName || defaultDB);
+      await this.refresh(container); 
+    }
+  }
+
+  async storeInFS(id) {
+    let container = containers[id];
+    let bucketDir = await resource(System.decanonicalize('lively.freezer/frozenParts/')).join(id + '/').ensureExistance();
+    let dynamicPartDir = await bucketDir.join('dynamicParts/').ensureExistance();
+    await resource(System.decanonicalize('lively.freezer/runtime-deps.js')).copyTo(bucketDir.join('runtime-deps.js'));
+    await bucketDir.join('load.js').write(container._script);
+    await bucketDir.join('config.js').writeJson({
+      autoUpdate: container._autoUpdate,
+      commit: container._commit,
+      dbName: container._dbName
+    }, true);
+    // write into dynamicParts (uncompressed)
+    for (let dynamicPartName in container._dynamicParts) {
+       await dynamicPartDir.join(dynamicPartName + '.json').writeJson(container._dynamicParts[dynamicPartName]);
+    }
+    let prerender = await this.prerender(id, 0, 0, '/', 'static');
+    prerender = prerender.replace('/lively.freezer/runtime-deps.js', 'runtime-deps.js')
+                         .replace(`/static/${container._lastChange.getTime()}-load.js`, 'load.js')
+                         .replace(`dynamicPartsDir = "/lively.freezer/frozenParts/${id}/dynamicParts/";`, `dynamicPartsDir = window.document.location.pathname.replace('index.html', 'dynamicParts')
+;`)
+                         .replace(`history.replaceState(null, '', (new URL(location.href)).searchParams.get('pathname') || window.location.origin);`, '');
+    await bucketDir.join('index.html').write(prerender);
+  }
   
   // l2l services
 
@@ -290,6 +354,7 @@ export default class FrozenPartsLoader {
       let container = containers[id] = {};
       await this.configure(container, commit, autoUpdate, dbName || defaultDB);
       await this.refresh(container);
+      await this.storeInFS(id);
     } catch (e) {
       typeof ackFn === "function" && ackFn({
         error: e.message
@@ -308,6 +373,7 @@ export default class FrozenPartsLoader {
        }
        await this.configure(container, commit, autoUpdate, dbName);
        await this.refresh(container);
+       await this.storeInFS(id);
      } catch (e) {
        typeof ackFn === "function" && ackFn({
         error: e.message

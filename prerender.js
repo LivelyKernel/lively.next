@@ -5,6 +5,8 @@ import { newMorphId } from "lively.morphic";
 
 let prerenderedParts;
 
+// refresh(commit)
+
 export function dispose(commit) {
   prerenderedParts[commit.name].remove();
   delete prerenderedParts[commit.name];
@@ -37,7 +39,7 @@ export async function refresh(commit, freeze=true) {
             return newMorphId(ref.realObj.constructor);
           }
         }),
-        {file: body} = freeze ? await freezeSnapshot({
+        { file: body, dynamicParts } = freeze ? await freezeSnapshot({
       snapshot: JSON.stringify(snapshot)
     }, {
       notifications: false,
@@ -59,7 +61,7 @@ export async function refresh(commit, freeze=true) {
   if (!prerenderedParts) prerenderedParts = {};
   prerenderedParts[commit.name] = part;
   await show(commit);
-  return body;
+  return { body, dynamicParts };
 }
 
 export async function prerender(commit, width, height, pathname, userAgent, timestamp, production) {
@@ -77,6 +79,7 @@ export async function prerender(commit, width, height, pathname, userAgent, time
         if (!window.location.origin) {
           window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
         }
+        dynamicPartsDir = "/lively.freezer/frozenParts/$id/dynamicParts/";
         lively = {};
         System = {baseUrl: window.location.origin};
       </script>

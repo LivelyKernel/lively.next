@@ -1,4 +1,4 @@
-/*global self,global,System,origin*/
+/*global self,global,System,origin,dynamicPartsDir*/
 
 /*
 
@@ -73,7 +73,7 @@ export function runtimeDefinition() {
       return localName;
     },
     loadObjectFromPartsbinFolder(name) {
-      return G.lively.morphic.MorphicDB.default.fetchSnapshot('part', name).then(snapshot => {
+      return G.lively.resources.resource(origin + dynamicPartsDir).join(name + '.json').readJson().then(snapshot => {
          return G.lively.morphic.loadMorphFromSnapshot(
            snapshot, {
              onDeserializationStart: false, 
