@@ -1,9 +1,9 @@
 /*global process,require,System*/
 
 let nodeVersion = process.versions.node;
-let majorVersion = Number(nodeVersion[0]);
+let majorVersion = Number(nodeVersion.split('.')[0]);
 if (majorVersion < 7) {
-  console.error("nodejs version %s not supported by lively.next.  Please use at least nodejs 7.");
+  console.error("nodejs version %s not supported by lively.next.  Please use at least nodejs 7.", majorVersion);
   process.exit(1);
 }
 
