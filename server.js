@@ -72,10 +72,9 @@ export default class FrozenPartsLoader {
      "[freezer] metrics"
     ].forEach(sel => l2lClient.addService(sel, this[sel].bind(this)));
 
-    console.log('reading buckets from filesystem...');
-    await this.readBucketsFromFS();
-
     l2lClient.whenRegistered()
+      .then(() => console.log('reading buckets from filesystem...'))
+      .then(() => this.readBucketsFromFS())
       .then(() => console.log("freezer service ready"))
       .catch(err => console.error(`freezer initialization failed`, err))
   }
@@ -305,13 +304,17 @@ export default class FrozenPartsLoader {
     }
   }
 
+  async removeFromFS(id) {
+    await resource(System.decanonicalize('lively.freezer/frozenParts/')).join(id + '/').remove();
+  }
+
   async storeInFS(id) {
     let container = containers[id];
     let bucketDir = await resource(System.decanonicalize('lively.freezer/frozenParts/')).join(id + '/').ensureExistance();
     let dynamicPartDir = await bucketDir.join('dynamicParts/').ensureExistance();
     await resource(System.decanonicalize('lively.freezer/runtime-deps.js')).copyTo(bucketDir.join('runtime-deps.js'));
     await bucketDir.join('load.js').write(container._script);
-    await bucketDir.join('config.js').writeJson({
+    await bucketDir.join('config.json').writeJson({
       autoUpdate: container._autoUpdate,
       commit: container._commit,
       dbName: container._dbName
@@ -386,6 +389,7 @@ export default class FrozenPartsLoader {
   async "[freezer] remove part"(tracker, {sender, data: {id}}, ackFn, socket) {
     await this.close(containers[id]);
     delete containers[id];
+    await this.removeFromFS(id);
     typeof ackFn === "function" && ackFn({success: true, status: "OK"})
   }
 
