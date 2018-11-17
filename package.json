@@ -2,7 +2,7 @@
   "name": "lively.graphics",
   "version": "0.1.1",
   "dependencies": {
-    "lively.lang": "^1.0.0"
+    "lively.lang": "^1.0.23"
   },
   "repository": {
     "type": "git",
