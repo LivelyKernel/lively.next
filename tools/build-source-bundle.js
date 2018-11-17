@@ -34,7 +34,22 @@ if (!fs.existsSync('./dist')) {
   fs.mkdirSync('./dist');
 }
 
-const opts = {classHolder: {type: "Identifier", name: "_classRecorder"}, functionNode: {type: "Identifier", name: "lively.classes.runtime.initializeClass"}};
+const opts = {
+  classHolder: {type: "Identifier", name: "_classRecorder"}, 
+  functionNode: {type: "Identifier", name: "lively.classes.runtime.initializeClass"},
+  currentModuleAccessor: ast.parse(`({
+      pathInPackage: () => {
+         return '/index.js'
+      },
+      subscribeToToplevelDefinitionChanges: () => () => {},
+      package: () => { 
+        return {
+          name: "${JSON.parse(fs.readFileSync('./package.json')).name}",
+          version: "${JSON.parse(fs.readFileSync('./package.json')).version}"
+        } 
+      } 
+    })`).body[0].expression,
+};
 
 module.exports = Promise.resolve()
 // 1. make sure deps are build
