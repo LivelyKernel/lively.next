@@ -32,7 +32,9 @@
       }
     }
   },
-  "dependencies": {},
+  "dependencies": {
+    "lively.source-transform": "^0.1.6" 
+  },
   "devDependencies": {
     "babel-core": "^6.16.0",
     "babel-plugin-external-helpers": "^6.8.0",
