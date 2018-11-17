@@ -10,7 +10,7 @@ import { makeEmitter } from "./events.js";
 import { newUUID } from "./string.js";
 import { waitFor } from "./function.js";
 import { create as messengerCreate } from "./messenger.js";
-import { stringifyFunctionWithoutToplevelRecorder } from "lively.source-transform";
+import Closure from "./closure.js";
 
 var isNodejs = typeof require !== 'undefined' && typeof process !== 'undefined';
 
@@ -191,14 +191,14 @@ var BrowserWorker = {
       options.libLocation = workerScript.src.replace(/worker.js$/, '');
     }
 
-    var workerSetupCode = String(workerSetupFunction).replace("__FUNCTIONDECLARATIONS__", [
+    const workerSetupCode = String(workerSetupFunction).replace("__FUNCTIONDECLARATIONS__", [
       WorkerSetup.initBrowserGlobals,
       WorkerSetup.loadDependenciesBrowser,
       WorkerSetup.initOnMessageHandler,
       WorkerSetup.initWorkerInterface,
       WorkerSetup.initWorkerMessenger
     ].join('\n'));
-    var workerCode = '(' + stringifyFunctionWithoutToplevelRecorder(workerSetupCode) + ')();';
+    var workerCode = '(' + Closure.fromSource(workerSetupCode).getFuncSource() + ')();';
     var worker = new Worker(makeDataURI(workerCode));
     init(options, worker);
     return worker;
