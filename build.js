@@ -37,7 +37,7 @@ uglifyjs.minify(fs.readFileSync(require.resolve('lively.resources/dist/lively.re
 "//LIVELY.STORAGE",
 fs.readFileSync(require.resolve('lively.storage/dist/lively.storage_with-pouch.min.js')), 
 "//LIVELY.GRAPHICS",
-fs.readFileSync(require.resolve("lively.graphics/dist/lively.graphics.min.js")),
+fs.readFileSync(require.resolve("lively.graphics/dist/lively.graphics_no-deps.min.js")),
 "//LIVELY.BINDINGS",
 fs.readFileSync(require.resolve("lively.bindings/dist/lively.bindings.min.js")),
 "//LIVELY.SERIALIZER",
