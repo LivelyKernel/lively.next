@@ -376,7 +376,7 @@ var config = {
     defaultStyle: {
       fontFamily: "Monaco, Inconsolata, monospace",
       padding: Rectangle.inset(4, 2, 4, 2),
-      fontSize: bowser.mac ? 12 : 16,
+      fontSize: 12,
       clipMode: "auto",
     },
 

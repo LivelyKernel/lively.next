@@ -338,7 +338,7 @@ export class Morph {
         group: "core",
         defaultValue: [],
         after: ["isLayoutable", "origin", "position", "rotation", "scale"],
-        get() { return (this.getProperty("submorphs") || []).slice(); },
+        get() { return (this.getProperty("submorphs") || []).concat(); },
         set(newSubmorphs) {
           let {layout} = this,
               activateLayout = layout && layout.isEnabled();
@@ -1110,8 +1110,8 @@ export class Morph {
   scrollUp(n) { this.scrollDown(-n*50); }
   scrollLeft(n) { this.scroll = this.scroll.addXY(n, 0); }
   scrollRight(n) { this.scrollLeft(-n); }
-  scrollPageDown(n) { this.scrollDown(this.height); }
-  scrollPageUp(n) { this.scrollUp(this.height*2); }
+  scrollPageDown() { this.scrollDown(this.height); }
+  scrollPageUp() { this.scrollUp(this.height); }
 
   static get styleClasses() {
     // we statically determine default style classes based on the Morph
@@ -2066,7 +2066,10 @@ export class Morph {
   menuItems() {
     var world = this.world(),
         items = [], self = this;
-
+        //If reset exists and is a function, it will add it as the first option in the menu list
+        if (this.reset && typeof this.reset == 'function'){
+          items.push(['Reset',()=>{this.reset()}])
+        }
     // items.push(['Select all submorphs', function(evt) { self.world().setSelectedMorphs(self.submorphs.clone()); }]);
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -2469,11 +2472,11 @@ export class Morph {
   copy() { return copyMorph(this); }
 
   async interactivelyPublish() {
+    let world = this.world() || this.env.world;
     try {
-      let {interactivelySavePart} = await System.import("lively.morphic/partsbin.js"),
-          commit = await interactivelySavePart(this, {
-            notifications: false, loadingIndicator: true}),
-          world = this.world() || this.env.world;
+      let {interactivelySavePart} = await System.import("lively.morphic/partsbin.js");
+      let commit = await interactivelySavePart(this, {
+        notifications: false, loadingIndicator: true});
       world.setStatusMessage(
         commit ?
           `Published ${this} as ${commit.name}` :
@@ -2745,6 +2748,10 @@ export class Image extends Morph {
         }
       },
 
+      fill: {
+        defaultValue: Color.transparent
+      },
+
       naturalExtent: {defaultValue: null},
       isLoaded: {defaultValue: false, serialize: false},
       autoResize: {defaultValue: false}
@@ -2855,18 +2862,27 @@ export class Image extends Morph {
   }
 
   async convertToBase64() {
-    // this.imageUrl = "http://blog.openclassrooms.com/en/wp-content/uploads/sites/4/2015/11/hello-world-v02.jpg"
     // await this.convertToBase64();
-    var urlString = this.imageUrl,
-        type = urlString.slice(urlString.lastIndexOf('.') + 1, urlString.length).toLowerCase();
-    if (type == 'jpg') type = 'jpeg';
-    if (!['gif', 'jpeg', 'png', 'tiff'].includes(type)) type = 'gif';
-    if (!urlString.startsWith('http'))
-      urlString = location.origin + "/" + urlString;
-    let {runCommand} = await System.import("lively.ide/shell/shell-interface"),
-        cmd = 'curl --silent "' + urlString + '" | openssl base64',
-        {stdout} = await runCommand(cmd).whenDone();
-    return this.loadUrl('data:image/' + type + ';base64,' + stdout, false);
+    let urlString = this.imageUrl;
+    let type = urlString.slice(urlString.lastIndexOf('.') + 1, urlString.length).toLowerCase();
+
+    if (type === 'jpg') {
+      type = 'jpeg';
+    } else if (type === 'svg') {
+      type = 'svg+xml';
+    }
+    if (!['gif', 'jpeg', 'png', 'tiff', 'svg+xml'].includes(type)) {
+      type = 'gif';
+    }
+
+    if (!urlString.startsWith('http')) {
+      urlString = `${location.origin}/${urlString}`;
+    }
+
+    let {runCommand} = await System.import('lively.ide/shell/shell-interface');
+    let cmd = `curl --silent "${urlString}" | openssl base64`;
+    let {stdout} = await runCommand(cmd).whenDone();
+    return this.loadUrl(`data:image/${type};base64,${stdout}`, false);
   }
 
   downloadImage() {
@@ -2984,9 +3000,15 @@ export class PathPoint {
     this._isSmooth = props.isSmooth || false;
     this.x = props.position ? props.position.x : (props.x || 0);
     this.y = props.position ? props.position.y : (props.y || 0);
-    this.controlPoints = props.controlPoints;
-    connect(this, 'position', path, 'makeDirty');
-    connect(this, 'controlPoints', path, 'makeDirty');
+    this._controlPoints = props.controlPoints;
+  }
+
+  get __dont_serialize__() {
+    return [
+      'attributeConnections',
+      '$$controlPoints', '$$position',
+      'doNotCopyProperties', 'doNotSerialize'
+    ];
   }
 
   get isPathPoint() { return true; }
@@ -3001,7 +3023,11 @@ export class PathPoint {
   }
 
   get position() { return pt(this.x, this.y)};
-  set position({x,y}) { this.x = x; this.y = y; }
+  set position({x,y}) {
+    this.x = x;
+    this.y = y;
+    this.path.makeDirty();
+  }
 
   moveBy(delta) {
     this.position = this.position.addPt(delta);
@@ -3034,6 +3060,8 @@ export class PathPoint {
     // ensure points
     let { next, previous } = cps;
     this._controlPoints = { next: next ? Point.fromLiteral(next) : pt(0,0), previous: previous ? Point.fromLiteral(previous) : pt(0,0) }; }
+    this.path.makeDirty();
+  }
 
   moveNextControlPoint(delta) {
     this.moveControlPoint("next", delta);
@@ -3497,7 +3525,7 @@ export class LineMorph extends Morph {
         defaultValue: Line.fromCoords(0, 0, 0, 0),
         set(val) {
           this.setProperty("line", val);
-          this.update();
+          this.update(val);
         }
       },
       start: {
@@ -3515,7 +3543,9 @@ export class LineMorph extends Morph {
         get(val) { return this.start; },
         set(val) {
           let delta = val.subPt(this.start);
+          var rotation = this.rotation;
           this.line = new Line(val, this.end.addPt(delta));
+          this.rotation = rotation;
         }
       }
     }
@@ -3532,6 +3562,7 @@ export class LineMorph extends Morph {
     this.setProperty("position", this.position.addPt(line.perpendicularLine(0, height, "cc").toVector()))
     this.width = vec.fastR();
     this.rotation = vec.theta();
+    this.vec = vec;
     this._isUpdating = false;
   }
 }

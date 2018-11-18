@@ -63,9 +63,7 @@ export class Text extends Morph {
 
 
   static get properties() {
-
     return {
-
       clipMode: {
         isStyleProp: true,
         defaultValue: "visible",
@@ -191,11 +189,13 @@ export class Text extends Morph {
         isStyleProp: true,
         defaultValue: config.text.useSoftTabs !== undefined ? config.text.useSoftTabs : true
       },
+
       tabWidth: {
         group: "text",
         isStyleProp: true,
         defaultValue: config.text.tabWidth || 2
       },
+
       tab: {
         group: "text",
         isStyleProp: true,
@@ -344,7 +344,7 @@ export class Text extends Morph {
           return this.document ? this.document.textString : "";
         },
         set(value) {
-          value = value ? String(value) : "";
+          value = (value != null) ? String(value) : "";
           this.deleteText({start: {column: 0, row: 0}, end: this.document.endPosition});
           this.insertText(value, {column: 0, row: 0});
         }
@@ -429,7 +429,7 @@ export class Text extends Morph {
       fontFamily: {
         group: "text styling",
         type: "Enum",
-        values: config.basicFontItems,
+        values: config.text.basicFontItems,
         defaultValue: "Sans-Serif",
         isStyleProp: true,
         isDefaultTextStyleProp: true,

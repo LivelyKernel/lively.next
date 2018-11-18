@@ -105,8 +105,9 @@ export function addSvgAttributes(morph, style) {
 
 export function getSvgVertices(vertices) {
   let X, Y, lastV;
-  var d = '';
-  {
+  let d = '';
+
+  if (vertices.length > 0) {
     lastV = vertices[0];
     let {x, y} = lastV.position;
     X = x; Y = y;
@@ -124,7 +125,7 @@ export function getSvgVertices(vertices) {
     X = x; Y = y
   }
 
-  {
+  if (vertices.length > 0) {
     let {isSmooth, x, y, controlPoints: {previous: p}} = vertices[vertices.length-1];
     d = isSmooth ?
       d + `C ${X + lastV.controlPoints.next.x} ${Y + lastV.controlPoints.next.y} ${x+p.x} ${y+p.y} ${x} ${y}` :

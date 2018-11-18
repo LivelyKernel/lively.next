@@ -529,7 +529,11 @@ export class SearchWidget extends Morph {
 
     var result = this.state.inProgress = {...opts, needle: this.input, found};
     this.applySearchResult(result);
-    found && this.addSearchMarkers(found, backwards);
+    if (found) {
+      this.addSearchMarkers(found, backwards);      
+    } else {
+      this.cleanup();
+    }
     return result;
   }
 
