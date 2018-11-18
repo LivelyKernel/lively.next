@@ -3059,7 +3059,7 @@ export class PathPoint {
   set controlPoints(cps = {}) { 
     // ensure points
     let { next, previous } = cps;
-    this._controlPoints = { next: next ? Point.fromLiteral(next) : pt(0,0), previous: previous ? Point.fromLiteral(previous) : pt(0,0) }; }
+    this._controlPoints = { next: next ? Point.fromLiteral(next) : pt(0,0), previous: previous ? Point.fromLiteral(previous) : pt(0,0) };
     this.path.makeDirty();
   }
 
