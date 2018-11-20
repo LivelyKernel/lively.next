@@ -43,7 +43,7 @@ module.exports = Promise.resolve()
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
-  if (typeof lively.lang === "undefined") GLOBAL.livey.lang = {};
+  if (typeof lively.lang === "undefined") GLOBAL.lively.lang = {};
 })();
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
