@@ -681,14 +681,14 @@ export class Morph {
         defaultValue: false
       },
 
-      installedCSSDeclarations: {
-        doc: "custom styles (most often fonts) can be installed from a respective morph, and are then kept as part of this morph's state in order to be loaded again the next time the it is cold loaded. (i.e. deserialization of a part)",
+      installedFonts: {
+        doc: "custom fonts can be installed from a respective morph, and are then kept as part of this morph's state in order to be loaded again the next time the it is cold loaded. (i.e. deserialization of a part)",
         defaultValue: {},
-        set(declarations) {
-          const propsBefore = arr.without(obj.keys(this.installedCSSDeclarations || {}), '_rev'),
-                propsAfter = arr.without(obj.keys(declarations || {}), '_rev');
-          this.setProperty('installedCSSDeclarations', declarations);
-          this.ensureCustomCSSDeclarations(propsAfter, propsBefore);
+        set(fonts) {
+          const fontsBefore = arr.without(obj.keys(this.installedFonts || {}), '_rev'),
+                fontsAfter = arr.without(obj.keys(fonts || {}), '_rev');
+          this.setProperty('installedFonts', fonts);
+          this.ensureInstalledFonts(fontsBefore, fontsAfter);
         }
       },
 
@@ -902,24 +902,24 @@ export class Morph {
   // custom font/css management 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  addOrChangeCSSDeclaration(id, cssString) {
-     this.installedCSSDeclarations[id] = cssString;
-     addOrChangeCSSDeclaration(`${this.id}-${id}`, cssString);
+  installFont(name, fontUrl) {
+     this.installedFonts[name] = fontUrl;
+     addOrChangeCSSDeclaration(`${this.id}-${name}`, `@import url("${this.installedFonts[name]}");`);
   }
 
-  removeCSSDeclaration(id) {
-    delete this.installedCSSDeclarations[id];
-    let node = document.getElementById(`${this.id}-${id}`);
+  uninstallFont(name) {
+    delete this.installedFonts[name];
+    let node = document.getElementById(`${this.id}-${name}`);
     if (node) node.remove();
   }
 
-  ensureCustomCSSDeclarations(addedRules, removedRules) {
-    for (let id of removedRules) {
-      let node = document.getElementById(`${this.id}-${id}`);
+  ensureInstalledFonts(removedFonts, addedFonts) {
+    for (let name of removedFonts) {
+      let node = document.getElementById(`${this.id}-${name}`);
       if (node) node.remove();
     }
-    for (let id of addedRules) {
-      addOrChangeCSSDeclaration(`${this.id}-${id}`, this.installedCSSDeclarations[id]);
+    for (let name of addedFonts) {
+      addOrChangeCSSDeclaration(`${this.id}-${name}`, `@import url("${this.installedFonts[name]}");`);
     }
   }
 
