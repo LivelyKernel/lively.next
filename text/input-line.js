@@ -494,7 +494,17 @@ export class PasswordInputLine extends HTMLMorph {
     });
   }
 
-  ensureInputNode() { return this.whenRendered().then(() => this.domNode); }
+  ensureInputNode() { 
+    return this.whenRendered().then(() => {
+      let n = this.domNode;
+      if (n.parentNode.tagName == 'INPUT') {
+        let actualNode = n.parentNode;
+        n.remove();
+        this.domNode = actualNode;
+      }
+      return this.domNode;
+    }); 
+  }
 
   onKeyDown(evt) {
     super.onKeyDown(evt);
