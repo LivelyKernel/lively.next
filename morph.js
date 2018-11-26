@@ -1,13 +1,13 @@
 /*global System,Uint8Array,Blob,location*/
 import { Color, Line, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
-import { string, obj, arr, num, promise, tree, Path as PropertyPath } from "lively.lang";
-import { connect, signal } from "lively.bindings";
+import { string, properties, obj, arr, num, promise, tree, Path as PropertyPath } from "lively.lang";
+import { signal } from "lively.bindings";
 import {
   renderRootMorph,
   ShadowObject
 } from "./rendering/morphic-default.js";
 import { AnimationQueue, easings } from "./rendering/animations.js";
-import { morph, Icon } from "./index.js";
+import { morph, addOrChangeCSSDeclaration, Icon } from "./index.js";
 import { MorphicEnv } from "./env.js";
 import config from "./config.js";
 import CommandHandler from "./CommandHandler.js";
@@ -681,6 +681,17 @@ export class Morph {
         defaultValue: false
       },
 
+      installedCSSDeclarations: {
+        doc: "custom styles (most often fonts) can be installed from a respective morph, and are then kept as part of this morph's state in order to be loaded again the next time the it is cold loaded. (i.e. deserialization of a part)",
+        defaultValue: {},
+        set(declarations) {
+          const propsBefore = arr.without(obj.keys(this.installedCSSDeclarations || {}), '_rev'),
+                propsAfter = arr.without(obj.keys(declarations || {}), '_rev');
+          this.setProperty('installedCSSDeclarations', declarations);
+          this.ensureCustomCSSDeclarations(propsAfter, propsBefore);
+        }
+      },
+
       metadata: {group: "core"}
     }
 
@@ -885,6 +896,31 @@ export class Morph {
       }
     });
     this.metadata = metadata;
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // custom font/css management 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  addOrChangeCSSDeclaration(id, cssString) {
+     this.installedCSSDeclarations[id] = cssString;
+     addOrChangeCSSDeclaration(`${this.id}-${id}`, cssString);
+  }
+
+  removeCSSDeclaration(id) {
+    delete this.installedCSSDeclarations[id];
+    let node = document.getElementById(`${this.id}-${id}`);
+    if (node) node.remove();
+  }
+
+  ensureCustomCSSDeclarations(addedRules, removedRules) {
+    for (let id of removedRules) {
+      let node = document.getElementById(`${this.id}-${id}`);
+      if (node) node.remove();
+    }
+    for (let id of addedRules) {
+      addOrChangeCSSDeclaration(`${this.id}-${id}`, this.installedCSSDeclarations[id]);
+    }
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
