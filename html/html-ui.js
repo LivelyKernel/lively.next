@@ -67,7 +67,7 @@
       loginWidget.querySelector(".user-name-input").focus();
     }
     async function continueAsGuest() {
-      let reg = UserRegistry.current, stored = reg.loadUserFromLocalStorage(authServerURL), user = stored.isGuestUser ? stored : await reg.login(ClientUser.guest);
+      let reg = UserRegistry.current, stored = reg.loadUserFromLocalStorage(authServerURL), user = (stored && stored.isGuestUser) ? stored : await reg.login(ClientUser.guest);
       resolveWithUser(user);
     }
     function setupRegisterWidget() {

@@ -7,6 +7,8 @@ export default class UserRegistry {
     return this._current || (this._current = new this());
   }
 
+  get isTrackingGuestUsers() { return false }
+
   hasUserStored() {
     try {
       return !!localStorage["lively.user"] || !!sessionStorage["lively.user"];
@@ -24,8 +26,10 @@ export default class UserRegistry {
 
   async logout(user) {
     try {
-      delete localStorage["lively.user"];
-      delete sessionStorage["lively.user"];
+      if (!this.isTrackingGuestUsers) {
+         delete localStorage["lively.user"];
+         delete sessionStorage["lively.user"]; 
+      }
     } catch (err) {}
     user = user && user.isGuestUser ? user : User.guest;
     if (lively.notifications)
@@ -54,7 +58,7 @@ export default class UserRegistry {
     } catch (err) {
       console.warn(`Could not read user from localStorage: ${err}`);
     }
-    return GuestUser.guest;
+    return this.isTrackingGuestUsers ? false : GuestUser.guest;
   }
 
   saveUserToLocalStorage(user) {
@@ -64,9 +68,11 @@ export default class UserRegistry {
       lively.notifications.emit("lively.user/userchanged", {user}, Date.now(), System);
 
     try {
-      if (user.isGuestUser) {
+      if (user.isGuestUser && !this.isTrackingGuestUsers) {
         sessionStorage["lively.user"] = JSON.stringify({isGuest: true, name: user.name});
         delete localStorage["lively.user"];
+      } else if (user.isGuestUser && this.isTrackingGuestUsers) {
+        localStorage["lively.user"] = JSON.stringify({isGuest: true, name: user.name});
       } else {
         localStorage["lively.user"] = JSON.stringify({token: user.token});
       }
