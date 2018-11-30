@@ -5,7 +5,7 @@ var path = require("path");
 var rollup = require('rollup');
 var babel = require('rollup-plugin-babel');
 var uglifyjs = require('uglify-es');
-var ast = require('lively.ast');
+var ast = require('lively.ast/dist/lively.ast.js');
 var classes = require('lively.classes');
 
 var targetFile = "dist/lively.bindings.js";
