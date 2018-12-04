@@ -19,7 +19,6 @@ export function show(commit) {
     $world.submorphs = [];
     part.openInWorld();
     part.left = part.top = 0;
-    part.extent = $world.extent;
   });
   return part;
 }
@@ -112,14 +111,9 @@ export async function prerender(commit, width, height, pathname, userAgent, time
        </script>`;
 
    $world.dontRecordChangesWhile(() => {
-     part.width = width;
-     part.height = height;
      $world.width = width;
      $world.height = height;
-   });
-   await $world.whenRendered();
-   $world.dontRecordChangesWhile(() => {
-     if (part.onWorldResize) part.onWorldResize();
+     part.execCommand('resize on server');
    });
    await $world.whenRendered();
    return await generateHTML($world, {

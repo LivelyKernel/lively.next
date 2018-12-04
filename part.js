@@ -84,7 +84,6 @@ export async function freezeSnapshot({snapshot, progress}, opts) {
   let res = await (await FreezerPart.fromSnapshot(snap, opts)).standalone({
       progress, includeRuntime: opts.includeRuntime
   });
-  debugger;
   return res;
 }
 
@@ -187,9 +186,10 @@ export class FreezerPart {
                             let obj = deserialize(window.lively.partData["${name}"], {
                                reinitializeIds: function(id) { return id }
                             });
-                            window.$world.height = obj.height;
                             obj.openInWorld();
-                            obj.top = 0;
+                            //lively.bindings.connect(window.$world, 'onWindowResize', obj, 'execCommand', { converter: () => 'resize on client'});
+                            window.onresize = () => obj.execCommand('resize on client');
+                            obj.execCommand('resize on client');
                           });
                        }`;
 
@@ -223,7 +223,7 @@ export class FreezerPart {
     this.entryModule = frozenPartPackageName;
     this.bundle = new Bundle(packageMap);
     this.partData = {
-      [frozenPartPackageName]: snap
+      [frozenPartPackageName]: {...snap, packages: {}}
     };
     return this;
   }
