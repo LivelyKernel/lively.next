@@ -1,4 +1,4 @@
-/*global System,origin*/
+/*global System,origin, babel*/
 import { resource } from "lively.resources";
 import { isURL } from "lively.modules/src/url-helpers.js";
 import { join, parent } from "lively.resources/src/helpers.js";
@@ -16,6 +16,26 @@ function exportCall(exportName, id) {
   return stringify(
     nodes.exprStmt(
       nodes.funcCall(nodes.id("_export"), nodes.literal(exportName), id)))
+}
+
+function asyncAwaitTranspilation(source) {
+    if (typeof babel === 'undefined') {
+      console.warn('[lively.freezer] Skipped async/await transpilation because babel not loaded.');
+      return source;
+    }
+    let options = {
+      sourceMap: undefined, // 'inline' || true || false
+      inputSourceMap: undefined,
+      babelrc: false,
+      plugins: ['transform-exponentiation-operator', 'transform-async-to-generator', 
+                "syntax-object-rest-spread", "transform-object-rest-spread"],
+      code: true,
+      ast: false
+    };
+    var sourceForBabel = source,
+        transpiled = babel.transform(sourceForBabel, options).code;
+    transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
+    return transpiled;
 }
 
 export class Module {
@@ -517,11 +537,12 @@ export class JSModule extends Module {
             return {target, replacementFunc}
           })
         ], this._source);
-        replaced = stringify(objectSpreadTransform(rewriteToCaptureTopLevelVariables(parse(replaced.source), {type: "Identifier", name: "__rec"}, {
+        replaced = asyncAwaitTranspilation(stringify(objectSpreadTransform(rewriteToCaptureTopLevelVariables(parse(replaced.source), {
+          type: "Identifier", name: "__rec"}, {
           classToFunction: tfmOpts,
           es6ExportFuncId: '_export',
           ignoreUndeclaredExcept: []
-        })));
+        }))));
         transpiledSource = `function(_export, _context) {\n`
          + `  "use strict";\n`
          + (topLevelDecl ? `  ${stringify(topLevelDecl)}\n` : "")

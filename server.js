@@ -8,6 +8,7 @@ import L2LClient from "lively.2lively/client.js";
 import { ObjectDB } from "lively.storage";
 import { join } from "path";
 import { resource } from "lively.resources";
+import * as uglifier from 'uglify-es';
 const packagePath = System.decanonicalize("lively.headless/").replace("file://", "");
 
 var l2lClient;
@@ -107,7 +108,7 @@ export default class FrozenPartsLoader {
         'Cache-Control':' max-age=31536000',
         'Last-Modified': container._lastChange.toGMTString()
       });
-      res.end(container._compressedScript);
+      res.end(this.production ? container._minifiedCompressedScript : container._compressedScript);
       return;      
     }
 
@@ -251,8 +252,10 @@ export default class FrozenPartsLoader {
 
     container._dynamicParts = dynamicParts;
     container._script = script;
+    container._minifiedScript = uglifier.minify(script).code || script;
     // store frozen version gzipped in server side cache
     container._compressedScript = zlib.gzipSync(script);
+    container._minifiedCompressedScript = zlib.gzipSync(container._minifiedScript);
     // capture current screenshot
     container._preview = await this.screenshot(container);
     container._lastChange = new Date();
@@ -314,6 +317,7 @@ export default class FrozenPartsLoader {
     let dynamicPartDir = await bucketDir.join('dynamicParts/').ensureExistance();
     await resource(System.decanonicalize('lively.freezer/runtime-deps.js')).copyTo(bucketDir.join('runtime-deps.js'));
     await bucketDir.join('load.js').write(container._script);
+    await bucketDir.join('load.min.js').write(container._minifiedScript);
     await bucketDir.join('config.json').writeJson({
       autoUpdate: container._autoUpdate,
       commit: container._commit,
