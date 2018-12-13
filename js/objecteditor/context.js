@@ -172,7 +172,7 @@ export default class ObjectEditorContext {
         `,
         context = this.remoteContextId ? `System.get('@lively-env').objectEditContexts["${this.remoteContextId}"]` : this,
         res = await this.evalEnvironment.systemInterface.runEval(evalStr,{
-           targetModule: "https://lively-next.org/lively.ide/js/objecteditor/context.js",
+           targetModule: "lively.ide/js/objecteditor/context.js",
            context
         });
     if (res.isError) {
