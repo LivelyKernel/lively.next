@@ -24,8 +24,9 @@ export function styleProps(morph) {
 function addTransform(morph, style) {
   let {position, origin, scale, rotation} = morph,
       x = Math.round(position.x - origin.x),
-      y = Math.round(position.y - origin.y);
-  style.transform = (morph.isImage ? `translate3d(${x}px, ${y}px, 0px)` : `translate(${x}px, ${y}px)`) + `rotate(${rotation.toFixed(2)}rad) scale(${scale.toFixed(2)},${scale.toFixed(2)})`;
+      y = Math.round(position.y - origin.y),
+      promoteToCompositionLayer = morph.renderOnGPU || (morph.isImage && !(morph.owner.isPath && morph.owner.clipMode != 'visible'));
+  style.transform = (promoteToCompositionLayer ? `translate3d(${x}px, ${y}px, 0px)` : `translate(${x}px, ${y}px)`) + `rotate(${rotation.toFixed(2)}rad) scale(${scale.toFixed(2)},${scale.toFixed(2)})`;
 }
 
 function addTransformOrigin(morph, style) {

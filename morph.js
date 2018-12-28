@@ -70,6 +70,11 @@ export class Morph {
         }
       },
 
+      renderOnGPU: {
+        group: 'core',
+        defaultValue: false,
+      },
+
       draggable: {
         group: "interaction",
         isStyleProp: true, defaultValue: true
