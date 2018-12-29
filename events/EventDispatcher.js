@@ -324,7 +324,6 @@ export default class EventDispatcher {
         events       = [defaultEvent],
         later        = [];
 
-
     switch (type) {
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -382,7 +381,6 @@ export default class EventDispatcher {
         });
         break;
 
-
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       case "pointerup":
         defaultEvent.onAfterDispatch(() => {
@@ -391,11 +389,6 @@ export default class EventDispatcher {
           state.prevClick = { clickedOnMorph, clickedOnPosition, clickedAtTime, clickCount };
           state.clickedOnMorph = null;
           state.clickCount = 0;
-
-          // remove hand created for this finger
-          if (touch) {
-            this.world.removeHandForPointerId(pointerId);
-          };
 
           // long click
           let clickDuration = domEvt.timeStamp - state.downTimeStamp,
@@ -429,6 +422,7 @@ export default class EventDispatcher {
           events.push(new Event("morphicdrop", domEvt, this, [targetMorph], hand, halo, layoutHalo));
           defaultEvent.targetMorphs = [this.world];
         }
+
         break;
 
 
@@ -521,6 +515,10 @@ export default class EventDispatcher {
 
           }
         });
+        // remove hand created for this finger
+        if (touch) {
+            this.world.removeHandForPointerId(pointerId);
+        };
         break;
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
