@@ -145,7 +145,6 @@ export default class DiffEditorPlugin extends EditorPlugin {
       {target, command: "[git] stage " + (hasSelection ? "selection" : "all")},
       {target, command: "[git] unstage "   + (hasSelection ? "selection" : "all")},
       {target, command: "[git] discard "   + (hasSelection ? "selection" : "all")},
-      {target, command: "[git] stage " + (hasSelection ? "selection" : "all")},
       {target, command: "[git] update"},
       {target, command: "[git] commit"}
     ]);
