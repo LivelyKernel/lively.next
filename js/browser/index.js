@@ -2,7 +2,7 @@ import { Color, rect, pt, Rectangle } from "lively.graphics";
 import { arr, Path, obj, fun, promise, string } from "lively.lang";
 import { connect } from "lively.bindings";
 import {
-  morph,
+  morph, easings,
   StyleSheet,
   HorizontalLayout, 
   GridLayout,
@@ -260,6 +260,7 @@ export default class Browser extends Window {
       history: {left: [], right: [], navigationInProgress: null}
     };
     this.reset();
+    this.relayout();
     var ed = this.ui.sourceEditor;
     if (!ed.plugins.length)
       ed.addPlugin(new JavaScriptEditorPlugin(config.codeEditor.defaultTheme));
@@ -474,8 +475,8 @@ export default class Browser extends Window {
       sourceEditor.setBounds(
         new Rectangle(
           0, metaInfoText.bottom,
-          metaInfoText.width - sourceEditor.borderWidth,
-          container.height - metaInfoText.bottom - sourceEditor.borderWidth));
+          metaInfoText.width - sourceEditor.borderWidth + 1,
+          container.height - metaInfoText.bottom));
     } finally { this._inLayout = false; }
   }
 
@@ -593,7 +594,8 @@ export default class Browser extends Window {
   }
 
   async toggleWindowStyle(animated = true) {
-    let duration = 300, theme, styleClasses;
+    let duration = 1000, easing = easings.outExpo,
+        theme, styleClasses;
     if ((await this.editorPlugin.runEval("System.get('@system-env').node")).value) {
       styleClasses = [...arr.without(this.styleClasses, 'local'), 'node'];
       theme = DarkTheme.instance;
@@ -603,9 +605,9 @@ export default class Browser extends Window {
     }
     this.editorPlugin.theme = theme;
     if (animated) {
-      this.animate({ duration, styleClasses });
+      this.animate({ duration, styleClasses, easing });
       this.ui.sourceEditor.animate({
-        fill: theme.background, duration
+        fill: theme.background, duration, easing
       });
     } else {
       this.styleClasses = styleClasses;
