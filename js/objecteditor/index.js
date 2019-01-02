@@ -1,11 +1,10 @@
-/*global System*/
-/*global System,localStorage */
+/*global System, localStorage*/
 import { arr, obj, t, Path, string, fun, promise } from "lively.lang";
 import { Icon, StyleSheet, Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
 import { pt, Color } from "lively.graphics";
 import JavaScriptEditorPlugin from "../editor-plugin.js";
 import { withSuperclasses, isClass } from "lively.classes/util.js";
-import { Tree } from "lively.components";
+import { Tree, LoadingIndicator } from "lively.components";
 import { connect } from "lively.bindings";
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
 import ObjectPackage, { isObjectClass } from "lively.classes/object-classes.js";
@@ -22,6 +21,7 @@ import ClassTreeData from './classTree.js';
 import ObjectEditorContext from "./context.js";
 import DarkTheme from "../../themes/dark.js";
 import DefaultTheme from "../../themes/default.js";
+import { stringifyFunctionWithoutToplevelRecorder } from "lively.source-transform";
 
 export class ObjectEditor extends Morph {
 
@@ -65,6 +65,7 @@ export class ObjectEditor extends Morph {
       fill: {defaultValue: Color.transparent},
       reactsToPointer: {defaultValue: false},
       name: {defaultValue: "object-editor"},
+      clipMode: {defaultValue: 'hidden'},
 
       context: {},
 
@@ -178,6 +179,7 @@ export class ObjectEditor extends Morph {
       ]});
     l.col(0).fixed = 180;
     l.col(2).fixed = 1;
+    l.col(2).width = 0;
     l.row(0).fixed = 28;
     l.row(2).fixed = 30;
 
@@ -276,7 +278,7 @@ export class ObjectEditor extends Morph {
         textPosition: sourceEditor.cursorPosition,
         scroll: sourceEditor.scroll,
         classTreeScroll: classTree.scroll,
-        evalEnvironment
+        evalEnvironment: obj.dissoc(evalEnvironment, ['context', 'systemInterface'])
       }
     };
 
@@ -428,21 +430,11 @@ export class ObjectEditor extends Morph {
     return await this.context.withContextDo(fn, varMapping);
   }
 
-  async refresh(keepCursor = false) {
-    var {
+  async update({className, treeData}, keepCursor = false) {
+    let {
           ui: {sourceEditor: ed, classTree: tree}
         } = this,
         oldPos = ed.cursorPosition;
-
-    let {className, methodName, treeData} = await this.withContextDo(async (ctx) => {
-      let res = {
-        className: ctx.selectedClass && ctx.selectedClass.name,
-        methodName: ctx.selectedMethod && ctx.selectedMethod.name
-      };
-      await ctx.refresh();
-      res.treeData = ctx.classTreeData;
-      return res;
-    });
     
     await tree.maintainViewStateWhile(
       () => tree.treeData = treeData,
@@ -452,12 +444,23 @@ export class ObjectEditor extends Morph {
                   + (node.target.owner ? `.${node.target.owner.name}` : "") :
         node.name);
 
-    if (className && methodName && !tree.selectedNode) {
-       // method rename, old selectedMethod does no longer exist
-       await this.selectClass(className);
-    }
+    if (className && !tree.selectedNode) await this.selectClass(className);
 
     if (keepCursor) ed.cursorPosition = oldPos;
+  }
+
+  async refresh(keepCursor = false) {
+    let data = await this.withContextDo(async (ctx) => {
+      let res = {
+        className: ctx.selectedClass && ctx.selectedClass.name,
+        methodName: ctx.selectedMethod && ctx.selectedMethod.name
+      };
+      await ctx.refresh();
+      res.treeData = ctx.classTreeData;
+      return res;
+    });
+
+    await this.update(data, keepCursor);
   }
 
   async updateKnownGlobals() {
@@ -482,7 +485,7 @@ export class ObjectEditor extends Morph {
   async updateSource(source, targetModule = "lively://object-editor/" + this.id) {
     let ed = this.ui.sourceEditor,
         format = await this.withContextDo(async (ctx) => {
-          let { systemInterface: system }  = ctx.evalEnvironment;
+          let { systemInterface: system }  = ctx.evalEnvironment,
               format = (await system.moduleFormat(targetModule)) || "esm";
           Object.assign(ctx.evalEnvironment, {targetModule, format});
           return format;
@@ -640,7 +643,14 @@ export class ObjectEditor extends Morph {
 
   async selectClass(klass) {
     let tree = this.ui.classTree;
-    await this.context.selectClass(klass.name || klass);
+    // update context if nessecary
+    if (this.context.selectedClassName != klass.name) {
+      await this.context.selectClass(klass.name || klass);
+      if (await this.withContextDo((ctx) => isObjectClass(ctx.selectedClass)))
+          this.ui.forkPackageButton.enable();
+      else this.ui.forkPackageButton.disable();  
+    }
+    // fetch data from context
     let descr = await this.withContextDo((ctx) => {
       const descr = ctx.sourceDescriptorFor(ctx.selectedClass);
       return {
@@ -651,11 +661,6 @@ export class ObjectEditor extends Morph {
 
     await this.updateSource(await descr.source, descr.moduleId);
     await this.updateKnownGlobals();
-
-    if (await this.withContextDo((ctx) => isObjectClass(ctx.selectedClass)))
-        this.ui.forkPackageButton.enable();
-    else this.ui.forkPackageButton.disable();
-
     await this.updateTitle();
     await this.ui.importController.setModule(descr.moduleId)
     
@@ -1340,21 +1345,21 @@ export class ObjectEditor extends Morph {
 
                 return [{
                   isListItem: true,
-                  string: klass.name,
-                  value: {node, selector: "selectClass"}
+                  string: klass,
+                  value: {node, selector: "selectClass", klass}
                 }].concat(
                   methods.map(ea => {
                     return {
                       isListItem: true,
                       label: [
-                        `${klass.name}`, {
+                        `${klass}`, {
                           fontSize: "80%",
                           textStyleClasses: ["v-center-text"],
                           paddingRight: "10px"
                         },
                         `${ea.name}`, null
                       ],
-                      value: {node: ea, selector: "selectMethod"}
+                      value: {node: ea, selector: "selectMethod", klass}
                     };
                   })
                 );
@@ -1365,9 +1370,10 @@ export class ObjectEditor extends Morph {
             {historyId: "lively.morphic-object-editor-jump-def-hist"});
 
           if (choice) {
-            await ed[choice.selector](choice.node.target);
+            await ed[choice.selector](choice.klass, choice.node.target);
             ed.ui.sourceEditor.focus();
             tree.scrollSelectionIntoView();
+            if (choice.selector == 'selectClass') ed.ui.sourceEditor.scroll = pt(0,0);
           }
           return true;
         }
@@ -1433,7 +1439,46 @@ export class ObjectEditor extends Morph {
         exec: async ed => {
           /*global inspect*/
           if (ed.env.eventDispatcher.isKeyPressed("Shift")) {
-            var [selected] = await $world.execCommand("select morph", {
+            // support remote morph selection
+            if (ed.context.isRemote) {
+               ed._loadingIndicator = LoadingIndicator.open('Connecting to Remote...');
+               await ed.withContextDo(async ctx => {
+                  // REMOTE START
+                  if (!ctx.target.isMorph) return;
+                  let selectionFn = async (title, items, opts) => {
+                     // ensure the tiems are ids
+                     let editorCallback = stringifyFunctionWithoutToplevelRecorder(async ed => {
+                       // LOCAL START
+                       ed._loadingIndicator.remove();
+                       let res = await ed.world().filterableListPrompt(title, items, opts);
+                       ed._loadingIndicator = LoadingIndicator.open('Switching Target...');
+                       return res;
+                       // LOCAL END
+                     })
+                     let res = await ctx.withEditorDo(editorCallback, {
+                       items: items.map(item => { item.value = item.value.id; return item; }),
+                       title,
+                       opts
+                     }); // insert stringified params
+                     let { selected, action } = res;
+                     selected = selected.map(id => $world.getMorphWithId(id));
+                     return { selected, action };
+                  };
+                  let [selected] = await $world.execCommand("select morph", {
+                    selectionFn,
+                    justReturn: true,
+                    root: [ctx.target, ...ctx.target.ownerChain()].find(m => m.owner.isWorld)
+                  });
+                  if (selected) {
+                    await ctx.selectTarget(selected);
+                  }
+                  // REMOTE END
+               });
+               await ed.refresh();
+               ed._loadingIndicator.remove();
+               return;
+            }
+            let [selected] = await $world.execCommand("select morph", {
               justReturn: true, 
               root: [ed.target, ...ed.target.ownerChain()].find(m => m.owner.isWorld)
             });

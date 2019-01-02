@@ -13,6 +13,7 @@ import semver from 'semver';
 import { adoptObject } from "lively.classes/runtime.js";
 import { chooseUnusedImports } from "../import-helper.js";
 import { serialize, deserialize } from "lively.serializer2";
+import { stringifyFunctionWithoutToplevelRecorder } from "lively.source-transform";
 
 export default class ObjectEditorContext {
  
@@ -31,7 +32,7 @@ export default class ObjectEditorContext {
   }
 
   async selectTarget(target, editor, evalEnvironment = false) {
-    if (!this.onModuleChangeHandler && System.get('@system-env').node) {
+    if (!this.onModuleChangeHandler && this.interfaceToEditor) {
       this.onModuleChangeHandler = async (evt) => {
         const newClassSource = await this.onModuleChanged(evt)
         if (newClassSource) this.withEditorDo((ed) =>
@@ -39,7 +40,7 @@ export default class ObjectEditorContext {
              newClassSource
            });
       };
-      // subscribe to module change events 
+      // FIXME: subscribe to module change events ...
       // but how to disconnect?
       subscribe("lively.modules/modulechanged", this.onModuleChangeHandler);
       subscribe("lively.modules/moduleloaded", this.onModuleChangeHandler);
@@ -86,8 +87,8 @@ export default class ObjectEditorContext {
        Object.assign(editor.editorPlugin.evalEnvironment, this.evalEnvironment);
     this.selectedClassName = await this.withContextDo(ctx => ctx.selectedClassName);
   }
-
-  async selectLocalTarget(target, editor) {
+  
+  async selectLocalTarget(target, editor = false /* if in browser */) {
     this.target = target;
     this.selectedClass = null;
     this.selectedMethod = null;
@@ -145,34 +146,50 @@ export default class ObjectEditorContext {
     return this.id;
   }  
 
-  stringifySource(source, varMapping) {
-    const recorderName = this.sourceDescriptorFor(this.constructor).module.recorderName,
-          varDeclarations = obj.keys(varMapping).map(k => `const ${k} = ${JSON.stringify(varMapping[k])};`).join('\n');
-    source = source === 'string' ? source : source.toString().replace(new RegExp(recorderName + '\.', "g"), '');
+  stringifySource(source, varMapping = {}) {
+    const varDeclarations = obj.keys(varMapping)
+                               .map(k => `const ${k} = ${JSON.stringify(varMapping[k])};`)
+                               .join('\n');
+    source = source === 'string' ? source : stringifyFunctionWithoutToplevelRecorder(source);
     return '(() => {' + varDeclarations + '\n return (' + source + ')(this) })()'
   }
 
-  async withEditorDo(source) {
-    source = this.stringifySource(source);
-    return await this.interfaceToEditor.runEval(source, {
-      context: `$world.getMorphWithId("${this.editorId}")`
+  async withEditorDo(source, varMapping) {
+    source = this.wrapSource(this.stringifySource(source, varMapping));
+    let res = await this.interfaceToEditor.runEval(source, {
+      context: `$world.getMorphWithId("${this.editorId}")`,
+      targetModule: "lively.ide/js/objecteditor/index.js",
+      ackTimeout: 30*1000
     });
+    if (res.isError) {
+      throw Error(res.value)
+    }
+    res = res.value;
+    if (!obj.isArray(res) && obj.isObject(res)) return deserialize(res);
+    return res;
   }
 
-  async withContextDo(source, varMapping = {}) {
-    // if we are local and the source is a plain function, just evaluate as is
-    source = this.stringifySource(source, varMapping);
-    // clean the source of the corder name
-    let evalStr = `
+  wrapSource(source) {
+    return `
           let { serialize } = await System.import('lively.serializer2');
           let __eval_res__ = await ${source};
           if (!obj.isArray(__eval_res__) && obj.isObject(__eval_res__))
             __eval_res__ = serialize(__eval_res__);
           __eval_res__;
-        `,
+        `;
+  }
+
+  async withContextDo(source, varMapping = {}) {
+    // if we are local and the source is a plain function, just evaluate as is
+    if (!this.remoteContextId && obj.isFunction(source)) {
+      return await source(this);
+    }
+    source = this.stringifySource(source, varMapping);
+    let evalStr = this.wrapSource(source),
         context = this.remoteContextId ? `System.get('@lively-env').objectEditContexts["${this.remoteContextId}"]` : this,
         res = await this.evalEnvironment.systemInterface.runEval(evalStr,{
            targetModule: "lively.ide/js/objecteditor/context.js",
+           ackTimeout: 30*1000,
            context
         });
     if (res.isError) {
