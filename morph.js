@@ -19,7 +19,7 @@ import { StylingVisitor } from "./sizzle.js";
 // optional lively.halos imports
 import {showAndSnapToGuides, removeSnapToGuidesOf} from "lively.halos/drag-guides.js";
 import { show } from "lively.halos";
-import { copy, ExpressionSerializer } from "lively.serializer2";
+import { copy, ExpressionSerializer, getSerializableClassMeta } from "lively.serializer2";
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -723,7 +723,7 @@ export class Morph {
     // rk 2017-02-04: FIXME remove the assign below once we are fully
     // transitioned to properties. Properties themselves set their default or
     // constructor value in initializeProperties
-    let descriptors = Object.getOwnPropertyDescriptors(props),
+    let descriptors = obj.getOwnPropertyDescriptors(props),
         myDescriptors = {},
         dontAssign = {env: true, type: true, submorphs: true, bounds: true, layout: true},
         properties = this.propertiesAndPropertySettings().properties;
@@ -2328,7 +2328,7 @@ export class Morph {
     for (let proto = this; proto !== Object.prototype;) {
       let protoName = proto === this ? String(this) : proto.constructor.name,
           group = null,
-          descrs = Object.getOwnPropertyDescriptors(proto),
+          descrs = obj.getOwnPropertyDescriptors(proto),
           nextProto = Object.getPrototypeOf(proto);
       for (let prop in descrs) {
         let val = descrs[prop].value;
@@ -2466,36 +2466,74 @@ export class Morph {
 
   exportToJSON(options = {keepFunctions: true}) {
     // quick hack to "snapshot" into JSON
+    const exprSerializer = new ExpressionSerializer();
     var exported = Object.keys(this._morphicState).reduce((exported, name) => {
       var val = this[name];
       if (name === "submorphs") val = val.map(ea => ea.exportToJSON());
+      if (['borderColor', 'borderWidth', 'borderStyle', 'borderRadius'].includes(name)) {
+        let serializedVal = {};
+        for (let mem of ['top', 'left', 'right', 'bottom']) {
+          serializedVal[mem] = val[mem].__serialize__ ? 
+            exprSerializer.exprStringEncode(val[mem].__serialize__()) : val;
+        }
+        val = serializedVal;
+      }
+      if (val && val.isMorph) val = val.exportToJSON();
+      if (val && val.__serialize__) {
+        try {
+          val = exprSerializer.exprStringEncode(val.__serialize__()); // serializeble expressions
+        } catch (e) {
+          console.log(`[export to JSON] failed converting ${name} to serialized expression`); 
+        }
+      }
       exported[name] = val;
       return exported;
     }, {});
     if (!exported.name) exported.name = this.name;
     exported._id = this._id;
-    exported.type = this.constructor; // not JSON!
     if (options.keepFunctions) {
+      exported.type = this.constructor; // not JSON!
       Object.keys(this).forEach(name =>
         typeof this[name] === "function" && (exported[name] = this[name]));
+    } else {
+      exported.styleSheets = [];
+      exported.type = getSerializableClassMeta(this);
     }
     return exported;
   }
 
   initFromJSON(spec) {
-    this._env = MorphicEnv.default();
+    const exprSerializer = new ExpressionSerializer();
+    function deserializeExpressions(spec) {
+      let deserializedSpec = {};
+      properties.forEachOwn(spec, (prop, value) => {
+        if (prop ==='_env' || prop ==='env') return;
+        if (obj.isString(value) && exprSerializer.isSerializedExpression(value)) {
+          value = exprSerializer.deserializeExpr(value);
+        }
+        if (['borderColor', 'borderWidth', 'borderStyle', 'borderRadius'].includes(prop)) {
+          value = deserializeExpressions(value);
+        }
+        deserializedSpec[prop] = value;
+      })
+      if (spec.submorphs) deserializedSpec.submorphs = spec.submorphs.map(deserializeExpressions);
+      return deserializedSpec;
+    }
+    this._env = spec.env || spec._env || MorphicEnv.default();
     this._rev = 0;
     this._owner = null;
     this._dirty = true;
     this._rendering = false;
     this._submorphOrderChanged = false;
-    this._id =  newMorphId(this.constructor.name);
+    this._id = spec._id || newMorphId(this.constructor.name);
     this._animationQueue = new AnimationQueue(this);
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
-    this.initializeProperties();
-    Object.assign(this, spec)
+    this.dontRecordChangesWhile(() => {
+      this.initializeProperties(); 
+      Object.assign(this, deserializeExpressions(spec));
+    });
     return this;
   }
 

@@ -11,7 +11,7 @@ export * from "./layout.js";
 export { StyleSheet } from "./style-sheets.js";
 export { ShadowObject } from "./rendering/morphic-default.js";
 export { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./rendering/dom-helper.js";
-export { easings } from "./rendering/animations.js";
+export { easings, stringToEasing } from "./rendering/animations.js";
 export * from "./tooltips.js";
 export { Icon } from "./text/icons.js";
 export { loadMorphFromSnapshot } from './serialization.js'
@@ -30,11 +30,13 @@ export { InputLine, PasswordInputLine };
 import { Button } from "lively.components/buttons.js";
 import { CheckBox, LabeledCheckBox } from "lively.components/widgets.js";
 import { List, DropDownList } from "lively.components/list.js";
+import { locateClass } from "lively.serializer2";
 
 export function morph(props = {}, opts = {restore: false}) {
   var klass = Morph;
   if (props.type) {
     if (typeof props.type === "function") klass = props.type;
+    if (typeof props.type === "object") klass = locateClass(props.type);
     else if (typeof props.type === "string")
       switch (props.type.toLowerCase()) {
         case 'world':           klass = World; break;
