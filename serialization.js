@@ -92,9 +92,9 @@ export function copyMorph(morph) {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import { registerPackage, getPackage, ensurePackage, lookupPackage, semver } from "lively.modules";
+import { registerPackage, module, getPackage, ensurePackage, lookupPackage, semver } from "lively.modules";
 import { createFiles } from "lively.resources";
-import { promise } from "lively.lang";
+import { promise, graph, arr } from "lively.lang";
 import { migrations } from "./object-migration.js";
 
 let objectScriptingEnabled = false;
@@ -112,47 +112,9 @@ export async function createMorphSnapshot(aMorph, options = {}) {
 
   if (addPackages) {
     // 1. save object packages
-    let packages = snapshot.packages = {},
-        objects = snapshot.snapshot,
-        packagesToSave = [],
-        externalPackageMap = {},
-        externalPackagesFound = true;
-    for (let id in objects) {
-      let classInfo = objects[id]["lively.serializer-class-info"];
-      if (classInfo && classInfo.module && classInfo.module.package) {
-        let p = getPackage(classInfo.module.package.name);
-        // if it's a "local" object package then save that as part of the snapshot
-        if (p.address.startsWith("local://")) packagesToSave.push(p);
-      }
-      let metadata = objects[id].props.metadata;
-      if (metadata) {
-        let externalPackages;
-        if (metadata.value && metadata.value.__ref__) {
-          let prop = objects[metadata.value.id];
-          if (prop.props.externalPackages)
-            externalPackages = prop.props.externalPackages.value;
-        } else {
-          externalPackages = metadata.externalPackages;
-        }
-        if (externalPackages) {
-          externalPackagesFound = true;
-        for (let i = 0; i < externalPackages.length; i++)
-          externalPackageMap[externalPackages[i]] = true;
-        }
-      }
-    }
-
-    if (externalPackagesFound) {
-      snapshot.packagesToRegister = Object.keys(externalPackageMap);
-    }
-
-    await Promise.all(
-      packagesToSave.map(async p => {
-        let root = resource(p.address).asDirectory(),
-            packageJSON = await resourceToJSON(root, {});
-        if (!packages[root.parent().url]) packages[root.parent().url] = {};
-        Object.assign(packages[root.parent().url], packageJSON);
-      }));
+    let { packages, depMap } = await findRequiredPackagesOfSnapshot(snapshot);
+    snapshot.packages = packages;
+    snapshot.packageDepMap = depMap;
   }
 
   if (addPreview) {
@@ -216,7 +178,7 @@ function findPackagesInFileSpec(files, path = []) {
   let result = [];
   if (files.hasOwnProperty("package.json")) {
     let url = path.slice(1).reduceRight((r, name) => r.join(name), resource(path[0])).url;
-    result.push({files, url})
+    result.push({files, url, requiredPackages: files.requiredPackages })
   }
   for (let name in files) {
     if (typeof files[name] !== "object") continue;
@@ -226,7 +188,11 @@ function findPackagesInFileSpec(files, path = []) {
 }
 
 export function packagesOfSnapshot(snapshot) {
-  return findPackagesInFileSpec(snapshot.packages)
+  let packages = findPackagesInFileSpec(snapshot.packages);
+  let packageMap = {}, depMap = snapshot.packageDepMap;
+  if (!depMap) return packages;
+  for (let p of packages) packageMap[p.url] = p;
+  return arr.flatten(graph.sortByReference(depMap)).map(url => packageMap[url]);
 }
 
 export async function loadPackagesAndModulesOfSnapshot(snapshot) {
@@ -239,10 +205,11 @@ export async function loadPackagesAndModulesOfSnapshot(snapshot) {
     }
   }
 
+
   if (snapshot.packages) {
     let packages = packagesOfSnapshot(snapshot);
 
-    for (let {files, url} of packages) {
+    for (let { files, url } of packages) {
       // if a package with the same url already is loaded in the runtime then
       // compare its version with the version of the package that gets loaded.  If
       // the version to-load is older, keep the newer version.
@@ -263,9 +230,8 @@ export async function loadPackagesAndModulesOfSnapshot(snapshot) {
           console.warn(`Error in package version comparison: `, err);
         }
       }
-
       let r = await createFiles(url, files);
-      p = await ensurePackage(url);
+          p = await ensurePackage(url);
       await p.reload({forgetEnv: false, forgetDeps: false});
       // ensure object package instance
       const { default: ObjectPackage } = await System.import("lively.classes/object-classes.js");
@@ -278,7 +244,88 @@ export async function loadPackagesAndModulesOfSnapshot(snapshot) {
   // load required modules
   await Promise.all(
     requiredModulesOfSnapshot(snapshot)
-      .map(modId =>
-        (System.get(modId) ? null : System.import(modId))
+      .map(modId => (System.get(modId) ? null : System.import(modId))
                 .catch(e => console.error(`Error loading ${modId}`, e))));
+}
+
+export async function findRequiredPackagesOfSnapshot(snapshot) {
+  let packages = {};
+  let objects = snapshot.snapshot;
+  let packagesToSave = [];
+  let externalPackageMap = {};
+  let externalPackagesFound = true;
+  let depMap = {};
+
+  for (let id in objects) {
+    let classInfo = objects[id]['lively.serializer-class-info'];
+    if (classInfo && classInfo.module && classInfo.module.package) {
+      let p = getPackage(classInfo.module.package.name);
+
+      // if it's a "local" object package then save that as part of the snapshot
+      if (p.address.startsWith('local://')) {
+        const { default: ObjectPackage } = await System.import('lively.classes/object-classes.js');
+        const { withSuperclasses } = await System.import('lively.classes/util.js');
+        objectScriptingEnabled = !!ObjectPackage;
+
+        let objPkg = ObjectPackage.forSystemPackage(p);
+        let objClass = objPkg.objectModule.systemModule._recorder[classInfo.className];
+        let classes = withSuperclasses(objClass);
+        classes.forEach(klass => {
+          let p = ObjectPackage.lookupPackageForClass(klass);
+          p && packagesToSave.push(p.systemPackage);
+        });
+      }
+    }
+
+    let metadata = objects[id].props.metadata;
+    if (metadata) {
+      let externalPackages;
+      if (metadata.value && metadata.value.__ref__) {
+        let prop = objects[metadata.value.id];
+        if (prop.props.externalPackages)
+          externalPackages = prop.props.externalPackages.value;
+      } else {
+        externalPackages = metadata.externalPackages;
+      }
+      if (externalPackages) {
+        externalPackagesFound = true;
+      for (let i = 0; i < externalPackages.length; i++)
+        externalPackageMap[externalPackages[i]] = true;
+      }
+    }
+  }
+
+  if (externalPackagesFound) {
+    snapshot.packagesToRegister = Object.keys(externalPackageMap);
+  }
+
+  let objectPackagesReferenced = [];
+  for (let pkg of packagesToSave) {
+    for (let mod of pkg.modules()) {
+      if (mod.id.endsWith('.json')) continue;
+      for (let { fromModule } of await mod.imports()) {
+        let requiredPackage = module(fromModule).package();
+        if (!requiredPackage) continue;
+        let config = requiredPackage.config;
+        if (config.lively && config.lively.isObjectPackage) {
+            objectPackagesReferenced.push(requiredPackage);
+            if (!depMap[pkg.url]) depMap[pkg.url] = [requiredPackage.url];
+            else arr.pushIfNotIncluded(depMap[pkg.url], requiredPackage.url);
+        }
+      }
+    }
+  }
+
+  packagesToSave = [...objectPackagesReferenced, ...packagesToSave];
+  
+  await Promise.all(
+    packagesToSave.map(async p => {
+      let root = resource(p.address).asDirectory(),
+          packageJSON = await resourceToJSON(root, {});
+      if (!packages[root.parent().url]) packages[root.parent().url] = {};
+      Object.assign(packages[root.parent().url], packageJSON);
+      if (!depMap[p.url]) depMap[p.url] = [];
+    }));
+
+  return { packages, depMap };
 }
