@@ -1,8 +1,11 @@
-/*global require,System*/
+/*global global, require,System*/
 var uglifyjs = require('uglify-es');
 var livelyLang = require('lively.lang');
 var fs = require('fs');
 var path = require("path");
+global.window = {}
+global.navigator = {};
+var babel = require("babel-standalone");
 
 var semverSourcePatched = `
 var semver;
@@ -12,12 +15,23 @@ semver = exports;
 })({}, {});
 `;
 
-
 var runtimeSource = `(${uglifyjs.minify(fs.readFileSync(require.resolve('lively.freezer/runtime.js')).toString()).code.slice(0,-1).replace('export ', '')})()`;
+
+let options = {
+  sourceMap: undefined, // 'inline' || true || false
+  inputSourceMap: undefined,
+  babelrc: false,
+  presets: [["es2015", {"modules": false}]],
+  plugins: ['transform-exponentiation-operator', 'transform-async-to-generator', 
+            "syntax-object-rest-spread", "transform-object-rest-spread"],
+  code: true,
+  ast: false
+};
+runtimeSource = babel.transform(runtimeSource, options).code;
 
 var res =  [
 uglifyjs.minify(semverSourcePatched).code,
-runtimeSource,  
+uglifyjs.minify(runtimeSource).code,  
 uglifyjs.minify(fs.readFileSync(require.resolve('babel-regenerator-runtime')).toString()).code,
 "//LIVELY.LANG - 100k",
 fs.readFileSync(require.resolve('lively.lang/dist/lively.lang.min.js')), 

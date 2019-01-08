@@ -18,7 +18,7 @@ function exportCall(exportName, id) {
       nodes.funcCall(nodes.id("_export"), nodes.literal(exportName), id)))
 }
 
-function asyncAwaitTranspilation(source) {
+export function asyncAwaitTranspilation(source) {
     if (typeof babel === 'undefined') {
       console.warn('[lively.freezer] Skipped async/await transpilation because babel not loaded.');
       return source;
@@ -27,14 +27,16 @@ function asyncAwaitTranspilation(source) {
       sourceMap: undefined, // 'inline' || true || false
       inputSourceMap: undefined,
       babelrc: false,
+      presets: [["es2015", {"modules": false}]],
       plugins: ['transform-exponentiation-operator', 'transform-async-to-generator', 
                 "syntax-object-rest-spread", "transform-object-rest-spread"],
       code: true,
       ast: false
     };
-    var sourceForBabel = source,
+    var sourceForBabel = source.startsWith('function') ? `(${source})` : source,
         transpiled = babel.transform(sourceForBabel, options).code;
     transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
+    if (transpiled.startsWith('(function') && transpiled.endsWith(');')) transpiled = transpiled.slice(1, -2);
     return transpiled;
 }
 
@@ -116,7 +118,7 @@ export class Module {
   }
 
   async source() {
-    return this._source || (this._source = await this.resource.read());
+    return this._source || (this._source = await module(this.resource.url).source());
   }
 
   parse() { throw new Error("Implement me!"); }
@@ -138,9 +140,11 @@ export class StandaloneModule extends Module {
 
   wrapStandalone(source, runtimeGlobal) {
     const pkg = this.package;
-    return `(function(module, exports = {}, require = () => {}) {
+    return `(function(module) {
+             var exports = arguments.length > 0 && arguments[1] !== undefined ? arguments[1] : {};
+             var require = arguments.length > 1 && arguments[2] !== undefined ? arguments[2] : function () {};
              // try to simulate node.js context
-             const exec = function(exports, require) { ${source} };
+             var exec = function(exports, require) { ${source} };
              exec(exports, require);
              if (lively.lang.obj.isEmpty(module.exports)) module.exports = exports;
              if (lively.lang.obj.isEmpty(module.exports)) {
@@ -166,11 +170,11 @@ export class StandaloneModule extends Module {
          + `  return {\n`
          + `    setters: [],\n`
          + `    execute: function() {\n`
-         + `      let exports = ${runtimeGlobal}.globalModules["${this.qualifiedName}"].exports;\n`
+         + `      var exports = ${runtimeGlobal}.globalModules["${this.qualifiedName}"].exports;\n`
          + `      if (typeof exports == 'function') {\n`
          + `         _export("default", exports);\n`
          + `      } else {\n`
-         + `        for (let exp in exports) _export(exp, exports[exp]);\n`
+         + `        for (var exp in exports) _export(exp, exports[exp]);\n`
          + `        if (!exports['default']) _export('default', exports);\n`
          + `      }\n`
          + `    }\n`
@@ -552,8 +556,8 @@ export class JSModule extends Module {
          + `${string.indent(setters.map(stringify).join(",\n"), "  ", 3)}\n`
          + `    ],\n`
          + `    execute: function() {\n`
-         + `const __mod = System.get("${this.qualifiedName}");\n`
-         + `const __rec = __mod.recorder = {};\n`
+         + `var __mod = System.get("${this.qualifiedName}");\n`
+         + `var __rec = __mod.recorder = {};\n`
          + (topLevelVarNames || []).map(id => `__rec.${id} = ${id};`).join('\n')
          + `${string.indent(replaced.trim(), "  ", 3)}\n`
          + (additionalExports.length ? `${string.indent(additionalExports.join("\n"), "  ", 3)}\n` : "")

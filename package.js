@@ -1,5 +1,5 @@
 import { resource } from "lively.resources";
-import { arr } from "lively.lang";
+import { arr, obj } from "lively.lang";
 import { isSubset, intersect } from "lively.lang/array.js";
 
 export default class FreezerPackage {
@@ -50,7 +50,7 @@ export default class FreezerPackage {
   }
 
   getModules(bundle) {
-    return Object.values(bundle.modules).filter(m => m.package === this)
+    return obj.values(bundle.modules).filter(m => m.package === this)
   }
 
   tryToEnforceStandalone(bundle) {
