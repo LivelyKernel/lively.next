@@ -1,11 +1,12 @@
 /*global System*/
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, date, Path, arr, string, obj } from "lively.lang";
-import { inspect, Text, config } from "./index.js";
+import { inspect, MorphicDB, Text, config } from "./index.js";
 import KeyHandler from "./events/KeyHandler.js";
 import { loadObjectFromPartsbinFolder, loadPart } from "./partsbin.js";
 import { interactivelySaveWorld } from "./world-loading.js";
 import { show } from "lively.halos/markers.js";
+import { LoadingIndicator } from "lively.components";
 
 var commands = [
 
@@ -1113,6 +1114,35 @@ var commands = [
           saved = await interactivelySaveWorld(world, args);
       if (focused && focused.focus());
       return saved;
+    }
+  },
+
+  {
+    name: 'freeze world',
+    exec: async (world) => {
+      let { defautl: L2LClient} = await System.import("lively.2lively/client.js");
+      let l2lClient = L2LClient.default();
+      let peers = await l2lClient.listPeers(true)
+      let freezer = peers.find(ea => ea.type === "lively.next.org freezer service");
+      let name = await world.prompt('Please enter an identifier for the frozen world');
+      let { data: status } = await l2lClient.sendToAndWait(freezer.id, "[freezer] status", {}); 
+      let deployment;
+      if (deployment = status.find(({id}) => id === name)) {
+        if(await $world.confirm('A frozen part/world with this name already exists. Would you like to update this deployment?')) {
+           return LoadingIndicator.forPromise(
+               l2lClient.sendToAndWait(freezer.id, "[freezer] update part", deployment),
+               `updating deployment for ${name}...`);
+        }
+      }
+      deployment = {
+        id: name,
+        commit: world.metadata.commit,
+        dbName: MorphicDB.default.name
+      };
+      return LoadingIndicator.forPromise(
+         l2lClient.sendToAndWait(freezer.id, "[freezer] register part", deployment),
+        `freezing world ${name}...`
+      ); 
     }
   },
 
