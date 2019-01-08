@@ -33,8 +33,8 @@ function indent(str, indentString, depth) {
 }
 
 
-var getOwnPropertyDescriptors = (typeof Object.prototype.getOwnPropertyDescriptors === "function") ?
-  Object.prototype.getOwnPropertyDescriptors :
+var getOwnPropertyDescriptors = (typeof Object.getOwnPropertyDescriptors === "function") ?
+  Object.getOwnPropertyDescriptors :
   function getOwnPropertyDescriptors(object) {
     let descriptors = {};
     for (let name in object) {
@@ -619,5 +619,6 @@ export {
   isMutableType,
   safeToString,
   asObject,
-  newKeyIn
+  newKeyIn,
+  getOwnPropertyDescriptors
 }
