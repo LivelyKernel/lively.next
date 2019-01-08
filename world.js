@@ -527,7 +527,8 @@ export class World extends Morph {
       {isDivider: true},
       ["Debugging", [
         {command: "delete change history", target: this},
-        {command: "fix font metric", target: this}
+        {command: "fix font metric", target: this},
+        {command: "inspect server", target: this}
       ]],
       ["Tools", [
         {command: "open PartsBin",            target: this},

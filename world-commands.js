@@ -774,6 +774,27 @@ var commands = [
   },
 
   {
+     name: "inspect server",
+     exec: async(world) => {
+        let { default: Inspector } = await System.import("lively.ide/js/inspector.js"),
+            { serverInterfaceFor } = await System.import('lively-system-interface'),
+            remote = serverInterfaceFor(System.baseURL + 'eval'),
+            evalEnvironment = {
+          format: 'esm',
+          context: 'global',
+          targetModule: "lively://lively.next-workspace/world",
+          sourceURL: 'inspect-server_' + Date.now(),
+          systemInterface: remote
+        }
+        await remote.runEval(`
+           import LivelyServer from "lively.server/server.js";
+           let server = LivelyServer.servers.values().next().value;
+        `, evalEnvironment);
+        Inspector.openInWindow({ remoteTarget: { code: 'server', evalEnvironment }})
+     }
+  },
+
+  {
     name: "open scene graph inspector",
     exec: async (world, args = {target: null}) => {
       let inspector = await loadObjectFromPartsbinFolder("scene graph inspector");
