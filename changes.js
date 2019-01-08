@@ -1,6 +1,6 @@
 /*global WeakMap*/
 import { arr, string, obj } from "lively.lang";
-import { connect, disconnect } from "lively.bindings";
+import { connect, signal, disconnect } from "lively.bindings";
 
 function signalBindings(obj, name, change) {
   // optimized lively.bindings.signal
@@ -164,6 +164,7 @@ export class ChangeManager {
 
   _record(morph, change) {
     // FIXME
+    signal(this, 'changeRecorded', change);
     if (change.hasOwnProperty("value")) {
       change.prevValue = morph._morphicState[change.prop];
       morph._morphicState[change.prop] = change.value;
