@@ -12,7 +12,7 @@ export function referenceGraph(snapshot) {
 
 function isReference(value) { return value && value.__ref__; }
 
-function referencesOfId(snapshot, id, withPath) {
+export function referencesOfId(snapshot, id, withPath) {
   // all the ids an regObj (given by id) points to
   let ref = snapshot[id], result = [];
   for (var key in ref.props) {
@@ -54,6 +54,11 @@ function referencesInArray(snapshot, arr, optPath) {
   return result;
 }
 
+export function moduleOfId(snapshot, id) {
+  var ref = snapshot[id],
+      classInfo = ref[ClassHelper.classMetaForSerializationProp] || {};
+  return classInfo.module || {};
+}
 
 export function referencesAndClassNamesOfId(snapshot, id) {
   // given an id, the regObj behind it is taken and for all its references a list is assembled
@@ -63,7 +68,7 @@ export function referencesAndClassNamesOfId(snapshot, id) {
 }
 
 
-function classNameOfId(snapshot, id) {
+export function classNameOfId(snapshot, id) {
   var ref = snapshot[id],
       {className} = ref[ClassHelper.classMetaForSerializationProp] || {};
   return className || "Object";

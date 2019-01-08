@@ -4,6 +4,50 @@ import { arr, string } from "lively.lang";
 const classMetaForSerializationProp = "lively.serializer-class-info",
       moduleMetaInClassProp = Symbol.for("lively-module-meta");
 
+export function getSerializableClassMeta(realObj) {
+  if (!realObj || !realObj.constructor) return;
+
+  let className = realObj.constructor.name;
+
+  if (!className) {
+    console.warn(`Cannot serialize class info of anonymous class of instance ${realObj}`);
+    return;
+  }
+
+  let moduleMeta = realObj.constructor[moduleMetaInClassProp];
+  if (className === "Object" && !moduleMeta) return;
+
+  // Errrr FIXME
+  if (moduleMeta) {
+    delete moduleMeta.lastChange;
+    delete moduleMeta.lastSuperclassChange;
+  }
+
+  return {className, module: moduleMeta};
+}
+
+export function locateClass(meta) {
+  // meta = {className, module: {package, pathInPackage}}
+  let m = meta.module;
+  if (m) {
+    let moduleId = m.pathInPackage;
+    if (m.package && m.package.name && m.package.name !== 'no group'/*FIXME*/) {
+      let packagePath = System.decanonicalize(m.package.name.replace(/\/*$/, '/'));
+      moduleId = string.joinPath(packagePath, moduleId);
+    }
+    let livelyEnv = System.get('@lively-env');
+    let realModule = livelyEnv.moduleEnv(moduleId) || livelyEnv.moduleEnv(m.pathInPackage);
+    if (!realModule) {
+      console.warn(`Trying to deserialize instance of class ${meta.className} but the module ${moduleId} is not yet loaded`);
+    } else {
+      return realModule.recorder[meta.className];
+    }
+  }
+
+  // is it a global?
+  return System.global[meta.className];
+}
+
 export default class ClassHelper {
 
   static get moduleMetaInClassProp() { return moduleMetaInClassProp; }
@@ -21,25 +65,10 @@ export default class ClassHelper {
   // class info persistence
 
   addClassInfo(objRef, realObj, snapshot) {
-
     // store class into persistentCopy if original is an instance
-    if (!realObj || !realObj.constructor) return;
-    
-    var className = realObj.constructor.name;
-
-    if (!className) {
-      console.warn(`Cannot serialize class info of anonymous class of instance ${realObj}`);
-      return;
-    }
-
-    var moduleMeta = realObj.constructor[moduleMetaInClassProp];
-    if (className === "Object" && !moduleMeta) return;
-    // Errrr FIXME
-    if (moduleMeta) {
-      delete moduleMeta.lastChange;
-      delete moduleMeta.lastSuperclassChange;
-    }
-    snapshot[classMetaForSerializationProp] = {className, module: moduleMeta};
+    const meta = getSerializableClassMeta(realObj);
+    if (!meta) return;
+    snapshot[classMetaForSerializationProp] = meta;
   }
 
   restoreIfClassInstance(objRef, snapshot) {
@@ -47,7 +76,7 @@ export default class ClassHelper {
     var meta = snapshot[classMetaForSerializationProp];
     if (!meta.className) return;
 
-    var klass = this.locateClass(meta);
+    var klass = locateClass(meta);
     if (!klass || typeof klass !== "function") {
       var msg = `Trying to deserialize instance of ${JSON.stringify(meta)} but this class cannot be found!`;
       if (!this.options.ignoreClassNotFound) throw new Error(msg);
@@ -58,28 +87,6 @@ export default class ClassHelper {
     // non-lively classes don't understand our instance restorer arg...!'
     var isLivelyClass = klass.hasOwnProperty(Symbol.for("lively-instance-superclass"));
     return isLivelyClass ? new klass(this) : new klass();
-  }
-
-  locateClass(meta) {
-    // meta = {className, module: {package, pathInPackage}}
-    let m = meta.module;
-    if (m) {
-      let moduleId = m.pathInPackage;
-      if (m.package && m.package.name && m.package.name !== "no group"/*FIXME*/) {
-        let packagePath = System.decanonicalize(m.package.name.replace(/\/*$/, "/"));
-        moduleId = string.joinPath(packagePath, moduleId);
-      }
-      let livelyEnv = System.get("@lively-env"),
-          realModule = livelyEnv.moduleEnv(moduleId) || livelyEnv.moduleEnv(m.pathInPackage);
-      if (!realModule)
-        console.warn(`Trying to deserialize instance of class ${meta.className} but the module ${moduleId} is not yet loaded`);
-      else
-        return realModule.recorder[meta.className];
-    }
-
-
-    // is it a global?
-    return System.global[meta.className];
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

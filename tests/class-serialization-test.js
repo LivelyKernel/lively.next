@@ -5,6 +5,7 @@ import { ObjectPool, deserialize, serialize, ObjectRef } from "../index.js";
 import ClassHelper from "../class-helper.js";
 import { resource } from "lively.resources";
 import { version as serializerVersion } from "../package.json";
+import { module } from "lively.modules/index.js";
 
 function serializationRoundtrip(obj, serializer = ObjectPool.withDefaultPlugins()) {
   let snapshotAndId = JSON.parse(JSON.stringify(objPool.snapshotObject(obj)));
@@ -128,7 +129,7 @@ describe("class properties", () => {
     await System.import(testModule);
   });
 
-  afterEach(async () => System.get(testModule).unload());
+  afterEach(async () => module(testModule).unload());
 
   it("it can ignore properties and initializes them", async () => {
     var {Foo} = System.get(testModule),

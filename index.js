@@ -5,6 +5,7 @@ import { removeUnreachableObjects } from "./snapshot-navigation.js";
 import { allPlugins } from "./plugins.js";
 import semver from 'semver';
 
+
 function normalizeOptions(options) {
   options = {plugins: allPlugins, reinitializeIds: false, skipMigrations: true, ...options};
   if (options.reinitializeIds && typeof options.reinitializeIds !== "function")
@@ -85,4 +86,5 @@ export function copy(obj, options) {
   return deserialize(serialize(obj, options), options);
 }
 import { default as ExpressionSerializer } from "./plugins/expression-serializer.js"
-export { ExpressionSerializer };
+import { getSerializableClassMeta, locateClass } from "./class-helper.js";
+export { ExpressionSerializer, getSerializableClassMeta, locateClass };
