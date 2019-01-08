@@ -119,9 +119,11 @@ var commands = [
 
   {
     name: "select morph",
-    exec: async (world, opts = {root: world, justReturn: false, filterFn: null, prependItems: [], prompt: null}) => {
-      var filterFn = opts.filterFn || (() => true),
-          i = 0,
+    exec: async (world, opts = {root: world, selectionFn: null, justReturn: false,
+                                filterFn: null, prependItems: [], prompt: null, remote: false}) => {
+      let i = 0,
+          filterFn = opts.filterFn || (() => true),
+          selectionFn = opts.selectionFn || ((title, items, opts) => world.filterableListPrompt(title, items, opts)),
           {default: ObjectPackage} = await System.import("lively.classes/object-classes.js"),
           items = arr.compact(tree.map(opts.root || world,
             (m, depth) => {
@@ -146,19 +148,20 @@ var commands = [
               }
             },
             m => filterFn(m) ? m.submorphs : [])),
-          actions = ["show halo", "open object editor", "open object inspector"],
-          {selected: morphs, action} = await world.filterableListPrompt(
-            opts.prompt || "Choose morph",
-            (opts.prependItems || []).concat(items),
-            {historyId: "lively.morphic-select morph",
-             onSelection: sel => {
-               if (this.lastSelectionHalo) this.lastSelectionHalo.remove();
-               if (sel && sel.show) {
-                 this.lastSelectionHalo = sel.show();
-               }
-             },
-             selectedAction: "show halo",
-             actions});
+          actions = ["show halo", "open object editor", "open object inspector"];
+          let {selected: morphs, action} = await selectionFn(
+              opts.prompt || "Choose morph",
+              (opts.prependItems || []).concat(items),
+              {historyId: "lively.morphic-select morph",
+               onSelection: sel => {
+                 if (this.lastSelectionHalo) this.lastSelectionHalo.remove();
+                 if (sel && sel.show) {
+                   this.lastSelectionHalo = sel.show();
+                 }
+               },
+               selectedAction: "show halo",
+               actions
+             });
 
       if (opts.justReturn) return morphs;
 
@@ -214,7 +217,9 @@ var commands = [
     name: "resize to fit window",
     exec: (world) => {
       delete world._cachedWindowBounds;
-      world.extent = world.windowBounds().union(world.submorphBounds()).extent();
+      world.extent = lively.FreezerRuntime ? 
+        world.windowBounds().extent() : 
+        world.windowBounds().union(world.submorphBounds()).extent();
       return true;
     }
   },
