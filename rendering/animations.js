@@ -46,7 +46,7 @@ function convertToSvgEasing(easing) {
 }
 
 export function stringToEasing(easingString) {
-  return Bezier(...eval(`([${easingString.match(/\((.*)\)/)[1]}])`));
+  return obj.isFunction(easingString) ? easingString : Bezier(...eval(`([${easingString.match(/\((.*)\)/)[1]}])`));
 }
 
 export class AnimationQueue {
@@ -149,7 +149,7 @@ export class PropertyAnimation {
           this.morph.withAllSubmorphsDo(m => m.isText && m.invalidateTextLayout(true, true)));
     }
     this.needsAnimation[type] = false;
-    if (!arr.any(Object.values(this.needsAnimation), Boolean)) {
+    if (!arr.any(obj.values(this.needsAnimation), Boolean)) {
       this.queue.removeAnimation(this);
       this.resolveCallback ? this.resolveCallback() : this.onFinish();
     }
@@ -433,22 +433,26 @@ export class PropertyAnimation {
     } else if (this.tweenGradient) {
       removalScheduled = true;
     }
-    if (before && after) {
+    if (node && before && after) {
       let camelBefore = {},
           camelAfter = {};
       for (let k in before) camelBefore[string.camelize(k)] = before[k];
       for (let k in after) camelAfter[string.camelize(k)] = after[k];
-      let anim = node.animate([camelBefore, camelAfter], {
-        duration: this.duration,
-        easing: this.easing,
-        fill: "forwards",
-        composite: "replace"
-      });
-      anim.onfinish = () => {
-        onComplete();
-        setTimeout(() => anim.cancel(), 200);
-      };
-      removalScheduled = true;
+      try {
+        let anim = node.animate([camelBefore, camelAfter], {
+          duration: this.duration,
+          easing: this.easing,
+          fill: "forwards",
+          composite: "replace"
+        });
+        anim.onfinish = () => {
+          onComplete();
+          setTimeout(() => anim.cancel(), 200);
+        };
+        removalScheduled = true;
+      } catch (e) {
+        removalScheduled = false;
+      }
     }
     if (!removalScheduled) onComplete();
   }
