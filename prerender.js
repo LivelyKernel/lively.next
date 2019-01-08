@@ -17,6 +17,7 @@ export function show(commit) {
   const part = prerenderedParts[commit.name];
   part.dontRecordChangesWhile(() => {
     $world.submorphs = [];
+    if (part.isWorld) return;
     part.openInWorld();
     part.left = part.top = 0;
   });
@@ -104,7 +105,9 @@ export async function prerender(commit, width, height, pathname, userAgent, time
       }
       <script id="loader" src="${pathname}/${userAgent}/${timestamp}-load.js" defer></script>
       <script>
-        history.replaceState(null, '', (new URL(location.href)).searchParams.get('pathname') || window.location.origin);
+        var url = new URL(location.href);
+        console.log(url.searchParams ? url.searchParams.get('pathname') : url.pathname);
+        history.replaceState(null, '', (url.searchParams ? url.searchParams.get('pathname') : url.pathname.split('/prerender')[0]) || window.location.origin);
         document.querySelector('#system').addEventListener('load', function() {
             window.prerenderNode = document.getElementById("${$world.id}");
         });

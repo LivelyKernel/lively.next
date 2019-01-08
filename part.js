@@ -1,8 +1,9 @@
 /*global System*/
 import { resource, createFiles } from 'lively.resources';
 import { requiredModulesOfSnapshot, removeUnreachableObjects, serialize } from "lively.serializer2";
-import { serializeMorph, loadPackagesAndModulesOfSnapshot, deserializeMorph } from "lively.morphic/serialization.js";
-import { arr } from "lively.lang";
+import { serializeMorph, findRequiredPackagesOfSnapshot, 
+        loadPackagesAndModulesOfSnapshot, deserializeMorph } from "lively.morphic/serialization.js";
+import { arr, obj } from "lively.lang";
 import { module } from "lively.modules/index.js";
 import Bundle from "./bundle.js";
 import FreezerPackage from "./package.js";
@@ -15,6 +16,10 @@ import { config, MorphicDB } from "lively.morphic";
 import { SnapshotInspector } from "lively.serializer2/debugging.js";
 import { parse, BaseVisitor } from "lively.ast";
 import { AllNodesVisitor } from "lively.ast/lib/visitors.js";
+import { moduleOfId } from "lively.serializer2/snapshot-navigation.js";
+import { classNameOfId } from "lively.serializer2/snapshot-navigation.js";
+import { referencesOfId } from "lively.serializer2/snapshot-navigation.js";
+import { asyncAwaitTranspilation } from "./module.js";
 
 export async function interactivelyFreezePart(part, opts) {
   var li = LoadingIndicator.open("Freezing target...", {center: $world.visibleBounds().center()}),
@@ -78,7 +83,37 @@ export async function interactivelyFreezePart(part, opts) {
 export async function freezeSnapshot({snapshot, progress}, opts) {
   // remove the metadata props
   const snap = JSON.parse(snapshot);
-  Object.values(snap.snapshot).forEach(m => delete m.props.metadata);
+  const deletedIds = [];
+  obj.values(snap.snapshot).forEach(m => delete m.props.metadata);
+  // remove objects that are part of the lively.ide or lively.halo package (dev tools)
+  for (let id in snap.snapshot) {
+     delete snap.snapshot[id].props.metadata;
+     let module = moduleOfId(snap.snapshot, id);
+     if (!module.package) continue;
+     if (['lively.ide', 'PartsBinBrowser', 'lively.halo'].includes(module.package.name)) {
+       // fixme: we also need to kill of packages which themselves require one of the "taboo" packages
+       delete snap.snapshot[id];
+       deletedIds.push(id);
+       continue;
+     }
+     // transform sources for attribute connections
+     if (classNameOfId(snap.snapshot, id) === 'AttributeConnection') {
+        let props = snap.snapshot[id].props;
+        if (props.converterString) {
+           props.converterString.value = asyncAwaitTranspilation(props.converterString.value); 
+        }
+        if (props.updaterString) {
+           props.updaterString.value = asyncAwaitTranspilation(props.updaterString.value);
+        }
+     }    
+  }
+  // remove all windows that are emptied due to the clearance process
+  for (let id in snap.snapshot) {
+     let className = classNameOfId(snap.snapshot, id);
+     if (className === 'Window' && arr.intersect(referencesOfId(snap.snapshot, id), deletedIds).length > 0) {
+       delete snap.snapshot[id];
+     }
+  }
   removeUnreachableObjects([snap.id], snap.snapshot);
   SnapshotInspector.forSnapshot(snap).openSummary();
   let res = await (await FreezerPart.fromSnapshot(snap, opts)).standalone({
@@ -112,6 +147,15 @@ export class FreezerPart {
   async getRequiredModulesFromSnapshot(snap, name, includeDynamicParts=false) {
     var imports = requiredModulesOfSnapshot(snap), // do this after the replacement of calls
         dynamicPartImports = [];
+
+    let { packages: additionalImports } = await findRequiredPackagesOfSnapshot(snap);
+    Object.keys(additionalImports['local://lively-object-modules/']).forEach(packageName => {
+      let filename = `${packageName}/index.js`;
+      if (!imports.includes(filename)) {
+        imports.push(filename);
+      }
+    });
+    
     for (let m of imports) {
        const partModuleSource = (await lively.modules.module(m).source()),
              parsedModuleSource = parse(partModuleSource),
@@ -186,10 +230,13 @@ export class FreezerPart {
                             let obj = deserialize(window.lively.partData["${name}"], {
                                reinitializeIds: function(id) { return id }
                             });
-                            obj.openInWorld();
-                            //lively.bindings.connect(window.$world, 'onWindowResize', obj, 'execCommand', { converter: () => 'resize on client'});
-                            window.onresize = () => obj.execCommand('resize on client');
-                            obj.execCommand('resize on client');
+                            if (obj.isWorld) {
+                              MorphicEnv.default().setWorldRenderedOn(obj, document.body, window.prerenderNode);
+                            } else {
+                              obj.openInWorld();
+                              window.onresize = () => obj.execCommand('resize on client');
+                              obj.execCommand('resize on client');
+                            }
                           });
                        }`;
 

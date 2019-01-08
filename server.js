@@ -135,7 +135,6 @@ export default class FrozenPartsLoader {
       if (newPath != this.fsRootDir) {
         req.url = sanitizedUrl.replace('/subserver/FrozenPartsLoader/' + id, '');
         // fixme: dynamically create whitelist for each part, only grant access to all defined resources
-        let whitelist = [...(this.production ? [] : [
                            'lively.lang', 
                            'lively.notifications',
                            'lively.classes',
@@ -144,7 +143,8 @@ export default class FrozenPartsLoader {
                            'lively.bindings',
                            'lively.graphics',
                            'lively.source-transform',
-                           'lively.serializer2']),
+                           'lively.serializer2',
+                           'upload']),
                          'users',
                          'noscript.html',
                          'objectdb',
@@ -269,7 +269,7 @@ export default class FrozenPartsLoader {
     if (autoUpdate) {
        // overrides commit to latest version
        const db = await ObjectDB.find(dbName);
-       container._commit = await db.getLatestCommit('part', commit.name)
+       container._commit = await db.getLatestCommit(commit.type, commit.name)
     }
   }
 
@@ -279,7 +279,7 @@ export default class FrozenPartsLoader {
        dispose(${JSON.stringify(container._commit)});
     `);
   }
-
+  
   getConfig(id) {
     const {
       _autoUpdate: autoUpdate,
@@ -400,7 +400,7 @@ export default class FrozenPartsLoader {
   async "[freezer] metrics"(tracker, {sender, data}, ackFn, socket) {
     let res;
     try {
-      res = this.headlessSession ? await this.headlessSession.page.getMetrics() : {JSHeapTotalSize: 0};
+      res = this.headlessSession ? await this.headlessSession.page.metrics() : {JSHeapTotalSize: 0};
     } catch (e) {
       typeof ackFn === "function" && ackFn({error: e.message});
       return;
