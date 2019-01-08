@@ -13,9 +13,10 @@ export function morphToNode(morph, renderer = morph.env.renderer) {
 function callMorphHTMLTransforms(morph, node, parents = []) {
   let morphNode = node.id === morph.id ? node : node.querySelector("#" + morph.id);
 
-  // FIXME... in this case simply ignore???
-  if (!morphNode)
-    throw new Error(`Cannot find node for morph ${morph}`);
+  if (!morphNode) {
+    console.warn(`Cannot find node for morph ${morph}`); 
+    return;
+  }
 
   morph.submorphs.forEach(ea => callMorphHTMLTransforms(ea, morphNode, parents.concat(morph)));
 
