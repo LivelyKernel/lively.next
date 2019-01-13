@@ -135,6 +135,7 @@ export default class FrozenPartsLoader {
       if (newPath != this.fsRootDir) {
         req.url = sanitizedUrl.replace('/subserver/FrozenPartsLoader/' + id, '');
         // fixme: dynamically create whitelist for each part, only grant access to all defined resources
+        let whitelist = [...(this.production ? [] : [
                            'lively.lang', 
                            'lively.notifications',
                            'lively.classes',
