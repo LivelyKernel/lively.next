@@ -11,7 +11,6 @@ import { Range } from "./range.js";
 import { eqPosition, lessPosition } from "./position.js";
 import KeyHandler from "../events/KeyHandler.js";
 import { Label } from "./label.js";
-import { Snippet } from "./snippets.js";
 import { UndoManager } from "../undo.js";
 import { TextSearcher } from "./search.js";
 import TextLayout from "./layout.js";
@@ -2781,11 +2780,7 @@ export class Text extends Morph {
   }
 
   get snippets() {
-    return this.pluginCollect("getSnippets", []).map(snippet => {
-      if (snippet.isTextSnippet) return snippet;
-      var [trigger, expansion] = snippet;
-      return new Snippet({trigger, expansion});
-    });
+    return this.pluginCollect("getSnippets", []);
   }
 
   onKeyDown(evt) {
