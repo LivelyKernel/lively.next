@@ -631,7 +631,7 @@ export class ObjectEditor extends Morph {
       items.push({command: "open browse snippet", target: this});
     }
 
-    if (this.selectedClass === klass) {
+    if (obj.isString(klass) ? this.context.selectedClassName === klass : this.context.selectedClass === klass) {
       let adoptByItems = [];
       klass.name !== "Morph" && adoptByItems.push({alias: "by superclass", command: "adopt by superclass", target: this});
       adoptByItems.push({alias: "by custom class...", command: "adopt by another class", target: this});
@@ -889,8 +889,9 @@ export class ObjectEditor extends Morph {
   
         let imports = (await realModule.imports()).map(ea => ea.local);
         const { Morph } = ctx.target.isMorph ? await System.import('lively.morphic') : {};
+        let klassDefs = (await realModule.scope()).classDecls.map(klass => klass.id.name);
         let klasses = obj.values(realModule.recorder).filter(ea =>
-          isClass(ea) && !imports.includes(ea.name) && 
+          isClass(ea) && !imports.includes(ea.name) && klassDefs.includes(ea.name) &&
           (ctx.target.isMorph ? withSuperclasses(ea).includes(Morph) : true));
   
         for (let klass of klasses) {
@@ -1212,14 +1213,14 @@ export class ObjectEditor extends Morph {
   browseSnippetForSelection() {
     // produces a string that, when evaluated, will open the browser at the
     // same location it is at now
-    let c = this.selectedClass,
+    let c = this.context.selectedClassName,
         m = this.selectedMethod,
         mod = this.selectedModule,
         t = this.target;
 
     let codeSnip = "$world.execCommand(\"open object editor\", {";
     codeSnip += `target: ${t.generateReferenceExpression()}`;
-    if (c) codeSnip += `, selectedClass: "${c.name}"`;
+    if (c) codeSnip += `, selectedClass: "${c}"`;
     if (m && c) codeSnip += `, selectedMethod: "${m.name}"`;
     codeSnip += "});";
 
