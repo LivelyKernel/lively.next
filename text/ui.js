@@ -188,12 +188,6 @@ export class RichTextControl extends Morph {
           let btn = this.addMorph(new DropDownList({
             selection: fontItems[0], items: fontItems,
             extent, width: 100, name: "font button",
-            // fill: new LinearGradient({
-            //   stops: [
-            //     {color: Color.white, offset: 0},
-            //     {color: Color.rgb(236,240,241), offset: 1}
-            //   ]
-            // }),
             tooltip: "change font family",
             listAlign: "top"
           }));

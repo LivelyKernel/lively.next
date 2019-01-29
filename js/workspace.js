@@ -1,7 +1,7 @@
 /*global System*/
 import { arr } from "lively.lang";
 import { pt, Color } from "lively.graphics";
-import { config, Text, InputLine } from "lively.morphic";
+import { config, easings, Text, InputLine } from "lively.morphic";
 import JavaScriptEditorPlugin from "./editor-plugin.js";
 import EvalBackendChooser from "./eval-backend-ui.js";
 import { resource } from "lively.resources";
@@ -94,7 +94,8 @@ export default class Workspace extends Window {
   }
 
   async setEvalBackend(choice) {
-    const duration = 300;
+    const duration = 1000,
+          easing = easings.outExpo;
     this.jsPlugin.setSystemInterfaceNamed(choice);
     let styleClasses, theme;
     if ((await this.jsPlugin.runEval("System.get('@system-env').node")).value) {
@@ -104,12 +105,12 @@ export default class Workspace extends Window {
       styleClasses = arr.without(this.styleClasses, 'node')
       theme = DefaultTheme.instance;
     }
-    this.animate({ duration, styleClasses });
+    this.animate({ duration, easing, styleClasses });
     this.jsPlugin.theme = theme;
     this.getSubmorphNamed('editor').textString = this.getSubmorphNamed('editor').textString;
     await this.get('editor').animate({
       fill: this.jsPlugin.theme.background,
-      duration
+      duration, easing
     })
     this.jsPlugin.highlight()
   }
