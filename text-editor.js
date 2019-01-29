@@ -1,3 +1,4 @@
+/*global TextDecoder*/
 import { Morph, Text, config } from "lively.morphic";
 import { num, promise } from "lively.lang";
 import { pt, Color } from "lively.graphics";
@@ -235,6 +236,9 @@ export default class TextEditor extends Morph {
       } else {
         res = resource(url);
         content = await res.read();
+        if (content.constructor == ArrayBuffer) {
+           content = new TextDecoder().decode(content)
+        }
       }
       if (!content) content = "";
       await this.prepareEditorForFile(url, content);
