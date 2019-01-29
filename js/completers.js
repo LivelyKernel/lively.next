@@ -1,4 +1,5 @@
 /*global System*/
+import { Snippet } from "../text/snippets.js";
 
 function buildEvalOpts(morph, additionalOpts) {
   let p = morph.plugins.find(p => p.isJSEditorPlugin);
@@ -119,7 +120,14 @@ export class DynamicJavaScriptCompleter {
               info: protoName,
               completion: ea,
               prefix: isValidIdentifier ? prefix : "." + prefix,
-              customInsertionFn: isValidIdentifier ? null :
+              customInsertionFn: isValidIdentifier ?
+                (this.isMethodCallCompletion(ea) ? (complString, prefix, textMorph, {start, end}) => {
+                   let expansion = complString.replace(/\((.*)\)/, (args) => 
+                      `(${args.slice(1, -1).split(', ').map((arg, i) => `\${${i}:${arg}}`).join(', ')})`);
+                   let snippet = new Snippet({expansion});
+                   snippet.expandAtCursor(textMorph);
+                } : null)
+              :
                 (complString, prefix, textMorph, {start, end}) => {
                   var before = {row: start.row, column: start.column-1},
                       range = textMorph.textInRange({start: before, end: start}) === "." ?

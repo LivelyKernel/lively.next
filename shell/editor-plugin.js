@@ -6,6 +6,7 @@ import { defaultDirectory, runCommand } from "./shell-interface.js";
 import { shellCompleters } from "./completers.js";
 
 import "./mode.js";
+import { Snippet } from "../text/snippets.js";
 
 var defaultDir;
 Promise.resolve(defaultDirectory()).then(dir => defaultDir = dir);
@@ -161,7 +162,7 @@ export default class ShellEditorPlugin extends CodeMirrorEnabledEditorPlugin {
   getSnippets(otherSnippets) {
     return otherSnippets.concat([
       ["findjs", "find ${0:.} \\( -name ${1:excluded} \\) -prune -o -iname '*.js' -type f -print0 | xargs -0 grep -nH ${2:what}"]
-    ]);
+    ].map(([trigger, expansion]) => new Snippet({ trigger, expansion })));
   }
 
   getCompleters(completers) {

@@ -191,10 +191,6 @@ export class Snippet {
 export const snippetCommands = [{
   name: "get snippets",
   exec: (textMorph) => {
-    return textMorph.pluginCollect("getSnippets", []).map(snippet => {
-      if (snippet.isTextSnippet) return snippet;
-      var [trigger, expansion] = snippet;
-      return new Snippet({trigger, expansion});
-    });
+    return textMorph.pluginCollect("getSnippets", []);
   }
 }];
