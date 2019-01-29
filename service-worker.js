@@ -5,6 +5,7 @@ import { obj, string, properties, worker, promise } from "lively.lang";
 import { subscribe } from "lively.notifications";
 import { module } from "lively.modules";
 import { config } from "lively.morphic";
+import { stringifyFunctionWithoutToplevelRecorder } from "lively.source-transform";
 
 !System.get('@system-env').worker
 && config.ide.workerEnabled
@@ -48,7 +49,7 @@ function initWorker() {
       'lively.ide/worker-init.js'
     ].map(url => System.baseURL + url)
   });
-  w.eval("(" + String(async function() {
+  w.eval("(" + stringifyFunctionWithoutToplevelRecorder(async function() {
    await lively.lang.promise.waitFor(5000, () => self.initialized);
    await System.import('lively-system-interface');
    await System.import('lively.ide/service-worker.js');
@@ -136,7 +137,7 @@ function initWorker() {
          messenger.answer(msg, res);
      }
    });
-  }).split('__lvVarRecorder.').join('') + ')()', () => {});
+  }) + ')()', () => {});
 
   subscribe("lively.modules/moduleloaded", async (evt) => {
       callService('loadModule', {
@@ -168,7 +169,7 @@ export async function callService(service, args, objectsInArguments = true) {
 
 function detectProgressMonitor(args) {
   if (args && args.isProgressMonitor) return args;
-  if (obj.isObject(args)) return Object.values(args).find(arg => arg && arg.isProgressMonitor);
+  if (obj.isObject(args)) return obj.values(args).find(arg => arg && arg.isProgressMonitor);
 }
 
 export class ProgressMonitor {
