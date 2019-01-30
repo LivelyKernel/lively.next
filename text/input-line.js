@@ -455,19 +455,7 @@ export class PasswordInputLine extends HTMLMorph {
       padding: {
         defaultValue: Rectangle.inset(2), after: ["input"],
         set(value) { this.setProperty("padding", value); this.updateHtml(this.input); }
-      },
-
-      // extent: {
-      //   defaultValue: pt(100,20), after: ["input"],
-      //   get(value) {
-      //     let ext = this.getProperty("extent"), pad = this.padding;
-      //     return ext.addXY(pad.left() + pad.right(), pad.top() + pad.bottom());
-      //   },
-      //   set(value) {
-      //     let pad = this.padding;
-      //     this.setProperty("extent", value.addXY(-(pad.left() + pad.right()), -(pad.top() + pad.bottom())));
-      //   },
-      // }
+      }
     }
   }
 
@@ -485,6 +473,12 @@ export class PasswordInputLine extends HTMLMorph {
     // return rect(x, y, width + padding.left()+padding.right(), height + padding.top()+padding.bottom());
   }
 
+  onChange(change) {
+    if (['fill', 'borderRadius'].includes(change.prop)) {
+      this.updateHtml(this.input)
+    }
+  }
+
   onLoad() {
     // hmm key events aren't dispatched by default...
     this.ensureInputNode().then(node => {
@@ -494,13 +488,19 @@ export class PasswordInputLine extends HTMLMorph {
     });
   }
 
+  onAfterRender(node) {
+    this.ensureInputNode();
+  }
+  
   ensureInputNode() { 
     return this.whenRendered().then(() => {
       let n = this.domNode;
+      
       if (n.parentNode.tagName == 'INPUT') {
-        let actualNode = n.parentNode;
-        n.remove();
-        this.domNode = actualNode;
+        n.parentNode.remove();
+        this.env.renderer
+          .getNodeForMorph(this)
+          .appendChild(this.domNode)
       }
       return this.domNode;
     }); 
