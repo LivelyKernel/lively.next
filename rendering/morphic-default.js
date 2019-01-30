@@ -183,6 +183,8 @@ export class ShadowObject {
     this.morph = morph;
     this.fast = fast;
   }
+
+  get __dont_serialize__() { return ['morph'] }
   
   get distance() { return this._distance }
   get blur() { return this._blur }
