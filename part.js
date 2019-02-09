@@ -16,7 +16,7 @@ import { config, MorphicDB } from "lively.morphic";
 import { SnapshotInspector } from "lively.serializer2/debugging.js";
 import { parse, BaseVisitor } from "lively.ast";
 import { AllNodesVisitor } from "lively.ast/lib/visitors.js";
-import { moduleOfId } from "lively.serializer2/snapshot-navigation.js";
+import { moduleOfId, isReference } from "lively.serializer2/snapshot-navigation.js";
 import { classNameOfId } from "lively.serializer2/snapshot-navigation.js";
 import { referencesOfId } from "lively.serializer2/snapshot-navigation.js";
 import { asyncAwaitTranspilation } from "./module.js";
@@ -88,6 +88,7 @@ export async function freezeSnapshot({snapshot, progress}, opts) {
   // remove objects that are part of the lively.ide or lively.halo package (dev tools)
   for (let id in snap.snapshot) {
      delete snap.snapshot[id].props.metadata;
+     delete snap.snapshot[id]._cachedLineCharBounds;
      let module = moduleOfId(snap.snapshot, id);
      if (!module.package) continue;
      if (['lively.ide', 'PartsBinBrowser', 'lively.halo'].includes(module.package.name)) {
@@ -107,11 +108,25 @@ export async function freezeSnapshot({snapshot, progress}, opts) {
         }
      }    
   }
+
+  console.log("Deleted objects:", deletedIds);
   // remove all windows that are emptied due to the clearance process
   for (let id in snap.snapshot) {
      let className = classNameOfId(snap.snapshot, id);
-     if (className === 'Window' && arr.intersect(referencesOfId(snap.snapshot, id), deletedIds).length > 0) {
-       delete snap.snapshot[id];
+     if ( arr.intersect(referencesOfId(snap.snapshot, id), deletedIds).length > 0) {
+         if (className === 'Window') {
+           delete snap.snapshot[id];
+           continue;
+         }
+         for (let { key, value: v } of Object.values(snap.snapshot[id].props)) {
+           if (isReference(v) && deletedIds.includes(v.id)) {
+             delete snap.snapshot[id].props[key];
+           }
+           if (arr.isArray(v)) { 
+             // also remove references that are stuck inside array values
+             snap.snapshot[id].props[key].value = v.filter(v => !(isReference(v) && deletedIds.includes(v.id)));
+           }
+         }   
      }
   }
   removeUnreachableObjects([snap.id], snap.snapshot);
@@ -149,7 +164,7 @@ export class FreezerPart {
         dynamicPartImports = [];
 
     let { packages: additionalImports } = await findRequiredPackagesOfSnapshot(snap);
-    Object.keys(additionalImports['local://lively-object-modules/']).forEach(packageName => {
+    Object.keys(additionalImports['local://lively-object-modules/'] || {}).forEach(packageName => {
       let filename = `${packageName}/index.js`;
       if (!imports.includes(filename)) {
         imports.push(filename);
@@ -233,9 +248,9 @@ export class FreezerPart {
                             if (obj.isWorld) {
                               MorphicEnv.default().setWorldRenderedOn(obj, document.body, window.prerenderNode);
                             } else {
-                              obj.openInWorld();
                               window.onresize = () => obj.execCommand('resize on client');
                               obj.execCommand('resize on client');
+                              obj.openInWorld();
                             }
                           });
                        }`;

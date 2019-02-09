@@ -33,7 +33,7 @@ export function asyncAwaitTranspilation(source) {
       code: true,
       ast: false
     };
-    var sourceForBabel = source.startsWith('function') ? `(${source})` : source,
+    var sourceForBabel = source.startsWith('function (') ? `(${source})` : source,
         transpiled = babel.transform(sourceForBabel, options).code;
     transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
     if (transpiled.startsWith('(function') && transpiled.endsWith(');')) transpiled = transpiled.slice(1, -2);
