@@ -147,7 +147,9 @@ export default class FrozenPartsLoader {
                            'lively.serializer2',
                            'upload']),
                          'users',
+                         'google',
                          'noscript.html',
+                         'nosupport.html',
                          'objectdb',
                          'lively.freezer',
                          'resources', 
@@ -170,6 +172,10 @@ export default class FrozenPartsLoader {
       const partsLoader = function () {
         if (!window.location.origin) {
           window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+        }
+        if (document.documentMode || /Edge/.test(navigator.userAgent)) {
+           document.location = '/nosupport.html';
+          return;
         }
         var w = document.documentElement.clientWidth;
         var h = document.documentElement.clientHeight || window.innerHeight ;
