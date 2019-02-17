@@ -300,8 +300,8 @@ function __additionally_serialize__addObjectFunction(objRef, snapshot, serialize
   // other objects to serialization
 
   return (key, value, verbatim = false) =>
-    snapshot.props[key] = verbatim ? {key, value, verbatim} :
-      {key, value: objRef.snapshotProperty(
+    snapshot.props[key] = verbatim ? {value, verbatim} :
+      {value: objRef.snapshotProperty(
         objRef.id, value, path.concat([key]), serializedObjMap, pool)}
 }
 
@@ -399,7 +399,6 @@ export class ObjectRef {
     for (var i = 0; i < keys.length; i++) {
       var key = keys[i];
       props[key] = {
-        key,
         value: this.snapshotProperty(
                   id, realObj[key], path.concat([key]),
                   serializedObjMap, pool)
