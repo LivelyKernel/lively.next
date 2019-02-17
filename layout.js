@@ -367,6 +367,18 @@ export class VerticalLayout extends FloatLayout {
   get resizeSubmorphs() { return this._resizeSubmorphs }
   set resizeSubmorphs(bool) { this._resizeSubmorphs = bool; this.apply(); }
 
+  getSpec() {
+    let { spacing, resizeSubmorphs, autoResize, align, padding } = this;
+    return { spacing, resizeSubmorphs, autoResize, align, padding };
+  }
+
+  __serialize__() {
+    return {
+      __expr__: `new VerticalLayout(${JSON.stringify(this.getSpec())})`,
+      bindings: {"lively.morphic": ["VerticalLayout"]}
+    }
+  }
+
   apply(animate = false) {
     if (this.active || !this.container) return;
     super.apply(animate);
@@ -466,6 +478,18 @@ export class HorizontalLayout extends FloatLayout {
 
   get spacing() { return this._spacing; }
   set spacing(offset) { this._spacing = offset; this.apply(); }
+
+  __serialize__() {
+    return {
+      __expr__: `new HorizontalLayout(${JSON.stringify(this.getSpec())})`,
+      bindings: {"lively.morphic": ["HorizontalLayout"]}
+    }
+  }
+
+  getSpec() {
+    let { spacing, autoResize, align, direction, padding } = this;
+    return { spacing, autoResize, align, direction, padding };
+  }
 
   async apply(animate = false) {
     if (this.active || !this.container || !this.container.submorphs.length) return;
@@ -1217,12 +1241,16 @@ export class LayoutColumn extends LayoutAxis {
      this.layout.apply();
   }
 
+  get paddingLeft() { return this.items[0].padding.x }
+
   set paddingRight(right) {
      this.items.forEach(c => {
         c.padding.width = right;
      });
      this.layout.apply();
   }
+
+  get paddingRight() { return this.items[0].padding.width }
 
   emptyAxis() {
     const col = new LayoutColumn(new LayoutCell({
@@ -1301,12 +1329,16 @@ export class LayoutRow extends LayoutAxis {
     this.layout.apply();
   }
 
+  get paddingTop() { return this.items[0].padding.y }
+
   set paddingBottom(bottom) {
     this.items.forEach(c => {
        c.padding.height = bottom;
     });
     this.layout.apply();
   }
+
+  get paddingBottom() { return this.items[0].padding.height }
 
   get before() { return this._before || (this._before = this.origin.top && new LayoutRow(this.origin.top)) }
   get after() { return this._after || (this._after = this.origin.bottom && new LayoutRow(this.origin.bottom)) }
@@ -1508,6 +1540,50 @@ export class GridLayout extends Layout {
 
   name() { return "Grid" }
   description() { return "Aligns the submorphs alongside a configurable grid. Columns and rows and be configured to have different proportional, minimal or fixed sizes. Cells can further be grouped such that submorphs fill up multiple slots of the grid." }
+
+  getSpec() {
+    let grid = [];
+    let rows = [];
+    let columns = [];
+    let groups = {};
+    for (let r of arr.range(0, this.rowCount - 1)) {
+      grid.push(this.grid.row(r).items.map(item => item.group.morph ? item.group.morph.name : null));
+    }
+    for (let r of arr.range(0, this.rowCount - 1)) {
+      let row = this.grid.row(r);
+      rows.push(r, {
+        ...(row.fixed ? {
+          fixed: row.length 
+        } : {}),
+        paddingTop: row.paddingTop,
+        paddingBottom: row.paddingBottom,
+      });
+    }
+    for (let c of arr.range(0, this.columnCount - 1)) {
+      let col = this.grid.col(c);
+      columns.push(c, {
+        ...(col.fixed ? {
+          fixed: col.length 
+        } : {}),
+        paddingLeft: col.paddingLeft,
+        paddingRight: col.paddingRight,
+      });
+    }
+    for (let cell of this.cellGroups) {
+      if (cell.morph) {
+        groups[cell.morph.name] = obj.select(cell, ['align', 'resize']);
+      }
+    }
+    return { autoAssign: false, grid, rows, columns, groups }
+  }
+
+  // serialize as expression with the config
+  __serialize__() {
+    return {
+      __expr__: `new GridLayout(${JSON.stringify(this.getSpec())})`,
+      bindings: {"lively.morphic": ["GridLayout"]}
+    }
+  }
 
   initGrid() {
     const grid = this.ensureGrid(this.config),
