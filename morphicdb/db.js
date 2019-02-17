@@ -5,6 +5,7 @@ import { loadMorphFromSnapshot, createMorphSnapshot } from "../serialization.js"
 import { resource } from "lively.resources";
 import { obj, Path, arr, string } from "lively.lang";
 
+
 /*
 
 $world.execCommand("open workspace", {
@@ -24,7 +25,25 @@ await versionDB.getAll()
 */
 var morphicDBs = morphicDBs || (morphicDBs = new Map());
 const defaultServerURL = (typeof document !== "undefined" ?
-                          document.location.origin : "http://localhost:9001") + "/objectdb/"
+                          document.location.origin : "http://localhost:9001") + "/objectdb/";
+
+export function convertToSerializableCommit(commit) {
+  commit.__serialize__ = () => {
+    let {type, name, _id} = commit
+    return {
+      __expr__: `({type: "${type}", name: "${name}", _id: "${_id}"})`,
+    }
+  };
+  return commit;
+}
+
+export async function ensureCommitInfo(commit) {
+  if (!commit) return false;
+  if (commit && commit._rev) return commit;
+  let { type, name, _id } = commit;
+  Object.assign(commit, await MorphicDB.default.fetchCommit(type, name, _id));
+  return commit;
+}
 
 export default class MorphicDB {
 
@@ -73,7 +92,7 @@ export default class MorphicDB {
     let {name, serverURL, snapshotLocation} = this;
     return {
       __expr__: `MorphicDB.named("${name}", {snapshotLocation: "${snapshotLocation}", serverURL: "${serverURL}"})`,
-      bindings: {"lively.morphic/morphicdb.js": [{exported: "default", local: "MorphicDB"}]}
+      bindings: {"lively.morphic/morphicdb/index.js": ["MorphicDB"]}
     }
   }
 
@@ -114,8 +133,9 @@ export default class MorphicDB {
     await this.initializeIfNecessary();
     let typesAndNames = [{type, name, ref}],
         commits = await this.httpDB.fetchCommits(
-          {db: this.name, ref, type, typesAndNames});
-    return commits[0];
+          {db: this.name, ref, type, typesAndNames, knownCommitIds: {}}),
+        commit = commits[0];
+    return convertToSerializableCommit(commits[0])
   }
 
   async fetchSnapshot(type, name, commitIdOrCommit, ref) {
@@ -147,7 +167,7 @@ export default class MorphicDB {
   async log(commit, limit, includeCommits = false, knownCommitIds) {
     await this.initializeIfNecessary();
     let {name: db} = this;
-    return this.httpDB.fetchLog({db, commit, limit, includeCommits, knownCommitIds});
+    return (await this.httpDB.fetchLog({db, commit, limit, includeCommits, knownCommitIds})).map(convertToSerializableCommit);
   }
 
   async revert(type, name, toCommitId, ref = "HEAD") {
@@ -159,6 +179,7 @@ export default class MorphicDB {
   async snapshotAndCommit(type, name, morph, snapshotOptions, commitSpec, ref, expectedParentCommit) {
     let snapshot = await createMorphSnapshot(morph, snapshotOptions),
         commit = await this.commit(type, name, snapshot, commitSpec, ref, expectedParentCommit);
+    commit = convertToSerializableCommit(commit);
     morph.changeMetaData("commit", obj.dissoc(commit, ["preview"]), /*serialize = */true, /*merge = */false);
     
     return commit;
@@ -200,6 +221,9 @@ export default class MorphicDB {
     }
     let snapshot = await this.fetchSnapshot(undefined, undefined, commit._id),
         morph = await loadMorphFromSnapshot(snapshot, loadOptions);
+    
+    commit = convertToSerializableCommit(commit);
+    
     morph.changeMetaData("commit", obj.dissoc(commit, ["preview"]),
       /*serialize = */true, /*merge = */false);
     return morph;

@@ -7,7 +7,7 @@ import { pt, Color, Rectangle } from "lively.graphics";
 import { connect } from "lively.bindings";
 import LoadingIndicator from "lively.components/loading-indicator.js";
 import { emit } from "lively.notifications";
-import { SnapshotPackageHelper, default as MorphicDB } from "./morphicdb/db.js";
+import { SnapshotPackageHelper, ensureCommitInfo, default as MorphicDB } from "./morphicdb/db.js";
 import { createMorphSnapshot } from "./serialization.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -29,7 +29,8 @@ export async function loadPart(nameOrCommit, options = {}) {
   // is re-attached to actual part
   if (part.isWindow && part.targetMorph/* && part.targetMorph.name === name*/) {
     let target = part.targetMorph,
-        commit = part.metadata && part.metadata.commit;
+        commit = await ensureCommitInfo(part.metadata && part.metadata.commit);
+    
     if (commit) {
       target.changeMetaData("commit", commit, /*serialize = */true, /*merge = */false);
     }
@@ -94,7 +95,7 @@ export async function interactivelySavePart(part, options = {}) {
       world = part.world() || part.env.world;
 
   let name = part.name, tags = [], description = "",
-      oldCommit = Path("metadata.commit").get(part) || Path("metadata.commit").get(actualPart),
+      oldCommit = await ensureCommitInfo(Path("metadata.commit").get(part) || Path("metadata.commit").get(actualPart)),
       morphicDB = options.morphicDB || MorphicDB.default;
 
   if (!oldCommit) {
@@ -151,8 +152,8 @@ export async function interactivelySavePart(part, options = {}) {
         commit = await savePart(part, name, options, commitSpec, ref, expectedParentCommit);
 
     if (switchedToWindow) {
-      if (actualPart.metadata) actualPart.metadata.commit = win.metadata.commit;
-      else actualPart.metadata = {commit: win.metadata.commit};
+      if (actualPart.metadata) actualPart.metadata.commit = await ensureCommitInfo(win.metadata.commit);
+      else actualPart.metadata = {commit: await ensureCommitInfo(win.metadata.commit)};
       win.metadata = windowMetadata;
     }
 

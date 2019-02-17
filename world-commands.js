@@ -7,6 +7,7 @@ import { loadObjectFromPartsbinFolder, loadPart } from "./partsbin.js";
 import { interactivelySaveWorld } from "./world-loading.js";
 import { show } from "lively.halos/markers.js";
 import { LoadingIndicator } from "lively.components";
+import { ensureCommitInfo } from "./morphicdb/db.js";
 
 var commands = [
 
@@ -717,11 +718,13 @@ var commands = [
   {
     name: "open PartsBin",
     exec: async function(world) {
+      var li = LoadingIndicator.open('Loading Partsbin...');
       var { loadPart } = await System.import("lively.morphic/partsbin.js")
       var pb = await loadPart("PartsBin");
       pb.openInWorldNearHand();
       pb.targetMorph.selectedCategory = "*basics*";
       pb.focus();
+      li.remove();
       return pb;
     }
   },
@@ -1141,7 +1144,7 @@ var commands = [
       }
       deployment = {
         id: name,
-        commit: world.metadata.commit,
+        commit: await ensureCommitInfo(world.metadata.commit),
         dbName: MorphicDB.default.name
       };
       return LoadingIndicator.forPromise(

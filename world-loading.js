@@ -7,6 +7,7 @@ import { Path, obj, date, promise } from "lively.lang";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import LoadingIndicator from "lively.components/loading-indicator.js";
 import { Color } from "lively.graphics";
+import { ensureCommitInfo } from "./morphicdb/db.js";
 
 
 export function pathForBrowserHistory(worldName, queryString) {
@@ -191,7 +192,7 @@ export async function interactivelySaveWorld(world, options) {
   options = {showSaveDialog: true, useExpectedCommit: true, errorOnMissingExpectedCommit: false, confirmOverwrite: true, ...options};
 
   let name = world.name, tags = [], description = "",
-      oldCommit = Path("metadata.commit").get(world),
+      oldCommit = await ensureCommitInfo(Path("metadata.commit").get(world)),
       db = options.morphicdb || MorphicDB.default;
 
   if (options.showSaveDialog) {

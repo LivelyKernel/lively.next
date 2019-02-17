@@ -3,6 +3,7 @@ import { morph, Icon } from "lively.morphic";
 import { removeUnreachableObjects } from "lively.serializer2";
 import { obj } from "lively.lang";
 import { connect, disconnectAll } from "lively.bindings";
+import { isReference } from "lively.serializer2/snapshot-navigation.js";
 
 export var migrations = [
 
@@ -246,6 +247,30 @@ For now only a simple default theme...
       }
       return idAndSnapshot;
     }
-  }
+  },
+
+  {
+    date: "2019-02-17",
+    name: 'change storage of commit metadata',
+    snapshotConverter: idAndSnapshot => {
+      let {id: rootId, snapshot} = idAndSnapshot;
+       // remove the nodeItemContainer from the tree submorphs, such that
+       // they do not get initialized at all.
+       // reconstruction of the tree rendering should happen automatically
+      Object.values(snapshot).map(m => {
+      if (m.props.metadata && isReference(m.props.metadata.value)) {
+          let metaObj = snapshot[m.props.metadata.value.id];
+          if (metaObj.props.commit && isReference(metaObj.props.commit.value)) {
+            let {type, name, _id} = snapshot[metaObj.props.commit.value.id].props;
+            metaObj.props.commit.value = {
+              __expr__: `({type: "${type.value}", name: "${name.value}", _id: "${_id.value}"})`,
+            }
+          }
+        }
+      });
+      removeUnreachableObjects([rootId], snapshot)
+      return idAndSnapshot;
+    }
+  },
 
 ];
