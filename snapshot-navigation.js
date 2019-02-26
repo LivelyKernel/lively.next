@@ -10,7 +10,7 @@ export function referenceGraph(snapshot) {
   return g;
 }
 
-function isReference(value) { return value && value.__ref__; }
+export function isReference(value) { return value && value.__ref__; }
 
 export function referencesOfId(snapshot, id, withPath) {
   // all the ids an regObj (given by id) points to
