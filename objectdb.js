@@ -1287,10 +1287,8 @@ export var ObjectDBInterface = {
       if (version.deleted || version._deleted) continue;
       let {_id, refs} = version;
       if (_id.startsWith("_")) continue;
-      ref = refsByTypeAndName[_id] || ref;
-      let commitId = refs[ref];
-      if (commitId && !knownCommitIds
-       || !knownCommitIds.hasOwnProperty(commitId))
+      let commitId = refs[refsByTypeAndName[_id] || ref] || ref;
+      if (commitId && (!knownCommitIds || !knownCommitIds.hasOwnProperty(commitId)))
         commitIds.push(commitId);
     }
 
