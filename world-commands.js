@@ -906,6 +906,7 @@ var commands = [
           { localInterface } = await System.import("lively-system-interface"),
           systemInterface = opts && opts.systemInterface ? opts.systemInterface :
             browser ? browser.systemInterface : localInterface,
+          locationString = systemInterface.name == 'local' ? '' : ` on [${systemInterface.name}]`,
           pkgs = await systemInterface.getPackages(),
           items = [];
 
@@ -926,7 +927,7 @@ var commands = [
       items = arr.sortBy(items, ea => ea.string);
       (async () => {
          var {selected} = await world.filterableListPrompt(
-            "Choose module to open", items, {
+             `Choose module to open${locationString}`, items, {
               historyId: "lively.morphic-choose and browse module",
               requester: browser || focused,
               width: 700, multiSelect: true, listFontColor: "white", fuzzy: "value.shortName"});
