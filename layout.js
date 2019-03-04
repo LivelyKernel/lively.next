@@ -368,8 +368,8 @@ export class VerticalLayout extends FloatLayout {
   set resizeSubmorphs(bool) { this._resizeSubmorphs = bool; this.apply(); }
 
   getSpec() {
-    let { spacing, resizeSubmorphs, autoResize, align, padding } = this;
-    return { spacing, resizeSubmorphs, autoResize, align, padding };
+    let { spacing, resizeSubmorphs, autoResize, align, padding, reactToSubmorphAnimations } = this;
+    return { spacing, resizeSubmorphs, autoResize, align, padding, reactToSubmorphAnimations };
   }
 
   __serialize__() {
@@ -487,8 +487,8 @@ export class HorizontalLayout extends FloatLayout {
   }
 
   getSpec() {
-    let { spacing, autoResize, align, direction, padding } = this;
-    return { spacing, autoResize, align, direction, padding };
+    let { spacing, autoResize, align, direction, padding, reactToSubmorphAnimations } = this;
+    return { spacing, autoResize, align, direction, padding, reactToSubmorphAnimations };
   }
 
   async apply(animate = false) {
