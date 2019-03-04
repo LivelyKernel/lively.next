@@ -125,6 +125,7 @@ export class DynamicJavaScriptCompleter {
                    let expansion = complString.replace(/\((.*)\)/, (args) => 
                       `(${args.slice(1, -1).split(', ').map((arg, i) => `\${${i}:${arg}}`).join(', ')})`);
                    let snippet = new Snippet({expansion});
+                   textMorph.replace({ start, end }, '');
                    snippet.expandAtCursor(textMorph);
                 } : null)
               :
