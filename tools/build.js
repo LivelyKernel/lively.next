@@ -76,6 +76,6 @@ module.exports = Promise.resolve()
   // 4. inject dependencies
   .then(source => {
     fs.writeFileSync(targetFile, source);
-    fs.writeFileSync(targetFile.replace('.js', '.min.js'), uglifyjs.minify(source).code);
+    fs.writeFileSync(targetFile.replace('.js', '.min.js'), uglifyjs.minify(source, {keep_fnames: true}).code);
   })
   .catch(err => { console.error(err.stack || err); throw err; })
