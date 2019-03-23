@@ -1,6 +1,7 @@
 import { obj, arr, string } from "lively.lang";
 import module from "lively.modules";
 import { resource } from 'lively.resources';
+import { System } from "lively.modules/index.js";
 
 const bundledPackages = [
    "lively.morphic",
@@ -14,6 +15,8 @@ export default class ModuleBundler {
   }
 
   get pluginId() { return "moduleBundler" }
+
+  toString() { return `<${this.pluginId}>`; }
 
   get after() { return ["cors"]; }
 

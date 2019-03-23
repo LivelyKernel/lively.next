@@ -4,6 +4,8 @@ export default class ShellPlugin {
 
   get pluginId() { return "shell" }
 
+  toString() { return `<${this.pluginId}>`; }
+
   get after() { return ["l2l"]; }
 
   setup(livelyServer) {  

@@ -7,6 +7,8 @@ export default class Lively2LivelyPlugin {
     this.l2lTracker = null
   }
 
+  toString() { return `<${this.pluginId}>`; }
+
   setOptions({l2lNamespace, l2lTracker} = {}) {
     this.l2lNamespace = l2lNamespace;
     this.l2lTracker = l2lTracker;

@@ -33,6 +33,8 @@ export default class ProxyPlugin {
 
   get pluginId() { return "proxy" }
 
+  toString() { return `<${this.pluginId}>`; }
+
   get before() { return ["jsdav"]; }
 
   setup(livelyServer) {}

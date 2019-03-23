@@ -1,3 +1,4 @@
+/*global System*/
 import LivelyServer from "../server.js";
 import fs from "fs";
 import { basename, join } from "path";
@@ -12,6 +13,8 @@ export default class LibLookupPlugin {
   setOptions({route} = {}) {}
 
   get pluginId() { return "lib-lookup"; }
+
+  toString() { return `<${this.pluginId}>`; }
 
   get before() { return ["jsdav"]; }
 

@@ -18,6 +18,8 @@ export default class ObjectDBPlugin {
 
   setOptions(opts) {}
 
+  toString() { return `<${this.pluginId}>`; }
+
   get pluginId() { return "objectdb" }
   get after() { return ["cors"]; }
   get before() { return ["jsdav"]; }

@@ -25,6 +25,8 @@ export default class WorldLoadingPlugin {
 
   get pluginId() { return "world-loading" }
 
+  toString() { return `<${this.pluginId}>`; }
+
   get before() { return ["jsdav"]; }
 
   setup(livelyServer) {}

@@ -14,6 +14,8 @@ export default class FileUploadPlugin {
 
   get pluginId() { return "file-upload" }
 
+  toString() { return `<${this.pluginId}>`; }
+
   get after() { return ["cors"]; }
   get before() { return ["jsdav"]; }
 

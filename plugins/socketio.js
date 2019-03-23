@@ -1,3 +1,4 @@
+/*global System*/
 import { arr } from "lively.lang";
 const socketio = System._nodeRequire("socket.io");
 
@@ -14,6 +15,8 @@ export default class SocketioPlugin {
   }
 
   get pluginId() { return "socketio"; }
+
+  toString() { return `<${this.pluginId}>`; }
 
   get after() { return ["cors"]; }
 

@@ -34,6 +34,8 @@ export default class LivelyDAVPlugin {
 
   get pluginId() { return "jsdav"; }
 
+  toString() { return `<${this.pluginId}>`; }
+
   get after() { return ["cors", "socketio", "eval"]; }
 
   setup({server}) {

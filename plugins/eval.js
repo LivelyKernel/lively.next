@@ -10,6 +10,8 @@ export default class EvalPlugin {
 
   get pluginId() { return "eval" }
 
+  toString() { return `<${this.pluginId}>`; }
+
   get after() { return ["cors"]; }
 
   handleRequest(req, res, next) {

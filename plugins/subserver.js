@@ -23,6 +23,8 @@ export default class SubserverPlugin {
   get pluginId() { return "subserver" }
   get before() { return ["jsdav"]; }
 
+  toString() { return `<${this.pluginId}>`; }
+
   setup(server) {
     this.server = server;
     this.startAllSubservers(server);

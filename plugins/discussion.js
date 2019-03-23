@@ -6,6 +6,8 @@ export default class DiscussionPlugin {
 
   get after() { return ["l2l"]; }
 
+  toString() { return `<${this.pluginId}>`; }
+
   setup(livelyServer) {  
     var l2lTracker = livelyServer.findPlugin("l2l").l2lTracker;
     Object.keys(DiscussionServices).forEach(name =>
