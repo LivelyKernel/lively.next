@@ -241,7 +241,8 @@ export class Color {
       darkGray:      Color.rgb(102,102,102),
       lightGray:     Color.rgb(230,230,230),
       veryLightGray: Color.rgb(243,243,243),
-      transparent:   Color.rgba(0,0,0,0)
+      transparent:   Color.rgba(0,0,0,0),
+      lively:        Color.rgb(245,124,0)
     }
   }
 
@@ -466,6 +467,16 @@ class Gradient {
     return interpolatedStops;
   }
 
+  __serialize__() {
+    return {
+      __expr__:  this.toJSExpr(),
+      bindings: {
+        "lively.graphics/color.js": ["Color", "RadialGradient", "LinearGradient"],
+        "lively.graphics/geometry-2d.js": ["pt", "rect"]
+      }
+    }
+  }
+
 }
 
 export class LinearGradient extends Gradient {
@@ -617,6 +628,11 @@ export class RadialGradient extends Gradient {
         str += `,${this.stops[i].color.toRGBAString()} ${(this.stops[i].offset * 100).toFixed() + "%"}`;
     str += ')';
     return str;
+  }
+
+  toJSExpr() {
+    let stops = this.stops.map(ea => `{offset: ${ea.offset}, color: ${ea.color.toJSExpr()}}`).join(", ");
+    return `new RadialGradient({stops: [${stops}], bounds: ${this.bounds}, focus: ${this.focus}})`;
   }
 
 }
