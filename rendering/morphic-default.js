@@ -227,6 +227,20 @@ export class ShadowObject {
   
   get isShadowObject() { return true; }
 
+  __serialize__() {
+    let {distance, rotation, color, inset, blur, spread, fast} = this.toJson();
+    color = color.toJSExpr();
+    return {
+      __expr__: `new ShadowObject({${
+         Object.entries({ distance, rotation, color, inset, blur, spread, fast}).map(([k, v]) => `${k}:${v}`)
+      }})`,
+      bindings: {
+         "lively.graphics/color.js": ["Color"],
+         "lively.morphic": ["ShadowObject"]
+      }
+    }
+  }
+
   toCss() {
     let {distance, rotation, color, inset, blur, spread} = this,
         {x, y} = Point.polar(distance, num.toRadians(rotation));
@@ -240,7 +254,8 @@ export class ShadowObject {
       "blur",
       "color",
       "inset",
-      "spread"
+      "spread",
+      "fast"
     ]);
   }
 
@@ -328,6 +343,7 @@ MorphAfterRenderHook.prototype.updateScroll = function(morph, node, fromScroll) 
     // this is only there to immediately respoond in the view to a setScroll
     node.scrollTop !== y && (node.scrollTop = y);
     node.scrollLeft !== x && (node.scrollLeft = x);
+    //if (bowser.firefox && bowser.mobile) return;
     !fromScroll && requestAnimationFrame(() => {
       node.scrollTop !== y && (node.scrollTop = y);
       node.scrollLeft !== x && (node.scrollLeft = x);

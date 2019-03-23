@@ -262,9 +262,7 @@ For now only a simple default theme...
           let metaObj = snapshot[m.props.metadata.value.id];
           if (metaObj.props.commit && isReference(metaObj.props.commit.value)) {
             let {type, name, _id} = snapshot[metaObj.props.commit.value.id].props;
-            metaObj.props.commit.value = {
-              __expr__: `({type: "${type.value}", name: "${name.value}", _id: "${_id.value}"})`,
-            }
+            metaObj.props.commit.value = `__lv_expr__:({type: "${type.value}", name: "${name.value}", _id: "${_id.value}"})`;
           }
         }
       });
