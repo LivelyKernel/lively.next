@@ -43,6 +43,8 @@
 //                            internal housekeeping. At this point this is only used
 //                            documentation and debugging purposes, it won't affect
 //                            how the property works
+//   readOnly: BOOL         - optional, if set prevents that the property is mutated. Also
+//                            prevents the serializer from storing that value state.
 // }
 
 

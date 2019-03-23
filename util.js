@@ -1,4 +1,4 @@
-import { arr, Path } from "lively.lang";
+import { arr, obj, Path } from "lively.lang";
 import { superclassSymbol } from "./runtime.js";
 import { RuntimeSourceDescriptor } from "./source-descriptors.js";
 
@@ -66,7 +66,7 @@ function runtimeClassMembersInProtoChain(klass) {
 
 function runtimeNonStaticMembers(klass) {
   var owner = klass.prototype,
-      descriptors = Object.getOwnPropertyDescriptors(owner);
+      descriptors = obj.getOwnPropertyDescriptors(owner);
   return arr.withoutAll(
     Object.keys(descriptors),
     ["constructor"])
@@ -93,7 +93,7 @@ function runtimeNonstaticClassMembersInProtoChain(klass) {
 
 export function runtimeStaticClassMembers(klass) {
   var owner = klass,
-      descriptors = Object.getOwnPropertyDescriptors(owner);
+      descriptors = obj.getOwnPropertyDescriptors(owner);
   return arr.withoutAll(
     Object.keys(descriptors),
     ["prototype", "name", "length", "toString"])
