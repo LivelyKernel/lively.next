@@ -754,7 +754,7 @@ export class TilingLayoutHalo extends Morph {
     connect(alignControl, 'update', this, 'updateAlign');
     connect(axisControl, 'update', this, 'updateAxis');
     let lineSpec = {
-      type: "text",
+      type: "label",
       padding: rect(0,5,5,5),
       fill: Color.transparent,
       fontColor: Color.gray.darker(),
@@ -1067,7 +1067,7 @@ export class ProportionalLayoutHalo extends Morph {
           }),
           modifySubmorphSettingsButton = new Button({
             name: "modify submorph settings button",
-            label: [...Icon.textAttribute("crosshairs"), "\u00a0Change submorph settings", {marginLeft: "5px"}]
+            label: [...Icon.textAttribute("crosshairs"), "\u00a0Change submorph settings"]
           });
 
     connect(xAxis, 'checked', this, 'updateXAxisEnabled');
