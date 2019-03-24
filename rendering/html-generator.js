@@ -37,7 +37,7 @@ export function morphicStyles() {
         .map(ea => ea.outerHTML.replace(`href="${document.location.origin}`, `href="`)).join("\n"),
       styles = Array.from(document.querySelectorAll("style"))
         .map(ea => ea.outerHTML).join("\n")
-        .replace(/[^\s]*user-select: none;/g, "");
+        //.replace(/[^\s]*user-select: none;/g, "");
   return `${styles}\n${styleLinks}`;
 }
 
@@ -66,7 +66,7 @@ export async function generateHTML(morph, htmlResource, options = {}) {
         addMetaTags,
         addScripts,
         appendHTML,
-        title = 'lively.next'
+        title = false
       } = options,
       renderFreeStanding = containerOpts == false,
       {width: containerWidth, height: containerHeight, id: containerId} = containerOpts || {},
@@ -97,7 +97,8 @@ export async function generateHTML(morph, htmlResource, options = {}) {
     if (appendHTML) html += appendHTML;
 
   } else {
-    html = `<head><title>${title}</title>
+    html = `<head>
+     ${title ? `<title>${title}</title>` : ''}
      <meta content="utf-8" http-equiv="encoding">
      <meta content="text/html;charset=utf-8" http-equiv="Content-Type">`;
     if (addMetaTags) {
