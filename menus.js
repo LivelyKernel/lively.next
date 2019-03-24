@@ -20,6 +20,7 @@ export class MenuItem extends Label {
 
   static get properties() {
     return {
+      acceptsDrops: { defaultValue: false },
       fixedWidth: {defaultValue: false},
       fixedHeight: {defaultValue: false},
       fill: {defaultValue: Color.transparent},
