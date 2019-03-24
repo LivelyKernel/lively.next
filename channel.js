@@ -1,4 +1,7 @@
 import { string, num, promise, fun } from "lively.lang";
+import L2LClient from "lively.2lively/client.js";
+import { newUUID } from "lively.lang/string.js";
+import { ExpressionSerializer } from "lively.serializer2";
 
 var debug = false;
 
@@ -7,11 +10,19 @@ var debug = false;
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 export class Channel {
 
+  static for(senderRecvrA, onReceivedMethodA, senderRecvrB, onReceivedMethodB) {
+    if (typeof senderRecvrB === 'string') {
+      return new L2LChannel(senderRecvrA, onReceivedMethodA, senderRecvrB, onReceivedMethodB); 
+    }
+    return new this(senderRecvrA, onReceivedMethodA, senderRecvrB, onReceivedMethodB);
+  }
+
   constructor(senderRecvrA, onReceivedMethodA, senderRecvrB, onReceivedMethodB) {
     if (!senderRecvrA) throw new Error("no sender / receiver a!");
     if (!senderRecvrB) throw new Error("no sender / receiver b!");
     if (typeof senderRecvrA[onReceivedMethodA] !== "function") throw new Error(`sender a has no receive method ${onReceivedMethodA}!`);
-    if (typeof senderRecvrB[onReceivedMethodB] !== "function") throw new Error(`sender b has no receive method ${onReceivedMethodB}!`);
+    if (typeof senderRecvrB != 'string' && typeof senderRecvrB[onReceivedMethodB] !== "function")
+      throw new Error(`sender b has no receive method ${onReceivedMethodB}!`);
 
     this.id = string.newUUID();
     this.senderRecvrA = senderRecvrA;
@@ -70,7 +81,7 @@ export class Channel {
   }
 
   send(content, sender) {
-    var { recvr, queue, delay, method, descr, } = this.componentsForSender(sender);
+    var { recvr, queue, descr } = this.componentsForSender(sender);
 
     if (debug) {
       var msgs = (Array.isArray(content) ? content : [content]);
@@ -111,4 +122,138 @@ export class Channel {
 
     return promise.waitFor(() => queue.length === 0);
   }
+}
+
+export class L2LChannel extends Channel {
+
+  constructor(...args) {
+    super(...args);
+    // now initialize a l2lClient connection to connect to the remote
+    this.initL2LConnection();
+  }
+
+  async initL2LConnection() {
+    let id = this.senderRecvrB;
+    this.l2lClient = await L2LClient.default();
+    await this.l2lClient.joinRoom(id)
+    // start listening for incoming messages
+    this.l2lClient.addService(this.onReceivedMethodA, (tracker, msg) => 
+       this.send(msg.data, id))
+  }
+
+  serializeContent(content) {
+    let exprSerializer = new ExpressionSerializer();
+    content = (Array.isArray(content) ? content : [content]);
+    content = content.map(o => {
+      return JSON.stringify(o, (key, val) => {
+        if (val.__serialize__) {
+          try {
+            val = exprSerializer.exprStringEncode(val.__serialize__());
+          } catch (e) {
+            console.log(`serializeChange: failed to serialize ${key} to serialized expression`);
+          }
+        }
+      })
+    })
+    return content;
+  }
+
+  deserializeContent(stringifiedContent) {
+    let exprSerializer = new ExpressionSerializer();
+    let content = JSON.parse(stringifiedContent, (key, val) => {
+       if (typeof val === "string" && exprSerializer.isSerializedExpression(val)) {
+         return exprSerializer.deserializeExpr(val);
+       }
+    });
+    return content;
+  }
+  
+  send(content, sender) {
+    var { recvr, queue, descr } = this.componentsForSender(sender);
+
+    if (debug) {
+      var msgs = (Array.isArray(content) ? content : [content]);
+      let string = `[lively.sync] sending ${sender} -> ${recvr}: `;
+      if (!msgs.length) string += " no messages"
+      // else if (msgs.length === 1) string += msgs[0];
+      string += msgs.map(ea => ea.change.prop || ea.change.selector).join(",")
+      console.log(string);
+    }
+
+    content = this.serializeContent(content);
+
+    queue.push(...content);
+
+    return this.deliver(sender);
+  }
+
+  deliver(sender) {
+
+    var { recvr, method, queue, delay, descr } = this.componentsForSender(sender);
+
+    this.watchdogProcess();
+
+    // try again later via watchdogProcess
+    if (!this.isOnline()) return Promise.resolve();
+
+    if (typeof recvr === 'string') {
+      // then we need to invoke our client
+      Promise.resolve().then(() => {
+        if (!delay) {
+          var outgoing = queue.slice(); queue.length = 0;
+          try {
+            this.l2lClient.broadcast(recvr, method, outgoing);
+          }
+          catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
+        } else {
+          fun.throttleNamed(`${this.id}-${descr}`, delay*1000, () => {
+            var outgoing = queue.slice(); queue.length = 0;
+            try { this.l2lClient.broadcast(recvr, method, outgoing); }
+            catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
+          })();
+        }
+      });
+    } else {
+      Promise.resolve().then(() => {
+        // incoming stuff for a l2l channel needs to always parse its arguments
+        outgoing = this.deserializeContent(outgoing);
+        if (!delay) {
+          var outgoing = queue.slice(); queue.length = 0;
+          try { recvr[method](outgoing, sender, this); }
+          catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
+        } else {
+          fun.throttleNamed(`${this.id}-${descr}`, delay*1000, () => {
+            var outgoing = queue.slice(); queue.length = 0;
+            try { recvr[method](outgoing, sender, this); }
+            catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
+          })();
+        }
+      }); 
+    }
+
+    return promise.waitFor(() => queue.length === 0);
+  }
+  
+}
+
+export class L2LCollaboration {
+  
+  static async for(master) {
+    let id = newUUID();
+    let collaboration = new this(master, id);
+    collaboration.l2lClient = await L2LClient.forLivelyInBrowser({ type: 'lively.sync master' });
+    collaboration.l2lClient.addService(
+       'getInitialState', (tracker, msg, ackFn) => {
+       return ackFn(master.state.world.exportToJSON({keepFunctions: false }))
+    })
+    await collaboration.l2lClient.joinRoom(id);
+    master.addConnection(collaboration);
+    return id;
+  }
+
+  constructor(master, id) {
+    this.opChannel = new L2LChannel(master, 'receiveOpsFromClient', id, 'receiveOpsFromMaster');
+    this.metaChannel = new L2LChannel(master, 'receiveMetaMsgsFromClient', id, 'receiveMetaMsgsFromMaster');
+  }
+  
 }

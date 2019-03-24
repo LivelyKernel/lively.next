@@ -3,6 +3,9 @@ import { morphicDefaultTransform, transformOp_1_to_n } from "./transform.js";
 import { printOps } from "./debugging.js";
 import { applyChange } from "./changes.js";
 
+
+import { L2LCollaboration } from "./channel.js";
+
 var i = val => obj.inspect(val, {maxDepth: 2});
 
 export function fnStringsToFunctions(fnStrings) {
@@ -43,6 +46,11 @@ export class Master {
   printHist() { return printOps(this.state.history); }
 
   get morphicEnv() { return this.state.world.env; }
+
+  async initL2LTracker() {
+    // sets up a l2l tracker other remote lively.sync clients can hook up to via channels
+    return await L2LCollaboration.for(this);
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // connections

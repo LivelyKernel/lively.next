@@ -1,7 +1,10 @@
 import { obj, num, arr, string } from "lively.lang";
 import { pt, Color, Point } from "lively.graphics";
-import { morph, HTMLMorph, EventDispatcher, Renderer } from "lively.morphic";
+import { morph, HTMLMorph, EventDispatcher } from "lively.morphic";
 import { Client, Master } from "lively.sync";
+import { Renderer } from "lively.morphic/rendering/renderer.js";
+
+setup()
 
 async function setup() {
 

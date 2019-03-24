@@ -3,6 +3,9 @@ import { morphicDefaultTransform, transformOp_1_to_n, composeOps } from "./trans
 import { printOps, printOp } from "./debugging.js";
 import { Channel } from "./channel.js";
 import { serializeChange, applyChange } from "./changes.js";
+import L2LClient from "lively.2lively/client.js";
+import { morph, MorphicEnv } from "lively.morphic";
+import { createDOMEnvironment } from "lively.morphic/rendering/dom-helper.js";
 
 var i = val => obj.inspect(val, {maxDepth: 2});
 
@@ -92,12 +95,13 @@ export class Client {
     con.opChannel = null;
   }
 
-  connectToMaster(master) {
+  connectToMaster(master /* either master object or uuid */) {
     this.disconnectFromMaster();
     var con = this.state.connection;
-    con.opChannel = new Channel(this, "receiveOpsFromMaster", master, "receiveOpsFromClient")
-    con.metaChannel = new Channel(this, "receiveMetaMsgsFromMaster", master, "receiveMetaMsgsFromClient")
-    master.addConnection(con);
+    con.opChannel = Channel.for(this, "receiveOpsFromMaster", master, "receiveOpsFromClient")
+    con.metaChannel = Channel.for(this, "receiveMetaMsgsFromMaster", master, "receiveMetaMsgsFromClient")
+    if (typeof master != 'string') master.addConnection(con);
+    return this;
   }
 
   hasConnection() {
@@ -318,7 +322,6 @@ export class Client {
         this.state.buffer = transformedAgainstOps;
         this.state.history.push(transformedOp);
         this.apply(transformedOp);
-
       }
     }
 
@@ -400,4 +403,13 @@ export class Client {
     this.state.buffer = keep.concat(composeOps(maybeCompose));
   }
 
+  static async remoteConnect(uuid, name){
+    let client = await L2LClient.default(),
+        morphicEnv = new MorphicEnv(await createDOMEnvironment()),
+        roomMembers = await client.listRoomMembers(uuid),
+        master = (await client.listPeers()).find(p => roomMembers.sockets[p.socketId] && p.type == 'lively.sync master'),
+        { data } = await client.sendToAndWait(master.id, 'getInitialState', true);
+    return (new Client(morph({...data, env: morphicEnv}, { restore: true }), name)).connectToMaster(uuid);
+  }
+  
 }

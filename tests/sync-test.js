@@ -2,7 +2,7 @@
 
 import { expect } from "mocha-es6";
 import { morph } from "lively.morphic";
-import { promise, tree } from "lively.lang";
+import { promise, obj, tree } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { disconnect, disconnectAll, connect } from "lively.bindings";
 import { buildTestWorld, destroyTestWorld } from "./helper.js";
@@ -25,7 +25,7 @@ async function setup(nClients) {
   state.masterWorld = masterEnv.world;
 
   for (var i = 0; i < nClients; i++) {
-    let env = state[`env${i+1}`] = await buildTestWorld(masterEnv.world.exportToJSON(), pt(0,300*(i+1))),
+    let env = state[`env${i+1}`] = await buildTestWorld(masterEnv.world.exportToJSON(), pt(0,300*(i+1)), true),
         client = state[`client${i+1}`] = new Client(env.world, `client${i+1}`);
     client.connectToMaster(master);
     state[`world${i+1}`] = env.world;
@@ -121,7 +121,9 @@ describe("syncing master with two clients", function() {
       target: {type: "lively-sync-morph-ref", id: world1.id},
       type: "method-call",
       selector: "addMorphAt",
-      args: [{type: "lively-sync-morph-spec", spec: {name: "m1", position: pt(10,10), extent: pt(50,50)}}, 0]
+      args: [{type: "lively-sync-morph-spec", spec: obj.select(morph({
+        name: "m1", position: pt(10,10), extent: pt(50,50)}).exportToJSON({
+        keepFunctions: false}), ['name', 'position', 'extent'])}, 0]
     }
 
     expect(client1.history[0].change).containSubset(expectedChange);
@@ -140,6 +142,59 @@ describe("syncing master with two clients", function() {
       expect(m)              .not.equals(world2Morphs[i], `morphs ${m.name} (${i}) in world 1 and 2 are identical`);
       expect(m)              .not.equals(world3Morphs[i], `morphs ${m.name} (${i}) in world 1 and 3 are identical`);
       expect(world2Morphs[i]).not.equals(world3Morphs[i], `morphs ${m.name} (${i}) in world 2 and 3 are identical`);
+    });
+
+  });
+
+  it("adding a morph hierarchy", async () => {
+    var {world1, world2, masterWorld, client1, client2, master} = state,
+        m = morph({name: "m1", position: pt(10,10), extent: pt(50,50), fill: Color.red,
+                     submorphs: [{name: "m2", position: pt(10,10), extent: pt(50,50), fill: Color.orange}]
+                    }),
+        spec = obj.select(
+          morph({
+            name: "m1", position: pt(10,10), extent: pt(50,50)
+          }).exportToJSON({ keepFunctions: false}), 
+            ['name', 'position', 'extent']);
+    world1.addMorph(m);
+    await client1.synced();
+
+    // is morph state completely synced?
+    //expect(masterWorld.exportToJSON()).deep.equals(world1.exportToJSON(), "masterWorld");
+    //expect(world2.exportToJSON()).deep.equals(world1.exportToJSON(), "world2");
+
+    // has morph an owner?
+    expect(masterWorld.getSubmorphNamed("m1").owner).equals(masterWorld);
+    expect(world2.getSubmorphNamed("m1").owner).equals(world2);
+
+    // is history consistent?
+    expect(client1.history).to.have.length(1);
+    var expectedChange = {
+      target: {type: "lively-sync-morph-ref", id: world1.id},
+      type: "method-call",
+      selector: "addMorphAt",
+      args: [{type: "lively-sync-morph-spec", spec }, 0]
+    }
+
+    expect(client1.history[0].change).containSubset(expectedChange);
+    expect(client2.history).to.have.length(1);
+    expect(master.history[0].change).containSubset(expectedChange);
+    expect(master.history).to.have.length(1);
+    
+    // are there different morphs in each world?
+    var world1Morphs = world1.withAllSubmorphsDo(ea => ea),
+        world2Morphs = world2.withAllSubmorphsDo(ea => ea),
+        world3Morphs = masterWorld.withAllSubmorphsDo(ea => ea);
+    world1Morphs.map((m, i) => {
+      expect(m.id)              .equals(world2Morphs[i].id, `morphs ${m.name} (${i}) in world 1 and 2 have not the same id`);
+      expect(m.id)              .equals(world3Morphs[i].id, `morphs ${m.name} (${i}) in world 1 and 3 have not the same id`);
+      expect(world2Morphs[i].id).equals(world3Morphs[i].id, `morphs ${m.name} (${i}) in world 2 and 3 have not the same id`);
+      expect(m)              .not.equals(world2Morphs[i], `morphs ${m.name} (${i}) in world 1 and 2 are identical`);
+      expect(m)              .not.equals(world3Morphs[i], `morphs ${m.name} (${i}) in world 1 and 3 are identical`);
+      expect(world2Morphs[i]).not.equals(world3Morphs[i], `morphs ${m.name} (${i}) in world 2 and 3 are identical`);
+      expect(master.state.objects.get(m.id)).not.be.undefined;
+      expect(client1.state.objects.get(m.id)).not.be.undefined;
+      expect(client2.state.objects.get(m.id)).not.be.undefined;
     });
 
   });
