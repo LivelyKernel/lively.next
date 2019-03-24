@@ -525,6 +525,7 @@ export class Text extends Morph {
         group: "text styling",
         isStyleProp: true,
         isDefaultTextStyleProp: true,
+        defaultValue: 1.4,
         after: ["document", "defaultTextStyle", "viewState"]
       },
       letterSpacing: {
@@ -631,8 +632,8 @@ export class Text extends Morph {
         set(plugins) {
           var prevPlugins = this.getProperty("plugins"),
               removed = arr.withoutAll(prevPlugins, plugins);
-          removed.forEach(p => this.removePlugin(p));
-          plugins.forEach(p => this.addPlugin(p));
+          removed.forEach(p => p && this.removePlugin(p));
+          plugins.forEach(p => p && this.addPlugin(p));
         }
       },
 
@@ -761,6 +762,13 @@ export class Text extends Morph {
         : [this.selection.range]).map(ea => obj.select(ea, ["start", "end"]))
     };
 
+    // filter the anchors
+    if (snapshot.props.anchors && this.selection.isEmpty()) {
+      snapshot.props.anchors.value = snapshot.props.anchors.value.filter(ref => {
+        return !ref.id.includes('selection-');
+      });
+    }
+
     snapshot.props.textAndAttributes = {
       key: "textAndAttributes",
       value: this.textAndAttributes.map(m => { 
@@ -848,6 +856,8 @@ export class Text extends Morph {
     
     let updateTextEngine = () => {
 
+      this._textChange = true;
+
       if (scrollChange) this.viewState.wasScrolled = true;
       
       if (hardLayoutChange || (softLayoutChange && !meta.styleSheetChange)) {
@@ -865,6 +875,7 @@ export class Text extends Morph {
 
       if (textChange) signal(this, "textChange", change);
       if (viewChange) signal(this, "viewChange", change);
+      this._textChange = false;
     }
     
     // if there is an animation in progress, we need to wait until that
@@ -884,12 +895,16 @@ export class Text extends Morph {
     if (change.meta.animation) {
       await change.meta.animation.asPromise();
     }
-    if (this._positioningSubmorph === submorph) return;
+    if (this._textChange || this._positioningSubmorph === submorph) {
+      return;
+    }
     let {prop} = change,
         isGeometricTransform = prop == 'position' ||
                                prop == 'extent' || 
                                prop == 'scale' || 
                                prop == 'rotation';
+    
+    // update the displacement shape if the bounds of a displacing morph changed
     if (this.displacingMorphMap.get(submorph) 
         && isGeometricTransform) {
        [...this.displacingMorphMap.keys()]
@@ -903,8 +918,15 @@ export class Text extends Morph {
     const {anchor: submorphAnchor} = this.embeddedMorphMap.get(submorph) || {};
     if (submorphAnchor
         && isGeometricTransform) {
+      if (prop == 'position') {
+        // embedded morphs are fixed, so we just revert the position and are done
+        this._positioningSubmorph = submorph;
+        submorph.position = change.prevValue;
+        this._positioningSubmorph = null;
+        return;
+      }
       const currentBounds = submorph.bounds(),
-            lastBounds = submorph._lastBounds,
+            lastBounds = submorph._lastBounds, // infer last bounds from the actual change
             row = submorphAnchor.position.row,
             line = this.document.getLine(row);
       if (!lastBounds || 
@@ -913,15 +935,23 @@ export class Text extends Morph {
         submorph._lastBounds = currentBounds;
         // update the height of the current line
         if (!lastBounds || lastBounds.height != currentBounds.height) {
+           // if we actually move because another morph changed its bounds,
+           // we can easily derive how the other morph's bounds need to be updated,
+           // based on their position in the text. Remeasuring is only needed, when
+           // the text changes
            this.textLayout.estimateExtentOfLine(this, line);
            this.textLayout.resetLineCharBoundsCacheOfRow(morph, row);
         }
         await submorph.whenRendered(); 
         let submorphAnchors = arr.sortBy([...this.embeddedMorphMap.entries()], x => x[1].anchor.position.row);
         for (let [m, {anchor}] of submorphAnchors) {
-           if (anchor.position.row >= row) {
+           if (anchor.position.row > row) {
              this._positioningSubmorph = m;
-             anchor.position = anchor.position;
+             if (lastBounds) {
+                m.top += currentBounds.height - lastBounds.height; 
+             } else {
+               anchor.position = anchor.position;
+             }
              this._positioningSubmorph = null;
            }
         };
@@ -1613,10 +1643,13 @@ export class Text extends Morph {
            }
            let anchor = this.addAnchor({id: "embedded-" + morph.id, ...start});
             connect(anchor, "position", morph, "position", {
-              converter: function(textPos) {
+              updater: function($upd, textPos) {
                 let tm = this.targetObj.owner,
-                    embeddedMorph = this.targetObj;
-                return tm ? tm.charBoundsFromTextPosition(textPos).topLeft().subPt(tm.origin) : embeddedMorph.position;
+                    embeddedMorph = this.targetObj,
+                    pos = tm ? tm.charBoundsFromTextPosition(textPos).topLeft().subPt(tm.origin) : embeddedMorph.position;
+                if (tm) tm._positioningSubmorph = embeddedMorph;
+                $upd(pos);
+                if (tm) tm._positioningSubmorph = false;
               }
             }).update(anchor.position);
             embeddedMorphMap.set(morph, {anchor});
