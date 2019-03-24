@@ -66,6 +66,7 @@ export class Button extends Morph {
       labelMorph: {
         group: "_internal",
         after: ["submorphs"],
+        serialize: false,
         initialize() {
           this.labelMorph = this.addMorph({
             type: "label", name: "label",
