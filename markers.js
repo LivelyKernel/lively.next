@@ -379,7 +379,7 @@ export class StatusMessageForMorph extends StatusMessage {
 
     this.fit();
 
-    this.width = forMorph.width;
+    this.width = forMorph.bounds().width;
     this.relayout();
 
     if (forMorph.world())
