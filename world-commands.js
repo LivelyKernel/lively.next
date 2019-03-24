@@ -906,7 +906,9 @@ var commands = [
           { localInterface } = await System.import("lively-system-interface"),
           systemInterface = opts && opts.systemInterface ? opts.systemInterface :
             browser ? browser.systemInterface : localInterface,
-          locationString = systemInterface.name == 'local' ? '' : ` on [${systemInterface.name}]`,
+          locationString = systemInterface.name == 'local' ? '' : ` on [${
+              string.truncate(systemInterface.name, 35, '...')
+          }]`,
           pkgs = await systemInterface.getPackages(),
           items = [];
 
