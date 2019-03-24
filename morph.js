@@ -46,10 +46,19 @@ export default class Halo extends Morph {
           t = this.prepareTarget(t);
           this.state.target = t;
           isUpdate && this.alignWithTarget();
+          //this.hasFixedPosition = [t, ...t.ownerChain()].find(m => m.hasFixedPosition);
           connect(t, "onChange", this, "alignWithTarget");
+          connect(t, "onOwnerChanged", this, "removeIfDetached");
         }
       }
-    };  }
+    };  
+  }
+
+  removeIfDetached() {
+    setTimeout(() => {
+      if (!this.target.owner) this.remove();
+    });
+  }
 
   initLayout() {
     var layout = this.layout = new GridLayout({
@@ -168,6 +177,7 @@ export default class Halo extends Morph {
     var {target} = this;
     if (!target) return;
     disconnect(target, "onChange", this, "alignWithTarget");
+    disconnect(target, "onOwnerChanged", this, "removeIfDetached");
     if (target instanceof MultiSelectionTarget) {
       target.modifiesSelectedMorphs = false;
       target.remove();
@@ -868,7 +878,10 @@ class GrabHaloItem extends HaloItem {
         dropTarget = hand.findDropTarget(
           hand.position,
           [halo.target],
-          m => !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem));
+          morph => {
+            let res =  !morph.isHaloItem && !morph.ownerChain().some(m => m.isHaloItem || !m.visible || m.opacity == 0);
+            return res;
+          });
 
     halo.toggleMorphHighlighter(dropTarget && dropTarget != world, dropTarget, true);
     if (prevDropTarget && prevDropTarget != dropTarget)
@@ -1491,7 +1504,7 @@ class MenuHaloItem extends HaloItem {
     let target = this.halo.target;
     this.halo.remove();
     let menuItems = await target.menuItems();
-    target.world().openMenu(menuItems);
+    target.world().openMenu(menuItems).hasFixedPosition = this.halo.hasFixedPosition;
   }
 
 }
@@ -1703,7 +1716,9 @@ export class InteractiveMorphSelector {
       target = hiddenMorph = hiddenMorph.morphBeneath(pos);
     }
     if (target && filterFn && !filterFn(target)) {
-      target && target.ownerChain().find(filterFn); 
+      while (target && ![target, ...target.ownerChain()].find(filterFn)) {
+        target = target.morphBeneath(pos);
+      }
     }
     if (!target) return;
     if (target != possibleTarget
