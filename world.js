@@ -22,7 +22,7 @@ import {
   ListPrompt,
   EditListPrompt
 } from "lively.components/prompts.js";
-import { loadMorphFromSnapshot, loadWorldFromResource } from "./serialization.js";
+import { loadMorphFromSnapshot } from "./serialization.js";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import { uploadFile } from "./events/html-drop-handler.js";
 import worldCommands from "./world-commands.js";
@@ -34,7 +34,9 @@ import { GradientEditor } from "lively.ide/styling/gradient-editor.js";
 import Halo, { MorphHighlighter } from "lively.halos/morph.js";
 import "lively.ide/service-worker.js";
 import { Window, List, FilterableList, Menu } from "lively.components";
- // ensure worker active
+import bowser from 'bowser';
+
+// TODO: rms 24.3.19 - I suggest performing a superclass extraction such that we end up with a very simple and stripped down version of the world (no style sheets, prompts, commands etc. just hand interactions). This will reduce the size of lively.morphic when used in frozen context and also remove the dependencies to lively.components, lively.halos and lively.ide that we have floating around here. We can move this world to lively.ide an name it something like: class LivelyProject extends World { } or something.
 
 export class World extends Morph {
 
@@ -217,7 +219,7 @@ export class World extends Morph {
     var haloTarget;
     if (isCommandKey && !target.isHalo) {
       var morphsBelow = evt.world.morphsContainingPoint(evt.position),
-          morphsBelowTarget = morphsBelow.slice(morphsBelow.indexOf(target));
+          morphsBelowTarget = morphsBelow;
       morphsBelow = morphsBelow.filter(ea => ea.halosEnabled);
       morphsBelowTarget = morphsBelowTarget.filter(ea => ea.halosEnabled);
       haloTarget = morphsBelowTarget[0] || morphsBelow[0];
@@ -356,6 +358,7 @@ export class World extends Morph {
   async onNativeDrop(evt) {
     /*global show, inspect*/
     this.nativeDrop_removeUploadIndicator();
+    if (evt.targetMorph != this) return;
 
     let {domEvt} = evt,
         {files, items} = domEvt.dataTransfer,
@@ -574,7 +577,7 @@ export class World extends Morph {
       scrollTopWhenChanged,
     } = evt.dispatcher.keyInputHelper.inputState;
     let docEl = document.documentElement;
-    if (Date.now() - positionChangedTime < 500) {
+    if (Date.now() - positionChangedTime < 500 && !bowser.firefox) {
       docEl.scrollLeft = scrollLeftWhenChanged;
       docEl.scrollTop = scrollTopWhenChanged;
       return;
@@ -586,7 +589,8 @@ export class World extends Morph {
     this.onMouseMove(evt);
   }
 
-  onWindowResize(evt) {
+  async onWindowResize(evt) {
+    await this.whenRendered();
     this._cachedWindowBounds = null;
     if (this.resizePolicy === 'elastic')
       this.execCommand("resize to fit window");
@@ -777,6 +781,7 @@ export class World extends Morph {
   }
 
   setStatusMessageFor(morph, message, color, delay = 5000, props) {
+    if (!StatusMessageForMorph) return;
     this.visibleStatusMessagesFor(morph).forEach(ea => ea.remove());
     var msgMorph = new StatusMessageForMorph({message, color, ...props});
     this.openStatusMessage(msgMorph, delay);
@@ -789,7 +794,7 @@ export class World extends Morph {
   }
 
   setStatusMessage(message, color, delay = 5000, optStyle = {}) {
-    // $world.setStatusMessage("test", Color.green)
+    if (!StatusMessage) return;
     console[color == Color.red ? "error" : "log"](message);
     return config.verboseLogging ?
       this.openStatusMessage(new StatusMessage({message, color, ...optStyle}), delay) :
@@ -797,7 +802,6 @@ export class World extends Morph {
   }
 
   openStatusMessage(statusMessage, delay) {
-    // $world.setStatusMessage("test", Color.green)
     this.addMorph(statusMessage);
     if (statusMessage.slidable) {
       var messages = this.visibleStatusMessages();
@@ -822,7 +826,6 @@ export class World extends Morph {
 
     if (typeof delay === "number")
       setTimeout(() => statusMessage.stayOpen || statusMessage.fadeOut(), delay);
-
     return statusMessage;
   }
 
