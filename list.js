@@ -17,7 +17,7 @@ function asItem(obj) {
   return obj;
 }
 
-class ListItemMorph extends Label {
+export class ListItemMorph extends Label {
 
   static get properties() {
     return {
