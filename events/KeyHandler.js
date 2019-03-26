@@ -353,7 +353,6 @@ export default class KeyHandler {
   }
 
   addCommandToBinding(keyCombo, command) {
-
     // remove overwritten keychains
     var prev = this.keyBindings[keyCombo];
     if (prev === "chainKeys" && command != "chainKeys") {

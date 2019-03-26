@@ -2796,10 +2796,10 @@ export class Text extends Morph {
   // keyboard events
 
   get keybindings() {
-    return this.pluginCollect(
-      "getKeyBindings",
-      super.keybindings.concat(config.text.defaultKeyBindings)
-    );
+    const world = this.world();
+    const userKeybindings = (world && world.getCurrentUser() && world.getCurrentUser().config && world.getCurrentUser().config.textKeyBindings)  || [];
+    const keybindings = super.keybindings.concat(userKeybindings).concat(config.text.defaultKeyBindings)
+    return this.pluginCollect("getKeyBindings", keybindings);
   }
   set keybindings(x) {
     super.keybindings = x;
