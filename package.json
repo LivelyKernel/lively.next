@@ -44,7 +44,7 @@
     "babel-regenerator-runtime": "^6.5.0",
     "doc-comments": "*",
     "lively.ast": "*",
-    "mocha-es6": "*",
+    "mocha-es6": "^0.5.4",
     "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.6.1",
     "uglify-js": "^2.7.5"
