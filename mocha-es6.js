@@ -19336,6 +19336,9 @@ Library.prototype.test = function(obj, type) {
 		};
 
 		function compare(expected, actual) {
+			if (expected === actual) {
+				return true;
+			}
 			if (typeof(actual) !== typeof(expected)) {
 				return false;
 			}
@@ -19358,8 +19361,12 @@ Library.prototype.test = function(obj, type) {
 				});
 			}
 
-			if(expected instanceof Date && actual instanceof Date) {
-				return expected.getTime() === actual.getTime();
+			if (expected instanceof Date) {
+				if (actual instanceof Date) {
+					return expected.getTime() === actual.getTime();
+				} else {
+					return false;
+				}
 			}
 
 			return Object.keys(expected).every(function (key) {
@@ -19367,6 +19374,9 @@ Library.prototype.test = function(obj, type) {
 				var ao = actual[key];
 				if (typeof(eo) === 'object' && eo !== null && ao !== null) {
 					return compare(eo, ao);
+				}
+				if (typeof(eo) === 'function') {
+					return eo(ao);
 				}
 				return ao === eo;
 			});
@@ -19390,7 +19400,7 @@ Library.prototype.test = function(obj, type) {
 var GLOBAL = typeof window !== "undefined" ? window :
     typeof global!=="undefined" ? global :
       typeof self!=="undefined" ? self : this;
-(function (exports,modules,mocha,chai,lively_ast) {
+(function (exports,modules,lively_ast,mocha,chai) {
 'use strict';
 
 mocha = 'default' in mocha ? mocha['default'] : mocha;
@@ -19513,7 +19523,7 @@ var set = function set(object, property, value, receiver) {
 };
 
 var loadTestModuleAndExtractTestState = function () {
-  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(testModuleName) {
+  var _ref = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(testModuleName) {
     var testsByFile = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
     var opts = arguments[2];
     var mod, id, mocha$$1, tests, prev;
@@ -19555,13 +19565,13 @@ var loadTestModuleAndExtractTestState = function () {
     }, _callee, this);
   }));
 
-  return function loadTestModuleAndExtractTestState(_x2, _x3, _x4) {
+  return function loadTestModuleAndExtractTestState(_x2) {
     return _ref.apply(this, arguments);
   };
 }();
 
 var runTestFiles = function () {
-  var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(files, options) {
+  var _ref2 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(files, options) {
     var failures, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, f, testState, mocha$$1, testsByFile, grep;
 
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
@@ -19687,7 +19697,7 @@ var runTestFiles = function () {
     }, _callee2, this, [[11, 38, 42, 50], [22, 28], [43,, 45, 49]]);
   }));
 
-  return function runTestFiles(_x6, _x7) {
+  return function runTestFiles(_x4, _x5) {
     return _ref2.apply(this, arguments);
   };
 }();
@@ -19799,7 +19809,7 @@ function installSystemInstantiateHook() {
   var name = "mochaEs6TestInstantiater";
   if (modules.isHookInstalled("instantiate", name)) return;
   modules.installHook("instantiate", function () {
-    var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(proceed, load) {
+    var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(proceed, load) {
       var executable, deps;
       return regeneratorRuntime.wrap(function _callee4$(_context4) {
         while (1) {
@@ -19833,7 +19843,7 @@ function installSystemInstantiateHook() {
       }, _callee4, this);
     }));
 
-    function mochaEs6TestInstantiater(_x8, _x9) {
+    function mochaEs6TestInstantiater(_x6, _x7) {
       return _ref4.apply(this, arguments);
     }
 
@@ -19847,7 +19857,7 @@ function uninstallSystemInstantiateHook() {
 }
 
 var isMochaTestLoad = function () {
-  var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(load, executable) {
+  var _ref5 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(load, executable) {
     var deps, moduleName, parsed, stop, isTest;
     return regeneratorRuntime.wrap(function _callee5$(_context5) {
       while (1) {
@@ -19891,7 +19901,7 @@ var isMochaTestLoad = function () {
     }, _callee5, this);
   }));
 
-  return function isMochaTestLoad(_x10, _x11) {
+  return function isMochaTestLoad(_x8, _x9) {
     return _ref5.apply(this, arguments);
   };
 }();
@@ -19962,7 +19972,7 @@ exports.installSystemInstantiateHook = installSystemInstantiateHook;
 exports.uninstallSystemInstantiateHook = uninstallSystemInstantiateHook;
 exports.isMochaTestLoad = isMochaTestLoad;
 
-}((this.mochaEs6 = this.mochaEs6 || {}),lively.modules,mocha,chai,lively.ast));
+}((this.mochaEs6 = this.mochaEs6 || {}),lively.modules,lively.ast,mocha,chai));
 
   if (typeof module !== "undefined" && module.exports)
     module.exports = GLOBAL.mochaEs6;

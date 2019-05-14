@@ -91,9 +91,9 @@ function setupLivelyModulesTestSystem() {
       System = lively.modules.getSystem("system-for-test", {baseURL}),
       registry = System["__lively.modules__packageRegistry"] = new modules.PackageRegistry(System),
       env = process.env;
-  registry.packageBaseDirs = env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").map(resourcify);
-  registry.individualPackageDirs = (env.FLATN_PACKAGE_DIRS || "").split(":").map(resourcify);
-  registry.devPackageDirs = env.FLATN_DEV_PACKAGE_DIRS.split(":").map(resourcify);
+  registry.packageBaseDirs = env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").filter(Boolean).map(resourcify);
+  registry.individualPackageDirs = (env.FLATN_PACKAGE_DIRS || "").split(":").filter(Boolean).map(resourcify);
+  registry.devPackageDirs = env.FLATN_DEV_PACKAGE_DIRS.split(":").filter(Boolean).map(resourcify);
   lively.modules.changeSystem(System, true);
   cacheMocha(System, "file://" + mochaDir);
   mochaEs6.installSystemInstantiateHook();

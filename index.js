@@ -1,9 +1,9 @@
 /*global System,global*/
 
 import * as modules from "lively.modules";
+import { withMozillaAstDo } from "lively.ast";
 import mocha from "mocha";
 import chai, { expect } from "chai";
-import { withMozillaAstDo } from "lively.ast";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // custom assertions

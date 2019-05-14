@@ -6186,6 +6186,9 @@ Library.prototype.test = function(obj, type) {
 		};
 
 		function compare(expected, actual) {
+			if (expected === actual) {
+				return true;
+			}
 			if (typeof(actual) !== typeof(expected)) {
 				return false;
 			}
@@ -6208,8 +6211,12 @@ Library.prototype.test = function(obj, type) {
 				});
 			}
 
-			if(expected instanceof Date && actual instanceof Date) {
-				return expected.getTime() === actual.getTime();
+			if (expected instanceof Date) {
+				if (actual instanceof Date) {
+					return expected.getTime() === actual.getTime();
+				} else {
+					return false;
+				}
 			}
 
 			return Object.keys(expected).every(function (key) {
@@ -6217,6 +6224,9 @@ Library.prototype.test = function(obj, type) {
 				var ao = actual[key];
 				if (typeof(eo) === 'object' && eo !== null && ao !== null) {
 					return compare(eo, ao);
+				}
+				if (typeof(eo) === 'function') {
+					return eo(ao);
 				}
 				return ao === eo;
 			});
