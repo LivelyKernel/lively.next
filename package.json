@@ -1,6 +1,6 @@
 {
   "name": "lively.lang",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "description": "JavaScript utils providing useful abstractions for working with collections, functions, objects.",
   "main": "dist/lively.lang.js",
   "systemjs": {
@@ -44,7 +44,7 @@
     "babel-regenerator-runtime": "^6.5.0",
     "doc-comments": "*",
     "lively.ast": "*",
-    "mocha-es6": "^0.5.4",
+    "mocha-es6": "^0.5.5",
     "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.6.1",
     "uglify-js": "^2.7.5"
