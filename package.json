@@ -27,11 +27,11 @@
   },
   "homepage": "https://github.com/LivelyKernel/lively.classes",
   "dependencies": {
-    "lively.ast": "*",
-    "lively.lang": "*"
+    "lively.ast": ">=0.11.1",
+    "lively.lang": ">=1.0.23"
   },
   "devDependencies": {
-    "lively.vm": "*",
+    "lively.vm": ">=0.9.18",
     "babel-core": "^6.16.0",
     "babel-plugin-external-helpers": "^6.8.0",
     "babel-plugin-syntax-object-rest-spread": "^6.13.0",
