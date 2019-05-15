@@ -29,6 +29,7 @@
   "dependencies": {
     "lively.ast": "https://github.com/LivelyKernel/lively.ast",
     "lively.lang": "https://github.com/LivelyKernel/lively.lang",
+    "lively.modules": "https://github.com/LivelyKernel/lively.modules",
     "lively.resources": "https://github.com/LivelyKernel/lively.resources"
   },
   "devDependencies": {
