@@ -1,6 +1,6 @@
 {
   "name": "lively.modules",
-  "version": "0.8.37",
+  "version": "0.8.38",
   "main": "dist/lively.modules.js",
   "repository": "https://github.com/LivelyKernel/lively.modules",
   "author": "Robert Krahn <robert.krahn@gmail.com>",
@@ -23,8 +23,8 @@
     "babel-core": "^6.21.0",
     "babel-regenerator-runtime": "^6.5.0",
     "babel-standalone": "^6.21.1-0",
-    "lively.ast": "*",
-    "lively.lang": "*",
+    "lively.ast": "^0.11",
+    "lively.lang": "^1",
     "lively.notifications": "*",
     "lively.resources": "*",
     "lively.storage": "*",
