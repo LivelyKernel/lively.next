@@ -12,7 +12,7 @@
     "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
     "lively.halos": "https://github.com/LivelyKernel/lively.halos",
     "lively.components": "https://github.com/LivelyKernel/lively.components",
-    "lively.lang": "^1.0.0",
+    "lively.lang": "https://github.com/LivelyKernel/lively.lang",
     "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
     "lively.ide": "https://github.com/LivelyKernel/lively.ide",
     "pepjs": "^0.4.3",
@@ -37,7 +37,6 @@
     "doc-comments": "^0.1.4",
     "lively.classes": "*",
     "lively.source-transform": "*",
-    "mocha-es6": "^0.5",
     "rollup": "0.36.4",
     "rollup-plugin-babel": "^2.6.1",
     "uglify-es": "^3.3.9"
