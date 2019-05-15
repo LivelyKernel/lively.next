@@ -27,9 +27,9 @@
   },
   "homepage": "https://github.com/LivelyKernel/lively.classes",
   "dependencies": {
-    "lively.ast": ">=0.11.1",
-    "lively.lang": ">=1.0.23"
-    "lively.resources": "*"
+    "lively.ast": "https://github.com/LivelyKernel/lively.ast",
+    "lively.lang": "https://github.com/LivelyKernel/lively.lang",
+    "lively.resources": "https://github.com/LivelyKernel/lively.resources"
   },
   "devDependencies": {
     "lively.vm": ">=0.9.18",
