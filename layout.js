@@ -110,6 +110,7 @@ class Layout {
     return !this.submorphBoundsChanged
             && !this.boundsChanged(this.container)
             && !this.extentChanged(this.container)
+            && !this.submorphsChanged
   }
 
   get __dont_serialize__() { return ['lastAnim', 'animationPromise'] }
@@ -150,9 +151,11 @@ class Layout {
     this.scheduleApply(submorph, this.reactToSubmorphAnimations && change.meta.animation, change)
   }
   onSubmorphAdded(submorph, animation) {
+    this.submorphsChanged = true;
     this.scheduleApply(submorph, animation)
   }
   onSubmorphRemoved(submorph, animation) {
+    this.submorphsChanged = true;
     this.scheduleApply(submorph, animation)
   }
 
@@ -206,6 +209,7 @@ class Layout {
   apply(animated) {
     if (this.active) return;
     this.active = true;
+    this.submorphsChanged = false;
     this.lastBoundsExtent = this.container && this.container.bounds().extent();
     this.active = false;
   }
