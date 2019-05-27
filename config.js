@@ -331,8 +331,8 @@ var config = {
       {keys: "Alt-Ctrl-A",                       command: "[multi select] align cursors"},
       {keys: "Ctrl-X R",                         command: "[multi select] create rectangular selection"},
 
-      {keys: {win: 'Shift-Ctrl-S|Ctrl-Alt-Space',   mac: 'Ctrl-  Command-space|Ctrl-Alt-Space'},      command: 'contractRegion'},
-      {keys: {win: 'Shift-Ctrl-E|Ctrl-Shift-Space', mac: 'Shift- Command-Space|Ctrl-Shift-Space'}, command: 'expandRegion'},
+      {keys: {win: 'Shift-Ctrl-S|Ctrl-Alt-Space',   mac: 'Ctrl-Command-space|Ctrl-Alt-Space'},      command: 'contractRegion'},
+      {keys: {win: 'Shift-Ctrl-E|Ctrl-Shift-Space', mac: 'Shift-Command-Space|Ctrl-Shift-Space'}, command: 'expandRegion'},
       {keys: 'Ctrl-Alt-h',                                       command: 'markDefun'},
       {keys: 'Ctrl-Alt-d|Ctrl-Alt-Down',                         command: 'forwardDownSexp'},
       {keys: 'Ctrl-Alt-u|Ctrl-Alt-Up',                           command: 'backwardUpSexp'},
