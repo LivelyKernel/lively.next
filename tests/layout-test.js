@@ -144,6 +144,14 @@ describe("layout", () => {
       expect(m.width).equals(250);
     });
 
+    it("enforces minimum height and minimum width", () => {
+      m.layout.direction = 'centered';
+      m.layout.autoResize = false;
+      m.width = 500;
+      m.applyLayoutIfNeeded();
+      expect(m.submorphBounds().topCenter().x).equals(250);
+    });
+
   });
 
   describe("tiling layout", () => {

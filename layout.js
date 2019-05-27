@@ -516,9 +516,9 @@ export class HorizontalLayout extends FloatLayout {
       startX = Math.max(0, container.width - 2 * spacing);
     } else if (direction === "centered") {
       let baseWidth = autoResize ? container.width - minExtent.x : minExtent.x,
-          submorphW = layoutableSubmorphs.length-1 * spacing;
-      for (let m of layoutableSubmorphs) submorphW = submorphW + m.width;
-      startX = minExtent.x / 2 - submorphW/2;
+          submorphW = (layoutableSubmorphs.length - 1) * spacing;
+      for (let m of layoutableSubmorphs) submorphW = submorphW + m.bounds().width;
+      startX = minExtent.x / 2 - submorphW / 2 - spacing;
     }
 
     if (autoResize) {
