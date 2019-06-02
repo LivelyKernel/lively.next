@@ -1,0 +1,4 @@
+{
+  "name": "test-package",
+  "main": "src/some-module.js"
+}

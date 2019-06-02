@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tests</title>
+    <meta http-equiv="cache-control" content="no-cache" />
+    <meta http-equiv="pragma" content="no-cache" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../node_modules/systemjs/dist/system.src.js"></script>
+    <script src="../node_modules/lively.modules/dist/lively.modules.js"></script>
+    <script src="../mocha-es6-browser.js"></script>
+
+    <script type="text/javascript">
+System.debug = true;
+      mochaEs6RunBrowserTests(["tests/tests.js"], {package: "test-package"});
+
+      // var mochaDir = "..";
+
+      // System.config({
+      //   baseURL: ".",
+      //   transpiler: "babel",
+      //   map: {
+      //     babel: mochaDir + "/node_modules/babel-core/browser.js",
+      //     "mocha-es6": mochaDir + "/index.js"
+      //   }
+      // });
+
+      // System.fetch({address: mochaDir + "/package.json", "metadata": {}})
+      //   .then(config => {
+      //     config = config.replace(/mocha-es6/g, mochaDir);
+      //     System.config(JSON.parse(config).systemjs);
+      //   })
+      //   .then(() => System.import(mochaDir + "/index.js"))
+      //   .then(function(tester) {
+      //     var grep = (function() {
+      //       if (!document || !document.location) return null;
+      //       var match = document.location.search.match(/grep=([^&$]+)/);
+      //       if (!match) return null;
+      //       var grep = decodeURIComponent(match[0].split("=")[1]);
+      //       return new RegExp(grep);
+      //     })();
+      //     return tester.runTestFiles(["./tests.js"], {grep: grep, reporter: "html"});
+      // })
+      // .catch(err => {
+      //   err = err.originalErr || err;
+      //   console.error(err);
+      //   document.body.insertAdjacentHTML("beforeend", "<pre>" + (err.stack || err) + "</pre>");
+      // })
+    </script>
+
+  </body>
+</html>
