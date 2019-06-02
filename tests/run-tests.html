@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tests</title>
+    <meta http-equiv="cache-control" content="no-cache" />
+    <meta http-equiv="pragma" content="no-cache" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../node_modules/mocha-es6/node_modules/systemjs/dist/system.src.js"></script>
+    <script src="../node_modules/mocha-es6/node_modules/lively.modules/dist/lively.modules.js"></script>
+    <script src="../node_modules/mocha-es6/mocha-es6-browser.js"></script>
+
+    <script type="text/javascript">
+
+    var tests = [
+        "tests/acorn-extension-test.js",
+        "tests/async-transform-test.js",
+        "tests/browser-helper.js",
+        "tests/capturing-test.js",
+        "tests/code-categorizer-test.js",
+        "tests/code-generation-test.js",
+        "tests/comments-test.js",
+        "tests/es6-test.js",
+        "tests/loading-test.js",
+        "tests/nodes-test.js",
+        "tests/parser-test.js",
+        "tests/query-test.js",
+        "tests/transform-test.js",
+        "tests/scope-reference-test.js",
+    ]
+     mochaEs6RunBrowserTests(tests, {package: ".."});
+
+    </script>
+
+  </body>
+</html>

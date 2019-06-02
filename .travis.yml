@@ -1,0 +1,13 @@
+language: node_js
+
+sudo: false
+
+node_js:
+  - "7"
+
+install:
+  - npm install -g mocha-es6
+
+notifications:
+  email: "robert.krahn@gmail.com"
+  slack: ycresearch:DHnjngxzOUybEggU2lAYdP9R
