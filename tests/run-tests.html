@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tests</title>
+    <meta http-equiv="cache-control" content="no-cache" />
+    <meta http-equiv="pragma" content="no-cache" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../node_modules/mocha-es6/node_modules/systemjs/dist/system.src.js"></script>
+    <script src="../node_modules/mocha-es6/node_modules/lively.modules/dist/lively.modules.js"></script>
+    <script src="../node_modules/mocha-es6/mocha-es6-browser.js"></script>
+
+    <script type="text/javascript">
+       mochaEs6RunBrowserTests([
+        "tests/binding-test.js ",
+        "tests/changes-test.js ",
+        "tests/hook-test.js",
+        "tests/instrumentation-test.js",
+        "tests/module-dependency-test.js",
+        "tests/module-test.js",
+        "tests/notify-test.js",
+        "tests/package-loading-test.js",
+        "tests/search-test.js",
+      ], {package: ".."});
+
+    </script>
+
+  </body>
+</html>
