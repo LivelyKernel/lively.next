@@ -1,0 +1,32 @@
+{
+  "name": "lively-system-interface",
+  "version": "0.2.1",
+  "repository": "https://github.com/LivelyKernel/lively-system-interface",
+  "dependencies": {
+    "lively.modules": "*",
+    "lively.resources": "*",
+    "lively.lang": "*",
+    "lively.ast": "*",
+    "lively.vm": "*"
+  },
+  "devDependencies": {
+    "mocha-es6": "^0.5",
+    "systemjs": "^0.19.40"
+  },
+  "systemjs": {
+    "map": {
+      "child_process": {
+        "node": "@node/child_process",
+        "~node": "@empty"
+      },
+      "fs": {
+        "node": "@node/fs",
+        "~node": "@empty"
+      }
+    }
+  },
+  "scripts": {
+    "test": "mocha-es6 tests/*-test.js",
+    "build": "node tools/build.js"
+  }
+}
