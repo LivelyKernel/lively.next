@@ -1,0 +1,7 @@
+#!/usr/bin/env node
+
+const path = require("path");
+const binDir = __dirname;
+
+if (!process.env.PATH.includes(binDir))
+  console.log(`PATH=${binDir}:${process.env.PATH}`);

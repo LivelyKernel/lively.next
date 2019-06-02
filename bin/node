@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# echo "calling node with args: $@"
+
+# for 2., see below
+if [[ "$1" == "--flatn-test" ]]; then
+  exit 0;
+fi
+
+# 1. find flatn directory so we can require module-resolver
+MY_DIR=$(dirname $0)
+
+EXEC=$(readlink "$0")
+if [ -n "$EXEC" ]; then
+  FLATN_DIR=$(dirname $EXEC);
+fi 
+
+if [[ ! "$FLATN_DIR" =~ ^/ ]]; then
+  FLATN_DIR="$MY_DIR/$FLATN_DIR";
+fi
+
+# 2. find the real node executable, in path, ignoring potentially multiple
+# flatn nodes
+
+PATH_PARTS=$(echo $PATH | tr -s ':' ' ')
+for PATH_PART in $PATH_PARTS
+do
+  if [ -f "$PATH_PART/node" ]; then
+    $PATH_PART/node --flatn-test > /dev/null 2>&1
+    rc=$?;
+    if [[ $rc != 0 ]]; then
+      real_node="$PATH_PART/node";
+      # echo "found real node $real_node"
+      break;
+    fi
+  fi
+done 
+
+if [ -z $real_node ]; then
+   echo "Cannot find node executable"
+   exit 1
+fi
+
+$real_node -r "$FLATN_DIR/../module-resolver.js" "$@"

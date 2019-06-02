@@ -1,0 +1,30 @@
+{
+  "name": "flatn",
+  "version": "1.3.3",
+  "main": "flatn-cjs.js",
+  "scripts": {
+    "test": "mocha-es6 tests/test.js",
+    "build": "node tools/build-cjs.js"
+  },
+  "bin": {
+    "flatn": "./bin/flatn",
+    "flatn_node": "./bin/node",
+    "flatn_env": "./bin/flatn_env"
+  },
+  "dependencies": {
+    "node-gyp": "3.6.2"
+  },
+  "systemjs": {
+    "map": {
+      "lively.resources": "./deps/lively.resources.js",
+      "lively.ast": "./deps/lively.ast.js"
+    },
+    "meta": {
+      "./deps/lively.resources.js": {
+        "deps": [
+          "fs"
+        ]
+      }
+    }
+  }
+}
