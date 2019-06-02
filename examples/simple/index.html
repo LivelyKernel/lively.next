@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>lively.morphic example 1</title>
+  </head>
+  <body>
+    <div id="lively-world"></div>
+    <!--<div style="position: absolute; left: 30px; top: 50px; background-color: yellow;">-->
+    <!--  <div style="position: relative; left: 30px; top: 50px;  background-color: blue;">-->
+    <!--    <div id="lively-world"></div>-->
+    <!--  </div>-->
+    <!--</div>-->
+    <script src="../../node_modules/pepjs/dist/pep.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/fetch/1.0.0/fetch.js"></script>
+    <script src="/node_modules/lively.modules/node_modules/systemjs/dist/system.src.js"></script>
+    <script src="/node_modules/lively.modules/dist/lively.modules.js"></script>
+    <script>
+      Promise.resolve()
+        // FIXME!!!
+        .then(function () { return lively.modules.importPackage('http://localhost:9001/node_modules/lively-system-interface/'); })
+        .then(function () { return lively.modules.importPackage('.'); })
+        .then(function() { console.log("loaded"); })
+        .catch(function(err) { console.error(err); })
+    </script>
+  </body>
+</html>

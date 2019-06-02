@@ -1,0 +1,182 @@
+.body {
+  width: 100%;
+  margin: 0;
+}
+
+a, a:-webkit-any-link {
+  color: black;
+  text-decoration: none;
+}
+
+.content {
+  font-family: Helvetica Neue, Verdana, sans-serif;
+  margin-left: 20px;
+  margin-right: 20px;
+/*  width: 70%;*/
+/*  max-width: 800px;*/
+}
+
+.hidden {
+  display: none !important;
+}
+
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+/* tabs */
+
+.world-tabs {
+  height: 1.6em;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  background-color: #eee;
+}
+
+.world-tabs button {
+  font-size: medium;
+  padding-left: 20px;
+  padding-right: 20px;
+  border: none;
+  background-color: #eee;
+  cursor: pointer;
+  outline: 0 !important;
+}
+
+.world-tabs button:hover {
+  background-color: #ccc;
+  color: white;
+}
+
+.world-tabs button.selected {
+  background-color: #888;
+  color: white;
+}
+
+.filter-worlds {
+  margin-top: 18px;
+  height: 1.6em;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.filter-worlds input {
+  padding: 12px;
+  font-size: medium;
+}
+
+.lively-next-logo {
+  position: absolute;
+  left: 5px;
+  height: 1.6em;
+}
+
+.lively-next-logo img {
+  height: 80%;
+  padding: 3px;
+}
+
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+/* user flap */
+
+.user-flap {
+  position: absolute;
+  right: 5px;
+  height: 1.6em;
+  cursor: pointer;
+}
+
+.user-flap {
+  position: absolute;
+  right: 5px;
+  height: 1.6em;
+  cursor: pointer;
+}
+
+.user-flap .label {
+  display: inline-block;
+  pointer-events: none;
+  font-family: sans-serif;
+  font-size: 12px;
+  font-famliy: Helvetica Neue, Verdana, Sans Serif;
+  font-weight: bold;
+  color: rgb(102, 102, 102);
+  padding: 4px;
+  margin-top: 3px;
+}
+
+
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+/* world listing */
+
+.list {
+  display: flex;
+  flex-flow: wrap;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+
+.world-link {
+  width: 350px;
+  margin: 10px 8px;
+  border: 2px #d4d4d4;
+  border-radius: 8px;
+  box-sizing: border-box;
+  border-style: solid;
+  overflow: hidden;
+}
+
+.world-name {
+  text-align: center;
+  font-weight: bold;
+  padding: 3px;
+  bottom: 0;
+  width: 100%;
+  position: absolute;
+  margin: auto;
+  padding: 0;
+}
+
+.world-preview {
+  font-size: small;
+  display: flex;
+  flex-direction: row;
+}
+
+.world-preview .description {
+  width: 60%;
+  margin: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.world-preview .description .description-text {
+  flex-grow: 2;
+  display: flex;
+  align-items: center;
+}
+
+.world-preview p {
+  margin: 0px; padding: 0;
+  margin-bottom: 10px;
+}
+
+.world-preview .image {
+  margin: 3px;
+  width: 40%;
+  border-right: 2px solid lightgray;
+  position: relative;
+}
+
+.world-preview .image img {
+  width: 100%;
+}
+
+.world-preview .image-title {
+  position: absolute;
+  text-align: center;
+  bottom: 0;
+  width: 100%
+}

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>lively.next worlds</title>
+    <link href="/lively.morphic/web/dom-loading-indicator.css" rel="stylesheet">
+    <link href="/lively.morphic/web/static-world-listing.css" rel="stylesheet">
+  </head>
+
+  <body style="margin: 0;">
+
+    <div id="dom-loading-indicator">
+      <div class="label">
+         <center><b>Loading</b></center>
+         <div class="lively-logo"></div>
+      </div>
+    </div>
+
+
+    <nav class="world-tabs">
+      <a class="lively-next-logo" href="/">
+        <img src="/lively.morphic/lively-web-logo-small.png"></img>
+      </a>
+      
+      <button class="public">public</button>
+      <button class="mine">mine</button>
+      <button class="latest">latest</button>
+      <button class="search">search...</button>
+
+      <div class="user-flap"><div class="label">logged in as:</div><div class="label"><span></span></div></div>
+    </nav>
+
+    <div class="hidden filter-worlds">
+      <input type="search" id="filter-button" name="filter"
+             placeholder="filter..." size="30">
+    </div>
+
+
+    <div class="content">
+      <div class="worlds">
+        <div class="list"></div>
+      </div>
+    </div>
+
+    <script src="/lively.morphic/web/console.js"></script>
+    <script src="/lively.next-node_modules/babel-standalone/babel.js"></script>
+    <script src="/lively.next-node_modules/systemjs/dist/system.src.js"></script>
+    <script src="/lively.modules/dist/lively.modules.js"></script>
+    <script src="/lively.storage/dist/lively.storage_with-pouch.js"></script>
+    <script src="/lively.user/dist/lively.user-client.js"></script>
+
+    <script src="/lively.2lively/dist/lively.2lively_client.js"></script>
+    <script>
+      lively.l2l.client = lively.l2l.L2LClient.ensure({
+        url: `${document.location.origin}/lively-socket.io`,
+        namespace: "l2l", info: {type: "world-listing"}
+      });
+    </script>
+
+    <script>
+      var $ = sel => document.querySelector(sel),
+          $$ = sel => document.querySelectorAll(sel),
+          res = lively.resources.resource,
+          loc = document.location,
+          origin = loc.origin,
+          query = res(loc.href).query(),
+          loginDone = false,
+          userRegistry = lively.user.UserRegistry.current,
+          userFlap = $(".user-flap"),
+          userFlapContent = $(".user-flap span"),
+          user = currentUser(), update;
+
+      if (loc.host !== "lively-next.org")
+        document.title = `lively.next (${loc.host})`;
+
+      {
+        userFlapContent.textContent = user.isGuestUser ? "guest" : user.name;
+        if (user.isGuestUser) {
+          $(".world-tabs button.mine").className += " hidden";
+        }
+        userFlap.onclick = evt => {
+          document.location = res(loc.href).withQuery({login: true}).url;
+        }
+      }
+
+      if (userRegistry.hasUserStored() && !query.login) {
+        loginDone = true;
+      } else {
+        var login = query.nologin ?
+          userRegistry.login(lively.user.ClientUser.guest) :  
+          res(`${origin}/lively.user/html/html-ui.fragment`).read()
+            .then(function(content) {
+              document.body.insertAdjacentHTML("beforeend", content);
+              return lively.resources.loadViaScript("/lively.user/html/html-ui.js");
+            })
+            .then(function() { return lively.user.html.openUserUI(); })
+        login.then(function(_user) {
+          user = _user;
+          userFlapContent.textContent = user.name.startsWith("guest-") ? "guest" : user.name;
+          loginDone = true;
+          if (typeof update === "function") update(user);
+        })
+        .catch(function(err) { console.error(err); });
+      }
+
+      polyfills()
+        .then(function() { return res(origin).join("package-registry.json").readJson(); })
+        .then(function(packageCached) {
+          var System = lively.modules.getSystem("listing", {baseURL: String(origin)});
+          lively.modules.changeSystem(System, true);
+          System["__lively.modules__packageRegistry"] = lively.modules.PackageRegistry.fromJSON(System, packageCached);
+        })
+        .then(function() { return lively.modules.registerPackage("lively.morphic"); })
+        .then(function() { return lively.modules.module("lively.morphic/web/static-world-listing.js").load(); })
+        .then(function(m) {
+          $(".world-tabs button.search").onclick = () => m.showWorlds('search', user);
+          $(".world-tabs button.latest").onclick = () => m.showWorlds('latest', user);
+          $(".world-tabs button.mine").onclick = () => m.showWorlds('mine', user);
+          $(".world-tabs button.public").onclick = () => m.showWorlds('public', user);
+          $('.filter-worlds input').oninput = () => lively.lang.fun.debounceNamed("filter-worlds", 300, () => m.showWorlds('search', user))();
+          update = m.showWorldsLastChoice;          
+          return m.showWorldsLastChoice(user);
+        })
+        .catch(function(err) { console.error(err); });
+
+      function currentUser() {
+        return userRegistry.loadUserFromLocalStorage("https://auth.lively-next.org"/*FIXME!!!*/);
+      }
+
+      function polyfills() {
+        var loads = [];
+        if (!("PointerEvent" in window))
+          loads.push(lively.resources.loadViaScript(`${origin}/lively.next-node_modules/pepjs/dist/pep.js`));
+        if (!("fetch" in window))
+          loads.push(lively.resources.loadViaScript(`//cdnjs.cloudflare.com/ajax/libs/fetch/1.0.0/fetch.js`));
+        return Promise.all(loads);
+      }
+    </script>
+
+  </body>
+</html>

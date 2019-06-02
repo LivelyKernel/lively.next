@@ -1,0 +1,76 @@
+{
+  "name": "lively.morphic",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LivelyKernel/lively.morphic"
+  },
+  "dependencies": {
+    "bowser": "^1.4.1",
+    "lively.modules": "https://github.com/LivelyKernel/lively.modules",
+    "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
+    "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
+    "lively.halos": "https://github.com/LivelyKernel/lively.halos",
+    "lively.components": "https://github.com/LivelyKernel/lively.components",
+    "lively.lang": "https://github.com/LivelyKernel/lively.lang",
+    "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
+    "lively.ide": "https://github.com/LivelyKernel/lively.ide",
+    "pepjs": "^0.4.3",
+    "jsdom": "^9.4.0",
+    "webfontloader": "^1.6.28",
+    "prismjs": "^1.6.0",
+    "virtual-dom": "^2.1.1",
+    "vdom-parser": "^1.4.1",
+    "web-animations-js": "^2.3.1",
+    "flubber": "^0.4.2",
+    "bezier-easing": "^2.1.0"
+  },
+  "devDependencies": {
+    "babel-plugin-external-helpers": "^6.8.0",
+    "babel-plugin-syntax-object-rest-spread": "^6.13.0",
+    "babel-plugin-transform-async-to-generator": "^6.16.0",
+    "babel-plugin-transform-object-rest-spread": "^6.16.0",
+    "babel-plugin-transform-exponentiation-operator": "6.22.0",
+    "babel-preset-es2015": "^6.16.0",
+    "babel-preset-es2015-rollup": "^1.1.1",
+    "babel-regenerator-runtime": "^6.5.0",
+    "doc-comments": "^0.1.4",
+    "lively.classes": "*",
+    "lively.source-transform": "*",
+    "rollup": "0.36.4",
+    "rollup-plugin-babel": "^2.6.1",
+    "uglify-es": "^3.3.9"
+  },
+  "systemjs": {
+    "main": "index.js",
+    "map": {
+      "jsdiff": "./lib/jsdiff-3.0.0.js",
+      "dom-to-image": "./lib/dom-to-image-2.6.0.min.js",
+      "virtual-dom": "virtual-dom/dist/virtual-dom.js",
+      "bowser": "bowser/bowser.min.js",
+      "prism": "prismjs/prism.js",
+      "prism-json": "prismjs/components/prism-json.js",
+      "webfontloader": "webfontloader/1.6.28/webfontloader.js"
+    },
+    "meta": {
+      "virtual-dom/dist/virtual-dom.js": {
+        "format": "amd"
+      },
+      "bowser/bowser.js": {
+        "format": "global",
+        "exports": "bowser"
+      }
+    }
+  },
+  "scripts": {
+    "build": "node tools/build.js",
+    "test": "mocha-es6 tests/{,text/,components/,text2/}*-test.js"
+  },
+  "lively": {
+    "ide": {
+      "exclude": [
+        "objectdb"
+      ]
+    }
+  }
+}

@@ -1,0 +1,6 @@
+node_modules/
+.module_cache
+parts/
+worlds/
+objectdb/
+dist/
