@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>lively.vm</title>
+    <style>
+    .body {
+      width: 100%
+    }
+    .content {
+      font-family: Helvetica, sans-serif;
+      margin-left: auto;
+      margin-right: auto;
+      width: 70%;
+      max-width: 800px;
+    }
+    code, .example, div.code {
+      font-family: Monaco, monospace;
+      white-space: pre;
+      font-size: 80%;
+    }
+
+    </style>
+  </head>
+  <body>
+
+    
+    <a href="https://github.com/LivelyKernel/lively.vm"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
+
+    <div class="content">
+      <h1>lively.vm <img src="https://travis-ci.org/LivelyKernel/lively.vm.svg?branch=master"/></h1>
+      
+      <p>lively.vm provides the ability to evaluate JavaScript code in an evaluation context.  Normally the JavaScript <code>eval()</code> function uses the local scope of the function it was called in (however, <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#Description" target="_blank">there are some additional weird rules</a>).  It offers no further options about scope and bindings.</p>
+
+      <p>lively.vm has a range of options that control what bindings are available inside the executed code and also how top-level assignments inside the evaluated code are captured.  The latter is helpful when you want to access intermediate results and assignments caused by the evaluation, e.g. to allow incremental development.</p>
+      
+      <h2>Example</h2>
+
+      <p>When you press the eval button below the content of the text area is passed to <code>lively.vm.runEval(source, options)</code> and the result printed.</p>
+      <textarea class="eval-code" style="width: 70%; height: 80px">
+"This page has " + document.querySelectorAll("*").length + " elements"
+      </textarea>
+      <br>
+      <input onclick="runEvalExample();" class="eval-button" type="button" value="eval!"/>
+      <pre class="eval-result"></pre>
+
+
+      <script src="dist/lively.vm_standalone.min.js"></script>
+      <script>
+        function runEvalExample() {
+          let result = lively.vm.syncEval(document.querySelector(".eval-code").value);
+          let output = ""
+          if (result.isError) {
+            output += "Oh no, an error!\n" + (result.value.message || result.value);
+          } else {
+            try {
+              output += "The eval result is: " + lively.lang.obj.inspect(result.value);
+            } catch(err) {
+              output += "The eval result is: " + result.value;
+            }
+          }
+          document.querySelector(".eval-result").innerText = output;
+        }
+      </script>
+
+      <h2>Usage</h2>
+
+      <p>
+        In it's simplest form, use <code>lively.vm.syncEval(code, options)</code>.  The return value is a result object whose value is the return value of the last statement in the evaluated code;
+        <div class="example">
+lively.vm.syncEval("3 + 4");
+=> {
+  value: 7,
+  isError: false,
+  isPromise: false,
+  warnings: []
+}
+        </div>
+      </p>
+
+      <h3>bindings</h3>
+
+      <p>
+        To capture the bindings of top-level variables inside the evaluated code, use the <code>topLevelVarRecorder</code> option. Note that this will not pollute the global namespace.
+        <div class="example">
+var bindings = {};
+lively.vm.syncEval(
+  "var x = 3; var y = 4; x + y;",
+  {topLevelVarRecorder: bindings});
+=> {value: 7}
+bindings.x
+=> 3
+bindings.y
+=> 4
+        </div>
+      </p>
+
+      <p>
+        Similarly, you can make pass bindings into the evaluation:
+        <div class="example">
+var bindings = {x: 99};
+lively.vm.syncEval("x = x + 2;", {topLevelVarRecorder: bindings});
+=> {value: 101}
+bindings.x
+=> 101
+        </div>
+      </p>
+
+      <h3>callbacks and asynchronous evaluation, custom transpilers</h3>
+      <p>
+      <code>lively.vm.runEval</code> supports evaluation processes that are asynchronous. <code>runEval</code> itself will return a Promise that resolves to the eval result object.  You can also specify an <code>onEndEval</code> handler to be notified when the evaluation is done.  The following example also uses the <code>transpiler</code>option to allow top-level await (your JavaScript VM needs to support that, alternatively use a transpiler like babeljs in the transpiler function you pass to lively.vm).
+      </p>
+      <div class="example">
+await lively.vm.runEval(
+  "await new Promise((resolve, reject) => setTimeout(() => resolve(42), 1000));", {
+  topLevelVarRecorder: {},
+  wrapInStartEndCall: true,
+  transpiler: source => "(async function() {" + source + "})()",
+  onEndEval: (err, value) => console.log("evaluation done", value)
+});
+=> will print "42" after 1 sec.
+      </div>
+
+      <h3>Using it with lively.modules</h3>
+      <p>
+      <a href="https://github.com/LivelyKernel/lively.modules">lively.modules</a> is a module system that supports interactive runtime changes of source code.  When lively.modules is loaded and <a href="https://github.com/systemjs/systemjs">SystemJS</a> are loaded, you can pass a <code>targetModule</code> option to lively.vm that will run the evaluation in the context of the module, having access to all top-level module bindings (and being able to change those).
+      </p>
+      <p>Assuming we have a module "test.js" with the following code:
+      <div class="code">
+var x = 3;
+export var y = x + 4;
+      </div>
+      </p>
+      <p>lively.vm can be used to access as well as modify exports and module internal state:
+      <div class="example">
+await lively.vm.runEval("x", {targetModule: "test.js"});
+=> {value: 3}
+await lively.vm.runEval("y = 10", {targetModule: "test.js"});
+(await System.import("test.js")).y
+=> 10
+      </div>
+      </p>
+
+      <h2>dynamic code completions</h2>
+<p>
+To inspect objects from an editor or repl and get auto completions of properties and methods you can use <code>lively.vm.completions.getCompletions</code>.  The result of the getCompletions call is a nested list, providing the prototype hierarchy of the completion target and their respective attributes/methods.
+<div class="example">
+var someObject = {
+  aProperty: 23,
+  anotherProperty: "hello world",
+  xProperty: 99
+}, bindings = {topLevelVarRecorder: {someObject}}
+
+let result = await lively.vm.completions.getCompletions(
+  source => lively.vm.syncEval(source, bindings),
+  "someObject.a");
+  
+=> {
+  code: "someObject",
+  startLetters: "a",
+  completions: [
+    ["[object Object]",
+      ["aProperty",
+       "anotherProperty",
+       "xProperty"]
+    ],
+    ["Object",
+      ["__defineGetter__()",
+       "__defineSetter__()",
+       "__lookupGetter__()",
+       "__lookupSetter__()",
+       "constructor()",
+       "hasOwnProperty()",
+       "isPrototypeOf()",
+       "propertyIsEnumerable()",
+       "toLocaleString()",
+       "toString()",...]
+    ]],
+}
+</div>
+</p>
+
+
+      <h2>notifications</h2>
+
+<p>There are two types of system-wide notifications:</p>
+<code>
+{type: "lively.vm/doitrequest", code, targetModule, waitForPromise}
+{type: "lively.vm/doitresult", code, targetModule, waitForPromise, result}
+</code>
+<p>These notifications are all emitted with lively.notifications.</p>
+
+
+      <h2>License</h2>
+      <a href="https://raw.githubusercontent.com/LivelyKernel/lively.vm/master/LICENSE">MIT</a>
+    </div>
+
+
+
+
+  </body>
+</html>

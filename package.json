@@ -1,0 +1,47 @@
+{
+  "name": "lively.vm",
+  "version": "0.9.18",
+  "description": "Controlled JavaScript code execution and instrumentation.",
+  "main": "dist/lively.vm.js",
+  "systemjs": {
+    "main": "index.js"
+  },
+  "scripts": {
+    "test": "mocha-es6 tests/*-test.js",
+    "build": "node tools/build.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LivelyKernel/lively.vm.git"
+  },
+  "keywords": [
+    "LivelyWeb",
+    "JavaScript"
+  ],
+  "author": "Robert Krahn",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/LivelyKernel/lively.vm/issues"
+  },
+  "homepage": "https://github.com/LivelyKernel/lively.vm",
+  "dependencies": {
+    "lively.ast": ">=0.11.1",
+    "lively.lang": ">=1.0.23",
+    "lively.notifications": "*",
+    "lively.classes": "*",
+    "lively.source-transform": "*"
+  },
+  "devDependencies": {
+    "babel-core": "^6.16.0",
+    "babel-plugin-external-helpers": "^6.8.0",
+    "babel-plugin-syntax-object-rest-spread": "^6.13.0",
+    "babel-plugin-transform-async-to-generator": "^6.22.0",
+    "babel-plugin-transform-object-rest-spread": "^6.20.2",
+    "babel-preset-es2015": "^6.24.0",
+    "babel-preset-es2015-rollup": "^3.0.0",
+    "babel-regenerator-runtime": "^6.5.0",
+    "rollup": "^0.36.1",
+    "rollup-plugin-babel": "^2.6.1",
+    "uglify-js": "^2.8.22"
+  }
+}
