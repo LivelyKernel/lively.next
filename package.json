@@ -1,0 +1,32 @@
+{
+  "name": "lively.installer",
+  "version": "0.3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LivelyKernel/lively.installer"
+  },
+  "systemjs": {
+    "map": {
+      "child_process": {
+        "node": "@node/child_process",
+        "~node": "@empty"
+      },
+      "fs": {
+        "node": "@node/fs",
+        "~node": "@empty"
+      }
+    }
+  },
+  "dependencies": {
+    "lively.modules": "*",
+    "systemjs": "^0.19.31",
+    "flatn": "*"
+  },
+  "systemjs": {
+    "map": {
+      "lively.modules": "./deps/lively.modules.js",
+      "babel": "./deps/babel.min.js",
+      "systemjs": "./deps/system.src.js"
+    }
+  }
+}
