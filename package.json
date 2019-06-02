@@ -1,0 +1,21 @@
+{
+  "name": "lively.bindings",
+  "version": "0.1.2",
+  "dependencies": {
+    "lively.lang": "*"
+  },
+  "scripts": {
+    "test": "mocha-es6 tests/*-test.js",
+    "build": "node tools/build.js"
+  },
+  "devDependencies": {
+    "mocha-es6": "^0.5",
+    "babel-core": "^6.21.0",
+    "babel-regenerator-runtime": "^6.5.0",
+    "babel-plugin-external-helpers": "^6.8.0",
+    "babel-plugin-syntax-object-rest-spread": "^6.13.0",
+    "babel-plugin-transform-async-to-generator": "^6.16.0",
+    "babel-plugin-transform-object-rest-spread": "^6.16.0",
+    "babel-preset-es2015": "^6.16.0"
+  }
+}
