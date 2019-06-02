@@ -1,0 +1,37 @@
+{
+  "name": "lively.ide",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LivelyKernel/lively.ide"
+  },
+  "dependencies": {
+    "lively-system-interface": "https://github.com/LivelyKernel/lively-system-interface",
+    "lively.2lively":          "https://github.com/LivelyKernel/lively.2lively",
+    "lively.ast":              "https://github.com/LivelyKernel/lively.ast",
+    "lively.bindings":         "https://github.com/LivelyKernel/lively.bindings",
+    "lively.changesets":       "https://github.com/LivelyKernel/lively.changesets",
+    "lively.classes":          "https://github.com/LivelyKernel/lively.classes",
+    "lively.components":       "https://github.com/LivelyKernel/lively.components",
+    "lively.graphics":         "https://github.com/LivelyKernel/lively.graphics",
+    "lively.halos":            "https://github.com/LivelyKernel/lively.halos",
+    "lively.ide":              "https://github.com/LivelyKernel/lively.ide",
+    "lively.modules":          "https://github.com/LivelyKernel/lively.modules",
+    "lively.morphic":          "https://github.com/LivelyKernel/lively.morphic",
+    "lively.notifications":    "https://github.com/LivelyKernel/lively.notifications",
+    "lively.resources":        "https://github.com/LivelyKernel/lively.resources",
+    "lively.shell":            "https://github.com/LivelyKernel/lively.shell",
+    "lively.lang": "^1.0.0"
+  },
+  "devDependencies": {
+    "mocha-es6": "^0.5"
+  },
+  "systemjs": {
+    "map": {
+      "prettier": "./js/prettier.1.7.4.js"
+    }
+  },
+  "scripts": {
+    "test": "mocha-es6 tests/{,diff/,js/,shell/}*-test.js"
+  }
+}
