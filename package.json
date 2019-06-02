@@ -1,0 +1,39 @@
+{
+  "name": "lively.shell",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LivelyKernel/lively.shell"
+  },
+  "dependencies": {
+    "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
+    "lively.lang": "*",
+    "lively.resources": "*",
+    "socket.io-client": "^2.0.3"
+  },
+  "devDependencies": {
+    "mocha-es6": "^0.5",
+    "lively.server": "https://github.com/LivelyKernel/lively.server.git",
+    "lively.2lively": "https://github.com/LivelyKernel/lively.2lively.git"
+  },
+  "systemjs": {
+    "main": "index.js",
+    "map": {
+      "fs": {
+        "node": "@node/fs",
+        "~node": "@empty"
+      },
+      "util": {
+        "node": "@node/util",
+        "~node": "@empty"
+      },
+      "path": {
+        "node": "@node/path",
+        "~node": "@empty"
+      }
+    }
+  },
+  "scripts": {
+    "test": "mocha-es6 tests/*-test.js --pre-script ./tests/node-pre.js"
+  }
+}
