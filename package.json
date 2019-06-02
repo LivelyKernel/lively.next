@@ -1,0 +1,32 @@
+{
+  "name": "lively.git",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LivelyKernel/lively.js-git"
+  },
+  "description": "git in your Lively!",
+  "author": "Robert Krahn <robert.krahn@gmail.com>",
+  "license": "MIT",
+  "main": "index.js",
+  "systemjs": {},
+  "lively": {
+    "main": "index.js",
+    "packageMap": {
+      "lively.resources": "./node_modules/lively.resources",
+      "lively.storage": "./node_modules/lively.storage"
+    }
+  },
+  "scripts": {},
+  "devDependencies": {
+    "browserify": "^13.0.1",
+    "minimist": "^1.2.0",
+    "bodec": "^1.1.0",
+    "js-git": "^0.7.7",
+    "js-github": "^1.0.0"
+  },
+  "dependencies": {
+    "lively.resources": "^0.1.20",
+    "lively.storage": "^0.1.7"
+  }
+}
