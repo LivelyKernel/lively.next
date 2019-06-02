@@ -1,0 +1,42 @@
+{
+  "name": "lively.keyboard",
+  "version": "0.1.1",
+  "main": "index.js",
+  "systemjs": {
+    "map": {
+      "bowser": "./bowser.min.js"
+    }
+  },
+  "scripts": {
+    "test": "echo 'no tests yet'; exit 1;",
+    "build": "node tools/build.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LivelyKernel/lively.keyboard.git"
+  },
+  "keywords": [
+    "LivelyWeb",
+    "JavaScript"
+  ],
+  "author": "Robert Krahn",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/LivelyKernel/lively.keyboard/issues"
+  },
+  "homepage": "https://github.com/LivelyKernel/lively.keyboard",
+  "dependencies": {
+    "lively.lang": "^1.0.0"
+  },
+  "devDependencies": {
+    "babel-core": "^6.16.0",
+    "babel-plugin-external-helpers": "^6.8.0",
+    "babel-plugin-syntax-object-rest-spread": "^6.13.0",
+    "babel-plugin-transform-async-to-generator": "^6.16.0",
+    "babel-plugin-transform-object-rest-spread": "^6.16.0",
+    "babel-preset-es2015": "^6.16.0",
+    "rollup": "^0.36.1",
+    "rollup-plugin-babel": "^2.6.1",
+    "uglify-js": "^2.8.22"
+  }
+}
