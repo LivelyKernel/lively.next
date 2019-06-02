@@ -1,0 +1,7 @@
+{
+  "name": "lively.headless",
+  "version": "0.1.0",
+  "dependencies": {
+    "puppeteer": "^1.5.0"
+  }
+}
