@@ -1,0 +1,25 @@
+{
+  "name": "lively.components",
+  "version": "0.1.0",
+  "repository": "https://github.com/LivelyKernel/lively.components",
+  "license": "MIT",
+  "dependencies": {
+    "lively.lang": "^1.0.18",
+    "lively.morphic": "^0.1.0",
+    "lively.bindings": "^0.1.2",
+    "lively.halos": "https://github.com/LivelyKernel/lively.halos",
+    "svg-intersections": "0.2.5",
+    "kld-intersections": "^0.4.2" 
+  },
+  "devDependencies": {
+    "mocha-es6": "*"
+  },
+  "scripts": {
+    "test": "mocha-es6 tests/*-test.js"
+  },
+  "systemjs": {
+    "map": {
+      "svg-intersections": "lively.morphic/dist/svg-intersections.js"
+    }
+  }
+}
