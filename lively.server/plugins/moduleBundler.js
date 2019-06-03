@@ -1,7 +1,6 @@
 import { obj, arr, string } from "lively.lang";
-import module from "lively.modules";
+import { defaultSystem } from "lively.modules";
 import { resource } from 'lively.resources';
-import { System } from "lively.modules/index.js";
 
 const bundledPackages = [
    "lively.morphic",
@@ -22,19 +21,19 @@ export default class ModuleBundler {
 
   async generateCombinedModule(name, depsToLocalFiles) {
      var combinedModule = this.combinedModules[name] || {};
-     this.moduleDeps[name] = {...this.moduleDeps[name], ...depsToLocalFiles}; 
+     this.moduleDeps[name] = {...this.moduleDeps[name], ...depsToLocalFiles};
      for (var path in depsToLocalFiles) {
         var res = resource(depsToLocalFiles[path]);
         if (!await res.exists()) {
            console.log(path, "does not exist!"); continue;
         }
-        combinedModule[path.slice(path.indexOf(name))] = await res.read() 
+        combinedModule[path.slice(path.indexOf(name))] = await res.read()
      }
      return combinedModule;
   }
 
   async handleRequest(req, res, next) {
-    if (!req.url.startsWith("/combined/") || 
+    if (!req.url.startsWith("/combined/") ||
         (req.method !== "GET" && req.method !== "POST"))
       return next();
 
@@ -54,7 +53,7 @@ export default class ModuleBundler {
           depsToLocalFiles = obj.merge(
             d.deps.map(path => {
               path = path.replace(d.serverUri, "");
-              return {[path]: System.baseURL.replace('lively.server/', '') + path}
+              return {[path]: defaultSystem.baseURL.replace('lively.server/', '') + path}
             })
           );
         });
