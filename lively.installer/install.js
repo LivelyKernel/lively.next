@@ -21,7 +21,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
 
 
   let step1_ensureDirectories = true,
-      step2_cloneLivelyPackages = true,
+      step2_cloneLivelyPackages = false,
       step3_setupFlatn = true,
       step4_installPackageDeps = true,
       step5_runPackageInstallScripts = true,
@@ -58,7 +58,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
         packages = await Promise.all(knownProjects.map(spec =>
           new Package(join(baseDir, spec.name), spec, log).readConfig()));
 
-    
+
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // creating packages
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -124,7 +124,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
     }
 
     if (step8_runPackageBuildScripts) {
-      let env = process.env, status;
+      let status;
       pBar && pBar.setValue(0)
       i = 0; for (let p of packages) {
         if (p.config.scripts && p.config.scripts.build) {
@@ -155,7 +155,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step7_setupAssets) {
       console.log(`=> setting up scripts and assets`);
-      
+
       // FIXME, this is old stuff...
       let toRemove = [
         "rebuild.sh",
@@ -167,17 +167,17 @@ export async function install(baseDir, dependenciesDir, verbose) {
         "mirror.html",
         "fix-links.js"],
           toInstall = [
-            {path: "lively.installer/assets/config.js",      canBeLinked: true, overwrite: true},
-            {path: "lively.installer/assets/localconfig.js", canBeLinked: false, overwrite: false},
-            {path: "lively.installer/assets/start.sh",       canBeLinked: true, overwrite: true},
-            {path: "lively.installer/assets/update.sh",      canBeLinked: true, overwrite: true},
-            {path: "lively.installer/assets/config.js",      canBeLinked: true, overwrite: true},
-            {path: "lively.morphic/assets/favicon.ico",      canBeLinked: true, overwrite: true},
+            // {path: "lively.installer/assets/config.js",      canBeLinked: true, overwrite: true},
+            // {path: "lively.installer/assets/localconfig.js", canBeLinked: false, overwrite: false},
+            // {path: "lively.installer/assets/start.sh",       canBeLinked: true, overwrite: true},
+            // {path: "lively.installer/assets/update.sh",      canBeLinked: true, overwrite: true},
+            // {path: "lively.installer/assets/config.js",      canBeLinked: true, overwrite: true},
+            // {path: "lively.morphic/assets/favicon.ico",      canBeLinked: true, overwrite: true},
           ];
-      
+
       for (let fn of toRemove)
         await safelyRemove(resource(baseDir), resource(baseDir).join(fn));
-      
+
       for (let {path, overwrite, canBeLinked} of toInstall) {
         let from = resource(baseDir).join(path),
             to = resource(baseDir).join(from.name());
@@ -192,7 +192,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
           await exec(`ln -sf ${from.path()} ${to.path()}`);
         }
       }
-      
+
       await exec("chmod a+x start.sh update.sh", {cwd: resource(baseDir).path()});
     }
 
@@ -255,7 +255,7 @@ async function replicateObjectDB(baseDir, packageMap) {
   let { ensureFetch, resource } = await lively.modules.importPackage(join(baseDir, "/lively.resources"));
   await ensureFetch();
   if (!global.navigator) global.navigator = {};
-    
+
   let { ObjectDB, Database } = await lively.modules.importPackage(join(baseDir, "/lively.storage/"));
   await resource(baseDir).join("lively.morphic/objectdb/morphicdb/snapshots/").ensureExistance();
   await resource(baseDir).join("lively.morphic/objectdb/morphicdb-commits/").ensureExistance();
@@ -270,11 +270,11 @@ async function replicateObjectDB(baseDir, packageMap) {
 
   try {
     let sync = db.replicateFrom(remoteCommitDB, remoteVersionDB, toSnapshotLocation, {debug: false, retry: true, live: true});
-    
+
     await sync.whenPaused();
     await sync.safeStop();
     await sync.waitForIt();
-    
+
     await db.close();
     await remoteVersionDB.close();
     await remoteCommitDB.close();

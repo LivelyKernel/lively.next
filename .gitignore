@@ -1,0 +1,5 @@
+lively.next-node_modules/
+dev-deps/
+.livelydbs/
+.module_cache/
+tmp/
