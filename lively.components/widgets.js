@@ -558,9 +558,9 @@ export class ModeSelector extends Morph {
         }
       },
       height: {defaultValue: 30},
-      init: {},
-      keys: {},
-      values: {},
+      init: { },
+      keys: { before: ['layout'] },
+      values: { before: ['layout'] },
       tooltips: {},
       styleSheets: {
         initialize() {
@@ -578,6 +578,7 @@ export class ModeSelector extends Morph {
       layout: {
         after: ["items", 'keys', 'values'],
         initialize() {
+          if (!this.keys) return;
           this.layout = new GridLayout({
             rows: [0, {paddingBottom: 10}],
             columns: [0, {fixed: 5}, this.keys.length + 2, {fixed: 5}],
@@ -590,6 +591,7 @@ export class ModeSelector extends Morph {
       submorphs: {
         after: ["items", 'keys', 'values'],
         initialize() {
+          if (!this.keys) return;
           this.submorphs = [
             {name: "typeMarker"},
             ...this.createLabels(this.keys, this.values, this.tooltips)
@@ -632,7 +634,7 @@ export class ModeSelector extends Morph {
         bounds = this.currentLabel.bounds();
     animated ? await tm.animate({bounds, duration: 200}) : tm.setBounds(bounds);
   }
-
+  
   async update(label, value, silent = false) {
     const newLabel = this.get(label + "Label");
     if (newLabel == this.currentLabel) return;
@@ -785,8 +787,9 @@ export class DropDownSelector extends Morph {
 
   onMouseDown(evt) {
     this.menu = this.world().openWorldMenu(evt, this.getMenuEntries());
-    this.menu.globalPosition = this.globalPosition;
-    this.menu.isHaloItem = this.isHaloItem;
+    this.menu.hasFixedPosition = true; // !!this.ownerChain().find(m => m.hasFixedPosition);
+    this.menu.topLeft = this.globalPosition;
+    //this.menu.isHaloItem = this.isHaloItem;
   }
 }
 
@@ -938,6 +941,7 @@ export class SearchField extends Text {
         dropShadow: {
           blur: 6,
           color: Color.rgb(52, 152, 219),
+          fast: true,
           distance: 0
         }
       }
