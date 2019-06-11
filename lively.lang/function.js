@@ -192,9 +192,9 @@ function debounce(wait, func, immediate) {
   //   alert("running after " + (Date.now()-start) + "ms with arg " + arg1);
   // });
   // f("call1");
-  // delay(f.curry("call2"), 0.1);
-  // delay(f.curry("call3"), 0.15);
-  // // => Will eventually output: "running after 352ms with arg call3"
+  // delay(curry(f, "call2"), 0.1);
+  // delay(curry(f, "call3"), 0.15);
+  // => Will eventually output: "running after 352ms with arg call3"
   var timeout;
   return function() {
     var context = this, args = arguments;
@@ -252,7 +252,7 @@ function createQueue(id, workerFunc) {
   //   push: function(task) {/**/},
   //   pushAll: function(tasks) {/**/},
   //   handleError: function(err) {}, // Overwrite to handle errors
-  //   dran: function() {}, // Overwrite to react when the queue empties
+  //   drain: function() {}, // Overwrite to react when the queue empties
   // }
   // Example:
   // var sum = 0;
@@ -270,11 +270,11 @@ function createQueue(id, workerFunc) {
       drain: null, // can be overwritten by a function
       push: function(task) {
         queue.tasks.push(task);
-        queue.activateWorker();
+        if (!queue._workerActive) queue.activateWorker();
       },
       pushAll: function(tasks) {
         tasks.forEach(function(ea) { queue.tasks.push(ea); });
-        queue.activateWorker();
+        if (!queue._workerActive) queue.activateWorker();
       },
       pushNoActivate: function(task) {
         queue.tasks.push(task);
