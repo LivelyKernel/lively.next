@@ -7,7 +7,7 @@
 
 
 import { equals as objectEquals } from "./object.js";
-import { once, Null as NullFunction } from "./function.js";
+import { delay, once, Null as NullFunction } from "./function.js";
 import Group from "./Group.js";
 
 var GLOBAL = typeof System !== "undefined" ? System.global :
@@ -613,29 +613,29 @@ function forEachShowingProgress(/*array, progressBar, iterator, labelFunc, whenD
     var Global = typeof window !== 'undefined' ? window : global;
     var world = Global.lively && lively.morphic && lively.morphic.World.current();
     progressBar = world ? world.addProgressBar() : {
-      setValue: function(val) {},
-      setLabel: function() {},
+      value: null,
+      label: null,
       remove: function() {}
     };
   }
-  progressBar.setValue(0);
+  progressBar.value = 0;
 
   // nest functions so that the iterator calls the next after a delay
   (array.reduceRight(function(nextFunc, item, idx) {
     return function() {
       try {
-        progressBar.setValue(idx / steps);
-        if (labelFunc) progressBar.setLabel(labelFunc.call(context, item, idx));
+        progressBar.value = (idx / steps);
+        if (labelFunc) progressBar.label = (labelFunc.call(context, item, idx));
         iterator.call(context, item, idx);
       } catch (e) {
         console.error(
           'Error in forEachShowingProgress at %s (%s)\n%s\n%s',
           idx, item, e, e.stack);
       }
-      nextFunc.delay(0);
+      delay(nextFunc, 0);     
     };
   }, function() {
-    progressBar.setValue(1);
+    progressBar.value = 1;
     if (progressBarAdded) (function() { progressBar.remove(); }).delay(0);
     if (whenDoneFunc) whenDoneFunc.call(context);
   }))();
