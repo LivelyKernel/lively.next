@@ -60,7 +60,9 @@ export class Tree extends Text {
       readOnly: {defaultValue: true},
       fixedWidth: {defaultValue: true},
       fixedHeight: {defaultValue: true},
-      lineHeight: {defaultValue: 1.5},
+      lineHeight: {
+        defaultValue: 1.5
+      },
       clipMode: {defaultValue: "auto"},
       padding: {defaultValue: Rectangle.inset(3)},
 
@@ -162,7 +164,6 @@ export class Tree extends Text {
     super(props);
     this.resetCache();
     this.update();
-    connect(this, 'extent', this, 'update');
     this.selectionColor = props.selectionColor || Color.blue;
   }
 
@@ -299,8 +300,9 @@ export class Tree extends Text {
     // fixme: this method should only be used in cases, where the tree data is replaced.
     //        When collapsing/uncollapsing nodes, we should insert, remove ranges of the text
     //        which makes for a faster rendering of the tree.
-    if (!this.treeData || !this.nodeItemContainer) return;
-
+    if (this._updating || !this.treeData || !this.nodeItemContainer) return;
+    this._updating = true;
+    
     this.withMetaDo({isLayoutAction: true}, () => {
       let {
             treeData,
@@ -321,7 +323,10 @@ export class Tree extends Text {
             end: this.documentEndPosition}, 
             this.computeTreeAttributes(nodes),
             false, false);
-        this.invalidateTextLayout(true, true);
+        this.invalidateTextLayout(true, false);
+        this.whenRendered().then(async () => {
+           this.makeDirty();
+        });
       } else if (this._lastSelectedIndex) {
         this.recoverOriginalLine(this._lastSelectedIndex - 1);
       }
@@ -332,6 +337,7 @@ export class Tree extends Text {
         this.renderSelectedLine(this.selectedIndex - 1);
       }
     });
+    this._updating = false;
   }
   
   buildViewState(nodeIdFn) {
