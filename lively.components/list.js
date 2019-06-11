@@ -1300,9 +1300,13 @@ export class DropDownList extends Button {
     return {
 
       padding:      {defaultValue: Rectangle.inset(3,2)},
-      listHeight: {defaultValue: 100},
+      listHeight:   {defaultValue: 100},
 
-      listAlign: {defaultValue: "bottom"/*or "top"*/},
+      listAlign: {
+        type: 'Enum',
+        values: ['bottom', 'top'],
+        defaultValue: "bottom"
+      },
 
       styleSheets: {
         initialize() {
@@ -1378,12 +1382,15 @@ export class DropDownList extends Button {
             if (!item) return;
 
             let label = item.label || [item.string, null];
-            this.label = [
+            label = [
               ...label, " ", null,
               ...Icon.textAttribute(
                 "caret-" + (listAlign === "bottom" ?
                   "down" : "up"))
             ];
+            if (label[5]) label[5].textStyleClasses = ['fa', 'annotation'];
+            this.label = label;
+            this.relayout();
 
             listMorph.selectedIndex = items.indexOf(item);
           }
@@ -1394,10 +1401,14 @@ export class DropDownList extends Button {
     };
 
   }
-
+  
   constructor(props) {
     super(props);
     connect(this, "fire", this, "toggleList");
+  }
+
+  onLoad() {
+    if (!this.listMorph.selection) this.listMorph.selection = this.label.value[0];
   }
 
   isListVisible() { return this.listMorph.owner === this; }
@@ -1422,7 +1433,8 @@ export class DropDownList extends Button {
     } else {
       signal(this, "activated");
       this.addMorph(list);
-      list.extent = pt(this.width, this.listHeight);
+      let totalItemHeight = (list.items.length * list.itemHeight) + list.padding.top() + list.padding.bottom();
+      list.extent = pt(this.width, Math.min(this.listHeight, totalItemHeight));
       if (this.listAlign === "top") {
         list.bottomLeft = this.innerBounds().topLeft();
       } else {
@@ -1460,6 +1472,13 @@ export class DropDownList extends Button {
       {keys: "Enter", command: "accept"},
       {keys: "Escape|Ctrl-G", command: "cancel"}
     ]);
+  }
+
+  relayout() {
+    super.relayout();
+    let targetWidth = this.width - 20;
+    if (this.labelMorph.width != targetWidth)
+      this.labelMorph.width = targetWidth;
   }
 
 }
