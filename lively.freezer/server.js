@@ -114,9 +114,17 @@ export default class FrozenPartsLoader {
 
     if (container && op.join('/').includes('prerender')) {
       let userAgent = 'default';
-      let {height, width, pathname} = urlParser.parse(sanitizedUrl, true).query;
+      let {height, width, pathname, userAgentString } = urlParser.parse(sanitizedUrl, true).query;
+      var botUserAgents = [
+          'googlebot',
+          'google-structured-data-testing-tool',
+          'bingbot',
+          'linkedinbot',
+          'mediapartners-google',
+      ];
       if (width < 600) userAgent = 'mobile';
-      if (width >= 600 && width < 1024) userAgent = 'tablet';
+      if (width >= 600 && width < 1024) userAgent = 'tablet'; 
+      if (botUserAgents.find(agent => userAgentString.includes(agent))) userAgent = 'bot';
       res.writeHead(200, {'Content-Type': 'text/html'});
       try {
         lastReq = await this.prerender(id, width, height, pathname, userAgent);
@@ -178,8 +186,9 @@ export default class FrozenPartsLoader {
         if (path.endsWith('/')) {
             path = path.slice(0, path.length - 1)
         }
-        var query = `/prerender?height=${h}&width=${w}&pathname=${path}`;
-        var red = window.location.origin + path + query; 
+        
+        var query = `/prerender?height=${h}&width=${w}&pathname=${path}&userAgentString=${navigator.userAgent}`;
+        var red = window.location.origin + path + query;
         document.location.replace(red);
       };
 
