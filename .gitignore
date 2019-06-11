@@ -3,3 +3,14 @@ dev-deps/
 .livelydbs/
 .module_cache/
 tmp/
+subservers/
+resources/
+uploads/
+users/
+custom-npm-modules/
+*.idb/
+*.html
+*.css
+robots.txt
+update.sh
+user-server.sh
