@@ -7,24 +7,45 @@ import { arr, obj } from "lively.lang";
 import { module } from "lively.modules/index.js";
 import Bundle from "./bundle.js";
 import FreezerPackage from "./package.js";
-import { loadPart, SnapshotEditor, loadObjectFromPartsbinFolder } from "lively.morphic/partsbin.js";
-import { runEval } from "lively.vm";
+import { loadPart } from "lively.morphic/partsbin.js";
 import { callService, ProgressMonitor } from "lively.ide/service-worker.js";
 import { LoadingIndicator } from "lively.components";
-import { allPlugins, LeakDetectorPlugin, plugins } from "lively.serializer2/plugins.js";
+import { allPlugins, LeakDetectorPlugin } from "lively.serializer2/plugins.js";
 import { config, MorphicDB } from "lively.morphic";
-import { SnapshotInspector } from "lively.serializer2/debugging.js";
-import { parse, BaseVisitor } from "lively.ast";
+import { parse } from "lively.ast";
 import { AllNodesVisitor } from "lively.ast/lib/visitors.js";
-import { moduleOfId, isReference } from "lively.serializer2/snapshot-navigation.js";
-import { classNameOfId } from "lively.serializer2/snapshot-navigation.js";
-import { referencesOfId } from "lively.serializer2/snapshot-navigation.js";
-import { asyncAwaitTranspilation } from "./module.js";
+import { referencesOfId, classNameOfId, moduleOfId, isReference } from "lively.serializer2/snapshot-navigation.js";
+import { es5Transpilation } from "lively.source-transform";
+
+const corePackages = [
+  'lively.lang', 'lively.modules', 'lively.components', 'bowser', 'jwt-decode',
+  'lively.serializer2', 'lively.ast', 'lively.vm', 'lively.storage',
+  'lively.resources', 'lively.bindings', 'lively.notifications', 
+  'lively.graphics', 'lively.classes', 'lively.source-transform', 'lively.morphic', 'lively.user'
+];
+const globalpackages = {
+  "lively.lang": "lively.lang",
+  "lively.modules": "lively.modules",
+  "lively.ast": 'lively.ast',
+  "lively.vm": "lively.vm",
+  "lively.serializer2": "lively.serializer2",
+  "lively.graphics": "lively.graphics",
+  "lively.resources": "lively.resources",
+  "lively.notifications": "lively.notifications",
+  "lively.bindings": "lively.bindings",
+  "lively.classes": "lively.classes",
+  "lively.storage": 'lively.storage',
+  "lively.source-transform": "lively.sourceTransform",
+  "lively.morphic": "lively.morphic",
+  "jwt-decode": "jwt_decode",
+  "bowser": "bowser",
+  "third-party": 'thirdParty'
+};
 
 export async function interactivelyFreezePart(part, opts) {
-  var li = LoadingIndicator.open("Freezing target...", {center: $world.visibleBounds().center()}),
-      leakDetector = new LeakDetectorPlugin(),
-      snap = serialize(part, {plugins: [...allPlugins, leakDetector]}); // do not serialize ad hoc, fetch from db
+  let li = LoadingIndicator.open("Freezing target...", {center: $world.visibleBounds().center()});
+  let leakDetector = new LeakDetectorPlugin();
+  let snap = serialize(part, {plugins: [...allPlugins, leakDetector]}); // do not serialize ad hoc, fetch from db
   if (opts.checkForLeaks && leakDetector.memoryLeaks) {
     // We discovered that the follwing objects are solely referenced via attribute connections
     // and nowhere else in the part. In most cases this is a strong indication for unintended
@@ -101,10 +122,10 @@ export async function freezeSnapshot({snapshot, progress}, opts) {
      if (classNameOfId(snap.snapshot, id) === 'AttributeConnection') {
         let props = snap.snapshot[id].props;
         if (props.converterString) {
-           props.converterString.value = asyncAwaitTranspilation(props.converterString.value); 
+           props.converterString.value = es5Transpilation(`(${props.converterString.value})`); 
         }
         if (props.updaterString) {
-           props.updaterString.value = asyncAwaitTranspilation(props.updaterString.value);
+           props.updaterString.value = es5Transpilation(`(${props.updaterString.value})`);
         }
      }    
   }
@@ -118,7 +139,7 @@ export async function freezeSnapshot({snapshot, progress}, opts) {
            delete snap.snapshot[id];
            continue;
          }
-         for (let { key, value: v } of Object.values(snap.snapshot[id].props)) {
+         for (let [key, {value: v}] of Object.entries(snap.snapshot[id].props)) {
            if (isReference(v) && deletedIds.includes(v.id)) {
              delete snap.snapshot[id].props[key];
            }
@@ -130,11 +151,93 @@ export async function freezeSnapshot({snapshot, progress}, opts) {
      }
   }
   removeUnreachableObjects([snap.id], snap.snapshot);
-  SnapshotInspector.forSnapshot(snap).openSummary();
   let res = await (await FreezerPart.fromSnapshot(snap, opts)).standalone({
       progress, includeRuntime: opts.includeRuntime
   });
   return res;
+}
+
+export async function getRequiredModulesFromSnapshot(snap, frozenPart, includeDynamicParts=false) {
+  var imports = requiredModulesOfSnapshot(snap), // do this after the replacement of calls
+      dynamicPartImports = [],
+      moduleImports = [];
+
+  let { packages: additionalImports } = await findRequiredPackagesOfSnapshot(snap);
+  Object.keys(additionalImports['local://lively-object-modules/'] || {}).forEach(packageName => {
+    let filename = `${packageName}/index.js`;
+    if (!imports.includes(filename)) {
+      imports.push(filename);
+    }
+  });
+
+  for (let m of imports) {
+    const mod = module(m),
+          modImports = await mod.requirements(),
+          partModuleSource = (await mod.source()),
+          parsedModuleSource = parse(partModuleSource),
+          dynamicPartLoads = [];
+    moduleImports.push(...modImports.filter(imp => {
+      if (imp.id.includes('@empty')) return false; // FIXME: why is this returned by requirements?
+      let p = imp.package();
+      if (p && corePackages.includes(p.name)) return false;
+      if (p && globalpackages[p.name]) return true;
+      return !p; // if no package, it needs to be inlined      
+    }).map(m => m.id));
+
+    // extract also modules that are "dependents" and loaded by the SystemJS engine
+    let callSite;
+    AllNodesVisitor.run(parsedModuleSource, (node, path) => {
+      if (node.type === 'CallExpression' &&
+          node.callee.name === 'loadObjectFromPartsbinFolder') {
+        dynamicPartLoads.push(node.arguments[0].value);
+      }
+    });
+
+    // try to resolve them
+    for (let partName of dynamicPartLoads) {
+      let dynamicPart = await MorphicDB.default.fetchSnapshot('part', partName);
+      if (dynamicPart) {             
+        if (frozenPart) frozenPart.dynamicParts[partName] = dynamicPart;
+        if (includeDynamicParts) {
+          // load the packages of the part, if they are not loaded
+          await loadPackagesAndModulesOfSnapshot(dynamicPart);
+          dynamicPartImports.push(...(await getRequiredModulesFromSnapshot(dynamicPart, frozenPart, includeDynamicParts)));
+        } else if (frozenPart) {
+          let resolved = frozenPart.warnings.resolvedLoads;
+          if (resolved) {
+            resolved.add(partName);
+          } else {
+            frozenPart.warnings.resolvedLoads = new Set([partName]);
+          }
+        }
+      }
+    }
+  }
+  return arr.uniq([...imports, ...dynamicPartImports, ...moduleImports]);
+}
+
+export async function getLicensesForSnapshot(snap, user) {
+  let imports = await getRequiredModulesFromSnapshot(snap);
+  let licenses = {};
+  for (let imp of imports) {
+    if (user && user.acceptedLicenses) {
+      if (user.acceptedLicenses[imp]) continue;
+    }
+    let m = module(imp);
+    let p = m.package();
+    let license = (p && p.config && p.config.license); 
+    if (!license) {
+       let meta = m.metadata();
+       license = (meta && meta.license);
+       if (p && !license && !corePackages.includes(p.name)) {
+         await p.reload();
+         meta = m.metadata();
+         license = (meta && meta.license);
+       }
+    }
+    if (license) licenses[imp] = license;
+  }
+  return licenses;
 }
 
 export class FreezerPart {
@@ -159,94 +262,33 @@ export class FreezerPart {
     return 'lively.FreezerRuntime';
   }
 
-  async getRequiredModulesFromSnapshot(snap, name, includeDynamicParts=false) {
-    var imports = requiredModulesOfSnapshot(snap), // do this after the replacement of calls
-        dynamicPartImports = [];
-
-    let { packages: additionalImports } = await findRequiredPackagesOfSnapshot(snap);
-    Object.keys(additionalImports['local://lively-object-modules/'] || {}).forEach(packageName => {
-      let filename = `${packageName}/index.js`;
-      if (!imports.includes(filename)) {
-        imports.push(filename);
-      }
-    });
-    
-    for (let m of imports) {
-       const partModuleSource = (await lively.modules.module(m).source()),
-             parsedModuleSource = parse(partModuleSource),
-             dynamicPartLoads = [];
-       let callSite;
-       AllNodesVisitor.run(parsedModuleSource, (node, path) => {
-         if (node.type == 'CallExpression' && node.callee.name == 'loadObjectFromPartsbinFolder') {
-            dynamicPartLoads.push(node.arguments[0].value);
-         }
-       }); 
-         // try to resolve them
-       for (let partName of dynamicPartLoads) {
-         let dynamicPart = await MorphicDB.default.fetchSnapshot('part', partName);
-         if (dynamicPart) {             
-           this.dynamicParts[partName] = dynamicPart;
-           if (includeDynamicParts) {
-             // load the packages of the part, if they are not loaded
-             await loadPackagesAndModulesOfSnapshot(dynamicPart);
-             dynamicPartImports.push(...(await this.getRequiredModulesFromSnapshot(dynamicPart, partName)));
-           } else {
-             let resolved;
-             if (resolved = this.warnings.resolvedLoads) {
-               resolved.add(partName);
-             } else {
-               this.warnings.resolvedLoads = new Set([partName]);
-             }
-           }
-         }
-       }
-    }
-    return arr.uniq([...imports, ...dynamicPartImports])
-  }
-
   async computePackageMapForSnapshotAndImports(snap, imports, name) {
-    let corePackages = ['lively.lang', 'lively.modules', 'lively.components', 'bowser',
-                        'lively.serializer2', 'lively.ast', 'lively.vm', 'lively.storage',
-                        'lively.resources', 'lively.bindings', 'lively.notifications', 
-                        'lively.graphics', 'lively.classes', 'lively.source-transform', 'lively.morphic'],
-        globalpackages = {"lively.lang": "lively.lang",
-                         "lively.modules": "lively.modules",
-                         "lively.ast": 'lively.ast',
-                         "lively.vm": "lively.vm",
-                         "lively.serializer2": "lively.serializer2",
-                         "lively.graphics": "lively.graphics",
-                         "lively.resources": "lively.resources",
-                         "lively.notifications": "lively.notifications",
-                         "lively.bindings": "lively.bindings",
-                         "lively.classes": "lively.classes",
-                         "lively.storage": 'lively.storage',
-                         "lively.source-transform": "lively.sourceTransform",
-                         "lively.morphic": "lively.morphic",
-                         "bowser": "bowser"},
-        localDir = resource("local://frozen-parts/"), // is this really nessecary ..?
+        let localDir = resource("local://frozen-parts/"), // is this really nessecary ..?
         // the problem is, that deserialization bypasses the module bounds and accesses the recorder.
         // we need to check at compile time, for which module the deserialization assumes a properly initialized
         // recorder, or we will have some unexpected crashes at runtime, when the freezer runtime will
         // attempt to replace some of the submodules by the standalone package.
         root = arr.uniq(imports.map(path => `import "${path}"`)).join('\n')
-                    + `\nimport { World, MorphicEnv } from "lively.morphic";
+                  + `\nimport { World, MorphicEnv } from "lively.morphic";
                        import { deserialize } from 'lively.serializer2';
                        import { resource } from 'lively.resources';
                        import { promise } from 'lively.lang';
                        import {pt} from "lively.graphics";
+                       const snapshot = window.lively.partData["${name}"];
                        if (!MorphicEnv.default().world) {
                           let world = window.$world = window.$$world = new World({
-                            name: "world", extent: pt(window.innerWidth, window.innerHeight)
+                            name: snapshot.name, extent: pt(window.innerWidth, window.innerHeight)
                           });
                           MorphicEnv.default().setWorldRenderedOn(world, document.body, window.prerenderNode);
                        }
                        export async function renderFrozenPart() {
                           window.$world.dontRecordChangesWhile(() => {
-                            let obj = deserialize(window.lively.partData["${name}"], {
+                            let obj = deserialize(snapshot, {
                                reinitializeIds: function(id) { return id }
                             });
                             if (obj.isWorld) {
-                              MorphicEnv.default().setWorldRenderedOn(obj, document.body, window.prerenderNode);
+                              obj.position = pt(0,0);
+                              MorphicEnv.default().setWorldRenderedOn(obj, document.body, window.prerenderNode);             obj.execCommand("resize to fit window");
                             } else {
                               window.onresize = () => obj.execCommand('resize on client');
                               obj.execCommand('resize on client');
@@ -279,9 +321,9 @@ export class FreezerPart {
   async freezeSnapshot(snap, {includeDynamicParts = false} = {}) {
     this.warnings = {};
     this.dynamicParts = {};
-    let frozenPartPackageName = "frozen-" + snap.snapshot[snap.id]["lively.serializer-class-info"].className,
-        imports = await this.getRequiredModulesFromSnapshot(snap, frozenPartPackageName, includeDynamicParts),
-        packageMap = await this.computePackageMapForSnapshotAndImports(snap, imports, frozenPartPackageName);
+    let frozenPartPackageName = "frozen-" + snap.snapshot[snap.id]["lively.serializer-class-info"].className;
+    let imports = await getRequiredModulesFromSnapshot(snap, this, includeDynamicParts);
+    let packageMap = await this.computePackageMapForSnapshotAndImports(snap, imports, frozenPartPackageName);
     this.entryModule = frozenPartPackageName;
     this.bundle = new Bundle(packageMap);
     this.partData = {

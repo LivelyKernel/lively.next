@@ -1,6 +1,8 @@
+/*global System*/
 import { resource } from "lively.resources";
 import { arr, obj } from "lively.lang";
 import { isSubset, intersect } from "lively.lang/array.js";
+import { module } from "lively.modules/index.js";
 
 export default class FreezerPackage {
 
@@ -38,12 +40,22 @@ export default class FreezerPackage {
       if (c.systemjs && c.systemjs.main) main = c.systemjs.main;
       else if (c.main) main = c.main;
       if (main && !main.match(/\.[^\/\.]+/)) main += ".js";
+      if (main && main.startsWith('./')) main = main.replace('./', '');
     }
     return main || "index.js";
   }
 
   async readConfig() {
-    let config = await this.resource.join("package.json").readJson();
+    let config;
+    try {
+      let p = module(this.resource.join(this.main).url.replace(System.baseURL, '/')).package();
+      if (p.config) config = p.config;
+    } catch (err) {
+
+    } finally {
+      if (!config)
+        config = await this.resource.join("package.json").readJson();
+    }
     this.version = config.version;
     this.name = config.name;
     this._config = config;
@@ -57,9 +69,13 @@ export default class FreezerPackage {
     // traverse all the foreign modules, which directly import one of the submodules
     // and resolve them to import the package's root instead
     let foreignModuleImports = [],
-        succ = true,        
+        succ = true,
         index = 'local://' + bundle.normalizeModuleName(this.qualifiedName),
         rootModule = this.getModules(bundle).find(m => m.name == `/${this.main}`);
+    if (!rootModule) {
+      console.log('Root module not loaded.');
+      return false;
+    }
     for (let m of this.getModules(bundle)) {
       if (m.qualifiedName == index) continue; // skip index
       foreignModuleImports.push(...m.getDependentsOutsideOfPackage(this))
@@ -85,7 +101,7 @@ export default class FreezerPackage {
            console.log(`Could not turn ${
              this.name
            } standalone, because ${
-             m.name
+             m.qualifiedName
            } demands ${
              requiredImports
            } from ${

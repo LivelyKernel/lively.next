@@ -1,9 +1,10 @@
-/*global global,self,__VERSION_PLACEHOLDER__*/
+/*global global,self,__VERSION_PLACEHOLDER__,System*/
 import { Module, StandaloneModule } from "./module.js";
 import { obj, fun, num, graph, arr } from "lively.lang";
 import { version } from "./package.json";
 import { runtimeDefinition } from "./runtime.js";
 import { join } from "lively.resources/src/helpers.js";
+import module from "lively.modules/src/module.js";
 
 export default class Bundle {
 
@@ -39,6 +40,7 @@ export default class Bundle {
     if (!entryModule) {
       entryModule =  this.findModuleInPackageWithName(packageSpec, moduleNameOrId)
                   || this.addModule(Module.create({name: moduleNameOrId, package: packageSpec}));
+      module(System, entryModule.resource.url)._source = null;
     }
 
     this.entryModule = entryModule;
@@ -70,24 +72,26 @@ export default class Bundle {
       let pkg = this.packages[packageName];
       if (pkg.standaloneGlobal && 
           (pkg.canBeReplacedByStandalone(this) || pkg.tryToEnforceStandalone(this))) {
-        let index = 'local://' + this.normalizeModuleName(pkg.qualifiedName),
-            indexModule = this.modules[index],
-            standalone = new StandaloneModule({
-              name: indexModule.name,
-              id: indexModule.qualifiedName.replace('local://', ''),
-              package: indexModule.package
-            });
+        let index = 'local://' + this.normalizeModuleName(pkg.qualifiedName);
+        let indexModule = this.modules[index];
+        if (!indexModule) continue;
+        let standalone = new StandaloneModule({
+          name: indexModule.name,
+          id: indexModule.qualifiedName.replace('local://', ''),
+          package: indexModule.package
+        });
+
         indexModule.dependents.forEach(d => {
           //swap out index reference
           let v = d.dependencies.get(indexModule);
           d.dependencies.delete(indexModule);
           d.dependencies.set(standalone, v);
-        })
+        });
         console.log('deleting', pkg.getModules(this).map(m => m.qualifiedName));
         pkg.getModules(this).forEach(m => delete this.modules[m.qualifiedName]) // remove all others
         // alter source for index module
         // fixme: populate recorder to make module system happy
-        standalone._source = `module.exports = window.${pkg.standaloneGlobal}`;
+        standalone._source = `exports = window.${pkg.standaloneGlobal}`;
         this.modules[index] = standalone;
       }
     }
@@ -177,7 +181,7 @@ export default class Bundle {
     var moduleSource = '';
     for (let i = 0; i < modules.length; i++) {
       if (progress) progressLogger(i);
-      moduleSource += modules[i].transformToRegisterFormat({
+      moduleSource += await modules[i].transformToRegisterFormat({
           runtimeGlobal, clearExcludedModules, livelyTranspilation}) + "\n\n";
     }
 

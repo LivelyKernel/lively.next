@@ -1,16 +1,15 @@
 /*global System,origin, babel*/
 import { resource } from "lively.resources";
-import { isURL } from "lively.modules/src/url-helpers.js";
-import { join, parent } from "lively.resources/src/helpers.js";
+import { isURL, join } from "lively.modules/src/url-helpers.js";
+import { parent } from "lively.resources/src/helpers.js";
 import { parse, stringify, transform, nodes, query } from "lively.ast";
 import { findUniqJsName } from "./util.js";
-import { string, arr } from "lively.lang";
-import { isString } from "lively.lang/object.js";
+import { string } from "lively.lang";
 import { prepareCodeForCustomCompile, prepareTranslatedCodeForSetterCapture } from "lively.modules/src/instrumentation.js";
 import { module } from "lively.modules/index.js";
-import { classToFunctionTransform } from "lively.classes";
 import { rewriteToCaptureTopLevelVariables } from "lively.source-transform/capturing.js";
 import objectSpreadTransform from "lively.ast/lib/object-spread-transform.js";
+import { es5Transpilation } from "lively.source-transform";
 
 function exportCall(exportName, id) {
   return stringify(
@@ -68,6 +67,7 @@ export class Module {
     this._id = id;
     this._package = p;
     this._evalId = 1;
+    this._format = module(this.qualifiedName).format();
     this.reset();
   }
 
@@ -92,6 +92,8 @@ export class Module {
 
   get package() { return this._package; }
 
+  get format() { return this._format; }
+
   get id() {
     if (this._id) return this._id;
     if (this.package) return join(this.package.id, this.name);
@@ -100,7 +102,7 @@ export class Module {
 
   get qualifiedName() {
     if (this.package) return 'local://' + join(this.package.qualifiedName, this.name);
-    if (this.id) return 'local://' + this.id;
+    if (this.id) return this.id.startsWith('http') ? this.id : ('local://' + this.id);
     throw new Error(`qualifiedName: Needs package or id!`);
   }
 
@@ -118,7 +120,7 @@ export class Module {
   }
 
   async source() {
-    return this._source || (this._source = await module(this.resource.url).source());
+    return await module(this.resource.url).source();
   }
 
   parse() { throw new Error("Implement me!"); }
@@ -136,13 +138,40 @@ export class Module {
 
 export class StandaloneModule extends Module {
   
-  async parse() { await this.source() }
+  async parse() { 
+    if (this._source) return;
+    this._source = await this.source();
+    // add deps from module metadata if present
+    let { deps } = module(this.id).metadata() || {}; // get other global modules this module may be dependent on
+    if (deps) {
+      for (let importPath of deps) {
+         let { id } = module(
+           System.decanonicalize(
+             join(this.id, '../' + importPath)
+           ).replace(System.baseURL, "")
+         ); 
+         // standalone modules can only depend on other standalone modules
+         this.addDependency(new StandaloneModule({ id }), {
+           isPackageImport: true, imports: []
+         });
+      }
+    }
+  }
 
   wrapStandalone(source, runtimeGlobal) {
     const pkg = this.package;
-    return `(function(module) {
+    if (this.format === 'global') {
+      return `${runtimeGlobal}.globalModules["${this.qualifiedName}"] = (function() {
+         var fetchGlobals = ${runtimeGlobal}.prepareGlobal("${this.qualifiedName}");
+         ${source};
+         return { exports: fetchGlobals() };
+      })()\n`;
+    }
+    return `(function(module /* exports, require */) {
+             // optional parameters
              var exports = arguments.length > 0 && arguments[1] !== undefined ? arguments[1] : {};
              var require = arguments.length > 1 && arguments[2] !== undefined ? arguments[2] : function () {};
+
              // try to simulate node.js context
              var exec = function(exports, require) { ${source} };
              exec(exports, require);
@@ -154,17 +183,21 @@ export class StandaloneModule extends Module {
   }
 
   get qualifiedName() {
-    if (this.id) return 'local://' + this.id.replace(System.baseURL, "");
+    if (this.id) {
+      let id = this.id.replace(System.baseURL, "");
+      return id.startsWith('http') ? id : ('local://' + id);
+    }
     throw new Error(`qualifiedName: Needs package or id!`);
   }
   
-  transformToRegisterFormat(opts) {
+  async transformToRegisterFormat(opts) {
+    await this.parse();
     let {_source: source} = this, exports = [],
         {runtimeGlobal} = opts;
 
     if (!runtimeGlobal) throw new Error("No runtimeGlobal name defined!");
 
-    return `\n${this.wrapStandalone(source, runtimeGlobal)}\n`
+    return `\n${await this.wrapStandalone(source, runtimeGlobal)}\n`
          + `${runtimeGlobal}.register("${this.qualifiedName}", [], function(_export, _context) {\n`
          + `  "use strict";\n`
          + `  return {\n`
@@ -174,7 +207,7 @@ export class StandaloneModule extends Module {
          + `      if (typeof exports == 'function') {\n`
          + `         _export("default", exports);\n`
          + `      } else {\n`
-         + `        for (var exp in exports) _export(exp, exports[exp]);\n`
+         + `        _export(exports);\n`
          + `        if (!exports['default']) _export('default', exports);\n`
          + `      }\n`
          + `    }\n`
@@ -297,7 +330,7 @@ export class JSModule extends Module {
     for (let localName in rawDependencies) {
       let {imports} = rawDependencies[localName],
           {module: otherModule, isPackageImport} = this.resolveImport(localName, bundle, imports);
-      this.addDependency(otherModule, {imports, localName, isPackageImport});
+      this.addDependency(otherModule, {imports, isPackageImport});
     }
 
     return this;
@@ -307,7 +340,11 @@ export class JSModule extends Module {
     if (isURL(localName)) {
       return {
         module: bundle.findModuleWithId(localName)
-             || bundle.addModule(new StandaloneModule({name: localName, id: localName, package: null}))
+             || bundle.addModule(new StandaloneModule({
+               name: localName,
+               id: localName,
+               package: null
+             }))
       };
     }
 
@@ -348,7 +385,10 @@ export class JSModule extends Module {
             return {
               isPackageImport,
               module: bundle.findModuleWithId(id)
-                   || bundle.addModule(new StandaloneModule({name: localName, id, package: null}))
+                   || bundle.addModule(new StandaloneModule({
+                     name: localName, 
+                     id,
+                     package: null}))
             }
           }
         }
@@ -368,6 +408,7 @@ export class JSModule extends Module {
     return {
       isPackageImport,
       module: bundle.findModuleInPackageWithName(packageSpec, nameInPackage)
+           || bundle.findModuleWithId(`local://${packageSpec.name}${nameInPackage}`)
            || bundle.addModule(bundle.addModule(Module.create({name: nameInPackage, package: packageSpec})))
     };
   }
@@ -424,7 +465,8 @@ export class JSModule extends Module {
       kind: "var",
       declarations: topLevelIds.map(ea => ({type: "VariableDeclarator", id: ea, init: null}))
     } : null;
-   // ensure that setters and dep names are in sync
+
+    // ensure that setters and dep names are in sync
     return {topLevelDecl, setters, undefinedTopLevelVars,
             qualifiedDependencyNames};
   }
@@ -498,14 +540,14 @@ export class JSModule extends Module {
     return exported;
   }
 
-  transformToLivelyModulesFormat() {
+  async transformToLivelyModulesFormat() {
     // mock the module
     if (this._cachedLivelyModule) return this._cachedLivelyModule;
     let mod = module(this.qualifiedName),
         localId = this.id == '@empty' ? this.id : (this.qualifiedName);
     mod.recorderName = "__lvVarRecorder";
     mod.embedOriginalCode = false;
-    var {options, source} = prepareCodeForCustomCompile(System, this._source, localId, mod);
+    let { options, source } = prepareCodeForCustomCompile(System, await this.source(), localId, mod);
     mod.embedOriginalCode = true;
     let Transpiler = System.get('lively.transpiler').default;
     source = new Transpiler(System, localId, {}).transpileModule(source, {})
@@ -513,7 +555,7 @@ export class JSModule extends Module {
     return this._cachedLivelyModule = source.split("defVar_" + this.id).join("defVar_" + localId);
   }
 
-  transformToRegisterFormat(opts = {}) {
+  async transformToRegisterFormat(opts = {}) {
     let {runtimeGlobal = "System", clearExcludedModules = false, livelyTranspilation = false} = opts,
         {topLevelDecl, setters, qualifiedDependencyNames, undefinedTopLevelVars} = this.registerTranformsOfImports(clearExcludedModules),
         undefinedVarArray = `[${undefinedTopLevelVars.map(v => `"${v}"`).join(', ')}]`,
@@ -521,7 +563,7 @@ export class JSModule extends Module {
         topLevelVarNames = topLevelDecl && topLevelDecl.declarations.map(ea => ea.id.name),
         transpiledSource;
     if (livelyTranspilation) {
-      let s = this.transformToLivelyModulesFormat();
+      let s = await this.transformToLivelyModulesFormat();
       transpiledSource = s.slice(s.indexOf('function (_export, _context)'), s.length - 2)
                           .replace(`"use strict";`,  `"use strict";\n  ${undefinedDeclaration}`);
     } else {
@@ -540,8 +582,8 @@ export class JSModule extends Module {
             additionalExports.push(...ids.map(ea => exportCall(ea.exported.name, ea.local)))
             return {target, replacementFunc}
           })
-        ], this._source);
-        replaced = asyncAwaitTranspilation(stringify(objectSpreadTransform(rewriteToCaptureTopLevelVariables(parse(replaced.source), {
+        ], await this.source());
+        replaced = es5Transpilation(stringify(objectSpreadTransform(rewriteToCaptureTopLevelVariables(parse(replaced.source), {
           type: "Identifier", name: "__rec"}, {
           classToFunction: tfmOpts,
           es6ExportFuncId: '_export',
