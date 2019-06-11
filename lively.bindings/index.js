@@ -289,10 +289,25 @@ export class AttributeConnection {
     if (!sourceObj.hasOwnProperty('doNotCopyProperties')) sourceObj.doNotCopyProperties = [];
     arr.pushIfNotIncluded(sourceObj.doNotCopyProperties, newAttrName);
 
-    if (existingGetter)
-      sourceObj.__defineGetter__(newAttrName, existingGetter);
-    if (existingSetter)
-      sourceObj.__defineSetter__(newAttrName, existingSetter);
+    if (existingGetter) {
+      // check if getter is defined on instance or on prototype
+      if (!sourceObj.hasOwnProperty(sourceAttrName)) {
+        sourceObj.__defineGetter__(newAttrName, () => {
+          return sourceObj.constructor.prototype.__lookupGetter__(sourceAttrName).bind(sourceObj)();
+        });
+      } else {
+        sourceObj.__defineGetter__(newAttrName, existingGetter);
+      }
+    }
+    if (existingSetter) {
+      if (!sourceObj.hasOwnProperty(sourceAttrName)) {
+        sourceObj.__defineSetter__(newAttrName, (newVal) => {
+          sourceObj.constructor.prototype.__lookupSetter__(sourceAttrName).bind(sourceObj)(newVal);
+        })
+      } else {
+        sourceObj.__defineSetter__(newAttrName, existingSetter);
+      }
+    }
 
     // assign old value to new slot
     if (!existingGetter && !existingSetter && sourceObj.hasOwnProperty(sourceAttrName))
