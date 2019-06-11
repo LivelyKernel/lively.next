@@ -77,6 +77,10 @@ function between(x, a, b, eps) {
   return (max - x + eps >= 0) && (min - x - eps <= 0);
 }
 
+function clamp(x, lower, upper) {
+  return Math.max(lower, Math.min(upper, x));
+}
+
 function sort(arr) {
   // numerical sort, JavaScript native `sort` function is lexical by default.
   return arr.sort(function(a,b) { return a-b; });
@@ -193,5 +197,6 @@ export {
   toDegrees,
   toRadians,
   backoff,
-  interpolate
+  interpolate,
+  clamp
 }
