@@ -50,7 +50,12 @@ export default class Window extends Morph {
       },
       ".node.active .Button": {
         "borderColor": Color.rgb(52,73,94),
-        "fill": new LinearGradient({stops: [{offset: 0, color: Color.rgb(127,140,141)}, {offset: 1, color: Color.rgb(97,106,107)}], vector: 0}),
+        "fill": new LinearGradient({
+          stops: [
+            {offset: 0, color: Color.rgb(127,140,141)}, {offset: 1, color: Color.rgb(97,106,107)}
+          ],
+          vector: 0
+        }),
         "fontColor": Color.rgb(253,254,254),
         "opacity": 1
       },
@@ -61,7 +66,12 @@ export default class Window extends Morph {
         "fill": Color.rgb(171,178,185)
       },
       ".node.inactive .Button": {
-        "fill": new LinearGradient({stops: [{offset: 0, color: Color.rgb(52,73,94)}, {offset: 1, color: Color.rgb(33,47,60)}], vector: 0}),
+        "fill": new LinearGradient({
+          stops: [{
+            offset: 0, color: Color.rgb(52,73,94)}, {offset: 1, color: Color.rgb(33,47,60)}
+          ],
+          vector: 0
+        }),
         "fontColor": Color.rgb(235,237,239),
         "opacity": 0.3
       },
@@ -162,6 +172,7 @@ export default class Window extends Morph {
         }
       },
 
+      renderOnGPU: { defaultValue: true },
       styleClasses: {defaultValue: ["active"]},
       clipMode: {defaultValue: "hidden"},
       resizable: {defaultValue: true},
