@@ -9,6 +9,7 @@ import { ObjectDB } from "lively.storage";
 import { join } from "path";
 import { resource } from "lively.resources";
 import * as uglifier from 'uglify-es';
+import config from 'lively.installer/assets/config.js'
 const packagePath = System.decanonicalize("lively.headless/").replace("file://", "");
 
 var l2lClient;
@@ -48,6 +49,8 @@ export default class FrozenPartsLoader {
   get pluginId() { return "FrozenPartsLoader" }
 
   get before() { return ['jsdav', "lib-lookup"] }
+
+  toString() { return `<${this.pluginId}>`}
 
   get production() { return true }
   
