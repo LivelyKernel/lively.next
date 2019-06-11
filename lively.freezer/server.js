@@ -313,12 +313,27 @@ export default class FrozenPartsLoader {
     // populate the container mapping with the information stored inside the file system
     let bucketDir = resource(System.decanonicalize('lively.freezer/frozenParts/'));
     if (!await bucketDir.exists()) return false;
-    for (let bucket of await bucketDir.dirList()) {
-      let container = containers[bucket.name()] = {},
+
+    let initialize = async (bucket, prefix = '') => {
+      let container = containers[prefix + bucket.name()] = {},
           { commit, autoUpdate, dbName } = await bucket.join('config.json').readJson();
+      console.log('[lively.freezer] loading ' + prefix + bucket.name());
       await this.configure(container, commit, autoUpdate, dbName || defaultDB);
-      await this.refresh(container); 
+      await this.refresh(container);
     }
+
+    let walkDir = async (dir, path = '') => {
+      for (let bucket of await dir.dirList()) {
+        let config = bucket.join('config.json');
+        if (!await config.exists()) {
+          await walkDir(bucket, path + bucket.name() + '/')
+          continue;
+        }
+        await initialize(bucket, path); 
+      }
+    }
+
+    await walkDir(bucketDir);
   }
 
   async removeFromFS(id) {
