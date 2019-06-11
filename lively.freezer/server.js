@@ -135,27 +135,22 @@ export default class FrozenPartsLoader {
       if (newPath != this.fsRootDir) {
         req.url = sanitizedUrl.replace('/subserver/FrozenPartsLoader/' + id, '');
         // fixme: dynamically create whitelist for each part, only grant access to all defined resources
-        let whitelist = [...(this.production ? [] : [
-                           'lively.lang', 
-                           'lively.notifications',
-                           'lively.classes',
-                           'lively.resources',
-                           'lively.storage',
-                           'lively.bindings',
-                           'lively.graphics',
-                           'lively.source-transform',
-                           'lively.serializer2',
-                           'upload']),
-                         'users',
-                         'google',
-                         'noscript.html',
-                         'nosupport.html',
-                         'objectdb',
-                         'lively.freezer',
-                         'resources', 
-                         'lively.morphic', 
-                         'subserver/MailService', 
-                         'lively.next-node_modules'];
+        let whitelist = [
+          ...(
+            this.production ? [] : [
+             'lively.lang', 
+             'lively.notifications',
+             'lively.classes',
+             'lively.resources',
+             'lively.storage',
+             'lively.bindings',
+             'lively.graphics',
+             'lively.source-transform',
+             'lively.serializer2',
+             'upload'
+            ]),
+          ...config.freezer.publicDirs
+        ];
         if (whitelist.find(dir => req.url.startsWith('/' + dir))) {
           console.log(req.url);
           next(); // pass on request to jsdav

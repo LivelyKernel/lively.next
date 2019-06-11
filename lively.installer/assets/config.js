@@ -1,5 +1,20 @@
 var config = {
-
+  freezer: {
+    publicDirs: [
+     'users',
+     'google',
+     'noscript.html',
+     'nosupport.html',
+     'objectdb',
+     'robots.txt',
+     'lively.freezer',
+     'resources', 
+     'prototypes',
+     'lively.morphic', 
+     'subserver/MailService', 
+     'lively.next-node_modules'
+    ]
+  },
   server: {
     port: 9011,
     hostname: "0.0.0.0",
@@ -10,7 +25,6 @@ var config = {
       "lively.server/plugins/eval.js",
       "lively.server/plugins/l2l.js",
       "lively.server/plugins/lib-lookup.js",
-      "lively.server/plugins/moduleBundler.js",
       "lively.server/plugins/proxy.js",
       "lively.server/plugins/remote-shell.js",
       "lively.server/plugins/socketio.js",
