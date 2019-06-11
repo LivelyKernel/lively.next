@@ -165,7 +165,7 @@ function equals(date, otherDate) {
     && otherDate.getTime() === date.getTime();
 }
 
-function relativeTo(date, otherDate) {
+function relativeTo(date, otherDate, opts = {}) {
   // Prints a human readable difference of two Date objects. The older date
   // goes first.
   // Examples:
@@ -191,17 +191,17 @@ function relativeTo(date, otherDate) {
     if (days > 1) dayString += 's';
     parts.push(dayString);
   }
-  if (hours > 0 && days < 2) {
+  if (opts.forceHours || (hours > 0 && days < 2)) {
     parts.push(hours);
     if (hours > 1) hourString += 's';
     parts.push(hourString);
   }
-  if (mins > 0 && hours < 3 && days === 0) {
+  if (opts.forceMinutes || (mins > 0 && hours < 3 && days === 0)) {
     parts.push(mins);
     if (mins > 1) minuteString += 's';
     parts.push(minuteString);
   }
-  if (secs > 0 && mins < 3 && hours === 0 && days === 0) {
+  if (opts.forceSeconds || (secs > 0 && mins < 3 && hours === 0 && days === 0)) {
     parts.push(secs);
     if (secs > 1) secondString += 's';
     parts.push(secondString);
