@@ -197,7 +197,8 @@ export class Point {
     return pt(x1 + (t * x21), y1 + (t * y21));
   }
 
-  interpolate(i, p) {
+  interpolate(i, p, transformLinear = true) {
+    if (transformLinear) return pt(num.interpolate(i, this.x, p.x), num.interpolate(i, this.y, p.y));
     return Point.polar(num.interpolate(i, this.r(), p.r()), num.interpolate(i, this.theta(), p.theta()));
   }
 
