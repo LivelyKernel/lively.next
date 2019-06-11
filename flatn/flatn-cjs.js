@@ -1,4 +1,4 @@
-// >>> file:///Users/robin.schreiber/Development/clean-lively.next/flatn/util.js
+// >>> file:///home/robin/lively.next/flatn/util.js
 /*global process, require, module, __filename*/
 
 var { exec } = require("child_process");
@@ -282,7 +282,7 @@ var npmFallbackEnv = {
   npm_config_strict_ssl: 'true',
   npm_config_tag: 'latest',
   npm_config_tag_version_prefix: 'v',
-  npm_config_tmp: tmpdir(),
+  npm_config_tmp: crossDeviceTest.customTmpDir,
   npm_config_umask: '0022',
   npm_config_unicode: 'true',
   npm_config_unsafe_perm: 'true',
@@ -329,9 +329,9 @@ module.exports.x = x;
 module.exports.npmFallbackEnv = npmFallbackEnv;
 module.exports.gitSpecFromVersion = gitSpecFromVersion;
 module.exports.tmpdir = tmpdir;
-// <<< file:///Users/robin.schreiber/Development/clean-lively.next/flatn/util.js
+// <<< file:///home/robin/lively.next/flatn/util.js
 
-// >>> file:///Users/robin.schreiber/Development/clean-lively.next/flatn/package-map.js
+// >>> file:///home/robin/lively.next/flatn/package-map.js
 var fs = require("fs");
 var path = require("path");
 
@@ -936,9 +936,9 @@ class PackageSpec {
 module.exports.PackageMap = PackageMap;
 module.exports.AsyncPackageMap = AsyncPackageMap;
 module.exports.PackageSpec = PackageSpec;
-// <<< file:///Users/robin.schreiber/Development/clean-lively.next/flatn/package-map.js
+// <<< file:///home/robin/lively.next/flatn/package-map.js
 
-// >>> file:///Users/robin.schreiber/Development/clean-lively.next/flatn/dependencies.js
+// >>> file:///home/robin/lively.next/flatn/dependencies.js
 var { graph } = require("./deps/lively.lang.min.js");
 
 module.exports.buildStages = buildStages;
@@ -1019,9 +1019,9 @@ function graphvizDeps({deps, packages, resolvedVersions}) {
   graph += "\n}\n";
   return graph;
 }
-// <<< file:///Users/robin.schreiber/Development/clean-lively.next/flatn/dependencies.js
+// <<< file:///home/robin/lively.next/flatn/dependencies.js
 
-// >>> file:///Users/robin.schreiber/Development/clean-lively.next/flatn/download.js
+// >>> file:///home/robin/lively.next/flatn/download.js
 /*global require, module*/
 var { join: j } = require("path");
 
@@ -1149,9 +1149,9 @@ function addNpmSpecificConfigAdditions(configFile, config, name, version, gitURL
       `${config.name}@${semver.validRange(version)}`;
   return configFile.writeJson(Object.assign({ _id, _from }, config), true);
 }
-// <<< file:///Users/robin.schreiber/Development/clean-lively.next/flatn/download.js
+// <<< file:///home/robin/lively.next/flatn/download.js
 
-// >>> file:///Users/robin.schreiber/Development/clean-lively.next/flatn/build.js
+// >>> file:///home/robin/lively.next/flatn/build.js
 /*global System,process,global,require,module,__dirname*/
 var { join: j } = require("path");
 var fs = require("fs");
@@ -1324,6 +1324,7 @@ class BuildProcess {
         await this.runScript(scripts, "preinstall", packageSpec, env);
         await this.runScript(scripts, "install", packageSpec, env);
         await this.runScript(scripts, "postinstall", packageSpec, env);
+        await this.runScript(scripts, "prepare", packageSpec, env);
         await packageSpec.changeLvInfo(info => Object.assign({}, info, { build: true }));
         console.log(`[flatn] ${packageSpec.name} build done`);
       }
@@ -1339,6 +1340,7 @@ class BuildProcess {
     let pathParts = process.env.PATH.split(":");
     pathParts.unshift(helperBinDir);
     pathParts.unshift(this.binLinkLocation);
+    pathParts.unshift(System.baseURL.replace("file://", "") + 'dev-deps');
 
     env = Object.assign({},
       process.env,
@@ -1372,9 +1374,9 @@ class BuildProcess {
 }
 
 module.exports.BuildProcess = BuildProcess;
-// <<< file:///Users/robin.schreiber/Development/clean-lively.next/flatn/build.js
+// <<< file:///home/robin/lively.next/flatn/build.js
 
-// >>> file:///Users/robin.schreiber/Development/clean-lively.next/flatn/index.js
+// >>> file:///home/robin/lively.next/flatn/index.js
 /*global require, module,process*/
 
 
@@ -1659,4 +1661,4 @@ async function installDependenciesOfPackage(
 
   return { packageMap, newPackages };
 }
-// <<< file:///Users/robin.schreiber/Development/clean-lively.next/flatn/index.js
+// <<< file:///home/robin/lively.next/flatn/index.js

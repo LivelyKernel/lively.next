@@ -278,7 +278,7 @@ const npmFallbackEnv = {
   npm_config_strict_ssl: 'true',
   npm_config_tag: 'latest',
   npm_config_tag_version_prefix: 'v',
-  npm_config_tmp: tmpdir(),
+  npm_config_tmp: crossDeviceTest.customTmpDir,
   npm_config_umask: '0022',
   npm_config_unicode: 'true',
   npm_config_unsafe_perm: 'true',
