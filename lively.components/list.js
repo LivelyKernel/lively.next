@@ -4,7 +4,7 @@ import { arr, Path, string } from "lively.lang";
 import { signal, once } from "lively.bindings";
 import { Button } from "./buttons.js";
 
-function asItem(obj) {
+export function asItem(obj) {
   // make sure that object is of the form
   // {isListItem: true, string: STRING, value: OBJECT}
   if (obj && obj.isListItem && typeof obj.string === "string") return obj;
@@ -547,12 +547,16 @@ export class List extends Morph {
         case "scroller": scroller = submorphs[i]; continue;
       }
     }
+    if (!scroller) 
+      this.addMorph(new ListScroller({
+        acceptsDrops: false, halosEnabled: false, name: "scroller"
+      }));
     if (!container) this.addMorph({
       name: "listItemContainer", fill: Color.transparent,
-      clipMode: "hidden", halosEnabled: false,
+      halosEnabled: false,
+      reactsToPointer: false,
       acceptsDrops: false, draggable: false
     });
-    if (!scroller) this.addMorph(new ListScroller({halosEnabled: false, name: "scroller"}));
     if (container || scroller) this.update();
   }
 
@@ -569,7 +573,7 @@ export class List extends Morph {
   }
 
   clickOnItem(evt) {
-    let item = this.scroller.morphBeneath(evt.positionIn(this.world()).subPt(this.scroll));
+    let item = this.listItemContainer.morphsContainingPoint(evt.positionIn(this.world()).subPt(this.scroll))[0];
     var {state: {clickCount}} = evt,
         method = clickCount === 2 ? "onItemMorphDoubleClicked" : "onItemMorphClicked";
     this[method](evt, item);
@@ -678,11 +682,18 @@ export class List extends Morph {
           padding = padding || Rectangle.inset(0),
           padTop = padding.top() , padLeft = padding.left(),
           padBottom = padding.bottom(), padRight = padding.right(),
-          scrollOffset =  -(top % itemHeight),
           firstItemIndex = Math.max(0, Math.floor((top) / itemHeight)),
-          lastItemIndex = Math.min(items.length, Math.ceil((top + height) / itemHeight)),
+          lastItemIndex = Math.min(items.length, firstItemIndex + (height / itemHeight) + 2),
           maxWidth = 0,
           goalWidth = this.width - (padLeft + padRight);
+
+      // try to keep itemIndexes in the items that were initially assigned to them
+      let rest, upper, lower;
+      
+      itemMorphs = arr.sortBy(itemMorphs, m => m.itemIndex);
+      [upper, rest] = arr.partition(itemMorphs, m => m.itemIndex < firstItemIndex);
+      [lower, rest] = arr.partition(rest, m => m.itemIndex > lastItemIndex - 1);
+      itemMorphs = [...lower, ...rest, ...upper];
 
       for (var i = 0; i < lastItemIndex-firstItemIndex; i++) {
         var itemIndex = firstItemIndex+i,
@@ -690,7 +701,9 @@ export class List extends Morph {
 
         if (!item) {
           // if no items to display, remove remaining itemMorphs
-          itemMorphs.slice(i).forEach(itemMorph => itemMorph.remove());
+          itemMorphs.slice(i).forEach(itemMorph => {
+            itemMorph.remove()
+          });
           break;
         }
 
@@ -703,12 +716,14 @@ export class List extends Morph {
               selectionColor
             }, itemMorph = itemMorphs[i];
 
-        if (!itemMorph)
+        if (!itemMorph) {
           itemMorph = itemMorphs[i] = listItemContainer.addMorph(new ListItemMorph(style));
+        }
+        itemMorph.reactsToPointer = false;
         itemMorph.displayItem(
           item, itemIndex,
           goalWidth, itemHeight,
-          pt(0, scrollOffset + itemHeight * (itemIndex - firstItemIndex)),
+          pt(0, itemHeight * itemIndex),
           selectedIndexes.includes(itemIndex),
           style);
 
@@ -717,12 +732,11 @@ export class List extends Morph {
 
       itemMorphs.slice(lastItemIndex-firstItemIndex).forEach(ea => ea.remove());
 
-      listItemContainer.setBounds(pt(padLeft, padTop).extent(this.extent));
+      let totalItemHeight = Math.max(padTop + padBottom + itemHeight * items.length, this.height);
+      listItemContainer.setBounds(pt(padLeft, padTop).subXY(0, top).extent(pt(this.width, totalItemHeight)));
       scroller.extent = this.extent;
       scrollBar.left = maxWidth - 1;
-      scrollBar.extent = pt(
-        1,
-        Math.max(padTop + padBottom + itemHeight * items.length, this.height));
+      scrollBar.extent = pt(1, totalItemHeight);
     });
   }
 
@@ -781,6 +795,14 @@ export class List extends Morph {
 
   onItemMorphDragged(evt, itemMorph) {}
 
+  onHoverIn(evt) {
+    this.scroller.visible = true;
+  }
+
+  onHoverOut(evt) {
+    this.scroller.visible = false;
+  }
+  
   onDragStart(evt) {
     if (!this.multiSelect || !this.multiSelectViaDrag) return;
   }
