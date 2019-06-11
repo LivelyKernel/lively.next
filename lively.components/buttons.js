@@ -68,7 +68,7 @@ export class Button extends Morph {
         after: ["submorphs"],
         serialize: false,
         initialize() {
-          this.labelMorph = this.addMorph({
+          this.labelMorph = this.getSubmorphNamed('label') || this.addMorph({
             type: "label", name: "label",
             value: "no label yet"
           });
@@ -221,7 +221,7 @@ export class Button extends Morph {
 
   onHoverIn(evt) {
     if (!this.deactivated && evt.isClickTarget(this))
-      this.pressed = this.pressed = {originalFill: this.fill};
+      this.pressed = {originalFill: this.fill};
   }
 
   async interactivelyChangeLabel() {
