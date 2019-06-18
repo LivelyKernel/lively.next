@@ -14,3 +14,5 @@ custom-npm-modules/
 robots.txt
 update.sh
 user-server.sh
+package-lock.json
+/lively.installer.log
