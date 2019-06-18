@@ -10,4 +10,7 @@ function lively_next_flatn_env {
         packageDirs.join(":")
 EOM
     export FLATN_DEV_PACKAGE_DIRS=$(node -p "${SETUP_FLATN_DEV_PACKAGE_DIRS}")
+
+    mkdir -p $lv_next_dir/lively.next-node_modules
+    mkdir -p $lv_next_dir/custom-npm-modules
 }
