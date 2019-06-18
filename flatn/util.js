@@ -13,6 +13,7 @@ const crossDeviceTest = {
   customTmpDirExists: false,
   customTmpDir: j(process.cwd(), "tmp")
 };
+
 function tmpdir() {
   const { done, isOnOtherDevice, customTmpDirExists, customTmpDir } = crossDeviceTest;
   if (done) {
@@ -51,7 +52,7 @@ async function npmSearchForVersions(pname, range = "*") {
     pname = pname.replace(/\//g, "%2f");
     // rms 18.6.18: npmjs.org seems to have dropped semver version resolution, so we do it by hand now
     const { versions } = await resource(`http://registry.npmjs.org/${pname}/`).readJson(),
-          version = pname == 'graceful-fs' ? 
+          version = pname == 'graceful-fs' ?
                        semver.maxSatisfying(Object.keys(versions), range, true) :
                        semver.minSatisfying(Object.keys(versions), range, true),
           { name, dist: { shasum, tarball } } = versions[version];

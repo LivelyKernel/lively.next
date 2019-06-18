@@ -1,4 +1,4 @@
-// >>> file:///home/robin/lively.next/flatn/util.js
+// >>> util.js
 /*global process, require, module, __filename*/
 
 var { exec } = require("child_process");
@@ -17,6 +17,7 @@ var crossDeviceTest = {
   customTmpDirExists: false,
   customTmpDir: j(process.cwd(), "tmp")
 };
+
 function tmpdir() {
   const { done, isOnOtherDevice, customTmpDirExists, customTmpDir } = crossDeviceTest;
   if (done) {
@@ -55,7 +56,7 @@ async function npmSearchForVersions(pname, range = "*") {
     pname = pname.replace(/\//g, "%2f");
     // rms 18.6.18: npmjs.org seems to have dropped semver version resolution, so we do it by hand now
     const { versions } = await resource(`http://registry.npmjs.org/${pname}/`).readJson(),
-          version = pname == 'graceful-fs' ? 
+          version = pname == 'graceful-fs' ?
                        semver.maxSatisfying(Object.keys(versions), range, true) :
                        semver.minSatisfying(Object.keys(versions), range, true),
           { name, dist: { shasum, tarball } } = versions[version];
@@ -329,9 +330,9 @@ module.exports.x = x;
 module.exports.npmFallbackEnv = npmFallbackEnv;
 module.exports.gitSpecFromVersion = gitSpecFromVersion;
 module.exports.tmpdir = tmpdir;
-// <<< file:///home/robin/lively.next/flatn/util.js
+// <<< util.js
 
-// >>> file:///home/robin/lively.next/flatn/package-map.js
+// >>> package-map.js
 var fs = require("fs");
 var path = require("path");
 
@@ -936,9 +937,9 @@ class PackageSpec {
 module.exports.PackageMap = PackageMap;
 module.exports.AsyncPackageMap = AsyncPackageMap;
 module.exports.PackageSpec = PackageSpec;
-// <<< file:///home/robin/lively.next/flatn/package-map.js
+// <<< package-map.js
 
-// >>> file:///home/robin/lively.next/flatn/dependencies.js
+// >>> dependencies.js
 var { graph } = require("./deps/lively.lang.min.js");
 
 module.exports.buildStages = buildStages;
@@ -1019,9 +1020,9 @@ function graphvizDeps({deps, packages, resolvedVersions}) {
   graph += "\n}\n";
   return graph;
 }
-// <<< file:///home/robin/lively.next/flatn/dependencies.js
+// <<< dependencies.js
 
-// >>> file:///home/robin/lively.next/flatn/download.js
+// >>> download.js
 /*global require, module*/
 var { join: j } = require("path");
 
@@ -1149,9 +1150,9 @@ function addNpmSpecificConfigAdditions(configFile, config, name, version, gitURL
       `${config.name}@${semver.validRange(version)}`;
   return configFile.writeJson(Object.assign({ _id, _from }, config), true);
 }
-// <<< file:///home/robin/lively.next/flatn/download.js
+// <<< download.js
 
-// >>> file:///home/robin/lively.next/flatn/build.js
+// >>> build.js
 /*global System,process,global,require,module,__dirname*/
 var { join: j } = require("path");
 var fs = require("fs");
@@ -1324,7 +1325,6 @@ class BuildProcess {
         await this.runScript(scripts, "preinstall", packageSpec, env);
         await this.runScript(scripts, "install", packageSpec, env);
         await this.runScript(scripts, "postinstall", packageSpec, env);
-        await this.runScript(scripts, "prepare", packageSpec, env);
         await packageSpec.changeLvInfo(info => Object.assign({}, info, { build: true }));
         console.log(`[flatn] ${packageSpec.name} build done`);
       }
@@ -1340,7 +1340,6 @@ class BuildProcess {
     let pathParts = process.env.PATH.split(":");
     pathParts.unshift(helperBinDir);
     pathParts.unshift(this.binLinkLocation);
-    pathParts.unshift(System.baseURL.replace("file://", "") + 'dev-deps');
 
     env = Object.assign({},
       process.env,
@@ -1374,9 +1373,9 @@ class BuildProcess {
 }
 
 module.exports.BuildProcess = BuildProcess;
-// <<< file:///home/robin/lively.next/flatn/build.js
+// <<< build.js
 
-// >>> file:///home/robin/lively.next/flatn/index.js
+// >>> index.js
 /*global require, module,process*/
 
 
@@ -1661,4 +1660,4 @@ async function installDependenciesOfPackage(
 
   return { packageMap, newPackages };
 }
-// <<< file:///home/robin/lively.next/flatn/index.js
+// <<< index.js

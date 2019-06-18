@@ -39,10 +39,23 @@ async function bundleToCjs(pkg, bundleFiles) {
       moduleSources = await Promise.all(modules.map(ea => ea.source())),
       moduleAsts = await Promise.all(modules.map(ea => ea.ast()));
 
-  return modules.map((ea,i) =>
-      `// >>> ${ea.id}\n`
-    + toCjsSource(ea, moduleImports[i], moduleExports[i], moduleSources[i], moduleAsts[i], modules)
-    + `// <<< ${ea.id}\n`).join("\n");
+  return modules
+    .map((ea, i) => {
+      const moduleMarker = ea.id.slice(System.baseURL.length);
+      return (
+        `// >>> ${moduleMarker}\n` +
+        toCjsSource(
+          ea,
+          moduleImports[i],
+          moduleExports[i],
+          moduleSources[i],
+          moduleAsts[i],
+          modules
+        ) +
+        `// <<< ${moduleMarker}\n`
+      );
+    })
+    .join("\n");
 }
 
 function toCjsSource(module, itsImports, itsExports, itsSource, itsAst, modulesInBundle) {
