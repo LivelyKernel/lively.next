@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -v
-
 target_package=$1
 lv_next_dir=$PWD
 

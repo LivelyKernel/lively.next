@@ -16,3 +16,4 @@ update.sh
 user-server.sh
 package-lock.json
 /lively.installer.log
+/lively-system-interface/.lively.next-eval-server-for-test.js
