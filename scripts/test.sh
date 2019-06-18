@@ -11,8 +11,10 @@ fi
 . $lv_next_dir/scripts/lively-next-flatn-env.sh
 lively_next_flatn_env $lv_next_dir
 
-ln -sf $lv_next_dir/mocha-es6/bin/{mocha-es6.js,mocha-es6}
-export PATH=$lv_next_dir/mocha-es6/bin:$PATH
+pushd $lv_next_dir/mocha-es6/bin/
+ln -sf mocha-es6.js mocha-es6
+export PATH=$PWD:$PATH
+popd
 
 cd $target_package;
 npm test
