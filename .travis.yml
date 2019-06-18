@@ -8,5 +8,4 @@ node_js:
 install:
 
 script:
-  - "./scripts/test.sh lively.lang"
-  - "./scripts/test.sh lively.ast"
+  - "./scripts/ci-tests.sh"
