@@ -12,7 +12,7 @@ if (!fs.existsSync('./dist')) {
 module.exports =
     Promise.resolve()
         .then(() => rollup.rollup({
-          entry: 'index-local-only.js',
+          entry: 'index.js',
           plugins: [babel({
             exclude: 'node_modules/**',
             sourceMap: false,
