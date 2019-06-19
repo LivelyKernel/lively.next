@@ -789,7 +789,10 @@ export class ObjectEditor extends Morph {
 
     if (sourceChanged && outsideChangeWarning) {
       var really = await this.world().confirm(
-        `The module ${selectedModuleId} you are trying to save changed elsewhere!\nOverwrite those changes?`);
+        "Simultaneous Change Warning\n", {},
+        `The module ${selectedModuleId} you are trying to save changed elsewhere!\nOverwrite those changes?`, {
+          fontSize: 16, fontWeight: 'normal'
+        });
       if (!really) return {success: false, reason: "Save canceled"};
       await this.withContextDo(ctx => ctx.moduleChangeWarning = null)
     }
@@ -836,9 +839,12 @@ export class ObjectEditor extends Morph {
       
       if (!objPkgName) {
         objPkgName = await this.world().prompt(
-          `No object package exists yet for object ${stringifiedTarget}.\n`
-        + "Enter a name for a new package:", {
+          ['New Object Package\n', {},
+           `No object package exists yet for object `, { fontSize: 16, fontWeight: 'normal'},
+           stringifiedTarget, { fontSize: 16, fontStyle: 'italic', fontWeight: 'normal'},
+          "\nEnter a name for a new package:", { fontSize: 16, fontWeight: 'normal'}], {
             historyId: "object-package-name-hist",
+            requester: this,
             input: string.capitalize(className).replace(/\s+(.)/g, (_, match) => match.toUpperCase())
           });
 
@@ -919,23 +925,38 @@ export class ObjectEditor extends Morph {
   }
 
   async interactivelyAdoptBySuperclass() {
-    const {nextClassName, className, packageName} = await this.withContextDo((ctx) => {
-      let {target: t} = this,
+    const {nextClassName, className, targetName, moduleMeta, nextModuleMeta} = await this.withContextDo((ctx) => {
+      let {target: t} = ctx,
            klass = t.constructor;
       if (klass === Morph) return {}; // this is a weird exception but makes sense in general
-      let nextClass = withSuperclasses(t.constructor)[1],
-          {package: {name: packageName}} = klass[Symbol.for("lively-module-meta")];
+      let nextClass = withSuperclasses(klass)[1];
       return {
-        packageName, nextClassName: nextClass.name, className: klass.name
+        moduleMeta: klass[Symbol.for("lively-module-meta")],
+        nextModuleMeta: nextClass[Symbol.for("lively-module-meta")],
+        nextClassName: nextClass.name,
+        className: klass.name, targetName: t.name
       }  
     });
+    let generateDoit = (meta, entity) => ({
+      textDecoration: 'underline',
+      doit: {code: `$world.execCommand("open browser", {moduleName: "${meta.package.name + '/' + meta.pathInPackage}", codeEntity: "${entity}"})`}
+    });
     if (nextClassName) {
-      const really = await this.world().confirm(`Do you really want to make ${t} an instance of `
-                                            + `${nextClassName} and remove class ${className} `
-                                            + `and its package ${packageName}?`);
+      let normalStyle = {fontWeight: 'normal', fontSize: 16};
+      let highlightStyle = {fontWeight: 'normal', fontStyle: 'italic', fontSize: 16};
+      const really = await this.world().confirm([
+        'Class Hierarchy Change\n', {},
+        `Do you really want to make `, normalStyle, 
+        `"${targetName}"`, highlightStyle,
+        ` an instance of `, normalStyle,
+        nextClassName, {...highlightStyle, ...generateDoit(nextModuleMeta, nextClassName)},
+        ' and remove class ', normalStyle, 
+        className, {...highlightStyle, ...generateDoit(moduleMeta, className)}, 
+        ` and its package `, normalStyle,
+        moduleMeta.package.name, highlightStyle, ' ?', normalStyle], { requester: this });
       if (!really) return;
       await this.withContextDo((ctx) => {
-         adoptObject(t, withSuperclasses(ctx.target.constructor)[1]);
+         adoptObject(ctx.target, withSuperclasses(ctx.target.constructor)[1]);
       });
       this.refresh(); 
     }
@@ -975,7 +996,10 @@ export class ObjectEditor extends Morph {
   }
 
   async interactivelyForkPackage() {
-    let forkedName = await this.world().prompt("Enter a name for the forked class and its package", {
+    let forkedName = await this.world().prompt([
+      "New Forked Package\n", {},
+      "Please enter a name for the forked class and its package:", {
+        fontSize: 16, fontWeight: 'normal'}], {
           requester: this,
           input: await this.withContextDo(ctx => ctx.target.constructor.name) + "Fork",
           historyId: "lively.morphic-object-editor-fork-names",
@@ -1115,8 +1139,9 @@ export class ObjectEditor extends Morph {
   async interactivelyRemoveImport() {
     var sels = this.ui.importsList.selections;
     if (!sels || !sels.length) return;
-    var really = await this.world().confirm(
-      "Really remove imports \n" + arr.pluck(sels, "local").join("\n") + "?");
+    var really = await this.world().confirm([
+      "Really remove these imports?\n", {},
+      arr.pluck(sels, "local").join("\n"), { fontWeight: 'normal', fontSize: 16}]);
     if (!really) return;
     const error = await this.withContextDo(async (ctx) => {
       try {

@@ -1,6 +1,7 @@
 import { arr } from "lively.lang";
 import { extractTestDescriptors } from "mocha-es6/test-analysis.js";
 import { loadTestModuleAndExtractTestState } from "mocha-es6";
+import { Icon } from "lively.morphic";
 
 function isTestModule(m, source) {
   return m && source.match(/import.*['"]mocha(-es6)?['"]/) && source.match(/it\(['"]/);
@@ -61,6 +62,7 @@ export default function browserCommands(browser) {
               "Select item", items,
               {
                 preselect: currentIdx,
+                requester: browser,
                 historyId: "js-browser-codeentity-jump-hist"
               });
         if (choice) {
@@ -132,7 +134,7 @@ export default function browserCommands(browser) {
         }));
 
         var {selected: [choice]} = await browser.world().filterableListPrompt(
-          "Jumpt to location", items, {preselect: currentIdx});
+          "Jumpt to location", items, {preselect: currentIdx, requester: browser });
         if (choice) {
           if (left.includes(choice)) {
             browser.state.history.left = left.slice(0, left.indexOf(choice) + 1);
@@ -233,10 +235,16 @@ export default function browserCommands(browser) {
       exec: async (browser) => {
         var what = await browser.world().multipleChoicePrompt(
           "Add Package",
-          {choices: ["Create New Package", "Load Existing Package", "Cancel"]});
+          {requester: browser,
+           choices: new Map([
+             [[...Icon.textAttribute('cube'), ' Create New Package', {}], 'Create New Package'],
+             [[...Icon.textAttribute('external-link-square'), ' Load Existing Package', {}], 'Load Existing Package']
+           ])
+         });
 
         if (!what || what === "Cancel") {
-          browser.world().inform("Canceled add package");
+          browser.world().inform("Canceled add package", {
+            requester: browser, lineWrapping: false });
           return true;
         }
 
@@ -248,7 +256,9 @@ export default function browserCommands(browser) {
             await system.interactivelyLoadPackage(
               browser, browser.selectedPackage ? browser.selectedPackage.address : null);
         } catch (e) {
-          if (e === "Canceled") browser.world().inform("Canceled package creation");
+          if (e === "Canceled") browser.world().inform("Canceled package creation", {
+            requester: browser, lineWrapping: false
+          });
           else throw e;
           return true;
         }
@@ -296,7 +306,7 @@ export default function browserCommands(browser) {
         });
 
         var {selected} = await browser.world().filterableListPrompt("Choose package(s)", items, {
-          multiselect: true,
+          multiselect: true, requester: browser,
           historyId: "lively.ide.js-browser-choose-package-for-showing-export-imports-hist"
         });
 

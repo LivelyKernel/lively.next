@@ -1,4 +1,5 @@
-import { Morph, Label, InputLine } from "lively.morphic";
+/*global System*/
+import { Morph, Image, Label, InputLine } from "lively.morphic";
 import { Tree, TreeData } from "lively.components";
 import { arr, fun, promise, num, date, string } from "lively.lang";
 import { pt, Rectangle, Color } from "lively.graphics";
@@ -33,6 +34,9 @@ var browserCommands = [
       } else if (sel.isDirectory()) {
         browser.execCommand("set location to selection");
 
+      } else if (sel.url.endsWith('.svg')) {
+        var image = new Image({name: sel.url, imageUrl: sel.url, autoResize: true});
+        image.openInWorld();
       } else {
         var editor = TextEditor.openURL(sel.url, {extent: pt(600,800)});
         setTimeout(() => editor.getWindow().activate(), 100);
@@ -85,13 +89,16 @@ var browserCommands = [
 
   {
     name: "copy file path to clipboard",
-    exec: browser => {
+    exec: async browser => {
       if (browser.ui.locationInput.isFocused()) return false;
 
       if (browser.selectedFile) {
         var fnText = browser.get("selectedFileName");
-        fnText.selectAll();
-        fnText.execCommand("manual clipboard copy");
+        browser.env.eventDispatcher.doCopy(fnText.textString);
+        fnText.fontColor = Color.rgb(52,152,219);
+        await fnText.animate({
+          customTween: p => fnText.fontColor = Color.rgb(52,152,219).interpolate(p, Color.black)
+        });
       }
       return true;
     }
@@ -117,7 +124,9 @@ var browserCommands = [
     name: "set file filter",
     exec: async browser => {
       browser.excludeFiles = browser.excludeFiles || [];
-      var {list: excludeList} = await browser.world().editListPrompt("Add or remove items to be excluded from the file list", browser.excludeFiles);
+      var {list: excludeList} = await browser.world().editListPrompt("Add or remove items to be excluded from the file list", browser.excludeFiles, {
+        requester: browser
+      });
       if (excludeList) {
         browser.excludeFiles = excludeList;
         await browser.execCommand("refresh contents");
@@ -131,12 +140,12 @@ var browserCommands = [
     exec: async browser => {
       var loc = browser.selectedFile || browser.location;
       if (!loc.isDirectory()) loc = loc.parent();
-      var newDir = await browser.world().prompt("Enter name of new directory", {
-        input: loc.url,
+      var newDir = await browser.world().prompt("Enter name of new directory:", {
+        input: loc.url, requester: browser,
         historyId: "lively.ide/http-file-browser-file-name-query"
       });
       if (!newDir) {
-        browser.world().inform("add directory canceled");
+        browser.world().inform("Add directory canceled", { requester: browser });
       } else {
         var res = resource(newDir);
         if (!res.isDirectory()) res = res.asDirectory();
@@ -154,12 +163,12 @@ var browserCommands = [
     exec: async browser => {
       var loc = browser.selectedFile || browser.location;
       if (!loc.isDirectory()) loc = loc.parent();
-      var newFile = await browser.world().prompt("Enter name of new file", {
-        input: loc.url,
+      var newFile = await browser.world().prompt("Enter name of new file:", {
+        input: loc.url, requester: browser,
         historyId: "lively.ide/http-file-browser-file-name-query"
       });
       if (!newFile) {
-        browser.world().inform("add file canceled");
+        browser.world().inform("Add file canceled",  { requester: browser });
       } else {
         var res = resource(newFile);
         if (res.isDirectory()) res = res.asFile();
@@ -183,7 +192,11 @@ var browserCommands = [
       }
 
       return (async () => {
-        var really = await browser.world().confirm(`Really delete ${browser.selectedFile.url}?`);
+        var really = await browser.world().confirm(
+          ['Confirm Delete\n', {}, 'Do you really want to remove\n', { fontWeight: 'normal', fontSize: 16},
+           `${browser.selectedFile.url}?`, { fontStyle: 'italic', fontWeight: 'normal', fontSize: 16}], {
+            requester: browser, lineWrapping: false
+          });
         if (really) {
           var res = browser.selectedFile,
               i = browser.ui.fileTree.selectedIndex;
@@ -192,7 +205,7 @@ var browserCommands = [
           await browser.whenFinishedLoading();
           browser.ui.fileTree.selectedIndex = i;
         } else {
-          browser.world().inform("delete canceled");
+          browser.world().inform("Delete canceled", { requester: browser });
         }
       })();
     }
@@ -207,12 +220,14 @@ var browserCommands = [
       }
 
       return (async () => {
-        var newName = await browser.world().prompt(`Rename ${browser.selectedFile.url} to`, {
-          input: browser.selectedFile.url,
+        var newName = await browser.world().prompt([`Rename\n`, {}, `${browser.selectedFile.url}`, {
+          fontStyle: 'italic', fontWeight: 'normal', fontSize: 16
+        }], {
+          input: browser.selectedFile.url, requester: browser,
           historyId: "lively.ide/http-file-browser-file-name-query",
         });
         if (!newName) {
-          browser.world().inform("rename canceled");
+          browser.world().inform("Rename canceled", { requester: browser });
           return true;
         }
 
@@ -361,6 +376,7 @@ export default class HTTPFileBrowser extends Morph {
       clipMode:     {defaultValue: "visible"},
       extent:       {defaultValue: pt(500,500)},
       excludeFiles: {defaultValue: [".git", ".DS_Store"]},
+      draggable:    {defaultValue: false},
 
       submorphs: {
         initialize() {
@@ -392,8 +408,10 @@ export default class HTTPFileBrowser extends Morph {
 
             {
               type: "label", name: "selectedFileName",
+              padding: Rectangle.inset(2,2),
               fontSize: 14, fontFamily: "Inconsolata, monospace",
-              readOnly: true, clipMode: "hidden"
+              readOnly: true, clipMode: "hidden", nativeCursor: 'pointer',
+              tooltip: 'click to copy', fontWeight: 'bold'
             },
 
             {name: "searchButton",       ...btnStyle, label: Label.icon("search"), tooltip: "search for files"},
@@ -416,7 +434,8 @@ export default class HTTPFileBrowser extends Morph {
             addDirectoryButton,
             addFileButton,
             renameFileButton,
-            deleteFileButton
+            deleteFileButton,
+            selectedFileName
           } = this.ui;
 
           connect(this, "extent", this, "relayout");
@@ -431,6 +450,8 @@ export default class HTTPFileBrowser extends Morph {
           connect(deleteFileButton,   "fire", this, "execCommand", {converter: () => "delete file or directory"});
           connect(addFileButton,      "fire", this, "execCommand", {converter: () => "add file"});
           connect(addDirectoryButton, "fire", this, "execCommand", {converter: () => "add directory"});
+          connect(selectedFileName,   'onMouseDown', this, "execCommand", { converter: () => "copy file path to clipboard"});
+          connect(this, 'onMouseMove', this, "hideBaseURL");
 
           this.onLocationChanged();
           this.relayout();
@@ -555,6 +576,16 @@ export default class HTTPFileBrowser extends Morph {
 
   whenFinishedLoading() {
     return promise.waitFor(3000, () => this._isLoading === false).catch(_ => undefined);
+  }
+
+  hideBaseURL(evt) {
+    let fnText = this.ui.selectedFileName;
+    if (evt.isShiftDown()) {
+      fnText.textString = fnText.textString.replace(System.baseURL, '/');
+    } else {
+      this.showSelectedFile();
+    }
+    
   }
 
   openLocation(urlOrResource) {

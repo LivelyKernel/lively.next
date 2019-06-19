@@ -22,7 +22,7 @@ async function loadPackage(system, spec) {
 
 export async function interactivelyCreatePackage(system, requester) {
   var world = requester.world(),
-      name = await world.prompt("Enter package name", {
+      name = await world.prompt("Enter package name", { requester,
         input: "", historyId: "lively.vm-editor-add-package-name", useLastInput: true});
 
   if (!name) throw "Canceled";
@@ -39,7 +39,9 @@ export async function interactivelyCreatePackage(system, requester) {
   }
 
   var loc = await world.prompt("Confirm or change package location", {
-              input: guessedAddress, historyId: "lively.vm-editor-add-package-address"});
+    requester, input: guessedAddress, 
+    historyId: "lively.vm-editor-add-package-address"
+  });
 
   if (!loc) throw "Canceled";
 
@@ -82,6 +84,7 @@ export async function interactivelyLoadPackage(system, requester, relatedPackage
                       || await system.getPackageForModule(relatedPackageAddress);
 
   var dir = await requester.world().prompt("What is the package directory?", {
+    requester,
     input: relatedPackage ? relatedPackage.address : config.baseURL,
     historyId: "lively.vm-editor-package-load-history",
     useLastInput: false
@@ -125,7 +128,7 @@ export async function interactivelyReloadPackage(system, vmEditor, packageURL) {
 
 export async function interactivelyUnloadPackage(system, vmEditor, packageURL, world) {
   var p = await system.getPackage(packageURL);
-  var really = await (world || $world).confirm(`Unload package ${p.name}??`);
+  var really = await (world || $world).confirm(`Unload package ${p.name}?`, { requester: vmEditor });
   if (!really) throw "Canceled";
   await system.removePackage(packageURL);
   
@@ -140,11 +143,11 @@ export async function interactivelyRemovePackage(system, requester, packageURL) 
       p = await system.getPackage(packageURL);
 
   if (!p) {
-    $world.inform(`No package "${packageURL}" found!`);
+    $world.inform(`No package "${packageURL}" found!`, { requester });
     return;
   }
 
-  let really = await world.confirm(`Really remove package ${p.name}??`);
+  let really = await world.confirm(`Really remove package ${p.name}?`, { requester });
 
   if (!really) throw "Canceled";
 

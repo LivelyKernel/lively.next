@@ -108,7 +108,7 @@ async function _searchForExistingFilesManually(requester, rootURL, p) {
   if (choice === "Create New Module") return "[create new module]";
   if (choice === "Load Existing Module") {
     var result = await requester.world().prompt("URL of module?", {
-      input: rootURL,
+      input: rootURL, requester,
       historyId: "lively.vm._searchForExistingFilesManually.url-of-module"
     });
     if (result) return [result];
@@ -152,7 +152,8 @@ async function _searchForExistingFilesWeb(requester, rootURL, p) {
         requester.world().filterableListPrompt("What module to load?", candidates, {
           filterLabel: "filter: ",
           multiselect: true,
-          ...(requester ? {extent: requester.bounds().extent().withY(400)} : {})
+          requester,
+          ...(requester ? {extent: requester.bounds().extent().withY(400).subXY(50,0)} : {})
         }));
 
   if (!answer || answer.status === "canceled" || !answer.selected.length)

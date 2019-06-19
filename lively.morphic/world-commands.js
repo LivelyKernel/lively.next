@@ -928,11 +928,12 @@ var commands = [
 
       items = arr.sortBy(items, ea => ea.string);
       (async () => {
+         let requester = browser || focused;
          var {selected} = await world.filterableListPrompt(
              `Choose module to open${locationString}`, items, {
               historyId: "lively.morphic-choose and browse module",
-              requester: browser || focused,
-              width: 700, multiSelect: true, listFontColor: "white", fuzzy: "value.shortName"});
+              requester, height: Math.min(requester.height, 700),
+              width: 500, multiSelect: true, listFontColor: "white", fuzzy: "value.shortName"});
 
          for (var i = 0; i < selected.length; i++) {
            var {package: p, shortName} = selected[i],
@@ -1131,7 +1132,7 @@ var commands = [
   {
     name: 'freeze world',
     exec: async (world) => {
-      let { defautl: L2LClient} = await System.import("lively.2lively/client.js");
+      let { default: L2LClient} = await System.import("lively.2lively/client.js");
       let l2lClient = L2LClient.default();
       let peers = await l2lClient.listPeers(true)
       let freezer = peers.find(ea => ea.type === "lively.next.org freezer service");
