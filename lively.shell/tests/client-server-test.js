@@ -60,6 +60,7 @@ describe('lively.shell', function() {
     var cmd = new ClientCommand(l2lClient);
     await cmd.spawn({command: "echo 1; sleep 1; echo 2; sleep 2; echo 3"});
     await cmd.whenStarted();
+    await promise.waitFor(500, () => !!cmd.stdout);
     await cmd.kill();
     expect(cmd.stdout).equals("1\n")
   });
