@@ -1,4 +1,4 @@
-/*global beforeEach, afterEach, before, after, describe, it,xdescribe,authserver*/
+/*global beforeEach, afterEach, before, after, describe, it,xdescribe,authserver,xit*/
 
 import { expect } from "mocha-es6";
 import { promise } from "lively.lang";
@@ -75,7 +75,7 @@ xdescribe('l2l user integration', function() {
   });
 
 
-  it('Ensure anonymous user is created on init without options', async () => {
+  xit('Ensure anonymous user is created on init without options', async () => {
     await promise.delay(100);
     expect(client1.user).to.be.an('object',"user object not present");
     expect(client1.user.name).equals('anonymous',"Username not created as anonymous")
@@ -83,7 +83,7 @@ xdescribe('l2l user integration', function() {
     expect(client1.user.token).to.be.an('object','failed token object not present')
   })
 
-  it('Determine that a user can be authenticated after creation', async () => {
+  xit('Determine that a user can be authenticated after creation', async () => {
     await promise.delay(100);
     expect(client1.user.token).to.be.an('object','failed token object not present');
     expect(client1.user.token.status).equals('error','token not showing error state before authentication');
@@ -92,7 +92,7 @@ xdescribe('l2l user integration', function() {
     expect(response.type).equals('success');
   });
 
-  it('Ensure token can be validated', async() => {
+  xit('Ensure token can be validated', async() => {
      await promise.delay(100);
      await client1.authenticate({name: "testUser1", email: "testuser1@lively-next.org", password: "test"})
      var response = await client1.validateToken(client1.user)

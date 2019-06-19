@@ -122,7 +122,7 @@ describe('l2l broadcast', function() {
 
       client1.broadcast('testRoom', "test", {payload: "test for broadcast message"});
 
-      await promise.waitFor(1000, () => client2Received.length);
+      await promise.waitFor(5000, () => client2Received.length);
 
       expect(client1Received).deep.equals([]);
 
