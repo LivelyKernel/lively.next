@@ -22,7 +22,9 @@ const dir = System.decanonicalize("lively.modules/tests/"),
       file3m = testProjectDir + "file3.js",
       file4m = testProjectDir + "file4.js";
 
-describe("lively.modules aware eval", () => {
+describe("lively.modules aware eval", function () {
+
+  this.timeout(6000);
 
   let S, module1, module2, module3, module4;
   beforeEach(async () => {
