@@ -384,9 +384,10 @@ export class AttributeConnection {
         delete srcObj[helperAttrName];
       }
     } else if(srcObj[realAttrName] && srcObj[realAttrName].isConnectionWrapper) {
+      let wrapper = srcObj[realAttrName];
       delete srcObj[realAttrName];
       if (!srcObj[realAttrName]) // only restore for scripts, non-scripts are restored via prototype chain
-          srcObj[realAttrName] = srcObj[realAttrName].originalFunction
+          srcObj[realAttrName] = wrapper.originalFunction
     }
 
     if (srcObj.doNotSerialize && srcObj.doNotSerialize.includes(helperAttrName)) {
