@@ -8,4 +8,5 @@ node_js:
 install:
 
 script:
+  - chmod a+x "./scripts/ci-tests.sh"
   - "./scripts/ci-tests.sh"
