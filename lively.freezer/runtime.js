@@ -1,4 +1,4 @@
-/*global self,global,System,origin,dynamicPartsDir*/
+/*global self,global,System*/
 
 /*
 
@@ -11,7 +11,65 @@ export function runtimeDefinition() {
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   if (typeof G.lively !== "object") G.lively = {};
-  var version, registry = {}, globalModules = {};
+  var version, registry = {}, globalModules = {}, globalSnapshot = {};
+  
+  // bare minimum ignores from SystemJS
+  var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'frameElement', 'external', 
+      'mozAnimationStartTime', 'webkitStorageInfo', 'webkitIndexedDB', 'mozInnerScreenY', 'mozInnerScreenX'];
+
+   // taken from SystemJS
+
+   function forEachGlobal(callback) {
+    if (Object.keys)
+      Object.keys(G).forEach(callback);
+    else
+      for (var g in G) {
+        if (!Object.hasOwnProperty.call(G, g))
+          continue;
+        callback(g);
+      }
+   };
+
+   function forEachGlobalValue(callback) {
+      forEachGlobal(function(globalName) {
+      if (ignoredGlobalProps.indexOf(globalName) != -1)
+        return;
+      try {
+        var value = G[globalName];
+      }
+      catch (e) {
+        ignoredGlobalProps.push(globalName);
+      }
+      callback(globalName, value);
+    });
+  };
+
+  function readMemberExpression(p, value) {
+    var pParts = p.split('.');
+    while (pParts.length)
+      value = value[pParts.shift()];
+    return value;
+  }
+
+  function getGlobalValue(exports) {
+    if (typeof exports == 'string')
+      return readMemberExpression(exports, G);
+  
+    if (!(exports instanceof Array))
+      throw new Error('Global exports must be a string or array.');
+  
+    var globalValue = {};
+    var first = true;
+    for (var i = 0; i < exports.length; i++) {
+      var val = readMemberExpression(exports[i], G);
+      if (first) {
+        globalValue['default'] = val;
+        first = false;
+      }
+      globalValue[exports[i].split('.').pop()] = val;
+    }
+    return globalValue;
+  }
 
   if (G.lively.FreezerRuntime) {
     let [myMajor, myMinor, myPatch] = version.split(".").map(Number),
@@ -44,7 +102,8 @@ export function runtimeDefinition() {
     },
     set(moduleId, module) { return this.registry[moduleId] = module; },
     add(id, dependencies = [], exports = {}, executed = false) {
-      let module = {id, dependencies, executed, exports, execute: function () {}, setters: [], package: function () { }};
+      let module = {id, dependencies, executed, exports, execute: function () {}, setters: [], 
+                    subscribeToToplevelDefinitionChanges: function () { }, package: function () { }};
       this.set(id, module);
       return module;
     },
@@ -73,7 +132,10 @@ export function runtimeDefinition() {
       return localName;
     },
     loadObjectFromPartsbinFolder(name) {
-      return G.lively.resources.resource(origin + dynamicPartsDir).join(name + '.json').readJson().then(snapshot => {
+      var location = document.location.href.split('?')[0];
+      var r = G.lively.resources.resource(location);
+      if (r.name() === 'index.html') r = r.parent();
+      return r.join(`dynamicParts/${name}.json`).readJson().then(snapshot => {
          return G.lively.morphic.loadMorphFromSnapshot(
            snapshot, {
              onDeserializationStart: false, 
@@ -109,7 +171,12 @@ export function runtimeDefinition() {
               module.exports[name] = val
             } else {
               // * export
-              for (let prop in name) module.exports[prop] = name[prop];
+              var prevExports = {};
+              for (let key in module.exports)
+                prevExports[key] = module.exports[key];
+              module.exports = name;
+              for (let key in prevExports)
+                if (!module.exports[key]) module.exports[key] = prevExports[key];
             }
           });
       module.execute = body.execute;
@@ -367,6 +434,75 @@ export function runtimeDefinition() {
       G.System.initializeClass._get = G.lively.classes.runtime.initializeClass._get;
       G.System.initializeClass._set = G.lively.classes.runtime.initializeClass._set;
       return lively.classes.runtime.initializeClass(constructorFunc, superclassSpec, instanceMethods, classMethods, classHolder, currentModule, sourceLoc);
+    },
+
+    prepareGlobal(moduleName, exports, globals, encapsulate) {
+      // disable module detection
+      var curDefine = G.define;
+      
+      G.define = undefined;
+
+      // set globals
+      var oldGlobals;
+      if (globals) {
+        oldGlobals = {};
+        for (var g in globals) {
+          oldGlobals[g] = G[g];
+          G[g] = globals[g];
+        }
+      }
+
+      // store a complete copy of the global object in order to detect changes
+      if (!exports) {
+        globalSnapshot = {};
+
+        forEachGlobalValue(function(name, value) {
+          globalSnapshot[name] = value;
+        });
+      }
+
+      // return function to retrieve global
+      return function() {
+        var globalValue = exports ? getGlobalValue(exports) : {};
+
+        var singleGlobal;
+        var multipleExports = !!exports;
+
+        if (!exports || encapsulate)
+          forEachGlobalValue(function(name, value) {
+            if (globalSnapshot[name] === value)
+              return;
+            if (typeof value == 'undefined')
+              return;
+            
+            // allow global encapsulation where globals are removed
+            if (encapsulate)
+              G[name] = undefined;
+
+            if (!exports) {
+              globalValue[name] = value;
+
+              if (typeof singleGlobal != 'undefined') {
+                if (!multipleExports && singleGlobal !== value)
+                  multipleExports = true;
+              }
+              else {
+                singleGlobal = value;
+              }
+            }
+          });
+
+        globalValue = multipleExports ? globalValue : singleGlobal;
+
+        // revert globals
+        if (oldGlobals) {
+          for (var g in oldGlobals)
+            G[g] = oldGlobals[g];
+        }
+        G.define = curDefine;
+
+        return globalValue;
+      };
     },
 
     load(moduleId) {
