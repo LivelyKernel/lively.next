@@ -59,6 +59,7 @@ describe("rendering", function () {
 
     it("scale and rotation are rendered", async () => {
       submorph1.rotateBy(num.toRadians(45));
+      submorph1.renderOnGPU = true;
       await submorph1.whenRendered();
       expect(env.renderer.getNodeForMorph(submorph1)).deep.property("style.transform")
         .match(/translate.*10px/)

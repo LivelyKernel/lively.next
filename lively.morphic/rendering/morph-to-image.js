@@ -1,5 +1,5 @@
 /*global System,Map*/
-import domToImage from "dom-to-image";
+import domToImage from "dom-to-image-more";
 
 /*
 
@@ -83,6 +83,9 @@ export async function renderMorphToDataURI(morph, opts = {}) {
     ea.isHTMLMorph && htmlMorphRestoreMap.set(
       ea, {domNode: ea.domNode, parentNode: ea.domNode.parentNode}));
 
+  let actualRenderOnGPU = morph.renderOnGPU;
+  morph.renderOnGPU = true; // needs to be promoted to own layer
+  await morph.whenRendered();
 
   let {document, window} = morph.env.domEnv,
       node = morph.renderPreview({...opts, asNode: true}), dataURI,
@@ -122,6 +125,7 @@ export async function renderMorphToDataURI(morph, opts = {}) {
     return await domToImage[method](canvas); // returns data URI
 
   } finally {
+    morph.renderOnGPU = actualRenderOnGPU;
     wrapper.parentNode && wrapper.parentNode.removeChild(wrapper);
 
     for (let [htmlMorph, {domNode, parentNode}] of htmlMorphRestoreMap) {

@@ -154,6 +154,8 @@ export class Renderer {
       if (!morphNode.parentNode)
         domNode.parentNode.appendChild(morphNode);
 
+      // fixme: ensure that fixed morph nodes are ordered correctly
+
       patch(morphNode, patches);
     }
 
@@ -178,7 +180,8 @@ export class Renderer {
     return h("div", {
       style: {
         position: "absolute",
-        transform: `translate(${oX - (morph.isPath ? 0 : borderWidthLeft)}px,${oY - (morph.isPath ? 0 : borderWidthTop)}px)`,
+        left: `${oX - (morph.isPath ? 0 : borderWidthLeft)}px`,
+        top: `${oY - (morph.isPath ? 0 : borderWidthTop)}px`,
         ...(morph.isPolygon ? {
           height: '100%', width: '100%',
           overflow: morph.clipMode,
@@ -409,9 +412,7 @@ export class Renderer {
   }
 
   renderSvgMorph(morph, svgEl, markers, controlPoints = []) {
-    let {position, filter, display, opacity,
-         transform, transformOrigin, cursor, overflow} = defaultStyle(morph),
-        svgAttrs = svgAttributes(morph),
+    let svgAttrs = svgAttributes(morph),
         {width, height} = morph.innerBounds(),
         defs, svgElements = [];
 
@@ -429,20 +430,17 @@ export class Renderer {
     }
 
     svgElements.push(svgEl)
-    if (defs) svgElements.push(h("defs", {namespace: svgNs}, defs));    
+    if (defs) svgElements.push(h("defs", {namespace: svgNs}, defs));  
+
+    let basicStyle = obj.select(defaultStyle(morph), ['position', 'filter', 'display', 'opacity',
+        'transform', 'top', 'left', 'transformOrigin', 'cursor', 'overflow']);
     
     return h("div", {
         ...defaultAttributes(morph, this),
         style: {
-          transform,
-          transformOrigin,
-          position,
-          opacity,
-          cursor,
+          ...basicStyle,
           width: width + "px",
           height: height + "px",
-          display,
-          filter,
           "pointer-events": morph.reactsToPointer ? "auto" : "none",
         }
       }, [
