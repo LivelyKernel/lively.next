@@ -695,6 +695,9 @@ export class Morph {
                 fontsAfter = arr.without(obj.keys(fonts || {}), '_rev');
           this.setProperty('installedFonts', fonts);
           this.ensureInstalledFonts(fontsBefore, fontsAfter);
+        },
+        get() {
+          return this.getProperty('installedFonts') || {};
         }
       },
 
@@ -910,7 +913,7 @@ export class Morph {
 
   installFont(name, fontUrl) {
      this.installedFonts[name] = fontUrl;
-     addOrChangeCSSDeclaration(`${this.id}-${name}`, `@import url("${this.installedFonts[name]}");`);
+     this.insertFontCSS(name, fontUrl);
   }
 
   uninstallFont(name) {
@@ -925,8 +928,18 @@ export class Morph {
       if (node) node.remove();
     }
     for (let name of addedFonts) {
-      addOrChangeCSSDeclaration(`${this.id}-${name}`, `@import url("${this.installedFonts[name]}");`);
+      this.insertFontCSS(name, this.installedFonts[name]);
     }
+  }
+
+  insertFontCSS(name, fontUrl) {
+    if (fontUrl.endsWith('.otf')) {
+       addOrChangeCSSDeclaration(`${this.id}-${name}`, 
+         `@font-face {
+             font-family: ${name};
+             src: url("${this.installedFonts[name]}") format("opentype");
+         }`);
+     } else addOrChangeCSSDeclaration(`${this.id}-${name}`, `@import url("${this.installedFonts[name]}");`);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
