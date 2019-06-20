@@ -125,7 +125,8 @@ export async function prerender(commit, width, height, pathname, userAgent, time
       <script id="loader" src="${pathname}/${userAgent}/${timestamp}-load.js" defer></script>
       <script>
         var url = new URL(location.href);
-        history.replaceState(null, '', (url.searchParams ? url.searchParams.get('pathname') : url.pathname.split('/prerender')[0]) || window.location.origin);
+        if (url.pathname.includes('/prerender'))
+          history.replaceState(null, '', (url.searchParams ? url.searchParams.get('pathname') : url.pathname.split('/prerender')[0]) || window.location.origin);
         document.querySelector('#system').addEventListener('load', function() {
             window.prerenderNode = document.getElementById("${$world.id}");
         });
