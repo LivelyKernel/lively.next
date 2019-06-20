@@ -1,4 +1,4 @@
-import { arr } from "lively.lang";
+import { arr, promise } from "lively.lang";
 import { pt, LinearGradient, Color, Rectangle } from "lively.graphics";
 import {
   Label,
@@ -261,6 +261,22 @@ export default class Window extends Morph {
       {isDivider: true},
       ...(await this.targetMorph.menuItems())
     ]);
+  }
+
+  async toggleFader(active) {
+    let fader = this.getSubmorphNamed('fader') || this.addMorph({
+      name: 'fader', fill: Color.black.withA(.5), opacity: 0, extent: this.extent
+    });
+    if (active) {
+      this._faderTriggered = true;
+      fader.opacity = 1;
+    } else {
+      this._faderTriggered = false;
+      await promise.delay(100);
+      if (this._faderTriggered) return; // hacky way to allow other prompts to steal the prompt
+      await fader.animate({ opacity: 0, duration: 300 });
+      fader.remove();
+    }
   }
 
   get isWindow() { return true; }
