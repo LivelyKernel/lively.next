@@ -20,7 +20,6 @@ import { StylingVisitor } from "./sizzle.js";
 import {showAndSnapToGuides, removeSnapToGuidesOf} from "lively.halos/drag-guides.js";
 import { show } from "lively.halos";
 import { copy, ExpressionSerializer, getSerializableClassMeta } from "lively.serializer2";
-import { newUUID } from "lively.lang/string.js";
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -319,6 +318,7 @@ export class Morph {
       opacity: {
         group: "styling",
         type: 'Number',
+        isFloat: true,
         min: 0,
         max: 1,
         isStyleProp: true, defaultValue: 1
@@ -683,7 +683,7 @@ export class Morph {
 
       respondsToVisibleWindow: {
         group: "interaction",
-        doc: "Morphs will respond to changes in visible window and a call will be made to the morph's relayout function, supplying the event generated",
+        doc: "Morphs will respond to changes to the visible browser window and a call will be made to the morph's relayout function, supplying the event generated",
         defaultValue: false
       },
 
@@ -818,23 +818,31 @@ export class Morph {
         properties = this.propertiesAndPropertySettings().properties,
         ignored = {submorphs: true},
         spec = {};
-    "attributeConnections"
     for (let key in properties) {
       let descr = properties[key];
+      if (!descr) continue;
       if (
         descr.readOnly ||
         descr.derived ||
         this[key] === defaults[key] ||
-        (this[key] && typeof this[key].equals === "function" && this[key].equals(defaults[key])) ||
+        (this[key] && defaults[key] && typeof this[key].equals === "function" && this[key].equals(defaults[key])) ||
         (descr.hasOwnProperty("serialize") && !descr.serialize) ||
         key in ignored
       ) continue;
+      if (this[key] && this[key].isMorph) {
+        spec[key] = this[key].spec();
+        continue;
+      }
+      if (this[key] && key === 'layout') {
+        spec[key] = this[key].copy();
+        continue;
+      }
       spec[key] = this[key];
     }
     if (this.submorphs.length) {
       spec.submorphs = this.submorphs.map(ea => ea.spec());
     }
-    spec.type = this.constructor.name.toLowerCase();
+    spec.type = this.constructor;
     return spec;
   }
 
@@ -890,7 +898,7 @@ export class Morph {
   changeMetaData(path, data, serialize = true, merge = true) {
     let {metadata} = this;
     if (!metadata) metadata = {};
-    PropertyPath(path).withParentAndKeyDo(metadata, true, (parent, key) => {
+    new PropertyPath(path).withParentAndKeyDo(metadata, true, (parent, key) => {
       if (merge) parent[key] = {...parent[key], ...data};
       else parent[key] = data;
       let dont = parent.__dont_serialize__;
