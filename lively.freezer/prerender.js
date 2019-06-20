@@ -1,9 +1,13 @@
+/*global System*/
 import { generateHTML } from 'lively.morphic/rendering/html-generator.js';
 import { MorphicDB, loadMorphFromSnapshot } from "lively.morphic";
 import { freezeSnapshot } from "./part.js";
 import { newMorphId } from "lively.morphic";
+import { arr } from "lively.lang";
+import { module } from "lively.modules/index.js";
 
 let prerenderedParts;
+let loadedModules = {};
 
 // refresh(commit)
 
@@ -24,7 +28,19 @@ export function show(commit) {
   return part;
 }
 
-export async function refresh(commit, freeze=true) {
+function captureModuleState() {
+  loadedModules = Object.keys(System._loader.modules);
+}
+
+function resetModuleState() {
+  arr.withoutAll(Object.keys(System._loader.modules), loadedModules).forEach(moduleName => {
+    let m = module("http://localhost:9011/lively.ast/lib/parser.js");
+    m.unload();
+  });
+}
+
+export async function refresh(commit, freeze = true, cleanModuleState = false) {
+  if (cleanModuleState) captureModuleState();
   [...document.head.children].filter(m => 
     m.href && (m.href.includes('loading-indicator.css') || 
                m.href.includes('font-awesome.css') ||
@@ -60,7 +76,10 @@ export async function refresh(commit, freeze=true) {
   // add this to the dictionary of managed commit
   if (!prerenderedParts) prerenderedParts = {};
   prerenderedParts[commit.name] = part;
-  await show(commit);
+  if (cleanModuleState) {
+    part.remove();
+    resetModuleState();
+  } else   await show(commit);
   return { body, dynamicParts };
 }
 
