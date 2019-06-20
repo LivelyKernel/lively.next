@@ -60,7 +60,7 @@ export class Label extends Morph {
           if (value.length === 0) value = ["", {}];
           let prevValue = this.textAndAttributes;
           this.setProperty("textAndAttributes", value);
-          if (this.autofit && !arr.equals(prevValue, value)) this.invalidateTextLayout();
+          if (this.autofit) this.invalidateTextLayout();
           signal(this, "value", value);
         }
       },

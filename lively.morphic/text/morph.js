@@ -124,7 +124,8 @@ export class Text extends Morph {
             lastVisibleRow: 0,
             heightBefore: 0,
             wasScrolled: false,
-            afterTextRenderHook: null
+            afterTextRenderHook: null,
+            fastScroll: true
           };
         }
       },
@@ -206,6 +207,24 @@ export class Text extends Morph {
       autoInsertPairs: {
         group: "text",
         defaultValue: true
+      },
+
+      extent: {
+        get() {
+          let initialExtent = this.getProperty('extent');
+          if (!this._textChange && this.viewState && 
+              this.viewState._needsFit && !this._rendering &&
+              !this._measuringTextBox && !!initialExtent) {
+            let renderer = this.env.renderer;
+            let textRenderer = this.textRenderer;
+            if (!renderer || !textRenderer) return initialExtent;
+            this._measuringTextBox = true;
+            renderer.renderStep();
+            textRenderer.manuallyTriggerTextRenderHook(this, renderer);
+            this._measuringTextBox = false;
+          }
+          return this.getProperty('extent');
+        }
       },
 
       fixedWidth: {
@@ -817,6 +836,7 @@ export class Text extends Morph {
         softLayoutChange = false,
         hardLayoutChange = false,
         scrollChange = false,
+        enforceFit = false,
         displacementChange = false;
 
     if (selector) {
@@ -827,13 +847,10 @@ export class Text extends Morph {
       switch (prop) {
         case 'scroll': viewChange = true; scrollChange = true; break;
         case 'extent': 
-          viewChange = true; 
-          /* rms 27.11.17: A change in the extent only constitutes 
-             a hard layout change if the width changes, line wrapping 
-             is enabled and we have a fixed width of the morph */
-          softLayoutChange = true;
-          hardLayoutChange = wraps && (change.prevValue.x != change.value.x);
-          this._displacementChange = hardLayoutChange;
+          viewChange = true;
+          enforceFit = !this.fixedWidth || !this.fixedHeight;
+          let delta = change.prevValue.subPt(change.value);
+          softLayoutChange = this.fixedWidth && !!this.lineWrapping && !!delta.x;
           break;
         case "wordSpacing":
         case "letterSpacing":
@@ -846,8 +863,13 @@ export class Text extends Morph {
         case "fontStyle":
         case "textStyleClasses":
         case "fixedWidth":
+          hardLayoutChange = change.prevValue != change.value;
+          break;
         case "lineWrapping": hardLayoutChange = true; break;
-        case "fixedHeight":
+        case 'borderWidth':
+        case "fixedHeight": 
+          softLayoutChange = change.prevValue != change.value;
+          break;
         case "padding": softLayoutChange = true; break;
       }
     }
@@ -860,10 +882,16 @@ export class Text extends Morph {
 
       if (scrollChange) this.viewState.wasScrolled = true;
       
-      if (hardLayoutChange || (softLayoutChange && !meta.styleSheetChange)) {
+      if (hardLayoutChange || 
+          enforceFit ||
+          (softLayoutChange && !meta.styleSheetChange)) {
         this.invalidateTextLayout(
           hardLayoutChange /*reset char bounds*/,
           hardLayoutChange /*reset line heights*/);
+      }
+
+      if (softLayoutChange || hardLayoutChange) {
+        if (this.document && this.world()) this.document.lines.forEach(l => l.hasEstimatedExtent = true);
       }
 
       if (this._displacementChange) {
@@ -882,9 +910,7 @@ export class Text extends Morph {
     // is finished animating, so that our dom measurement is not fucked up.
     if (meta.animation)
       promise.delay(meta.animation.duration).then(updateTextEngine)
-    else if (prop == 'extent') {
-       this.whenRendered().then(updateTextEngine);
-    } else {
+    else {
        updateTextEngine(); 
     }
   }
@@ -932,29 +958,8 @@ export class Text extends Morph {
       if (!lastBounds || 
           lastBounds.height != currentBounds.height ||
           lastBounds.bottom() != currentBounds.bottom()) {
+        line.hasEstimatedExtent = true;
         submorph._lastBounds = currentBounds;
-        // update the height of the current line
-        if (!lastBounds || lastBounds.height != currentBounds.height) {
-           // if we actually move because another morph changed its bounds,
-           // we can easily derive how the other morph's bounds need to be updated,
-           // based on their position in the text. Remeasuring is only needed, when
-           // the text changes
-           this.textLayout.estimateExtentOfLine(this, line);
-           this.textLayout.resetLineCharBoundsCacheOfRow(morph, row);
-        }
-        await submorph.whenRendered(); 
-        let submorphAnchors = arr.sortBy([...this.embeddedMorphMap.entries()], x => x[1].anchor.position.row);
-        for (let [m, {anchor}] of submorphAnchors) {
-           if (anchor.position.row > row) {
-             this._positioningSubmorph = m;
-             if (lastBounds) {
-                m.top += currentBounds.height - lastBounds.height; 
-             } else {
-               anchor.position = anchor.position;
-             }
-             this._positioningSubmorph = null;
-           }
-        };
       }
     }
   }

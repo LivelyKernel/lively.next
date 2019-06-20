@@ -115,6 +115,8 @@ describeInBrowser("text layout", function() {
 
   describe("fit", () => {
 
+    afterEach(() => t.remove());
+
     it("computes size on construction", () => {
       var t = text("hello", {clipMode: "visible", fixedHeight: false, fixedWidth: false}),
           {width, height} = t;
@@ -151,6 +153,42 @@ describeInBrowser("text layout", function() {
       t.fit();
       expect(height).closeTo(h + padding.top()+ padding.bottom(), 2);
       expect(width).closeTo(5*w + padding.left()+ padding.right(), 2);
+    });
+
+    it("fits bounds synchronously if font size changed", async () => {
+      var t = text('hello world', { clipMode: "visible", fixedWidth: false, fixedHeight: false });
+      env.world.addMorph(t);
+      await t.whenRendered();
+      let rightBefore = t.right;
+      t.fontSize = 50;
+      let rightAfter = t.right;
+      expect(rightBefore).lessThan(rightAfter);
+      await t.whenRendered();
+      expect(rightAfter).equals(t.right);
+    });
+
+    it("fits bounds synchronously if padding changed", async () => {
+      var t = text('hello world', { name: 'trollo', clipMode: "visible", fixedWidth: false, fixedHeight: false });
+      env.world.addMorph(t);
+      await t.whenRendered();
+      let rightBefore = t.right;
+      t.padding = rect(50,0,50,0);
+      let rightAfter = t.right;
+      expect(rightBefore).lessThan(rightAfter);
+      await t.whenRendered();
+      expect(rightAfter).equals(t.right);
+    });
+
+    it("fits bounds synchronously if border width changed", async () => {
+      var t = text('hello world', { clipMode: "visible", fixedWidth: false, fixedHeight: false });
+      env.world.addMorph(t);
+      await t.whenRendered();
+      let rightBefore = t.right;
+      t.fontSize = 50;
+      let rightAfter = t.right;
+      expect(rightBefore).lessThan(rightAfter);
+      await t.whenRendered();
+      expect(rightAfter).equals(t.right);
     });
 
   });

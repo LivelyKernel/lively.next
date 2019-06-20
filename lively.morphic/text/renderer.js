@@ -1,7 +1,7 @@
 /*global global,System*/
 import { obj } from "lively.lang";
 import { pt } from "lively.graphics";
-import { h } from "virtual-dom";
+import { h, create, patch, diff } from "virtual-dom";
 import { defaultAttributes, defaultStyle } from "../rendering/morphic-default.js";
 import { addOrChangeCSSDeclaration } from "../rendering/dom-helper.js";
 import { hyperscriptFnForDocument } from "../rendering/dom-helper.js";
@@ -28,6 +28,7 @@ function printViewState(textMorph) {
   console.log(`${textMorph} #${textMorph.id.slice(0,12)}
 scroll: ${scrollTop} + ${scrollHeight}
 lines: ${firstVisibleRow} - ${lastVisibleRow}
+visible lines: ${lastVisibleRow - firstVisibleRow}
 height: ${textHeight}, ${lines.length} lines`);
 }
 
@@ -71,6 +72,7 @@ function installCSS(domEnv) {
       white-space: pre;
       z-index: 0;
       min-width: 100%;
+      pointer-events: none;
     }
 
     .newtext-before-filler {}
@@ -94,6 +96,14 @@ function installCSS(domEnv) {
     }
 
     .newtext-text-layer.no-wrapping {
+    }
+
+    .newtext-text-layer a {
+       pointer-events: auto;
+    }
+
+    .newtext-text-layer.auto-width .line {
+      width: fit-content;
     }
 
     .newtext-text-layer .line {
@@ -187,95 +197,116 @@ let nextTick = (function(window, prefixes, i, p, fnc, to) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // Render hook to update layout / size of text document lines once those are
 // rendered and DOM measuring can be used
-function AfterTextRenderHook() {}
 
-AfterTextRenderHook.prototype.reset = function(morph) {
-  this.morph = morph;
-  this.called = false;
-  this.needsRerender = false;
-}
+class AfterTextRenderHook {
+  
+  reset(morph) {
+    this.morph = morph;
+    this.called = false;
+    this.needsRerender = false;
+  }
 
-AfterTextRenderHook.prototype.updateLineHeightOfNode = function(morph, docLine, lineNode) {
+  updateLineHeightOfNode(morph, docLine, lineNode) {
+    if (docLine.height === 0 || docLine.hasEstimatedExtent) {
+      
+      const tfm = morph.getGlobalTransform().inverse();
+      tfm.e = tfm.f = 0;
+      
+      const needsTransformAdjustment = tfm.getScale() != 1 || tfm.getRotation() != 0;
+      if (needsTransformAdjustment) lineNode.style.transform = tfm.toString();
+      const {height: nodeHeight, width: nodeWidth} = lineNode.getBoundingClientRect();
+      if (needsTransformAdjustment) lineNode.style.transform = '';
+      
+      if (nodeHeight && nodeWidth && (docLine.height !== nodeHeight || docLine.width !== nodeWidth)) {
+        // console.log(`[${docLine.row}] ${nodeHeight} vs ${docLine.height}`)
+        docLine.changeExtent(nodeWidth, nodeHeight, false);
+        morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
+        // force re-render in case text layout / line heights changed
+        this.needsRerender = true;
+        morph.viewState._needsFit = true;
+      }
+  
+      if (docLine.textAndAttributes && docLine.textAndAttributes.length) {
+        let inlineMorph;
+        for (var j = 0, column=0; j < docLine.textAndAttributes.length; j += 2) {
+          inlineMorph = docLine.textAndAttributes[j]
+          if (inlineMorph && inlineMorph.isMorph) {
+             morph._positioningSubmorph = inlineMorph;
+             inlineMorph.position = morph.textLayout.pixelPositionFor(morph, {row: docLine.row , column}).subPt(morph.origin);
+             inlineMorph._dirty = false; // no need to rerender
+             morph._positioningSubmorph = null;
+             column++;
+          } else if (inlineMorph) {
+             column += inlineMorph.length
+          }
+        }
+      }
+      
+      return nodeHeight;
+    }
+    return docLine.height;
+  }
 
-  if (docLine.height === 0 || docLine.hasEstimatedExtent) {
+  updateExtentsOfLines(textlayerNode) {
+    // figure out what lines are displayed in the text layer node and map those
+    // back to document lines.  Those are then updated via lineNode.getBoundingClientRect
+    let {morph} = this,
+        {textLayout, viewState} = morph
+  
+    viewState.dom_nodes = [];
+    viewState.dom_nodeFirstRow = 0;
+    viewState.textWidth = textlayerNode.scrollWidth;
     
-    const tfm = morph.getGlobalTransform().inverse();
-    tfm.e = tfm.f = 0;
-    if (tfm.getScale() != 1 || tfm.getRotation() != 0) {
-      lineNode.style.transform = tfm.toString()
-    }
-    const {height: nodeHeight, width: nodeWidth} = lineNode.getBoundingClientRect();
-    lineNode.style.transform = '';
-    if (nodeHeight && nodeWidth && (docLine.height !== nodeHeight || docLine.width !== nodeWidth)) {
-      // console.log(`[${docLine.row}] ${nodeHeight} vs ${docLine.height}`)
-      docLine.changeExtent(nodeWidth, nodeHeight, false);
-      morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
-      // force re-render in case text layout / line heights changed
-      this.needsRerender = true;
-      morph.viewState._needsFit = true;
-    }
-    return nodeHeight;
-  }
-  return docLine.height;
-}
-
-AfterTextRenderHook.prototype.updateExtentsOfLines = function(textlayerNode) {
-  // figure out what lines are displayed in the text layer node and map those
-  // back to document lines.  Those are then updated via lineNode.getBoundingClientRect
-
-  let {morph} = this,
-      {textLayout, viewState} = morph
-
-  viewState.dom_nodes = [];
-  viewState.dom_nodeFirstRow = 0;
-  viewState.textWidth = textlayerNode.scrollWidth;
+    let lineNodes = textlayerNode.children,
+        i = 0, 
+        firstLineNode;
   
-  let lineNodes = textlayerNode.children,
-      i = 0, 
-      firstLineNode;
-
-  while (i < lineNodes.length && lineNodes[i].className != 'line') i++;
-  
-  if (i < lineNodes.length) {
-    firstLineNode = lineNodes[i];
-  } else {
-    return;
-  }
-
-  let ds = firstLineNode.dataset,
-      row = Number(ds ? ds.row : firstLineNode.getAttribute("data-row"));
-  if (typeof row !== "number" || isNaN(row)) return;
-  viewState.dom_nodeFirstRow = row;
-  let actualTextHeight = 0,
-      line = morph.document.getLine(row);
-
-  for (; i < lineNodes.length; i++) {
-    let node = lineNodes[i];
-    viewState.dom_nodes.push(node);
-    if (line) {
-      actualTextHeight = actualTextHeight + this.updateLineHeightOfNode(morph, line, node);
-      line = line.nextLine();
+    while (i < lineNodes.length && lineNodes[i].className != 'line') i++;
+    
+    if (i < lineNodes.length) {
+      firstLineNode = lineNodes[i];
+    } else {
+      return;
     }
+  
+    let ds = firstLineNode.dataset,
+        row = Number(ds ? ds.row : firstLineNode.getAttribute("data-row"));
+    if (typeof row !== "number" || isNaN(row)) return;
+    viewState.dom_nodeFirstRow = row;
+    let actualTextHeight = 0,
+        line = morph.document.getLine(row);
+  
+    let foundEstimatedLine;
+    for (; i < lineNodes.length; i++) {
+      let node = lineNodes[i];
+      viewState.dom_nodes.push(node);
+      if (line) {
+        if (!foundEstimatedLine)
+          foundEstimatedLine = line.hasEstimatedExtent;
+        line.hasEstimatedExtent = foundEstimatedLine;
+        actualTextHeight = actualTextHeight + this.updateLineHeightOfNode(morph, line, node);
+        line.hasEstimatedExtent = false;
+        line = line.nextLine();
+      }
+    }
+  
+    if (this.needsRerender) {
+      morph.fitIfNeeded();
+      morph.makeDirty();
+    } else morph._dirty = !!morph.submorphs.find(m => m.needsRerender());
   }
 
-  if (this.needsRerender) {
-    morph.fitIfNeeded();
-    morph.makeDirty();
-  } else morph._dirty = !!morph.submorphs.find(m => m.needsRerender());
+  hook(node, propName, prevValue) {
+    if (!node || !node.parentNode) return;
+    let vs = this.morph.viewState;
+    vs.text_layer_node = node;
+    vs.fontmetric_text_layer_node = null;
+    this.called = true;
+    // the childNodes = line nodes of node are updated after the hook was called,
+    // so delay...
+    this.updateExtentsOfLines(node);
+  }
 }
-
-AfterTextRenderHook.prototype.hook = function(node, propName, prevValue) {
-  if (!node || !node.parentNode) return;
-  let vs = this.morph.viewState;
-  vs.text_layer_node = node;
-  vs.fontmetric_text_layer_node = null;
-  this.called = true;
-  // the childNodes = line nodes of node are updated after the hook was called,
-  // so delay...
-  this.updateExtentsOfLines(node);
-}
-
-
 
 export default class TextRenderer {
 
@@ -387,6 +418,7 @@ export default class TextRenderer {
 
 
     let node = this.renderJustTextLayerNode(h, morph, null, children);
+    node.properties.style.position = 'absolute';
 
     // install hook so we can update text layout from real DOM once it is rendered
     let hook = morph.viewState.afterTextRenderHook
@@ -397,13 +429,19 @@ export default class TextRenderer {
       // The hook only gets called on prop changes of textlayer node. We
       // actually want to always trigger in order to update the lines, so run
       // delayed
-      if (hook.called) return;
-      let node = renderer.getNodeForMorph(morph),
-          textlayerNode = node && node.querySelector(".actual.newtext-text-layer");
-      textlayerNode && hook.hook(textlayerNode);
+      this.manuallyTriggerTextRenderHook(morph, renderer);
     })
 
     return node;
+  }
+
+  manuallyTriggerTextRenderHook(morph, renderer) {
+    let hook = morph.viewState.afterTextRenderHook;
+    if (!hook || hook.called) return;
+    let node = renderer.getNodeForMorph(morph),
+        textlayerNode = node && node.querySelector(".actual.newtext-text-layer");
+    if (textlayerNode) hook.hook(textlayerNode);
+    morph.fit();
   }
 
   renderJustTextLayerNode(h, morph, additionalStyle, children) {
@@ -413,6 +451,8 @@ export default class TextRenderer {
           height,
           padding: {x: padLeft, y: padTop, width: padWidth, height: padHeight},
           lineWrapping,
+          fixedWidth,
+          fixedHeight,
           backgroundColor,
           fontColor,
           textAlign,
@@ -443,6 +483,9 @@ export default class TextRenderer {
       case "by-chars":      textLayerClasses = textLayerClasses + " wrap-by-chars"; break;
       case false:           textLayerClasses = textLayerClasses + " no-wrapping"; break;
     }
+
+    if (!fixedWidth) textLayerClasses = textLayerClasses + " auto-width";
+    if (!fixedHeight) textLayerClasses = textLayerClasses + " auto-height";
 
     // ...and now other attribues
     let style = {height: textHeight + "px"};
