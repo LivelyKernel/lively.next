@@ -139,7 +139,7 @@ export async function prerender(commit, width, height, pathname, userAgent, time
    await $world.whenRendered();
    return await generateHTML($world, {
       container: false,
-      title: part.name,
+      appendHTML: part.__loading_html__ && `<div id="loading screen">${part.__loading_html__}</div>`,
       addMetaTags: [{
         name: "viewport", content: "minimum-scale=1.0, maximum-scale=1.0, initial-scale=1.0, user-scalable=no, viewport-fit=cover"
       }, {
