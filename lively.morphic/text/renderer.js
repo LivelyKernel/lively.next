@@ -323,29 +323,56 @@ export default class TextRenderer {
         textLayerForFontMeasure = this.renderJustTextLayerNode(h, morph, null, []),
         markerLayer = this.renderMarkerLayer(morph, renderer);
 
+    let scrollLayer = h('div', {
+      className: 'scrollLayer',
+      style: {
+        position: 'absolute',
+        top: 0 + 'px',
+        ...morph.viewState.fastScroll ? { overflow: morph.scrollActive ? morph.clipMode : 'hidden' } : {},
+        width: morph.width - 3 + 'px',
+        height: morph.height + 'px'
+      }
+    }, [h('div', {style: {
+      width: Math.max(morph.document.width, morph.width) + 'px',
+      height: Math.max(morph.document.height, morph.height) + 'px' }})]);
+
     textLayer.properties.className += " actual";
+    textLayer.properties.style.overflow = morph.clipMode === 'visible' ? 'visible' : 'hidden';
     textLayerForFontMeasure.properties.className += " font-measure";
-    // textLayerForFontMeasure.properties.style.visibility = "hidden";
 
     let {embeddedMorphMap} = morph,
         submorphsNotInText = embeddedMorphMap
           ? morph.submorphs.filter(ea => !embeddedMorphMap.has(ea))
           : morph.submorphs;
 
+    let subNodes = [
+      ...selectionLayer, markerLayer, 
+      textLayerForFontMeasure,
+      textLayer,
+      renderer.renderSelectedSubmorphs(morph, submorphsNotInText)
+    ];
+
     return h("div", {
         ...defaultAttributes(morph, renderer),
         style: {
           ...defaultStyle(morph),
+          ... morph.viewState.fastScroll ? {overflow: morph.clipMode == 'visible' ? 'visible' : 'hidden'} : {},
           "-moz-user-select": "none",
           cursor: morph.nativeCursor === "auto" ?
             (morph.readOnly ? "default" : "text") :
             morph.nativeCursor
         }
       }, [
-        ...selectionLayer, markerLayer,
-        textLayerForFontMeasure,
-        textLayer,
-        renderer.renderSelectedSubmorphs(morph, submorphsNotInText)
+        scrollLayer,
+        ...morph.viewState.fastScroll ? [h("div", {
+            className: 'scrollWrapper',
+            style: {
+              'pointer-events': 'none',
+              position: 'absolute',
+              width: '100%', height: '100%',
+              transform: `translate(-${morph.scroll.x}px, -${morph.scroll.y}px)`
+            }
+          }, subNodes)] : subNodes
       ]
     );
   }
@@ -438,6 +465,8 @@ export default class TextRenderer {
 
     let textAttrs = {className: textLayerClasses, style};
 
+    style.overflow = "hidden";
+    
     if (additionalStyle) {
       let {clipMode, height, width} = additionalStyle;
       if (typeof width === "number")
@@ -447,7 +476,6 @@ export default class TextRenderer {
       if (clipMode)
         style.overflow = clipMode;
     }
-    style.overflow = "hidden";
 
     return h("div", textAttrs, children);
   }
@@ -468,31 +496,23 @@ export default class TextRenderer {
         scrollHeight = height,
         lastLineNo = doc.rowCount-1,
         textHeight = doc.height,
-        clips = clipMode !== "visible",
-        delta = scroll.y - ((node && node._lastScrollTop) || scroll.y),
-        down = 0 < delta,
-        up = 0 > delta,
-        bufferSpace = 500,
-        buffer = {top: (up || delta == 0) ? bufferSpace : 0, bottom: (down || delta == 0) ? bufferSpace : 0}; 
-         // in order to avoid blank spaces we prerender nodes that arent yet visible
-
-    if (node) node._lastScrollTop = scroll.y;
+        clips = clipMode !== "visible";
     
     let {
       line: startLine,
       offset: startOffset,
       y: heightBefore,
       row: startRow
-    } = doc.findLineByVerticalOffset(clips ? Math.max(0, clips ? scrollTop - padTop - buffer.top : 0) : 0)
+    } = doc.findLineByVerticalOffset(clips ? Math.max(0, clips ? scrollTop - padTop : 0) : 0)
      || {row: 0, y: 0, offset: 0, line: doc.getLine(0)};
 
     let {
       line: endLine,
       offset: endLineOffset,
       row: endRow
-    } = doc.findLineByVerticalOffset(clips ? Math.min(textHeight, (scrollTop - padTop + buffer.bottom) + scrollHeight) : textHeight)
+    } = doc.findLineByVerticalOffset(clips ? Math.min(textHeight, (scrollTop - padTop) + scrollHeight) : textHeight)
      || {row: lastLineNo, offset: 0, y: 0, line: doc.getLine(lastLineNo)};
-
+    
     let firstVisibleRow = clips ? startRow : 0,
         firstFullyVisibleRow = startOffset === 0 ? startRow : startRow + 1,
         lastVisibleRow = clips ? endRow + 1 : lastLineNo,
@@ -500,20 +520,23 @@ export default class TextRenderer {
 
     // render lines via virtual-dom
 
+    this.maxVisibleLines = Math.max(this.maxVisibleLines || 1, lastVisibleRow - firstVisibleRow + 1);
+
     let visibleLines = [],
         renderedLines = [];
 
     // spacer to push visible lines into the scrolled area
-    renderedLines.push(h("div.newtext-before-filler", {style: {height: heightBefore + "px"}}));
+    renderedLines.push(h("div.newtext-before-filler", {key: 'filler', style: {height: heightBefore + "px"}}));
 
-    let line = startLine, i = startRow;
-    while (line) {
+    let line = startLine, i = 0;
+    while (i < this.maxVisibleLines) {
       visibleLines.push(line);
-      // renderedLines.push(line._rendered || (line._rendered = this.renderLine(h, morph, line)));
-      renderedLines.push(this.renderLine(h, renderer, morph, line));
+      let newLine = this.renderLine(h, renderer, morph, line);
+      renderedLines.push(newLine);
+      newLine.key = line.row % this.maxVisibleLines;
       i++;
-      if (line === endLine) break;
       line = line.nextLine();
+      if (!line) break;
     }
 
     Object.assign(morph.viewState, {
@@ -525,7 +548,7 @@ export default class TextRenderer {
       visibleLines
     });
 
-    debug && printViewState(morph);
+    morph.debug && printViewState(morph);
 
     return renderedLines;
   }
@@ -541,7 +564,8 @@ export default class TextRenderer {
         fontSize, fontFamily, fontWeight, fontStyle, textDecoration, fontColor,
         backgroundColor, nativeCursor, textStyleClasses, link,
         tagname, nodeStyle, nodeAttrs, paddingRight, paddingLeft, paddingTop, paddingBottom,
-        lineHeight, textAlign, wordSpacing, letterSpacing, quote, nested;
+        lineHeight, textAlign, verticalAlign, wordSpacing, letterSpacing, quote, nested,
+        minFontSize = morph.fontSize;
 
     if (size > 0) {
       for (let i = 0; i < size; i = i+2) {
@@ -576,15 +600,19 @@ export default class TextRenderer {
         paddingLeft =      attr.paddingLeft;
         paddingTop =       attr.paddingTop;
         paddingBottom =    attr.paddingBottom;
+        verticalAlign =    attr.verticalAlign;
         quote =            attr.quote || quote;
 
         tagname = "span";
         nodeStyle = {};
         nodeAttrs = {style: nodeStyle};
 
+        if (fontSize && attr.fontSize < minFontSize) minFontSize = attr.fontSize;
+
         if (link) {
           tagname = "a";
           nodeAttrs.href = link;
+          nodeStyle.pointerEvents = 'auto';
           if (link && link.startsWith('http')) nodeAttrs.target = "_blank";
         }
 
@@ -600,6 +628,8 @@ export default class TextRenderer {
         if (paddingLeft)  nodeStyle.paddingLeft        = paddingLeft;
         if (paddingTop) nodeStyle.paddingTop           = paddingTop;
         if (paddingBottom) nodeStyle.paddingBottom     = paddingBottom;
+        if (verticalAlign) nodeStyle.verticalAlign      = verticalAlign;
+        if (attr.doit) { nodeStyle.pointerEvents = 'auto'; nodeStyle.cursor = 'pointer'; };
 
         if (textStyleClasses && textStyleClasses.length)
           nodeAttrs.className = textStyleClasses.join(" ");
@@ -612,13 +642,14 @@ export default class TextRenderer {
     var lineStyle = {};
     // var lineTag = quote ? "blockquote" : "div";
     var lineTag = "div";
+    if (morph.fontSize > minFontSize) lineStyle.fontSize = minFontSize + 'px';
     if (lineHeight) lineStyle.lineHeight = lineHeight;
     if (textAlign) lineStyle.textAlign = textAlign;
     if (letterSpacing) lineStyle.letterSpacing = letterSpacing;
     if (wordSpacing) lineStyle.wordSpacing = wordSpacing;
 
     let node = h(lineTag,
-      {className: "line", key: line.row, style: lineStyle, dataset: {row: line.row}},
+      {className: "line", style: lineStyle, dataset: {row: line.row}},
       renderedChunks);
 
     if (quote) {

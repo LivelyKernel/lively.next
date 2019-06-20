@@ -2815,6 +2815,16 @@ export class Text extends Morph {
   get snippets() {
     return this.pluginCollect("getSnippets", []);
   }
+  
+  onHoverIn(evt) {
+    this.scrollActive = true;
+    this.makeDirty();
+  }
+
+  onHoverOut(evt) {
+    this.scrollActive = false;
+    this.makeDirty();
+  }
 
   onKeyDown(evt) {
     if (this.compositionRange || evt.targetMorph != this) return;

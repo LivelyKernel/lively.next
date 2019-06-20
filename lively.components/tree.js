@@ -51,6 +51,7 @@ export class Tree extends Text {
         }
       },
       selectionColor: {
+        type: 'ColorGradient',
         defaultValue: Color.blue,
       },
       fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
@@ -87,10 +88,15 @@ export class Tree extends Text {
         get() { return this.treeData.asList(); },
       },
 
+      defaultViewState: {
+        get() {
+          return {...super.prototype.defaultViewState, fastScroll: false }
+        }
+      },
+
       selectedNode: {
         set(sel) { 
           this.setProperty("selectedNode", sel); 
-          signal(this, 'selectedNode', this.selectedNode);
           this.update(); 
         }
       },
@@ -467,6 +473,16 @@ export class Tree extends Text {
     }
   }
 
+  onHoverIn(evt) {
+    super.onHoverIn(evt);
+    this.clipMode = 'auto';
+  }
+
+  onHoverOut(evt) {
+    super.onHoverOut(evt);
+    this.clipMode = 'hidden';
+  }
+  
   onContextMenu(evt) {
     if (evt.targetMorph !== this) return;
     evt.stop();

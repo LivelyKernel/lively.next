@@ -333,23 +333,26 @@ MorphAfterRenderHook.prototype.updateScroll = function(morph, node, fromScroll) 
   if (node && interactiveScrollInProgress) {
     return interactiveScrollInProgress.then(() => this.updateScroll(morph, node, true)); // scheduled more then once!!
   }
+  if (morph.isWorld) return;
   if (node) {
     const {x, y} = morph.scroll;
 
     if (morph._animationQueue.animations.find(anim => anim.animatedProps.scroll)) return
-
+    let scrollLayer = morph.isText && morph.viewState.fastScroll ? node.querySelector('.scrollLayer') : node;
+    if (!scrollLayer) return;
     //prevent interference with bounce back animation
-
+    
     // this is only there to immediately respoond in the view to a setScroll
-    node.scrollTop !== y && (node.scrollTop = y);
-    node.scrollLeft !== x && (node.scrollLeft = x);
+    scrollLayer.scrollTop !== y && (scrollLayer.scrollTop = y);
+    scrollLayer.scrollLeft !== x && (scrollLayer.scrollLeft = x);
     //if (bowser.firefox && bowser.mobile) return;
     !fromScroll && requestAnimationFrame(() => {
-      node.scrollTop !== y && (node.scrollTop = y);
-      node.scrollLeft !== x && (node.scrollLeft = x);
+      scrollLayer.scrollTop !== y && (scrollLayer.scrollTop = y);
+      scrollLayer.scrollLeft !== x && (scrollLayer.scrollLeft = x);
     }, morph.id);
   }
 }
+MorphAfterRenderHook.prototype.unhook = function(morph, renderer) {}
 MorphAfterRenderHook.prototype.updateScrollOfSubmorphs = function(morph, renderer) {
   morph.submorphs.forEach(m => {
     if (m.isClip())
