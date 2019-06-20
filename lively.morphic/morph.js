@@ -3481,7 +3481,8 @@ export class Path extends Morph {
   }
 
   get _pathNode() {
-    let node = this.env.renderer.getNodeForMorph(this);
+    let renderer = PropertyPath('env.renderer').get(this);
+    let node = renderer && renderer.getNodeForMorph(this);
     return node && node.querySelector("#svg" + string.regExpEscape(this.id));
   }
 
@@ -3583,7 +3584,7 @@ export class Path extends Morph {
 
   onDragStart(evt) {
     let {domEvt: {target}} = evt,
-        cssClass = PropertyPath("attributes.class.value").get(target);
+        cssClass = new PropertyPath("attributes.class.value").get(target);
     if (cssClass && cssClass.includes("path-point")) {
       let [_, n, ctrlN] = cssClass.match(/path-point-([0-9]+)(?:-control-([0-9]+))?$/);
       this._controlPointDrag = {marker: target, n: Number(n)};
@@ -3653,6 +3654,12 @@ export class Path extends Morph {
       {isDivider: true},
       ...super.menuItems()
     ]
+  }
+
+  getPointOnPath(n /* 0 - 1*/) {
+    if (!this._pathNode) return pt(0,0);
+    let {x, y} = this._pathNode.getPointAtLength(this._pathNode.getTotalLength() * n) || pt(0,0);
+    return pt(x,y);
   }
 }
 
