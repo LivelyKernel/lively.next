@@ -1,3 +1,4 @@
+/*global fetch,XMLHttpRequest,DOMParser*/
 /* global origin, System */
 import { HeadlessSession } from "lively.headless";
 import zlib from 'zlib';
@@ -9,7 +10,6 @@ import { ObjectDB } from "lively.storage";
 import { join } from "path";
 import { resource } from "lively.resources";
 import * as uglifier from 'uglify-es';
-import config from 'lively.installer/assets/config.js'
 const packagePath = System.decanonicalize("lively.headless/").replace("file://", "");
 
 var l2lClient;
@@ -47,6 +47,10 @@ const noScriptTag = `
 export default class FrozenPartsLoader {
 
   get pluginId() { return "FrozenPartsLoader" }
+
+  constructor(config) {
+    this.publicDirs = config.freezer.publicDirs;
+  }
 
   get before() { return ['jsdav', "lib-lookup"] }
 
@@ -160,7 +164,7 @@ export default class FrozenPartsLoader {
              'lively.serializer2',
              'upload'
             ]),
-          ...config.freezer.publicDirs
+          ...this.publicDirs
         ];
         if (whitelist.find(dir => req.url.startsWith('/' + dir))) {
           console.log(req.url);
