@@ -206,14 +206,15 @@ export default class InputLine extends Text {
 
     let textB = this.innerBounds();
     placeholder.fontSize = this.fontSize;
-    placeholder.leftCenter = this.label.length
-                           ? textB.rightCenter().addXY(0, this.borderWidth)
-                           : textB.leftCenter().withX(0);
     placeholder.visible = true;
     placeholder.height = this.height;
     placeholder.padding = this.padding;
     placeholder.defaultTextStyle = this.defaultTextStyle;
     placeholder.lineHeight = this.height + "px";
+    placeholder.fit();
+    placeholder.leftCenter = this.label.length
+                           ? textB.rightCenter().addXY(0, this.borderWidth)
+                           : textB.leftCenter().withX(0);
   }
 
   fixCursor() {
@@ -354,23 +355,6 @@ export default class InputLine extends Text {
     ]);
   }
 
-
-  onFocus(evt) {
-    super.onFocus(evt);
-    this.highlightWhenFocused && this.animate({
-      dropShadow: this.haloShadow,
-      duration: 200
-    });
-  }
-
-  onBlur(evt) {
-    super.onBlur(evt);
-    this.highlightWhenFocused && this.animate({
-      dropShadow: false,
-      duration: 200
-    });
-  }
-
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // html export
   htmlExport_transformNode(node) {
@@ -416,16 +400,12 @@ export class PasswordInputLine extends HTMLMorph {
         set(x) {}
       },
 
+      highlightWhenFocused: {
+        defaultValue: true
+      },
+
       haloShadow: {
-        readOnly: true,
-        get(){
-           return {
-             blur: 10,
-             color: Color.rgb(52,152,219),
-             distance: 0,
-             rotation: 45
-           } 
-         }
+        type: "Shadow"
       },
 
       domNodeTagName: {readOnly: true, get() { return "input"; }},
@@ -459,28 +439,28 @@ export class PasswordInputLine extends HTMLMorph {
     }
   }
 
+  onChange(change) {
+    super.onChange(change);
+    if (change.prop == 'borderRadius') {
+      this.updateHtml(this.input);
+    }
+  }
+
   constructor(opts = {}) {
     super(opts);
     this.onLoad();
   }
 
-  bounds() {
-    // FIXME
-    // show(this.owner.getGlobalTransform().transformRectToRect(this.bounds()))
-
-    return super.bounds();
-    // let {padding} = this, {x,y,width, height} = super.bounds();
-    // return rect(x, y, width + padding.left()+padding.right(), height + padding.top()+padding.bottom());
-  }
-
   onChange(change) {
+    super.onChange(change);
     if (['fill', 'borderRadius'].includes(change.prop)) {
       this.updateHtml(this.input)
     }
   }
 
-  onLoad() {
+  async onLoad() {
     // hmm key events aren't dispatched by default...
+    await this.whenRendered();
     this.ensureInputNode().then(node => {
       this.updateHtml(this.input);
       node.onkeydown = evt => this.env.eventDispatcher.dispatchDOMEvent(evt, this, "onKeyDown");
@@ -498,9 +478,9 @@ export class PasswordInputLine extends HTMLMorph {
       
       if (n.parentNode.tagName == 'INPUT') {
         n.parentNode.remove();
-        this.env.renderer
-          .getNodeForMorph(this)
-          .appendChild(this.domNode)
+        let morphNode = this.env.renderer.getNodeForMorph(this);
+        morphNode.insertBefore(this.domNode, morphNode.firstChild);
+        // make sure that the submorph node is still in front
       }
       return this.domNode;
     }); 
@@ -522,16 +502,19 @@ export class PasswordInputLine extends HTMLMorph {
 
   onFocus(evt) {
     super.onFocus(evt);
-    this.animate({
+    if (this._originalShadow) return;
+    this._originalShadow = this.dropShadow;
+    this.highlightWhenFocused && this.animate({
       dropShadow: this.haloShadow, duration: 200
     });
   }
 
   onBlur(evt) {
     super.onBlur(evt);
-    this.animate({
-      dropShadow: null, duration: 200
+    this.highlightWhenFocused && this.animate({
+      dropShadow: this._originalShadow || null, duration: 200
     })
+    this._originalShadow = null;
   }
 
   acceptInput() { var i = this.input; signal(this, "inputAccepted", i); return i; }
@@ -550,7 +533,7 @@ export class PasswordInputLine extends HTMLMorph {
     n.setAttribute("placeholder", placeholder);
     n.setAttribute("value", input);
     Object.assign(n.style, {
-      height: `calc(100% - ${padt}px - ${padb}px)`,
+      position: 'absolute',
       width: `calc(100% - ${padl}px - ${padr}px)`,
       "border-width": 0,
       outline: "none",
@@ -577,6 +560,7 @@ export class PasswordInputLine extends HTMLMorph {
 
   htmlExport_transformNode(node) {
     let doc = node.ownerDocument,
+        wrapper = doc.createElement("div"),
         oldInput = node.querySelector("input"),
         input = doc.createElement("input"),
         textCSSProps = [
@@ -586,14 +570,23 @@ export class PasswordInputLine extends HTMLMorph {
           "font-style",
           "text-decoration",
           "font-size",
+          "border-radius",
           "color"];
+    if (oldInput.childNodes[0] && oldInput.childNodes[0].tagName === 'INPUT')
+      oldInput = oldInput.childNodes[0];
     input.id = node.id; input.className = node.className;
-    input.placeholder = this.placeholder;
-    input.style = node.style.cssText;
+    wrapper.style = node.style.cssText;
     Object.assign(input.style, obj.select(oldInput.style, textCSSProps));
+    input.style.position = 'absolute';
+    input.style.width = node.style.width;
+    input.style.height = node.style.height;
+    input.style['border-width'] = node.style['border-width'];
+    input.placeholder = this.placeholder;
     input.type = "password";
     input.autocomplete = input.name = this.name.replace(/[\s"]/g, "-");
-    return input;
+    wrapper.appendChild(input);
+    wrapper.appendChild(node.childNodes[1]);
+    return wrapper;
   }
 
 }
