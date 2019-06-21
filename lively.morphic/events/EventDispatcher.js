@@ -263,17 +263,17 @@ export default class EventDispatcher {
     var { emitter } = this,
         globalEmitter = System.global/*FIXME?*/;
 
-    domEventsWeListenTo.forEach(({type, capturing}) => {
+    domEventsWeListenTo.forEach(({type, capturing, passive }) => {
       let fn = evt => this.dispatchDOMEvent(evt);
       this.handlerFunctions.push({node: emitter, type, fn, capturing});
-      let arg = capturing;
+      let arg = { capture: capturing, passive};
       emitter.addEventListener(type, fn, arg);
     });
 
-    globalEmitter.addEventListener && globalDomEventsWeListenTo.forEach(({type, capturing, morphMethod}) => {
+    globalEmitter.addEventListener && globalDomEventsWeListenTo.forEach(({type, capturing, morphMethod, passive }) => {
       let fn = evt => this.dispatchDOMEvent(evt, this.world, morphMethod);
       this.handlerFunctions.push({node: globalEmitter, type, fn, capturing});
-      let arg = capturing;
+      let arg = { capture: capturing, passive };
       globalEmitter.addEventListener(type, fn, arg);
     });
 
