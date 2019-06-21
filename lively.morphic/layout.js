@@ -376,6 +376,10 @@ export class VerticalLayout extends FloatLayout {
     return { spacing, resizeSubmorphs, autoResize, align, padding, reactToSubmorphAnimations };
   }
 
+  copy() {
+    return new this.constructor(this.getSpec());
+  }
+
   __serialize__() {
     return {
       __expr__: `new VerticalLayout(${JSON.stringify(this.getSpec())})`,
@@ -488,6 +492,10 @@ export class HorizontalLayout extends FloatLayout {
       __expr__: `new HorizontalLayout(${JSON.stringify(this.getSpec())})`,
       bindings: {"lively.morphic": ["HorizontalLayout"]}
     }
+  }
+
+  copy() {
+    return new this.constructor(this.getSpec());
   }
 
   getSpec() {
@@ -1545,6 +1553,11 @@ export class GridLayout extends Layout {
   name() { return "Grid" }
   description() { return "Aligns the submorphs alongside a configurable grid. Columns and rows and be configured to have different proportional, minimal or fixed sizes. Cells can further be grouped such that submorphs fill up multiple slots of the grid." }
 
+
+  copy() {
+    return new this.constructor(this.getSpec());
+  }
+  
   getSpec() {
     let grid = [];
     let rows = [];
