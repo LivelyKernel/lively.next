@@ -2574,7 +2574,7 @@ export class Text extends Morph {
     let morphs = evt.hand.grabbedMorphs.filter(ea => ea.isLayoutable);
     super.onDrop(evt);
     if (morphs[0]) {
-      let textPos = this.textPositionFromPoint(this.localize(evt.hand.position));
+      let textPos = this.textPositionFromPoint(this.localize(evt.hand.globalPosition));
       this.insertText([morphs[0], null], textPos);
       morphs[0].opacity = evt.state.originalOpacity || 1;
     }

@@ -90,7 +90,8 @@ class DraggedProp extends Morph {
     editor.focus();
   }
 
-  update(handPosition) {
+  update(evt) {
+    let handPosition = evt.hand.globalPosition;
     var target = this.morphBeneath(handPosition), hiddenMorph;
     if (!target) return;
     if (target == this.morphHighlighter) {
@@ -121,7 +122,21 @@ class DraggableTreeLabel extends Label {
       valueString: {},
       fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
       fill:  {defaultValue: Color.transparent},
-      padding: {defaultValue: rect(0,0,10,0)}
+      padding: {defaultValue: rect(0,0,10,0)},
+      isSelected: {
+        after: ['submorphs'],
+        set(b) {
+          this.setProperty('isSelected', b);
+          if (b) {
+            this.removeStyleClass('deselected');
+            this.addStyleClass('selected');
+          } else {
+            this.addStyleClass('deselected');
+            this.removeStyleClass('selected');
+          }
+          if (this.control) this.control.isSelected = b;  
+        }
+      }
     };
   }
 
@@ -133,13 +148,13 @@ class DraggableTreeLabel extends Label {
       control: this.copy()
     });
     this.draggedProp.openInWorld();
-    connect(evt.hand, "position", this.draggedProp, "update");
+    connect(evt.hand, "update", this.draggedProp, "update");
   }
 
   onDrag(evt) {}
 
   onDragEnd(evt) {
-    disconnect(evt.hand, "position", this.draggedProp, "update");
+    disconnect(evt.hand, "update", this.draggedProp, "update");
     this.draggedProp.applyToTarget(evt);
   }
 

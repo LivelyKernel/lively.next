@@ -586,7 +586,6 @@ export class World extends Morph {
     this.setProperty("scroll", pt(docEl.scrollLeft, docEl.scrollTop));
     this._cachedWindowBounds = null;
     this.updateVisibleWindowMorphs(evt);
-    this.onMouseMove(evt);
   }
 
   async onWindowResize(evt) {
@@ -952,6 +951,7 @@ export class Hand extends Morph {
 
   static get properties() {
     return {
+      hasFixedPosition: { defaultValue: true },
       fill: {defaultValue: Color.orange},
       extent: {defaultValue: pt(1,1)},
       reactsToPointer: {defaultValue: false},
@@ -993,7 +993,7 @@ export class Hand extends Morph {
   morphsContainingPoint(point, list) { return list }
 
   update(evt) {
-    this.position = evt.position;
+    this.position = evt.position.subXY(window.scrollX, window.scrollY);
   }
 
   async cancelGrab(animate = true, causingEvent) {
@@ -1043,7 +1043,7 @@ export class Hand extends Morph {
     });
   }
 
-  findDropTarget(position = this.position, grabbedMorphs, optFilterFn) {
+  findDropTarget(position = this.globalPosition, grabbedMorphs = this.grabbedMorphs, optFilterFn) {
     let morphs = this.world().morphsContainingPoint(position),
         filterFn = typeof optFilterFn === "function"
           ? (m, i) =>

@@ -876,13 +876,13 @@ class GrabHaloItem extends HaloItem {
     let {hand, halo, prevDropTarget} = this,
         world = hand.world(),
         dropTarget = hand.findDropTarget(
-          hand.position,
+          hand.globalPosition,
           [halo.target],
           morph => {
             let res =  !morph.isHaloItem && !morph.ownerChain().some(m => m.isHaloItem || !m.visible || m.opacity == 0);
             return res;
           });
-
+    dropTarget = this.adjustTarget(dropTarget, hand.globalPosition);
     halo.toggleMorphHighlighter(dropTarget && dropTarget != world, dropTarget, true);
     if (prevDropTarget && prevDropTarget != dropTarget)
       halo.toggleMorphHighlighter(false, prevDropTarget);
@@ -905,9 +905,10 @@ class GrabHaloItem extends HaloItem {
     let {halo, prevDropTarget} = this,
         undo = halo.target.undoInProgress,
         dropTarget = evt.hand.findDropTarget(
-          evt.hand.position,
+          evt.hand.globalPosition,
           [halo.target],
           m => !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem));
+    dropTarget = this.adjustTarget(dropTarget, evt.hand.globalPosition);
     disconnect(evt.hand, 'update', this, 'update');
     MorphHighlighter.interceptDrop(halo, dropTarget, halo.target);
     undo.addTarget(dropTarget);
@@ -1208,7 +1209,7 @@ class CopyHaloItem extends HaloItem {
   stop(hand) {
     var {halo} = this,
         dropTarget = hand.findDropTarget(
-          hand.position,
+          hand.globalPosition,
           [halo.target],
           m => !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem)),
         undo = halo.target.undoInProgress;
@@ -1701,7 +1702,8 @@ export class InteractiveMorphSelector {
     this.scanForTargetAt(this.world.firstHand.position);
   }
 
-  scanForTargetAt(pos) {
+  scanForTargetAt() {
+    let pos = this.world.firstHand.globalPosition;
     this.selectorMorph.center = pos;
     var target = this.selectorMorph.morphBeneath(pos), hiddenMorph;
     let {possibleTarget, controllingMorph, filterFn, world, morphHighlighter} = this;
