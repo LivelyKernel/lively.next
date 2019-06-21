@@ -364,8 +364,8 @@ export default class TextRenderer {
         height: morph.height + 'px'
       }
     }, [h('div', {style: {
-      width: Math.max(morph.document.width, morph.width) + 'px',
-      height: Math.max(morph.document.height, morph.height) + 'px' }})]);
+      width: Math.max(morph.document.width, morph.width) - morph.scrollbarOffset.x + 'px',
+      height: Math.max(morph.document.height, morph.height) - morph.scrollbarOffset.y + 'px' }})]);
 
     textLayer.properties.className += " actual";
     textLayer.properties.style.overflow = morph.clipMode === 'visible' ? 'visible' : 'hidden';
