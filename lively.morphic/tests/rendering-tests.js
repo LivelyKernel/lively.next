@@ -154,10 +154,14 @@ describe("rendering", function () {
 
       world.submorphs = [
         {position: pt(  0, 0), extent: pt(100,100),
-         submorphs: [{position: pt(75,75), extent: pt(125,125)}], fill: Color.blue, clipMode: "auto", scroll: pt(50,50)},
+         submorphs: [{position: pt(75,75), extent: pt(125,125)}],
+         fill: Color.blue, clipMode: "auto", scroll: pt(50,50)},
         {position: pt(100, 0), extent: pt(100,100),
-         submorphs: [{position: pt(75,75), extent: pt(125,125)}], fill: Color.green, clipMode: "auto", scroll: pt(50,50)}];
+         submorphs: [{position: pt(75,75), extent: pt(125,125)}],
+         fill: Color.green, clipMode: "auto", scroll: pt(50,50)}];
       var [m1, m2] = world.submorphs;
+      await world.whenRendered();
+      m1.scroll = m2.scroll = pt(50,50); // this is wrong
       await promise.delay(50);
 
       var node1 = env.renderer.getNodeForMorph(m1);
@@ -168,7 +172,7 @@ describe("rendering", function () {
       expect(node2.scrollTop).equals(50, "m2 scrollTop after setup");
       
       m1.bringToFront()
-      await promise.delay(50);
+      await promise.delay(500);
       var node1 = env.renderer.getNodeForMorph(m1);
       expect(node1.scrollLeft).equals(50, "m1 scrollLeft 1");
       expect(node1.scrollTop).equals(50, "m1 scrollTop 1");

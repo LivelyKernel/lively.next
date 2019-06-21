@@ -193,8 +193,8 @@ describe("changes", function () {
           a2 = {fill: Color.green, extent: pt(50,50)};
       q.registerAnimation(a1);
       q.registerAnimation(a2);
-      expect(new PropertyAnimation(null, m, a1).equals(new PropertyAnimation(null, m, a2))).to.be.true;
       expect(q.animations.length).equals(1);
+      expect(new PropertyAnimation(null, m, a1).equals(new PropertyAnimation(null, m, a2))).to.be.true;
     })
     
     it("does not enqueue animations that have no effect", () => {

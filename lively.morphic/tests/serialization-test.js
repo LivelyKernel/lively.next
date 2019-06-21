@@ -81,7 +81,7 @@ describe("morph serialization", function() {
       let m1 = new c1();
       m1.foo = new c2();
 
-      let snap = await createMorphSnapshot(m1)
+      let snap = await createMorphSnapshot(m1, { addPreview: false })
       expect(snap.packages["local://lively-object-modules/"]).to.have.keys("MorphA", "MorphB");
     });
 
@@ -98,7 +98,7 @@ describe("morph serialization", function() {
 
         c1 = await p1.ensureObjectClass(Morph), obj = new c1();
 
-        snap1 = await createMorphSnapshot(obj);
+        snap1 = await createMorphSnapshot(obj, { addPreview: false });
 
         await p1.objectModule.systemModule.changeSource(`
           import { Morph } from "lively.morphic";
@@ -106,7 +106,7 @@ describe("morph serialization", function() {
         var config = await p1.resource("package.json").readJson();
         p1.systemPackage.updateConfig({...config, version: "0.2.0"});
 
-        snap2 = await createMorphSnapshot(obj)
+        snap2 = await createMorphSnapshot(obj, { addPreview: false })
 
         await p1.objectModule.systemModule.changeSource(`
           import { Morph } from "lively.morphic";
@@ -114,7 +114,7 @@ describe("morph serialization", function() {
         var config = await p1.resource("package.json").readJson();
         p1.systemPackage.updateConfig({...config, version: "0.3.0"});
 
-        snap3 = await createMorphSnapshot(obj)
+        snap3 = await createMorphSnapshot(obj, { addPreview: false })
 
       });
 

@@ -30,7 +30,7 @@ describe("label", function() {
     var l = new Label({textString: "foo", fontSize: 20, fontMetric});
     expect(l.render(env.renderer).children[0]).containSubset({
       properties: {style: {}},
-      children: [{text: "foo"}]
+      children: [{children: [{text: "foo"}] }]
     });
   });
 
@@ -42,11 +42,13 @@ describe("label", function() {
       fontSize: 20, fontMetric
     });
     expect(l.render(env.renderer).children).containSubset([{
-      properties: {style: {fontSize: "11px",}},
-      children: [{text: "foo"}]
+      children: [{
+        properties: {style: {fontSize: "11px"}},
+        children: [{text: "foo"}] }]
     }, {
-      properties: {style: {fontSize: "12px",}},
-      children: [{text: "bar"}]
+      children: [{
+        properties: {style: {fontSize: "12px",}},
+        children: [{text: "bar"}] }]
     }]);
   });
 

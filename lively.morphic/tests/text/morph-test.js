@@ -766,9 +766,10 @@ describeInBrowser("morph inside textAndAttributes", () => {
     expect(m.position).equals(sut.charBoundsFromTextPosition({column: 0, row: 1}).topLeft());
   })
 
-  it("layout is updated on morph resize", () => {
+  it("layout is updated on morph resize", async () => {
     sut.insertText([m, null, "\n", null], {column: 0, row: 1});
     m.resizeBy(pt(100,100));
+    await m.whenRendered(); // instead of having to wait for a render pass, make the text morph inject a synchronous forced render and remeasure in order to allow the code to continue with synchronously with the propert values
     expect(m.extent).equals(sut.charBoundsFromTextPosition({column: 0, row: 1}).extent());
   })
 
