@@ -1,5 +1,6 @@
-import { Color } from "lively.graphics";
+import { Color, pt } from "lively.graphics";
 import { Morph, StyleSheet, Label, HorizontalLayout, config } from "./index.js";
+import { connect } from "lively.bindings";
 
 export class TooltipViewer {
 
@@ -57,12 +58,18 @@ export class TooltipViewer {
     clearTimeout(this.timer);
   }
 
+  clearCurrentTooltip() {
+    let current = this.currentTooltip;
+    if (current) current.remove();
+  }
+
   showTooltipFor(morph, hand) {
     if (!morph.tooltip || !morph.world()) return;
-    this.currentTooltip && this.currentTooltip.remove();
+    this.clearCurrentTooltip();
     var position = hand ? hand.position.addXY(10,7) : morph.globalBounds().bottomRight();
     this.currentTooltip = new Tooltip({position, description: morph.tooltip});
     morph.world().addMorph(this.currentTooltip);
+    this.currentTooltip.update(morph);
   }
 
 }
@@ -86,6 +93,9 @@ export class Tooltip extends Morph {
 
   static get properties() {
     return {
+      hasFixedPosition: { defaultValue: true },
+      reactsToPointer: { defaultValue: false },
+      isEpiMorph: { defaultValue: true },
       description: {
         after: ['submorphs'],
         derived: true,
@@ -111,8 +121,12 @@ export class Tooltip extends Morph {
     }
   }
 
+  update(target) {
+    this.position = target.globalBounds().bottomCenter().subPt(target.world().scroll).addPt(pt(0,7));
+  }
+
   async softRemove(cb) {
-    await this.animate({opacity: 0});
+    await this.animate({opacity: 0, duration: 300 });
     cb && cb(this);
     this.remove();
   }
