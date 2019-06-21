@@ -1,5 +1,4 @@
 var config = {
-
   server: {
     port: 9011,
     hostname: "0.0.0.0",
@@ -10,7 +9,6 @@ var config = {
       "lively.server/plugins/eval.js",
       "lively.server/plugins/l2l.js",
       "lively.server/plugins/lib-lookup.js",
-      "lively.server/plugins/moduleBundler.js",
       "lively.server/plugins/proxy.js",
       "lively.server/plugins/remote-shell.js",
       "lively.server/plugins/socketio.js",
