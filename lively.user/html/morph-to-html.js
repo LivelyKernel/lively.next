@@ -1,4 +1,4 @@
-/*global System*/
+/*global System */
 import { resource } from "lively.resources";
 import { morphicStyles } from "lively.morphic/rendering/html-generator.js";
 
@@ -25,7 +25,7 @@ function setupForHTMLPage() {
 
   let UserRegistry = lively.user.UserRegistry,
       ClientUser = lively.user.ClientUser,
-      authServerURL = "https://auth.lively-next.org", overlay, resolve, reject,
+      authServerURL = window.__AUTH_SERVER_URL__, overlay, resolve, reject,
       loginWidget = document.querySelector(".html-login-widget"),
       registerWidget = document.querySelector(".html-register-widget")
 

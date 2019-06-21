@@ -18,7 +18,8 @@ p.resetHTMLCache();
 
 export default class WorldLoadingPlugin {
 
-  constructor() {
+  constructor(config) {
+    this.authServerURL = config.authServerURL;
     this.resetHTMLCache();
   }
   setOptions({route} = {}) {}
@@ -141,7 +142,10 @@ export default class WorldLoadingPlugin {
       let parsedUrl = parseUrl(url, true),
           [_, worldName] = parsedUrl.pathname.match(/^\/worlds\/?(.*)/),
           htmlFile = worldName ? "morphic.html" : "static-world-listing.html",
-          html = (useCache && this.cachedHTML[htmlFile]) || (this.cachedHTML[htmlFile] = await this.readFile(htmlFile));
+          html = (useCache && this.cachedHTML[htmlFile]) || 
+                 (this.cachedHTML[htmlFile] = (await this.readFile(htmlFile)).replace('<!--AUTH_SERVER_URL-->', 
+                                                                                      `<script> window.__AUTH_SERVER_URL__ = "${this.authServerURL}"; </script>`));
+          
       if (worldName) {
         let withMeta = `${htmlFile}-for-${worldName}`;
         html = (useCache && this.cachedHTML[withMeta]) || (this.cachedHTML[withMeta] = this.addMeta(html, worldName, parsedUrl));

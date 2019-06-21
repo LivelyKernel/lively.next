@@ -1,5 +1,5 @@
 (function setupForHTMLPage() {
-    let UserRegistry = lively.user.UserRegistry, ClientUser = lively.user.ClientUser, authServerURL = "https://auth.lively-next.org", overlay, resolve, reject, loginWidget = document.querySelector(".html-login-widget"), registerWidget = document.querySelector(".html-register-widget");
+    let UserRegistry = lively.user.UserRegistry, ClientUser = lively.user.ClientUser, authServerURL = window.__AUTH_SERVER_URL__, overlay, resolve, reject, loginWidget = document.querySelector(".html-login-widget"), registerWidget = document.querySelector(".html-register-widget");
     lively.user.html = { openUserUI: openUserUI };
     return;
     function openUserUI() {
@@ -67,7 +67,7 @@
       loginWidget.querySelector(".user-name-input").focus();
     }
     async function continueAsGuest() {
-      let reg = UserRegistry.current, stored = reg.loadUserFromLocalStorage(authServerURL), user = (stored && stored.isGuestUser) ? stored : await reg.login(ClientUser.guest);
+      let reg = UserRegistry.current, stored = reg.loadUserFromLocalStorage(authServerURL), user = stored.isGuestUser ? stored : await reg.login(ClientUser.guest);
       resolveWithUser(user);
     }
     function setupRegisterWidget() {
