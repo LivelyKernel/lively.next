@@ -16,6 +16,7 @@ var config = {
       "lively.server/plugins/world-loading.js",
       "lively.server/plugins/file-upload.js",
       "lively.server/plugins/objectdb.js",
+      "lively.server/plugins/pdf-printer.js",
       "lively.server/plugins/subserver.js",
       "lively.headless/subserver.js",
       "lively.freezer/server.js"
