@@ -33,7 +33,11 @@ export class ListItemMorph extends Label {
       },
       itemIndex:             {defaultValue: undefined},
       selectionFontColor:    {isStyleProp: true, defaultValue: Color.white},
-      selectionColor:        {isStyleProp: true, defaultValue: Color.blue},
+      selectionColor: {
+        type: 'ColorGradient',
+        isStyleProp: true,
+        defaultValue: Color.blue
+      },
       nonSelectionFontColor: {isStyleProp: true, defaultValue: Color.rgbHex("333")},
       fontColor: {
         derived: true,
@@ -86,7 +90,10 @@ export class ListItemMorph extends Label {
       this.extent = pt(width, height);
     }
 
-    if (itemMorph) this.addMorph(itemMorph);
+    if (itemMorph) {
+      this.submorphs = [itemMorph];
+      itemMorph.position = pt(0,0);
+    }
     else if (this.submorphs.length) this.submorphs = [];
 
     this.isSelected = isSelected;
@@ -132,7 +139,7 @@ class ListScroller extends Morph {
       }
     }
   }
-  
+
   onScroll(evt) { return this.owner.update(); }
   onMouseDown(evt) { return this.owner.clickOnItem(evt); }
 }
@@ -301,7 +308,6 @@ export class List extends Morph {
     return new StyleSheet({
       ".List.dark": {
         hideScrollbars: true,
-        padding: Rectangle.inset(2, 2, 0, 0),
         fontFamily: "Monaco, monospace",
         selectionColor: Color.gray.lighter(),
         selectionFontColor: Color.black,
@@ -313,9 +319,6 @@ export class List extends Morph {
       ".List.dark .ListItemMorph": {
         selectionFontColor: Color.black,
         nonSelectionFontColor: Color.gray,
-      },
-      ".List.default": {
-        padding: Rectangle.inset(2, 2, 0, 0)
       }
     });
   }
@@ -328,7 +331,11 @@ export class List extends Morph {
       clipMode:        {defaultValue: 'hidden'},
 
       selectionFontColor:    {isStyleProp: true, defaultValue: Color.white},
-      selectionColor:        {isStyleProp: true, defaultValue: Color.blue},
+      selectionColor: {
+        type: 'ColorGradient',
+        isStyleProp: true,
+        defaultValue: Color.blue
+      },
       nonSelectionFontColor: {isStyleProp: true, defaultValue: Color.rgbHex("333")},
       fontColor:             {isStyleProp: true, defaultValue: Color.rgbHex("333")},
 
@@ -381,7 +388,7 @@ export class List extends Morph {
 
       padding: {
         isStyleProp: true,
-        defaultValue: Rectangle.inset(3)
+        defaultValue: Rectangle.inset(3),
       },
 
       itemBorderRadius: {
@@ -540,7 +547,7 @@ export class List extends Morph {
   initializeSubmorphs(submorphs) {
     let container, scroller;
     submorphs = submorphs || this.submorphs || [];
-    if (!this.submorphs) this.submorphs = submorphs;
+    this.submorphs = submorphs;
     for (let i = 0; i < submorphs.length; i++) {
       switch (submorphs[i].name) {
         case "listItemContainer": container = submorphs[i]; continue;
@@ -553,7 +560,7 @@ export class List extends Morph {
       }));
     if (!container) this.addMorph({
       name: "listItemContainer", fill: Color.transparent,
-      halosEnabled: false,
+      halosEnabled: false, // renderOnGPU: true,
       reactsToPointer: false,
       acceptsDrops: false, draggable: false
     });
@@ -573,7 +580,9 @@ export class List extends Morph {
   }
 
   clickOnItem(evt) {
-    let item = this.listItemContainer.morphsContainingPoint(evt.positionIn(this.world()).subPt(this.scroll))[0];
+    let items = this.listItemContainer
+                   .morphsContainingPoint(evt.positionIn(this.world()).subPt(this.scroll));
+    let item = items.find(m => m.isListItem) || items[0];
     var {state: {clickCount}} = evt,
         method = clickCount === 2 ? "onItemMorphDoubleClicked" : "onItemMorphClicked";
     this[method](evt, item);
@@ -754,6 +763,7 @@ export class List extends Morph {
     if (itemBounds.top() < visibleBounds.top())
       offsetY = itemBounds.top() - visibleBounds.top();
     this.itemScroll = itemScroll.addXY(offsetX, offsetY);
+    this.update();
   }
 
   onItemMorphDoubleClicked(evt, itemMorph) {}
@@ -842,7 +852,6 @@ export class FilterableList extends Morph {
     return new StyleSheet({
       ".FilterableList.dark [name=input]": {
         borderWidth: 0,
-        borderRadius: 20,
         fill: Color.gray.withA(0.8),
         fontColor: Color.gray.darker(),
         padding: rect(10, 2)
@@ -916,7 +925,6 @@ export class FilterableList extends Morph {
       fontFamily: {
         isStyleProp: true,
         derived: true, after: ["submorphs"],
-        defaultValue: "Helvetica Neue, Arial, sans-serif",
         get() { return this.listMorph.fontFamily; },
         set(val) {
           this.listMorph.fontFamily = val;
@@ -927,7 +935,6 @@ export class FilterableList extends Morph {
       padding: {
         isStyleProp: true,
         derived: true, after: ["submorphs"],
-        defaultValue: Rectangle.inset(2,0),
         get() { return this.listMorph.padding; },
         set(val) {
           this.listMorph.padding = val;
@@ -938,11 +945,10 @@ export class FilterableList extends Morph {
       fontSize: {
         isStyleProp: true,
         group: "styling",
-        derived: true, after: ["submorphs"], defaultValue: 11,
+        derived: true, after: ["submorphs"],
         get() { return this.listMorph.fontSize; },
         set(val) {
           this.listMorph.fontSize = val;
-          this.inputMorph.fontSize = val;
         }
       },
 
@@ -956,7 +962,6 @@ export class FilterableList extends Morph {
       inputPadding: {
         isStyleProp: true,
         derived: true, after: ["submorphs", "padding"],
-        defaultValue: Rectangle.inset(2),
         get() { return this.inputMorph.padding; },
         set(val) { this.inputMorph.padding = val; }
       },
@@ -1112,7 +1117,7 @@ export class FilterableList extends Morph {
     connect(this.listMorph, "selection", this, "selectionChanged");
     connect(this.listMorph, "onItemMorphDoubleClicked", this, "acceptInput");
     this.updateFilter();
-    this.layout = new CustomLayout({relayout: () => this.relayout()});
+    connect(this, 'extent', this, 'relayout');
   }
 
   resetConnections() {
@@ -1472,13 +1477,6 @@ export class DropDownList extends Button {
       {keys: "Enter", command: "accept"},
       {keys: "Escape|Ctrl-G", command: "cancel"}
     ]);
-  }
-
-  relayout() {
-    super.relayout();
-    let targetWidth = this.width - 20;
-    if (this.labelMorph.width != targetWidth)
-      this.labelMorph.width = targetWidth;
   }
 
 }
