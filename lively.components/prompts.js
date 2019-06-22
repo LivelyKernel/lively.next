@@ -737,7 +737,8 @@ export class ListPrompt extends AbstractPrompt {
         derived: true,
         after: ['submorphs'],
         set(items) {
-          this.getSubmorphNamed('list').items = items || [];
+          if (this.submorphs.length > 0)
+            this.getSubmorphNamed('list').items = items || [];
         }
       },
       preselect: {
@@ -883,6 +884,8 @@ export class EditListPrompt extends ListPrompt {
 
   build(props) {
     super.build(props);
+
+    this.getSubmorphNamed('list').items = props.items;
 
     var addBtn = this.addMorph({
           type: 'button',
