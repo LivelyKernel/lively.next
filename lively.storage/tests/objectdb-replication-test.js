@@ -74,9 +74,9 @@ describe("replication", function() {
     await replication.waitForIt();
 
     let commitReplicated = lively.lang.arr.uniq((await pouchDBForCommits.getAll()).map(ci => ci.name || ci._id)).sort();
-    expect(commitReplicated).equals(["_design/nameAndTimestamp_index", "_design/nameTypeFilter", "_design/nameWithMaxMinTimestamp_index", "_design/name_index", world2.name]);
+    expect(commitReplicated).equals(['_design/conflict_index', "_design/nameAndTimestamp_index", "_design/nameTypeFilter", "_design/nameWithMaxMinTimestamp_index", "_design/name_index", world2.name]);
     let histReplicated = lively.lang.arr.uniq((await pouchDBForHist.getAll()).map(ci => ci._id)).sort()
-    expect(histReplicated).equals(["_design/nameTypeFilter", `world/${world2.name}`]);
+    expect(histReplicated).equals(['_design/conflict_index', "_design/nameTypeFilter", `world/${world2.name}`]);
 
     let root = objectDB.snapshotLocation,
         expectedPaths = (await pouchDBForCommits.getAll()).filter(ea => !ea._id.startsWith("_")).map(ea => ea.content.slice(0,2) + "/").sort(),

@@ -6,7 +6,7 @@ import { Database } from "lively.storage";
 let dbOpts = (function() {
   let opts = {adapter: "memory"};
   try {
-    let db = new Database._PouchDB("adapter-tester")
+    let db = new Database.PouchDB("adapter-tester")
     db.destroy();
     return {adapter: db.adapter};
   } catch (e) { return {adapter: "memory"}; }
@@ -161,6 +161,14 @@ describe("database replication", () => {
   beforeEach(() => {
     db1 = Database.ensureDB("lively.storage-replication-test-1", dbOpts);
     db2 = Database.ensureDB("lively.storage-replication-test-2", dbOpts);
+    db1.addDesignDoc({
+      name: 'conflict_index',
+      mapFn: `function(doc) { if (doc._conflicts) emit(doc._id); }`
+    });
+    db2.addDesignDoc({
+      name: 'conflict_index',
+      mapFn: `function(doc) { if (doc._conflicts) emit(doc._id); }`
+    });
   });
 
   afterEach(async () => {
