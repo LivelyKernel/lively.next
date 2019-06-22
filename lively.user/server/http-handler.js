@@ -24,7 +24,7 @@ let routes = [
 
       let userDB = UserDB.ensureDB(server.options.userdb, {}),
           user = await userDB.getUserNamed(data.name);
-      if (!user) return fail(`no user "${data.name}"`, true);
+      if (!user) return fail(`No user "${data.name}"`, true);
       if (!user.checkPassword(data.password))
         return fail(`password for "${data.name}" does not match`, true);
 
@@ -97,7 +97,7 @@ let routes = [
 
       let userDB = UserDB.ensureDB(server.options.userdb, {}),
           user = await userDB.getUserNamed(name);
-      if (!user) return fail(`no user ${name}`, true);
+      if (!user) return fail(`No user ${name}`, true);
       success({status: user.checkPassword(password)});
     }
   },
@@ -119,7 +119,7 @@ let routes = [
 
       let userDB = UserDB.ensureDB(server.options.userdb, {}),
           user = await userDB.getUserNamed(decoded.name);
-      if (!user) return fail(`no user ${data.name}`);
+      if (!user) return fail(`No user ${data.name}`);
 
       try { user.modify(data.changes); }
       catch (err) { return fail(`User change failure: `, err.message, true); }

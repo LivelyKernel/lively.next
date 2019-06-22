@@ -1,7 +1,7 @@
 /*global describe,System,beforeEach,afterEach,it,before,after,xdescribe*/
 import { expect } from "mocha-es6";
 import ServerUser from "../server/user.js";
-import ClientUser from "../client/user.js";
+import { User as ClientUser } from "../client/user.js";
 import { start } from "../server/server.js";
 import UserDB from "../server/user-db.js";
 import { verify } from "../server/jwt.js";
@@ -42,7 +42,7 @@ describe("client user", function () {
       let serverUser = await userDB.createUser({name: "test user", password: "foo"});
       let user = ClientUser.named("test user", url);
       let answer = await user.register("foo")
-      expect(answer).deep.equals({error: "/register failed, A user with the name \"test user\" is already registered!"});
+      expect(answer).deep.equals({error: "A user with the name \"test user\" is already registered!"});
       expect(user.isLoggedIn()).equals(false);
       expect(user.token).equals(null);
     });
@@ -62,7 +62,7 @@ describe("client user", function () {
     it("non exisiting user", async () => {
       let user = ClientUser.named("test user 2", url),
           answer = await user.login("foo");
-      expect(answer).deep.equals({error: "/login failed, no user \"test user 2\""});
+      expect(answer).deep.equals({error: "No user \"test user 2\""});
       expect(user.isLoggedIn()).equals(false);
       expect(user.token).equals(null);
     });

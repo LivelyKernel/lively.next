@@ -72,7 +72,7 @@ describe("auth server", function () {
     it("with non-existing users", async () => {
       var {data, statusCode} = await req("/login", "POST", {name: "foo", password: "bar"});
       expect(statusCode).equals(400, "1");
-      expect(data).deep.equals({error: `no user "foo"`});
+      expect(data).deep.equals({error: `No user "foo"`});
     });
 
     it("with wrong password", async () => {
