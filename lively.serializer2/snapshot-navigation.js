@@ -1,7 +1,8 @@
 /*global alert*/
-import ClassHelper from "./class-helper.js";
-import { Path, arr, graph } from "lively.lang";
+import ClassHelper, { locateClass } from "./class-helper.js";
+import { Path, obj, arr, graph } from "lively.lang";
 import ExpressionSerializer from "./plugins/expression-serializer.js";
+import { Morph } from "lively.morphic";
 
 export function referenceGraph(snapshot) {
   let ids = Object.keys(snapshot), g = {};
@@ -12,13 +13,17 @@ export function referenceGraph(snapshot) {
 
 export function isReference(value) { return value && value.__ref__; }
 
+export function referencesOfRef(ref, withPath) {
+  return referencesOfId({[ref.id]: ref.currentSnapshot}, ref.id, withPath);
+}
+
 export function referencesOfId(snapshot, id, withPath) {
   // all the ids an regObj (given by id) points to
   let ref = snapshot[id], result = [];
   for (var key in ref.props) {
     let {value, verbatim} = ref.props[key] || {};
     if (Array.isArray(value)) {
-      result.push(...referencesInArray(snapshot, value, withPath && key));
+      result.push(...referencesInArray(value, withPath && key));
       continue;
     };
     if (verbatim || !value || !isReference(value)) continue;
@@ -29,7 +34,7 @@ export function referencesOfId(snapshot, id, withPath) {
   if (ref.hasOwnProperty("entries")) {
     for (let i = 0; i < ref.entries.length; i++) {
       let entry = ref.entries[i];
-      if (Array.isArray(entry)) { result.push(...referencesInArray(snapshot, entry, withPath && entry)); continue; }
+      if (Array.isArray(entry)) { result.push(...referencesInArray(entry, withPath && entry)); continue; }
       else if (!entry || !isReference(entry)) {}
       else result.push(withPath ? {key: entry, id: entry.id} : entry.id);
     }
@@ -38,14 +43,14 @@ export function referencesOfId(snapshot, id, withPath) {
 }
 
 
-function referencesInArray(snapshot, arr, optPath) {
+function referencesInArray(arr, optPath) {
   // helper for referencesOfId
   var result = [];
   for (let i = 0; i < arr.length; i++) {
     let value = arr[i];
     if (Array.isArray(value)) {
       let path = optPath ? optPath + '[' + i + ']' : undefined;
-      result.push(...referencesInArray(snapshot, value, path));
+      result.push(...referencesInArray(value, path));
       continue;
     };
     if (!value || !isReference(value)) continue;
@@ -199,7 +204,13 @@ export function modifyProperty(snapshot, objId, pathToProperty, modifyFn) {
 
 export function removeUnreachableObjects(rootIds, snapshot) {
   let idsToRemove = arr.withoutAll(Object.keys(snapshot), rootIds),
-      refGraph = referenceGraph(snapshot);
+      garbageCollectedConnections = idsToRemove.filter(id => {
+        if (classNameOfId(snapshot, id) === 'AttributeConnection') {
+          return snapshot[id].props.garbageCollect.value;
+        }
+      }),
+      refGraph = referenceGraph(obj.dissoc({...snapshot}, garbageCollectedConnections));
+  
   rootIds.forEach(rootId => {
     let subGraph = graph.subgraphReachableBy(refGraph, rootId);
     for (let i = idsToRemove.length; i--; ) {
@@ -209,9 +220,21 @@ export function removeUnreachableObjects(rootIds, snapshot) {
   });
 
   idsToRemove.forEach(id => delete snapshot[id]);
+  clearDanglingConnections(snapshot);
   return idsToRemove;
 }
 
+function clearDanglingConnections(snapshot) {
+  for (let id in snapshot) {
+    if (classNameOfId(snapshot, id) === 'AttributeConnection') {
+       let objSnap = snapshot[id];
+       if (snapshot[objSnap.props.targetObj.value.id]) continue;
+       let sourceObjSnap = snapshot[objSnap.props.sourceObj.value.id];
+       sourceObjSnap.props.attributeConnections.value = sourceObjSnap.props.attributeConnections.value.filter(ref => ref.id != id);
+       delete snapshot[id];
+    }
+  }
+}
 
 const defaultExprSerializer = new ExpressionSerializer();
 
