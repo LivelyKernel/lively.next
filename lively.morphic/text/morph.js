@@ -542,6 +542,9 @@ export class Text extends Morph {
       },
       lineHeight: {
         group: "text styling",
+        type: "Number",
+        min: 1,
+        isFloat: true,
         isStyleProp: true,
         isDefaultTextStyleProp: true,
         defaultValue: 1.4,
@@ -2955,6 +2958,8 @@ export class Text extends Morph {
     super.onFocus(evt);
     this.makeDirty();
     this.selection.cursorBlinkStart();
+    if (this._originalShadow) return;
+    this._originalShadow = this.dropShadow;
     this.highlightWhenFocused && this.animate({
       dropShadow: this.haloShadow || this.propertiesAndPropertySettings().properties.haloShadow.defaultValue,
       duration: 200
@@ -2965,9 +2970,10 @@ export class Text extends Morph {
     this.makeDirty();
     this.selection.cursorBlinkStop();
     this.highlightWhenFocused && this.animate({
-      dropShadow: null,
+      dropShadow: this._originalShadow || null,
       duration: 200
     });
+    this._originalShadow = null;
     super.onBlur(evt);
   }
   

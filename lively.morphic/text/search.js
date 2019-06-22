@@ -124,6 +124,7 @@ export class SearchWidget extends Morph {
       borderColor:  {defaultValue: Color.gray},
       borderRadius: {defaultValue: 3},
       fill:         {defaultValue: Color.black.withA(.6)},
+      epiMorph:     { defaultValue: true },
 
       target: {},
       state: {},

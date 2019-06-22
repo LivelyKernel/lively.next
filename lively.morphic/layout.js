@@ -1,5 +1,5 @@
 import { pt, Rectangle, rect } from "lively.graphics";
-import { arr, Closure, num, grid, obj } from "lively.lang";
+import { arr, properties, Closure, num, grid, obj } from "lively.lang";
 import {
   GridLayoutHalo, 
   ProportionalLayoutHalo,
@@ -37,8 +37,8 @@ class Layout {
     this.apply();
     this.refreshBoundsCache();
   }
-
-  copy() { return new this.constructor(this); }
+  
+  copy() { return new this.constructor(this) }
 
   description() { return "Describe the layout behavior here."; }
   name() { return "Name presented to the user."; }
@@ -200,10 +200,10 @@ class Layout {
   attachAnimated(duration = 0, container, easing) {
     if (this.active) return;
     this.container = container;
-    this.apply({duration, easing});
     this.active = true;
     container.layout = this;
     this.active = false;
+    this.lastAnim = { duration, easing };
   }
 
   apply(animated) {
@@ -234,7 +234,7 @@ export class CustomLayout extends Layout {
      this.active = true;
      if (!this.relayout) {
        this.relayout = Closure.fromSource(JSON.parse(this.layouterString),
-         this.varMapping).recreateFunc()
+         this.varMapping).recreateFunc();
      }
      try {
        this.relayout(this.container, animate);
@@ -1620,6 +1620,7 @@ export class GridLayout extends Layout {
       for (let g in groups) {
         let group = this.getCellGroupFor(this.container.getSubmorphNamed(g)),
             {resize, align = 'topLeft', alignedProperty = 'topLeft'} = groups[g];
+        if (!group) continue;
         if (resize != undefined) group.resize = resize
         group.align = align;
         group.alignedProperty = alignedProperty;

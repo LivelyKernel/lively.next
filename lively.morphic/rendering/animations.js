@@ -29,11 +29,12 @@ export const easings = {
   inOutQuad:   'cubic-bezier(0.455,  0.030, 0.515, 0.955)',
   inOutCubic:  'cubic-bezier(0.645,  0.045, 0.355, 1.000)',
   inOutQuart:  'cubic-bezier(0.770,  0.000, 0.175, 1.000)',
-  inOutQint:   'cubic-bezier(0.860,  0.000, 0.070, 1.000)',
+  inOutQuint:  'cubic-bezier(0.860,  0.000, 0.070, 1.000)',
   inOutSine:   'cubic-bezier(0.445,  0.050, 0.550, 0.950)',
   inOutExpo:   'cubic-bezier(1.000,  0.000, 0.000, 1.000)',
   inOutCirc:   'cubic-bezier(0.785,  0.135, 0.150, 0.860)',
-  inOutBack:   'cubic-bezier(0.680, -0.550, 0.265, 1.550)'
+  inOutBack:   'cubic-bezier(0.680, -0.550, 0.265, 1.550)',
+  linear:      'cubic-bezier(0.5, 0.5, 0.5, 0.5)'
 }
 
 function convertToSvgEasing(easing) {
@@ -74,7 +75,7 @@ export class AnimationQueue {
         if (mergeable = this.animations.find(a => a.canMerge(anim))) {
           mergeable.mergeWith(anim);
           return mergeable;
-        } else {
+        } else if (anim.affectsMorph) {
           anim.assignProps();
           this.animations.push(anim);
           return anim; 
@@ -202,7 +203,7 @@ export class PropertyAnimation {
   }
 
   get animatedProps() {
-    return obj.dissoc(this.config, ["easing", "onFinish", "duration"]);
+    return obj.dissoc(this.config, ["customTween", "easing", "onFinish", "duration"]);
   }
 
   get easing() {

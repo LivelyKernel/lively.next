@@ -1499,7 +1499,9 @@ export class Morph {
   }
 
   async fadeIntoWorld(pos=$world.visibleBounds().center(), duration=200) {
-      const w = new Morph({opacity: 0, scale: 0,
+      const w = new Morph({opacity: 0, scale: 0, 
+                           epiMorph: true,
+                           hasFixedPosition: true,
                            fill: Color.transparent}),
             world = this.env.world;
       w.openInWorld();
@@ -1508,7 +1510,10 @@ export class Morph {
       w.center = pos
       w.scale = .8;
       await w.animate({opacity: 1, scale: 1, duration});
+      let bounds = this.globalBounds();
       world.addMorph(this);
+      this.top = bounds.top();
+      this.left = bounds.left();
       w.remove();
       return this;
    }
@@ -2125,6 +2130,7 @@ export class Morph {
   onKeyUp(evt) {}
 
   onContextMenu(evt) {
+    // FIXME: if (lively.FreezerRuntime) return; // do not stop propagation if in freezer mode
     if (evt.targetMorph !== this) return;
     evt.stop();
     Promise
@@ -2507,7 +2513,7 @@ export class Morph {
       try {
           val = val.__serialize__(); // serializeble expressions
           if (asExpression) {
-            let exprId = newUUID();
+            let exprId = string.newUUID();
             nestedExpressions[exprId] = val;
             val = exprId;
           } else val = exprSerializer.exprStringEncode(val);
@@ -2543,7 +2549,7 @@ export class Morph {
              memberValue = memberValue.__serialize__();
              if (memberValue && memberValue.__expr__) {
                if (asExpression) {
-                 let uuid = newUUID();
+                 let uuid = string.newUUID();
                  nestedExpressions[uuid] = memberValue;
                  memberValue = uuid;
                } else memberValue = exprSerializer.exprStringEncode(memberValue)
