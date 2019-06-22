@@ -1045,6 +1045,7 @@ export class Hand extends Morph {
 
   findDropTarget(position = this.globalPosition, grabbedMorphs = this.grabbedMorphs, optFilterFn) {
     let morphs = this.world().morphsContainingPoint(position),
+        sortedTargets = arr.sortBy(morphs, m => [m, ...m.ownerChain()].find(m => Path('owner.isWorld').get(m) && m.hasFixedPosition) ? 0 : 1),
         filterFn = typeof optFilterFn === "function"
           ? (m, i) =>
               !this.isAncestorOf(m) &&
@@ -1053,7 +1054,7 @@ export class Hand extends Morph {
               optFilterFn(m, i)
           : m => !this.isAncestorOf(m) && m.acceptsDrops &&
             grabbedMorphs.every(ea => ea.wantsToBeDroppedOn(m));
-    return morphs.find(filterFn);
+    return sortedTargets.find(filterFn);
   }
 
 }
