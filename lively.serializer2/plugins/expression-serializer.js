@@ -32,6 +32,7 @@ export default class ExpressionSerializer {
         prefix = string.slice(0, idx),
         rest = string.slice(idx+1),
         bindings = {},
+        httpPlaceholder = `__HTTP_PLACEHOLDER__`,
         hasBindings = false;
 
     // 2. bindings?
@@ -39,7 +40,11 @@ export default class ExpressionSerializer {
       hasBindings = true;
       let importedVars = rest.slice(1,idx);
       rest = rest.slice(idx+2); // skip }:
-      idx = rest.indexOf(":"); // end of package
+      if (rest.includes('https:') && rest.indexOf('https:') < rest.indexOf(':')) {
+        rest = rest.replace('https:', httpPlaceholder);
+        idx = rest.indexOf(":") - httpPlaceholder.length + 'https:'.length;
+        rest = rest.replace(httpPlaceholder, 'https:');
+      } else idx = rest.indexOf(":") // end of package
       let from = rest.slice(0, idx),
           imports = importedVars.split(",")
             .filter(ea => Boolean(ea.trim()))
