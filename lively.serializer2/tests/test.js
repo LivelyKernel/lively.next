@@ -1,4 +1,4 @@
-/*global describe, it, beforeEach, afterEach*/
+/*global describe, it, beforeEach, afterEach,System*/
 import { expect, chai } from "mocha-es6";
 
 import { obj, arr } from "lively.lang";
@@ -212,7 +212,7 @@ describe("marshalling", () => {
           obj = {foo},
           {id, snapshot} = objPool.snapshotObject(obj);
       expect(snapshot).deep.equals(
-        {[id]: {rev: 0, props: {foo: {key: "foo", value: "__lv_expr__:foo()"}}}});
+        {[id]: {rev: 0, props: {foo: {value: "__lv_expr__:foo()"}}}});
       try {
         System.global.foo = () => foo;
         var obj2 = ObjectPool.resolveFromSnapshotAndId({id, snapshot}, objPool.options);
@@ -318,8 +318,8 @@ describe("marshalling", () => {
       }, {id} = objPool.add(obj2);
 
       expect(obj.values(objPool.snapshot())).containSubset([
-        {props: {other: {key: "other",value: []}}},
-        {props: {bar: {key: "bar", value: 99}}}
+        {props: {other: {value: []}}},
+        {props: {bar: {value: 99}}}
       ]);
 
       expect(serializationRoundtrip(obj2))
@@ -339,9 +339,9 @@ describe("marshalling", () => {
 
       var expected = [{
           rev: 0,
-          props: {other2: {key: "other2", value: {__ref__: true, id: otherId, rev: 0}}},
+          props: {other2: {value: {__ref__: true, id: otherId, rev: 0}}},
         },
-        {props: {zork: {key: "zork", value: 33}}, rev: 0}
+        {props: {zork: {value: 33}}, rev: 0}
       ]
 
       expect(obj.values(snapshot)).containSubset(expected);
@@ -384,7 +384,7 @@ describe("plugins", () => {
         }),
         s = ObjectPool.withObject(o, {plugins: [p]}).snapshot();
     expect(obj.values(s)).deep.equals([
-      {props: {bar: {key: "bar", value: 24}, foo: {key: "foo", value: 99}}, rev: 0}
+      {props: {bar: {value: 24}, foo: {value: 99}}, rev: 0}
     ]);
   });
   
@@ -394,7 +394,7 @@ describe("plugins", () => {
           propertiesToSerialize(pool, ref, snapshot, keysSoFar) { return ["bar"]; }
         }),
         s = ObjectPool.withObject(o, {plugins: [p]}).snapshot();
-    expect(obj.values(s)).deep.equals([{props: {bar: {key: "bar", value: 23}}, rev: 0}]);
+    expect(obj.values(s)).deep.equals([{props: {bar: {value: 23}}, rev: 0}]);
   });
 
   it("deserializeObject", () => {
@@ -498,10 +498,10 @@ console.profileEnd("s")
     lively.persistence.Serializer.copy(objs[0])
   }, 100);
 
-  var firstNewObj = objPool2.resolveToObj(objPool.ref(objs[0]).id)
+  var firstNewObj = objPool.resolveToObj(objPool.ref(objs[0]).id)
   expect(objs[0]).not.equals(firstNewObj)
   expect(objs[0]).deep.equals(firstNewObj)
-  expect(objs).deep.equals(objPool2.objects())
+  expect(objs).deep.equals(objPool.objects())
 
 
 }

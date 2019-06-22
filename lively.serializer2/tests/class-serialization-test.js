@@ -135,7 +135,7 @@ describe("class properties", () => {
     var {Foo} = System.get(testModule),
         instance = new Foo(),
         {id, snapshot} = serialize(new Foo());
-    expect(snapshot[id].props).deep.equals({bar: {key: "bar", value: 24}});
+    expect(snapshot[id].props).deep.equals({bar: {value: 24}});
     var instance2 = deserialize({id, snapshot});
     expect(instance2.foo).equals(23);
     expect(instance2.bar).equals(24);
