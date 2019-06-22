@@ -310,6 +310,13 @@ export class Slider extends Morph {
 export class ValueScrubber extends Text {
   static get properties() {
     return {
+      autofit: {
+        defaultValue: false,
+        set(v) {
+          this.fixedWidth = v;
+          this.setProperty('autofit', v);
+        }
+      },
       value: {defaultValue: 0},
       fill: {defaultValue: Color.transparent},
       draggable: {defaultValue: true},
@@ -322,28 +329,8 @@ export class ValueScrubber extends Text {
 
   relayout() {
     const d = 5;
-    this.fit();
-    if (this.width + d < this.textBounds().width) {
-      this.squeezeLabel(this.width + d);
-    } else if (this.width > this.textBounds().width) {
-      this.expandLabel(this.width);
-    }
-  }
-
-  squeezeLabel(len) {
-    if (this.fontSize < 11) return;
-    while (this.fontSize > 10 && this.textBounds().width > len) {
-      this.fontSize -= 2;
-      this.padding = this.padding.withY(this.padding.top() + 1);
-    }
-  }
-
-  expandLabel(len) {
-    if (this.fontSize > 13) return;
-    while (this.fontSize < 14 && this.textBounds().width < len) {
-      this.fontSize += 2;
-      this.padding = this.padding.withY(this.padding.top() - 1);
-    }
+    if (!this.autofit) return;
+    this.scale = Math.min(1, this.width / (this.textBounds().width + d));
   }
 
   onKeyDown(evt) {
@@ -378,8 +365,9 @@ export class ValueScrubber extends Text {
     const {scale, offset} = this.getScaleAndOffset(evt),
           v = this.getCurrentValue(offset, scale);
     signal(this, "scrub", v);
-    this.textString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
-    if (this.unit) this.textString += " " + this.unit;
+    let valueString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
+    if (this.unit) valueString += " " + this.unit;
+    this.replace(this.documentRange, valueString, false, this.autofit, false, false);
     this.factorLabel.description = scale.toFixed(3) + "x";
     this.factorLabel.position = evt.hand.position.addXY(10, 10);
     this.relayout();

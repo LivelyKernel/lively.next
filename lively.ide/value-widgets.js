@@ -471,6 +471,14 @@ export class NumberWidget extends Morph {
   static get properties() {
 
     return {
+      autofit: { 
+        defaultValue: true,
+        after: ['submorphs'],
+        set(active) {
+          this.getSubmorphNamed('value').autofit = !active;
+          this.setProperty('autofit', active);
+        }
+      },
       extent: {defaultValue: pt(55, 25)},
       number: {
         defaultValue: 0,
@@ -481,8 +489,22 @@ export class NumberWidget extends Morph {
       },
       min: {defaultValue: -Infinity},
       max: {defaultValue: Infinity},
-      floatingPoint: {defaultValue: false}, // infer that indirectly by looking at the floating point of the passed number value
-      padding: {isStyleProp: true, defaultValue: rect(5,3,0,0)},
+      floatingPoint: {
+        after: ['number'],
+        get() {
+           let m = /[+-]?([0-9]*[.])?[0-9]+/.exec(this.number);
+           return m && !!m[1];
+        }
+      }, // infer that indirectly by looking at the floating point of the passed number value
+      padding: {
+        isStyleProp: true, 
+        defaultValue: rect(5,3,0,0),
+        after: ['submorphs'],
+        set(p) {
+          this.setProperty('padding', p);
+          this.getSubmorphNamed('value').padding = p;
+        }
+      },
       baseFactor: {
         after: ["submorphs"],
         derived: true,
@@ -535,16 +557,6 @@ export class NumberWidget extends Morph {
           this.updateStyleSheet();
         }
       },
-      layout: {
-        initialize() {
-          this.layout = new GridLayout({
-            resizeSubmorphs: true,
-            columns: [1, {paddingLeft: 5, paddingRight: 0, fixed: 25}],
-            grid: [["value", "up"], ["value", "down"]]
-          });
-          this.update(this.number);
-        }
-      },
       submorphs: {
         after: ["number", "min", "max"],
         initialize() {
@@ -553,29 +565,30 @@ export class NumberWidget extends Morph {
               name: "value",
               value: this.number,
               floatingPoint: this.floatingPoint,
+              autofit: false,
               min: this.min,
               max: this.max
             }),
             {
               type: "button",
               name: "down", styleClasses: ["buttonStyle", "TreeLabel"],
-              padding: rect(4,1,0,-1),
+              padding: rect(4,3,0,-3),
+              extent: pt(5, 10),
               label: Icon.makeLabel("sort-asc", {
                 rotation: Math.PI,
                 autofit: false,
                 padding: rect(3,0,0,-8),
-                fixedHeight: true, extent: pt(8,8),
                 fontSize: 12
               }).fit()
             },
             {
               type: "button",
               name: "up", styleClasses: ["buttonStyle", "TreeLabel"],
-              padding: rect(4,0,0,2),
+              padding: rect(4,0,0,0),
+              extent: pt(5, 10),
               label: Icon.makeLabel("sort-asc", {
                 autofit: false,
-                padding: rect(0,0,0,-9),
-                fixedHeight: true, extent: pt(8,8),
+                padding: rect(3,0,0,-8),
                 fontSize: 12
               })
             }
@@ -630,10 +643,21 @@ export class NumberWidget extends Morph {
   }
 
   relayout(fromScrubber) {
-    if (!fromScrubber) this.get("value").value = this.number;
-    this.get("up").labelMorph.fit();
-    this.get("down").labelMorph.fit();
-    this.layout.col(0).width = this.get("value").textBounds().width;
+    let valueContainer = this.getSubmorphNamed("value");
+    let upButton = this.getSubmorphNamed('up');
+    let downButton = this.getSubmorphNamed('down');
+    if (this.autofit) {
+      if (!fromScrubber) valueContainer.value = this.number;
+      valueContainer.fit();
+      upButton.topLeft = pt(valueContainer.right, 0);
+      downButton.bottomLeft = pt(valueContainer.right, this.height);
+    } else {
+      valueContainer.width = this.width - 15;
+      upButton.topRight = pt(this.width + 2, 0);
+      downButton.bottomRight = pt(this.width + 2, this.height);
+      if (!fromScrubber) valueContainer.value = this.number;
+    }
+    valueContainer.leftCenter = this.innerBounds().leftCenter();
   }
 
   increment() {

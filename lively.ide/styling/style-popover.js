@@ -1036,7 +1036,7 @@ export class RectanglePopover extends StylePopover {
         submorphs: arr.flatten(
           ["top", "right", "bottom", "left"].map(side => {
             let widget = new NumberWidget({
-              name: side + " scrubber",
+              name: side + " scrubber", autofit: false,
               number: this.rectangle.partNamed(side)
             });
             connect(widget, "update", this, "rectangle", {
