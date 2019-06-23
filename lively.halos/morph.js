@@ -1,6 +1,6 @@
 /* global System */
 import {
-  Morph, StyleSheet, HorizontalLayout,
+  Morph, Label, StyleSheet, HorizontalLayout,
   Path,
   Text,
   GridLayout,
@@ -495,7 +495,7 @@ export default class Halo extends Morph {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // The thing at the top left of the halo that indicates currently changing
 // properties such as the position of the halo target
-class HaloPropertyDisplay extends Text {
+class HaloPropertyDisplay extends Label {
 
   static get morphName() { return "propertyDisplay"; }
   static get defaultPosition() { return pt(25,0); }
@@ -732,6 +732,7 @@ class NameHolder extends Morph {
   }
 
   update() {
+    if (this.nameHolder.textString === this.target.name) return;
     this.nameHolder.textString = this.target.name;
     this.whenRendered().then(() => this.nameHolder.fit());
   }
@@ -932,10 +933,11 @@ class GrabHaloItem extends HaloItem {
     var undo = halo.target.undoStart("grab-halo");
     undo && undo.addTarget(halo.target.owner);
     this.hand = hand;
-    halo.target.onGrab({hand, isShiftDown: () => false});
+    halo.target.onGrab({halo, hand, isShiftDown: () => false});
     halo.state.activeButton = this;
     this.opacity = .3;
-    connect(hand, 'update', this, 'update');
+    let c = connect(hand, 'update', this, 'update');
+    once(halo.target, 'remove', () => c.disconnect());
   }
 
   stop(evt) {
@@ -1042,8 +1044,8 @@ class InspectHaloItem extends HaloItem {
       var {default: Inspector} = await System.import("lively.ide/js/inspector.js"),
            existing = this.world().getSubmorphsByStyleClassName('Inspector')
                                   .find(i => i.targetObject == this.halo.target);
-      if (existing) {
-        let win = existing.getWindow();
+      var win;
+      if (existing && (win = existing.getWindow())) {
         win.minimized = false;
         win.animate({center: this.world().visibleBounds().center(), duration: 200})
       } else {
@@ -1217,7 +1219,7 @@ class CopyHaloItem extends HaloItem {
       world.addMorph(halo);
       halo.refocus(copies);
       hand.grab(halo.target);
-      halo.target.onGrab({hand, isShiftDown: () => false});
+      halo.target.onGrab({halo, hand, isShiftDown: () => false});
       positions.forEach((pos,i) => copies[i].globalPosition = pos);
       halo.alignWithTarget();
 
@@ -1280,6 +1282,7 @@ class CopyHaloItem extends HaloItem {
             ${document.querySelector("#lively-morphic-css").outerHTML}
           </head>
           <body>`;
+    
     halo.remove(); // we do not want to copy the halo
     try {
       for (let m of morphsToCopy) {
@@ -1612,6 +1615,7 @@ export class MorphHighlighter extends Morph {
       styleClasses: {defaultValue: ['inactive']},
       reactsToPointer: {defaultValue: false},
       halo: {},
+      epiMorph: { defaultValue: true },
       isHighlighter: {readOnly: true, defaultValue: true},
       highlightedSides: {
         defaultValue: [],
