@@ -9,7 +9,7 @@ import {
 } from "lively.morphic";
 import { createMorphSnapshot } from "lively.morphic/serialization.js";
 import { Color, pt, rect, Rectangle, LinearGradient } from "lively.graphics";
-import { obj, promise, properties, num, arr } from "lively.lang";
+import { obj, Path as PropertyPath, promise, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
 import { ConnectionHalo } from "lively.ide/fabrik.js";
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from "./drag-guides.js";
@@ -409,6 +409,10 @@ export default class Halo extends Morph {
   }
 
   toggleMorphHighlighter(active, target, showLayout = false) {
+    if (target.onHaloGrabover) {
+       target.onHaloGrabover(active);
+       return;
+    }
     const h = MorphHighlighter.for(this, target, showLayout);
     if (active && target && target != this.world()) h && h.show(target);
     else h && h.deactivate();
@@ -898,6 +902,13 @@ class GrabHaloItem extends HaloItem {
     };
   }
 
+  adjustTarget(target, pos) {
+    if (PropertyPath('owner.layout.autoResize').get(target)) {
+      if (!target.globalBounds().insetBy(10).containsPoint(pos)) target = target.owner;
+    }
+    return target;
+  }
+
   valueForPropertyDisplay() {
     let {hand, halo, prevDropTarget} = this,
         world = hand.world(),
@@ -905,8 +916,8 @@ class GrabHaloItem extends HaloItem {
           hand.globalPosition,
           [halo.target],
           morph => {
-            let res =  !morph.isHaloItem && !morph.ownerChain().some(m => m.isHaloItem || !m.visible || m.opacity == 0);
-            return res;
+            return !morph.isHaloItem && !morph.ownerChain().some(m => 
+              m.isHaloItem || !m.visible || m.opacity == 0);
           });
     dropTarget = this.adjustTarget(dropTarget, hand.globalPosition);
     halo.toggleMorphHighlighter(dropTarget && dropTarget != world, dropTarget, true);
