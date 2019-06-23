@@ -5,8 +5,7 @@ import { removeUnreachableObjects, clearDanglingConnections, replaceMorphsBySeri
 import { allPlugins } from "./plugins.js";
 import semver from 'semver';
 
-
-function normalizeOptions(options) {
+export function normalizeOptions(options) {
   options = {plugins: allPlugins, reinitializeIds: false, skipMigrations: true, ...options};
   if (options.reinitializeIds && typeof options.reinitializeIds !== "function")
     throw new Error(`serializer option 'reinitializeIds' needs to be a function(id, ref) => id`)
@@ -40,6 +39,7 @@ const majorAndMinorVersionRe = /\.[^\.]+$/; // x.y.z => x.y
 export { ObjectRef, ObjectPool } from "./object-pool.js";
 export { requiredModulesOfSnapshot, removeUnreachableObjects } from "./snapshot-navigation.js";
 
+
 export function serialize(obj, options) {
   options = normalizeOptions(options);
   let objPool = options.objPool || new ObjectPool(options),
@@ -47,7 +47,8 @@ export function serialize(obj, options) {
       snapshotAndId = objPool.snapshotObject(obj);
   // object hooks are allowed to modify the snapshot graph and remove
   // references. To only serialize what's needed we cleanup the graph after all
-  // hooks are done.
+  // hooks are done
+  if (options.extractMorphExpressions) replaceMorphsBySerializableExpressions(snapshotAndId.snapshot, objPool);
   removeUnreachableObjects([snapshotAndId.id], snapshotAndId.snapshot);
   clearDanglingConnections(snapshotAndId.snapshot);
   snapshotAndId.requiredVersion = requiredVersion;
