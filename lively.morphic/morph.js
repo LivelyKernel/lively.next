@@ -19,7 +19,7 @@ import { StylingVisitor } from "./sizzle.js";
 // optional lively.halos imports
 import {showAndSnapToGuides, removeSnapToGuidesOf} from "lively.halos/drag-guides.js";
 import { show } from "lively.halos";
-import { copy, ExpressionSerializer, getSerializableClassMeta } from "lively.serializer2";
+import { copy, deserializeSpec, ExpressionSerializer, getSerializableClassMeta, serializeSpec } from "lively.serializer2";
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -813,7 +813,7 @@ export class Morph {
 
   get env() { return this._env; }
 
-  spec() {
+  spec(skipUnchangedFromDefault = true) {
     let defaults = this.defaultProperties,
         properties = this.propertiesAndPropertySettings().properties,
         ignored = {submorphs: true},
@@ -824,13 +824,19 @@ export class Morph {
       if (
         descr.readOnly ||
         descr.derived ||
-        this[key] === defaults[key] ||
-        (this[key] && defaults[key] && typeof this[key].equals === "function" && this[key].equals(defaults[key])) ||
         (descr.hasOwnProperty("serialize") && !descr.serialize) ||
         key in ignored
       ) continue;
+      if (skipUnchangedFromDefault) {
+        if (this[key] === defaults[key] ||
+           (this[key] && defaults[key] && 
+            typeof this[key].equals === "function" && 
+            this[key].equals(defaults[key]))) {
+            continue;
+        }
+      }
       if (this[key] && this[key].isMorph) {
-        spec[key] = this[key].spec();
+        spec[key] = this[key].spec(skipUnchangedFromDefault);
         continue;
       }
       if (this[key] && key === 'layout') {
@@ -839,9 +845,7 @@ export class Morph {
       }
       spec[key] = this[key];
     }
-    if (this.submorphs.length) {
-      spec.submorphs = this.submorphs.map(ea => ea.spec());
-    }
+    spec.submorphs = this.submorphs.map(ea => ea.spec(skipUnchangedFromDefault));
     spec.type = this.constructor;
     return spec;
   }
@@ -2503,126 +2507,11 @@ export class Morph {
   // serialization
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  exportToJSON(options = {}) {
-    // quick hack to "snapshot" into JSON or serialized expression
-    var { keepFunctions = true, asExpression = false, root = true, nestedExpressions = {} } = options;
-    if (asExpression) keepFunctions = false;
-    const exprSerializer = new ExpressionSerializer();
-    const { properties } = this.propertiesAndPropertySettings();
-    const getExpression = (name, val) => {
-      try {
-          val = val.__serialize__(); // serializeble expressions
-          if (asExpression) {
-            let exprId = string.newUUID();
-            nestedExpressions[exprId] = val;
-            val = exprId;
-          } else val = exprSerializer.exprStringEncode(val);
-        } catch (e) {
-          console.log(`[export to JSON] failed converting ${name} to serialized expression`); 
-        }
-      return val;
-    }
-    var exported = Object.keys(this._morphicState).reduce((exported, name) => {
-      var val = this[name];
-      if (asExpression && 
-          properties[name] && 
-          (obj.equals(properties[name].defaultValue, val) || 
-           properties[name].readOnly ||
-           properties[name].serialize === false ||
-           val === undefined || 
-           val instanceof Map ||
-           name === 'metadata'))
-        return exported;
-      if (name === "submorphs") {
-        val = val.map(ea => ea.exportToJSON({
-          keepFunctions,
-          asExpression,
-          nestedExpressions,
-          root: false
-        }));
-      }
-      if (['borderColor', 'borderWidth', 'borderStyle', 'borderRadius'].includes(name)) {
-        let serializedVal = {};
-        for (let mem of ['top', 'left', 'right', 'bottom']) {
-          let memberValue = val[mem];
-          if (memberValue.__serialize__) {
-             memberValue = memberValue.__serialize__();
-             if (memberValue && memberValue.__expr__) {
-               if (asExpression) {
-                 let uuid = string.newUUID();
-                 nestedExpressions[uuid] = memberValue;
-                 memberValue = uuid;
-               } else memberValue = exprSerializer.exprStringEncode(memberValue)
-             }
-          }
-          serializedVal[mem] = memberValue; 
-        }
-        val = serializedVal;
-      }
-      if (val && val.isMorph) val = val.exportToJSON({ keepFunctions, asExpression, root: false });
-      if (val && val.__serialize__) {
-        val = getExpression(name, val);
-      }
-      if (Array.isArray(val)) {
-        // check if each array member is seralizable
-        val = val.map((v, i) => {
-          if (v && v.isMorph)
-            return v.exportToJSON({ keepFunctions, asExpression, root: false });
-          if (v && v.__serialize__) {
-            return getExpression(name + '.' + i, v);
-          }
-          return v;
-        })
-      }
-      exported[name] = val;
-      return exported;
-    }, {});
-    if (!exported.name) exported.name = this.name;
-    if (!asExpression) exported._id = this._id;
-    if (keepFunctions) {
-      exported.type = this.constructor; // not JSON!
-      Object.keys(this).forEach(name =>
-        typeof this[name] === "function" && (exported[name] = this[name]));
-    } else {
-      if (exported.styleSheets) exported.styleSheets = [];
-      exported.type = getSerializableClassMeta(this);
-    }
-    if (asExpression && root) {
-      // replace the nestedExpressions after stringification
-      let __expr__ = `morph(${JSON.stringify(exported)})`;
-      let bindings = {
-        'lively.morphic': ['morph']
-      }
-      for (let exprId in nestedExpressions) {
-        __expr__ = __expr__.replace('\"' + exprId + '\"', nestedExpressions[exprId].__expr__);
-        Object.entries(nestedExpressions[exprId].bindings).forEach(([binding, imports]) => {
-          if (bindings[binding])
-            bindings[binding] = arr.uniq([...bindings[binding], ...imports])
-          else bindings[binding] = imports;
-        });
-      }
-      return { __expr__, bindings }
-    }
-    return exported;
+  exportToJSON(options) {
+    return serializeSpec(this, options)
   }
 
   initFromJSON(spec) {
-    const exprSerializer = new ExpressionSerializer();
-    function deserializeExpressions(spec) {
-      let deserializedSpec = {};
-      properties.forEachOwn(spec, (prop, value) => {
-        if (prop ==='_env' || prop ==='env') return;
-        if (obj.isString(value) && exprSerializer.isSerializedExpression(value)) {
-          value = exprSerializer.deserializeExpr(value);
-        }
-        if (['borderColor', 'borderWidth', 'borderStyle', 'borderRadius'].includes(prop)) {
-          value = deserializeExpressions(value);
-        }
-        deserializedSpec[prop] = value;
-      })
-      if (spec.submorphs) deserializedSpec.submorphs = spec.submorphs.map(deserializeExpressions);
-      return deserializedSpec;
-    }
     this._env = spec.env || spec._env || MorphicEnv.default();
     this._rev = 0;
     this._owner = null;
@@ -2636,7 +2525,7 @@ export class Morph {
     this._tickingScripts = [];
     this.dontRecordChangesWhile(() => {
       this.initializeProperties(); 
-      Object.assign(this, deserializeExpressions(spec));
+      Object.assign(this, deserializeSpec(spec));
     });
     return this;
   }

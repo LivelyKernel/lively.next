@@ -147,3 +147,131 @@ export default class ExpressionSerializer {
   }
 
 }
+
+/*
+ 22.06.19 rms:
+ The following two functions are helpers that allow us to convert non cyclical morph hierarchies
+ into nested serialized expressions. As of now it is kinda morph specific, however could be easily
+ generalized to become suitable for more general object trees.
+*/
+
+export function deserializeSpec(serializedSpec) {
+  const exprSerializer = new ExpressionSerializer();
+  let deserializedSpec = {};
+  properties.forEachOwn(serializedSpec, (prop, value) => {
+    if (prop ==='_env' || prop ==='env') return;
+    if (obj.isString(value) && exprSerializer.isSerializedExpression(value)) {
+      value = exprSerializer.deserializeExpr(value);
+    }
+    if (['borderColor', 'borderWidth', 'borderStyle', 'borderRadius'].includes(prop)) {
+      value = deserializeSpec(value);
+    }
+    deserializedSpec[prop] = value;
+  })
+  if (serializedSpec.submorphs) deserializedSpec.submorphs = serializedSpec.submorphs.map(deserializeSpec);
+  return deserializedSpec;
+}
+
+// this.exportToJSON()
+
+export function serializeSpec(morph, opts = {}) {
+  // quick hack to "snapshot" into JSON or serialized expression
+    var { 
+      keepFunctions = true, 
+      asExpression = false, 
+      root = true,
+      skipUnchangedFromDefault = false,
+      nestedExpressions = {}
+    } = opts;
+    if (asExpression) keepFunctions = false;
+    const exprSerializer = new ExpressionSerializer();
+    const getExpression = (name, val) => {
+      try {
+          val = val.__serialize__(); // serializeble expressions
+          if (asExpression) {
+            let exprId = string.newUUID();
+            nestedExpressions[exprId] = val;
+            val = exprId;
+          } else val = exprSerializer.exprStringEncode(val);
+        } catch (e) {
+          console.log(`[export to JSON] failed converting ${name} to serialized expression`); 
+        }
+      return val;
+    }
+
+    var exported = {};
+
+    for (let name in morph.spec(skipUnchangedFromDefault)) {
+      let val = morph[name];
+      if (name === "submorphs") {
+        val = val.map(ea => serializeSpec(ea, {
+          keepFunctions,
+          asExpression,
+          nestedExpressions,
+          root: false
+        }));
+      }
+      if (['borderColor', 'borderWidth', 'borderStyle', 'borderRadius'].includes(name)) {
+        let serializedVal = {};
+        for (let mem of ['top', 'left', 'right', 'bottom']) {
+          let memberValue = val[mem];
+          if (memberValue.__serialize__) {
+             memberValue = memberValue.__serialize__();
+             if (memberValue && memberValue.__expr__) {
+               if (asExpression) {
+                 let uuid = string.newUUID();
+                 nestedExpressions[uuid] = memberValue;
+                 memberValue = uuid;
+               } else memberValue = exprSerializer.exprStringEncode(memberValue)
+             }
+          }
+          serializedVal[mem] = memberValue; 
+        }
+        val = serializedVal;
+      }
+      if (val && val.isMorph) val = serializeSpec(val, { keepFunctions, asExpression, root: false });
+      if (val && val.__serialize__) {
+        val = getExpression(name, val);
+      }
+      if (Array.isArray(val)) {
+        // check if each array member is seralizable
+        val = val.map((v, i) => {
+          if (v && v.isMorph)
+            return serializeSpec(v, { keepFunctions, asExpression, root: false });
+          if (v && v.__serialize__) {
+            return getExpression(name + '.' + i, v);
+          }
+          return v;
+        })
+      }
+      exported[name] = val;
+    }
+    
+    if (!asExpression) exported._id = morph._id;
+    if (keepFunctions) {
+      exported.type = morph.constructor; // not JSON!
+      Object.keys(morph).forEach(name =>
+        typeof morph[name] === "function" && (exported[name] = morph[name]));
+    } else {
+      if (exported.styleSheets) exported.styleSheets = [];
+      exported.type = getSerializableClassMeta(this);
+    }
+    
+    if (asExpression && root) {
+      // replace the nestedExpressions after stringification
+      let __expr__ = `morph(${JSON.stringify(exported)})`;
+      let bindings = {
+        'lively.morphic': ['morph']
+      }
+      for (let exprId in nestedExpressions) {
+        __expr__ = __expr__.replace('\"' + exprId + '\"', nestedExpressions[exprId].__expr__);
+        Object.entries(nestedExpressions[exprId].bindings).forEach(([binding, imports]) => {
+          if (bindings[binding])
+            bindings[binding] = arr.uniq([...bindings[binding], ...imports])
+          else bindings[binding] = imports;
+        });
+      }
+      return { __expr__, bindings }
+    }
+    return exported;
+}

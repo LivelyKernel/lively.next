@@ -87,6 +87,7 @@ export function deserializeWithMigrations(idAndSnapshot, migrations, options) {
 export function copy(obj, options) {
   return deserialize(serialize(obj, options), options);
 }
-import { default as ExpressionSerializer } from "./plugins/expression-serializer.js"
+
+import { default as ExpressionSerializer, serializeSpec, deserializeSpec } from "./plugins/expression-serializer.js"
 import { getSerializableClassMeta, locateClass } from "./class-helper.js";
-export { ExpressionSerializer, getSerializableClassMeta, locateClass };
+export { ExpressionSerializer, getSerializableClassMeta, locateClass, serializeSpec, deserializeSpec };
