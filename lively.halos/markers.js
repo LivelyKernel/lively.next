@@ -157,9 +157,9 @@ export class StatusMessage extends Morph {
         draggable: false,
         readOnly: true,
         selectable: true,
-        fixedWidth: false,
+        fixedWidth: true,
         fixedHeight: false,
-        clipMode: "visible",
+        lineWrapping: true,
         fontSize: 14,
         fontFamily: "Monaco, 'DejaVu Sans Mono', monospace"
       },
@@ -228,7 +228,7 @@ export class StatusMessage extends Morph {
           this.submorphs = [
             {
               name: "messageText",
-              type: "text"
+              type: "text",
             },
             {
               name: "closeButton",
@@ -239,6 +239,7 @@ export class StatusMessage extends Morph {
           ];
           this.relayout();
           connect(this.getSubmorphNamed("closeButton"), "fire", this, "remove");
+          connect(this, 'extent', this, 'relayout');
         }
       }
     };
@@ -278,7 +279,7 @@ export class StatusMessage extends Morph {
     this.isMaximized = true;
     this.stayOpen = true;
     var text = this.getSubmorphNamed("messageText");
-    Object.assign(text, {readOnly: false, fixedWidth: false, selectable: true});
+    Object.assign(text, { clipMode: 'auto', fixedWidth: true, selectable: true});
     if (this.expandedContent) text.value = this.expandedContent;
     text.fit();
     var ext = text.extent.addXY(20, 20), visibleBounds = world.visibleBounds();
@@ -320,6 +321,7 @@ export class StatusMessageForMorph extends StatusMessage {
   static get properties() {
     return {
       slidable: {defaultValue: false},
+      renderOnGPU: { defaultValue: true },
 
       // should "internal" changes in the morph we are showing the message for
       // (like cursor changes in a text morph) make this message morph disappear?
@@ -409,7 +411,7 @@ function showLine(world, line, delay = 3000) {
   return path;
 }
 
-export function showConnector(morph1, morph2, delay = 3000) {
+export async function showConnector(morph1, morph2, delay = 3000) {
   if (!morph1 || !morph1.world() ||!morph2 || !morph2.world()) return null;
 
   let p1 = morph1.owner.worldPoint(morph1.center),
@@ -434,10 +436,21 @@ export function showConnector(morph1, morph2, delay = 3000) {
 
   let path = $world.addMorph(new Path({
     position: midPoint,
+    renderOnGPU: true,
     vertices: [pt(0), pt(0)], borderWidth: 2,
     startMarker: marker, endMarker: marker, borderColor: Color.red
   }));
-  path.animate({vertices: [p1.subPt(midPoint), p2.subPt(midPoint)], duration: 400});
+  await path.whenRendered();
+  await path.animate({
+    opacity: 1,
+    customTween: (p) => {
+       let center = path.center;
+       path.vertices = [
+         pt(0).interpolate(p, p1.subPt(midPoint)),
+         pt(0).interpolate(p, p2.subPt(midPoint))
+       ];
+       path.center = center;
+    }, duration: 400});
   if (delay) setTimeout(() => path.fadeOut(), delay);
   return path;
 }
