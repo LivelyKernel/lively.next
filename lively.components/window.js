@@ -172,7 +172,6 @@ export default class Window extends Morph {
         }
       },
 
-      renderOnGPU: { defaultValue: true },
       styleClasses: {defaultValue: ["active"]},
       clipMode: {defaultValue: "hidden"},
       resizable: {defaultValue: true},
@@ -488,6 +487,7 @@ export default class Window extends Morph {
     if (this.isActive()) {
       this.bringToFront();
       this.focus(evt);
+      this.renderOnGPU = true;
       return this;
     }
 
@@ -514,6 +514,7 @@ export default class Window extends Morph {
     this.addStyleClass('inactive');
     this.titleLabel().fontWeight = "normal";
     this.relayoutWindowControls();
+    this.renderOnGPU = false;
   }
 
   get keybindings() {
