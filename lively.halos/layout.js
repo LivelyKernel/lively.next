@@ -708,18 +708,19 @@ export class TilingLayoutHalo extends Morph {
         isHaloItem: true,
         bounds: morph.bounds(),
         fill: Color.orange.withA(.3),
+        epiMorph: true,
         borderColor: Color.orange,
         borderWidth: 2,
         opacity: 1,
         borderStyle: "dashed",
         async step() {
           const easing = easings.inOutQuad;
-          await this.animate({opacity: .5, duration: pulseDuration / 2, easing});
-          await this.animate({opacity: 1, duration: pulseDuration / 2, easing});
+          await this.animate({opacity: .5, duration: (pulseDuration - 10) / 2, easing});
+          await this.animate({opacity: 1, duration: (pulseDuration - 10) / 2, easing});
         }
       }));
     this.previews.forEach(p => {
-      p.step(); p.startStepping(pulseDuration, "step");
+      p.startStepping(pulseDuration, "step");
     });
   }
 
@@ -774,6 +775,7 @@ export class FlexLayoutHalo extends Morph {
   constructor(container, pointerId) {
     super({
       reactsToPointer: false,
+      halosEnabled: false,
       isHaloItem: true,
       styleClasses: ["Halo"],
       fill: Color.transparent,
@@ -791,6 +793,7 @@ export class FlexLayoutHalo extends Morph {
     this.previews = morphs.map(morph =>
       this.container.addMorph({
         isHaloItem: true,
+        epiMorph: true,
         position: this.container.localize(this.world().firstHand.position),
         extent: morph.bounds().extent(),
         fill: Color.orange.withA(.3),
@@ -800,8 +803,8 @@ export class FlexLayoutHalo extends Morph {
         borderStyle: "dashed",
         async step() {
           const easing = easings.inOutQuad;
-          await this.animate({opacity: .5, duration: pulseDuration / 2, easing});
-          await this.animate({opacity: 1, duration: pulseDuration / 2, easing});
+          await this.animate({opacity: .5, duration: (pulseDuration - 10) / 2, easing});
+          await this.animate({opacity: 1, duration: (pulseDuration - 10) / 2, easing});
         }
       }));
     this.previews.forEach(p => {
@@ -924,6 +927,12 @@ export class FlexLayoutHalo extends Morph {
 
 
 export class ProportionalLayoutHalo extends Morph {
+
+  static get properties() {
+    return {
+      halosEnabled: { defaultValue: false}
+    }
+  }
 
   constructor(container, pointerId) {
     super({
