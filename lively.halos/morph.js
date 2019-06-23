@@ -19,11 +19,15 @@ import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } 
 // inspect properties of a target morph in some way
 export default class Halo extends Morph {
 
+  relayout() { this.alignWithTarget(); }
+
   static get properties() {
     return {
       fill: {defaultValue: Color.transparent},
       resizeOnly: {defaultValue: false},
       pointerId: {},
+      hasFixedPosition: { defaultValue: true },
+      respondsToVisibleWindow: { defaultValue: true },
       submorphs: {
         after: ["target"],
         initialize() {
@@ -149,12 +153,17 @@ export default class Halo extends Morph {
 
   alignWithTarget() {
     if (this.active || !this.target) return;
-    const targetBounds = this.target.globalBounds(),
-          worldBounds = (this.target.world() || $world).visibleBounds(),
-          {x, y, width, height} = targetBounds.intersection(worldBounds);
+    const world = this.target.world() || $world,
+          worldBounds = world.visibleBounds(),
+          targetBounds = this.target.globalBounds(),
+          haloBounds = targetBounds.insetBy(-36).intersection(worldBounds),
+          boxBounds = targetBounds.intersection(worldBounds);
+    // we could fix this, if instead of transforming to world coordinates, we just transform to halo coordinates
     this.layout && this.layout.disable();
-    this.setBounds(targetBounds.insetBy(-36).intersection(worldBounds));
-    this.borderBox.setBounds(pt(x,y).subPt(this.position).extent(pt(width,height)));
+
+    this.setBounds(haloBounds.translatedBy(world.scroll.negated())); // needs adhere to fixedness of halo
+    this.borderBox.setBounds($world.transformRectToMorph(this, boxBounds));
+
     if (this.state.activeButton) {
       this.buttonControls.forEach(ea => ea.visible = false);
       this.ensureResizeHandles().forEach(h => h.visible = false);
@@ -1287,9 +1296,8 @@ class OriginHaloItem extends HaloItem {
   get tooltip() { return "Change the morph's origin"; }
 
   computePositionAtTarget() {
-    let topLeft = this.halo.target.globalBounds().topLeft(),
-        localizedOrigin = this.halo.target.worldPoint(pt(0)).subPt(topLeft);
-    return this.halo.borderBox.position.addPt(localizedOrigin);
+    let topLeft = this.halo.target.globalPosition;
+    return this.halo.localize(topLeft);
   }
 
   alignInHalo() {
