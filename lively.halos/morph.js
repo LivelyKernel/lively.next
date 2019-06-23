@@ -58,6 +58,23 @@ export default class Halo extends Morph {
     };  
   }
 
+  get keybindings() {
+    return [
+       {keys: {mac: 'Meta-C', win: 'Ctrl-C'}, command: {command: "clipboard copy", passEvent: true}}
+    ]
+  } 
+
+  get commands() {
+    return [{
+      name: "clipboard copy",
+      doc: "copy selected morph(s) to clipboard",
+      scrollCursorIntoView: false,
+      exec: function(halo) {
+        halo.copyHalo().copyToClipBoard();
+      }
+    }]
+  }
+
   removeIfDetached() {
     setTimeout(() => {
       if (!this.target.owner) this.remove();
@@ -1233,15 +1250,15 @@ class CopyHaloItem extends HaloItem {
   onDragEnd(evt) { this.stop(evt.hand); }
   update() { this.halo.alignWithTarget(); }
 
-  async onMouseUp(evt) {
-    evt.stop();
-    let {halo} = this,
-        t = halo.target,
-        world = halo.world();
+  async copyToClipBoard() {
+    let {halo} = this;
 
-    halo.remove();
-
-    let isMultiSelection = t instanceof MultiSelectionTarget,
+    
+    if (halo.nameHalo().nameHolders.find(nh => nh.nameHolder === $world.focusedMorph)) return;
+    
+    let t = halo.target,
+        world = halo.world(),
+        isMultiSelection = t instanceof MultiSelectionTarget,
         origin = t.globalBounds().topLeft(),
         morphsToCopy = isMultiSelection ? t.selectedMorphs : [t],
         snapshots = [],
@@ -1252,7 +1269,7 @@ class CopyHaloItem extends HaloItem {
             ${document.querySelector("#lively-morphic-css").outerHTML}
           </head>
           <body>`;
-
+    halo.remove(); // we do not want to copy the halo
     try {
       for (let m of morphsToCopy) {
         let snap = await createMorphSnapshot(m, {addPreview: false, testLoad: false});
@@ -1265,16 +1282,20 @@ class CopyHaloItem extends HaloItem {
 
       let data = JSON.stringify(snapshots);
 
-      await evt.dispatcher.doCopyWithMimeTypes([
+      await this.env.eventDispatcher.doCopyWithMimeTypes([
         {type: 'text/html', data: html},
         {type: 'application/morphic', data}
       ]);
 
     } catch (e) { world.logError(e); return; }
-
     world.addMorph(halo);
     halo.refocus(morphsToCopy);
     halo.setStatusMessage("copied");
+  }
+
+  async onMouseUp(evt) {
+    evt.stop();
+    await this.copyToClipBoard();
   }
 }
 
