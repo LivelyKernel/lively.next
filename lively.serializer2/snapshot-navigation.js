@@ -220,17 +220,17 @@ export function removeUnreachableObjects(rootIds, snapshot) {
   });
 
   idsToRemove.forEach(id => delete snapshot[id]);
-  clearDanglingConnections(snapshot);
   return idsToRemove;
 }
 
-function clearDanglingConnections(snapshot) {
+export function clearDanglingConnections(snapshot) {
   for (let id in snapshot) {
     if (classNameOfId(snapshot, id) === 'AttributeConnection') {
        let objSnap = snapshot[id];
-       if (snapshot[objSnap.props.targetObj.value.id]) continue;
-       let sourceObjSnap = snapshot[objSnap.props.sourceObj.value.id];
-       sourceObjSnap.props.attributeConnections.value = sourceObjSnap.props.attributeConnections.value.filter(ref => ref.id != id);
+       if (snapshot[Path('props.targetObj.value.id').get(objSnap)]) continue;
+       let sourceObjSnap = snapshot[Path('props.targetObj.value.id').get(objSnap)];
+       if (sourceObjSnap)
+         sourceObjSnap.props.attributeConnections.value = sourceObjSnap.props.attributeConnections.value.filter(ref => ref.id != id);
        delete snapshot[id];
     }
   }

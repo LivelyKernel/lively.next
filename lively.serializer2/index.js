@@ -1,7 +1,7 @@
 import "./object-extensions.js";
 import { ObjectPool } from "./object-pool.js";
 import { version as serializerVersion } from "./package.json";
-import { removeUnreachableObjects } from "./snapshot-navigation.js";
+import { removeUnreachableObjects, clearDanglingConnections, replaceMorphsBySerializableExpressions } from "./snapshot-navigation.js";
 import { allPlugins } from "./plugins.js";
 import semver from 'semver';
 
@@ -49,6 +49,7 @@ export function serialize(obj, options) {
   // references. To only serialize what's needed we cleanup the graph after all
   // hooks are done.
   removeUnreachableObjects([snapshotAndId.id], snapshotAndId.snapshot);
+  clearDanglingConnections(snapshotAndId.snapshot);
   snapshotAndId.requiredVersion = requiredVersion;
   return snapshotAndId;
 }
