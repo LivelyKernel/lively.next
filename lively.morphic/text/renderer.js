@@ -352,7 +352,9 @@ export default class TextRenderer {
 
     let textLayer = this.renderTextLayer(morph, renderer),
         textLayerForFontMeasure = this.renderJustTextLayerNode(h, morph, null, []),
-        markerLayer = this.renderMarkerLayer(morph, renderer);
+        markerLayer = this.renderMarkerLayer(morph, renderer),
+        horizontalScrollBarVisible = morph.document.width > morph.width,
+        scrollBarOffset = horizontalScrollBarVisible ? morph.scrollbarOffset : pt(0,0);
 
     let scrollLayer = h('div', {
       className: 'scrollLayer',
@@ -360,12 +362,12 @@ export default class TextRenderer {
         position: 'absolute',
         top: 0 + 'px',
         ...morph.viewState.fastScroll ? { overflow: morph.scrollActive ? morph.clipMode : 'hidden' } : {},
-        width: morph.width - 3 + 'px',
+        width: morph.width + 'px',
         height: morph.height + 'px'
       }
     }, [h('div', {style: {
-      width: Math.max(morph.document.width, morph.width) - morph.scrollbarOffset.x + 'px',
-      height: Math.max(morph.document.height, morph.height) - morph.scrollbarOffset.y + 'px' }})]);
+      width: Math.max(morph.document.width, morph.width) + 'px',
+      height: Math.max(morph.document.height, morph.height) - scrollBarOffset.y + 'px' }})]);
 
     textLayer.properties.className += " actual";
     textLayer.properties.style.overflow = morph.clipMode === 'visible' ? 'visible' : 'hidden';
