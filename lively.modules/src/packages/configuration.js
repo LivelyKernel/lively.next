@@ -73,6 +73,8 @@ export default class PackageConfiguration {
       System.config({map: sysConfig.globalmap});
     if (sysConfig.babelOptions)
       System.config({babelOptions: sysConfig.babelOptions});
+    if (sysConfig.meta)
+      System.config({meta: sysConfig.meta});
   }
 
 
