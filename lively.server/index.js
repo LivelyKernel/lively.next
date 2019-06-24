@@ -100,8 +100,8 @@ function setupSystem(rootDirectory) {
 }
 
 function startServer(serverMod, config) {
-  let {serverDir, port, hostname, rootDirectory, authServerURL} = config,
-      serverConfig = {port, hostname, plugins: [], jsdav: {rootDirectory}, authServerURL};
+  let {serverDir, port, hostname, rootDirectory, authServerURL, freezer} = config,
+      serverConfig = {port, hostname, plugins: [], jsdav: {rootDirectory}, authServerURL, freezer};
   return Promise.all(
     config.plugins.map(path =>
       livelySystem.import(path)
