@@ -788,7 +788,9 @@ export default class TextRenderer {
         left: startPos.x + "px", top: startPos.y + "px",
         width: (endPos.x-startPos.x) + "px",
         height: (endPos.y-startPos.y)+"px",
-        backgroundColor: selectionColor
+        ...selectionColor && selectionColor.isGradient ? 
+          { backgroundImage: selectionColor } : 
+          { backgroundColor: selectionColor }
       }
     })
   }
