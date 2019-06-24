@@ -228,7 +228,7 @@ export function clearDanglingConnections(snapshot) {
     if (classNameOfId(snapshot, id) === 'AttributeConnection') {
        let objSnap = snapshot[id];
        if (snapshot[Path('props.targetObj.value.id').get(objSnap)]) continue;
-       let sourceObjSnap = snapshot[Path('props.targetObj.value.id').get(objSnap)];
+       let sourceObjSnap = snapshot[Path('props.sourceObj.value.id').get(objSnap)];
        if (sourceObjSnap)
          sourceObjSnap.props.attributeConnections.value = sourceObjSnap.props.attributeConnections.value.filter(ref => ref.id != id);
        delete snapshot[id];
@@ -331,7 +331,7 @@ export function replaceMorphsBySerializableExpressions(snapshot, pool) {
     }
 
     for (let prop in referer.props) {
-      if (referer.props[prop].value == id) {
+      if (Path('props.' + prop + '.value.id').get(referer) == id) {
         referer.props[prop].value = morphExpression;
         continue;
       }
