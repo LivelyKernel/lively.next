@@ -1,3 +1,5 @@
+import { string, obj, properties, arr } from "lively.lang";
+import { getSerializableClassMeta } from "../class-helper.js";
 /*global System*/
 export default class ExpressionSerializer {
 
@@ -117,10 +119,13 @@ export default class ExpressionSerializer {
         let modName = mods[i],
             vars = bindings[modName],
             exports = System.get(System.decanonicalize(modName));
-        if (!exports && lively.FreezerRuntime) {
-          // try to fetch if global is defined
-          let mod = lively.FreezerRuntime.fetchStandaloneFor(modName);
-          if (mod) exports = mod.exports;
+        if (lively.FreezerRuntime) {
+          if (!exports) {
+            // try to fetch if global is defined
+            let mod = lively.FreezerRuntime.fetchStandaloneFor(modName);
+            if (mod) exports = mod.exports; 
+          }
+          if (exports.exports) exports = exports.exports;
         }
         if (!exports) {
           throw new Error(`[lively.serializer] expression eval: bindings specify to import ${
@@ -229,7 +234,7 @@ export function serializeSpec(morph, opts = {}) {
         }
         val = serializedVal;
       }
-      if (val && val.isMorph) val = serializeSpec(val, { keepFunctions, asExpression, root: false });
+      if (val && val.isMorph) val = serializeSpec(val, { nestedExpressions, keepFunctions, asExpression, root: false });
       if (val && val.__serialize__) {
         val = getExpression(name, val);
       }
@@ -237,7 +242,7 @@ export function serializeSpec(morph, opts = {}) {
         // check if each array member is seralizable
         val = val.map((v, i) => {
           if (v && v.isMorph)
-            return serializeSpec(v, { keepFunctions, asExpression, root: false });
+            return serializeSpec(v, { nestedExpressions, keepFunctions, asExpression, root: false });
           if (v && v.__serialize__) {
             return getExpression(name + '.' + i, v);
           }
@@ -254,7 +259,7 @@ export function serializeSpec(morph, opts = {}) {
         typeof morph[name] === "function" && (exported[name] = morph[name]));
     } else {
       if (exported.styleSheets) exported.styleSheets = [];
-      exported.type = getSerializableClassMeta(this);
+      exported.type = getSerializableClassMeta(morph);
     }
     
     if (asExpression && root) {
