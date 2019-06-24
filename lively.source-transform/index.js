@@ -1,3 +1,4 @@
+/*global babel*/
 import * as capturing from "./capturing.js";
 export { capturing };
 
@@ -30,4 +31,26 @@ export function stringifyFunctionWithoutToplevelRecorder(
         return isVarRecorderMember ? node.property : node;
       });
   return stringify(replaced);
+}
+
+export function es5Transpilation(source) {
+    if (typeof babel === 'undefined') {
+      console.warn('[lively.freezer] Skipped async/await transpilation because babel not loaded.');
+      return source;
+    }
+    let options = {
+      sourceMap: undefined, // 'inline' || true || false
+      inputSourceMap: undefined,
+      babelrc: false,
+      presets: [["es2015", {"modules": false}]],
+      plugins: ['transform-exponentiation-operator', 'transform-async-to-generator',
+                "syntax-object-rest-spread", "transform-object-rest-spread"],
+      code: true,
+      ast: false
+    };
+    var sourceForBabel = source,
+        transpiled = babel.transform(sourceForBabel, options).code;
+    transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
+    if (transpiled.startsWith('(function') && transpiled.endsWith(');')) transpiled = transpiled.slice(1, -2);
+    return transpiled;
 }
