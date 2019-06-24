@@ -313,6 +313,9 @@ export class IconPopover extends StylePopover {
 
   static get properties() {
     return {
+      isEpiMorph: {
+        get() { return false }
+      },
       popoverColor: {defaultValue: Color.gray.lighter()},
       ui: {
         get() {
@@ -325,16 +328,23 @@ export class IconPopover extends StylePopover {
     };
   }
 
+  onDrop(evt) {
+    let grabbedMorphs = evt.hand.grabbedMorphs;
+    if (grabbedMorphs.find(m => m === this.iconLabel)) {
+      evt.hand.dropMorphsOn(this);
+      this.iconLabel.remove();
+    }
+  }
+
   updateStyleSheet() {
     super.updateStyleSheet();
     this.styleSheets = [...this.styleSheets, new StyleSheet({
         "[name=iconList]": {
-          padding: 8,
+          padding: rect(8,0,0,8),
           fill: Color.transparent,
           fontFamily: "FontAwesome",
           clipMode: "auto",
           lineWrapping: "by-chars",
-          fontSize: 25,
           textAlign: "justify",
         }
     })]
@@ -359,6 +369,7 @@ export class IconPopover extends StylePopover {
           morph({
             textAndAttributes: this.iconAsTextAttributes(),
             name: "iconList",
+            draggable: true,
             type: "text",
             extent: pt(width, height),
             textStyleClasses: ["fa"],
@@ -374,23 +385,38 @@ export class IconPopover extends StylePopover {
     let {searchInput, iconList} = this.ui;
     connect(searchInput, "searchInput", this, "filterIcons");
     connect(iconList, "onMouseUp", this, "iconSelectClick");
+    connect(iconList, 'onDragStart', this, 'createIconLabel');
+  }
+
+  relayout() {}
+
+  createIconLabel(evt) {
+    let pos = this.ui.iconList.textPositionFromPoint(evt.positionIn(this.ui.iconList)),
+        iconName = this.iconAtTextPos(pos);
+    this.iconLabel = Icon.makeLabel(iconName, {
+      fontSize: this.ui.iconList.fontSize, name: iconName
+    });
+    this.iconLabel.openInHand();
   }
 
   iconAsTextAttributes(filterFn) {
     let iconNames = Object.keys(Icons);
     if (filterFn) iconNames = iconNames.filter(filterFn);
     return arr.flatmap(iconNames,
-      name => [
+      (name, i) => [
         Icons[name].code,
       {iconCode: Icons[name].code, iconName: name},
-      " ", null
+      " ", {fontFamily: "sans-serif", iconCode: false, iconName: false}
     ]);
   }
 
-  filterIcons() {
-    this.ui.iconList.textAndAttributes = this.iconAsTextAttributes(name =>
-      this.ui.searchInput.matches(name.toLowerCase())
-    );
+  async filterIcons() {
+    await promise.delay(250);
+    fun.debounceNamed('filterIcons', 200, () => {
+       this.ui.iconList.textAndAttributes = this.iconAsTextAttributes(name =>
+        this.ui.searchInput.matches(name.toLowerCase())
+       );  
+    })();   
   }
 
   iconSelectClick(evt) {
@@ -402,13 +428,20 @@ export class IconPopover extends StylePopover {
   }
 
   iconAtTextPos({row, column}) {
+    column = column - 1;
     let iconList = this.ui.iconList,
-        range = {start: {row, column: column-1}, end: {row, column: column+1}},
-        found = iconList.textAndAttributesInRange(range);
+        range = {start: {row, column: Math.max(0, column)}, end: {row, column: column+2}};
+    let found = iconList.textAndAttributesInRange(range);
     while (found.length) {
-      if (found[1]) break;
+      if (found[1].iconName) {
+        break;
+      }
+      column++;
       found = found.slice(2)
     }
+    let iconRange = {start: {row, column}, end: {row, column: column + 1}};
+    iconList.addTextAttribute({ backgroundColor: iconList.selectionColor.darker().withA(.5) }, iconRange)
+    promise.delay(1000).then(() => iconList.addTextAttribute({ backgroundColor: Color.transparent }, iconRange))
     return found.length ? found[1].iconName : null;
   }
 
