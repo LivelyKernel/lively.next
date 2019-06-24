@@ -344,13 +344,26 @@ class InspectionNode {
   }
 
   getSubNode(node) {
-    return InspectionNode.for(node, this.root);
+    if (node.value && node.value.isMorph)
+       return new MorphNode({root: this.root, ...node});
+    return new PropertyNode({
+      ...node,
+      root: this.root,
+      target: this.value,
+      spec: {}
+    });
   }
 
   display(inspector) {
     let {keyString, valueString} = this;
     if (!this.interactive) return `${keyString}: ${valueString}`;
-    return this._propertyWidget || (this._propertyWidget = inspector.renderDraggableTreeLabel({value: `${keyString}: ${valueString}`}));
+    if (!this._propertyWidget) {
+      this._propertyWidget = inspector.renderDraggableTreeLabel({
+        value: `${keyString}: ${valueString}`
+      });
+    }
+    this._propertyWidget.isSelected = this.isSelected;
+    return this._propertyWidget;
   }
 
 }
@@ -452,7 +465,7 @@ class PropertyNode extends InspectionNode {
   refreshProperty(v, updateTarget = false) {
     if (updateTarget) this.target[this.key] = v;
     this.value = this.target[this.key];
-    this._propertyWidget && signal(this._propertyWidget, "update", this.value);
+    //this._propertyWidget && signal(this._propertyWidget, "update", this.value);
     this.valueString = printValue(v);
     if (this.interactive) {
       if (!updateTarget) {
@@ -481,13 +494,16 @@ class PropertyNode extends InspectionNode {
     if (w) { // recycle widget
       w.keyString = keyString;
       w.valueString = valueString;
+      w.isSelected = this.isSelected;
       w.control && (w.control.isSelected = this.isSelected);
       return w;
     }
 
     // create a new widget
     w = this._propertyWidget = inspector.renderPropertyControl({
-        target, keyString, valueString, value, spec, node: this});
+        target, keyString, valueString, value, spec, node: this,
+        isSelected: this.isSelected
+    });
 
     if (!this.isInternalProperty && !spec.readOnly) {
       connect(w, "propertyValue", this, "refreshProperty", {
