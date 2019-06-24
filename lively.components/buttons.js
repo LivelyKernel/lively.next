@@ -26,6 +26,7 @@ export class Button extends Morph {
       deactivated: {
         group: "button",
         defaultValue: false,
+        after: ['labelMorph'],
         set(val) {
           this.setProperty("deactivated", val);
           this.nativeCursor = val ? "not-allowed" : "pointer";
