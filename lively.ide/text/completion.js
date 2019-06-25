@@ -4,6 +4,7 @@ import { morph, ShadowObject, StyleSheet } from "lively.morphic";
 import { connect } from "lively.bindings";
 import { arr, string } from "lively.lang";
 import { FilterableList } from "lively.components/list.js";
+import { Range } from "lively.morphic/text/range.js";
 
 export class Completer {
   compute() { return []; }
@@ -193,9 +194,9 @@ export class CompletionController {
         bounds = position.extent(pt(width, height));
 
     // ensure menu is visible
-    let world = m.world();
+    let world = m.world(), visibleBounds;
     if (world) {
-      let visibleBounds = world.visibleBounds().insetBy(5);
+      visibleBounds = world.visibleBounds().insetBy(5);
       if (bounds.bottom() > visibleBounds.bottom()) {
         let delta = bounds.bottom() - visibleBounds.bottom();
         if (delta > bounds.height-50) delta = bounds.height-50;
@@ -208,6 +209,7 @@ export class CompletionController {
       }
       if (!visibleBounds.containsRect(bounds))
         bounds = bounds.withTopLeft(visibleBounds.translateForInclusion(bounds).topLeft());
+      bounds = bounds.translatedBy(visibleBounds.insetBy(-5).topLeft().negated());
     }
 
     return {
@@ -218,9 +220,9 @@ export class CompletionController {
         ".List": {
           dropShadow: new ShadowObject({
             rotation: 45,
-            distance: 2,
-            blur: 2,
-            color: Color.gray.darker()
+            distance: 5,
+            blur: 40,
+            color: Color.black.withA(.3)
           }),
           fontColor,
         },
@@ -229,8 +231,10 @@ export class CompletionController {
           fontSize,
           fontColor
         }
-      }),      
+      }),
+      hasFixedPosition: true,      
       fontColor,
+      epiMorph: true,
       fontFamily, fontSize,
       position: bounds.topLeft(),
       extent: bounds.extent(),
@@ -259,17 +263,28 @@ export class CompletionController {
   }
 
   async openCompletionList() {
-    let spec = await this.completionListSpec(),
+    let currentCursorPos = this.textMorph.selection.start,
+        spec = await this.completionListSpec(),
         { theme } = this.textMorph.pluginFind(p => p.theme) || {},
         menu = new FilterableList(spec),
+        intermittendTextRange = new Range({
+          start: currentCursorPos,
+          end: this.textMorph.selection.start
+        }),
+        intermittendInput = this.textMorph.textInRange(intermittendTextRange),
         input = menu.inputMorph,
         list = menu.listMorph,
-        prefix = spec.input,
+        prefix = spec.input ,
         mask = menu.addMorph({
           name: 'prefix mask',
           fill: Color.transparent,
           bounds: input.textBounds()
         }, input);
+    if (!intermittendTextRange.isEmpty()) {
+      this.textMorph.deleteText(intermittendTextRange);
+      input.input = intermittendInput;
+      input.gotoDocumentEnd(); 
+    }
     input.fontColor = this.textMorph.fontColor;
     connect(input, 'textString', mask, 'setBounds', {
       converter: () => input.textBounds(),
