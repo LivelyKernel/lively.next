@@ -27,6 +27,9 @@ export class ColorPickerField extends Morph {
             v = Color.blue;
           }
           this.setProperty('colorValue', v);
+        },
+        get() {
+          return this.getProperty('colorValue') || Color.white;
         }
       },
       styleSheets: {
@@ -36,7 +39,8 @@ export class ColorPickerField extends Morph {
               extent: pt(70,30),
               layout: new HorizontalLayout(),
               borderRadius: 5, fill: Color.gray, clipMode: "hidden",
-              borderWidth: 1, borderColor: Color.gray.darker(),
+              borderWidth: 1, 
+              borderColor: Color.darkGray,
             },
             '[name=pickerButton]': {
               extent: pt(20, 20),
@@ -128,7 +132,9 @@ export class ColorPickerField extends Morph {
     const p = this.picker || new ColorPicker({color: this.colorValue});
     p.position = pt(0, -p.height / 2);
     connect(p, "color", this, "update");
-    this.picker = p.openInWorld(this.globalBounds().bottomCenter());
+    this.picker = p.openInWorld();
+    this.picker.topLeft = this.globalBounds().bottomCenter();
+    this.picker.topLeft = this.world().visibleBounds().translateForInclusion(this.picker.globalBounds()).topLeft();
     this.removePalette();
   }
 
@@ -146,8 +152,9 @@ export class ColorPickerField extends Morph {
       });
     connect(p.targetMorph, "color", this, "update");
     p.isLayoutable = false;
-    this.palette = await p.openInWorld(
-       this.get('paletteButton').globalBounds().center());
+    this.palette = await p.openInWorld();
+    this.palette.topCenter = this.get('paletteButton').globalBounds().center();
+    this.palette.topCenter = this.world().visibleBounds().translateForInclusion(this.palette.globalBounds()).topCenter();
     this.removePicker();
     once(p, 'remove', p, 'topLeft', {converter: () => pt(0,0), varMapping: {pt}});
   }
@@ -457,6 +464,7 @@ export class ColorPicker extends Window {
       fill: {defaultValue: Color.black.withA(.7)},
       isHaloItem: {defaultValue: true},
       borderWidth: {defaultValue: 0},
+      hasFixedPosition: { defaultValue: true },
       color: {
         defaultValue: Color.blue,
         derived: true,

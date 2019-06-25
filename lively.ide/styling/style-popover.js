@@ -16,7 +16,7 @@ import {
 import KeyHandler from "lively.morphic/events/KeyHandler.js";
 
 import { connect, signal } from "lively.bindings";
-import { arr, string, obj } from "lively.lang";
+import { arr, promise, fun, string, obj } from "lively.lang";
 import { Color, rect, Rectangle, pt } from "lively.graphics";
 
 import {
@@ -40,6 +40,8 @@ export class Popover extends Morph {
 
   static get properties() {
     return {
+      epiMorph: { defaultValue: true },
+      hasFixedPosition: {defaultValue: true },
       popoverColor: {
         defaultValue: Color.rgbHex('c9c9c9'),
         set(v) {
@@ -290,6 +292,7 @@ class StylePopover extends Popover {
       targetMorph: {
         initialize() {
           this.targetMorph = morph({
+            layout: new HorizontalLayout({ spacing: 5, resizeContainer: true }),
             fill: Color.transparent,
             submorphs: this.controls()});
           this.setupConnections();
@@ -642,7 +645,7 @@ export class FillPopover extends StylePopover {
       return [
         {
           fill: Color.transparent,
-          layout: new VerticalLayout({spacing: 4}),
+          layout: new VerticalLayout({spacing: 0}),
           submorphs: [
             new ColorPickerField({
               name: "colorField",
@@ -672,7 +675,7 @@ export class ShadowPopover extends StylePopover {
   static get properties() {
     return {
       shadowValue: {},
-      cachedShadow: {defaultValue: new ShadowObject({})},
+      cachedShadow: {defaultValue: new ShadowObject({ fast: true })},
       popoverColor: {defaultValue: Color.gray.lighter()}
     }
   }

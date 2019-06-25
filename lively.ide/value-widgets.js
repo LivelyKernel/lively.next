@@ -75,7 +75,10 @@ class ContextSensitiveWidget extends Morph {
           this.layout = new HorizontalLayout();
         }
       },
-      context: {/* a certain morph that the inspected property is assigned to */}
+      context: {
+        serialize: false,
+        /* a certain morph that the inspected property is assigned to */
+      }
     };
   }
 
@@ -144,7 +147,10 @@ export class VerticesWidget extends ShortcutWidget {
   }
 
   async openPopover() {
-    let editor = new VerticesPopover({pathOrPolygon: this.context});
+    let editor = new VerticesPopover({
+      hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
+      pathOrPolygon: this.context
+    });
     await editor.fadeIntoWorld(this.globalBounds().center());
     connect(editor, "vertices", this, "vertices");
     signal(this, "openWidget", editor);
@@ -191,7 +197,10 @@ export class LayoutWidget extends ShortcutWidget {
   }
 
   async openPopover() {
-    let editor = new LayoutPopover({container: this.context});
+    let editor = new LayoutPopover({
+      hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
+      container: this.context
+    });
     await editor.fadeIntoWorld(this.globalBounds().center());
     connect(editor, "layoutChanged", this, "layoutChanged");
     signal(this, "openWidget", editor);
@@ -432,6 +441,7 @@ export class ColorWidget extends ContextSensitiveWidget {
 
   async openFillEditor() {
     let editor = new FillPopover({
+      hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
       handleMorph: this.context,
       fillValue: this.color,
       title: "Fill Control",
@@ -717,7 +727,10 @@ export class ShadowWidget extends Morph {
   }
 
   async openPopover() {
-    let shadowEditor = new ShadowPopover({shadowValue: this.shadowValue});
+    let shadowEditor = new ShadowPopover({
+      hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
+      shadowValue: this.shadowValue
+    });
     await shadowEditor.fadeIntoWorld(this.globalBounds().center());
     connect(shadowEditor, "shadowValue", this, "shadowValue");
     connect(this, "shadowValue", this, "update");
@@ -818,7 +831,10 @@ export class PointWidget extends Label {
   }
 
   async openPopover() {
-    let editor = new PointPopover({pointValue: this.pointValue});
+    let editor = new PointPopover({
+      pointValue: this.pointValue, 
+      hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition)
+    });
     await editor.fadeIntoWorld(this.globalBounds().center());
     connect(editor, "pointValue", this, "pointValue");
     signal(this, "openWidget", editor);
@@ -855,7 +871,10 @@ export class PaddingWidget extends Label {
   }
 
   async openPopover() {
-    let editor = new RectanglePopover({rectangle: this.rectangle});
+    let editor = new RectanglePopover({
+      hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
+      rectangle: this.rectangle
+    });
     editor.relayout();
     await editor.fadeIntoWorld(this.globalBounds().center());
     connect(editor, "rectangle", this, "rectangle");
@@ -887,7 +906,9 @@ export class IconWidget extends Label {
   }
 
   async openPopover() {
-    let iconPicker = new IconPopover();
+    let iconPicker = new IconPopover({
+      hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition)
+    });
     await iconPicker.fadeIntoWorld(this.globalBounds().center());
     connect(iconPicker, "select", this, "iconValue", {converter: (iconName) => {
       return iconName && Icon.makeLabel(iconName).value;
