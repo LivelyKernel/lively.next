@@ -803,6 +803,20 @@ export default class Browser extends Window {
 
   async onModuleSelected(m) {
     let pack = this.state.selectedPackage;
+
+    if (this._return) return;
+    if (this.selectedModule && this.hasUnsavedChanges()) {
+      let proceed = await this.world().confirm([
+      'Discard Changes\n', {}, 'The unsaved changes to this module are going to be discarded.\nAre you sure you want to proceed?', {fontSize: 16, fontWeight: 'normal'}], { requester: this });
+      if (!proceed) {
+        this._return = true;
+        let m = await this.state.history.navigationInProgress;
+        await this.selectModuleNamed(arr.last(this.state.history.left).module.name)
+        this._return = false;
+        return;
+      }
+    }
+    
     this.state.moduleChangeWarning = null;
 
     if (!m) {
