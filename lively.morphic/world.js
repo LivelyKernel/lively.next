@@ -1,6 +1,6 @@
 /*global System,WeakMap,FormData,fetch,DOMParser*/
 import { Rectangle, Color, pt } from "lively.graphics";
-import { arr, fun, obj, promise } from "lively.lang";
+import { arr, Path, fun, obj, promise } from "lively.lang";
 import { once, signal } from "lively.bindings";
 import {
   Morph,
@@ -286,7 +286,7 @@ export class World extends Morph {
      if (evt.leftMouseButtonPressed()) {
        this.selectionStartPos = evt.positionIn(this);
        this.morphSelection = this.addMorph({
-          isSelectionElement: true,
+          isSelectionElement: true, epiMorph: true,
           position: this.selectionStartPos, extent: evt.state.dragDelta,
           fill: Color.gray.withA(.2),
           borderWidth: 2, borderColor: Color.gray
@@ -310,7 +310,8 @@ export class World extends Morph {
                   bounds: candidateBounds,
                   borderColor: Color.red,
                   borderWidth: 1,
-                  fill: Color.transparent
+                  fill: Color.transparent,
+                  epiMorph: true
               }, this.morphSelection);
            }
            if (this.selectedMorphs[c.id] && !included) {
