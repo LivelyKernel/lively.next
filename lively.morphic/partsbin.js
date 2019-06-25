@@ -167,10 +167,10 @@ export async function interactivelySavePart(part, options = {}) {
     if (expectedVersion1 && actualVersion1) {
       let [newerCommit] = await morphicDB.log(actualVersion1, 1, /*includeCommits = */true),
           {author: {name: authorName}, timestamp} = newerCommit,
-          overwriteQ = `The current version of part ${name} is not the most recent!\n`
+          overwriteQ = `The current version of part "${name}" is not the most recent!\n`
                      + `A newer version by ${authorName} was saved on `
                      + `${date.format(new Date(timestamp), "yyyy-mm-dd HH:MM")}. Overwrite?`,
-          overwrite = await world.confirm(overwriteQ);
+          overwrite = await world.confirm(['Version Mismatch\n', {}, overwriteQ, { fontWeight: 'normal', fontSize: 16}]);
       if (!overwrite) return null;
       let commitMetaData = obj.dissoc(newerCommit, ["preview"]);
       actualPart.changeMetaData("commit", commitMetaData, /*serialize = */true, /*merge = */false);
@@ -199,7 +199,7 @@ export async function interactivelyLoadObjectFromPartsBinFolder(options = {}) {
       partSpecs = await morphicDB.latestCommits("part"),
       items = partSpecs.map(ea => ({isListItem: true, string: ea.name, value: ea})),
       {selected: [choice]} = await $world.filterableListPrompt(
-        "select part to load", items, {fuzzy: true});
+        "Select part to load", items, {fuzzy: true});
   return choice ? loadPart(choice) : null;
 }
 
@@ -312,7 +312,7 @@ export class SnapshotEditor {
         let snap = snapshot || await this.db.fetchSnapshot(undefined, undefined, _id),
             oldContent = JSON.stringify(snap, null, 2);
         if (oldContent !== origContent) {
-          let really = await $world.confirm("Content change since loading, save anyway");
+          let really = await $world.confirm(["The content you are editing was changed in the mean time.\nDo you want to save anyway and overwrite those changes?", { fontWeight: 'normal'}]);
           if (!really) return {saved: false, message: "canceled"};
         }
 
@@ -338,7 +338,7 @@ export class SnapshotEditor {
         snap = snapshot || await this.db.fetchSnapshot(undefined, undefined, _id),
         files = new SnapshotPackageHelper(snap).filesInPackages(),
         items = files.map(ea => ({isListItem: true, string: ea.url, value: ea})),
-        {selected: [file]} = await $world.filterableListPrompt("select file to edit",
+        {selected: [file]} = await $world.filterableListPrompt("Select file to edit",
           items,  {historyId: "object-serialization-debugger-hist"});
 
     if (!file) return;
@@ -360,7 +360,7 @@ export class SnapshotEditor {
       customSaveAction: async ed => {
         let oldContent = file.get(snap);
         if (oldContent !== origContent) {
-          let really = await $world.confirm("Content change since loading, save anyway");
+          let really = await $world.confirm(["The content you are editing was changed in the mean time.\nDo you want to save anyway and overwrite those changes?", { fontWeight: 'normal'}]);
           if (!really) return {saved: false, message: "canceled"};
         }
         file.set(snap, ed.ui.contentText.textString);
