@@ -32,7 +32,8 @@ export function printConnectionElements(
   sourceObj, sourceAttr, targetObj, targetAttr,
   converter, updater
 ) {
-  let source = `connect(sourceObj, '${sourceAttr}', targetObj, '${targetAttr}'`;
+  let source = `/* global connect, sourceObj, targetObj */
+connect(sourceObj, '${sourceAttr}', targetObj, '${targetAttr}'`;
   if (converter || updater) source += ", {\n"
   if (converter) source += `  converter: ${converter}`
   if (converter && updater) source += ","
