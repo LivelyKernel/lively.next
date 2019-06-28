@@ -41,6 +41,10 @@ export default class Halo extends Morph {
           this.initLayout();
         }
       },
+      hasTinyTarget: {
+        derived: true,
+        get() { return this.target.extent.leqPt(pt(20,20)) }
+      },
       target: {
         get() { return this.state ? this.state.target : null; },
         set(t) {
@@ -1336,6 +1340,7 @@ class OriginHaloItem extends HaloItem {
   }
 
   alignInHalo() {
+    this.visible = !this.halo.hasTinyTarget;
     this.center = this.computePositionAtTarget();
   }
 
@@ -1406,9 +1411,9 @@ class ResizeHandle extends HaloItem {
   static resizersFor(halo) {
     if (!halo.target) return [];
     var globalRot =  halo.target.getGlobalTransform().getRotation();
-    return this.getResizeParts(globalRot)
+    return arr.compact(this.getResizeParts(globalRot)
       .map(([[corner, deltaMask, originDelta], [nativeCursor, location]]) =>
-        this.for(halo, corner, location, nativeCursor).alignInHalo());
+        this.for(halo, corner, location, nativeCursor))).map(h => h.alignInHalo());
   }
 
   static for(halo, corner, location, nativeCursor) {
@@ -1418,6 +1423,7 @@ class ResizeHandle extends HaloItem {
           tooltip: "Resize " + corner,
           extent: pt(10, 10),
           borderWidth: 1,
+          borderRadius: 0,
           borderColor: Color.black,
           fill: Color.white
         });
@@ -1425,7 +1431,7 @@ class ResizeHandle extends HaloItem {
   }
 
   get isResizeHandle() { return true; }
-
+  
   get corner() { return this.getProperty("corner"); }
   set corner(val) { this.setProperty("corner", val); }
   get location() { return this.getProperty("location"); }
@@ -1436,7 +1442,13 @@ class ResizeHandle extends HaloItem {
     return `${width.toFixed(1)}x${height.toFixed(1)}`;
   }
 
-  positionInHalo() { return this.halo.borderBox.bounds().partNamed(this.location); }
+  positionInHalo() { 
+    let bounds = this.halo.borderBox.bounds();
+    if (this.halo.hasTinyTarget) {
+      if (Rectangle.prototype.sides.includes(this.location)) this.visible = false;
+      bounds = bounds.insetBy(-4);
+    }
+    return bounds.partNamed(this.location); }
 
   alignInHalo() { this.center = this.positionInHalo(); return this; }
 
