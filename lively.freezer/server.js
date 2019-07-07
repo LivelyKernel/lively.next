@@ -49,7 +49,7 @@ export default class FrozenPartsLoader {
   get pluginId() { return "FrozenPartsLoader" }
 
   constructor(config) {
-    this.publicDirs = config.freezer.publicDirs;
+    this.publicDirs = (config.freezer && config.freezer.publicDirs) || [];
   }
 
   get before() { return ['jsdav', "lib-lookup"] }
