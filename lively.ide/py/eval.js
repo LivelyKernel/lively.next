@@ -29,28 +29,35 @@ export class PyEvaluator {
       hostname: "127.0.0.1",
       path: "/",
       ssl: false,
+      onData: (data) => console.log("data received from python - data is not being handled"),
       ...opts
     };
   }
 
   static ensure(opts) {
     opts = this.fixOpts(opts);
-    let instances = this._instances || (this._instances = {}),
-        url = this.urlFor(opts);
-    console.log(url)
-    return instances[url] || (instances[url] = new this(opts));
+    const instances = this._instances || (this._instances = {}),
+          url = this.urlFor(opts),
+          existing = instances[url];
+    return existing ? existing.assignOpts(opts) : (instances[url] = new this(opts));
   }
 
   constructor(opts = {}) {
     opts = this.constructor.fixOpts(opts);
-    this.port = opts.port;
-    this.hostname = opts.hostname;
-    this.ssl = opts.ssl;
-    this.path = opts.path;
+    this.assignOpts(opts);
     this._websocket = null;
     this.taskQueue = [];
     this.taskInProgress = null;
     this.debug = false;
+  }
+
+  assignOpts(opts) {
+    this.port = opts.port;
+    this.hostname = opts.hostname;
+    this.ssl = opts.ssl;
+    this.path = opts.path;
+    this.onData = opts.onData;
+    return this;
   }
 
   get isConnected() {
@@ -100,7 +107,7 @@ export class PyEvaluator {
     this._websocket = null;
     ws.close();
 
-    if (!reason) reason = "disconnected from python server";    
+    if (!reason) reason = "disconnected from python server";
     if (this.taskInProgress) {
       let {deferred: {reject}} = this.taskInProgress
       this.taskInProgress = null;
@@ -116,17 +123,31 @@ export class PyEvaluator {
   onMessage(evt) {
     this.debug && console.log(`[PyEvaluator] got message ${evt.data}`);
     let answer;
-    try { answer = JSON.parse(evt.data); } catch (err) {
-      console.warn(`PyEvaluator recived strange websocket answer: ${evt.data}`);
-      return;
+    const isDataTransfer = evt.data instanceof window.Blob;
+    if (isDataTransfer) {
+      answer = evt.data;
+    } else {
+      try {
+        answer = JSON.parse(evt.data);
+      } catch (err) {
+        console.warn(`PyEvaluator recived strange websocket answer: ${evt.data}`);
+        return;
+      }
     }
-    this.processAnswer(answer);    
+    this.processAnswer(answer, isDataTransfer);
   }
 
-  processAnswer(msg) {
+  processAnswer(msg, isDataTransfer) {
+    if (isDataTransfer) {
+      if (typeof this.onData === 'function') {
+        this.onData(msg);
+      }
+      return;
+    }
+
     let {taskInProgress} = this;
     if (!taskInProgress) {
-      console.warn(`PyEvaluator received answer but no eval is in progress! ${JSON.stringify(msg)}`);
+      console.warn(`PyEvaluator received answer but no task is in progress! ${JSON.stringify(msg)}`);
       return;
     }
 
@@ -140,7 +161,7 @@ export class PyEvaluator {
   }
 
   _workTaskQueue() {
-    if (this.taskInProgress || !this.taskQueue.length) return;
+    if (this.taskInProgress || !this.taskQueue.length) return Promise.resolve(this.taskInProgress);
     if (!this.isConnected) return this.connect().then(() => this._workTaskQueue());
     let task = this.taskInProgress = this.taskQueue.shift();
     if (task.type === "eval") {
@@ -162,6 +183,12 @@ export class PyEvaluator {
       this.debug && console.log(`[PyEvaluator] sending code_format req ${file}`);
       this._websocket.send(JSON.stringify({action: "code_format", data}));
     }
+    if (task.type === "fetchData") {
+      let { source } = task;
+      this.debug && console.log(`[PyEvaluator] fetching data ${source}`);
+      this._websocket.send(JSON.stringify({ action: "fetchData", data: { source } }));
+    }
+    return Promise.resolve(task);
   }
 
   async runEval(source) {
@@ -185,4 +212,12 @@ export class PyEvaluator {
     return deferred.promise;
   }
 
+  async fetchData(source) {
+    // 2019-07-07 currently unused and not implemented server side
+    // server can trigger data send an this.onData is called in that case
+    let deferred = promise.deferred();
+    this.taskQueue.push({type: "fetchData", source, deferred, messages: [], result: undefined});
+    this._workTaskQueue();
+    return deferred.promise;
+  }
 }

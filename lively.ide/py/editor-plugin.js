@@ -61,6 +61,7 @@ export default class PythonEditorPlugin extends CodeMirrorEnabledEditorPlugin {
 
 
   systemInterface(env) {
+    env = {...this.evalEnvironment, ...env};
     return PyEvaluator.ensure(env);
   }
 
