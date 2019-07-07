@@ -34,7 +34,7 @@ export default class PythonEditorPlugin extends CodeMirrorEnabledEditorPlugin {
 
   getCompleters(otherCompleters) { return completers.concat(otherCompleters); }
 
-  getCommands(otherCommands) { return [...otherCommands,...commands]; }
+  getCommands(otherCommands) { return [...super.getCommands(otherCommands),...commands]; }
 
   getKeyBindings(other) {
     return [

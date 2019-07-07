@@ -1,4 +1,5 @@
 /*global System*/
+import { codeEvaluationCommands } from "../text/code-evaluation-commands.js";
 
 export var commands = [
 
@@ -6,33 +7,38 @@ export var commands = [
     name: "[python] auto format code",
     handlesCount: true,
     exec: async (text, opts, count) => {
-      opts = {...opts};
+      opts = { ...opts };
 
-      var plugin = text.pluginFind(({isPythonEditorPlugin}) => isPythonEditorPlugin),
-          sel = text.selection,
-          source = text.textString,
-          fromRow = sel.isEmpty() ? undefined : sel.start.row,
-          toRow = sel.isEmpty() ? undefined : sel.end.row;
+      var plugin = text.pluginFind(
+          ({ isPythonEditorPlugin }) => isPythonEditorPlugin
+        ),
+        sel = text.selection,
+        source = text.textString,
+        fromRow = sel.isEmpty() ? undefined : sel.start.row,
+        toRow = sel.isEmpty() ? undefined : sel.end.row;
 
       if (!plugin) return true;
-      
+
       let pySystem = plugin.systemInterface(),
-          formattedCode = await pySystem.formatCode(source, fromRow, toRow),
-          err = !formattedCode ? new Error("format failed") : formattedCode.error;
+        formattedCode = await pySystem.formatCode(source, fromRow, toRow),
+        err = !formattedCode ? new Error("format failed") : formattedCode.error;
 
       if (err) {
-        text.showError("code format failed: " + err)
+        text.showError("code format failed: " + err);
         return true;
       }
 
       text.undoManager.group();
-      let jsdiff = await System.import("jsdiff", System.decanonicalize("lively.morphic")),
-          diff = jsdiff.diffChars(text.textString, formattedCode);
+      let jsdiff = await System.import(
+          "jsdiff",
+          System.decanonicalize("lively.morphic")
+        ),
+        diff = jsdiff.diffChars(text.textString, formattedCode);
       text.applyJsDiffPatch(diff);
       text.undoManager.group();
       return true;
-   }
+    }
+  },
 
-  }
-
-]
+  ...codeEvaluationCommands.filter(ea => ea.name === "doit" || ea.name == "printit")
+];
