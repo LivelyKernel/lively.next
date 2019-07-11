@@ -1,5 +1,5 @@
 import { pt, Rectangle, rect } from "lively.graphics";
-import { arr, properties, Closure, num, grid, obj } from "lively.lang";
+import { arr, Closure, num, grid, obj } from "lively.lang";
 import {
   GridLayoutHalo, 
   ProportionalLayoutHalo,
@@ -129,7 +129,7 @@ class Layout {
   }
 
   forceLayoutsInNextLevel() {
-    function forceLayouts(m) {
+    let forceLayouts = (m, i) => {
       if (m.layout)
         m.layout.forceLayout();
       else
@@ -247,7 +247,6 @@ export class CustomLayout extends Layout {
 
 }
 
-
 export class SnapLayout extends Layout {
 
   constructor(config = {}) {
@@ -272,93 +271,23 @@ export class SnapLayout extends Layout {
   }
 }
 
-export class FillLayout extends Layout {
-
-  constructor(config = {}) {
-    super(config);
-    this.morphs = config.morphs || [];
-    this.fixedHeight = config.fixedHeight;
-    this.fixedWidth = config.fixedWidth;
-    this._spacing = 0;
-  }
-
-  name() { return "Fill" }
-
-  description() { return "Forces all submorphs to match the extent of their owner."}
-
-  set spacing(spacing = 0) {
-     if (obj.isNumber(spacing)) {
-        var top = left = right = bottom = spacing;
-     } else {
-        var {top, left, right, bottom} = spacing;
-        top = top || 0;
-        left = left || 0;
-        right = right || 0;
-        bottom = bottom || 0;
-     }
-     this._spacing = {top, left, right, bottom};
-     this.apply();
-  }
-
-  get spacing() { return this._spacing }
-
-  apply(animate = false) {
-    /* FIXME: Add support for destructuring default values */
-    if (this.active || !this.container) return;
-    super.apply(animate);
-    const {fixedWidth, fixedHeight} = this,
-          {top, bottom, left, right} = this.spacing,
-          height = !fixedHeight  && this.container.height - top - bottom,
-          width = !fixedWidth && this.container.width - left - right;
-    this.active = true;
-    this.morphs.forEach(m => {
-      if (!m.isLayoutable) return;
-      var m = this.container.getSubmorphNamed(m),
-          newBounds = pt(left,top).extent(pt(width || m.width, height || m.height));
-      if (animate) {
-         const {duration, easing} = animate;
-         m.animate({bounds: newBounds, duration, easing});
-      } else {
-         m.setBounds(newBounds);
-      }
-    });
-    this.active = false;
-  }
-
-  layoutOrder(aMorph) { return aMorph.top; }
-}
-
 class FloatLayout extends Layout {
-
-  layoutOrder(aMorph) { return aMorph.left; }
-}
-
-export class VerticalLayout extends FloatLayout {
 
   constructor(props = {}) {
     super(props);
-    // supported directions: "left", "center"
     this._resizeSubmorphs = typeof props.resizeSubmorphs !== "undefined" ?
                               props.resizeSubmorphs : false;
-    this._align = props.align || "left";
   }
 
-  name() { return "Vertical" }
-  description() { return "Assemble the submorphs in a vertically growing list." }
-
-  inspect(pointerId) {
-    return new FlexLayoutHalo(this.container, pointerId);
+  copy() {
+    return new this.constructor(this.getSpec());
   }
 
-  equals(other) {
-    if (!other.name || other.name() != 'Vertical') return false;
-    if (this.spacing != other.spacing) return false;
-    if (this.align != other.align) return false;
-    //if (this.direction != other.direction) return false;
-    return true;
-  }
-
-  get possibleAlignValues() { return ["left", "center", "right"]; }
+  layoutOrder(aMorph) { return aMorph.left; }
+  
+  get direction() { return this._direction; }
+  set direction(d) { this._direction = d; this.apply(); }
+  
   get align() { return this._align; }
   set align(d) { this._align = d; this.apply(); }
 
@@ -371,14 +300,65 @@ export class VerticalLayout extends FloatLayout {
   get resizeSubmorphs() { return this._resizeSubmorphs }
   set resizeSubmorphs(bool) { this._resizeSubmorphs = bool; this.apply(); }
 
-  getSpec() {
-    let { spacing, resizeSubmorphs, autoResize, align, padding, reactToSubmorphAnimations } = this;
-    return { spacing, resizeSubmorphs, autoResize, align, padding, reactToSubmorphAnimations };
+  equals(other) {
+    if (this.spacing != other.spacing) return false;
+    if (this.align != other.align) return false;
+    if (this.direction != other.direction) return false;
+    return true;
   }
 
-  copy() {
-    return new this.constructor(this.getSpec());
+  getSpec() {
+    let { spacing, resizeSubmorphs, autoResize, align, direction, padding, reactToSubmorphAnimations } = this;
+    return { spacing, resizeSubmorphs, autoResize, align, direction, padding, reactToSubmorphAnimations };
   }
+
+  inspect(pointerId) {
+    return new FlexLayoutHalo(this.container, pointerId);
+  }
+
+  async apply(animate = false) {
+    if (this.active || !this.container || !this.container.submorphs.length) return;
+
+    if (!this.layoutableSubmorphs.length) return;
+    if (!this.layoutableSubmorphBounds) this.refreshBoundsCache();
+    
+    super.apply(animate);
+    
+    this.active = true;
+    
+    let minExtent = this.computeMinContainerExtent();
+    this.layoutSubmorphs(minExtent, animate);
+    this.forceLayoutsInNextLevel();
+    minExtent = this.computeMinContainerExtent();
+    this.resizeContainer(minExtent, animate);
+    this.lastBoundsExtent = this.container.bounds().extent();
+    
+    this.active = false;
+    this.layoutRequests = false;
+    return this.animationPromise;
+  }
+  
+}
+
+export class VerticalLayout extends FloatLayout {
+
+  constructor(props = {}) {
+    super(props);
+    this._align = props.align || "left";
+    this._direction = props.direction || 'topToBottom';
+  }
+
+  name() { return "Vertical" }
+  description() { return "Assemble the submorphs in a vertically growing list." }
+
+  equals(other) {
+    if (!super.equals(other)) return false;
+    if (!other.name || other.name() != 'Vertical') return false;
+    return true;
+  }
+
+  get possibleDirectionValues() { return ["topToBottom", "bottomToTop", "centered"]; }
+  get possibleAlignValues() { return ["left", "center", "right"]; }
 
   __serialize__() {
     return {
@@ -387,72 +367,81 @@ export class VerticalLayout extends FloatLayout {
     }
   }
 
-  apply(animate = false) {
-    if (this.active || !this.container) return;
-    super.apply(animate);
-
-    let {
-          container,
-          autoResize,
-          resizeSubmorphs,
-          spacing,
-          align,
-          layoutableSubmorphs,
-          padding
-        } = this,
-        padLeft = padding ? padding.left() : 0,
-        padRight = padding ? padding.right() : 0,
-        padTop = padding ? padding.top() : 0,
-        padBottom = padding ? padding.bottom() : 0,
-        pos = pt(padLeft + spacing, padTop + spacing),
-        containerWidth = container.width,
-        submorphWidth = containerWidth - spacing*2 - padLeft - padRight,
-        maxWidth = 0;
-
-    this.active = true;
-    for (let m of layoutableSubmorphs) {
-      let {x: oldX, y: oldY} = m.position,
-          {x: oldWidth} = m.extent,
-          y = pos.y,
-          x = pos.x,
-          accessor = 'topLeft';
-      // resize morphs now
-      if (resizeSubmorphs && oldWidth !== submorphWidth)
-        m.width = submorphWidth;
-      if (align == 'center') {
-        accessor = 'topCenter';
-        x = containerWidth / 2;
-      }
-      if (align == 'right') {
-        accessor = 'topRight';
-        x = containerWidth - padRight - spacing;
-      }
-      if (oldX !== x || oldY !== y) {
-        if (animate) {
-          const {duration, easing} = animate;
-          m.animate({[accessor]: pt(x, y), duration, easing});
-        } else {
-          m[accessor] = pt(x, y);
-        }
-      }
-      pos = m.bottomLeft.addPt(pt(0, spacing));
-      maxWidth = Math.max(m.bounds().width, maxWidth);
+  layoutSubmorphs(minExtent, animate) {
+    let { container, layoutableSubmorphs, spacing, autoResize, align, resizeSubmorphs } = this;
+    let startY = this.getStartY(minExtent), layoutableSubmorphBounds = [];
+    
+    let layoutRoutine = (accessor, startPosition) => {
+      layoutableSubmorphs.reduce((pos, m) => {
+        if (resizeSubmorphs) m.width = container.width - 2 * spacing;
+        this.changePropertyAnimated(m, accessor, pos, animate);
+        let bounds = m.bounds();
+        layoutableSubmorphBounds.push(bounds);
+        return bounds[accessor]().addXY(0, bounds.height + spacing);
+      }, startPosition);
     }
 
-    this.forceLayoutsInNextLevel();
-
-    if (autoResize && layoutableSubmorphs.length > 0) {
-      // resize vertically only
-      const newExtent = pt(maxWidth + 2 * spacing + padLeft + padRight, padBottom + pos.y);
-      if (animate) {
-        const {duration, easing} = animate;
-        this.container.animate({height: newExtent.y, duration, easing});
+    this.layoutableSubmorphBounds = layoutableSubmorphBounds;
+    
+    if (align === "left") {
+      layoutRoutine("topLeft", pt(spacing, startY));
+    } else if (align === "right") {
+      layoutRoutine("topRight", pt(minExtent.x + (autoResize ? spacing : -spacing), startY));
+    } else { // center
+      layoutRoutine("topCenter", pt(container.width/2, startY));
+    }
+  }
+  
+  resizeContainer(minExtent, animate) {
+    let { autoResize, direction, layoutableSubmorphs, 
+          resizeSubmorphs, spacing, container } = this;
+    if (autoResize) {
+      var h = 0;
+      if (direction === "centered") {
+        var topOffset = layoutableSubmorphs[0].top;
+        h = arr.last(layoutableSubmorphs).bottom + topOffset
       } else {
-        this.container.height = newExtent.y;
+        h = arr.last(layoutableSubmorphs).bottom + spacing;
       }
+    
+      var newExtent = pt(
+        resizeSubmorphs ? container.width : minExtent.x + 2 * spacing,
+        Math.max(h, minExtent.y)
+      );
+      this.changePropertyAnimated(container, "extent", newExtent, animate);
     }
-    this.lastBoundsExtent = this.container.bounds().extent();
-    this.active = false;
+  }
+
+  getStartY(minExtent) {
+    let { layoutableSubmorphBounds, spacing, direction } = this;
+    let submorphH = 0, startY;
+    submorphH += (layoutableSubmorphBounds.length - 1) * spacing;
+    for (let bounds of layoutableSubmorphBounds) submorphH += bounds.height;
+
+    if (direction === "bottomToTop") { 
+      startY = minExtent.y - submorphH - 2 * spacing;
+    } else if (direction === "centered") {
+      startY = minExtent.y / 2 - submorphH / 2 - spacing;
+    } else { // topToBottom
+      startY = 0;
+    }
+
+    return Math.max(0, startY) + spacing;
+  }
+
+  computeMinContainerExtent() {
+    let { spacing, container, layoutableSubmorphs, autoResize } = this;
+    var spacingHeight = (layoutableSubmorphs.length + 1) * spacing;
+    var maxW = 0, maxH = 0;
+    for (var i = 0; i < layoutableSubmorphs.length; i++) {
+      let bounds = layoutableSubmorphs[i].bounds(),
+          {width: w, height: h} = bounds;
+      maxH += h;
+      maxW = Math.max(w, maxW);
+    }
+    let minExtent = pt(maxW, maxH + spacingHeight)
+    if (!autoResize) minExtent = minExtent.maxPt(container.extent);
+    return minExtent;
   }
 
   layoutOrder(aMorph) { return aMorph.top; }
@@ -462,30 +451,15 @@ export class HorizontalLayout extends FloatLayout {
 
   constructor(props = {}) {
     super(props);
-    // supported directions: "leftToRight", "rightToLeft", "centered"
     this._direction = props.direction || "leftToRight";
-    // top, center, bottom
     this._align = props.align || "top";
   }
 
   name() { return "Horizontal"; }
   description() { return "Assemble the submorphs in a horizontally growing list."; }
 
-  inspect(pointerId) { return new FlexLayoutHalo(this.container, pointerId); }
-
   get possibleDirectionValues() { return ["leftToRight", "rightToLeft", "centered"]; }
-  get direction() { return this._direction; }
-  set direction(d) { this._direction = d; this.apply(); }
-
   get possibleAlignValues() { return ["top", "center", "bottom"]; }
-  get align() { return this._align; }
-  set align(d) { this._align = d; this.apply(); }
-
-  get autoResize() { return this._autoResize; }
-  set autoResize(active) { this._autoResize = active; this.apply(); }
-
-  get spacing() { return this._spacing; }
-  set spacing(offset) { this._spacing = offset; this.apply(); }
 
   __serialize__() {
     return {
@@ -494,101 +468,87 @@ export class HorizontalLayout extends FloatLayout {
     }
   }
 
-  copy() {
-    return new this.constructor(this.getSpec());
-  }
-
-  getSpec() {
-    let { spacing, autoResize, align, direction, padding, reactToSubmorphAnimations } = this;
-    return { spacing, autoResize, align, direction, padding, reactToSubmorphAnimations };
-  }
-
-  async apply(animate = false) {
-    if (this.active || !this.container || !this.container.submorphs.length) return;
-
-    var { direction, align, spacing, container, autoResize, layoutableSubmorphs } = this;
-
-    if (!layoutableSubmorphs.length) return;
-
-    super.apply(animate);
-    this.active = true;
-    this.maxHeight = 0;
-
-    var minExtent = this.computeMinContainerExtent(spacing, container, layoutableSubmorphs);
-    if (!autoResize) minExtent = minExtent.maxPt(container.extent);
-
-    var startX = 0, rightToLeft = false;
-    if (direction === "rightToLeft") {
-      rightToLeft = true;
-      layoutableSubmorphs = layoutableSubmorphs.reverse();
-      startX = Math.max(0, container.width - 2 * spacing);
-    } else if (direction === "centered") {
-      let baseWidth = autoResize ? container.width - minExtent.x : minExtent.x,
-          submorphW = (layoutableSubmorphs.length - 1) * spacing;
-      for (let m of layoutableSubmorphs) submorphW = submorphW + m.bounds().width;
-      startX = minExtent.x / 2 - submorphW / 2 - spacing;
-    }
-
-    if (autoResize) {
-      var w = 0;
-      if (direction === "centered") {
-        var leftOffset = layoutableSubmorphs[0].left;
-        w = arr.last(layoutableSubmorphs).right + leftOffset
-      } else  {
-        w = arr.last(layoutableSubmorphs).right + spacing;
-      }
-    
-      var newExtent = pt(Math.max(minExtent.x, w), minExtent.y + 2 * spacing);
-      this.changePropertyAnimated(container, "extent", newExtent, animate);
-    }
-
-    if (align === "top") {
-      let top = spacing;
-      layoutableSubmorphs.reduce((pos, m) => {
-        this.changePropertyAnimated(m, rightToLeft ? "topRight" : "topLeft", pos, animate);
-        return rightToLeft ? m.topLeft.subPt(pt(spacing, 0)) : m.topRight.addPt(pt(spacing, 0));
-      }, pt(Math.max(0, startX) + spacing, top));
-      this.forceLayoutsInNextLevel();
-
-    } else if (align === "bottom") {
-      let bottom = minExtent.y + (autoResize ? spacing : -spacing);
-      layoutableSubmorphs.reduce((pos, m) => {
-        this.changePropertyAnimated(m, rightToLeft ? "bottomRight" : "bottomLeft", pos, animate);
-        return rightToLeft ? m.bottomLeft.subPt(pt(spacing, 0)) : m.bottomRight.addPt(pt(spacing, 0));
-      }, pt(Math.max(0, startX) + spacing, bottom));
-       this.forceLayoutsInNextLevel();
-    } else { // centered
-      let yCenter = container.height/2;      
-      layoutableSubmorphs.reduce((pos, m) => {
-        this.changePropertyAnimated(m, rightToLeft ? "rightCenter" : "leftCenter", pos, animate);
-        return rightToLeft ? m.leftCenter.subPt(pt(spacing, 0)) : m.rightCenter.addPt(pt(spacing, 0));
-      }, pt(Math.max(0, startX) + spacing, yCenter));
-      this.forceLayoutsInNextLevel();
-    }
-
-    this.lastBoundsExtent = this.container.bounds().extent();
-    this.active = false;
-    return this.animationPromise;
-  }
-
   equals(other) {
+    if (!super.equals(other)) return false;
     if (!other.name || other.name() != 'Horizontal') return false;
-    if (this.spacing != other.spacing) return false;
-    if (this.align != other.align) return false;
-    if (this.direction != other.direction) return false;
     return true;
   }
 
-  computeMinContainerExtent(spacing, container, layoutableSubmorphs) {
-    var spacingWidth = (layoutableSubmorphs.length + 1) * spacing;
+  layoutSubmorphs(minExtent, animate) {
+    let { container, layoutableSubmorphs, 
+         resizeSubmorphs, spacing, autoResize, align } = this;
+    let startX = this.getStartX(minExtent), layoutableSubmorphBounds = [];
+    
+    let layoutRoutine = (accessor, startPosition) => {
+      layoutableSubmorphs.reduce((pos, m) => {
+        this.changePropertyAnimated(m, accessor, pos, animate);
+        if (resizeSubmorphs) m.height = container.height - 2 * spacing;
+        let bounds = m.bounds();
+        layoutableSubmorphBounds.push(bounds);
+        return bounds[accessor]().addXY(bounds.width + spacing, 0);
+      }, startPosition);
+    }
+
+    this.layoutableSubmorphBounds = layoutableSubmorphBounds;
+    
+    if (align === "top") {
+      layoutRoutine("topLeft", pt(startX, spacing));
+    } else if (align === "bottom") {
+      layoutRoutine("bottomLeft", pt(startX, minExtent.y + (autoResize ? spacing : -spacing)));
+    } else { // center
+      layoutRoutine("leftCenter", pt(startX, container.height/2));
+    }
+  }
+  
+  resizeContainer(minExtent, animate) {
+    let { autoResize, direction, layoutableSubmorphBounds, 
+         resizeSubmorphs, spacing, container } = this;
+    if (autoResize) {
+      var w = 0;
+      if (direction === "centered") {
+        var leftOffset = layoutableSubmorphBounds[0].left();
+        w = arr.last(layoutableSubmorphBounds).right() + leftOffset
+      } else  {
+        w = arr.last(layoutableSubmorphBounds).right() + spacing;
+      }
+    
+      var newExtent = pt(
+        Math.max(minExtent.x, w), 
+        resizeSubmorphs ? container.height : minExtent.y + 2 * spacing);
+      this.changePropertyAnimated(container, "extent", newExtent, animate);
+    }
+  }
+
+  getStartX(minExtent) {
+    let { layoutableSubmorphBounds, spacing, direction } = this;
+    let submorphW = 0, startX;
+    submorphW += (layoutableSubmorphBounds.length - 1) * spacing;
+    for (let bounds of layoutableSubmorphBounds) submorphW += bounds.width;
+
+    if (direction === "rightToLeft") { 
+      startX = minExtent.x - submorphW - 2 * spacing;
+    } else if (direction === "centered") {
+      startX = minExtent.x / 2 - submorphW / 2 - spacing;
+    } else { // leftToRight
+      startX = 0;
+    }
+
+    return Math.max(0, startX) + spacing;
+  }
+
+  computeMinContainerExtent() {
+    let { spacing, container, layoutableSubmorphBounds, autoResize } = this;
+    var spacingWidth = (layoutableSubmorphBounds.length + 1) * spacing;
     var maxW = 0, maxH = 0;
-    for (var i = 0; i < layoutableSubmorphs.length; i++) {
-      let m = layoutableSubmorphs[i],
-          {x: w, y: h} = m.extent;
+    for (var i = 0; i < layoutableSubmorphBounds.length; i++) {
+      let bounds = layoutableSubmorphBounds[i],
+          {width: w, height: h} = bounds;
       maxW += w;
       maxH = Math.max(h, maxH);
     }
-    return pt(maxW + spacingWidth, maxH)
+    let minExtent = pt(maxW + spacingWidth, maxH)
+    if (!autoResize) minExtent = minExtent.maxPt(container.extent);
+    return minExtent;
   }
 
 }
@@ -609,6 +569,8 @@ export class ProportionalLayout extends Layout {
     this.extentDelta = pt(0,0);
     this.proportionalLayoutSettingsForMorphs = new WeakMap();
     this.submorphSettings = (args && args.submorphSettings) || [];
+    delete this.spacing;
+    delete this.autoResize;
   }
 
   get __dont_serialize__() { return [...super.__dont_serialize__, 'extentDelta', 'lastExtent'] }
@@ -717,18 +679,67 @@ export class ProportionalLayout extends Layout {
         var morphScale = pt(
           x === "scale" ? scalePt.x : 1,
           y === "scale" ? scalePt.y : 1);
-        m.position = m.position.scaleByPt(morphScale);
-        m.extent = m.extent.scaleByPt(morphScale);
+        this.changePropertyAnimated(m, 'position', m.position.scaleByPt(morphScale), animate);
+        this.changePropertyAnimated(m, 'extent', m.extent.scaleByPt(morphScale), animate)
       }
       
-      if (moveX || moveY) m.moveBy(pt(moveX, moveY));
-      if (resizeX || resizeY) m.extent = m.extent.addXY(resizeX, resizeY);
-
+      if (moveX || moveY) 
+        this.changePropertyAnimated(m, 'position', m.position.addXY(moveX, moveY), animate);
+      if (resizeX || resizeY)
+        this.changePropertyAnimated(m, 'extent', m.extent.addXY(resizeX, resizeY), animate);
     }
 
     this.forceLayoutsInNextLevel();
 
     // this.lastExtent = extent;
+    this.active = false;
+  }
+
+}
+
+export class CenteredTilingLayout extends TilingLayout {
+
+  name() { return "CenteredTiling" }
+  description() { return "Similar to TilingLayout but center the rows." }
+
+  apply(animate = false) {
+    if (this.active || !this.container) return;
+
+    this.active = true;
+    super.apply(animate);
+
+    var width = this.getOptimalWidth(this.container),
+        {spacing, layoutableSubmorphs} = this,
+        y = spacing + this.border.top;
+
+    layoutableSubmorphs = layoutableSubmorphs.slice();
+
+    while (layoutableSubmorphs.length) {
+
+      let remainingWidth = width;
+      let rowMorphs = arr.takeWhile(layoutableSubmorphs, m => {
+        let newWidth = remainingWidth - (m.width + 2*spacing);
+        if (newWidth < 0) return false;
+        remainingWidth = newWidth;
+        return true;
+      })
+
+      if (rowMorphs.length) layoutableSubmorphs = arr.withoutAll(layoutableSubmorphs, rowMorphs);
+      else {
+        rowMorphs = [layoutableSubmorphs.shift()]
+        remainingWidth = 0;
+      };
+
+      let pos = pt(remainingWidth/2 + spacing + this.border.left, y);
+      for (let m of rowMorphs) {
+        m.position = pos;
+        pos = pos.addXY(2*spacing + m.width, 0);
+        y = Math.max(y, m.bottom)
+      }
+
+      y += 2*spacing;
+    }
+
     this.active = false;
   }
 
@@ -749,6 +760,27 @@ export class TilingLayout extends Layout {
   inspect(pointerId) {
     return new TilingLayoutHalo(this.container, pointerId);
   }
+
+  __serialize__() {
+    return {
+      __expr__: `new TilingLayout(${JSON.stringify(this.getSpec())})`,
+      bindings: {"lively.morphic": ["TilingLayout"]}
+    }
+  }
+
+  copy() {
+    return new this.constructor(this.getSpec());
+  }
+
+  getSpec() {
+    let { axis, align, spacing, layoutOrder } = this;
+    return {
+      axis, align, spacing, layoutOrder
+    }
+  }
+
+  get possibleAxisValues() { return ['row', 'columns']; }
+  get possibleAlignValues() { return ['left', 'center']; }
 
   get axis() { return this._axis }
   set axis(a) { this._axis = a; this.apply() }
@@ -806,12 +838,7 @@ export class TilingLayout extends Layout {
       }
 
       for (let m of rowMorphs) {
-        if (animate) {
-          const {duration, easing} = animate;
-          m.animate({position: pos, duration, easing});
-        } else {
-          m.position = pos;
-        }
+        this.changePropertyAnimated(m, 'position', pos, animate);
         pos = isHorizontal ?
           pos.addXY(spacing + m.extent[normalizedWidthAccessor], 0) :
           pos.addXY(0, spacing + m.extent[normalizedWidthAccessor]);
@@ -850,54 +877,6 @@ export class TilingLayout extends Layout {
     // the following creates a drop zone that is 15 pixels tall.
     // allows for horizontal reordering.
     return (morph.top - morph.top % 15) * 1000000 + morph.left;
-  }
-
-}
-
-export class CenteredTilingLayout extends TilingLayout {
-
-  name() { return "CenteredTiling" }
-  description() { return "Similar to TilingLayout but center the rows." }
-
-  apply(animate = false) {
-    if (this.active || !this.container) return;
-
-    this.active = true;
-    super.apply(animate);
-
-    var width = this.getOptimalWidth(this.container),
-        {spacing, layoutableSubmorphs} = this,
-        y = spacing + this.border.top;
-
-    layoutableSubmorphs = layoutableSubmorphs.slice();
-
-    while (layoutableSubmorphs.length) {
-
-      let remainingWidth = width;
-      let rowMorphs = arr.takeWhile(layoutableSubmorphs, m => {
-        let newWidth = remainingWidth - (m.width + 2*spacing);
-        if (newWidth < 0) return false;
-        remainingWidth = newWidth;
-        return true;
-      })
-
-      if (rowMorphs.length) layoutableSubmorphs = arr.withoutAll(layoutableSubmorphs, rowMorphs);
-      else {
-        rowMorphs = [layoutableSubmorphs.shift()]
-        remainingWidth = 0;
-      };
-
-      let pos = pt(remainingWidth/2 + spacing + this.border.left, y);
-      for (let m of rowMorphs) {
-        m.position = pos;
-        pos = pos.addXY(2*spacing + m.width, 0);
-        y = Math.max(y, m.bottom)
-      }
-
-      y += 2*spacing;
-    }
-
-    this.active = false;
   }
 
 }

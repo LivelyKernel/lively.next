@@ -48,6 +48,29 @@ describe("layout", () => {
       expect(item3.position).equals(item2.bottomLeft);
     });
 
+    it("may render submorphs from bottom to top", () => {
+      const [item1, item2, item3] = m.submorphs;
+      m.layout.direction = 'bottomToTop';
+      m.layout.autoResize = false;
+      m.height = 500;
+      m.applyLayoutIfNeeded();
+      expect(item3.bottom).equals(m.height);
+      m.layout.spacing = 5;
+      m.applyLayoutIfNeeded();
+      expect(item3.bottom).equals(m.height - 5);
+    });
+
+    it("may render submorph centered", () => {
+      const [item1, item2, item3] = m.submorphs;
+      m.layout.align = 'center';
+      m.layout.direction = 'centered';
+      m.layout.spacing = 5;
+      m.layout.autoResize = false;
+      m.extent = pt(500, 500);
+      m.applyLayoutIfNeeded();
+      expect(m.submorphBounds().center()).equals(m.innerBounds().center());
+    });
+
     it("adjusts layout when submorph changes extent", () => {
       const [item1, item2, item3] = m.submorphs;
       item2.extent = pt(100,100);
@@ -81,9 +104,18 @@ describe("layout", () => {
     });
 
     it("adjusts width to widest item", () => {
-      m.layout.resizeSubmorphs = new VerticalLayout({resizeSubmorphs: true});
-      const maxWidth = arr.max(m.submorphs.map( m => m.width ));
+      m.layout.resizeSubmorphs = new VerticalLayout({autoResize: true});
+      const maxWidth = 1000;
+      m.submorphs[1].width = maxWidth;
+      m.applyLayoutIfNeeded();
       expect(m.width).equals(maxWidth);
+    });
+
+    it("can resize width of submorphs", () => {
+      m.layout.resizeSubmorphs = new VerticalLayout({resizeSubmorphs: true});
+      m.width = 600;
+      m.applyLayoutIfNeeded();
+      expect(m.width).equals(m.submorphs[1].width);
     });
 
     it("adjusts height to number of items", () => {
@@ -144,7 +176,7 @@ describe("layout", () => {
       expect(m.width).equals(250);
     });
 
-    it("enforces minimum height and minimum width", () => {
+    it("enforces minimum height and minimum width when centered", () => {
       m.layout.direction = 'centered';
       m.layout.autoResize = false;
       m.width = 500;
