@@ -19,6 +19,7 @@ import commands from "./commands.js";
 import { textAndAttributesWithSubRanges } from "./attributes.js";
 import { serializeMorph, deserializeMorph } from "../serialization.js";
 import { getSvgVertices } from "../rendering/property-dom-mapping.js";
+import { renderSubTree } from "../rendering/morphic-default.js";
 
 export class Text extends Morph {
 
@@ -219,7 +220,7 @@ export class Text extends Morph {
             let textRenderer = this.textRenderer;
             if (!renderer || !textRenderer) return initialExtent;
             this._measuringTextBox = true;
-            renderer.renderStep();
+            renderSubTree(this, renderer);
             textRenderer.manuallyTriggerTextRenderHook(this, renderer);
             this._measuringTextBox = false;
           }
@@ -835,6 +836,11 @@ export class Text extends Morph {
 
   get isText() {
     return true;
+  }
+
+  makeDirty() {
+    if (this._positioningSubmorph) return;
+    super.makeDirty();
   }
 
   onChange(change) {
@@ -1660,7 +1666,7 @@ export class Text extends Morph {
               updater: function($upd, textPos) {
                 let tm = this.targetObj.owner,
                     embeddedMorph = this.targetObj,
-                    pos = tm ? tm.charBoundsFromTextPosition(textPos).topLeft().subPt(tm.origin) : embeddedMorph.position;
+                    pos = (tm && tm.isText) ? tm.charBoundsFromTextPosition(textPos).topLeft().subPt(tm.origin) : embeddedMorph.position;
                 if (tm) tm._positioningSubmorph = embeddedMorph;
                 $upd(pos);
                 if (tm) tm._positioningSubmorph = false;

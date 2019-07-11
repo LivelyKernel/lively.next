@@ -47,10 +47,10 @@ export default class TextLayout {
   
   estimateExtentOfLine(morph, line, transform = morph.getGlobalTransform()) {
     var { 
-           fontMetric, lineWrapping, 
-           extent: {x: morphWidth, y: morphHeight},
+           fontMetric, lineWrapping,
            padding, textRenderer, debug, defaultTextStyle
         } = morph,
+        {x: morphWidth, y: morphHeight} = morph.getProperty('extent'),
         paddingLeft = padding.left(),
         paddingRight = padding.right(),
         paddingTop = padding.top(),
@@ -105,10 +105,10 @@ export default class TextLayout {
     let {
           fontMetric, textRenderer, document,
           defaultTextStyle,
-          extent: {x: morphWidth, y: morphHeight},
           clipMode, textAlign, padding, lineWrapping,
           debug
         } = morph,
+        {x: morphWidth, y: morphHeight} = morph.getProperty('extent'),
         transform = morph.getGlobalTransform(),
         paddingLeft = padding.left(),
         paddingRight = padding.right(),
@@ -266,10 +266,10 @@ export default class TextLayout {
 
     let cached = this.lineCharBoundsCache.get(line);
     if (cached) return cached;
+    let {x: width, y: height} = morph.getProperty('extent');
     let {
           fontMetric, textRenderer,
           defaultTextStyle,
-          extent: {x: width, y: height},
           clipMode, textAlign, padding, lineWrapping
         } = morph,
         transform = morph.getGlobalTransform(),
