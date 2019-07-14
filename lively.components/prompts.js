@@ -85,7 +85,6 @@ export class AbstractPrompt extends Morph {
     this.build(props);
     if (props.commands) this.addCommands(props.commands);
     if (props.keybindings) this.addKeyBindings(props.keybindings);
-    this.addStyleClass('Halo');
   }
 
   get isEpiMorph() { return true; }
@@ -745,6 +744,7 @@ export class ListPrompt extends AbstractPrompt {
         derived: true,
         after: ['items'],
         set(idx) {
+          if (this.submorphs.length == 0) return;
           let list = this.getSubmorphNamed('list');
           list.selectedIndex = idx;
           list.scrollSelectionIntoView;
@@ -785,7 +785,7 @@ export class ListPrompt extends AbstractPrompt {
     historyId,
     useLastInput,
     fuzzy, filterFunction, sortFunction,
-    actions, selectedAction, theme
+    actions, selectedAction, theme, items
   }) {
 
     this.extent = extent || pt(500,400);
@@ -808,6 +808,8 @@ export class ListPrompt extends AbstractPrompt {
       padding, itemPadding, inputPadding: Rectangle.inset(10,2),
       theme: 'dark'
     });
+
+    list.items = items;
 
     if (filterable && fuzzy) list.fuzzy = fuzzy;
     if (filterable && typeof filterFunction === "function")
@@ -887,15 +889,13 @@ export class EditListPrompt extends ListPrompt {
 
     this.getSubmorphNamed('list').items = props.items;
 
-    var addBtn = this.addMorph({
+    var addBtn = this.addNamed("add item button", {
           type: 'button',
           styleClasses: ['standard'],
-          name: "add item button",
           label: Icon.makeLabel("plus", {fontSize: 12})
         }),
-        rmBtn = this.addMorph({
+        rmBtn = this.addNamed("remove item button", {
           styleClasses: ['standard'],
-          name: "remove item button",
           type: 'button',
           label: Icon.makeLabel("minus", {fontSize: 12})
         });
@@ -903,22 +903,25 @@ export class EditListPrompt extends ListPrompt {
     connect(addBtn, 'fire', this, 'addItemToList');
     connect(rmBtn, 'fire', this, 'removeSelectedItemsFromList');
 
-    this.layout = new GridLayout({
-      autoAssign: false,
-      columns: [
-        0, {paddingLeft: 5, paddingRight: 5},
-        3, {paddingRight: 5},
-        4, {paddingRight: 5}
-      ],
-      rows: [
-        0, {fixed: 30, paddingTop: 5, paddingBottom: 5},
-        1, {paddingBottom: 2},
-        2, {fixed: 30, paddingBottom: 5}
-      ],
-      grid: [["promptTitle", "promptTitle", "promptTitle", "promptTitle", "promptTitle"],
-        ["list", "list", "list", "list", "list"],
-        ["add item button", "remove item button", null, "ok button", "cancel button"]]
-    });
+    if (!this.layout) {
+      this.layout = new GridLayout({
+        autoAssign: false,
+        columns: [
+          0, {paddingLeft: 5, paddingRight: 5},
+          3, {paddingRight: 5},
+          4, {paddingRight: 5}
+        ],
+        rows: [
+          0, {fixed: 30, paddingTop: 5, paddingBottom: 5},
+          1, {paddingBottom: 2},
+          2, {fixed: 30, paddingBottom: 5}
+        ],
+        grid: [["promptTitle", "promptTitle", "promptTitle", "promptTitle", "promptTitle"],
+          ["list", "list", "list", "list", "list"],
+          ["add item button", "remove item button", null, "ok button", "cancel button"]]
+      });
+    }
+    
   }
 
   async removeSelectedItemsFromList() {
