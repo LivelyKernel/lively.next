@@ -1,3 +1,4 @@
+import { Range } from "lively.morphic/text/range.js";
 var warnStyle = {"border-bottom": "2px dotted orange"},
     errorStyle = {"background-color": "red"};
 
@@ -8,6 +9,12 @@ export default class JSONChecker {
     (morph.markers || [])
       .forEach(ea => ea.id.startsWith("js-checker-") && morph.removeMarker(ea));
     morph.removeMarker("js-syntax-error");
+  }
+
+  hasEmbeddedMorphInRange(textMorph, range) {
+    return [...textMorph.embeddedMorphMap.values()].find(({ anchor }) => {
+      return range.containsPosition(anchor.position)
+    });
   }
 
   onDocumentChange(change, textMorph, jsPlugin) {
@@ -35,12 +42,14 @@ export default class JSONChecker {
       }
 
       if (pos && !isNaN(pos.row) && !isNaN(pos.column)) {
+        let range = new Range({
+          start: {column: pos.column - 1, row: pos.row},
+          end: {column: pos.column + 1, row: pos.row}
+        });
+        if (this.hasEmbeddedMorphInRange(textMorph, range)) return;
         textMorph.addMarker({
           id: "js-syntax-error",
-          range: {
-            start: {column: pos.column - 1, row: pos.row},
-            end: {column: pos.column + 1, row: pos.row}
-          },
+          range,
           style: errorStyle,
           type: "js-syntax-error"
         });

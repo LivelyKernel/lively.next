@@ -1,3 +1,4 @@
+/*global System*/
 import { Color, rect, pt, Rectangle } from "lively.graphics";
 import { arr, Path, obj, fun, promise, string } from "lively.lang";
 import { connect } from "lively.bindings";
@@ -27,9 +28,14 @@ import "mocha-es6/index.js";
 
 import { findDecls } from "lively.ast/lib/code-categorizer.js";
 import { testsFromSource } from "../../test-runner.js";
-import { module } from "lively.modules/index.js";
+import { module, semver } from "lively.modules/index.js";
 import DarkTheme from "../../themes/dark.js";
 import DefaultTheme from "../../themes/default.js";
+import { query } from "lively.ast/index.js";
+import { objectReplacementChar } from "lively.morphic/text/document.js";
+import { loadPart } from "lively.morphic/partsbin.js";
+import { serverInterfaceFor } from "lively-system-interface/index.js";
+import { resource } from "lively.resources/index.js";
 
 class CodeDefTreeData extends TreeData {
 
@@ -552,7 +558,9 @@ export default class Browser extends Window {
   }
 
   hasUnsavedChanges() {
-    return this.state.sourceHash !== string.hashCode(this.ui.sourceEditor.textString);
+    let content = this.ui.sourceEditor.textString;
+    content = content.split(objectReplacementChar).join('')
+    return this.state.sourceHash !== string.hashCode(content);
   }
 
   updateUnsavedChangeIndicatorDebounced() {
@@ -1020,13 +1028,126 @@ export default class Browser extends Window {
     runTestsInModuleButton.visible = runTestsInModuleButton.isLayoutable = !!hasTests;
   }
 
+  async runOnServer(source) {
+    let result = await serverInterfaceFor(config.remotes.server).runEval(`
+        ${ source }
+    `, { targetModule: "lively://PackageBrowser/eval" });
+    if (result.isError)
+      throw result.value;
+    return result.value;
+  }
+
+  async getInstalledPackagesList() {
+    let pmap = await this.runOnServer(`
+      let r = System.get("@lively-env").packageRegistry;
+      r.toJSON();`);
+
+    let items = [];
+
+    for (let pname in pmap.packageMap) {
+      let {versions} = pmap.packageMap[pname];
+      for (let v in versions) {
+        let p = versions[v];
+        items.push(p);
+      }
+    }
+    return items;
+  }
+
+  // await this.getInstalledPackagesList()
+
+  async updatePackageDependencies() {
+    let parsedJSON = this.editorPlugin.parse(),
+        { sourceEditor } = this.ui,
+        installedPackages = await this.getInstalledPackagesList(),
+        depDefFields = parsedJSON.body[0].expression.properties.filter(p => {
+            return ['devDependencies', 'dependencies'].includes(p.key.value)
+          });
+    // find added modules
+    for (let field of depDefFields) {
+      for (let {key: { value: packageName }, value: { value: range }, end} of field.value.properties) {
+        if (semver.validRange(range) || semver.valid(range)) {
+          if (installedPackages.find(p => p._name === packageName && semver.satisfies(p.version, range)))
+          continue;
+          let { versions } = await resource(`https://registry.npmjs.com/${packageName}`).makeProxied().readJson()
+          // find the best match for the version that satisfies the range
+          let version = semver.minSatisfying(obj.keys(versions), range)
+          await this.installPackage(packageName, version, end); 
+        }
+      }
+    }
+  }
+
+  async installPackage(name, version, sourceIdx) {
+    let installIndicator = await loadPart('package install indicator');
+    
+    if (installIndicator) {
+      let { sourceEditor } = this.ui;
+      sourceEditor.insertText([installIndicator, {}], sourceEditor.indexToPosition(sourceIdx - 1));
+      installIndicator.showInstallationProgress();
+    }
+    
+    try {
+      const { pkgRegistry, buildFailed } = await this.runOnServer(`        
+        async function installPackage(name, version) {
+          let Module = System._nodeRequire("module"),
+              flatn = Module._load("flatn")
+        
+          let env = process.env,
+              devPackageDirs = env.FLATN_DEV_PACKAGE_DIRS.split(":").filter(Boolean),
+              packageCollectionDirs = env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").filter(Boolean),
+              packageDirs = env.FLATN_PACKAGE_DIRS.split(":").filter(Boolean),
+              packageMap = flatn.PackageMap.ensure(packageCollectionDirs, packageDirs, devPackageDirs);
+              buildFailed;
+
+          await flatn.installPackage(
+            name + "@" + version,
+            System.baseURL.replace("file://", "") + "custom-npm-modules",
+            packageMap,
+            undefined,
+            /*isDev = */false,
+            /*verbose = */true
+          );
+          try {          
+            await flatn.installDependenciesOfPackage(
+               packageMap.lookup(name, version),
+               System.baseURL.replace("file://", "") + 'dev-deps',
+               packageMap,
+               ['devDependencies'],
+               true
+            );
+          } catch(e) {
+            // install scripts dont really work sometimes so
+            // dont let that disrup the normal install process
+            buildFailed = e.message;
+          }
+        
+          let r = System.get("@lively-env").packageRegistry
+          await r.update();
+          return { pkgRegistry: r, buildFailed };
+        }
+        await installPackage("${name}", "${version}");   
+    `);
+      System.get('@lively-env').packageRegistry.updateFromJSON(pkgRegistry);
+      installIndicator && installIndicator.showInstallationComplete();
+    } catch (err) {
+      installIndicator && installIndicator.showError();
+    } finally {
+      if (installIndicator) {
+        await promise.delay(2000);
+        await installIndicator.reset();
+        installIndicator.remove(); 
+      }
+    }
+  }
+
   async save(attempt = 0) {
     let {ui: {moduleList, sourceEditor}, state} = this,
         module = moduleList.selection;
 
     if (!module) return this.setStatusMessage("Cannot save, no module selected", Color.red);
 
-    let content = this.ui.sourceEditor.textString,
+    let content = this.ui.sourceEditor.textString.split(objectReplacementChar).join(''),
         system = this.systemInterface;
 
     // moduleChangeWarning is set when this browser gets notified that the
@@ -1056,7 +1177,7 @@ export default class Browser extends Window {
         if (module.nameInPackage === "package.json") {
           await system.packageConfChange(content, module.name);
           this.setStatusMessage("updated package config", Color.green);
-
+          this.updatePackageDependencies();
         } else {
           await system.coreInterface.resourceWrite(module.name, content);
           this.setStatusMessage(`saved ${module.nameInPackage}`, Color.green);
