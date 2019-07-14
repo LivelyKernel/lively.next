@@ -460,6 +460,21 @@ export function renderMorph(morph, renderer = morph.env.renderer) {
   return createNode(morph.render(renderer), renderer.domEnvironment);
 }
 
+export function renderSubTree(morph, renderer) {
+  // a function which allows to force rendering in a subhierarchy of the world
+  // useful in situation where in order for synchronous execution to continue, we
+  // quickly need to push changes to the dom and update the DOM state (text and label morphs)
+  let tree = renderer.renderMap.get(morph),
+      domNode = renderer.getNodeForMorph(morph);
+
+  if (!domNode || !tree) return;
+  
+  let newTree = renderer.render(morph),
+      patches = diff(tree, newTree);
+
+  patch(domNode, patches);
+}
+
 export function renderRootMorph(world, renderer) {
   if (!world.needsRerender()) return;
 
