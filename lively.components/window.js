@@ -398,17 +398,108 @@ export default class Window extends Morph {
     );
   }
 
+  resizeAt([corner, dist]) {
+    let right;
+    switch (corner) {
+      case 'right':
+        this.resizeBy(dist.withY(0)); break;
+      case 'bottom right':
+        this.resizeBy(dist); break;
+      case 'bottom':
+        this.resizeBy(dist.withX(0)); break;
+      case 'left':
+        right = this.right;
+        this.resizeBy(dist.withY(0).negated());
+        this.right = right;
+        break; // more adjustment needed
+      case 'bottom left':
+        right = this.right;
+        this.resizeBy(dist.scaleByPt(pt(-1, 1))); 
+        this.right = right;
+        break; // adjustment needed
+    }
+    this.relayoutResizer();
+  }
+
+  relayoutResizer() {
+    let resizer = this.getSubmorphNamed("resizer"),
+      {
+        submorphs: [
+          rightResizer, bottomRightResizer, leftResizer,
+          bottomLeftResizer, bottomResizer
+        ]
+      } = resizer;
+    
+    rightResizer.height = this.height;
+    rightResizer.bottomRight = this.extent;
+
+    bottomRightResizer.bottomRight = this.extent;
+
+    leftResizer.height = this.height;
+    leftResizer.bottomLeft = pt(0, this.height);
+
+    bottomLeftResizer.bottomLeft = pt(0, this.height);
+
+    bottomResizer.width = this.width;
+    bottomResizer.bottomLeft = pt(0,this.height);
+
+    resizer.position = pt(0,0)
+  }
+
   resizer() {
-    var win = this, resizer = this.getSubmorphNamed("resizer");
+    var win = this, resizer = this.getSubmorphNamed("resizer"),
+        rightResizer, bottomRightResizer, leftResizer, bottomLeftResizer, bottomResizer;
     if (resizer) return resizer;
+    let fill = Color.transparent;
     resizer = morph({
       name: "resizer",
-      nativeCursor: "nwse-resize",
-      extent: pt(20, 20),
       fill: Color.transparent,
-      bottomRight: this.extent
+      position: pt(0,0),
+      submorphs: [
+        rightResizer = morph({
+          name: 'right resizer',
+          fill, width: 5,
+          nativeCursor: 'ew-resize'
+        }),
+        bottomRightResizer = morph({
+          name: 'bottom right resizer',
+          fill, extent: pt(20,20),
+          nativeCursor: "nwse-resize"
+        }),
+        leftResizer = morph({
+          name: 'right resizer',
+          fill, width: 5, 
+          nativeCursor: 'ew-resize'
+        }),
+        bottomLeftResizer = morph({
+          name: 'bottom left resizer',
+          fill, extent: pt(20,20),
+          nativeCursor: "nesw-resize"
+        }),
+        bottomResizer = morph({
+          name: 'bottom resizer',
+          fill, height: 5,
+          nativeCursor: 'ns-resize'
+        }),
+      ]
     });
-    connect(resizer, "onDrag", win, "resizeBy", {converter: evt => evt.state.dragDelta});
+    connect(bottomRightResizer, "onDrag", win, "resizeAt", {
+      converter: evt => ['bottom right', evt.state.dragDelta]
+    });
+    connect(rightResizer, "onDrag", win, "resizeAt", {
+      converter: evt => ['right', evt.state.dragDelta]
+    });
+    connect(bottomResizer, "onDrag", win, "resizeAt", {
+      converter: evt => ['bottom', evt.state.dragDelta]
+    })
+    connect(leftResizer, "onDrag", win, "resizeAt", {
+      converter: evt => ['left', evt.state.dragDelta]
+    });
+    connect(bottomLeftResizer, "onDrag", win, "resizeAt", {
+      converter: evt => ['bottom left', evt.state.dragDelta]
+    })
+    this.addMorph(resizer);
+    this.relayoutResizer();
     return resizer;
   }
 
