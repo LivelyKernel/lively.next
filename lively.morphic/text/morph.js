@@ -729,34 +729,6 @@ export class Text extends Morph {
   __after_deserialize__(snapshot, objRef) {
     super.__after_deserialize__(snapshot, objRef);
     let lines, line, cacheEntry;
-    if (snapshot._cachedLineCharBounds) {
-       this.changeMetaData('deserializeInfo', {recoveredLineCharBounds: true});
-       lines = snapshot._cachedLineCharBounds;
-       for (let row = 0; row < lines.length; row++) {
-         if (line = lines[row]) {
-           cacheEntry = [];
-           this.textLayout.lineCharBoundsCache.set(this.document.getLine(row), cacheEntry);
-           for (let i = 0; i < line.length; i += 4) {
-             cacheEntry.push({
-               height: line[i],
-               width: line[i + 1],
-               x: line[i + 2],
-               y: line[i + 3],
-             });
-           }
-         }
-       }
-    }
-    if (snapshot._cachedLineExtents) {
-      this.changeMetaData('deserializeInfo', {recoveredTextBounds: true});
-      this.whenRendered().then(() => {
-        for (let i = 0; i < Math.min(snapshot._cachedLineExtents.length, this.document.lines.length); i++) {
-          let [width, height] = snapshot._cachedLineExtents[i];
-          this.document.lines[i].changeExtent(width, height);
-          this.fit();
-        }
-      });
-    }
     this._isDeserializing = false;
     this.whenRendered().then(() => {
        this.embeddedMorphs.forEach(m => m.top = 0);
@@ -818,14 +790,6 @@ export class Text extends Morph {
           return m;
       })
     };
-    snapshot._cachedLineExtents = this.document.lines.map(l => [l.width, l.height]);
-    snapshot._cachedLineCharBounds = this.document.lines.map(l => {
-      const hit = this.textLayout.lineCharBoundsCache.get(l);
-      if (hit) {
-         return arr.flatten(hit.map(({height, width, x, y}) => [height, width, x, y]))
-      }
-      return null;
-    });
   }
 
   spec() {
