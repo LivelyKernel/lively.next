@@ -133,6 +133,8 @@ export class Renderer {
     if (!fixedMorphs.length && !fixedMorphNodeMap.size) return;
     if (!domNode || !domNode.parentNode) return;
 
+    let fixedMorphNode = domNode.parentNode;
+
     for (let [morph, node] of fixedMorphNodeMap) {
       if (!fixedMorphs.includes(morph)) {
         node.parentNode.removeChild(node);
@@ -140,6 +142,14 @@ export class Renderer {
       }
     }
 
+    // now figure out if the order of nodes changed
+    let currentFixedMorphNodes = fixedMorphs.map(m => fixedMorphNodeMap.get(m));
+    let supposedOrder = currentFixedMorphNodes.map(m => m && m.id);
+    let actualOrder = [...fixedMorphNode.children].map(m => m.id).filter(id => supposedOrder.includes(id));
+
+    if (!arr.equals(supposedOrder, actualOrder))
+      currentFixedMorphNodes.map(n => n && n.parentNode && n.parentNode.removeChild(n));
+    
     for (let morph of fixedMorphs) {
 
       var tree = this.renderMap.get(morph) || this.renderAsFixed(morph),
@@ -152,9 +162,7 @@ export class Renderer {
         fixedMorphNodeMap.set(morph, morphNode);
       }
       if (!morphNode.parentNode)
-        domNode.parentNode.appendChild(morphNode);
-
-      // fixme: ensure that fixed morph nodes are ordered correctly
+        fixedMorphNode.appendChild(morphNode);
 
       patch(morphNode, patches);
     }
