@@ -472,6 +472,12 @@ export function renderSubTree(morph, renderer) {
   let newTree = renderer.render(morph),
       patches = diff(tree, newTree);
 
+  // insert new tree into global tree
+  let parentNode = renderer.renderMap.get(morph.owner);
+  let siblings = parentNode.children[0].children;
+  let treeIndex = siblings.indexOf(tree);
+  siblings[treeIndex] = newTree;
+  
   patch(domNode, patches);
 }
 
