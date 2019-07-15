@@ -751,6 +751,7 @@ export class TilingLayout extends Layout {
     super(props);
     this._axis = props.axis || 'row';
     this._align = props.align || 'left';
+    delete this.autoResize;
   }
   
   name() { return "Tiling" }
@@ -780,7 +781,7 @@ export class TilingLayout extends Layout {
   }
 
   get possibleAxisValues() { return ['row', 'columns']; }
-  get possibleAlignValues() { return ['left', 'center']; }
+  get possibleAlignValues() { return ['left', 'center', 'right']; }
 
   get axis() { return this._axis }
   set axis(a) { this._axis = a; this.apply() }
@@ -827,14 +828,23 @@ export class TilingLayout extends Layout {
       var pos;
 
       if (isHorizontal) {
-        pos = "center" === align ?
-          pt(remainingWidth/2 + spacing + border[widthAccessor], previousRowHeight) :
-          pt(spacing, previousRowHeight);
-
+        switch (align) {
+          case 'left':
+            pos = pt(spacing, previousRowHeight); break;
+          case 'center':
+            pos = pt(remainingWidth/2 + spacing + border[widthAccessor], previousRowHeight); break;
+          case 'right':
+            pos = pt(remainingWidth - spacing, previousRowHeight); break; // ???
+        }
       } else {
-        pos = "center" === align ?
-          pt(previousRowHeight, remainingWidth/2 + spacing + border[widthAccessor]) :
-          pt(previousRowHeight, spacing);
+        switch (align) {
+          case 'left':
+            pos = pt(previousRowHeight, spacing); break;
+          case 'center':
+            pos = pt(previousRowHeight, remainingWidth/2 + spacing + border[widthAccessor]); break;
+          case 'right':
+            pos = pt(previousRowHeight, remainingWidth - spacing); break;
+        }
       }
 
       for (let m of rowMorphs) {
