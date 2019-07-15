@@ -334,12 +334,12 @@ export class PropertyAnimation {
     if (!this.active) {
       this.active = true;
       let [before, after] = this.getAnimationProps("css");
-      this.tween(node, before, after);
+      node && this.tween(node, before, after);
       if (this.config.origin) {
         let b = this.capturedProperties.origin,
             a = this.config.origin,
             originNode = node.childNodes[0];
-        this.tween(
+        originNode && this.tween(
           originNode,
           originNode.style.top ? { left: `${b.x}px`, top: `${b.y}px` } : {
             transform: `translate3d(${b.x}px, ${b.y}px, 0px)`
