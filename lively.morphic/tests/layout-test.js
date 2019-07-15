@@ -104,7 +104,7 @@ describe("layout", () => {
     });
 
     it("adjusts width to widest item", () => {
-      m.layout.resizeSubmorphs = new VerticalLayout({autoResize: true});
+      m.layout = new VerticalLayout({resizeSubmorphs: false, autoResize: true});
       const maxWidth = 1000;
       m.submorphs[1].width = maxWidth;
       m.applyLayoutIfNeeded();
@@ -116,6 +116,15 @@ describe("layout", () => {
       m.width = 600;
       m.applyLayoutIfNeeded();
       expect(m.width).equals(m.submorphs[1].width);
+    });
+
+    it("can resize width of submorphs and adjust height", () => {
+      m.layout.resizeSubmorphs = new VerticalLayout({resizeSubmorphs: true, autoResize: true});
+      m.width = 600;
+      m.height = 1000;
+      m.applyLayoutIfNeeded();
+      expect(m.width).equals(m.submorphs[1].width);
+      expect(m.height).equals(m.submorphBounds().height);
     });
 
     it("adjusts height to number of items", () => {
