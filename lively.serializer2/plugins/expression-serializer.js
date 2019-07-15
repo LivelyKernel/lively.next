@@ -160,7 +160,7 @@ export default class ExpressionSerializer {
  generalized to become suitable for more general object trees.
 */
 
-export function deserializeSpec(serializedSpec) {
+export function deserializeSpec(serializedSpec, subSpecHandler = (spec) => spec) {
   const exprSerializer = new ExpressionSerializer();
   let deserializedSpec = {};
   properties.forEachOwn(serializedSpec, (prop, value) => {
@@ -169,11 +169,16 @@ export function deserializeSpec(serializedSpec) {
       value = exprSerializer.deserializeExpr(value);
     }
     if (['borderColor', 'borderWidth', 'borderStyle', 'borderRadius'].includes(prop)) {
-      value = deserializeSpec(value);
+      value = deserializeSpec(value, subSpecHandler);
+    }
+    if (value && value._id) {
+      value = subSpecHandler(deserializeSpec(value, subSpecHandler));
     }
     deserializedSpec[prop] = value;
   })
-  if (serializedSpec.submorphs) deserializedSpec.submorphs = serializedSpec.submorphs.map(deserializeSpec);
+  if (serializedSpec.submorphs) deserializedSpec.submorphs = serializedSpec.submorphs.map(spec => {
+    return deserializeSpec(spec, subSpecHandler)
+  });
   return deserializedSpec;
 }
 

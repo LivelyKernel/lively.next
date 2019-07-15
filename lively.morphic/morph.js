@@ -2525,7 +2525,7 @@ export class Morph {
     this._tickingScripts = [];
     this.dontRecordChangesWhile(() => {
       this.initializeProperties(); 
-      Object.assign(this, deserializeSpec(spec));
+      Object.assign(this, deserializeSpec(spec, spec => morph(spec)));
     });
     return this;
   }
@@ -2538,7 +2538,7 @@ export class Morph {
         (_, num) => `copy ${num && num.trim() ? Number(num)+1 : "1"}`);
     // rk 2017-01-08: attributeConnections hard reset...! and only of root
     // morph? this seems really wrong!
-    return morph({attributeConnections: [], ...exported});
+    return morph().initFromJSON(exported);
   }
 
   copy() { return copyMorph(this); }
