@@ -657,9 +657,10 @@ export default class TextRenderer {
         if (link) {
           tagname = "a";
           nodeAttrs.href = link;
-          nodeStyle.pointerEvents = 'auto';
           if (link && link.startsWith('http')) nodeAttrs.target = "_blank";
         }
+
+        if (link || nativeCursor) nodeStyle.pointerEvents = 'auto';
 
         if (fontSize) nodeStyle.fontSize               = fontSize;
         if (fontFamily) nodeStyle.fontFamily           = fontFamily;
