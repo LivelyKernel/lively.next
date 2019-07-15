@@ -1313,6 +1313,8 @@ export class DropDownList extends Button {
         defaultValue: "bottom"
       },
 
+      openListInWorld: { defaultValue: false },
+
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
@@ -1416,7 +1418,7 @@ export class DropDownList extends Button {
     if (!this.listMorph.selection) this.listMorph.selection = this.label.value[0];
   }
 
-  isListVisible() { return this.listMorph.owner === this; }
+  isListVisible() { return !!this.listMorph.world(); }
 
   removeWhenFocusLost(evt) {
     setTimeout(() => {
@@ -1430,20 +1432,27 @@ export class DropDownList extends Button {
   }
 
   toggleList() {
-    var list = this.listMorph;
+    var list = this.listMorph, bounds;
     if (this.isListVisible()) {
       signal(this, "deactivated");
       this.selection = list.selection;
       list.remove();
     } else {
       signal(this, "activated");
-      this.addMorph(list);
+      if (this.openListInWorld) {
+        list.openInWorld();
+        list.hasFixedPosition = true;
+        bounds = this.globalBounds();
+      } else {
+        bounds = this.innerBounds();
+        this.addMorph(list);
+      }
       let totalItemHeight = (list.items.length * list.itemHeight) + list.padding.top() + list.padding.bottom();
       list.extent = pt(this.width, Math.min(this.listHeight, totalItemHeight));
       if (this.listAlign === "top") {
-        list.bottomLeft = this.innerBounds().topLeft();
+        list.bottomLeft = bounds.topLeft();
       } else {
-        list.topLeft = this.innerBounds().bottomLeft();
+        list.topLeft = bounds.bottomLeft();
       }
       once(list, 'onItemMorphClicked', this, 'toggleList');
       once(list, 'onBlur', this, 'removeWhenFocusLost');
