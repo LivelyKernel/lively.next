@@ -632,7 +632,7 @@ export class RadialGradient extends Gradient {
 
   toJSExpr() {
     let stops = this.stops.map(ea => `{offset: ${ea.offset}, color: ${ea.color.toJSExpr()}}`).join(", ");
-    return `new RadialGradient({stops: [${stops}], bounds: ${this.bounds}, focus: ${this.focus}})`;
+    return `new RadialGradient({stops: [${stops}], bounds: ${this.bounds}, focus: ${this.focus.toString(false)}})`;
   }
 
 }
