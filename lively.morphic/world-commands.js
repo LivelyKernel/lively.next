@@ -1163,6 +1163,7 @@ var commands = [
       let peers = await l2lClient.listPeers(true)
       let freezer = peers.find(ea => ea.type === "lively.next.org freezer service");
       let name = await world.prompt('Please enter an identifier for the frozen world');
+      if (!name) return;
       let { data: status } = await l2lClient.sendToAndWait(freezer.id, "[freezer] status", {}); 
       let deployment;
       if (deployment = status.find(({id}) => id === name)) {
