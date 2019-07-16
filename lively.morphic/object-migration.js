@@ -3,7 +3,8 @@ import { morph, Icon } from "lively.morphic";
 import { removeUnreachableObjects } from "lively.serializer2";
 import { obj } from "lively.lang";
 import { connect, disconnectAll } from "lively.bindings";
-import { isReference } from "lively.serializer2/snapshot-navigation.js";
+
+export function isReference(value) { return value && value.__ref__; }
 
 export var migrations = [
 
