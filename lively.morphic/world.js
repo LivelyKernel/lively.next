@@ -797,7 +797,7 @@ export class World extends Morph {
     if (!StatusMessage) return;
     console[color == Color.red ? "error" : "log"](message);
     return config.verboseLogging ?
-      this.openStatusMessage(new StatusMessage({message, color, ...optStyle}), delay) :
+      this.openStatusMessage(new StatusMessage({message, color, hasFixedPosition: true, ...optStyle}), delay) :
       null;
   }
 
