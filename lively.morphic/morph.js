@@ -295,11 +295,21 @@ export class Morph {
         get()   { return this.bounds().rightCenter(); },
         set(v)  { return this.align(this.rightCenter, v); }
       },
+      
       rotation: {
         group: "geometry",
         type: 'Number',
         isFloat: true,
         isStyleProp: true, defaultValue:  0
+      },
+      
+      flipped: {
+        group: 'geometry',
+        typ: "number",
+        isFloat: true,
+        isStyleProp: true,
+        defaultValue: 0,
+        min: 0, max: 1
       },
 
       scale: {

@@ -21,18 +21,19 @@ export function styleProps(morph) {
 }
 
 function addTransform(morph, style) {
-  let {position, origin, scale, rotation} = morph,
+  let {position, origin, scale, rotation, flipped} = morph,
       x = Math.round(position.x - origin.x),
       y = Math.round(position.y - origin.y),
       promoteToCompositionLayer = morph.renderOnGPU || (morph.dropShadow && !morph.dropShadow.fast);
   if ((morph.owner && morph.owner.isText) || promoteToCompositionLayer) {
     style.transform = (promoteToCompositionLayer ? `translate3d(${x}px, ${y}px, 0px)` : `translate(${x}px, ${y}px)`);
   } else {
+    style.transform = '';
     style.top = `${y}px`;
-    style.left = `${x}px`;
+    style.left = `${x + (flipped ? (morph.width * scale) : 0) }px`;
   }
-  style.transform = (style.transform || '') + `rotate(${rotation.toFixed(2)}rad) scale(${scale.toFixed(2)},${scale.toFixed(2)})`;
-  
+  style.transform += ` rotate(${rotation.toFixed(2)}rad) scale(${scale.toFixed(2)},${scale.toFixed(2)})`;
+  if (flipped) style.transform += `rotate3d(0,1,0, ${flipped * 180}deg)`;
 }
 
 function addTransformOrigin(morph, style) {

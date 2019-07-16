@@ -80,6 +80,7 @@ export default class TextInput {
     textareaNode.setAttribute("autocorrect", "off");
     textareaNode.setAttribute("autocapitalize", "off");
     textareaNode.setAttribute("spellcheck", false);
+    textareaNode.setAttribute("aria-label", "Lively Textinput Node");
     textareaNode.className = "lively-text-input";
     textareaNode.value = "";
     newRootNode.insertBefore(textareaNode, newRootNode.firstChild);
