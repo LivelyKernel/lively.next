@@ -277,7 +277,7 @@ export default class TextInput {
     setTimeout(() => {
       var {textareaNode, rootNode} = this.domState || {};
       if (rootNode && document.activeElement === rootNode)
-        !(bowser.mobile || bowser.tablet) && textareaNode && textareaNode.focus();
+        !(bowser.mobile || bowser.tablet || lively.FreezerRuntime) && textareaNode && textareaNode.focus();
     });
   }
 
