@@ -18,7 +18,6 @@ const domEventsWeListenTo = [
   {type: 'pointerout',  capturing: false, passive: false},
   {type: 'contextmenu', capturing: false},
   {type: 'scroll',      capturing: true, passive: false},
-  {type: 'wheel',       capturing: false, passive: false},
 
   {type: "drag",      capturing: false},
   {type: "dragstart", capturing: false},
