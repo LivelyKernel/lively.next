@@ -694,7 +694,8 @@ export class World extends Morph {
       halo = new Halo({pointerId, target});
     }
     this.addMorph(halo);
-    if (focus) halo.focus()
+    if (focus) halo.focus();
+    halo.alignWithTarget();
     return halo;
   }
 
