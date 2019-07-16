@@ -370,6 +370,8 @@ export class VerticalLayout extends FloatLayout {
   layoutSubmorphs(minExtent, animate) {
     let { container, layoutableSubmorphs, spacing, autoResize, align, resizeSubmorphs } = this;
     let startY = this.getStartY(minExtent), layoutableSubmorphBounds = [];
+    let startX = resizeSubmorphs ? container.width : minExtent.x;
+    let onlyFitContainer = autoResize && !resizeSubmorphs;
     
     let layoutRoutine = (accessor, startPosition) => {
       layoutableSubmorphs.reduce((pos, m) => {
@@ -386,9 +388,9 @@ export class VerticalLayout extends FloatLayout {
     if (align === "left") {
       layoutRoutine("topLeft", pt(spacing, startY));
     } else if (align === "right") {
-      layoutRoutine("topRight", pt(minExtent.x + (autoResize ? spacing : -spacing), startY));
+      layoutRoutine("topRight", pt(startX + (onlyFitContainer ? spacing : -spacing), startY));
     } else { // center
-      layoutRoutine("topCenter", pt(container.width/2, startY));
+      layoutRoutine("topCenter", pt((startX + (onlyFitContainer ? 2 * spacing : 0)) / 2, startY));
     }
   }
   
@@ -478,11 +480,13 @@ export class HorizontalLayout extends FloatLayout {
     let { container, layoutableSubmorphs, 
          resizeSubmorphs, spacing, autoResize, align } = this;
     let startX = this.getStartX(minExtent), layoutableSubmorphBounds = [];
+    let startY = resizeSubmorphs ? container.height : minExtent.y;
+    let onlyFitContainer = autoResize && !resizeSubmorphs;
     
     let layoutRoutine = (accessor, startPosition) => {
       layoutableSubmorphs.reduce((pos, m) => {
-        this.changePropertyAnimated(m, accessor, pos, animate);
         if (resizeSubmorphs) m.height = container.height - 2 * spacing;
+        this.changePropertyAnimated(m, accessor, pos, animate);
         let bounds = m.bounds();
         layoutableSubmorphBounds.push(bounds);
         return bounds[accessor]().addXY(bounds.width + spacing, 0);
@@ -494,9 +498,9 @@ export class HorizontalLayout extends FloatLayout {
     if (align === "top") {
       layoutRoutine("topLeft", pt(startX, spacing));
     } else if (align === "bottom") {
-      layoutRoutine("bottomLeft", pt(startX, minExtent.y + (autoResize ? spacing : -spacing)));
+      layoutRoutine("bottomLeft", pt(startX, startY + (onlyFitContainer ? spacing : -spacing)));
     } else { // center
-      layoutRoutine("leftCenter", pt(startX, container.height/2));
+      layoutRoutine("leftCenter", pt(startX, (startY + (onlyFitContainer ? 2 * spacing : 0)) / 2));
     }
   }
   
@@ -528,7 +532,7 @@ export class HorizontalLayout extends FloatLayout {
     if (direction === "rightToLeft") { 
       startX = minExtent.x - submorphW - 2 * spacing;
     } else if (direction === "centered") {
-      startX = minExtent.x / 2 - submorphW / 2 - spacing;
+      startX = (minExtent.x / 2) - (submorphW / 2) - spacing;
     } else { // leftToRight
       startX = 0;
     }
