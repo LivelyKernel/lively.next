@@ -481,6 +481,7 @@ export class NumberWidget extends Morph {
   static get properties() {
 
     return {
+      unit: {},
       autofit: { 
         defaultValue: true,
         after: ['submorphs'],
@@ -489,9 +490,9 @@ export class NumberWidget extends Morph {
           this.setProperty('autofit', active);
         }
       },
-      extent: {defaultValue: pt(55, 25)},
       number: {
         defaultValue: 0,
+        after: ['unit'],
         set(v) {
           this.setProperty("number", v);
           this.get("value") && this.relayout(false);
@@ -501,9 +502,12 @@ export class NumberWidget extends Morph {
       max: {defaultValue: Infinity},
       floatingPoint: {
         after: ['number'],
+        set(isFloat) {
+          this.setProperty('floatingPoint', isFloat);
+        },
         get() {
            let m = /[+-]?([0-9]*[.])?[0-9]+/.exec(this.number);
-           return m && !!m[1];
+           return this.getProperty('floatingPoint') || (m && !!m[1]);
         }
       }, // infer that indirectly by looking at the floating point of the passed number value
       padding: {
@@ -513,6 +517,13 @@ export class NumberWidget extends Morph {
         set(p) {
           this.setProperty('padding', p);
           this.getSubmorphNamed('value').padding = p;
+        }
+      },
+      extent: { defaultValue: pt(60, 40) },
+      scaleFactor: {
+        defaultValue: 1,
+        get() {
+          return this.getProperty('scaleFactor') || 1
         }
       },
       baseFactor: {
@@ -574,6 +585,7 @@ export class NumberWidget extends Morph {
             new ValueScrubber({
               name: "value",
               value: this.number,
+              unit: this.unit,
               floatingPoint: this.floatingPoint,
               autofit: false,
               min: this.min,
@@ -582,23 +594,25 @@ export class NumberWidget extends Morph {
             {
               type: "button",
               name: "down", styleClasses: ["buttonStyle", "TreeLabel"],
-              padding: rect(4,3,0,-3),
               extent: pt(5, 10),
               label: Icon.makeLabel("sort-asc", {
                 rotation: Math.PI,
-                autofit: false,
-                padding: rect(3,0,0,-8),
+                autofit: true,
+                padding: rect(0,-6,0,5),
+                opacity: .6,
                 fontSize: 12
               }).fit()
             },
             {
               type: "button",
               name: "up", styleClasses: ["buttonStyle", "TreeLabel"],
-              padding: rect(4,0,0,0),
               extent: pt(5, 10),
               label: Icon.makeLabel("sort-asc", {
-                autofit: false,
-                padding: rect(3,0,0,-8),
+                autofit: true,
+                borderWidth: 1,
+                borderColor: Color.transparent,
+                opacity: .6,
+                padding: rect(0,0,2,-6),
                 fontSize: 12
               })
             }
@@ -607,12 +621,18 @@ export class NumberWidget extends Morph {
           connect(this.get("up"), "fire", this, "increment");
           connect(this.get("down"), "fire", this, "decrement");
           connect(this, "number", this, "relayout");
+          connect(this, 'extent', this, 'relayout');
           this.whenRendered().then(() => {
+            this.extent = this.extent.maxPt(pt(70,25));
             this.relayout();
           });
         }
       }
     };
+  }
+
+  spec() {
+    return obj.dissoc(super.spec(), ['submorphs']);
   }
 
   updateStyleSheet() {
@@ -648,8 +668,16 @@ export class NumberWidget extends Morph {
   }
 
   update(v, fromScrubber = true) {
-    this.setProperty("number", v);
+    this.setProperty("number", fromScrubber ? v / this.scaleFactor : v);
+    signal(this, 'number', this.number);
     this.relayout(fromScrubber);
+  }
+
+  relayoutButtons() {
+    let upButton = this.getSubmorphNamed('up');
+    let downButton = this.getSubmorphNamed('down');
+    upButton.height = downButton.height = this.height / 2;
+    upButton.width = downButton.width = 20;
   }
 
   relayout(fromScrubber) {
@@ -657,27 +685,37 @@ export class NumberWidget extends Morph {
     let upButton = this.getSubmorphNamed('up');
     let downButton = this.getSubmorphNamed('down');
     if (this.autofit) {
-      if (!fromScrubber) valueContainer.value = this.number;
+      if (!fromScrubber) valueContainer.value = this.number * this.scaleFactor;
       valueContainer.fit();
+      this.height = valueContainer.height;
+      this.relayoutButtons();
       upButton.topLeft = pt(valueContainer.right, 0);
       downButton.bottomLeft = pt(valueContainer.right, this.height);
+      this.width = upButton.right + 2;
     } else {
-      valueContainer.width = this.width - 15;
-      upButton.topRight = pt(this.width + 2, 0);
-      downButton.bottomRight = pt(this.width + 2, this.height);
-      if (!fromScrubber) valueContainer.value = this.number;
+      if (!fromScrubber) valueContainer.width = this.width - 15;
+      this.relayoutButtons();
+      upButton.topRight = pt(this.width - 2, 0);
+      downButton.bottomRight = pt(this.width - 1, this.height);
     }
-    valueContainer.leftCenter = this.innerBounds().leftCenter();
+    if (!fromScrubber) 
+        valueContainer.value = num.roundTo(this.number * this.scaleFactor, 1);
+    if (!fromScrubber) {
+      valueContainer.min = this.min != -Infinity ? this.min * this.scaleFactor : this.min;
+      valueContainer.max = this.max != Infinity ? this.max * this.scaleFactor : this.max;
+      valueContainer.unit = this.unit;
+      valueContainer.leftCenter = this.innerBounds().leftCenter();      
+    }
   }
 
   increment() {
     if (this.max != undefined && this.number >= this.max) return;
-    this.update(this.number + 1, false);
+    this.update(this.number + (1 / this.scaleFactor), false);
   }
 
   decrement() {
     if (this.min != undefined && this.number <= this.min) return;
-    this.update(this.number - 1, false);
+    this.update(this.number - (1 / this.scaleFactor), false);
   }
 }
 
