@@ -1,5 +1,5 @@
 import Resource from "./resource.js";
-import { createFiles } from '../index.js';
+import { createFiles } from './helpers.js';
 
 var debug = false;
 const slashRe = /\//g;

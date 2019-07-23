@@ -1,41 +1,13 @@
 /*global System,babel*/
 export { default as Resource } from "./src/resource.js";
-export { parseQuery } from "./src/helpers.js";
+import { unregisterExtensions, registerExtension, parseQuery, extensions, createFiles, resource } from './src/helpers.js';
 import { resourceExtension as httpResourceExtension } from "./src/http-resource.js";
 import { resourceExtension as fileResourceExtension } from "./src/fs-resource.js";
 import { resourceExtension as localResourceExtension } from "./src/local-resource.js";
 
-var extensions = extensions || []; // [{name, matches, resourceClass}]
-
 registerExtension(localResourceExtension);
 registerExtension(httpResourceExtension);
 registerExtension(fileResourceExtension);
-
-export function resource(url, opts) {
-  if (!url) throw new Error("lively.resource resource constructor: expects url but got " + url);
-  if (url.isResource) return url;
-  url = String(url);
-  for (var i = 0; i < extensions.length; i++)
-    if (extensions[i].matches(url))
-      return new extensions[i].resourceClass(url, opts);
-  throw new Error(`Cannot find resource type for url ${url}`);
-}
-
-export async function createFiles(baseDir, fileSpec, opts) {
-  // creates resources as specified in fileSpec, e.g.
-  // {"foo.txt": "hello world", "sub-dir/bar.js": "23 + 19"}
-  // supports both sync and async resources
-  let base = resource(baseDir, opts).asDirectory();
-  await base.ensureExistance();
-  for (let name in fileSpec) {
-    if (!fileSpec.hasOwnProperty(name)) continue;
-    let resource = base.join(name);
-    typeof fileSpec[name] === "object" ?
-      await createFiles(resource, fileSpec[name], opts) :
-      await resource.write(fileSpec[name]);
-  }
-  return base;
-}
 
 export async function createFileSpec(baseDir, depth = "infinity", opts) {
   let files = await baseDir.dirList(depth, opts), spec = {};
@@ -115,17 +87,6 @@ export async function ensureFetch() {
   Object.assign(System.global, fetchInterface())
 }
 
-export function registerExtension(extension) {
-  // extension = {name: STRING, matches: FUNCTION, resourceClass: RESOURCE}
-  // name: uniquely identifying this extension
-  // predicate matches gets a resource url (string) passed and decides if the
-  // extension handles it
-  // resourceClass needs to implement the Resource interface
-  var {name} = extension;
-  extensions = extensions.filter(ea => ea.name !== name).concat(extension);
-}
 
-export function unregisterExtension(extension) {
-  var name = typeof extension === "string" ? extension : extension.name;
-  extensions = extensions.filter(ea => ea.name !== name);
-}
+
+export { registerExtension, unregisterExtension, parseQuery, extensions, createFiles, resource };

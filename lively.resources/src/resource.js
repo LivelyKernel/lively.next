@@ -1,5 +1,4 @@
-import { resource } from "../index.js";
-import { parseQuery, withRelativePartsResolved, relativePathBetween, join } from "./helpers.js";
+import { resource, parseQuery, withRelativePartsResolved, relativePathBetween, join } from "./helpers.js";
 
 const slashEndRe = /\/+$/,
       slashStartRe = /^\/+/,
