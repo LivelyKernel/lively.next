@@ -20,7 +20,7 @@
   "dependencies": {
     "lively.lang": "^1.0.0",
     "lively.resources": "^0.1.18",
-    "pouchdb": "6.1.2"
+    "pouchdb": "7.1.1"
   },
   "devDependencies": {
     "babel-core": "^6.16.0",
