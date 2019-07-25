@@ -29,7 +29,7 @@ function depGraph(packageSpec, packageMap, dependencyFields = ["dependencies"]) 
   while (queue.length) {
     let nameAndVersion = queue.shift();
     if (nameAndVersion in resolvedVersions) continue;
-    
+
     let atIndex = nameAndVersion.lastIndexOf("@");
     if (atIndex === -1) atIndex = nameAndVersion.length;
     let name = nameAndVersion.slice(0, atIndex),

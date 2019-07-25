@@ -58,6 +58,10 @@ async function bundleToCjs(pkg, bundleFiles) {
     .join("\n");
 }
 
+// Some quick inline source rewrite magic:
+// - Replace const/let with var
+// - replace es6 imports with require(...)
+// - replace es6 exports with module.exports.xxx
 function toCjsSource(module, itsImports, itsExports, itsSource, itsAst, modulesInBundle) {
   console.log(module.id);
   let moduleIds = modulesInBundle.map(ea => ea.id);
@@ -91,7 +95,7 @@ function toCjsSource(module, itsImports, itsExports, itsSource, itsAst, modulesI
     let { exported, local, node: {start, end} } = ea;
     return {start, end, newSource: `module.exports.${exported} = ${local};`};
   })
-  
+
   let replacementsByPos = arr.groupBy([...otherReplacements, ...importReplacements, ...exportReplacements], ea => ea.start + ":" + ea.end).toArray(),
       sortedReplacements = arr.sortBy(replacementsByPos, ([tfm]) => tfm.start)
   return sortedReplacements.reduceRight((source, replacement) => {

@@ -94,7 +94,7 @@ async function buildPackage(
       ? buildPackageMap(packageMapOrDirs)
       : packageMapOrDirs,
     { name, version } = packageSpec;
-  return await BuildProcess.for(packageSpec, packageMap, dependencyFields, forceBuild).run();
+  return await BuildProcess.for(packageSpec, packageMap, dependencyFields, forceBuild, verbose).run();
 }
 
 

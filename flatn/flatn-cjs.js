@@ -969,7 +969,7 @@ function depGraph(packageSpec, packageMap, dependencyFields = ["dependencies"]) 
   while (queue.length) {
     let nameAndVersion = queue.shift();
     if (nameAndVersion in resolvedVersions) continue;
-    
+
     let atIndex = nameAndVersion.lastIndexOf("@");
     if (atIndex === -1) atIndex = nameAndVersion.length;
     let name = nameAndVersion.slice(0, atIndex),
@@ -1249,9 +1249,9 @@ function linkBins(packageSpecs, linkState = {}, verbose = false) {
 
 class BuildProcess {
 
-  static for(packageSpec, packageMap, dependencyFields, forceBuild = false) {
+  static for(packageSpec, packageMap, dependencyFields, forceBuild = false, verbose = false) {
     let stages = buildStages(packageSpec, packageMap, dependencyFields);
-    return new this(stages, packageMap, forceBuild);
+    return new this(stages, packageMap, forceBuild, verbose);
   }
 
   constructor(buildStages, packageMap, forceBuild, verbose = false) {
@@ -1475,7 +1475,7 @@ async function buildPackage(
       ? buildPackageMap(packageMapOrDirs)
       : packageMapOrDirs,
     { name, version } = packageSpec;
-  return await BuildProcess.for(packageSpec, packageMap, dependencyFields, forceBuild).run();
+  return await BuildProcess.for(packageSpec, packageMap, dependencyFields, forceBuild, verbose).run();
 }
 
 

@@ -93,9 +93,9 @@ function linkBins(packageSpecs, linkState = {}, verbose = false) {
 
 class BuildProcess {
 
-  static for(packageSpec, packageMap, dependencyFields, forceBuild = false) {
+  static for(packageSpec, packageMap, dependencyFields, forceBuild = false, verbose = false) {
     let stages = buildStages(packageSpec, packageMap, dependencyFields);
-    return new this(stages, packageMap, forceBuild);
+    return new this(stages, packageMap, forceBuild, verbose);
   }
 
   constructor(buildStages, packageMap, forceBuild, verbose = false) {
