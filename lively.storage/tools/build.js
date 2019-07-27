@@ -65,11 +65,15 @@ module.exports = Promise.resolve()
   .then(bundled => {
     var source = bundled.code;
 
-var noDeps = `
-(function() {
+    var global = `
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
+`;
+
+var noDeps = `
+(function() {
+${global}
   if (typeof GLOBAL.lively === "undefined") GLOBAL.lively = {};
   if (typeof btoa === "undefined")
     GLOBAL.btoa = function(str) { return new Buffer(str).toString('base64'); };
@@ -86,6 +90,12 @@ var withPouch = `
 (function() {
 
 var PouchDB = (function() {
+
+${global}
+if (!("Headers" in GLOBAL) && "lively" in GLOBAL && lively.resources && lively.resources.ensureFetch) {
+  lively.resources.ensureFetch();
+}
+
   var exports = {}, module = {exports: exports};
 // INLINED ${parts["pouchdb"].path}
 ${parts["pouchdb"].source}
