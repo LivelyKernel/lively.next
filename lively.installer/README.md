@@ -1,3 +1,9 @@
+*Please note*
+
+The method below is deprecated as of June 2019. It's now sufficient to just clone the main repository https://github.com/LivelyKernel/lively.next and run the `install.sh` script as described in the [lively.next README](https://github.com/LivelyKernel/lively.next/blob/master/README.md).
+
+--------------------------
+
 # lively.installer
 
 lively.installer can install and update all packages of lively.next on your local computer.
