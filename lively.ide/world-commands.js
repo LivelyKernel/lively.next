@@ -1,14 +1,15 @@
 /*global System*/
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, date, Path, arr, string, obj } from "lively.lang";
-import { inspect, MorphicDB, Text, config } from "./index.js";
-import KeyHandler from "./events/KeyHandler.js";
-import { loadObjectFromPartsbinFolder, loadPart } from "./partsbin.js";
-import { interactivelySaveWorld } from "./world-loading.js";
+import { inspect, MorphicDB, Text, config } from "lively.morphic";
+import KeyHandler from "lively.morphic/events/KeyHandler.js";
+import { loadObjectFromPartsbinFolder, loadPart } from "lively.morphic/partsbin.js";
+import { interactivelySaveWorld } from "lively.morphic/world-loading.js";
 import { show } from "lively.halos/markers.js";
 import { LoadingIndicator } from "lively.components";
-import { ensureCommitInfo } from "./morphicdb/db.js";
-import { serializeMorph, createMorphSnapshot } from "./serialization.js";
+import { ensureCommitInfo } from "lively.morphic/morphicdb/db.js";
+import { serializeMorph, createMorphSnapshot } from "lively.morphic/serialization.js";
+import { showAndSnapToGuides, removeSnapToGuidesOf } from "lively.halos/drag-guides.js";
 
 var commands = [
 
@@ -71,6 +72,7 @@ var commands = [
       let {prompt, selected: [cmd]} = await world.filterableListPrompt(
         "Run command", items, {
           historyId: "lively.morphic-run command",
+          requester: world,
           extent: pt(700,900), prompt: world._cachedRunCommandPrompt});
 
       world._cachedRunCommandPrompt = prompt;
@@ -89,7 +91,7 @@ var commands = [
               value: cmd
             }
           });
-      $world.editListPrompt("select commands", items, {multiSelect: true});
+      $world.editListPrompt("select commands", items, {multiSelect: true, requester: world});
       return true;
     }
   },
@@ -100,6 +102,27 @@ var commands = [
       var morph = world.focusedMorph;
       world.showHaloFor(morph.getWindow() || morph, world.firstHand.pointerId);
       return true;
+    }
+  },
+
+  {
+    name: "show morph",
+    exec: (world, morph) => {
+      show(morph);
+    }
+  },
+
+  {
+    name: "show and snap to guides",
+    exec(world, { target, showGuides, snap}) {
+      showAndSnapToGuides(target, showGuides, snap);
+    }
+  },
+
+  {
+    name: "remove snap to guides",
+    exec: (world, target) => {
+      removeSnapToGuidesOf(target)
     }
   },
 
@@ -121,7 +144,7 @@ var commands = [
 
   {
     name: "select morph",
-    exec: async (world, opts = {root: world, selectionFn: null, justReturn: false,
+    exec: async (world, opts = {root: world, selectionFn: null, justReturn: false, requester: world,
                                 filterFn: null, prependItems: [], prompt: null, remote: false}) => {
       let i = 0,
           filterFn = opts.filterFn || (() => true),
@@ -241,25 +264,18 @@ var commands = [
   },
 
   {
-    name: "resize to fit window",
-    exec: (world) => {
-      delete world._cachedWindowBounds;
-      world.extent = lively.FreezerRuntime ? 
-        world.windowBounds().extent() : 
-        world.windowBounds().union(world.submorphBounds()).extent();
-      return true;
-    }
-  },
-
-  {
     name: "resize manually",
     exec: async (world, args = {}) => {
       let width, height,
           winBounds = world.windowBounds(),
           bounds = world.bounds();
-      width = Number(args.width || await world.prompt("Enter world width", {input: Math.max(bounds.width, winBounds.width)}));
+      width = Number(args.width || await world.prompt("Enter world width", {
+        input: Math.max(bounds.width, winBounds.width), requester: world
+      }));
       if (typeof width === "number")
-        height = Number(args.height || await world.prompt("Enter world height", {input: Math.max(bounds.height, winBounds.height)}));
+        height = Number(args.height || await world.prompt("Enter world height", {
+          input: Math.max(bounds.height, winBounds.height), requester: world,
+        }));
 
       if (typeof width === "number" && !isNaN(width)
        && typeof height === "number" && !isNaN(height))
@@ -297,16 +313,26 @@ var commands = [
       }
 
       let wins = world.submorphs.filter(({isWindow}) => isWindow).reverse()
-            .map(win => ({isListItem: true, string: win.title || String(win), value: win})),
-          answer = await world.filterableListPrompt(
+            .map(win => ({isListItem: true, string: win.title || String(win), value: win}));
+      wins.forEach(m => m.value.opacity = .5);
+      let selectedWindow;
+      let answer = await world.filterableListPrompt(
             "Choose window", wins, {
               preselect: 1,
+              requester: world,
               historyId: "lively.morphic-window switcher",
-              onSelection: sel => sel && sel.show(),
+              onSelection: sel => {
+                if (selectedWindow) selectedWindow.animate({
+                  opacity: .5, duration: 200,
+                })
+                selectedWindow = sel;
+                sel && sel.animate({ opacity: 1, duration: 200 })
+              },
               width: world.visibleBounds().extent().x * 1/3,
               itemPadding: Rectangle.inset(4)
             }),
           {selected: [win]} = answer;
+      wins.forEach(m => m.value.opacity = 1);
       win && win.activate();
       return true;
     }
@@ -383,7 +409,7 @@ var commands = [
           "full", "fullscreen","center","right","left","bottom",
           "top","shrinkWidth", "growWidth","shrinkHeight",
           "growHeight", "col1","col2", "col3", "col4", "col5",
-          "reset"]);
+          "reset"], { requester: world });
         return how
       }
 
@@ -454,7 +480,9 @@ var commands = [
               value: ea
             }
           }),
-          {selected: coices} = await world.filterableListPrompt("select doit code", items, {multiSelect: true});
+          {selected: coices} = await world.filterableListPrompt("select doit code", items, {
+            multiSelect: true, requester: world
+          });
       if (coices.length) {
         let sources = [];
         for (let coice of coices) {
@@ -465,6 +493,13 @@ var commands = [
           {title: "logged doits", mode: "js", ...opts, content: sources.join("\n\n")});
       }
       return true;
+    }
+  },
+
+  {
+    name: "open loading indicator",
+    exec: (world, message) => {
+      return LoadingIndicator.open(message);
     }
   },
 
@@ -713,7 +748,7 @@ var commands = [
         return morphs.map(function(m) {
           var win = m.world() ? m.getWindow() : $world.withAllSubmorphsDetect(m => m.isWindow && m.targetMorph === morph),
               row = 0,
-              preview = lively.lang.string.lines(m.textString).find((l, i) => {
+              preview = string.lines(m.textString).find((l, i) => {
                 l = l.toLowerCase(); row = i;
                 return tokens.every(token => l.includes(token));
               }),
@@ -1162,7 +1197,7 @@ var commands = [
       let l2lClient = L2LClient.default();
       let peers = await l2lClient.listPeers(true)
       let freezer = peers.find(ea => ea.type === "lively.next.org freezer service");
-      let name = await world.prompt('Please enter an identifier for the frozen world');
+      let name = await world.prompt('Please enter an identifier for the frozen world', { requester: world });
       if (!name) return;
       let { data: status } = await l2lClient.sendToAndWait(freezer.id, "[freezer] status", {}); 
       let deployment;

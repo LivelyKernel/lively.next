@@ -1,7 +1,5 @@
-import { Color, rect, pt } from "lively.graphics";
-import { morph, Icon } from "lively.morphic";
 import { removeUnreachableObjects } from "lively.serializer2";
-import { obj } from "lively.lang";
+import { obj, Path } from "lively.lang";
 import { connect, disconnectAll } from "lively.bindings";
 
 export function isReference(value) { return value && value.__ref__; }
@@ -168,7 +166,7 @@ For now only a simple default theme...
             ['lively.morphic/halo', 'lively.halos'],
             ['lively.morphic/components/markers.js', 'lively.halos'],
             ['lively.morphic/components/icons.js', 'lively.morphic'],
-            ['lively.morphic/components/loading-indicator.js', 'lively.components', imports => `\{${imports}\}`],
+            ['lively.morphic/components/loading-indicator.js', 'lively.components', imports => `{${imports}}`],
             ['lively.morphic/components', 'lively.components'],
             ['lively.components/markers.js', 'lively.halos'],
             ['lively.morphic/ide', 'lively.ide'],
@@ -255,9 +253,6 @@ For now only a simple default theme...
     name: 'change storage of commit metadata',
     snapshotConverter: idAndSnapshot => {
       let {id: rootId, snapshot} = idAndSnapshot;
-       // remove the nodeItemContainer from the tree submorphs, such that
-       // they do not get initialized at all.
-       // reconstruction of the tree rendering should happen automatically
       Object.values(snapshot).map(m => {
       if (m.props.metadata && isReference(m.props.metadata.value)) {
           let metaObj = snapshot[m.props.metadata.value.id];
@@ -272,4 +267,17 @@ For now only a simple default theme...
     }
   },
 
+  {
+    date: "2019-07-25",
+    name: 'world superclass extraction',
+    snapshotConverter: idAndSnapshot => {
+      let {packages} = idAndSnapshot;
+      let indexjs;
+      let pathToIndex = Path(['local://lively-object-modules/', 'EmptyWorld', 'index.js']);
+      if (indexjs = pathToIndex.get(packages)) {
+        pathToIndex.set(packages, indexjs.replace('import { World, morph } from "lively.morphic";', 'import { morph } from "lively.morphic";\nimport { LivelyWorld as World } from "lively.ide/world.js"'));
+      }
+      return idAndSnapshot;
+    }
+  },
 ];
