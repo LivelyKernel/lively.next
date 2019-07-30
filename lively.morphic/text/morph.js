@@ -3,14 +3,15 @@ import { Rectangle, Point, rect, Color, pt } from "lively.graphics";
 import { string, obj, fun, promise, arr } from "lively.lang";
 import { signal, connect, disconnect } from "lively.bindings";
 
-import { config, morph, Morph } from "../index.js";
+import { morph } from "../helpers.js";
+import config from '../config.js';
+import { Morph } from '../morph.js';
 import { Selection, MultiSelection } from "./selection.js";
 import Document, {objectReplacementChar} from "./document.js";
 import { Anchor } from "./anchors.js";
 import { Range } from "./range.js";
 import { eqPosition, lessPosition } from "./position.js";
 import KeyHandler from "../events/KeyHandler.js";
-import { Label } from "./label.js";
 import { UndoManager } from "../undo.js";
 import { TextSearcher } from "./search.js";
 import TextLayout from "./layout.js";
@@ -24,7 +25,8 @@ import { renderSubTree } from "../rendering/morphic-default.js";
 export class Text extends Morph {
 
   static makeLabel(value, props) {
-    return new Label({
+    return new morph({
+      type: 'label',
       value,
       fontFamily: "Helvetica Neue, Arial, sans-serif",
       fontColor: Color.almostBlack,

@@ -3,7 +3,7 @@
 import { obj, arr, num } from "lively.lang";
 import { Rectangle, rect, Color, pt } from "lively.graphics";
 import { connect, signal, disconnect } from "lively.bindings"; // for makeInputLine
-import { Text } from "../index.js"
+import { Text } from "./morph.js"
 import { Range } from "./range.js";
 
 export default class InputLine extends Text {
@@ -476,7 +476,7 @@ export class PasswordInputLine extends HTMLMorph {
     return this.whenRendered().then(() => {
       let n = this.domNode;
       
-      if (n.parentNode.tagName == 'INPUT') {
+      if (n.parentNode && n.parentNode.tagName == 'INPUT') {
         n.parentNode.remove();
         let morphNode = this.env.renderer.getNodeForMorph(this);
         morphNode.insertBefore(this.domNode, morphNode.firstChild);

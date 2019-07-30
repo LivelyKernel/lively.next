@@ -31,45 +31,27 @@ import { Button } from "lively.components/buttons.js";
 import { CheckBox, LabeledCheckBox } from "lively.components/widgets.js";
 import { List, DropDownList } from "lively.components/list.js";
 import { locateClass } from "lively.serializer2";
+import { morph, addClassMappings, inspect } from './helpers.js';
 
-export function morph(props = {}, opts = {restore: false}) {
-  var klass = Morph;
-  if (props.type) {
-    if (typeof props.type === "function") klass = props.type;
-    if (typeof props.type === "object") klass = locateClass(props.type);
-    else if (typeof props.type === "string")
-      switch (props.type.toLowerCase()) {
-        case 'world':           klass = World; break;
-        case 'hand':            klass = Hand; break;
-        case 'image':           klass = Image; break;
-        case 'ellipse':         klass = Ellipse; break;
-        case 'triangle':        klass = Triangle; break;
-        case 'path':            klass = Path; break;
-        case 'text':            klass = Text; break;
-        case 'input':           klass = InputLine; break;
-        case 'label':           klass = Label; break;
-        case 'list':            klass = List; break;
-        case 'polygon':         klass = Polygon; break;
-        case 'line':            klass = LineMorph; break;
-        case 'html':            klass = HTMLMorph; break;
-        // lively.components, find a way to extract these in the future
-        case 'dropdownlist':    klass = DropDownList; break;
-        case 'button':          klass = Button; break;
-        case 'checkbox':        klass = CheckBox; break;
-        case 'labeledcheckbox': klass = LabeledCheckBox; break;
-      }
-  }
+addClassMappings({
+  'default':         Morph,
+  'world':           World,
+  'hand':            Hand,
+  'image':           Image,
+  'ellipse':         Ellipse,
+  'triangle':        Triangle,
+  'path':            Path,
+  'text':            Text,
+  'input':           InputLine,
+  'label':           Label,
+  'list':            List,
+  'polygon':         Polygon,
+  'line':            LineMorph,
+  'html':            HTMLMorph,
+  'dropdownlist':    DropDownList,
+  'button':          Button,
+  'checkbox':        CheckBox,
+  'labeledcheckbox': LabeledCheckBox
+})
 
-  return opts.restore ?
-    new klass({[Symbol.for("lively-instance-restorer")]: true}).initFromJSON(props) :
-    new klass(props);
-}
-
-async function lazyInspect(obj) {
-  // lazy load
-  var {inspect: realInspect} = await System.import("lively.ide/js/inspector.js")
-  inspect = realInspect;
-  return realInspect(obj);
-}
-
-export var inspect = lazyInspect;
+export { morph, inspect };

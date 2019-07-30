@@ -1,14 +1,14 @@
 import { obj, arr, string, properties } from "lively.lang";
-import { Morph, config } from "../index.js";
 import { Rectangle, Color } from "lively.graphics";
 import { signal } from "lively.bindings";
 import { h } from "virtual-dom";
 
+import { Morph } from "../morph.js";
+import config from '../config.js';
 import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js";
 import { Icon, Icons } from "./icons.js";
 
 import { splitTextAndAttributesIntoLines } from "./attributes.js";
-
 
 export class Label extends Morph {
 

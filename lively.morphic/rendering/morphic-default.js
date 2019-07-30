@@ -2,7 +2,7 @@ import { h, diff, patch, create as createNode } from "virtual-dom";
 import parser from "vdom-parser";
 import { num, obj, arr, properties, promise } from "lively.lang";
 import { Color, RadialGradient, pt, Point, LinearGradient, rect } from "lively.graphics";
-import { config } from "../index.js";
+import config from "../config.js";
 import { styleProps, addSvgAttributes, addPathAttributes } from "./property-dom-mapping.js"
 import bowser from 'bowser';
 
@@ -114,6 +114,7 @@ div.text-layer span {
 .Label span {
   white-space: pre;
   float: left;
+  line-height: initial;
   -moz-user-select: none;
 }
 

@@ -50,7 +50,8 @@
       "bowser": "bowser/bowser.min.js",
       "prism": "prismjs/prism.js",
       "prism-json": "prismjs/components/prism-json.js",
-      "webfontloader": "webfontloader/1.6.28/webfontloader.js"
+      "webfontloader": "webfontloader/1.6.28/webfontloader.js",
+      "vdom-parser": "vdom-parser/dist.js"
     },
     "meta": {
       "virtual-dom/dist/virtual-dom.js": {

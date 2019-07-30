@@ -1,9 +1,7 @@
 /*global System,process,require,fetch*/
 import Database from "./database.js";
 import { resource } from "lively.resources";
-import { obj } from "lively.lang";
-import { promise } from "lively.lang";
-import { arr } from "lively.lang";
+import { obj, promise, arr, string, Path } from "lively.lang";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // sha1
@@ -1189,7 +1187,7 @@ export var ObjectDBInterface = {
           doc = {name, parameters: [], sideEffect: false, returns: null, description: ""};
 
       if (comment && comment.text.trim()) {
-        let text = lively.lang.string.changeIndent(comment.text, " ", 0),
+        let text = string.changeIndent(comment.text, " ", 0),
             commentLines = text.split("\n");
         for (let line of commentLines) {
           if (line.startsWith("ignore-in-doc")) { doc.description = ""; break; }
@@ -1206,9 +1204,9 @@ export var ObjectDBInterface = {
       }
 
       for (let stmt of stmts) {
-        if ("checkArgs" !== lively.lang.Path("declarations.0.init.callee.name").get(stmt))
+        if ("checkArgs" !== Path("declarations.0.init.callee.name").get(stmt))
           continue;
-        let props = lively.lang.Path("declarations.0.id.properties").get(stmt);
+        let props = Path("declarations.0.id.properties").get(stmt);
         if (props) {
           doc.parameters = props.map(ea => ea.key.name);
         }

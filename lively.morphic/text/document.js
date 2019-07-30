@@ -1188,7 +1188,7 @@ export default class Document {
     //   ["hello", {bar: 23}, "wold", {foo: "..."}, ...]
 
     let {lines} = this;
-    if (!lines.length) return result;
+    if (!lines.length) return [];
 
     let nl = newline,
         lastRow = lines.length-1,

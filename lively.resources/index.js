@@ -1,6 +1,6 @@
 /*global System,babel*/
 export { default as Resource } from "./src/resource.js";
-import { unregisterExtensions, registerExtension, parseQuery, extensions, createFiles, resource } from './src/helpers.js';
+import { unregisterExtension, registerExtension, parseQuery, extensions, createFiles, resource } from './src/helpers.js';
 import { resourceExtension as httpResourceExtension } from "./src/http-resource.js";
 import { resourceExtension as fileResourceExtension } from "./src/fs-resource.js";
 import { resourceExtension as localResourceExtension } from "./src/local-resource.js";

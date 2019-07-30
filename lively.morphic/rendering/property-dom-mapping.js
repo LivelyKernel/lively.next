@@ -1,4 +1,4 @@
-import { config } from "lively.morphic";
+import config from "../config.js";
 import { pt, Color } from "lively.graphics";
 import { arr, num, string } from "lively.lang";
 // addPathAttributes

@@ -1,7 +1,7 @@
 /*global show,System*/
 import { obj, promise, string } from "lively.lang";
 import { pt } from "lively.graphics";
-import { Morph } from "./index.js";
+import { Morph } from "./morph.js";
 import vdom from "virtual-dom";
 import { addOrChangeCSSDeclaration } from "./rendering/dom-helper.js";
 var { diff, patch, h, create: createElement } = vdom

@@ -1,11 +1,5 @@
 import { pt, Rectangle, rect } from "lively.graphics";
 import { arr, Closure, num, grid, obj } from "lively.lang";
-import {
-  GridLayoutHalo, 
-  ProportionalLayoutHalo,
-  FlexLayoutHalo,
-  TilingLayoutHalo
-} from "lively.halos/layout.js";
 import { once } from "lively.bindings";
 
 
@@ -313,7 +307,7 @@ class FloatLayout extends Layout {
   }
 
   inspect(pointerId) {
-    return new FlexLayoutHalo(this.container, pointerId);
+    //return new FlexLayoutHalo(this.container, pointerId);
   }
 
   async apply(animate = false) {
@@ -565,7 +559,7 @@ export class ProportionalLayout extends Layout {
 
   inspect(pointerId) {
     // return new ProportionalLayoutHalo(this.container, pointerId);
-    return new ProportionalLayoutHalo(this.container, pointerId);
+    //return new ProportionalLayoutHalo(this.container, pointerId);
   }
 
   constructor(args) {
@@ -763,7 +757,7 @@ export class TilingLayout extends Layout {
   description() { return "Make the submorphs fill their owner, inserting breaks to defer intersecting the bounds as much as possible." }
 
   inspect(pointerId) {
-    return new TilingLayoutHalo(this.container, pointerId);
+    //return new TilingLayoutHalo(this.container, pointerId);
   }
 
   __serialize__() {
@@ -1719,7 +1713,7 @@ export class GridLayout extends Layout {
   }
 
   inspect(pointerId) {
-    return new GridLayoutHalo(this.container, pointerId);
+    //return new GridLayoutHalo(this.container, pointerId);
   }
 
   ensureGrid({grid, rowCount, columnCount}) {

@@ -7,7 +7,7 @@ var GLOBAL = typeof window!=="undefined" ?
     global : typeof self!=="undefined" ?
       self : this;
 
-import "acorn";
+import * as acorn from "acorn";
 export { acorn }
 var walk = acorn.walk;
 var loose = acorn.loose;

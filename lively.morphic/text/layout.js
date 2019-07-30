@@ -1,7 +1,7 @@
 /*global WeakMap*/
 import { Rectangle, pt } from "lively.graphics";
 import { arr } from "lively.lang";
-import { inspect } from "lively.morphic";
+import { inspect } from "../helpers.js";
 import { Range } from "../text/range.js";
 
 function todo(name) { throw new Error("not yet implemented " + name)}

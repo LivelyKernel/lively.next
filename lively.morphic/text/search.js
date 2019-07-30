@@ -1,8 +1,12 @@
 import { Rectangle, pt, Color } from "lively.graphics";
 import { connect, once, disconnect } from "lively.bindings"
 import { Path } from "lively.lang";
-import { Button } from "lively.components/buttons.js";
-import { Morph, config, GridLayout, StyleSheet, Text } from "../index.js";
+import { morph } from '../helpers.js';
+import { Text } from './morph.js';
+import { StyleSheet } from '../style-sheets.js';
+import { GridLayout } from '../layout.js';
+import config from "../config.js";
+import { Morph } from '../morph.js';
 import { lessPosition, minPosition, maxPosition } from "./position.js";
 import { occurStartCommand } from "./occur.js";
 import { Icon } from "./icons.js";
@@ -222,22 +226,26 @@ export class SearchWidget extends Morph {
         after: ["extent"],
         initialize() {
           this.submorphs = [
-            new Button({
+            morph({
+              type: 'button',
               name: "acceptButton",
               label: Icon.textAttribute("check-circle-o"),
               styleClasses: ["nav"]
             }).fit(),
-            new Button({
+            morph({
+              type: 'button',
               name: "cancelButton",
               label: Icon.textAttribute("times-circle-o"),
               styleClasses: ["nav"]
             }).fit(),
-            new Button({
+            morph({
+              type: 'button',
               name: "nextButton",
               label: Icon.textAttribute("arrow-circle-o-down"),
               styleClasses: ["nav"]
             }).fit(),
-            new Button({
+            morph({
+              type: 'button',
               name: "prevButton",
               label: Icon.textAttribute("arrow-circle-o-up"),
               styleClasses: ["nav"]
@@ -254,14 +262,16 @@ export class SearchWidget extends Morph {
               placeholder: "replace input",
               historyId: "lively.morphic-text replace"
             }),
-            new Button({
+            morph({
+              type: 'button',
               styleClasses: ["replace"],
               name: "replaceButton",
               label: "replace",
               fontSize: 10,
               extent: pt(60, 17)
             }),
-            new Button({
+            morph({
+              type: 'button',
               styleClasses: ["replace"],
               name: "replaceAllButton",
               label: "replace all",

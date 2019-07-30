@@ -19,10 +19,8 @@ $world.openInWindow(morph({
 
 */
 
-import { pt, Rectangle } from "lively.graphics";
 import { obj } from "lively.lang";
-import { morph } from "../index.js";
-import { Label } from "../text/label.js";
+import { morph } from '../helpers.js';
 
 export class Icon {
   
@@ -33,7 +31,8 @@ export class Icon {
     if (prefix) textAndAttributes.push(...typeof prefix === "string" ? [prefix || "", {}] : prefix);
     textAndAttributes.push(...this.textAttribute(iconName));
     if (suffix) textAndAttributes.push(...typeof suffix === "string" ? [suffix || "", {}] : suffix);
-    return new Label({
+    return morph({
+      type: 'label',
       value: textAndAttributes,
       ...obj.dissoc(props, ["prefix", "suffix"])
     });

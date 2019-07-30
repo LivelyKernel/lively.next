@@ -1,4 +1,5 @@
-import { Image } from "lively.morphic";
+/*global FileReader*/
+import { Image } from "../morph.js";
 
 export function uploadItem() {}
 

@@ -1,13 +1,17 @@
 /*global System,Uint8Array,Blob,location*/
 import { Color, Line, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
-import { string, properties, obj, arr, num, promise, tree, Path as PropertyPath } from "lively.lang";
+import { string, fun, properties, obj, arr, num, promise, tree, Path as PropertyPath } from "lively.lang";
 import { signal } from "lively.bindings";
+import { copy, deserializeSpec, ExpressionSerializer, getSerializableClassMeta, serializeSpec } from "lively.serializer2";
+
 import {
   renderRootMorph,
   ShadowObject
 } from "./rendering/morphic-default.js";
 import { AnimationQueue, easings } from "./rendering/animations.js";
-import { morph, addOrChangeCSSDeclaration, Icon } from "./index.js";
+import { addOrChangeCSSDeclaration } from "./rendering/dom-helper.js";
+import { Icon } from "./text/icons.js";
+import { morph, newMorphId } from './helpers.js';
 import { MorphicEnv } from "./env.js";
 import config from "./config.js";
 import CommandHandler from "./CommandHandler.js";
@@ -16,19 +20,7 @@ import { TargetScript } from "./ticking.js";
 import { copyMorph } from "./serialization.js";
 import { StylingVisitor } from "./sizzle.js";
 
-// optional lively.halos imports
-import {showAndSnapToGuides, removeSnapToGuidesOf} from "lively.halos/drag-guides.js";
-import { show } from "lively.halos";
-import { copy, deserializeSpec, ExpressionSerializer, getSerializableClassMeta, serializeSpec } from "lively.serializer2";
-
 const defaultCommandHandler = new CommandHandler();
-
-export function newMorphId(classOrClassName) {
-  var prefix = typeof classOrClassName === "function" ?
-    classOrClassName.name : typeof classOrClassName === "string" ?
-      classOrClassName.toLowerCase() : "";
-  return prefix + "_" + string.newUUID().replace(/-/g, "_");
-}
 
 function generateUnfolded(propName, members=['top', 'left', 'right', 'bottom'], group = "core") {
   // generate the accessors for members of a folded property
@@ -1042,7 +1034,7 @@ export class Morph {
     return {sort: false, includeDefault: false, properties};
   }
 
-  show() { return show(this); }
+  show() { return $world.execCommand('show morph', this) }
 
   setStatusMessage(msg, color, delay, opts) {
     var w = this.world();
@@ -2389,7 +2381,7 @@ export class Morph {
         if (prop.startsWith("$") || prop.startsWith("_")) continue;
         
         if (!group) group = [];
-        let args = lively.lang.fun.argumentNames(val);
+        let args = fun.argumentNames(val);
         group.push({group: protoName + " methods", signature: `${prop}(${args.join(", ")})`, name: prop})
       }
       
@@ -2448,13 +2440,15 @@ export class Morph {
 
   onDragEnd(evt) {
     this.undoStop("drag-move");
-    removeSnapToGuidesOf && removeSnapToGuidesOf(this);
+    this.world().execCommand('remove snap to guides', this);
   }
 
   onDrag(evt) {
     let {dragStartMorphPosition, absDragDelta} = evt.state;
     this.position = dragStartMorphPosition.addPt(absDragDelta);
-    showAndSnapToGuides && showAndSnapToGuides(this, evt.isCtrlDown()/*show guides*/, evt.isCtrlDown()/*snap*/);
+    this.world().execCommand('show and snap to guides', { 
+      target: this, showGuides: evt.isCtrlDown(), snap: evt.isCtrlDown()
+    });
   }
 
   onGrab(evt) {
@@ -2548,7 +2542,7 @@ export class Morph {
         (_, num) => `copy ${num && num.trim() ? Number(num)+1 : "1"}`);
     // rk 2017-01-08: attributeConnections hard reset...! and only of root
     // morph? this seems really wrong!
-    return morph().initFromJSON(exported);
+    return morph({type: exported.type }).initFromJSON(exported);
   }
 
   copy() { return copyMorph(this); }

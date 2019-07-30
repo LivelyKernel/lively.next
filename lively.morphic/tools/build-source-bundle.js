@@ -131,7 +131,7 @@ module.exports = Promise.resolve()
 
   // 3. massage code a little
   .then((bundled)=> {
-    console.log("massging code...")
+    console.log("massaging code...")
     var origSource = bundled.code;
      // remove the mangling that rollup performs
     let varName, m, mangled = [];

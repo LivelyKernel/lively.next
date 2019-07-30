@@ -1,4 +1,4 @@
-import { string, arr, Closure } from "lively.lang";
+import { string, arr, Closure, obj } from "lively.lang";
 import { stringifyFunctionWithoutToplevelRecorder } from "lively.source-transform";
 
 export { connect, disconnect, disconnectAll, once, signal, noUpdate };
@@ -20,7 +20,7 @@ export class AttributeConnection {
     spec = {
       removeAfterUpdate: false,
       forceAttributeConnection: false,
-      garbageCollect: true,
+      garbageCollect: false,
       signalOnAssignment: true,
       ...spec
     };
@@ -62,11 +62,12 @@ export class AttributeConnection {
     if (!this.varMapping) this.varMapping = {};
     this.varMapping.source = this.sourceObj;
     this.varMapping.target = this.targetObj;
-    this.connect();
+    this.onSourceAndTargetRestored();
   }
   
   onSourceAndTargetRestored() {
-    if (this.sourceObj && this.targetObj) this.connect();
+    if (this.sourceObj && this.targetObj)
+      this.connect();
   }
 
   copy(copier) {
@@ -475,7 +476,7 @@ function connect(sourceObj, attrName, targetObj, targetMethodName, specOrConvert
     spec = {converter: specOrConverter};
   } else spec = specOrConverter;
 
-  if (connectionPoint) spec = lively.lang.obj.merge(connectionPoint, spec);
+  if (connectionPoint) spec = obj.merge(connectionPoint, spec);
 
   // 4: does a similar connection exist? Yes: update it with new specs,
   //  no: create new connection

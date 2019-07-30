@@ -2,7 +2,7 @@
 import { string, obj } from "lively.lang";
 import FontDetector from "./font-detector.js";
 import { cumulativeOffset } from "./dom-helper.js";
-import { config } from "lively.morphic";
+import config from "../config.js";
 
 var debug = !!config.onloadURLQuery["debug-font-metric"];
 

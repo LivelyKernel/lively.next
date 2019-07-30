@@ -2,10 +2,10 @@
 /* global System */
 import { resource } from "lively.resources";
 import { Path, obj, date, promise } from "lively.lang";
-import { morph, HorizontalLayout, VerticalLayout } from "lively.morphic";
+import { HorizontalLayout, VerticalLayout } from "./layout.js";
+import { morph } from './helpers.js';
 import { pt, Color, Rectangle } from "lively.graphics";
 import { connect } from "lively.bindings";
-import LoadingIndicator from "lively.components/loading-indicator.js";
 import { emit } from "lively.notifications";
 import { SnapshotPackageHelper, ensureCommitInfo, default as MorphicDB } from "./morphicdb/db.js";
 import { createMorphSnapshot } from "./serialization.js";
@@ -116,7 +116,7 @@ export async function interactivelySavePart(part, options = {}) {
 
 
   if (loadingIndicator) {
-    var i = LoadingIndicator.open(`saving ${name}...`);
+    var i = $world.execCommand('open loading indicator', `saving ${name}...`);
     await promise.delay(80);
   }
 

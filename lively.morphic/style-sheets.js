@@ -1,7 +1,7 @@
 import { arr, obj } from "lively.lang";
 import { rect } from "lively.graphics";
-import { ShadowObject, morph } from "./index.js";
-
+import { ShadowObject } from "./rendering/morphic-default.js";
+import { morph } from './helpers.js';
 
 // THE MODEL
 

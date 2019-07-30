@@ -1,5 +1,5 @@
+/*global System*/
 import { obj, arr, promise } from "lively.lang";
-import LoadingIndicator from "lively.components/loading-indicator.js";
 
 function printArg(x) {
   return obj.inspect(x, {maxDepth: 1}).replace(/\n/g, "").replace(/\s+/g, " ");
@@ -69,10 +69,6 @@ export default class CommandHandler {
 
     var world = morph.world(), result;
     
-    if (this.progressIndicator) this.progressIndicator.remove();
-    if (typeof command.progressIndicator === "string")
-       this.progressIndicator = LoadingIndicator.open(command.progressIndicator);
-    
     if (typeof command.exec === "function") {
       try {
         result = command.exec(morph, args, command.handlesCount ? count : undefined, evt)
@@ -85,17 +81,22 @@ export default class CommandHandler {
       console.error(`command ${name} has no exec function!`);
     }
 
-    // to not swallow errors
-    if (result && typeof result.catch === "function") {
-      result.catch(err => {
-        var msg = `Error in interactive command ${name}: ${err}\n${err.stack || err}`;
-        world ? world.logError(msg) : console.error(msg);
-        throw err;
-      });
-      this.progressIndicator && promise.finally(result, () => this.progressIndicator.remove());
-    } else {
-      this.progressIndicator && this.progressIndicator.remove();
-    }
+    if (this.progressIndicator) this.progressIndicator.remove();
+    System.import("lively.components/loading-indicator.js").then(({ default: LoadingIndicator }) => {
+      if (typeof command.progressIndicator === "string")
+         this.progressIndicator = LoadingIndicator.open(command.progressIndicator);
+      // to not swallow errors
+      if (result && typeof result.catch === "function") {
+        result.catch(err => {
+          var msg = `Error in interactive command ${name}: ${err}\n${err.stack || err}`;
+          world ? world.logError(msg) : console.error(msg);
+          throw err;
+        });
+        this.progressIndicator && promise.finally(result, () => this.progressIndicator.remove());
+      } else {
+        this.progressIndicator && this.progressIndicator.remove();
+      }
+    });
 
     // handle count by repeating command
     if (result && typeof count === "number" && count > 1 && !command.handlesCount) {

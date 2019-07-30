@@ -1,14 +1,13 @@
 /*global System,fetch*/
-import { MorphicEnv } from "./index.js";
-import { loadWorldFromResource } from "./serialization.js";
 import { resource, registerExtension as registerResourceExension } from "lively.resources";
-import { MorphicDB } from "./morphicdb/index.js";
-import { Path, obj, date, promise } from "lively.lang";
-import { loadObjectFromPartsbinFolder } from "./partsbin.js";
-import LoadingIndicator from "lively.components/loading-indicator.js";
 import { Color } from "lively.graphics";
-import { ensureCommitInfo } from "./morphicdb/db.js";
+import { Path, obj, date, promise } from "lively.lang";
 
+import { MorphicEnv } from "./env.js";
+import { loadWorldFromResource } from "./serialization.js";
+import { MorphicDB } from "./morphicdb/index.js";
+import { loadObjectFromPartsbinFolder } from "./partsbin.js";
+import { ensureCommitInfo } from "./morphicdb/db.js";
 
 export function pathForBrowserHistory(worldName, queryString) {
   // how does the resource map to a URL shown in the browser URL bar? used for
@@ -22,7 +21,7 @@ export function pathForBrowserHistory(worldName, queryString) {
 
 export async function loadWorldFromURL(url, oldWorld, options) {
   let worldResource = url.isResource ? url :
-        lively.resources.resource(System.decanonicalize(url)),
+        resource(System.decanonicalize(url)),
       name = worldResource.nameWithoutExt();
   return loadWorldFromDB(name, undefined, oldWorld, options);
 }
@@ -205,7 +204,7 @@ export async function interactivelySaveWorld(world, options) {
     ({name, tags, description} = oldCommit);
   }
 
-  let i = LoadingIndicator.open(`saving ${name}...`);
+  let i = $world.execCommand('open loading indicator', `saving ${name}...`);
   await promise.delay(80);
 
   try {

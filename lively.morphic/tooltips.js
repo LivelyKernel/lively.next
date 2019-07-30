@@ -1,6 +1,10 @@
 import { Color, pt } from "lively.graphics";
-import { Morph, StyleSheet, Label, HorizontalLayout, config } from "./index.js";
 import { connect } from "lively.bindings";
+import { Morph } from './morph.js';
+import { morph } from './helpers.js';
+import { StyleSheet } from "./style-sheets.js";
+import config from './config.js';
+import { HorizontalLayout } from './layout.js';
 
 export class TooltipViewer {
 
@@ -112,7 +116,8 @@ export class Tooltip extends Morph {
       submorphs: {
         initialize() {
           this.submorphs = [
-            new Label({
+            new morph({
+              type: 'label',
               width: 200,
             })
           ];

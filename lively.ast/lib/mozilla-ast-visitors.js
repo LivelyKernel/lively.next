@@ -1,6 +1,6 @@
 /*global process, global, exports*/
 
-import { obj } from "lively.lang";
+import { obj, Path } from "lively.lang";
 import Visitor from "../generated/estree-visitor.js";
 
 class PrinterVisitor extends Visitor {
@@ -35,7 +35,7 @@ class ComparisonVisitor extends Visitor {
   }
 
   compareField(field, node1, node2, state) {
-    node2 = lively.lang.Path(state.completePath.join('.')).get(node2);
+    node2 = Path(state.completePath.join('.')).get(node2);
     if (node1 && node2 && node1[field] === node2[field]) return true;
     if ((node1 && node1[field] === '*') || (node2 && node2[field] === '*')) return true;
     var fullPath = state.completePath.join('.') + '.' + field, msg;
@@ -47,7 +47,7 @@ class ComparisonVisitor extends Visitor {
   }
 
   accept(node1, node2, state, path) {
-    var patternNode = lively.lang.Path(path.join('.')).get(node2);
+    var patternNode = Path(path.join('.')).get(node2);
     if (node1 === '*' || patternNode === '*') return;
     var nextState = {
       completePath: path,

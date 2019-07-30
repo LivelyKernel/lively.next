@@ -4,9 +4,9 @@ import {
   deserializeWithMigrations,
   serialize
 } from "lively.serializer2";
-import { World, Morph } from "./index.js";
+import { MorphicEnv } from './env.js';
 import { resource } from "lively.resources";
-import { newMorphId } from "./morph.js";
+import { newMorphId, morph } from "./helpers.js";
 import { pathForBrowserHistory } from "./world-loading.js";
 
 function normalizeOptions(options) {
@@ -37,7 +37,7 @@ export async function loadWorldFromResource(fromResource) {
   return loadMorphFromSnapshot(await fromResource.readJson());
 }
 
-export async function saveWorldToResource(world = World.defaultWorld(), toResource, options) {
+export async function saveWorldToResource(world = MorphicEnv.default().world, toResource, options) {
   let {
     prettyPrint = true,
     showIndicator = true,
@@ -126,7 +126,7 @@ export async function createMorphSnapshot(aMorph, options = {}) {
       snapshot.preview = await renderMorphToDataURI(aMorph, {width, height, type});
     } catch (err) {
       console.error(`Error generating morph preview: ${err}`);
-      snapshot.preview = await renderMorphToDataURI(new Morph({fill: aMorph.fill, width, height}), {width, height, type})
+      snapshot.preview = await renderMorphToDataURI(morph({fill: aMorph.fill, width, height}), {width, height, type})
     }
   }
 
