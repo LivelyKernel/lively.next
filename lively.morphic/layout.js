@@ -890,7 +890,7 @@ export class TilingLayout extends Layout {
   layoutOrder(morph) {
     // the following creates a drop zone that is 15 pixels tall.
     // allows for horizontal reordering.
-    return (morph.top - morph.top % 15) * 1000000 + morph.left;
+    return this.axis === 'row' ? (morph.top - morph.top % 15) * 1000000 + morph.left : (morph.left - morph.left % 15) * 1000000 + morph.top;
   }
 
 }
