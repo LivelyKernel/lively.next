@@ -1,4 +1,4 @@
-/*global acorn*/
+/*global acorn,global,self*/
 import { obj, arr, string, Path } from "lively.lang"; 
 import { withMozillaAstDo } from "./mozilla-ast-visitor-interface.js";
 
@@ -480,8 +480,9 @@ function findSiblings(parsed, node, beforeOrAfter) {
 // // cached visitors that are used often
 walk.visitors = {
   stopAtFunctions: walk.make({
-    'Function': function() { /* stop descent */ }
-  }, walk.base),
+    'Function': function() { /* stop descent */ },
+    ...walk.base
+  }),
 
   withMemberExpression: walk.make({
     MemberExpression: function(node, st, c) {
