@@ -1,18 +1,18 @@
 /*global System*/
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
 import { withSuperclasses, isClass } from "lively.classes/util.js";
-import { module, getPackage } from "lively.modules/index.js";
-import { string, Path, obj, promise } from "lively.lang";
+import { module } from "lively.modules/index.js";
+import { string, Path, obj } from "lively.lang";
 import ClassTreeData from "./classTree.js";
 import { subscribe, unsubscribe } from "lively.notifications/index.js";
 import L2LClient from "lively.2lively/client.js";
 import { l2lInterfaceFor, localInterface } from "lively-system-interface";
 import ObjectPackage, { isObjectClass, addScript } from "lively.classes/object-classes.js";
-import { parse } from "lively.ast";
+
 import semver from 'semver';
 import { adoptObject } from "lively.classes/runtime.js";
 import { chooseUnusedImports } from "../import-helper.js";
-import { serialize, deserialize } from "lively.serializer2";
+import { deserialize } from "lively.serializer2";
 import { stringifyFunctionWithoutToplevelRecorder } from "lively.source-transform";
 
 export default class ObjectEditorContext {
@@ -60,12 +60,7 @@ export default class ObjectEditorContext {
   }
   
   async refresh() {
-    const td = new ClassTreeData(this.target.constructor);
-    await td.uncollapseAll((n) => td.getChildren(n)); // class trees have a max depth of 2
-    for (let n of td.asList()) { 
-      if (!n.isRoot) await td.collapse(n, true);
-    }
-    this.classTreeData = td;
+    this.classTreeData = new ClassTreeData(this.target.constructor);
     // never really used....
     this.evalEnvironment = {
       context: this.target,

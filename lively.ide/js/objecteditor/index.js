@@ -438,11 +438,7 @@ export class ObjectEditor extends Morph {
     
     await tree.maintainViewStateWhile(
       () => tree.treeData = treeData,
-      node => node.target ?
-        node.target.name
-                  + node.target.kind
-                  + (node.target.owner ? `.${node.target.owner.name}` : "") :
-        node.name);
+      node => node.isClass ? node.target : node.name);
 
     if (className && !tree.selectedNode) await this.selectClass(className);
 
