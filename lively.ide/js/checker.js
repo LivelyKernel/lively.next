@@ -10,6 +10,12 @@ export default class JavaScriptChecker {
     morph.removeMarker("js-syntax-error");
   }
 
+  hasEmbeddedMorphInRange(textMorph, range) {
+    return [...textMorph.embeddedMorphMap.values()].find(({ anchor }) => {
+      return range.containsPosition(anchor.position)
+    });
+  }
+
   onDocumentChange(change, morph, jsPlugin) {
 
     // 1. parse
@@ -35,10 +41,12 @@ export default class JavaScriptChecker {
     // 3. "errors" such as syntax errors
     if (parsed.parseError) {
       var {column, line} = parsed.parseError.loc, row = line-1,
-          {column, row} = doc.indexToPosition(parsed.parseError.pos);
+          {column, row} = doc.indexToPosition(parsed.parseError.pos),
+          range = {start: {column: column-1, row}, end: {column: column+1, row}};
+      if (this.hasEmbeddedMorphInRange(morph, range)) return;
       morph.addMarker({
         id: "js-syntax-error",
-        range: {start: {column: column-1, row}, end: {column: column+1, row}},
+        range,
         style: errorStyle,
         type: "js-syntax-error"
       });

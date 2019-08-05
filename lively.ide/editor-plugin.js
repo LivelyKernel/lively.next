@@ -17,6 +17,7 @@ import { commands as codeCommands } from "./text/generic-code-commands.js";
 import { codeEvaluationCommands } from "./text/code-evaluation-commands.js";
 import { commands as richTextCommands } from "./text/rich-text-commands.js";
 import { Color } from "lively.graphics";
+import { Range } from "lively.morphic/text/range.js";
 
 export function guessTextModeName(contentOrEditor, filename = "", hint) {
 
@@ -145,6 +146,7 @@ export default class EditorPlugin {
     textMorph.cursorColor = theme.cursorColor || Color.black;
 
     let {firstVisibleRow, lastVisibleRow} = textMorph.viewState,
+        morphAttrs = {},
         {lines, tokens} = tokenizeDocument(
           mode,
           textMorph.document,
@@ -162,12 +164,25 @@ export default class EditorPlugin {
               endColumn = lineTokens[i+1],
               token = lineTokens[i+2],
               style = theme[token] || theme.default;
+          // if the style chopped of an embedded morph, fix that here
           style && attributes.push(
             {start: {row, column: startColumn}, end: {row, column: endColumn}},
             style);
         }
       }
+      textMorph.embeddedMorphs.forEach(m => {
+        let a = textMorph.embeddedMorphMap.get(m).anchor;
+        morphAttrs[m.id] = textMorph.textAttributeAt(a.position);
+      });
+      
       textMorph.setTextAttributesWithSortedRanges(attributes);
+      textMorph.embeddedMorphs.forEach(m => {
+        let a = textMorph.embeddedMorphMap.get(m).anchor,
+            r = Range.at(a.position);
+        r.end.column += 1;
+        textMorph.replace(r, [m, morphAttrs[m.id]], false);
+      });
+      
       this._tokenizerValidBefore = {row: arr.last(lines).row+1, column: 0};
     }
 
