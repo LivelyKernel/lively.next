@@ -1,3 +1,4 @@
+/*global global,self,process*/
 import * as string from "./string.js";
 import * as num from "./number.js";
 import * as fun from "./function.js";
@@ -90,7 +91,7 @@ function createLivelyLangObject() {
 
 export var livelyLang = createLivelyLangObject();
 
-function globalInstall() {
+export function globalInstall() {
   if (isNode && !GLOBAL.lively) { if (!GLOBAL.lively) return; }
 
   livelyLang._prevLivelyGlobal = GLOBAL.lively;

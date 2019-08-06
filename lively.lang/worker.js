@@ -1,4 +1,4 @@
-/*global, require, Worker, URL, webkitURL, Blob, BlobBuilder, process, require,self,global,remoteWorker,postMessage,XMLHttpRequest,__FUNCTIONDECLARATIONS__,initBrowserGlobals,loadDependenciesBrowser,initOnMessageHandler,initWorkerInterface,initWorkerMessenger,loadDependenciesNodejs,importScripts*/
+/*global require, Worker, URL, webkitURL, Blob, BlobBuilder, process, require,self,global,remoteWorker,postMessage,XMLHttpRequest,__FUNCTIONDECLARATIONS__,initBrowserGlobals,loadDependenciesBrowser,initOnMessageHandler,initWorkerInterface,initWorkerMessenger,loadDependenciesNodejs,importScripts*/
 
 
 /*
@@ -191,7 +191,7 @@ var BrowserWorker = {
       options.libLocation = workerScript.src.replace(/worker.js$/, '');
     }
 
-    const workerSetupCode = String(workerSetupFunction).replace("__FUNCTIONDECLARATIONS__", [
+    const workerSetupCode = String(workerSetupFunction).split('__lvVarRecorder.').join('').replace("__FUNCTIONDECLARATIONS__", [
       WorkerSetup.initBrowserGlobals,
       WorkerSetup.loadDependenciesBrowser,
       WorkerSetup.initOnMessageHandler,
@@ -254,6 +254,7 @@ var BrowserWorker = {
     // This code is run inside the worker and bootstraps the messenger
     // interface. It also installs a console.log method since since this is not
     // available by default.
+    
     function workerSetupFunction() {
       var remoteWorker = self;
       remoteWorker.onmessage = function(evt) {
@@ -352,9 +353,10 @@ var NodejsWorker = {
 
     return worker;
   },
-
+  
   // this code is run in the context of the worker process
   workerSetupFunction: function workerSetupFunction() {
+    /* global loadDependenciesNodesjs, initOnMessageHandler */
     var remoteWorker = process;
     var debug = true;
     var close = false;
