@@ -284,8 +284,11 @@ export class ObjectEditor extends Morph {
 
   }
 
-  onWindowClose() {
-    this.context.dispose();
+  async onWindowClose() {
+    let proceed = true;
+    if (await this.hasUnsavedChanges()) proceed = await this.warnForUnsavedChanges();
+    if (proceed) this.context.dispose();
+    else return false;
   }
 
   async onLoad() {
@@ -1255,6 +1258,14 @@ export class ObjectEditor extends Morph {
   focus() {
     let {importsList, sourceEditor} = this.ui;
     (this.isShowingImports() ? importsList : sourceEditor).focus();
+  }
+
+  async warnForUnsavedChanges() {
+    return await this.world().confirm(['Before you Continue\n', {},
+          `Unsaved changes to this class will be discarded. Are you sure you want to proceed?`, {
+          fontWeight: 'normal',
+          fontSize: 16
+        }], { requester: this });
   }
 
   get keybindings() {

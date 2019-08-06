@@ -809,13 +809,19 @@ export default class Browser extends Window {
     return this.selectedModule;
   }
 
+  async warnForUnsavedChanges() {
+    return await this.world().confirm([
+      'Discard Changes\n', {}, 'The unsaved changes to this module are going to be discarded.\nAre you sure you want to proceed?', {fontSize: 16, fontWeight: 'normal'}], { requester: this });
+  }
+
+  
+
   async onModuleSelected(m) {
     let pack = this.state.selectedPackage;
 
     if (this._return) return;
     if (this.selectedModule && this.hasUnsavedChanges()) {
-      let proceed = await this.world().confirm([
-      'Discard Changes\n', {}, 'The unsaved changes to this module are going to be discarded.\nAre you sure you want to proceed?', {fontSize: 16, fontWeight: 'normal'}], { requester: this });
+      let proceed = await this.warnForUnsavedChanges()
       if (!proceed) {
         this._return = true;
         let m = await this.state.history.navigationInProgress;
@@ -953,7 +959,6 @@ export default class Browser extends Window {
         end = sourceEditor.indexToPosition(entity.node.end);
     sourceEditor.cursorPosition = start;
     sourceEditor.flash({start, end}, {id: "codeentity", time: 1000, fill: Color.rgb(200,235,255)});
-    if (this.world()) await sourceEditor.whenRendered();
     sourceEditor.centerRange({start, end});
   }
 
@@ -1423,6 +1428,12 @@ export default class Browser extends Window {
   setStatusMessage() {
     let ed = this.ui.sourceEditor;
     return ed.setStatusMessage.apply(ed, arguments);
+  }
+
+  async close() {
+    let proceed = true;
+    if (this.hasUnsavedChanges()) proceed = await this.warnForUnsavedChanges()
+    if (proceed) super.close();
   }
 
   focus(evt) {
