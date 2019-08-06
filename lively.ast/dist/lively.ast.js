@@ -6673,7 +6673,7 @@ module.exports = function(acorn) {
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v8.14.0',
+        version: 'v9.11.2',
         browser: true,
         env: {},
         argv: [],
@@ -14645,16 +14645,15 @@ function parse(source, options) {
     var parsed = acorn.parse(source, options);
   } catch (err) {
     if (typeof SyntaxError !== "undefined" && err instanceof SyntaxError && err.loc) {
-      var lines = source.split("\n"),
-          message = err.message,
-          _err$loc = err.loc,
-          row = _err$loc.line,
-          column = _err$loc.column,
-          pos = err.pos,
-          line = lines[row - 1],
-          newMessage = "Syntax error at line " + row + " column " + column + " (index " + pos + ") \"" + message + "\"\nsource: " + line.slice(0, column) + "<--SyntaxError-->" + line.slice(column),
-          betterErr = new SyntaxError(newMessage);
-
+      var lines = source.split("\n");
+      var message = err.message;
+      var _err$loc = err.loc;
+      var row = _err$loc.line;
+      var column = _err$loc.column;
+      var pos = err.pos;
+      var line = lines[row - 1];
+      var newMessage = "Syntax error at line " + row + " column " + column + " (index " + pos + ") \"" + message + "\"\nsource: " + line.slice(0, column) + "<--SyntaxError-->" + line.slice(column);
+      var betterErr = new SyntaxError(newMessage);
       betterErr.loc = { line: row, column: column };
       betterErr.pos = pos;
       throw betterErr;
@@ -14910,10 +14909,10 @@ function funcExpr(_ref) {
     statements[_key - 2] = arguments[_key];
   }
 
-  var arrow = _ref.arrow,
-      funcId = _ref.id,
-      expression = _ref.expression,
-      generator = _ref.generator;
+  var arrow = _ref.arrow;
+  var funcId = _ref.id;
+  var expression = _ref.expression;
+  var generator = _ref.generator;
   var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
 
   // lively.ast.stringify(funcExpr({id: "foo"}, ["a"], exprStmt(id("3"))))
@@ -15521,17 +15520,19 @@ function topLevelFuncDecls(parsed) {
 function resolveReference(ref, scopePath) {
   if (scopePath.length == 0) return [null, null];
 
-  var _scopePath = toArray(scopePath),
-      scope = _scopePath[0],
-      outer = _scopePath.slice(1);
+  var _scopePath = toArray(scopePath);
+
+  var scope = _scopePath[0];
+
+  var outer = _scopePath.slice(1);
 
   var decls = scope.decls || declarationsWithIdsOfScope(scope);
   scope.decls = decls;
   var decl = decls.find(function (_ref) {
-    var _ref2 = slicedToArray(_ref, 2),
-        _ = _ref2[0],
-        id = _ref2[1];
+    var _ref2 = slicedToArray(_ref, 2);
 
+    var _ = _ref2[0];
+    var id = _ref2[1];
     return id.name == ref;
   });
   return decl || resolveReference(ref, outer);
@@ -15541,10 +15542,12 @@ function resolveReferences(scope) {
   function rec(scope, outerScopes) {
     var path = [scope].concat(outerScopes);
     scope.refs.forEach(function (ref) {
-      var _resolveReference = resolveReference(ref.name, path),
-          _resolveReference2 = slicedToArray(_resolveReference, 2),
-          decl = _resolveReference2[0],
-          id = _resolveReference2[1];
+      var _resolveReference = resolveReference(ref.name, path);
+
+      var _resolveReference2 = slicedToArray(_resolveReference, 2);
+
+      var decl = _resolveReference2[0];
+      var id = _resolveReference2[1];
 
       map.set(ref, { decl: decl, declId: id, ref: ref });
     });
@@ -15567,9 +15570,9 @@ function refWithDeclAt(pos, scope) {
   try {
     for (var _iterator10 = scope.resolvedRefMap.values()[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
       var ref = _step10.value;
-      var _ref$ref = ref.ref,
-          start = _ref$ref.start,
-          end = _ref$ref.end;
+      var _ref$ref = ref.ref;
+      var start = _ref$ref.start;
+      var end = _ref$ref.end;
 
       if (start <= pos && pos <= end) return ref;
     }
@@ -16261,9 +16264,9 @@ function replaceNodes(targetAndReplacementFuncs, sourceOrChanges) {
   }),
       sourceChanges = (typeof sourceOrChanges === "undefined" ? "undefined" : _typeof(sourceOrChanges)) === 'object' ? sourceOrChanges : { changes: [], source: sourceOrChanges };
   for (var i = 0; i < sorted.length; i++) {
-    var _sorted$i = sorted[i],
-        target = _sorted$i.target,
-        replacementFunc = _sorted$i.replacementFunc;
+    var _sorted$i = sorted[i];
+    var target = _sorted$i.target;
+    var replacementFunc = _sorted$i.replacementFunc;
 
     sourceChanges = replaceNode(target, replacementFunc, sourceChanges);
   }
@@ -16532,8 +16535,8 @@ function wrapInStartEndCall(parsed, options) {
   // 1. Hoist func decls outside the actual eval start - end code. The async /
   // generator transforms require this!
   funcDecls.forEach(function (_ref3) {
-    var node = _ref3.node,
-        path = _ref3.path;
+    var node = _ref3.node;
+    var path = _ref3.path;
 
     lively_lang.Path(path).set(parsed, exprStmt(node.id));
     outerBody.push(node);
@@ -17024,8 +17027,8 @@ function varDefs(varDeclNode) {
   try {
     var _loop = function _loop() {
       var _ref = _step3.value;
-      var id = _ref.id,
-          node = _ref.node;
+      var id = _ref.id;
+      var node = _ref.node;
 
       var def = { name: id.name, node: node, type: "var-decl" };
       result.push(def);
