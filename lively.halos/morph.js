@@ -43,7 +43,7 @@ export default class Halo extends Morph {
       },
       hasTinyTarget: {
         derived: true,
-        get() { return this.target.extent.leqPt(pt(20,20)) }
+        get() { return this.target.extent.dist(pt(0)) < 40 }
       },
       target: {
         get() { return this.state ? this.state.target : null; },
@@ -1082,7 +1082,7 @@ class EditHaloItem extends HaloItem {
       win.minimized = false;
       win.animate({center: this.world().visibleBounds().center(), duration: 200});
     } else {
-      this.halo.world().execCommand("open object editor", {target: this.halo.target}); 
+      $world.execCommand("open object editor", {target: this.halo.target}); 
     }
     this.halo.remove();
   }
@@ -1761,6 +1761,7 @@ export class InteractiveMorphSelector {
   scanForTargetAt() {
     let pos = this.world.firstHand.globalPosition;
     this.selectorMorph.center = pos;
+    this.selectorMorph.focus();
     var target = this.selectorMorph.morphBeneath(pos), hiddenMorph;
     let {possibleTarget, controllingMorph, filterFn, world, morphHighlighter} = this;
     if (morphHighlighter == target) {

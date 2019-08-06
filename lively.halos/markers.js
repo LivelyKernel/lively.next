@@ -188,7 +188,7 @@ export class StatusMessage extends Morph {
       clipMode: {defaultValue: "hidden"},
       grabbing: {defaultValue: false},
       dragging: {defaultValue: false},
-      borderRadius: {defaultValue: 20},
+      borderRadius: {defaultValue: 10},
       borderWidth: {defaultValue: 5},
       fill: {defaultValue: Color.white},
       dropShadow: {defaultValue: new ShadowObject(true)},
@@ -279,10 +279,11 @@ export class StatusMessage extends Morph {
     this.isMaximized = true;
     this.stayOpen = true;
     var text = this.getSubmorphNamed("messageText");
+    text.lineWrapping = false;
     Object.assign(text, { clipMode: 'auto', fixedWidth: true, selectable: true});
     if (this.expandedContent) text.value = this.expandedContent;
     text.fit();
-    var ext = text.extent.addXY(20, 20), visibleBounds = world.visibleBounds();
+    var ext = text.textBounds().extent(), visibleBounds = world.visibleBounds();
     if (ext.y > visibleBounds.extent().y) ext.y = visibleBounds.extent().y - 20;
     if (ext.x > visibleBounds.extent().x) ext.x = visibleBounds.extent().x - 20;
     ext = this.extent.maxPt(ext);
