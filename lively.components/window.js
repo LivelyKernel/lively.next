@@ -463,7 +463,7 @@ export default class Window extends Morph {
         }),
         bottomRightResizer = morph({
           name: 'bottom right resizer',
-          fill, extent: pt(20,20),
+          fill, extent: pt(10,10),
           nativeCursor: "nwse-resize"
         }),
         leftResizer = morph({
@@ -473,7 +473,7 @@ export default class Window extends Morph {
         }),
         bottomLeftResizer = morph({
           name: 'bottom left resizer',
-          fill, extent: pt(20,20),
+          fill, extent: pt(10,10),
           nativeCursor: "nesw-resize"
         }),
         bottomResizer = morph({
@@ -538,7 +538,11 @@ export default class Window extends Morph {
     this.resizer().visible = !this.minimized;
   }
 
-  close() {
+  async close() {
+    let proceed;
+    if (this.targetMorph && typeof this.targetMorph.onWindowClose === "function")
+      proceed = await this.targetMorph.onWindowClose();
+    if (proceed === false) return;
     var world = this.world();
     this.deactivate();
     this.remove();
@@ -547,8 +551,6 @@ export default class Window extends Morph {
     next && next.activate();
 
     signal(this, "windowClosed", this);
-    if (this.targetMorph && typeof this.targetMorph.onWindowClose === "function")
-      this.targetMorph.onWindowClose();
   }
 
   onMouseDown(evt) {
