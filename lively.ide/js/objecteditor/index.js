@@ -1,6 +1,6 @@
 /*global System, localStorage*/
 import { arr, obj, t, Path, string, fun, promise } from "lively.lang";
-import { Icon, StyleSheet, Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
+import { Icon, ProportionalLayout, StyleSheet, Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
 import { pt, Color } from "lively.graphics";
 import JavaScriptEditorPlugin from "../editor-plugin.js";
 import { withSuperclasses, isClass } from "lively.classes/util.js";
@@ -13,15 +13,15 @@ import { module } from "lively.modules";
 import { parse } from "lively.ast";
 import { interactivelySavePart } from "lively.morphic/partsbin.js";
 import * as livelySystem from 'lively-system-interface';
-import { LinearGradient } from "lively.graphics/index.js";
+
 import { adoptObject } from "lively.classes/runtime.js";
 import { InteractiveMorphSelector } from "lively.halos/morph.js";
-import { interactivelyFreezePart } from "lively.freezer/part.js";
 import ClassTreeData from './classTree.js';
 import ObjectEditorContext from "./context.js";
 import DarkTheme from "../../themes/dark.js";
 import DefaultTheme from "../../themes/default.js";
 import { stringifyFunctionWithoutToplevelRecorder } from "lively.source-transform";
+import { interactivelyFreezePart, displayFrozenPartsFor } from "lively.freezer";
 
 export class ObjectEditor extends Morph {
 
@@ -166,6 +166,8 @@ export class ObjectEditor extends Morph {
       sourceEditor:        this.getSubmorphNamed("sourceEditor"),
       toggleImportsButton: this.getSubmorphNamed("toggleImportsButton"),
       classAndMethodControls: this.getSubmorphNamed("classAndMethodControls"),
+      freezeTargetButton: this.getSubmorphNamed('freezeTargetButton'),
+      showFrozenPartsButton: this.getSubmorphNamed('showFrozenPartsButton')
     };
   }
 
@@ -199,9 +201,14 @@ export class ObjectEditor extends Morph {
       saveButton,
       sourceEditor,
       toggleImportsButton,
-      classAndMethodControls
+      classAndMethodControls,
+      freezeTargetButton,
+      showFrozenPartsButton
     } = this.ui;
 
+    connect(freezeTargetButton, 'fire', this, 'execCommand', {converter: () => 'freeze target'});
+    connect(showFrozenPartsButton, 'fire', this, 'execCommand', {converter: () => 'show frozen parts'});
+    
     connect(inspectObjectButton, "fire", this, "execCommand", {converter: () => "open object inspector for target"});
     connect(publishButton, "fire", this, "execCommand", {converter: () => "publish target to PartsBin"});
     connect(chooseTargetButton, "fire", this, "execCommand", {converter: () => "choose target"});
@@ -314,16 +321,46 @@ export class ObjectEditor extends Morph {
     const topBtnStyle = { type: 'Button', styleClasses: ['plain'] },
           btnStyle = { type: 'Button', styleClasses: ['plain'] },
           listStyle = { styleClasses: ['listing'] },
-          textStyle = { type: 'Text' };
+          textStyle = { type: 'Text' },
+          wrapperStyle = {
+            fill: Color.transparent,
+            extent: pt(100, 30),
+            clipMode: 'hidden',
+          }
 
     return [
-      {name: "objectCommands",
+      {
+        name: "objectCommands",
         reactsToPointer: false,
-        layout: new HorizontalLayout({direction: "centered", spacing: 2, autoResize: false}),
+        width: 401,
+        layout: new ProportionalLayout({
+          submorphSettings: [
+            ['target controls', { x: 'scale', y: 'fixed' }],
+            ['freezer controls', { x: 'move', y: 'fixed' }],
+          ]
+        }),
         submorphs: [
-          {...topBtnStyle, name: "inspectObjectButton", label: Icon.textAttribute("gears"), tooltip: "open object inspector"},
-          {...topBtnStyle, name: "publishButton", label: Icon.textAttribute("cloud-upload"), tooltip: "publish object to PartsBin"},
-          {...topBtnStyle, name: "chooseTargetButton", label: Icon.textAttribute("crosshairs"), tooltip: "select another target"}
+          {
+            ...wrapperStyle,
+            layout: new HorizontalLayout({direction: "centered", spacing: 2, autoResize: false}),
+            name: 'target controls',
+            topCenter: pt(200,0),
+            submorphs:[
+              {...topBtnStyle, name: "inspectObjectButton", label: Icon.textAttribute("gears"), tooltip: "open object inspector"},
+              {...topBtnStyle, name: "publishButton", label: Icon.textAttribute("cloud-upload"), tooltip: "publish object to PartsBin"},
+              {...topBtnStyle, name: "chooseTargetButton", label: Icon.textAttribute("crosshairs"), tooltip: "select another target"}
+            ]
+          },
+          {
+            ...wrapperStyle,
+            name: 'freezer controls',
+            layout: new HorizontalLayout({direction: "rightToLeft", spacing: 2, autoResize: false}),
+            right: 400,
+            submorphs:[
+              {...topBtnStyle, name: "freezeTargetButton", label: Icon.textAttribute("snowflake-o"), tooltip: "publish target"},
+              {...topBtnStyle, name: "showFrozenPartsButton", label: Icon.textAttribute("sellsy"), tooltip: "show published parts"}
+            ]
+          }
         ]},
 
       { type: Tree, name: "classTree", treeData: new ClassTreeData(null), ...listStyle },
@@ -1441,12 +1478,18 @@ export class ObjectEditor extends Morph {
         name: 'freeze target',
         exec: async ed => {
           try {
-            let frozenFileString = await interactivelyFreezePart(ed.target, {notifications: false, loadingIndicator: true, checkForLeaks: true});
-            this.world().serveFileAsDownload(frozenFileString, {fileName: ed.target.name + ".js", type: 'application/javascript'});
+            await interactivelyFreezePart(ed.target, ed);
           } catch(e) {
             if (e === "canceled") this.setStatusMessage("canceled");
             else this.showError(e);
           }
+        }
+      },
+
+      {
+        name: 'show frozen parts',
+        exec: async ed => {
+          await displayFrozenPartsFor($world.getCurrentUser(), ed);
         }
       },
 
