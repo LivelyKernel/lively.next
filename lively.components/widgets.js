@@ -337,7 +337,7 @@ export class ValueScrubber extends Text {
     super.onKeyDown(evt);
     if ("Enter" == evt.keyCombo) {
       const [v, unit] = this.textString.split(" ");
-      if (v) {
+      if (typeof v == 'string') {
         this.value = parseFloat(v);
         signal(this, "scrub", this.scrubbedValue);
       }
@@ -387,8 +387,9 @@ export class ValueScrubber extends Text {
   set value(v) {
     v = Math.max(this.min, Math.min(this.max, v));
     this.scrubbedValue = v;
-    this.textString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
-    if (this.unit) this.textString += " " + this.unit;
+    let textString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
+    if (this.unit) textString += " " + this.unit;
+    this.replace(this.documentRange, textString, false, true);
     this.relayout();
   }
 }
@@ -536,6 +537,7 @@ export class ModeSelector extends Morph {
   static get properties() {
     return {
       items: {
+        derived: true,
         set(items) {
           if (obj.isArray(items)) {
             this.keys = this.values = items;
@@ -581,10 +583,10 @@ export class ModeSelector extends Morph {
         initialize() {
           if (!this.keys) return;
           this.submorphs = [
-            {name: "typeMarker"},
+            {name: "typeMarker", isLayoutable: false},
             ...this.createLabels(this.keys, this.values, this.tooltips)
           ];
-          connect(this, "extent", this, "relayout", {converter: () => false});
+          connect(this, "extent", this, "relayout");
           this.update(
             this.init ? this.init : this.keys[0],
             this.values[this.keys.includes(this.init) ? this.keys.indexOf(this.init) : 0],
@@ -622,16 +624,26 @@ export class ModeSelector extends Morph {
         bounds = this.currentLabel.bounds();
     animated ? await tm.animate({bounds, duration: 200}) : tm.setBounds(bounds);
   }
+
+  animateFontColor(target, color, duration) {
+    let currentColor = target.fontColor;
+    target.animate({
+      customTween: p => target.fontColor = currentColor.interpolate(p, color),
+      duration
+    });
+  }
   
   async update(label, value, silent = false) {
     const newLabel = this.get(label + "Label");
     if (newLabel == this.currentLabel) return;
-    if (this.currentLabel) this.currentLabel.fontColor = Color.black;
+    this.getSubmorphsByStyleClassName('Label').forEach(m => {
+       if (m != newLabel) this.animateFontColor(m, Color.black, 200)
+    });
     this.currentLabel = newLabel;
-    newLabel.fontColor = Color.white;
-    this.relayout(!silent);
     !silent && signal(this, label, value);
     !silent && signal(this, "switchLabel", value);
+    this.relayout(!silent);
+    await this.animateFontColor(newLabel, Color.white, 200);
   }
 }
 

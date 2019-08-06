@@ -216,10 +216,6 @@ export class Canvas extends Morph {
   }
 
   text(textString, atPt, style={}) {
-    // write textString at atPt as guided by style
-    // this.text('Hello World', this.extent.scaleBy(0.5), {angle:Math.PI/4, color:"red", align:'center', font:'30px Comic Sans MS'})
-    // this.text('Hello World', this.extent.scaleBy(0.5), {color:"red", align:'center', font:'30px Comic Sans MS'})
-    // this.text('Hello World', this.extent.scaleBy(0.5))
     let ctx = this.context,
         color = style.color || "black",
         font = style.font || "14px Arial",

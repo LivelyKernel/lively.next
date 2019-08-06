@@ -7,7 +7,10 @@ export class Button extends Morph {
   static get properties() {
 
     return {
-      padding: {isStyleProp: true, defaultValue: Rectangle.inset(5,2)},
+      padding: {
+        isStyleProp: true,
+        defaultValue: Rectangle.inset(5,2)
+      },
       draggable: {defaultValue: false},
       extent: {defaultValue: pt(100,20)},
       borderColor: {defaultValue: Color.gray},
@@ -134,9 +137,11 @@ export class Button extends Morph {
   constructor(props) {
     super(props);
     if (props) {
+      return;
       let {width, height, extent, bounds} = props;
       if (width === undefined && height === undefined
-          && extent === undefined && bounds === undefined) this.fit();
+          && extent === undefined && bounds === undefined)
+        this.fit();
     }
   }
 
@@ -151,9 +156,9 @@ export class Button extends Morph {
     if (this.label/*don't call too early*/) {
       switch (prop) {
         case 'extent':
-        case 'padding':
         case 'fontSize':
-        case 'fontFamily': this.relayout();
+        case 'fontFamily': this.relayout(); break;
+        case 'padding': this.fit();
       }
     }
     return super.onChange(change);

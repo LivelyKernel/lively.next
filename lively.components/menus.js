@@ -144,6 +144,9 @@ export class Menu extends Morph {
           this.updateMorphs();
         }
       },
+      epiMorph: { defaultValue: true },
+      acceptsDrops: { defaultValue: false },
+      hasFixedPosition: { defaultValue: true },
       padding: {defaultValue: Rectangle.inset(0, 2)},
       itemPadding: {defaultValue: Rectangle.inset(8, 4)},
       borderWidth: {defaultValue: 1},
@@ -454,15 +457,16 @@ export class Menu extends Morph {
   }
 
   clipForVisibility(bounds = this.bounds(), worldBounds = this.world().visibleBounds()) {
-    var globalBounds = this.owner.getTransform().transformRectToRect(bounds),
-        overlapping = !worldBounds.containsRect(globalBounds.insetBy(5));
+    var globalBounds = this.transformRectToMorph(this.world(), bounds.withX(0).withY(0)),
+        overlapping = !worldBounds.containsRect(globalBounds.insetBy(10));
 
     // FIXME!
-    var scrollbarWidth = 20;
+    var scrollbarWidth = 0; // 15 ?? this requires a change of submenu rendering, 
+    //since those need to be rendered outside of parent menu
 
     if (overlapping) {
-      bounds = bounds.withExtent(pt(scrollbarWidth + 5 + bounds.width, worldBounds.height));
-      // this.clipMode = "auto"
+      bounds = bounds.withExtent(pt(scrollbarWidth + 5 + bounds.width, Math.min(globalBounds.height, worldBounds.height)));
+      //this.clipMode = "auto"
     }
     return bounds;
   }
@@ -471,6 +475,7 @@ export class Menu extends Morph {
     var bounds = this.innerBounds().translatedBy(pos);
     if (this.owner.visibleBounds) {
       var worldBounds = this.owner.visibleBounds();
+      //bounds = this.moveBoundsForVisibility(bounds, worldBounds);
       bounds = this.clipForVisibility(
         this.moveBoundsForVisibility(bounds, worldBounds),
         worldBounds);

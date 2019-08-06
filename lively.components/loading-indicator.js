@@ -3,7 +3,6 @@ import { promise } from "lively.lang";
 import { Icon, morph, Morph, StyleSheet, Image } from "lively.morphic";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { connect } from "lively.bindings";
-import bowser from 'bowser';
 
 export default class LoadingIndicator extends Morph {
 
@@ -26,7 +25,6 @@ export default class LoadingIndicator extends Morph {
       },
       ".LoadingIndicator .center-text": {
         fontSize: 16,
-        fontFamily: "Helvetica Neue, Arial",
         fontColor: Color.white,
         halosEnabled: false
       },
@@ -116,11 +114,11 @@ export default class LoadingIndicator extends Morph {
               label: Icon.textAttribute("times")
             }
           ];
-          if (bowser.name == 'Firefox') {
-            spinner.extent = pt(55,55);
-            spinner.origin = pt(25,25);
-            spinner.scale = 2;
-          }
+          // if (bowser.name == 'Firefox') {
+          //   spinner.extent = pt(55,55);
+          //   spinner.origin = pt(25,25);
+          //   spinner.scale = 2;
+          // }
         }
       }
     };

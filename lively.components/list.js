@@ -85,6 +85,7 @@ export class ListItemMorph extends Label {
       // this is more correct but slower:
       // this.extent = pt(Math.max(goalWidth, this.textBounds().width), itemHeight);
       // this is faster:
+      if (item.autoFit) itemMorph.width = goalWidth;
       let width = itemMorph ? Math.max(itemMorph.width, goalWidth) : goalWidth,
           height = itemHeight; // itemMorph ? Math.max(itemMorph.height, itemHeight) : itemHeight;
       this.extent = pt(width, height);
@@ -1436,11 +1437,13 @@ export class DropDownList extends Button {
     if (this.isListVisible()) {
       signal(this, "deactivated");
       this.selection = list.selection;
+      list.epiMorph = false;
       list.remove();
     } else {
       signal(this, "activated");
       if (this.openListInWorld) {
         list.openInWorld();
+        list.epiMorph = true;
         list.hasFixedPosition = true;
         bounds = this.globalBounds();
       } else {
