@@ -623,7 +623,7 @@ export class RadialGradient extends Gradient {
   toCSSString() {
     const innerCircle = this.focus.scaleBy(100.0),
           ext = this.bounds.extent();
-    var str = `radial-gradient(${ext.x / 2}px ${ext.y / 2}px at ${innerCircle.x}\% ${innerCircle.y}\%`;
+    var str = `radial-gradient(${ext.x / 2}px ${ext.y / 2}px at ${innerCircle.x}% ${innerCircle.y}%`;
     for (var i = 0; i < this.stops.length; i++)
         str += `,${this.stops[i].color.toRGBAString()} ${(this.stops[i].offset * 100).toFixed() + "%"}`;
     str += ')';

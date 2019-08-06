@@ -317,7 +317,7 @@ Color.prototype._INTUpdated = function(){
 };
 
 Color.prototype._broadcastUpdate = function(){
-	this.broadcast(Event.UPDATED);
+	this.broadcast(Events.UPDATED);
 };
 
 Color.prototype.decimal = function(value){
@@ -369,7 +369,7 @@ Color.prototype._handle = function(prop, value, event){
 					this.broadcast(event);
 				};
 			};
-			this.broadcast(Event.UPDATED);
+			this.broadcast(Events.UPDATED);
 		};
 	};
 	return this[prop];

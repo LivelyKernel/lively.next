@@ -12,11 +12,11 @@ function parseUnit(str, out) {
   return out
 }
 
-var baseFontSize = "16px", parseUnit, unit, unitLess;
+var baseFontSize = "16px";
 
 if (System.get("@system-env").browser) {
   try {
-    var newBaseFontSize = genericCssLengthParser(16)(window.getComputedStyle(document.body).fontSize)
+    var newBaseFontSize = genericCssLengthParser(baseFontSize)(window.getComputedStyle(document.body).fontSize)
     if (newBaseFontSize && newBaseFontSize.slice(0,3) !== "NaN")
       baseFontSize = newBaseFontSize
   } catch (e) {}
@@ -37,6 +37,9 @@ export function genericCssLengthParser(baseFontSize) {
     }
     if (toContext == null) {
       toContext = fromContext;
+    }
+    if (toUnit == null) {
+      toUnit = unit(length);
     }
     fromUnit = unit(length);
     if (fromUnit === toUnit) {
