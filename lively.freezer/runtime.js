@@ -32,10 +32,11 @@ export function runtimeDefinition() {
 
    function forEachGlobalValue(callback) {
       forEachGlobal(function(globalName) {
+      var value;
       if (ignoredGlobalProps.indexOf(globalName) != -1)
         return;
       try {
-        var value = G[globalName];
+        value = G[globalName];
       }
       catch (e) {
         ignoredGlobalProps.push(globalName);
@@ -108,6 +109,7 @@ export function runtimeDefinition() {
       return module;
     },
     decanonicalize(name) {
+      return name;
       // this decanonicalize forces all modules to contain version numbers (if not provided)
       // and to start with the local:// prefix.
       // This only applies to modules, that is all .js file that are requested in this context.
@@ -134,7 +136,7 @@ export function runtimeDefinition() {
     loadObjectFromPartsbinFolder(name) {
       var location = document.location.href.split('?')[0];
       var r = G.lively.resources.resource(location);
-      if (r.name() === 'index.html') r = r.parent();
+      if (!r.isDirectory()) r = r.parent();
       return r.join(`dynamicParts/${name}.json`).readJson().then(snapshot => {
          return G.lively.morphic.loadMorphFromSnapshot(
            snapshot, {
@@ -164,6 +166,11 @@ export function runtimeDefinition() {
       if (mod) return mod;
       throw new Error(`Module ${name} cannot be found in lively.freezer bundle!`)
     },
+
+    import(id) {
+      return Promise.resolve(this.registry[id] ? this.registry[id].exports : {})
+    },
+    
     register(id, dependencies, defineFn) {
       let module = this.add(id, dependencies),
           body = defineFn((name, val) => {
@@ -503,6 +510,11 @@ export function runtimeDefinition() {
 
         return globalValue;
       };
+    },
+
+    recorderFor(moduleId) {
+      let rec = {};
+      return (this.registry[moduleId] = this.registry[moduleId] || {recorder: rec, exports: rec}).recorder;
     },
 
     load(moduleId) {

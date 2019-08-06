@@ -2,11 +2,10 @@
   "name": "lively.freezer",
   "version": "0.1.0",
   "dependencies": {
-     "babel-standalone": "^6.21.1-0",
-     "uglify-es": "^3.3.9" 
-  },
-  "systemjs": {
-    "main": "index.js"
+    "babel-standalone": "^6.21.1-0",
+    "uglify-es": "^3.3.9",
+    "google-closure-compiler-linux": "^20190618.0.0",
+    "wasm-brotli": "1.0.2"
   },
   "scripts": {
     "build": "node build.js"

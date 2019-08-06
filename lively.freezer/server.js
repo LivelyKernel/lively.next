@@ -49,7 +49,7 @@ export default class FrozenPartsLoader {
   get pluginId() { return "FrozenPartsLoader" }
 
   constructor(config) {
-    this.publicDirs = (config.freezer && config.freezer.publicDirs) || [];
+    this.publicDirs = config.freezer.publicDirs;
   }
 
   get before() { return ['jsdav', "lib-lookup"] }
@@ -116,6 +116,7 @@ export default class FrozenPartsLoader {
         'Last-Modified': container._lastChange.toGMTString()
       });
       res.end(this.production ? container._minifiedCompressedScript : container._compressedScript);
+      //res.end(container._compressedScript);
       return;      
     }
 
@@ -167,6 +168,7 @@ export default class FrozenPartsLoader {
           ...this.publicDirs
         ];
         if (whitelist.find(dir => req.url.startsWith('/' + dir))) {
+          req.url = req.url.replace('dynamicParts', `lively.freezer/frozenParts/${id}/dynamicParts`);
           console.log(req.url);
           next(); // pass on request to jsdav
         } else {
