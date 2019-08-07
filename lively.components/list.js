@@ -3,6 +3,7 @@ import { pt, LinearGradient, Color, Rectangle, rect } from "lively.graphics";
 import { arr, Path, string } from "lively.lang";
 import { signal, once } from "lively.bindings";
 import { Button } from "./buttons.js";
+import bowser from 'bowser';
 
 export function asItem(obj) {
   // make sure that object is of the form
@@ -28,6 +29,7 @@ export class ListItemMorph extends Label {
       fill: {
         derived: true,
         get() {
+          if (bowser.mobile && this.pressed) return Color.black.withA(.1);
           return this.isSelected ? this.selectionColor : Color.transparent;
         }
       },
@@ -141,8 +143,24 @@ class ListScroller extends Morph {
     }
   }
 
-  onScroll(evt) { return this.owner.update(); }
-  onMouseDown(evt) { return this.owner.clickOnItem(evt); }
+  onScroll(evt) { 
+    return this.owner.update();
+  }
+  
+  onMouseDown(evt) {
+    let scrollY = this.scroll.y;
+    if (bowser.mobile) {
+      let item = this.owner.itemForClick(evt);
+      item.pressed = true;
+      setTimeout(() => {
+         item.pressed = false;
+         if (scrollY - this.scroll.y != 0) return;
+         return this.owner.clickOnItem(evt);
+      }, 300); 
+      return;
+    } 
+    return this.owner.clickOnItem(evt);
+  }
 }
 
 var listCommands = [
@@ -323,11 +341,10 @@ export class List extends Morph {
       }
     });
   }
-
+  
   static get properties() {
 
     return {
-
       fill:            {defaultValue: Color.white},
       clipMode:        {defaultValue: 'hidden'},
 
@@ -557,6 +574,7 @@ export class List extends Morph {
     }
     if (!scroller) 
       this.addMorph(new ListScroller({
+        draggable: false, grabbable: false,
         acceptsDrops: false, halosEnabled: false, name: "scroller"
       }));
     if (!container) this.addMorph({
@@ -580,10 +598,14 @@ export class List extends Morph {
     return super.onChange(change);
   }
 
-  clickOnItem(evt) {
+  itemForClick(evt) {
     let items = this.listItemContainer
                    .morphsContainingPoint(evt.positionIn(this.world()).subPt(this.scroll));
-    let item = items.find(m => m.isListItem) || items[0];
+    return items.find(m => m.isListItem) || items[0];
+  }
+
+  clickOnItem(evt) {
+    let item = this.itemForClick(evt)
     var {state: {clickCount}} = evt,
         method = clickCount === 2 ? "onItemMorphDoubleClicked" : "onItemMorphClicked";
     this[method](evt, item);
@@ -811,6 +833,7 @@ export class List extends Morph {
   }
 
   onHoverOut(evt) {
+    if (bowser.mobile) return;
     this.scroller.visible = false;
   }
   
