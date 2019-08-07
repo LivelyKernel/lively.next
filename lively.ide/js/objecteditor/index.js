@@ -536,7 +536,20 @@ export class ObjectEditor extends Morph {
        ctx.moduleChangeWarning = null;
        ctx.sourceHash = hashCode;
     }, { hashCode });
+    this.clearLocalProperties();
     this.indicateNoUnsavedChanges();
+  }
+
+  clearLocalProperties() {
+    this.withContextDo((ctx) => {
+      let { properties } = ctx.target.propertiesAndPropertySettings();
+      for (let prop in properties) {
+        if (ctx.target.hasOwnProperty(prop)) {
+          if (ctx.target[prop] && ctx.target[prop].isConnectionWrapper) continue;
+          if (ctx.hasOwnProperty("$$" + prop)) delete ctx.target[prop];
+        }
+      }
+    })
   }
 
   indicateUnsavedChanges() {
@@ -678,9 +691,20 @@ export class ObjectEditor extends Morph {
   }
 
   async selectClass(klass) {
+    if (this._updatingTree) return;
     let tree = this.ui.classTree;
     // update context if nessecary
     if (this.context.selectedClassName != klass.name) {
+      if (tree.selectedNode && await this.hasUnsavedChanges() && this.ui.sourceEditor.textString) {
+        let proceed = await this.warnForUnsavedChanges();
+        if (!proceed) {
+          let node = tree.nodes.find(ea => !ea.isRoot && ea.isClass && ea.klass.name === this.context.selectedClassName);
+          this._updatingTree = true;
+          tree.selectedNode = node;
+          this._updatingTree = false;
+          return;
+        }
+      }
       await this.context.selectClass(klass.name || klass);
       if (await this.withContextDo((ctx) => isObjectClass(ctx.selectedClass)))
           this.ui.forkPackageButton.enable();
@@ -739,7 +763,6 @@ export class ObjectEditor extends Morph {
         cursorPos = ed.indexToPosition(putCursorInBody ?
           methodNode.value.body.start+1 : methodNode.key.start);
     ed.cursorPosition = cursorPos;
-    this.world() && await ed.whenRendered();
     ed.scrollCursorIntoView();
 
     var methodRange = {
@@ -842,7 +865,6 @@ export class ObjectEditor extends Morph {
         }, {content})
        await sourceEditor.saveExcursion(async () => {
          await this.refresh();
-         await this.updateSource(sourceEditor.textString, selectedModuleId);
        });
        await this.withContextDo((ctx) => {
          ctx.updatePackageConfig(sourceChanged);   
