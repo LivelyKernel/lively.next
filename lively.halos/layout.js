@@ -697,7 +697,7 @@ export class TilingLayoutHalo extends Morph {
   }
 
   removePreviews() {
-    this.previews.forEach(p => p.remove());
+    this.previews.forEach(p => p.clear());
   }
 
   previewDrop(morphs) {
@@ -713,14 +713,19 @@ export class TilingLayoutHalo extends Morph {
         borderWidth: 2,
         opacity: 1,
         borderStyle: "dashed",
+        clear() {
+          this.stopped = true;
+          this.remove();          
+        },
         async step() {
           const easing = easings.inOutQuad;
           await this.animate({opacity: .5, duration: (pulseDuration - 10) / 2, easing});
           await this.animate({opacity: 1, duration: (pulseDuration - 10) / 2, easing});
+          if (!this.stopped) this.step();
         }
       }));
     this.previews.forEach(p => {
-      p.startStepping(pulseDuration, "step");
+      p.step();
     });
   }
 
@@ -801,14 +806,19 @@ export class FlexLayoutHalo extends Morph {
         borderWidth: 2,
         opacity: 1,
         borderStyle: "dashed",
+        clear() {
+          this.stopped = true;
+          this.remove();
+        },
         async step() {
           const easing = easings.inOutQuad;
           await this.animate({opacity: .5, duration: (pulseDuration - 10) / 2, easing});
           await this.animate({opacity: 1, duration: (pulseDuration - 10) / 2, easing});
+          if (!this.stopped) this.step();
         }
       }));
     this.previews.forEach(p => {
-      p.step(); p.startStepping(pulseDuration, "step");
+      p.step();
     });
   }
 
@@ -819,7 +829,7 @@ export class FlexLayoutHalo extends Morph {
   }
 
   removePreviews() {
-    this.previews.forEach(p => p.remove());
+    this.previews.forEach(p => p.clear());
   }
 
   onDrop(evt) {
