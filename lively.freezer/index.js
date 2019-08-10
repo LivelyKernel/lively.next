@@ -35,6 +35,9 @@ await resource('https://admin.typeshift.io/rollup-test.closure.js').write(frozen
 
 export async function generateLoadHtml(part) {
   const addScripts = `
+      <noscript>
+         <meta http-equiv="refresh" content="0;url=/noscript.html">
+      </noscript>
       <title>${part.title || part.name}</title>
       ${part.__head_html__ || ''}
       <style>
@@ -49,19 +52,31 @@ export async function generateLoadHtml(part) {
         lively = {};
         System = { baseUrl: window.location.origin };
       </script>
-      <link rel="preload" id="loader" href="load.js" as="script">
-      <script src="load.js" defer></script>`;
+      <link rel="preload" id="loader" href="load.js" as="script">`;
 
    let html = `
      <!DOCTYPE html>
      <head>
      <meta content="utf-8" http-equiv="encoding">
      <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-     <meta name="viewport" content="minimum-scale=1.0, maximum-scale=1.0, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+     <meta name="viewport" content="minimum-scale=1.0, maximum-scale=5.0, initial-scale=1.0, viewport-fit=cover">
      <meta name="apple-mobile-web-app-capable" content="yes">
      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">`
   html += addScripts;
-  html += `</head><body style="margin: 0; overflow-x: hidden; width: 100%; height: 100%;"></body>`;
+  html += `</head><body style="margin: 0; overflow-x: hidden; width: 100%; height: 100%;"><div id="loading screen">${part.__loading_html__ || ''}</div><div id="crawler content">${part.__crawler_html__ || ''}</div>
+<script id="crawler checker">
+    var botPattern = "(googlebot\/|Googlebot-Mobile|Googlebot-Image|Google favicon|Mediapartners-Google|bingbot|slurp|java|wget|curl|Commons-HttpClient|Python-urllib|libwww|httpunit|nutch|phpcrawl|msnbot|jyxobot|FAST-WebCrawler|FAST Enterprise Crawler|biglotron|teoma|convera|seekbot|gigablast|exabot|ngbot|ia_archiver|GingerCrawler|webmon |httrack|webcrawler|grub.org|UsineNouvelleCrawler|antibot|netresearchserver|speedy|fluffy|bibnum.bnf|findlink|msrbot|panscient|yacybot|AISearchBot|IOI|ips-agent|tagoobot|MJ12bot|dotbot|woriobot|yanga|buzzbot|mlbot|yandexbot|purebot|Linguee Bot|Voyager|CyberPatrol|voilabot|baiduspider|citeseerxbot|spbot|twengabot|postrank|turnitinbot|scribdbot|page2rss|sitebot|linkdex|Adidxbot|blekkobot|ezooms|dotbot|Mail.RU_Bot|discobot|heritrix|findthatfile|europarchive.org|NerdByNature.Bot|sistrix crawler|ahrefsbot|Aboundex|domaincrawler|wbsearchbot|summify|ccbot|edisterbot|seznambot|ec2linkfinder|gslfbot|aihitbot|intelium_bot|facebookexternalhit|yeti|RetrevoPageAnalyzer|lb-spider|sogou|lssbot|careerbot|wotbox|wocbot|ichiro|DuckDuckBot|lssrocketcrawler|drupact|webcompanycrawler|acoonbot|openindexspider|gnam gnam spider|web-archive-net.com.bot|backlinkcrawler|coccoc|integromedb|content crawler spider|toplistbot|seokicks-robot|it2media-domain-crawler|ip-web-crawler.com|siteexplorer.info|elisabot|proximic|changedetection|blexbot|arabot|WeSEE:Search|niki-bot|CrystalSemanticsBot|rogerbot|360Spider|psbot|InterfaxScanBot|Lipperhey SEO Service|CC Metadata Scaper|g00g1e.net|GrapeshotCrawler|urlappendbot|brainobot|fr-crawler|binlar|SimpleCrawler|Livelapbot|Twitterbot|cXensebot|smtbot|bnf.fr_bot|A6-Indexer|ADmantX|Facebot|Twitterbot|OrangeBot|memorybot|AdvBot|MegaIndex|SemanticScholarBot|ltx71|nerdybot|xovibot|BUbiNG|Qwantify|archive.org_bot|Applebot|TweetmemeBot|crawler4j|findxbot|SemrushBot|yoozBot|lipperhey|y!j-asr|Domain Re-Animator Bot|AddThis)";
+    var re = new RegExp(botPattern, 'i');
+    var userAgent = navigator.userAgent;
+    if (!re.test(userAgent)) {
+      document.getElementById("crawler content").remove();
+      var script = document.createElement('script');
+      script.setAttribute('src',"load.js");
+      document.head.appendChild(script);
+    }
+    document.getElementById("crawler checker").remove();
+</script>
+</body>`;
   return html;
 }
 
@@ -86,14 +101,20 @@ export async function interactivelyFreezePart(part, requester = false) {
   await publicationDir.ensureExistance();
 
   // freeze the part
-  let frozen = await bundlePart(part, {
-    compress: true,
-    exclude: [
-      'lively.ast', 'lively.vm', 'lively-system-interface',
-      'lively.halos', 'lively.ide', 'pouchdb',
-      'pouchdb-adapter-mem', 'bowser'
-    ]
-  });
+  let frozen;
+  try {
+    frozen = await bundlePart(part, {
+      compress: true,
+      exclude: [
+        'lively.ast', 'lively.vm', 'lively-system-interface',
+        'lively.halos', 'lively.ide', 'pouchdb',
+        'pouchdb-adapter-mem'
+      ]
+    });
+  } catch(e) {
+    li.remove();
+    throw e;
+  }
 
   let li = LoadingIndicator.open('Writing files...')
   await publicationDir.join('index.html').write(await generateLoadHtml(part));
@@ -274,6 +295,7 @@ class LivelyRollup {
              import { resource } from 'lively.resources';
              import { promise } from 'lively.lang';
              import {pt} from "lively.graphics";
+             ${await resource(System.baseURL).join('localconfig.js').read()}
              const snapshot = ${ JSON.stringify(this.snapshot) }
              lively.resources = { resource };
              lively.morphic = { loadMorphFromSnapshot }
@@ -514,6 +536,8 @@ class LivelyRollup {
     } else {
       c = await runCommand(`${googleClosure} tmp.js > tmp.min.js --warning_level=QUIET`, { cwd });
       await promise.waitFor(50000, () => c.status.startsWith('exited'));
+      if (c.stderr) throw new Error(c.stderr);
+      console.log(c);
       res.code = code;
     }
     res.min = await min.read();
