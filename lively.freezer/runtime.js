@@ -88,7 +88,7 @@ export function runtimeDefinition() {
     options: {},
     // this is for lively.serializer2 locateClass()
     moduleEnv(id) {
-      const m = System.get(id) || System.fetchStandaloneFor(id) || System.get(id + 'index.js');
+      const m = System.get(id, false) || System.fetchStandaloneFor(id) || System.get(id + 'index.js', false);
       return {recorder: m.recorder || m.exports};
     }
   };
@@ -97,9 +97,10 @@ export function runtimeDefinition() {
   G.lively.FreezerRuntime = {
     global: window,
     version, registry, globalModules,
-    get(moduleId) {
+    get(moduleId, recorder = true) {
       if (moduleId && moduleId.startsWith('@')) return this.globalModules[moduleId];
-      return this.registry[moduleId]; 
+      let mod = this.registry[moduleId];
+      return recorder ? mod && mod.recorder : mod; 
     },
     set(moduleId, module) { return this.registry[moduleId] = module; },
     add(id, dependencies = [], exports = {}, executed = false) {
