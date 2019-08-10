@@ -1,7 +1,5 @@
 /*global System*/
 import { fun, obj, arr, num, string, graph, Path } from "lively.lang";
-import { HTMLMorph, inspect } from "lively.morphic";
-
 import { ObjectPool } from "./index.js";
 import {
   lookupPath, referencesAndClassNamesOfId, modifyProperty,
@@ -363,7 +361,9 @@ export class SnapshotInspector {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+/* 
 import { connect } from "lively.bindings";
+import { HTMLMorph } from "lively.morphic/html-morph.js";
 
 export class ObjectGraphVisualizer extends HTMLMorph {
 
@@ -410,6 +410,8 @@ export class ObjectGraphVisualizer extends HTMLMorph {
 
   async renderSnapshot(snapshot) {
     this.cleanup();
+
+    var { inspect } = await System.import('lively.morphic');
 
     var i = new SnapshotInspector(snapshot);
     var g = i.referenceGraph();
@@ -588,3 +590,5 @@ export class ObjectGraphVisualizer extends HTMLMorph {
   }
 
 }
+
+*/
