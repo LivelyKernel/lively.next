@@ -85,6 +85,7 @@ import { wrapModuleLoad } from "./instrumentation.js"
 import { wrapResource } from "./resource.js"
 import { emit } from "lively.notifications";
 import { join, urlResolve } from "./url-helpers.js";
+import { resource } from "lively.resources";
 
 function makeSystem(cfg) { return prepareSystem(new SystemClass(), cfg); }
 
@@ -145,7 +146,7 @@ function prepareSystem(System, config) {
         "cluster", "console", "crypto", "dgram", "dns", "domain", "events", "fs",
         "http", "https", "module", "net", "os", "path", "punycode", "querystring",
         "readline", "repl", "stream", "stringdecoder", "timers", "tls",
-        "tty", "url", "util", "v8", "vm", "zlib"],
+        "tty", "url", "util", "v8", "vm", "zlib", "constants"],
         map = nodejsCoreModules.reduce((map, ea) => { map[ea] = "@node/" + ea; return map; }, {});
     config.map = obj.merge(map, config.map);
     // for sth l ike map: {"lively.lang": "node_modules:lively.lang"}
@@ -300,6 +301,17 @@ function normalizeHook(proceed, name, parent, parentAddress) {
     return proceed(stage1, parent, parentAddress).then(stage2 => {
       let stage3 = postNormalize(System, stage2 || stage1, false);
       System.debug && console.log(`[normalize] ${name} => ${stage3}`);
+      if (stage3.startsWith('file') && !name.endsWith('.js')) {
+        // make sure that the file actually exists
+        return resource(stage3).exists().then(exists => {
+          if (exists) return stage3;
+          let node = stage3.replace('.js', '/index.node');
+          resource(node).exists().then(exists => {
+            if (exists) return node;
+            return stage3.replace('.js', '/index.js');
+          })
+        });
+      }
       return stage3;
     });
 }
