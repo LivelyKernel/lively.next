@@ -1,7 +1,7 @@
 import "./object-extensions.js";
 import { ObjectPool } from "./object-pool.js";
 import { version as serializerVersion } from "./package.json";
-import { removeUnreachableObjects, clearDanglingConnections, replaceMorphsBySerializableExpressions } from "./snapshot-navigation.js";
+import { requiredModulesOfSnapshot, removeUnreachableObjects, clearDanglingConnections } from "./snapshot-navigation.js";
 import { allPlugins } from "./plugins.js";
 import semver from 'semver';
 
@@ -37,7 +37,7 @@ const majorAndMinorVersionRe = /\.[^\.]+$/; // x.y.z => x.y
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export { ObjectRef, ObjectPool } from "./object-pool.js";
-export { requiredModulesOfSnapshot, removeUnreachableObjects } from "./snapshot-navigation.js";
+export { requiredModulesOfSnapshot, removeUnreachableObjects };
 
 
 export function serialize(obj, options) {
@@ -45,10 +45,7 @@ export function serialize(obj, options) {
   let objPool = options.objPool || new ObjectPool(options),
       requiredVersion = "~" + serializerVersion.replace(majorAndMinorVersionRe, ""), // semver
       snapshotAndId = objPool.snapshotObject(obj);
-  // object hooks are allowed to modify the snapshot graph and remove
-  // references. To only serialize what's needed we cleanup the graph after all
-  // hooks are done
-  if (options.extractMorphExpressions) replaceMorphsBySerializableExpressions(snapshotAndId.snapshot, objPool);
+  
   removeUnreachableObjects([snapshotAndId.id], snapshotAndId.snapshot);
   clearDanglingConnections(snapshotAndId.snapshot);
   snapshotAndId.requiredVersion = requiredVersion;

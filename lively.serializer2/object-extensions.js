@@ -1,3 +1,4 @@
+"format es6";
 /*global Map, System*/
 // extensions to native JS objects to support serialization
 
