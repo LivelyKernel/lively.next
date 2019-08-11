@@ -1,5 +1,5 @@
 /*global System*/
-import { promise } from "lively.lang";
+import { promise, arr, string } from "lively.lang";
 import { resource } from "lively.resources";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { connect, once, signal } from "lively.bindings";
@@ -10,6 +10,7 @@ import { loadMorphFromSnapshot, createMorphSnapshot } from "lively.morphic/seria
 import UserRegistry from "lively.user/client/user-registry.js";
 import { ClientUser } from "lively.user/index.js";
 import { loadPart } from "lively.morphic/partsbin.js";
+import LoadingIndicator from "lively.components/loading-indicator.js";
 
 // adoptObject(that, UserInfoWidget) 
 // adoptObject(that, LoginWidget) 
@@ -52,12 +53,17 @@ export var UserUI = {
     return UserRegistry.current.loadUserFromLocalStorage(config.users.authServerURL);
   },
 
-  showUserFlap(world = $world) {
+  async showUserFlap(world = $world) {
     this.hideUserFlap(world);
-    let flap = new UserFlap().open();
+    let flap = await loadPart('user flap');
+    flap.opacity = 0;
+    flap.openInWorld();
+    flap.alignInWorld();
     // FIXME
-    System.import("lively.2lively/client.js").then(m =>
-      flap.updateNetworkIndicator(m.default.default()))
+    System.import("lively.2lively/client.js").then(m => {
+      flap.animate({ opacity: 1, duration: 200 });
+      flap.updateNetworkIndicator(m.default.default())
+     });
     return flap;
   },
 
@@ -88,7 +94,6 @@ export var UserUI = {
   }
 
 }
-
 
 class UserWidget extends Morph {
 
@@ -195,6 +200,7 @@ export class UserInfoWidget extends UserWidget {
       saveButton: this.getSubmorphNamed("save button"),
       logoutButton: this.getSubmorphNamed("logout button"),
       closeButton: this.getSubmorphNamed("close button"),
+      userAvatar: this.getSubmorphNamed('user avatar')
     }
   }
 
@@ -240,10 +246,13 @@ export class UserInfoWidget extends UserWidget {
   displayUser(user) {
     this.user = user;
     let {name, email} = user || {};
-    this.ui.userNameInput.input = name || "";
-    this.ui.emailInput.input = email || "";
-    this.ui.passwordInput.input = "";
-    this.ui.passwordInput2.input = "";
+    let { userNameInput, emailInput, passwordInput,
+          passwordInput2, userAvatar } = this.ui;
+    userNameInput.input = name || "";
+    emailInput.input = email || "";
+    passwordInput.input = "";
+    passwordInput2.input = "";
+    userAvatar.imageUrl = resource(`https://s.gravatar.com/avatar`).join(string.md5(email || '')).withQuery({s: 320}).url;     
   }
 
   async trySave() {
@@ -308,6 +317,18 @@ export class UserInfoWidget extends UserWidget {
   }
 
   close() { signal(this, "resolved", this.user); }
+
+  onMouseUp(evt) {
+    let { closeButton, saveButton } = this.ui;
+    switch(evt.targetMorph) {
+        case closeButton:
+          this.close();
+          break;
+        case saveButton:
+          this.trySave();
+          break;
+    }
+  }
 
 }
 
@@ -387,6 +408,18 @@ export class LoginWidget extends UserWidget {
         stored = reg.loadUserFromLocalStorage(config.users.authServerURL),
         user = stored.isGuestUser ? stored : await reg.login(ClientUser.guest);
     signal(this, "resolved", user);
+  }
+
+  onMouseUp(evt) {
+    let { loginButton, registerButton } = this.ui;
+    switch(evt.targetMorph) {
+        case loginButton:
+          this.tryLogin();
+          break;
+        case registerButton:
+          this.switchToRegisterWidget();
+          break;
+    }
   }
 
 }
@@ -480,6 +513,18 @@ export class RegisterWidget extends UserWidget {
   close() {
     signal(this, "resolved", this.user);
   }
+
+  onMouseUp(evt) {
+    let { registerButton, cancelButton } = this.ui;
+    switch (evt.targetMorph) {
+        case registerButton:
+          this.tryRegister();
+          break;
+        case cancelButton:
+          this.close();
+          break;
+    }
+  }
 }
 
 export class UserFlap extends Morph {
@@ -520,6 +565,15 @@ export class UserFlap extends Morph {
         }
       },
 
+      fontColor: {
+        after: ['submorphs'],
+        set(c) {
+          this.setProperty('fontColor', c);
+          this.setPaletteButtonActive(this.palette && this.palette.visible);
+          this.getSubmorphNamed('label').fontColor = c;
+        }
+      },
+
       name: {initialize() { this.name = "user flap"; }},
       epiMorph: {defaultValue: true},
       clipMode: {defaultValue: 'hidden'},
@@ -534,12 +588,30 @@ export class UserFlap extends Morph {
       borderRadiusLeft: {defaultValue: 10},
       borderRadiusRight: {defaultValue: 10},
       nativeCursor: {defaultValue: "pointer"},
+      respondsToVisibleWindow: { defaultValue: true },
+      haloShadow: {
+        get() {
+          return {
+            distance:2,
+            rotation:45,
+            color:Color.rgba(64,196,255,0.4),
+            inset:false,
+            blur:6,
+            spread:0,
+            fast:false
+          }
+        }
+      }
     }
   }
 
   get isUserFlap() { return true; }
 
   get isMaximized() { return this.submorphs.length > 3; }
+
+  onLoad() {
+    this.showUser(this.currentUser());
+  }
 
   open() {
     this.openInWorld();
@@ -549,8 +621,29 @@ export class UserFlap extends Morph {
     return this;
   }
 
-  onMouseDown(evt) {
-    if (!this.isMaximized) this.maximize();
+  async onMouseDown(evt) {
+    let target = evt.targetMorph.name;
+    let user = this.currentUser();
+    switch (target) {
+      case 'profile item':
+        return this.showUserInfo(user);
+      case 'logout item':
+        await this.minimize();
+        await this.logout(user);
+        return;
+      case 'login item':
+        await this.showLogin(user);
+        return;
+      case 'register item':
+        this.showRegister();
+        break;
+      case 'palette button':
+        this.togglePalette();
+        break;
+      case 'user flap':
+        this.maximize();
+        break;
+    }
   }
 
   currentUser() {
@@ -558,26 +651,38 @@ export class UserFlap extends Morph {
   }
 
   onUserChanged(evt) {
-    // console.log("user changed!!!", evt)
-    if (!this.isMaximized) this.showUser(evt.user || {name: "???"}, false);
+    this.showUser(evt.user || {name: "???"}, false);
   }
 
   onWorldResize(evt) { this.alignInWorld(); }
 
+  relayout() { this.alignInWorld(); }
+
   alignInWorld(animated) {
-    let w = $world.visibleBounds().width;
-    if (animated) this.animate({topRight: pt(w - 10, 0)});
-    else this.topRight = pt(w - 10, 0);
+    let tr = $world.visibleBounds().topRight().subXY(10,0);
+    if (animated) this.animate({topRight: tr, duration: 200});
+    else this.topRight = tr;
   }
 
   async minimize() {
-    await this.showUser(this.currentUser(), true);
-    this.get("network-indicator").visible = true;
+    let menu = this.getSubmorphNamed('user menu');
+    await menu.animate({
+      opacity: 0,
+      scale: .8,
+      duration: 200
+    });
+    menu.visible = false;
   }
 
   async maximize() {
-    this.get("network-indicator").visible = false;
-    await this.showMenu(this.currentUser(), true);
+    let menu = this.getSubmorphNamed('user menu');
+    menu.right = this.width - 5;
+    menu.visible = true;
+    await menu.animate({
+      opacity: 1,
+      scale: 1,
+      duration: 200
+    });
   }
 
   async changeWidthAndHeight(newWidth, newHeight, animated) {
@@ -594,27 +699,44 @@ export class UserFlap extends Morph {
     }
   }
 
-  async showUser(user, animated = false) {
-    let label = this.getSubmorphNamed("label"),
-        menu = this.getSubmorphNamed("menu"),
-        avatar = this.getSubmorphNamed("avatar"),
-        userName = String(user.name);
-    if (userName.startsWith("guest-")) userName = "guest";
-    avatar.visible = true;
-    label.visible = true;
-    label.value = [userName, {fontColor: Color.gray.darker()}];
-    label.fit();
-    avatar.fit();
-    if (menu && animated) menu.animate({opacity: 0, duration: 200});
-    await this.changeWidthAndHeight(label.width + 20 + avatar.width, label.height, animated);
-    label.leftCenter = this.innerBounds().insetBy(10).leftCenter();
-    avatar.leftCenter = label.rightCenter;
-    menu && menu.remove();
+  showMenuItems(items) {
+    let allItems = ['login item', 'logout item', 'profile item', 'register item'];
+    arr.withoutAll(allItems, items)
+       .map(name => this.getSubmorphNamed(name))
+       .forEach(m => m.visible = m.isLayoutable = false);
+    items.map(name => this.getSubmorphNamed(name))
+         .forEach(m => m.visible = m.isLayoutable = true);
   }
 
+  // this.showUser(this.currentUser())
+
+  async showUser(user, animated = false) {
+    let label = this.getSubmorphNamed("label"),
+        menu = this.getSubmorphNamed("user menu"),
+        avatar = this.getSubmorphNamed("avatar"),
+        login = this.getSubmorphNamed('login item'),
+        logout = this.getSubmorphNamed('logout item'),
+        progile = this.getSubmorphNamed('profile item'),
+        userName = String(user.name),
+        gravatar = resource(`https://s.gravatar.com/avatar`).join(string.md5(user.email || '')).withQuery({s: 160}).url;
+    if (userName.startsWith("guest-")) {
+      this.showMenuItems(['login item', 'register item']);
+      userName = "guest";
+    } else {
+      this.showMenuItems(['logout item', 'profile item']);
+    }
+    label.value = userName;
+    avatar.imageUrl = gravatar;
+    await this.whenRendered();
+    menu.position = avatar.bottomCenter.addXY(0, 10);
+    await this.whenRendered();
+    this.alignInWorld();
+  }
+
+  showRegister() { return UserUI.showRegister(); }
   showUserInfo(user) { return UserUI.showUserInfo({user}); }
   showLogin(user) { return UserUI.showLogin({user}); }
-  logout(user) { UserRegistry.current.logout(user); }
+  logout(user) { return UserRegistry.current.logout(user); }
 
   onBlur(evt) {
     this.minimize();
@@ -653,12 +775,50 @@ export class UserFlap extends Morph {
       menu.width + 20, menu.height + 10, animated);
   }
 
+  setPaletteButtonActive(active) {
+    let paletteButton = this.getSubmorphNamed('palette button');
+    if (!active) {
+      paletteButton.fontColor = this.fontColor;
+      paletteButton.dropShadow = false;
+    } else {
+      paletteButton.fontColor = Color.rgb(0,176,255);
+      paletteButton.dropShadow = this.haloShadow;
+    }
+  }
+
+  async togglePalette() {
+    if (!this.palette) {
+      let li = LoadingIndicator.open('Loading Styler');
+      this.palette = this.get('styling assistant') || await loadPart('quick part drawer');
+      this.palette.scale = .5;
+      this.palette.opacity = 1;
+      this.palette.visible = false;
+      this.palette.openInWorld(pt(0,0));
+      li.remove();
+    }
+    let duration = 200;
+    if (this.palette.visible) {
+      await this.palette.animate({
+        scale: .5, opacity: 0, duration
+      });
+      this.palette.visible = false;
+    } else {
+      this.palette.visible = true;
+      await this.palette.animate({
+        scale: 1, opacity: 1, duration
+      });
+    }
+    this.setPaletteButtonActive(this.palette.visible)
+  }
+
   updateNetworkIndicator(l2lClient) {
     let color = "red";
     if (l2lClient) {
       if (l2lClient.isOnline()) color = "yellow";
       if (l2lClient.isRegistered()) color = "green";
     }
-    this.get("network-indicator").fill = Color[color];
+    this.get("network-indicator").animate({
+      fill: Color[color], duration: 300
+    });
   }
 }

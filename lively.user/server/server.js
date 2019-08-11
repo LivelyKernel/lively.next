@@ -1,6 +1,8 @@
+global.Headers = {};
 import { promise } from "lively.lang";
 import * as http from "http";
 import { handleRequest } from "./http-handler.js";
+
 
 export async function start(opts = {}) {
   // opts = {hostname, port, userdb}
