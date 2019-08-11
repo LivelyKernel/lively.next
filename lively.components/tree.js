@@ -4,6 +4,7 @@ import { pt, Rectangle, Color } from "lively.graphics";
 import { Label } from "lively.morphic/text/label.js";
 import { Morph, Text, config, StyleSheet } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
+import bowser from 'bowser';
 
 /*
 
@@ -480,6 +481,7 @@ export class Tree extends Text {
 
   onHoverOut(evt) {
     super.onHoverOut(evt);
+    if (bowser.mobile) return;
     this.clipMode = 'hidden';
   }
   

@@ -2,6 +2,7 @@
 import { Rectangle, Point, rect, Color, pt } from "lively.graphics";
 import { string, obj, fun, promise, arr } from "lively.lang";
 import { signal, connect, disconnect } from "lively.bindings";
+import bowser from 'bowser';
 
 import { morph } from "../helpers.js";
 import config from '../config.js';
@@ -2808,6 +2809,7 @@ export class Text extends Morph {
   }
 
   onHoverOut(evt) {
+    if (bowser.mobile) return;
     this.scrollActive = false;
     this.makeDirty();
   }
