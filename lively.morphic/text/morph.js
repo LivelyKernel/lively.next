@@ -39,7 +39,7 @@ export class Text extends Morph {
   static makeInputLine(props) {
     // hack to break up the cyclic dependency for now  without having to
     // update the imports all over the place
-    const InputLine = (lively.morphic ? lively.morphic.InputLine : lively.modules.module('lively.morphic').recorder.InputLine);
+    const InputLine = System.get(System.decanonicalize('lively.morphic')).InputLine;
     return new InputLine(props);
   }
 
