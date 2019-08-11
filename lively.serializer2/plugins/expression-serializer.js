@@ -1,5 +1,6 @@
-import { string, obj, properties, arr } from "lively.lang";
+import { string, Path, obj, properties, arr } from "lively.lang";
 import { getSerializableClassMeta } from "../class-helper.js";
+import { connect } from "lively.bindings";
 /*global System*/
 export default class ExpressionSerializer {
 
@@ -98,7 +99,10 @@ export default class ExpressionSerializer {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   // note __boundValues__ becomes a dynamically scoped "variable" inside eval
-  __eval__(__source__, __boundValues__) { return eval(__source__) }
+  __eval__(__source__, __boundValues__) { 
+    this.__boundValues__ = __boundValues__;
+    return eval(__source__); 
+  }
 
   deserializeExpr(encoded) {
     if (!encoded.startsWith(this.prefix))
@@ -142,7 +146,7 @@ export default class ExpressionSerializer {
             ({local, exported} = varName);
           }
           __boundValues__[local] = exports[exported];
-          source = `var ${local} = __boundValues__.${local};\n${source}`;
+          source = `var ${local} = this.__boundValues__.${local};\n${source}`;
         }
       }
     }
@@ -163,8 +167,9 @@ export default class ExpressionSerializer {
 export function deserializeSpec(serializedSpec, subSpecHandler = (spec) => spec) {
   const exprSerializer = new ExpressionSerializer();
   let deserializedSpec = {};
+  
   properties.forEachOwn(serializedSpec, (prop, value) => {
-    if (prop ==='_env' || prop ==='env') return;
+    if (prop ==='_env' || prop ==='env' || prop === '__connections__' || prop === '__refs__') return;
     if (obj.isString(value) && exprSerializer.isSerializedExpression(value)) {
       value = exprSerializer.deserializeExpr(value);
     }
@@ -179,6 +184,22 @@ export function deserializeSpec(serializedSpec, subSpecHandler = (spec) => spec)
   if (serializedSpec.submorphs) deserializedSpec.submorphs = serializedSpec.submorphs.map(spec => {
     return deserializeSpec(spec, subSpecHandler)
   });
+  if (serializedSpec.__refs__) {
+    for (let [pathToParent, pathToVal] of serializedSpec.__refs__) {
+      Path(pathToParent).set(deserializedSpec, Path(pathToVal).get(deserializedSpec));
+    }
+  }
+  if (serializedSpec.__connections__) {
+    for (let conn of serializedSpec.__connections__) {
+      connect(
+        Path(conn.pathToSource).get(deserializedSpec),
+        conn.sourceAttrName,
+        Path(conn.pathToTarget).get(deserializedSpec),
+        conn.targetMethodName, {
+          ...obj.select(conn, ['garbageCollect', 'converterString', 'updaterString', 'varMapping'])
+      });
+    }
+  }
   return deserializedSpec;
 }
 
@@ -188,11 +209,32 @@ export function serializeSpec(morph, opts = {}) {
   // quick hack to "snapshot" into JSON or serialized expression
     var { 
       keepFunctions = true, 
+      keepConnections = true,
       asExpression = false, 
       root = true,
+      path = '',
       skipUnchangedFromDefault = false,
-      nestedExpressions = {}
+      nestedExpressions = {},
+      objToPath = new WeakMap(),
+      objRefs = [],
+      connections = [],
     } = opts;
+    let subopts = {
+      root: false,
+      keepFunctions,
+      asExpression,
+      nestedExpressions,
+      connections,
+      objRefs,
+      objToPath,
+      keepConnections
+    };
+
+    if (objToPath.has(morph)) {
+      // morph was already serialized, add ref and return
+      objRefs.push([path, /* => */ objToPath.get(morph)]) // store assignment
+      return null;
+    } else objToPath.set(morph, path);
     if (asExpression) keepFunctions = false;
     const exprSerializer = new ExpressionSerializer();
     const getExpression = (name, val) => {
@@ -202,7 +244,7 @@ export function serializeSpec(morph, opts = {}) {
             let exprId = string.newUUID();
             nestedExpressions[exprId] = val;
             val = exprId;
-          } else val = exprSerializer.exprStringEncode(val);
+          } else val = val.__expr__ ? exprSerializer.exprStringEncode(val) : val;
         } catch (e) {
           console.log(`[export to JSON] failed converting ${name} to serialized expression`); 
         }
@@ -211,21 +253,42 @@ export function serializeSpec(morph, opts = {}) {
 
     var exported = {};
 
+    objToPath.set(morph, path);
+
+    if (keepConnections && morph.attributeConnections)
+      connections.push(...morph.attributeConnections);
+
+    if (morph.isText) {
+      exported.textAndAttributes = morph.textAndAttributes.map((ea, i) => {
+        return ea && ea.isMorph ? serializeSpec(ea, {
+           ...subopts,
+           path: path ? path + '.textAndAttributes.' + i : 'textAndAttributes.' + i ,
+        }) : ea
+      })
+    }
+
+    if (morph.submorphs) {
+      exported.submorphs = morph.submorphs.map((ea, i) => serializeSpec(ea, {
+        ...subopts,
+        path: path ? path + '.submorphs.' + i : 'submorphs.' + i ,
+      })).filter(Boolean);
+    }
+
     for (let name in morph.spec(skipUnchangedFromDefault)) {
       let val = morph[name];
-      if (name === "submorphs") {
-        val = val.map(ea => serializeSpec(ea, {
-          keepFunctions,
-          asExpression,
-          nestedExpressions,
-          root: false
-        }));
+      if (val && typeof val === 'object' && !Array.isArray(val) && !val.isMorph) {
+        objToPath.set(val, path ? path + '.' + name : name);
+      }
+      if (name === "submorphs") continue;
+      if (name === 'metadata' && Path('commit.__serialize__').get(val)) {
+        exported[name] = { ...val, commit: getExpression(name + '.commit', val.commit)};
+        continue;
       }
       if (['borderColor', 'borderWidth', 'borderStyle', 'borderRadius'].includes(name)) {
         let serializedVal = {};
         for (let mem of ['top', 'left', 'right', 'bottom']) {
           let memberValue = val[mem];
-          if (memberValue.__serialize__) {
+          if (memberValue && memberValue.__serialize__) {
              memberValue = memberValue.__serialize__();
              if (memberValue && memberValue.__expr__) {
                if (asExpression) {
@@ -237,25 +300,48 @@ export function serializeSpec(morph, opts = {}) {
           }
           serializedVal[mem] = memberValue; 
         }
-        val = serializedVal;
+        exported[name] = serializedVal;
+        continue;
       }
-      if (val && val.isMorph) val = serializeSpec(val, { nestedExpressions, keepFunctions, asExpression, root: false });
+      if (val && val.isMorph) {
+        exported[name] = serializeSpec(val, {
+          ...subopts,
+          path: path ? path + "." + name : name
+        });
+        continue;
+      }
       if (val && val.__serialize__) {
-        val = getExpression(name, val);
+        exported[name] = getExpression(name, val);
+        continue;
       }
       if (Array.isArray(val)) {
         // check if each array member is seralizable
-        val = val.map((v, i) => {
+        exported[name] = val.map((v, i) => {
           if (v && v.isMorph)
-            return serializeSpec(v, { nestedExpressions, keepFunctions, asExpression, root: false });
+            return serializeSpec(v, {
+              ...subopts,
+              path: path ? path + '.' + name + '.' + i : name + '.' + i
+            });
           if (v && v.__serialize__) {
             return getExpression(name + '.' + i, v);
           }
           return v;
-        })
+        });
+        continue;
+      }
+      if (val && !obj.isString(val) && !obj.isNumber(val) &&          
+         properties.allOwnPropertiesOrFunctions(val).length > 0) {
+         for (let prop in val) {
+           if (val[prop] && val[prop].isMorph) val[prop] = serializeSpec(val[prop], {
+             ...subopts,
+             path: path ? path + '.' + name + '.' + prop : name + '.' + prop
+           });
+         }
       }
       exported[name] = val;
     }
+
+    if (morph.isText) delete exported.textString;
     
     if (!asExpression) exported._id = morph._id;
     if (keepFunctions) {
@@ -266,6 +352,35 @@ export function serializeSpec(morph, opts = {}) {
       if (exported.styleSheets) exported.styleSheets = [];
       exported.type = getSerializableClassMeta(morph);
     }
+    // this.exportToJSON()
+    if (keepConnections && root) {
+       /*
+         Right now we can only reconstruct connections which are between morphs 
+         or objects which are directly referenced by a morph. Other ones are skipped.
+       */
+       let connectionExpressions = []
+       for (let conn of connections) {
+         let { 
+           sourceAttrName, targetMethodName, sourceObj, targetObj,
+           updaterString, converterString, varMapping, garbageCollect
+         } = conn;
+         let pathToSource = objToPath.get(sourceObj);
+         let pathToTarget = objToPath.get(targetObj);
+         if (typeof pathToSource === 'string' && typeof pathToTarget === 'string') {
+           connectionExpressions.push({
+             pathToSource, pathToTarget, garbageCollect,
+             updaterString, converterString,
+             sourceAttrName, targetMethodName,
+             varMapping: {
+               properties
+             }
+           })
+           continue;
+         }
+         console.log('skipping:', conn);
+       }
+      if (!asExpression) exported.__connections__ = connectionExpressions;
+    }
     
     if (asExpression && root) {
       // replace the nestedExpressions after stringification
@@ -275,7 +390,7 @@ export function serializeSpec(morph, opts = {}) {
       }
       for (let exprId in nestedExpressions) {
         __expr__ = __expr__.replace('\"' + exprId + '\"', nestedExpressions[exprId].__expr__);
-        Object.entries(nestedExpressions[exprId].bindings).forEach(([binding, imports]) => {
+        Object.entries(nestedExpressions[exprId].bindings || {}).forEach(([binding, imports]) => {
           if (bindings[binding])
             bindings[binding] = arr.uniq([...bindings[binding], ...imports])
           else bindings[binding] = imports;
@@ -283,5 +398,8 @@ export function serializeSpec(morph, opts = {}) {
       }
       return { __expr__, bindings }
     }
+
+    if (root) exported.__refs__ = objRefs;
+  
     return exported;
 }
