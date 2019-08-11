@@ -137,7 +137,7 @@ export class Label extends Morph {
         isStyleProp: true,
         type: "Enum",
         values: config.text.basicFontItems,
-        defaultValue: "Sans-Serif",
+        defaultValue: "Nunito, Sans-Serif",
         set(fontFamily) {
           let previousFontFamily = this.fontFamily;
           this.setProperty("fontFamily", fontFamily);

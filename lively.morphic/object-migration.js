@@ -279,5 +279,19 @@ For now only a simple default theme...
       }
       return idAndSnapshot;
     }
-  },
+  }, 
+  
+  {
+     date: '2019-08-05',
+     name: 'remove Camphor from system',
+     snapshotConverter: idAndSnapshot => {
+        let {id: rootId, snapshot} = idAndSnapshot;
+        Object.values(snapshot).map(m => {
+          if (m.props.fontFamily && m.props.fontFamily.value == 'Camphor') {
+             m.props.fontFamily.value = 'Nunito';
+          }
+        });
+        return idAndSnapshot;
+     }
+  }
 ];

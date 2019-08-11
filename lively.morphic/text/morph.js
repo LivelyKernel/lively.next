@@ -29,7 +29,7 @@ export class Text extends Morph {
     return new morph({
       type: 'label',
       value,
-      fontFamily: "Helvetica Neue, Arial, sans-serif",
+      fontFamily: "Nunito, Helvetica Neue, Arial, sans-serif",
       fontColor: Color.almostBlack,
       fontSize: 11,
       ...props
@@ -452,7 +452,7 @@ export class Text extends Morph {
         group: "text styling",
         type: "Enum",
         values: config.text.basicFontItems,
-        defaultValue: "Sans-Serif",
+        defaultValue: "Nunito, Sans-Serif",
         isStyleProp: true,
         isDefaultTextStyleProp: true,
         after: ["defaultTextStyle"]
