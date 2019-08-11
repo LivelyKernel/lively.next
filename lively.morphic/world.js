@@ -275,7 +275,7 @@ export class Hand extends Morph {
   static get properties() {
     return {
       hasFixedPosition: { defaultValue: true },
-      fill: {defaultValue: Color.orange},
+      fill: {defaultValue: bowser.mobile ? Color.transparent : Color.orange},
       extent: {defaultValue: pt(1,1)},
       reactsToPointer: {defaultValue: false},
       _grabbedMorphProperties: {
