@@ -815,11 +815,13 @@ export class Morph {
 
   get env() { return this._env; }
 
-  spec(skipUnchangedFromDefault = true) {
+  spec(skipUnchangedFromDefault = true, seenMorphs = new WeakMap()) {
     let defaults = this.defaultProperties,
         properties = this.propertiesAndPropertySettings().properties,
         ignored = {submorphs: true},
         spec = {};
+    if (seenMorphs.has(this)) return seenMorphs.get(this);
+    seenMorphs.set(this, spec);
     for (let key in properties) {
       let descr = properties[key];
       if (!descr) continue;
@@ -838,7 +840,7 @@ export class Morph {
         }
       }
       if (this[key] && this[key].isMorph) {
-        spec[key] = this[key].spec(skipUnchangedFromDefault);
+        spec[key] = this[key].spec(skipUnchangedFromDefault, seenMorphs);
         continue;
       }
       if (this[key] && key === 'layout') {
@@ -847,7 +849,7 @@ export class Morph {
       }
       spec[key] = this[key];
     }
-    spec.submorphs = this.submorphs.map(ea => ea.spec(skipUnchangedFromDefault));
+    spec.submorphs = this.submorphs.map(ea => ea.spec(skipUnchangedFromDefault, seenMorphs));
     spec.type = this.constructor;
     return spec;
   }
