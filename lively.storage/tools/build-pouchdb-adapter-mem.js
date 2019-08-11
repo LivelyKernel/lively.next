@@ -4,6 +4,7 @@ var path = require('path');
 var fs = require('fs');
 var Module = require('module');
 var flatn = require('flatn');
+var babel = require('babel-core')
 require('flatn/module-resolver.js');
 
 const npmPaths = require.resolve.paths('.').sort((a,b) => a.length - b.length),
@@ -80,7 +81,20 @@ module.exports = new Promise(function(resolve, reject) {
   b.add(require.resolve("pouchdb-adapter-memory"));
   b.bundle(function(err, buf) {
     if (err) return reject(err);
-    require("fs").writeFileSync(require("path").join(__dirname, "../dist/pouchdb-adapter-mem.js"), String(buf));
+    let code = String(buf);
+    // transpile to es5
+    let options = {
+      sourceMap: undefined, // 'inline' || true || false
+      inputSourceMap: undefined,
+      babelrc: false,
+      presets: [["es2015", {"modules": false}]],
+      plugins: ['transform-exponentiation-operator', 'transform-async-to-generator',
+                "syntax-object-rest-spread", "transform-object-rest-spread"],
+      code: true,
+      ast: false
+    };
+    code = babel.trasform(code, options).code;
+    require("fs").writeFileSync(require("path").join(__dirname, "../dist/pouchdb-adapter-mem.js"), code);
     resolve(String(buf))
   });
 });
