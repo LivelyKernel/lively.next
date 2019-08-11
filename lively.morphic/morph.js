@@ -2442,13 +2442,13 @@ export class Morph {
 
   onDragEnd(evt) {
     this.undoStop("drag-move");
-    this.world().execCommand('remove snap to guides', this);
+    $world.execCommand('remove snap to guides', this);
   }
 
   onDrag(evt) {
     let {dragStartMorphPosition, absDragDelta} = evt.state;
     this.position = dragStartMorphPosition.addPt(absDragDelta);
-    this.world().execCommand('show and snap to guides', { 
+    $world.execCommand('show and snap to guides', { 
       target: this, showGuides: evt.isCtrlDown(), snap: evt.isCtrlDown()
     });
   }
