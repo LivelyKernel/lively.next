@@ -43,8 +43,10 @@ export function es5Transpilation(source) {
       inputSourceMap: undefined,
       babelrc: false,
       presets: [["es2015", {"modules": false}]],
-      plugins: ['transform-exponentiation-operator', 'transform-async-to-generator',
-                "syntax-object-rest-spread", "transform-object-rest-spread"],
+      plugins: [
+        'transform-exponentiation-operator', 'transform-async-to-generator',
+        "syntax-object-rest-spread", "transform-object-rest-spread"
+      ],
       code: true,
       ast: false
     };

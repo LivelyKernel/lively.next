@@ -1,4 +1,4 @@
-import { obj, chain, arr, fun, Path } from "lively.lang";
+import { obj, string, chain, arr, fun, Path } from "lively.lang";
 import { classToFunctionTransform } from "lively.classes";
 import {
   parse,
@@ -30,9 +30,10 @@ export function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) 
   /* replaces var and function declarations with assignment statements.
    * Example:
      stringify(
-       rewriteToCaptureTopLevelVariables2(
+       rewriteToCaptureTopLevelVariables(
          parse("var x = 3, y = 2, z = 4"),
-         {name: "A", type: "Identifier"}, ['z']));
+         {name: "A", type: "Identifier"}, 
+         {exclude: ['z']}));
      // => "A.x = 3; A.y = 2; z = 4"
    */
 
@@ -483,6 +484,57 @@ function splitExportDeclarations(parsed, options) {
       });
     }
   }
+  return parsed;
+}
+
+export function insertCapturesForExportedImports(parsed, options) {
+  // function only needed for additional capturing of exports when using rollup.js
+  // since rollup discards the module boundaries, information about immediate exports from modules is lost,
+  // which is needed for deserialization to work properly.
+  // this function detects all occurances of export { a, b } from 'moduleZ' or export { * } from 'moduleY'
+  // and replaces them with code that captures the immediatly exported variables within the context of this module
+  // => export { a, b } from 'moduleZ'; __rec.a = a; __rec.b = b;
+  // => export * from 'moduleY'; import * as __capturedY__ from 'moduleY'; Object.assign(__rec, __capturedY__);
+
+  let recorder = stringify(options.captureObj);
+  let captureId = 0;
+  parsed.body = parsed.body.reduce((stmts, stmt) => {
+    let nodes = [stmt];
+    let sourceImport = '';
+    let sourceExport = false;
+    if (stmt.type === "ExportNamedDeclaration") {
+      let decls;
+      if (stmt.source) {
+        decls = stmt.specifiers.map(specifier => [specifier.local.name, specifier.exported.name]);
+        sourceImport = `import { ${decls.map(([local, imp]) => local === imp ? imp : `${local} as ${imp}`).join(',')} } from ${stmt.source.raw};\n`;
+        sourceExport = `export { ${decls.map(([local, imp]) => imp).join(',')} };\n`;
+      } else if (stmt.declaration) {
+        decls = stmt.declaration.declarations || [];
+        decls = decls.map(decl => {
+          return [decl.id.name, decl.id.name]
+        })
+      } else {
+        decls = stmt.specifiers.map(specifier => [specifier.exported.name, specifier.exported.name])
+      }
+      if (sourceExport) {
+        nodes = [];
+        sourceImport += sourceExport;
+      }
+      nodes = nodes.concat(parse(
+        sourceImport +
+        decls.map(([exp, imp]) => {
+        return `${recorder}.${imp} = ${imp};`;
+      }).join('\n')));
+    }
+    if (stmt.type === "ExportAllDeclaration") {
+      captureId++
+      nodes = nodes.concat(parse(`
+       import * as __captured${captureId}__ from ${stmt.source.raw};
+       Object.assign(${recorder}, __captured${captureId}__);
+      `));
+    }
+    return stmts.concat(nodes);
+  }, [])
   return parsed;
 }
 
