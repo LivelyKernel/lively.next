@@ -2529,7 +2529,7 @@ export class Morph {
     this._tickingScripts = [];
     this.dontRecordChangesWhile(() => {
       this.initializeProperties(); 
-      Object.assign(this, deserializeSpec(spec, spec => morph(spec)));
+      deserializeSpec(spec, spec => morph(spec), this);
     });
     return this;
   }

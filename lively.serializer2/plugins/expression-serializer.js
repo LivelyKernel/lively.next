@@ -164,11 +164,14 @@ export default class ExpressionSerializer {
  generalized to become suitable for more general object trees.
 */
 
-export function deserializeSpec(serializedSpec, subSpecHandler = (spec) => spec) {
+export function deserializeSpec(serializedSpec, subSpecHandler = (spec) => spec, base = {}) {
   const exprSerializer = new ExpressionSerializer();
-  let deserializedSpec = {};
-  
-  properties.forEachOwn(serializedSpec, (prop, value) => {
+  let deserializedSpec = base;
+  let props = base.isMorph ? base.propertiesAndPropertySettings().properties : []
+  props = props.length ? obj.sortKeysWithBeforeAndAfterConstraints(props) : obj.keys(serializedSpec);
+
+  for (let prop of props) {
+    let value = serializedSpec[prop];
     if (prop ==='_env' || prop ==='env' || prop === '__connections__' || prop === '__refs__') return;
     if (obj.isString(value) && exprSerializer.isSerializedExpression(value)) {
       value = exprSerializer.deserializeExpr(value);
@@ -180,10 +183,16 @@ export function deserializeSpec(serializedSpec, subSpecHandler = (spec) => spec)
       value = subSpecHandler(deserializeSpec(value, subSpecHandler));
     }
     deserializedSpec[prop] = value;
-  })
+  }
+  
   if (serializedSpec.submorphs) deserializedSpec.submorphs = serializedSpec.submorphs.map(spec => {
     return deserializeSpec(spec, subSpecHandler)
   });
+
+  if (base) {
+    for (let prop of props.filter(key => !!serializedSpec[key])) base[prop] = deserializedSpec[prop];
+  }
+  
   if (serializedSpec.__refs__) {
     for (let [pathToParent, pathToVal] of serializedSpec.__refs__) {
       Path(pathToParent).set(deserializedSpec, Path(pathToVal).get(deserializedSpec));
