@@ -558,7 +558,6 @@ export class ProportionalLayout extends Layout {
   description() { return "Resizes, scales, and moves morphs according to their original position." }
 
   inspect(pointerId) {
-    // return new ProportionalLayoutHalo(this.container, pointerId);
     //return new ProportionalLayoutHalo(this.container, pointerId);
   }
 
@@ -569,6 +568,19 @@ export class ProportionalLayout extends Layout {
     this.submorphSettings = (args && args.submorphSettings) || [];
     delete this.spacing;
     delete this.autoResize;
+  }
+
+  getSpec() {
+    return {
+      submorphSettings: this.submorphSettings
+    }
+  }
+
+  __serialize__() {
+    return {
+      __expr__: `new ProportionalLayout(${JSON.stringify(this.getSpec())})`,
+      bindings: {"lively.morphic": ["ProportionalLayout"]}
+    }
   }
 
   get __dont_serialize__() { return [...super.__dont_serialize__, 'extentDelta', 'lastExtent'] }
@@ -614,7 +626,7 @@ export class ProportionalLayout extends Layout {
   set submorphSettings(submorphSettings) {
     if (!this.container) {
       once(this, "container", this, "submorphSettings",
-        {converter: () => submorphSettings, varMapping: {submorphSettings}});
+        {converter: `() => submorphSettings`, varMapping: {submorphSettings}});
       return;
     }
     this._submorphSettings = submorphSettings;
