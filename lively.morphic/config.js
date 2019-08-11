@@ -396,6 +396,11 @@ var config = {
 
   remotes: {
     server: System.get("@system-env").browser ? `${document.location.origin}/eval` : null
+  },
+
+  css: {
+     fontAwesome: "/lively.morphic/assets/font-awesome/css/font-awesome.css",
+     inconsolata: "/lively.morphic/assets/inconsolata/inconsolata.css"
   }
 
 }

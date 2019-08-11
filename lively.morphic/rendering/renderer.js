@@ -13,6 +13,7 @@ import {
 } from "./morphic-default.js";
 import { Transform, pt } from "lively.graphics";
 import { getSvgVertices } from "./property-dom-mapping.js";
+import config from '../config.js';
 
 const svgNs = "http://www.w3.org/2000/svg";
 
@@ -52,8 +53,8 @@ export class Renderer {
     return promise.waitFor(3000, () => this.domNode.ownerDocument)
       .then(doc => Promise.all([
         addOrChangeCSSDeclaration("lively-morphic-css", defaultCSS, doc),
-        addOrChangeLinkedCSS("lively-font-awesome", "/lively.morphic/assets/font-awesome/css/font-awesome.css", doc),
-        addOrChangeLinkedCSS("lively-font-inconsolata", "/lively.morphic/assets/inconsolata/inconsolata.css", doc)]));
+        addOrChangeLinkedCSS("lively-font-awesome", config.css.fontAwesome, doc),
+        addOrChangeLinkedCSS("lively-font-inconsolata", config.css.inconsolata, doc)]));
   }
 
   startRenderWorldLoop() {
