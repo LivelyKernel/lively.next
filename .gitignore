@@ -11,6 +11,7 @@ custom-npm-modules/
 *.idb/
 *.html
 *.css
+localconfig.js
 robots.txt
 update.sh
 user-server.sh
