@@ -237,6 +237,7 @@ export class Renderer {
       }, [
         h("img", {
           src: url,
+          alt: image.tooltip || '',
           draggable: false,
           style: {
             "pointer-events": "none",
