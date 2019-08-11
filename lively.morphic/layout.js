@@ -749,6 +749,7 @@ export class TilingLayout extends Layout {
     super(props);
     this._axis = props.axis || 'row';
     this._align = props.align || 'left';
+    this._orderByIndex = props.orderByIndex || false;
     delete this.autoResize;
   }
   
@@ -772,15 +773,19 @@ export class TilingLayout extends Layout {
   }
 
   getSpec() {
-    let { axis, align, spacing, layoutOrder } = this;
+    let { axis, align, spacing, layoutOrder, orderByIndex } = this;
     return {
-      axis, align, spacing, layoutOrder
+      axis, align, spacing, layoutOrder, orderByIndex
     }
   }
 
   get possibleAxisValues() { return ['row', 'columns']; }
   get possibleAlignValues() { return ['left', 'center', 'right']; }
 
+
+  get orderByIndex() { return this._orderByIndex; }
+  set orderByIndex(active) { this._orderByIndex = active; this.apply() }
+  
   get axis() { return this._axis }
   set axis(a) { this._axis = a; this.apply() }
 
@@ -884,6 +889,7 @@ export class TilingLayout extends Layout {
   layoutOrder(morph) {
     // the following creates a drop zone that is 15 pixels tall.
     // allows for horizontal reordering.
+    if (this.orderByIndex) return this.container.submorphs.indexOf(morph);
     return this.axis === 'row' ? (morph.top - morph.top % 15) * 1000000 + morph.left : (morph.left - morph.left % 15) * 1000000 + morph.top;
   }
 
