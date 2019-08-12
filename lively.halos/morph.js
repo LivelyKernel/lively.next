@@ -1699,7 +1699,7 @@ export class MorphHighlighter extends Morph {
     if (this.target && this.target.layout && this.showLayout) {
       this.layoutHalo =
         this.layoutHalo || this.world().showLayoutHaloFor(this.target, this.pointerId);
-      if (this.layoutHalo.previewDrop) {
+      if (this.layoutHalo && this.layoutHalo.previewDrop) {
         this.styleClasses = ['inactive'];
         this.alignWithHalo();
         if (this.halo.get("grab").hand.grabbedMorphs)
@@ -1750,7 +1750,7 @@ export class InteractiveMorphSelector {
     let deferred = promise.deferred();
     deferred.promise.resolve = deferred.resolve;
     this.whenDone = deferred.promise;
-    this.selectorMorph = Icon.makeLabel('crosshairs', {fontSize: 20}).openInWorld();
+    this.selectorMorph = Icon.makeLabel('crosshairs', {fontSize: 20, hasFixedPosition: true}).openInWorld();
     connect(this.world.firstHand, 'position', this, 'scanForTargetAt');
     once(this.selectorMorph, 'onMouseDown', this, 'selectTarget');
     once(this.selectorMorph, 'onKeyDown', this, 'stopSelect');
