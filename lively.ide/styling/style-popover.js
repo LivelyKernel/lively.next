@@ -80,9 +80,11 @@ export class Popover extends Morph {
       layout: {
         initialize() {
           this.layout = new CustomLayout({
-            reactToSubmorphAnimations: true,
             relayout(self, animated) { self.relayout(animated); }
           });
+          this.whenRendered().then(() => {
+            this.layout.reactToSubmorphAnimations = true
+          })
         }
       },
 
@@ -614,7 +616,7 @@ export class FillPopover extends StylePopover {
         exec: () => {
           let p = new ColorPickerField({
             name: "colorField",
-            colorValue: this.fillValue
+            colorValue: this.fillValue.isGradient ? Color.blue : this.fillValue
           });
           p.whenRendered().then(() => {
             this.setupConnections();

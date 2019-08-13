@@ -347,32 +347,35 @@ class StopControlHead extends Morph {
       var center = pt(2,-14);
       this.layout = null;
       this.submorphs = [this.closeButton(), palette, this.pickerField()];
-      palette.animate({extent: pt(15,15), duration});
-      this.animate({
-        layout: new HorizontalLayout({spacing: 3}), duration
-      });
+      this.layout = new HorizontalLayout({spacing: 3});
       // if clipped by owner move into view accordingly
       ge = this.get('gradientEditor');
       let {x: leftDistance, width} = this.transformRectToMorph(ge, this.innerBounds()),
           rightDistance = leftDistance + width - ge.width;
       if (leftDistance < this.width / 2) center = center.addXY((this.width / 3) - leftDistance, 0);
       if (rightDistance > this.width / 2) center = center.addXY((this.width / 3) - rightDistance, 0);
-      await this.animate({center, duration})
+      palette.extent = pt(15,15);
+      this.center = center;
       this.stopVisualizer.gradientEditor.update();
    }
 
    async shrink() {
-      if (this.submorphs.length < 3) return;
+      if (this.submorphs.length < 3) {
+        return;
+      }
       const oldCenter = pt(2,-14),
             [close, palette, picker] = [
               this.get("close"), this.get("paletteField"), this.get("pickerField")
             ];
-      palette.animate({extent: pt(10,10), duration: 200});
-      this.layout = null; close.remove(); picker.remove();
-      await this.animate({
-        layout: new HorizontalLayout({spacing: 3}),
-        center: oldCenter, duration: 200
-      });
+      this.layout = null;
+      let duration = 200;
+      palette.bringToFront();
+      close.remove();
+      picker.remove();
+      palette.extent = pt(10,10);
+      this.layout = new HorizontalLayout({ spacing: 3 });
+      this.width = 16;
+      this.center = oldCenter;
    }
 
    onWidgetClosed() {
@@ -411,7 +414,8 @@ class StopControlHead extends Morph {
 
    removeWhenLostFocus(name) {
     setTimeout(() => {
-      if (!$world.focusedMorph.ownerChain().includes(this[name])) {
+      if (!$world.focusedMorph.ownerChain().includes(this[name]) &&
+          !$world.focusedMorph.isMenuItem) {
        this.closeColorWidget(name);
      } else {
        this[name].focus();
@@ -462,6 +466,7 @@ class GradientStopVisualizer extends Morph {
     return {
          fill: {defaultValue: Color.gray},
          gradientEditor: {},
+         draggable: { defaultValue: false },
          targetProperty: {
            get() {
              return this.gradientEditor.gradientValue;
