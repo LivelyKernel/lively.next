@@ -179,7 +179,7 @@ class ExportPrompt {
         historyId: "lively.ide/js-interactively-import",
         extent: pt(800, 500),
         fuzzy: "value.exported",
-
+        requester: world,
         sortFunction: (parsedInput, item) => {
           // preioritize those completions that are close to the input
           var {exported, isMain} = item.value,

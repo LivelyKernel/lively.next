@@ -44,6 +44,7 @@ export default class ShellEditorPlugin extends CodeMirrorEnabledEditorPlugin {
         dirs = arr.uniq([cwd].concat(defaultDir, ...this.knownCwds)).filter(Boolean),
         {status, list: newDirs, selections: [choice]} = await this.textMorph.world().editListPrompt(
           "Choose working directory:", dirs, {
+            requester: this.textMorph.getWindow(),
             historyId: "lively.morphic-ide/shell-changeCwdInteractively-hist-list",
             preselect: dirs.indexOf(cwd)
           }) || {};
