@@ -928,7 +928,7 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   installFont(name, fontUrl) {
-     this.installedFonts[name] = fontUrl;
+     this.installedFonts = {...this.installedFonts, [name]: fontUrl};
      this.insertFontCSS(name, fontUrl);
   }
 
