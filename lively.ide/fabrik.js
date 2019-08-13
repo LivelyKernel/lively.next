@@ -1,11 +1,12 @@
 import { connect, once } from "lively.bindings";
 import { Color, rect, pt } from "lively.graphics";
 import { arr, obj } from "lively.lang";
-import { show, HorizontalLayout, Morph, VerticalLayout, StyleSheet, Icon, GridLayout, morph, Window } from "lively.morphic";
+import { HorizontalLayout, Morph, VerticalLayout, StyleSheet, Icon, GridLayout, morph } from "lively.morphic";
 import { TreeData, Tree } from "lively.components/tree.js";
 import { Leash, LabeledCheckBox, SearchField } from "lively.components/widgets.js";
-import {showConnector} from "lively.halos/markers.js"
+import {showConnector, show} from "lively.halos/markers.js"
 import { InteractiveMorphSelector, MorphHighlighter } from "lively.halos/morph.js";
+import Window from "lively.components/window.js";
 
 export function interactivelyShowConnection(connection) {
   let {sourceObj, sourceAttrName, targetObj, targetMethodName} = connection;
