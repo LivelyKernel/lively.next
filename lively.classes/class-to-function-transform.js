@@ -238,7 +238,10 @@ function replaceClass(node, state, path, options) {
       }
       (classSide ? props.clazz : props.inst).push(decl);
       return props;
-    }, {inst: [], clazz: []})
+    }, {inst: [], clazz: [
+       // explicitly add in a static property to ensure the class name is accessible also in google closure env
+       parse(`({ key: "name", get: function get() { return "${className}"; } })`).body[0].expression
+    ]})
 
     if (inst.length) instanceProps = {type: "ArrayExpression", elements: inst};
     if (clazz.length) classProps = {type: "ArrayExpression", elements: clazz};
