@@ -12,7 +12,7 @@ import { obj } from "lively.lang";
 import { Window } from "lively.components";
 
 import {ColorPalette} from "./color-palette.js";
-import { Popover } from "./style-popover.js";
+import { Popover, FillPopover } from "./style-popover.js";
 import { Slider } from "lively.components/widgets.js";
 
 const WHEEL_URL = '/lively.ide/assets/color-wheel.png'
@@ -21,11 +21,39 @@ export class ColorPickerField extends Morph {
 
    static get properties() {
      return {
+      gradientEnabled: {
+        defaultValue: false,
+        after: ['colorValue'],
+        set(active) {
+          this.setProperty('gradientEnabled', active);
+          this.update(this.colorValue);
+        }
+      },
+      fillWidget: {
+        serialize: false,
+        get() {
+          return (this._fillWidget = new FillPopover({
+            fillValue: this.colorValue
+          }))
+        }
+      },
+      palette: {
+        serialize: false,
+        get() {
+          return this._palette || (this._palette = new Popover({
+            position: pt(0,0),
+            name: "Color Palette",
+            targetMorph: new ColorPalette({color: this.colorValue})
+          }));
+        }
+      },
       colorValue: {
+        after: ['submorphs'],
         set(v) {
-          if (!(v && v.isColor)) {
+          if (!(v && (v.isColor || v.isGradient))) {
             v = Color.blue;
           }
+          if (!this._updating) return this.update(v);
           this.setProperty('colorValue', v);
         },
         get() {
@@ -62,12 +90,6 @@ export class ColorPickerField extends Morph {
               extent: colorFieldExtent,
               clipMode: "hidden",
               name: 'paletteButton',
-              onHoverIn() {
-                this.get("dropDownIndicator").animate({opacity: 1, duration: 300});
-              },
-              onHoverOut() {
-                this.get("dropDownIndicator").animate({opacity: 0, duration: 300});
-              },
               submorphs: [
                 {
                   name: "topLeft",
@@ -115,17 +137,39 @@ export class ColorPickerField extends Morph {
      }
    }
 
+  spec() {
+    return obj.dissoc(super.spec(), ['submorphs']);
+  }
+
    onKeyDown(evt) {
       if (evt.key == "Escape") {
          this.picker && this.picker.remove();
-         this.palette && this.palette.remove();
+         this.colorValue.isGradient ? this.fillWidget.remove() : this.palette.remove();
       }
    }
 
+  onHoverIn() {
+    this.get("dropDownIndicator").animate({opacity: 1, duration: 300});
+  }
+
+  onHoverOut() {
+    this.get("dropDownIndicator").animate({opacity: 0, duration: 300});
+  }
+
   update(color) {
+    this._updating = true;
+    let pickerButton = this.submorphs[1];
     this.colorValue = color;
     this.get("topLeft").fill = color;
-    this.get("bottomRight").fill = color.withA(1);
+    this.get("bottomRight").fill = color.isGradient ? Color.transparent : color.withA(1);
+    pickerButton.visible = pickerButton.isLayoutable = !this.gradientEnabled;
+    if (this.gradientEnabled) {
+      this.get("bottomRight").width = this.get("topLeft").width = this.submorphs[0].width = this.width;
+    } else {
+      this.get("bottomRight").width = this.get("topLeft").width = this.width - pickerButton.width;
+    }
+    this.get("dropDownIndicator").right = this.width - 10;
+    this._updating = false;
   }
 
   async openPicker(evt) {
@@ -138,29 +182,24 @@ export class ColorPickerField extends Morph {
     this.removePalette();
   }
 
-   removePicker() {
-      this.picker && this.picker.remove();
-   }
+  removePicker() {
+    this.picker && this.picker.remove();
+  }
 
   async openPalette(evt) {
     const p =
-      this.palette ||
-      new Popover({
-        position: pt(0,0),
-        name: "Color Palette",
-        targetMorph: new ColorPalette({color: this.colorValue})
-      });
-    connect(p.targetMorph, "color", this, "update");
+      this.gradientEnabled ? this.fillWidget : this.palette;
+    this.gradientEnabled ? connect(p, 'fillValue', this, 'update') : connect(p.targetMorph, "color", this, "update");
     p.isLayoutable = false;
-    this.palette = await p.openInWorld();
-    this.palette.topCenter = this.get('paletteButton').globalBounds().center();
-    this.palette.topCenter = this.world().visibleBounds().translateForInclusion(this.palette.globalBounds()).topCenter();
+    await p.openInWorld();
+    p.topCenter = this.get('paletteButton').globalBounds().center();
+    p.topCenter = this.world().visibleBounds().translateForInclusion(p.globalBounds()).topCenter();
     this.removePicker();
     once(p, 'remove', p, 'topLeft', {converter: () => pt(0,0), varMapping: {pt}});
   }
 
    removePalette() {
-     this.palette && this.palette.remove();
+     this.colorValue.isGradient ? this.fillWidget.remove() : this.palette.remove();
    }
 
    removeWidgets() {
@@ -400,9 +439,10 @@ class ColorDetails extends Morph {
 
    update({color}) {
      const [r, g, b] = color.toTuple8Bit(),
-           [h, s, v] = color.toHSB();
+           [h, s, v] = color.toHSB(),
+           hashViewer = this.get('hashViewer');
      this.get('colorViewer').fill = color;
-     this.get('hashViewer').value = color.toHexString();
+     hashViewer.replace(hashViewer.documentRange, color.toHexString(), false, false);
      this.get('R').value = `R ${r.toFixed(0)}\n\nG ${g.toFixed(0)}\n\nB ${b.toFixed(0)}\n\nH ${h.toFixed(0)}\n\nS ${s.toFixed(2)}\n\nV ${v.toFixed(2)}`
    }
 
