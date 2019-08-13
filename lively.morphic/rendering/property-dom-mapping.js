@@ -15,6 +15,7 @@ export function styleProps(morph) {
   addBorder(morph, style);
   addBorderRadius(morph, style);
   addShadowStyle(morph, style);
+  if (morph.grayscale) style.filter = `${style.filter || ''} grayscale(${100 * morph.grayscale}%)`
   if (morph.opacity != null) style.opacity = morph.opacity;
   if (morph.draggable && !morph.isWorld) style['touch-action'] = 'unset';
   return style;
@@ -99,7 +100,7 @@ function addShadowStyle(morph, style) {
   if ((dropShadow && dropShadow.fast) || (dropShadow && dropShadow.inset)) {
     style.boxShadow = dropShadow ? dropShadow.toCss() : "none"
   } else {
-    style.filter = dropShadow ? dropShadow.toFilterCss() : "none"
+    style.filter = dropShadow ? dropShadow.toFilterCss() : ""
   }
 }
 

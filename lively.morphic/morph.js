@@ -90,6 +90,15 @@ export class Morph {
         defaultValue: true
       },
 
+      grayscale: {
+        group: "styling",
+        type: "Number",
+        isStyleProp: true,
+        defaultValue: 0,
+        min: 0, max: 1,
+        isFloat: true
+      },
+
       dropShadow: {
         group: "styling",
         type: 'Shadow',
