@@ -1,5 +1,7 @@
 import Inspector from "../js/inspector.js";
 import { string } from "lively.lang";
+import { Morph } from "lively.morphic";
+import { pt, Color } from "lively.graphics";
 
 export var codeEvaluationCommands = [
 
@@ -48,12 +50,28 @@ export var codeEvaluationCommands = [
       morph.maybeSelectCommentOrLine();
       var result, err;
       try {
-        opts = {...opts, asString: true, logDoit: true};
+        opts = {...opts, asString: false, logDoit: true};
         result = await morph.doEval(undefined, opts);
         err = result.error ? result.error : result.isError ? result.value : null;
       } catch (e) { err = e; }
       morph.selection.collapseToEnd();
       // morph.insertTextAndSelect(err ? err.stack || String(err) : String(result.value));
+      let isColor = result.value && result.value.isColor;
+      if (isColor) {
+        morph.selection.text = String(result.value);
+        let embeddedMorph = new Morph({
+          fill: Color.transparent, extent: pt(morph.fontSize + 2,morph.fontSize + 2),
+          submorphs: [{
+            fill: result.value,
+            center: pt(morph.fontSize + 2,morph.fontSize + 2).scaleBy(.5)
+          }]
+        }),
+            { column, row } = morph.selection.start;
+        morph.insertText([embeddedMorph, {}],
+          morph.selection.start);
+        morph.selection.start = { column: column, row };
+        return result;
+      }
       morph.insertTextAndSelect(
         err ? String(err) + (err.stack ? "\n" + err.stack : "") :
         String(result.value));
