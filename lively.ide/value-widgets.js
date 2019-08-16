@@ -1,5 +1,5 @@
 import {
-  Morph,
+  Morph, TilingLayout,
   morph,
   Label,
   HorizontalLayout,
@@ -94,12 +94,6 @@ class ShortcutWidget extends ContextSensitiveWidget {
         set(t) {
           this.setProperty("title", t);
           this.getSubmorphNamed("valueString").value = t;
-        }
-      },
-      fontColor: {
-        set(c) {
-          this.setProperty('fontColor', c);
-          this.submorphs.forEach(m => { m.fontColor = c })
         }
       },
       nativeCursor: {defaultValue: "pointer"},
@@ -484,18 +478,18 @@ export class NumberWidget extends Morph {
       unit: {},
       autofit: { 
         defaultValue: true,
-        after: ['submorphs'],
+        after: ['submorphs', 'extent'],
         set(active) {
-          this.getSubmorphNamed('value').autofit = !active;
           this.setProperty('autofit', active);
+          this.getSubmorphNamed('value').scaleToBounds = !active;
         }
       },
       number: {
         defaultValue: 0,
-        after: ['unit'],
+        after: ['unit', 'autofit'],
         set(v) {
           this.setProperty("number", v);
-          this.get("value") && this.relayout(false);
+          this.relayout(false);
         }
       },
       min: {defaultValue: -Infinity},
@@ -519,7 +513,7 @@ export class NumberWidget extends Morph {
           this.getSubmorphNamed('value').padding = p;
         }
       },
-      extent: { defaultValue: pt(60, 40) },
+      extent: { defaultValue: pt(70,25) },
       scaleFactor: {
         defaultValue: 1,
         get() {
@@ -578,35 +572,30 @@ export class NumberWidget extends Morph {
           this.updateStyleSheet();
         }
       },
+      layout: {
+        initialize() {
+          this.layout = new TilingLayout({
+            axis: 'column', orderByIndex: true, align: 'center'
+          })
+        }
+      },
       submorphs: {
-        after: ["number", "min", "max"],
+        after: ["min", "max"],
         initialize() {
           this.submorphs = [
             new ValueScrubber({
               name: "value",
-              value: this.number,
               unit: this.unit,
               floatingPoint: this.floatingPoint,
-              autofit: false,
+              scaleToBounds: false,
               min: this.min,
               max: this.max
             }),
             {
               type: "button",
-              name: "down", styleClasses: ["buttonStyle", "TreeLabel"],
-              extent: pt(5, 10),
-              label: Icon.makeLabel("sort-asc", {
-                rotation: Math.PI,
-                autofit: true,
-                padding: rect(0,-6,0,5),
-                opacity: .6,
-                fontSize: 12
-              }).fit()
-            },
-            {
-              type: "button",
               name: "up", styleClasses: ["buttonStyle", "TreeLabel"],
-              extent: pt(5, 10),
+              extent: pt(5, 8),
+              padding: rect(5,0,0,2),
               label: Icon.makeLabel("sort-asc", {
                 autofit: true,
                 borderWidth: 1,
@@ -615,17 +604,25 @@ export class NumberWidget extends Morph {
                 padding: rect(0,0,2,-6),
                 fontSize: 12
               })
+            },
+            {
+              type: "button",
+              name: "down", styleClasses: ["buttonStyle", "TreeLabel"],
+              extent: pt(5, 8),
+              padding: rect(5,0,0,2),
+              label: Icon.makeLabel("sort-asc", {
+                rotation: Math.PI,
+                autofit: true,
+                padding: rect(0,-6,0,5),
+                opacity: .6,
+                fontSize: 12
+              }).fit()
             }
           ];
           connect(this.get("value"), "scrub", this, "update");
           connect(this.get("up"), "fire", this, "increment");
           connect(this.get("down"), "fire", this, "decrement");
-          connect(this, "number", this, "relayout");
-          connect(this, 'extent', this, 'relayout');
-          this.whenRendered().then(() => {
-            this.extent = this.extent.maxPt(pt(70,25));
-            this.relayout();
-          });
+          this.whenRendered().then(() => this.relayout());
         }
       }
     };
@@ -676,35 +673,35 @@ export class NumberWidget extends Morph {
   relayoutButtons() {
     let upButton = this.getSubmorphNamed('up');
     let downButton = this.getSubmorphNamed('down');
-    upButton.height = downButton.height = this.height / 2;
+    let value = this.getSubmorphNamed('value');
+    upButton.height = downButton.height = (this.height - 2) / 2;
     upButton.width = downButton.width = 20;
+  }
+
+  onChange(change) {
+    super.onChange(change);
+    if (change.prop == 'extent' && !this.autofit) this.relayout();
   }
 
   relayout(fromScrubber) {
     let valueContainer = this.getSubmorphNamed("value");
-    let upButton = this.getSubmorphNamed('up');
-    let downButton = this.getSubmorphNamed('down');
+    if (!valueContainer) return;
     if (this.autofit) {
       if (!fromScrubber) valueContainer.value = this.number * this.scaleFactor;
       valueContainer.fit();
       this.height = valueContainer.height;
+      this.width = valueContainer.width + 20;
       this.relayoutButtons();
-      upButton.topLeft = pt(valueContainer.right, 0);
-      downButton.bottomLeft = pt(valueContainer.right, this.height);
-      this.width = upButton.right + 2;
     } else {
-      if (!fromScrubber) valueContainer.width = this.width - 15;
+      if (!fromScrubber) valueContainer.width = this.width - 20;
       this.relayoutButtons();
-      upButton.topRight = pt(this.width - 2, 0);
-      downButton.bottomRight = pt(this.width - 1, this.height);
     }
-    if (!fromScrubber) 
-        valueContainer.value = num.roundTo(this.number * this.scaleFactor, 1);
+    
     if (!fromScrubber) {
+      valueContainer.value = num.roundTo(this.number * this.scaleFactor, 1);
       valueContainer.min = this.min != -Infinity ? this.min * this.scaleFactor : this.min;
       valueContainer.max = this.max != Infinity ? this.max * this.scaleFactor : this.max;
       valueContainer.unit = this.unit;
-      valueContainer.leftCenter = this.innerBounds().leftCenter();      
     }
   }
 
