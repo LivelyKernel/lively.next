@@ -6,7 +6,7 @@ import { signal } from "lively.bindings";
 import config from './config.js';
 import { MorphicEnv } from './env.js'
 import { Morph } from "./morph.js";
-import { TooltipViewer } from "./tooltips.js";
+import { TooltipViewer, Tooltip } from "./tooltips.js";
 
 import { loadWorldFromURL, loadWorldFromDB, loadWorldFromCommit, loadWorld } from "./world-loading.js";
 
@@ -14,6 +14,12 @@ export class World extends Morph {
 
   static get properties() {
     return {
+
+      styleSheets: {
+        initialize() {
+          this.styleSheets = [Tooltip.styleSheet]
+        }
+      },
 
       resizePolicy : {
         doc: "how the world behaves on window size changes 'elastic': resizes to window extent, 'static': leaves its extent unchanged",
