@@ -44,6 +44,9 @@ export async function generateLoadHtml(part) {
         #prerender {
            position: absolute
         }
+        html {
+          touch-action: manipulation;
+        }
       </style> 
       <script>
         if (!window.location.origin) {
@@ -107,12 +110,13 @@ export async function interactivelyFreezePart(part, requester = false) {
       compress: true,
       exclude: [
         'lively.ast', 'lively.vm', 'lively-system-interface',
-        'lively.halos', 'lively.ide', 'pouchdb',
-        'pouchdb-adapter-mem'
+        'pouchdb',
+        'pouchdb-adapter-mem',
+        'lively.halos',
+        'lively.ide'
       ]
     });
   } catch(e) {
-    li.remove();
     throw e;
   }
 
