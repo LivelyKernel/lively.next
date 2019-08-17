@@ -9,7 +9,7 @@
     "lively.bindings": "^0.1.2",
     "lively.halos": "https://github.com/LivelyKernel/lively.halos",
     "svg-intersections": "0.2.5",
-    "kld-intersections": "^0.4.2" 
+    "kld-intersections": "^0.4.2"
   },
   "devDependencies": {
     "mocha-es6": "*"
@@ -19,7 +19,14 @@
   },
   "systemjs": {
     "map": {
+      "bowser": "bowser/bowser.min.js",
       "svg-intersections": "lively.morphic/dist/svg-intersections.js"
+    },
+    "meta": {
+      "bowser/bowser.js": {
+        "format": "global",
+        "exports": "bowser"
+      }
     }
   }
 }
