@@ -84,7 +84,8 @@ describe("tree", function() {
       // tree.remove()
       var m = morph({extent: pt(50,50), fill: Color.red});
       tree.treeData.root.children[1].morph = m;
-      tree.update();
+      tree.update(true);
+      await tree.whenRendered();
 
       expect(tree.submorphs[0]).equals(m, "morph not rendered in display node morph");
       await tree.onNodeCollapseChanged({node: tree.treeData.root.children[1], isCollapsed: false})
@@ -95,6 +96,14 @@ describe("tree", function() {
   });
 
   describe("view state", () => {
+
+    it("can be preserved while tree data is being changed", async () => {
+      tree.selectedIndex = 4
+      await tree.maintainViewStateWhile(
+        () => tree.treeData = tree.treeData,
+        node => node.name);
+      expect(tree.selectedIndex).equals(4);
+    });
 
     it("can be externalized and applied", async () => {
       // createTree({});

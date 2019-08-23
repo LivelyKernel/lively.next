@@ -5,6 +5,7 @@ import { Label } from "lively.morphic/text/label.js";
 import { Morph, Text, config, StyleSheet } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 import bowser from 'bowser';
+import { renderSubTree } from "lively.morphic/rendering/morphic-default.js";
 
 /*
 
@@ -237,6 +238,13 @@ export class Tree extends Text {
         attrs[i] = {fontColor: this.selectionFontColor};
     }
     this.document.setTextAndAttributesOfLine(row, attrs)
+    if (this.document.lines[row].hasEstimatedExtent) {
+      let renderer = this.env.renderer;
+      let textRenderer = this.textRenderer;
+      if (!renderer || !textRenderer) return;
+      renderSubTree(this, renderer);
+      textRenderer.manuallyTriggerTextRenderHook(this, renderer);
+    }
     this.selectLine(row, true);
     this._lastSelectedIndex = this.selectedIndex;
   }
@@ -376,7 +384,7 @@ export class Tree extends Text {
       var nodes = this.nodes;
       if (i >= nodes.length) break;
       var id = nodeIdFn(nodes[i]);
-      if (selectionId === id) newSelIndex = i + 1;
+      if (selectionId === id) newSelIndex = i;
       if (collapsedMap.has(id) && !collapsedMap.get(id))
         await this.treeData.collapse(nodes[i], false);
       i++;

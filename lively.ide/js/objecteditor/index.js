@@ -323,6 +323,7 @@ export class ObjectEditor extends Morph {
           listStyle = { styleClasses: ['listing'] },
           textStyle = { type: 'Text' },
           wrapperStyle = {
+            reactsToPointer: false,
             fill: Color.transparent,
             extent: pt(100, 30),
             clipMode: 'hidden',
@@ -872,6 +873,7 @@ export class ObjectEditor extends Morph {
       return {success: true};
      } finally { 
        await this.withContextDo(ctx => ctx.isSaving = false);
+       this.updateSource(content, selectedModuleId);
      }
  
   }
