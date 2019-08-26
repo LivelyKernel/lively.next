@@ -1,23 +1,23 @@
 /*global System,WeakMap,FormData,fetch,DOMParser*/
-import bowser from 'bowser';
 import { resource } from "lively.resources";
 import { Rectangle, Color, pt } from "lively.graphics";
-import { arr, Path, fun, obj, promise } from "lively.lang";
-import { once, signal } from "lively.bindings";
+import { arr, fun, obj, promise } from "lively.lang";
+import { once } from "lively.bindings";
 import {
-  Morph, GridLayout, VerticalLayout, HorizontalLayout, ProportionalLayout,
+  GridLayout,
+  VerticalLayout,
+  HorizontalLayout,
+  ProportionalLayout,
   Tooltip,
   Image,
   inspect,
   config,
-  MorphicEnv,
   World
 } from "lively.morphic";
-import { TooltipViewer } from "lively.morphic/tooltips.js";
+
 import { loadMorphFromSnapshot } from "lively.morphic/serialization.js";
 import { loadObjectFromPartsbinFolder } from "lively.morphic/partsbin.js";
 import { uploadFile } from "lively.morphic/events/html-drop-handler.js";
-import { loadWorldFromURL, loadWorldFromDB, loadWorldFromCommit, loadWorld } from "lively.morphic/world-loading.js";
 
 import {
   InformPrompt,
@@ -31,13 +31,11 @@ import {
 } from "lively.components/prompts.js";
 
 import LoadingIndicator from "lively.components/loading-indicator.js";
-import { StatusMessage, StatusMessageForMorph } from 'lively.halos/markers.js';
-import Halo, { MorphHighlighter } from "lively.halos/morph.js";
+import { Halo, MorphHighlighter, StatusMessage, StatusMessageForMorph, ProportionalLayoutHalo, GridLayoutHalo, FlexLayoutHalo  } from 'lively.halos';
 import { Window, List, FilterableList, Menu } from "lively.components";
 
 import worldCommands from "./world-commands.js";
 import { GradientEditor } from "./styling/gradient-editor.js";
-import { ProportionalLayoutHalo, GridLayoutHalo, FlexLayoutHalo } from "lively.halos/layout.js";
 
 export class LivelyWorld extends World {
 

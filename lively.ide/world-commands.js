@@ -5,11 +5,10 @@ import { inspect, Text, config } from "lively.morphic";
 import KeyHandler from "lively.morphic/events/KeyHandler.js";
 import { loadObjectFromPartsbinFolder, loadPart } from "lively.morphic/partsbin.js";
 import { interactivelySaveWorld } from "lively.morphic/world-loading.js";
-import { show } from "lively.halos/markers.js";
+import { show, showAndSnapToGuides, removeSnapToGuidesOf  } from "lively.halos";
 import { LoadingIndicator } from "lively.components";
 
 import { createMorphSnapshot } from "lively.morphic/serialization.js";
-import { showAndSnapToGuides, removeSnapToGuidesOf } from "lively.halos/drag-guides.js";
 import { interactivelyFreezeWorld } from "lively.freezer";
 
 

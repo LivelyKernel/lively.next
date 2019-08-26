@@ -1,6 +1,6 @@
 /*global System*/
 import { arr, string } from "lively.lang";
-import { show } from "lively.halos/markers.js";
+import { show } from "lively.halos";
 import { Range } from "lively.morphic/text/range.js";
 
 function getEvalEnv(morph) {

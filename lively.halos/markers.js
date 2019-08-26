@@ -247,7 +247,7 @@ export class StatusMessage extends Morph {
 
   relayout() {
     this.getSubmorphNamed("messageText").setBounds(this.innerBounds().insetBy(10));
-    this.getSubmorphNamed("closeButton").topRight = this.innerBounds().topRight().addXY(-6, 6);
+    this.getSubmorphNamed("closeButton").topRight = this.innerBounds().topRight().addXY(-6, 8);
   }
 
   isEpiMorph() {

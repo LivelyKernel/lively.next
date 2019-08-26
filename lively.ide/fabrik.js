@@ -4,8 +4,7 @@ import { arr, obj } from "lively.lang";
 import { HorizontalLayout, Morph, VerticalLayout, StyleSheet, Icon, GridLayout, morph } from "lively.morphic";
 import { TreeData, Tree } from "lively.components/tree.js";
 import { Leash, LabeledCheckBox, SearchField } from "lively.components/widgets.js";
-import {showConnector, show} from "lively.halos/markers.js"
-import { InteractiveMorphSelector, MorphHighlighter } from "lively.halos/morph.js";
+import { showConnector, show, InteractiveMorphSelector, MorphHighlighter } from "lively.halos";
 import Window from "lively.components/window.js";
 
 export function interactivelyShowConnection(connection) {

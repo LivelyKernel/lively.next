@@ -161,6 +161,7 @@ export async function interactivelyFreezeWorld(world) {
         'lively.vm',
         'lively-system-interface',
         'lively.shell',
+        'lively.halos',
         'pouchdb',
         'pouchdb-adapter-mem',
         'https://unpkg.com/rollup@1.17.0/dist/rollup.browser.js',

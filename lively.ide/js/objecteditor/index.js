@@ -15,7 +15,7 @@ import { interactivelySavePart } from "lively.morphic/partsbin.js";
 import * as livelySystem from 'lively-system-interface';
 
 import { adoptObject } from "lively.classes/runtime.js";
-import { InteractiveMorphSelector } from "lively.halos/morph.js";
+import { InteractiveMorphSelector } from "lively.halos";
 import ClassTreeData from './classTree.js';
 import ObjectEditorContext from "./context.js";
 import DarkTheme from "../../themes/dark.js";

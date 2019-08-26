@@ -6,7 +6,7 @@ import { connect, disconnect, once } from "lively.bindings";
 import { Morph, GridLayout, HorizontalLayout, morph, CustomLayout, Label, Icon, StyleSheet, config } from "lively.morphic";
 import { Tree, LoadingIndicator, DropDownList } from "lively.components";
 import { DropDownSelector, SearchField, LabeledCheckBox } from "lively.components/widgets.js";
-import { MorphHighlighter, InteractiveMorphSelector } from "lively.halos/morph.js";
+import { MorphHighlighter, InteractiveMorphSelector } from "lively.halos";
 import { printValue, RemoteInspectionTree, InspectionTree, isMultiValue } from './inspector/context.js';
 
 import { NumberWidget, StringWidget, IconWidget, PaddingWidget,

@@ -26,7 +26,7 @@ import {
   CheckBox
 } from "lively.components/widgets.js";
 
-import { SvgStyleHalo } from "lively.halos/vertices.js";
+import { SvgStyleHalo } from "lively.halos";
 
 import { GradientEditor } from "./gradient-editor.js";
 import { ColorPickerField } from "./color-picker.js";
