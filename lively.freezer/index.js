@@ -24,15 +24,6 @@ import { Color } from "lively.graphics";
 import { moduleOfId, isReference, referencesOfId, classNameOfId } from "lively.serializer2/snapshot-navigation.js";
 import { LoadingIndicator } from "lively.components";
 
-// part = this.get('typeshift wrapper')
-/*
-frozen = await bundlePart(part, { compress: true, exclude: [
-    'lively.ast', 'lively.vm', 'lively-system-interface', 'lively.halos', 'lively.ide', 'pouchdb', 'pouchdb-adapter-mem', 'bowser'
-]})
-await resource('https://admin.typeshift.io/rollup-test.closure.js').write(frozen.min)
-*/
-// frozen = await bundlePart(part, { compress: true })
-
 export async function generateLoadHtml(part) {
   const addScripts = `
       <noscript>
@@ -234,25 +225,32 @@ export async function displayFrozenPartsFor(user = $world.getCurrentUser(), requ
   let frozenPartsDir = resource(System.baseURL).join('users').join(userName).join('published/');
   if (!await frozenPartsDir.exists()) return;
   let publishedItems = (await frozenPartsDir.dirList()).map(dir => [dir.name(), dir.join('index.html').url])
-  $world.listPrompt('Published Parts', publishedItems.map(([name, url]) => {
+  $world.filterableListPrompt('Published Parts', publishedItems.map(([name, url]) => {
     return {
       isListItem: true,
       autoFit: true,
+      string: name,
       morph: morph({
         type: 'text',
         fontSize: 14,
         fontColor: Color.white,
         fill: Color.transparent,
+        readOnly: true,
         fixedWidth: true,
         textAndAttributes: [url.replace(System.baseURL, ''), {
-          link: url, fontColor: Color.white
+          link: url, fontColor: 'inherit',
         }, name, {
           fontStyle: 'italic', fontWeight: 'bold',
           textStyleClasses: ['annotation', 'truncated-text']
         }]
       })
     } 
-  }), { requester });
+  }), {
+    requester, fuzzy: true, onSelection: (prompt) => {
+      prompt.submorphs[2].items.forEach(item => item.morph.fontColor = Color.white);
+      prompt.submorphs[2].selectedItems[0].morph.fontColor = Color.black;                   
+    }
+  });
 }
   
 function belongsToObjectPackage(moduleId) {
@@ -637,22 +635,13 @@ class LivelyRollup {
     let es5 = resource(System.decanonicalize('lively.freezer/tmp.es5.js'));
     let min = resource(System.decanonicalize('lively.freezer/tmp.min.js'));
     await tmp.write(code);
-    let cwd = '/home/robin/lively.next/lively.freezer';
+    let cwd = await evalOnServer('System.baseURL + "lively.freezer/"').then(cwd => cwd.replace('file://', ''));
     let c, res = {};
-    if (output == 'es5') {
-      c = await runCommand(`${swc} tmp.js -o tmp.es5.js`, { cwd });
-      await promise.waitFor(50000, () => c.status.startsWith('exited'));
-      c = await runCommand(`${uglify} tmp.es5.js > tmp.min.js`, { cwd });
-      await promise.waitFor(50000, () => c.status.startsWith('exited'));
-      res.code = await es5.read();
-      await es5.remove();
-    } else {
-      c = await runCommand(`${googleClosure} tmp.js > tmp.min.js --warning_level=QUIET`, { cwd });
-      await promise.waitFor(50000, () => c.status.startsWith('exited'));
-      if (c.stderr) throw new Error(c.stderr);
-      console.log(c);
-      res.code = code;
-    }
+    c = await runCommand(`${googleClosure} tmp.js > tmp.min.js --warning_level=QUIET`, { cwd });
+    await promise.waitFor(50000, () => c.status.startsWith('exited'));
+    if (c.stderr) throw new Error(c.stderr);
+    console.log(c);
+    res.code = code;
     res.min = await min.read();
     li.label = 'Compressing...';
     if (compressBundle) res.compressed = await compress(new TextEncoder('utf-8').encode(res.min));
