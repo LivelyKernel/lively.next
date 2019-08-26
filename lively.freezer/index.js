@@ -2,7 +2,7 @@
 import { rollup } from 'https://unpkg.com/rollup@1.17.0/dist/rollup.browser.js';
 import {compress} from 'wasm-brotli'
 import {
-  createMorphSnapshot,
+  createMorphSnapshot, serializeMorph,
   loadPackagesAndModulesOfSnapshot,
   findRequiredPackagesOfSnapshot
 } from "lively.morphic/serialization.js";
@@ -11,18 +11,18 @@ import { module } from "lively.modules";
 import * as ast from 'lively.ast';
 import * as classes from 'lively.classes';
 import { resource } from "lively.resources";
-import LoadingIndicator from "lively.components/loading-indicator.js";
 import { es5Transpilation } from "lively.source-transform";
 import {
   rewriteToCaptureTopLevelVariables,
   insertCapturesForExportedImports
 } from "lively.source-transform/capturing.js";
 import { compose } from "lively.lang/function.js";
-import { requiredModulesOfSnapshot } from "lively.serializer2";
-import { AllNodesVisitor } from "lively.ast/lib/visitors.js";
+import { requiredModulesOfSnapshot, removeUnreachableObjects } from "lively.serializer2";
 import { runCommand } from "lively.ide/shell/shell-interface.js";
-import { Path, promise, string, arr } from "lively.lang";
+import { Path, obj, promise, string, arr } from "lively.lang";
 import { Color } from "lively.graphics";
+import { moduleOfId, isReference, referencesOfId, classNameOfId } from "lively.serializer2/snapshot-navigation.js";
+import { LoadingIndicator } from "lively.components";
 
 // part = this.get('typeshift wrapper')
 /*
@@ -83,6 +83,104 @@ export async function generateLoadHtml(part) {
   return html;
 }
 
+export async function interactivelyFreezeWorld(world) {
+  /*
+    Function prompts the user for a name to publish the part under.
+    Data is uploaded to directory and then returns a link to the folder. 
+  */ 
+  let userName = $world.getCurrentUser().name;
+  let frozenPartsDir = await resource(System.baseURL).join('users').join(userName).join('published/').ensureExistance();
+  let publicAlias = world.metadata.commit.name;
+  let publicationDir = frozenPartsDir.join(publicAlias + '/');
+  while (await publicationDir.exists()) {
+    let proceed = await $world.confirm(`A world published as "${publicAlias}" already exists.\nDo you want to overwrite this publication?`);
+    if (proceed) break;
+    publicAlias = await $world.prompt('Please enter a different name for this published world:');
+    if (!publicAlias) return;
+    publicationDir = frozenPartsDir.join(publicAlias + '/');
+  }
+
+  await publicationDir.ensureExistance();
+
+  // remove the metadata props
+  const snap = serializeMorph(world);
+  const deletedIds = [];
+  obj.values(snap.snapshot).forEach(m => delete m.props.metadata);
+  // remove objects that are part of the lively.ide or lively.halo package (dev tools)
+  for (let id in snap.snapshot) {
+     delete snap.snapshot[id].props.metadata;
+     delete snap.snapshot[id]._cachedLineCharBounds;
+     let module = moduleOfId(snap.snapshot, id);
+     if (!module.package) continue;
+     if (['lively.ide', 'PartsBinBrowser', 'lively.halo'].includes(module.package.name)) {
+       // fixme: we also need to kill of packages which themselves require one of the "taboo" packages
+       delete snap.snapshot[id];
+       deletedIds.push(id);
+       continue;
+     }
+     // transform sources for attribute connections
+     if (classNameOfId(snap.snapshot, id) === 'AttributeConnection') {
+        let props = snap.snapshot[id].props;
+        if (props.converterString) {
+           props.converterString.value = es5Transpilation(`(${props.converterString.value})`); 
+        }
+        if (props.updaterString) {
+           props.updaterString.value = es5Transpilation(`(${props.updaterString.value})`);
+        }
+     }    
+  }
+
+  // remove all windows that are emptied due to the clearance process
+  for (let id in snap.snapshot) {
+     let className = classNameOfId(snap.snapshot, id);
+     if ( arr.intersect(referencesOfId(snap.snapshot, id), deletedIds).length > 0) {
+         if (className === 'Window') {
+           delete snap.snapshot[id];
+           continue;
+         }
+         for (let [key, {value: v}] of Object.entries(snap.snapshot[id].props)) {
+           if (isReference(v) && deletedIds.includes(v.id)) {
+             delete snap.snapshot[id].props[key];
+           }
+           if (arr.isArray(v)) { 
+             // also remove references that are stuck inside array values
+             snap.snapshot[id].props[key].value = v.filter(v => !(isReference(v) && deletedIds.includes(v.id)));
+           }
+         }   
+     }
+  }
+  removeUnreachableObjects([snap.id], snap.snapshot);
+
+  // freeze the part
+  let frozen;
+  try {
+    frozen = await bundlePart(snap, {
+      compress: true,
+      exclude: [
+        'lively.ast',
+        'lively.vm',
+        'lively-system-interface',
+        'lively.shell',
+        'pouchdb',
+        'pouchdb-adapter-mem',
+        'https://unpkg.com/rollup@1.17.0/dist/rollup.browser.js',
+        'wasm-brotli'
+      ]
+    });
+  } catch(e) {
+    throw e;
+  }
+
+  let li = LoadingIndicator.open('Writing files...')
+  await publicationDir.join('index.html').write(await generateLoadHtml(world));
+  await publicationDir.join('load.js').write(frozen.min);
+  let dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
+  for (let [partName, snapshot] of Object.entries(frozen.dynamicParts)) {
+    await dynamicParts.join(partName + '.json').writeJson(snapshot);
+  }
+  li.remove();
+}
+
 export async function interactivelyFreezePart(part, requester = false) {
   /*
     Function prompts the user for a name to publish the part under.
@@ -119,7 +217,7 @@ export async function interactivelyFreezePart(part, requester = false) {
   } catch(e) {
     throw e;
   }
-
+  
   let li = LoadingIndicator.open('Writing files...')
   await publicationDir.join('index.html').write(await generateLoadHtml(part));
   await publicationDir.join('load.js').write(frozen.min);
@@ -184,7 +282,7 @@ async function getRequiredModulesFromSnapshot(snap, frozenPart, includeDynamicPa
 
     // extract also modules that are "dependents" and loaded by the SystemJS engine
     let callSite;
-    AllNodesVisitor.run(parsedModuleSource, (node, path) => {
+    ast.AllNodesVisitor.run(parsedModuleSource, (node, path) => {
       if (node.type === 'CallExpression' &&
           ['loadObjectFromPartsbinFolder', 'loadPart'].includes(node.callee.name)) {
         dynamicPartLoads.push(node.arguments[0].value);
@@ -335,6 +433,9 @@ class LivelyRollup {
     }
     let pkg = module(importer).package();
     let mappedId;
+    if (id == 'lively.ast' && this.excludedModules.includes(id)) {
+      return { id, excternal: true };
+    }
     if (pkg && this.excludedModules.includes(pkg.name)) return false;
     if (this.excludedModules.includes(id)) return false;
     if (pkg && pkg.map[id]) {
@@ -355,6 +456,11 @@ class LivelyRollup {
   }
 
   async load(id) {
+    if (id == 'lively.ast' && this.excludedModules.includes(id)) {
+      return `
+        let nodes = {}, query = {}, transform = {}, BaseVisitor = Object;
+        export { nodes, query, transform, BaseVisitor };`
+    }
     if (id === '__root_module__') return await this.getRootModule();
     let mod = module(id);
     if (this.excludedModules.includes(mod.package().name) && !mod.id.endsWith('.json')) {
@@ -450,7 +556,9 @@ class LivelyRollup {
              var require = arguments.length > 1 && arguments[2] !== undefined ? arguments[2] : function () {};
 
              // try to simulate node.js context
-             var exec = function(exports, require) { ${mod._source} };
+             var exec = function(exports, require) {
+                ${mod._source} 
+             };
              exec(exports, require);
              if (typeof module.exports != 'function' && Object.keys(module.exports).length === 0) Object.assign(module.exports, exports);
              if (typeof module.exports != 'function' && Object.keys(module.exports).length === 0) {
@@ -553,8 +661,8 @@ class LivelyRollup {
   }
 }
 
-export async function bundlePart(part, { exclude: excludedModules = [], compress, output = 'es2019' }) {
-  let snapshot = await createMorphSnapshot(part);
+export async function bundlePart(partOrSnapshot, { exclude: excludedModules = [], compress, output = 'es2019' }) {
+  let snapshot = partOrSnapshot.isMorph ? await createMorphSnapshot(partOrSnapshot) : partOrSnapshot;
   let bundle = new LivelyRollup({ excludedModules, snapshot });
   let res = await bundle.rollup(compress, output);
   console.log(bundle);

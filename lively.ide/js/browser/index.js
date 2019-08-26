@@ -26,12 +26,11 @@ import "mocha-es6/index.js";
 // Browser UI
 // -=-=-=-=-=-
 
-import { findDecls } from "lively.ast/lib/code-categorizer.js";
+import { categorizer, query } from "lively.ast";
 import { testsFromSource } from "../../test-runner.js";
 import { module, semver } from "lively.modules/index.js";
 import DarkTheme from "../../themes/dark.js";
 import DefaultTheme from "../../themes/default.js";
-import { query } from "lively.ast/index.js";
 import { objectReplacementChar } from "lively.morphic/text/document.js";
 import { loadPart } from "lively.morphic/partsbin.js";
 import { serverInterfaceFor } from "lively-system-interface/index.js";
@@ -1013,7 +1012,7 @@ export default class Browser extends Window {
     }
 
     let parsed = editorPlugin.getNavigator().ensureAST(editorPlugin.textMorph),
-        decls = findDecls(parsed);
+        decls = categorizer.findDecls(parsed);
     codeEntityTree.treeData = new CodeDefTreeData(decls);
   }
 

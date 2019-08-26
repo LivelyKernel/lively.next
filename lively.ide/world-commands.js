@@ -1,15 +1,19 @@
 /*global System*/
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, date, Path, arr, string, obj } from "lively.lang";
-import { inspect, MorphicDB, Text, config } from "lively.morphic";
+import { inspect, Text, config } from "lively.morphic";
 import KeyHandler from "lively.morphic/events/KeyHandler.js";
 import { loadObjectFromPartsbinFolder, loadPart } from "lively.morphic/partsbin.js";
 import { interactivelySaveWorld } from "lively.morphic/world-loading.js";
 import { show } from "lively.halos/markers.js";
 import { LoadingIndicator } from "lively.components";
-import { ensureCommitInfo } from "lively.morphic/morphicdb/db.js";
-import { serializeMorph, createMorphSnapshot } from "lively.morphic/serialization.js";
+
+import { createMorphSnapshot } from "lively.morphic/serialization.js";
 import { showAndSnapToGuides, removeSnapToGuidesOf } from "lively.halos/drag-guides.js";
+import { interactivelyFreezeWorld } from "lively.freezer";
+
+
+
 
 var commands = [
 
@@ -1193,30 +1197,7 @@ var commands = [
   {
     name: 'freeze world',
     exec: async (world) => {
-      let { default: L2LClient} = await System.import("lively.2lively/client.js");
-      let l2lClient = L2LClient.default();
-      let peers = await l2lClient.listPeers(true)
-      let freezer = peers.find(ea => ea.type === "lively.next.org freezer service");
-      let name = await world.prompt('Please enter an identifier for the frozen world', { requester: world });
-      if (!name) return;
-      let { data: status } = await l2lClient.sendToAndWait(freezer.id, "[freezer] status", {}); 
-      let deployment;
-      if (deployment = status.find(({id}) => id === name)) {
-        if(await $world.confirm('A frozen part/world with this name already exists. Would you like to update this deployment?')) {
-           return LoadingIndicator.forPromise(
-               l2lClient.sendToAndWait(freezer.id, "[freezer] update part", deployment),
-               `updating deployment for ${name}...`);
-        }
-      }
-      deployment = {
-        id: name,
-        commit: await ensureCommitInfo(world.metadata.commit),
-        dbName: MorphicDB.default.name
-      };
-      return LoadingIndicator.forPromise(
-         l2lClient.sendToAndWait(freezer.id, "[freezer] register part", deployment),
-        `freezing world ${name}...`
-      ); 
+      await interactivelyFreezeWorld(world);
     }
   },
 

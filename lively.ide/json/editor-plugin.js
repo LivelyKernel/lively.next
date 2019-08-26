@@ -1,7 +1,7 @@
 import JavaScriptEditorPlugin from "../js/editor-plugin.js";
 import JSONChecker from "./checker.js";
 import { getMode } from "../editor-modes.js";
-import { nodesAt } from "lively.ast/lib/query.js";
+import { query } from "lively.ast";
 import { PackageJSONCompleter } from "./completers.js";
 
 export default class JSONEditorPlugin extends JavaScriptEditorPlugin {
@@ -38,7 +38,7 @@ export default class JSONEditorPlugin extends JavaScriptEditorPlugin {
   }
 
   tokenAt(pos) {
-     return nodesAt(this.textMorph.positionToIndex(pos) - 1, this._ast);
+     return query.nodesAt(this.textMorph.positionToIndex(pos) - 1, this._ast);
   }
 
   get isJSONEditorPlugin() { return true; }

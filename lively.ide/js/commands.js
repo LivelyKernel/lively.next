@@ -393,5 +393,5 @@ export var astEditorCommands = [
 
 ];
 
-lively.modules.module("lively.ide/js/editor-plugin.js")
+lively.modules && lively.modules.module("lively.ide/js/editor-plugin.js")
   .reload({reloadDeps: false, resetEnv: false});
