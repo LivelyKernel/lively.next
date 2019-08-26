@@ -218,7 +218,7 @@ export class Text extends Morph {
           let initialExtent = this.getProperty('extent');
           if (!this._textChange && this.viewState && 
               this.viewState._needsFit && !this._rendering &&
-              !this._measuringTextBox && !!initialExtent) {
+              !this._measuringTextBox && !!initialExtent && this.owner) {
             let renderer = this.env.renderer;
             let textRenderer = this.textRenderer;
             if (!renderer || !textRenderer) return initialExtent;
