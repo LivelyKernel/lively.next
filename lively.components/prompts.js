@@ -754,7 +754,7 @@ export class ListPrompt extends AbstractPrompt {
         derived: true,
         after: ['preselect'],
         set(cb) {
-          connect(this.getSubmorphNamed('list'), "selection", cb);
+          connect(this.getSubmorphNamed('list'), "selection", () => cb(this));
         }
       }
     }

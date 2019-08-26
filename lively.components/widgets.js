@@ -310,11 +310,11 @@ export class Slider extends Morph {
 export class ValueScrubber extends Text {
   static get properties() {
     return {
-      autofit: {
+      scaleToBounds: {
         defaultValue: false,
-        set(v) {
-          this.fixedWidth = v;
-          this.setProperty('autofit', v);
+        set(active) {
+          this.fixedWidth = true;
+          this.setProperty('scaleToBounds', active);
         }
       },
       value: {defaultValue: 0},
@@ -329,7 +329,7 @@ export class ValueScrubber extends Text {
 
   relayout() {
     const d = 5;
-    if (!this.autofit) return;
+    if (!this.scaleToBounds) return;
     this.scale = Math.min(1, this.width / (this.textBounds().width + d));
   }
 
@@ -367,7 +367,7 @@ export class ValueScrubber extends Text {
     signal(this, "scrub", v);
     let valueString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
     if (this.unit) valueString += " " + this.unit;
-    this.replace(this.documentRange, valueString, false, this.autofit, false, false);
+    this.replace(this.documentRange, valueString, false, this.scaleToBounds, false, false);
     this.factorLabel.description = scale.toFixed(3) + "x";
     this.factorLabel.position = evt.hand.position.addXY(10, 10);
     this.relayout();

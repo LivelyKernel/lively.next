@@ -1455,7 +1455,7 @@ export class DropDownList extends Button {
     }, 100);
   }
 
-  toggleList() {
+  async toggleList() {
     var list = this.listMorph, bounds;
     if (this.isListVisible()) {
       signal(this, "deactivated");
@@ -1483,7 +1483,9 @@ export class DropDownList extends Button {
       once(list, 'onItemMorphClicked', this, 'toggleList');
       once(list, 'onBlur', this, 'removeWhenFocusLost');
       list.focus();
-      list.whenRendered(() => list.submorphs[0].submorphs.forEach(m => m.fit()))
+      await list.whenRendered();
+      await list.whenRendered();
+      list.scrollSelectionIntoView();
     }
   }
 
