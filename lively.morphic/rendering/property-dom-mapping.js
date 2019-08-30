@@ -17,7 +17,7 @@ export function styleProps(morph) {
   addShadowStyle(morph, style);
   if (morph.grayscale) style.filter = `${style.filter || ''} grayscale(${100 * morph.grayscale}%)`
   if (morph.opacity != null) style.opacity = morph.opacity;
-  if (morph.draggable && !morph.isWorld) style['touch-action'] = 'unset';
+  if (morph.draggable && !morph.isWorld) style['touch-action'] = 'none';
   return style;
 }
 
@@ -25,7 +25,7 @@ function addTransform(morph, style) {
   let {position, origin, scale, rotation, flipped} = morph,
       x = Math.round(position.x - origin.x),
       y = Math.round(position.y - origin.y),
-      promoteToCompositionLayer = morph.renderOnGPU || (morph.dropShadow && !morph.dropShadow.fast);
+      promoteToCompositionLayer = morph.renderOnGPU || (morph.dropShadow && !morph.dropShadow.fast) || morph.grayscale > 0;
   if ((morph.owner && morph.owner.isText) || promoteToCompositionLayer) {
     style.transform = (promoteToCompositionLayer ? `translate3d(${x}px, ${y}px, 0px)` : `translate(${x}px, ${y}px)`);
   } else {

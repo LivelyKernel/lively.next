@@ -182,7 +182,7 @@ export default class TextInput {
     if (morph && morph.isText && morph.focusable) {
       // need this even if node === activeElement
       // to bring up virtual keyboard on iPad
-      node.focus();
+      if (bowser.tablet || bowser.mobile) node.focus();
       this.ensureBeingAtCursorOfText(morph);
     } else if (world) this.ensureBeingInVisibleBoundsOfWorld(world);
   }
