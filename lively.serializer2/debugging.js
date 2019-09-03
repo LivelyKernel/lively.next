@@ -1,6 +1,6 @@
 /*global System*/
 import { fun, obj, arr, num, string, graph, Path } from "lively.lang";
-import { ObjectPool } from "./index.js";
+import { ObjectPool } from "./object-pool.js";
 import {
   lookupPath, referencesAndClassNamesOfId, modifyProperty,
   removeUnreachableObjects,

@@ -22,6 +22,7 @@ import { textAndAttributesWithSubRanges } from "./attributes.js";
 import { serializeMorph, deserializeMorph } from "../serialization.js";
 import { getSvgVertices } from "../rendering/property-dom-mapping.js";
 import { renderSubTree } from "../rendering/morphic-default.js";
+import { getClassName } from "lively.serializer2";
 
 export class Text extends Morph {
 
@@ -1037,7 +1038,7 @@ export class Text extends Morph {
         computeIntersectionShape = (submorph) => {
           if (submorph.isPath) {
             return Shapes.path(getSvgVertices(submorph.vertices));
-          } else if (submorph.constructor.name == 'Ellipse') {
+          } else if (getClassName(submorph) == 'Ellipse') {
             return Shapes.ellipse(
               submorph.center.x,
               submorph.center.y,        

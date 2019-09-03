@@ -5,10 +5,14 @@ const classMetaForSerializationProp = "lively.serializer-class-info",
       classSuperClassProp = Symbol.for('lively-instance-superclass'),
       moduleMetaInClassProp = Symbol.for("lively-module-meta");
 
+export function getClassName(obj) {
+  return obj.constructor.name || obj.constructor.className;
+}
+
 export function getSerializableClassMeta(realObj) {
   if (!realObj || !realObj.constructor) return;
 
-  let className = realObj.constructor.name;
+  let className = getClassName(realObj);
 
   if (!className) {
     console.warn(`Cannot serialize class info of anonymous class of instance ${realObj}`);

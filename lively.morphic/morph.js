@@ -2,7 +2,7 @@
 import { Color, Line, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, fun, properties, obj, arr, num, promise, tree, Path as PropertyPath } from "lively.lang";
 import { signal } from "lively.bindings";
-import { copy, deserializeSpec, ExpressionSerializer, getSerializableClassMeta, serializeSpec } from "lively.serializer2";
+import { copy, deserializeSpec, ExpressionSerializer, getSerializableClassMeta, serializeSpec, getClassName } from "lively.serializer2";
 
 import {
   renderRootMorph,
@@ -55,7 +55,7 @@ export class Morph {
         group: "core",
         initialize(name) {
           if (!name) {
-            let className = this.constructor.name;
+            let className = getClassName(this)
             name = (string.startsWithVowel(className) ? "an" : "a") + className;
           }
           this.name = name;
@@ -726,7 +726,7 @@ export class Morph {
     this._dirty = true; // for renderer, signals need  to re-render
     this._rendering = false; // for knowing when rendering is done
     this._submorphOrderChanged = false; // extra info for renderer
-    this._id = newMorphId(this.constructor.name);
+    this._id = newMorphId(getClassName(this));
     this._animationQueue = new AnimationQueue(this);
     this._cachedPaths = {};
     this._pathDependants = [];
@@ -972,12 +972,12 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   toString() {
-    return `<${this.constructor.name} - ${this.name ? this.name : this.id}>`;
+    return `<${getClassName(this)} - ${this.name ? this.name : this.id}>`;
   }
 
   edit(opts) {
     return this.env.world.execCommand("open object editor", {
-      className: this.constructor.name, ...opts, target: this});
+      className: getClassName(this), ...opts, target: this});
   }
 
   inspect(opts) {
@@ -2382,7 +2382,7 @@ export class Morph {
     // builds a ["proto name", [metthod, ...]] list
     let methodsByProto = [];
     for (let proto = this; proto !== Object.prototype;) {
-      let protoName = proto === this ? String(this) : proto.constructor.name,
+      let protoName = proto === this ? String(this) : getClassName(proto),
           group = null,
           descrs = obj.getOwnPropertyDescriptors(proto),
           nextProto = Object.getPrototypeOf(proto);
@@ -2533,7 +2533,7 @@ export class Morph {
     this._dirty = true;
     this._rendering = false;
     this._submorphOrderChanged = false;
-    this._id = spec._id || newMorphId(this.constructor.name);
+    this._id = spec._id || newMorphId(getClassName(this));
     this._animationQueue = new AnimationQueue(this);
     this._cachedPaths = {};
     this._pathDependants = [];
@@ -2763,6 +2763,7 @@ export class Ellipse extends Morph {
       borderRadiusBottom: {get() { return this.width; }, set() {}},
     }
   }
+  
 }
 
 export class Triangle extends Morph {
@@ -3295,7 +3296,7 @@ export class Path extends Morph {
       value: pool.expressionSerializer.exprStringEncode({
         __expr__: c.toJSExpr(),
         bindings: {"lively.graphics/geometry-2d.js": ['pt', 'rect'],
-                   "lively.graphics/color.js": ["Color", c.constructor.name]}
+                   "lively.graphics/color.js": ["Color", getClassName(c)]}
       })
     }
   }
