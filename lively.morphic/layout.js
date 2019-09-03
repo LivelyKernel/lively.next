@@ -572,7 +572,8 @@ export class ProportionalLayout extends Layout {
 
   getSpec() {
     return {
-      submorphSettings: this.submorphSettings
+      submorphSettings: this.submorphSettings,
+      reactToSubmorphAnimations: this.reactToSubmorphAnimations
     }
   }
 
@@ -626,7 +627,7 @@ export class ProportionalLayout extends Layout {
   set submorphSettings(submorphSettings) {
     if (!this.container) {
       once(this, "container", this, "submorphSettings",
-        {converter: `() => submorphSettings`, varMapping: {submorphSettings}});
+        {converter: `function () { return submorphSettings }`, varMapping: {submorphSettings}});
       return;
     }
     this._submorphSettings = submorphSettings;
@@ -785,9 +786,9 @@ export class TilingLayout extends Layout {
   }
 
   getSpec() {
-    let { axis, align, spacing, layoutOrder, orderByIndex } = this;
+    let { axis, align, spacing, layoutOrder, orderByIndex, reactToSubmorphAnimations } = this;
     return {
-      axis, align, spacing, layoutOrder, orderByIndex
+      axis, align, spacing, layoutOrder, orderByIndex, reactToSubmorphAnimations
     }
   }
 

@@ -282,7 +282,9 @@ export default class EventDispatcher {
     //             we need to pass this undocumented touch-action attribute as "none"
     //             to the body of the document, since iOS does not support the
     //             CSS property touch-action.
-    if (bowser.ios || bowser.firefox) rootNode.setAttribute("touch-action", "none");
+    // rmes 3.9.19: This seems to break the scroll on iOS9 and possibly others, so I removed
+    //              this flag for iOS and set it on firefox only
+    if (bowser.firefox) rootNode.setAttribute("touch-action", "none");
 
     return this;
   }
