@@ -11,7 +11,7 @@ import { module } from "lively.modules";
 import * as ast from 'lively.ast';
 import * as classes from 'lively.classes';
 import { resource } from "lively.resources";
-import { es5Transpilation } from "lively.source-transform";
+import { es5Transpilation, stringifyFunctionWithoutToplevelRecorder } from "lively.source-transform";
 import {
   rewriteToCaptureTopLevelVariables,
   insertCapturesForExportedImports
@@ -153,6 +153,7 @@ export async function interactivelyFreezeWorld(world) {
         'lively-system-interface',
         'lively.shell',
         'lively.halos',
+        'lively.ide', // optional but saves roughly 1mb
         'pouchdb',
         'pouchdb-adapter-mem',
         'https://unpkg.com/rollup@1.17.0/dist/rollup.browser.js',
@@ -180,7 +181,7 @@ export async function interactivelyFreezePart(part, requester = false) {
   */ 
   let userName = $world.getCurrentUser().name;
   let frozenPartsDir = await resource(System.baseURL).join('users').join(userName).join('published/').ensureExistance();
-  let publicAlias = await $world.prompt('Please enter a name for this published part:', { requester });
+  let publicAlias = await $world.prompt('Please enter a name for this published part:', { requester, input: part.metadata.publishedAlias || '' });
   if (!publicAlias) return;
   let publicationDir = frozenPartsDir.join(publicAlias + '/');
   while (await publicationDir.exists()) {
@@ -190,6 +191,8 @@ export async function interactivelyFreezePart(part, requester = false) {
     if (!publicAlias) return;
     publicationDir = frozenPartsDir.join(publicAlias + '/');
   }
+
+  part.changeMetaData('publishedAlias', publicAlias, true, false)
 
   await publicationDir.ensureExistance();
 
@@ -291,7 +294,8 @@ async function getRequiredModulesFromSnapshot(snap, frozenPart, includeDynamicPa
     // try to resolve them
     for (let partName of dynamicPartLoads) {
       let dynamicPart = await MorphicDB.default.fetchSnapshot('part', partName);
-      if (dynamicPart) {             
+      if (dynamicPart) {
+        transpileAttributeConnections(dynamicPart);
         if (frozenPart) frozenPart.dynamicParts[partName] = dynamicPart;
         if (includeDynamicParts) {
           // load the packages of the part, if they are not loaded
@@ -651,10 +655,22 @@ class LivelyRollup {
   }
 }
 
+function transpileAttributeConnections(snap) {
+  let transpile = compose((c) => `(${c})`, es5Transpilation, stringifyFunctionWithoutToplevelRecorder);
+  Object.values(snap.snapshot).filter(m => Path(["lively.serializer-class-info", "className"]).get(m) == 'AttributeConnection').forEach(m => {
+  if (m.props.converterString) {
+    return m.props.converterString.value = transpile(m.props.converterString.value);
+  }
+  if (m.props.updaterString) {
+    return m.props.updaterString.value = transpile(m.props.updaterString.value);
+  }
+})
+}
+
 export async function bundlePart(partOrSnapshot, { exclude: excludedModules = [], compress, output = 'es2019' }) {
   let snapshot = partOrSnapshot.isMorph ? await createMorphSnapshot(partOrSnapshot) : partOrSnapshot;
+  transpileAttributeConnections(snapshot);
   let bundle = new LivelyRollup({ excludedModules, snapshot });
   let res = await bundle.rollup(compress, output);
-  console.log(bundle);
   return res;
 }
