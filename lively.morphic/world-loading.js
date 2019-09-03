@@ -8,16 +8,7 @@ import { loadWorldFromResource } from "./serialization.js";
 import { MorphicDB } from "./morphicdb/index.js";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import { ensureCommitInfo } from "./morphicdb/db.js";
-
-export function pathForBrowserHistory(worldName, queryString) {
-  // how does the resource map to a URL shown in the browser URL bar? used for
-  // browser history
-  queryString = queryString.trim();
-  if (!queryString || queryString === "?") queryString = "";
-  let basePath = "/worlds/";
-  worldName = worldName.replace(/\.json$/, "").replace(/%20/g, " ");
-  return `${basePath}${worldName}${queryString}`;
-}
+import { pathForBrowserHistory } from './helpers.js';
 
 export async function loadWorldFromURL(url, oldWorld, options) {
   let worldResource = url.isResource ? url :

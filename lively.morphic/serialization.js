@@ -6,8 +6,7 @@ import {
 } from "lively.serializer2";
 import { MorphicEnv } from './env.js';
 import { resource } from "lively.resources";
-import { newMorphId, morph } from "./helpers.js";
-import { pathForBrowserHistory } from "./world-loading.js";
+import { newMorphId, morph, pathForBrowserHistory } from "./helpers.js";
 
 function normalizeOptions(options) {
   options = {reinitializeIds: false, ...options}

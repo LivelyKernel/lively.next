@@ -1,16 +1,15 @@
+/*global System*/
 import { Rectangle, pt, Color } from "lively.graphics";
 import { connect, once, disconnect } from "lively.bindings"
 import { Path } from "lively.lang";
 import { morph } from '../helpers.js';
-import { Text } from './morph.js';
+
 import { StyleSheet } from '../style-sheets.js';
 import { GridLayout } from '../layout.js';
 import config from "../config.js";
 import { Morph } from '../morph.js';
 import { lessPosition, minPosition, maxPosition } from "./position.js";
-import { occurStartCommand } from "./occur.js";
 import { Icon } from "./icons.js";
-import TextMap from "./map.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // finds string / regexp matches in text morphs
@@ -250,13 +249,15 @@ export class SearchWidget extends Morph {
               label: Icon.textAttribute("arrow-circle-o-up"),
               styleClasses: ["nav"]
             }).fit(),
-            Text.makeInputLine({
+            morph({
+              type: 'input',
               name: "searchInput", clipMode: "hidden",
               width: this.width, height: 20,
               placeholder: "search input",
               historyId: "lively.morphic-text search"
             }),
-            Text.makeInputLine({
+            morph({
+              type: 'input',
               name: "replaceInput", clipMode: "hidden",
               width: this.width, height: 20,
               placeholder: "replace input",
@@ -549,7 +550,7 @@ export class SearchWidget extends Morph {
   }
 
   showTextMap() {
-    let textMap = this.textMap = new TextMap();
+    let textMap = this.textMap = morph({ type: 'textmap' });
     textMap.attachTo(this.target);
     textMap.isLayoutable = false;
     this.addMorph(textMap)
@@ -581,7 +582,8 @@ export class SearchWidget extends Morph {
 
   get commands() {
     return [
-      {name: "occur with search term", exec: () => {
+      {name: "occur with search term", exec: async () => {
+        let { occurStartCommand } = await System.import('lively.morphic/text/occur.js');
         this.target.addCommands([occurStartCommand]);
         this.execCommand("accept search");
         return this.target.execCommand("occur", {needle: this.input});

@@ -2,6 +2,7 @@ import { Canvas } from "lively.components/canvas.js";
 import { connect } from "lively.bindings";
 import { fun, promise } from 'lively.lang';
 import { pt, Color } from "lively.graphics";
+import { addClassMappings } from "../helpers.js";
 
 export default class TextMap extends Canvas {
 
@@ -172,3 +173,7 @@ export default class TextMap extends Canvas {
     this.onMouseDown(evt);
   }
 }
+
+addClassMappings({
+  textmap: TextMap
+});

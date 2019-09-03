@@ -4,6 +4,16 @@ import { string } from "lively.lang";
 
 const nameToClassMapping = {};
 
+export function pathForBrowserHistory(worldName, queryString) {
+  // how does the resource map to a URL shown in the browser URL bar? used for
+  // browser history
+  queryString = queryString.trim();
+  if (!queryString || queryString === "?") queryString = "";
+  let basePath = "/worlds/";
+  worldName = worldName.replace(/\.json$/, "").replace(/%20/g, " ");
+  return `${basePath}${worldName}${queryString}`;
+}
+
 export function addClassMappings(mapping) {
   Object.assign(nameToClassMapping, mapping);
 }

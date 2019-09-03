@@ -86,5 +86,5 @@ export function copy(obj, options) {
 }
 
 import { default as ExpressionSerializer, serializeSpec, deserializeSpec } from "./plugins/expression-serializer.js"
-import { getSerializableClassMeta, locateClass } from "./class-helper.js";
-export { ExpressionSerializer, getSerializableClassMeta, locateClass, serializeSpec, deserializeSpec };
+import { getSerializableClassMeta, locateClass, getClassName } from "./class-helper.js";
+export { ExpressionSerializer, getSerializableClassMeta, locateClass, serializeSpec, deserializeSpec, getClassName };

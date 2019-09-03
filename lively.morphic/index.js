@@ -27,9 +27,6 @@ import { HTMLMorph } from './html-morph.js';
 import InputLine, { PasswordInputLine } from "./text/input-line.js";
 export { InputLine, PasswordInputLine };
 
-import { Button } from "lively.components/buttons.js";
-import { CheckBox, LabeledCheckBox } from "lively.components/widgets.js";
-import { List, DropDownList } from "lively.components/list.js";
 import { locateClass } from "lively.serializer2";
 import { morph, addClassMappings, inspect } from './helpers.js';
 
@@ -44,14 +41,9 @@ addClassMappings({
   'text':            Text,
   'input':           InputLine,
   'label':           Label,
-  'list':            List,
   'polygon':         Polygon,
   'line':            LineMorph,
   'html':            HTMLMorph,
-  'dropdownlist':    DropDownList,
-  'button':          Button,
-  'checkbox':        CheckBox,
-  'labeledcheckbox': LabeledCheckBox
 })
 
 export { morph, inspect };
