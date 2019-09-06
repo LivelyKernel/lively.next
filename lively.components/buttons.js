@@ -1,6 +1,7 @@
 import { Morph, Icon } from "lively.morphic";
 import { Rectangle, LinearGradient, Color, pt } from "lively.graphics";
 import { signal } from "lively.bindings";
+import bowser from 'bowser';
 
 export class Button extends Morph {
 
@@ -221,11 +222,13 @@ export class Button extends Morph {
   }
 
   onHoverOut(evt) {
+    if (bowser.mobile) return;
     // When leaving the button without mouse up, reset appearance
     if (this.pressed && evt.isClickTarget(this)) this.pressed = null;
   }
 
   onHoverIn(evt) {
+    if (bowser.mobile) return;
     if (!this.deactivated && evt.isClickTarget(this))
       this.pressed = {originalFill: this.fill};
   }

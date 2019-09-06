@@ -348,7 +348,7 @@ export class Tree extends Text {
       this.lastTreeData = this.treeData;
       this.lastNumberOfNodes = nodes.length;
       this.cursorPosition = {row: 0, column: 0};
-      if (this.selectedIndex > -1) {
+      if (this.selectedIndex > 0) {
         this.renderSelectedLine(this.selectedIndex - 1);
       }
     });

@@ -29,7 +29,7 @@ export class ListItemMorph extends Label {
       fill: {
         derived: true,
         get() {
-          if (bowser.mobile && this.pressed) return Color.black.withA(.1);
+          if (bowser.mobile && this.pressed) return Color.gray.withA(.5);
           return this.isSelected ? this.selectionColor : Color.transparent;
         }
       },
@@ -151,7 +151,9 @@ class ListScroller extends Morph {
     let scrollY = this.scroll.y;
     if (bowser.mobile) {
       let item = this.owner.itemForClick(evt);
+      if (!item) return;
       item.pressed = true;
+      item.makeDirty();
       setTimeout(() => {
          item.pressed = false;
          if (scrollY - this.scroll.y != 0) return;
@@ -562,6 +564,10 @@ export class List extends Morph {
     this.whenRendered().then(() => this.update())
   }
 
+  onLoad() {
+     this.scroller.visible = bowser.mobile;
+  }
+
   initializeSubmorphs(submorphs) {
     let container, scroller;
     submorphs = submorphs || this.submorphs || [];
@@ -573,7 +579,7 @@ export class List extends Morph {
       }
     }
     if (!scroller) 
-      this.addMorph(new ListScroller({
+      scroller = this.addMorph(new ListScroller({
         draggable: false, grabbable: false,
         acceptsDrops: false, halosEnabled: false, name: "scroller"
       }));
@@ -599,8 +605,8 @@ export class List extends Morph {
   }
 
   itemForClick(evt) {
-    let items = this.listItemContainer
-                   .morphsContainingPoint(evt.positionIn(this.world()).subPt(this.scroll));
+    let clickedPos = evt.positionIn(this.world()).subPt(this.scroll);
+    let items = this.listItemContainer.morphsContainingPoint(clickedPos);
     return items.find(m => m.isListItem) || items[0];
   }
 
@@ -1448,10 +1454,11 @@ export class DropDownList extends Button {
     setTimeout(() => {
       let list = this.listMorph,
           focused = this.world() && this.world().focusedMorph;
-      if (list !== focused
+      if (list !== focused && focused !== this
           && list.world()
-          && !list.withAllSubmorphsDetect(m => m == focused))
+          && !list.withAllSubmorphsDetect(m => m == focused)) {
         list.fadeOut(200);
+      } else once(bowser.mobile ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
     }, 100);
   }
 
@@ -1468,6 +1475,7 @@ export class DropDownList extends Button {
         list.openInWorld();
         list.epiMorph = true;
         list.hasFixedPosition = true;
+        list.setTransform(this.getGlobalTransform());
         bounds = this.globalBounds();
       } else {
         bounds = this.innerBounds();
@@ -1481,10 +1489,10 @@ export class DropDownList extends Button {
         list.topLeft = bounds.bottomLeft();
       }
       once(list, 'onItemMorphClicked', this, 'toggleList');
-      once(list, 'onBlur', this, 'removeWhenFocusLost');
-      list.focus();
+      once(bowser.mobile ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
       await list.whenRendered();
       await list.whenRendered();
+      bowser.mobile ? list.scroller.focus() : list.focus();
       list.scrollSelectionIntoView();
     }
   }
