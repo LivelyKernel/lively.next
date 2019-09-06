@@ -2,7 +2,7 @@
 import { locateClass } from "lively.serializer2";
 import { string } from "lively.lang";
 
-const nameToClassMapping = {};
+const nameToClassMapping = nameToClassMapping || {};
 
 export function pathForBrowserHistory(worldName, queryString) {
   // how does the resource map to a URL shown in the browser URL bar? used for
@@ -34,7 +34,7 @@ export function morph(props = {}, opts = {restore: false}) {
 
 export function newMorphId(classOrClassName) {
   var prefix = typeof classOrClassName === "function" ?
-    classOrClassName.name : typeof classOrClassName === "string" ?
+    classOrClassName.className : typeof classOrClassName === "string" ?
       classOrClassName.toLowerCase() : "";
   return prefix + "_" + string.newUUID().replace(/-/g, "_");
 }

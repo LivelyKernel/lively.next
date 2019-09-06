@@ -25,6 +25,7 @@ import { Text } from "./text/morph.js";
 import { Label } from "./text/label.js";
 import { HTMLMorph } from './html-morph.js';
 import InputLine, { PasswordInputLine } from "./text/input-line.js";
+import './text/map.js';
 export { InputLine, PasswordInputLine };
 
 import { locateClass } from "lively.serializer2";

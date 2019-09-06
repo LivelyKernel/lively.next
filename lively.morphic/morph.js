@@ -1206,7 +1206,7 @@ export class Morph {
         classNames = [];
     while (klass) {
       if (klass === Object) break;
-      classNames.push(klass.name);
+      classNames.push(klass.name || klass.className);
       klass = klass[Symbol.for("lively-instance-superclass")];
     }
     return this._styleClasses = classNames;
