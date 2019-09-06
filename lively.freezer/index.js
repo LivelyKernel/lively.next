@@ -79,6 +79,11 @@ export async function interactivelyFreezeWorld(world) {
     Function prompts the user for a name to publish the part under.
     Data is uploaded to directory and then returns a link to the folder. 
   */ 
+  let excludedModules = [
+    //'lively.ide', 
+    //'PartsBinBrowser', 
+    'lively.halo'
+  ];
   let userName = $world.getCurrentUser().name;
   let frozenPartsDir = await resource(System.baseURL).join('users').join(userName).join('published/').ensureExistance();
   let publicAlias = world.metadata.commit.name;
@@ -103,7 +108,7 @@ export async function interactivelyFreezeWorld(world) {
      delete snap.snapshot[id]._cachedLineCharBounds;
      let module = moduleOfId(snap.snapshot, id);
      if (!module.package) continue;
-     if (['lively.ide', 'PartsBinBrowser', 'lively.halo'].includes(module.package.name)) {
+     if (excludedModules.includes(module.package.name)) {
        // fixme: we also need to kill of packages which themselves require one of the "taboo" packages
        delete snap.snapshot[id];
        deletedIds.push(id);
@@ -151,13 +156,11 @@ export async function interactivelyFreezeWorld(world) {
         'lively.ast',
         'lively.vm',
         'lively-system-interface',
-        'lively.shell',
-        'lively.halos',
-        'lively.ide', // optional but saves roughly 1mb
         'pouchdb',
         'pouchdb-adapter-mem',
         'https://unpkg.com/rollup@1.17.0/dist/rollup.browser.js',
-        'wasm-brotli'
+        'wasm-brotli',
+        ...excludedModules
       ]
     });
   } catch(e) {
@@ -172,7 +175,12 @@ export async function interactivelyFreezeWorld(world) {
     await dynamicParts.join(partName + '.json').writeJson(snapshot);
   }
   li.remove();
+  $world.setStatusMessage([`Published ${publicAlias}. Click `,null, 'here', {
+    textDecoration: 'underline', fontWeight: 'bold',
+    doit: {code: `window.open("${publicationDir.join('index.html').url}")`}
+  }, ' to view.'], Color.green, 10000);
 }
+
 
 export async function interactivelyFreezePart(part, requester = false) {
   /*
@@ -221,6 +229,10 @@ export async function interactivelyFreezePart(part, requester = false) {
     await dynamicParts.join(partName + '.json').writeJson(snapshot);
   }
   li.remove();
+  $world.setStatusMessage([`Published ${publicAlias}. Click `,null, 'here', {
+    textDecoration: 'underline', fontWeight: 'bold',
+    doit: {code: `window.open("${publicationDir.join('index.html').url}")`}
+  }, ' to view.'], Color.green, 10000);
 }
 
 export async function displayFrozenPartsFor(user = $world.getCurrentUser(), requester) {
@@ -472,7 +484,7 @@ class LivelyRollup {
     if (id.endsWith('.json')) {
        return this.translateToEsm(mod._source || await mod.source());
     }
-    return await mod.source()
+    return await mod.source();
   }
 
   needsScopeToBeCaptured(moduleId) {
