@@ -1701,7 +1701,7 @@ export class Morph {
       if (this != m && d == 'up') {
         p.x -= m.scroll.x;
         p.y -= m.scroll.y;
-        if (m.hasFixedPosition) hasFixedParent = true;
+        if (m.hasFixedPosition) hasFixedParent = m.owner && m.owner.isWorld;
         if (m.hasFixedPosition && m.owner && m.owner.owner) {
           p.x += m.owner.scroll.x;
           p.y += m.owner.scroll.y;
@@ -1711,7 +1711,7 @@ export class Morph {
       if (this != m && d == 'down') {
         p.x += m.scroll.x;
         p.y += m.scroll.y;
-        if (m.hasFixedPosition) hasFixedParent = true;
+        if (m.hasFixedPosition) hasFixedParent = m.owner && m.owner.isWorld;
         if (m.hasFixedPosition && m.owner && m.owner.owner/*i.e. except world*/) {
           p.x -= m.owner.scroll.x;
           p.y -= m.owner.scroll.y;
@@ -2328,17 +2328,7 @@ export class Morph {
     if (connectItems) {
       items.push(["connect...", connectItems]);
     }
-
-    // if (this.hasFixedPosition()) {
-    //   morphicMenuItems[1].push(["set unfixed", function() {
-    //     self.disableFixedPositioning();
-    //   }]);
-    // } else {
-    //   morphicMenuItems[1].push(["set fixed", function() {
-    //     self.enableFixedPositioning()
-    //   }]);
-    // }
-
+    
     return items;
   }
 
