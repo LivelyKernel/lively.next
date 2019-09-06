@@ -118,9 +118,14 @@ export class World extends Morph {
 
   haloForPointerId(pointerId) { /* only in LivelyWorld */ }
 
-  handForPointerId(pointerId) {
-    return this.existingHandForPointerId(pointerId)
-        || this.addMorph(new Hand(pointerId), this.submorphs[0]);
+  handForPointerId(pointerId, isPrimary = false) {
+    let currentHand = this.existingHandForPointerId(pointerId);
+    if (currentHand) return currentHand;
+    if (!currentHand && this.firstHand && isPrimary) {
+      this.firstHand.pointerId = pointerId;
+      return this.firstHand;
+    }
+    return this.addMorph(new Hand(pointerId), this.submorphs[0]);
   }
 
   removeHandForPointerId(pointerId) {
