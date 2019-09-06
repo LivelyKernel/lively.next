@@ -957,7 +957,8 @@ export class Morph {
     }
   }
 
-  insertFontCSS(name, fontUrl) {
+  async insertFontCSS(name, fontUrl) {
+    await this.whenRendered();
     if (fontUrl.endsWith('.otf')) {
        addOrChangeCSSDeclaration(`${this.id}-${name}`, 
          `@font-face {
