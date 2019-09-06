@@ -377,16 +377,21 @@ SvgAnimation.prototype.hook = function(node) {
 
 
 export function defaultAttributes(morph, renderer) {
-  return {
+  let attrs = {
     animation: new Animation(morph),
     key: morph.id,
     id: morph.id,
+    attributes: {},
     className: (morph.hideScrollbars ?
                 morph.styleClasses.concat("hiddenScrollbar") :
                 morph.styleClasses).join(" "),
     draggable: false,
-    "morph-after-render-hook": new MorphAfterRenderHook(morph, renderer)
+    "morph-after-render-hook": new MorphAfterRenderHook(morph, renderer),
   };
+  if (bowser.ios && morph.draggable && !morph.isWorld) {
+     attrs.attributes["touch-action"] = "none";
+  }
+  return attrs;
 }
 
 export function svgAttributes(svg) {

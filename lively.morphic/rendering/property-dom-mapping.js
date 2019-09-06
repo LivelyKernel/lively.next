@@ -18,6 +18,7 @@ export function styleProps(morph) {
   if (morph.grayscale) style.filter = `${style.filter || ''} grayscale(${100 * morph.grayscale}%)`
   if (morph.opacity != null) style.opacity = morph.opacity;
   if (morph.draggable && !morph.isWorld) style['touch-action'] = 'none';
+  // on ios touch-action is an undocumented html attribute and can not be set via css
   return style;
 }
 

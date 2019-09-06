@@ -1,5 +1,5 @@
 /*global System*/
-import { promise, arr } from "lively.lang";
+import { promise, obj, arr } from "lively.lang";
 import { Rectangle } from "lively.graphics";
 
 export function cumulativeOffset(element) {
@@ -208,7 +208,7 @@ export const hyperscriptFnForDocument = (function() {
   
       if (attrs) {
         for (var attrKey in attrs)
-          if (attrKey !== "style" && attrKey !== "dataset")
+          if (attrKey !== "style" && attrKey !== "dataset" && attrKey !== 'attributes')
             el[attrKey] = attrs[attrKey];
         var style = attrs.style;
         if (style) for (var styleKey in style) el.style[styleKey] = style[styleKey];
@@ -216,6 +216,13 @@ export const hyperscriptFnForDocument = (function() {
         if (dataset) {
           if (el.dataset) for (var dsKey in dataset) el.dataset[dsKey] = dataset[dsKey];
           else for (var dsKey in dataset) el.setAttribute("data-" + dsKey, dataset[dsKey]);
+        }
+        var attributes = attrs.attributes;
+        if (attributes) {
+          for (var attr in attributes) {
+            if (attributes[attr] && obj.isBoolean(attributes[attr])) el.toggleAttribute(attr);
+            else el.setAttribute(attr, attributes[attr]);
+          }
         }
       }
 
