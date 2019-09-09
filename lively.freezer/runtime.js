@@ -110,6 +110,8 @@ export function runtimeDefinition() {
       return module;
     },
     decanonicalize(name) {
+      if (!name.endsWith('.js') && !name.endsWith('/'))
+        return name.split('/').concat(['index.js']).filter(Boolean).join('/');
       return name;
       // this decanonicalize forces all modules to contain version numbers (if not provided)
       // and to start with the local:// prefix.

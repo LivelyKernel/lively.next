@@ -467,7 +467,7 @@ class LivelyRollup {
       this.globalModules[id] = true;
       return { id, external: true }
     }
-    return id;
+    return module(id).id;
   }
 
   async load(id) {
