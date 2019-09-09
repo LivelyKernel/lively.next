@@ -1,21 +1,6 @@
-import { arr, obj } from "lively.lang";
+import { obj } from "lively.lang";
 import { prepareClassForManagedPropertiesAfterCreation } from "./properties.js";
-
-export const initializeSymbol       = Symbol.for("lively-instance-initialize"),
-             instanceRestorerSymbol = Symbol.for("lively-instance-restorer"),
-             superclassSymbol       = Symbol.for("lively-instance-superclass"),
-             moduleMetaSymbol       = Symbol.for("lively-module-meta"),
-             objMetaSymbol          = Symbol.for("lively-object-meta"),
-             moduleSubscribeToToplevelChangesSym = Symbol.for("lively-klass-changes-subscriber");
-
-export function getClassHierarchy(klass) {
-  var curr = klass, hierarchy = [];
-  do {
-    hierarchy.push(curr)
-    curr = curr[superclassSymbol];
-  } while (curr && curr.name)
-  return hierarchy.map(c => c.name).join('->');
-}
+import { superclassSymbol, moduleSubscribeToToplevelChangesSym, moduleMetaSymbol, objMetaSymbol, initializeSymbol } from "./util.js";
 
 const constructorArgMatcher = /\([^\\)]*\)/;
 

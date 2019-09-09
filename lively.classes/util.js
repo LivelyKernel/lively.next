@@ -1,9 +1,24 @@
 import { arr, obj, Path } from "lively.lang";
-import { superclassSymbol } from "./runtime.js";
 import { RuntimeSourceDescriptor } from "./source-descriptors.js";
 
 export function superclasses(klass) {
   return withSuperclasses(klass).slice(1)
+}
+
+export const initializeSymbol       = Symbol.for("lively-instance-initialize"),
+             instanceRestorerSymbol = Symbol.for("lively-instance-restorer"),
+             superclassSymbol       = Symbol.for("lively-instance-superclass"),
+             moduleMetaSymbol       = Symbol.for("lively-module-meta"),
+             objMetaSymbol          = Symbol.for("lively-object-meta"),
+             moduleSubscribeToToplevelChangesSym = Symbol.for("lively-klass-changes-subscriber");
+
+export function getClassHierarchy(klass) {
+  var curr = klass, hierarchy = [];
+  do {
+    hierarchy.push(curr)
+    curr = curr[superclassSymbol];
+  } while (curr && curr.name)
+  return hierarchy.map(c => c.name).join('->');
 }
 
 export function withSuperclasses(klass) {

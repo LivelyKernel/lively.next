@@ -51,7 +51,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import { obj} from "lively.lang";
-import { getClassHierarchy } from "./runtime.js";
+import { getClassHierarchy } from './util.js';
 
 const defaultPropertiesSettingKey = "propertySettings",
       defaultPropertiesKey = "properties",
