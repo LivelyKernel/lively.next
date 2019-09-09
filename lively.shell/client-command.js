@@ -4,9 +4,6 @@ import { signal } from "lively.bindings";
 
 var debug = false;
 
-// http://localhost:9001/node_modules/lively.shell/client-command.js
-// http://localhost:9001/node_modules/lively.2lively/node_modules/lively.server/node_modules/lively.shell/client-command.js
-
 export function runCommand(commandString, opts = {}) {
   var {l2lClient} = opts;
 
@@ -183,7 +180,7 @@ export default class ClientCommand extends CommandInterface {
 
 var L2LServices = {
 
-  async "lively.shell.onOutput": (client, {data: {pid, stdout, stderr}}, ackFn, sender) => {
+  "lively.shell.onOutput": async (client, {data: {pid, stdout, stderr}}, ackFn, sender) => {
     debug && console.log(`[lively.shell] client received lively.shell.onOutput for command ${pid}`);
     try {
       var cmd = await promise.waitFor(1000, () => ClientCommand.findCommand(pid))
@@ -194,7 +191,7 @@ var L2LServices = {
     cmd.onOutput({stdout, stderr})
   },
 
-  async "lively.shell.onExit": (client, {data: {pid, code, error}}, ackFn, sender) => {
+  "lively.shell.onExit": async (client, {data: {pid, code, error}}, ackFn, sender) => {
     debug && console.log(`[lively.shell] client received lively.shell.onExit for command ${pid}`);
 
     try {
