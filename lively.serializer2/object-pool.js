@@ -1,9 +1,9 @@
-import { arr, graph, obj, string } from "lively.lang";
+import { arr, obj, string } from "lively.lang";
 import { isPrimitive } from "./util.js";
 import ClassHelper from "./class-helper.js";
 import ExpressionSerializer from "./plugins/expression-serializer.js";
 import { allPlugins } from "./plugins.js";
-import { SnapshotInspector } from "./debugging.js";
+
 
 
 /*

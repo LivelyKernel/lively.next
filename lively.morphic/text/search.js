@@ -549,7 +549,8 @@ export class SearchWidget extends Morph {
     return result;
   }
 
-  showTextMap() {
+  async showTextMap() {
+    await System.import('lively.morphic/text/map.js');
     let textMap = this.textMap = morph({ type: 'textmap' });
     textMap.attachTo(this.target);
     textMap.isLayoutable = false;
