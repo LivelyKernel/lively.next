@@ -261,7 +261,7 @@ export async function displayFrozenPartsFor(user = $world.getCurrentUser(), requ
       })
     } 
   }), {
-    requester, fuzzy: true, onSelection: (prompt) => {
+    requester, fuzzy: true, onSelection: (_, prompt) => {
       prompt.submorphs[2].items.forEach(item => item.morph.fontColor = Color.white);
       prompt.submorphs[2].selectedItems[0].morph.fontColor = Color.black;                   
     }
