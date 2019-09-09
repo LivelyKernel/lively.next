@@ -194,6 +194,7 @@ function replaceClass(node, state, path, options) {
   console.assert(node.type === "ClassDeclaration" || node.type === "ClassExpression");  
 
   var {body: {body}, superClass, id: classId, type, start, end} = node,
+      { addClassNameGetter = true } = options,
       instanceProps = id("undefined"),
       classProps = id("undefined"),
       className = classId ? classId.name : "anonymous_class",
@@ -238,10 +239,10 @@ function replaceClass(node, state, path, options) {
       }
       (classSide ? props.clazz : props.inst).push(decl);
       return props;
-    }, {inst: [], clazz: [
+    }, {inst: [], clazz: addClassNameGetter ? [
        // explicitly add in a static property to ensure the class name is accessible also in google closure env
        parse(`({ key: "className", get: function get() { return "${className}"; } })`).body[0].expression
-    ]})
+    ] : []})
 
     if (inst.length) instanceProps = {type: "ArrayExpression", elements: inst};
     if (clazz.length) classProps = {type: "ArrayExpression", elements: clazz};

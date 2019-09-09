@@ -40,7 +40,8 @@ function classTemplateDecl(className, superClassName, methodString, classMethodS
 var opts = {
   classHolder: {type: "Identifier", name: "_rec"},
   functionNode: {type: "Identifier", name: "initializeClass"},
-  addDeclarations: false
+  addDeclarations: false,
+  addClassNameGetter: false,
 };
 
 describe("class transform", () => {
