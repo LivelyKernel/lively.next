@@ -364,7 +364,7 @@ export default class Browser extends Window {
               name: "metaInfoText",
               bounds: metaInfoBounds,
               ...textStyle,
-              type: 'label',
+              type: 'text',
               autofit: false,
               fill: Color.white,
               fontSize: config.codeEditor.defaultStyle.fontSize - 2,
@@ -888,19 +888,18 @@ export default class Browser extends Window {
 
       await this.updateCodeEntities(m);
       await this.updateTestUI(m);
-
-      this.ui.metaInfoText.textAndAttributes = [
+      this.ui.metaInfoText.replace(this.ui.metaInfoText.documentRange, [
         `[${pack.name}]`,
         {
           nativeCursor: "pointer",
           textDecoration: "underline",
           doit: {code: `$world.execCommand("open file browser", {location: "${pack.url}"})`}
         },
-        " ", null,
+        " ", {},
         m.nameInPackage, {},
         ` (${await system.moduleFormat(m.url)} format)`, {},
-        " - ", null
-      ];
+        " - ", {}
+      ], false);
 
     } finally {
       if (deferred) {
@@ -945,9 +944,10 @@ export default class Browser extends Window {
           {parent, name} = arr.last(codeEntityTree.treeData.defs.filter(
             ({node: {start, end}}) => start < cursorIdx && cursorIdx < end)) || {}
     if (name) {
-      metaInfoText.textAndAttributes = [
-        ...metaInfoText.textAndAttributes.slice(0,6), 
-        ` ${parent ? parent.name + ">>" : ""}${name}`];
+      
+      metaInfoText.replace(metaInfoText.documentRange, [
+        ...metaInfoText.textAndAttributes.slice(0,4), 
+        `${parent ? parent.name + ">>" : ""}${name}`], false);
     }
   }
 
