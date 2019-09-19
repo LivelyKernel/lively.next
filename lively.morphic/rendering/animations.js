@@ -5,6 +5,7 @@ import {styleProps, addPathAttributes, addSvgAttributes} from "./property-dom-ma
 import { interpolate as flubberInterpolate } from 'flubber';
 import Bezier from 'bezier-easing';
 import "web-animations-js";
+import { ShadowObject } from "lively.morphic";
 
 
 /*rms 27.11.17: Taken from https://css-tricks.com/snippets/sass/easing-map-get-function/ */
@@ -105,14 +106,24 @@ export class PropertyAnimation {
   constructor(queue, morph, config) {
     this.queue = queue;
     this.morph = morph;
-    if (morph.isPath && config.fill) {
-        const fillBefore = morph.fill, fillAfter = config.fill;
+    if (morph.isPath && "fill" in config) {
+        const fillBefore = morph.fill || Color.transparent, fillAfter = config.fill;
         config.customTween = fun.compose(p => {
           morph.fill = fillBefore.interpolate(p, fillAfter);
           return p;
        }, config.customTween || (p => {}));
        delete config.fill;
        morph.fill = fillBefore;
+    }
+    if ("dropShadow" in config) {
+      let shadowBefore = morph.dropShadow || new ShadowObject({ blur: 0, distance: 0, spread: 0});
+      let shadowAfter = config.dropShadow || new ShadowObject({ blur: 0, distance: 0, spread: 0});
+      config.customTween = fun.compose(p => {
+          morph.dropShadow = shadowBefore.interpolate(p, shadowAfter);
+          return p;
+       }, config.customTween || (p => {}));
+      delete config.dropShadow;
+      morph.dropShadow = shadowBefore;
     }
     this.config = this.convertBounds(config);
     this.needsAnimation = {

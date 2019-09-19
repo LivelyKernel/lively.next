@@ -267,6 +267,18 @@ export class ShadowObject {
     return `drop-shadow(${x}px ${y}px ${blur}px ${color.toString()})`;
   }
 
+  interpolate(p, other) {
+    return new ShadowObject({
+      distance: num.interpolate(p, this.distance, other.distance),
+      rotation: num.interpolate(p, this.rotation, other.rotation),
+      color: this.color.interpolate(p, other.color),
+      blur: num.interpolate(p, this.blur, other.blur),
+      spread: num.interpolate(p, this.spread, other.spread),
+      inset: other.inset,
+      fast: other.fast
+    })
+  }
+
 }
 
 
