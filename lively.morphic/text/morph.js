@@ -220,12 +220,8 @@ export class Text extends Morph {
           if (!this._textChange && this.viewState && 
               this.viewState._needsFit && !this._rendering &&
               !this._measuringTextBox && !!initialExtent && this.owner) {
-            let renderer = this.env.renderer;
-            let textRenderer = this.textRenderer;
-            if (!renderer || !textRenderer) return initialExtent;
             this._measuringTextBox = true;
-            renderSubTree(this, renderer);
-            textRenderer.manuallyTriggerTextRenderHook(this, renderer);
+            this.directRender();
             this._measuringTextBox = false;
           }
           return this.getProperty('extent');
@@ -2345,6 +2341,15 @@ export class Text extends Morph {
 
   render(renderer) {
     return this.textRenderer.renderMorph(this, renderer);
+  }
+
+  directRender() {
+    let renderer = this.env.renderer;
+    let textRenderer = this.textRenderer;
+    if (renderer && textRenderer) {
+      renderSubTree(this, renderer);
+      textRenderer.manuallyTriggerTextRenderHook(this, renderer);
+    }
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

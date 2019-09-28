@@ -238,15 +238,12 @@ export class Tree extends Text {
         attrs[i] = {fontColor: this.selectionFontColor};
     }
     this.document.setTextAndAttributesOfLine(row, attrs)
-    if (this.document.lines[row].hasEstimatedExtent) {
-      let renderer = this.env.renderer;
-      let textRenderer = this.textRenderer;
-      if (!renderer || !textRenderer) return;
-      renderSubTree(this, renderer);
-      textRenderer.manuallyTriggerTextRenderHook(this, renderer);
-    }
     this.selectLine(row, true);
     this._lastSelectedIndex = this.selectedIndex;
+    // force synchronous render to avoid "bouncing" of selection
+    if (this.document.lines[row].hasEstimatedExtent) {
+      this.directRender();
+    }
   }
 
   computeTreeAttributes(nodes) {
