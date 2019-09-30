@@ -5,7 +5,7 @@ import {styleProps, addPathAttributes, addSvgAttributes} from "./property-dom-ma
 import { interpolate as flubberInterpolate } from 'flubber';
 import Bezier from 'bezier-easing';
 import "web-animations-js";
-import { ShadowObject } from "lively.morphic";
+import { ShadowObject } from "./morphic-default.js";
 
 
 /*rms 27.11.17: Taken from https://css-tricks.com/snippets/sass/easing-map-get-function/ */
@@ -125,6 +125,30 @@ export class PropertyAnimation {
       delete config.dropShadow;
       morph.dropShadow = shadowBefore;
     }
+    if ("visible" in config) {
+      let originalOpacity = morph.opacity;
+      let targetVisibility = config.visible;
+      config.customTween = fun.compose(p => {
+          if (targetVisibility) console.log('transforming to visible')
+          if (this._otherVisibleTransformationInProgress) {
+            //console.log('canceled transform', morph.name, targetVisibility, this)
+            return p;
+          }
+          if (p == 0 && targetVisibility == true) {
+            morph.visible = true;
+          }
+          morph.opacity = targetVisibility ? num.interpolate(p, 0, 1) : num.interpolate(p, 1, 0); 
+          if (p == 1) {
+            console.log('finished', morph.name, targetVisibility, this)
+            morph.visible = targetVisibility;
+            morph.opacity = originalOpacity;
+          }
+          return p;
+       }, config.customTween || (p => {}));
+      // inform all previous animation about the situation
+       this.queue.animations.forEach(anim => anim._otherVisibleTransformationInProgress = true)
+       delete config.visible;
+    }
     this.config = this.convertBounds(config);
     this.needsAnimation = {
       svg: morph.isSvgMorph,
@@ -187,7 +211,7 @@ export class PropertyAnimation {
   }
 
   equals(animation) {
-    return obj.equals(this.animatedProps, animation.animatedProps);
+    return !this.config.customTween && !animation.config.customTweem && obj.equals(this.animatedProps, animation.animatedProps);
   }
 
   canMerge(animation) {
@@ -198,7 +222,8 @@ export class PropertyAnimation {
     let origCustomTween = this.config.customTween,
         customTween = (p) => {
       origCustomTween && origCustomTween(p);
-      animation.customTween && animation.config.customTween(p);
+      animation.config.customTween && animation.config.customTween(p);
+      return p;
     }
     Object.assign(this.morph, animation.animatedProps);
     Object.assign(this.config, animation.config);
@@ -264,8 +289,8 @@ export class PropertyAnimation {
     }
     // ensure that before and after props both have the same keys
     for (let key of arr.union(obj.keys(before), obj.keys(after))) {
-      if (!key in before) before[key] = after[key];
-      if (!key in after) after[key] = before[key];
+      if (!(key in before)) before[key] = after[key];
+      if (!(key in after)) after[key] = before[key];
     }
     return [obj.isEmpty(before) ? false : before, obj.isEmpty(after) ? false : after];
   }

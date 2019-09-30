@@ -1166,17 +1166,14 @@ export default class Inspector extends Morph {
       terminalToggler.styleClasses = ["active", "toggle"];
       layout.row(3).height = this.codeEditorHeight || 180;
       layout.row(2).height = 5;
-      fixImportButton.opacity = thisBindingSelector.opacity = 0;
-      fixImportButton.visible = thisBindingSelector.visible = true;
-      fixImportButton.animate({opacity: 1, duration});
-      thisBindingSelector.animate({opacity: 1, duration});
+      fixImportButton.animate({visible: true, duration});
+      thisBindingSelector.animate({visible: true, duration});
     } else {
       this.codeEditorHeight = layout.row(3).height;
       terminalToggler.styleClasses = ["inactive", "toggle"];
       layout.row(3).height = layout.row(2).height = 0;
-      fixImportButton.opacity = thisBindingSelector.opacity = 1;
-      fixImportButton.animate({visible: false, opacity: 0, duration});
-      thisBindingSelector.animate({visible: false, opacity: 0, duration});
+      fixImportButton.animate({visible: false, duration});
+      thisBindingSelector.animate({visible: false, duration});
     }
     this.extent = prevExtent;
     layout.enable({duration});

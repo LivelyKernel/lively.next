@@ -418,18 +418,19 @@ export class ColorPalette extends Morph {
 
    selectSolidMode() {
       var duration = 200,
+          solidPalette = this.get("solidColorPalette"),
           paletteView = this.get("paletteView");
-       if (this.get("solidColorPalette").visible) return;
-       paletteView.submorphs.forEach(m => m.animate({isLayoutable: false, opacity: 0, visible: false, duration}));
-       this.get("solidColorPalette").animate({isLayoutable: true, opacity: 1, visible: true, duration});
+       if (solidPalette.visible) return;
+       paletteView.submorphs.forEach(m => m.animate({isLayoutable: false, visible: false, duration}));
+       solidPalette.animate({isLayoutable: true, visible: true, duration});
    }
 
    selectHarmonyMode() {
       var duration = 200,
           paletteView = this.get("paletteView");
       if (this.get("harmony palette").visible) return;
-      paletteView.submorphs.forEach(m => m.animate({isLayoutable: false, opacity: 0, visible: false, duration}));
-      this.get("harmony palette").animate({isLayoutable: true, opacity: 1, visible: true, duration});
+      paletteView.submorphs.forEach(m => m.animate({isLayoutable: false, visible: false, duration}));
+      this.get("harmony palette").animate({isLayoutable: true, visible: true, duration});
    }
 
   fillTypeSelector() {

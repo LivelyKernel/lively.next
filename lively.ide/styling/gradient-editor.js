@@ -490,7 +490,7 @@ class GradientStopVisualizer extends Morph {
 
   update(gradient) {
     this.fill = new LinearGradient({stops: gradient.stops, vector: "eastwest"});
-    this.get("instruction").animate({opacity: 0, visible: false, duration: 300});
+    this.get("instruction").animate({visible: false, duration: 300});
     this.renderStopControls(gradient)
   }
 
