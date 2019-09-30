@@ -5,6 +5,8 @@ import { signal, once } from "lively.bindings";
 import { Button } from "./buttons.js";
 import bowser from 'bowser';
 
+const touchInput = bowser.mobile || bowser.tablet;
+
 export function asItem(obj) {
   // make sure that object is of the form
   // {isListItem: true, string: STRING, value: OBJECT}
@@ -29,7 +31,7 @@ export class ListItemMorph extends Label {
       fill: {
         derived: true,
         get() {
-          if (bowser.mobile && this.pressed) return Color.gray.withA(.5);
+          if (touchInput && this.pressed) return Color.gray.withA(.5);
           return this.isSelected ? this.selectionColor : Color.transparent;
         }
       },
@@ -149,7 +151,7 @@ class ListScroller extends Morph {
   
   onMouseDown(evt) {
     let scrollY = this.scroll.y;
-    if (bowser.mobile) {
+    if (touchInput) {
       let item = this.owner.itemForClick(evt);
       if (!item) return;
       item.pressed = true;
@@ -565,7 +567,7 @@ export class List extends Morph {
   }
 
   onLoad() {
-     this.scroller.visible = bowser.mobile;
+     this.scroller.visible = touchInput;
   }
 
   initializeSubmorphs(submorphs) {
@@ -787,8 +789,8 @@ export class List extends Morph {
         itemBounds = new Rectangle(0, idx*itemHeight, width, itemHeight),
         visibleBounds = this.innerBounds().insetByRect(this.padding).translatedBy(itemScroll),
         offsetX = 0, offsetY = 0;
-    if (itemBounds.bottom() > visibleBounds.bottom() - scrollbarOffset.y)
-      offsetY = itemBounds.bottom() - (visibleBounds.bottom() - scrollbarOffset.y);
+    if (itemBounds.bottom() > visibleBounds.bottom())
+      offsetY = itemBounds.bottom() - (visibleBounds.bottom());
     if (itemBounds.top() < visibleBounds.top())
       offsetY = itemBounds.top() - visibleBounds.top();
     this.itemScroll = itemScroll.addXY(offsetX, offsetY);
@@ -839,7 +841,7 @@ export class List extends Morph {
   }
 
   onHoverOut(evt) {
-    if (bowser.mobile) return;
+    if (touchInput) return;
     this.scroller.visible = false;
   }
   
@@ -1458,7 +1460,7 @@ export class DropDownList extends Button {
           && list.world()
           && !list.withAllSubmorphsDetect(m => m == focused)) {
         list.fadeOut(200);
-      } else once(bowser.mobile ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
+      } else once(touchInput ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
     }, 100);
   }
 
@@ -1489,10 +1491,10 @@ export class DropDownList extends Button {
         list.topLeft = bounds.bottomLeft();
       }
       once(list, 'onItemMorphClicked', this, 'toggleList');
-      once(bowser.mobile ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
+      once(touchInput ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
       await list.whenRendered();
       await list.whenRendered();
-      bowser.mobile ? list.scroller.focus() : list.focus();
+      touchInput ? list.scroller.focus() : list.focus();
       list.scrollSelectionIntoView();
     }
   }
