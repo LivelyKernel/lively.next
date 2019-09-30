@@ -1,5 +1,5 @@
 /*global System*/
-import { arr, obj, chain, fun } from "lively.lang";
+import { arr, promise, obj, chain, fun } from "lively.lang";
 import { query, parse, acorn } from "lively.ast";
 import { pt } from "lively.graphics";
 import { addOrChangeCSSDeclaration } from "lively.morphic/rendering/dom-helper.js";
@@ -10,6 +10,7 @@ import EvalBackendChooser from "./js/eval-backend-ui.js";
 import "mocha-es6";
 import {LoadingIndicator} from "lively.components";
 import JavaScriptEditorPlugin from "./js/editor-plugin.js";
+import { resource } from "lively.resources/index.js";
 
 var jsDiff;
 (async function loadJsDiff() {
@@ -112,7 +113,11 @@ const testRunnerCSS = `.mocha-test-runner {
 }
 
 .mocha-test-runner .row.test-file {
-  margin-top: 6px;
+  margin-top: 0px;
+}
+
+.controls {
+  margin-bottom: 6px;
 }
 
 .mocha-test-runner .row {
@@ -204,6 +209,16 @@ export default class TestRunner extends HTMLMorph {
 
   static get properties() {
     return {
+      showControls: {
+        defaultValue: true,
+        after: ['html', 'submorphs'],
+        set(visible) {
+          this.setProperty('showControls', visible);
+          this.get("eval backend button").visible = visible;
+          this.update();
+        }
+      },
+      state: {},
       editorPlugin: {
         get() {
           return this.getProperty("editorPlugin")
@@ -228,12 +243,19 @@ export default class TestRunner extends HTMLMorph {
     connect(this, "extent", this, "relayout");
   }
 
+  async onLoad() {
+    // on deserialization
+    this.addStyleClass("mocha-test-runner");
+    addOrChangeCSSDeclaration("mocha-testrunner-css", testRunnerCSS);
+    await promise.waitFor(30000, () => !!$world)
+    resource(document.URL).query().runAllTests && this.runAllTests();
+    await this.whenRendered();
+    this.update();
+  }
+
   reset() {
     var win = this.getWindow();
     win && (win.extent = pt(500,600));
-
-    this.addStyleClass("mocha-test-runner");
-    addOrChangeCSSDeclaration("mocha-testrunner-css", testRunnerCSS);
 
     this.clipMode = "auto";
 
@@ -515,7 +537,7 @@ export default class TestRunner extends HTMLMorph {
     }
 
     this.html = `
-       <div class="controls">
+       <div class="controls" ${this.showControls ? '' : 'style="display: none;"'}>
          <input type="button" class="load-test-button" value="load test" onmouseup="${this.htmlRef}.interactivelyloadTests()"></input>
          <input type="button" class="run-button" value="run all" onmouseup="${this.htmlRef}.runAllTests()"></input>
          <input type="button" class="collapse-button" value="toggle collapse" onmouseup="${this.htmlRef}.collapseToggle()"></input>
