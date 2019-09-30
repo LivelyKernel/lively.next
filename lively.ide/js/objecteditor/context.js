@@ -2,7 +2,7 @@
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
 import { withSuperclasses, isClass } from "lively.classes/util.js";
 import { module } from "lively.modules/index.js";
-import { string, Path, obj } from "lively.lang";
+import { string, promise, Path, obj } from "lively.lang";
 import ClassTreeData from "./classTree.js";
 import { subscribe, unsubscribe } from "lively.notifications/index.js";
 import L2LClient from "lively.2lively/client.js";
@@ -59,8 +59,12 @@ export default class ObjectEditorContext {
     return this;
   }
   
-  async refresh() {
+  async refresh(expandAll) {
     this.classTreeData = new ClassTreeData(this.target.constructor);
+    if (expandAll) {
+      // uncollapse the tree completely
+      await this.classTreeData.uncollapseAll((node) => this.classTreeData.getChildren(node) && node.isRoot);
+    }
     // never really used....
     this.evalEnvironment = {
       context: this.target,
@@ -87,7 +91,7 @@ export default class ObjectEditorContext {
     this.target = target;
     this.selectedClass = null;
     this.selectedMethod = null;
-    await this.refresh()
+    await this.refresh(!editor)
     if (editor)
       Object.assign(editor.editorPlugin.evalEnvironment, this.evalEnvironment);
     await this.selectClass(target.constructor.name);
@@ -179,6 +183,8 @@ export default class ObjectEditorContext {
     if (!this.remoteContextId && obj.isFunction(source)) {
       return await source(this);
     }
+    if (this._evalInProgress) await promise.waitFor(5000, () => !this._evalInProgress);
+    this._evalInProgress = true;
     source = this.stringifySource(source, varMapping);
     let evalStr = this.wrapSource(source),
         context = this.remoteContextId ? `System.get('@lively-env').objectEditContexts["${this.remoteContextId}"]` : this,
@@ -191,6 +197,7 @@ export default class ObjectEditorContext {
       throw Error(res.value)
     }
     res = res.value;
+    this._evalInProgress = false;
     if (!obj.isArray(res) && obj.isObject(res)) return deserialize(res);
     return res;
   }

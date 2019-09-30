@@ -34,23 +34,27 @@ export class ObjectEditor extends Morph {
       textPosition,
       scroll,
       classTreeScroll,
-      evalEnvironment
+      evalEnvironment,
+      loadingIndicator
     } = options;
 
     var ed = new this(obj.dissoc(options, "title", "class", "method", "target", "evalEnvironment")),
         winOpts = {name: "ObjectEditor window", title: options.title || "ObjectEditor"},
         win = (await ed.openInWindow(winOpts)).activate();
     await win.whenRendered();
-    if (target) ed.browse({
-      title,
-      target,
-      className,
-      methodName,
-      textPosition,
-      scroll,
-      classTreeScroll,
-      evalEnvironment
-    });
+    if (target) {
+      if (loadingIndicator) loadingIndicator.label = 'Connecting to target';
+      await ed.browse({
+        title,
+        target,
+        className,
+        methodName,
+        textPosition,
+        scroll,
+        classTreeScroll,
+        evalEnvironment
+      });
+    }
     return win;
   }
 
@@ -214,6 +218,7 @@ export class ObjectEditor extends Morph {
     connect(chooseTargetButton, "fire", this, "execCommand", {converter: () => "choose target"});
 
     connect(classTree, "selectedNode", this, "onClassTreeSelection");
+
     connect(addButton, "fire", this, "interactivelyAddObjectPackageAndMethod");
     connect(removeButton, "fire", this, "execCommand", {converter: () => "remove method or class"});
     connect(forkPackageButton, "fire", this, "interactivelyForkPackage");
@@ -537,12 +542,12 @@ export class ObjectEditor extends Morph {
        ctx.moduleChangeWarning = null;
        ctx.sourceHash = hashCode;
     }, { hashCode });
-    this.clearLocalProperties();
+    await this.clearLocalProperties();
     this.indicateNoUnsavedChanges();
   }
 
-  clearLocalProperties() {
-    this.withContextDo((ctx) => {
+  async clearLocalProperties() {
+    await this.withContextDo((ctx) => {
       let { properties } = ctx.target.propertiesAndPropertySettings();
       for (let prop in properties) {
         if (ctx.target.hasOwnProperty(prop)) {
@@ -694,8 +699,8 @@ export class ObjectEditor extends Morph {
   async selectClass(klass) {
     if (this._updatingTree) return;
     let tree = this.ui.classTree;
-    // update context if nessecary
-    if (this.context.selectedClassName != klass.name) {
+    let className = typeof klass === 'string' ? klass : klass.name;
+    if (this.context.selectedClassName != className) {
       if (tree.selectedNode && await this.hasUnsavedChanges() && this.ui.sourceEditor.textString) {
         let proceed = await this.warnForUnsavedChanges();
         if (!proceed) {
@@ -706,7 +711,7 @@ export class ObjectEditor extends Morph {
           return;
         }
       }
-      await this.context.selectClass(klass.name || klass);
+      await this.context.selectClass(className);
       if (await this.withContextDo((ctx) => isObjectClass(ctx.selectedClass)))
           this.ui.forkPackageButton.enable();
       else this.ui.forkPackageButton.disable();  
