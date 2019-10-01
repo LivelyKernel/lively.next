@@ -1,6 +1,7 @@
 import config from "../config.js";
 import { pt, Color } from "lively.graphics";
 import { arr, num, string } from "lively.lang";
+import bowser from 'bowser';
 // addPathAttributes
 // addStyleProps
 // addSvgAttributes
@@ -58,18 +59,19 @@ function addBorder(morph, style) {
        borderWidthRight, borderColorRight, borderStyleRight, borderColor,
        borderWidthBottom, borderColorBottom, borderStyleBottom,
        borderWidthTop, borderColorTop, borderStyleTop} = morph;
-    style["border-left-style"] =   `${borderStyleLeft}`;
-    style["border-right-style"] =  `${borderStyleRight}`;
-    style["border-bottom-style"] = `${borderStyleBottom}`;
-    style["border-top-style"] =    `${borderStyleTop}`;
-    style["border-left-width"] =   `${borderWidthLeft}px`;
-    style["border-right-width"] =  `${borderWidthRight}px`;
-    style["border-bottom-width"] = `${borderWidthBottom}px`;
-    style["border-top-width"] =    `${borderWidthTop}px`;
-    style["border-top-color"] =    borderColorTop ? borderColorTop.toString() : "transparent";
-    style["border-right-color"] =  borderColorRight ? borderColorRight.toString() : "transparent";
-    style["border-bottom-color"] = borderColorBottom ? borderColorBottom.toString() : "transparent";
-    style["border-left-color"] =   borderColorLeft ? borderColorLeft.toString() : "transparent";
+  let t = (s) => bowser.safari ? string.camelize(s) : s;
+    style[t("border-left-style")] =   `${borderStyleLeft}`;
+    style[t("border-right-style")] =  `${borderStyleRight}`;
+    style[t("border-bottom-style")] = `${borderStyleBottom}`;
+    style[t("border-top-style")] =    `${borderStyleTop}`;
+    style[t("border-left-width")] =   `${borderWidthLeft}px`;
+    style[t("border-right-width")] =  `${borderWidthRight}px`;
+    style[t("border-bottom-width")] = `${borderWidthBottom}px`;
+    style[t("border-top-width")] =    `${borderWidthTop}px`;
+    style[t("border-top-color")] =    borderColorTop ? borderColorTop.toString() : "transparent";
+    style[t("border-right-color")] =  borderColorRight ? borderColorRight.toString() : "transparent";
+    style[t("border-bottom-color")] = borderColorBottom ? borderColorBottom.toString() : "transparent";
+    style[t("border-left-color")] =   borderColorLeft ? borderColorLeft.toString() : "transparent";
     if (borderColor && borderColor.isGradient) style["border-image"] = borderColor.toString()
 
 }
