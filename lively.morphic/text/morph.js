@@ -21,7 +21,7 @@ import commands from "./commands.js";
 import { textAndAttributesWithSubRanges } from "./attributes.js";
 import { serializeMorph, deserializeMorph } from "../serialization.js";
 import { getSvgVertices } from "../rendering/property-dom-mapping.js";
-import { renderSubTree } from "../rendering/morphic-default.js";
+import { renderSubTree, ShadowObject } from "../rendering/morphic-default.js";
 import { getClassName } from "lively.serializer2";
 
 export class Text extends Morph {
@@ -2940,9 +2940,11 @@ export class Text extends Morph {
     this.makeDirty();
     this.selection.cursorBlinkStart();
     if (this._originalShadow) return;
-    this._originalShadow = this.dropShadow;
+    let haloShadow = this.haloShadow || this.propertiesAndPropertySettings().properties.haloShadow.defaultValue;
+    if (haloShadow && !haloShadow.equals) haloShadow = new ShadowObject(haloShadow);
+    if (haloShadow && !haloShadow.equals(this.dropShadow)) this._originalShadow = this.dropShadow;
     this.highlightWhenFocused && this.animate({
-      dropShadow: this.haloShadow || this.propertiesAndPropertySettings().properties.haloShadow.defaultValue,
+      dropShadow: haloShadow,
       duration: 200
     });
   }

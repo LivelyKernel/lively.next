@@ -117,9 +117,10 @@ export class PropertyAnimation {
     }
     if ("dropShadow" in config) {
       let shadowBefore = morph.dropShadow || new ShadowObject({ blur: 0, distance: 0, spread: 0});
-      let shadowAfter = config.dropShadow || new ShadowObject({ blur: 0, distance: 0, spread: 0});
+      let shadowAfter = config.dropShadow;
       config.customTween = fun.compose(p => {
-          morph.dropShadow = shadowBefore.interpolate(p, shadowAfter);
+          morph.dropShadow = shadowBefore.interpolate(p, shadowAfter || new ShadowObject({ blur: 0, distance: 0, spread: 0}));
+          if (p == 1) morph.dropShadow = shadowAfter;
           return p;
        }, config.customTween || (p => {}));
       delete config.dropShadow;

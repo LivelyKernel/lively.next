@@ -260,6 +260,10 @@ export class ShadowObject {
     ]);
   }
 
+  equals(other) {
+    return !!other && obj.equals(this.toJson(), other.toJson())
+  }
+
   toFilterCss() {
     let {distance, rotation, blur, color, spread} = this,
         {x, y} = Point.polar(distance, num.toRadians(rotation));
