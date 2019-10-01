@@ -1,6 +1,6 @@
 import { arr, Path } from "lively.lang";
 import { parse, stringify, transform, query, nodes } from "lively.ast";
-import { capturing } from "lively.source-transform";
+import { capturing, es5Transpilation } from "lively.source-transform";
 import { runtime as classRuntime } from "lively.classes";
 import { getGlobal } from "./util.js";
 
@@ -25,7 +25,7 @@ export function evalCodeTransform(code, options) {
   // state. THis makes it possible to capture eval results, e.g. for
   // inspection, watching and recording changes, workspace vars, and
   // incrementally evaluating var declarations and having values bound later.
-
+  
   // 1. Allow evaluation of function expressions and object literals
   code = transform.transformSingleExpression(code);
   var parsed = parse(code, {withComments: true});
@@ -135,6 +135,8 @@ export function evalCodeTransform(code, options) {
   }
 
   var result = stringify(parsed);
+
+  if (options.jsx) result = es5Transpilation(result);
 
   if (options.sourceURL) result += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
 

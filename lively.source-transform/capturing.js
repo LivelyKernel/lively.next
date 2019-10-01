@@ -7,7 +7,7 @@ import {
   transform,
   nodes,
   BaseVisitor as Visitor,
-   ReplaceManyVisitor, ReplaceVisitor 
+  ReplaceManyVisitor, ReplaceVisitor 
 } from "lively.ast";
 
 var {

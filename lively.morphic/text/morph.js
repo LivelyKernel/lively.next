@@ -1247,6 +1247,7 @@ export class Text extends Morph {
       let Mode = await this.lookupEditorPluginNamed(nameOrMode);
       if (!Mode) throw new Error(`Cannot find editor mode ${nameOrMode}`);
       nameOrMode = new Mode(config.codeEditor.defaultTheme);
+      if (this.evalEnvironment) nameOrMode.evalEnvironment = this.evalEnvironment;
     }
 
     this.plugins = pluginsWithoutModes.concat(nameOrMode);

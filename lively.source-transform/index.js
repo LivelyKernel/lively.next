@@ -1,7 +1,6 @@
 /*global babel*/
 import * as capturing from "./capturing.js";
 export { capturing };
-
 import { parseFunction, stringify, ReplaceVisitor } from "lively.ast";
 
 export function stringifyFunctionWithoutToplevelRecorder(
@@ -45,7 +44,8 @@ export function es5Transpilation(source) {
       presets: [["es2015", {"modules": false}]],
       plugins: [
         'transform-exponentiation-operator', 'transform-async-to-generator',
-        "syntax-object-rest-spread", "transform-object-rest-spread"
+        "syntax-object-rest-spread", "transform-object-rest-spread",
+        ['transform-jsx', { "module": 'lively.ide/jsx/generator.js'}]
       ],
       code: true,
       ast: false

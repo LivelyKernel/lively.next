@@ -191,7 +191,8 @@ export function runEval(System, code, options) {
    && !options.importsEnsured
    && hasUnimportedImports(System, code, targetModule)) {
     return ensureImportsAreImported(System, code, targetModule)
-            .then(() => runEval(System, originalSource, {...options, importsEnsured: true}));
+            .catch(err => null)
+            .then(() => runEval(System, originalSource, {...options, importsEnsured: true}))
   }
 
   // delay eval to ensure SystemJS module record

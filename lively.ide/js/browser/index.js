@@ -35,6 +35,7 @@ import { objectReplacementChar } from "lively.morphic/text/document.js";
 import { loadPart } from "lively.morphic/partsbin.js";
 import { serverInterfaceFor } from "lively-system-interface/index.js";
 import { resource } from "lively.resources/index.js";
+import JSXEditorPlugin from "../../jsx/editor-plugin.js";
 
 class CodeDefTreeData extends TreeData {
 
@@ -406,7 +407,7 @@ export default class Browser extends Window {
 
                   {...btnStyle, name: "addPackageButton", label: Icon.makeLabel("plus"), tooltip: "add package"},
                   {...btnStyle, name: "removePackageButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
-                  {...btnStyle, name: "runTestsInPackageButton", label: "run tests", tooltip: "run tests", styleClasses: [], fontSize: 10, padding: rect(5,3,0,0)}
+                  {...btnStyle, name: "runTestsInPackageButton", label: "run tests", tooltip: "run tests", styleClasses: [], fontSize: 10, padding: rect(5,2,0,0)}
 
                 ]},
                 EvalBackendChooser.default.ensureEvalBackendDropdown(this, "local")]}
@@ -917,8 +918,9 @@ export default class Browser extends Window {
     // combine these?!
     var Mode = JavaScriptEditorPlugin;
     switch (ext) {
-    case "js": /*default*/break;
-    case "json": Mode = JSONEditorPlugin; break;
+      case "js": /*default*/break;
+      case "json": Mode = JSONEditorPlugin; break;
+      case "jsx": Mode = JSXEditorPlugin; break;
     }
 
     // switch text mode
@@ -1177,7 +1179,7 @@ export default class Browser extends Window {
     state.isSaving = true;
     try {
       // deal with non-js code, this needs to be cleaned up as well!
-      if (ext !== "js") {
+      if (ext !== "js" && ext !== 'jsx') {
         if (module.nameInPackage === "package.json") {
           await system.packageConfChange(content, module.name);
           this.setStatusMessage("updated package config", Color.green);
