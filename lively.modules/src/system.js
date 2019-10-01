@@ -204,10 +204,13 @@ function urlQuery() {
 // name resolution extensions
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const dotSlashStartRe = /^\.?\//,
-      trailingSlashRe = /\/$/,
-      jsExtRe = /\.js$/,
-      jsonJsExtRe = /\.json\.js$/i,
-      doubleSlashRe = /.\/{2,}/g;
+  trailingSlashRe = /\/$/,
+  jsExtRe = /\.js$/,
+  jsxExtRe = /\.jsx$/,
+  jsonJsExtRe = /(.*\.json)\.js$/i,
+  jsxJsExtRe = /(.*\.jsx)\.js$/i,
+  doubleSlashRe = /.\/{2,}/g,
+  nodeModRe = /\@node.*/;
 
 function preNormalize(System, name, parent) {
 // console.log(`> [preNormalize] ${name}`);
@@ -295,34 +298,34 @@ function postNormalize(System, normalizeResult, isSync) {
   return m ? m[1] : normalizeResult;
 }
 
-function normalizeHook(proceed, name, parent, parentAddress) {
+async function normalizeHook(proceed, name, parent, parentAddress) {
   var System = this,
-      stage1 = preNormalize(System, name, parent);
-    return proceed(stage1, parent, parentAddress).then(stage2 => {
-      let stage3 = postNormalize(System, stage2 || stage1, false);
-      System.debug && console.log(`[normalize] ${name} => ${stage3}`);
-      if (stage3.startsWith('file') && !name.endsWith('.js')) {
-        // make sure that the file actually exists
-        return resource(stage3).exists().then(exists => {
-          if (exists) return stage3;
-          let node = stage3.replace('.js', '/index.node');
-          resource(node).exists().then(exists => {
-            if (exists) return node;
-            return stage3.replace('.js', '/index.js');
-          })
-        });
-      }
-      return stage3;
-    });
+    stage1 = preNormalize(System, name, parent),
+    stage2 = await proceed(stage1, parent, parentAddress),
+    stage3 = postNormalize(System, stage2 || stage1, false);
+  let isNodePath = stage3.startsWith("file:");
+  System.debug && console.log(`[normalize] ${name} => ${stage3}`);
+  if (
+    !jsExtRe.test(name) &&
+    !jsxExtRe.test(name) &&
+    !nodeModRe.test(stage3) &&
+    !System.loads[stage3]
+  ) {
+    if (await resource(stage3).exists()) return stage3;
+    let indexjs = stage3.replace(".js", "/index.js");
+    if ((await resource(indexjs).exists()) || isNodePath) return indexjs;
+    return stage3.replace(".js", "/index.node");
+  }
+  return stage3;
 }
 
 function decanonicalizeHook(proceed, name, parent, isPlugin) {
   let System = this,
-      stage1 = preNormalize(System, name, parent),
-      stage2 = proceed(stage1, parent, isPlugin),
-      stage3 = postNormalize(System, stage2, true);
-    System.debug && console.log(`[normalizeSync] ${name} => ${stage3}`);
-    return stage3;
+    stage1 = preNormalize(System, name, parent),
+    stage2 = proceed(stage1, parent, isPlugin),
+    stage3 = postNormalize(System, stage2, true);
+  System.debug && console.log(`[normalizeSync] ${name} => ${stage3}`);
+  return stage3;
 }
 
 function normalize_doMapWithObject(mappedObject, pkg, loader) {
