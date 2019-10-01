@@ -122,15 +122,15 @@ class Layout {
     }
   }
 
-  forceLayoutsInNextLevel() {
-    let forceLayouts = (m, i) => {
-      if (m.layout)
+  forceLayoutsOfMorph(m) {
+    if (m.layout)
         m.layout.forceLayout();
       else
-        m.submorphs.forEach(forceLayouts);
-    }
+        m.submorphs.forEach(m => this.forceLayoutsOfMorph(m));
+  }
 
-    this.layoutableSubmorphs.forEach(forceLayouts)
+  forceLayoutsInNextLevel() {
+    this.layoutableSubmorphs.forEach(m => this.forceLayoutsOfMorph(m))
   }
 
   scheduleApply(submorph, animation, change = {}) {
@@ -319,10 +319,9 @@ class FloatLayout extends Layout {
     super.apply(animate);
     
     this.active = true;
-    
+
     let minExtent = this.computeMinContainerExtent();
     this.layoutSubmorphs(minExtent, animate);
-    this.forceLayoutsInNextLevel();
     minExtent = this.computeMinContainerExtent();
     this.resizeContainer(minExtent, animate);
     this.lastBoundsExtent = this.container.bounds().extent();
@@ -330,6 +329,10 @@ class FloatLayout extends Layout {
     this.active = false;
     this.layoutRequests = false;
     return this.animationPromise;
+  }
+
+  resizeContainer() {
+    
   }
   
 }
@@ -369,7 +372,8 @@ export class VerticalLayout extends FloatLayout {
     
     let layoutRoutine = (accessor, startPosition) => {
       layoutableSubmorphs.reduce((pos, m) => {
-        if (resizeSubmorphs) m.width = container.width - 2 * spacing;
+        if (resizeSubmorphs) this.changePropertyAnimated(m, 'width', container.width - 2 * spacing, animate);
+        this.forceLayoutsOfMorph(m);
         this.changePropertyAnimated(m, accessor, pos, animate);
         let bounds = m.bounds();
         layoutableSubmorphBounds.push(bounds);
@@ -479,7 +483,8 @@ export class HorizontalLayout extends FloatLayout {
     
     let layoutRoutine = (accessor, startPosition) => {
       layoutableSubmorphs.reduce((pos, m) => {
-        if (resizeSubmorphs) m.height = container.height - 2 * spacing;
+        if (resizeSubmorphs) this.changePropertyAnimated(m, 'height', container.height - 2 * spacing, animate);
+        this.forceLayoutsOfMorph(m);
         this.changePropertyAnimated(m, accessor, pos, animate);
         let bounds = m.bounds();
         layoutableSubmorphBounds.push(bounds);

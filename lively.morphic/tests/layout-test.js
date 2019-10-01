@@ -36,7 +36,12 @@ function closeToPoint(p1,p2) {
 describe("layout", () => {
 
   before(async () => env = await MorphicEnv.pushDefault(new MorphicEnv()))
-  after(() =>  MorphicEnv.popDefault().uninstall());
+  after(() => {
+    MorphicEnv.popDefault().uninstall();
+    $world.hands.map(h => h.remove());
+    $world = MorphicEnv.default().world;
+    //$world = this.env.world;
+  });
   beforeEach(() => env.setWorld(createDummyWorld()));
 
   describe("vertical layout", () => {
@@ -816,13 +821,13 @@ describe("layout", () => {
               morph({
                 name: "B",
                 layout: new HorizontalLayout({
-                  resizeContainer: true
+                  autoResize: true
                 }),
                 submorphs: [
                   morph({
                     name: "C",
                     layout: new VerticalLayout({
-                      resizeContainer: true
+                      autoResize: true
                     }),
                     submorphs: [morph({name: "D"})]
                   })
@@ -845,10 +850,10 @@ describe("layout", () => {
       expect(c.layout.boundsChanged(c)).is.true;
       expect(c.layout.submorphBoundsChanged).is.true;
       c.clipMode = 'hidden';      
-      c.layout.resizeContainer = false;
+      c.layout.autoResize = false;
       expect(c.layout.boundsChanged(c)).is.false;
-      expect(c.layout.submorphBoundsChanged).is.true;
-      expect(c.layout.noLayoutActionNeeded).is.false;
+      expect(c.layout.submorphBoundsChanged).is.false;
+      expect(c.layout.noLayoutActionNeeded).is.true;
       c.extent = pt(100, 100);
       expect(c.layout.boundsChanged(c)).is.true;
       expect(c.layout.noLayoutActionNeeded).is.false;   
@@ -859,7 +864,7 @@ describe("layout", () => {
     
     it('ignores updates in response to changes that did not affect layout', () => {
       var b = m.get('B'), c = m.get('C'), d = m.get('D'), a = m;
-      c.layout.resizeContainer = false;
+      c.layout.autoResize = false;
       d.extent = pt(100,100);
       expect(c.layout.boundsChanged(c)).is.true;
       expect(c.layout.submorphBoundsChanged).is.true;
@@ -900,5 +905,56 @@ describe("layout", () => {
       expect(b.layout.noLayoutActionNeeded).is.false;
     })
 
+    it("properly supports nesting in vertical layouts", () => {
+      var m = morph({
+        layout: new VerticalLayout({ resizeSubmorphs: true, autoResize: true }),
+        extent: pt(200, 200),
+        name: 'root',
+        fill: Color.blue,
+        submorphs: arr.range(1, 3).map(() => morph({
+            name: 'twig',
+            fill: Color.green,
+            layout: new TilingLayout(),
+            submorphs: arr.range(1, 3).map(() => morph({
+              fill: Color.red,
+              name: 'leaf',
+              extent: pt(50,50)
+            }))
+          }))
+      });
+      expect(m.height).equals(150);
+      m.width = 100;
+      m.applyLayoutIfNeeded();
+      //m.width = 101;
+      //m.applyLayoutIfNeeded();
+      expect(m.height).equals(300);
+      expect(m.submorphBounds().height).equals(300);
+    });
+
+    it("properly supports nesting in horizontal layouts", () => {
+      var m = morph({
+        layout: new HorizontalLayout({ resizeSubmorphs: true, autoResize: true }),
+        extent: pt(200, 200),
+        name: 'root',
+        fill: Color.blue,
+        submorphs: arr.range(1, 3).map(() => morph({
+            name: 'twig',
+            fill: Color.green,
+            layout: new TilingLayout({ axis: 'column' }),
+            submorphs: arr.range(1, 3).map(() => morph({
+              fill: Color.red,
+              name: 'leaf',
+              extent: pt(50,50)
+            }))
+          }))
+      });
+      expect(m.width).equals(150);
+      m.height = 100;
+      m.applyLayoutIfNeeded();
+      expect(m.width).equals(300);
+      expect(m.submorphBounds().width).equals(300);
+    });
+
   });
+
 })
