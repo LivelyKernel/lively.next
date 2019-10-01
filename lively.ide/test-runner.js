@@ -1,7 +1,7 @@
 /*global System*/
 import { arr, promise, obj, chain, fun } from "lively.lang";
 import { query, parse, acorn } from "lively.ast";
-import { pt } from "lively.graphics";
+import { pt, Color } from "lively.graphics";
 import { addOrChangeCSSDeclaration } from "lively.morphic/rendering/dom-helper.js";
 import { HTMLMorph } from "lively.morphic";
 import { connect } from "lively.bindings";
@@ -97,7 +97,7 @@ export function testsFromMocha(mocha) {
 
 
 const testRunnerCSS = `.mocha-test-runner {
-  font-family: Arial,sans-serif;
+  font-family: Nunito,Arial,sans-serif;
   font-size: 12px;
   line-height: 1.5em;
 }
@@ -117,7 +117,7 @@ const testRunnerCSS = `.mocha-test-runner {
 }
 
 .controls {
-  margin-bottom: 6px;
+  margin: 6px 6px;
 }
 
 .mocha-test-runner .row {
@@ -125,9 +125,12 @@ const testRunnerCSS = `.mocha-test-runner {
 }
 
 .mocha-test-runner .suites {
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: calc(100% - 30px);
   text-overflow: ellipsis;
   white-space: nowrap;
+  background: rgba(0,0,0,0.5);
 }
 
 .mocha-test-runner .suite {
@@ -218,6 +221,7 @@ export default class TestRunner extends HTMLMorph {
           this.update();
         }
       },
+      fill: { defaultValue: Color.transparent },
       state: {},
       editorPlugin: {
         get() {
@@ -225,7 +229,7 @@ export default class TestRunner extends HTMLMorph {
               || (this.editorPlugin = new JavaScriptEditorPlugin());
         }
       },
-
+      name: { defaultValue: 'test runner' },
       systemInterface: {
         derived: true, after: ["editorPlugin", "submorphs"],
         get() { return this.editorPlugin.systemInterface(); },
@@ -238,7 +242,7 @@ export default class TestRunner extends HTMLMorph {
   }
 
   constructor(props) {
-    super({name: "test runner", clipMode: "auto", ...props});
+    super(props);
     this.reset();
     connect(this, "extent", this, "relayout");
   }
@@ -257,8 +261,6 @@ export default class TestRunner extends HTMLMorph {
     var win = this.getWindow();
     win && (win.extent = pt(500,600));
 
-    this.clipMode = "auto";
-
     this.state = {
       grep: null,
       loadedTests: [],
@@ -270,7 +272,7 @@ export default class TestRunner extends HTMLMorph {
   }
 
   relayout() {
-    this.get("eval backend button").topRight = this.innerBounds().topRight();
+    this.get("eval backend button").topRight = this.innerBounds().insetBy(5).topRight();
   }
 
   setEvalBackend(choice) {
