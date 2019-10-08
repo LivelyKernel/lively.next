@@ -1,4 +1,4 @@
-/*global System,WeakMap,FormData,fetch,DOMParser*/
+/*global System,WeakMap,FormData,fetch,DOMParser,XMLHttpRequest*/
 import { resource } from "lively.resources";
 import { Rectangle, Color, pt } from "lively.graphics";
 import { arr, fun, obj, promise } from "lively.lang";
@@ -247,25 +247,38 @@ export class LivelyWorld extends World {
       for (let i = 0; i < files.length; i++)
         fd.append('file', files[i], files[i].name);
 
-      let res, answerText;
+      let res, answer, ld = LoadingIndicator.open('Uploading File'),
+          xhr = new XMLHttpRequest();
       try {
-        let headers = {};
+        let headers = {}, { promise: p, resolve } = promise.deferred();
         if (!user.isGuestUser) headers["Authorization"] = `Bearer ${user.token}`;
-        res = await fetch(
+        xhr.open("POST",
           `/upload?uploadPath=${encodeURIComponent(uploadPath)}`,
           {method: 'POST', body: fd, headers});
-        answerText = await res.text();
-
+        for (let header in headers)
+          xhr.setRequestHeader(header, headers[header]);
+        xhr.upload.addEventListener("progress", (evt) => {
+          // set progress of loading indicator
+          let p = evt.loaded / evt.total;
+          ld.progress = p;
+          ld.label = 'Uploading File ' + (100 * p).toFixed() + '%';
+        });
+        xhr.responseType = 'json';
+        xhr.onload = () => {
+          resolve(xhr.response);
+        }
+        xhr.send(fd);
+        answer = await p;
       } catch (err) {
         return this.showError(`Upload failed: ${err.message}\n`);
       }
 
-      if (!res.ok) {
-        return this.showError(answerText || res.statusText);
+      ld.remove();
+
+      if (xhr.status !== 200) {
+        return this.showError(xhr.statusText);
       }
       try {
-        let answer = JSON.parse(answerText);
-
         if (answer.status !== "done") {
           return this.setStatusMessage(`File upload failed: ${answer.status}`)
         }
