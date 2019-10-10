@@ -1,10 +1,12 @@
 /*global Map,System*/
-import { obj, arr, string } from "lively.lang";
+import { obj, num, arr, string } from "lively.lang";
 import { connect, signal } from "lively.bindings";
 import { TreeData } from "lively.components";
 import { newUUID } from "lively.lang/string.js";
 import { localInterface } from "lively-system-interface";
 
+const MAX_NODE_THRESHOLD = 1000; // the maximum number of nodes to be displayed as children per property
+const MIN_PARTITION_SIZE = 250;
 /*
 
 When using trees as a means to simply display information to the user
@@ -77,14 +79,14 @@ function safeToString(value) {
   } catch (e) { return `Cannot print object: ${e}`; }
 }
 
-function propertyNamesOf(obj) {
+function propertyNamesOf(obj, partition) {
   if (!obj) return [];
-  var keys = arr.sortBy(Object.keys(obj), p => p.toLowerCase());
   if (Array.isArray(obj)) {
-    var indexes = obj.length ? arr.range(0, obj.length-1).map(String) : [];
-    return indexes.concat(arr.withoutAll(keys, indexes));
+    console.log(partition)
+    let len = partition ? partition.partitionSize : obj.length - 1;
+    return arr.range(0, len); // this ignores custom props on arrays though...
   }
-  return keys;
+  return arr.sortBy(Object.keys(obj), p => p.toLowerCase());
 }
 
 export function isMultiValue(foldableValue, propNames) {
@@ -107,6 +109,32 @@ export function printValue(value) {
   result = result.replace(/\n/g, "");
   if (result.length > 500) result = result.slice(0, 20) + `...[${result.length - 20} CHARS]"`;
   return result;
+}
+
+function partitionedChildren(arrayOrDict, { originalValue = arrayOrDict, offset = 0, partitionSize = arrayOrDict.length } = {}) {
+  if (obj.isArray(arrayOrDict)) {
+    let newPartitionSize = num.roundTo(Math.max(MIN_PARTITION_SIZE, partitionSize / 50), .1),
+        numPartitions = partitionSize / newPartitionSize,
+        partitions = [];
+    for (let i = 0; i < numPartitions; i++) {
+      let keyString = `[${offset + i * newPartitionSize}-${offset + (i + 1) * newPartitionSize}]`;
+      partitions.push({
+        partition: {
+          originalValue,
+          offset: offset + i * newPartitionSize,
+          partitionSize: newPartitionSize
+        },
+        value: [],
+        key: keyString,
+        keyString,
+        valueString: '...',
+        isCollapsed: true
+      })
+    }
+    return partitions;
+  } else {
+    return arrayOrDict;
+  }
 }
 
 export class InspectionTree extends TreeData {
@@ -137,23 +165,6 @@ export class InspectionTree extends TreeData {
 
   dispose() {}
 
-  partitionedChildren(nodes) {
-    let partitionSize = 250,
-        numPartitions = nodes.length / partitionSize,
-        partitions = [];
-    for (let i = 0; i < numPartitions; i++) {
-      let partition = nodes.slice(i * partitionSize, (i + 1) * partitionSize);
-      partitions.push(new InspectionNode({
-        keyString: `[${i * partitionSize}-${(i + 1) * partitionSize}]`,
-        valueString: '...',
-        value: partition,
-        children: partition,
-        isCollapsed: true
-      }))
-    }
-    return partitions;
-  }
-
   async filter({sorter, maxDepth = 1, iterator, showUnknown, showInternal}) {
     await this.uncollapseAll(
       (node, depth) => maxDepth > depth && (node == this.root || node.value.submorphs)
@@ -168,11 +179,7 @@ export class InspectionTree extends TreeData {
   }
   
   getChildren(node) {
-    if (node.children && node.children.filter(c => c.visible).length > 1000) {
-      return node._childGenerator || (node._childGenerator = this.partitionedChildren(node.children))
-    } else {
-      return node.children;
-    }    
+    return node.children;  
   }
 
   display(node) { return node.display(this.inspector); }
@@ -317,11 +324,13 @@ class InspectionNode {
     children = [],
     isSelected = false,
     visible = true,
-    draggable = true
+    draggable = true,
+    partition
   }) {
+    this.partition = partition;
     this.priority = priority;
     this.key = key;
-    this.keyString = keyString || String(key);
+    this.keyString = String(keyString || key);
     this.value = value;
     this.valueString = valueString || printValue(value);
     this.isCollapsed = isCollapsed;
@@ -346,10 +355,22 @@ class InspectionNode {
   getSubNode(node) {
     if (node.value && node.value.isMorph)
        return new MorphNode({root: this.root, ...node});
+    // handle the case where I am a partition
+    let offset, { key, keyString } = node, target = this.value, partition = node.partition || this.partition;
+    if (partition) {
+      if (obj.isNumber(key)) debugger;
+      offset = partition.offset;
+      target = partition.originalValue;
+      key = offset && obj.isNumber(key) ? key + offset : key;
+      keyString = key;
+    }
     return new PropertyNode({
       ...node,
+      keyString,
+      key,
+      target,
+      partition,
       root: this.root,
-      target: this.value,
       spec: {}
     });
   }
@@ -417,9 +438,11 @@ class PropertyNode extends InspectionNode {
   constructor(args) {
     super(args);
     let {
+      partition,
       spec, // spec providing information about the inspected values type etc...
       target // target is passed from previous morph context
     } = args;
+    this.partition = partition;
     this.target = target;
     this.spec = spec;
     this.foldedNodes = {};
@@ -536,7 +559,7 @@ class FoldedNode extends PropertyNode {
 }
 
 function propertiesOf(node) {
-  let target = node.value;
+  let target = node.partition ? node.target : node.value;
   if (!target) return [];
 
   var seen = {_rev: true}, props = [],
@@ -563,12 +586,18 @@ function propertiesOf(node) {
     }
   }
   if (options.includeDefault) {
-    var defaultProps = propertyNamesOf(target);
-    for (let key of defaultProps) {
-      if (key in seen) continue;
-      var value = target[key], valueString = printValue(value),
-          nodeArgs = {key, keyString: key, value, valueString, isCollapsed};
-      props.push(node.getSubNode(nodeArgs));
+    var defaultProps = propertyNamesOf(target, node.partition);
+    if (defaultProps.length > MAX_NODE_THRESHOLD) {
+      for (let nodeArgs of partitionedChildren(target, node.partition)) {
+        props.push(node.getSubNode(nodeArgs));
+      }
+    } else {
+      for (let key of defaultProps) {
+        if (key in seen) continue;
+        var value = target[key], valueString = printValue(value),
+            nodeArgs = { keyString: key, key, value, valueString, isCollapsed };
+        props.push(node.getSubNode(nodeArgs));
+      }
     }
     if (options.includeSymbols) {
       for (let key of Object.getOwnPropertySymbols(target)) {
