@@ -52,7 +52,7 @@ export default class Resource {
     return `${this.constructor.name}("${this.url}")`;
   }
 
-  newResource(url) { return resource(url); }
+  newResource(url) { return resource(url, this); }
 
   path() {
     var path = this.url

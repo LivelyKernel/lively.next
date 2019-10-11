@@ -23,7 +23,7 @@ export default class FileUploadPlugin {
   async close() {}
 
   async handleRequest(req, res, next) {
-    if (req.method.toUpperCase() !== "POST" || !req.url.startsWith("/upload"))
+    if (!["POST", "PUT"].includes(req.method.toUpperCase()) || !req.url.startsWith("/upload"))
       return next();
 
     let query = parseQuery(req.url),

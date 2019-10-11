@@ -1,7 +1,8 @@
-/*global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace,System,global,process*/
+/*global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace,System,global,process,XMLHttpRequest*/
 
 import Resource from "./resource.js";
 import { applyExclude } from "./helpers.js";
+import { promise } from "lively.lang";
 
 class XPathQuery {
 
@@ -138,7 +139,7 @@ function defaultOrigin() {
 }
 
 
-function makeRequest(resource, method = "GET", body, headers = {}) {
+function makeRequest(resource, method = "GET", body, headers = {}, onProgress = () => {}) {
   var url = resource.url,
       {useCors, useProxy, headers: moreHeaders} = resource,
       useCors = typeof useCors !== "undefined" ? useCors : true,
@@ -163,10 +164,45 @@ function makeRequest(resource, method = "GET", body, headers = {}) {
   return fetch(url, fetchOpts);
 }
 
+export function upload(resource, body) {
+    let { useProxy = true, useCors = true, url,
+         onLoad, headers, onProgress } = resource;
+    let xhr = new XMLHttpRequest();
+    let res = promise.deferred();
+    
+    xhr.open("PUT", url);
+
+    if (useProxy) {
+      Object.assign(headers, {
+        'pragma': 'no-cache',
+        'cache-control': 'no-cache',
+        "x-lively-proxy-request": url
+      });
+  
+      url = resource.proxyDomain || defaultOrigin();
+    }
+  
+    for (let header in headers)
+      xhr.setRequestHeader(header, headers[header]);
+    xhr.upload.addEventListener("progress", onProgress);
+    xhr.responseType = 'json';
+    xhr.onload = () => {
+      onLoad(xhr.response);
+      res.resolve(xhr);
+    }
+    
+    
+    if (useCors) xhr.withCredentials = true;
+    xhr.send(body);
+    return res.promise;
+}
+
 export default class WebDAVResource extends Resource {
 
   constructor(url, opts = {}) {
     super(url, opts);
+    this.onLoad = opts.onLoad || (() => {});
+    this.onProgress = opts.onProgress || (() => {});
     this.useProxy = opts.hasOwnProperty("useProxy") ? opts.useProxy : false;
     this.proxyDomain = opts.proxyDomain || undefined;
     this.useCors = opts.hasOwnProperty("useCors") ? opts.useCors : false;
@@ -205,8 +241,8 @@ export default class WebDAVResource extends Resource {
 
   async write(content) {
     if (!this.isFile()) throw new Error(`Cannot write a non-file: ${this.url}`);
-    var res = await makeRequest(this, "PUT", content);
-    if (!res.ok && this.errorOnHTTPStatusCodes)
+    var res = await upload(this, content);
+    if (res.status != 200  && this.errorOnHTTPStatusCodes)
       throw new Error(`Cannot write ${this.url}: ${res.statusText} ${res.status}`);
     return this;
   }
