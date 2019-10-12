@@ -242,7 +242,7 @@ export default class WebDAVResource extends Resource {
   async write(content) {
     if (!this.isFile()) throw new Error(`Cannot write a non-file: ${this.url}`);
     var res = await upload(this, content);
-    if (res.status != 200  && this.errorOnHTTPStatusCodes)
+    if (res.status != 200 && res.status != 201  && this.errorOnHTTPStatusCodes)
       throw new Error(`Cannot write ${this.url}: ${res.statusText} ${res.status}`);
     return this;
   }
