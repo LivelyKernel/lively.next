@@ -711,11 +711,11 @@ export class ObjectEditor extends Morph {
           return;
         }
       }
-      await this.context.selectClass(className);
-      if (await this.withContextDo((ctx) => isObjectClass(ctx.selectedClass)))
-          this.ui.forkPackageButton.enable();
-      else this.ui.forkPackageButton.disable();  
+      await this.context.selectClass(className);    
     }
+    if (await this.withContextDo((ctx) => isObjectClass(ctx.selectedClass)))
+      this.ui.forkPackageButton.enable();
+    else this.ui.forkPackageButton.disable(); 
     // fetch data from context
     let descr = await this.withContextDo((ctx) => {
       const descr = ctx.sourceDescriptorFor(ctx.selectedClass);
