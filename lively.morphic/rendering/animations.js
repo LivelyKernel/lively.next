@@ -127,12 +127,11 @@ export class PropertyAnimation {
       morph.dropShadow = shadowBefore;
     }
     if ("visible" in config) {
-      let originalOpacity = morph.opacity;
+      let { originalOpacity = morph.opacity } = queue;
+      queue.originalOpacity = originalOpacity;
       let targetVisibility = config.visible;
       config.customTween = fun.compose(p => {
-          if (targetVisibility) console.log('transforming to visible')
           if (this._otherVisibleTransformationInProgress) {
-            //console.log('canceled transform', morph.name, targetVisibility, this)
             return p;
           }
           if (p == 0 && targetVisibility == true) {
@@ -140,9 +139,9 @@ export class PropertyAnimation {
           }
           morph.opacity = targetVisibility ? num.interpolate(p, 0, 1) : num.interpolate(p, 1, 0); 
           if (p == 1) {
-            console.log('finished', morph.name, targetVisibility, this)
             morph.visible = targetVisibility;
             morph.opacity = originalOpacity;
+            delete queue.originalOpacity;
           }
           return p;
        }, config.customTween || (p => {}));
