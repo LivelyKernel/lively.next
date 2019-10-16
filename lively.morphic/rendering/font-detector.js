@@ -19,13 +19,18 @@ export default class FontDetector {
     this.prepared = false;
     this.defaultWidth = {};
     this.defaultHeight = {};
-    this.baseFonts = ['monospace', 'sans-serif', 'serif'];
+    this.possibleFontWeights = [
+      'normal', 'bold', 'bolder', 'lighter',
+      '100', '200', '300', '400', '500', '600', '700', '800', '900'
+    ];
+    this.baseFonts = ['monospace', 'sans-serif', 'serif', 'Comic Sans MS'];
     this.span = null;
   }
 
   prepare() {
     var defaultWidth = this.defaultWidth,
         defaultHeight = this.defaultHeight,
+        fontWeights = this.possibleFontWeights,
         baseFonts = this.baseFonts,
         // we use m or w because these two characters take up the maximum width.
         // And we use a LLi so that the same matching fonts can get separated
@@ -37,18 +42,21 @@ export default class FontDetector {
         s = this.span = this.document.createElement("span");
     s.style.fontSize = testSize;
     s.innerHTML = testString;
-    for (let index in baseFonts) {
-      //get the default width for the three base fonts
-      s.style.fontFamily = baseFonts[index];
-      h.appendChild(s);
-      defaultWidth[baseFonts[index]] = s.offsetWidth; //width for the default font
-      defaultHeight[baseFonts[index]] = s.offsetHeight; //height for the defualt font
-      h.removeChild(s);
+    for (let j in fontWeights) {
+      for (let i in baseFonts) {
+        //get the default width for the three base fonts
+        s.style.fontFamily = baseFonts[i];
+        s.style.fontWeight = fontWeights[j];
+        h.appendChild(s);
+        defaultWidth[baseFonts[i] + '@' + fontWeights[j]] = s.offsetWidth; //width for the default font
+        defaultHeight[baseFonts[i] + '@' + fontWeights[j]] = s.offsetHeight; //height for the defualt font
+        h.removeChild(s);
+      }
     }
     this.prepared = true;
   }
 
-  isFontSupported(font) {
+  isFontSupported(font, weight = 'normal') {
     if (!this.prepared) this.prepare();
 
     let {
@@ -60,10 +68,12 @@ export default class FontDetector {
     try {
       body.appendChild(span);
       for (let index in baseFonts) {
+        span.style.fontWeight = weight
         span.style.fontFamily = font + ',' + baseFonts[index]; // name of the font along with the base font for fallback.
-        let matched = (span.offsetWidth != defaultWidth[baseFonts[index]]
-                    || span.offsetHeight != defaultHeight[baseFonts[index]]);
-        if (matched) return true;
+        let matched = (span.offsetWidth != defaultWidth[baseFonts[index] + '@' + weight]
+                   || span.offsetHeight != defaultHeight[baseFonts[index] + '@' + weight]);
+        if (matched)
+          return true;
       }
       return false;
     } finally { body.removeChild(span); }

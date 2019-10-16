@@ -187,9 +187,9 @@ export default class FontMetric {
     return this.sizeFor(style, " ").height;
   }
 
-  isFontSupported(font) {
+  isFontSupported(font, weight = 'normal') {
     let fd = this.fontDetector || (this.fontDetector = new FontDetector(this.element.ownerDocument));
-    return fd.isFontSupported(font);
+    return fd.isFontSupported(font, weight);
   }
 
   defaultCharExtent(morph, styleOpts, rendertTextLayerFn) {
