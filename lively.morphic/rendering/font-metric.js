@@ -144,7 +144,7 @@ export default class FontMetric {
         } else {
           ({ width, height } = this.sizeFor(style, char));
         }
-        bounds[col] = { x, y: 0, width, height };
+        bounds[col] = { x, y: 0, width: Math.ceil(width), height: Math.ceil(height) };
         x = x + width;
       }
       if (adjustSpacing) this.cachedBoundsInfo = { bounds, str, style };

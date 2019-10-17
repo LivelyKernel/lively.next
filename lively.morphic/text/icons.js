@@ -41,7 +41,7 @@ export class Icon {
   static textAttribute(iconName) {
     return [
       Icons[iconName].code || `icon ${iconName} not found`,
-       {fontFamily: "", textStyleClasses: ["fa"]}]
+       {fontFamily: "FontAwesome", textStyleClasses: ["fa"]}]
   }
 
   static setIcon(label, iconName) {

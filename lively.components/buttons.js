@@ -124,7 +124,10 @@ export class Button extends Morph {
             this.setProperty('label', stringOrAttributesOrMorph);
             this.labelMorph.value = stringOrAttributesOrMorph;
           }
-          this.labelMorph.fit();
+          this.labelMorph.whenFontLoaded().then(() => { 
+              this.labelMorph.invalidateTextLayout();
+              this.labelMorph.fit()
+          });
         }
       },
 

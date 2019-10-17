@@ -1,4 +1,4 @@
-import { obj, arr, string, properties } from "lively.lang";
+import { obj, promise, arr, string, properties } from "lively.lang";
 import { Rectangle, Color } from "lively.graphics";
 import { signal } from "lively.bindings";
 import { h } from "virtual-dom";
@@ -273,6 +273,28 @@ export class Label extends Morph {
     return splitTextAndAttributesIntoLines(this.textAndAttributes, "\n");
   }
 
+  allFontsLoaded() {
+    let { fontMetric } = this.env;
+    return [
+      this, 
+      ...this.textAndAttributes.map((attr = {
+        fontFamily: this.fontFamily, fontWeight: this.fontWeight
+      }, i) => {
+        if (i % 2) {
+          return attr;
+        }
+      }).filter(Boolean)
+    ].every(attr => 
+      fontMetric.isFontSupported(attr.fontFamily, attr.fontWeight)
+    );
+  }
+
+  async whenFontLoaded() {
+    return promise.waitFor(5000, () => {
+      return this.allFontsLoaded()
+    });
+  }
+
   textBoundsSingleChunk() {
     // text bounds not considering "chunks", i.e. only default text style is
     // used
@@ -359,7 +381,7 @@ export class Label extends Morph {
   }
 
   applyLayoutIfNeeded() {
-    this.fitIfNeeded();
+    if (this.allFontsLoaded()) this.fitIfNeeded();
     super.applyLayoutIfNeeded();
   }
 
