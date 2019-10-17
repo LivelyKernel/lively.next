@@ -21,7 +21,7 @@ import {
 } from "lively.morphic";
 import { num, arr } from "lively.lang";
 import { connect, signal } from "lively.bindings";
-import { Popover } from "./style-popover.js";
+import { Popover } from "lively.components/popup.js";
 import {ColorPalette} from "./color-palette.js";
 import {ColorPicker} from "./color-picker.js";
 

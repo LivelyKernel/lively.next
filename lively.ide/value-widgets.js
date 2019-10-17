@@ -21,10 +21,10 @@ import {
   PointPopover,
   VerticesPopover,
   LayoutPopover,
-  Popover
 } from "./styling/style-popover.js";
 import { StyleSheetEditor } from "./styling/style-sheet-editor.js";
 import { ValueScrubber } from "lively.components/widgets.js";
+import { Popover } from 'lively.components/popup.js';
 
 /*
 

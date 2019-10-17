@@ -11,9 +11,10 @@ import { obj } from "lively.lang";
 
 import { Window } from "lively.components";
 
-import {ColorPalette} from "./color-palette.js";
-import { Popover, FillPopover } from "./style-popover.js";
+import { ColorPalette} from "./color-palette.js";
+import { FillPopover } from "./style-popover.js";
 import { Slider } from "lively.components/widgets.js";
+import { Popover } from 'lively.components/popup.js';
 
 const WHEEL_URL = '/lively.ide/assets/color-wheel.png'
 
