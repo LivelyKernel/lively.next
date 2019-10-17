@@ -830,8 +830,11 @@ var commands = [
         world.setStatusMessage('No target for ObjectEditor');
         return null;
       }
+      let li = args.loadingIndicator = LoadingIndicator.open('Open Object Editor...');
       let { ObjectEditor } = await System.import('lively.ide/js/objecteditor/index.js');
-      return await ObjectEditor.open(args);
+      let ed = await ObjectEditor.open(args);
+      li.remove();
+      return ed;
     }
   },
 
