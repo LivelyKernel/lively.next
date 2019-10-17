@@ -24,6 +24,38 @@ import { Color } from "lively.graphics";
 import { moduleOfId, isReference, referencesOfId, classNameOfId } from "lively.serializer2/snapshot-navigation.js";
 import { LoadingIndicator } from "lively.components";
 
+
+// fixme: read form localconfig
+
+const CLASS_INSTRUMENTATION_MODULES = [
+  'lively.morphic', 
+  'lively.components',
+  'lively.ide',
+  'typeshift.components',
+  'lively.halos'        
+];
+
+const DEFAULT_EXCLUDED_MODULES_PART = [
+  'lively.ast', 
+  'lively.vm',
+  'lively-system-interface',
+  'pouchdb',
+  'pouchdb-adapter-mem',
+  'lively.halos',
+  'lively.ide'
+];
+
+const DEFAULT_EXCLUDED_MODULES_WORLD = [
+  'lively.ast',
+  'lively.vm',
+  'lively-system-interface',
+  'pouchdb',
+  'pouchdb-adapter-mem',
+  'https://unpkg.com/rollup@1.17.0/dist/rollup.browser.js',
+  'wasm-brotli',
+  'lively.halo'
+];
+
 export async function generateLoadHtml(part) {
   const addScripts = `
       <noscript>
@@ -79,11 +111,6 @@ export async function interactivelyFreezeWorld(world) {
     Function prompts the user for a name to publish the part under.
     Data is uploaded to directory and then returns a link to the folder. 
   */ 
-  let excludedModules = [
-    //'lively.ide', 
-    //'PartsBinBrowser', 
-    'lively.halo'
-  ];
   let userName = $world.getCurrentUser().name;
   let frozenPartsDir = await resource(System.baseURL).join('users').join(userName).join('published/').ensureExistance();
   let publicAlias = world.metadata.commit.name;
@@ -99,24 +126,24 @@ export async function interactivelyFreezeWorld(world) {
   await publicationDir.ensureExistance();
 
   // remove the metadata props
-  const snap = serializeMorph(world);
+  const worldSnap = serializeMorph(world);
   const deletedIds = [];
-  obj.values(snap.snapshot).forEach(m => delete m.props.metadata);
+  obj.values(worldSnap.snapshot).forEach(m => delete m.props.metadata);
   // remove objects that are part of the lively.ide or lively.halo package (dev tools)
-  for (let id in snap.snapshot) {
-     delete snap.snapshot[id].props.metadata;
-     delete snap.snapshot[id]._cachedLineCharBounds;
-     let module = moduleOfId(snap.snapshot, id);
+  for (let id in worldSnap.snapshot) {
+     delete worldSnap.snapshot[id].props.metadata;
+     delete worldSnap.snapshot[id]._cachedLineCharBounds;
+     let module = moduleOfId(worldSnap.snapshot, id);
      if (!module.package) continue;
-     if (excludedModules.includes(module.package.name)) {
+     if (DEFAULT_EXCLUDED_MODULES_WORLD.includes(module.package.name)) {
        // fixme: we also need to kill of packages which themselves require one of the "taboo" packages
-       delete snap.snapshot[id];
+       delete worldSnap.snapshot[id];
        deletedIds.push(id);
        continue;
      }
      // transform sources for attribute connections
-     if (classNameOfId(snap.snapshot, id) === 'AttributeConnection') {
-        let props = snap.snapshot[id].props;
+     if (classNameOfId(worldSnap.snapshot, id) === 'AttributeConnection') {
+        let props = worldSnap.snapshot[id].props;
         if (props.converterString) {
            props.converterString.value = es5Transpilation(`(${props.converterString.value})`); 
         }
@@ -127,41 +154,32 @@ export async function interactivelyFreezeWorld(world) {
   }
 
   // remove all windows that are emptied due to the clearance process
-  for (let id in snap.snapshot) {
-     let className = classNameOfId(snap.snapshot, id);
-     if ( arr.intersect(referencesOfId(snap.snapshot, id), deletedIds).length > 0) {
+  for (let id in worldSnap.snapshot) {
+     let className = classNameOfId(worldSnap.snapshot, id);
+     if ( arr.intersect(referencesOfId(worldSnap.snapshot, id), deletedIds).length > 0) {
          if (className === 'Window') {
-           delete snap.snapshot[id];
+           delete worldSnap.snapshot[id];
            continue;
          }
-         for (let [key, {value: v}] of Object.entries(snap.snapshot[id].props)) {
+         for (let [key, {value: v}] of Object.entries(worldSnap.snapshot[id].props)) {
            if (isReference(v) && deletedIds.includes(v.id)) {
-             delete snap.snapshot[id].props[key];
+             delete worldSnap.snapshot[id].props[key];
            }
            if (arr.isArray(v)) { 
              // also remove references that are stuck inside array values
-             snap.snapshot[id].props[key].value = v.filter(v => !(isReference(v) && deletedIds.includes(v.id)));
+             worldSnap.snapshot[id].props[key].value = v.filter(v => !(isReference(v) && deletedIds.includes(v.id)));
            }
          }   
      }
   }
-  removeUnreachableObjects([snap.id], snap.snapshot);
+  removeUnreachableObjects([worldSnap.id], worldSnap.snapshot);
 
-  // freeze the part
+  // freeze the world
   let frozen;
   try {
-    frozen = await bundlePart(snap, {
+    frozen = await bundlePart(worldSnap, {
       compress: true,
-      exclude: [
-        'lively.ast',
-        'lively.vm',
-        'lively-system-interface',
-        'pouchdb',
-        'pouchdb-adapter-mem',
-        'https://unpkg.com/rollup@1.17.0/dist/rollup.browser.js',
-        'wasm-brotli',
-        ...excludedModules
-      ]
+      exclude: DEFAULT_EXCLUDED_MODULES_WORLD
     });
   } catch(e) {
     throw e;
@@ -189,7 +207,9 @@ export async function interactivelyFreezePart(part, requester = false) {
   */ 
   let userName = $world.getCurrentUser().name;
   let frozenPartsDir = await resource(System.baseURL).join('users').join(userName).join('published/').ensureExistance();
-  let publicAlias = await $world.prompt('Please enter a name for this published part:', { requester, input: part.metadata.publishedAlias || '' });
+  let publicAlias = await $world.prompt('Please enter a name for this published part:', {
+    requester, input: (part.metadata && part.metadata.publishedAlias) || ''
+  });
   if (!publicAlias) return;
   let publicationDir = frozenPartsDir.join(publicAlias + '/');
   while (await publicationDir.exists()) {
@@ -209,13 +229,8 @@ export async function interactivelyFreezePart(part, requester = false) {
   try {
     frozen = await bundlePart(part, {
       compress: true,
-      exclude: [
-        'lively.ast', 'lively.vm', 'lively-system-interface',
-        'pouchdb',
-        'pouchdb-adapter-mem',
-        'lively.halos',
-        'lively.ide'
-      ]
+      exclude: DEFAULT_EXCLUDED_MODULES_PART,
+      requester
     });
   } catch(e) {
     throw e;
@@ -399,7 +414,10 @@ class LivelyRollup {
   checkIfImportedModuleExcluded() {
     const conflicts = arr.intersect(this.importedModules.map(id => module(id).package()), this.excludedModules.map(id => module(id).package()));
     if (conflicts.length > 0) {
-      throw Error(`Packages ${conflicts} are directly required by part, yet set to be excluded.`);
+      let multiple = conflicts.length > 1;
+      let error = Error(`Package${multiple ? 's' : ''} ${conflicts.map(p => `"${p.name}"`)} ${multiple ? 'are' : 'is'} directly required by part, yet set to be excluded.`);
+      error.name = 'Exclusion Conflict'
+      throw error;
     }
   }
 
@@ -493,10 +511,7 @@ class LivelyRollup {
   }
 
   needsClassInstrumentation(moduleId) {
-    if (moduleId.includes('lively.morphic') || 
-        moduleId.includes('lively.components') ||
-        moduleId.includes('lively.ide') ||
-        moduleId.includes('lively.halos')) {
+    if (CLASS_INSTRUMENTATION_MODULES.some(m => moduleId.includes(m))) {
       return true;
     }
   }
@@ -610,21 +625,25 @@ class LivelyRollup {
 
   async rollup(compressBundle, output) {
     let li = LoadingIndicator.open('Bundling...');
+    let depsCode, bundledCode;
 
     await li.whenRendered();
-    let bundle = await rollup({
-      input: '__root_module__',
-      shimMissingExports: true,
-      plugins: [{
-        resolveId: (id, importer) => { return this.resolveId(id, importer) },
-        load: async (id) => { return await this.load(id) },
-        transform: (source, id) => { return this.transform(source, id)}
-      }]
-    });
-    
-    let {code: depsCode, globals} = this.generateGlobals();
-    let bundledCode = (await bundle.generate({ format: 'iife', globals, name: 'frozenPart' })).output[0].code;
-    li.remove();
+    try {
+      let bundle = await rollup({
+        input: '__root_module__',
+        shimMissingExports: true,
+        plugins: [{
+          resolveId: (id, importer) => { return this.resolveId(id, importer) },
+          load: async (id) => { return await this.load(id) },
+          transform: (source, id) => { return this.transform(source, id)}
+        }]
+      });
+      let globals;
+      ({code: depsCode, globals} = this.generateGlobals());
+      bundledCode = (await bundle.generate({ format: 'iife', globals, name: 'frozenPart' })).output[0].code;
+    } finally {
+      li.remove();
+    }
     let res = await this.transpileAndCompressOnServer({
       depsCode, bundledCode, output, compressBundle
     });
@@ -679,10 +698,27 @@ function transpileAttributeConnections(snap) {
 })
 }
 
-export async function bundlePart(partOrSnapshot, { exclude: excludedModules = [], compress, output = 'es2019' }) {
+export async function bundlePart(partOrSnapshot, { exclude: excludedModules = [], compress, output = 'es2019', requester }) {
   let snapshot = partOrSnapshot.isMorph ? await createMorphSnapshot(partOrSnapshot) : partOrSnapshot;
   transpileAttributeConnections(snapshot);
   let bundle = new LivelyRollup({ excludedModules, snapshot });
-  let res = await bundle.rollup(compress, output);
-  return res;
+  let rollupBundle = async () => {
+    let res;
+    try {
+      res = await bundle.rollup(compress, output);
+    } catch (e) {
+      if (e.name == 'Exclusion Conflict') {
+        // adjust the excluded Modules
+        let { status, list } = await $world.editListPrompt([
+          e.message, {}, '\n', {}, 'Packages are usually excluded so reduce the payload of a frozen morph. In order to fix this issue you can either remove the problematic package from the exclusion list, or remove the morph that requires this package directly.', {fontSize: 12, fontWeight: 'normal'}], bundle.excludedModules, { requester });
+        if (status != 'canceled') {
+          bundle.excludedModules = list;
+          return await rollupBundle();
+        }
+        throw e;
+      }
+    }
+    return res;
+  }
+  return await rollupBundle();
 }
