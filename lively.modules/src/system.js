@@ -206,7 +206,9 @@ function urlQuery() {
 const dotSlashStartRe = /^\.?\//,
   trailingSlashRe = /\/$/,
   jsExtRe = /\.js$/,
-  jsxExtRe = /\.jsx$/,
+  jsxExtRe = /\.jsx$/,  
+  nodeExtRe = /\.node$/,
+  jsonExtRe = /\.json$/,
   jsonJsExtRe = /(.*\.json)\.js$/i,
   jsxJsExtRe = /(.*\.jsx)\.js$/i,
   doubleSlashRe = /.\/{2,}/g,
@@ -306,16 +308,27 @@ async function normalizeHook(proceed, name, parent, parentAddress) {
   let isNodePath = stage3.startsWith("file:");
   System.debug && console.log(`[normalize] ${name} => ${stage3}`);
   if (
+    // Make sure we did not ask for a js or jsx file in the initial query.
     !jsExtRe.test(name) &&
     !jsxExtRe.test(name) &&
+    // Make sure SystemJS has not yet resolved to a json or node module.
+    // If this happens, the resolution algorithm most likely has already
+    // figured out things and we assume that it has come up with a reasonable
+    // answer.
+    !jsonExtRe.test(stage3) &&
     !nodeModRe.test(stage3) &&
-    !System.loads[stage3]
+    !nodeExtRe.test(stage3) &&
+    // Make sure that the module as not been loaded.
+    !System.loads[stage3] &&
+    // We only continue if SystemJS as resolved to a js file.
+    jsExtRe.test(stage3)
   ) {
     if (await resource(stage3).exists()) return stage3;
     let indexjs = stage3.replace(".js", "/index.js");
-    if ((await resource(indexjs).exists()) || isNodePath) return indexjs;
+    if ((await resource(indexjs).exists()) || !isNodePath) return indexjs;
     return stage3.replace(".js", "/index.node");
   }
+  if (jsxJsExtRe.test(stage3)) stage3 = stage3.replace('.jsx.js', '.jsx');
   return stage3;
 }
 
