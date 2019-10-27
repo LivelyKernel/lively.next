@@ -266,7 +266,7 @@ export class Label extends Morph {
   }
 
   fitIfNeeded() {
-    if (this._needsFit) { this.fit(); }
+    if (this._needsFit && this.allFontsLoaded()) { this.fit(); }
   }
 
   get textAndAttributesOfLines() {
@@ -277,11 +277,12 @@ export class Label extends Morph {
     let { fontMetric } = this.env;
     return [
       this, 
-      ...this.textAndAttributes.map((attr = {
-        fontFamily: this.fontFamily, fontWeight: this.fontWeight
-      }, i) => {
+      ...this.textAndAttributes.map((attr, i) => {
         if (i % 2) {
-          return attr;
+          return {
+            fontFamily: (attr && attr.fontFamily) || this.fontFamily, 
+            fontWeight: (attr && attr.fontWeight) || this.fontWeight
+          };
         }
       }).filter(Boolean)
     ].every(attr => 
@@ -381,7 +382,7 @@ export class Label extends Morph {
   }
 
   applyLayoutIfNeeded() {
-    if (this.allFontsLoaded()) this.fitIfNeeded();
+    this.fitIfNeeded();
     super.applyLayoutIfNeeded();
   }
 
