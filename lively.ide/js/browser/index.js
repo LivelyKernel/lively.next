@@ -14,8 +14,9 @@ import Window from "lively.components/window.js";
 import { HorizontalResizer } from "lively.components/resizers.js";
 import { Tree, TreeData } from "lively.components/tree.js";
 
-import JSONEditorPlugin from "lively.ide/json/editor-plugin.js";
 import JavaScriptEditorPlugin from "../editor-plugin.js";
+import JSONEditorPlugin from "lively.ide/json/editor-plugin.js";
+import JSXEditorPlugin from "lively.ide/jsx/editor-plugin.js";
 import EvalBackendChooser from "../eval-backend-ui.js";
 import browserCommands from "./commands.js";
 
@@ -35,7 +36,6 @@ import { objectReplacementChar } from "lively.morphic/text/document.js";
 import { loadPart } from "lively.morphic/partsbin.js";
 import { serverInterfaceFor } from "lively-system-interface/index.js";
 import { resource } from "lively.resources/index.js";
-import JSXEditorPlugin from "../../jsx/editor-plugin.js";
 
 class CodeDefTreeData extends TreeData {
 
@@ -630,7 +630,7 @@ export default class Browser extends Window {
     excluded.push(".git", "node_modules", ".module_cache");
     try {
       return (await this.systemInterface.resourcesOfPackage(p.address, excluded))
-        .filter(({url}) => (url.endsWith(".js") || url.endsWith(".json"))
+        .filter(({url}) => (url.endsWith(".js") || url.endsWith(".json") || url.endsWith('.jsx'))
                         && !excluded.some(ex => ex instanceof RegExp ? ex.test(url): url.includes(ex)))
         .map((ea) => { ea.name = ea.url; return ea; });
     } catch (e) { this.showError(e); return []; }
