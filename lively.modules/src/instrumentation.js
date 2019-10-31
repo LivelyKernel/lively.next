@@ -43,21 +43,26 @@ export class ModuleTranslationCache {
   deleteCachedData(moduleId) { throw new Error("not yet implemented"); }
 }
 
-var nodejsCacheDir = null;
+var nodejsCacheDirURL = null;
 function prepareNodejsCaching() {
   var fs = System._nodeRequire("fs"),
-      path = System._nodeRequire("path");
-  nodejsCacheDir = process.cwd() === "/"
-    ? path.join(process.env.HOME, ".lively.next")
-    : process.cwd();
+      path = System._nodeRequire("path"),
+      isWindows = process.platform === "win32",
+      nodejsCacheDir =
+        !isWindows && process.cwd() === "/"
+          ? path.join(process.env.HOME, ".lively.next")
+          : process.cwd();
+  nodejsCacheDirURL = isWindows
+    ? `file:///${nodejsCacheDir.replace(/\\/g, "/")}`
+    : `file://${nodejsCacheDir}`;
   if (!fs.existsSync(nodejsCacheDir)) fs.mkdirSync(nodejsCacheDir);
 }
 
 export class NodeModuleTranslationCache extends ModuleTranslationCache {
 
   get moduleCacheDir() {
-    if (!nodejsCacheDir) prepareNodejsCaching();
-    return resource(`file://${nodejsCacheDir}/.module_cache/`); 
+    if (!nodejsCacheDirURL) prepareNodejsCaching();
+    return resource(`${nodejsCacheDirURL}/.module_cache/`);
   }
 
   async ensurePath(path) {
@@ -300,7 +305,9 @@ function getCachedNodejsModule(System, load) {
   // twice we have this little hack...
   try {
     var Module = System._nodeRequire("module").Module,
-        id = Module._resolveFilename(load.name.replace(/^file:\/\//, "")),
+        id = Module._resolveFilename(load.name
+                                       .replace(/^file:\/\//, "") // unix
+                                       .replace(/^\/([a-z]:\/)/i, '$1')), // windows
         nodeModule = Module._cache[id];
     return nodeModule;
   } catch (e) {

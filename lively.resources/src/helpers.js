@@ -191,3 +191,9 @@ export function unregisterExtension(extension) {
   var name = typeof extension === "string" ? extension : extension.name;
   extensions = extensions.filter(ea => ea.name !== name);
 }
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+export const windowsURLPrefixRe = /^file:\/\/\/[a-z]:\//i;
+export const windowsPathPrefixRe = /^[a-z]:\//i;
+export const windowsRootPathRe = /^[a-z]:\/$/i;

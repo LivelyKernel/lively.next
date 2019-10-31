@@ -30,6 +30,7 @@ module.exports = Promise.resolve()
       format: 'iife',
       moduleName: 'lively.resources',
       globals: {
+        "lively.lang": "lively.lang",
         "fs": "typeof module !== 'undefined' && typeof module.require === 'function' ? module.require('fs') : {readFile: function() { throw new Error('fs module not available'); }}"
       }
     }))

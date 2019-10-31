@@ -1,5 +1,6 @@
+/*global process*/
 import Resource from "./resource.js";
-import { applyExclude } from "./helpers.js";
+import { applyExclude, windowsURLPrefixRe, windowsRootPathRe } from "./helpers.js";
 
 import { createWriteStream, createReadStream, readFile, writeFile, exists, mkdir, rmdir, unlink, readdir, lstat, rename } from "fs";
 
@@ -11,7 +12,7 @@ function wrapInPromise(func) {
 
 const readFileP = wrapInPromise(readFile),
       writeFileP = wrapInPromise(writeFile),
-      existsP = (path) => new Promise((resolve, reject) =>
+      existsP = (path) => new Promise((resolve, _reject) =>
                             exists(path, (exists) => resolve(!!exists))),
       readdirP = wrapInPromise(readdir),
       mkdirP = wrapInPromise(mkdir),
@@ -20,7 +21,7 @@ const readFileP = wrapInPromise(readFile),
       lstatP = wrapInPromise(lstat),
       renameP = wrapInPromise(rename);
 
-export default class NodeJSFileResource extends Resource {
+export class NodeJSFileResource extends Resource {
 
   get isNodeJSFileResource() { return true; }
 
@@ -43,7 +44,7 @@ export default class NodeJSFileResource extends Resource {
     return this;
   }
 
-  async mkdir(content) {
+  async mkdir() {
     if (this.isFile()) throw new Error(`Cannot mkdir on a file: ${this.path()}`);
     await mkdirP(this.path());
     return this;
@@ -126,7 +127,7 @@ export default class NodeJSFileResource extends Resource {
     return this;
   }
 
-  async readProperties(opts) {
+  async readProperties() {
     return this._assignPropsFromStat(await this.stat());
   }
 
@@ -149,13 +150,53 @@ export default class NodeJSFileResource extends Resource {
       isLink: stat.isSymbolicLink()
     });
   }
-  
+
   _createWriteStream() { return createWriteStream(this.path()); }
   _createReadStream() { return createReadStream(this.path()); }
 }
 
+export class NodeJSWindowsFileResource extends NodeJSFileResource {
+
+  constructor(url, opts) {
+    // rkrk 2019-10-31:
+    // Windows file uris have three slashes. Since we have used
+    // file:// throughout the code base we introduce this as a
+    // single point fix for the time being...
+    const prefix = url.slice(0,8);
+    if (prefix !== "file:///" && url.slice(0, 7) === "file://") {
+      url = "file:///" + url.slice(7)
+    }
+    if (url.includes("\\")) {
+      url = url.replace(/\\/g, "/");
+    }
+    super(url, opts);
+  }
+
+  path() {
+    return this.url.replace("file:///", "");
+  }
+
+  isRoot() {
+    return !!this.path().match(windowsRootPathRe);
+  }
+
+  root() {
+    if (this.isRoot()) return this;
+    console.log(this.url);
+    var toplevelMatch = this.url.match(windowsURLPrefixRe);
+    if (toplevelMatch) return this.newResource(toplevelMatch[0]);
+    throw new Error(
+      "Could not determine root path of windows file resource for url " +
+        this.url);
+  }
+
+}
+
+const isWindows = typeof process != undefined && process.platform === "win32";
+export default isWindows ? NodeJSFileResource : NodeJSWindowsFileResource;
+
 export var resourceExtension = {
   name: "nodejs-file-resource",
   matches: (url) => url.startsWith("file:"),
-  resourceClass: NodeJSFileResource
+  resourceClass: isWindows ? NodeJSFileResource : NodeJSWindowsFileResource,
 }

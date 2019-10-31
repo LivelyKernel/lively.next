@@ -1,4 +1,4 @@
-import { resource, parseQuery, withRelativePartsResolved, relativePathBetween, join } from "./helpers.js";
+import { resource, parseQuery, withRelativePartsResolved, relativePathBetween, windowsPathPrefixRe } from "./helpers.js";
 
 const slashEndRe = /\/+$/,
       slashStartRe = /^\/+/,
@@ -149,6 +149,8 @@ export default class Resource {
     let path = this.path(), result = withRelativePartsResolved(path);
     if (result === path) return this;
     if (result.startsWith("/")) result = result.slice(1);
+    if (result[1] === ":".startsWith("/")) result = result.slice(1);
+    else if (result[1] === ":" && result.match(windowsPathPrefixRe)) result = result.slice(3);
     return this.newResource(this.root().url + result);
   }
 
@@ -226,7 +228,7 @@ export default class Resource {
         () => Promise.resolve(
                 ea.isDirectory() && toResources[i].ensureExistance()).then(next),
         () => Promise.resolve())();
-  
+
       // copy individual files, this can happen in parallel but certain protocols
       // might not be able to handle a large amount of parallel writes so we
       // synchronize this as well by default
@@ -251,7 +253,7 @@ export default class Resource {
     this.binary = bool;
     return this;
   }
-  
+
   async read()               { nyi(this, "read"); }
   async write()              { nyi(this, "write"); }
   async mkdir()              { nyi(this, "mkdir"); }
