@@ -192,11 +192,10 @@ export class NodeJSWindowsFileResource extends NodeJSFileResource {
 
 }
 
-const isWindows = typeof process != "undefined" && process.platform === "win32";
-export default isWindows ? NodeJSWindowsFileResource : NodeJSFileResource;
-
 export var resourceExtension = {
   name: "nodejs-file-resource",
-  matches: (url) => url.startsWith("file:"),
-  resourceClass: isWindows ? NodeJSWindowsFileResource : NodeJSFileResource,
-}
+  matches: url => url.startsWith("file:"),
+  resourceClass: typeof process != "undefined" && process.platform === "win32"
+    ? NodeJSWindowsFileResource
+    : NodeJSFileResource
+};
