@@ -176,10 +176,7 @@ function prepareSystem(System, config) {
       });
     }
   }
-
-  // if (!cfg.hasOwnProperty("defaultJSExtensions")) cfg.defaultJSExtensions = true;
-
-
+  
   System.config(config);
 
   return System;
@@ -319,7 +316,7 @@ async function normalizeHook(proceed, name, parent, parentAddress) {
     !nodeModRe.test(stage3) &&
     !nodeExtRe.test(stage3) &&
     // Make sure that the module as not been loaded.
-    !System.loads[stage3] &&
+    !(System.loads && System.loads[stage3]) &&
     // We only continue if SystemJS as resolved to a js file.
     jsExtRe.test(stage3)
   ) {
