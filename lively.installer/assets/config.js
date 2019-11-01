@@ -1,6 +1,6 @@
 var config = {
   server: {
-    freezer: { publicDirs: [] },
+    authServerURL: "https://auth.lively-next.org",
     port: 9011,
     hostname: "0.0.0.0",
     plugins: [
@@ -18,8 +18,7 @@ var config = {
       "lively.server/plugins/objectdb.js",
       "lively.server/plugins/pdf-printer.js",
       "lively.server/plugins/subserver.js",
-      "lively.headless/subserver.js",
-      "lively.freezer/server.js"
+      "lively.headless/subserver.js"
     ]
   }
 }
