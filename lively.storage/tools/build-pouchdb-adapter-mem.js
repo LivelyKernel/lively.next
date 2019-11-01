@@ -93,7 +93,7 @@ module.exports = new Promise(function(resolve, reject) {
       code: true,
       ast: false
     };
-    code = babel.trasform(code, options).code;
+    code = babel.transform(code, options).code;
     require("fs").writeFileSync(require("path").join(__dirname, "../dist/pouchdb-adapter-mem.js"), code);
     resolve(String(buf))
   });
