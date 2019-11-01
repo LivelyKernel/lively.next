@@ -32,6 +32,8 @@ module.exports = Promise.resolve()
       globals: {
         "lively.lang": "lively.lang",
         "lively.ast": "lively.ast",
+        "lively.vm": "lively.vm",
+        "lively.modules": "lively.modules",
         "module": "typeof module !== 'undefined' ? module.constructor : {}"
       },
     }))

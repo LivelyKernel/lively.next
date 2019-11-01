@@ -1,7 +1,6 @@
 /*global require, process, module*/
 
 var fs = require("fs"),
-    path = require("path"),
     rollup = require('rollup'),
     babel = require('rollup-plugin-babel');
 
