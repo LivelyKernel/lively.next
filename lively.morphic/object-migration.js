@@ -275,7 +275,8 @@ For now only a simple default theme...
       let indexjs;
       let pathToIndex = Path(['local://lively-object-modules/', 'EmptyWorld', 'index.js']);
       if (indexjs = pathToIndex.get(packages)) {
-        pathToIndex.set(packages, indexjs.replace('import { World, morph } from "lively.morphic";', 'import { morph } from "lively.morphic";\nimport { LivelyWorld as World } from "lively.ide/world.js"'));
+        indexjs = indexjs.replace('import { World, morph } from "lively.morphic";', 'import { morph } from "lively.morphic";\nimport { LivelyWorld as World } from "lively.ide/world.js"').replace('import { World } from "lively.morphic";', 'import { LivelyWorld as World } from "lively.ide/world.js"')
+        pathToIndex.set(packages, indexjs);
       }
       return idAndSnapshot;
     }
