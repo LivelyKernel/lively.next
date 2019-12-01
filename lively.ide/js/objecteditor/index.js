@@ -210,6 +210,17 @@ export class ObjectEditor extends Morph {
       showFrozenPartsButton
     } = this.ui;
 
+    sourceEditor.addCommands([{
+      name: "[javascript] fix undeclared variables",
+      exec: () => this.interactivlyFixUndeclaredVariables()
+    },{
+      name: "[javascript] inject import",
+      exec: () => this.interactivelyAddImport()
+    },{
+      name: "[javascript] remove unused imports",
+      exec: () => this.interactivelyRemoveUnusedImports()
+    }]);
+
     connect(freezeTargetButton, 'fire', this, 'execCommand', {converter: () => 'freeze target'});
     connect(showFrozenPartsButton, 'fire', this, 'execCommand', {converter: () => 'show frozen parts'});
     
@@ -1166,7 +1177,7 @@ export class ObjectEditor extends Morph {
       }
 
       var system = await editorPlugin.systemInterface(),
-          choices = await interactivelyChooseImports(system);
+          choices = await interactivelyChooseImports(system, { requester: this });
       if (!choices) return null;
 
       // FIXME move this into system interface!
@@ -1229,9 +1240,9 @@ export class ObjectEditor extends Morph {
   async interactivelyRemoveUnusedImports() {
     try {
       const origSource = await this.withContextDo(async ctx => {
-            return await ctx.selectedModule.source();
-          }),
-           toRemove = await chooseUnusedImports(origSource);
+             return await ctx.selectedModule.source();
+           }),
+           toRemove = await chooseUnusedImports(origSource, { requester: this });
 
       if (!toRemove || !toRemove.changes || !toRemove.changes.length) {
         this.setStatusMessage("Nothing to remove");
@@ -1466,7 +1477,10 @@ export class ObjectEditor extends Morph {
 
           var {selected: [choice]} = await ed.world().filterableListPrompt(
             "select class or method", items,
-            {historyId: "lively.morphic-object-editor-jump-def-hist"});
+            {
+              historyId: "lively.morphic-object-editor-jump-def-hist",
+              requester: ed
+            });
 
           if (choice) {
             await ed[choice.selector](choice.klass, choice.node.target);

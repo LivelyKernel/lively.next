@@ -101,7 +101,7 @@ export async function interactivelyInjectImportIntoText(textMorph, opts) {
     throw new Error(`cannot find js plugin of ${textMorph}`);
   var choices = await interactivelyChooseImports(
     await jsPlugin.systemInterface(), {
-      world: textMorph.world(), progress: opts.progress
+      world: textMorph.world(), progress: opts.progress, requester: opts.requester
     });
   return choices ? injectImportsIntoText(textMorph, choices, opts) : null;
 }
@@ -133,7 +133,7 @@ export async function interactivelyChooseImports(livelySystem, opts) {
     }, "computing imports...");
 
   // 2. Ask what to import + generate insertions
-  var choices = await ExportPrompt.run(opts.world, exports);
+  var choices = await ExportPrompt.run(opts.world, exports, opts.requester);
   return !choices.length ? null : choices;
 }
 
@@ -161,9 +161,11 @@ function labelForExport(exportSpec) {
 
 class ExportPrompt {
 
-  static run(world, exportData) { return new this().run(world, exportData); }
+  static run(world, exportData, requester=world) {
+    return new this().run(world, exportData, requester);
+  }
 
-  async run(world, exportData) {
+  async run(world, exportData, requester=world) {
 
     var {selected: choices}  = await world.filterableListPrompt(
       "Select import",
@@ -179,7 +181,7 @@ class ExportPrompt {
         historyId: "lively.ide/js-interactively-import",
         extent: pt(800, 500),
         fuzzy: "value.exported",
-        requester: world,
+        requester,
         sortFunction: (parsedInput, item) => {
           // preioritize those completions that are close to the input
           var {exported, isMain} = item.value,
@@ -404,7 +406,7 @@ export async function chooseUnusedImports(source, opts) {
   });
 
   var {list: importsToRemove} = await opts.world.editListPrompt(
-    "Which imports should be removed?", items, {multiSelect: true});
+    "Which imports should be removed?", items, {multiSelect: true, requester: opts.requester});
 
   if (!importsToRemove || !importsToRemove.length) return [];
 
