@@ -82,9 +82,9 @@ function safeToString(value) {
 function propertyNamesOf(obj, partition) {
   if (!obj) return [];
   if (Array.isArray(obj)) {
-    console.log(partition)
     let len = partition ? partition.partitionSize : obj.length - 1;
-    return arr.range(0, len); // this ignores custom props on arrays though...
+    let offset = partition ? partition.offset : 0;
+    return arr.range(offset, offset + len); // this ignores custom props on arrays though...
   }
   return arr.sortBy(Object.keys(obj), p => p.toLowerCase());
 }
@@ -356,12 +356,10 @@ class InspectionNode {
     if (node.value && node.value.isMorph)
        return new MorphNode({root: this.root, ...node});
     // handle the case where I am a partition
-    let offset, { key, keyString } = node, target = this.value, partition = node.partition || this.partition;
+    let offset, { key, keyString } = node, target = this.value, partition = node.partition;
     if (partition) {
-      if (obj.isNumber(key)) debugger;
       offset = partition.offset;
       target = partition.originalValue;
-      key = offset && obj.isNumber(key) ? key + offset : key;
       keyString = key;
     }
     return new PropertyNode({
@@ -509,7 +507,7 @@ class PropertyNode extends InspectionNode {
 
     if (!this.interactive && !(spec.foldable && isMultiValue(value, spec.foldable))) {
       return inspector.renderPropertyControl({
-        target, keyString, valueString, 
+        target, keyString, valueString,
         value, spec, node: this, fastRender: true
       });
     }
