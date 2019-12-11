@@ -95,6 +95,7 @@ export class Renderer {
     // test, for scoped lookup, fixing the issue mentioned above
     let id = "#" + string.regExpEscape(morph.id),
         node = this.domNode && this.domNode.querySelector(id);
+    if (this.domNode && this.domNode.id == morph.id) node = this.domNode;
     if (node) return node;
     // we also need to lookup fixed morphs which are covered by this renderer
     for (let fixedNode of this.fixedMorphNodeMap.values()) {
@@ -500,11 +501,14 @@ export class Renderer {
         bbox = invTfm.transformRectToRect(morph.bounds()),
         w = bbox.width, h = bbox.height,
         ratio = Math.max(0.1, Math.min(goalWidth/w, goalHeight/h)),
-        node = renderMorph(morph),
         tfm = new Transform(
           bbox.topLeft().negated().scaleBy(ratio).subPt(origin),
           rotation, pt(ratio, ratio));
 
+    let node = this.getNodeForMorph(morph);
+    if (node) node = node.cloneNode(true);
+    else node = renderMorph(morph);
+    
     if (center) {
       var previewBounds = tfm.transformRectToRect(
             morph.extent.extentAsRectangle()),
