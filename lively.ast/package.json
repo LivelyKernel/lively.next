@@ -47,7 +47,6 @@
   "systemjs": {
     "main": "index.js",
     "map": {
-      "lively.ast": ".",
       "escodegen": "./dist/escodegen.browser.js",
       "acorn": "./dist/acorn.js",
       "util": {

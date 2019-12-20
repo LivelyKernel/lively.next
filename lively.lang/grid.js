@@ -131,7 +131,7 @@ function benchmark() {
 
   var g = create(1000, 200, 1),
       addNum = 0;
-      t = lively.lang.fun.timeToRunN(function() {
+      t = timeToRunN(function() {
   forEach(g, function(n) { addNum += n; }) }, 10);
   results.push(`forEach: ${t.toFixed(2)}ms`);
 

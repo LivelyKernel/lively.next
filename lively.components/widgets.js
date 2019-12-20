@@ -1,4 +1,4 @@
-import { obj, string, num, arr, properties } from "lively.lang";
+import { obj, Path as PropertyPath, string, num, arr, properties } from "lively.lang";
 import { pt, Color, Rectangle, rect } from "lively.graphics";
 import { signal, connect, disconnect } from "lively.bindings";
 import {
@@ -864,7 +864,7 @@ export class SearchField extends Text {
               || (this._fuzzySortFunction = (parsedInput, item) => {
                 var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
                 // preioritize those completions that are close to the input
-                var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
+                var fuzzyValue = String(PropertyPath(prop).get(item)).toLowerCase();
                 var base = 0;
                 parsedInput.lowercasedTokens.forEach(t => {
                   if (fuzzyValue.startsWith(t)) base -= 10;
@@ -884,7 +884,7 @@ export class SearchField extends Text {
                 var tokens = parsedInput.lowercasedTokens;
                 if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
                 // "fuzzy" match against item.string or another prop of item
-                var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
+                var fuzzyValue = String(PropertyPath(prop).get(item)).toLowerCase();
                 return arr.sum(parsedInput.lowercasedTokens.map(token =>
                   string.levenshtein(fuzzyValue, token))) <= 3;
               });

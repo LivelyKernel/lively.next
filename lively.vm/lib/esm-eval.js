@@ -21,7 +21,7 @@ function ensureImportsAreImported(System, code, parentModule) {
 }
 
 function hasUnimportedImports(System, code, parentModule) {
-  var body = lively.ast.parse(code).body,
+  var body = parse(code).body,
       imports = body.filter(node => node.type === "ImportDeclaration"),
       importedModules = arr.uniq(imports.map(ea => ea.source.value)).filter(Boolean),
       unloadedImports = importedModules.filter(ea =>

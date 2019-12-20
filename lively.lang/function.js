@@ -8,6 +8,7 @@
 
 import { merge as objectMerge, safeToString } from "./object.js";
 import Closure from "./closure.js";
+import * as arr from "./array.js";
 
 // -=-=-=-=-=-=-=-=-
 // static functions
@@ -510,7 +511,7 @@ function withNull(func) {
   // promise.then(withNull(cb)).catch(cb);
   func = func || function() {};
   return function(/*args*/) {
-    var args = lively.lang.arr.from(arguments);
+    var args = arr.from(arguments);
     func.apply(null, [null].concat(args))
   }
 }

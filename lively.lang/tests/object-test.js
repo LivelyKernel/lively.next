@@ -2,6 +2,8 @@
 
 import { expect } from "mocha-es6";
 import { isObject, newKeyIn, sortKeysWithBeforeAndAfterConstraints, select, extend, inspect, equals, keys, isRegExp, isFunction, extract, isEmpty, deepCopy, inherit, values, merge, clone, isBoolean, dissoc, isString, isElement, isArray, deepMerge, isNumber, isUndefined, typeStringOf, safeToString, isMutableType, shortPrintStringOf, mergePropertyInHierarchy } from "../object.js";
+import * as properties from "../properties.js";
+import Path from '../Path.js';
 
 var isNodejs = System.get("@system-env").node;
 var GLOBAL = System.global;
@@ -433,8 +435,7 @@ describe('object', function() {
 });
 
 describe('properties', function() {
-
-  var properties = lively.lang.properties;
+  
   var obj;
 
   beforeEach(function() {
@@ -486,8 +487,6 @@ describe('properties', function() {
 
 
 describe('Path', function() {
-
-  var Path = lively.lang.Path;
 
   it("parsePath", function() {
     expect([]).to.eql(Path(undefined).parts());
@@ -557,7 +556,7 @@ describe('Path', function() {
   });
 
   it("withParentAndKeyDo", function() {
-    var p1 = lively.lang.Path("a.b.c"),
+    var p1 = Path("a.b.c"),
         o = {a: {b: {c: {foo: 23}}}};
     p1.withParentAndKeyDo(o, false, function(parent, key) {
       expect(key).equal("c");
@@ -566,7 +565,7 @@ describe('Path', function() {
   });
 
   it("defineProperty", function() {
-    var p1 = lively.lang.Path("a.b.c"),
+    var p1 = Path("a.b.c"),
         o = {a: {b: {}}};
     p1.defineProperty(o, {value: 37, writable: true, enumerable: false, configurable: true});
     expect(o.a.b.c).equal(37);

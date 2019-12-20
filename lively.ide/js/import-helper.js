@@ -3,6 +3,7 @@ import { arr, string } from "lively.lang";
 import { pt } from "lively.graphics";
 import { LoadingIndicator } from "lively.components";
 import { config } from "lively.morphic";
+import { fuzzyParse, query } from 'lively.ast';
 import { ImportInjector, GlobalInjector, ImportRemover } from "lively.modules/src/import-modification.js";
 import { callService, ProgressMonitor } from "../service-worker.js";
 
@@ -234,8 +235,8 @@ function matchingExportsForUndeclared(undeclaredVar, allExports, preferReExporte
 
 function undeclaredVariables(source, knownGlobals) {
   knownGlobals = knownGlobals || [];
-  let parsed = lively.ast.fuzzyParse(source, {withComments: true});
-  return lively.ast.query.findGlobalVarRefs(parsed, {jslintGlobalComment: true})
+  let parsed = fuzzyParse(source, {withComments: true});
+  return query.findGlobalVarRefs(parsed, {jslintGlobalComment: true})
     .filter(ea => !knownGlobals.includes(ea.name));
 }
 

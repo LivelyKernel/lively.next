@@ -1,7 +1,8 @@
 /*global System*/
-import { arr, string } from "lively.lang";
+import { arr, promise, string } from "lively.lang";
 import { show } from "lively.halos";
 import { Range } from "lively.morphic/text/range.js";
+import { query, BaseVisitor } from 'lively.ast';
 
 function getEvalEnv(morph) {
   var plugin = morph.pluginFind(p => p.isJSEditorPlugin);
@@ -27,7 +28,7 @@ export var jsEditorCommands = [
         if (!position) position = ed.cursorPosition;
         var nav = ed.pluginInvokeFirst("getNavigator"),
             parsed = nav.ensureAST(ed),
-            node = lively.ast.query.nodesAt(ed.positionToIndex(position), parsed)
+            node = query.nodesAt(ed.positionToIndex(position), parsed)
               .reverse().find(ea => ea.type === "Identifier");
         if (!node) { ed.showError(new Error("no identifier found!")); return true; }
         varName = node.name;
@@ -137,7 +138,7 @@ export var jsIdeCommands = [
   {
     name: "[javascript] inject import",
     exec: async (text, opts = {gotoImport: false, insertImportAtCursor: true}) => {
-      await lively.lang.promise.delay(0);
+      await promise.delay(0);
       var {interactivelyInjectImportIntoText} =
         await System.import("lively.ide/js/import-helper.js");
       var result = await interactivelyInjectImportIntoText(text, opts);
@@ -148,7 +149,7 @@ export var jsIdeCommands = [
 
   {
     name: "[javascript] fix undeclared variables",
-    exec: async (text, opts = {ignore: [], autoApplyIfSingleChoice: false}) => {
+    exec: async (text, opts = {ignore: [], autoApplyIfSingleChoice: false, requester: text}) => {
       let {interactivlyFixUndeclaredVariables} =
         await System.import("lively.ide/js/import-helper.js");
       let result = await interactivlyFixUndeclaredVariables(text, opts);
@@ -240,7 +241,7 @@ export var jsIdeCommands = [
         let ranges = string.lineRanges(src),
             lines = src.split("\n"),
             actions = [],
-            v = new lively.ast.BaseVisitor(),
+            v = new BaseVisitor(),
             superVisitVariableDeclaration = v.visitVariableDeclaration;
 
         v.visitVariableDeclaration = (node, state, path) => {

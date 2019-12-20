@@ -9,6 +9,7 @@ import { MorphicDB } from "./morphicdb/index.js";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import { ensureCommitInfo } from "./morphicdb/db.js";
 import { pathForBrowserHistory } from './helpers.js';
+import { subscribe } from "lively.notifications";
 
 export async function loadWorldFromURL(url, oldWorld, options) {
   let worldResource = url.isResource ? url :
@@ -146,7 +147,8 @@ async function setupLively2Lively(world) {
           .then(() => console.log("re-registered after user change"));
       }
     }
-    lively.notifications.subscribe("lively.user/userchanged", client._onUserChange, System);
+    
+    subscribe("lively.user/userchanged", client._onUserChange, System);
 
     client.once("registered", () => {
       reportWorldLoad(world, user);

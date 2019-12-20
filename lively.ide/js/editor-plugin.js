@@ -14,6 +14,7 @@ import {
 
 import { CodeMirrorEnabledEditorPlugin } from "../editor-plugin.js";
 import { Snippet } from "../text/snippets.js";
+import * as parser from 'lively.ast';
 
 import {
   localInterface, systemInterfaceNamed,
@@ -157,7 +158,7 @@ export default class JavaScriptEditorPlugin extends CodeMirrorEnabledEditorPlugi
   }
 
   get parser() {
-    return System.get(System.decanonicalize("lively.ast"));
+    return parser;
   }
 
   parse(astType = null) {

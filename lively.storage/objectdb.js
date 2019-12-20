@@ -2,6 +2,7 @@
 import Database from "./database.js";
 import { resource } from "lively.resources";
 import { obj, promise, arr, string, Path } from "lively.lang";
+import { parse, categorizer } from "lively.ast";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // sha1
@@ -1168,8 +1169,8 @@ export var ObjectDBInterface = {
     try {
       if (!this._methodSpecs) {
         let src = await lively.modules.module("lively.storage/objectdb.js").source(),
-            parsed = lively.ast.parse(src, {withComments: true}),
-            entities = lively.ast.categorizer.findDecls(parsed);
+            parsed = parse(src, {withComments: true}),
+            entities = categorizer.findDecls(parsed);
         this._methodSpecs = entities.filter(ea => ea.parent && ea.parent.name === "ObjectDBInterface");
       }
 

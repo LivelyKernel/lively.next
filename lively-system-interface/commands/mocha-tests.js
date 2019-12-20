@@ -1,4 +1,5 @@
-import { arr } from "lively.lang";
+/*global System*/
+import { arr, chain } from "lively.lang";
 
 export async function loadMochaTestFile(file, testsByFile = []) {
   var tester = await System.import("mocha-es6/index.js");
@@ -18,7 +19,7 @@ export async function runMochaTests(grep, testsByFile, onChange, onError) {
   function mochaRun(mocha) {
     return new Promise((resolve, reject) => {
       var files = arr.compact(mocha.suite.suites).map(({file}) => file),
-        tests = lively.lang.chain(testsByFile)
+        tests = chain(testsByFile)
           .filter(ea => files.includes(ea.file))
           .pluck("tests").flatten().value();
 
