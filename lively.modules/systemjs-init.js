@@ -1,7 +1,7 @@
 /*global System,Babel,global,require,__dirname,self*/
 "format global";
 (function configure() {
-
+  if (typeof System === 'undefined') System = global.System;
   System.useModuleTranslationCache = !urlQuery().noModuleCache;
 
   if (System.get("lively.transpiler")

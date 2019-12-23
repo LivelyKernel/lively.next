@@ -553,7 +553,8 @@ function wrapModuleLoad(System) {
   if (isHookInstalled(System, "translate", "lively_modules_translate_hook")) return;
   installHook(
     System, "translate",
-    function lively_modules_translate_hook(proceed, load) { return customTranslate.call(System, proceed, load); });
+    function lively_modules_translate_hook(proceed, load) { return customTranslate.call(System, proceed, load); },
+    "lively_modules_translate_hook");
 }
 
 function unwrapModuleLoad(System) {

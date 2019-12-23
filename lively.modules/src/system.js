@@ -119,20 +119,20 @@ function prepareSystem(System, config) {
   wrapResource(System);
   wrapModuleLoad(System);
 
-  if (!isHookInstalled(System, "normalizeHook"))
-    installHook(System, "normalize", normalizeHook);
+  if (!isHookInstalled(System, "normalizeHook", "normalizeHook"))
+    installHook(System, "normalize", normalizeHook, "normalizeHook");
 
   if (!isHookInstalled(System, "decanonicalize", "decanonicalizeHook"))
-    installHook(System, "decanonicalize", decanonicalizeHook);
+    installHook(System, "decanonicalize", decanonicalizeHook, "decanonicalizeHook");
 
   if (!isHookInstalled(System, "normalizeSync", "decanonicalizeHook"))
-    installHook(System, "normalizeSync", decanonicalizeHook);
+    installHook(System, "normalizeSync", decanonicalizeHook, "decanonicalizeHook");
 
   if (!isHookInstalled(System, "newModule", "newModule_volatile"))
-    installHook(System, "newModule", newModule_volatile);
+    installHook(System, "newModule", newModule_volatile, "newModule_volatile");
 
   if (!isHookInstalled(System, "instantiate", "instantiate_triggerOnLoadCallbacks"))
-    installHook(System, "instantiate", instantiate_triggerOnLoadCallbacks);
+    installHook(System, "instantiate", instantiate_triggerOnLoadCallbacks, "instantiate_triggerOnLoadCallbacks");
 
   if (isElectron) {
     var electronCoreModules = ["electron"],
