@@ -1,3 +1,4 @@
+/*global System*/
 import { obj, string, arr } from "lively.lang";
 import { resource, createFiles } from "lively.resources";
 import * as ast from "lively.ast";
@@ -18,7 +19,7 @@ export class LocalCoreInterface extends AbstractCoreInterface {
 
   async dynamicCompletionsForPrefix(moduleName, prefix, options) {
     var result = await vm.completions.getCompletions(
-      code => vm.runEval(code, {targetModule: moduleName, ...options}), prefix);
+      code => vm.runEval(code.replace('return ', ''), {targetModule: moduleName, ...options}), prefix);
     if (result.isError) throw result.value;
     return {
       completions: result.completions,
