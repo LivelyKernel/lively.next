@@ -70,7 +70,10 @@ function hasManagedProperties(klass) {
 
 export function prepareClassForManagedPropertiesAfterCreation(klass) {
   var {properties, propertySettings} = propertiesAndSettingsInHierarchyOf(klass);
-  klass[propertiesAndSettingsCacheSym] = {properties, propertySettings, classHierarchy: getClassHierarchy(klass)};
+  klass[propertiesAndSettingsCacheSym] = {
+    properties, order: obj.sortKeysWithBeforeAndAfterConstraints(properties),
+    propertySettings, classHierarchy: getClassHierarchy(klass)
+  };
   if (!properties || typeof properties !== "object") {
     console.warn(`Class ${klass.name} indicates it has managed properties but its `
                + `properties accessor (${defaultPropertiesKey}) does not return `
@@ -136,7 +139,7 @@ function ensurePropertyInitializer(klass) {
         if (cached.classHierarchy != getClassHierarchy(klass)) {
            let {properties, propertySettings} = propertiesAndSettingsInHierarchyOf(klass);
            klass[propertiesAndSettingsCacheSym] = {
-             properties, propertySettings,
+             properties, propertySettings, order: obj.sortKeysWithBeforeAndAfterConstraints(properties),
              classHierarchy: getClassHierarchy(klass)
            };
            prepareClassForProperties(klass, propertySettings, properties);
@@ -152,8 +155,8 @@ function ensurePropertyInitializer(klass) {
     configurable: true,
     writable: true,
     value: function(values) {
-      var {properties, propertySettings} = this.propertiesAndPropertySettings();
-      prepareInstanceForProperties(this, propertySettings, properties, values)
+      var {properties, propertySettings, order} = this.propertiesAndPropertySettings();
+      prepareInstanceForProperties(this, propertySettings, properties, values, order)
       return this;
     }
   });
@@ -189,9 +192,9 @@ function propertiesAndSettingsInHierarchyOf(klass) {
   return {properties, propertySettings};
 }
 
-function prepareInstanceForProperties(instance, propertySettings, properties, values) {
+function prepareInstanceForProperties(instance, propertySettings, properties, values, sortedKeys) {
   var {valueStoreProperty} = propertySettings,
-      sortedKeys = obj.sortKeysWithBeforeAndAfterConstraints(properties),
+      sortedKeys = sortedKeys || obj.sortKeysWithBeforeAndAfterConstraints(properties),
       propsNeedingInitialize = [],
       initActions = {};
 
