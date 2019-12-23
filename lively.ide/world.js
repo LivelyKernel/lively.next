@@ -645,7 +645,7 @@ export class LivelyWorld extends World {
     var focused = this.focusedMorph, visBounds = this.visibleBounds();
 
     promptMorph.openInWorldNear(
-      opts.requester ?
+      opts.requester && !opts.requester.isWorld ?
         visBounds.intersection(opts.requester.globalBounds()).center() :
         visBounds.center(), this);
 
@@ -664,6 +664,20 @@ export class LivelyWorld extends World {
     }
     this.previousPrompt = promptMorph;
     return promise.finally(promptMorph.activate(opts), () => focused && focused.focus());
+  }
+
+  async withRequesterDo(requester, doFn) {
+     let win, pos = this.visibleBounds().center();
+     if (requester) {
+       pos = requester.globalBounds().center();
+       if (requester.isWorld) pos = requester.visibleBounds().center();
+       if (win = requester.getWindow()) {
+         await win.toggleFader(true);
+         pos = win.globalBounds().center();
+       }
+     }
+     await doFn(pos);
+     if (win) win.toggleFader(false);
   }
 
   inform(label = "no message", opts = {fontSize: 16, requester: null, animated: true}) {

@@ -104,7 +104,7 @@ async function _searchForExistingFiles(requester, rootURL, p) {
 
 async function _searchForExistingFilesManually(requester, rootURL, p) {
   var choice = await requester.world().multipleChoicePrompt(
-    "Add Module", {choices: ["Create New Module", "Load Existing Module"]})
+    "Add Module", { requester, choices: ["Create New Module", "Load Existing Module"]})
   if (choice === "Create New Module") return "[create new module]";
   if (choice === "Load Existing Module") {
     var result = await requester.world().prompt("URL of module?", {

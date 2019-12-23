@@ -67,7 +67,7 @@ export async function interactiveConnectGivenSourceAndTarget(sourceObj, sourceAt
 
     items.push(["custom...", async () => {
       let targetAttr = await world.prompt("Enter custom connection point", {
-            requester: targetObj,
+            requester: $world,
             historyId: "lively.morphic-custom-connection-points",
             useLastInput: true
           })
@@ -94,8 +94,8 @@ export async function interactivelyReEvaluateConnection(
 export async function interactivelyEvaluateConnection(opts) {
   let {
     sourceObj, sourceAttr, targetObj, targetAttr, converter, updater,
-    prompt = "confirm connection", highlight = true,
-    onConnect
+    prompt, // = "confirm connection",
+    highlight = true, onConnect
   } = opts;
   let targetModule = "lively://lively.bindings-interactive-connect/x" + sourceObj.id,
       evalEnvironment = {
@@ -104,15 +104,33 @@ export async function interactivelyEvaluateConnection(opts) {
         targetModule
       },
       input = printConnectionElements(sourceObj, sourceAttr, targetObj, targetAttr, converter, updater);
+  if (targetObj.isMorph && sourceObj.isMorph) {
+    // figure out if the properties can be coerced naively
+    let { type: targetType } = targetObj.propertiesAndPropertySettings().properties[targetAttr] || {
+      type: typeof targetObj[targetAttr]
+    };
+    let { type: sourceType } = sourceObj.propertiesAndPropertySettings().properties[sourceAttr] || {
+      type: typeof sourceObj[sourceAttr]
+    }
+    if (sourceType !== targetType) {
+      prompt = true;
+    }
+  }
   Object.assign(lively.modules.module(targetModule).recorder,
-    {sourceObj, targetObj, connect, once, [sourceAttr]: sourceObj[sourceAttr]
-  })
-  let source = await $world.editPrompt(prompt, {
-    input, historyId: "lively.bindings-interactive-morph-connect", mode: "js",
-    evalEnvironment,
-    animated: false
+    {source: sourceObj, target: targetObj, connect, once, [sourceAttr]: sourceObj[sourceAttr]
   });
-  if (!source) { $world.setStatusMessage("connect canceled"); return; }
+  let source;
+  if (prompt) {
+    source = await $world.editPrompt(prompt, {
+      input, historyId: "lively.bindings-interactive-morph-connect", mode: "js",
+      requester: $world,
+      evalEnvironment,
+      animated: false
+    });
+    if (!source) { $world.setStatusMessage("connect canceled"); return; }
+  } else {
+    source = input;
+  }
   let result = await lively.vm.runEval(source, evalEnvironment);
   if (result.isError) {
     $world.logError(result.value);
@@ -874,7 +892,7 @@ export class ConnectionHalo extends Morph {
     let menuItems = this.target.connectMenuItems(async (name, target, spec) => {
       if (name === "custom...") {
         name = await this.world().prompt("Enter custom connection point", {
-          requester: this,
+          requester: this.world(),
           historyId: "lively.morphic-custom-connection-points",
           useLastInput: true
         });

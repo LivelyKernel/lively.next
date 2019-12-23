@@ -865,10 +865,10 @@ export class ObjectEditor extends Morph {
 
     if (sourceChanged && outsideChangeWarning) {
       var really = await this.world().confirm(
-        "Simultaneous Change Warning\n", {},
+        ["Simultaneous Change Warning\n", {},
         `The module ${selectedModuleId} you are trying to save changed elsewhere!\nOverwrite those changes?`, {
           fontSize: 16, fontWeight: 'normal'
-        });
+        }], { requester: this});
       if (!really) return {success: false, reason: "Save canceled"};
       await this.withContextDo(ctx => ctx.moduleChangeWarning = null)
     }
