@@ -4,6 +4,7 @@ import { pt } from "lively.graphics";
 import { Morph } from "./morph.js";
 import vdom from "virtual-dom";
 import { addOrChangeCSSDeclaration } from "./rendering/dom-helper.js";
+import css from "lively.ide/css/parser.js";
 var { diff, patch, h, create: createElement } = vdom
 
 // see https://github.com/Matt-Esch/virtual-dom/blob/master/docs/widget.md
@@ -132,14 +133,16 @@ export class HTMLMorph extends Morph {
                 style = doc.getElementById("css-for-" + this.id);
             if (style) style.remove();
           } else {
-            System.import("lively.ide/css/parser.js").then(css => {
+            try {
               let parsed = css.parse(val);
               // prepend morph id to each rule so that css is scoped to morph
               parsed.stylesheet.rules.forEach(r => {
                 if (r.selectors) r.selectors = r.selectors.map(ea => `#${this.id} ${ea}`);
               });
               addOrChangeCSSDeclaration("css-for-" + this.id, css.stringify(parsed));
-            }).catch(err => console.error(`Error setting cssDeclaration of ${this}: ${err}`));
+           } catch(err) {
+             console.error(`Error setting cssDeclaration of ${this}: ${err}`);
+           }
           }
         }
       }
@@ -169,6 +172,9 @@ export class HTMLMorph extends Morph {
   menuItems() {
     let items = super.menuItems();
     items.unshift(
+      ["edit CSS...", () => this.world().execCommand("open workspace", {
+        language: 'css', content: this.cssDeclaration, target: this
+      })],
       ["edit html...", () => this.world().execCommand("open workspace", {language: "html", content: this.html, target: this})],
       {isDivider: true})
     return items;
