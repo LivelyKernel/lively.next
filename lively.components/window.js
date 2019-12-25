@@ -267,10 +267,20 @@ export default class Window extends Morph {
       name: 'fader', fill: Color.black.withA(.5), opacity: 0, extent: this.extent
     });
     if (active) {
+      let shiftedBounds = this.world().visibleBounds().translateForInclusion(this.bounds());
+      this._originalBounds = this.bounds();
+      this.animate({ bounds: shiftedBounds, duration: 300 });
       this._faderTriggered = true;
       fader.opacity = 1;
     } else {
+      if (this._originalBounds) {
+        this.animate({
+          bounds: this._originalBounds, duration: 300
+        });
+        this._originalBounds = null;
+      }
       this._faderTriggered = false;
+      await this.whenRendered();
       await promise.delay(100);
       if (this._faderTriggered) return; // hacky way to allow other prompts to steal the prompt
       await fader.animate({ opacity: 0, duration: 300 });
