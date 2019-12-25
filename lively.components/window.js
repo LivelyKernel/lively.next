@@ -556,6 +556,21 @@ export default class Window extends Morph {
   onMouseDown(evt) {
     this.activate(evt);
   }
+  
+  onDragStart(evt) {
+    super.onDragStart(evt);
+    if (this.targetMorph) {
+      evt.state.origReactsToPointer = this.targetMorph.reactsToPointer;
+      this.targetMorph.reactsToPointer = false;
+    }
+  }
+
+  onDragEnd(evt) {
+    super.onDragEnd(evt);
+    if (this.targetMorph) {
+      this.targetMorph.reactsToPointer = evt.state.origReactsToPointer;
+    }
+  }
 
   onDrag(evt) {
     super.onDrag(evt);
