@@ -1076,6 +1076,18 @@ export class Line {
     return this.start.eqPt(otherLine.start) && this.end.eqPt(otherLine.end);
   }
 
+  distanceFromLine(p) {
+    var x1 = this.start.x,
+        y1 = this.start.y,
+        x2 = this.end.x,
+        y2 = this.end.y,
+        x3 = p.x,
+        y3 = p.y;
+     return Math.abs((y2 - y1) * x3 - (x2 - x1) * y3 + x2 * y1 - y2 * x1) / 
+            Math.sqrt((y2 - y1)**2 + (x2 - x1)**2)
+     //return ((x2 - x1) * (y3 - y1)) - ((x3 - x1) * (y2 - y1));
+  }
+
   includesPoint(p, unconstrained) {
     // test whether p is collinear with this.start, this.end
     // constrained: p also needs to be on segment between start, end
