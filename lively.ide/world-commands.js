@@ -211,20 +211,22 @@ var commands = [
       while (!finishedSelection) {
          let [morph] = await world.execCommand('select morph', {justReturn: true});
          selectedMorphs.push(morph)
-         finishedSelection = !await world.confirm('Select additional morphs?');        
+         finishedSelection = !await world.confirm('Select additional morphs?', {
+           rejectLabel: 'NO'
+         });        
       }
       let li = LoadingIndicator.open('printing morph...');
       let { default: L2LClient} = await System.import("lively.2lively/client.js");
       let l2l = L2LClient.default();
       let peers = await l2l.listPeers(true)
-      let printer = peers.find(ea => ea.type === "lively.next.org freezer service");
+      let printer = peers.find(ea => ea.type === "pdf printer");
       let opts = { ackTimeout: 30000};
       let msg = await l2l.sendToAndWait(printer.id, '[PDF printer] print', 
         await Promise.all(selectedMorphs.map(m => createMorphSnapshot(m, {addPreview: false, testLoad: false}))), opts);
       let err = msg.error || msg.data.error;
       if (err) { world.showError(err); throw err; }
-      li.remove();
       world.serveFileAsDownload(msg.data, {fileName: selectedMorphs[0].name + (selectedMorphs.length > 1 ? '.etc' : '') + ".pdf", type: 'application/pdf'});
+      li.remove();
     }
   },
 
@@ -708,7 +710,10 @@ var commands = [
         var candidates = morphs.map(ea =>
           ({isListItem: true, value: ea, string: ea.name || String(ea)}));
         var {selected: [choice]} = await world.filterableListPrompt(
-          "choose text: ", candidates, {onSelection: m => m && m.show()});
+          "choose text: ", candidates, {onSelection: m => {
+            m && m.show()
+          }
+       });
         return choice;
       }
 
