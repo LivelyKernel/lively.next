@@ -23,6 +23,17 @@ export default class FontDetector {
       'normal', 'bold', 'bolder', 'lighter',
       '100', '200', '300', '400', '500', '600', '700', '800', '900'
     ];
+    this.namedToNumeric = new Map([
+      'Thin',
+      'Extra Light',
+      'Light',
+      'Normal',
+      'Medium',
+      'Semi Bold',
+      'Bold',
+      'Extra Bold',
+      'Ultra Bold',
+    ].map((name, i) => [name, String((i + 1) * 100)]));
     this.baseFonts = ['monospace', 'sans-serif', 'serif', 'Comic Sans MS'];
     this.span = null;
   }
@@ -57,6 +68,8 @@ export default class FontDetector {
   }
 
   isFontSupported(font, weight = 'normal') {
+    if (!this.possibleFontWeights.includes(weight))
+      weight = this.namedToNumeric.get(weight) || 'normal';
     if (!this.prepared) this.prepare();
 
     let {
