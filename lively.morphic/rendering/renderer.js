@@ -17,6 +17,15 @@ import config from '../config.js';
 
 const svgNs = "http://www.w3.org/2000/svg";
 
+var InitStroke = function (path, renderer, reverse) { this.path = path; this.renderer = renderer; this.reverse = reverse }
+InitStroke.prototype.hook = function(node, propertyName, previousValue) {
+  let p = this.path.drawnProportion || 0;
+  if (p == 0) return;
+  node.setAttribute('stroke-width', this.path.borderWidth.valueOf() + 1);
+  node.setAttribute('stroke-dasharray', node.getTotalLength());
+  node.setAttribute('stroke-dashoffset', node.getTotalLength() * (!this.reverse ? (-1 + (1 - p)) : (1 - p)));
+}
+
 export class Renderer {
 
   static default() { return this._default || new this() }
@@ -293,18 +302,48 @@ export class Renderer {
 
   // FIXME: The gradient handling is inconsistent to the way its handled in "vanilla" morphs
   renderPath(path) {
-    const {id, startMarker, endMarker, showControlPoints, origin} = path;
+    const {id, startMarker, endMarker, showControlPoints, origin, drawnProportion, borderWidth} = path;
     const d = getSvgVertices(path.vertices);
     var el = h("path", {
       namespace: svgNs,
       id: "svg" + path.id,
       ...pathAttributes(path)
-    }), clipPath = h("clipPath", {
+    }), maskPath = h("mask", {
+      namespace: svgNs, 
+      id: "mask" + path.id,
+    }, [
+      h("rect", {
+        namespace: svgNs, 
+        attributes: {
+          fill: 'white',
+          x: 0, y: 0,
+          width: path.width + 20,
+          height: path.height + 20,
+        }
+      }),
+      h("path", {
+        namespace: svgNs, 
+        initStroke: new InitStroke(path, this, true),
+        attributes: {
+            d,
+            stroke: 'black',
+            fill: 'none'
+      }}),
+      h("path", {
+        namespace: svgNs, 
+        initStroke: new InitStroke(path, this, false),
+        attributes: {
+            d,
+            stroke: 'white',
+            fill: 'none'
+      }})
+    ]),
+        clipPath = h("clipPath", {
       namespace: svgNs,
       id: "clipPath" + path.id,
     }, h("path", {namespace: svgNs, attributes: { d, fill: "white" }}));
 
-    var markers = [clipPath];
+    var markers = [clipPath, maskPath];
     if (startMarker) {
       if (!startMarker.id) startMarker.id = "start-marker"
       el.properties.attributes["marker-start"] = `url(#${path.id}-${startMarker.id})`;

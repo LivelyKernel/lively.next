@@ -158,7 +158,7 @@ export function addPathAttributes(morph, style) {
 
   addSvgBorderStyle(morph, style);
   style["stroke-width"] = borderWidth.valueOf();
-  style["paint-order"] = "stroke";
+  //style["paint-order"] = "stroke";
   style.fill = fill ?
                 fill.isGradient ? "url(#gradient-fill" + id + ")" : fill.toString() :
                 "transparent";

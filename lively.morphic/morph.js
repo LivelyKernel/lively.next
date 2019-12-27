@@ -3276,6 +3276,14 @@ export class Path extends Morph {
       startMarker: {defaultValue: null, type: "Object"},
       endMarker: {defaultValue: null, type: "Object"},
 
+      drawnProportion: {
+        type: 'Number',
+        isFloat: true,
+        min: -1,
+        max: 1,
+        defaultValue: 0
+      },
+
       isSmooth: {
         defaultValue: false,
         type: "Boolean",

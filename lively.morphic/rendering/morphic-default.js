@@ -418,7 +418,9 @@ export function svgAttributes(svg) {
 }
 
 export function pathAttributes(path) {
-  let animation = new SvgAnimation(path, "path"), attributes = {};
+  let animation = new SvgAnimation(path, "path"), attributes = {
+    mask: path.drawnProportion !== 0 ? 'url(#mask' + path.id + ')' : '',
+  };
   addPathAttributes(path, attributes);
   Object.assign(attributes, path._animationQueue.maskedProps("path"))
   return {animation, attributes};
