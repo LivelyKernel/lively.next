@@ -424,7 +424,7 @@ export class PropertyAnimation {
        let startTime,
            scrollState = this.morph.env.eventDispatcher.eventState,
            { promise: p, resolve } = promise.deferred(),
-           interpolateScrollX = this.interpolate('scrollLeft', node.scrollTop, scroll.x),
+           interpolateScrollX = this.interpolate('scrollLeft', node.scrollLeft, scroll.x),
            interpolateScrollY = this.interpolate('scrollTop', node.scrollTop, scroll.y),
            easingFn = stringToEasing(this.easing),
            draw = (time) => {
