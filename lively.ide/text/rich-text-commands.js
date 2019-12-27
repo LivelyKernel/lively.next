@@ -1,4 +1,4 @@
-/*global localStorage*/
+/*global localStorage,System*/
 
 function changeAttributeInSelectionOrMorph(target, name, valueOrFn) {
   let sel = target.selection;
@@ -156,7 +156,8 @@ export var commands = [
   {
     name: "open text attribute controls",
     exec: async text => {
-      let {RichTextControl} = await lively.modules.module("lively.ide/text/ui.js").load();
+      let { module } = await System.import('lively.modules');
+      let {RichTextControl} = await module("lively.ide/text/ui.js").load();
       return RichTextControl.openFor(text);
     }
   }

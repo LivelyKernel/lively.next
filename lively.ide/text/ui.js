@@ -1,5 +1,5 @@
 /*global System,WeakMap*/
-import { fun, obj, properties, arr } from "lively.lang";
+import { fun, string, obj, properties, arr } from "lively.lang";
 import {
   Text, config,
   HorizontalLayout,
@@ -29,8 +29,8 @@ export class RichTextControl extends Morph {
       managedProps: {
         readOnly: true,
         get() {
-          return ['fontFamily', 'fontWeight', 'fontSize', 'fontStyle', 
-                  'fontColor', 'textAlign', 'link', 'textDecoration'];
+          return ['fontFamily', 'fontWeight', 'fontSize', 'fontStyle', 'isText',
+                  'fontColor', 'textAlign', 'link', 'textDecoration', 'fixedWidth', 'fixedHeight'];
         }
       },
       updateSpec: {
@@ -51,7 +51,7 @@ export class RichTextControl extends Morph {
               }
             },
             fontWeightSelection: (target, dropDownList) => {
-              dropDownList.selection = target.fontWeight == 'normal' ? 'Medium' : target.fontWeight;
+              dropDownList.selection = target.fontWeight == 'normal' ? 'Medium' : string.capitalize(target.fontWeight);
             },
             boldButton: (target, btn) => {
               this.toggleButton(btn, target.fontWeight === 'bold');
@@ -70,6 +70,14 @@ export class RichTextControl extends Morph {
             },
             fontSizeField: (target, field) => {
               field.number = target.fontSize;
+            },
+            fixedWidthControl: (target, field) => {
+              target.isText ? field.enable() : field.disable();
+              field.checked = target.fixedWidth;
+            },
+            fixedHeightControl: (target, field) => {
+              target.isText ? field.enable() : field.disable();
+              field.checked = target.fixedHeight;
             },
             ...(
               ['left', 'center', 'right', 'block'].reduce((handlers, align) => {
@@ -99,7 +107,9 @@ export class RichTextControl extends Morph {
             colorPicker: 'color picker',
             copyStyleButton: 'copy style',
             applyStyleButton: 'apply style',
-            removeStyleButton: 'remove style'
+            removeStyleButton: 'remove style',
+            fixedHeightControl: 'fixed height control',
+            fixedWidthControl: 'fixed width control'
           };
           return obj.extract(
             uiMapping,
@@ -217,12 +227,14 @@ export class RichTextControl extends Morph {
         targetProps = obj.select(target, managedProps);
  
     for (let [key, value] of Object.entries(obj.select(attr || {}, managedProps))) {
-       if (typeof elem !== 'undefined') targetProps[key] = value;
+       if (typeof value !== 'undefined') targetProps[key] = value;
     }
 
-    for (let [key, elem] of Object.entries(this.ui)) {
-      if (updateSpec[key]) updateSpec[key](targetProps, elem);
-    }
+    noUpdate(() => {
+      for (let [key, elem] of Object.entries(this.ui)) {
+        if (updateSpec[key]) updateSpec[key](targetProps, elem);
+      }
+    });
   }
 
   relayout() {
@@ -248,6 +260,7 @@ export class RichTextControl extends Morph {
   }
 
   async changeFont(fontFamily) {
+    this._last = fontFamily;
     let custom = fontFamily === "custom...";
     if (custom) {
       fontFamily = await $world.prompt("Enter font family name", {
@@ -274,6 +287,14 @@ export class RichTextControl extends Morph {
 
   changeFontSize(size) {
     this.changeAttributeInSelectionOrMorph("fontSize", size);
+  }
+
+  changeFixedWidth(fixed) {
+    this.target.fixedWidth = fixed;
+  }
+
+  changeFixedHeight(fixed) {
+    this.target.fixedHeight = fixed;
   }
 
   async changeLink() {

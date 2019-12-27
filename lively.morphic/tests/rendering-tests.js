@@ -42,7 +42,7 @@ describe("rendering", function () {
     expect(world.id).equals(env.renderer.domNode.id);
   });
 
-  it("renderer associates domNodewith morph", () => {
+  it("renderer associates domNode with morph", () => {
     var node = env.renderer.getNodeForMorph(submorph2),
         morph = env.renderer.getMorphForNode(node);
     expect(morph).equals(submorph2, morph && morph.name);

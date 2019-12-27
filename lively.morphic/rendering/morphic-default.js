@@ -406,6 +406,8 @@ export function defaultAttributes(morph, renderer) {
   };
   if (bowser.ios && morph.draggable && !morph.isWorld) {
      attrs.attributes["touch-action"] = "none";
+  } else if (bowser.ios && morph.clipMode != 'visible' && !morph.isWorld) {
+     attrs.attributes["touch-action"] = "auto";
   }
   return attrs;
 }
