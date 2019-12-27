@@ -292,15 +292,18 @@ export class RemoteInspectionTree extends InspectionTree {
     if (!node.children.length) {
       const res = (await this.evalEnvironment.systemInterface.runEval(`
          const node = this.getNodeViaId("${node.uuid}");
-         this.collapse(node, false);
+         try {
+           this.collapse(node, false);
+         } catch (e) {
+
+         }
          node.children.map(n => this.retrieveForRemoteProxy(n));
       `, {
         targetModule: "/lively.ide/js/inspector/context.js",
         context: `System.get('@lively-env').remoteInspectionContext["${this.delegateId}"]`
       }));
-     node.children = res.value;
+     node.children = res.isError ? [] : res.value;
     }
-    console.log(node.children)
   }
   
 }
@@ -523,7 +526,7 @@ class PropertyNode extends InspectionNode {
     // create a new widget
     w = this._propertyWidget = inspector.renderPropertyControl({
         target, keyString, valueString, value, spec, node: this,
-        isSelected: this.isSelected
+        isSelected: this.isSelected, fontColor: inspector.ui.propertyTree.fontColor
     });
 
     if (!this.isInternalProperty && !spec.readOnly) {
@@ -583,6 +586,7 @@ function propertiesOf(node) {
       }));
     }
   }
+  
   if (options.includeDefault) {
     var defaultProps = propertyNamesOf(target, node.partition);
     if (defaultProps.length > MAX_NODE_THRESHOLD) {
