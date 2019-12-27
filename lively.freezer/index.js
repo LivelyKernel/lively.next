@@ -185,7 +185,7 @@ export async function interactivelyFreezeWorld(world) {
     throw e;
   }
 
-  let li = LoadingIndicator.open('Writing files...')
+  let li = LoadingIndicator.open('Freezing World', {status: 'Writing files...'})
   await publicationDir.join('index.html').write(await generateLoadHtml(world));
   await publicationDir.join('load.js').write(frozen.min);
   let dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
@@ -236,12 +236,22 @@ export async function interactivelyFreezePart(part, requester = false) {
     throw e;
   }
   
-  let li = LoadingIndicator.open('Writing files...')
-  await publicationDir.join('index.html').write(await generateLoadHtml(part));
-  await publicationDir.join('load.js').write(frozen.min);
+  let li = LoadingIndicator.open('Freezing Part', {status: 'Writing files...'});
+  let currentFile = '';
+  publicationDir.onProgress = (evt) => {
+    // set progress of loading indicator
+    let p = evt.loaded / evt.total;
+    li.progress = p;
+    li.status = 'Writing file ' + currentFile + ' ' + (100 * p).toFixed() + '%';
+  };
+  currentFile = 'index.html';
+  await publicationDir.join(currentFile).write(await generateLoadHtml(part));
+  currentFile = 'load.js';
+  await publicationDir.join(currentFile).write(frozen.min);
   let dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
   for (let [partName, snapshot] of Object.entries(frozen.dynamicParts)) {
-    await dynamicParts.join(partName + '.json').writeJson(snapshot);
+    currentFile = partName + '.json';
+    await dynamicParts.join(currentFile).writeJson(snapshot);
   }
   li.remove();
   $world.setStatusMessage([`Published ${publicAlias}. Click `,null, 'here', {
@@ -624,7 +634,7 @@ class LivelyRollup {
   }
 
   async rollup(compressBundle, output) {
-    let li = LoadingIndicator.open('Bundling...');
+    let li = LoadingIndicator.open('Freezing Part', { status: 'Bundling...' });
     let depsCode, bundledCode;
 
     await li.whenRendered();
@@ -654,7 +664,7 @@ class LivelyRollup {
   }
 
   async transpileAndCompressOnServer({ depsCode, bundledCode, output, compressBundle }) {
-    let li = LoadingIndicator.open('Optimizing...');
+    let li = LoadingIndicator.open("Freezing Part", { status: 'Optimizing...'});
     
     let runtimeCode = await this.getRuntimeCode();
     let regeneratorSource = await lively.modules.module('babel-regenerator-runtime').source();
@@ -679,6 +689,7 @@ class LivelyRollup {
     res.code = code;
     res.min = await min.read();
     li.label = 'Compressing...';
+    li.status = 'Compressing...';
     if (compressBundle) res.compressed = await compress(new TextEncoder('utf-8').encode(res.min));
     await Promise.all([tmp, min].map(m => m.remove()));
     li.remove();

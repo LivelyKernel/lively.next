@@ -254,7 +254,7 @@ export class LivelyWorld extends World {
           // set progress of loading indicator
           let p = evt.loaded / evt.total;
           ld.progress = p;
-          ld.label = 'Uploading File ' + (100 * p).toFixed() + '%';
+          ld.status = 'Uploaded ' + (100 * p).toFixed() + '%';
         };
         if (!user.isGuestUser) headers["Authorization"] = `Bearer ${user.token}`;
         res = resource(System.baseURL, { headers, onProgress, onLoad: (res) => answer = res });

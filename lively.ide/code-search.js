@@ -184,7 +184,8 @@ export class CodeSearcher extends FilterableList {
       this.progressIndicator = this.addMorph(LoadingIndicator.open());
       if (win) this.progressIndicator.center = win.innerBounds().center();
     }
-    this.progressIndicator.label = label;
+    this.progressIndicator.label = 'Searching Files';
+    this.progressIndicator.status = label;
     if (progress) this.progressIndicator.progress = progress;
   }
 
