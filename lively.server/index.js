@@ -25,12 +25,14 @@ module.exports = function start(hostname, port, configFile, rootDirectory, serve
   console.log(`[lively.server] system base directory: ${rootDirectory}`);
   return setupSystem(config.rootDirectory)
     .then(() => console.log(`[lively.server] ${step++}. preparing system`))
-    .then(() => lively.modules.registerPackage(config.serverDir))
+    .then(() => modules.registerPackage(config.serverDir))
 
     // 1. This loads the lively system
     .then(() => livelySystem.import("lively.resources"))
     .then(resources => resources.ensureFetch())
     .then(() => livelySystem.import("lively.storage"))
+    .then(() => livelySystem.import("lively.vm"))
+    .then(vm => lively.vm = vm)
     .then(() =>
       silenceDuring(
         // we use "GLOBAL" as normally declared var, nodejs doesn't seem to care...
@@ -91,11 +93,12 @@ function setupLogger() {
 
 function setupSystem(rootDirectory) {
   var baseURL = "file://" + rootDirectory;
-  livelySystem = lively.modules.getSystem("lively", {baseURL});
-  lively.modules.changeSystem(livelySystem, true);
+  livelySystem = modules.getSystem("lively", {baseURL});
+  modules.changeSystem(livelySystem, true);
   var registry = livelySystem["__lively.modules__packageRegistry"] = new modules.PackageRegistry(livelySystem);
   registry.packageBaseDirs = process.env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").map(ea => resource(`file://${ea}`));
   registry.devPackageDirs = process.env.FLATN_DEV_PACKAGE_DIRS.split(":").map(ea => resource(`file://${ea}`));
+  registry.individualPackageDirs = process.env.FLATN_PACKAGE_DIRS.split(":").map(ea => resource(`file://${ea}`));
   return registry.update();
 }
 
