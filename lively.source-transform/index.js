@@ -2,6 +2,10 @@
 import * as capturing from "./capturing.js";
 export { capturing };
 import { parseFunction, stringify, ReplaceVisitor } from "lively.ast";
+import transformJSX from "babel-plugin-transform-jsx";
+
+// fixme: this is a sort of bad placement
+typeof babel !== 'undefined' && !babel.availablePlugins['transform-jsx'] && !(lively || global.lively).FreezerRuntime && babel.registerPlugin('transform-jsx', transformJSX);
 
 export function stringifyFunctionWithoutToplevelRecorder(
   funcOrSourceOrAst,

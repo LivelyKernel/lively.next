@@ -34,6 +34,7 @@
     "babel-plugin-syntax-object-rest-spread": "^6.13.0",
     "babel-plugin-transform-async-to-generator": "^6.16.0",
     "babel-plugin-transform-object-rest-spread": "^6.16.0",
+    "babel-plugin-transform-jsx": "2.0.0",
     "babel-preset-es2015": "^6.16.0",
     "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.6.1"
