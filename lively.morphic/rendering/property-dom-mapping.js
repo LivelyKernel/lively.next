@@ -16,15 +16,16 @@ export function styleProps(morph) {
   addBorder(morph, style);
   addBorderRadius(morph, style);
   addShadowStyle(morph, style);
-  if (morph.grayscale) style.filter = `${style.filter || ''} grayscale(${100 * morph.grayscale}%)`
+  if (morph.grayscale) style.filter = `${style.filter || ''} grayscale(${100 * morph.grayscale}%)`;
+  if (morph.blur) style.filter = `${style.filter || ''} blur(${morph.blur}px)`;
   if (morph.opacity != null) style.opacity = morph.opacity;
   if (morph.draggable && !morph.isWorld) style['touch-action'] = 'none';
   // on ios touch-action is an undocumented html attribute and can not be set via css
   return style;
 }
 
-function addTransform(morph, style) {
-  let {position, origin, scale, rotation, flipped} = morph,
+export function addTransform(morph, style) {
+  let {position, origin, scale, rotation, flipped, tilted, perspective} = morph,
       x = Math.round(position.x - origin.x),
       y = Math.round(position.y - origin.y),
       promoteToCompositionLayer = morph.renderOnGPU || (morph.dropShadow && !morph.dropShadow.fast) || morph.grayscale > 0;
@@ -33,10 +34,12 @@ function addTransform(morph, style) {
   } else {
     style.transform = '';
     style.top = `${y}px`;
-    style.left = `${x + (flipped ? (morph.width * scale) : 0) }px`;
+    style.left = `${x}px`;
   }
   style.transform += ` rotate(${rotation.toFixed(2)}rad) scale(${scale.toFixed(2)},${scale.toFixed(2)})`;
-  if (flipped) style.transform += `rotate3d(0,1,0, ${flipped * 180}deg)`;
+  if (perspective) style.perspective = `${perspective}px`;
+  if (flipped) style.transform += ` rotateY(${flipped * 180}deg)`;
+  if (tilted) style.transform += ` rotateX(${tilted * 180}deg)`;
 }
 
 function addTransformOrigin(morph, style) {

@@ -98,6 +98,15 @@ export class Morph {
         min: 0, max: 1,
         isFloat: true
       },
+      
+      blur: {
+        group: "styling",
+        type: "Number",
+        isStyleProp: true,
+        defaultValue: 0,
+        min: 0,
+        isFloat: true
+      },
 
       dropShadow: {
         group: "styling",
@@ -306,11 +315,28 @@ export class Morph {
       
       flipped: {
         group: 'geometry',
-        typ: "number",
+        type: "Number",
         isFloat: true,
         isStyleProp: true,
         defaultValue: 0,
         min: 0, max: 1
+      },
+
+      tilted: {
+        group: 'geometry',
+        type: "Number",
+        isFloat: true,
+        isStyleProp: true,
+        defaultValue: 0,
+        min: 0, max: 1
+      },
+
+      perspective: {
+        group: 'geometry',
+        type: "Number",
+        isStyleProp: true,
+        defaultValue: 0,
+        min: 0,
       },
 
       scale: {
