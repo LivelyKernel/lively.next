@@ -137,7 +137,7 @@ export class PropertyAnimation {
           if (p == 0 && targetVisibility == true) {
             morph.visible = true;
           }
-          morph.opacity = targetVisibility ? num.interpolate(p, 0, 1) : num.interpolate(p, 1, 0); 
+          morph.opacity = targetVisibility ? num.interpolate(p, 0, originalOpacity) : num.interpolate(p, 1, 0); 
           if (p == 1) {
             morph.visible = targetVisibility;
             morph.opacity = originalOpacity;
