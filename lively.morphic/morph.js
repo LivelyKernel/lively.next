@@ -867,10 +867,11 @@ export class Morph {
         key in ignored
       ) continue;
       if (skipUnchangedFromDefault) {
-        if (this[key] === defaults[key] ||
-           (this[key] && defaults[key] && 
-            typeof this[key].equals === "function" && 
-            this[key].equals(defaults[key]))) {
+        if (obj.equals(this[key], defaults[key]) || (
+            this[key] && defaults[key] && 
+            this[key].valueOf && defaults[key].valueOf && 
+            obj.equals(this[key].valueOf(), defaults[key].valueOf())
+           )) {
             continue;
         }
       }

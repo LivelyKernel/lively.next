@@ -217,7 +217,8 @@ export function deserializeSpec(serializedSpec, subSpecHandler = (spec) => spec,
 export function serializeSpec(morph, opts = {}) {
   // quick hack to "snapshot" into JSON or serialized expression
     var { 
-      keepFunctions = true, 
+      keepFunctions = true,
+      skipAttributes = [],
       keepConnections = true,
       asExpression = false, 
       root = true,
@@ -229,6 +230,8 @@ export function serializeSpec(morph, opts = {}) {
       connections = [],
     } = opts;
     let subopts = {
+      skipAttributes,
+      skipUnchangedFromDefault,
       root: false,
       keepFunctions,
       asExpression,
@@ -276,7 +279,7 @@ export function serializeSpec(morph, opts = {}) {
       })
     }
 
-    if (morph.submorphs) {
+    if (morph.submorphs && morph.submorphs.length > 0) {
       exported.submorphs = morph.submorphs.map((ea, i) => serializeSpec(ea, {
         ...subopts,
         path: path ? path + '.submorphs.' + i : 'submorphs.' + i ,
@@ -289,6 +292,7 @@ export function serializeSpec(morph, opts = {}) {
         objToPath.set(val, path ? path + '.' + name : name);
       }
       if (name === "submorphs") continue;
+      if (skipAttributes.includes(name)) continue;
       if (name === 'metadata' && Path('commit.__serialize__').get(val)) {
         exported[name] = { ...val, commit: getExpression(name + '.commit', val.commit)};
         continue;
@@ -393,7 +397,7 @@ export function serializeSpec(morph, opts = {}) {
     
     if (asExpression && root) {
       // replace the nestedExpressions after stringification
-      let __expr__ = `morph(${JSON.stringify(exported)})`;
+      let __expr__ = `morph(${obj.inspect(exported)})`;
       let bindings = {
         'lively.morphic': ['morph']
       }

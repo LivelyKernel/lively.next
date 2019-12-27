@@ -359,7 +359,7 @@ export class VerticalLayout extends FloatLayout {
 
   __serialize__() {
     return {
-      __expr__: `new VerticalLayout(${JSON.stringify(this.getSpec())})`,
+      __expr__: `new VerticalLayout(${obj.inspect(this.getSpec())})`,
       bindings: {"lively.morphic": ["VerticalLayout"]}
     }
   }
@@ -463,7 +463,7 @@ export class HorizontalLayout extends FloatLayout {
 
   __serialize__() {
     return {
-      __expr__: `new HorizontalLayout(${JSON.stringify(this.getSpec())})`,
+      __expr__: `new HorizontalLayout(${obj.inspect(this.getSpec())})`,
       bindings: {"lively.morphic": ["HorizontalLayout"]}
     }
   }
@@ -584,7 +584,7 @@ export class ProportionalLayout extends Layout {
 
   __serialize__() {
     return {
-      __expr__: `new ProportionalLayout(${JSON.stringify(this.getSpec())})`,
+      __expr__: `new ProportionalLayout(${obj.inspect(this.getSpec())})`,
       bindings: {"lively.morphic": ["ProportionalLayout"]}
     }
   }
@@ -781,7 +781,7 @@ export class TilingLayout extends Layout {
 
   __serialize__() {
     return {
-      __expr__: `new TilingLayout(${JSON.stringify(this.getSpec())})`,
+      __expr__: `new TilingLayout(${obj.inspect(this.getSpec())})`,
       bindings: {"lively.morphic": ["TilingLayout"]}
     }
   }
@@ -1608,7 +1608,7 @@ export class GridLayout extends Layout {
   // serialize as expression with the config
   __serialize__() {
     return {
-      __expr__: `new GridLayout(${JSON.stringify(this.getSpec())})`,
+      __expr__: `new GridLayout(${obj.inspect(this.getSpec())})`,
       bindings: {"lively.morphic": ["GridLayout"]}
     }
   }
