@@ -315,10 +315,10 @@ export class StylingVisitor extends SizzleVisitor {
     var capturedPropValues;
 
     // the first time we start styling the morph, we capture all the styled properties
-    morph._appliedRules = [];
+    morph.__appliedRules__ = [];
     for (let {styleSheet, rule, animated} of styleSheetPatches.apply) {
       // changed props and styledProps!
-      morph._appliedRules.push([styleSheet, rule]);
+      morph.__appliedRules__.push([styleSheet, rule]);
       capturedPropValues = styleSheet.applyRule(rule, morph, animated)
       Object.assign(styledProps, capturedPropValues);
       retained = { ...capturedPropValues, ...retained };
