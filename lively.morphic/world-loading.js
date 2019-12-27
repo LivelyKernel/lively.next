@@ -201,7 +201,10 @@ export async function interactivelySaveWorld(world, options) {
   await promise.delay(80);
 
   try {
-    let snapshotOptions = {previewWidth: 200, previewHeight: 200, previewType: "png"},
+    let snapshotOptions = {
+          previewWidth: 200, previewHeight: 200,
+          previewType: "png", ignoreMorphs: [i]
+        },
         ref = "HEAD",
         oldName = oldCommit ? oldCommit.name : world.name,
         expectedParentCommit;

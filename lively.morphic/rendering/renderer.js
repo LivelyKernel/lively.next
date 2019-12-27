@@ -486,7 +486,7 @@ export class Renderer {
 
     // FIXME doesn't work with scale yet...!
 
-    let {width = 100, height = 100, center = true, 
+    let {width = 100, height = 100, center = true, ignoreMorphs = [],
          asNode = false, includeStyles = false, disableScroll = false} = opts,
         {
           borderWidthLeft, borderWidthTop, borderWidthBottom, borderWidthRight,
@@ -533,6 +533,7 @@ export class Renderer {
             isMorph = cssClasses.includes("Morph");
       if (!isMorph) return;
       node.className = arr.withoutAll(cssClasses, ["morph", "Morph"]).join(" ");
+      if (ignoreMorphs.find(m => m.id === node.id)) node.remove();
       node.id = "";
     },
     node => Array.from(node.childNodes));
