@@ -38,10 +38,10 @@ export class Icon {
     });
   }
 
-  static textAttribute(iconName) {
+  static textAttribute(iconName, attrs = {}) {
     return [
       Icons[iconName].code || `icon ${iconName} not found`,
-       {fontFamily: "FontAwesome", textStyleClasses: ["fa"]}]
+       {...attrs, fontFamily: "FontAwesome", textStyleClasses: ["fa"]}]
   }
 
   static setIcon(label, iconName) {
