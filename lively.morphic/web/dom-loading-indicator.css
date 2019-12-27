@@ -19,7 +19,8 @@
 
 #dom-loading-indicator .lively-logo {
   background-image: url(/lively.morphic/lively-web-logo-small-animate.svg);
-  background-size: cover;
+  background-size: 100px 100px;
+  background-repeat: no-repeat;
   height: 100%;
   margin-left: 110px;
   margin-top: 20px;
