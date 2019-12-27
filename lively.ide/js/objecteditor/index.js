@@ -474,7 +474,7 @@ export class ObjectEditor extends Morph {
        this.ui.openInBrowserButton.disable();
     else this.ui.openInBrowserButton.enable();
     this.ui.classTree.treeData = await this.withContextDo(ctx => ctx.classTreeData);
-    await this.selectClass(this.context.selectedClassName)
+    await this.selectClass(this.context.selectedClassName);
     // toggle the node style
     this.toggleWindowStyle();
   }
@@ -998,6 +998,7 @@ export class ObjectEditor extends Morph {
       klassAndModule
     })
     this.refresh();
+    this.selectClass(klassAndModule.className);
   }
 
   async interactivelyAdoptBySuperclass() {
@@ -1035,6 +1036,7 @@ export class ObjectEditor extends Morph {
          adoptObject(ctx.target, withSuperclasses(ctx.target.constructor)[1]);
       });
       this.refresh(); 
+      this.selectClass(nextClassName);
     }
   }
 
