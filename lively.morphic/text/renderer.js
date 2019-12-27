@@ -217,7 +217,8 @@ class AfterTextRenderHook {
       const {height: nodeHeight, width: nodeWidth} = lineNode.getBoundingClientRect();
       if (needsTransformAdjustment) lineNode.style.transform = '';
       
-      if (nodeHeight && nodeWidth && (docLine.height !== nodeHeight || docLine.width !== nodeWidth)) {
+      if (nodeHeight && nodeWidth && (docLine.height !== nodeHeight || docLine.width !== nodeWidth)
+         && morph.fontMetric.isFontSupported(morph.fontFamily, morph.fontWeight)) {
         // console.log(`[${docLine.row}] ${nodeHeight} vs ${docLine.height}`)
         docLine.changeExtent(nodeWidth, nodeHeight, false);
         morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
@@ -251,7 +252,7 @@ class AfterTextRenderHook {
     // figure out what lines are displayed in the text layer node and map those
     // back to document lines.  Those are then updated via lineNode.getBoundingClientRect
     let {morph} = this,
-        {textLayout, viewState} = morph
+        {textLayout, viewState, fontMetric} = morph
   
     viewState.dom_nodes = [];
     viewState.dom_nodeFirstRow = 0;
@@ -285,7 +286,8 @@ class AfterTextRenderHook {
           foundEstimatedLine = line.hasEstimatedExtent;
         line.hasEstimatedExtent = foundEstimatedLine;
         actualTextHeight = actualTextHeight + this.updateLineHeightOfNode(morph, line, node);
-        line.hasEstimatedExtent = false;
+        // if we measured but the font as not been loaded, this is also just an estimate
+        line.hasEstimatedExtent = !fontMetric.isFontSupported(morph.fontFamily, morph.fontWeight);
         line = line.nextLine();
       }
     }

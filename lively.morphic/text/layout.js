@@ -136,7 +136,7 @@ export default class TextLayout {
             }, directRenderTextLayerFn, directRenderLineFn);
       for (var i = 0; i < lines.length; i++) {
         var {width, height} = linesBounds[i];
-        lines[i].changeExtent(width, height, false);
+        lines[i].changeExtent(width, height, !fontMetric.isFontSupported(morph.fontFamily, morph.fontWeight));
       }
       return;
     }
