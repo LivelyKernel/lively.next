@@ -1126,7 +1126,7 @@ export class StyleSheetEditor extends Morph {
       layout: {
         initialize() {
           this.layout = new CustomLayout({
-            relayout: () => this.relayout()
+            relayout: (self) => self.relayout()
           })
         }
       },

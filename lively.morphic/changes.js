@@ -170,7 +170,7 @@ export class ChangeManager {
       morph._morphicState[change.prop] = change.value;
     }
 
-    morph.makeDirty();
+    morph.makeDirty(change);
 
     var grouping = arr.last(this.changeGroupStack);
     if (grouping && grouping.consumesChanges()) {

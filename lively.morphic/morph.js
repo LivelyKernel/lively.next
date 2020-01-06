@@ -844,7 +844,6 @@ export class Morph {
     }
   }
 
-
   get isMorph() { return true; }
   get id() { return this._id; }
 
@@ -1095,11 +1094,11 @@ export class Morph {
           {prop, value} = change;
 
     if ('position' === prop || 'rotation' === prop
-        || 'scale' === prop || 'origin' === prop
+        || 'scale' === prop 
+        || 'origin' === prop
         || 'reactsToPointer' === prop) {
       this.onBoundsChanged(this.bounds());
       this.updateTransform({[prop]: value});
-
     } else  if (prop == 'extent') {
       this.onBoundsChanged(this.bounds());
 
@@ -2594,7 +2593,7 @@ export class Morph {
   // rendering
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  makeDirty() {
+  makeDirty(change) {
     // for notifying renderer that this morph needs to be updated. The flag is
     // reset by aboutToRender() which then transitions the morph to the
     // _rendering = true state. This gets reset in MorphAfterRenderHook when
@@ -2622,7 +2621,7 @@ export class Morph {
 
   applyLayoutIfNeeded() {
      if (!this._dirty) return;
-     for (var i in this.submorphs)
+     for (var i = 0; i < this.submorphs.length; i++)
        this.submorphs[i].applyLayoutIfNeeded();
      this.layout && !this.layout.manualUpdate && this.layout.forceLayout();
   }

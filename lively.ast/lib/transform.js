@@ -210,15 +210,15 @@ function oneDeclaratorForVarsInDestructoring(astOrSource) {
         }
 
         let nodes = [];
-        for (let declNode of declNode.declarations) {
+        for (let decl of declNode.declarations) {
           var extractedId = {type: "Identifier", name: "__temp"},
               extractedInit = {
                 type: "VariableDeclaration", kind: "var",
-                declarations: [{type: "VariableDeclarator", id: extractedId, init: declNode.init}]
+                declarations: [{type: "VariableDeclarator", id: extractedId, init: decl.init}]
               }
           nodes.push(extractedInit);
 
-          for (let {key: keyPath} of helpers.objPropertiesAsList(declNode.id, [], false)) {
+          for (let {key: keyPath} of helpers.objPropertiesAsList(decl.id, [], false)) {
             nodes.push(varDecl(
               keyPath[keyPath.length-2],
               memberChain(extractedId.name, ...keyPath), "var"));
