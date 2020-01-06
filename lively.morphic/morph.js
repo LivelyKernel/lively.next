@@ -431,9 +431,10 @@ export class Morph {
         isStyleProp: true,
         defaultValue: ["morph"],
         get() {
-          return this.constructor.styleClasses.concat(this.getProperty("styleClasses"));
+          return this._cachedStyleClasses || (this._cachedStyleClasses = this.constructor.styleClasses.concat(this.getProperty("styleClasses")));
         },
         set(value) {
+          this._cachedStyleClasses = null;
           this.setProperty("styleClasses", arr.withoutAll(value, this.constructor.styleClasses));
           this.requestStyling();
         }
