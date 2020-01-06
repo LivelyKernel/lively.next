@@ -9,8 +9,6 @@ export default class PDFPrinter {
 
   get pluginId() { return "PDFPrinter" }
 
-  get after() { return ['FrozenPartsLoader'] }
-
   handleRequest(req, res, next) {
     if (!req.url.startsWith("/subserver/PDFPrinter")) return next();
     res.writeHead(200, {'Content-Type': 'text/plain'});
