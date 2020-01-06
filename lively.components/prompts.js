@@ -158,7 +158,9 @@ export class AbstractPrompt extends Morph {
   }
 
   addNamed(name, spec) {
-    return this.getSubmorphNamed(name) || this.addMorph({ ...spec, name });
+    let m = this.getSubmorphNamed(name) || this.addMorph({ ...spec, name });
+    if (spec.label) m.label = spec.label; // to parametrize labels
+    return m;
   }
 
 }
@@ -218,7 +220,9 @@ export class ConfirmPrompt extends AbstractPrompt {
 
   static get properties() {
     return {
-      lineWrapping: { defaultValue: true }
+      lineWrapping: { defaultValue: true },
+      confirmLabel: { defaultValue: 'OK' },
+      rejectLabel: { defaultValue: 'CANCEL' }
     }
   }
 
@@ -231,12 +235,12 @@ export class ConfirmPrompt extends AbstractPrompt {
     let okButton = this.addNamed('ok button', {
       styleClasses: ['ok'],
       type: "button",
-      label: "OK"
+      label: this.confirmLabel
     });
     let cancelButton = this.addNamed('cancel button', {
       styleClasses: ['cancel'],
       type: "button",
-      label: "Cancel"
+      label: this.rejectLabel
     });
     connect(okButton, 'fire', this, 'resolve');
     connect(cancelButton, 'fire', this, 'reject');
@@ -444,7 +448,7 @@ export class TextPrompt extends AbstractPrompt {
       this.width = Math.min(this.maxWidth, inputWidth+25);
 
     let okButton = this.addNamed('ok button', {type: "button", label: "OK", styleClasses: ['ok']});
-    let cancelButton = this.addNamed('cancel button', {type: "button", label: "Cancel", styleClasses: ['cancel']});
+    let cancelButton = this.addNamed('cancel button', {type: "button", label: "CANCEL", styleClasses: ['cancel']});
 
     connect(okButton, 'fire', this, 'resolve');
     connect(cancelButton, 'fire', this, 'reject');
@@ -552,7 +556,7 @@ export class EditPrompt extends AbstractPrompt {
     if (!this.getSubmorphNamed('ok button'))
       this.addMorph({name: "ok button", type: "button", label: "OK", styleClasses: ['ok']});
     if (!this.getSubmorphNamed('cancel button'))
-      this.addMorph({name: "cancel button", type: "button", label: "Cancel", styleClasses: ['cancel']});
+      this.addMorph({name: "cancel button", type: "button", label: "CANCEL", styleClasses: ['cancel']});
 
     connect(this.getSubmorphNamed("ok button"), 'fire', this, 'resolve');
     connect(this.getSubmorphNamed("cancel button"), 'fire', this, 'reject');
@@ -692,7 +696,7 @@ export class PasswordPrompt extends AbstractPrompt {
     if (!this.getSubmorphNamed('ok button'))
       this.addMorph({name: "ok button", type: "button", label: "OK", styleClasses: ['ok']});
     if (!this.getSubmorphNamed('cancel button'))
-      this.addMorph({name: "cancel button", type: "button", label: "Cancel", styleClasses: ['cancel']});
+      this.addMorph({name: "cancel button", type: "button", label: "CANCEL", styleClasses: ['cancel']});
 
     connect(this.get("ok button"), 'fire', this, 'resolve');
     connect(this.get("cancel button"), 'fire', this, 'reject');
