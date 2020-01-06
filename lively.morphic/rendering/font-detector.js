@@ -50,21 +50,26 @@ export default class FontDetector {
         testSize = '72px',
         h = this.document.getElementsByTagName("body")[0],
         // create a SPAN in the document to get the width of the text we use to test
-        s = this.span = this.document.createElement("span");
+        s = this.span || this.document.createElement("span");
     s.style.fontSize = testSize;
     s.style.opacity = 0;
     s.innerHTML = testString;
-    h.appendChild(s);
+    if (!s.parentNode) {
+      let w = this.document.createElement("div");
+      w.style.position = 'absolute';
+      w.appendChild(s); 
+      h.appendChild(w);
+    }
     for (let j in fontWeights) {
       for (let i in baseFonts) {
         //get the default width for the three base fonts
         s.style.fontFamily = baseFonts[i];
         s.style.fontWeight = fontWeights[j];
         defaultWidth[baseFonts[i] + '@' + fontWeights[j]] = s.offsetWidth; //width for the default font
-        defaultHeight[baseFonts[i] + '@' + fontWeights[j]] = s.offsetHeight; //height for the defualt font
+        defaultHeight[baseFonts[i] + '@' + fontWeights[j]] = s.offsetHeight; //height for the default font
       }
     }
-    h.removeChild(s);
+    this.span = s;
     this.prepared = true;
   }
 
