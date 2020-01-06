@@ -11,6 +11,78 @@ export function runtimeDefinition() {
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   if (typeof G.lively !== "object") G.lively = {};
+
+  function prepareGlobal(moduleName, exports, globals, encapsulate) {
+    // disable module detection
+    var curDefine = G.define;
+    
+    G.define = undefined;
+  
+    // set globals
+    var oldGlobals;
+    if (globals) {
+      oldGlobals = {};
+      for (var g in globals) {
+        oldGlobals[g] = G[g];
+        G[g] = globals[g];
+      }
+    }
+  
+    // store a complete copy of the global object in order to detect changes
+    if (!exports) {
+      globalSnapshot = {};
+  
+      forEachGlobalValue(function(name, value) {
+        globalSnapshot[name] = value;
+      });
+    }
+  
+    // return function to retrieve global
+    return function() {
+      var globalValue = exports ? getGlobalValue(exports) : {};
+  
+      var singleGlobal;
+      var multipleExports = !!exports;
+  
+      if (!exports || encapsulate)
+        forEachGlobalValue(function(name, value) {
+          if (globalSnapshot[name] === value)
+            return;
+          if (typeof value == 'undefined')
+            return;
+          
+          // allow global encapsulation where globals are removed
+          if (encapsulate)
+            G[name] = undefined;
+  
+          if (!exports) {
+            globalValue[name] = value;
+  
+            if (typeof singleGlobal != 'undefined') {
+              if (!multipleExports && singleGlobal !== value)
+                multipleExports = true;
+            }
+            else {
+              singleGlobal = value;
+            }
+          }
+        });
+  
+      globalValue = multipleExports ? globalValue : singleGlobal;
+  
+      // revert globals
+      if (oldGlobals) {
+        for (var g in oldGlobals)
+          G[g] = oldGlobals[g];
+      }
+      G.define = curDefine;
+  
+      return globalValue;
+    };
+  }
+
+  G.prepareGlobal = prepareGlobal; // set as global
+  
   var version, registry = {}, globalModules = {}, globalSnapshot = {};
   
   // bare minimum ignores from SystemJS
@@ -95,7 +167,7 @@ export function runtimeDefinition() {
   globalModules["@system-env"] = {executed: true, browser: true}
   
   G.lively.FreezerRuntime = {
-    global: window,
+    global: G,
     version, registry, globalModules,
     get(moduleId, recorder = true) {
       if (moduleId && moduleId.startsWith('@')) return this.globalModules[moduleId];
@@ -557,5 +629,5 @@ export function runtimeDefinition() {
       return this.get(moduleId).exports;
     }
   };
-  G.System = G.lively.FreezerRuntime;
+  if (!G.System) G.System = G.lively.FreezerRuntime;
 }

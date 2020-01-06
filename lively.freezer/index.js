@@ -27,6 +27,22 @@ import { LoadingIndicator } from "lively.components";
 
 // fixme: read form localconfig
 
+// client bootstrap
+
+// await bootstrapLibrary('lively.morphic/web/bootstrap.js', 'lively.morphic/web/lively.bootstrap.min.js');
+// await bootstrapLibrary('lively.modules/tools/bootstrap.js', 'lively.modules/dist/lively.modules.bootstrap.min.js', false, 'lively.modules');
+
+async function bootstrapLibrary(url, out, asBrowserModule = true, globalName) {
+  module(url)._source = null
+  let m = new LivelyRollup({ rootModule: module(url), asBrowserModule, globalName });
+  m.excludedModules = ['babel-plugin-transform-jsx'];
+  let res = await m.rollup(true, 'es2019')
+  await resource(System.baseURL).join(out).write(res.min); 
+}
+
+// todo: also do this for the server
+// todo: decouple rollup from lively.modules resolution mechanism
+
 const CLASS_INSTRUMENTATION_MODULES = [
   'lively.morphic', 
   'lively.components',
@@ -42,7 +58,8 @@ const DEFAULT_EXCLUDED_MODULES_PART = [
   'pouchdb',
   'pouchdb-adapter-mem',
   'lively.halos',
-  'lively.ide'
+  'lively.ide',
+  'babel-plugin-transform-jsx'
 ];
 
 const DEFAULT_EXCLUDED_MODULES_WORLD = [
@@ -76,7 +93,6 @@ export async function generateLoadHtml(part) {
           window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
         }
         lively = {};
-        System = { baseUrl: window.location.origin };
       </script>
       <link rel="preload" id="loader" href="load.js" as="script">`;
 
@@ -89,7 +105,7 @@ export async function generateLoadHtml(part) {
      <meta name="apple-mobile-web-app-capable" content="yes">
      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">`
   html += addScripts;
-  html += `</head><body style="margin: 0; overflow-x: hidden; width: 100%; height: 100%;"><div id="loading screen">${part.__loading_html__ || ''}</div><div id="crawler content">${part.__crawler_html__ || ''}</div>
+  html += `</head><body style="margin: 0; overflow-x: hidden; width: 100%; height: 100%;"><div id="loading-screen">${part.__loading_html__ || ''}</div><div id="crawler content">${part.__crawler_html__ || ''}</div>
 <script id="crawler checker">
     var botPattern = "(googlebot\/|Googlebot-Mobile|Googlebot-Image|Google favicon|Mediapartners-Google|bingbot|slurp|java|wget|curl|Commons-HttpClient|Python-urllib|libwww|httpunit|nutch|phpcrawl|msnbot|jyxobot|FAST-WebCrawler|FAST Enterprise Crawler|biglotron|teoma|convera|seekbot|gigablast|exabot|ngbot|ia_archiver|GingerCrawler|webmon |httrack|webcrawler|grub.org|UsineNouvelleCrawler|antibot|netresearchserver|speedy|fluffy|bibnum.bnf|findlink|msrbot|panscient|yacybot|AISearchBot|IOI|ips-agent|tagoobot|MJ12bot|dotbot|woriobot|yanga|buzzbot|mlbot|yandexbot|purebot|Linguee Bot|Voyager|CyberPatrol|voilabot|baiduspider|citeseerxbot|spbot|twengabot|postrank|turnitinbot|scribdbot|page2rss|sitebot|linkdex|Adidxbot|blekkobot|ezooms|dotbot|Mail.RU_Bot|discobot|heritrix|findthatfile|europarchive.org|NerdByNature.Bot|sistrix crawler|ahrefsbot|Aboundex|domaincrawler|wbsearchbot|summify|ccbot|edisterbot|seznambot|ec2linkfinder|gslfbot|aihitbot|intelium_bot|facebookexternalhit|yeti|RetrevoPageAnalyzer|lb-spider|sogou|lssbot|careerbot|wotbox|wocbot|ichiro|DuckDuckBot|lssrocketcrawler|drupact|webcompanycrawler|acoonbot|openindexspider|gnam gnam spider|web-archive-net.com.bot|backlinkcrawler|coccoc|integromedb|content crawler spider|toplistbot|seokicks-robot|it2media-domain-crawler|ip-web-crawler.com|siteexplorer.info|elisabot|proximic|changedetection|blexbot|arabot|WeSEE:Search|niki-bot|CrystalSemanticsBot|rogerbot|360Spider|psbot|InterfaxScanBot|Lipperhey SEO Service|CC Metadata Scaper|g00g1e.net|GrapeshotCrawler|urlappendbot|brainobot|fr-crawler|binlar|SimpleCrawler|Livelapbot|Twitterbot|cXensebot|smtbot|bnf.fr_bot|A6-Indexer|ADmantX|Facebot|Twitterbot|OrangeBot|memorybot|AdvBot|MegaIndex|SemanticScholarBot|ltx71|nerdybot|xovibot|BUbiNG|Qwantify|archive.org_bot|Applebot|TweetmemeBot|crawler4j|findxbot|SemrushBot|yoozBot|lipperhey|y!j-asr|Domain Re-Animator Bot|AddThis)";
     var re = new RegExp(botPattern, 'i');
@@ -116,7 +132,9 @@ export async function interactivelyFreezeWorld(world) {
   let publicAlias = world.metadata.commit.name;
   let publicationDir = frozenPartsDir.join(publicAlias + '/');
   while (await publicationDir.exists()) {
-    let proceed = await $world.confirm(`A world published as "${publicAlias}" already exists.\nDo you want to overwrite this publication?`);
+    let proceed = await $world.confirm(`A world published as "${publicAlias}" already exists.\nDo you want to overwrite this publication?`, {
+      rejectLabel: 'CHANGE NAME'
+    });
     if (proceed) break;
     publicAlias = await $world.prompt('Please enter a different name for this published world:');
     if (!publicAlias) return;
@@ -368,10 +386,15 @@ class LivelyRollup {
     this.setup(props);
   }
 
-  setup({ excludedModules = [], snapshot }) {
+  setup({ excludedModules = [], snapshot, rootModule, globalName, asBrowserModule = true }) {
+    this.globalMap = {};
     this.snapshot = snapshot;
+    this.rootModule = rootModule;
+    this.globalName = globalName;
     this.dynamicParts = {};
     this.globalModules = {};
+    this.importedModules = [];
+    this.asBrowserModule = asBrowserModule;
     this.resolved = new Set();
     this.excludedModules = [...excludedModules, 'lively.modules', "kld-intersections"];
   }
@@ -432,40 +455,45 @@ class LivelyRollup {
   }
 
   async getRootModule() {
-     this.importedModules = await getRequiredModulesFromSnapshot(this.snapshot, this, true);
-     this.checkIfImportedModuleExcluded();
-     return arr.uniq(this.importedModules.map(path => `import "${path}"`)).join('\n')
-        + `\nimport { World, MorphicEnv, loadMorphFromSnapshot } from "lively.morphic";
-             import { deserialize } from 'lively.serializer2';
-             import { resource } from 'lively.resources';
-             import { promise } from 'lively.lang';
-             import {pt} from "lively.graphics";
-             ${await resource(System.baseURL).join('localconfig.js').read()}
-             const snapshot = ${ JSON.stringify(this.snapshot) }
-             lively.resources = { resource };
-             lively.morphic = { loadMorphFromSnapshot }
-             if (!MorphicEnv.default().world) {
-                let world = window.$world = window.$$world = new World({
-                  name: snapshot.name, extent: pt(window.innerWidth, window.innerHeight)
-                });
-                MorphicEnv.default().setWorldRenderedOn(world, document.body, window.prerenderNode);
-             }
-             export async function renderFrozenPart() {
-                window.$world.dontRecordChangesWhile(() => {
-                  let obj = deserialize(snapshot, {
-                     reinitializeIds: function(id) { return id }
-                  });
-                  if (obj.isWorld) {
-                    obj.position = pt(0,0);
-                    MorphicEnv.default().setWorldRenderedOn(obj, document.body, window.prerenderNode);
-                    obj.execCommand("resize to fit window");
-                  } else {
-                    window.onresize = () => obj.execCommand('resize on client');
-                    obj.execCommand('resize on client');
-                    obj.openInWorld();
-                  }
-                });
-             }`;
+    if (this.rootModule) {
+      if ((await this.rootModule.exports()).length > 0)
+        return `export * from "${this.rootModule.id}";`;
+      return await this.rootModule.source();
+    }
+    this.importedModules = await getRequiredModulesFromSnapshot(this.snapshot, this, true);
+    this.checkIfImportedModuleExcluded();
+    return arr.uniq(this.importedModules.map(path => `import "${path}"`)).join('\n')
+       + `\nimport { World, MorphicEnv, loadMorphFromSnapshot } from "lively.morphic";
+            import { deserialize } from 'lively.serializer2';
+            import { resource } from 'lively.resources';
+            import { promise } from 'lively.lang';
+            import {pt} from "lively.graphics";
+            ${await resource(System.baseURL).join('localconfig.js').read()}
+            const snapshot = JSON.parse(${ JSON.stringify(JSON.stringify(this.snapshot)) })
+            lively.resources = { resource };
+            lively.morphic = { loadMorphFromSnapshot }
+            if (!MorphicEnv.default().world) {
+               let world = window.$world = window.$$world = new World({
+                 name: snapshot.name, extent: pt(window.innerWidth, window.innerHeight)
+               });
+               MorphicEnv.default().setWorldRenderedOn(world, document.body, window.prerenderNode);
+            }
+            export async function renderFrozenPart() {
+               window.$world.dontRecordChangesWhile(() => {
+                 let obj = deserialize(snapshot, {
+                    reinitializeIds: function(id) { return id }
+                 });
+                 if (obj.isWorld) {
+                   obj.position = pt(0,0);
+                   MorphicEnv.default().setWorldRenderedOn(obj, document.body, window.prerenderNode);
+                   obj.execCommand("resize to fit window");
+                 } else {
+                   window.onresize = () => obj.execCommand('resize on client');
+                   obj.execCommand('resize on client');
+                   obj.openInWorld(pt(0,0));
+                 }
+               });
+            }`;
   }
   
   resolveId(id, importer) {
@@ -481,9 +509,13 @@ class LivelyRollup {
     }
     if (pkg && this.excludedModules.includes(pkg.name)) return false;
     if (this.excludedModules.includes(id)) return false;
-    if (pkg && pkg.map[id]) {
+    if (pkg && pkg.map) this.globalMap = {...this.globalMap, ...pkg.map};
+    if (pkg && pkg.map[id] || this.globalMap[id]) {
       mappedId = id;
-      id = pkg.map[id];
+      if (!pkg.map[id] && this.globalMap[id]) {
+        console.warn(`[freezer] No mapping for "${id}" provided by package "${pkg.name}". Guessing "${this.globalMap[id]}" based on past resolutions. Please consider adding a map entry to this package config in oder to make the package definition sound and work independently of the current setup!`);
+      }
+      id = pkg.map[id] || this.globalMap[id];
       if (id['~node']) id = id['~node'];
       importer = pkg.url;
     }
@@ -496,6 +528,16 @@ class LivelyRollup {
       return { id, external: true }
     }
     return module(id).id;
+  }
+
+  warn(warning, warn) {
+    switch (warning.code) {
+      case "THIS_IS_UNDEFINED":
+      case "EVAL":
+      case "MODULE_LEVEL_DIRECTIVE":
+        return;
+    }
+    warn(warning);
   }
 
   async load(id) {
@@ -577,13 +619,14 @@ class LivelyRollup {
   
   deriveVarName(moduleId) { return string.camelize(arr.last(moduleId.split('/')).replace(/\.js|\.min/g, '').split('.').join('')) }
 
-  wrapStandalone(moduleId) {
+  async wrapStandalone(moduleId) {
     let mod = module(moduleId);
+    if (!mod._source) await mod.source();
     let globalVarName = this.deriveVarName(moduleId)
     let code;
     if (mod.format() === 'global') {
       code = `var ${globalVarName} = (function() {
-         var fetchGlobals = System.prepareGlobal("${mod.id}");
+         var fetchGlobals = prepareGlobal("${mod.id}");
          ${mod._source};
          return fetchGlobals();
       })();\n`;
@@ -610,11 +653,10 @@ class LivelyRollup {
     return { code, global: globalVarName}
   }
 
-  generateGlobals() {
-    let code = "var fs = {}; var _missingExportShim, show, System, require, timing, lively, Namespace, localStorage;", globals = {};
+  async generateGlobals() {
+    let code = `${this.asBrowserModule ? 'var fs = {};' : 'var fs = require("fs");'} var _missingExportShim, show, System, require, timing, lively, Namespace, localStorage;`, globals = {};
     for (let modId in this.globalModules) {
-       let { code: newCode, global: newGlobal } = this.wrapStandalone(modId);
-       console.log(modId, newCode.length);
+       let { code: newCode, global: newGlobal } = await this.wrapStandalone(modId);
        code += newCode;
        globals[modId] = newGlobal;
     }
@@ -640,8 +682,9 @@ class LivelyRollup {
     await li.whenRendered();
     try {
       let bundle = await rollup({
-        input: '__root_module__',
+        input: this.rootModule ? this.rootModule.id : '__root_module__',
         shimMissingExports: true,
+        onwarn: (warning, warn) => { return this.warn(warning, warn) },
         plugins: [{
           resolveId: (id, importer) => { return this.resolveId(id, importer) },
           load: async (id) => { return await this.load(id) },
@@ -649,8 +692,8 @@ class LivelyRollup {
         }]
       });
       let globals;
-      ({code: depsCode, globals} = this.generateGlobals());
-      bundledCode = (await bundle.generate({ format: 'iife', globals, name: 'frozenPart' })).output[0].code;
+      ({code: depsCode, globals} = await this.generateGlobals());
+      bundledCode = (await bundle.generate({ format: 'iife', globals, name: this.globalName || 'frozenPart' })).output[0].code;
     } finally {
       li.remove();
     }
@@ -668,45 +711,67 @@ class LivelyRollup {
     
     let runtimeCode = await this.getRuntimeCode();
     let regeneratorSource = await lively.modules.module('babel-regenerator-runtime').source();
-    let polyfills = await module('lively.freezer/deps/pep.min.js').source();
-    polyfills += await module('lively.freezer/deps/fetch.umd.js').source();
+    let polyfills = !this.asBrowserModule ? "" : await module('lively.freezer/deps/pep.min.js').source();
+    polyfills += !this.asBrowserModule ? "" : await module('lively.freezer/deps/fetch.umd.js').source();
     
-    let swc = System.decanonicalize('@swc/cli/bin/swc.js').replace(System.baseURL, '../');
-    let uglify = System.decanonicalize('uglify-es/bin/uglifyjs').replace(System.baseURL, '../');
-    let googleClosure = System.decanonicalize('google-closure-compiler-linux/compiler').replace(System.baseURL, '../');
-    let code = runtimeCode + polyfills + depsCode + regeneratorSource + bundledCode + '\nfrozenPart.renderFrozenPart();';
+    let code = runtimeCode + polyfills + regeneratorSource + depsCode + bundledCode;
+    if (!this.rootModule) code += '\nfrozenPart.renderFrozenPart();'
     // write file
-    let tmp = resource(System.decanonicalize('lively.freezer/tmp.js'));
-    let es5 = resource(System.decanonicalize('lively.freezer/tmp.es5.js'));
-    let min = resource(System.decanonicalize('lively.freezer/tmp.min.js'));
-    await tmp.write(code);
-    let cwd = await evalOnServer('System.baseURL + "lively.freezer/"').then(cwd => cwd.replace('file://', ''));
-    let c, res = {};
-    c = await runCommand(`${googleClosure} tmp.js > tmp.min.js --warning_level=QUIET`, { cwd });
-    await promise.waitFor(50000, () => c.status.startsWith('exited'));
-    if (c.stderr) throw new Error(c.stderr);
-    console.log(c);
-    res.code = code;
-    res.min = await min.read();
-    li.label = 'Compressing...';
+    let res = await compileOnServer(code, li); // seems to be faster for now
+    //res = await compileViaGoogle(code, li);
     li.status = 'Compressing...';
     if (compressBundle) res.compressed = await compress(new TextEncoder('utf-8').encode(res.min));
-    await Promise.all([tmp, min].map(m => m.remove()));
     li.remove();
     return res;
   }
 }
 
+async function compileViaGoogle(code) {
+  let compile = resource('https://closure-compiler.appspot.com/compile')
+  compile.headers["Content-type"] = "application/x-www-form-urlencoded";
+  let queryString = compile.withQuery({
+    js_code: window._code,
+    warning_level: 'QUIET',
+    output_format: 'text',
+    output_info: 'compiled_code',
+    language_out: 'ECMASCRIPT5'
+  }).path().split('?')[1]
+  let min = await compile.post(queryString);
+  return {
+    min,
+    code
+  }
+}
+
+async function compileOnServer(code, loadingIndicator) {
+  let googleClosure = System.decanonicalize('google-closure-compiler-linux/compiler').replace(System.baseURL, '../');
+  let tmp = resource(System.decanonicalize('lively.freezer/tmp.js'));
+  let min = resource(System.decanonicalize('lively.freezer/tmp.min.js'));
+  await tmp.write(code);
+  let cwd = await evalOnServer('System.baseURL + "lively.freezer/"').then(cwd => cwd.replace('file://', ''));
+  let c, res = {};
+  c = await runCommand(`${googleClosure} tmp.js > tmp.min.js --warning_level=QUIET`, { cwd });
+  await promise.waitFor(50000, () => c.status.startsWith('exited'));
+  if (c.stderr) {
+    loadingIndicator && loadingIndicator.remove();
+    throw new Error(c.stderr);
+  }
+  res.code = code;
+  res.min = await min.read();
+  await Promise.all([tmp, min].map(m => m.remove()));
+  return res;
+}
+
 function transpileAttributeConnections(snap) {
   let transpile = compose((c) => `(${c})`, es5Transpilation, stringifyFunctionWithoutToplevelRecorder);
   Object.values(snap.snapshot).filter(m => Path(["lively.serializer-class-info", "className"]).get(m) == 'AttributeConnection').forEach(m => {
-  if (m.props.converterString) {
-    return m.props.converterString.value = transpile(m.props.converterString.value);
-  }
-  if (m.props.updaterString) {
-    return m.props.updaterString.value = transpile(m.props.updaterString.value);
-  }
-})
+    if (m.props.converterString) {
+      return m.props.converterString.value = transpile(m.props.converterString.value);
+    }
+    if (m.props.updaterString) {
+      return m.props.updaterString.value = transpile(m.props.updaterString.value);
+    }
+  });
 }
 
 export async function bundlePart(partOrSnapshot, { exclude: excludedModules = [], compress, output = 'es2019', requester }) {
@@ -726,8 +791,8 @@ export async function bundlePart(partOrSnapshot, { exclude: excludedModules = []
           bundle.excludedModules = list;
           return await rollupBundle();
         }
-        throw e;
       }
+      throw e;
     }
     return res;
   }
