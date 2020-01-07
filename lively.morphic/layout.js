@@ -793,7 +793,7 @@ export class TilingLayout extends Layout {
   getSpec() {
     let { axis, align, spacing, layoutOrder, orderByIndex, reactToSubmorphAnimations } = this;
     return {
-      axis, align, spacing, layoutOrder, orderByIndex, reactToSubmorphAnimations
+      axis, align, spacing, orderByIndex, reactToSubmorphAnimations
     }
   }
 
