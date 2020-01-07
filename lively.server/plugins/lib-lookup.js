@@ -73,7 +73,11 @@ export default class LibLookupPlugin {
     let newPath = join(libPath, pkgURL.slice(fullLibPath.length), ...rest);
     req.url = newPath;
 
-    res.writeHead(301,  {location: newPath});
+    if (fs.existsSync(join(fsRootDir, newPath)))
+      res.writeHead(301,  {location: newPath});
+    else
+      res.writeHead(404);
+    
     res.end();
   }
 
