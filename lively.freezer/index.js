@@ -450,6 +450,7 @@ class LivelyRollup {
       let multiple = conflicts.length > 1;
       let error = Error(`Package${multiple ? 's' : ''} ${conflicts.map(p => `"${p.name}"`)} ${multiple ? 'are' : 'is'} directly required by part, yet set to be excluded.`);
       error.name = 'Exclusion Conflict'
+      error.reducedExclusionSet = arr.withoutAll(this.excludedModules, conflicts.map(p => p.name));
       throw error;
     }
   }
@@ -785,10 +786,10 @@ export async function bundlePart(partOrSnapshot, { exclude: excludedModules = []
     } catch (e) {
       if (e.name == 'Exclusion Conflict') {
         // adjust the excluded Modules
-        let { status, list } = await $world.editListPrompt([
-          e.message, {}, '\n', {}, 'Packages are usually excluded so reduce the payload of a frozen morph. In order to fix this issue you can either remove the problematic package from the exclusion list, or remove the morph that requires this package directly.', {fontSize: 12, fontWeight: 'normal'}], bundle.excludedModules, { requester });
-        if (status != 'canceled') {
-          bundle.excludedModules = list;
+        let proceed = await $world.confirm([
+          e.message.replace('Could not load __root_module__:', ''), {}, '\n', {}, 'Packages are usually excluded to reduce the payload of a frozen interactive.\nIn order to fix this issue you can either remove the problematic package from the exclusion list,\nor remove the morph that requires this package directly. Removing the package from the\nexclusion list is a quick fix yet it may increase the payload of your frozen interactive substantially.', {fontSize: 13, fontWeight: 'normal'}], { requester, confirmLabel: 'Remove Package from Exclusion Set', rejectLabel: 'Cancel' });
+        if (proceed) {
+          bundle.excludedModules = e.reducedExclusionSet;
           return await rollupBundle();
         }
       }
