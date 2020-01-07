@@ -518,6 +518,16 @@ export class LabeledCheckBox extends Morph {
     };
   }
 
+  disable() {
+    this.active = false;
+    this.labelMorph.opacity = .5;
+  }
+
+  enable() {
+    this.active = true;
+    this.labelMorph.opacity = 1;
+  }
+
   trigger() {
     this.checkboxMorph.trigger();
   }
