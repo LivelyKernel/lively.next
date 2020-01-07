@@ -373,8 +373,10 @@ export class LivelyWorld extends World {
   // file download serving
 
   serveFileAsDownload(fileString, {fileName = 'file.txt', type = 'text/plain'} = {}) {
+    const isDataURL = /^\s*data:([a-z]+\/[a-z]+(;[a-z\-]+\=[a-z\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i;
+
     var a = window.document.createElement('a');
-    a.href = window.URL.createObjectURL(new Blob([fileString], {type}));
+    a.href = obj.isString(fileString) && !!fileString.match(isDataURL) ? fileString : window.URL.createObjectURL(new Blob([fileString], {type}));
     a.download = fileName;
     document.body.appendChild(a);
     a.click();
