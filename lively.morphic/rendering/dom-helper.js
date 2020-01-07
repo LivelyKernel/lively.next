@@ -156,7 +156,7 @@ export function addOrChangeLinkedCSS(id, url, doc = document) {
   if (link.getAttribute('href') !== url) {
     link.setAttribute('href', url);
     var loaded = false; link.onload = () => loaded = true;
-    return promise.waitFor(() => !!loaded && link);
+    return promise.waitFor(30000, () => !!loaded && link);
   }
   return Promise.resolve();
 }
