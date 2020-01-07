@@ -558,7 +558,8 @@ export default class EventDispatcher {
             }
             state.scroll.interactiveScrollInProgress.debounce();
 
-            var {scrollLeft: newX, scrollTop: newY, style} = domEvt.target,
+            let target  = domEvt.target.documentElement || domEvt.target,
+                {scrollLeft: newX, scrollTop: newY, style} = target,
                 {x, y} = targetMorph.scroll;
             if (style.overflow != 'hidden' && x !== newX || y !== newY) targetMorph.scroll = pt(newX, newY);
           })]
