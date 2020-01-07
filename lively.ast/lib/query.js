@@ -154,7 +154,8 @@ var knownGlobals = [
   "sessionStorage",
   "localStorage",
   "$world",
-  "lively"
+  "lively",
+  "System"
 ];
 
 function scopes(parsed) {
