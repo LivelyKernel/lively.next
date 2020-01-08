@@ -145,7 +145,6 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // ObjectDB sync
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step6_syncWithObjectDB) {
-      console.log(`=> synchronizing with object database from lively-next.org...`);
       await setupSystem(baseDir);
       await replicateObjectDB(baseDir, packageMap);
     }
@@ -167,12 +166,11 @@ export async function install(baseDir, dependenciesDir, verbose) {
         "mirror.html",
         "fix-links.js"],
           toInstall = [
-            // {path: "lively.installer/assets/config.js",      canBeLinked: true, overwrite: true},
-            // {path: "lively.installer/assets/localconfig.js", canBeLinked: false, overwrite: false},
-            // {path: "lively.installer/assets/start.sh",       canBeLinked: true, overwrite: true},
-            // {path: "lively.installer/assets/update.sh",      canBeLinked: true, overwrite: true},
-            // {path: "lively.installer/assets/config.js",      canBeLinked: true, overwrite: true},
-            // {path: "lively.morphic/assets/favicon.ico",      canBeLinked: true, overwrite: true},
+            {path: "lively.installer/assets/config.js",      canBeLinked: false, overwrite: false},
+            {path: "lively.installer/assets/localconfig.js", canBeLinked: false, overwrite: false},
+            {path: "lively.installer/assets/start.sh",       canBeLinked: false, overwrite: false},
+            {path: "lively.installer/assets/update.sh",      canBeLinked: true, overwrite: true},
+            {path: "lively.morphic/assets/favicon.ico",      canBeLinked: true, overwrite: true},
           ];
 
       for (let fn of toRemove)
@@ -248,6 +246,9 @@ function setupSystem(baseURL) {
 }
 
 async function replicateObjectDB(baseDir, packageMap) {
+  let config = await System.import(resource(baseDir).join("config.js").url);
+  console.log(`=> synchronizing with object database from ${resource(config.remoteCommitDB).host()}...`);
+  
   console.time("replication");
 
   // FIXME...!
@@ -264,9 +265,9 @@ async function replicateObjectDB(baseDir, packageMap) {
     snapshotLocation: resource(System.decanonicalize(baseDir + "/lively.morphic/objectdb/morphicdb/snapshots/"))
   });
 
-  let remoteCommitDB = Database.ensureDB("https://sofa.lively-next.org/objectdb-morphicdb-commits"),
-      remoteVersionDB = Database.ensureDB("https://sofa.lively-next.org/objectdb-morphicdb-version-graph"),
-      toSnapshotLocation = resource("https://lively-next.org/lively.morphic/objectdb/morphicdb/snapshots/");
+  let remoteCommitDB = Database.ensureDB(config.remoteCommitDB),
+      remoteVersionDB = Database.ensureDB(config.remoteVersionDB),
+      toSnapshotLocation = resource(config.remoteSnapshotLocation);
 
   try {
     let sync = db.replicateFrom(remoteCommitDB, remoteVersionDB, toSnapshotLocation, {debug: false, retry: true, live: true});

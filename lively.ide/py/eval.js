@@ -1,5 +1,6 @@
 /*global WebSocket*/
 import { promise } from "lively.lang";
+import serverConfig from 'config.js'
 
 // let p = PyEvaluator.ensure({hostname: "127.0.0.1", port: 9942})
 // await p.connect()
@@ -25,10 +26,7 @@ export class PyEvaluator {
 
   static fixOpts(opts) {
     return {
-      port: 9942,
-      hostname: "127.0.0.1",
-      path: "/",
-      ssl: false,
+      ...serverConfig.pythonServer,
       onData: (data) => console.log("data received from python - data is not being handled"),
       ...opts
     };

@@ -1,4 +1,13 @@
 var config = {
+  remoteCommitDB: "https://sofa.lively-next.org/objectdb-morphicdb-commits",
+  remoteVersionDB: "https://sofa.lively-next.org/objectdb-morphicdb-version-graph",
+  remoteSnapshotLocation: "https://lively-next.org/lively.morphic/objectdb/morphicdb/snapshots/",
+  pythonServer: {
+    port: 9942,
+    hostname: "127.0.0.1",
+    path: "/",
+    ssl: false,
+  },
   server: {
     authServerURL: "https://auth.lively-next.org",
     port: 9011,
