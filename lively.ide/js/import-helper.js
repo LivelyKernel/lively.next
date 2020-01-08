@@ -114,18 +114,20 @@ export async function interactivelyChooseImports(livelySystem, opts) {
   var exports = await LoadingIndicator.runFn(
     (li) => {
       let progress = new ProgressMonitor({
-          handlers: [(stepName, progress) => {
+          handlers: {searchProgress: (stepName, progress) => {
             li.progress = progress;
             li.label = stepName;
-          }]
+          }}
         });
       return config.ide.workerEnabled ? callService("exportsOfModules", {
         excludedPackages: config.ide.js.ignoredPackages,
         livelySystem, progress: new ProgressMonitor({
-          handlers: [(stepName, progress) => {
-            li.progress = progress;
-            li.label = stepName;
-          }]
+          handlers: {
+            workerProgress: (stepName, progress) => {
+              li.progress = progress;
+              li.label = stepName;
+            }
+          }
         })
        }) : livelySystem.exportsOfModules({
          excludedPackages: config.ide.js.ignoredPackages,
