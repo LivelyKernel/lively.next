@@ -3476,7 +3476,7 @@ export class Path extends Morph {
       }
       {
         let {length} = this.findClosestPointOnPath(
-          closest.vertex.position, 6, 3, _pathNode);
+          closest.vertex.position, 20, 3, _pathNode);
         closest.length = length;
       }
     }
