@@ -52,7 +52,7 @@ let NativeArrayFunctions = {
 
   some: function(iterator, context) {
     // show-in-doc
-    return this.detect(iterator, context) !== undefined;
+    return arr.detect(this, iterator, context) !== undefined;
   },
 
   every: function(iterator, context) {
