@@ -57,7 +57,7 @@
       "virtual-dom/dist/virtual-dom.js": {
         "format": "amd"
       },
-      "bowser/bowser.js": {
+      "bowser/bowser.min.js": {
         "format": "global",
         "exports": "bowser"
       }
