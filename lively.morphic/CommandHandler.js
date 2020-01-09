@@ -82,21 +82,20 @@ export default class CommandHandler {
     }
 
     if (this.progressIndicator) this.progressIndicator.remove();
-    System.import("lively.components/loading-indicator.js").then(({ default: LoadingIndicator }) => {
-      if (typeof command.progressIndicator === "string")
-         this.progressIndicator = LoadingIndicator.open(command.progressIndicator);
-      // to not swallow errors
-      if (result && typeof result.catch === "function") {
-        result.catch(err => {
-          var msg = `Error in interactive command ${name}: ${err}\n${err.stack || err}`;
-          world ? world.logError(msg) : console.error(msg);
-          throw err;
-        });
-        this.progressIndicator && promise.finally(result, () => this.progressIndicator.remove());
-      } else {
-        this.progressIndicator && this.progressIndicator.remove();
-      }
-    });
+
+    if (typeof command.progressIndicator === "string")
+       this.progressIndicator = world.execCommand('open loading indicator', command.progressIndicator);
+    // to not swallow errors
+    if (result && typeof result.catch === "function") {
+      result.catch(err => {
+        var msg = `Error in interactive command ${name}: ${err}\n${err.stack || err}`;
+        world ? world.logError(msg) : console.error(msg);
+        throw err;
+      });
+      this.progressIndicator && promise.finally(result, () => this.progressIndicator.remove());
+    } else {
+      this.progressIndicator && this.progressIndicator.remove();
+    }
 
     // handle count by repeating command
     if (result && typeof count === "number" && count > 1 && !command.handlesCount) {
