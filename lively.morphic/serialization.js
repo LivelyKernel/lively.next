@@ -105,7 +105,8 @@ export async function createMorphSnapshot(aMorph, options = {}) {
         previewWidth = 100, previewHeight = 100,
         previewType = "png",
         testLoad = true,
-        addPackages = true
+        addPackages = true,
+        ignoreMorphs = []
       } = options,
       snapshot = serializeMorph(aMorph);
 
@@ -122,10 +123,10 @@ export async function createMorphSnapshot(aMorph, options = {}) {
         height = previewHeight || aMorph.height,
         type = previewType || "png";
     try {
-      snapshot.preview = await renderMorphToDataURI(aMorph, {width, height, type});
+      snapshot.preview = await renderMorphToDataURI(aMorph, {width, height, type, ignoreMorphs});
     } catch (err) {
       console.error(`Error generating morph preview: ${err}`);
-      snapshot.preview = await renderMorphToDataURI(morph({fill: aMorph.fill, width, height}), {width, height, type})
+      snapshot.preview = await renderMorphToDataURI(morph({fill: aMorph.fill, width, height}), {width, height, type, ignoreMorphs})
     }
   }
 
