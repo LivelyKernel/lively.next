@@ -3287,6 +3287,7 @@ export class Path extends Morph {
 
       isSmooth: {
         defaultValue: false,
+        before: ['verices'],
         type: "Boolean",
         set(val) {
           this.setProperty("isSmooth", val);
@@ -3360,7 +3361,7 @@ export class Path extends Morph {
         offset = b.topLeft();
     vertices.forEach(ea => ea.moveBy(offset.negated()));
     this.moveBy(this.getTransform().transformDirection(offset));
-    this.extent = b.extent();
+    this.extent = b.extent().maxPt(pt(this.borderWidth, this.borderWidth));
     this.origin = newOrigin;
     this._adjustingVertices = false;
   }
