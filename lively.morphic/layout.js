@@ -269,6 +269,7 @@ class FloatLayout extends Layout {
 
   constructor(props = {}) {
     super(props);
+    this._orderByIndex = props.orderByIndex || false;
     this._resizeSubmorphs = typeof props.resizeSubmorphs !== "undefined" ?
                               props.resizeSubmorphs : false;
   }
@@ -277,7 +278,12 @@ class FloatLayout extends Layout {
     return new this.constructor(this.getSpec());
   }
 
-  layoutOrder(aMorph) { return aMorph.left; }
+  layoutOrder(aMorph) {
+    return this.orderByIndex ? this.container.submorphs.indexOf(aMorph) : aMorph.left; 
+  }
+
+  get orderByIndex() { return this._orderByIndex; }
+  set orderByIndex(active) { this._orderByIndex = active; this.apply() }
   
   get direction() { return this._direction; }
   set direction(d) { this._direction = d; this.apply(); }
@@ -302,8 +308,8 @@ class FloatLayout extends Layout {
   }
 
   getSpec() {
-    let { spacing, resizeSubmorphs, autoResize, align, direction, padding, reactToSubmorphAnimations } = this;
-    return { spacing, resizeSubmorphs, autoResize, align, direction, padding, reactToSubmorphAnimations };
+    let { spacing, resizeSubmorphs, autoResize, align, direction, padding, reactToSubmorphAnimations, orderByIndex } = this;
+    return { spacing, resizeSubmorphs, autoResize, align, direction, padding, reactToSubmorphAnimations, orderByIndex };
   }
 
   inspect(pointerId) {
@@ -444,7 +450,9 @@ export class VerticalLayout extends FloatLayout {
     return minExtent;
   }
 
-  layoutOrder(aMorph) { return aMorph.top; }
+  layoutOrder(aMorph) {
+    return this.orderByIndex ? this.container.submorphs.indexOf(aMorph) : aMorph.top;
+  }
 }
 
 export class HorizontalLayout extends FloatLayout {
@@ -833,7 +841,7 @@ export class TilingLayout extends Layout {
 
       var remainingWidth = width - spacing,
           rowMorphs = arr.takeWhile(layoutableSubmorphs, m => {
-            var ext = m.extent,
+            var ext = m.bounds().extent(),
                 newWidth = remainingWidth - (ext[normalizedWidthAccessor] + spacing);
             if (newWidth < 0) return false;
             remainingWidth = newWidth;
@@ -870,10 +878,11 @@ export class TilingLayout extends Layout {
 
       for (let m of rowMorphs) {
         this.changePropertyAnimated(m, 'position', pos, animate);
+        let ext = m.bounds().extent();
         pos = isHorizontal ?
-          pos.addXY(spacing + m.extent[normalizedWidthAccessor], 0) :
-          pos.addXY(0, spacing + m.extent[normalizedWidthAccessor]);
-        currentRowHeight = Math.max(currentRowHeight, m.extent[normalizedHeightAccessor]);
+          pos.addXY(spacing + ext[normalizedWidthAccessor], 0) :
+          pos.addXY(0, spacing + ext[normalizedWidthAccessor]);
+        currentRowHeight = Math.max(currentRowHeight, ext[normalizedHeightAccessor]);
       }
 
       previousRowHeight += spacing + currentRowHeight;
@@ -1608,7 +1617,7 @@ export class GridLayout extends Layout {
   // serialize as expression with the config
   __serialize__() {
     return {
-      __expr__: `new GridLayout(${obj.inspect(this.getSpec())})`,
+      __expr__: `new GridLayout(${obj.inspect(this.getSpec(), { escapeKeys: true })})`,
       bindings: {"lively.morphic": ["GridLayout"]}
     }
   }
