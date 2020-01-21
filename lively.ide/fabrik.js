@@ -243,13 +243,7 @@ class ConnectionPin extends Morph {
           });
         }
       },
-      connections: {
-        derived: true,
-        get() {
-          return (this.target.attributeConnections || [])
-                          .filter(c => c.sourceAttrName == this.propertyName);
-        }
-      },
+      connections: {},
       nativeCursor: {defaultValue: 'pointer'},
       expanded: {defaultValue: true},
       collapsible: {defaultValue: false},

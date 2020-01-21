@@ -4,7 +4,7 @@ import { Rectangle, Color, pt } from "lively.graphics";
 import { arr, fun, obj, promise } from "lively.lang";
 import { once } from "lively.bindings";
 import {
-  GridLayout,
+  GridLayout, Morph,
   VerticalLayout,
   HorizontalLayout,
   ProportionalLayout,
@@ -148,10 +148,10 @@ export class LivelyWorld extends World {
      if (evt.leftMouseButtonPressed()) {
        this.selectionStartPos = evt.positionIn(this);
        this.morphSelection = this.addMorph({
-          isSelectionElement: true, epiMorph: true,
-          position: this.selectionStartPos, extent: evt.state.dragDelta,
-          fill: Color.gray.withA(.2),
-          borderWidth: 2, borderColor: Color.gray
+          type: Selection,
+          epiMorph: true,
+          position: this.selectionStartPos,
+          extent: evt.state.dragDelta,
        });
        this.selectedMorphs = {};
      }
@@ -168,12 +168,8 @@ export class LivelyWorld extends World {
 
            if (!this.selectedMorphs[c.id] && included) {
               this.selectedMorphs[c.id] = this.addMorph({
-                  isSelectionElement: true,
-                  bounds: candidateBounds,
-                  borderColor: Color.red,
-                  borderWidth: 1,
-                  fill: Color.transparent,
-                  epiMorph: true
+                  type: SelectionElement, 
+                  bounds: candidateBounds
               }, this.morphSelection);
            }
            if (this.selectedMorphs[c.id] && !included) {
@@ -188,8 +184,10 @@ export class LivelyWorld extends World {
      if (this.morphSelection) {
        this.morphSelection.fadeOut(200);
        obj.values(this.selectedMorphs).map(m => m.remove());
-       this.showHaloForSelection(Object.keys(this.selectedMorphs)
-                                       .map(id => this.getMorphWithId(id)));
+       this.showHaloForSelection(
+         Object.keys(this.selectedMorphs)
+               .map(id => this.getMorphWithId(id))
+       );
        this.selectedMorphs = {};
        this.morphSelection = null;
      }
@@ -521,17 +519,17 @@ export class LivelyWorld extends World {
     let overlay;
     switch (morph.layout.constructor) {
       case ProportionalLayout:
-        overlay = new ProportionalLayoutHalo(morph, pointerId);
+        overlay = new ProportionalLayoutHalo({ container: morph, pointerId});
         break;
       case HorizontalLayout:
       case VerticalLayout:
-        overlay = new FlexLayoutHalo(morph, pointerId);
+        overlay = new FlexLayoutHalo({ container: morph, pointerId});
         break;
       case GridLayout:
-        overlay = new GridLayoutHalo(this.container, pointerId);
+        overlay = new GridLayoutHalo({ container: this.container, pointerId});
         break;
     }
-    return this.addMorphAt(overlay, insertionIndex);
+    return overlay && this.addMorphAt(overlay, insertionIndex);
   }
 
   highlightMorph(highlightOwner, morph, showLayout = false, highlightedSides = []) {
@@ -757,5 +755,34 @@ export class LivelyWorld extends World {
      return this.addMorph(LoadingIndicator.open(label, { center: requester.globalBounds().center() }))
   }
 
+}
+
+class SelectionElement extends Morph {
+  static get properties() {
+    return {
+      borderColor: { defaultValue: Color.red },
+      borderWidth: { defaultValue: 1 },
+      fill: { defaultValue: Color.transparent },
+      epiMorph: { defaultValue: true },
+      isSelectionElement: {
+        readOnly: true,
+        get() { return true }
+      }
+    }
+  }
+}
+
+class Selection extends Morph {
+  static get properties() {
+    return {
+      fill: { defaultValue: Color.gray.withA(.2) },
+      borderWidth: { defaultValue: 2 },
+      borderColor: { defaultValue: Color.gray },
+      isSelectionElement: {
+        readOnly: true,
+        get() { return true }
+      }
+    }
+  }
 }
 

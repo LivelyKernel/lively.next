@@ -1,5 +1,5 @@
 import {
-  Morph, StyleSheet, Text, Icon,
+  Morph, morph, StyleSheet, Text, Icon,
   VerticalLayout,
   GridLayout,
   HorizontalLayout
@@ -509,7 +509,7 @@ export class ColorPicker extends Window {
       color: {
         defaultValue: Color.blue,
         derived: true,
-        after: ['submorphs', 'targetMorph'],
+        before: ['submorphs', 'targetMorph'],
         get() { return Color.hsb(this.hue, this.saturation, this.brightness).withA(this.alpha) },
         set(c) {
           const [h, s, b] = c.toHSB();
@@ -520,7 +520,6 @@ export class ColorPicker extends Window {
         }
       },
       alpha: {
-        after: ['submorphs', 'targetMorph'],
         set(a) {
           this.setProperty("alpha", a);
           this.update();
@@ -536,7 +535,6 @@ export class ColorPicker extends Window {
         }
       },
       hue: {
-        after: ['targetMorph'],
         set(h) {
           this.setProperty('hue', h);
           this.update();
@@ -591,10 +589,11 @@ export class ColorPicker extends Window {
   }
 
   update() {
+     if (this.submorphs.length == 0) return;
      this.get('field picker').update(this);
      this.get('hue picker').update(this);
      this.get('details').update(this);
-     this.get('alpha slider').update(this);
+     this.get('alpha slider').update(this.alpha);
      // would be better if this.color is the canonical place
      // rms: as long as lively.graphics/color loses the hue information
      //      when lightness or saturation drop to 0, this.color can not serve
@@ -632,7 +631,8 @@ export class ColorPicker extends Window {
   }
 
   alphaSlider() {
-    return {
+    let slider;
+    let m = morph({
       name: "alphaSlider",
       fill: Color.transparent,
       layout: new HorizontalLayout({spacing: 3}),
@@ -644,16 +644,17 @@ export class ColorPicker extends Window {
           fontColor: Color.gray,
           fontWeight: "bold"
         },
-        new Slider({
+        slider = new Slider({
           name: 'alpha slider',
-          target: this,
+          value: this.alpha,
           min: 0,
           max: 1,
-          property: "alpha",
           width: 170
         })
       ]
-    };
+    });
+    connect(slider, 'value', this, 'alpha');
+    return m;
   }
 
   fieldPicker() {

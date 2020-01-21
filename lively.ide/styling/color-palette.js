@@ -204,12 +204,13 @@ class HarmonyPalette extends Morph {
 
   harmonyControl() {
     var selector,
+        slider,
         controls = new Morph({
          name: "harmonyControl",
          submorphs: [new HarmonyVisualizer({name: "harmony visualizer"}),
-                     new Slider({
-                       target: this, min: 0, max: 1, tooltip: "Adjust Brightness",
-                       property: "pivotBrightness", width: 100
+                     slider = new Slider({
+                       min: 0, max: 1, tooltip: "Adjust Brightness",
+                       width: 100, value: this.pivotBrightness
                      }),
                      selector = new DropDownSelector({
                        name: "harmonySelector", isHaloItem: true,
@@ -224,6 +225,7 @@ class HarmonyPalette extends Morph {
                                 Neutral: new Neutral()}
                    })]
      });
+    connect(slider, "value", this,  "pivotBrightness");
     connect(selector, 'selectedValue', this, 'harmony');
     return controls;
   }

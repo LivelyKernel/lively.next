@@ -140,7 +140,6 @@ export default class Halo extends Morph {
 
   get borderBox() {
     return this.getSubmorphNamed("border-box") || this.addMorphBack(morph({
-      isHalo: true,
       name: "border-box", fill: Color.transparent,
       borderColor: Color.red, borderWidth: 1
     }));
@@ -673,6 +672,7 @@ class NameHolder extends Morph {
       draggable: {defaultValue: false},
       fill:      {defaultValue: Color.transparent},
       forceUniqueName: {defaultValue: false},
+      halo: {},
       layout:    {
         after: ["nameHolder"],
         initialize() { this.layout = new HorizontalLayout({ resizeContainer: true, spacing: 7}); }
@@ -1376,6 +1376,17 @@ class OriginHaloItem extends HaloItem {
 // The white thingies at the corner and edges of a morph
 class ResizeHandle extends HaloItem {
 
+  static get properties() {
+    return {
+      corner: {},
+      location: {},
+      isResizeHandle: {
+        readOnly: true,
+        get() { return true; }
+      }        
+    }
+  }
+  
   static getResizeParts(rotation) {
     if (rotation > 0) rotation = rotation - 360;
     var offset = -8 - (rotation / 45).toFixed();
@@ -1429,13 +1440,6 @@ class ResizeHandle extends HaloItem {
         });
     return Object.assign(resizer, {nativeCursor, location});
   }
-
-  get isResizeHandle() { return true; }
-  
-  get corner() { return this.getProperty("corner"); }
-  set corner(val) { this.setProperty("corner", val); }
-  get location() { return this.getProperty("location"); }
-  set location(val) { this.setProperty("location", val); }
 
   valueForPropertyDisplay() {
     var {x: width, y: height} = this.halo.target.extent;

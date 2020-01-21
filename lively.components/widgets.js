@@ -2,7 +2,7 @@ import { obj, Path as PropertyPath, string, num, arr, properties } from "lively.
 import { pt, Color, Rectangle, rect } from "lively.graphics";
 import { signal, connect, disconnect } from "lively.bindings";
 import {
-  Morph,
+  Morph, ShadowObject,
   morph,
   Text,
   GridLayout,
@@ -178,7 +178,7 @@ export class Leash extends Path {
       borderColor: {defaultValue: Color.black},
       fill: {defaultValue: Color.transparent},
       vertices: {
-        after: ["start", "end"],
+        after: ["start", "end", "borderWidth"],
         initialize() {
           this.vertices = [this.start, this.end];
         }
@@ -244,67 +244,83 @@ export class Leash extends Path {
 }
 
 export class Slider extends Morph {
-  constructor(props) {
-    super({
-      height: 20,
-      fill: Color.transparent,
-      draggable: false,
-      ...props
-    });
-    const slider = this;
-    this.submorphs = [
-      new Path({
-        borderColor: Color.gray.darker(),
-        borderWidth: 2,
-        vertices: [pt(0, 0), pt(this.width, 0)],
-        position: pt(0, this.height/2)
-      }),
-      {
-        type: "ellipse",
-        fill: Color.gray,
-        name: "slideHandle",
-        borderColor: Color.gray.darker(),
-        borderWidth: 1,
-        dropShadow: {blur: 5},
-        extent: pt(15, 15),
-        nativeCursor: "-webkit-grab",
-        getValue: () => {
-          return num.roundTo(this.target[this.property], 0.01);
-        },
-        onDragStart(evt) {
-          this.valueView = new Tooltip({description: this.getValue()}).openInWorld(
-            evt.hand.position.addXY(10, 10)
-          );
-        },
-        onDrag(evt) {
-          slider.onSlide(this, evt.state.dragDelta);
-          this.valueView.description = this.getValue();
-          this.valueView.position = evt.hand.position.addXY(10, 10);
-        },
-        onDragEnd(evt) {
-          this.valueView.remove();
+
+  static get properties() {
+    return {
+      value: {},
+      min: {},
+      max: {},
+      height: { defaultValue: 20 },
+      fill: { defaultValue: Color.transparent },
+      draggable: { defaultValue: false },
+      submorphs: {
+        after: ['value', 'max', 'min'],
+        initialize() {
+          let slide = this;
+          let handle = new SliderHandle({ slider: this, name: "slideHandle" });
+          this.submorphs = [
+            new Path({
+              borderColor: Color.gray.darker(),
+              borderWidth: 2,
+              vertices: [pt(0, 0), pt(this.width, 0)],
+              position: pt(0, this.height/2)
+            }),
+            handle
+          ];
+          connect(this, "extent", this, "update");
+          this.update();
         }
       }
-    ];
-    connect(this, "extent", this, "update");
-    this.update();
+    }
   }
 
   normalize(v) {
     return Math.abs(v / (this.max - this.min));
   }
 
-  update() {
-    const x = (this.width - 15) * this.normalize(this.target[this.property]);
-    this.get("slideHandle").center = pt(x + 7.5, 10);
+  update(v=this.value) {
+    const x = (this.width - 15) * this.normalize(v);
+    if (String(x) == 'NaN') debugger;
+    this.getSubmorphNamed("slideHandle").center = pt(x + 7.5, 10);
   }
 
   onSlide(slideHandle, delta) {
-    const oldValue = this.target[this.property],
-          newValue = num.roundTo(oldValue + delta.x / this.width, 0.01);
-    this.target[this.property] = Math.max(this.min, Math.min(this.max, newValue));
-    this.update();
+    const oldValue = this.value,
+          newValue = num.roundTo(oldValue + delta.x / this.width, 0.01),
+          v = Math.max(this.min, Math.min(this.max, newValue));
+    this.value = v;
+    this.update(v);
   }
+}
+
+class SliderHandle extends Ellipse {
+  static get properties() {
+     return {
+       slider: {},
+       fill: { defaultValue: Color.gray },
+       borderColor: { defaultValue: Color.gray.darker() },
+       borderWidth: { defaultValue: 1 },
+       dropShadow: { defaultValue: new ShadowObject({blur: 5})},
+       extent: { defaultValue: pt(15, 15) },
+       nativeCursor: { defaultValue: "-webkit-grab" }
+     }
+   }
+  
+   onDragStart(evt) {
+     this.valueView = new Tooltip({description: ''}).openInWorld(
+       evt.hand.position.addXY(10, 10)
+     );
+   }
+  
+   onDrag(evt) {
+     this.slider.onSlide(this, evt.state.dragDelta);
+     this.valueView.description = this.slider.value;
+     this.valueView.position = evt.hand.position.addXY(10, 10);
+   }
+ 
+   onDragEnd(evt) {
+     this.valueView.remove();
+   }
 }
 
 export class ValueScrubber extends Text {

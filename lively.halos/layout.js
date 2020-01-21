@@ -413,19 +413,39 @@ class CellGuide extends Morph {
 
 }
 
-export class GridLayoutHalo extends Morph {
+class LayoutHalo extends Morph {
+  static get properties() {
+    return {
+      container: {},
+      target: {},
+      pointerId: {},
+      halosEnabled: { defaultValue: false },
+      isEpiMorph: { defaultValue: true },
+      isHaloItem: { defaultValue: true },
+      borderColor: { defaultValue: Color.orange },
+      borderWidth: { defaultValue: 2 },
+      styleClasses: { defaultValue: ['Halo'] },
+    }
+  }
+}
 
-  constructor(container, pointerId) {
-    super({
-      isHaloItem: true,
-      borderColor: Color.orange,
-      borderWidth: 2,
-      borderRadius: container.borderRadius,
-      extent: container.extent,
-      fill: Color.transparent,
-      state: {container, pointerId, target: container.layout}
-    });
-    this.initialize();
+export class GridLayoutHalo extends LayoutHalo {
+
+  static get properties() {
+    return {
+      fill: { defaultValue: Color.transparent},
+      cells: {
+        derived: true,
+        get() {
+          return arr.flatten(this.target.col(0).items.map(c => c.row(0).items));
+        }
+      },
+      submorphs: {
+        initialize() {
+          this.initialize();
+        }
+      }
+    }
   }
 
   previewDrop(morphs) {
@@ -467,9 +487,6 @@ export class GridLayoutHalo extends Morph {
 
   get isLayoutHalo() { return false; }
 
-  get container() { return this.state.container; }
-  get target() { return this.state.target; }
-
   alignWithTarget() {
     this.target.apply();
     this.position = this.container.globalPosition;
@@ -491,10 +508,6 @@ export class GridLayoutHalo extends Morph {
     this.initCellGuides();
     this.initColumnGuides();
     this.initRowGuides();
-  }
-
-  get cells() {
-    return arr.flatten(this.target.col(0).items.map(c => c.row(0).items));
   }
 
   initCellGuides() {
@@ -665,18 +678,15 @@ export class GridLayoutHalo extends Morph {
   }
 }
 
-export class TilingLayoutHalo extends Morph {
+export class TilingLayoutHalo extends LayoutHalo {
 
-  constructor(container, pointerId) {
-    super({
-      isHaloItem: true,
-      styleClasses: ["Halo"],
-      extent: container.extent,
-      fill: Color.transparent,
-      previews: []
-    });
-    this.state = {container, pointerId, target: container.layout};
-    this.alignWithTarget();
+  static get properties() {
+    return {
+      fill: { defaultValue: Color.transparent},
+      previews: {
+        defaultValue: []
+      }
+    }
   }
 
   remove() {
@@ -684,9 +694,6 @@ export class TilingLayoutHalo extends Morph {
     this.removePreviews();
     return this;
   }
-
-  get container() { return this.state.container; }
-  get target() { return this.state.target; }
 
   alignWithTarget() {
     this.setBounds(this.container.globalBounds());
@@ -701,28 +708,11 @@ export class TilingLayoutHalo extends Morph {
   }
 
   previewDrop(morphs) {
-    const pulseDuration = 2000;
     if (this.previews.length > 0) return;
     this.previews = morphs.map(morph =>
       this.container.addMorph({
-        isHaloItem: true,
+        type: DropPreview,
         bounds: morph.bounds(),
-        fill: Color.orange.withA(.3),
-        epiMorph: true,
-        borderColor: Color.orange,
-        borderWidth: 2,
-        opacity: 1,
-        borderStyle: "dashed",
-        clear() {
-          this.stopped = true;
-          this.remove();          
-        },
-        async step() {
-          const easing = easings.inOutQuad;
-          await this.animate({opacity: .5, duration: (pulseDuration - 10) / 2, easing});
-          await this.animate({opacity: 1, duration: (pulseDuration - 10) / 2, easing});
-          if (!this.stopped) this.step();
-        }
       }));
     this.previews.forEach(p => {
       p.step();
@@ -775,48 +765,55 @@ export class TilingLayoutHalo extends Morph {
 
 }
 
-export class FlexLayoutHalo extends Morph {
+class DropPreview extends Morph {
 
-  constructor(container, pointerId) {
-    super({
-      reactsToPointer: false,
-      halosEnabled: false,
-      isHaloItem: true,
-      styleClasses: ["Halo"],
-      fill: Color.transparent,
-      previews: []
-    });
-    this.state = {container, pointerId, target: container.layout};
-    this.alignWithTarget();
+  static get properties() {
+    return {
+      isHaloItem: { readOnly: true, get() { return true }},
+      epiMorph: { readOnly: true, get() { return true }},
+      fill: { defaultValue: Color.orange.withA(.3)},
+      borderColor: { defaultValue: Color.orange },
+      borderWidth: { defaultValue: 2 },
+      borderStyle: { defaultValue: "dashed" },
+      pulseDuration: { defaultValue: 2000 }
+    }
+  }
+  
+  clear() {
+    this.stopped = true;
+    this.remove();
+  }
+  
+  async step() {
+    const easing = easings.inOutQuad;
+    await this.animate({opacity: .5, duration: (this.pulseDuration - 10) / 2, easing});
+    await this.animate({opacity: 1, duration: (this.pulseDuration - 10) / 2, easing});
+    if (!this.stopped) this.step();
+  }
+}
+
+export class FlexLayoutHalo extends LayoutHalo {
+
+  static get properties() {
+    return {
+      reactsToPointer: { defaultValue: false },
+      fill: { defaultValue: Color.transparent },
+      halosEnabled: { defaultValue: false },
+      previews: {
+        defaultValue: []
+      }
+    }
   }
 
   handleDrop(morph) {}
 
   previewDrop(morphs) {
-    const pulseDuration = 2000;
     if (this.previews.length > 0) return;
-    this.previews = morphs.map(morph =>
-      this.container.addMorph({
-        isHaloItem: true,
-        epiMorph: true,
-        position: this.container.localize(this.world().firstHand.position),
-        extent: morph.bounds().extent(),
-        fill: Color.orange.withA(.3),
-        borderColor: Color.orange,
-        borderWidth: 2,
-        opacity: 1,
-        borderStyle: "dashed",
-        clear() {
-          this.stopped = true;
-          this.remove();
-        },
-        async step() {
-          const easing = easings.inOutQuad;
-          await this.animate({opacity: .5, duration: (pulseDuration - 10) / 2, easing});
-          await this.animate({opacity: 1, duration: (pulseDuration - 10) / 2, easing});
-          if (!this.stopped) this.step();
-        }
-      }));
+    this.previews = morphs.map(morph => this.container.addMorph({
+      type: DropPreview,
+      position: this.container.localize(this.world().firstHand.position),
+      extent: morph.bounds().extent()
+    }));
     this.previews.forEach(p => {
       p.step();
     });
@@ -840,9 +837,6 @@ export class FlexLayoutHalo extends Morph {
   alignWithTarget() {
     this.setBounds(this.container.globalBounds());
   }
-
-  get target() { return this.state.target; }
-  get container() { return this.state.container; }
 
   updateAutoResizePolicy(auto) {
     if (auto) this.originalExtent = this.container.extent;
@@ -936,35 +930,19 @@ export class FlexLayoutHalo extends Morph {
 }
 
 
-export class ProportionalLayoutHalo extends Morph {
+export class ProportionalLayoutHalo extends LayoutHalo {
 
   static get properties() {
     return {
-      halosEnabled: { defaultValue: false}
+      reactsToPointer: { defaultValue: false },
+      fill: { defaultValue: Color.transparent }
     }
-  }
-
-  constructor(container, pointerId) {
-    super({
-      reactsToPointer: false,
-      isHaloItem: true,
-      styleClasses: ["Halo"],
-      fill: Color.transparent,
-      epiMorph: true
-    });
-    this.state = {container, pointerId, target: container.layout};
-    this.alignWithTarget();
   }
 
   handleDrop(morph) {}
   onDrop(evt) { evt.hand.dropMorphsOn(this.container); }
 
   alignWithTarget() {this.setBounds(this.container.globalBounds()); }
-
-  get target() { return this.state.target; }
-  get container() { return this.state.container; }
-
-  // updateDirectionPolicy(val) { this.target.direction = val; }
 
   updateSubmorphProportionalLayoutSettings({policy, submorph, axis}) {
     this.target.changeSettingsFor(submorph, {[axis]: policy}, true/*save*/);

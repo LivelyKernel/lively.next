@@ -759,22 +759,8 @@ export class Morph {
     this._pathDependants = [];
     this._tickingScripts = [];
     this.initializeProperties(props);
+    
     if (props.bounds) this.setBounds(props.bounds);
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // rk 2017-02-04: FIXME remove the assign below once we are fully
-    // transitioned to properties. Properties themselves set their default or
-    // constructor value in initializeProperties
-    let descriptors = obj.getOwnPropertyDescriptors(props),
-        myDescriptors = {},
-        dontAssign = {env: true, type: true, submorphs: true, bounds: true, layout: true},
-        properties = this.propertiesAndPropertySettings().properties;
-    for (let key in descriptors)
-      if (!(key in dontAssign) && !(key in properties))
-        myDescriptors[key] = descriptors[key];
-    Object.defineProperties(this, myDescriptors);
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
     if (props.layout) this.layout = props.layout;
 
     if (typeof this.onLoad === "function") this.onLoad();
