@@ -1,23 +1,29 @@
-import { parse, nodes } from "lively.ast";
+import { parse, nodes, stringify } from "lively.ast";
 import { emit } from "lively.notifications";
 
 const { funcCall, member, id, literal } = nodes;
 
-import { obj, promise, arr } from "lively.lang";
+import { arr } from "lively.lang";
 import { runEval as vmRunEval } from "./eval.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // load support
 
-function ensureImportsAreImported(System, code, parentModule) {
+async function ensureImportsAreImported(System, code, parentModule) {
   // FIXME do we have to do a reparse? We should be able to get the ast from
   // the rewriter...
-  var body = parse(code).body,
+  var parsed = parse(code),
+      body = parsed.body,
       imports = body.filter(node => node.type === "ImportDeclaration");
-  return Promise.all(imports.map(node =>
-          System.normalize(node.source.value, parentModule)
-            .then(fullName => System.get(fullName) || System.import(fullName))))
+  await Promise.all(imports.map(node => {
+          return System.normalize(node.source.value, parentModule)
+            .then(fullName => {
+               node.source.value = fullName;
+               return System.get(fullName) || System.import(fullName)
+            })
+         }))
         .catch(err => { console.error("Error ensuring imports: " + err.message); throw err; });
+  return stringify(parsed);
 }
 
 function hasUnimportedImports(System, code, parentModule) {
@@ -192,7 +198,7 @@ export function runEval(System, code, options) {
    && hasUnimportedImports(System, code, targetModule)) {
     return ensureImportsAreImported(System, code, targetModule)
             .catch(err => null)
-            .then(() => runEval(System, originalSource, {...options, importsEnsured: true}))
+            .then((patchedSource) => runEval(System, patchedSource, {...options, importsEnsured: true}))
   }
 
   // delay eval to ensure SystemJS module record
