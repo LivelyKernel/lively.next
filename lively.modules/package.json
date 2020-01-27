@@ -1,7 +1,7 @@
 {
   "name": "lively.modules",
   "version": "0.8.38",
-  "main": "dist/lively.modules.js",
+  "main": "dist/lively.modules.bootstrap.min.js",
   "repository": "https://github.com/LivelyKernel/lively.modules",
   "author": "Robert Krahn <robert.krahn@gmail.com>",
   "license": "MIT",

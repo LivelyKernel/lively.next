@@ -1,6 +1,6 @@
 /*global System,process,self,WorkerGlobalScope,location*/
 import { arr, obj, promise } from 'lively.lang';
-import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
+import { remove as removeHook, install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 import module from "./module.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -13,6 +13,31 @@ if (!SystemClass.systems) SystemClass.systems = {};
 
 var defaultOptions = {
   notificationLimit: null
+}
+
+export function wrapModuleResolution(System) {
+  if (!isHookInstalled(System, "normalize", "normalizeHook"))
+    installHook(System, "normalize", normalizeHook, "normalizeHook");
+
+  if (!isHookInstalled(System, "decanonicalize", "decanonicalizeHook"))
+    installHook(System, "decanonicalize", decanonicalizeHook, "decanonicalizeHook");
+
+  if (!isHookInstalled(System, "normalizeSync", "decanonicalizeHook"))
+    installHook(System, "normalizeSync", decanonicalizeHook, "decanonicalizeHook");
+
+  if (!isHookInstalled(System, "newModule", "newModule_volatile"))
+    installHook(System, "newModule", newModule_volatile, "newModule_volatile");
+
+  if (!isHookInstalled(System, "instantiate", "instantiate_triggerOnLoadCallbacks"))
+    installHook(System, "instantiate", instantiate_triggerOnLoadCallbacks, "instantiate_triggerOnLoadCallbacks");
+}
+
+export function unwrapModuleResolution(System) {
+  removeHook(System, "normalize", "normalizeHook");
+  removeHook(System, "decanonicalize", "decanonicalizeHook");
+  removeHook(System, "normalizeSync", "decanonicalizeHook");
+  removeHook(System, "newModule", "newModule_volatile");
+  removeHook(System, "instantiate", "instantiate_triggerOnLoadCallbacks");
 }
 
 // Accessible system-wide via System.get("@lively-env")
@@ -118,21 +143,7 @@ function prepareSystem(System, config) {
 
   wrapResource(System);
   wrapModuleLoad(System);
-
-  if (!isHookInstalled(System, "normalizeHook", "normalizeHook"))
-    installHook(System, "normalize", normalizeHook, "normalizeHook");
-
-  if (!isHookInstalled(System, "decanonicalize", "decanonicalizeHook"))
-    installHook(System, "decanonicalize", decanonicalizeHook, "decanonicalizeHook");
-
-  if (!isHookInstalled(System, "normalizeSync", "decanonicalizeHook"))
-    installHook(System, "normalizeSync", decanonicalizeHook, "decanonicalizeHook");
-
-  if (!isHookInstalled(System, "newModule", "newModule_volatile"))
-    installHook(System, "newModule", newModule_volatile, "newModule_volatile");
-
-  if (!isHookInstalled(System, "instantiate", "instantiate_triggerOnLoadCallbacks"))
-    installHook(System, "instantiate", instantiate_triggerOnLoadCallbacks, "instantiate_triggerOnLoadCallbacks");
+  wrapModuleResolution(System)
 
   if (isElectron) {
     var electronCoreModules = ["electron"],

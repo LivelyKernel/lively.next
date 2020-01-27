@@ -248,6 +248,8 @@
 import {
   getSystem, removeSystem, prepareSystem,
   printSystemConfig as _printSystemConfig,
+  unwrapModuleResolution as _unwrapModuleResolution, 
+  wrapModuleResolution as _wrapModuleResolution,
   whenLoaded as _whenLoaded,
 } from "./src/system.js";
 import _module, {
@@ -265,6 +267,8 @@ function changeSystem(newSystem, makeGlobal) {
   if (makeGlobal) GLOBAL.System = newSystem;
   return newSystem;
 }
+function wrapModuleResolution() { _wrapModuleResolution(defaultSystem); }
+function unwrapModuleResolution() { _unwrapModuleResolution(defaultSystem); }
 function loadedModules() { return Object.keys(requireMap()); }
 function module(id) { return _module(defaultSystem, id); }
 function isModuleLoaded(name, isNormalized) {
@@ -287,7 +291,9 @@ export {
   changeSystem,
   module,
   doesModuleExist,
-  isModuleLoaded
+  isModuleLoaded,
+  unwrapModuleResolution,
+  wrapModuleResolution
 };
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
