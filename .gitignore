@@ -11,6 +11,7 @@ custom-npm-modules/
 *.idb/
 *.html
 *.css
+favicon.ico
 localconfig.js
 robots.txt
 update.sh
