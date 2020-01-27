@@ -1,4 +1,4 @@
-import { CustomLayout, Morph, Text, StyleSheet, Label, Icon, morph } from "lively.morphic";
+import { Morph, Text, StyleSheet, Label, Icon, morph } from "lively.morphic";
 import { pt, LinearGradient, Color, Rectangle, rect } from "lively.graphics";
 import { arr, Path, string } from "lively.lang";
 import { signal, once } from "lively.bindings";
@@ -96,7 +96,9 @@ export class ListItemMorph extends Label {
     }
 
     if (itemMorph) {
+      let tfm = itemMorph.getTransform().copy();
       this.submorphs = [itemMorph];
+      itemMorph.setTransform(tfm);
       itemMorph.position = pt(0,0);
     }
     else if (this.submorphs.length) this.submorphs = [];
