@@ -1,5 +1,5 @@
 /* global System */
-import { promise, num } from "lively.lang";
+import { promise } from "lively.lang";
 import { Icon, VerticalLayout, ShadowObject, HorizontalLayout, morph, Morph, StyleSheet, Image } from "lively.morphic";
 import { pt, RadialGradient, rect, Rectangle, Color } from "lively.graphics";
 import { connect } from "lively.bindings";

@@ -658,8 +658,6 @@ export class LivelyWorld extends World {
     if (opts.animated) {
       if (this.previousPrompt && this.previousPrompt.world()) {
         this.previousPrompt.transitionTo(promptMorph);
-      } else {
-        promptMorph.openInWorld(promptMorph.globalPosition);
       }
     }
     this.previousPrompt = promptMorph;
