@@ -92,6 +92,7 @@ export default class FontMetric {
     if (transform) transform = transform.inverse();
     el.textContent = text;
     Object.assign(el.style, {
+      '-webkit-text-size-adjust': "none",
       fontFamily, fontWeight, fontStyle, textDecoration, transform: transform,
       fontSize: fontSize + "px",
     })
