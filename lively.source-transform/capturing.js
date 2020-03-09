@@ -112,6 +112,13 @@ export function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) 
   //   "var foo = 3;" -> "Global.foo = _define(3, 'foo', _rec, 'var');"
   rewritten = replaceVarDecls(rewritten, options);
 
+  // clear empty exports
+  // rms 26.05.20: removes statements of the sort "export {}"
+  //               This is technically illegal ESM syntax, however
+  //               this sometimes is served by jspm due to auto generated esm modules
+  //               It's therefore worth tolerating this kind of syntax for convenience sake.
+  rewritten = clearEmptyExports(rewritten, options);
+
   // 5.b record class declarations
   // Example: "class Foo {}" -> "class Foo {}; Global.Foo = Foo;"
   // if declarationWrapper is requested:
@@ -243,6 +250,15 @@ export function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, opt
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // replacement helpers
+
+function clearEmptyExports(parsed, options) {
+  var topLevel = topLevelDeclsAndRefs(parsed);
+  for (let exp of topLevel.scope.exportDecls) {
+    if (!exp.declaration && exp.specifiers && !exp.specifiers.length)
+      arr.remove(parsed.body, exp);
+  }
+  return parsed;
+}
 
 function replaceRefs(parsed, options) {
   var topLevel = topLevelDeclsAndRefs(parsed),
