@@ -155,7 +155,10 @@ var knownGlobals = [
   "localStorage",
   "$world",
   "lively",
-  "System"
+  "System",
+  "customElements",
+  "performance",
+  "addEventListener"
 ];
 
 function scopes(parsed) {
