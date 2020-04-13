@@ -96,7 +96,7 @@ export class NodeModuleTranslationCache extends ModuleTranslationCache {
 
   async fetchStoredModuleSource(moduleId) {
     var moduleId = moduleId.replace("file://", ""),
-        fname = moduleId.match(/([^\/]*.)\.js/)[0],
+        fname = moduleId.match(/([^\/]*.)\.js$/)[0],
         fpath = moduleId.replace(fname, ""),
         r = this.moduleCacheDir.join(moduleId);
     if (!await r.exists()) return null;
@@ -108,7 +108,7 @@ export class NodeModuleTranslationCache extends ModuleTranslationCache {
 
   async cacheModuleSource(moduleId, hash, source) {
     var moduleId = moduleId.replace("file://", ""),
-        fname = moduleId.match(/([^\/]*.)\.js/)[0],
+        fname = moduleId.match(/([^\/]*.)\.js$/)[0],
         fpath = moduleId.replace(fname, "");
     await this.ensurePath(fpath);
     await this.moduleCacheDir.join(moduleId).write(source);
@@ -117,7 +117,7 @@ export class NodeModuleTranslationCache extends ModuleTranslationCache {
 
   async deleteCachedData(moduleId) {
     moduleId = moduleId.replace("file://", "");
-    var fname = moduleId.match(/([^\/]*.)\.js/)[0],
+    var fname = moduleId.match(/([^\/]*.)\.js$/)[0],
         fpath = moduleId.replace(fname, ""),
         r = this.moduleCacheDir.join(moduleId);
     if (!await r.exists()) return false;
