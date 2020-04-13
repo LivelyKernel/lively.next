@@ -11,7 +11,7 @@ import { createMorphSnapshot } from "lively.morphic/serialization.js";
 import { Color, pt, rect, Rectangle, LinearGradient } from "lively.graphics";
 import { obj, Path as PropertyPath, promise, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
-import { ConnectionHalo } from "lively.ide/fabrik.js";
+
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from "./drag-guides.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -121,7 +121,6 @@ export default class Halo extends Morph {
         this.dragHalo(),
         this.grabHalo(),
         this.menuHalo(),
-        this.connectionHalo(),
         this.inspectHalo(),
         this.editHalo(),
         this.copyHalo(),
@@ -241,7 +240,6 @@ export default class Halo extends Morph {
   grabHalo() { return GrabHaloItem.for(this); }
   dragHalo() { return DragHaloItem.for(this); }
   menuHalo() { return MenuHaloItem.for(this); }
-  connectionHalo() { return ConnectionsHaloItem.for(this); }
   inspectHalo() { return InspectHaloItem.for(this); }
   editHalo() { return EditHaloItem.for(this); }
   rotateHalo() { return RotateHaloItem.for(this); }
@@ -1568,54 +1566,6 @@ class MenuHaloItem extends HaloItem {
   }
 
 }
-
-class ConnectionsHaloItem extends HaloItem {
-
-  static get connectionHaloMap() {
-    return this._connectionHaloMap || (this._connectionHaloMap = new WeakMap());
-  }
-
-  static removeHalosFor(morph) {
-    if (!this._connectionHaloMap) return;
-    let halo = this._connectionHaloMap.get(morph);
-    if (halo) {
-      halo.remove();
-      this._connectionHaloMap.delete(morph);
-    }
-  }
-
-  static openHalosFor(morph) {
-    let halo = this.connectionHaloMap.get(morph);
-    if (!halo) {
-      halo = new ConnectionHalo({target: morph});
-      this.connectionHaloMap.set(morph, halo);
-    }
-    halo.openInWorld(halo.position);
-    return halo;
-  }
-
-  static get morphName() { return 'connections'; }
-
-  static get properties() {
-    return {
-      styleClasses: {
-        defaultValue: ['fa', 'fa-tencent-weibo']
-      },
-      tooltip: {defaultValue: "Manage this morph's connections"},
-      draggable: {defaultValue: false}
-    };
-  }
-
-  async onMouseDown(evt) {
-    let halo = this.constructor.openHalosFor(this.halo.target);
-    once(halo, "remove", this.constructor, "removeHalosFor", {
-      converter: function() { return this.sourceObj.target; }
-    });
-    this.halo.remove();
-  }
-
-}
-
 
 
 // The orange thing that indicates a drop target when a grabbed morph is
