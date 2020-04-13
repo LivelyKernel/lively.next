@@ -82,7 +82,14 @@ function filter(array, iterator, context) {
   // Calls `iterator` for each element in `array` and returns a subset of it
   // including the elements for which `iterator` returned a truthy value.
   // Like `Array.prototype.filter`.
-  return array.filter(iterator, context);
+  var res = [];
+  for(var idx=0; idx<array.length; idx++) {
+    var currentItem = array[idx];
+    if(iterator.call(context, currentItem)) {
+      res.push(currentItem);
+    }
+  }
+  return res;
 }
 
 var detect = features.find ?
@@ -122,44 +129,44 @@ function filterByKey(arr, key) {
   return arr.filter(function(ea) { return !!ea[key]; });
 }
 
-function grep(arr, filter, context) {
+function grep(arr, test, context) {
   // [a] -> String|RegExp -> [a]
   // `filter` can be a String or RegExp. Will stringify each element in
   // Example:
   // ["Hello", "World", "Lively", "User"].grep("l") // => ["Hello","World","Lively"]
-  if (typeof filter === 'string') filter = new RegExp(filter, 'i');
-  return arr.filter(filter.test.bind(filter))
+  if (typeof test === 'string') test = new RegExp(test, 'i');
+  return filter(arr, filter.test.bind(test));
 }
 
 function mask(array, mask) {
   // select every element in array for which array's element is truthy
   // Example: [1,2,3].mask([false, true, false]) => [2]
-  return array.filter(function(_, i) { return !!mask[i]; });
+  return filter(array, function(_, i) { return !!mask[i]; });
 }
 
 function reject(array, func, context) {
   // show-in-doc
   function iterator(val, i) { return !func.call(context, val, i); }
-  return array.filter(iterator);
+  return filter(array, iterator);
 }
 
 function rejectByKey(array, key) {
   // show-in-doc
-  return array.filter(function(ea) { return !ea[key]; });
+  return filter(array, function(ea) { return !ea[key]; });
 }
 
 function without(array, elem) {
   // non-mutating
   // Example:
   // arr.without([1,2,3,4,5,6], 3) // => [1,2,4,5,6]
-  return array.filter(val => val !== elem);
+  return filter(array, val => val !== elem);
 }
 
 function withoutAll(array, otherArr) {
   // non-mutating
   // Example:
   // arr.withoutAll([1,2,3,4,5,6], [3,4]) // => [1,2,5,6]
-  return array.filter(val => otherArr.indexOf(val) === -1);
+  return filter(array, val => otherArr.indexOf(val) === -1);
 }
 
 function uniq(array, sorted) {
@@ -218,7 +225,7 @@ function compact(array) {
   // removes falsy values
   // Example:
   // arr.compact([1,2,undefined,4,0]) // => [1,2,4]
-  return array.filter(Boolean);
+  return filter(array, Boolean);
 }
 
 function mutableCompact(array) {
@@ -473,7 +480,7 @@ function last(array) { return array[array.length - 1]; }
 
 function intersect(array1, array2) {
   // set-like intersection
-  return uniq(array1).filter(item => array2.indexOf(item) > -1);
+  return filter(uniq(array1), item => array2.indexOf(item) > -1);
 }
 
 function union(array1, array2) {
@@ -986,7 +993,7 @@ function collect(arr, iterator, context) {
 }
 
 function findAll(arr, iterator, context) {
-  return arr.filter(iterator, context);
+  return filter(arr, iterator, context);
 }
 
 function inject(array, memo, iterator, context) {
