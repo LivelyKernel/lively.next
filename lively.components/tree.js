@@ -589,7 +589,7 @@ export class TreeData {
     tree.prewalk(this.root,
       (node, i, depth) => nodesWithIndex.push({node, depth, i}),
       (node) => this.getChildrenIfUncollapsed(node));
-    return filterFn ? nodesWithIndex.filter(filterFn) : nodesWithIndex;
+    return filterFn ? arr.filter(nodesWithIndex, filterFn) : nodesWithIndex;
   }
 
   pathOf(node) {
@@ -849,7 +849,7 @@ var treeCommands = [
       return true;
 
       function allNonLeafChildren(parent) {
-        return td.getChildrenIfUncollapsed(parent).filter(n => !td.isLeaf(n));
+        return arr.filter(td.getChildrenIfUncollapsed(parent), n => !td.isLeaf(n));
       }
 
       function collapseOrUncollapse(nodes, doCollapse) {
