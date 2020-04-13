@@ -40,6 +40,9 @@
     "rollup-plugin-babel": "^2.6.1"
   },
   "systemjs": {
-    "main": "index.js"
+    "main": "index.js",
+    "map": {
+      "babel-plugin-transform-jsx": "https://dev.jspm.io/babel-plugin-transform-jsx"
+    }
   }
 }

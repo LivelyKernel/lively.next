@@ -1,11 +1,11 @@
-/*global babel*/
+/*global global, babel*/
 import * as capturing from "./capturing.js";
 export { capturing };
 import { parseFunction, stringify, ReplaceVisitor } from "lively.ast";
 import transformJSX from "babel-plugin-transform-jsx";
 
 // fixme: this is a sort of bad placement
-typeof babel !== 'undefined' && !babel.availablePlugins['transform-jsx'] && !(lively || global.lively).FreezerRuntime && babel.registerPlugin('transform-jsx', transformJSX);
+typeof babel !== 'undefined' && !babel.availablePlugins['transform-jsx'] && !(lively || global.lively).FreezerRuntime && babel.registerPlugin('transform-jsx', transformJSX.default);
 
 export function stringifyFunctionWithoutToplevelRecorder(
   funcOrSourceOrAst,
@@ -37,6 +37,7 @@ export function stringifyFunctionWithoutToplevelRecorder(
 }
 
 export function es5Transpilation(source) {
+  
     if (typeof babel === 'undefined') {
       console.warn('[lively.freezer] Skipped async/await transpilation because babel not loaded.');
       return source;
