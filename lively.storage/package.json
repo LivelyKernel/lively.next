@@ -46,14 +46,12 @@
   "main": "dist/lively.storage.js",
   "systemjs": {
     "main": "index.js",
-    "meta": {
-      "./dist/pouchdb-adapter-mem.js": {
-        "format": "global"
-      }
-    },
     "map": {
-      "pouchdb": "pouchdb/dist/pouchdb.js",
-      "pouchdb-adapter-mem": "./dist/pouchdb-adapter-mem.js"
+      "pouchdb": {
+        "node": "pouchdb/dist/pouchdb.js",
+        "~node": "https://dev.jspm.io/pouchdb"
+      },
+      "pouchdb-adapter-mem": "https://dev.jspm.io/pouchdb-adapter-memory"
     }
   }
 }
