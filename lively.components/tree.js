@@ -402,7 +402,7 @@ export class Tree extends Text {
     this.resetCache();
     try {
       await this.treeData.collapse(node, isCollapsed);
-      signal(this, 'nodeCollapseChanged');
+      signal(this, 'nodeCollapseChanged', { node, isCollapsed });
       this.update(); // this perform cut/paste of the node contents instead of a brute force update
     } catch (e) { this.showError(e); }
   }
