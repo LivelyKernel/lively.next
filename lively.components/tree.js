@@ -4,7 +4,6 @@ import { pt, Rectangle, Color } from "lively.graphics";
 import { Morph, Text, config, StyleSheet, touchInputDevice, Label } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 import bowser from 'bowser';
-import { renderSubTree } from "lively.morphic/rendering/morphic-default.js";
 
 /*
 
@@ -239,10 +238,6 @@ export class Tree extends Text {
     this.document.setTextAndAttributesOfLine(row, attrs)
     this.selectLine(row, true);
     this._lastSelectedIndex = this.selectedIndex;
-    // force synchronous render to avoid "bouncing" of selection
-    if (this.document.lines[row].hasEstimatedExtent) {
-      this.directRender();
-    }
   }
 
   computeTreeAttributes(nodes) {
