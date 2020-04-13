@@ -25,7 +25,6 @@ var {
 var { topLevelDeclsAndRefs, helpers: queryHelpers } = query;
 var { transformSingleExpression, wrapInStartEndCall } = transform;
 
-
 export function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
   /* replaces var and function declarations with assignment statements.
    * Example:
@@ -193,7 +192,8 @@ export function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, opt
     throw new Error(`rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at finding execute: ${stringify(parsed).slice(0,300)}...`)
 
   // in each setter function: intercept the assignments to local vars and inject capture object
-  setters.value.elements.forEach(funcExpr =>
+  setters.value.elements.forEach(funcExpr => {
+    funcExpr.params[0] = assign(funcExpr.params[0], nodes.objectLiteral({}));
     funcExpr.body.body = funcExpr.body.body.map(stmt => {
       if (stmt.type !== "ExpressionStatement"
        || stmt.expression.type !== "AssignmentExpression"
@@ -212,7 +212,9 @@ export function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, opt
               options) :
             stmt.expression;
       return exprStmt(assign(member(options.captureObj, id), rhs))
-    }));
+    })
+  });
+  
 
   var captureInitialize = execute.value.body.body.find(stmt =>
                             stmt.type === "ExpressionStatement"
