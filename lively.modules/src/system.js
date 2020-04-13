@@ -1,4 +1,4 @@
-/*global System,process,self,WorkerGlobalScope,location*/
+/*global System,process,self,WorkerGlobalScope,location,global*/
 import { arr, obj, promise } from 'lively.lang';
 import { remove as removeHook, install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 import module from "./module.js";
@@ -6,10 +6,10 @@ import module from "./module.js";
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 var isNode = System.get("@system-env").node;
-var initialSystem = initialSystem || System;
 
-var SystemClass = System.constructor;
-if (!SystemClass.systems) SystemClass.systems = {};
+var GLOBAL = typeof window !== "undefined" ? window :
+              (typeof global !== "undefined" ? global :
+                (typeof self !== "undefined" ? self : this));
 
 var defaultOptions = {
   notificationLimit: null
@@ -84,7 +84,10 @@ function livelySystemEnv(System) {
   }
 }
 
-function systems() { return SystemClass.systems }
+function systems() { 
+  if (!System.constructor.systems) System.constructor.systems = {};
+  return System.constructor.systems;
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // System creation + access interface
@@ -112,7 +115,9 @@ import { emit } from "lively.notifications";
 import { join, urlResolve } from "./url-helpers.js";
 import { resource } from "lively.resources";
 
-function makeSystem(cfg) { return prepareSystem(new SystemClass(), cfg); }
+function makeSystem(cfg) { 
+  return prepareSystem(new System.constructor(), cfg);
+}
 
 function prepareSystem(System, config) {
   System.trace = true;
@@ -168,6 +173,7 @@ function prepareSystem(System, config) {
 
   if (!config.transpiler && System.transpiler === "traceur") {
 
+    let initialSystem = GLOBAL.System;
     if (initialSystem.transpiler === "lively.transpiler") {
       System.set("lively.transpiler", initialSystem.get("lively.transpiler"));
       System._loader.transpilerPromise = initialSystem._loader.transpilerPromise;
