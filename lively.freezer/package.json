@@ -6,5 +6,16 @@
     "uglify-es": "^3.3.9",
     "google-closure-compiler-linux": "^20190618.0.0",
     "wasm-brotli": "1.0.2"
+  },
+  "systemjs": {
+    "meta": {
+      "https://unpkg.com/wasm-flate@0.1.11-alpha/dist/bootstrap.js": {
+        "format": "global"
+      }
+    },
+    "map": {
+      "wasm-flate": "https://unpkg.com/wasm-flate@0.1.11-alpha/dist/bootstrap.js",
+      "semver": "https://dev.jspm.io/semver"
+    }
   }
 }

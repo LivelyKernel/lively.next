@@ -1,12 +1,14 @@
 /*global System,TextEncoder*/
-import { rollup } from 'https://unpkg.com/rollup@1.17.0/dist/rollup.browser.js';
-import {compress} from 'wasm-brotli'
+import {rollup} from 'https://unpkg.com/rollup@1.17.0/dist/rollup.browser.js';
+import semver from 'semver';
+import { compress } from 'wasm-brotli';
+import 'wasm-flate';
 import {
   createMorphSnapshot, serializeMorph,
   loadPackagesAndModulesOfSnapshot,
   findRequiredPackagesOfSnapshot
 } from "lively.morphic/serialization.js";
-import { MorphicDB, morph } from "lively.morphic";
+import { MorphicDB, config, morph } from "lively.morphic";
 import { module } from "lively.modules";
 import * as ast from 'lively.ast';
 import * as classes from 'lively.classes';
@@ -17,12 +19,20 @@ import {
   insertCapturesForExportedImports
 } from "lively.source-transform/capturing.js";
 import { compose } from "lively.lang/function.js";
-import { requiredModulesOfSnapshot, removeUnreachableObjects } from "lively.serializer2";
+import { requiredModulesOfSnapshot, locateClass, removeUnreachableObjects } from "lively.serializer2";
 import { runCommand } from "lively.ide/shell/shell-interface.js";
 import { Path, obj, promise, string, arr } from "lively.lang";
 import { Color } from "lively.graphics";
 import { moduleOfId, isReference, referencesOfId, classNameOfId } from "lively.serializer2/snapshot-navigation.js";
 import { LoadingIndicator } from "lively.components";
+
+if (!LoadingIndicator) {
+  LoadingIndicator = {
+    open: () => LoadingIndicator,
+    remove: () => {},
+    whenRendered: () => {}
+  }
+}
 
 
 // fixme: read form localconfig
@@ -31,12 +41,25 @@ import { LoadingIndicator } from "lively.components";
 
 // await bootstrapLibrary('lively.morphic/web/bootstrap.js', 'lively.morphic/web/lively.bootstrap.min.js');
 // await bootstrapLibrary('lively.modules/tools/bootstrap.js', 'lively.modules/dist/lively.modules.bootstrap.min.js', false, 'lively.modules');
+/* 
+await jspmCompile(url = 'https://dev.jspm.io/pouchdb-adapter-memory', out = 'lively.storage/dist/pouchdb-adapter-mem.min.js', globalName = 'window.pouchdbAdapterMem', redirect = {
+   "https://dev.jspm.io/npm:ltgt@2.1.3/index.dew.js": "https://dev.jspm.io/npm:ltgt@2.2.1/index.dew.js"
+})
+*/
+
+async function jspmCompile(url, out, globalName, redirect = {}) {
+  module(url)._source = null
+  let m = new LivelyRollup({ rootModule: module(url), includePolyfills: false, globalName, includeRuntime: false, jspm: true, redirect });
+  m.excludedModules = ['babel-plugin-transform-jsx'];
+  let res = await m.rollup(true, 'es2019');
+  await resource(System.baseURL).join(out).write(res.min); 
+}
 
 async function bootstrapLibrary(url, out, asBrowserModule = true, globalName) {
   module(url)._source = null
-  let m = new LivelyRollup({ rootModule: module(url), asBrowserModule, globalName });
+  let m = new LivelyRollup({ rootModule: module(url), asBrowserModule, globalName, includeRuntime: false });
   m.excludedModules = ['babel-plugin-transform-jsx'];
-  let res = await m.rollup(true, 'es2019')
+  let res = await m.rollup(true, 'es2019');
   await resource(System.baseURL).join(out).write(res.min); 
 }
 
@@ -48,18 +71,24 @@ const CLASS_INSTRUMENTATION_MODULES = [
   'lively.components',
   'lively.ide',
   'typeshift.components',
-  'lively.halos'        
+  //'lively.halos'        
 ];
 
-const DEFAULT_EXCLUDED_MODULES_PART = [
-  'lively.ast', 
+const ADVANCED_EXCLUDED_MODULES = [
+  'lively.ast',
   'lively.vm',
-  'lively-system-interface',
+  'lively.ide',
+  'lively.modules',
+  'babel-plugin-transform-jsx'
+]
+
+const DEFAULT_EXCLUDED_MODULES_PART = [
+  'wasm-brotli',
+  'kld-intersections',
   'pouchdb',
   'pouchdb-adapter-mem',
+  'lively-system-interface',
   'lively.halos',
-  'lively.ide',
-  'babel-plugin-transform-jsx'
 ];
 
 const DEFAULT_EXCLUDED_MODULES_WORLD = [
@@ -70,21 +99,26 @@ const DEFAULT_EXCLUDED_MODULES_WORLD = [
   'pouchdb-adapter-mem',
   'https://unpkg.com/rollup@1.17.0/dist/rollup.browser.js',
   'wasm-brotli',
-  'lively.halo'
+  'lively.halos'
 ];
 
-export async function generateLoadHtml(part) {
+export async function generateLoadHtml(part, format = 'global') {
   const addScripts = `
       <noscript>
          <meta http-equiv="refresh" content="0;url=/noscript.html">
       </noscript>
       <title>${part.title || part.name}</title>
       ${part.__head_html__ || ''}
+      <link type="text/css" rel="stylesheet" id="lively-font-awesome" href="assets/fontawesome-free-5.12.1/css/all.css">
+      <link type="text/css" rel="stylesheet" id="lively-font-inconsolata" href="assets/inconsolata/inconsolata.css">
       <style>
         #prerender {
            position: absolute
         }
         html {
+          touch-action: manipulation;
+        }
+        .Morph {
           touch-action: manipulation;
         }
       </style> 
@@ -94,6 +128,24 @@ export async function generateLoadHtml(part) {
         }
         lively = {};
       </script>
+      <script>
+      // check browser support
+        var browser = (function (agent) {
+        switch (true) {
+            case agent.indexOf("edge") > -1: return "edge";
+            case agent.indexOf("edg") > -1: return "chromium based edge (dev or canary)";
+            case agent.indexOf("opr") > -1 && !!window.opr: return "opera";
+            case agent.indexOf("chrome") > -1 && !!window.chrome: return "chrome";
+            case agent.indexOf("trident") > -1: return "ie";
+            case agent.indexOf("firefox") > -1: return "firefox";
+            case agent.indexOf("safari") > -1: return "safari";
+            default: return "other";
+        }
+        })(window.navigator.userAgent.toLowerCase());
+        if (browser == 'edge' || browser =='ie') {
+          window.BROWSER_UNSUPPORTED = true;
+        }
+      </script>
       <link rel="preload" id="loader" href="load.js" as="script">`;
 
    let html = `
@@ -101,7 +153,7 @@ export async function generateLoadHtml(part) {
      <head>
      <meta content="utf-8" http-equiv="encoding">
      <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-     <meta name="viewport" content="minimum-scale=1.0, maximum-scale=5.0, initial-scale=1.0, viewport-fit=cover">
+     <meta name="viewport" content="minimum-scale=1.0, maximum-scale=1.0, initial-scale=1.0, viewport-fit=cover">
      <meta name="apple-mobile-web-app-capable" content="yes">
      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">`
   html += addScripts;
@@ -110,10 +162,14 @@ export async function generateLoadHtml(part) {
     var botPattern = "(googlebot\/|Googlebot-Mobile|Googlebot-Image|Google favicon|Mediapartners-Google|bingbot|slurp|java|wget|curl|Commons-HttpClient|Python-urllib|libwww|httpunit|nutch|phpcrawl|msnbot|jyxobot|FAST-WebCrawler|FAST Enterprise Crawler|biglotron|teoma|convera|seekbot|gigablast|exabot|ngbot|ia_archiver|GingerCrawler|webmon |httrack|webcrawler|grub.org|UsineNouvelleCrawler|antibot|netresearchserver|speedy|fluffy|bibnum.bnf|findlink|msrbot|panscient|yacybot|AISearchBot|IOI|ips-agent|tagoobot|MJ12bot|dotbot|woriobot|yanga|buzzbot|mlbot|yandexbot|purebot|Linguee Bot|Voyager|CyberPatrol|voilabot|baiduspider|citeseerxbot|spbot|twengabot|postrank|turnitinbot|scribdbot|page2rss|sitebot|linkdex|Adidxbot|blekkobot|ezooms|dotbot|Mail.RU_Bot|discobot|heritrix|findthatfile|europarchive.org|NerdByNature.Bot|sistrix crawler|ahrefsbot|Aboundex|domaincrawler|wbsearchbot|summify|ccbot|edisterbot|seznambot|ec2linkfinder|gslfbot|aihitbot|intelium_bot|facebookexternalhit|yeti|RetrevoPageAnalyzer|lb-spider|sogou|lssbot|careerbot|wotbox|wocbot|ichiro|DuckDuckBot|lssrocketcrawler|drupact|webcompanycrawler|acoonbot|openindexspider|gnam gnam spider|web-archive-net.com.bot|backlinkcrawler|coccoc|integromedb|content crawler spider|toplistbot|seokicks-robot|it2media-domain-crawler|ip-web-crawler.com|siteexplorer.info|elisabot|proximic|changedetection|blexbot|arabot|WeSEE:Search|niki-bot|CrystalSemanticsBot|rogerbot|360Spider|psbot|InterfaxScanBot|Lipperhey SEO Service|CC Metadata Scaper|g00g1e.net|GrapeshotCrawler|urlappendbot|brainobot|fr-crawler|binlar|SimpleCrawler|Livelapbot|Twitterbot|cXensebot|smtbot|bnf.fr_bot|A6-Indexer|ADmantX|Facebot|Twitterbot|OrangeBot|memorybot|AdvBot|MegaIndex|SemanticScholarBot|ltx71|nerdybot|xovibot|BUbiNG|Qwantify|archive.org_bot|Applebot|TweetmemeBot|crawler4j|findxbot|SemrushBot|yoozBot|lipperhey|y!j-asr|Domain Re-Animator Bot|AddThis)";
     var re = new RegExp(botPattern, 'i');
     var userAgent = navigator.userAgent;
-    if (!re.test(userAgent)) {
+    if (!re.test(userAgent) && !window.BROWSER_UNSUPPORTED) {
       document.getElementById("crawler content").remove();
       var script = document.createElement('script');
       script.setAttribute('src',"load.js");
+      script.onload = function() {
+        if (window.frozenPart && window.frozenPart.renderFrozenPart)
+          window.frozenPart.renderFrozenPart();
+      }
       document.head.appendChild(script);
     }
     document.getElementById("crawler checker").remove();
@@ -131,6 +187,7 @@ export async function interactivelyFreezeWorld(world) {
   let frozenPartsDir = await resource(System.baseURL).join('users').join(userName).join('published/').ensureExistance();
   let publicAlias = world.metadata.commit.name;
   let publicationDir = frozenPartsDir.join(publicAlias + '/');
+  let assetDir = await publicationDir.join('assets/').ensureExistance();
   while (await publicationDir.exists()) {
     let proceed = await $world.confirm(`A world published as "${publicAlias}" already exists.\nDo you want to overwrite this publication?`, {
       rejectLabel: 'CHANGE NAME'
@@ -204,8 +261,10 @@ export async function interactivelyFreezeWorld(world) {
   }
 
   let li = LoadingIndicator.open('Freezing World', {status: 'Writing files...'})
-  await publicationDir.join('index.html').write(await generateLoadHtml(world));
+  await publicationDir.join('index.html').write(await generateLoadHtml(world, frozen.format));
   await publicationDir.join('load.js').write(frozen.min);
+  li.status = 'copying asset files...'
+  for (let asset of frozen.assets) await asset.copyTo(assetDir);
   let dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
   for (let [partName, snapshot] of Object.entries(frozen.dynamicParts)) {
     await dynamicParts.join(partName + '.json').writeJson(snapshot);
@@ -225,6 +284,9 @@ export async function interactivelyFreezePart(part, requester = false) {
   */ 
   let userName = $world.getCurrentUser().name;
   let frozenPartsDir = await resource(System.baseURL).join('users').join(userName).join('published/').ensureExistance();
+  let advanced = 'Advanced' === await $world.multipleChoicePrompt([`Select Optimization Level\n`, {fontSize: 20}, `Please select the code optimization degree for this compilation. Selecting "Advanced" will prune off more of the systems's default modules, resultung in a smaller payload and faster loading times.`, {fontSize: 15, fontWeight: 'normal'}], {
+    choices: ['Advanced', 'Default'], requester
+  });
   let publicAlias = await $world.prompt('Please enter a name for this published part:', {
     requester, input: (part.metadata && part.metadata.publishedAlias) || ''
   });
@@ -247,7 +309,7 @@ export async function interactivelyFreezePart(part, requester = false) {
   try {
     frozen = await bundlePart(part, {
       compress: true,
-      exclude: DEFAULT_EXCLUDED_MODULES_PART,
+      exclude: [...DEFAULT_EXCLUDED_MODULES_PART, ...advanced ? ADVANCED_EXCLUDED_MODULES : []],
       requester
     });
   } catch(e) {
@@ -263,14 +325,41 @@ export async function interactivelyFreezePart(part, requester = false) {
     li.status = 'Writing file ' + currentFile + ' ' + (100 * p).toFixed() + '%';
   };
   currentFile = 'index.html';
-  await publicationDir.join(currentFile).write(await generateLoadHtml(part));
-  currentFile = 'load.js';
-  await publicationDir.join(currentFile).write(frozen.min);
+  // if the module is split, include systemjs
+  await publicationDir.join(currentFile).write(await generateLoadHtml(part, frozen.format));
+  
+  if (obj.isArray(frozen)) {
+    for (let part of frozen) {
+      currentFile = part.fileName;
+      await publicationDir.join(currentFile).write(part.min); 
+    }
+    currentFile = 'load.js';
+    await publicationDir.join(currentFile).write(frozen.load.min);
+    currentFile = 'load.js.gz'    
+    await publicationDir.join(currentFile).write(frozen.load.gzip);
+    currentFile = 'load.js.br'    
+    await publicationDir.join(currentFile).write(frozen.load.brotli);    
+  } else {
+    currentFile = 'load.js';
+    await publicationDir.join(currentFile).write(frozen.min);
+    currentFile = 'load.js.gz'    
+    await publicationDir.join(currentFile).write(frozen.gzip); 
+    currentFile = 'load.js.br'    
+    await publicationDir.join(currentFile).write(frozen.brotli);    
+  }
   let dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
   for (let [partName, snapshot] of Object.entries(frozen.dynamicParts)) {
     currentFile = partName + '.json';
     await dynamicParts.join(currentFile).writeJson(snapshot);
   }
+  let assetDir = await publicationDir.join('assets/').ensureExistance();
+  // copy font awesome assets
+  await resource(System.baseURL).join(config.css.fontAwesome).parent().copyTo(assetDir.join('fontawesome-free-5.12.1/css/'));
+  await resource(System.baseURL).join(config.css.fontAwesome).parent().parent().join('webfonts/').copyTo(assetDir.join('fontawesome-free-5.12.1/webfonts/'));
+  // copy inconsoloata
+  await resource(System.baseURL).join(config.css.inconsolata).parent().copyTo(assetDir.join('inconsolata/'));
+  li.status = 'Copying assets...'
+  for (let asset of frozen.assets) await asset.copyTo(assetDir);
   li.remove();
   $world.setStatusMessage([`Published ${publicAlias}. Click `,null, 'here', {
     textDecoration: 'underline', fontWeight: 'bold',
@@ -306,13 +395,21 @@ export async function displayFrozenPartsFor(user = $world.getCurrentUser(), requ
   }), {
     requester, fuzzy: true, onSelection: (_, prompt) => {
       prompt.submorphs[2].items.forEach(item => item.morph.fontColor = Color.white);
-      prompt.submorphs[2].selectedItems[0].morph.fontColor = Color.black;                   
+      if (prompt.submorphs[2].selectedItems[0])
+        prompt.submorphs[2].selectedItems[0].morph.fontColor = Color.black;                   
     }
   });
 }
   
 function belongsToObjectPackage(moduleId) {
   return Path('config.lively.isObjectPackage').get(module(moduleId).package());
+}
+
+function cleanSnapshot({snapshot}) {
+  Object.values(snapshot).forEach(entry => {
+    delete entry.rev;
+    if (entry.props && entry.props._rev) delete entry.props._rev;
+  });
 }
 
 async function getRequiredModulesFromSnapshot(snap, frozenPart, includeDynamicParts=false) {
@@ -333,25 +430,35 @@ async function getRequiredModulesFromSnapshot(snap, frozenPart, includeDynamicPa
           modImports = await mod.requirements(),
           partModuleSource = (mod._source || await mod.source()),
           parsedModuleSource = ast.parse(partModuleSource),
+          isObjectPackageModule = belongsToObjectPackage(m),
           dynamicPartLoads = [];
-    
     moduleImports.push(...modImports.map(m => m.id).filter(id => belongsToObjectPackage(id)));
-
     // extract also modules that are "dependents" and loaded by the SystemJS engine
-    let callSite;
     ast.AllNodesVisitor.run(parsedModuleSource, (node, path) => {
       if (node.type === 'CallExpression' &&
           ['loadObjectFromPartsbinFolder', 'loadPart'].includes(node.callee.name)) {
         dynamicPartLoads.push(node.arguments[0].value);
+        frozenPart.hasDynamicImports = true;
+      }
+      if (isObjectPackageModule && node.type === 'CallExpression' && node.callee.type === 'MemberExpression') {
+        if (node.callee.property.name === 'import' && node.callee.object.name === 'System') {
+          frozenPart.modulesWithDynamicLoads.add(mod.id);
+          frozenPart.hasDynamicImports = true;
+        }
       }
     });
 
     // try to resolve them
-    for (let partName of dynamicPartLoads) {
+    for (let partName of arr.compact(dynamicPartLoads)) {
       let dynamicPart = await MorphicDB.default.fetchSnapshot('part', partName);
       if (dynamicPart) {
         transpileAttributeConnections(dynamicPart);
-        if (frozenPart) frozenPart.dynamicParts[partName] = dynamicPart;
+        cleanSnapshot(dynamicPart);
+        if (frozenPart) {
+          if (frozenPart.dynamicParts[partName]) continue;
+          frozenPart.dynamicParts[partName] = dynamicPart;
+          frozenPart.modulesWithDynamicLoads.add(mod.id);
+        }
         if (includeDynamicParts) {
           // load the packages of the part, if they are not loaded
           await loadPackagesAndModulesOfSnapshot(dynamicPart);
@@ -366,11 +473,15 @@ async function getRequiredModulesFromSnapshot(snap, frozenPart, includeDynamicPa
         }
       }
     }
+    
   }
   return arr.uniq([...imports, ...dynamicPartImports, ...moduleImports]);
 }
 
 async function evalOnServer(code) {
+  if (System.get('@system-env').node) {
+    return eval(code)
+  }
   let {default: EvalBackendChooser} = await System.import("lively.ide/js/eval-backend-ui.js"),
         {RemoteCoreInterface} = await System.import("lively-system-interface/interfaces/interface.js"),
     // fetch next available nodejs env
@@ -386,17 +497,37 @@ class LivelyRollup {
     this.setup(props);
   }
 
-  setup({ excludedModules = [], snapshot, rootModule, globalName, asBrowserModule = true }) {
+  setup({
+    excludedModules = [],
+    snapshot,
+    rootModule,
+    globalName,
+    asBrowserModule = true,
+    includeRuntime = true,
+    jspm = false,
+    redirect = {
+       "https://dev.jspm.io/npm:ltgt@2.1.3/index.dew.js": "https://dev.jspm.io/npm:ltgt@2.2.1/index.dew.js" // this is always needed
+    },
+    includePolyfills = true 
+  }) {
     this.globalMap = {};
+    this.jspm = jspm;
+    this.includePolyfills = includePolyfills;
+    this.includeRuntime = includeRuntime;
     this.snapshot = snapshot;
     this.rootModule = rootModule;
     this.globalName = globalName;
-    this.dynamicParts = {};
+    this.dynamicParts = {}; // parts loaded via loadPart/loadObjectsFromPartsbinFolder
+    this.dynamicModules = new Set(); // modules loaded via System.import(...)
+    this.modulesWithDynamicLoads = new Set();
+    this.hasDynamicImports = false;
     this.globalModules = {};
     this.importedModules = [];
     this.asBrowserModule = asBrowserModule;
-    this.resolved = new Set();
-    this.excludedModules = [...excludedModules, 'lively.modules', "kld-intersections"];
+    this.resolved = {};
+    this.redirect = redirect;
+    this.excludedModules = excludedModules;
+    this.assetsToCopy = [];
   }
   
   resolveRelativeImport(moduleId, path) {
@@ -419,7 +550,7 @@ class LivelyRollup {
   getTransformOptions(mod) {
     if (mod.id === '@empty') return {}
     let classToFunction = {
-      classHolder: ast.parse(`(System.recorderFor("${this.normalizedId(mod.id)}"))`), 
+      classHolder: ast.parse(`(lively.FreezerRuntime.recorderFor("${this.normalizedId(mod.id)}"))`), 
       functionNode: {type: "Identifier", name: "initializeES6ClassForLively"},
       currentModuleAccessor: ast.parse(`({
         pathInPackage: () => {
@@ -445,14 +576,20 @@ class LivelyRollup {
   }
 
   checkIfImportedModuleExcluded() {
-    const conflicts = arr.intersect(this.importedModules.map(id => module(id).package()), this.excludedModules.map(id => module(id).package()));
+    const conflicts = arr.intersect(this.importedModules.map(id => module(id).package()), arr.compact(this.excludedModules.map(id => module(id).package())));
     if (conflicts.length > 0) {
       let multiple = conflicts.length > 1;
-      let error = Error(`Package${multiple ? 's' : ''} ${conflicts.map(p => `"${p.name}"`)} ${multiple ? 'are' : 'is'} directly required by part, yet set to be excluded.`);
+      let error = Error(`Package${multiple ? 's' : ''} ${conflicts.map(p => `"${p.name}"`)}\n${multiple ? 'are' : 'is'} directly required by part, yet set to be excluded.`);
       error.name = 'Exclusion Conflict'
       error.reducedExclusionSet = arr.withoutAll(this.excludedModules, conflicts.map(p => p.name));
       throw error;
     }
+  }
+
+  async getPartModule(partName) {
+    let snapshot = this.dynamicParts[partName];
+    let modules = await getRequiredModulesFromSnapshot(snapshot, this);
+    return modules.map(path => `import "${path}"`).join('\n');
   }
 
   async getRootModule() {
@@ -461,70 +598,100 @@ class LivelyRollup {
         return `export * from "${this.rootModule.id}";`;
       return await this.rootModule.source();
     }
+    this.dynamicParts = {}; // needed such that required modules are fetched correctly
     this.importedModules = await getRequiredModulesFromSnapshot(this.snapshot, this, true);
     this.checkIfImportedModuleExcluded();
-    return arr.uniq(this.importedModules.map(path => `import "${path}"`)).join('\n')
+    // instead of combining all imported modules here in the root module,
+    // split them up in groups, with respect to the part who imports them
+    // this can save additional initial loading time
+    return arr.uniq((await getRequiredModulesFromSnapshot(this.snapshot, this)).map(path => `import "${path}"`)).join('\n')
        + `\nimport { World, MorphicEnv, loadMorphFromSnapshot } from "lively.morphic";
             import { deserialize } from 'lively.serializer2';
-            import { resource } from 'lively.resources';
+            import { resource, loadViaScript } from 'lively.resources';
             import { promise } from 'lively.lang';
             import {pt} from "lively.graphics";
             ${await resource(System.baseURL).join('localconfig.js').read()}
             const snapshot = JSON.parse(${ JSON.stringify(JSON.stringify(this.snapshot)) })
-            lively.resources = { resource };
-            lively.morphic = { loadMorphFromSnapshot }
-            if (!MorphicEnv.default().world) {
-               let world = window.$world = window.$$world = new World({
-                 name: snapshot.name, extent: pt(window.innerWidth, window.innerHeight)
-               });
-               MorphicEnv.default().setWorldRenderedOn(world, document.body, window.prerenderNode);
-            }
-            export async function renderFrozenPart() {
-               window.$world.dontRecordChangesWhile(() => {
-                 let obj = deserialize(snapshot, {
-                    reinitializeIds: function(id) { return id }
-                 });
-                 if (obj.isWorld) {
-                   obj.position = pt(0,0);
-                   MorphicEnv.default().setWorldRenderedOn(obj, document.body, window.prerenderNode);
-                   obj.execCommand("resize to fit window");
-                 } else {
-                   window.onresize = () => obj.execCommand('resize on client');
-                   obj.execCommand('resize on client');
-                   obj.openInWorld(pt(0,0));
-                 }
-               });
-            }`;
+            lively.resources = { resource, loadViaScript };
+            lively.morphic = { loadMorphFromSnapshot };
+            export async function renderFrozenPart(node = document.body) {
+                if (!MorphicEnv.default().world) {
+                  let world = window.$world = window.$$world = new World({
+                    name: snapshot.name, extent: pt(window.innerWidth, window.innerHeight)
+                  });
+                  MorphicEnv.default().setWorldRenderedOn(world, node, window.prerenderNode);
+                }
+                window.$world.dontRecordChangesWhile(() => {
+                  let obj = deserialize(snapshot, {
+                     reinitializeIds: function(id) { return id }
+                  });
+                  if (obj.isWorld) {
+                    obj.position = pt(0,0);
+                    MorphicEnv.default().setWorldRenderedOn(obj, node, window.prerenderNode);
+                    obj.resizePolicy === 'elastic' && obj.execCommand("resize to fit window");
+                  } else {
+                    try {
+                      window.onresize = lively.FreezerRuntime.resizeHandler = () => obj.execCommand('resize on client');
+                      obj.openInWorld(pt(0,0));
+                      obj.execCommand('resize on client');
+                    } catch (err) {
+                      obj.position = pt(0,0);
+                    }
+                  }
+                });
+             }`;
   }
   
   resolveId(id, importer) {
     if (id === '__root_module__') return id;
-    if (!importer) return id;
-    if (id == 'fs') {
-      return { id, external: true }
+    if (id.startsWith('[PART_MODULE]')) return id;
+    if (importer != '__root_module__' &&
+        (id.includes('jspm.io') || importer.includes('jspm.io'))
+        && this.jspm && importer) {
+      let { url } = resource(importer).root();
+      if (url.includes('jspm.io')) {
+        if (id.startsWith('.')) {
+          id = resource(importer).parent().join(id).withRelativePartsResolved().url;
+        } else {
+          id = resource(url).join(id).withRelativePartsResolved().url;
+        }
+        if (this.redirect[id]) {
+          id = this.redirect[id];
+        }
+      }
     }
-    let pkg = module(importer).package();
+    if (!importer) return id;
+    let importingPackage = module(importer).package();
+    let importedPackage = module(id).package();
     let mappedId;
     if (id == 'lively.ast' && this.excludedModules.includes(id)) {
-      return { id, excternal: true };
+      return { id, external: true };
     }
-    if (pkg && this.excludedModules.includes(pkg.name)) return false;
-    if (this.excludedModules.includes(id)) return false;
-    if (pkg && pkg.map) this.globalMap = {...this.globalMap, ...pkg.map};
-    if (pkg && pkg.map[id] || this.globalMap[id]) {
+
+    // if we are imported from a non dynamic context this does not apply
+    let dynamicContext = this.dynamicModules.has(module(importer).id) || this.dynamicModules.has(module(id).id);
+    if (!dynamicContext) {
+      if (importingPackage && this.excludedModules.includes(importingPackage.name)) return false;
+      if (this.excludedModules.includes(id)) return false; 
+    } else {
+      this.dynamicModules.add(module(id).id);
+    }
+    
+    if (importingPackage && importingPackage.map) this.globalMap = {...this.globalMap, ...importingPackage.map};
+    if (importingPackage && importingPackage.map[id] || this.globalMap[id]) {
       mappedId = id;
-      if (!pkg.map[id] && this.globalMap[id]) {
-        console.warn(`[freezer] No mapping for "${id}" provided by package "${pkg.name}". Guessing "${this.globalMap[id]}" based on past resolutions. Please consider adding a map entry to this package config in oder to make the package definition sound and work independently of the current setup!`);
+      if (!importingPackage.map[id] && this.globalMap[id]) {
+        console.warn(`[freezer] No mapping for "${id}" provided by package "${importingPackage.name}". Guessing "${this.globalMap[id]}" based on past resolutions. Please consider adding a map entry to this package config in oder to make the package definition sound and work independently of the current setup!`);
       }
-      id = pkg.map[id] || this.globalMap[id];
+      id = importingPackage.map[id] || this.globalMap[id];
       if (id['~node']) id = id['~node'];
-      importer = pkg.url;
+      importer = importingPackage.url;
     }
     if (id.startsWith('.')) {
       id = this.resolveRelativeImport(importer, id);
-      if (this.excludedModules.includes(id)) return false;
+      if (!dynamicContext && this.excludedModules.includes(id)) return false;
     }
-    if (!id.endsWith('.json') && module(id).format() !== 'register') {
+    if (!id.endsWith('.json') && module(id).format() !== 'register' && !this.jspm) {
       this.globalModules[id] = true;
       return { id, external: true }
     }
@@ -542,23 +709,39 @@ class LivelyRollup {
   }
 
   async load(id) {
+    id = this.redirect[id] || id;
     if (id == 'lively.ast' && this.excludedModules.includes(id)) {
       return `
         let nodes = {}, query = {}, transform = {}, BaseVisitor = Object;
         export { nodes, query, transform, BaseVisitor };`
     }
-    if (id === '__root_module__') return await this.getRootModule();
+    if (id === '__root_module__') {
+      let res = await this.getRootModule();
+      return res;
+    }
+    if (id.startsWith('[PART_MODULE]')) {
+      let res = await this.getPartModule(id.replace('[PART_MODULE]', ''));
+      return res;
+    }
     let mod = module(id);
-    if (this.excludedModules.includes(mod.package().name) && !mod.id.endsWith('.json')) {
+    let pkg = mod.package();
+    if (pkg && this.excludedModules.includes(pkg.name) &&
+        !mod.id.endsWith('.json') && 
+        !this.dynamicModules.has(pkg.name) &&
+        !this.dynamicModules.has(mod.id)) {
       return '';
     }
     if (id.endsWith('.json')) {
        return this.translateToEsm(mod._source || await mod.source());
     }
-    return await mod.source();
+    let s = await mod.source();
+    return s;
   }
 
   needsScopeToBeCaptured(moduleId) {
+    if ([...this.dynamicModules.values()].find(id => 
+      module(id).package() && module(id).package() === module(moduleId).package())
+       ) return true;
     if (this.importedModules.find(id => module(id).package() === module(moduleId).package())) return true;
     return belongsToObjectPackage(moduleId)
   }
@@ -570,35 +753,56 @@ class LivelyRollup {
   }
 
   needsDynamicLoadTransform(moduleId) {
-     return belongsToObjectPackage(moduleId);
+     return this.modulesWithDynamicLoads.has(moduleId);
   }
   
-  transform(source, id) {
+  async transform(source, id) {
+
     if (id === '__root_module__' || id.endsWith('.json')) {
        return source
     }
+    
+    if (this.needsDynamicLoadTransform(id)) {
+      source = this.instrumentDynamicLoads(source);
+    }
+    // this capturing stuff needs to behave differently when we have dynamic imports
     if (this.needsScopeToBeCaptured(id)) {
       source = this.captureScope(source, id);
     } else if (this.needsClassInstrumentation(id)) {
       source = this.instrumentClassDefinitions(source, id);
-    }
-
-    if (this.needsDynamicLoadTransform(id)) {
-      source = this.instrumentDynamicLoads(source);
     }
     
     return source;
   }
 
   instrumentDynamicLoads(source) {
-    let scopes = ast.query.scopes(ast.parse(source)),
-        refs = [];
-    refs.push(...ast.query.findReferencesAndDeclsInScope(scopes, 'loadObjectFromPartsbinFolder').refs);
-    refs.push(...ast.query.findReferencesAndDeclsInScope(scopes, 'loadPart').refs);
+    let parsed = ast.parse(source),
+        nodesToReplace = [];
+    
+    ast.AllNodesVisitor.run(parsed, (node, path) => {
+      // we checked beforehand if the user has decided to use dynamic imports
+      // if that is the case, we run on systemjs anyways, so there is no need to stub it
+      if (node.type === 'AwaitExpression' &&
+          ['loadObjectFromPartsbinFolder', 'loadPart'].includes(node.argument.callee.name)) {
+        let partName = node.argument.arguments[0].value;
+        nodesToReplace.push({
+          // fixme: replace by a dynamic import of the generated deps module, followed by the import
+          // like so: `await import("${node.arguments.id}"); lively.FreezerRuntime.loadObjectFromPartsbinFolder`
+          target: node,
+          replacementFunc: () => `await import("[PART_MODULE]${partName}") && await lively.FreezerRuntime.loadObjectFromPartsbinFolder("${partName}")`
+          // target: node.callee, replacementFunc: () => 'lively.FreezerRuntime.loadObjectFromPartsbinFolder' 
+        });
+      }
+      if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression') {
+        if (node.callee.property.name === 'import' && node.callee.object.name === 'System') {
+          nodesToReplace.push({
+            target: node.callee, replacementFunc: () => 'import' 
+          });
+        }
+      }
+    });
 
-    return ast.transform.replaceNodes(refs.map(target => ({
-      target, replacementFunc: () => 'lively.FreezerRuntime.loadObjectFromPartsbinFolder' 
-    })), source).source;
+    return ast.transform.replaceNodes(nodesToReplace, source).source;
   }
 
   instrumentClassDefinitions(source, id) {
@@ -610,7 +814,7 @@ class LivelyRollup {
 
   captureScope(source, id) {
     let importerString = 'import { initializeClass as initializeES6ClassForLively } from "lively.classes/runtime.js";\n'
-    let recorderString = `const __varRecorder__ = System.recorderFor("${this.normalizedId(id)}");\n`;
+    let recorderString = `const __varRecorder__ = lively.FreezerRuntime.recorderFor("${this.normalizedId(id)}");\n`;
     let tfm = compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform);
     let captureObj = {name: `__varRecorder__`, type: 'Identifier'};
     let mod = module(id);
@@ -654,17 +858,79 @@ class LivelyRollup {
     return { code, global: globalVarName}
   }
 
-  async generateGlobals() {
-    let code = `${this.asBrowserModule ? 'var fs = {};' : 'var fs = require("fs");'} var _missingExportShim, show, System, require, timing, lively, Namespace, localStorage;`, globals = {};
+  async generateGlobals(systemJsEnabled) {
+    let code = '',
+        globals = {};
+
+    if (!systemJsEnabled) {
+      code += `${this.asBrowserModule ? 'var fs = {};' : 'var fs = require("fs");'} var _missingExportShim, show, System, require, timing, lively, Namespace, localStorage;`;
+    }
+
+    // this is no longer an issue due to removal of all non ESM modules from our system. Can be removed?
     for (let modId in this.globalModules) {
-       let { code: newCode, global: newGlobal } = await this.wrapStandalone(modId);
-       code += newCode;
-       globals[modId] = newGlobal;
+      let { code: newCode, global: newGlobal } = await this.wrapStandalone(modId);
+      code += newCode;
+      globals[modId] = newGlobal;
     }
-    for (let id of this.excludedModules) {
-      let varName = globals[id] = this.deriveVarName(id);
-      code += `var ${varName} = {};\n`;
+
+    if (systemJsEnabled) {
+      code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/0.21/dist/system.src.js').read();
+      //code += await resource(System.decanonicalize('systemjs/dist/system.js')).read();
+      //code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/master/dist/s.js').read();
+      //code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/master/dist/extras/named-register.js').read();
+      // stub the globals
+      code += `
+         const _origGet = System.get.bind(System);
+         System.get = (id, recorder = true) => (lively.FreezerRuntime && lively.FreezerRuntime.get(id, recorder)) || _origGet(id);
+      `;
+      //if (this.asBrowserModule) code += 'System.global = window;\n'
+      code += `
+         const _origDecanonicalize = System.decanonicalize.bind(System);
+         System.decanonicalize = (id) =>
+            lively.FreezerRuntime ? lively.FreezerRuntime.decanonicalize(id) : _origDecanonicalize(id);
+      `
+      code += 'window._missingExportShim = () => {};\n';
+      code += `
+         const _originalRegister = System.register.bind(System);
+         System.register = (name, deps, def) => {
+           if (typeof name != 'string') {
+             def = deps;
+             deps = name;
+             return _originalRegister(deps, (exports, module) => {
+               let res = def(exports, module);
+               if (!res.setters) res.setters = [];
+               return res;
+             });
+           }
+           return _originalRegister(name, deps, (exports, module) => {
+             let res = def(exports, module);
+             if (!res.setters) res.setters = [];
+             return res;
+           })
+        };
+      `;
+      // map fs as global
+      code += `System.set('stub-transpiler', System.newModule({
+        translate: (load) => {
+           return load.source;
+        }
+      }));\n`
+      code += `System.config({
+        transpiler: 'stub-transpiler'
+      });\n`
+      code += 'System.trace = false;\n';
+      for (let id of this.excludedModules.concat(this.asBrowserModule ? ["fs", "events"] : [])) {
+        //code += `"${id}": "@empty",`
+        code += `System.set("${id}", System.newModule({ default: {} }));\n`;
+        //code += `System.register("${id}", [], (exports) => ({ execute: () => { console.log('loaded ${id}'); exports({ default: {} }) }, setters: []}));\n`;
+      }
+    } else {
+      for (let id of this.excludedModules) {
+        let varName = globals[id] = this.deriveVarName(id);
+        code += `var ${varName} = {};\n`;
+      }
     }
+    
     return {
       code, globals
     }
@@ -672,13 +938,45 @@ class LivelyRollup {
   
   async getRuntimeCode() {
     let runtimeCode = await module('lively.freezer/runtime.js').source();
-    runtimeCode =`(${runtimeCode.slice(0,-1).replace('export ', '')}})()`;
+    runtimeCode =`(${runtimeCode.slice(0,-1).replace('export ', '')}})();\n`;
+    if (!this.hasDynamicImports) {
+      // If there are no dynamic imports, we compile without systemjs and
+      // can stub it with our FreezerRuntime
+      runtimeCode += 'if (!window.System) window.System = window.lively.FreezerRuntime;\n'
+    }
     return es5Transpilation(runtimeCode);
+  }
+
+  getAssetsFromSnapshot({snapshot: snap}) {
+
+    Object.entries(snap).map(([k, v]) => {
+      if (!classNameOfId(snap, k) || !moduleOfId(snap, k).package) return;
+      let klass = locateClass({
+        className: classNameOfId(snap, k),
+        module: moduleOfId(snap, k)
+      });
+      let toBeCopied = Object.entries(klass[Symbol.for("lively.classes-properties-and-settings")].properties)
+                             .map(([key, settings]) => settings.copyAssetOnFreeze && key)
+                             .filter(Boolean);
+      for (let prop of toBeCopied) {
+        if (v.props[prop].value.startsWith('assets')) continue; // already copied
+        let path = v.props[prop].value;
+        if (path.startsWith('data:')) continue; // data URL can not be copied
+        let asset = resource(path);
+        if (asset.host() != resource(System.baseURL).host()) continue;
+        asset._from = k;
+        this.assetsToCopy.push(asset);
+        v.props[prop].value = 'assets/' + asset.name(); // this may be causing duplicates
+      }
+    });
+    console.log('[ASSETS]', this.assetsToCopy);
   }
 
   async rollup(compressBundle, output) {
     let li = LoadingIndicator.open('Freezing Part', { status: 'Bundling...' });
-    let depsCode, bundledCode;
+    let depsCode, bundledCode, splitModule;
+
+    this.getAssetsFromSnapshot(this.snapshot);
 
     await li.whenRendered();
     try {
@@ -687,51 +985,137 @@ class LivelyRollup {
         shimMissingExports: true,
         onwarn: (warning, warn) => { return this.warn(warning, warn) },
         plugins: [{
-          resolveId: (id, importer) => { return this.resolveId(id, importer) },
+          resolveId: (id, importer) => {
+            let res = this.resolveId(id, importer);
+            return res;
+          },
+          resolveDynamicImport: (id, importer) => {
+            // schedule a request to initiate a nested rollup that bundles
+            // the dynamically loaded bundles separately
+            console.log(id, importer);
+            this.dynamicModules.add(module(id).id);
+            let res = this.resolveId(id, importer); // dynamic imports are never excluded
+            if (res && obj.isString(res)) {
+              return {
+                external: false,
+                id: res
+              }
+            }
+            return res;
+          },
           load: async (id) => { return await this.load(id) },
-          transform: (source, id) => { return this.transform(source, id)}
+          transform: async (source, id) => { return await this.transform(source, id)}
         }]
       });
       let globals;
-      ({code: depsCode, globals} = await this.generateGlobals());
-      bundledCode = (await bundle.generate({ format: 'iife', globals, name: this.globalName || 'frozenPart' })).output[0].code;
+      ({code: depsCode, globals} = await this.generateGlobals(this.hasDynamicImports));
+      if (this.hasDynamicImports) {
+        splitModule = (await bundle.generate({ format: 'system', globals }));
+      } else
+        bundledCode = (await bundle.generate({ format: 'iife', globals, name: this.globalName || 'frozenPart' })).output[0].code;
     } finally {
       li.remove();
     }
-    let res = await this.transpileAndCompressOnServer({
-      depsCode, bundledCode, output, compressBundle
-    });
 
+    let res;
+    if (splitModule) {
+      res = splitModule.output;
+      // it seems like rollup sometimes returns duplicates which are optimized away by closure
+      // causing issues when reassigned the minified pieces
+      //res = arr.uniqBy(res, (snipped1, snipped2) => snipped1.code === snipped2.code);
+      let loadCode = `
+        System.config({
+          meta: {
+           ${
+            res.map(snippet => `'./${snippet.fileName}': {format: "system"}`).join(',\n') // makes sure that compressed modules are still recognized as such
+            }
+          }
+        });
+        System.import("./__root_module__.js").then(m => { System.trace = false; m.renderFrozenPart(); });
+      `
+      // concat all snippets and compile them on server
+      // unsert hint strings
+      res.forEach((snippet, i) => {
+        snippet.instrumentedCode = snippet.code.replace('System.register(', `System.register("${i}",` );
+      });
+      let { min, code } = await this.transpileAndCompressOnServer({
+          depsCode,
+          bundledCode: [loadCode, ...res.map(snippet => snippet.instrumentedCode)].join('\n'),
+          output, compressBundle
+      });
+      
+      let [compiledLoad, ...compiledSnippets] = min.split(/\nSystem.register\(/);
+
+      // ensure that all compiled snippets are present
+      // clear the hints
+      let adjustedSnippets = new Map(); // ensure order
+      res.forEach((snippet, i) => {
+        adjustedSnippets.set(i, snippet.code);
+      });
+      compiledSnippets.forEach((compiledSnippet) => {
+        let hint = Number(compiledSnippet.match(/\"[0-9]+\"/)[0].slice(1,-1));
+        adjustedSnippets.set(hint, compiledSnippet.replace(/\"[0-9]+\"\,/, 'System.register('));
+      });
+      compiledSnippets = [...adjustedSnippets.values()];
+      
+      res.load = { min: compiledLoad };
+      for (let [snippet, compiled] of arr.zip(res, compiledSnippets))
+        snippet.min = compiled;
+    } else {
+      res = await this.transpileAndCompressOnServer({
+        depsCode, bundledCode: bundledCode, output, compressBundle
+      });
+    }
+
+    res.format = !this.hasDynamicImports ? 'global' : 'systemjs';
+    for (let part in this.dynamicParts) {
+      this.getAssetsFromSnapshot(this.dynamicParts[part]);
+    }
     res.dynamicParts = this.dynamicParts;
+    res.assets = this.assetsToCopy;
 
     return res
   }
 
-  async transpileAndCompressOnServer({ depsCode, bundledCode, output, compressBundle }) {
+  async transpileAndCompressOnServer({
+      depsCode = '',
+      bundledCode,
+      output,
+      fileName = '',
+      compressBundle,
+      addRuntime = true,
+      optimize = true,
+      includePolyfills = this.includePolyfills 
+    }) {
     let li = LoadingIndicator.open("Freezing Part", { status: 'Optimizing...'});
     
-    let runtimeCode = await this.getRuntimeCode();
-    let regeneratorSource = await lively.modules.module('babel-regenerator-runtime').source();
-    let polyfills = !this.asBrowserModule ? "" : await module('lively.freezer/deps/pep.min.js').source();
-    polyfills += !this.asBrowserModule ? "" : await module('lively.freezer/deps/fetch.umd.js').source();
+    let runtimeCode = addRuntime ? await this.getRuntimeCode() : "";
+    let regeneratorSource = '';
+    let polyfills = !includePolyfills ? "" : await module('lively.freezer/deps/pep.min.js').source();
+    polyfills += !includePolyfills ? "" : await module('lively.freezer/deps/fetch.umd.js').source();
     
     let code = runtimeCode + polyfills + regeneratorSource + depsCode + bundledCode;
-    if (!this.rootModule) code += '\nfrozenPart.renderFrozenPart();'
     // write file
-    let res = await compileOnServer(code, li); // seems to be faster for now
-    //res = await compileViaGoogle(code, li);
-    li.status = 'Compressing...';
-    if (compressBundle) res.compressed = await compress(new TextEncoder('utf-8').encode(res.min));
+    if (!optimize) { li.remove(); return { code, min: code }; }
+    let res = await compileOnServer(code, li, fileName); // seems to be faster for now
+    //res = await compileViaGoogle(code, li, fileName);
+    li.status = `Compressing ${fileName}...`;
+    
+    if (compressBundle) {
+      res.brotli = await compress(new TextEncoder('utf-8').encode(res.min));
+      res.gzip = window.flate.deflate_encode_raw(new TextEncoder('utf-8').encode(res.min));
+    }
     li.remove();
     return res;
   }
 }
 
-async function compileViaGoogle(code) {
+async function compileViaGoogle(code, li, fileName) {
   let compile = resource('https://closure-compiler.appspot.com/compile')
   compile.headers["Content-type"] = "application/x-www-form-urlencoded";
+  li.status = `Compiling ${fileName} on Google's servers.`;
   let queryString = compile.withQuery({
-    js_code: window._code,
+    js_code: code,
     warning_level: 'QUIET',
     output_format: 'text',
     output_info: 'compiled_code',
@@ -744,20 +1128,50 @@ async function compileViaGoogle(code) {
   }
 }
 
-async function compileOnServer(code, loadingIndicator) {
+async function compileOnServer(code, loadingIndicator, fileName = 'data') {
   let googleClosure = System.decanonicalize('google-closure-compiler-linux/compiler').replace(System.baseURL, '../');
   let tmp = resource(System.decanonicalize('lively.freezer/tmp.js'));
   let min = resource(System.decanonicalize('lively.freezer/tmp.min.js'));
+  tmp.onProgress = (evt) => {
+    // set progress of loading indicator
+    let p = evt.loaded / evt.total;
+    loadingIndicator.progress = p;
+    loadingIndicator.status = `Sending ${fileName} to Google Closure: ` + (100 * p).toFixed() + '%';
+  };
+  min.onProgress = (evt) => {
+    // set progress of loading indicator
+    let p = evt.loaded / evt.total;
+    loadingIndicator.progress = p;
+    loadingIndicator.status = 'Retrieving compiled code...' + (100 * p).toFixed() + '%';
+  };
   await tmp.write(code);
   let cwd = await evalOnServer('System.baseURL + "lively.freezer/"').then(cwd => cwd.replace('file://', ''));
   let c, res = {};
-  c = await runCommand(`${googleClosure} tmp.js > tmp.min.js --warning_level=QUIET`, { cwd });
+  if (System.get('@system-env').node) {
+    let { default: ServerCommand } = await System.import('lively.shell/server-command.js')
+    let cmd = new ServerCommand().spawn({
+      command: `${googleClosure} tmp.js > tmp.min.js --warning_level=QUIET`,
+      cwd
+    });
+    c = { status: 'started' };
+    cmd.on("stdout", stdout => c.status = 'exited');
+  } else {
+    c = await runCommand(`${googleClosure} tmp.js > tmp.min.js --warning_level=QUIET`, { cwd }); 
+  }
+  loadingIndicator.status = `Compiling ${fileName}...`;
+  loadingIndicator.progress = 0.01;
+  for (let i of arr.range(0, code.length / 62000)) {
+    await promise.delay(400);
+    if (c.status.startsWith('exited')) break;
+    loadingIndicator.progress = (i + 1) / (code.length / 62000);
+  }
   await promise.waitFor(50000, () => c.status.startsWith('exited'));
   if (c.stderr) {
     loadingIndicator && loadingIndicator.remove();
     throw new Error(c.stderr);
   }
   res.code = code;
+  
   res.min = await min.read();
   await Promise.all([tmp, min].map(m => m.remove()));
   return res;
@@ -774,11 +1188,11 @@ function transpileAttributeConnections(snap) {
     }
   });
 }
-
-export async function bundlePart(partOrSnapshot, { exclude: excludedModules = [], compress, output = 'es2019', requester }) {
+// partOrSnapshot = this.get('world landing page')
+export async function bundlePart(partOrSnapshot, { exclude: excludedModules = [], compress = false, output = 'es2019', requester }) {
   let snapshot = partOrSnapshot.isMorph ? await createMorphSnapshot(partOrSnapshot) : partOrSnapshot;
   transpileAttributeConnections(snapshot);
-  let bundle = new LivelyRollup({ excludedModules, snapshot });
+  let bundle = new LivelyRollup({ excludedModules, snapshot, jspm: true });
   let rollupBundle = async () => {
     let res;
     try {

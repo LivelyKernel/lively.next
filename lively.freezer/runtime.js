@@ -182,7 +182,8 @@ export function runtimeDefinition() {
       return module;
     },
     decanonicalize(name) {
-      if (!name.endsWith('.js') && !name.endsWith('/'))
+      if (name.endsWith('.json')) return G.lively.resources.resource(G.origin).join(name).url;
+      if (!name.endsWith('.js') && !name.endsWith('/')) // just import via package name
         return name.split('/').concat(['index.js']).filter(Boolean).join('/');
       return name;
       // this decanonicalize forces all modules to contain version numbers (if not provided)
@@ -628,6 +629,6 @@ export function runtimeDefinition() {
       }
       return this.get(moduleId).exports;
     }
+    
   };
-  if (!G.System) G.System = G.lively.FreezerRuntime;
 }
