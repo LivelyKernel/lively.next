@@ -112,7 +112,7 @@ export class PackageRegistry {
         let pkgSpec = spec.versions[version],
             url = pkgSpec.url;
         if (!isAbsolute(url)) url = base.join(url).url;
-        let pkg = new Package.fromJSON(System, {...pkgSpec, url});
+        let pkg = Package.fromJSON(System, {...pkgSpec, url});
         packageMap[pName].versions[version] = pkg;
       }
     }

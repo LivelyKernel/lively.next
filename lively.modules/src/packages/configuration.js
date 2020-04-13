@@ -66,7 +66,7 @@ export default class PackageConfiguration {
     let {System} = this;
     // System.debug && console.log("[lively.modules package configuration] applying SystemJS config of %s", pkg);
     if (sysConfig.packageConfigPaths)
-      System.packageConfigPaths = arr.uniq(System.packageConfigPaths.concat(sysConfig.packageConfigPaths));
+      System.config({packageConfigPaths: arr.uniq(System.packageConfigPaths.concat(sysConfig.packageConfigPaths))});
     if (sysConfig.packages) // packages is normaly not support locally in a package.json
       System.config({packages: sysConfig.packages});
     if (sysConfig.globalmap)

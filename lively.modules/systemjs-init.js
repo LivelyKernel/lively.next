@@ -65,7 +65,7 @@
     function translate(load, traceOpts) {
       return new Transpiler(this, load.name, {}).transpileModule(load.source, {})
     }
-    System.set("lively.transpiler", System.newModule({default: Transpiler}));
+    System.set("lively.transpiler", System.newModule({ default: Transpiler, translate }));
     System._loader.transpilerPromise = Promise.resolve({translate})
 
     System.config({

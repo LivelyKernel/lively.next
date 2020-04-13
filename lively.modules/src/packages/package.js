@@ -321,7 +321,9 @@ class Package {
 
     try {
       var config = System.get(packageConfigURL) || await System.import(packageConfigURL);
-      arr.pushIfNotIncluded(System.packageConfigPaths, packageConfigURL); // to inform systemjs that there is a config
+      var packageConfigPaths = [...System.packageConfigPaths];
+      arr.pushIfNotIncluded(packageConfigPaths, packageConfigURL); // to inform systemjs that there is a config
+      System.config({ packageConfigPaths });
       return config;
     } catch (err) {
       console.log("[lively.modules package] Unable loading package config %s for package: ", packageConfigURL, err);
