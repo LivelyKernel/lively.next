@@ -9,7 +9,7 @@ let isNode = typeof System !== "undefined" ?
 
 // FIXME!!
 // import ioClient from "socket.io-client";
-import _ioClient from "socket.io-client/dist/socket.io.js";
+import _ioClient from "socket.io-client";
 var ioClient;
 if (isNode) {
   let require = System._nodeRequire("module")._load;

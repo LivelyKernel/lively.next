@@ -4,7 +4,6 @@
   "dependencies": {
     "lively.lang": "*",
     "lively.storage": "*",
-    "lively.lang": "*",
     "socket.io-client": "^2.0.3",
     "lively.user": "git://github.com/LivelyKernel/lively.user.git"
   },
@@ -28,8 +27,8 @@
   "systemjs": {
     "map": {
       "socket.io-client": {
-        "~node": "socket.io-client/dist/socket.io.js",
-        "node": "socket.io-client/lib/index.js"
+        "~node": "https://dev.jspm.io/socket.io-client",
+        "node": "@empty"
       }
     },
     "meta": {
