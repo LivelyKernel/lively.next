@@ -874,7 +874,7 @@ class CloseHaloItem extends HaloItem {
 
   static get properties() {
     return {
-      styleClasses: {defaultValue: ["fa", "fa-close"]},
+      styleClasses: {defaultValue: ["fas", "fa-times"]},
       draggable: {defaultValue: false},
       tooltip: {defaultValue: "Remove this morph from the world"}
     };
@@ -900,7 +900,7 @@ class GrabHaloItem extends HaloItem {
 
   static get properties() {
     return {
-      styleClasses: {defaultValue: ["fa", "fa-hand-rock-o"]},
+      styleClasses: {defaultValue: ["far", "fa-hand-rock"]},
       tooltip: {defaultValue: "Grab the morph"}
     };
   }
@@ -975,7 +975,7 @@ class DragHaloItem extends HaloItem {
   
   static get properties() {
     return {
-      styleClasses: { defaultValue: ["fa", "fa-arrows"] },
+      styleClasses: { defaultValue: ["fas", "fa-arrows-alt"] },
       tooltip: {defaultValue: "Change the morph's position. Press (alt) while dragging to align the morph's position along a grid."}
     } 
   }
@@ -1037,7 +1037,7 @@ class InspectHaloItem extends HaloItem {
     return {
       tooltip: {defaultValue: "Inspect the morph's local state" },
       draggable: {defaultValue: false},
-      styleClasses: {defaultValue: ["fa", "fa-gears"]}
+      styleClasses: {defaultValue: ["fas", "fa-cogs"]}
     }
   }
 
@@ -1068,7 +1068,7 @@ class EditHaloItem extends HaloItem {
     return {
       tooltip: {defaultValue: "Edit the morph's definition" },
       draggable: {defaultValue: false},
-      styleClasses: {defaultValue: ["fa", "fa-wrench"]}
+      styleClasses: {defaultValue: ["fas", "fa-wrench"]}
     }
   }
 
@@ -1150,7 +1150,7 @@ class RotateHaloItem extends HaloItem {
   }
 
   adaptAppearance(scaling) {
-    this.styleClasses = ["fa", scaling ? "fa-search-plus" : "fa-repeat"];
+    this.styleClasses = ["fas", scaling ? "fa-search-plus" : "fa-redo"];
     this.tooltip = scaling ? "Scale morph" : "Rotate morph";
   }
 
@@ -1202,7 +1202,7 @@ class CopyHaloItem extends HaloItem {
   static get properties() {
     return {
       tooltip: {defaultValue: "Copy morph" },
-      styleClasses: {defaultValue: ["fa", "fa-clone"] }
+      styleClasses: {defaultValue: ["far", "fa-clone"] }
     }
   }
 
@@ -1554,7 +1554,7 @@ class MenuHaloItem extends HaloItem {
     return {
       draggable: {defaultValue: false},
       tooltip: {defaultValue: "Opens the morph menu" },
-      styleClasses: {defaultValue: ["fa", "fa-navicon"]}
+      styleClasses: {defaultValue: ["fas", "fa-bars"]}
     }
   }
 
