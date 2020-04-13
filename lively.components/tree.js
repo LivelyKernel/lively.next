@@ -253,18 +253,18 @@ export class Tree extends Text {
       containerTextAndAttributes[j + 1] = {
         fontSize: toggleWidth,
         fontColor: Color.transparent, 
-        textStyleClasses: ['fa'],
+        textStyleClasses: ['far'],
         paddingRight: (toggleWidth * (nodes[i].depth - 1)) + 'px'
       };
       // toggle
       containerTextAndAttributes[j + 3] = {
         fontColor: Color.transparent, 
-        textStyleClasses: ['fa'],
+        textStyleClasses: ['far'],
         paddingTop: (this.fontSize / 10) + 'px',
         paddingRight: (this.fontSize / 8) + 'px'
       };
       if (!this.treeData.isLeaf(nodes[i].node)) {
-         containerTextAndAttributes[j + 2] = this.treeData.isCollapsed(nodes[i].node) ? " \uf196 " : " \uf147 "; 
+         containerTextAndAttributes[j + 2] = this.treeData.isCollapsed(nodes[i].node) ? " \uf0fe " : " \uf146 "; 
          Object.assign(
             containerTextAndAttributes[j + 3], {
               nativeCursor: 'pointer',
@@ -297,7 +297,7 @@ export class Tree extends Text {
     }
     containerTextAndAttributes.push(' ', {
       fontSize: this.fontSize * 1.3,
-      textStyleClasses: ['fa']
+      textStyleClasses: ['far']
     });
     return nodes.length > 1 ? arr.flatten(containerTextAndAttributes) : []
   }
