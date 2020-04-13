@@ -1,11 +1,9 @@
-import { Morph, Text, StyleSheet, Label, Icon, morph } from "lively.morphic";
+import { Morph, Text, StyleSheet, Label, Icon, morph, touchInputDevice } from "lively.morphic";
 import { pt, LinearGradient, Color, Rectangle, rect } from "lively.graphics";
 import { arr, Path, string } from "lively.lang";
 import { signal, once } from "lively.bindings";
 import { Button } from "./buttons.js";
 import bowser from 'bowser';
-
-const touchInput = bowser.mobile || bowser.tablet;
 
 export function asItem(obj) {
   // make sure that object is of the form
@@ -27,11 +25,11 @@ export class ListItemMorph extends Label {
       clipMode:              {defaultValue: "hidden"},
       autofit:               {defaultValue: false},
       isSelected:            {defaultValue: false},
-      draggable:             {defaultValue: true},
+      draggable:             {defaultValue: !touchInputDevice },
       fill: {
         derived: true,
         get() {
-          if (touchInput && this.pressed) return Color.gray.withA(.5);
+          if (touchInputDevice && this.pressed) return Color.gray.withA(.5);
           return this.isSelected ? this.selectionColor : Color.transparent;
         }
       },
@@ -153,7 +151,7 @@ class ListScroller extends Morph {
   
   onMouseDown(evt) {
     let scrollY = this.scroll.y;
-    if (touchInput) {
+    if (touchInputDevice) {
       let item = this.owner.itemForClick(evt);
       if (!item) return;
       item.pressed = true;
@@ -569,7 +567,7 @@ export class List extends Morph {
   }
 
   onLoad() {
-     this.scroller.visible = touchInput;
+     this.scroller.visible = touchInputDevice;
   }
 
   initializeSubmorphs(submorphs) {
@@ -843,7 +841,7 @@ export class List extends Morph {
   }
 
   onHoverOut(evt) {
-    if (touchInput) return;
+    if (touchInputDevice) return;
     this.scroller.visible = false;
   }
   
@@ -1462,7 +1460,7 @@ export class DropDownList extends Button {
           && list.world()
           && !list.withAllSubmorphsDetect(m => m == focused)) {
         list.fadeOut(200);
-      } else once(touchInput ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
+      } else once(touchInputDevice ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
     }, 100);
   }
 
@@ -1493,10 +1491,10 @@ export class DropDownList extends Button {
         list.topLeft = bounds.bottomLeft();
       }
       once(list, 'onItemMorphClicked', this, 'toggleList');
-      once(touchInput ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
+      once(touchInputDevice ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
       await list.whenRendered();
       await list.whenRendered();
-      touchInput ? list.scroller.focus() : list.focus();
+      touchInputDevice ? list.scroller.focus() : list.focus();
       list.scrollSelectionIntoView();
     }
   }

@@ -1,7 +1,6 @@
-import { Morph, Icon } from "lively.morphic";
+import { Morph, Icon, touchInputDevice } from "lively.morphic";
 import { Rectangle, LinearGradient, Color, pt } from "lively.graphics";
 import { signal } from "lively.bindings";
-import bowser from 'bowser';
 
 export class Button extends Morph {
 
@@ -211,9 +210,13 @@ export class Button extends Morph {
     }
   }
 
+  considerPress(evt) {
+    if (touchInputDevice) return true;
+    else return this.innerBoundsContainsPoint(evt.positionIn(this));
+  }
+
   onMouseDown(evt) {
-    if (!evt.isAltDown() && !this.deactivated
-     && this.innerBoundsContainsPoint(evt.positionIn(this)))
+    if (!evt.isAltDown() && !this.deactivated && this.considerPress(evt))
       this.pressed = {originalFill: this.fill};
   }
 
@@ -224,14 +227,27 @@ export class Button extends Morph {
     }
   }
 
+  onDragStart(evt) {
+    if (touchInputDevice) {
+      this.draggable = true
+      this.pressed = null;
+    } else {
+      super.onDragStart(evt);
+    }
+  }
+
+  onDrag(evt) {
+    // buttons should not be draggable
+  }
+
   onHoverOut(evt) {
-    if (bowser.mobile) return;
+    if (touchInputDevice) return;
     // When leaving the button without mouse up, reset appearance
     if (this.pressed && evt.isClickTarget(this)) this.pressed = null;
   }
 
   onHoverIn(evt) {
-    if (bowser.mobile) return;
+    if (touchInputDevice) return;
     if (!this.deactivated && evt.isClickTarget(this))
       this.pressed = {originalFill: this.fill};
   }

@@ -1,8 +1,7 @@
 /*global Map,WeakMap*/
 import { arr, fun, obj, tree, string, promise } from "lively.lang";
 import { pt, Rectangle, Color } from "lively.graphics";
-import { Label } from "lively.morphic/text/label.js";
-import { Morph, Text, config, StyleSheet } from "lively.morphic";
+import { Morph, Text, config, StyleSheet, touchInputDevice, Label } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 import bowser from 'bowser';
 import { renderSubTree } from "lively.morphic/rendering/morphic-default.js";
@@ -486,7 +485,7 @@ export class Tree extends Text {
 
   onHoverOut(evt) {
     super.onHoverOut(evt);
-    if (bowser.mobile) return;
+    if (touchInputDevice) return;
     this.clipMode = 'hidden';
   }
   
