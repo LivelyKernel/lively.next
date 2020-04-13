@@ -8,7 +8,7 @@
     "map": {
       "fs": {
         "node": "@node/fs",
-        "~node": "@empty"
+        "~node": "https://dev.jspm.io/fs"
       },
       "fetch-ponyfill": {
         "node": "fetch-ponyfill/fetch-node.js",
