@@ -5,6 +5,11 @@
     "lively.lang": "^1.0.5",
     "semver": "^5.3.0"
   },
+  "systemjs": {
+    "map": {
+      "semver": "https://dev.jspm.io/semver"
+    }
+  },
   "devDependencies": {
     "mocha-es6": "*",
     "rollup": "^0.36.1",
