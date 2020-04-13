@@ -28,6 +28,9 @@ export var detectModuleFormat = (function() {
      || !cjsFormatCommentRegExp.test(source.slice(0,5000)) && esmRegEx.test(source))
        return "esm";
 
+    if (cjsFormatCommentRegExp.test(source.slice(0,5000)))
+      return "cjs"
+
     return "global";
   }
 })();
