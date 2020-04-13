@@ -19,14 +19,9 @@
   },
   "systemjs": {
     "map": {
-      "bowser": "bowser/bowser.min.js",
-      "svg-intersections": "lively.morphic/dist/svg-intersections.js"
-    },
-    "meta": {
-      "bowser/bowser.js": {
-        "format": "global",
-        "exports": "bowser"
-      }
+      "bowser": "https://dev.jspm.io/bowser@1.4.1",
+      "svg-intersections": "https://dev.jspm.io/svg-intersections",
+      "kld-intersections": "https://dev.jspm.io/kld-intersections"
     }
   }
 }

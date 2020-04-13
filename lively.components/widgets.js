@@ -15,8 +15,9 @@ import {
   Icon
 } from "lively.morphic";
 
-import { Shapes, Intersection } from 'kld-intersections';
+import kld from 'kld-intersections';
 
+const { Shapes, Intersection } = kld;
 
 class LeashEndpoint extends Ellipse {
 
@@ -280,7 +281,6 @@ export class Slider extends Morph {
 
   update(v=this.value) {
     const x = (this.width - 15) * this.normalize(v);
-    if (String(x) == 'NaN') debugger;
     this.getSubmorphNamed("slideHandle").center = pt(x + 7.5, 10);
   }
 
@@ -344,7 +344,7 @@ export class ValueScrubber extends Text {
   }
 
   relayout() {
-    const d = 5;
+    const d = 0;
     if (!this.scaleToBounds) return;
     this.scale = Math.min(1, this.width / (this.textBounds().width + d));
   }
