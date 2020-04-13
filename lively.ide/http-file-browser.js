@@ -417,11 +417,11 @@ export default class HTTPFileBrowser extends Morph {
             {name: "searchButton",       ...btnStyle, label: Label.icon("search"), tooltip: "search for files"},
             {name: "reloadButton",       ...btnStyle, label: Label.icon("refresh"), tooltip: "reload list"},
             {name: "filterButton",       ...btnStyle, label: Label.icon("filter"), tooltip: "set file filter"},
-            {name: "openFileButton",     ...btnStyle, label: Label.icon("pencil-square-o"), tooltip: "open selected file"},
-            {name: "addDirectoryButton", ...btnStyle, label: Label.icon("folder-o"), tooltip: "add directory"},
-            {name: "addFileButton",      ...btnStyle, label: Label.icon("file-o"), tooltip: "add file"},
-            {name: "renameFileButton",   ...btnStyle, label: Label.icon("clone"), tooltip: "rename selected file"},
-            {name: "deleteFileButton",   ...btnStyle, label: Label.icon("trash-o"), tooltip: "delete selected file"}
+            {name: "openFileButton",     ...btnStyle, label: Label.icon("edit", { textStyleClasses: ['far']}), tooltip: "open selected file"},
+            {name: "addDirectoryButton", ...btnStyle, label: Label.icon("folder", { textStyleClasses: ['far']}), tooltip: "add directory"},
+            {name: "addFileButton",      ...btnStyle, label: Label.icon("file", { textStyleClasses: ['far']}), tooltip: "add file"},
+            {name: "renameFileButton",   ...btnStyle, label: Label.icon("clone", { textStyleClasses: ['far']}), tooltip: "rename selected file"},
+            {name: "deleteFileButton",   ...btnStyle, label: Label.icon("trash-alt", { textStyleClasses: ['far']}), tooltip: "delete selected file"}
           ];
 
           var {

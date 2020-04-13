@@ -348,7 +348,7 @@ export default class Browser extends Window {
               fill: Color.transparent,
               submorphs: [
                 {...btnDarkStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
-                {...btnDarkStyle, name: "removeModuleButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
+                {...btnDarkStyle, name: "removeModuleButton", label: Icon.textAttribute("minus"), tooltip: "remove package"},
                 {...btnDarkStyle, name: "runTestsInModuleButton", label: "run tests", tooltip: "run tests", visible: false}
               ]},
 

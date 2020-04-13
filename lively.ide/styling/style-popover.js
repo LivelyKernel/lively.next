@@ -202,14 +202,14 @@ export class IconPopover extends StylePopover {
       this.iconLabel.remove();
     }
   }
-
+  
   updateStyleSheet() {
     super.updateStyleSheet();
     this.styleSheets = [...this.styleSheets, new StyleSheet({
         "[name=iconList]": {
           padding: rect(8,0,0,8),
           fill: Color.transparent,
-          fontFamily: "FontAwesome",
+          fontFamily: `"Font Awesome 5 Free", "Font Awesome 5 Brands"`,
           clipMode: "auto",
           lineWrapping: "by-chars",
           textAlign: "justify",
@@ -239,7 +239,7 @@ export class IconPopover extends StylePopover {
             draggable: true,
             type: "text",
             extent: pt(width, height),
-            textStyleClasses: ["fa"],
+            textStyleClasses: ["fas", 'far'],
             clipMode: 'auto',
             readOnly: true
           })

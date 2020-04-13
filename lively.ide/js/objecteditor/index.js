@@ -374,8 +374,8 @@ export class ObjectEditor extends Morph {
             layout: new HorizontalLayout({direction: "rightToLeft", spacing: 2, autoResize: false}),
             right: 400,
             submorphs:[
-              {...topBtnStyle, name: "freezeTargetButton", label: Icon.textAttribute("snowflake-o"), tooltip: "publish target"},
-              {...topBtnStyle, name: "showFrozenPartsButton", label: Icon.textAttribute("sellsy"), tooltip: "show published parts"}
+              {...topBtnStyle, name: "freezeTargetButton", label: Icon.textAttribute("snowflake-o", { textStyleClasses: ['far']}), tooltip: "publish target"},
+              {...topBtnStyle, name: "showFrozenPartsButton", label: Icon.textAttribute("sellsy", { textStyleClasses: ['fab'], fontWeight: 400 }), tooltip: "show published parts"}
             ]
           }
         ]},
@@ -405,7 +405,7 @@ export class ObjectEditor extends Morph {
           grid: [[null, "saveButton", "runMethodButton", null, "toggleImportsButton"]]}),
         submorphs: [
           {...btnStyle, name: "saveButton", label: Icon.makeLabel("save"), tooltip: "save"},
-          {...btnStyle, name: "runMethodButton", label: Icon.makeLabel("play-circle-o"), tooltip: "execute selected method"},
+          {...btnStyle, name: "runMethodButton", label: Icon.textAttribute("play-circle", { textStyleClasses: ['far']}), tooltip: "execute selected method"},
           {...btnStyle, name: "toggleImportsButton", label: "imports", tooltip: "toggle showing imports"}
         ]},
 

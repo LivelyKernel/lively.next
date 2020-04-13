@@ -1001,7 +1001,7 @@ export default class Inspector extends Morph {
           ...config.codeEditor.defaultStyle,
           textString: ""
         },
-        rightArrow = Icon.makeLabel("long-arrow-right").textAndAttributes,
+        rightArrow = Icon.textAttribute("long-arrow-right", {textStyleClasses: ['fas']}),
         searchBarBounds = rect(0,0,this.width, 30),
         searchField = new SearchField({
           styleClasses: ["idle"],
@@ -1029,7 +1029,7 @@ export default class Inspector extends Morph {
             type: 'button',
             name: "targetPicker",
             tooltip: "Change Inspection Target",
-            label: Icon.makeLabel("crosshairs")
+            label: Icon.textAttribute("crosshairs")
           }
           ,
           new LabeledCheckBox({label: "Internals", name: "internals"}),
