@@ -200,6 +200,23 @@ export class World extends Morph {
     }
   }
 
+  onBeforeUnload(evt) {
+    // called when browser window is closed
+    return this.onUnload(evt);
+  }
+
+  onUnload(evt) {
+    // world is deactivated, either b/c a different world is loaded or the
+    // browser window is closed
+    // var confirmationMessage = "\o/";
+    // e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
+    // return confirmationMessage;              // Gecko, WebKit, Chrome <34
+    this.submorphs.forEach(ea => {
+      if (typeof ea.onWorldUnload === "function")
+        ea.onWorldUnload(evt)
+    });
+  }
+
   updateVisibleWindowMorphs(evt) {
     // Currently checks all morphs to see if an update is required.  Could
     // possibly be streamlined by having a discrete list of morphs to be updated
