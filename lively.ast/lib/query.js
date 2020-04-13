@@ -3,7 +3,7 @@ import { BaseVisitor, ScopeVisitor } from "./mozilla-ast-visitors.js";
 import { FindToplevelFuncDeclVisitor } from "./visitors.js";
 import { withMozillaAstDo } from "./mozilla-ast-visitor-interface.js";
 import { parse } from "./parser.js";
-import { acorn } from "./acorn-extension.js";
+import { acorn, walk } from "./acorn-extension.js";
 import stringify from "./stringify.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -198,7 +198,7 @@ function scopesAtPos(pos, parsed) {
   // DEPRECATED
   // FIXME "scopes" should actually not referer to a node but to a scope
   // object, see exports.scopes!
-  return nodesAt(pos, parsed).filter(function(node) {
+  return arr.filter(nodesAt(pos, parsed), function(node) {
     return node.type === 'Program'
         || node.type === 'FunctionDeclaration'
         || node.type === 'FunctionExpression';
@@ -242,9 +242,11 @@ function declarationsOfScope(scope, includeOuter, result = []) {
 function declarationsWithIdsOfScope(scope) {
   // returns a list of pairs [(DeclarationNode,IdentifierNode)]
   const bareIds = helpers.declIds(scope.params).concat(scope.catches),
-        declNodes = (scope.node.id && scope.node.id.name ? [scope.node] : [])
-                      .concat(scope.funcDecls.filter(ea => ea.id))
-                      .concat(scope.classDecls.filter(ea => ea.id));
+        declNodes = [
+          ...scope.node.id && scope.node.id.name ? [scope.node] : [],
+          ...arr.filter(scope.funcDecls, ea => ea.id),
+          ...arr.filter(scope.classDecls, ea => ea.id)
+        ];
   return bareIds.map(ea => [ea, ea])
           .concat(declNodes.map(ea => [ea, ea.id]))
           .concat(helpers.varDecls(scope))
@@ -328,8 +330,8 @@ function topLevelDeclsAndRefs(parsed, options) {
   return {
     scope:           scope,
     varDecls:        scope.varDecls,
-    funcDecls:       scope.funcDecls.filter(ea => ea.id),
-    classDecls:      scope.classDecls.filter(ea => ea.id),
+    funcDecls:       arr.filter(scope.funcDecls, ea => ea.id),
+    classDecls:      arr.filter(scope.classDecls, ea => ea.id),
     declaredNames:   declared,
     undeclaredNames: undeclared,
     refs:            refs,
@@ -340,10 +342,12 @@ function topLevelDeclsAndRefs(parsed, options) {
 
   function findUndeclaredReferences(scope) {
     var names = _declaredVarNames(scope, useComments);
-    return scope.subScopes
-      .map(findUndeclaredReferences)
-      .reduce(function(refs, ea) { return refs.concat(ea); }, scope.refs)
-      .filter(function(ref) { return names.indexOf(ref.name) === -1; });
+    return arr.filter(
+      scope.subScopes
+        .map(findUndeclaredReferences)
+        .reduce(function(refs, ea) { return refs.concat(ea); }, scope.refs),
+      function(ref) { return names.indexOf(ref.name) === -1; }
+    );
   }
 
 }
@@ -351,7 +355,7 @@ function topLevelDeclsAndRefs(parsed, options) {
 function findGlobalVarRefs(parsed, options) {
   var topLevel = topLevelDeclsAndRefs(parsed, options),
       noGlobals = topLevel.declaredNames.concat(knownGlobals);
-  return topLevel.refs.filter(function(ea) {
+  return arr.filter(topLevel.refs, function(ea) {
     return noGlobals.indexOf(ea.name) === -1; })
 }
 
@@ -409,7 +413,7 @@ function findDeclarationClosestToIndex(parsed, name, index) {
 
 function nodesAt(pos, ast) {
   ast = typeof ast === 'string' ? parse(ast) : ast;
-  return acorn.walk.findNodesIncluding(ast, pos);
+  return walk.findNodesIncluding(ast, pos);
 }
 
 const _stmtTypes = [

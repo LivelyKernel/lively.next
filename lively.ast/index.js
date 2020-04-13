@@ -10,9 +10,9 @@ export { ReplaceManyVisitor, ReplaceVisitor, AllNodesVisitor } from "./lib/visit
 
 export { parse, parseFunction, fuzzyParse } from "./lib/parser.js";
 
-import { acorn } from "./lib/acorn-extension.js";
+import { acorn, walk } from "./lib/acorn-extension.js";
 import stringify, { escodegen } from "./lib/stringify.js";
-export { escodegen, acorn }
+export { escodegen, acorn, walk }
 
 import * as nodes from "./lib/nodes.js";
 import * as query from "./lib/query.js";

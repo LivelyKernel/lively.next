@@ -2,19 +2,21 @@ import { arr } from "lively.lang";
 import {
   acorn,
   loose,
+  walk,
   addAstIndex, findNodesIncluding
 } from "./acorn-extension.js";
 
 import { AllNodesVisitor } from "./visitors.js";
 
 export {
+  walk,
   parse,
   parseFunction,
   fuzzyParse,
   addSource
 }
 
-acorn.walk.addSource = addSource;
+walk.addSource = addSource;
 
 function addSource(parsed, source) {
   if (typeof parsed === "string") {
@@ -54,7 +56,7 @@ function parseFunction(source, options = {}) {
 function fuzzyParse(source, options) {
   // options: verbose, addSource, type
   options = options || {};
-  options.ecmaVersion = options.ecmaVersion || 8;
+  options.ecmaVersion = options.ecmaVersion || 11;
   options.sourceType = options.sourceType || "module";
   options.plugins = options.plugins || {};
   // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
@@ -81,13 +83,13 @@ function fuzzyParse(source, options) {
     parseErrorSource += source.slice(err.raisedAt - 20, err.raisedAt);
     parseErrorSource += '<-error->';
     parseErrorSource += source.slice(err.raisedAt, err.raisedAt + 20);
-    options.verbose && show('parse error: ' + parseErrorSource);
+    options.verbose && console.log('parse error: ' + parseErrorSource);
     err.parseErrorSource = parseErrorSource;
   } else if (err && options.verbose) {
-    show('' + err + err.stack);
+    console.log('' + err + err.stack);
   }
   if (!ast) {
-    ast = loose.parse_dammit(source, options);
+    ast = loose.parse(source, options);
     if (options.addSource) addSource(ast, source);
     ast.isFuzzy = true;
     ast.parseError = err;
@@ -160,7 +162,8 @@ function parse(source, options) {
   // }
 
   options = options || {};
-  options.ecmaVersion = options.ecmaVersion || 8;
+  options.ecmaVersion = options.ecmaVersion || 11;
+  options.allowAwaitOutsideFunction = true;
   options.sourceType = options.sourceType || "module";
   if (!options.hasOwnProperty("allowImportExportEverywhere"))
     options.allowImportExportEverywhere = true;

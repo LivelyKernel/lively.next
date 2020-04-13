@@ -55,7 +55,7 @@ export function findDecls(parsed, options) {
 
     if (options.hideOneLiners) {
       if (parsed.loc) {
-        found = found.filter(def =>
+        found = arr.filter(found, def =>
           !def.node.loc || (def.node.loc.start.line !== def.node.loc.end.line));
       } else if (parsed.source) {
         var filtered = [];
@@ -89,9 +89,8 @@ function es6ClassDef(node) {
     node: node,
     children: []
   };
-  def.children.push(...node.body.body.map((node, i) =>
-                        es6ClassMethod(node, def, i))
-                          .filter(Boolean))
+  def.children.push(...arr.compact(node.body.body.map((node, i) =>
+                        es6ClassMethod(node, def, i))))
   return [def, ...def.children]
 }
 

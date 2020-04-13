@@ -1,5 +1,5 @@
 import { obj } from "lively.lang";
-import * as escodegen from "escodegen";
+import escodegen from "escodegen";
 
 var es = escodegen.escodegen || escodegen;
 

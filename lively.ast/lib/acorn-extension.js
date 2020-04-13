@@ -7,11 +7,10 @@ var GLOBAL = typeof window!=="undefined" ?
     global : typeof self!=="undefined" ?
       self : this;
 
-import * as acorn from "acorn";
-export { acorn }
-var walk = acorn.walk;
-var loose = acorn.loose;
-export { walk, loose }
+import acorn from "acorn";
+import walk from "acorn-walk";
+import loose from "acorn-loose";
+export { walk, loose, acorn };
 
 // rk 2016-05-17 FIXME: the current version of acorn.walk doesn't support async
 // await. We patch the walker here until it does
