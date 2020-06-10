@@ -486,11 +486,16 @@ class PropertyNode extends InspectionNode {
     });
   }
 
+  rerender() {
+    // triggers the inspector to just update the line that this node is rendered at
+    this.root.inspector.refreshSelectedLine();    
+  }
+
   refreshProperty(v, updateTarget = false) {
     if (updateTarget) this.target[this.key] = v;
     this.value = this.target[this.key];
     //this._propertyWidget && signal(this._propertyWidget, "update", this.value);
-    this.valueString = printValue(v);
+    this.valueString = printValue(this.value);
     if (this.interactive) {
       if (!updateTarget) {
         this._propertyWidget.highlight();
@@ -511,7 +516,7 @@ class PropertyNode extends InspectionNode {
     if (!this.interactive && !(spec.foldable && isMultiValue(value, spec.foldable))) {
       return inspector.renderPropertyControl({
         target, keyString, valueString,
-        value, spec, node: this, fastRender: true
+        value, spec, node: this, fastRender: true,
       });
     }
 

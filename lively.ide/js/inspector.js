@@ -1,20 +1,17 @@
 /*global Map*/
 import { Color, Rectangle, rect, pt } from "lively.graphics";
-
-import { obj, Path, arr, promise } from "lively.lang";
+import { obj, num, Path, arr, promise } from "lively.lang";
 import { connect, disconnect, once } from "lively.bindings";
-import { Morph, GridLayout, HorizontalLayout, morph, CustomLayout, Label, Icon, StyleSheet, config } from "lively.morphic";
+import { Morph, Tooltip, VerticalLayout, GridLayout, HorizontalLayout, morph, CustomLayout, Label, Icon, StyleSheet, config } from "lively.morphic";
 import { Tree, LoadingIndicator, DropDownList } from "lively.components";
 import { DropDownSelector, SearchField, LabeledCheckBox } from "lively.components/widgets.js";
 import { MorphHighlighter, InteractiveMorphSelector } from "lively.halos";
 import { printValue, RemoteInspectionTree, InspectionTree, isMultiValue } from './inspector/context.js';
 
-import { NumberWidget, StringWidget, IconWidget, PaddingWidget,
-  VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget,
-  BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
+import { valueWidgets, popovers } from "../index.js";
 import DarkTheme from "../themes/dark.js";
 import DefaultTheme from "../themes/default.js";
-
+import { syncEval } from "lively.vm";
 
 var inspectorCommands = [
 
@@ -74,7 +71,7 @@ class DraggedProp extends Morph {
 
     if (!target.isText || target.editorModeName !== "js") {
       // normal apply prop
-      if (control.hasOwnProperty("propertyValue"))
+      if ("propertyValue" in control)
         target[control.keyString] = control.propertyValue;
       return;
     }
@@ -84,7 +81,7 @@ class DraggedProp extends Morph {
     let editor = target,
         toObject = editor.evalEnvironment.context,
         textPos = editor.textPositionFromPoint(editor.localize(evt.position)),
-        expr = this.sourceObject.generateReferenceExpression({fromMorph: toObject});
+        expr = generateReferenceExpression(this.sourceObject, {fromMorph: toObject});
     if (control.keyString) expr += "." + control.keyString;
     editor.insertTextAndSelect(expr, textPos);
     editor.focus();
@@ -122,7 +119,7 @@ class DraggableTreeLabel extends Label {
       valueString: {},
       fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
       fill:  {defaultValue: Color.transparent},
-      padding: {defaultValue: rect(0,0,10,0)},
+      padding: {defaultValue: rect(0,1,10,-1)},
       isSelected: {
         after: ['submorphs'],
         set(b) {
@@ -217,8 +214,6 @@ export class PropertyControl extends DraggableTreeLabel {
       // 12.6.17
       // rms: not sure wether a string based spec is that effective in the long run
       //      it may require too much dedicated maintenance
-      case "Icon":
-        propertyControl = this.renderIconControl(args); break;
       case "Color":
         propertyControl = this.renderColorControl(args); break;
       case "ColorGradient":
@@ -233,14 +228,10 @@ export class PropertyControl extends DraggableTreeLabel {
         propertyControl = this.renderLayoutControl(args); break;
       case "Enum":
         propertyControl = this.renderEnumControl(args); break;
-      case "Vertices":
-        propertyControl = this.renderVertexControl(args); break;
       case "Shadow":
         propertyControl = this.renderShadowControl(args); break;
       case "Point":
         propertyControl = this.renderPointControl(args); break;
-      case "StyleSheets":
-        propertyControl = this.renderStyleSheetControl(args); break;
       case "Rectangle":
         propertyControl = this.renderRectangleControl(args); break;
       case "Boolean":
@@ -335,213 +326,275 @@ export class PropertyControl extends DraggableTreeLabel {
     connect(this, "update", this, "toggleFoldableValue");
   }
 
-  static renderEnumControl(args) {
-    let propertyControl,
-        {fastRender, value, spec: {values}, valueString, keyString} = args;
-    if (fastRender) {
-      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
-              ` ${value ? (value.valueOf ? value.valueOf() : value) : 'Not set'}`, 
-              {}]
-    }
-    propertyControl = this.baseControl(args);
-    return propertyControl.renderValueSelector(propertyControl, 
-      value && value.valueOf ? value.valueOf() : value, values);
+  static renderGrabbableKey(args) {
+    const { keyString, target } = args;
+    return [
+      `${keyString}:`, {
+        nativeCursor: "-webkit-grab",
+        onDragStart: (evt) => {
+          evt.state.draggedProp = new DraggedProp({
+            sourceObject: target,
+            control: this.baseControl(args),
+          });
+          evt.state.draggedProp.openInWorld();
+          connect(evt.hand, "update", evt.state.draggedProp, "update");
+        },
+      
+        onDrag: (evt) => {},
+      
+        onDragEnd: (evt) => {
+          disconnect(evt.hand, "update", evt.state.draggedProp, "update");
+          evt.state.draggedProp.applyToTarget(evt);
+        },
+      },
+    ];
   }
 
-  static renderIconControl(args) {
+  static renderEnumControl(args) {
     let propertyControl,
-        {value, fastRender, keyString, valueString} = args;
-    if (fastRender) {
-      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
-              ` ${valueString}`, {fontColor: Color.darkGray}];
-    }
-    propertyControl = this.baseControl(args);
-    propertyControl.control = new IconWidget({name: "valueString", iconValue: value});
-    connect(propertyControl.control, "iconValue", propertyControl, "propertyValue");
-    return propertyControl;
+        { value, spec: {values}, valueString, keyString, target, node } = args,
+        handler = async (evt, charPos) => {
+          const menu = target.world().openWorldMenu(evt, values.map(v => ({
+            string: v.toString(), action: () => {
+              target[keyString] = v;
+              node.rerender();
+            }
+          })));
+        };
+    return [
+      ...this.renderGrabbableKey(args),
+      ` ${value ? (value.valueOf ? value.valueOf() : value) : 'Not set'}`, {
+        nativeCursor: 'pointer', onMouseDown: handler
+      },
+      Icon.makeLabel("chevron-circle-down", {
+        opacity: .7, name: 'dropDownIcon'
+      }), {paddingTop: '4px', paddingLeft: '4px'},
+    ];
   }
 
   static renderStringControl(args) {
     let propertyControl,
         {value, fastRender, keyString, valueString, node} = args;
-    if (fastRender) {
-      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
-              ` ${value.length > 200 ? value.slice(0, 20) + '...' : value}`, {fontColor: Color.blue, paddingTop: '1px'}];
-    }
-    propertyControl = this.baseControl(args);
-    propertyControl.control = new StringWidget({
-      name: "valueString",
-      stringValue: value || "",
-      readOnly: keyString == "id"
-    });
-    connect(propertyControl.control, "stringValue", propertyControl, "propertyValue");
-    connect(node, "isSelected", propertyControl.control, "isSelected");
-    return propertyControl;
+    return [
+      ...this.renderGrabbableKey(args),        
+      ` ${value.length > 200 ? value.slice(0, 20) + '...' : value}`, {fontColor: Color.blue, paddingTop: '0px'}
+    ];
   }
 
   static renderRectangleControl(args) {
     let propertyControl,
-        {value, fastRender, keyString, valueString} = args;
-    if (fastRender) {
-      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
-              ` ${valueString}`, {fontColor: Color.black}];
-    }
-    propertyControl = this.baseControl(args);
-    propertyControl.control = new PaddingWidget({name: "valueString", rectangle: value});
-    connect(propertyControl.control, "rectangle", propertyControl, "propertyValue");
-    return propertyControl;
+        { value, keyString, valueString, target, node } = args,
+        handler = async (evt) => {
+          let editor = new popovers.RectanglePopover({
+            hasFixedPosition: true,
+            rectangle: value
+          });
+          editor.relayout();
+          await editor.fadeIntoWorld(evt.positionIn(target.world()));
+          connect(editor, "rectangle", (rect) => {
+            target[keyString] = rect;
+            node.rerender();
+          });
+        };
+    return [
+      ...this.renderGrabbableKey(args),
+      ` ${valueString}`, {fontColor: Color.black, nativeCursor: "pointer", onMouseDown: handler}
+    ];
   }
-
-  static renderVertexControl(args) {
-    let propertyControl,
-        {target, valueString, keyString, fastRender} = args;
-    if (fastRender) {
-      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
-              ` ${valueString}`, {fontColor: Color.black}]
-    }
-    propertyControl = this.baseControl(args);
-    propertyControl.control = new VerticesWidget({context: target});
-    connect(propertyControl.control, "vertices", propertyControl, "propertyValue");
-    return propertyControl;
-  }
-
+  
   static renderBooleanControl(args) {
-    let propertyControl, {value, keyString, valueString, fastRender} = args;
-    if (fastRender) {
-       return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
-               ` ${valueString}`, {fontColor: value ? Color.green : Color.red}]
-    }
-    propertyControl = this.baseControl(args);
-    propertyControl.control = new BooleanWidget({name: "valueString", boolean: value});
-    connect(propertyControl.control, "boolean", propertyControl, "propertyValue");
-    return propertyControl;
+    let { value, keyString, valueString, target, node } = args;
+    return [
+      `${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+      ` ${valueString}`, {
+          nativeCursor: "pointer",
+          fontColor: value ? Color.green : Color.red,
+          onMouseDown: (evt) => {
+            target[keyString] = !target[keyString]; // toggle boolean
+            node.rerender();
+          }
+      }]
   }
 
   static renderNumberControl(args) {
-    let propertyControl, {value, spec, keyString, valueString, fastRender} = args;
-    var baseFactor = .5, floatingPoint = spec.isFloat;
+    let propertyControl, { value, spec, keyString, valueString, fastRender, node, target } = args;
+    let { _numberControls = new NumberControls()} = node;
     
-    if (fastRender) {
-      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
-             ` ${value != undefined && (value.valueOf ? value.valueOf() : value.valueString)}`, 
-              {fontColor: NumberWidget.properties.fontColor.defaultValue}]
-    }
+    const [up, down] = _numberControls.submorphs;
+    let scrubState = node._numberControls = _numberControls;
+
     if ("max" in spec && "min" in spec
         && spec.min != -Infinity && spec.max != Infinity) {
-      baseFactor = (spec.max - spec.min) / 100;
-      floatingPoint = true;
+      scrubState.baseFactor = (spec.max - spec.min) / 100;
+      scrubState.floatingPoint = spec.isFloat;
+      scrubState.max = spec.max;
+      scrubState.min = spec.min;
+    } else {
+      scrubState.floatingPoint = spec.isFloat;
+      scrubState.baseFactor = .5;
+      
+      scrubState.min = spec.min != undefined ? spec.min : -Infinity;
+      scrubState.max = spec.max != undefined ? spec.max : Infinity;
     }
-    propertyControl = this.baseControl(args);
-    propertyControl.control = new NumberWidget({
-      name: "valueString",
-      baseFactor,
-      extent: pt(50,17),
-      floatingPoint,
-      borderWidth: 0,
-      borderColor: Color.transparent,
-      fill: Color.transparent,
-      padding: rect(0),
-      fontFamily: config.codeEditor.defaultStyle.fontFamily,
-      number: value,
-      ...("max" in spec ? {max: spec.max} : {}),
-      ...("min" in spec ? {min: spec.min} : {})
-    });
-    connect(propertyControl.control, "update", propertyControl, "propertyValue");
-    connect(propertyControl, "update", propertyControl.control, "number", {
-      updater: function($upd, val) {
-        val = (val && val.valueOf ? val.valueOf() : val) || 0;
-        if (this.targetObj.number != val) $upd(val);
-      }
-    });
-    return propertyControl;
+
+    const numberColor = valueWidgets.NumberWidget.properties.fontColor.defaultValue;
+    return [
+      ...this.renderGrabbableKey(args),
+      ...node._inputMorph ? [node._inputMorph, {}] : [
+        ` ${value != undefined && (value.valueOf ? value.valueOf() : value).toFixed(spec.isFloat ? 3 : 0)} `, 
+        {
+          fontColor: numberColor,
+          onMouseUp: (evt) => {
+            node._inputMorph = morph({ 
+              type: 'input',
+              fill: null,
+              fontColor: numberColor,
+              fontFamily: 'IBM Plex Mono',
+              fontSize: 14,
+              padding: rect(8,2,-6,2),
+              height: 23, // get line height?
+              cursorColor: Color.white,
+              value: value.valueOf ? value.valueOf() : valueString
+            });
+            target[keyString] = value; // trigger update. is there a better way?
+            node._inputMorph.focus();
+            once(node._inputMorph, 'inputAccepted', (v) => {
+              delete node._inputMorph;
+              target[keyString] = spec.isFloat ? Number.parseFloat(v) : Number.parseInt(v);
+              node.rerender();
+            });
+            once(node._inputMorph, 'onBlur', (v) => {
+              if (node._inputMorph) {
+                delete node._inputMorph;
+                target[keyString] = value;
+                node.rerender();
+              }
+            });
+            node.rerender();
+          },
+          onDragStart: (evt) => {
+            scrubState.scrubbedValue = value;
+            onNumberDragStart(evt, scrubState);
+          },
+          onDrag: (evt) => {
+            target[keyString] = onNumberDrag(evt, scrubState);
+            node.rerender();
+          },
+          onDragEnd: (evt) => onNumberDragEnd(evt, scrubState),
+        }, _numberControls, {
+          onMouseUp: () => {
+            up.fill = down.fill = null;
+          },
+          onMouseDown: (evt) => {
+            if (evt.targetMorph === up) {
+              up.fill = Color.white.withA(.2);
+              if ("max" in spec && target[keyString] >= spec.max) return; 
+              target[keyString] += 1;
+            }
+            if (evt.targetMorph === down) {
+              down.fill = Color.white.withA(.2);
+              if ("min" in spec && target[keyString] <= spec.min) return;
+              target[keyString] -= 1;
+            }
+            node.rerender();
+          }
+        }], 
+        
+    ];
   }
 
   static renderShadowControl(args) {
-    let propertyControl, {fastRender, keyString, valueString, value} = args;
-    if (fastRender) {
-      // FIXME: actually display name of shadow
-       return [`${keyString}:`, {nativeCursor: "-webkit-grab", paddingRight: '6pt'}, 
-               `${value ? valueString : 'No Shadow'}`, {}]
-    }
-    propertyControl = this.baseControl(args);
-    propertyControl.control = new ShadowWidget({
-      name: "valueString", 
-      shadowValue: args.value
-    });
-    connect(propertyControl.control, "update", propertyControl, "propertyValue");
-    connect(propertyControl, "update", propertyControl.control, "shadowValue", {
-      updater: function($upd, val) {
-        val = (val && val.valueOf ? val.valueOf() : val) || null;
-        if (this.targetObj.shadowValue != val) $upd(val);
-      }
-    });
-    return propertyControl;
-  }
-
-  static renderStyleSheetControl(args) {
-    let propertyControl, {target, fastRender, valueString, keyString} = args;
-    if (fastRender) {
-      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
-               ` ${valueString}`, {fontColor: Color.black}]
-    }
-    propertyControl = this.baseControl(args);
-    propertyControl.control = new StyleSheetWidget({context: target});
-    return propertyControl;
+    const { keyString, valueString, value, target, node } = args;
+    const handler = async (evt) => {
+          // if already open, return
+          let editor = new popovers.ShadowPopover({
+            shadowValue: target[keyString],
+            hasFixedPosition: true
+          });
+          await editor.fadeIntoWorld(evt.positionIn(target.world()));
+          connect(editor, "shadowValue", (pointValue) => {
+            target[keyString] = pointValue;
+            node.rerender();
+          });
+        }
+    return [
+      `${keyString}:`, {nativeCursor: "-webkit-grab", paddingRight: '6pt'}, 
+       `${value ? value.toFilterCss() : 'No Shadow'}`, { nativeCursor: "pointer", onMouseDown: handler }
+    ]
   }
 
   static renderPointControl(args) {
-    let propertyControl, {fastRender, keyString, valueString, value} = args,
-        numberColor = NumberWidget.properties.fontColor.defaultValue;
-    if (fastRender) {
-      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
-              ` pt(`, {}, 
-              `${value.x.toFixed()}`, {fontColor: numberColor},
-              ',', {}, `${value.y.toFixed()}`, {fontColor: numberColor}, ')', {}]
-    }
-    propertyControl = this.baseControl(args);
-    propertyControl.control = new PointWidget({name: "valueString", pointValue: args.value});
-    connect(propertyControl.control, "pointValue", propertyControl, "propertyValue");
-    connect(propertyControl, "update", propertyControl.control, "pointValue", {
-      updater: function ($upd, val) {
-        val = val && val.valueOf ? val.valueOf() : val;
-        if (!this.targetObj.pointValue.equals(val)) $upd(val);
-      }
-    });
-    return propertyControl;
+    let propertyControl, { keyString, valueString, value, fontColor, target, node } = args,
+        numberColor = valueWidgets.NumberWidget.properties.fontColor.defaultValue,
+        handler = async (evt) => {
+          // if already open, return
+          let editor = new popovers.PointPopover({
+            pointValue: target[keyString], 
+            hasFixedPosition: true,
+          });
+          await editor.fadeIntoWorld(evt.positionIn(target.world()));
+          connect(editor, "pointValue", (pointValue) => {
+            target[keyString] = pointValue;
+            node.rerender();
+          });
+        },
+        attrs = {nativeCursor: "pointer", onMouseDown: handler};
+    return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+            ` pt(`, { ...attrs }, 
+            `${value.x.toFixed()}`, {fontColor: numberColor, ...attrs},
+            ',', { ...attrs }, 
+            `${value.y.toFixed()}`, {fontColor: numberColor, ...attrs},
+            ')', { ...attrs }]
   }
 
   static renderLayoutControl(args) {
     let propertyControl, {target, fastRender, valueString, keyString, value} = args;
     if (fastRender) {
-      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
-               ` ${value ? valueString : 'No Layout'}`, {}];
+      return [
+        `${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+        ` ${value ? valueString : 'No Layout'}`, { onMouseDown: (evt) => {
+                 
+        }
+      }];
     }
     propertyControl = this.baseControl(args);
-    propertyControl.control = new LayoutWidget({context: target});
+    propertyControl.control = new valueWidgets.LayoutWidget({context: target});
     connect(propertyControl.control, "layoutChanged", propertyControl, "propertyValue");
     return propertyControl;
   }
 
   static renderColorControl(args) {
     let propertyControl, {node, gradientEnabled, fastRender, 
-                          valueString, keyString, value, target} = args;
-    if (fastRender) {
-      return [`${keyString}:`, {nativeCursor: "-webkit-grab", paddingRight: '23px'},
-               `${value ? (value.valueOf ? value.valueOf() : valueString) : 'No Color'}`, {}]
-    } 
-    propertyControl = this.baseControl(args);
-    propertyControl.control = new ColorWidget({
-      color: (args.value && args.value.valueOf) ? args.value.valueOf() : args.value,
-      gradientEnabled, context: target
-    });
-    connect(propertyControl.control, "update", propertyControl, "propertyValue");
-    connect(propertyControl, "update", propertyControl.control, "color", {
-      updater: function ($upd, val) {
-        val = (val && val.valueOf )? val.valueOf() : val;
-        if (!this.targetObj.color.equals(val)) $upd(val);
-      }
-    });
-    return propertyControl;
+                          valueString, keyString, value, target} = args,
+        handler = async (evt) => {
+          let editor = new popovers.FillPopover({
+            hasFixedPosition: true,
+            handleMorph: target,
+            fillValue: value,
+            title: "Fill Control",
+            gradientEnabled
+          });
+          await editor.fadeIntoWorld(evt.positionIn(target.world()));
+          connect(editor, "fillValue", (fill) => {
+            target[keyString] = fill;
+            node.rerender();
+          });
+        };
+    return [
+      ...this.renderGrabbableKey(args),
+      morph({
+       fill: value,
+       extent: pt(15,15),
+       borderColor: Color.gray,
+       borderWidth: 1,
+      }), {
+        paddingLeft: '5px',
+        paddingTop: '4px',
+        paddingRight: '5px'
+      }, 
+     `${value ? (value.valueOf ? value.valueOf() : valueString) : 'No Color'}`, {
+       nativeCursor: "pointer", onMouseDown: handler
+    }];
   }
 
   static renderItSomehow(args) {
@@ -559,7 +612,7 @@ export class PropertyControl extends DraggableTreeLabel {
   relayout() {
     this.fit();    
     if (this.control) {
-      this.control.topLeft = this.textBounds().topRight().addXY(-2,0);
+      this.control.topLeft = this.textBounds().topRight().addXY(-2,1);
       this.width = this.textBounds().width + this.control.bounds().width;
     }
 
@@ -592,6 +645,172 @@ export function remoteInspect(code, evalEnvironment) {
   return Inspector.openInWindow({remoteTarget: {code, evalEnvironment}}); 
 }
 
+export function generateReferenceExpression(morph, opts = {}) {
+  // creates a expr (string) that, when evaluated, looks up a morph starting
+  // from another morph
+  // Example:
+  // generateReferenceExpression(m)
+  //   $world.get("aBrowser").get("sourceEditor");
+
+  let world = morph.world(),
+      {
+        maxLength = 10,
+        fromMorph = world
+      } = opts;
+
+  if (fromMorph === morph) return "this";
+
+  var rootExpr = world === fromMorph ? "$world" : "this";
+
+  // can we find it at all? if not return a generic "morph"
+  if (!world && (!morph.name || fromMorph.get(morph.name) !== morph))
+    return "morph";
+
+  var exprs = makeReferenceExpressionListFor(morph);
+
+  return exprs.length > maxLength
+    ? `$world.getMorphWithId("${morph.id}")`
+    : exprs.join(".");
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function makeReferenceExpressionListFor(morph) {
+    var name = morph.name,
+        owners = morph.ownerChain(),
+        owner = morph.owner,
+        world = morph.world(),
+        exprList;
+
+    if (morph === fromMorph) exprList = [rootExpr];
+
+    if (world === morph) exprList = ["$world"];
+
+    if (!exprList && name && owner) {
+      if (owner === world && arr.count(arr.pluck(world.submorphs, "name"), name) === 1) {
+        exprList = [`$world.get("${name}")`]
+
+      }
+
+      if (!exprList && owner != world) {
+        for (let i = owners.length-1; i--; ) {
+          if (owners[i].getAllNamed(name).length === 1){
+            exprList = [...makeReferenceExpressionListFor(owners[i]), `get("${name}")`];
+            break;
+          }
+        }
+
+      }
+
+      if (!exprList) {
+        var exprsToCheck = [...makeReferenceExpressionListFor(owner), `get("${name}")`];
+        if (syncEval(exprsToCheck.join("."), {context: fromMorph}).value === morph) {
+          exprList = exprsToCheck;
+        }
+      }
+    }
+
+    // if (!exprList && owner && owner.name) {
+    //   var idx = owner.submorphs.indexOf(morph);
+    //   exprList = makeReferenceExpressionListFor(morph.owner).concat([`submorphs[${idx}]`]);
+    // }
+
+    if (!exprList) {
+      exprList = [`${rootExpr}.getMorphById("${morph.id}")`];
+    }
+
+    return exprList;
+  }
+
+  function commonOwner(m1, m2) {
+    var owners1 = m1.ownerChain(),
+        owners2 = m2.ownerChain();
+    if (owners1.includes(m2)) return m2;
+    if (owners2.includes(m1)) return m1;
+    return arr.intersect(owners1, owners2)[0];
+  }
+
+}
+
+class NumberControls extends Morph {
+  static get properties() {
+    return {
+      layout: {
+        initialize(){
+          this.layout = new VerticalLayout({ spacing: 0, orderByIndex: true });
+        }
+      },
+      fill: { defaultValue: Color.transparent },
+      width: { defaultValue: 15 },
+      fontColor: {
+        derived: true,
+        set(c) {
+          this.submorphs.map(m => m.fontColor = c);
+        }
+      },
+      submorphs: {
+        initialize() {
+          this.submorphs = [
+            Icon.makeLabel("sort-asc", {
+              autofit: true,
+              opacity: .6,
+              nativeCursor: "pointer",
+              padding: rect(5,2,0,-6),
+              fontSize: 12
+            }),
+            Icon.makeLabel("sort-asc", {
+              top: 10,
+              rotation: Math.PI,
+              autofit: true,
+              padding: rect(5,4,0,-9),
+              opacity: .6,
+              nativeCursor: "pointer",
+              fontSize: 12
+            }),
+          ];
+        }
+      }
+    }
+  }
+}
+
+// number scrubbing
+function onNumberDragStart(evt, scrubState) {
+  scrubState.initPos = evt.position;
+  scrubState.factorLabel = new Tooltip({description: "1x"}).openInWorld(
+    evt.hand.position.addXY(10, 10)
+  );
+}
+
+function onNumberDrag(evt, scrubState) {
+  const {scale, offset} = getScaleAndOffset(evt, scrubState);
+  scrubState.factorLabel.position = evt.hand.position.addXY(10, 10);
+  scrubState.factorLabel.description = `${scale}x`;
+  return getCurrentValue(offset, scale, scrubState);
+}
+
+function onNumberDragEnd(evt, scrubState) {
+  const {offset, scale} = getScaleAndOffset(evt, scrubState);
+  scrubState.factorLabel.softRemove();
+  return getCurrentValue(offset, scale, scrubState);
+}
+  
+function getScaleAndOffset(evt, scrubState) {
+  const {x, y} = evt.position.subPt(scrubState.initPos),
+        scale = num.roundTo(Math.exp(-y / $world.height * 6), 0.01) * scrubState.baseFactor;
+  return {offset: x, scale};
+}
+
+function getCurrentValue(delta, s, scrubState) {
+  const v = scrubState.scrubbedValue + (scrubState.floatingPoint ? delta * s : Math.round(delta * s));
+  return Math.max(scrubState.min, Math.min(scrubState.max, v));
+}
+
+class PropertyTree extends Tree {
+  onDrag(evt) {
+    if (this._onDragHandler) this._onDragHandler(evt);
+  }
+}
+
 export default class Inspector extends Morph {
 
   static openInWindow(props) {
@@ -607,6 +826,7 @@ export default class Inspector extends Morph {
   }
 
   onMouseMove(evt) {
+    return;
     let tree = this.ui.propertyTree,
         loc = tree.textPositionFromPoint(evt.positionIn(tree)),
         node;
@@ -617,13 +837,21 @@ export default class Inspector extends Morph {
       }
       this.lastInteractive = node;
       node.interactive = true;
+      // this is a hack to ensure the application of style sheets
+      // which seem to be skipped due to then immediate rendering of
+      // the text morph
+      if (node._propertyWidget) {
+        node._propertyWidget.whenRendered().then(() => {
+          node._propertyWidget.requestStyling();
+        })
+      }
       tree.update(true);
     }
   }
 
   __after_deserialize__() {
     let t = this._serializableTarget;
-    var tree = new Tree({
+    var tree = new PropertyTree({
       name: "propertyTree",
       ...this.treeStyle,
       treeData: InspectionTree.forObject(null, this)
@@ -753,6 +981,7 @@ export default class Inspector extends Morph {
       treeStyle: {
         readOnly: true,
         defaultValue: {
+          draggable: true,
           borderWidth: 1,
           borderColor: Color.gray,
           fontSize: 14,
@@ -889,6 +1118,20 @@ export default class Inspector extends Morph {
         {autoApplyIfSingleChoice: true})});
   }
 
+  refreshSelectedLine() {
+    // instead of completely re-rendering the whole tree, identify the node at the selected line and replace it
+    let row = this.ui.propertyTree.selectedIndex - 1
+    let selectedNode = this.ui.propertyTree.selectedNode;
+    this.ui.propertyTree.selectedNode.refreshProperty();
+    let newLine = this.ui
+      .propertyTree.document.getLine(row)
+      .textAndAttributes.slice(0, 4)
+      .concat(selectedNode.display(this));
+    let lineRange = this.ui.propertyTree.lineRange(row, false);
+    this.ui.propertyTree.replace(lineRange, newLine, false, false, false);
+    this.ui.propertyTree.selectedNode = this.ui.propertyTree.selectedNode;
+  }
+
   refreshAllProperties() {
     if (!this.targetObject || !this.targetObject.isMorph) return;
     if (this.targetObject._styleSheetProps != this.lastStyleSheetProps) {
@@ -957,7 +1200,7 @@ export default class Inspector extends Morph {
       if (li) li.remove();
     } catch (e) { this.showError(e); }
 
-    this.startStepping(100,"refreshAllProperties");
+    this.startStepping(1000,"refreshAllProperties");
     this.updateInProgress = null;
   }
 
@@ -1036,11 +1279,11 @@ export default class Inspector extends Morph {
           new LabeledCheckBox({label: "Unknowns", name: "unknowns"})
         ]
       },
-      new Tree({
+      new PropertyTree({
         name: "propertyTree", ...this.treeStyle,
         treeData: InspectionTree.forObject(null, this)
       }),
-      Icon.makeLabel("keyboard-o", {
+      Icon.makeLabel("keyboard", {
         name: "terminal toggler",
         styleClasses: ["toggle", "inactive"]
       }),
