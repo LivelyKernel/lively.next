@@ -7,7 +7,6 @@ import {
   Text,
   GridLayout,
   HorizontalLayout,
-  StyleSheet,
   Path,
   Ellipse,
   Label,
@@ -40,7 +39,7 @@ class LeashEndpoint extends Ellipse {
       this.clearConnection();
     } else {
       var m = evt.hand.findDropTarget(
-        evt.hand.position,
+        evt.hand.globalPosition,
         [this.leash, this.leash.endPoint, this.leash.startPoint],
         m => this.canConnectTo(m)
       );
@@ -52,6 +51,8 @@ class LeashEndpoint extends Ellipse {
           .partNameNearest(obj.keys(Leash.connectionPoints), this.globalPosition);
         this.highlighter = $world.highlightMorph($world, this.possibleTarget, false, [this.closestSide]);
         this.highlighter.show();
+        if (this.possibleTarget.constructor.className == 'MorphContainer')
+          this.highlighter.get('name tag').value = this.possibleTarget.target.name;
       }
     }
     evt.state.endpoint = this;
@@ -66,7 +67,7 @@ class LeashEndpoint extends Ellipse {
   }
   
   getConnectionPoint() {
-    const {isPath, isPolygon, vertices, origin} = this.connectedMorph,
+    let {isPath, isPolygon, vertices, origin} = this.connectedMorph,
           gb = this.connectedMorph.globalBounds();
     if ((isPath || isPolygon) && this.attachedSide != "center") {
       const vs = vertices.map(({x, y}) => pt(x, y).addPt(origin)),
@@ -87,7 +88,9 @@ class LeashEndpoint extends Ellipse {
         && !["position", "extent", "rotation", "scale"].includes(change.prop)
         && change.target != this.connectedMorph) return;
     if (!this.connectedMorph) return;
-    const globalPos = this.getConnectionPoint(), pos = this.leash.localize(globalPos);
+    const globalPos = this.getConnectionPoint();
+    let pos = this.leash.localize(globalPos);
+    if (this.hasFixedPosition) pos = pos.subPt($world.scroll);
     this.vertex.position = pos;
     this.relayout();
   }
@@ -125,6 +128,7 @@ class LeashEndpoint extends Ellipse {
       nativeCursor: {defaultValue: '-webkit-grab'},
       attachedSide: {},
       connectedMorph: {},
+      draggable: { defaultValue: true },
       vertex: {
         after: ['leash'],
         get() {
@@ -160,7 +164,7 @@ export class Leash extends Path {
       start: {defaultValue: pt(0,0)}, end: {defaultValue: pt(0,0)},
       canConnectTo: {defaultValue: m => true},
       reactsToPointer: {defaultValue: false},
-      wantsDroppedMorphs: {defaultValue: false},
+      acceptsDroppedMorphs: {defaultValue: false},
       direction: {
         type: 'Enum',
         values: ['unidirectional', 'outward', 'inward'],
@@ -302,7 +306,8 @@ class SliderHandle extends Ellipse {
        borderWidth: { defaultValue: 1 },
        dropShadow: { defaultValue: new ShadowObject({blur: 5})},
        extent: { defaultValue: pt(15, 15) },
-       nativeCursor: { defaultValue: "-webkit-grab" }
+       nativeCursor: { defaultValue: "-webkit-grab" },
+       draggable: { defaultValue: true },
      }
    }
   
@@ -352,7 +357,7 @@ export class ValueScrubber extends Text {
   onKeyDown(evt) {
     super.onKeyDown(evt);
     if ("Enter" == evt.keyCombo) {
-      const [v, unit] = this.textString.split(" ");
+      const [v, unit] = this.textString.replace('\n', '').split(" ");
       if (typeof v == 'string') {
         this.value = parseFloat(v);
         signal(this, "scrub", this.scrubbedValue);
@@ -405,6 +410,7 @@ export class ValueScrubber extends Text {
     this.scrubbedValue = v;
     let textString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
     if (this.unit) textString += " " + this.unit;
+    else textString += "";
     this.replace(this.documentRange, textString, false, true);
     this.relayout();
   }
@@ -556,7 +562,7 @@ export class LabeledCheckBox extends Morph {
 
 export class ModeSelector extends Morph {
   static example() {
-    var cb = new ModeSelector({items: {foo: {}}}).openInWorld();
+    var cb = new ModeSelector({items: {foo: {}, trottel: {}, babbel: {}}}).openInWorld();
     // cb.remove()
   }
 
@@ -578,17 +584,17 @@ export class ModeSelector extends Morph {
       keys: { before: ['layout'] },
       values: { before: ['layout'] },
       tooltips: {},
-      styleSheets: {
+      fontColor: {
+        defaultValue: Color.black,
+      },
+      selectionFontColor: {
+        defaultValue: Color.white,
+      },
+      master: {
         initialize() {
-          this.styleSheets = new StyleSheet({
-            ".ModeSelector": {fill: Color.transparent, origin: pt(0, 5)},
-            ".ModeSelector [name=typeMarker]": {fill: Color.gray.darker(), borderRadius: 3},
-            ".ModeSelector .label": {
-              fontWeight: "bold",
-              nativeCursor: "pointer",
-              padding: Rectangle.inset(4)
-            }
-          });
+          this.master = {
+            auto: 'styleguide://SystemWidgets/mode selector'
+          }
         }
       },
       layout: {
@@ -605,7 +611,7 @@ export class ModeSelector extends Morph {
         }
       },
       submorphs: {
-        after: ["items", 'keys', 'values'],
+        after: ["items", 'keys', 'values', 'fontColor'],
         initialize() {
           if (!this.keys) return;
           this.submorphs = [
@@ -628,10 +634,13 @@ export class ModeSelector extends Morph {
       const tooltip = tooltips[name],
             label = morph({
               name: name + "Label",
-              styleClasses: ["label"],
+              master: {
+                auto: 'styleguide://SystemWidgets/mode label'
+              },
               type: "label",
               value: name,
-              autofit: true,
+              // autofit: true,
+              // fontColor: this.fontColor,
               ...(tooltip && {tooltip})
             });
       connect(label, 'onMouseDown', this, 'update', {
@@ -663,13 +672,13 @@ export class ModeSelector extends Morph {
     const newLabel = this.get(label + "Label");
     if (newLabel == this.currentLabel) return;
     this.getSubmorphsByStyleClassName('Label').forEach(m => {
-       if (m != newLabel) this.animateFontColor(m, Color.black, 200)
+       if (m != newLabel) this.animateFontColor(m, this.fontColor, 200)
     });
     this.currentLabel = newLabel;
     !silent && signal(this, label, value);
     !silent && signal(this, "switchLabel", value);
     this.relayout(!silent);
-    await this.animateFontColor(newLabel, Color.white, 200);
+    await this.animateFontColor(newLabel, this.selectionFontColor, 200);
   }
 }
 
@@ -703,33 +712,12 @@ export class DropDownSelector extends Morph {
           this.layout = new HorizontalLayout({spacing: this.padding});
         }
       },
-      styleSheets: {
-        after: ['fontFamily', 'fontSize'],
-        initialize() {
-          this.updateStyleSheet();
-        }
-      },
       submorphs: {
         initialize() {
           this.build();
         }
       }
     };
-  }
-
-  updateStyleSheet(args) {
-    this.styleSheets = new StyleSheet({
-      ".Label": {
-        fontColor: this.fontColor,
-        fontSize: this.fontSize,
-        fontFamily: this.fontFamily
-      },
-      "[name=dropDownIcon]": {
-        padding: rect(5,1,0,0),
-        opacity: .8
-      }
-    });
-    this.whenRendered().then(() => this.requestStyling());
   }
 
   build() {
@@ -743,7 +731,6 @@ export class DropDownSelector extends Morph {
       },
       this.dropDownLabel
     ];
-    connect(this, 'onChange', this, 'updateStyleSheet');
   }
 
   getMenuEntries() {
@@ -819,15 +806,18 @@ export class DropDownSelector extends Morph {
   }
 }
 
+//new SearchField().openInHand()
+
 export class SearchField extends Text {
 
   static get properties() {
     return {
       fixedWidth: {defaultValue: true},
-      styleSheets: {
-        after: ['selectedFontColor', 'idleFontColor'],
+      master: {
         initialize() {
-          this.updateStyleSheet();
+          this.master = {
+            auto: 'styleguide://SystemWidgets/search field'
+          }
         }
       },
       selectedFontColor: { 
@@ -946,34 +936,6 @@ export class SearchField extends Text {
     };
   }
 
-  updateStyleSheet() {
-    this.styleSheets = new StyleSheet({
-      ".SearchField": {
-        borderRadius: 15,
-        borderWidth: 1,
-        padding: rect(6, 3, 0, 0),
-        clipMode: 'hidden'
-      },
-      ".SearchField [name=placeholder]": {
-        padding: rect(6, 4, 0, 0),
-        fontColor: this.selectedFontColor,
-        opacity: .3
-      },
-      ".SearchField.idle": {
-        fontColor: this.idleFontColor
-      },
-      ".SearchField.selected": {
-        fontColor: this.selectedFontColor,
-        dropShadow: {
-          blur: 6,
-          color: Color.rgb(52, 152, 219),
-          fast: true,
-          distance: 0
-        }
-      }
-    });
-  }
-
   parseInput() {
     var filterText = this.textString,
         // parser that allows escapes
@@ -1026,8 +988,6 @@ export class SearchField extends Text {
       this.owner.focus();
     }
     this.active && inputChange && signal(this, "searchInput", this.parseInput());
-    if (['idleFontColor', 'selectedFontColor'].includes(change.prop))
-       this.updateStyleSheet();
   }
 
   onBlur(evt) {
@@ -1035,7 +995,6 @@ export class SearchField extends Text {
     this.active = false;
     this.get('placeholder').visible = !this.textString;
     this.animate({styleClasses: ["idle"], duration: 300});
-
   }
 
   onFocus(evt) {

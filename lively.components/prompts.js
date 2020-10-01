@@ -6,6 +6,7 @@ import { arr, obj, promise } from "lively.lang";
 import { connect } from 'lively.bindings';
 
 import { List, FilterableList } from './list.js';
+import { RadioButtonGroup, RadioButton } from "./buttons.js";
 
 export class AbstractPrompt extends Morph {
 
@@ -18,6 +19,7 @@ export class AbstractPrompt extends Morph {
       clipMode: {defaultValue: 'hidden'},
       _isActive: {defaultValue: false},
       autoRemove: {defaultValue: true},
+      epiMorph: { defaultValue: true },
       answer: {defaultValue: null, derived: true},
       label: {
         derived: true,
@@ -25,58 +27,6 @@ export class AbstractPrompt extends Morph {
         get() { return this.getSubmorphNamed("promptTitle").value; },
         set(label) { this.getSubmorphNamed("promptTitle").value = label; } 
       },
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            "[name=promptTitle]": {
-              fontWeight: 'bold',
-              textAlign: 'center',
-              fill: null, 
-              padding: Rectangle.inset(3),
-              fontSize: 14, 
-              fontColor: Color.gray,
-              fixedHeight: true,
-              clipMode: 'visible'
-            },
-            ".Button": {borderRadius: 15},
-            ".Button.standard": {
-              borderWidth: 2,
-              fill: Color.transparent,
-              borderColor: Color.white,
-              nativeCursor: "pointer"
-            },
-            ".Button.cancel": {
-              borderWidth: 2,
-              fill: Color.transparent,
-              borderColor: Color.red.lighter(),
-              fontStyle: "bold",
-              nativeCursor: "pointer"
-            },
-            ".Button.ok": {
-              borderWidth: 2,
-              fill: Color.transparent,
-              borderColor: Color.green.lighter(),
-              fontStyle: "bold",
-              nativeCursor: "pointer"
-            },
-            ".Button.standard [name=label]": {
-              fontStyle: "bold",
-              fontColor: Color.white
-            },
-            ".List": {
-              fill: Color.transparent,
-            },
-            ".Button.cancel [name=label]": {
-              fontColor: Color.red.lighter(),
-              fontStyle: "bold"
-            },
-            ".Button.ok [name=label]": {
-              fontColor: Color.green.lighter(),
-              fontStyle: "bold"
-            }
-          });
-        }
-      }
     };
   }
 
@@ -87,7 +37,6 @@ export class AbstractPrompt extends Morph {
     if (props.keybindings) this.addKeyBindings(props.keybindings);
   }
 
-  get isEpiMorph() { return true; }
   get isPrompt() { return true; }
 
   resolve(arg) { return this.answer.resolve(arg); }
@@ -112,6 +61,7 @@ export class AbstractPrompt extends Morph {
     return super.keybindings.concat([
       {keys: "Enter", command: "resolve"},
       {keys: "Escape", command: "reject"},
+      {keys: {mac: "Meta-."}, command: "reject"}
     ]);
   }
 
@@ -158,32 +108,42 @@ export class AbstractPrompt extends Morph {
   }
 
   addNamed(name, spec) {
-    let m = this.getSubmorphNamed(name) || this.addMorph({ ...spec, name });
+    let m = this.getSubmorphNamed(name) || this.addMorph(spec.isMorph ? spec : morph({ ...spec, name }));
     if (spec.label) m.label = spec.label; // to parametrize labels
+    if (spec.isMorph) m.name = name;
     return m;
   }
 
 }
 
-// $world.inform(lively.lang.arr.range(0,40).join("\n"))
 export class InformPrompt extends AbstractPrompt {
 
   static get properties() {
     return {
       lineWrapping: { defaultValue: true },
+      master: {
+        initialize() {
+          this.master = {
+            auto: "styleguide://SystemPrompts/prompts/inform"
+          }
+        }
+      }
     }
   }
 
+  // $world.inform('hi. I am an interesting guy.', { lineWrapping: false })
+
   build(props = {}) {
-    var {label} = props;
-    let title = this.addNamed('promptTitle', { type: "label"});
+    var {label, lineWrapping} = props;
+    let title = this.addNamed('promptTitle', { type: "text", lineWrapping });
     let okButton = this.addNamed('ok button', {
-      styleClasses: ['ok'], type: "button", label: "OK",
+      type: "button", label: "OK", width: 100,
     });
-    title.value = label;
+    this.addNamed('button wrapper', {
+      submorphs: [okButton]
+    });
+    title.textString = label;
     connect(okButton, 'fire', this, 'resolve');
-    if (!this.layout) this.initLayout();
-    title.lineWrapping = props.lineWrapping;
     if (!props.lineWrapping) {
       this.opacity = 0;
       this.whenRendered().then(() => {
@@ -197,17 +157,6 @@ export class InformPrompt extends AbstractPrompt {
     }
   }
 
-  initLayout() {
-    const label = this.getSubmorphNamed("promptTitle");
-    label.fit();
-    this.height = label.height + 30;
-    this.get('ok button').extent = pt(100,25);
-    this.layout = new VerticalLayout({
-      align: "center", spacing: 5
-    });
-    this.whenRendered().then(() => this.layout.apply())
-  }
-
   get keybindings() {
     return super.keybindings.concat([
       {keys: "Escape", command: "resolve"},
@@ -216,41 +165,49 @@ export class InformPrompt extends AbstractPrompt {
 
 }
 
+// new ConfirmPrompt().openInWorld()
+
 export class ConfirmPrompt extends AbstractPrompt {
 
   static get properties() {
     return {
       lineWrapping: { defaultValue: true },
       confirmLabel: { defaultValue: 'OK' },
-      rejectLabel: { defaultValue: 'CANCEL' }
+      rejectLabel: { defaultValue: 'CANCEL' },
+      master: { 
+        initialize() {
+          this.master = {
+            auto: 'styleguide://SystemPrompts/prompts/confirm'
+          }
+        }
+      }
     }
   }
 
   build(props) {
     let title = this.addNamed('promptTitle', {
-      type: "label"
+      type: "text"
     });
     title.value = props.label;
     
     let okButton = this.addNamed('ok button', {
-      styleClasses: ['ok'],
       type: "button",
       label: this.confirmLabel
     });
     let cancelButton = this.addNamed('cancel button', {
-      styleClasses: ['cancel'],
       type: "button",
       label: this.rejectLabel
     });
+    this.addNamed('button wrapper', { submorphs: [okButton, cancelButton]});
+    
     connect(okButton, 'fire', this, 'resolve');
     connect(cancelButton, 'fire', this, 'reject');
-    
-    this.initLayout();
     
     title.lineWrapping = this.lineWrapping;
     if (!this.lineWrapping) {
       this.opacity = 0;
       this.whenRendered().then(() => {
+        title.lineWrapping = this.lineWrapping;
         let center = this.center;
         this.width = Math.max(this.width, title.document.width + 100);
         this.center = center;
@@ -262,32 +219,9 @@ export class ConfirmPrompt extends AbstractPrompt {
   resolve() { super.resolve(true); }
   reject() { super.resolve(false); }
 
-  initLayout() {
-    if (this.layout) return;
-    const label = this.getSubmorphNamed("promptTitle");
-    this.opacity = 0;
-    this.whenRendered().then(() => {
-      this.width = Math.max(125, label.textBounds().width) + 10;
-      this.layout = new GridLayout({
-        columns: [
-          0, {paddingLeft: 5},
-          1, {paddingRight: 2.5, fixed: 60},
-          2, {paddingLeft: 2.5, fixed: 60},
-          3, {paddingRight: 5}
-        ],
-        rows: [
-          0, {fixed: label.textBounds().height + 10},
-          1, {paddingBottom: 5, fixed: 30}
-        ],
-        grid: [["promptTitle", "promptTitle", "promptTitle", "promptTitle"],
-          [null, "ok button", "cancel button", null]]
-      });
-      this.height = label.textBounds().height + 40;
-      this.opacity = 1;
-    })
-  }
 }
 
+// new MultipleChoicePrompt({ label: 'hallo', choices: [1,2,3]}).openInWorld()
 
 export class MultipleChoicePrompt extends AbstractPrompt {
 
@@ -308,6 +242,13 @@ export class MultipleChoicePrompt extends AbstractPrompt {
           if (choiceContainer = this.getSubmorphNamed('choices'))
             choiceContainer.choices = choices;
         }
+      },
+      master: {
+        initialize() {
+          this.master = {
+            auto: 'styleguide://SystemPrompts/prompts/multiple choice'
+          }
+        }
       }
     }
   }
@@ -318,75 +259,35 @@ export class MultipleChoicePrompt extends AbstractPrompt {
 
   build(props = {choices: ["No choice"]}) {
     let {label, choices} = props;
-    let okButton = this.getSubmorphNamed('ok button');
-    let cancelButton = this.getSubmorphNamed('cancel button');
+    let okButton = this.addNamed('ok button', { type: 'button' });
+    let cancelButton = this.addNamed('cancel button', { type: 'button' });
     
     if (label) {
       let title = this.addNamed("promptTitle", {
-        type: "label",
+        type: "text",
       });
       title.value = label;
     }
 
-    if (this.getSubmorphsByStyleClassName('RadioButtonGroup').length == 0) {
-      let choicesContainer = this.addMorph({
-        name: 'choices',
-        fill: Color.transparent,
-        layout: new VerticalLayout({spacing: 5, 
-                                    resizeSubmorphs: true,
-                                    direction: 'centered'})
-      });
-  
-      choices.forEach((choice, i) => {
-        var btn = choicesContainer.addMorph({
-          name: "button " + i, type: "button",
-          styleClasses: ['standard'],
-          padding: Rectangle.inset(10, 8),
-          label: choice});
-        btn.choice = choice;
-        connect(btn, 'fire', this, 'resolve', {converter: function() { return this.sourceObj.choice; }});
-      });
-    }
-    if (!this.layout) this.initLayout();
+    const choicesContainer = this.addNamed('choices', {
+      name: 'choices',
+      type: RadioButtonGroup,
+      choices,
+    });
+
+    this.addNamed('button wrapper', { submorphs: [okButton, cancelButton]});
     
     okButton && connect(okButton, 'fire', this, 'resolve');
     cancelButton && connect(cancelButton, 'fire', this, 'reject');
     
-    let choiceMorphs = this.getSubmorphsByStyleClassName('RadioButton');
-    this.opacity = 0;
-    this.whenRendered().then(() => {
-      let originalCenter = this.center;
-      this.width = arr.max([this.width, ...choiceMorphs.map(m => m.bounds().width + 70)]);
-      this.align(this.center, originalCenter);
-      this.opacity = 1;
-    })
-  }
-
-  initLayout() {
-    // fixme: layout should be able to let one morph
-    //         define the overall width of the container
-    var label = this.getSubmorphNamed("promptTitle"),
-        choices = this.get('choices');
-    label && label.fit();
-    var buttons = choices.submorphs.filter(({isButton}) => isButton);
-    buttons.forEach(ea => ea.fit());
-
-    this.layout = new GridLayout({
-      fitToCell: true,
-      columns: [0, {paddingLeft: 5, paddingRight: 5}],
-      rows: label ? [0, {height: 20, fixed: true},
-        1, {paddingBottom: 10}] : [0, {paddingBottom: 10}],
-      grid: label ?
-        [["promptTitle"],
-          ['choices']] :
-        [['choices']],
-    });
-
-    this.width = Math.max(
-      label ? label.width : 0,
-      choices.bounds().width);
-
-    this.height = choices.bounds().height + label.height;
+    // let choiceMorphs = this.getSubmorphsByStyleClassName('RadioButton');
+    // this.opacity = 0;
+    // this.whenRendered().then(() => {
+    //   let originalCenter = this.center;
+    //   this.width = arr.max([this.width, ...choiceMorphs.map(m => m.bounds().width + 70)]);
+    //   this.align(this.center, originalCenter);
+    //   this.opacity = 1;
+    // })
   }
 
   onKeyDown(evt) {
@@ -401,7 +302,6 @@ export class MultipleChoicePrompt extends AbstractPrompt {
     return super.onKeyDown(evt);
   }
 
-
 }
 
 export class TextPrompt extends AbstractPrompt {
@@ -413,7 +313,12 @@ export class TextPrompt extends AbstractPrompt {
 
   static get properties() {
     return {
-      lineWrapping: { defaultValue: true }
+      lineWrapping: { defaultValue: true },
+      master: {
+        initialize() {
+          this.master = { auto: 'styleguide://SystemPrompts/prompts/text' }
+        }
+      }
     }
   }
 
@@ -421,18 +326,14 @@ export class TextPrompt extends AbstractPrompt {
 
   build({label, input, historyId, useLastInput}) {
     let title = this.addNamed('promptTitle', {
-      type: "label"
+      type: "text"
     });
     title.value = label;
 
-    var inputLine = this.getSubmorphNamed('input') || Text.makeInputLine({
+    var inputLine = this.addNamed('input', Text.makeInputLine({
       historyId,
       highlightWhenFocused: false,
-      name: "input",
-      borderWidth: 0, borderRadius: 20, fill: Color.rgbHex("#DDD"),
-      fontSize: 14, fontColor: Color.rgbHex("#666"),
-      padding: Rectangle.inset(5,5), fixedHeight: false
-    });
+    }));
 
     inputLine.viewState.fastScroll = false;
     inputLine.textString = input || '';
@@ -442,18 +343,19 @@ export class TextPrompt extends AbstractPrompt {
       if (lastInput) inputLine.textString = lastInput;
     }
 
-    var inputWidth = inputLine.textBounds().width;
-    // if the input string we pre-fill is wide than we try to make it fit
-    if (inputWidth > this.width-25)
-      this.width = Math.min(this.maxWidth, inputWidth+25);
+    this.width = Math.max(this.width, title.textBounds().width + 50);
 
-    let okButton = this.addNamed('ok button', {type: "button", label: "OK", styleClasses: ['ok']});
-    let cancelButton = this.addNamed('cancel button', {type: "button", label: "CANCEL", styleClasses: ['cancel']});
+    let okButton = this.addNamed('ok button', {type: "button", label: "OK" });
+    let cancelButton = this.addNamed('cancel button', {type: "button", label: "CANCEL" });
+
+    this.addNamed('button wrapper', {
+      submorphs: [okButton, cancelButton]
+    })
 
     connect(okButton, 'fire', this, 'resolve');
     connect(cancelButton, 'fire', this, 'reject');
 
-    this.initLayout();
+    //this.initLayout();
 
     title.lineWrapping = this.lineWrapping;
     if (!this.lineWrapping) {
@@ -518,27 +420,27 @@ export class EditPrompt extends AbstractPrompt {
   static get properties() {
     return {
       extent: {defaultValue: pt(500, 300)},
+      master: {
+        initialize() {
+          this.master = {
+            auto: 'styleguide://SystemPrompts/prompts/edit'
+          }
+        }
+      }
     };
   }
 
   get maxWidth() { return this.env.world.visibleBounds().width - 20; }
 
   build({label, input, historyId, useLastInput, mode, textStyle, evalEnvironment}) {
-    let title = this.getSubmorphNamed('promptTitle') || this.addMorph({
-      fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray,
-      name: "promptTitle", type: "label", value: label
+    let title = this.addNamed('promptTitle', {
+      type: 'text', textString: label
     });
 
     if (!textStyle) textStyle = {};
     if (mode && !textStyle.fontFamily) textStyle.fontFamily = "Monaco, monospace";
 
-    var inputEditor = this.getSubmorphNamed('editor') || this.addMorph(new Text({
-      name: "editor",
-      clipMode: "auto",
-      borderWidth: 0, borderRadius: 5, fill: Color.white,
-      fontSize: 12, fontColor: Color.rgbHex("#666"),
-      padding: Rectangle.inset(8,4), fixedHeight: false,
-    }));
+    var inputEditor = this.addNamed('editor', { type: 'text' });
 
     inputEditor.textString = input || "";
     Object.assign(inputEditor, textStyle);
@@ -553,48 +455,16 @@ export class EditPrompt extends AbstractPrompt {
     if (inputWidth > this.width-25)
       this.width = Math.min(this.maxWidth, inputWidth+125);
 
-    if (!this.getSubmorphNamed('ok button'))
-      this.addMorph({name: "ok button", type: "button", label: "OK", styleClasses: ['ok']});
-    if (!this.getSubmorphNamed('cancel button'))
-      this.addMorph({name: "cancel button", type: "button", label: "CANCEL", styleClasses: ['cancel']});
+    const okButton = this.addNamed('ok button', { type: "button"});
+    const cancelButton = this.addNamed('cancel button', { type: "button"});
 
-    connect(this.getSubmorphNamed("ok button"), 'fire', this, 'resolve');
-    connect(this.getSubmorphNamed("cancel button"), 'fire', this, 'reject');
+    this.addNamed('button wrapper', { submorphs: [ okButton, cancelButton ]});
     
-
-    this.whenRendered().then(() => this.initLayout());
+    connect(okButton, 'fire', this, 'resolve');
+    connect(cancelButton, 'fire', this, 'reject');
 
     inputEditor.gotoDocumentEnd();
     inputEditor.scrollCursorIntoView();
-  }
-
-  initLayout() {
-    // this.initLayout();
-    if (this.layout) return;
-    const label = this.getSubmorphNamed("promptTitle"),
-          editor = this.getSubmorphNamed("editor");
-    label.fit();
-
-    const minWidth = Math.max(editor.textBounds().width+20, label.width);
-    if (this.width < minWidth)
-      this.width = Math.min(this.maxWidth, minWidth + 20);
-
-    const l = this.layout = new GridLayout({
-      columns: [
-        0, {paddingLeft: 4},
-        1, {fixed: 100, paddingRight: 2.5},
-        2, {paddingLeft: 2.5, paddingRight: 4, fixed: 100}
-      ],
-      rows: [
-        0, {fixed: label.height, paddingBottom: 2.5},
-        2, {paddingTop: 5, paddingBottom: 5, fixed: 35},
-      ],
-      grid: [
-        ["promptTitle", "promptTitle", "promptTitle"],
-        ["editor", "editor", "editor"],
-        [null, "ok button", "cancel button"]
-      ]
-    });
   }
 
   resolve(arg) {
@@ -679,45 +549,45 @@ export class EditPrompt extends AbstractPrompt {
 
 export class PasswordPrompt extends AbstractPrompt {
 
-  get maxWidth() { return 800; }
+  static get properties() {
+    return {
+      maxWidth: {
+        readOnly: true,
+        get() {
+          return 800;
+        }
+      },
+      master: {
+        initialize() {
+          this.master = {
+            auto: "styleguide://SystemPrompts/prompts/password"
+          }
+        }
+      }
+    }
+  }
 
   build({label, placeholder}) {
-    let title = this.getSubmorphNamed('promptTitle') || this.addMorph({
-      name: "promptTitle", type: "label", value: label
+    const title = this.addNamed("promptTitle", {
+      type: "text", value: label,
+      fixedHeight: true, // FIXME: this is a nasty vdom/text rendering bug
     });
 
-    var passwordInput = this.getSubmorphNamed('input') || this.addMorph(new PasswordInputLine({
-      fontSize: 20, name: "input", borderRadius: 20, 
-      fill: Color.rgbHex("#DDD"),
-      padding: rect(5,10,2,-2),
-      placeholder: placeholder || "", borderWidth: 0
-    }));
+    const passwordInput = this.addNamed("input", {
+      type: PasswordInputLine,
+      name: "input",
+      placeholder: placeholder || "",
+    });
+      
+    const okButton = this.addNamed("ok button", { type: "button", label: "OK" });
+    const cancelButton = this.addNamed("cancel button", {type: "button", label: "CANCEL"});
 
-    if (!this.getSubmorphNamed('ok button'))
-      this.addMorph({name: "ok button", type: "button", label: "OK", styleClasses: ['ok']});
-    if (!this.getSubmorphNamed('cancel button'))
-      this.addMorph({name: "cancel button", type: "button", label: "CANCEL", styleClasses: ['cancel']});
+    connect(okButton, 'fire', this, 'resolve');
+    connect(cancelButton, 'fire', this, 'reject');
 
-    connect(this.get("ok button"), 'fire', this, 'resolve');
-    connect(this.get("cancel button"), 'fire', this, 'reject');
-
-    if (!this.layout) {
-      this.layout = new GridLayout({
-        rows: [
-          0, {fixed: 25},
-          1, {paddingBottom: 5},
-          2, {paddingBottom: 5}
-        ],
-        columns: [
-          0, {height: 20, paddingLeft: 5, paddingRight: 2.5, min: 50},
-          //1, {fixed: 100},
-          1, {paddingLeft: 2.5, paddingRight: 5, min: 50}
-        ],
-        grid: [["promptTitle", "promptTitle"],
-          ["input", "input"],
-          ["ok button", "cancel button"]]
-      });
-    }
+    this.addNamed("button wrapper", {
+      submorphs: [okButton, cancelButton],
+    });
   }
 
   resolve() { super.resolve(this.get("input").acceptInput()); }
@@ -728,8 +598,10 @@ export class PasswordPrompt extends AbstractPrompt {
   }
 }
 
-export class ListPrompt extends AbstractPrompt {
+// new ListPrompt({ label: 'hallo', filterable: false, items: [1,2,3,4]}).openInWorld()
 
+export class ListPrompt extends AbstractPrompt {
+  
   static async example() {
     await $world.listPrompt("hello", [1,2,3,4], {multiSelect: true});
   }
@@ -741,24 +613,34 @@ export class ListPrompt extends AbstractPrompt {
         after: ['submorphs'],
         set(items) {
           if (this.submorphs.length > 0)
-            this.getSubmorphNamed('list').items = items || [];
+            this.getSubmorphNamed('prompt list').items = items || [];
+        }
+      },
+      filterable: {},
+      master: {
+        after: ['filterable'],
+        initialize() {
+          this.master = {
+            auto: this.getMaster()
+          }
         }
       },
       preselect: {
         derived: true,
         after: ['items'],
         set(idx) {
-          if (this.submorphs.length == 0) return;
-          let list = this.getSubmorphNamed('list');
+          let list = this.getSubmorphNamed('prompt list');
+          if (!list) return;
           list.selectedIndex = idx;
           list.scrollSelectionIntoView;
         }
       },
       onSelection: {
         derived: true,
-        after: ['preselect'],
+        after: ['preselect', 'submorphs'],
         set(cb) {
-          let list = this.getSubmorphNamed('list');
+          let list = this.getSubmorphNamed('prompt list');
+          if (!list) return;
           connect(list, "selection", (sel) => cb(sel, this));
         }
       }
@@ -769,8 +651,12 @@ export class ListPrompt extends AbstractPrompt {
     super.onChange(change);
     if (change.prop == 'extent' && this.layout && !this.layout.active) {
       let delta = change.value.subPt(change.prevValue);
-      this.getSubmorphNamed('list').height += delta.y;
+      this.getSubmorphNamed('prompt list').height += delta.y;
     }
+  }
+
+  getMaster() {
+    return this.filterable ? `styleguide://SystemPrompts/prompts/list` : `styleguide://SystemPrompts/prompts/edit list`
   }
 
   reset() {
@@ -790,7 +676,8 @@ export class ListPrompt extends AbstractPrompt {
     historyId,
     useLastInput,
     fuzzy, filterFunction, sortFunction,
-    actions, selectedAction, theme, items
+    actions, selectedAction, theme, items,
+    onSelection
   }) {
 
     this.extent = extent || pt(500,400);
@@ -800,19 +687,23 @@ export class ListPrompt extends AbstractPrompt {
     listFontSize = listFontSize || 12;
 
     let title = this.addNamed('promptTitle', {
-      type: "label"
+      type: "text"
     });
-    title.value = label;
+    title.textString = label;
 
-    let list =  this.addNamed('list', {
+    let list =  this.addNamed('prompt list', {
       type: filterable ? FilterableList : List,
       multiSelect,
-      historyId, useLastInput,
-      borderWidth: 0, borderColor: Color.gray,
-      fontSize: listFontSize, fontFamily: listFontFamily,
-      padding, itemPadding, inputPadding: Rectangle.inset(10,2),
-      theme: 'dark'
+      historyId,
+      useLastInput,
     });
+
+    // this should be handled by the base master
+    if (filterable) {
+      this.get('list').master = false;
+    } else {
+      this.get('prompt list').master = false;
+    }
 
     list.items = items;
 
@@ -821,50 +712,32 @@ export class ListPrompt extends AbstractPrompt {
       list.filterFunction = filterFunction;
     if (filterable && typeof sortFunction === "function")
       list.sortFunction = sortFunction;
+    if (onSelection && typeof onSelection === "function")
+      this.onSelection = onSelection;
     if (filterable && actions)
       list.actions = actions;
     if (filterable && selectedAction)
       list.selectedAction = selectedAction;
 
     let okButton = this.addNamed('ok button', {
-      type: "button", label: "Select",
-      styleClasses: ['ok']
+      type: "button",
     });
     let cancelButton = this.addNamed('cancel button', {
-      type: "button", label: "Cancel",
-      styleClasses: ['cancel']
+      type: "button",
     });
+    this.addNamed('button wrapper', { submorphs: [okButton, cancelButton]});
     connect(okButton, 'fire', this, 'resolve');
     connect(cancelButton, 'fire', this, 'reject');
-
-    if (!this.layout) {
-      this.layout = new GridLayout({
-        rows: [
-          0, {fixed: 25},
-          1, {paddingBottom: 10},
-          2, {fixed: 30, paddingBottom: 5}
-        ],
-        columns: [
-          0, {paddingLeft: 5},
-          1, {fixed: 100, paddingRight: 5},
-          2, {fixed: 100, paddingRight: 5}
-        ],
-        grid: [
-          ["promptTitle", "promptTitle", "promptTitle"],
-          ["list", "list", "list"],
-          [null,"ok button", "cancel button"]
-        ]
-      }); 
-    }
 
     if (filterable) {
       connect(list, 'accepted', this, 'resolve');
       connect(list, 'canceled', this, 'reject');
+      list.whenRendered().then(() => list.relayout());
     }
   }
 
   resolve(arg) {
-    let list = this.getSubmorphNamed("list");
+    let list = this.getSubmorphNamed("prompt list");
     var answer = arg || list instanceof FilterableList ?
       list.acceptInput() :
       {selected: list.selections, status: "accepted", actions: "default"};
@@ -878,10 +751,9 @@ export class ListPrompt extends AbstractPrompt {
     });
   }
 
-  focus() { this.getSubmorphNamed("list").focus(); }
+  focus() { this.getSubmorphNamed("prompt list").focus(); }
 
 }
-
 
 export class EditListPrompt extends ListPrompt {
 
@@ -889,48 +761,40 @@ export class EditListPrompt extends ListPrompt {
     await $world.editListPrompt("hello", [1,2,3,4], {multiSelect: true});
   }
 
+  static get properties() {
+    return {
+      master: {
+        initialize() {
+          this.master = { auto: 'styleguide://SystemPrompts/prompts/edit list' }
+        }
+      }
+    }
+  }
+
   build(props) {
     super.build(props);
 
-    this.getSubmorphNamed('list').items = props.items;
+    this.getSubmorphNamed('prompt list').items = props.items;
 
     var addBtn = this.addNamed("add item button", {
-          type: 'button',
-          styleClasses: ['standard'],
-          label: Icon.makeLabel("plus", {fontSize: 12})
-        }),
-        rmBtn = this.addNamed("remove item button", {
-          styleClasses: ['standard'],
-          type: 'button',
-          label: Icon.makeLabel("minus", {fontSize: 12})
-        });
+        type: 'button',
+        label: Icon.makeLabel("plus")
+      }),
+      rmBtn = this.addNamed("remove item button", {
+        type: 'button',
+        label: Icon.makeLabel("minus")
+      });
+
+    this.getSubmorphNamed('button wrapper').addMorph(addBtn);
+    this.getSubmorphNamed('button wrapper').addMorph(rmBtn);
 
     connect(addBtn, 'fire', this, 'addItemToList');
     connect(rmBtn, 'fire', this, 'removeSelectedItemsFromList');
-
-    if (!this.layout) {
-      this.layout = new GridLayout({
-        autoAssign: false,
-        columns: [
-          0, {paddingLeft: 5, paddingRight: 5},
-          3, {paddingRight: 5},
-          4, {paddingRight: 5}
-        ],
-        rows: [
-          0, {fixed: 30, paddingTop: 5, paddingBottom: 5},
-          1, {paddingBottom: 2},
-          2, {fixed: 30, paddingBottom: 5}
-        ],
-        grid: [["promptTitle", "promptTitle", "promptTitle", "promptTitle", "promptTitle"],
-          ["list", "list", "list", "list", "list"],
-          ["add item button", "remove item button", null, "ok button", "cancel button"]]
-      });
-    }
     
   }
 
   async removeSelectedItemsFromList() {
-    var list = this.get("list"),
+    var list = this.get("prompt list"),
         selectAfterwards = list.selectedItems.length != 1 ?
           -1 : list.selectedIndex === 0 ? 0 : list.selectedIndex-1;
     list.items = arr.withoutAll(list.items, list.selectedItems);
@@ -940,7 +804,7 @@ export class EditListPrompt extends ListPrompt {
   }
 
   async addItemToList() {
-    var list = this.get("list"),
+    var list = this.get("prompt list"),
         input = list.selection ? list.items[list.selectedIndex].string : "",
         toAdd = await this.world().prompt(
           "Input to add to the list", {
@@ -981,7 +845,7 @@ export class EditListPrompt extends ListPrompt {
   }
 
   resolve() {
-    var {values: list, selections} = this.get("list");
+    var {values: list, selections} = this.get("prompt list");
     return this.answer.resolve({list, selections});
   }
 

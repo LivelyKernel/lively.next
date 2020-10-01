@@ -68,6 +68,7 @@ export class ListItemMorph extends Label {
         selectionColor,
         selectionFontColor,
         nonSelectionFontColor,
+        borderRadius,
         fontSize,
         padding
       } = style;
@@ -77,6 +78,8 @@ export class ListItemMorph extends Label {
         this.nonSelectionFontColor = nonSelectionFontColor;
       if (selectionColor && this.selectionColor !== selectionColor)
         this.selectionColor = selectionColor;
+      if (borderRadius && borderRadius != this.borderRadius)
+        this.borderRadius = borderRadius;
       if (fontSize && this.fontSize !== fontSize) this.fontSize = fontSize;
       if (fontFamily && this.fontFamily !== fontFamily) this.fontFamily = fontFamily;
       if (padding && !this.padding.equals(padding)) this.padding = padding;
@@ -109,6 +112,11 @@ export class ListItemMorph extends Label {
     this._dragState = {sourceIsSelected: this.isSelected, source: this, itemsTouched: []};
     if (!list.multiSelect || !list.multiSelectViaDrag)
       list.onItemMorphDragged(evt, this);
+  }
+
+  onMouseDown(evt) {
+    super.onMouseDown(evt);
+    this.owner.owner.clickOnItem(evt);
   }
 
   onDrag(evt) {
@@ -324,28 +332,8 @@ var listCommands = [
   }
 ];
 
-
 export class List extends Morph {
 
-  static get styleSheet() {
-    return new StyleSheet({
-      ".List.dark": {
-        hideScrollbars: true,
-        fontFamily: "Monaco, monospace",
-        selectionColor: Color.gray.lighter(),
-        selectionFontColor: Color.black,
-        nonSelectionFontColor: Color.gray,
-      },
-      "[name=scrollbar]": {
-        fill: Color.transparent
-      },
-      ".List.dark .ListItemMorph": {
-        selectionFontColor: Color.black,
-        nonSelectionFontColor: Color.gray,
-      }
-    });
-  }
-  
   static get properties() {
 
     return {
@@ -356,7 +344,7 @@ export class List extends Morph {
       selectionColor: {
         type: 'ColorGradient',
         isStyleProp: true,
-        defaultValue: Color.blue
+        defaultValue: Color.rgb(21,101,192)
       },
       nonSelectionFontColor: {isStyleProp: true, defaultValue: Color.rgbHex("333")},
       fontColor:             {isStyleProp: true, defaultValue: Color.rgbHex("333")},
@@ -376,12 +364,14 @@ export class List extends Morph {
         set(s) { if (this.scroller) this.scroller.scroll = s; }
       },
 
-      styleSheets: {
+      master: {
         initialize() {
-          this.styleSheets = List.styleSheet;
+          this.master = {
+            auto: 'styleguide://SystemWidgets/list/light'
+          }
         }
       },
-
+      
       extent: {
         set(value) {
           if (value.eqPt(this.extent)) return;
@@ -519,6 +509,13 @@ export class List extends Morph {
       scroller: {
         after: ['submorphs'], readOnly: true,
         get() {  return this.getSubmorphNamed('scroller'); }
+      },
+
+      scrollable: {
+        derived: true,
+        get() {
+          return this.padding.top() + this.itemMorphs.length * this.itemHeight > this.height;
+        }
       },
 
       manualItemHeight: {type: "Boolean"},
@@ -716,7 +713,7 @@ export class List extends Morph {
             fontSize, fontFamily, fontColor,
             padding, itemPadding, selectionColor,
             selectionFontColor, nonSelectionFontColor,
-            itemBorderRadius, scrollBar, scroller
+            itemBorderRadius, scrollBar, scroller, scrollable
           } = this,
           {scroll: {x: left, y: top}} = scroller,
           padding = padding || Rectangle.inset(0),
@@ -759,7 +756,7 @@ export class List extends Morph {
         if (!itemMorph) {
           itemMorph = itemMorphs[i] = listItemContainer.addMorph(new ListItemMorph(style));
         }
-        itemMorph.reactsToPointer = false;
+        itemMorph.reactsToPointer = !scrollable;
         itemMorph.displayItem(
           item, itemIndex,
           goalWidth, itemHeight,
@@ -776,6 +773,7 @@ export class List extends Morph {
       listItemContainer.setBounds(pt(padLeft, padTop).subXY(0, top).extent(pt(this.width, totalItemHeight)));
       scroller.extent = this.extent;
       scrollBar.left = maxWidth - 1;
+      scroller.position = pt(0,0);
       scrollBar.extent = pt(1, totalItemHeight);
     });
   }
@@ -837,7 +835,8 @@ export class List extends Morph {
   onItemMorphDragged(evt, itemMorph) {}
 
   onHoverIn(evt) {
-    this.scroller.visible = true;
+    if (this.scrollable)
+      this.scroller.visible = true;
   }
 
   onHoverOut(evt) {
@@ -879,24 +878,6 @@ export class List extends Morph {
 import { connect } from "lively.bindings";
 
 export class FilterableList extends Morph {
-
-  static get styleSheet() {
-    return new StyleSheet({
-      ".FilterableList.dark [name=input]": {
-        borderWidth: 0,
-        fill: Color.gray.withA(0.8),
-        fontColor: Color.gray.darker(),
-        padding: rect(10, 2)
-      },
-      ".FilterableList.dark [name=input] [name=placeholder]": {
-        fontColor: Color.gray.darker().withA(.7)
-      },
-      ".FilterableList.default [name=input]": {
-        borderWidth: 0,
-        borderColor: Color.gray
-      }
-    });
-  }
 
   static get properties() {
 
@@ -1027,7 +1008,7 @@ export class FilterableList extends Morph {
 
       visibleItems: {
         derived: true, after: ["submorphs"],
-        get visibleItems() { return this.listMorph.items; }
+        get() { return this.listMorph.items; }
       },
 
       selection: {
@@ -1347,37 +1328,6 @@ export class DropDownList extends Button {
 
       openListInWorld: { defaultValue: false },
 
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            ".DropDownList [name=dropDownList]": {
-              fontSize: 12,
-              fontFamily: "Helvetica Neue, Arial, sans-serif",
-              borderWidth: 1,
-              borderColor: Color.gray
-            },
-            ".DropDownList.dark [name=dropDownList]": {
-              fontColor: Color.white,
-              nonSelectionFontColor: Color.white,
-              selectionColor: Color.gray,
-              selectionFontColor: Color.black,
-              fill: Color.black.withA(.7),
-              padding: rect(2,2,0,-2),
-              borderRadius: 2,
-              borderWidth: 0
-            },
-            ".Button.activeStyle": {
-              fill: new LinearGradient({
-                stops: [
-                  {offset: 0, color: Color.white},
-                  {offset: 1, color: new Color.rgb(236, 240, 241)}
-                ]
-              })
-            }
-          });
-        }
-      },
-
       listMorph: {
         after: ["labelMorph"],
         get() {
@@ -1388,12 +1338,7 @@ export class DropDownList extends Button {
           return list;
         }
       },
-
-      label: {
-        readOnly: true, after: ["labelMorph"],
-        get() { return this.getSubmorphNamed("label"); }
-      },
-
+      
       items: {
         derived: true, after: ["listMorph"],
         get() { return this.listMorph.items; },
@@ -1440,6 +1385,10 @@ export class DropDownList extends Button {
     };
 
   }
+
+  fitLabelMorph() {
+    // do not fit!
+  }
   
   constructor(props) {
     super(props);
@@ -1447,7 +1396,7 @@ export class DropDownList extends Button {
   }
 
   onLoad() {
-    if (!this.listMorph.selection) this.listMorph.selection = this.label.value[0];
+    if (!this.listMorph.selection) this.listMorph.selection = this.labelMorph.value[0];
   }
 
   isListVisible() { return !!this.listMorph.world(); }
@@ -1526,4 +1475,255 @@ export class DropDownList extends Button {
     ]);
   }
 
+}
+
+export class InteractiveItem extends ListItemMorph {
+  static get properties() {
+    return {
+      draggable: {
+        defaultValue: touchInputDevice ? false : true 
+      },
+      item: {
+        derived: true,
+        get() {
+          return this.list.items[this.itemIndex];
+        }
+      },
+      list: {
+        drived: true,
+        get() {
+          return this.owner.owner;
+        }
+      },
+      isListItem: {
+        get() {
+          return true
+        }
+      }
+    }
+  }
+
+  fit() {
+    // resize the target according to the style
+  }
+
+  onHaloGrabover(active) {
+    this.list.showDropPreviewFor(this, active);
+  }
+
+  async onDrop(evt) {
+     // insert a morph item in my place, or if I receive a label morph,
+     // just a vanilla label
+     if (this.item.isPreview) {
+       let wrappedMorph = evt.hand.grabbedMorphs[0];
+       super.onDrop(evt);
+       await this.list.whenRendered();
+       this.list.addItemAt({
+         morph: wrappedMorph,
+         isListItem: true
+       }, this.itemIndex);
+       this.list.clearPreviews();
+     }
+  }
+
+  select() {
+    this.list.selectedIndex = this.itemIndex;
+    this.item.morph.focus();
+  }
+
+  onMouseDown(evt) {
+    if (!touchInputDevice)
+      this.select();
+    else
+      this._touchDown = Date.now();
+  }
+
+  onMouseUp(evt) {
+    if (touchInputDevice && Date.now() - this._touchDown < 500) {
+       this.select();
+    }
+  }
+  
+  displayItem(item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
+    super.displayItem(item, itemIndex, goalWidth, itemHeight, pos, isSelected, style);
+    if (item.morph) item.morph.selected = isSelected;
+  }
+
+  onGrab(evt) {
+    // fixme: on mobile this gesture needs to be triggered in a different way
+    // maybe hold and wait?
+    let list = this.list;
+    let hasHaloAttached = evt.halo && evt.halo.target === this;
+    if (hasHaloAttached) evt.halo.detachFromTarget();
+    let copy = this.submorphs.length ? 
+         this.submorphs[0] : 
+         morph({ type: 'label', value: this.value});
+    evt.hand.grab(copy);
+    copy.position = evt.hand.localize(this.globalPosition);
+    if (hasHaloAttached) evt.halo.refocus(copy);
+    list.removeItem(this.list.items[this.itemIndex])
+    list.itemMorphs.forEach(m => m.remove());
+    list.update();
+  }
+  
+}
+
+export class MorphList extends List {
+
+  static get properties() {
+    return {
+      touchInput: {
+        get() {
+          return touchInputDevice;
+        }
+      },
+      items: {
+        group: "list", defaultValue: [], after: ["submorphs"],
+        set(items) {
+          this.setProperty("items", items.map(asItem));
+          this.itemMorphs.forEach(m => m.remove());
+          this.update();
+          if (this.attributeConnections)
+            signal(this, "values", this.values);
+        }
+      }
+    }
+  }
+
+  onLoad() {
+    super.onLoad();
+    this.clipMode = this.touchInput ? 'auto' : 'hidden';
+  }
+
+  showDropPreviewFor(itemMorph, active) {
+    let idx = itemMorph.itemIndex;
+    let hoveredItem = this.items[idx];
+    if (hoveredItem.isPreview && active) return;
+    this.clearPreviews();
+    if (!active) return;
+    this.addItemAt({
+      isListItem: true,
+      isPreview: true,
+      morph: morph({
+        reactsToPointer: false,
+        acceptsDrops: false,
+        width: this.width - 5,
+        height: this.itemHeight,        
+        fill: Color.orange.withA(.5)
+      })
+    }, idx);
+  
+  }
+
+  clearPreviews() {
+    // remove embedded morphs that got detached
+    this.items.filter(m => m.morph && m.morph.owner && !Path('morph.owner.isListItem').get(m))
+      .map(async m => this.removeItem(m));
+    this.items.filter(m => m.isPreview).map(p => this.removeItem(p));
+    // this.items.filter(m => m.morph && Path('morph.owner.isListItem').get(m)).forEach(m => {
+    //   m.morph.position = pt(0,0); 
+    //   m.morph.extent = m.morph.owner.extent;
+    // });
+    // fixme: add a proper relayout routine that fits morphs that are added to the list
+  }
+  
+  update() {
+    var items = this.items;
+    if (!items) return; // pre-initialize
+    if (!this.listItemContainer) return;
+    if (this.scroller) this.scroller.visible = false;
+    this.dontRecordChangesWhile(() => {
+      var {
+            itemHeight,
+            itemMorphs, listItemContainer,
+            selectedIndexes,
+            extent: {x: width, y: height},
+            fontSize, fontFamily, fontColor,
+            padding, itemPadding, selectionColor,
+            selectionFontColor, nonSelectionFontColor,
+            itemBorderRadius, scrollBar
+          } = this,
+          {scroll: {x: left, y: top}} = this,
+          padding = padding || Rectangle.inset(0),
+          padTop = padding.top() , padLeft = padding.left(),
+          padBottom = padding.bottom(), padRight = padding.right(),
+          scrollOffset = top,
+          firstItemIndex = Math.max(0, Math.floor(top / itemHeight)),
+          lastItemIndex = Math.min(items.length, Math.ceil((top + height) / itemHeight)),
+          maxWidth = 0,
+          goalWidth = this.width - (padLeft + padRight);
+
+      // try to keep itemIndexes in the items that were initially assigned to them
+      let rest, upper, lower;
+      
+      itemMorphs = arr.sortBy(itemMorphs, m => m.itemIndex);
+      [upper, rest] = arr.partition(itemMorphs, m => m.itemIndex < firstItemIndex);
+      [lower, rest] = arr.partition(rest, m => m.itemIndex > lastItemIndex);
+      itemMorphs = [...lower, ...rest, ...upper];
+
+      let style = {
+        fontSize, fontFamily,
+        fontColor: nonSelectionFontColor || fontColor,
+        padding: itemPadding, borderRadius: itemBorderRadius || 0,
+        selectionFontColor,
+        nonSelectionFontColor,
+        selectionColor
+      };
+
+      if (itemMorphs.length && lastItemIndex-firstItemIndex > itemMorphs.length) {
+         if (firstItemIndex != itemMorphs[0].itemIndex)
+           arr.pushAt(itemMorphs, listItemContainer.addMorph(new InteractiveItem(style)), 0);
+         else if (lastItemIndex != arr.last(itemMorphs).itemIndex)
+           itemMorphs.push(listItemContainer.addMorph(new InteractiveItem(style)));
+      }
+
+      for (var i = 0; i < lastItemIndex-firstItemIndex; i++) {
+        var itemIndex = firstItemIndex+i,
+            item = items[itemIndex];
+
+        if (!item) {
+          // if no items to display, remove remaining itemMorphs
+          itemMorphs.slice(i).forEach(itemMorph => itemMorph.remove());
+          break;
+        }
+
+        let itemMorph = itemMorphs[i];
+
+        if (!itemMorph) {
+          itemMorph = itemMorphs[i] = listItemContainer.addMorph(new InteractiveItem(style));
+          itemMorph.clipMode = 'visible';
+        }
+        itemMorph.displayItem(
+          item, itemIndex,
+          goalWidth, itemHeight,
+          pt(0, itemHeight * itemIndex),
+          selectedIndexes.includes(itemIndex),
+          style);
+
+        maxWidth = Math.max(maxWidth, itemMorph.width);
+      }
+      
+      let containerExtent, scrollHeight = Math.max(padTop + padBottom + itemHeight * items.length, this.height);
+      containerExtent = pt(this.width, scrollHeight).subPt(pt(padLeft + padRight,0));
+      listItemContainer.setBounds(pt(padLeft, padTop).extent(containerExtent));
+
+      scrollBar.left = maxWidth - 10;
+      scrollBar.fill = null;
+      scrollBar.top = 0;
+      scrollBar.extent = pt(1, scrollHeight);
+    });
+  }
+
+  onHoverIn(evt) {
+    this.clipMode = 'auto';
+  }
+
+  onHoverOut(evt) {
+    if (this.touchInput) return;
+    this.clipMode = 'hidden';
+  }
+
+  onScroll(evt) {
+    this.update();
+  }
 }

@@ -1,6 +1,7 @@
-import { Morph, Icon, touchInputDevice } from "lively.morphic";
+import { Morph, morph, Icon, touchInputDevice } from "lively.morphic";
 import { Rectangle, LinearGradient, Color, pt } from "lively.graphics";
-import { signal } from "lively.bindings";
+import { signal, connect } from "lively.bindings";
+import { arr, obj, Closure } from "lively.lang";
 
 export class Button extends Morph {
 
@@ -44,26 +45,36 @@ export class Button extends Morph {
           let oldVal = this.getProperty("pressed");
           this.setProperty("pressed", val);
           let realFill = (!val && oldVal && oldVal.originalFill) || this.fill;
-          this.fill = val && realFill ? realFill.darker() : realFill;
+          //this.fill = val && realFill ? realFill.darker() : realFill;
         }
       },
 
       fontSize: {
         group: "button styling",
-        type: "Number", min: 4, isStyleProp: true, defaultValue: 12,
-        after: ['labelMorph'],
+        derived: true,
+        type: "Number", min: 4, 
+        isStyleProp: true,
+        after: ['label'],
         set(s) {
-          this.setProperty('fontSize', s);
           this.labelMorph.fontSize = s;
+          if (this.labelMorph._parametrizedProps)
+            this.labelMorph._parametrizedProps.fontSize = s
+        },
+        get() {
+          return this.labelMorph.fontSize;
         }
       },
 
       fontColor: {
         group: "button styling",
-        isStyleProp: true, defaultValue: Color.almostBlack, after: ['labelMorph'],
+        derived: true,
+        isStyleProp: true,
+        after: ['labelMorph'],
         set(c) {
-          this.setProperty('fontColor', c);
           this.labelMorph.fontColor = c;
+        },
+        get() {
+          return this.labelMorph.fontColor;
         }
       },
 
@@ -94,21 +105,21 @@ export class Button extends Morph {
         set(val) { this.labelMorph.textAndAttributes = val; }
       },
 
-      icon: {
-        group: "button",
-        after: ['labelMorph'], derived: true, isStyleProp: true,
-        showInInspector: true,
-        type: "Icon", // "" -> no icon, else a valid font awesome icon code
-        get() { return this.label[0]; },
-        set(iconNameOrCode) {
-          try {
-            if (Array.isArray(iconNameOrCode)) this.label = iconNameOrCode;
-            else this.label = Icon.textAttribute(iconNameOrCode);
-          } catch (err) {
-            console.warn(`Button ${this}: Error assigning icon, ${err}`);
-          }
-        }
-      },
+      // icon: {
+      //   group: "button",
+      //   after: ['labelMorph'], derived: true, isStyleProp: true,
+      //   showInInspector: true,
+      //   type: "Icon", // "" -> no icon, else a valid font awesome icon code
+      //   get() { return this.label[0]; },
+      //   set(iconNameOrCode) {
+      //     try {
+      //       if (Array.isArray(iconNameOrCode)) this.label = iconNameOrCode;
+      //       else this.label = Icon.textAttribute(iconNameOrCode);
+      //     } catch (err) {
+      //       console.warn(`Button ${this}: Error assigning icon, ${err}`);
+      //     }
+      //   }
+      // },
 
       label: {
         group: "button",
@@ -122,16 +133,19 @@ export class Button extends Morph {
           } else {
             this.setProperty('label', stringOrAttributesOrMorph);
             this.labelMorph.value = stringOrAttributesOrMorph;
+            if (this.labelMorph._parametrizedProps)
+              this.labelMorph._parametrizedProps.value = stringOrAttributesOrMorph;
           }
-          this.labelMorph.whenFontLoaded().then(() => { 
-              this.labelMorph.invalidateTextLayout();
-              this.labelMorph.fit()
-          });
+          this.fitLabelMorph();
         }
       },
 
       fire: {
         group: "button", derived: true, readOnly: true, isSignal: true
+      },
+
+      action: {
+        serialize: false
       }
 
     };
@@ -170,6 +184,13 @@ export class Button extends Morph {
   onSubmorphChange(change, submorph) {
     if (submorph === this.labelMorph && change.prop === "extent") this.relayout();
     return super.onSubmorphChange(change, submorph);
+  }
+
+  fitLabelMorph() {
+    this.labelMorph.whenFontLoaded().then(() => { 
+        this.labelMorph.invalidateTextLayout();
+        this.labelMorph.fit()
+    });
   }
 
   relayout() {
@@ -216,11 +237,13 @@ export class Button extends Morph {
   }
 
   onMouseDown(evt) {
+    super.onMouseDown(evt);
     if (!evt.isAltDown() && !this.deactivated && this.considerPress(evt))
       this.pressed = {originalFill: this.fill};
   }
 
   onMouseUp(evt) {
+    super.onMouseUp(evt);
     if (evt.isClickTarget(this) && this.pressed) {
       this.trigger();
       this.pressed = null;
@@ -268,4 +291,219 @@ export class Button extends Morph {
     return items;
   }
 
+}
+
+export class RadioButton extends Morph {
+  static get properties() {
+    return {
+      indicator: {
+        get() {
+          return this.getSubmorphNamed('indicator');
+        }
+      },
+
+      master: {
+        after: ['selected'],
+        initialize() {
+          this.master = {
+            auto: this.getMaster(this.selected)
+          }
+        }
+      },
+
+      selectionColor: {},
+      selectionStyle: {},
+
+      selected: {
+        after: ['indicator'],
+        defaultValue: false,
+        set(bool) {
+          this.whenRendered().then(_ => {
+            let duration = 200;
+            this.master = {
+              auto: this.getMaster(bool)
+            }
+          });
+          this.setProperty('selected', !!bool);
+        }
+      },
+
+      valueFunctionString: {
+        defaultValue: '"function (morph) { return morph.value; }"',
+        set(funcOrString) {
+          this.setProperty('valueFunctionString', funcOrString.toString());
+          this.valueFn = undefined;
+        }
+      },
+
+      submorphs: {
+        initialize() {
+          this.submorphs = [
+            { type: 'ellipse', name: 'indicator' },
+          ]
+        }
+      }
+    }
+  }
+
+  getMaster(selected) {
+    return selected ? 
+      `styleguide://SystemPrompts/prompts/buttons/selection/selected` :
+      `styleguide://SystemPrompts/prompts/buttons/selection/unselected`
+  }
+
+  reset() {
+    let indicator = this.indicator;
+    indicator.borderWidth = 1;
+    indicator.borderColor = Color.gray
+    this.selected = false;
+
+    connect(indicator, 'onMouseUp', this, 'select');
+  }
+
+  get morph() {
+    let indicator = this.indicator;
+    return this.submorphs.find(m => m !== indicator);
+  }
+
+  set morph(morph) {
+    let indicator = this.indicator;
+    this.submorphs.forEach(m => {
+      if (m === indicator) return;
+      m.remove();
+    });
+    morph.position = pt(50, 0);
+    this.addMorph(morph);
+  }
+
+  get value() {
+    if (!this.valueFn) {
+      let fnCode;
+      try {
+        fnCode = JSON.parse(this.valueFunctionString);
+      } catch(e) {
+        fnCode = this.valueFunctionString;
+      }
+      this.valueFn = Closure.fromSource(fnCode).recreateFunc();
+    }
+
+    return this.morph ? this.valueFn(this.morph) : undefined;
+  }
+
+  onMouseDown(evt) {
+    this.select();
+  }
+
+  select() {
+    this.selected = true;
+    this.owner.setSelection(this);
+  }
+}
+
+export class RadioButtonGroup extends Morph {
+  static get properties() {
+    return {
+      choices: {
+        derived: true,
+        defaultValue: [],
+        get() {
+          return this.submorphs.map(m => m.value);
+        },
+        set(labels) {
+          this.removeAllButtons();
+          if (obj.isArray(labels)) {
+            labels.forEach(value => {
+              this.addButton(morph({
+                name: 'label', type: 'label', value, reactsToPointer: false
+              }))
+            });
+          } else {
+            [...labels.entries()].forEach(([label, value]) => {
+              this.addButton(morph({
+                name: 'label', type: 'label', value: label, reactsToPointer: false
+              }), value);
+            })
+          }
+          this.submorphs[0] && this.setSelection(this.submorphs[0]);
+        },
+        value: {
+          derived: true,
+          after: ['submorphs'],
+          get() {
+            let selection = this.selectedButton;
+            return selection ? selection.value : null;
+          },
+          set(value) {
+            let buttonToSelect = this.submorphs.find(m => {
+              try {
+                return m.value === value;
+              } catch(e) {
+                return false
+              }
+            });
+            if (buttonToSelect) {
+              buttonToSelect.select();
+            } else {
+              this.setSelection(null);
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  reset() {
+    this.submorphs.forEach(m => m.reset());
+    this.layout.layoutableSubmorphs[0].selected = true;
+  }
+
+  removeAllButtons() {
+    this.removeAllMorphs();
+    this.height = 10;
+  }
+
+  addButton(morph, optValue) {
+    let button = new RadioButton();
+    button.reset();
+    button.morph = morph;
+    if (optValue != undefined) {
+      button.internalValue = optValue;
+      button.valueFunctionString = "function (morph) { return morph.owner.internalValue; }"
+    }
+    this.addMorph(button);
+    return button;
+  }
+
+  setSelection(activeButton) {
+    this.submorphs.forEach(m => {
+      if (m !== activeButton) {
+        m.selected = false;
+      }
+    });
+    activeButton.selected = true;
+  }
+
+  get selectedButton() {
+    return this.submorphs.find(m => m.selected);
+  }
+
+  get value() {
+    let selection = this.selectedButton;
+    return selection ? selection.value : null;
+  }
+
+  set value(value) {
+    let buttonToSelect = this.submorphs.find(m => {
+      try {
+        return m.value === value;
+      } catch(e) {
+        return false
+      }
+    });
+    if (buttonToSelect) {
+      buttonToSelect.select();
+    } else {
+      this.setSelection(null);
+    }
+  }
 }

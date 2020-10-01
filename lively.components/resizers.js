@@ -5,11 +5,14 @@ import { Morph } from "lively.morphic";
 export class VerticalResizer extends Morph {
 
   static get properties() {
-    return {fill: Color.gray.lighter(), nativeCursor: "ew-resize",
+    return {
+      fill: { defaultValue: Color.gray.lighter()},
+      nativeCursor: { defaultValue: "ew-resize"},
       fixed: {defaultValue: []},
       scalingLeft: {defaultValue: []},
       scalingRight: {defualtValue: []},
-      minWidth: {defaultValue: 20}
+      minWidth: {defaultValue: 20},
+      draggable: {defaultValue: true},
     };
   }
 
@@ -87,7 +90,8 @@ export class HorizontalResizer extends Morph {
       fixed: {defaultValue: []},
       scalingBelow: {defaultValue: []},
       scalingAbove: {defaultValue: []},
-      minHeight: {defaultValue: 20}
+      minHeight: {defaultValue: 20},
+      draggable: {defaultValue: true},
     };
   }
 

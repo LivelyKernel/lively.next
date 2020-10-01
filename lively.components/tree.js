@@ -1,7 +1,7 @@
 /*global Map,WeakMap*/
 import { arr, fun, obj, tree, string, promise } from "lively.lang";
 import { pt, Rectangle, Color } from "lively.graphics";
-import { Morph, Text, config, StyleSheet, touchInputDevice, Label } from "lively.morphic";
+import { Morph, Text, config, touchInputDevice, Label } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 import bowser from 'bowser';
 
@@ -44,15 +44,9 @@ export class Tree extends Text {
   static get properties() {
 
     return {
-      styleSheets: {
-        after: ['selectionColor', 'selectionFontColor', 'nonSelectionFontColor', 'fontColor'],
-        initialize() {
-          this.updateStyleSheet();
-        }
-      },
       selectionColor: {
         type: 'ColorGradient',
-        defaultValue: Color.blue,
+        defaultValue: Color.rgb(21,101,192),
       },
       fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
       nativeCursor: {defaultValue: 'auto'},
@@ -61,12 +55,24 @@ export class Tree extends Text {
       readOnly: {defaultValue: true},
       fixedWidth: {defaultValue: true},
       fixedHeight: {defaultValue: true},
+      disableIndent: {defaultValue: false},
+      activateOnHover: { defaultValue: true},
       lineHeight: {
         defaultValue: 1.5
       },
-      clipMode: {defaultValue: "auto"},
+      clipMode: {
+        defaultValue: "auto",
+      },
       padding: {defaultValue: Rectangle.inset(3)},
 
+      master: {
+        initialize() {
+          this.master = {
+            auto: 'styleguide://SystemWidgets/tree/light'
+          }
+        }
+      },
+      
       resizeNodes: {
         defaultValue: false,
         set(val) { this.setProperty("resizeNodes", val); this.resetCache(); this.update(); }
@@ -138,46 +144,18 @@ export class Tree extends Text {
     };
   }
 
-  updateStyleSheet() {
-    this.styleSheets = new StyleSheet({
-      ".TreeNode .PropertyControl": {
-        fontSize: this.fontSize,
-        fontColor: this.fontColor
-      },
-      ".TreeNode .TreeLabel": {
-        fontSize: this.fontSize
-      },
-      ".TreeNode.deselected": {
-        fill: Color.transparent
-      },
-      ".TreeNode.selected": {
-        fill: this.selectionColor
-      },
-      ".TreeNode.selected .TreeLabel": {
-        fontColor: this.selectionFontColor,
-        borderColor:  this.selectionFontColor
-      },
-      ".TreeNode.deselected .TreeLabel": {
-        fontColor: this.nonSelectionFontColor,
-        borderColor:  this.nonSelectionFontColor
-      }
-    });
-  }
-
   constructor(props = {}) {
     if (!props.treeData)
       throw new Error("Cannot create tree without TreeData!");
     super(props);
     this.resetCache();
     this.update();
-    this.selectionColor = props.selectionColor || Color.blue;
   }
 
   onChange(change) {
     super.onChange(change);
-    if (['fontSize', 'fontColor', 'selectionColor', 
+    if (['fontSize', 'fontColor', 'selectionColor', 'disableIndent',
          'nonSelectionFontColor', 'selectionFontColor'].includes(change.prop)) {
-      this.updateStyleSheet();
       this.update(true);
     }
   }
@@ -243,7 +221,7 @@ export class Tree extends Text {
   computeTreeAttributes(nodes) {
     if (!nodes.length) return [];
     var containerTextAndAttributes = arr.genN(8 * (nodes.length - 1), () => null), 
-        i = 1, j, isSelected, toggleWidth = this.fontSize * 1.3;
+        i = 1, j, isSelected, toggleWidth = this.disableIndent ? 0 : this.fontSize * 1.3;
     for (; i < nodes.length; i++) {
       j = 8 * (i - 1);
       isSelected = this.selectedIndex == i;
@@ -253,25 +231,27 @@ export class Tree extends Text {
       containerTextAndAttributes[j + 1] = {
         fontSize: toggleWidth,
         fontColor: Color.transparent, 
-        textStyleClasses: ['far'],
+        textStyleClasses: ['fas'],
         paddingRight: (toggleWidth * (nodes[i].depth - 1)) + 'px'
       };
       // toggle
       containerTextAndAttributes[j + 3] = {
         fontColor: Color.transparent, 
-        textStyleClasses: ['far'],
+        textStyleClasses: ['fas'],
         paddingTop: (this.fontSize / 10) + 'px',
         paddingRight: (this.fontSize / 8) + 'px'
       };
       if (!this.treeData.isLeaf(nodes[i].node)) {
-         containerTextAndAttributes[j + 2] = this.treeData.isCollapsed(nodes[i].node) ? " \uf0fe " : " \uf146 "; 
+         containerTextAndAttributes[j + 2] = this.treeData.isCollapsed(nodes[i].node) ? " \uf0da " : " \uf0d7 "; 
          Object.assign(
             containerTextAndAttributes[j + 3], {
+              paddingRight: this.treeData.isCollapsed(nodes[i].node) ? `${this.fontSize / 4}px` : "0px",
+              paddingTop: '0px',
               nativeCursor: 'pointer',
               fontColor: this.fontColor
          })
       } else {
-         containerTextAndAttributes[j + 2] = "     "; 
+         containerTextAndAttributes[j + 2] = this.disableIndent ? "" : "    "; 
       }
       // node
       let displayedNode = this.treeData.safeDisplay(nodes[i].node);
@@ -308,42 +288,46 @@ export class Tree extends Text {
     //        which makes for a faster rendering of the tree.
     if (this._updating || !this.treeData || !this.nodeItemContainer) return;
     this._updating = true;
-    
-    this.withMetaDo({isLayoutAction: true}, () => {
-      let {
-            treeData,
-            padding,
-            extent,
-            resizeNodes,
-            nodeMorphs,
-            selectedNode
-          } = this,
-          nodes = treeData.asListWithIndexAndDepth(),
-          treeDataRestructured = this.treeData !== this.lastTreeData || 
-                                 this.lastNumberOfNodes !== nodes.length;
-      
-      var row, attrs;
-      if (treeDataRestructured || force) {
-        this.replace(
-           {start: {row: 0, column: 0}, 
-            end: this.documentEndPosition}, 
-            this.computeTreeAttributes(nodes),
-            false, false);
-        this.invalidateTextLayout(true, false);
-        this.whenRendered().then(async () => {
-           this.makeDirty();
-        });
-      } else if (this._lastSelectedIndex) {
-        this.recoverOriginalLine(this._lastSelectedIndex - 1);
-      }
-      this.lastTreeData = this.treeData;
-      this.lastNumberOfNodes = nodes.length;
-      this.cursorPosition = {row: 0, column: 0};
-      if (this.selectedIndex > 0) {
-        this.renderSelectedLine(this.selectedIndex - 1);
-      }
-    });
-    this._updating = false;
+
+    try {
+      this.withMetaDo({isLayoutAction: true}, () => {
+        let {
+              treeData,
+              padding,
+              extent,
+              resizeNodes,
+              nodeMorphs,
+              selectedNode
+            } = this,
+            nodes = treeData.asListWithIndexAndDepth(),
+            treeDataRestructured = this.treeData !== this.lastTreeData || 
+                                   this.lastNumberOfNodes !== nodes.length;
+        
+        var row, attrs;
+        if (treeDataRestructured || force) {
+          this.replace(
+             {start: {row: 0, column: 0}, 
+              end: this.documentEndPosition}, 
+              this.computeTreeAttributes(nodes),
+              false, false);
+          this.invalidateTextLayout(true, false);
+          this.whenRendered().then(async () => {
+             this.makeDirty();
+          });
+        } else if (this._lastSelectedIndex) {
+          this.recoverOriginalLine(this._lastSelectedIndex - 1);
+        }
+        this.lastTreeData = this.treeData;
+        this.lastNumberOfNodes = nodes.length;
+        this.cursorPosition = {row: 0, column: 0};
+        if (this.selectedIndex > 0) {
+          this.renderSelectedLine(this.selectedIndex - 1);
+        }
+      });
+    } finally {
+      this._updating = false;
+    }
+
   }
   
   buildViewState(nodeIdFn) {
@@ -457,6 +441,27 @@ export class Tree extends Text {
     if (f.isText && !f.readOnly) return;
     return super.onKeyDown(evt);
   }
+
+  onDragStart(evt) {
+    super.onDragStart(evt);
+    let { onDragStart, onDrag, onDragEnd } = this.textAttributeAtPoint(evt.positionIn(this)) || {};
+    if (onDrag) this._onDragHandler = onDrag;
+    if (onDragEnd) this._onDragEndHandler = onDragEnd;
+    if (onDragStart) onDragStart(evt);
+  }
+
+  onDrag(evt) {
+    // allow text attributes to be dragged instead
+    if (this._onDragHandler) this._onDragHandler(evt);
+    else super.onDrag(evt);
+  }
+
+  onDragEnd(evt) {
+    super.onDragEnd(evt);
+    delete this._onDragHandler
+    if (this._onDragEndHandler) this._onDragEndHandler(evt);
+    delete this._onDragEndHandler;
+  }
   
   async onMouseDown(evt) {
     //super.onMouseDown(evt);
@@ -471,17 +476,28 @@ export class Tree extends Text {
       if (this.selectedIndex != row + 1)
          this.selectedIndex = row + 1;
     }
+    // check for defined onMouseDown in attributes
+    let { onMouseDown } = this.textAttributeAt({ row, column }) || {};
+    if (onMouseDown) onMouseDown(evt);
+  }
+
+  onMouseUp(evt) {
+    super.onMouseUp(evt);
+    let { onMouseUp } = this.textAttributeAtPoint(evt.positionIn(this)) || {};
+    if (onMouseUp) onMouseUp(evt);
   }
 
   onHoverIn(evt) {
     super.onHoverIn(evt);
-    this.clipMode = 'auto';
+    if (this.activateOnHover)
+      this.clipMode = 'auto';
   }
 
   onHoverOut(evt) {
     super.onHoverOut(evt);
     if (touchInputDevice) return;
-    this.clipMode = 'hidden';
+    if (this.activateOnHover)
+      this.clipMode = 'hidden';
   }
   
   onContextMenu(evt) {

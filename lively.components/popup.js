@@ -1,6 +1,7 @@
 import { Morph, VerticalLayout, StyleSheet, Icon, CustomLayout } from "lively.morphic";
 import { Color, rect, pt } from "lively.graphics";
 import { connect } from "lively.bindings";
+import { Path } from "lively.lang";
 
 let duration = 300;
 
@@ -10,11 +11,11 @@ export class Popover extends Morph {
     return {
       epiMorph: { defaultValue: true },
       hasFixedPosition: {defaultValue: true },
-      popoverColor: {
-        defaultValue: Color.rgbHex('c9c9c9'),
-        set(v) {
-          this.setProperty('popoverColor', v);
-          this.updateStyleSheet();
+      master: {
+        initialize() {
+          this.master = {
+            auto: 'styleguide://SystemWidgets/popover/light'
+          }
         }
       },
 
@@ -39,23 +40,6 @@ export class Popover extends Morph {
         }
       },
 
-      styleSheets: {
-        initialize() {
-          this.updateStyleSheet();
-        }
-      },
-
-      layout: {
-        initialize() {
-          this.layout = new CustomLayout({
-            relayout(self, animated) { self.relayout(animated); }
-          });
-          this.whenRendered().then(() => {
-            this.layout.reactToSubmorphAnimations = true
-          })
-        }
-      },
-
       submorphs: {
         initialize() {
           this.submorphs = [
@@ -77,8 +61,12 @@ export class Popover extends Morph {
               borderColor: Color.transparent,
             }
           ];
-          let [_1, _2, btn] = this.submorphs;
+          let [_1, body, btn] = this.submorphs;
           connect(btn, 'fire', this, 'close');
+          connect(body, 'extent', this, 'relayout', {
+            converter: '() => target.animated'
+          });
+          setTimeout(() => this.animated = true, 1000);
         }
       }
     };
@@ -93,52 +81,17 @@ export class Popover extends Morph {
 
     if (animated) {
       body.animate({
-        extent: body.submorphBounds().extent(), 
         topCenter: pt(0, offset),
-        duration
+        duration: 200,
       });
-      closeBtn.animate({topRight: body.topRight.addXY(padding, -padding), duration});
+      closeBtn.animate({topRight: body.topRight.addXY(padding, -padding), duration: 200 });
     } else {
-      body.extent = body.submorphBounds().extent();
       body.topCenter = pt(0, offset);
       closeBtn.topRight = body.topRight.addXY(padding, -padding);
     }
   }
 
-  updateStyleSheet() {
-    this.styleSheets = new StyleSheet({
-      ".Popover": {
-        //dropShadow: true,
-        fill: Color.transparent,
-        borderRadius: 4
-      },
-      "[name=body]": {
-        layout: new VerticalLayout({resizeContainer: true, reactToSubmorphAnimations: true}),
-        fill: this.popoverColor,
-        dropShadow: true,
-        borderRadius: 4,
-        clipMode: "hidden"
-      },
-      ".controlName": {
-          fontSize: 14,
-          padding: rect(0, 3, 0, 0),
-          opacity: 0.5,
-          fontWeight: 'bold'
-        },
-      ".NumberWidget": {
-        padding: rect(5, 3, 0, 0),
-        borderRadius: 3,
-        borderWidth: 1,
-        borderColor: Color.gray
-      },
-      "[name=arrow]": {
-        fill: this.popoverColor.isGradient ?
-          this.popoverColor.stops[0].color : this.popoverColor,
-        dropShadow: {blur: 3, color: Color.black.withA(0.4)},
-        draggable: false
-      },
-    });
-  }
+  
 
   close() {
     this.fadeOut(300);

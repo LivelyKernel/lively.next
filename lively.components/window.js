@@ -12,163 +12,30 @@ import { easings } from "lively.morphic/rendering/animations.js";
 
 export default class Window extends Morph {
 
-  static get nodeStyleSheet() {
-    return new StyleSheet({
-      ".node .LabeledCheckBox .Label": {
-        "fontColor": Color.rgb(214,219,223)
-      },
-      ".node .List": {
-        "borderColor": Color.rgb(133,146,158),
-        "fill": Color.rgb(86,101,115),
-        "fontColor": Color.rgb(174,182,191),
-        "nonSelectionFontColor": Color.rgb(214,219,223),
-        "selectionColor": Color.rgb(174,182,191),
-        "selectionFontColor": Color.rgb(52,73,94)
-      },
-      ".node .SearchField": {
-        "fill": Color.rgb(93,109,126),
-        "selectedFontColor": Color.rgb(213,216,220)
-      },
-      ".node .Text": {
-        "borderColor": Color.rgb(171,178,185),
-        "fontColor": Color.rgb(214,219,223),
-        "selectionColor": Color.rgba(212,230,241,0.16)
-      },
-      ".node .Tree": {
-        "borderColor": Color.rgb(133,146,158),
-        "fill": Color.rgb(86,101,115),
-        "selectionColor": Color.rgb(174,182,191),
-        "selectionFontColor": Color.rgb(52,73,94)
-      },
-      ".node [name=metaInfoText]": {
-        "fill": Color.rgb(86,101,115),
-        "fontColor": Color.rgb(214,219,223)
-      },
-      ".node.active": {
-        "borderColor": Color.rgb(93,109,126),
-        "fill": Color.rgb(33,47,61)
-      },
-      ".node.active .Button": {
-        "borderColor": Color.rgb(52,73,94),
-        "fill": new LinearGradient({
-          stops: [
-            {offset: 0, color: Color.rgb(127,140,141)}, {offset: 1, color: Color.rgb(97,106,107)}
-          ],
-          vector: 0
-        }),
-        "fontColor": Color.rgb(253,254,254),
-        "opacity": 1
-      },
-      ".node.active .windowTitleLabel": {
-        "fontColor": Color.rgb(174,182,191)
-      },
-      ".node.inactive": {
-        "fill": Color.rgb(171,178,185)
-      },
-      ".node.inactive .Button": {
-        "fill": new LinearGradient({
-          stops: [{
-            offset: 0, color: Color.rgb(52,73,94)}, {offset: 1, color: Color.rgb(33,47,60)}
-          ],
-          vector: 0
-        }),
-        "fontColor": Color.rgb(235,237,239),
-        "opacity": 0.3
-      },
-      ".node.inactive .Label": {
-        "fontColor": Color.rgb(234,236,238)
-      },
-      ".node.inactive .windowTitleLabel": {
-        "fontColor": Color.rgb(234,236,238)
-      }
-    })
-  }
-
-  static get styleSheet() {
-    let windowButtonSize = pt(13, 13);
-    return new StyleSheet('System Window Style',{
-      ".Window .buttonGroup": {
-        draggable: false,
-        fill: Color.transparent,
-        position: pt(0, 0),
-        layout: new HorizontalLayout({autoResize: true, spacing: 6})
-      },
-      ".Window.inactive .windowButton .Label": {
-        fontColor: Color.gray.darker(),
-      },
-      ".Window .defaultLabelStyle": {
-        fontSize: 14,
-        position: pt(2,1)
-      },
-      ".Window .buttonGroup .windowButton": {
-        borderRadius: 14,
-        fill: Color.transparent,
-        nativeCursor: 'pointer',
-        extent: pt(15,13)
-      },
-      ".Window .windowButton .Label": {
-        nativeCursor: 'pointer'
-      },
-      ".Window .closeButton .Label.highlight": {
-        fontColor: Color.rgb(223, 75, 75),
-      },
-      ".Window.active .closeButton .Label.default": {
-        fontColor: Color.rgb(255, 96, 82)
-      },
-      ".Window .minimizeButton .Label.highlight": {
-        fontColor: Color.rgb(224, 177, 77),
-      },
-      ".Window.active .minimizeButton .Label.default": {
-        fontColor: Color.rgb(255, 190, 6)
-      },
-      ".Window .windowMenuButton .Label.highlight": {
-        fontColor: Color.rgb(40,116,166),
-      },
-      ".Window.active .windowMenuButton .Label.default": {
-        fontColor: Color.rgb(52,152,219),
-      },
-      ".Window .windowTitleLabel": {
-        fill: Color.transparent,
-        fontColor: Color.darkGray
-      },
-      ".Window": {
-        borderRadius: 7,
-        borderColor: Color.gray,
-        borderWidth: 1
-      },
-      ".Window.inactive": {
-        fill: Color.lightGray.lighter(),
-        dropShadow: {
-          fast: true,
-          rotation: 90,
-          distance: 8,
-          blur: 10,
-          color: Color.black.withA(0.1)
-        }
-      },
-      ".Window.active": {
-        fill: Color.lightGray,
-        dropShadow: {
-          fast: true,
-          rotation: 90,
-          distance: 8,
-          blur: 35,
-          color: Color.black.withA(0.3),
-          spread: 5
-        }
-      }
-    });
-  }
-
   static get properties() {
 
     return {
-      controls: {
-        after: ["submorphs"],
+      submorphs: {
         initialize() {
-          this.controls = this.getControls();
-          if (this.resizable) this.controls.push(this.resizer());
-          this.submorphs = [...this.submorphs, ...this.controls];
+          this.build();
+        }
+      },
+
+      ui: {
+        derived: true,
+        get() {
+          return {
+            header: this.get('header'),
+            resizer: this.get('resizer'),
+            windowControls: this.get('window controls'),
+            windowTitle: this.get('window title'),
+          }  
+        }
+      },
+
+      master: {
+        initialize() {
+          this.master = { auto: "styleguide://System/window/light/active" };   
         }
       },
 
@@ -177,12 +44,12 @@ export default class Window extends Morph {
       resizable: {defaultValue: true},
 
       title: {
-        after: ["controls"],
+        after: ["submorphs"],
         derived: true,
         get() {
-          return this.titleLabel().textString;
+          return this.ui.windowTitle.textString;
         },
-        set(title) {
+        async set(title) {
           let textAndAttrs = typeof title === "string" ? [title, {}] : title, maxLength = 100, length = 0, truncated = [];
           for (var i = 0; i < textAndAttrs.length; i = i + 2) {
             let string = textAndAttrs[i], attr = textAndAttrs[i + 1];
@@ -192,22 +59,23 @@ export default class Window extends Morph {
             truncated.push(string, attr || {});
             if (length >= maxLength) break;
           }
-          this.titleLabel().value = truncated;
+          this.ui.windowTitle.value = truncated;
+          await this.whenRendered();
           this.relayoutWindowControls();
         }
       },
 
       targetMorph: {
-        after: ["controls"],
+        after: ["submorphs"],
         derived: true,
         get() {
-          return arr.withoutAll(this.submorphs, this.controls)[0];
+          return arr.withoutAll(this.submorphs, [this.get('header'), this.get('resizer')])[0];
         },
         set(morph) {
-          let ctrls = this.controls;
+          let ctrls = [this.get('header'), this.get('resizer')];
           arr.withoutAll(this.submorphs, ctrls).forEach(ea => ea.remove());
-          if (morph) this.addMorph(morph, ctrls[0]);
-          this.whenRendered().then(() => this.relayoutWindowControls());
+          if (morph) this.addMorph(morph, this.resizable ? this.get('resizer') : false);
+          this.relayoutWindowControls();
         }
       },
 
@@ -224,19 +92,8 @@ export default class Window extends Morph {
     };
   }
 
-  constructor(props = {}) {
-    super(props);
-    this.relayoutWindowControls();
-    connect(this, "extent", this, "relayoutWindowControls");
-    connect(this.titleLabel(), "extent", this, "relayoutWindowControls");
-  }
-
-  fixControls() {
-    let title = this.title;
-    arr.invoke(this.controls, "remove");
-    this.propertiesAndPropertySettings()
-      .properties.controls.initialize.call(this);
-    this.title = title;
+  build() {
+    this.submorphs = [this.buildHeader(), this.buildResizer()];
   }
 
   async openWindowMenu() {
@@ -270,6 +127,7 @@ export default class Window extends Morph {
       let shiftedBounds = this.world().visibleBounds().translateForInclusion(this.bounds());
       this._originalBounds = this.bounds();
       this.animate({ bounds: shiftedBounds, duration: 300 });
+      this.borderColor = Color.gray.darker();
       this._faderTriggered = true;
       fader.opacity = 1;
     } else {
@@ -282,6 +140,7 @@ export default class Window extends Morph {
       this._faderTriggered = false;
       await this.whenRendered();
       await promise.delay(100);
+      this.borderColor = Color.gray;
       if (this._faderTriggered) return; // hacky way to allow other prompts to steal the prompt
       await fader.animate({ opacity: 0, duration: 300 });
       fader.remove();
@@ -296,14 +155,16 @@ export default class Window extends Morph {
 
   relayoutWindowControls() {
     var innerB = this.innerBounds(),
-        title = this.titleLabel(),
+        title = this.ui.windowTitle,
+        resizer = this.ui.resizer,
         labelBounds = innerB.withHeight(25),
-        lastButtonOrWrapper = this.getSubmorphNamed("button wrapper") || arr.last(this.buttons()),
+        header = this.ui.header,
+        lastButtonOrWrapper = this.ui.windowControls,
         buttonOffset = lastButtonOrWrapper.bounds().right() + 3,
         minLabelBounds = labelBounds.withLeftCenter(pt(buttonOffset, labelBounds.height / 2));
 
     // resizer
-    this.resizer().bottomRight = innerB.bottomRight();
+    resizer.bottomRight = innerB.bottomRight();
 
     // targetMorph
     if (!this.minimized && this.targetMorph && this.targetMorph.isLayoutable) this.targetMorph.setBounds(this.targetMorphBounds());
@@ -312,6 +173,8 @@ export default class Window extends Morph {
     title.textBounds().width < labelBounds.width - 2 * buttonOffset
       ? (title.center = labelBounds.center())
       : (title.leftCenter = minLabelBounds.leftCenter());
+
+    header.width = this.width;
   }
 
   ensureNotOverTheTop() {
@@ -322,18 +185,22 @@ export default class Window extends Morph {
       this.moveBy(pt(0, world.innerBounds().top() - bounds.top()));
   }
 
-  getControls() {
-    return [
-      morph({
-        name: "button wrapper",
-        styleClasses: ["buttonGroup"],
-        submorphs: this.buttons()
-      }),
-      this.titleLabel(),
-    ];
+  buildHeader() {
+    return morph({
+        name: 'header',
+        extent: pt(this.width, 50),
+        submorphs: [
+          morph({
+            name: "window controls",
+            styleClasses: ["buttonGroup"],
+            submorphs: this.buildButtons()
+          }),
+          this.buildTitleLabel(),
+        ]
+      });
   }
 
-  buttons() {
+  buildButtons() {
     let closeButton =
       this.getSubmorphNamed("close") ||
       morph({
@@ -342,6 +209,7 @@ export default class Window extends Morph {
         tooltip: "close window",
         submorphs: [
           Label.icon("times", {
+            name: "label",
             styleClasses: ["defaultLabelStyle",'default'],
           })
         ]
@@ -356,6 +224,7 @@ export default class Window extends Morph {
         tooltip: "collapse window",
         submorphs: [
           Label.icon("minus", {
+            name: "label",
             styleClasses: ["defaultLabelStyle", 'default'],
           })
         ]
@@ -368,13 +237,14 @@ export default class Window extends Morph {
 
     if (this.resizable) {
       var windowMenuButton =
-        this.getSubmorphNamed("window menu button") ||
+        this.getSubmorphNamed("menu") ||
         morph({
-          name: "window menu button",
+          name: "menu",
           styleClasses: ['windowButton', "windowMenuButton"],
           tooltip: "Open Window Menu",
           submorphs: [
             Label.icon("chevron-down", {
+              name: "label",
               styleClasses: ["defaultLabelStyle", 'default'],
             })
           ]
@@ -382,30 +252,23 @@ export default class Window extends Morph {
       connect(windowMenuButton, "onMouseDown", this, "openWindowMenu");
     }
 
-    let buttons = arr.compact([closeButton, minimizeButton, windowMenuButton]);
-    buttons.forEach(b => {
-      connect(b, "onHoverIn", b.submorphs[0], "styleClasses", {
-        converter: () => ["defaultLabelStyle", "highlight"]
-      });
-      connect(b, "onHoverOut", b.submorphs[0], "styleClasses", {
-        converter: () => ["defaultLabelStyle", "default"]
-      });
-    });
-    return buttons;
+    return arr.compact([closeButton, minimizeButton, windowMenuButton]);;
   }
 
-  titleLabel() {
-    return (
-      this.getSubmorphNamed("titleLabel") ||
-      this.addMorph({
+  buildTitleLabel() {
+    return this.addMorph({
         padding: Rectangle.inset(0, 2, 0, 0),
         styleClasses: ["windowTitleLabel"],
         type: "label",
-        name: "titleLabel",
+        name: "window title",
         reactsToPointer: false,
         value: ""
-      })
-    );
+      });
+  }
+
+  resizeBy(dist) {
+    super.resizeBy(dist);
+    this.relayoutWindowControls();
   }
 
   resizeAt([corner, dist]) {
@@ -456,12 +319,11 @@ export default class Window extends Morph {
     resizer.position = pt(0,0)
   }
 
-  resizer() {
-    var win = this, resizer = this.getSubmorphNamed("resizer"),
+  buildResizer() {
+    let win = this,
         rightResizer, bottomRightResizer, leftResizer, bottomLeftResizer, bottomResizer;
-    if (resizer) return resizer;
     let fill = Color.transparent;
-    resizer = morph({
+    let resizer = morph({
       name: "resizer",
       fill: Color.transparent,
       position: pt(0,0),
@@ -469,25 +331,30 @@ export default class Window extends Morph {
         rightResizer = morph({
           name: 'right resizer',
           fill, width: 5,
+          draggable: true,
           nativeCursor: 'ew-resize'
         }),
         bottomRightResizer = morph({
           name: 'bottom right resizer',
           fill, extent: pt(10,10),
+          draggable: true,
           nativeCursor: "nwse-resize"
         }),
         leftResizer = morph({
           name: 'right resizer',
           fill, width: 5, 
+          draggable: true,
           nativeCursor: 'ew-resize'
         }),
         bottomLeftResizer = morph({
           name: 'bottom left resizer',
+          draggable: true,
           fill, extent: pt(10,10),
           nativeCursor: "nesw-resize"
         }),
         bottomResizer = morph({
           name: 'bottom resizer',
+          draggable: true,
           fill, height: 5,
           nativeCursor: 'ns-resize'
         }),
@@ -518,6 +385,7 @@ export default class Window extends Morph {
   async applyMinimize() {
     if (!this.targetMorph) return;
     let {nonMinizedBounds, minimized, width} = this,
+        { windowTitle, resizer } = this.ui,
         bounds = this.bounds(),
         duration = 100,
         collapseButton = this.getSubmorphNamed("minimize"),
@@ -526,17 +394,18 @@ export default class Window extends Morph {
     if (!minimized) {
       this.minimizedBounds = bounds;
       this.targetMorph && (this.targetMorph.visible = true);
+      nonMinizedBounds = this.world().bounds().translateForInclusion(nonMinizedBounds || bounds)
       this.animate({
-        bounds: nonMinizedBounds || bounds,
+        bounds: nonMinizedBounds,
         styleClasses: ['neutral', 'active', ...arr.without(this.styleClasses, 'minimzed')], 
         duration, easing
       });
       collapseButton.tooltip = "collapse window";
     } else {
       this.nonMinizedBounds = bounds;
-      var minimizedBounds = this.minimizedBounds || bounds.withExtent(pt(width, 28)),
-          labelBounds = this.titleLabel().textBounds(),
-          buttonOffset = this.get('button wrapper').bounds().right() + 3;
+      var minimizedBounds = (this.minimizedBounds || bounds).withExtent(pt(width, 28)),
+          labelBounds = windowTitle.textBounds(),
+          buttonOffset = this.get('window controls').bounds().right() + 3;
       if (labelBounds.width + 2 * buttonOffset < minimizedBounds.width)
         minimizedBounds = minimizedBounds.withWidth(labelBounds.width + buttonOffset + 5);
       this.minimizedBounds = minimizedBounds;
@@ -545,7 +414,8 @@ export default class Window extends Morph {
         bounds: minimizedBounds, duration, easing});
       this.targetMorph && (this.targetMorph.visible = false);
     }
-    this.resizer().visible = !this.minimized;
+    resizer.visible = !this.minimized;
+    this.relayoutWindowControls();
   }
 
   async close() {
@@ -597,7 +467,7 @@ export default class Window extends Morph {
   isActive() {
     var w = this.world();
     if (!w) return false;
-    if (this.titleLabel().fontWeight != "bold") return false;
+    if (this.ui.windowTitle.fontWeight != "bold") return false;
     return arr.last(w.getWindows()) === this;
   }
 
@@ -606,31 +476,32 @@ export default class Window extends Morph {
       this.bringToFront();
       this.focus(evt);
       this.renderOnGPU = true;
+      this.relayoutWindowControls();
       return this;
     }
 
-    this.removeStyleClass('inactive');
-    this.addStyleClass('active');
+    this.master = { auto: "styleguide://System/window/light/active" };
 
     if (!this.world()) this.openInWorldNearHand();
     else this.bringToFront();
     let w = this.world() || this.env.world;
 
     arr.without(w.getWindows(), this).forEach(ea => ea.deactivate());
-    this.titleLabel().fontWeight = "bold";
     this.focus(evt);
 
     signal(this, "windowActivated", this);
-    setTimeout(() => this.relayoutWindowControls(), 0);
+    Promise.resolve(this.master.applyIfNeeded(true)).then(() => 
+      this.relayoutWindowControls())
 
     return this;
   }
 
   deactivate() {
-    if (this.styleClasses.includes('inactive')) return;
-    this.removeStyleClass('active');
-    this.addStyleClass('inactive');
-    this.titleLabel().fontWeight = "normal";
+    // if (this.styleClasses.includes('inactive')) return;
+    // this.removeStyleClass('active');
+    // this.addStyleClass('inactive');
+    if (this.master && this.master.auto == "styleguide://System/window/light/inactive") return;
+    this.master = { auto: "styleguide://System/window/light/inactive" };
     this.relayoutWindowControls();
     this.renderOnGPU = false;
   }

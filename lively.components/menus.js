@@ -1,7 +1,6 @@
 import { Label, config, Morph } from "lively.morphic";
-import { obj, fun } from "lively.lang";
+import { obj, promise, fun } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
-import { show } from "lively.halos";
 
 export class MenuDivider extends Morph {
 
@@ -35,7 +34,7 @@ export class MenuItem extends Label {
           this.addValueChange("selected", value);
           if (value) {
             this.fontColor = Color.white;
-            this.fill = Color.blue;
+            this.fill = Color.rgb(21,101,192);
           } else {
             this.fill = Color.transparent;
             this.fontColor = Color.black;
@@ -90,12 +89,14 @@ export class MenuItem extends Label {
     this.owner.maybeRemoveSubmenu();
   }
 
-  onMouseDown(evt) {
+  async onMouseDown(evt) {
     if (this.submenu) return;
     try {
+      this.owner.startFinish();
       if (typeof this.action !== "function")
         throw new Error(`Menu item ${this.textString} has no executable action!`);
-      this.action();
+      await this.action();
+      this.owner.completeFinish();
     } catch (err) {
       var w = this.world();
       if (w) w.logError(err);
@@ -105,7 +106,8 @@ export class MenuItem extends Label {
 
 }
 
-var invalidItem = {string: "invalid item", action: () => show("invalid item")};
+
+var invalidItem = {string: "invalid item", action: () => $world.setStatusMessage("invalid item")};
 
 export class Menu extends Morph {
 
@@ -164,6 +166,11 @@ export class Menu extends Morph {
           this.addValueChange("title", value);
         }
       },
+      finishedPromise: {
+        initialize() {
+          this.finishedPromise = promise.deferred();  
+        }
+      },
       ownerMenu: {},
       submenu: {},
       submenus: {
@@ -204,6 +211,20 @@ export class Menu extends Morph {
     };
   }
 
+  startFinish() {
+    if (this.ownerMenu) this.ownerMenu.startFinish();
+    this._waitingForFinish = true;
+  }
+
+  completeFinish() {
+    if (this.ownerMenu) this.ownerMenu.completeFinish();
+    this.finishedPromise.resolve(true);
+  }
+
+  whenFinished() {
+    return this.finishedPromise.promise;
+  }
+
   onChange(change) {
     let {prop, selector} = change;
     switch (prop) {
@@ -216,6 +237,7 @@ export class Menu extends Morph {
 
   async remove() {
     await this.animate({opacity: 0, duration: 300});
+    if (!this._waitingForFinish) this.completeFinish();
     super.remove();
   }
 
@@ -236,7 +258,10 @@ export class Menu extends Morph {
       if (typeof name !== "string" && !Array.isArray(name)/*rich text*/) return invalidItem;
 
       if (!actionOrList || typeof actionOrList === "function")
-        return {label: name, action: actionOrList || show.bind(null, name)};
+        return {
+          label: name,
+          action: actionOrList || (() => $world.setStatusMessage(name))
+        };
 
       if (typeof actionOrList === "object" && actionOrList.getItems)
         return {
