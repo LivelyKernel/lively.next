@@ -10,7 +10,7 @@ export { ReplaceManyVisitor, ReplaceVisitor, AllNodesVisitor } from "./lib/visit
 
 export { parse, parseFunction, fuzzyParse } from "./lib/parser.js";
 
-import { acorn, walk } from "./lib/acorn-extension.js";
+import { acorn, walk, custom } from "./lib/acorn-extension.js";
 import stringify, { escodegen } from "./lib/stringify.js";
 export { escodegen, acorn, walk }
 
@@ -25,7 +25,8 @@ export {
   comments,
   categorizer,
   stringify,
-  nodes
+  nodes,
+  custom
 }
 
 

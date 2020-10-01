@@ -3,7 +3,7 @@ import { BaseVisitor, ScopeVisitor } from "./mozilla-ast-visitors.js";
 import { FindToplevelFuncDeclVisitor } from "./visitors.js";
 import { withMozillaAstDo } from "./mozilla-ast-visitor-interface.js";
 import { parse } from "./parser.js";
-import { acorn, walk } from "./acorn-extension.js";
+import { acorn, walk, custom } from "./acorn-extension.js";
 import stringify from "./stringify.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -83,6 +83,7 @@ var helpers = {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 var knownGlobals = [
+  "closed",
   "true",
   "false",
   "null",
@@ -158,7 +159,8 @@ var knownGlobals = [
   "System",
   "customElements",
   "performance",
-  "addEventListener"
+  "addEventListener",
+  "closed"
 ];
 
 function scopes(parsed) {
@@ -413,7 +415,7 @@ function findDeclarationClosestToIndex(parsed, name, index) {
 
 function nodesAt(pos, ast) {
   ast = typeof ast === 'string' ? parse(ast) : ast;
-  return walk.findNodesIncluding(ast, pos);
+  return custom.findNodesIncluding(ast, pos);
 }
 
 const _stmtTypes = [

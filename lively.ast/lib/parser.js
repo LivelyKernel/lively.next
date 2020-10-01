@@ -3,7 +3,8 @@ import {
   acorn,
   loose,
   walk,
-  addAstIndex, findNodesIncluding
+  addAstIndex, findNodesIncluding,
+  custom,
 } from "./acorn-extension.js";
 
 import { AllNodesVisitor } from "./visitors.js";
@@ -16,7 +17,7 @@ export {
   addSource
 }
 
-walk.addSource = addSource;
+custom.addSource = addSource;
 
 function addSource(parsed, source) {
   if (typeof parsed === "string") {

@@ -1,6 +1,6 @@
 {
   "name": "lively.ast",
-  "version": "0.11.2",
+  "version": "0.11.3",
   "description": "Parsing JS code into ASTs and tools to query and transform these trees.",
   "main": "dist/lively.ast.js",
   "scripts": {
@@ -47,10 +47,10 @@
   "systemjs": {
     "main": "index.js",
     "map": {
-      "escodegen": "https://dev.jspm.io/escodegen",
-      "acorn-walk": "https://dev.jspm.io/acorn-walk",
-      "acorn-loose": "https://dev.jspm.io/acorn-loose",
-      "acorn": "https://dev.jspm.io/acorn",
+      "escodegen": "https://jspm.dev/escodegen",
+      "acorn-walk": "https://jspm.dev/acorn-walk",
+      "acorn-loose": "https://jspm.dev/acorn-loose",
+      "acorn": "https://jspm.dev/acorn",
       "util": {
         "node": "@node/util",
         "~node": "@empty"

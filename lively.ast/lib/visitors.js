@@ -66,8 +66,8 @@ function block(nodes) {
 
 class ReplaceManyVisitor extends Visitor {
   accept(node, state, path) {
-    return this.replacer(super.accept(node, state, path));
-    var replaced = this.replacer(super.accept(node, state, path), path);
+    //return this.replacer(super.accept(node, state, path));
+    var replaced = this.replacer(super.accept(node, state, path));
     return !Array.isArray(replaced) ?
       replaced : replaced.length === 1 ?
         replaced[0] : Object.assign(block(replaced), {[canBeInlinedSym]: true});

@@ -7,33 +7,35 @@ var GLOBAL = typeof window!=="undefined" ?
     global : typeof self!=="undefined" ?
       self : this;
 
-import acorn from "acorn";
-import walk from "acorn-walk";
-import loose from "acorn-loose";
-export { walk, loose, acorn };
+import * as acorn from "acorn";
 
-// rk 2016-05-17 FIXME: the current version of acorn.walk doesn't support async
-// await. We patch the walker here until it does
-if (!walk.base.AwaitExpression) {
-  walk.base.AwaitExpression = function (node, st, c) {
-    if (node.argument)
-        c(node.argument, st, 'Expression');
-  }
-}
+import * as walk from "acorn-walk";
+import * as loose from "acorn-loose";
 
-// FIXME, don't add to walk object, that's our own stuff!
-walk.forEachNode = forEachNode;
-walk.matchNodes = matchNodes;
-walk.findNodesIncluding = findNodesIncluding;
-walk.withParentInfo = withParentInfo;
-walk.copy = copy;
-walk.findSiblings = findSiblings;
+// // rk 2016-05-17 FIXME: the current version of acorn.walk doesn't support async
+// // await. We patch the walker here until it does
+// if (!walk.base.AwaitExpression) {
+//   walk.base.AwaitExpression = function (node, st, c) {
+//     if (node.argument)
+//         c(node.argument, st, 'Expression');
+//   }
+// }
 
-walk.findNodeByAstIndex = findNodeByAstIndex;
-walk.findStatementOfNode = findStatementOfNode;
-walk.addAstIndex = addAstIndex;
+
+const custom = {};
+
+custom.forEachNode = forEachNode;
+custom.matchNodes = matchNodes;
+custom.findNodesIncluding = findNodesIncluding;
+custom.withParentInfo = withParentInfo;
+custom.copy = copy;
+custom.findSiblings = findSiblings;
+custom.findNodeByAstIndex = findNodeByAstIndex;
+custom.findStatementOfNode = findStatementOfNode;
+custom.addAstIndex = addAstIndex;
 
 export {
+  walk, loose, acorn, custom,
   findStatementOfNode,
   addAstIndex,
   findNodesIncluding,
@@ -52,7 +54,7 @@ function forEachNode(parsed, func, state, options) {
   options = options || {};
   var traversal = options.traversal || 'preorder'; // also: postorder
   
-  var visitors = obj.clone(options.visitors ? options.visitors : walk.make(walk.visitors.withMemberExpression));
+  var visitors = obj.clone(options.visitors ? options.visitors : walk.make(custom.visitors.withMemberExpression));
   var iterator = traversal === 'preorder' ?
     function(orig, type, node, depth, cont) { func(node, state, depth, type); return orig(node, depth+1, cont); } :
     function(orig, type, node, depth, cont) { var result = orig(node, depth+1, cont); func(node, state, depth, type); return result; };
@@ -87,7 +89,7 @@ function matchNodes(parsed, visitor, state, options) {
 
 function findNodesIncluding(parsed, pos, test, base) {
   var nodes = [];
-  base = base || walk.make(walk.visitors.withMemberExpression);
+  base = base || walk.make(custom.withMemberExpression);
   Object.keys(walk.base).forEach(function (name) {
     var orig = base[name];
     base[name] = function(node, state, cont) {
@@ -477,7 +479,7 @@ function findSiblings(parsed, node, beforeOrAfter) {
 }
 
 // // cached visitors that are used often
-walk.visitors = {
+custom.visitors = {
   stopAtFunctions: walk.make({
     'Function': function() { /* stop descent */ },
     ...walk.base
