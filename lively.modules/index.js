@@ -338,8 +338,8 @@ export {
   lookupPackage
 };
 
-export { PackageRegistry } from "./src/packages/package-registry.js";
-
+import { PackageRegistry } from "./src/packages/package-registry.js";
+export { PackageRegistry }
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // changing modules
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -402,13 +402,14 @@ export { cjs };
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // semver
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-export { default as semver } from "semver";
+export { default as semver} from "semver";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // object scripting capabilities
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import { ImportInjector } from './src/import-modification.js';
-const scripting = {
+
+const scripting = defaultSystem._scripting = {
   module: _module, 
   ensurePackage: _ensurePackage, 
   registerPackage: _registerPackage, 
@@ -416,4 +417,13 @@ const scripting = {
   lookupPackage: _lookupPackage,
   ImportInjector
 };
+import { defaultClassToFunctionConverterName } from "lively.vm";
+import { runtime as classRuntime } from 'lively.classes';
+defaultSystem.global[defaultClassToFunctionConverterName] = classRuntime.initializeClass;
+import { classHolder } from './src/cycle-breaker.js';
+import ModulePackageMapping from "./src/packages/module-package-mapping.js";
+classHolder.ModulePackageMapping = ModulePackageMapping;
+classHolder.Package = Package;
+classHolder.PackageRegistry = PackageRegistry;
+
 export { scripting };

@@ -1,7 +1,7 @@
-import { arr, promise, obj } from "lively.lang";
+import { arr } from "lively.lang";
 import { unsubscribe, subscribe } from "lively.notifications";
-import { Package } from './package.js'
 import { knownModuleNames } from '../system.js'
+import { classHolder } from "../cycle-breaker.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // This deals with which modules are mapped to which packages. There is
@@ -71,7 +71,7 @@ export default class ModulePackageMapping {
 
     if (_cacheInitialized) return this;
 
-    let packageNames = Package.allPackageURLs(System);
+    let packageNames = classHolder.Package.allPackageURLs(System);
 
     for (let j = 0; j < packageNames.length; j++)
       packageToModule[packageNames[j]] = [];

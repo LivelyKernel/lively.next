@@ -10,6 +10,7 @@ import {
   remove as removeHook,
   isInstalled as isHookInstalled
 } from "./hooks.js";
+import { classToFunctionTransform } from "lively.classes";
 
 var isNode = System.get("@system-env").node;
 
@@ -94,9 +95,13 @@ export class NodeModuleTranslationCache extends ModuleTranslationCache {
     }
   }
 
+  getFileName(moduleId) {
+    return moduleId.match(/([^\/]*.)(\.js)?$/)[0];
+  }
+
   async fetchStoredModuleSource(moduleId) {
     var moduleId = moduleId.replace("file://", ""),
-        fname = moduleId.match(/([^\/]*.)\.js$/)[0],
+        fname = this.getFileName(moduleId),
         fpath = moduleId.replace(fname, ""),
         r = this.moduleCacheDir.join(moduleId);
     if (!await r.exists()) return null;
@@ -108,7 +113,7 @@ export class NodeModuleTranslationCache extends ModuleTranslationCache {
 
   async cacheModuleSource(moduleId, hash, source) {
     var moduleId = moduleId.replace("file://", ""),
-        fname = moduleId.match(/([^\/]*.)\.js$/)[0],
+        fname = this.getFileName(moduleId),
         fpath = moduleId.replace(fname, "");
     await this.ensurePath(fpath);
     await this.moduleCacheDir.join(moduleId).write(source);
@@ -117,7 +122,7 @@ export class NodeModuleTranslationCache extends ModuleTranslationCache {
 
   async deleteCachedData(moduleId) {
     moduleId = moduleId.replace("file://", "");
-    var fname = moduleId.match(/([^\/]*.)\.js$/)[0],
+    var fname = this.getFileName(moduleId),
         fpath = moduleId.replace(fname, ""),
         r = this.moduleCacheDir.join(moduleId);
     if (!await r.exists()) return false;
@@ -207,7 +212,7 @@ var node_modulesDir = System.decanonicalize("lively.modules/node_modules/");
 var exceptions = [
       // id => id.indexOf(resolve("node_modules/")) > -1,
       // id => canonicalURL(id).indexOf(node_modulesDir) > -1,
-      id => !id.endsWith(".js") && !id.endsWith('.jsx'),
+      id => !id.endsWith(".js") && !id.endsWith('.jsx') && !id.startsWith('https://jspm.dev'),
       id => id.endsWith("dist/acorn.js") || id.endsWith("dist/escodegen.browser.js") || id.endsWith("bowser.js") || id.endsWith("TweenMax.min.js"),
       id => id.endsWith("babel-core/browser.js") || id.endsWith("system.src.js") || id.includes("systemjs-plugin-babel"),
     ],
@@ -239,6 +244,7 @@ export function prepareCodeForCustomCompile(System, source, moduleId, module, de
         keepPreviouslyDeclaredValues: true,
         declarationWrapperName: varDefinitionCallbackName,
         evalId: module.nextEvalId(),
+        classTransform: classToFunctionTransform,
         currentModuleAccessor: funcCall(
                                 member(
                                   funcCall(
@@ -275,6 +281,7 @@ export function prepareTranslatedCodeForSetterCapture(System, source, moduleId, 
   source = String(source);
   var tfmOptions = {
         ...options,
+        classTransform: classToFunctionTransform,
         topLevelVarRecorder: module.recorder,
         varRecorderName: module.recorderName,
         dontTransform: module.dontTransform,

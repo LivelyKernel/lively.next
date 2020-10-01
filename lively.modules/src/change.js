@@ -1,11 +1,11 @@
 import { arr }  from "lively.lang";
 import { emit } from "lively.notifications";
-import module from "./module.js";
 import {
   instrumentSourceOfEsmModuleLoad,
   instrumentSourceOfGlobalModuleLoad
 } from "./instrumentation.js";
 import { scheduleModuleExportsChange } from "./import-export.js";
+import { classHolder } from "./cycle-breaker.js";
 
 async function moduleSourceChange(System, moduleId, newSource, format, options) {
   try {
@@ -62,7 +62,7 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
     // imported modules and getting the module record and module object as
     // a fallback (module records only exist for esm modules)
     let depId = await System.normalize(depName, load.name),
-        depModule = module(System, depId),
+        depModule = classHolder.module(System, depId),
         exports = await depModule.load();
     deps.push({name: depName, fullname: depId, module: depModule, exports});
   }
@@ -79,7 +79,7 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
     }
   }
 
-  var mod = module(System, load.name),
+  var mod = classHolder.module(System, load.name),
       record = mod.record();
 
   // 1. update the record so that when its dependencies change and cause a
@@ -137,7 +137,7 @@ function doInstantiateGlobalModule(System, load) {
     // SystemJS exports detection for global modules is based in new props
     // added to the global. In order to allow re-load we remove previously
     // "exported" values
-    var prevMeta = module(System, m.id).metadata(),
+    var prevMeta = classHolder.module(System, m.id).metadata(),
         exports = prevMeta && prevMeta.entry
                && prevMeta.entry.module && prevMeta.entry.module.exports;
     if (exports)
@@ -160,7 +160,7 @@ function doInstantiateGlobalModule(System, load) {
     if (exportName)
       load.source += `\nSystem.global["${exportName}"] = ${exportName};`
 
-    var retrieveGlobal = System.get('@@global-helpers').prepareGlobal(module.id, exportName, globals);
+    var retrieveGlobal = System.get('@@global-helpers').prepareGlobal(m.id, exportName, globals);
 
     __evaluateGlobalLoadSource(System, load);
 

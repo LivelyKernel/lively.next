@@ -1,7 +1,8 @@
 /*global System,process,self,WorkerGlobalScope,location,global*/
 import { arr, obj, promise } from 'lively.lang';
 import { remove as removeHook, install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
-import module from "./module.js";
+import { classHolder } from "./cycle-breaker.js";
+
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -30,6 +31,9 @@ export function wrapModuleResolution(System) {
 
   if (!isHookInstalled(System, "instantiate", "instantiate_triggerOnLoadCallbacks"))
     installHook(System, "instantiate", instantiate_triggerOnLoadCallbacks, "instantiate_triggerOnLoadCallbacks");
+
+  if (!isHookInstalled(System, "locate", "locateHook"))
+    installHook(System, "locate", locateHook, "locateHook");
 }
 
 export function unwrapModuleResolution(System) {
@@ -38,22 +42,23 @@ export function unwrapModuleResolution(System) {
   removeHook(System, "normalizeSync", "decanonicalizeHook");
   removeHook(System, "newModule", "newModule_volatile");
   removeHook(System, "instantiate", "instantiate_triggerOnLoadCallbacks");
+  removeHook(System, "locate", "locateHook");
 }
 
 // Accessible system-wide via System.get("@lively-env")
 function livelySystemEnv(System) {
   return {
-    moduleEnv(id) { return module(System, id); },
+    moduleEnv(id) { return classHolder.module(System, id); },
 
     // TODO this is just a test, won't work in all cases...
     get itself() { return System.get(System.decanonicalize("lively.modules/index.js")); },
 
     evaluationStart(moduleId) {
-      module(System, moduleId).evaluationStart();
+      classHolder.module(System, moduleId).evaluationStart();
     },
 
     evaluationEnd(moduleId) {
-      module(System, moduleId).evaluationEnd();
+      classHolder.module(System, moduleId).evaluationEnd();
     },
 
     dumpConfig() {
@@ -314,7 +319,14 @@ function postNormalize(System, normalizeResult, isSync) {
   return m ? m[1] : normalizeResult;
 }
 
+async function checkExistence(url, System) {
+   System._fileCheckMap = System._fileCheckMap || {};
+   if (url in System._fileCheckMap) return System._fileCheckMap[url];
+   return System._fileCheckMap[url] = await resource(url).exists();
+}
+
 async function normalizeHook(proceed, name, parent, parentAddress) {
+  if (parent && name == "cjs") return "cjs";
   var System = this,
     stage1 = preNormalize(System, name, parent),
     stage2 = await proceed(stage1, parent, parentAddress),
@@ -337,9 +349,11 @@ async function normalizeHook(proceed, name, parent, parentAddress) {
     // We only continue if SystemJS as resolved to a js file.
     jsExtRe.test(stage3)
   ) {
-    if (await resource(stage3).exists()) return stage3;
+    // fixme: repeated calling exists really slows down loading times
+    //        cache the previous answers and return those if present
+    if (await checkExistence(stage3, System)) return stage3;
     let indexjs = stage3.replace(".js", "/index.js");
-    if ((await resource(indexjs).exists()) || !isNodePath) return indexjs;
+    if (await checkExistence(indexjs, System) || !isNodePath) return indexjs;
     return stage3.replace(".js", "/index.node");
   }
   if (jsxJsExtRe.test(stage3)) stage3 = stage3.replace('.jsx.js', '.jsx');
@@ -347,12 +361,27 @@ async function normalizeHook(proceed, name, parent, parentAddress) {
 }
 
 function decanonicalizeHook(proceed, name, parent, isPlugin) {
+  let plugin;
+  if (name && name.endsWith("!cjs")) {
+    name = name.replace('!cjs', '');
+    plugin = "!cjs";
+  }
   let System = this,
     stage1 = preNormalize(System, name, parent),
     stage2 = proceed(stage1, parent, isPlugin),
     stage3 = postNormalize(System, stage2, true);
+  if (plugin) stage3 += plugin;
   System.debug && console.log(`[normalizeSync] ${name} => ${stage3}`);
   return stage3;
+}
+
+async function locateHook(proceed, load) {
+  // we only support loading of esm modules
+  // any plugins via the ! notation are ignored
+  let [url, plugin] = load.name.split('!');
+  load.name = url;
+  let res = await proceed(load);
+  return res;
 }
 
 function normalize_doMapWithObject(mappedObject, pkg, loader) {
@@ -455,7 +484,7 @@ function instantiate_triggerOnLoadCallbacks(proceed, load) {
         return;
       }
       var modId = load.name,
-          mod = module(System, modId),
+          mod = classHolder.module(System, modId),
           callbacks = System.get("@lively-env").onLoadCallbacks;
 
       for (var i = callbacks.length; i--; ) {
@@ -476,7 +505,7 @@ function instantiate_triggerOnLoadCallbacks(proceed, load) {
 export function whenLoaded(System, moduleName, callback) {
   var modId = System.decanonicalize(moduleName);
   if (System.get(modId)) {
-    try { callback(module(System, modId)) } catch (e) { console.error(e); }
+    try { callback(classHolder.module(System, modId)) } catch (e) { console.error(e); }
     return;
   }
   System.get("@lively-env").onLoadCallbacks.push({moduleName, resolved: false, callback});

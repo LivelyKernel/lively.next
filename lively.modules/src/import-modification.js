@@ -254,6 +254,17 @@ ImportRemover.removeUnusedImports(src)
 
 export class GlobalInjector {
 
+  static getGlobals(src, optAst) {
+     let parsed = optAst || fuzzyParse(src, {withComments: true}),
+        globalComment = parsed.comments
+          ? parsed.comments.find(c => c.isBlock && c.text.startsWith("global"))
+          : null;
+     return globalComment
+          ? globalComment.text.replace(/^global\s*/, "")
+              .split(",").map(ea => ea.trim()).filter(Boolean)
+          : []
+  }
+  
   static run(src, namesToDeclareGlobal, optAst) {
     let parsed = optAst || fuzzyParse(src, {withComments: true}),
         globalComment = parsed.comments

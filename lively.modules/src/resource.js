@@ -1,3 +1,4 @@
+/* global Buffer */
 import { resource, Resource } from "lively.resources";
 import {
   install as installHook,
@@ -5,14 +6,22 @@ import {
   isInstalled as isHookInstalled
 } from "./hooks.js";
 
-async function fetchResource(proceed, load) {
-  const System = this,
-        res = System.resource(load.name);
+var brotli, fetch;
+if (System.get("@system-env").node) {
+  fetch = System._nodeRequire('node-fetch');
+  brotli = System._nodeRequire("brotli");
+}
 
+async function fetchResource(proceed, load) {
+  const System = this;   
+  let res = System.resource(load.name);
+  const useNodeFetch = System.get("@system-env").node && !res.isNodeJSFileResource;
+  
+  if (useNodeFetch) res = await fetch(load.name)
   if (!res) return proceed(load);
 
   var result, error;
-  try { result = await res.read(); } catch (e) { error = e }
+  try { result = res.isResource ? await res.read() : res; } catch (e) { error = e }
 
   // if we are in a browser we try to use the proxy when cors requests fail
   if (error && System.get("@system-env").browser) {
@@ -27,6 +36,18 @@ async function fetchResource(proceed, load) {
   }
 
   if (error) throw error;
+
+  if (useNodeFetch) {
+    // since we run outside of a browser, it is likely not handling brotli decompression
+    // out of the box if needed
+    const { _headers } = result.headers || {};
+    const [encoding] = _headers && _headers['content-encoding'] || [];
+    if (encoding == 'br') {
+      result = Buffer.from(brotli.decompress(await result.buffer())).toString() 
+    } else {
+      result = await result.text();
+    }
+  }
 
   return result;
 }

@@ -1,9 +1,9 @@
-import { semver } from "../../index.js";
+import semver from "semver";
 import { arr, obj, promise } from "lively.lang";
 import { getPackage, Package } from "./package.js";
-import ModulePackageMapping from "./module-package-mapping.js";
 import { resource } from "lively.resources";
 import { isURL } from "../url-helpers.js";
+import { classHolder } from "../cycle-breaker.js";
 
 const urlStartRe = /^[a-z\.-_\+]+:/i
 function isAbsolute(path) {
@@ -122,7 +122,7 @@ export class PackageRegistry {
     this.devPackageDirs = jso.devPackageDirs.map(deserializeURL);
     this.packageBaseDirs = jso.packageBaseDirs.map(deserializeURL);
     this.resetByURL();
-    ModulePackageMapping.forSystem(System).clearCache();
+    classHolder.ModulePackageMapping.forSystem(System).clearCache();
 
     return this;
 
@@ -157,7 +157,7 @@ export class PackageRegistry {
     }
 
     this.resetByURL();
-    ModulePackageMapping.forSystem(System).clearCache();
+    classHolder.ModulePackageMapping.forSystem(System).clearCache();
     return this;
   }
 
@@ -381,7 +381,7 @@ export class PackageRegistry {
     finally {
       this._readyPromise = null;
       this.resetByURL();
-      ModulePackageMapping.forSystem(this.System).clearCache();
+      classHolder.ModulePackageMapping.forSystem(this.System).clearCache();
     }
 
     return this;
@@ -402,7 +402,7 @@ export class PackageRegistry {
     }
 
     this.resetByURL();
-    ModulePackageMapping.forSystem(this.System).clearCache();
+    classHolder.ModulePackageMapping.forSystem(this.System).clearCache();
     this._updateLatestPackages();
 
     return this.findPackageWithURL(url);
@@ -425,7 +425,7 @@ export class PackageRegistry {
     }
 
     this.resetByURL();
-    ModulePackageMapping.forSystem(this.System).clearCache();
+    classHolder.ModulePackageMapping.forSystem(this.System).clearCache();
     if (updateLatestPackage) this._updateLatestPackages(pkg.name);
   }
 

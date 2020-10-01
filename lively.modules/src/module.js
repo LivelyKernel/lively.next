@@ -11,6 +11,7 @@ import { defaultClassToFunctionConverterName } from "lively.vm";
 import { runtime as classRuntime } from "lively.classes";
 import { ImportInjector, GlobalInjector, ImportRemover } from "./import-modification.js";
 import { _require, _resolve } from "./nodejs.js";
+import { classHolder } from "./cycle-breaker.js";
 
 export var detectModuleFormat = (function() {
   const esmFormatCommentRegExp = /['"]format (esm|es6)['"];/,
@@ -40,6 +41,8 @@ export default function module(System, moduleName, parent) {
       id = System.decanonicalize(moduleName, parent);
   return sysEnv.loadedModules[id] || (sysEnv.loadedModules[id] = new ModuleInterface(System, id));
 }
+
+classHolder.module = module;
 
 export function isModuleLoaded(System, name, isNormalized = false) {
   let sysEnv = livelySystemEnv(System),
@@ -399,7 +402,8 @@ class ModuleInterface {
       "_moduleExport", "_moduleImport",
       "localStorage", // for Firefox, see fetch
       // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
-      "prompt", "alert", "fetch", "getComputedStyle"
+      "prompt", "alert", "fetch", "getComputedStyle",
+      ...GlobalInjector.getGlobals(this._source)
     ].concat(query.knownGlobals);
   }
 
@@ -415,7 +419,7 @@ class ModuleInterface {
     if (!globalProps.initialized) {
       globalProps.initialized = true;
       for (let prop in S.global) {
-        if (S.global.__lookupGetter__(prop))
+        if (S.global.__lookupGetter__(prop) || prop == 'closed')
           globalProps.descriptors[prop] = {
             value: undefined,
             configurable: true,

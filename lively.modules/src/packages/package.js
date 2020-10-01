@@ -2,11 +2,9 @@ import { arr, promise, obj } from "lively.lang";
 import { emit } from "lively.notifications";
 import module from "../../src/module.js";
 import { resource } from "lively.resources";
-import ModulePackageMapping from "./module-package-mapping.js";
 import PackageConfiguration from "./configuration.js";
 import { isURL, join } from "../url-helpers.js";
-import { PackageRegistry } from "./package-registry.js";
-
+import { classHolder } from "../cycle-breaker.js";
 
 function normalizePackageURL(System, packageURL, allPackageURLs = []) {
   if (allPackageURLs.some(ea => ea === packageURL)) return packageURL;
@@ -29,7 +27,7 @@ function normalizePackageURL(System, packageURL, allPackageURLs = []) {
 }
 
 function lookupPackage(System, packageURL, isNormalized = false) {
-  let registry = PackageRegistry.ofSystem(System),
+  let registry = classHolder.PackageRegistry.ofSystem(System),
       allPackageURLs = registry.allPackageURLs(),
       url = isNormalized
         ? packageURL
@@ -116,14 +114,14 @@ function getPackageSpecs(System) {
 
 class Package {
 
-  static allPackages(System) { return obj.values(PackageRegistry.ofSystem(System).byURL); }
+  static allPackages(System) { return obj.values(classHolder.PackageRegistry.ofSystem(System).byURL); }
 
-  static allPackageURLs(System) { return PackageRegistry.ofSystem(System).allPackageURLs(); }
+  static allPackageURLs(System) { return classHolder.PackageRegistry.ofSystem(System).allPackageURLs(); }
 
   static forModule(System, module) { return this.forModuleId(System, module.id); }
 
   static forModuleId(System, moduleId) {
-    let pAddress = ModulePackageMapping.forSystem(System).getPackageURLForModuleId(moduleId);
+    let pAddress = classHolder.ModulePackageMapping.forSystem(System).getPackageURLForModuleId(moduleId);
     return pAddress ? getPackage(System, pAddress, true/*normalized*/) : null;
   }
 
@@ -243,7 +241,7 @@ class Package {
 
   modules() {
     let {url, System} = this;
-    return ModulePackageMapping.forSystem(System)
+    return classHolder.ModulePackageMapping.forSystem(System)
             .getModuleIdsForPackageURL(url)
             .map(id => module(System, id));
   }
@@ -382,7 +380,7 @@ class Package {
     new PackageConfiguration(this).applyConfig(config);
     if (name !== config.name || version !== config.version) {
       console.log(`[lively.modules] Updating registry ${name}@${version} => ${newName}@${newVersion}`);
-      let registry = PackageRegistry.ofSystem(this.System);
+      let registry = classHolder.PackageRegistry.ofSystem(this.System);
       registry.updateNameAndVersionOf(this, name, version, newName, newVersion);
     }
   }
@@ -408,7 +406,7 @@ class Package {
     if (opts.unloadModules)
       this.modules().forEach(mod => mod.unload(opts));
 
-    let registry = PackageRegistry.ofSystem(System);
+    let registry = classHolder.PackageRegistry.ofSystem(System);
     registry.removePackage(this);
 
     let conf = System.getConfig(),
@@ -427,7 +425,7 @@ class Package {
 
   reload(opts) {
     let {System, url} = this,
-        registry = PackageRegistry.ofSystem(System),
+        registry = classHolder.PackageRegistry.ofSystem(System),
         covered = registry.coversDirectory(url);
 
     this.remove(opts);
@@ -458,10 +456,10 @@ class Package {
 
     config.name = newName || this.name;
 
-    let registry = PackageRegistry.ofSystem(System),
+    let registry = classHolder.PackageRegistry.ofSystem(System),
         covered = registry.coversDirectory(oldURL);
 
-    ModulePackageMapping.forSystem(System).clearCache();
+    classHolder.ModulePackageMapping.forSystem(System).clearCache();
     if (System.packages[oldURL]) {
       System.packages[newURL] = System.packages[oldURL];
       if (removeOriginal)
