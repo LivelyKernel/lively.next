@@ -9,7 +9,9 @@ if (majorVersion < 7) {
 
 global.babel = require("./deps/babel.min.js");
 require("./deps/system.src.js");
-require("./deps/lively.modules.js");
+//require("./deps/lively.modules.js");
+
+require('../lively.modules/dist/lively.modules.bootstrap.min.js');
 
 if (!process.argv[2]) {
   console.error("No installation dir specified!")
