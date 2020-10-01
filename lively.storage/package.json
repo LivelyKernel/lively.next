@@ -49,9 +49,12 @@
     "map": {
       "pouchdb": {
         "node": "pouchdb/dist/pouchdb.js",
-        "~node": "https://dev.jspm.io/pouchdb"
+        "~node": "https://jspm.dev/pouchdb@7.2.1"
       },
-      "pouchdb-adapter-mem": "https://dev.jspm.io/pouchdb-adapter-memory"
+      "pouchdb-adapter-mem": {
+	"node": "./dist/pouchdb-adapter-mem.js",
+	"~node": "https://jspm.dev/pouchdb-adapter-memory"
+      }
     }
   }
 }
