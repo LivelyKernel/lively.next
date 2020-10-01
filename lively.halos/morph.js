@@ -14,6 +14,10 @@ import { connect, signal, disconnect, disconnectAll, once } from "lively.binding
 
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from "./drag-guides.js";
 
+const haloBlue = Color.rgb(23,160,251);
+const componentAccent = Color.magenta;
+const derivedAccent = Color.purple;
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // The halo morph controls a group of halo items, each of which can control or
 // inspect properties of a target morph in some way
@@ -43,7 +47,7 @@ export default class Halo extends Morph {
       },
       hasTinyTarget: {
         derived: true,
-        get() { return this.target.extent.dist(pt(0)) < 40 }
+        get() { return this.target.bounds().extent().dist(pt(0)) < 40 }
       },
       target: {
         get() { return this.state ? this.state.target : null; },
@@ -104,7 +108,7 @@ export default class Halo extends Morph {
         [null,     null,   null,   null,  null,   null,   null     ],
         ["copy",   null,   null,   null,  null,   null,   "edit"   ],
         [null,     null,   null,   null,  null,   null,   null     ],
-        ["connections",  null,   null,   null,  null,   null,   "inspect"],
+        ["component",  null,   null,   null,  null,   null,   "inspect"],
         [null,     null,   null,   null,  null,   null,   null     ],
         ["rotate", null,   null,   null,  null,   null,   "resize" ],
         [null,     "name", "name", "name","name", "name", null     ]]});
@@ -124,6 +128,7 @@ export default class Halo extends Morph {
         this.inspectHalo(),
         this.editHalo(),
         this.copyHalo(),
+        this.componentHalo(),
         this.rotateHalo(),
         this.nameHalo(),
         this.originHalo()
@@ -140,7 +145,8 @@ export default class Halo extends Morph {
   get borderBox() {
     return this.getSubmorphNamed("border-box") || this.addMorphBack(morph({
       name: "border-box", fill: Color.transparent,
-      borderColor: Color.red, borderWidth: 1
+      borderColor: this.target.isComponent ? componentAccent : haloBlue,
+      borderWidth: 1
     }));
   }
 
@@ -245,6 +251,7 @@ export default class Halo extends Morph {
   rotateHalo() { return RotateHaloItem.for(this); }
   copyHalo() { return CopyHaloItem.for(this); }
   originHalo() { return OriginHaloItem.for(this); }
+  componentHalo() { return ComponentHaloItem.for(this); }
 
   get buttonControls() { return this.submorphs.filter(m => m.isHaloItem && !m.isResizeHandle); }
 
@@ -401,7 +408,7 @@ export default class Halo extends Morph {
           localize = (p) => rotationIndicator.localizePointFrom(p, this);
     rotationIndicator = rotationIndicator || this.addMorphBack(new Path({
       name: "rotationIndicator",
-      borderColor: Color.red,
+      borderColor: haloBlue,
       borderWidth: 1,
       vertices: []
     }));
@@ -635,6 +642,7 @@ class HaloItem extends Morph {
   static get properties() {
     return {
       borderRadius: {defaultValue: 15},
+      nativeCursor: {defaultValue: 'pointer'},
       fill:         {defaultValue: Color.gray.withA(.7)},
       grabbable:    {defaultValue: false},
       extent:       {defaultValue: pt(24,24)},
@@ -680,7 +688,8 @@ class NameHolder extends Morph {
         initialize() {
           this.nameHolder = this.addMorph(new Text({
             fill: Color.transparent,
-            fontColor: Color.darkgray,
+            fontColor: Color.white,
+            fontWeight: 'bold',
             active: true
           }));
           connect(this.nameHolder, 'onBlur', this, 'accept');
@@ -722,7 +731,7 @@ class NameHolder extends Morph {
   }
 
   onMouseDown(evt) {
-    this.nameHolder.fontColor = Color.darkgray;
+    this.nameHolder.fontColor = Color.white;
     this.halo.toggleMorphHighlighter(false, this.target);
   }
 
@@ -765,8 +774,8 @@ class NameHaloItem extends HaloItem {
   static get morphName() { return "name"; }
   static get properties() {
     return {
-      borderRadius: {defaultValue: 15},
-      fill: {defaultValue: Color.gray.withA(0.7)},
+      borderRadius: {defaultValue: 4},
+      fill: {defaultValue: haloBlue },
       borderColor: {defaultValue: Color.green},
       layout: {
         initialize() {
@@ -788,6 +797,8 @@ class NameHaloItem extends HaloItem {
       fontSize: 15,
       padding: rect(4, 6, 4, 0)
     });
+
+    this.fill = this.halo.target.isComponent ? componentAccent : haloBlue;
 
     this.alignInHalo();
   }
@@ -821,8 +832,10 @@ class NameHaloItem extends HaloItem {
       this.nameHolders.forEach(nh => nh != nameHolder && nh.deactivate());
       this.borderWidth = 3;
       this.addMorph(this.validityIndicator);
+      this.fill = Color.darkGray;
       setTimeout(() => nameHolder.nameHolder.selectAll());
     } else {
+      this.fill = haloBlue;
       this.nameHolders.forEach(nh => nh != nameHolder && nh.activate());
       this.borderWidth = 0;
       this.validityIndicator.remove();
@@ -901,7 +914,8 @@ class GrabHaloItem extends HaloItem {
   static get properties() {
     return {
       styleClasses: {defaultValue: ["far", "fa-hand-rock"]},
-      tooltip: {defaultValue: "Grab the morph"}
+      tooltip: {defaultValue: "Grab the morph"},
+      draggable: { defaultValue: true },
     };
   }
 
@@ -975,6 +989,7 @@ class DragHaloItem extends HaloItem {
   
   static get properties() {
     return {
+      draggable: { defaultValue: true },
       styleClasses: { defaultValue: ["fas", "fa-arrows-alt"] },
       tooltip: {defaultValue: "Change the morph's position. Press (alt) while dragging to align the morph's position along a grid."}
     } 
@@ -1077,6 +1092,7 @@ class EditHaloItem extends HaloItem {
                        .find(oe => oe.target == this.halo.target);
     if (existing) {
       let win = existing.getWindow();
+      win.bringToFront();
       win.minimized = false;
       win.animate({center: this.world().visibleBounds().center(), duration: 200});
     } else {
@@ -1089,6 +1105,14 @@ class EditHaloItem extends HaloItem {
 class RotateHaloItem extends HaloItem {
 
   static get morphName() { return "rotate"; }
+
+  static get properties() {
+    return {
+      draggable: {
+        defaultValue: true,
+      }
+    }
+  }
 
   constructor(props) { super(props); this.adaptAppearance(false); }
 
@@ -1195,12 +1219,46 @@ class RotateHaloItem extends HaloItem {
 
 const nameNumberRe = /(.+)([0-9]+)$/;
 
+class ComponentHaloItem extends HaloItem {
+
+  static get morphName() { return "component"; }
+  
+  static get properties() {
+    return {
+      tooltip: {
+        get() {
+          return this.halo.target.isComponent ? "Retract Component" : "Turn into Component"
+        }
+      },
+      styleClasses: {
+        initialize() {
+          this.styleClasses = this.halo.target.isComponent ? ["fas", "fa-eraser"] : ["fas", "fa-cube"]
+        }
+      },
+    }
+  }
+
+  updateComponentIndicator() {
+
+    const world = this.world();
+    const target = this.halo.target;
+    this.halo.remove();
+    world.showHaloFor(target);
+  }
+
+  onMouseDown() {
+    this.halo.target.isComponent = !this.halo.target.isComponent;
+    this.updateComponentIndicator();
+  }
+}
+
 class CopyHaloItem extends HaloItem {
 
   static get morphName() { return "copy"; }
 
   static get properties() {
     return {
+      draggable: { defaultValue: true },
       tooltip: {defaultValue: "Copy morph" },
       styleClasses: {defaultValue: ["far", "fa-clone"] }
     }
@@ -1227,13 +1285,23 @@ class CopyHaloItem extends HaloItem {
 
     } else {
       let pos = target.globalPosition,
-          copy = world.addMorph(target.copy());
+          copy = target.copy();
+      if (target.isComponent) {
+        copy.isComponent = false;
+        copy.withAllSubmorphsDoExcluding(m => {
+          if (m == copy || !m.master)
+            delete m._parametrizedProps;
+        }, m => m.master && m != copy);
+        copy.master = target;
+      }
       copy.name = findNewName(target, target.name);
+      world.addMorph(copy);
       copy.globalPosition = pos;
       copy.undoStart("copy-halo");
       hand.grab(copy);
       world.addMorph(halo);
-      halo.refocus(copy);
+      
+      halo.visible = false;
     }
 
     function findNewName(originalMorph, name) {
@@ -1249,6 +1317,7 @@ class CopyHaloItem extends HaloItem {
 
   stop(hand) {
     var {halo} = this,
+        [copy] = hand.grabbedMorphs,
         dropTarget = hand.findDropTarget(
           hand.globalPosition,
           [halo.target],
@@ -1258,7 +1327,8 @@ class CopyHaloItem extends HaloItem {
     undo.addTarget(dropTarget);
     hand.dropMorphsOn(dropTarget);
     halo.target.undoStop("copy-halo");
-    halo.alignWithTarget();
+    halo.remove();
+    hand.world().showHaloFor(copy);
   }
 
   onDragStart(evt) { this.init(evt.hand); }
@@ -1322,13 +1392,19 @@ class OriginHaloItem extends HaloItem {
 
   static get properties() {
     return {
-      borderColor: {defaultValue: Color.black},
-      borderWidth: {defaultValue: 1},
-      nativeCursor: {defaultValue: '-webkit-grab'}
+      borderWidth: {defaultValue: 3},
+      nativeCursor: {defaultValue: '-webkit-grab'},
+      draggable: { defaultValue: true },
+      borderColor: {
+        after: ['halo'],
+        initialize() {
+          this.borderColor = this.halo.target.isComponent ? componentAccent : haloBlue;
+        }
+      }
     };
   }
 
-  get fill() { return Color.red; }
+  get fill() { return Color.white.interpolate(.2, this.borderColorTop); }
   get extent() { return pt(15, 15); }
   get tooltip() { return "Change the morph's origin"; }
 
@@ -1378,6 +1454,7 @@ class ResizeHandle extends HaloItem {
     return {
       corner: {},
       location: {},
+      draggable: { defaultValue: true },
       isResizeHandle: {
         readOnly: true,
         get() { return true; }
@@ -1433,7 +1510,7 @@ class ResizeHandle extends HaloItem {
           extent: pt(10, 10),
           borderWidth: 1,
           borderRadius: 0,
-          borderColor: Color.black,
+          borderColor: halo.target.isComponent ? componentAccent : haloBlue,
           fill: Color.white
         });
     return Object.assign(resizer, {nativeCursor, location});
@@ -1580,6 +1657,10 @@ export class MorphHighlighter extends Morph {
       name: {defaultValue: "morphHighlighter"},
       styleClasses: {defaultValue: ['inactive']},
       reactsToPointer: {defaultValue: false},
+      hasFixedPosition: { defaultValue: true },
+      fill: { defaultValue: Color.orange.withA(0.3)},
+      borderWidth: { defaultValue: 2 },
+      borderColor: { defaultValue: Color.orange },
       halo: {},
       epiMorph: { defaultValue: true },
       isHighlighter: {readOnly: true, defaultValue: true},
@@ -1587,29 +1668,22 @@ export class MorphHighlighter extends Morph {
         defaultValue: [],
         set(sides) {
           this.setProperty('highlightedSides', sides);
-          this.alignWithHalo();
           this.submorphs = sides.map(side => {
             return {type: 'ellipse', isHaloItem: true,
               fill: Color.orange, center: this.innerBounds()[side]()};
           });
+          this.addMorph({
+            type: "label",
+            name: "name tag",
+            padding: Rectangle.inset(5,5,5,5),
+            fontColor: Color.white,
+            fill: Color.orange,
+            borderRadius: 3,
+          })
+          this.alignWithHalo();
         }
       },
       showLayout: {defaultValue: false},
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            '.inactive': {
-              opacity: 0,
-            },
-            '.active': {
-              fill: Color.orange.withA(0.3),
-              opacity: 1,
-              borderWidth: 2,
-              borderColor: Color.orange
-            }
-          });
-        }
-      },
       targetId: {},
       target: {
         readOnly: true, derived: true,
@@ -1630,9 +1704,8 @@ export class MorphHighlighter extends Morph {
     var store = (halo._morphHighlighters = halo._morphHighlighters || {});
     properties.forEachOwn(store, (_, h) => h.alignWithHalo());
     if (!morph || morph.ownerChain().find(owner => owner.isHaloItem)) return null;
-    store[morph.id] =
-      store[morph.id] ||
-      halo.addMorph(new this({targetId: morph.id, halo, showLayout}));
+    store[morph.id] = store[morph.id] || new this({targetId: morph.id, halo, showLayout});
+    halo.addMorph(store[morph.id]);
     store[morph.id].highlightedSides = highlightedSides;
     return store[morph.id];
   }
@@ -1645,7 +1718,10 @@ export class MorphHighlighter extends Morph {
   alignWithHalo() {
     if (this.target) {
       this.position = this.halo.localize(this.target.globalBounds().topLeft());
+      if (this.halo.isWorld) this.position = this.position.subPt(this.halo.scroll);
       this.extent = this.target.globalBounds().extent();
+      this.get('name tag').value = this.target.name;
+      this.get('name tag').topCenter = this.innerBounds().insetBy(-10).bottomCenter()
     }
   }
 
@@ -1654,7 +1730,7 @@ export class MorphHighlighter extends Morph {
       this.layoutHalo =
         this.layoutHalo || this.world().showLayoutHaloFor(this.target, this.pointerId);
       if (this.layoutHalo && this.layoutHalo.previewDrop) {
-        this.styleClasses = ['inactive'];
+        this.visible = false;
         this.alignWithHalo();
         if (this.halo.get("grab").hand.grabbedMorphs)
           this.layoutHalo.previewDrop(this.halo.get("grab").hand.grabbedMorphs);
@@ -1662,7 +1738,7 @@ export class MorphHighlighter extends Morph {
       }
     }
 
-    this.styleClasses = ['active'];
+    this.visible = true;
     this.alignWithHalo();
   }
 
@@ -1675,8 +1751,9 @@ export class MorphHighlighter extends Morph {
       this.layoutHalo.remove();
       this.layoutHalo = null;
     }
-    this.styleClasses = ['inactive'];
+    this.visible = false;
     this.alignWithHalo();
+    this.remove();
   }
 
 }
@@ -1704,7 +1781,7 @@ export class InteractiveMorphSelector {
     let deferred = promise.deferred();
     deferred.promise.resolve = deferred.resolve;
     this.whenDone = deferred.promise;
-    this.selectorMorph = Icon.makeLabel('crosshairs', {fontSize: 20, hasFixedPosition: true}).openInWorld();
+    this.selectorMorph = Icon.makeLabel('crosshairs', {fontSize: 20, hasFixedPosition: true, epiMorph: true }).openInWorld();
     connect(this.world.firstHand, 'position', this, 'scanForTargetAt');
     once(this.selectorMorph, 'onMouseDown', this, 'selectTarget');
     once(this.selectorMorph, 'onKeyDown', this, 'stopSelect');

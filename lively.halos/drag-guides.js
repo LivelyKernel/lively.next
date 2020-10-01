@@ -4,7 +4,7 @@ import { morph } from "lively.morphic";
 
 const cachedGuideLines = new WeakMap();
 
-const guideWidth = 4,
+const guideWidth = 1,
       guideColor = Color.orange.lighter();
 
 export function removeSnapToGuidesOf(target) {
@@ -29,6 +29,10 @@ export function showAndSnapToGuides(target, showGuides = true, snap = true, eps 
       maxHPriority = 0, maxVPriority = 0,
       dragOffsetX = 0, dragOffsetY = 0;
 
+    // adjust world scroll in transform
+  tfm.e -= world.scroll.x;
+  tfm.f -= world.scroll.y;
+
 
   // compute guides and drag offset for snapping
   if (aligned) {
@@ -50,7 +54,8 @@ export function showAndSnapToGuides(target, showGuides = true, snap = true, eps 
         guideSpecs.push({
           type: "line",
           epiMorph: true,
-          height: 2,
+          hasFixedPosition: true,
+          height: guideWidth,
           start: tfm.transformPoint(pt(edgeBVal, top)),
           end: tfm.transformPoint(pt(edgeBVal, bottom)),
           fill: guideColor,
@@ -73,7 +78,8 @@ export function showAndSnapToGuides(target, showGuides = true, snap = true, eps 
         guideSpecs.push({
           type: "line",
           epiMorph: true,
-          height: 2,
+          hasFixedPosition: true,
+          height: guideWidth,
           start: tfm.transformPoint(pt(left, edgeBVal)),
           end: tfm.transformPoint(pt(right, edgeBVal)),
           fill: guideColor,
@@ -149,18 +155,20 @@ export function showAndSnapToGuides(target, showGuides = true, snap = true, eps 
       guideSpecs.push({
         type: "line",
         epiMorph: true,
+        hasFixedPosition: true,
         start: tfm.transformPoint(pt(startXb, startYb)),
         end: tfm.transformPoint(pt(endXb, endYb)),
         fill: Color.orange,
-        height: 2,
+        height: guideWidth,
         guideType: dir, priority: 10
       }, {
         type: "line",
         epiMorph: true,
+        hasFixedPosition: true,
         start: tfm.transformPoint(pt(startXa, startYa)),
         end: tfm.transformPoint(pt(endXa, endYa)),
         fill: Color.orange,
-        height: 2,
+        height: guideWidth,
         guideType: dir, priority: 10
       });
 
@@ -229,6 +237,10 @@ export function showAndSnapToResizeGuides(
       maxHPriority = 0, maxVPriority = 0,
       guideSpecs = [];
 
+  // adjust world scroll in transform
+  tfm.e -= world.scroll.x;
+  tfm.f -= world.scroll.y;
+
   if (similarExtents) {
 
     for (let [m, {similarIn, delta, valA, valB, refPointsA, refPointsB, minDist}] of similarExtents) {
@@ -251,7 +263,8 @@ export function showAndSnapToResizeGuides(
           specA = {
             type: "line",
             epiMorph: true,
-            height: 4,
+            hasFixedPosition: true,
+            height: guideWidth,
             fill: guideColor,
             guideType: similarIn, priority,
             start: tfm.transformPoint(
@@ -304,7 +317,8 @@ export function showAndSnapToResizeGuides(
         guideSpecs.push({
           type: "line",
           epiMorph: true,
-          height: 2,
+          hasFixedPosition: true,
+          height: guideWidth,
           start: tfm.transformPoint(pt(edgeBVal, top)),
           end: tfm.transformPoint(pt(edgeBVal, bottom)),
           fill: guideColor,
@@ -329,7 +343,8 @@ export function showAndSnapToResizeGuides(
         guideSpecs.push({
           type: "line",
           epiMorph: true,
-          height: 2,
+          hasFixedPosition: true,
+          height: guideWidth,
           start: tfm.transformPoint(pt(left, edgeBVal)),
           end: tfm.transformPoint(pt(right, edgeBVal)),
           fill: guideColor,

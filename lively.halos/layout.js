@@ -772,6 +772,7 @@ class DropPreview extends Morph {
       isHaloItem: { readOnly: true, get() { return true }},
       epiMorph: { readOnly: true, get() { return true }},
       fill: { defaultValue: Color.orange.withA(.3)},
+      hasFixedPosition: { defaultValue: true },
       borderColor: { defaultValue: Color.orange },
       borderWidth: { defaultValue: 2 },
       borderStyle: { defaultValue: "dashed" },
