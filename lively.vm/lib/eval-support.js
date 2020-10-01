@@ -1,7 +1,6 @@
 import { arr, Path } from "lively.lang";
 import { parse, stringify, transform, query, nodes } from "lively.ast";
 import { capturing, es5Transpilation } from "lively.source-transform";
-import { runtime as classRuntime } from "lively.classes";
 import { getGlobal } from "./util.js";
 
 var {id, literal, member, objectLiteral} = nodes;
@@ -98,15 +97,14 @@ export function evalCodeTransform(code, options) {
       // existing) constructor function in a way that allows us to redefine
       // methods and properties of the class while keeping the class object
       // identical
-      if (!(defaultClassToFunctionConverterName in options.topLevelVarRecorder))
-        options.topLevelVarRecorder[defaultClassToFunctionConverterName] = classRuntime.initializeClass;
       es6ClassToFunctionOptions = {
         currentModuleAccessor: options.currentModuleAccessor,
         classHolder: varRecorder,
         functionNode: member(varRecorder, defaultClassToFunctionConverterName),
         declarationWrapper: options.declarationWrapper,
         evalId: options.evalId,
-        sourceAccessorName: options.sourceAccessorName
+        sourceAccessorName: options.sourceAccessorName,
+        transform: options.classTransform,
       };
     }
 

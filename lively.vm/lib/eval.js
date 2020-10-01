@@ -1,8 +1,9 @@
 /*global: global, System*/
 
-import { arr, obj, string, Path, promise } from "lively.lang";
+import { arr, obj, string, Path, promise, Closure } from "lively.lang";
 import { evalCodeTransform } from "./eval-support.js";
 import { printEvalResult, getGlobal } from "./util.js";
+
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // options
@@ -62,9 +63,14 @@ function _normalizeEvalOptions(opts) {
 // eval
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function _eval(__lvEvalStatement, __lvVarRecorder/*needed as arg for capturing*/, __lvOriginalCode) {
+// this is needed to prevent google closure from optimizing away the variable names
+const _eval = Closure.fromSource(`function _eval(__lvEvalStatement, __lvVarRecorder/*needed as arg for capturing*/, __lvOriginalCode) {
   return eval(__lvEvalStatement);
-}
+}`).getFunc();
+
+// function _eval(__lvEvalStatement, __lvVarRecorder/*needed as arg for capturing*/, __lvOriginalCode) {
+//   return eval(__lvEvalStatement);
+// }
 
 function runEval(code, options, thenDo) {
   // The main function where all eval options are configured.
@@ -121,6 +127,7 @@ function runEval(code, options, thenDo) {
       onEvalEndCalled = true;
       finishEval(err, value, result, options, recorder, evalDone, thenDo);
     }
+    
   }
 
   // 2. Transform the code to capture top-level variables, inject function calls, ...

@@ -66,7 +66,7 @@ export class RemoteEvalStrategy extends LivelyVmEvalStrategy {
 
   sourceForRemote(action, arg, options) {
     const contextFetch = obj.isString(options.context) ? options.context : false;
-    options = obj.dissoc(options, ["systemInterface", "System", "context"]);
+    options = obj.dissoc(options, ["systemInterface", "System", "context", "classTransform"]);
     return `
 (function() {
   var arg = ${JSON.stringify(arg)},
@@ -79,7 +79,8 @@ export class RemoteEvalStrategy extends LivelyVmEvalStrategy {
     });
   }
   var hasSystem = typeof System !== "undefined"
-  options.context = ${contextFetch}
+  options.context = ${contextFetch};
+  options.classTransform = lively.classes.classToFunctionTransform;
   if (!options.context) {
     options.context = hasSystem
       ? System.global
