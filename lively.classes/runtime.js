@@ -1,4 +1,3 @@
-import { obj } from "lively.lang";
 import { prepareClassForManagedPropertiesAfterCreation } from "./properties.js";
 import { superclassSymbol, moduleSubscribeToToplevelChangesSym, moduleMetaSymbol, objMetaSymbol, initializeSymbol } from "./util.js";
 

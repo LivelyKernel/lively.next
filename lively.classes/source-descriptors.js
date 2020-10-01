@@ -2,7 +2,6 @@
 import { string, arr } from "lively.lang";
 import { parse, query } from "lively.ast";
 import { runEval } from "lively.vm";
-import { scripting } from "lively.modules";
 
 const objMetaSym = Symbol.for("lively-object-meta"),
       moduleSym = Symbol.for("lively-module-meta"),
@@ -158,9 +157,9 @@ export class RuntimeSourceDescriptor {
 
     var {package: {name: pName}, pathInPackage: mName} = obj[moduleSym],
         mId = mName.includes("://") ? mName : pName + "/" + mName,
-        m = scripting.module(System, mId);
+        m = this.System._scripting.module(System, mId);
 
-    if (!m._source && this.moduleSource)
+    if (!m._frozenModule && !m._source && this.moduleSource)
       m.setSource(this.moduleSource);
     return m;
   }
@@ -185,7 +184,7 @@ export class RuntimeSourceDescriptor {
     if (this._sourceLocation) return this._sourceLocation;
     var {meta: {start, end}} = this;
     if (start === undefined || end === undefined)
-      throw new Error(`lively meta data has no start/end`)
+      throw new Error(`lively meta data has no start/end`);
     return this._sourceLocation = {start, end};
   }
 
@@ -194,7 +193,7 @@ export class RuntimeSourceDescriptor {
     if (this._moduleSource) return this._moduleSource;
     var {meta: {moduleSource}} = this;
     if (moduleSource === undefined)
-      throw new Error(`lively meta data has no moduleSource`)
+      throw new Error(`lively meta data has no moduleSource`);
     return this._moduleSource = moduleSource;
   }
 

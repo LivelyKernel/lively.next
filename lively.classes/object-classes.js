@@ -10,6 +10,7 @@ const {ensurePackage, registerPackage, importPackage,
 import { RuntimeSourceDescriptor } from "./source-descriptors.js";
 import { toJsIdentifier } from "./util.js";
 import { adoptObject } from "./runtime.js";
+import { classToFunctionTransform } from "./class-to-function-transform.js";
 
 const objectPackageSym = Symbol.for("lively-object-package-data"),
       // defaultBaseURL = System.normalizeSync("lively.morphic/parts/packages/"),
@@ -40,10 +41,12 @@ export function isObjectClass(klass, options) {
   return pkg ? !!ObjectPackage.forSystemPackage(pkg) : false
 }
 
+var _packageStore = _packageStore || {};
+
 export default class ObjectPackage {
 
   static get packageStore() {
-    return this._packageStore || (this._packageStore = {});
+    return this._packageStore || (this._packageStore = _packageStore);
   }
 
   static lookupPackageForObject(object, options) {
@@ -139,7 +142,7 @@ export default class ObjectPackage {
   async renameObjectClass(newName, objects = []) {
     let {objectClass: klass, System} = this;
 
-    if (!klass || klass.name === newName) return klass;
+    if (!klass || klass.className === newName) return klass;
 
     if (!isValidIdentifier(newName))
       throw new Error(`${newName} is not a valid name for a class`);
@@ -222,7 +225,12 @@ class ObjectModule {
 
       if (bindings) for (var key in bindings) mod.define(key, bindings[key]);
 
-      let evalResult = runEval(source, {sync: true, targetModule: moduleId, System});
+      let evalResult = runEval(source, {
+        classTransform: classToFunctionTransform,
+        sync: true,
+        targetModule: moduleId,
+        System
+      });
       if (evalResult.isError)
         throw evalResult.value;
 
@@ -247,7 +255,7 @@ class ObjectModule {
 
     let { System, systemModule: module, objectPackage } = this,
         className = string.capitalize(toJsIdentifier(objectPackage.id)),
-        superClassName = superClass.name,
+        superClassName = superClass.className,
         isAnonymousSuperclass = !superClassName,
         globalSuperClass = globalClasses.includes(superClass),
         source = "",
