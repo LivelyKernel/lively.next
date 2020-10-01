@@ -209,4 +209,4 @@ function relativeTo(date, otherDate, opts = {}) {
   return parts.join(' ');
 }
 
-export { format, equals, relativeTo }
+export { format, equals, relativeTo, dateFormat }

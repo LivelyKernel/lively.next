@@ -20,7 +20,6 @@ function promise(obj) {
     Promise.resolve(obj);
 }
 
-
 function delay(ms, resolveVal) {
   // Like `Promise.resolve(resolveVal)` but waits for `ms` milliseconds
   // before resolving

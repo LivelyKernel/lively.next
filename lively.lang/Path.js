@@ -43,6 +43,11 @@ Object.assign(Path.prototype, {
     return this;
   },
 
+  map(fn) {
+    this._mapper = fn;
+    return this;
+  },
+
   parts() { /*key names as array*/ return this._parts; },
 
   size() { /*show-in-doc*/ return this._parts.length; },
@@ -157,8 +162,9 @@ Object.assign(Path.prototype, {
   get(obj, n) {
     // show-in-doc
     var parts = n ? this._parts.slice(0, n) : this._parts;
+    var self = this;
     return parts.reduce(function(current, pathPart) {
-      return current ? current[pathPart] : current; }, obj);
+      return current ? (self._mapper ? self._mapper(pathPart, current[pathPart]) : current[pathPart]) : current; }, obj);
   },
 
   concat(p, splitter) {
@@ -208,18 +214,15 @@ Object.assign(Path.prototype, {
       parent[propName] = parent[newPropName];
       delete parent[newPropName];
       var msg = 'Watcher for ' + parent + '.' + propName + ' uninstalled';
-      show(msg);
       return;
     }
     if (watcherIsInstalled) {
       var msg = 'Watcher for ' + parent + '.' + propName + ' already installed';
-      show(msg);
       return;
     }
     if (getter || setter) {
       var msg = parent + '["' + propName + '"] is a getter/setter, watching not support';
       console.log(msg);
-      if (typeof show === "undefined") show(msg);
       return;
     }
     // observe slots, for debugging
@@ -232,7 +235,6 @@ Object.assign(Path.prototype, {
                            lively.printStack() : console.trace());
       if (options.verbose) {
         console.log(msg);
-        if (typeof show !== 'undefined') show(msg);
       }
       if (haltWhenChanged) debugger;
       return parent[newPropName] = v;
@@ -243,7 +245,6 @@ Object.assign(Path.prototype, {
     });
     var msg = 'Watcher for ' + parent + '.' + propName + ' installed';
     console.log(msg);
-    if (typeof show !== 'undefined') show(msg);
   },
 
   debugFunctionWrapper(options) {
@@ -263,28 +264,22 @@ Object.assign(Path.prototype, {
       parent[funcName] = parent[funcName].debugTargetFunction;
       var msg = 'Uninstalled debugFunctionWrapper for ' + parent + '.' + funcName;
       console.log(msg);
-      if (typeof show !== 'undefined') show(msg);
-      show(msg);
       return;
     }
     if (debuggerInstalled) {
       var msg = 'debugFunctionWrapper for ' + parent + '.' + funcName + ' already installed';
       console.log(msg);
-      if (typeof show !== 'undefined') show(msg);
       return;
     }
     var debugFunc = parent[funcName] = func.wrap(function(proceed) {
       var args = Array.from(arguments);
       if (haltWhenChanged) debugger;
-      if (showStack) show(lively.printStack());
-      if (options.verbose) show(funcName + ' called');
       return args.shift().apply(parent, args);
     });
     debugFunc.isDebugFunctionWrapper = true;
     debugFunc.debugTargetFunction = func;
     var msg = 'debugFunctionWrapper for ' + parent + '.' + funcName + ' installed';
     console.log(msg);
-    if (typeof show !== 'undefined') show(msg);
   }
 
 });
