@@ -118,7 +118,7 @@ export default class Workspace extends Window {
   relayoutWindowControls() {
     super.relayoutWindowControls();
     var list = this.getSubmorphNamed("eval backend button"),
-        title = this.titleLabel();
+        title = this.ui.windowTitle;
     if (list) {
       list.height = 21;
       list.topRight = this.innerBounds().topRight().addXY(-5, 2);

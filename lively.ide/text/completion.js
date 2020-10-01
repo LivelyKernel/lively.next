@@ -173,9 +173,8 @@ export class CompletionController {
         cursorBounds = m.charBoundsFromTextPosition(m.cursorPosition),
         globalCursorBounds = m.getGlobalTransform().transformRectToRect(cursorBounds);
     return globalCursorBounds.topLeft()
-      .addXY(-m.padding.left(), -m.padding.top())
       .addXY(-m.scroll.x, -m.scroll.y)
-      .addPt(pt(m.borderWidth + 2, m.borderWidth));
+      .addPt(pt(m.borderWidth + 3, m.borderWidth + 3));
   }
 
   async completionListSpec() {
@@ -187,12 +186,13 @@ export class CompletionController {
         charBounds = m.env.fontMetric.sizeFor(fontFamily, fontSize, "M"),
         minWidth = 120,
         textWidth = charBounds.width*maxCol,
+        lineHeight = m.document.getLine(0).height,
         width = Math.max(minWidth, textWidth < m.width ? textWidth : m.width),
         minHeight = 70, maxHeight = 700,
-        fullHeight = charBounds.height*items.length+charBounds.height+10,
+        fullHeight = lineHeight*items.length+lineHeight+10,
         height = Math.max(minHeight, Math.min(maxHeight, fullHeight)),
         bounds = position.extent(pt(width, height));
-
+    
     // ensure menu is visible
     let world = m.world(), visibleBounds;
     if (world) {
@@ -207,43 +207,24 @@ export class CompletionController {
         if (bounds.width-delta < minWidth) bounds.width = minWidth;
         else bounds.width -= delta;
       }
-      if (!visibleBounds.containsRect(bounds))
+      if (!visibleBounds.containsRect(bounds)) {
         bounds = bounds.withTopLeft(visibleBounds.translateForInclusion(bounds).topLeft());
-      bounds = bounds.translatedBy(visibleBounds.insetBy(-5).topLeft().negated());
+      }
+      bounds = bounds.translatedBy(visibleBounds.insetBy(0).topLeft().negated());
     }
 
     return {
-      styleSheets: new StyleSheet({
-        "[name=input]": {
-          fill: Color.transparent
-        },
-        ".List": {
-          dropShadow: new ShadowObject({
-            rotation: 45,
-            distance: 5,
-            blur: 40,
-            color: Color.black.withA(.3)
-          }),
-          fontColor,
-        },
-        ".List .ListItemMorph": {
-          fontFamily,
-          fontSize,
-          fontColor
-        }
-      }),
-      hasFixedPosition: true,      
-      fontColor,
+      master: {
+        auto: 'styleguide://SystemWidgets/autocomplete list'
+      },
+      hasFixedPosition: true,
       epiMorph: true,
-      fontFamily, fontSize,
+      fontSize,
       position: bounds.topLeft(),
       extent: bounds.extent(),
       items, input: prefix,
       name: "text completion menu",
       historyId: "lively.morphic-text completion",
-      fill: Color.transparent,
-      border: {width: 0, color: Color.gray},
-      inputPadding: Rectangle.inset(0, 2),
       filterFunction: this.filterFunction,
       sortFunction: this.sortFunction
     }
@@ -280,6 +261,7 @@ export class CompletionController {
           fill: Color.transparent,
           bounds: input.textBounds()
         }, input);
+    list.master = null;
     if (!intermittendTextRange.isEmpty()) {
       this.textMorph.deleteText(intermittendTextRange);
       input.input = intermittendInput;
@@ -287,11 +269,11 @@ export class CompletionController {
     }
     input.fontColor = this.textMorph.fontColor;
     connect(input, 'textString', mask, 'setBounds', {
-      converter: () => input.textBounds(),
+      converter: `() => input.textBounds()`,
       varMapping: {input}
     });
     connect(menu, "accepted", this, "insertCompletion", {
-      updater: function($upd) {
+      updater: `function($upd) {
         let textToInsert, customInsertionFn = null, completion = this.sourceObj.selection;
         if (completion) {
           if (completion.prefix) prefix = completion.prefix;
@@ -301,14 +283,14 @@ export class CompletionController {
           textToInsert = this.sourceObj.inputMorph.textString;
         }
         $upd(textToInsert, prefix, customInsertionFn);
-      },
+      }`,
       varMapping: {prefix}
     });
     connect(menu, "accepted", menu, "remove");
     connect(menu, "canceled", menu, "remove");
     connect(menu, "remove", this.textMorph, "focus");
     connect(menu.inputMorph, 'onBlur', this, 'removeMenuOnBlur', {
-      converter: evt => ({menu, evt}), varMapping: {menu}
+      converter: `evt => ({menu, evt})`, varMapping: {menu}
     });
 
     var world = this.textMorph.world();
@@ -316,14 +298,9 @@ export class CompletionController {
 
     // fixme: the styling of the completion menu should be defined by the theme itself
     list.addStyleClass("hiddenScrollbar");
-    list.fill = Color.white.withA(0.85);
-    if (theme && theme.constructor.name == 'DarkTheme') {
-      list.styleClasses = ['dark'];
-      list.fill = Color.black.withA(0.7);
-    }
-
     input.height = list.itemHeight;
     input.fixedHeight = true;
+    input.fontSize = list.fontSize;
     input.focus();
 
     menu.get("padding").height = 0;

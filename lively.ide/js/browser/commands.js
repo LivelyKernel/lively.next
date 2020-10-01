@@ -238,7 +238,7 @@ export default function browserCommands(browser) {
           {requester: browser,
            choices: new Map([
              [[...Icon.textAttribute('cube'), ' Create New Package', {}], 'Create New Package'],
-             [[...Icon.textAttribute('external-link-square'), ' Load Existing Package', {}], 'Load Existing Package']
+             [[...Icon.textAttribute('external-link-alt'), ' Load Existing Package', {}], 'Load Existing Package']
            ])
          });
 

@@ -25,6 +25,11 @@
     "lively.lang": "^1.0.0",
     "prettier": "1.18.2"
   },
+  "systemjs": {
+    "map": {
+      "semver": "https://dev.jspm.io/semver"
+    }
+  },
   "devDependencies": {
     "mocha-es6": "^0.5"
   },

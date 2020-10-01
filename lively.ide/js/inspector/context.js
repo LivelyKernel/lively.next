@@ -111,7 +111,11 @@ export function printValue(value) {
   return result;
 }
 
-function partitionedChildren(arrayOrDict, { originalValue = arrayOrDict, offset = 0, partitionSize = arrayOrDict.length } = {}) {
+function partitionedChildren(arrayOrDict, {
+  originalValue = arrayOrDict,
+  offset = 0,
+  partitionSize = arrayOrDict.length || Object.values(arrayOrDict).length,
+} = {}) {
   if (obj.isArray(arrayOrDict)) {
     let newPartitionSize = num.roundTo(Math.max(MIN_PARTITION_SIZE, partitionSize / 50), .1),
         numPartitions = partitionSize / newPartitionSize,
@@ -133,7 +137,29 @@ function partitionedChildren(arrayOrDict, { originalValue = arrayOrDict, offset 
     }
     return partitions;
   } else {
-    return arrayOrDict;
+    let newPartitionSize = num.roundTo(Math.max(MIN_PARTITION_SIZE, partitionSize / 50), .1),
+        numPartitions = partitionSize / newPartitionSize,
+        partitions = [];
+    const keys = obj.keys(originalValue).sort();
+    for (let i = 0; i < numPartitions; i++) {
+      const start = offset + i * newPartitionSize;
+      const end = offset + (i + 1) * newPartitionSize;
+      const subObj = obj.select(originalValue, keys.slice(start, end));
+      const keyString = `[${keys[start].slice(0, 4)}-${(keys[end] || arr.last(keys)).slice(0, 4)}]`;
+      partitions.push({
+        partition: {
+          originalValue: subObj,
+          offset: offset + i * newPartitionSize,
+          partitionSize: newPartitionSize
+        },
+        value: [],
+        key: keyString,
+        keyString,
+        valueString: '...',
+        isCollapsed: true
+      })
+    }
+    return partitions;
   }
 }
 
@@ -515,7 +541,7 @@ class PropertyNode extends InspectionNode {
 
     if (!this.interactive && !(spec.foldable && isMultiValue(value, spec.foldable))) {
       return inspector.renderPropertyControl({
-        target, keyString, valueString,
+        target, keyString, valueString, tree: inspector.ui.propertyTree,
         value, spec, node: this, fastRender: true,
       });
     }

@@ -218,7 +218,7 @@ function matchingExportsForUndeclared(undeclaredVar, allExports, preferReExporte
   // given an undeclared var ({name, start,end}), filters the list of
   // allExports to those exports that match the undeclared var.  Since re-exports
   // of the same object are possible, allows to suppress re-exports or original
-  // exports to filter the lost of choices further
+  // exports to filter the list of choices further
   let matching = allExports.filter(ea => {
     let isDefault = ea.exported === "default",
         name = isDefault ? ea.local : ea.exported;

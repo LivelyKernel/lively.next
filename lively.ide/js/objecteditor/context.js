@@ -1,8 +1,9 @@
 /*global System*/
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
 import { withSuperclasses, isClass } from "lively.classes/util.js";
-import { module } from "lively.modules/index.js";
-import { string, promise, Path, obj } from "lively.lang";
+import * as modules from "lively.modules/index.js";
+let { module } = modules;
+import { string, num, promise, Path, obj } from "lively.lang";
 import ClassTreeData from "./classTree.js";
 import { subscribe, unsubscribe } from "lively.notifications/index.js";
 import L2LClient from "lively.2lively/client.js";
@@ -94,7 +95,7 @@ export default class ObjectEditorContext {
     await this.refresh(!editor)
     if (editor)
       Object.assign(editor.editorPlugin.evalEnvironment, this.evalEnvironment);
-    await this.selectClass(target.constructor.name);
+    await this.selectClass(target.constructor.className);
     return this;
   }
 
@@ -239,7 +240,7 @@ export default class ObjectEditorContext {
     } = this;
         
     if (selectedClass) {
-      title += ` - ${selectedClass.name}`;
+      title += ` - ${selectedClass.className}`;
       if (isObjectClass(selectedClass)) {
         let p = selectedClass[Symbol.for("lively-module-meta")].package;
         if (p && p.version) title += "@" + p.version;
@@ -252,11 +253,12 @@ export default class ObjectEditorContext {
   }
   
   async selectClass(className) {
+    // what if classes names are the same, but located in different modules?
     this.selectedClassName = await this.withContextDo(() => {
-      let klass = this.classChainOfTarget().find(ea => ea.name === className);
+      let klass = this.classChainOfTarget().find(ea => ea.className === className);
       this.selectedMethod = null;
       this.selectedClass = klass;
-      return klass.name;
+      return klass.className;
     }, { className });
   }
 
@@ -280,7 +282,7 @@ export default class ObjectEditorContext {
         {baseURL, System} = pkg,
         forkedPackage = await pkg.fork(forkedName, {baseURL, System});
     await adoptObject(t, forkedPackage.objectClass);
-    return forkedPackage.objectClass.name;
+    return forkedPackage.objectClass.className;
   }
 
   async addNewMethod() {
@@ -289,7 +291,7 @@ export default class ObjectEditorContext {
 
   async selectMethod(className, methodSpec) {
     let methodNode = await this.withContextDo(async () => {
-      let klass = this.classChainOfTarget().find(ea => ea.name === className);
+      let klass = this.classChainOfTarget().find(ea => ea.className === className);
 
       if (klass && !methodSpec && isClass(klass.owner)) {
         methodSpec = klass;
@@ -327,12 +329,20 @@ export default class ObjectEditorContext {
     }
   }
 
-  async _sourceDescriptor_of_class_findMethodNode(klass, methodName, methodKind, isClassMethod = false, ast) {
+  async getMethodAtCursorPos(className, methodSpec, cursorIndex) {
+    return await this.withContextDo(() => {
+      let klass = this.classChainOfTarget().find(ea => ea.className === className);
+      return this._sourceDescriptor_of_class_findMethodNode(klass, cursorIndex);
+    }, { cursorIndex });
+  }
+
+  async _sourceDescriptor_of_class_findMethodNode(klass, methodNameOrIndex, methodKind, isClassMethod = false, ast) {
     let descr = this.sourceDescriptorFor(klass),
         parsed = ast || await descr.ast,
         methods = Path("body.body").get(parsed),
-        method = methods.find(({kind, static: itIsClassMethod, key: {name}}) => {
-          if (name !== methodName || itIsClassMethod !== isClassMethod)
+        method = methods.find(({kind, static: itIsClassMethod, key: {name}, value: { body: { start, end } }}) => {
+          if (obj.isNumber(methodNameOrIndex)) return num.between(methodNameOrIndex, start, end);
+          if (name !== methodNameOrIndex || itIsClassMethod !== isClassMethod)
             return false;
           if (!methodKind || (methodKind !== "get" && methodKind !== "set"))
             return true;

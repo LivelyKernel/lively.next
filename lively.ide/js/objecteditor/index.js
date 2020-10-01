@@ -1,7 +1,7 @@
 /*global System, localStorage*/
 import { arr, obj, t, Path, string, fun, promise } from "lively.lang";
-import { Icon, ProportionalLayout, StyleSheet, Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
-import { pt, Color } from "lively.graphics";
+import { Icon, ShadowObject, ProportionalLayout, StyleSheet, Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
+import { pt, rect, Color } from "lively.graphics";
 import JavaScriptEditorPlugin from "../editor-plugin.js";
 import { withSuperclasses, isClass } from "lively.classes/util.js";
 import { Tree, LoadingIndicator } from "lively.components";
@@ -9,7 +9,7 @@ import { connect } from "lively.bindings";
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
 import ObjectPackage, { isObjectClass } from "lively.classes/object-classes.js";
 import { chooseUnusedImports, interactivlyFixUndeclaredVariables, interactivelyChooseImports } from "../import-helper.js";
-import { module } from "lively.modules";
+import * as modules from "lively.modules";
 import { parse } from "lively.ast";
 import { interactivelySavePart } from "lively.morphic/partsbin.js";
 import * as livelySystem from 'lively-system-interface';
@@ -22,6 +22,7 @@ import DarkTheme from "../../themes/dark.js";
 import DefaultTheme from "../../themes/default.js";
 import { stringifyFunctionWithoutToplevelRecorder } from "lively.source-transform";
 import { interactivelyFreezePart, displayFrozenPartsFor } from "lively.freezer";
+import { generateReferenceExpression } from "../inspector.js";
 
 export class ObjectEditor extends Morph {
 
@@ -41,6 +42,7 @@ export class ObjectEditor extends Morph {
     var ed = new this(obj.dissoc(options, "title", "class", "method", "target", "evalEnvironment")),
         winOpts = {name: "ObjectEditor window", title: options.title || "ObjectEditor"},
         win = (await ed.openInWindow(winOpts)).activate();
+    ed.master = { auto: "styleguide://SystemIDE/objectEditor/light"};
     await win.whenRendered();
     if (target) {
       if (loadingIndicator) loadingIndicator.label = 'Connecting to target';
@@ -73,57 +75,6 @@ export class ObjectEditor extends Morph {
 
       context: {},
 
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-          ".listing": {
-            // borderWidth: 1, borderColor: Color.gray,
-            fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"
-          },
-          ".Text": {
-            borderLeft: {width: 1, color: Color.gray},
-            borderRight: {width: 1, color: Color.gray},
-            borderBottom: {width: 1, color: Color.gray},
-          },
-          ".Button.plain": {
-            extent: pt(26,24),
-            fontSize: 14
-          },
-  
-          ".Button.flat": {
-            fill: Color.white,
-            border: {color: Color.lightGray, style: "solid", radius: 5},
-            nativeCursor: "pointer",
-            extent: pt(26,24),
-            fontSize: 14
-          },
-           "[name=sourceEditor]": {
-             lineWrapping: "by-chars",
-             ...config.codeEditor.defaultStyle,
-           },
-           "[name=classTree]": {
-             borderRight: {width: 0},
-             borderTop: {width: 1, color: Color.gray},
-             borderBottom: {width: 1, color: Color.gray}
-           },
-           "[name=objectCommands]": {
-             fill: Color.transparent
-           },
-           "[name=classAndMethodControls]": {
-             fill: Color.transparent
-           },
-           "[name=importController]": {
-             fill: Color.transparent
-           },
-            "[name=sourceEditorControls]": {
-             fill: Color.transparent,
-             borderLeft: {width: 1, color: Color.gray},
-             borderRight: {width: 1, color: Color.gray},
-           }
-          });
-        }
-      },
-
       editorPlugin: {
         readOnly: true, derived: true, after: ["submorphs"],
         get() {
@@ -152,6 +103,7 @@ export class ObjectEditor extends Morph {
 
   get ui() {
     return this._ui = this._ui || {
+      frozenWarning:       this.getSubmorphNamed('frozen-module-info'),
       addImportButton:     this.getSubmorphNamed("addImportButton"),
       addButton:           this.getSubmorphNamed("addButton"),
       removeButton:        this.getSubmorphNamed("removeButton"),
@@ -180,14 +132,16 @@ export class ObjectEditor extends Morph {
     var l = this.layout = new GridLayout({
       grid: [
         ["objectCommands", "objectCommands", "objectCommands"],
+        ["classTree", "frozen warning", "importController"],
         ["classTree", "sourceEditor", "importController"],
         ["classAndMethodControls", "sourceEditorControls", "importController"],
       ]});
     l.col(0).fixed = 180;
     l.col(2).fixed = 1;
     l.col(2).width = 0;
+    l.row(1).fixed = 0.1;
     l.row(0).fixed = 28;
-    l.row(2).fixed = 30;
+    l.row(3).fixed = 30;
 
     let {
       addImportButton,
@@ -334,10 +288,16 @@ export class ObjectEditor extends Morph {
 
   build() {
 
-    const topBtnStyle = { type: 'Button', styleClasses: ['plain'] },
-          btnStyle = { type: 'Button', styleClasses: ['plain'] },
+    const topBtnStyle = { master: {
+            auto: "styleguide://System/buttons/light",
+            click: "styleguide://System/buttons/pressed/light",
+          }, type: 'Button', styleClasses: ['plain'] },
+          btnStyle = { master: {
+            auto: "styleguide://System/buttons/light",
+            click: "styleguide://System/buttons/pressed/light",
+          }, type: 'Button', styleClasses: ['plain'] },
           listStyle = { styleClasses: ['listing'] },
-          textStyle = { type: 'Text' },
+          textStyle = { type: 'Text', styleClasses: ['noChanges'], nativeCursor: 'text'},
           wrapperStyle = {
             reactsToPointer: false,
             fill: Color.transparent,
@@ -363,8 +323,8 @@ export class ObjectEditor extends Morph {
             name: 'target controls',
             topCenter: pt(200,0),
             submorphs:[
-              {...topBtnStyle, name: "inspectObjectButton", label: Icon.textAttribute("gears"), tooltip: "open object inspector"},
-              {...topBtnStyle, name: "publishButton", label: Icon.textAttribute("cloud-upload"), tooltip: "publish object to PartsBin"},
+              {...topBtnStyle, name: "inspectObjectButton", label: Icon.textAttribute("cogs"), tooltip: "open object inspector"},
+              {...topBtnStyle, name: "publishButton", label: Icon.textAttribute("cloud-upload-alt"), tooltip: "publish object to PartsBin"},
               {...topBtnStyle, name: "chooseTargetButton", label: Icon.textAttribute("crosshairs"), tooltip: "select another target"}
             ]
           },
@@ -374,24 +334,36 @@ export class ObjectEditor extends Morph {
             layout: new HorizontalLayout({direction: "rightToLeft", spacing: 2, autoResize: false}),
             right: 400,
             submorphs:[
-              {...topBtnStyle, name: "freezeTargetButton", label: Icon.textAttribute("snowflake-o", { textStyleClasses: ['far']}), tooltip: "publish target"},
+              {...topBtnStyle, name: "freezeTargetButton", label: Icon.textAttribute("snowflake", { textStyleClasses: ['far']}), tooltip: "publish target"},
               {...topBtnStyle, name: "showFrozenPartsButton", label: Icon.textAttribute("sellsy", { textStyleClasses: ['fab'], fontWeight: 400 }), tooltip: "show published parts"}
             ]
           }
         ]},
-
-      { type: Tree, name: "classTree", treeData: new ClassTreeData(null), ...listStyle },
 
       {name: "classAndMethodControls",
         width: 100,
         layout: new HorizontalLayout({direction: "centered", spacing: 2, autoResize: false}), submorphs: [
           {...btnStyle, name: "addButton", label: Icon.textAttribute("plus"), tooltip: "add a new method"},
           {...btnStyle, name: "removeButton", label: Icon.textAttribute("minus"), tooltip: "remove a method or class"},
-          {...btnStyle, name: "forkPackageButton", label: Icon.textAttribute("code-fork"), tooltip: "fork package"},
-          {...btnStyle, name: "openInBrowserButton", label: Icon.textAttribute("external-link"), tooltip: "open selected class in system browser"},
+          {...btnStyle, name: "forkPackageButton", label: Icon.textAttribute("code-branch"), tooltip: "fork package"},
+          {...btnStyle, name: "openInBrowserButton", label: Icon.textAttribute("external-link-alt"), tooltip: "open selected class in system browser"},
         ]},
 
       {name: "sourceEditor", ...textStyle},
+
+      {
+        name: "frozen warning",
+        master: { auto: "styleguide://System/frozenWarning" },
+        height: 0,
+        submorphs: [
+          { type: "text", name: "frozen-module-info", fixedWidth: true },
+          Icon.makeLabel('snowflake', {
+            name: "snowflake",
+          })
+        ]
+      },
+
+      { type: Tree, name: "classTree", treeData: new ClassTreeData(null), ...listStyle, master: false },
 
       {name: "sourceEditorControls",
         layout: new GridLayout({
@@ -415,7 +387,7 @@ export class ObjectEditor extends Morph {
 
   isShowingImports() { return this.get("importsList").width > 10; }
 
-  toggleShowingImports(timeout = 300/*ms*/) {
+  async toggleShowingImports(timeout = 300/*ms*/) {
     var expandedWidth = Math.min(300, Math.max(200, this.ui.importsList.listItemContainer.width)),
         enable = !this.isShowingImports(),
         newWidth = enable ? expandedWidth : -expandedWidth,
@@ -423,9 +395,11 @@ export class ObjectEditor extends Morph {
     this.layout.disable();
     column.width += newWidth;
     column.before.width -= newWidth;
-    this.layout.enable(timeout ? {duration: timeout} : null);
+    await this.layout.enable(timeout ? {duration: timeout} : null);
     (enable ? this.ui.importsList : this.ui.sourceEditor).focus();
-    return promise.delay(timeout);
+    await promise.delay(2 * timeout);
+    await this.ui.frozenWarning.whenRendered();
+    //this.layout.row(1).height = this.ui.frozenWarning.height;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -570,11 +544,17 @@ export class ObjectEditor extends Morph {
   }
 
   indicateUnsavedChanges() {
-    Object.assign(this.ui.sourceEditor, {border: {width: 1, color: Color.red}});
+    let { sourceEditor } = this.ui;
+    this.layout.col(1).paddingRight = 1;
+    sourceEditor.padding = sourceEditor.padding.withWidth(-1)
+    sourceEditor.borderColor = Color.red;
   }
 
   indicateNoUnsavedChanges() {
-    Object.assign(this.ui.sourceEditor, {border: {width: 1, color: Color.gray}});
+    let { sourceEditor } = this.ui;
+    this.layout.col(1).paddingRight = 0;
+    sourceEditor.padding = sourceEditor.padding.withWidth(0);
+    sourceEditor.borderColor = Color.gray;
   }
 
   async hasUnsavedChanges() {
@@ -728,8 +708,11 @@ export class ObjectEditor extends Morph {
       this.ui.forkPackageButton.enable();
     else this.ui.forkPackageButton.disable(); 
     // fetch data from context
-    let descr = await this.withContextDo((ctx) => {
+    let descr = await this.withContextDo(async (ctx) => {
       const descr = ctx.sourceDescriptorFor(ctx.selectedClass);
+      if (!descr._moduleSource && descr.module._frozenModule) {
+         descr._moduleSource = await descr.module.source();
+      }
       return {
         source: descr.source,
         moduleId: descr.module.id,
@@ -740,11 +723,34 @@ export class ObjectEditor extends Morph {
     await this.updateKnownGlobals();
     await this.updateTitle();
     await this.ui.importController.setModule(descr.moduleId)
+
+    this.displayFrozenWarningIfNeeded();
     
     if (!tree.selectedNode || tree.selectedNode.target !== klass) {
       let node = tree.nodes.find(ea => !ea.isRoot && ea.isClass && ea.name === klass);
       tree.selectedNode = node;
     }
+  }
+
+  async displayFrozenWarningIfNeeded() {
+    let moduleInfo = await this.withContextDo(ctx => {
+      return ctx.selectedModule._frozenModule && {
+        pkgName: ctx.selectedModule.package().name,
+        moduleName: ctx.selectedModule.pathInPackage(),
+      }
+    });
+    if (moduleInfo) {
+      this.ui.frozenWarning.textString = `The module "${moduleInfo.pkgName}/${moduleInfo.moduleName}" you are viewing is frozen. You are not able to make changes to this module unless you reload the world with dynamic load enabled for the package "${moduleInfo.pkgName}".`
+    }
+    
+    this.ui.saveButton.deactivated = !!moduleInfo;
+    const prevHeight = this.layout.row(1).height;
+    const row =  this.layout.row(1);
+    this.layout.disable();
+    row.height = moduleInfo ? 80 : 0;
+    row.after.height -= prevHeight != row.height ? (moduleInfo ? 80 : -80) : 0; 
+    this.layout.enable();
+    this.layout.apply({ duration: 300 });
   }
 
   async selectMethod(klass, methodSpec, highlight = true, putCursorInBody = false) { 
@@ -812,6 +818,9 @@ export class ObjectEditor extends Morph {
     let {ui: {sourceEditor}} = this;
     if (await this.withContextDo((ctx) => !ctx.selectedClass))
        return {success: false, reason: "No class selected"};
+
+    if (await this.withContextDo((ctx) => ctx.selectedModule._frozenModule))
+       return {success: false, reason: "Frozen modules can not be altered" };
 
     // Ask user what to do with undeclared variables. If this gets canceled we
     // abort the save
@@ -888,10 +897,23 @@ export class ObjectEditor extends Morph {
        }, { sourceChanged });
       return {success: true};
      } finally { 
+       // jump to the member the cursor is located at
+       this.jumpToMethodAtCursorPosition();
        await this.withContextDo(ctx => ctx.isSaving = false);
        this.updateSource(content, selectedModuleId);
      }
  
+  }
+
+  async jumpToMethodAtCursorPosition() {
+    return;
+    const { sourceEditor } = this.ui;
+    const cursorIndex = sourceEditor.positionToIndex(sourceEditor.cursorPosition);
+    const [methodNode, className] = await this.withContextDo((ctx) => {
+      const { className } = ctx.selectedClass;
+      return [ctx.getMethodAtCursorPos(className, {}, cursorIndex), className]
+    }, { cursorIndex })
+    this.selectMethod(className, methodNode.key.name, false);
   }
 
   backupSourceInLocalStorage(source) {
@@ -909,7 +931,7 @@ export class ObjectEditor extends Morph {
         const pkg = ObjectPackage.lookupPackageForObject(ctx.target);
         return { 
           objPkgName: pkg && pkg.id,
-          className: ctx.target.constructor.name, 
+          className: ctx.target.constructor.className, 
           stringifiedTarget: ctx.target.toString() }
       }));
       
@@ -933,7 +955,7 @@ export class ObjectEditor extends Morph {
       ({ className, methodName} = await this.withContextDo(async ctx => {
         const {methodName} = await ctx.addNewMethod();
         return {
-          methodName, className: ctx.target.constructor.name
+          methodName, className: ctx.target.constructor.className
         }
       }));
       await this.refresh();
@@ -957,6 +979,7 @@ export class ObjectEditor extends Morph {
     let items = await this.withContextDo(async (ctx) => {
       let { systemInterface: system } = ctx.evalEnvironment;
       let modules = await system.getModules();
+      let { module } = await System.import('lively.modules');
       let items = [];
       for (let mod of modules) {
         // mod = modules[0]
@@ -992,7 +1015,7 @@ export class ObjectEditor extends Morph {
 
     await this.withContextDo((ctx) => {
       const { moduleName, className } = klassAndModule,
-             klass = module(moduleName).recorder[className];
+             klass = modules.module(moduleName).recorder[className];
       adoptObject(ctx.target, klass);
     }, {
       klassAndModule
@@ -1079,7 +1102,7 @@ export class ObjectEditor extends Morph {
       "Please enter a name for the forked class and its package:", {
         fontSize: 16, fontWeight: 'normal'}], {
           requester: this,
-          input: await this.withContextDo(ctx => ctx.target.constructor.name) + "Fork",
+          input: await this.withContextDo(ctx => ctx.target.constructor.className) + "Fork",
           historyId: "lively.morphic-object-editor-fork-names",
           useLastInput: false
         });
@@ -1152,7 +1175,7 @@ export class ObjectEditor extends Morph {
 
     } catch (e) {
       await this.withContextDo(async () => 
-         origSource && await module(moduleId).changeSource(origSource), {
+         origSource && await modules.module(moduleId).changeSource(origSource), {
             moduleId, origSource
          });
       this.showError(e);
@@ -1178,25 +1201,63 @@ export class ObjectEditor extends Morph {
         return;
       }
 
-      var system = await editorPlugin.systemInterface(),
-          choices = await interactivelyChooseImports(system, { requester: this });
-      if (!choices) return null;
+      const importViaFreeText = await this.world().multipleChoicePrompt(
+        "Select import style:", {
+        requester: this,
+        width: 400,
+        choices: new Map([
+          ["An already loaded module (via exports)", false],
+          ["A custom module (via free text)", true],
+        ])
+      });
 
-      // FIXME move this into system interface!
-      origSource = await this.withContextDo(async (ctx) => {
-        const origSource = await ctx.selectedModule.source();
-        ctx.isSaving = true;
-        await ctx.selectedModule.addImports(choices);
-        return origSource;
-      }, {
-        choices
-      })
+      if (importViaFreeText) {
 
-      let insertions = choices.map(({local, exported}) =>
-        exported === "default" ? local : exported);
-      sourceEditor.insertTextAndSelect(
-        insertions.join("\n"),
-        sourceEditor.cursorPosition);
+        let importStmt = `import ... from "module";`;
+        while (true) {
+          importStmt = await this.world().editPrompt("Enter import statement:", {
+            requester: this,
+            input: importStmt,
+            mode: 'js',
+          });
+          if (!importStmt) return;
+          try {
+            parse(importStmt)
+          } catch (e) {
+            sourceEditor.setStatusMessage(e.message);
+            continue;
+          }
+          break;
+        }
+
+        // prepend this import statement to the module
+        origSource = await this.withContextDo(async (ctx) => {
+           const origSource = await ctx.selectedModule.source();
+           ctx.isSaving = true;
+           await ctx.selectedModule.changeSource(importStmt + '\n' + origSource);
+          return origSource;
+        }, { importStmt });
+      }
+      if (!importViaFreeText) {
+        var system = await editorPlugin.systemInterface(),
+            choices = await interactivelyChooseImports(system, { requester: this });
+        if (!choices) return null;
+  
+        // FIXME move this into system interface!
+        origSource = await this.withContextDo(async (ctx) => {
+          const origSource = await ctx.selectedModule.source();
+          ctx.isSaving = true;
+          await ctx.selectedModule.addImports(choices);
+          return origSource;
+        }, {
+          choices
+        })
+  
+        let insertions = choices.map(({local, exported}) =>
+          exported === "default" ? local : exported).join('\n');
+        
+        sourceEditor.insertTextAndSelect(insertions, sourceEditor.cursorPosition);
+      }
 
     } catch (e) {
       await this.withContextDo(async (ctx) => 
@@ -1322,7 +1383,7 @@ export class ObjectEditor extends Morph {
         t = this.target;
 
     let codeSnip = "$world.execCommand(\"open object editor\", {";
-    codeSnip += `target: ${t.generateReferenceExpression()}`;
+    codeSnip += `target: ${generateReferenceExpression(t)}`;
     if (c) codeSnip += `, selectedClass: "${c}"`;
     if (m && c) codeSnip += `, selectedMethod: "${m.name}"`;
     codeSnip += "});";
@@ -1340,7 +1401,7 @@ export class ObjectEditor extends Morph {
   }
 
   async warnForUnsavedChanges() {
-    return await this.world().confirm(['Before you Continue\n', {},
+    return await this.world().confirm(['Before you Continue\n', {fontWeight: 'bold'},
           `Unsaved changes to this class will be discarded. Are you sure you want to proceed?`, {
           fontWeight: 'normal',
           fontSize: 16
@@ -1499,7 +1560,12 @@ export class ObjectEditor extends Morph {
         exec: async ed => {
           try {
             let {success, reason} = await ed.doSave();
-            ed.setStatusMessage(success ? "saved" : reason, success ? Color.green : null);
+            ed.setStatusMessage(
+              success ? "saved" : reason, 
+              success ? Color.white : null,
+              5000,
+              { extent: pt(ed.width, 40), master: { auto:  "styleguide://System/saveStatusMessage"} }
+            );
           } catch (e) { ed.showError(e); }
           return true;
         }
@@ -1547,7 +1613,11 @@ export class ObjectEditor extends Morph {
               commit ?
                 `Published ${this.target} as ${commit.name}` :
                 `Failed to publish part ${ed.target}`,
-              commit ? Color.green : Color.red);
+              Color.white, 5000, {
+                master: {
+                  auto: commit ? "styleguide://System/saveStatusMessage" : "styleguide://System/errorStatusMessage"
+                }
+              });
           } catch (e) {
             if (e === "canceled") this.setStatusMessage("canceled");
             else this.showError(e);
@@ -1631,7 +1701,7 @@ class ImportController extends Morph {
       extent: {defaultValue: pt(300,600)},
       systemInterface: {
         get() {
-          return this.get('object-editor').systemInterface;
+          return this.owner.systemInterface;
         }
       },
       module: {
@@ -1659,7 +1729,7 @@ class ImportController extends Morph {
     var listStyle = {
           borderWidthTop: 1, borderWidthBottom: 1,
           borderColor: Color.gray,
-          fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif",
+          fontSize: 14, fontFamily: "IBM Plex Sans",
           type: "list"
         },
 
@@ -1697,7 +1767,7 @@ class ImportController extends Morph {
   async updateImports() {
     // this needs to be done within the context, since there
     // currently is no remote tracking of module objects
-    let items = await this.get('object-editor').withContextDo(async (ctx) => {
+    let items = await this.owner.withContextDo(async (ctx) => {
       let module = await ctx.selectedModule;
       if (!module) {
         return [];

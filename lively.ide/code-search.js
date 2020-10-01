@@ -198,7 +198,7 @@ export class CodeSearcher extends FilterableList {
     var searchInput = this.get("input").textString;
     if (searchInput.length <= 2) return;
 
-    this.ensureIndicator("input...");
+    this.ensureIndicator("receiving input...");
 
     fun.debounceNamed(this.id + "updateFilterDebounced", 1200, async (needle) => {
       this.removeIndicator();

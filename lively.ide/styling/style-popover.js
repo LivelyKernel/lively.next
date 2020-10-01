@@ -1,6 +1,7 @@
 /*global target,connection*/
 import {
-  Morph, Icon,
+  Morph,
+  Icon,
   ProportionalLayout,
   config,
   Text,
@@ -8,16 +9,16 @@ import {
   GridLayout,
   TilingLayout,
   StyleSheet,
-  CustomLayout,
   morph,
   HorizontalLayout,
-  VerticalLayout,
+  VerticalLayout
 } from "lively.morphic";
 import KeyHandler from "lively.morphic/events/KeyHandler.js";
 
 import { connect, signal } from "lively.bindings";
 import { arr, promise, fun, string, obj } from "lively.lang";
 import { Color, rect, Rectangle, pt } from "lively.graphics";
+import { popovers } from "../index.js";
 
 import {
   ModeSelector,
@@ -31,14 +32,13 @@ import {
 } from "lively.components/popup.js";
 
 import { SvgStyleHalo } from "lively.halos";
-
-import { GradientEditor } from "./gradient-editor.js";
-import { ColorPickerField } from "./color-picker.js";
 import { NumberWidget } from "../value-widgets.js";
 import { Icons } from "lively.morphic/text/icons.js";
 
-
 const duration = 200;
+export var colorWidgets = colorWidgets || {
+  // to be set by color-picker and gradient-editor
+};
 
 class SelectableControl extends Morph {
 
@@ -87,8 +87,8 @@ class SelectableControl extends Morph {
        control.topLeft = selector.bottomLeft.addXY(lr ? 20 : -20,10);
     }
     this.lastLabel = selector.currentLabel;
-    this.animate({submorphs: [selector, control], duration});
-    control.animate({opacity: 1, duration});
+    this.animate({submorphs: [selector, control], duration: duration });
+    control.animate({opacity: 1, duration: duration });
   }
 }
 
@@ -143,8 +143,8 @@ class ToggledControl extends Morph {
           submorphs = [title, ...(valueControl ? [valueControl] : [])];
     signal(this, "update", value && valueControl.value);
     if (valueControl) valueControl.opacity = 0;
-    this.animate({submorphs, duration});
-    if (valueControl) valueControl.animate({opacity: 1, duration});
+    this.animate({submorphs, duration: duration });
+    if (valueControl) valueControl.animate({opacity: 1, duration: duration });
   }
 
 }
@@ -153,6 +153,7 @@ class StylePopover extends Popover {
 
   static get properties() {
     return {
+      
       targetMorph: {
         initialize() {
           this.targetMorph = morph({
@@ -201,20 +202,6 @@ export class IconPopover extends StylePopover {
       evt.hand.dropMorphsOn(this);
       this.iconLabel.remove();
     }
-  }
-  
-  updateStyleSheet() {
-    super.updateStyleSheet();
-    this.styleSheets = [...this.styleSheets, new StyleSheet({
-        "[name=iconList]": {
-          padding: rect(8,0,0,8),
-          fill: Color.transparent,
-          fontFamily: `"Font Awesome 5 Free", "Font Awesome 5 Brands"`,
-          clipMode: "auto",
-          lineWrapping: "by-chars",
-          textAlign: "justify",
-        }
-    })]
   }
 
   controls() {
@@ -435,6 +422,7 @@ export class FillPopover extends StylePopover {
       openHandles: {
         defaultValue: []
       },
+      
       ui: {
         get() {
           return {
@@ -476,7 +464,7 @@ export class FillPopover extends StylePopover {
       {
         name: "switch to fill",
         exec: () => {
-          let p = new ColorPickerField({
+          let p = new colorWidgets.ColorPickerField({
             name: "colorField",
             colorValue: this.fillValue.isGradient ? Color.blue : this.fillValue
           });
@@ -489,7 +477,7 @@ export class FillPopover extends StylePopover {
       {
         name: "switch to gradient",
         exec: () => {
-          const g = new GradientEditor({
+          const g = new colorWidgets.GradientEditor({
             name: "gradient editor",
             gradientValue: this.fillValue
           });
@@ -511,7 +499,7 @@ export class FillPopover extends StylePopover {
           fill: Color.transparent,
           layout: new VerticalLayout({spacing: 0}),
           submorphs: [
-            new ColorPickerField({
+            new colorWidgets.ColorPickerField({
               name: "colorField",
               colorValue: this.fillValue
             })
@@ -569,8 +557,10 @@ export class ShadowPopover extends StylePopover {
 
   shadowControls() {
     let value = this.shadowValue,
+        autofit = false,
         distanceInspector = new NumberWidget({
           min: 0,
+          autofit,
           name: "distanceSlider",
           number: value.distance,
           unit: "px"
@@ -579,19 +569,22 @@ export class ShadowPopover extends StylePopover {
           name: "angleSlider",
           min: 0,
           max: 360,
-          number: value.rotation
+          number: value.rotation,
+          autofit
         }),
         spreadInspector = new NumberWidget({
           name: "spreadSlider",
           min: 0,
-          number: value.spread
+          number: value.spread,
+          autofit
         }),
         blurInspector = new NumberWidget({
           name: "blurSlider",
           min: 0,
-          number: value.blur
+          number: value.blur,
+          autofit
         }),
-        colorField = new ColorPickerField({
+        colorField = new colorWidgets.ColorPickerField({
           name: "colorPicker",
           colorValue: value.color
         });
@@ -787,125 +780,6 @@ export class PointPopover extends StylePopover {
 
 }
 
-export class VerticesPopover extends StylePopover {
-
-  static get properties() {
-    return {
-      pathOrPolygon: {},
-      popoverColor: {defaultValue: Color.gray.lighter()}
-    }
-  }
-
-  controls() {
-    this.showVertexHaloFor(this.pathOrPolygon)
-    this.whenRendered().then(() => {
-      signal(this, "add vertices");
-      this.focus()
-    });
-    return this.vertexEditModes(this.pathOrPolygon);
-  }
-
-  showVertexHaloFor(pathOrPolygon) {
-    if (!this.vertexHalo) this.vertexHalo = new SvgStyleHalo({target: pathOrPolygon}).openInWorld();
-    this.vertexHalo.relayout();
-    connect(this, "add vertices", this.vertexHalo, "startAddingVertices");
-    connect(this, "delete vertices", this.vertexHalo, "startDeletingVertices");
-    connect(this, "transform vertices", this.vertexHalo, "startTransformingVertices");
-  }
-
-  close() {
-    super.close();
-    this.vertexHalo.remove();
-    this.vertexHalo = null;
-  }
-
-  get keybindings() {
-    return super.keybindings.concat([
-      {keys: "Alt-A", command: "add vertices"},
-      {keys: "Alt-D", command: "delete vertices"},
-      {keys: "Alt-S", command: "transform vertices"}
-    ]);
-  }
-
-  get commands() {
-    return [
-      {
-        name: "add vertices",
-        doc: "Add Anchor Points",
-        exec: () => signal(this, "add vertices")
-      },
-      {
-        name: "delete vertices",
-        doc: "Remove Anchor Points",
-        exec: () => signal(this, "delete vertices")
-      },
-      {
-        name: "transform vertices",
-        doc: "Transform Control Points",
-        exec: () => signal(this, "transform vertices")
-      }
-    ];
-  }
-
-  vertexEditModes(target) {
-    return [{
-      fill: Color.transparent,
-      layout: new VerticalLayout({spacing: 5}),
-      styleSheets: new StyleSheet({
-        ".modeLabel": {
-          fontColor: Color.white,
-          fontWeight: "bold",
-          fill: Color.transparent,
-        },
-        '.inactive': {opacity: .5},
-        ".modeBox": {borderRadius: 5, nativeCursor: "pointer"},
-        ".addMode": {fill: Color.rgb(39, 174, 96)},
-        ".deleteMode": {fill: Color.rgb(231, 76, 60)},
-        ".transformMode": {fill: Color.rgb(52, 152, 219)}
-      }),
-      submorphs: this.modes = KeyHandler.generateCommandToKeybindingMap(this).map(ea => {
-        return this.newVertexMode(ea);
-      })
-    }];
-  }
-
-  newVertexMode(cmd) {
-    const self = this,
-      {prettyKeys, command: {doc, name}} = cmd,
-      m = new Morph({
-        styleClasses: this.commandToMorphClasses(cmd.command),
-        layout: new HorizontalLayout({spacing: 5}),
-        submorphs: [
-          {type: "label", value: doc,
-           reactsToPointer: false, styleClasses: ["modeLabel"]},
-          {
-            type: "label",
-            value: prettyKeys.join(" "),
-            styleClasses: ["modeLabel"]
-          }
-        ]
-      });
-    connect(m, 'onMouseDown', this, 'execCommand', {converter: () => cmd.command, varMapping: {cmd}});
-    connect(this, name, this, "activate", {converter: () => m, varMapping: {m}});
-    return m;
-  }
-
-  activate(mode) {
-    this.modes.forEach(m => {
-      m.addStyleClass('inactive');
-    })
-    mode.removeStyleClass('inactive');
-  }
-
-  commandToMorphClasses(cmd) {
-    return {
-      "add vertices": ["modeBox", "addMode"],
-      "delete vertices": ["modeBox", "deleteMode"],
-      "transform vertices": ["modeBox", "transformMode"]
-    }[cmd.name];
-  }
-}
-
 export class RectanglePopover extends StylePopover {
 
   static get properties() {
@@ -919,7 +793,7 @@ export class RectanglePopover extends StylePopover {
     return [
       {
         fill: Color.transparent,
-        extent: pt(120, 110),
+        extent: pt(120, 120),
         layout: new GridLayout({
           grid: [
             ["top", "top scrubber"],
@@ -927,7 +801,7 @@ export class RectanglePopover extends StylePopover {
             ["left", "left scrubber"],
             ["bottom", "bottom scrubber"]
           ],
-          columns: [0, {paddingLeft: 4}, 1, {paddingRight: 4, fixed: true, width: 40}],
+          columns: [0, {paddingLeft: 4}, 1, {paddingRight: 4, fixed: true, width: 60}],
           rows: arr.flatten(arr.range(0, 3).map(i => [i, {
              paddingTop: i == 0 ? 4 : 2, 
              paddingBottom: i == 3 ? 4 : 2
@@ -936,6 +810,7 @@ export class RectanglePopover extends StylePopover {
         submorphs: arr.flatten(
           ["top", "right", "bottom", "left"].map(side => {
             let widget = new NumberWidget({
+              master: { auto: 'styleguide://SystemWidgets/number field/light' },
               name: side + " scrubber", autofit: false,
               number: this.rectangle.partNamed(side)
             });
@@ -967,7 +842,8 @@ export class RectanglePopover extends StylePopover {
         )
       }
     ];
-  }}
+  }
+}
 
 export class TextPopover extends StylePopover {
 
@@ -1013,3 +889,12 @@ export class TextPopover extends StylePopover {
   }
 
 }
+
+Object.assign(popovers, {
+  FillPopover,
+  IconPopover,
+  RectanglePopover,
+  ShadowPopover,
+  PointPopover,
+  LayoutPopover,
+});

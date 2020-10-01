@@ -1,28 +1,19 @@
 import {
-  Morph, TilingLayout,
+  Morph,
+  TilingLayout,
   morph,
   Label,
   HorizontalLayout,
-  StyleSheet,
   Icon,
-  GridLayout,
-  config,
-  InputLine
+  InputLine,
+  config
 } from "lively.morphic";
+
 import { connect, signal } from "lively.bindings";
 import { Color, LinearGradient, pt, rect } from "lively.graphics";
 import { num, obj } from "lively.lang";
 
-import {
-  FillPopover,
-  IconPopover,
-  RectanglePopover,
-  ShadowPopover,
-  PointPopover,
-  VerticesPopover,
-  LayoutPopover,
-} from "./styling/style-popover.js";
-import { StyleSheetEditor } from "./styling/style-sheet-editor.js";
+import { popovers } from "./index.js";
 import { ValueScrubber } from "lively.components/widgets.js";
 import { Popover } from 'lively.components/popup.js';
 
@@ -132,45 +123,6 @@ class ShortcutWidget extends ContextSensitiveWidget {
 
 }
 
-export class VerticesWidget extends ShortcutWidget {
-
-  static get properties() {
-    return {
-      title: {defaultValue: "Edit Vertices"}
-    };
-  }
-
-  async openPopover() {
-    let editor = new VerticesPopover({
-      hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
-      pathOrPolygon: this.context
-    });
-    await editor.fadeIntoWorld(this.globalBounds().center());
-    connect(editor, "vertices", this, "vertices");
-    signal(this, "openWidget", editor);
-  }
-
-}
-
-export class StyleSheetWidget extends ShortcutWidget {
-
-  static get properties() {
-    return {
-      title: {defaultValue: "Edit Style Sheets"}
-    };
-  }
-
-  async openPopover() {
-    let editor = new Popover({
-      popoverColor: LinearGradient.create({0: Color.gray.lighter(), 1: Color.gray}),
-      targetMorph: new StyleSheetEditor({target: this.context})
-    });
-    await editor.fadeIntoWorld(this.globalBounds().center());
-    connect(editor, "fadeOut", editor.targetMorph, "closeOpenWidget");
-    signal(this, "openWidget", editor);
-  }
-}
-
 export class LayoutWidget extends ShortcutWidget {
 
   static get properties() {
@@ -191,7 +143,7 @@ export class LayoutWidget extends ShortcutWidget {
   }
 
   async openPopover() {
-    let editor = new LayoutPopover({
+    let editor = new popovers.LayoutPopover({
       hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
       container: this.context
     });
@@ -213,60 +165,27 @@ export class ColorWidget extends ContextSensitiveWidget {
           this.layout = new HorizontalLayout({direction: "centered"});
         }
       },
+      selectionFontColor: {
+        defaultValue: Color.white
+      },
+      nonSelectionFontColor: {
+        defaultValue: Color.black
+      },
       color: {defaultValue: Color.blue},
       gradientEnabled: {defaultValue: false},
       fontSize: {defaultValue: 14},
       isSelected: {
+        after: ['submorphs'],
         set(selected) {
           if (this.getProperty('isSelected') != selected) {
-             // fixme: style sheets should restore the initial value, once a rule no longer applies
-             if (selected) {
-               this.addStyleClass('selected');
-               this.removeStyleClass('unselected');
-             } else {               
-               this.removeStyleClass('selected');
-               this.addStyleClass('unselected');
-             }
+             this.getSubmorphNamed('valueString').fontColor = selected ?
+               this.selectionFontColor : this.nonSelectionFontColor
              this.setProperty('isSelected', selected);
           }
         }
       },
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            ".ColorWidget.selected .Label": {
-              fontColor: Color.white
-            },
-            ".ColorWidget.unselected .Label": {
-              fontColor: Color.black
-            },
-            ".ColorWidget .Label": {
-              opacity:.6,
-              nativeCursor: "pointer",
-              fontFamily: config.codeEditor.defaultStyle.fontFamily,
-              fontSize: this.fontSize,
-              padding: 0
-            },
-            ".colorValue": {
-              nativeCursor: "pointer",
-              borderColor: Color.gray.darker(),
-              borderWidth: 1,
-              draggable: false,
-              extent: pt(this.fontSize - 3, this.fontSize - 3)
-            },
-            "[name=valueString]": {
-              opacity: .6,
-              fontFamily: config.codeEditor.defaultStyle.fontFamily,
-            },
-            ".ColorWidget": {
-              fill: Color.transparent,
-              nativeCursor: "pointer",
-              fontFamily: config.codeEditor.defaultStyle.fontFamily,
-            }
-          });
-        }
-      },
       submorphs: {
+        after: ['nonSelectionFontColor', 'selectionFontColor'],
         initialize() {
           connect(this, "color", this, "relayout", {
             converter: (next, prev) => {
@@ -434,7 +353,7 @@ export class ColorWidget extends ContextSensitiveWidget {
   }
 
   async openFillEditor() {
-    let editor = new FillPopover({
+    let editor = new popovers.FillPopover({
       hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
       handleMorph: this.context,
       fillValue: this.color,
@@ -475,7 +394,9 @@ export class NumberWidget extends Morph {
   static get properties() {
 
     return {
-      unit: {},
+      unit: {
+
+      },
       autofit: { 
         defaultValue: true,
         after: ['submorphs', 'extent'],
@@ -495,13 +416,14 @@ export class NumberWidget extends Morph {
       min: {defaultValue: -Infinity},
       max: {defaultValue: Infinity},
       floatingPoint: {
-        after: ['number'],
+        after: ['number', 'submorphs'],
         set(isFloat) {
           this.setProperty('floatingPoint', isFloat);
+          this.get('value').floatingPoint = isFloat;
         },
         get() {
            let m = /[+-]?([0-9]*[.])?[0-9]+/.exec(this.number);
-           return this.getProperty('floatingPoint') || (m && !!m[1]);
+           return this.getProperty('floatingPoint') || (this.scaleFactor == 1 && m && !!m[1]);
         }
       }, // infer that indirectly by looking at the floating point of the passed number value
       padding: {
@@ -531,11 +453,18 @@ export class NumberWidget extends Morph {
         }
       },
       styleClasses: {defaultValue: ["unfocused"]},
+      master: {
+        initialize() {
+          this.master = {
+            auto: 'styleguide://SystemWidgets/number field/light'
+          }
+        }
+      },
       fontColor: {
+        isStyleProp: true,
         defaultValue: Color.rgbHex("#0086b3"),
         set(v) {
           this.setProperty("fontColor", v);
-          this.updateStyleSheet();
         }
       },
       isSelected: {
@@ -555,21 +484,16 @@ export class NumberWidget extends Morph {
       },
       fontFamily: {
         defaultValue: "Sans-Serif",
+        isStyleProp: true,
         set(v) {
           this.setProperty("fontFamily", v);
-          this.updateStyleSheet();
         }
       },
       fontSize: {
         defaultValue: 15,
+        isStyleProp: true,
         set(v) {
           this.setProperty("fontSize", v);
-          this.updateStyleSheet();
-        }
-      },
-      styleSheets: {
-        initialize() {
-          this.updateStyleSheet();
         }
       },
       layout: {
@@ -591,77 +515,31 @@ export class NumberWidget extends Morph {
               min: this.min,
               max: this.max
             }),
-            {
-              type: "button",
-              name: "up", styleClasses: ["buttonStyle", "TreeLabel"],
-              extent: pt(5, 8),
-              padding: rect(5,0,0,2),
-              label: Icon.makeLabel("sort-asc", {
-                autofit: true,
-                borderWidth: 1,
-                borderColor: Color.transparent,
-                opacity: .6,
-                padding: rect(0,0,2,-6),
-                fontSize: 12
-              })
-            },
-            {
-              type: "button",
-              name: "down", styleClasses: ["buttonStyle", "TreeLabel"],
-              extent: pt(5, 8),
-              padding: rect(5,0,0,2),
-              label: Icon.makeLabel("sort-asc", {
-                rotation: Math.PI,
-                autofit: true,
-                padding: rect(0,-6,0,5),
-                opacity: .6,
-                fontSize: 12
-              }).fit()
-            }
+            Icon.makeLabel("sort-up", {
+              name: 'up',
+            }),
+            Icon.makeLabel("sort-up", {
+              name: 'down',
+              rotation: Math.PI,
+            })
           ];
           connect(this.get("value"), "scrub", this, "update");
-          connect(this.get("up"), "fire", this, "increment");
-          connect(this.get("down"), "fire", this, "decrement");
           this.whenRendered().then(() => this.relayout());
         }
       }
     };
   }
 
-  spec() {
-    return obj.dissoc(super.spec(), ['submorphs']);
+  onMouseDown(evt) {
+    super.onMouseDown(evt);
+    if (evt.targetMorph.name == 'up')
+      this.increment();
+    if (evt.targetMorph.name == 'down')
+      this.decrement();
   }
 
-  updateStyleSheet() {
-    this.styleSheets = new StyleSheet({
-      ".Button": {
-        clipMode: "hidden",
-        fill: Color.transparent,
-        borderWidth: 0
-      },
-      ".PropertyInspector .Button.activeStyle [name=label]": {
-        fontColor: Color.white.darker()
-      },
-      ".Button.triggerStyle [name=label]": {
-        fontColor: Color.black
-      },
-      ".NumberWidget": {
-        clipMode: "hidden"
-      },
-      ".selected .Label": {
-        fontColor: Color.white
-      },
-      '.unselected .Label': {
-        fontColor: Color.black
-      },
-      "[name=value]": {
-        padding: this.padding,
-        fill: Color.transparent,
-        fontSize: this.fontSize,
-        fontColor: this.fontColor,
-        fontFamily: this.fontFamily
-      }
-    });
+  spec() {
+    return obj.dissoc(super.spec(), ['submorphs']);
   }
 
   update(v, fromScrubber = true) {
@@ -696,7 +574,6 @@ export class NumberWidget extends Morph {
       if (!fromScrubber) valueContainer.width = this.width - 20;
       this.relayoutButtons();
     }
-    
     if (!fromScrubber) {
       valueContainer.value = num.roundTo(this.number * this.scaleFactor, 1);
       valueContainer.min = this.min != -Infinity ? this.min * this.scaleFactor : this.min;
@@ -762,7 +639,7 @@ export class ShadowWidget extends Morph {
   }
 
   async openPopover() {
-    let shadowEditor = new ShadowPopover({
+    let shadowEditor = new popovers.ShadowPopover({
       hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
       shadowValue: this.shadowValue
     });
@@ -837,8 +714,16 @@ export class PointWidget extends Label {
         defaultValue: "false",
         set(v) {
           this.setProperty("isSelected", v);
-          this.fontColor = v ? Color.white : Color.black;
+          this.fontColor = v ? this.selectionFontColor : this.nonSelectionFontColor;
         }
+      },
+      selectionFontColor: {
+        isStyleProp: true,
+        defaultValue: Color.white
+      },
+      nonSelectionFontColor: {
+        isStyleProp: true,
+        defaultValue: Color.black
       },
       fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
       nativeCursor: {defaultValue: "pointer"},
@@ -848,10 +733,10 @@ export class PointWidget extends Label {
         set(p) {
           let fontColor = Color.rgbHex("#0086b3");
           this.setProperty("pointValue", p);
-          this.textAndAttributes = ["pt(", {},
+          this.textAndAttributes = ["pt(", null,
             p.x.toFixed(), {fontColor},
             ",", {},
-            p.y.toFixed(), {fontColor}, ")", {}];
+            p.y.toFixed(), {fontColor}, ")", null];
           this.fixedWidth = true;
           this.fixedHeight = true;
           this.height = 20;
@@ -866,7 +751,7 @@ export class PointWidget extends Label {
   }
 
   async openPopover() {
-    let editor = new PointPopover({
+    let editor = new popovers.PointPopover({
       pointValue: this.pointValue, 
       hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition)
     });
@@ -906,7 +791,7 @@ export class PaddingWidget extends Label {
   }
 
   async openPopover() {
-    let editor = new RectanglePopover({
+    let editor = new popovers.RectanglePopover({
       hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
       rectangle: this.rectangle
     });
@@ -941,7 +826,7 @@ export class IconWidget extends Label {
   }
 
   async openPopover() {
-    let iconPicker = new IconPopover({
+    let iconPicker = new popovers.IconPopover({
       hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition)
     });
     await iconPicker.fadeIntoWorld(this.globalBounds().center());
@@ -1025,3 +910,8 @@ export class StringWidget extends InputLine {
   }
 
 }
+
+import { valueWidgets } from "./index.js"
+Object.assign(valueWidgets, { NumberWidget, StringWidget, IconWidget, PaddingWidget,
+  ShadowWidget, PointWidget,
+  BooleanWidget, LayoutWidget, ColorWidget });

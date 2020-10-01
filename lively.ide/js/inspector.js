@@ -352,7 +352,7 @@ export class PropertyControl extends DraggableTreeLabel {
 
   static renderEnumControl(args) {
     let propertyControl,
-        { value, spec: {values}, valueString, keyString, target, node } = args,
+        { value, spec: {values}, valueString, keyString, target, node, tree } = args,
         handler = async (evt, charPos) => {
           const menu = target.world().openWorldMenu(evt, values.map(v => ({
             string: v.toString(), action: () => {
@@ -366,9 +366,9 @@ export class PropertyControl extends DraggableTreeLabel {
       ` ${value ? (value.valueOf ? value.valueOf() : value) : 'Not set'}`, {
         nativeCursor: 'pointer', onMouseDown: handler
       },
-      Icon.makeLabel("chevron-circle-down", {
-        opacity: .7, name: 'dropDownIcon'
-      }), {paddingTop: '4px', paddingLeft: '4px'},
+      ...Icon.textAttribute("angle-down", {
+        paddingTop: '4px', paddingLeft: '4px', opacity: .7,
+      })
     ];
   }
 
@@ -405,7 +405,7 @@ export class PropertyControl extends DraggableTreeLabel {
   static renderBooleanControl(args) {
     let { value, keyString, valueString, target, node } = args;
     return [
-      `${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+      ...this.renderGrabbableKey(args), 
       ` ${valueString}`, {
           nativeCursor: "pointer",
           fontColor: value ? Color.green : Color.red,
@@ -417,10 +417,11 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderNumberControl(args) {
-    let propertyControl, { value, spec, keyString, valueString, fastRender, node, target } = args;
+    let propertyControl, { value, spec, keyString, valueString, fastRender, node, target, tree } = args;
     let { _numberControls = new NumberControls()} = node;
     
     const [up, down] = _numberControls.submorphs;
+    _numberControls.fontColor = tree.fontColor;
     let scrubState = node._numberControls = _numberControls;
 
     if ("max" in spec && "min" in spec
@@ -518,7 +519,7 @@ export class PropertyControl extends DraggableTreeLabel {
           });
         }
     return [
-      `${keyString}:`, {nativeCursor: "-webkit-grab", paddingRight: '6pt'}, 
+      ...this.renderGrabbableKey(args),
        `${value ? value.toFilterCss() : 'No Shadow'}`, { nativeCursor: "pointer", onMouseDown: handler }
     ]
   }
@@ -539,7 +540,7 @@ export class PropertyControl extends DraggableTreeLabel {
           });
         },
         attrs = {nativeCursor: "pointer", onMouseDown: handler};
-    return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
+    return [ ...this.renderGrabbableKey(args), 
             ` pt(`, { ...attrs }, 
             `${value.x.toFixed()}`, {fontColor: numberColor, ...attrs},
             ',', { ...attrs }, 
@@ -549,18 +550,12 @@ export class PropertyControl extends DraggableTreeLabel {
 
   static renderLayoutControl(args) {
     let propertyControl, {target, fastRender, valueString, keyString, value} = args;
-    if (fastRender) {
-      return [
-        `${keyString}:`, {nativeCursor: "-webkit-grab"}, 
-        ` ${value ? valueString : 'No Layout'}`, { onMouseDown: (evt) => {
-                 
-        }
-      }];
-    }
-    propertyControl = this.baseControl(args);
-    propertyControl.control = new valueWidgets.LayoutWidget({context: target});
-    connect(propertyControl.control, "layoutChanged", propertyControl, "propertyValue");
-    return propertyControl;
+    return [
+      ...this.renderGrabbableKey(args), 
+      ` ${value ? valueString : 'No Layout'}`, { onMouseDown: (evt) => {
+               
+      }
+    }];
   }
 
   static renderColorControl(args) {
@@ -583,7 +578,7 @@ export class PropertyControl extends DraggableTreeLabel {
     return [
       ...this.renderGrabbableKey(args),
       morph({
-       fill: value,
+       fill: value.valueOf ? value.valueOf() : value,
        extent: pt(15,15),
        borderColor: Color.gray,
        borderWidth: 1,
@@ -599,14 +594,10 @@ export class PropertyControl extends DraggableTreeLabel {
 
   static renderItSomehow(args) {
     let propertyControl, {fastRender, keyString, valueString, value} = args;
-    if (fastRender) {
-      return [`${keyString}:`, {nativeCursor: "-webkit-grab"}, 
-              ` ${valueString}`, {}]
-    }
-    propertyControl = this.baseControl(args);
-    propertyControl.value += " " + args.valueString;
-    propertyControl._targetMenuItems = (value && value.menuItems) ? value.menuItems() : [];
-    return propertyControl;
+    return [
+       ...this.renderGrabbableKey(args),
+      ` ${valueString}`, {}
+    ];
   }
 
   relayout() {
@@ -750,14 +741,14 @@ class NumberControls extends Morph {
       submorphs: {
         initialize() {
           this.submorphs = [
-            Icon.makeLabel("sort-asc", {
+            Icon.makeLabel("sort-up", {
               autofit: true,
               opacity: .6,
               nativeCursor: "pointer",
               padding: rect(5,2,0,-6),
               fontSize: 12
             }),
-            Icon.makeLabel("sort-asc", {
+            Icon.makeLabel("sort-up", {
               top: 10,
               rotation: Math.PI,
               autofit: true,
@@ -814,8 +805,8 @@ class PropertyTree extends Tree {
 export default class Inspector extends Morph {
 
   static openInWindow(props) {
-    var i = new this(props).openInWorld();
-    i.world().openInWindow(i).activate();
+    var i = new this(props);
+    i.openInWindow().activate();
     return i;
   }
 
@@ -862,15 +853,17 @@ export default class Inspector extends Morph {
 
     this.whenRendered().then(
       () => {
-        if (this.targetObject.isMorph &&
-            this.targetObject.world() == this.world()) {
-          this.targetObject = this.targetObject;
-        } else {
-          tree.value = ['Please select a target!', {
-            textAlign: 'center',
-            fontStyle: 'italic'
-          }];
-        }
+        // if (this.targetObject.isMorph &&
+        //     this.targetObject.world() == this.world()) {
+        //   this.targetObject = this.targetObject;
+        // } else {
+        //   tree.value = ['Please select a target!', {
+        //     textAlign: 'center',
+        //     fontStyle: 'italic'
+        //   }];
+        // }
+        if (this.targetObject)
+           this.targetObject = this.targetObject;
       }
     );
 
@@ -939,21 +932,21 @@ export default class Inspector extends Morph {
 
       submorphs: {initialize() { this.build(); }},
 
-      layout: {
-        after: ["submorphs"],
-        initialize() {
-          this.layout = new GridLayout({
-            manualUpdate: true,
-            grid: [["searchBar"],
-              ["propertyTree"],
-              ["resizer"],
-              ["codeEditor"]],
-            rows: [0, {fixed: 30},
-              2, {fixed: 1},
-              3, {height: 0}]
-          });
-        }
-      },
+      // layout: {
+      //   after: ["submorphs"],
+      //   initialize() {
+      //     this.layout = new GridLayout({
+      //       manualUpdate: true,
+      //       grid: [["searchBar"],
+      //         ["propertyTree"],
+      //         ["resizer"],
+      //         ["codeEditor"]],
+      //       rows: [0, {fixed: 30},
+      //         2, {fixed: 1},
+      //         3, {height: 0}]
+      //     });
+      //   }
+      // },
 
       ui: {
         readOnly: true, derived: true, after: ["submorphs"],
@@ -979,7 +972,6 @@ export default class Inspector extends Morph {
       },
 
       treeStyle: {
-        readOnly: true,
         defaultValue: {
           draggable: true,
           borderWidth: 1,
@@ -988,68 +980,13 @@ export default class Inspector extends Morph {
           fontFamily: config.codeEditor.defaultStyle.fontFamily
         }
       },
-      styleSheets: {
+      master: {
         initialize() {
-          this.styleSheets = new StyleSheet({
-            "[name=selectionInstruction]": {
-              fill: Color.black.withA(.7),
-              borderRadius: 4,
-              fontColor: Color.white,
-              fontSize: 14,
-              padding: rect(10,10)
-            },
-            "[name=escapeKey]": {
-              opacity: .7,
-              fill: Color.white,
-              padding: rect(5,1,5,1),
-              borderRadius: 4,
-              fontWeight: "bold"
-            },
-            "[name=searchBar]": {
-              fill: Color.transparent,
-              draggable: false
-            },
-            "[name=searchBar] .LabeledCheckBox": {
-              fill: Color.transparent
-            },
-            "[name=targetPicker]": {
-              fontSize: 15,
-              borderRadius: 20,
-              //padding: rect(0, 0),
-              nativeCursor: "pointer"
-            },
-            "[name=resizer]": {
-              fill: Color.gray.lighter(),
-              nativeCursor: "ns-resize"
-            },
-            "[name=valueString]": {
-              fontFamily: config.codeEditor.defaultStyle.fontFamily,
-              fontSize: 14
-            },
-            "[name=propertyTree] .DraggableTreeLabel": {
-              fontSize: 14
-            },
-            "[name=propertyTree]": {
-              fontSize: 14
-            },
-            ".toggle": {
-              nativeCursor: "pointer",
-              fill: Color.black.withA(0.5),
-              draggable: false,
-              fontSize: 15,
-              borderRadius: 5,
-              padding: rect(5, 2, 1, 1)
-            },
-            ".toggle.inactive": {
-              fontColor: Color.white
-            },
-            ".toggle.active": {
-              fontColor: Color.rgbHex("00e0ff")
-            }
-          });
+          this.master = {
+            auto: 'styleguide://SystemWidgets/inspector/light'    
+          }
         }
       }
-
     };
   }
 
@@ -1133,6 +1070,7 @@ export default class Inspector extends Morph {
   }
 
   refreshAllProperties() {
+    if (!this.world()) this.stopStepping();
     if (!this.targetObject || !this.targetObject.isMorph) return;
     if (this.targetObject._styleSheetProps != this.lastStyleSheetProps) {
       this.refreshTreeView();
@@ -1244,7 +1182,7 @@ export default class Inspector extends Morph {
           ...config.codeEditor.defaultStyle,
           textString: ""
         },
-        rightArrow = Icon.textAttribute("long-arrow-right", {textStyleClasses: ['fas']}),
+        rightArrow = Icon.textAttribute("long-arrow-alt-right", {textStyleClasses: ['fas']}),
         searchBarBounds = rect(0,0,this.width, 30),
         searchField = new SearchField({
           styleClasses: ["idle"],
@@ -1256,21 +1194,16 @@ export default class Inspector extends Morph {
     this.submorphs = [
       {
         name: "searchBar",
-        layout: new GridLayout({
-          manualUpdate: true,
-          grid: [["searchField", "targetPicker", "internals", "unknowns"]],
-          rows: [0, {paddingTop: 5, paddingBottom: 3}],
-          columns: [0, {paddingLeft: 5, paddingRight: 2},
-            1, {fixed: 22},
-            2, {fixed: 75}, 
-            3, {fixed: 80}]
-        }),
-        height: 30,
         submorphs: [
           searchField,
           {
             type: 'button',
             name: "targetPicker",
+            padding: rect(2,2,0,0),
+            borderRadius: 15,
+            master: {
+              auto: "styleguide://System/buttons/light"
+            },
             tooltip: "Change Inspection Target",
             label: Icon.textAttribute("crosshairs")
           }
@@ -1285,25 +1218,19 @@ export default class Inspector extends Morph {
       }),
       Icon.makeLabel("keyboard", {
         name: "terminal toggler",
-        styleClasses: ["toggle", "inactive"]
       }),
       {name: "resizer"},
       {name: "codeEditor", ...textStyle},
       {
         name: "fix import button", type: "button",
-        fill:  Color.black.withA(.5),
-        fontColor: Color.white,
-        borderWidth: 0, visible: false,
-        label: "fix undeclared vars", extent: pt(100, 20)
+        visible: false,
+        label: "fix undeclared vars", 
       },
       {
-        name: "this binding selector", type: DropDownList,
-        fill: Color.black.withA(.5),
-        padding: Rectangle.inset(3),
-        fontColor: Color.white, borderWidth: 0,
+        name: "this binding selector",
+        type: DropDownList,
         visible: false,
         listAlign: 'top',
-        selection: "selection",
         items: [{isListItem: true, value: "target",
           label: ["this ", null, ...rightArrow, " target", null]},
         {isListItem: true, value: "selection",
@@ -1312,6 +1239,9 @@ export default class Inspector extends Morph {
     ];
     this.ui.thisBindingSelector.listMorph.dropShadow = true;
     this.ui.thisBindingSelector.listMorph.borderRadius = 3;
+    this.ui.thisBindingSelector.whenRendered().then(() => {
+      this.ui.thisBindingSelector.selection = "target";      
+    });
   }
 
   async selectTarget() {
@@ -1406,14 +1336,14 @@ export default class Inspector extends Morph {
     } = this, duration = 200;
     layout.disable();
     if (show) {
-      terminalToggler.styleClasses = ["active", "toggle"];
+      terminalToggler.fontColor = Color.rgbHex("00e0ff");
       layout.row(3).height = this.codeEditorHeight || 180;
       layout.row(2).height = 5;
       fixImportButton.animate({visible: true, duration});
       thisBindingSelector.animate({visible: true, duration});
     } else {
       this.codeEditorHeight = layout.row(3).height;
-      terminalToggler.styleClasses = ["inactive", "toggle"];
+      terminalToggler.fontColor = Color.white;
       layout.row(3).height = layout.row(2).height = 0;
       fixImportButton.animate({visible: false, duration});
       thisBindingSelector.animate({visible: false, duration});
@@ -1447,7 +1377,7 @@ export default class Inspector extends Morph {
   }
 
   async relayout(animated={}) {
-    this.layout.forceLayout(); // removes "sluggish" button alignment
+    this.layout && this.layout.forceLayout(); // removes "sluggish" button alignment
     let {ui: {
           fixImportButton,
           terminalToggler: toggler,

@@ -34,7 +34,7 @@ var browserCommands = [
       } else if (sel.isDirectory()) {
         browser.execCommand("set location to selection");
 
-      } else if (sel.url.endsWith('.svg')) {
+      } else if (sel.url.endsWith('.svg') || sel.url.endsWith('.png')) {
         var image = new Image({name: sel.url, imageUrl: sel.url, autoResize: true});
         image.openInWorld();
       } else {
@@ -195,7 +195,8 @@ var browserCommands = [
         var really = await browser.world().confirm(
           ['Confirm Delete\n', {}, 'Do you really want to remove\n', { fontWeight: 'normal', fontSize: 16},
            `${browser.selectedFile.url}?`, { fontStyle: 'italic', fontWeight: 'normal', fontSize: 16}], {
-            requester: browser, lineWrapping: false
+            requester: browser, 
+            lineWrapping: false
           });
         if (really) {
           var res = browser.selectedFile,
@@ -393,10 +394,13 @@ export default class HTTPFileBrowser extends Morph {
                 resource: null,
                 isCollapsed: true,
               }),
+              extent: this.extent,
               lineHeight: 1.6,
               fontSize: 14,
               resizeNodes: true/*for right align size + date*/,
-              fill: Color.white, border: {color: Color.gray, width: 1},
+              fill: Color.white,
+              borderWidth: { top: 1, bottom: 1, right: 0, left: 0},
+              borderColor: Color.gray,
               padding: Rectangle.inset(4)
             }),
 
@@ -415,7 +419,7 @@ export default class HTTPFileBrowser extends Morph {
             },
 
             {name: "searchButton",       ...btnStyle, label: Label.icon("search"), tooltip: "search for files"},
-            {name: "reloadButton",       ...btnStyle, label: Label.icon("refresh"), tooltip: "reload list"},
+            {name: "reloadButton",       ...btnStyle, label: Label.icon("redo"), tooltip: "reload list"},
             {name: "filterButton",       ...btnStyle, label: Label.icon("filter"), tooltip: "set file filter"},
             {name: "openFileButton",     ...btnStyle, label: Label.icon("edit", { textStyleClasses: ['far']}), tooltip: "open selected file"},
             {name: "addDirectoryButton", ...btnStyle, label: Label.icon("folder", { textStyleClasses: ['far']}), tooltip: "add directory"},
@@ -441,6 +445,7 @@ export default class HTTPFileBrowser extends Morph {
           connect(this, "extent", this, "relayout");
           connect(locationInput, "inputAccepted", this, "onLocationChanged");
           connect(fileTree, "selectedNode", this, "showSelectedFile");
+          connect(fileTree, 'contextMenuRequested', this, 'showMenuFor');
 
           connect(searchButton,       "fire", this, "execCommand", {converter: () => "find file and select"});
           connect(reloadButton,       "fire", this, "execCommand", {converter: () => "refresh contents"});
@@ -595,6 +600,22 @@ export default class HTTPFileBrowser extends Morph {
     locationInput.input = res.url;
     locationInput.acceptInput();
     return this;
+  }
+
+  async showMenuFor({node, evt}) {
+    evt.stop();
+    let items = [];
+    if (node.resource.isFile()) {
+      items.push({
+        alias: "Open File in Text Editor",
+        command: "open file",
+        target: this.world(),
+        args: {
+          url: node.resource.url
+        }
+      });    
+    }
+    return this.world().openWorldMenu(evt, items);
   }
 
   showSelectedFile() {

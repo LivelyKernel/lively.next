@@ -12,7 +12,7 @@ import { obj } from "lively.lang";
 import { Window } from "lively.components";
 
 import { ColorPalette} from "./color-palette.js";
-import { FillPopover } from "./style-popover.js";
+import { FillPopover, colorWidgets } from "./style-popover.js";
 import { Slider } from "lively.components/widgets.js";
 import { Popover } from 'lively.components/popup.js';
 
@@ -38,6 +38,11 @@ export class ColorPickerField extends Morph {
           }))
         }
       },
+      testProp: {
+        get() {
+          return [42];
+        }
+      },
       palette: {
         serialize: false,
         get() {
@@ -61,23 +66,11 @@ export class ColorPickerField extends Morph {
           return this.getProperty('colorValue') || Color.white;
         }
       },
-      styleSheets: {
+      master: {
         initialize() {
-          this.styleSheets = new StyleSheet({
-            '.ColorPickerField': {
-              extent: pt(70,30),
-              layout: new HorizontalLayout(),
-              borderRadius: 5, fill: Color.gray, clipMode: "hidden",
-              borderWidth: 1, 
-              borderColor: Color.darkGray,
-            },
-            '[name=pickerButton]': {
-              extent: pt(20, 20),
-              nativeCursor: "pointer",
-              fill: Color.transparent,
-              position: pt(3, 3),
-            }
-          })
+          this.master = {
+            auto: 'styleguide://SystemWidgets/color field'
+          }
         }
       },
       submorphs: {
@@ -137,6 +130,10 @@ export class ColorPickerField extends Morph {
       }
      }
    }
+
+  get testAttr() {
+    return [42];
+  }
 
   spec() {
     return obj.dissoc(super.spec(), ['submorphs']);
@@ -210,6 +207,8 @@ export class ColorPickerField extends Morph {
 
 }
 
+colorWidgets.ColorPickerField = ColorPickerField;
+
 class FieldPicker extends Morph {
 
    static get properties() {
@@ -217,6 +216,7 @@ class FieldPicker extends Morph {
        fill: {defaultValue: Color.transparent},
        saturation: {defaultValue: 0},
        brightness: {defaultValue: 0},
+       draggable: { defaultValue: true },
        pickerPosition: {
         derived: true,
         after: ['submorphs', 'brightness', 'saturation'],
@@ -543,37 +543,14 @@ export class ColorPicker extends Window {
       targetMorph: {
         initialize() {
           this.targetMorph = this.colorPalette();
-          this.titleLabel().fontColor = Color.gray;
-          this.whenRendered().then(() => this.update());
+          this.ui.windowTitle.fontColor = Color.gray;
+          this.ui.header.fill = Color.transparent;
+          this.whenRendered().then(() => {
+                      this.fill = Color.black.withA(.7);
+            this.update()
+          });
         }
       },
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-              ".ColorPicker .key": {
-                fill: Color.transparent,
-                fontColor: Color.gray,
-                fontWeight: "bold"
-              },
-              ".ColorPicker.Window": {
-                fill: Color.black.withA(0.7),
-                borderColor: Color.gray.darker()
-              },
-              ".ColorPicker .large": {fontSize: 20},
-              ".ColorPicker .active": {fontColor: Color.orange, borderColor: Color.orange},
-              ".ColorPicker .ColorPropertyView": {
-                fill: Color.transparent,
-                fontColor: Color.gray.lighter()
-              },
-              ".ColorPicker .editable": {
-                borderRadius: 4,
-                borderWidth: 1,
-                padding: rect(2, 2, 2, 2),
-                borderColor: Color.gray.lighter()
-              }
-            });
-        }
-      }
     }
   }
 
@@ -590,6 +567,7 @@ export class ColorPicker extends Window {
 
   update() {
      if (this.submorphs.length == 0) return;
+     this.get('header').fill = Color.transparent; // hack
      this.get('field picker').update(this);
      this.get('hue picker').update(this);
      this.get('details').update(this);
@@ -608,21 +586,12 @@ export class ColorPicker extends Window {
         huePicker = this.huePicker(),
         alphaSlider = this.alphaSlider(),
         colorPalette = new Morph({
+          master: {
+            auto: 'styleguide://SystemWidgets/color picker'
+          },
           name: "colorPalette",
           width: this.width,
-          fill: Color.transparent,
-          draggable: false,
-          layout: new GridLayout({
-            autoAssign: false,
-            rows: [1, {fixed: 30}],
-            columns: [0, {paddingLeft: 10},
-                      1, {fixed: 55, paddingLeft: 10, paddingRight: 5},
-                      2, {fixed: 100}],
-            groups: {"field picker": {alignedProperty: 'position'},
-                     "hue picker": {alignedProperty: 'position'}},
-            grid: [["field picker", "hue picker", "details"],
-                   ["alphaSlider", "alphaSlider", "alphaSlider"]]}),
-            submorphs: [fieldPicker, huePicker, colorDetails, alphaSlider]
+          submorphs: [fieldPicker, huePicker, colorDetails, alphaSlider]
         })
     connect(fieldPicker, 'brightness', this, 'brightness');
     connect(fieldPicker, 'saturation', this, 'saturation');

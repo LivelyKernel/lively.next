@@ -9,7 +9,7 @@ import {
   Icon,
 } from "lively.morphic";
 import { pt, Rectangle, Color } from "lively.graphics";
-import { connect, noUpdate } from "lively.bindings";
+import { connect, once, noUpdate } from "lively.bindings";
 import { ColorPicker } from "../styling/color-picker.js";
 import { DropDownList } from "lively.components";
 
@@ -30,7 +30,8 @@ export class RichTextControl extends Morph {
         readOnly: true,
         get() {
           return ['fontFamily', 'fontWeight', 'fontSize', 'fontStyle', 'isText',
-                  'fontColor', 'textAlign', 'link', 'textDecoration', 'fixedWidth', 'fixedHeight'];
+                  'fontColor', 'textAlign', 'link', 'textDecoration', 'fixedWidth', 
+                  'fixedHeight', 'lineWrapping', 'padding'];
         }
       },
       updateSpec: {
@@ -49,9 +50,11 @@ export class RichTextControl extends Morph {
                 });
                 fb.selection = arr.last(fb.items);
               }
+              fb.fit();
+              fb.width = Math.max(fb.width, 170);
             },
             fontWeightSelection: (target, dropDownList) => {
-              dropDownList.selection = target.fontWeight == 'normal' ? 'Medium' : string.capitalize(target.fontWeight);
+              dropDownList.selection = target.fontWeight == 'normal' ? 'Medium' : (target.fontWeight ? string.capitalize(target.fontWeight) : "Medium");
             },
             boldButton: (target, btn) => {
               this.toggleButton(btn, target.fontWeight === 'bold');
@@ -78,6 +81,46 @@ export class RichTextControl extends Morph {
             fixedHeightControl: (target, field) => {
               target.isText ? field.enable() : field.disable();
               field.checked = target.fixedHeight;
+            },
+            lineWrappingControl: (target, control) => {
+              const [checkBox, selector] = control.submorphs;
+              checkBox.checked = !!target.lineWrapping;
+              selector.deactivated = !target.lineWrapping;
+
+              // connect(checkBox, 'checked', this, 'setLineWrapping');
+              // connect(selector, 'selection', this, 'setLineWrapping');
+              
+              if (selector.deactivated) {
+                selector.opacity = .5
+              } else {
+                selector.opacity = 1;
+                selector.selection = target.lineWrapping;
+              }
+            },
+            paddingControl: ({ padding }, control) => {
+               const left = padding.left();
+               const top = padding.top();
+               const right = padding.right();
+               const bottom = padding.bottom();
+               const isMultiVar = !arr.every([left, top, right, bottom], side => side == left);
+              
+               control.get('multi value indicator').visible = isMultiVar;
+               connect(control.get('multi value indicator'), 'onMouseDown',  control.get('padding field'), 'number', {
+                 converter: '() => left',
+                 varMapping: { left },
+               });
+              
+               control.get('padding field').number = left;
+               control.get('padding field').visible = !isMultiVar;
+
+               try {
+                 control.get('padding field top').number = top;
+                 control.get('padding field left').number = left;
+                 control.get('padding field right').number = right;
+                 control.get('padding field bottom').number = bottom; 
+               } finally {
+                 
+               }
             },
             ...(
               ['left', 'center', 'right', 'block'].reduce((handlers, align) => {
@@ -109,7 +152,9 @@ export class RichTextControl extends Morph {
             applyStyleButton: 'apply style',
             removeStyleButton: 'remove style',
             fixedHeightControl: 'fixed height control',
-            fixedWidthControl: 'fixed width control'
+            fixedWidthControl: 'fixed width control',
+            lineWrappingControl: 'line wrapping control',
+            paddingControl: 'padding control',
           };
           return obj.extract(
             uiMapping,
@@ -271,6 +316,34 @@ export class RichTextControl extends Morph {
       if (!fontFamily) return;
     }
     this.changeAttributeInSelectionOrMorph("fontFamily", fontFamily);
+  }
+
+  setPadding(padding) {
+    this.target.padding = Rectangle.inset(padding);
+  }
+
+  setPaddingTop(top) {
+    const r = this.target.padding;
+    this.target.padding = Rectangle.inset(r.left(), top, r.right(), r.bottom());
+  }
+
+  setPaddingLeft(left) {
+    const r = this.target.padding;
+    this.target.padding = Rectangle.inset(left, r.top(), r.right(), r.bottom());
+  }
+
+  setPaddingRight(right) {
+    const r = this.target.padding;
+    this.target.padding = Rectangle.inset(r.left(), r.top(), right, r.bottom());
+  }
+
+  setPaddingBottom(bottom) {
+    const r = this.target.padding;
+    this.target.padding = Rectangle.inset(r.left(), r.top(), r.right(), bottom);
+  }
+  
+  setLineWrapping(wrapStyle) {
+     this.target.lineWrapping = wrapStyle;
   }
 
   changeFontWeight(weight) {

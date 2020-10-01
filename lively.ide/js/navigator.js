@@ -1,6 +1,6 @@
 // FIXME proper dependency to lively.ast
 
-import { query, fuzzyParse, acorn } from "lively.ast";
+import { query, fuzzyParse, acorn, custom } from "lively.ast";
 
 export default class JavaScriptNavigator {
 
@@ -32,7 +32,7 @@ export default class JavaScriptNavigator {
 
   _forwardSexp(src, pos) {
     var ast = this.parse(src),
-        nodes = acorn.walk.findNodesIncluding(ast, pos),
+        nodes = custom.findNodesIncluding(ast, pos),
         containingNode = nodes.reverse().find(function(n) { return n.end !== pos; });
     if (!containingNode) return pos;
     if (containingNode.type === "BlockStatement") {
@@ -44,7 +44,7 @@ export default class JavaScriptNavigator {
 
   _backwardSexp(src, pos) {
     var ast = this.parse(src),
-        nodes = acorn.walk.findNodesIncluding(ast, pos),
+        nodes = custom.findNodesIncluding(ast, pos),
         containingNode = nodes.reverse().find(function(n) { return n.start !== pos; });
     if (!containingNode) return pos;
     if (containingNode.type === "BlockStatement") {
@@ -56,14 +56,14 @@ export default class JavaScriptNavigator {
 
   _backwardUpSexp(src, pos) {
     var ast = this.parse(src),
-        nodes = acorn.walk.findNodesIncluding(ast, pos),
+        nodes = custom.findNodesIncluding(ast, pos),
         containingNode = nodes.reverse().find(function(n) { return n.start !== pos; });
     return containingNode ? containingNode.start : pos;
   }
 
   _forwardDownSexp(src, pos) {
     var ast = this.parse(src),
-        found = acorn.walk.findNodeAfter(ast, pos, function(type, node) { return node.start > pos; });
+        found = custom.findNodeAfter(ast, pos, function(type, node) { return node.start > pos; });
     return found ? found.node.start : pos;
   }
 
@@ -85,7 +85,7 @@ export default class JavaScriptNavigator {
     // if the cursor is at a position that has a containing node matching func
     // return start/end index of that node
     var ast = this.parse(src),
-        nodes = acorn.walk.findNodesIncluding(ast, pos),
+        nodes = custom.findNodesIncluding(ast, pos),
         containingNode = nodes.reverse().find(func);
     return containingNode ? [containingNode.start, containingNode.end] : null;
   }

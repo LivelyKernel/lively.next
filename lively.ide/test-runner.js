@@ -1,6 +1,6 @@
 /*global System*/
 import { arr, promise, obj, chain, fun } from "lively.lang";
-import { query, parse, acorn } from "lively.ast";
+import { query, parse, acorn, walk, } from "lively.ast";
 import { pt, Color } from "lively.graphics";
 import { addOrChangeCSSDeclaration } from "lively.morphic/rendering/dom-helper.js";
 import { HTMLMorph } from "lively.morphic";
@@ -44,7 +44,7 @@ export function testsFromSource(sourceOrAst) {
     parsed = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
   } catch (err) { return testsAndSuites; }
 
-  acorn.walk.recursive(parsed, {}, {
+  walk.recursive(parsed, {}, {
     CallExpression: (node, state, c) => {
       if (node.callee.name && node.callee.name.match(/describe|it/) && node.arguments.length >= 2) {
         var spec = {
@@ -55,10 +55,10 @@ export function testsFromSource(sourceOrAst) {
         var recorded = {fullTitle: arr.pluck(testStack, "title").join(" "), type: spec.type, node: node};
         testsAndSuites.push(recorded);
       }
-      acorn.walk.base.CallExpression(node, state, c);
+      walk.base.CallExpression(node, state, c);
       if (spec) testStack.pop();
     }
-  }, ({...acorn.walk.base, SpreadProperty: function (node, st, c) {}}));
+  }, ({...walk.base, SpreadProperty: function (node, st, c) {}}));
 
   return testsAndSuites;
 }

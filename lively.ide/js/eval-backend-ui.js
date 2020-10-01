@@ -48,8 +48,7 @@ export class EvalBackendButton extends Button {
         readOnly: true, derived: true,
         get() { return EvalBackendChooser.default; }
       },
-      
-      fontSize: {defaultValue: 10},
+     
       extent: {defaultValue: pt(120, 20)},
       target: {}
     };
@@ -129,46 +128,6 @@ export class EvalBackendButton extends Button {
   }
 }
 
-
-class EvalBackendList extends DropDownList {
-
-  static get properties() {
-    return {
-      target: {},
-      evalbackendChooser: {},
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            ".DropDownList [name=dropDownList]": {
-              fontSize: 12,
-              fontFamily: "Helvetica Neue, Arial, sans-serif",
-              fontColor: Color.black,
-              borderWidth: 1,
-              borderColor: Color.gray,
-              fill: Color.white.withA(.8),
-              dropShadow: true
-            },
-            ".EvalBackendList": {extent: pt(120, 20)},
-            ".EvalBackendList [name=label]": {fontSize: 10},
-            ".Button.activeStyle": {
-              fill: new LinearGradient({
-                stops: [
-                  {offset: 0, color: Color.white},
-                  {offset: 1, color: new Color.rgb(236, 240, 241)}
-                ]
-              })
-            }
-          });
-        }
-      }
-    };
-  }
-
-  setAndSelectBackend(backend) {}
-  async ensureSimilarBackend() {}
-}
-
-
 export default class EvalBackendChooser {
 
   static get default() {
@@ -245,6 +204,8 @@ export default class EvalBackendChooser {
   buildEvalBackendDropdownFor(morph) {
     var btn = new EvalBackendButton({
       name: "eval backend button",
+      master: { auto: "styleguide://style guide/buttons/light"},
+      fontSize: 11,
       height: 20,
       target: morph,
     });

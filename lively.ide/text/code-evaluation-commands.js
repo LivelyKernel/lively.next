@@ -83,6 +83,7 @@ export var codeEvaluationCommands = [
     name: "editit",
     doc: "Evaluates the expression and opens an object editor on the resulting object.",
     exec: async function(morph, opts) {
+      debugger;
       morph.maybeSelectCommentOrLine();
       var result, err, target = morph.textInRange(morph.selection),
           evalEnvironment = morph.evalEnvironment || {},

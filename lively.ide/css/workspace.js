@@ -69,6 +69,7 @@ export default class Workspace extends Window {
           if (workspace.target) {
             if (workspace.target.isHTMLMorph) {
               workspace.target.cssDeclaration = css;
+              workspace.setStatusMessage("CSS applied", Color.green);
             }
           }
 

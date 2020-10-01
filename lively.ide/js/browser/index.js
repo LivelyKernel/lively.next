@@ -3,20 +3,22 @@ import { Color, rect, pt, Rectangle } from "lively.graphics";
 import { arr, Path, obj, fun, promise, string } from "lively.lang";
 import { connect } from "lively.bindings";
 import {
-  morph, easings,
+  morph, Morph, easings,
   StyleSheet,
   HorizontalLayout, 
   GridLayout,
   config,
-  Icon
+  Icon,
+  ProportionalLayout,
+  ShadowObject,
 } from "lively.morphic";
 import Window from "lively.components/window.js";
 import { HorizontalResizer } from "lively.components/resizers.js";
 import { Tree, TreeData } from "lively.components/tree.js";
 
 import JavaScriptEditorPlugin from "../editor-plugin.js";
-import JSONEditorPlugin from "lively.ide/json/editor-plugin.js";
-import JSXEditorPlugin from "lively.ide/jsx/editor-plugin.js";
+import JSONEditorPlugin from "../../json/editor-plugin.js";
+import JSXEditorPlugin from "../../jsx/editor-plugin.js";
 import EvalBackendChooser from "../eval-backend-ui.js";
 import browserCommands from "./commands.js";
 
@@ -29,7 +31,8 @@ import "mocha-es6/index.js";
 
 import { categorizer, query } from "lively.ast";
 import { testsFromSource } from "../../test-runner.js";
-import { module, semver } from "lively.modules/index.js";
+import * as modules from "lively.modules/index.js";
+let { module, semver } = modules;
 import DarkTheme from "../../themes/dark.js";
 import DefaultTheme from "../../themes/default.js";
 import { objectReplacementChar } from "lively.morphic/text/document.js";
@@ -38,7 +41,7 @@ import { serverInterfaceFor } from "lively-system-interface/index.js";
 import { resource } from "lively.resources/index.js";
 
 class CodeDefTreeData extends TreeData {
-
+  
   constructor(defs) {
     // defs come from lively.ast.categorizer.findDecls()
     defs.forEach(ea => ea.children && (ea.isCollapsed = true));
@@ -67,14 +70,14 @@ class CodeDefTreeData extends TreeData {
 }
 
 // Browser.browse({moduleName: "lively.morphic/morph.js", codeEntity: {name: "Morph"}});
-export default class Browser extends Window {
+export default class Browser extends Morph {
 
   static async browse(browseSpec = {}, browserOrProps = {}, optSystemInterface) {
     // browse spec:
     // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
     var browser = browserOrProps instanceof Browser ?
       browserOrProps : new this(browserOrProps);
-    if (!browser.world()) browser.openInWorldNearHand();
+    if (!browser.world()) browser.openInWindow(); 
     return browser.browse(browseSpec, optSystemInterface);
   }
 
@@ -83,46 +86,8 @@ export default class Browser extends Window {
     return {
       name: {defaultValue: "browser"},
       extent: {defaultValue: pt(700,600)},
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            "[name=moduleList]": {
-              borderColor: Color.gray,
-              borderWidthRight: 1,
-            },
-            ".node [name=metaInfoText]": {
-              fill: Color.rgb(86, 101, 115),
-              fontColor: Color.rgb(214, 219, 223)
-            },
-            ".local [name=metaInfoText]": {
-              fill: Color.white,
-              fontColor: Color.black
-            },
-            ".Button.default [name=label]": {
-              fontSize: 10,
-              padding: rect(1,1,1,1)
-            },
-            ".Button.default": {
-              padding: rect(5,3,0,0)
-            },
-            ".Button.dark [name=label]": {
-              fontColor: Color.white,
-              fontSize: 10
-            },
-            ".Button.triggerStyle.default": {
-              fill: Color.gray,
-            },
-            ".Button.dark": {
-              fontColor: Color.white,
-              fill: Color.black.withA(0.5),
-              borderWidth: 0,
-              borderRadius: 5,
-              nativeCursor: "pointer",
-              extent: pt(20, 18)
-            }
-          });
-        }
-      },
+      fill: {defaultValue: Color.transparent},
+      reactsToPointer: { defaultValue: false },
       systemInterface: {
         derived: true,
         readOnly: true,
@@ -132,6 +97,12 @@ export default class Browser extends Window {
         },
         set(systemInterface) {
           this.editorPlugin.setSystemInterfaceNamed(systemInterface);
+        }
+      },
+
+      submorphs: {
+        initialize() {
+          this.buildBrowser();
         }
       },
 
@@ -151,7 +122,7 @@ export default class Browser extends Window {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   reset() {
-    if (!this.targetMorph) this.targetMorph = this.build();
+    //if (!this.targetMorph) this.targetMorph = this.buildBrowser();
 
     this._inLayout = true;
 
@@ -278,37 +249,41 @@ export default class Browser extends Window {
     }
   }
 
-  build() {
-    // this.relayout();
-    // this.removeAllMorphs(); this.targetMorph = this.build();
-
+  buildBrowser() {
     this._inLayout = true;
-
-    this.targetMorph && this.targetMorph.remove();
 
     let style = {
           // borderWidth: 1, borderColor: Color.gray,
           draggable: false,
-          fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"
+          itemBorderRadius: 2.5,
+          itemHeight: 22,
+          fontSize: 14, fontFamily: "IBM Plex Sans"
         },
         textStyle = {
           borderWidth: 1, borderColor: Color.gray,
           lineWrapping: "by-chars",
           type: "text",
+          nativeCursor: 'text',
           ...config.codeEditor.defaultStyle
         },
 
         btnStyle = {
+          master: {
+            auto: "styleguide://System/buttons/light",
+            click: "styleguide://System/buttons/pressed/light",
+          },
+          height: 18,
+          padding: rect(6,4,0,0),
+          fontSize: 10,
           type: "button",
-          styleClasses: ["default"]
         },
 
         btnDarkStyle = {
+          master: { auto: "styleguide://System/systemBrowser/button/dark" },
           type: "button",
-          styleClasses: ["dark"],
         },
 
-        bounds = this.targetMorphBounds(),
+        bounds = this.bounds(),
 
         [
           browserCommandsBounds,
@@ -318,101 +293,129 @@ export default class Browser extends Window {
           codeEntityCommandBoxBounds,
           resizerBounds,
           metaInfoBounds,
+          frozenWarningBounds,
           sourceEditorBounds
         ] = bounds.extent().extentAsRectangle().divide([
           new Rectangle(0,   0,    1,   0.04),
           new Rectangle(0,   0.04, 0.5, 0.34),
           new Rectangle(0.5, 0.04, 0.5, 0.34),
-          new Rectangle(0,   0.34, 0.5, 0.04),
-          new Rectangle(0.5, 0.34, 0.5, 0.04),
-          new Rectangle(0,   0.38,  1,   0.01),
-          new Rectangle(0,   0.39,  1,   0.03),
-          new Rectangle(0,   0.42, 1,   0.57)]),
+          new Rectangle(0,   0.335, 0.49, 0.04),
+          new Rectangle(0.5, 0.335, 0.49, 0.04),
+          new Rectangle(0,   0.38, 1,   0.01),
+          new Rectangle(0,   0.39, 1,   0.03),
+          new Rectangle(0,   0.42, 1,   0),
+          new Rectangle(0,   0.42, 1,   0.57)
+        ]),
+        container = this;
+        
+        container.submorphs = [
+          {
+           name: "moduleList",
+           bounds: moduleListBounds,
+           borderColor: Color.gray,
+           borderWidth: {
+            top: 0, left: 0, bottom: 1, right: 1,
+           },
+           type: "list", ...style
+          },
 
-        container = morph({
-          ...style,
-          fill: Color.transparent,
-          reactsToPointer: false,
-          bounds,
-          submorphs: [
+          new Tree({name: "codeEntityTree", treeData: new CodeDefTreeData([]),
+            bounds: codeEntityTreeBounds, 
+            borderWidth: { bottom: 1, top: 0, left: 0, right: 0 },
+            borderColor: Color.gray,
+            ...style
+          }),
 
-            {name: "moduleList", bounds: moduleListBounds, type: "list", ...style },
+          {name: "moduleCommands", bounds: moduleCommandBoxBounds,
+            layout: new HorizontalLayout({spacing: 3, autoResize: false, direction: "rightToLeft"}),
+            borderRight: {color: Color.gray, width: 1},
+            reactsToPointer: false,
+            fill: Color.transparent,
+            submorphs: [
+              {...btnDarkStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
+              {...btnDarkStyle, name: "removeModuleButton", label: Icon.textAttribute("minus"), tooltip: "remove package"},
+              {...btnDarkStyle, name: "runTestsInModuleButton", label: morph({
+               type: "label", value: "run tests", padding: rect(1,0,0,-2)
+              }), tooltip: "run tests", visible: false, padding: rect(5,-3,0,2)}
+            ]},
 
-            new Tree({name: "codeEntityTree", treeData: new CodeDefTreeData([]),
-              bounds: codeEntityTreeBounds, ...style}),
+          {name: "codeEntityCommands", bounds: codeEntityCommandBoxBounds,
+            layout: new HorizontalLayout({spacing: 2, autoResize: false, direction: "rightToLeft"}),
+            fill: Color.transparent,
+            submorphs: [
+              {...btnDarkStyle, name: "codeEntityJumpButton", label: Icon.makeLabel("search"), tooltip: "search for code entity"},
+            ]},
 
-            {name: "moduleCommands", bounds: moduleCommandBoxBounds,
-              layout: new HorizontalLayout({spacing: 2, autoResize: false, direction: "rightToLeft"}),
-              borderRight: {color: Color.gray, width: 1},
-              reactsToPointer: false,
+          new HorizontalResizer({name: "hresizer", bounds: resizerBounds}),
+
+          {
+            name: "metaInfoText",
+            bounds: metaInfoBounds,
+            ...textStyle,
+            type: 'text',
+            autofit: false,
+            fill: Color.white,
+            fontSize: config.codeEditor.defaultStyle.fontSize - 2,
+            clipMode: "hidden",
+            borderWidth: 1
+          },
+          {name: "sourceEditor", bounds: sourceEditorBounds, 
+           borderRadius: Rectangle.inset(7,0,7,7),
+           borderWidthLeft: 3,
+           ...textStyle},
+           // {
+           //   name: "save note",
+           //   master: { auto: "styleguide://System/saveNote"},
+           //   submorphs: [
+           //     { name: "save module info", type: "text"},
+           //     { name: "checkmark", type: "label"},
+           //   ]
+           // },
+          {
+            name: "frozen-warning",
+            master: { auto: "styleguide://System/frozenWarning" },
+            height: 0,
+            submorphs: [
+              { type: "text", name: "frozen-module-info", fixedWidth: true },
+              Icon.makeLabel('snowflake', { name: "snowflake" })
+            ]
+          },
+
+          {name: "browserCommands", bounds: browserCommandsBounds,
+            layout: new GridLayout({
+              grid: [["commands", null, "eval backend button", null]],
+              rows: [0, {paddingBottom: 2}],
+              columns: [0, {paddingLeft: 2}, 2, {fixed: 100}, 3, {fixed: 5}],
+              groups: {commands: {resize: false}}
+            }),
+            fill: Color.transparent,
+            reactsToPointer: false,
+            borderBottom: {color: Color.gray, width: 1},
+            submorphs: [
+              {name: "commands", layout: new HorizontalLayout({
+                spacing: 2, autoResize: false, layoutOrder: function(m) {
+                  return this.container.submorphs.indexOf(m);
+                }}),
               fill: Color.transparent,
               submorphs: [
-                {...btnDarkStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
-                {...btnDarkStyle, name: "removeModuleButton", label: Icon.textAttribute("minus"), tooltip: "remove package"},
-                {...btnDarkStyle, name: "runTestsInModuleButton", label: "run tests", tooltip: "run tests", visible: false}
+                {...btnStyle, name: "historyBackwardButton", label: Icon.makeLabel("step-backward"), tooltip: "back in browse history"},
+                {...btnStyle, name: "browseHistoryButton", label: Icon.makeLabel("history"), tooltip: "show browse history"},
+                {...btnStyle, name: "historyForwardButton", label: Icon.makeLabel("step-forward"), tooltip: "forward in browse history"},
+
+                {extent: pt(10,18), fill: Color.transparent},
+
+                {...btnStyle, name: "searchButton", label: Icon.makeLabel("search"), tooltip: "code search"},
+                {...btnStyle, name: "browseModulesButton", label: Icon.makeLabel("bars"), tooltip: "list all modules"},
+
+                {extent: pt(10,18), fill: Color.transparent},
+
+                {...btnStyle, name: "addPackageButton", label: Icon.makeLabel("plus"), tooltip: "add package"},
+                {...btnStyle, name: "removePackageButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
+                {...btnStyle, name: "runTestsInPackageButton", label: "run tests", tooltip: "run tests", styleClasses: [], fontSize: 10, padding: rect(6,3,0,-1)}
+
               ]},
-
-            {name: "codeEntityCommands", bounds: codeEntityCommandBoxBounds,
-              layout: new HorizontalLayout({spacing: 2, autoResize: false, direction: "rightToLeft"}),
-              fill: Color.transparent,
-              submorphs: [
-                {...btnDarkStyle, name: "codeEntityJumpButton", label: Icon.makeLabel("search"), tooltip: "search for code entity"},
-              ]},
-
-            new HorizontalResizer({name: "hresizer", bounds: resizerBounds}),
-
-            {
-              name: "metaInfoText",
-              bounds: metaInfoBounds,
-              ...textStyle,
-              type: 'text',
-              autofit: false,
-              fill: Color.white,
-              fontSize: config.codeEditor.defaultStyle.fontSize - 2,
-              clipMode: "hidden",
-              borderWidth: 1
-            },
-            {name: "sourceEditor", bounds: sourceEditorBounds, 
-             borderRadius: Rectangle.inset(7,0,7,7),
-             borderWidthLeft: 3,
-             ...textStyle},
-
-            {name: "browserCommands", bounds: browserCommandsBounds,
-              layout: new GridLayout({
-                grid: [["commands", null, "eval backend button", null]],
-                rows: [0, {paddingBottom: 2}],
-                columns: [0, {paddingLeft: 2}, 2, {fixed: 100}, 3, {fixed: 5}],
-                groups: {commands: {resize: false}}
-              }),
-              fill: Color.transparent,
-              reactsToPointer: false,
-              borderBottom: {color: Color.gray, width: 1},
-              submorphs: [
-                {name: "commands", layout: new HorizontalLayout({
-                  spacing: 2, autoResize: false, layoutOrder: function(m) {
-                    return this.container.submorphs.indexOf(m);
-                  }}),
-                fill: Color.transparent,
-                submorphs: [
-                  {...btnStyle, name: "historyBackwardButton", label: Icon.makeLabel("step-backward"), tooltip: "back in browse history"},
-                  {...btnStyle, name: "browseHistoryButton", label: Icon.makeLabel("history"), tooltip: "show browse history"},
-                  {...btnStyle, name: "historyForwardButton", label: Icon.makeLabel("step-forward"), tooltip: "forward in browse history"},
-
-                  {extent: pt(10,18), fill: Color.transparent},
-
-                  {...btnStyle, name: "searchButton", label: Icon.makeLabel("search"), tooltip: "code search"},
-                  {...btnStyle, name: "browseModulesButton", label: Icon.makeLabel("navicon"), tooltip: "list all modules"},
-
-                  {extent: pt(10,18), fill: Color.transparent},
-
-                  {...btnStyle, name: "addPackageButton", label: Icon.makeLabel("plus"), tooltip: "add package"},
-                  {...btnStyle, name: "removePackageButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
-                  {...btnStyle, name: "runTestsInPackageButton", label: "run tests", tooltip: "run tests", styleClasses: [], fontSize: 10, padding: rect(5,2,0,0)}
-
-                ]},
-                EvalBackendChooser.default.ensureEvalBackendDropdown(this, "local")]}
-          ]
-        });
+              EvalBackendChooser.default.ensureEvalBackendDropdown(this, "local")]}
+        ];
 
 
     let browserCommands =    container.getSubmorphNamed("browserCommands"),
@@ -422,20 +425,29 @@ export default class Browser extends Window {
         codeEntityCommands = container.getSubmorphNamed("codeEntityCommands"),
         codeEntityTree =     container.getSubmorphNamed("codeEntityTree"),
         sourceEditor =       container.getSubmorphNamed("sourceEditor"),
-        metaInfoText =       container.getSubmorphNamed("metaInfoText");
+        frozenWarning =      container.getSubmorphNamed("frozen-warning"),
+        metaInfoText =       container.getSubmorphNamed("metaInfoText"),
+        evalBackendChooser = container.getSubmorphNamed("eval backend button");
 
-    browserCommands.withAllSubmorphsDo(b => b.isButton && b.fit());
+    evalBackendChooser.width = 150;
+
+    browserCommands.opacity = 0;
+    frozenWarning.setBounds(frozenWarningBounds);
+
+    browserCommands.whenRendered().then(() => {
+      browserCommands.withAllSubmorphsDo(b => b != evalBackendChooser && b.isButton && b.fit());
+      browserCommands.opacity = 1;
+    });
 
     hresizer.addScalingAbove(moduleList);
     hresizer.addScalingAbove(codeEntityTree);
     hresizer.addFixed(moduleCommands);
     hresizer.addFixed(codeEntityCommands);
     hresizer.addFixed(metaInfoText);
+    hresizer.addFixed(frozenWarning);
     hresizer.addScalingBelow(sourceEditor);
 
     this._inLayout = false;
-
-    return container;
   }
 
 
@@ -444,13 +456,11 @@ export default class Browser extends Window {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   relayout() {
-    if (this.minimized) return;
     if (this._inLayout) return;
 
     this._inLayout = true;
 
     var {
-      container,
       moduleList,
       codeEntityTree,
       browserCommands,
@@ -459,30 +469,31 @@ export default class Browser extends Window {
       metaInfoText,
       sourceEditor,
       hresizer,
-      evalBackendList
+      evalBackendList,
+      frozenWarning,
     } = this.ui;
 
-    var listEditorRatio = moduleList.height / (container.height - hresizer.height);
+    var listEditorRatio = moduleList.height / (this.height - hresizer.height);
 
     try {
-      container.setBounds(this.targetMorphBounds());
 
       [moduleList, moduleCommands, codeEntityTree, codeEntityCommands]
-        .forEach(ea => ea.width = container.width/2);
+        .forEach(ea => ea.width = this.width/2);
       [moduleCommands, codeEntityCommands]
         .forEach(ea => ea.height = hresizer.top-moduleList.bottom);
 
       codeEntityCommands.left = codeEntityTree.left = moduleList.right;
       if (evalBackendList)
         browserCommands.layout.col(2).width = evalBackendList.width;
-      browserCommands.width = hresizer.width = container.width;
+      browserCommands.width = hresizer.width = this.width;
       metaInfoText.top = hresizer.bottom + 1;
       metaInfoText.width = browserCommands.width + 1;
+      frozenWarning.width = this.width;
       sourceEditor.setBounds(
         new Rectangle(
-          0, metaInfoText.bottom,
-          metaInfoText.width - sourceEditor.borderWidth + 1,
-          container.height - metaInfoText.bottom));
+          0, frozenWarning.height > 0 ? frozenWarning.bottom : metaInfoText.bottom,
+          frozenWarning.width - sourceEditor.borderWidth + 1,
+          this.height - Math.max(metaInfoText.bottom, frozenWarning.bottom)));
     } finally { this._inLayout = false; }
   }
 
@@ -494,8 +505,11 @@ export default class Browser extends Window {
   get isBrowser() { return true; }
 
   get ui() {
-    return this._ui || (this._ui = {
+    return {
+      ...super.ui,
       container:             this.targetMorph,
+      frozenWarning:         this.getSubmorphNamed("frozen-warning"),
+      frozenModuleInfo:      this.getSubmorphNamed("frozen-module-info"),
       addModuleButton:       this.getSubmorphNamed("addModuleButton"),
       addPackageButton:      this.getSubmorphNamed("addPackageButton"),
       browseHistoryButton:   this.getSubmorphNamed("browseHistoryButton"),
@@ -517,7 +531,7 @@ export default class Browser extends Window {
       metaInfoText:          this.getSubmorphNamed("metaInfoText"),
       sourceEditor:          this.getSubmorphNamed("sourceEditor"),
       evalBackendList:       this.getSubmorphNamed("eval backend button")
-    });
+    };
   }
 
   get selectedModule() { return this.ui.moduleList.selection; }
@@ -627,7 +641,7 @@ export default class Browser extends Window {
   async packageResources(p) {
     let excluded = (Path("lively.ide.exclude").get(p) || []).map(ea =>
       ea.includes("*") ? new RegExp(ea.replace(/\*/g, ".*")): ea);
-    excluded.push(".git", "node_modules", ".module_cache");
+    excluded.push(".git", "node_modules", ".module_cache", "assets");
     try {
       return (await this.systemInterface.resourcesOfPackage(p.address, excluded))
         .filter(({url}) => (url.endsWith(".js") || url.endsWith(".json") || url.endsWith('.jsx'))
@@ -731,13 +745,14 @@ export default class Browser extends Window {
 
     try {
       let {metaInfoText, moduleList} = this.ui;
+      let win = this.getWindow();
       metaInfoText.textString = "";
       if (!p) {
         moduleList.items = [];
         this.updateSource("");
-        this.title = "browser";
+        win.title = "browser";
       } else {
-        this.title = "browser - " + p.name;
+        win.title = "browser - " + p.name;
         moduleList.selection = null;
         await this.updateModuleList(p);
       }
@@ -748,6 +763,30 @@ export default class Browser extends Window {
         deferred.resolve(p);
       }
     }
+  }
+
+  // this.indicateFrozenModuleIfNeeded()
+
+  async indicateFrozenModuleIfNeeded() {
+    const { frozenWarning, sourceEditor, frozenModuleInfo } = this.ui;
+    const m = await this.systemInterface.getModule(this.selectedModule.name);
+    const pkgName = m.package().name;
+    const moduleName = m.pathInPackage();
+    
+    let frozenWarningHeight = 0;
+    if (m._frozenModule) {
+      frozenWarningHeight = 80;
+      frozenModuleInfo.textString = `The module "${pkgName}/${moduleName}" you are viewing is frozen. You are not able to make changes to this module unless you reload the world with dynamic load enabled for the package "${pkgName}".`;
+    }
+    frozenWarning.animate({
+      height: frozenWarningHeight,
+      duration: 300
+    });
+    sourceEditor.animate({
+      top: frozenWarning.bottom,
+      height: this.height - frozenWarning.bottom,
+      duration: 300,
+    })
   }
 
   async selectModuleNamed(mName) {
@@ -818,6 +857,7 @@ export default class Browser extends Window {
 
   async onModuleSelected(m) {
     let pack = this.state.selectedPackage;
+    const win = this.getWindow();
 
     if (this._return) return;
     if (this.selectedModule && this.hasUnsavedChanges()) {
@@ -835,7 +875,7 @@ export default class Browser extends Window {
 
     if (!m) {
       this.updateSource("");
-      this.title = "browser - " + (pack && pack.name || "");
+      win.title = "browser - " + (pack && pack.name || "");
       this.updateCodeEntities(null);
       this.ui.metaInfoText.textString = "";
       return;
@@ -853,6 +893,7 @@ export default class Browser extends Window {
 
     try {
       var system = this.systemInterface;
+      const win = this.getWindow();
 
       if (!m.isLoaded && m.name.endsWith(".js")) {
         var err;
@@ -879,7 +920,7 @@ export default class Browser extends Window {
       }
 
       this.ui.moduleList.scrollSelectionIntoView();
-      this.title = `browser - [${pack.name}] ${m.nameInPackage}`;
+      win.title = `browser - [${pack.name}] ${m.nameInPackage}`;
       var source = await system.moduleRead(m.name);
       this.updateSource(source, {row: 0, column: 0});
 
@@ -903,6 +944,7 @@ export default class Browser extends Window {
       ], false);
 
     } finally {
+      this.indicateFrozenModuleIfNeeded();
       if (deferred) {
         this.state.moduleUpdateInProgress = null;
         deferred.resolve(m);
@@ -1070,6 +1112,7 @@ export default class Browser extends Window {
             return ['devDependencies', 'dependencies'].includes(p.key.value)
           });
     // find added modules
+    return;
     for (let field of depDefFields) {
       for (let {key: { value: packageName }, value: { value: range }, end} of field.value.properties) {
         if (semver.validRange(range) || semver.valid(range)) {
@@ -1151,7 +1194,10 @@ export default class Browser extends Window {
     let {ui: {moduleList, sourceEditor}, state} = this,
         module = moduleList.selection;
 
-    if (!module) return this.setStatusMessage("Cannot save, no module selected", Color.red);
+    if (!module) return this.setStatusMessage("Cannot save, no module selected", Color.red, 5000, {
+      master: { auto: "styleguide://System/errorStatusMessage" }
+    });
+    if (modules.module(module.name)._frozenModule) return this.setStatusMessage("Cannot alter frozen modules");
 
     let content = this.ui.sourceEditor.textString.split(objectReplacementChar).join(''),
         system = this.systemInterface;
@@ -1182,11 +1228,13 @@ export default class Browser extends Window {
       if (ext !== "js" && ext !== 'jsx') {
         if (module.nameInPackage === "package.json") {
           await system.packageConfChange(content, module.name);
-          this.setStatusMessage("updated package config", Color.green);
+          this.setStatusMessage("updated package config", Color.rgb(39,174,96));
           this.updatePackageDependencies();
         } else {
           await system.coreInterface.resourceWrite(module.name, content);
-          this.setStatusMessage(`saved ${module.nameInPackage}`, Color.green);
+          this.setStatusMessage(`saved ${module.nameInPackage}`, Color.white, 5000, {
+            
+          });
         }
 
       // js save
@@ -1224,7 +1272,10 @@ export default class Browser extends Window {
 
     } finally { this.state.isSaving = false; }
 
-    this.setStatusMessage("saved " + module.nameInPackage, Color.green);
+    this.setStatusMessage("saved " + module.nameInPackage, Color.white, 5000, {
+      extent: pt(this.width, 35),
+      master: { auto: "styleguide://System/saveStatusMessage" },
+    });
   }
 
   async reloadModule(hard = false) {

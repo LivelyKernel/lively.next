@@ -46,7 +46,7 @@ function initWorker() {
       'lively.next-node_modules/systemjs/dist/system.src.js',
       'lively.modules/dist/lively.modules.js',
       'lively.ide/jsdom.worker.js',
-      'lively.ide/worker-init.js'
+      //'lively.ide/worker-init.js'
     ].map(url => System.baseURL + url)
   });
   w.eval("(" + stringifyFunctionWithoutToplevelRecorder(async function() {

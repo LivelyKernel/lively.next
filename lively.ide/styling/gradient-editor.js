@@ -1,6 +1,5 @@
 import {
   RadialGradient,
-  Rectangle,
   Point,
   pt,
   rect,
@@ -8,13 +7,11 @@ import {
   LinearGradient
 } from "lively.graphics";
 import {
-  Morph,
+  Morph, Tooltip,
   Image,
   VerticalLayout,
   GridLayout,
-  StyleSheet,
   Text,
-  HorizontalLayout,
   Ellipse,
   morph,
   Icon
@@ -22,76 +19,90 @@ import {
 import { num, arr } from "lively.lang";
 import { connect, signal } from "lively.bindings";
 import { Popover } from "lively.components/popup.js";
-import {ColorPalette} from "./color-palette.js";
-import {ColorPicker} from "./color-picker.js";
+import { ColorPalette } from "./color-palette.js";
+import { ColorPicker } from "./color-picker.js";
+import { colorWidgets } from "./style-popover.js";
 
 const WHEEL_URL = '/lively.ide/assets/color-wheel.png';
 
 class GradientTypeSelector extends Morph {
 
-      get defaultLinearGradient() {
-         return new LinearGradient({stops: [
-              {color: Color.white, offset: 0},
-              {color: Color.black, offset: 1}]});
-      }
+  get defaultLinearGradient() {
+     return new LinearGradient({stops: [
+          {color: Color.white, offset: 0},
+          {color: Color.black, offset: 1}]});
+  }
 
-      get defaultRadialGradient() {
-         return new RadialGradient({
-               stops: [
-                {color: Color.white, offset: 0},
-                {color: Color.black, offset: 1}],
-              focus: pt(.5,.5),
-              bounds: rect(0,0,30,30)});
-      }
+  get defaultRadialGradient() {
+     return new RadialGradient({
+           stops: [
+            {color: Color.white, offset: 0},
+            {color: Color.black, offset: 1}],
+          focus: pt(.5,.5),
+          bounds: rect(0,0,30,30)});
+  }
 
-      static get properties() {
-        return {
-          layout: {
-            initialize() {
-              this.extent = pt(180, 40);
-              this.layout = new GridLayout({
-               grid: [[null, "radialMode", null, "linearMode", null]],
-                       autoAssign: false, fitToCell: false})
-            }
-          },
+  static get properties() {
+    return {
+      fill: {
+        defaultValue: Color.transparent,
+      },
+      layout: {
+        initialize() {
+          this.extent = pt(180, 40);
+          this.layout = new GridLayout({
+           grid: [[null, "radialMode", null, "linearMode", null]],
+                   autoAssign: false, fitToCell: false})
+        }
+      },
 
-          submorphs: {
-            initialize() {
-              this.submorphs = [{
-                 type: "ellipse",
-                 styleClasses: ['modeButton'], name: "radialMode",
-                 fill: this.defaultRadialGradient,
-                 onMouseDown: (evt) => {
-                    signal(this, "radial");
-                 }
-              }, {
-                  type: 'ellipse',
-                  styleClasses: ['modeButton'], name: "linearMode",
-                  fill: this.defaultLinearGradient,
-                  onMouseDown: (evt) => {
-                     signal(this, "linear");
-                 }
-              }];
-            }
-          }
+      submorphs: {
+        initialize() {
+          let [m1, m2] = this.submorphs = [morph({
+             type: "ellipse",
+             master: {
+               auto: 'styleguide://SystemWidgets/gradient mode/deselected'
+             },
+             name: "radialMode",
+             fill: this.defaultRadialGradient,
+          }), morph({
+              type: 'ellipse',
+              master: {
+                auto: 'styleguide://SystemWidgets/gradient mode/deselected'
+              },
+              name: "linearMode",
+              fill: this.defaultLinearGradient
+          })];
+          connect(m1, 'onMouseDown', () => signal(this, 'radial'));
+          connect(m2, 'onMouseDown', () => signal(this, 'linear'));
         }
       }
+    }
+  }
 
-      update(gradient) {
-        const [radial, linear] = this.submorphs;
-        radial.borderColor = linear.borderColor = Color.gray.darker();
-        if (gradient instanceof RadialGradient) {
-            radial.borderColor = Color.orange;
-        } else if (gradient instanceof LinearGradient) {
-            linear.borderColor = Color.orange;
-        }
-      }
+  update(gradient) {
+    const [radial, linear] = this.submorphs;
+    radial.borderColor = linear.borderColor = Color.gray.darker();
+    if (gradient instanceof RadialGradient) {
+        radial.borderColor = Color.orange;
+    } else if (gradient instanceof LinearGradient) {
+        linear.borderColor = Color.orange;
+    }
+  }
 
 }
 
 export class GradientEditor extends Morph {
   static get properties() {
     return {
+      layout: {
+        initialize() {
+          this.layout = new VerticalLayout({
+            spacing: 3,
+          })
+        }
+      },
+      fill: { defaultValue: Color.transparent },
       handleMorph: {},
       gradientValue: {
         set(v) {
@@ -106,11 +117,6 @@ export class GradientEditor extends Morph {
           this.build();
         }
       },
-      styleSheets: {
-        initialize() {
-          this.styleSheets = GradientEditor.styleSheet;
-        }
-      }
     };
   }
 
@@ -119,82 +125,6 @@ export class GradientEditor extends Morph {
     this.gradientHandle && this.gradientHandle.remove();
   }
 
-  static get styleSheet() {
-    return new StyleSheet({
-      ".GradientEditor": {
-        layout: new VerticalLayout({
-          spacing: 3,
-          layoutOrder(m) {
-            return this.container.submorphs.indexOf(m)
-          }
-        }),
-        fill: Color.transparent
-      },
-      ".GradientEditor [name=addStopLabel]": {
-        fontSize: 18,
-        fontColor: Color.orange,
-        position: pt(-5, -22),
-        extent: pt(10, 10),
-        padding: Rectangle.inset(0),
-        fixedWidth: true,
-        fixedHeight: true
-      },
-      ".GradientEditor [name=stopControlPreview]": {extent: pt(2, 50), fill: Color.orange},
-      ".propertyView": {
-        fill: Color.black.withA(0.7),
-        borderRadius: 5,
-        padding: Rectangle.inset(5),
-        fontColor: Color.white
-      },
-      ".GradientEditor .stopControlLine": {
-        extent: pt(2, 50),
-        fill: Color.gray.darker(),
-        tooltip: "Drag to change proportional offset of stop"
-      },
-      ".StopControlHead": {
-        fill: Color.black.withA(0.3),
-        borderRadius: 20,
-        extent: pt(15, 15),
-        position: pt(-6, -22)
-      },
-      ".pickerField": {
-        imageUrl: WHEEL_URL,
-        extent: pt(15, 15),
-        tooltip: "Open Color Picker",
-        nativeCursor: "pointer",
-        fill: Color.transparent
-      },
-      ".GradientEditor .paletteField": {
-        nativeCursor: "pointer",
-        clipMode: "hidden",
-        tooltip: "Open Color Palette"
-      },
-      ".GradientEditor [name=typeSelector]": {fill: Color.transparent, extent: pt(180, 40)},
-      ".GradientEditor .modeButton": {
-        nativeCursor: "pointer",
-        extent: pt(30, 30),
-        borderWidth: 2
-      },
-      ".GradientEditor [name=instruction]": {
-        fontSize: 15,
-        padding: Rectangle.inset(15),
-        fontWeight: "bold",
-        fontColor: Color.black.lighter()
-      },
-      ".closeButton": {
-        fontColor: Color.gray.lighter(),
-        tooltip: "Remove Stop",
-        fontSize: 17,
-        nativeCursor: "pointer"
-      },
-      ".GradientEditor [name=gradientEditor]": {
-        extent: pt(180, 50),
-        borderRadius: 5,
-        borderWidth: 1,
-        borderColor: Color.gray.darker()
-      }
-    });
-  }
   async selectRadialGradient() {
     this.get("linearMode").borderColor = Color.gray.darker();
     this.get("radialMode").borderColor = Color.orange;
@@ -288,10 +218,16 @@ class StopControlHead extends Morph {
        targetProperty: {
          get() { return this.stopVisualizer.targetProperty },
        },
+       master: {
+         initialize() {
+           this.master = {
+             auto: 'styleguide://SystemWidgets/stop control head/collapsed'
+           }
+         }
+       },
        index: {},
        queue: {defaultValue: []},
        isHaloItem: {defaultValue: true},
-       layout: {initialize() { this.layout = new HorizontalLayout({spacing: 3}) }}
     }
   }
 
@@ -345,9 +281,10 @@ class StopControlHead extends Morph {
       if (this.submorphs.length > 1) return;
       let palette = this.get("paletteField"), duration = 100, ge;
       var center = pt(2,-14);
-      this.layout = null;
       this.submorphs = [this.closeButton(), palette, this.pickerField()];
-      this.layout = new HorizontalLayout({spacing: 3});
+      this.master = {
+        auto: 'styleguide://SystemWidgets/stop control head/expanded'
+      };
       // if clipped by owner move into view accordingly
       ge = this.get('gradientEditor');
       let {x: leftDistance, width} = this.transformRectToMorph(ge, this.innerBounds()),
@@ -367,14 +304,13 @@ class StopControlHead extends Morph {
             [close, palette, picker] = [
               this.get("close"), this.get("paletteField"), this.get("pickerField")
             ];
-      this.layout = null;
       let duration = 200;
       palette.bringToFront();
       close.remove();
       picker.remove();
-      palette.extent = pt(10,10);
-      this.layout = new HorizontalLayout({ spacing: 3 });
-      this.width = 16;
+      this.master = {
+        auto: 'styleguide://SystemWidgets/stop control head/collapsed'
+      }
       this.center = oldCenter;
    }
 
@@ -383,16 +319,21 @@ class StopControlHead extends Morph {
        this.shrink();
    }
 
+  removeStop() {
+     this.stopVisualizer.removeStop(this.index) && this.remove();
+  }
+
    closeButton() {
-      return new Morph({
+      let bt = new Morph({
          name: "close",
          extent: pt(15,15), fill: Color.transparent,
          origin: pt(0,-3), clipMode: 'hidden',
-         submorphs: [Icon.makeLabel("close", {
+         submorphs: [Icon.makeLabel("times", {
           styleClasses: ["closeButton"],
-          onMouseDown: () => {
-             this.stopVisualizer.removeStop(this.index) && this.remove();
-          }})]})
+        })]
+      });
+      connect(bt, 'onMouseDown', this, 'removeStop');
+      return bt;
    }
 
    updateColor(color) {
@@ -468,19 +409,32 @@ class GradientStopVisualizer extends Morph {
          gradientEditor: {},
          draggable: { defaultValue: false },
          targetProperty: {
+           derived: true,
            get() {
-             return this.gradientEditor.gradientValue;
+             return this.gradientEditor && this.gradientEditor.gradientValue;
            },
            set(v) {
              this.gradientEditor.gradientValue = v;
            }
          },
+         master: {
+           initialize() {
+             this.master = {
+               auto: 'styleguide://SystemWidgets/gradient stop visualizer'
+             }
+           }
+         },
          submorphs: {
+           after: ['gradientEditor'],
            initialize() {
              this.submorphs = [{
                  type: "label", name: "instruction", value: "Select Gradient Type",
                  visible: !(this.targetProperty && this.targetProperty.isGradient)
-             }, {name: "stopControlPreview", visible: false,
+             }, {
+                 name: "stopControlPreview", visible: false,
+                 master: {
+                   auto: 'styleguide://SystemWidgets/stop control preview'
+                 },
                  submorphs: [Icon.makeLabel("plus-circle", {name: "addStopLabel"})]
              }];
             }
@@ -567,10 +521,19 @@ class GradientStopControl extends Morph {
       stopVisualizer: {},
       styleClasses: {defaultValue: ['stopControlLine']},
       nativeCursor: {defaultValue: '-webkit-grab'},
+      draggable: {defaultValue: true},
+      master: {
+        initialize() {
+          this.master = {
+            auto: 'styleguide://SystemWidgets/gradient stop control'
+          }
+        }
+      },
       submorphs: {
-        after: ['index', 'stopVisualizer', 'gradientEditor'],
+        after: ['index', 'stopVisualizer'],
         initialize() {
           this.head = new StopControlHead({
+             name: 'stop control head',
              stopVisualizer: this.stopVisualizer,
              index: this.index
           });
@@ -592,16 +555,14 @@ class GradientStopControl extends Morph {
   onDragStart(evt) {
      this.nativeCursor = '-webkit-grabbing';
      this.stopVisualizer.nativeCursor = '-webkit-grabbing';
-     this.offsetView = this.addMorph(new Text({
-        type: 'text', styleClasses: ['Tooltip'], padding: 3
-     })).openInWorld(evt.hand.position.addPt(pt(10,10)));
+     this.offsetView = new Tooltip().openInWorld(evt.hand.position.addPt(pt(10,10)));
   }
 
   onDrag(evt) {
      const absOffset = this.position.x - 5 + evt.state.dragDelta.x,
            offset = Math.max(0, Math.min(1, absOffset / (this.stopVisualizer.width - 10)));
      this.stopVisualizer.updateStop(this.index, {offset});
-     this.offsetView.textString = (offset * 100).toFixed(2) + "%"
+     this.offsetView.description = (offset * 100).toFixed(2) + "%"
      this.offsetView.position = evt.hand.position.addPt(pt(10,10));
   }
 
@@ -629,11 +590,7 @@ class FocusHandle extends Ellipse {
 
   onDragStart(evt) {
      this.tfm = this.gradientHandle.target.getGlobalTransform().inverse();
-     this.focusView = this.addMorph(new Text({
-          type: 'text', styleClasses: ['propertyView']
-     })).openInWorld(evt.hand.position.addPt(pt(10,10)));
-     this.focusView.rotation = 0;
-     this.focusView.scale = 1;
+     this.focusView = new Tooltip().openInWorld(evt.hand.position.addPt(pt(10,10)));
   }
 
   onDrag(evt) {
@@ -641,7 +598,7 @@ class FocusHandle extends Ellipse {
            gh = this.gradientHandle,
            g = gh.target.fill;
      g.focus = g.focus.addXY(x / gh.target.width, y / gh.target.height)
-     this.focusView.textString = `x: ${(g.focus.x * 100).toFixed()}%, y: ${(g.focus.y * 100).toFixed()}%`;
+     this.focusView.description = `x: ${(g.focus.x * 100).toFixed()}%, y: ${(g.focus.y * 100).toFixed()}%`;
      this.focusView.position = evt.hand.position.addPt(pt(10,10));
      gh.target.makeDirty();
      gh.relayout();
@@ -674,10 +631,7 @@ class BoundsHandle extends Ellipse {
   }
 
   onDragStart(evt) {
-    this.boundsView = this.addMorph(new Text({
-      type: 'text', styleClasses: ['propertyView']
-    })).openInWorld(evt.hand.position.addPt(pt(10,10)));
-    this.boundsView.rotation = 0;
+    this.boundsView = new Tooltip().openInWorld(evt.hand.position.addPt(pt(10,10)));
   }
 
   onDrag(evt) {
@@ -685,7 +639,7 @@ class BoundsHandle extends Ellipse {
         g = gh.target.fill,
         newSide = g.bounds.partNamed(this.side).addPt(evt.state.dragDelta.scaleBy(2));
     g.bounds = g.bounds.withPartNamed(this.side, newSide);
-    this.boundsView.textString = `w: ${g.bounds.width.toFixed()}px h: ${g.bounds.height.toFixed()}px`
+    this.boundsView.description = `w: ${g.bounds.width.toFixed()}px h: ${g.bounds.height.toFixed()}px`
     this.boundsView.position = evt.hand.position.addPt(pt(10,10));
     gh.target.makeDirty()
     gh.relayout();
@@ -705,9 +659,12 @@ export class GradientFocusHandle extends Ellipse {
       return {
         target: {/* REQUIRED */},
         isHaloItem: {defaultValue: true},
-        styleSheets: {
+        hasFixedPosition: { defaultValue: true },
+        master: {
           initialize() {
-            this.styleSheets = this.styler;
+            this.master = {
+              auto: 'styleguide://SystemWidgets/gradient focus handle'
+            }
           }
         },
         submorphs: {
@@ -720,55 +677,6 @@ export class GradientFocusHandle extends Ellipse {
         }
       }
     }
-
-  get styler() {
-    return new StyleSheet({
-      ".GradientFocusHandle": {
-        fill: Color.transparent,
-        borderColor: Color.orange,
-        draggable: false,
-        borderWidth: 2
-      },
-      ".GradientFocusHandle .topCenter": {nativeCursor: "ns-resize"},
-      ".GradientFocusHandle .rightCenter": {nativeCursor: "ew-resize"},
-      ".GradientFocusHandle .bottomCenter": {nativeCursor: "ns-resize"},
-      ".GradientFocusHandle .leftCenter": {nativeCursor: "ew-resize"},
-      ".GradientFocusHandle .propertyView": {
-        fill: Color.black.withA(0.7),
-        borderRadius: 5,
-        padding: Rectangle.inset(5),
-        fontColor: Color.white
-      },
-      ".GradientFocusHandle .boundsHandle": {
-        borderColor: Color.orange.darker(),
-        fill: Color.orange.withA(0.7),
-        tooltip: "Resize bounds of radial gradient"
-      },
-      ".GradientFocusHandle .crossBar": {
-        borderWidth: 2,
-        borderColor: Color.orange,
-        center: pt(11, 11),
-        draggable: false
-      },
-      ".GradientFocusHandle .focusHandle": {
-        clipMode: "hidden",
-        nativeCursor: "-webkit-grab",
-        fill: Color.transparent,
-        borderColor: Color.orange,
-        submorphs: [
-          {type: "path", vertices: [pt(0, 0), pt(50, 0)], styleClasses: ["crossBar"]},
-          {type: "path", vertices: [pt(0, 0), pt(0, 50)], styleClasses: ["crossBar"]},
-          {
-            type: "ellipse",
-            fill: Color.transparent,
-            extent: pt(20, 20),
-            tooltip: "Shift focal center of radial gradient",
-            reactsToPointer: false
-          }
-        ]
-      }
-    });
-  }
 
     relayout() {
        const {bounds, focus} = this.target.fill;
@@ -783,7 +691,7 @@ export class GradientFocusHandle extends Ellipse {
 
     initBoundsHandles() {
        this.bounds().sides.forEach(side => {
-          this.addMorph(new BoundsHandle({gradientHandle: this, side}))
+          this.addMorph(new BoundsHandle({gradientHandle: this, side, name: 'bounds handle ' + side.split('C')[0]}))
        });
     }
 
@@ -804,12 +712,7 @@ class RotationPoint extends Ellipse {
   }
 
   onDragStart(evt) {
-    this.angleView = this.addMorph(
-      new Text({
-        type: "text",
-        styleClasses: ["propertyView"]
-      })
-    ).openInWorld(evt.hand.position.addPt(pt(10, 10)));
+    this.angleView = new Tooltip().openInWorld(evt.hand.position.addPt(pt(10, 10)));
     this.angleView.rotation = 0;
   }
 
@@ -818,7 +721,7 @@ class RotationPoint extends Ellipse {
     gh.target.fill.vector = evt.positionIn(gh).theta();
     gh.target.makeDirty();
     gh.relayout();
-    this.angleView.textString = `${(num.toDegrees(gh.target.fill.vectorAsAngle()) + 180).toFixed()}°`;
+    this.angleView.description = `${(num.toDegrees(gh.target.fill.vectorAsAngle()) + 180).toFixed()}°`;
     this.angleView.position = evt.hand.position.addPt(pt(10, 10));
   }
 
@@ -836,40 +739,21 @@ class GradientDirectionHandle extends Ellipse {
       target: {},
       origin: {defaultValue: pt(25, 25)},
       extent: {defaultValue: pt(50, 50)},
-      styleSheets: {
-        initialize() {
-          this.styleSheets = this.styler;
-        }
-      },
+      hasFixedPosition: { defaultValue: true },
       submorphs: {
         initialize() {
           this.initRotationPoint();
           this.relayout();
         }
+      },
+      master: {
+        initialize() {
+          this.master = {
+            auto: 'styleguide://SystemWidgets/gradient direction handle'
+          }
+        }
       }
     }
-  }
-
-  get styler() {
-    return new StyleSheet({
-      '.GradientDirectionHandle': {
-        borderColor: Color.orange,
-        fill: Color.transparent,
-        borderWidth: 1
-      },
-      '.GradientDirectionHandle .RotationPoint': {
-        fill: Color.orange,
-        extent: pt(10, 10),
-        nativeCursor: "-webkit-grab",
-        tooltip: "Adjust direction of linear gradient"
-      },
-      '.GradientDirectionHandle .propertyView': {
-        fill: Color.black.withA(0.7),
-        borderRadius: 5,
-        padding: Rectangle.inset(5),
-        fontColor: Color.white
-      }
-    });
   }
 
   get isHaloItem() { return true }
@@ -881,7 +765,11 @@ class GradientDirectionHandle extends Ellipse {
   }
 
   initRotationPoint() {
-     this.rotationPoint = this.addMorph(new RotationPoint({gradientHandle: this}));
+     this.rotationPoint = this.addMorph(new RotationPoint({gradientHandle: this, name: 'rotation point'}));
   }
 
 }
+
+
+colorWidgets.GradientEditor = GradientEditor;
+

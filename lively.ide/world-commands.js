@@ -10,9 +10,7 @@ import { LoadingIndicator } from "lively.components";
 
 import { createMorphSnapshot } from "lively.morphic/serialization.js";
 import { interactivelyFreezeWorld } from "lively.freezer";
-
-
-
+import { resource } from "lively.resources";
 
 var commands = [
 
@@ -75,7 +73,7 @@ var commands = [
       let {prompt, selected: [cmd]} = await world.filterableListPrompt(
         "Run command", items, {
           historyId: "lively.morphic-run command",
-          requester: world,
+          requester: target,
           extent: pt(700,900), prompt: world._cachedRunCommandPrompt});
 
       world._cachedRunCommandPrompt = prompt;
@@ -110,8 +108,8 @@ var commands = [
 
   {
     name: "show morph",
-    exec: (world, morph) => {
-      show(morph);
+    exec: (world, { morph, loop = false }) => {
+      show(morph, loop);
     }
   },
 
@@ -177,14 +175,16 @@ var commands = [
             },
             m => filterFn(m) ? m.submorphs : [])),
           actions = ["show halo", "open object editor", "open object inspector"];
+          let lastSelected;
           let {selected: morphs, action} = await selectionFn(
               opts.prompt || "Choose morph",
               (opts.prependItems || []).concat(items),
               {historyId: "lively.morphic-select morph",
                onSelection: sel => {
                  if (this.lastSelectionHalo) this.lastSelectionHalo.remove();
-                 if (sel && sel.show) {
+                 if (sel && sel.show && lastSelected != sel) {
                    this.lastSelectionHalo = sel.show();
+                   lastSelected = sel;
                  }
                },
                selectedAction: "show halo",
@@ -319,26 +319,45 @@ var commands = [
 
       let wins = world.submorphs.filter(({isWindow}) => isWindow).reverse()
             .map(win => ({isListItem: true, string: win.title || String(win), value: win}));
-      wins.forEach(m => m.value.opacity = .5);
+      wins.forEach(m => {
+        m.value.opacity = .5;
+        m.value.blur = 1;
+      });
       let selectedWindow;
+      let prevMinimizedState;
       let answer = await world.filterableListPrompt(
             "Choose window", wins, {
               preselect: 1,
               requester: world,
               historyId: "lively.morphic-window switcher",
               onSelection: sel => {
-                if (selectedWindow) selectedWindow.animate({
-                  opacity: .5, duration: 200,
-                })
+                if (selectedWindow) {
+                  selectedWindow.minimized = prevMinimizedState;
+                  selectedWindow.blur = 1;
+                  selectedWindow.animate({
+                    opacity: .3, duration: 200,
+                  })
+                }
                 selectedWindow = sel;
-                sel && sel.animate({ opacity: 1, duration: 200 })
+                if (sel) {
+                  sel.animate({ opacity: 1, duration: 200 });
+                  sel.blur = 0;
+                  prevMinimizedState = sel.minimized;
+                  sel.minimized = false;
+                }
               },
               width: world.visibleBounds().extent().x * 1/3,
               itemPadding: Rectangle.inset(4)
             }),
           {selected: [win]} = answer;
-      wins.forEach(m => m.value.opacity = 1);
-      win && win.activate();
+      wins.forEach(m => {
+        m.value.opacity = 1;
+        m.value.blur = 0;
+      });
+      if (win) {
+        win.activate();
+        win.minimized = false;
+      }
       return true;
     }
   },
@@ -618,7 +637,7 @@ var commands = [
       if (!format) var {a,b, format} = findFormat(a, b);
       else { a = String(a);  b = String(b); }
 
-      var diff = await System.import("jsdiff", System.decanonicalize("lively.morphic")),
+      var { default: diff} = await System.import("https://dev.jspm.io/diff"),
           diffed = await diffInWindow(a, b, {fontFamily: "monospace", ...opts, format});
 
       return diffed;
@@ -711,6 +730,7 @@ var commands = [
           ({isListItem: true, value: ea, string: ea.name || String(ea)}));
         var {selected: [choice]} = await world.filterableListPrompt(
           "choose text: ", candidates, {onSelection: m => {
+            debugger;
             m && m.show()
           }
        });
@@ -795,7 +815,18 @@ var commands = [
       pb.targetMorph.selectedCategory = "*basics*";
       pb.focus();
       li.remove();
+      pb.getWindow().activate();
       return pb;
+    }
+  },
+
+  {
+    name: 'browse and load component',
+    exec: async function(world) {
+      const componentsBrowser = await resource('part://SystemDialogs/master component browser').read()
+      const loadedComponent = await componentsBrowser.activate();
+      if (loadedComponent && !loadedComponent.world())
+        loadedComponent.openInWorld();
     }
   },
 
@@ -1014,7 +1045,7 @@ var commands = [
                b = await Browser.browse(
                   loc, i === 0 ? browser : undefined, systemInterface);
            b.moveBy(pt(i*20, i*20));
-           b.activate();
+           b.getWindow().activate();
          }
       })();
 
@@ -1029,6 +1060,8 @@ var commands = [
 
       let activeMorphs = world.focusedMorph ? world.focusedMorph.ownerChain() : [],
           browser = opts.browser || activeMorphs.find(ea => ea.isBrowser);
+
+      const li = LoadingIndicator.open("loading code search");
 
       if (browser && browser.isBrowser) {
         if (browser.state.associatedSearchPanel)
@@ -1051,6 +1084,8 @@ var commands = [
         systemInterface
       });
       searcher.activate();
+
+      li.remove();
 
       if (browser) browser.state.associatedSearchPanel = searcher;
       return searcher;
@@ -1093,12 +1128,16 @@ var commands = [
     progressIndicator: "opening file...",
     exec: async (world, opts = {url: null, lineNumber: null, reuse: false}) => {
       let { url, lineNumber, reuse } = opts;
-      if (!url)
+      let li = world.commandHandler.progressIndicator;
+      if (!url) {
+        li.visible = false;
+        debugger;
         url = await world.prompt("Enter file location", {
           historyId: "lively.morphic-text editor url",
           useLastInput: true
         });
-
+        li.visible = true;
+      }
       if (reuse) {
         let ea = world.getWindows().slice(-2)[0],
             editor = arr.findAndGet(world.getWindows(), ea => {
@@ -1232,7 +1271,10 @@ var commands = [
       if (id || commit) return World.loadFromCommit(id || commit, oldWorld);
       if (name) return World.loadFromDB(name, ref, oldWorld);
 
-      let worldList = oldWorld.get("world-list") || await loadObjectFromPartsbinFolder("world-list");
+      let worldList = oldWorld.get("a project browser") || await resource('part://partial freezing/project browser').read();
+      worldList.name = 'a project browser';
+      worldList.hasFixedPosition = true;
+      worldList.epiMorph = true;
       worldList.bringToFront().alignInWorld(oldWorld);
       worldList.update();
       worldList.focus();
