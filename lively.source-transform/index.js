@@ -3,14 +3,31 @@ import * as capturing from "./capturing.js";
 export { capturing };
 import { parseFunction, stringify, ReplaceVisitor } from "lively.ast";
 import transformJSX from "babel-plugin-transform-jsx";
+import catchBinding from "babel-catch-binding";
+import importMeta from "babel-import-meta";
 
 // fixme: this is a sort of bad placement
-typeof babel !== 'undefined' && !babel.availablePlugins['transform-jsx'] && !(lively || global.lively).FreezerRuntime && babel.registerPlugin('transform-jsx', transformJSX.default);
+
+function ensureJSXPlugin() {
+  if (!transformJSX) return;
+  typeof babel !== 'undefined' && !babel.availablePlugins['transform-jsx'] && !(lively || global.lively).FreezerRuntime && babel.registerPlugin('transform-jsx', transformJSX.default);
+}
+
+function ensureOptionalCatchBinding() {
+  if (!catchBinding) return;
+  typeof babel !== 'undefined' && !babel.availablePlugins['optional-catch-binding'] && !(lively || global.lively).FreezerRuntime && babel.registerPlugin('optional-catch-binding', catchBinding.default);
+}
+
+function ensureImportMeta() {
+  if (!importMeta) return;
+  typeof babel !== 'undefined' && !babel.availablePlugins['syntax-import-meta'] && !(lively || global.lively).FreezerRuntime && babel.registerPlugin('syntax-import-meta', importMeta.default);
+}
 
 export function stringifyFunctionWithoutToplevelRecorder(
   funcOrSourceOrAst,
   varRecorderName = "__lvVarRecorder"
 ) {
+  ensureJSXPlugin();
   // stringifyFunctionWithoutToplevelRecorder((x) => hello + x)
   // => x => hello + x
   // instead of String((x) => hello + x) // => x => __lvVarRecorder.hello + x
@@ -42,6 +59,9 @@ export function es5Transpilation(source) {
       console.warn('[lively.freezer] Skipped async/await transpilation because babel not loaded.');
       return source;
     }
+    ensureJSXPlugin();
+    ensureOptionalCatchBinding();
+    ensureImportMeta();
     let options = {
       sourceMap: undefined, // 'inline' || true || false
       inputSourceMap: undefined,
@@ -50,11 +70,15 @@ export function es5Transpilation(source) {
       plugins: [
         'transform-exponentiation-operator', 'transform-async-to-generator',
         "syntax-object-rest-spread", "transform-object-rest-spread",
-        ['transform-jsx', { "module": 'lively.ide/jsx/generator.js'}]
+        //'syntax-import-meta', 'optional-catch-binding',
+        //['transform-jsx', { "module": 'lively.ide/jsx/generator.js'}]
       ],
       code: true,
       ast: false
     };
+
+   // System.babelOptions.plugins.push('optional-catch-binding')
+    
     var sourceForBabel = source,
         transpiled = babel.transform(sourceForBabel, options).code;
     transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, "}).call(this)");

@@ -1,5 +1,4 @@
 import { obj, string, chain, arr, fun, Path } from "lively.lang";
-import { classToFunctionTransform } from "lively.classes";
 import {
   parse,
   stringify,
@@ -51,14 +50,15 @@ export function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) 
     moduleExportFunc: {name: options && options.es6ExportFuncId || "_moduleExport", type: "Identifier"},
     moduleImportFunc: {name: options && options.es6ImportFuncId || "_moduleImport", type: "Identifier"},
     declarationWrapper: undefined,
-    classToFunction: options && options.hasOwnProperty("classToFunction") ?
-      options.classToFunction : {
-        classHolder: assignToObj,
-        functionNode: {type: "Identifier", name: "_createOrExtendClass"},
-        declarationWrapper: options && options.declarationWrapper,
-        evalId: options && options.evalId,
-        sourceAccessorName: options && options.sourceAccessorName
-      },
+    classTransform: (parsed) => parsed, // no transform
+    // classToFunction: options && options.hasOwnProperty("classToFunction") ?
+    //   options.classToFunction : {
+    //     classHolder: assignToObj,
+    //     functionNode: {type: "Identifier", name: "_createOrExtendClass"},
+    //     declarationWrapper: options && options.declarationWrapper,
+    //     evalId: options && options.evalId,
+    //     sourceAccessorName: options && options.sourceAccessorName
+    //   },
     ...options
   }
 
@@ -151,7 +151,18 @@ export function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) 
   //   "Global.bar = _define(bar, 'bar', _rec, 'function'); function bar() {}"
   rewritten = putFunctionDeclsInFront(rewritten, options);
 
+  rewritten = transformImportMeta(rewritten, options);
+
   return rewritten
+}
+
+function transformImportMeta(parsed, options) {
+  return ReplaceVisitor.run(parsed, (node) => {
+    if (node.type == 'MetaProperty' && node.meta.name == 'import') {
+      return parse('({url: _context.id})').body[0].expression
+    }
+    return node;
+  });
 }
 
 export function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, options) {
@@ -468,9 +479,8 @@ function shouldRefBeCaptured(ref, toplevel, options) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function replaceClassDecls(parsed, options) {
-
   if (options.classToFunction)
-    return classToFunctionTransform(parsed, options.classToFunction);
+    return options.classToFunction.transform(parsed, options.classToFunction);
 
   var topLevel = topLevelDeclsAndRefs(parsed);
   if (!topLevel.classDecls.length) return parsed;
@@ -532,7 +542,7 @@ export function insertCapturesForExportedImports(parsed, options) {
           return [decl.id.name, decl.id.name]
         })
       } else {
-        decls = stmt.specifiers.map(specifier => [specifier.exported.name, specifier.exported.name])
+        decls = stmt.specifiers.map(specifier => [specifier.exported.name, specifier.local.name])
       }
       if (sourceExport) {
         nodes = [];
@@ -541,8 +551,8 @@ export function insertCapturesForExportedImports(parsed, options) {
       nodes = nodes.concat(parse(
         sourceImport +
         decls.map(([exp, imp]) => {
-        return `${recorder}.${imp} = ${imp};`;
-      }).join('\n')));
+          return `${recorder}.${exp} = ${imp};\n` + `${recorder}.${imp} = ${imp};\n`;
+        }).join('\n')));
     }
     if (stmt.type === "ExportAllDeclaration") {
       captureId++
@@ -619,8 +629,10 @@ function insertDeclarationsForExports(parsed, options) {
   var topLevel = topLevelDeclsAndRefs(parsed), body = [];
   for (var i = 0; i < parsed.body.length; i++) {
     var stmt = parsed.body[i];
-
-    if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration && !stmt.declaration.type.includes("Declaration") && (stmt.declaration.type === "Identifier" || stmt.declaration.id)) {
+    if (options.classToFunction &&
+        stmt.type === "ExportDefaultDeclaration" && 
+        stmt.declaration && !stmt.declaration.type.includes("Declaration") &&
+        (stmt.declaration.type === "Identifier" || stmt.declaration.id)) {
       body = body.concat([
         varDeclOrAssignment(parsed, {
           type: "VariableDeclarator",

@@ -1,6 +1,6 @@
 {
   "name": "lively.source-transform",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "EcmaScript 6 classes for live development",
   "main": "dist/lively.source-transform.js",
   "scripts": {
@@ -42,7 +42,18 @@
   "systemjs": {
     "main": "index.js",
     "map": {
-      "babel-plugin-transform-jsx": "https://dev.jspm.io/babel-plugin-transform-jsx"
+      "babel-plugin-transform-jsx": {
+        "~node": "https://jspm.dev/babel-plugin-transform-jsx",
+        "node": "@empty"
+      },
+      "babel-catch-binding": {
+        "~node": "https://jspm.dev/@babel/plugin-proposal-optional-catch-binding",
+        "node": "@empty"
+      },
+      "babel-import-meta": {
+        "node": "@empty",
+	"~node": "https://jspm.dev/@babel/plugin-syntax-import-meta"
+      }
     }
   }
 }
