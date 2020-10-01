@@ -3,14 +3,17 @@ import { promise, arr, string } from "lively.lang";
 import { resource } from "lively.resources";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { connect, once, signal } from "lively.bindings";
-import { morph, Icon, config } from "lively.morphic";
+import { morph, easings, touchInputDevice, Icon, config, Morph } from "lively.morphic";
 import { Menu } from 'lively.components';
-import { Morph } from "lively.morphic/morph.js";
 import { loadMorphFromSnapshot, createMorphSnapshot } from "lively.morphic/serialization.js";
 import UserRegistry from "lively.user/client/user-registry.js";
 import { ClientUser } from "lively.user/index.js";
 import { loadPart } from "lively.morphic/partsbin.js";
 import LoadingIndicator from "lively.components/loading-indicator.js";
+
+// das kostet was??? 99 euro ey.
+//import * as AppleID from "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js";
+import { gapi } from "https://apis.google.com/js/platform.js";
 
 // adoptObject(that, UserInfoWidget) 
 // adoptObject(that, LoginWidget) 
@@ -54,22 +57,27 @@ export var UserUI = {
   },
 
   async showUserFlap(world = $world) {
-    this.hideUserFlap(world);
-    let flap = await loadPart('user flap');
-    flap.opacity = 0;
-    flap.openInWorld();
-    flap.alignInWorld();
+    // this.hideUserFlap(world);
+    let topBar = await resource('part://SystemIDE/lively top bar master').read();
+    topBar.name = 'lively top bar';
+    topBar.hasFixedPosition = true;
+    topBar.respondsToVisibleWindow = true;
+    topBar.openInWorld();
+    topBar.relayout();
+    topBar.top = -topBar.height; // tell top bar to hide
+    const dropShadow = topBar.dropShadow;
+    topBar.dropShadow = null;
     // FIXME
-    System.import("lively.2lively/client.js").then(m => {
-      flap.animate({ opacity: 1, duration: 200 });
-      flap.updateNetworkIndicator(m.default.default())
+    System.import("lively.2lively/client.js").then(async m => {
+      await topBar.whenRendered();
+      await topBar.animate({ position: pt(0,0), dropShadow, duration: 500 }); // tell top bar to show in
      });
-    return flap;
+    return topBar;
   },
 
   hideUserFlap(world = $world) {
     world.submorphs
-      .filter(ea => ea.name === "user flap")
+      .filter(ea => ea.name === "user flap" && ea.owner == world)
       .forEach(ea => ea.remove());
   },
 
@@ -80,14 +88,20 @@ export var UserUI = {
   },
 
   async showUserInfo(options = {}) {
-    return this.showWidget("user info", options);
-    // let {user = this.getCurrentUser()} = options;
-    // return user.isGuestUser ? this.showLogin(options) : this.showWidget("user info", options);
+    return await this.showWidget("user info", options);
   },
   async showLogin(options = {}) { return this.showWidget("login widget", options); },
   async showRegister(options = {}) { return this.showWidget("register widget", options); },
 
   async loadMorph(name, options) {
+    switch (name) {
+      case 'login widget':
+        return await loadPart('login widget', options);
+      case 'user info':
+        return await loadPart('user info', options);
+      case 'register widget':
+        return await loadPart('register widget', options);
+    }
     let url = System.decanonicalize(`lively.user/morphic/${name}.json`),
         snap = await resource(url).readJson();
     return loadMorphFromSnapshot(snap, options);
@@ -108,11 +122,14 @@ class UserWidget extends Morph {
     if (withOverlay) {
       var overlay = world.addMorph({
         name: this.name + " overlay",
+        hasFixedPosition: true,
         grabbable: false, draggable: false,
         extent: world.extent,
         fill: Color.black.withA(.4)
       });
     }
+    this.hasFixedPosition = true;
+    this.epiMorph = true;
     this.activate(user);
     return new Promise((resolve, reject) => {
       once(this, "resolved", resolve);
@@ -342,7 +359,41 @@ export class LoginWidget extends UserWidget {
       loginButton: this.getSubmorphNamed("login button"),
       registerButton: this.getSubmorphNamed("register button"),
       guestButton: this.getSubmorphNamed("guest button"),
+      emailLoginForm: this.getSubmorphNamed("email login form"),
+      googleLogin: this.getSubmorphNamed('google login'),
+      emailLogin: this.getSubmorphNamed('email login'),
+      appleLogin: this.getSubmorphNamed('apple login'),
     }
+  }
+
+  signInWithGoogle() {
+    gapi.load('auth2', async () => {
+      gapi.auth2.init({
+        client_id: 'CLIENT_ID.apps.googleusercontent.com'
+      });
+      let GoogleAuth = gapi.auth2.getAuthInstance();
+      let user = await GoogleAuth.signIn();
+    });
+  }
+
+  async signInWithEmail() {
+    const { emailLoginForm, googleLogin, emailLogin, appleLogin } = this.ui;
+    const easing = easings.inOutExpo;
+    const duration = 300;
+
+    [googleLogin, emailLogin, appleLogin].map(m => m.animate({
+      visible: false,
+      isLayoutable: false,
+      easing,
+      duration,
+    }));
+    
+    emailLoginForm.animate({
+      visible: true,
+      isLayoutable: true,
+      easing,
+      duration,
+    });
   }
 
   focus() {
@@ -352,20 +403,29 @@ export class LoginWidget extends UserWidget {
   focusOrder() {
     return [
       this.ui.userNameInput,
-      this.ui.passwordInput];
+      this.ui.passwordInput
+    ];
   }
+
+  // this.reset()
 
   reset() {
     this.withAllSubmorphsDo(ea => { ea.draggable = false; ea.grabbable = false; });
 
-    connect(this.ui.loginButton, 'fire', this, 'tryLogin');
-    connect(this.ui.registerButton, 'fire', this, 'switchToRegisterWidget');
-    connect(this.ui.guestButton, 'fire', this, 'continueAsGuest');
+    const {
+      loginButton, registerButton, userNameInput, appleLogin,
+      passwordInput, emailLoginForm, googleLogin, emailLogin } = this.ui;
+    
+    connect(loginButton, 'fire', this, 'tryLogin');
+    connect(registerButton, 'fire', this, 'switchToRegisterWidget');
+    connect(emailLogin, 'fire', this, 'signInWithEmail');
+    connect(googleLogin, 'fire', this, 'loginWithGoogle');
 
-    this.ui.userNameInput.input = "";
-    this.ui.passwordInput.input = "";
+    userNameInput.input = "";
+    passwordInput.input = "";
 
-    notify(this, "OK")
+    emailLoginForm.isLayoutable = emailLoginForm.visible = false;
+    [emailLogin, appleLogin, googleLogin].map(m => m.visible = m.isLayoutable = true);
   }
 
   onEnterPressed() { this.tryLogin(); }
@@ -389,7 +449,8 @@ export class LoginWidget extends UserWidget {
 
     if (error) {
       signal(this, "loginFailed", error);
-      this.world().inform(error, {requester: this});
+      if (error.includes('No user')) this.indicateError(this.ui.userNameInput, error);
+      if (error.includes('does not match')) this.indicateError(this.ui.passwordInput, 'Password incorrect');
       return;
     }
 
@@ -408,6 +469,15 @@ export class LoginWidget extends UserWidget {
         stored = reg.loadUserFromLocalStorage(config.users.authServerURL),
         user = stored.isGuestUser ? stored : await reg.login(ClientUser.guest);
     signal(this, "resolved", user);
+  }
+
+  indicateError(input, message) {
+    input.indicateError(message)
+  }
+
+  clearErrors() {
+    this.ui.userNameInput.clearError();
+    this.ui.passwordInput.clearError();
   }
 
   onMouseUp(evt) {
@@ -486,12 +556,18 @@ export class RegisterWidget extends UserWidget {
         password = passwordInput.input,
         password2 = passwordInput2.input;
 
-    if (!username || !password || !password2)
-      return this.world().inform("Please check your input", {requester: this});
+    if (!username || !password || !password2 || !email) {
+      if (!username) userNameInput.indicateError('Please enter a user name!');
+      if (!email) emailInput.indicateError('Please enter E-Mail address!');
+      if (!password) passwordInput.indicateError('Please enter a password!');
+      if (!password2) passwordInput2.indicateError('Please repeat your password!');
+      return;
+    }
 
-    if (password !== password2)
-      return this.world().inform("Passwords do not match!", {requester: this});
-
+    if (password !== password2) {
+      passwordInput2.indicateError('Passwords do not match!');
+      return;
+    }
     
     let user = ClientUser.named(username, config.users.authServerURL);
     if (email) user.email = email;
@@ -564,13 +640,11 @@ export class UserFlap extends Morph {
           ];
         }
       },
-
+      
       fontColor: {
         after: ['submorphs'],
         set(c) {
           this.setProperty('fontColor', c);
-          this.setPaletteButtonActive(this.palette && this.palette.visible);
-          this.getSubmorphNamed('label').fontColor = c;
         }
       },
 
@@ -581,15 +655,19 @@ export class UserFlap extends Morph {
       grabbable: {defaultValue: false},
       acceptsDrops: {defaultValue: false},
       fill: {defaultValue: Color.white},
-      borderLeft: {defaultValue: {width: 1, color: Color.gray}},
-      borderRight: {defaultValue: {width: 1, color: Color.gray}},
-      borderBottom: {defaultValue: {width: 1, color: Color.gray}},
       borderRadiusBottom: {defaultValue: 10},
       borderRadiusLeft: {defaultValue: 10},
       borderRadiusRight: {defaultValue: 10},
       nativeCursor: {defaultValue: "pointer"},
       respondsToVisibleWindow: { defaultValue: true },
+      haloColor: {
+        readOnly: true,
+        get() {
+          return Color.rgb(0,176,255);
+        }
+      },
       haloShadow: {
+        readOnly: true,
         get() {
           return {
             distance:2,
@@ -637,12 +715,26 @@ export class UserFlap extends Morph {
       case 'register item':
         this.showRegister();
         break;
-      case 'palette button':
-        this.togglePalette();
-        break;
       case 'user flap':
         this.maximize();
         break;
+      case 'keyboard input':
+        this.toggleKeyboardInput();
+        break;
+    }
+  }
+
+  //this.get('user flap').toggleKeyboardInput(false)
+
+  toggleKeyboardInput(active = !touchInputDevice) {
+    touchInputDevice = active; // but this does not really have a system wide effect unfortunately
+    let keyboardToggleButton = this.get('keyboard input');
+    if (!active) {
+      keyboardToggleButton.fontColor = this.fontColor;
+      keyboardToggleButton.dropShadow = false;
+    } else {
+      keyboardToggleButton.fontColor = Color.rgb(0,176,255);
+      keyboardToggleButton.dropShadow = this.haloShadow;
     }
   }
 
@@ -658,8 +750,13 @@ export class UserFlap extends Morph {
 
   relayout() { this.alignInWorld(); }
 
-  alignInWorld(animated) {
-    let tr = $world.visibleBounds().topRight().subXY(10,0);
+  async alignInWorld(animated) {
+    await this.whenRendered();
+    if (this.hasFixedPosition && this.owner.isWorld) {
+      this.topRight = pt(this.world().visibleBounds().width, 0);
+      return;
+    }
+    let tr = $world.visibleBounds().topRight().withY(0).subXY(10,0);
     if (animated) this.animate({topRight: tr, duration: 200});
     else this.topRight = tr;
   }
@@ -738,17 +835,17 @@ export class UserFlap extends Morph {
   showLogin(user) { return UserUI.showLogin({user}); }
   logout(user) { return UserRegistry.current.logout(user); }
 
-  onBlur(evt) {
+  async onBlur(evt) {
     this.minimize();
+    await this.whenRendered();
+    if (this.world().focusedMorph.ownerChain().includes(this))
+      this.focus();
   }
 
   async showMenu(user, animated = false) {
     let label = this.getSubmorphNamed("label"),
         avatar = this.getSubmorphNamed('avatar'),
-        openChatItem = ["open chat", async () => {
-          let chat = await loadPart("Lively Chat");
-          chat.openInWorld();
-        }],
+        openChatItem = ["open chat", async () => { }],
         menu = Object.assign(Menu.forItems(
           user.isGuestUser ? [
             openChatItem,
@@ -773,42 +870,6 @@ export class UserFlap extends Morph {
     if (animated) menu.animate({opacity: 1, duration: 200});
     await this.changeWidthAndHeight(
       menu.width + 20, menu.height + 10, animated);
-  }
-
-  setPaletteButtonActive(active) {
-    let paletteButton = this.getSubmorphNamed('palette button');
-    if (!active) {
-      paletteButton.fontColor = this.fontColor;
-      paletteButton.dropShadow = false;
-    } else {
-      paletteButton.fontColor = Color.rgb(0,176,255);
-      paletteButton.dropShadow = this.haloShadow;
-    }
-  }
-
-  async togglePalette() {
-    if (!this.palette) {
-      let li = LoadingIndicator.open('Loading Styler');
-      this.palette = this.get('styling assistant') || await loadPart('quick part drawer');
-      this.palette.scale = .5;
-      this.palette.opacity = 1;
-      this.palette.visible = false;
-      this.palette.openInWorld(pt(0,0));
-      li.remove();
-    }
-    let duration = 200;
-    if (this.palette.visible) {
-      await this.palette.animate({
-        scale: .5, opacity: 0, duration
-      });
-      this.palette.visible = false;
-    } else {
-      this.palette.visible = true;
-      await this.palette.animate({
-        scale: 1, opacity: 1, duration
-      });
-    }
-    this.setPaletteButtonActive(this.palette.visible)
   }
 
   updateNetworkIndicator(l2lClient) {
