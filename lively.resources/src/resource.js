@@ -1,4 +1,4 @@
-import { resource, parseQuery, withRelativePartsResolved, relativePathBetween, windowsPathPrefixRe } from "./helpers.js";
+import { resource, parseQuery, withRelativePartsResolved, relativePathBetween, windowsPathPrefixRe, stringifyQuery } from "./helpers.js";
 
 const slashEndRe = /\/+$/,
       slashStartRe = /^\/+/,
@@ -123,9 +123,7 @@ export default class Resource {
   withQuery(queryObj) {
     let query = {...this.query(), ...queryObj},
         [url] = this.url.split("?"),
-        queryString = Object.keys(query)
-          .map(key => `${key}=${encodeURIComponent(String(query[key]))}`)
-          .join("&");
+        queryString = stringifyQuery(query);
     return this.newResource(`${url}?${queryString}`);
   }
 

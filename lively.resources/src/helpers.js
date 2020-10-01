@@ -55,6 +55,12 @@ export function parseQuery(url) {
   return query;
 }
 
+export function stringifyQuery(query) {
+  return Object.keys(query)
+          .map(key => `${key}=${encodeURIComponent(String(query[key]))}`)
+          .join("&");
+}
+
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

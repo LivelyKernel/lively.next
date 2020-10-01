@@ -1,4 +1,4 @@
-/*global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace,System,global,process,XMLHttpRequest*/
+/*global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace,System,global,process,XMLHttpRequest,Buffer*/
 
 import Resource from "./resource.js";
 import { applyExclude } from "./helpers.js";

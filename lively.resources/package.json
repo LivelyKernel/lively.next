@@ -11,7 +11,7 @@
         "~node": "https://dev.jspm.io/fs"
       },
       "fetch-ponyfill": {
-        "node": "fetch-ponyfill/fetch-node.js",
+        "node": "https://dev.jspm.io/fetch-ponyfill",
         "~node": "fetch-ponyfill/build/fetch-browser.js"
       }
     }
@@ -21,7 +21,7 @@
     "build": "node build.js"
   },
   "dependencies": {
-    "fetch-ponyfill": "^3.0.2"
+    "fetch-ponyfill": "^6.1.1"
   },
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.8.0",
