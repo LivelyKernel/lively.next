@@ -597,7 +597,7 @@ function noUpdate(noUpdateSpec, func) {
     proto.isActive++;
     try { result = func(); } finally {
       proto.isActive--;
-      if (proto.isActive <= 0) proto.isActive;
+      if (proto.isActive <= 0) delete proto.isActive;
     }
   } else {
     var obj = noUpdateSpec.sourceObj,
