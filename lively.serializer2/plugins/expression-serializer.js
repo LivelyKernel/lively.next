@@ -1,4 +1,4 @@
-import { string, Path, obj, properties, arr } from "lively.lang";
+import { string, Closure, Path, obj, properties, arr } from "lively.lang";
 import { getSerializableClassMeta } from "../class-helper.js";
 import { connect } from "lively.bindings";
 /*global System*/
@@ -99,9 +99,8 @@ export default class ExpressionSerializer {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   // note __boundValues__ becomes a dynamically scoped "variable" inside eval
-  __eval__(__source__, __boundValues__) { 
-    this.__boundValues__ = __boundValues__;
-    return eval(__source__); 
+  __eval__(source, boundValues) { 
+    return __eval__(source, boundValues); 
   }
 
   deserializeExpr(encoded) {
@@ -149,7 +148,7 @@ export default class ExpressionSerializer {
             ({local, exported} = varName);
           }
           __boundValues__[local] = exports[exported];
-          source = `var ${local} = this.__boundValues__.${local};\n${source}`;
+          source = `var ${local} = __boundValues__.${local};\n${source}`;
         }
       }
     }
@@ -167,11 +166,16 @@ export default class ExpressionSerializer {
  generalized to become suitable for more general object trees.
 */
 
+// 25.5.20 rms: this function requires the parameters to be unchanged when we run this through google closure. This is why we construct if from source.
+const __eval__ = Closure.fromSource(`function __eval__(__source__, __boundValues__) { 
+  return eval(__source__); 
+}`).getFunc();
+
 export function deserializeSpec(serializedSpec, subSpecHandler = (spec) => spec, base = {}) {
   const exprSerializer = new ExpressionSerializer();
   let deserializedSpec = base;
-  let props = base.isMorph ? base.propertiesAndPropertySettings().properties : []
-  props = props.length ? obj.sortKeysWithBeforeAndAfterConstraints(props) : obj.keys(serializedSpec);
+  let props = base.isMorph ? base.propertiesAndPropertySettings().order : []
+  props = props.length ? props : obj.keys(serializedSpec);
 
   for (let prop of props) {
     let value = serializedSpec[prop];

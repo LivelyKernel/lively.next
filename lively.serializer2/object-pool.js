@@ -1,4 +1,4 @@
-import { arr, obj, string } from "lively.lang";
+import { arr, Path, obj, string } from "lively.lang";
 import { isPrimitive } from "./util.js";
 import ClassHelper from "./class-helper.js";
 import ExpressionSerializer from "./plugins/expression-serializer.js";
@@ -309,7 +309,27 @@ export class ObjectRef {
 
   static fromSnapshot(id, snapshot, pool, path = [], idPropertyName) {
     var ref = new this(id, undefined, undefined, idPropertyName);
-    return pool.internalAddRef(ref).recreateObjFromSnapshot(snapshot, pool, path);
+    try {
+      return pool.internalAddRef(ref).recreateObjFromSnapshot(snapshot, pool, path);
+    } catch (err) {
+      if (pool.options.highlightBuggyMorphs) {
+        let m;
+        while (path.length) {
+          m = Path(path).map((key, value) => {
+            if (key == "submorphs") return value.filter(m => !m.isHand && !m.isEpiMorph);
+            return value;
+          }).get(pool.options.rootObject);
+          // filter the submorph props via epiMorph
+          if (m && m.isMorph && m.world()) {
+            m.show(true);
+            pool.options.highlightBuggyMorphs = false;
+            break;
+          }
+          path.pop();
+        }
+      }
+      throw err;
+    }
   }
 
   constructor(id, realObj, snapshot, idPropertyName = "id") {

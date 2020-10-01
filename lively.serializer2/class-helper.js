@@ -6,7 +6,7 @@ const classMetaForSerializationProp = "lively.serializer-class-info",
       moduleMetaInClassProp = Symbol.for("lively-module-meta");
 
 export function getClassName(obj) {
-  return obj.constructor.name || obj.constructor.className;
+  return obj.constructor.className || obj.constructor.name;
 }
 
 export function getSerializableClassMeta(realObj) {

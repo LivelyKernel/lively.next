@@ -43,7 +43,7 @@ export { requiredModulesOfSnapshot, removeUnreachableObjects };
 export function serialize(obj, options) {
   options = normalizeOptions(options);
   let objPool = options.objPool || new ObjectPool(options),
-      requiredVersion = "~" + serializerVersion.replace(majorAndMinorVersionRe, ""), // semver
+      requiredVersion = ">" + serializerVersion.replace(majorAndMinorVersionRe, ""), // semver
       snapshotAndId = objPool.snapshotObject(obj);
   
   removeUnreachableObjects([snapshotAndId.id], snapshotAndId.snapshot);

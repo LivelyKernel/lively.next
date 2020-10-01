@@ -90,6 +90,23 @@ class ClassPlugin {
 
 }
 
+class SerializationIndicationPlugin {
+  
+  serializeObject(realObj, isProperty, pool, serializedObjMap, path) {
+    if (realObj && realObj.isMorph)
+      realObj.__isBeingSerialized__ = true;
+    return null; // do not intercept serialization
+  }
+  
+}
+
+class SerializationFinishPlugin {
+  additionallySerialize(pool, ref, snapshot, addFn) {
+    if (ref.realObj && ref.realObj.isMorph)
+      ref.realObj.__isBeingSerialized__ = false;
+  }
+}
+
 class AdditionallySerializePlugin {
   // for objects with __additionally_serialize__(snapshot, ref, pool, addFn) method
 
@@ -190,9 +207,10 @@ class LivelyClassPropertiesPlugin {
   additionallyDeserializeBeforeProperties(pool, ref, newObj, props, snapshot, serializedObjMap, path) {
     // deserialize class properties as indicated by realObj.constructor.properties
     var classProperties = newObj.constructor[Symbol.for("lively.classes-properties-and-settings")];
+    
     if (!classProperties) return props;
 
-    var {properties, propertySettings} = classProperties,
+    var {properties, propertySettings, order: sortedKeys } = classProperties,
         valueStoreProperty = propertySettings.valueStoreProperty || "_state",
         props = snapshot.props;
 
@@ -205,8 +223,7 @@ class LivelyClassPropertiesPlugin {
     if (!newObj.hasOwnProperty(valueStoreProperty))
       newObj.initializeProperties();
 
-    var valueStore = newObj[valueStoreProperty],
-        sortedKeys = obj.sortKeysWithBeforeAndAfterConstraints(properties);
+    var valueStore = newObj[valueStoreProperty];
     for (var i = 0; i < sortedKeys.length; i++) {
       var key = sortedKeys[i],
           spec = properties[key];
@@ -253,14 +270,18 @@ export var plugins = {
   onlySerializePropsPlugin:    new OnlySerializePropsPlugin(),
   additionallySerializePlugin: new AdditionallySerializePlugin(),
   classPlugin:                 new ClassPlugin(),
-  customSerializePlugin:       new CustomSerializePlugin()
+  customSerializePlugin:       new CustomSerializePlugin(),
+  indicationPlugin:            new SerializationIndicationPlugin(),
+  finishPlugin:                new SerializationFinishPlugin(),
 }
 
 export var allPlugins = [
+  plugins.indicationPlugin,
   plugins.customSerializePlugin,
   plugins.classPlugin,
   plugins.additionallySerializePlugin,
   plugins.onlySerializePropsPlugin,
   plugins.dontSerializePropsPlugin,
-  plugins.livelyClassPropertiesPlugin
+  plugins.livelyClassPropertiesPlugin,
+  plugins.finishPlugin,
 ]
