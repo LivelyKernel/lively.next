@@ -89,7 +89,7 @@ async function _askForModuleName(system, input, world) {
     {input: input, historyId: "lively.vm-editor-add-module-name"});
   if (!input) throw "Canceled";
   var fullname = await system.normalize(input),
-      really = await world.confirm("Create module " + fullname + "?");
+      really = await world.confirm(["Create module \n", {}, fullname, { fontStyle: 'italic'}, " ?", {}], { lineWrapping: false });
   if (!really) throw "Canceled";
   return fullname;
 }
@@ -138,8 +138,8 @@ async function _searchForExistingFilesWeb(requester, rootURL, p) {
       candidates = [{
         isListItem: true,
         string: "[create new module]",
-        value: "[create new module]"}
-      ].concat(found
+        value: "[create new module]"
+      }].concat(found
         .filter(ea => ea.endsWith(".js"))
         .map(name => {
           var shortName = name;

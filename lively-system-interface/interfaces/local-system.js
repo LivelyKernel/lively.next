@@ -8,6 +8,7 @@ import * as vm from "lively.vm";
 import { loadMochaTestFile, runMochaTests } from "../commands/mocha-tests.js";
 import { parseJsonLikeObj } from "../helpers.js";
 import { AbstractCoreInterface } from "./interface.js";
+import { classToFunctionTransform } from "lively.classes";
 
 export class LocalCoreInterface extends AbstractCoreInterface {
 
@@ -19,7 +20,7 @@ export class LocalCoreInterface extends AbstractCoreInterface {
 
   async dynamicCompletionsForPrefix(moduleName, prefix, options) {
     var result = await vm.completions.getCompletions(
-      code => vm.runEval(code.replace('return ', ''), {targetModule: moduleName, ...options}), prefix);
+      code => vm.runEval(code.replace('return ', ''), {targetModule: moduleName, classTransform: classToFunctionTransform, ...options}), prefix);
     if (result.isError) throw result.value;
     return {
       completions: result.completions,
@@ -28,7 +29,7 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   }
 
   runEval(source, options) {
-    return vm.runEval(source, options);
+    return vm.runEval(source, { classTransform: classToFunctionTransform, ...options });
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -49,11 +50,11 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   normalizeSync(name, parentName, isPlugin) {
-    return modules.System.decanonicalize(name, parentName, isPlugin);
+    return System.decanonicalize(name, parentName, isPlugin);
   }
 
   normalize(name, parent, parentAddress) {
-    return modules.System.normalize(name, parent, parentAddress);
+    return System.normalize(name, parent, parentAddress);
   }
 
   printSystemConfig() {
@@ -61,7 +62,7 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   }
 
   getConfig() {
-    return modules.System.getConfig();
+    return System.getConfig();
   }
 
   setConfig(conf) {
@@ -217,7 +218,7 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   }
 
   exportsOfModules(options) {
-    return modules.ExportLookup.run(modules.System, options);
+    return modules.ExportLookup.run(System, options);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

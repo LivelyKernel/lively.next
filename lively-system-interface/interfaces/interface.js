@@ -2,7 +2,7 @@ import { parseJsonLikeObj } from "../helpers.js";
 import { arr, Closure, obj } from "lively.lang";
 import { resource } from "lively.resources";
 import { transform } from "lively.ast";
-import { module } from "lively.modules";
+import * as modules from "lively.modules";
 
 function todo(methodName) {
   throw new Error(`${methodName} is not yet implemented!`);
@@ -172,6 +172,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
       var prefix = ${JSON.stringify(prefix)},
           opts = ${JSON.stringify(options)};
       opts.context = ${contextFetch};
+      opts.classTransform = (await System.import("lively.classes")).classToFunctionTransform;
       var evalFn = code => lively.vm.runEval(code, opts);
       if (typeof System === "undefined") delete opts.targetModule;
       lively.vm.completions.getCompletions(evalFn, prefix).then(function(result) {
@@ -313,7 +314,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
 
   async getModule(name) {
     var spec = (await this.getModules()).find(ea => ea.name === name);
-    return spec ? module(spec.name) : null;
+    return spec ? modules.module(spec.name) : null;
   }
 
   importModule(name) {
