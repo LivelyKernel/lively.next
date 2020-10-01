@@ -229,7 +229,7 @@ export class Color {
       green:         new Color(0,0.8,0),
       yellow:        new Color(0.8,0.8,0),
       blue:          new Color(0,0,0.8),
-      purple:        new Color(1,0,1),
+      purple:        new Color(.5,0,.5),
       magenta:       new Color(1,0,1),
       pink:          Color.rgb(255,30,153),
       turquoise:     Color.rgb(0,240,255),
