@@ -1,5 +1,5 @@
 /*global global, module, Global,LivelyDebuggingASTRegistry*/
-import { acorn, parse } from "lively.ast";
+import { acorn, parse, walk } from "lively.ast";
 import { obj, arr } from "lively.lang";
 
 export let LivelyDebuggingASTRegistry = {};
@@ -150,7 +150,7 @@ export class Rewriter {
   registerDeclarations(ast, visitor) {
       if (!this.scopes.length) return;
       var scope = arr.last(this.scopes), that = this, decls = {};
-      acorn.walk.matchNodes(ast, {
+      walk.matchNodes(ast, {
           'VariableDeclaration': function(node, state, depth, type) {
               if (node.type != type) return; // skip Expression, Statement, etc.
               node.declarations.forEach(function(n) {
@@ -172,7 +172,7 @@ export class Rewriter {
               if (scope.localVars.indexOf(node.id.name) == -1)
                   scope.localVars.push(node.id.name);
           }
-      }, decls, { visitors: acorn.walk.visitors.stopAtFunctions });
+      }, decls, { visitors: walk.visitors.stopAtFunctions });
 
       return Object.getOwnPropertyNames(decls).map(function(decl) {
           var node = decls[decl];
@@ -425,7 +425,7 @@ export class Rewriter {
 
   rewrite(node) {
       this.enterScope();
-      acorn.walk.addAstIndex(node);
+      walk.addAstIndex(node);
       // FIXME: make astRegistry automatically use right namespace
       node.registryId = this.astRegistry[this.namespace].push(node) - 1;
       if (node.type == 'FunctionDeclaration')
@@ -443,7 +443,7 @@ export class Rewriter {
           throw new Error('no a valid function expression/statement? ' + acorn.printAst(node));
       if (!node.id) node.id = this.newNode("Identifier", {name: ""});
 
-      acorn.walk.addAstIndex(node);
+      walk.addAstIndex(node);
       // FIXME: make astRegistry automatically use right namespace
       node.registryId = this.astRegistry[this.namespace].push(node) - 1;
       var rewriteVisitor = this.createVisitor(node.registryId),
@@ -458,7 +458,7 @@ export class Rewriter {
       node.registryId = this.astRegistry[this.namespace].push(node) - 1;
       node._parentEntry = originalRegistryIndex;
       if (node.id.name.substr(0, 12) == '_NO_REWRITE_') {
-          var astCopy = acorn.walk.copy(node);
+          var astCopy = walk.copy(node);
           astCopy.type = 'FunctionExpression';
           return astCopy;
       }
@@ -494,7 +494,7 @@ export class RecordingRewriter extends Rewriter {
 
   rewrite(node) {
       this.enterScope();
-      acorn.walk.addAstIndex(node);
+      walk.addAstIndex(node);
       // FIXME: make astRegistry automatically use right namespace
       node.registryId = this.astRegistry[this.namespace].push(node) - 1;
       if (node.type == 'FunctionDeclaration')
@@ -592,7 +592,7 @@ export class RecordingRewriter extends Rewriter {
       node.registryId = this.astRegistry[this.namespace].push(node) - 1;
       node._parentEntry = originalRegistryIndex;
       if (node.id.name.substr(0, 12) == '_NO_REWRITE_') {
-          var astCopy = acorn.walk.copy(node);
+          var astCopy = walk.copy(node);
           astCopy.type = 'FunctionExpression';
           return astCopy;
       }
