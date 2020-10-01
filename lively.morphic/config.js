@@ -78,6 +78,7 @@ var config = {
 
     modes: {
       aliases: {
+        "text": "text",
         "sh": "shell",
         "markdown": "md",
         "javascript": "js",
@@ -375,7 +376,7 @@ var config = {
       showTextMap: true,
     },
     defaultStyle: {
-      fontFamily: "Monaco, Inconsolata, monospace",
+      fontFamily: "IBM Plex Mono",
       padding: Rectangle.inset(4, 2, 4, 2),
       fontSize: isMac ? 12 : 16,
       clipMode: "auto",
@@ -399,7 +400,8 @@ var config = {
   },
 
   css: {
-     fontAwesome: "/lively.morphic/assets/font-awesome/css/font-awesome.css",
+     ibmPlex: '/lively.morphic/assets/ibm-plex/css/ibm-plex.css',
+     fontAwesome: "/lively.morphic/assets/fontawesome-free-5.12.1/css/all.css",
      inconsolata: "/lively.morphic/assets/inconsolata/inconsolata.css"
   }
 

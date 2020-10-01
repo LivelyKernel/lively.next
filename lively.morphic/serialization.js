@@ -91,10 +91,12 @@ export function copyMorph(morph) {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import { registerPackage, module, getPackage, ensurePackage, lookupPackage, semver } from "lively.modules";
+import * as modules from "lively.modules";
 import { createFiles } from "lively.resources";
 import { promise, graph, arr } from "lively.lang";
 import { migrations } from "./object-migration.js";
+
+let { registerPackage, module, getPackage, ensurePackage, lookupPackage, semver } = modules;
 
 let objectScriptingEnabled = false;
 
@@ -106,9 +108,10 @@ export async function createMorphSnapshot(aMorph, options = {}) {
         previewType = "png",
         testLoad = true,
         addPackages = true,
-        ignoreMorphs = []
+        ignoreMorphs = [],
+        frozenSnapshot = false,
       } = options,
-      snapshot = serializeMorph(aMorph);
+      snapshot = serializeMorph(aMorph, { frozenSnapshot });
 
   if (addPackages) {
     // 1. save object packages
@@ -134,7 +137,9 @@ export async function createMorphSnapshot(aMorph, options = {}) {
 
   if (testLoad) {
     try {
-      let testLoad = await loadMorphFromSnapshot(snapshot);
+      let testLoad = await loadMorphFromSnapshot(snapshot, {
+        highlightBuggyMorphs: true, rootObject: aMorph
+      });
       if (!testLoad || !testLoad.isMorph)
         throw new Error("reloading snapshot does not create a morph!")
     } catch (e) {

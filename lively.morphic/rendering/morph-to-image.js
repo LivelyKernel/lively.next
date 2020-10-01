@@ -1,5 +1,5 @@
 /*global System,Map*/
-import domToImage from "dom-to-image-more";
+import domToImage from "https://dev.jspm.io/dom-to-image-more";
 
 /*
 

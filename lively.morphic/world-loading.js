@@ -4,7 +4,7 @@ import { Color } from "lively.graphics";
 import { Path, obj, date, promise } from "lively.lang";
 
 import { MorphicEnv } from "./env.js";
-import { loadWorldFromResource } from "./serialization.js";
+import { loadWorldFromResource, createMorphSnapshot } from "./serialization.js";
 import { MorphicDB } from "./morphicdb/index.js";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import { ensureCommitInfo } from "./morphicdb/db.js";
@@ -45,6 +45,7 @@ export async function loadWorld(newWorld, oldWorld, options = {}) {
 
   let {
     env,
+    root,
     verbose = true,
     localconfig = true,
     l2l = true,
@@ -67,13 +68,10 @@ export async function loadWorld(newWorld, oldWorld, options = {}) {
 
     if (verbose && nativeLoadingIndicator) nativeLoadingIndicator.style.display = "";
 
-    await env.setWorld(newWorld);
-
     localconfig && await loadLocalConfig();
-
-    initializeGlobalStyleSheets && newWorld.whenRendered().then(() =>
-                                    newWorld.propertiesAndPropertySettings()
-                                      .properties.styleSheets.initialize.call(newWorld));
+    
+    // if root is defined render on the root node
+    await env.setWorld(newWorld);
 
     worldLoadDialog && newWorld.execCommand("load world");
 
@@ -115,8 +113,8 @@ async function loadLocalConfig() {
 
 async function setupLivelyShell(opts) {
   await lively.modules.importPackage("lively.shell");
-  let {default: ClientCommand} = await lively.modules.module("lively.shell/client-command.js").load(),
-      { resourceExtension } = await lively.modules.module("lively.shell/client-resource.js").load(),
+  let {default: ClientCommand} = await System.import("lively.shell/client-command.js"),
+      { resourceExtension } = await System.import("lively.shell/client-resource.js"),
       {l2lClient} = opts;
   ClientCommand.installLively2LivelyServices(l2lClient);
   resourceExtension.resourceClass.defaultL2lClient = l2lClient;
@@ -133,7 +131,7 @@ async function setupLively2Lively(world) {
   }
 
   await lively.modules.importPackage("lively.2lively");
-  let {default: L2LClient} = await lively.modules.module("lively.2lively/client.js").load(),
+  let {default: L2LClient} = await System.import("lively.2lively/client.js"),
       client = await L2LClient.forLivelyInBrowser(info);
   console.log(`[lively] lively2lively client created ${client}`);
 
@@ -185,12 +183,16 @@ export async function interactivelySaveWorld(world, options) {
 
   let name = world.name, tags = [], description = "",
       oldCommit = await ensureCommitInfo(Path("metadata.commit").get(world)),
-      db = options.morphicdb || MorphicDB.default;
+      db = options.morphicdb || MorphicDB.default,
+      jsonStoragePath = "",
+      mode = 'db';
 
   if (options.showSaveDialog) {
-    let dialog = await loadObjectFromPartsbinFolder("save world dialog"),
-        {commit, db: dialogDB} = await world.openPrompt(dialog, {targetWorld: world});
+    let dialog = await resource("part://SystemDialogs/save world dialog").read(),
+        {commit, db: dialogDB, mode: storageMode, filePath} = await world.openPrompt(dialog, {targetWorld: world});
     if (dialogDB) db = dialogDB;
+    mode = storageMode;
+    jsonStoragePath = filePath;
     ({name, tags, description} = commit || {});
     if (!name) return null;
   } else if (oldCommit) {
@@ -199,6 +201,25 @@ export async function interactivelySaveWorld(world, options) {
 
   let i = $world.execCommand('open loading indicator', `saving ${name}...`);
   await promise.delay(80);
+
+  if (mode == 'json') {
+    const resourceHandle = resource(System.baseURL).join(jsonStoragePath).withRelativePartsResolved();
+    
+    if (await resourceHandle.exists()) {
+      const proceed = await $world.confirm([
+        'File Conflict\n', {},
+        'The file you want to save the world to ', { fontSize: 15, fontWeight: 'normal' },
+        resourceHandle.url, { textStyle: 'italic', fontSize: 15, fontWeight: 'normal' },
+        '\n already exists. Overwrite?', { fontSize: 15, fontWeight: 'normal' }
+      ], { width: 350});
+      if (!proceed) return;
+    } else await resourceHandle.ensureExistance();
+    
+    await resourceHandle.writeJson(await createMorphSnapshot(world));
+    i.remove();
+    world.setStatusMessage(`saved world ${name} to file: ${resourceHandle.url}`);
+    return;
+  }
 
   try {
     let snapshotOptions = {

@@ -36,6 +36,7 @@ const globalDomEventsWeListenTo = [
   {type: 'resize', capturing: false, morphMethod: "onWindowResize"},
   {type: 'orientationchange', capturing: false, morphMethod: "onWindowResize"},
   {type: 'scroll', capturing: false, passive: false, morphMethod: "onWindowScroll"},
+  {type: 'wheel', capturing: false, passive: false, morphToMethod: 'onMouseWheel'},
   {type: 'beforeunload', capturing: false, passive: false, morphMethod: "onBeforeUnload"}
 ];
 
@@ -247,6 +248,14 @@ export default class EventDispatcher {
     return this.eventState.focusedMorph === morph;
   }
 
+  isMorphHovered(morph) {
+    return this.eventState.hover.hoveredOverMorphs.includes(morph);
+  }
+
+  isMorphClicked(morph) {
+    return this.eventState.clickedMorph == morph; 
+  }
+
   isKeyPressed(keyName) {
     return Object.keys(this.eventState.pressedKeys).map(ea => ea.toLowerCase())
       .includes(keyName.toLowerCase());
@@ -276,13 +285,13 @@ export default class EventDispatcher {
       globalEmitter.addEventListener(type, fn, arg);
     });
 
-    this.keyInputHelper = new TextInput(this).install(rootNode);
+    this.keyInputHelper = new TextInput(this).install(rootNode, this.world);
 
     // rms 6.9.18: In order for us to handle touch events ourselves,
     //             we need to pass this undocumented touch-action attribute as "none"
     //             to the body of the document, since iOS does not support the
     //             CSS property touch-action.
-    if (bowser.firefox) rootNode.setAttribute("touch-action", "none");
+    //if (bowser.firefox) rootNode.setAttribute("touch-action", "none");
     // rms 3.9.19: Setting touch-action to none seems to break the scroll on iOS9 and possibly others.
     //             setting it to auto seems to fix things for now.
     if (bowser.ios) rootNode.setAttribute("touch-action", "auto");
@@ -380,6 +389,12 @@ export default class EventDispatcher {
             prevClickCount = clickCount;
           }
           state.clickCount = repeatedClick ? prevClickCount + 1 : 1;
+
+          // setTimeout(() => {
+          //   if (targetMorph.grabbable && !state.draggedMorph
+          //       && state.clickedOnMorph === targetMorph
+          //       && !hand.carriesMorphs()) hand.grab(targetMorph);
+          // }, 800);
         });
         break;
 
@@ -549,6 +564,7 @@ export default class EventDispatcher {
             if (!scrollInProgress) {
               var {promise: p, resolve} = promise.deferred(),
                   delay = bowser.name == 'Firefox' ? 500 : 250;
+              if (bowser.name == 'Safari') delay = 1000; // safari recently became more sensitive to this
               state.scroll.interactiveScrollInProgress = p;
               p.debounce = fun.debounce(delay, () => {
                 state.scroll.interactiveScrollInProgress = null;
@@ -634,7 +650,8 @@ export default class EventDispatcher {
 
     } else if (!targetMorph) {
       // search for the target node that represents a morph: Not all nodes with
-      // event handlers might be rendered by morphs, e.g. in case of HTML morphs
+      // event handlers might be rendered by morphs, e.g. in case of HTML morphs.
+      // rms 13.4.20: What to do in case of a morph that is rendered to canvas?
       var targetNode = domEvt.target;
       while (true) {
         var cssClasses = targetNode.className || "";

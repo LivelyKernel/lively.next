@@ -1,10 +1,8 @@
 /*global System*/
-import { Rectangle, pt, Color } from "lively.graphics";
+import { pt, Color } from "lively.graphics";
 import { connect, once, disconnect } from "lively.bindings"
 import { Path } from "lively.lang";
 import { morph } from '../helpers.js';
-
-import { StyleSheet } from '../style-sheets.js';
 import { GridLayout } from '../layout.js';
 import config from "../config.js";
 import { Morph } from '../morph.js';
@@ -132,6 +130,14 @@ export class SearchWidget extends Morph {
       target: {},
       state: {},
 
+      master: {
+        initialize() {
+          this.master = {
+            auto: 'styleguide://SystemWidgets/search widget'
+          }
+        }
+      },
+
       input: {
         after: ["submorphs"],
         get() {
@@ -156,43 +162,6 @@ export class SearchWidget extends Morph {
         set(v) {
           this.get("searchInput").fontFamily = v;
           this.get("replaceInput").fontFamily = v;
-        }
-      },
-
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            '.Button.nav': {
-               extent: pt(24,24),
-               opacity: .9,
-               borderWidth: 0,
-               fill: Color.transparent
-            },
-            ".Button.nav [name=label]": {
-              fontSize: 18,
-              fontColor: Color.white
-            },
-            '.Button.replace': {
-              borderWidth: 2, borderColor: Color.white,
-              fill: Color.transparent
-            },
-            '.Button.replace [name=label]': {
-              fontColor: Color.white,
-            },
-            '.InputLine [name=placeholder]': {
-              fontSize: 12,
-              fontFamily: "Monaco, monospace",
-            },
-            '.InputLine': {
-              fill: Color.gray.withA(0.2),
-              fontSize: 12,
-              fontFamily: "Monaco, monospace",
-              fontColor: Color.white,
-              borderWidth: 1,
-              borderColor: Color.gray,
-              padding: Rectangle.inset(2),
-            }
-          });
         }
       },
 
@@ -228,38 +197,36 @@ export class SearchWidget extends Morph {
             morph({
               type: 'button',
               name: "acceptButton",
-              label: Icon.textAttribute("check-circle-o"),
-              styleClasses: ["nav"]
+              label: Icon.textAttribute("check-circle"),
             }).fit(),
             morph({
               type: 'button',
               name: "cancelButton",
-              label: Icon.textAttribute("times-circle-o"),
-              styleClasses: ["nav"]
+              label: Icon.textAttribute("times-circle"),
             }).fit(),
             morph({
               type: 'button',
               name: "nextButton",
-              label: Icon.textAttribute("arrow-circle-o-down"),
-              styleClasses: ["nav"]
+              label: Icon.textAttribute("arrow-alt-circle-down", {
+                textStyleClasses: ['far']
+              }),
             }).fit(),
             morph({
               type: 'button',
               name: "prevButton",
-              label: Icon.textAttribute("arrow-circle-o-up"),
-              styleClasses: ["nav"]
+              label: Icon.textAttribute("arrow-alt-circle-up", {
+                textStyleClasses: ['far']
+              }),
             }).fit(),
             morph({
               type: 'input',
-              name: "searchInput", clipMode: "hidden",
-              width: this.width, height: 20,
+              name: "searchInput",
               placeholder: "search input",
               historyId: "lively.morphic-text search"
             }),
             morph({
               type: 'input',
-              name: "replaceInput", clipMode: "hidden",
-              width: this.width, height: 20,
+              name: "replaceInput",
               placeholder: "replace input",
               historyId: "lively.morphic-text replace"
             }),
@@ -268,16 +235,12 @@ export class SearchWidget extends Morph {
               styleClasses: ["replace"],
               name: "replaceButton",
               label: "replace",
-              fontSize: 10,
-              extent: pt(60, 17)
             }),
             morph({
               type: 'button',
               styleClasses: ["replace"],
               name: "replaceAllButton",
               label: "replace all",
-              fontSize: 10,
-              extent: pt(60, 17)
             })
           ];
           connect(this.get('searchInput'), 'onBlur', this, 'onBlur');
@@ -558,6 +521,7 @@ export class SearchWidget extends Morph {
     textMap.topRight = this.innerBounds().bottomRight().addXY(0,5);
     textMap.height = this.target.height - this.height - 15
     textMap.update();
+    this.renderOnGPU = true;
     return textMap;
   }
 

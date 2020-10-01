@@ -28,7 +28,7 @@ import InputLine, { PasswordInputLine } from "./text/input-line.js";
 export { InputLine, PasswordInputLine };
 
 import { locateClass } from "lively.serializer2";
-import { morph, addClassMappings, inspect } from './helpers.js';
+import { morph, addClassMappings, inspect, touchInputDevice } from './helpers.js';
 
 addClassMappings({
   'default':         Morph,
@@ -46,4 +46,4 @@ addClassMappings({
   'html':            HTMLMorph,
 })
 
-export { morph, inspect };
+export { morph, inspect, touchInputDevice };

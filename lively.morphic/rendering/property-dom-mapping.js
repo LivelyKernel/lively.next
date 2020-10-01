@@ -26,17 +26,18 @@ export function styleProps(morph) {
 
 export function addTransform(morph, style) {
   let {position, origin, scale, rotation, flipped, tilted, perspective} = morph,
+      idx = morph.__stackIdx__ || 0,
       x = Math.round(position.x - origin.x),
       y = Math.round(position.y - origin.y),
       promoteToCompositionLayer = morph.renderOnGPU || (morph.dropShadow && !morph.dropShadow.fast) || morph.grayscale > 0;
   if ((morph.owner && morph.owner.isText) || promoteToCompositionLayer) {
-    style.transform = (promoteToCompositionLayer ? `translate3d(${x}px, ${y}px, 0px)` : `translate(${x}px, ${y}px)`);
+    style.transform = (promoteToCompositionLayer ? `translate3d(${x}px, ${y}px, ${idx}px)` : `translate(${x}px, ${y}px)`);
   } else {
     style.transform = '';
     style.top = `${y}px`;
     style.left = `${x}px`;
   }
-  style.transform += ` rotate(${rotation.toFixed(2)}rad) scale(${scale.toFixed(2)},${scale.toFixed(2)})`;
+  style.transform += ` rotate(${rotation.toFixed(2)}rad) scale(${scale.toFixed(5)},${scale.toFixed(5)})`;
   if (perspective) style.perspective = `${perspective}px`;
   if (flipped) style.transform += ` rotateY(${flipped * 180}deg)`;
   if (tilted) style.transform += ` rotateX(${tilted * 180}deg)`;
@@ -141,7 +142,8 @@ export function getSvgVertices(vertices) {
   }
 
   if (vertices.length > 0) {
-    let {isSmooth, x, y, controlPoints: {previous: p}} = vertices[vertices.length-1];
+    let { x, y } = vertices[vertices.length-1].position;
+    let {isSmooth, controlPoints: {previous: p}} = vertices[vertices.length-1];
     d = isSmooth ?
       d + `C ${X + lastV.controlPoints.next.x} ${Y + lastV.controlPoints.next.y} ${x+p.x} ${y+p.y} ${x} ${y}` :
       d + `L ${x} ${y}`;
@@ -150,7 +152,7 @@ export function getSvgVertices(vertices) {
 }
 
 export function addPathAttributes(morph, style) {
-  let {id, vertices, fill, borderColor, borderWidth} = morph;
+  let { id, vertices, fill, borderColor, borderWidth } = morph;
 
   if (vertices.length) {
     style.d = getSvgVertices(vertices)
@@ -158,7 +160,6 @@ export function addPathAttributes(morph, style) {
 
   addSvgBorderStyle(morph, style);
   style["stroke-width"] = borderWidth.valueOf();
-  //style["paint-order"] = "stroke";
   style.fill = fill ?
                 fill.isGradient ? "url(#gradient-fill" + id + ")" : fill.toString() :
                 "transparent";

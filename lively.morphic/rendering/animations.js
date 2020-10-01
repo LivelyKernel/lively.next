@@ -2,7 +2,7 @@
 import { obj, promise, fun, num, properties, arr, string } from "lively.lang";
 import { Color } from "lively.graphics";
 import {styleProps, addPathAttributes, addSvgAttributes} from "./property-dom-mapping.js";
-import { interpolate as flubberInterpolate } from 'flubber';
+import flubber from 'flubber';
 import Bezier from 'bezier-easing';
 import "web-animations-js";
 import { ShadowObject } from "./morphic-default.js";
@@ -137,7 +137,7 @@ export class PropertyAnimation {
           if (p == 0 && targetVisibility == true) {
             morph.visible = true;
           }
-          morph.opacity = targetVisibility ? num.interpolate(p, 0, originalOpacity) : num.interpolate(p, 1, 0); 
+          morph.opacity = targetVisibility ? num.interpolate(p, 0, originalOpacity) : num.interpolate(p, originalOpacity, 0); 
           if (p == 1) {
             morph.visible = targetVisibility;
             morph.opacity = originalOpacity;
@@ -326,7 +326,7 @@ export class PropertyAnimation {
        case "scrollLeft":
          return i => num.interpolate(i, v1, v2);
        case 'd':
-         return flubberInterpolate(v1, v2);
+         return flubber.interpolate(v1, v2);
        case 'stroke-width':
          return i => num.interpolate(i, v1, v2);
        case 'stroke':
@@ -368,22 +368,27 @@ export class PropertyAnimation {
 
   start(node) {
     if (!this.active) {
-      this.active = true;
-      let [before, after] = this.getAnimationProps("css");
-      node && this.tween(node, before, after);
-      if (this.config.origin) {
-        let b = this.capturedProperties.origin,
-            a = this.config.origin,
-            originNode = node.childNodes[0];
-        originNode && this.tween(
-          originNode,
-          originNode.style.top ? { left: `${b.x}px`, top: `${b.y}px` } : {
-            transform: `translate3d(${b.x}px, ${b.y}px, 0px)`
-          },
-          originNode.style.top ? { left: `${b.x}px`, top: `${b.y}px` } : {
-            transform: `translate3d(${a.x}px, ${a.y}px, 0px)`
-          }
-        );
+      try {
+        this.active = true;
+        let [before, after] = this.getAnimationProps("css");
+        node && this.tween(node, before, after);
+        if (this.config.origin) {
+          let b = this.capturedProperties.origin,
+              a = this.config.origin,
+              originNode = node.childNodes[0];
+          originNode && this.tween(
+            originNode,
+            originNode.style.top ? { left: `${b.x}px`, top: `${b.y}px` } : {
+              transform: `translate3d(${b.x}px, ${b.y}px, 0px)`
+            },
+            originNode.style.top ? { left: `${b.x}px`, top: `${b.y}px` } : {
+              transform: `translate3d(${a.x}px, ${a.y}px, 0px)`
+            }
+          );
+        }
+      } catch (e) {
+        this.active = false;
+        
       }
     }
   }

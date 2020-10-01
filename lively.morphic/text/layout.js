@@ -1,7 +1,7 @@
 /*global WeakMap*/
-import { Rectangle, pt } from "lively.graphics";
+import { Rectangle, rect, pt } from "lively.graphics";
 import { arr } from "lively.lang";
-import { inspect } from "../helpers.js";
+
 import { Range } from "../text/range.js";
 
 function todo(name) { throw new Error("not yet implemented " + name)}
@@ -14,6 +14,26 @@ export default class TextLayout {
 
   reset() {
     this.resetLineCharBoundsCache();
+  }
+
+  restore(serializedLineBounds, morph) {
+    const decompress = (compressedBounds) => {
+      let x = 0, y = 0;
+      return arr.flatten(arr.histogram(compressedBounds, compressedBounds.length / 3).map(([count, width, height]) => {
+        const batch = [];
+        for (let i = 0; i < count; i++) {
+          batch.push(rect(x, y, width, height));
+          x += width;
+        }
+        return batch;
+      }));
+    }
+    
+    for (let [row, compressedBounds] of serializedLineBounds) {
+      let v = decompress(compressedBounds);
+      // we get the lines too early, and these will be replaced
+      this.lineCharBoundsCache.set(morph.document.getLine(row), v);
+    }
   }
 
   resetLineCharBoundsCache(morph) {
@@ -31,6 +51,7 @@ export default class TextLayout {
 
   resetLineCharBoundsCacheOfRow(morph, row) {
     let doc = morph.document;
+    if (morph._isDeserializing && morph._initializedByCachedBounds) return;
     doc && this.resetLineCharBoundsCacheOfLine(doc.getLine(row));
   }
 
@@ -173,11 +194,11 @@ export default class TextLayout {
       borderWidthTop,
       borderWidthBottom
     } = morph;
-
+    
     return new Rectangle(
       padding.left(), padding.top(),
-      doc.width + borderWidthLeft + borderWidthRight,
-      doc.height + borderWidthTop + borderWidthBottom);
+      Math.round(doc.width + borderWidthLeft + borderWidthRight),
+      Math.round(doc.height + borderWidthTop + borderWidthBottom));
   }
 
   isFirstLineVisible(morph) {
@@ -207,7 +228,7 @@ export default class TextLayout {
 
   screenLineRange(morph, textPos, ignoreLeadingWhitespace) {
     // find the range that includes textPos whose start and end chars are in a
-    // vertical line. Normally all chars of a line are positioned vertically
+    // horizontal line. Normally all chars of a line are positioned horizontally
     // next to each other, unless the line is wrapped. This is for figuring
     // that out
 
@@ -222,14 +243,14 @@ export default class TextLayout {
     let firstIndex = column, lastIndex = column;
 
     for (var i = column+1; i < charBounds.length; i++) {
-      if (charBounds[i].y+charBounds[i].height > bounds.y+bounds.height) break;
+      if (charBounds[i].y > bounds.y+bounds.height) break;
       lastIndex = i;
     }
     // For last range we go until end of line
     if (lastIndex === charBounds.length-1) lastIndex++;
 
     for (var i = column-1; i >= 0; i--) {
-      if (charBounds[i].y+charBounds[i].height < bounds.y+bounds.height) break;
+      if (charBounds[i].y < bounds.y+bounds.height) break;
       firstIndex = i;
     }
 
@@ -264,8 +285,14 @@ export default class TextLayout {
     let doc = morph.document,
         line = doc.getLine(row);
 
+    if (morph._initializedByCachedBounds && !this._restored) {
+      this.restore(morph._initializedByCachedBounds, morph);
+      this._restored = true;
+    }
+    
     let cached = this.lineCharBoundsCache.get(line);
     if (cached) return cached;
+    
     let {x: width, y: height} = morph.getProperty('extent');
     let {
           fontMetric, textRenderer,
@@ -300,7 +327,7 @@ export default class TextLayout {
         textLayout = morph.textLayout,
         end = morph.lineWrapping ? 
                       textLayout.rangesOfWrappedLine(morph, start.row)
-                                .find(r => r.containsPosition(start)).end : end,
+                                .find(r => r.containsPosition(start)).intersect(selection).end : end,
         end = end.row == start.row ? end : {row: end.row, column: -1},
         charBoundsInSelection = textLayout.charBoundsOfRow(morph, start.row),
         charBoundsInSelection = end.column < 0 ? 

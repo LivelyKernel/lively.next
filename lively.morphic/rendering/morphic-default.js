@@ -1,10 +1,12 @@
-import { h, diff, patch, create as createNode } from "virtual-dom";
+import vdom from "virtual-dom";
 import parser from "vdom-parser";
 import { num, obj, arr, properties, promise } from "lively.lang";
 import { Color, RadialGradient, pt, Point, LinearGradient, rect } from "lively.graphics";
 import config from "../config.js";
 import { styleProps, addSvgAttributes, addPathAttributes } from "./property-dom-mapping.js"
 import bowser from 'bowser';
+
+const { h, diff, patch, create: createNode } = vdom;
 
 // await $world.env.renderer.ensureDefaultCSS()
 export const defaultCSS = `
@@ -245,7 +247,7 @@ export class ShadowObject {
   toCss() {
     let {distance, rotation, color, inset, blur, spread} = this,
         {x, y} = Point.polar(distance, num.toRadians(rotation));
-    return `${inset ? 'inset' : ''} ${color.toString()} ${x}px ${y}px ${blur}px ${spread}px`
+    return `${inset ? 'inset' : ''} ${color.toString()} ${x.toFixed(2)}px ${y.toFixed(2)}px ${blur}px ${spread}px`
   }
 
   toJson() {
@@ -268,7 +270,7 @@ export class ShadowObject {
     let {distance, rotation, blur, color, spread} = this,
         {x, y} = Point.polar(distance, num.toRadians(rotation));
     blur = bowser.chrome ? blur / 3 : blur / 2;
-    return `drop-shadow(${x}px ${y}px ${blur}px ${color.toString()})`;
+    return `drop-shadow(${x.toFixed(2)}px ${y.toFixed(2)}px ${blur.toFixed(2)}px ${color.toString()})`;
   }
 
   interpolate(p, other) {
@@ -356,13 +358,14 @@ MorphAfterRenderHook.prototype.updateScroll = function(morph, node, fromScroll) 
 
     if (morph._animationQueue.animations.find(anim => anim.animatedProps.scroll)) return
     let scrollLayer = morph.isText && morph.viewState.fastScroll ? node.querySelector('.scrollLayer') : node;
+    if (morph._skipScrollUpdate) return;
     if (!scrollLayer) return;
     //prevent interference with bounce back animation
     
     // this is only there to immediately respoond in the view to a setScroll
     scrollLayer.scrollTop !== y && (scrollLayer.scrollTop = y);
     scrollLayer.scrollLeft !== x && (scrollLayer.scrollLeft = x);
-    //if (bowser.firefox && bowser.mobile) return;
+
     !fromScroll && requestAnimationFrame(() => {
       scrollLayer.scrollTop !== y && (scrollLayer.scrollTop = y);
       scrollLayer.scrollLeft !== x && (scrollLayer.scrollLeft = x);
@@ -408,6 +411,8 @@ export function defaultAttributes(morph, renderer) {
      attrs.attributes["touch-action"] = "none";
   } else if (bowser.ios && morph.clipMode != 'visible' && !morph.isWorld) {
      attrs.attributes["touch-action"] = "auto";
+  } else {
+     attrs.attributes["touch-action"] = "manipulation";
   }
   return attrs;
 }

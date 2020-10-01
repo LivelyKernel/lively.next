@@ -68,6 +68,9 @@ export default class CommandHandler {
     }
 
     var world = morph.world(), result;
+
+    if (typeof command.progressIndicator === "string")
+       this.progressIndicator = world.execCommand('open loading indicator', command.progressIndicator);
     
     if (typeof command.exec === "function") {
       try {
@@ -83,8 +86,6 @@ export default class CommandHandler {
 
     if (this.progressIndicator) this.progressIndicator.remove();
 
-    if (typeof command.progressIndicator === "string")
-       this.progressIndicator = world.execCommand('open loading indicator', command.progressIndicator);
     // to not swallow errors
     if (result && typeof result.catch === "function") {
       result.catch(err => {

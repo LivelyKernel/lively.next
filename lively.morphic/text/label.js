@@ -1,7 +1,7 @@
 import { obj, promise, arr, string, properties } from "lively.lang";
 import { Rectangle, Color } from "lively.graphics";
 import { signal } from "lively.bindings";
-import { h } from "virtual-dom";
+import vdom from "virtual-dom";
 
 import { Morph } from "../morph.js";
 import config from '../config.js';
@@ -9,6 +9,8 @@ import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js
 import { Icon, Icons } from "./icons.js";
 
 import { splitTextAndAttributesIntoLines } from "./attributes.js";
+
+const { h } = vdom;
 
 export class Label extends Morph {
 
@@ -137,7 +139,7 @@ export class Label extends Morph {
         isStyleProp: true,
         type: "Enum",
         values: config.text.basicFontItems,
-        defaultValue: "Nunito, Sans-Serif",
+        defaultValue: "IBM Plex Sans, Sans-Serif",
         set(fontFamily) {
           let previousFontFamily = this.fontFamily;
           this.setProperty("fontFamily", fontFamily);
@@ -234,7 +236,7 @@ export class Label extends Morph {
     this.fit();
     snapshot._cachedTextBounds = this._cachedTextBounds && this._cachedTextBounds.toTuple();
   }
-
+  
   __after_deserialize__(snapshot, objRef) {
     super.__after_deserialize__(snapshot, objRef);
     if (snapshot._cachedTextBounds) {
@@ -261,7 +263,9 @@ export class Label extends Morph {
 
   fit() {
     this.extent = this.textBounds().extent();
-    this._needsFit = false;
+    if (!this.visible) {
+      this._cachedTextBounds = null;
+    } else this._needsFit = false;
     return this;
   }
 
@@ -387,7 +391,10 @@ export class Label extends Morph {
   }
 
   render(renderer) {
-
+    if (this._requestMasterStyling) {
+      this.master && this.master.applyIfNeeded(true);
+      this._requestMasterStyling = false;
+    }
     var renderedText = [],
         nLines = this.textAndAttributesOfLines.length;
 
@@ -432,6 +439,7 @@ export class Label extends Morph {
     return h("div", attrs, [
       h('div', {
         style: {
+          pointerEvents: "none",
           position: 'absolute',
           paddingLeft: padding.left() + "px",
           paddingRight: padding.right() + "px",
@@ -456,7 +464,8 @@ export class Label extends Morph {
           textAlign,
           float,
           display,
-          lineHeight
+          lineHeight,
+          opacity,
         } = chunkStyle,
         style = {},
         attrs = {style};
@@ -471,6 +480,7 @@ export class Label extends Morph {
     if (textDecoration !== "none") style.textDecoration = textDecoration;
     if (textAlign) style.textAlign = textAlign;
     if (lineHeight) style.lineHeight = lineHeight;
+    if (opacity) style.opacity = opacity;
     if (textStyleClasses && textStyleClasses.length)
       attrs.className = textStyleClasses.join(" ");
 

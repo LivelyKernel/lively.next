@@ -1,12 +1,15 @@
 /*global global,System*/
-import { obj } from "lively.lang";
-import { pt } from "lively.graphics";
-import { h, create, patch, diff } from "virtual-dom";
+import { obj, arr, num } from "lively.lang";
+import { pt, Rectangle } from "lively.graphics";
+import vdom from "virtual-dom";
 import { defaultAttributes, defaultStyle } from "../rendering/morphic-default.js";
 import { addOrChangeCSSDeclaration } from "../rendering/dom-helper.js";
 import { hyperscriptFnForDocument } from "../rendering/dom-helper.js";
 import { objectReplacementChar } from "./document.js";
 import config from "../config.js";
+import { getSvgVertices } from "../rendering/property-dom-mapping.js";
+
+const { h, create, patch, diff } = vdom;
 
 let cssInstalled = false;
 
@@ -445,7 +448,8 @@ export default class TextRenderer {
     let node = renderer.getNodeForMorph(morph),
         textlayerNode = node && node.querySelector(".actual.newtext-text-layer");
     if (textlayerNode) hook.hook(textlayerNode);
-    morph.fit();
+    if (morph.ownerChain().every(m => m.visible))
+      morph.fit();
   }
 
   renderJustTextLayerNode(h, morph, additionalStyle, children) {
@@ -612,6 +616,7 @@ export default class TextRenderer {
         backgroundColor, nativeCursor, textStyleClasses, link,
         tagname, nodeStyle, nodeAttrs, paddingRight, paddingLeft, paddingTop, paddingBottom,
         lineHeight, textAlign, verticalAlign, wordSpacing, letterSpacing, quote, nested,
+        textStroke,
         minFontSize = morph.fontSize;
 
     if (size > 0) {
@@ -648,6 +653,7 @@ export default class TextRenderer {
         paddingTop =       attr.paddingTop;
         paddingBottom =    attr.paddingBottom;
         verticalAlign =    attr.verticalAlign;
+        textStroke =       attr.textStroke;
         quote =            attr.quote || quote;
 
         tagname = "span";
@@ -676,7 +682,8 @@ export default class TextRenderer {
         if (paddingLeft)  nodeStyle.paddingLeft        = paddingLeft;
         if (paddingTop) nodeStyle.paddingTop           = paddingTop;
         if (paddingBottom) nodeStyle.paddingBottom     = paddingBottom;
-        if (verticalAlign) nodeStyle.verticalAlign      = verticalAlign;
+        if (verticalAlign) nodeStyle.verticalAlign     = verticalAlign;
+        if (textStroke) nodeStyle["-webkit-text-stroke"]    = textStroke;
         if (attr.doit) { nodeStyle.pointerEvents = 'auto'; nodeStyle.cursor = 'pointer'; };
 
         if (textStyleClasses && textStyleClasses.length)
@@ -715,6 +722,7 @@ export default class TextRenderer {
       rendered = renderer.render(morph);
       rendered.properties.style.position = "relative";
       rendered.properties.style.transform = "";
+      rendered.properties.style.textAlign = "initial";
       // fixme:  this addition screws up the bounds computation of the embedded submorph
       if (attr.paddingTop) rendered.properties.style.marginTop = attr.paddingTop;
       if (attr.paddingLeft) rendered.properties.style.marginLeft= attr.paddingLeft;
@@ -729,73 +737,190 @@ export default class TextRenderer {
   }
 
   renderSelectionLayer(morph, selection, diminished = false, cursorWidth = 2) {
-    // FIXME just hacked together... needs cleanup!!!
 
     if (!selection) return [];
 
     let {textLayout} = morph;
 
-    var {start, end, lead, cursorVisible, selectionColor} = selection,
-
-        isReverse           = selection.isReverse(),
+    var {start, end, cursorVisible, selectionColor} = selection,
         {document, cursorColor} = morph,
-        startBounds         = textLayout.boundsFor(morph, start),
-        maxBounds           = textLayout.computeMaxBoundsForLineSelection(morph, selection),
-        endBounds           = textLayout.boundsFor(morph, end),
-        startPos            = pt(startBounds.x, maxBounds.y),
-        endPos              = pt(endBounds.x, endBounds.y),
-        leadLineHeight      = startBounds.height,
-        maxLineHeight       = maxBounds.height,
-        endLineHeight       = endBounds.height,
-        cursorPos           = isReverse ? pt(startBounds.x, startBounds.y) : endPos,
-        cursorHeight        = isReverse ? leadLineHeight : endLineHeight;
+        isReverse               = selection.isReverse(),
+        startBounds             = textLayout.boundsFor(morph, start),
+        maxBounds               = textLayout.computeMaxBoundsForLineSelection(morph, selection),
+        endBounds               = textLayout.boundsFor(morph, end),
+        startPos                = pt(startBounds.x, maxBounds.y),
+        endPos                  = pt(endBounds.x, endBounds.y),
+        leadLineHeight          = startBounds.height,
+        endLineHeight           = endBounds.height,
+        cursorPos               = isReverse ? pt(startBounds.x, startBounds.y) : endPos,
+        cursorHeight            = isReverse ? leadLineHeight : endLineHeight,
+        renderedCursor          = this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth, cursorColor);
+     
+    if (selection.isEmpty()) return [renderedCursor];
 
-    // collapsed selection -> cursor
-    if (selection.isEmpty())
-      return [this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth, cursorColor)];
+    // render selection layer
+    let slices = [];
+    let row = selection.start.row;
+    let yOffset = document.computeVerticalOffsetOf(row) + morph.padding.top();
+    let paddingLeft = morph.padding.left();
+    let bufferOffset = 50;
+    
+    let charBounds, 
+        selectionTopLeft,
+        selectionBottomRight,
+        isFirstLine,
+        renderedSelectionPart,
+        cb, line, isWrapped;
+   
+     while (row <= selection.end.row) {
+       line = document.getLine(row)
 
-    // single line -> one rectangle
-    if (Math.abs((startBounds.y + leadLineHeight) - (endBounds.y + endLineHeight)) < 5) {
-      return [
-        this.selectionLayerPart(startPos, endPos.withY(maxBounds.y + maxLineHeight), selectionColor),
-        this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth, cursorColor)
-      ]
-    }
+       if (row < morph.viewState.firstVisibleRow - bufferOffset) {
+         yOffset += line.height;
+         row++;
+         continue;
+       }
 
-    let endPosLine1 = pt(morph.width - morph.padding.right(), maxBounds.y + maxLineHeight),
-        startPosLine2 = pt(morph.padding.left(), endPosLine1.y);
+       if (row > morph.viewState.lastVisibleRow + bufferOffset) break;
+       
+       charBounds = textLayout.charBoundsOfRow(morph, row).map(Rectangle.fromLiteral);
+       isFirstLine = row == selection.start.row;
+       isWrapped = charBounds[0].bottom() < arr.last(charBounds).top();
 
-    // two lines -> two rectangles
-    if (Math.abs((startBounds.y + leadLineHeight) - (endBounds.y)) < 5) {
-      return [
-        this.selectionLayerPart(startPos, endPosLine1, selectionColor),
-        this.selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight), selectionColor),
-        this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth, cursorColor)];
-    }
+       if (isWrapped) {
+         // since wrapped lines spread multiple "rendered" rows, we need to do add in a couple of
+         // additional selection parts here
+         let rangesToRender = textLayout.rangesOfWrappedLine(morph, row).map(r => r.intersect(selection));
+         let isFirstSubLine = isFirstLine;
+         let subLineMinY = 0;
+         let subCharBounds;
+         let subLineMaxBottom;
+         for (let r of rangesToRender) {
+           if (r.isEmpty()) continue;
 
-    let endPosMiddle = pt(morph.width - morph.padding.right(), endPos.y),
-        startPosLast = pt(morph.padding.left(), endPos.y);
+           subCharBounds = charBounds.slice(r.start.column, r.end.column);
+           
+           subLineMinY = isFirstSubLine ? arr.min(subCharBounds.map(cb => cb.top())) : subLineMinY;
+           subLineMaxBottom = arr.max(subCharBounds.map(cb => cb.bottom()));
+           
+           cb = subCharBounds[0];
+           selectionTopLeft = pt(paddingLeft + cb.left(), yOffset + subLineMinY);
 
-    // 3+ lines -> three rectangles
-    return [
-      this.selectionLayerPart(startPos, endPosLine1, selectionColor),
-      this.selectionLayerPart(startPosLine2, endPosMiddle, selectionColor),
-      this.selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight), selectionColor),
-      this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth, cursorColor)];
+           cb = arr.last(subCharBounds);
+           selectionBottomRight = pt(paddingLeft + cb.right(), yOffset + subLineMaxBottom);
 
+           subLineMinY = subLineMaxBottom;
+           isFirstSubLine = false;
+
+           slices.push(Rectangle.fromAny(selectionTopLeft, selectionBottomRight))
+         }
+       }
+
+       if (!isWrapped) {
+         let isLastLine = row == selection.end.row;
+         let startIdx = isFirstLine ? selection.start.column : 0;
+         let endIdx = isLastLine ? selection.end.column : charBounds.length - 1;
+         let lineMinY = isFirstLine && arr.min(charBounds.slice(startIdx, endIdx + 1).map(cb => cb.top())) || 0;
+         let emptyBuffer = startIdx >= endIdx ? 5 : 0;
+         
+         cb = charBounds[startIdx];
+         selectionTopLeft = pt(paddingLeft + (cb ? cb.left() : arr.last(charBounds).right()), yOffset + lineMinY);
+         
+         cb = charBounds[endIdx];
+         if (selection.includingLineEnd)
+           selectionBottomRight = pt(morph.width - morph.padding.right(), yOffset + lineMinY + line.height);
+         else {
+           let excludeCharWidth = isLastLine && selection.end.column <= charBounds.length - 1;
+           selectionBottomRight = pt(paddingLeft + (cb ? (excludeCharWidth ? cb.left() : cb.right()) : arr.last(charBounds).right()) + emptyBuffer, yOffset + lineMinY + line.height);
+         }
+
+         slices.push(Rectangle.fromAny(selectionTopLeft, selectionBottomRight))
+       }
+
+       yOffset += line.height;
+       row++;
+     }
+
+     let renderedSelection = this.selectionLayerRounded(slices, selectionColor, morph)
+
+     renderedSelection.push(renderedCursor);
+     return renderedSelection;
   }
 
-  selectionLayerPart(startPos, endPos, selectionColor) {
-    return h('div.newtext-selection-layer.selection-layer-part', {
-      style: {
-        left: startPos.x + "px", top: startPos.y + "px",
-        width: (endPos.x-startPos.x) + "px",
-        height: (endPos.y-startPos.y)+"px",
-        ...selectionColor && selectionColor.isGradient ? 
-          { backgroundImage: selectionColor } : 
-          { backgroundColor: selectionColor }
+  selectionLayerRounded(slices, selectionColor, morph) {
+    // split up the rectangle corners into a left and right batches
+    let currentBatch;
+    let batches = [
+      currentBatch = {
+        left: [], right: []
       }
-    })
+    ];
+
+    let lastSlice;
+    for (let slice of slices) {
+      // if rectangles do not overlap, create a new split batch
+      if (lastSlice && (lastSlice.left() > slice.right() || lastSlice.right() < slice.left())) {
+        batches.push(currentBatch = { left: [], right: []});
+      }
+      currentBatch.left.push(slice.topLeft(), slice.bottomLeft());
+      currentBatch.right.push(slice.topRight(), slice.bottomRight());
+      lastSlice = slice;
+    }
+    // turn each of the batches into its own svg path
+    let svgs = []
+    for (let batch of batches) {
+      if (!batch.left.length) continue;
+      let pos = batch.left.reduce((p1, p2) => p1.minPt(p2)); // topLeft of the path
+      let vs = batch.left.concat(batch.right.reverse());
+
+      // move a sliding window over each vertex
+      let updatedVs = [];
+      for (let vi = 0; vi < vs.length; vi++) {
+        let prevV = vs[vi - 1] || arr.last(vs);
+        let currentV = vs[vi];
+        let nextV = vs[vi + 1] || arr.first(vs);
+
+        // replace the vertex by two adjacent ones offset by distance
+        let offset = 6;
+        let offsetV1 = prevV.subPt(currentV).normalized().scaleBy(offset);
+        let p1 = currentV.addPt(offsetV1);
+        p1._next = offsetV1.scaleBy(-1);
+        let offsetV2 = nextV.subPt(currentV).normalized().scaleBy(offset);
+        let p2 = currentV.addPt(offsetV2);
+        p2._prev = offsetV2.scaleBy(-1);
+
+        updatedVs.push(p1, p2)
+      }
+
+      updatedVs = updatedVs.map( p => ({
+          position: p.subPt(pos), isSmooth: true, controlPoints: { next: p._next || pt(0), previous: p._prev || pt(0) }
+        })
+      );
+      
+      let d = getSvgVertices(updatedVs);
+      let { y: minY, x: minX } = updatedVs.map(p => p.position).reduce((p1, p2) => p1.minPt(p2));
+      let { y: maxY, x: maxX } = updatedVs.map(p => p.position).reduce((p1, p2) => p1.maxPt(p2));
+      let height = maxY - minY;
+      let width = maxX - minX;
+      svgs.push(
+        h("svg", {
+          namespace: "http://www.w3.org/2000/svg",
+          version: "1.1",
+          style: {
+            position: "absolute",
+            left: pos.x + 'px',
+            top: pos.y + 'px',
+            width,
+            height,
+          }
+        }, h("path", { 
+          namespace: "http://www.w3.org/2000/svg",
+          attributes: { d, fill: selectionColor.toString() }
+        }))
+      );
+    }
+
+    return svgs;
   }
 
   cursor(pos, height, visible, diminished, width, color) {

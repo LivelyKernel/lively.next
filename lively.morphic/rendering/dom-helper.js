@@ -114,7 +114,10 @@ class IFramedDomEnvironment extends DomEnvironment {
 var _defaultEnv;
 export function defaultDOMEnv() {
   return _defaultEnv || (_defaultEnv = System.get("@system-env").browser ?
-    new DomEnvironment(window, document) :
+    new DomEnvironment(window, document, () => {
+      // clean body
+      // clean header    
+    }) :
     createDOMEnvironment());
 }
 
@@ -144,18 +147,22 @@ export function addOrChangeCSSDeclaration(id = "lively-css", cssString, doc = do
     addCSSDef(id, cssString, doc);
 }
 
-export function addOrChangeLinkedCSS(id, url, doc = document) {
+export function addOrChangeLinkedCSS(id, url, doc = document, overwrite = true) {
   var link = doc.getElementById(id);
+  var loaded = false;
   if (!link) {
     link = doc.createElement('link');
     link.type = 'text/css';
     link.rel = "stylesheet";
     link.setAttribute('id', id);
-    doc.head.appendChild(link);
-  }
-  if (link.getAttribute('href') !== url) {
     link.setAttribute('href', url);
-    var loaded = false; link.onload = () => loaded = true;
+    link.onload = () => loaded = true;
+    doc.head.appendChild(link);
+    return promise.waitFor(30000, () => !!loaded && link);
+  }
+  if (overwrite && link.getAttribute('href') !== url) {
+    link.setAttribute('href', url);
+    link.onload = () => loaded = true;
     return promise.waitFor(30000, () => !!loaded && link);
   }
   return Promise.resolve();

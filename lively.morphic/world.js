@@ -1,7 +1,7 @@
 /*global System,WeakMap,FormData,fetch,DOMParser*/
 import bowser from 'bowser';
 import { Rectangle, Color, pt } from "lively.graphics";
-import { arr, Path, obj } from "lively.lang";
+import { arr, promise, Path, obj } from "lively.lang";
 import { signal } from "lively.bindings";
 import config from './config.js';
 import { MorphicEnv } from './env.js'
@@ -9,17 +9,13 @@ import { Morph } from "./morph.js";
 import { TooltipViewer, Tooltip } from "./tooltips.js";
 
 import { loadWorldFromURL, loadWorldFromDB, loadWorldFromCommit, loadWorld } from "./world-loading.js";
+import { touchInputDevice } from "./helpers.js";
+import { UserRegistry } from "lively.user";
 
 export class World extends Morph {
 
   static get properties() {
     return {
-
-      styleSheets: {
-        initialize() {
-          this.styleSheets = [Tooltip.styleSheet]
-        }
-      },
 
       resizePolicy : {
         doc: "how the world behaves on window size changes 'elastic': resizes to window extent, 'static': leaves its extent unchanged",
@@ -31,6 +27,14 @@ export class World extends Morph {
           this.setProperty("resizePolicy", val);
           this.clipMode = val === "static" ? "visible" : "hidden";
           if (val == "elastic") this.execCommand("resize to fit window");
+        }
+      },
+
+      colorScheme: {
+        derived: true,
+        get() {
+          // place somewhere were it is called less often???
+          return window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light"
         }
       },
 
@@ -69,8 +73,8 @@ export class World extends Morph {
     this._tooltipViewer = new TooltipViewer(this);
   }
 
-  __deserialize__(snapshot, objRef) {
-    super.__deserialize__(snapshot, objRef);
+  __deserialize__(snapshot, objRef, serializedMap, pool) {
+    super.__deserialize__(snapshot, objRef, serializedMap, pool);
     this._renderer = null;
     this._tooltipViewer = new TooltipViewer(this);
   }
@@ -92,21 +96,32 @@ export class World extends Morph {
     return [
       ...super.commands, {
       name: "resize to fit window",
-      exec: (world) => {
-        delete world._cachedWindowBounds;
-        world.extent = lively.FreezerRuntime ? 
-          world.windowBounds().extent() : 
-          world.windowBounds().union(world.submorphBounds()).extent();
+      exec: async (world) => {
+        let resize = () => {
+          world.extent = lively.FreezerRuntime ? 
+            world.windowBounds().extent() : 
+            world.windowBounds().union(world.submorphBounds(m => !m.isEpiMorph && !m.hasFixedPosition)).extent();
+        }
+        let needsMoreResize = async () => {
+          await world.whenRendered();
+          delete world._cachedWindowBounds;
+          return !world.windowBounds().extent().equals(world.extent);
+        }
+        let attempts = 0;
+        while (attempts < 5 && await needsMoreResize()) {
+          attempts++;
+          resize();  
+        }
+        world.relayout();
         return true;
       }
     }];
   }
+  
   get isWorld() { return true }
 
   render(renderer) { return renderer.renderWorld(this); }
 
-  get draggable() { return true; }
-  set draggable(_) {}
   get grabbable() { return false; }
   set grabbable(_) {}
 
@@ -153,8 +168,7 @@ export class World extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   getCurrentUser() {
-    if (!lively.user) return null;
-    let reg = lively.user.UserRegistry.current;
+    let reg = UserRegistry.current;
     return reg.loadUserFromLocalStorage(config.users.authServerURL);
   }
 
@@ -175,6 +189,7 @@ export class World extends Morph {
 
   onMouseDown(evt) {
     if (evt.state.menu) evt.state.menu.remove();
+    this.onWindowScroll();
     this._tooltipViewer.mouseDown(evt);
   }
 
@@ -217,7 +232,7 @@ export class World extends Morph {
     });
   }
 
-  updateVisibleWindowMorphs(evt) {
+  updateVisibleWindowMorphs() {
     // Currently checks all morphs to see if an update is required.  Could
     // possibly be streamlined by having a discrete list of morphs to be updated
     // instead of traversing tree or moving to a CSS method if necessary.
@@ -226,17 +241,17 @@ export class World extends Morph {
       if (typeof aMorph.relayout !== 'function')
         return aMorph.showError(new Error(`${aMorph} listed as responding to visible window`
                                           + ` change, but has no relayout instruction`));
-      aMorph.relayout(evt);
+      aMorph.relayout();
     });
   }
 
-  onWindowScroll(evt) {
+  onWindowScroll() {
     // rk 2017-07-02: Experimental, see evts/TextInput.js ensureBeingAtCursorOfText
     let {
       positionChangedTime,
       scrollLeftWhenChanged,
       scrollTopWhenChanged,
-    } = evt.dispatcher.keyInputHelper.inputState;
+    } = this.env.eventDispatcher.keyInputHelper.inputState;
     let docEl = document.documentElement;
     if (Date.now() - positionChangedTime < 500 && !bowser.firefox) {
       docEl.scrollLeft = scrollLeftWhenChanged;
@@ -246,15 +261,15 @@ export class World extends Morph {
 
     this.setProperty("scroll", pt(docEl.scrollLeft, docEl.scrollTop));
     this._cachedWindowBounds = null;
-    this.updateVisibleWindowMorphs(evt);
+    this.updateVisibleWindowMorphs();
   }
 
   async onWindowResize(evt) {
     await this.whenRendered();
     this._cachedWindowBounds = null;
     if (this.resizePolicy === 'elastic')
-      this.execCommand("resize to fit window");
-    this.updateVisibleWindowMorphs(evt);
+      await this.execCommand("resize to fit window");
+    this.updateVisibleWindowMorphs();
     for (let morph of this.submorphs)
       if (typeof morph.onWorldResize === "function")
         morph.onWorldResize(evt);
@@ -296,6 +311,12 @@ export class World extends Morph {
 
   logError(msg) { console.log(msg) }
 
+  relayout() { /* subclass responsibility */ }
+
+  defaultMenuItems(morph) {
+    return []; /* subclass responsibility */
+  }
+
 }
 
 export class Hand extends Morph {
@@ -303,7 +324,7 @@ export class Hand extends Morph {
   static get properties() {
     return {
       hasFixedPosition: { defaultValue: true },
-      fill: {defaultValue: bowser.mobile ? Color.transparent : Color.orange},
+      fill: {defaultValue: touchInputDevice ? Color.transparent : Color.orange},
       extent: {defaultValue: pt(1,1)},
       reactsToPointer: {defaultValue: false},
       _grabbedMorphProperties: {
@@ -317,8 +338,8 @@ export class Hand extends Morph {
     super({pointerId});
   }
 
-  __deserialize__(snapshot, objRef) {
-    super.__deserialize__(snapshot, objRef);
+  __deserialize__(snapshot, objRef, serializedMap, pool) {
+    super.__deserialize__(snapshot, objRef, serializedMap, pool);
     this.reset();
   }
 
@@ -365,32 +386,40 @@ export class Hand extends Morph {
 
   grab(morph) {
     if (obj.isArray(morph)) return morph.forEach(m => this.grab(m));
-    this._grabbedMorphProperties.set(morph, {
-      prevOwner: morph.owner,
-      prevPosition: morph.position,
-      prevIndex: morph.owner ? morph.owner.submorphs.indexOf(morph) : -1,
-      pointerAndShadow: obj.select(morph, ["dropShadow", "reactsToPointer"])
-    })
-    // So that the morphs doesn't steal events
-    morph.reactsToPointer = false;
-    morph.dropShadow = true;
-    this.addMorph(morph);
+    this.withMetaDo({
+      metaInteraction: true
+    }, () => {
+      this._grabbedMorphProperties.set(morph, {
+        prevOwner: morph.owner,
+        prevPosition: morph.position,
+        prevIndex: morph.owner ? morph.owner.submorphs.indexOf(morph) : -1,
+        pointerAndShadow: obj.select(morph, ["dropShadow", "reactsToPointer"])
+      })
+      // So that the morphs doesn't steal events
+      morph.reactsToPointer = false;
+      morph.dropShadow = true;
+      this.addMorph(morph);
+    });
     signal(this, "grab", morph);
   }
 
   dropMorphsOn(dropTarget) {
-    this.grabbedMorphs.forEach(morph => {
-      try {
-        let {pointerAndShadow} = this._grabbedMorphProperties.get(morph) || {}
-        Object.assign(morph, pointerAndShadow);
-        signal(this, "drop", morph);
-        morph.onBeingDroppedOn(this, dropTarget);
-      } catch (err) {
-        console.error(err);
-        this.world().showError(`Error dropping ${morph} onto ${dropTarget}:\n${err.stack}`);
-        if (morph.owner !== dropTarget)
-          this.world().addMorph(dropTarget);
-      }
+    this.withMetaDo({
+      metaInteraction: true
+    }, () => {
+      this.grabbedMorphs.forEach(morph => {
+        try {
+          let {pointerAndShadow} = this._grabbedMorphProperties.get(morph) || {}
+          Object.assign(morph, pointerAndShadow);
+          signal(this, "drop", morph);
+          morph.onBeingDroppedOn(this, dropTarget);
+        } catch (err) {
+          console.error(err);
+          this.world().showError(`Error dropping ${morph} onto ${dropTarget}:\n${err.stack}`);
+          if (morph.owner !== dropTarget)
+            this.world().addMorph(dropTarget);
+        }
+      });
     });
   }
 

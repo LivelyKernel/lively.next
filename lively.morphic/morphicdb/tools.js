@@ -93,14 +93,18 @@ export class MorphicDBPrompt extends AbstractPrompt {
         padding: Rectangle.inset(3), fontSize: 11
       },
       {
-        styleClasses: ['ok'],
+        master: { 
+          auto: "styleguide://SystemPrompts/prompts/buttons/ok/default",
+          click: "styleguide://SystemPrompts/prompts/buttons/ok/pressed",
+        },
         name: "ok button", type: "button",
-        label: "OK"
       },
       {
-        styleClasses: ['cancel'],
+        master: { 
+          auto: "styleguide://SystemPrompts/prompts/buttons/cancel/default",
+          click: "styleguide://SystemPrompts/prompts/buttons/cancel/pressed",
+        },
         name: "cancel button", type: "button",
-        label: "Cancel"
       }
     ];
 
@@ -261,12 +265,21 @@ class MorphicDBWidget extends Morph {
         {alias = "", serverURL = "", snapshotLocation = "", removable, editable} = dbInfo || {};
     if (!editable) showEdit = false;
     if (!removable) showRemove = false;
-    if (showEdit) controls.push({type: "button", name: "edit button", label: "edit", padding: Rectangle.inset(5, 2)});
-    if (showRemove) controls.push({type: "button", name: "remove button", label: "remove", padding: Rectangle.inset(5,2)});
+    if (showEdit) controls.push({
+      master: { 
+        auto: "styleguide://SystemPrompts/prompts/buttons/ok/default",
+        click: "styleguide://SystemPrompts/prompts/buttons/ok/pressed",
+      },
+      type: "button", name: "edit button", label: "edit"
+    });
+    if (showRemove) controls.push({
+      master: { 
+        auto: "styleguide://SystemPrompts/prompts/buttons/cancel/default",
+        click: "styleguide://SystemPrompts/prompts/buttons/cancel/pressed",
+      },
+      type: "button", name: "remove button", label: "remove"
+    });
     let padLeft = showSelect ? 30 : 0;
-    if (!this.layout)
-       this.layout = new VerticalLayout({spacing: 4, autoResize: true})
-    this.layout.padding = Rectangle.inset(padLeft, 0, 0, 0);
 
     this.submorphs = [
       {type: "label", name: "alias", value: [`alias: `, null, alias, {fontWeight: "bold"}]},

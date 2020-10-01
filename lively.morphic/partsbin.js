@@ -1,6 +1,6 @@
 // This is a prototype implementation of a file-system based partsbin...
 /* global System */
-import { resource } from "lively.resources";
+import { resource, Resource, registerExtension } from "lively.resources";
 import { Path, obj, date, promise } from "lively.lang";
 import { HorizontalLayout, VerticalLayout } from "./layout.js";
 import { morph } from './helpers.js';
@@ -384,6 +384,46 @@ export class SnapshotEditor {
 
 }
 
+const partURLRe = /^part:\/\/([^\/]+)\/(.*)$/;
+
+class PartResource extends Resource {
+  
+  get canDealWithJSON() { return false; }
+  // just is a small decoration on top of the styleguide resource
+  // essentially fetch the master component and create an instance based off of it
+  async dirList(depth, opts) {
+    return await resource(this.url.replace('part://', 'styleguide://')).dirList(depth, opts);  
+  }
+
+  async write(source) {
+    throw Error('Part urls are ready only! Please go to the world they are defined in and change the exported component directly.');
+  }
+  
+  async read() {
+    const master = await resource(this.url.replace('part://', 'styleguide://')).read();
+    const part = master.copy();
+    part.isComponent = false;
+    part.name = 'a' + part.constructor.className;
+    part.withAllSubmorphsDoExcluding(m => {
+      if (m == part || !m.master)
+        delete m._parametrizedProps;
+    }, m => m.master && m != part);
+    part.master = master;
+    part.withAllSubmorphsDo(m => {
+      if (m.master) m.master.applyIfNeeded(true);
+    });
+    return part;
+  }
+}
+
+// part extension
+export const resourceExtension = {
+  name: "part",
+  matches: (url) => url.match(partURLRe),
+  resourceClass: PartResource
+}
+
+registerExtension(resourceExtension);
 
 export function buildCommitEditor(props) {
 

@@ -1,9 +1,8 @@
 /*global System,Uint8Array,Blob,location*/
 import { Color, Line, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
-import { string, fun, properties, obj, arr, num, promise, tree, Path as PropertyPath } from "lively.lang";
+import { string, properties, obj, arr, num, promise, tree, Path as PropertyPath } from "lively.lang";
 import { signal } from "lively.bindings";
-import { copy, deserializeSpec, ExpressionSerializer, getSerializableClassMeta, serializeSpec, getClassName } from "lively.serializer2";
-
+import { copy, deserializeSpec, ExpressionSerializer, serializeSpec, getClassName } from "lively.serializer2";
 import {
   renderRootMorph,
   ShadowObject
@@ -18,7 +17,8 @@ import CommandHandler from "./CommandHandler.js";
 import KeyHandler, { findKeysForPlatform } from "./events/KeyHandler.js";
 import { TargetScript } from "./ticking.js";
 import { copyMorph } from "./serialization.js";
-import { StylingVisitor } from "./sizzle.js";
+
+import { ComponentPolicy } from "./style-guide.js";
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -62,6 +62,28 @@ export class Morph {
         }
       },
 
+      isComponent: {
+        group: "core",
+        defaultValue: false,
+        after: ['master'],
+        set(active) {
+          this.setProperty('isComponent', active);
+          if (active) {
+            if (!this.master) delete this._parametrizedProps;
+          }
+        }
+      },
+
+      master: {
+        before: ['metadata'],
+        group: "core",
+        set(args) {
+          if (this.master && this.master.equals(args)) return;
+          this.setProperty("master", args ? ComponentPolicy.for(this, args) : (args == false ? false : null));
+          args && this.requestMasterStyling();
+        },
+      },
+
       renderOnGPU: {
         group: 'core',
         defaultValue: false,
@@ -69,7 +91,8 @@ export class Morph {
 
       draggable: {
         group: "interaction",
-        isStyleProp: true, defaultValue: true
+        isStyleProp: true,
+        defaultValue: false
       },
 
       grabbable: {
@@ -444,7 +467,7 @@ export class Morph {
         group: "layouting",
         isStyleProp: true,
         type: 'Layout',
-        after: ["submorphs", "extent", "origin", "position", "isLayoutable", 'styleSheets'],
+        after: ["submorphs", "extent", "origin", "position", "isLayoutable"],
         set(value) {
           if (value) value.container = this;
           this.setProperty("layout", value);
@@ -670,31 +693,14 @@ export class Morph {
         }
       },
 
-      styleSheets: {
-        group: "styling",
-        before: ['submorphs'],
-        type: 'StyleSheets',
-        defaultValue: [],
-        set(sheets) {
-          if (!obj.isArray(sheets)) {
-            sheets = [sheets];
-          }
-          this.setProperty("styleSheets", sheets);
-          sheets.forEach(ss => {
-            ss.context = this;
-          });
-          this.requestStyling();
-        }
-      },
-
       styleProperties: {
         group: "styling",
         derived: true, readOnly: true,
         get() {
-          var p = this.propertiesAndPropertySettings().properties,
+          var { properties, order } = this.propertiesAndPropertySettings(),
               styleProps = [];
-          for (var prop in p)
-            if (p[prop].isStyleProp)
+          for (var prop of order)
+            if (properties[prop].isStyleProp)
               styleProps.push(prop);
           return styleProps;
         }
@@ -758,9 +764,16 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
+    this._parametrizedProps = obj.select(props, arr.intersect(Object.keys(props), this.styleProperties));
     this.initializeProperties(props);
     
-    if (props.bounds) this.setBounds(props.bounds);
+    if (props.bounds) {
+      this.setBounds(props.bounds);
+      this._parametrizedProps.extent = this.extent;
+      this._parametrizedProps.position = this.position;
+    }
+    if (props.height != undefined || props.width != undefined)
+      this._parametrizedProps.extent = this.extent;
     if (props.layout) this.layout = props.layout;
 
     if (typeof this.onLoad === "function") this.onLoad();
@@ -768,7 +781,7 @@ export class Morph {
 
   get __serialization_id_property__() { return "_id"; }
 
-  __deserialize__(snapshot, objRef) {
+  __deserialize__(snapshot, objRef, serializedMap, pool) {
     this._env = MorphicEnv.default(); // FIXME!
     this._rev = snapshot.rev;
     this._owner = null;
@@ -780,11 +793,20 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
+    this._parametrizedProps = obj.select(snapshot.props, arr.intersect(Object.keys(snapshot.props), this.styleProperties));
+    this._parametrizedProps.__takenFromSnapshot__ = true;
+    const s = pool.expressionSerializer;
+    for (let prop in this._parametrizedProps) {
+      const v = this._parametrizedProps[prop].value;
+      if (v && obj.isString(v) && s.isSerializedExpression(v))
+        this._parametrizedProps[prop] = s.deserializeExpr(v);
+    }
     this.initializeProperties();
   }
 
-  __after_deserialize__() {
+  __after_deserialize__(snapshot) {
     this.resumeStepping();
+    // too late, the master may have already applied itself here...
     if (typeof this.onLoad === "function") {
       try { this.onLoad(); }
       catch (e) { console.error(`[lively.morphic] ${this}.onLoad() error: ${e.stack}`)}
@@ -794,9 +816,18 @@ export class Morph {
   get __only_serialize__() {
     let defaults = this.defaultProperties,
         properties = this.propertiesAndPropertySettings().properties,
-        propsToSerialize = ["_tickingScripts", "attributeConnections"];
+        propsToSerialize = [];
+    if (this._tickingScripts.length > 0) propsToSerialize.push('_tickingScripts');
+    if (this.attributeConnections) propsToSerialize.push('attributeConnections');
+    const master = [this, ...this.ownerChain()].map(m => m.__isBeingSerialized__ && m.master).find(Boolean);
     for (let key in properties) {
       let descr = properties[key];
+      if (master && 
+         master.managesMorph(this) && 
+         master._overriddenProps.get(this)[key] != undefined) {
+        propsToSerialize.push(key); // always save away overridden props
+        continue;        
+      }
       if (
         descr.readOnly ||
         descr.derived ||
@@ -804,6 +835,13 @@ export class Morph {
         (descr.hasOwnProperty("serialize") && !descr.serialize)
       ) continue;
       propsToSerialize.push(key);
+    }
+
+    // also take into account styled properties via master
+    // but make sure that morph is actually part of the serialization
+    
+    if (master && !this.isComponent) {
+      return master.propsToSerializeForMorph(this, propsToSerialize);
     }
     return propsToSerialize;
   }
@@ -820,7 +858,7 @@ export class Morph {
       }
     }
 
-    for (let foldedProp of ['borderColor', 'borderWidth', 'borderStyle', 'borderRadius']) {
+    for (let foldedProp of arr.intersect(this.__only_serialize__, ['borderColor', 'borderWidth', 'borderStyle', 'borderRadius'])) {
       snapshot.props[foldedProp] = {
         key: foldedProp,
         verbatim: true,
@@ -1059,7 +1097,7 @@ export class Morph {
     return {sort: false, includeDefault: false, properties};
   }
 
-  show() { return $world.execCommand('show morph', this) }
+  show(loop) { return $world.execCommand('show morph', { morph: this, loop }) }
 
   setStatusMessage(msg, color, delay, opts) {
     var w = this.world();
@@ -1098,6 +1136,17 @@ export class Morph {
     }
 
     this.layout && this.layout.onChange(change);
+
+    if (this.isComponent) {
+      const world = this.world();
+      const derivedMorphs = world ? world.withAllSubmorphsSelect(m => m.master && m.master.uses(this)) : [];
+      derivedMorphs.forEach(m => {
+        m.requestMasterStyling();
+      });
+    }
+    if (this.master) {
+      this.master.onMorphChange(this, change);
+    }
   }
 
   onBoundsChanged(bounds) {
@@ -1108,6 +1157,17 @@ export class Morph {
   }
 
   onSubmorphChange(change, submorph) {
+    if (this.isComponent && !change.meta.metaInteraction && !change.meta.layoutAction) {
+      const world = this.world();
+      world && world.withAllSubmorphsDo(m => {
+        if (m.master && m.master.uses(this)) {
+          m.requestMasterStyling();  
+        }
+      });
+    }
+    if (this.master) {
+      this.master.onMorphChange(submorph, change);
+    }
     this.layout && this.layout.onSubmorphChange(submorph, change);
   }
 
@@ -1177,6 +1237,22 @@ export class Morph {
     return Promise.resolve(this);
   }
 
+  async withAnimationDo(cb, config) {
+    // collect all changes inside the submorphs and animate them
+    const { changes } = this.groupChangesWhile(false, cb);
+    await Promise.all(Object.values(arr.groupBy(changes, change => change.target.id))
+       .map((changes) => {
+      const animConfig = { ...config }
+      var target;
+      changes.forEach(change => {
+        target = change.target;
+        change.reverseApply();
+        animConfig[change.prop] = change.value;
+      });
+      return target.animate(animConfig);
+    }));
+  }
+
   isClip() { return this.clipMode !== "visible"; }
 
   get scrollExtent() {
@@ -1219,7 +1295,7 @@ export class Morph {
         classNames = [];
     while (klass) {
       if (klass === Object) break;
-      classNames.push(klass.name || klass.className);
+      classNames.push(klass.className);
       klass = klass[Symbol.for("lively-instance-superclass")];
     }
     return this._styleClasses = classNames;
@@ -1286,9 +1362,10 @@ export class Morph {
     return this.relativeBounds(this.world());
   }
 
-  submorphBounds() {
-    if (this.submorphs.length < 1) return this.innerBounds();
-    return this.submorphs.map(submorph => submorph.bounds())
+  submorphBounds(filterFn = () => true) {
+    let morphs = arr.filter(this.submorphs, filterFn);
+    if (morphs.length < 1) return this.innerBounds();
+    return morphs.map(submorph => submorph.bounds())
                          .reduce((a,b) => a.union(b));
   }
 
@@ -1320,7 +1397,9 @@ export class Morph {
 
   get isEpiMorph() {
     /*transient "meta" morph*/
-    return this.getProperty("epiMorph");
+    // note: Components even if declared epi Morphs are not treated as such
+    //       since that should only apply to their derived morphs.
+    return this.getProperty("epiMorph") && !this.isComponent;
   }
 
   isUsedAsEpiMorph() {
@@ -1451,6 +1530,11 @@ export class Morph {
       submorph.resumeSteppingAll();
 
       submorph.withAllSubmorphsDo(ea => ea.onOwnerChanged(this));
+
+      if (this.world() && submorph._requestMasterStyling) {
+        submorph.master && submorph.master.applyIfNeeded(true);
+        submorph._requestMasterStyling = false;
+      }
     });
 
     return submorph;
@@ -1515,6 +1599,9 @@ export class Morph {
   onOwnerChanged(newOwner) {
     // newOwner = null => me or any of my owners was removed
     // newOwner = morp => me or any of my owners was added to another morph
+    if (newOwner && this.master) {
+      this.requestMasterStyling(); // I may have surfaced and now need to refresh
+    }
   }
 
   async fadeOut(duration=1000) {
@@ -1568,6 +1655,14 @@ export class Morph {
     return undefined;
   }
 
+  withAllSubmorphsDoExcluding(func, exclusionFunc) {
+    var result = [func(this)];
+    if (exclusionFunc(this)) return result;
+    for (let m of this.submorphs)
+      arr.pushAll(result, m.withAllSubmorphsDoExcluding(func, exclusionFunc));
+    return result;
+  }
+
   withAllSubmorphsDo(func) {
     var result = [func(this)];
     for (let m of this.submorphs)
@@ -1596,7 +1691,7 @@ export class Morph {
     var world = optWorld || this.world() || this.env.world;
     if (!world) return this;
     this.center = pos;
-    this.setBounds(world.visibleBounds().insetBy(5).translateForInclusion(this.bounds()))
+    this.setBounds(world.visibleBounds().insetBy(50).translateForInclusion(this.bounds()))
     return this.openInWorld(this.position);
   }
 
@@ -1971,93 +2066,6 @@ export class Morph {
     return this.withAllSubmorphsDetect(({id: morphId}) => id === morphId);
   }
 
-  generateReferenceExpression(opts = {}) {
-    // creates a expr (string) that, when evaluated, looks up a morph starting
-    // from another morph
-    // Example:
-    // this.generateReferenceExpression()
-    //   $world.get("aBrowser").get("sourceEditor");
-
-    let morph = this,
-        world = morph.world(),
-        {
-          maxLength = 10,
-          fromMorph = world
-        } = opts;
-
-    if (fromMorph === morph) return "this";
-
-    var rootExpr = world === fromMorph ? "$world" : "this";
-
-    // can we find it at all? if not return a generic "morph"
-    if (!world && (!morph.name || fromMorph.get(morph.name) !== morph))
-      return "morph";
-
-    var vm = lively.vm,
-        exprs = makeReferenceExpressionListFor(morph);
-
-    return exprs.length > maxLength
-      ? `$world.getMorphWithId("${morph.id}")`
-      : exprs.join(".");
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    function makeReferenceExpressionListFor(morph) {
-      var name = morph.name,
-          owners = morph.ownerChain(),
-          owner = morph.owner,
-          world = morph.world(),
-          exprList;
-
-      if (morph === fromMorph) exprList = [rootExpr];
-
-      if (world === morph) exprList = ["$world"];
-
-      if (!exprList && name && owner) {
-        if (owner === world && arr.count(arr.pluck(world.submorphs, "name"), name) === 1) {
-          exprList = [`$world.get("${name}")`]
-
-        }
-
-        if (!exprList && owner != world) {
-          for (let i = owners.length-1; i--; ) {
-            if (owners[i].getAllNamed(name).length === 1){
-              exprList = [...makeReferenceExpressionListFor(owners[i]), `get("${name}")`];
-              break;
-            }
-          }
-
-        }
-
-        if (!exprList) {
-          var exprsToCheck = [...makeReferenceExpressionListFor(owner), `get("${name}")`];
-          if (vm.syncEval(exprsToCheck.join("."), {context: fromMorph}).value === morph) {
-            exprList = exprsToCheck;
-          }
-        }
-      }
-
-      // if (!exprList && owner && owner.name) {
-      //   var idx = owner.submorphs.indexOf(morph);
-      //   exprList = makeReferenceExpressionListFor(morph.owner).concat([`submorphs[${idx}]`]);
-      // }
-
-      if (!exprList) {
-        exprList = [`${rootExpr}.getMorphById("${morph.id}")`];
-      }
-
-      return exprList;
-    }
-
-    function commonOwner(m1, m2) {
-      var owners1 = m1.ownerChain(),
-          owners2 = m2.ownerChain();
-      if (owners1.includes(m2)) return m2;
-      if (owners2.includes(m1)) return m1;
-      return arr.intersect(owners1, owners2)[0];
-    }
-
-  }
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // mirror prototype
 
@@ -2083,18 +2091,18 @@ export class Morph {
   get dragTriggerDistance() { return 0; }
 
   onMouseDown(evt) {
-    // FIXME this doesn't belong here. Event dispatch related code should go
-    // into events/dispatcher.js
-    if (this === evt.targetMorph) {
-      setTimeout(() => {
-        if (this.grabbable && !evt.state.draggedMorph
-            && evt.state.clickedOnMorph === this
-            && !evt.hand.carriesMorphs()) evt.hand.grab(this);
-      }, 800);
+    if (this === evt.targetMorph)
+      evt.state.clickedMorph = this;
+    if (this === evt.targetMorph && this.master) {
+        this.requestMasterStyling();
     }
   }
 
-  onMouseUp(evt) {}
+  onMouseUp(evt) {
+    evt.state.clickedMorph = null;
+    if (this === evt.targetMorph && this.master)
+      this.requestMasterStyling();
+  }
   onMouseMove(evt) {}
   onLongClick(evt) {}
 
@@ -2163,7 +2171,7 @@ export class Morph {
   onContextMenu(evt) {
     // FIXME: if (lively.FreezerRuntime) return; // do not stop propagation if in freezer mode
     if (evt.targetMorph !== this) return;
-    evt.stop();
+    if (!lively.FreezerRuntime) evt.stop();
     Promise
       .resolve(this.menuItems()).then(items => this.openMenu(items, evt))
       .catch(err => $world.logError(err));
@@ -2175,273 +2183,10 @@ export class Morph {
   }
 
   menuItems() {
-    var world = this.world(),
-        items = [], self = this;
-        //If reset exists and is a function, it will add it as the first option in the menu list
-        if (this.reset && typeof this.reset == 'function'){
-          items.push(['Reset',()=>{this.reset()}])
-        }
-    // items.push(['Select all submorphs', function(evt) { self.world().setSelectedMorphs(self.submorphs.clone()); }]);
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // morphic hierarchy / windows
-
-    items.push(['Publish...', () => this.interactivelyPublish()]);
-
-    items.push(['Open in...', [
-      ['Window', () => { this.openInWindow(); }]
-    ]]);
-
-    // Drilling into scene to addMorph or get a halo
-    // whew... this is expensive...
-    function menuItemsForMorphsBeneathMe(itemCallback) {
-      var morphs = world.morphsContainingPoint(self.worldPoint(pt(0,0)));
-      morphs.pop(); // remove world
-      var selfInList = morphs.indexOf(self);
-      // remove self and other morphs over self (the menu)
-      morphs = morphs.slice(selfInList + 1);
-      return morphs.map(ea => [String(ea), itemCallback.bind(this, ea)]);
-    }
-
-    items.push(["Add morph to...", {
-      getItems: menuItemsForMorphsBeneathMe.bind(this, morph => morph.addMorph(self))
-    }]);
-
-    items.push(["Get halo on...", {
-      getItems: menuItemsForMorphsBeneathMe.bind(this, morph => morph.world().showHaloFor(morph))
-    }]);
-
-    if (this.owner && this.owner.submorphs.length > 1) {
-      items.push(["Arrange morph", [
-        ["Bring to front", () => this.owner.addMorph(this)],
-        ["Send to back", () => this.owner.addMorphBack(this)]
-      ]]);
-    }
-
-    if (this.submorphs.length) {
-      items.push(["Select all submorphs",
-        () => this.world().showHaloFor(this.submorphs.slice())]);
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // stepping scripts
-    var steppingItems = [];
-
-    if (this.startSteppingScripts) {
-      steppingItems.push(["Start stepping", function(){self.startSteppingScripts()}])
-    } else {
-      steppingItems.push(["Start stepping", async () => {
-
-        let items = [];
-        let {completions} = await lively.vm.completions.getCompletions(() => this, "")
-
-        for (let methodsPerProto of completions) {
-          let [protoName, methods] = methodsPerProto;
-          for (let method of methods) {
-            if (method.startsWith("_") || method.startsWith("$")) continue;
-            let [_, selector, args] = method.match(/^([^\(]+)\(?([^\)]+)?\)?$/) || []
-            if (!selector || typeof this[selector] !== "function") continue;
-            items.push({
-              isListItem: true,
-              string: `${protoName} ${method}`,
-              value: {selector, args}
-            })
-          }
-        }
-
-        let {selected: [choice]} = await $world.filterableListPrompt("Select method to start", items, {
-          requester: this,
-          historyId: "lively.morphic-start-stepping-chooser",
-        });
-        if (!choice) return;
-
-        let time = await $world.prompt("Steptime in ms (how of the method will be called)?", {input: 100})
-        time = Number(time)
-        if (isNaN(time)) return;
-
-        let args = [time, choice.selector];
-        if (choice.args) {
-          let evalEnvironment = {targetModule: "lively://lively.morphic-stepping-args/eval.js"},
-              _args = await $world.editPrompt("Arguments to pass", {
-                input: `[${choice.args}]`,
-                mode: "js",
-                evalEnvironment
-              }),
-              {value: _argsEvaled, isError} = await lively.vm.runEval(_args, evalEnvironment);
-          if (isError) {
-            $world.inform(`Error evaluating the arguments: ${_argsEvaled}`);
-            return;
-          }
-          if (Array.isArray(_argsEvaled))
-            args.push(..._argsEvaled);
-        }
-
-        this.startStepping(...args);
-      }]);
-    }
-
-    if (this.tickingScripts.length != 0) {
-      steppingItems.push(["Stop stepping", () => self.stopStepping()])
-    }
-
-    if (steppingItems.length != 0) {
-      items.push(["Stepping", steppingItems])
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // morphic properties
-    var morphicMenuItems = ['Morphic properties', []];
-    items.push(morphicMenuItems);
-    // morphicMenuItems[1].push(['display serialization info', function() {
-    //   require('lively.persistence.Debugging').toRun(function() {
-    //     var json = self.copy(true),
-    //         printer = lively.persistence.Debugging.Helper.listObjects(json);
-    //     var text = world.addTextWindow({content: printer.toString(),
-    //                                     extent: pt(600, 200),
-    //                                     title: 'Objects in this world'});
-    //     text.setFontFamily('Monaco,monospace');
-    //     text.setFontSize(10);
-    //   })}]);
-
-    let checked = Icon.textAttribute('check-square-o'),
-        unchecked = Icon.textAttribute('square-o');
-    unchecked[1].paddingRight = "7px";
-    Object.assign(checked[1], {paddingRight: "5px", float: 'none', display: 'inline'});
-
-    ['grabbable', 'draggable', 'acceptsDrops', 'halosEnabled'].forEach(propName =>
-      morphicMenuItems[1].push(
-        [[...(this[propName] ? checked : unchecked),  propName, {float: 'none'}],
-         () => this[propName] = !this[propName]]));
-
-
-    items.push(["Fit to submorphs", async () => {
-      let padding = await this.world().prompt("Padding around submorphs:", {
-        input: "Rectangle.inset(5)",
-        historyId: "lively.morphic-fit-to-submorphs-padding-hist",
-        requester: this
-      })
-      if (typeof padding !== "string") return;
-      let {value} = await lively.vm.runEval(padding, {topLevelVarRecorder: {Rectangle}});
-
-      padding = value && value.isRectangle ? value : Rectangle.inset(0);
-
-      this.undoStart("fitToSubmorphs");
-      this.fitToSubmorphs(padding);
-      this.undoStop("fitToSubmorphs");
-    }]);
-
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    let connectionItems = this.connectionMenuItems();
-    if (connectionItems) {
-      items.push(["connections...", connectionItems]);
-    }
-
-    let connectItems = this.connectMenuItems();
-    if (connectItems) {
-      items.push(["connect...", connectItems]);
-    }
-    
-    return items;
+    return this.world().defaultMenuItems(this);
   }
 
-  connectionMenuItems() {
-    if (!this.attributeConnections || !this.attributeConnections.length) return null;
-    return this.attributeConnections.map(c => [String(c), [
-      ["show", async () => {
-        let { interactivelyShowConnection } = await System.import("lively.ide/fabrik.js");
-        interactivelyShowConnection(c);
-      }],
-      ["edit", async () => {
-        let { interactivelyReEvaluateConnection } = await System.import("lively.ide/fabrik.js");
-        interactivelyReEvaluateConnection(c)
-      }],
-      ["disconnect", () => { c.disconnect(); $world.setStatusMessage("disconnected " + c)}]
-    ]]);
-  }
-
-  sourceDataBindings() {
-    let allProps = this.propertiesAndPropertySettings().properties,
-        groupedProps = arr.groupByKey(
-          Object.keys(allProps).map(name => {
-            let props = {name, ...allProps[name]};
-            // group "_..." is private, don't show
-            if (props.group && props.group.startsWith("_")) return null;
-            return props;
-          }).filter(Boolean), "group"),
-        customOrder = ["core", "geometry", "interaction", "styling", "layouting"],
-        sortedGroupedProps = [];
-
-    customOrder.forEach(ea => sortedGroupedProps.push(groupedProps[ea]));
-
-    arr.withoutAll(groupedProps.keys(), customOrder).forEach(
-      ea => sortedGroupedProps.push(groupedProps[ea]));
-
-    return sortedGroupedProps;
-  }
-
-  targetDataBindings() {
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // builds a ["proto name", [metthod, ...]] list
-    let methodsByProto = [];
-    for (let proto = this; proto !== Object.prototype;) {
-      let protoName = proto === this ? String(this) : getClassName(proto),
-          group = null,
-          descrs = obj.getOwnPropertyDescriptors(proto),
-          nextProto = Object.getPrototypeOf(proto);
-      for (let prop in descrs) {
-        let val = descrs[prop].value;
-        if (typeof val !== "function" || val === proto.constructor) continue;
-        if (prop.startsWith("$") || prop.startsWith("_")) continue;
-        
-        if (!group) group = [];
-        let args = fun.argumentNames(val);
-        group.push({group: protoName + " methods", signature: `${prop}(${args.join(", ")})`, name: prop})
-      }
-      
-      if (group) methodsByProto.push(group);
-      proto = nextProto;
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    return this.sourceDataBindings().concat(methodsByProto);
-  }
-
-  connectMenuItems(actionFn) {
-    // returns menu of source attributes that can be used for connection from this object.
-    // when actionFn is passed it will be called with (sourceAttrName, morph, propertySpec)
-    // sourceAttrName can be "custom..." in this case the user can enter specify manually
-    // what the source should be
-    let bindings = this.sourceDataBindings(),
-        w = this.world(),
-        items = bindings.map(
-          group => [
-            group[0].group || "uncategorized",
-            group.map(ea => [
-              ea.name, actionFn ? () => actionFn(ea.name, this, ea) : async () => {
-                let { interactiveConnectGivenSource } =
-                   await System.import("lively.ide/fabrik.js");
-                interactiveConnectGivenSource(this, ea.name);
-              }
-            ])]);
-
-    w && items.push([
-      "custom...", actionFn ?
-      () => actionFn("custom...", this, null) :
-      async () => {
-        let { interactiveConnectGivenSource } =
-             await System.import("lively.ide/fabrik.js"),
-            attr = await w.prompt("Enter custom connection point", {
-              requester: this,
-              historyId: "lively.morphic-custom-connection-points",
-              useLastInput: true
-            });
-        if (attr) interactiveConnectGivenSource(this, attr);
-      }]);
-    return items;
-  }
+  
 
   onCut(evt) {}
   onCopy(evt) {}
@@ -2496,8 +2241,14 @@ export class Morph {
     recipient.addMorph(this);
   }
 
-  onHoverIn(evt) {}
-  onHoverOut(evt) {}
+  onHoverIn(evt) {
+    if (this.master)
+      this.requestMasterStyling();
+  }
+  onHoverOut(evt) {
+    if (this.master)
+      this.requestMasterStyling();
+  }
 
   onScroll(evt) {}
   onMouseWheel(evt) {}
@@ -2603,6 +2354,10 @@ export class Morph {
   }
 
   render(renderer) {
+    if (this._requestMasterStyling) {
+      this.master && this.master.applyIfNeeded(true);
+      this._requestMasterStyling = false;
+    }
     return renderer.renderMorph(this);
   }
 
@@ -2611,6 +2366,16 @@ export class Morph {
      for (var i = 0; i < this.submorphs.length; i++)
        this.submorphs[i].applyLayoutIfNeeded();
      this.layout && !this.layout.manualUpdate && this.layout.forceLayout();
+  }
+
+  requestMasterStyling() {
+    if (this._rendering) return;
+    if (this.master && this.master._hasUnresolvedMaster) {
+       this.master._capturedExtents = new WeakMap();
+       this.withAllSubmorphsDo(m => this.master._capturedExtents.set(m, m.extent));
+    }
+    if (this.master) this._requestMasterStyling = true;
+    this.makeDirty();
   }
 
   requestStyling() {
@@ -2622,9 +2387,6 @@ export class Morph {
 
   renderAsRoot(renderer) {
     this.dontRecordChangesWhile(() => {
-      let stylingVisitor = this._stylingVisitor;
-      if (!stylingVisitor) stylingVisitor = this._stylingVisitor = new StylingVisitor(this);
-      stylingVisitor.visit();
       this.applyLayoutIfNeeded();
     })
     return renderRootMorph(this, renderer);
@@ -2752,12 +2514,14 @@ export class Ellipse extends Morph {
   static get properties() {
     return {
       borderRadius: {
+        derived: true,
         get() { 
           return {
             top: this.borderRadiusTop,
             right: this.borderRadiusRight,
             left: this.borderRadiusLeft,
-            bottom: this.borderRadiusBottom
+            bottom: this.borderRadiusBottom,
+            valueOf: () => this.borderRadiusLeft,
           }
         }
       },
@@ -2821,9 +2585,9 @@ export class Image extends Morph {
 
   static get properties() {
     return {
-
       imageUrl: {
         isStyleProp: true,
+        copyAssetOnFreeze: true,
         after: ['extent', 'autoResize'],
         defaultValue: System.decanonicalize("lively.morphic/lively-web-logo-small.svg"),
 
@@ -2846,13 +2610,16 @@ export class Image extends Morph {
 
       naturalExtent: {defaultValue: null},
       isLoaded: {defaultValue: false, serialize: false},
-      autoResize: {defaultValue: false}
+      autoResize: {
+        isStyleProp: true,
+        defaultValue: false,
+      }
     }
   }
 
-  __deserialize__(snapshot, objRef) {
+  __deserialize__(snapshot, objRef, serializedMap, pool) {
     this._isDeserializing = true;
-    super.__deserialize__(snapshot, objRef);
+    super.__deserialize__(snapshot, objRef, serializedMap, pool);
   }
 
   __after_deserialize__(snapshot, ref) {
@@ -2896,7 +2663,13 @@ export class Image extends Morph {
 
   determineNaturalExtent() { return this.whenLoaded().then(() => this.naturalExtent); }
 
-  render(renderer) { return renderer.renderImage(this); }
+  render(renderer) { 
+    if (this._requestMasterStyling) {
+      this.master && this.master.applyIfNeeded(true);
+      this._requestMasterStyling = false;
+    }
+    return renderer.renderImage(this);
+  }
 
 
   clear() {
@@ -3078,6 +2851,13 @@ export class Image extends Morph {
     let items = super.menuItems();
     items.unshift(
       ["change image url...", () => this.interactivelyChangeImageURL()],
+      ["resize image to to fit world", () => {
+        const s = Math.min(
+          this.world().visibleBounds().width / this.naturalExtent.x,
+          this.world().visibleBounds().height / this.naturalExtent.y
+        );
+        this.extent = this.naturalExtent.scaleBy(s);
+      }],
       ["resize image to its real image size", () => this.extent = this.naturalExtent],
       ["resample image to fit current bounds", () => this.resampleImageToFitBounds()],
       {isDivider: true})
@@ -3262,6 +3042,12 @@ export class Path extends Morph {
 
       startMarker: {defaultValue: null, type: "Object"},
       endMarker: {defaultValue: null, type: "Object"},
+      
+      endStyle: {
+        type: 'Enum',
+        values: ['butt', 'round', 'square'],
+        defaultValue: 'butt'
+      },
 
       drawnProportion: {
         type: 'Number',
@@ -3271,9 +3057,21 @@ export class Path extends Morph {
         defaultValue: 0
       },
 
+      cornerStyle: {
+        type: 'Enum',
+        values: ['arcs', 'bevel', 'miter', 'miter-clip', 'round'],
+        defaultValue: 'miter'
+      },
+
+      draggable: {
+        get() {
+          return this.getProperty('draggable') || this.showControlPoints;
+        }
+      },
+
       isSmooth: {
         defaultValue: false,
-        before: ['verices'],
+        before: ['vertices'],
         type: "Boolean",
         set(val) {
           this.setProperty("isSmooth", val);
@@ -3302,6 +3100,9 @@ export class Path extends Morph {
 
   __additionally_serialize__(snapshot, ref, pool, addFn) {
     super.__additionally_serialize__(snapshot, ref, pool, addFn);
+    const draggable = this.getProperty('draggable');
+    if (draggable != this.propertiesAndPropertySettings().properties.draggable.defaultValue)
+      snapshot.props.draggable = { value: draggable };
     let c = this.borderColor.valueOf();
     if (!c) return;
     snapshot.props.borderColor = {
@@ -3578,6 +3379,7 @@ export class Path extends Morph {
   }
 
   onMouseDown(evt) {
+    super.onMouseDown(evt);
     var {state: {clickCount}} = evt,
         double = clickCount === 2;
 
@@ -3587,8 +3389,8 @@ export class Path extends Morph {
   }
 
   menuItems() {
-    let checked = Icon.textAttribute('check-square-o'),
-        unchecked = Icon.textAttribute('square-o');
+    let checked = Icon.textAttribute('check-square', { textStyleClasses: ['far']}),
+        unchecked = Icon.textAttribute('square', { textStyleClasses: ['far']});
     unchecked[1].paddingRight = "7px";
     checked[1].paddingRight = "5px";
     return [

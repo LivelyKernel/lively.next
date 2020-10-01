@@ -1,4 +1,3 @@
-
 /*global System*/
 // import 'systemjs';
 import { resource, loadViaScript } from 'lively.resources';
@@ -27,7 +26,7 @@ var loc = document.location,
     res = resource(origin + "/" + "lively.morphic/worlds/" + worldName),
     loginDone = false,
     worldLoaded = false,
-    isBenchmark = worldNameMatch[1].startsWith("morph benchmark")/*FIXME!!!2017-11-15*/,
+    isBenchmark = worldNameMatch && worldNameMatch[1].startsWith("morph benchmark")/*FIXME!!!2017-11-15*/,
     doBootstrap = !query.quickload && !isBenchmark,
     askBeforeQuit = 'askBeforeQuit' in query ? !!query.askBeforeQuit : true;
 
@@ -84,8 +83,7 @@ Promise.resolve()
     return Promise.all([
       lively.modules.importPackage('lively.morphic'),
       promise.waitFor(function() { return loginDone; })
-    ]).then(function(result) {
-      var morphic = result[0];
+    ]).then(function([morphic]) {
       log("Loading world...");
       return morphic.World.loadWorldFromURL(worldLocation.resource, null, {
         verbose: true,
@@ -171,7 +169,9 @@ function bootstrapLivelySystem() {
         function(m) {
           lively.modules = m;
           lively.modules.unwrapModuleLoad();
+          lively.modules.unwrapModuleResolution();
           lively.modules.wrapModuleLoad();
+          lively.modules.wrapModuleResolution();
           let oldRegistry = System["__lively.modules__packageRegistry"];
           delete System["__lively.modules__packageRegistry"];
           let newRegistry = System["__lively.modules__packageRegistry"] = m.PackageRegistry.ofSystem(System);

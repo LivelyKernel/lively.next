@@ -61,6 +61,10 @@ class Layout {
     return !(this.lastExtent && container.extent.equals(this.lastExtent));
   }
 
+  equals(otherLayout) {
+    return otherLayout.name() == this.name();
+  }
+
   get layoutableSubmorphs() {
     if (!this.layoutOrder)
       this.layoutOrder = Closure.fromSource(JSON.parse(this.layoutOrderSource)).recreateFunc();
@@ -579,6 +583,7 @@ export class ProportionalLayout extends Layout {
     this.extentDelta = pt(0,0);
     this.proportionalLayoutSettingsForMorphs = new WeakMap();
     this.submorphSettings = (args && args.submorphSettings) || [];
+    this.lastExtent = args.lastExtent;
     delete this.spacing;
     delete this.autoResize;
   }
@@ -586,7 +591,8 @@ export class ProportionalLayout extends Layout {
   getSpec() {
     return {
       submorphSettings: this.submorphSettings,
-      reactToSubmorphAnimations: this.reactToSubmorphAnimations
+      reactToSubmorphAnimations: this.reactToSubmorphAnimations,
+      lastExtent: this.lastExtent,
     }
   }
 
@@ -719,6 +725,10 @@ export class ProportionalLayout extends Layout {
     this.active = false;
   }
 
+  copy() {
+    return new this.constructor(this.getSpec()); // no container
+  }
+
 }
 
 export class CenteredTilingLayout extends TilingLayout {
@@ -775,6 +785,7 @@ export class TilingLayout extends Layout {
     super(props);
     this._axis = props.axis || 'row';
     this._align = props.align || 'left';
+    this._verticalAlign = props.verticalAlign || "top";
     this._orderByIndex = props.orderByIndex || false;
     delete this.autoResize;
   }
@@ -835,8 +846,21 @@ export class TilingLayout extends Layout {
         normalizedWidthAccessor = isHorizontal ? 'x' : 'y', 
         normalizedHeightAccessor = isHorizontal ? 'y' : 'x',
         currentRowHeight = 0,
-        previousRowHeight = spacing + border[heightAccessor];
+        previousRowHeight = spacing + border[heightAccessor],
+        posAccessor = "topLeft";
 
+    switch (this._verticalAlign) {
+      case "top":
+        posAccessor = "topLeft";
+        break;
+      case "center":
+        posAccessor = "leftCenter";
+        break;
+      case "bottom":
+        posAccessor = "bottomLeft";
+        break;
+    }
+    
     while (layoutableSubmorphs.length) {
 
       var remainingWidth = width - spacing,
@@ -855,6 +879,8 @@ export class TilingLayout extends Layout {
       }
 
       var pos;
+
+      currentRowHeight = arr.max(rowMorphs.map(m => m.bounds().extent()[normalizedHeightAccessor]));
 
       if (isHorizontal) {
         switch (align) {
@@ -876,13 +902,16 @@ export class TilingLayout extends Layout {
         }
       }
 
+      if (posAccessor == 'bottomLeft') {
+        pos = pos.addXY(0, currentRowHeight);
+      }
+
       for (let m of rowMorphs) {
-        this.changePropertyAnimated(m, 'position', pos, animate);
+        this.changePropertyAnimated(m, posAccessor, pos, animate);
         let ext = m.bounds().extent();
         pos = isHorizontal ?
           pos.addXY(spacing + ext[normalizedWidthAccessor], 0) :
           pos.addXY(0, spacing + ext[normalizedWidthAccessor]);
-        currentRowHeight = Math.max(currentRowHeight, ext[normalizedHeightAccessor]);
       }
 
       previousRowHeight += spacing + currentRowHeight;
@@ -895,13 +924,13 @@ export class TilingLayout extends Layout {
   getMinWidth() {
     var {layoutableSubmorphs, border: {left, right}} = this;
     return layoutableSubmorphs.reduce((s, m) =>
-      (m.width > s) ? m.width : s, 0) + left + right;
+      (m.bounds().width > s) ? m.bounds().width : s, 0) + left + right;
   }
 
   getMinHeight() {
     var {layoutableSubmorphs, border: {top, bottom}} = this;
     return layoutableSubmorphs.reduce((s, e) =>
-      (e.height > s) ? e.height : s, 0) + top + bottom;
+      (e.bounds().height > s) ? e.bounds().height : s, 0) + top + bottom;
   }
 
   getOptimalWidth(container) {
@@ -952,7 +981,9 @@ export class CellGroup {
 
   set morph(value) {
     const conflictingGroup = value && this.layout.getCellGroupFor(value);
-    if (conflictingGroup) conflictingGroup.morph = null;
+    if (conflictingGroup) {
+      conflictingGroup.morph = null;
+    }
     this.state.morph = value;
     this.layout.apply();
   }
@@ -1108,7 +1139,7 @@ class LayoutAxis {
       c.fixed[this.dimension] = active;
     });
     containerLength = this.containerLength;
-    if (newLength) this[this.dimension] = newLength;
+    if (newLength != undefined) this[this.dimension] = newLength;
     this.adjustOtherProportions(active)
     this.containerLength = containerLength; // force length
   }
@@ -1584,14 +1615,16 @@ export class GridLayout extends Layout {
     let columns = [];
     let groups = {};
     for (let r of arr.range(0, this.rowCount - 1)) {
-      grid.push(this.grid.row(r).items.map(item => item.group.morph ? item.group.morph.name : null));
+      grid.push(this.grid.row(r).items.map(item => item.group.state.morph ? item.group.state.morph.name || item.group.state.morph : null));
     }
     for (let r of arr.range(0, this.rowCount - 1)) {
       let row = this.grid.row(r);
       rows.push(r, {
         ...(row.fixed ? {
           fixed: row.length 
-        } : {}),
+        } : {
+          height: row.height
+        }),
         paddingTop: row.paddingTop,
         paddingBottom: row.paddingBottom,
       });
@@ -1607,8 +1640,8 @@ export class GridLayout extends Layout {
       });
     }
     for (let cell of this.cellGroups) {
-      if (cell.morph) {
-        groups[cell.morph.name] = obj.select(cell, ['align', 'resize']);
+      if (cell.state.morph) {
+        groups[typeof cell.state.morph == "string" ? cell.state.morph : cell.morph.name] = obj.select(cell, ['align', 'resize']);
       }
     }
     return { autoAssign: false, grid, rows, columns, groups }

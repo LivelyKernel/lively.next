@@ -93,9 +93,11 @@ export class Selection {
     if (range.equals(this._range)) return;
 
     this._range = range;
+    // next two ops are super expensive on deserialization
     this._goalColumn = this.textMorph.lineWrapping ?
       this.textMorph.columnInWrappedLine(this.lead) :
       this.lead.column;
+
     this._goalX = this.textMorph.charBoundsFromTextPosition(this.lead).x;
 
     this.startAnchor.position = range.start;
@@ -175,9 +177,10 @@ export class Selection {
   }
 
   selectLine(row = this.lead.row, includingLineEnd = false) {
+    this.includingLineEnd = includingLineEnd;
     this.range = {
     start: {row, column: 0},
-    end: {row: includingLineEnd ? row + 1 : row, column: includingLineEnd ? 0 : this.textMorph.getLine(row).length}};
+    end: { row, column: this.textMorph.getLine(row).length}};
     return this;
   }
 
@@ -354,6 +357,7 @@ export class MultiSelection extends Selection {
   }
 
   selectLine(row, includingLineEnd) {
+    this.includingLineEnd = includingLineEnd;
     this.defaultSelection.selectLine(row, includingLineEnd);
     return this;
   }

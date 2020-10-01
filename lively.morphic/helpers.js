@@ -1,6 +1,19 @@
 /* global System */
 import { locateClass } from "lively.serializer2";
 import { string } from "lively.lang";
+import { parseQuery } from "lively.resources";
+import { stringifyQuery } from "lively.resources/src/helpers.js";
+
+var touchInput;
+
+try {  
+  document.createEvent("TouchEvent");  
+  touchInput = true;  
+} catch (e) {  
+  touchInput = false;  
+}
+
+export var touchInputDevice = touchInput;
 
 var nameToClassMapping = nameToClassMapping || {};
 
@@ -8,10 +21,15 @@ export function pathForBrowserHistory(worldName, queryString) {
   // how does the resource map to a URL shown in the browser URL bar? used for
   // browser history
   queryString = queryString.trim();
-  if (!queryString || queryString === "?") queryString = "";
-  let basePath = "/worlds/";
-  worldName = worldName.replace(/\.json$/, "").replace(/%20/g, " ");
-  return `${basePath}${worldName}${queryString}`;
+  let query;
+  if (!queryString || queryString === "?") query = {};
+  else query = parseQuery(queryString);
+  
+  let basePath = "/worlds/load";
+  query.name = worldName.replace(/\.json$/, "").replace(/%20/g, " ");
+  // ensure the name param in the query string matches worldName
+  
+  return `${basePath}?${stringifyQuery(query)}`;
 }
 
 export function addClassMappings(mapping) {

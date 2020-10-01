@@ -1,10 +1,10 @@
 /*global System,Map,WeakMap,Shapes,Intersection*/
 import { Rectangle, Point, rect, Color, pt } from "lively.graphics";
-import { string, obj, fun, promise, arr } from "lively.lang";
-import { signal, connect, disconnect } from "lively.bindings";
+import { string, num, obj, fun, promise, arr } from "lively.lang";
+import { signal, noUpdate, connect, disconnect } from "lively.bindings";
 import bowser from 'bowser';
 
-import { morph } from "../helpers.js";
+import { morph, touchInputDevice } from "../helpers.js";
 import config from '../config.js';
 import { Morph } from '../morph.js';
 import { Selection, MultiSelection } from "./selection.js";
@@ -30,7 +30,7 @@ export class Text extends Morph {
     return new morph({
       type: 'label',
       value,
-      fontFamily: "Nunito, Helvetica Neue, Arial, sans-serif",
+      fontFamily: "IBM Plex, Helvetica Neue, Arial, sans-serif",
       fontColor: Color.almostBlack,
       fontSize: 11,
       ...props
@@ -203,9 +203,9 @@ export class Text extends Morph {
 
       tab: {
         group: "text",
-        isStyleProp: true,
         after: ["useSoftTabs", "tabWidth"],
         readOnly: true,
+        derived: true,
         get() { return this.useSoftTabs ? " ".repeat(this.tabWidth) : "\t"; }
       },
 
@@ -221,7 +221,9 @@ export class Text extends Morph {
               this.viewState._needsFit && !this._rendering &&
               !this._measuringTextBox && !!initialExtent && this.owner) {
             this._measuringTextBox = true;
-            this.directRender();
+            noUpdate(() => {
+              this.directRender();
+            })
             this._measuringTextBox = false;
           }
           return this.getProperty('extent');
@@ -327,6 +329,8 @@ export class Text extends Morph {
           return sel;
         },
         set(selOrRange) {
+          if (this._isDeserializing && this._initializedByCachedBounds)
+            this.textLayout.restore(this._initializedByCachedBounds, this);
           if (!selOrRange) {
             if (this.selection.isMultiSelection) {
               this.selection.disableMultiSelect();
@@ -364,6 +368,8 @@ export class Text extends Morph {
         },
         set(value) {
           value = (value != null) ? String(value) : "";
+          if (this._isDeserializing && this._initializedByCachedBounds)
+            this.textLayout.restore(this._initializedByCachedBounds, this);
           this.deleteText({start: {column: 0, row: 0}, end: this.document.endPosition});
           this.insertText(value, {column: 0, row: 0});
         }
@@ -399,6 +405,8 @@ export class Text extends Morph {
           return this.document.textAndAttributes;
         },
         set(textAndAttributes) {
+          if (this._isDeserializing && this._initializedByCachedBounds)
+            this.textLayout.restore(this._initializedByCachedBounds, this);
           this.replace(
             {start: {row: 0, column: 0}, end: this.documentEndPosition},
             textAndAttributes
@@ -449,7 +457,7 @@ export class Text extends Morph {
         group: "text styling",
         type: "Enum",
         values: config.text.basicFontItems,
-        defaultValue: "Nunito, Sans-Serif",
+        defaultValue: "IBM Plex Sans, Sans-Serif",
         isStyleProp: true,
         isDefaultTextStyleProp: true,
         after: ["defaultTextStyle"]
@@ -714,8 +722,8 @@ export class Text extends Morph {
     if (center !== undefined) this.center = center;
   }
 
-  __deserialize__(snapshot, objRef, pool) {
-    super.__deserialize__(snapshot, objRef);
+  __deserialize__(snapshot, objRef, serializedMap, pool) {
+    super.__deserialize__(snapshot, objRef, serializedMap, pool);
     
     this.viewState = this.defaultViewState;
     this.markers = [];
@@ -723,13 +731,16 @@ export class Text extends Morph {
     this.textLayout = new TextLayout(this);
     this.changeDocument(Document.fromString(""));
     this.ensureUndoManager();
+    if (snapshot.cachedLineBounds) {
+      this._initializedByCachedBounds = snapshot.cachedLineBounds;
+    }
     this._isDeserializing = true;
   }
 
   __after_deserialize__(snapshot, objRef) {
     super.__after_deserialize__(snapshot, objRef);
-    let lines, line, cacheEntry;
     this._isDeserializing = false;
+    
     this.whenRendered().then(() => {
        this.embeddedMorphs.forEach(m => m.top = 0);
     })
@@ -743,7 +754,8 @@ export class Text extends Morph {
       "undoManager",
       "markers",
       "textLayout",
-      "embeddedMorphMap"
+      "embeddedMorphMap",
+      this.displacingMorphMap.size ? '' : 'displacingMorphMap'
     ]);
   }
 
@@ -790,6 +802,33 @@ export class Text extends Morph {
           return m;
       })
     };
+
+    const cachedLineBounds = [];
+    for (let line of this.document.lines) {
+      // line = this.document.lines[810]
+      const lineBounds = this.textLayout.lineCharBoundsCache.get(line); 
+      if (!lineBounds) continue; 
+      const compactBounds = [];
+      let prevRect;
+      let sameRectCount = 0;
+      if (lineBounds) {
+        for (let charBounds of lineBounds) {
+          if (prevRect) {
+            if (num.roundTo(prevRect.width, .001) == num.roundTo(charBounds.width || 0, .001) && charBounds.height == prevRect.height) {
+              sameRectCount++;
+              continue
+            }
+            compactBounds.push([sameRectCount, num.roundTo(prevRect.width || 0, .001), prevRect.height || 0]);
+          } 
+          sameRectCount = 1;
+          prevRect = charBounds;
+        }
+      }
+      if (prevRect) compactBounds.push([sameRectCount, num.roundTo(prevRect.width || 0, .001), prevRect.height || 0]);
+      cachedLineBounds.push([line.row, arr.flatten(compactBounds)]);
+    }
+
+    snapshot.cachedLineBounds = cachedLineBounds;
   }
 
   spec() {
@@ -827,9 +866,9 @@ export class Text extends Morph {
         case 'scroll': viewChange = true; scrollChange = true; break;
         case 'extent': 
           viewChange = true;
-          enforceFit = !this.fixedWidth || !this.fixedHeight;
           let delta = change.prevValue.subPt(change.value);
           softLayoutChange = this.fixedWidth && !!this.lineWrapping && !!delta.x;
+          enforceFit = softLayoutChange && (!this.fixedWidth || !this.fixedHeight);
           break;
         case "wordSpacing":
         case "letterSpacing":
@@ -1572,7 +1611,8 @@ export class Text extends Morph {
           textAndAttributes,
           removedTextAndAttributes);
 
-        this.textLayout.estimateLineHeights(this, false);
+        if (!this._isDeserializing || !this._initializedByCachedBounds)
+          this.textLayout.estimateLineHeights(this, false);
         
         if (consistencyCheck)
           this.consistencyCheck();
@@ -2341,6 +2381,10 @@ export class Text extends Morph {
   }
 
   render(renderer) {
+    if (this._requestMasterStyling) {
+      this.master && this.master.applyIfNeeded(true);
+      this._requestMasterStyling = false;
+    }
     return this.textRenderer.renderMorph(this, renderer);
   }
 
@@ -2348,6 +2392,7 @@ export class Text extends Morph {
     let renderer = this.env.renderer;
     let textRenderer = this.textRenderer;
     if (renderer && textRenderer) {
+      if (renderer._stopped) return;
       renderSubTree(this, renderer);
       textRenderer.manuallyTriggerTextRenderHook(this, renderer);
     }
@@ -2816,7 +2861,7 @@ export class Text extends Morph {
   }
 
   onHoverOut(evt) {
-    if (bowser.mobile) return;
+    if (touchInputDevice) return;
     this.scrollActive = false;
     this.makeDirty();
   }

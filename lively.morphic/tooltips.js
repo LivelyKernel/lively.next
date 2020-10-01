@@ -1,10 +1,7 @@
-import { Color, pt } from "lively.graphics";
-import { connect } from "lively.bindings";
+import { pt } from "lively.graphics";
 import { Morph } from './morph.js';
 import { morph } from './helpers.js';
-import { StyleSheet } from "./style-sheets.js";
 import config from './config.js';
-import { HorizontalLayout } from './layout.js';
 
 export class TooltipViewer {
 
@@ -80,26 +77,16 @@ export class TooltipViewer {
 
 export class Tooltip extends Morph {
 
-  static get styleSheet() {
-    return new StyleSheet({
-      ".Tooltip": {
-        draggable: false,
-        fill: Color.black.withA(0.5),
-        borderRadius: 4,
-        fontColor: Color.white,
-        layout: new HorizontalLayout({spacing: 5})
-      },
-      '.Tooltip .Label': {
-        fontColor: Color.white
-      }
-    })
-  }
-
   static get properties() {
     return {
       hasFixedPosition: { defaultValue: true },
       reactsToPointer: { defaultValue: false },
       isEpiMorph: { defaultValue: true },
+      master: {
+        initialize() {
+          this.master = { auto: "styleguide://System/tooltip" }
+        }
+      },
       description: {
         after: ['submorphs'],
         derived: true,
@@ -109,8 +96,8 @@ export class Tooltip extends Morph {
         },
         set(stringOrAttributes) {
           const [descriptor] = this.submorphs;
-          descriptor.fixedWidth = stringOrAttributes.length > 40;
           descriptor.value = stringOrAttributes;
+          descriptor.fit();
         }
       },
       submorphs: {

@@ -1,6 +1,6 @@
 {
   "name": "lively.morphic",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/LivelyKernel/lively.morphic"
@@ -18,7 +18,6 @@
     "pepjs": "^0.4.3",
     "jsdom": "^9.4.0",
     "webfontloader": "^1.6.28",
-    "prismjs": "^1.6.0",
     "virtual-dom": "^2.1.1",
     "vdom-parser": "^1.4.1",
     "web-animations-js": "^2.3.1",
@@ -44,23 +43,15 @@
   "systemjs": {
     "main": "index.js",
     "map": {
-      "jsdiff": "./lib/jsdiff-3.0.0.js",
-      "dom-to-image": "./lib/dom-to-image-2.6.0.min.js",
-      "virtual-dom": "virtual-dom/dist/virtual-dom.js",
-      "bowser": "bowser/bowser.min.js",
-      "prism": "prismjs/prism.js",
-      "prism-json": "prismjs/components/prism-json.js",
-      "webfontloader": "webfontloader/1.6.28/webfontloader.js",
-      "vdom-parser": "vdom-parser/dist.js"
-    },
-    "meta": {
-      "virtual-dom/dist/virtual-dom.js": {
-        "format": "amd"
-      },
-      "bowser/bowser.min.js": {
-        "format": "global",
-        "exports": "bowser"
-      }
+      "bezier-easing": "https://jspm.dev/bezier-easing",
+      "flubber": "https://jspm.dev/flubber",
+      "jsdiff": "https://jspm.dev/jsdiff",
+      "dom-to-image": "https://jspm.dev/dom-to-image",
+      "virtual-dom": "https://jspm.dev/virtual-dom",
+      "bowser": "https://jspm.dev/bowser@1.4.1",
+      "webfontloader": "https://jspm.dev/webfontloader",
+      "vdom-parser": "https://jspm.dev/vdom-parser",
+      "web-animations-js": "https://jspm.dev/web-animations-js"
     }
   },
   "scripts": {

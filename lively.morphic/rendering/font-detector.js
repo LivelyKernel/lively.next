@@ -57,6 +57,10 @@ export default class FontDetector {
     if (!s.parentNode) {
       let w = this.document.createElement("div");
       w.style.position = 'absolute';
+      w.style.width = '100%';
+      w.style.overflow = 'hidden';
+      w.style['pointer-events'] = 'none';
+      w.style['-webkit-user-select'] = 'none';
       w.appendChild(s); 
       h.appendChild(w);
     }
@@ -92,8 +96,9 @@ export default class FontDetector {
         span.style.fontFamily = font + ',' + baseFonts[index]; // name of the font along with the base font for fallback.
         let matched = (span.offsetWidth != defaultWidth[baseFonts[index] + '@' + weight]
                    || span.offsetHeight != defaultHeight[baseFonts[index] + '@' + weight]);
-        if (matched)
+        if (matched) {
           return true;
+        }
       }
       return false;
     } finally {

@@ -6,6 +6,8 @@ import config from "../config.js";
 
 var debug = !!config.onloadURLQuery["debug-font-metric"];
 
+const checkTimeout = 1000;
+
 export default class FontMetric {
 
   static default() {
@@ -40,6 +42,7 @@ export default class FontMetric {
   constructor() {
     this.charMap = {};
     this.cachedBoundsInfo = {};
+    this.supportedFontCache = {};
     this.element = null;
     this.isProportionalCache = {};
   }
@@ -104,7 +107,7 @@ export default class FontMetric {
 
     return {height, width}
   }
-
+  
   charBoundsFor(style, str) {
     let nCols = str.length,
         bounds = new Array(nCols),
@@ -158,9 +161,10 @@ export default class FontMetric {
   isProportional(fontFamily) {
     if (this.isProportionalCache.hasOwnProperty(fontFamily))
       return this.isProportionalCache[fontFamily];
+    //if (fontFamily && fontFamily.includes('Font Awesome')) return false;
     let style = { fontFamily, fontSize: 12 },
         w_width = this.sizeFor(style, 'w').width,
-        i_width = this.sizeFor(style, 'i').width;
+        i_width = this.sizeFor(style, 'i').width; // this fails for glyph unicode languages like font awesome
     return this.isProportionalCache[fontFamily] = w_width !== i_width;
   }
 
@@ -190,7 +194,19 @@ export default class FontMetric {
 
   isFontSupported(font, weight = 'normal') {
     let fd = this.fontDetector || (this.fontDetector = new FontDetector(this.element.ownerDocument));
-    return fd.isFontSupported(font, weight);
+    
+    if (this.supportedFontCache[font + '-' + weight]) {
+      let { ts, value } = this.supportedFontCache[font + '-' + weight];
+      if (Date.now() - ts < checkTimeout) return value;
+    }
+    
+    const value = fd.isFontSupported(font, weight)
+    
+    this.supportedFontCache[font + '-' + weight] = {
+      ts: Date.now(), value,
+    };
+    
+    return value;
   }
 
   defaultCharExtent(morph, styleOpts, rendertTextLayerFn) {

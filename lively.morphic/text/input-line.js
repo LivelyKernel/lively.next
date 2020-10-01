@@ -2,11 +2,24 @@
 // import config from "../config.js";
 import { obj, arr, num } from "lively.lang";
 import { Rectangle, rect, Color, pt } from "lively.graphics";
-import { connect, signal, disconnect } from "lively.bindings"; // for makeInputLine
+import { connect, noUpdate, signal, disconnect } from "lively.bindings"; // for makeInputLine
 import { Text } from "./morph.js"
 import { Range } from "./range.js";
+import { HTMLMorph } from "../html-morph.js"
+import { Icon } from "./icons.js";
+import { morph } from "../helpers.js"
 
 export default class InputLine extends Text {
+
+  /*
+    rms 19.02.2020: The fact that InputLine merely extends the TextMorph causes issues when
+                    these are used as part of a form. Forms do not take into account span
+                    elements which is however the sole tag being used to render text morphs.
+                    This is especially troublesome on mobile devices where the input line is
+                    not properly scrolled into view when selected.
+                    It is therefore advised to switch to an implementation based on the HTML
+                    morph analogous to the password input line below.
+  */
 
 /*
 
@@ -98,9 +111,9 @@ export default class InputLine extends Text {
         set(value) {
           this.setProperty("label", value);
           if (this.textString.startsWith(value)) return;
-          disconnect(this, 'textChange', this, 'onInputChanged');
-          this.textString = value + this.input;
-          connect(this, 'textChange', this, 'onInputChanged');
+          noUpdate(() => {
+            this.textString = value + this.input;
+          });
         }
       },
 
@@ -189,11 +202,39 @@ export default class InputLine extends Text {
 
   focus() {
     this.fixCursor();
-    return super.focus();
+    super.focus();
+  }
+
+  onBlur(evt) {
+    super.onBlur(evt);
+    this.updatePlaceholder();
   }
 
   fitToLineHeight() {
     this.height = this.defaultLineHeight + this.padding.top() + this.padding.bottom();
+  }
+
+  // this.indicateError('hello')
+  // this.clearError()
+
+  async indicateError(message) {
+    this.borderWidth = 3;
+    this.borderColor = Color.red;
+    this._errorIcon = this.addMorph(this._errorIcon || morph({
+      type: 'label',
+      value: [' ' + message, {fontSize: 18}, ' ', {}, ...Icon.textAttribute('exclamation-circle', {paddingTop: '2px'})],
+      fontSize: 20, fontColor: Color.red, opacity: 0, reactsToPointer: false, fill: Color.white.withA(.9)
+    }));
+    await this.whenRendered();
+    this._errorIcon.opacity = 1;
+    this._errorIcon.rightCenter = this.innerBounds().insetBy(10).rightCenter();
+  }
+
+  clearError() {
+    if (!this._errorIcon) return;
+    this._errorIcon && this._errorIcon.remove();
+    this._errorIcon = null;
+    this.borderColor = Color.transparent;
   }
 
   updatePlaceholder() {
@@ -235,7 +276,13 @@ export default class InputLine extends Text {
   }
   onInputChanged(change) {
     signal(this, "inputChanged", change);
+    this.clearError();
     this.updatePlaceholder();
+  }
+  
+  onMouseDown(evt) {
+    super.onMouseDown(evt);
+    this._errorIcon && this._errorIcon.remove();    
   }
 
   deleteText(range) {
@@ -379,10 +426,6 @@ export default class InputLine extends Text {
   }
 }
 
-
-
-import { HTMLMorph } from "../html-morph.js"
-
 // var i = new PasswordInputLine().openInWorld();
 // i.remove();
 
@@ -468,6 +511,11 @@ export class PasswordInputLine extends HTMLMorph {
     });
   }
 
+  onMouseDown(evt) {
+    super.onMouseDown(evt);
+    this._errorIcon && this._errorIcon.remove();
+  }
+
   onAfterRender(node) {
     this.ensureInputNode();
   }
@@ -517,8 +565,31 @@ export class PasswordInputLine extends HTMLMorph {
     this._originalShadow = null;
   }
 
+  // this.indicateError('hello')
+  // this.clearError()
+
+  async indicateError(message) {
+    this.borderWidth = 3;
+    this.borderColor = Color.red;
+    this._errorIcon = this.addMorph(this._errorIcon || morph({
+      type: 'label',
+      value: [' ' + message, {fontSize: 18}, ' ', {}, ...Icon.textAttribute('exclamation-circle', {paddingTop: '2px'})],
+      fontSize: 20, fontColor: Color.red, opacity: 0, reactsToPointer: false, fill: Color.white.withA(.9)
+    }));
+    await this.whenRendered();
+    this._errorIcon.opacity = 1;
+    this._errorIcon.rightCenter = this.innerBounds().insetBy(10).rightCenter();
+  }
+
+  clearError() {
+    if (!this._errorIcon) return;
+    this._errorIcon && this._errorIcon.remove();
+    this._errorIcon = null;
+    this.borderColor = Color.transparent;
+  }
+
   acceptInput() { var i = this.input; signal(this, "inputAccepted", i); return i; }
-  onInputChanged(change) { signal(this, "inputChanged", change); }
+  onInputChanged(change) { this.clearError(); signal(this, "inputChanged", change); }
 
   async updateHtml(input) {
     // await this.updateHtml(this.input)
@@ -590,3 +661,4 @@ export class PasswordInputLine extends HTMLMorph {
   }
 
 }
+

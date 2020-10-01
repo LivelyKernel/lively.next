@@ -1,6 +1,7 @@
 /*global show*/
 import { promise } from "lively.lang";
 import bowser from "bowser";
+import { touchInputDevice } from '../helpers.js';
 
 const placeholderValue = "\x01\x01",
       placeholderRe = new RegExp("\x01", "g");
@@ -27,9 +28,11 @@ export default class TextInput {
     }
   }
 
-  install(newRootNode) {
+  install(newRootNode, world) {
     let domState = this.domState,
         {isInstalled, rootNode} = domState;
+
+    this.world = world;
 
     if (isInstalled) {
       if (rootNode === newRootNode) return;
@@ -72,7 +75,7 @@ export default class TextInput {
       /*with pre-line chrome inserts &nbsp; instead of space*/
       white-space: pre!important;`);
 
-    if (bowser.tablet || bowser.mobile) {
+    if (touchInputDevice) {
       textareaNode.setAttribute("x-palm-disable-auto-cap", true);
     }
 
@@ -85,7 +88,7 @@ export default class TextInput {
     textareaNode.value = "";
     newRootNode.insertBefore(textareaNode, newRootNode.firstChild);
 
-    if (bowser.tablet || bowser.mobile) {
+    if (touchInputDevice) {
       textareaNode.setAttribute('disabled', true);
       textareaNode.style.setProperty('transform', 'scale(0)');
     }
@@ -158,7 +161,7 @@ export default class TextInput {
     var node = this.domState.textareaNode;
     if (!node) return;
 
-    if (bowser.tablet || bowser.mobile) {
+    if (touchInputDevice) {
        /*
         On mobile we can not simply focus arbitrarliy, but only
         when a morph that accepts actual text input is focused
@@ -170,11 +173,13 @@ export default class TextInput {
       if (morph && morph.isText && !morph.readOnly) {
         node.removeAttribute('disabled');
       } else if (morph && !morph.isText) {
-        node.setAttribute('disabled', true);
+        //node.setAttribute('disabled', true);
       }
     }
     
-    node.ownerDocument.activeElement !== node && node.focus();
+    if (!morph || !morph.stealFocus) {
+      node.ownerDocument.activeElement !== node && node.focus();
+    }
 
     if (bowser.firefox) // FF needs an extra invitation...
       Promise.resolve().then(() => node.ownerDocument.activeElement !== node && node.focus());
@@ -182,14 +187,14 @@ export default class TextInput {
     if (morph && morph.isText && morph.focusable) {
       // need this even if node === activeElement
       // to bring up virtual keyboard on iPad
-      if (bowser.tablet || bowser.mobile) node.focus();
+      if (touchInputDevice) node.focus();
       this.ensureBeingAtCursorOfText(morph);
     } else if (world) this.ensureBeingInVisibleBoundsOfWorld(world);
   }
 
   blur() {
     var node = this.domState.textareaNode;
-    if (bowser.tablet || bowser.mobile) {
+    if (touchInputDevice) {
        node.setAttribute('disabled', true);
     }
 
@@ -274,11 +279,19 @@ export default class TextInput {
       On mobile browsers, the continuous capturing of keyboard events
       causes the keyboard to show up at all times. We therefore disable
       this behavior for either mobile or tablets
+
+      This refocusing breaks the text selection of plain html.
+      Stop that focusing if the morph explicitly steals the focus.
+      Should be handled with care...
     */
     setTimeout(() => {
       var {textareaNode, rootNode} = this.domState || {};
-      if (rootNode && document.activeElement === rootNode)
-        !(bowser.mobile || bowser.tablet || lively.FreezerRuntime) && textareaNode && textareaNode.focus();
+      if (
+        rootNode && document.activeElement === rootNode
+        && !(this.world.focusedMorph && this.world.focusedMorph.stealFocus) 
+        && !(touchInputDevice || lively.FreezerRuntime)) {
+          textareaNode && textareaNode.focus();
+        }
     });
   }
 
@@ -286,8 +299,11 @@ export default class TextInput {
 
   onRootNodeFocus(evt) {
     var {textareaNode, rootNode} = this.domState || {};
-    if (evt.target === textareaNode || evt.target === rootNode)
-      this.focus();
+    if (evt.target === textareaNode || evt.target === rootNode) {
+      if (!(this.world.focusedMorph && this.world.focusedMorph.stealFocus))
+        this.focus();
+    }
+      
     this.inputState.composition = null;
   }
 

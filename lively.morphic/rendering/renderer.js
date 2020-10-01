@@ -1,5 +1,5 @@
 /*global System,WeakMap*/
-import { h, diff, patch, create as createNode } from "virtual-dom";
+import vdom from "virtual-dom";
 import { promise, arr, tree, obj, string } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
 import {
@@ -14,6 +14,8 @@ import {
 import { Transform, pt } from "lively.graphics";
 import { getSvgVertices } from "./property-dom-mapping.js";
 import config from '../config.js';
+
+const { h, diff, patch, create: createNode } = vdom;
 
 const svgNs = "http://www.w3.org/2000/svg";
 
@@ -51,9 +53,18 @@ export class Renderer {
     this.requestAnimationFrame = domEnvironment.window.requestAnimationFrame.bind(domEnvironment.window);
   }
 
-  clear() {
-    this.stopRenderWorldLoop();
-    this.domNode && this.domNode.parentNode.removeChild(this.domNode);
+  async clear() {
+    let domNode = this.domNode;
+    try {
+      await this.stopRenderWorldLoop(); 
+    } catch (err) {
+      
+    }
+    if (domNode) {
+      let parent = domNode.parentNode;
+      parent.removeChild(domNode);
+      [...this.fixedMorphNodeMap.values()].forEach(n => parent.removeChild(n));
+    }
     this.domNode = null;
     this.renderMap = new WeakMap();
   }
@@ -62,25 +73,30 @@ export class Renderer {
     return promise.waitFor(3000, () => this.domNode.ownerDocument)
       .then(doc => Promise.all([
         addOrChangeCSSDeclaration("lively-morphic-css", defaultCSS, doc),
-        addOrChangeLinkedCSS("lively-font-awesome", config.css.fontAwesome, doc),
-        addOrChangeLinkedCSS("lively-font-inconsolata", config.css.inconsolata, doc)]));
+        addOrChangeLinkedCSS("lively-ibm-plex", config.css.ibmPlex),
+        addOrChangeLinkedCSS("lively-font-awesome", config.css.fontAwesome, doc, false),
+        addOrChangeLinkedCSS("lively-font-inconsolata", config.css.inconsolata, doc, false)]));
   }
 
   startRenderWorldLoop() {
+    this._stopped = false;
+    this._renderWorldLoopLater = null;
     this.renderWorldLoopProcess = this.requestAnimationFrame(() => this.startRenderWorldLoop());
     return this.renderStep();
   }
 
-  stopRenderWorldLoop() {
+  async stopRenderWorldLoop() {
+    this._stopped = true;
     this.domEnvironment.window.cancelAnimationFrame(this.renderWorldLoopProcess);
     this.renderWorldLoopProcess = null;
     this.domEnvironment.window.cancelAnimationFrame(this.renderWorldLoopLater);
     this.renderWorldLoopLater = null;
+    await promise.waitFor(2000, () => !this.worldMorph.needsRerender());
   }
 
   renderLater(n = 10) {
     this.renderWorldLoopLaterCounter = n;
-    if (this.renderWorldLoopLater) return;
+    if (this.renderWorldLoopLater || this._stopped) return;
     this.renderWorldLoopLater = this.requestAnimationFrame(() => {
       this.renderWorldLoopLater = null;
       if (this.renderWorldLoopLaterCounter > 0)
@@ -195,7 +211,10 @@ export class Renderer {
   renderSelectedSubmorphs(morph, submorphs) {
     let {borderWidthLeft, borderWidthTop, origin: {x: oX, y: oY}} = morph,
         i = submorphs.length - 1, renderedSubmorphs = new Array(i + 1);
-    for (; i >= 0; i--) renderedSubmorphs[i] = this.render(submorphs[i]);
+    for (; i >= 0; i--) {
+      submorphs[i].__stackIdx__ = i;
+      renderedSubmorphs[i] = this.render(submorphs[i]);
+    }
     return h("div", {
       style: {
         position: "absolute",
@@ -498,6 +517,8 @@ export class Renderer {
             namespace: svgNs, version: "1.1",
             style: {
               position: "absolute",
+             'stroke-linejoin': morph.cornerStyle || 'mint',
+             'stroke-linecap': morph.endStyle || 'round',
               // "pointer-events": controlPoints ? "" : "none",
               overflow: "visible"
             },

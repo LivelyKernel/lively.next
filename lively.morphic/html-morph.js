@@ -4,7 +4,7 @@ import { pt } from "lively.graphics";
 import { Morph } from "./morph.js";
 import vdom from "virtual-dom";
 import { addOrChangeCSSDeclaration } from "./rendering/dom-helper.js";
-import css from "lively.ide/css/parser.js";
+import css from "https://dev.jspm.io/css";
 var { diff, patch, h, create: createElement } = vdom
 
 // see https://github.com/Matt-Esch/virtual-dom/blob/master/docs/widget.md
@@ -36,6 +36,9 @@ class CustomVNode {
     // here we replace the placeholder node with our custom node, this only
     // needs to happen when we create the DOM node for the entire morph
     domNode.childNodes[0].appendChild(this.morph.domNode);
+    // mount the style node
+    if (this.morph.cssDeclaration)
+      this.morph.ensureCSSDeclaration();
     return domNode;
   }
 
@@ -51,6 +54,10 @@ class CustomVNode {
   }
 
   destroy(domNode) { 
+    // clear the css node of the morph
+    let doc = this.renderer.domEnvironment.document,
+        style = doc.getElementById("css-for-" + this.morph.id);
+    if (style) style.remove();
     console.log(`[HTMLMorph] node of ${this.morph.name} gets removed from DOM`); 
   }
 }
@@ -72,6 +79,7 @@ export class HTMLMorph extends Morph {
 
       html: {
         after: ["cssDeclaration"],
+        isStyleProp: true,
         initialize() { this.html = this.defaultHTML; },
         get() { return this.domNode.innerHTML; },
         set(value) {
@@ -126,6 +134,7 @@ export class HTMLMorph extends Morph {
       },
 
       cssDeclaration: {
+        isStyleProp: true,
         set(val) {
           this.setProperty("cssDeclaration", val);
           if (!val) {
@@ -133,16 +142,7 @@ export class HTMLMorph extends Morph {
                 style = doc.getElementById("css-for-" + this.id);
             if (style) style.remove();
           } else {
-            try {
-              let parsed = css.parse(val);
-              // prepend morph id to each rule so that css is scoped to morph
-              parsed.stylesheet.rules.forEach(r => {
-                if (r.selectors) r.selectors = r.selectors.map(ea => `#${this.id} ${ea}`);
-              });
-              addOrChangeCSSDeclaration("css-for-" + this.id, css.stringify(parsed));
-           } catch(err) {
-             console.error(`Error setting cssDeclaration of ${this}: ${err}`);
-           }
+            this.ensureCSSDeclaration();
           }
         }
       }
@@ -150,6 +150,22 @@ export class HTMLMorph extends Morph {
   }
 
   get isHTMLMorph() { return true; }
+
+  ensureCSSDeclaration() {
+    try {
+      let parsed = css.parse(this.cssDeclaration);
+      // prepend morph id to each rule so that css is scoped to morph
+      this.whenRendered().then(() => {
+        // wait until morphs id has been determined
+        parsed.stylesheet.rules.forEach(r => {
+          if (r.selectors) r.selectors = r.selectors.map(ea => `#${this.id} ${ea}`);
+        });
+        addOrChangeCSSDeclaration("css-for-" + this.id, css.stringify(parsed))
+      });
+    } catch(err) {
+      console.error(`Error setting cssDeclaration of ${this}: ${err}`);
+    }
+  }
 
   get defaultHTML() {
      return `

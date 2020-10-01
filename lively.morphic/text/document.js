@@ -108,7 +108,8 @@ class TreeNode {
 
 
     var maxWidth = children.length ? Math.max.apply(null, arr.pluck(children, "width")) : 0;
-    if (Number.parseInt(maxWidth) != Number.parseInt(width))
+    var hasEstimatedLine = children.find(child => child.isLine && child.hasEstimatedExtent);
+    if (hasEstimatedLine ? Number.parseInt(maxWidth) > Number.parseInt(width) : Number.parseInt(maxWidth) != Number.parseInt(width))
       report.push({error: `max width of children of ${this} is not node width: ${maxWidth} != ${width}`});
 
     var max = isLeaf ? maxLeafSize : maxNodeSize,
@@ -872,7 +873,7 @@ export class Line extends TreeNode {
     let {height, width, parent} = this;
     this.width = newWidth;
     this.height = newHeight;
-    this.hasEstimatedExtent = isEstimated;
+    this.hasEstimatedExtent = isEstimated
     if (width !== newWidth || height !== newHeight) {
       let heightDelta = newHeight - height;
       while (parent) {
@@ -889,6 +890,7 @@ export class Line extends TreeNode {
           }
           parent.width = parentWidth;
         }
+        
         parent = parent.parent;
       }
     }
