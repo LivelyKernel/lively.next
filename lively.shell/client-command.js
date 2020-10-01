@@ -108,7 +108,9 @@ export default class ClientCommand extends CommandInterface {
 
 
     var {data: {status, error, pid}} = await l2lClient.sendToAndWait(l2lClient.trackerId,
-                                        "lively.shell.spawn", {command, env, cwd, stdin});
+                                        "lively.shell.spawn", {command, env, cwd, stdin}, {
+                                          ackTimeout: 30 * 1000,
+                                        });
 
     if (error) {
       debug && console.error(`[${this}] error at start: ${error}`);

@@ -5,12 +5,16 @@ import { string, promise, arr, obj } from "lively.lang";
 
 export default class ShellClientResource extends Resource {
 
-  static get defaultL2lClient() { return this._defaultL2lClient; }
-  static set defaultL2lClient(l2lClient) { this._defaultL2lClient = l2lClient; }
+  static get defaultL2lClient() { return this._defaultL2lClient || _defaultL2LClient; }
+  static set defaultL2lClient(l2lClient) { this._defaultL2lClient = _defaultL2LClient = l2lClient; }
 
-  constructor(url, l2lClient = this.constructor.defaultL2lClient, options = {}) {
+  constructor(url, l2lClient, options = {}) {
     super(url);
-    this.options = {...options, l2lClient};  // passed to commands
+    this.options = {...options, l2lClient: l2lClient || this.constructor.defaultL2lClient};  // passed to commands
+  }
+
+  newResource(url) {
+    return new this.constructor(url, this.options.l2lClient, this.options);
   }
 
   read() {
@@ -49,6 +53,24 @@ export default class ShellClientResource extends Resource {
     });
   }
 
+  async gzip(content) {
+    // requires gzip to be installed on server!
+    var cmd = runCommand(`gzip > "${this.url}"`, {stdin: String(content), ...this.options});
+    return cmd.whenDone().then(() => {
+      if (cmd.exitCode) throw new Error(`Gzip compression of ${this.url} failed: ${cmd.stderr}`);
+      return this;
+    });
+  }
+
+  async brotli(content) {
+    // requires brotli to be installed on server!
+    var cmd = runCommand(`brotli > "${this.url}"`, {stdin: String(content), ...this.options});
+    return cmd.whenDone().then(() => {
+      if (cmd.exitCode) throw new Error(`Brotli compression of ${this.url} failed: ${cmd.stderr}`);
+      return this;
+    });
+  }
+
   async readProperties() {
     var info = await fileInfo(this.url, this.options);
     this.assignProperties(obj.dissoc(info, ["fileName", "path", "rootDirectory"]));
@@ -79,6 +101,8 @@ export default class ShellClientResource extends Resource {
   }
 
 }
+
+var _defaultL2LClient;
 
 export var resourceExtension = {
   name: "shell-client",
