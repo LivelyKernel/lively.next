@@ -17,5 +17,13 @@
       "wasm-flate": "https://unpkg.com/wasm-flate@0.1.11-alpha/dist/bootstrap.js",
       "semver": "https://dev.jspm.io/semver"
     }
+  },
+  "lively": {
+    "ide": {
+      "exclude": [
+        "loading-screen",
+        "dashboard"
+      ]
+    }
   }
 }

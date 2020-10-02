@@ -168,6 +168,7 @@ export function runtimeDefinition() {
   
   G.lively.FreezerRuntime = {
     global: G,
+    location: G.document && G.document.location.href.split('?')[0],
     version, registry, globalModules,
     get(moduleId, recorder = true) {
       if (moduleId && moduleId.startsWith('@')) return this.globalModules[moduleId];
@@ -210,7 +211,7 @@ export function runtimeDefinition() {
       return localName;
     },
     loadObjectFromPartsbinFolder(name) {
-      var location = document.location.href.split('?')[0];
+      var location = this.location;
       var r = G.lively.resources.resource(location);
       if (!r.isDirectory()) r = r.parent();
       return r.join(`dynamicParts/${name}.json`).readJson().then(snapshot => {
@@ -631,4 +632,7 @@ export function runtimeDefinition() {
     }
     
   };
+
+  G.loadCompiledFrozenPart = G.lively.FreezerRuntime.loadObjectFromPartsbinFolder.bind(G.lively.FreezerRuntime);
+  
 }
