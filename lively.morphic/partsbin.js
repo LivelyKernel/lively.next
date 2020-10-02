@@ -409,9 +409,7 @@ class PartResource extends Resource {
         delete m._parametrizedProps;
     }, m => m.master && m != part);
     part.master = master;
-    part.withAllSubmorphsDo(m => {
-      if (m.master) m.master.applyIfNeeded(true);
-    });
+    part.master.applyIfNeeded(true); // apply before opening in world
     return part;
   }
 }

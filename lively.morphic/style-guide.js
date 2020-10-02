@@ -600,7 +600,9 @@ class StyleGuideResource extends Resource {
     
     component._resourceHandle = this;
 
-    if (component.master) await component.master.applyIfNeeded(true);
+    await Promise.all(component
+      .withAllSubmorphsSelect(m => m.master)
+      .map(m => m.master.applyIfNeeded(true)))
     
     return Promise.resolve(component);
   }
