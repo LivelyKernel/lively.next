@@ -22,7 +22,7 @@ export default class Terminal extends Morph {
   static open(options = {}) {
     var term = new this(options),
         winOpts = {name: "ShellTerminal window", title: options.title || "Terminal"},
-        win = term.openInWindow(winOpts).activate();
+        win = term.openInWindow(winOpts);
     return win;
   }
 
