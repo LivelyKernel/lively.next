@@ -1083,14 +1083,9 @@ export class LivelyWorld extends World {
 
   handleHaloPreview(evt) {
     if (this._showHaloPreview) {
-      let target = this.firstHand.morphBeneath(evt.positionIn(this));
-      if (target && target.styleClasses.includes('HaloPreview')) {
-        target = target.morphBeneath(evt.positionIn(this));
-      }
-      if (target && [target, ...target.ownerChain()].find(m => !m.visible)) {
-        target = target.morphBeneath(evt.positionIn(this));
-        if ([target, ...target.ownerChain()].find(m => !m.visible)) target = null;
-      }
+      let target = this.morphsContainingPoint(evt.positionIn(this)).filter(m => {
+        return m.halosEnabled && [m, ...m.ownerChain()].every(m => m.visible && m.opacity > 0 && !m.styleClasses.includes('HaloPreview'))
+      })[0];
       this.showHaloPreviewFor(target);
     }
   }
