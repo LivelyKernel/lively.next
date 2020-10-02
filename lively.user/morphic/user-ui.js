@@ -688,6 +688,7 @@ export class UserFlap extends Morph {
   get isMaximized() { return this.submorphs.length > 3; }
 
   onLoad() {
+    if (this.isComponent) return;
     this.showUser(this.currentUser());
   }
 
@@ -746,7 +747,7 @@ export class UserFlap extends Morph {
     this.showUser(evt.user || {name: "???"}, false);
   }
 
-  onWorldResize(evt) { this.alignInWorld(); }
+  onWorldResize(evt) { !this.isComponent && this.alignInWorld(); }
 
   relayout() { this.alignInWorld(); }
 
