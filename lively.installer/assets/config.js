@@ -27,6 +27,7 @@ var config = {
       "lively.server/plugins/objectdb.js",
       "lively.server/plugins/pdf-printer.js",
       "lively.server/plugins/subserver.js",
+      "lively.server/plugins/components-browser.js",
       "lively.headless/subserver.js"
     ]
   }

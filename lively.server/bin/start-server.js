@@ -2,6 +2,7 @@
 ':' //; exec "$(command -v nodejs || command -v node)" "$0" "$@"
 
 var start = require("../index.js");
+//var start = require("./server.min.js");
 
 var parseArgs = require('minimist'),
     defaultRootDirectory = process.cwd(),

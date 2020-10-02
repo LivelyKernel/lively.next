@@ -14,6 +14,8 @@ let s = LivelyServer.servers.values().next().value;
 let p = s.findPlugin("world-loading");
 p.resetHTMLCache();
 
+p.handleRequest
+
 */
 
 export default class WorldLoadingPlugin {
@@ -59,7 +61,7 @@ export default class WorldLoadingPlugin {
     }
     return html.replace("<!--META-->", tagMarkup.join("\n"));
   }
-
+  
   async handleRequest(req, res, next) {
     let [url, query] = req.url.split("?");
     query = query ? "?" + query : "";
@@ -136,24 +138,35 @@ export default class WorldLoadingPlugin {
       console.log(`[report-world-load] ${message} ${ip}`);
       res.end();
       return;
-
-    } else if (url.startsWith("/worlds")) {
-
-      let parsedUrl = parseUrl(url, true),
-          [_, worldName] = parsedUrl.pathname.match(/^\/worlds\/?(.*)/),
-          htmlFile = worldName ? "morphic.html" : "static-world-listing.html",
-          html = (useCache && this.cachedHTML[htmlFile]) || 
-                 (this.cachedHTML[htmlFile] = (await this.readFile(htmlFile)).replace('<!--AUTH_SERVER_URL-->', 
-                                                                                      `<script> window.__AUTH_SERVER_URL__ = "${this.authServerURL}"; </script>`));
-          
-      if (worldName) {
-        let withMeta = `${htmlFile}-for-${worldName}`;
-        html = (useCache && this.cachedHTML[withMeta]) || (this.cachedHTML[withMeta] = this.addMeta(html, worldName, parsedUrl));
+      
+    } else if (url.startsWith('/worlds')) {
+      if (['/worlds', '/worlds/'].includes(url) && req.method.toUpperCase() === "GET") {
+         res.writeHead(301,  {location: "/dashboard/"});
+         res.end();
+         return;
       }
 
-      res.setHeader('content-type', 'text/html');
-      res.end(html);
+      // if there is stuff after this, it has got to be a request by the loaded frozen part
+      let parsedUrl = parseUrl(url, true);
+      let [_, sub] = parsedUrl.pathname.match(/^\/worlds\/?(.*)/);
+      req.url = sub == 'load' ?
+        url.replace('/worlds/load', '/lively.freezer/loading-screen/index.html') :
+        url.replace('/worlds', '/lively.freezer/loading-screen');
+      // redirect to world loading screen
+      next();
+    } else if (url.startsWith('/dashboard')) {
+      if (url === '/dashboard' && req.method.toUpperCase() === "GET") {
+         res.writeHead(301,  {location: "/dashboard/"});
+         res.end();
+         return;
+      }
 
+      let parsedUrl = parseUrl(url, true);
+      let [_, sub] = parsedUrl.pathname.match(/^\/dashboard\/?(.*)/);
+      req.url = url.replace('/dashboard', '/lively.freezer/dashboard');
+      if (!sub) req.url += '/index.html';
+      // redirect to dashboard
+      next();      
     } else {
       next();
     }

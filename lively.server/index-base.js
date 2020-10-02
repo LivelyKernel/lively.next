@@ -1,11 +1,10 @@
 /*global process,require,__dirname,module*/
-require("systemjs");
-const modules = require("lively.modules");
-const resource = lively.resources.resource;
-require("socket.io");
-const util = require('util');
-const winston = require("winston")
-
+import "https://jspm.dev/npm:systemjs@0.21.6!cjs";
+import modules from "lively.modules";
+import { resource } from "lively.resources";
+import "https://jspm.dev/socket.io";
+import util from 'https://jspm.dev/util';
+import winston from "https://jspm.dev/winston";
 
 const defaultServerDir = __dirname;
 var livelySystem;
@@ -17,7 +16,7 @@ var config = {
   plugins: []
 };
 
-module.exports = function start(hostname, port, configFile, rootDirectory, serverDir) {
+export default function start(hostname, port, configFile, rootDirectory, serverDir) {
   config.rootDirectory = rootDirectory || process.cwd();
   config.serverDir = serverDir || defaultServerDir;
   setupLogger();
@@ -35,13 +34,7 @@ module.exports = function start(hostname, port, configFile, rootDirectory, serve
     .then(vm => lively.vm = vm)
     .then(() => livelySystem.import("lively.classes"))
     .then(klass => lively.classes = klass)
-    .then(() => livelySystem.import('lively.modules'))
-    .then(modules => {
-      // migrate the system over 
-      modules.changeSystem(livelySystem);
-      modules.unwrapModuleResolution();
-      modules.wrapModuleResolution();
-    }).then(() =>
+    .then(() =>
       silenceDuring(
         // we use "GLOBAL" as normally declared var, nodejs doesn't seem to care...
         data => !String(data).includes("DeprecationWarning: 'GLOBAL'"),
@@ -120,3 +113,4 @@ function startServer(serverMod, config) {
         .catch(err => { console.error(`Error loading plugin ${path}`); throw err; }))
   ).then(() => serverMod.start(serverConfig));
 }
+
