@@ -514,7 +514,7 @@ export class List extends Morph {
       scrollable: {
         derived: true,
         get() {
-          return this.padding.top() + this.itemMorphs.length * this.itemHeight > this.height;
+          return this.padding.top() + this.items.length * this.itemHeight > this.height;
         }
       },
 
