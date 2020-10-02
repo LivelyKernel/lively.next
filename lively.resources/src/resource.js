@@ -101,10 +101,11 @@ export default class Resource {
     if (this.isRoot()) return this.asFile().url;
     return this.url.slice(0, this.url.length - this.path().length);
   }
-
+  
   parent() {
+    // drops the query
     return this.isRoot() ? null :
-      this.newResource(this.url.replace(slashEndRe, "").split("/").slice(0, -1).join("/") + "/");
+      this.newResource(this.url.split("?")[0].replace(slashEndRe, "").split("/").slice(0, -1).join("/") + "/");
   }
 
   parents() {
