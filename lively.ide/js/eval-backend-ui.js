@@ -204,7 +204,7 @@ export default class EvalBackendChooser {
   buildEvalBackendDropdownFor(morph) {
     var btn = new EvalBackendButton({
       name: "eval backend button",
-      master: { auto: "styleguide://style guide/buttons/light"},
+      master: { auto: "styleguide://System/buttons/light"},
       fontSize: 11,
       height: 20,
       target: morph,
