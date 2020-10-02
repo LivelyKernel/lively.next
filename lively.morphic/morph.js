@@ -776,7 +776,7 @@ export class Morph {
       this._parametrizedProps.extent = this.extent;
     if (props.layout) this.layout = props.layout;
 
-    if (typeof this.onLoad === "function") this.onLoad();
+    if (typeof this.onLoad === "function" && !this.isComponent) this.onLoad();
   }
 
   get __serialization_id_property__() { return "_id"; }

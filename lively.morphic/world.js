@@ -11,6 +11,8 @@ import { TooltipViewer, Tooltip } from "./tooltips.js";
 import { loadWorldFromURL, loadWorldFromDB, loadWorldFromCommit, loadWorld } from "./world-loading.js";
 import { touchInputDevice } from "./helpers.js";
 import { UserRegistry } from "lively.user";
+import { loadMorphFromSnapshot } from "lively.morphic";
+import { emit } from "lively.notifications/index.js";
 
 export class World extends Morph {
 
@@ -65,6 +67,10 @@ export class World extends Morph {
 
   static loadFromDB(name, ref, oldWorld = this.defaultWorld(), options = {}) {
     return loadWorldFromDB(name, ref, oldWorld, options);
+  }
+
+  static async loadFromResource(res, oldWorld = this.defaultWorld(), options = {}) {
+    return await loadWorld(await loadMorphFromSnapshot(await res.readJson()), oldWorld, options);
   }
 
   constructor(props) {

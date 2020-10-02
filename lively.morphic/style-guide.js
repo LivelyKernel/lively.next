@@ -4,6 +4,7 @@ import { pt } from "lively.graphics";
 import MorphicDB from "./morphicdb/db.js";
 import { ObjectPool, normalizeOptions } from "lively.serializer2";
 import { deserializeMorph, loadPackagesAndModulesOfSnapshot } from "./serialization.js";
+import { subscribeOnce } from "lively.notifications/index.js";
 
 /*
 
@@ -122,6 +123,7 @@ export class ComponentPolicy {
   getResourceUrlFor(component) {
     if (!component) return null;
     if (component._resourceHandle) return component._resourceHandle.url; // we leave this being for remote masters :)
+    if (component.name == undefined) return null;
     // else we assume the component resides within the current world
     return `styleguide://${Path('metadata.commit.name').get($world)}/${component.name}`;
   }
@@ -527,6 +529,25 @@ class StyleGuideResource extends Resource {
     return [];
   }
 
+  async localWorldName() {
+    let localName;
+    if (localName = Path('metadata.commit.name').get($world)) {
+      return localName;
+    }
+    if (this._localNamePromise)
+      return this._localNamePromise;
+
+    let resolve;
+    ({ resolve, promise: this._localNamePromise } = promise.deferred());
+    
+    subscribeOnce('world/loaded', () => {
+      debugger;
+      resolve(Path('metadata.commit.name').get($world));
+    }, System);
+
+    return this._localNamePromise;
+  }
+
   async read() {
     let name = this.componentName;
     let component = Path([this.worldName, this.componentName]).get(resolvedMasters);
@@ -541,7 +562,8 @@ class StyleGuideResource extends Resource {
 
     if (!lively.FreezerRuntime) {
       // again, this wait for clogs up the main thread. try to use a callback instead.
-      if (await promise.waitFor(() => Path('metadata.commit.name').get($world)) == this.worldName) {
+      
+      if (await this.localWorldName() == this.worldName) {
         component = typeof $world !== "undefined" && $world.getSubmorphNamed(name);
         if (!component)
           throw Error(`Master component "${name}" can not be found in "${this.worldName}"`);
@@ -564,7 +586,7 @@ class StyleGuideResource extends Resource {
           if ((await db.exists('world', this.worldName)).exists)
             return await db.fetchSnapshot("world", this.worldName);
           else {
-            // try to get the JSON
+            // try to get the JSON (fallback)
             let jsonRes = resource(System.baseURL).join('lively.morphic/styleguides').join(this.worldName + '.json');
             if (await jsonRes.exists()) return await jsonRes.readJson();
             return null;
@@ -594,9 +616,10 @@ class StyleGuideResource extends Resource {
   
       component = pool.resolveFromSnapshotAndId({...commit, id: idToDeserialize });
       
-      if (resolvedMasters[this.worldName]) resolvedMasters[this.worldName][name] = component;
-      else resolvedMasters[this.worldName] = { [name]: component };
     }
+
+    if (resolvedMasters[this.worldName]) resolvedMasters[this.worldName][name] = component;
+    else resolvedMasters[this.worldName] = { [name]: component };
     
     component._resourceHandle = this;
 

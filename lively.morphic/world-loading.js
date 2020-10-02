@@ -9,7 +9,7 @@ import { MorphicDB } from "./morphicdb/index.js";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import { ensureCommitInfo } from "./morphicdb/db.js";
 import { pathForBrowserHistory } from './helpers.js';
-import { subscribe } from "lively.notifications";
+import { subscribe, emit } from "lively.notifications";
 
 export async function loadWorldFromURL(url, oldWorld, options) {
   let worldResource = url.isResource ? url :
@@ -83,6 +83,8 @@ export async function loadWorld(newWorld, oldWorld, options = {}) {
 
     if (oldWorld)
       oldWorld.onUnload();
+
+    emit('world/loaded', newWorld);
 
     return newWorld;
   } catch (e) {
@@ -206,13 +208,18 @@ export async function interactivelySaveWorld(world, options) {
     const resourceHandle = resource(System.baseURL).join(jsonStoragePath).withRelativePartsResolved();
     
     if (await resourceHandle.exists()) {
+      i.visible = false;
       const proceed = await $world.confirm([
         'File Conflict\n', {},
-        'The file you want to save the world to ', { fontSize: 15, fontWeight: 'normal' },
+        'The file you want to save the world to\n', { fontSize: 15, fontWeight: 'normal' },
         resourceHandle.url, { textStyle: 'italic', fontSize: 15, fontWeight: 'normal' },
         '\n already exists. Overwrite?', { fontSize: 15, fontWeight: 'normal' }
-      ], { width: 350});
-      if (!proceed) return;
+      ], { lineWrapping: false });
+      if (!proceed) {
+        i.remove();
+        return;
+      }
+      i.visible = true;
     } else await resourceHandle.ensureExistance();
     
     await resourceHandle.writeJson(await createMorphSnapshot(world));
