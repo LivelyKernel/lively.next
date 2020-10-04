@@ -1,13 +1,1 @@
-System.register(['./__root_module__-f9290433.js', 'kld-intersections'], function (exports) {
-	'use strict';
-	return {
-		setters: [function (module) {
-			exports('renderFrozenPart', module.bV);
-		}, function () {}],
-		execute: function () {
-
-
-
-		}
-	};
-});
+System.register(["./__root_module__-11543d52.js","kld-intersections"],function(sa){return{setters:[function(lb){sa("renderFrozenPart",lb.bU)},function(){}],execute:function(){}}});
