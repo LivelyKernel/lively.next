@@ -57,7 +57,6 @@ export var UserUI = {
   },
 
   async showUserFlap(world = $world) {
-    // this.hideUserFlap(world);
     let topBar = await resource('part://SystemIDE/lively top bar master').read();
     topBar.name = 'lively top bar';
     topBar.hasFixedPosition = true;
@@ -96,11 +95,11 @@ export var UserUI = {
   async loadMorph(name, options) {
     switch (name) {
       case 'login widget':
-        return await loadPart('login widget', options);
+        return await resource('part://SystemUserUI/login widget').read();
       case 'user info':
-        return await loadPart('user info', options);
+        return await resource('part://SystemUserUI/user info').read();
       case 'register widget':
-        return await loadPart('register widget', options);
+        return await resource('part://SystemUserUI/register widget').read();
     }
     let url = System.decanonicalize(`lively.user/morphic/${name}.json`),
         snap = await resource(url).readJson();
@@ -692,7 +691,7 @@ export class UserFlap extends Morph {
     this.showUser(this.currentUser());
   }
 
-  open() {
+  async open() {
     this.openInWorld();
     this.showUser(this.currentUser(), false);
     this.alignInWorld(false);
@@ -801,9 +800,14 @@ export class UserFlap extends Morph {
     let allItems = ['login item', 'logout item', 'profile item', 'register item'];
     arr.withoutAll(allItems, items)
        .map(name => this.getSubmorphNamed(name))
-       .forEach(m => m.visible = m.isLayoutable = false);
+       .forEach(m => {
+      m.visible = false;
+      m.bringToFront();
+    })
     items.map(name => this.getSubmorphNamed(name))
-         .forEach(m => m.visible = m.isLayoutable = true);
+         .forEach(m => {
+      m.visible = true;
+    });
   }
 
   // this.showUser(this.currentUser())
@@ -825,7 +829,7 @@ export class UserFlap extends Morph {
     }
     label.value = userName;
     avatar.imageUrl = gravatar;
-    await this.whenRendered();
+    await menu.master.whenApplied();
     menu.position = avatar.bottomCenter.addXY(0, 10);
     await this.whenRendered();
     this.alignInWorld();
