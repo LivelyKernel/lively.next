@@ -500,6 +500,8 @@ var resolvedMasters = resolvedMasters || {};
 var modulesToLoad = modulesToLoad || {};
 
 var li;
+var localNamePromise;
+var masterComponentFetches = masterComponentFetches || {};
 
 class StyleGuideResource extends Resource {
 
@@ -529,23 +531,36 @@ class StyleGuideResource extends Resource {
     return [];
   }
 
-  async localWorldName() {
+  localWorldName() {
     let localName;
+    
     if (localName = Path('metadata.commit.name').get($world)) {
       return localName;
     }
-    if (this._localNamePromise)
-      return this._localNamePromise;
+    
+    if (localNamePromise)
+      return localNamePromise;
 
     let resolve;
-    ({ resolve, promise: this._localNamePromise } = promise.deferred());
+    ({ resolve, promise: localNamePromise } = promise.deferred());
+
+    if (resource(document.location.href).query().name == '__newWorld__') {
+      resolve('__newWorld__');
+      return localNamePromise;
+    }
     
     subscribeOnce('world/loaded', () => {
-      debugger;
       resolve(Path('metadata.commit.name').get($world));
     }, System);
 
-    return this._localNamePromise;
+    return localNamePromise;
+  }
+
+  fetchFromMasterDir(masterDir, name) {
+    const res = masterDir.join(this.worldName).join(name + '.json');
+    if (masterComponentFetches[res.url]) return masterComponentFetches[res.url];
+    masterComponentFetches[res.url] = (async () => deserializeMorph(await res.readJson()))();
+    return masterComponentFetches[res.url];
   }
 
   async read() {
@@ -557,11 +572,16 @@ class StyleGuideResource extends Resource {
       let rootDir = resource(window.location);
       if (rootDir.isFile()) rootDir = rootDir.parent();
       const masterDir = rootDir.join('masters/');
-      component = deserializeMorph(await masterDir.join(this.worldName).join(name + '.json').readJson());
+      component = await this.fetchFromMasterDir(masterDir, name)
     }
 
     if (!lively.FreezerRuntime) {
-      // again, this wait for clogs up the main thread. try to use a callback instead.
+      // announce we are about to fetch this snapshot;
+      let resolveSnapshot;
+      if (!fetchedSnapshots[this.worldName]) {
+        console.log('scheduling fetch of', this.worldName);
+        ({ resolve: resolveSnapshot, promise: fetchedSnapshots[this.worldName] } = promise.deferred());
+      }
       
       if (await this.localWorldName() == this.worldName) {
         component = typeof $world !== "undefined" && $world.getSubmorphNamed(name);
@@ -569,52 +589,31 @@ class StyleGuideResource extends Resource {
           throw Error(`Master component "${name}" can not be found in "${this.worldName}"`);
         return component;
       }
-      let db = MorphicDB.default;
-  
-      const loadPackages = !fetchedSnapshots[this.worldName];
-  
-      let packageLoadPromise = false;
-      if (loadPackages) {
-        packageLoadPromise = promise.deferred();
-        modulesToLoad[this.worldName] = packageLoadPromise.promise;
-      } else {
-        await modulesToLoad[this.worldName];
-      }
-  
-      if (!fetchedSnapshots[this.worldName]) {
-        fetchedSnapshots[this.worldName] = await (async () => {
-          if ((await db.exists('world', this.worldName)).exists)
-            return await db.fetchSnapshot("world", this.worldName);
-          else {
-            // try to get the JSON (fallback)
-            let jsonRes = resource(System.baseURL).join('lively.morphic/styleguides').join(this.worldName + '.json');
-            if (await jsonRes.exists()) return await jsonRes.readJson();
-            return null;
-          }
-        })(); 
-      }
-       // delete fetchedSnapshots.System;
-      // await resource('styleguide://System/light button').read()
 
-      let commit = await fetchedSnapshots[this.worldName];
-  
-      // make sure that everyone waits for packages until they are loaded
-  
-      if (packageLoadPromise) {
-        // should the components browser serve commits?
-        await loadPackagesAndModulesOfSnapshot(commit);
-        packageLoadPromise.resolve();
-      }
+      let snapshot;
+      if (resolveSnapshot) {
+        let db = MorphicDB.default;
+        if ((await db.exists('world', this.worldName)).exists)
+          snapshot = await db.fetchSnapshot("world", this.worldName);
+        else {
+          // try to get the JSON (fallback)
+          let jsonRes = resource(System.baseURL).join('lively.morphic/styleguides').join(this.worldName + '.json');
+          if (await jsonRes.exists()) snapshot = await jsonRes.readJson();
+          else resolveSnapshot(null); // total fail
+        }
+        await loadPackagesAndModulesOfSnapshot(snapshot);
+        resolveSnapshot(snapshot);
+      } else snapshot = await fetchedSnapshots[this.worldName];
       
       let pool = new ObjectPool(normalizeOptions({}));
   
-      let [idToDeserialize] = Object.entries(commit.snapshot).find(([k, v]) => {
+      let [idToDeserialize] = Object.entries(snapshot.snapshot).find(([k, v]) => {
         return Path('props.isComponent.value').get(v) && Path('props.name.value').get(v) == name
       }) || [];
   
       if (!idToDeserialize) throw Error(`Master component "${name}" can not be found in "${this.worldName}"`);
   
-      component = pool.resolveFromSnapshotAndId({...commit, id: idToDeserialize });
+      component = pool.resolveFromSnapshotAndId({...snapshot, id: idToDeserialize });
       
     }
 
