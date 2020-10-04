@@ -409,12 +409,14 @@ class PartResource extends Resource {
         delete m._parametrizedProps;
     }, m => m.master && m != part);
     part.master = master;
-    part.master.applyIfNeeded(true); // apply before opening in world
+    await part.master.applyIfNeeded(true); // apply before opening in world
     part.withAllSubmorphsDo(m => {
       // execute onLoad since that has not happened on the initial copy (component copy)
       if (typeof m.onLoad == 'function') m.onLoad();
     })
     return part;
+
+    part.openInWorld()
   }
 }
 

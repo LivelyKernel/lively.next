@@ -2376,6 +2376,10 @@ export class Text extends Morph {
   }
 
   applyLayoutIfNeeded() {
+    if (this._requestMasterStyling) {
+      this.master && this.master.applyIfNeeded(true);
+      this._requestMasterStyling = false;
+    }
     this.fitIfNeeded();
     super.applyLayoutIfNeeded();
   }
@@ -2856,11 +2860,13 @@ export class Text extends Morph {
   }
   
   onHoverIn(evt) {
+    super.onHoverIn(evt);
     this.scrollActive = true;
     this.makeDirty();
   }
 
   onHoverOut(evt) {
+    super.onHoverOut(evt);
     if (touchInputDevice) return;
     this.scrollActive = false;
     this.makeDirty();

@@ -186,7 +186,7 @@ export class ComponentPolicy {
     const target = this.derivedMorph;
     const master = this.determineMaster(target);
     if (master && this._appliedMaster != master) needsUpdate = true;
-    if (needsUpdate) {
+    if (master && needsUpdate) {
       this.apply(target, master);
       this._appliedMaster = master;
     }
@@ -622,9 +622,8 @@ class StyleGuideResource extends Resource {
     
     component._resourceHandle = this;
 
-    await Promise.all(component
-      .withAllSubmorphsSelect(m => m.master)
-      .map(m => m.master.applyIfNeeded(true)))
+    for (let m of component.withAllSubmorphsSelect(m => m.master))
+      await m.master.applyIfNeeded(true);
     
     return Promise.resolve(component);
   }
