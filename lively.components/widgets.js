@@ -338,6 +338,12 @@ export class ValueScrubber extends Text {
           this.setProperty('scaleToBounds', active);
         }
       },
+      field: {
+        derived: true,
+        get() {
+          return this.owner;
+        }
+      },
       value: {defaultValue: 0},
       fill: {defaultValue: Color.transparent},
       draggable: {defaultValue: true},
@@ -360,10 +366,14 @@ export class ValueScrubber extends Text {
       const [v, unit] = this.textString.replace('\n', '').split(" ");
       if (typeof v == 'string') {
         this.value = parseFloat(v);
-        signal(this, "scrub", this.scrubbedValue);
+        this.scrub(this.scrubbedValue);
       }
       evt.stop();
     }
+  }
+
+  scrub(val) {
+    this.field.update(val);
   }
 
   onDragStart(evt) {
@@ -385,7 +395,7 @@ export class ValueScrubber extends Text {
     // y is the scale
     const {scale, offset} = this.getScaleAndOffset(evt),
           v = this.getCurrentValue(offset, scale);
-    signal(this, "scrub", v);
+    this.scrub(v);
     let valueString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
     if (this.unit) valueString += " " + this.unit;
     this.replace(this.documentRange, valueString, false, this.scaleToBounds, false, false);
