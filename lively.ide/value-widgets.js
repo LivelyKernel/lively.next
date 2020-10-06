@@ -395,7 +395,9 @@ export class NumberWidget extends Morph {
 
     return {
       unit: {
-
+        type: 'Enum',
+        isStyleProp: true,
+        values: ['px', '%', 'pt', '']
       },
       autofit: { 
         defaultValue: true,

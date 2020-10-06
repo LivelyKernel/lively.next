@@ -197,7 +197,9 @@ export class LivelyWorld extends World {
     this.opacity = 0;
     this.onWindowResize();
     await this.whenRendered();
-    this.animate({ opacity: 1, duration: 1000, easing: easings.inOutExpo })
+    this.animate({ opacity: 1, duration: 1000, easing: easings.inOutExpo });
+    document.body.style.overflowX = 'visible';
+    document.body.style.overflowY = 'visible';
   }
 
   onWindowResize(evt) {

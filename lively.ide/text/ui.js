@@ -155,6 +155,11 @@ export class RichTextControl extends Morph {
             fixedWidthControl: 'fixed width control',
             lineWrappingControl: 'line wrapping control',
             paddingControl: 'padding control',
+            paddingField: 'padding field',
+            paddingFieldTop: 'padding field top',
+            paddingFieldLeft: 'padding field left',
+            paddingFieldRight: 'padding field right',
+            paddingFieldBottom: 'padding field bottom',
           };
           return obj.extract(
             uiMapping,
@@ -211,11 +216,13 @@ export class RichTextControl extends Morph {
   toggleButton(btn, active) {
     let { fontSelection } = this.ui;
     if (active) {
-      btn.fontColor = Color.white;
-      btn.fill = this.toggleColor;
+      btn.master = {
+        auto: 'styleguide://SystemIDE/selected button'
+      }
     } else {
-      btn.fontColor = fontSelection.fontColor;
-      btn.fill = fontSelection.fill;
+      btn.master = {
+        auto: "styleguide://System/dark button"
+      };
     }
   }
 
@@ -258,6 +265,14 @@ export class RichTextControl extends Morph {
     await this.whenRendered();
     this.ui.fontSizeField.relayout();
     if (align) this.alignAtTarget();
+  }
+
+  setupConnections() {
+    connect(this.ui.paddingField, 'number', this, 'setPadding');
+    connect(this.ui.paddingFieldTop, 'number', this, 'setPaddingTop');
+    connect(this.ui.paddingFieldBottom, 'number', this, 'setPaddingBottom');
+    connect(this.ui.paddingFieldLeft, 'number', this, 'setPaddingLeft');
+    connect(this.ui.paddingFieldRight, 'number', this, 'setPaddingRight');
   }
 
   // this.update()

@@ -806,7 +806,7 @@ export default class Inspector extends Morph {
 
   static openInWindow(props) {
     var i = new this(props);
-    i.openInWindow().activate();
+    i.openInWindow();
     return i;
   }
 
@@ -840,7 +840,7 @@ export default class Inspector extends Morph {
     }
   }
 
-  __after_deserialize__() {
+  __after_deserialize__(snapshot, ref, pool) {
     let t = this._serializableTarget;
     var tree = new PropertyTree({
       name: "propertyTree",
@@ -867,7 +867,7 @@ export default class Inspector extends Morph {
       }
     );
 
-    super.__after_deserialize__();
+    super.__after_deserialize__(snapshot, ref, pool);
   }
 
   __additionally_serialize__(snapshot, ref, pool, addFn) {
@@ -1071,7 +1071,10 @@ export default class Inspector extends Morph {
 
   refreshAllProperties() {
     if (!this.world()) this.stopStepping();
-    if (!this.targetObject || !this.targetObject.isMorph) return;
+    if (!this.targetObject || !this.targetObject.isMorph) {
+      this.stopStepping();
+      return;
+    };
     if (this.targetObject._styleSheetProps != this.lastStyleSheetProps) {
       this.refreshTreeView();
       this.lastStyleSheetProps = this.targetObject._styleSheetProps;
