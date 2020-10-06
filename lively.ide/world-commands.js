@@ -1077,14 +1077,16 @@ var commands = [
         else systemInterface = localInterface;
       }
 
-      let searcher = await loadObjectFromPartsbinFolder("code search");
-      Object.assign(searcher.targetMorph, {
+      let searcher = await resource("part://SystemIDE/code search").read();
+      Object.assign(searcher, {
         browser,
         input: opts.input,
         systemInterface
       });
-      searcher.activate();
 
+      searcher.openInWindow();
+      searcher.focus();
+      
       li.remove();
 
       if (browser) browser.state.associatedSearchPanel = searcher;
