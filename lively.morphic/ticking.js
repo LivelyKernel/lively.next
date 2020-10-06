@@ -67,6 +67,7 @@ class TargetScript extends Script {
   }
 
   execute() {
+    if (this.target.isMorph && !this.target.tickingScripts.includes(this)) this.stop();
     typeof this.target[this.selector] === 'function'
  && this.target[this.selector].apply(this.target, this.args);
   }

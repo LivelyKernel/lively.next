@@ -102,11 +102,17 @@ export class ComponentPolicy {
     return excludedProps;
   }
 
-  __additionally_serialize__(snapshot, objRef, pool, addFn) {
-    if (this.auto) addFn("auto", this.getResourceUrlFor(this.auto));
-    if (this.click) addFn("click", this.getResourceUrlFor(this.click));
-    if (this.hover) addFn("hover", this.getResourceUrlFor(this.hover));
-  }
+  __serialize__() {
+    let spec = {};
+    
+    if (this.auto) spec.auto = this.getResourceUrlFor(this.auto);
+    if (this.click) spec.click = this.getResourceUrlFor(this.click);
+    if (this.hover) spec.hover = this.getResourceUrlFor(this.hover);
+    
+    return {
+      __expr__: `(${JSON.stringify(spec)})`,
+    }
+  }  
 
   __after_deserialize__(snapshot, objRef) {
     this._overriddenProps = new WeakMap();
@@ -503,6 +509,8 @@ var li;
 var localNamePromise;
 var masterComponentFetches = masterComponentFetches || {};
 
+export { resolvedMasters };
+
 class StyleGuideResource extends Resource {
 
   get canDealWithJSON() { return false; }
@@ -622,8 +630,16 @@ class StyleGuideResource extends Resource {
     
     component._resourceHandle = this;
 
-    for (let m of component.withAllSubmorphsSelect(m => m.master))
-      await m.master.applyIfNeeded(true);
+    if (component._pool.mastersInSubHierarchy) {
+      // fixme: apply these in hierarchical order
+      for (let master of component._pool.mastersInSubHierarchy) {
+        await master.applyIfNeeded(true);
+        if (!master.derivedMorph.ownerChain().includes(component)) {
+          master.derivedMorph.requestMasterStyling()
+        }
+      }
+      delete component._pool;
+    }
     
     return Promise.resolve(component);
   }

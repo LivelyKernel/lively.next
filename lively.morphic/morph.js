@@ -802,14 +802,22 @@ export class Morph {
         this._parametrizedProps[prop] = s.deserializeExpr(v);
     }
     this.initializeProperties();
+    this._pool = pool;
   }
 
-  __after_deserialize__(snapshot) {
+  __after_deserialize__(snapshot, ref, pool) {
     this.resumeStepping();
     // too late, the master may have already applied itself here...
     if (typeof this.onLoad === "function") {
       try { this.onLoad(); }
       catch (e) { console.error(`[lively.morphic] ${this}.onLoad() error: ${e.stack}`)}
+    }
+    if (!this.isComponent || this.owner) delete this._pool;
+    if (this.master) {
+      if (pool.mastersInSubHierarchy)
+        pool.mastersInSubHierarchy.push(this.master);
+      else
+        pool.mastersInSubHierarchy = [this.master];
     }
   }
 
@@ -1882,6 +1890,7 @@ export class Morph {
      }
      this._cachedPaths[other.id] = path = [...up, ...down.reverse()];
      return path;
+     
   }
 
   closestCommonAncestor(other) {
@@ -2622,9 +2631,9 @@ export class Image extends Morph {
     super.__deserialize__(snapshot, objRef, serializedMap, pool);
   }
 
-  __after_deserialize__(snapshot, ref) {
+  __after_deserialize__(snapshot, ref, pool) {
     delete this._isDeserializing;
-    super.__after_deserialize__(snapshot, ref);
+    super.__after_deserialize__(snapshot, ref, pool);
   }
 
   get isImage() { return true }
@@ -3093,8 +3102,8 @@ export class Path extends Morph {
     this.updateBounds(this.vertices);
   }
 
-  __after_deserialize__(snapshot, objRef) {
-    super.__after_deserialize__(snapshot, objRef)
+  __after_deserialize__(snapshot, objRef, pool) {
+    super.__after_deserialize__(snapshot, objRef, pool)
     this.updateBounds(this.vertices);
   }
 

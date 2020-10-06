@@ -408,8 +408,19 @@ class PartResource extends Resource {
       if (m == part || !m.master)
         delete m._parametrizedProps;
     }, m => m.master && m != part);
+    const superMaster = part.master;
     part.master = master;
-    await part.master.applyIfNeeded(true); // apply before opening in world
+    if (part._pool.mastersInSubHierarchy) {
+      // fixme: apply these in hierarchical order
+      for (let subMaster of part._pool.mastersInSubHierarchy) {
+        if (superMaster == subMaster) continue;
+        await subMaster.applyIfNeeded(true);
+        if (!subMaster.derivedMorph.ownerChain().includes(part)) {
+          subMaster.derivedMorph.requestMasterStyling()
+        }
+      }
+    }
+    delete part._pool;
     part.withAllSubmorphsDo(m => {
       // execute onLoad since that has not happened on the initial copy (component copy)
       if (typeof m.onLoad == 'function') m.onLoad();

@@ -737,8 +737,8 @@ export class Text extends Morph {
     this._isDeserializing = true;
   }
 
-  __after_deserialize__(snapshot, objRef) {
-    super.__after_deserialize__(snapshot, objRef);
+  __after_deserialize__(snapshot, objRef, pool) {
+    super.__after_deserialize__(snapshot, objRef, pool);
     this._isDeserializing = false;
     
     this.whenRendered().then(() => {
@@ -2314,7 +2314,9 @@ export class Text extends Morph {
   fit() {
     let {viewState, fixedWidth, fixedHeight} = this;
     viewState._needsFit = false;
-    if ((fixedHeight && fixedWidth) || !this.textLayout /*not init'ed yet*/) return this;
+    if ((fixedHeight && fixedWidth) || 
+        !this.textLayout /*not init'ed yet*/ || 
+        this.master && !this.master._appliedMaster) return this;
     let textBounds = this.textBounds().outsetByRect(this.padding),
         resize = () => {
             if (!fixedHeight && this.height != textBounds.height) this.height = textBounds.height
@@ -2385,10 +2387,6 @@ export class Text extends Morph {
   }
 
   render(renderer) {
-    if (this._requestMasterStyling) {
-      this.master && this.master.applyIfNeeded(true);
-      this._requestMasterStyling = false;
-    }
     return this.textRenderer.renderMorph(this, renderer);
   }
 
