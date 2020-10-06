@@ -53,6 +53,9 @@ class ProgressBar extends Morph {
   }
 
   update() {
+    setTimeout(() => {
+      if (!this.world()) this.stopStepping();
+    }, 1000);
     if (!this._lastWidth) return;
     let pb = this.get('progress path');
     let p = stringToEasing(easings.inOutExpo)(num.clamp(Date.now() - this._timeStamp, 0, 1000) / 1000);
@@ -64,9 +67,6 @@ class ProgressBar extends Morph {
     } else {
       pb.width = num.interpolate(p, this._lastWidth, targetWidth); 
     }
-    setTimeout(() => {
-      if (!this.world()) this.stopStepping();
-    }, 1000);
   }
 }
 
