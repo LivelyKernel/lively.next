@@ -19,7 +19,7 @@ import {
 import { Path, obj, promise, string, arr, fun } from "lively.lang";
 import { Color } from "lively.graphics";
 import { LoadingIndicator } from "lively.components";
-import { requiredModulesOfSnapshot, serialize, locateClass, removeUnreachableObjects } from "lively.serializer2";
+import { requiredModulesOfSnapshot, ExpressionSerializer, serialize, locateClass, removeUnreachableObjects } from "lively.serializer2";
 import { moduleOfId, isReference, referencesOfId, classNameOfId } from "lively.serializer2/snapshot-navigation.js";
 import { runCommand, defaultDirectory } from "lively.ide/shell/shell-interface.js";
 import { loadPart } from "lively.morphic/partsbin.js";
@@ -31,7 +31,7 @@ const { module } = modules;
 How to build the bootstrap and memory adapters with the freezer. Will replace build scripts completely in the future.
 
 await bootstrapLibrary('lively.classes/runtime.js', '/classes.runtime.min.js',);
-await bootstrapLibrary('https://admin.typeshift.io/lively.server/index-base.js', 'lively.server/bin/server.min.js', false)
+await bootstrapLibrary('/lively.server/index-base.js', 'lively.server/bin/server.min.js', false)
 await bootstrapLibrary('lively.morphic/web/bootstrap.js', 'lively.morphic/web/lively.bootstrap.min.js');
 await bootstrapLibrary('lively.modules/tools/bootstrap.js', 'lively.modules/dist/new_lively.modules.bootstrap.min.js', false, 'lively.modules');
 
@@ -294,7 +294,7 @@ export async function interactivelyFreezeWorld(world) {
 
 
 async function promptForFreezing(target, requester) {
-  let freezerPrompt = await loadPart('freezer prompt');
+  let freezerPrompt = await resource('part://SystemDialogs/freezer prompt').read();
   let userName = $world.getCurrentUser().name;
   let previouslyExcludedPackages = Path('metadata.excludedPackages').get(target) || ADVANCED_EXCLUDED_MODULES;
   let previouslyPublishedDir = Path('metadata.publishedLocation').get(target) || resource(System.baseURL).join('users').join(userName).join('published').join(target.name).url;
@@ -487,23 +487,20 @@ async function evalOnServer(code) {
 
 function findMasterComponentsInSnapshot(snap) {
   const masterComponents = new Set();
+  const exprSerializer = new ExpressionSerializer();
   let props;
   for (let id in snap.snapshot) {
     if (props = snap.snapshot[id].props.master) {
-      props = snap.snapshot[props.value.id].props;
+      // also handle expression!
+      if (typeof props.value == 'string') {
+         props = exprSerializer.deserializeExpr(props.value);
+      } else props = snap.snapshot[props.value.id].props;
       let { auto, click, hover } = props;
-      arr.compact([ auto, click, hover ]).forEach(({ value: url }) => masterComponents.add(url))
+      arr.compact([ auto, click, hover ]).forEach((url) => masterComponents.add(url.value || url))
     }
   }
   return [...masterComponents]
 }
-
-//snap = await createMorphSnapshot(this.get('world landing page'))
-// fp = { warnings: {}, dynamicParts: {}, dynamicModules: new Set(), requiredMasterComponents: new Set(), modulesWithDynamicLoads: new Set() }
-// mods = await getRequiredModulesFromSnapshot(snap, fp, true, true)
-// [...fp.requiredMasterComponents]
-//[...fp.modulesWithDynamicLoads]
-// 'part://SystemIDE/user flap master/dark'.match(/^part:\/\/.*\/.+/)
 
 async function getRequiredModulesFromSnapshot(snap, frozenPart, includeDynamicParts=false, includeObjectModules=true) {
   var imports = requiredModulesOfSnapshot(snap), // do this after the replacement of calls
