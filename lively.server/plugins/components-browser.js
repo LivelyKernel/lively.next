@@ -71,83 +71,85 @@ export default class ComponentsBrowser {
 
     const urlFor = (name, json = false) => 
        json ? 
-         `http://localhost:9011/worlds/load?file=${encodeURIComponent(name)}&fastLoad=true` :
-         `http://localhost:9011/worlds/load?name=${encodeURIComponent(name)}&fastLoad=true`;
+         `http://localhost:9011/worlds/load?file=${encodeURIComponent(name)}&fastLoad=true&showsUserFlap=false` :
+         `http://localhost:9011/worlds/load?name=${encodeURIComponent(name)}&fastLoad=true&showsUserFlap=false`;
 
     this.headlessSession = new HeadlessSession();
     // fire up the headless chrome browser
     for (let [worldName, jsonPath] of [...allStyleguidesInDb.map(m => [m]), ...additionalStyleguidesInFolders]) {
-      if (worldToUpdate && worldName != worldToUpdate) continue; 
+      if (worldToUpdate && worldName != worldToUpdate) continue;
+      if (worldName == 'SystemIDE') continue;      
       console.log('[ComponentsBrowser] indexing ' + worldName);
       try {
         await this.headlessSession.open(
           jsonPath ? urlFor(jsonPath, true) : urlFor(worldName),
           (sess) => sess.runEval(`$world.name == '${worldName}' || window.__loadingError__`)
         );
+
+        if (await this.headlessSession.runEval('window.__loadingError__')) {
+          console.log('[ComponentsBrowser] Failed indexing ' + worldName);
+          continue;
+        }
+        
+        await this.headlessSession.page.emulate({ viewport: { width: 1000, height: 1000, deviceScaleFactor: 2}, userAgent: 'Chrome'})
+        
+        let listedComponents = await this.headlessSession.runEval(`
+          this.__listedComponents__ = $world.getListedComponents();
+          this.__listedComponents__.map(m => m.name);
+        `);
+  
+        await promise.delay(2000);
+  
+        let worldFolder = cacheDir.join(worldName + '/');
+        if (await worldFolder.exists()) await worldFolder.remove(); // always make sure to start form clean slate
+  
+        // fixme: remove deleted worlds?
+  
+        for (let i = 0; i < listedComponents.length; i++) {
+          let [componentName, screenshotSize] = await this.headlessSession.runEval(`
+            let component = window.__currentComponent__ = this.__listedComponents__.pop();
+            let res;
+            if ($world.get('lively top bar'))
+              $world.get('lively top bar').visible = false;
+            document.body.style.backgroundColor = "transparent" 
+            $world.opacity = 0;
+            $world.withAllSubmorphsSelect(m => m.hasFixedPosition && m.owner == $world)
+                  .forEach(m => m.opacity = 0);
+            if (component) {
+              if (component.master) await component.master.whenApplied();
+              component.opacity = 1;
+              component._origOwner = component.owner;
+              component._origPos = component.position;
+              component.hasFixedPosition = true;
+              component.openInWorld();
+              component.top = 50;
+              component.left = 50;
+              res = [component.name, component.bounds().insetBy(-50)];
+            } else {
+              res = [false];
+            }
+            res;
+          `);
+    
+          if (!screenshotSize) break;
+  
+          await this.headlessSession.page.screenshot({
+            path: (await worldFolder.join(componentName + '.png').ensureExistance()).url.replace('file://', ''), 
+            clip: screenshotSize,
+            omitBackground: true,
+          });
+    
+          await this.headlessSession.runEval(`
+            let component = window.__currentComponent__;
+            component._origOwner.addMorph(component);
+            component.position = component._origPos;
+            component.hasFixedPosition = false;
+          `);
+        }
+
       } catch (err) {
         console.log('[ComponentsBrowser] Failed indexing ' + worldName);
         continue;
-      }
-
-      if (await this.headlessSession.runEval('window.__loadingError__')) {
-        console.log('[ComponentsBrowser] Failed indexing ' + worldName);
-        continue;
-      }
-      
-      await this.headlessSession.page.emulate({ viewport: { width: 1000, height: 1000, deviceScaleFactor: 2}, userAgent: 'Chrome'})
-      
-      let listedComponents = await this.headlessSession.runEval(`
-        this.__listedComponents__ = $world.getListedComponents();
-        this.__listedComponents__.map(m => m.name);
-      `);
-
-      await promise.delay(2000);
-
-      let worldFolder = cacheDir.join(worldName + '/');
-      if (await worldFolder.exists()) await worldFolder.remove(); // always make sure to start form clean slate
-
-      // fixme: remove deleted worlds?
-
-      for (let i = 0; i < listedComponents.length; i++) {
-        let [componentName, screenshotSize] = await this.headlessSession.runEval(`
-          let component = window.__currentComponent__ = this.__listedComponents__.pop();
-          let res;
-          if ($world.get('lively top bar'))
-            $world.get('lively top bar').visible = false;
-          document.body.style.backgroundColor = "transparent" 
-          $world.opacity = 0;
-          $world.withAllSubmorphsSelect(m => m.hasFixedPosition && m.owner == $world)
-                .forEach(m => m.opacity = 0);
-          if (component) {
-            if (component.master) await component.master.whenApplied();
-            component.opacity = 1;
-            component._origOwner = component.owner;
-            component._origPos = component.position;
-            component.hasFixedPosition = true;
-            component.openInWorld();
-            component.top = 50;
-            component.left = 50;
-            res = [component.name, component.bounds().insetBy(-50)];
-          } else {
-            res = [false];
-          }
-          res;
-        `);
-  
-        if (!screenshotSize) break;
-
-        await this.headlessSession.page.screenshot({
-          path: (await worldFolder.join(componentName + '.png').ensureExistance()).url.replace('file://', ''), 
-          clip: screenshotSize,
-          omitBackground: true,
-        });
-  
-        await this.headlessSession.runEval(`
-          let component = window.__currentComponent__;
-          component._origOwner.addMorph(component);
-          component.position = component._origPos;
-          component.hasFixedPosition = false;
-        `);
       }
     }
     
