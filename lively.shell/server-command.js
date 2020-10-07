@@ -26,7 +26,7 @@ var defaultEnv = Object.assign(
     MANPAGER:'ul | cat -s',
     TERM:"xterm",
     PATH: binDir + path.delimiter + process.env.PATH,
-    LIVELY
+    LIVELY: LIVELY,
   })
 
 

@@ -106,7 +106,7 @@ function setupSystem(rootDirectory) {
   var registry = livelySystem["__lively.modules__packageRegistry"] = new modules.PackageRegistry(livelySystem);
   registry.packageBaseDirs = process.env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").map(ea => resource(`file://${ea}`));
   registry.devPackageDirs = process.env.FLATN_DEV_PACKAGE_DIRS.split(":").map(ea => resource(`file://${ea}`));
-  registry.individualPackageDirs = process.env.FLATN_PACKAGE_DIRS.split(":").map(ea => resource(`file://${ea}`));
+  registry.individualPackageDirs = process.env.FLATN_PACKAGE_DIRS.split(":").map(ea => ea.length > 0 ? resource(`file://${ea}`) : false).filter(Boolean);
   return registry.update();
 }
 
