@@ -10,4 +10,3 @@ tests/test-project-2-dir
 tests/test-project-dir
 tests/test-project
 tests/test-module-deps/
-dist/

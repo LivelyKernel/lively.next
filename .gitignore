@@ -9,8 +9,6 @@ uploads/
 users/
 custom-npm-modules/
 *.idb/
-*.html
-*.css
 favicon.ico
 localconfig.js
 robots.txt
@@ -19,5 +17,6 @@ start.sh
 config.js
 user-server.sh
 package-lock.json
+/lively.server/usage_log.json
 /lively.installer.log
 /lively-system-interface/.lively.next-eval-server-for-test.js
