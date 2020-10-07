@@ -420,6 +420,7 @@ class PartResource extends Resource {
         }
       }
     }
+    part.master.applyIfNeeded(true);
     delete part._pool;
     part.withAllSubmorphsDo(m => {
       // execute onLoad since that has not happened on the initial copy (component copy)
