@@ -4,7 +4,8 @@
   "dependencies": {
     "babel-standalone": "^6.21.1-0",
     "uglify-es": "^3.3.9",
-    "google-closure-compiler-linux": "^20190618.0.0",
+    "google-closure-compiler-linux": "^20200927.0.0",
+    "google-closure-compiler-osx": "^20200927.0.0",
     "wasm-brotli": "1.0.2"
   },
   "systemjs": {
