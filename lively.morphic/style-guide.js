@@ -204,11 +204,12 @@ export class ComponentPolicy {
     this._applying = true;
     try {
       derivedMorph.dontRecordChangesWhile(() => {
-        this.prepareSubmorphsToBeManaged(derivedMorph, master);
+        let nameToStylableMorph = this.prepareSubmorphsToBeManaged(derivedMorph, master);
         master.withAllSubmorphsDoExcluding(masterSubmorph => {
           const isRoot = masterSubmorph == master;
-          let morphToBeStyled = isRoot ? derivedMorph : derivedMorph.getSubmorphNamed(masterSubmorph.name); // get all named?
+          let morphToBeStyled = isRoot ? derivedMorph : nameToStylableMorph[masterSubmorph.name]; // get all named?
           if (!morphToBeStyled) return; // morph to be styled is not present. can this happen? Not when working via direct manipulation tools. But can happen when you work in code purely. In those cases we resort to silent ignore.
+          if (obj.isArray(morphToBeStyled)) morphToBeStyled = morphToBeStyled.pop();
           if (masterSubmorph.master && !isRoot) { // can not happen to the root since we ruled that out before
             // only do this when the master has changed
             morphToBeStyled.master = masterSubmorph.master.spec(); // assign to the same master
@@ -282,12 +283,24 @@ export class ComponentPolicy {
   }
 
   prepareSubmorphsToBeManaged(derivedMorph, master) {
+    let nameToStylableMorph = {};
+    derivedMorph.withAllSubmorphsDoExcluding(m => {
+      if (nameToStylableMorph[m.name]) {
+        if (!obj.isArray(nameToStylableMorph[m.name])) {
+          nameToStylableMorph[m.name] = [nameToStylableMorph[m.name], m];
+        } else nameToStylableMorph[m.name].push(m);
+      }
+      nameToStylableMorph[m.name] = m;
+    }, m => m != derivedMorph && m.master);
     // assign these based on the current master
     master.withAllSubmorphsDoExcluding(masterSubmorph => {
-      let morphToBeStyled = masterSubmorph == master ? derivedMorph : derivedMorph.getSubmorphNamed(masterSubmorph.name);
+      let morphToBeStyled = masterSubmorph == master ? derivedMorph : nameToStylableMorph[masterSubmorph.name];
       if (!morphToBeStyled) return;
+      if (obj.isArray(morphToBeStyled)) morphToBeStyled = morphToBeStyled.pop();
       this.prepareMorphToBeManaged(morphToBeStyled);
     }, masterSubmorph => masterSubmorph != master && masterSubmorph.master);
+    
+    return nameToStylableMorph;
   }
 
   /* 
