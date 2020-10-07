@@ -239,13 +239,15 @@ export class ObjectEditor extends Morph {
       ref.currentSnapshot.props.root.value = {};
       ref.currentSnapshot.props.root.verbatim = true;
     }
-
+    
     var ref = pool.ref(importsList);
-    ref.currentSnapshot.props.items.value = [];
+    if (ref.currentSnapshot.props.items)
+      ref.currentSnapshot.props.items.value = [];
     if (ref.currentSnapshot.props.selection)
       ref.currentSnapshot.props.selection.value = null;
 
-    evalEnvironment.backend = evalEnvironment.systemInterface.coreInterface.url || 'local';
+    if (evalEnvironment.systemInterface)
+      evalEnvironment.backend = evalEnvironment.systemInterface.coreInterface.url || 'local';
     // save essential state
     snapshot.props._serializedState = {
       verbatim: true,
