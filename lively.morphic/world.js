@@ -13,6 +13,7 @@ import { touchInputDevice } from "./helpers.js";
 import { UserRegistry } from "lively.user";
 import { loadMorphFromSnapshot } from "lively.morphic";
 import { emit } from "lively.notifications/index.js";
+import { resource } from "lively.resources/index.js";
 
 export class World extends Morph {
 
@@ -43,6 +44,9 @@ export class World extends Morph {
       showsUserFlap: {
         defaultValue: true,
         set(bool) {
+          // allow to override from URL
+          const { showsUserFlap } = resource(document.location.href).query();
+          if (typeof showsUserFlap != 'undefined') bool = showsUserFlap;
           this.setProperty("showsUserFlap", bool);
           System.import("lively.user/morphic/user-ui.js")
             .then(userUI => userUI.UserUI[bool ? "showUserFlap" : "hideUserFlap"](this));
