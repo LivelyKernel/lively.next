@@ -9,9 +9,6 @@ if (majorVersion < 7) {
 
 global.babel = require("./deps/babel.min.js");
 require("./deps/system.src.js");
-//require("./deps/lively.modules.js");
-
-lively.modules = require('lively.modules');
 
 if (!process.argv[2]) {
   console.error("No installation dir specified!")
@@ -24,7 +21,7 @@ var path = require('path'),
     dependenciesDir = path.join(installDir, "lively.next-node_modules"),
     verbose = false;
 
-
+lively.modules = require('lively.modules');
 
 console.log("Installing lively.system packages into %s", installDir);
 

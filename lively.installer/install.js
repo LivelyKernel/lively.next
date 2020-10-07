@@ -146,7 +146,6 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     if (step6_setupObjectDB) {
-      console.log(process.env.FLATN_DEV_PACKAGE_DIRS)
       await setupSystem(baseDir);
       await setupObjectDB(baseDir, packageMap);
     }
