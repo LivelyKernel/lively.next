@@ -50,7 +50,7 @@
       "escodegen": "https://jspm.dev/escodegen",
       "acorn-walk": "https://jspm.dev/acorn-walk",
       "acorn-loose": "https://jspm.dev/acorn-loose",
-      "acorn": "https://jspm.dev/acorn",
+      "acorn": "https://jspm.dev/acorn@8.0.4",
       "util": {
         "node": "@node/util",
         "~node": "@empty"
