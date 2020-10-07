@@ -15,7 +15,6 @@ var config = {
     plugins: [
       "lively.server/plugins/cors.js",
       "lively.server/plugins/dav.js",
-      "lively.server/plugins/discussion.js",
       "lively.server/plugins/eval.js",
       "lively.server/plugins/l2l.js",
       "lively.server/plugins/lib-lookup.js",
@@ -25,7 +24,6 @@ var config = {
       "lively.server/plugins/world-loading.js",
       "lively.server/plugins/file-upload.js",
       "lively.server/plugins/objectdb.js",
-      "lively.server/plugins/pdf-printer.js",
       "lively.server/plugins/subserver.js",
       "lively.server/plugins/components-browser.js",
       "lively.headless/subserver.js"

@@ -23,6 +23,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
       step3_setupFlatn = true,
       step4_installPackageDeps = true,
       step5_runPackageInstallScripts = true,
+      step6_setupObjectDB = true,
       step6_syncWithObjectDB = false,
       step7_setupAssets = true,
       step8_runPackageBuildScripts = false;
@@ -139,12 +140,23 @@ export async function install(baseDir, dependenciesDir, verbose) {
       }
     }
 
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // ObjectDB init
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    if (step6_setupObjectDB) {
+      console.log(process.env.FLATN_DEV_PACKAGE_DIRS)
+      await setupSystem(baseDir);
+      await setupObjectDB(baseDir, packageMap);
+    }
+
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // ObjectDB sync
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step6_syncWithObjectDB) {
       await setupSystem(baseDir);
-      await replicateObjectDB(baseDir, packageMap);
+      await replicateObjectDB(baseDir);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -240,16 +252,11 @@ function setupSystem(baseURL) {
   var registry = livelySystem["__lively.modules__packageRegistry"] = new lively.modules.PackageRegistry(livelySystem);
   registry.packageBaseDirs = process.env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").map(ea => resource(`file://${ea}`));
   registry.devPackageDirs = process.env.FLATN_DEV_PACKAGE_DIRS.split(":").map(ea => resource(`file://${ea}`));
+  registry.individualPackageDirs = process.env.FLATN_PACKAGE_DIRS.split(":").map(ea => ea.length > 0 ? resource(`file://${ea}`) : false).filter(Boolean);
   return registry.update();
 }
 
-async function replicateObjectDB(baseDir, packageMap) {
-  let config = await System.import(resource(baseDir).join("config.js").url);
-  console.log(`=> synchronizing with object database from ${resource(config.remoteCommitDB).host()}...`);
-  
-  console.time("replication");
-
-  // FIXME...!
+async function setupObjectDB(baseDir, packageMap) {
   System._nodeRequire(packageMap.lookup("flatn").location + "/module-resolver.js")
   let { ensureFetch, resource } = await lively.modules.importPackage(join(baseDir, "/lively.resources"));
   await ensureFetch();
@@ -259,15 +266,24 @@ async function replicateObjectDB(baseDir, packageMap) {
   await resource(baseDir).join("lively.morphic/objectdb/morphicdb/snapshots/").ensureExistance();
   await resource(baseDir).join("lively.morphic/objectdb/morphicdb-commits/").ensureExistance();
   await resource(baseDir).join("lively.morphic/objectdb/morphicdb-version-graph/").ensureExistance();
-  let db = ObjectDB.named("lively.morphic/objectdb/morphicdb", {
-    snapshotLocation: resource(System.decanonicalize(baseDir + "/lively.morphic/objectdb/morphicdb/snapshots/"))
-  });
+}
+
+async function replicateObjectDB(baseDir) {
+  let config = await System.import(resource(baseDir).join("config.js").url);
+  console.log(`=> synchronizing with object database from ${resource(config.remoteCommitDB).host()}...`);
+  
+  console.time("replication");
 
   let remoteCommitDB = Database.ensureDB(config.remoteCommitDB),
       remoteVersionDB = Database.ensureDB(config.remoteVersionDB),
       toSnapshotLocation = resource(config.remoteSnapshotLocation);
 
   try {
+    
+    let db = ObjectDB.named("lively.morphic/objectdb/morphicdb", {
+      snapshotLocation: resource(System.decanonicalize(baseDir + "/lively.morphic/objectdb/morphicdb/snapshots/"))
+    });
+    
     let sync = db.replicateFrom(remoteCommitDB, remoteVersionDB, toSnapshotLocation, {debug: false, retry: true, live: true});
 
     await sync.whenPaused();
