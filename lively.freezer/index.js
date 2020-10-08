@@ -1,5 +1,5 @@
 /*global System,TextEncoder*/
-import * as Rollup from "https://jspm.dev/rollup";
+import * as Rollup from "rollup";
 import { MorphicDB, config, morph } from "lively.morphic";
 import {
   createMorphSnapshot, serializeMorph,

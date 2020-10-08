@@ -16,7 +16,8 @@
     },
     "map": {
       "wasm-flate": "https://unpkg.com/wasm-flate@0.1.11-alpha/dist/bootstrap.js",
-      "semver": "https://dev.jspm.io/semver"
+      "semver": "https://jspm.dev/semver",
+      "rollup": "https://jspm.dev/rollup@2.28.2"
     }
   },
   "lively": {
