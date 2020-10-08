@@ -78,8 +78,8 @@ export async function ensureFetch() {
     try {
       fetchInterface = System._nodeRequire("fetch-ponyfill");
     } catch (err) {
-      var moduleId = (await System.normalize("fetch-ponyfill", thisModuleId)).replace("file://", "")
-      fetchInterface = System._nodeRequire(moduleId)
+      var moduleId = (await System.normalize("fetch-ponyfill", thisModuleId)).replace("file://", "");
+      ({ default: fetchInterface } = await System.import(moduleId));
     }
   } else {
     fetchInterface = await System.import("fetch-ponyfill", thisModuleId)

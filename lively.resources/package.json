@@ -8,10 +8,10 @@
     "map": {
       "fs": {
         "node": "@node/fs",
-        "~node": "https://dev.jspm.io/fs"
+        "~node": "https://jspm.dev/fs"
       },
       "fetch-ponyfill": {
-        "node": "https://dev.jspm.io/fetch-ponyfill",
+        "node": "https://jspm.dev/fetch-ponyfill",
         "~node": "fetch-ponyfill/build/fetch-browser.js"
       }
     }
