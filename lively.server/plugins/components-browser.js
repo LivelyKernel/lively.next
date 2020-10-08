@@ -41,7 +41,8 @@ export default class ComponentsBrowser {
     // fixme: configure these from the config file
     this.customDirs = ['./lively.morphic/styleguides/'];
     this.cacheDir = './components_cache/';
-    // this.refresh();
+    
+    //this.refresh();
   }
 
   // await this.refresh()
@@ -163,7 +164,9 @@ export default class ComponentsBrowser {
   handleRequest(req, res, next) {
     if (!req.url.startsWith("/subserver/ComponentsBrowser")) return next();
     if (req.url.startsWith("/subserver/ComponentsBrowser/refresh")) {
-      return this.refresh().then(() => {
+      // req = {}; req.url = "/subserver/ComponentsBrowser/refresh"
+      const [_, worldName] = req.url.split("refresh/");
+      return this.refresh(decodeURIComponent(worldName)).then(() => {
         res.writeHead(200, {'Content-Type': 'text/plain'});
         res.end("Comonents Cached");
       }).catch(() => {
