@@ -131,7 +131,7 @@ export class ComponentPolicy {
     if (component._resourceHandle) return component._resourceHandle.url; // we leave this being for remote masters :)
     if (component.name == undefined) return null;
     // else we assume the component resides within the current world
-    return `styleguide://${Path('metadata.commit.name').get($world)}/${component.name}`;
+    return `styleguide://${Path('metadata.commit.name').get($world) || $world.name}/${component.name}`;
   }
 
   async resolveMasterComponents() {
