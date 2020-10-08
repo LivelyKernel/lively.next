@@ -38,7 +38,7 @@ export default class JavaScriptEditorPlugin extends CodeMirrorEnabledEditorPlugi
 
   attach(editor) {
     super.attach(editor);
-    this.evalEnvironment.context = editor;
+    this.evalEnvironment = { ...this.evalEnvironment, context: editor };
   }
 
   detach(editor) {
