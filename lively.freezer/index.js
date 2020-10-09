@@ -678,7 +678,8 @@ async function compileViaGoogle(code, li, fileName) {
 }
 
 async function compileOnServer(code, loadingIndicator, fileName = 'data') {
-  let googleClosure = System.decanonicalize('google-closure-compiler-linux/compiler').replace(System.baseURL, '../');
+  const osName = await evalOnServer('process.platform');
+  let googleClosure = System.decanonicalize(`google-closure-compiler-${osName}/compiler`).replace(System.baseURL, '../');
   let tmp = resource(System.decanonicalize('lively.freezer/tmp.js'));
   let min = resource(System.decanonicalize('lively.freezer/tmp.min.js'));
   tmp.onProgress = (evt) => {
