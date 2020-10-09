@@ -427,6 +427,8 @@ class ModuleInterface {
           };
       }
     }
+
+    
     
     const nodejsDescriptors = {};
     if (S.get("@system-env").node) {
@@ -440,6 +442,11 @@ class ModuleInterface {
 
       ...globalProps.descriptors,
       ...nodejsDescriptors,
+
+      "event": {
+        configurable: true, writable: true,
+        value: undefined,
+      },
 
       System: {configurable: true, writable: true, value: S},
 
