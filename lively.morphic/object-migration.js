@@ -294,5 +294,19 @@ For now only a simple default theme...
         });
         return idAndSnapshot;
      }
+  },
+
+  {
+     date: '2020-10-09',
+     name: 'remove style guide',
+     snapshotConverter: idAndSnapshot => {
+        let {id: rootId, snapshot} = idAndSnapshot;
+        Object.values(snapshot).map(m => {
+          if (m.props.master && typeof m.props.master.value == 'string') {
+             m.props.master.value = m.props.master.value.split('styleguide://style guide').join('styleguide://System');
+          }
+        });
+        return idAndSnapshot;
+     }
   }
 ];
