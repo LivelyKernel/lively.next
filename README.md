@@ -17,6 +17,11 @@ Make sure you have the following software installed.
 2. Run the `start.sh` script.
 3. Lively will now be running on your local computer at [http://localhost:9011](http://localhost:9011).
 
+## Docker Image
+A docker image exists for this to try it out in the environment of your choice.
+1. Run the docker command as follows: `docker run -d --restart=unless-stopped --name lively-next -p 9011:9011 engagelively/lively-next:alpha3`
+2. Once completely started, navigate to [http://localhost:9011 ](http://localhost:9011)
+
 ## License
 
 This project is [MIT licensed](LICENSE).
