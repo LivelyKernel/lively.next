@@ -28,6 +28,10 @@ class CustomVNode {
     var key = "customNode-key-" + morph.id;
     if (!vtree.children[0] || vtree.children[0].key !== key)
       vtree.children.unshift(h(morph.domNodeTagName || "div", {key}, []));
+    if (morph._updateCSSDeclaration) {
+      morph.ensureCSSDeclaration();
+      morph._updateCSSDeclaration = false;
+    }
     return vtree;
   }
 
@@ -142,7 +146,8 @@ export class HTMLMorph extends Morph {
                 style = doc.getElementById("css-for-" + this.id);
             if (style) style.remove();
           } else {
-            this.ensureCSSDeclaration();
+            this.makeDirty();
+            this._updateCSSDeclaration = true;
           }
         }
       }
