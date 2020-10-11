@@ -412,19 +412,24 @@ export class RadioButtonGroup extends Morph {
         set(labels) {
           this.removeAllButtons();
           if (obj.isArray(labels)) {
+            if (labels.length == 0) return;
             labels.forEach(value => {
               this.addButton(morph({
                 name: 'label', type: 'label', value, reactsToPointer: false
               }))
             });
           } else {
-            [...labels.entries()].forEach(([label, value]) => {
+            labels = [...labels.entries()];
+            if (labels.length == 0) return;
+            labels.forEach(([label, value]) => {
               this.addButton(morph({
                 name: 'label', type: 'label', value: label, reactsToPointer: false
               }), value);
             })
           }
-          this.submorphs[0] && this.setSelection(this.submorphs[0]);
+          // fixme: this should be handled by the components themselves
+          this.submorphs[0].master.whenApplied().then(() => 
+            this.setSelection(this.submorphs[0]))
         },
         value: {
           derived: true,

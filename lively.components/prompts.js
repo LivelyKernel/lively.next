@@ -272,7 +272,6 @@ export class MultipleChoicePrompt extends AbstractPrompt {
     const choicesContainer = this.addNamed('choices', {
       name: 'choices',
       type: RadioButtonGroup,
-      choices,
     });
 
     this.addNamed('button wrapper', { submorphs: [okButton, cancelButton]});
@@ -280,14 +279,9 @@ export class MultipleChoicePrompt extends AbstractPrompt {
     okButton && connect(okButton, 'fire', this, 'resolve');
     cancelButton && connect(cancelButton, 'fire', this, 'reject');
     
-    // let choiceMorphs = this.getSubmorphsByStyleClassName('RadioButton');
-    // this.opacity = 0;
-    // this.whenRendered().then(() => {
-    //   let originalCenter = this.center;
-    //   this.width = arr.max([this.width, ...choiceMorphs.map(m => m.bounds().width + 70)]);
-    //   this.align(this.center, originalCenter);
-    //   this.opacity = 1;
-    // })
+    this.whenRendered().then(() => {
+      choicesContainer.choices = choices;
+    });
   }
 
   onKeyDown(evt) {
