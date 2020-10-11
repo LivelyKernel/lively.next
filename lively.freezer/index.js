@@ -679,7 +679,7 @@ async function compileViaGoogle(code, li, fileName) {
 
 async function compileOnServer(code, loadingIndicator, fileName = 'data') {
   const osName = await evalOnServer('process.platform');
-  let googleClosure = System.decanonicalize(`google-closure-compiler-${osName}/compiler`).replace(System.baseURL, '../');
+  let googleClosure = System.decanonicalize(`google-closure-compiler-${osName == 'darwin' ? 'osx' : 'linux'}/compiler`).replace(System.baseURL, '../');
   let tmp = resource(System.decanonicalize('lively.freezer/tmp.js'));
   let min = resource(System.decanonicalize('lively.freezer/tmp.min.js'));
   tmp.onProgress = (evt) => {
@@ -716,7 +716,7 @@ async function compileOnServer(code, loadingIndicator, fileName = 'data') {
     loadingIndicator.progress = (i + 1) / (code.length / 62000);
   }
   await promise.waitFor(50000, () => c.status.startsWith('exited'));
-  if (c.stderr) {
+  if (c.stderr && c.exitCode != 0) {
     loadingIndicator && loadingIndicator.remove();
     throw new Error(c.stderr);
   }
