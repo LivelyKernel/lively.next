@@ -42,7 +42,13 @@ export default class ComponentsBrowser {
     this.customDirs = ['./lively.morphic/styleguides/'];
     this.cacheDir = './components_cache/';
     
-    //this.refresh();
+    if (!await this.getCacheDir().exists())
+      this.refresh();
+  }
+
+  getCacheDir() {
+    const baseUrl = "file://" + process.cwd(); // assume we are running inside the lively.server folder
+    return resource(baseUrl + '/../').join(this.cacheDir).withRelativePartsResolved();
   }
 
   // await this.refresh()
@@ -55,7 +61,7 @@ export default class ComponentsBrowser {
     });
     let allStyleguidesInDb = worlds.filter(commit => commit.tags.includes('styleguide')).map(snap => snap.name);
     let additionalStyleguidesInFolders = [];
-    let cacheDir = resource(baseUrl + '/../').join(this.cacheDir).withRelativePartsResolved(); // ensure?
+    let cacheDir = this.getCacheDir(); // ensure?
     await cacheDir.ensureExistance()
     let dir;
     for (let relPath of this.customDirs) {
