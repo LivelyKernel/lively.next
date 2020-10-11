@@ -1213,6 +1213,8 @@ export class ObjectEditor extends Morph {
         ])
       });
 
+      if (importViaFreeText == undefined) return;
+
       if (importViaFreeText) {
 
         let importStmt = `import ... from "module";`;

@@ -243,8 +243,6 @@ export default function browserCommands(browser) {
          });
 
         if (!what || what === "Cancel") {
-          browser.world().inform("Canceled add package", {
-            requester: browser, lineWrapping: false });
           return true;
         }
 
