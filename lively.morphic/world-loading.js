@@ -223,7 +223,9 @@ export async function interactivelySaveWorld(world, options) {
     } else await resourceHandle.ensureExistance();
 
     world.changeMetaData('file', jsonStoragePath, false, false);
+    
     await resourceHandle.writeJson(await createMorphSnapshot(world));
+    resource(System.baseURL).join('/subservers/ComponentBrowser/refresh').join(name).read();
     i.remove();
     world.setStatusMessage(`saved world ${name} to file: ${resourceHandle.url}`);
     return;
@@ -267,6 +269,8 @@ export async function interactivelySaveWorld(world, options) {
           path = pathForBrowserHistory(name, queryString);
       window.history.pushState({}, "lively.next", path);
     }
+
+    resource(System.baseURL).join('/subserver/ComponentsBrowser/refresh').join(name).read();
 
     world.setStatusMessage(`saved world ${name}`);
     world.get("world-list") && world.get("world-list").onWorldSaved(name);
