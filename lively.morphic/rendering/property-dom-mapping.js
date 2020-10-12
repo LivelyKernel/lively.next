@@ -1,6 +1,5 @@
-import config from "../config.js";
-import { pt, Color } from "lively.graphics";
-import { arr, num, string } from "lively.lang";
+import { Color } from "lively.graphics";
+import { string } from "lively.lang";
 import bowser from 'bowser';
 // addPathAttributes
 // addStyleProps
@@ -25,12 +24,12 @@ export function styleProps(morph) {
 }
 
 export function addTransform(morph, style) {
-  let {position, origin, scale, rotation, flipped, tilted, perspective} = morph,
+  let {position, origin, scale, rotation, flipped, tilted, perspective, owner} = morph,
       idx = morph.__stackIdx__ || 0,
-      x = Math.round(position.x - origin.x),
-      y = Math.round(position.y - origin.y),
+      x = Math.round(position.x - origin.x - (morph._skipWrapping && owner ? owner.borderWidthLeft : 0)),
+      y = Math.round(position.y - origin.y - (morph._skipWrapping && owner ? owner.borderWidthTop : 0)),
       promoteToCompositionLayer = morph.renderOnGPU || (morph.dropShadow && !morph.dropShadow.fast) || morph.grayscale > 0;
-  if ((morph.owner && morph.owner.isText) || promoteToCompositionLayer) {
+  if ((owner && owner.isText) || promoteToCompositionLayer) {
     style.transform = (promoteToCompositionLayer ? `translate3d(${x}px, ${y}px, ${idx}px)` : `translate(${x}px, ${y}px)`);
   } else {
     style.transform = '';
