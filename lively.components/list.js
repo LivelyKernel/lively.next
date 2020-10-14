@@ -1,8 +1,8 @@
-import { Morph, Text, StyleSheet, Label, Icon, morph, touchInputDevice } from 'lively.morphic';
-import { pt, LinearGradient, Color, Rectangle, rect } from 'lively.graphics';
-import { arr, Path, string } from 'lively.lang';
-import { signal, noUpdate, once } from 'lively.bindings';
-import { Button } from './buttons.js';
+import { Morph, VerticalLayout, Text, StyleSheet, Label, Icon, morph, touchInputDevice } from "lively.morphic";
+import { pt, LinearGradient, Color, Rectangle, rect } from "lively.graphics";
+import { arr, Path, string } from "lively.lang";
+import { signal, once } from "lively.bindings";
+import { Button } from "./buttons.js";
 import bowser from 'bowser';
 
 export function asItem (obj) {
@@ -883,6 +883,12 @@ export class FilterableList extends Morph {
       fill: { defaultValue: Color.transparent },
       borderWidth: { defaultValue: 1 },
       updateSelectionsAfterFilter: { defaultValue: false },
+
+      layout: {
+        initialize() {
+          this.layout = new VerticalLayout({ renderViaCSS: true });
+        }
+      },
 
       theme: {
         after: ['styleClasses', 'listMorph'],
