@@ -1,9 +1,9 @@
-import vdom from 'virtual-dom';
-import parser from 'vdom-parser';
-import { num, obj, arr, properties, promise } from 'lively.lang';
-import { Color, RadialGradient, pt, Point, LinearGradient, rect } from 'lively.graphics';
-import config from '../config.js';
-import { styleProps, addSvgAttributes, addPathAttributes } from './property-dom-mapping.js';
+import vdom from "virtual-dom";
+import parser from "vdom-parser";
+import { num, Path, obj, arr, properties, promise } from "lively.lang";
+import { Color, RadialGradient, pt, Point, LinearGradient, rect } from "lively.graphics";
+import config from "../config.js";
+import { styleProps, addSvgAttributes, addPathAttributes } from "./property-dom-mapping.js"
 import bowser from 'bowser';
 
 const { h, diff, patch, create: createNode } = vdom;
@@ -309,6 +309,12 @@ export function defaultStyle (morph) {
   domStyle.position = 'absolute';
   domStyle['pointer-events'] = reactsToPointer ? 'auto' : 'none';
   domStyle.cursor = nativeCursor;
+  if (Path('owner.layout.renderViaCSS').get(morph)) {
+    morph.owner.layout.addSubmorphCSS(morph, domStyle);
+  }
+  if (Path('layout.renderViaCSS').get(morph)) {
+    morph.layout.addContainerCSS(morph, domStyle);
+  }
   return domStyle;
 }
 
@@ -327,6 +333,13 @@ MorphAfterRenderHook.prototype.hook = function (node, propertyName, previousValu
       this.morph._submorphOrderChanged = false;
       this.updateScrollOfSubmorphs(this.morph, this.renderer);
     } else if (this.morph.isClip()) this.updateScroll(this.morph, node);
+
+    if (Path('morph.owner.layout.renderViaCSS').get(this)) {
+      this.morph.owner.layout.ensureBoundsMonitor(node, this.morph);
+    }
+    if (Path('morph.layout.renderViaCSS').get(this)) {
+      this.morph.layout.ensureBoundsMonitor(node, this.morph);
+    }
   }
 
   if (isInDOM || attempt > 3) {
@@ -370,9 +383,19 @@ MorphAfterRenderHook.prototype.updateScroll = function (morph, node, fromScroll)
       scrollLayer.scrollLeft !== x && (scrollLayer.scrollLeft = x);
     }, morph.id);
   }
-};
-MorphAfterRenderHook.prototype.unhook = function (morph, renderer) {};
-MorphAfterRenderHook.prototype.updateScrollOfSubmorphs = function (morph, renderer) {
+}
+MorphAfterRenderHook.prototype.unhook = function(node, propName, propValue) {
+  // remove the listener to that node
+  // this is getting called on every render pass... too many times :(
+  if (Path('morph.layout.renderViaCSS').get(this) && !propValue) {
+    this.morph.layout._resizeObservers = new WeakMap();
+  }
+  // if (this.morph._boundsObserver && !propValue) {
+  //   this.morph._boundsObserver.unobserve(node);
+  //   delete this.morph._boundsObserver;
+  // }
+}
+MorphAfterRenderHook.prototype.updateScrollOfSubmorphs = function(morph, renderer) {
   morph.submorphs.forEach(m => {
     if (m.isClip()) { this.updateScroll(m, renderer.getNodeForMorph(m)); }
     this.updateScrollOfSubmorphs(m, renderer);

@@ -432,25 +432,24 @@ export class Label extends Morph {
       if (i < nLines - 1) renderedText.push(h('br'));
     }
 
-    const {
-      fontColor,
-      fontFamily,
-      fontSize,
-      fontStyle,
-      fontWeight,
-      textShadow,
-      textDecoration,
-      textStyleClasses
-    } = this.textStyle;
-    const padding = this.padding;
-    var style = {
-      fontFamily,
-      fontSize: typeof fontSize === 'number' ? fontSize + 'px' : fontSize,
-      color: fontColor ? String(fontColor) : 'transparent',
-      position: 'absolute',
-      cursor: this.nativeCursor
-    };
-    const attrs = defaultAttributes(this, renderer);
+    var {
+          fontColor,
+          fontFamily,
+          fontSize,
+          fontStyle,
+          fontWeight,
+          textShadow,
+          textDecoration,
+          textStyleClasses,
+        } = this.textStyle,
+        padding = this.padding,
+        style = {
+          fontFamily,
+          fontSize: typeof fontSize === "number" ? fontSize + "px" : fontSize,
+          color: fontColor ? String(fontColor) : "transparent",
+          cursor: this.nativeCursor
+        },
+        attrs = defaultAttributes(this, renderer);
 
     if (textShadow) style.textShadow = textShadow;
     if (fontWeight !== 'normal') style.fontWeight = fontWeight;

@@ -1,6 +1,6 @@
-import { pt, Rectangle, rect } from 'lively.graphics';
-import { arr, Closure, num, grid, obj } from 'lively.lang';
-import { once } from 'lively.bindings';
+import { pt, Rectangle, rect } from "lively.graphics";
+import { arr, fun, Closure, num, grid, obj } from "lively.lang";
+import { once } from "lively.bindings";
 
 class Layout {
   constructor (args = {}) {
@@ -71,8 +71,10 @@ class Layout {
     return otherLayout.name() == this.name();
   }
 
-  get layoutableSubmorphs () {
-    if (!this.layoutOrder) { this.layoutOrder = Closure.fromSource(JSON.parse(this.layoutOrderSource)).recreateFunc(); }
+  get layoutableSubmorphs() {
+    if (!this.layoutOrder)
+      this.layoutOrder = Closure.fromSource(JSON.parse(this.layoutOrderSource)).recreateFunc();
+    if (!this.container) return [];
     return arr.sortBy(
       this.container.submorphs.filter(
         m => m.isLayoutable && !this.ignore.includes(m.name)),
@@ -212,6 +214,17 @@ class Layout {
     this.lastBoundsExtent = this.container && this.container.bounds().extent();
     this.active = false;
   }
+
+  ensureBoundsMonitor(node, morph) {
+    let observer = this._resizeObservers.get(morph);
+    if (observer) return observer;
+    observer = new window.ResizeObserver(([entry]) => {
+      this.onDomResize(node, entry, morph);
+    });
+    observer.observe(node);
+    this._resizeObservers.set(morph, observer);
+    return observer;
+  }
 }
 
 export class CustomLayout extends Layout {
@@ -271,9 +284,10 @@ class FloatLayout extends Layout {
   constructor (props = {}) {
     super(props);
     this._orderByIndex = props.orderByIndex || false;
-    this._resizeSubmorphs = typeof props.resizeSubmorphs !== 'undefined'
-      ? props.resizeSubmorphs
-      : false;
+    this._resizeSubmorphs = typeof props.resizeSubmorphs !== "undefined" ?
+                              props.resizeSubmorphs : false;
+    this.renderViaCSS = props.renderViaCSS || false;
+    this._resizeObservers = new WeakMap();
   }
 
   copy () {
@@ -284,20 +298,90 @@ class FloatLayout extends Layout {
     return this.orderByIndex ? this.container.submorphs.indexOf(aMorph) : aMorph.left;
   }
 
-  get orderByIndex () { return this._orderByIndex; }
-  set orderByIndex (active) { this._orderByIndex = active; this.apply(); }
+  get orderByIndex() { return this._orderByIndex; }
+  set orderByIndex(active) { this._orderByIndex = active; this.apply() }
+  
+  get direction() { return this._direction; }
+  set direction(d) {
+    this._direction = d;
+    this.onConfigUpdate();
+  }
+  
+  get align() { return this._align; }
+  set align(d) {
+    this._align = d;
+    this.onConfigUpdate();
+  }
 
-  get direction () { return this._direction; }
-  set direction (d) { this._direction = d; this.apply(); }
+  get autoResize() { return this._autoResize; }
+  set autoResize(active) {
+    this._autoResize = active;
+    this.onConfigUpdate();
+  }
 
-  get align () { return this._align; }
-  set align (d) { this._align = d; this.apply(); }
+  get spacing() { return this._spacing }
+  set spacing(offset) {
+    this._spacing = offset;
+    this.onConfigUpdate();
+  }
 
-  get autoResize () { return this._autoResize; }
-  set autoResize (active) { this._autoResize = active; this.apply(); }
+  get resizeSubmorphs() { return this._resizeSubmorphs }
+  set resizeSubmorphs(bool) {
+    this._resizeSubmorphs = bool;
+    this.onConfigUpdate();
+  }
 
-  get spacing () { return this._spacing; }
-  set spacing (offset) { this._spacing = offset; this.apply(); }
+  set renderViaCSS(active) {
+    this._renderViaCSS = active;
+    this.layoutableSubmorphs.forEach(m => m.makeDirty());
+  }
+
+  get renderViaCSS() {
+    return this._renderViaCSS;
+  }
+
+  onConfigUpdate() {
+    this.apply();
+    if (this.renderViaCSS) {
+      this.layoutableSubmorphs.forEach(m => {
+        m.makeDirty();
+        this.triggerMeasure(m);        
+      });
+    }
+  }
+
+  triggerMeasure(submorph) {
+    if (this._resizeObservers.get(submorph)) {
+      // this introduces some lag. maybe fixed once we move to vanilla dom.
+      submorph.whenRendered().then(() => {
+        const target = submorph.env.renderer.getNodeForMorph(submorph);
+        target && this.onDomResize(this._resizeObservers.get(submorph), {
+          target, contentRect: target.getBoundingClientRect()
+        }, submorph);
+      });
+    }
+  }
+
+  onSubmorphAdded(submorph, animation) {
+    if (this.renderViaCSS) {
+      this.triggerMeasure(this.container);
+      this.layoutableSubmorphs.forEach(m => this.triggerMeasure(m));
+    } else super.onSubmorphAdded(submorph, animation);
+  }
+
+  onSubmorphRemoved(submorph, animation) {
+    if (this.renderViaCSS) {
+      this.triggerMeasure(this.container);
+      this.layoutableSubmorphs.forEach(m => this.triggerMeasure(m));
+    } else super.onSubmorphRemoved(submorph, animation);
+  }
+
+  onSubmorphResized(submorph, change) {
+    if (this.renderViaCSS) {
+      submorph = [submorph, ...submorph.ownerChain()].find(m => m.owner == this.container);
+      this.triggerMeasure(submorph);
+    } else super.onSubmorphResized(submorph, change);
+  }
 
   get resizeSubmorphs () { return this._resizeSubmorphs; }
   set resizeSubmorphs (bool) { this._resizeSubmorphs = bool; this.apply(); }
@@ -309,17 +393,17 @@ class FloatLayout extends Layout {
     return true;
   }
 
-  getSpec () {
-    const { spacing, resizeSubmorphs, autoResize, align, direction, padding, reactToSubmorphAnimations, orderByIndex } = this;
-    return { spacing, resizeSubmorphs, autoResize, align, direction, padding, reactToSubmorphAnimations, orderByIndex };
+  getSpec() {
+    let { spacing, resizeSubmorphs, autoResize, align, direction, padding, reactToSubmorphAnimations, orderByIndex, renderViaCSS } = this;
+    return { spacing, resizeSubmorphs, autoResize, align, direction, padding, reactToSubmorphAnimations, orderByIndex, renderViaCSS };
   }
 
   inspect (pointerId) {
     // return new FlexLayoutHalo(this.container, pointerId);
   }
 
-  async apply (animate = false) {
-    if (this.active || !this.container || !this.container.submorphs.length) return;
+  async apply(animate = false) {
+    if (this.active || !this.container || !this.container.submorphs.length || this.renderViaCSS) return;
 
     if (!this.layoutableSubmorphs.length) return;
     if (!this.layoutableSubmorphBounds) this.refreshBoundsCache();
@@ -458,6 +542,72 @@ export class VerticalLayout extends FloatLayout {
   layoutOrder (aMorph) {
     return this.orderByIndex ? this.container.submorphs.indexOf(aMorph) : aMorph.top;
   }
+
+  // CSS based implementation
+  onDomResize(observer, entry, morph) {
+    const { contentRect, target } = entry;
+    const { width, height } = contentRect;
+    const originalDirty = morph._dirty;
+    if (morph == this.container) {
+      if (this.autoResize && morph.submorphs.length > 0) morph.height = height + this.spacing;
+      if (this.direction != 'topToBottom' || this.align != 'left') {
+        // resizing has affected the position of my submorphs
+        this.layoutableSubmorphs.forEach(m => this.triggerMeasure(m));
+      }
+      return;
+    }
+    
+    morph.position = pt(target.offsetLeft, target.offsetTop);
+    if (this.resizeSubmorphs) morph.width = width;
+
+    if (!observer) observer = this.ensureBoundsMonitor(target, morph);
+    // only do that if we have changed size in height
+    if (observer._lastContentRect && 
+        observer._lastContentRect.height != contentRect.height) {
+      const renderer = morph.env.renderer;
+      observer._lastContentRect = contentRect;
+      
+      this.layoutableSubmorphs.forEach(m => {
+        if (m != morph) {
+          const node = renderer.getNodeForMorph(m);
+          if (!node) return;
+          this.onDomResize(this._resizeObservers.get(m), {
+            target: node, contentRect: node.getBoundingClientRect(),
+          }, m);
+        }
+      });
+    }
+    
+    observer._lastContentRect = contentRect;
+    morph._dirty = originalDirty;
+  }
+
+  addSubmorphCSS(morph, style) {
+    if (!morph.isLayoutable) return;
+    const clip = morph.clipMode != 'visible';
+    const bounds = !clip && morph.submorphBounds();
+    style.position = 'static';
+    style.marginTop = `${Math.max(0, clip ? 0 : -bounds.top()) + this.spacing / 2}px`;
+    style.marginBottom = `${Math.max(0, clip ? 0 : bounds.bottom() - morph.height) + this.spacing / 2}px`;
+    style.marginLeft = `${Math.max(0, clip ? 0 : -bounds.left()) + this.spacing}px`;
+    style.marginRight = `${Math.max(0, clip ? 0 : bounds.right() - morph.width) + this.spacing}px`;
+    style['flex-shrink'] = 0;
+    if (this.resizeSubmorphs) {
+      style.width = `calc(100% - ${this.spacing * 2}px)`;
+      morph.width = this.container.width - 2 * this.spacing;
+    }
+  }
+
+  addContainerCSS(morph, style) {
+    if (morph.visible)
+      style.display = this.autoResize ? 'inline-flex' : 'flex';
+    if (this.autoResize && morph.submorphs.length > 0) style.height = 'auto';
+    style.justifyContent = ({topToBottom: 'flex-start', bottomToTop: 'flex-end', centered: 'center'})[this.direction];
+    style.alignItems = ({ center: 'center', left: 'flex-start', right: 'flex-end'})[this.align];
+    style.flexDirection = 'column';
+    style.paddingTop = `${this.spacing / 2}px`;
+    style.paddingBottom = `${this.spacing / 2}px`;
+  }
 }
 
 export class HorizontalLayout extends FloatLayout {
@@ -569,6 +719,80 @@ export class HorizontalLayout extends FloatLayout {
     if (!autoResize) minExtent = minExtent.maxPt(container.extent);
     return minExtent;
   }
+
+  // CSS based implementation
+
+  onDomResize(observer, entry, morph) {
+    const { contentRect, target } = entry;
+    const { width, height } = contentRect;
+    const originalDirty = morph._dirty;
+    if (morph == this.container) {
+      if (this.autoResize && morph.submorphs.length > 0) {
+        morph.width = width + this.spacing;
+        if (!this.resizeSubmorphs) morph.height = height;
+      }
+      if (this.direction != 'topToBottom' || this.align != 'left') {
+        // resizing has affected the position of my submorphs
+        this.layoutableSubmorphs.forEach(m => this.triggerMeasure(m));
+      }
+      return;
+    }
+    
+    morph.position = pt(target.offsetLeft, target.offsetTop);
+    if (this.resizeSubmorphs) morph.height = height;
+    if (!observer) observer = this.ensureBoundsMonitor(target, morph);
+    // only do that if we have changed size in height
+    if (observer._lastContentRect && 
+        observer._lastContentRect.width != contentRect.width) {
+      const renderer = morph.env.renderer;
+      observer._lastContentRect = contentRect;
+      
+      this.layoutableSubmorphs.forEach(m => {
+        if (m != morph) {
+          const node = renderer.getNodeForMorph(m);
+          if (!node) return;
+          this.onDomResize(this._resizeObservers.get(m), {
+            target: node, contentRect: node.getBoundingClientRect(),
+          }, m);
+        }
+      });
+    }
+    
+    observer._lastContentRect = contentRect;
+    //console.log(morph.name, originalDirty);
+    morph._dirty = originalDirty;
+  }
+
+  addSubmorphCSS(morph, style) {
+    if (!morph.isLayoutable) return;
+    const clip = !morph.env.renderer.getNodeForMorph(morph) || morph.clipMode != 'visible';
+    const bounds = !clip && morph.submorphBounds();
+    style.position = 'static';
+    style.marginTop = `${Math.max(0, clip ? 0 : -bounds.top()) + this.spacing - morph.owner.borderWidthTop}px`;
+    style.marginBottom = `${Math.max(0, clip ? 0 : bounds.bottom() - morph.height) + this.spacing - morph.owner.borderWidthBottom}px`;
+    style.marginLeft = `${Math.max(0, clip ? 0 : -bounds.left()) + this.spacing / 2 - morph.owner.borderWidthLeft}px`;
+    style.marginRight = `${Math.max(0, clip ? 0 : bounds.right() - morph.width) + this.spacing / 2 - morph.owner.borderWidthRight}px`;
+    style['flex-shrink'] = 0;
+    if (this.resizeSubmorphs) {
+      style.height = `calc(100% - ${this.spacing * 2}px)`;
+      morph.height = this.container.height - 2 * this.spacing;
+    }
+  }
+
+  addContainerCSS(morph, style) {
+    if (morph.visible)
+      style.display = this.autoResize ? 'inline-flex' : 'flex';
+    if (this.autoResize && morph.submorphs.length > 0) {
+      style.width = 'auto';
+      if (!this.resizeSubmorphs) style.height = 'auto';
+    }
+    style.justifyContent = ({leftToRight: 'flex-start', rightToLeft: 'flex-end', centered: 'center'})[this.direction];
+    style.alignItems = ({ center: 'center', left: 'flex-start', right: 'flex-end'})[this.align];
+    style.flexDirection = 'row';
+    style.paddingLeft = `${this.spacing / 2}px`;
+    style.paddingRight = `${this.spacing / 2}px`;
+  }
+
 }
 
 export class ProportionalLayout extends Layout {
@@ -775,10 +999,12 @@ export class CenteredTilingLayout extends TilingLayout {
 export class TilingLayout extends Layout {
   constructor (props = {}) {
     super(props);
+    this._renderViaCSS = props.renderViaCSS || false;
     this._axis = props.axis || 'row';
     this._align = props.align || 'left';
     this._verticalAlign = props.verticalAlign || 'top';
     this._orderByIndex = props.orderByIndex || false;
+    this._resizeObservers = new WeakMap();
     delete this.autoResize;
   }
 
@@ -801,11 +1027,11 @@ export class TilingLayout extends Layout {
     return new this.constructor(this.getSpec());
   }
 
-  getSpec () {
-    const { axis, align, spacing, layoutOrder, orderByIndex, reactToSubmorphAnimations } = this;
+  getSpec() {
+    let { axis, align, spacing, layoutOrder, orderByIndex, reactToSubmorphAnimations, renderViaCSS } = this;
     return {
-      axis, align, spacing, orderByIndex, reactToSubmorphAnimations
-    };
+      axis, align, spacing, orderByIndex, reactToSubmorphAnimations, renderViaCSS
+    }
   }
 
   get possibleAxisValues () { return ['row', 'column']; }
@@ -820,11 +1046,76 @@ export class TilingLayout extends Layout {
   get align () { return this._align; }
   set align (a) { this._align = a; this.apply(); }
 
-  get spacing () { return this._spacing; }
-  set spacing (offset) { this._spacing = offset; this.apply(); }
+  get spacing() { return this._spacing; }
+  set spacing(offset) {
+    this._spacing = offset;
+    this.apply();
+    this.layoutableSubmorphs.forEach(m => m.makeDirty());
+  }
 
-  apply (animate = false) {
-    if (this.active || !this.container) return;
+  set renderViaCSS(active) {
+    this._renderViaCSS = active;
+    this.layoutableSubmorphs.forEach(m => m.makeDirty());
+  }
+
+  get renderViaCSS() {
+    return this._renderViaCSS;
+  }
+
+  onDomResize(observer, entry, morph) {
+    const { contentRect, target } = entry;
+    const originalDirty = morph._dirty;
+    morph.position = pt(target.offsetLeft, target.offsetTop);
+    // only do that if we have changed size in height
+    if (!observer) observer = this.ensureBoundsMonitor(target, morph);
+    if (observer._lastContentRect && 
+        ((observer._lastContentRect.height != contentRect.height) ||
+        (observer._lastContentRect.width != contentRect.width))) {
+      const renderer = morph.env.renderer;
+      observer._lastContentRect = contentRect;
+      this.container.submorphs.forEach(m => {
+        if (m.isLayoutable && m != morph) {
+          const node = renderer.getNodeForMorph(m);
+          if (!node) return;
+          this.onDomResize(this._resizeObservers.get(m), {
+            target: node, contentRect: node.getBoundingClientRect(),
+          }, m);
+        }
+      });
+    }
+    
+    observer._lastContentRect = contentRect;
+    morph._dirty = originalDirty;
+  }
+
+  addSubmorphCSS(morph, style) {
+    if (!morph.isLayoutable) return;
+    const bounds = morph.submorphBounds();
+    style.position = 'static';
+    style.marginTop = `${Math.max(0, -bounds.top()) + this.spacing / 2}px`;
+    style.marginBottom = `${Math.max(0, bounds.bottom() - morph.height) + this.spacing / 2}px`;
+    style.marginLeft = `${Math.max(0, -bounds.left()) + this.spacing}px`;
+    style['flex-shrink'] = 0;
+    if (this.resizeSubmorphs) {
+      style.width = `calc(100% - ${this.spacing * 2}px)`;
+    }
+  }
+
+  addContainerCSS(morph, style) {
+    style.display = 'flex';
+    style['align-content'] = 'flex-start';
+    style['flex-flow'] = (this.axis == 'columns' ? 'column' : 'row') + ' wrap';
+    style.paddingTop = `${this.spacing / 2}px`;
+    style.paddingBottom = `${this.spacing / 2}px`;
+  }
+
+  forceLayout() {
+    if (this.renderViaCSS) return;
+    else super.forceLayout();
+  }
+
+  apply(animate = false) {
+    if (this.active || !this.container || this.renderViaCSS) return;
 
     this.active = true;
     super.apply(animate);
@@ -941,8 +1232,9 @@ export class TilingLayout extends Layout {
 }
 
 export class CellGroup {
-  constructor ({ cell, morph, layout, align }) {
-    this.state = { cells: [cell], layout, align, resize: layout.fitToCell };
+
+  constructor({cell, morph, layout, align, resize = layout.fitToCell}) {
+    this.state = {cells: [cell], layout, align, resize };
     layout && layout.addGroup(this);
     this.morph = morph;
   }
@@ -967,7 +1259,28 @@ export class CellGroup {
     this.layout.apply();
   }
 
-  set morph (value) {
+  get area() {
+    let minCol, maxCol, minRow, maxRow;
+    this.cells.map(cell => {
+      const colIdx = cell.before.length;
+      if (minCol == undefined || minCol > colIdx) minCol = colIdx;
+      if (maxCol == undefined || maxCol < colIdx) maxCol = colIdx;
+
+      const rowIdx = cell.above.length;
+      if (minRow == undefined || minRow > rowIdx) minRow = rowIdx;
+      if (maxRow == undefined || maxRow < rowIdx) maxRow = rowIdx;      
+    });
+
+    const tl = this.layout.row(minRow).col(minCol).padding;
+    const br = this.layout.row(maxRow).col(maxCol).padding;
+    
+    return {
+      minCol, maxCol, minRow, maxRow,
+      padding: Rectangle.inset(tl.left(), tl.top(), br.right(), br.bottom())
+    }
+  }
+
+  set morph(value) {
     const conflictingGroup = value && this.layout.getCellGroupFor(value);
     if (conflictingGroup) {
       conflictingGroup.morph = null;
@@ -1581,6 +1894,13 @@ export class GridLayout extends Layout {
     config = { autoAssign: true, fitToCell: true, ...config };
     this.cellGroups = [];
     this.config = config;
+    this.renderViaCSS = config.renderViaCSS || false;
+    this._resizeObservers = new WeakMap();
+  }
+
+  attach() {
+    if (this.renderViaCSS) this.initGrid();
+    else super.attach();
   }
 
   name () { return 'Grid'; }
@@ -1727,8 +2047,8 @@ export class GridLayout extends Layout {
     });
   }
 
-  apply (animate = false) {
-    if (this.active) return;
+  apply(animate = false) {
+    if (this.active || this.renderViaCSS) return;
     this.active = true;
     super.apply(animate);
     if (!this.grid) this.initGrid();
@@ -1757,14 +2077,8 @@ export class GridLayout extends Layout {
     return morph && this.cellGroups.find(g => g.morph == morph);
   }
 
-  onSubmorphRemoved (removedMorph) {
-    const cellGroup = this.getCellGroupFor(removedMorph);
-    if (cellGroup) cellGroup.morph = null;
-    super.onSubmorphRemoved(removedMorph);
-  }
-
-  inspect (pointerId) {
-    // return new GridLayoutHalo(this.container, pointerId);
+  inspect(pointerId) {
+    //return new GridLayoutHalo(this.container, pointerId);
   }
 
   ensureGrid ({ grid, rowCount, columnCount }) {
@@ -1807,4 +2121,143 @@ export class GridLayout extends Layout {
       if (cellGroup) cellGroup.morph = m;
     });
   }
+
+  // CSS based implementation
+  set renderViaCSS(active) {
+    this._renderViaCSS = active;
+    this.layoutableSubmorphs.forEach(m => m.makeDirty());
+  }
+
+  get renderViaCSS() {
+    return this._renderViaCSS;
+  }
+
+  triggerMeasure(submorph) {
+    if (this._resizeObservers.get(submorph)) {
+      // this introduces some lag. maybe fixed once we move to vanilla dom.
+      submorph.whenRendered().then(() => {
+        const target = submorph.env.renderer.getNodeForMorph(submorph);
+        target && this.onDomResize(this._resizeObservers.get(submorph), {
+          target, contentRect: target.getBoundingClientRect()
+        }, submorph);
+      });
+    }
+  }
+
+  onSubmorphAdded(submorph, animation) {
+    if (this.renderViaCSS) {
+      this.triggerMeasure(this.container);
+      this.layoutableSubmorphs.forEach(m => this.triggerMeasure(m));
+    } else super.onSubmorphAdded(submorph, animation);
+  }
+
+  onSubmorphRemoved(removedMorph, animation) {
+    const cellGroup = this.getCellGroupFor(removedMorph);
+    if (cellGroup) cellGroup.morph = null;
+    if (this.renderViaCSS) {
+      this.triggerMeasure(this.container);
+      this.layoutableSubmorphs.forEach(m => this.triggerMeasure(m));
+    } else {
+      super.onSubmorphRemoved(removedMorph, animation);
+    }
+  }
+
+  onSubmorphResized(submorph, change) {
+    if (this.renderViaCSS) {
+      submorph = [submorph, ...submorph.ownerChain()].find(m => m.owner == this.container);
+      this.triggerMeasure(submorph);
+    } else super.onSubmorphResized(submorph, change);
+  }
+
+  onDomResize(observer, entry, morph) {
+    // grid layouts enforce extents, so a change should only update the morph itself
+    //const { contentRect, target } = entry;
+    //const { width, height } = contentRect;
+    for (let { resize, morph: layoutableSubmorph } of this.cellGroups) {
+      if (!layoutableSubmorph) continue;
+      const node = morph.env.renderer.getNodeForMorph(layoutableSubmorph);
+      if (!node) continue;
+      if (layoutableSubmorph.isText) {
+        fun.throttleNamed('layout-' + layoutableSubmorph.id, 500, () => {
+          if (resize) layoutableSubmorph.extent = pt(node.offsetWidth, node.offsetHeight);
+          layoutableSubmorph.position = pt(node.offsetLeft, node.offsetTop);
+        })();
+        continue;
+      }
+      if (resize) layoutableSubmorph.extent = pt(node.offsetWidth, node.offsetHeight);
+      layoutableSubmorph.position = pt(node.offsetLeft, node.offsetTop);
+      //layoutableSubmorph._dirty = false; // prevent render
+    }
+  }
+
+  addSubmorphCSS(morph, style) {
+    if (!morph.isLayoutable) return;
+    const { area, resize, align, alignedProperty } = this.getCellGroupFor(morph) || {};
+    if (!area) return;
+    const { minCol, maxCol, minRow, maxRow, padding } = area;
+    style.margin = padding.top() + 'px ' + padding.right() + 'px ' + padding.bottom() + 'px ' + padding.left() + 'px';
+    style.gridColumnStart = minCol + 1;
+    style.gridColumnEnd = maxCol + 2;
+    style.gridRowStart = minRow + 1;
+    style.gridRowEnd = maxRow + 2;
+    style.position = 'static';
+    const alignToStretch = {
+      topLeft: {}, // the default
+      topRight: {
+        justifySelf: 'end',
+        alignSelf: 'start'
+      },
+      bottomRight: {
+        justifySelf: 'end',
+        alignSelf: 'end'
+      },
+      bottomLeft: {
+        justifySelf: 'start',
+        alignSelf: 'end'
+      },
+      center: {
+        justifySelf: 'center',
+        alignSelf: 'center'
+      },
+      topCenter: {
+        justifySelf: 'center',
+        alignSelf: 'start',
+      },
+      bottomCenter: {
+        justifySelf: 'center',
+        alignSelf: 'end',
+      },
+      leftCenter: {
+        justifySelf: 'start',
+        alignSelf: 'center',
+      },
+      rightCenter: {
+        justifySelf: 'end',
+        alignSelf: 'center',
+      }
+    }
+    Object.assign(style, alignToStretch[align]);
+    if (resize) {
+      style.width = 'auto';
+      style.height = 'auto'; 
+    }
+  }
+
+  addContainerCSS(morph, style) {
+    if (morph.visible)
+      style.display = 'grid';
+    const cols = arr.range(0, this.columnCount - 1).map(i => {
+      const col = this.col(i);
+      if (col.fixed) return col.length + 'px';
+      else return col.proportion + 'fr';
+    });
+    const rows = arr.range(0, this.rowCount - 1).map(i => {
+      const row = this.row(i);
+      if (row.fixed) return row.length + 'px';
+      else return row.proportion + 'fr';
+    });
+    style.gridTemplateColumns = cols.join(' ');
+    style.gridTemplateRows = rows.join(' ');
+  }
+
 }
