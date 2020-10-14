@@ -362,6 +362,37 @@ class FloatLayout extends Layout {
     }
   }
 
+  onDomResize(observer, entry, morph) {
+    const { contentRect, target } = entry;
+    const originalDirty = morph._dirty;
+    if (morph == this.container)
+      return this.updateContainerViaDom(contentRect);
+
+    morph.withMetaDo({ isLayoutAction: true }, () => {
+      this.updateSubmorphViaDom(morph, target, contentRect);
+    });
+
+    if (!observer) observer = this.ensureBoundsMonitor(target, morph);
+    // only do that if we have changed size in height
+    if (this.contentRectChanged()) {
+      const renderer = morph.env.renderer;
+      observer._lastContentRect = contentRect;
+      
+      this.layoutableSubmorphs.forEach(m => {
+        if (m != morph) {
+          const node = renderer.getNodeForMorph(m);
+          if (!node) return;
+          this.onDomResize(this._resizeObservers.get(m), {
+            target: node, contentRect: node.getBoundingClientRect(),
+          }, m);
+        }
+      });
+    }
+    
+    observer._lastContentRect = contentRect;
+    morph._dirty = originalDirty;
+  }
+
   onSubmorphAdded(submorph, animation) {
     if (this.renderViaCSS) {
       this.triggerMeasure(this.container);
@@ -543,44 +574,28 @@ export class VerticalLayout extends FloatLayout {
     return this.orderByIndex ? this.container.submorphs.indexOf(aMorph) : aMorph.top;
   }
 
-  // CSS based implementation
-  onDomResize(observer, entry, morph) {
-    const { contentRect, target } = entry;
+  updateContainerViaDom(contentRect) {
     const { width, height } = contentRect;
-    const originalDirty = morph._dirty;
-    if (morph == this.container) {
-      if (this.autoResize && morph.submorphs.length > 0) morph.height = height + this.spacing;
-      if (this.direction != 'topToBottom' || this.align != 'left') {
-        // resizing has affected the position of my submorphs
-        this.layoutableSubmorphs.forEach(m => this.triggerMeasure(m));
-      }
-      return;
+    if (this.autoResize && this.container.submorphs.length > 0)
+      this.container.height = height + this.spacing;
+    if (this.direction != 'topToBottom' || this.align != 'left') {
+      // resizing has affected the position of my submorphs
+      this.layoutableSubmorphs.forEach(m => this.triggerMeasure(m));
     }
-    
-    morph.position = pt(target.offsetLeft, target.offsetTop);
-    if (this.resizeSubmorphs) morph.width = width;
-
-    if (!observer) observer = this.ensureBoundsMonitor(target, morph);
-    // only do that if we have changed size in height
-    if (observer._lastContentRect && 
-        observer._lastContentRect.height != contentRect.height) {
-      const renderer = morph.env.renderer;
-      observer._lastContentRect = contentRect;
-      
-      this.layoutableSubmorphs.forEach(m => {
-        if (m != morph) {
-          const node = renderer.getNodeForMorph(m);
-          if (!node) return;
-          this.onDomResize(this._resizeObservers.get(m), {
-            target: node, contentRect: node.getBoundingClientRect(),
-          }, m);
-        }
-      });
-    }
-    
-    observer._lastContentRect = contentRect;
-    morph._dirty = originalDirty;
   }
+
+  updateSubmorphViaDom(morph, target, contentRect) {
+    const { width } = contentRect;
+    const newPos = pt(target.offsetLeft, target.offsetTop);
+    if (!newPos.equals(morph.position)) morph.position = newPos;
+    if (this.resizeSubmorphs && morph.width != width) morph.width = width;
+  }
+
+  contentRectChanged(observer, contentRect) {
+    return observer._lastContentRect && observer._lastContentRect.height != contentRect.height
+  }
+
+  // CSS based implementation
 
   addSubmorphCSS(morph, style) {
     if (!morph.isLayoutable) return;
@@ -594,7 +609,9 @@ export class VerticalLayout extends FloatLayout {
     style['flex-shrink'] = 0;
     if (this.resizeSubmorphs) {
       style.width = `calc(100% - ${this.spacing * 2}px)`;
-      morph.width = this.container.width - 2 * this.spacing;
+      morph.withMetaDo({ isLayoutAction: true }, () => {
+        morph.width = this.container.width - 2 * this.spacing;
+      });
     }
   }
 
@@ -722,45 +739,28 @@ export class HorizontalLayout extends FloatLayout {
 
   // CSS based implementation
 
-  onDomResize(observer, entry, morph) {
-    const { contentRect, target } = entry;
+  updateContainerViaDom(contentRect) {
     const { width, height } = contentRect;
-    const originalDirty = morph._dirty;
-    if (morph == this.container) {
-      if (this.autoResize && morph.submorphs.length > 0) {
-        morph.width = width + this.spacing;
-        if (!this.resizeSubmorphs) morph.height = height;
-      }
-      if (this.direction != 'topToBottom' || this.align != 'left') {
-        // resizing has affected the position of my submorphs
-        this.layoutableSubmorphs.forEach(m => this.triggerMeasure(m));
-      }
-      return;
+    if (this.autoResize && this.container.submorphs.length > 0) {
+      this.container.width = width + this.spacing;
+      if (!this.resizeSubmorphs && this.container.height != height)
+        this.container.height = height;
     }
-    
-    morph.position = pt(target.offsetLeft, target.offsetTop);
-    if (this.resizeSubmorphs) morph.height = height;
-    if (!observer) observer = this.ensureBoundsMonitor(target, morph);
-    // only do that if we have changed size in height
-    if (observer._lastContentRect && 
-        observer._lastContentRect.width != contentRect.width) {
-      const renderer = morph.env.renderer;
-      observer._lastContentRect = contentRect;
-      
-      this.layoutableSubmorphs.forEach(m => {
-        if (m != morph) {
-          const node = renderer.getNodeForMorph(m);
-          if (!node) return;
-          this.onDomResize(this._resizeObservers.get(m), {
-            target: node, contentRect: node.getBoundingClientRect(),
-          }, m);
-        }
-      });
+    if (this.direction != 'topToBottom' || this.align != 'left') {
+      // resizing has affected the position of my submorphs
+      this.layoutableSubmorphs.forEach(m => this.triggerMeasure(m));
     }
-    
-    observer._lastContentRect = contentRect;
-    //console.log(morph.name, originalDirty);
-    morph._dirty = originalDirty;
+  }
+
+  updateSubmorphViaDom(morph, target, contentRect) {
+    const height = contentRect.height;
+    const newPos = pt(target.offsetLeft, target.offsetTop);
+    if (!newPos.equals(morph.position)) morph.position = newPos;
+    if (this.resizeSubmorphs && morph.height != height) morph.height = height;
+  }
+
+  contentRectChanged(observer, contentRect) {
+    return observer._lastContentRect && observer._lastContentRect.width != contentRect.width
   }
 
   addSubmorphCSS(morph, style) {
