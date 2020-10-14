@@ -304,6 +304,7 @@ export class CompletionController {
     input.fixedWidth = false;
     input.fontSize = list.fontSize;
 
+    //menu.get("padding").height = 0;
     menu.relayout();
     menu.selectedIndex = 0;
 

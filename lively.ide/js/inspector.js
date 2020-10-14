@@ -935,6 +935,7 @@ export default class Inspector extends Morph {
       //   after: ["submorphs"],
       //   initialize() {
       //     this.layout = new GridLayout({
+      //       renderViaCSS: true,
       //       manualUpdate: true,
       //       grid: [["searchBar"],
       //         ["propertyTree"],
