@@ -875,7 +875,7 @@ export default class Browser extends Morph {
 
     if (!m) {
       this.updateSource("");
-      win.title = "browser - " + (pack && pack.name || "");
+      if (win) win.title = "browser - " + (pack && pack.name || "");
       this.updateCodeEntities(null);
       this.ui.metaInfoText.textString = "";
       return;
@@ -920,7 +920,7 @@ export default class Browser extends Morph {
       }
 
       this.ui.moduleList.scrollSelectionIntoView();
-      win.title = `browser - [${pack.name}] ${m.nameInPackage}`;
+      if (win) win.title = `browser - [${pack.name}] ${m.nameInPackage}`;
       var source = await system.moduleRead(m.name);
       this.updateSource(source, {row: 0, column: 0});
 
