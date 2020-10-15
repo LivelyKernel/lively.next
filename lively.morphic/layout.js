@@ -2181,13 +2181,30 @@ export class GridLayout extends Layout {
       if (!node) continue;
       if (layoutableSubmorph.isText) {
         fun.throttleNamed('layout-' + layoutableSubmorph.id, 500, () => {
-          if (resize) layoutableSubmorph.extent = pt(node.offsetWidth, node.offsetHeight);
-          layoutableSubmorph.position = pt(node.offsetLeft, node.offsetTop);
+          morph.withMetaDo({ isLayoutAction: true }, () => {
+            if (resize) {
+              const newExt = pt(node.offsetWidth, node.offsetHeight);
+              if (!layoutableSubmorph.extent.equals(newExt))
+                layoutableSubmorph.extent = newExt;
+            }
+            const newPos = pt(node.offsetLeft, node.offsetTop);
+            if (!layoutableSubmorph.position.equals(newPos))
+              layoutableSubmorph.position = newPos;
+          });
         })();
         continue;
       }
-      if (resize) layoutableSubmorph.extent = pt(node.offsetWidth, node.offsetHeight);
-      layoutableSubmorph.position = pt(node.offsetLeft, node.offsetTop);
+      morph.withMetaDo({ isLayoutAction: true }, () => {
+        if (resize) {
+          const newExt = pt(node.offsetWidth, node.offsetHeight);
+          if (!layoutableSubmorph.extent.equals(newExt))
+            layoutableSubmorph.extent = newExt;
+        }
+        const newPos = pt(node.offsetLeft, node.offsetTop);
+        if (!layoutableSubmorph.position.equals(newPos))
+          layoutableSubmorph.position = newPos;
+      });
+      
       //layoutableSubmorph._dirty = false; // prevent render
     }
   }
