@@ -392,6 +392,15 @@ class ModuleInterface {
   // module environment
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  isMochaTest() {
+    if (!this._source) { return false };
+    let scope = this._scope || (this._scope = query.topLevelDeclsAndRefs(parse(this._source)).scope);
+    const deps = query.imports(scope).map(imp => imp.fromModule);
+    if (!deps.some(ea => ea.endsWith("mocha-es6") || ea.endsWith("mocha-es6/index.js")))
+      return false;
+    return true;
+  }
+  
   // What variables to not transform during execution, i.e. what variables
   // should not be accessed as properties of recorder
   get dontTransform() {
@@ -403,7 +412,7 @@ class ModuleInterface {
       "localStorage", // for Firefox, see fetch
       // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
       "prompt", "alert", "fetch", "getComputedStyle",
-      ...GlobalInjector.getGlobals(this._source)
+      ...this.isMochaTest() ? [] : GlobalInjector.getGlobals(this._source),
     ].concat(query.knownGlobals);
   }
 

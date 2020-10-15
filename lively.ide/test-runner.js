@@ -96,10 +96,13 @@ export function testsFromMocha(mocha) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-const testRunnerCSS = `.mocha-test-runner {
-  font-family: Nunito,Arial,sans-serif;
+const testRunnerCSS = `
+
+.mocha-test-runner {
+  font-family: IBM Plex Sans,Arial,sans-serif;
   font-size: 12px;
   line-height: 1.5em;
+  height: 100%;
 }
 
 .mocha-test-runner .controls input {
@@ -117,6 +120,7 @@ const testRunnerCSS = `.mocha-test-runner {
 }
 
 .controls {
+  pointer-events: auto;
   margin: 6px 6px;
 }
 
@@ -125,6 +129,7 @@ const testRunnerCSS = `.mocha-test-runner {
 }
 
 .mocha-test-runner .suites {
+  pointer-events: auto;
   overflow-y: auto;
   overflow-x: hidden;
   height: calc(100% - 30px);
@@ -147,6 +152,19 @@ const testRunnerCSS = `.mocha-test-runner {
 
 .mocha-test-runner .row {
 /*line-height: 2.2;*/
+}
+
+.mocha-test-runner .run-button {
+  color: rgb(30,30,30);
+  border: gray 1px solid;
+  font-size: 12px;
+  border-radius: 5px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.row .run-button {
+  font-size: 11px;
 }
 
 .mocha-test-runner .heading .run-button, .row .run-button, .row .remove-button {
@@ -221,6 +239,7 @@ export default class TestRunner extends HTMLMorph {
           this.update();
         }
       },
+      reactsToPointer: { defaultValue: false },
       fill: { defaultValue: Color.transparent },
       state: {},
       editorPlugin: {
@@ -237,6 +256,9 @@ export default class TestRunner extends HTMLMorph {
           this.editorPlugin.setSystemInterface(systemInterface);
           this.get("eval backend button").updateFromTarget();
         }
+      },
+      cssDeclaration: {
+        defaultValue: testRunnerCSS,
       }
     };
   }
@@ -249,8 +271,6 @@ export default class TestRunner extends HTMLMorph {
 
   async onLoad() {
     // on deserialization
-    this.addStyleClass("mocha-test-runner");
-    addOrChangeCSSDeclaration("mocha-testrunner-css", testRunnerCSS);
     await promise.waitFor(30000, () => !!$world)
     resource(document.URL).query().runAllTests && this.runAllTests();
     await this.whenRendered();
@@ -539,13 +559,15 @@ export default class TestRunner extends HTMLMorph {
     }
 
     this.html = `
+       <div class="mocha-test-runner">
        <div class="controls" ${this.showControls ? '' : 'style="display: none;"'}>
-         <input type="button" class="load-test-button" value="load test" onmouseup="${this.htmlRef}.interactivelyloadTests()"></input>
+         <input type="button" class="load-test-button run-button" value="load test" onmouseup="${this.htmlRef}.interactivelyloadTests()"></input>
          <input type="button" class="run-button" value="run all" onmouseup="${this.htmlRef}.runAllTests()"></input>
-         <input type="button" class="collapse-button" value="toggle collapse" onmouseup="${this.htmlRef}.collapseToggle()"></input>
+         <input type="button" class="collapse-button run-button" value="toggle collapse" onmouseup="${this.htmlRef}.collapseToggle()"></input>
          <span class="${runningTest ? "" : "hidden"}">Running: ${runningTest && runningTest.title}</span>
        </div>
-       <div class="suites">${renderedFiles.join("\n")}</div>`;
+       <div class="suites">${renderedFiles.join("\n")}</div>
+       <div>`;
   }
 
   renderTest(test, testsAndSuites, file, collapsed) {
@@ -634,9 +656,8 @@ export default class TestRunner extends HTMLMorph {
               <input
                 type="button" class="run-button" value="run"
                 onmouseup="${this.htmlRef}.runTestFile('${id}')"></input>
-              <input
-                type="button" class="remove-button" value="✗"
-                onmouseup="${this.htmlRef}.removeTestFile('${id}')"></input>
+              <i class="far fa-window-close remove-button"
+                 onmouseup="${this.htmlRef}.removeTestFile('${id}')"></i>
             </div>`;
   }
 
