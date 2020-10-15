@@ -51,14 +51,30 @@ export default class ComponentsBrowser {
     return resource(baseUrl + '/../').join(this.cacheDir).withRelativePartsResolved();
   }
 
-  // await this.refresh()
+  async fetchWorlds() {
+    let worlds;
+    let attempts = 0;
+    while (!worlds && attempts < 10) {
+      try {
+        worlds = await ObjectDBInterface.fetchCommits({
+          db: "lively.morphic/objectdb/morphicdb", type: 'world'
+        });
+      } catch (err) {
+        attempts++;
+        await promise.delay(1000);  
+      }
+    }
+    if (!worlds) {
+      console.log('[ComponentsBrowser]: Failed to load worlds from database');
+      return [];
+    }
+    return worlds;
+  }
   
   async refresh(worldToUpdate = false) {
     // if worldName is specified, then we only update that particular world
     const baseUrl = "file://" + process.cwd(); // assume we are running inside the lively.server folder
-    const worlds = await ObjectDBInterface.fetchCommits({
-      db: "lively.morphic/objectdb/morphicdb", type: 'world'
-    });
+    const worlds = await this.fetchWorlds();
     let allStyleguidesInDb = worlds.filter(commit => commit.tags.includes('styleguide')).map(snap => snap.name);
     let additionalStyleguidesInFolders = [];
     let cacheDir = this.getCacheDir(); // ensure?
@@ -172,7 +188,7 @@ export default class ComponentsBrowser {
     if (req.url.startsWith("/subserver/ComponentsBrowser/refresh")) {
       // req = {}; req.url = "/subserver/ComponentsBrowser/refresh"
       const [_, worldName] = req.url.split("refresh/");
-      return this.refresh(decodeURIComponent(worldName)).then(() => {
+      return this.refresh(worldName && decodeURIComponent(worldName)).then(() => {
         res.writeHead(200, {'Content-Type': 'text/plain'});
         res.end("Comonents Cached");
       }).catch(() => {
