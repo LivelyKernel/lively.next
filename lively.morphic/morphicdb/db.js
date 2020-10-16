@@ -38,11 +38,14 @@ export function convertToSerializableCommit(commit) {
 }
 
 export async function ensureCommitInfo(commit) {
-  if (!commit) return false;
+  if (!commit || obj.isEmpty(commit)) return false;
   if (commit && commit._rev) return commit;
   let { type, name, _id } = commit;
-  Object.assign(commit, await MorphicDB.default.fetchCommit(type, name, _id));
-  return commit;
+  try {
+    Object.assign(commit, await MorphicDB.default.fetchCommit(type, name, _id));
+  } finally {
+    return commit; 
+  }
 }
 
 export default class MorphicDB {
