@@ -54,15 +54,17 @@ export default class ComponentsBrowser {
   async fetchWorlds() {
     let worlds;
     let attempts = 0;
-    while (!worlds && attempts < 10) {
-      try {
-        worlds = await ObjectDBInterface.fetchCommits({
-          db: "lively.morphic/objectdb/morphicdb", type: 'world'
-        });
-      } catch (err) {
-        attempts++;
-        await promise.delay(1000);  
-      }
+    try {
+      await ObjectDBInterface.ensureDB({
+        db: 'lively.morphic/objectdb/morphicdb',
+        snapshotLocation: '/lively.morphic/objectdb/morphicdb/snapshots'
+      });
+      worlds = await ObjectDBInterface.fetchCommits({
+        db: "lively.morphic/objectdb/morphicdb",
+        type: 'world'
+      });
+    } catch (err) {
+	      console.log(err)
     }
     if (!worlds) {
       console.log('[ComponentsBrowser]: Failed to load worlds from database');
