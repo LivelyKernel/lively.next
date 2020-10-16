@@ -773,6 +773,13 @@ export class UserFlap extends Morph {
 
   async maximize() {
     let menu = this.getSubmorphNamed('user menu');
+    if (!menu) {
+      menu = this.addMorph(await resource('part://SystemIDE/user menu master').read());
+      menu.name = 'user menu';
+      menu.opacity = 0;
+      menu.scale = .8;
+      menu.position = this.getSubmorphNamed('avatar').bottomCenter.addXY(0, 10);
+    }
     menu.right = this.width - 5;
     menu.visible = true;
     await menu.animate({
