@@ -100,6 +100,7 @@ const ADVANCED_EXCLUDED_MODULES = [
   'lively.modules',
   'babel-plugin-transform-jsx',
   'lively-system-interface',
+  'lively.storage',
 ]
 
 const DEFAULT_EXCLUDED_MODULES_PART = [
@@ -867,7 +868,7 @@ class LivelyRollup {
             import { promise } from 'lively.lang';
             import { pt } from "lively.graphics";
             ${await resource(System.baseURL).join('localconfig.js').read()}
-            const snapshot = JSON.parse(${ JSON.stringify(JSON.stringify(this.snapshot)) })
+            const snapshot = JSON.parse(${ JSON.stringify(JSON.stringify(obj.dissoc(this.snapshot, ['preview', 'packages']))) })
             lively.resources = { resource, loadViaScript };
             lively.morphic = { loadMorphFromSnapshot };
             export async function renderFrozenPart(node = document.body) {
