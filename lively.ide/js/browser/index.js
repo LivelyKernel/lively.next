@@ -1482,10 +1482,10 @@ export default class Browser extends Morph {
     return ed.setStatusMessage.apply(ed, arguments);
   }
 
-  async close() {
+  async onWindowClose() {
     let proceed = true;
     if (this.hasUnsavedChanges()) proceed = await this.warnForUnsavedChanges()
-    if (proceed) super.close();
+    return proceed;
   }
 
   focus(evt) {
