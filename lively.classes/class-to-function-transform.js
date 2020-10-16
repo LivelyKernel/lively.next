@@ -241,7 +241,7 @@ function replaceClass(node, state, path, options) {
       return props;
     }, {inst: [], clazz: addClassNameGetter ? [
        // explicitly add in a static property to ensure the class name is accessible also in google closure env
-       parse(`({ key: "className", get: function get() { return "${className}"; } })`).body[0].expression
+       parse(`({ key: Symbol.for("__LivelyClassName__"), get: function get() { return "${className}"; } })`).body[0].expression
     ] : []})
 
     if (inst.length) instanceProps = {type: "ArrayExpression", elements: inst};

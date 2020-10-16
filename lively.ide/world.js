@@ -1153,7 +1153,8 @@ export class LivelyWorld extends World {
     if (!this._previewCache) this._previewCache = new WeakMap();
 
     let type = Morph;
-    switch (aMorph.constructor.className) {
+    
+    switch (getClassName(aMorph)) {
       case "Ellipse":
         type = Ellipse;
         break;

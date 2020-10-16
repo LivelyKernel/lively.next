@@ -3,10 +3,11 @@ import { arr, string } from "lively.lang";
 
 const classMetaForSerializationProp = "lively.serializer-class-info",
       classSuperClassProp = Symbol.for('lively-instance-superclass'),
+      classNameProp = Symbol.for('__LivelyClassName__'),
       moduleMetaInClassProp = Symbol.for("lively-module-meta");
 
 export function getClassName(obj) {
-  return obj.constructor.className || obj.constructor.name;
+  return obj.constructor[classNameProp] || obj.constructor.name;
 }
 
 export function getSerializableClassMeta(realObj) {
@@ -58,8 +59,8 @@ export default class ClassHelper {
   static get moduleMetaInClassProp() { return moduleMetaInClassProp; }
   static get classMetaForSerializationProp() { return classMetaForSerializationProp; }
   static get classSuperClassProp() { return classSuperClassProp; }
-
-  get classNameProperty() { return '__LivelyClassName__'; }
+  static get classNameProperty() { return classNameProp; }
+  
   get sourceModuleNameProperty() { return '__SourceModuleName__'; }
 
   constructor(options) {
