@@ -23,6 +23,7 @@ import DefaultTheme from "../../themes/default.js";
 import { stringifyFunctionWithoutToplevelRecorder } from "lively.source-transform";
 import { interactivelyFreezePart, displayFrozenPartsFor } from "lively.freezer";
 import { generateReferenceExpression } from "../inspector.js";
+import { getClassName } from "lively.serializer2";
 
 export class ObjectEditor extends Morph {
 
@@ -933,7 +934,7 @@ export class ObjectEditor extends Morph {
         const pkg = ObjectPackage.lookupPackageForObject(ctx.target);
         return { 
           objPkgName: pkg && pkg.id,
-          className: ctx.target.constructor.className, 
+          className: getClassName(ctx.target), 
           stringifiedTarget: ctx.target.toString() }
       }));
       
@@ -957,7 +958,7 @@ export class ObjectEditor extends Morph {
       ({ className, methodName} = await this.withContextDo(async ctx => {
         const {methodName} = await ctx.addNewMethod();
         return {
-          methodName, className: ctx.target.constructor.className
+          methodName, className: ctx.target.constructor[Symbol.for('__LivelyClassName__')]
         }
       }));
       await this.refresh();
@@ -1104,7 +1105,7 @@ export class ObjectEditor extends Morph {
       "Please enter a name for the forked class and its package:", {
         fontSize: 16, fontWeight: 'normal'}], {
           requester: this,
-          input: await this.withContextDo(ctx => ctx.target.constructor.className) + "Fork",
+          input: await this.withContextDo(ctx => ctx.target.constructor[Symbol.for('__LivelyClassName')]) + "Fork",
           historyId: "lively.morphic-object-editor-fork-names",
           useLastInput: false
         });

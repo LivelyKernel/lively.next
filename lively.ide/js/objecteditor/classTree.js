@@ -64,7 +64,7 @@ export default class ClassTreeData extends TreeData {
     if (node.isRoot) {
       if (node.children) return node.children;
       var classes = arr.without(withSuperclasses(node.target), Object).reverse();
-      return node.children = classes.map(klass => ({isClass: true, klass, target: klass.className, isCollapsed: true}));
+      return node.children = classes.map(klass => ({isClass: true, klass, target: klass[Symbol.for('__LivelyClassName__')], isCollapsed: true}));
     }
 
     if (node.isClass) {

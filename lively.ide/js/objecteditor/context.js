@@ -13,7 +13,7 @@ import ObjectPackage, { isObjectClass, addScript } from "lively.classes/object-c
 import semver from 'semver';
 import { adoptObject } from "lively.classes/runtime.js";
 import { chooseUnusedImports } from "../import-helper.js";
-import { deserialize } from "lively.serializer2";
+import { deserialize, getClassName } from "lively.serializer2";
 import { stringifyFunctionWithoutToplevelRecorder } from "lively.source-transform";
 
 export default class ObjectEditorContext {
@@ -95,7 +95,7 @@ export default class ObjectEditorContext {
     await this.refresh(!editor)
     if (editor)
       Object.assign(editor.editorPlugin.evalEnvironment, this.evalEnvironment);
-    await this.selectClass(target.constructor.className);
+    await this.selectClass(getClassName(target));
     return this;
   }
 
@@ -240,7 +240,7 @@ export default class ObjectEditorContext {
     } = this;
         
     if (selectedClass) {
-      title += ` - ${selectedClass.className}`;
+      title += ` - ${selectedClass[Symbol.for('__LivelyClassName__')]}`;
       if (isObjectClass(selectedClass)) {
         let p = selectedClass[Symbol.for("lively-module-meta")].package;
         if (p && p.version) title += "@" + p.version;
@@ -255,10 +255,10 @@ export default class ObjectEditorContext {
   async selectClass(className) {
     // what if classes names are the same, but located in different modules?
     this.selectedClassName = await this.withContextDo(() => {
-      let klass = this.classChainOfTarget().find(ea => ea.className === className);
+      let klass = this.classChainOfTarget().find(ea => ea[Symbol.for('__LivelyClassName__')] === className);
       this.selectedMethod = null;
       this.selectedClass = klass;
-      return klass.className;
+      return getClassName(klass);
     }, { className });
   }
 
@@ -282,7 +282,7 @@ export default class ObjectEditorContext {
         {baseURL, System} = pkg,
         forkedPackage = await pkg.fork(forkedName, {baseURL, System});
     await adoptObject(t, forkedPackage.objectClass);
-    return forkedPackage.objectClass.className;
+    return forkedPackage.objectClass[Symbol.for('__LivelyClassName__')];
   }
 
   async addNewMethod() {
@@ -291,7 +291,7 @@ export default class ObjectEditorContext {
 
   async selectMethod(className, methodSpec) {
     let methodNode = await this.withContextDo(async () => {
-      let klass = this.classChainOfTarget().find(ea => ea.className === className);
+      let klass = this.classChainOfTarget().find(ea => ea[Symbol.for('__LivelyClassName__')] === className);
 
       if (klass && !methodSpec && isClass(klass.owner)) {
         methodSpec = klass;
@@ -331,7 +331,7 @@ export default class ObjectEditorContext {
 
   async getMethodAtCursorPos(className, methodSpec, cursorIndex) {
     return await this.withContextDo(() => {
-      let klass = this.classChainOfTarget().find(ea => ea.className === className);
+      let klass = this.classChainOfTarget().find(ea => ea[Symbol.for('__LivelyClassName__')] === className);
       return this._sourceDescriptor_of_class_findMethodNode(klass, cursorIndex);
     }, { cursorIndex });
   }
