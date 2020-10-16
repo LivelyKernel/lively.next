@@ -184,6 +184,10 @@ export class HTMLMorph extends Morph {
   }
 
   render(renderer) {
+    if (this._requestMasterStyling) {
+      this.master && this.master.applyIfNeeded(true);
+      this._requestMasterStyling = false;
+    }
     return new CustomVNode(this, renderer);
   }
 
