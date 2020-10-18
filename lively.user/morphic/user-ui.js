@@ -763,6 +763,7 @@ export class UserFlap extends Morph {
 
   async minimize() {
     let menu = this.getSubmorphNamed('user menu');
+    if (!menu) return;
     await menu.animate({
       opacity: 0,
       scale: .8,
@@ -771,14 +772,19 @@ export class UserFlap extends Morph {
     menu.visible = false;
   }
 
+  async ensureMenu() {
+    let menu = this.addMorph(await resource('part://SystemIDE/user menu master').read());
+    menu.name = 'user menu';
+    menu.opacity = 0;
+    menu.scale = .8;
+    menu.position = this.getSubmorphNamed('avatar').bottomCenter.addXY(0, 10);
+    return menu;
+  }
+
   async maximize() {
     let menu = this.getSubmorphNamed('user menu');
     if (!menu) {
-      menu = this.addMorph(await resource('part://SystemIDE/user menu master').read());
-      menu.name = 'user menu';
-      menu.opacity = 0;
-      menu.scale = .8;
-      menu.position = this.getSubmorphNamed('avatar').bottomCenter.addXY(0, 10);
+      menu = await this.ensureMenu();
     }
     menu.right = this.width - 5;
     menu.visible = true;
@@ -828,6 +834,7 @@ export class UserFlap extends Morph {
         progile = this.getSubmorphNamed('profile item'),
         userName = String(user.name),
         gravatar = resource(`https://s.gravatar.com/avatar`).join(string.md5(user.email || '')).withQuery({s: 160}).url;
+    await this.ensureMenu();
     if (userName.startsWith("guest-")) {
       this.showMenuItems(['login item', 'register item']);
       userName = "guest";
@@ -836,8 +843,10 @@ export class UserFlap extends Morph {
     }
     label.value = userName;
     avatar.imageUrl = gravatar;
-    await menu.master.whenApplied();
-    menu.position = avatar.bottomCenter.addXY(0, 10);
+    if (menu) {
+      await menu.master.whenApplied();
+      menu.position = avatar.bottomCenter.addXY(0, 10); 
+    }
     await this.whenRendered();
     this.alignInWorld();
   }

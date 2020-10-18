@@ -1,1 +1,0 @@
-System.register("./__root_module__-c4d7431e.js kld-intersections ./user-ui-1bab221a.js ./editor-plugin-012baedf.js ./index-ad3a1066.js ./index-1640eed6.js ./index-596c305d.js".split(" "),function(){return{setters:[function(){},function(){},function(){},function(){},function(){},function(){},function(){}],execute:function(){}}});
