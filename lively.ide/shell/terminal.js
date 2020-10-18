@@ -23,6 +23,7 @@ export default class Terminal extends Morph {
     var term = new this(options),
         winOpts = {name: "ShellTerminal window", title: options.title || "Terminal"},
         win = term.openInWindow(winOpts);
+    term.whenRendered().then(() => term.focus());
     return win;
   }
 
