@@ -142,7 +142,7 @@ export default class ObjectPackage {
   async renameObjectClass(newName, objects = []) {
     let {objectClass: klass, System} = this;
 
-    if (!klass || klass.className === newName) return klass;
+    if (!klass || klass[Symbol.for('__LivelyClassName__')] === newName) return klass;
 
     if (!isValidIdentifier(newName))
       throw new Error(`${newName} is not a valid name for a class`);
@@ -255,7 +255,7 @@ class ObjectModule {
 
     let { System, systemModule: module, objectPackage } = this,
         className = string.capitalize(toJsIdentifier(objectPackage.id)),
-        superClassName = superClass.className,
+        superClassName = superClass[Symbol.for('__LivelyClassName__')],
         isAnonymousSuperclass = !superClassName,
         globalSuperClass = globalClasses.includes(superClass),
         source = "",
