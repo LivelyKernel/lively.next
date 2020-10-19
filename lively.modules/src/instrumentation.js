@@ -36,7 +36,7 @@ function canonicalURL(url) {
 
 export class ModuleTranslationCache {
   static get earliestDate() {
-    return +(new Date("Sun Nov 06 2016 16:00:00 GMT-0800 (PST)"))
+    return +(new Date("Sun Oct 18 2020 16:00:00 GMT-0800 (PST)"))
   }
 
   cacheModuleSource(moduleId, hash, source) { throw new Error("not yet implemented"); }
