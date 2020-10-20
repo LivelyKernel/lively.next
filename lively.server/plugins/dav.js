@@ -17,7 +17,7 @@ var DavHandler, FsTree, jsDavPlugins = {};
   finally { console.log = log; }  
 })();
 
-
+var lastReq;
 
 export default class LivelyDAVPlugin {
 
@@ -68,6 +68,15 @@ export default class LivelyDAVPlugin {
     }
     this.server.baseUri = path + '/';
     req.url = path + req.url;
+    lastReq = req;
+    if (req.url.endsWith('.json') && 
+        req.headers['accept-encoding'].includes('br') &&
+        // fixme
+        req.url.includes('lively.morphic/styleguides')) {
+      // check if there is a brotli compressed version persent and serve that instead
+      req.url = req.url.replace('.json', '.br.json');
+      res.setHeader('content-encoding', 'br');
+    }
     this.callDAV(req, res);
   }
 
