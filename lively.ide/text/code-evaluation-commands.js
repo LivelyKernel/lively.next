@@ -70,11 +70,13 @@ export var codeEvaluationCommands = [
         morph.insertText([embeddedMorph, {}],
           morph.selection.start);
         morph.selection.start = { column: column, row };
+        morph.focus();
         return result;
       }
       morph.insertTextAndSelect(
         err ? String(err) + (err.stack ? "\n" + err.stack : "") :
         String(result.value));
+      morph.focus();
       return result;
     }
   },
