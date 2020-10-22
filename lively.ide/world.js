@@ -454,6 +454,13 @@ export class LivelyWorld extends World {
       ],
       {command: "report a bug",          target: this},
       {isDivider: true},
+      ["Windows",
+       [
+          {command: "toggle minimize all windows", target: this},
+          {command: "close all windows", target: this}
+       ]
+      ],
+      {isDivider: true},
       {command: "save world",          target: this},
       {command: "load world",          target: this},
     ];
