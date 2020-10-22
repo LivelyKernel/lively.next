@@ -1,6 +1,8 @@
 /*global System, process*/
 
 import { obj } from "lively.lang";
+import { resource } from "lively.resources";
+import { string } from "lively.lang";
 
 // FIXME...
 var DavHandler, FsTree, jsDavPlugins = {};
@@ -16,8 +18,6 @@ var DavHandler, FsTree, jsDavPlugins = {};
   catch (err) { console.error(`cannot load jsdav:` , err); }
   finally { console.log = log; }  
 })();
-
-var lastReq;
 
 export default class LivelyDAVPlugin {
 
@@ -42,6 +42,7 @@ export default class LivelyDAVPlugin {
     server.once("close", () => this.server = null);
     this.server = server;
     this.patchServerForJsDAV(server);
+    this.fileHashes = {};
   }
 
   patchServerForJsDAV(server, thenDo) {
@@ -68,8 +69,23 @@ export default class LivelyDAVPlugin {
     }
     this.server.baseUri = path + '/';
     req.url = path + req.url;
-    lastReq = req;
-    if (req.url.endsWith('.json') && 
+
+    if (req.url == '/__JS_FILE_HASHES__') {
+      res.writeHead(200, {"content-type": "application/json"});
+      res.end(JSON.stringify(this.fileHashes));
+      return;
+    }
+    
+    if (req.url.endsWith('.js')) {
+      if (req.method == 'PUT' || !this.fileHashes[req.url]) {
+        resource("file://" + this.options.rootDirectory).join(req.url).read().then(source => {
+          this.fileHashes[req.url] = string.hashCode(source);   
+        });
+      }
+    }
+    
+    if (req.method == 'GET' && 
+        req.url.endsWith('.json') && 
         req.headers['accept-encoding'].includes('br') &&
         // fixme
         req.url.includes('lively.morphic/styleguides')) {

@@ -322,6 +322,11 @@ function postNormalize(System, normalizeResult, isSync) {
 async function checkExistence(url, System) {
    System._fileCheckMap = System._fileCheckMap || {};
    if (url in System._fileCheckMap) return System._fileCheckMap[url];
+   // first consult if this file has been cached by local storage before
+   const cache = System._livelyModulesTranslationCache;
+   if (cache && cache.fetchStoredModuleSource(url)) {
+     return System._fileCheckMap[url] = true;
+   }
    return System._fileCheckMap[url] = await resource(url).exists();
 }
 

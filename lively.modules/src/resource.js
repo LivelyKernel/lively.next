@@ -12,6 +12,8 @@ if (System.get("@system-env").node) {
   brotli = System._nodeRequire("brotli");
 }
 
+let jsFileHashMap;
+
 async function fetchResource(proceed, load) {
   const System = this;   
   let res = System.resource(load.name);
@@ -21,6 +23,23 @@ async function fetchResource(proceed, load) {
   if (!res) return proceed(load);
 
   var result, error;
+
+  // first check if this file is present inside the js file hash map
+  // an wether our locally stored and translated one already matches that
+  // criteria
+  if (!jsFileHashMap && !System.get("@system-env").node) jsFileHashMap = await System.resource(System.baseURL).join('__JS_FILE_HASHES__').readJson();
+
+  const useCache = System.useModuleTranslationCache,
+        indexdb = System.global.indexedDB,
+        cache = System._livelyModulesTranslationCache;
+  if (!System.get("@system-env").node && useCache && indexdb && cache) {
+    const stored = await cache.fetchStoredModuleSource(load.name);
+    if (stored && (jsFileHashMap[load.name.replace(System.baseURL, '/')] == stored.hash || load.name.includes('jspm'))) {
+      load.metadata.instrument = false; // skip instrumentation
+      return stored.source
+    }
+  }
+  
   try { result = res.isResource ? await res.read() : res; } catch (e) { error = e }
 
   // if we are in a browser we try to use the proxy when cors requests fail
