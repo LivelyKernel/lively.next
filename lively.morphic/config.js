@@ -378,7 +378,7 @@ var config = {
     defaultStyle: {
       fontFamily: "IBM Plex Mono",
       padding: Rectangle.inset(4, 2, 4, 2),
-      fontSize: isMac ? 12 : 16,
+      fontSize: 12,
       clipMode: "auto",
     },
 
