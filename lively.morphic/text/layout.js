@@ -311,7 +311,12 @@ export default class TextLayout {
             defaultTextStyle, width, height, clipMode, lineWrapping, textAlign,
             paddingLeft, paddingRight, paddingTop, paddingBottom, transform
           }, directRenderTextLayerFn, directRenderLineFn);
-    this.lineCharBoundsCache.set(line, charBounds);
+    if (charBounds.find(r => r.width == undefined && r.height == undefined)) {
+      // measuring failed, probably due to https://stackoverflow.com/questions/57590718/range-getclientrects-is-returning-0-rectangle-when-used-with-textarea-in-html
+      // delay measuring until next render
+      return charBounds;
+    }
+    this.lineCharBoundsCache.set(line, charBounds); 
     return charBounds;
   }
 

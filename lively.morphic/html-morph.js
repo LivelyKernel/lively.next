@@ -4,7 +4,7 @@ import { pt } from "lively.graphics";
 import { Morph } from "./morph.js";
 import vdom from "virtual-dom";
 import { addOrChangeCSSDeclaration } from "./rendering/dom-helper.js";
-import css from "https://dev.jspm.io/css";
+import css from "https://jspm.dev/css";
 var { diff, patch, h, create: createElement } = vdom
 
 // see https://github.com/Matt-Esch/virtual-dom/blob/master/docs/widget.md
