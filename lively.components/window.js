@@ -302,19 +302,20 @@ export default class Window extends Morph {
           bottomLeftResizer, bottomResizer
         ]
       } = resizer;
+    const resizerInset = 10;
     
-    rightResizer.height = this.height;
-    rightResizer.bottomRight = this.extent;
+    rightResizer.height = this.height - resizerInset;
+    rightResizer.bottomRight = this.extent.subXY(0, resizerInset);
 
     bottomRightResizer.bottomRight = this.extent;
 
-    leftResizer.height = this.height;
-    leftResizer.bottomLeft = pt(0, this.height);
+    leftResizer.height = this.height - resizerInset;
+    leftResizer.bottomLeft = pt(0, this.height - resizerInset);
 
     bottomLeftResizer.bottomLeft = pt(0, this.height);
 
-    bottomResizer.width = this.width;
-    bottomResizer.bottomLeft = pt(0,this.height);
+    bottomResizer.width = this.width - 2 * resizerInset;
+    bottomResizer.bottomLeft = pt(resizerInset,this.height);
 
     resizer.position = pt(0,0)
   }
