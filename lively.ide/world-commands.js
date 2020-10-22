@@ -15,6 +15,16 @@ import { resource } from "lively.resources";
 var commands = [
 
   {
+    name: "clear storage and reload",
+    exec: function() {
+      localStorage.clear();
+      var del = System.global.indexedDB.deleteDatabase("2");
+      window.location.reload(true);
+      // TODO
+    }
+  },
+  
+  {
     name: "undo",
     exec: function(world) {
       if (
