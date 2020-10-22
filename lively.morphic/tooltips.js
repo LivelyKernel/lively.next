@@ -21,9 +21,18 @@ export class TooltipViewer {
     return newTarget.tooltip || this.notPartOfCurrentTooltip(newTarget);
   }
 
-  mouseMove({targetMorph, hand}) {
+  mouseMove(evt) {
+    const { hand } = evt;
+    let targetMorph = hand.morphBeneath(evt.positionIn($world));
+    while (targetMorph && !targetMorph.visible) {
+      targetMorph = targetMorph.morphBeneath(evt.positionIn($world))
+    }
+
+    if (!targetMorph) return;
+      
     if (this.currentMorph === targetMorph
      || !this.invalidatesCurrentTooltip(targetMorph)) return;
+    
     this.hoverOutOfMorph(this.currentMorph);
     this.hoverIntoMorph(targetMorph, hand);
     this.currentMorph = targetMorph;
