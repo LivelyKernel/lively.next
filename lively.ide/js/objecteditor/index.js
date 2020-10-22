@@ -391,7 +391,7 @@ export class ObjectEditor extends Morph {
   isShowingImports() { return this.get("importsList").width > 10; }
 
   async toggleShowingImports(timeout = 300/*ms*/) {
-    var expandedWidth = Math.min(300, Math.max(200, this.ui.importsList.listItemContainer.width)),
+    var expandedWidth = Math.min(400, Math.max(300, this.ui.importsList.listItemContainer.width)),
         enable = !this.isShowingImports(),
         newWidth = enable ? expandedWidth : -expandedWidth,
         column = this.layout.grid.col(2);
@@ -1783,13 +1783,23 @@ class ImportController extends Morph {
             var label = [];
             var alias = ea.local !== ea.imported && ea.imported !== "default" ? ea.local : null;
             if (alias) label.push(`${ea.imported} as `, {});
-            label.push(alias || ea.local || "??????", {fontWeight: "bold"});
-            label.push(` from ${ea.fromModule}`);
-            return {isListItem: true, value: ea, label};
+            const importName = alias || ea.local || "??????";
+            label.push(importName, {fontWeight: "bold"});
+            label.push(` from ${string.truncate(ea.fromModule, 25, '...')}`, { opacity: .5});
+            const tooltip = label.slice();
+            tooltip[2] = ` from ${ea.fromModule}`;
+            tooltip[3] = {};
+            return {
+              isListItem: true, 
+              value: ea, 
+              label, 
+              tooltip,
+              annotation: ea.fromModule.includes('jspm.dev') ? Icon.textAttribute('npm', { fontSize: 18, fontWeight: '400', textStyleClasses: ['fab']}) : []};
           });
        return items;
     }); 
 
+    this.getSubmorphNamed("importsList").items = []
     this.getSubmorphNamed("importsList").items = items;
   }
 
