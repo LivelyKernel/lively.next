@@ -323,6 +323,7 @@ export default class Window extends Morph {
     let win = this,
         rightResizer, bottomRightResizer, leftResizer, bottomLeftResizer, bottomResizer;
     let fill = Color.transparent;
+    let resizerInset = 10;
     let resizer = morph({
       name: "resizer",
       fill: Color.transparent,
@@ -330,7 +331,7 @@ export default class Window extends Morph {
       submorphs: [
         rightResizer = morph({
           name: 'right resizer',
-          fill, width: 5,
+          fill, width: resizerInset,
           draggable: true,
           nativeCursor: 'ew-resize'
         }),
@@ -342,7 +343,7 @@ export default class Window extends Morph {
         }),
         leftResizer = morph({
           name: 'right resizer',
-          fill, width: 5, 
+          fill, width: resizerInset, 
           draggable: true,
           nativeCursor: 'ew-resize'
         }),
@@ -355,7 +356,7 @@ export default class Window extends Morph {
         bottomResizer = morph({
           name: 'bottom resizer',
           draggable: true,
-          fill, height: 5,
+          fill, height: resizerInset,
           nativeCursor: 'ns-resize'
         }),
       ]
