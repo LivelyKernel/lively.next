@@ -637,7 +637,7 @@ var commands = [
       if (!format) var {a,b, format} = findFormat(a, b);
       else { a = String(a);  b = String(b); }
 
-      var { default: diff} = await System.import("https://dev.jspm.io/diff"),
+      var { default: diff} = await System.import("https://jspm.dev/diff"),
           diffed = await diffInWindow(a, b, {fontFamily: "monospace", ...opts, format});
 
       return diffed;

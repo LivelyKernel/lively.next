@@ -27,7 +27,7 @@
   },
   "systemjs": {
     "map": {
-      "semver": "https://dev.jspm.io/semver"
+      "semver": "https://jspm.dev/semver"
     }
   },
   "devDependencies": {

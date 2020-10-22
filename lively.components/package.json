@@ -19,9 +19,9 @@
   },
   "systemjs": {
     "map": {
-      "bowser": "https://dev.jspm.io/bowser@1.4.1",
-      "svg-intersections": "https://dev.jspm.io/svg-intersections",
-      "kld-intersections": "https://dev.jspm.io/kld-intersections"
+      "bowser": "https://jspm.dev/bowser@1.4.1",
+      "svg-intersections": "https://jspm.dev/svg-intersections",
+      "kld-intersections": "https://jspm.dev/kld-intersections"
     }
   }
 }
