@@ -264,6 +264,7 @@ export default class Halo extends Morph {
     const world = this.world(),
           currentTargets = this.target.isMorphSelection ?
             this.target.selectedMorphs : [this.target];
+    if (currentTargets.includes(morph)) return;
     this.remove();
     return await world.showHaloForSelection([...currentTargets, morph], this.state.pointerId);
   }
@@ -557,6 +558,7 @@ class MultiSelectionTarget extends Morph {
       visible:                {defaultValue: false},
       modifiesSelectedMorphs: {defaultValue: false},
       selectedMorphs:         {defaultValue: []},
+      halosEnabled:           {defaultValue: false},
     };
   }
 
