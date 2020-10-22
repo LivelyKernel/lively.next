@@ -909,7 +909,7 @@ export class FilterableList extends Morph {
           });
           this.submorphs = [
             input,
-            new morph({name: 'padding', fill: Color.transparent, height: 5}),
+            new morph({name: 'padding', fill: Color.transparent}),
             new List({name: "list", items: [], clipMode: "auto"})
           ];
           // rms 24.5.17 in order to ensure that the list correctly conforms to

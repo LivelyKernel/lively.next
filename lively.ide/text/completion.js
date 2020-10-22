@@ -174,7 +174,7 @@ export class CompletionController {
         globalCursorBounds = m.getGlobalTransform().transformRectToRect(cursorBounds);
     return globalCursorBounds.topLeft()
       .addXY(-m.scroll.x, -m.scroll.y)
-      .addPt(pt(m.borderWidth + 3, m.borderWidth + 3));
+      .addPt(pt(m.borderWidth + 4, m.borderWidth + 4));
   }
 
   async completionListSpec() {
@@ -294,24 +294,30 @@ export class CompletionController {
     });
 
     var world = this.textMorph.world();
-    world.addMorph(menu);
 
     // fixme: the styling of the completion menu should be defined by the theme itself
     list.addStyleClass("hiddenScrollbar");
+    menu.paddingMorph.height = 2;
     input.height = list.itemHeight;
+    input.clipMode = 'visible';
+    input.fill = this.textMorph.fill;
     input.fixedHeight = true;
+    input.fixedWidth = false;
     input.fontSize = list.fontSize;
-    input.focus();
 
-    menu.get("padding").height = 0;
     menu.relayout();
     menu.selectedIndex = 0;
+    
+    // force the master styling while styll not visible, to ensure proper measuring
+    menu.master.applyIfNeeded(true);
+    await menu.master.whenApplied();
     if (prefix.length) {
       input.gotoDocumentEnd();
-      menu.moveBy(pt(-input.textBounds().width + 2, 0));
-    } else {
-      menu.moveBy(pt(2, 0));
+      menu.moveBy(pt(-input.textBounds().width, 0));
     }
+    world.addMorph(menu);
+    input.focus();
+    menu.inputPadding = Rectangle.inset(0,0,0,0);
     return menu;
   }
 
