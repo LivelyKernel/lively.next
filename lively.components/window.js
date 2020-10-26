@@ -435,9 +435,20 @@ export default class Window extends Morph {
     signal(this, "windowClosed", this);
   }
 
-  onMouseDown(evt) {
-    this.activate(evt);
+  onMouseUp(evt) {
+    super.onMouseUp(evt);
+    this.ui.resizer.visible = true;
   }
+
+  onMouseDown(evt) {
+    super.onMouseDown(evt);
+    this.activate(evt);
+    if (!this.ui.resizer.submorphs.includes(evt.targetMorph)) {
+      this.ui.resizer.visible = false;
+    }
+  }
+
+  
   
   onDragStart(evt) {
     super.onDragStart(evt);
