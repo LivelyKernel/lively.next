@@ -114,6 +114,15 @@ export default class Window extends Morph {
           {alias: "reset",  target: w, command: "resize active window", args: {window: this, how: "reset"}},
         ]
       ],
+      [
+        "Window Management", [
+          {alias: "minimize all except this",   target: w, command: "toggle minimize all except active window"},
+          {alias: "close all except this", target: w, command: "close all except active window"},
+          {isDivider: true},
+          {alias: "minimize all",  target: w, command: "toggle minimize all windows"},
+          {alias: "close all",  target: w, command: "close all windows"},
+        ]
+      ],
       {isDivider: true},
       ...(await this.targetMorph.menuItems())
     ]);

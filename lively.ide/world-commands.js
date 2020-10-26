@@ -390,6 +390,42 @@ var commands = [
   },
 
   {
+    name: "toggle minimize all windows",
+    exec: world => {
+      var allWindows = world.getWindows();
+      allWindows && allWindows.map(w => w.toggleMinimize());
+      return true;
+    }
+  },
+
+  {
+    name: "toggle minimize all except active window",
+    exec: world => {
+      var allWindowsExceptActive = world.getWindows().filter(w => !w.isActive());
+      allWindowsExceptActive && allWindowsExceptActive.map(w => w.toggleMinimize());
+      return true;
+    }
+  },
+
+  {
+    name: "close all except active window",
+    exec: world => {
+      var allWindowsExceptActive = world.getWindows().filter(w => !w.isActive());
+      allWindowsExceptActive && allWindowsExceptActive.map(w => w.close());
+      return true;
+    }
+  },
+
+  {
+    name: "close all windows",
+    exec: world => {
+      var allWindows = world.getWindows();
+      allWindows && allWindows.map(w => w.close());
+      return true;
+    }
+  },
+
+  {
     name: "open status message of focused morph",
     exec: world => {
       var focused = world.focusedMorph;
