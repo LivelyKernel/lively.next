@@ -221,7 +221,7 @@ function throttleNamed(name, wait, func) {
   function throttleNamedWrapper() {
     // ignore-in-doc, cleaning up
     debounceNamed(name, wait, function() { delete store[name]; })();
-    func.apply(this, arguments);
+    return func.apply(this, arguments);
   }
   return store[name] = throttle(throttleNamedWrapper, wait);
 }
@@ -238,7 +238,7 @@ function debounceNamed(name, wait, func, immediate) {
   function debounceNamedWrapper() {
     // ignore-in-doc, cleaning up
     delete store[name];
-    func.apply(this, arguments);
+    return func.apply(this, arguments);
   }
   return store[name] = debounce(wait, debounceNamedWrapper, immediate);
 }
