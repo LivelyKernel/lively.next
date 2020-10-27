@@ -991,7 +991,7 @@ export default class Browser extends Morph {
       
       metaInfoText.replace(metaInfoText.documentRange, [
         ...metaInfoText.textAndAttributes.slice(0,4), 
-        `${parent ? parent.name + ">>" : ""}${name}`], false);
+        `${parent ? parent.name + ">>" : ""}${name} - Line ${sourceEditor.cursorPosition.row}`], false);
     }
   }
 
