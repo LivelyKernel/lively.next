@@ -89,7 +89,7 @@ export default class ExportLookup {
       this.resolveExportsOfModule(id, exportsByModule))
 
     return arr.flatmap(Object.keys(exportsByModule),
-      id => exportsByModule[id].resolvedExports || exportsByModule[id].rawExports)
+      id => exportsByModule[id] ? exportsByModule[id].resolvedExports || exportsByModule[id].rawExports : [])
   }
 
   async rawExportsByModule(options) {
@@ -187,7 +187,7 @@ export default class ExportLookup {
       // resolve "* from"
       var fromId = System.decanonicalize(fromModule, moduleId);
       this.resolveExportsOfModule(fromId, exportsByModule, locked);
-      return (exportsByModule[fromId].resolvedExports || []).map(resolvedExport => {
+      return (exportsByModule[fromId] && exportsByModule[fromId].resolvedExports || []).map(resolvedExport => {
         var {type, exported, local, fromModule: resolvedFromModule} = resolvedExport;
         return {...base, type, exported, local, fromModule: resolvedFromModule || fromModule};
       })
