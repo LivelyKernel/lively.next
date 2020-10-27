@@ -1372,7 +1372,10 @@ export class DropDownList extends Button {
                 "caret-" + (listAlign === "bottom" ?
                   "down" : "up"))
             ];
-            if (label[5]) label[5].textStyleClasses = ['fa', 'annotation'];
+            if (label[5]) {
+              label[5].paddingRight = '0px';
+              label[5].textStyleClasses = ['fa', 'annotation'];
+            }
             this.label = label;
             this.relayout();
 
