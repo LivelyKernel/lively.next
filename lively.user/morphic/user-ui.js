@@ -773,14 +773,17 @@ export class UserFlap extends Morph {
   }
 
   async ensureMenu() {
-    return await fun.throttleNamed('ensureMenu', 2000, async () => {
-      let menu = this.getSubmorphNamed('user menu') || this.addMorph(await resource('part://SystemIDE/user menu master').read());
-      menu.name = 'user menu';
-      menu.opacity = 0;
-      menu.scale = .8;
-      menu.position = this.getSubmorphNamed('avatar').bottomCenter.addXY(0, 10);
-      return menu;
-    })();
+    if (this._menuFetch) {
+      return await this._menuFetch;
+    }
+    const p = promise.deferred();
+    this._menuFetch = p.promise;
+    let menu = this.getSubmorphNamed('user menu') || this.addMorph(await resource('part://SystemIDE/user menu master').read());
+    menu.name = 'user menu';
+    menu.opacity = 0;
+    menu.scale = .8;
+    menu.position = this.getSubmorphNamed('avatar').bottomCenter.addXY(0, 10);
+    p.resolve(menu);
   }
 
   async maximize() {
