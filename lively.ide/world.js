@@ -452,7 +452,11 @@ export class LivelyWorld extends World {
            ["switch to manual resizing of world", () => this.resizePolicy = "static"]
          ]
       ],
-      {command: "report a bug",          target: this},
+      ["Troubleshooting", [
+        {command: "report a bug",             target: this},
+        {command: "clear storage and reload", target: this}
+      ]
+    ],
       {isDivider: true},
       {command: "save world",          target: this},
       {command: "load world",          target: this},
