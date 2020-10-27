@@ -18,7 +18,7 @@ var commands = [
   {
     name: "clear storage and reload",
     exec: async function() {
-      var proceed = await $world.confirm("Proceeding will clear all local storage and reload the page! Make sure if you want to save your world before proceeding.");
+      var proceed = await $world.confirm(["Caution\n", {}, "Proceeding will clear all local storage and reload the page! Make sure if you want to save your world before you continue.", {fontSize: 15, fontWeight: 'normal'}], { width: 400 });
       if (proceed){
         localStorage.clear();
         let browserModule = new BrowserModuleTranslationCache("2");
