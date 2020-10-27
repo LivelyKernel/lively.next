@@ -875,7 +875,10 @@ export class UserFlap extends Morph {
         menu = Object.assign(Menu.forItems(
           user.isGuestUser ? [
             openChatItem,
-            ["login", () => { this.minimize(); this.showLogin(user); }],
+            ["login", async () => { 
+              this.minimize(); 
+              this.showLogin(user);
+            }],
           ] :
           [
             ["show user info", () => { this.minimize(); this.showUserInfo(user); }],

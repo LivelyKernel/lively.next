@@ -1,5 +1,6 @@
 /*global System*/
 import { User, GuestUser } from "./user.js";
+import { emit } from "lively.notifications/index.js";
   
 export default class UserRegistry {
 
@@ -32,8 +33,7 @@ export default class UserRegistry {
       }
     } catch (err) {}
     user = user && user.isGuestUser ? user : User.guest;
-    if (lively.notifications)
-      lively.notifications.emit("lively.user/userchanged", {user}, Date.now(), System);
+    emit("lively.user/userchanged", {user}, Date.now(), System);
     return user;
   }
 
@@ -64,8 +64,7 @@ export default class UserRegistry {
   saveUserToLocalStorage(user) {
     if (!user || (!user.isGuestUser && !user.token)) return false;
 
-    if (lively.notifications)
-      lively.notifications.emit("lively.user/userchanged", {user}, Date.now(), System);
+    emit("lively.user/userchanged", {user}, Date.now(), System);
 
     try {
       if (user.isGuestUser && !this.isTrackingGuestUsers) {
