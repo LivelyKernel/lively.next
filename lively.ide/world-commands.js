@@ -624,6 +624,11 @@ var commands = [
   },
 
   {
+    name: "open javascript workspace",
+    exec: (world, opts) => world.execCommand("open workspace", {...opts, language: "javascript"})
+  },
+
+  {
     name: "open shell terminal",
     exec: async (world, opts) => {
       var { default: Terminal } = await System.import("lively.ide/shell/terminal.js");

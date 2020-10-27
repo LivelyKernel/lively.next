@@ -106,7 +106,7 @@ var config = {
     {keys: {mac: "Meta-Shift-L W S", win: "Ctrl-Shift-L W S"}, command: "search workspaces"},
     {keys: {mac: "Meta-O", win: "Ctrl-O"}, command: "open status message of focused morph"},
 
-    {keys: {win: "Ctrl-K", mac: "Meta-K"}, command: {command: "open workspace", onlyWhenFocused: false, args: {askForMode: true}}},
+    {keys: {win: "Ctrl-K", mac: "Meta-K"}, command: {command: "open javascript workspace", onlyWhenFocused: false}},
     {keys: "Alt-Shift-1", command: {command: "open shell terminal", onlyWhenFocused: false}},
     {keys: {win: "Ctrl-B", mac: "Meta-B"}, command: {command: "open browser", onlyWhenFocused: false}},
     {keys: {win: "Ctrl-P", mac: "Meta-P"}, command: {command: "open PartsBin", onlyWhenFocused: true}},

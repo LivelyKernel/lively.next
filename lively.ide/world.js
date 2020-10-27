@@ -412,12 +412,13 @@ export class LivelyWorld extends World {
       ]],
       ["Tools", [
         {command: "open PartsBin",            target: this},
-        {command: "open workspace",           target: this},
+        {command: "open javascript workspace",target: this},
         {command: "open browser",             target: this},
         {command: "choose and browse module", target: this},
         {command: "open code search",         target: this},
         {command: "open file browser",         target: this},
-        {command: "open shell workspace",     target: this}
+        {command: "open shell workspace",     target: this},
+        {command: "open workspace", args: {askForMode: true}, target: this}
       ]],
       {isDivider: true},
       {command: "run command",              target: this},
