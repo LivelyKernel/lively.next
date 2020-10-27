@@ -1,5 +1,5 @@
 /*global System*/
-import { promise, arr, string } from "lively.lang";
+import { promise, fun, arr, string } from "lively.lang";
 import { resource } from "lively.resources";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { connect, once, signal } from "lively.bindings";
@@ -773,12 +773,14 @@ export class UserFlap extends Morph {
   }
 
   async ensureMenu() {
-    let menu = this.addMorph(await resource('part://SystemIDE/user menu master').read());
-    menu.name = 'user menu';
-    menu.opacity = 0;
-    menu.scale = .8;
-    menu.position = this.getSubmorphNamed('avatar').bottomCenter.addXY(0, 10);
-    return menu;
+    return await fun.throttleNamed('ensureMenu', 2000, async () => {
+      let menu = this.getSubmorphNamed('user menu') || this.addMorph(await resource('part://SystemIDE/user menu master').read());
+      menu.name = 'user menu';
+      menu.opacity = 0;
+      menu.scale = .8;
+      menu.position = this.getSubmorphNamed('avatar').bottomCenter.addXY(0, 10);
+      return menu;
+    })();
   }
 
   async maximize() {
