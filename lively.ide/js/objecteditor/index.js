@@ -313,11 +313,12 @@ export class ObjectEditor extends Morph {
         name: "objectCommands",
         reactsToPointer: false,
         width: 401,
-        layout: new ProportionalLayout({
-          submorphSettings: [
-            ['target controls', { x: 'scale', y: 'fixed' }],
-            ['freezer controls', { x: 'move', y: 'fixed' }],
-          ]
+        layout: new GridLayout({
+          fitToCell: false,
+          grid: [
+            [null, 'target controls', null, 'freezer controls', null],
+          ],
+          columns: [1, { fixed: 100 }, 3, { fixed: 100 }, 4, {fixed: 10}]
         }),
         submorphs: [
           {
