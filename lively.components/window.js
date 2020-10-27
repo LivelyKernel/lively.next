@@ -472,6 +472,7 @@ export default class Window extends Morph {
     if (this.targetMorph) {
       this.targetMorph.reactsToPointer = evt.state.origReactsToPointer;
     }
+    this.ui.resizer.visible = true;
   }
 
   onDrag(evt) {
