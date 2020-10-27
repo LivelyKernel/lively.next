@@ -229,19 +229,19 @@ export class ObjectEditor extends Morph {
       props.anchors.value.filter(ea => ea.id.startsWith("selection-"));
     if (props.savedMarks) props.savedMarks.value = [];
 
-    var ref = pool.ref(classTree);
+    ref = pool.ref(classTree);
     if (ref.currentSnapshot.props.selectedNode)
       ref.currentSnapshot.props.selectedNode.value = null;
-    var ref = pool.ref(classTree.nodeItemContainer);
+    ref = pool.ref(classTree.nodeItemContainer);
     if (ref.currentSnapshot.props.submorphs)
       ref.currentSnapshot.props.submorphs.value = [];
-    var ref = pool.ref(classTree.treeData);
+    ref = pool.ref(classTree.treeData);
     if (ref.currentSnapshot.props.root) {
       ref.currentSnapshot.props.root.value = {};
       ref.currentSnapshot.props.root.verbatim = true;
     }
     
-    var ref = pool.ref(importsList);
+    ref = pool.ref(importsList);
     if (ref.currentSnapshot.props.items)
       ref.currentSnapshot.props.items.value = [];
     if (ref.currentSnapshot.props.selection)
@@ -391,17 +391,22 @@ export class ObjectEditor extends Morph {
   isShowingImports() { return this.get("importsList").width > 10; }
 
   async toggleShowingImports(timeout = 300/*ms*/) {
+    const importController = this.ui.importController;
     var expandedWidth = Math.min(400, Math.max(300, this.ui.importsList.listItemContainer.width)),
         enable = !this.isShowingImports(),
         newWidth = enable ? expandedWidth : -expandedWidth,
         column = this.layout.grid.col(2);
     this.layout.disable();
+    importController.layout.disable();
     column.width += newWidth;
     column.before.width -= newWidth;
+    importController.layout.col(0).width = enable ? expandedWidth : 0;
+    importController.layout.enable(timeout ? {duration: timeout} : null);
     await this.layout.enable(timeout ? {duration: timeout} : null);
     (enable ? this.ui.importsList : this.ui.sourceEditor).focus();
     await promise.delay(2 * timeout);
     await this.ui.frozenWarning.whenRendered();
+    
     //this.layout.row(1).height = this.ui.frozenWarning.height;
   }
 
