@@ -292,7 +292,7 @@ export async function interactivelySaveWorld(world, options) {
             overwriteQ = `The current version of world ${name} is not the most recent!\n`
                        + `A newer version by ${authorName} was saved on `
                        + `${date.format(new Date(timestamp), "yyyy-mm-dd HH:MM")}. Overwrite?`;
-        overwrite = await world.confirm(overwriteQ);        
+        overwrite = await world.confirm(["Version Conflict\n", null, overwriteQ, { fontSize: 16, fontWeight: 'normal'}], { width: 600 });
       }
       if (!overwrite) return null;
       world.changeMetaData("commit", obj.dissoc(newerCommit, ["preview"]), /*serialize = */true, /*merge = */false);
