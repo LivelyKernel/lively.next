@@ -330,14 +330,17 @@ class FloatLayout extends Layout {
     
     this.active = true;
 
-    let minExtent = this.computeMinContainerExtent();
-    this.layoutSubmorphs(minExtent, animate);
-    minExtent = this.computeMinContainerExtent();
-    this.resizeContainer(minExtent, animate);
-    this.lastBoundsExtent = this.container.bounds().extent();
+    try {
+      let minExtent = this.computeMinContainerExtent();
+      this.layoutSubmorphs(minExtent, animate);
+      minExtent = this.computeMinContainerExtent();
+      this.resizeContainer(minExtent, animate);
+      this.lastBoundsExtent = this.container.bounds().extent();
+    } finally {
+      this.active = false;
+      this.layoutRequests = false;
+    }
     
-    this.active = false;
-    this.layoutRequests = false;
     return this.animationPromise;
   }
 
