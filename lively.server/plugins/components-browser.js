@@ -85,7 +85,7 @@ export default class ComponentsBrowser {
     for (let relPath of this.customDirs) {
       dir = resource(baseUrl + '/../').join(relPath).withRelativePartsResolved();
       let snapshots = await dir.dirList();
-      additionalStyleguidesInFolders.push(...snapshots.filter(d => !allStyleguidesInDb.includes(d.name().replace('.json', ''))).map(d => 
+      additionalStyleguidesInFolders.push(...snapshots.filter(d => !d.name().endsWith('.br.json') && !allStyleguidesInDb.includes(d.name().replace('.json', ''))).map(d => 
          [
           d.name().replace('.json', ''),
           d.url.replace(resource(baseUrl + '/../').withRelativePartsResolved().url, '')
