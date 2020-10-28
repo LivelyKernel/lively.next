@@ -1235,7 +1235,7 @@ var commands = [
   {
     name: "report a bug",
     exec: async world => {
-      window.open("https://github.com/LivelyKernel/lively.morphic/issues/new", "_blank");
+      window.open("https://github.com/LivelyKernel/lively.next/issues/new", "_blank");
       return true;
     }
   },
