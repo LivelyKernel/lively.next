@@ -57,6 +57,7 @@ export class HeadlessSession {
     return this.constructor.browser
        || (this.constructor.browser = await puppeteer.launch({
         userDataDir: packagePath + "chrome-data-dir",
+        executablePath: "google-chrome-stable",
         // headless: false,
         // args: ["--disk-cache-dir", packagePath + "chrome-cache-dir"]
     }));
