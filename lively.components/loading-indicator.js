@@ -83,7 +83,7 @@ export default class LoadingIndicator extends Morph {
       promise.delay(props.delay || 0).then(() => {
         const hoverOffset = 25;
         li.openInWorld();
-                li.opacity = 0;
+        li.opacity = 0;
         li.whenRendered().then(() => {
           li.ui.spinner.visible = true;
           li.top += hoverOffset;

@@ -9,6 +9,7 @@ import { connect } from "lively.bindings";
 import { emit } from "lively.notifications";
 import { SnapshotPackageHelper, ensureCommitInfo, default as MorphicDB } from "./morphicdb/db.js";
 import { createMorphSnapshot } from "./serialization.js";
+import { getClassName } from "lively.serializer2";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // deprecated
@@ -403,7 +404,7 @@ class PartResource extends Resource {
     const master = await resource(this.url.replace('part://', 'styleguide://')).read();
     const part = master.copy();
     part.isComponent = false;
-    part.name = 'a' + part.constructor.className;
+    part.name = 'a' + getClassName(part);
     part.withAllSubmorphsDoExcluding(m => {
       if (m == part || !m.master)
         delete m._parametrizedProps;
