@@ -265,14 +265,21 @@ export default class Window extends Morph {
   }
 
   buildTitleLabel() {
-    return this.addMorph({
+    let title = morph ({
         padding: Rectangle.inset(0, 2, 0, 0),
         styleClasses: ["windowTitleLabel"],
         type: "label",
         name: "window title",
-        reactsToPointer: false,
+        tooltip: "double click to maximize",
+        reactsToPointer: true,
         value: ""
       });
+    connect(title, "onDoubleMouseDown", this, "maximizeInView");
+    return this.addMorph(title);
+  }
+
+  maximizeInView() {
+    $world.execCommand("resize active window", {window: this, how: "full-visible"})
   }
 
   resizeBy(dist) {

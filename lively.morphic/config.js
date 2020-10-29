@@ -403,7 +403,9 @@ var config = {
      ibmPlex: '/lively.morphic/assets/ibm-plex/css/ibm-plex.css',
      fontAwesome: "/lively.morphic/assets/fontawesome-free-5.12.1/css/all.css",
      inconsolata: "/lively.morphic/assets/inconsolata/inconsolata.css"
-  }
+  },
+
+  fullVisibleGap: 10
 
 }
 

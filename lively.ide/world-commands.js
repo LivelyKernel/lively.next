@@ -474,7 +474,8 @@ var commands = [
 
       if (how === "reset") delete win.normalBounds;
       win.setBounds(resizeBounds(how, how.startsWith("half") ? winB : worldB));
-
+      win.relayoutResizer();
+      win.relayoutWindowControls();
       return true;
 
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -482,7 +483,7 @@ var commands = [
 
       async function askForHow() {
         var {selected: [how]} = await world.filterableListPrompt("How to resize the window?", [
-          "full", "fullscreen","center","right","left","bottom",
+          "full", "fullscreen", "full-visible", "center","right","left","bottom",
           "top","shrinkWidth", "growWidth","shrinkHeight",
           "growHeight", "col1","col2", "col3", "col4", "col5",
           "reset"], { requester: world });
@@ -492,6 +493,7 @@ var commands = [
       function resizeBounds(how, bounds) {
         switch(how) {
           case "full": case "fullscreen": return worldB;
+          case "full-visible": return world.fullVisibleBounds();
           case "col1":
           case "left": return thirdColBounds.withTopLeft(worldB.topLeft());
           case "col2": return thirdColBounds.withTopLeft(worldB.topCenter().scaleByPt(pt(.333,1))).withWidth(thirdW);
