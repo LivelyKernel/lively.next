@@ -947,11 +947,12 @@ export class ObjectEditor extends Morph {
       if (!objPkgName) {
         objPkgName = await this.world().prompt(
           ['New Object Package\n', {},
-           `No object package exists yet for object `, { fontSize: 16, fontWeight: 'normal'},
+           `No object package exists yet for object\n`, { fontSize: 16, fontWeight: 'normal'},
            stringifiedTarget, { fontSize: 16, fontStyle: 'italic', fontWeight: 'normal'},
           "\nEnter a name for a new package:", { fontSize: 16, fontWeight: 'normal'}], {
             historyId: "object-package-name-hist",
             requester: this,
+            width: 400,
             input: string.capitalize(className).replace(/\s+(.)/g, (_, match) => match.toUpperCase())
           });
 
@@ -1062,7 +1063,7 @@ export class ObjectEditor extends Morph {
         ' and remove class ', normalStyle, 
         className, {...highlightStyle, ...generateDoit(moduleMeta, className)}, 
         ` and its package `, normalStyle,
-        moduleMeta.package.name, highlightStyle, ' ?', normalStyle], { requester: this });
+        moduleMeta.package.name, highlightStyle, ' ?', normalStyle], { requester: this, width: 500 });
       if (!really) return;
       await this.withContextDo((ctx) => {
          adoptObject(ctx.target, withSuperclasses(ctx.target.constructor)[1]);

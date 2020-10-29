@@ -258,7 +258,7 @@ export default class ObjectEditorContext {
       let klass = this.classChainOfTarget().find(ea => ea[Symbol.for('__LivelyClassName__')] === className);
       this.selectedMethod = null;
       this.selectedClass = klass;
-      return getClassName(klass);
+      return klass[Symbol.for('__LivelyClassName__')];
     }, { className });
   }
 
