@@ -686,25 +686,23 @@ export class LivelyWorld extends World {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   async openPrompt(promptMorph, opts = {requester: null, animated: false}) {
     var focused = this.focusedMorph, visBounds = this.visibleBounds();
+
+    return this.withRequesterDo(opts.requester, async (pos) => {
+      promptMorph.openInWorldNear(pos, this);
+      if (promptMorph.height > visBounds.height)
+        promptMorph.height = visBounds.height - 5;
     
-    promptMorph.openInWorldNear(
-      opts.requester && !opts.requester.isWorld ?
-        visBounds.intersection(opts.requester.globalBounds()).center() :
-        visBounds.center(), this);
-
-    if (promptMorph.height > visBounds.height)
-      promptMorph.height = visBounds.height - 5;
-
-    if (typeof opts.customize === "function")
-      opts.customize(promptMorph);
-
-    if (opts.animated) {
-      if (this.previousPrompt && this.previousPrompt.world()) {
-        this.previousPrompt.transitionTo(promptMorph);
+      if (typeof opts.customize === "function")
+        opts.customize(promptMorph);
+    
+      if (opts.animated) {
+        if (this.previousPrompt && this.previousPrompt.world()) {
+          this.previousPrompt.transitionTo(promptMorph);
+        }
       }
-    }
-    this.previousPrompt = promptMorph;
-    return promise.finally(promptMorph.activate(opts), () => focused && focused.focus());
+      this.previousPrompt = promptMorph;
+      return promise.finally(promptMorph.activate(opts), () => focused && focused.focus());
+    });
   }
 
   async withRequesterDo(requester, doFn) {
@@ -717,8 +715,9 @@ export class LivelyWorld extends World {
          pos = win.globalBounds().center();
        }
      }
-     await doFn(pos);
+     const res = await doFn(pos);
      if (win) win.toggleFader(false);
+     return res;
   }
 
   inform(label = "no message", opts = {fontSize: 16, requester: null, animated: true}) {

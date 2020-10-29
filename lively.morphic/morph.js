@@ -1717,7 +1717,7 @@ export class Morph {
     }
     if (pos) this.position = pos;
     else {
-      this.center = world.visibleBounds().center();
+      this.center = this.hasFixedPosition ? world.visibleBounds().extent().scaleBy(.5, .5) : world.visibleBounds().center();
       this.snap();
     }
     world.addMorph(this);
