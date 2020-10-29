@@ -78,7 +78,7 @@ export default class LivelyDAVPlugin {
     
     if (req.url.endsWith('.js')) {
       if (req.method == 'PUT' || !this.fileHashes[req.url]) {
-        resource("file://" + this.options.rootDirectory).join(req.url).read().then(source => {
+        resource("file://" + this.options.rootDirectory).join(decodeURIComponent(req.url)).read().then(source => {
           this.fileHashes[req.url] = string.hashCode(source);   
         });
       }
