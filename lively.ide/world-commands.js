@@ -864,7 +864,10 @@ var commands = [
   {
     name: 'browse and load component',
     exec: async function(world) {
+      const li = LoadingIndicator.open('loading component browser');
+      await li.whenRendered();
       const componentsBrowser = await resource('part://SystemDialogs/master component browser').read()
+      li.remove();
       const loadedComponent = await componentsBrowser.activate();
       if (loadedComponent && !loadedComponent.world())
         loadedComponent.openInWorld();
@@ -1314,6 +1317,9 @@ var commands = [
       if (id || commit) return World.loadFromCommit(id || commit, oldWorld);
       if (name) return World.loadFromDB(name, ref, oldWorld);
 
+      const li = LoadingIndicator.open('loading project browser...');
+      await li.whenRendered();
+
       let worldList = oldWorld.get("a project browser") || await resource('part://partial freezing/project browser').read();
       worldList.name = 'a project browser';
       worldList.hasFixedPosition = true;
@@ -1321,6 +1327,7 @@ var commands = [
       worldList.bringToFront().alignInWorld(oldWorld);
       worldList.update();
       worldList.focus();
+      li.remove();
       return worldList;
 
     }
