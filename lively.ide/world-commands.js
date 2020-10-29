@@ -11,9 +11,24 @@ import { LoadingIndicator } from "lively.components";
 import { createMorphSnapshot } from "lively.morphic/serialization.js";
 import { interactivelyFreezeWorld } from "lively.freezer";
 import { resource } from "lively.resources";
+import { BrowserModuleTranslationCache } from "lively.modules/src/instrumentation.js";
 
 var commands = [
 
+  {
+    name: "clear storage and reload",
+    exec: async function() {
+      var proceed = await $world.confirm(["Caution\n", {}, "Proceeding will clear all local storage and reload the page! Make sure if you want to save your world before you continue.", {fontSize: 15, fontWeight: 'normal'}], { width: 400 });
+      if (proceed){
+        localStorage.clear();
+        let browserModule = new BrowserModuleTranslationCache("2");
+        browserModule.closeDb();
+        browserModule.deleteDb();
+        window.location.reload(true);
+      }
+    }
+  },
+  
   {
     name: "undo",
     exec: function(world) {
