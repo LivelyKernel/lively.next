@@ -2102,10 +2102,19 @@ export class Morph {
   onMouseDown(evt) {
     if (this === evt.targetMorph)
       evt.state.clickedMorph = this;
+      if (evt.state.prevClick.clickCount == 1) {
+        let timeDiff = Date.now() - evt.state.prevClick.clickedAtTime;
+        if (timeDiff <= 200) {
+          this.onDoubleMouseDown(evt);
+          return;
+        }
+      }
     if (this === evt.targetMorph && this.master) {
         this.requestMasterStyling();
     }
   }
+
+  onDoubleMouseDown(evt) {}
 
   onMouseUp(evt) {
     evt.state.clickedMorph = null;
