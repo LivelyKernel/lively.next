@@ -64,6 +64,7 @@ var commands = [
             keysPrinted, {
               fontSize: "80%",
               textStyleClasses: ["truncated-text"],
+              paddingRight: '5px',
               maxWidth: 140
             }
           ]

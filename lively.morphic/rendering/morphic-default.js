@@ -131,7 +131,6 @@ div.text-layer span {
   height: 100%;*/
   /*vertical align*/
   float: right;
-  padding-right: 5px;
   position: relative;
   top: 50%;
   text-align: right;
