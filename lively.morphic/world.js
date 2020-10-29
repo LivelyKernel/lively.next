@@ -302,10 +302,19 @@ export class World extends Morph {
   }
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  visibleBounds () {
+  visibleBounds() {
     // the bounds call seems to slow down halos...
     if (!this.env.renderer) return this.innerBounds();
     return this.windowBounds().intersection(this.innerBounds());
+  }
+
+  fullVisibleBounds() {
+    let gap = config.fullVisibleGap;
+    let doubleGap = 2 * gap;
+    let bar = $world.getSubmorphNamed("lively top bar");
+    let bounds = this.visibleBounds();
+    let visibleBounds = new Rectangle(gap, bar.height + gap, bounds.width - doubleGap, bounds.height - bar.height - doubleGap);
+    return visibleBounds;
   }
 
   windowBounds(optWorldDOMNode) {
