@@ -310,13 +310,13 @@ export class CompletionController {
     
     // force the master styling while styll not visible, to ensure proper measuring
     menu.master.applyIfNeeded(true);
+    input.focus(); // get the focus already, to receive all text input while style is being applied
     await menu.master.whenApplied();
     if (prefix.length) {
       input.gotoDocumentEnd();
       menu.moveBy(pt(-input.textBounds().width, 0));
     }
     world.addMorph(menu);
-    input.focus();
     menu.inputPadding = Rectangle.inset(0,0,0,0);
     return menu;
   }
