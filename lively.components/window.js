@@ -113,9 +113,12 @@ export default class Window extends Morph {
       ],
       [
         "Align and resize", [
+          {alias: "full",   target: w, command: "resize active window", args: {window: this, how: "full"}},
           {alias: "left",   target: w, command: "resize active window", args: {window: this, how: "left"}},
           {alias: "center", target: w, command: "resize active window", args: {window: this, how: "center"}},
           {alias: "right",  target: w, command: "resize active window", args: {window: this, how: "right"}},
+          {alias: "top",   target: w, command: "resize active window", args: {window: this, how: "top"}},
+          {alias: "bottom",   target: w, command: "resize active window", args: {window: this, how: "bottom"}},
           {alias: "reset",  target: w, command: "resize active window", args: {window: this, how: "reset"}},
         ]
       ],
