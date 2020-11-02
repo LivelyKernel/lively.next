@@ -88,7 +88,12 @@ export default class Window extends Morph {
           this.applyMinimize();
         }
       },
-      maximized: {}
+      maximized: {
+        set(isMaximized) {
+          this.setProperty('maximized', isMaximized);
+          this.toggleMaximize;
+        }
+      }
     };
   }
 
@@ -270,16 +275,12 @@ export default class Window extends Morph {
         styleClasses: ["windowTitleLabel"],
         type: "label",
         name: "window title",
-        tooltip: "double click to maximize",
+        tooltip: "double click to maximize/reset",
         reactsToPointer: true,
         value: ""
       });
-    connect(title, "onDoubleMouseDown", this, "maximizeInView");
+    connect(title, "onDoubleMouseDown", this, "toggleMaximize");
     return this.addMorph(title);
-  }
-
-  maximizeInView() {
-    $world.execCommand("resize active window", {window: this, how: "full-visible"})
   }
 
   resizeBy(dist) {
@@ -399,6 +400,16 @@ export default class Window extends Morph {
   }
 
   async toggleMinimize() { this.minimized = !this.minimized; }
+
+  toggleMaximize() {
+    this.maximized = !this.maximized;
+    if (this.maximized) {
+      $world.execCommand("resize active window", {window: this, how: "full"})
+    }
+    else {
+      $world.execCommand("resize active window", {window: this, how: "reset"})
+    }
+  }
 
   async applyMinimize() {
     if (!this.targetMorph) return;
