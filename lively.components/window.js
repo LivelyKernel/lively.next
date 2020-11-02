@@ -290,6 +290,8 @@ export default class Window extends Morph {
 
   resizeAt([corner, dist]) {
     let right;
+    let x,y, height, width;
+    let b = this.bounds();
     switch (corner) {
       case 'right':
         this.resizeBy(dist.withY(0)); break;
@@ -307,6 +309,27 @@ export default class Window extends Morph {
         this.resizeBy(dist.scaleByPt(pt(-1, 1))); 
         this.right = right;
         break; // adjustment needed
+      case 'top':
+        x = b.x;
+        y = b.y + dist.y;
+        width = b.width;
+        height = b.height - dist.y;
+        this.setBounds(new Rectangle(x, y, width, height));
+        break;
+      case 'top left':
+        x = b.x + dist.x;
+        y = b.y + dist.y;
+        width = b.width - dist.x;
+        height = b.height - dist.y;
+        this.setBounds(new Rectangle(x, y, width, height));
+        break;
+      case 'top right':
+        x = b.x;
+        y = b.y + dist.y;
+        width = b.width + dist.x;
+        height = b.height - dist.y;
+        this.setBounds(new Rectangle(x, y, width, height));
+        break;
     }
     this.relayoutResizer();
   }
@@ -316,7 +339,8 @@ export default class Window extends Morph {
       {
         submorphs: [
           rightResizer, bottomRightResizer, leftResizer,
-          bottomLeftResizer, bottomResizer
+          bottomLeftResizer, bottomResizer, topResizer,
+          topLeftResizer, topRightResizer,
         ]
       } = resizer;
     const resizerInset = 10;
@@ -334,12 +358,19 @@ export default class Window extends Morph {
     bottomResizer.width = this.width - 2 * resizerInset;
     bottomResizer.bottomLeft = pt(resizerInset,this.height);
 
+    topResizer.width = this.width - 2 * resizerInset;
+    topResizer.bottomLeft = pt(resizerInset, resizerInset);
+
+    topRightResizer.topRight = pt(this.width,0);
+
+    topLeftResizer.topLeft = pt(0,0)
+
     resizer.position = pt(0,0)
   }
 
   buildResizer() {
     let win = this,
-        rightResizer, bottomRightResizer, leftResizer, bottomLeftResizer, bottomResizer;
+        rightResizer, bottomRightResizer, leftResizer, bottomLeftResizer, bottomResizer, topResizer, topLeftResizer, topRightResizer;
     let fill = Color.transparent;
     let resizerInset = 10;
     let resizer = morph({
@@ -360,7 +391,7 @@ export default class Window extends Morph {
           nativeCursor: "nwse-resize"
         }),
         leftResizer = morph({
-          name: 'right resizer',
+          name: 'left resizer',
           fill, width: resizerInset, 
           draggable: true,
           nativeCursor: 'ew-resize'
@@ -377,6 +408,24 @@ export default class Window extends Morph {
           fill, height: resizerInset,
           nativeCursor: 'ns-resize'
         }),
+        topResizer = morph({
+          name: 'top resizer',
+          draggable: true,
+          fill, height: resizerInset,
+          nativeCursor: 'ns-resize'
+        }),
+        topLeftResizer = morph({
+          name: 'top left resizer',
+          draggable: true,
+          fill, extent: pt(10,10),
+          nativeCursor: 'nwse-resize'
+        }),
+        topRightResizer = morph({
+          name: 'top rigth resizer',
+          draggable: true,
+          fill, extent: pt(10,10),
+          nativeCursor: 'nesw-resize'
+        }),
       ]
     });
     connect(bottomRightResizer, "onDrag", win, "resizeAt", {
@@ -387,13 +436,22 @@ export default class Window extends Morph {
     });
     connect(bottomResizer, "onDrag", win, "resizeAt", {
       converter: evt => ['bottom', evt.state.dragDelta]
-    })
+    });
+    connect(topResizer, "onDrag", win, "resizeAt", {
+      converter: evt => ['top', evt.state.dragDelta]
+    });
+    connect(topRightResizer, "onDrag", win, "resizeAt", {
+      converter: evt => ['top right', evt.state.dragDelta]
+    });
+    connect(topLeftResizer, "onDrag", win, "resizeAt", {
+      converter: evt => ['top left', evt.state.dragDelta]
+    });
     connect(leftResizer, "onDrag", win, "resizeAt", {
       converter: evt => ['left', evt.state.dragDelta]
     });
     connect(bottomLeftResizer, "onDrag", win, "resizeAt", {
       converter: evt => ['bottom left', evt.state.dragDelta]
-    })
+    });
     this.addMorph(resizer);
     this.relayoutResizer();
     return resizer;
