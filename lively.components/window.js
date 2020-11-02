@@ -447,6 +447,12 @@ export default class Window extends Morph {
     this.relayoutWindowControls();
   }
 
+  setBounds(bounds){
+    super.setBounds(bounds);
+    this.relayoutResizer();
+    this.relayoutWindowControls();
+  }
+
   async close() {
     let proceed;
     if (this.targetMorph && typeof this.targetMorph.onWindowClose === "function")
