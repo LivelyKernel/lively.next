@@ -2,8 +2,8 @@
 import { promise } from "lively.lang";
 import { string } from "lively.lang";
 import { transform } from "lively.ast";
-import containerized from 'https://jspm.dev/containerized'
 
+let containerized = process.env.CONTAINERIZED || false;
 // let puppeteer = System._nodeRequire("puppeteer");
 let packagePath = System.decanonicalize("lively.headless/").replace("file://", "");
 let puppeteer = System._nodeRequire("puppeteer");
@@ -57,7 +57,7 @@ export class HeadlessSession {
     return this.constructor.browser
        || (this.constructor.browser = await puppeteer.launch({
         userDataDir: packagePath + "chrome-data-dir",
-        ...(await containerized()) ? {executablePath: "google-chrome-stable"} : {},
+        ...containerized ? {executablePath: "google-chrome-stable"} : {},
         // headless: false,
         // args: ["--disk-cache-dir", packagePath + "chrome-cache-dir"]
     }));
