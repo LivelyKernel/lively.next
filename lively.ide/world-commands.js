@@ -311,7 +311,7 @@ var commands = [
     exec: world => {
       let windows = world.getWindows().filter(ea => !ea.minimized);
       if (!windows.length) return true;
-      let visibleBounds = world.fullVisibleBounds(),
+      let visibleBounds = world.visibleBoundsExcludingTopBar(),
           windowBoundsCombined = windows.reduce((bounds, win) =>
             win.bounds().union(bounds), new Rectangle(0,0,0,0)),
           scaleX = visibleBounds.width / windowBoundsCombined.width,
@@ -460,7 +460,7 @@ var commands = [
 
       if (!win) return;
 
-      var worldB = world.fullVisibleBounds().insetBy(15),
+      var worldB = world.visibleBoundsExcludingTopBar().insetBy(15),
           winB = win.bounds();
         // FIXME!
       if (!win._normalBounds) win._normalBounds = winB;

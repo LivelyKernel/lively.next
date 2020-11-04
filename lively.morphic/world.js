@@ -308,14 +308,6 @@ export class World extends Morph {
     return this.windowBounds().intersection(this.innerBounds());
   }
 
-  fullVisibleBounds() {
-    // returns the visible rect of the world with respect to the topbar
-    let bar = $world.getSubmorphNamed("lively top bar");
-    let bounds = this.visibleBounds();
-    let visibleBounds = new Rectangle(bounds.x, bounds.y + bar.height, bounds.width, bounds.height - bar.height);
-    return visibleBounds;
-  }
-
   windowBounds(optWorldDOMNode) {
     if (this._cachedWindowBounds) return this._cachedWindowBounds;
     var {window} = this.env.domEnv,
