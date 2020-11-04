@@ -91,7 +91,7 @@ export default class Window extends Morph {
       maximized: {
         set(isMaximized) {
           this.setProperty('maximized', isMaximized);
-          this.toggleMaximize;
+          this.applyMaximize();
         }
       }
     };
@@ -462,8 +462,9 @@ export default class Window extends Morph {
 
   async toggleMinimize() { this.minimized = !this.minimized; }
 
-  toggleMaximize() {
-    this.maximized = !this.maximized;
+  toggleMaximize() { this.maximized = !this.maximized; }
+
+  applyMaximize() {
     if (this.maximized) {
       $world.execCommand("resize active window", {window: this, how: "full"})
     }
