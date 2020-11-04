@@ -1066,7 +1066,8 @@ class InspectHaloItem extends HaloItem {
       var win;
       if (existing && (win = existing.getWindow())) {
         win.minimized = false;
-        win.animate({center: this.world().visibleBounds().center(), duration: 200})
+        win.activate();
+        win.animate({center: this.world().visibleBounds().center(), duration: 200});
       } else {
         Inspector.openInWindow({targetObject: this.halo.target});
       }
