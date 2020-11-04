@@ -4,6 +4,7 @@ import { arr } from "lively.lang";
 import { withSuperclasses } from "lively.classes/util.js";
 import { lexicalClassMembers } from "lively.classes/util.js";
 import { isString } from "lively.lang/object.js";
+import { Icon } from "lively.morphic";
 
 // var oe = ObjectEditor.open({target: this})
 
@@ -71,12 +72,12 @@ export default class ClassTreeData extends TreeData {
       try {
         return node.children
           || (node.children = lexicalClassMembers(node.klass).map(ea => {
-            var {static: _static, name, kind} = ea;
+            var {static: _static, name, kind, overridden} = ea;
             var prefix = "";
             if (_static) prefix += "static ";
             if (kind === "get") prefix += "get ";
             if (kind === "set") prefix += "set ";
-            return {name: prefix + name, target: ea};
+            return {name: [ overridden ? [...Icon.textAttribute('arrow-circle-up'), " ", { opacity: .5 }] : [], prefix + name, {}], target: ea};
           }));
       } catch (e) { $world.showError(e); return node.children = []; }
     }

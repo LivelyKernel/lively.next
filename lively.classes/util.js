@@ -59,11 +59,12 @@ export function lexicalClassMembers(klass) {
   return members.map(node => {
     var {static: isStatic, kind, key: {type: keyType, name: id, value: literalId}} = node,
         name = id || literalId,
+        overridden = !!klass[Symbol.for("lively-instance-superclass")].prototype[name],
         base = isStatic ? klass : klass.prototype,
         value = kind === "get" ? base.__lookupGetter__(name) :
                   kind === "set" ? base.__lookupSetter__(name) :
                     base[name];
-    return {static: isStatic, name, value, kind, owner: klass}
+    return {static: isStatic, name, value, kind, owner: klass, overridden}
   });
 }
 

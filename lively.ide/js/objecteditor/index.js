@@ -10,7 +10,7 @@ import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
 import ObjectPackage, { isObjectClass } from "lively.classes/object-classes.js";
 import { chooseUnusedImports, interactivlyFixUndeclaredVariables, interactivelyChooseImports } from "../import-helper.js";
 import * as modules from "lively.modules";
-import { parse } from "lively.ast";
+import { parse, query } from "lively.ast";
 import { interactivelySavePart } from "lively.morphic/partsbin.js";
 import * as livelySystem from 'lively-system-interface';
 
@@ -24,6 +24,8 @@ import { stringifyFunctionWithoutToplevelRecorder } from "lively.source-transfor
 import { interactivelyFreezePart, displayFrozenPartsFor } from "lively.freezer";
 import { generateReferenceExpression } from "../inspector.js";
 import { getClassName } from "lively.serializer2";
+
+const DANGEROUS_METHODS_TO_OVERRIDE = ['render', 'remove', 'addMorph', 'addMorphAt'];
 
 export class ObjectEditor extends Morph {
 
@@ -880,6 +882,36 @@ export class ObjectEditor extends Morph {
     }, {
       editorSourceHash
     });
+
+    const overriddenSystemMethods = await this.withContextDo(ctx => {
+      const parsed = parse(content);
+      
+      let [classDecl] = query.topLevelDeclsAndRefs(parsed).classDecls;
+      const problematicOverrides = query.nodesInScopeOf(classDecl).filter(m => {
+        return m.type == 'MethodDefinition' &&
+        DANGEROUS_METHODS_TO_OVERRIDE.includes(m.key.name) &&
+        !ctx.selectedClass.prototype.hasOwnProperty(m.key.name)
+      });
+      return problematicOverrides.length ? problematicOverrides.map(m => m.key.name) : false
+    });
+
+    if (overriddenSystemMethods) {
+      var overriddenSystemMethod;
+      while (overriddenSystemMethod = overriddenSystemMethods.pop()) {
+        var really = await this.world().confirm(
+          ["System Method Override\n", {},
+            `You are about to override `, { fontWeight: 'normal', fontSize: 16},
+            overriddenSystemMethod + '()', { fontWeight: 'bold', fontStyle: 'italic' },
+            ' which is a method at the core of the System. You should only proceed if you are absolutely sure you know what you are doing, else you may cause to crash the running System.', {fontWeight: 'normal'}
+          ],
+          {
+            width: 400,
+            requester: this,
+          }
+        );
+        if (!really) return { success: false };
+      }
+    }
 
     if (sourceChanged && outsideChangeWarning) {
       var really = await this.world().confirm(
