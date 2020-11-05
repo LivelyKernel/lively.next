@@ -16,7 +16,7 @@ export default class L2LConnection {
   }
 
   isOnline() { nyi("isOnline"); }
-  open() { nyi("isOnline"); }
+  open() { nyi("open"); }
   close() { nyi("close"); }
   remove() { nyi("remove"); }
 
