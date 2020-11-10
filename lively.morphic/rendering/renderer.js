@@ -19,6 +19,14 @@ const { h, diff, patch, create: createNode } = vdom;
 
 const svgNs = "http://www.w3.org/2000/svg";
 
+const CanvasHook = function(canvas) {
+  this.canvasMorph = canvas;
+}
+CanvasHook.prototype.hook = function(node, prop, prev) {
+  let hasNewCanvas = this.canvasMorph._canvas !== node && node.tagName == 'CANVAS';
+  this.canvasMorph.afterRender(node, hasNewCanvas);
+}
+
 var InitStroke = function (path, renderer, reverse) { this.path = path; this.renderer = renderer; this.reverse = reverse }
 InitStroke.prototype.hook = function(node, propertyName, previousValue) {
   let p = this.path.drawnProportion || 0;
@@ -285,11 +293,6 @@ export class Renderer {
   }
 
   renderCanvas(canvas) {
-    const CanvasHook = function() {}
-    CanvasHook.prototype.hook = function(node, prop, prev) {
-      let hasNewCanvas = canvas._canvas !== node;
-      canvas.afterRender(node, hasNewCanvas);
-    }
     return h("div", {
       ...defaultAttributes(canvas, this),
         style: defaultStyle(canvas),
@@ -298,7 +301,7 @@ export class Renderer {
           width: canvas.width,
           height: canvas.height,
           style: {"pointer-events": "none", position: "absolute"},
-          canvasHook: new CanvasHook(),
+          canvasHook: new CanvasHook(canvas),
         }),
         this.renderSubmorphs(canvas)
       ]);
