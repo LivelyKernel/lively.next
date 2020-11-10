@@ -26,6 +26,10 @@ import { subscribeOnce } from "lively.notifications/index.js";
   
 */
 
+function getProjectName(world) {
+  return Path('metadata.commit.name').get(world) || world.name;
+}
+
 export class ComponentPolicy {
 
   static for(derivedMorph, args) {
@@ -131,7 +135,7 @@ export class ComponentPolicy {
     if (component._resourceHandle) return component._resourceHandle.url; // we leave this being for remote masters :)
     if (component.name == undefined) return null;
     // else we assume the component resides within the current world
-    return `styleguide://${Path('metadata.commit.name').get($world) || $world.name}/${component.name}`;
+    return `styleguide://${getProjectName($world)}/${component.name}`;
   }
 
   async resolveMasterComponents() {
@@ -542,7 +546,7 @@ class StyleGuideResource extends Resource {
 
   async dirList(depth, opts) {
     // provide dir last by filtering the components inside the world via the slash based naming scheme
-    if (this.worldName == $world.metadata.commit.name) {
+    if (this.worldName == getProjectName($world)) {
       return $world.withAllSubmorphsSelect(m => m.isComponent)
     }
 
@@ -555,7 +559,7 @@ class StyleGuideResource extends Resource {
   localWorldName() {
     let localName;
     
-    if (localName = Path('metadata.commit.name').get($world)) {
+    if (localName = getProjectName($world)) {
       return localName;
     }
     
@@ -571,7 +575,7 @@ class StyleGuideResource extends Resource {
     }
     
     subscribeOnce('world/loaded', () => {
-      resolve(Path('metadata.commit.name').get($world));
+      resolve(getProjectName($world));
     }, System);
 
     return localNamePromise;
