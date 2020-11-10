@@ -272,8 +272,13 @@ export default class TextLayout {
       if (range.end.column >= lineLength) break;
       let nextColumn = range.end.column + 1;
       if (nextColumn >= lineLength) break;
-      if (nextColumn <= column)
+      if (nextColumn <= column) {
+        if (!morph.env.renderer.getNodeForMorph(morph)) {
+          column = nextColumn;
+          break;
+        }
         throw new Error(`should not happen ${range.end.column} vs ${column}`);
+      }
       column = nextColumn;
     }
     return ranges;
@@ -330,9 +335,9 @@ export default class TextLayout {
     */
     var {start, end} = selection,
         textLayout = morph.textLayout,
-        end = morph.lineWrapping ? 
-                      textLayout.rangesOfWrappedLine(morph, start.row)
-                                .find(r => r.containsPosition(start)).intersect(selection).end : end,
+        intersectingRect = textLayout.rangesOfWrappedLine(morph, start.row)
+                                     .find(r => r.containsPosition(start)),
+        end = (morph.lineWrapping && intersectingRect) ? intersectingRect.intersect(selection).end : end,
         end = end.row == start.row ? end : {row: end.row, column: -1},
         charBoundsInSelection = textLayout.charBoundsOfRow(morph, start.row),
         charBoundsInSelection = end.column < 0 ? 
