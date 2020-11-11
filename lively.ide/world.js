@@ -486,7 +486,8 @@ export class LivelyWorld extends World {
         evt.stop();
         let snapshots = JSON.parse(data.getData("application/morphic")),
             morphs = [];
-        data.clearData()
+        
+        //data.clearData()
         if (!Array.isArray(snapshots)) snapshots = [snapshots];
         li = LoadingIndicator.open('pasting morphs...');
         for (let s of snapshots) {
@@ -939,13 +940,12 @@ export class LivelyWorld extends World {
 
     let checked = Icon.textAttribute('check-square'),
         unchecked = Icon.textAttribute('square');
-    unchecked[1].paddingRight = "7px";
     Object.assign(checked[1], {paddingRight: "5px", float: 'none', display: 'inline'});
 
     ['grabbable', 'draggable', 'acceptsDrops', 'halosEnabled'].forEach(propName =>
       morphicMenuItems[1].push(
-        [[...(this[propName] ? checked : unchecked),  propName, {float: 'none'}],
-         () => this[propName] = !this[propName]]));
+        [[...(morph[propName] ? checked : unchecked), (morph[propName] ? '' : ' ') + propName, {float: 'none'}],
+         () => morph[propName] = !morph[propName]]));
 
 
     items.push(["Fit to submorphs", async () => {
