@@ -80,6 +80,7 @@ export default class JavaScriptEditorPlugin extends CodeMirrorEnabledEditorPlugi
         jsItems = [
           {command: "doit", target: editor, showKeyShortcuts: true},
           {command: "inspectit", target: editor, showKeyShortcuts: true},
+          {command: "editit", target: editor, showKeyShortcuts: true},
           {command: "printit", target: editor, showKeyShortcuts: true},
           {command: "print inspectit", alias: "print inspect", target: editor, showKeyShortcuts: true},
           {command: "eval all", target: editor, showKeyShortcuts: true},
