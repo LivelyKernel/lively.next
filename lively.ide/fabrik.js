@@ -55,30 +55,31 @@ export async function interactiveConnectGivenSource(sourceObj, sourceAttr) {
 }
 
 export async function interactiveConnectGivenSourceAndTarget(sourceObj, sourceAttr, targetObj, onConnect) {
-  let bindings = targetObj && targetObj.world().targetDataBindings(targetObj),
+  let targetBindings = targetObj && targetObj.world().targetDataBindings(targetObj),
       world = sourceObj.world(),
       prompts = [];
-  if (!bindings || !bindings.length) {
-    world.setStatusMessage("connect canceled"); return; }
+  if (!targetBindings || !targetBindings.length) {
+    world.setStatusMessage("connect canceled");
+    return;
+  }
 
-  let items = bindings.map(
-    group => [group[0].group || "uncategorized",
-              group.map(ea => [
-                ea.signature || ea.name, async () => await interactivelyEvaluateConnection(
-                  {sourceObj, sourceAttr, targetObj, targetAttr: ea.name, onConnect})])]);
+  if (!sourceAttr) {
+    const sourceBindings = [{ isListItem: true, string: '[Enter custom attribute..]', value: {custom: true}}, ...arr.flatten(sourceObj.world().targetDataBindings(targetObj)).map(ea => ({ isListItem: true, string: ea.signature || ea.name, value: ea}))];
+    sourceAttr = await world.listPrompt(['Select Source Attribute\n', {}, 'Choose the attribute of the morph that is supposed to invoke the connection. This can be a method, property or a custom signal that is invoked upon the morph.', { paddingTop: '10px', fontSize: 14, textAlign: 'left', fontWeight: 'normal' }], sourceBindings, {filterable: true});
+    if (sourceAttr.status == 'canceled') return;
+    sourceAttr = sourceAttr.selected[0];
+    sourceAttr = sourceAttr.custom ? "sourceAttribute" : sourceAttr.name;
+  }
 
+  let items = [{ isListItem: true, string: "[Enter custom attribute...]", value: { custom: true }}, ...arr.flatten(targetBindings).map(ea => ({ isListItem: true, value: ea, string: ea.signature || ea.name}))];
 
-    items.push(["custom...", async () => {
-      let targetAttr = await world.prompt("Enter custom connection point", {
-            requester: $world,
-            historyId: "lively.morphic-custom-connection-points",
-            useLastInput: true
-          })
-      if (targetAttr) await interactivelyEvaluateConnection(
-        {sourceObj, sourceAttr, targetObj, targetAttr, onConnect});
-    }]);
+  let res = await world.listPrompt(['Select Target Attribute\n', {}, 'Choose the attribute of the morph that is supposed to invoked once the connection is triggered. This can be either a method or a property of the morph. When selecting a property, keep in mind that the value of the source attribute will be assigned to the property or passed to the method as an argument.', { fontSize: 14, textAlign: 'left', fontWeight: 'normal', paddingTop: '10px' }], items, { filterable: true });
 
-  await targetObj.openMenu(items).whenFinished();
+  if (res.status == 'canceled') return;
+  res = res.selected[0];
+
+  await interactivelyEvaluateConnection({
+    sourceObj, sourceAttr, targetObj, targetAttr: res.custom ? "targetAttribute" : res.name, onConnect, prompt: 'Edit and confirm connection:'});
 }
 
 export async function interactivelyReEvaluateConnection(
@@ -157,7 +158,7 @@ export async function interactivelyEvaluateConnection(opts) {
       type: typeof sourceObj[sourceAttr]
     }
     if (sourceType !== targetType) {
-      prompt = true;
+      prompt = "Edit and confirm connection:";
     }
   }
   Object.assign(lively.modules.module(targetModule).recorder,

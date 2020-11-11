@@ -51,8 +51,7 @@ class LeashEndpoint extends Ellipse {
           .partNameNearest(obj.keys(Leash.connectionPoints), this.globalPosition);
         this.highlighter = $world.highlightMorph($world, this.possibleTarget, false, [this.closestSide]);
         this.highlighter.show();
-        if (this.possibleTarget.constructor.className == 'MorphContainer')
-          this.highlighter.get('name tag').value = this.possibleTarget.target.name;
+        this.highlighter.get('name tag').value = this.leash.getLabelFor(this.possibleTarget);
       }
     }
     evt.state.endpoint = this;
@@ -65,7 +64,7 @@ class LeashEndpoint extends Ellipse {
       this.attachTo(this.possibleTarget, this.closestSide);
     }
   }
-  
+
   getConnectionPoint() {
     let {isPath, isPolygon, vertices, origin} = this.connectedMorph,
           gb = this.connectedMorph.globalBounds();
@@ -90,7 +89,7 @@ class LeashEndpoint extends Ellipse {
     if (!this.connectedMorph) return;
     const globalPos = this.getConnectionPoint();
     let pos = this.leash.localize(globalPos);
-    if (this.hasFixedPosition) pos = pos.subPt($world.scroll);
+    //if (this.leash.hasFixedPosition) pos = pos.addPt($world.scroll);
     this.vertex.position = pos;
     this.relayout();
   }
@@ -113,7 +112,7 @@ class LeashEndpoint extends Ellipse {
 
   attachTo(morph, side) {
     this.clearConnection();
-    this.leash.openInWorld(this.leash.position);
+    if (!this.leash.world()) this.leash.openInWorld(morph.globalPosition);
     this.connectedMorph = morph;
     this.attachedSide = side;
     this.vertex.controlPoints = this.leash.controlPointsFor(side, this);
@@ -163,6 +162,7 @@ export class Leash extends Path {
     return {
       start: {defaultValue: pt(0,0)}, end: {defaultValue: pt(0,0)},
       canConnectTo: {defaultValue: m => true},
+      getLabelFor: {defaultValue: m => m.name },
       reactsToPointer: {defaultValue: false},
       acceptsDroppedMorphs: {defaultValue: false},
       direction: {
