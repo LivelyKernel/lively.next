@@ -849,10 +849,9 @@ export default class Inspector extends Morph {
     });
 
     this.addMorph(tree, this.getSubmorphNamed("terminal toggler"));
-    this.layout.col(0).row(1).group.morph = tree;
-
-    this.whenRendered().then(
+    this.master.whenApplied().then(
       () => {
+        this.layout.col(0).row(1).group.morph = tree;
         // if (this.targetObject.isMorph &&
         //     this.targetObject.world() == this.world()) {
         //   this.targetObject = this.targetObject;
