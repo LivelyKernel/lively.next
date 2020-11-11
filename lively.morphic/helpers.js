@@ -52,7 +52,7 @@ export function morph(props = {}, opts = {restore: false}) {
 
 export function newMorphId(classOrClassName) {
   var prefix = typeof classOrClassName === "function" ?
-    classOrClassName.className : typeof classOrClassName === "string" ?
+    classOrClassName[Symbol.for('__LivelyClassName__')] : typeof classOrClassName === "string" ?
       classOrClassName.toLowerCase() : "";
   return prefix + "_" + string.newUUID().replace(/-/g, "_");
 }
