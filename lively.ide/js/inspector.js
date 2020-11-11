@@ -849,6 +849,9 @@ export default class Inspector extends Morph {
     });
 
     this.addMorph(tree, this.getSubmorphNamed("terminal toggler"));
+
+    super.__after_deserialize__(snapshot, ref, pool);
+
     this.master.whenApplied().then(
       () => {
         this.layout.col(0).row(1).group.morph = tree;
@@ -865,8 +868,6 @@ export default class Inspector extends Morph {
            this.targetObject = this.targetObject;
       }
     );
-
-    super.__after_deserialize__(snapshot, ref, pool);
   }
 
   __additionally_serialize__(snapshot, ref, pool, addFn) {
