@@ -423,7 +423,9 @@ export default class Window extends Morph {
       collapseButton.tooltip = "uncollapse window";
       await this.animate({styleClasses: ['minimized', 'active', ...arr.without(this.styleClasses, 'neutral')],
         bounds: minimizedBounds, duration, easing});
-      this.targetMorph && (this.targetMorph.visible = false);
+      this.withMetaDo({ metaInteraction: true }, () => {
+        this.targetMorph && (this.targetMorph.visible = false);
+      });
     }
     resizer.visible = !this.minimized;
     this.relayoutWindowControls();
