@@ -24,6 +24,7 @@ import { stringifyFunctionWithoutToplevelRecorder } from "lively.source-transfor
 import { interactivelyFreezePart, displayFrozenPartsFor } from "lively.freezer";
 import { generateReferenceExpression } from "../inspector.js";
 import { getClassName } from "lively.serializer2";
+import { resource } from "lively.resources";
 
 const DANGEROUS_METHODS_TO_OVERRIDE = ['render', 'remove', 'addMorph', 'addMorphAt'];
 
@@ -1243,21 +1244,40 @@ export class ObjectEditor extends Morph {
         return;
       }
 
-      const importViaFreeText = await this.world().multipleChoicePrompt(
+      let importStyle = await this.world().multipleChoicePrompt(
         "Select import style:", {
         requester: this,
         width: 400,
         choices: new Map([
-          ["An already loaded module (via exports)", false],
-          ["A custom module (via free text)", true],
+          ["An already loaded module (via exports)", "system"],
+          ["A NPM Module via jspm.dev", "jspm"],
+          ["A custom module (via free text)", "free text"],
         ])
       });
 
-      if (importViaFreeText == undefined) return;
+      if (importStyle == undefined) return;
 
-      if (importViaFreeText) {
+      let importStmt = `import ... from "module";`;
 
-        let importStmt = `import ... from "module";`;
+      if (importStyle == 'jspm') {
+        let jspmModule = await this.world().filterableListPrompt("Browse NPM", [], {
+          requester: this,
+          onFilter: fun.debounce(500, async (list) => {
+            if (list._lastTerm == list.input) return;
+            list._lastTerm = list.input;
+            list.items = await importController.doNewNPMSearch(list.input);
+          }),
+          fuzzy: true,
+        });
+        if (jspmModule.status != 'accepted') return;
+        [jspmModule] = jspmModule.selected;
+        const { version, name } = jspmModule.package;
+        importStmt = `import ... from "https://jspm.dev/${name}@${version}";`;
+        importStyle = 'free text'; // transition to free text mode
+      }
+
+      if (importStyle == 'free text') {
+
         while (true) {
           importStmt = await this.world().editPrompt("Enter import statement:", {
             requester: this,
@@ -1282,7 +1302,7 @@ export class ObjectEditor extends Morph {
           return origSource;
         }, { importStmt });
       }
-      if (!importViaFreeText) {
+      if (importStyle == 'system') {
         var system = await editorPlugin.systemInterface(),
             choices = await interactivelyChooseImports(system, { requester: this });
         if (!choices) return null;
@@ -1806,6 +1826,31 @@ class ImportController extends Morph {
       this.get("cleanupButton"),
       this.get("removeImportButton"),
       this.get("addImportButton")].forEach(btn => btn.extent = btnStyle.extent);
+  }
+
+  async doNewNPMSearch(query) {
+    // https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md#get-v1search
+    // text	String	Query	❌	full-text search to apply
+    // size	integer	Query	❌	how many results should be returned (default 20, max 250)
+    // from	integer	Query	❌	offset to return results from
+    // quality	float	Query	❌	how much of an effect should quality have on search results
+    // popularity	float	Query	❌	how much of an effect should popularity have on search results
+    // maintenance	float	Query	❌	how much of an effect should maintenance have on search results
+
+    // let fields = ['name','description','keywords','author','modified','homepage','version','license','rating', "readme"]
+    let i = LoadingIndicator.open("fetching information...");
+    i.center = this.owner.globalBounds().center();
+    let url = `https://registry.npmjs.com/-/v1/search?text=${query}&size=50`,
+        found = await resource(url).makeProxied().readJson();
+    i.remove();
+    return found.objects.map(p => {
+      let {searchScore, package: {name, version}} = p;
+      return {
+        isListItem: true,
+        string: `${name}@${version}`,
+        value: p
+      }
+    });
   }
 
   async updateImports() {

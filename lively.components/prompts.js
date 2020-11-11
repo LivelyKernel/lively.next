@@ -671,7 +671,7 @@ export class ListPrompt extends AbstractPrompt {
     useLastInput,
     fuzzy, filterFunction, sortFunction,
     actions, selectedAction, theme, items,
-    onSelection
+    onSelection, onFilter
   }) {
 
     this.extent = extent || pt(500,400);
@@ -726,6 +726,7 @@ export class ListPrompt extends AbstractPrompt {
     if (filterable) {
       connect(list, 'accepted', this, 'resolve');
       connect(list, 'canceled', this, 'reject');
+      if (onFilter) connect(list, 'updateFilter', () => onFilter(list));
       list.whenRendered().then(() => list.relayout());
     }
   }
