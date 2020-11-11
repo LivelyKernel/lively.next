@@ -852,7 +852,7 @@ export default class Inspector extends Morph {
 
     super.__after_deserialize__(snapshot, ref, pool);
 
-    this.master.whenApplied().then(
+    !this.isComponent && this.master.whenApplied().then(
       () => {
         this.layout.col(0).row(1).group.morph = tree;
         // if (this.targetObject.isMorph &&
