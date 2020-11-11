@@ -61,6 +61,7 @@ export class ObjectEditor extends Morph {
         evalEnvironment
       });
     }
+    win.doNotAcceptDropsForThisAndSubmorphs();
     return win;
   }
 

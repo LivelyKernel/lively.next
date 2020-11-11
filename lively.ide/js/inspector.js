@@ -799,10 +799,12 @@ class PropertyTree extends Tree {
 }
 
 export default class Inspector extends Morph {
+
   static openInWindow (props) {
     if (System._testsRunning) return console.log(props.targetObject);
     const i = new this(props);
-    i.openInWindow();
+    let window = i.openInWindow();
+    window.doNotAcceptDropsForThisAndSubmorphs();
     return i;
   }
 
@@ -1103,6 +1105,8 @@ export default class Inspector extends Morph {
       }
     });
     this.ui.propertyTree.update(true);
+    //block drops even if target,... changes
+    this.ui.propertyTree.doNotAcceptDropsForThisAndSubmorphs();
   }
 
   get isInspector () { return true; }
