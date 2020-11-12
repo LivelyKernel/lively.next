@@ -683,7 +683,7 @@ export class ListPrompt extends AbstractPrompt {
     let title = this.addNamed('promptTitle', {
       type: "text"
     });
-    title.textString = label;
+    title.value = label;
 
     let list =  this.addNamed('prompt list', {
       type: filterable ? FilterableList : List,
