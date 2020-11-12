@@ -26,12 +26,12 @@ function convert(str, to, from, useLite) {
     var result;
 
     if (from !== 'UTF-8' && typeof str === 'string') {
-        str = new Buffer(str, 'binary');
+        str = Buffer.from(str, 'binary');
     }
 
     if (from === to) {
         if (typeof str === 'string') {
-            result = new Buffer(str);
+            result = Buffer.from(str);
         } else {
             result = str;
         }
@@ -58,7 +58,7 @@ function convert(str, to, from, useLite) {
 
 
     if (typeof result === 'string') {
-        result = new Buffer(result, 'utf-8');
+        result = Buffer.from(result, 'utf-8');
     }
 
     return result;
@@ -413,7 +413,7 @@ function DBCSEncoder(options, codec) {
 }
 
 DBCSEncoder.prototype.write = function(str) {
-    var newBuf = new Buffer(str.length * (this.gb18030 ? 4 : 3)), 
+    var newBuf = Buffer.alloc(str.length * (this.gb18030 ? 4 : 3)), 
         leadSurrogate = this.leadSurrogate,
         seqObj = this.seqObj, nextChar = -1,
         i = 0, j = 0;
@@ -536,7 +536,7 @@ DBCSEncoder.prototype.end = function() {
     if (this.leadSurrogate === -1 && this.seqObj === undefined)
         return; // All clean. Most often case.
 
-    var newBuf = new Buffer(10), j = 0;
+    var newBuf = Buffer.alloc(10), j = 0;
 
     if (this.seqObj) { // We're in the sequence.
         var dbcsCode = this.seqObj[DEF_CHAR];
@@ -572,7 +572,7 @@ DBCSEncoder.prototype.findIdx = findIdx;
 function DBCSDecoder(options, codec) {
     // Decoder state
     this.nodeIdx = 0;
-    this.prevBuf = new Buffer(0);
+    this.prevBuf = Buffer.alloc(0);
 
     // Static data
     this.decodeTables = codec.decodeTables;
@@ -582,7 +582,7 @@ function DBCSDecoder(options, codec) {
 }
 
 DBCSDecoder.prototype.write = function(buf) {
-    var newBuf = new Buffer(buf.length*2),
+    var newBuf = Buffer.alloc(buf.length*2),
         nodeIdx = this.nodeIdx, 
         prevBuf = this.prevBuf, prevBufOffset = this.prevBuf.length,
         seqStart = -this.prevBuf.length, // idx of the start of current parsed sequence.
@@ -659,7 +659,7 @@ DBCSDecoder.prototype.end = function() {
         var buf = this.prevBuf.slice(1);
 
         // Parse remaining as usual.
-        this.prevBuf = new Buffer(0);
+        this.prevBuf = Buffer.alloc(0);
         this.nodeIdx = 0;
         if (buf.length > 0)
             ret += this.write(buf);
@@ -926,7 +926,7 @@ function InternalCodec(codecOptions, iconv) {
         this.encoder = InternalEncoderCesu8;
 
         // Add decoder for versions of Node not supporting CESU-8
-        if (new Buffer("eda080", 'hex').toString().length == 3) {
+        if (Buffer.from("eda080", 'hex').toString().length == 3) {
             this.decoder = InternalDecoderCesu8;
             this.defaultCharUnicode = iconv.defaultCharUnicode;
         }
@@ -960,7 +960,7 @@ function InternalEncoder(options, codec) {
 }
 
 InternalEncoder.prototype.write = function(str) {
-    return new Buffer(str, this.enc);
+    return Buffer.from(str, this.enc);
 }
 
 InternalEncoder.prototype.end = function() {
@@ -980,11 +980,11 @@ InternalEncoderBase64.prototype.write = function(str) {
     this.prevStr = str.slice(completeQuads);
     str = str.slice(0, completeQuads);
 
-    return new Buffer(str, "base64");
+    return Buffer.from(str, "base64");
 }
 
 InternalEncoderBase64.prototype.end = function() {
-    return new Buffer(this.prevStr, "base64");
+    return Buffer.from(this.prevStr, "base64");
 }
 
 
@@ -995,7 +995,7 @@ function InternalEncoderCesu8(options, codec) {
 }
 
 InternalEncoderCesu8.prototype.write = function(str) {
-    var buf = new Buffer(str.length * 3), bufIdx = 0;
+    var buf = Buffer.alloc(str.length * 3), bufIdx = 0;
     for (var i = 0; i < str.length; i++) {
         var charCode = str.charCodeAt(i);
         // Naive implementation, but it works because CESU-8 is especially easy
@@ -1103,10 +1103,10 @@ function SBCSCodec(codecOptions, iconv) {
         codecOptions.chars = asciiString + codecOptions.chars;
     }
 
-    this.decodeBuf = new Buffer(codecOptions.chars, 'ucs2');
+    this.decodeBuf = Buffer.from(codecOptions.chars, 'ucs2');
     
     // Encoding buffer.
-    var encodeBuf = new Buffer(65536);
+    var encodeBuf = Buffer.alloc(65536);
     encodeBuf.fill(iconv.defaultCharSingleByte.charCodeAt(0));
 
     for (var i = 0; i < codecOptions.chars.length; i++)
@@ -1124,7 +1124,7 @@ function SBCSEncoder(options, codec) {
 }
 
 SBCSEncoder.prototype.write = function(str) {
-    var buf = new Buffer(str.length);
+    var buf = Buffer.alloc(str.length);
     for (var i = 0; i < str.length; i++)
         buf[i] = this.encodeBuf[str.charCodeAt(i)];
     
@@ -1142,7 +1142,7 @@ function SBCSDecoder(options, codec) {
 SBCSDecoder.prototype.write = function(buf) {
     // Strings are immutable in JS -> we use ucs2 buffer to speed up computations.
     var decodeBuf = this.decodeBuf;
-    var newBuf = new Buffer(buf.length*2);
+    var newBuf = Buffer.alloc(buf.length*2);
     var idx1 = 0, idx2 = 0;
     for (var i = 0; i < buf.length; i++) {
         idx1 = buf[i]*2; idx2 = i*2;
@@ -3011,7 +3011,7 @@ function Utf16BEEncoder() {
 }
 
 Utf16BEEncoder.prototype.write = function(str) {
-    var buf = new Buffer(str, 'ucs2');
+    var buf = Buffer.from(str, 'ucs2');
     for (var i = 0; i < buf.length; i += 2) {
         var tmp = buf[i]; buf[i] = buf[i+1]; buf[i+1] = tmp;
     }
@@ -3032,7 +3032,7 @@ Utf16BEDecoder.prototype.write = function(buf) {
     if (buf.length == 0)
         return '';
 
-    var buf2 = new Buffer(buf.length + 1),
+    var buf2 = Buffer.alloc(buf.length + 1),
         i = 0, j = 0;
 
     if (this.overflowByte !== -1) {
@@ -3196,7 +3196,7 @@ function Utf7Encoder(options, codec) {
 Utf7Encoder.prototype.write = function(str) {
     // Naive implementation.
     // Non-direct chars are encoded as "+<base64>-"; single "+" char is encoded as "+-".
-    return new Buffer(str.replace(nonDirectChars, function(chunk) {
+    return Buffer.from(str.replace(nonDirectChars, function(chunk) {
         return "+" + (chunk === '+' ? '' : 
             this.iconv.encode(chunk, 'utf16-be').toString('base64').replace(/=+$/, '')) 
             + "-";
@@ -3245,7 +3245,7 @@ Utf7Decoder.prototype.write = function(buf) {
                     res += "+";
                 } else {
                     var b64str = base64Accum + buf.slice(lastI, i).toString();
-                    res += this.iconv.decode(new Buffer(b64str, 'base64'), "utf16-be");
+                    res += this.iconv.decode(Buffer.from(b64str, 'base64'), "utf16-be");
                 }
 
                 if (buf[i] != minusChar) // Minus is absorbed after base64.
@@ -3267,7 +3267,7 @@ Utf7Decoder.prototype.write = function(buf) {
         base64Accum = b64str.slice(canBeDecoded); // The rest will be decoded in future.
         b64str = b64str.slice(0, canBeDecoded);
 
-        res += this.iconv.decode(new Buffer(b64str, 'base64'), "utf16-be");
+        res += this.iconv.decode(Buffer.from(b64str, 'base64'), "utf16-be");
     }
 
     this.inBase64 = inBase64;
@@ -3279,7 +3279,7 @@ Utf7Decoder.prototype.write = function(buf) {
 Utf7Decoder.prototype.end = function() {
     var res = "";
     if (this.inBase64 && this.base64Accum.length > 0)
-        res = this.iconv.decode(new Buffer(this.base64Accum, 'base64'), "utf16-be");
+        res = this.iconv.decode(Buffer.from(this.base64Accum, 'base64'), "utf16-be");
 
     this.inBase64 = false;
     this.base64Accum = '';
@@ -3314,7 +3314,7 @@ Utf7IMAPCodec.prototype.bomAware = true;
 function Utf7IMAPEncoder(options, codec) {
     this.iconv = codec.iconv;
     this.inBase64 = false;
-    this.base64Accum = new Buffer(6);
+    this.base64Accum = Buffer.alloc(6);
     this.base64AccumIdx = 0;
 }
 
@@ -3322,7 +3322,7 @@ Utf7IMAPEncoder.prototype.write = function(str) {
     var inBase64 = this.inBase64,
         base64Accum = this.base64Accum,
         base64AccumIdx = this.base64AccumIdx,
-        buf = new Buffer(str.length*5 + 10), bufIdx = 0;
+        buf = Buffer.alloc(str.length*5 + 10), bufIdx = 0;
 
     for (var i = 0; i < str.length; i++) {
         var uChar = str.charCodeAt(i);
@@ -3368,7 +3368,7 @@ Utf7IMAPEncoder.prototype.write = function(str) {
 }
 
 Utf7IMAPEncoder.prototype.end = function() {
-    var buf = new Buffer(10), bufIdx = 0;
+    var buf = Buffer.alloc(10), bufIdx = 0;
     if (this.inBase64) {
         if (this.base64AccumIdx > 0) {
             bufIdx += buf.write(this.base64Accum.slice(0, this.base64AccumIdx).toString('base64').replace(/\//g, ',').replace(/=+$/, ''), bufIdx);
@@ -3416,7 +3416,7 @@ Utf7IMAPDecoder.prototype.write = function(buf) {
                     res += "&";
                 } else {
                     var b64str = base64Accum + buf.slice(lastI, i).toString().replace(/,/g, '/');
-                    res += this.iconv.decode(new Buffer(b64str, 'base64'), "utf16-be");
+                    res += this.iconv.decode(Buffer.from(b64str, 'base64'), "utf16-be");
                 }
 
                 if (buf[i] != minusChar) // Minus may be absorbed after base64.
@@ -3438,7 +3438,7 @@ Utf7IMAPDecoder.prototype.write = function(buf) {
         base64Accum = b64str.slice(canBeDecoded); // The rest will be decoded in future.
         b64str = b64str.slice(0, canBeDecoded);
 
-        res += this.iconv.decode(new Buffer(b64str, 'base64'), "utf16-be");
+        res += this.iconv.decode(Buffer.from(b64str, 'base64'), "utf16-be");
     }
 
     this.inBase64 = inBase64;
@@ -3450,7 +3450,7 @@ Utf7IMAPDecoder.prototype.write = function(buf) {
 Utf7IMAPDecoder.prototype.end = function() {
     var res = "";
     if (this.inBase64 && this.base64Accum.length > 0)
-        res = this.iconv.decode(new Buffer(this.base64Accum, 'base64'), "utf16-be");
+        res = this.iconv.decode(Buffer.from(this.base64Accum, 'base64'), "utf16-be");
 
     this.inBase64 = false;
     this.base64Accum = '';
@@ -3524,7 +3524,7 @@ module.exports = function (iconv) {
 
     // Node authors rewrote Buffer internals to make it compatible with
     // Uint8Array and we cannot patch key functions since then.
-    iconv.supportsNodeEncodingsExtension = !(new Buffer(0) instanceof Uint8Array);
+    iconv.supportsNodeEncodingsExtension = !(Buffer.alloc(0) instanceof Uint8Array);
 
     iconv.extendNodeEncodings = function extendNodeEncodings() {
         if (original) return;
@@ -3767,7 +3767,7 @@ iconv.decode = function decode(buf, encoding, options) {
             iconv.skipDecodeWarning = true;
         }
 
-        buf = new Buffer("" + (buf || ""), "binary"); // Ensure buffer.
+        buf = Buffer.from("" + (buf || ""), "binary"); // Ensure buffer.
     }
 
     var decoder = iconv.getDecoder(encoding, options);
@@ -4400,7 +4400,7 @@ Body.prototype._decode = function() {
 		// body is string
 		if (typeof self.body === 'string') {
 			self._bytes = self.body.length;
-			self._raw = [new Buffer(self.body)];
+			self._raw = [Buffer.from(self.body)];
 			return resolve(self._convert());
 		}
 
