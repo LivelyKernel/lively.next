@@ -64,7 +64,7 @@ export async function interactiveConnectGivenSourceAndTarget(sourceObj, sourceAt
   }
 
   if (!sourceAttr) {
-    const sourceBindings = [{ isListItem: true, string: '[Enter custom attribute..]', value: {custom: true}}, ...arr.flatten(sourceObj.world().targetDataBindings(targetObj)).map(ea => ({ isListItem: true, string: ea.signature || ea.name, value: ea}))];
+    const sourceBindings = [{ isListItem: true, string: '[Enter custom attribute..]', value: {custom: true}}, ...arr.flatten(sourceObj.world().targetDataBindings(sourceObj)).map(ea => ({ isListItem: true, string: ea.signature || ea.name, value: ea}))];
     sourceAttr = await world.listPrompt(['Select Source Attribute\n', {}, 'Choose the attribute of the morph that is supposed to invoke the connection. This can be a method, property or a custom signal that is invoked upon the morph.', { paddingTop: '10px', fontSize: 14, textAlign: 'left', fontWeight: 'normal' }], sourceBindings, {filterable: true});
     if (sourceAttr.status == 'canceled') return;
     sourceAttr = sourceAttr.selected[0];
