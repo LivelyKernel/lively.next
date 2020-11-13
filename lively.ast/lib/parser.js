@@ -1,13 +1,13 @@
-import { arr } from "lively.lang";
+import { arr } from 'lively.lang';
 import {
   acorn,
   loose,
   walk,
   addAstIndex, findNodesIncluding,
-  custom,
-} from "./acorn-extension.js";
+  custom
+} from './acorn-extension.js';
 
-import { AllNodesVisitor } from "./visitors.js";
+import { AllNodesVisitor } from './visitors.js';
 
 export {
   walk,
@@ -15,12 +15,12 @@ export {
   parseFunction,
   fuzzyParse,
   addSource
-}
+};
 
 custom.addSource = addSource;
 
-function addSource(parsed, source) {
-  if (typeof parsed === "string") {
+function addSource (parsed, source) {
+  if (typeof parsed === 'string') {
     source = parsed;
     parsed = parse(parsed);
   }
@@ -29,15 +29,15 @@ function addSource(parsed, source) {
   return parsed;
 }
 
-function nodesAt(pos, ast) {
+function nodesAt (pos, ast) {
   ast = typeof ast === 'string' ? this.parse(ast) : ast;
   return findNodesIncluding(ast, pos);
 }
 
-function parseFunction(source, options = {}) {
-  var src = '(' + source + ')',
-      offset = -1,
-      parsed = parse(src, options);
+function parseFunction (source, options = {}) {
+  const src = '(' + source + ')';
+  const offset = -1;
+  const parsed = parse(src, options);
 
   AllNodesVisitor.run(parsed, (node, state, path) => {
     if (node._positionFixed) return;
@@ -54,22 +54,21 @@ function parseFunction(source, options = {}) {
   return parsed.body[0].expression;
 }
 
-function fuzzyParse(source, options) {
+function fuzzyParse (source, options) {
   // options: verbose, addSource, type
   options = options || {};
   options.ecmaVersion = options.ecmaVersion || 11;
-  options.sourceType = options.sourceType || "module";
+  options.sourceType = options.sourceType || 'module';
   options.plugins = options.plugins || {};
   // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
-  options.plugins.jsx = options.plugins.hasOwnProperty("jsx") ?
-    options.plugins.jsx : true;
-  options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ?
-    options.plugins.asyncawait : {inAsyncFunction: true};
-  options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ?
-    options.plugins.objectSpread : true;
+  options.plugins.jsx = options.plugins.hasOwnProperty('jsx')
+    ? options.plugins.jsx : true;
+  options.plugins.asyncawait = options.plugins.hasOwnProperty('asyncawait')
+    ? options.plugins.asyncawait : { inAsyncFunction: true };
+  options.plugins.objectSpread = options.plugins.hasOwnProperty('objectSpread')
+    ? options.plugins.objectSpread : true;
 
-
-  var ast, safeSource, err;
+  let ast, safeSource, err;
   if (options.type === 'LabeledStatement') { safeSource = '$={' + source + '}'; }
   try {
     // we only parse to find errors
@@ -79,8 +78,9 @@ function fuzzyParse(source, options) {
   } catch (e) { err = e; }
   if (err && err.raisedAt !== undefined) {
     if (safeSource) { // fix error pos
-      err.pos -= 3; err.raisedAt -= 3; err.loc.column -= 3; }
-    var parseErrorSource = '';
+      err.pos -= 3; err.raisedAt -= 3; err.loc.column -= 3;
+    }
+    let parseErrorSource = '';
     parseErrorSource += source.slice(err.raisedAt - 20, err.raisedAt);
     parseErrorSource += '<-error->';
     parseErrorSource += source.slice(err.raisedAt, err.raisedAt + 20);
@@ -98,25 +98,25 @@ function fuzzyParse(source, options) {
   return ast;
 }
 
-function acornParseAsyncAware(source, options) {
-  var asyncSource = `async () => {\n${source}\n}`,
-      offset = "async () => {\n".length;
-  
+function acornParseAsyncAware (source, options) {
+  const asyncSource = `async () => {\n${source}\n}`;
+  const offset = 'async () => {\n'.length;
+
   if (options.onComment) {
-    var orig = options.onComment;
-    options.onComment = function(isBlock, text, start, end, line, column) {
+    const orig = options.onComment;
+    options.onComment = function (isBlock, text, start, end, line, column) {
       start -= offset;
       end -= offset;
       return orig.call(this, isBlock, text, start, end, line, column);
     };
   }
 
-  var parsed = acorn.parse(asyncSource, options);
+  let parsed = acorn.parse(asyncSource, options);
   if (parsed.loc) {
     var SourceLocation = parsed.loc.constructor;
   }
 
-  parsed = {body: parsed.body[0].expression.body.body, sourceType: "module", type: "Program"};
+  parsed = { body: parsed.body[0].expression.body.body, sourceType: 'module', type: 'Program' };
 
   AllNodesVisitor.run(parsed, (node, state, path) => {
     if (node._positionFixed) return;
@@ -126,8 +126,8 @@ function acornParseAsyncAware(source, options) {
       node.end -= offset;
     }
     if (node.loc && SourceLocation) {
-      var {start: {column: sc, line: sl}, end: {column: ec, line: el}} = node.loc;
-      node.loc = new SourceLocation(options, {column: sc, line: sl-1}, {column: ec, line: el-1});
+      const { start: { column: sc, line: sl }, end: { column: ec, line: el } } = node.loc;
+      node.loc = new SourceLocation(options, { column: sc, line: sl - 1 }, { column: ec, line: el - 1 });
     }
     if (options.addSource && (!node.source)) {
       node.source = source.slice(node.start, node.end);
@@ -144,7 +144,7 @@ function acornParseAsyncAware(source, options) {
   return parsed;
 }
 
-function parse(source, options) {
+function parse (source, options) {
   // proxy function to acorn.parse.
   // Note that we will implement useful functionality on top of the pure
   // acorn interface and make it available here (such as more convenient
@@ -165,27 +165,29 @@ function parse(source, options) {
   options = options || {};
   options.ecmaVersion = options.ecmaVersion || 11;
   options.allowAwaitOutsideFunction = true;
-  options.sourceType = options.sourceType || "module";
-  if (!options.hasOwnProperty("allowImportExportEverywhere"))
-    options.allowImportExportEverywhere = true;
+  options.sourceType = options.sourceType || 'module';
+  if (!options.hasOwnProperty('allowImportExportEverywhere')) { options.allowImportExportEverywhere = true; }
   options.plugins = options.plugins || {};
-  options.plugins.jsx = options.plugins.hasOwnProperty("jsx") ?
-    options.plugins.jsx : true;
-  options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ?
-    options.plugins.asyncawait : {inAsyncFunction: true};
-  options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ?
-    options.plugins.objectSpread : true;
+  options.plugins.jsx = options.plugins.hasOwnProperty('jsx')
+    ? options.plugins.jsx : true;
+  options.plugins.asyncawait = options.plugins.hasOwnProperty('asyncawait')
+    ? options.plugins.asyncawait : { inAsyncFunction: true };
+  options.plugins.objectSpread = options.plugins.hasOwnProperty('objectSpread')
+    ? options.plugins.objectSpread : true;
 
   if (options.withComments) {
     // record comments
     delete options.withComments;
     var comments = [];
-    options.onComment = function(isBlock, text, start, end, line, column) {
+    options.onComment = function (isBlock, text, start, end, line, column) {
       comments.push({
         isBlock: isBlock,
-        text: text, node: null,
-        start: start, end: end,
-        line: line, column: column
+        text: text,
+        node: null,
+        start: start,
+        end: end,
+        line: line,
+        column: column
       });
     };
   }
@@ -193,15 +195,15 @@ function parse(source, options) {
   try {
     var parsed = acorn.parse(source, options);
   } catch (err) {
-    if (typeof SyntaxError !== "undefined" && err instanceof SyntaxError && err.loc) {
-      var lines = source.split("\n"),
-          {message, loc: {line: row, column}, pos} = err,
-          line = lines[row-1],
-          newMessage = `Syntax error at line ${row} column ${column} (index ${pos}) "${message}"\nsource: ${line.slice(0, column)}<--SyntaxError-->${line.slice(column)}`,
-          betterErr = new SyntaxError(newMessage);          
-      betterErr.loc = {line: row, column};
+    if (typeof SyntaxError !== 'undefined' && err instanceof SyntaxError && err.loc) {
+      const lines = source.split('\n');
+      const { message, loc: { line: row, column }, pos } = err;
+      const line = lines[row - 1];
+      const newMessage = `Syntax error at line ${row} column ${column} (index ${pos}) "${message}"\nsource: ${line.slice(0, column)}<--SyntaxError-->${line.slice(column)}`;
+      const betterErr = new SyntaxError(newMessage);
+      betterErr.loc = { line: row, column };
       betterErr.pos = pos;
-      throw betterErr
+      throw betterErr;
     } else throw err;
   }
 
@@ -209,23 +211,23 @@ function parse(source, options) {
 
   if (options.addAstIndex && !parsed.hasOwnProperty('astIndex')) addAstIndex(parsed);
 
-  if (parsed && comments) attachCommentsToAST({ast: parsed, comments: comments, nodesWithComments: []});
+  if (parsed && comments) attachCommentsToAST({ ast: parsed, comments: comments, nodesWithComments: [] });
 
   return parsed;
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function attachCommentsToAST(commentData) {
+  function attachCommentsToAST (commentData) {
     // for each comment: assign the comment to a block-level AST node
     commentData = mergeComments(assignCommentsToBlockNodes(commentData));
     parsed.allComments = commentData.comments;
   }
 
-  function assignCommentsToBlockNodes(commentData) {
-    comments.forEach(function(comment) {
-      var node = arr.detect(
+  function assignCommentsToBlockNodes (commentData) {
+    comments.forEach(function (comment) {
+      let node = arr.detect(
         nodesAt(comment.start, parsed).reverse(),
-        function(node) { return node.type === 'BlockStatement' || node.type === 'Program'; });
+        function (node) { return node.type === 'BlockStatement' || node.type === 'Program'; });
       if (!node) node = parsed;
       if (!node.comments) node.comments = [];
       node.comments.push(comment);
@@ -234,11 +236,11 @@ function parse(source, options) {
     return commentData;
   }
 
-  function mergeComments(commentData) {
+  function mergeComments (commentData) {
     // coalesce non-block comments (multiple following lines of "// ...") into one comment.
     // This only happens if line comments aren't seperated by newlines
-    commentData.nodesWithComments.forEach(function(blockNode) {
-      arr.clone(blockNode.comments).reduce(function(coalesceData, comment) {
+    commentData.nodesWithComments.forEach(function (blockNode) {
+      arr.clone(blockNode.comments).reduce(function (coalesceData, comment) {
         if (comment.isBlock) {
           coalesceData.lastComment = null;
           return coalesceData;
@@ -250,27 +252,27 @@ function parse(source, options) {
         }
 
         // if the comments are seperated by a statement, don't merge
-        var last = coalesceData.lastComment;
-        var nodeInbetween = arr.detect(blockNode.body, function(node) { return node.start >= last.end && node.end <= comment.start; });
+        const last = coalesceData.lastComment;
+        const nodeInbetween = arr.detect(blockNode.body, function (node) { return node.start >= last.end && node.end <= comment.start; });
         if (nodeInbetween) {
           coalesceData.lastComment = comment;
           return coalesceData;
         }
 
         // if the comments are seperated by a newline, don't merge
-        var codeInBetween = source.slice(last.end, comment.start);
+        const codeInBetween = source.slice(last.end, comment.start);
         if (/[\n\r][\n\r]+/.test(codeInBetween)) {
           coalesceData.lastComment = comment;
           return coalesceData;
         }
 
         // merge comments into one
-        last.text += "\n" + comment.text;
+        last.text += '\n' + comment.text;
         last.end = comment.end;
         arr.remove(blockNode.comments, comment);
         arr.remove(commentData.comments, comment);
         return coalesceData;
-      }, {lastComment: null});
+      }, { lastComment: null });
     });
     return commentData;
   }

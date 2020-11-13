@@ -1,38 +1,38 @@
-/*global process, global, exports*/
+/* global process, global, exports */
 
-import { string, Path } from "lively.lang";
-import { BaseVisitor, PrinterVisitor, ComparisonVisitor } from "./mozilla-ast-visitors.js"
-import stringify from "./stringify.js";
-import { addAstIndex } from "./acorn-extension.js";
-import { parse, addSource } from "./parser.js";
+import { string, Path } from 'lively.lang';
+import { BaseVisitor, PrinterVisitor, ComparisonVisitor } from './mozilla-ast-visitors.js';
+import stringify from './stringify.js';
+import { addAstIndex } from './acorn-extension.js';
+import { parse, addSource } from './parser.js';
 
-var methods = {
+const methods = {
 
-  withMozillaAstDo: function(parsed, state, func) {
+  withMozillaAstDo: function (parsed, state, func) {
     // simple interface to mozilla AST visitor. function gets passed three
     // arguments:
     // acceptNext, -- continue visiting
     // node, -- current node being visited
     // state -- state variable that is passed along
-    var vis = new BaseVisitor(),
-        origAccept = vis.accept;
-    vis.accept = function(node, st, path) {
-      var next = function() { origAccept.call(vis, node, st, path); }
+    const vis = new BaseVisitor();
+    const origAccept = vis.accept;
+    vis.accept = function (node, st, path) {
+      const next = function () { origAccept.call(vis, node, st, path); };
       state = func(next, node, st, path);
       return node;
-    }
+    };
     vis.accept(parsed, state, []);
     return state;
   },
 
-  printAst: function(astOrSource, options) {
+  printAst: function (astOrSource, options) {
     options = options || {};
-    var printSource = options.printSource || false,
-        printPositions = options.printPositions || false,
-        printIndex = options.printIndex || false,
-        source, parsed, tree = [];
+    const printSource = options.printSource || false;
+    const printPositions = options.printPositions || false;
+    const printIndex = options.printIndex || false;
+    let source; let parsed; const tree = [];
 
-    if (typeof astOrSource === "string") {
+    if (typeof astOrSource === 'string') {
       source = astOrSource;
       parsed = parse(astOrSource);
     } else { parsed = astOrSource; source = options.source || parsed.source; }
@@ -45,74 +45,74 @@ var methods = {
       addSource(parsed, source);
     }
 
-    function printFunc(ea) {
-      var line = ea.path + ':' + ea.node.type, additional = [];
+    function printFunc (ea) {
+      let line = ea.path + ':' + ea.node.type; const additional = [];
       if (printIndex) { additional.push(ea.index); }
       if (printPositions) { additional.push(ea.node.start + '-' + ea.node.end); }
       if (printSource) {
-        var src = ea.node.source || source.slice(ea.node.start, ea.node.end),
-            printed = string.print(src.truncate(60).replace(/\n/g, '').replace(/\s+/g, ' '));
+        const src = ea.node.source || source.slice(ea.node.start, ea.node.end);
+        const printed = string.print(src.truncate(60).replace(/\n/g, '').replace(/\s+/g, ' '));
         additional.push(printed);
       }
       if (additional.length) { line += '(' + additional.join(',') + ')'; }
       return line;
     }
 
-    new PrinterVisitor().accept(parsed, {index: 0, tree: tree}, []);
+    new PrinterVisitor().accept(parsed, { index: 0, tree: tree }, []);
     return string.printTree(tree[0], printFunc, ea => ea.children, '  ');
   },
 
-  compareAst: function(node1, node2) {
+  compareAst: function (node1, node2) {
     if (!node1 || !node2) throw new Error('node' + (node1 ? '1' : '2') + ' not defined');
-    var state = {completePath: [], comparisons: {errors: []}};
+    const state = { completePath: [], comparisons: { errors: [] } };
     new ComparisonVisitor().accept(node1, node2, state, []);
     return !state.comparisons.errors.length ? null : state.comparisons.errors.pluck('msg');
   },
 
-  pathToNode: function(parsed, index, options) {
+  pathToNode: function (parsed, index, options) {
     options = options || {};
     if (!parsed.astIndex) addAstIndex(parsed);
-    var vis = new BaseVisitor(), found = null;
+    const vis = new BaseVisitor(); let found = null;
     (vis.accept = function (node, pathToHere, state, path) {
       if (found) return;
-      var fullPath = pathToHere.concat(path);
+      const fullPath = pathToHere.concat(path);
       if (node.astIndex === index) {
-        var pathString = fullPath
-          .map(function(ea) { return typeof ea === 'string' ? '.' + ea : '[' + ea + ']'})
+        const pathString = fullPath
+          .map(function (ea) { return typeof ea === 'string' ? '.' + ea : '[' + ea + ']'; })
           .join('');
-        found = {pathString: pathString, path: fullPath, node: node};
+        found = { pathString: pathString, path: fullPath, node: node };
       }
       return this['visit' + node.type](node, fullPath, state, path);
-    }).call(vis,parsed, [], {}, []);
+    }).call(vis, parsed, [], {}, []);
     return found;
   },
 
-  rematchAstWithSource: function(parsed, source, addLocations, subTreePath) {
+  rematchAstWithSource: function (parsed, source, addLocations, subTreePath) {
     addLocations = !!addLocations;
-    var parsed2 = parse(source, addLocations ? { locations: true } : undefined),
-        visitor = new BaseVisitor();
+    let parsed2 = parse(source, addLocations ? { locations: true } : undefined);
+    const visitor = new BaseVisitor();
     if (subTreePath) parsed2 = Path(subTreePath).get(parsed2);
-    visitor.accept = function(node, state, path) {
+    visitor.accept = function (node, state, path) {
       path = path || [];
-      var node2 = path.reduce((node, pathElem) => node[pathElem], parsed);
+      const node2 = path.reduce((node, pathElem) => node[pathElem], parsed);
       node2.start = node.start;
       node2.end = node.end;
       if (addLocations) node2.loc = node.loc;
       return this['visit' + node.type](node, state, path);
-    }
+    };
 
     visitor.accept(parsed2);
   }
 
-}
+};
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-var withMozillaAstDo = methods.withMozillaAstDo,
-    printAst = methods.printAst,
-    compareAst = methods.compareAst,
-    pathToNode = methods.pathToNode,
-    rematchAstWithSource = methods.rematchAstWithSource;
+const withMozillaAstDo = methods.withMozillaAstDo;
+const printAst = methods.printAst;
+const compareAst = methods.compareAst;
+const pathToNode = methods.pathToNode;
+const rematchAstWithSource = methods.rematchAstWithSource;
 
 export {
   BaseVisitor,
@@ -121,7 +121,7 @@ export {
   compareAst,
   pathToNode,
   rematchAstWithSource
-}
+};
 
 // obj.extend(ast, methods);
 
