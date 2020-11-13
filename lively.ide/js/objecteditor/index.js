@@ -25,6 +25,7 @@ import { interactivelyFreezePart, displayFrozenPartsFor } from "lively.freezer";
 import { generateReferenceExpression } from "../inspector.js";
 import { getClassName } from "lively.serializer2";
 import { resource } from "lively.resources";
+import lint from "../linter.js";
 
 const DANGEROUS_METHODS_TO_OVERRIDE = ['render', 'remove', 'addMorph', 'addMorphAt'];
 
@@ -868,6 +869,8 @@ export class ObjectEditor extends Morph {
     }, {
       content
     });
+
+    content = await lint(content);
 
     const editorSourceHash = string.hashCode(content),
           {sourceChanged, outsideChangeWarning, selectedModuleId} = await this.withContextDo((ctx) => {

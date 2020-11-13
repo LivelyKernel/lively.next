@@ -39,6 +39,7 @@ import { objectReplacementChar } from "lively.morphic/text/document.js";
 import { loadPart } from "lively.morphic/partsbin.js";
 import { serverInterfaceFor } from "lively-system-interface/index.js";
 import { resource } from "lively.resources/index.js";
+import lint from "../linter.js";
 
 class CodeDefTreeData extends TreeData {
   
@@ -1254,7 +1255,7 @@ export default class Browser extends Morph {
             module.name, content, {targetModule: module.name, doEval: true});
         } else await system.coreInterface.resourceWrite(module.name, content);
       }
-
+      content = await lint(content);
       this.updateSource(content);
       await this.updateCodeEntities(module);
       await this.updateTestUI(module);
