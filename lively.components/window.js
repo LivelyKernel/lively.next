@@ -448,13 +448,14 @@ export default class Window extends Morph {
 
   onMouseUp(evt) {
     super.onMouseUp(evt);
-    this.ui.resizer.visible = true;
+    if (!this.minimized)
+      this.ui.resizer.visible = true;
   }
 
   onMouseDown(evt) {
     super.onMouseDown(evt);
     this.activate(evt);
-    if (!this.ui.resizer.submorphs.includes(evt.targetMorph)) {
+    if (!this.minimized && !this.ui.resizer.submorphs.includes(evt.targetMorph)) {
       this.ui.resizer.visible = false;
     }
   }
@@ -474,7 +475,8 @@ export default class Window extends Morph {
     if (this.targetMorph) {
       this.targetMorph.reactsToPointer = evt.state.origReactsToPointer;
     }
-    this.ui.resizer.visible = true;
+    if (!this.minimized)
+      this.ui.resizer.visible = true;
   }
 
   onDrag(evt) {
