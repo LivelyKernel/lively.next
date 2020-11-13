@@ -4,6 +4,8 @@ import { unregisterExtension, registerExtension, parseQuery, extensions, createF
 import { resourceExtension as httpResourceExtension } from "./src/http-resource.js";
 import { resourceExtension as fileResourceExtension } from "./src/fs-resource.js";
 import { resourceExtension as localResourceExtension } from "./src/local-resource.js";
+import { newUUID } from "lively.lang/string.js";
+import { waitFor } from "lively.lang/promise.js";
 
 registerExtension(localResourceExtension);
 registerExtension(httpResourceExtension);
@@ -22,6 +24,27 @@ export async function createFileSpec(baseDir, depth = "infinity", opts) {
     parentDir[path[path.length-1]] = content;
   }
   return spec;
+}
+
+export async function importModuleViaNative(url) {
+  var parentNode = document.head,
+      xmlNamespace = parentNode.namespaceURI,
+      useBabelJsForScriptLoad = false,
+      SVGNamespace = "http://www.w3.org/2000/svg",
+      evalId = newUUID(),
+      XLINKNamespace = "http://www.w3.org/1999/xlink";
+
+  var script = document.createElementNS(xmlNamespace, 'script');
+
+  script.setAttribute('type', "module");
+  parentNode.appendChild(script);
+  script.innerText = `import m from '${url}'; window['${evalId}'] = m;`
+
+  script.setAttributeNS(null, 'async', true);
+  const mod = await waitFor(30 * 1000, () => window[evalId]);
+  delete window[evalId];
+  script.remove();
+  return mod;
 }
 
 export function loadViaScript(url, onLoadCb) {
