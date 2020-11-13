@@ -1,16 +1,15 @@
-/*global System*/
+/* global System */
 // import config from "../config.js";
-import { obj, arr, num } from "lively.lang";
-import { Rectangle, rect, Color, pt } from "lively.graphics";
-import { connect, noUpdate, signal, disconnect } from "lively.bindings"; // for makeInputLine
-import { Text } from "./morph.js"
-import { Range } from "./range.js";
-import { HTMLMorph } from "../html-morph.js"
-import { Icon } from "./icons.js";
-import { morph } from "../helpers.js"
+import { obj, arr, num } from 'lively.lang';
+import { Rectangle, rect, Color, pt } from 'lively.graphics';
+import { connect, noUpdate, signal, disconnect } from 'lively.bindings'; // for makeInputLine
+import { Text } from './morph.js';
+import { Range } from './range.js';
+import { HTMLMorph } from '../html-morph.js';
+import { Icon } from './icons.js';
+import { morph } from '../helpers.js';
 
 export default class InputLine extends Text {
-
   /*
     rms 19.02.2020: The fact that InputLine merely extends the TextMorph causes issues when
                     these are used as part of a form. Forms do not take into account span
@@ -21,7 +20,7 @@ export default class InputLine extends Text {
                     morph analogous to the password input line below.
   */
 
-/*
+  /*
 
   This represents a single text input line, useful in places where users
   should be prompted for short strings
@@ -58,58 +57,58 @@ export default class InputLine extends Text {
 
 */
 
-  static getHistoryFromLocalSorage(id) {
-    if (typeof localStorage === "undefined") return null;
+  static getHistoryFromLocalSorage (id) {
+    if (typeof localStorage === 'undefined') return null;
     try {
-      var hist = localStorage.getItem("lively.morphic-inputline-" + id);
+      const hist = localStorage.getItem('lively.morphic-inputline-' + id);
       return hist ? JSON.parse(hist) : null;
     } catch (e) {
-      return null
+      return null;
     }
   }
 
-  static addHistoryToLocalStorage(id, hist) {
-    if (typeof localStorage === "undefined") return;
+  static addHistoryToLocalStorage (id, hist) {
+    if (typeof localStorage === 'undefined') return;
     try {
-      localStorage.setItem("lively.morphic-inputline-" + id, JSON.stringify(hist));
+      localStorage.setItem('lively.morphic-inputline-' + id, JSON.stringify(hist));
     } catch (e) { console.error(e); }
   }
 
-  static get histories() {
+  static get histories () {
     if (!this._histories) this._histories = new Map();
     return this._histories;
   }
 
-  static getHistory(id) {
-    var hist = this.histories.get(id);
+  static getHistory (id) {
+    let hist = this.histories.get(id);
     if (hist) return hist;
-    hist = this.getHistoryFromLocalSorage(id) || {items: [], max: 50, index: 0};
+    hist = this.getHistoryFromLocalSorage(id) || { items: [], max: 50, index: 0 };
     this.histories.set(id, hist);
     return hist;
   }
 
-  static setHistory(id, hist = {items: [], max: 50, index: 0}) {
+  static setHistory (id, hist = { items: [], max: 50, index: 0 }) {
     this.histories.set(id, hist);
     this.addHistoryToLocalStorage(id, hist);
     return hist;
   }
 
-  static get properties() {
-
+  static get properties () {
     return {
-      fixedWidth:   {defaultValue: true},
-      fixedHeight:  {defaultValue: true},
-      extent:       {defaultValue: pt(100, 20)},
-      padding:      {defaultValue: Rectangle.inset(2,4)},
-      clipMode:     {defaultValue: "hidden"},
-      lineWrapping: {defaultValue: false},
-      historyId:    {defaultValue: null},
-      clearOnInput: {defaultValue: false},
+      fixedWidth: { defaultValue: true },
+      fixedHeight: { defaultValue: true },
+      extent: { defaultValue: pt(100, 20) },
+      padding: { defaultValue: Rectangle.inset(2, 4) },
+      clipMode: { defaultValue: 'hidden' },
+      lineWrapping: { defaultValue: false },
+      historyId: { defaultValue: null },
+      clearOnInput: { defaultValue: false },
 
       label: {
-        after: ["textAndAttributes", "extent", "padding", "submorphs"], defaultValue: "",
-        set(value) {
-          this.setProperty("label", value);
+        after: ['textAndAttributes', 'extent', 'padding', 'submorphs'],
+        defaultValue: '',
+        set (value) {
+          this.setProperty('label', value);
           if (this.textString.startsWith(value)) return;
           noUpdate(() => {
             this.textString = value + this.input;
@@ -118,24 +117,26 @@ export default class InputLine extends Text {
       },
 
       input: {
-        after: ["label"], derived: true,
-        get() {
+        after: ['label'],
+        derived: true,
+        get () {
           return this.textString.slice(this.label.length);
         },
-        set(val) {
-          this.textString = this.label + (val ? String(val) : "");
+        set (val) {
+          this.textString = this.label + (val ? String(val) : '');
           this.updatePlaceholder();
         }
       },
 
       placeholder: {
-        after: ["submorphs", "label", "defaultTextStyle"], dervied: true,
-        get() {
-          let placeholder = this.getSubmorphNamed("placeholder");
+        after: ['submorphs', 'label', 'defaultTextStyle'],
+        dervied: true,
+        get () {
+          const placeholder = this.getSubmorphNamed('placeholder');
           return placeholder ? placeholder.value : null;
         },
-        set(val) {
-          let placeholder = this.getSubmorphNamed("placeholder");
+        set (val) {
+          let placeholder = this.getSubmorphNamed('placeholder');
           if (!val) {
             if (placeholder) {
               placeholder.remove();
@@ -145,152 +146,154 @@ export default class InputLine extends Text {
             if (!placeholder) {
               placeholder = this.addMorph(Text.makeLabel(val, {
                 ...this.defaultTextStyle,
-                name: "placeholder",
+                name: 'placeholder',
                 reactsToPointer: false,
                 fontColor: Color.gray
               }));
             } else {
-              placeholder.defaultTextStyle = {...this.defaultTextStyle, fontColor: Color.gray};
+              placeholder.defaultTextStyle = { ...this.defaultTextStyle, fontColor: Color.gray };
               placeholder.value = val;
             }
           }
           this.updatePlaceholder();
         }
       }
-    }
+    };
   }
 
-  constructor(props = {}) {
+  constructor (props = {}) {
     super(props);
     connect(this, 'textChange', this, 'onInputChanged');
     connect(this, 'selectionChange', this, 'fixCursor');
   }
 
-  onChange(change) {
-    if (["extent",
-         "fontSize",
-         "padding",
-         "fontFamily",
-         "position",
-         "selection"].includes(change.prop)) { this.updatePlaceholder(); }
-
+  onChange (change) {
+    if (['extent',
+      'fontSize',
+      'padding',
+      'fontFamily',
+      'position',
+      'selection'].includes(change.prop)) { this.updatePlaceholder(); }
 
     return super.onChange(change);
   }
 
-  get isInputLine() { return true; }
+  get isInputLine () { return true; }
 
-  get allowDuplicatesInHistory() { return false }
+  get allowDuplicatesInHistory () { return false; }
 
-  resetHistory() { this.inputHistory = {items: [], max: 50, index: 0}; }
+  resetHistory () { this.inputHistory = { items: [], max: 50, index: 0 }; }
 
-  get inputHistory() {
+  get inputHistory () {
     if (this._inputHistory) return this._inputHistory;
-    return this._inputHistory = this.historyId ?
-      this.constructor.getHistory(this.historyId) :
-      {items: [], max: 30, index: 0};
+    return this._inputHistory = this.historyId
+      ? this.constructor.getHistory(this.historyId)
+      : { items: [], max: 30, index: 0 };
   }
 
-  set inputHistory(hist) {
+  set inputHistory (hist) {
     this._inputHistory = hist;
     this.historyId && this.constructor.setHistory(this.historyId, this._inputHistory);
   }
 
-  clear() {
-    this.input = "";
+  clear () {
+    this.input = '';
   }
 
-  focus() {
+  focus () {
     this.fixCursor();
     super.focus();
   }
 
-  onBlur(evt) {
+  onBlur (evt) {
     super.onBlur(evt);
     this.updatePlaceholder();
   }
 
-  fitToLineHeight() {
+  fitToLineHeight () {
     this.height = this.defaultLineHeight + this.padding.top() + this.padding.bottom();
   }
 
   // this.indicateError('hello')
   // this.clearError()
 
-  async indicateError(message) {
+  async indicateError (message) {
     this.borderWidth = 3;
     this.borderColor = Color.red;
     this._errorIcon = this.addMorph(this._errorIcon || morph({
       type: 'label',
-      value: [' ' + message, {fontSize: 18}, ' ', {}, ...Icon.textAttribute('exclamation-circle', {paddingTop: '2px'})],
-      fontSize: 20, fontColor: Color.red, opacity: 0, reactsToPointer: false, fill: Color.white.withA(.9)
+      value: [' ' + message, { fontSize: 18 }, ' ', {}, ...Icon.textAttribute('exclamation-circle', { paddingTop: '2px' })],
+      fontSize: 20,
+      fontColor: Color.red,
+      opacity: 0,
+      reactsToPointer: false,
+      fill: Color.white.withA(0.9)
     }));
     await this.whenRendered();
     this._errorIcon.opacity = 1;
     this._errorIcon.rightCenter = this.innerBounds().insetBy(10).rightCenter();
   }
 
-  clearError() {
+  clearError () {
     if (!this._errorIcon) return;
     this._errorIcon && this._errorIcon.remove();
     this._errorIcon = null;
     this.borderColor = Color.transparent;
   }
 
-  updatePlaceholder() {
-    let placeholder = this.getSubmorphNamed("placeholder");
+  updatePlaceholder () {
+    const placeholder = this.getSubmorphNamed('placeholder');
     if (!placeholder) return;
-    if (!!this.input.length) {
+    if (this.input.length) {
       placeholder.visible = false;
       return;
     }
 
-    let textB = this.innerBounds();
+    const textB = this.innerBounds();
     placeholder.fontSize = this.fontSize;
     placeholder.visible = true;
     placeholder.height = this.height;
     placeholder.padding = this.padding;
     placeholder.defaultTextStyle = this.defaultTextStyle;
-    placeholder.lineHeight = this.height + "px";
+    placeholder.lineHeight = this.height + 'px';
     placeholder.fit();
     placeholder.leftCenter = this.label.length
-                           ? textB.rightCenter().addXY(0, this.borderWidth)
-                           : textB.leftCenter().withX(0);
+      ? textB.rightCenter().addXY(0, this.borderWidth)
+      : textB.leftCenter().withX(0);
   }
 
-  fixCursor() {
-    if (!this.label) return
-    var leadIndex = this.positionToIndex(this.selection.lead);
-    if (leadIndex < this.label.length)
-      this.selection.lead = this.indexToPosition(this.label.length)
-    var anchorIndex = this.positionToIndex(this.selection.anchor);
-    if (anchorIndex < this.label.length)
-      this.selection.anchor = this.indexToPosition(this.label.length)
+  fixCursor () {
+    if (!this.label) return;
+    const leadIndex = this.positionToIndex(this.selection.lead);
+    if (leadIndex < this.label.length) { this.selection.lead = this.indexToPosition(this.label.length); }
+    const anchorIndex = this.positionToIndex(this.selection.anchor);
+    if (anchorIndex < this.label.length) { this.selection.anchor = this.indexToPosition(this.label.length); }
   }
 
-  acceptInput() { var i = this.input; this.onInput(i); return i; }
-  onInput(input) {
+  acceptInput () { const i = this.input; this.onInput(i); return i; }
+  onInput (input) {
     if (this.input.length > 0) this.addInputToHistory(this.input);
     this.clearOnInput && this.clear();
-    signal(this, "inputAccepted", input);
+    signal(this, 'inputAccepted', input);
   }
-  onInputChanged(change) {
-    signal(this, "inputChanged", change);
+
+  onInputChanged (change) {
+    signal(this, 'inputChanged', change);
     this.clearError();
     this.updatePlaceholder();
   }
-  
-  onMouseDown(evt) {
+
+  onMouseDown (evt) {
     super.onMouseDown(evt);
-    this._errorIcon && this._errorIcon.remove();    
+    this._errorIcon && this._errorIcon.remove();
   }
 
-  deleteText(range) {
+  deleteText (range) {
     range = range.isRange ? range : new Range(range);
     if (range.isEmpty()) return;
     range = range.subtract({
-      start: {row: 0, column: 0},
-      end: {row: 0, column: this.label.length}
+      start: { row: 0, column: 0 },
+      end: { row: 0, column: this.label.length }
     })[0];
     return super.deleteText(range);
   }
@@ -298,9 +301,9 @@ export default class InputLine extends Text {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // history
 
-  addInputToHistory(input) {
-    var hist = this.inputHistory,
-        items = hist.items;
+  addInputToHistory (input) {
+    const hist = this.inputHistory;
+    let items = hist.items;
     if (arr.last(items) === input) return;
     items.push(input);
     if (items.length > hist.max) {
@@ -308,50 +311,52 @@ export default class InputLine extends Text {
     }
     hist.index = items.length - 1;
     if (!this.allowDuplicatesInHistory) {
-      for (var i = hist.items.length-1; i--; )
+      for (let i = hist.items.length - 1; i--;) {
         if (hist.items[i] === input) {
-          hist.items.splice(i, 1); hist.index--; }
+          hist.items.splice(i, 1); hist.index--;
+        }
+      }
     }
     this.historyId && this.constructor.addHistoryToLocalStorage(this.historyId, hist);
   }
 
-  async browseHistory() {
-    var items = this.inputHistory.items.map((item, i) =>
-          ({isListItem: true, string: item, value: i})).reverse(),
-        {selected: [item]} = await this.world().filterableListPrompt(
-                                "Choose item:", items, {commands: [this.histEditCommandForHistBrowse()]});
-    typeof item === "number" && this.setAndShowHistItem(item);
+  async browseHistory () {
+    const items = this.inputHistory.items.map((item, i) =>
+      ({ isListItem: true, string: item, value: i })).reverse();
+    const { selected: [item] } = await this.world().filterableListPrompt(
+      'Choose item:', items, { commands: [this.histEditCommandForHistBrowse()] });
+    typeof item === 'number' && this.setAndShowHistItem(item);
     this.focus();
   }
 
-  histEditCommandForHistBrowse() {
+  histEditCommandForHistBrowse () {
     return {
-      name: "edit history " + this.historyId,
+      name: 'edit history ' + this.historyId,
       exec: async prompt => {
-        var items = this.inputHistory.items.slice().reverse()
-        var {status, list: values} = await prompt.world().editListPrompt(
-                                        "edit history " + this.historyId, items)
-        if ("canceled" === status) return true;
+        let items = this.inputHistory.items.slice().reverse();
+        const { status, list: values } = await prompt.world().editListPrompt(
+          'edit history ' + this.historyId, items);
+        if (status === 'canceled') return true;
         items = items.filter(ea => ea.isListItem ? values.includes(ea.value) : values.includes(ea));
-        this.inputHistory = {...this.inputHistory, items};
-        prompt.get("list").items = items.map((item, i) =>
-          ({isListItem: true, string: item, value: i})).reverse()
+        this.inputHistory = { ...this.inputHistory, items };
+        prompt.get('list').items = items.map((item, i) =>
+          ({ isListItem: true, string: item, value: i })).reverse();
         return true;
       }
-    }
+    };
   }
 
-  setAndShowHistItem(idx) {
-    var hist = this.inputHistory, items = hist.items, len = items.length-1, i = idx;
-    if (!num.between(i, 0, len+1)) hist.index = i = len;
+  setAndShowHistItem (idx) {
+    const hist = this.inputHistory; const items = hist.items; const len = items.length - 1; let i = idx;
+    if (!num.between(i, 0, len + 1)) hist.index = i = len;
     else hist.index = i;
     if (this.input !== items[i] && typeof items[i] !== 'undefined') this.input = items[i];
   }
 
-  showHistItem(dir) {
+  showHistItem (dir) {
     dir = dir || 'next';
-    var hist = this.inputHistory, items = hist.items, len = items.length-1, i = hist.index;
-    if (!num.between(i, 0, len+1)) hist.index = i = len;
+    const hist = this.inputHistory; const items = hist.items; const len = items.length - 1; let i = hist.index;
+    if (!num.between(i, 0, len + 1)) hist.index = i = len;
     if (this.input !== items[i] && typeof items[i] !== 'undefined') { this.input = items[i]; return; }
     if (dir === 'next') {
       if (i > len) return;
@@ -365,20 +370,20 @@ export default class InputLine extends Text {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // ui events
-  get commands() {
+  get commands () {
     return [
-      {name: "accept input", exec: () => { this.acceptInput(); return true; }},
-      {name: "show previous input from history", exec: () => { this.showHistItem('prev'); return true; }},
-      {name: "show next input from history", exec: () => { this.showHistItem('next'); return true; }},
-      {name: "browse history", exec: () => { this.browseHistory(); return true; }},
+      { name: 'accept input', exec: () => { this.acceptInput(); return true; } },
+      { name: 'show previous input from history', exec: () => { this.showHistItem('prev'); return true; } },
+      { name: 'show next input from history', exec: () => { this.showHistItem('next'); return true; } },
+      { name: 'browse history', exec: () => { this.browseHistory(); return true; } },
       {
-        name: "remove items from history",
+        name: 'remove items from history',
         exec: async inputLine => {
-          var hist = inputLine.inputHistory,
-              items = hist.items.map((item, i) =>
-                ({isListItem: true, string: item, value: i})).reverse(),
-              {selected} = await inputLine.world().filterableListPrompt(
-                            "Choose items to delete:", items, {multiSelect: true});
+          const hist = inputLine.inputHistory;
+          const items = hist.items.map((item, i) =>
+            ({ isListItem: true, string: item, value: i })).reverse();
+          const { selected } = await inputLine.world().filterableListPrompt(
+            'Choose items to delete:', items, { multiSelect: true });
 
           arr.sort(selected).reverse().forEach(index => {
             if (index < hist.index) hist.index--;
@@ -391,37 +396,37 @@ export default class InputLine extends Text {
     ].concat(super.commands);
   }
 
-  get keybindings() {
+  get keybindings () {
     return super.keybindings.concat([
-      {keys: "Enter", command: "accept input"},
-      {keys: {mac: "Meta-S", win: "Ctrl-S"}, command: "accept input"},
-      {keys: "Up|Ctrl-Up|Alt-P", command: "show previous input from history"},
-      {keys: "Down|Ctrl-Down|Alt-N", command: "show next input from history"},
-      {keys: "Alt-H", command: "browse history"},
-      {keys: "Alt-Shift-H", command: "remove items from history"}
+      { keys: 'Enter', command: 'accept input' },
+      { keys: { mac: 'Meta-S', win: 'Ctrl-S' }, command: 'accept input' },
+      { keys: 'Up|Ctrl-Up|Alt-P', command: 'show previous input from history' },
+      { keys: 'Down|Ctrl-Down|Alt-N', command: 'show next input from history' },
+      { keys: 'Alt-H', command: 'browse history' },
+      { keys: 'Alt-Shift-H', command: 'remove items from history' }
     ]);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // html export
-  htmlExport_transformNode(node) {
-    let doc = node.ownerDocument,
-        input = doc.createElement("input"),
-        textCSSProps = [
-          "padding",
-          "font-family",
-          "font-weight",
-          "font-style",
-          "text-decoration",
-          "font-size",
-          "color"],
-        textLayer = node.querySelector(".newtext-text-layer.actual");
+  htmlExport_transformNode (node) {
+    const doc = node.ownerDocument;
+    const input = doc.createElement('input');
+    const textCSSProps = [
+      'padding',
+      'font-family',
+      'font-weight',
+      'font-style',
+      'text-decoration',
+      'font-size',
+      'color'];
+    const textLayer = node.querySelector('.newtext-text-layer.actual');
     input.id = node.id; input.className = node.className;
     input.style = node.style.cssText;
     Object.assign(input.style, obj.select(textLayer.style, textCSSProps));
     input.placeholder = this.placeholder;
-    input.type = "text";
-    input.autocomplete = input.name = this.name.replace(/[\s"]/g, "-");
+    input.type = 'text';
+    input.autocomplete = input.name = this.name.replace(/[\s"]/g, '-');
     return input;
   }
 }
@@ -430,17 +435,16 @@ export default class InputLine extends Text {
 // i.remove();
 
 export class PasswordInputLine extends HTMLMorph {
-
-  static get properties() {
+  static get properties () {
     return {
       // this.clipMode = "hidden"
-      extent: {defaultValue: pt(100,20)},
+      extent: { defaultValue: pt(100, 20) },
 
       html: {
         derived: true,
-        initialize() {},
-        get() { return ""; },
-        set(x) {}
+        initialize () {},
+        get () { return ''; },
+        set (x) {}
       },
 
       highlightWhenFocused: {
@@ -448,107 +452,111 @@ export class PasswordInputLine extends HTMLMorph {
       },
 
       haloShadow: {
-        type: "Shadow"
+        type: 'Shadow'
       },
 
-      domNodeTagName: {readOnly: true, get() { return "input"; }},
-      domNodeStyle: {readOnly: true, get() { return "background: grey"; }},
+      domNodeTagName: { readOnly: true, get () { return 'input'; } },
+      domNodeStyle: { readOnly: true, get () { return 'background: grey'; } },
 
       input: {
-        derived: true, after: ["domNode"],
-        get() { return (this.domNode && this.domNode.value) || ""; },
-        set(val) { this.domNode.value = val; this.updateHtml(this.input); }
+        derived: true,
+        after: ['domNode'],
+        get () { return (this.domNode && this.domNode.value) || ''; },
+        set (val) { this.domNode.value = val; this.updateHtml(this.input); }
       },
 
       placeholder: {
-        after: ["domNode"],
-        set(val) { this.setProperty("placeholder", val); this.updateHtml(this.input); }
+        after: ['domNode'],
+        set (val) { this.setProperty('placeholder', val); this.updateHtml(this.input); }
       },
 
       fontSize: {
-        defaultValue: 12, after: ["input"],
-        set(value) { this.setProperty("fontSize", value); this.updateHtml(this.input); }
+        defaultValue: 12,
+        after: ['input'],
+        set (value) { this.setProperty('fontSize', value); this.updateHtml(this.input); }
       },
 
       fontFamily: {
-        defaultValue: "sans-serif", after: ["input"],
-        set(value) { this.setProperty("fontFamily", value); this.updateHtml(this.input); }
+        defaultValue: 'sans-serif',
+        after: ['input'],
+        set (value) { this.setProperty('fontFamily', value); this.updateHtml(this.input); }
       },
 
       padding: {
-        defaultValue: Rectangle.inset(2), after: ["input"],
-        set(value) { this.setProperty("padding", value); this.updateHtml(this.input); }
+        defaultValue: Rectangle.inset(2),
+        after: ['input'],
+        set (value) { this.setProperty('padding', value); this.updateHtml(this.input); }
       }
-    }
+    };
   }
 
-  onChange(change) {
+  onChange (change) {
     super.onChange(change);
     if (change.prop == 'borderRadius') {
       this.updateHtml(this.input);
     }
   }
 
-  constructor(opts = {}) {
+  constructor (opts = {}) {
     super(opts);
     this.onLoad();
   }
 
-  onChange(change) {
+  onChange (change) {
     super.onChange(change);
     if (['fill', 'borderRadius'].includes(change.prop)) {
-      this.updateHtml(this.input)
+      this.updateHtml(this.input);
     }
   }
 
-  async onLoad() {
+  async onLoad () {
     // hmm key events aren't dispatched by default...
     await this.whenRendered();
     this.ensureInputNode().then(node => {
       this.updateHtml(this.input);
-      node.onkeydown = evt => this.env.eventDispatcher.dispatchDOMEvent(evt, this, "onKeyDown");
-      node.onkeyup = evt => this.env.eventDispatcher.dispatchDOMEvent(evt, this, "onKeyUp");
+      node.onkeydown = evt => this.env.eventDispatcher.dispatchDOMEvent(evt, this, 'onKeyDown');
+      node.onkeyup = evt => this.env.eventDispatcher.dispatchDOMEvent(evt, this, 'onKeyUp');
     });
   }
 
-  onMouseDown(evt) {
+  onMouseDown (evt) {
     super.onMouseDown(evt);
     this._errorIcon && this._errorIcon.remove();
   }
 
-  onAfterRender(node) {
+  onAfterRender (node) {
     this.ensureInputNode();
   }
-  
-  ensureInputNode() { 
+
+  ensureInputNode () {
     return this.whenRendered().then(() => {
-      let n = this.domNode;
-      
+      const n = this.domNode;
+
       if (n.parentNode && n.parentNode.tagName == 'INPUT') {
         n.parentNode.remove();
-        let morphNode = this.env.renderer.getNodeForMorph(this);
+        const morphNode = this.env.renderer.getNodeForMorph(this);
         morphNode.insertBefore(this.domNode, morphNode.firstChild);
         // make sure that the submorph node is still in front
       }
       return this.domNode;
-    }); 
+    });
   }
 
-  onKeyDown(evt) {
+  onKeyDown (evt) {
     super.onKeyDown(evt);
     // at that point in time the input has not changed to the most recent value yet
     if (this.input != this.lastInput) {
       this.onInputChanged(this.input);
     }
-    this.lastInput = this.input
+    this.lastInput = this.input;
   }
 
-  focus() {
-    super.focus()
+  focus () {
+    super.focus();
     this.domNode && this.domNode.focus();
   }
 
-  onFocus(evt) {
+  onFocus (evt) {
     super.onFocus(evt);
     if (this._originalShadow) return;
     this._originalShadow = this.dropShadow;
@@ -557,94 +565,99 @@ export class PasswordInputLine extends HTMLMorph {
     });
   }
 
-  onBlur(evt) {
+  onBlur (evt) {
     super.onBlur(evt);
     this.highlightWhenFocused && this.animate({
       dropShadow: this._originalShadow || null, duration: 200
-    })
+    });
     this._originalShadow = null;
   }
 
   // this.indicateError('hello')
   // this.clearError()
 
-  async indicateError(message) {
+  async indicateError (message) {
     this.borderWidth = 3;
     this.borderColor = Color.red;
     this._errorIcon = this.addMorph(this._errorIcon || morph({
       type: 'label',
-      value: [' ' + message, {fontSize: 18}, ' ', {}, ...Icon.textAttribute('exclamation-circle', {paddingTop: '2px'})],
-      fontSize: 20, fontColor: Color.red, opacity: 0, reactsToPointer: false, fill: Color.white.withA(.9)
+      value: [' ' + message, { fontSize: 18 }, ' ', {}, ...Icon.textAttribute('exclamation-circle', { paddingTop: '2px' })],
+      fontSize: 20,
+      fontColor: Color.red,
+      opacity: 0,
+      reactsToPointer: false,
+      fill: Color.white.withA(0.9)
     }));
     await this.whenRendered();
     this._errorIcon.opacity = 1;
     this._errorIcon.rightCenter = this.innerBounds().insetBy(10).rightCenter();
   }
 
-  clearError() {
+  clearError () {
     if (!this._errorIcon) return;
     this._errorIcon && this._errorIcon.remove();
     this._errorIcon = null;
     this.borderColor = Color.transparent;
   }
 
-  acceptInput() { var i = this.input; signal(this, "inputAccepted", i); return i; }
-  onInputChanged(change) { this.clearError(); signal(this, "inputChanged", change); }
+  acceptInput () { const i = this.input; signal(this, 'inputAccepted', i); return i; }
+  onInputChanged (change) { this.clearError(); signal(this, 'inputChanged', change); }
 
-  async updateHtml(input) {
+  async updateHtml (input) {
     // await this.updateHtml(this.input)
-    let {fontSize, fontFamily, padding, placeholder, 
-         fill = Color.white, borderRadius } = this,
-        padt = padding.top(),
-        padr = padding.right(),
-        padb = padding.bottom(),
-        padl = padding.left();
-    let n = await this.ensureInputNode();
-    n.setAttribute("type", "password");
-    n.setAttribute("placeholder", placeholder);
-    n.setAttribute("value", input);
+    const {
+      fontSize, fontFamily, padding, placeholder,
+      fill = Color.white, borderRadius
+    } = this;
+    const padt = padding.top();
+    const padr = padding.right();
+    const padb = padding.bottom();
+    const padl = padding.left();
+    const n = await this.ensureInputNode();
+    n.setAttribute('type', 'password');
+    n.setAttribute('placeholder', placeholder);
+    n.setAttribute('value', input);
     Object.assign(n.style, {
       position: 'absolute',
       width: `calc(100% - ${padl}px - ${padr}px)`,
-      "border-width": 0,
-      outline: "none",
-      "border-radius": `${borderRadius.valueOf()}px`,
+      'border-width': 0,
+      outline: 'none',
+      'border-radius': `${borderRadius.valueOf()}px`,
       background: fill.toString(),
       padding: `${padt}px ${padr}px ${padb}px ${padl}px`,
-      "font-size": `${fontSize}px`,
-      "font-family": `${fontFamily}`
+      'font-size': `${fontSize}px`,
+      'font-family': `${fontFamily}`
     });
   }
 
-  get commands() {
+  get commands () {
     return [
-      {name: "accept input", exec: () => { this.acceptInput(); return true; }}
+      { name: 'accept input', exec: () => { this.acceptInput(); return true; } }
     ].concat(super.commands);
   }
 
-  get keybindings() {
+  get keybindings () {
     return super.keybindings.concat([
-      {keys: "Enter", command: "accept input"},
-      {keys: {mac: "Meta-S", win: "Ctrl-S"}, command: "accept input"}
+      { keys: 'Enter', command: 'accept input' },
+      { keys: { mac: 'Meta-S', win: 'Ctrl-S' }, command: 'accept input' }
     ]);
   }
 
-  htmlExport_transformNode(node) {
-    let doc = node.ownerDocument,
-        wrapper = doc.createElement("div"),
-        oldInput = node.querySelector("input"),
-        input = doc.createElement("input"),
-        textCSSProps = [
-          "padding",
-          "font-family",
-          "font-weight",
-          "font-style",
-          "text-decoration",
-          "font-size",
-          "border-radius",
-          "color"];
-    if (oldInput.childNodes[0] && oldInput.childNodes[0].tagName === 'INPUT')
-      oldInput = oldInput.childNodes[0];
+  htmlExport_transformNode (node) {
+    const doc = node.ownerDocument;
+    const wrapper = doc.createElement('div');
+    let oldInput = node.querySelector('input');
+    const input = doc.createElement('input');
+    const textCSSProps = [
+      'padding',
+      'font-family',
+      'font-weight',
+      'font-style',
+      'text-decoration',
+      'font-size',
+      'border-radius',
+      'color'];
+    if (oldInput.childNodes[0] && oldInput.childNodes[0].tagName === 'INPUT') { oldInput = oldInput.childNodes[0]; }
     input.id = node.id; input.className = node.className;
     wrapper.style = node.style.cssText;
     Object.assign(input.style, obj.select(oldInput.style, textCSSProps));
@@ -653,12 +666,10 @@ export class PasswordInputLine extends HTMLMorph {
     input.style.height = node.style.height;
     input.style['border-width'] = node.style['border-width'];
     input.placeholder = this.placeholder;
-    input.type = "password";
-    input.autocomplete = input.name = this.name.replace(/[\s"]/g, "-");
+    input.type = 'password';
+    input.autocomplete = input.name = this.name.replace(/[\s"]/g, '-');
     wrapper.appendChild(input);
     wrapper.appendChild(node.childNodes[1]);
     return wrapper;
   }
-
 }
-

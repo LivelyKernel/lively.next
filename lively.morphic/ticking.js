@@ -1,8 +1,7 @@
-/*global System*/
+/* global System */
 
 class Script {
-
-  constructor() {
+  constructor () {
     this.suspended = false;
     this.stopped = true;
     this.tickTime = null;
@@ -10,93 +9,90 @@ class Script {
     this.currentTimeout = null;
   }
 
-  __additionally_serialize__(snapshot, ref, snapshotFn) {
+  __additionally_serialize__ (snapshot, ref, snapshotFn) {
     snapshot.props.suspended.value = true;
   }
 
-  get isScript() { return true }
-  get global() { return System.global; }
+  get isScript () { return true; }
+  get global () { return System.global; }
 
-  execute() { throw new Error('subclass responsibility') }
+  execute () { throw new Error('subclass responsibility'); }
 
-  tick() {
+  tick () {
     try {
       this.execute();
-    } catch(e) {
+    } catch (e) {
       console.error('Error executing script ' + this + ': ' + e + '\n' + e.stack);
       return;
     }
     if (!this.stopped) this.startTicking(this.tickTime);
   }
 
-  startTicking(ms) {
+  startTicking (ms) {
     this.stopped = false;
     this.tickTime = ms;
-    this.type = typeof ms === "number" ? "setTimeout" : "requestAnimationFrame";
-    this.currentTimeout = this.type === "setTimeout" ?
-      this.global.setTimeout(this.tick.bind(this), ms) :
-      this.global.requestAnimationFrame(this.tick.bind(this))
+    this.type = typeof ms === 'number' ? 'setTimeout' : 'requestAnimationFrame';
+    this.currentTimeout = this.type === 'setTimeout'
+      ? this.global.setTimeout(this.tick.bind(this), ms)
+      : this.global.requestAnimationFrame(this.tick.bind(this));
   }
 
-  stop() {
-    var sel = this.type === "setTimeout" ? "clearTimeout" : "cancelAnimationFrame";
+  stop () {
+    const sel = this.type === 'setTimeout' ? 'clearTimeout' : 'cancelAnimationFrame';
     this.global[sel](this.currentTimeout);
     this.stopped = true;
   }
 
-  resume(ms = this.tickTime) {
+  resume (ms = this.tickTime) {
     if (!this.suspended) return;
     this.suspended = false;
     this.startTicking(this.tickTime = ms);
   }
 
-  suspend() {
+  suspend () {
     this.stop();
     this.suspended = true;
   }
-
 }
 
 class TargetScript extends Script {
-
-  constructor(target, selector, args) {
+  constructor (target, selector, args) {
     super();
     this.target = target;
     this.selector = selector;
     this.args = args || [];
   }
 
-  execute() {
+  execute () {
     if (this.target.isMorph && !this.target.tickingScripts.includes(this)) this.stop();
-    typeof this.target[this.selector] === 'function'
- && this.target[this.selector].apply(this.target, this.args);
+    typeof this.target[this.selector] === 'function' &&
+ this.target[this.selector].apply(this.target, this.args);
   }
 
-  equals(other) {
-    return other.isScript
-        && this.target == other.target
-        && this.selector == other.selector;
+  equals (other) {
+    return other.isScript &&
+        this.target == other.target &&
+        this.selector == other.selector;
   }
 
-  toString() {
+  toString () {
     return `Script(${this.target}>>${this.selector}(${this.args.join(',')}))`;
   }
 }
 
 class FunctionScript extends Script {
-
-  constructor(callback) {
+  constructor (callback) {
     super();
     this.callback = callback;
   }
 
-  execute() { this.callback() }
+  execute () { this.callback(); }
 
-  equals(other) { return other.isScript && this.callback == other.callback }
+  equals (other) { return other.isScript && this.callback == other.callback; }
 
-  toString() {
-    return `Script(${this.callback.toString().replace(/\n/g, "").slice(0, 40) + "..."})`;
+  toString () {
+    return `Script(${this.callback.toString().replace(/\n/g, '').slice(0, 40) + '...'})`;
   }
 }
 
-export { Script, TargetScript, FunctionScript }
+export { Script, TargetScript, FunctionScript };

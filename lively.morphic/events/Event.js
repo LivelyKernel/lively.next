@@ -1,46 +1,45 @@
-import bowser from "bowser";
-import { obj } from "lively.lang";
-import { pt } from "lively.graphics";
+import bowser from 'bowser';
+import { obj } from 'lively.lang';
+import { pt } from 'lively.graphics';
 import Keys from './Keys.js';
-import { cumulativeOffset } from "../rendering/dom-helper.js";
+import { cumulativeOffset } from '../rendering/dom-helper.js';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // event constants and type detection
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export const pointerEvents = [
-  "pointerover",
-  "pointerenter",
-  "pointerout",
-  "pointerleave",
-  "pointerdown",
-  "pointermove",
-  "pointerup",
-  "pointercancel",
-  "gotpointercapture",
-  "lostpointercapture"
+  'pointerover',
+  'pointerenter',
+  'pointerout',
+  'pointerleave',
+  'pointerdown',
+  'pointermove',
+  'pointerup',
+  'pointercancel',
+  'gotpointercapture',
+  'lostpointercapture'
 ];
 
 export const mouseEvents = [
-  "mouseover",
-  "mouseenter",
-  "mousedown",
-  "mousemove",
-  "mouseup",
-  "mouseout",
-  "mouseleave",
+  'mouseover',
+  'mouseenter',
+  'mousedown',
+  'mousemove',
+  'mouseup',
+  'mouseout',
+  'mouseleave',
   'click',
   'dblclick',
   'contextmenu',
   'mousewheel'
 ];
 
-export const keyboardEvents = ["keydown", "keyup", "keypress"];
-export const keyLikeEvents = keyboardEvents.concat("input", "compositionstart", "compositionupdate", "compositionend")
+export const keyboardEvents = ['keydown', 'keyup', 'keypress'];
+export const keyLikeEvents = keyboardEvents.concat('input', 'compositionstart', 'compositionupdate', 'compositionend');
 
 export class Event {
-
-  constructor(type, domEvt, dispatcher, targetMorphs, hand, halo, layoutHalo) {
+  constructor (type, domEvt, dispatcher, targetMorphs, hand, halo, layoutHalo) {
     this.type = type;
     this.domEvt = domEvt;
     this.dispatcher = dispatcher;
@@ -55,141 +54,133 @@ export class Event {
     this.onStopCallbacks = [];
   }
 
-  onDispatch(cb) { this.onDispatchCallbacks.push(cb); return this; }
-  onAfterDispatch(cb) { this.onAfterDispatchCallbacks.push(cb); return this; }
-  onStop(cb) { this.onStopCallbacks.push(cb); return this; }
+  onDispatch (cb) { this.onDispatchCallbacks.push(cb); return this; }
+  onAfterDispatch (cb) { this.onAfterDispatchCallbacks.push(cb); return this; }
+  onStop (cb) { this.onStopCallbacks.push(cb); return this; }
 
-  get data() { return this.domEvt.data; }
-  get world() { return this.dispatcher.world; }
-  get state() { return this.dispatcher.eventState; }
-  get keyInputState() { return this.state.keyInputState }
+  get data () { return this.domEvt.data; }
+  get world () { return this.dispatcher.world; }
+  get state () { return this.dispatcher.eventState; }
+  get keyInputState () { return this.state.keyInputState; }
 
-  isMouseEvent() {
+  isMouseEvent () {
     return pointerEvents.includes(this.type) || mouseEvents.includes(this.type);
   }
 
-  isKeyboardEvent() {
+  isKeyboardEvent () {
     return !this.isMouseEvent() && keyboardEvents.includes(this.type);
   }
 
-  stop() {
+  stop () {
     this.stopped = true;
-    this.domEvt && typeof this.domEvt.stopPropagation === "function" && this.domEvt.stopPropagation();
-    this.domEvt && typeof this.domEvt.preventDefault === "function" && this.domEvt.preventDefault();
+    this.domEvt && typeof this.domEvt.stopPropagation === 'function' && this.domEvt.stopPropagation();
+    this.domEvt && typeof this.domEvt.preventDefault === 'function' && this.domEvt.preventDefault();
     this.onStopCallbacks.forEach(ea => ea());
   }
 
-  get targetMorph() { return this.targetMorphs[0]; }
-  get timestamp() { return this.domEvt.timeStamp; }
+  get targetMorph () { return this.targetMorphs[0]; }
+  get timestamp () { return this.domEvt.timeStamp; }
 
-  get position() {
-    if (!this.domEvt) return pt(0,0);
-    var worldNode = this.domEvt.target;
+  get position () {
+    if (!this.domEvt) return pt(0, 0);
+    let worldNode = this.domEvt.target;
     while (worldNode) {
       if (worldNode.id === this.world.id) break;
       worldNode = worldNode.parentNode;
     }
 
     if (!worldNode) {
-      let target = this.domEvt.target,
-          doc = target.nodeType === target.DOCUMENT_NODE ? target : target.ownerDocument;
+      const target = this.domEvt.target;
+      const doc = target.nodeType === target.DOCUMENT_NODE ? target : target.ownerDocument;
       worldNode = doc.getElementById(this.world.id);
     }
 
     if (!worldNode) {
-      console.error(`event position: cannot find world node for determining the position!`)
-      return pt(0,0)
+      console.error('event position: cannot find world node for determining the position!');
+      return pt(0, 0);
     }
 
-    var {left, top} = cumulativeOffset(worldNode),
-        {pageX, pageY} = this.domEvt,
-        pos = pt((pageX || 0) - left, (pageY || 0) - top);
-    if (this.world.scale !== 1)
-      pos = pos.scaleBy(1 / this.world.scale);
+    const { left, top } = cumulativeOffset(worldNode);
+    const { pageX, pageY } = this.domEvt;
+    let pos = pt((pageX || 0) - left, (pageY || 0) - top);
+    if (this.world.scale !== 1) { pos = pos.scaleBy(1 / this.world.scale); }
     return pos;
   }
 
-  get startPosition() {
+  get startPosition () {
     // FIXME, might be for more than just clicks...
     return this.state.clickedOnPosition;
   }
 
-  get pressure() {
+  get pressure () {
     if (!this.domEvt) return 0.5;
     return this.domEvt.pressure;
   }
 
-  positionIn(aMorph) {
+  positionIn (aMorph) {
     // returns the event position localized to aMorph
     return aMorph.localize(this.position);
   }
 
-  isClickTarget(morph) {
-    var clicked = this.state.clickedOnMorph;
+  isClickTarget (morph) {
+    const clicked = this.state.clickedOnMorph;
     return clicked && (morph === clicked || morph.isAncestorOf(clicked));
   }
 
   // mouse buttons, see
   // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons
-  leftMouseButtonPressed() {
+  leftMouseButtonPressed () {
     return this.domEvt ? (this.domEvt.buttons || 0) & 1 : false;
   }
 
-  rightMouseButtonPressed() {
+  rightMouseButtonPressed () {
     // return this.domEvt ? (this.domEvt.buttons || 0) & 2 : false;
-    return bowser.firefox ?
-      (this.domEvt.which === 3 || this.domEvt.buttons === 2) :
-      this.domEvt.which === 3 || this.domEvt.buttons === 2
+    return bowser.firefox
+      ? (this.domEvt.which === 3 || this.domEvt.buttons === 2)
+      : this.domEvt.which === 3 || this.domEvt.buttons === 2;
   }
 
-  middleMouseButtonPressed() {
+  middleMouseButtonPressed () {
     return this.domEvt ? (this.domEvt.buttons || 0) & 4 : false;
   }
 
-  isCommandKey() {
-    var domEvt = this.domEvt;
+  isCommandKey () {
+    const domEvt = this.domEvt;
     if (!domEvt) return false;
-    var isCmd = false;
-    if (!bowser.mac)
-        isCmd = isCmd || domEvt.ctrlKey;
-    if (bowser.tablet || bowser.tablet)
-        isCmd = isCmd || false/*FIXME!*/
+    let isCmd = false;
+    if (!bowser.mac) { isCmd = isCmd || domEvt.ctrlKey; }
+    if (bowser.tablet || bowser.tablet) { isCmd = isCmd || false; }/* FIXME! */
     return isCmd || domEvt.metaKey || domEvt.keyIdentifier === 'Meta';
   }
 
-  isShiftDown() { return this.domEvt && !!this.domEvt.shiftKey }
-  isCtrlDown() { return this.domEvt && !!this.domEvt.ctrlKey }
-  isAltDown() { return this.domEvt && !!this.domEvt.altKey }
+  isShiftDown () { return this.domEvt && !!this.domEvt.shiftKey; }
+  isCtrlDown () { return this.domEvt && !!this.domEvt.ctrlKey; }
+  isAltDown () { return this.domEvt && !!this.domEvt.altKey; }
 
-  get keyCombo() { return this._keyCombo || (this._keyCombo = Keys.eventToKeyCombo(this.domEvt)); }
-  set keyCombo(keyCombo) { return this._keyCombo = keyCombo; }
-
+  get keyCombo () { return this._keyCombo || (this._keyCombo = Keys.eventToKeyCombo(this.domEvt)); }
+  set keyCombo (keyCombo) { return this._keyCombo = keyCombo; }
 }
 
-
 export class KeyEvent extends Event {
-
-  constructor(type, domEvt, dispatcher, targetMorphs, hand, halo, layoutHalo) {
-    console.assert(keyLikeEvents.includes(type), "not a keyboard event: " + type);
+  constructor (type, domEvt, dispatcher, targetMorphs, hand, halo, layoutHalo) {
+    console.assert(keyLikeEvents.includes(type), 'not a keyboard event: ' + type);
     super(type, domEvt, dispatcher, targetMorphs, hand, halo, layoutHalo);
     Object.assign(this, Keys.canonicalizeEvent(domEvt));
   }
 
-  get isKeyEvent() { return true; }
+  get isKeyEvent () { return true; }
 }
 
 export class SimulatedDOMEvent {
-
-  constructor(props = {}) {
-
+  constructor (props = {}) {
     if (props.position) {
-      let {position: {x, y}, target} = props;
-      props = obj.dissoc(props, ["position"]);
+      const { position: { x, y }, target } = props;
+      props = obj.dissoc(props, ['position']);
       props.pageX = x; props.pageY = y;
     }
 
-    if (!props.hasOwnProperty("pointerId") && mouseEvents.concat(pointerEvents).includes(props.type)) {
-      props = {...props, pointerId: 1};
+    if (!props.hasOwnProperty('pointerId') && mouseEvents.concat(pointerEvents).includes(props.type)) {
+      props = { ...props, pointerId: 1 };
     }
 
     Object.assign(this, {
@@ -198,10 +189,10 @@ export class SimulatedDOMEvent {
       pageX: undefined,
       pageY: undefined,
       pointerId: undefined,
-      pointerType: "mouse",
+      pointerType: 'mouse',
       buttons: 0,
       keyCode: undefined,
-      keyString: "",
+      keyString: '',
       keyIdentifier: undefined,
       altKey: false,
       ctrlKey: false,
@@ -212,6 +203,6 @@ export class SimulatedDOMEvent {
     });
   }
 
-  preventDefault() { this.defaultPrevented = true; }
-  stopPropagation() { this.propagationStopped = true; }
+  preventDefault () { this.defaultPrevented = true; }
+  stopPropagation () { this.propagationStopped = true; }
 }

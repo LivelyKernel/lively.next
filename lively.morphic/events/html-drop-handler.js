@@ -1,15 +1,15 @@
-/*global FileReader*/
-import { Image } from "../morph.js";
+/* global FileReader */
+import { Image } from '../morph.js';
 
-export function uploadItem() {}
+export function uploadItem () {}
 
-export async function uploadFile(file, type, options) {
+export async function uploadFile (file, type, options) {
   // file is an instance of the Browser File class
   //   https://developer.mozilla.org/en-US/docs/Web/API/File
 
-  if (type.startsWith("image/")) {
-    // upload as inlined image    
-    let imageUrl = await fileReadAsDataURL(file);
+  if (type.startsWith('image/')) {
+    // upload as inlined image
+    const imageUrl = await fileReadAsDataURL(file);
 
     return new Image({
       imageUrl,
@@ -21,12 +21,11 @@ export async function uploadFile(file, type, options) {
   return null;
 }
 
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // helpers
-function fileReadAsDataURL(file) {
+function fileReadAsDataURL (file) {
   return new Promise((resolve, reject) => {
-    let reader = new FileReader();
+    const reader = new FileReader();
     reader.onload = e => resolve(e.target.result);
     reader.readAsDataURL(file);
   });

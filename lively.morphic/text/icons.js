@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 /*
 Currently only FontAwesome icons are supported
   http://fontawesome.io/icons/

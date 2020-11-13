@@ -1,14 +1,13 @@
-/*global show*/
-import { promise } from "lively.lang";
-import bowser from "bowser";
+/* global show */
+import { promise } from 'lively.lang';
+import bowser from 'bowser';
 import { touchInputDevice } from '../helpers.js';
 
-const placeholderValue = "\x01\x01",
-      placeholderRe = new RegExp("\x01", "g");
+const placeholderValue = '\x01\x01';
+const placeholderRe = new RegExp('\x01', 'g');
 
 export default class TextInput {
-
-  constructor(eventDispatcher) {
+  constructor (eventDispatcher) {
     this.eventDispatcher = eventDispatcher;
 
     this.domState = {
@@ -16,7 +15,7 @@ export default class TextInput {
       textareaNode: null,
       eventHandlers: [],
       isInstalled: false
-    }
+    };
 
     this.inputState = {
       composition: null,
@@ -25,12 +24,12 @@ export default class TextInput {
       positionChangedTime: 0,
       scrollLeftWhenChanged: 0,
       scrollTopWhenChanged: 0
-    }
+    };
   }
 
-  install(newRootNode, world) {
-    let domState = this.domState,
-        {isInstalled, rootNode} = domState;
+  install (newRootNode, world) {
+    const domState = this.domState;
+    const { isInstalled, rootNode } = domState;
 
     this.world = world;
 
@@ -47,11 +46,10 @@ export default class TextInput {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // textarea element that acts as an event proxy
 
-    var doc = newRootNode.ownerDocument,
-        textareaNode = domState.textareaNode = doc.createElement("textarea");
+    const doc = newRootNode.ownerDocument;
+    const textareaNode = domState.textareaNode = doc.createElement('textarea');
 
-
-    textareaNode.setAttribute("style", `
+    textareaNode.setAttribute('style', `
       position: absolute;
       /*extent cannot be 0, input won't work correctly in Chrome 52.0*/
       width: 20px; height: 20px;
@@ -76,16 +74,16 @@ export default class TextInput {
       white-space: pre!important;`);
 
     if (touchInputDevice) {
-      textareaNode.setAttribute("x-palm-disable-auto-cap", true);
+      textareaNode.setAttribute('x-palm-disable-auto-cap', true);
     }
 
-    textareaNode.setAttribute("wrap", "off");
-    textareaNode.setAttribute("autocorrect", "off");
-    textareaNode.setAttribute("autocapitalize", "off");
-    textareaNode.setAttribute("spellcheck", false);
-    textareaNode.setAttribute("aria-label", "Lively Textinput Node");
-    textareaNode.className = "lively-text-input";
-    textareaNode.value = "";
+    textareaNode.setAttribute('wrap', 'off');
+    textareaNode.setAttribute('autocorrect', 'off');
+    textareaNode.setAttribute('autocapitalize', 'off');
+    textareaNode.setAttribute('spellcheck', false);
+    textareaNode.setAttribute('aria-label', 'Lively Textinput Node');
+    textareaNode.className = 'lively-text-input';
+    textareaNode.value = '';
     newRootNode.insertBefore(textareaNode, newRootNode.firstChild);
 
     if (touchInputDevice) {
@@ -96,73 +94,72 @@ export default class TextInput {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // event handlers
     domState.eventHandlers = [
-      {type: "focusin", node: newRootNode,           fn: evt => this.onRootNodeFocus(evt), capturing: true},
-      {type: "focusin", node: domState.textareaNode, fn: evt => this.onTextAreaFocus(evt), capturing: true},
-      {type: "blur",    node: domState.textareaNode, fn: evt => this.onTextAreaBlur(evt), capturing: true},
-      {type: "keydown", node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
-      {type: "keyup",   node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
-      {type: "cut",     node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
-      {type: "copy",    node: domState.textareaNode, fn: evt => this.inputState.manualCopy ? this.inputState.manualCopy.onEvent(evt) : this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
-      {type: "paste",   node: domState.textareaNode, fn: evt => this.inputState.manualPaste ? this.inputState.manualPaste.onEvent(evt) : this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
+      { type: 'focusin', node: newRootNode, fn: evt => this.onRootNodeFocus(evt), capturing: true },
+      { type: 'focusin', node: domState.textareaNode, fn: evt => this.onTextAreaFocus(evt), capturing: true },
+      { type: 'blur', node: domState.textareaNode, fn: evt => this.onTextAreaBlur(evt), capturing: true },
+      { type: 'keydown', node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false },
+      { type: 'keyup', node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false },
+      { type: 'cut', node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false },
+      { type: 'copy', node: domState.textareaNode, fn: evt => this.inputState.manualCopy ? this.inputState.manualCopy.onEvent(evt) : this.eventDispatcher.dispatchDOMEvent(evt), capturing: false },
+      { type: 'paste', node: domState.textareaNode, fn: evt => this.inputState.manualPaste ? this.inputState.manualPaste.onEvent(evt) : this.eventDispatcher.dispatchDOMEvent(evt), capturing: false },
 
-      {type: "compositionstart",  node: domState.textareaNode, fn: evt => this.onCompositionStart(evt), capturing: false},
-      {type: "compositionend",    node: domState.textareaNode, fn: evt => this.onCompositionEnd(evt), capturing: false},
-      {type: "compositionupdate", node: domState.textareaNode, fn: evt => this.onCompositionUpdate(evt), capturing: false},
-      {type: "input",             node: domState.textareaNode, fn: evt => this.onInput(evt), capturing: false},
-    ]
-    domState.eventHandlers.forEach(({type, node, fn, capturing}) =>
+      { type: 'compositionstart', node: domState.textareaNode, fn: evt => this.onCompositionStart(evt), capturing: false },
+      { type: 'compositionend', node: domState.textareaNode, fn: evt => this.onCompositionEnd(evt), capturing: false },
+      { type: 'compositionupdate', node: domState.textareaNode, fn: evt => this.onCompositionUpdate(evt), capturing: false },
+      { type: 'input', node: domState.textareaNode, fn: evt => this.onInput(evt), capturing: false }
+    ];
+    domState.eventHandlers.forEach(({ type, node, fn, capturing }) =>
       node.addEventListener(type, fn, capturing));
 
     return this;
   }
 
-  uninstall() {
-    var domState = this.domState;
+  uninstall () {
+    const domState = this.domState;
 
     domState.isInstalled = false;
 
-    domState.eventHandlers.forEach(({node, type, fn, capturing}) =>
+    domState.eventHandlers.forEach(({ node, type, fn, capturing }) =>
       node.removeEventListener(type, fn, capturing));
 
-    var n = domState.textareaNode;
-    n && n.parentNode && n.parentNode.removeChild(n)
+    const n = domState.textareaNode;
+    n && n.parentNode && n.parentNode.removeChild(n);
     domState.rootNode = null;
 
     return this;
   }
 
-  resetValue() {
-    var n = this.domState.textareaNode;
+  resetValue () {
+    const n = this.domState.textareaNode;
     n && (n.value = placeholderValue);
   }
 
-  readValue() {
-    var n = this.domState.textareaNode;
-    return n ? n.value.replace(placeholderRe, "") : "";
+  readValue () {
+    const n = this.domState.textareaNode;
+    return n ? n.value.replace(placeholderRe, '') : '';
 
-  //   if (!n) return "";
-  //   var val = n.value;
-  //   var placeholder1 = placeholderValue.charAt(0);
-  // // if (val == placeholder1) return "DELETE";
-  //   if (val.substring(0, 2) == placeholderValue)
-  //     val = val.substr(2);
-  //   else if (val.charAt(0) == placeholder1)
-  //     val = val.substr(1);
-  //   else if (val.charAt(val.length - 1) == placeholder1)
-  //     val = val.slice(0, -1);
-  //   // can happen if undo in textarea isn't stopped
-  //   if (val.charAt(val.length - 1) == placeholder1)
-  //     val = val.slice(0, -1);
-  //   return val;
-
+    //   if (!n) return "";
+    //   var val = n.value;
+    //   var placeholder1 = placeholderValue.charAt(0);
+    // // if (val == placeholder1) return "DELETE";
+    //   if (val.substring(0, 2) == placeholderValue)
+    //     val = val.substr(2);
+    //   else if (val.charAt(0) == placeholder1)
+    //     val = val.substr(1);
+    //   else if (val.charAt(val.length - 1) == placeholder1)
+    //     val = val.slice(0, -1);
+    //   // can happen if undo in textarea isn't stopped
+    //   if (val.charAt(val.length - 1) == placeholder1)
+    //     val = val.slice(0, -1);
+    //   return val;
   }
 
-  focus(morph, world) {
-    var node = this.domState.textareaNode;
+  focus (morph, world) {
+    const node = this.domState.textareaNode;
     if (!node) return;
 
     if (touchInputDevice) {
-       /*
+      /*
         On mobile we can not simply focus arbitrarliy, but only
         when a morph that accepts actual text input is focused
 
@@ -173,16 +170,16 @@ export default class TextInput {
       if (morph && morph.isText && !morph.readOnly) {
         node.removeAttribute('disabled');
       } else if (morph && !morph.isText) {
-        //node.setAttribute('disabled', true);
+        // node.setAttribute('disabled', true);
       }
     }
-    
+
     if (!morph || !morph.stealFocus) {
       node.ownerDocument.activeElement !== node && node.focus();
     }
 
     if (bowser.firefox) // FF needs an extra invitation...
-      Promise.resolve().then(() => node.ownerDocument.activeElement !== node && node.focus());
+    { Promise.resolve().then(() => node.ownerDocument.activeElement !== node && node.focus()); }
 
     if (morph && morph.isText && morph.focusable) {
       // need this even if node === activeElement
@@ -192,65 +189,64 @@ export default class TextInput {
     } else if (world) this.ensureBeingInVisibleBoundsOfWorld(world);
   }
 
-  blur() {
-    var node = this.domState.textareaNode;
+  blur () {
+    const node = this.domState.textareaNode;
     if (touchInputDevice) {
-       node.setAttribute('disabled', true);
+      node.setAttribute('disabled', true);
     }
 
     node && node.blur();
   }
 
-  doCopyWithMimeTypes(dataAndTypes) {
+  doCopyWithMimeTypes (dataAndTypes) {
     // dataAndTypes [{data: STRING, type: mime-type-STRING}]
-    return this.execCommand("manualCopy", () => {
-      var el = this.domState.textareaNode;
-      let h = evt => {
+    return this.execCommand('manualCopy', () => {
+      const el = this.domState.textareaNode;
+      const h = evt => {
         el.removeEventListener('copy', h);
         evt.preventDefault();
-        dataAndTypes.forEach(({data, type}) => evt.clipboardData.setData(type, data));
-      }
+        dataAndTypes.forEach(({ data, type }) => evt.clipboardData.setData(type, data));
+      };
       setTimeout(() => el.removeEventListener('copy', h), 300);
       el.addEventListener('copy', h);
-      el.value = "";
+      el.value = '';
       el.select();
-      el.ownerDocument.execCommand("copy")
+      el.ownerDocument.execCommand('copy');
     });
   }
 
-  doCopy(content) {
+  doCopy (content) {
     // attempt to manually copy to the clipboard
     // this might fail for various strange browser reasons
     // also it will probably steal the focus...
-    return this.execCommand("manualCopy", () => {
-      var el = this.domState.textareaNode;
+    return this.execCommand('manualCopy', () => {
+      const el = this.domState.textareaNode;
       el.value = content;
       el.select();
-      el.ownerDocument.execCommand("copy");
+      el.ownerDocument.execCommand('copy');
     });
   }
 
-  doPaste() {
-    return this.execCommand("manualPaste", () => {
-      var el = this.domState.textareaNode;
-      el.value = "";
+  doPaste () {
+    return this.execCommand('manualPaste', () => {
+      const el = this.domState.textareaNode;
+      el.value = '';
       el.select();
-      el.ownerDocument.execCommand("paste");
+      el.ownerDocument.execCommand('paste');
     });
   }
 
-  async execCommand(stateName, execFn) {
-    if (!this.domState.isInstalled)
-      throw new Error("Cannot copy to clipboard – input helper is not installed into DOM!");
+  async execCommand (stateName, execFn) {
+    if (!this.domState.isInstalled) { throw new Error('Cannot copy to clipboard – input helper is not installed into DOM!'); }
 
-    var state = this.inputState;
+    const state = this.inputState;
     if (state[stateName]) {
       try {
         await state[stateName].promise;
       } catch (e) {}
     }
 
-    var deferred = promise.deferred(), isDone = false;
+    const deferred = promise.deferred(); let isDone = false;
     state[stateName] = {
       onEvent: evt => {
         if (isDone) return;
@@ -259,7 +255,7 @@ export default class TextInput {
         deferred.resolve(evt);
       },
       promise: deferred.promise
-    }
+    };
 
     execFn();
 
@@ -274,7 +270,7 @@ export default class TextInput {
     return deferred.promise;
   }
 
-  onTextAreaBlur(evt) {
+  onTextAreaBlur (evt) {
     /*
       On mobile browsers, the continuous capturing of keyboard events
       causes the keyboard to show up at all times. We therefore disable
@@ -285,29 +281,28 @@ export default class TextInput {
       Should be handled with care...
     */
     setTimeout(() => {
-      var {textareaNode, rootNode} = this.domState || {};
+      const { textareaNode, rootNode } = this.domState || {};
       if (
-        rootNode && document.activeElement === rootNode
-        && !(this.world.focusedMorph && this.world.focusedMorph.stealFocus) 
-        && !(touchInputDevice || lively.FreezerRuntime)) {
-          textareaNode && textareaNode.focus();
-        }
+        rootNode && document.activeElement === rootNode &&
+        !(this.world.focusedMorph && this.world.focusedMorph.stealFocus) &&
+        !(touchInputDevice || lively.FreezerRuntime)) {
+        textareaNode && textareaNode.focus();
+      }
     });
   }
 
-  onTextAreaFocus(evt) {}
+  onTextAreaFocus (evt) {}
 
-  onRootNodeFocus(evt) {
-    var {textareaNode, rootNode} = this.domState || {};
+  onRootNodeFocus (evt) {
+    const { textareaNode, rootNode } = this.domState || {};
     if (evt.target === textareaNode || evt.target === rootNode) {
-      if (!(this.world.focusedMorph && this.world.focusedMorph.stealFocus))
-        this.focus();
+      if (!(this.world.focusedMorph && this.world.focusedMorph.stealFocus)) { this.focus(); }
     }
-      
+
     this.inputState.composition = null;
   }
 
-  onInput(evt) {
+  onInput (evt) {
     if (this.inputState.composition) return;
     if (!evt.data) {
       const data = this.readValue();
@@ -317,49 +312,48 @@ export default class TextInput {
     this.eventDispatcher.dispatchDOMEvent(evt);
   }
 
-  onCompositionStart(evt) {
+  onCompositionStart (evt) {
     this.inputState.composition = {};
     this.eventDispatcher.dispatchDOMEvent(evt);
   }
 
-  onCompositionUpdate(evt) {
-    var {composition: c} = this.inputState,
-        val = this.readValue();
+  onCompositionUpdate (evt) {
+    const { composition: c } = this.inputState;
+    const val = this.readValue();
     if (c.lastValue === val) return;
-    c.lastValue = val;    
+    c.lastValue = val;
     this.eventDispatcher.dispatchDOMEvent(evt);
   }
 
-  onCompositionEnd(evt) {
+  onCompositionEnd (evt) {
     this.inputState.composition = null;
     this.eventDispatcher.dispatchDOMEvent(evt);
   }
 
-  setPosition(pos) {
-    var {textareaNode} = this.domState || {};
+  setPosition (pos) {
+    const { textareaNode } = this.domState || {};
     if (!textareaNode) return;
-    textareaNode.style.left = pos.x + "px";
-    textareaNode.style.top = pos.y + "px";
+    textareaNode.style.left = pos.x + 'px';
+    textareaNode.style.top = pos.y + 'px';
   }
 
-  ensureBeingInVisibleBoundsOfWorld(world) {
+  ensureBeingInVisibleBoundsOfWorld (world) {
     this.setPosition(world.visibleBounds().center());
   }
 
-  ensureBeingAtCursorOfText(textMorph) {
+  ensureBeingAtCursorOfText (textMorph) {
     // move the textarea to the text cursor
 
-    let world = textMorph.world();
+    const world = textMorph.world();
     if (!world) return;
 
-    let {startRow, endRow} = textMorph.whatsVisible,
-        {row, column} = textMorph.cursorPosition;
+    const { startRow, endRow } = textMorph.whatsVisible;
+    let { row, column } = textMorph.cursorPosition;
     row = Math.max(startRow, Math.min(row, endRow));
-    let localCursorPos = textMorph.charBoundsFromTextPosition({row, column}).topLeft(),
-        globalCursorPos = world.visibleBounds().insetBy(10).constrainPt(
-                            textMorph.worldPoint(
-                              localCursorPos.subPt(textMorph.scroll)));
-
+    const localCursorPos = textMorph.charBoundsFromTextPosition({ row, column }).topLeft();
+    const globalCursorPos = world.visibleBounds().insetBy(10).constrainPt(
+      textMorph.worldPoint(
+        localCursorPos.subPt(textMorph.scroll)));
 
     // rk 2017-07-02: Experimental, when input/text areas are focused the DOM
     // tries to auto scroll to them, even if they are inside the visible bounds

@@ -1,1 +1,1 @@
-export { default as MorphicDB } from "./db.js";
+export { default as MorphicDB } from './db.js';

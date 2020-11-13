@@ -1,32 +1,32 @@
-import Keys from "./Keys.js";
-import bowser from "bowser";
-import config from "../config.js";
-import { arr } from "lively.lang";
+import Keys from './Keys.js';
+import bowser from 'bowser';
+import config from '../config.js';
+import { arr } from 'lively.lang';
 
-function ensureSpaces(s) { return s.length ? s : ' '; }
+function ensureSpaces (s) { return s.length ? s : ' '; }
 
-function invokeKeyHandlers(morph, evt, noInputEvents = false) {
+function invokeKeyHandlers (morph, evt, noInputEvents = false) {
   evt = Keys.canonicalizeEvent(evt);
 
-  let {keyCombo, key, data} = evt,
-      toExecute,
-      executed = false,
-      keyhandlers = morph.keyhandlers,
-      keyInputState = evt.keyInputState || {},
-      isInputEvent = keyCombo.startsWith("input-"),
-      nullCommand = false,
-      carryOverCount = keyInputState.count,
-      carryOverKeyChain = keyInputState.keyChain || "",
-      keyInputStateNeedsUpdate = false;
+  const { keyCombo, key, data } = evt;
+  let toExecute;
+  let executed = false;
+  const keyhandlers = morph.keyhandlers;
+  const keyInputState = evt.keyInputState || {};
+  const isInputEvent = keyCombo.startsWith('input-');
+  let nullCommand = false;
+  let carryOverCount = keyInputState.count;
+  let carryOverKeyChain = keyInputState.keyChain || '';
+  let keyInputStateNeedsUpdate = false;
 
   if (!keyhandlers || (noInputEvents && isInputEvent)) return false;
 
-  for (var i = keyhandlers.length; i--;) {
+  for (let i = keyhandlers.length; i--;) {
     toExecute = keyhandlers[i].eventCommandLookup(morph, evt);
 
     if (!toExecute || !toExecute.command) continue;
 
-    let {command, args, passEvent, count, keyChain, onlyWhenFocused} = toExecute;
+    const { command, args, passEvent, count, keyChain, onlyWhenFocused } = toExecute;
 
     // carry count and keychain along, either to be used in the command lookup
     // + execute process, or if there is no command (keyCombo is part of a key
@@ -37,29 +37,27 @@ function invokeKeyHandlers(morph, evt, noInputEvents = false) {
     carryOverCount = count;
     carryOverKeyChain = keyChain;
 
-    nullCommand = command === "null"; // "null"... is there something better?!
+    nullCommand = command === 'null'; // "null"... is there something better?!
 
     if (onlyWhenFocused) {
-      var world = morph.world();
-      if (world && world.focusedMorph && world.focusedMorph !== morph)
-        continue;
+      const world = morph.world();
+      if (world && world.focusedMorph && world.focusedMorph !== morph) { continue; }
     }
 
     executed = nullCommand ? false : morph.execCommand(command, args, count, evt);
 
     // do not stop input events to not break repeating
-    if (executed && (!isInputEvent || command !== "insertstring")
-     && !passEvent && typeof evt.stop === "function")
-       evt.stop();
+    if (executed && (!isInputEvent || command !== 'insertstring') &&
+     !passEvent && typeof evt.stop === 'function') { evt.stop(); }
 
     if (executed || nullCommand) break;
   }
 
   if (!executed && !nullCommand && isInputEvent && morph.onTextInput && !carryOverKeyChain) {
-    var count = keyInputState.count;
-    executed = morph.execCommand("insertstring", {
+    const count = keyInputState.count;
+    executed = morph.execCommand('insertstring', {
       string: data || key,
-      undoGroup: config.text.undoGroupDelay/*ms*/
+      undoGroup: config.text.undoGroupDelay/* ms */
     }, count, evt);
   }
 
@@ -68,14 +66,14 @@ function invokeKeyHandlers(morph, evt, noInputEvents = false) {
     // handle key, this is necessary when multiple morphs share the same
     // keyChain prefixes
     // keyInputState.count = carryOverCount;
-    if (typeof evt.onAfterDispatch === "function") {
+    if (typeof evt.onAfterDispatch === 'function') {
       evt.onAfterDispatch(() => {
         keyInputState.count = executed ? undefined : carryOverCount;
-        keyInputState.keyChain = executed ? "" : carryOverKeyChain;
+        keyInputState.keyChain = executed ? '' : carryOverKeyChain;
       });
     } else {
       keyInputState.count = executed ? undefined : carryOverCount;
-      keyInputState.keyChain = executed ? "" : carryOverKeyChain;
+      keyInputState.keyChain = executed ? '' : carryOverKeyChain;
     }
   }
 
@@ -86,46 +84,43 @@ function invokeKeyHandlers(morph, evt, noInputEvents = false) {
   return executed && !nullCommand;
 }
 
-
-async function simulateKeys(
+async function simulateKeys (
   morph, keyComboString,
-  keyInputState = {keyChain: undefined, count: undefined}) {
+  keyInputState = { keyChain: undefined, count: undefined }) {
   // keyComboString like "a b ctrl-c"
   // there can be multiple pressed keys separated by spaces. To simulate a
   // space press use a double space. split up the individual keys and
   // simulate each
-  var pressedKeys = keyComboString.length === 1 ?
-      [keyComboString] :
-      keyComboString.split(/ /g).map(ensureSpaces)
-  for (let keys of pressedKeys)
-    await simulateKey(morph, keys, keyInputState);
+  const pressedKeys = keyComboString.length === 1
+    ? [keyComboString]
+    : keyComboString.split(/ /g).map(ensureSpaces);
+  for (const keys of pressedKeys) { await simulateKey(morph, keys, keyInputState); }
 }
 
-
-function simulateKey(morph, keyComboString, keyInputState) {
-  return invokeKeyHandlers(morph, {...Keys.keyComboToEventSpec(keyComboString), keyInputState});
+function simulateKey (morph, keyComboString, keyInputState) {
+  return invokeKeyHandlers(morph, { ...Keys.keyComboToEventSpec(keyComboString), keyInputState });
 }
 
-function bowserOS() {
+function bowserOS () {
   // if (bowser.mac)          return "windows";
-  if (bowser.mac)          return "mac";
-  if (bowser.windows)      return "windows";
-  if (bowser.windowsphone) return "windowsphone";
-  if (bowser.linux)        return "linux";
-  if (bowser.chromeos)     return "chromeos";
-  if (bowser.android)      return "android";
-  if (bowser.ios)          return "ios";
-  if (bowser.blackberry)   return "blackberry";
-  if (bowser.firefoxos)    return "firefoxos";
-  if (bowser.webos)        return "webos";
-  if (bowser.bada)         return "bada";
-  if (bowser.tizen)        return "tizen";
-  if (bowser.sailfish)     return "sailfish";
+  if (bowser.mac) return 'mac';
+  if (bowser.windows) return 'windows';
+  if (bowser.windowsphone) return 'windowsphone';
+  if (bowser.linux) return 'linux';
+  if (bowser.chromeos) return 'chromeos';
+  if (bowser.android) return 'android';
+  if (bowser.ios) return 'ios';
+  if (bowser.blackberry) return 'blackberry';
+  if (bowser.firefoxos) return 'firefoxos';
+  if (bowser.webos) return 'webos';
+  if (bowser.bada) return 'bada';
+  if (bowser.tizen) return 'tizen';
+  if (bowser.sailfish) return 'sailfish';
   // console.error(`bowserOS detection, unknown OS!`, bowser);
-  return "unknown";
+  return 'unknown';
 }
 
-export function findKeysForPlatform(binding, platform/*bowser OS flag*/) {
+export function findKeysForPlatform (binding, platform/* bowser OS flag */) {
   // bowser OS flags 2016-08-24:
   // bowser
   // mac
@@ -142,24 +137,24 @@ export function findKeysForPlatform(binding, platform/*bowser OS flag*/) {
   // tizen
   // sailfish
 
-  if (typeof binding === "string") return binding;
+  if (typeof binding === 'string') return binding;
 
-  if (!binding || typeof binding !== "object") return null;
+  if (!binding || typeof binding !== 'object') return null;
 
   switch (platform) {
-    case 'ios':          return binding.ios || binding.mac;
-    case 'mac':          return binding.mac || binding.ios;
+    case 'ios': return binding.ios || binding.mac;
+    case 'mac': return binding.mac || binding.ios;
     case 'win':
     case 'windows':
-    case 'windowsphone': return binding.win      || binding.windows;
-    case 'linux':        return binding.linux    || binding.win     || binding.windows;
-    case 'chromeos':     return binding.chromeos || binding.linux   || binding.win || binding.windows;
-    case 'android':      return binding.android  || binding.linux   || binding.win || binding.windows;
-    default:             return binding.linux    || binding.win     || binding.windows
+    case 'windowsphone': return binding.win || binding.windows;
+    case 'linux': return binding.linux || binding.win || binding.windows;
+    case 'chromeos': return binding.chromeos || binding.linux || binding.win || binding.windows;
+    case 'android': return binding.android || binding.linux || binding.win || binding.windows;
+    default: return binding.linux || binding.win || binding.windows;
   }
 }
 
-var regexps = {
+const regexps = {
   meta: /Meta|Cmd|Command/gi,
   alt: /Alt/gi,
   ctrl: /Ctrl|Control/gi,
@@ -174,19 +169,18 @@ var regexps = {
   down: /down/gi,
   keySpacer: /([^-])-/g,
   seqSpacer: /([^\s])\s/g
-}
+};
 
 export default class KeyHandler {
-
-  static invokeKeyHandlers(morph, evt, noInputEvents = false) {
+  static invokeKeyHandlers (morph, evt, noInputEvents = false) {
     return invokeKeyHandlers(morph, evt, noInputEvents);
   }
 
-  static simulateKeys(morph, keyCombo, keyInputState) {
+  static simulateKeys (morph, keyCombo, keyInputState) {
     return simulateKeys(morph, keyCombo, keyInputState);
   }
 
-  static withBindings(listOfBindings, platform) {
+  static withBindings (listOfBindings, platform) {
     // listOfBindings is a list of objects that should have at least fields keys and command
     // e.g. {keys: "Ctrl-A", command: "selectall"}
     // you can make platform specific bindings like
@@ -194,136 +188,135 @@ export default class KeyHandler {
     // command can be an object specifying additional properties like "args"
     // that are being passed to the command handler when the command is executed,
     // e.g. {command: {command: "goto line start", args: {select: true}}, keys: "Shift-Home"}
-    var handler = new this(platform);
-    listOfBindings.forEach(({command, keys}) => handler.bindKey(keys, command));
+    const handler = new this(platform);
+    listOfBindings.forEach(({ command, keys }) => handler.bindKey(keys, command));
     return handler;
   }
 
-  static prettyCombo(combo) {
-    var map = this._prettyCombos || (this._prettyCombos = {})
+  static prettyCombo (combo) {
+    const map = this._prettyCombos || (this._prettyCombos = {});
     if (this._prettyCombos[combo]) return map[combo];
     return map[combo] = combo
-      .replace(regexps.meta,      "⌘")
-      .replace(regexps.alt,       "⌥")
-      .replace(regexps.ctrl,      "⌃")
-      .replace(regexps.tab,       "⇥")
-      .replace(regexps.enter,     "⏎")
-      .replace(regexps.shift,     "⇧")
-      .replace(regexps.backspace, "⌫")
-      .replace(regexps.delete, "⌦")
-      .replace(regexps.left, "→")
-      .replace(regexps.right, "←")
-      .replace(regexps.up, "↑")
-      .replace(regexps.down, "↓")
-      .replace(regexps.keySpacer, "$1")
-      .replace(regexps.seqSpacer, "$1-")
+      .replace(regexps.meta, '⌘')
+      .replace(regexps.alt, '⌥')
+      .replace(regexps.ctrl, '⌃')
+      .replace(regexps.tab, '⇥')
+      .replace(regexps.enter, '⏎')
+      .replace(regexps.shift, '⇧')
+      .replace(regexps.backspace, '⌫')
+      .replace(regexps.delete, '⌦')
+      .replace(regexps.left, '→')
+      .replace(regexps.right, '←')
+      .replace(regexps.up, '↑')
+      .replace(regexps.down, '↓')
+      .replace(regexps.keySpacer, '$1')
+      .replace(regexps.seqSpacer, '$1-');
   }
 
-  static generateCommandToKeybindingMap(morph, includeOwnerCommands = false, prettyKeys = true) {
-    var keyMaps = {}, commandsToKeys = {},
-        commands = includeOwnerCommands ?
-          morph.commandsIncludingOwners :
-          morph.commands.map(command => ({command, target: morph}));
+  static generateCommandToKeybindingMap (morph, includeOwnerCommands = false, prettyKeys = true) {
+    const keyMaps = {}; const commandsToKeys = {};
+    const commands = includeOwnerCommands
+      ? morph.commandsIncludingOwners
+      : morph.commands.map(command => ({ command, target: morph }));
 
-    return commands.map(({target, command}) => {
-      var keys = commandsToKeysFor(target)[command.name];
+    return commands.map(({ target, command }) => {
+      const keys = commandsToKeysFor(target)[command.name];
       return {
         keys,
-        target, command,
-        prettyKeys: keys && prettyKeys ? keys.map(ea => this.prettyCombo(ea)) : null,
-      }
+        target,
+        command,
+        prettyKeys: keys && prettyKeys ? keys.map(ea => this.prettyCombo(ea)) : null
+      };
     });
 
-    function commandsToKeysFor(target) {
+    function commandsToKeysFor (target) {
       if (commandsToKeys[target.id]) return commandsToKeys[target.id];
-      var keyMap = keyMaps[target.id] || (keyMaps[target.id] = target.keyCommandMap);
+      const keyMap = keyMaps[target.id] || (keyMaps[target.id] = target.keyCommandMap);
       return commandsToKeys[target.id] = arr.groupBy(Object.keys(keyMap), combo => keyMap[combo].name);
     }
   }
 
-  constructor(platform = bowserOS()) {
+  constructor (platform = bowserOS()) {
     this.platform = platform;
     this.keyBindings = {};
   }
 
-  eventCommandLookup(morph, evt) {
-    let {keyCombo, keyInputState} = evt;
+  eventCommandLookup (morph, evt) {
+    const { keyCombo, keyInputState } = evt;
     return this.lookup(keyCombo, keyInputState);
   }
 
-  lookup(keyCombo, keyInputState = {keyChain: undefined, count: undefined}) {
+  lookup (keyCombo, keyInputState = { keyChain: undefined, count: undefined }) {
     // tries to find suitable command name or object for keyCombo in
     // this.keyBindings. Uses keyInputState for keychains.
     keyCombo = Keys.canonicalizeKeyCombo(keyCombo);
 
-    var keyChain = keyInputState.keyChain || "",
-        count = keyInputState.count;
+    let keyChain = keyInputState.keyChain || '';
+    const count = keyInputState.count;
 
-    if (!keyChain && keyCombo.startsWith("Ctrl-")) {
-      let countMatch = keyCombo.match(/^Ctrl-([0-9]+)/);
+    if (!keyChain && keyCombo.startsWith('Ctrl-')) {
+      const countMatch = keyCombo.match(/^Ctrl-([0-9]+)/);
       if (countMatch) {
-        let numArg = parseInt((typeof count === "number" ? count : "") + countMatch[1]);
-        return {command: "null", count: numArg};
+        const numArg = parseInt((typeof count === 'number' ? count : '') + countMatch[1]);
+        return { command: 'null', count: numArg };
       }
       // universal argument
-      if (keyCombo === "Ctrl-U") return {command: "null", count: 4, keyChain: "Ctrl-U"};
+      if (keyCombo === 'Ctrl-U') return { command: 'null', count: 4, keyChain: 'Ctrl-U' };
     }
 
     // for simple input test both upper and lowercase
-    var combos = [keyCombo];
-    if (!command && keyCombo.startsWith("input-")) {
-      var upper = keyCombo.replace(/^(input-)(.*)$/, (_, before, key) => before+key.toUpperCase()),
-          lower = keyCombo.replace(/^(input-)(.*)$/, (_, before, key) => before+key.toLowerCase());
+    const combos = [keyCombo];
+    if (!command && keyCombo.startsWith('input-')) {
+      const upper = keyCombo.replace(/^(input-)(.*)$/, (_, before, key) => before + key.toUpperCase());
+      const lower = keyCombo.replace(/^(input-)(.*)$/, (_, before, key) => before + key.toLowerCase());
       combos.push(upper, lower);
     }
 
     var command = combos.map(keyCombo => this.keyBindings[keyCombo])[0];
 
     if (keyChain) {
-      var chainCombo = combos.find(keyCombo => this.keyBindings[keyChain + " " + keyCombo]);
+      const chainCombo = combos.find(keyCombo => this.keyBindings[keyChain + ' ' + keyCombo]);
       if (chainCombo) {
-        keyChain += " " + chainCombo;
+        keyChain += ' ' + chainCombo;
         command = this.keyBindings[keyChain] || command;
       }
     }
 
-    if (command && command === "chainKeys") {
+    if (command && command === 'chainKeys') {
       keyChain = keyChain || keyCombo;
-      var result = {command: "null", keyChain}
+      var result = { command: 'null', keyChain };
       if (count !== undefined) result.count = count;
       return result;
     }
 
     if (!command) return undefined;
-    var result = typeof command === "object" ? {...command} : {command};
+    var result = typeof command === 'object' ? { ...command } : { command };
     if (count !== undefined) result.count = count;
     return result;
   }
 
-  bindKey(keyCombo, command) {
-    if (typeof keyCombo == "object" && keyCombo && !Array.isArray(keyCombo))
-      keyCombo = findKeysForPlatform(keyCombo, this.platform);
+  bindKey (keyCombo, command) {
+    if (typeof keyCombo === 'object' && keyCombo && !Array.isArray(keyCombo)) { keyCombo = findKeysForPlatform(keyCombo, this.platform); }
 
     if (!keyCombo) return;
 
-    if (typeof command == "function")
-      return this.addCommand({exec: command, bindKey: keyCombo, name: command.name || keyCombo});
+    if (typeof command === 'function') { return this.addCommand({ exec: command, bindKey: keyCombo, name: command.name || keyCombo }); }
 
-    var allCombos = Array.isArray(keyCombo) ?
-      keyCombo : keyCombo.includes("|") ?
-        keyCombo.split("|") : [keyCombo];
+    const allCombos = Array.isArray(keyCombo)
+      ? keyCombo : keyCombo.includes('|')
+          ? keyCombo.split('|') : [keyCombo];
 
     allCombos.forEach((keyPart) => {
-      var chain = "";
-      if (keyPart.indexOf(" ") != -1) {
-        var parts = keyPart.split(/\s+/);
+      let chain = '';
+      if (keyPart.indexOf(' ') != -1) {
+        const parts = keyPart.split(/\s+/);
         keyPart = parts.pop();
         parts.forEach((keyPart) => {
-          var binding = Keys.canonicalizeKeyCombo(keyPart);
-          chain += (chain ? " " : "") + binding;
-          this.addCommandToBinding(chain, "chainKeys");
+          const binding = Keys.canonicalizeKeyCombo(keyPart);
+          chain += (chain ? ' ' : '') + binding;
+          this.addCommandToBinding(chain, 'chainKeys');
         });
-        chain += " ";
+        chain += ' ';
       }
 
       this.addCommandToBinding(chain + Keys.canonicalizeKeyCombo(keyPart), command);
@@ -332,11 +325,11 @@ export default class KeyHandler {
     this.cleanupUnusedKeyChains();
   }
 
-  unbindKey(keyCombo) { this.bindKey(keyCombo, null); }
+  unbindKey (keyCombo) { this.bindKey(keyCombo, null); }
 
-  cleanupUnusedKeyChains() {
-    var keys = Object.keys(this.keyBindings),
-        chainedKeys = keys.filter(key => this.keyBindings[key] === "chainKeys");
+  cleanupUnusedKeyChains () {
+    const keys = Object.keys(this.keyBindings);
+    let chainedKeys = keys.filter(key => this.keyBindings[key] === 'chainKeys');
     chainedKeys = arr.sortBy(chainedKeys, ea => ea.length).reverse();
     // remove all chainKeys bindings that doesn't point to a real binding
     chainedKeys.forEach(key => {
@@ -347,24 +340,22 @@ export default class KeyHandler {
     });
   }
 
-  addCommand(command) {
-    return !command || !command.bindKey ?
-      undefined : this.addCommandToBinding(command.bindKey, command);
+  addCommand (command) {
+    return !command || !command.bindKey
+      ? undefined : this.addCommandToBinding(command.bindKey, command);
   }
 
-  addCommandToBinding(keyCombo, command) {
+  addCommandToBinding (keyCombo, command) {
     // remove overwritten keychains
-    var prev = this.keyBindings[keyCombo];
-    if (prev === "chainKeys" && command != "chainKeys") {
+    const prev = this.keyBindings[keyCombo];
+    if (prev === 'chainKeys' && command != 'chainKeys') {
       Object.keys(this.keyBindings).forEach(key => {
-        if (key.startsWith(keyCombo))
-          delete this.keyBindings[key];
+        if (key.startsWith(keyCombo)) { delete this.keyBindings[key]; }
       });
     }
 
     if (!command) delete this.keyBindings[keyCombo];
     else this.keyBindings[keyCombo] = command;
-    if (command !== "chainKeys") this.cleanupUnusedKeyChains();
+    if (command !== 'chainKeys') this.cleanupUnusedKeyChains();
   }
-
 }

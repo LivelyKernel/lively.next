@@ -1,23 +1,22 @@
-/*global global,System*/
-import { obj, arr, num } from "lively.lang";
-import { pt, Rectangle } from "lively.graphics";
-import vdom from "virtual-dom";
-import { defaultAttributes, defaultStyle } from "../rendering/morphic-default.js";
-import { addOrChangeCSSDeclaration } from "../rendering/dom-helper.js";
-import { hyperscriptFnForDocument } from "../rendering/dom-helper.js";
-import { objectReplacementChar } from "./document.js";
-import config from "../config.js";
-import { getSvgVertices } from "../rendering/property-dom-mapping.js";
+/* global global,System */
+import { obj, arr, num } from 'lively.lang';
+import { pt, Rectangle } from 'lively.graphics';
+import vdom from 'virtual-dom';
+import { defaultAttributes, defaultStyle } from '../rendering/morphic-default.js';
+import { addOrChangeCSSDeclaration } from '../rendering/dom-helper.js';
+import { hyperscriptFnForDocument } from '../rendering/dom-helper.js';
+import { objectReplacementChar } from './document.js';
+import config from '../config.js';
+import { getSvgVertices } from '../rendering/property-dom-mapping.js';
 
 const { h, create, patch, diff } = vdom;
 
 let cssInstalled = false;
 
-var debug = !!config.onloadURLQuery["debug-text"];
+const debug = !!config.onloadURLQuery['debug-text'];
 
-function printViewState(textMorph) {
-
-  let {
+function printViewState (textMorph) {
+  const {
     viewState: {
       scrollTop, scrollHeight,
       heightBefore, textHeight,
@@ -25,19 +24,19 @@ function printViewState(textMorph) {
       firstFullyVisibleRow, lastFullyVisibleRow,
       visibleLines
     },
-    document: {lines}
+    document: { lines }
   } = textMorph;
 
-  console.log(`${textMorph} #${textMorph.id.slice(0,12)}
+  console.log(`${textMorph} #${textMorph.id.slice(0, 12)}
 scroll: ${scrollTop} + ${scrollHeight}
 lines: ${firstVisibleRow} - ${lastVisibleRow}
 visible lines: ${lastVisibleRow - firstVisibleRow}
 height: ${textHeight}, ${lines.length} lines`);
 }
 
-function installCSS(domEnv) {
+function installCSS (domEnv) {
   cssInstalled = true;
-  addOrChangeCSSDeclaration("new-text-css", `
+  addOrChangeCSSDeclaration('new-text-css', `
 
     /* markers */
 
@@ -188,40 +187,36 @@ function installCSS(domEnv) {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-let nextTick = (function(window, prefixes, i, p, fnc, to) {
-    while (!fnc && i < prefixes.length) {
-        fnc = window[prefixes[i++] + 'equestAnimationFrame'];
-    }
-    return (fnc && fnc.bind(window)) || window.setImmediate || function(fnc) {window.setTimeout(fnc, 0);};
+const nextTick = (function (window, prefixes, i, p, fnc, to) {
+  while (!fnc && i < prefixes.length) {
+    fnc = window[prefixes[i++] + 'equestAnimationFrame'];
+  }
+  return (fnc && fnc.bind(window)) || window.setImmediate || function (fnc) { window.setTimeout(fnc, 0); };
 })(typeof window !== 'undefined' ? window : global, 'r webkitR mozR msR oR'.split(' '), 0);
-
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // Render hook to update layout / size of text document lines once those are
 // rendered and DOM measuring can be used
 
 class AfterTextRenderHook {
-  
-  reset(morph) {
+  reset (morph) {
     this.morph = morph;
     this.called = false;
     this.needsRerender = false;
   }
 
-  updateLineHeightOfNode(morph, docLine, lineNode) {
+  updateLineHeightOfNode (morph, docLine, lineNode) {
     if (docLine.height === 0 || docLine.hasEstimatedExtent) {
-      
       const tfm = morph.getGlobalTransform().inverse();
       tfm.e = tfm.f = 0;
-      
+
       const needsTransformAdjustment = tfm.getScale() != 1 || tfm.getRotation() != 0;
       if (needsTransformAdjustment) lineNode.style.transform = tfm.toString();
-      const {height: nodeHeight, width: nodeWidth} = lineNode.getBoundingClientRect();
+      const { height: nodeHeight, width: nodeWidth } = lineNode.getBoundingClientRect();
       if (needsTransformAdjustment) lineNode.style.transform = '';
-      
-      if (nodeHeight && nodeWidth && (docLine.height !== nodeHeight || docLine.width !== nodeWidth)
-         && morph.fontMetric.isFontSupported(morph.fontFamily, morph.fontWeight)) {
+
+      if (nodeHeight && nodeWidth && (docLine.height !== nodeHeight || docLine.width !== nodeWidth) &&
+         morph.fontMetric.isFontSupported(morph.fontFamily, morph.fontWeight)) {
         // console.log(`[${docLine.row}] ${nodeHeight} vs ${docLine.height}`)
         docLine.changeExtent(nodeWidth, nodeHeight, false);
         morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
@@ -229,64 +224,63 @@ class AfterTextRenderHook {
         this.needsRerender = true;
         morph.viewState._needsFit = true;
       }
-  
+
       if (docLine.textAndAttributes && docLine.textAndAttributes.length) {
         let inlineMorph;
-        for (var j = 0, column=0; j < docLine.textAndAttributes.length; j += 2) {
-          inlineMorph = docLine.textAndAttributes[j]
+        for (let j = 0, column = 0; j < docLine.textAndAttributes.length; j += 2) {
+          inlineMorph = docLine.textAndAttributes[j];
           if (inlineMorph && inlineMorph.isMorph) {
-             morph._positioningSubmorph = inlineMorph;
-             inlineMorph.position = morph.textLayout.pixelPositionFor(morph, {row: docLine.row , column}).subPt(morph.origin);
-             inlineMorph._dirty = false; // no need to rerender
-             morph._positioningSubmorph = null;
-             column++;
+            morph._positioningSubmorph = inlineMorph;
+            inlineMorph.position = morph.textLayout.pixelPositionFor(morph, { row: docLine.row, column }).subPt(morph.origin);
+            inlineMorph._dirty = false; // no need to rerender
+            morph._positioningSubmorph = null;
+            column++;
           } else if (inlineMorph) {
-             column += inlineMorph.length
+            column += inlineMorph.length;
           }
         }
       }
-      
+
       return nodeHeight;
     }
     return docLine.height;
   }
 
-  updateExtentsOfLines(textlayerNode) {
+  updateExtentsOfLines (textlayerNode) {
     // figure out what lines are displayed in the text layer node and map those
     // back to document lines.  Those are then updated via lineNode.getBoundingClientRect
-    let {morph} = this,
-        {textLayout, viewState, fontMetric} = morph
-  
+    const { morph } = this;
+    const { textLayout, viewState, fontMetric } = morph;
+
     viewState.dom_nodes = [];
     viewState.dom_nodeFirstRow = 0;
     viewState.textWidth = textlayerNode.scrollWidth;
-    
-    let lineNodes = textlayerNode.children,
-        i = 0, 
-        firstLineNode;
-  
+
+    const lineNodes = textlayerNode.children;
+    let i = 0;
+    let firstLineNode;
+
     while (i < lineNodes.length && lineNodes[i].className != 'line') i++;
-    
+
     if (i < lineNodes.length) {
       firstLineNode = lineNodes[i];
     } else {
       return;
     }
-  
-    let ds = firstLineNode.dataset,
-        row = Number(ds ? ds.row : firstLineNode.getAttribute("data-row"));
-    if (typeof row !== "number" || isNaN(row)) return;
+
+    const ds = firstLineNode.dataset;
+    const row = Number(ds ? ds.row : firstLineNode.getAttribute('data-row'));
+    if (typeof row !== 'number' || isNaN(row)) return;
     viewState.dom_nodeFirstRow = row;
-    let actualTextHeight = 0,
-        line = morph.document.getLine(row);
-  
+    let actualTextHeight = 0;
+    let line = morph.document.getLine(row);
+
     let foundEstimatedLine;
     for (; i < lineNodes.length; i++) {
-      let node = lineNodes[i];
+      const node = lineNodes[i];
       viewState.dom_nodes.push(node);
       if (line) {
-        if (!foundEstimatedLine)
-          foundEstimatedLine = line.hasEstimatedExtent;
+        if (!foundEstimatedLine) { foundEstimatedLine = line.hasEstimatedExtent; }
         line.hasEstimatedExtent = foundEstimatedLine;
         actualTextHeight = actualTextHeight + this.updateLineHeightOfNode(morph, line, node);
         // if we measured but the font as not been loaded, this is also just an estimate
@@ -294,16 +288,16 @@ class AfterTextRenderHook {
         line = line.nextLine();
       }
     }
-  
+
     if (this.needsRerender) {
       morph.fitIfNeeded();
       morph.makeDirty();
     } else morph._dirty = !!morph.submorphs.find(m => m.needsRerender());
   }
 
-  hook(node, propName, prevValue) {
+  hook (node, propName, prevValue) {
     if (!node || !node.parentNode) return;
-    let vs = this.morph.viewState;
+    const vs = this.morph.viewState;
     vs.text_layer_node = node;
     vs.fontmetric_text_layer_node = null;
     this.called = true;
@@ -314,54 +308,52 @@ class AfterTextRenderHook {
 }
 
 export default class TextRenderer {
-
-  constructor(domEnv) {
+  constructor (domEnv) {
     if (!domEnv) {
-      console.warn(`Text renderer initialized without domEnv. Depending on what you want to do you might have bad luck...!`);
+      console.warn('Text renderer initialized without domEnv. Depending on what you want to do you might have bad luck...!');
     } else if (!cssInstalled) installCSS(domEnv);
     this.domEnv = domEnv;
   }
 
-  directRenderLineFn(morph) {
+  directRenderLineFn (morph) {
     let fn = morph.viewState._renderLineFn;
     if (!fn) {
-      let h = hyperscriptFnForDocument(this.domEnv.document);
+      const h = hyperscriptFnForDocument(this.domEnv.document);
       fn = morph.viewState._renderLineFn = line => this.renderLine(h, null, morph, line);
     }
     return fn;
   }
 
-  directRenderTextLayerFn(morph) {
+  directRenderTextLayerFn (morph) {
     let fn = morph.viewState._renderTextLayerFn;
     if (!fn) {
-      let h = hyperscriptFnForDocument(this.domEnv.document);
+      const h = hyperscriptFnForDocument(this.domEnv.document);
       fn = morph.viewState._renderTextLayerFn = additionalStyle =>
         this.renderJustTextLayerNode(h, morph, additionalStyle, []);
     }
     return fn;
   }
 
-  renderMorph(morph, renderer) {
-    var cursorWidth = 1,
-        selectionLayer = [];
-    
-    let sel = morph.selection;
+  renderMorph (morph, renderer) {
+    const cursorWidth = 1;
+    let selectionLayer = [];
+
+    const sel = morph.selection;
     if (morph.inMultiSelectMode()) {
-      let sels = sel.selections, i = 0;
-      for (; i < sels.length-1; i++)
-        selectionLayer.push(...this.renderSelectionLayer(morph, sels[i], true/*diminished*/, 2))
-      selectionLayer.push(...this.renderSelectionLayer(morph, sels[i], false/*diminished*/, 4))
+      const sels = sel.selections; let i = 0;
+      for (; i < sels.length - 1; i++) { selectionLayer.push(...this.renderSelectionLayer(morph, sels[i], true/* diminished */, 2)); }
+      selectionLayer.push(...this.renderSelectionLayer(morph, sels[i], false/* diminished */, 4));
     } else {
-      selectionLayer = this.renderSelectionLayer(morph, sel, false, cursorWidth)
-    };
+      selectionLayer = this.renderSelectionLayer(morph, sel, false, cursorWidth);
+    }
 
-    let textLayer = this.renderTextLayer(morph, renderer),
-        textLayerForFontMeasure = this.renderJustTextLayerNode(h, morph, null, []),
-        markerLayer = this.renderMarkerLayer(morph, renderer),
-        horizontalScrollBarVisible = morph.document.width > morph.width,
-        scrollBarOffset = horizontalScrollBarVisible ? morph.scrollbarOffset : pt(0,0);
+    const textLayer = this.renderTextLayer(morph, renderer);
+    const textLayerForFontMeasure = this.renderJustTextLayerNode(h, morph, null, []);
+    const markerLayer = this.renderMarkerLayer(morph, renderer);
+    const horizontalScrollBarVisible = morph.document.width > morph.width;
+    const scrollBarOffset = horizontalScrollBarVisible ? morph.scrollbarOffset : pt(0, 0);
 
-    let scrollLayer = h('div', {
+    const scrollLayer = h('div', {
       className: 'scrollLayer',
       style: {
         position: 'absolute',
@@ -370,115 +362,117 @@ export default class TextRenderer {
         width: morph.width + 'px',
         height: morph.height + 'px'
       }
-    }, [h('div', {style: {
-      width: Math.max(morph.document.width, morph.width) + 'px',
-      height: Math.max(morph.document.height, morph.height) - scrollBarOffset.y + 'px' }})]);
+    }, [h('div', {
+      style: {
+        width: Math.max(morph.document.width, morph.width) + 'px',
+        height: Math.max(morph.document.height, morph.height) - scrollBarOffset.y + 'px'
+      }
+    })]);
 
-    textLayer.properties.className += " actual";
+    textLayer.properties.className += ' actual';
     textLayer.properties.style.overflow = morph.clipMode === 'visible' ? 'visible' : 'hidden';
-    textLayerForFontMeasure.properties.className += " font-measure";
+    textLayerForFontMeasure.properties.className += ' font-measure';
 
-    let {embeddedMorphMap} = morph,
-        submorphsNotInText = embeddedMorphMap
-          ? morph.submorphs.filter(ea => !embeddedMorphMap.has(ea))
-          : morph.submorphs;
+    const { embeddedMorphMap } = morph;
+    const submorphsNotInText = embeddedMorphMap
+      ? morph.submorphs.filter(ea => !embeddedMorphMap.has(ea))
+      : morph.submorphs;
 
-    let subNodes = [
-      ...selectionLayer, markerLayer, 
+    const subNodes = [
+      ...selectionLayer, markerLayer,
       textLayerForFontMeasure,
       textLayer,
       renderer.renderSelectedSubmorphs(morph, submorphsNotInText)
     ];
 
-    return h("div", {
-        ...defaultAttributes(morph, renderer),
+    return h('div', {
+      ...defaultAttributes(morph, renderer),
+      style: {
+        ...defaultStyle(morph),
+        ...morph.viewState.fastScroll ? { overflow: morph.clipMode == 'visible' ? 'visible' : 'hidden' } : {},
+        '-moz-user-select': 'none',
+        cursor: morph.nativeCursor === 'auto'
+          ? (morph.readOnly ? 'default' : 'text')
+          : morph.nativeCursor
+      }
+    }, [
+      scrollLayer,
+      ...morph.viewState.fastScroll ? [h('div', {
+        className: 'scrollWrapper',
         style: {
-          ...defaultStyle(morph),
-          ... morph.viewState.fastScroll ? {overflow: morph.clipMode == 'visible' ? 'visible' : 'hidden'} : {},
-          "-moz-user-select": "none",
-          cursor: morph.nativeCursor === "auto" ?
-            (morph.readOnly ? "default" : "text") :
-            morph.nativeCursor
+          'pointer-events': 'none',
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          transform: `translate(-${morph.scroll.x}px, -${morph.scroll.y}px)`
         }
-      }, [
-        scrollLayer,
-        ...morph.viewState.fastScroll ? [h("div", {
-            className: 'scrollWrapper',
-            style: {
-              'pointer-events': 'none',
-              position: 'absolute',
-              width: '100%', height: '100%',
-              transform: `translate(-${morph.scroll.x}px, -${morph.scroll.y}px)`
-            }
-          }, subNodes)] : subNodes
-      ]
+      }, subNodes)] : subNodes
+    ]
     );
   }
 
-  renderTextLayer(morph, renderer) {
+  renderTextLayer (morph, renderer) {
     // this method renders the text content = lines
 
-    let children = morph.debug ? [
+    const children = morph.debug ? [
       ...this.renderDebugLayer(morph),
       ...this.renderLines(h, renderer, morph)
     ] : this.renderLines(h, renderer, morph);
 
-
-    let node = this.renderJustTextLayerNode(h, morph, null, children);
+    const node = this.renderJustTextLayerNode(h, morph, null, children);
     node.properties.style.position = 'absolute';
 
     // install hook so we can update text layout from real DOM once it is rendered
-    let hook = morph.viewState.afterTextRenderHook
-            || (morph.viewState.afterTextRenderHook = new AfterTextRenderHook());
+    const hook = morph.viewState.afterTextRenderHook ||
+            (morph.viewState.afterTextRenderHook = new AfterTextRenderHook());
     hook.reset(morph);
-    node.properties["after-text-render-hook"] = hook;
+    node.properties['after-text-render-hook'] = hook;
     nextTick(() => {
       // The hook only gets called on prop changes of textlayer node. We
       // actually want to always trigger in order to update the lines, so run
       // delayed
       this.manuallyTriggerTextRenderHook(morph, renderer);
-    })
+    });
 
     return node;
   }
 
-  manuallyTriggerTextRenderHook(morph, renderer) {
-    let hook = morph.viewState.afterTextRenderHook;
+  manuallyTriggerTextRenderHook (morph, renderer) {
+    const hook = morph.viewState.afterTextRenderHook;
     if (!hook || hook.called) return;
-    let node = renderer.getNodeForMorph(morph),
-        textlayerNode = node && node.querySelector(".actual.newtext-text-layer");
+    const node = renderer.getNodeForMorph(morph);
+    const textlayerNode = node && node.querySelector('.actual.newtext-text-layer');
     if (textlayerNode) hook.hook(textlayerNode);
-    if (morph.ownerChain().every(m => m.visible))
-      morph.fit();
+    if (morph.ownerChain().every(m => m.visible)) { morph.fit(); }
   }
 
-  renderJustTextLayerNode(h, morph, additionalStyle, children) {
+  renderJustTextLayerNode (h, morph, additionalStyle, children) {
     // this method renders the text content = lines
 
-    let {
-          height,
-          padding: {x: padLeft, y: padTop, width: padWidth, height: padHeight},
-          lineWrapping,
-          fixedWidth,
-          fixedHeight,
-          backgroundColor,
-          fontColor,
-          textAlign,
-          fontSize,
-          textDecoration,
-          fontStyle,
-          fontWeight,
-          fontFamily,
-          lineHeight,
-          wordSpacing,
-          letterSpacing,
-          document: doc,
-          tabWidth
-        } = morph,
-        padRight = padLeft + padWidth,
-        padBottom = padTop + padHeight,
-        textHeight = Math.max(morph.document.height, morph.height),
-        textLayerClasses = "newtext-text-layer";
+    const {
+      height,
+      padding: { x: padLeft, y: padTop, width: padWidth, height: padHeight },
+      lineWrapping,
+      fixedWidth,
+      fixedHeight,
+      backgroundColor,
+      fontColor,
+      textAlign,
+      fontSize,
+      textDecoration,
+      fontStyle,
+      fontWeight,
+      fontFamily,
+      lineHeight,
+      wordSpacing,
+      letterSpacing,
+      document: doc,
+      tabWidth
+    } = morph;
+    const padRight = padLeft + padWidth;
+    const padBottom = padTop + padHeight;
+    const textHeight = Math.max(morph.document.height, morph.height);
+    let textLayerClasses = 'newtext-text-layer';
 
     // assemble attributes of node
 
@@ -486,103 +480,99 @@ export default class TextRenderer {
 
     switch (lineWrapping) {
       case true:
-      case "by-words":      textLayerClasses = textLayerClasses + " wrap-by-words"; break;
-      case "only-by-words": textLayerClasses = textLayerClasses + " only-wrap-by-words"; break;
-      case "by-chars":      textLayerClasses = textLayerClasses + " wrap-by-chars"; break;
-      case false:           textLayerClasses = textLayerClasses + " no-wrapping"; break;
+      case 'by-words': textLayerClasses = textLayerClasses + ' wrap-by-words'; break;
+      case 'only-by-words': textLayerClasses = textLayerClasses + ' only-wrap-by-words'; break;
+      case 'by-chars': textLayerClasses = textLayerClasses + ' wrap-by-chars'; break;
+      case false: textLayerClasses = textLayerClasses + ' no-wrapping'; break;
     }
 
-    if (!fixedWidth) textLayerClasses = textLayerClasses + " auto-width";
-    if (!fixedHeight) textLayerClasses = textLayerClasses + " auto-height";
+    if (!fixedWidth) textLayerClasses = textLayerClasses + ' auto-width';
+    if (!fixedHeight) textLayerClasses = textLayerClasses + ' auto-height';
 
     // ...and now other attribues
-    let style = {height: textHeight + "px"};
-    if (padLeft > 0)     style.paddingLeft =     padLeft + "px";
-    if (padRight > 0)    style.paddingRight =    padRight + "px";
-    if (padTop > 0)      style.paddingTop =      padTop + "px";
-    if (padBottom > 0)   style.paddingBottom =   padBottom + "px";
-    if (letterSpacing)   style.letterSpacing =   letterSpacing;
-    if (wordSpacing)     style.wordSpacing =     wordSpacing;
-    if (lineHeight)      style.lineHeight =      lineHeight;
-    if (fontFamily)      style.fontFamily =      fontFamily;
-    if (fontWeight)      style.fontWeight =      fontWeight;
-    if (fontStyle)       style.fontStyle =       fontStyle;
-    if (textDecoration)  style.textDecoration =  textDecoration;
-    if (fontSize)        style.fontSize =        fontSize + "px";
-    if (textAlign)       style.textAlign =       textAlign;
-    if (fontColor)       style.color =           String(fontColor);
+    const style = { height: textHeight + 'px' };
+    if (padLeft > 0) style.paddingLeft = padLeft + 'px';
+    if (padRight > 0) style.paddingRight = padRight + 'px';
+    if (padTop > 0) style.paddingTop = padTop + 'px';
+    if (padBottom > 0) style.paddingBottom = padBottom + 'px';
+    if (letterSpacing) style.letterSpacing = letterSpacing;
+    if (wordSpacing) style.wordSpacing = wordSpacing;
+    if (lineHeight) style.lineHeight = lineHeight;
+    if (fontFamily) style.fontFamily = fontFamily;
+    if (fontWeight) style.fontWeight = fontWeight;
+    if (fontStyle) style.fontStyle = fontStyle;
+    if (textDecoration) style.textDecoration = textDecoration;
+    if (fontSize) style.fontSize = fontSize + 'px';
+    if (textAlign) style.textAlign = textAlign;
+    if (fontColor) style.color = String(fontColor);
     if (backgroundColor) style.backgroundColor = backgroundColor;
-    if (tabWidth !== 8)  style.tabSize =         tabWidth;
+    if (tabWidth !== 8) style.tabSize = tabWidth;
 
-    let textAttrs = {className: textLayerClasses, style};
+    const textAttrs = { className: textLayerClasses, style };
 
-    style.overflow = "hidden";
-    
+    style.overflow = 'hidden';
+
     if (additionalStyle) {
-      let {clipMode, height, width} = additionalStyle;
-      if (typeof width === "number")
-        style.width = width + "px";
-      if (typeof height === "number")
-        style.height = height + "px";
-      if (clipMode)
-        style.overflow = clipMode;
+      const { clipMode, height, width } = additionalStyle;
+      if (typeof width === 'number') { style.width = width + 'px'; }
+      if (typeof height === 'number') { style.height = height + 'px'; }
+      if (clipMode) { style.overflow = clipMode; }
     }
 
-    return h("div", textAttrs, children);
+    return h('div', textAttrs, children);
   }
 
-  renderLines(h, renderer, morph) {
+  renderLines (h, renderer, morph) {
+    const {
+      height,
+      scroll,
+      padding: { x: padLeft, y: padTop, width: padWidth, height: padHeight },
+      document: doc,
+      clipMode
+    } = morph;
+    const node = renderer.getNodeForMorph(morph);
+    const padRight = padLeft + padWidth;
+    const padBottom = padTop + padHeight;
+    const scrollTop = scroll.y;
+    const scrollHeight = height;
+    const lastLineNo = doc.rowCount - 1;
+    const textHeight = doc.height;
+    const clips = clipMode !== 'visible';
 
-    let {
-          height,
-          scroll,
-          padding: {x: padLeft, y: padTop, width: padWidth, height: padHeight},
-          document: doc,
-          clipMode
-        } = morph,
-        node = renderer.getNodeForMorph(morph),
-        padRight = padLeft + padWidth,
-        padBottom = padTop + padHeight,
-        scrollTop = scroll.y,
-        scrollHeight = height,
-        lastLineNo = doc.rowCount-1,
-        textHeight = doc.height,
-        clips = clipMode !== "visible";
-    
-    let {
+    const {
       line: startLine,
       offset: startOffset,
       y: heightBefore,
       row: startRow
-    } = doc.findLineByVerticalOffset(clips ? Math.max(0, clips ? scrollTop - padTop : 0) : 0)
-     || {row: 0, y: 0, offset: 0, line: doc.getLine(0)};
+    } = doc.findLineByVerticalOffset(clips ? Math.max(0, clips ? scrollTop - padTop : 0) : 0) ||
+     { row: 0, y: 0, offset: 0, line: doc.getLine(0) };
 
-    let {
+    const {
       line: endLine,
       offset: endLineOffset,
       row: endRow
-    } = doc.findLineByVerticalOffset(clips ? Math.min(textHeight, (scrollTop - padTop) + scrollHeight) : textHeight)
-     || {row: lastLineNo, offset: 0, y: 0, line: doc.getLine(lastLineNo)};
-    
-    let firstVisibleRow = clips ? startRow : 0,
-        firstFullyVisibleRow = startOffset === 0 ? startRow : startRow + 1,
-        lastVisibleRow = clips ? endRow + 1 : lastLineNo,
-        lastFullyVisibleRow = !endLine || endLineOffset === endLine.height ? endRow : endRow-1;
+    } = doc.findLineByVerticalOffset(clips ? Math.min(textHeight, (scrollTop - padTop) + scrollHeight) : textHeight) ||
+     { row: lastLineNo, offset: 0, y: 0, line: doc.getLine(lastLineNo) };
+
+    const firstVisibleRow = clips ? startRow : 0;
+    const firstFullyVisibleRow = startOffset === 0 ? startRow : startRow + 1;
+    const lastVisibleRow = clips ? endRow + 1 : lastLineNo;
+    const lastFullyVisibleRow = !endLine || endLineOffset === endLine.height ? endRow : endRow - 1;
 
     // render lines via virtual-dom
 
     this.maxVisibleLines = Math.max(this.maxVisibleLines || 1, lastVisibleRow - firstVisibleRow + 1);
 
-    let visibleLines = [],
-        renderedLines = [];
+    const visibleLines = [];
+    const renderedLines = [];
 
     // spacer to push visible lines into the scrolled area
-    renderedLines.push(h("div.newtext-before-filler", {key: 'filler', style: {height: heightBefore + "px"}}));
+    renderedLines.push(h('div.newtext-before-filler', { key: 'filler', style: { height: heightBefore + 'px' } }));
 
-    let line = startLine, i = 0;
+    let line = startLine; let i = 0;
     while (i < this.maxVisibleLines) {
       visibleLines.push(line);
-      let newLine = this.renderLine(h, renderer, morph, line);
+      const newLine = this.renderLine(h, renderer, morph, line);
       renderedLines.push(newLine);
       newLine.key = line.row % this.maxVisibleLines;
       i++;
@@ -591,11 +581,15 @@ export default class TextRenderer {
     }
 
     Object.assign(morph.viewState, {
-      scrollTop, scrollHeight,
+      scrollTop,
+      scrollHeight,
       scrollBottom: scrollTop + scrollHeight,
-      heightBefore, textHeight,
-      firstVisibleRow, lastVisibleRow,
-      firstFullyVisibleRow, lastFullyVisibleRow,
+      heightBefore,
+      textHeight,
+      firstVisibleRow,
+      lastVisibleRow,
+      firstFullyVisibleRow,
+      lastFullyVisibleRow,
       visibleLines
     });
 
@@ -604,27 +598,27 @@ export default class TextRenderer {
     return renderedLines;
   }
 
-  renderLine(h, renderer, morph, line) {
+  renderLine (h, renderer, morph, line) {
     // Note: this function is being used in the font metric as well, with a
     // non-virtual-dom "h" function
 
-    let { textAndAttributes } = line,
-        renderedChunks = [],
-        size = textAndAttributes.length,
-        content, attr,
-        fontSize, fontFamily, fontWeight, fontStyle, textDecoration, fontColor,
-        backgroundColor, nativeCursor, textStyleClasses, link,
-        tagname, nodeStyle, nodeAttrs, paddingRight, paddingLeft, paddingTop, paddingBottom,
-        lineHeight, textAlign, verticalAlign, wordSpacing, letterSpacing, quote, nested,
-        textStroke,
-        minFontSize = morph.fontSize;
+    const { textAndAttributes } = line;
+    const renderedChunks = [];
+    const size = textAndAttributes.length;
+    let content; let attr;
+    let fontSize; let fontFamily; let fontWeight; let fontStyle; let textDecoration; let fontColor;
+    let backgroundColor; let nativeCursor; let textStyleClasses; let link;
+    let tagname; let nodeStyle; let nodeAttrs; let paddingRight; let paddingLeft; let paddingTop; let paddingBottom;
+    let lineHeight; let textAlign; let verticalAlign; let wordSpacing; let letterSpacing; let quote; let nested;
+    let textStroke;
+    let minFontSize = morph.fontSize;
 
     if (size > 0) {
-      for (let i = 0; i < size; i = i+2) {
-        content = textAndAttributes[i] || "\u00a0";
-        attr = textAndAttributes[i+1];
+      for (let i = 0; i < size; i = i + 2) {
+        content = textAndAttributes[i] || '\u00a0';
+        attr = textAndAttributes[i + 1];
 
-        if (typeof content !== "string") {
+        if (typeof content !== 'string') {
           renderedChunks.push(
             content.isMorph
               ? this.renderEmbeddedSubmorph(h, renderer, content, attr)
@@ -634,69 +628,67 @@ export default class TextRenderer {
 
         if (!attr) { renderedChunks.push(content); continue; }
 
-        fontSize =         attr.fontSize && (obj.isString(attr.fontSize) ? attr.fontSize : attr.fontSize + 'px');
-        fontFamily =       attr.fontFamily;
-        fontWeight =       attr.fontWeight;
-        fontStyle =        attr.fontStyle;
-        textDecoration =   attr.textDecoration;
-        fontColor =        attr.fontColor;
-        backgroundColor =  attr.backgroundColor;
-        nativeCursor =     attr.nativeCursor;
+        fontSize = attr.fontSize && (obj.isString(attr.fontSize) ? attr.fontSize : attr.fontSize + 'px');
+        fontFamily = attr.fontFamily;
+        fontWeight = attr.fontWeight;
+        fontStyle = attr.fontStyle;
+        textDecoration = attr.textDecoration;
+        fontColor = attr.fontColor;
+        backgroundColor = attr.backgroundColor;
+        nativeCursor = attr.nativeCursor;
         textStyleClasses = attr.textStyleClasses;
-        link =             attr.link;
-        lineHeight =       attr.lineHeight || lineHeight;
-        textAlign =        attr.textAlign || textAlign;
-        wordSpacing =      attr.wordSpacing || wordSpacing;
-        letterSpacing =    attr.letterSpacing || letterSpacing;
-        paddingRight =     attr.paddingRight;
-        paddingLeft =      attr.paddingLeft;
-        paddingTop =       attr.paddingTop;
-        paddingBottom =    attr.paddingBottom;
-        verticalAlign =    attr.verticalAlign;
-        textStroke =       attr.textStroke;
-        quote =            attr.quote || quote;
+        link = attr.link;
+        lineHeight = attr.lineHeight || lineHeight;
+        textAlign = attr.textAlign || textAlign;
+        wordSpacing = attr.wordSpacing || wordSpacing;
+        letterSpacing = attr.letterSpacing || letterSpacing;
+        paddingRight = attr.paddingRight;
+        paddingLeft = attr.paddingLeft;
+        paddingTop = attr.paddingTop;
+        paddingBottom = attr.paddingBottom;
+        verticalAlign = attr.verticalAlign;
+        textStroke = attr.textStroke;
+        quote = attr.quote || quote;
 
-        tagname = "span";
+        tagname = 'span';
         nodeStyle = {};
-        nodeAttrs = {style: nodeStyle};
+        nodeAttrs = { style: nodeStyle };
 
         if (fontSize && attr.fontSize < minFontSize) minFontSize = attr.fontSize;
 
         if (link) {
-          tagname = "a";
+          tagname = 'a';
           nodeAttrs.href = link;
-          if (link && link.startsWith('http')) nodeAttrs.target = "_blank";
+          if (link && link.startsWith('http')) nodeAttrs.target = '_blank';
         }
 
         if (link || nativeCursor) nodeStyle.pointerEvents = 'auto';
 
-        if (fontSize) nodeStyle.fontSize               = fontSize;
-        if (fontFamily) nodeStyle.fontFamily           = fontFamily;
-        if (fontWeight) nodeStyle.fontWeight           = fontWeight;
-        if (fontStyle) nodeStyle.fontStyle             = fontStyle;
-        if (textDecoration) nodeStyle.textDecoration   = textDecoration;
-        if (fontColor) nodeStyle.color                 = String(fontColor);
+        if (fontSize) nodeStyle.fontSize = fontSize;
+        if (fontFamily) nodeStyle.fontFamily = fontFamily;
+        if (fontWeight) nodeStyle.fontWeight = fontWeight;
+        if (fontStyle) nodeStyle.fontStyle = fontStyle;
+        if (textDecoration) nodeStyle.textDecoration = textDecoration;
+        if (fontColor) nodeStyle.color = String(fontColor);
         if (backgroundColor) nodeStyle.backgroundColor = String(backgroundColor);
-        if (nativeCursor) nodeStyle.cursor             = nativeCursor;
-        if (paddingRight) nodeStyle.paddingRight       = paddingRight;
-        if (paddingLeft)  nodeStyle.paddingLeft        = paddingLeft;
-        if (paddingTop) nodeStyle.paddingTop           = paddingTop;
-        if (paddingBottom) nodeStyle.paddingBottom     = paddingBottom;
-        if (verticalAlign) nodeStyle.verticalAlign     = verticalAlign;
-        if (textStroke) nodeStyle["-webkit-text-stroke"]    = textStroke;
-        if (attr.doit) { nodeStyle.pointerEvents = 'auto'; nodeStyle.cursor = 'pointer'; };
+        if (nativeCursor) nodeStyle.cursor = nativeCursor;
+        if (paddingRight) nodeStyle.paddingRight = paddingRight;
+        if (paddingLeft) nodeStyle.paddingLeft = paddingLeft;
+        if (paddingTop) nodeStyle.paddingTop = paddingTop;
+        if (paddingBottom) nodeStyle.paddingBottom = paddingBottom;
+        if (verticalAlign) nodeStyle.verticalAlign = verticalAlign;
+        if (textStroke) nodeStyle['-webkit-text-stroke'] = textStroke;
+        if (attr.doit) { nodeStyle.pointerEvents = 'auto'; nodeStyle.cursor = 'pointer'; }
 
-        if (textStyleClasses && textStyleClasses.length)
-          nodeAttrs.className = textStyleClasses.join(" ");
+        if (textStyleClasses && textStyleClasses.length) { nodeAttrs.className = textStyleClasses.join(' '); }
 
         renderedChunks.push(h(tagname, nodeAttrs, content));
       }
+    } else renderedChunks.push(h('br'));
 
-    } else renderedChunks.push(h("br"));
-
-    var lineStyle = {};
+    const lineStyle = {};
     // var lineTag = quote ? "blockquote" : "div";
-    var lineTag = "div";
+    const lineTag = 'div';
     if (morph.fontSize > minFontSize) lineStyle.fontSize = minFontSize + 'px';
     if (lineHeight) lineStyle.lineHeight = lineHeight;
     if (textAlign) lineStyle.textAlign = textAlign;
@@ -704,217 +696,214 @@ export default class TextRenderer {
     if (wordSpacing) lineStyle.wordSpacing = wordSpacing;
 
     let node = h(lineTag,
-      {className: "line", style: lineStyle, dataset: {row: line.row}},
+      { className: 'line', style: lineStyle, dataset: { row: line.row } },
       renderedChunks);
 
     if (quote) {
-      if (typeof quote !== "number") quote = 1;
-      for (let i = quote; i--;) node = h("blockquote", {}, node);
+      if (typeof quote !== 'number') quote = 1;
+      for (let i = quote; i--;) node = h('blockquote', {}, node);
     }
 
     return node;
   }
 
-  renderEmbeddedSubmorph(h, renderer, morph, attr) {
+  renderEmbeddedSubmorph (h, renderer, morph, attr) {
     let rendered;
     attr = attr || {};
     if (renderer) {
       rendered = renderer.render(morph);
-      rendered.properties.style.position = "relative";
-      rendered.properties.style.transform = "";
-      rendered.properties.style.textAlign = "initial";
+      rendered.properties.style.position = 'relative';
+      rendered.properties.style.transform = '';
+      rendered.properties.style.textAlign = 'initial';
       // fixme:  this addition screws up the bounds computation of the embedded submorph
       if (attr.paddingTop) rendered.properties.style.marginTop = attr.paddingTop;
-      if (attr.paddingLeft) rendered.properties.style.marginLeft= attr.paddingLeft;
+      if (attr.paddingLeft) rendered.properties.style.marginLeft = attr.paddingLeft;
       if (attr.paddingRight) rendered.properties.style.marginRight = attr.paddingRight;
       if (attr.paddingBottom) rendered.properties.style.marginBottom = attr.paddingBottom;
       return rendered;
     }
-    let {extent, styleClasses} = morph,
-        width = extent.x + "px",
-        height = extent.y + "px";
-    return h("div", {className: styleClasses.join(" "), style: {width, height}}, []);
+    const { extent, styleClasses } = morph;
+    const width = extent.x + 'px';
+    const height = extent.y + 'px';
+    return h('div', { className: styleClasses.join(' '), style: { width, height } }, []);
   }
 
-  renderSelectionLayer(morph, selection, diminished = false, cursorWidth = 2) {
-
+  renderSelectionLayer (morph, selection, diminished = false, cursorWidth = 2) {
     if (!selection) return [];
 
-    let {textLayout} = morph;
+    const { textLayout } = morph;
 
-    var {start, end, cursorVisible, selectionColor} = selection,
-        {document, cursorColor} = morph,
-        isReverse               = selection.isReverse(),
-        startBounds             = textLayout.boundsFor(morph, start),
-        maxBounds               = textLayout.computeMaxBoundsForLineSelection(morph, selection),
-        endBounds               = textLayout.boundsFor(morph, end),
-        startPos                = pt(startBounds.x, maxBounds.y),
-        endPos                  = pt(endBounds.x, endBounds.y),
-        leadLineHeight          = startBounds.height,
-        endLineHeight           = endBounds.height,
-        cursorPos               = isReverse ? pt(startBounds.x, startBounds.y) : endPos,
-        cursorHeight            = isReverse ? leadLineHeight : endLineHeight,
-        renderedCursor          = this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth, cursorColor);
-     
+    const { start, end, cursorVisible, selectionColor } = selection;
+    const { document, cursorColor } = morph;
+    const isReverse = selection.isReverse();
+    const startBounds = textLayout.boundsFor(morph, start);
+    const maxBounds = textLayout.computeMaxBoundsForLineSelection(morph, selection);
+    const endBounds = textLayout.boundsFor(morph, end);
+    const startPos = pt(startBounds.x, maxBounds.y);
+    const endPos = pt(endBounds.x, endBounds.y);
+    const leadLineHeight = startBounds.height;
+    const endLineHeight = endBounds.height;
+    const cursorPos = isReverse ? pt(startBounds.x, startBounds.y) : endPos;
+    const cursorHeight = isReverse ? leadLineHeight : endLineHeight;
+    const renderedCursor = this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth, cursorColor);
+
     if (selection.isEmpty()) return [renderedCursor];
 
     // render selection layer
-    let slices = [];
+    const slices = [];
     let row = selection.start.row;
     let yOffset = document.computeVerticalOffsetOf(row) + morph.padding.top();
-    let paddingLeft = morph.padding.left();
-    let bufferOffset = 50;
-    
-    let charBounds, 
-        selectionTopLeft,
-        selectionBottomRight,
-        isFirstLine,
-        renderedSelectionPart,
-        cb, line, isWrapped;
-   
-     while (row <= selection.end.row) {
-       line = document.getLine(row)
+    const paddingLeft = morph.padding.left();
+    const bufferOffset = 50;
 
-       if (row < morph.viewState.firstVisibleRow - bufferOffset) {
-         yOffset += line.height;
-         row++;
-         continue;
-       }
+    let charBounds,
+      selectionTopLeft,
+      selectionBottomRight,
+      isFirstLine,
+      renderedSelectionPart,
+      cb, line, isWrapped;
 
-       if (row > morph.viewState.lastVisibleRow + bufferOffset) break;
-       
-       charBounds = textLayout.charBoundsOfRow(morph, row).map(Rectangle.fromLiteral);
-       isFirstLine = row == selection.start.row;
-       isWrapped = charBounds[0].bottom() < arr.last(charBounds).top();
+    while (row <= selection.end.row) {
+      line = document.getLine(row);
 
-       if (isWrapped) {
-         // since wrapped lines spread multiple "rendered" rows, we need to do add in a couple of
-         // additional selection parts here
-         let rangesToRender = textLayout.rangesOfWrappedLine(morph, row).map(r => r.intersect(selection));
-         let isFirstSubLine = isFirstLine;
-         let subLineMinY = 0;
-         let subCharBounds;
-         let subLineMaxBottom;
-         for (let r of rangesToRender) {
-           if (r.isEmpty()) continue;
+      if (row < morph.viewState.firstVisibleRow - bufferOffset) {
+        yOffset += line.height;
+        row++;
+        continue;
+      }
 
-           subCharBounds = charBounds.slice(r.start.column, r.end.column);
-           
-           subLineMinY = isFirstSubLine ? arr.min(subCharBounds.map(cb => cb.top())) : subLineMinY;
-           subLineMaxBottom = arr.max(subCharBounds.map(cb => cb.bottom()));
-           
-           cb = subCharBounds[0];
-           selectionTopLeft = pt(paddingLeft + cb.left(), yOffset + subLineMinY);
+      if (row > morph.viewState.lastVisibleRow + bufferOffset) break;
 
-           cb = arr.last(subCharBounds);
-           selectionBottomRight = pt(paddingLeft + cb.right(), yOffset + subLineMaxBottom);
+      charBounds = textLayout.charBoundsOfRow(morph, row).map(Rectangle.fromLiteral);
+      isFirstLine = row == selection.start.row;
+      isWrapped = charBounds[0].bottom() < arr.last(charBounds).top();
 
-           subLineMinY = subLineMaxBottom;
-           isFirstSubLine = false;
+      if (isWrapped) {
+        // since wrapped lines spread multiple "rendered" rows, we need to do add in a couple of
+        // additional selection parts here
+        const rangesToRender = textLayout.rangesOfWrappedLine(morph, row).map(r => r.intersect(selection));
+        let isFirstSubLine = isFirstLine;
+        let subLineMinY = 0;
+        let subCharBounds;
+        let subLineMaxBottom;
+        for (const r of rangesToRender) {
+          if (r.isEmpty()) continue;
 
-           slices.push(Rectangle.fromAny(selectionTopLeft, selectionBottomRight))
-         }
-       }
+          subCharBounds = charBounds.slice(r.start.column, r.end.column);
 
-       if (!isWrapped) {
-         let isLastLine = row == selection.end.row;
-         let startIdx = isFirstLine ? selection.start.column : 0;
-         let endIdx = isLastLine ? selection.end.column : charBounds.length - 1;
-         let lineMinY = isFirstLine && arr.min(charBounds.slice(startIdx, endIdx + 1).map(cb => cb.top())) || 0;
-         let emptyBuffer = startIdx >= endIdx ? 5 : 0;
-         
-         cb = charBounds[startIdx];
-         selectionTopLeft = pt(paddingLeft + (cb ? cb.left() : arr.last(charBounds).right()), yOffset + lineMinY);
-         
-         cb = charBounds[endIdx];
-         if (selection.includingLineEnd)
-           selectionBottomRight = pt(morph.width - morph.padding.right(), yOffset + lineMinY + line.height);
-         else {
-           let excludeCharWidth = isLastLine && selection.end.column <= charBounds.length - 1;
-           selectionBottomRight = pt(paddingLeft + (cb ? (excludeCharWidth ? cb.left() : cb.right()) : arr.last(charBounds).right()) + emptyBuffer, yOffset + lineMinY + line.height);
-         }
+          subLineMinY = isFirstSubLine ? arr.min(subCharBounds.map(cb => cb.top())) : subLineMinY;
+          subLineMaxBottom = arr.max(subCharBounds.map(cb => cb.bottom()));
 
-         slices.push(Rectangle.fromAny(selectionTopLeft, selectionBottomRight))
-       }
+          cb = subCharBounds[0];
+          selectionTopLeft = pt(paddingLeft + cb.left(), yOffset + subLineMinY);
 
-       yOffset += line.height;
-       row++;
-     }
+          cb = arr.last(subCharBounds);
+          selectionBottomRight = pt(paddingLeft + cb.right(), yOffset + subLineMaxBottom);
 
-     let renderedSelection = this.selectionLayerRounded(slices, selectionColor, morph)
+          subLineMinY = subLineMaxBottom;
+          isFirstSubLine = false;
 
-     renderedSelection.push(renderedCursor);
-     return renderedSelection;
+          slices.push(Rectangle.fromAny(selectionTopLeft, selectionBottomRight));
+        }
+      }
+
+      if (!isWrapped) {
+        const isLastLine = row == selection.end.row;
+        const startIdx = isFirstLine ? selection.start.column : 0;
+        const endIdx = isLastLine ? selection.end.column : charBounds.length - 1;
+        const lineMinY = isFirstLine && arr.min(charBounds.slice(startIdx, endIdx + 1).map(cb => cb.top())) || 0;
+        const emptyBuffer = startIdx >= endIdx ? 5 : 0;
+
+        cb = charBounds[startIdx];
+        selectionTopLeft = pt(paddingLeft + (cb ? cb.left() : arr.last(charBounds).right()), yOffset + lineMinY);
+
+        cb = charBounds[endIdx];
+        if (selection.includingLineEnd) { selectionBottomRight = pt(morph.width - morph.padding.right(), yOffset + lineMinY + line.height); } else {
+          const excludeCharWidth = isLastLine && selection.end.column <= charBounds.length - 1;
+          selectionBottomRight = pt(paddingLeft + (cb ? (excludeCharWidth ? cb.left() : cb.right()) : arr.last(charBounds).right()) + emptyBuffer, yOffset + lineMinY + line.height);
+        }
+
+        slices.push(Rectangle.fromAny(selectionTopLeft, selectionBottomRight));
+      }
+
+      yOffset += line.height;
+      row++;
+    }
+
+    const renderedSelection = this.selectionLayerRounded(slices, selectionColor, morph);
+
+    renderedSelection.push(renderedCursor);
+    return renderedSelection;
   }
 
-  selectionLayerRounded(slices, selectionColor, morph) {
+  selectionLayerRounded (slices, selectionColor, morph) {
     // split up the rectangle corners into a left and right batches
     let currentBatch;
-    let batches = [
+    const batches = [
       currentBatch = {
         left: [], right: []
       }
     ];
 
     let lastSlice;
-    for (let slice of slices) {
+    for (const slice of slices) {
       // if rectangles do not overlap, create a new split batch
       if (lastSlice && (lastSlice.left() > slice.right() || lastSlice.right() < slice.left())) {
-        batches.push(currentBatch = { left: [], right: []});
+        batches.push(currentBatch = { left: [], right: [] });
       }
       currentBatch.left.push(slice.topLeft(), slice.bottomLeft());
       currentBatch.right.push(slice.topRight(), slice.bottomRight());
       lastSlice = slice;
     }
     // turn each of the batches into its own svg path
-    let svgs = []
-    for (let batch of batches) {
+    const svgs = [];
+    for (const batch of batches) {
       if (!batch.left.length) continue;
-      let pos = batch.left.reduce((p1, p2) => p1.minPt(p2)); // topLeft of the path
-      let vs = batch.left.concat(batch.right.reverse());
+      const pos = batch.left.reduce((p1, p2) => p1.minPt(p2)); // topLeft of the path
+      const vs = batch.left.concat(batch.right.reverse());
 
       // move a sliding window over each vertex
       let updatedVs = [];
       for (let vi = 0; vi < vs.length; vi++) {
-        let prevV = vs[vi - 1] || arr.last(vs);
-        let currentV = vs[vi];
-        let nextV = vs[vi + 1] || arr.first(vs);
+        const prevV = vs[vi - 1] || arr.last(vs);
+        const currentV = vs[vi];
+        const nextV = vs[vi + 1] || arr.first(vs);
 
         // replace the vertex by two adjacent ones offset by distance
-        let offset = 6;
-        let offsetV1 = prevV.subPt(currentV).normalized().scaleBy(offset);
-        let p1 = currentV.addPt(offsetV1);
+        const offset = 6;
+        const offsetV1 = prevV.subPt(currentV).normalized().scaleBy(offset);
+        const p1 = currentV.addPt(offsetV1);
         p1._next = offsetV1.scaleBy(-1);
-        let offsetV2 = nextV.subPt(currentV).normalized().scaleBy(offset);
-        let p2 = currentV.addPt(offsetV2);
+        const offsetV2 = nextV.subPt(currentV).normalized().scaleBy(offset);
+        const p2 = currentV.addPt(offsetV2);
         p2._prev = offsetV2.scaleBy(-1);
 
-        updatedVs.push(p1, p2)
+        updatedVs.push(p1, p2);
       }
 
-      updatedVs = updatedVs.map( p => ({
-          position: p.subPt(pos), isSmooth: true, controlPoints: { next: p._next || pt(0), previous: p._prev || pt(0) }
-        })
+      updatedVs = updatedVs.map(p => ({
+        position: p.subPt(pos), isSmooth: true, controlPoints: { next: p._next || pt(0), previous: p._prev || pt(0) }
+      })
       );
-      
-      let d = getSvgVertices(updatedVs);
-      let { y: minY, x: minX } = updatedVs.map(p => p.position).reduce((p1, p2) => p1.minPt(p2));
-      let { y: maxY, x: maxX } = updatedVs.map(p => p.position).reduce((p1, p2) => p1.maxPt(p2));
-      let height = maxY - minY;
-      let width = maxX - minX;
+
+      const d = getSvgVertices(updatedVs);
+      const { y: minY, x: minX } = updatedVs.map(p => p.position).reduce((p1, p2) => p1.minPt(p2));
+      const { y: maxY, x: maxX } = updatedVs.map(p => p.position).reduce((p1, p2) => p1.maxPt(p2));
+      const height = maxY - minY;
+      const width = maxX - minX;
       svgs.push(
-        h("svg", {
-          namespace: "http://www.w3.org/2000/svg",
-          version: "1.1",
+        h('svg', {
+          namespace: 'http://www.w3.org/2000/svg',
+          version: '1.1',
           style: {
-            position: "absolute",
+            position: 'absolute',
             left: pos.x + 'px',
             top: pos.y + 'px',
             width,
-            height,
+            height
           }
-        }, h("path", { 
-          namespace: "http://www.w3.org/2000/svg",
+        }, h('path', {
+          namespace: 'http://www.w3.org/2000/svg',
           attributes: { d, fill: selectionColor.toString() }
         }))
       );
@@ -923,34 +912,35 @@ export default class TextRenderer {
     return svgs;
   }
 
-  cursor(pos, height, visible, diminished, width, color) {
+  cursor (pos, height, visible, diminished, width, color) {
     return h('div', {
-      className: "newtext-cursor" + (diminished ? " diminished" : ""),
+      className: 'newtext-cursor' + (diminished ? ' diminished' : ''),
       style: {
-        left: pos.x-Math.ceil(width/2) + "px", top: pos.y + "px",
-        width: width + "px", height: height + "px",
-        display: visible ? "" : "none",
-        background: color || "black"
+        left: pos.x - Math.ceil(width / 2) + 'px',
+        top: pos.y + 'px',
+        width: width + 'px',
+        height: height + 'px',
+        display: visible ? '' : 'none',
+        background: color || 'black'
       }
-    }/*, "\u00a0"*/);
+    }/*, "\u00a0" */);
   }
-
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // markers
 
-  renderMarkerLayer(morph) {
-    let {
-          markers,
-          textLayout,
-          viewState: {firstVisibleRow, lastVisibleRow}
-        } = morph,
-        parts = [];
+  renderMarkerLayer (morph) {
+    const {
+      markers,
+      textLayout,
+      viewState: { firstVisibleRow, lastVisibleRow }
+    } = morph;
+    const parts = [];
 
     if (!markers) return parts;
 
-    for (let m of markers) {
-      let {style, range: {start, end}} = m;
+    for (const m of markers) {
+      const { style, range: { start, end } } = m;
 
       if (end.row < firstVisibleRow || start.row > lastVisibleRow) continue;
 
@@ -964,78 +954,78 @@ export default class TextRenderer {
       // first line
       parts.push(this.renderMarkerPart(textLayout, morph, start, morph.lineRange(start.row).end, style));
       // lines in the middle
-      for (var row = start.row+1; row <= end.row-1; row++) {
-        let {start: lineStart, end: lineEnd} = morph.lineRange(row);
+      for (let row = start.row + 1; row <= end.row - 1; row++) {
+        const { start: lineStart, end: lineEnd } = morph.lineRange(row);
         parts.push(this.renderMarkerPart(textLayout, morph, lineStart, lineEnd, style, true));
       }
       // last line
-      parts.push(this.renderMarkerPart(textLayout, morph, {row: end.row, column: 0}, end, style));
+      parts.push(this.renderMarkerPart(textLayout, morph, { row: end.row, column: 0 }, end, style));
     }
 
     return parts;
   }
 
-  renderMarkerPart(textLayouter, morph, start, end, style, entireLine = false) {
-    var startX = 0, endX = 0, y = 0, height = 0,
-        {document: doc} = morph,
-        line = doc.getLine(start.row)
+  renderMarkerPart (textLayouter, morph, start, end, style, entireLine = false) {
+    let startX = 0; let endX = 0; let y = 0; let height = 0;
+    const { document: doc } = morph;
+    const line = doc.getLine(start.row);
     if (entireLine) {
-      var {padding} = morph;
+      const { padding } = morph;
       startX = padding.left();
       y = padding.top() + doc.computeVerticalOffsetOf(start.row);
       endX = startX + line.width;
       height = line.height;
     } else {
-      ({x: startX, y} = textLayouter.boundsFor(morph, start));
-      ({x: endX, height} = textLayouter.boundsFor(morph, end));
+      ({ x: startX, y } = textLayouter.boundsFor(morph, start));
+      ({ x: endX, height } = textLayouter.boundsFor(morph, end));
     }
     height = Math.ceil(height);
-    return h("div.newtext-marker-layer", {
+    return h('div.newtext-marker-layer', {
       style: {
         ...style,
-        left: startX + "px", top: y + "px",
-        height: height + "px",
-        width: endX - startX + "px"
+        left: startX + 'px',
+        top: y + 'px',
+        height: height + 'px',
+        width: endX - startX + 'px'
       }
     });
   }
 
-
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debug layer
 
-  renderDebugLayer(morph) {
-    let vs = morph.viewState,
-        debugHighlights = [],
-        textWidth = 0,
-        {heightBefore: rowY, firstVisibleRow, lastVisibleRow, visibleLines} = vs,
-        {padding, scroll: {x: visibleLeft, y: visibleTop}} = morph,
-        leftP = padding.left(),
-        rightP = padding.right(),
-        topP = padding.top(),
-        bottomP = padding.bottom();
+  renderDebugLayer (morph) {
+    const vs = morph.viewState;
+    const debugHighlights = [];
+    const textWidth = 0;
+    let { heightBefore: rowY, firstVisibleRow, lastVisibleRow, visibleLines } = vs;
+    const { padding, scroll: { x: visibleLeft, y: visibleTop } } = morph;
+    const leftP = padding.left();
+    const rightP = padding.right();
+    const topP = padding.top();
+    const bottomP = padding.bottom();
 
-    debugHighlights.push(h("div.debug-info", {
+    debugHighlights.push(h('div.debug-info', {
       style: {
-        left: (visibleLeft+leftP) + "px",
-        top: visibleTop + "px",
-        width: (morph.width-rightP)+"px",
+        left: (visibleLeft + leftP) + 'px',
+        top: visibleTop + 'px',
+        width: (morph.width - rightP) + 'px'
       }
-    }, h("span", `visible rows: ${firstVisibleRow} - ${lastVisibleRow}`)));
+    }, h('span', `visible rows: ${firstVisibleRow} - ${lastVisibleRow}`)));
 
     for (let i = 0, row = firstVisibleRow; row < lastVisibleRow; i++, row++) {
-      let line = visibleLines[i],
-          charBounds = morph.textLayout.lineCharBoundsCache.get(line),
-          {height} = line;
+      const line = visibleLines[i];
+      const charBounds = morph.textLayout.lineCharBoundsCache.get(line);
+      const { height } = line;
 
-      debugHighlights.push(h("div.debug-line", {
+      debugHighlights.push(h('div.debug-line', {
         style: {
-          left: (visibleLeft + leftP) + "px",
-          top: (topP + rowY) + "px",
-          width: (morph.width-rightP)+"px",
-          height: height+"px",
+          left: (visibleLeft + leftP) + 'px',
+          top: (topP + rowY) + 'px',
+          width: (morph.width - rightP) + 'px',
+          height: height + 'px'
         }
-      }, h("span", String(row))));
+      }, h('span', String(row))));
 
       if (!charBounds) {
         rowY = rowY + height;
@@ -1043,41 +1033,40 @@ export default class TextRenderer {
       }
 
       for (let col = 0; col < charBounds.length; col++) {
-        let {x, y, width, height} = charBounds[col];
-        debugHighlights.push(h("div.debug-char", {
+        const { x, y, width, height } = charBounds[col];
+        debugHighlights.push(h('div.debug-char', {
           style: {
-            left: (leftP+x) +"px",
-            top: (topP + rowY + y) + "px",
-            width: width+"px",
-            height: height+"px"
+            left: (leftP + x) + 'px',
+            top: (topP + rowY + y) + 'px',
+            width: width + 'px',
+            height: height + 'px'
           }
-        }))
+        }));
       }
 
       rowY = rowY + height;
     }
 
-    return debugHighlights
+    return debugHighlights;
   }
 }
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // DOM extraction from text morph
 
-export function extractHTMLFromTextMorph(
+export function extractHTMLFromTextMorph (
   textMorph,
   textAndAttributes = textMorph.textAndAttributesInRange(textMorph.selection.range)
 ) {
-  let text = new textMorph.constructor({
-        ...textMorph.defaultTextStyle,
-        width: textMorph.width,
-        textAndAttributes: textAndAttributes
-      }),
-      render = text.textRenderer.directRenderTextLayerFn(text),
-      renderLine = text.textRenderer.directRenderLineFn(text),
-      textLayerNode = render();
-  let style = System.global && System.global.getComputedStyle ? System.global.getComputedStyle(textLayerNode) : null;
+  const text = new textMorph.constructor({
+    ...textMorph.defaultTextStyle,
+    width: textMorph.width,
+    textAndAttributes: textAndAttributes
+  });
+  const render = text.textRenderer.directRenderTextLayerFn(text);
+  const renderLine = text.textRenderer.directRenderLineFn(text);
+  const textLayerNode = render();
+  const style = System.global && System.global.getComputedStyle ? System.global.getComputedStyle(textLayerNode) : null;
   if (style) {
     textLayerNode.ownerDocument.body.appendChild(textLayerNode);
     textLayerNode.style.whiteSpace = style.whiteSpace;
@@ -1086,7 +1075,6 @@ export function extractHTMLFromTextMorph(
     textLayerNode.style.minWidth = style.minWidth;
     textLayerNode.parentNode.removeChild(textLayerNode);
   }
-  for (let line of text.document.lines)
-    textLayerNode.appendChild(renderLine(line));
+  for (const line of text.document.lines) { textLayerNode.appendChild(renderLine(line)); }
   return textLayerNode.outerHTML;
 }
