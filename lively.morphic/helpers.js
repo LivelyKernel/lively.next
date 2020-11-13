@@ -20,13 +20,22 @@ var nameToClassMapping = nameToClassMapping || {};
 export function pathForBrowserHistory(worldName, queryString) {
   // how does the resource map to a URL shown in the browser URL bar? used for
   // browser history
+  if (!queryString)
+    queryString = typeof document !== "undefined" ? document.location.search : "";
   queryString = queryString.trim();
   let query;
   if (!queryString || queryString === "?") query = {};
   else query = parseQuery(queryString);
   
   let basePath = "/worlds/load";
-  query.name = worldName.replace(/\.json$/, "").replace(/%20/g, " ");
+  if (worldName.endsWith('.json')) {
+    query.file = worldName;
+    delete query.name;
+  } else {
+    delete query.file;
+    query.name = worldName;
+  }
+  
   // ensure the name param in the query string matches worldName
   
   return `${basePath}?${stringifyQuery(query)}`;

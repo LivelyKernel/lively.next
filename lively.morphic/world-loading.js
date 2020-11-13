@@ -265,8 +265,7 @@ export async function interactivelySaveWorld(world, options) {
 
     // hist
     if (window.history) {
-      let queryString = typeof document !== "undefined" ? document.location.search : "",
-          path = pathForBrowserHistory(name, queryString);
+      let path = pathForBrowserHistory(name);
       window.history.pushState({}, "lively.next", path);
     }
 
