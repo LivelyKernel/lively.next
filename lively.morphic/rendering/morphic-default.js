@@ -265,7 +265,7 @@ export class ShadowObject {
   }
 
   toFilterCss () {
-    const { distance, rotation, blur, color, spread } = this;
+    let { distance, rotation, blur, color, spread } = this;
     const { x, y } = Point.polar(distance, num.toRadians(rotation));
     blur = bowser.chrome ? blur / 3 : blur / 2;
     return `drop-shadow(${x.toFixed(2)}px ${y.toFixed(2)}px ${blur.toFixed(2)}px ${color.toString()})`;
