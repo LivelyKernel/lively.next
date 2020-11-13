@@ -1,75 +1,71 @@
-/*global System*/
-import { arr, string } from "lively.lang";
-import { pt } from "lively.graphics";
-import { LoadingIndicator } from "lively.components";
-import { config } from "lively.morphic";
+/* global System */
+import { arr, string } from 'lively.lang';
+import { pt } from 'lively.graphics';
+import { LoadingIndicator } from 'lively.components';
+import { config } from 'lively.morphic';
 import { fuzzyParse, query } from 'lively.ast';
-import { ImportInjector, GlobalInjector, ImportRemover } from "lively.modules/src/import-modification.js";
-import { callService, ProgressMonitor } from "../service-worker.js";
-
+import { ImportInjector, GlobalInjector, ImportRemover } from 'lively.modules/src/import-modification.js';
+import { callService, ProgressMonitor } from '../service-worker.js';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // inject import or global decls into code
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-export function declareVarNamesAsGlobals(textMorph, varNames, opts) {
-  let {recordUndo = true} = opts || {},
-      src = textMorph.textString,
-      parsed = textMorph.editorPlugin.parse(),
-      {status, generated, from, to} = GlobalInjector.run(src, varNames, parsed),
-      pos = textMorph.indexToPosition(from), range;
-  if (status === "not modified") return null;
+export function declareVarNamesAsGlobals (textMorph, varNames, opts) {
+  const { recordUndo = true } = opts || {};
+  const src = textMorph.textString;
+  const parsed = textMorph.editorPlugin.parse();
+  const { status, generated, from, to } = GlobalInjector.run(src, varNames, parsed);
+  const pos = textMorph.indexToPosition(from); let range;
+  if (status === 'not modified') return null;
   if (recordUndo) textMorph.undoManager.group();
   range = textMorph.insertText(generated, pos);
   if (recordUndo) textMorph.undoManager.group();
   return range;
 }
 
-export async function injectImportsIntoText(textMorph, imports, opts) {
-  let {gotoImport, insertImportAtCursor, recordUndo, System: S} = {
-        gotoImport: true,
-        insertImportAtCursor: false,
-        recordUndo: true,
-        System,
-        ...opts
-      },
-      jsPlugin = textMorph.pluginFind(p => p.isJSEditorPlugin);
+export async function injectImportsIntoText (textMorph, imports, opts) {
+  const { gotoImport, insertImportAtCursor, recordUndo, System: S } = {
+    gotoImport: true,
+    insertImportAtCursor: false,
+    recordUndo: true,
+    System,
+    ...opts
+  };
+  const jsPlugin = textMorph.pluginFind(p => p.isJSEditorPlugin);
 
-  if (!jsPlugin)
-    throw new Error(`cannot find js plugin of ${textMorph}`);
+  if (!jsPlugin) { throw new Error(`cannot find js plugin of ${textMorph}`); }
 
-  var moduleId = jsPlugin.evalEnvironment.targetModule,
-      intoPackage = await jsPlugin.systemInterface().getPackageForModule(moduleId),
-      from, to, pos, importedVarNames = [], ranges = [];
+  const moduleId = jsPlugin.evalEnvironment.targetModule;
+  const intoPackage = await jsPlugin.systemInterface().getPackageForModule(moduleId);
+  var from; var to; var pos; const importedVarNames = []; const ranges = [];
 
-  if (gotoImport)
-    textMorph.saveMark(); // so we can easily jump to where we were after insertion
+  if (gotoImport) { textMorph.saveMark(); } // so we can easily jump to where we were after insertion
 
   if (recordUndo) textMorph.undoManager.group();
 
   // 3. Insert new import statements or extend existing
   imports = imports.slice();
   while (imports.length) {
-    let choice = imports.shift(),
-        source = textMorph.textString;
+    const choice = imports.shift();
+    const source = textMorph.textString;
 
-    var {generated, from, to, standaloneImport, importedVarName} =
-          ImportInjector.run(S, moduleId, intoPackage, source, choice),
-        pos = textMorph.indexToPosition(from);
+    var { generated, from, to, standaloneImport, importedVarName } =
+          ImportInjector.run(S, moduleId, intoPackage, source, choice);
+    var pos = textMorph.indexToPosition(from);
 
     if (generated) ranges.push(textMorph.insertText(generated, pos));
     if (importedVarName) importedVarNames.push(importedVarName);
     if (standaloneImport) {
-      try { await jsPlugin.runEval(standaloneImport); }
-      catch (e) { console.error(`Error when trying to import ${standaloneImport}: ${e.stack}`); }
+      try { await jsPlugin.runEval(standaloneImport); } catch (e) { console.error(`Error when trying to import ${standaloneImport}: ${e.stack}`); }
     }
   }
 
   // 4. insert imported var names at cursor
   if (insertImportAtCursor) {
-    let source = importedVarNames.join("\n"),
-        pos = textMorph.cursorPosition,
-        before = textMorph.getLine(pos.row).slice(0, pos.col);
+    const source = importedVarNames.join('\n');
+    const pos = textMorph.cursorPosition;
+    const before = textMorph.getLine(pos.row).slice(0, pos.col);
     textMorph.selection.text = source;
     if (!gotoImport) {
       textMorph.scrollCursorIntoView();
@@ -81,47 +77,47 @@ export async function injectImportsIntoText(textMorph, imports, opts) {
 
   // 5. select changes in import statements
   if (gotoImport) {
-    textMorph.selection = ranges.length ?
-      arr.last(ranges) :
-      {start: pos, end: textMorph.indexToPosition(to)};
+    textMorph.selection = ranges.length
+      ? arr.last(ranges)
+      : { start: pos, end: textMorph.indexToPosition(to) };
     textMorph.scrollCursorIntoView();
-    textMorph.focus();    
+    textMorph.focus();
   }
 
-  return {ranges};
+  return { ranges };
 }
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // choosing an export to import
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-export async function interactivelyInjectImportIntoText(textMorph, opts) {
-  var jsPlugin = textMorph.pluginFind(p => p.isJSEditorPlugin);
-  if (!jsPlugin)
-    throw new Error(`cannot find js plugin of ${textMorph}`);
-  var choices = await interactivelyChooseImports(
+export async function interactivelyInjectImportIntoText (textMorph, opts) {
+  const jsPlugin = textMorph.pluginFind(p => p.isJSEditorPlugin);
+  if (!jsPlugin) { throw new Error(`cannot find js plugin of ${textMorph}`); }
+  const choices = await interactivelyChooseImports(
     await jsPlugin.systemInterface(), {
       world: textMorph.world(), progress: opts.progress, requester: opts.requester
     });
   return choices ? injectImportsIntoText(textMorph, choices, opts) : null;
 }
 
-
-export async function interactivelyChooseImports(livelySystem, opts) {
-  opts = {System: System, world: $world, ...opts};
+export async function interactivelyChooseImports (livelySystem, opts) {
+  opts = { System: System, world: $world, ...opts };
   // 1. gather all exports
-  var exports = await LoadingIndicator.runFn(
+  const exports = await LoadingIndicator.runFn(
     (li) => {
-      let progress = new ProgressMonitor({
-          handlers: {searchProgress: (stepName, progress) => {
+      const progress = new ProgressMonitor({
+        handlers: {
+          searchProgress: (stepName, progress) => {
             li.progress = progress;
             li.label = stepName;
-          }}
-        });
-      return config.ide.workerEnabled ? callService("exportsOfModules", {
+          }
+        }
+      });
+      return config.ide.workerEnabled ? callService('exportsOfModules', {
         excludedPackages: config.ide.js.ignoredPackages,
-        livelySystem, progress: new ProgressMonitor({
+        livelySystem,
+        progress: new ProgressMonitor({
           handlers: {
             workerProgress: (stepName, progress) => {
               li.progress = progress;
@@ -129,49 +125,46 @@ export async function interactivelyChooseImports(livelySystem, opts) {
             }
           }
         })
-       }) : livelySystem.exportsOfModules({
-         excludedPackages: config.ide.js.ignoredPackages,
-         progress
-      })
-    }, "computing imports...");
+      }) : livelySystem.exportsOfModules({
+        excludedPackages: config.ide.js.ignoredPackages,
+        progress
+      });
+    }, 'computing imports...');
 
   // 2. Ask what to import + generate insertions
-  var choices = await ExportPrompt.run(opts.world, exports, opts.requester);
+  const choices = await ExportPrompt.run(opts.world, exports, opts.requester);
   return !choices.length ? null : choices;
 }
 
-function labelForExport(exportSpec) {
-  let {type, exported, local, fromModule, pathInPackage, packageName, packageVersion} = exportSpec,
-      exportName = exported === "default" ? `${local} (default)` : exported;
+function labelForExport (exportSpec) {
+  const { type, exported, local, fromModule, pathInPackage, packageName, packageVersion } = exportSpec;
+  const exportName = exported === 'default' ? `${local} (default)` : exported;
 
   if (fromModule) var reexportString = ` rexported from ${fromModule}`;
 
-  var annotationString = ` [${packageName}/${pathInPackage}`;
+  let annotationString = ` [${packageName}/${pathInPackage}`;
   if (packageVersion) annotationString += ` ${packageVersion}`;
-  annotationString += "]";
+  annotationString += ']';
 
   return [
     exportName, {},
-    `${type} ${reexportString || ""} ${annotationString}`, {
-      fontSize: "70%",
-      lineHeight: "175%",
-      textStyleClasses: ["truncated-text", "annotation"],
+    `${type} ${reexportString || ''} ${annotationString}`, {
+      fontSize: '70%',
+      lineHeight: '175%',
+      textStyleClasses: ['truncated-text', 'annotation']
       // maxWidth: 300
     }
   ];
 }
 
-
 class ExportPrompt {
-
-  static run(world, exportData, requester=world) {
+  static run (world, exportData, requester = world) {
     return new this().run(world, exportData, requester);
   }
 
-  async run(world, exportData, requester=world) {
-
-    var {selected: choices}  = await world.filterableListPrompt(
-      "Select import",
+  async run (world, exportData, requester = world) {
+    const { selected: choices } = await world.filterableListPrompt(
+      'Select import',
       exportData.map(ea => {
         return {
           isListItem: true,
@@ -181,15 +174,15 @@ class ExportPrompt {
       }),
       {
         multiSelect: true,
-        historyId: "lively.ide/js-interactively-import",
+        historyId: 'lively.ide/js-interactively-import',
         extent: pt(800, 500),
-        fuzzy: "value.exported",
+        fuzzy: 'value.exported',
         requester,
         sortFunction: (parsedInput, item) => {
           // preioritize those completions that are close to the input
-          var {exported, isMain} = item.value,
-              exported = (exported || "").toLowerCase(),
-              base = isMain ? -1 : 0;
+          var { exported, isMain } = item.value;
+          var exported = (exported || '').toLowerCase();
+          let base = isMain ? -1 : 0;
           parsedInput.lowercasedTokens.forEach(t =>
             base -= exported.startsWith(t) ? 10 : exported.includes(t) ? 5 : 0);
           return arr.sum(parsedInput.lowercasedTokens.map(token =>
@@ -198,51 +191,49 @@ class ExportPrompt {
       });
     return choices;
   }
-
 }
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // guide user through possible import declaration choices
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function ensureFullModuleIdOfFromModule(exported) {
-  let {fromModule, packageURL} = exported;
+function ensureFullModuleIdOfFromModule (exported) {
+  const { fromModule, packageURL } = exported;
   if (!fromModule) return null;
-  if (!fromModule.startsWith(".")) return fromModule;
-  let baseURL = packageURL || System.baseURL;
+  if (!fromModule.startsWith('.')) return fromModule;
+  const baseURL = packageURL || System.baseURL;
   return string.joinPath(baseURL, fromModule);
 }
 
-function matchingExportsForUndeclared(undeclaredVar, allExports, preferReExported = true) {
+function matchingExportsForUndeclared (undeclaredVar, allExports, preferReExported = true) {
   // given an undeclared var ({name, start,end}), filters the list of
   // allExports to those exports that match the undeclared var.  Since re-exports
   // of the same object are possible, allows to suppress re-exports or original
   // exports to filter the list of choices further
-  let matching = allExports.filter(ea => {
-    let isDefault = ea.exported === "default",
-        name = isDefault ? ea.local : ea.exported;
+  const matching = allExports.filter(ea => {
+    const isDefault = ea.exported === 'default';
+    const name = isDefault ? ea.local : ea.exported;
     return name === undeclaredVar.name;
   });
-  let reExported = matching.filter(export1 => {
+  const reExported = matching.filter(export1 => {
     if (export1.fromModule) return true;
     return !matching.some(export2 => {
       if (export1 === export2 || !export2.fromModule) return false;
-      let fullFrom = ensureFullModuleIdOfFromModule(export2);
+      const fullFrom = ensureFullModuleIdOfFromModule(export2);
       return fullFrom === export1.moduleId;
     });
   });
   return preferReExported ? reExported : arr.withoutAll(matching, reExported);
 }
 
-function undeclaredVariables(source, knownGlobals) {
+function undeclaredVariables (source, knownGlobals) {
   knownGlobals = knownGlobals || [];
-  let parsed = fuzzyParse(source, {withComments: true});
-  return query.findGlobalVarRefs(parsed, {jslintGlobalComment: true})
+  const parsed = fuzzyParse(source, { withComments: true });
+  return query.findGlobalVarRefs(parsed, { jslintGlobalComment: true })
     .filter(ea => !knownGlobals.includes(ea.name));
 }
 
-export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
+export async function interactivlyFixUndeclaredVariables (textMorph, opts) {
   // step-by-step selects an undeclared var and asks the user what to do with it.
   // choices are ignore, declare as global (via /*global*/ comment) or add an import.
   //
@@ -272,59 +263,60 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
     knownGlobals = textMorph.evalEnvironment.knownGlobals || []
   } = opts || {};
 
-  if (typeof sourceRetriever !== "function")
-    sourceRetriever = () => textMorph.textString;
+  if (typeof sourceRetriever !== 'function') { sourceRetriever = () => textMorph.textString; }
 
-  if (typeof highlightUndeclared !== "function")
+  if (typeof highlightUndeclared !== 'function') {
     highlightUndeclared = undeclared => {
-      let {start, end} = undeclared,
-          range = {
-            start: textMorph.indexToPosition(start),
-            end: textMorph.indexToPosition(end)};
+      const { start, end } = undeclared;
+      const range = {
+        start: textMorph.indexToPosition(start),
+        end: textMorph.indexToPosition(end)
+      };
       textMorph.selection = range;
       textMorph.centerRange(range);
     };
+  }
 
-  var allUndeclared = await updateUndeclared(), changes = [];
+  let allUndeclared;
+  const changes = [];
+
+  await updateUndeclared();
   if (!allUndeclared.length) return changes;
   ignore = ignore.slice();
 
-  var jsPlugin = textMorph.pluginFind(p => p.isJSEditorPlugin);
-  if (!jsPlugin)
-    throw new Error(`cannot find js plugin of ${textMorph}`);
+  const jsPlugin = textMorph.pluginFind(p => p.isJSEditorPlugin);
+  if (!jsPlugin) { throw new Error(`cannot find js plugin of ${textMorph}`); }
 
-  let livelySystem = await jsPlugin.systemInterface(),
-      exports = await livelySystem.exportsOfModules({
-        excludedPackages: config.ide.js.ignoredPackages});
+  const livelySystem = await jsPlugin.systemInterface();
+  const exports = await livelySystem.exportsOfModules({ excludedPackages: config.ide.js.ignoredPackages });
 
   textMorph.collapseSelection();
 
   if (keepTextPosition) {
-    var {scroll, cursorPosition} = textMorph,
-        anchor = textMorph.addAnchor({...cursorPosition, id: "fix-undeclared-vars"});
+    var { scroll, cursorPosition } = textMorph;
+    var anchor = textMorph.addAnchor({ ...cursorPosition, id: 'fix-undeclared-vars' });
   }
 
-  var canceled = false;
+  let canceled = false;
 
   while (true) {
     await updateUndeclared(); if (!allUndeclared.length) break;
 
-    let undeclared = allUndeclared[0],
-        {name} = undeclared,
-        imports = matchingExportsForUndeclared(undeclared, exports),
-        choices = ["ignore for now", "declare as global"].concat(
-          imports.map(ea => ({isListItem: true, value: ea, label: labelForExport(ea)}))),
-        choice;
+    const undeclared = allUndeclared[0];
+    const { name } = undeclared;
+    const imports = matchingExportsForUndeclared(undeclared, exports);
+    const choices = ['ignore for now', 'declare as global'].concat(
+      imports.map(ea => ({ isListItem: true, value: ea, label: labelForExport(ea) })));
+    let choice;
 
     await highlightUndeclared(undeclared);
     if (autoApplyIfSingleChoice && imports.length === 1) {
       choice = imports[0];
-
     } else {
       // ask user
-      ({selected: [choice]} = await $world.filterableListPrompt(
+      ({ selected: [choice] } = await $world.filterableListPrompt(
         `Found undeclared variable ${name}.  How should it be handled?`,
-        choices, {requester, theme: "dark", preselect: choices.length > 2 ? 2 : 0}));
+        choices, { requester, theme: 'dark', preselect: choices.length > 2 ? 2 : 0 }));
       if (!choice) { canceled = true; break; }
     }
 
@@ -332,23 +324,22 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
 
     // make global
     if (choice === choices[1]) {
-      changes.push({type: "global", name});
-      if (typeof sourceUpdater === "function") {
-        await sourceUpdater("global", [name]);
+      changes.push({ type: 'global', name });
+      if (typeof sourceUpdater === 'function') {
+        await sourceUpdater('global', [name]);
       } else {
-        await declareVarNamesAsGlobals(textMorph, [name], {
-          recordUndo: true, sourceUpdater});
+        await declareVarNamesAsGlobals(textMorph, [name], { recordUndo: true, sourceUpdater });
       }
       continue;
     }
 
     // add import
-    changes.push({type: "import", imported: choice});
-    if (typeof sourceUpdater === "function") {
-      await sourceUpdater("import", [choice]);
+    changes.push({ type: 'import', imported: choice });
+    if (typeof sourceUpdater === 'function') {
+      await sourceUpdater('import', [choice]);
     } else {
       await injectImportsIntoText(textMorph, [choice],
-        {gotoImport: false, insertImportAtCursor: false, recordUndo: true});
+        { gotoImport: false, insertImportAtCursor: false, recordUndo: true });
     }
   }
 
@@ -360,7 +351,7 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
 
   return canceled ? null : changes;
 
-  async function updateUndeclared() {
+  async function updateUndeclared () {
     return allUndeclared = undeclaredVariables(await sourceRetriever(), knownGlobals)
       .filter(ea => !ignore.includes(ea.name));
   }
@@ -370,18 +361,18 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
 // import cleanup
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-export async function cleanupUnusedImports(textMorph, opts) {
-  opts = {world: textMorph.world(), ...opts};
+export async function cleanupUnusedImports (textMorph, opts) {
+  opts = { world: textMorph.world(), ...opts };
 
-  var source = textMorph.textString,
-      toRemove = await chooseUnusedImports(source, opts);
+  const source = textMorph.textString;
+  const toRemove = await chooseUnusedImports(source, opts);
 
-  if (!toRemove) return "canceled";
-  if (!toRemove.changes || !toRemove.changes.length) return "nothing to remove";
+  if (!toRemove) return 'canceled';
+  if (!toRemove.changes || !toRemove.changes.length) return 'nothing to remove';
 
   textMorph.undoManager.group();
-  for (let {replacement, start, end} of toRemove.changes) {
-    var range = {
+  for (const { replacement, start, end } of toRemove.changes) {
+    const range = {
       start: textMorph.indexToPosition(start),
       end: textMorph.indexToPosition(end)
     };
@@ -389,27 +380,26 @@ export async function cleanupUnusedImports(textMorph, opts) {
   }
   textMorph.undoManager.group();
 
-  return "imports removed";
+  return 'imports removed';
 }
 
+export async function chooseUnusedImports (source, opts) {
+  opts = { world: $world, ...opts };
 
-export async function chooseUnusedImports(source, opts) {
-  opts = {world: $world, ...opts};
-
-  var unused = ImportRemover.findUnusedImports(source);
+  const unused = ImportRemover.findUnusedImports(source);
   if (!unused || !unused.length) return null;
 
-  var items = unused.map(ea => {
-    let {local, from} = ea,
-        label = [
-          `${local}`, {fontWeight: "bold"},
-          " from ", {},
-          `${from}\n`, {fontStyle: "italic"}];
-    return {isListItem: true, label, value: ea};
+  const items = unused.map(ea => {
+    const { local, from } = ea;
+    const label = [
+          `${local}`, { fontWeight: 'bold' },
+          ' from ', {},
+          `${from}\n`, { fontStyle: 'italic' }];
+    return { isListItem: true, label, value: ea };
   });
 
-  var {list: importsToRemove} = await opts.world.editListPrompt(
-    "Which imports should be removed?", items, {multiSelect: true, requester: opts.requester});
+  const { list: importsToRemove } = await opts.world.editListPrompt(
+    'Which imports should be removed?', items, { multiSelect: true, requester: opts.requester });
 
   if (!importsToRemove || !importsToRemove.length) return [];
 

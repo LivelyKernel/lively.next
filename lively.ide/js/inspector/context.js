@@ -1,9 +1,9 @@
-/*global Map,System*/
-import { obj, num, arr, string } from "lively.lang";
-import { connect, signal } from "lively.bindings";
-import { TreeData } from "lively.components";
-import { newUUID } from "lively.lang/string.js";
-import { localInterface } from "lively-system-interface";
+/* global Map,System */
+import { obj, num, arr, string } from 'lively.lang';
+import { connect, signal } from 'lively.bindings';
+import { TreeData } from 'lively.components';
+import { newUUID } from 'lively.lang/string.js';
+import { localInterface } from 'lively-system-interface';
 
 const MAX_NODE_THRESHOLD = 1000; // the maximum number of nodes to be displayed as children per property
 const MIN_PARTITION_SIZE = 250;
@@ -29,99 +29,97 @@ data they are inspecting and also know how they react to changes in the system.
 
 */
 
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // printing
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // FIXME duplication with lively.vm completions and lively morphic completions and inspector!
 
-var defaultPropertyOptions = {
+const defaultPropertyOptions = {
   includeDefault: true,
   includeSymbols: true,
   sort: true,
   sortFunction: (target, props) => Array.isArray(target) ? props : props.sort(defaultSort)
 };
 
-var symMatcher = /^Symbol\((.*)\)$/,
-    knownSymbols = (() =>
-      Object.getOwnPropertyNames(Symbol)
-        .filter(ea => typeof Symbol[ea] === "symbol")
-        .reduce((map, ea) => map.set(Symbol[ea], "Symbol." + ea), new Map()))();
-function printSymbol(sym) {
+const symMatcher = /^Symbol\((.*)\)$/;
+const knownSymbols = (() =>
+  Object.getOwnPropertyNames(Symbol)
+    .filter(ea => typeof Symbol[ea] === 'symbol')
+    .reduce((map, ea) => map.set(Symbol[ea], 'Symbol.' + ea), new Map()))();
+function printSymbol (sym) {
   if (Symbol.keyFor(sym)) return `Symbol.for("${Symbol.keyFor(sym)}")`;
   if (knownSymbols.get(sym)) return knownSymbols.get(sym);
-  var matched = String(sym).match(symMatcher);
+  const matched = String(sym).match(symMatcher);
   return String(sym);
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function defaultSort(a, b) {
-  if (a.hasOwnProperty("priority") || b.hasOwnProperty("priority")) {
-    let aP = a.priority || 0, bP = b.priority || 0;
+function defaultSort (a, b) {
+  if (a.hasOwnProperty('priority') || b.hasOwnProperty('priority')) {
+    const aP = a.priority || 0; const bP = b.priority || 0;
     if (aP < bP) return -1;
     if (aP > bP) return 1;
   }
-  let aK = (a.keyString || a.key).toLowerCase(),
-      bK = (b.keyString || b.key).toLowerCase();
+  const aK = (a.keyString || a.key).toLowerCase();
+  const bK = (b.keyString || b.key).toLowerCase();
   return aK < bK ? -1 : aK === bK ? 0 : 1;
 }
 
-function safeToString(value) {
+function safeToString (value) {
   if (!value) return String(value);
-  if (Array.isArray(value)) return `[${value.map(safeToString).join(",")}]`;
-  if (typeof value === "symbol") return printSymbol(value);
+  if (Array.isArray(value)) return `[${value.map(safeToString).join(',')}]`;
+  if (typeof value === 'symbol') return printSymbol(value);
   try {
     return String(value);
   } catch (e) { return `Cannot print object: ${e}`; }
 }
 
-function propertyNamesOf(obj, partition) {
+function propertyNamesOf (obj, partition) {
   if (!obj) return [];
   if (Array.isArray(obj)) {
-    let len = partition ? partition.partitionSize : obj.length - 1;
-    let offset = partition ? partition.offset : 0;
+    const len = partition ? partition.partitionSize : obj.length - 1;
+    const offset = partition ? partition.offset : 0;
     return arr.range(offset, offset + len); // this ignores custom props on arrays though...
   }
   return arr.sortBy(Object.keys(obj), p => p.toLowerCase());
 }
 
-export function isMultiValue(foldableValue, propNames) {
+export function isMultiValue (foldableValue, propNames) {
   return !arr.every(propNames.map(p => foldableValue[p]),
-      v => obj.equals(v, foldableValue && foldableValue.valueOf()))
+    v => obj.equals(v, foldableValue && foldableValue.valueOf()));
 }
 
-export function printValue(value) {
-  var result;
+export function printValue (value) {
+  let result;
   if (obj.isPrimitive(value)) result = string.print(value);
   else if (Array.isArray(value)) {
-    var tooLong = value.length > 3;
+    const tooLong = value.length > 3;
     if (tooLong) value = value.slice(0, 3);
-    var printed = string.print(value);
-    if (tooLong) printed = printed.slice(0, -1) + ", ...]";
+    let printed = string.print(value);
+    if (tooLong) printed = printed.slice(0, -1) + ', ...]';
     result = printed;
   } else {
     result = string.print(value);
   }
-  result = result.replace(/\n/g, "");
+  result = result.replace(/\n/g, '');
   if (result.length > 500) result = result.slice(0, 20) + `...[${result.length - 20} CHARS]"`;
   return result;
 }
 
-function partitionedChildren(arrayOrDict, {
+function partitionedChildren (arrayOrDict, {
   originalValue = arrayOrDict,
   offset = 0,
-  partitionSize = arrayOrDict.length || Object.values(arrayOrDict).length,
+  partitionSize = arrayOrDict.length || Object.values(arrayOrDict).length
 } = {}) {
   if (obj.isArray(arrayOrDict)) {
-    let newPartitionSize = num.roundTo(Math.max(MIN_PARTITION_SIZE, partitionSize / 50), .1),
-        numPartitions = partitionSize / newPartitionSize,
-        partitions = [];
+    const newPartitionSize = num.roundTo(Math.max(MIN_PARTITION_SIZE, partitionSize / 50), 0.1);
+    const numPartitions = partitionSize / newPartitionSize;
+    const partitions = [];
     for (let i = 0; i < numPartitions; i++) {
-      let keyString = `[${offset + i * newPartitionSize}-${offset + (i + 1) * newPartitionSize}]`;
+      const keyString = `[${offset + i * newPartitionSize}-${offset + (i + 1) * newPartitionSize}]`;
       partitions.push({
         partition: {
           originalValue,
@@ -133,13 +131,13 @@ function partitionedChildren(arrayOrDict, {
         keyString,
         valueString: '...',
         isCollapsed: true
-      })
+      });
     }
     return partitions;
   } else {
-    let newPartitionSize = num.roundTo(Math.max(MIN_PARTITION_SIZE, partitionSize / 50), .1),
-        numPartitions = partitionSize / newPartitionSize,
-        partitions = [];
+    const newPartitionSize = num.roundTo(Math.max(MIN_PARTITION_SIZE, partitionSize / 50), 0.1);
+    const numPartitions = partitionSize / newPartitionSize;
+    const partitions = [];
     const keys = obj.keys(originalValue).sort();
     for (let i = 0; i < numPartitions; i++) {
       const start = offset + i * newPartitionSize;
@@ -157,64 +155,62 @@ function partitionedChildren(arrayOrDict, {
         keyString,
         valueString: '...',
         isCollapsed: true
-      })
+      });
     }
     return partitions;
   }
 }
 
 export class InspectionTree extends TreeData {
-
-  constructor(args) {
+  constructor (args) {
     super(args);
     this.inspector = args.inspector;
-    if (!this.root.isInspectionNode)
-      this.root = InspectionNode.for(this.root, this);
+    if (!this.root.isInspectionNode) { this.root = InspectionNode.for(this.root, this); }
   }
 
-  get __only_serialize__() {
-    return ["root"];
+  get __only_serialize__ () {
+    return ['root'];
   }
 
-  asListWithIndexAndDepth(filtered = true) {
-    return super.asListWithIndexAndDepth(({node}) => filtered ? node.visible : true);
+  asListWithIndexAndDepth (filtered = true) {
+    return super.asListWithIndexAndDepth(({ node }) => filtered ? node.visible : true);
   }
 
-  static forObject(obj, inspector) {
-    return new this({key: "inspectee", value: {inspectee: obj}, isCollapsed: true, inspector});
+  static forObject (obj, inspector) {
+    return new this({ key: 'inspectee', value: { inspectee: obj }, isCollapsed: true, inspector });
   }
 
-  getContextFor(node) {
+  getContextFor (node) {
     if (node == this.root) return this.root.value.inspectee;
     return node.value;
   }
 
-  dispose() {}
+  dispose () {}
 
-  async filter({sorter, maxDepth = 1, iterator, showUnknown, showInternal}) {
+  async filter ({ sorter, maxDepth = 1, iterator, showUnknown, showInternal }) {
     await this.uncollapseAll(
       (node, depth) => maxDepth > depth && (node == this.root || node.value.submorphs)
     );
-    this.asListWithIndexAndDepth(false).forEach(({node, depth}) => {
+    this.asListWithIndexAndDepth(false).forEach(({ node, depth }) => {
       if (depth == 0) return (node.visible = true);
-      if (!showUnknown && node.keyString && node.keyString.includes("UNKNOWN PROPERTY")) return (node.visible = false);
-      if (!showInternal && node.keyString && node.keyString.includes("internal")) return (node.visible = false);
+      if (!showUnknown && node.keyString && node.keyString.includes('UNKNOWN PROPERTY')) return (node.visible = false);
+      if (!showInternal && node.keyString && node.keyString.includes('internal')) return (node.visible = false);
       if (node.value && node.value.submorphs) return (node.visible = true);
       return (node.visible = iterator(node));
     });
   }
-  
-  getChildren(node) {
-    return node.children;  
+
+  getChildren (node) {
+    return node.children;
   }
 
-  display(node) { return node.display(this.inspector); }
+  display (node) { return node.display(this.inspector); }
 
-  isCollapsed(node) { return node.isCollapsed; }
+  isCollapsed (node) { return node.isCollapsed; }
 
-  isLeaf(node) { return obj.isPrimitive(node.value); }
+  isLeaf (node) { return obj.isPrimitive(node.value); }
 
-  collapse(node, bool) {
+  collapse (node, bool) {
     node.isCollapsed = bool;
     if (bool || this.isLeaf(node)) return;
 
@@ -226,10 +222,10 @@ export class InspectionTree extends TreeData {
     }
   }
 
-  retrieveForRemoteProxy(node) {
+  retrieveForRemoteProxy (node) {
     if (!node.uuid) {
-       node.uuid = newUUID();
-       this.idToNodeMap[node.uuid] = node; 
+      node.uuid = newUUID();
+      this.idToNodeMap[node.uuid] = node;
     }
     return {
       uuid: node.uuid,
@@ -239,59 +235,57 @@ export class InspectionTree extends TreeData {
       valueString: safeToString(node.value),
       isCollapsed: true,
       children: []
-    }
+    };
   }
 
-  get systemInterface() {
+  get systemInterface () {
     return localInterface;
   }
 
-  getNodeViaId(uuid) {
+  getNodeViaId (uuid) {
     return this.idToNodeMap[uuid];
   }
 
-  asRemoteDelegate(sessionId) {
+  asRemoteDelegate (sessionId) {
     this.idToNodeMap = {};
     this.isRemoteDelegate = true;
     if (!System.get('@lively-env').remoteInspectionContext) {
       System.get('@lively-env').remoteInspectionContext = {};
     }
     System.get('@lively-env').remoteInspectionContext[sessionId] = this;
-    return this.retrieveForRemoteProxy(this.root)
+    return this.retrieveForRemoteProxy(this.root);
   }
-  
 }
 
 export class RemoteInspectionTree extends InspectionTree {
-
-  static async forObject(target, inspector) {  
-    let { proxy, delegateId, evalEnvironment } = await this.createRemoteContext(target, inspector)
-    return new this({key: 'inspectee', proxy, delegateId,  evalEnvironment, inspector});
+  static async forObject (target, inspector) {
+    const { proxy, delegateId, evalEnvironment } = await this.createRemoteContext(target, inspector);
+    return new this({ key: 'inspectee', proxy, delegateId, evalEnvironment, inspector });
   }
 
-  static async createRemoteContext({code, evalEnvironment, delegateId}, inspector) {
+  static async createRemoteContext ({ code, evalEnvironment, delegateId }, inspector) {
     if (delegateId) {
       // try to reconned to the remote context
       // if it fails throw error
     }
-    
+
     delegateId = `lively://inspector-${inspector.id}`;
 
-    let { value: proxy } = await evalEnvironment.systemInterface.runEval(`
+    const { value: proxy } = await evalEnvironment.systemInterface.runEval(`
        const { InspectionTree } = await System.import("lively.ide/js/inspector/context.js");
        const t = (() => ${code})();
        const tree = InspectionTree.forObject(t);
        tree.asRemoteDelegate("${delegateId}");
     `, evalEnvironment);
 
-    return { delegateId, evalEnvironment, proxy }
+    return { delegateId, evalEnvironment, proxy };
   }
 
-  get systemInterface() {
+  get systemInterface () {
     return this.evalEnvironment.systemInterface;
   }
 
-  constructor(args) {
+  constructor (args) {
     this.parentMap = new WeakMap();
     this.root = args.proxy;
     this.evalEnvironment = args.evalEnvironment;
@@ -299,20 +293,20 @@ export class RemoteInspectionTree extends InspectionTree {
     this.delegateId = args.delegateId;
   }
 
-  getContextFor(node) {
-    return `System.get('@lively-env').remoteInspectionContext["${this.delegateId}"].getNodeViaId("${node.uuid}").value`
+  getContextFor (node) {
+    return `System.get('@lively-env').remoteInspectionContext["${this.delegateId}"].getNodeViaId("${node.uuid}").value`;
   }
 
-  async dispose() {
+  async dispose () {
     // dispose the remote inspection context
     await this.evalEnvironment.systemInterface.runEval(`
       delete System.get('@lively-env').remoteInspectionContext['${this.delegateId}']
     `, this.evalEnvironment);
   }
 
-  display(node) { return `${node.keyString}: ${node.valueString}` }
+  display (node) { return `${node.keyString}: ${node.valueString}`; }
 
-  async collapse(node, bool) {
+  async collapse (node, bool) {
     node.isCollapsed = bool;
     if (bool || this.isLeaf(node)) return;
     if (!node.children.length) {
@@ -325,29 +319,27 @@ export class RemoteInspectionTree extends InspectionTree {
          }
          node.children.map(n => this.retrieveForRemoteProxy(n));
       `, {
-        targetModule: "/lively.ide/js/inspector/context.js",
+        targetModule: '/lively.ide/js/inspector/context.js',
         context: `System.get('@lively-env').remoteInspectionContext["${this.delegateId}"]`
       }));
-     node.children = res.isError ? [] : res.value;
+      node.children = res.isError ? [] : res.value;
     }
   }
-  
 }
 
 class InspectionNode {
-
   /* This node type is used for datapoints that do not provide any
      context information whatsoever, that is: They are not a Morph,
      a property of a morph or a member of a folded property.
      Plain Inspection nodes do not provide interactiveness (they are read only),
      so they do not store a target that they poll or propagate changes from and to. */
 
-  constructor({
+  constructor ({
     root, // the tree data object that serves as the root of the node tree
     priority, // order inside the tree
-    key, //property on the object
-    keyString, //a printed version of the property, sometimes different to key i.e. [INTERNAL] ...
-    value, //the value of the inspected datafield
+    key, // property on the object
+    keyString, // a printed version of the property, sometimes different to key i.e. [INTERNAL] ...
+    value, // the value of the inspected datafield
     valueString, // the value of the datafield printed safely to a string
     isCollapsed, // wether or not the node is dispalying its child nodes,
     children = [],
@@ -369,23 +361,22 @@ class InspectionNode {
     this.root = root;
   }
 
-  get __only_serialize__() {
+  get __only_serialize__ () {
     return [];
   }
 
-  get isInspectionNode() { return true; }
+  get isInspectionNode () { return true; }
 
-  static for(node, root = null) {
+  static for (node, root = null) {
     // if is morph -> MorphContext
-    if (node.value && node.value.isMorph) return new MorphNode({root, ...node});
-    return new InspectionNode({root, ...node});
+    if (node.value && node.value.isMorph) return new MorphNode({ root, ...node });
+    return new InspectionNode({ root, ...node });
   }
 
-  getSubNode(node) {
-    if (node.value && node.value.isMorph)
-       return new MorphNode({root: this.root, ...node});
+  getSubNode (node) {
+    if (node.value && node.value.isMorph) { return new MorphNode({ root: this.root, ...node }); }
     // handle the case where I am a partition
-    let offset, { key, keyString } = node, target = this.value, partition = node.partition;
+    let offset; let { key, keyString } = node; let target = this.value; const partition = node.partition;
     if (partition) {
       offset = partition.offset;
       target = partition.originalValue;
@@ -402,8 +393,8 @@ class InspectionNode {
     });
   }
 
-  display(inspector) {
-    let {keyString, valueString} = this;
+  display (inspector) {
+    const { keyString, valueString } = this;
     if (!this.interactive) return `${keyString}: ${valueString}`;
     if (!this._propertyWidget) {
       this._propertyWidget = inspector.renderDraggableTreeLabel({
@@ -413,11 +404,9 @@ class InspectionNode {
     this._propertyWidget.isSelected = this.isSelected;
     return this._propertyWidget;
   }
-
 }
 
 class MorphNode extends InspectionNode {
-
   /* Used for properties that store a morph as a value and thereby
        give rise to a new target context that subsequent properties need
        to be bound to:
@@ -435,16 +424,15 @@ class MorphNode extends InspectionNode {
         to supply their subnode with meta information about the property values.
     */
 
-  constructor(args) {
+  constructor (args) {
     super(args);
     this.target = this.value; // target changes to the value of the node
     this.propertyInfo = this.target.propertiesAndPropertySettings().properties;
   }
 
-  getSubNode(nodeArgs) {
-    let spec = this.propertyInfo[nodeArgs.key] || {};
-    if (nodeArgs.value && nodeArgs.value.isMorph)
-      return new MorphNode({...nodeArgs, root: this.root});
+  getSubNode (nodeArgs) {
+    const spec = this.propertyInfo[nodeArgs.key] || {};
+    if (nodeArgs.value && nodeArgs.value.isMorph) { return new MorphNode({ ...nodeArgs, root: this.root }); }
     return new PropertyNode({
       ...nodeArgs,
       root: this.root,
@@ -455,16 +443,15 @@ class MorphNode extends InspectionNode {
 }
 
 class PropertyNode extends InspectionNode {
-
   /* Used for properties attached to a morph.
      Also come with a spec object that is retrieved from
      the previous morph node's propertyInfo dictionary.
      The spec object is used to render the direct manipulation
      widgets for the property value correctly. */
 
-  constructor(args) {
+  constructor (args) {
     super(args);
-    let {
+    const {
       partition,
       spec, // spec providing information about the inspected values type etc...
       target // target is passed from previous morph context
@@ -475,52 +462,52 @@ class PropertyNode extends InspectionNode {
     this.foldedNodes = {};
   }
 
-  __deserialize__(snapshot, objRef) {
+  __deserialize__ (snapshot, objRef) {
     this.spec = {};
   }
 
-  get interactive() {
+  get interactive () {
     return this._interactive;
   }
 
-  set interactive(b) {
+  set interactive (b) {
     this._interactive = b;
   }
 
-  get isFoldable() {
+  get isFoldable () {
     return !!this.spec.foldable;
   }
 
-  get isInternalProperty() {
-    return this.keyString == "id" || this.keyString.includes("internal");
+  get isInternalProperty () {
+    return this.keyString == 'id' || this.keyString.includes('internal');
   }
 
-  getSubNode(nodeArgs) {
+  getSubNode (nodeArgs) {
     if (this.isFoldable) {
       return this.getFoldedContext(nodeArgs);
     }
     return super.getSubNode(nodeArgs);
   }
 
-  getFoldedContext(node) {
+  getFoldedContext (node) {
     return this.foldedNodes[node.key] = new FoldedNode({
       ...node,
       root: this.root,
       target: this.target,
       foldableNode: this,
-      spec: obj.dissoc(this.spec, ["foldable"])
+      spec: obj.dissoc(this.spec, ['foldable'])
     });
   }
 
-  rerender() {
+  rerender () {
     // triggers the inspector to just update the line that this node is rendered at
-    this.root.inspector.refreshSelectedLine();    
+    this.root.inspector.refreshSelectedLine();
   }
 
-  refreshProperty(v, updateTarget = false) {
+  refreshProperty (v, updateTarget = false) {
     if (updateTarget) this.target[this.key] = v;
     this.value = this.target[this.key];
-    //this._propertyWidget && signal(this._propertyWidget, "update", this.value);
+    // this._propertyWidget && signal(this._propertyWidget, "update", this.value);
     this.valueString = printValue(this.value);
     if (this.interactive) {
       if (!updateTarget) {
@@ -528,7 +515,7 @@ class PropertyNode extends InspectionNode {
       }
     }
     if (this.isFoldable) {
-      for (let m in this.foldedNodes) {
+      for (const m in this.foldedNodes) {
         this.foldedNodes[m].value = this.value[m];
         this.foldedNodes[m].valueString = printValue(this.value[m]);
         this.foldedNodes[m]._propertyWidget && signal(this.foldedNodes[m]._propertyWidget, 'update', this.value[m]);
@@ -536,13 +523,19 @@ class PropertyNode extends InspectionNode {
     }
   }
 
-  display(inspector) {
-    let {_propertyWidget: w, keyString, valueString, target, value, spec} = this;
+  display (inspector) {
+    let { _propertyWidget: w, keyString, valueString, target, value, spec } = this;
 
     if (!this.interactive && !(spec.foldable && isMultiValue(value, spec.foldable))) {
       return inspector.renderPropertyControl({
-        target, keyString, valueString, tree: inspector.ui.propertyTree,
-        value, spec, node: this, fastRender: true,
+        target,
+        keyString,
+        valueString,
+        tree: inspector.ui.propertyTree,
+        value,
+        spec,
+        node: this,
+        fastRender: true
       });
     }
 
@@ -556,15 +549,19 @@ class PropertyNode extends InspectionNode {
 
     // create a new widget
     w = this._propertyWidget = inspector.renderPropertyControl({
-        target, keyString, valueString, value, spec, node: this,
-        isSelected: this.isSelected, fontColor: inspector.ui.propertyTree.fontColor
+      target,
+      keyString,
+      valueString,
+      value,
+      spec,
+      node: this,
+      isSelected: this.isSelected,
+      fontColor: inspector.ui.propertyTree.fontColor
     });
 
     if (!this.isInternalProperty && !spec.readOnly) {
-      connect(w, "propertyValue", this, "refreshProperty", {
-        updater: ($upd, val) => $upd(val, true)});
-      connect(w, "openWidget", this.root, "onWidgetOpened", {
-        converter: widget => ({widget, node: this.sourceObj})});
+      connect(w, 'propertyValue', this, 'refreshProperty', { updater: ($upd, val) => $upd(val, true) });
+      connect(w, 'openWidget', this.root, 'onWidgetOpened', { converter: widget => ({ widget, node: this.sourceObj }) });
     }
 
     return w;
@@ -572,10 +569,9 @@ class PropertyNode extends InspectionNode {
 }
 
 class FoldedNode extends PropertyNode {
-
-  constructor(args) {
+  constructor (args) {
     super(args);
-    let {foldableNode} = args;
+    const { foldableNode } = args;
     this.foldableNode = foldableNode;
     /* key and keyString will be just the member name (i.e. .left, or .right).
        In order to update a folded property correctly the accessor that triggers the
@@ -584,27 +580,26 @@ class FoldedNode extends PropertyNode {
     this.foldedProp = foldableNode.key + string.capitalize(this.key);
   }
 
-  refreshProperty(v, updateTarget = false) {
-    this.foldableNode.refreshProperty({...this.target[this.foldableNode.key], [this.key]: v}, updateTarget);
+  refreshProperty (v, updateTarget = false) {
+    this.foldableNode.refreshProperty({ ...this.target[this.foldableNode.key], [this.key]: v }, updateTarget);
   }
-
 }
 
-function propertiesOf(node) {
-  let target = node.partition ? node.target : node.value;
+function propertiesOf (node) {
+  const target = node.partition ? node.target : node.value;
   if (!target) return [];
 
-  var seen = {_rev: true}, props = [],
-      isCollapsed = true,
-      customProps = typeof target.livelyCustomInspect === "function" ?
-        target.livelyCustomInspect() : {},
-      options = {
-        ...defaultPropertyOptions,
-        ...customProps
-      };
+  const seen = { _rev: true }; let props = [];
+  const isCollapsed = true;
+  const customProps = typeof target.livelyCustomInspect === 'function'
+    ? target.livelyCustomInspect() : {};
+  const options = {
+    ...defaultPropertyOptions,
+    ...customProps
+  };
 
   if (customProps.properties) {
-    for (let {key, hidden, priority, keyString, value, valueString} of customProps.properties) {
+    for (const { key, hidden, priority, keyString, value, valueString } of customProps.properties) {
       seen[key] = true;
       if (hidden) continue;
       props.push(node.getSubNode({
@@ -617,26 +612,26 @@ function propertiesOf(node) {
       }));
     }
   }
-  
+
   if (options.includeDefault) {
-    var defaultProps = propertyNamesOf(target, node.partition);
+    const defaultProps = propertyNamesOf(target, node.partition);
     if (defaultProps.length > MAX_NODE_THRESHOLD) {
-      for (let nodeArgs of partitionedChildren(target, node.partition)) {
+      for (const nodeArgs of partitionedChildren(target, node.partition)) {
         props.push(node.getSubNode(nodeArgs));
       }
     } else {
-      for (let key of defaultProps) {
+      for (const key of defaultProps) {
         if (key in seen) continue;
-        var value = target[key], valueString = printValue(value),
-            nodeArgs = { keyString: key, key, value, valueString, isCollapsed };
+        var value = target[key]; var valueString = printValue(value);
+        var nodeArgs = { keyString: key, key, value, valueString, isCollapsed };
         props.push(node.getSubNode(nodeArgs));
       }
     }
     if (options.includeSymbols) {
-      for (let key of Object.getOwnPropertySymbols(target)) {
-        var keyString = safeToString(key), value = target[key],
-            valueString = printValue(value),
-            nodeArgs = {key, keyString, value, valueString, isCollapsed};
+      for (const key of Object.getOwnPropertySymbols(target)) {
+        const keyString = safeToString(key); var value = target[key];
+        var valueString = printValue(value);
+        var nodeArgs = { key, keyString, value, valueString, isCollapsed };
         props.push(node.getSubNode(nodeArgs));
       }
     }

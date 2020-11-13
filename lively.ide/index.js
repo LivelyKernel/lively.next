@@ -1,4 +1,3 @@
-export var info = "import via sub modules";
-export var valueWidgets = {};
-export var popovers = {};
-
+export var info = 'import via sub modules';
+export var valueWidgets = {} || valueWidgets;
+export var popovers = {} || popovers;

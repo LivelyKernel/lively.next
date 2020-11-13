@@ -1,4 +1,4 @@
-/*global target,connection*/
+/* global target,connection */
 import {
   Morph,
   Icon,
@@ -12,28 +12,28 @@ import {
   morph,
   HorizontalLayout,
   VerticalLayout
-} from "lively.morphic";
-import KeyHandler from "lively.morphic/events/KeyHandler.js";
+} from 'lively.morphic';
+import KeyHandler from 'lively.morphic/events/KeyHandler.js';
 
-import { connect, signal } from "lively.bindings";
-import { arr, promise, fun, string, obj } from "lively.lang";
-import { Color, rect, Rectangle, pt } from "lively.graphics";
-import { popovers } from "../index.js";
+import { connect, signal } from 'lively.bindings';
+import { arr, promise, fun, string, obj } from 'lively.lang';
+import { Color, rect, Rectangle, pt } from 'lively.graphics';
+import { popovers } from '../index.js';
 
 import {
   ModeSelector,
   DropDownSelector,
   SearchField,
   CheckBox
-} from "lively.components/widgets.js";
+} from 'lively.components/widgets.js';
 
 import {
   Popover
-} from "lively.components/popup.js";
+} from 'lively.components/popup.js';
 
-import { SvgStyleHalo } from "lively.halos";
-import { NumberWidget } from "../value-widgets.js";
-import { Icons } from "lively.morphic/text/icons.js";
+import { SvgStyleHalo } from 'lively.halos';
+import { NumberWidget } from '../value-widgets.js';
+import { Icons } from 'lively.morphic/text/icons.js';
 
 const duration = 200;
 export var colorWidgets = colorWidgets || {
@@ -41,192 +41,188 @@ export var colorWidgets = colorWidgets || {
 };
 
 class SelectableControl extends Morph {
-
-  static get properties() {
+  static get properties () {
     return {
       target: {
         type: 'Morph'
       },
       selectableControls: {},
       selectedControl: {},
-      fill: {defaultValue: Color.transparent},
+      fill: { defaultValue: Color.transparent },
       layout: {
-        initialize() {
+        initialize () {
           this.layout = new VerticalLayout({
-            spacing: 10, autoResize: true,
-            layoutOrder: function(m) {
-              return this.container.submorphs.indexOf(m)
+            spacing: 10,
+            autoResize: true,
+            layoutOrder: function (m) {
+              return this.container.submorphs.indexOf(m);
             }
           });
         }
       },
       submorphs: {
         after: ['selectableControls', 'selectedControl', 'target'],
-        initialize() {
+        initialize () {
           const modeSelector = new ModeSelector({
-            name: "modeSelector",
+            name: 'modeSelector',
             items: this.selectableControls,
             init: this.selectedControl
           });
           this.submorphs = [modeSelector];
           modeSelector.width = 100;
-          connect(modeSelector, "switchLabel", this, "select");
+          connect(modeSelector, 'switchLabel', this, 'select');
           this.select(this.selectableControls[this.selectedControl]);
         }
       }
     };
   }
 
-  async select(cmd) {
+  async select (cmd) {
     if (!this.target) return;
-    const control = await this.target.execCommand(cmd),
-          selector = this.get("modeSelector");
+    const control = await this.target.execCommand(cmd);
+    const selector = this.get('modeSelector');
     control.opacity = 0;
     if (this.lastLabel) {
-       let lr = selector.submorphs.indexOf(this.lastLabel) < selector.submorphs.indexOf(selector.currentLabel);
-       control.topLeft = selector.bottomLeft.addXY(lr ? 20 : -20,10);
+      const lr = selector.submorphs.indexOf(this.lastLabel) < selector.submorphs.indexOf(selector.currentLabel);
+      control.topLeft = selector.bottomLeft.addXY(lr ? 20 : -20, 10);
     }
     this.lastLabel = selector.currentLabel;
-    this.animate({submorphs: [selector, control], duration: duration });
-    control.animate({opacity: 1, duration: duration });
+    this.animate({ submorphs: [selector, control], duration: duration });
+    control.animate({ opacity: 1, duration: duration });
   }
 }
 
 class ToggledControl extends Morph {
-
-  static get properties() {
+  static get properties () {
     return {
-      title: {defaultValue: 'Toggled Property'},
+      title: { defaultValue: 'Toggled Property' },
       toggledControl: {},
       checked: {},
-      clipMode: {defaultValue: "hidden"},
-      fill: {defaultValue: Color.transparent},
+      clipMode: { defaultValue: 'hidden' },
+      fill: { defaultValue: Color.transparent },
       layout: {
-        initialize() {
-          this.layout = new VerticalLayout({spacing: 5});
+        initialize () {
+          this.layout = new VerticalLayout({ spacing: 5 });
         }
       },
       submorphs: {
-        initialize() {
-          const toggler = new CheckBox({checked: this.checked});
+        initialize () {
+          const toggler = new CheckBox({ checked: this.checked });
           this.submorphs = [
             {
               fill: Color.transparent,
-              layout: new HorizontalLayout({autoResize: false}),
+              layout: new HorizontalLayout({ autoResize: false }),
               height: 25,
               submorphs: [
                 {
-                  type: "label",
-                  name: "property name",
+                  type: 'label',
+                  name: 'property name',
                   fontWeight: 'bold',
                   fontSize: 14,
                   autofit: true,
-                  opacity: .8,
-                  padding: rect(0,2,3,0),
+                  opacity: 0.8,
+                  padding: rect(0, 2, 3, 0),
                   textString: this.title,
-                  styleClasses: ["controlLabel"]
+                  styleClasses: ['controlLabel']
                 },
                 toggler
               ]
             }
           ];
           this.toggle(this.checked);
-          connect(toggler, "toggle", this, "toggle");
-        }
-      }
-    }
-  }
-
-  toggle(value) {
-    const [title] = this.submorphs,
-          valueControl = this.toggledControl(value),
-          submorphs = [title, ...(valueControl ? [valueControl] : [])];
-    signal(this, "update", value && valueControl.value);
-    if (valueControl) valueControl.opacity = 0;
-    this.animate({submorphs, duration: duration });
-    if (valueControl) valueControl.animate({opacity: 1, duration: duration });
-  }
-
-}
-
-class StylePopover extends Popover {
-
-  static get properties() {
-    return {
-      
-      targetMorph: {
-        initialize() {
-          this.targetMorph = morph({
-            layout: new HorizontalLayout({ spacing: 5, resizeContainer: true }),
-            fill: Color.transparent,
-            submorphs: this.controls()});
-          this.setupConnections();
-        }
-      }
-    }
-  }
-
-  setupConnections() {
-    // wire up signals and events to morphs
-  }
-
-  controls() {
-    // return an array of control elements
-    return [];
-  }
-
-}
-
-export class IconPopover extends StylePopover {
-
-  static get properties() {
-    return {
-      isEpiMorph: {
-        get() { return false }
-      },
-      popoverColor: {defaultValue: Color.gray.lighter()},
-      ui: {
-        get() {
-          return {
-            searchInput: this.get('searchInput'),
-            iconList: this.get('iconList')
-          }
+          connect(toggler, 'toggle', this, 'toggle');
         }
       }
     };
   }
 
-  onDrop(evt) {
-    let grabbedMorphs = evt.hand.grabbedMorphs;
+  toggle (value) {
+    const [title] = this.submorphs;
+    const valueControl = this.toggledControl(value);
+    const submorphs = [title, ...(valueControl ? [valueControl] : [])];
+    signal(this, 'update', value && valueControl.value);
+    if (valueControl) valueControl.opacity = 0;
+    this.animate({ submorphs, duration: duration });
+    if (valueControl) valueControl.animate({ opacity: 1, duration: duration });
+  }
+}
+
+class StylePopover extends Popover {
+  static get properties () {
+    return {
+
+      targetMorph: {
+        initialize () {
+          this.targetMorph = morph({
+            layout: new HorizontalLayout({ spacing: 5, resizeContainer: true }),
+            fill: Color.transparent,
+            submorphs: this.controls()
+          });
+          this.setupConnections();
+        }
+      }
+    };
+  }
+
+  setupConnections () {
+    // wire up signals and events to morphs
+  }
+
+  controls () {
+    // return an array of control elements
+    return [];
+  }
+}
+
+export class IconPopover extends StylePopover {
+  static get properties () {
+    return {
+      isEpiMorph: {
+        get () { return false; }
+      },
+      popoverColor: { defaultValue: Color.gray.lighter() },
+      ui: {
+        get () {
+          return {
+            searchInput: this.get('searchInput'),
+            iconList: this.get('iconList')
+          };
+        }
+      }
+    };
+  }
+
+  onDrop (evt) {
+    const grabbedMorphs = evt.hand.grabbedMorphs;
     if (grabbedMorphs.find(m => m === this.iconLabel)) {
       evt.hand.dropMorphsOn(this);
       this.iconLabel.remove();
     }
   }
 
-  controls() {
-    let width = 200,
-        height = 200,
-        margin = 4,
-        searchBarHeight = 20;
+  controls () {
+    const width = 200;
+    const height = 200;
+    const margin = 4;
+    const searchBarHeight = 20;
     return [
       {
         draggable: false,
-        layout: new VerticalLayout({spacing: 4}),
+        layout: new VerticalLayout({ spacing: 4 }),
         fill: Color.transparent,
         submorphs: [
           new SearchField({
-            name: "searchInput",
+            name: 'searchInput',
             width,
-            placeHolder: "Search Icons"
+            placeHolder: 'Search Icons'
           }),
           morph({
             textAndAttributes: this.iconAsTextAttributes(),
-            name: "iconList",
+            name: 'iconList',
             draggable: true,
-            type: "text",
+            type: 'text',
             extent: pt(width, height),
-            textStyleClasses: ["fas", 'far'],
+            textStyleClasses: ['fas', 'far'],
             clipMode: 'auto',
             readOnly: true
           })
@@ -235,105 +231,103 @@ export class IconPopover extends StylePopover {
     ];
   }
 
-  setupConnections() {
-    let {searchInput, iconList} = this.ui;
-    connect(searchInput, "searchInput", this, "filterIcons");
-    connect(iconList, "onMouseUp", this, "iconSelectClick");
+  setupConnections () {
+    const { searchInput, iconList } = this.ui;
+    connect(searchInput, 'searchInput', this, 'filterIcons');
+    connect(iconList, 'onMouseUp', this, 'iconSelectClick');
     connect(iconList, 'onDragStart', this, 'createIconLabel');
   }
 
-  relayout() {}
+  relayout () {}
 
-  createIconLabel(evt) {
-    let pos = this.ui.iconList.textPositionFromPoint(evt.positionIn(this.ui.iconList)),
-        iconName = this.iconAtTextPos(pos);
+  createIconLabel (evt) {
+    const pos = this.ui.iconList.textPositionFromPoint(evt.positionIn(this.ui.iconList));
+    const iconName = this.iconAtTextPos(pos);
     this.iconLabel = Icon.makeLabel(iconName, {
       fontSize: this.ui.iconList.fontSize, name: iconName
     });
     this.iconLabel.openInHand();
   }
 
-  iconAsTextAttributes(filterFn) {
+  iconAsTextAttributes (filterFn) {
     let iconNames = Object.keys(Icons);
     if (filterFn) iconNames = iconNames.filter(filterFn);
     return arr.flatmap(iconNames,
       (name, i) => [
         Icons[name].code,
-      {iconCode: Icons[name].code, iconName: name},
-      " ", {fontFamily: "sans-serif", iconCode: false, iconName: false}
-    ]);
+        { iconCode: Icons[name].code, iconName: name },
+        ' ', { fontFamily: 'sans-serif', iconCode: false, iconName: false }
+      ]);
   }
 
-  async filterIcons() {
+  async filterIcons () {
     await promise.delay(250);
     fun.debounceNamed('filterIcons', 200, () => {
-       this.ui.iconList.textAndAttributes = this.iconAsTextAttributes(name =>
+      this.ui.iconList.textAndAttributes = this.iconAsTextAttributes(name =>
         this.ui.searchInput.matches(name.toLowerCase())
-       );  
-    })();   
+      );
+    })();
   }
 
-  iconSelectClick(evt) {
+  iconSelectClick (evt) {
     // let iconList = this.get("icon-list");
-    let textPos = this.ui.iconList.textPositionFromPoint(evt.positionIn(this.ui.iconList)),
-        iconName = this.iconAtTextPos(textPos);
+    const textPos = this.ui.iconList.textPositionFromPoint(evt.positionIn(this.ui.iconList));
+    const iconName = this.iconAtTextPos(textPos);
     this.setStatusMessage(iconName);
-    signal(this, "select", iconName);
+    signal(this, 'select', iconName);
   }
 
-  iconAtTextPos({row, column}) {
+  iconAtTextPos ({ row, column }) {
     column = column - 1;
-    let iconList = this.ui.iconList,
-        range = {start: {row, column: Math.max(0, column)}, end: {row, column: column+2}};
+    const iconList = this.ui.iconList;
+    const range = { start: { row, column: Math.max(0, column) }, end: { row, column: column + 2 } };
     let found = iconList.textAndAttributesInRange(range);
     while (found.length) {
       if (found[1].iconName) {
         break;
       }
       column++;
-      found = found.slice(2)
+      found = found.slice(2);
     }
-    let iconRange = {start: {row, column}, end: {row, column: column + 1}};
-    iconList.addTextAttribute({ backgroundColor: iconList.selectionColor.darker().withA(.5) }, iconRange)
-    promise.delay(1000).then(() => iconList.addTextAttribute({ backgroundColor: Color.transparent }, iconRange))
+    const iconRange = { start: { row, column }, end: { row, column: column + 1 } };
+    iconList.addTextAttribute({ backgroundColor: iconList.selectionColor.darker().withA(0.5) }, iconRange);
+    promise.delay(1000).then(() => iconList.addTextAttribute({ backgroundColor: Color.transparent }, iconRange));
     return found.length ? found[1].iconName : null;
   }
-
 }
 
 export class LayoutPopover extends StylePopover {
-
-  static get properties() {
+  static get properties () {
     return {
       container: {},
-      popoverColor: {defaultValue: Color.gray.lighter()}
-    }
+      popoverColor: { defaultValue: Color.gray.lighter() }
+    };
   }
 
-  getLayoutObjects() {
+  getLayoutObjects () {
     return [
       null,
-      new HorizontalLayout({autoResize: false}),
-      new VerticalLayout({autoResize: false}),
+      new HorizontalLayout({ autoResize: false }),
+      new VerticalLayout({ autoResize: false }),
       new TilingLayout(),
       new ProportionalLayout(),
-      new GridLayout({grid: [[null], [null], [null]]})
+      new GridLayout({ grid: [[null], [null], [null]] })
     ];
   }
 
-  close() {
+  close () {
     super.close();
     this.clearLayoutHalo();
   }
 
-  controls() {
+  controls () {
     this.showLayoutHaloFor(this.container);
     return [
       {
         fill: Color.transparent,
         layout: new VerticalLayout({
           spacing: 5,
-          layoutOrder: function(m) {
+          layoutOrder: function (m) {
             return this.container.submorphs.indexOf(m);
           }
         }),
@@ -341,57 +335,59 @@ export class LayoutPopover extends StylePopover {
       }];
   }
 
-  updateControls() {
+  updateControls () {
     this.get('Layout Type').relayout();
-    this.getSubmorphNamed("controlContainer").animate(this.layoutHalo ? {
+    this.getSubmorphNamed('controlContainer').animate(this.layoutHalo ? {
       isLayoutable: true,
       submorphs: this.layoutHalo.optionControls(this),
       duration: 300
     } : {
       isLayoutable: false,
-      extent: pt(0, 0), submorphs: [],
+      extent: pt(0, 0),
+      submorphs: [],
       duration: 300
     });
   }
 
-  showLayoutHaloFor(morph) {
+  showLayoutHaloFor (morph) {
     this.clearLayoutHalo();
     if (!morph || !morph.layout) return;
-    let world = morph.world() || morph.env.world;
+    const world = morph.world() || morph.env.world;
     this.layoutHalo = world.showLayoutHaloFor(morph);
   }
 
-  clearLayoutHalo() {
+  clearLayoutHalo () {
     if (this.layoutHalo) {
       this.layoutHalo.remove();
       this.layoutHalo = null;
     }
   }
 
-  getCurrentLayoutName() {
+  getCurrentLayoutName () {
     return this.getLayoutName(this.container.layout);
   }
 
-  getLayoutName(l) {
-    return l ? l.name() + " Layout" : "No Layout";
+  getLayoutName (l) {
+    return l ? l.name() + ' Layout' : 'No Layout';
   }
 
-  update() {}
+  update () {}
 
-  applyLayout(l) {
-    this.container.animate({layout: l});
+  applyLayout (l) {
+    this.container.animate({ layout: l });
     this.showLayoutHaloFor(this.container);
     this.updateControls(this.controls());
-    signal(this, "layoutChanged", this.container.layout);
+    signal(this, 'layoutChanged', this.container.layout);
   }
 
-  layoutPicker() {
+  layoutPicker () {
     const items = this.getLayoutObjects().map(l => {
-      return {[this.getLayoutName(l)]: l};
+      return { [this.getLayoutName(l)]: l };
     });
-    let layoutSelector = this.get("Layout Type") || new DropDownSelector({
-      name: "Layout Type",
-      borderRadius: 2, padding: 3,
+    const layoutSelector = this.get('Layout Type') || new DropDownSelector({
+      name: 'Layout Type',
+      borderRadius: 2,
+      padding: 3,
       getCurrentValue: () => this.getCurrentLayoutName(),
       selectedValue: this.container.layout,
       values: obj.merge(items)
@@ -400,7 +396,7 @@ export class LayoutPopover extends StylePopover {
     return layoutSelector;
   }
 
-  layoutControls() {
+  layoutControls () {
     return {
       name: 'controlContainer',
       fill: Color.transparent,
@@ -412,41 +408,40 @@ export class LayoutPopover extends StylePopover {
 }
 
 export class FillPopover extends StylePopover {
-
-  static get properties() {
+  static get properties () {
     return {
-      gradientEnabled: {defaultValue: true},
-      fillValue: {defaultValue: Color.blue},
-      popoverColor: {defaultValue: Color.gray.lighter()},
+      gradientEnabled: { defaultValue: true },
+      fillValue: { defaultValue: Color.blue },
+      popoverColor: { defaultValue: Color.gray.lighter() },
       handleMorph: {},
       openHandles: {
         defaultValue: []
       },
-      
+
       ui: {
-        get() {
+        get () {
           return {
             colorField: this.get('colorField'),
             fillSelector: this.get('fillSelector'),
-            gradientEditor: this.get("gradient editor")
-          }
+            gradientEditor: this.get('gradient editor')
+          };
         }
       }
-    }
+    };
   }
 
-  openHandle(handle) {
+  openHandle (handle) {
     handle.openInWorld();
     this.openHandles.push(handle);
   }
 
-  close() {
+  close () {
     super.close();
     this.openHandles.forEach(h => h.remove());
   }
 
-  setupConnections() {
-    let {fillSelector, colorField, gradientEditor} = this.ui;
+  setupConnections () {
+    const { fillSelector, colorField, gradientEditor } = this.ui;
     fillSelector && connect(this, 'fillValue', fillSelector, 'value');
     if (gradientEditor) {
       connect(gradientEditor, 'gradientValue', this, 'fillValue');
@@ -455,17 +450,17 @@ export class FillPopover extends StylePopover {
     if (colorField) {
       connect(this, 'close', colorField, 'remove');
       connect(colorField, 'update', this, 'fillValue');
-      connect(this, "onMouseDown", colorField, "removeWidgets");
+      connect(this, 'onMouseDown', colorField, 'removeWidgets');
     }
   }
 
-  get commands() {
+  get commands () {
     return super.commands.concat([
       {
-        name: "switch to fill",
+        name: 'switch to fill',
         exec: () => {
-          let p = new colorWidgets.ColorPickerField({
-            name: "colorField",
+          const p = new colorWidgets.ColorPickerField({
+            name: 'colorField',
             colorValue: this.fillValue.isGradient ? Color.blue : this.fillValue
           });
           p.whenRendered().then(() => {
@@ -475,15 +470,15 @@ export class FillPopover extends StylePopover {
         }
       },
       {
-        name: "switch to gradient",
+        name: 'switch to gradient',
         exec: () => {
           const g = new colorWidgets.GradientEditor({
-            name: "gradient editor",
+            name: 'gradient editor',
             gradientValue: this.fillValue
           });
           g.whenRendered().then(() => {
             this.setupConnections();
-            this.handleMorph && g.showGradientHandlesOn(this.handleMorph)
+            this.handleMorph && g.showGradientHandlesOn(this.handleMorph);
             g.update();
           });
           return g;
@@ -492,25 +487,25 @@ export class FillPopover extends StylePopover {
     ]);
   }
 
-  controls() {
+  controls () {
     if (!this.gradientEnabled) {
       return [
         {
           fill: Color.transparent,
-          layout: new VerticalLayout({spacing: 0}),
+          layout: new VerticalLayout({ spacing: 0 }),
           submorphs: [
             new colorWidgets.ColorPickerField({
-              name: "colorField",
+              name: 'colorField',
               colorValue: this.fillValue
             })
           ]
         }
       ];
     }
-    let selectedControl = this.fillValue && this.fillValue.isGradient ? "Gradient" : "Fill";
+    const selectedControl = this.fillValue && this.fillValue.isGradient ? 'Gradient' : 'Fill';
     return [
       new SelectableControl({
-        name: "fillSelector",
+        name: 'fillSelector',
         target: this,
         selectedControl,
         selectableControls: {
@@ -523,93 +518,92 @@ export class FillPopover extends StylePopover {
 }
 
 export class ShadowPopover extends StylePopover {
-
-  static get properties() {
+  static get properties () {
     return {
       shadowValue: {},
-      cachedShadow: {defaultValue: new ShadowObject({ fast: true })},
-      popoverColor: {defaultValue: Color.gray.lighter()}
-    }
+      cachedShadow: { defaultValue: new ShadowObject({ fast: true }) },
+      popoverColor: { defaultValue: Color.gray.lighter() }
+    };
   }
 
-  controls() {
-    let selectedValue = (this.shadowValue ? (this.shadowValue.inset ? 'Inset Shadow' : "Drop Shadow") : 'No Shadow');
-    var shadowSelector,
-        controls = [
-          {
-            layout: new VerticalLayout({resizeContainer: true, spacing:5}),
-            fill: Color.transparent,
-            name: 'control container',
-            submorphs: [
-              (shadowSelector = new DropDownSelector({
-                name: "shadow type",
-                borderRadius: 2,
-                padding: 3,
-                selectedValue,
-                values: ["No Shadow", "Drop Shadow", "Inset Shadow"]
-              })),
-            ].concat(this.shadowValue ? this.shadowControls() : [])
-          }
-        ];
-    connect(shadowSelector, "selectedValue", this, "changeShadowType");
+  controls () {
+    const selectedValue = (this.shadowValue ? (this.shadowValue.inset ? 'Inset Shadow' : 'Drop Shadow') : 'No Shadow');
+    let shadowSelector;
+    const controls = [
+      {
+        layout: new VerticalLayout({ resizeContainer: true, spacing: 5 }),
+        fill: Color.transparent,
+        name: 'control container',
+        submorphs: [
+          (shadowSelector = new DropDownSelector({
+            name: 'shadow type',
+            borderRadius: 2,
+            padding: 3,
+            selectedValue,
+            values: ['No Shadow', 'Drop Shadow', 'Inset Shadow']
+          }))
+        ].concat(this.shadowValue ? this.shadowControls() : [])
+      }
+    ];
+    connect(shadowSelector, 'selectedValue', this, 'changeShadowType');
     return controls;
   }
 
-  shadowControls() {
-    let value = this.shadowValue,
-        autofit = false,
-        distanceInspector = new NumberWidget({
-          min: 0,
-          autofit,
-          name: "distanceSlider",
-          number: value.distance,
-          unit: "px"
-        }),
-        angleSlider = new NumberWidget({
-          name: "angleSlider",
-          min: 0,
-          max: 360,
-          number: value.rotation,
-          autofit
-        }),
-        spreadInspector = new NumberWidget({
-          name: "spreadSlider",
-          min: 0,
-          number: value.spread,
-          autofit
-        }),
-        blurInspector = new NumberWidget({
-          name: "blurSlider",
-          min: 0,
-          number: value.blur,
-          autofit
-        }),
-        colorField = new colorWidgets.ColorPickerField({
-          name: "colorPicker",
-          colorValue: value.color
-        });
-    connect(colorField, "colorValue", this, "updateShadow", {converter: color => ({color})});
+  shadowControls () {
+    const value = this.shadowValue;
+    const autofit = false;
+    const distanceInspector = new NumberWidget({
+      min: 0,
+      autofit,
+      name: 'distanceSlider',
+      number: value.distance,
+      unit: 'px'
+    });
+    const angleSlider = new NumberWidget({
+      name: 'angleSlider',
+      min: 0,
+      max: 360,
+      number: value.rotation,
+      autofit
+    });
+    const spreadInspector = new NumberWidget({
+      name: 'spreadSlider',
+      min: 0,
+      number: value.spread,
+      autofit
+    });
+    const blurInspector = new NumberWidget({
+      name: 'blurSlider',
+      min: 0,
+      number: value.blur,
+      autofit
+    });
+    const colorField = new colorWidgets.ColorPickerField({
+      name: 'colorPicker',
+      colorValue: value.color
+    });
+    connect(colorField, 'colorValue', this, 'updateShadow', { converter: color => ({ color }) });
     connect(this, 'onMouseDown', colorField, 'removeWidgets');
     connect(this, 'close', colorField, 'remove');
-    connect(spreadInspector, "update", this, "updateShadow", {converter: spread => ({spread})});
-    connect(distanceInspector, "update", this, "updateShadow", {
-      converter: distance => ({distance})
+    connect(spreadInspector, 'update', this, 'updateShadow', { converter: spread => ({ spread }) });
+    connect(distanceInspector, 'update', this, 'updateShadow', {
+      converter: distance => ({ distance })
     });
-    connect(blurInspector, "update", this, "updateShadow", {converter: blur => ({blur})});
-    connect(angleSlider, "update", this, "updateShadow", {converter: rotation => ({rotation})});
+    connect(blurInspector, 'update', this, 'updateShadow', { converter: blur => ({ blur }) });
+    connect(angleSlider, 'update', this, 'updateShadow', { converter: rotation => ({ rotation }) });
 
     return new Morph({
       layout: new GridLayout({
         autoAssign: false,
         fitToCell: false,
-        columns: [0, {paddingLeft: 1}],
-        rows: arr.flatten(arr.range(0, 3).map(i => [i, {paddingBottom: 5}]), 1),
+        columns: [0, { paddingLeft: 1 }],
+        rows: arr.flatten(arr.range(0, 3).map(i => [i, { paddingBottom: 5 }]), 1),
         grid: [
-          ["spreadLabel", null, "spreadSlider"],
-          ["distanceLabel", null, "distanceSlider"],
-          ["blurLabel", null, "blurSlider"],
-          ["angleLabel", null, "angleSlider"],
-          ["colorLabel", null, "colorPicker"]
+          ['spreadLabel', null, 'spreadSlider'],
+          ['distanceLabel', null, 'distanceSlider'],
+          ['blurLabel', null, 'blurSlider'],
+          ['angleLabel', null, 'angleSlider'],
+          ['colorLabel', null, 'colorPicker']
         ]
       }),
       width: 120,
@@ -617,18 +611,18 @@ export class ShadowPopover extends StylePopover {
       fill: Color.transparent,
       submorphs: arr.flatten(
         [
-          ["distance", distanceInspector],
-          ["spread", spreadInspector],
-          ["blur", blurInspector],
-          ["angle", angleSlider],
-          ["color", colorField]
+          ['distance', distanceInspector],
+          ['spread', spreadInspector],
+          ['blur', blurInspector],
+          ['angle', angleSlider],
+          ['color', colorField]
         ].map(([value, control]) => {
           return [
             {
-              type: "label",
-              styleClasses: ["controlName"],
-              value: string.capitalize(value) + ":",
-              name: value + "Label"
+              type: 'label',
+              styleClasses: ['controlName'],
+              value: string.capitalize(value) + ':',
+              name: value + 'Label'
             },
             control
           ];
@@ -637,88 +631,86 @@ export class ShadowPopover extends StylePopover {
     });
   }
 
-  changeShadowType(type) {
+  changeShadowType (type) {
     if (type == 'No Shadow') {
-      this.toggleShadow(false)
+      this.toggleShadow(false);
     } else if (type == 'Inset Shadow') {
-      this.toggleShadow(true)
+      this.toggleShadow(true);
       this.shadowValue.inset = true;
     } else {
-      this.toggleShadow(true)
+      this.toggleShadow(true);
       this.shadowValue.inset = false;
     }
     this.get('control container').animate({
       submorphs: [this.get('shadow type')].concat(this.shadowValue ? this.shadowControls() : []),
       duration: 300
-    })
+    });
   }
 
-  updateShadow(args) {
-    let {color, spread, blur, distance, rotation, inset, fast} = this.shadowValue,
-        shadow = {fast, color, spread, blur, distance, rotation, inset, ...args};
+  updateShadow (args) {
+    const { color, spread, blur, distance, rotation, inset, fast } = this.shadowValue;
+    const shadow = { fast, color, spread, blur, distance, rotation, inset, ...args };
     this.shadowValue = new ShadowObject(shadow);
   }
 
-  toggleShadow(shadowActive) {
+  toggleShadow (shadowActive) {
     if (this.shadowValue) this.cachedShadow = this.shadowValue;
     this.shadowValue = shadowActive && this.cachedShadow;
   }
-
 }
 
 const milimeter = 'https://upload.wikimedia.org/wikipedia/commons/c/c8/Millimeterpapier_10_x_10_cm.svg';
 
 export class PointPopover extends StylePopover {
-
-  static get properties() {
+  static get properties () {
     return {
-      pointValue: {defaultValue: pt(0,0)},
-      resolution: {defaultValue: 1}
-    }
+      pointValue: { defaultValue: pt(0, 0) },
+      resolution: { defaultValue: 1 }
+    };
   }
 
-  refineResolution(evt) {
-    this.resolution = .25 + this.get('scroller').scroll.y / 160;
+  refineResolution (evt) {
+    this.resolution = 0.25 + this.get('scroller').scroll.y / 160;
     this.relayout();
   }
 
-  adjustPoint({state: {dragDelta}}) {
-    this.pointValue = this.pointValue.addPt(dragDelta.scaleBy(1/this.resolution)).roundTo(1);
+  adjustPoint ({ state: { dragDelta } }) {
+    this.pointValue = this.pointValue.addPt(dragDelta.scaleBy(1 / this.resolution)).roundTo(1);
     this.relayout();
   }
 
-  relayout() {
+  relayout () {
     super.relayout();
-    let m = this.getSubmorphNamed('mesh'),
-        pv = this.getSubmorphNamed('point value view');
-    m.origin = m.innerBounds().center().addXY(4,1);
+    const m = this.getSubmorphNamed('mesh');
+    const pv = this.getSubmorphNamed('point value view');
+    m.origin = m.innerBounds().center().addXY(4, 1);
     m.position = this.get('body').innerBounds().center();
     m.scale = this.resolution;
-    this.getSubmorphNamed('resolution view').value = "Resolution: " + this.resolution.toFixed(2) + 'x';
+    this.getSubmorphNamed('resolution view').value = 'Resolution: ' + this.resolution.toFixed(2) + 'x';
     pv.value = obj.safeToString(this.pointValue);
     pv.position = this.getSubmorphNamed('knob').bottomRight;
   }
 
-  constructor(props) {
+  constructor (props) {
     super(props);
     this.whenRendered().then(() => this.relayout());
   }
 
-  async calibrate() {
-    this.get('knob').animate({center: this.innerBounds().center(), duration: 200});
-    await this.getSubmorphNamed('point value view').animate({opacity: 0, duration: 200})
+  async calibrate () {
+    this.get('knob').animate({ center: this.innerBounds().center(), duration: 200 });
+    await this.getSubmorphNamed('point value view').animate({ opacity: 0, duration: 200 });
     this.relayout();
   }
 
-  showPointValue() {
-    this.getSubmorphNamed('point value view').animate({opacity: 1, duration: 200})
+  showPointValue () {
+    this.getSubmorphNamed('point value view').animate({ opacity: 1, duration: 200 });
   }
 
-  controls() {
-    this.extent = pt(200,200);
-    var scroller, grabber,
-        controls =  [morph({
-      extent: pt(200,200),
+  controls () {
+    this.extent = pt(200, 200);
+    let scroller; let grabber;
+    const controls = [morph({
+      extent: pt(200, 200),
       clipMode: 'hidden',
       fill: Color.transparent,
       submorphs: [
@@ -726,23 +718,23 @@ export class PointPopover extends StylePopover {
           type: 'image',
           name: 'mesh',
           fill: Color.transparent,
-          opacity: .5,
+          opacity: 0.5,
           imageUrl: milimeter,
-          autoResize: true,
+          autoResize: true
         },
         {
-          extent: pt(200,200),
+          extent: pt(200, 200),
           draggable: false,
-          dropShadow: {inset: true, spread: 5, color: Color.gray},
+          dropShadow: { inset: true, spread: 5, color: Color.gray },
           fill: Color.transparent
         },
         scroller = morph({
           name: 'scroller',
-          extent: pt(200,200),
+          extent: pt(200, 200),
           clipMode: 'scroll',
           draggable: false,
           opacity: 0.01,
-          submorphs: [{height: 200 + 2.66 * 160, width: 10}]
+          submorphs: [{ height: 200 + 2.66 * 160, width: 10 }]
         }),
         grabber = morph({
           name: 'knob',
@@ -751,7 +743,7 @@ export class PointPopover extends StylePopover {
           fill: Color.red,
           borderColor: Color.black,
           borderWidth: 1,
-          center: pt(100,100)
+          center: pt(100, 100)
         }),
         {
           type: 'label',
@@ -761,7 +753,7 @@ export class PointPopover extends StylePopover {
           styleClasses: ['Tooltip']
         },
         {
-          position: pt(10,10),
+          position: pt(10, 10),
           type: 'label',
           name: 'resolution view',
           padding: 4,
@@ -769,7 +761,7 @@ export class PointPopover extends StylePopover {
         }
       ]
     })];
-    scroller.scroll = pt(0,.75 * 160);
+    scroller.scroll = pt(0, 0.75 * 160);
     connect(grabber, 'onDragStart', this, 'showPointValue');
     connect(grabber, 'onDrag', this, 'adjustPoint');
     connect(grabber, 'onDragEnd', this, 'calibrate');
@@ -777,61 +769,60 @@ export class PointPopover extends StylePopover {
     connect(scroller, 'onScroll', this, 'refineResolution');
     return controls;
   }
-
 }
 
 export class RectanglePopover extends StylePopover {
-
-  static get properties() {
+  static get properties () {
     return {
-      popoverColor: {defaultValue: Color.gray.lighter()},
-      rectangle: {defaultValue: rect(0)}
-    }
+      popoverColor: { defaultValue: Color.gray.lighter() },
+      rectangle: { defaultValue: rect(0) }
+    };
   }
 
-  controls() {
+  controls () {
     return [
       {
         fill: Color.transparent,
         extent: pt(120, 120),
         layout: new GridLayout({
           grid: [
-            ["top", "top scrubber"],
-            ["right", "right scrubber"],
-            ["left", "left scrubber"],
-            ["bottom", "bottom scrubber"]
+            ['top', 'top scrubber'],
+            ['right', 'right scrubber'],
+            ['left', 'left scrubber'],
+            ['bottom', 'bottom scrubber']
           ],
-          columns: [0, {paddingLeft: 4}, 1, {paddingRight: 4, fixed: true, width: 60}],
+          columns: [0, { paddingLeft: 4 }, 1, { paddingRight: 4, fixed: true, width: 60 }],
           rows: arr.flatten(arr.range(0, 3).map(i => [i, {
-             paddingTop: i == 0 ? 4 : 2, 
-             paddingBottom: i == 3 ? 4 : 2
+            paddingTop: i == 0 ? 4 : 2,
+            paddingBottom: i == 3 ? 4 : 2
           }]))
         }),
         submorphs: arr.flatten(
-          ["top", "right", "bottom", "left"].map(side => {
-            let widget = new NumberWidget({
+          ['top', 'right', 'bottom', 'left'].map(side => {
+            const widget = new NumberWidget({
               master: { auto: 'styleguide://SystemWidgets/number field/light' },
-              name: side + " scrubber", autofit: false,
+              name: side + ' scrubber',
+              autofit: false,
               number: this.rectangle.partNamed(side)
             });
-            connect(widget, "update", this, "rectangle", {
-              updater: function($upd, val) {
-                let r = this.targetObj.rectangle,
-                    sides = {
-                      left: r.left(),
-                      top: r.top(),
-                      right: r.right(),
-                      bottom: r.bottom(),
-                      [side]: val
-                    };
+            connect(widget, 'update', this, 'rectangle', {
+              updater: function ($upd, val) {
+                const r = this.targetObj.rectangle;
+                const sides = {
+                  left: r.left(),
+                  top: r.top(),
+                  right: r.right(),
+                  bottom: r.bottom(),
+                  [side]: val
+                };
                 $upd(Rectangle.inset(sides.left, sides.top, sides.right, sides.bottom));
               },
-              varMapping: {side, Rectangle}
+              varMapping: { side, Rectangle }
             });
             return [
               {
-                type: "label",
-                styleClasses: ["controlName"],
+                type: 'label',
+                styleClasses: ['controlName'],
                 name: side,
                 value: side,
                 padding: 3
@@ -846,48 +837,49 @@ export class RectanglePopover extends StylePopover {
 }
 
 export class TextPopover extends StylePopover {
-
-  static get properties() {
+  static get properties () {
     return {
-      text: {defaultValue: 'Enter some text!'}
-    }
+      text: { defaultValue: 'Enter some text!' }
+    };
   }
 
-  controls() {
-    let editor = new Text({
-            name: "editor",
-            extent: pt(300,200),
-            textString: this.text,
-            lineWrapping: "by-chars",
-            ...config.codeEditor.defaultStyle
-          });
-    return [{layout: new HorizontalLayout(),
-             fill: Color.transparent,
-             borderColor: Color.gray,
-             borderWidth: 1, borderRadius: 4,
-             clipMode: 'hidden',
-             submorphs: [editor]}]
+  controls () {
+    const editor = new Text({
+      name: 'editor',
+      extent: pt(300, 200),
+      textString: this.text,
+      lineWrapping: 'by-chars',
+      ...config.codeEditor.defaultStyle
+    });
+    return [{
+      layout: new HorizontalLayout(),
+      fill: Color.transparent,
+      borderColor: Color.gray,
+      borderWidth: 1,
+      borderRadius: 4,
+      clipMode: 'hidden',
+      submorphs: [editor]
+    }];
   }
 
-  get commands() {
+  get commands () {
     return super.commands.concat([
       {
-        name: "save string",
-        async exec(textPopover) {
+        name: 'save string',
+        async exec (textPopover) {
           textPopover.text = textPopover.get('editor').textString;
           signal(textPopover, 'save', textPopover.text);
-          textPopover.setStatusMessage(`String saved!`, Color.green);
+          textPopover.setStatusMessage('String saved!', Color.green);
         }
       }
     ]);
   }
 
-  get keybindings() {
+  get keybindings () {
     return super.keybindings.concat([
-      {keys: {mac: "Command-S", win: "Ctrl-S"}, command: "save string"}
+      { keys: { mac: 'Command-S', win: 'Ctrl-S' }, command: 'save string' }
     ]);
   }
-
 }
 
 Object.assign(popovers, {
@@ -896,5 +888,5 @@ Object.assign(popovers, {
   RectanglePopover,
   ShadowPopover,
   PointPopover,
-  LayoutPopover,
+  LayoutPopover
 });

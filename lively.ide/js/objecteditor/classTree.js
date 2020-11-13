@@ -1,10 +1,10 @@
-import { TreeData } from "lively.components";
-import { isClass } from "lively.classes/util.js";
-import { arr } from "lively.lang";
-import { withSuperclasses } from "lively.classes/util.js";
-import { lexicalClassMembers } from "lively.classes/util.js";
-import { isString } from "lively.lang/object.js";
-import { Icon } from "lively.morphic";
+import { TreeData } from 'lively.components';
+import { isClass } from 'lively.classes/util.js';
+import { arr } from 'lively.lang';
+import { withSuperclasses } from 'lively.classes/util.js';
+import { lexicalClassMembers } from 'lively.classes/util.js';
+import { isString } from 'lively.lang/object.js';
+import { Icon } from 'lively.morphic';
 
 // var oe = ObjectEditor.open({target: this})
 
@@ -30,59 +30,55 @@ import { Icon } from "lively.morphic";
 // in order to run locally as well as remotely
 
 export default class ClassTreeData extends TreeData {
-
-  constructor(target) {
+  constructor (target) {
     super({
       target,
-      name: "root",
+      name: 'root',
       isRoot: true,
       isCollapsed: false
     });
   }
 
-  display(node) {
-    if (!node) return "empty";
+  display (node) {
+    if (!node) return 'empty';
 
-    if (node.isRoot)
-      return node.target.name || node.target.id || "root object";
+    if (node.isRoot) { return node.target.name || node.target.id || 'root object'; }
 
     // class
-    if (node.isClass)
-      return node.target;
+    if (node.isClass) { return node.target; }
     // method
 
-    return node.name || "no name";
+    return node.name || 'no name';
   }
 
-  isLeaf(node) { if (!node) return true; return !node.isRoot && !node.isClass; }
-  isCollapsed(node) { return !node || node.isCollapsed; }
-  collapse(node, bool) { node && (node.isCollapsed = bool); }
+  isLeaf (node) { if (!node) return true; return !node.isRoot && !node.isClass; }
+  isCollapsed (node) { return !node || node.isCollapsed; }
+  collapse (node, bool) { node && (node.isCollapsed = bool); }
 
-  getChildren(node) {
+  getChildren (node) {
     if (!node) return [];
     // if (node.isCollapsed) return [];
 
     if (node.isRoot) {
       if (node.children) return node.children;
-      var classes = arr.without(withSuperclasses(node.target), Object).reverse();
-      return node.children = classes.map(klass => ({isClass: true, klass, target: klass[Symbol.for('__LivelyClassName__')], isCollapsed: true}));
+      const classes = arr.without(withSuperclasses(node.target), Object).reverse();
+      return node.children = classes.map(klass => ({ isClass: true, klass, target: klass[Symbol.for('__LivelyClassName__')], isCollapsed: true }));
     }
 
     if (node.isClass) {
       try {
-        return node.children
-          || (node.children = lexicalClassMembers(node.klass).map(ea => {
-            var {static: _static, name, kind, overridden} = ea;
-            var prefix = "";
-            if (_static) prefix += "static ";
-            if (kind === "get") prefix += "get ";
-            if (kind === "set") prefix += "set ";
-            return {name: [ overridden ? [...Icon.textAttribute('arrow-circle-up'), " ", { opacity: .5 }] : [], prefix + name, {}], target: ea};
+        return node.children ||
+          (node.children = lexicalClassMembers(node.klass).map(ea => {
+            const { static: _static, name, kind, overridden } = ea;
+            let prefix = '';
+            if (_static) prefix += 'static ';
+            if (kind === 'get') prefix += 'get ';
+            if (kind === 'set') prefix += 'set ';
+            return { name: [overridden ? [...Icon.textAttribute('arrow-circle-up'), ' ', { opacity: 0.5 }] : [], prefix + name, {}], target: ea };
           }));
       } catch (e) { $world.showError(e); return node.children = []; }
     }
 
     return [];
   }
-
 }

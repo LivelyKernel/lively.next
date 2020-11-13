@@ -1,33 +1,31 @@
-/*global System*/
-import { arr } from "lively.lang";
-import { pt, Color } from "lively.graphics";
-import { config, easings, Text, InputLine } from "lively.morphic";
-import JavaScriptEditorPlugin from "./editor-plugin.js";
-import EvalBackendChooser from "./eval-backend-ui.js";
-import { resource } from "lively.resources";
-import { Window } from "lively.components";
-import DefaultTheme from "../themes/default.js";
-import DarkTheme from "../themes/dark.js";
+/* global System */
+import { arr } from 'lively.lang';
+import { pt, Color } from 'lively.graphics';
+import { config, easings, Text, InputLine } from 'lively.morphic';
+import JavaScriptEditorPlugin from './editor-plugin.js';
+import EvalBackendChooser from './eval-backend-ui.js';
+import { resource } from 'lively.resources';
+import { Window } from 'lively.components';
+import DefaultTheme from '../themes/default.js';
+import DarkTheme from '../themes/dark.js';
 
 export default class Workspace extends Window {
-
-  static get properties() {
-
+  static get properties () {
     return {
-      extent: {defaultValue: pt(400,300)},
+      extent: { defaultValue: pt(400, 300) },
 
       title: {
-        initialize(val) {
-          this.title = val || "Workspace";
-        },
+        initialize (val) {
+          this.title = val || 'Workspace';
+        }
       },
 
       targetMorph: {
-        initialize() {
+        initialize () {
           this.targetMorph = new Text({
-            name: "editor",
-            textString: "// Enter and evaluate JavaScript code here",
-            lineWrapping: "by-chars",
+            name: 'editor',
+            textString: '// Enter and evaluate JavaScript code here',
+            lineWrapping: 'by-chars',
             ...config.codeEditor.defaultStyle,
             plugins: [new JavaScriptEditorPlugin()]
           });
@@ -35,74 +33,79 @@ export default class Workspace extends Window {
       },
 
       content: {
-        derived: true, after: ["targetMorph"],
-        get() { return this.targetMorph.textString; },
-        set(val) { if (val) this.targetMorph.textString = val; }
+        derived: true,
+        after: ['targetMorph'],
+        get () { return this.targetMorph.textString; },
+        set (val) { if (val) this.targetMorph.textString = val; }
       },
 
       jsPlugin: {
-        derived: true, readOnly: true, after: ["targetMorph"],
-        get() { return this.targetMorph.pluginFind(p => p.isEditorPlugin); },
-        initialize() {
-          var ed = this.targetMorph;
+        derived: true,
+        readOnly: true,
+        after: ['targetMorph'],
+        get () { return this.targetMorph.pluginFind(p => p.isEditorPlugin); },
+        initialize () {
+          const ed = this.targetMorph;
           this.jsPlugin.evalEnvironment = {
-            targetModule: "lively://lively.next-workspace/" + ed.id,
-            context: ed, format: "esm"
+            targetModule: 'lively://lively.next-workspace/' + ed.id,
+            context: ed,
+            format: 'esm'
           };
-          let sys = this.jsPlugin.systemInterface();
+          const sys = this.jsPlugin.systemInterface();
           this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(
-            this, sys ? sys.name : "local"));
+            this, sys ? sys.name : 'local'));
         }
       },
 
       systemInterface: {
-        derived: true, after: ["jsPlugin"],
-        get() { return this.jsPlugin.systemInterface(); },
-        set(systemInterface) {
+        derived: true,
+        after: ['jsPlugin'],
+        get () { return this.jsPlugin.systemInterface(); },
+        set (systemInterface) {
           this.jsPlugin.setSystemInterfaceNamed(systemInterface);
         }
       },
 
       file: {
-        get() { let f = this.getProperty("file"); return f ? resource(f) : f; },
-        set(file) {
+        get () { const f = this.getProperty('file'); return f ? resource(f) : f; },
+        set (file) {
           if (file && file.isResource) file = file.url;
-          this.setProperty("file", file);
+          this.setProperty('file', file);
         }
       }
     };
   }
 
-  async openWindowMenu() {
-    let menuItems = [
+  async openWindowMenu () {
+    const menuItems = [
       [
-        "Change Window Title",
+        'Change Window Title',
         async () => {
-          let newTitle = await $world.prompt("Enter New Name", {input: this.title});
+          const newTitle = await $world.prompt('Enter New Name', { input: this.title });
           if (newTitle) this.title = newTitle;
         }
       ],
-      {isDivider: true},
-      ["Set Workspace File...", () => this.execCommand("[workspace] query for file")],
+      { isDivider: true },
+      ['Set Workspace File...', () => this.execCommand('[workspace] query for file')],
       ...(await this.targetMorph.menuItems())
     ];
     this.targetMorph.world().openMenu(menuItems);
   }
 
-  onLoad() {
+  onLoad () {
     this.jsPlugin.requestHighlight();
   }
 
-  async setEvalBackend(choice) {
-    const duration = 1000,
-          easing = easings.outExpo;
+  async setEvalBackend (choice) {
+    const duration = 1000;
+    const easing = easings.outExpo;
     this.jsPlugin.setSystemInterfaceNamed(choice);
     let styleClasses, theme;
     if ((await this.jsPlugin.runEval("System.get('@system-env').node")).value) {
-      styleClasses = [...this.styleClasses, 'node']
+      styleClasses = [...this.styleClasses, 'node'];
       theme = DarkTheme.instance;
     } else {
-      styleClasses = arr.without(this.styleClasses, 'node')
+      styleClasses = arr.without(this.styleClasses, 'node');
       theme = DefaultTheme.instance;
     }
     this.animate({ duration, easing, styleClasses });
@@ -110,15 +113,16 @@ export default class Workspace extends Window {
     this.getSubmorphNamed('editor').textString = this.getSubmorphNamed('editor').textString;
     await this.get('editor').animate({
       fill: this.jsPlugin.theme.background,
-      duration, easing
-    })
-    this.jsPlugin.highlight()
+      duration,
+      easing
+    });
+    this.jsPlugin.highlight();
   }
 
-  relayoutWindowControls() {
+  relayoutWindowControls () {
     super.relayoutWindowControls();
-    var list = this.getSubmorphNamed("eval backend button"),
-        title = this.ui.windowTitle;
+    const list = this.getSubmorphNamed('eval backend button');
+    const title = this.ui.windowTitle;
     if (list) {
       list.height = 21;
       list.topRight = this.innerBounds().topRight().addXY(-5, 2);
@@ -126,40 +130,39 @@ export default class Workspace extends Window {
     }
   }
 
-  get commands() {
+  get commands () {
     return [
       EvalBackendChooser.default.activateEvalBackendCommand(this),
 
       {
-        name: "[workspace] query for file",
-        async exec(workspace) {
-          let historyId = "lively.ide-workspace-file-hist",
-              {items: hist} = InputLine.getHistory(historyId),
-              f = await workspace.world().prompt(
-                "Enter a file to save the workspace contents to",
-                {
-                  input: workspace.file ? workspace.file.url :
-                    hist.length ? arr.last(hist) :
-                      resource(System.baseURL).join("workspace.js").url,
-                  requester: workspace,
-                  historyId
-                });
+        name: '[workspace] query for file',
+        async exec (workspace) {
+          const historyId = 'lively.ide-workspace-file-hist';
+          const { items: hist } = InputLine.getHistory(historyId);
+          const f = await workspace.world().prompt(
+            'Enter a file to save the workspace contents to',
+            {
+              input: workspace.file ? workspace.file.url
+                : hist.length ? arr.last(hist)
+                  : resource(System.baseURL).join('workspace.js').url,
+              requester: workspace,
+              historyId
+            });
           workspace.file = f;
           if (!f) {
-            workspace.setStatusMessage("workspace file cleared");
+            workspace.setStatusMessage('workspace file cleared');
             return;
           }
           workspace.setStatusMessage(`workspace saves content to ${workspace.file.url}`);
-          if (await workspace.world().confirm(`Load content from ${f}?`, {requester: workspace}))
-            workspace.content = await workspace.file.read();
+          if (await workspace.world().confirm(`Load content from ${f}?`, { requester: workspace })) { workspace.content = await workspace.file.read(); }
         }
       },
 
       {
-        name: "[workspace] save content",
-        async exec(workspace) {
+        name: '[workspace] save content',
+        async exec (workspace) {
           if (!workspace.file) {
-            workspace.setStatusMessage("Cannot save: no workspace file set");
+            workspace.setStatusMessage('Cannot save: no workspace file set');
             return workspace;
           }
           try {
@@ -172,12 +175,11 @@ export default class Workspace extends Window {
     ].concat(super.commands);
   }
 
-  get keybindings() {
+  get keybindings () {
     return super.keybindings.concat([
-      {keys: "Meta-Shift-L b a c k e n d", command: "activate eval backend dropdown list"},
-      {keys: "Alt-L", command: "[workspace] query for file"},
-      {keys: {mac: "Command-S", win: "Ctrl-S"}, command: "[workspace] save content"}
+      { keys: 'Meta-Shift-L b a c k e n d', command: 'activate eval backend dropdown list' },
+      { keys: 'Alt-L', command: '[workspace] query for file' },
+      { keys: { mac: 'Command-S', win: 'Ctrl-S' }, command: '[workspace] save content' }
     ]);
   }
-
 }

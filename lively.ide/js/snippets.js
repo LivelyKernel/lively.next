@@ -1,14 +1,14 @@
-import { Snippet } from "../text/snippets.js";
+import { Snippet } from '../text/snippets.js';
 
 export var snippets = [
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // # typeof tests
-  ["typef", "typeof ${0:object} === \"function\"$1"],
-  ["types", "typeof ${0:object} === \"string\"$1"],
-  ["typen", "typeof ${0:object} === \"number\"$1"],
-  ["typeu", "typeof ${0:object} === \"undefined\"$1"],
-  ["typenu", "typeof ${0:object} !== \"undefined\"$1"],
+  ['typef', 'typeof ${0:object} === "function"$1'],
+  ['types', 'typeof ${0:object} === "string"$1'],
+  ['typen', 'typeof ${0:object} === "number"$1'],
+  ['typeu', 'typeof ${0:object} === "undefined"$1'],
+  ['typenu', 'typeof ${0:object} !== "undefined"$1'],
 
   // ["afun", ],
   // async function ${1?:functionName}(${2}) {${0}}
@@ -22,9 +22,9 @@ export var snippets = [
   // regex /((=)\s*|(:)\s*|(\()|\b)/fn\*/
   // function*($2) {${0:$TM_SELECTED_TEXT}}${M2?;}${M3?,}
 
-  ["import", "import { ${0:name} } from \"${1:module}\";"],
-  ["importd", "import ${0:name} from \"${1:module}\";"],
-  ["import*", "import * as ${0:name} from \"${1:module}\";"],
+  ['import', 'import { ${0:name} } from "${1:module}";'],
+  ['importd', 'import ${0:name} from "${1:module}";'],
+  ['import*', 'import * as ${0:name} from "${1:module}";'],
 
   // ["export", ],
   // regex /\b/expo?r?t?/
@@ -39,11 +39,11 @@ export var snippets = [
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // classes
 
-  ["subclass", "class ${0:name} extends ${1:base} {\n  constructor(${2:args}) {\n    super(${3:args})\n    $4\n  }\n}"],
-  ["class", "class ${0:name} {\n  constructor(${1:args}) {\n    $2\n  }\n}"],
+  ['subclass', 'class ${0:name} extends ${1:base} {\n  constructor(${2:args}) {\n    super(${3:args})\n    $4\n  }\n}'],
+  ['class', 'class ${0:name} {\n  constructor(${1:args}) {\n    $2\n  }\n}'],
 
   // control flow
-  ["switch", `switch (\${0:expression}) {
+  ['switch', `switch (\${0:expression}) {
   case '\${2:case}':
     \${3:// code}
     break;
@@ -52,36 +52,33 @@ export var snippets = [
     \${1:// code}
 }`],
 
-  ["tryf", "try {${0:/* code */}} finally {}"],
-  ["try", "try {${0:/* code */}} catch (err) {}"],
+  ['tryf', 'try {${0:/* code */}} finally {}'],
+  ['try', 'try {${0:/* code */}} catch (err) {}'],
 
-  ["do", "do {${1:/* code */}} while (${0:/* condition */});"],
+  ['do', 'do {${1:/* code */}} while (${0:/* condition */});'],
 
+  ['fori', 'for (let ${0:prop} in ${1:obj}) {\n  ${2:obj[prop]}\n}'],
+  ['foro', 'for (let ${0:value} of ${1:iterable}) {\n  ${2:value}\n}'],
 
-  ["fori", "for (let ${0:prop} in ${1:obj}) {\n  ${2:obj[prop]}\n}"],
-  ["foro", "for (let ${0:value} of ${1:iterable}) {\n  ${2:value}\n}"],
+  ['for-', 'for (let ${0:i} = ${1:list}.length; ${2:i}--; ) {\n  $3\n}'],
 
-
-  ["for-", "for (let ${0:i} = ${1:list}.length; ${2:i}--; ) {\n  $3\n}"],
-
-  ["for", "for (let ${0:i} = 0; ${1:i} < ${3:list}.length; ${2:i}++) {\n  $4\n}"],
-
+  ['for', 'for (let ${0:i} = 0; ${1:i} < ${3:list}.length; ${2:i}++) {\n  $4\n}'],
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // js vocabulary
-  ["Prom", "new Promise((resolve, reject) => {$0})"],
-  ["keys", "Object.keys($0)"],
-  ["assign", "Object.assign(${0:dest}, ${1:source})"],
-  ["stringi", "JSON.stringify(${0:object})"],
+  ['Prom', 'new Promise((resolve, reject) => {$0})'],
+  ['keys', 'Object.keys($0)'],
+  ['assign', 'Object.assign(${0:dest}, ${1:source})'],
+  ['stringi', 'JSON.stringify(${0:object})'],
 
-  ["forE", "forEach(${0:ea} => $1)"],
-  ["map", "map(${0:ea} => $1)"],
-  ["reduce", "reduce((${1:all}, ${2:ea}) => {$3}, ${0:init})"],
-  ["from", "Array.from(${0:list})"],
-  ["last", "arr.last(${0:list})"],
-  ["pluck", "arr.pluck(${0:list}, \"${1:key}\")"],
-  ["sortBy", "arr.sortBy(${0:list}, ($1) => $2)"],
-  ["join", "join(\"\\n\")"],
+  ['forE', 'forEach(${0:ea} => $1)'],
+  ['map', 'map(${0:ea} => $1)'],
+  ['reduce', 'reduce((${1:all}, ${2:ea}) => {$3}, ${0:init})'],
+  ['from', 'Array.from(${0:list})'],
+  ['last', 'arr.last(${0:list})'],
+  ['pluck', 'arr.pluck(${0:list}, "${1:key}")'],
+  ['sortBy', 'arr.sortBy(${0:list}, ($1) => $2)'],
+  ['join', 'join("\\n")'],
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // # addScript
@@ -90,47 +87,47 @@ export var snippets = [
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // lively.bindings.connect
-  ["con", "connect(${0:source}, '${1:sourceAttr}', ${2:target}, '${3:targetAttr}');"],
-  ["once", "once(${0:source}, '${1:sourceAttr}', ${2:target}, '${3:targetAttr}');"],
-  ["sig", "signal(${0:source}, '${1:sourceAttr}', ${2:value});"],
+  ['con', "connect(${0:source}, '${1:sourceAttr}', ${2:target}, '${3:targetAttr}');"],
+  ['once', "once(${0:source}, '${1:sourceAttr}', ${2:target}, '${3:targetAttr}');"],
+  ['sig', "signal(${0:source}, '${1:sourceAttr}', ${2:value});"],
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // # lively.lang
 
-  ["ll",  "lively.lang."],
-  ["lls", "lively.lang.string."],
-  ["lla", "lively.lang.arr."],
-  ["llo", "lively.lang.obj."],
-  ["llf", "lively.lang.fun."],
-  ["llp", "lively.lang.promise."],
+  ['ll', 'lively.lang.'],
+  ['lls', 'lively.lang.string.'],
+  ['lla', 'lively.lang.arr.'],
+  ['llo', 'lively.lang.obj.'],
+  ['llf', 'lively.lang.fun.'],
+  ['llp', 'lively.lang.promise.'],
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic stuff
 
-  ["withA", "withAllSubmorphsDo(ea => { return ${0:ea}; })"],
-  ["$w", "$world"],
-  ["$m", "$morph('${0:name}')"],
-  ["get", "get(\"${0:name}\")"],
+  ['withA', 'withAllSubmorphsDo(ea => { return ${0:ea}; })'],
+  ['$w', '$world'],
+  ['$m', "$morph('${0:name}')"],
+  ['get', 'get("${0:name}")'],
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // string stuff
-  ["$", "${$0}"],
+  ['$', '${$0}'],
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // console, debugging
-  ["cl", "console.log($0)"],
-  ["cw", "console.warn($0)"],
-  ["ce", "console.error($0)"],
-  ["s", "show(`$0`);"],
+  ['cl', 'console.log($0)'],
+  ['cw', 'console.warn($0)'],
+  ['ce', 'console.error($0)'],
+  ['s', 'show(`$0`);'],
 
-  ["l2lC", "import L2LClient from \"lively.2lively/client.js\";\nlet l2lClient = L2LClient.default();$0"],
+  ['l2lC', 'import L2LClient from "lively.2lively/client.js";\nlet l2lClient = L2LClient.default();$0'],
 
   // functions
-  ["fun", "function ${0:functionName}($1) {$2}"],
-  ["fn", "function($0) {$1}"],
-  ["f", "($0) => $1"],
+  ['fun', 'function ${0:functionName}($1) {$2}'],
+  ['fn', 'function($0) {$1}'],
+  ['f', '($0) => $1'],
 
-  ["aw", "await $0"],
+  ['aw', 'await $0']
 
 ];
 

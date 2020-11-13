@@ -7,14 +7,14 @@ import {
   Icon,
   InputLine,
   config
-} from "lively.morphic";
+} from 'lively.morphic';
 
-import { connect, signal } from "lively.bindings";
-import { Color, LinearGradient, pt, rect } from "lively.graphics";
-import { num, obj } from "lively.lang";
+import { connect, signal } from 'lively.bindings';
+import { Color, LinearGradient, pt, rect } from 'lively.graphics';
+import { num, obj } from 'lively.lang';
 
-import { popovers } from "./index.js";
-import { ValueScrubber } from "lively.components/widgets.js";
+import { popovers } from './index.js';
+import { ValueScrubber } from 'lively.components/widgets.js';
 import { Popover } from 'lively.components/popup.js';
 
 /*
@@ -50,119 +50,120 @@ of these existing and/or add their own for new types of values as they please.
 */
 
 class ContextSensitiveWidget extends Morph {
-
-  static get properties() {
+  static get properties () {
     return {
-      fill: {defaultValue: Color.transparent},
+      fill: { defaultValue: Color.transparent },
       isSelected: {
-        defaultValue: "false",
-        set(v) {
-          this.setProperty("isSelected", v);
+        defaultValue: 'false',
+        set (v) {
+          this.setProperty('isSelected', v);
           this.fontColor = v ? Color.white : Color.black;
         }
       },
       layout: {
-        initialize() {
+        initialize () {
           this.layout = new HorizontalLayout();
         }
       },
       context: {
-        serialize: false,
+        serialize: false
         /* a certain morph that the inspected property is assigned to */
       }
     };
   }
-
 }
 
 class ShortcutWidget extends ContextSensitiveWidget {
-
-  static get properties() {
+  static get properties () {
     return {
       title: {
-        defaultValue: "No Title", /* Name denoting the shortcut */
-        after: ["submorphs"],
-        set(t) {
-          this.setProperty("title", t);
-          this.getSubmorphNamed("valueString").value = t;
+        defaultValue: 'No Title', /* Name denoting the shortcut */
+        after: ['submorphs'],
+        set (t) {
+          this.setProperty('title', t);
+          this.getSubmorphNamed('valueString').value = t;
         }
       },
-      nativeCursor: {defaultValue: "pointer"},
+      nativeCursor: { defaultValue: 'pointer' },
       fontColor: {
         derived: true,
-        set(c) {
+        set (c) {
           this.submorphs.forEach(m => m.fontColor = c);
         }
       },
       submorphs: {
-        initialize() {
+        initialize () {
           this.submorphs = [
-            Icon.makeLabel("arrow-right", {
-              styleClasses: ["TreeLabel"],
-              fontSize: 15, padding: rect(1,1,4,1)}),
-            {type: "label", value: this.title,
-              styleClasses: ["TreeLabel"],
-              fontWeight: "bold",
-              name: "valueString", opacity: .8,
-              borderRadius: 5, padding: rect(0,0,0,2),
-              nativeCursor: "pointer", fontSize: 12,
-              borderWidth: 0}
+            Icon.makeLabel('arrow-right', {
+              styleClasses: ['TreeLabel'],
+              fontSize: 15,
+              padding: rect(1, 1, 4, 1)
+            }),
+            {
+              type: 'label',
+              value: this.title,
+              styleClasses: ['TreeLabel'],
+              fontWeight: 'bold',
+              name: 'valueString',
+              opacity: 0.8,
+              borderRadius: 5,
+              padding: rect(0, 0, 0, 2),
+              nativeCursor: 'pointer',
+              fontSize: 12,
+              borderWidth: 0
+            }
           ];
         }
       }
     };
   }
 
-  onMouseDown(evt) {
+  onMouseDown (evt) {
     this.openPopover();
   }
 
-  async openPopover() {
+  async openPopover () {
     /* provide a tool for editing the property at hand */
   }
-
 }
 
 export class LayoutWidget extends ShortcutWidget {
-
-  static get properties() {
+  static get properties () {
     return {
       title: {
-        after: ["submorphs"],
-        initialize() {
-          this.title = this.context && this.context.layout ?
-            "Configure " + this.context.layout.name() + " Layout" : "No Layout";
+        after: ['submorphs'],
+        initialize () {
+          this.title = this.context && this.context.layout
+            ? 'Configure ' + this.context.layout.name() + ' Layout' : 'No Layout';
         }
       }
     };
   }
 
-  layoutChanged() {
-    this.title = this.context.layout ?
-      "Configure " + this.context.layout.name() + " Layout" : "No Layout";
+  layoutChanged () {
+    this.title = this.context.layout
+      ? 'Configure ' + this.context.layout.name() + ' Layout' : 'No Layout';
   }
 
-  async openPopover() {
-    let editor = new popovers.LayoutPopover({
+  async openPopover () {
+    const editor = new popovers.LayoutPopover({
       hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
       container: this.context
     });
     await editor.fadeIntoWorld(this.globalBounds().center());
-    connect(editor, "layoutChanged", this, "layoutChanged");
-    signal(this, "openWidget", editor);
+    connect(editor, 'layoutChanged', this, 'layoutChanged');
+    signal(this, 'openWidget', editor);
   }
-
 }
 
 // these can exist outside of a certain morph context
 
 export class ColorWidget extends ContextSensitiveWidget {
-
-  static get properties() {
+  static get properties () {
     return {
       layout: {
-        initialize() {
-          this.layout = new HorizontalLayout({direction: "centered"});
+        initialize () {
+          this.layout = new HorizontalLayout({ direction: 'centered' });
         }
       },
       selectionFontColor: {
@@ -171,23 +172,23 @@ export class ColorWidget extends ContextSensitiveWidget {
       nonSelectionFontColor: {
         defaultValue: Color.black
       },
-      color: {defaultValue: Color.blue},
-      gradientEnabled: {defaultValue: false},
-      fontSize: {defaultValue: 14},
+      color: { defaultValue: Color.blue },
+      gradientEnabled: { defaultValue: false },
+      fontSize: { defaultValue: 14 },
       isSelected: {
         after: ['submorphs'],
-        set(selected) {
+        set (selected) {
           if (this.getProperty('isSelected') != selected) {
-             this.getSubmorphNamed('valueString').fontColor = selected ?
-               this.selectionFontColor : this.nonSelectionFontColor
-             this.setProperty('isSelected', selected);
+            this.getSubmorphNamed('valueString').fontColor = selected
+              ? this.selectionFontColor : this.nonSelectionFontColor;
+            this.setProperty('isSelected', selected);
           }
         }
       },
       submorphs: {
         after: ['nonSelectionFontColor', 'selectionFontColor'],
-        initialize() {
-          connect(this, "color", this, "relayout", {
+        initialize () {
+          connect(this, 'color', this, 'relayout', {
             converter: (next, prev) => {
               return (prev && prev.isColor) != (next && next.isColor);
             }
@@ -198,78 +199,78 @@ export class ColorWidget extends ContextSensitiveWidget {
     };
   }
 
-  relayout(reset) {
+  relayout (reset) {
     if (reset) {
       if (!this.color) {
         this.submorphs = this.renderNoColor();
         return;
       }
-      this.submorphs = this.color.isGradient ?
-        this.renderGradientValue() : this.renderColorValue();
+      this.submorphs = this.color.isGradient
+        ? this.renderGradientValue() : this.renderColorValue();
     } else {
       if (!this.color) return;
-      this.color.isGradient ?
-        this.updateGradientValue() : this.updateColorValue();
+      this.color.isGradient
+        ? this.updateGradientValue() : this.updateColorValue();
     }
   }
 
-  updateGradientValue() {
-    let gradient = this.color;
+  updateGradientValue () {
+    const gradient = this.color;
     if (gradient.stops.length * 2 == this.submorphs.length - 3) {
       // patch the stops
-      var stopLabel;
-      for (let i in this.color.stops) {
-        let {color, offset} = gradient.stops[i];
-        let {submorphs: [stopColor]} = this.submorphs[2 + i * 2];
+      let stopLabel;
+      for (const i in this.color.stops) {
+        const { color, offset } = gradient.stops[i];
+        const { submorphs: [stopColor] } = this.submorphs[2 + i * 2];
         stopLabel = this.submorphs[3 + i * 2];
         stopColor.fill = color;
-        stopLabel.value = (offset * 100).toFixed() + "%" + (i < gradient.stops.length - 1 ? "," : "");
+        stopLabel.value = (offset * 100).toFixed() + '%' + (i < gradient.stops.length - 1 ? ',' : '');
       }
     } else {
       this.submorphs = this.renderGradientValue();
     }
   }
 
-  renderGradientValue() {
+  renderGradientValue () {
     return [
       {
-        type: "label",
-        styleClasses: ["TreeLabel"],
-        value: this.color.type + "(",
-        name: "valueString"
+        type: 'label',
+        styleClasses: ['TreeLabel'],
+        value: this.color.type + '(',
+        name: 'valueString'
       },
       ...this.renderStops(),
       {
-        type: "label",
-        styleClasses: ["TreeLabel"],
-        value: ")"
+        type: 'label',
+        styleClasses: ['TreeLabel'],
+        value: ')'
       }
     ];
   }
 
-  updateColorValue() {
-    this.getSubmorphNamed("color box").fill = this.color;
-    this.getSubmorphNamed("valueString").value = obj.safeToString(this.color);
+  updateColorValue () {
+    this.getSubmorphNamed('color box').fill = this.color;
+    this.getSubmorphNamed('valueString').value = obj.safeToString(this.color);
   }
 
-  renderNoColor() {
+  renderNoColor () {
     return [
       {
         extent: pt(15, 15),
         fill: Color.transparent,
         submorphs: [
           {
-            styleClasses: ["colorValue"],
-            name: "color box",
+            styleClasses: ['colorValue'],
+            name: 'color box',
             center: pt(5, 7.5),
             fill: Color.white,
             borderColor: Color.gray.darker(),
             borderWidth: 1,
             submorphs: [
               {
-                type: "path",
-                name: "no fill",
-                vertices: [pt(0,0), pt(10,10)],
+                type: 'path',
+                name: 'no fill',
+                vertices: [pt(0, 0), pt(10, 10)],
                 borderColor: Color.red
               }
             ]
@@ -277,105 +278,104 @@ export class ColorWidget extends ContextSensitiveWidget {
         ]
       },
       {
-        type: "label",
-        value: "No Color",
+        type: 'label',
+        value: 'No Color',
         fontSize: 14,
-        name: "valueString",
-        styleClasses: ["TreeLabel"]
+        name: 'valueString',
+        styleClasses: ['TreeLabel']
       }
-    ];  }
+    ];
+  }
 
-  renderColorValue() {
+  renderColorValue () {
     return [
       {
         extent: pt(15, 15),
         fill: Color.transparent,
         submorphs: [{
-          styleClasses: ["colorValue"],
-          name: "color box",
+          styleClasses: ['colorValue'],
+          name: 'color box',
           center: pt(5, 7.5),
           fill: this.color,
           borderColor: Color.gray.darker(),
-          nativeCursor: "pointer",
+          nativeCursor: 'pointer',
           borderWidth: 1
         }
         ]
       },
       {
-        type: "label",
+        type: 'label',
         value: obj.safeToString(this.color),
         fontSize: 14,
-        name: "valueString",
-        styleClasses: ["TreeLabel"]
+        name: 'valueString',
+        styleClasses: ['TreeLabel']
       }
     ];
   }
 
-  renderStops() {
-    let gradient = this.color,
-        stops = [
-          {
-            type: "label",
-            padding: rect(0, 0, 5, 0),
-            value: gradient.type == "linearGradient"
-              ? num.toDegrees(gradient.vectorAsAngle()).toFixed() + "°,"
-              : ""
-          }
-        ];
-    for (let i in gradient.stops) {
-      var {color, offset} = gradient.stops[i];
+  renderStops () {
+    const gradient = this.color;
+    const stops = [
+      {
+        type: 'label',
+        padding: rect(0, 0, 5, 0),
+        value: gradient.type == 'linearGradient'
+          ? num.toDegrees(gradient.vectorAsAngle()).toFixed() + '°,'
+          : ''
+      }
+    ];
+    for (const i in gradient.stops) {
+      const { color, offset } = gradient.stops[i];
       stops.push({
         extent: pt(this.fontSize, this.fontSize),
         fill: Color.transparent,
-        layout: new HorizontalLayout({spacing: 3}),
+        layout: new HorizontalLayout({ spacing: 3 }),
         submorphs: [
           {
-            styleClasses: ["colorValue"],
+            styleClasses: ['colorValue'],
             fill: color
           }
         ]
       });
       stops.push({
-        type: "label",
-        padding: rect(0,0,5,0),
-        value: (offset * 100).toFixed() + "%" + (i < gradient.stops.length - 1 ? "," : "")
+        type: 'label',
+        padding: rect(0, 0, 5, 0),
+        value: (offset * 100).toFixed() + '%' + (i < gradient.stops.length - 1 ? ',' : '')
       });
     }
     return stops;
   }
 
-  onMouseDown(evt) {
+  onMouseDown (evt) {
     this.openFillEditor();
   }
 
-  update(color) {
+  update (color) {
     this.color = color;
   }
 
-  async openFillEditor() {
-    let editor = new popovers.FillPopover({
+  async openFillEditor () {
+    const editor = new popovers.FillPopover({
       hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
       handleMorph: this.context,
       fillValue: this.color,
-      title: "Fill Control",
+      title: 'Fill Control',
       gradientEnabled: this.gradientEnabled
     });
     await editor.fadeIntoWorld(this.globalBounds().center());
-    connect(editor, "fillValue", this, "update");
-    signal(this, "openWidget", editor);
+    connect(editor, 'fillValue', this, 'update');
+    signal(this, 'openWidget', editor);
   }
-
 }
 
 export class BooleanWidget extends Label {
-
-  static get properties() {
+  static get properties () {
     return {
-      fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
-      nativeCursor: {defaultValue: "pointer"},
+      fontFamily: { defaultValue: config.codeEditor.defaultStyle.fontFamily },
+      nativeCursor: { defaultValue: 'pointer' },
       boolean: {
-        set(b) {
-          this.setProperty("boolean", b);
+        set (b) {
+          this.setProperty('boolean', b);
           this.value = obj.safeToString(b);
           this.fontColor = this.boolean ? Color.green : Color.red;
         }
@@ -383,26 +383,23 @@ export class BooleanWidget extends Label {
     };
   }
 
-  onMouseDown(evt) {
+  onMouseDown (evt) {
     this.boolean = !this.boolean;
   }
-
 }
 
 export class NumberWidget extends Morph {
-
-  static get properties() {
-
+  static get properties () {
     return {
       unit: {
         type: 'Enum',
         isStyleProp: true,
         values: ['px', '%', 'pt', '']
       },
-      autofit: { 
+      autofit: {
         defaultValue: true,
         after: ['submorphs', 'extent'],
-        set(active) {
+        set (active) {
           this.setProperty('autofit', active);
           this.getSubmorphNamed('value').scaleToBounds = !active;
         }
@@ -410,161 +407,159 @@ export class NumberWidget extends Morph {
       number: {
         defaultValue: 0,
         after: ['unit', 'autofit'],
-        set(v) {
-          this.setProperty("number", v);
+        set (v) {
+          this.setProperty('number', v);
           this.relayout(false);
         }
       },
-      min: {defaultValue: -Infinity},
-      max: {defaultValue: Infinity},
+      min: { defaultValue: -Infinity },
+      max: { defaultValue: Infinity },
       floatingPoint: {
         after: ['number', 'submorphs'],
-        set(isFloat) {
+        set (isFloat) {
           this.setProperty('floatingPoint', isFloat);
           this.get('value').floatingPoint = isFloat;
         },
-        get() {
-           let m = /[+-]?([0-9]*[.])?[0-9]+/.exec(this.number);
-           return this.getProperty('floatingPoint') || (this.scaleFactor == 1 && m && !!m[1]);
+        get () {
+          const m = /[+-]?([0-9]*[.])?[0-9]+/.exec(this.number);
+          return this.getProperty('floatingPoint') || (this.scaleFactor == 1 && m && !!m[1]);
         }
       }, // infer that indirectly by looking at the floating point of the passed number value
       padding: {
-        isStyleProp: true, 
-        defaultValue: rect(5,3,0,0),
+        isStyleProp: true,
+        defaultValue: rect(5, 3, 0, 0),
         after: ['submorphs'],
-        set(p) {
+        set (p) {
           this.setProperty('padding', p);
           this.getSubmorphNamed('value').padding = p;
         }
       },
-      extent: { defaultValue: pt(70,25) },
+      extent: { defaultValue: pt(70, 25) },
       scaleFactor: {
         defaultValue: 1,
-        get() {
-          return this.getProperty('scaleFactor') || 1
+        get () {
+          return this.getProperty('scaleFactor') || 1;
         }
       },
       baseFactor: {
-        after: ["submorphs"],
+        after: ['submorphs'],
         derived: true,
-        get() {
-          return this.get("value").baseFactor;
+        get () {
+          return this.get('value').baseFactor;
         },
-        set(v) {
-          this.get("value").baseFactor = v;
+        set (v) {
+          this.get('value').baseFactor = v;
         }
       },
-      styleClasses: {defaultValue: ["unfocused"]},
+      styleClasses: { defaultValue: ['unfocused'] },
       master: {
-        initialize() {
+        initialize () {
           this.master = {
             auto: 'styleguide://SystemWidgets/number field/light'
-          }
+          };
         }
       },
       fontColor: {
         isStyleProp: true,
-        defaultValue: Color.rgbHex("#0086b3"),
-        set(v) {
-          this.setProperty("fontColor", v);
+        defaultValue: Color.rgbHex('#0086b3'),
+        set (v) {
+          this.setProperty('fontColor', v);
         }
       },
       isSelected: {
-        set(selected) {
+        set (selected) {
           if (this.getProperty('isSelected') != selected) {
-             // fixme: style sheets should restore the initial value, once a rule no longer applies
-             if (selected) {
-               this.addStyleClass('selected');
-               this.removeStyleClass('unselected');
-             } else {               
-               this.removeStyleClass('selected');
-               this.addStyleClass('unselected');
-             }
-             this.setProperty('isSelected', selected);
+            // fixme: style sheets should restore the initial value, once a rule no longer applies
+            if (selected) {
+              this.addStyleClass('selected');
+              this.removeStyleClass('unselected');
+            } else {
+              this.removeStyleClass('selected');
+              this.addStyleClass('unselected');
+            }
+            this.setProperty('isSelected', selected);
           }
         }
       },
       fontFamily: {
-        defaultValue: "Sans-Serif",
+        defaultValue: 'Sans-Serif',
         isStyleProp: true,
-        set(v) {
-          this.setProperty("fontFamily", v);
+        set (v) {
+          this.setProperty('fontFamily', v);
         }
       },
       fontSize: {
         defaultValue: 15,
         isStyleProp: true,
-        set(v) {
-          this.setProperty("fontSize", v);
+        set (v) {
+          this.setProperty('fontSize', v);
         }
       },
       layout: {
-        initialize() {
+        initialize () {
           this.layout = new TilingLayout({
             axis: 'column', orderByIndex: true, align: 'center'
-          })
+          });
         }
       },
       submorphs: {
-        after: ["min", "max"],
-        initialize() {
+        after: ['min', 'max'],
+        initialize () {
           this.submorphs = [
             new ValueScrubber({
-              name: "value",
+              name: 'value',
               unit: this.unit,
               floatingPoint: this.floatingPoint,
               scaleToBounds: false,
               min: this.min,
               max: this.max
             }),
-            Icon.makeLabel("sort-up", {
-              name: 'up',
+            Icon.makeLabel('sort-up', {
+              name: 'up'
             }),
-            Icon.makeLabel("sort-up", {
+            Icon.makeLabel('sort-up', {
               name: 'down',
-              rotation: Math.PI,
+              rotation: Math.PI
             })
           ];
-          connect(this.get("value"), "scrub", this, "update");
+          connect(this.get('value'), 'scrub', this, 'update');
           this.whenRendered().then(() => this.relayout());
         }
       }
     };
   }
 
-  onMouseDown(evt) {
+  onMouseDown (evt) {
     super.onMouseDown(evt);
-    if (evt.targetMorph.name == 'up')
-      this.increment();
-    if (evt.targetMorph.name == 'down')
-      this.decrement();
+    if (evt.targetMorph.name == 'up') { this.increment(); }
+    if (evt.targetMorph.name == 'down') { this.decrement(); }
   }
 
-  spec() {
+  spec () {
     return obj.dissoc(super.spec(), ['submorphs']);
   }
 
-  update(v, fromScrubber = true) {
-    this.setProperty("number", fromScrubber ? v / this.scaleFactor : v);
+  update (v, fromScrubber = true) {
+    this.setProperty('number', fromScrubber ? v / this.scaleFactor : v);
     signal(this, 'number', this.number);
     this.relayout(fromScrubber);
   }
 
-  relayoutButtons() {
-    let upButton = this.getSubmorphNamed('up');
-    let downButton = this.getSubmorphNamed('down');
-    let value = this.getSubmorphNamed('value');
+  relayoutButtons () {
+    const upButton = this.getSubmorphNamed('up');
+    const downButton = this.getSubmorphNamed('down');
+    const value = this.getSubmorphNamed('value');
     upButton.height = downButton.height = (this.height - 2) / 2;
     upButton.width = downButton.width = 20;
   }
 
-  onChange(change) {
+  onChange (change) {
     super.onChange(change);
     if (change.prop == 'extent' && !this.autofit) this.relayout();
   }
 
-  relayout(fromScrubber) {
-    let valueContainer = this.getSubmorphNamed("value");
+  relayout (fromScrubber) {
+    const valueContainer = this.getSubmorphNamed('value');
     if (!valueContainer) return;
     if (this.autofit) {
       if (!fromScrubber) valueContainer.value = this.number * this.scaleFactor;
@@ -584,87 +579,86 @@ export class NumberWidget extends Morph {
     }
   }
 
-  increment() {
+  increment () {
     if (this.max != undefined && this.number >= this.max) return;
     this.update(this.number + (1 / this.scaleFactor), false);
   }
 
-  decrement() {
+  decrement () {
     if (this.min != undefined && this.number <= this.min) return;
     this.update(this.number - (1 / this.scaleFactor), false);
   }
 }
 
 export class ShadowWidget extends Morph {
-
-  static get properties() {
+  static get properties () {
     return {
       shadowValue: {
-        after: ["submorphs"],
+        after: ['submorphs'],
         defaultValue: null,
-        set(v) {
-          this.setProperty("shadowValue", v);
+        set (v) {
+          this.setProperty('shadowValue', v);
           this.renderShadowDisplay();
         }
       },
-      fill: {defaultValue: Color.transparent},
-      nativeCursor: {defaultValue: "pointer"},
-      fontSize: {defaultValue: 12},
+      fill: { defaultValue: Color.transparent },
+      nativeCursor: { defaultValue: 'pointer' },
+      fontSize: { defaultValue: 12 },
       fontColor: {
         derived: true,
-        set(c) {
+        set (c) {
           this.submorphs.forEach(m => m.fontColor = c);
         }
       },
       isSelected: {
         defaultValue: false,
-        set(v) {
-          this.setProperty("isSelected", v);
+        set (v) {
+          this.setProperty('isSelected', v);
           this.fontColor = v ? Color.white : Color.black;
         }
       },
       layout: {
-        initialize() {
+        initialize () {
           this.layout = new HorizontalLayout();
         }
       },
       submorphs: {
-        initialize() {
+        initialize () {
           this.update();
         }
       }
     };
   }
 
-  onMouseDown(evt) {
+  onMouseDown (evt) {
     this.openPopover();
   }
 
-  async openPopover() {
-    let shadowEditor = new popovers.ShadowPopover({
+  async openPopover () {
+    const shadowEditor = new popovers.ShadowPopover({
       hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
       shadowValue: this.shadowValue
     });
     await shadowEditor.fadeIntoWorld(this.globalBounds().center());
-    connect(shadowEditor, "shadowValue", this, "shadowValue");
-    connect(this, "shadowValue", this, "update");
-    signal(this, "openWidget", shadowEditor);
+    connect(shadowEditor, 'shadowValue', this, 'shadowValue');
+    connect(this, 'shadowValue', this, 'update');
+    signal(this, 'openWidget', shadowEditor);
   }
 
-  update() {
+  update () {
     this.renderShadowDisplay();
   }
 
-  renderShadowDisplay() {
+  renderShadowDisplay () {
     if (!this.shadowValue) {
       this.submorphs = [
         {
           opacity: 0.8,
           reactsToPointer: false,
-          styleClasses: ["TreeLabel"],
-          name: "valueString",
-          type: "label",
-          value: "No Shadow"
+          styleClasses: ['TreeLabel'],
+          name: 'valueString',
+          type: 'label',
+          value: 'No Shadow'
         }
       ];
       return;
@@ -675,19 +669,25 @@ export class ShadowWidget extends Morph {
       this.initShadowDisplay();
     }
   }
-  updateShadowDisplay() {
-    let {inset, blur, spread, distance, color} = this.shadowValue,
-        [nameLabel, {submorphs: [shadowColor]}, paramLabel] = this.submorphs;
-    nameLabel.value  = `${this.shadowValue.inset ? "inset" : "drop"}-shadow(`;
+
+  updateShadowDisplay () {
+    const { inset, blur, spread, distance, color } = this.shadowValue;
+    const [nameLabel, { submorphs: [shadowColor] }, paramLabel] = this.submorphs;
+    nameLabel.value = `${this.shadowValue.inset ? 'inset' : 'drop'}-shadow(`;
     shadowColor.fill = color;
     paramLabel.value = `, ${blur}px, ${distance}px, ${spread}px)`;
   }
 
-  initShadowDisplay() {
-    let {inset, blur, spread, distance, color} = this.shadowValue;
+  initShadowDisplay () {
+    const { inset, blur, spread, distance, color } = this.shadowValue;
     this.submorphs = [
-      {name: "valueString", opacity: .7, reactsToPointer: false,
-        type: "label", value: `${this.shadowValue.inset ? "inset" : "drop"}-shadow(`},
+      {
+        name: 'valueString',
+        opacity: 0.7,
+        reactsToPointer: false,
+        type: 'label',
+        value: `${this.shadowValue.inset ? 'inset' : 'drop'}-shadow(`
+      },
       morph({
         fill: Color.transparent,
         extent: pt(this.fontSize + 6, this.fontSize + 4),
@@ -701,21 +701,24 @@ export class ShadowWidget extends Morph {
           }
         ]
       }),
-      {name: "valueString", type: "label", opacity: .7,reactsToPointer: false,
-        value: `, ${blur}px, ${distance}px, ${spread}px)`}
+      {
+        name: 'valueString',
+        type: 'label',
+        opacity: 0.7,
+        reactsToPointer: false,
+        value: `, ${blur}px, ${distance}px, ${spread}px)`
+      }
     ];
   }
-
 }
 
 export class PointWidget extends Label {
-
-  static get properties() {
+  static get properties () {
     return {
       isSelected: {
-        defaultValue: "false",
-        set(v) {
-          this.setProperty("isSelected", v);
+        defaultValue: 'false',
+        set (v) {
+          this.setProperty('isSelected', v);
           this.fontColor = v ? this.selectionFontColor : this.nonSelectionFontColor;
         }
       },
@@ -727,18 +730,18 @@ export class PointWidget extends Label {
         isStyleProp: true,
         defaultValue: Color.black
       },
-      fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
-      nativeCursor: {defaultValue: "pointer"},
-      styleClasses: {defaultValue: ["TreeLabel"]}, // in order to be highlighted in tree
+      fontFamily: { defaultValue: config.codeEditor.defaultStyle.fontFamily },
+      nativeCursor: { defaultValue: 'pointer' },
+      styleClasses: { defaultValue: ['TreeLabel'] }, // in order to be highlighted in tree
       pointValue: {
-        after: ["textAndAttributes"],
-        set(p) {
-          let fontColor = Color.rgbHex("#0086b3");
-          this.setProperty("pointValue", p);
-          this.textAndAttributes = ["pt(", null,
-            p.x.toFixed(), {fontColor},
-            ",", {},
-            p.y.toFixed(), {fontColor}, ")", null];
+        after: ['textAndAttributes'],
+        set (p) {
+          const fontColor = Color.rgbHex('#0086b3');
+          this.setProperty('pointValue', p);
+          this.textAndAttributes = ['pt(', null,
+            p.x.toFixed(), { fontColor },
+            ',', {},
+            p.y.toFixed(), { fontColor }, ')', null];
           this.fixedWidth = true;
           this.fixedHeight = true;
           this.height = 20;
@@ -748,172 +751,177 @@ export class PointWidget extends Label {
     };
   }
 
-  onMouseDown(evt) {
+  onMouseDown (evt) {
     this.openPopover();
   }
 
-  async openPopover() {
-    let editor = new popovers.PointPopover({
-      pointValue: this.pointValue, 
+  async openPopover () {
+    const editor = new popovers.PointPopover({
+      pointValue: this.pointValue,
       hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition)
     });
     await editor.fadeIntoWorld(this.globalBounds().center());
-    connect(editor, "pointValue", this, "pointValue");
-    signal(this, "openWidget", editor);
+    connect(editor, 'pointValue', this, 'pointValue');
+    signal(this, 'openWidget', editor);
   }
-
 }
 
 export class PaddingWidget extends Label {
-
-  static get properties() {
+  static get properties () {
     return {
-      nativeCursor: {defaultValue: "pointer"},
-      styleClasses: {defaultValue: ["TreeLabel"]},
-      fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
+      nativeCursor: { defaultValue: 'pointer' },
+      styleClasses: { defaultValue: ['TreeLabel'] },
+      fontFamily: { defaultValue: config.codeEditor.defaultStyle.fontFamily },
       isSelected: {
-        defaultValue: "false",
-        set(v) {
-          this.setProperty("isSelected", v);
+        defaultValue: 'false',
+        set (v) {
+          this.setProperty('isSelected', v);
           this.fontColor = v ? Color.white : Color.black;
         }
       },
       rectangle: {
         defaultValue: rect(0),
-        set(r) {
-          this.setProperty("rectangle", r);
+        set (r) {
+          this.setProperty('rectangle', r);
           this.value = obj.safeToString(r);
         }
       }
     };
   }
 
-  onMouseDown(evt) {
+  onMouseDown (evt) {
     this.openPopover();
   }
 
-  async openPopover() {
-    let editor = new popovers.RectanglePopover({
+  async openPopover () {
+    const editor = new popovers.RectanglePopover({
       hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
       rectangle: this.rectangle
     });
     editor.relayout();
     await editor.fadeIntoWorld(this.globalBounds().center());
-    connect(editor, "rectangle", this, "rectangle");
-    signal(this, "openWidget", editor);
+    connect(editor, 'rectangle', this, 'rectangle');
+    signal(this, 'openWidget', editor);
   }
 }
 
 export class IconWidget extends Label {
-
-  static get properties() {
+  static get properties () {
     return {
-      fontColor: {defaultValue: Color.gray.darker()},
-      fontFamily: {defaultValue: "FontAwesome"},
-      nativeCursor: {defaultValue: "pointer"},
+      fontColor: { defaultValue: Color.gray.darker() },
+      fontFamily: { defaultValue: 'FontAwesome' },
+      nativeCursor: { defaultValue: 'pointer' },
       iconValue: {
         derived: true,
-        get() {
+        get () {
           return this.value;
         },
-        set(v) {
-          this.value = v || "No Icon";
+        set (v) {
+          this.value = v || 'No Icon';
         }
       }
     };
   }
 
-  onMouseDown(evt) {
+  onMouseDown (evt) {
     this.openPopover();
   }
 
-  async openPopover() {
-    let iconPicker = new popovers.IconPopover({
+  async openPopover () {
+    const iconPicker = new popovers.IconPopover({
       hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition)
     });
     await iconPicker.fadeIntoWorld(this.globalBounds().center());
-    connect(iconPicker, "select", this, "iconValue", {converter: (iconName) => {
-      return iconName && Icon.makeLabel(iconName).value;
-    }, varMapping: {Icon}});
-    signal(this, "openWidget", iconPicker);
+    connect(iconPicker, 'select', this, 'iconValue', {
+      converter: (iconName) => {
+        return iconName && Icon.makeLabel(iconName).value;
+      },
+      varMapping: { Icon }
+    });
+    signal(this, 'openWidget', iconPicker);
   }
-
 }
 
 export class StringWidget extends InputLine {
-
   // inline editing of string, very basic
-  static get properties() {
+  static get properties () {
     return {
-      fill: {defaultValue: Color.transparent},
-      fontColor: {defaultValue: Color.blue},
-      nativeCursor: {defaultValue: "auto"},
-      borderColor: {defaultValue: Color.transparent},
-      borderStyle: {defaultValue: "dashed"},
-      borderRadius: {defaultValue: 4},
-      borderWidth: {defaultValue: 1},
-      padding: {defaultValue: rect(0,0,0,0)},
-      fixedWidth:   {defaultValue: false},
-      fixedHeight:   {defaultValue: false},
+      fill: { defaultValue: Color.transparent },
+      fontColor: { defaultValue: Color.blue },
+      nativeCursor: { defaultValue: 'auto' },
+      borderColor: { defaultValue: Color.transparent },
+      borderStyle: { defaultValue: 'dashed' },
+      borderRadius: { defaultValue: 4 },
+      borderWidth: { defaultValue: 1 },
+      padding: { defaultValue: rect(0, 0, 0, 0) },
+      fixedWidth: { defaultValue: false },
+      fixedHeight: { defaultValue: false },
       stringValue: {
-        after: ["textString"],
-        set(v) {
-          this.setProperty("stringValue", v);
+        after: ['textString'],
+        set (v) {
+          this.setProperty('stringValue', v);
           this.textString = this.truncate(v);
-          this.nativeCursor = this.stringTooLong ? "pointer" : "auto";
+          this.nativeCursor = this.stringTooLong ? 'pointer' : 'auto';
         }
       },
       stringTooLong: {
         readOnly: true,
-        get() { return this.stringValue.includes("\n"); }
+        get () { return this.stringValue.includes('\n'); }
       },
       isSelected: {
-        defaultValue: "false",
-        set(v) {
-          this.setProperty("isSelected", v);
+        defaultValue: 'false',
+        set (v) {
+          this.setProperty('isSelected', v);
           this.fontColor = v ? Color.white : Color.blue;
         }
       }
     };
   }
 
-  truncate(s) {
+  truncate (s) {
     if (s.length > 200) {
-      return s.slice(0, 20) + "...";
+      return s.slice(0, 20) + '...';
     } else {
       return s;
     }
   }
 
-  async onFocus(evt) {
+  async onFocus (evt) {
     super.onFocus(evt);
     if (this.readOnly) return;
     if (!this.stringTooLong) {
-      this.borderColor = Color.white.withA(.9);
+      this.borderColor = Color.white.withA(0.9);
       this.textString = this.stringValue;
       return;
     }
-    let result = await this.world().editPrompt(
-      "edit string", {requester: this,input: this.stringValue});
-    if (typeof result === "string") this.onInput(result);
+    const result = await this.world().editPrompt(
+      'edit string', { requester: this, input: this.stringValue });
+    if (typeof result === 'string') this.onInput(result);
   }
 
-  onBlur(evt) {
+  onBlur (evt) {
     super.onBlur(evt);
     if (this.readOnly) return;
     this.borderColor = Color.transparent;
     this.onInput(this.textString);
   }
 
-  onInput(input) {
+  onInput (input) {
     this.owner.focus();
-    signal(this, "inputAccepted", input);
+    signal(this, 'inputAccepted', input);
     this.stringValue = input;
   }
-
 }
 
-import { valueWidgets } from "./index.js"
-Object.assign(valueWidgets, { NumberWidget, StringWidget, IconWidget, PaddingWidget,
-  ShadowWidget, PointWidget,
-  BooleanWidget, LayoutWidget, ColorWidget });
+import { valueWidgets } from './index.js';
+Object.assign(valueWidgets, {
+  NumberWidget,
+  StringWidget,
+  IconWidget,
+  PaddingWidget,
+  ShadowWidget,
+  PointWidget,
+  BooleanWidget,
+  LayoutWidget,
+  ColorWidget
+});
