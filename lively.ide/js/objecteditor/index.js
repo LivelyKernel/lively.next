@@ -1011,8 +1011,8 @@ export class ObjectEditor extends Morph {
 
   async interactivelyRemoveMethodOrClass() {
     let {selectedMethod, selectedClass} = await this.withContextDo(ctx => ({
-      selectedMethod: ctx.selectedMethod.name,
-      selectedClass: ctx.selectedClass.name
+      selectedMethod: Path('selectedMethod.name').get(ctx),
+      selectedClass: Path('selectedClass.name').get(ctx)
     }));
     if (selectedMethod) return this.interactivelyRemoveMethod();
     if (selectedClass) return this.interactivelyAdoptBySuperclass();
