@@ -238,12 +238,12 @@ function declarationsOfScope(scope, includeOuter, result = []) {
     if (id) result.push(id);
   }
   result.push(...scope.importSpecifiers);
-  return result;
+  return arr.compact(result);
 }
 
 function declarationsWithIdsOfScope(scope) {
   // returns a list of pairs [(DeclarationNode,IdentifierNode)]
-  const bareIds = helpers.declIds(scope.params).concat(scope.catches),
+  const bareIds = arr.compact(helpers.declIds(scope.params).concat(scope.catches)),
         declNodes = [
           ...scope.node.id && scope.node.id.name ? [scope.node] : [],
           ...arr.filter(scope.funcDecls, ea => ea.id),

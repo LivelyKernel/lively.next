@@ -1,4 +1,4 @@
-import { arr } from "lively.lang";
+import { arr, Path } from "lively.lang";
 import { parse, stringify, query, nodes, BaseVisitor as Visitor } from "lively.ast";
 
 var {
@@ -216,16 +216,16 @@ function replaceClass(node, state, path, options) {
         // native debuggers. We have to be careful about it b/c it shadows
         // outer functions / vars, something that is totally not apparent for a user
         // of the class syntax. That's the reason for making it a little cryptic
-        let methodId = id(className + "_" + ensureIdentifier(key.name || key.value) + "_"),
+        let methodId = id(className + "_" + ensureIdentifier(key.name || key.value || Path('property.name').get(key)) + "_"),
             props = [
-              "key", literal(key.name || key.value),
+              "key", literal(key.name || key.value || Path('property.name').get(key)),
               "value", {...value, id: methodId, [methodKindSymbol]: classSide ? "static" : "proto"}];
 
         decl = objectLiteral(props);
 
       } else if (kind === "get" || kind === "set") {
         decl = objectLiteral([
-          "key", literal(key.name || key.value),
+          "key", literal(key.name || key.value || Path('property.name').get(key)),
           kind, Object.assign({}, value, {id: id(kind), [methodKindSymbol]: classSide ? "static" : "proto"})])
 
       } else if (kind === "constructor") {
