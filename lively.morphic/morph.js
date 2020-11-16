@@ -2874,7 +2874,7 @@ export class Image extends Morph {
         );
         this.extent = this.naturalExtent.scaleBy(s);
       }],
-      ['resize image to its real image size', () => this.extent = this.naturalExtent],
+      ['resize image to its real image size', async () => this.extent = await this.determineNaturalExtent()],
       ['resample image to fit current bounds', () => this.resampleImageToFitBounds()],
       { isDivider: true });
     return items;
