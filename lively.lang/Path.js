@@ -9,9 +9,9 @@
 // can be used for debugging by providing a hook that allows users to find out
 // when get/set operations happen.
 
-import { inspect } from "./object.js";
+import { inspect } from './object.js';
 
-export default function Path(p, splitter) {
+export default function Path (p, splitter) {
   if (p instanceof Path) return p;
   if (!(this instanceof Path)) return new Path(p, splitter);
   this.setSplitter(splitter || '.');
@@ -20,11 +20,11 @@ export default function Path(p, splitter) {
 
 Object.assign(Path.prototype, {
 
-  get isPathAccessor() { return true },
+  get isPathAccessor () { return true; },
 
-  fromPath(path) {
+  fromPath (path) {
     // ignore-in-doc
-    if (typeof path === "string" && path !== '' && path !== this.splitter) {
+    if (typeof path === 'string' && path !== '' && path !== this.splitter) {
       this._parts = path.split(this.splitter);
       this._path = path;
     } else if (Array.isArray(path)) {
@@ -37,39 +37,39 @@ Object.assign(Path.prototype, {
     return this;
   },
 
-  setSplitter(splitter) {
+  setSplitter (splitter) {
     // ignore-in-doc
     if (splitter) this.splitter = splitter;
     return this;
   },
 
-  map(fn) {
+  map (fn) {
     this._mapper = fn;
     return this;
   },
 
-  parts() { /*key names as array*/ return this._parts; },
+  parts () { /* key names as array */ return this._parts; },
 
-  size() { /*show-in-doc*/ return this._parts.length; },
+  size () { /* show-in-doc */ return this._parts.length; },
 
-  slice(n, m) { /*show-in-doc*/ return Path(this.parts().slice(n, m)); },
+  slice (n, m) { /* show-in-doc */ return Path(this.parts().slice(n, m)); },
 
-  normalizePath() {
+  normalizePath () {
     // ignore-in-doc
     // FIXME: define normalization
     return this._path;
   },
 
-  isRoot(obj) { return this._parts.length === 0; },
+  isRoot (obj) { return this._parts.length === 0; },
 
-  isIn(obj) {
+  isIn (obj) {
     // Does the Path resolve to a value when applied to `obj`?
     if (this.isRoot()) return true;
-    var parent = this.get(obj, -1);
-    return parent && parent.hasOwnProperty(this._parts[this._parts.length-1]);
+    const parent = this.get(obj, -1);
+    return parent && parent.hasOwnProperty(this._parts[this._parts.length - 1]);
   },
 
-  equals(obj) {
+  equals (obj) {
     // Example:
     // var p1 = Path("foo.1.bar.baz"), p2 = Path(["foo", 1, "bar", "baz"]);
     // // Path's can be both created via strings or pre-parsed with keys in a list.
@@ -77,53 +77,53 @@ Object.assign(Path.prototype, {
     return obj && obj.isPathAccessor && this.parts().equals(obj.parts());
   },
 
-  isParentPathOf(otherPath) {
+  isParentPathOf (otherPath) {
     // Example:
     // var p1 = Path("foo.1.bar.baz"), p2 = Path("foo.1.bar");
     // p2.isParentPathOf(p1) // => true
     // p1.isParentPathOf(p2) // => false
-    otherPath = otherPath && otherPath.isPathAccessor ?
-      otherPath : Path(otherPath);
-    var parts = this.parts(),
-        otherParts = otherPath.parts();
-    for(var i = 0; i < parts.length; i ++) {
-      if (parts[i] != otherParts[i]) return false
+    otherPath = otherPath && otherPath.isPathAccessor
+      ? otherPath : Path(otherPath);
+    const parts = this.parts();
+    const otherParts = otherPath.parts();
+    for (let i = 0; i < parts.length; i++) {
+      if (parts[i] != otherParts[i]) return false;
     }
-    return true
+    return true;
   },
 
-  relativePathTo(otherPath) {
+  relativePathTo (otherPath) {
     // Example:
     // var p1 = Path("foo.1.bar.baz"), p2 = Path("foo.1");
     // p2.relativePathTo(p1) // => Path(["bar","baz"])
     // p1.relativePathTo(p2) // => undefined
     otherPath = Path(otherPath);
-    return this.isParentPathOf(otherPath) ?
-      otherPath.slice(this.size(), otherPath.size()) : undefined;
+    return this.isParentPathOf(otherPath)
+      ? otherPath.slice(this.size(), otherPath.size()) : undefined;
   },
 
-  del(obj) {
+  del (obj) {
     if (this.isRoot()) return false;
-    var parent = obj
-    for (var i = 0; i < this._parts.length-1; i++) {
-      var part = this._parts[i];
+    let parent = obj;
+    for (let i = 0; i < this._parts.length - 1; i++) {
+      const part = this._parts[i];
       if (parent.hasOwnProperty(part)) {
         parent = parent[part];
       } else return false;
     }
-    return delete parent[this._parts[this._parts.length-1]];
+    return delete parent[this._parts[this._parts.length - 1]];
   },
 
-  withParentAndKeyDo(obj, ensure, doFunc) {
+  withParentAndKeyDo (obj, ensure, doFunc) {
     // Deeply resolve path in `obj`, not fully, however, only to the parent
     // element of the last part of path. Take the parent, the key (the last
     // part of path) and pass it to `doFunc`. When `ensure` is true, create
     // objects along path it path does not resolve
     if (this.isRoot()) return doFunc(null, null);
-    var parent = obj;
-    for (var i = 0; i < this._parts.length-1; i++) {
-      var part = this._parts[i];
-      if (parent.hasOwnProperty(part) && (typeof parent[part] === "object" || typeof parent[part] === "function")) {
+    let parent = obj;
+    for (let i = 0; i < this._parts.length - 1; i++) {
+      const part = this._parts[i];
+      if (parent.hasOwnProperty(part) && (typeof parent[part] === 'object' || typeof parent[part] === 'function')) {
         parent = parent[part];
       } else if (ensure) {
         parent = parent[part] = {};
@@ -131,10 +131,10 @@ Object.assign(Path.prototype, {
         return doFunc(null, part);
       }
     }
-    return doFunc(parent, this._parts[this._parts.length-1]);
+    return doFunc(parent, this._parts[this._parts.length - 1]);
   },
 
-  set(obj, val, ensure) {
+  set (obj, val, ensure) {
     // Deeply resolve path in `obj` and set the resulting property to `val`. If
     // `ensure` is true, create nested structure in between as necessary.
     // Example:
@@ -146,40 +146,41 @@ Object.assign(Path.prototype, {
     // path.set(o2, 43, true)
     // o2 // => {foo: {bar: {baz: 43}}}
     return this.withParentAndKeyDo(obj, ensure,
-      function(parent, key) { return parent ? parent[key] = val : undefined; });
+      function (parent, key) { return parent ? parent[key] = val : undefined; });
   },
 
-  defineProperty(obj, propertySpec, ensure) {
+  defineProperty (obj, propertySpec, ensure) {
     // like `Path>>set`, however uses Objeect.defineProperty
     return this.withParentAndKeyDo(obj, ensure,
-      function(parent, key) {
-        return parent ?
-          Object.defineProperty(parent, key, propertySpec) :
-          undefined;
+      function (parent, key) {
+        return parent
+          ? Object.defineProperty(parent, key, propertySpec)
+          : undefined;
       });
   },
 
-  get(obj, n) {
+  get (obj, n) {
     // show-in-doc
-    var parts = n ? this._parts.slice(0, n) : this._parts;
-    var self = this;
-    return parts.reduce(function(current, pathPart) {
-      return current ? (self._mapper ? self._mapper(pathPart, current[pathPart]) : current[pathPart]) : current; }, obj);
+    const parts = n ? this._parts.slice(0, n) : this._parts;
+    const self = this;
+    return parts.reduce(function (current, pathPart) {
+      return current ? (self._mapper ? self._mapper(pathPart, current[pathPart]) : current[pathPart]) : current;
+    }, obj);
   },
 
-  concat(p, splitter) {
+  concat (p, splitter) {
     // show-in-doc
     return Path(this.parts().concat(Path(p, splitter).parts()));
   },
 
-  toString() { return this.normalizePath(); },
+  toString () { return this.normalizePath(); },
 
-  serializeExpr() {
+  serializeExpr () {
     // ignore-in-doc
     return 'lively.lang.Path(' + inspect(this.parts()) + ')';
   },
 
-  watch(options) {
+  watch (options) {
     // React or be notified on reads or writes to a path in a `target`. Options:
     // ```js
     // {
@@ -197,16 +198,16 @@ Object.assign(Path.prototype, {
     // Path("foo.bar").watch({target: o, verbose: true});
     // o.foo.bar = 24; // => You should see: "[object Object].bar changed: 23 -> 24"
     if (!options || this.isRoot()) return;
-    var target = options.target,
-        parent = this.get(target, -1),
-        propName = this.parts().slice(-1)[0],
-        newPropName = 'propertyWatcher$' + propName,
-        watcherIsInstalled = parent && parent.hasOwnProperty(newPropName),
-        uninstall = options.uninstall,
-        haltWhenChanged = options.haltWhenChanged,
-        showStack = options.showStack,
-        getter = parent.__lookupGetter__(propName),
-        setter = parent.__lookupSetter__(propName);
+    const target = options.target;
+    const parent = this.get(target, -1);
+    const propName = this.parts().slice(-1)[0];
+    const newPropName = 'propertyWatcher$' + propName;
+    const watcherIsInstalled = parent && parent.hasOwnProperty(newPropName);
+    const uninstall = options.uninstall;
+    const haltWhenChanged = options.haltWhenChanged;
+    const showStack = options.showStack;
+    const getter = parent.__lookupGetter__(propName);
+    const setter = parent.__lookupSetter__(propName);
     if (!target || !propName || !parent) return;
     if (uninstall) {
       if (!watcherIsInstalled) return;
@@ -227,19 +228,21 @@ Object.assign(Path.prototype, {
     }
     // observe slots, for debugging
     parent[newPropName] = parent[propName];
-    parent.__defineSetter__(propName, function(v) {
-      var oldValue = parent[newPropName];
+    parent.__defineSetter__(propName, function (v) {
+      const oldValue = parent[newPropName];
       if (options.onSet) options.onSet(v, oldValue);
-      var msg = parent + "." + propName + " changed: " + oldValue + " -> " + v;
-      if (showStack) msg += '\n' + (typeof lively !== "undefined" ?
-                           lively.printStack() : console.trace());
+      let msg = parent + '.' + propName + ' changed: ' + oldValue + ' -> ' + v;
+      if (showStack) {
+        msg += '\n' + (typeof lively !== 'undefined'
+          ? lively.printStack() : console.trace());
+      }
       if (options.verbose) {
         console.log(msg);
       }
       if (haltWhenChanged) debugger;
       return parent[newPropName] = v;
     });
-    parent.__defineGetter__(propName, function() {
+    parent.__defineGetter__(propName, function () {
       if (options.onGet) options.onGet(parent[newPropName]);
       return parent[newPropName];
     });
@@ -247,17 +250,17 @@ Object.assign(Path.prototype, {
     console.log(msg);
   },
 
-  debugFunctionWrapper(options) {
+  debugFunctionWrapper (options) {
     // ignore-in-doc
     // options = {target, [haltWhenChanged, showStack, verbose, uninstall]}
-    var target = options.target,
-      parent = this.get(target, -1),
-      funcName = this.parts().slice(-1)[0],
-      uninstall = options.uninstall,
-      haltWhenChanged = options.haltWhenChanged === undefined ? true : options.haltWhenChanged,
-      showStack = options.showStack,
-      func = parent && funcName && parent[funcName],
-      debuggerInstalled = func && func.isDebugFunctionWrapper;
+    const target = options.target;
+    const parent = this.get(target, -1);
+    const funcName = this.parts().slice(-1)[0];
+    const uninstall = options.uninstall;
+    const haltWhenChanged = options.haltWhenChanged === undefined ? true : options.haltWhenChanged;
+    const showStack = options.showStack;
+    const func = parent && funcName && parent[funcName];
+    const debuggerInstalled = func && func.isDebugFunctionWrapper;
     if (!target || !funcName || !func || !parent) return;
     if (uninstall) {
       if (!debuggerInstalled) return;
@@ -271,8 +274,8 @@ Object.assign(Path.prototype, {
       console.log(msg);
       return;
     }
-    var debugFunc = parent[funcName] = func.wrap(function(proceed) {
-      var args = Array.from(arguments);
+    const debugFunc = parent[funcName] = func.wrap(function (proceed) {
+      const args = Array.from(arguments);
       if (haltWhenChanged) debugger;
       return args.shift().apply(parent, args);
     });

@@ -1,4 +1,4 @@
-/*global clearTimeout, setTimeout, clearInterval, setInterval*/
+/* global clearTimeout, setTimeout, clearInterval, setInterval */
 
 /*
  * A pluggable interface to provide asynchronous, actor-like message
@@ -6,13 +6,13 @@
  * and send / receive methods.
  */
 
-import { remove, pluck } from "./array.js";
-import { makeEmitter } from "./events.js";
-import { newUUID } from "./string.js";
+import { remove, pluck } from './array.js';
+import { makeEmitter } from './events.js';
+import { newUUID } from './string.js';
 
-var OFFLINE = 'offline';
-var ONLINE = 'online';
-var CONNECTING = 'connecting';
+const OFFLINE = 'offline';
+const ONLINE = 'online';
+const CONNECTING = 'connecting';
 
 /*
 
@@ -129,7 +129,6 @@ them to a specific implementation. Please see [worker.js]() for examples of
 how web workers and node.js processes are wrapped to provide a cross-platform
 interface to a worker abstraction.
 
-
 #### <a name="messenger-message-protocol"></a>Message protocol
 
 A message is a JSON object with the following fields:
@@ -217,31 +216,28 @@ msger1.sendTo(msger2.id(), 'add', {a: 3, b: 4},
 
 */
 
-
-
-function create(spec) {
-
-  var expectedMethods = [
-    {name: "send", args: ['msg', 'callback']},
-    {name: "listen", args: ['messenger', 'callback']},
-    {name: "close", args: ['messenger', 'callback']},
-    {name: "isOnline", args: []}
+function create (spec) {
+  const expectedMethods = [
+    { name: 'send', args: ['msg', 'callback'] },
+    { name: 'listen', args: ['messenger', 'callback'] },
+    { name: 'close', args: ['messenger', 'callback'] },
+    { name: 'isOnline', args: [] }
   ];
 
-  var ignoredAttributes = expectedMethods
-    .map(function(ea) { return ea.name; })
-    .concat(["id", "sendHeartbeat", "heartbeatInterval", "ignoreUnknownMessages",
-      "allowConcurrentSends","sendTimeout","services"]);
+  const ignoredAttributes = expectedMethods
+    .map(function (ea) { return ea.name; })
+    .concat(['id', 'sendHeartbeat', 'heartbeatInterval', 'ignoreUnknownMessages',
+      'allowConcurrentSends', 'sendTimeout', 'services']);
 
-  expectedMethods.forEach(function(exp) {
+  expectedMethods.forEach(function (exp) {
     if (spec[exp.name]) return;
-      var msg = "message implementation needs function "
-              + exp.name + "(" + (exp.args.join(',')) + ")";
-      throw new Error(msg);
+    const msg = 'message implementation needs function ' +
+              exp.name + '(' + (exp.args.join(',')) + ')';
+    throw new Error(msg);
   });
 
-  var heartbeatInterval = spec.sendHeartbeat && (spec.heartbeatInterval || 1000);
-  var ignoreUnknownMessages = spec.hasOwnProperty("ignoreUnknownMessages") ? spec.ignoreUnknownMessages : false;
+  const heartbeatInterval = spec.sendHeartbeat && (spec.heartbeatInterval || 1000);
+  const ignoreUnknownMessages = spec.hasOwnProperty('ignoreUnknownMessages') ? spec.ignoreUnknownMessages : false;
 
   var messenger = {
 
@@ -260,22 +256,21 @@ function create(spec) {
     _status: OFFLINE,
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    _runWhenOnlineCallbacks: function() {
-      var cbs = messenger._whenOnlineCallbacks.slice();
+    _runWhenOnlineCallbacks: function () {
+      const cbs = messenger._whenOnlineCallbacks.slice();
       messenger._whenOnlineCallbacks = [];
-      cbs.forEach(function(ea) {
+      cbs.forEach(function (ea) {
         try { ea.call(null, null, messenger); } catch (e) {
-          console.error("error in _runWhenOnlineCallbacks: %s", e);
+          console.error('error in _runWhenOnlineCallbacks: %s', e);
         }
       });
     },
 
-    _ensureStatusWatcher: function() {
+    _ensureStatusWatcher: function () {
       if (messenger._statusWatcherProc) return;
-      messenger._statusWatcherProc = setInterval(function() {
-        if (messenger.isOnline() && messenger._whenOnlineCallbacks.length)
-          messenger._runWhenOnlineCallbacks();
-        var prevStatus = messenger._status;
+      messenger._statusWatcherProc = setInterval(function () {
+        if (messenger.isOnline() && messenger._whenOnlineCallbacks.length) { messenger._runWhenOnlineCallbacks(); }
+        const prevStatus = messenger._status;
         messenger._status = messenger.isOnline() ? ONLINE : OFFLINE;
         if (messenger._status !== ONLINE && messenger._statusWatcherProc) {
           messenger.reconnect();
@@ -286,9 +281,9 @@ function create(spec) {
       }, 20);
     },
 
-    _addMissingData: function(msg) {
-      if (!msg.target) throw new Error("Message needs target!");
-      if (!msg.action) throw new Error("Message needs action!");
+    _addMissingData: function (msg) {
+      if (!msg.target) throw new Error('Message needs target!');
+      if (!msg.action) throw new Error('Message needs action!');
       if (!msg.data) msg.data = null;
       if (!msg.messageId) msg.messageId = newUUID();
       msg.sender = messenger.id();
@@ -296,45 +291,42 @@ function create(spec) {
       return msg;
     },
 
-    _queueSend: function(msg, onReceiveFunc) {
-      if (onReceiveFunc && typeof onReceiveFunc !== 'function')
-        throw new Error("Expecing a when send callback, got: " + onReceiveFunc);
+    _queueSend: function (msg, onReceiveFunc) {
+      if (onReceiveFunc && typeof onReceiveFunc !== 'function') { throw new Error('Expecing a when send callback, got: ' + onReceiveFunc); }
       messenger._outgoing.push([msg, onReceiveFunc]);
     },
 
-    _deliverMessageQueue: function() {
+    _deliverMessageQueue: function () {
       if (!spec.allowConcurrentSends && messenger._inflight.length) return;
 
-      var queued = messenger._outgoing.shift();
+      const queued = messenger._outgoing.shift();
       if (!queued) return;
 
       messenger._inflight.push(queued);
       if (messenger.isOnline()) deliver(queued);
-      else messenger.whenOnline(function() { deliver(queued); });
+      else messenger.whenOnline(function () { deliver(queued); });
       startTimeoutProc(queued);
 
-      if (spec.allowConcurrentSends && messenger._outgoing.length)
-        messenger._deliverMessageQueue();
+      if (spec.allowConcurrentSends && messenger._outgoing.length) { messenger._deliverMessageQueue(); }
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-      function deliver(queued) {
+      function deliver (queued) {
         // ignore-in-doc
         if (messenger._inflight.indexOf(queued) === -1) return; // timed out
-        var msg = queued[0], callback = queued[1];
-        if (callback)
-          messenger._messageResponseCallbacks[msg.messageId] = callback;
+        const msg = queued[0]; const callback = queued[1];
+        if (callback) { messenger._messageResponseCallbacks[msg.messageId] = callback; }
 
-        spec.send.call(messenger, msg, function(err) {
+        spec.send.call(messenger, msg, function (err) {
           remove(messenger._inflight, queued);
           if (err) onSendError(err, queued);
           messenger._deliverMessageQueue();
         });
       }
 
-      function startTimeoutProc(queued) {
+      function startTimeoutProc (queued) {
         if (typeof spec.sendTimeout !== 'number') return;
-        setTimeout(function() {
+        setTimeout(function () {
           if (messenger._inflight.indexOf(queued) === -1) return; // delivered
           remove(messenger._inflight, queued);
           onSendError(new Error('Timeout sending message'), queued);
@@ -342,130 +334,131 @@ function create(spec) {
         }, spec.sendTimeout);
       }
 
-      function onSendError(err, queued) {
-        var msg = queued[0], callback = queued[1];
+      function onSendError (err, queued) {
+        const msg = queued[0]; const callback = queued[1];
         delete messenger._messageResponseCallbacks[msg.messageId];
         console.error(err);
         callback && callback(err);
       }
     },
 
-    _startHeartbeatProcess: function() {
+    _startHeartbeatProcess: function () {
       if (messenger._startHeartbeatProcessProc) return;
-      messenger._startHeartbeatProcessProc = setTimeout(function() {
-        spec.sendHeartbeat.call(messenger, function(err, result) {
+      messenger._startHeartbeatProcessProc = setTimeout(function () {
+        spec.sendHeartbeat.call(messenger, function (err, result) {
           messenger._startHeartbeatProcessProc = null;
           messenger._startHeartbeatProcess();
-        })
+        });
       }, messenger._heartbeatInterval);
     },
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    id: function() { return messenger._id; },
+    id: function () { return messenger._id; },
 
-    isOnline: function() { return spec.isOnline.call(messenger); },
+    isOnline: function () { return spec.isOnline.call(messenger); },
 
-    heartbeatEnabled: function() {
+    heartbeatEnabled: function () {
       return typeof messenger._heartbeatInterval === 'number';
     },
 
-    listen: function(thenDo) {
+    listen: function (thenDo) {
       if (messenger._listenInProgress) return;
       messenger._listenInProgress = true;
       messenger._ensureStatusWatcher();
-      return spec.listen.call(messenger, function(err) {
+      return spec.listen.call(messenger, function (err) {
         messenger._listenInProgress = null;
         thenDo && thenDo(err);
-        if (messenger.heartbeatEnabled())
-          messenger._startHeartbeatProcess();
+        if (messenger.heartbeatEnabled()) { messenger._startHeartbeatProcess(); }
       });
       return messenger;
     },
 
-    reconnect: function() {
+    reconnect: function () {
       if (messenger._status === ONLINE) return;
       messenger.listen();
       return messenger;
     },
 
-    send: function(msg, onReceiveFunc) {
+    send: function (msg, onReceiveFunc) {
       messenger._addMissingData(msg);
       messenger._queueSend(msg, onReceiveFunc);
       messenger._deliverMessageQueue();
       return msg;
     },
 
-    sendTo: function(target, action, data, onReceiveFunc) {
-      var msg = {target: target, action: action, data: data};
+    sendTo: function (target, action, data, onReceiveFunc) {
+      const msg = { target: target, action: action, data: data };
       return messenger.send(msg, onReceiveFunc);
     },
 
-    onMessage: function(msg) {
-      messenger.emit("message", msg);
+    onMessage: function (msg) {
+      messenger.emit('message', msg);
       if (msg.inResponseTo) {
-        var cb = messenger._messageResponseCallbacks[msg.inResponseTo];
+        const cb = messenger._messageResponseCallbacks[msg.inResponseTo];
         if (cb && !msg.expectMoreResponses) delete messenger._messageResponseCallbacks[msg.inResponseTo];
         if (cb) cb(null, msg);
       } else {
-        var action = messenger._services[msg.action];
+        const action = messenger._services[msg.action];
         if (action) {
           try {
             action.call(null, msg, messenger);
           } catch (e) {
-            var errmMsg = String(e.stack || e);
-            console.error("Error invoking service: " + errmMsg);
-            messenger.answer(msg, {error: errmMsg});
+            const errmMsg = String(e.stack || e);
+            console.error('Error invoking service: ' + errmMsg);
+            messenger.answer(msg, { error: errmMsg });
           }
         } else if (!messenger._ignoreUnknownMessages) {
-          var err = new Error("messageNotUnderstood: " + msg.action);
-          messenger.answer(msg, {error: String(err)});
+          const err = new Error('messageNotUnderstood: ' + msg.action);
+          messenger.answer(msg, { error: String(err) });
         }
       }
     },
 
-    answer: function(msg, data, expectMore, whenSend) {
+    answer: function (msg, data, expectMore, whenSend) {
       if (typeof expectMore === 'function') {
-        whenSend = expectMore; expectMore = false; }
-      var answer = {
+        whenSend = expectMore; expectMore = false;
+      }
+      const answer = {
         target: msg.sender,
         action: msg.action + 'Result',
         inResponseTo: msg.messageId,
-        data: data};
+        data: data
+      };
       if (expectMore) answer.expectMoreResponses = true;
       return messenger.send(answer, whenSend);
     },
 
-    close: function(thenDo) {
+    close: function (thenDo) {
       clearInterval(messenger._statusWatcherProc);
       messenger._statusWatcherProc = null;
-      spec.close.call(messenger, function(err) {
+      spec.close.call(messenger, function (err) {
         messenger._status = OFFLINE;
         thenDo && thenDo(err);
       });
       return messenger;
     },
 
-    whenOnline: function(thenDo) {
+    whenOnline: function (thenDo) {
       messenger._whenOnlineCallbacks.push(thenDo);
       if (messenger.isOnline()) messenger._runWhenOnlineCallbacks();
       return messenger;
     },
 
-    outgoingMessages: function() {
+    outgoingMessages: function () {
       return pluck(messenger._inflight.concat(messenger._outgoing), 0);
     },
 
-    addServices: function(serviceSpec) {
+    addServices: function (serviceSpec) {
       Object.assign(messenger._services, serviceSpec);
       return messenger;
     }
-  }
+  };
 
   if (spec.services) messenger.addServices(spec.services);
   makeEmitter(messenger);
 
-  for (var name in spec) {
+  for (const name in spec) {
     if (ignoredAttributes.indexOf(name) === -1 && spec.hasOwnProperty(name)) {
       messenger[name] = spec[name];
     }
@@ -476,4 +469,4 @@ function create(spec) {
 
 export {
   create
-}
+};
