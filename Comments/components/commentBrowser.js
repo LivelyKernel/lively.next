@@ -1,17 +1,21 @@
 import { Window } from "lively.components";
 import { CommentMorph } from "./commentMorph.js";
 import { VerticalLayout, Morph } from "lively.morphic";
+import { pt } from "lively.graphics";
 
 export class CommentsBrowser extends Window {
 
   constructor() {
-    super()
+    super();
     this.container = new Morph({
         layout: new VerticalLayout(),
       })
     this.addMorph(this.container);
     this.updateCommentMorphs();
-    this.relayout();
+    this.height = ($world.height - $world.getSubmorphNamed("lively top bar").height) * 0.8;
+    this.width = 200;
+    this.position = pt($world.width - 200, $world.getSubmorphNamed("lively top bar").height + 100);
+    this.relayoutWindow();
   }
 
   getCommentsInWorld() {
@@ -36,8 +40,8 @@ export class CommentsBrowser extends Window {
     this.container.submorphs = commentMorphs;
   }
   
-
-  relayout() {
+  // to not block responseToVisibleWindow
+  relayoutWindow() {
     this.relayoutWindowControls();
   }
   
