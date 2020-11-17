@@ -997,7 +997,9 @@ export class LivelyWorld extends World {
           text: commentText,
           timestamp: new Date().getTime()
         }
-        $world.setStatusMessage(newComment.timestamp, "green");
+        self.addComment(newComment);
+        //TODO: remove this if the window opens instead
+        $world.setStatusMessage("Comment saved", "green");
       }
       else {
         $world.setStatusMessage("Comment not saved", "red");
