@@ -1,40 +1,37 @@
-import { Label, config, Morph } from "lively.morphic";
-import { obj, promise, fun } from "lively.lang";
-import { pt, Color, Rectangle } from "lively.graphics";
+import { Label, config, Morph } from 'lively.morphic';
+import { obj, promise, fun } from 'lively.lang';
+import { pt, Color, Rectangle } from 'lively.graphics';
 
 export class MenuDivider extends Morph {
-
-  static get properties() {
+  static get properties () {
     return {
-      isMenuDevider: {defaultValue: true},
-      fill: {defaultValue: Color.gray.lighter()},
-      extent: {defaultValue: pt(100, 5)},
-      reactsToPointer: {defaultValue: false}
+      isMenuDevider: { defaultValue: true },
+      fill: { defaultValue: Color.gray.lighter() },
+      extent: { defaultValue: pt(100, 5) },
+      reactsToPointer: { defaultValue: false }
     };
   }
-
 }
 
 export class MenuItem extends Label {
-
-  static get properties() {
+  static get properties () {
     return {
       acceptsDrops: { defaultValue: false },
-      fixedWidth: {defaultValue: false},
-      fixedHeight: {defaultValue: false},
-      fill: {defaultValue: Color.transparent},
-      fontSize: {defaultValue: 14},
-      draggable: {defaultValue: false},
-      readOnly: {defaultValue: true},
-      nativeCursor: {defaultValue: "pointer"},
+      fixedWidth: { defaultValue: false },
+      fixedHeight: { defaultValue: false },
+      fill: { defaultValue: Color.transparent },
+      fontSize: { defaultValue: 14 },
+      draggable: { defaultValue: false },
+      readOnly: { defaultValue: true },
+      nativeCursor: { defaultValue: 'pointer' },
       selected: {
         defaultValue: false,
-        set(value) {
+        set (value) {
           if (this.selected === value) return;
-          this.addValueChange("selected", value);
+          this.addValueChange('selected', value);
           if (value) {
             this.fontColor = Color.white;
-            this.fill = Color.rgb(21,101,192);
+            this.fill = Color.rgb(21, 101, 192);
           } else {
             this.fill = Color.transparent;
             this.fontColor = Color.black;
@@ -44,26 +41,26 @@ export class MenuItem extends Label {
       isMenuItem: {
         derived: true,
         readOnly: true,
-        get() {
+        get () {
           return true;
         }
       },
       label: {
-        get() {
-          var {value} = this.valueAndAnnotation,
-              label = value.map((string, i) => (i % 2 === 0 ? string : "")).join("\n");
+        get () {
+          const { value } = this.valueAndAnnotation;
+          const label = value.map((string, i) => (i % 2 === 0 ? string : '')).join('\n');
           return label;
         },
-        set(value) {
-          this.valueAndAnnotation = {value, annotation: this.annotation};
+        set (value) {
+          this.valueAndAnnotation = { value, annotation: this.annotation };
         }
       },
       annotation: {
-        get() {
+        get () {
           return this.valueAndAnnotation.annotation;
         },
-        set(annotation) {
-          this.valueAndAnnotation = {value: this.value, annotation};
+        set (annotation) {
+          this.valueAndAnnotation = { value: this.value, annotation };
         }
       },
       action: {},
@@ -71,70 +68,64 @@ export class MenuItem extends Label {
     };
   }
 
-  onHoverIn(evt) {
+  onHoverIn (evt) {
     this.owner.itemMorphs.forEach(ea => ea !== this && (ea.selected = false));
     this.selected = true;
-    if (this.submenu)
-      this.owner.openSubMenuDelayed(evt, this, this.submenu);
+    if (this.submenu) { this.owner.openSubMenuDelayed(evt, this, this.submenu); }
   }
 
-  onHoverOut(evt) {
-    var {hand} = evt;
+  onHoverOut (evt) {
+    const { hand } = evt;
     setTimeout(() => {
       // only deselect if hand is not over a submenu
-      var submenus = this.owner ? this.owner.submenus : [];
-      if (!submenus.some(ea => ea.fullContainsWorldPoint(hand.globalPosition)))
-        this.selected = false;
+      const submenus = this.owner ? this.owner.submenus : [];
+      if (!submenus.some(ea => ea.fullContainsWorldPoint(hand.globalPosition))) { this.selected = false; }
     }, 20);
     this.owner.maybeRemoveSubmenu();
   }
 
-  async onMouseDown(evt) {
+  async onMouseDown (evt) {
     if (this.submenu) return;
     try {
       this.owner.startFinish();
-      if (typeof this.action !== "function")
-        throw new Error(`Menu item ${this.textString} has no executable action!`);
+      if (typeof this.action !== 'function') { throw new Error(`Menu item ${this.textString} has no executable action!`); }
       await this.action();
       this.owner.completeFinish();
     } catch (err) {
-      var w = this.world();
+      const w = this.world();
       if (w) w.logError(err);
       else console.error(err);
     }
   }
-
 }
 
-
-var invalidItem = {string: "invalid item", action: () => $world.setStatusMessage("invalid item")};
+const invalidItem = { string: 'invalid item', action: () => $world.setStatusMessage('invalid item') };
 
 export class Menu extends Morph {
-
-  static forItems(items, opts = {title: ""}) {
-    return new this({...opts, items});
+  static forItems (items, opts = { title: '' }) {
+    return new this({ ...opts, items });
   }
 
-  static openAt(pos, items, opts = {title: ""}) {
-    var menu = this.forItems(items, opts).openInWorldNear(pos);
+  static openAt (pos, items, opts = { title: '' }) {
+    const menu = this.forItems(items, opts).openInWorldNear(pos);
     menu.offsetForWorld(pos);
     return menu;
   }
 
-  static openAtHand(items, opts = {title: ""}) {
-    var hand = opts.hand,
-        menu = this.forItems(items, obj.dissoc(opts, ["hand"])),
-        pos = hand ? hand.position : pt(0,0);
+  static openAtHand (items, opts = { title: '' }) {
+    const hand = opts.hand;
+    const menu = this.forItems(items, obj.dissoc(opts, ['hand']));
+    let pos = hand ? hand.position : pt(0, 0);
     if (menu.titleMorph) pos = pos.addXY(0, -menu.titleMorph.height);
     menu.openInWorld(pos);
     menu.offsetForWorld(pos);
     return menu;
   }
 
-  static get properties() {
+  static get properties () {
     return {
       dropShadow: {
-        initialize() {
+        initialize () {
           if (config.fastShadows || !this.ownerMenu) {
             this.dropShadow = true;
             this.dropShadow.fast = false;
@@ -142,47 +133,50 @@ export class Menu extends Morph {
         }
       },
       submorphs: {
-        initialize() {
+        initialize () {
           this.updateMorphs();
         }
       },
       epiMorph: { defaultValue: true },
       acceptsDrops: { defaultValue: false },
       hasFixedPosition: { defaultValue: true },
-      padding: {defaultValue: Rectangle.inset(0, 2)},
-      itemPadding: {defaultValue: Rectangle.inset(8, 4)},
-      borderWidth: {defaultValue: 1},
-      fill: {defaultValue: Color.white},
-      borderColor: {defaultValue: Color.gray.lighter()},
-      borderRadius: {defaultValue: 4},
-      opacity: {defaultValue: 0.95},
-      fontSize: {defaultValue: 16},
-      fontFamily: {defaultValue: "Helvetica Neue, Arial, sans-serif"},
+      padding: { defaultValue: Rectangle.inset(0, 2) },
+      itemPadding: { defaultValue: Rectangle.inset(8, 4) },
+      borderWidth: { defaultValue: 1 },
+      fill: { defaultValue: Color.white },
+      borderColor: { defaultValue: Color.gray.lighter() },
+      borderRadius: { defaultValue: 4 },
+      opacity: { defaultValue: 0.95 },
+      fontSize: { defaultValue: 16 },
+      fontFamily: { defaultValue: 'Helvetica Neue, Arial, sans-serif' },
       title: {
-        get() {
-          return this.getProperty("title");
+        get () {
+          return this.getProperty('title');
         },
-        set(value) {
-          this.addValueChange("title", value);
+        set (value) {
+          this.addValueChange('title', value);
         }
       },
       finishedPromise: {
-        initialize() {
-          this.finishedPromise = promise.deferred();  
+        initialize () {
+          this.finishedPromise = promise.deferred();
         }
       },
       ownerMenu: {},
       submenu: {},
+      styleClasses: {
+        defaultValue: ['Halo']
+      },
       submenus: {
         readOnly: true,
-        get() {
+        get () {
           return this.submenu ? [this.submenu].concat(this.submenu.submenus) : [];
         }
       },
       ownerItemMorph: {},
       removeOnMouseOut: {},
       items: {
-        set(items) {
+        set (items) {
           items = items.map(this.ensureItem.bind(this)).filter(Boolean);
           this.setProperty('items', items);
         }
@@ -190,147 +184,152 @@ export class Menu extends Morph {
       selectedItemMorph: {
         derived: true,
         readOnly: true,
-        get() {
+        get () {
           return this.itemMorphs.find(ea => ea.selected);
         }
       },
       titleMorph: {
         derived: true,
         readOnly: true,
-        get() {
-          return this.getSubmorphNamed("title");
+        get () {
+          return this.getSubmorphNamed('title');
         }
       },
       itemMorphs: {
         derived: true,
         readOnly: true,
-        get() {
+        get () {
           return this.submorphs.filter(ea => ea.isMenuItem);
         }
       }
     };
   }
 
-  startFinish() {
+  startFinish () {
     if (this.ownerMenu) this.ownerMenu.startFinish();
     this._waitingForFinish = true;
   }
 
-  completeFinish() {
+  completeFinish () {
     if (this.ownerMenu) this.ownerMenu.completeFinish();
     this.finishedPromise.resolve(true);
   }
 
-  whenFinished() {
+  whenFinished () {
     return this.finishedPromise.promise;
   }
 
-  onChange(change) {
-    let {prop, selector} = change;
+  onChange (change) {
+    const { prop, selector } = change;
     switch (prop) {
-    case "itemPadding":
-    case "fontSize":
-    case "fontFamily": this.updateMorphs(); break;
+      case 'itemPadding':
+      case 'fontSize':
+      case 'fontFamily': this.updateMorphs(); break;
     }
     super.onChange(change);
   }
 
-  async remove() {
-    await this.animate({opacity: 0, duration: 300});
+  async remove () {
+    await this.animate({ opacity: 0, duration: 300 });
     if (!this._waitingForFinish) this.completeFinish();
     super.remove();
   }
 
-  ensureItem(item) {
+  ensureItem (item) {
     if (!item) return invalidItem;
 
     if (item.title) { this.title = item.title; return null; }
 
     if (item.isDivider) return item;
 
-    if (item.hasOwnProperty("string") && item.hasOwnProperty("action")) {
-      return obj.select(item, ["string", "action", "annotation"]);
+    if (item.hasOwnProperty('string') && item.hasOwnProperty('action')) {
+      return obj.select(item, ['string', 'action', 'annotation']);
     }
 
     if (Array.isArray(item)) {
-      var [name, actionOrList] = item;
+      const [name, actionOrList] = item;
 
-      if (typeof name !== "string" && !Array.isArray(name)/*rich text*/) return invalidItem;
+      if (typeof name !== 'string' && !Array.isArray(name)/* rich text */) return invalidItem;
 
-      if (!actionOrList || typeof actionOrList === "function")
+      if (!actionOrList || typeof actionOrList === 'function') {
         return {
           label: name,
           action: actionOrList || (() => $world.setStatusMessage(name))
         };
+      }
 
-      if (typeof actionOrList === "object" && actionOrList.getItems)
+      if (typeof actionOrList === 'object' && actionOrList.getItems) {
         return {
           label: name,
           submenu: actionOrList.getItems,
-          annotation: [" ", {textStyleClasses: ["fa", "fa-caret-right"]}]
+          annotation: [' ', { textStyleClasses: ['fa', 'fa-caret-right'] }]
         };
+      }
 
-      if (Array.isArray(actionOrList))
+      if (Array.isArray(actionOrList)) {
         return {
           label: name,
           submenu: actionOrList,
-          annotation: [" ", {textStyleClasses: ["fa", "fa-caret-right"]}]
+          annotation: [' ', { textStyleClasses: ['fa', 'fa-caret-right'] }]
         };
+      }
 
       return invalidItem;
     }
 
     if (item.command) {
-      var {command, showKeyShortcuts, target, alias, args} = item;
+      let { command, showKeyShortcuts, target, alias, args } = item;
       if (!command || !target) return invalidItem;
       if (showKeyShortcuts === undefined) showKeyShortcuts = true;
-      var keys = !showKeyShortcuts ?
-            null :
-            typeof showKeyShortcuts === "string" ?
-              showKeyShortcuts :
-              target.keysForCommand(command),
-          label = alias || command,
-          annotation = keys ? [`\t${keys}`, {fontSize: "70%"}] : ["", {}];
-      return {string: label, annotation, action: () => target.execCommand(command, args)};
+      const keys = !showKeyShortcuts
+        ? null
+        : typeof showKeyShortcuts === 'string'
+          ? showKeyShortcuts
+          : target.keysForCommand(command);
+      const label = alias || command;
+      const annotation = keys ? [`\t${keys}`, { fontSize: '70%' }] : ['', {}];
+      return { string: label, annotation, action: () => target.execCommand(command, args) };
     }
 
     return invalidItem;
   }
 
-  updateMorphs() {
+  updateMorphs () {
     this.submorphs = [];
 
-    var pLeft = this.padding.left(),
-        pRight = this.padding.right(),
-        pTop = this.padding.top(),
-        pBottom = this.padding.bottom(),
-        maxWidth = 0, pos = pt(pLeft, pTop);
+    const pLeft = this.padding.left();
+    const pRight = this.padding.right();
+    const pTop = this.padding.top();
+    const pBottom = this.padding.bottom();
+    let maxWidth = 0; let pos = pt(pLeft, pTop);
 
-    var defaultStyle = {};
+    const defaultStyle = {};
     if (this.fontFamily) defaultStyle.fontFamily = this.fontFamily;
     if (this.fontSize) defaultStyle.fontSize = this.fontSize;
     if (this.itemPadding) defaultStyle.padding = this.itemPadding;
 
     if (this.title) {
-      var title = this.addMorph({
-        type: "label",
+      const title = this.addMorph({
+        type: 'label',
         value: this.title,
-        name: "title",
+        name: 'title',
         position: pos,
-        fontWeight: "bold",
+        fontWeight: 'bold',
         ...defaultStyle
       });
       pos = title.bottomLeft;
       maxWidth = Math.max(title.width, maxWidth);
     }
 
-    this.items.forEach(({label, string, annotation, action, submenu, isDivider}) => {
-      var itemMorph = this.addMorph(
-        isDivider ?
-          new MenuDivider({position: pos}) :
-          new MenuItem({
-            label: label || string, annotation,
-            action, submenu,
+    this.items.forEach(({ label, string, annotation, action, submenu, isDivider }) => {
+      const itemMorph = this.addMorph(
+        isDivider
+          ? new MenuDivider({ position: pos })
+          : new MenuItem({
+            label: label || string,
+            annotation,
+            action,
+            submenu,
             position: pos,
             ...defaultStyle
           }));
@@ -351,7 +350,7 @@ export class Menu extends Morph {
     this.extent = pt(maxWidth + pRight + pLeft, pos.y + pBottom);
   }
 
-  openSubMenuDelayed(evt, itemMorph, items) {
+  openSubMenuDelayed (evt, itemMorph, items) {
     // only open a new submenu after a certain delay to reduce the
     // impression of "flickering" menus and to be less annoying when trying to
     // move over a menu and leaving the bounds of the item morph that opened it
@@ -359,13 +358,13 @@ export class Menu extends Morph {
     this.openingSubMenuProcess = setTimeout(() => {
       try {
         this.openSubMenu(evt, itemMorph, items);
-      } catch(err) { var w = this.world(); w ? w.logError(err) : console.error(err); }
+      } catch (err) { const w = this.world(); w ? w.logError(err) : console.error(err); }
     }, 200);
   }
 
-  openSubMenu(evt, itemMorph, items) {
+  openSubMenu (evt, itemMorph, items) {
     if (!itemMorph.selected) return;
-    var existingSubMenu = this.submenu;
+    const existingSubMenu = this.submenu;
 
     if (existingSubMenu) {
       if (existingSubMenu.ownerItemMorph === itemMorph) return;
@@ -373,23 +372,23 @@ export class Menu extends Morph {
       this.removeSubMenu();
     }
 
-    if (typeof items === "function") items = items();
+    if (typeof items === 'function') items = items();
 
-    var m = this.submenu = this.addMorph(
-      new Menu({items, ownerItemMorph: itemMorph, ownerMenu: this}));
+    const m = this.submenu = this.addMorph(
+      new Menu({ items, ownerItemMorph: itemMorph, ownerMenu: this }));
     m.updateMorphs();
     m.offsetForOwnerMenu();
   }
 
-  maybeRemoveSubmenu() {
-    fun.debounceNamed(this.id + "-maybeRemoveSubmenu", 300, () => {
-      var w = this.world();
+  maybeRemoveSubmenu () {
+    fun.debounceNamed(this.id + '-maybeRemoveSubmenu', 300, () => {
+      const w = this.world();
       if (!w) return;
-      var {submenu, selectedItemMorph} = this,
-          handOverSubmenu = w && submenu && submenu.fullContainsWorldPoint(w.firstHand.position);
+      const { submenu, selectedItemMorph } = this;
+      const handOverSubmenu = w && submenu && submenu.fullContainsWorldPoint(w.firstHand.position);
 
-      if (submenu && submenu.ownerItemMorph !== selectedItemMorph
-       && !submenu.ownerItemMorph.selected) {
+      if (submenu && submenu.ownerItemMorph !== selectedItemMorph &&
+       !submenu.ownerItemMorph.selected) {
         // this logic is to ensure that if this is an owner menu and the selected
         // item morph that generated a submenu has changed but the user is
         // still hovering over the submenu then the item morph will be
@@ -405,9 +404,9 @@ export class Menu extends Morph {
     return this.removeOnMouseOut;
   }
 
-  removeSubMenu() {
+  removeSubMenu () {
     if (!this.submenu) return;
-    var m = this.submenu;
+    const m = this.submenu;
     m.ownerMenu = null;
     this.submenu = null;
     m.remove();
@@ -415,14 +414,12 @@ export class Menu extends Morph {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  moveBoundsForVisibility (menuBounds, visibleBounds) {
+    let offsetX = 0; let offsetY = 0;
 
-  moveBoundsForVisibility(menuBounds, visibleBounds) {
-    var offsetX = 0, offsetY = 0;
+    if (menuBounds.right() > visibleBounds.right()) { offsetX = -1 * (menuBounds.right() - visibleBounds.right()); }
 
-    if (menuBounds.right() > visibleBounds.right())
-      offsetX = -1 * (menuBounds.right() - visibleBounds.right());
-
-    var overlapLeft = menuBounds.left() + offsetX;
+    const overlapLeft = menuBounds.left() + offsetX;
     if (overlapLeft < 0) offsetX += -overlapLeft;
 
     if (menuBounds.bottom() > visibleBounds.bottom()) {
@@ -432,23 +429,22 @@ export class Menu extends Morph {
       offsetX += 1;
     }
 
-    var overlapTop = menuBounds.top() + offsetY;
+    const overlapTop = menuBounds.top() + offsetY;
     if (overlapTop < 0) offsetY += -overlapTop;
 
     return menuBounds.translatedBy(pt(offsetX, offsetY));
   }
 
-
-  moveSubMenuBoundsForVisibility(subMenuBnds, mainMenuItemBnds, visibleBounds, direction) {
+  moveSubMenuBoundsForVisibility (subMenuBnds, mainMenuItemBnds, visibleBounds, direction) {
     // subMenuBnds is bounds to  be transformed, mainMenuItemBnds is the bounds of the menu
     // item that caused the submenu to appear, visbleBounds is the bounds that the submenu
     // should fit into, when there are multiple submenus force one direction with forceDirection
     if (!direction) {
-      direction = mainMenuItemBnds.right() + subMenuBnds.width > visibleBounds.right() ?
-        'left' : 'right';
+      direction = mainMenuItemBnds.right() + subMenuBnds.width > visibleBounds.right()
+        ? 'left' : 'right';
     }
 
-    var extent = subMenuBnds.extent();
+    const extent = subMenuBnds.extent();
     if (direction === 'left') {
       subMenuBnds = mainMenuItemBnds.topLeft().addXY(-extent.x, 0).extent(extent);
     } else {
@@ -456,51 +452,51 @@ export class Menu extends Morph {
     }
 
     if (subMenuBnds.bottom() > visibleBounds.bottom()) {
-      let deltaY = -1 * (subMenuBnds.bottom() - visibleBounds.bottom());
+      const deltaY = -1 * (subMenuBnds.bottom() - visibleBounds.bottom());
       subMenuBnds = subMenuBnds.translatedBy(pt(0, deltaY));
     }
 
     // if it overlaps at the top move the bounds so that it aligns woitht he top
     if (subMenuBnds.top() < visibleBounds.top()) {
-      let deltaY = visibleBounds.top() - subMenuBnds.top();
+      const deltaY = visibleBounds.top() - subMenuBnds.top();
       subMenuBnds = subMenuBnds.translatedBy(pt(0, deltaY));
     }
 
     return subMenuBnds;
   }
 
-  offsetForOwnerMenu() {
-    var owner = this.ownerMenu,
-        visibleBounds = this.world().visibleBounds(),
-        localVisibleBounds = owner.getGlobalTransform().inverse().transformRectToRect(visibleBounds),
-        newBounds = this.clipForVisibility(
-          this.moveSubMenuBoundsForVisibility(
-            this.innerBounds(),
-            owner.selectedItemMorph ? owner.selectedItemMorph.bounds() : owner.innerBounds(),
-            localVisibleBounds), visibleBounds);
+  offsetForOwnerMenu () {
+    const owner = this.ownerMenu;
+    const visibleBounds = this.world().visibleBounds();
+    const localVisibleBounds = owner.getGlobalTransform().inverse().transformRectToRect(visibleBounds);
+    const newBounds = this.clipForVisibility(
+      this.moveSubMenuBoundsForVisibility(
+        this.innerBounds(),
+        owner.selectedItemMorph ? owner.selectedItemMorph.bounds() : owner.innerBounds(),
+        localVisibleBounds), visibleBounds);
     this.setBounds(newBounds);
   }
 
-  clipForVisibility(bounds = this.bounds(), worldBounds = this.world().visibleBounds()) {
-    var globalBounds = this.transformRectToMorph(this.world(), bounds.withX(0).withY(0)),
-        overlapping = !worldBounds.containsRect(globalBounds.insetBy(10));
+  clipForVisibility (bounds = this.bounds(), worldBounds = this.world().visibleBounds()) {
+    const globalBounds = this.transformRectToMorph(this.world(), bounds.withX(0).withY(0));
+    const overlapping = !worldBounds.containsRect(globalBounds.insetBy(10));
 
     // FIXME!
-    var scrollbarWidth = 0; // 15 ?? this requires a change of submenu rendering, 
-    //since those need to be rendered outside of parent menu
+    const scrollbarWidth = 0; // 15 ?? this requires a change of submenu rendering,
+    // since those need to be rendered outside of parent menu
 
     if (overlapping) {
       bounds = bounds.withExtent(pt(scrollbarWidth + 5 + bounds.width, Math.min(globalBounds.height, worldBounds.height)));
-      //this.clipMode = "auto"
+      // this.clipMode = "auto"
     }
     return bounds;
   }
 
-  offsetForWorld(pos) {
-    var bounds = this.innerBounds().translatedBy(pos);
+  offsetForWorld (pos) {
+    let bounds = this.innerBounds().translatedBy(pos);
     if (this.owner.visibleBounds) {
-      var worldBounds = this.owner.visibleBounds();
-      //bounds = this.moveBoundsForVisibility(bounds, worldBounds);
+      const worldBounds = this.owner.visibleBounds();
+      // bounds = this.moveBoundsForVisibility(bounds, worldBounds);
       bounds = this.clipForVisibility(
         this.moveBoundsForVisibility(bounds, worldBounds),
         worldBounds);
@@ -512,8 +508,7 @@ export class Menu extends Morph {
   // events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  onHoverOut() {
+  onHoverOut () {
     if (this.removeOnMouseOut) this.remove();
   }
-
 }
