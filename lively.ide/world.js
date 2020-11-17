@@ -989,6 +989,21 @@ export class LivelyWorld extends World {
       items.push(['connect...', connectItems]);
     }
 
+    items.push(["Add comment", async () => {
+      // TODO: maybe use promise functionality instead of if else
+      let commentText = await $world.prompt("Enter comment");
+      if (commentText) {
+        let newComment = {
+          text: commentText,
+          timestamp: new Date().getTime()
+        }
+        $world.setStatusMessage(newComment.timestamp, "green");
+      }
+      else {
+        $world.setStatusMessage("Comment not saved", "red");
+      }
+    }]);
+
     return items;
   }
 
