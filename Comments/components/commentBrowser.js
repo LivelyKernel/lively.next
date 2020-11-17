@@ -6,13 +6,10 @@ export class CommentsBrowser extends Window {
 
   constructor() {
     super()
-    this.ui = {
-      container: new Morph({
+    this.container = new Morph({
         layout: new VerticalLayout(),
-      }),
-    }
-    
-    this.addMorph(this.ui.container);
+      })
+    this.addMorph(this.container);
     this.updateCommentMorphs();
     this.relayout();
   }
@@ -20,6 +17,7 @@ export class CommentsBrowser extends Window {
   getCommentsInWorld() {
     let comments = [];
     $world.withAllSubmorphsDo((morph) => {
+      
       comments.push(...morph.comments);
     })
     return comments;
@@ -35,7 +33,7 @@ export class CommentsBrowser extends Window {
 
   updateCommentMorphs() {
     let commentMorphs = this.getCommentMorphs(this.getCommentsInWorld());
-    this.ui.container.submorphs = commentMorphs;
+    this.container.submorphs = commentMorphs;
   }
   
 
