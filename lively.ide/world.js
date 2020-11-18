@@ -39,6 +39,7 @@ import { GradientEditor } from './styling/gradient-editor.js';
 import { completions, runEval } from 'lively.vm';
 import { getClassName, serialize } from 'lively.serializer2';
 import { Canvas } from 'lively.components/canvas.js';
+import { CommentBrowser } from 'Comments/components/commentBrowser.js';
 
 export class LivelyWorld extends World {
   static get properties () {
@@ -989,20 +990,19 @@ export class LivelyWorld extends World {
       items.push(['connect...', connectItems]);
     }
 
-    items.push(["Add comment", async () => {
+    items.push(['Add comment', async () => {
       // TODO: maybe use promise functionality instead of if else
-      let commentText = await $world.prompt("Enter comment");
+      const commentText = await $world.prompt('Enter comment');
       if (commentText) {
-        let newComment = {
+        const newComment = {
           text: commentText,
           timestamp: new Date().getTime()
-        }
+        };
         self.addComment(newComment);
-        //TODO: remove this if the window opens instead
-        $world.setStatusMessage("Comment saved", "green");
-      }
-      else {
-        $world.setStatusMessage("Comment not saved", "red");
+        $world.setStatusMessage('Comment saved', 'green');
+        CommentBrowser.update();
+      } else {
+        $world.setStatusMessage('Comment not saved', 'red');
       }
     }]);
 
