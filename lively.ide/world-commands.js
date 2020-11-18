@@ -12,7 +12,7 @@ import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { interactivelyFreezeWorld } from 'lively.freezer';
 import { resource } from 'lively.resources';
 import { BrowserModuleTranslationCache } from 'lively.modules/src/instrumentation.js';
-import { CommentsBrowser } from 'Comments/components/commentBrowser.js';
+import { CommentBrowser } from 'Comments/components/commentBrowser.js';
 
 const commands = [
 
@@ -1379,11 +1379,11 @@ const commands = [
   {
     name: 'toggle comment browser',
     exec: async (world) => {
-      if (CommentsBrowser.isOpen()) {
-        CommentsBrowser.close();
+      if (CommentBrowser.isOpen()) {
+        CommentBrowser.close();
         return;
       }
-      new CommentsBrowser();
+      new CommentBrowser();
     }
   }
 
