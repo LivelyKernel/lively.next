@@ -76,7 +76,7 @@ async function fetchResource (proceed, load) {
   if (result.length > largeModuleSize && $world && !System._loadingIndicator) {
     System._loadingIndicator = $world.execCommand('open loading indicator', 'loading module');
     await promise.delay(500);
-    await System._loadingIndicator.whenRendered();
+    if (System._loadingIndicator) { await System._loadingIndicator.whenRendered(); }
   }
 
   return result;
