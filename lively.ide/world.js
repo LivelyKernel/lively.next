@@ -994,13 +994,8 @@ export class LivelyWorld extends World {
       // TODO: maybe use promise functionality instead of if else
       const commentText = await $world.prompt('Enter comment');
       if (commentText) {
-        const newComment = {
-          text: commentText,
-          timestamp: new Date().getTime()
-        };
-        self.addComment(newComment);
+        self.addComment(commentText);
         $world.setStatusMessage('Comment saved', 'green');
-        CommentBrowser.update();
       } else {
         $world.setStatusMessage('Comment not saved', 'red');
       }
