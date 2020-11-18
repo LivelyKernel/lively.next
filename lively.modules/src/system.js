@@ -1,67 +1,60 @@
-/*global System,process,self,WorkerGlobalScope,location,global*/
+/* global System,process,self,WorkerGlobalScope,location,global */
 import { arr, obj, promise } from 'lively.lang';
-import { remove as removeHook, install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
-import { classHolder } from "./cycle-breaker.js";
-
+import { remove as removeHook, install as installHook, isInstalled as isHookInstalled } from './hooks.js';
+import { classHolder } from './cycle-breaker.js';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-var isNode = System.get("@system-env").node;
+const isNode = System.get('@system-env').node;
 
-var GLOBAL = typeof window !== "undefined" ? window :
-              (typeof global !== "undefined" ? global :
-                (typeof self !== "undefined" ? self : this));
+const GLOBAL = typeof window !== 'undefined' ? window
+  : (typeof global !== 'undefined' ? global
+      : (typeof self !== 'undefined' ? self : this));
 
-var defaultOptions = {
+const defaultOptions = {
   notificationLimit: null
+};
+
+export function wrapModuleResolution (System) {
+  if (!isHookInstalled(System, 'normalize', 'normalizeHook')) { installHook(System, 'normalize', normalizeHook, 'normalizeHook'); }
+
+  if (!isHookInstalled(System, 'decanonicalize', 'decanonicalizeHook')) { installHook(System, 'decanonicalize', decanonicalizeHook, 'decanonicalizeHook'); }
+
+  if (!isHookInstalled(System, 'normalizeSync', 'decanonicalizeHook')) { installHook(System, 'normalizeSync', decanonicalizeHook, 'decanonicalizeHook'); }
+
+  if (!isHookInstalled(System, 'newModule', 'newModule_volatile')) { installHook(System, 'newModule', newModule_volatile, 'newModule_volatile'); }
+
+  if (!isHookInstalled(System, 'instantiate', 'instantiate_triggerOnLoadCallbacks')) { installHook(System, 'instantiate', instantiate_triggerOnLoadCallbacks, 'instantiate_triggerOnLoadCallbacks'); }
+
+  if (!isHookInstalled(System, 'locate', 'locateHook')) { installHook(System, 'locate', locateHook, 'locateHook'); }
 }
 
-export function wrapModuleResolution(System) {
-  if (!isHookInstalled(System, "normalize", "normalizeHook"))
-    installHook(System, "normalize", normalizeHook, "normalizeHook");
-
-  if (!isHookInstalled(System, "decanonicalize", "decanonicalizeHook"))
-    installHook(System, "decanonicalize", decanonicalizeHook, "decanonicalizeHook");
-
-  if (!isHookInstalled(System, "normalizeSync", "decanonicalizeHook"))
-    installHook(System, "normalizeSync", decanonicalizeHook, "decanonicalizeHook");
-
-  if (!isHookInstalled(System, "newModule", "newModule_volatile"))
-    installHook(System, "newModule", newModule_volatile, "newModule_volatile");
-
-  if (!isHookInstalled(System, "instantiate", "instantiate_triggerOnLoadCallbacks"))
-    installHook(System, "instantiate", instantiate_triggerOnLoadCallbacks, "instantiate_triggerOnLoadCallbacks");
-
-  if (!isHookInstalled(System, "locate", "locateHook"))
-    installHook(System, "locate", locateHook, "locateHook");
-}
-
-export function unwrapModuleResolution(System) {
-  removeHook(System, "normalize", "normalizeHook");
-  removeHook(System, "decanonicalize", "decanonicalizeHook");
-  removeHook(System, "normalizeSync", "decanonicalizeHook");
-  removeHook(System, "newModule", "newModule_volatile");
-  removeHook(System, "instantiate", "instantiate_triggerOnLoadCallbacks");
-  removeHook(System, "locate", "locateHook");
+export function unwrapModuleResolution (System) {
+  removeHook(System, 'normalize', 'normalizeHook');
+  removeHook(System, 'decanonicalize', 'decanonicalizeHook');
+  removeHook(System, 'normalizeSync', 'decanonicalizeHook');
+  removeHook(System, 'newModule', 'newModule_volatile');
+  removeHook(System, 'instantiate', 'instantiate_triggerOnLoadCallbacks');
+  removeHook(System, 'locate', 'locateHook');
 }
 
 // Accessible system-wide via System.get("@lively-env")
-function livelySystemEnv(System) {
+function livelySystemEnv (System) {
   return {
-    moduleEnv(id) { return classHolder.module(System, id); },
+    moduleEnv (id) { return classHolder.module(System, id); },
 
     // TODO this is just a test, won't work in all cases...
-    get itself() { return System.get(System.decanonicalize("lively.modules/index.js")); },
+    get itself () { return System.get(System.decanonicalize('lively.modules/index.js')); },
 
-    evaluationStart(moduleId) {
+    evaluationStart (moduleId) {
       classHolder.module(System, moduleId).evaluationStart();
     },
 
-    evaluationEnd(moduleId) {
+    evaluationEnd (moduleId) {
       classHolder.module(System, moduleId).evaluationEnd();
     },
 
-    dumpConfig() {
+    dumpConfig () {
       return JSON.stringify({
         baseURL: System.baseURL,
         transpiler: System.transpiler,
@@ -74,22 +67,22 @@ function livelySystemEnv(System) {
       }, null, 2);
     },
 
-    get packageRegistry() { return System["__lively.modules__packageRegistry"]; },
-    set packageRegistry(x) { System["__lively.modules__packageRegistry"] = x; },
+    get packageRegistry () { return System['__lively.modules__packageRegistry']; },
+    set packageRegistry (x) { System['__lively.modules__packageRegistry'] = x; },
 
     // this is where the canonical state of the module system is held...
-    packages:                System["__lively.modules__packages"]                || (System["__lively.modules__packages"]                = {}),
-    loadedModules:           System["__lively.modules__loadedModules"]           || (System["__lively.modules__loadedModules"]           = {}),
-    pendingExportChanges:    System["__lively.modules__pendingExportChanges"]    || (System["__lively.modules__pendingExportChanges"]    = {}),
-    notifications:           System["__lively.modules__notifications"]           || (System["__lively.modules__notifications"]           = []),
-    notificationSubscribers: System["__lively.modules__notificationSubscribers"] || (System["__lively.modules__notificationSubscribers"] = {}),
-    options:                 System["__lively.modules__options"]                 || (System["__lively.modules__options"]                 = obj.deepCopy(defaultOptions)),
-    onLoadCallbacks:         System["__lively.modules__onLoadCallbacks"]         || (System["__lively.modules__onLoadCallbacks"]         = []),
-    modulePackageMapCache:   System["__lively.modules__modulePackageMapCache"]
-  }
+    packages: System['__lively.modules__packages'] || (System['__lively.modules__packages'] = {}),
+    loadedModules: System['__lively.modules__loadedModules'] || (System['__lively.modules__loadedModules'] = {}),
+    pendingExportChanges: System['__lively.modules__pendingExportChanges'] || (System['__lively.modules__pendingExportChanges'] = {}),
+    notifications: System['__lively.modules__notifications'] || (System['__lively.modules__notifications'] = []),
+    notificationSubscribers: System['__lively.modules__notificationSubscribers'] || (System['__lively.modules__notificationSubscribers'] = {}),
+    options: System['__lively.modules__options'] || (System['__lively.modules__options'] = obj.deepCopy(defaultOptions)),
+    onLoadCallbacks: System['__lively.modules__onLoadCallbacks'] || (System['__lively.modules__onLoadCallbacks'] = []),
+    modulePackageMapCache: System['__lively.modules__modulePackageMapCache']
+  };
 }
 
-function systems() { 
+function systems () {
   if (!System.constructor.systems) System.constructor.systems = {};
   return System.constructor.systems;
 }
@@ -98,77 +91,78 @@ function systems() {
 // System creation + access interface
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function nameOfSystem(System) {
+function nameOfSystem (System) {
   return Object.keys(systems()).detect(name => systems()[name] === System);
 }
 
-function getSystem(nameOrSystem, config) {
-  return nameOrSystem && typeof nameOrSystem !== "string" ?
-    nameOrSystem : systems()[nameOrSystem] || (systems()[nameOrSystem] = makeSystem(config));
+function getSystem (nameOrSystem, config) {
+  return nameOrSystem && typeof nameOrSystem !== 'string'
+    ? nameOrSystem : systems()[nameOrSystem] || (systems()[nameOrSystem] = makeSystem(config));
 }
 
-function removeSystem(nameOrSystem) {
+function removeSystem (nameOrSystem) {
   // FIXME "unload" code...???
-  var name = nameOrSystem && typeof nameOrSystem !== "string" ?
-    nameOfSystem(nameOrSystem) : nameOrSystem;
+  const name = nameOrSystem && typeof nameOrSystem !== 'string'
+    ? nameOfSystem(nameOrSystem) : nameOrSystem;
   delete systems()[name];
 }
 
-import { wrapModuleLoad } from "./instrumentation.js"
-import { wrapResource } from "./resource.js"
-import { emit } from "lively.notifications";
-import { join, urlResolve } from "./url-helpers.js";
-import { resource } from "lively.resources";
+import { wrapModuleLoad } from './instrumentation.js';
+import { wrapResource } from './resource.js';
+import { emit } from 'lively.notifications';
+import { join, urlResolve } from './url-helpers.js';
+import { resource } from 'lively.resources';
 
-function makeSystem(cfg) { 
+function makeSystem (cfg) {
   return prepareSystem(new System.constructor(), cfg);
 }
 
-function prepareSystem(System, config) {
+function prepareSystem (System, config) {
   System.trace = true;
   config = config || {};
 
-  var useModuleTranslationCache = config.hasOwnProperty("useModuleTranslationCache") ?
-    config.useModuleTranslationCache : !urlQuery().noModuleCache;
+  const useModuleTranslationCache = config.hasOwnProperty('useModuleTranslationCache')
+    ? config.useModuleTranslationCache : !urlQuery().noModuleCache;
   System.useModuleTranslationCache = useModuleTranslationCache;
 
-  System.set("@lively-env", System.newModule(livelySystemEnv(System)));
+  System.set('@lively-env', System.newModule(livelySystemEnv(System)));
 
-  let isWorker = typeof WorkerGlobalScope !== 'undefined';
+  const isWorker = typeof WorkerGlobalScope !== 'undefined';
 
   if (isWorker) {
-    System.set("@system-env",
-      System.newModule({...System.get("@system-env"), browser: true, worker: true, location}));
+    System.set('@system-env',
+      System.newModule({ ...System.get('@system-env'), browser: true, worker: true, location }));
   }
 
-  let isElectron =
-    typeof process !== "undefined" &&
+  const isElectron =
+    typeof process !== 'undefined' &&
     process.versions &&
     process.versions.electron;
 
   if (isElectron) {
-    System.set("@system-env",
-      System.newModule({electron: isElectron, ...System.get("@system-env")}));
+    System.set('@system-env',
+      System.newModule({ electron: isElectron, ...System.get('@system-env') }));
   }
 
   wrapResource(System);
   wrapModuleLoad(System);
-  wrapModuleResolution(System)
+  wrapModuleResolution(System);
 
   if (isElectron) {
-    var electronCoreModules = ["electron"],
-        map = electronCoreModules.reduce((map, ea) => {
-          map[ea] = "@node/" + ea; return map; }, {});
+    const electronCoreModules = ['electron'];
+    var map = electronCoreModules.reduce((map, ea) => {
+      map[ea] = '@node/' + ea; return map;
+    }, {});
     config.map = obj.merge(map, config.map);
   }
 
   if (isNode) {
-    var nodejsCoreModules = ["addons", "assert", "buffer", "child_process",
-        "cluster", "console", "crypto", "dgram", "dns", "domain", "events", "fs",
-        "http", "https", "module", "net", "os", "path", "punycode", "querystring",
-        "readline", "repl", "stream", "stringdecoder", "timers", "tls",
-        "tty", "url", "util", "v8", "vm", "zlib", "constants"],
-        map = nodejsCoreModules.reduce((map, ea) => { map[ea] = "@node/" + ea; return map; }, {});
+    const nodejsCoreModules = ['addons', 'assert', 'buffer', 'child_process',
+      'cluster', 'console', 'crypto', 'dgram', 'dns', 'domain', 'events', 'fs',
+      'http', 'https', 'module', 'net', 'os', 'path', 'punycode', 'querystring',
+      'readline', 'repl', 'stream', 'stringdecoder', 'timers', 'tls',
+      'tty', 'url', 'util', 'v8', 'vm', 'zlib', 'constants'];
+    var map = nodejsCoreModules.reduce((map, ea) => { map[ea] = '@node/' + ea; return map; }, {});
     config.map = obj.merge(map, config.map);
     // for sth l ike map: {"lively.lang": "node_modules:lively.lang"}
     // cfg.paths = obj.merge({"node_modules:*": "./node_modules/*"}, cfg.paths);
@@ -176,29 +170,27 @@ function prepareSystem(System, config) {
 
   config.packageConfigPaths = config.packageConfigPaths || ['./node_modules/*/package.json'];
 
-  if (!config.transpiler && System.transpiler === "traceur") {
-
-    let initialSystem = GLOBAL.System;
-    if (initialSystem.transpiler === "lively.transpiler") {
-      System.set("lively.transpiler", initialSystem.get("lively.transpiler"));
+  if (!config.transpiler && System.transpiler === 'traceur') {
+    const initialSystem = GLOBAL.System;
+    if (initialSystem.transpiler === 'lively.transpiler') {
+      System.set('lively.transpiler', initialSystem.get('lively.transpiler'));
       System._loader.transpilerPromise = initialSystem._loader.transpilerPromise;
       System.config({
         transpiler: 'lively.transpiler',
         babelOptions: Object.assign(initialSystem.babelOptions || {}, config.babelOptions)
       });
-
     } else {
       System.config({
         map: {
-          'plugin-babel': initialSystem.map["plugin-babel"],
-          'systemjs-babel-build': initialSystem.map["systemjs-babel-build"]
+          'plugin-babel': initialSystem.map['plugin-babel'],
+          'systemjs-babel-build': initialSystem.map['systemjs-babel-build']
         },
         transpiler: initialSystem.transpiler,
         babelOptions: Object.assign(initialSystem.babelOptions || {}, config.babelOptions)
       });
     }
   }
-  
+
   System.config(config);
 
   return System;
@@ -206,61 +198,60 @@ function prepareSystem(System, config) {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // FIXME! proper config!
-function urlQuery() {
-  if (typeof document === "undefined" || !document.location) return {};
-  return (document.location.search || "").replace(/^\?/, "").split("&")
-    .reduce(function(query, ea) {
-      var split = ea.split("="), key = split[0], value = split[1];
-      if (value === "true" || value === "false") value = eval(value);
+function urlQuery () {
+  if (typeof document === 'undefined' || !document.location) return {};
+  return (document.location.search || '').replace(/^\?/, '').split('&')
+    .reduce(function (query, ea) {
+      const split = ea.split('='); const key = split[0]; let value = split[1];
+      if (value === 'true' || value === 'false') value = eval(value);
       else if (!isNaN(Number(value))) value = Number(value);
       query[key] = value;
       return query;
     }, {});
 }
 
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // name resolution extensions
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const dotSlashStartRe = /^\.?\//,
-  trailingSlashRe = /\/$/,
-  jsExtRe = /\.js$/,
-  jsxExtRe = /\.jsx$/,  
-  nodeExtRe = /\.node$/,
-  jsonExtRe = /\.json$/,
-  jsonJsExtRe = /(.*\.json)\.js$/i,
-  jsxJsExtRe = /(.*\.jsx)\.js$/i,
-  doubleSlashRe = /.\/{2,}/g,
-  nodeModRe = /\@node.*/;
+const dotSlashStartRe = /^\.?\//;
+const trailingSlashRe = /\/$/;
+const jsExtRe = /\.js$/;
+const jsxExtRe = /\.jsx$/;
+const nodeExtRe = /\.node$/;
+const jsonExtRe = /\.json$/;
+const jsonJsExtRe = /(.*\.json)\.js$/i;
+const jsxJsExtRe = /(.*\.jsx)\.js$/i;
+const doubleSlashRe = /.\/{2,}/g;
+const nodeModRe = /\@node.*/;
 
-function preNormalize(System, name, parent) {
+function preNormalize (System, name, parent) {
 // console.log(`> [preNormalize] ${name}`);
 
-  if (name === "..") name = '../index.js'; // Fix ".."
+  if (name === '..') name = '../index.js'; // Fix ".."
 
   // rk 2016-07-19: sometimes SystemJS doStringMap() will resolve path into
   // names with double slashes which causes module id issues later. This fixes
   // that...
   // name = name.replace(/([^:])\/\/+/g, "$1\/");
-  name = name.replace(doubleSlashRe, (match) => match[0] === ":" ? match : match[0]+"/");
+  name = name.replace(doubleSlashRe, (match) => match[0] === ':' ? match : match[0] + '/');
 
   // systemjs' decanonicalize has by default not the fancy
   // '{node: "events", "~node": "@empty"}' mapping but we need it
-  let {packageRegistry} = System.get("@lively-env");
+  const { packageRegistry } = System.get('@lively-env');
   if (packageRegistry) {
-    var pkg = parent && packageRegistry.findPackageHavingURL(parent);
+    const pkg = parent && packageRegistry.findPackageHavingURL(parent);
     if (pkg) {
-      var {map, url: packageURL} = pkg;
-      var mappedObject = (map && map[name]) || System.map[name];
+      const { map, url: packageURL } = pkg;
+      let mappedObject = (map && map[name]) || System.map[name];
       if (mappedObject) {
-        if (typeof mappedObject === "object") {
+        if (typeof mappedObject === 'object') {
           mappedObject = normalize_doMapWithObject(mappedObject, pkg, System);
         }
-        if (typeof mappedObject === "string" && mappedObject !== "") {
+        if (typeof mappedObject === 'string' && mappedObject !== '') {
           name = mappedObject;
         }
         // relative to package
-        if (name.startsWith(".")) name = urlResolve(join(packageURL, name));
+        if (name.startsWith('.')) name = urlResolve(join(packageURL, name));
       }
     }
   }
@@ -269,74 +260,73 @@ function preNormalize(System, name, parent) {
   if (packageRegistry) {
     let resolved = packageRegistry.resolvePath(name, parent);
     if (resolved) {
-      if (resolved.endsWith("/") && !name.endsWith("/")) resolved = resolved.slice(0, -1);
-      if (!resolved.endsWith("/") && name.endsWith("/")) resolved = resolved + "/";
+      if (resolved.endsWith('/') && !name.endsWith('/')) resolved = resolved.slice(0, -1);
+      if (!resolved.endsWith('/') && name.endsWith('/')) resolved = resolved + '/';
       name = resolved;
     }
   }
   // </snap> experimental
 
-// console.log(`>> [preNormalize] ${name}`);
+  // console.log(`>> [preNormalize] ${name}`);
   return name;
 }
 
-function postNormalize(System, normalizeResult, isSync) {
+function postNormalize (System, normalizeResult, isSync) {
 // console.log(`> [postNormalize] ${normalizeResult}`);
   // lookup package main
-  var base = normalizeResult.replace(jsExtRe, "");
+  const base = normalizeResult.replace(jsExtRe, '');
 
   // rk 2017-05-13: FIXME, we currently use a form like
   // System.decanonicalize("lively.lang/") to figure out the package base path...
-  if (normalizeResult.endsWith("/")) {
-// console.log(`>> [postNormalize] ${normalizeResult}`);
+  if (normalizeResult.endsWith('/')) {
+    // console.log(`>> [postNormalize] ${normalizeResult}`);
     return normalizeResult;
   }
 
-  let {packageRegistry} = System.get("@lively-env");
+  const { packageRegistry } = System.get('@lively-env');
   if (packageRegistry) {
-    let referencedPackage = packageRegistry.findPackageWithURL(base);
+    const referencedPackage = packageRegistry.findPackageWithURL(base);
     if (referencedPackage) {
-      var main = (referencedPackage.main || "index.js").replace(dotSlashStartRe, ""),
-          withMain = base.replace(trailingSlashRe, "") + "/" + main;
-// console.log(`>> [postNormalize] ${withMain} (main 1)`);
+      var main = (referencedPackage.main || 'index.js').replace(dotSlashStartRe, '');
+      var withMain = base.replace(trailingSlashRe, '') + '/' + main;
+      // console.log(`>> [postNormalize] ${withMain} (main 1)`);
       return withMain;
     }
-
   } else {
     if (base in System.packages) {
       var main = System.packages[base].main;
       if (main) {
-        var withMain = base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
-// console.log(`>> [postNormalize] ${withMain} (main 2)`);
+        var withMain = base.replace(trailingSlashRe, '') + '/' + main.replace(dotSlashStartRe, '');
+        // console.log(`>> [postNormalize] ${withMain} (main 2)`);
         return withMain;
       }
     }
   }
 
   // Fix issue with accidentally adding .js
-  var m = normalizeResult.match(jsonJsExtRe);
-// console.log(`>> [postNormalize] ${m ? m[1] : normalizeResult}`);
+  const m = normalizeResult.match(jsonJsExtRe);
+  // console.log(`>> [postNormalize] ${m ? m[1] : normalizeResult}`);
   return m ? m[1] : normalizeResult;
 }
 
-async function checkExistence(url, System) {
-   System._fileCheckMap = System._fileCheckMap || {};
-   if (url in System._fileCheckMap) return System._fileCheckMap[url];
-   // first consult if this file has been cached by local storage before
-   const cache = System._livelyModulesTranslationCache;
-   if (cache && cache.fetchStoredModuleSource(url)) {
-     return System._fileCheckMap[url] = true;
-   }
-   return System._fileCheckMap[url] = await resource(url).exists();
+async function checkExistence (url, System) {
+  System._fileCheckMap = System._fileCheckMap || {};
+  if (url in System._fileCheckMap) return System._fileCheckMap[url];
+  // first consult if this file has been cached by local storage before
+  const cache = System._livelyModulesTranslationCache;
+  if (cache && cache.fetchStoredModuleSource(url)) {
+    return System._fileCheckMap[url] = true;
+  }
+  return System._fileCheckMap[url] = await resource(url).exists();
 }
 
-async function normalizeHook(proceed, name, parent, parentAddress) {
-  if (parent && name == "cjs") return "cjs";
-  var System = this,
-    stage1 = preNormalize(System, name, parent),
-    stage2 = await proceed(stage1, parent, parentAddress),
-    stage3 = postNormalize(System, stage2 || stage1, false);
-  let isNodePath = stage3.startsWith("file:");
+async function normalizeHook (proceed, name, parent, parentAddress) {
+  if (parent && name == 'cjs') return 'cjs';
+  const System = this;
+  const stage1 = preNormalize(System, name, parent);
+  const stage2 = await proceed(stage1, parent, parentAddress);
+  let stage3 = postNormalize(System, stage2 || stage1, false);
+  const isNodePath = stage3.startsWith('file:');
   System.debug && console.log(`[normalize] ${name} => ${stage3}`);
   if (
     // Make sure we did not ask for a js or jsx file in the initial query.
@@ -357,49 +347,49 @@ async function normalizeHook(proceed, name, parent, parentAddress) {
     // fixme: repeated calling exists really slows down loading times
     //        cache the previous answers and return those if present
     if (await checkExistence(stage3, System)) return stage3;
-    let indexjs = stage3.replace(".js", "/index.js");
+    const indexjs = stage3.replace('.js', '/index.js');
     if (await checkExistence(indexjs, System) || !isNodePath) return indexjs;
-    return stage3.replace(".js", "/index.node");
+    return stage3.replace('.js', '/index.node');
   }
   if (jsxJsExtRe.test(stage3)) stage3 = stage3.replace('.jsx.js', '.jsx');
   return stage3;
 }
 
-function decanonicalizeHook(proceed, name, parent, isPlugin) {
+function decanonicalizeHook (proceed, name, parent, isPlugin) {
   let plugin;
-  if (name && name.endsWith("!cjs")) {
+  if (name && name.endsWith('!cjs')) {
     name = name.replace('!cjs', '');
-    plugin = "!cjs";
+    plugin = '!cjs';
   }
-  let System = this,
-    stage1 = preNormalize(System, name, parent),
-    stage2 = proceed(stage1, parent, isPlugin),
-    stage3 = postNormalize(System, stage2, true);
+  const System = this;
+  const stage1 = preNormalize(System, name, parent);
+  const stage2 = proceed(stage1, parent, isPlugin);
+  let stage3 = postNormalize(System, stage2, true);
   if (plugin) stage3 += plugin;
   System.debug && console.log(`[normalizeSync] ${name} => ${stage3}`);
   return stage3;
 }
 
-async function locateHook(proceed, load) {
+async function locateHook (proceed, load) {
   // we only support loading of esm modules
   // any plugins via the ! notation are ignored
-  let [url, plugin] = load.name.split('!');
+  const [url, plugin] = load.name.split('!');
   load.name = url;
-  let res = await proceed(load);
+  const res = await proceed(load);
   return res;
 }
 
-function normalize_doMapWithObject(mappedObject, pkg, loader) {
+function normalize_doMapWithObject (mappedObject, pkg, loader) {
   // SystemJS allows stuff like {events: {"node": "@node/events", "~node": "@empty"}}
   // for conditional name lookups based on the environment. The resolution
   // process in SystemJS is asynchronous, this one here synch. to support
   // decanonicalize and a one-step-load
-  var env = loader.get(pkg.map['@env'] || '@system-env');
+  const env = loader.get(pkg.map['@env'] || '@system-env');
   // first map condition to match is used
-  var resolved;
-  for (var e in mappedObject) {
-    var negate = e[0] == '~';
-    var value = normalize_readMemberExpression(negate ? e.substr(1) : e, env);
+  let resolved;
+  for (const e in mappedObject) {
+    const negate = e[0] == '~';
+    const value = normalize_readMemberExpression(negate ? e.substr(1) : e, env);
     if (!negate && value || negate && !value) {
       resolved = mappedObject[e];
       break;
@@ -407,43 +397,41 @@ function normalize_doMapWithObject(mappedObject, pkg, loader) {
   }
 
   if (resolved) {
-    if (typeof resolved != 'string')
-      throw new Error('Unable to map a package conditional to a package conditional.');
+    if (typeof resolved !== 'string') { throw new Error('Unable to map a package conditional to a package conditional.'); }
   }
   return resolved;
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function normalize_readMemberExpression(p, value) {
-    var pParts = p.split('.');
-    while (pParts.length)
-      value = value[pParts.shift()];
+  function normalize_readMemberExpression (p, value) {
+    const pParts = p.split('.');
+    while (pParts.length) { value = value[pParts.shift()]; }
     return value;
   }
 }
 
-function normalize_packageOfURL(url, System) {
+function normalize_packageOfURL (url, System) {
   // given a url like "http://localhost:9001/lively.lang/lib/base.js" finds the
   // corresponding package name in loader.packages, like "http://localhost:9001/lively.lang"
   // ... actually it returns the package
-  var packageNames = Object.keys(System.packages || {}),
-      matchingPackages = packageNames
-        .map(pkgName =>
-          url.indexOf(pkgName) === 0 ?
-            {url: pkgName, penalty: url.slice(pkgName.length).length} : null)
-        .filter(ea => !!ea),
-      pName = matchingPackages.length ?
-        matchingPackages.reduce((matchingPkg, ea) =>
-          matchingPkg.penalty > ea.penalty ? ea: matchingPkg).url :
-        null,
-      systemPackage = pName && System.packages[pName];
-  return systemPackage ? {systemPackage, packageURL: pName} : null;
+  const packageNames = Object.keys(System.packages || {});
+  const matchingPackages = packageNames
+    .map(pkgName =>
+      url.indexOf(pkgName) === 0
+        ? { url: pkgName, penalty: url.slice(pkgName.length).length } : null)
+    .filter(ea => !!ea);
+  const pName = matchingPackages.length
+    ? matchingPackages.reduce((matchingPkg, ea) =>
+        matchingPkg.penalty > ea.penalty ? ea : matchingPkg).url
+    : null;
+  const systemPackage = pName && System.packages[pName];
+  return systemPackage ? { systemPackage, packageURL: pName } : null;
 }
 
-function newModule_volatile(proceed, exports) {
-  var freeze = Object.freeze;
+function newModule_volatile (proceed, exports) {
+  const freeze = Object.freeze;
   Object.freeze = x => x;
-  var m = proceed(exports);
+  const m = proceed(exports);
   Object.freeze = freeze;
   return m;
 }
@@ -452,88 +440,93 @@ function newModule_volatile(proceed, exports) {
 // debugging
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function printSystemConfig(System) {
+function printSystemConfig (System) {
   System = getSystem(System);
-  var json = {
-    baseURL:             System.baseURL,
-    transpiler:          System.transpiler,
+  const json = {
+    baseURL: System.baseURL,
+    transpiler: System.transpiler,
     defaultJSExtensions: System.defaultJSExtensions,
-    defaultExtension:    System.defaultExtension,
-    map:                 System.map,
-    meta:                System.meta,
-    packages:            System.packages,
-    paths:               System.paths,
-    packageConfigPaths:  System.packageConfigPaths,
-    bundles:             System.bundles
-  }
+    defaultExtension: System.defaultExtension,
+    map: System.map,
+    meta: System.meta,
+    packages: System.packages,
+    paths: System.paths,
+    packageConfigPaths: System.packageConfigPaths,
+    bundles: System.bundles
+  };
   return JSON.stringify(json, null, 2);
 }
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // on-load / import extensions
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function instantiate_triggerOnLoadCallbacks(proceed, load) {
-  var System = this;
+function instantiate_triggerOnLoadCallbacks (proceed, load) {
+  const System = this;
 
   return proceed(load).then(result => {
     // Wait until module is properly loaded, i.e. added to the System module cache.
     // Then find those callbacks in System.get("@lively-env").onLoadCallbacks that
     // resolve to the loaded module, trigger + remove them
 
-    let timeout = {};
-    promise.waitFor(60*1000, () => System.get(load.name), timeout).then(result => {
+    const timeout = {};
+    // rms 18.11.20 fixme: replace with promise? this busy wait is a boon on performance
+    promise.waitFor(60 * 1000, () => System.get(load.name), timeout).then(result => {
       if (result === timeout) {
         console.warn(`[lively.modules] instantiate_triggerOnLoadCallbacks for ${load.name} timed out`);
         return;
       }
-      var modId = load.name,
-          mod = classHolder.module(System, modId),
-          callbacks = System.get("@lively-env").onLoadCallbacks;
+      const modId = load.name;
+      const mod = classHolder.module(System, modId);
+      const callbacks = System.get('@lively-env').onLoadCallbacks;
 
-      for (var i = callbacks.length; i--; ) {
-        var {moduleName, resolved, callback} = callbacks[i],
-            id = resolved ? moduleName : System.decanonicalize(moduleName);
+      for (let i = callbacks.length; i--;) {
+        const { moduleName, resolved, callback } = callbacks[i];
+        const id = resolved ? moduleName : System.decanonicalize(moduleName);
         if (id !== modId) continue;
         callbacks.splice(i, 1);
-        try { callback(mod) } catch (e) { console.error(e); }
+        try { callback(mod); } catch (e) { console.error(e); }
       }
 
-      emit("lively.modules/moduleloaded", {module: load.name}, Date.now(), System);
+      emit('lively.modules/moduleloaded', { module: load.name }, Date.now(), System);
+
+      if (System._loadingIndicator) {
+        System._loadingIndicator.remove();
+        System._loadingIndicator = null;
+      }
     });
 
     return result;
   });
 }
 
-export function whenLoaded(System, moduleName, callback) {
-  var modId = System.decanonicalize(moduleName);
+export function whenLoaded (System, moduleName, callback) {
+  const modId = System.decanonicalize(moduleName);
   if (System.get(modId)) {
-    try { callback(classHolder.module(System, modId)) } catch (e) { console.error(e); }
+    try { callback(classHolder.module(System, modId)); } catch (e) { console.error(e); }
     return;
   }
-  System.get("@lively-env").onLoadCallbacks.push({moduleName, resolved: false, callback});
+  System.get('@lively-env').onLoadCallbacks.push({ moduleName, resolved: false, callback });
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // module state
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function loadedModules(System) { return System.get("@lively-env").loadedModules; }
+function loadedModules (System) { return System.get('@lively-env').loadedModules; }
 
-function knownModuleNames(System) {
-  var fromSystem = System.loads ?
-    Object.keys(System.loads) :
-    Object.keys(System._loader.moduleRecords);
+function knownModuleNames (System) {
+  const fromSystem = System.loads
+    ? Object.keys(System.loads)
+    : Object.keys(System._loader.moduleRecords);
   return arr.uniq(fromSystem.concat(Object.keys(loadedModules(System))));
 }
 
-function searchLoadedModules(System, searchStr, options) {
+function searchLoadedModules (System, searchStr, options) {
   return Promise.all(
     obj.values(loadedModules(System))
       .map(m => m.search(searchStr, options)))
-        .then(res => arr.flatten(res, 1));
+    .then(res => arr.flatten(res, 1));
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
