@@ -1422,7 +1422,7 @@ export default class Document {
     end = this.clipPositionToLines(end);
     if (lessPosition(end, start)) [start, end] = [end, start];
 
-    const { row, column } = start;
+    let { row, column } = start;
     const { row: endRow, column: endColumn } = end;
 
     if (row === endRow) {
