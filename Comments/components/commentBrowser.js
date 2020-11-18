@@ -1,7 +1,8 @@
 import { Window } from 'lively.components';
 import { CommentMorph } from './commentMorph.js';
 import { VerticalLayout, Morph } from 'lively.morphic';
-import { pt } from 'lively.graphics';
+import { pt, Rectangle } from 'lively.graphics';
+import { resource } from 'lively.resources';
 
 let instance;
 
@@ -28,13 +29,13 @@ export class CommentBrowser extends Window {
     if (!instance) {
       super();
       this.container = new Morph({
-        layout: new VerticalLayout()
+        layout: new VerticalLayout(),
+        name: 'comment container'
       });
       this.addMorph(this.container);
-      this.updateCommentMorphs();
       this.height = ($world.height - $world.getSubmorphNamed('lively top bar').height) * 0.8;
-      this.width = 200;
-      this.position = pt($world.width - 200, $world.getSubmorphNamed('lively top bar').height + 100);
+      this.width = 230;
+      this.position = pt($world.width - this.width, $world.getSubmorphNamed('lively top bar').height + 100);
       this.relayoutWindow();
       $world.addMorph(this);
       instance = this;
@@ -64,16 +65,18 @@ export class CommentBrowser extends Window {
     return commentTuples;
   }
 
-  getCommentMorphs (commentList) {
+  async getCommentMorphs (commentList) {
     const commentMorphs = [];
-    commentList.forEach((commentTuple) => {
-      commentMorphs.push(new CommentMorph(commentTuple.comment, commentTuple.morph));
-    });
+    await Promise.all(commentList.map(async (commentTuple) => {
+      const commentMorph = await resource('part://CommentComponents/comment morph master').read();
+      commentMorph.initialize(commentTuple.comment, commentTuple.morph);
+      commentMorphs.push(commentMorph);
+    }));
     return commentMorphs;
   }
 
-  updateCommentMorphs () {
-    const commentMorphs = this.getCommentMorphs(this.getCommentsInWorld());
+  async updateCommentMorphs () {
+    const commentMorphs = await this.getCommentMorphs(this.getCommentsInWorld());
     this.container.submorphs = commentMorphs;
   }
 

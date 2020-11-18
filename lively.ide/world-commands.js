@@ -1379,6 +1379,7 @@ const commands = [
         return;
       }
       new CommentBrowser();
+      await CommentBrowser.instance.updateCommentMorphs();
     }
   }
 

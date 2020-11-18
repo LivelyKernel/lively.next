@@ -12,17 +12,12 @@ export class CommentMorph extends Morph {
     };
   }
 
-  constructor (comment, referenceMorph) {
-    super({ fill: '#fff3b6', extent: pt(200, 100) });
-
+  initialize (comment, referenceMorph) {
     this.comment = comment;
     this.referenceMorph = referenceMorph;
-
-    const label = new Label({
-      textString: this.comment.text + '\n' + this.comment.timestamp,
-      padding: new Rectangle(5, 5, 5, 5)
-    });
-    this.addMorph(label);
+    const [date, time] = new Date(this.comment.timestamp).toLocaleString('de-DE', { hour12: false }).split(', ');
+    this.get('dateLabel').textString = ' ' + date + ' ' + time;
+    this.get('commentTextField').textString = this.comment.text;
   }
 
   onMouseDown (evt) {
