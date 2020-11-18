@@ -18,6 +18,12 @@ export class CommentBrowser extends Window {
     return instance;
   }
 
+  static update () {
+    if (CommentBrowser.isOpen()) {
+      instance.updateCommentMorphs();
+    }
+  }
+
   constructor () {
     if (!instance) {
       super();
