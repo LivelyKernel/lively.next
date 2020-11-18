@@ -864,9 +864,9 @@ class CloseHaloItem extends HaloItem {
 
   static get properties () {
     return {
-      styleClasses: {defaultValue: ["fas", "fa-trash"]},
-      draggable: {defaultValue: false},
-      tooltip: {defaultValue: "Remove this morph from the world"}
+      styleClasses: { defaultValue: ['fas', 'fa-trash'] },
+      draggable: { defaultValue: false },
+      tooltip: { defaultValue: 'Remove this morph from the world' }
     };
   }
 
