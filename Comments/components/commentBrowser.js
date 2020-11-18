@@ -52,17 +52,22 @@ export class CommentBrowser extends Window {
   }
 
   getCommentsInWorld () {
-    const comments = [];
+    const commentTuples = [];
     $world.withAllSubmorphsDo((morph) => {
-      comments.push(...morph.comments);
+      morph.comments.forEach((comment) => {
+        commentTuples.push({
+          comment: comment,
+          morph: morph
+        });
+      });
     });
-    return comments;
+    return commentTuples;
   }
 
   getCommentMorphs (commentList) {
     const commentMorphs = [];
-    commentList.forEach((comment) => {
-      commentMorphs.push(new CommentMorph(comment));
+    commentList.forEach((commentTuple) => {
+      commentMorphs.push(new CommentMorph(commentTuple.comment, commentTuple.morph));
     });
     return commentMorphs;
   }
