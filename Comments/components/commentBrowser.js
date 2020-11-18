@@ -5,7 +5,7 @@ import { pt } from 'lively.graphics';
 
 let instance;
 
-export class CommentsBrowser extends Window {
+export class CommentBrowser extends Window {
   static close () {
     instance.close();
   }
