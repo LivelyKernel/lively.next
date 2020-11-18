@@ -7,7 +7,6 @@ export class CommentMorph extends Morph {
       comment: {
       },
       referenceMorph: {
-
       }
     };
   }
@@ -22,6 +21,13 @@ export class CommentMorph extends Morph {
 
   onMouseDown (evt) {
     super.onMouseDown(evt);
-    this.referenceMorph.show();
+
+    const deleteButton = this.get('deleteButton');
+
+    if (evt.targetMorph === deleteButton) {
+      this.referenceMorph.removeComment(this.comment);
+    } else {
+      this.referenceMorph.show();
+    }
   }
 }
