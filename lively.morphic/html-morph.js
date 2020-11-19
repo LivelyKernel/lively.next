@@ -84,6 +84,12 @@ export class HTMLMorph extends Morph {
         get () { return this.domNode.innerHTML; },
         set (value) {
           this.domNode.innerHTML = value;
+          // manually trigger master change
+          if (this.master) {
+            this.master.onMorphChange(this, {
+              prop: 'html', value
+            });
+          }
           // scripts won't execute using innerHTML...
           if (value.includes('<script')) {
             const scripts = this.domNode.querySelectorAll('script');
