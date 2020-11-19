@@ -242,6 +242,11 @@ export class ShadowObject {
     };
   }
 
+  with (props) {
+    const { distance, rotation, color, inset, blur, spread, fast } = this;
+    return new ShadowObject({ distance, rotation, color, inset, blur, spread, fast, ...props });
+  }
+
   toCss () {
     const { distance, rotation, color, inset, blur, spread } = this;
     const { x, y } = Point.polar(distance, num.toRadians(rotation));
