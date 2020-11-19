@@ -29,12 +29,14 @@ export class CommentBrowser extends Window {
     if (!instance) {
       super();
       this.container = new Morph({
-        layout: new VerticalLayout(),
+        layout: new VerticalLayout({
+          spacing: 5
+        }),
         name: 'comment container'
       });
       this.addMorph(this.container);
       this.height = ($world.height - $world.getSubmorphNamed('lively top bar').height) * 0.8;
-      this.width = 230;
+      this.width = 260;
       this.position = pt($world.width - this.width, $world.getSubmorphNamed('lively top bar').height + 100);
       this.relayoutWindow();
       $world.addMorph(this);
