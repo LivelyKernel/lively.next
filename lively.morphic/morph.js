@@ -2502,9 +2502,7 @@ export class Morph {
   }
 
   removeComment (commentToRemove) {
-    this.comments = this.comments.filter((comment) => {
-      commentToRemove === comment;
-    });
+    this.comments = this.comments.filter(comment => commentToRemove !== comment);
     CommentBrowser.update();
   }
 
