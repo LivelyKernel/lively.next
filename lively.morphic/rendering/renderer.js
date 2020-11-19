@@ -155,7 +155,7 @@ export class Renderer {
 
   renderAsFixed (morph) {
     const tree = this.render(morph);
-    tree.properties.style.position = 'fixed';
+    if (!morph.isHTMLMorph) { tree.properties.style.position = 'fixed'; }
     return tree;
   }
 
@@ -168,7 +168,7 @@ export class Renderer {
 
     for (const [morph, node] of fixedMorphNodeMap) {
       if (!fixedMorphs.includes(morph)) {
-        node.parentNode.removeChild(node);
+        if (node.parentNode) node.parentNode.removeChild(node);
         fixedMorphNodeMap.delete(morph);
       }
     }
@@ -190,7 +190,9 @@ export class Renderer {
         morphNode = createNode(tree, this.domEnvironment);
         fixedMorphNodeMap.set(morph, morphNode);
       }
-      if (!morphNode.parentNode) { fixedMorphNode.appendChild(morphNode); }
+      if (!morphNode.parentNode) {
+        fixedMorphNode.appendChild(morphNode);
+      }
 
       patch(morphNode, patches);
     }
