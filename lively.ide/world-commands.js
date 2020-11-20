@@ -583,7 +583,12 @@ const commands = [
   {
     name: 'open loading indicator',
     exec: (world, message) => {
-      return LoadingIndicator.open(message);
+      let props = {};
+      if (typeof message === 'object') {
+        props = message;
+        message = props.label;
+      }
+      return LoadingIndicator.open(message, props);
     }
   },
 
