@@ -165,7 +165,7 @@ export default class FontMetric {
     return this.isProportionalCache[fontFamily] = w_width !== i_width;
   }
 
-  sizeFor (style, string, forceCache = false) {
+  sizeFor (style, string = '', forceCache = false) {
     // Select style properties relevant to individual character size
     const {
       fontFamily, fontSize,
