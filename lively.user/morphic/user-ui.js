@@ -83,6 +83,7 @@ export var UserUI = {
           duration: 500
         });
         const worldName = await world.askForName();
+        world.name = worldName;
         world.changeMetaData('commit', { name: worldName });
         if (window.history) {
           window.history.pushState({}, 'lively.next', pathForBrowserHistory(worldName));
