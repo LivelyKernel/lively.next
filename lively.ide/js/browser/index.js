@@ -22,13 +22,11 @@ import JSXEditorPlugin from '../../jsx/editor-plugin.js';
 import EvalBackendChooser from '../eval-backend-ui.js';
 import browserCommands from './commands.js';
 
-import 'mocha-es6/index.js';
-
 // -=-=-=-=-=-
 // Browser UI
 // -=-=-=-=-=-
 
-import { categorizer, query } from 'lively.ast';
+import { categorizer, query, parse } from 'lively.ast';
 import { testsFromSource } from '../../test-runner.js';
 import * as modules from 'lively.modules/index.js';
 const { module, semver } = modules;
@@ -39,6 +37,7 @@ import { loadPart } from 'lively.morphic/partsbin.js';
 import { serverInterfaceFor } from 'lively-system-interface/index.js';
 import { resource } from 'lively.resources/index.js';
 import lint from '../linter.js';
+import { isTestModule } from 'lively-system-interface/commands/modules.js';
 
 class CodeDefTreeData extends TreeData {
   constructor (defs) {
@@ -871,6 +870,12 @@ export default class Browser extends Morph {
       'Discard Changes\n', {}, 'The unsaved changes to this module are going to be discarded.\nAre you sure you want to proceed?', { fontSize: 16, fontWeight: 'normal' }], { requester: this });
   }
 
+  async loadES6Mocha () {
+    if (!!window.Mocha && !!window.chai) return;
+    await System.import('mocha-es6');
+    await promise.waitFor(() => !!window.Mocha && !!window.chai);
+  }
+
   async onModuleSelected (m) {
     const pack = this.state.selectedPackage;
     const win = this.getWindow();
@@ -910,6 +915,11 @@ export default class Browser extends Morph {
     try {
       const system = this.systemInterface;
       const win = this.getWindow();
+
+      // in case of tests, we need to proactively load mocha-es6
+      if (await isTestModule(await resource(system.coreInterface.normalizeSync(m.name)).read())) {
+        await this.loadES6Mocha();
+      }
 
       if (!m.isLoaded && m.name.endsWith('.js')) {
         let err;

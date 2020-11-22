@@ -7,10 +7,10 @@ import { HTMLMorph } from 'lively.morphic';
 import { connect } from 'lively.bindings';
 import EvalBackendChooser from './js/eval-backend-ui.js';
 
-import 'mocha-es6';
 import { LoadingIndicator } from 'lively.components';
 import JavaScriptEditorPlugin from './js/editor-plugin.js';
 import { resource } from 'lively.resources/index.js';
+import { es5Transpilation } from 'lively.source-transform';
 
 let jsDiff;
 (async function loadJsDiff () {
@@ -41,7 +41,7 @@ export function testsFromSource (sourceOrAst) {
   const testStack = []; const testsAndSuites = []; let parsed;
 
   try {
-    parsed = typeof sourceOrAst === 'string' ? parse(sourceOrAst) : sourceOrAst;
+    parsed = typeof sourceOrAst === 'string' ? parse(es5Transpilation(sourceOrAst)) : sourceOrAst;
   } catch (err) { return testsAndSuites; }
 
   walk.recursive(parsed, {}, {
@@ -274,6 +274,7 @@ export default class TestRunner extends HTMLMorph {
 
   async onLoad () {
     // on deserialization
+    await System.import('mocha-es6');
     await promise.waitFor(30000, () => !!$world);
     resource(document.URL).query().runAllTests && this.runAllTests();
     await this.whenRendered();
@@ -377,18 +378,23 @@ export default class TestRunner extends HTMLMorph {
   runTest (testName) { return this.runSuite(testName); }
 
   async runTestFile (file, grep, options) {
-    if (!this.state.loadedTests) this.state.loadedTests = [];
-    if (!this.state.loadedTests.some(ea => ea.file === file)) { this.state.loadedTests.push({ file, tests: [] }); }
+    System._testsRunning = true;
+    try {
+      if (!this.state.loadedTests) this.state.loadedTests = [];
+      if (!this.state.loadedTests.some(ea => ea.file === file)) { this.state.loadedTests.push({ file, tests: [] }); }
 
-    // make sure to run only one module!
-    const recordIndex = this.state.loadedTests.findIndex(ea => ea.file === file);
-    const result = await this.runTestFiles([file], grep, options);
+      // make sure to run only one module!
+      const recordIndex = this.state.loadedTests.findIndex(ea => ea.file === file);
+      const result = await this.runTestFiles([file], grep, options);
 
-    this.state.loadedTests[recordIndex] = result.find(ea => ea.file === file);
+      this.state.loadedTests[recordIndex] = result.find(ea => ea.file === file);
 
-    this.update();
+      this.update();
 
-    return this.state.loadedTests[recordIndex];
+      return this.state.loadedTests[recordIndex];
+    } finally {
+      System._testsRunning = false;
+    }
   }
 
   async runTestFiles (files, grep, options) {

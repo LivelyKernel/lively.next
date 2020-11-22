@@ -1,6 +1,4 @@
 import { arr } from 'lively.lang';
-import { extractTestDescriptors } from 'mocha-es6/test-analysis.js';
-import { loadTestModuleAndExtractTestState } from 'mocha-es6';
 import { Icon } from 'lively.morphic';
 
 function isTestModule (m, source) {
@@ -86,6 +84,8 @@ export default function browserCommands (browser) {
         const lines = source.split('\n');
         const { cursorPosition: { row: currentRow } } = sourceEditor;
         let preselect = 0;
+
+        const { loadTestModuleAndExtractTestState } = await System.import('mocha-es6');
 
         await loadTestModuleAndExtractTestState(m.url, testsByFile);
         const tests = testsByFile[0].tests.filter(ea => ea.fullTitle);
@@ -188,6 +188,7 @@ export default function browserCommands (browser) {
         const p = browser.selectedPackage;
         const m = browser.selectedModule;
         const system = browser.systemInterface;
+
         try {
           var mods = await system.interactivelyAddModule(browser, m ? m.name : p ? p.address : null);
         } catch (e) {
@@ -368,6 +369,7 @@ export default function browserCommands (browser) {
         if (!m) return browser.world().inform('No module selected', { requester: browser });
 
         const ed = browser.get('sourceEditor');
+        const { extractTestDescriptors } = await System.import('mocha-es6/test-analysis.js');
         const testDescriptors = await extractTestDescriptors(
           ed.textString, ed.document.positionToIndex(ed.cursorPosition));
 
@@ -396,6 +398,7 @@ export default function browserCommands (browser) {
         if (!m) return browser.world().inform('No module selected', { requester: browser });
 
         const ed = browser.get('sourceEditor');
+        const { extractTestDescriptors } = await System.import('mocha-es6/test-analysis.js');
         const testDescriptors = await extractTestDescriptors(
           ed.textString, ed.document.positionToIndex(ed.cursorPosition));
 
