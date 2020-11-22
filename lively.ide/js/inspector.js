@@ -800,6 +800,7 @@ class PropertyTree extends Tree {
 
 export default class Inspector extends Morph {
   static openInWindow (props) {
+    if (System._testsRunning) return console.log(props.targetObject);
     const i = new this(props);
     i.openInWindow();
     return i;
