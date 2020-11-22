@@ -702,8 +702,9 @@ export class UserFlap extends Morph {
 
   get isMaximized () { return this.submorphs.length > 3; }
 
-  onLoad () {
-    if (this.isComponent) return;
+  async onLoad () {
+    await this.whenRendered();
+    if ([this, ...this.ownerChain()].find(m => m.isComponent)) return;
     this.showUser(this.currentUser());
   }
 
@@ -770,11 +771,11 @@ export class UserFlap extends Morph {
     await this.whenRendered();
     if (this.hasFixedPosition && this.owner.isWorld) {
       this.topRight = pt(this.world().visibleBounds().width, 0);
-      return;
+    } else if (this.owner.isWorld) {
+      const tr = $world.visibleBounds().topRight().withY(0).subXY(10, 0);
+      if (animated) this.animate({ topRight: tr, duration: 200 });
+      else this.topRight = tr;
     }
-    const tr = $world.visibleBounds().topRight().withY(0).subXY(10, 0);
-    if (animated) this.animate({ topRight: tr, duration: 200 });
-    else this.topRight = tr;
   }
 
   async minimize () {
@@ -796,6 +797,7 @@ export class UserFlap extends Morph {
     this._menuFetch = p.promise;
     const menu = this.getSubmorphNamed('user menu') || this.addMorph(await resource('part://SystemIDE/user menu master').read());
     menu.name = 'user menu';
+    menu.visible = false;
     menu.opacity = 0;
     menu.scale = 0.8;
     menu.position = this.getSubmorphNamed('avatar').bottomCenter.addXY(0, 10);
@@ -926,3 +928,7 @@ export class UserFlap extends Morph {
     });
   }
 }
+
+
+
+
