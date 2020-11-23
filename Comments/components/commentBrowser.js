@@ -1,6 +1,6 @@
 import { Window } from 'lively.components';
 import { CommentMorph } from './commentMorph.js';
-import { VerticalLayout, Morph } from 'lively.morphic';
+import { VerticalLayout, Label, Morph } from 'lively.morphic';
 import { pt, Rectangle } from 'lively.graphics';
 import { resource } from 'lively.resources';
 
@@ -30,7 +30,8 @@ export class CommentBrowser extends Window {
       super();
       this.container = new Morph({
         layout: new VerticalLayout({
-          spacing: 5
+          spacing: 5,
+          orderByIndex: true
         }),
         name: 'comment container'
       });
@@ -69,11 +70,21 @@ export class CommentBrowser extends Window {
 
   async getCommentMorphs (commentList) {
     const commentMorphs = [];
+    let lastMorph;
     await Promise.all(commentList.map(async (commentTuple) => {
       const commentMorph = await resource('part://CommentComponents/comment morph master').read();
+      if (lastMorph != commentTuple.morph) {
+        const labelHolder = new Morph();
+        const morphLabel = new Label();
+        morphLabel.textString = commentTuple.morph.name;
+        labelHolder.addMorph(morphLabel);
+        commentMorphs.push(labelHolder);
+        lastMorph = commentTuple.morph;
+      }
       commentMorph.initialize(commentTuple.comment, commentTuple.morph);
       commentMorphs.push(commentMorph);
     }));
+    console.log(commentMorphs);
     return commentMorphs;
   }
 

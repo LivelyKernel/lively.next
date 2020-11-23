@@ -1,5 +1,6 @@
 import { Morph, Label } from 'lively.morphic';
 import { pt, Rectangle } from 'lively.graphics';
+import { connect } from 'lively.bindings';
 
 export class CommentMorph extends Morph {
   static get properties () {
