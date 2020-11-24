@@ -199,9 +199,11 @@ export class MorphicEnv {
     for (const [morph, requestState] of whenRenderedRequesters) {
       const { maxAttempts, currentAttempt, resolve, reject } = requestState;
       if (!morph._dirty && !morph._rendering) {
+        morph.__onDeletion__();
         whenRenderedRequesters.delete(morph);
         resolve(morph);
       } else if (++requestState.currentAttempt > maxAttempts) {
+        morph.__onDeletion__();
         whenRenderedRequesters.delete(morph);
         reject(new Error(`Failed to wait for whenRendered of ${morph} (tried ${maxAttempts}x)`));
       } else nRequesters++;

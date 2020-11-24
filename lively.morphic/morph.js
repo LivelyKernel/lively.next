@@ -916,6 +916,9 @@ export class Morph {
     }
   }
 
+  __onDeletion__ () {
+  }
+
   get isMorph () { return true; }
   get id () { return this._id; }
 
