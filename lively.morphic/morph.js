@@ -917,6 +917,7 @@ export class Morph {
   }
 
   __onDeletion__ () {
+    this.emptyComments();
   }
 
   get isMorph () { return true; }
@@ -2506,6 +2507,11 @@ export class Morph {
 
   removeComment (commentToRemove) {
     this.comments = this.comments.filter(comment => commentToRemove !== comment);
+    CommentBrowser.update();
+  }
+
+  emptyComments () {
+    this.comments = [];
     CommentBrowser.update();
   }
 
