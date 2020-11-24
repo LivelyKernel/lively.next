@@ -20,3 +20,4 @@ package-lock.json
 /lively.server/usage_log.json
 /lively.installer.log
 /lively-system-interface/.lively.next-eval-server-for-test.js
+components_cache/*
