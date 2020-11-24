@@ -296,6 +296,19 @@ const commands = [
   },
 
   {
+    name: 'close halo target',
+    exec: (world) => {
+      const halo = world.halos()[0];
+      if (!halo || halo.changingName) return false;
+
+      halo.target.selectedMorphs
+        ? halo.target.selectedMorphs.forEach(m => m.remove())
+        : halo.target.remove();
+      return true;
+    }
+  },
+
+  {
     name: 'resize manually',
     exec: async (world, args = {}) => {
       let width; let height;
