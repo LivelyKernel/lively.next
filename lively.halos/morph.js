@@ -13,6 +13,7 @@ import { obj, Path as PropertyPath, promise, properties, num, arr } from 'lively
 import { connect, signal, disconnect, disconnectAll, once } from 'lively.bindings';
 
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from './drag-guides.js';
+import { CommentBrowser } from 'http://localhost:9011/Comments/components/commentBrowser.js';
 
 const haloBlue = Color.rgb(23, 160, 251);
 const componentAccent = Color.magenta;
@@ -876,6 +877,7 @@ class CloseHaloItem extends HaloItem {
     halo.target.selectedMorphs
       ? halo.target.selectedMorphs.forEach(m => m.remove())
       : halo.target.remove();
+    CommentBrowser.update();
     o.undoStop('close-halo');
     halo.remove();
   }
