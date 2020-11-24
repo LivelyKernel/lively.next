@@ -76,13 +76,13 @@ export default class Workspace extends Window {
     };
   }
 
-  build() {
+  build () {
     super.build();
     // deactivate dropping for actual window
     this.doNotAcceptDropsForThisAndSubmorphs();
   }
 
-  async openWindowMenu() {
+  async openWindowMenu () {
     const menuItems = [
       [
         'Change Window Title',
@@ -125,13 +125,9 @@ export default class Workspace extends Window {
     this.jsPlugin.highlight();
   }
 
-<<<<<<< HEAD
   relayoutWindowControls () {
-=======
-  relayoutWindowControls() {
-    //deactivate dropping for code editor,...
-    this.doNotAcceptDropsForThisAndSubmorphs(); 
->>>>>>> #56 no drops in dev-tools and option in morphic properties menu
+    // deactivate dropping for code editor,...
+    this.doNotAcceptDropsForThisAndSubmorphs();
     super.relayoutWindowControls();
     const list = this.getSubmorphNamed('eval backend button');
     const title = this.ui.windowTitle;

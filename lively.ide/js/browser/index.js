@@ -1068,8 +1068,8 @@ export default class Browser extends Morph {
       .map(m => ({ string: m.nameInPackage + (m.isLoaded ? '' : ' [not loaded]'), value: m, isListItem: true }));
 
     await this.ui.moduleList.whenRendered();
-    //since list items are not generated at the time of browser creation,
-    //drops need to be deactivated separately
+    // since list items are not generated at the time of browser creation,
+    // drops need to be deactivated separately
     this.ui.moduleList.doNotAcceptDropsForThisAndSubmorphs();
   }
 

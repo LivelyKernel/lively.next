@@ -963,16 +963,16 @@ export class LivelyWorld extends World {
 
     morphicMenuItems[1].push(['this and submorphs accept drops', () => {
       this.acceptDropsForThisAndSubmorphs();
-    }])
+    }]);
 
     morphicMenuItems[1].push(['this and submorphs do not accept drops', () => {
       this.doNotAcceptDropsForThisAndSubmorphs();
     }]);
-    
-    items.push(["Fit to submorphs", async () => {
-      let padding = await self.world().prompt("Padding around submorphs:", {
-        input: "Rectangle.inset(5)",
-        historyId: "lively.morphic-fit-to-submorphs-padding-hist",
+
+    items.push(['Fit to submorphs', async () => {
+      let padding = await self.world().prompt('Padding around submorphs:', {
+        input: 'Rectangle.inset(5)',
+        historyId: 'lively.morphic-fit-to-submorphs-padding-hist',
         requester: self
       });
       if (typeof padding !== 'string') return;
