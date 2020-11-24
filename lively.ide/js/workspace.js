@@ -76,12 +76,6 @@ export default class Workspace extends Window {
     };
   }
 
-  build () {
-    super.build();
-    // deactivate dropping for actual window
-    this.doNotAcceptDropsForThisAndSubmorphs();
-  }
-
   async openWindowMenu () {
     const menuItems = [
       [
@@ -126,7 +120,7 @@ export default class Workspace extends Window {
   }
 
   relayoutWindowControls () {
-    // deactivate dropping for code editor,...
+    // deactivate here since all submorphs are present
     this.doNotAcceptDropsForThisAndSubmorphs();
     super.relayoutWindowControls();
     const list = this.getSubmorphNamed('eval backend button');

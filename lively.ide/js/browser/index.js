@@ -75,10 +75,7 @@ export default class Browser extends Morph {
     // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
     const browser = browserOrProps instanceof Browser
       ? browserOrProps : new this(browserOrProps);
-    if (!browser.world()) {
-      const window = browser.openInWindow();
-      window.doNotAcceptDropsForThisAndSubmorphs();
-    }
+    if (!browser.world()) browser.openInWindow();
     return browser.browse(browseSpec, optSystemInterface);
   }
 
@@ -1068,9 +1065,7 @@ export default class Browser extends Morph {
       .map(m => ({ string: m.nameInPackage + (m.isLoaded ? '' : ' [not loaded]'), value: m, isListItem: true }));
 
     await this.ui.moduleList.whenRendered();
-    // since list items are not generated at the time of browser creation,
-    // drops need to be deactivated separately
-    this.ui.moduleList.doNotAcceptDropsForThisAndSubmorphs();
+    this.owner.doNotAcceptDropsForThisAndSubmorphs();
   }
 
   updateCodeEntities (mod) {
