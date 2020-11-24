@@ -4,6 +4,7 @@ import { VerticalLayout, Label, Morph } from 'lively.morphic';
 import { pt, Rectangle } from 'lively.graphics';
 import { resource } from 'lively.resources';
 import { connect } from 'lively.bindings';
+import { CommentIndicator } from './commentIndicator.js';
 
 let instance;
 
@@ -35,6 +36,7 @@ export class CommentBrowser extends Window {
       this.initializeExtents();
       this.relayoutWindow();
       $world.addMorph(this);
+      this.commentIndicators = [];
       instance = this;
     }
     return instance;
@@ -74,6 +76,7 @@ export class CommentBrowser extends Window {
     if (topbar) {
       topbar.uncolorCommentBrowserButton();
     }
+    this.removeCommentIndicators();
     instance = undefined;
   }
 
@@ -99,13 +102,14 @@ export class CommentBrowser extends Window {
     return labelHolder;
   }
 
-  async getCommentMorphs (commentList) {
+  async generateCommentMorphs (commentList) {
     const commentMorphs = [];
     let lastMorph;
     await Promise.all(commentList.map(async (commentTuple) => {
       const commentMorph = await resource('part://CommentComponents/comment morph master').read();
       if (lastMorph != commentTuple.morph) {
         commentMorphs.push(this.getHeadingMorph(commentTuple.morph));
+        this.commentIndicators.push(CommentIndicator.for(commentTuple.morph));
         lastMorph = commentTuple.morph;
       }
       commentMorph.initialize(commentTuple.comment, commentTuple.morph);
@@ -114,8 +118,13 @@ export class CommentBrowser extends Window {
     return commentMorphs;
   }
 
+  removeCommentIndicators () {
+    // Comment Indicators (little icons and morphs that show that they have comments) are created by the CommentBrowser. They have to be removed by the CommentBrowser as well.
+    this.commentIndicators.forEach((commentIndicator) => commentIndicator.remove());
+  }
+
   async updateCommentMorphs () {
-    const commentMorphs = await this.getCommentMorphs(this.getCommentsInWorld());
+    const commentMorphs = await this.generateCommentMorphs(this.getCommentsInWorld());
     this.containerLayout.submorphs = commentMorphs;
   }
 
