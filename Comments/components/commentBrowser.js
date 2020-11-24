@@ -3,6 +3,7 @@ import { CommentMorph } from './commentMorph.js';
 import { VerticalLayout, Label, Morph } from 'lively.morphic';
 import { pt, Rectangle } from 'lively.graphics';
 import { resource } from 'lively.resources';
+import { connect } from 'lively.bindings';
 
 let instance;
 
@@ -29,15 +30,20 @@ export class CommentBrowser extends Window {
     if (!instance) {
       super();
       this.container = new Morph({
+        clipMode: 'auto',
+        name: 'comment container'
+      });
+      this.containerLayout = new Morph({
         layout: new VerticalLayout({
           spacing: 5,
           orderByIndex: true
         }),
-        name: 'comment container'
+        name: 'comment container layout'
       });
-      this.addMorph(this.container);
+      this.container.addMorph(this.containerLayout);
       this.height = ($world.height - $world.getSubmorphNamed('lively top bar').height) * 0.8;
-      this.width = 260;
+      this.addMorph(this.container);
+      this.width = 275;
       this.position = pt($world.width - this.width, $world.getSubmorphNamed('lively top bar').height + 100);
       this.relayoutWindow();
       $world.addMorph(this);
@@ -84,13 +90,13 @@ export class CommentBrowser extends Window {
       commentMorph.initialize(commentTuple.comment, commentTuple.morph);
       commentMorphs.push(commentMorph);
     }));
-    console.log(commentMorphs);
+    commentMorphs.push(new Morph());
     return commentMorphs;
   }
 
   async updateCommentMorphs () {
     const commentMorphs = await this.getCommentMorphs(this.getCommentsInWorld());
-    this.container.submorphs = commentMorphs;
+    this.containerLayout.submorphs = commentMorphs;
   }
 
   // to not block respondsToVisibleWindow
