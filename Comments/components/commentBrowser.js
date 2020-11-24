@@ -26,30 +26,46 @@ export class CommentBrowser extends Window {
     }
   }
 
+  // Construction and initialization
+
   constructor () {
     if (!instance) {
       super();
-      this.container = new Morph({
-        clipMode: 'auto',
-        name: 'comment container'
-      });
-      this.containerLayout = new Morph({
-        layout: new VerticalLayout({
-          spacing: 5,
-          orderByIndex: true
-        }),
-        name: 'comment container layout'
-      });
-      this.container.addMorph(this.containerLayout);
-      this.height = ($world.height - $world.getSubmorphNamed('lively top bar').height) * 0.8;
-      this.addMorph(this.container);
-      this.width = 275;
-      this.position = pt($world.width - this.width, $world.getSubmorphNamed('lively top bar').height + 100);
+      this.initializeContainers();
+      this.initializeExtents();
       this.relayoutWindow();
       $world.addMorph(this);
       instance = this;
     }
     return instance;
+  }
+
+  initializeExtents () {
+    this.height = ($world.height - $world.getSubmorphNamed('lively top bar').height);
+    this.width = 275; // perhaps use width of comment morph?
+
+    this.position = pt($world.width - this.width, $world.getSubmorphNamed('lively top bar').height);
+
+    // when styling palette is opened, position comment browser to the left of it. TODO: move it back when palette is closed
+    if ($world.get('lively top bar') && $world.get('lively top bar').activeSideBars.includes('Styling Palette')) {
+      this.position = this.position.addPt(pt(-$world.get('lively top bar').stylingPalette.width, 0));
+    }
+  }
+
+  initializeContainers () {
+    this.container = new Morph({
+      clipMode: 'auto',
+      name: 'comment container'
+    });
+    this.containerLayout = new Morph({
+      layout: new VerticalLayout({
+        spacing: 5,
+        orderByIndex: true
+      }),
+      name: 'comment container layout'
+    });
+    this.container.addMorph(this.containerLayout);
+    this.addMorph(this.container);
   }
 
   close () {
@@ -64,14 +80,23 @@ export class CommentBrowser extends Window {
   getCommentsInWorld () {
     const commentTuples = [];
     $world.withAllSubmorphsDo((morph) => {
-      morph.comments.forEach((comment) => {
+      morph.comments.forEach((comment) =>
         commentTuples.push({
           comment: comment,
           morph: morph
-        });
-      });
+        })
+      );
     });
     return commentTuples;
+  }
+
+  getHeadingMorph (referenceMorph) {
+    const labelHolder = new Morph();
+    const morphLabel = new Label();
+    morphLabel.textString = referenceMorph.name;
+    morphLabel.fontWeight = 'bolder';
+    labelHolder.addMorph(morphLabel);
+    return labelHolder;
   }
 
   async getCommentMorphs (commentList) {
@@ -80,17 +105,12 @@ export class CommentBrowser extends Window {
     await Promise.all(commentList.map(async (commentTuple) => {
       const commentMorph = await resource('part://CommentComponents/comment morph master').read();
       if (lastMorph != commentTuple.morph) {
-        const labelHolder = new Morph();
-        const morphLabel = new Label();
-        morphLabel.textString = commentTuple.morph.name;
-        labelHolder.addMorph(morphLabel);
-        commentMorphs.push(labelHolder);
+        commentMorphs.push(this.getHeadingMorph(commentTuple.morph));
         lastMorph = commentTuple.morph;
       }
       commentMorph.initialize(commentTuple.comment, commentTuple.morph);
       commentMorphs.push(commentMorph);
     }));
-    commentMorphs.push(new Morph());
     return commentMorphs;
   }
 
@@ -99,7 +119,7 @@ export class CommentBrowser extends Window {
     this.containerLayout.submorphs = commentMorphs;
   }
 
-  // to not block respondsToVisibleWindow
+  // named relayoutWindows instead of relayout() to not block respondsToVisibleWindow() implementation
   relayoutWindow () {
     this.relayoutWindowControls();
   }

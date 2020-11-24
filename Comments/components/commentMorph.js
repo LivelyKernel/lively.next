@@ -26,8 +26,6 @@ export class CommentMorph extends Morph {
     this.referenceMorph = referenceMorph;
     const [date, time] = new Date(this.comment.timestamp).toLocaleString('de-DE', { hour12: false }).split(', ');
     this.get('date label').textString = date + ' ' + time;
-    // TODO: Fix that width doesn't need to be increased at runtime
-    this.get('date label').width += 20;
     this.get('comment text field').textString = this.comment.text;
   }
 
