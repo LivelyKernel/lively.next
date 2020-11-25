@@ -36,13 +36,11 @@ export class CommentIndicator extends Label {
   connectMorphs () {
     // When the morph that has the comment is a child in a hierarchy, it does not generate 'onChange' Events when the morphs that are higher in the hierarchy are moved.
     // Therefore we need to connect the indication with all morphs higher in the hierarchy.
-    // ! These connections will currently not update / be removed when the morph's hierarchy position changes while the indication is active !
     let referenceMorph = this.morph;
     disconnectAll(this);
-    while (referenceMorph != $world) {
+    while (referenceMorph && referenceMorph != $world) {
       connect(referenceMorph, 'onChange', this, 'referenceMoving');
-      // line below sounds good, but produces errors when the object is moved
-      // connect(referenceMorph, 'onOwnerChanged', this, 'connectMorph');
+      connect(referenceMorph, 'onOwnerChanged', this, 'connectMorphs');
       referenceMorph = referenceMorph.owner;
     }
   }
@@ -51,7 +49,7 @@ export class CommentIndicator extends Label {
     super.onChange(change);
     const { prop, value } = change;
     if (!this._referenceMorphMoving && prop === 'position') {
-      // Unsolved problem: Don't move the comment's reference point when the referenced morph moves
+      // Unsolved problem: Don't move the comment's reference point when the referenced morph moves (not a problem for now)
       this.comment.position = this.getRelativePositionInMorph();
     }
   }
