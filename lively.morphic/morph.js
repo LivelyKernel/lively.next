@@ -2256,21 +2256,15 @@ export class Morph {
     evt.hand.dropMorphsOn(this);
   }
 
-  doNotAcceptDropsForThisAndSubmorphs() {
-    this.acceptsDrops = false;
-    this.submorphs.forEach((m) => {
-      m.doNotAcceptDropsForThisAndSubmorphs();
-    })
+  doNotAcceptDropsForThisAndSubmorphs () {
+    this.withAllSubmorphsDo(m => { m.acceptsDrops = false; debugger; });
   }
 
-  acceptDropsForThisAndSubmorphs() {
-    this.acceptsDrops = true;
-    this.submorphs.forEach((m) => {
-      m.acceptDropsForThisAndSubmorphs();
-    })
-  } 
+  acceptDropsForThisAndSubmorphs () {
+    this.withAllSubmorphsDo(m => m.acceptsDrops = true);
+  }
 
-  wantsToBeDroppedOn(dropTarget) {
+  wantsToBeDroppedOn (dropTarget) {
     // called when `this` is grabbed and a drop target for `this` needs to be found
     return true;
   }

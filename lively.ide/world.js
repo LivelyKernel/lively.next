@@ -962,11 +962,11 @@ export class LivelyWorld extends World {
           () => morph[propName] = !morph[propName]]));
 
     morphicMenuItems[1].push(['this and submorphs accept drops', () => {
-      this.acceptDropsForThisAndSubmorphs();
+      morph.acceptDropsForThisAndSubmorphs();
     }]);
 
     morphicMenuItems[1].push(['this and submorphs do not accept drops', () => {
-      this.doNotAcceptDropsForThisAndSubmorphs();
+      morph.doNotAcceptDropsForThisAndSubmorphs();
     }]);
 
     items.push(['Fit to submorphs', async () => {
