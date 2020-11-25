@@ -109,10 +109,10 @@ export class CommentBrowser extends Window {
       const commentMorph = await resource('part://CommentComponents/comment morph master').read();
       if (lastMorph != commentTuple.morph) {
         commentMorphs.push(this.getHeadingMorph(commentTuple.morph));
-        this.commentIndicators.push(CommentIndicator.for(commentTuple.morph));
         lastMorph = commentTuple.morph;
       }
       commentMorph.initialize(commentTuple.comment, commentTuple.morph);
+      this.commentIndicators.push(CommentIndicator.for(commentTuple.morph, commentTuple.comment));
       commentMorphs.push(commentMorph);
     }));
     return commentMorphs;

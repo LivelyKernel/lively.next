@@ -2498,7 +2498,8 @@ export class Morph {
   addComment (commentText) {
     const comment = {
       text: commentText,
-      timestamp: new Date().getTime()
+      timestamp: new Date().getTime(),
+      position: pt(0, 0)
     };
     this.comments.push(comment);
     CommentBrowser.update();
