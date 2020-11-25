@@ -30,6 +30,6 @@ export class CommentIndicator extends Label {
   }
 
   alignWithMorph () {
-    this.position = pt(this.morph.position.x + this.morph.width - this.width, this.morph.position.y + this.padding.y);
+    this.position = pt(this.morph.globalPosition.x + this.morph.width - this.width, this.morph.globalPosition.y + this.padding.y);
   }
 }
