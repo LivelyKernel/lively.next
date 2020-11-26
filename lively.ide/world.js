@@ -58,6 +58,18 @@ export class LivelyWorld extends World {
     };
   }
 
+  visibleBoundsExcludingTopBar () {
+    // returns the visible rect of the world with respect to the topbar
+    const bar = $world.getSubmorphNamed('lively top bar');
+    const visibleBounds = this.visibleBounds();
+    if (bar) {
+      const visibleBoundsExclTopBar = new Rectangle(visibleBounds.x, visibleBounds.y + bar.height, visibleBounds.width, visibleBounds.height - bar.height);
+      return visibleBoundsExclTopBar;
+    } else {
+      return visibleBounds;
+    }
+  }
+
   getListedComponents () {
     return this.withAllSubmorphsSelect(m => m.isComponent && !this.hiddenComponents.includes(m.name));
   }

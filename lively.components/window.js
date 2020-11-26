@@ -1,60 +1,58 @@
-import { arr, promise } from "lively.lang";
-import { pt, LinearGradient, Color, Rectangle } from "lively.graphics";
+import { arr, promise } from 'lively.lang';
+import { pt, LinearGradient, Color, Rectangle } from 'lively.graphics';
 import {
   Label,
   morph,
   Morph,
   HorizontalLayout,
   StyleSheet
-} from "lively.morphic";
-import { connect, signal } from "lively.bindings";
-import { easings } from "lively.morphic/rendering/animations.js";
+} from 'lively.morphic';
+import { connect, signal } from 'lively.bindings';
+import { easings } from 'lively.morphic/rendering/animations.js';
 
 export default class Window extends Morph {
-
-  static get properties() {
-
+  static get properties () {
     return {
       submorphs: {
-        initialize() {
+        initialize () {
           this.build();
         }
       },
 
       ui: {
         derived: true,
-        get() {
+        get () {
           return {
             header: this.get('header'),
             resizer: this.get('resizer'),
             windowControls: this.get('window controls'),
-            windowTitle: this.get('window title'),
-          }  
+            windowTitle: this.get('window title')
+          };
         }
       },
 
       master: {
-        initialize() {
-          this.master = { auto: "styleguide://System/window/light/active" };   
+        initialize () {
+          this.master = { auto: 'styleguide://System/window/light/active' };
         }
       },
 
-      styleClasses: {defaultValue: ["active"]},
-      clipMode: {defaultValue: "hidden"},
-      resizable: {defaultValue: true},
+      styleClasses: { defaultValue: ['active'] },
+      clipMode: { defaultValue: 'hidden' },
+      resizable: { defaultValue: true },
 
       title: {
-        after: ["submorphs"],
+        after: ['submorphs'],
         derived: true,
-        get() {
+        get () {
           return this.ui.windowTitle.textString;
         },
-        async set(title) {
-          let textAndAttrs = typeof title === "string" ? [title, {}] : title, maxLength = 100, length = 0, truncated = [];
-          for (var i = 0; i < textAndAttrs.length; i = i + 2) {
-            let string = textAndAttrs[i], attr = textAndAttrs[i + 1];
-            string = string.replace(/\n/g, "");
-            var delta = string.length + length - maxLength;
+        async set (title) {
+          const textAndAttrs = typeof title === 'string' ? [title, {}] : title; const maxLength = 100; const length = 0; const truncated = [];
+          for (let i = 0; i < textAndAttrs.length; i = i + 2) {
+            let string = textAndAttrs[i]; const attr = textAndAttrs[i + 1];
+            string = string.replace(/\n/g, '');
+            const delta = string.length + length - maxLength;
             if (delta > 0) string = string.slice(0, -delta);
             truncated.push(string, attr || {});
             if (length >= maxLength) break;
@@ -66,74 +64,82 @@ export default class Window extends Morph {
       },
 
       targetMorph: {
-        after: ["submorphs"],
+        after: ['submorphs'],
         derived: true,
-        get() {
+        get () {
           return arr.withoutAll(this.submorphs, [this.get('header'), this.get('resizer')])[0];
         },
-        set(morph) {
-          let ctrls = [this.get('header'), this.get('resizer')];
+        set (morph) {
+          const ctrls = [this.get('header'), this.get('resizer')];
           arr.withoutAll(this.submorphs, ctrls).forEach(ea => ea.remove());
           if (morph) this.addMorph(morph, this.resizable ? this.get('resizer') : false);
           this.relayoutWindowControls();
         }
       },
 
-      minimizedBounds: {serialize: false},
+      minimizedBounds: { serialize: false },
       nonMinizedBounds: {},
       nonMaximizedBounds: {},
       minimized: {
-        set(isMinimized) {
+        set (isMinimized) {
           this.setProperty('minimized', isMinimized);
           this.applyMinimize();
         }
       },
-      maximized: {}
+      maximized: {
+        set (isMaximized) {
+          this.setProperty('maximized', isMaximized);
+          this.applyMaximize();
+        }
+      }
     };
   }
 
-  build() {
+  build () {
     this.submorphs = [this.buildHeader(), this.buildResizer()];
   }
 
-  async openWindowMenu() {
-    let w = this.world() || this.env.world;
+  async openWindowMenu () {
+    const w = this.world() || this.env.world;
     return this.targetMorph.world().openMenu([
       [
-        "Change Window Title",
+        'Change Window Title',
         async () => {
-          let newTitle = await w.prompt("Enter New Name", {input: this.title});
+          const newTitle = await w.prompt('Enter New Name', { input: this.title });
           if (newTitle) this.title = newTitle;
         }
       ],
       [
-        "Align and resize", [
-          {alias: "left",   target: w, command: "resize active window", args: {window: this, how: "left"}},
-          {alias: "center", target: w, command: "resize active window", args: {window: this, how: "center"}},
-          {alias: "right",  target: w, command: "resize active window", args: {window: this, how: "right"}},
-          {alias: "reset",  target: w, command: "resize active window", args: {window: this, how: "reset"}},
+        'Align and resize', [
+          { alias: 'full', target: w, command: 'resize active window', args: { window: this, how: 'full' } },
+          { alias: 'left', target: w, command: 'resize active window', args: { window: this, how: 'left' } },
+          { alias: 'center', target: w, command: 'resize active window', args: { window: this, how: 'center' } },
+          { alias: 'right', target: w, command: 'resize active window', args: { window: this, how: 'right' } },
+          { alias: 'top', target: w, command: 'resize active window', args: { window: this, how: 'top' } },
+          { alias: 'bottom', target: w, command: 'resize active window', args: { window: this, how: 'bottom' } },
+          { alias: 'reset', target: w, command: 'resize active window', args: { window: this, how: 'reset' } }
         ]
       ],
       [
-        "Window Management", [
-          {alias: "minimize all except this",   target: w, command: "toggle minimize all except active window"},
-          {alias: "close all except this", target: w, command: "close all except active window"},
-          {isDivider: true},
-          {alias: "minimize all",  target: w, command: "toggle minimize all windows"},
-          {alias: "close all",  target: w, command: "close all windows"},
+        'Window Management', [
+          { alias: 'minimize all except this', target: w, command: 'toggle minimize all except active window' },
+          { alias: 'close all except this', target: w, command: 'close all except active window' },
+          { isDivider: true },
+          { alias: 'minimize all', target: w, command: 'toggle minimize all windows' },
+          { alias: 'close all', target: w, command: 'close all windows' }
         ]
       ],
-      {isDivider: true},
+      { isDivider: true },
       ...(await this.targetMorph.menuItems())
     ]);
   }
 
-  async toggleFader(active) {
-    let fader = this.getSubmorphNamed('fader') || this.addMorph({
-      name: 'fader', fill: Color.black.withA(.5), opacity: 0, extent: this.extent
+  async toggleFader (active) {
+    const fader = this.getSubmorphNamed('fader') || this.addMorph({
+      name: 'fader', fill: Color.black.withA(0.5), opacity: 0, extent: this.extent
     });
     if (active) {
-      let shiftedBounds = this.world().visibleBounds().translateForInclusion(this.bounds());
+      const shiftedBounds = this.world().visibleBounds().translateForInclusion(this.bounds());
       this._originalBounds = this.bounds();
       this.animate({ bounds: shiftedBounds, duration: 300 });
       this.borderColor = Color.gray.darker();
@@ -156,21 +162,21 @@ export default class Window extends Morph {
     }
   }
 
-  get isWindow() { return true; }
+  get isWindow () { return true; }
 
-  targetMorphBounds() {
+  targetMorphBounds () {
     return new Rectangle(0, 25, this.width, this.height - 25);
   }
 
-  relayoutWindowControls() {
-    var innerB = this.innerBounds(),
-        title = this.ui.windowTitle,
-        resizer = this.ui.resizer,
-        labelBounds = innerB.withHeight(25),
-        header = this.ui.header,
-        lastButtonOrWrapper = this.ui.windowControls,
-        buttonOffset = lastButtonOrWrapper.bounds().right() + 3,
-        minLabelBounds = labelBounds.withLeftCenter(pt(buttonOffset, labelBounds.height / 2));
+  relayoutWindowControls () {
+    const innerB = this.innerBounds();
+    const title = this.ui.windowTitle;
+    const resizer = this.ui.resizer;
+    const labelBounds = innerB.withHeight(25);
+    const header = this.ui.header;
+    const lastButtonOrWrapper = this.ui.windowControls;
+    const buttonOffset = lastButtonOrWrapper.bounds().right() + 3;
+    const minLabelBounds = labelBounds.withLeftCenter(pt(buttonOffset, labelBounds.height / 2));
 
     // resizer
     resizer.bottomRight = innerB.bottomRight();
@@ -186,102 +192,106 @@ export default class Window extends Morph {
     header.width = this.width;
   }
 
-  ensureNotOverTheTop() {
-    let world = this.world();
+  ensureNotOverTheTop () {
+    const world = this.world();
     if (!world) return;
-    let bounds = this.globalBounds();
-    if (bounds.top() < world.innerBounds().top())
-      this.moveBy(pt(0, world.innerBounds().top() - bounds.top()));
+    const bounds = this.globalBounds();
+    if (bounds.top() < world.innerBounds().top()) { this.moveBy(pt(0, world.innerBounds().top() - bounds.top())); }
   }
 
-  buildHeader() {
+  buildHeader () {
     return morph({
-        name: 'header',
-        extent: pt(this.width, 50),
-        submorphs: [
-          morph({
-            name: "window controls",
-            styleClasses: ["buttonGroup"],
-            submorphs: this.buildButtons()
-          }),
-          this.buildTitleLabel(),
-        ]
-      });
+      name: 'header',
+      extent: pt(this.width, 50),
+      submorphs: [
+        morph({
+          name: 'window controls',
+          styleClasses: ['buttonGroup'],
+          submorphs: this.buildButtons()
+        }),
+        this.buildTitleLabel()
+      ]
+    });
   }
 
-  buildButtons() {
-    let closeButton =
-      this.getSubmorphNamed("close") ||
+  buildButtons () {
+    const closeButton =
+      this.getSubmorphNamed('close') ||
       morph({
-        name: "close",
-        styleClasses: ['windowButton', "closeButton"],
-        tooltip: "close window",
+        name: 'close',
+        styleClasses: ['windowButton', 'closeButton'],
+        tooltip: 'close window',
         submorphs: [
-          Label.icon("times", {
-            name: "label",
-            styleClasses: ["defaultLabelStyle",'default'],
+          Label.icon('times', {
+            name: 'label',
+            styleClasses: ['defaultLabelStyle', 'default']
           })
         ]
       });
-    connect(closeButton, "onMouseDown", this, "close");
+    connect(closeButton, 'onMouseDown', this, 'close');
 
-    let minimizeButton =
-      this.getSubmorphNamed("minimize") ||
+    const minimizeButton =
+      this.getSubmorphNamed('minimize') ||
       morph({
-        name: "minimize",
-        styleClasses: ['windowButton', "minimizeButton"],
-        tooltip: "collapse window",
+        name: 'minimize',
+        styleClasses: ['windowButton', 'minimizeButton'],
+        tooltip: 'collapse window',
         submorphs: [
-          Label.icon("minus", {
-            name: "label",
-            styleClasses: ["defaultLabelStyle", 'default'],
+          Label.icon('minus', {
+            name: 'label',
+            styleClasses: ['defaultLabelStyle', 'default']
           })
         ]
       });
-    connect(minimizeButton, "onMouseDown", this, "minimized", {
-      updater: function($upd) {
-        $upd(!this.targetObj.minimized)
+    connect(minimizeButton, 'onMouseDown', this, 'minimized', {
+      updater: function ($upd) {
+        $upd(!this.targetObj.minimized);
       }
     });
 
     if (this.resizable) {
       var windowMenuButton =
-        this.getSubmorphNamed("menu") ||
+        this.getSubmorphNamed('menu') ||
         morph({
-          name: "menu",
-          styleClasses: ['windowButton', "windowMenuButton"],
-          tooltip: "Open Window Menu",
+          name: 'menu',
+          styleClasses: ['windowButton', 'windowMenuButton'],
+          tooltip: 'Open Window Menu',
           submorphs: [
-            Label.icon("chevron-down", {
-              name: "label",
-              styleClasses: ["defaultLabelStyle", 'default'],
+            Label.icon('chevron-down', {
+              name: 'label',
+              styleClasses: ['defaultLabelStyle', 'default']
             })
           ]
         });
-      connect(windowMenuButton, "onMouseDown", this, "openWindowMenu");
+      connect(windowMenuButton, 'onMouseDown', this, 'openWindowMenu');
     }
 
-    return arr.compact([closeButton, minimizeButton, windowMenuButton]);;
+    return arr.compact([closeButton, minimizeButton, windowMenuButton]);
   }
 
-  buildTitleLabel() {
-    return this.addMorph({
-        padding: Rectangle.inset(0, 2, 0, 0),
-        styleClasses: ["windowTitleLabel"],
-        type: "label",
-        name: "window title",
-        reactsToPointer: false,
-        value: ""
-      });
+  buildTitleLabel () {
+    const title = morph({
+      padding: Rectangle.inset(0, 2, 0, 0),
+      styleClasses: ['windowTitleLabel'],
+      type: 'label',
+      name: 'window title',
+      tooltip: 'double click to maximize/reset',
+      reactsToPointer: true,
+      value: ''
+    });
+    connect(title, 'onDoubleMouseDown', this, 'toggleMaximize');
+    return this.addMorph(title);
   }
 
-  resizeBy(dist) {
+  resizeBy (dist) {
     super.resizeBy(dist);
     this.relayoutWindowControls();
   }
 
-  resizeAt([corner, dist]) {
+  resizeAt ([corner, dist]) {
     let right;
+    let x, y, height, width;
+    const b = this.bounds();
     switch (corner) {
       case 'right':
         this.resizeBy(dist.withY(0)); break;
@@ -296,23 +306,45 @@ export default class Window extends Morph {
         break; // more adjustment needed
       case 'bottom left':
         right = this.right;
-        this.resizeBy(dist.scaleByPt(pt(-1, 1))); 
+        this.resizeBy(dist.scaleByPt(pt(-1, 1)));
         this.right = right;
         break; // adjustment needed
+      case 'top':
+        x = b.x;
+        y = b.y + dist.y;
+        width = b.width;
+        height = b.height - dist.y;
+        this.setBounds(new Rectangle(x, y, width, height));
+        break;
+      case 'top left':
+        x = b.x + dist.x;
+        y = b.y + dist.y;
+        width = b.width - dist.x;
+        height = b.height - dist.y;
+        this.setBounds(new Rectangle(x, y, width, height));
+        break;
+      case 'top right':
+        x = b.x;
+        y = b.y + dist.y;
+        width = b.width + dist.x;
+        height = b.height - dist.y;
+        this.setBounds(new Rectangle(x, y, width, height));
+        break;
     }
     this.relayoutResizer();
   }
 
-  relayoutResizer() {
-    let resizer = this.getSubmorphNamed("resizer"),
-      {
-        submorphs: [
-          rightResizer, bottomRightResizer, leftResizer,
-          bottomLeftResizer, bottomResizer
-        ]
-      } = resizer;
+  relayoutResizer () {
+    const resizer = this.getSubmorphNamed('resizer');
+    const {
+      submorphs: [
+        rightResizer, bottomRightResizer, leftResizer,
+        bottomLeftResizer, bottomResizer, topResizer,
+        topLeftResizer, topRightResizer
+      ]
+    } = resizer;
     const resizerInset = 10;
-    
+
     rightResizer.height = this.height - resizerInset;
     rightResizer.bottomRight = this.extent.subXY(0, resizerInset);
 
@@ -324,105 +356,161 @@ export default class Window extends Morph {
     bottomLeftResizer.bottomLeft = pt(0, this.height);
 
     bottomResizer.width = this.width - 2 * resizerInset;
-    bottomResizer.bottomLeft = pt(resizerInset,this.height);
+    bottomResizer.bottomLeft = pt(resizerInset, this.height);
 
-    resizer.position = pt(0,0)
+    topResizer.width = this.width - 2 * resizerInset;
+    topResizer.bottomLeft = pt(resizerInset, resizerInset);
+
+    topLeftResizer.topLeft = pt(0, 0);
+
+    topRightResizer.topRight = pt(this.width, 0);
+
+    resizer.position = pt(0, 0);
   }
 
-  buildResizer() {
-    let win = this,
-        rightResizer, bottomRightResizer, leftResizer, bottomLeftResizer, bottomResizer;
-    let fill = Color.transparent;
-    let resizerInset = 10;
-    let resizer = morph({
-      name: "resizer",
+  buildResizer () {
+    const win = this;
+    let rightResizer, bottomRightResizer, leftResizer, bottomLeftResizer, bottomResizer, topResizer, topLeftResizer, topRightResizer;
+    const fill = Color.transparent;
+    const resizerInset = 10;
+    const resizer = morph({
+      name: 'resizer',
       fill: Color.transparent,
-      position: pt(0,0),
+      position: pt(0, 0),
       submorphs: [
         rightResizer = morph({
           name: 'right resizer',
-          fill, width: resizerInset,
+          fill,
+          width: resizerInset,
           draggable: true,
           nativeCursor: 'ew-resize'
         }),
         bottomRightResizer = morph({
           name: 'bottom right resizer',
-          fill, extent: pt(10,10),
+          fill,
+          extent: pt(10, 10),
           draggable: true,
-          nativeCursor: "nwse-resize"
+          nativeCursor: 'nwse-resize'
         }),
         leftResizer = morph({
-          name: 'right resizer',
-          fill, width: resizerInset, 
+          name: 'left resizer',
+          fill,
+          width: resizerInset,
           draggable: true,
           nativeCursor: 'ew-resize'
         }),
         bottomLeftResizer = morph({
           name: 'bottom left resizer',
           draggable: true,
-          fill, extent: pt(10,10),
-          nativeCursor: "nesw-resize"
+          fill,
+          extent: pt(10, 10),
+          nativeCursor: 'nesw-resize'
         }),
         bottomResizer = morph({
           name: 'bottom resizer',
           draggable: true,
-          fill, height: resizerInset,
+          fill,
+          height: resizerInset,
           nativeCursor: 'ns-resize'
         }),
+        topResizer = morph({
+          name: 'top resizer',
+          draggable: true,
+          fill,
+          height: resizerInset,
+          nativeCursor: 'ns-resize'
+        }),
+        topLeftResizer = morph({
+          name: 'top left resizer',
+          draggable: true,
+          fill,
+          extent: pt(10, 10),
+          nativeCursor: 'nwse-resize'
+        }),
+        topRightResizer = morph({
+          name: 'top rigth resizer',
+          draggable: true,
+          fill,
+          extent: pt(10, 10),
+          nativeCursor: 'nesw-resize'
+        })
       ]
     });
-    connect(bottomRightResizer, "onDrag", win, "resizeAt", {
+    connect(topResizer, 'onDrag', win, 'resizeAt', {
+      converter: evt => ['top', evt.state.dragDelta]
+    });
+    connect(topRightResizer, 'onDrag', win, 'resizeAt', {
+      converter: evt => ['top right', evt.state.dragDelta]
+    });
+    connect(topLeftResizer, 'onDrag', win, 'resizeAt', {
+      converter: evt => ['top left', evt.state.dragDelta]
+    });
+    connect(bottomRightResizer, 'onDrag', win, 'resizeAt', {
       converter: evt => ['bottom right', evt.state.dragDelta]
     });
-    connect(rightResizer, "onDrag", win, "resizeAt", {
+    connect(rightResizer, 'onDrag', win, 'resizeAt', {
       converter: evt => ['right', evt.state.dragDelta]
     });
-    connect(bottomResizer, "onDrag", win, "resizeAt", {
+    connect(bottomResizer, 'onDrag', win, 'resizeAt', {
       converter: evt => ['bottom', evt.state.dragDelta]
-    })
-    connect(leftResizer, "onDrag", win, "resizeAt", {
+    });
+    connect(leftResizer, 'onDrag', win, 'resizeAt', {
       converter: evt => ['left', evt.state.dragDelta]
     });
-    connect(bottomLeftResizer, "onDrag", win, "resizeAt", {
+    connect(bottomLeftResizer, 'onDrag', win, 'resizeAt', {
       converter: evt => ['bottom left', evt.state.dragDelta]
-    })
+    });
     this.addMorph(resizer);
     this.relayoutResizer();
     return resizer;
   }
 
-  async toggleMinimize() { this.minimized = !this.minimized; }
+  toggleMaximize () { this.maximized = !this.maximized; }
 
-  async applyMinimize() {
+  applyMaximize () {
+    if (this.maximized) {
+      $world.execCommand('resize active window', { window: this, how: 'full' });
+    } else {
+      $world.execCommand('resize active window', { window: this, how: 'reset' });
+    }
+  }
+
+  async toggleMinimize () { this.minimized = !this.minimized; }
+
+  async applyMinimize () {
     if (!this.targetMorph) return;
-    let {nonMinizedBounds, minimized, width} = this,
-        { windowTitle, resizer } = this.ui,
-        bounds = this.bounds(),
-        duration = 100,
-        collapseButton = this.getSubmorphNamed("minimize"),
-        easing = easings.outQuad;
+    const { nonMinizedBounds, minimized, width } = this;
+    const { windowTitle, resizer } = this.ui;
+    const bounds = this.bounds();
+    const duration = 100;
+    const collapseButton = this.getSubmorphNamed('minimize');
+    const easing = easings.outQuad;
 
     if (!minimized) {
       this.minimizedBounds = bounds;
       this.targetMorph && (this.targetMorph.visible = true);
-      nonMinizedBounds = this.world().bounds().translateForInclusion(nonMinizedBounds || bounds)
+      nonMinizedBounds = this.world().bounds().translateForInclusion(nonMinizedBounds || bounds);
       this.animate({
         bounds: nonMinizedBounds,
-        styleClasses: ['neutral', 'active', ...arr.without(this.styleClasses, 'minimzed')], 
-        duration, easing
+        styleClasses: ['neutral', 'active', ...arr.without(this.styleClasses, 'minimzed')],
+        duration,
+        easing
       });
-      collapseButton.tooltip = "collapse window";
+      collapseButton.tooltip = 'collapse window';
     } else {
       this.nonMinizedBounds = bounds;
-      var minimizedBounds = (this.minimizedBounds || bounds).withExtent(pt(width, 28)),
-          labelBounds = windowTitle.textBounds(),
-          buttonOffset = this.get('window controls').bounds().right() + 3;
-      if (labelBounds.width + 2 * buttonOffset < minimizedBounds.width)
-        minimizedBounds = minimizedBounds.withWidth(labelBounds.width + buttonOffset + 5);
+      let minimizedBounds = (this.minimizedBounds || bounds).withExtent(pt(width, 28));
+      const labelBounds = windowTitle.textBounds();
+      const buttonOffset = this.get('window controls').bounds().right() + 3;
+      if (labelBounds.width + 2 * buttonOffset < minimizedBounds.width) { minimizedBounds = minimizedBounds.withWidth(labelBounds.width + buttonOffset + 5); }
       this.minimizedBounds = minimizedBounds;
-      collapseButton.tooltip = "uncollapse window";
-      await this.animate({styleClasses: ['minimized', 'active', ...arr.without(this.styleClasses, 'neutral')],
-        bounds: minimizedBounds, duration, easing});
+      collapseButton.tooltip = 'uncollapse window';
+      await this.animate({
+        styleClasses: ['minimized', 'active', ...arr.without(this.styleClasses, 'neutral')],
+        bounds: minimizedBounds,
+        duration,
+        easing
+      });
       this.withMetaDo({ metaInteraction: true }, () => {
         this.targetMorph && (this.targetMorph.visible = false);
       });
@@ -431,28 +519,38 @@ export default class Window extends Morph {
     this.relayoutWindowControls();
   }
 
-  async close() {
+  setBounds (bounds) {
+    super.setBounds(bounds);
+    this.relayoutResizer();
+    this.relayoutWindowControls();
+  }
+
+  setBounds (bounds) {
+    super.setBounds(bounds);
+    this.relayoutResizer();
+    this.relayoutWindowControls();
+  }
+
+  async close () {
     let proceed;
-    if (this.targetMorph && typeof this.targetMorph.onWindowClose === "function")
-      proceed = await this.targetMorph.onWindowClose();
+    if (this.targetMorph && typeof this.targetMorph.onWindowClose === 'function') { proceed = await this.targetMorph.onWindowClose(); }
     if (proceed === false) return;
-    var world = this.world();
+    const world = this.world();
     this.deactivate();
     this.remove();
 
-    var next = world.activeWindow() || arr.last(world.getWindows());
+    const next = world.activeWindow() || arr.last(world.getWindows());
     next && next.activate();
 
-    signal(this, "windowClosed", this);
+    signal(this, 'windowClosed', this);
   }
 
-  onMouseUp(evt) {
+  onMouseUp (evt) {
     super.onMouseUp(evt);
-    if (!this.minimized)
-      this.ui.resizer.visible = true;
+    if (!this.minimized) { this.ui.resizer.visible = true; }
   }
 
-  onMouseDown(evt) {
+  onMouseDown (evt) {
     super.onMouseDown(evt);
     this.activate(evt);
     if (!this.minimized && !this.ui.resizer.submorphs.includes(evt.targetMorph)) {
@@ -460,9 +558,7 @@ export default class Window extends Morph {
     }
   }
 
-  
-  
-  onDragStart(evt) {
+  onDragStart (evt) {
     super.onDragStart(evt);
     if (this.targetMorph) {
       evt.state.origReactsToPointer = this.targetMorph.reactsToPointer;
@@ -470,35 +566,34 @@ export default class Window extends Morph {
     }
   }
 
-  onDragEnd(evt) {
+  onDragEnd (evt) {
     super.onDragEnd(evt);
     if (this.targetMorph) {
       this.targetMorph.reactsToPointer = evt.state.origReactsToPointer;
     }
-    if (!this.minimized)
-      this.ui.resizer.visible = true;
+    if (!this.minimized) { this.ui.resizer.visible = true; }
   }
 
-  onDrag(evt) {
+  onDrag (evt) {
     super.onDrag(evt);
     this.ensureNotOverTheTop();
   }
 
-  focus() {
-    var w = this.world(), t = this.targetMorph;
+  focus () {
+    const w = this.world(); const t = this.targetMorph;
     if (!w || !t) return;
     if (w.focusedMorph && (w.focusedMorph === t || t.isAncestorOf(w.focusedMorph))) return;
     t.focus();
   }
 
-  isActive() {
-    var w = this.world();
+  isActive () {
+    const w = this.world();
     if (!w) return false;
-    if (this.ui.windowTitle.fontWeight != "bold") return false;
+    if (this.ui.windowTitle.fontWeight != 'bold') return false;
     return arr.last(w.getWindows()) === this;
   }
 
-  activate(evt) {
+  activate (evt) {
     if (this.isActive()) {
       this.bringToFront();
       this.focus(evt);
@@ -507,53 +602,53 @@ export default class Window extends Morph {
       return this;
     }
 
-    this.master = { auto: "styleguide://System/window/light/active" };
+    this.master = { auto: 'styleguide://System/window/light/active' };
 
     if (!this.world()) this.openInWorldNearHand();
     else this.bringToFront();
-    let w = this.world() || this.env.world;
+    const w = this.world() || this.env.world;
 
     arr.without(w.getWindows(), this).forEach(ea => ea.deactivate());
     this.focus(evt);
 
-    signal(this, "windowActivated", this);
-    Promise.resolve(this.master.applyIfNeeded(true)).then(() => 
-      this.relayoutWindowControls())
+    signal(this, 'windowActivated', this);
+    Promise.resolve(this.master.applyIfNeeded(true)).then(() =>
+      this.relayoutWindowControls());
 
     return this;
   }
 
-  deactivate() {
+  deactivate () {
     // if (this.styleClasses.includes('inactive')) return;
     // this.removeStyleClass('active');
     // this.addStyleClass('inactive');
-    if (this.master && this.master.auto == "styleguide://System/window/light/inactive") return;
-    this.master = { auto: "styleguide://System/window/light/inactive" };
+    if (this.master && this.master.auto == 'styleguide://System/window/light/inactive') return;
+    this.master = { auto: 'styleguide://System/window/light/inactive' };
     this.relayoutWindowControls();
     this.renderOnGPU = false;
   }
 
-  get keybindings() {
+  get keybindings () {
     return super.keybindings.concat([
       {
         keys: {
-          mac: "Meta-Shift-L R E N",
-          win: "Ctrl-Shift-L R E N",
+          mac: 'Meta-Shift-L R E N',
+          win: 'Ctrl-Shift-L R E N'
         },
-        command: "[window] change title"
+        command: '[window] change title'
       }
     ]);
   }
 
-  get commands() {
+  get commands () {
     return super.commands.concat([
       {
-        name: "[window] change title",
-        exec: async (win, args = {}) =>  {
-          let title = args.title ||
-            (await win.world().prompt("Enter new title", {
+        name: '[window] change title',
+        exec: async (win, args = {}) => {
+          const title = args.title ||
+            (await win.world().prompt('Enter new title', {
               input: win.title,
-              historyId: "lively.morphic-window-title-hist"
+              historyId: 'lively.morphic-window-title-hist'
             }));
           if (title) win.title = title;
           return true;
