@@ -136,7 +136,7 @@ export class ComponentPolicy {
   }
 
   getWorldUrlFor (component) {
-    const worldOfMaster = resource(this.getResourceUrlFor(component)).worldName;
+    const worldOfMaster = resource(typeof component === 'string ' ? component : this.getResourceUrlFor(component)).worldName;
     return worldToUrl[worldOfMaster];
   }
 

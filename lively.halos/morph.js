@@ -793,13 +793,13 @@ class NameHaloItem extends HaloItem {
     if (target.master) {
       const appliedMaster = target.master.determineMaster(target);
       const linkToWorld = target.master.getWorldUrlFor(appliedMaster);
-      const masterLink = this.addMorph(Icon.makeLabel('external-link-alt', {
+      const masterLink = this.addMorph(Icon.makeLabel(linkToWorld ? 'external-link-alt' : 'exclamation-triangle', {
         nativeCursor: 'pointer',
         fontColor: Color.white,
         padding: rect(8, 0, -8, 0),
         tooltip: 'Located in: ' + linkToWorld
       }));
-      connect(masterLink, 'onMouseDown', () => {
+      linkToWorld && connect(masterLink, 'onMouseDown', () => {
         window.open(linkToWorld);
       });
     }
