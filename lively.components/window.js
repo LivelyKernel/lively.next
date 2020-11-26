@@ -86,7 +86,12 @@ export default class Window extends Morph {
           this.applyMinimize();
         }
       },
-      maximized: {}
+      maximized: {
+        set (isMaximized) {
+          this.setProperty('maximized', isMaximized);
+          this.applyMaximize();
+        }
+      }
     };
   }
 
@@ -262,14 +267,17 @@ export default class Window extends Morph {
   }
 
   buildTitleLabel () {
-    return this.addMorph({
+    const title = morph({
       padding: Rectangle.inset(0, 2, 0, 0),
       styleClasses: ['windowTitleLabel'],
       type: 'label',
       name: 'window title',
-      reactsToPointer: false,
+      tooltip: 'double click to maximize/reset',
+      reactsToPointer: true,
       value: ''
     });
+    connect(title, 'onDoubleMouseDown', this, 'toggleMaximize');
+    return this.addMorph(title);
   }
 
   resizeBy (dist) {
@@ -391,6 +399,16 @@ export default class Window extends Morph {
     this.addMorph(resizer);
     this.relayoutResizer();
     return resizer;
+  }
+
+  toggleMaximize () { this.maximized = !this.maximized; }
+
+  applyMaximize () {
+    if (this.maximized) {
+      $world.execCommand('resize active window', { window: this, how: 'full' });
+    } else {
+      $world.execCommand('resize active window', { window: this, how: 'reset' });
+    }
   }
 
   async toggleMinimize () { this.minimized = !this.minimized; }
