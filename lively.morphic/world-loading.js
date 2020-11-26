@@ -10,6 +10,8 @@ import { loadObjectFromPartsbinFolder } from './partsbin.js';
 import { ensureCommitInfo } from './morphicdb/db.js';
 import { pathForBrowserHistory } from './helpers.js';
 import { subscribe, emit } from 'lively.notifications';
+import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
+import ShellClientResource from 'lively.shell/client-resource.js';
 
 export async function loadWorldFromURL (url, oldWorld, options) {
   const worldResource = url.isResource ? url
@@ -217,8 +219,13 @@ export async function interactivelySaveWorld (world, options) {
 
     world.changeMetaData('file', jsonStoragePath, false, false);
 
-    await resourceHandle.writeJson(await createMorphSnapshot(world));
-    resource(System.baseURL).join('/subservers/ComponentBrowser/refresh').join(name).read();
+    const snap = await createMorphSnapshot(world);
+    await resourceHandle.writeJson(snap);
+    await resource(defaultDirectory(ShellClientResource.defaultL2lClient) + '/..')
+      .join(jsonStoragePath.replace('.json', '.br.json'))
+      .withRelativePartsResolved()
+      .brotli(JSON.stringify(snap));
+    resource(System.baseURL).join('/subserver/ComponentsBrowser/refresh').join(name).read();
     i.remove();
     world.setStatusMessage(`saved world ${name} to file: ${resourceHandle.url}`);
     return;
