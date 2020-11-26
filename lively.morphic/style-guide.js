@@ -135,6 +135,11 @@ export class ComponentPolicy {
     return `styleguide://${getProjectName($world)}/${component.name}`;
   }
 
+  getWorldUrlFor (component) {
+    const worldOfMaster = resource(this.getResourceUrlFor(component)).worldName;
+    return worldToUrl[worldOfMaster];
+  }
+
   async resolveMasterComponents () {
     const res = promise.deferred();
     this._hasUnresolvedMaster = res.promise;
@@ -508,6 +513,7 @@ var modulesToLoad = modulesToLoad || {};
 let li;
 let localNamePromise;
 var masterComponentFetches = masterComponentFetches || {};
+var worldToUrl = worldToUrl || {};
 
 export { resolvedMasters };
 
@@ -598,11 +604,20 @@ class StyleGuideResource extends Resource {
       let snapshot;
       if (resolveSnapshot) {
         const db = MorphicDB.default;
-        if ((await db.exists('world', this.worldName)).exists) { snapshot = await db.fetchSnapshot('world', this.worldName); } else {
+        if ((await db.exists('world', this.worldName)).exists) {
+          snapshot = await db.fetchSnapshot('world', this.worldName);
+          worldToUrl[this.worldName] = resource(System.baseURL).join('worlds/load').withQuery({
+            name: this.worldName
+          }).url;
+        } else {
           // try to get the JSON (fallback)
           const jsonRes = resource(System.baseURL).join('lively.morphic/styleguides').join(this.worldName + '.json');
-          if (await jsonRes.exists()) snapshot = await jsonRes.readJson();
-          else resolveSnapshot(null); // total fail
+          if (await jsonRes.exists()) {
+            snapshot = await jsonRes.readJson();
+            worldToUrl[this.worldName] = resource(System.baseURL).join('worlds/load').withQuery({
+              file: 'lively.morphic/styleguides/' + this.worldName + '.json'
+            }).url;
+          } else resolveSnapshot(null); // total fail
         }
         await loadPackagesAndModulesOfSnapshot(snapshot);
         resolveSnapshot(snapshot);

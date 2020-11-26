@@ -13,6 +13,7 @@ import { obj, Path as PropertyPath, promise, properties, num, arr } from 'lively
 import { connect, signal, disconnect, disconnectAll, once } from 'lively.bindings';
 
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from './drag-guides.js';
+import { resource } from 'lively.resources';
 
 const haloBlue = Color.rgb(23, 160, 251);
 const componentAccent = Color.magenta;
@@ -761,7 +762,7 @@ class NameHaloItem extends HaloItem {
       layout: {
         initialize () {
           this.layout = new HorizontalLayout({
-            resizeContainer: true, spacing: 0
+            resizeContainer: true, spacing: 0, align: 'center'
           });
         }
       }
@@ -770,6 +771,8 @@ class NameHaloItem extends HaloItem {
 
   constructor (props) {
     super(props);
+
+    this.initComponentLink();
 
     this.initNameHolders();
 
@@ -782,6 +785,24 @@ class NameHaloItem extends HaloItem {
     this.fill = this.halo.target.isComponent ? componentAccent : haloBlue;
 
     this.alignInHalo();
+  }
+
+  initComponentLink () {
+    const target = this.halo.target;
+    if (!target || target.isMorphSelection) return;
+    if (target.master) {
+      const appliedMaster = target.master.determineMaster(target);
+      const linkToWorld = target.master.getWorldUrlFor(appliedMaster);
+      const masterLink = this.addMorph(Icon.makeLabel('external-link-alt', {
+        nativeCursor: 'pointer',
+        fontColor: Color.white,
+        padding: rect(8, 0, -8, 0),
+        tooltip: 'Located in: ' + linkToWorld
+      }));
+      connect(masterLink, 'onMouseDown', () => {
+        window.open(linkToWorld);
+      });
+    }
   }
 
   targets () {
@@ -799,10 +820,10 @@ class NameHaloItem extends HaloItem {
       connect(nh, 'valid', this, 'toggleNameValid');
       return nh;
     });
-    this.submorphs = arr.interpose(this.nameHolders, {
+    this.submorphs = [...this.submorphs, ...arr.interpose(this.nameHolders, {
       extent: pt(1, 28),
       fill: Color.black.withA(0.4)
-    });
+    })];
   }
 
   toggleActive ([active, nameHolder]) {
