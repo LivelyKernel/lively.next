@@ -1065,6 +1065,7 @@ export default class Browser extends Morph {
       .map(m => ({ string: m.nameInPackage + (m.isLoaded ? '' : ' [not loaded]'), value: m, isListItem: true }));
 
     await this.ui.moduleList.whenRendered();
+    this.owner.doNotAcceptDropsForThisAndSubmorphs();
   }
 
   updateCodeEntities (mod) {

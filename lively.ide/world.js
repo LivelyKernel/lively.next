@@ -961,6 +961,14 @@ export class LivelyWorld extends World {
         [[...(morph[propName] ? checked : unchecked), ' ' + propName, { float: 'none' }],
           () => morph[propName] = !morph[propName]]));
 
+    morphicMenuItems[1].push(['this and submorphs accept drops', () => {
+      morph.acceptDropsForThisAndSubmorphs();
+    }]);
+
+    morphicMenuItems[1].push(['this and submorphs do not accept drops', () => {
+      morph.doNotAcceptDropsForThisAndSubmorphs();
+    }]);
+
     items.push(['Fit to submorphs', async () => {
       let padding = await self.world().prompt('Padding around submorphs:', {
         input: 'Rectangle.inset(5)',
