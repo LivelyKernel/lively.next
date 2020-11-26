@@ -831,7 +831,7 @@ export class LivelyWorld extends World {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // morphic hierarchy / windows
 
-    items.push(['Publish...', () => self.interactivelyPublish()]);
+    // items.push(['Publish...', () => self.interactivelyPublish()]);
 
     items.push(['Open in...', [
       ['Window', () => { self.openInWindow(); }]
@@ -859,7 +859,22 @@ export class LivelyWorld extends World {
     if (self.owner && self.owner.submorphs.length > 1) {
       items.push(['Arrange morph', [
         ['Bring to front', () => self.owner.addMorph(self)],
-        ['Send to back', () => self.owner.addMorphBack(self)]
+        ['Send to back', () => self.owner.addMorphBack(self)],
+        ['Fit to submorphs', async () => {
+          let padding = await self.world().prompt('Padding around submorphs:', {
+            input: 'Rectangle.inset(5)',
+            historyId: 'lively.morphic-fit-to-submorphs-padding-hist',
+            requester: self
+          });
+          if (typeof padding !== 'string') return;
+          const { value } = await runEval(padding, { topLevelVarRecorder: { Rectangle } });
+
+          padding = value && value.isRectangle ? value : Rectangle.inset(0);
+
+          self.undoStart('fitToSubmorphs');
+          self.fitToSubmorphs(padding);
+          self.undoStop('fitToSubmorphs');
+        }]
       ]]);
     }
 
@@ -872,13 +887,12 @@ export class LivelyWorld extends World {
     // stepping scripts
     const steppingItems = [];
 
-    if (this.startSteppingScripts) {
+    if (self.startSteppingScripts) {
       steppingItems.push(['Start stepping', function () { self.startSteppingScripts(); }]);
     } else {
       steppingItems.push(['Start stepping', async () => {
         const items = [];
-
-        for (const methodsPerProto of await completions.getCompletions(() => this, '')) {
+        for (const methodsPerProto of (await completions.getCompletions(() => self, '')).completions) {
           const [protoName, methods] = methodsPerProto;
           for (const method of methods) {
             if (method.startsWith('_') || method.startsWith('$')) continue;
@@ -961,41 +975,17 @@ export class LivelyWorld extends World {
         [[...(morph[propName] ? checked : unchecked), ' ' + propName, { float: 'none' }],
           () => morph[propName] = !morph[propName]]));
 
-    morphicMenuItems[1].push(['this and submorphs accept drops', () => {
-      morph.acceptDropsForThisAndSubmorphs();
-    }]);
-
-    morphicMenuItems[1].push(['this and submorphs do not accept drops', () => {
-      morph.doNotAcceptDropsForThisAndSubmorphs();
-    }]);
-
-    items.push(['Fit to submorphs', async () => {
-      let padding = await self.world().prompt('Padding around submorphs:', {
-        input: 'Rectangle.inset(5)',
-        historyId: 'lively.morphic-fit-to-submorphs-padding-hist',
-        requester: self
-      });
-      if (typeof padding !== 'string') return;
-      const { value } = await runEval(padding, { topLevelVarRecorder: { Rectangle } });
-
-      padding = value && value.isRectangle ? value : Rectangle.inset(0);
-
-      self.undoStart('fitToSubmorphs');
-      self.fitToSubmorphs(padding);
-      self.undoStop('fitToSubmorphs');
-    }]);
-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    const connectionItems = this.defaultConnectionMenuItems(self);
-    if (connectionItems) {
-      items.push(['connections...', connectionItems]);
-    }
-
-    const connectItems = this.defaultConnectMenuItems(() => {}, self);
-    if (connectItems) {
-      items.push(['connect...', connectItems]);
-    }
+    // const connectionItems = this.defaultConnectionMenuItems(self);
+    // if (connectionItems) {
+    //   items.push(['connections...', connectionItems]);
+    // }
+    //
+    // const connectItems = this.defaultConnectMenuItems(() => {}, self);
+    // if (connectItems) {
+    //   items.push(['connect...', connectItems]);
+    // }
 
     return items;
   }
@@ -1323,7 +1313,6 @@ export class LivelyWorld extends World {
     }
   }
 }
-
 
 class SelectionElement extends Morph {
   static get properties () {
