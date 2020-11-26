@@ -2257,7 +2257,7 @@ export class Morph {
   }
 
   doNotAcceptDropsForThisAndSubmorphs () {
-    this.withAllSubmorphsDo(m => { m.acceptsDrops = false; debugger; });
+    this.withAllSubmorphsDo(m => m.acceptsDrops = false);
   }
 
   acceptDropsForThisAndSubmorphs () {
