@@ -1243,7 +1243,7 @@ export class LivelyWorld extends World {
   yieldShapeIfNeeded (evt) {
     if (this._yieldedShape) {
       this._yieldedShape.extent = evt.positionIn(this).subPt(evt.state.dragStartPosition).subPt(pt(1, 1)).maxPt(pt(1, 1));
-      this._sizeTooltip.description = `${this._yieldShapeOnClick.className}: ${this._yieldedShape.width.toFixed(0)}x${this._yieldedShape.height.toFixed(0)}`;
+      this._sizeTooltip.description = `${this._yieldShapeOnClick[Symbol.for('__LivelyClassName__')]}: ${this._yieldedShape.width.toFixed(0)}x${this._yieldedShape.height.toFixed(0)}`;
       this._sizeTooltip.topLeft = evt.positionIn(this).addXY(15, 15);
     }
   }
@@ -1323,6 +1323,7 @@ export class LivelyWorld extends World {
     }
   }
 }
+
 
 class SelectionElement extends Morph {
   static get properties () {
