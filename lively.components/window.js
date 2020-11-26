@@ -111,9 +111,12 @@ export default class Window extends Morph {
       ],
       [
         'Align and resize', [
+          { alias: 'full', target: w, command: 'resize active window', args: { window: this, how: 'full' } },
           { alias: 'left', target: w, command: 'resize active window', args: { window: this, how: 'left' } },
           { alias: 'center', target: w, command: 'resize active window', args: { window: this, how: 'center' } },
           { alias: 'right', target: w, command: 'resize active window', args: { window: this, how: 'right' } },
+          { alias: 'top', target: w, command: 'resize active window', args: { window: this, how: 'top' } },
+          { alias: 'bottom', target: w, command: 'resize active window', args: { window: this, how: 'bottom' } },
           { alias: 'reset', target: w, command: 'resize active window', args: { window: this, how: 'reset' } }
         ]
       ],
@@ -287,6 +290,8 @@ export default class Window extends Morph {
 
   resizeAt ([corner, dist]) {
     let right;
+    let x, y, height, width;
+    const b = this.bounds();
     switch (corner) {
       case 'right':
         this.resizeBy(dist.withY(0)); break;
@@ -304,6 +309,27 @@ export default class Window extends Morph {
         this.resizeBy(dist.scaleByPt(pt(-1, 1)));
         this.right = right;
         break; // adjustment needed
+      case 'top':
+        x = b.x;
+        y = b.y + dist.y;
+        width = b.width;
+        height = b.height - dist.y;
+        this.setBounds(new Rectangle(x, y, width, height));
+        break;
+      case 'top left':
+        x = b.x + dist.x;
+        y = b.y + dist.y;
+        width = b.width - dist.x;
+        height = b.height - dist.y;
+        this.setBounds(new Rectangle(x, y, width, height));
+        break;
+      case 'top right':
+        x = b.x;
+        y = b.y + dist.y;
+        width = b.width + dist.x;
+        height = b.height - dist.y;
+        this.setBounds(new Rectangle(x, y, width, height));
+        break;
     }
     this.relayoutResizer();
   }
@@ -313,7 +339,8 @@ export default class Window extends Morph {
     const {
       submorphs: [
         rightResizer, bottomRightResizer, leftResizer,
-        bottomLeftResizer, bottomResizer
+        bottomLeftResizer, bottomResizer, topResizer,
+        topLeftResizer, topRightResizer
       ]
     } = resizer;
     const resizerInset = 10;
@@ -331,12 +358,19 @@ export default class Window extends Morph {
     bottomResizer.width = this.width - 2 * resizerInset;
     bottomResizer.bottomLeft = pt(resizerInset, this.height);
 
+    topResizer.width = this.width - 2 * resizerInset;
+    topResizer.bottomLeft = pt(resizerInset, resizerInset);
+
+    topLeftResizer.topLeft = pt(0, 0);
+
+    topRightResizer.topRight = pt(this.width, 0);
+
     resizer.position = pt(0, 0);
   }
 
   buildResizer () {
     const win = this;
-    let rightResizer; let bottomRightResizer; let leftResizer; let bottomLeftResizer; let bottomResizer;
+    let rightResizer, bottomRightResizer, leftResizer, bottomLeftResizer, bottomResizer, topResizer, topLeftResizer, topRightResizer;
     const fill = Color.transparent;
     const resizerInset = 10;
     const resizer = morph({
@@ -359,7 +393,7 @@ export default class Window extends Morph {
           nativeCursor: 'nwse-resize'
         }),
         leftResizer = morph({
-          name: 'right resizer',
+          name: 'left resizer',
           fill,
           width: resizerInset,
           draggable: true,
@@ -378,8 +412,38 @@ export default class Window extends Morph {
           fill,
           height: resizerInset,
           nativeCursor: 'ns-resize'
+        }),
+        topResizer = morph({
+          name: 'top resizer',
+          draggable: true,
+          fill,
+          height: resizerInset,
+          nativeCursor: 'ns-resize'
+        }),
+        topLeftResizer = morph({
+          name: 'top left resizer',
+          draggable: true,
+          fill,
+          extent: pt(10, 10),
+          nativeCursor: 'nwse-resize'
+        }),
+        topRightResizer = morph({
+          name: 'top rigth resizer',
+          draggable: true,
+          fill,
+          extent: pt(10, 10),
+          nativeCursor: 'nesw-resize'
         })
       ]
+    });
+    connect(topResizer, 'onDrag', win, 'resizeAt', {
+      converter: evt => ['top', evt.state.dragDelta]
+    });
+    connect(topRightResizer, 'onDrag', win, 'resizeAt', {
+      converter: evt => ['top right', evt.state.dragDelta]
+    });
+    connect(topLeftResizer, 'onDrag', win, 'resizeAt', {
+      converter: evt => ['top left', evt.state.dragDelta]
     });
     connect(bottomRightResizer, 'onDrag', win, 'resizeAt', {
       converter: evt => ['bottom right', evt.state.dragDelta]
