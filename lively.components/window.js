@@ -479,7 +479,7 @@ export default class Window extends Morph {
 
   async applyMinimize () {
     if (!this.targetMorph) return;
-    const { nonMinizedBounds, minimized, width } = this;
+    let { nonMinizedBounds, minimized, width } = this;
     const { windowTitle, resizer } = this.ui;
     const bounds = this.bounds();
     const duration = 100;
