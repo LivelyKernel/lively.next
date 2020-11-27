@@ -221,7 +221,7 @@ export async function interactivelySaveWorld (world, options) {
 
     const snap = await createMorphSnapshot(world);
     await resourceHandle.writeJson(snap);
-    await resource(defaultDirectory(ShellClientResource.defaultL2lClient) + '/..')
+    await resource((await defaultDirectory(ShellClientResource.defaultL2lClient)) + '/..')
       .join(jsonStoragePath.replace('.json', '.br.json'))
       .withRelativePartsResolved()
       .brotli(JSON.stringify(snap));
