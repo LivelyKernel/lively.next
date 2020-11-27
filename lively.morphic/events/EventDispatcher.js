@@ -298,7 +298,13 @@ export default class EventDispatcher {
     return this;
   }
 
-  uninstall () {
+  uninstallHandler(handler) {
+    const handlerToBeRemoved = this.handlerFuntions.find(({ type }) => type == handler);
+    if (handlerToBeRemoved)
+      handlerToBeRemoved.node.removeEventListener(handlerToBeRemoved.node, handlerToBeRemoved.fn, handlerToBeRemoved.capturing);
+  }
+
+  uninstall() {
     this.installed = false;
 
     const handlerFunctions = this.handlerFunctions;
