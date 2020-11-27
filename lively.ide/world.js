@@ -1170,7 +1170,7 @@ export class LivelyWorld extends World {
 
   showHaloPreviewFor (aMorph) {
     if (!aMorph) return;
-    if (aMorph.getWindow()) aMorph = null; // do not inspect windows
+    if (![aMorph, ...aMorph.ownerChain()].find(m => m.isComponent) && aMorph.getWindow()) aMorph = null; // do not inspect windows
     else if ([aMorph, ...aMorph.ownerChain()].find(m => m.isEpiMorph)) aMorph = null; // do not inspect epi morphs
     else if (aMorph == this) aMorph = null; // reset halo preview
     // if the previously highlighted morph is different one, then clean all exisiting previews
