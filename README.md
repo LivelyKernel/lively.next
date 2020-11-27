@@ -19,8 +19,9 @@ Make sure you have the following software installed.
 
 ## Docker Image
 A docker image exists for this to try it out in the environment of your choice.
-1. Run the docker command as follows: `docker run -d --restart=unless-stopped --name lively-next -p 9011:9011 engagelively/lively-next:alpha3`
-2. Once completely started, navigate to [http://localhost:9011 ](http://localhost:9011)
+1. Download [chrome.json](https://raw.githubusercontent.com/LivelyKernel/lively.next/master/chrome.json) and take note of where it is saved
+2. Run the docker command as follows (replacing the seccomp section with the location above where the file was saved): `docker run -d --restart=unless-stopped --init --security-opt seccomp=/path/to/chrome.json --name lively-next -p 127.0.0.1:9011:9011 engagelively/lively-next:Alpha4.5.0`
+3. Once completely started, navigate to [http://localhost:9011 ](http://localhost:9011)
 
 ## License
 
