@@ -364,7 +364,7 @@ export class PropertyControl extends DraggableTreeLabel {
         nativeCursor: 'pointer', onMouseDown: handler
       },
       ...Icon.textAttribute('angle-down', {
-        paddingTop: '4px', paddingLeft: '4px', opacity: 0.7
+        paddingTop: '4px', paddingLeft: '4px', opacity: 0.7, onMouseDown: handler
       })
     ];
   }
