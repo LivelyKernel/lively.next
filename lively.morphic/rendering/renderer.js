@@ -215,8 +215,6 @@ export class Renderer {
     let i = submorphs.length - 1; const renderedSubmorphs = new Array(i + 1);
     const skipWrapping = oX == 0 && oY == 0 && !morph.isImage && !morph.isPath && !morph.isText;
     for (; i >= 0; i--) {
-      submorphs[i].__stackIdx__ = i;
-      // submorphs[i]._skipWrapping = skipWrapping;
       renderedSubmorphs[i] = this.render(submorphs[i]);
     }
     if (skipWrapping) {
