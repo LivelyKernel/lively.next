@@ -1585,7 +1585,7 @@ export class ObjectEditor extends Morph {
 
             return [{
               isListItem: true,
-              string: klass,
+              label: [klass, { fontWeight: 'bold', fontFamily: 'IBM Plex Mono' }],
               value: { node, selector: 'selectClass', klass }
             }].concat(
               methods.map(ea => {
@@ -1597,7 +1597,7 @@ export class ObjectEditor extends Morph {
                           textStyleClasses: ['v-center-text'],
                           paddingRight: '10px'
                         },
-                        `${ea.name}`, null
+                        `${ea.name[1]}`, {}
                   ],
                   value: { node: ea, selector: 'selectMethod', klass }
                 };
