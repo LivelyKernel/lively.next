@@ -792,15 +792,16 @@ class NameHaloItem extends HaloItem {
     if (!target || target.isMorphSelection) return;
     if (target.master) {
       const appliedMaster = target.master.determineMaster(target);
-      const linkToWorld = target.master.getWorldUrlFor(appliedMaster);
+      const linkToWorld = target.master.getWorldUrlFor(appliedMaster) || 'this project';
+      const isLocal = !!appliedMaster.world();
       const masterLink = this.addMorph(Icon.makeLabel(linkToWorld ? 'external-link-alt' : 'exclamation-triangle', {
         nativeCursor: 'pointer',
         fontColor: Color.white,
         padding: rect(8, 0, -8, 0),
-        tooltip: 'Located in: ' + linkToWorld
+        tooltip: 'Located in ' + linkToWorld
       }));
       linkToWorld && connect(masterLink, 'onMouseDown', () => {
-        window.open(linkToWorld);
+        isLocal ? appliedMaster.show() : window.open(linkToWorld);
       });
     }
   }
