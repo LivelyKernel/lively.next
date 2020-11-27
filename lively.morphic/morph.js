@@ -1192,7 +1192,7 @@ export class Morph {
   }
 
   onSubmorphChange (change, submorph) {
-    if (this.isComponent && !change.meta.metaInteraction && !change.meta.layoutAction) {
+    if (this.isComponent && !PropertyPath('meta.metaInteraction').get(change) && !PropertyPath('meta.layoutAction').get(change)) {
       const world = this.world();
       world && world.withAllSubmorphsDo(m => {
         if (m.master && m.master.uses(this)) {
