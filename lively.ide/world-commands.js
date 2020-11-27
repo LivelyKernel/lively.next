@@ -1,7 +1,7 @@
 /* global System */
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, date, Path, arr, string, obj } from 'lively.lang';
-import { inspect, Text, config } from 'lively.morphic';
+import { inspect, easings, morph, Text, config } from 'lively.morphic';
 import KeyHandler from 'lively.morphic/events/KeyHandler.js';
 import { loadObjectFromPartsbinFolder, loadPart } from 'lively.morphic/partsbin.js';
 import { interactivelySaveWorld } from 'lively.morphic/world-loading.js';
@@ -12,6 +12,7 @@ import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { interactivelyFreezeWorld } from 'lively.freezer';
 import { resource } from 'lively.resources';
 import { BrowserModuleTranslationCache } from 'lively.modules/src/instrumentation.js';
+import { once } from 'lively.bindings';
 
 const commands = [
 
@@ -1341,6 +1342,10 @@ const commands = [
       const li = LoadingIndicator.open('loading project browser...');
       await li.whenRendered();
 
+      const fader = morph({ fill: Color.black.withA(0.5), extent: oldWorld.extent, name: 'dark overlay', opacity: 0, reactsToPointer: false, renderOnGPU: true });
+      fader.openInWorld(pt(0, 0));
+      fader.animate({ opacity: 1 });
+
       const worldList = oldWorld.get('a project browser') || await resource('part://partial freezing/project browser').read();
       worldList.name = 'a project browser';
       worldList.hasFixedPosition = true;
@@ -1348,6 +1353,7 @@ const commands = [
       worldList.bringToFront().alignInWorld(oldWorld);
       worldList.update();
       worldList.focus();
+      once(worldList, 'remove', () => fader.animate({ opacity: 0 }).then(() => fader.remove()));
       li.remove();
       return worldList;
     }
