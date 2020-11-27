@@ -1232,8 +1232,29 @@ class ComponentHaloItem extends HaloItem {
     world.showHaloFor(target);
   }
 
-  onMouseDown () {
-    this.halo.target.isComponent = !this.halo.target.isComponent;
+  async onMouseDown () {
+    const target = this.halo.target;
+    const toBeComponent = !target.isComponent;
+    const numDuplicates = $world.getAllNamed(target.name).length;
+    if (toBeComponent && numDuplicates > 1) {
+      const newName = await $world.prompt([
+        'Name Conflict\n', {},
+        `The morph\'s name you are about to turn into a component is already used by ${numDuplicates - 1} other morph${numDuplicates > 2 ? 's' : ''}. Please enter a `, {
+          fontWeight: 'normal'
+        }, 'unique identifier', { fontStyle: 'italic' },
+        ' for this component within this project.', {
+          fontWeight: 'normal', fontSize: 16
+        }], {
+        input: target.name,
+        lineWrapping: true,
+        width: 400,
+        errorMessage: 'Identifier not unique',
+        validate: (input) => $world.getAllNamed(input).length == 0
+      });
+      if (!newName) return;
+      target.name = newName;
+    }
+    target.isComponent = toBeComponent;
     this.updateComponentIndicator();
   }
 }
