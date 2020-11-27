@@ -1206,7 +1206,7 @@ export class ObjectEditor extends Morph {
         }),
         highlightUndeclared: async undeclaredVar => {
           // start,end index into module source, compensate
-          const { start: varStart, end: varEnd } = undeclaredVar;
+          let { start: varStart, end: varEnd } = undeclaredVar;
           const { classStart, classEnd } = await this.withContextDo((ctx) => {
             const descr = ctx.sourceDescriptorFor(ctx.selectedClass);
             const { sourceLocation: { start: classStart, end: classEnd } } = descr;
