@@ -488,7 +488,9 @@ export default class Window extends Morph {
 
     if (!minimized) {
       this.minimizedBounds = bounds;
-      this.targetMorph && (this.targetMorph.visible = true);
+      this.withMetaDo({ metaInteraction: true }, () => {
+        this.targetMorph && (this.targetMorph.visible = true);
+      });
       nonMinizedBounds = this.world().bounds().translateForInclusion(nonMinizedBounds || bounds);
       this.animate({
         bounds: nonMinizedBounds,
@@ -511,9 +513,10 @@ export default class Window extends Morph {
         duration,
         easing
       });
-      this.withMetaDo({ metaInteraction: true }, () => {
-        this.targetMorph && (this.targetMorph.visible = false);
-      });
+      if (this.targetMorph) {
+        if (!this.targetMorph.isComponent) this.targetMorph.visible = false;
+        else this.targetMorph.top = this.height;
+      }
     }
     windowTitle.reactsToPointer = !this.minimized;
     resizer.visible = !this.minimized;
@@ -563,14 +566,18 @@ export default class Window extends Morph {
     super.onDragStart(evt);
     if (this.targetMorph) {
       evt.state.origReactsToPointer = this.targetMorph.reactsToPointer;
-      this.targetMorph.reactsToPointer = false;
+      this.withMetaDo({ metaInteraction: true }, () => {
+        this.targetMorph.reactsToPointer = false;
+      });
     }
   }
 
   onDragEnd (evt) {
     super.onDragEnd(evt);
     if (this.targetMorph) {
-      this.targetMorph.reactsToPointer = evt.state.origReactsToPointer;
+      this.withMetaDo({ metaInteraction: true }, () => {
+        this.targetMorph.reactsToPointer = evt.state.origReactsToPointer;
+      });
     }
     if (!this.minimized) { this.ui.resizer.visible = true; }
   }
