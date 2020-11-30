@@ -465,7 +465,7 @@ export default class Window extends Morph {
     return resizer;
   }
 
-  toggleMaximize () { this.maximized = !this.maximized; }
+  toggleMaximize () { if (!this.minized) this.maximized = !this.maximized; }
 
   applyMaximize () {
     if (this.maximized) {
@@ -515,6 +515,7 @@ export default class Window extends Morph {
         this.targetMorph && (this.targetMorph.visible = false);
       });
     }
+    windowTitle.reactsToPointer = !this.minimized;
     resizer.visible = !this.minimized;
     this.relayoutWindowControls();
   }
