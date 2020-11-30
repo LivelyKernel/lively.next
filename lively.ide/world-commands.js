@@ -1342,9 +1342,9 @@ const commands = [
       const li = LoadingIndicator.open('loading project browser...');
       await li.whenRendered();
 
-      const fader = morph({ fill: Color.black.withA(0.5), extent: oldWorld.extent, name: 'dark overlay', opacity: 0, reactsToPointer: false, renderOnGPU: true });
+      const fader = morph({ fill: Color.black.withA(0.5), extent: oldWorld.extent, name: 'dark overlay', opacity: 0, reactsToPointer: false, renderOnGPU: true, halosEnabled: false });
       fader.openInWorld(pt(0, 0));
-      fader.animate({ opacity: 1 });
+      fader.animate({ opacity: 1, duration: 300 });
 
       const worldList = oldWorld.get('a project browser') || await resource('part://partial freezing/project browser').read();
       worldList.name = 'a project browser';
