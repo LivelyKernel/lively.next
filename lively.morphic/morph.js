@@ -1172,7 +1172,7 @@ export class Morph {
 
     this.layout && this.layout.onChange(change);
 
-    if (this.isComponent) {
+    if (this.isComponent && !PropertyPath('meta.metaInteraction').get(change)) {
       const world = this.world();
       const derivedMorphs = world ? world.withAllSubmorphsSelect(m => m.master && m.master.uses(this)) : [];
       derivedMorphs.forEach(m => {
