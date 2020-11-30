@@ -74,4 +74,16 @@ export class CommentIndicator extends Label {
     const yOffset = this.morph.height * this.comment.position.y;
     this.position = morphOrigin.addPt(pt(xOffset, yOffset));
   }
+
+  getCommentMorph () {
+    if (CommentBrowser.isOpen()) {
+      return CommentBrowser.instance.getCommentMorphForComment(this.comment, this.morph);
+    }
+  }
+
+  onMouseDown (evt) {
+    super.onMouseDown(evt);
+
+    this.getCommentMorph().show();
+  }
 }

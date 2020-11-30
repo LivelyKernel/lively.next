@@ -989,7 +989,7 @@ export class LivelyWorld extends World {
     if (connectItems) {
       items.push(['connect...', connectItems]);
     }
-
+    items.push({ isDivider: true });
     items.push(['Add comment', async () => {
       // TODO: maybe use promise functionality instead of if else
       const commentText = await $world.prompt('Enter comment');
