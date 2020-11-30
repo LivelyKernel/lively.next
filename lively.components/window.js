@@ -610,7 +610,9 @@ export default class Window extends Morph {
       return this;
     }
 
-    this.master = { auto: 'styleguide://System/window/light/active' };
+    this.master.whenApplied().then(() => {
+      this.master = { auto: 'styleguide://System/window/light/active' };
+    });
 
     if (!this.world()) this.openInWorldNearHand();
     else this.bringToFront();
@@ -631,7 +633,9 @@ export default class Window extends Morph {
     // this.removeStyleClass('active');
     // this.addStyleClass('inactive');
     if (this.master && this.master.auto == 'styleguide://System/window/light/inactive') return;
-    this.master = { auto: 'styleguide://System/window/light/inactive' };
+    this.master.whenApplied().then(() => {
+      this.master = { auto: 'styleguide://System/window/light/inactive' };
+    });
     this.relayoutWindowControls();
     this.renderOnGPU = false;
   }
