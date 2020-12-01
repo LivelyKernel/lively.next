@@ -11,7 +11,8 @@ export class CommentGroupMorph extends Morph {
       groupNameLabel: this.get('group name label'),
       commentMorphContainer: this.get('comment morph container'),
       header: this.get('header'),
-      collapseIndicator: this.get('collapse indicator')
+      collapseIndicator: this.get('collapse indicator'),
+      commentCountLabel: this.get('comment count label')
     };
     connect(this.ui.header, 'onMouseDown', this, 'toggleExpanded');
     this.referenceMorph = referenceMorph;
@@ -28,6 +29,7 @@ export class CommentGroupMorph extends Morph {
       commentMorph.initialize(comment, this.referenceMorph);
       commentMorphs.push(commentMorph);
     }));
+    this.ui.commentCountLabel.textString = commentMorphs.length;
     return commentMorphs;
   }
 
