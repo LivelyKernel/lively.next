@@ -7,11 +7,13 @@ import { connect } from 'lively.bindings';
 import { CommentIndicator } from './commentIndicator.js';
 
 let instance;
-const commentsForMorphExpanded = {};
+
+// Store for each morph if its corresponding comment group is expanded
+const commentGroupExpandedState = {};
 
 export class CommentBrowser extends Window {
   static toggleCommentGroupMorphExpandedFor (morph) {
-    commentsForMorphExpanded[morph.id] = !commentsForMorphExpanded[morph.id];
+    commentGroupExpandedState[morph.id] = !commentGroupExpandedState[morph.id];
   }
 
   static close () {
@@ -37,7 +39,6 @@ export class CommentBrowser extends Window {
   constructor () {
     if (!instance) {
       super();
-      this.commentIndicators = [];
       this.initializeContainers();
       this.initializeExtents();
       this.relayoutWindow();
@@ -88,14 +89,16 @@ export class CommentBrowser extends Window {
   async refreshCommentGroupMorphs () {
     const commentGroupMorphs = [];
     await Promise.all($world.withAllSubmorphsDo(async (morph) => {
-      if (morph.comments.length == 0) { return; }
+      if (morph.comments.length == 0) {
+        return;
+      }
       const commentGroupMorph = await resource('part://CommentGroupMorphMockup/comment group morph master').read();
       await commentGroupMorph.initialize(morph);
-      if (commentsForMorphExpanded[morph.id] != undefined) {
-        commentGroupMorph.isExpanded = commentsForMorphExpanded[morph.id];
+      if (morph.id in commentGroupExpandedState) {
+        commentGroupMorph.isExpanded = commentGroupExpandedState[morph.id];
         commentGroupMorph.applyExpanded();
       } else {
-        commentsForMorphExpanded[morph.id] = true;
+        commentGroupExpandedState[morph.id] = true;
       }
       commentGroupMorphs.push(commentGroupMorph);
     }));
@@ -103,8 +106,8 @@ export class CommentBrowser extends Window {
   }
 
   removeCommentIndicators () {
-    // Comment Indicators (little icons and morphs that show that they have comments) are created by the CommentBrowser. They have to be removed by the CommentBrowser as well.
-    this.commentIndicators.forEach((commentIndicator) => commentIndicator.remove());
+    // comment indicators are referenced in comment groups
+    this.containerLayout.submorphs.forEach((commentGroup) => commentGroup.removeCommentIndicators());
   }
 
   getCommentMorphForComment (comment, referencedMorph) {
