@@ -14,6 +14,7 @@ import { connect, signal, disconnect, disconnectAll, once } from 'lively.binding
 
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from './drag-guides.js';
 import { resource } from 'lively.resources';
+import { show } from './markers.js';
 
 const haloBlue = Color.rgb(23, 160, 251);
 const componentAccent = Color.magenta;
@@ -1233,6 +1234,68 @@ class ComponentHaloItem extends HaloItem {
     world.showHaloFor(target);
   }
 
+  async checkForDuplicateNamesInHierarchy () {
+    const target = this.halo.target;
+    const world = this.world();
+    const nameGroups = arr.groupBy(target.withAllSubmorphsSelect(m => m != target && !target.master), m => m.name);
+    const defaultStyle = { fontWeight: 'normal', fontSize: 16 };
+    // initial warn to allow the user to cancel the component conversion
+    if (Object.values(nameGroups).find(ms => ms.length > 1)) {
+      const numberOfAmbigousMorphs = arr.sum(Object.values(nameGroups).filter(ms => ms.length > 1).map(ms => ms.length));
+      const canProceed = await world.confirm([
+        'Ambigous Names in Submorph Hierarchy  ', {}, ...Icon.textAttribute('exclamation-triangle', { fontColor: Color.rgb(230, 126, 34), fontSize: 30, lineHeight: '40px' }),
+        `\nThe morph you are about to turn into a component has ${numberOfAmbigousMorphs} morphs within its submorph hierarchy, that have ambigous names. This can lead to incorrect applications of style properties when you create derived instances from this component.\n\n`, { ...defaultStyle, textAlign: 'left' },
+        'Usually ambigous names are caused if your component is in some kind of intermittent state, where it already displays an example state or code has run that automatically created interface elements. This can be fixed by resetting the submorphs of this morph, usually by implementing a ', { ...defaultStyle, textAlign: 'left', fontStyle: 'italic' }, 'reset()', { ...defaultStyle, fontStyle: 'italic', fontFamily: 'IBM Plex Mono' }, ' routine you can invoke to put the morph into some kind of "neutral" state. Alternatively you can go ahead and rename the duplicate morphs to have proper unique names. If you have a hard time giving the conflicting morphs appropriate names, this can be an indication that the component you are declaring is too large, and you need to decompose your component into subcomponents further.', { ...defaultStyle, textAlign: 'left', fontStyle: 'italic' }
+      ], {
+        width: 600,
+        confirmLabel: 'PROCEED TO RENAME',
+        rejectLabel: 'CANCEL',
+        align: 'left'
+      });
+      if (!canProceed) return;
+    }
+
+    for (const name in nameGroups) {
+      if (nameGroups[name].length < 2) continue;
+      let nonUniqueMorphs = nameGroups[name];
+      while (nonUniqueMorphs.length > 1) {
+        const morphToBeRenamed = nonUniqueMorphs[0];
+        // morphToBeRenamed = that
+        show(morphToBeRenamed, true);
+        const newName = await world.prompt([
+          'Name Collision\n', {},
+          'The name of\n', defaultStyle,
+          morphToBeRenamed.toString(), {
+            ...defaultStyle, fontStyle: 'italic', fontWeight: 'bold'
+          },
+          '\nis not unique within the submorph hierachy of\n', { ...defaultStyle },
+          target.name, { ...defaultStyle, fontStyle: 'italic', fontWeight: 'bold' },
+          `\nThere ${nonUniqueMorphs.length > 2 ? 'are ' + (nonUniqueMorphs.length - 1) + ' other morphs' : 'is one other morph'} with the exact same name located in this component.`, defaultStyle,
+          ' Duplicate names can cause errors when applying styles to derived morphs of this master component, so it is essential that there is no name ambiguity. Please enter a new name for this or the other conflicting morphs:', defaultStyle
+        ], {
+          input: morphToBeRenamed.name,
+          lineWrapping: true,
+          width: 500,
+          fontSize: 12,
+          rejectLabel: 'IGNORE',
+          confirmLabel: 'RENAME',
+          errorMessage: 'Provided name is not unique',
+          validate: (val) => !Object.keys(nameGroups).includes(val)
+        });
+        signal(world, 'hideMarkers');
+        // remove the indicator
+        if (newName) morphToBeRenamed.name = newName;
+        if (newName in nameGroups) continue;
+        else if (!newName) {
+          nonUniqueMorphs = arr.rotate(nonUniqueMorphs);
+          continue; // force rename
+        }
+        arr.remove(nonUniqueMorphs, morphToBeRenamed);
+      }
+    }
+    return true;
+  }
+
   async onMouseDown () {
     const target = this.halo.target;
     const toBeComponent = !target.isComponent;
@@ -1255,8 +1318,9 @@ class ComponentHaloItem extends HaloItem {
       if (!newName) return;
       target.name = newName;
     }
-    target.isComponent = toBeComponent;
-    this.updateComponentIndicator();
+    target.isComponent = toBeComponent && await this.checkForDuplicateNamesInHierarchy();
+    if (!this.world()) target.world().showHaloFor(target); // halo got disposed
+    else this.updateComponentIndicator();
   }
 }
 
