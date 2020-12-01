@@ -7,8 +7,13 @@ import { connect } from 'lively.bindings';
 import { CommentIndicator } from './commentIndicator.js';
 
 let instance;
+const commentsForMorphExpanded = {};
 
 export class CommentBrowser extends Window {
+  static toggleCommentGroupMorphExpandedFor (morph) {
+    commentsForMorphExpanded[morph.id] = !commentsForMorphExpanded[morph.id];
+  }
+
   static close () {
     instance.close();
   }
@@ -21,9 +26,9 @@ export class CommentBrowser extends Window {
     return instance;
   }
 
-  static update () {
+  static async update () {
     if (CommentBrowser.isOpen()) {
-      instance.updateCommentMorphs();
+      await instance.refreshCommentGroupMorphs();
     }
   }
 
@@ -44,7 +49,7 @@ export class CommentBrowser extends Window {
 
   initializeExtents () {
     this.height = ($world.height - $world.getSubmorphNamed('lively top bar').height);
-    this.width = 275; // perhaps use width of comment morph?
+    this.width = 280; // perhaps use width of comment morph?
 
     this.position = pt($world.width - this.width, $world.getSubmorphNamed('lively top bar').height);
 
@@ -80,52 +85,26 @@ export class CommentBrowser extends Window {
     instance = undefined;
   }
 
-  getCommentsInWorld () {
-    const commentTuples = [];
-    $world.withAllSubmorphsDo((morph) => {
-      morph.comments.forEach((comment) =>
-        commentTuples.push({
-          comment: comment,
-          morph: morph
-        })
-      );
-    });
-    return commentTuples;
-  }
-
-  getHeadingMorph (referenceMorph) {
-    const labelHolder = new Morph();
-    const morphLabel = new Label();
-    morphLabel.textString = referenceMorph.name;
-    morphLabel.fontWeight = 'bolder';
-    labelHolder.addMorph(morphLabel);
-    return labelHolder;
-  }
-
-  async generateCommentMorphs (commentList) {
-    const commentMorphs = [];
-    let lastMorph;
-    await Promise.all(commentList.map(async (commentTuple) => {
-      const commentMorph = await resource('part://CommentComponents/comment morph master').read();
-      if (lastMorph != commentTuple.morph) {
-        commentMorphs.push(this.getHeadingMorph(commentTuple.morph));
-        lastMorph = commentTuple.morph;
+  async refreshCommentGroupMorphs () {
+    const commentGroupMorphs = [];
+    await Promise.all($world.withAllSubmorphsDo(async (morph) => {
+      if (morph.comments.length == 0) { return; }
+      const commentGroupMorph = await resource('part://CommentGroupMorphMockup/comment group morph master').read();
+      await commentGroupMorph.initialize(morph);
+      if (commentsForMorphExpanded[morph.id] != undefined) {
+        commentGroupMorph.isExpanded = commentsForMorphExpanded[morph.id];
+        commentGroupMorph.applyExpanded();
+      } else {
+        commentsForMorphExpanded[morph.id] = true;
       }
-      commentMorph.initialize(commentTuple.comment, commentTuple.morph);
-      this.commentIndicators.push(CommentIndicator.for(commentTuple.morph, commentTuple.comment));
-      commentMorphs.push(commentMorph);
+      commentGroupMorphs.push(commentGroupMorph);
     }));
-    return commentMorphs;
+    this.containerLayout.submorphs = commentGroupMorphs;
   }
-
+  
   removeCommentIndicators () {
     // Comment Indicators (little icons and morphs that show that they have comments) are created by the CommentBrowser. They have to be removed by the CommentBrowser as well.
     this.commentIndicators.forEach((commentIndicator) => commentIndicator.remove());
-  }
-
-  async updateCommentMorphs () {
-    const commentMorphs = await this.generateCommentMorphs(this.getCommentsInWorld());
-    this.containerLayout.submorphs = commentMorphs;
   }
 
   getCommentMorphForComment (comment, referencedMorph) {

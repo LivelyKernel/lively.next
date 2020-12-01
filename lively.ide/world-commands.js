@@ -1384,7 +1384,7 @@ const commands = [
         return;
       }
       new CommentBrowser();
-      await CommentBrowser.instance.updateCommentMorphs();
+      await CommentBrowser.instance.refreshCommentGroupMorphs();
     }
   }
 

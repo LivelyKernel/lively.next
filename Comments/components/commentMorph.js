@@ -1,6 +1,56 @@
-import { Morph, Label } from 'lively.morphic';
+import { Morph, Icon, Label } from 'lively.morphic';
 import { pt, Rectangle } from 'lively.graphics';
 import { connect } from 'lively.bindings';
+import { resource } from 'lively.resources';
+import { CommentBrowser } from './commentBrowser.js';
+
+export class CommentGroupMorph extends Morph {
+  async initialize (referenceMorph) {
+    this.ui = {
+      groupNameLabel: this.get('group name label'),
+      commentMorphContainer: this.get('comment morph container'),
+      header: this.get('header'),
+      collapseIndicator: this.get('collapse indicator')
+    };
+    connect(this.ui.header, 'onMouseDown', this, 'toggleExpanded');
+    this.referenceMorph = referenceMorph;
+    await this.refreshCommentMorphs();
+    this.ui.groupNameLabel.textString = this.referenceMorph.name;
+    this.isExpanded = true;
+  }
+
+  async getCommentMorphs (comments) {
+    const commentMorphs = [];
+    await Promise.all(comments.map(async (comment) => {
+      const commentMorph = await resource('part://CommentComponents/comment morph master').read();
+      commentMorph.initialize(comment, this.referenceMorph);
+      commentMorphs.push(commentMorph);
+    }));
+    return commentMorphs;
+  }
+
+  async refreshCommentMorphs () {
+    const commentMorphs = await this.getCommentMorphs(this.referenceMorph.comments);
+    this.ui.commentMorphContainer.submorphs = commentMorphs;
+  }
+
+  applyExpanded () {
+    Icon.setIcon(this.ui.collapseIndicator, this.isExpanded ? 'caret-down' : 'caret-right');
+    if (!this.isExpanded) {
+      this.ui.commentMorphContainer.submorphs = [];
+      // should not be necessary to set extent manually, but layout doesn't change it automatically
+      this.ui.commentMorphContainer.extent = pt(0, 0);
+    } else {
+      this.refreshCommentMorphs();
+    }
+  }
+
+  toggleExpanded () {
+    CommentBrowser.toggleCommentGroupMorphExpandedFor(this.referenceMorph);
+    this.isExpanded = !this.isExpanded;
+    this.applyExpanded();
+  }
+}
 
 export class CommentMorph extends Morph {
   static get properties () {
