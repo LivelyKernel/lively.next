@@ -300,6 +300,8 @@ export class TextPrompt extends AbstractPrompt {
     return {
       lineWrapping: { defaultValue: true },
       errorMessage: { defaultValue: 'Invalid Input' },
+      confirmLabel: { defaultValue: 'OK' },
+      rejectLabel: { defaultValue: 'CANCEL' },
       validate: {
         serialize: false,
         initialize () {
@@ -342,8 +344,8 @@ export class TextPrompt extends AbstractPrompt {
 
     if (!this.lineWrapping) { this.width = Math.max(this.width, title.textBounds().width + 50); }
 
-    const okButton = this.addNamed('ok button', { type: 'button', label: 'OK' });
-    const cancelButton = this.addNamed('cancel button', { type: 'button', label: 'CANCEL' });
+    const okButton = this.addNamed('ok button', { type: 'button', label: this.confirmLabel });
+    const cancelButton = this.addNamed('cancel button', { type: 'button', label: this.rejectLabel });
 
     this.addNamed('button wrapper', {
       submorphs: [okButton, cancelButton]
@@ -404,7 +406,6 @@ export class TextPrompt extends AbstractPrompt {
 
   focus () { this.getSubmorphNamed('input').focus(); }
 }
-
 
 export class EditPrompt extends AbstractPrompt {
   static async example () {
