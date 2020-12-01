@@ -92,7 +92,7 @@ class DraggedProp extends Morph {
       target = target.morphBeneath(handPosition);
     }
     while (hiddenMorph = [target, ...target.ownerChain()].find(m => !m.visible)) {
-      target = hiddenMorph = hiddenMorph.morphBeneath(handPosition);
+      target = hiddenMorph = target.morphBeneath(handPosition);
     }
     if (target != this.currentTarget) {
       this.currentTarget = target;
