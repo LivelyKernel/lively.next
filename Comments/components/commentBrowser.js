@@ -18,11 +18,11 @@ export class CommentBrowser extends Window {
     instance.close();
   }
 
-  static isOpen () {
+  static get instance () {
     return instance;
   }
 
-  static get instance () {
+  static isOpen () {
     return instance;
   }
 
@@ -37,11 +37,11 @@ export class CommentBrowser extends Window {
   constructor () {
     if (!instance) {
       super();
+      this.commentIndicators = [];
       this.initializeContainers();
       this.initializeExtents();
       this.relayoutWindow();
       $world.addMorph(this);
-      this.commentIndicators = [];
       instance = this;
     }
     return instance;
@@ -101,7 +101,7 @@ export class CommentBrowser extends Window {
     }));
     this.containerLayout.submorphs = commentGroupMorphs;
   }
-  
+
   removeCommentIndicators () {
     // Comment Indicators (little icons and morphs that show that they have comments) are created by the CommentBrowser. They have to be removed by the CommentBrowser as well.
     this.commentIndicators.forEach((commentIndicator) => commentIndicator.remove());

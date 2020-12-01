@@ -3,6 +3,7 @@ import { pt, Rectangle } from 'lively.graphics';
 import { connect } from 'lively.bindings';
 import { resource } from 'lively.resources';
 import { CommentBrowser } from './commentBrowser.js';
+import { CommentIndicator } from './commentIndicator.js';
 
 export class CommentGroupMorph extends Morph {
   async initialize (referenceMorph) {
@@ -23,6 +24,7 @@ export class CommentGroupMorph extends Morph {
     const commentMorphs = [];
     await Promise.all(comments.map(async (comment) => {
       const commentMorph = await resource('part://CommentComponents/comment morph master').read();
+      CommentBrowser.instance.commentIndicators.push(CommentIndicator.for(this.referenceMorph, comment));
       commentMorph.initialize(comment, this.referenceMorph);
       commentMorphs.push(commentMorph);
     }));
