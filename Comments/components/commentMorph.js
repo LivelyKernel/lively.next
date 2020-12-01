@@ -55,6 +55,14 @@ export class CommentGroupMorph extends Morph {
     return commentMorphs;
   }
 
+  async addCommentMorph (comment) {
+    const commentMorph = await resource('part://CommentComponents/comment morph master').read();
+    this.commentIndicators.push(CommentIndicator.for(this.referenceMorph, comment));
+    commentMorph.initialize(comment, this.referenceMorph);
+    this.ui.commentMorphContainer.addMorph(commentMorph);
+    this.ui.commentMorphContainer.extent = pt(0, 0);
+  }
+
   async refreshCommentMorphs () {
     const commentMorphs = await this.getCommentMorphs(this.referenceMorph.comments);
     this.ui.commentMorphContainer.submorphs = commentMorphs;

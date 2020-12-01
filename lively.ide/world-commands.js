@@ -1383,8 +1383,8 @@ const commands = [
         CommentBrowser.close();
         return;
       }
+
       new CommentBrowser();
-      await CommentBrowser.instance.refreshCommentGroupMorphs();
     }
   }
 
