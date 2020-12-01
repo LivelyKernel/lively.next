@@ -109,7 +109,7 @@ export class CommentBrowser extends Window {
 
   getCommentMorphForComment (comment, referencedMorph) {
     // currently comments are referenced by timestamp and morph. We assume that no two comments have the same timestamp and morph.
-    // This may be changed to a id
+    // This may be changed to an id
     let result;
     this.withAllSubmorphsDo((submorph) => {
       if (submorph.comment && submorph.referenceMorph) {

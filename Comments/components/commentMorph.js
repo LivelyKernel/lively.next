@@ -68,26 +68,58 @@ export class CommentMorph extends Morph {
 
   constructor () {
     super();
-    this.ui = {
-      dateLabel: this.get('date label'),
-      commentTextLabel: this.get('comment text field'),
-      deleteButton: this.get('delete button')
-    };
   }
 
   initialize (comment, referenceMorph) {
     this.comment = comment;
     this.referenceMorph = referenceMorph;
+
+    this.ui = {
+      dateLabel: this.get('date label'),
+      commentTextField: this.get('comment text field'),
+      deleteButton: this.get('delete button'),
+      editSaveButton: this.get('edit save button')
+    };
+
     const [date, time] = new Date(this.comment.timestamp).toLocaleString('de-DE', { hour12: false }).split(', ');
-    this.get('date label').textString = date + ' ' + time;
-    this.get('comment text field').textString = this.comment.text;
+    this.ui.dateLabel.textString = date + ' ' + time;
+    this.ui.commentTextField.textString = this.comment.text;
+    this.editSaveButtonState = 'edit';
+    this.ui.commentTextField.readOnly = true;
+  }
+
+  toggleEditSaveButton () {
+    if (this.editSaveButtonState === 'edit') {
+      Icon.setIcon(this.ui.editSaveButton, 'save');
+      this.editSaveButtonState = 'save';
+      this.ui.commentTextField.readOnly = false;
+      this.ui.editSaveButton.padding.width += 1; // Icon widths are off by one
+    } else {
+      Icon.setIcon(this.ui.editSaveButton, 'pencil-alt');
+      this.editSaveButtonState = 'edit';
+      this.ui.commentTextField.readOnly = true;
+      this.textChanged();
+      this.ui.editSaveButton.padding.width -= 1;
+    }
+  }
+
+  textChanged () {
+    const text = this.ui.commentTextField.textString;
+    this.referenceMorph.comments.forEach((comment) => {
+      if (comment.timestamp === this.comment.timestamp) {
+        comment.text = text;
+        return true; // Break
+      }
+    });
   }
 
   onMouseDown (evt) {
     super.onMouseDown(evt);
 
-    if (evt.targetMorph === this.get('delete button')) {
+    if (evt.targetMorph === this.ui.deleteButton) {
       this.referenceMorph.removeComment(this.comment);
+    } else if (evt.targetMorph === this.ui.editSaveButton) {
+      this.toggleEditSaveButton();
     } else if (this.referenceMorph) {
       this.referenceMorph.show();
     }
