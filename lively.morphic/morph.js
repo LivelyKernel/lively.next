@@ -1724,6 +1724,14 @@ export class Morph {
   openInWorldNear (pos, optWorld) {
     const world = optWorld || this.world() || this.env.world;
     if (!world) return this;
+    if (this.master) {
+      this.opacity = 0;
+      this.master.whenApplied().then(async () => {
+        await this.whenRendered();
+        this.opacity = 1;
+        this.center = pos;
+      });
+    }
     this.center = pos;
     this.setBounds(world.visibleBounds().insetBy(50).translateForInclusion(this.bounds()));
     return this.openInWorld(this.position);
