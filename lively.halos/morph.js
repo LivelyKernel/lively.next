@@ -417,6 +417,7 @@ export default class Halo extends Morph {
   }
 
   toggleMorphHighlighter (active, target, showLayout = false) {
+    if (!target) return;
     if (target.onHaloGrabover) {
       target.onHaloGrabover(active);
       return;
@@ -1237,7 +1238,11 @@ class ComponentHaloItem extends HaloItem {
   async checkForDuplicateNamesInHierarchy () {
     const target = this.halo.target;
     const world = this.world();
-    const nameGroups = arr.groupBy(target.withAllSubmorphsSelect(m => m != target && !target.master), m => m.name);
+    const morphsInHierarchy = [];
+    this.withAllSubmorphsDoExcluding(m => {
+      morphsInHierarchy.push(m);
+    }, m => m != target && !target.master);
+    const nameGroups = arr.groupBy(morphsInHierarchy, m => m.name);
     const defaultStyle = { fontWeight: 'normal', fontSize: 16 };
     // initial warn to allow the user to cancel the component conversion
     if (Object.values(nameGroups).find(ms => ms.length > 1)) {
