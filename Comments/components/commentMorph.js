@@ -77,6 +77,7 @@ export class CommentMorph extends Morph {
 
   constructor () {
     super();
+    this.isInEditMode = false;
   }
 
   setDate () {
@@ -98,8 +99,7 @@ export class CommentMorph extends Morph {
     }
 
     this.ui.commentTextField.textString = this.comment.text;
-    this.editSaveButtonState = 'edit';
-    this.ui.commentTextField.readOnly = true;
+    this.setDefaultUI();
   }
 
   initialize (comment, referenceMorph) {
@@ -111,43 +111,53 @@ export class CommentMorph extends Morph {
   }
 
   saveComment () {
-    this.leaveEditMode();
-    this.textChanged();
+    this.comment.text = this.ui.commentTextField.textString;
+    this.setDefaultUI();
   }
 
-  leaveEditMode () {
+  abortCommentEdit () {
+    this.ui.commentTextField.textString = this.comment.text;
+    this.setDefaultUI();
+  }
+
+  setDefaultUI () {
     Icon.setIcon(this.ui.editSaveButton, 'pencil-alt');
-    this.editSaveButtonState = 'edit';
-    this.ui.commentTextFieldreadOnly = true;
-    this.ui.commentTextFieldfill = this.comment.isResolved() ? Color.rgb(216, 216, 216) : Color.rgb(240, 243, 244);
-    this.ui.editSaveButton.padding.width -= 1;
+
+    // Edit/Save Icon widths are off by one, revert the additional padding from setEditUI
+    if (this.isInEditMode) this.ui.editSaveButton.padding.width -= 1;
+
+    this.isInEditMode = false;
+
+    this.ui.commentTextField.readOnly = true;
+    this.ui.commentTextField.fill =
+      this.comment.isResolved() ? Color.rgb(216, 216, 216) : Color.rgb(240, 243, 244);
+    this.ui.commentTextField.borderStyle = 'none';
   }
 
-  enterEditMode () {
+  setEditUI () {
     Icon.setIcon(this.ui.editSaveButton, 'save');
-    this.editSaveButtonState = 'save';
+
+    // Edit/Save Icon widths are off by one, will be reverted in setDefaultUI
+    if (!this.isInEditMode) this.ui.editSaveButton.padding.width += 1;
+
+    this.isInEditMode = true;
+
     this.ui.commentTextField.readOnly = false;
-    this.ui.commentTextField.fill = new Color('white');
+    this.ui.commentTextField.fill = Color.white;
+    this.ui.commentTextField.borderStyle = 'solid';
     this.ui.commentTextField.focus();
-    this.ui.editSaveButton.padding.width += 1; // Icon widths are off by one
   }
 
-  toggleEditSaveButton () {
-    this.isInEditMode() ? this.enterEditMode() : this.saveComment();
-  }
-
-  isInEditMode () {
-    return this.editSaveButtonState === 'edit';
+  toggleEditMode () {
+    this.isInEditMode ? this.saveComment() : this.setEditUI();
   }
 
   toggleResolveStatus () {
+    this.abortCommentEdit();
     this.comment.toggleResolveStatus();
     this.fill = this.comment.isResolved() ? Color.rgb(216, 216, 216) : Color.rgb(240, 243, 244);
-  }
-
-  textChanged () {
-    const text = this.ui.commentTextField.textString;
-    this.comment.text = text;
+    this.ui.commentTextField.fill =
+      this.comment.isResolved() ? Color.rgb(216, 216, 216) : Color.rgb(240, 243, 244);
   }
 
   onMouseDown (evt) {
@@ -156,10 +166,10 @@ export class CommentMorph extends Morph {
     if (evt.targetMorph === this.ui.deleteButton) {
       this.referenceMorph.removeComment(this.comment);
     } else if (evt.targetMorph === this.ui.editSaveButton) {
-      this.toggleEditSaveButton();
+      this.toggleEditMode();
     } else if (evt.targetMorph === this.ui.resolveButton) {
       this.toggleResolveStatus();
-    } else if (this.referenceMorph && this.isInEditMode()) {
+    } else if (this.referenceMorph && !this.isInEditMode) {
       this.referenceMorph.show();
     }
   }

@@ -1,5 +1,6 @@
 import { newUUID } from 'lively.lang/string.js';
 import { pt } from 'lively.graphics';
+
 export class Comment {
   constructor (text) {
     this.text = text;

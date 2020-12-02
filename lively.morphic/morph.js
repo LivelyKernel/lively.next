@@ -21,7 +21,6 @@ import { copyMorph } from './serialization.js';
 import { ComponentPolicy } from './style-guide.js';
 
 import { CommentBrowser } from 'Comments/components/commentBrowser.js';
-import { newUUID } from 'lively.lang/string.js';
 import { Comment } from 'Comments/components/comment.js';
 
 const defaultCommandHandler = new CommandHandler();
