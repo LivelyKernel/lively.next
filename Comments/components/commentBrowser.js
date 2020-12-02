@@ -7,15 +7,7 @@ import { CommentMorph, CommentIndicator } from 'Comments';
 
 let instance;
 
-// Store for each morph if its corresponding comment group is expanded
-const commentGroupExpandedState = {};
-const commentGroups = {}; // dict Morph -> Comment group morph
-
 export class CommentBrowser extends Window {
-  static toggleCommentGroupMorphExpandedFor (morph) {
-    commentGroupExpandedState[morph.id] = !commentGroupExpandedState[morph.id];
-  }
-
   static close () {
     instance.close();
   }
@@ -28,8 +20,8 @@ export class CommentBrowser extends Window {
     return instance && instance.visible;
   }
 
-  static async updateCommentForMorph (updatedComment, morph) {
-    await instance.updateCommentForMorph(updatedComment, morph);
+  static async removeCommentForMorph (updatedComment, morph) {
+    await instance.removeCommentForMorph(updatedComment, morph);
   }
 
   static async addCommentForMorph (comment, morph) {
@@ -48,10 +40,19 @@ export class CommentBrowser extends Window {
       this.initializeCommentGroupMorphs();
       $world.addMorph(this);
       instance = this;
+
+      this.commentGroups = {}; // dict Morph id -> Comment group morph
     } else {
       instance.visible = true;
+      this.toggleHalos();
     }
     return instance;
+  }
+
+  toggleHalos () {
+    this.withAllSubmorphsDo((submorph) => {
+      submorph.halosEnabled = !submorph.halosEnabled;
+    });
   }
 
   initializeExtents () {
@@ -89,7 +90,8 @@ export class CommentBrowser extends Window {
       topbar.uncolorCommentBrowserButton();
     }
     this.removeCommentIndicators();
-    instance.visible = false;
+    this.visible = false;
+    this.toggleHalos();
   }
 
   async initializeCommentGroupMorphs () {
@@ -98,35 +100,36 @@ export class CommentBrowser extends Window {
       if (morph.comments.length == 0) {
         return;
       }
-      const commentGroupMorph = await resource('part://CommentGroupMorphMockup/comment group morph master').read();
-      await commentGroupMorph.initialize(morph);
-      if (morph.id in commentGroupExpandedState) {
-        commentGroupMorph.isExpanded = commentGroupExpandedState[morph.id];
-        commentGroupMorph.applyExpanded();
-      } else {
-        commentGroupExpandedState[morph.id] = true;
-      }
-      commentGroupMorphs.push(commentGroupMorph);
-      commentGroups[morph] = commentGroupMorph;
+      morph.comments.forEach(async (comment) => {
+        await this.addCommentForMorph(comment, morph);
+      });
     }));
-    this.containerLayout.submorphs = commentGroupMorphs;
-  }
-
-  updateCommentForMorph (updatedComment, morph) {
-
   }
 
   async addCommentForMorph (comment, morph) {
-    if (morph in commentGroups) {
-      await commentGroups[morph].addCommentMorph(comment);
-      commentGroups[morph].relayout();
+    if (morph.id in this.commentGroups) {
+      await this.commentGroups[morph.id].addCommentMorph(comment);
+      this.commentGroups[morph.id].relayout();
     } else {
       const commentGroupMorph = await resource('part://CommentGroupMorphMockup/comment group morph master').read();
       await commentGroupMorph.initialize(morph);
-      commentGroupExpandedState[morph.id] = true;
-      commentGroups[morph] = commentGroupMorph;
+      this.commentGroups[morph.id] = commentGroupMorph;
+      await this.commentGroups[morph.id].addCommentMorph(comment);
       this.containerLayout.addMorph(commentGroupMorph);
     }
+  }
+
+  async removeCommentForMorph (comment, morph) {
+    const group = this.commentGroups[morph.id];
+    await group.removeCommentMorph(comment);
+    if (group.getCommentMorphCount() === 0) {
+      this.removeCommentGroup(group);
+    }
+  }
+
+  removeCommentGroup (group) {
+    delete this.commentGroups[group.referenceMorph.id];
+    group.remove();
   }
 
   removeCommentIndicators () {

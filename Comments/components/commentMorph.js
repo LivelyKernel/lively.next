@@ -24,14 +24,12 @@ export class CommentGroupMorph extends Morph {
 
   async initialize (referenceMorph) {
     this.referenceMorph = referenceMorph;
-    this.initializeUI();
-    this.applyExpanded();
-
+    await this.initializeUI();
     this.commentIndicators = [];
-    await this.refreshCommentMorphs();
+    this.isExpanded = true;
   }
 
-  initializeUI () {
+  async initializeUI () {
     this.ui = {
       groupNameLabel: this.get('group name label'),
       commentMorphContainer: this.get('comment morph container'),
@@ -43,44 +41,45 @@ export class CommentGroupMorph extends Morph {
     this.ui.groupNameLabel.textString = this.referenceMorph.name;
   }
 
-  async getCommentMorphs (comments) {
-    const commentMorphs = [];
-    await Promise.all(comments.map(async (comment) => {
-      const commentMorph = await resource('part://CommentComponents/comment morph master').read();
-      this.commentIndicators.push(CommentIndicator.for(this.referenceMorph, comment));
-      commentMorph.initialize(comment, this.referenceMorph);
-      commentMorphs.push(commentMorph);
-    }));
-    this.ui.commentCountLabel.textString = commentMorphs.length;
-    return commentMorphs;
-  }
-
   async addCommentMorph (comment) {
     const commentMorph = await resource('part://CommentComponents/comment morph master').read();
     this.commentIndicators.push(CommentIndicator.for(this.referenceMorph, comment));
     commentMorph.initialize(comment, this.referenceMorph);
     this.ui.commentMorphContainer.addMorph(commentMorph);
     this.ui.commentMorphContainer.extent = pt(0, 0);
+    this.updateCommentCountLabel();
   }
 
-  async refreshCommentMorphs () {
-    const commentMorphs = await this.getCommentMorphs(this.referenceMorph.comments);
-    this.ui.commentMorphContainer.submorphs = commentMorphs;
+  updateCommentCountLabel () {
+    this.ui.commentCountLabel.textString = this.getCommentMorphCount();
+  }
+
+  getCommentMorphCount () {
+    return this.ui.commentMorphContainer.submorphs.length;
+  }
+
+  async removeCommentMorph (comment) {
+    this.ui.commentMorphContainer.submorphs.forEach((commentMorph) => {
+      if (commentMorph.comment.timestamp == comment.timestamp) {
+        commentMorph.remove();
+      }
+    });
+    this.updateCommentCountLabel();
   }
 
   applyExpanded () {
     Icon.setIcon(this.ui.collapseIndicator, this.isExpanded ? 'caret-down' : 'caret-right');
     if (!this.isExpanded) {
+      this.commentMorphCache = this.ui.commentMorphContainer.submorphs;
       this.ui.commentMorphContainer.submorphs = [];
       // it should not be necessary to set extent manually, but layout doesn't change it automatically
       this.ui.commentMorphContainer.extent = pt(0, 0);
     } else {
-      this.refreshCommentMorphs();
+      this.ui.commentMorphContainer.submorphs = this.commentMorphCache;
     }
   }
 
   toggleExpanded () {
-    CommentBrowser.toggleCommentGroupMorphExpandedFor(this.referenceMorph);
     this.isExpanded = !this.isExpanded;
     this.applyExpanded();
   }
