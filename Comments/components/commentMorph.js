@@ -1,5 +1,5 @@
 import { Morph, Icon, Label } from 'lively.morphic';
-import { pt, Rectangle } from 'lively.graphics';
+import { pt, Color, Rectangle } from 'lively.graphics';
 import { connect } from 'lively.bindings';
 import { resource } from 'lively.resources';
 import { CommentBrowser } from './commentBrowser.js';
@@ -89,6 +89,7 @@ export class CommentMorph extends Morph {
       dateLabel: this.get('date label'),
       commentTextField: this.get('comment text field'),
       deleteButton: this.get('delete button'),
+      resolveButton: this.get('resolve button'),
       editSaveButton: this.get('edit save button')
     };
 
@@ -129,6 +130,20 @@ export class CommentMorph extends Morph {
     }
   }
 
+  toggleResolve () {
+    this.referenceMorph.comments.forEach((comment) => {
+      if (comment.timestamp === this.comment.timestamp) { // Maybe use ids in comments / implement an equal method for a comment class
+        comment.resolved = !comment.resolved;
+        if (comment.resolved === true) {
+          this.fill = Color.rgb(216, 216, 216);
+        } else {
+          this.fill = Color.rgb(240, 243, 244);
+        }
+        return true; // Break
+      }
+    });
+  }
+
   textChanged () {
     const text = this.ui.commentTextField.textString;
     this.referenceMorph.comments.forEach((comment) => {
@@ -146,6 +161,8 @@ export class CommentMorph extends Morph {
       this.referenceMorph.removeComment(this.comment);
     } else if (evt.targetMorph === this.ui.editSaveButton) {
       this.toggleEditSaveButton();
+    } else if (evt.targetMorph === this.ui.resolveButton) {
+      this.toggleResolve();
     } else if (this.referenceMorph) {
       this.referenceMorph.show();
     }
