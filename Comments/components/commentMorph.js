@@ -93,6 +93,10 @@ export class CommentMorph extends Morph {
       editSaveButton: this.get('edit save button')
     };
 
+    if (this.comment.isResolved()) {
+      this.fill = Color.rgb(216, 216, 216);
+    }
+
     this.ui.commentTextField.textString = this.comment.text;
     this.editSaveButtonState = 'edit';
     this.ui.commentTextField.readOnly = true;
@@ -107,51 +111,43 @@ export class CommentMorph extends Morph {
   }
 
   saveComment () {
-    Icon.setIcon(this.ui.editSaveButton, 'pencil-alt');
-    this.editSaveButtonState = 'edit';
-    this.ui.commentTextField.readOnly = true;
-    this.ui.editSaveButton.padding.width -= 1;
-
+    this.leaveEditMode();
     this.textChanged();
   }
 
-  editComment () {
+  leaveEditMode () {
+    Icon.setIcon(this.ui.editSaveButton, 'pencil-alt');
+    this.editSaveButtonState = 'edit';
+    this.ui.commentTextFieldreadOnly = true;
+    this.ui.commentTextFieldfill = this.comment.isResolved() ? Color.rgb(216, 216, 216) : Color.rgb(240, 243, 244);
+    this.ui.editSaveButton.padding.width -= 1;
+  }
+
+  enterEditMode () {
     Icon.setIcon(this.ui.editSaveButton, 'save');
     this.editSaveButtonState = 'save';
     this.ui.commentTextField.readOnly = false;
+    this.ui.commentTextField.fill = new Color('white');
+    this.ui.commentTextField.focus();
     this.ui.editSaveButton.padding.width += 1; // Icon widths are off by one
   }
 
   toggleEditSaveButton () {
-    if (this.editSaveButtonState === 'edit') {
-      this.editComment();
-    } else if (this.editSaveButtonState === 'save') {
-      this.saveComment();
-    }
+    this.isInEditMode() ? this.enterEditMode() : this.saveComment();
   }
 
-  toggleResolve () {
-    this.referenceMorph.comments.forEach((comment) => {
-      if (comment.timestamp === this.comment.timestamp) { // Maybe use ids in comments / implement an equal method for a comment class
-        comment.resolved = !comment.resolved;
-        if (comment.resolved === true) {
-          this.fill = Color.rgb(216, 216, 216);
-        } else {
-          this.fill = Color.rgb(240, 243, 244);
-        }
-        return true; // Break
-      }
-    });
+  isInEditMode () {
+    return this.editSaveButtonState === 'edit';
+  }
+
+  toggleResolveStatus () {
+    this.comment.toggleResolveStatus();
+    this.fill = this.comment.isResolved() ? Color.rgb(216, 216, 216) : Color.rgb(240, 243, 244);
   }
 
   textChanged () {
     const text = this.ui.commentTextField.textString;
-    this.referenceMorph.comments.forEach((comment) => {
-      if (comment.timestamp === this.comment.timestamp) { // Maybe use ids in comments / implement an equal method for a comment class
-        comment.text = text;
-        return true; // Break
-      }
-    });
+    this.comment.text = text;
   }
 
   onMouseDown (evt) {
@@ -162,8 +158,8 @@ export class CommentMorph extends Morph {
     } else if (evt.targetMorph === this.ui.editSaveButton) {
       this.toggleEditSaveButton();
     } else if (evt.targetMorph === this.ui.resolveButton) {
-      this.toggleResolve();
-    } else if (this.referenceMorph) {
+      this.toggleResolveStatus();
+    } else if (this.referenceMorph && this.isInEditMode()) {
       this.referenceMorph.show();
     }
   }

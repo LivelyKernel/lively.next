@@ -21,6 +21,8 @@ import { copyMorph } from './serialization.js';
 import { ComponentPolicy } from './style-guide.js';
 
 import { CommentBrowser } from 'Comments/components/commentBrowser.js';
+import { newUUID } from 'lively.lang/string.js';
+import { Comment } from 'Comments/components/comment.js';
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -2496,19 +2498,14 @@ export class Morph {
   // comments
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   addComment (commentText) {
-    const comment = {
-      text: commentText,
-      timestamp: new Date().getTime(),
-      position: pt(0, 0),
-      resolved: false
-    };
+    const comment = new Comment(commentText);
     this.comments.push(comment);
     CommentBrowser.update();
     return comment;
   }
 
   removeComment (commentToRemove) {
-    this.comments = this.comments.filter(comment => commentToRemove !== comment);
+    this.comments = this.comments.filter(comment => !commentToRemove.equals(comment));
     CommentBrowser.update();
   }
 

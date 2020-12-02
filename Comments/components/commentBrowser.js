@@ -111,19 +111,13 @@ export class CommentBrowser extends Window {
   }
 
   getCommentMorphForComment (comment, referencedMorph) {
-    // currently comments are referenced by timestamp and morph. We assume that no two comments have the same timestamp and morph.
-    // This may be changed to an id
-    let result;
     this.withAllSubmorphsDo((submorph) => {
       if (submorph.comment && submorph.referenceMorph) {
-        if (submorph.comment.timestamp === comment.timestamp &&
-          submorph.referenceMorph === referencedMorph) {
-          result = submorph;
-          return 0; // Return to break execution
+        if (submorph.comment.equals(comment)) {
+          return submorph;
         }
       }
     });
-    return result;
   }
 
   // named relayoutWindows instead of relayout() to not block respondsToVisibleWindow() implementation
