@@ -43,11 +43,22 @@ export class CommentGroupMorph extends Morph {
 
   async addCommentMorph (comment) {
     const commentMorph = await resource('part://CommentComponents/comment morph master').read();
-    this.commentIndicators.push(CommentIndicator.for(this.referenceMorph, comment));
+    const commentIndicator = CommentIndicator.for(this.referenceMorph, comment);
+    this.commentIndicators.push(commentIndicator);
     commentMorph.initialize(comment, this.referenceMorph);
     this.ui.commentMorphContainer.addMorph(commentMorph);
     this.ui.commentMorphContainer.extent = pt(0, 0);
     this.updateCommentCountLabel();
+  }
+
+  onOwnerChanged () {
+    // called when comment groups enter or exit the screen
+    super.onOwnerChanged();
+    if (CommentBrowser.isOpen()) {
+      this.showCommentIndicators();
+    } else {
+      this.hideCommentIndicators();
+    }
   }
 
   updateCommentCountLabel () {
@@ -84,8 +95,13 @@ export class CommentGroupMorph extends Morph {
     this.applyExpanded();
   }
 
-  removeCommentIndicators () {
-    this.commentIndicators.forEach((commentIndicator) => commentIndicator.remove());
+  showCommentIndicators () {
+    this.commentIndicators.forEach((commentIndicator) => $world.addMorph(commentIndicator));
+  }
+
+  hideCommentIndicators () {
+    // $world.setStatusMessage(this.commentIndicators);
+    this.commentIndicators.forEach((commentIndicator) => commentIndicator.delete());
   }
 }
 

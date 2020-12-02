@@ -30,6 +30,7 @@ export class CommentIndicator extends Label {
     this.padding = new Rectangle(0, 2, 4, 0);
     this.width = this.fontSize + this.padding.width;
     this.height = this.fontSize + this.padding.y;
+    this.isLayoutable = false;
     this.fontColor = Color.rgbHex('#f1c40f');
   }
 
@@ -60,6 +61,11 @@ export class CommentIndicator extends Label {
     const xRelative = (ownPosition.x - morphOrigin.x) / this.morph.width;
     const yRelative = (ownPosition.y - morphOrigin.y) / this.morph.height;
     return pt(xRelative, yRelative);
+  }
+
+  delete () {
+    disconnectAll(this);
+    this.fadeOut(1);
   }
 
   referenceMoving () {
