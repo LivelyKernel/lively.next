@@ -214,7 +214,7 @@ export default class EventDispatcher {
       clickedOnPosition: null,
       clickedOnMorph: null,
       clickCount: 0,
-      prevClick: null,
+      prevClick: {},
       draggedMorph: null,
       dragDelta: null,
       absDragDelta: null,
@@ -298,13 +298,12 @@ export default class EventDispatcher {
     return this;
   }
 
-  uninstallHandler(handler) {
+  uninstallHandler (handler) {
     const handlerToBeRemoved = this.handlerFuntions.find(({ type }) => type == handler);
-    if (handlerToBeRemoved)
-      handlerToBeRemoved.node.removeEventListener(handlerToBeRemoved.node, handlerToBeRemoved.fn, handlerToBeRemoved.capturing);
+    if (handlerToBeRemoved) { handlerToBeRemoved.node.removeEventListener(handlerToBeRemoved.node, handlerToBeRemoved.fn, handlerToBeRemoved.capturing); }
   }
 
-  uninstall() {
+  uninstall () {
     this.installed = false;
 
     const handlerFunctions = this.handlerFunctions;
