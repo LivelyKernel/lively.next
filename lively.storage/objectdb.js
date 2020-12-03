@@ -1283,6 +1283,7 @@ export var ObjectDBInterface = {
 
     let versions = await versionDB.getAll(versionQueryOpts), commitIds = [];
     for (let version of versions) {
+      if (!version) continue;
       if (version.deleted || version._deleted) continue;
       let {_id, refs} = version;
       if (_id.startsWith("_")) continue;
@@ -1293,7 +1294,7 @@ export var ObjectDBInterface = {
 
     let commits = await db.getCommitsWithIds(commitIds);
     if (!includeDeleted)
-      commits = commits.filter(ea => !ea.deleted);
+      commits = commits.filter(ea => ea && !ea.deleted);
     if (filterFn) {
       try {
         let fn = eval(`(${filterFn})`);
