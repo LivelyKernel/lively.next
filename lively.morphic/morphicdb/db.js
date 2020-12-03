@@ -27,12 +27,14 @@ const defaultServerURL = (typeof document !== 'undefined'
   ? document.location.origin : 'http://localhost:9001') + '/objectdb/';
 
 export function convertToSerializableCommit (commit) {
-  commit.__serialize__ = () => {
-    const { type, name, _id } = commit;
-    return {
-      __expr__: `({type: "${type}", name: "${name}", _id: "${_id}"})`
+  if (commit) {
+    commit.__serialize__ = () => {
+      const { type, name, _id } = commit;
+      return {
+        __expr__: `({type: "${type}", name: "${name}", _id: "${_id}"})`
+      };
     };
-  };
+  }
   return commit;
 }
 
