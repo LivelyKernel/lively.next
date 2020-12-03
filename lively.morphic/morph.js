@@ -3045,6 +3045,7 @@ export class PathPoint {
   }
 }
 
+
 export class Path extends Morph {
   static get properties () {
     return {
@@ -3073,6 +3074,7 @@ export class Path extends Morph {
 
       vertices: {
         defaultValue: [],
+        isStyleProp: true,
         after: ['isSmooth', 'borderWidth'],
         before: ['extent', 'origin'],
         type: 'Vertices',
@@ -3092,6 +3094,7 @@ export class Path extends Morph {
       endMarker: { defaultValue: null, type: 'Object' },
 
       endStyle: {
+        isStyleProp: true,
         type: 'Enum',
         values: ['butt', 'round', 'square'],
         defaultValue: 'butt'
@@ -3099,6 +3102,7 @@ export class Path extends Morph {
 
       drawnProportion: {
         type: 'Number',
+        isStyleProp: true,
         isFloat: true,
         min: -1,
         max: 1,
@@ -3107,6 +3111,7 @@ export class Path extends Morph {
 
       cornerStyle: {
         type: 'Enum',
+        isStyleProp: true,
         values: ['arcs', 'bevel', 'miter', 'miter-clip', 'round'],
         defaultValue: 'miter'
       },
@@ -3451,6 +3456,7 @@ export class Path extends Morph {
     return pt(x, y);
   }
 }
+
 
 export class Polygon extends Path {
   constructor (props) {
