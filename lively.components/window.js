@@ -169,27 +169,31 @@ export default class Window extends Morph {
   }
 
   relayoutWindowControls () {
-    const innerB = this.innerBounds();
-    const title = this.ui.windowTitle;
-    const resizer = this.ui.resizer;
-    const labelBounds = innerB.withHeight(25);
-    const header = this.ui.header;
-    const lastButtonOrWrapper = this.ui.windowControls;
-    const buttonOffset = lastButtonOrWrapper.bounds().right() + 3;
-    const minLabelBounds = labelBounds.withLeftCenter(pt(buttonOffset, labelBounds.height / 2));
+    try {
+      const innerB = this.innerBounds();
+      const title = this.ui.windowTitle;
+      const resizer = this.ui.resizer;
+      const labelBounds = innerB.withHeight(25);
+      const header = this.ui.header;
+      const lastButtonOrWrapper = this.ui.windowControls;
+      const buttonOffset = lastButtonOrWrapper.bounds().right() + 3;
+      const minLabelBounds = labelBounds.withLeftCenter(pt(buttonOffset, labelBounds.height / 2));
 
-    // resizer
-    resizer.bottomRight = innerB.bottomRight();
+      // resizer
+      resizer.bottomRight = innerB.bottomRight();
 
-    // targetMorph
-    if (!this.minimized && this.targetMorph && this.targetMorph.isLayoutable) this.targetMorph.setBounds(this.targetMorphBounds());
+      // targetMorph
+      if (!this.minimized && this.targetMorph && this.targetMorph.isLayoutable) this.targetMorph.setBounds(this.targetMorphBounds());
 
-    // title
-    title.textBounds().width < labelBounds.width - 2 * buttonOffset
-      ? (title.center = labelBounds.center())
-      : (title.leftCenter = minLabelBounds.leftCenter());
+      // title
+      title.textBounds().width < labelBounds.width - 2 * buttonOffset
+        ? (title.center = labelBounds.center())
+        : (title.leftCenter = minLabelBounds.leftCenter());
 
-    header.width = this.width;
+      header.width = this.width;
+    } catch (err) {
+
+    }
   }
 
   ensureNotOverTheTop () {
@@ -359,7 +363,7 @@ export default class Window extends Morph {
     bottomResizer.bottomLeft = pt(resizerInset, this.height);
 
     topResizer.width = this.width - 2 * resizerInset;
-    topResizer.bottomLeft = pt(resizerInset, resizerInset);
+    topResizer.bottomLeft = pt(resizerInset, resizerInset / 4);
 
     topLeftResizer.topLeft = pt(0, 0);
 
@@ -417,7 +421,7 @@ export default class Window extends Morph {
           name: 'top resizer',
           draggable: true,
           fill,
-          height: resizerInset,
+          height: resizerInset / 4,
           nativeCursor: 'ns-resize'
         }),
         topLeftResizer = morph({

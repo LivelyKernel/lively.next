@@ -56,7 +56,7 @@ morph breaks old windows without it.
 
           if (!win.submorphs.some(m => m.name === 'button wrapper') ||
            !win.get('button wrapper').submorphs.some(m => m.name === 'window menu button')) {
-            win.fixControls();
+            // win.fixControls();
           }
           win.minimizedBounds = null;
           disconnectAll(win.get('minimize'));
