@@ -26,6 +26,27 @@ import { subscribeOnce } from 'lively.notifications/index.js';
 
 */
 
+export async function prefetchCoreStyleguides (li) {
+  li.label = 'loading System Elements';
+  li.progress = 0;
+  li.status = 'core elements...';
+  await resource('styleguide://System/buttons/light').read(),
+  li.progress = 1 / 5;
+  li.status = 'top bar...';
+  await resource('styleguide://SystemIDE/lively top bar master').read(),
+  li.progress = 2 / 5;
+  li.status = 'scene graph...';
+  await resource('styleguide://SystemIDE/styling side bar master').read(),
+  li.progress = 3 / 5;
+  li.status = 'styling palette...';
+  await resource('styleguide://SystemIDE/scene graph side bar master').read();
+  li.progress = 4 / 5;
+  li.status = 'world loader...';
+  await resource('styleguide://partial freezing/project browser').read();
+  li.progress = 5 / 5;
+  await promise.delay(500);
+}
+
 function getProjectName (world) {
   return Path('metadata.commit.name').get(world) || world.name;
 }

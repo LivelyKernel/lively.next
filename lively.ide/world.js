@@ -39,6 +39,7 @@ import { GradientEditor } from './styling/gradient-editor.js';
 import { completions, runEval } from 'lively.vm';
 import { getClassName, serialize } from 'lively.serializer2';
 import { Canvas } from 'lively.components/canvas.js';
+import { prefetchCoreStyleguides } from 'lively.morphic/style-guide.js';
 
 export class LivelyWorld extends World {
   static get properties () {
@@ -204,10 +205,18 @@ export class LivelyWorld extends World {
     }
   }
 
+  async whenReady () {
+    await this._styleLoading;
+    return true;
+  }
+
   async onLoad () {
     this.opacity = 0;
     this.onWindowResize();
-    await this.whenRendered();
+    // some meta stuff...
+    lively.modules.removeHook('fetch', window.__logFetch);
+    this._styleLoading = prefetchCoreStyleguides(window.worldLoadingIndicator);
+    await this._styleLoading;
     this.animate({ opacity: 1, duration: 1000, easing: easings.inOutExpo });
     document.body.style.overflowX = 'visible';
     document.body.style.overflowY = 'visible';

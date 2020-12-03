@@ -4,14 +4,15 @@ import { Color } from 'lively.graphics';
 import { Path, obj, date, promise } from 'lively.lang';
 
 import { MorphicEnv } from './env.js';
-import { loadWorldFromResource, createMorphSnapshot } from './serialization.js';
+import { createMorphSnapshot } from './serialization.js';
 import { MorphicDB } from './morphicdb/index.js';
-import { loadObjectFromPartsbinFolder } from './partsbin.js';
+
 import { ensureCommitInfo } from './morphicdb/db.js';
 import { pathForBrowserHistory } from './helpers.js';
 import { subscribe, emit } from 'lively.notifications';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
+import "./partsbin.js";
 
 export async function loadWorldFromURL (url, oldWorld, options) {
   const worldResource = url.isResource ? url
