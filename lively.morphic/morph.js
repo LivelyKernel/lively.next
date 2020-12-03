@@ -1284,7 +1284,7 @@ export class Morph {
           change.reverseApply();
           animConfig[change.prop] = change.value;
         });
-        return target.animate(animConfig);
+        return target && target.animate(animConfig);
       }));
   }
 
@@ -3045,7 +3045,6 @@ export class PathPoint {
   }
 }
 
-
 export class Path extends Morph {
   static get properties () {
     return {
@@ -3456,7 +3455,6 @@ export class Path extends Morph {
     return pt(x, y);
   }
 }
-
 
 export class Polygon extends Path {
   constructor (props) {
