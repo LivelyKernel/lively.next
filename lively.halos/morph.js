@@ -764,7 +764,7 @@ class NameHaloItem extends HaloItem {
       layout: {
         initialize () {
           this.layout = new HorizontalLayout({
-            resizeContainer: true, spacing: 0, align: 'center'
+            resizeContainer: true, spacing: 0, align: 'center', orderByIndex: true
           });
         }
       }
@@ -800,12 +800,22 @@ class NameHaloItem extends HaloItem {
         nativeCursor: 'pointer',
         fontColor: Color.white,
         padding: rect(8, 0, -8, 0),
+        name: 'master link',
         tooltip: 'Located in ' + linkToWorld
       }));
       linkToWorld && connect(masterLink, 'onMouseDown', () => {
-        isLocal ? appliedMaster.show() : window.open(linkToWorld);
+        isLocal ? this.showLocalMaster(appliedMaster) : window.open(linkToWorld);
       });
     }
+  }
+
+  showLocalMaster (masterComponent) {
+    let win;
+    if (win = masterComponent.getWindow()) {
+      win.activate();
+      if (win.minimized) win.minimized = false;
+    }
+    masterComponent.show();
   }
 
   targets () {
@@ -832,6 +842,8 @@ class NameHaloItem extends HaloItem {
   toggleActive ([active, nameHolder]) {
     if (this.halo.changingName === active) { return; }
     this.halo.changingName = active;
+    const masterLink = this.get('master link');
+    if (masterLink) { masterLink.visible = masterLink.isLayoutable = !active; }
     if (active) {
       this.nameHolders.forEach(nh => nh != nameHolder && nh.deactivate());
       this.borderWidth = 3;
@@ -1239,9 +1251,9 @@ class ComponentHaloItem extends HaloItem {
     const target = this.halo.target;
     const world = this.world();
     const morphsInHierarchy = [];
-    this.withAllSubmorphsDoExcluding(m => {
-      morphsInHierarchy.push(m);
-    }, m => m != target && !target.master);
+    target.withAllSubmorphsDoExcluding(m => {
+      if (m != target) morphsInHierarchy.push(m);
+    }, m => target.master);
     const nameGroups = arr.groupBy(morphsInHierarchy, m => m.name);
     const defaultStyle = { fontWeight: 'normal', fontSize: 16 };
     // initial warn to allow the user to cancel the component conversion
