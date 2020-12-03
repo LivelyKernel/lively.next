@@ -3014,6 +3014,12 @@ export class PathPoint {
 
   get previousVertex () { return this.path.vertexBefore(this); }
 
+  interpolate (p, pos) {
+    const interpolated = this.copy();
+    interpolated.position = interpolated.position.interpolate(p, pos);
+    return interpolated;
+  }
+
   adaptControlPoints (smooth) {
     const { nextVertex, previousVertex, position, path } = this;
     const { vertices } = path;
