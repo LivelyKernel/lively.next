@@ -31,8 +31,8 @@ export class Badge extends Morph {
     this.ui.count.fontColor = Color.rgb(253, 254, 254);
   }
 
-  setCount (count) {
-    this.ui.count.textString = count;
+  setText (text) {
+    this.ui.count.textString = text;
     if (this.morph) {
       this.alignWithMorph();
     }

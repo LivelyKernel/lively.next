@@ -3,7 +3,7 @@ import { VerticalLayout, Label, Morph } from 'lively.morphic';
 import { pt, Rectangle } from 'lively.graphics';
 import { resource } from 'lively.resources';
 import { connect } from 'lively.bindings';
-import { CommentMorph, CommentIndicator } from 'Comments';
+import { CommentMorph, Badge, CommentIndicator } from 'Comments';
 
 let instance;
 
@@ -114,6 +114,7 @@ export class CommentBrowser extends Window {
       this.layoutContainer.addMorph(commentGroupMorph);
     }
     await this.commentGroups[morph.id].addCommentMorph(comment);
+    this.updateCommentCountBadge();
   }
 
   async removeCommentForMorph (comment, morph) {
@@ -122,6 +123,7 @@ export class CommentBrowser extends Window {
     if (group.getCommentMorphCount() === 0) {
       this.removeCommentGroup(group);
     }
+    this.updateCommentCountBadge();
   }
 
   removeCommentGroup (group) {
@@ -138,6 +140,27 @@ export class CommentBrowser extends Window {
         }
       }
     });
+    return result;
+  }
+
+  getCommentCount () {
+    return this.layoutContainer.submorphs.reduce((acc, cur) => cur.getCommentMorphCount() + acc, 0);
+  }
+
+  updateCommentCountBadge () {
+    const count = this.getCommentCount();
+    let badge = $world.get('lively top bar').get('comment browser button').get('comment count badge');
+    if (badge) {
+      if (count <= 0) {
+        badge.remove();
+        return;
+      }
+      badge.setText(count);
+    } else if (count > 0) {
+      badge = Badge.newWithText(count);
+      badge.name = 'comment count badge';
+      badge.addToMorph($world.get('lively top bar').get('comment browser button'));
+    }
   }
 
   // named relayoutWindows instead of relayout() to not block respondsToVisibleWindow() implementation
