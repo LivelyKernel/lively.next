@@ -1,5 +1,6 @@
 import { Morph, HorizontalLayout, Label } from 'lively.morphic';
-import { Rectangle, Color } from 'lively.graphics';
+import { Rectangle, pt, Color } from 'lively.graphics';
+import { connect } from 'lively.bindings';
 
 export class Badge extends Morph {
   static newWithText (text) {
@@ -25,10 +26,26 @@ export class Badge extends Morph {
 
     this.borderRadius = 12;
 
+    this.isLayoutable = false;
+
     this.ui.count.fontColor = Color.rgb(253, 254, 254);
   }
 
   setCount (count) {
     this.ui.count.textString = count;
+    if (this.morph) {
+      this.alignWithMorph();
+    }
+  }
+
+  alignWithMorph () {
+    this.position = this.morph.extent.addPt(pt(-this.extent.x, -this.extent.y));
+  }
+
+  addToMorph (morph) {
+    this.morph = morph;
+    morph.addMorph(this);
+    this.alignWithMorph();
+    connect(morph, 'onChange', this, 'alignWithMorph');
   }
 }
