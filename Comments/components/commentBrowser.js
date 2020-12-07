@@ -1,10 +1,9 @@
 import { Window } from 'lively.components';
-import { CommentMorph } from './commentMorph.js';
 import { VerticalLayout, Label, Morph } from 'lively.morphic';
 import { pt, Rectangle } from 'lively.graphics';
 import { resource } from 'lively.resources';
 import { connect } from 'lively.bindings';
-import { CommentIndicator } from './commentIndicator.js';
+import { CommentMorph, CommentIndicator } from 'Comments';
 
 let instance;
 

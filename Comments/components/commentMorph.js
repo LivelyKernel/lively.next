@@ -2,19 +2,36 @@ import { Morph, Icon, Label } from 'lively.morphic';
 import { pt, Color, Rectangle } from 'lively.graphics';
 import { connect } from 'lively.bindings';
 import { resource } from 'lively.resources';
-import { CommentBrowser } from './commentBrowser.js';
-import { CommentIndicator } from './commentIndicator.js';
+import { CommentBrowser, CommentIndicator } from 'Comments';
 
 export class CommentGroupMorph extends Morph {
-  async initialize (referenceMorph) {
-    this.referenceMorph = referenceMorph;
-    await this.initializeUI();
-    this.commentIndicators = [];
-    await this.refreshCommentMorphs();
-    this.isExpanded = true;
+  static get properties () {
+    return {
+      referenceMorph: {
+        defaultValue: undefined,
+        set (referenceMorph) {
+          this.setProperty('referenceMorph', referenceMorph);
+        }
+      },
+      isExpanded: {
+        defaultValue: true,
+        set (expand) {
+          this.setProperty('isExpanded', expand);
+        }
+      }
+    };
   }
 
-  async initializeUI () {
+  async initialize (referenceMorph) {
+    this.referenceMorph = referenceMorph;
+    this.initializeUI();
+    this.applyExpanded();
+
+    this.commentIndicators = [];
+    await this.refreshCommentMorphs();
+  }
+
+  initializeUI () {
     this.ui = {
       groupNameLabel: this.get('group name label'),
       commentMorphContainer: this.get('comment morph container'),
@@ -69,8 +86,16 @@ export class CommentMorph extends Morph {
   static get properties () {
     return {
       comment: {
+        defaultValue: undefined,
+        set (comment) {
+          this.setProperty('comment', comment);
+        }
       },
       referenceMorph: {
+        defaultValue: undefined,
+        set (referenceMorph) {
+          this.setProperty('referenceMorph', referenceMorph);
+        }
       }
     };
   }
@@ -85,7 +110,14 @@ export class CommentMorph extends Morph {
     this.ui.dateLabel.textString = date + ' ' + time;
   }
 
-  initializeUI () {
+  initialize (comment, referenceMorph) {
+    this.comment = comment;
+    this.referenceMorph = referenceMorph;
+    this.initializeUI();
+    this.setDate();
+  }
+
+  reset () {
     this.ui = {
       dateLabel: this.get('date label'),
       commentTextField: this.get('comment text field'),
@@ -93,6 +125,14 @@ export class CommentMorph extends Morph {
       resolveButton: this.get('resolve button'),
       editSaveButton: this.get('edit save button')
     };
+  }
+
+  async onLoad () {
+    this.reset();
+  }
+
+  initializeUI () {
+    this.reset();
 
     if (this.comment.isResolved()) {
       this.fill = Color.rgb(216, 216, 216);
@@ -100,14 +140,6 @@ export class CommentMorph extends Morph {
 
     this.ui.commentTextField.textString = this.comment.text;
     this.setDefaultUI();
-  }
-
-  initialize (comment, referenceMorph) {
-    this.comment = comment;
-    this.referenceMorph = referenceMorph;
-    this.initializeUI();
-
-    this.setDate();
   }
 
   saveComment () {

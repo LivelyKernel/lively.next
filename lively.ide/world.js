@@ -39,7 +39,7 @@ import { GradientEditor } from './styling/gradient-editor.js';
 import { completions, runEval } from 'lively.vm';
 import { getClassName, serialize } from 'lively.serializer2';
 import { Canvas } from 'lively.components/canvas.js';
-import { CommentBrowser } from 'Comments/components/commentBrowser.js';
+import { CommentBrowser } from 'Comments';
 
 export class LivelyWorld extends World {
   static get properties () {

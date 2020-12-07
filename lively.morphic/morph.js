@@ -20,8 +20,7 @@ import { copyMorph } from './serialization.js';
 
 import { ComponentPolicy } from './style-guide.js';
 
-import { CommentBrowser } from 'Comments/components/commentBrowser.js';
-import { Comment } from 'Comments/components/comment.js';
+import { Comment, CommentBrowser } from 'Comments';
 
 const defaultCommandHandler = new CommandHandler();
 
