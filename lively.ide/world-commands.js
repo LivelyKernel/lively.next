@@ -1384,7 +1384,7 @@ const commands = [
         return;
       }
 
-      new CommentBrowser();
+      CommentBrowser.initializeCommentBrowser();
     }
   }
 
