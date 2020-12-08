@@ -2,7 +2,7 @@ import { Morph, Icon, Label } from 'lively.morphic';
 import { pt, Color, Rectangle } from 'lively.graphics';
 import { connect } from 'lively.bindings';
 import { resource } from 'lively.resources';
-import { CommentBrowser, CommentIndicator } from 'Comments';
+import { CommentBrowser, CommentIndicator } from 'lively.collab';
 
 export class CommentGroupMorph extends Morph {
   static get properties () {

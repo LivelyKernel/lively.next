@@ -128,7 +128,7 @@
     "repoURL": "https://github.com/LivelyKernel/lively.freezer"
   },
   {
-    "name": "Comments",
+    "name": "lively.collab",
     "repoURL": "https://github.com/hpi-swa-lab/lively.next"
   }
 ]
