@@ -70,6 +70,10 @@ export class CommentGroupMorph extends Morph {
     return this.ui.commentMorphContainer.submorphs.length;
   }
 
+  getUnresolvedCommentMorphCount () {
+    return this.ui.commentMorphContainer.submorphs.filter((commentMorph) => !commentMorph.comment.isResolved()).length;
+  }
+
   async removeCommentMorph (comment) {
     this.ui.commentMorphContainer.submorphs.forEach((commentMorph) => {
       if (commentMorph.comment.timestamp == comment.timestamp) {
@@ -210,6 +214,7 @@ export class CommentMorph extends Morph {
   toggleResolveStatus () {
     this.abortCommentEdit();
     this.comment.toggleResolveStatus();
+    CommentBrowser.instance.updateCommentCountBadge();
     this.fill = this.comment.isResolved() ? Color.rgb(216, 216, 216) : Color.rgb(240, 243, 244);
     this.ui.commentTextField.fill =
       this.comment.isResolved() ? Color.rgb(216, 216, 216) : Color.rgb(240, 243, 244);

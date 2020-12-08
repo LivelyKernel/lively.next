@@ -25,7 +25,9 @@ export class CommentBrowser extends Window {
   }
 
   static async addCommentForMorph (comment, morph) {
-    await instance.addCommentForMorph(comment, morph);
+    if (CommentBrowser.isOpen()) {
+      await instance.addCommentForMorph(comment, morph);
+    }
   }
 
   static async initializeCommentBrowser () {
@@ -140,15 +142,18 @@ export class CommentBrowser extends Window {
         }
       }
     });
-    return result;
   }
 
   getCommentCount () {
     return this.layoutContainer.submorphs.reduce((acc, cur) => cur.getCommentMorphCount() + acc, 0);
   }
 
+  getUnresolvedCommentCount () {
+    return this.layoutContainer.submorphs.reduce((acc, cur) => cur.getUnresolvedCommentMorphCount() + acc, 0);
+  }
+
   updateCommentCountBadge () {
-    const count = this.getCommentCount();
+    const count = this.getUnresolvedCommentCount();
     let badge = $world.get('lively top bar').get('comment browser button').get('comment count badge');
     if (badge) {
       if (count <= 0) {
@@ -161,6 +166,7 @@ export class CommentBrowser extends Window {
       badge.name = 'comment count badge';
       badge.addToMorph($world.get('lively top bar').get('comment browser button'));
     }
+    badge.tooltip = count + ' unresolved comment' + (count == 1 ? '' : 's');
   }
 
   // named relayoutWindows instead of relayout() to not block respondsToVisibleWindow() implementation
