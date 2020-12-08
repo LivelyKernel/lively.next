@@ -3,7 +3,7 @@ import { VerticalLayout, Label, Morph } from 'lively.morphic';
 import { pt, Rectangle } from 'lively.graphics';
 import { resource } from 'lively.resources';
 import { connect } from 'lively.bindings';
-import { CommentMorph, Badge, CommentIndicator } from 'lively.collab';
+import { CommentMorph, Badge } from 'lively.collab';
 
 let instance;
 

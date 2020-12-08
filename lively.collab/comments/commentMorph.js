@@ -47,8 +47,6 @@ export class CommentGroupMorph extends Morph {
   async addCommentMorph (comment) {
     // TODO this has to be changed when package position changed
     const commentMorph = await resource('part://CommentComponents/comment morph master').read();
-    const commentIndicator = CommentIndicator.for(this.referenceMorph, comment);
-    this.commentIndicators.push(commentIndicator);
     commentMorph.initialize(comment, this.referenceMorph);
     this.ui.commentMorphContainer.addMorph(commentMorph);
     this.ui.commentMorphContainer.extent = pt(0, 0);
@@ -80,7 +78,7 @@ export class CommentGroupMorph extends Morph {
   async removeCommentMorph (comment) {
     this.ui.commentMorphContainer.submorphs.forEach((commentMorph) => {
       if (commentMorph.comment.equals(comment)) {
-        commentMorph.remove();
+        commentMorph.delete();
       }
     });
     this.updateCommentCountLabel();
@@ -104,11 +102,11 @@ export class CommentGroupMorph extends Morph {
   }
 
   showCommentIndicators () {
-    this.commentIndicators.forEach((commentIndicator) => $world.addMorph(commentIndicator));
+    this.ui.commentMorphContainer.submorphs.forEach((commentMorph) => commentMorph.showCommentIndicator());
   }
 
   hideCommentIndicators () {
-    this.commentIndicators.forEach((commentIndicator) => commentIndicator.delete());
+    this.ui.commentMorphContainer.submorphs.forEach((commentMorph) => commentMorph.hideCommentIndicator());
   }
 }
 
@@ -144,6 +142,7 @@ export class CommentMorph extends Morph {
     this.comment = comment;
     this.referenceMorph = referenceMorph;
     this.initializeUI();
+    this.initializeCommentIndicator();
     this.setDate();
   }
 
@@ -170,6 +169,11 @@ export class CommentMorph extends Morph {
 
     this.ui.commentTextField.textString = this.comment.text;
     this.setDefaultUI();
+  }
+
+  initializeCommentIndicator () {
+    this.commentIndicator = new CommentIndicator(this, this.comment, this.referenceMorph);
+    if (CommentBrowser.isOpen()) this.showCommentIndicator();
   }
 
   saveComment () {
@@ -221,6 +225,19 @@ export class CommentMorph extends Morph {
     this.fill = this.comment.isResolved() ? Color.rgb(216, 216, 216) : Color.rgb(240, 243, 244);
     this.ui.commentTextField.fill =
       this.comment.isResolved() ? Color.rgb(216, 216, 216) : Color.rgb(240, 243, 244);
+  }
+
+  hideCommentIndicator () {
+    this.commentIndicator.delete();
+  }
+
+  showCommentIndicator () {
+    this.commentIndicator.display();
+  }
+
+  delete () {
+    this.commentIndicator.delete();
+    this.remove();
   }
 
   onMouseDown (evt) {

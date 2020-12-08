@@ -4,17 +4,13 @@ import { connect, disconnectAll } from 'lively.bindings';
 import { CommentBrowser } from 'lively.collab';
 
 export class CommentIndicator extends Label {
-  static for (morph, comment) {
-    const indicator = new this({ morph, comment });
-    return indicator;
-  }
-
-  constructor (props = {}) {
-    super(props);
-    this.morph = props.morph;
-    this.comment = props.comment;
-
-    $world.addMorph(this);
+  constructor (commentMorph, comment, referenceMorph) {
+    super();
+    this.referenceMorph = referenceMorph;
+    this.commentMorph = commentMorph;
+    this.comment = comment;
+    // TODO
+    // $world.addMorph(this);
     this.initStyling();
 
     this._referenceMorphMoving = false;
@@ -37,7 +33,7 @@ export class CommentIndicator extends Label {
   connectMorphs () {
     // When the morph that has the comment is a child in a hierarchy, it does not generate 'onChange' Events when the morphs that are higher in the hierarchy are moved.
     // Therefore we need to connect the indication with all morphs higher in the hierarchy.
-    let referenceMorph = this.morph;
+    let referenceMorph = this.referenceMorph;
     disconnectAll(this);
     while (referenceMorph && referenceMorph != $world) {
       connect(referenceMorph, 'onChange', this, 'referenceMoving');
@@ -56,16 +52,20 @@ export class CommentIndicator extends Label {
   }
 
   getRelativePositionInMorph () {
-    const morphOrigin = this.morph.globalPosition;
+    const morphOrigin = this.referenceMorph.globalPosition;
     const ownPosition = this.globalPosition;
-    const xRelative = (ownPosition.x - morphOrigin.x) / this.morph.width;
-    const yRelative = (ownPosition.y - morphOrigin.y) / this.morph.height;
+    const xRelative = (ownPosition.x - morphOrigin.x) / this.referenceMorph.width;
+    const yRelative = (ownPosition.y - morphOrigin.y) / this.referenceMorph.height;
     return pt(xRelative, yRelative);
   }
 
   delete () {
     disconnectAll(this);
     this.fadeOut(1);
+  }
+
+  display () {
+    $world.addMorph(this);
   }
 
   referenceMoving () {
@@ -75,21 +75,14 @@ export class CommentIndicator extends Label {
   }
 
   alignWithMorph () {
-    const morphOrigin = this.morph.globalPosition;
-    const xOffset = this.morph.width * this.comment.position.x;
-    const yOffset = this.morph.height * this.comment.position.y;
+    const morphOrigin = this.referenceMorph.globalPosition;
+    const xOffset = this.referenceMorph.width * this.comment.position.x;
+    const yOffset = this.referenceMorph.height * this.comment.position.y;
     this.position = morphOrigin.addPt(pt(xOffset, yOffset));
-  }
-
-  getCommentMorph () {
-    if (CommentBrowser.isOpen()) {
-      return CommentBrowser.instance.getCommentMorphForComment(this.comment, this.morph);
-    }
   }
 
   onMouseDown (evt) {
     super.onMouseDown(evt);
-
-    this.getCommentMorph().show();
+    if (this.commentMorph.owner) this.commentMorph.show();
   }
 }
