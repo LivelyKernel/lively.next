@@ -9,15 +9,12 @@ export class CommentIndicator extends Label {
     this.referenceMorph = referenceMorph;
     this.commentMorph = commentMorph;
     this.comment = comment;
-    // TODO
-    // $world.addMorph(this);
     this.initStyling();
 
     this._referenceMorphMoving = false;
     this.alignWithMorph();
 
     this.connectMorphs();
-    // connect(this, 'onMouseDown', CommentBrowser.getInstance(), 'scrollToMorph', { converter: () => commentIndicator.morph, varMapping: { commentIndicator: this } });
   }
 
   initStyling () {
@@ -62,7 +59,7 @@ export class CommentIndicator extends Label {
 
   delete () {
     disconnectAll(this);
-    this.fadeOut(1);
+    this.remove();
   }
 
   display () {
