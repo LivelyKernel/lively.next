@@ -79,7 +79,7 @@ export class CommentGroupMorph extends Morph {
 
   async removeCommentMorph (comment) {
     this.ui.commentMorphContainer.submorphs.forEach((commentMorph) => {
-      if (commentMorph.comment.timestamp == comment.timestamp) {
+      if (commentMorph.comment.equals(comment)) {
         commentMorph.remove();
       }
     });
