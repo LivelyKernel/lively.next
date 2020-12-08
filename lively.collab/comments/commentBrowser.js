@@ -10,7 +10,9 @@ let instance;
 
 export class CommentBrowser extends Window {
   static close () {
-    instance.close();
+    if (CommentBrowser.isOpen()) {
+      instance.close();
+    }
   }
 
   static get instance () {
@@ -39,6 +41,10 @@ export class CommentBrowser extends Window {
 
   static toggle () {
     CommentBrowser.isOpen() ? CommentBrowser.close() : CommentBrowser.initializeCommentBrowser();
+  }
+
+  static async whenRendered () {
+    return instance.whenRendered();
   }
 
   // Construction and initialization

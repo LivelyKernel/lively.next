@@ -246,15 +246,29 @@ export class CommentMorph extends Morph {
     this.remove();
   }
 
+  performClickAction (action) {
+    switch (action) {
+      case 'remove':
+        this.referenceMorph.removeComment(this.comment);
+        break;
+      case 'toggle_edit':
+        this.toggleEditMode();
+        break;
+      case 'resolve':
+        this.toggleResolveStatus();
+        break;
+    }
+  }
+
   onMouseDown (evt) {
     super.onMouseDown(evt);
 
     if (evt.targetMorph === this.ui.deleteButton) {
-      this.referenceMorph.removeComment(this.comment);
+      this.performClickAction('remove');
     } else if (evt.targetMorph === this.ui.editSaveButton) {
-      this.toggleEditMode();
+      this.performClickAction('toggle_edit');
     } else if (evt.targetMorph === this.ui.resolveButton) {
-      this.toggleResolveStatus();
+      this.performClickAction('resolve');
     } else if (this.referenceMorph && !this.isInEditMode) {
       this.referenceMorph.show();
     }

@@ -42,13 +42,13 @@ describe('morph', function () {
     expect(morphHasNoComments(morph));
   });
 
-  it('comment can be added', async function () {
+  it('a comment may be added', async function () {
     await morph.addComment(exampleText);
     expect(morphHasNumberOfComments(morph, 1));
     expect(morph.comments[0].text).equals(exampleText);
   });
 
-  it('comment may be removed', async function () {
+  it('a comment may be removed', async function () {
     const comment = await morph.addComment(exampleText);
     expect(morph.comments[0].equals(comment));
     await morph.removeComment(comment);
