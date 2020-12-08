@@ -8,7 +8,7 @@ export class Badge extends Morph {
   }
 
   constructor (props = {}) {
-    super();
+    super(props);
     this.ui = {};
     this.ui.count = new Label();
     this.addMorph(this.ui.count);
@@ -47,5 +47,14 @@ export class Badge extends Morph {
     morph.addMorph(this);
     this.alignWithMorph();
     connect(morph, 'onChange', this, 'alignWithMorph');
+  }
+
+  incrementCounter (value = 1) {
+    const newValue = Number(this.ui.count.textString) + value;
+    this.setText(newValue);
+  }
+
+  decrementCounter (value = 1) {
+    this.incrementCounter(-value);
   }
 }
