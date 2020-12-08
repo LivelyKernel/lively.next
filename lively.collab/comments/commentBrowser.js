@@ -25,9 +25,7 @@ export class CommentBrowser extends Window {
   }
 
   static async addCommentForMorph (comment, morph) {
-    if (CommentBrowser.isOpen()) {
-      await instance.addCommentForMorph(comment, morph);
-    }
+    await instance.addCommentForMorph(comment, morph);
   }
 
   static async initializeCommentBrowser () {

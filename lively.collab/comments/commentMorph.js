@@ -1,5 +1,6 @@
 import { Morph, Icon, Label } from 'lively.morphic';
 import { pt, Color, Rectangle } from 'lively.graphics';
+import { remove } from 'lively.lang/array.js';
 import { connect } from 'lively.bindings';
 import { resource } from 'lively.resources';
 import { CommentBrowser, CommentIndicator } from 'lively.collab';
@@ -19,7 +20,7 @@ export class CommentGroupMorph extends Morph {
           this.setProperty('isExpanded', expand);
         }
       },
-      commentIndicators: {
+      commentMorphs: {
         defaultValue: []
       }
     };
@@ -48,8 +49,8 @@ export class CommentGroupMorph extends Morph {
     // TODO this has to be changed when package position changed
     const commentMorph = await resource('part://CommentComponents/comment morph master').read();
     commentMorph.initialize(comment, this.referenceMorph);
-    this.ui.commentMorphContainer.addMorph(commentMorph);
-    this.ui.commentMorphContainer.extent = pt(0, 0);
+    this.commentMorphs.push(commentMorph);
+    this.updateCommentContainerSubmorphs();
     this.updateCommentCountLabel();
   }
 
@@ -68,31 +69,38 @@ export class CommentGroupMorph extends Morph {
   }
 
   getCommentMorphCount () {
-    return this.ui.commentMorphContainer.submorphs.length;
+    return this.commentMorphs.length;
   }
 
   getUnresolvedCommentMorphCount () {
-    return this.ui.commentMorphContainer.submorphs.filter((commentMorph) => !commentMorph.comment.isResolved()).length;
+    return this.commentMorphs.filter((commentMorph) => !commentMorph.comment.isResolved()).length;
   }
 
   async removeCommentMorph (comment) {
-    this.ui.commentMorphContainer.submorphs.forEach((commentMorph) => {
+    this.commentMorphs.forEach((commentMorph) => {
       if (commentMorph.comment.equals(comment)) {
         commentMorph.delete();
+        remove(this.commentMorphs, commentMorph);
+        this.updateCommentContainerSubmorphs();
       }
     });
     this.updateCommentCountLabel();
   }
 
+  updateCommentContainerSubmorphs () {
+    if (this.isExpanded) {
+      this.ui.commentMorphContainer.submorphs = this.commentMorphs;
+    }
+  }
+
   applyExpanded () {
     Icon.setIcon(this.ui.collapseIndicator, this.isExpanded ? 'caret-down' : 'caret-right');
     if (!this.isExpanded) {
-      this.commentMorphCache = this.ui.commentMorphContainer.submorphs;
       this.ui.commentMorphContainer.submorphs = [];
       // it should not be necessary to set extent manually, but layout doesn't change it automatically
       this.ui.commentMorphContainer.extent = pt(0, 0);
     } else {
-      this.ui.commentMorphContainer.submorphs = this.commentMorphCache;
+      this.ui.commentMorphContainer.submorphs = this.commentMorphs;
     }
   }
 
@@ -102,11 +110,11 @@ export class CommentGroupMorph extends Morph {
   }
 
   showCommentIndicators () {
-    this.ui.commentMorphContainer.submorphs.forEach((commentMorph) => commentMorph.showCommentIndicator());
+    this.commentMorphs.forEach((commentMorph) => commentMorph.showCommentIndicator());
   }
 
   hideCommentIndicators () {
-    this.ui.commentMorphContainer.submorphs.forEach((commentMorph) => commentMorph.hideCommentIndicator());
+    this.commentMorphs.forEach((commentMorph) => commentMorph.hideCommentIndicator());
   }
 }
 
