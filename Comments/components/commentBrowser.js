@@ -20,8 +20,8 @@ export class CommentBrowser extends Window {
     return instance && $world.get('comment browser');
   }
 
-  static async removeCommentForMorph (updatedComment, morph) {
-    await instance.removeCommentForMorph(updatedComment, morph);
+  static async removeCommentForMorph (comment, morph) {
+    await instance.removeCommentForMorph(comment, morph);
   }
 
   static async addCommentForMorph (comment, morph) {
@@ -48,11 +48,8 @@ export class CommentBrowser extends Window {
       instance = this;
       this.name = 'comment browser';
       this.commentGroups = {}; // dict Morph id -> Comment group morph
-
-      this.makeVisible();
-    } else {
-      this.makeVisible();
     }
+    this.makeVisible();
     return instance;
   }
 
@@ -61,7 +58,7 @@ export class CommentBrowser extends Window {
   }
 
   initializeExtents () {
-    this.height = ($world.height - $world.getSubmorphNamed('lively top bar').height);
+    this.height = $world.height - $world.getSubmorphNamed('lively top bar').height;
     this.width = 280; // perhaps use width of comment morph?
 
     this.position = pt($world.width - this.width, $world.getSubmorphNamed('lively top bar').height);
@@ -89,7 +86,6 @@ export class CommentBrowser extends Window {
   }
 
   close () {
-    // super.close();
     const topbar = $world.getSubmorphNamed('lively top bar');
     if (topbar) {
       topbar.uncolorCommentBrowserButton();
@@ -110,16 +106,14 @@ export class CommentBrowser extends Window {
   }
 
   async addCommentForMorph (comment, morph) {
-    if (morph.id in this.commentGroups) {
-      await this.commentGroups[morph.id].addCommentMorph(comment);
-      this.commentGroups[morph.id].relayout();
-    } else {
+    if (!(morph.id in this.commentGroups)) {
+      // TODO change when package location got changed
       const commentGroupMorph = await resource('part://CommentGroupMorphMockup/comment group morph master').read();
       await commentGroupMorph.initialize(morph);
       this.commentGroups[morph.id] = commentGroupMorph;
-      await this.commentGroups[morph.id].addCommentMorph(comment);
       this.layoutContainer.addMorph(commentGroupMorph);
     }
+    await this.commentGroups[morph.id].addCommentMorph(comment);
   }
 
   async removeCommentForMorph (comment, morph) {

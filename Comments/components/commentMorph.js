@@ -42,6 +42,7 @@ export class CommentGroupMorph extends Morph {
   }
 
   async addCommentMorph (comment) {
+    // TODO this has to be changed when package position changed
     const commentMorph = await resource('part://CommentComponents/comment morph master').read();
     const commentIndicator = CommentIndicator.for(this.referenceMorph, comment);
     this.commentIndicators.push(commentIndicator);
@@ -100,7 +101,6 @@ export class CommentGroupMorph extends Morph {
   }
 
   hideCommentIndicators () {
-    // $world.setStatusMessage(this.commentIndicators);
     this.commentIndicators.forEach((commentIndicator) => commentIndicator.delete());
   }
 }
