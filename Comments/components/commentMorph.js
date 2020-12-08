@@ -18,6 +18,9 @@ export class CommentGroupMorph extends Morph {
         set (expand) {
           this.setProperty('isExpanded', expand);
         }
+      },
+      commentIndicators: {
+        defaultValue: []
       }
     };
   }
