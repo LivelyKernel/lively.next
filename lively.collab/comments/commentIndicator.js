@@ -28,6 +28,7 @@ export class CommentIndicator extends Label {
     this.height = this.fontSize + this.padding.y;
     this.isLayoutable = false;
     this.fontColor = Color.rgbHex('#f1c40f');
+    this.nativeCursor = 'pointer';
   }
 
   connectMorphs () {
