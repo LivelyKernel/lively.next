@@ -20,7 +20,7 @@ import { copyMorph } from './serialization.js';
 
 import { ComponentPolicy } from './style-guide.js';
 
-import { Comment, CommentBrowser } from 'Comments';
+import { Comment, CommentBrowser } from 'lively.collab';
 
 const defaultCommandHandler = new CommandHandler();
 

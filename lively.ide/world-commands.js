@@ -12,7 +12,7 @@ import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { interactivelyFreezeWorld } from 'lively.freezer';
 import { resource } from 'lively.resources';
 import { BrowserModuleTranslationCache } from 'lively.modules/src/instrumentation.js';
-import { CommentBrowser } from 'Comments';
+import { CommentBrowser } from 'lively.collab';
 
 const commands = [
 
