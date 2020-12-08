@@ -1,6 +1,7 @@
 /* global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after */
 import { expect } from 'mocha-es6';
 import { Comment } from 'lively.collab';
+import { Morph } from 'lively.morphic';
 
 describe('comment object', function () {
   let comment;
@@ -27,4 +28,46 @@ describe('comment object', function () {
     comment.toggleResolveStatus();
     expect(comment.isResolved()).equals(false);
   });
+});
+
+describe('morph', function () {
+  let morph;
+  const exampleText = 'Example text';
+
+  beforeEach(function () {
+    morph = new Morph();
+  });
+
+  it('has no comment', function () {
+    expect(morphHasNoComments(morph));
+  });
+
+  it('comment can be added', async function () {
+    await morph.addComment(exampleText);
+    expect(morphHasNumberOfComments(morph, 1));
+    expect(morph.comments[0].text).equals(exampleText);
+  });
+
+  it('comment may be removed', async function () {
+    const comment = await morph.addComment(exampleText);
+    expect(morph.comments[0].equals(comment));
+    await morph.removeComment(comment);
+    expect(morphHasNoComments(morph));
+  });
+
+  it('comments may be emptied', async function () {
+    await morph.addComment(exampleText);
+    await morph.addComment(exampleText);
+    expect(morphHasNumberOfComments(morph, 2));
+    morph.emptyComments();
+    expect(morphHasNoComments(morph));
+  });
+
+  function morphHasNoComments (morph) {
+    return morphHasNumberOfComments(morph, 0);
+  }
+
+  function morphHasNumberOfComments (morph, number) {
+    return morph.comments.length === number;
+  }
 });
