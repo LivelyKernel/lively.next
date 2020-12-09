@@ -65,42 +65,38 @@ export class CommentGroupMorph extends Morph {
   }
 
   updateCommentCountLabel () {
-    this.ui.commentCountLabel.textString = this.getCommentMorphCount();
+    this.ui.commentCountLabel.textString = this.getCommentCount();
   }
 
-  getCommentMorphCount () {
+  getCommentCount () {
     return this.commentMorphs.length;
   }
 
-  getUnresolvedCommentMorphCount () {
+  getUnresolvedCommentCount () {
     return this.commentMorphs.filter((commentMorph) => !commentMorph.comment.isResolved()).length;
   }
 
-  async removeCommentMorph (comment) {
+  async removeCommentMorphFor (comment) {
     this.commentMorphs.forEach((commentMorph) => {
       if (commentMorph.comment.equals(comment)) {
         commentMorph.delete();
         remove(this.commentMorphs, commentMorph);
         this.updateCommentContainerSubmorphs();
+        this.updateCommentCountLabel();
       }
     });
-    this.updateCommentCountLabel();
   }
 
   updateCommentContainerSubmorphs () {
-    if (this.isExpanded) {
-      this.ui.commentMorphContainer.submorphs = this.commentMorphs;
-    }
+    this.ui.commentMorphContainer.submorphs = this.isExpanded ? this.commentMorphs : [];
   }
 
   applyExpanded () {
     Icon.setIcon(this.ui.collapseIndicator, this.isExpanded ? 'caret-down' : 'caret-right');
+    this.updateCommentContainerSubmorphs();
     if (!this.isExpanded) {
-      this.ui.commentMorphContainer.submorphs = [];
       // it should not be necessary to set extent manually, but layout doesn't change it automatically
       this.ui.commentMorphContainer.extent = pt(0, 0);
-    } else {
-      this.ui.commentMorphContainer.submorphs = this.commentMorphs;
     }
   }
 

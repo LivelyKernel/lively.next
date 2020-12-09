@@ -119,8 +119,8 @@ export class CommentBrowser extends Window {
 
   async removeCommentForMorph (comment, morph) {
     const group = this.commentGroups[morph.id];
-    await group.removeCommentMorph(comment);
-    if (group.getCommentMorphCount() === 0) {
+    await group.removeCommentMorphFor(comment);
+    if (group.getCommentCount() === 0) {
       this.removeCommentGroup(group);
     }
     this.updateCommentCountBadge();
@@ -143,11 +143,11 @@ export class CommentBrowser extends Window {
   }
 
   getCommentCount () {
-    return this.layoutContainer.submorphs.reduce((acc, cur) => cur.getCommentMorphCount() + acc, 0);
+    return this.layoutContainer.submorphs.reduce((acc, cur) => cur.getCommentCount() + acc, 0);
   }
 
   getUnresolvedCommentCount () {
-    return this.layoutContainer.submorphs.reduce((acc, cur) => cur.getUnresolvedCommentMorphCount() + acc, 0);
+    return this.layoutContainer.submorphs.reduce((acc, cur) => cur.getUnresolvedCommentCount() + acc, 0);
   }
 
   updateCommentCountBadge () {
