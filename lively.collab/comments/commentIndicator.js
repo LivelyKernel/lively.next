@@ -1,6 +1,6 @@
 import { Morph, Icon, Label } from 'lively.morphic';
 import { pt, Rectangle, Color } from 'lively.graphics';
-import { connect, disconnectAll } from 'lively.bindings';
+import { connect, disconnect, disconnectAll } from 'lively.bindings';
 import { CommentBrowser } from 'lively.collab';
 
 export class CommentIndicator extends Label {
@@ -32,7 +32,6 @@ export class CommentIndicator extends Label {
     // When the morph that has the comment is a child in a hierarchy, it does not generate 'onChange' Events when the morphs that are higher in the hierarchy are moved.
     // Therefore we need to connect the indication with all morphs higher in the hierarchy.
     let referenceMorph = this.referenceMorph;
-    disconnectAll(this);
     while (referenceMorph && referenceMorph != $world) {
       connect(referenceMorph, 'onChange', this, 'referenceMoving');
       connect(referenceMorph, 'onOwnerChanged', this, 'connectMorphs');
@@ -58,7 +57,9 @@ export class CommentIndicator extends Label {
   }
 
   delete () {
-    disconnectAll(this);
+    const referenceMorph = this.referenceMorph;
+    disconnect(referenceMorph, 'onChange', this, 'referenceMoving');
+    disconnect(referenceMorph, 'onOwnerChanged', this, 'connectMorphs');
     this.remove();
   }
 
