@@ -9,14 +9,14 @@ describe('comment browser', function () {
   const exampleText = 'Example text';
   const exampleName = 'a test morph';
   let browser;
-  let env;
+  let comment;
   beforeEach(async function () {
     morph = new Morph();
     morph.name = exampleName;
-    // env = MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()));
     new CommentBrowser();
     browser = CommentBrowser.instance; // This shouldn't be neccessary
     await CommentBrowser.whenRendered();
+    comment = await morph.addComment(exampleText);
   });
 
   it('may be opened', function () {
@@ -29,7 +29,6 @@ describe('comment browser', function () {
   });
 
   it('has comment displayed', async function (done) {
-    const comment = await morph.addComment(exampleText);
     browser.withAllSubmorphsDo((submorph) => {
       if (submorph.comment && submorph.comment.equals(comment)) {
         done();
@@ -39,7 +38,6 @@ describe('comment browser', function () {
   });
 
   it('has name of morph displayed', async function (done) {
-    const comment = await morph.addComment(exampleText);
     browser.withAllSubmorphsDo((submorph) => {
       if (submorph.textString && submorph.textString.includes(exampleName)) {
         done();
@@ -49,15 +47,47 @@ describe('comment browser', function () {
   });
 
   it('can resolve comment', async function () {
-    const comment = await morph.addComment(exampleText);
     comment.unresolve();
     browser.withAllSubmorphsDo(async (submorph) => {
       if (submorph.comment && submorph.comment.equals(comment)) {
-        // await env.eventDispatcher.simulateDOMEvents({ type: 'pointerdown', position: submorph.ui.resolveButton, target: submorph });
         submorph.performClickAction('resolve');
       }
     });
     expect(comment.isResolved()).to.be.ok;
+  });
+
+  async function getCommentCountLabelString () {
+    let label;
+    browser.withAllSubmorphsDo(async (submorph) => {
+      if (submorph.name === 'comment count label') {
+        label = submorph.textString;
+      }
+    });
+    return label;
+  }
+
+  it('comment count label counts comments', async function () {
+    const comment2 = await morph.addComment(exampleText);
+    let label = await getCommentCountLabelString();
+    expect(label).equals('2');
+    morph.removeComment(comment2);
+    label = await getCommentCountLabelString();
+    expect(label).equals('1');
+  });
+
+  it('comment may be removed', async function () {
+    await browser.withAllSubmorphsDo(async (submorph) => {
+      if (submorph.comment && submorph.comment.equals(comment)) {
+        submorph.performClickAction('remove');
+      }
+    });
+    let commentMorphLabel;
+    browser.withAllSubmorphsDo((submorph) => {
+      if (submorph.textString && submorph.textString.includes(exampleName)) {
+        commentMorphLabel = submorph;
+      }
+    });
+    expect(commentMorphLabel).to.be.not.ok;
   });
 
   afterEach(function () {
@@ -70,6 +100,5 @@ describe('comment browser', function () {
 // Tests to add:
 // Collapse
 // Uncollapse
-// Remove with remove button
 // Edit
-// Unresolved comment count
+// Badge counts resolved comments

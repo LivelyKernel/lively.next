@@ -50,17 +50,23 @@ describe('morph', function () {
 
   it('a comment may be removed', async function () {
     const comment = await morph.addComment(exampleText);
-    expect(morph.comments[0].equals(comment));
+    expect(morph.comments[0].equals(comment)).to.be.ok;
     await morph.removeComment(comment);
-    expect(morphHasNoComments(morph));
+    expect(morphHasNoComments(morph)).to.be.ok;
   });
 
   it('comments may be emptied', async function () {
     await morph.addComment(exampleText);
     await morph.addComment(exampleText);
-    expect(morphHasNumberOfComments(morph, 2));
+    expect(morphHasNumberOfComments(morph, 2)).to.be.ok;
     morph.emptyComments();
-    expect(morphHasNoComments(morph));
+    expect(morphHasNoComments(morph)).to.be.ok;
+  });
+
+  it('can be cloned to with equal comment', async function () {
+    await morph.addComment(exampleText);
+    const morph2 = morph.copy();
+    expect(morph.comments[0].equals(morph2.comments[0])).to.be.ok;
   });
 
   function morphHasNoComments (morph) {
