@@ -81,10 +81,10 @@ export class CommentGroupMorph extends Morph {
       if (commentMorph.comment.equals(comment)) {
         commentMorph.delete();
         remove(this.commentMorphs, commentMorph);
-        this.updateCommentContainerSubmorphs();
-        this.updateCommentCountLabel();
       }
     });
+    this.updateCommentContainerSubmorphs();
+    this.updateCommentCountLabel();
   }
 
   updateCommentContainerSubmorphs () {

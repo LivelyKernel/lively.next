@@ -1379,12 +1379,7 @@ const commands = [
   {
     name: 'toggle comment browser',
     exec: async (world) => {
-      if (CommentBrowser.isOpen()) {
-        CommentBrowser.close();
-        return;
-      }
-
-      CommentBrowser.initializeCommentBrowser();
+      CommentBrowser.toggle();
     }
   }
 

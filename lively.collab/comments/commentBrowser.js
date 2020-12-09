@@ -36,13 +36,17 @@ export class CommentBrowser extends Window {
     }
   }
 
+  static toggle () {
+    CommentBrowser.isOpen() ? CommentBrowser.close() : CommentBrowser.initializeCommentBrowser();
+  }
+
   // Construction and initialization
 
   constructor () {
     if (!instance) {
       super();
       this.initializeContainers();
-      this.initializeExtents();
+      this.initializeAppearance();
       this.relayoutWindow();
 
       instance = this;
@@ -57,7 +61,8 @@ export class CommentBrowser extends Window {
     $world.addMorph(instance);
   }
 
-  initializeExtents () {
+  initializeAppearance () {
+    this.title = 'Comment Browser';
     this.height = $world.height - $world.getSubmorphNamed('lively top bar').height;
     this.width = 280; // perhaps use width of comment morph?
 
