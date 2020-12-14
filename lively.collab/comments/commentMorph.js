@@ -167,10 +167,6 @@ export class CommentMorph extends Morph {
   initializeUI () {
     this.reset();
 
-    if (this.comment.isResolved()) {
-      this.fill = Color.rgb(216, 216, 216);
-    }
-
     this.ui.commentTextField.textString = this.comment.text;
     this.setDefaultUI();
   }
@@ -199,8 +195,7 @@ export class CommentMorph extends Morph {
     this.isInEditMode = false;
 
     this.ui.commentTextField.readOnly = true;
-    this.ui.commentTextField.fill =
-      this.comment.isResolved() ? Color.rgb(216, 216, 216) : Color.rgb(240, 243, 244);
+    this.ui.commentTextField.fill = Color.rgb(240, 243, 244);
     this.ui.commentTextField.borderStyle = 'none';
   }
 
@@ -222,19 +217,10 @@ export class CommentMorph extends Morph {
     this.isInEditMode ? this.saveComment() : this.setEditUI();
   }
 
-  toggleResolveStatus () {
+  async toggleResolveStatus () {
     this.abortCommentEdit();
     this.comment.toggleResolveStatus();
-    CommentBrowser.instance.updateCommentCountBadge();
-    if (this.comment.isResolved()) {
-      this.fill = Color.rgb(216, 216, 216);
-      this.ui.commentTextField.fill = Color.rgb(216, 216, 216);
-      this.hideCommentIndicator();
-    } else {
-      this.fill = Color.rgb(240, 243, 244);
-      this.ui.commentTextField.fill = Color.rgb(240, 243, 244);
-      this.showCommentIndicator();
-    }
+    await CommentBrowser.instance.applyResolveStatus(this.comment, this.referenceMorph);
   }
 
   hideCommentIndicator () {

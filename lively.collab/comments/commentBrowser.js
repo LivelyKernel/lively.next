@@ -52,6 +52,7 @@ export class CommentBrowser extends Window {
       instance = this;
       this.name = 'comment browser';
       this.commentGroups = {}; // dict Morph id -> Comment group morph
+      this.resolvedCommentGroups = {};
     }
     this.makeVisible();
     return instance;
@@ -77,17 +78,34 @@ export class CommentBrowser extends Window {
   initializeContainers () {
     this.container = new Morph({
       clipMode: 'auto',
-      name: 'comment container'
+      name: 'container'
     });
-    this.layoutContainer = new Morph({
+    this.commentContainer = new Morph({
       layout: new VerticalLayout({
         spacing: 5,
         orderByIndex: true
       }),
-      name: 'comment container layout'
+      name: 'comment container'
     });
-    this.container.addMorph(this.layoutContainer);
+    this.resolvedCommentContainer = new Morph({
+      layout: new VerticalLayout({
+        spacing: 5,
+        orderByIndex: true
+      }),
+      name: 'resolved comment container'
+    });
+    this.showUnresolved();
     this.addMorph(this.container);
+  }
+
+  showResolved () {
+    this.commentContainer.remove();
+    this.container.addMorph(this.resolvedCommentContainer);
+  }
+
+  showUnresolved () {
+    this.resolvedCommentContainer.remove();
+    this.container.addMorph(this.commentContainer);
   }
 
   close () {
@@ -111,33 +129,52 @@ export class CommentBrowser extends Window {
   }
 
   async addCommentForMorph (comment, morph) {
-    if (!(morph.id in this.commentGroups)) {
+    let groupDictionary = this.commentGroups;
+    let commentContainer = this.commentContainer;
+
+    if (comment.isResolved()) {
+      groupDictionary = this.resolvedCommentGroups;
+      commentContainer = this.resolvedCommentContainer;
+    }
+
+    if (!(morph.id in groupDictionary)) {
       // TODO change when package location got changed
       const commentGroupMorph = await resource('part://CommentGroupMorphMockup/comment group morph master').read();
       await commentGroupMorph.initialize(morph);
-      this.commentGroups[morph.id] = commentGroupMorph;
-      this.layoutContainer.addMorph(commentGroupMorph);
+      groupDictionary[morph.id] = commentGroupMorph;
+      commentContainer.addMorph(commentGroupMorph);
     }
-    await this.commentGroups[morph.id].addCommentMorph(comment);
+    await groupDictionary[morph.id].addCommentMorph(comment);
     this.updateCommentCountBadge();
   }
 
   async removeCommentForMorph (comment, morph) {
-    const group = this.commentGroups[morph.id];
-    await group.removeCommentMorphFor(comment);
-    if (group.getCommentCount() === 0) {
-      this.removeCommentGroup(group);
+    let groupDictionary = this.commentGroups;
+    if (this.resolvedCommentGroups[morph.id] &&
+       this.resolvedCommentGroups[morph.id].hasCommentMorphForComment(comment)) {
+      groupDictionary = this.resolvedCommentGroups;
+    }
+    const groupOfCommentMorph = groupDictionary[morph.id];
+
+    await groupOfCommentMorph.removeCommentMorphFor(comment);
+    if (groupOfCommentMorph.getCommentCount() === 0) {
+      this.removeCommentGroup(groupOfCommentMorph, groupDictionary);
     }
     this.updateCommentCountBadge();
   }
 
-  removeCommentGroup (group) {
+  async applyResolveStatus (comment, referenceMorph) {
+    await this.removeCommentForMorph(comment, referenceMorph);
+    await this.addCommentForMorph(comment, referenceMorph);
+  }
+
+  removeCommentGroup (group, groupDictionary) {
     group.hideCommentIndicators();
-    delete this.commentGroups[group.referenceMorph.id];
+    delete groupDictionary[group.referenceMorph.id];
     group.remove();
   }
 
-  getCommentMorphForComment (comment, referencedMorph) {
+  getCommentMorphForComment (comment) {
     this.withAllSubmorphsDo((submorph) => {
       if (submorph.comment && submorph.referenceMorph) {
         if (submorph.comment.equals(comment)) {
@@ -148,11 +185,15 @@ export class CommentBrowser extends Window {
   }
 
   getCommentCount () {
-    return this.layoutContainer.submorphs.reduce((acc, cur) => cur.getCommentCount() + acc, 0);
+    return this.getResolvedCommentCount() + this.getUnresolvedCommentCount();
+  }
+
+  getResolvedCommentCount () {
+    return this.resolvedCommentContainer.submorphs.reduce((acc, cur) => cur.getCommentCount() + acc, 0);
   }
 
   getUnresolvedCommentCount () {
-    return this.layoutContainer.submorphs.reduce((acc, cur) => cur.getUnresolvedCommentCount() + acc, 0);
+    return this.commentContainer.submorphs.reduce((acc, cur) => cur.getCommentCount() + acc, 0);
   }
 
   updateCommentCountBadge () {
@@ -169,7 +210,9 @@ export class CommentBrowser extends Window {
       badge.name = 'comment count badge';
       badge.addToMorph($world.get('lively top bar').get('comment browser button'));
     }
-    badge.tooltip = count + ' unresolved comment' + (count == 1 ? '' : 's');
+    if (badge) {
+      badge.tooltip = count + ' unresolved comment' + (count == 1 ? '' : 's');
+    }
   }
 
   // named relayoutWindows instead of relayout() to not block respondsToVisibleWindow() implementation
