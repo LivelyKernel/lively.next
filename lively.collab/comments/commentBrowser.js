@@ -1,9 +1,10 @@
 import { Window } from 'lively.components';
-import { VerticalLayout, Label, Morph } from 'lively.morphic';
+import { VerticalLayout, HorizontalLayout, Label, Morph } from 'lively.morphic';
 import { pt, Rectangle } from 'lively.graphics';
 import { resource } from 'lively.resources';
 import { connect } from 'lively.bindings';
 import { CommentMorph, Badge } from 'lively.collab';
+import { ModeSelector } from 'lively.components/widgets.js';
 
 let instance;
 
@@ -47,6 +48,7 @@ export class CommentBrowser extends Window {
       super();
       this.initializeContainers();
       this.initializeAppearance();
+      this.initFilterSelector();
       this.relayoutWindow();
 
       instance = this;
@@ -94,8 +96,31 @@ export class CommentBrowser extends Window {
       }),
       name: 'resolved comment container'
     });
+    this.filterContainer = new Morph({
+      name: 'filter container'
+    });
     this.showUnresolved();
     this.addMorph(this.container);
+    this.addMorph(this.filterContainer);
+  }
+
+  initFilterSelector () {
+    this.filterSelector = new ModeSelector({
+      reactsToPointer: false,
+      width: this.width,
+      name: 'resolvedModeSelector',
+      items: ['Unresolved Comments', 'Resolved Comments'],
+      tooltips: {
+        'Unresolved Comments': 'Show unresolved comments',
+        'Resolved Comments': 'Show resolved comments'
+      },
+      layout: new HorizontalLayout({
+        spacing: 5
+      })
+    });
+    connect(this.filterSelector, 'Unresolved Comments', () => { this.showUnresolved(); });
+    connect(this.filterSelector, 'Resolved Comments', () => { this.showResolved(); });
+    this.filterContainer.addMorph(this.filterSelector);
   }
 
   showResolved () {
@@ -218,5 +243,15 @@ export class CommentBrowser extends Window {
   // named relayoutWindows instead of relayout() to not block respondsToVisibleWindow() implementation
   relayoutWindow () {
     this.relayoutWindowControls();
+  }
+
+  relayoutWindowControls () {
+    super.relayoutWindowControls();
+    const headerHeight = 25;
+    const filterContainerHeight = 30;
+    const filterContainerBounds = new Rectangle(0, headerHeight, this.width, filterContainerHeight);
+    const mainContainerBounds = new Rectangle(0, headerHeight + filterContainerHeight, this.width, this.height - headerHeight - filterContainerHeight);
+    this.filterContainer.setBounds(filterContainerBounds);
+    this.container.setBounds(mainContainerBounds);
   }
 }
