@@ -228,7 +228,7 @@ export class CommentMorph extends Morph {
   }
 
   showCommentIndicator () {
-    this.commentIndicator.display();
+    if (!this.comment.resolved) { this.commentIndicator.display(); }
   }
 
   delete () {

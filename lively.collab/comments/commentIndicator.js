@@ -64,6 +64,8 @@ export class CommentIndicator extends Label {
   }
 
   display () {
+    this.connectMorphs();
+    this.alignWithMorph();
     $world.addMorph(this);
   }
 
