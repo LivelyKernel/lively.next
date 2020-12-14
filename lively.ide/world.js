@@ -819,7 +819,7 @@ export class LivelyWorld extends World {
 
   // morph meta menu items
 
-  defaultMenuItems (morph) {
+  defaultMenuItems (morph, evt) {
     const world = this;
     const items = [];
     const self = morph;
@@ -994,7 +994,13 @@ export class LivelyWorld extends World {
       // TODO: maybe use promise functionality instead of if else
       const commentText = await $world.prompt('Enter comment');
       if (commentText) {
-        await self.addComment(commentText);
+        let relativePosition = pt(0, 0);
+        if (evt) {
+          const xRelative = self.localize(evt.position).x / self.width;
+          const yRelative = self.localize(evt.position).y / self.height;
+          relativePosition = pt(xRelative, yRelative);
+        }
+        await self.addComment(commentText, relativePosition);
         $world.setStatusMessage('Comment saved', 'green');
       } else {
         $world.setStatusMessage('Comment not saved', 'red');

@@ -2216,7 +2216,7 @@ export class Morph {
     if (evt.targetMorph !== this) return;
     if (!lively.FreezerRuntime) evt.stop();
     Promise
-      .resolve(this.menuItems()).then(items => this.openMenu(items, evt))
+      .resolve(this.menuItems(evt)).then(items => this.openMenu(items, evt))
       .catch(err => $world.logError(err));
   }
 
@@ -2225,8 +2225,8 @@ export class Morph {
     return items && items.length && world ? world.openWorldMenu(optEvt, items) : null;
   }
 
-  menuItems () {
-    return this.world().defaultMenuItems(this);
+  menuItems (evt) {
+    return this.world().defaultMenuItems(this, evt);
   }
 
   onCut (evt) {}
@@ -2495,8 +2495,8 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // comments
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  async addComment (commentText) {
-    const comment = new Comment(commentText);
+  async addComment (commentText, relativePosition) {
+    const comment = new Comment(commentText, relativePosition);
     this.comments.push(comment);
     await CommentBrowser.addCommentForMorph(comment, this);
     return comment;
