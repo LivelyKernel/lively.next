@@ -226,9 +226,15 @@ export class CommentMorph extends Morph {
     this.abortCommentEdit();
     this.comment.toggleResolveStatus();
     CommentBrowser.instance.updateCommentCountBadge();
-    this.fill = this.comment.isResolved() ? Color.rgb(216, 216, 216) : Color.rgb(240, 243, 244);
-    this.ui.commentTextField.fill =
-      this.comment.isResolved() ? Color.rgb(216, 216, 216) : Color.rgb(240, 243, 244);
+    if (this.comment.isResolved()) {
+      this.fill = Color.rgb(216, 216, 216);
+      this.ui.commentTextField.fill = Color.rgb(216, 216, 216);
+      this.hideCommentIndicator();
+    } else {
+      this.fill = Color.rgb(240, 243, 244);
+      this.ui.commentTextField.fill = Color.rgb(240, 243, 244);
+      this.showCommentIndicator();
+    }
   }
 
   hideCommentIndicator () {
