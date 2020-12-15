@@ -205,16 +205,6 @@ export class CommentBrowser extends Window {
     group.remove();
   }
 
-  getCommentMorphForComment (comment) {
-    this.withAllSubmorphsDo((submorph) => {
-      if (submorph.comment && submorph.referenceMorph) {
-        if (submorph.comment.equals(comment)) {
-          return submorph;
-        }
-      }
-    });
-  }
-
   getCommentCount () {
     return this.getResolvedCommentCount() + this.getUnresolvedCommentCount();
   }
