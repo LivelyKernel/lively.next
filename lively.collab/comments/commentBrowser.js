@@ -158,9 +158,9 @@ export class CommentBrowser extends Window {
       if (morph.comments.length == 0) {
         return;
       }
-      morph.comments.forEach(async (comment) => {
+      for (const comment of morph.comments) {
         await this.addCommentForMorph(comment, morph);
-      });
+      }
     }));
   }
 
