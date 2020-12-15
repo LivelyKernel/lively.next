@@ -54,6 +54,16 @@ export class CommentGroupMorph extends Morph {
     this.updateCommentCountLabel();
   }
 
+  hasCommentMorphForComment (comment) {
+    let result = false;
+    this.commentMorphs.forEach((commentMorph) => {
+      if (commentMorph.comment.equals(comment)) {
+        result = true;
+      }
+    });
+    return result;
+  }
+
   onOwnerChanged () {
     // called when comment groups enter or exit the screen
     super.onOwnerChanged();
