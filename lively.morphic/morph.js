@@ -2495,7 +2495,7 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // comments
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  async addComment (commentText, relativePosition) {
+  async addComment (commentText, relativePosition = pt(0, 0)) {
     const comment = new Comment(commentText, relativePosition);
     this.comments.push(comment);
     await CommentBrowser.addCommentForMorph(comment, this);

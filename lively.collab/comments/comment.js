@@ -2,7 +2,7 @@ import { newUUID } from 'lively.lang/string.js';
 import { pt } from 'lively.graphics';
 
 export class Comment {
-  constructor (text, relativePosition) {
+  constructor (text, relativePosition = pt(0, 0)) {
     this.text = text;
     this.uuid = newUUID();
     this.timestamp = new Date().getTime();
