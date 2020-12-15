@@ -105,9 +105,9 @@ export class CommentBrowser extends Window {
     this.filterContainer = new Morph({
       name: 'filter container'
     });
-    this.showUnresolved();
     this.addMorph(this.container);
     this.addMorph(this.filterContainer);
+    this.container.addMorph(this.commentContainer);
   }
 
   initFilterSelector () {
@@ -124,19 +124,24 @@ export class CommentBrowser extends Window {
         spacing: 5
       })
     });
-    connect(this.filterSelector, 'Unresolved Comments', () => { this.showUnresolved(); });
-    connect(this.filterSelector, 'Resolved Comments', () => { this.showResolved(); });
+    connect(this.filterSelector, 'Unresolved Comments', () => { this.toggleArchive(); });
+    connect(this.filterSelector, 'Resolved Comments', () => { this.toggleArchive(); });
     this.filterContainer.addMorph(this.filterSelector);
   }
 
-  showResolved () {
-    this.commentContainer.remove();
-    this.container.addMorph(this.resolvedCommentContainer);
-  }
+  toggleArchive () {
+    this.resolvedFilter = !this.resolvedFilter;
+    let containerToRemove = this.resolvedCommentContainer;
+    let newContainer = this.commentContainer;
+    if (this.resolvedFilter) {
+      containerToRemove = this.commentContainer;
+      newContainer = this.resolvedCommentContainer;
+    }
 
-  showUnresolved () {
-    this.resolvedCommentContainer.remove();
-    this.container.addMorph(this.commentContainer);
+    containerToRemove.remove();
+    this.container.addMorph(newContainer);
+    containerToRemove.submorphs.forEach((commentGroup) => commentGroup.hideCommentIndicators());
+    newContainer.submorphs.forEach((commentGroup) => commentGroup.showCommentIndicators());
   }
 
   close () {
