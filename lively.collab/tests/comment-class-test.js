@@ -1,7 +1,8 @@
 /* global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after */
 import { expect } from 'mocha-es6';
 import { Comment } from 'lively.collab';
-import { Morph } from 'lively.morphic';
+import { Morph, config } from 'lively.morphic';
+import { UserRegistry } from 'lively.user';
 
 describe('comment object', function () {
   let comment;
@@ -27,6 +28,10 @@ describe('comment object', function () {
     expect(comment.isResolved());
     comment.toggleResolveStatus();
     expect(comment.isResolved()).equals(false);
+  });
+
+  it('is saved with a user name', function () {
+    expect(comment.username).to.contain(UserRegistry.current.loadUserFromLocalStorage(config.users.authServerURL).name);
   });
 });
 

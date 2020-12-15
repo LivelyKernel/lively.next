@@ -46,6 +46,18 @@ describe('comment browser', function () {
     throw new Error('Failed');
   });
 
+  it('displays user name', async function () {
+    let username;
+    const creatorUsername = comment.username;
+    browser.withAllSubmorphsDo(async (submorph) => {
+      if (submorph.comment && submorph.comment.equals(comment)) {
+        username = submorph.ui.usernameLabel.textString;
+      }
+    });
+    expect(creatorUsername.startsWith(username)).to.be.ok;
+    expect(username.length).to.be.above(0);
+  });
+
   it('can resolve comment', async function () {
     comment.unresolve();
     browser.withAllSubmorphsDo(async (submorph) => {
