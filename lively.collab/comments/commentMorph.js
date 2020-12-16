@@ -217,9 +217,36 @@ export class CommentMorph extends Morph {
 
     this.isInEditMode = false;
 
+    this.resetButtons();
+    this.ui.editSaveButton.tooltip = 'Edit Comment';
+
     this.ui.commentTextField.readOnly = true;
     this.ui.commentTextField.fill = Color.rgb(240, 243, 244);
     this.ui.commentTextField.borderStyle = 'none';
+  }
+
+  resetButtons () {
+    const buttonColor = Color.rgb(127, 140, 141);
+
+    this.ui.resolveButton.fontColor = buttonColor;
+    this.ui.resolveButton.nativeCursor = 'pointer';
+    this.ui.resolveButton.tooltip = this.comment.isResolved() ? 'Unresolve Comment' : 'Resolve Comment';
+
+    this.ui.deleteButton.fontColor = buttonColor;
+    this.ui.deleteButton.nativeCursor = 'pointer';
+    this.ui.deleteButton.tooltip = 'Delete Comment';
+  }
+
+  deactivateButtons () {
+    const deactivatedButtonColor = Color.rgba(127, 140, 141, 0.22);
+
+    this.ui.resolveButton.fontColor = deactivatedButtonColor;
+    this.ui.resolveButton.nativeCursor = 'default';
+    this.ui.resolveButton.tooltip = 'Save comment to be able to resolve it.';
+
+    this.ui.deleteButton.fontColor = deactivatedButtonColor;
+    this.ui.deleteButton.nativeCursor = 'default';
+    this.ui.deleteButton.tooltip = 'Save comment to be able to delete it.';
   }
 
   setEditUI () {
@@ -229,6 +256,9 @@ export class CommentMorph extends Morph {
     if (!this.isInEditMode) this.ui.editSaveButton.padding.width += 1;
 
     this.isInEditMode = true;
+
+    this.deactivateButtons();
+    this.ui.editSaveButton.tooltip = 'Save Comment';
 
     this.ui.commentTextField.readOnly = false;
     this.ui.commentTextField.fill = Color.white;
@@ -262,13 +292,17 @@ export class CommentMorph extends Morph {
   performClickAction (action) {
     switch (action) {
       case 'remove':
-        this.referenceMorph.removeComment(this.comment);
+        if (!this.isInEditMode) {
+          this.referenceMorph.removeComment(this.comment);
+        }
         break;
       case 'toggle_edit':
         this.toggleEditMode();
         break;
       case 'resolve':
-        this.toggleResolveStatus();
+        if (!this.isInEditMode) {
+          this.toggleResolveStatus();
+        }
         break;
     }
   }
