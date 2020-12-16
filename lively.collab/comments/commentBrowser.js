@@ -130,10 +130,10 @@ export class CommentBrowser extends Window {
   }
 
   toggleArchive () {
-    this.resolvedFilter = !this.resolvedFilter;
+    this.showsResolvedComments = !this.showsResolvedComments;
     let containerToRemove = this.resolvedCommentContainer;
     let newContainer = this.commentContainer;
-    if (this.resolvedFilter) {
+    if (this.showsResolvedComments) {
       containerToRemove = this.commentContainer;
       newContainer = this.resolvedCommentContainer;
     }
