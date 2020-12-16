@@ -24,8 +24,9 @@ export class CommentIndicator extends Label {
     this.width = this.fontSize + this.padding.width;
     this.height = this.fontSize + this.padding.y;
     this.isLayoutable = false;
-    this.fontColor = Color.rgbHex('#f1c40f');
     this.nativeCursor = 'pointer';
+    this.fontColor = this.comment.isResolved() ? Color.rgb(174, 214, 241) : Color.rgb(241, 196, 15);
+    this.tooltip = this.comment.isResolved() ? 'A comment was placed here and resolved' : 'A comment was placed here';
   }
 
   connectMorphs () {

@@ -1,5 +1,5 @@
-import { Morph, Icon, Label } from 'lively.morphic';
-import { pt, Color, Rectangle } from 'lively.graphics';
+import { Morph, Icon } from 'lively.morphic';
+import { pt, Color } from 'lively.graphics';
 import { remove } from 'lively.lang/array.js';
 import { connect } from 'lively.bindings';
 import { resource } from 'lively.resources';
@@ -147,17 +147,26 @@ export class CommentMorph extends Morph {
     this.isInEditMode = false;
   }
 
-  setDate () {
-    const [date, time] = new Date(this.comment.timestamp).toLocaleString('de-DE', { hour12: false }).split(', ');
-    this.ui.dateLabel.textString = date + ' ' + time;
-  }
-
   initialize (comment, referenceMorph) {
     this.comment = comment;
     this.referenceMorph = referenceMorph;
     this.initializeUI();
     this.initializeCommentIndicator();
     this.setDate();
+    this.setUser();
+  }
+
+  setDate () {
+    const [date, time] = new Date(this.comment.timestamp).toLocaleString('de-DE', { hour12: false }).split(', ');
+    this.ui.dateLabel.textString = date + ' ' + time;
+  }
+
+  setUser () {
+    let username = this.comment.username;
+    if (username.startsWith('guest')) {
+      username = 'guest';
+    }
+    this.ui.usernameLabel.textString = username;
   }
 
   reset () {
@@ -166,7 +175,8 @@ export class CommentMorph extends Morph {
       commentTextField: this.get('comment text field'),
       deleteButton: this.get('delete button'),
       resolveButton: this.get('resolve button'),
-      editSaveButton: this.get('edit save button')
+      editSaveButton: this.get('edit save button'),
+      usernameLabel: this.get('user name label')
     };
   }
 
