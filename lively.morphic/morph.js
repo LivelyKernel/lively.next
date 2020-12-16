@@ -1184,7 +1184,7 @@ export class Morph {
 
     this.layout && this.layout.onChange(change);
 
-    if (this.isComponent) {
+    if (this.isComponent && !PropertyPath('meta.metaInteraction').get(change)) {
       const world = this.world();
       const derivedMorphs = world ? world.withAllSubmorphsSelect(m => m.master && m.master.uses(this)) : [];
       derivedMorphs.forEach(m => {
@@ -1204,7 +1204,7 @@ export class Morph {
   }
 
   onSubmorphChange (change, submorph) {
-    if (this.isComponent && !change.meta.metaInteraction && !change.meta.layoutAction) {
+    if (this.isComponent && !PropertyPath('meta.metaInteraction').get(change) && !PropertyPath('meta.layoutAction').get(change)) {
       const world = this.world();
       world && world.withAllSubmorphsDo(m => {
         if (m.master && m.master.uses(this)) {
@@ -1296,7 +1296,7 @@ export class Morph {
           change.reverseApply();
           animConfig[change.prop] = change.value;
         });
-        return target.animate(animConfig);
+        return target && target.animate(animConfig);
       }));
   }
 
@@ -1736,6 +1736,14 @@ export class Morph {
   openInWorldNear (pos, optWorld) {
     const world = optWorld || this.world() || this.env.world;
     if (!world) return this;
+    if (this.master) {
+      this.opacity = 0;
+      this.master.whenApplied().then(async () => {
+        await this.whenRendered();
+        this.opacity = 1;
+        this.center = pos;
+      });
+    }
     this.center = pos;
     this.setBounds(world.visibleBounds().insetBy(50).translateForInclusion(this.bounds()));
     return this.openInWorld(this.position);
@@ -2131,11 +2139,22 @@ export class Morph {
   get dragTriggerDistance () { return 0; }
 
   onMouseDown (evt) {
-    if (this === evt.targetMorph) { evt.state.clickedMorph = this; }
+    if (this === evt.targetMorph) {
+      evt.state.clickedMorph = this;
+      if (evt.state.prevClick.clickCount == 1) {
+        const timeDiff = Date.now() - evt.state.prevClick.clickedAtTime;
+        if (timeDiff <= 200) {
+          this.onDoubleMouseDown(evt);
+          return;
+        }
+      }
+    }
     if (this === evt.targetMorph && this.master) {
       this.requestMasterStyling();
     }
   }
+
+  onDoubleMouseDown (evt) {}
 
   onMouseUp (evt) {
     evt.state.clickedMorph = null;
@@ -2266,6 +2285,14 @@ export class Morph {
     // called when `this` is choosen as a drop target, double dispatches the
     // drop back to the hand but can be overriden to handle drops differently
     evt.hand.dropMorphsOn(this);
+  }
+
+  doNotAcceptDropsForThisAndSubmorphs () {
+    this.withAllSubmorphsDo(m => m.acceptsDrops = false);
+  }
+
+  acceptDropsForThisAndSubmorphs () {
+    this.withAllSubmorphsDo(m => m.acceptsDrops = true);
   }
 
   wantsToBeDroppedOn (dropTarget) {
@@ -3019,6 +3046,12 @@ export class PathPoint {
 
   get previousVertex () { return this.path.vertexBefore(this); }
 
+  interpolate (p, pos) {
+    const interpolated = this.copy();
+    interpolated.position = interpolated.position.interpolate(p, pos);
+    return interpolated;
+  }
+
   adaptControlPoints (smooth) {
     const { nextVertex, previousVertex, position, path } = this;
     const { vertices } = path;
@@ -3072,6 +3105,7 @@ export class Path extends Morph {
 
       vertices: {
         defaultValue: [],
+        isStyleProp: true,
         after: ['isSmooth', 'borderWidth'],
         before: ['extent', 'origin'],
         type: 'Vertices',
@@ -3091,6 +3125,7 @@ export class Path extends Morph {
       endMarker: { defaultValue: null, type: 'Object' },
 
       endStyle: {
+        isStyleProp: true,
         type: 'Enum',
         values: ['butt', 'round', 'square'],
         defaultValue: 'butt'
@@ -3098,6 +3133,7 @@ export class Path extends Morph {
 
       drawnProportion: {
         type: 'Number',
+        isStyleProp: true,
         isFloat: true,
         min: -1,
         max: 1,
@@ -3106,6 +3142,7 @@ export class Path extends Morph {
 
       cornerStyle: {
         type: 'Enum',
+        isStyleProp: true,
         values: ['arcs', 'bevel', 'miter', 'miter-clip', 'round'],
         defaultValue: 'miter'
       },

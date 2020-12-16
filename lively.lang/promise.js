@@ -51,6 +51,15 @@ function timeToRun (prom) {
   return Promise.resolve(prom).then(() => Date.now() - startTime);
 }
 
+const waitForClosures = {};
+
+function clearPendingWaitFors () {
+  Object.kets(waitForClosures).forEach(i => {
+    delete waitForClosures[i];
+    clearInterval(i);
+  });
+}
+
 function waitFor (ms, tester, timeoutObj) {
   // Tests for a condition calling function `tester` until the result is
   // truthy. Resolves with last return value of `tester`. If `ms` is defined
@@ -64,12 +73,16 @@ function waitFor (ms, tester, timeoutObj) {
     let timeoutValue;
     let error;
     let value;
+    const stopWaiting = (i) => {
+      clearInterval(i);
+      delete waitForClosures[i];
+    };
     const i = setInterval(() => {
-      if (stopped) return clearInterval(i);
+      if (stopped) return stopWaiting(i);
       try { value = tester(); } catch (e) { error = e; }
       if (!value && !error && !timedout) return;
       stopped = true;
-      clearInterval(i);
+      stopWaiting(i);
       if (error) return reject(error);
       if (timedout) {
         return typeof timeoutObj === 'undefined'
@@ -78,6 +91,7 @@ function waitFor (ms, tester, timeoutObj) {
       }
       return resolve(value);
     }, 10);
+    waitForClosures[i] = i;
     if (typeof ms === 'number') setTimeout(() => timedout = true, ms);
   });
 }

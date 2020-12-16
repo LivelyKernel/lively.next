@@ -99,7 +99,7 @@ let objectScriptingEnabled = false;
 export async function createMorphSnapshot (aMorph, options = {}) {
   const isNode = System.get('@system-env').node;
   const {
-    addPreview = !isNode,
+    addPreview = false, // this is incredibely slow for large worlds. Perform on server intead.
     previewWidth = 100, previewHeight = 100,
     previewType = 'png',
     testLoad = true,
@@ -122,7 +122,7 @@ export async function createMorphSnapshot (aMorph, options = {}) {
     const height = previewHeight || aMorph.height;
     const type = previewType || 'png';
     try {
-      snapshot.preview = await renderMorphToDataURI(aMorph, { width, height, type, ignoreMorphs });
+      snapshot.preview = await renderMorphToDataURI(aMorph, { width: width, height: height, type: type, ignoreMorphs: [] });
     } catch (err) {
       console.error(`Error generating morph preview: ${err}`);
       snapshot.preview = await renderMorphToDataURI(morph({ fill: aMorph.fill, width, height }), { width, height, type, ignoreMorphs });

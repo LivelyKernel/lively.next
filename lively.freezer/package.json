@@ -2,6 +2,11 @@
   "name": "lively.freezer",
   "version": "0.1.0",
   "dependencies": {
+    "@babel/core": "^7.12.3",
+    "@babel/cli": "^7.12.1",
+    "@babel/preset-env": "^7.12.1",
+    "@babel/plugin-transform-runtime": "^7.12.1",
+    "caniuse-lite": "^1.0.30001158",
     "babel-standalone": "^6.21.1-0",
     "uglify-es": "^3.3.9",
     "google-closure-compiler-linux": "^20200927.0.0",

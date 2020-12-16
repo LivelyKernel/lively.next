@@ -14,6 +14,8 @@ import { connect, signal, disconnect, disconnectAll, once } from 'lively.binding
 
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from './drag-guides.js';
 import { CommentBrowser } from 'lively.collab';
+import { resource } from 'lively.resources';
+import { show } from './markers.js';
 
 const haloBlue = Color.rgb(23, 160, 251);
 const componentAccent = Color.magenta;
@@ -416,6 +418,7 @@ export default class Halo extends Morph {
   }
 
   toggleMorphHighlighter (active, target, showLayout = false) {
+    if (!target) return;
     if (target.onHaloGrabover) {
       target.onHaloGrabover(active);
       return;
@@ -762,7 +765,7 @@ class NameHaloItem extends HaloItem {
       layout: {
         initialize () {
           this.layout = new HorizontalLayout({
-            resizeContainer: true, spacing: 0
+            resizeContainer: true, spacing: 0, align: 'center', orderByIndex: true
           });
         }
       }
@@ -771,6 +774,8 @@ class NameHaloItem extends HaloItem {
 
   constructor (props) {
     super(props);
+
+    this.initComponentLink();
 
     this.initNameHolders();
 
@@ -783,6 +788,35 @@ class NameHaloItem extends HaloItem {
     this.fill = this.halo.target.isComponent ? componentAccent : haloBlue;
 
     this.alignInHalo();
+  }
+
+  initComponentLink () {
+    const target = this.halo.target;
+    if (!target || target.isMorphSelection) return;
+    if (target.master) {
+      const appliedMaster = target.master.determineMaster(target);
+      const linkToWorld = target.master.getWorldUrlFor(appliedMaster) || 'this project';
+      const isLocal = !!appliedMaster.world();
+      const masterLink = this.addMorph(Icon.makeLabel(linkToWorld ? 'external-link-alt' : 'exclamation-triangle', {
+        nativeCursor: 'pointer',
+        fontColor: Color.white,
+        padding: rect(8, 0, -8, 0),
+        name: 'master link',
+        tooltip: 'Located in ' + linkToWorld
+      }));
+      linkToWorld && connect(masterLink, 'onMouseDown', () => {
+        isLocal ? this.showLocalMaster(appliedMaster) : window.open(linkToWorld);
+      });
+    }
+  }
+
+  showLocalMaster (masterComponent) {
+    let win;
+    if (win = masterComponent.getWindow()) {
+      win.activate();
+      if (win.minimized) win.minimized = false;
+    }
+    masterComponent.show();
   }
 
   targets () {
@@ -800,15 +834,17 @@ class NameHaloItem extends HaloItem {
       connect(nh, 'valid', this, 'toggleNameValid');
       return nh;
     });
-    this.submorphs = arr.interpose(this.nameHolders, {
+    this.submorphs = [...this.submorphs, ...arr.interpose(this.nameHolders, {
       extent: pt(1, 28),
       fill: Color.black.withA(0.4)
-    });
+    })];
   }
 
   toggleActive ([active, nameHolder]) {
     if (this.halo.changingName === active) { return; }
     this.halo.changingName = active;
+    const masterLink = this.get('master link');
+    if (masterLink) { masterLink.visible = masterLink.isLayoutable = !active; }
     if (active) {
       this.nameHolders.forEach(nh => nh != nameHolder && nh.deactivate());
       this.borderWidth = 3;
@@ -1215,9 +1251,97 @@ class ComponentHaloItem extends HaloItem {
     world.showHaloFor(target);
   }
 
-  onMouseDown () {
-    this.halo.target.isComponent = !this.halo.target.isComponent;
-    this.updateComponentIndicator();
+  async checkForDuplicateNamesInHierarchy () {
+    const target = this.halo.target;
+    const world = this.world();
+    const morphsInHierarchy = [];
+    target.withAllSubmorphsDoExcluding(m => {
+      if (m != target) morphsInHierarchy.push(m);
+    }, m => target.master);
+    const nameGroups = arr.groupBy(morphsInHierarchy, m => m.name);
+    const defaultStyle = { fontWeight: 'normal', fontSize: 16 };
+    // initial warn to allow the user to cancel the component conversion
+    if (Object.values(nameGroups).find(ms => ms.length > 1)) {
+      const numberOfAmbigousMorphs = arr.sum(Object.values(nameGroups).filter(ms => ms.length > 1).map(ms => ms.length));
+      const canProceed = await world.confirm([
+        'Ambigous Names in Submorph Hierarchy  ', {}, ...Icon.textAttribute('exclamation-triangle', { fontColor: Color.rgb(230, 126, 34), fontSize: 30, lineHeight: '40px' }),
+        `\nThe morph you are about to turn into a component has ${numberOfAmbigousMorphs} morphs within its submorph hierarchy, that have ambigous names. This can lead to incorrect applications of style properties when you create derived instances from this component.\n\n`, { ...defaultStyle, textAlign: 'left' },
+        'Usually ambigous names are caused if your component is in some kind of intermittent state, where it already displays an example state or code has run that automatically created interface elements. This can be fixed by resetting the submorphs of this morph, usually by implementing a ', { ...defaultStyle, textAlign: 'left', fontStyle: 'italic' }, 'reset()', { ...defaultStyle, fontStyle: 'italic', fontFamily: 'IBM Plex Mono' }, ' routine you can invoke to put the morph into some kind of "neutral" state. Alternatively you can go ahead and rename the duplicate morphs to have proper unique names. If you have a hard time giving the conflicting morphs appropriate names, this can be an indication that the component you are declaring is too large, and you need to decompose your component into subcomponents further.', { ...defaultStyle, textAlign: 'left', fontStyle: 'italic' }
+      ], {
+        width: 600,
+        confirmLabel: 'PROCEED TO RENAME',
+        rejectLabel: 'CANCEL',
+        align: 'left'
+      });
+      if (!canProceed) return;
+    }
+
+    for (const name in nameGroups) {
+      if (nameGroups[name].length < 2) continue;
+      let nonUniqueMorphs = nameGroups[name];
+      while (nonUniqueMorphs.length > 1) {
+        const morphToBeRenamed = nonUniqueMorphs[0];
+        // morphToBeRenamed = that
+        show(morphToBeRenamed, true);
+        const newName = await world.prompt([
+          'Name Collision\n', {},
+          'The name of\n', defaultStyle,
+          morphToBeRenamed.toString(), {
+            ...defaultStyle, fontStyle: 'italic', fontWeight: 'bold'
+          },
+          '\nis not unique within the submorph hierachy of\n', { ...defaultStyle },
+          target.name, { ...defaultStyle, fontStyle: 'italic', fontWeight: 'bold' },
+          `\nThere ${nonUniqueMorphs.length > 2 ? 'are ' + (nonUniqueMorphs.length - 1) + ' other morphs' : 'is one other morph'} with the exact same name located in this component.`, defaultStyle,
+          ' Duplicate names can cause errors when applying styles to derived morphs of this master component, so it is essential that there is no name ambiguity. Please enter a new name for this or the other conflicting morphs:', defaultStyle
+        ], {
+          input: morphToBeRenamed.name,
+          lineWrapping: true,
+          width: 500,
+          fontSize: 12,
+          rejectLabel: 'IGNORE',
+          confirmLabel: 'RENAME',
+          errorMessage: 'Provided name is not unique',
+          validate: (val) => !Object.keys(nameGroups).includes(val)
+        });
+        signal(world, 'hideMarkers');
+        // remove the indicator
+        if (newName) morphToBeRenamed.name = newName;
+        if (newName in nameGroups) continue;
+        else if (!newName) {
+          nonUniqueMorphs = arr.rotate(nonUniqueMorphs);
+          continue; // force rename
+        }
+        arr.remove(nonUniqueMorphs, morphToBeRenamed);
+      }
+    }
+    return true;
+  }
+
+  async onMouseDown () {
+    const target = this.halo.target;
+    const toBeComponent = !target.isComponent;
+    const numDuplicates = $world.getAllNamed(target.name).length;
+    if (toBeComponent && numDuplicates > 1) {
+      const newName = await $world.prompt([
+        'Name Conflict\n', {},
+        `The morph\'s name you are about to turn into a component is already used by ${numDuplicates - 1} other morph${numDuplicates > 2 ? 's' : ''}. Please enter a `, {
+          fontWeight: 'normal'
+        }, 'unique identifier', { fontStyle: 'italic' },
+        ' for this component within this project.', {
+          fontWeight: 'normal', fontSize: 16
+        }], {
+        input: target.name,
+        lineWrapping: true,
+        width: 400,
+        errorMessage: 'Identifier not unique',
+        validate: (input) => $world.getAllNamed(input).length == 0
+      });
+      if (!newName) return;
+      target.name = newName;
+    }
+    target.isComponent = toBeComponent && await this.checkForDuplicateNamesInHierarchy();
+    if (!this.world()) target.world().showHaloFor(target); // halo got disposed
+    else this.updateComponentIndicator();
   }
 }
 

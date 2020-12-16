@@ -120,6 +120,8 @@ export default class Workspace extends Window {
   }
 
   relayoutWindowControls () {
+    // deactivate here since all submorphs are present
+    this.doNotAcceptDropsForThisAndSubmorphs();
     super.relayoutWindowControls();
     const list = this.getSubmorphNamed('eval backend button');
     const title = this.ui.windowTitle;

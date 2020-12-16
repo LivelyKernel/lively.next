@@ -1,28 +1,28 @@
-/*global System,TextEncoder*/
-import * as Rollup from "rollup";
-import { MorphicDB, config, morph } from "lively.morphic";
+/* global System,TextEncoder */
+import * as Rollup from 'rollup';
+import { MorphicDB, config, morph } from 'lively.morphic';
 import {
   createMorphSnapshot, serializeMorph,
   loadPackagesAndModulesOfSnapshot,
   findRequiredPackagesOfSnapshot
-} from "lively.morphic/serialization.js";
-import * as modules from "lively.modules";
+} from 'lively.morphic/serialization.js';
+import * as modules from 'lively.modules';
 import * as ast from 'lively.ast';
 import * as classes from 'lively.classes';
-import { resource } from "lively.resources";
+import { resource } from 'lively.resources';
 
-import { es5Transpilation, stringifyFunctionWithoutToplevelRecorder } from "lively.source-transform";
+import { es5Transpilation, stringifyFunctionWithoutToplevelRecorder } from 'lively.source-transform';
 import {
   rewriteToCaptureTopLevelVariables,
   insertCapturesForExportedImports
-} from "lively.source-transform/capturing.js";
-import { Path, obj, promise, string, arr, fun } from "lively.lang";
-import { Color } from "lively.graphics";
-import { LoadingIndicator } from "lively.components";
-import { requiredModulesOfSnapshot, ExpressionSerializer, serialize, locateClass, removeUnreachableObjects } from "lively.serializer2";
-import { moduleOfId, isReference, referencesOfId, classNameOfId } from "lively.serializer2/snapshot-navigation.js";
-import { runCommand, defaultDirectory } from "lively.ide/shell/shell-interface.js";
-import { loadPart } from "lively.morphic/partsbin.js";
+} from 'lively.source-transform/capturing.js';
+import { Path, obj, promise, string, arr, fun } from 'lively.lang';
+import { Color } from 'lively.graphics';
+import { LoadingIndicator } from 'lively.components';
+import { requiredModulesOfSnapshot, ExpressionSerializer, serialize, locateClass, removeUnreachableObjects } from 'lively.serializer2';
+import { moduleOfId, isReference, referencesOfId, classNameOfId } from 'lively.serializer2/snapshot-navigation.js';
+import { runCommand, defaultDirectory } from 'lively.ide/shell/shell-interface.js';
+import { loadPart } from 'lively.morphic/partsbin.js';
 
 const { module } = modules;
 
@@ -45,23 +45,23 @@ await jspmCompile(
 
 */
 
-async function jspmCompile(url, out, globalName, redirect = {}) {
-  module(url)._source = null
-  let m = new LivelyRollup({ rootModule: module(url), includePolyfills: false, globalName, includeRuntime: false, jspm: true, redirect });
+async function jspmCompile (url, out, globalName, redirect = {}) {
+  module(url)._source = null;
+  const m = new LivelyRollup({ rootModule: module(url), includePolyfills: false, globalName, includeRuntime: false, jspm: true, redirect });
   m.excludedModules = ['babel-plugin-transform-jsx'];
-  let res = await m.rollup(true, 'es2019');
-  await resource(System.baseURL).join(out).write(res.min); 
+  const res = await m.rollup(true, 'es2019');
+  await resource(System.baseURL).join(out).write(res.min);
 }
 
-async function bootstrapLibrary(url, out, asBrowserModule = true, globalName) {
-  module(url)._source = null
-  let m = new LivelyRollup({ rootModule: module(url), asBrowserModule, globalName, includeRuntime: false, jspm: true });
+async function bootstrapLibrary (url, out, asBrowserModule = true, globalName) {
+  module(url)._source = null;
+  const m = new LivelyRollup({ rootModule: module(url), asBrowserModule, globalName, includeRuntime: false, jspm: true });
   m.excludedModules = ['babel-plugin-transform-jsx'];
-  let res = await m.rollup(true, 'es2019');
-  await resource(System.baseURL).join(out).write(res.min); 
+  const res = await m.rollup(true, 'es2019');
+  await resource(System.baseURL).join(out).write(res.min);
 }
 
-function fixSourceForBugsInGoogleClosure(id, source) {
+function fixSourceForBugsInGoogleClosure (id, source) {
   /*
     rms 27.9.20
     Given that Google Closure is at the core of what anything that drives this company's revenue,
@@ -69,24 +69,28 @@ function fixSourceForBugsInGoogleClosure(id, source) {
     This method checks for known issues with certain modules, and attempts to fix the source accordingly.
   */
   if (id.includes('rollup')) {
-    return source.replace(`if(({entryModules:this.entryModules,implicitEntryModules:this.implicitEntryModules}=await this.moduleLoader.addEntryModules((e=this.options.input,Array.isArray(e)?e.map(e=>({fileName:null,id:e,implicitlyLoadedAfter:[],importer:void 0,name:null})):Object.keys(e).map(t=>({fileName:null,id:e[t],implicitlyLoadedAfter:[],importer:void 0,name:t}))),!0)),0===this.entryModules.length)`,
+    return source.replace('if(({entryModules:this.entryModules,implicitEntryModules:this.implicitEntryModules}=await this.moduleLoader.addEntryModules((e=this.options.input,Array.isArray(e)?e.map(e=>({fileName:null,id:e,implicitlyLoadedAfter:[],importer:void 0,name:null})):Object.keys(e).map(t=>({fileName:null,id:e[t],implicitlyLoadedAfter:[],importer:void 0,name:t}))),!0)),0===this.entryModules.length)',
       `({entryModules:this.entryModules,implicitEntryModules:this.implicitEntryModules}=await this.moduleLoader.addEntryModules((e=this.options.input,Array.isArray(e)?e.map(e=>({fileName:null,id:e,implicitlyLoadedAfter:[],importer:void 0,name:null})):Object.keys(e).map(t=>({fileName:null,id:e[t],implicitlyLoadedAfter:[],importer:void 0,name:t}))),!0))
       if(0===this.entryModules.length)`);
+  }
+  if (id.includes('lottie-web') && source.includes('var loopIn, loop_in, loopOut, loop_out, smooth;')) {
+    return source.replace('var loopIn, loop_in, loopOut, loop_out, smooth;', `function __capture__(...args) { if (args[100]) console.log(args) }; var loopIn, loop_in, loopOut, loop_out, smooth; __capture__($bm_sum, $bm_sub, $bm_mul, $bm_div, $bm_mod, radiansToDegrees, length);
+`);
   }
   return source;
 }
 
 // The exclusion sets are used for optimization of the generated package.
-// TODO: make the selection of excluded packages more comprehensive and part of the future freeze wizard 
+// TODO: make the selection of excluded packages more comprehensive and part of the future freeze wizard
 
 const CLASS_INSTRUMENTATION_MODULES = [
-  'lively.morphic', 
+  'lively.morphic',
   'lively.components',
   'lively.ide',
   'lively.halos',
   'lively.user',
   'lively.bindings',
-  'typeshift.components',
+  'typeshift.components'
 ];
 
 const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = [
@@ -100,11 +104,11 @@ const ADVANCED_EXCLUDED_MODULES = [
   'lively.modules',
   'babel-plugin-transform-jsx',
   'lively-system-interface',
-  'lively.storage',
-]
+  'lively.storage'
+];
 
 const DEFAULT_EXCLUDED_MODULES_PART = [
-  'kld-intersections',
+  'kld-intersections'
 ];
 
 const DEFAULT_EXCLUDED_MODULES_WORLD = [
@@ -117,7 +121,7 @@ const DEFAULT_EXCLUDED_MODULES_WORLD = [
   'lively.halos'
 ];
 
-export async function generateLoadHtml(part, format = 'global') {
+export async function generateLoadHtml (part, format = 'global') {
   const addScripts = `
       <noscript>
          <meta http-equiv="refresh" content="0;url=/noscript.html">
@@ -163,14 +167,14 @@ export async function generateLoadHtml(part, format = 'global') {
       </script>
       <link rel="preload" id="loader" href="load.js" as="script">`;
 
-   let html = `
+  let html = `
      <!DOCTYPE html>
      <head>
      <meta content="utf-8" http-equiv="encoding">
      <meta name="viewport" content="minimum-scale=1.0, maximum-scale=1.0, initial-scale=1.0, width=device-width">
      <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
      <meta name="apple-mobile-web-app-capable" content="yes">
-     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">`   
+     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">`;
   html += addScripts;
   html += `</head><body style="margin: 0; overflow-x: hidden; width: 100%; height: 100%;"><div id="loading-screen">${part.__loading_html__ || ''}</div><div id="crawler content">${part.__crawler_html__ || ''}</div>
 <script id="crawler checker">
@@ -195,18 +199,18 @@ export async function generateLoadHtml(part, format = 'global') {
 
 // TODO: Remove coded duplication between freezeWorld and freezePart.
 
-export async function interactivelyFreezeWorld(world) {
+export async function interactivelyFreezeWorld (world) {
   /*
     Function prompts the user for a name to publish the part under.
-    Data is uploaded to directory and then returns a link to the folder. 
-  */ 
-  let userName = $world.getCurrentUser().name;
-  let frozenPartsDir = await resource(System.baseURL).join('users').join(userName).join('published/').ensureExistance();
+    Data is uploaded to directory and then returns a link to the folder.
+  */
+  const userName = $world.getCurrentUser().name;
+  const frozenPartsDir = await resource(System.baseURL).join('users').join(userName).join('published/').ensureExistance();
   let publicAlias = world.metadata.commit.name;
   let publicationDir = frozenPartsDir.join(publicAlias + '/');
-  let assetDir = await publicationDir.join('assets/').ensureExistance();
+  const assetDir = await publicationDir.join('assets/').ensureExistance();
   while (await publicationDir.exists()) {
-    let proceed = await $world.confirm(`A world published as "${publicAlias}" already exists.\nDo you want to overwrite this publication?`, {
+    const proceed = await $world.confirm(`A world published as "${publicAlias}" already exists.\nDo you want to overwrite this publication?`, {
       rejectLabel: 'CHANGE NAME'
     });
     if (proceed) break;
@@ -222,47 +226,48 @@ export async function interactivelyFreezeWorld(world) {
   const deletedIds = [];
   obj.values(worldSnap.snapshot).forEach(m => delete m.props.metadata);
   // remove objects that are part of the lively.ide or lively.halo package (dev tools)
-  for (let id in worldSnap.snapshot) {
-     delete worldSnap.snapshot[id].props.metadata;
-     delete worldSnap.snapshot[id]._cachedLineCharBounds;
-     let module = moduleOfId(worldSnap.snapshot, id);
-     if (!module.package) continue;
-     if (DEFAULT_EXCLUDED_MODULES_WORLD.includes(module.package.name)) {
-       // fixme: we also need to kill of packages which themselves require one of the "taboo" packages
-       delete worldSnap.snapshot[id];
-       deletedIds.push(id);
-       continue;
-     }
-     // transform sources for attribute connections
-     if (classNameOfId(worldSnap.snapshot, id) === 'AttributeConnection') {
-        let props = worldSnap.snapshot[id].props;
-        if (props.converterString) {
-           props.converterString.value = es5Transpilation(`(${props.converterString.value})`); 
-        }
-        if (props.updaterString) {
-           props.updaterString.value = es5Transpilation(`(${props.updaterString.value})`);
-        }
-     }    
+  for (const id in worldSnap.snapshot) {
+    delete worldSnap.snapshot[id].props.metadata;
+    delete worldSnap.snapshot[id]._cachedLineCharBounds;
+    const module = moduleOfId(worldSnap.snapshot, id);
+    if (!module.package) continue;
+    if (DEFAULT_EXCLUDED_MODULES_WORLD.includes(module.package.name)) {
+      // fixme: we also need to kill of packages which themselves require one of the "taboo" packages
+      delete worldSnap.snapshot[id];
+      deletedIds.push(id);
+      continue;
+    }
+
+    // transform sources for attribute connections
+    if (classNameOfId(worldSnap.snapshot, id) === 'AttributeConnection') {
+      const props = worldSnap.snapshot[id].props;
+      if (props.converterString) {
+        props.converterString.value = es5Transpilation(`(${props.converterString.value})`);
+      }
+      if (props.updaterString) {
+        props.updaterString.value = es5Transpilation(`(${props.updaterString.value})`);
+      }
+    }
   }
 
   // remove all windows that are emptied due to the clearance process
-  for (let id in worldSnap.snapshot) {
-     let className = classNameOfId(worldSnap.snapshot, id);
-     if ( arr.intersect(referencesOfId(worldSnap.snapshot, id), deletedIds).length > 0) {
-         if (className === 'Window') {
-           delete worldSnap.snapshot[id];
-           continue;
-         }
-         for (let [key, {value: v}] of Object.entries(worldSnap.snapshot[id].props)) {
-           if (isReference(v) && deletedIds.includes(v.id)) {
-             delete worldSnap.snapshot[id].props[key];
-           }
-           if (arr.isArray(v)) { 
-             // also remove references that are stuck inside array values
-             worldSnap.snapshot[id].props[key].value = v.filter(v => !(isReference(v) && deletedIds.includes(v.id)));
-           }
-         }   
-     }
+  for (const id in worldSnap.snapshot) {
+    const className = classNameOfId(worldSnap.snapshot, id);
+    if (arr.intersect(referencesOfId(worldSnap.snapshot, id), deletedIds).length > 0) {
+      if (className === 'Window') {
+        delete worldSnap.snapshot[id];
+        continue;
+      }
+      for (const [key, { value: v }] of Object.entries(worldSnap.snapshot[id].props)) {
+        if (isReference(v) && deletedIds.includes(v.id)) {
+          delete worldSnap.snapshot[id].props[key];
+        }
+        if (arr.isArray(v)) {
+          // also remove references that are stuck inside array values
+          worldSnap.snapshot[id].props[key].value = v.filter(v => !(isReference(v) && deletedIds.includes(v.id)));
+        }
+      }
+    }
   }
   removeUnreachableObjects([worldSnap.id], worldSnap.snapshot);
 
@@ -273,32 +278,32 @@ export async function interactivelyFreezeWorld(world) {
       compress: true,
       exclude: DEFAULT_EXCLUDED_MODULES_WORLD
     });
-  } catch(e) {
+  } catch (e) {
     throw e;
   }
 
-  let li = LoadingIndicator.open('Freezing World', {status: 'Writing files...'})
+  const li = LoadingIndicator.open('Freezing World', { status: 'Writing files...' });
   await publicationDir.join('index.html').write(await generateLoadHtml(world, frozen.format));
   await publicationDir.join('load.js').write(frozen.min);
-  li.status = 'copying asset files...'
-  for (let asset of frozen.assets) await asset.copyTo(assetDir);
-  let dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
-  for (let [partName, snapshot] of Object.entries(frozen.dynamicParts)) {
+  li.status = 'copying asset files...';
+  for (const asset of frozen.assets) await asset.copyTo(assetDir);
+  const dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
+  for (const [partName, snapshot] of Object.entries(frozen.dynamicParts)) {
     await dynamicParts.join(partName + '.json').writeJson(snapshot);
   }
   li.remove();
-  $world.setStatusMessage([`Published ${publicAlias}. Click `,null, 'here', {
-    textDecoration: 'underline', fontWeight: 'bold',
-    doit: {code: `window.open("${publicationDir.join('index.html').url}")`}
+  $world.setStatusMessage([`Published ${publicAlias}. Click `, null, 'here', {
+    textDecoration: 'underline',
+    fontWeight: 'bold',
+    doit: { code: `window.open("${publicationDir.join('index.html').url}")` }
   }, ' to view.'], Color.green, 10000);
 }
 
-
-async function promptForFreezing(target, requester) {
-  let freezerPrompt = await resource('part://SystemDialogs/freezer prompt').read();
-  let userName = $world.getCurrentUser().name;
-  let previouslyExcludedPackages = Path('metadata.excludedPackages').get(target) || ADVANCED_EXCLUDED_MODULES;
-  let previouslyPublishedDir = Path('metadata.publishedLocation').get(target) || resource(System.baseURL).join('users').join(userName).join('published').join(target.name).url;
+async function promptForFreezing (target, requester) {
+  const freezerPrompt = await resource('part://SystemDialogs/freezer prompt').read();
+  const userName = $world.getCurrentUser().name;
+  const previouslyExcludedPackages = Path('metadata.excludedPackages').get(target) || ADVANCED_EXCLUDED_MODULES;
+  const previouslyPublishedDir = Path('metadata.publishedLocation').get(target) || resource(System.baseURL).join('users').join(userName).join('published').join(target.name).url;
   let res;
   await $world.withRequesterDo(requester, async (pos) => {
     freezerPrompt.excludedPackages = previouslyExcludedPackages;
@@ -310,20 +315,20 @@ async function promptForFreezing(target, requester) {
   return res;
 }
 
-var masterComponents;
+let masterComponents;
 
-export async function interactivelyFreezePart(part, requester = false) {
+export async function interactivelyFreezePart (part, requester = false) {
   /*
     Function prompts the user for a name to publish the part under.
-    Data is uploaded to directory and then returns a link to the folder. 
-  */ 
+    Data is uploaded to directory and then returns a link to the folder.
+  */
 
-  let userName = $world.getCurrentUser().name;
-  let options = await promptForFreezing(part, requester);
+  const userName = $world.getCurrentUser().name;
+  const options = await promptForFreezing(part, requester);
 
   if (!options) return;
-  let publicationDir = await resource(System.baseURL).join(options.location).asDirectory().ensureExistance();
-  let publicationDirShell = resource(await defaultDirectory()).join("..").join(options.location).withRelativePartsResolved().asDirectory()
+  const publicationDir = await resource(System.baseURL).join(options.location).asDirectory().ensureExistance();
+  const publicationDirShell = resource(await defaultDirectory()).join('..').join(options.location).withRelativePartsResolved().asDirectory();
 
   part.changeMetaData('excludedPackages', options.excludedPackages, true, false);
   part.changeMetaData('publishedLocation', options.location, true, false);
@@ -335,58 +340,60 @@ export async function interactivelyFreezePart(part, requester = false) {
   try {
     frozen = await bundlePart(part, {
       compress: true,
+      useTerser: options.useTerser,
       exclude: options.excludedPackages,
-      requester
+      requester: false
     });
-  } catch(e) {
+  } catch (e) {
     throw e;
   }
-  
-  let li = LoadingIndicator.open('Freezing Part', {status: 'Writing files...'});
+
+  const li = LoadingIndicator.open('Freezing Part', { status: 'Writing files...' });
+  await li.hideSpinner();
   let currentFile = '';
   publicationDir.onProgress = (evt) => {
     // set progress of loading indicator
-    let p = evt.loaded / evt.total;
+    const p = evt.loaded / evt.total;
     li.progress = p;
     li.status = 'Writing file ' + currentFile + ' ' + (100 * p).toFixed() + '%';
   };
   currentFile = 'index.html';
   // if the module is split, include systemjs
   await publicationDir.join(currentFile).write(await generateLoadHtml(part, frozen.format));
-  
+
   if (obj.isArray(frozen)) {
-    for (let part of frozen) {
+    for (const part of frozen) {
       currentFile = part.fileName;
       await publicationDir.join(currentFile).write(part.min);
       try {
         await publicationDirShell.join(currentFile + '.gz').gzip(part.min);
         await publicationDirShell.join(currentFile + '.br').brotli(part.min);
       } catch (err) {
-        
+
       }
     }
     currentFile = 'load.js';
     await publicationDir.join(currentFile).write(frozen.load.min);
     try {
-      currentFile = 'load.js.gz'    
+      currentFile = 'load.js.gz';
       await publicationDirShell.join(currentFile).gzip(frozen.load.min);
-      currentFile = 'load.js.br'    
+      currentFile = 'load.js.br';
       await publicationDirShell.join(currentFile).brotli(frozen.load.min);
-    } catch(err) {
-      
+    } catch (err) {
+
     }
   } else {
     currentFile = 'load.js';
     await publicationDir.join(currentFile).write(frozen.min);
-    currentFile = 'load.js.gz'    
-    await publicationDirShell.join(currentFile).gzip(frozen.min); 
-    currentFile = 'load.js.br'    
-    await publicationDirShell.join(currentFile).brotli(frozen.min);    
+    currentFile = 'load.js.gz';
+    await publicationDirShell.join(currentFile).gzip(frozen.min);
+    currentFile = 'load.js.br';
+    await publicationDirShell.join(currentFile).brotli(frozen.min);
   }
 
-  li.status = 'Copying dynamic parts...' // to be unified by url parts fetching
-  let dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
-  for (let [partName, snapshot] of Object.entries(frozen.dynamicParts)) {
+  li.status = 'Copying dynamic parts...'; // to be unified by url parts fetching
+  const dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
+  for (const [partName, snapshot] of Object.entries(frozen.dynamicParts)) {
     if (partName.startsWith('part://')) {
       arr.pushIfNotIncluded(frozen.masterComponents, partName.replace('part://', 'styleguide://'));
       continue;
@@ -394,41 +401,44 @@ export async function interactivelyFreezePart(part, requester = false) {
     currentFile = partName + '.json';
     await dynamicParts.join(currentFile).writeJson(snapshot);
   }
-  li.status = 'Copying assets...'
-  let assetDir = await publicationDir.join('assets/').ensureExistance();
+  li.status = 'Copying assets...';
+  const assetDir = await publicationDir.join('assets/').ensureExistance();
   // copy font awesome assets
   await resource(System.baseURL).join(config.css.fontAwesome).parent().copyTo(assetDir.join('fontawesome-free-5.12.1/css/'));
   await resource(System.baseURL).join(config.css.fontAwesome).parent().parent().join('webfonts/').copyTo(assetDir.join('fontawesome-free-5.12.1/webfonts/'));
   // copy inconsoloata
   await resource(System.baseURL).join(config.css.inconsolata).parent().copyTo(assetDir.join('inconsolata/'));
-  for (let asset of frozen.assets) {
+  for (const asset of frozen.assets) {
     currentFile = asset.url;
+    // skip if exists
+    // if (await assetDir.join(asset.name()).exists()) continue;
     await asset.copyTo(assetDir);
   }
 
   // then copy over the style morphs
-  li.status = 'Copying master components...'
+  li.status = 'Copying master components...';
   masterComponents = frozen.masterComponents;
-  let masterDir = await publicationDir.join('masters/').ensureExistance();
-  for (let url of frozen.masterComponents) {
-    let masterFile = await masterDir
+  const masterDir = await publicationDir.join('masters/').ensureExistance();
+  for (const url of frozen.masterComponents) {
+    const masterFile = await masterDir
       .join(url.replace('styleguide://', '') + '.json')
       .ensureExistance();
-    await masterFile.writeJson(serialize(await resource(url).read()))
+    await masterFile.writeJson(serialize(await resource(url).read()));
   }
-  
+
   li.remove();
-  $world.setStatusMessage([`Published ${part.name}. Click `,null, 'here', {
-    textDecoration: 'underline', fontWeight: 'bold',
-    doit: {code: `window.open("${publicationDir.join('index.html').url}")`}
+  $world.setStatusMessage([`Published ${part.name}. Click `, null, 'here', {
+    textDecoration: 'underline',
+    fontWeight: 'bold',
+    doit: { code: `window.open("${publicationDir.join('index.html').url}")` }
   }, ' to view.'], Color.green, false);
 }
 
-export async function displayFrozenPartsFor(user = $world.getCurrentUser(), requester) {
-  let userName = user.name;
-  let frozenPartsDir = resource(System.baseURL).join('users').join(userName).join('published/');
+export async function displayFrozenPartsFor (user = $world.getCurrentUser(), requester) {
+  const userName = user.name;
+  const frozenPartsDir = resource(System.baseURL).join('users').join(userName).join('published/');
   if (!await frozenPartsDir.exists()) return;
-  let publishedItems = (await frozenPartsDir.dirList()).map(dir => [dir.name(), dir.join('index.html').url])
+  const publishedItems = (await frozenPartsDir.dirList()).map(dir => [dir.name(), dir.join('index.html').url]);
   $world.filterableListPrompt('Published Parts', publishedItems.map(([name, url]) => {
     return {
       isListItem: true,
@@ -442,29 +452,31 @@ export async function displayFrozenPartsFor(user = $world.getCurrentUser(), requ
         readOnly: true,
         fixedWidth: true,
         textAndAttributes: [url.replace(System.baseURL, ''), {
-          link: url, fontColor: 'inherit',
+          link: url, fontColor: 'inherit'
         }, name, {
-          fontStyle: 'italic', fontWeight: 'bold',
+          fontStyle: 'italic',
+          fontWeight: 'bold',
           textStyleClasses: ['annotation', 'truncated-text']
         }]
       })
-    } 
+    };
   }), {
-    requester, fuzzy: true, onSelection: (_, prompt) => {
+    requester,
+    fuzzy: true,
+    onSelection: (_, prompt) => {
       prompt.submorphs[2].items.forEach(item => item.morph.fontColor = Color.white);
-      if (prompt.submorphs[2].selectedItems[0])
-        prompt.submorphs[2].selectedItems[0].morph.fontColor = Color.black;                   
+      if (prompt.submorphs[2].selectedItems[0]) { prompt.submorphs[2].selectedItems[0].morph.fontColor = Color.black; }
     }
   });
 }
 
 /* HELPERS */
-  
-function belongsToObjectPackage(moduleId) {
+
+function belongsToObjectPackage (moduleId) {
   return Path('config.lively.isObjectPackage').get(module(moduleId).package());
 }
 
-function cleanSnapshot({snapshot}) {
+function cleanSnapshot ({ snapshot }) {
   Object.values(snapshot).forEach(entry => {
     delete entry.rev;
     if (entry.props && entry.props._rev) delete entry.props._rev;
@@ -473,69 +485,73 @@ function cleanSnapshot({snapshot}) {
 
 // await evalOnServer('1 + 1')
 
-async function evalOnServer(code) {
+async function evalOnServer (code) {
   if (System.get('@system-env').node) {
-    return eval(code)
+    return eval(code);
   }
-  let {default: EvalBackendChooser} = await System.import("lively.ide/js/eval-backend-ui.js"),
-        {RemoteCoreInterface} = await System.import("lively-system-interface/interfaces/interface.js"),
-    // fetch next available nodejs env
-        remoteInterface = (await EvalBackendChooser.default.allEvalBackends())
-      .map(backend => backend.coreInterface)
-      .find(coreInterface => coreInterface instanceof RemoteCoreInterface);
-   return await remoteInterface.runEvalAndStringify(code,  { classTransform: classes.classToFunctionTransform });
+  const { default: EvalBackendChooser } = await System.import('lively.ide/js/eval-backend-ui.js');
+  const { RemoteCoreInterface } = await System.import('lively-system-interface/interfaces/interface.js');
+  // fetch next available nodejs env
+  const remoteInterface = (await EvalBackendChooser.default.allEvalBackends())
+    .map(backend => backend.coreInterface)
+    .find(coreInterface => coreInterface instanceof RemoteCoreInterface);
+  return await remoteInterface.runEvalAndStringify(code, { classTransform: classes.classToFunctionTransform });
 }
 
-function findMasterComponentsInSnapshot(snap) {
+function findMasterComponentsInSnapshot (snap) {
   const masterComponents = new Set();
   const exprSerializer = new ExpressionSerializer();
   let props;
-  for (let id in snap.snapshot) {
+  for (const id in snap.snapshot) {
     if (props = snap.snapshot[id].props.master) {
       // also handle expression!
-      if (typeof props.value == 'string') {
-         props = exprSerializer.deserializeExpr(props.value);
-      } else props = snap.snapshot[props.value.id].props;
-      let { auto, click, hover } = props;
-      arr.compact([ auto, click, hover ]).forEach((url) => masterComponents.add(url.value || url))
+      if (typeof props.value === 'string') {
+        props = exprSerializer.deserializeExpr(props.value);
+      } else if (props.value == false) {
+        continue;
+      } else {
+        props = snap.snapshot[props.value.id].props;
+      }
+      const { auto, click, hover } = props;
+      arr.compact([auto, click, hover]).forEach((url) => masterComponents.add(url.value || url));
     }
   }
-  return [...masterComponents]
+  return [...masterComponents];
 }
 
-async function getRequiredModulesFromSnapshot(snap, frozenPart, includeDynamicParts=false, includeObjectModules=true) {
-  var imports = requiredModulesOfSnapshot(snap), // do this after the replacement of calls
-      dynamicPartImports = [],
-      requiredMasterComponents = new Set(),
-      objectModules = [];
+async function getRequiredModulesFromSnapshot (snap, frozenPart, includeDynamicParts = false, includeObjectModules = true) {
+  let imports = requiredModulesOfSnapshot(snap); // do this after the replacement of calls
+  const dynamicPartImports = [];
+  let requiredMasterComponents = new Set();
+  const objectModules = [];
 
   // flatten imports to all imports of the object package
   imports = arr.flatten(
-    imports.map(modId => 
+    imports.map(modId =>
       module(modId)
-                .requirements()
-                .map(mod => mod.id)
-                .filter(id => belongsToObjectPackage(id))
-                .concat(modId)));
+        .requirements()
+        .map(mod => mod.id)
+        .filter(id => belongsToObjectPackage(id))
+        .concat(modId)));
 
   findMasterComponentsInSnapshot(snap).forEach(url => requiredMasterComponents.add(url));
 
-  let { packages: additionalImports } = await findRequiredPackagesOfSnapshot(snap);
+  const { packages: additionalImports } = await findRequiredPackagesOfSnapshot(snap);
   Object.entries(additionalImports['local://lively-object-modules/'] || {}).forEach(([packageName, pkg]) => {
     Object.keys(pkg).filter(key => key.endsWith('.js')).forEach(file => {
-      let filename = `${packageName}/${file}`;
-      if (imports.includes(filename)) arr.remove(imports, filename)
+      const filename = `${packageName}/${file}`;
+      if (imports.includes(filename)) arr.remove(imports, filename);
       objectModules.push(filename);
     });
   });
   // [...imports, ...objectModules].map(id => belongsToObjectPackage(id))
-  for (let m of [...imports, ...objectModules]) {
-    const mod = module(m),
-          partModuleSource = (mod._source || await mod.source()),
-          parsedModuleSource = ast.parse(partModuleSource),
-          isObjectPackageModule = belongsToObjectPackage(m),
-          dynamicPartFetches = [],
-          dynamicPartLoads = [];
+  for (const m of [...imports, ...objectModules]) {
+    const mod = module(m);
+    const partModuleSource = (mod._source || await mod.source());
+    const parsedModuleSource = ast.parse(partModuleSource);
+    const isObjectPackageModule = belongsToObjectPackage(m);
+    const dynamicPartFetches = [];
+    const dynamicPartLoads = [];
 
     // scan for dynamic imports
     ast.AllNodesVisitor.run(parsedModuleSource, (node, path) => {
@@ -548,17 +564,17 @@ async function getRequiredModulesFromSnapshot(snap, frozenPart, includeDynamicPa
       // part loading necceciates a dynamic import. this automatically causes syleguides to be fetched dynamically too.
       if (node.type === 'CallExpression' && Path('callee.name').get(node) == 'resource' &&
           (Path('arguments.0.value').get(node) || '').match(/^part:\/\/.*\/.+/)) {
-        let partUrl = node.arguments[0].value;
+        const partUrl = node.arguments[0].value;
         dynamicPartFetches.push(partUrl);
         frozenPart.hasDynamicImports = true;
       }
 
       // just styleguides usage itself does not necceciate a dynamic import
-      if (node.type === 'Literal' && typeof node.value == 'string' && node.value.match(/^styleguide:\/\/.*\/.+/)) {
+      if (node.type === 'Literal' && typeof node.value === 'string' && node.value.match(/^styleguide:\/\/.*\/.+/)) {
         requiredMasterComponents.add(node.value);
       }
-      if (isObjectPackageModule
-          && node.type === 'CallExpression' && node.callee.type === 'MemberExpression') {
+      if (isObjectPackageModule &&
+          node.type === 'CallExpression' && node.callee.type === 'MemberExpression') {
         if (node.callee.property.name === 'import' && node.callee.object.name === 'System') {
           frozenPart.modulesWithDynamicLoads.add(mod.id);
           frozenPart.dynamicModules.add(node.arguments[0].value);
@@ -570,13 +586,13 @@ async function getRequiredModulesFromSnapshot(snap, frozenPart, includeDynamicPa
     // try to resolve them
     if (!frozenPart.__cachedSnapshots__) frozenPart.__cachedSnapshots__ = {};
 
-    for (let partUrl of arr.compact(dynamicPartFetches)) {
-      const styleguideUrl = partUrl.replace('part://', 'styleguide://') // makes for faster freezing
+    for (const partUrl of arr.compact(dynamicPartFetches)) {
+      const styleguideUrl = partUrl.replace('part://', 'styleguide://'); // makes for faster freezing
       if (!frozenPart.__cachedSnapshots__[styleguideUrl]) console.log('snapshotting', partUrl);
       // this is way cheaper
-      let partSnapshot = frozenPart.__cachedSnapshots__[styleguideUrl] || serialize(await resource(styleguideUrl).read());
+      const partSnapshot = frozenPart.__cachedSnapshots__[styleguideUrl] || serialize(await resource(styleguideUrl).read());
       frozenPart.__cachedSnapshots__[styleguideUrl] = partSnapshot;
-      
+
       if (partSnapshot) {
         transpileAttributeConnections(partSnapshot);
         cleanSnapshot(partSnapshot);
@@ -593,7 +609,7 @@ async function getRequiredModulesFromSnapshot(snap, frozenPart, includeDynamicPa
           // these should be loaded just as lazily
           sub.requiredMasterComponents.forEach(url => requiredMasterComponents.add(url));
         } else if (frozenPart) {
-          let resolved = frozenPart.warnings.resolvedLoads;
+          const resolved = frozenPart.warnings.resolvedLoads;
           if (resolved) {
             resolved.add(partUrl);
           } else {
@@ -602,12 +618,12 @@ async function getRequiredModulesFromSnapshot(snap, frozenPart, includeDynamicPa
         }
       }
     }
-    
-    for (let partName of arr.compact(dynamicPartLoads)) {
-      let dynamicCommit = await MorphicDB.default.fetchCommit('part', partName);
-      let dynamicPart = frozenPart.__cachedSnapshots__[dynamicCommit._id] || await MorphicDB.default.fetchSnapshot(dynamicCommit);
+
+    for (const partName of arr.compact(dynamicPartLoads)) {
+      const dynamicCommit = await MorphicDB.default.fetchCommit('part', partName);
+      const dynamicPart = frozenPart.__cachedSnapshots__[dynamicCommit._id] || await MorphicDB.default.fetchSnapshot(dynamicCommit);
       frozenPart.__cachedSnapshots__[dynamicCommit._id] = dynamicPart;
-      
+
       if (dynamicPart) {
         transpileAttributeConnections(dynamicPart);
         cleanSnapshot(dynamicPart);
@@ -623,7 +639,7 @@ async function getRequiredModulesFromSnapshot(snap, frozenPart, includeDynamicPa
           dynamicPartImports.push(...sub.requiredModules);
           sub.requiredMasterComponents.forEach(url => requiredMasterComponents.add(url));
         } else if (frozenPart) {
-          let resolved = frozenPart.warnings.resolvedLoads;
+          const resolved = frozenPart.warnings.resolvedLoads;
           if (resolved) {
             resolved.add(partName);
           } else {
@@ -633,18 +649,17 @@ async function getRequiredModulesFromSnapshot(snap, frozenPart, includeDynamicPa
       }
     }
   }
-  
+
   requiredMasterComponents = arr.compact([...requiredMasterComponents]);
   // also add the required modules of the master components. This is actually a bad practice from the side of the master component
   // provider. a master component should not come with a custom class that has nothing to do with the original.
   const urlToSnap = {};
   if (!frozenPart._masterToMods) frozenPart._masterToMods = {};
-  for (let url of requiredMasterComponents) {
+  for (const url of requiredMasterComponents) {
     if (frozenPart.requiredMasterComponents.has(url)) {
-      if (frozenPart._masterToMods[url])
-        dynamicPartImports.push(...frozenPart._masterToMods[url]);
+      if (frozenPart._masterToMods[url]) { dynamicPartImports.push(...frozenPart._masterToMods[url]); }
       continue;
-    };
+    }
     frozenPart.requiredMasterComponents.add(url);
     // url = 'styleguide://SystemWidgets/list/light'
     // frozenPart = fp
@@ -656,81 +671,105 @@ async function getRequiredModulesFromSnapshot(snap, frozenPart, includeDynamicPa
 
   return {
     requiredModules: arr.uniq([...imports, ...dynamicPartImports, ...(includeObjectModules ? objectModules : [])]),
-    requiredMasterComponents,
-  }
+    requiredMasterComponents
+  };
 }
 
-async function compileViaGoogle(code, li, fileName) {
-  let compile = resource('https://closure-compiler.appspot.com/compile')
-  compile.headers["Content-type"] = "application/x-www-form-urlencoded";
+async function compileViaGoogle (code, li, fileName) {
+  const compile = resource('https://closure-compiler.appspot.com/compile');
+  compile.headers['Content-type'] = 'application/x-www-form-urlencoded';
   li.status = `Compiling ${fileName} on Google's servers.`;
-  let queryString = compile.withQuery({
+  const queryString = compile.withQuery({
     js_code: code,
     warning_level: 'QUIET',
     output_format: 'text',
     output_info: 'compiled_code',
     language_out: 'ECMASCRIPT5'
-  }).path().split('?')[1]
-  let min = await compile.post(queryString);
+  }).path().split('?')[1];
+  const min = await compile.post(queryString);
   return {
     min,
     code
-  }
+  };
 }
 
-async function compileOnServer(code, loadingIndicator, fileName = 'data') {
+async function compileOnServer (code, loadingIndicator, fileName = 'data', useTerser) {
   const osName = await evalOnServer('process.platform');
-  let googleClosure = System.decanonicalize(`google-closure-compiler-${osName == 'darwin' ? 'osx' : 'linux'}/compiler`).replace(System.baseURL, '../');
-  let tmp = resource(System.decanonicalize('lively.freezer/tmp.js'));
-  let min = resource(System.decanonicalize('lively.freezer/tmp.min.js'));
+  const googleClosure = System.decanonicalize(`google-closure-compiler-${osName == 'darwin' ? 'osx' : 'linux'}/compiler`).replace(System.baseURL, '../');
+  const tmp = resource(System.decanonicalize('lively.freezer/tmp.js'));
+  const min = resource(System.decanonicalize('lively.freezer/tmp.min.js'));
   tmp.onProgress = (evt) => {
     // set progress of loading indicator
-    let p = evt.loaded / evt.total;
+    const p = evt.loaded / evt.total;
     loadingIndicator.progress = p;
     loadingIndicator.status = `Sending ${fileName} to Google Closure: ` + (100 * p).toFixed() + '%';
   };
   min.onProgress = (evt) => {
     // set progress of loading indicator
-    let p = evt.loaded / evt.total;
+    const p = evt.loaded / evt.total;
     loadingIndicator.progress = p;
     loadingIndicator.status = 'Retrieving compiled code...' + (100 * p).toFixed() + '%';
   };
   await tmp.write(code);
-  let cwd = await evalOnServer('System.baseURL + "lively.freezer/"').then(cwd => cwd.replace('file://', ''));
-  let c, res = {};
+  const presetPath = await evalOnServer('System.decanonicalize(\'@babel/preset-env\').replace(\'file://\', \'\')');
+  const babelPath = await evalOnServer('System.decanonicalize(\'@babel/cli/bin/babel.js\').replace(System.baseURL, \'../\')');
+  const cwd = await evalOnServer('System.baseURL + "lively.freezer/"').then(cwd => cwd.replace('file://', ''));
+  let c; const res = {};
   if (System.get('@system-env').node) {
-    let { default: ServerCommand } = await System.import('lively.shell/server-command.js')
-    let cmd = new ServerCommand().spawn({
+    const { default: ServerCommand } = await System.import('lively.shell/server-command.js');
+    const cmd = new ServerCommand().spawn({
       command: `${googleClosure} tmp.js > tmp.min.js --warning_level=QUIET`,
       cwd
     });
     c = { status: 'started' };
-    cmd.on("stdout", stdout => c.status = 'exited');
+    cmd.on('stdout', stdout => c.status = 'exited');
   } else {
-    c = await runCommand(`${googleClosure} tmp.js > tmp.min.js --warning_level=QUIET`, { cwd }); 
+    const transpilationSpeed = 100000;
+    // problem terser fails to convert class definitions into functions
+    // combine with babel transform
+    await resource(System.baseURL).join('lively.freezer/.babelrc').writeJson({
+      presets: [[presetPath, { modules: false }]]
+      // plugins: [transformRuntime]
+      // [generatorPath, { minified: true, comments: false }]],
+    });
+    if (useTerser) {
+      c = await runCommand(`${babelPath} -o tmp.es5.js tmp.js`, { cwd });
+      loadingIndicator.status = `Transpiling ${fileName}...`;
+      loadingIndicator.progress = 0.01;
+      for (const i of arr.range(0, code.length / transpilationSpeed)) {
+        await promise.delay(400);
+        if (c.status.startsWith('exited')) break;
+        loadingIndicator.progress = (i + 1) / (code.length / transpilationSpeed);
+      }
+      await promise.waitFor(100 * 1000, () => c.status.startsWith('exited'));
+      c = await runCommand('terser --compress --mangle --comments false --ecma 5 --output tmp.min.js -- tmp.es5.js', { cwd });
+    } else {
+      c = await runCommand(`${googleClosure} tmp.js > tmp.min.js --warning_level=QUIET`, { cwd });
+    }
   }
-  loadingIndicator.status = `Compiling ${fileName}...`;
+  const compressionSpeed = 150000;
+  loadingIndicator.status = `Compressing ${fileName}...`;
   loadingIndicator.progress = 0.01;
-  for (let i of arr.range(0, code.length / 62000)) {
+  for (const i of arr.range(0, code.length / compressionSpeed)) {
     await promise.delay(400);
     if (c.status.startsWith('exited')) break;
-    loadingIndicator.progress = (i + 1) / (code.length / 62000);
+    loadingIndicator.progress = (i + 1) / (code.length / compressionSpeed);
   }
-  await promise.waitFor(50000, () => c.status.startsWith('exited'));
+  await promise.waitFor(100 * 1000, () => c.status.startsWith('exited'));
   if (c.stderr && c.exitCode != 0) {
     loadingIndicator && loadingIndicator.remove();
     throw new Error(c.stderr);
   }
   res.code = code;
-  
+
   res.min = await min.read();
   await Promise.all([tmp, min].map(m => m.remove()));
   return res;
 }
 
-function transpileAttributeConnections(snap) {
-  let transpile = fun.compose((c) => `(${c})`, es5Transpilation, stringifyFunctionWithoutToplevelRecorder);
-  Object.values(snap.snapshot).filter(m => Path(["lively.serializer-class-info", "className"]).get(m) == 'AttributeConnection').forEach(m => {
+function transpileAttributeConnections (snap) {
+  const transpile = fun.compose((c) => `(${c})`, es5Transpilation, stringifyFunctionWithoutToplevelRecorder);
+  Object.values(snap.snapshot).filter(m => Path(['lively.serializer-class-info', 'className']).get(m) == 'AttributeConnection').forEach(m => {
     if (m.props.converterString) {
       return m.props.converterString.value = transpile(m.props.converterString.value);
     }
@@ -741,12 +780,11 @@ function transpileAttributeConnections(snap) {
 }
 
 class LivelyRollup {
-
-  constructor(props = {}) {
+  constructor (props = {}) {
     this.setup(props);
   }
 
-  setup({
+  setup ({
     excludedModules = [],
     snapshot,
     rootModule,
@@ -754,12 +792,14 @@ class LivelyRollup {
     asBrowserModule = true,
     includeRuntime = true,
     jspm = false,
+    useTerser = true,
     redirect = {
-       "fs": modules.module("lively.freezer/node-fs-wrapper.js").id, 
-       "https://dev.jspm.io/npm:ltgt@2.1.3/index.dew.js": "https://dev.jspm.io/npm:ltgt@2.2.1/index.dew.js" // this is always needed
+      fs: modules.module('lively.freezer/node-fs-wrapper.js').id,
+      'https://dev.jspm.io/npm:ltgt@2.1.3/index.dew.js': 'https://dev.jspm.io/npm:ltgt@2.2.1/index.dew.js' // this is always needed
     },
-    includePolyfills = true 
+    includePolyfills = true
   }) {
+    this.useTerser = useTerser;
     this.globalMap = {};
     this.jspm = jspm;
     this.includePolyfills = includePolyfills;
@@ -780,30 +820,30 @@ class LivelyRollup {
     this.assetsToCopy = [];
     this.requiredMasterComponents = new Set();
   }
-  
-  resolveRelativeImport(moduleId, path) {
+
+  resolveRelativeImport (moduleId, path) {
     if (!path.startsWith('.')) return module(path).id;
-    return resource(module(moduleId).id).join('..').join(path).withRelativePartsResolved().url
+    return resource(module(moduleId).id).join('..').join(path).withRelativePartsResolved().url;
   }
 
-  translateToEsm(jsonString) {
+  translateToEsm (jsonString) {
     let source = '';
     if (jsonString.match(/\nexport/)) return jsonString;
-    for (let [key, value] of Object.entries(JSON.parse(jsonString))) {
-       source += `export var ${key} = ${JSON.stringify(value)};\n`;
+    for (const [key, value] of Object.entries(JSON.parse(jsonString))) {
+      source += `export var ${key} = ${JSON.stringify(value)};\n`;
     }
     return source;
   }
 
-  normalizedId(id) {
+  normalizedId (id) {
     return id.replace(System.baseURL, '').replace('local://lively-object-modules/', '');
   }
 
-  getTransformOptions(mod) {
-    if (mod.id === '@empty') return {}
-    let classToFunction = {
-      classHolder: ast.parse(`(lively.FreezerRuntime.recorderFor("${this.normalizedId(mod.id)}"))`), 
-      functionNode: {type: "Identifier", name: "initializeES6ClassForLively"},
+  getTransformOptions (mod) {
+    if (mod.id === '@empty') return {};
+    const classToFunction = {
+      classHolder: ast.parse(`(lively.FreezerRuntime.recorderFor("${this.normalizedId(mod.id)}"))`),
+      functionNode: { type: 'Identifier', name: 'initializeES6ClassForLively' },
       transform: classes.classToFunctionTransform,
       currentModuleAccessor: ast.parse(`({
         pathInPackage: () => {
@@ -817,58 +857,57 @@ class LivelyRollup {
             version: "${mod.package().version}"
           } 
         } 
-      })`).body[0].expression,
-    }
+      })`).body[0].expression
+    };
     return {
-       exclude: [
-         'System',
-         ...mod.dontTransform, 
-         ...arr.range(0, 50).map(i => `__captured${i}__`)], 
-        classToFunction
-     }
+      exclude: [
+        'System',
+        ...mod.dontTransform,
+        ...arr.range(0, 50).map(i => `__captured${i}__`)],
+      classToFunction
+    };
   }
 
-  checkIfImportedModuleExcluded() {
+  checkIfImportedModuleExcluded () {
     const conflicts = arr.intersect(this.importedModules.map(id => module(id).package()), arr.compact(this.excludedModules.map(id => module(id).package())));
     if (conflicts.length > 0) {
-      let multiple = conflicts.length > 1;
-      let error = Error(`Package${multiple ? 's' : ''} ${conflicts.map(p => `"${p.name}"`)}\n${multiple ? 'are' : 'is'} directly required by part, yet set to be excluded.`);
-      error.name = 'Exclusion Conflict'
+      const multiple = conflicts.length > 1;
+      const error = Error(`Package${multiple ? 's' : ''} ${conflicts.map(p => `"${p.name}"`)}\n${multiple ? 'are' : 'is'} directly required by part, yet set to be excluded.`);
+      error.name = 'Exclusion Conflict';
       error.reducedExclusionSet = arr.withoutAll(this.excludedModules, conflicts.map(p => p.name));
       throw error;
     }
   }
 
-  async getPartModule(partNameOrUrl) {
-    let snapshot = this.dynamicParts[partNameOrUrl];
+  async getPartModule (partNameOrUrl) {
+    const snapshot = this.dynamicParts[partNameOrUrl];
     // snapshot = await createMorphSnapshot(this.get('world-list'))
     // snapshot = snap
     // fp = { warnings: {}, dynamicParts: {}, dynamicModules: new Set(), requiredMasterComponents: new Set(), modulesWithDynamicLoads: new Set() }
     // let { requiredModules: modules, requiredMasterComponents } = await getRequiredModulesFromSnapshot(snapshot, fp);
-    let { requiredModules: modules, requiredMasterComponents } = await getRequiredModulesFromSnapshot(snapshot, this);
+    const { requiredModules: modules, requiredMasterComponents } = await getRequiredModulesFromSnapshot(snapshot, this);
     console.log('required modules:', partNameOrUrl, modules);
     return modules.map(path => `import "${path}"`).join('\n');
   }
 
-  async getRootModule() {
+  async getRootModule () {
     if (this.rootModule) {
-      if ((await this.rootModule.exports()).length > 0)
-        return `export * from "${this.rootModule.id}";`;
+      if ((await this.rootModule.exports()).length > 0) { return `export * from "${this.rootModule.id}";`; }
       return await this.rootModule.source();
     }
     this.dynamicParts = {}; // needed such that required modules are fetched correctly
-    let { requiredModules, requiredMasterComponents} = await getRequiredModulesFromSnapshot(this.snapshot, this, true);
+    const { requiredModules, requiredMasterComponents } = await getRequiredModulesFromSnapshot(this.snapshot, this, true);
     this.importedModules = requiredModules;
     this.checkIfImportedModuleExcluded();
-    //console.log('Masters for root:', requiredMasterComponents, requiredModules);
-    return arr.uniq((await getRequiredModulesFromSnapshot(this.snapshot, this)).requiredModules.map(path => `import "${path}"`)).join('\n')
-       + `\nimport { World, MorphicEnv, loadMorphFromSnapshot } from "lively.morphic";
+    // console.log('Masters for root:', requiredMasterComponents, requiredModules);
+    return arr.uniq((await getRequiredModulesFromSnapshot(this.snapshot, this)).requiredModules.map(path => `import "${path}"`)).join('\n') +
+       `\nimport { World, MorphicEnv, loadMorphFromSnapshot } from "lively.morphic";
             import { deserialize } from 'lively.serializer2';
             import { resource, loadViaScript } from 'lively.resources';
             import { promise } from 'lively.lang';
             import { pt } from "lively.graphics";
             ${await resource(System.baseURL).join('localconfig.js').read()}
-            const snapshot = JSON.parse(${ JSON.stringify(JSON.stringify(obj.dissoc(this.snapshot, ['preview', 'packages']))) })
+            const snapshot = JSON.parse(${JSON.stringify(JSON.stringify(obj.dissoc(this.snapshot, ['preview', 'packages'])))})
             lively.resources = { resource, loadViaScript };
             lively.morphic = { loadMorphFromSnapshot };
             export async function renderFrozenPart(node = document.body) {
@@ -904,17 +943,17 @@ class LivelyRollup {
                 });
              }`;
   }
-  
-  resolveId(id, importer) {
-    if (id == "fs") return "fs";
+
+  resolveId (id, importer) {
+    if (id == 'fs') return 'fs';
     if (this.resolved[id]) return this.resolved[id];
     if (id === '__root_module__') return id;
     if (id.startsWith('[PART_MODULE]')) return id;
     if (!importer) return id;
     if (importer != '__root_module__' &&
-        (id.includes('jspm.io') || importer.includes('jspm.io') || id.includes('jspm.dev') || importer.includes('jspm.dev'))
-        && this.jspm && importer) {
-      let { url } = resource(importer).root();
+        (id.includes('jspm.io') || importer.includes('jspm.io') || id.includes('jspm.dev') || importer.includes('jspm.dev')) &&
+        this.jspm && importer) {
+      const { url } = resource(importer).root();
       if (url.includes('jspm.io') || url.includes('jspm.dev')) {
         if (id.startsWith('.')) {
           id = resource(importer).parent().join(id).withRelativePartsResolved().url;
@@ -926,23 +965,23 @@ class LivelyRollup {
         }
       }
     }
-    let importingPackage = module(importer).package();
-    let importedPackage = module(id).package();
+    const importingPackage = module(importer).package();
+    const importedPackage = module(id).package();
     let mappedId;
     if (id == 'lively.ast' && this.excludedModules.includes(id)) {
       return { id, external: true };
     }
 
     // if we are imported from a non dynamic context this does not apply
-    let dynamicContext = this.dynamicModules.has(module(importer).id) || this.dynamicModules.has(module(id).id);
+    const dynamicContext = this.dynamicModules.has(module(importer).id) || this.dynamicModules.has(module(id).id);
     if (!dynamicContext) {
       if (importingPackage && this.excludedModules.includes(importingPackage.name)) return false;
-      if (this.excludedModules.includes(id)) return false; 
+      if (this.excludedModules.includes(id)) return false;
     } else {
       this.dynamicModules.add(module(id).id);
     }
-    
-    if (importingPackage && importingPackage.map) this.globalMap = {...this.globalMap, ...importingPackage.map};
+
+    if (importingPackage && importingPackage.map) this.globalMap = { ...this.globalMap, ...importingPackage.map };
     if (importingPackage && importingPackage.map[id] || this.globalMap[id]) {
       mappedId = id;
       if (!importingPackage.map[id] && this.globalMap[id]) {
@@ -958,84 +997,84 @@ class LivelyRollup {
     }
     if (!id.endsWith('.json') && module(id).format() !== 'register' && !this.jspm) {
       this.globalModules[id] = true;
-      return { id, external: true }
+      return { id, external: true };
     }
     return this.resolved[id] = module(id).id;
   }
 
-  warn(warning, warn) {
+  warn (warning, warn) {
     switch (warning.code) {
-      case "THIS_IS_UNDEFINED":
-      case "EVAL":
-      case "MODULE_LEVEL_DIRECTIVE":
+      case 'THIS_IS_UNDEFINED':
+      case 'EVAL':
+      case 'MODULE_LEVEL_DIRECTIVE':
         return;
     }
     warn(warning);
   }
 
-  async load(id) {
+  async load (id) {
     id = this.redirect[id] || id;
     if (id == 'lively.ast' && this.excludedModules.includes(id)) {
       return `
         let nodes = {}, query = {}, transform = {}, BaseVisitor = Object;
-        export { nodes, query, transform, BaseVisitor };`
+        export { nodes, query, transform, BaseVisitor };`;
     }
     if (id === '__root_module__') {
-      let res = await this.getRootModule();
+      const res = await this.getRootModule();
       return res;
     }
     if (id === 'fs') {
-      return 'const fs = require("fs"); export default fs;'
+      return 'const fs = require("fs"); export default fs;';
     }
     if (id.startsWith('[PART_MODULE]')) {
-      let res = await this.getPartModule(id.replace('[PART_MODULE]', ''));
+      const res = await this.getPartModule(id.replace('[PART_MODULE]', ''));
       return res;
     }
-    let mod = module(id);
-    let pkg = mod.package();
+    const mod = module(id);
+    const pkg = mod.package();
     if (pkg && this.excludedModules.includes(pkg.name) &&
-        !mod.id.endsWith('.json') && 
+        !mod.id.endsWith('.json') &&
         !this.dynamicModules.has(pkg.name) &&
         !this.dynamicModules.has(mod.id)) {
       return '';
     }
     if (id.endsWith('.json')) {
-       return this.translateToEsm(mod._source || await mod.source());
+      return this.translateToEsm(mod._source || await mod.source());
     }
     let s = await mod.source();
 
     s = fixSourceForBugsInGoogleClosure(id, s);
-    
+
     return s;
   }
 
-  needsScopeToBeCaptured(moduleId) {
-    if ([...this.dynamicModules.values()].find(id => 
+  needsScopeToBeCaptured (moduleId) {
+    if ([...this.dynamicModules.values()].find(id =>
       module(id).package() && module(id).package() === module(moduleId).package())
-       ) return true;
+    ) return true;
     if (this.importedModules.find(id => module(id).package() === module(moduleId).package())) return true;
-    return belongsToObjectPackage(moduleId)
+    return belongsToObjectPackage(moduleId);
   }
 
-  needsClassInstrumentation(moduleId) {
-    if (CLASS_INSTRUMENTATION_MODULES_EXCLUSION.some(pkgName => moduleId.includes(pkgName)))
-      return false;
+  needsClassInstrumentation (moduleId) {
+    if (CLASS_INSTRUMENTATION_MODULES_EXCLUSION.some(pkgName => moduleId.includes(pkgName))) { return false; }
     if (CLASS_INSTRUMENTATION_MODULES.some(pkgName => moduleId.includes(pkgName)) ||
         belongsToObjectPackage(moduleId)) {
       return true;
     }
   }
 
-  needsDynamicLoadTransform(moduleId) {
-     return this.modulesWithDynamicLoads.has(moduleId); // seem to sometimes be not checked for dynamic loads
+  needsDynamicLoadTransform (moduleId) {
+    return this.modulesWithDynamicLoads.has(moduleId); // seem to sometimes be not checked for dynamic loads
   }
-  
-  async transform(source, id) {
+
+  async transform (source, id) {
+    if (source.includes('thisComp') && source.split('var $bm_sum = sum;').length > 2) console.log(id);
 
     if (id === '__root_module__' || id.endsWith('.json')) {
-       return source
+      return source;
     }
-    
+
     if (this.needsDynamicLoadTransform(id)) {
       source = this.instrumentDynamicLoads(source);
     }
@@ -1043,43 +1082,43 @@ class LivelyRollup {
     if (this.needsScopeToBeCaptured(id) || this.needsClassInstrumentation(id)) {
       source = this.captureScope(source, id);
     }
-    
+
     return source;
   }
 
-  instrumentDynamicLoads(source) {
-    let parsed = ast.parse(source),
-        nodesToReplace = [];
-    
+  instrumentDynamicLoads (source) {
+    const parsed = ast.parse(source);
+    const nodesToReplace = [];
+
     ast.AllNodesVisitor.run(parsed, (node, path) => {
       // we checked beforehand if the user has decided to use dynamic imports
       // if that is the case, we run on systemjs anyways, so there is no need to stub it
       if (node.type === 'AwaitExpression' && node.argument.callee &&
           ['loadObjectFromPartsbinFolder', 'loadPart'].includes(node.argument.callee.name)) {
-        let partName = node.argument.arguments[0].value;
+        const partName = node.argument.arguments[0].value;
         nodesToReplace.push({
           // fixme: replace by a dynamic import of the generated deps module, followed by the import
           // like so: `await import("${node.arguments.id}"); lively.FreezerRuntime.loadObjectFromPartsbinFolder`
           target: node,
           replacementFunc: () => `await import("[PART_MODULE]${partName}") && await window.loadCompiledFrozenPart("${partName}")`
-          // target: node.callee, replacementFunc: () => 'lively.FreezerRuntime.loadObjectFromPartsbinFolder' 
+          // target: node.callee, replacementFunc: () => 'lively.FreezerRuntime.loadObjectFromPartsbinFolder'
         });
       }
       if (node.type === 'CallExpression' && Path('callee.name').get(node) == 'resource' &&
           (Path('arguments.0.value').get(node) || '').match(/^part:\/\/.*\/.+/)) {
-        let partUrl = Path('arguments.0.value').get(node);
+        const partUrl = Path('arguments.0.value').get(node);
         nodesToReplace.push({
           // fixme: replace by a dynamic import of the generated deps module, followed by the import
           // like so: `await import("${node.arguments.id}"); lively.FreezerRuntime.loadObjectFromPartsbinFolder`
           target: node,
           replacementFunc: () => `(await import("[PART_MODULE]${partUrl}") && await resource("${partUrl}"))`
-          // target: node.callee, replacementFunc: () => 'lively.FreezerRuntime.loadObjectFromPartsbinFolder' 
+          // target: node.callee, replacementFunc: () => 'lively.FreezerRuntime.loadObjectFromPartsbinFolder'
         });
       }
       if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression') {
         if (node.callee.property.name === 'import' && node.callee.object.name === 'System') {
           nodesToReplace.push({
-            target: node.callee, replacementFunc: () => 'import' 
+            target: node.callee, replacementFunc: () => 'import'
           });
         }
       }
@@ -1088,78 +1127,73 @@ class LivelyRollup {
     return ast.transform.replaceNodes(nodesToReplace, source).source;
   }
 
-  instrumentClassDefinitions(source, id) {
+  instrumentClassDefinitions (source, id) {
     // this is not really working anyways
     let classRuntimeImport = '';
-    let mod = module(id);
-    let parsed = ast.parse(source);
-    let recorderString = `const __varRecorder__ = lively.FreezerRuntime.recorderFor("${this.normalizedId(id)}");\n`;
+    const mod = module(id);
+    const parsed = ast.parse(source);
+    const recorderString = `const __varRecorder__ = lively.FreezerRuntime.recorderFor("${this.normalizedId(id)}");\n`;
     if (ast.query.scopes(parsed).classDecls.length) {
       classRuntimeImport = 'import { initializeClass as initializeES6ClassForLively } from "lively.classes/runtime.js";\n';
     }
-    let captureObj = {name: `__varRecorder__`, type: 'Identifier'};
-    let tfm = fun.compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform, ast.stringify)
+    const captureObj = { name: '__varRecorder__', type: 'Identifier' };
+    const tfm = fun.compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform, ast.stringify);
     return recorderString + classRuntimeImport + tfm(parsed, captureObj, this.getTransformOptions(mod));
   }
 
-  captureScope(source, id) {
+  captureScope (source, id) {
     let classRuntimeImport = '';
-    let recorderString = `const __varRecorder__ = lively.FreezerRuntime.recorderFor("${this.normalizedId(id)}");\n`;
-    let tfm = fun.compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform);
-    let captureObj = {name: `__varRecorder__`, type: 'Identifier'};
-    let exportObj = {name: `__expRecorder__`, type: 'Identifier'};
+    const recorderString = `const __varRecorder__ = lively.FreezerRuntime.recorderFor("${this.normalizedId(id)}");\n`;
+    const tfm = fun.compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform);
+    const captureObj = { name: '__varRecorder__', type: 'Identifier' };
+    const exportObj = { name: '__expRecorder__', type: 'Identifier' };
     // id = 'lively.vm/index.js'
-    let mod = module(id);
+    const mod = module(id);
     // source = mod._source
-    let parsed = ast.parse(source);
+    const parsed = ast.parse(source);
     // opts = {}
 
-    let opts = this.getTransformOptions(mod);
-    if (this.needsClassInstrumentation(id))
-      classRuntimeImport = `import { initializeClass as initializeES6ClassForLively } from "lively.classes/runtime.js";\n`;
-    else
-      opts.classToFunction = false;
-    let instrumented = insertCapturesForExportedImports(tfm(parsed, captureObj, opts), { captureObj });
-    let imports = [];
+    const opts = this.getTransformOptions(mod);
+    if (this.needsClassInstrumentation(id)) { classRuntimeImport = 'import { initializeClass as initializeES6ClassForLively } from "lively.classes/runtime.js";\n'; } else { opts.classToFunction = false; }
+    const instrumented = insertCapturesForExportedImports(tfm(parsed, captureObj, opts), { captureObj });
+    const imports = [];
     let defaultExport = '';
-    let toBeReplaced = [];
+    const toBeReplaced = [];
 
     ast.custom.forEachNode(instrumented, (n) => {
       if (n.type == 'ImportDeclaration') arr.pushIfNotIncluded(imports, n);
-      if (n.type == 'Literal' && typeof n.value == 'string' && n.value.match(/^styleguide:\/\/.+\/.+/)) {
+      if (n.type == 'Literal' && typeof n.value === 'string' && n.value.match(/^styleguide:\/\/.+\/.+/)) {
         if (!this.requiredMasterComponents.has(n.value)) console.log('DID NOT CAPTURE', n.value);
         this.requiredMasterComponents.add(n.value);
       }
-      if (n.type == "ExportDefaultDeclaration") {
+      if (n.type == 'ExportDefaultDeclaration') {
         let exp;
         switch (n.declaration.type) {
           case 'Literal':
             exp = Path('declaration.raw').get(n);
             break;
           case 'Identifier':
-            exp = Path('declaration.name').get(n); 
+            exp = Path('declaration.name').get(n);
             break;
           case 'ClassDeclaration':
           case 'FunctionDeclaration':
-            exp = Path('declaration.id.name').get(n); 
-            break;            
+            exp = Path('declaration.id.name').get(n);
+            break;
         }
         if (exp) defaultExport = `${captureObj.name}.default = ${exp};\n`;
       }
     });
 
-    
-    
-    for (let stmts of Object.values(arr.groupBy(imports, imp => imp.source.value))) {
-      let toBeMerged = arr.filter(stmts, stmt => arr.all(stmt.specifiers, spec => spec.type == 'ImportSpecifier'))
+    for (const stmts of Object.values(arr.groupBy(imports, imp => imp.source.value))) {
+      const toBeMerged = arr.filter(stmts, stmt => arr.all(stmt.specifiers, spec => spec.type == 'ImportSpecifier'));
       if (toBeMerged.length > 1) {
         // merge statements
         // fixme: if specifiers are not named, these can not be merged
         // fixme: properly handle default export
-        let mergedSpecifiers = arr.uniqBy(
+        const mergedSpecifiers = arr.uniqBy(
           arr.flatten(toBeMerged.map(stmt => stmt.specifiers)),
           (spec1, spec2) =>
-            spec1.type == 'ImportSpecifier' && 
+            spec1.type == 'ImportSpecifier' &&
             spec2.type == 'ImportSpecifier' &&
             spec1.imported.name == spec2.imported.name &&
             spec1.local.name == spec2.local.name
@@ -1172,16 +1206,16 @@ class LivelyRollup {
         }));
       }
     }
-    
+
     return recorderString + classRuntimeImport + ast.stringify(instrumented) + defaultExport;
   }
-  
-  deriveVarName(moduleId) { return string.camelize(arr.last(moduleId.split('/')).replace(/\.js|\.min/g, '').split('.').join('')) }
 
-  async wrapStandalone(moduleId) {
-    let mod = module(moduleId);
+  deriveVarName (moduleId) { return string.camelize(arr.last(moduleId.split('/')).replace(/\.js|\.min/g, '').split('.').join('')); }
+
+  async wrapStandalone (moduleId) {
+    const mod = module(moduleId);
     if (!mod._source) await mod.source();
-    let globalVarName = this.deriveVarName(moduleId)
+    const globalVarName = this.deriveVarName(moduleId);
     let code;
     if (mod.format() === 'global') {
       code = `var ${globalVarName} = (function() {
@@ -1190,7 +1224,7 @@ class LivelyRollup {
          return fetchGlobals();
       })();\n`;
     } else {
-     code = `
+      code = `
       var ${globalVarName};
       (function(module /* exports, require */) {
              // optional parameters
@@ -1208,41 +1242,41 @@ class LivelyRollup {
              }
              ${globalVarName} = module.exports;
            })({exports: {}});\n`;
-     }
-    return { code, global: globalVarName}
+    }
+    return { code, global: globalVarName };
   }
 
-  async generateGlobals(systemJsEnabled) {
-    let code = '',
-        globals = {};
+  async generateGlobals (systemJsEnabled) {
+    let code = '';
+    const globals = {};
 
     if (!systemJsEnabled) {
       code += `${this.asBrowserModule ? 'var fs = {};' : 'var fs = require("fs");'} var _missingExportShim, show, System, require, timing, lively, Namespace, localStorage;`;
     }
 
     // this is no longer an issue due to removal of all non ESM modules from our system. Can be removed?
-    for (let modId in this.globalModules) {
-      let { code: newCode, global: newGlobal } = await this.wrapStandalone(modId);
+    for (const modId in this.globalModules) {
+      const { code: newCode, global: newGlobal } = await this.wrapStandalone(modId);
       code += newCode;
       globals[modId] = newGlobal;
     }
 
     if (systemJsEnabled) {
       code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/0.21/dist/system.src.js').read();
-      //code += await resource(System.decanonicalize('systemjs/dist/system.js')).read();
-      //code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/master/dist/s.js').read();
-      //code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/master/dist/extras/named-register.js').read();
+      // code += await resource(System.decanonicalize('systemjs/dist/system.js')).read();
+      // code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/master/dist/s.js').read();
+      // code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/master/dist/extras/named-register.js').read();
       // stub the globals
       code += `
          const _origGet = System.get.bind(System);
          System.get = (id, recorder = true) => (lively.FreezerRuntime && lively.FreezerRuntime.get(id, recorder)) || _origGet(id);
       `;
-      //if (this.asBrowserModule) code += 'System.global = window;\n'
+      // if (this.asBrowserModule) code += 'System.global = window;\n'
       code += `
          const _origDecanonicalize = System.decanonicalize.bind(System);
          System.decanonicalize = (id) =>
             lively.FreezerRuntime ? lively.FreezerRuntime.decanonicalize(id) : _origDecanonicalize(id);
-      `
+      `;
       code += 'window._missingExportShim = () => {};\n';
       code += `
          const _originalRegister = System.register.bind(System);
@@ -1268,31 +1302,31 @@ class LivelyRollup {
         translate: (load) => {
            return load.source;
         }
-      }));\n`
+      }));\n`;
       code += `System.config({
         transpiler: 'stub-transpiler'
-      });\n`
+      });\n`;
       code += 'System.trace = false;\n';
-      for (let id of this.excludedModules.concat(this.asBrowserModule ? ["fs", "events"] : [])) {
-        //code += `"${id}": "@empty",`
+      for (const id of this.excludedModules.concat(this.asBrowserModule ? ['fs', 'events'] : [])) {
+        // code += `"${id}": "@empty",`
         code += `System.set("${id}", System.newModule({ default: {} }));\n`;
-        //code += `System.register("${id}", [], (exports) => ({ execute: () => { console.log('loaded ${id}'); exports({ default: {} }) }, setters: []}));\n`;
+        // code += `System.register("${id}", [], (exports) => ({ execute: () => { console.log('loaded ${id}'); exports({ default: {} }) }, setters: []}));\n`;
       }
     } else {
-      for (let id of this.excludedModules) {
-        let varName = globals[id] = this.deriveVarName(id);
+      for (const id of this.excludedModules) {
+        const varName = globals[id] = this.deriveVarName(id);
         code += `var ${varName} = {};\n`;
       }
     }
-    
+
     return {
       code, globals
-    }
+    };
   }
-  
-  async getRuntimeCode() {
+
+  async getRuntimeCode () {
     let runtimeCode = await module('lively.freezer/runtime.js').source();
-    runtimeCode =`(${runtimeCode.slice(0,-1).replace('export ', '')}})();\n`;
+    runtimeCode = `(${runtimeCode.slice(0, -1).replace('export ', '')}})();\n`;
     if (!this.hasDynamicImports) {
       // If there are no dynamic imports, we compile without systemjs and
       // can stub it with our FreezerRuntime
@@ -1305,75 +1339,74 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
     return es5Transpilation(runtimeCode);
   }
 
-  getAssetsFromSnapshot({snapshot: snap}) {
-
+  getAssetsFromSnapshot ({ snapshot: snap }) {
     Object.entries(snap).map(([k, v]) => {
       if (!classNameOfId(snap, k) || !moduleOfId(snap, k).package) return;
-      let klass = locateClass({
+      const klass = locateClass({
         className: classNameOfId(snap, k),
         module: moduleOfId(snap, k)
       });
-      let toBeCopied = Object.entries(klass[Symbol.for("lively.classes-properties-and-settings")].properties)
-                             .map(([key, settings]) => settings.copyAssetOnFreeze && key)
-                             .filter(Boolean);
-      for (let prop of toBeCopied) {
+      const toBeCopied = Object.entries(klass[Symbol.for('lively.classes-properties-and-settings')].properties)
+        .map(([key, settings]) => settings.copyAssetOnFreeze && key)
+        .filter(Boolean);
+      for (const prop of toBeCopied) {
         if (!v.props[prop]) continue; // may be styled and not present in snapshot
         if (v.props[prop].value.startsWith('assets')) continue; // already copied
-        let path = v.props[prop].value;
+        const path = v.props[prop].value;
         if (path.startsWith('data:')) continue; // data URL can not be copied
-        let asset = resource(path);
+        const asset = resource(path);
         if (asset.host() != resource(System.baseURL).host()) continue;
         asset._from = k;
-        this.assetsToCopy.push(asset);
+        if (!this.assetsToCopy.find(res => res.url == asset.url)) { this.assetsToCopy.push(asset); }
         v.props[prop].value = 'assets/' + asset.name(); // this may be causing duplicates
       }
     });
     console.log('[ASSETS]', this.assetsToCopy);
   }
 
-  async rollup(compressBundle, output) {
-    let li = LoadingIndicator.open('Freezing Part', { status: 'Bundling...' });
+  async rollup (compressBundle, output) {
+    const li = LoadingIndicator.open('Freezing Part', { status: 'Bundling...' });
+    await li.hideSpinner();
     let depsCode, bundledCode, splitModule;
 
     if (this.snapshot) this.getAssetsFromSnapshot(this.snapshot);
 
     await li.whenRendered();
     try {
-      let bundle = await Rollup.rollup({
+      const bundle = await Rollup.rollup({
         input: this.rootModule ? this.rootModule.id : '__root_module__',
         shimMissingExports: true,
-        onwarn: (warning, warn) => { return this.warn(warning, warn) },
+        onwarn: (warning, warn) => { return this.warn(warning, warn); },
         plugins: [{
           resolveId: (id, importer) => {
-            let res = this.resolveId(id, importer);
+            const res = this.resolveId(id, importer);
             return res;
           },
           resolveDynamicImport: (id, importer) => {
             // schedule a request to initiate a nested rollup that bundles
             // the dynamically loaded bundles separately
             this.dynamicModules.add(module(id).id);
-            let res = this.resolveId(id, importer); // dynamic imports are never excluded
+            const res = this.resolveId(id, importer); // dynamic imports are never excluded
             if (res && obj.isString(res)) {
               return {
                 external: false,
                 id: res
-              }
+              };
             }
             return res;
           },
-          load: async (id) => { 
-            let src = await this.load(id);
-            return src;            
+          load: async (id) => {
+            const src = await this.load(id);
+            return src;
           },
-          transform: async (source, id) => { return await this.transform(source, id)}
+          transform: async (source, id) => { return await this.transform(source, id); }
         }]
       });
       let globals;
-      ({code: depsCode, globals} = await this.generateGlobals(this.hasDynamicImports));
+      ({ code: depsCode, globals } = await this.generateGlobals(this.hasDynamicImports));
       if (this.hasDynamicImports) {
         splitModule = (await bundle.generate({ format: 'system', globals }));
-      } else
-        bundledCode = (await bundle.generate({ format: 'iife', globals, name: this.globalName || 'frozenPart' })).output[0].code;
+      } else { bundledCode = (await bundle.generate({ format: 'iife', globals, name: this.globalName || 'frozenPart' })).output[0].code; }
     } finally {
       li.remove();
     }
@@ -1383,8 +1416,8 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
       res = splitModule.output;
       // it seems like rollup sometimes returns duplicates which are optimized away by closure
       // causing issues when reassigned the minified pieces
-      //res = arr.uniqBy(res, (snipped1, snipped2) => snipped1.code === snipped2.code);
-      let loadCode = `
+      // res = arr.uniqBy(res, (snipped1, snipped2) => snipped1.code === snipped2.code);
+      const loadCode = `
         System.config({
           meta: {
            ${
@@ -1393,37 +1426,37 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
           }
         });
         System.import("./__root_module__.js").then(m => { System.trace = false; m.renderFrozenPart(); });
-      `
+      `;
       // concat all snippets and compile them on server
-      // unsert hint strings
+      // insert hint strings
       res.forEach((snippet, i) => {
-        snippet.instrumentedCode = snippet.code.replace('System.register(', `System.register("${i}",` );
+        snippet.instrumentedCode = snippet.code.replace('System.register(', `System.register("${i}",`);
       });
 
-      let { min, code } = await this.transpileAndCompressOnServer({
-          depsCode,
-          bundledCode: [loadCode, ...res.map(snippet => snippet.instrumentedCode)].join('\n'),
-          output, compressBundle: false
+      const { min, code } = await this.transpileAndCompressOnServer({
+        depsCode,
+        bundledCode: [loadCode, ...res.map(snippet => snippet.instrumentedCode)].join('\n'),
+        output,
+        compressBundle: false
       });
 
-      //let [compiledLoad, ...compiledSnippets] = [depsCode + loadCode, ...res.map(snippet => snippet.instrumentedCode)]
-      let [compiledLoad, ...compiledSnippets] = min.split(/\nSystem.register\(/);
+      // let [compiledLoad, ...compiledSnippets] = [depsCode + loadCode, ...res.map(snippet => snippet.instrumentedCode)]
+      let [compiledLoad, ...compiledSnippets] = min.split(this.useTerser ? /\,System.register\(/ : /\nSystem.register\(/);
 
       // ensure that all compiled snippets are present
       // clear the hints
-      let adjustedSnippets = new Map(); // ensure order
+      const adjustedSnippets = new Map(); // ensure order
       res.forEach((snippet, i) => {
         adjustedSnippets.set(i, snippet.code);
       });
       compiledSnippets.forEach((compiledSnippet) => {
-        let hint = Number(compiledSnippet.match(/\"[0-9]+\"/)[0].slice(1,-1));
+        const hint = Number(compiledSnippet.match(/\"[0-9]+\"/)[0].slice(1, -1));
         adjustedSnippets.set(hint, compiledSnippet.replace(/\"[0-9]+\"\,/, 'System.register('));
       });
       compiledSnippets = [...adjustedSnippets.values()];
-      
+
       res.load = { min: compiledLoad };
-      for (let [snippet, compiled] of arr.zip(res, compiledSnippets))
-        snippet.min = compiled;
+      for (const [snippet, compiled] of arr.zip(res, compiledSnippets)) { snippet.min = compiled; }
     } else {
       res = await this.transpileAndCompressOnServer({
         depsCode, bundledCode: bundledCode, output, compressBundle
@@ -1431,63 +1464,64 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
     }
 
     res.format = !this.hasDynamicImports ? 'global' : 'systemjs';
-    for (let part in this.dynamicParts) {
+    for (const part in this.dynamicParts) {
       this.getAssetsFromSnapshot(this.dynamicParts[part]);
     }
     res.dynamicParts = this.dynamicParts;
     res.assets = this.assetsToCopy;
     res.masterComponents = [...this.requiredMasterComponents];
+    res.rollup = this;
 
-    return res
+    return res;
   }
 
-  async transpileAndCompressOnServer({
-      depsCode = '',
-      bundledCode,
-      output,
-      fileName = '',
-      compressBundle,
-      addRuntime = true,
-      optimize = true,
-      includePolyfills = this.includePolyfills && this.asBrowserModule
-    }) {
-    let li = LoadingIndicator.open("Freezing Part", { status: 'Optimizing...'});
-    
-    let runtimeCode = addRuntime ? await this.getRuntimeCode() : "";
-    let regeneratorSource = '';
-    let polyfills = !includePolyfills ? "" : await module('lively.freezer/deps/pep.min.js').source();
-    polyfills += !includePolyfills ? "" : await module('lively.freezer/deps/fetch.umd.js').source();
-    
-    let code = runtimeCode + polyfills + regeneratorSource + depsCode + bundledCode;
+  async transpileAndCompressOnServer ({
+    depsCode = '',
+    bundledCode,
+    output,
+    fileName = '',
+    compressBundle,
+    addRuntime = true,
+    optimize = true,
+    includePolyfills = this.includePolyfills && this.asBrowserModule
+  }) {
+    const li = LoadingIndicator.open('Freezing Part', { status: 'Optimizing...' });
+    await li.hideSpinner();
+    const runtimeCode = addRuntime ? await this.getRuntimeCode() : '';
+    const regeneratorSource = addRuntime ? await resource('https://unpkg.com/regenerator-runtime@0.13.7/runtime.js').read() : '';
+    let polyfills = !includePolyfills ? '' : await module('lively.freezer/deps/pep.min.js').source();
+    polyfills += !includePolyfills ? '' : await module('lively.freezer/deps/fetch.umd.js').source();
+
+    const code = runtimeCode + polyfills + regeneratorSource + depsCode + bundledCode;
     // due to a bug in google closure this little dance is needed:
-    code = code.split(`const i = e[s],
-                            n = i.facadeModule;`).join(`var i = e[s], n = i.facadeModule;`);
-    
+    // code = code.split(`const i = e[s],
+    //                         n = i.facadeModule;`).join(`var i = e[s], n = i.facadeModule;`);
+
     // write file
     if (!optimize) { li.remove(); return { code, min: code }; }
-    let res = await compileOnServer(code, li, fileName); // seems to be faster for now
-    //res = await compileViaGoogle(code, li, fileName);
-    
+    const res = await compileOnServer(code, li, fileName, this.useTerser); // seems to be faster for now
+    // res = await compileViaGoogle(code, li, fileName);
+
     li.remove();
     return res;
   }
 }
 
-export async function bundlePart(partOrSnapshot, { exclude: excludedModules = [], compress = false, output = 'es2019', requester }) {
-  let snapshot = partOrSnapshot.isMorph ? await createMorphSnapshot(partOrSnapshot, {
-    frozenSnapshot: true,
+export async function bundlePart (partOrSnapshot, { exclude: excludedModules = [], compress = false, output = 'es2019', requester, useTerser }) {
+  const snapshot = partOrSnapshot.isMorph ? await createMorphSnapshot(partOrSnapshot, {
+    frozenSnapshot: true
   }) : partOrSnapshot;
   transpileAttributeConnections(snapshot);
-  let bundle = new LivelyRollup({ excludedModules, snapshot, jspm: true });
-  let rollupBundle = async () => {
+  const bundle = new LivelyRollup({ excludedModules, snapshot, jspm: true, useTerser });
+  const rollupBundle = async () => {
     let res;
     try {
       res = await bundle.rollup(compress, output);
     } catch (e) {
       if (e.name == 'Exclusion Conflict') {
         // adjust the excluded Modules
-        let proceed = await $world.confirm([
-          e.message.replace('Could not load __root_module__:', ''), {}, '\n', {}, 'Packages are usually excluded to reduce the payload of a frozen interactive.\nIn order to fix this issue you can either remove the problematic package from the exclusion list,\nor remove the morph that requires this package directly. Removing the package from the\nexclusion list is a quick fix yet it may increase the payload of your frozen interactive substantially.', {fontSize: 13, fontWeight: 'normal'}], { requester, confirmLabel: 'Remove Package from Exclusion Set', rejectLabel: 'Cancel' });
+        const proceed = await $world.confirm([
+          e.message.replace('Could not load __root_module__:', ''), {}, '\n', {}, 'Packages are usually excluded to reduce the payload of a frozen interactive.\nIn order to fix this issue you can either remove the problematic package from the exclusion list,\nor remove the morph that requires this package directly. Removing the package from the\nexclusion list is a quick fix yet it may increase the payload of your frozen interactive substantially.', { fontSize: 13, fontWeight: 'normal' }], { requester, confirmLabel: 'Remove Package from Exclusion Set', rejectLabel: 'Cancel' });
         if (proceed) {
           bundle.excludedModules = e.reducedExclusionSet;
           return await rollupBundle();
@@ -1496,6 +1530,6 @@ export async function bundlePart(partOrSnapshot, { exclude: excludedModules = []
       throw e;
     }
     return res;
-  }
+  };
   return await rollupBundle();
 }

@@ -1,7 +1,7 @@
 /* global System */
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, date, Path, arr, string, obj } from 'lively.lang';
-import { inspect, Text, config } from 'lively.morphic';
+import { inspect, easings, morph, Text, config } from 'lively.morphic';
 import KeyHandler from 'lively.morphic/events/KeyHandler.js';
 import { loadObjectFromPartsbinFolder, loadPart } from 'lively.morphic/partsbin.js';
 import { interactivelySaveWorld } from 'lively.morphic/world-loading.js';
@@ -13,6 +13,7 @@ import { interactivelyFreezeWorld } from 'lively.freezer';
 import { resource } from 'lively.resources';
 import { BrowserModuleTranslationCache } from 'lively.modules/src/instrumentation.js';
 import { CommentBrowser } from 'lively.collab';
+import { once } from 'lively.bindings';
 
 const commands = [
 
@@ -297,6 +298,19 @@ const commands = [
   },
 
   {
+    name: 'close halo target',
+    exec: (world) => {
+      const halo = world.halos()[0];
+      if (!halo || halo.changingName) return false;
+
+      halo.target.selectedMorphs
+        ? halo.target.selectedMorphs.forEach(m => m.remove())
+        : halo.target.remove();
+      return true;
+    }
+  },
+
+  {
     name: 'resize manually',
     exec: async (world, args = {}) => {
       let width; let height;
@@ -323,7 +337,7 @@ const commands = [
     exec: world => {
       const windows = world.getWindows().filter(ea => !ea.minimized);
       if (!windows.length) return true;
-      const visibleBounds = world.visibleBounds();
+      const visibleBounds = world.visibleBoundsExcludingTopBar();
       const windowBoundsCombined = windows.reduce((bounds, win) =>
         win.bounds().union(bounds), new Rectangle(0, 0, 0, 0));
       const scaleX = visibleBounds.width / windowBoundsCombined.width;
@@ -471,7 +485,7 @@ const commands = [
 
       if (!win) return;
 
-      const worldB = world.visibleBounds().insetBy(20);
+      const worldB = world.visibleBoundsExcludingTopBar().insetBy(15);
       const winB = win.bounds();
       // FIXME!
       if (!win._normalBounds) win._normalBounds = winB;
@@ -484,7 +498,7 @@ const commands = [
       if (!how) return;
 
       if (how === 'reset') delete win.normalBounds;
-      win.setBounds(resizeBounds(how, how.startsWith('half') ? winB : worldB));
+      win.setBounds(resizeBounds(how, worldB));
 
       return true;
 
@@ -492,40 +506,23 @@ const commands = [
 
       async function askForHow () {
         const { selected: [how] } = await world.filterableListPrompt('How to resize the window?', [
-          'full', 'fullscreen', 'center', 'right', 'left', 'bottom',
-          'top', 'shrinkWidth', 'growWidth', 'shrinkHeight',
-          'growHeight', 'col1', 'col2', 'col3', 'col4', 'col5',
-          'reset'], { requester: world });
+          'full', 'center', 'right', 'left', 'bottom',
+          'top', 'reset'], { requester: world });
         return how;
       }
 
       function resizeBounds (how, bounds) {
         switch (how) {
-          case 'full': case 'fullscreen': return worldB;
+          case 'full': return worldB;
           case 'col1':
           case 'left': return thirdColBounds.withTopLeft(worldB.topLeft());
-          case 'col2': return thirdColBounds.withTopLeft(worldB.topCenter().scaleByPt(pt(0.333, 1))).withWidth(thirdW);
-          case 'col3':
+          case 'col2':
           case 'center': return thirdColBounds.withCenter(worldB.center());
-          case 'col4': return thirdColBounds.translatedBy(worldB.topCenter().withY(0));
-          case 'col5':
+          case 'col3':
           case 'right': return thirdColBounds.translatedBy(pt(worldB.width - thirdW, 0));
           case 'top': return worldB.divide([rect(0, 0, 1, 0.5)])[0];
           case 'bottom': return worldB.divide([rect(0, 0.5, 1, 0.5)])[0];
-          case 'halftop': return bounds.withY(worldB.top()).withHeight(bounds.height / 2);
-          case 'halfbottom': return bounds.withHeight(worldB.height / 2).withY(worldB.top() + worldB.height / 2);
           case 'reset': return win.normalBounds || pt(500, 400).extentAsRectangle().withCenter(bounds.center());
-
-          case 'quadrant1': return resizeBounds('halftop', resizeBounds('col1', bounds));
-          case 'quadrant2': return resizeBounds('halftop', resizeBounds('col2', bounds));
-          case 'quadrant3': return resizeBounds('halftop', resizeBounds('col3', bounds));
-          case 'quadrant4': return resizeBounds('halftop', resizeBounds('col4', bounds));
-          case 'quadrant5': return resizeBounds('halftop', resizeBounds('col5', bounds));
-          case 'quadrant6': return resizeBounds('halfbottom', resizeBounds('col1', bounds));
-          case 'quadrant7': return resizeBounds('halfbottom', resizeBounds('col2', bounds));
-          case 'quadrant8': return resizeBounds('halfbottom', resizeBounds('col3', bounds));
-          case 'quadrant9': return resizeBounds('halfbottom', resizeBounds('col4', bounds));
-          case 'quadrant0': return resizeBounds('halfbottom', resizeBounds('col5', bounds));
           default: return bounds;
         }
       }
@@ -1346,6 +1343,10 @@ const commands = [
       const li = LoadingIndicator.open('loading project browser...');
       await li.whenRendered();
 
+      const fader = morph({ fill: Color.black.withA(0.5), extent: oldWorld.extent, name: 'dark overlay', opacity: 0, reactsToPointer: false, renderOnGPU: true, halosEnabled: false });
+      fader.openInWorld(pt(0, 0));
+      fader.animate({ opacity: 1, duration: 300 });
+
       const worldList = oldWorld.get('a project browser') || await resource('part://partial freezing/project browser').read();
       worldList.name = 'a project browser';
       worldList.hasFixedPosition = true;
@@ -1353,6 +1354,7 @@ const commands = [
       worldList.bringToFront().alignInWorld(oldWorld);
       worldList.update();
       worldList.focus();
+      once(worldList, 'remove', () => fader.animate({ opacity: 0 }).then(() => fader.remove()));
       li.remove();
       return worldList;
     }

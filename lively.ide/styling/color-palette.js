@@ -44,7 +44,7 @@ class ColorPaletteField extends Morph {
 
   onHoverIn () {
     if (!this.color) return;
-    const [h, s, b] = this.color.toHSB();
+    const [h, s, b] = this.color.isGradient ? Color.blue.toHSB() : this.color.toHSB();
     this.borderColor = Color.hsb(h, s + 0.5 > 1 ? s - 0.5 : s + 0.5, b + 0.5 > 1 ? b - 0.5 : b + 0.5);
   }
 
@@ -318,7 +318,7 @@ export class ColorPalette extends Morph {
       submorphs: {
         after: ['color'],
         initialize () {
-          const [h, s, b] = this.color.toHSB();
+          const [h, s, b] = (this.color.isGradient ? Color.blue : this.color).toHSB();
           this.cachedPalette = {};
           this.submorphs = [this.fillTypeSelector(), this.paletteView()];
           this.pivotColor = Color.hsb(h, s, 1);

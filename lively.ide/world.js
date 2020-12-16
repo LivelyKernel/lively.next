@@ -40,6 +40,7 @@ import { completions, runEval } from 'lively.vm';
 import { getClassName, serialize } from 'lively.serializer2';
 import { Canvas } from 'lively.components/canvas.js';
 import { CommentBrowser } from 'lively.collab';
+import { prefetchCoreStyleguides } from 'lively.morphic/style-guide.js';
 
 export class LivelyWorld extends World {
   static get properties () {
@@ -57,6 +58,18 @@ export class LivelyWorld extends World {
         get () { return !touchInputDevice; }
       }
     };
+  }
+
+  visibleBoundsExcludingTopBar () {
+    // returns the visible rect of the world with respect to the topbar
+    const bar = $world.getSubmorphNamed('lively top bar');
+    const visibleBounds = this.visibleBounds();
+    if (bar) {
+      const visibleBoundsExclTopBar = new Rectangle(visibleBounds.x, visibleBounds.y + bar.height, visibleBounds.width, visibleBounds.height - bar.height);
+      return visibleBoundsExclTopBar;
+    } else {
+      return visibleBounds;
+    }
   }
 
   getListedComponents () {
@@ -193,10 +206,18 @@ export class LivelyWorld extends World {
     }
   }
 
+  async whenReady () {
+    await this._styleLoading;
+    return true;
+  }
+
   async onLoad () {
     this.opacity = 0;
     this.onWindowResize();
-    await this.whenRendered();
+    // some meta stuff...
+    lively.modules.removeHook('fetch', window.__logFetch);
+    this._styleLoading = prefetchCoreStyleguides(window.worldLoadingIndicator);
+    await this._styleLoading;
     this.animate({ opacity: 1, duration: 1000, easing: easings.inOutExpo });
     document.body.style.overflowX = 'visible';
     document.body.style.overflowY = 'visible';
@@ -832,7 +853,7 @@ export class LivelyWorld extends World {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // morphic hierarchy / windows
 
-    items.push(['Publish...', () => self.interactivelyPublish()]);
+    // items.push(['Publish...', () => self.interactivelyPublish()]);
 
     items.push(['Open in...', [
       ['Window', () => { self.openInWindow(); }]
@@ -860,7 +881,22 @@ export class LivelyWorld extends World {
     if (self.owner && self.owner.submorphs.length > 1) {
       items.push(['Arrange morph', [
         ['Bring to front', () => self.owner.addMorph(self)],
-        ['Send to back', () => self.owner.addMorphBack(self)]
+        ['Send to back', () => self.owner.addMorphBack(self)],
+        ['Fit to submorphs', async () => {
+          let padding = await self.world().prompt('Padding around submorphs:', {
+            input: 'Rectangle.inset(5)',
+            historyId: 'lively.morphic-fit-to-submorphs-padding-hist',
+            requester: self
+          });
+          if (typeof padding !== 'string') return;
+          const { value } = await runEval(padding, { topLevelVarRecorder: { Rectangle } });
+
+          padding = value && value.isRectangle ? value : Rectangle.inset(0);
+
+          self.undoStart('fitToSubmorphs');
+          self.fitToSubmorphs(padding);
+          self.undoStop('fitToSubmorphs');
+        }]
       ]]);
     }
 
@@ -873,13 +909,12 @@ export class LivelyWorld extends World {
     // stepping scripts
     const steppingItems = [];
 
-    if (this.startSteppingScripts) {
+    if (self.startSteppingScripts) {
       steppingItems.push(['Start stepping', function () { self.startSteppingScripts(); }]);
     } else {
       steppingItems.push(['Start stepping', async () => {
         const items = [];
-
-        for (const methodsPerProto of await completions.getCompletions(() => this, '')) {
+        for (const methodsPerProto of (await completions.getCompletions(() => self, '')).completions) {
           const [protoName, methods] = methodsPerProto;
           for (const method of methods) {
             if (method.startsWith('_') || method.startsWith('$')) continue;
@@ -962,33 +997,18 @@ export class LivelyWorld extends World {
         [[...(morph[propName] ? checked : unchecked), ' ' + propName, { float: 'none' }],
           () => morph[propName] = !morph[propName]]));
 
-    items.push(['Fit to submorphs', async () => {
-      let padding = await self.world().prompt('Padding around submorphs:', {
-        input: 'Rectangle.inset(5)',
-        historyId: 'lively.morphic-fit-to-submorphs-padding-hist',
-        requester: self
-      });
-      if (typeof padding !== 'string') return;
-      const { value } = await runEval(padding, { topLevelVarRecorder: { Rectangle } });
-
-      padding = value && value.isRectangle ? value : Rectangle.inset(0);
-
-      self.undoStart('fitToSubmorphs');
-      self.fitToSubmorphs(padding);
-      self.undoStop('fitToSubmorphs');
-    }]);
-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    const connectionItems = this.defaultConnectionMenuItems(self);
-    if (connectionItems) {
-      items.push(['connections...', connectionItems]);
-    }
+    // const connectionItems = this.defaultConnectionMenuItems(self);
+    // if (connectionItems) {
+    //   items.push(['connections...', connectionItems]);
+    // }
+    //
+    // const connectItems = this.defaultConnectMenuItems(() => {}, self);
+    // if (connectItems) {
+    //   items.push(['connect...', connectItems]);
+    // }
 
-    const connectItems = this.defaultConnectMenuItems(() => {}, self);
-    if (connectItems) {
-      items.push(['connect...', connectItems]);
-    }
     items.push({ isDivider: true });
     items.push(['Add comment', async () => {
       // TODO: maybe use promise functionality instead of if else
@@ -1178,7 +1198,7 @@ export class LivelyWorld extends World {
 
   showHaloPreviewFor (aMorph) {
     if (!aMorph) return;
-    if (aMorph.getWindow()) aMorph = null; // do not inspect windows
+    if (![aMorph, ...aMorph.ownerChain()].find(m => m.isComponent) && aMorph.getWindow()) aMorph = null; // do not inspect windows
     else if ([aMorph, ...aMorph.ownerChain()].find(m => m.isEpiMorph)) aMorph = null; // do not inspect epi morphs
     else if (aMorph == this) aMorph = null; // reset halo preview
     // if the previously highlighted morph is different one, then clean all exisiting previews
@@ -1253,7 +1273,7 @@ export class LivelyWorld extends World {
   yieldShapeIfNeeded (evt) {
     if (this._yieldedShape) {
       this._yieldedShape.extent = evt.positionIn(this).subPt(evt.state.dragStartPosition).subPt(pt(1, 1)).maxPt(pt(1, 1));
-      this._sizeTooltip.description = `${this._yieldShapeOnClick.className}: ${this._yieldedShape.width.toFixed(0)}x${this._yieldedShape.height.toFixed(0)}`;
+      this._sizeTooltip.description = `${this._yieldShapeOnClick[Symbol.for('__LivelyClassName__')]}: ${this._yieldedShape.width.toFixed(0)}x${this._yieldedShape.height.toFixed(0)}`;
       this._sizeTooltip.topLeft = evt.positionIn(this).addXY(15, 15);
     }
   }

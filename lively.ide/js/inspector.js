@@ -92,7 +92,7 @@ class DraggedProp extends Morph {
       target = target.morphBeneath(handPosition);
     }
     while (hiddenMorph = [target, ...target.ownerChain()].find(m => !m.visible)) {
-      target = hiddenMorph = hiddenMorph.morphBeneath(handPosition);
+      target = hiddenMorph = target.morphBeneath(handPosition);
     }
     if (target != this.currentTarget) {
       this.currentTarget = target;
@@ -364,7 +364,7 @@ export class PropertyControl extends DraggableTreeLabel {
         nativeCursor: 'pointer', onMouseDown: handler
       },
       ...Icon.textAttribute('angle-down', {
-        paddingTop: '4px', paddingLeft: '4px', opacity: 0.7
+        paddingTop: '4px', paddingLeft: '4px', opacity: 0.7, onMouseDown: handler
       })
     ];
   }
@@ -802,7 +802,8 @@ export default class Inspector extends Morph {
   static openInWindow (props) {
     if (System._testsRunning) return console.log(props.targetObject);
     const i = new this(props);
-    i.openInWindow();
+    const window = i.openInWindow();
+    window.doNotAcceptDropsForThisAndSubmorphs();
     return i;
   }
 
@@ -1103,6 +1104,8 @@ export default class Inspector extends Morph {
       }
     });
     this.ui.propertyTree.update(true);
+    // block drops even if target,... changes
+    this.ui.propertyTree.doNotAcceptDropsForThisAndSubmorphs();
   }
 
   get isInspector () { return true; }

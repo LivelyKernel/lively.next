@@ -25,12 +25,14 @@ export function styleProps (morph) {
 
 export function addTransform (morph, style) {
   const { position, origin, scale, rotation, flipped, tilted, perspective, owner } = morph;
-  const idx = morph.__stackIdx__ || 0;
   const x = Math.round(position.x - origin.x - (morph._skipWrapping && owner ? owner.borderWidthLeft : 0));
   const y = Math.round(position.y - origin.y - (morph._skipWrapping && owner ? owner.borderWidthTop : 0));
   const promoteToCompositionLayer = morph.renderOnGPU || (morph.dropShadow && !morph.dropShadow.fast) || morph.grayscale > 0;
+  if (promoteToCompositionLayer) {
+    style.willChange = 'transform';
+  }
   if ((owner && owner.isText) || promoteToCompositionLayer) {
-    style.transform = (promoteToCompositionLayer ? `translate3d(${x}px, ${y}px, ${idx}px)` : `translate(${x}px, ${y}px)`);
+    style.transform = (promoteToCompositionLayer ? `translate(${x}px, ${y}px)` : `translate(${x}px, ${y}px)`);
   } else {
     style.transform = '';
     style.top = `${y}px`;

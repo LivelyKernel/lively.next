@@ -871,9 +871,17 @@ export default class Browser extends Morph {
   }
 
   async loadES6Mocha () {
-    if (!!window.Mocha && !!window.chai) return;
-    await System.import('mocha-es6');
-    await promise.waitFor(() => !!window.Mocha && !!window.chai);
+    const { value: isInstalled } = await this.systemInterface.runEval(`
+      const g = typeof global != 'undefined' ? global : window;
+     !!g.Mocha && !!g.chai
+    `, { targetModule: this.selectedModule.name });
+    if (isInstalled) return;
+    await this.systemInterface.importPackage('mocha-es6');
+    await this.systemInterface.runEval(`
+      const g = typeof global != 'undefined' ? global : window;
+      const promise = await System.import('lively.lang/promise.js')
+      promise.waitFor(30 * 1000, () =>  !!g.Mocha && !!g.chai);
+    `, { targetModule: this.selectedModule.name });
   }
 
   async onModuleSelected (m) {
@@ -917,7 +925,10 @@ export default class Browser extends Morph {
       const win = this.getWindow();
 
       // in case of tests, we need to proactively load mocha-es6
-      if (await isTestModule(await resource(system.coreInterface.normalizeSync(m.name)).read())) {
+      const url = (await system.coreInterface.normalizeSync(m.name));
+
+      // fixme: actuall perform that in the conext of the module
+      if (await isTestModule(await system.moduleRead(m.name))) {
         await this.loadES6Mocha();
       }
 
@@ -1065,6 +1076,7 @@ export default class Browser extends Morph {
       .map(m => ({ string: m.nameInPackage + (m.isLoaded ? '' : ' [not loaded]'), value: m, isListItem: true }));
 
     await this.ui.moduleList.whenRendered();
+    this.owner.doNotAcceptDropsForThisAndSubmorphs();
   }
 
   updateCodeEntities (mod) {

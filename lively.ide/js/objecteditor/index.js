@@ -61,6 +61,7 @@ export class ObjectEditor extends Morph {
         evalEnvironment
       });
     }
+    win.doNotAcceptDropsForThisAndSubmorphs();
     return win;
   }
 
@@ -1205,7 +1206,7 @@ export class ObjectEditor extends Morph {
         }),
         highlightUndeclared: async undeclaredVar => {
           // start,end index into module source, compensate
-          const { start: varStart, end: varEnd } = undeclaredVar;
+          let { start: varStart, end: varEnd } = undeclaredVar;
           const { classStart, classEnd } = await this.withContextDo((ctx) => {
             const descr = ctx.sourceDescriptorFor(ctx.selectedClass);
             const { sourceLocation: { start: classStart, end: classEnd } } = descr;
@@ -1584,7 +1585,7 @@ export class ObjectEditor extends Morph {
 
             return [{
               isListItem: true,
-              string: klass,
+              label: [klass, { fontWeight: 'bold', fontFamily: 'IBM Plex Mono' }],
               value: { node, selector: 'selectClass', klass }
             }].concat(
               methods.map(ea => {
@@ -1596,7 +1597,7 @@ export class ObjectEditor extends Morph {
                           textStyleClasses: ['v-center-text'],
                           paddingRight: '10px'
                         },
-                        `${ea.name}`, null
+                        `${ea.name[1]}`, {}
                   ],
                   value: { node: ea, selector: 'selectMethod', klass }
                 };

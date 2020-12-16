@@ -83,6 +83,7 @@ export class RichTextControl extends Morph {
             lineWrappingControl: (target, control) => {
               const [checkBox, selector] = control.submorphs;
               checkBox.checked = !!target.lineWrapping;
+              !target.isText ? checkBox.disable() : checkBox.enable();
               selector.deactivated = !target.lineWrapping;
 
               // connect(checkBox, 'checked', this, 'setLineWrapping');
@@ -123,6 +124,7 @@ export class RichTextControl extends Morph {
             ...(
               ['left', 'center', 'right', 'block'].reduce((handlers, align) => {
                 handlers[align + 'Align'] = (target, btn) => {
+                  btn.deactivated = !target.isText;
                   this.toggleButton(btn, target.textAlign == align);
                 };
                 return handlers;
@@ -516,3 +518,4 @@ export class RichTextControl extends Morph {
     });
   }
 }
+

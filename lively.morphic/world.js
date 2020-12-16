@@ -11,9 +11,9 @@ import { TooltipViewer, Tooltip } from './tooltips.js';
 import { loadWorldFromURL, loadWorldFromDB, loadWorldFromCommit, loadWorld } from './world-loading.js';
 import { touchInputDevice } from './helpers.js';
 import { UserRegistry } from 'lively.user';
-import { loadMorphFromSnapshot } from 'lively.morphic';
 import { emit } from 'lively.notifications/index.js';
 import { resource } from 'lively.resources/index.js';
+import { loadMorphFromSnapshot } from './serialization.js';
 
 export class World extends Morph {
   static get properties () {
@@ -47,7 +47,8 @@ export class World extends Morph {
           const { showsUserFlap } = resource(document.location.href).query();
           if (typeof showsUserFlap !== 'undefined') bool = showsUserFlap;
           this.setProperty('showsUserFlap', bool);
-          System.import('lively.user/morphic/user-ui.js')
+          this.whenReady()
+            .then(() => System.import('lively.user/morphic/user-ui.js'))
             .then(userUI => userUI.UserUI[bool ? 'showUserFlap' : 'hideUserFlap'](this));
         }
       }
@@ -127,6 +128,10 @@ export class World extends Morph {
   }
 
   get isWorld () { return true; }
+
+  async whenReady () {
+    return true;
+  }
 
   render (renderer) { return renderer.renderWorld(this); }
 

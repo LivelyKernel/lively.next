@@ -26,6 +26,27 @@ import { subscribeOnce } from 'lively.notifications/index.js';
 
 */
 
+export async function prefetchCoreStyleguides (li) {
+  li.label = 'loading System Elements';
+  li.progress = 0;
+  li.status = 'core elements...';
+  await resource('styleguide://System/buttons/light').read(),
+  li.progress = 1 / 5;
+  li.status = 'top bar...';
+  await resource('styleguide://SystemIDE/lively top bar master').read(),
+  li.progress = 2 / 5;
+  li.status = 'scene graph...';
+  await resource('styleguide://SystemIDE/styling side bar master').read(),
+  li.progress = 3 / 5;
+  li.status = 'styling palette...';
+  await resource('styleguide://SystemIDE/scene graph side bar master').read();
+  li.progress = 4 / 5;
+  li.status = 'world loader...';
+  await resource('styleguide://partial freezing/project browser').read();
+  li.progress = 5 / 5;
+  await promise.delay(500);
+}
+
 function getProjectName (world) {
   return Path('metadata.commit.name').get(world) || world.name;
 }
@@ -127,12 +148,21 @@ export class ComponentPolicy {
     return true;
   }
 
+  async whenReady () {
+    await this._hasUnresolvedMaster;
+  }
+
   getResourceUrlFor (component) {
     if (!component) return null;
     if (component._resourceHandle) return component._resourceHandle.url; // we leave this being for remote masters :)
     if (component.name == undefined) return null;
     // else we assume the component resides within the current world
     return `styleguide://${getProjectName($world)}/${component.name}`;
+  }
+
+  getWorldUrlFor (component) {
+    const worldOfMaster = resource(typeof component === 'string ' ? component : this.getResourceUrlFor(component)).worldName;
+    return worldToUrl[worldOfMaster];
   }
 
   async resolveMasterComponents () {
@@ -167,13 +197,21 @@ export class ComponentPolicy {
     We check if the master component updated in the mean time and we need to trigger a style application of our submorph hierarchy.
   */
 
-  applyIfNeeded (needsUpdate = false) {
+  applyAnimated (config = { duration: 1000 }) {
+    this.applyIfNeeded(true, config);
+  }
+
+  applyIfNeeded (needsUpdate = false, animationConfig = false) {
+    if (animationConfig) this._animationConfig = animationConfig;
     if (this._hasUnresolvedMaster) {
       this._originalOpacity = this.derivedMorph.opacity;
       // fixme: this may still be too late if applyIfNeeded is triggered at render time
       // hide the component until it is applied
       this.derivedMorph.withMetaDo({ metaInteraction: true }, () => {
-        if (![this.derivedMorph, ...this.derivedMorph.ownerChain()].find(m => m.isComponent)) { this.derivedMorph.opacity = 0; }
+        if (!animationConfig &&
+            ![this.derivedMorph, ...this.derivedMorph.ownerChain()].find(m => m.isComponent)) {
+          this.derivedMorph.opacity = 0;
+        }
       });
       // this clogs up the main thread. Instead use a callback from the master.
       return this._hasUnresolvedMaster.then(() => {
@@ -194,12 +232,12 @@ export class ComponentPolicy {
     }
   }
 
-  apply (derivedMorph, master) {
+  apply (derivedMorph, master, animationConfig = this._animationConfig) {
     // traverse the masters submorph hierarchy
     if (this._applying) return;
     this._applying = true;
     try {
-      derivedMorph.dontRecordChangesWhile(() => {
+      const apply = () => {
         const nameToStylableMorph = this.prepareSubmorphsToBeManaged(derivedMorph, master);
         master.withAllSubmorphsDoExcluding(masterSubmorph => {
           const isRoot = masterSubmorph == master;
@@ -261,9 +299,15 @@ export class ComponentPolicy {
           if (morphToBeStyled._parametrizedProps) { delete morphToBeStyled._parametrizedProps; }
           this.reconcileSubmorphs(morphToBeStyled, masterSubmorph);
         }, masterSubmorph => master != masterSubmorph && masterSubmorph.master);
-      });
+      };
+      if (animationConfig) {
+        derivedMorph.withAnimationDo(apply, animationConfig).then(() => {
+          delete this._animationConfig;
+          this._applying = false;
+        });
+      } else derivedMorph.dontRecordChangesWhile(apply);
     } finally {
-      this._applying = false;
+      if (!animationConfig) this._applying = false;
       delete derivedMorph._parametrizedProps; // needs to be done for all managed submorphs
     }
   }
@@ -508,6 +552,7 @@ var modulesToLoad = modulesToLoad || {};
 let li;
 let localNamePromise;
 var masterComponentFetches = masterComponentFetches || {};
+var worldToUrl = worldToUrl || {};
 
 export { resolvedMasters };
 
@@ -598,11 +643,20 @@ class StyleGuideResource extends Resource {
       let snapshot;
       if (resolveSnapshot) {
         const db = MorphicDB.default;
-        if ((await db.exists('world', this.worldName)).exists) { snapshot = await db.fetchSnapshot('world', this.worldName); } else {
+        if ((await db.fetchCommit('world', this.worldName))) {
+          snapshot = await db.fetchSnapshot('world', this.worldName);
+          worldToUrl[this.worldName] = resource(System.baseURL).join('worlds/load').withQuery({
+            name: this.worldName
+          }).url;
+        } else {
           // try to get the JSON (fallback)
           const jsonRes = resource(System.baseURL).join('lively.morphic/styleguides').join(this.worldName + '.json');
-          if (await jsonRes.exists()) snapshot = await jsonRes.readJson();
-          else resolveSnapshot(null); // total fail
+          if (await jsonRes.exists()) {
+            snapshot = await jsonRes.readJson();
+            worldToUrl[this.worldName] = resource(System.baseURL).join('worlds/load').withQuery({
+              file: 'lively.morphic/styleguides/' + this.worldName + '.json'
+            }).url;
+          } else resolveSnapshot(null); // total fail
         }
         await loadPackagesAndModulesOfSnapshot(snapshot);
         resolveSnapshot(snapshot);
