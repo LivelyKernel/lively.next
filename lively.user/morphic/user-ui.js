@@ -928,7 +928,3 @@ export class UserFlap extends Morph {
     });
   }
 }
-
-
-
-

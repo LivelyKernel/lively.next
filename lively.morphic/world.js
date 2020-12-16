@@ -15,6 +15,8 @@ import { emit } from 'lively.notifications/index.js';
 import { resource } from 'lively.resources/index.js';
 import { loadMorphFromSnapshot } from './serialization.js';
 
+import { CommentBrowser } from 'lively.collab';
+
 export class World extends Morph {
   static get properties () {
     return {
@@ -47,9 +49,19 @@ export class World extends Morph {
           const { showsUserFlap } = resource(document.location.href).query();
           if (typeof showsUserFlap !== 'undefined') bool = showsUserFlap;
           this.setProperty('showsUserFlap', bool);
-          this.whenReady()
-            .then(() => System.import('lively.user/morphic/user-ui.js'))
-            .then(userUI => userUI.UserUI[bool ? 'showUserFlap' : 'hideUserFlap'](this));
+          System.import('lively.user/morphic/user-ui.js')
+            .then(userUI => userUI.UserUI[bool ? 'showUserFlap' : 'hideUserFlap'](this)
+              .then(() => { if (bool) this.enableComments = true; }));
+        }
+      },
+
+      enableComments: {
+        defaultValue: true,
+        set (bool) {
+          this.setProperty('enableComments', bool);
+          if (bool) {
+            CommentBrowser.initializeCommentBrowser();
+          }
         }
       }
     };

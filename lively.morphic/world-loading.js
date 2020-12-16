@@ -56,7 +56,8 @@ export async function loadWorld (newWorld, oldWorld, options = {}) {
     worldLoadDialog = false,
     initializeGlobalStyleSheets = true,
     showUserFlap = typeof newWorld.showsUserFlap === 'undefined'
-      ? true : newWorld.showsUserFlap
+      ? true : newWorld.showsUserFlap,
+    enableComments = true
   } = options;
 
   env = env || (oldWorld ? oldWorld.env : MorphicEnv.default());
@@ -82,7 +83,7 @@ export async function loadWorld (newWorld, oldWorld, options = {}) {
       window.history.pushState({}, 'lively.next', options.pathForBrowserHistory);
     }
 
-    newWorld.showsUserFlap = showUserFlap;
+    newWorld.showsUserFlap = showUserFlap; // will initialize Comment Browser
 
     if (oldWorld) { oldWorld.onUnload(); }
 
