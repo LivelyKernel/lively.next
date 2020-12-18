@@ -794,8 +794,8 @@ class NameHaloItem extends HaloItem {
     if (!target || target.isMorphSelection) return;
     if (target.master) {
       const appliedMaster = target.master.determineMaster(target);
-      const linkToWorld = target.master.getWorldUrlFor(appliedMaster) || 'this project';
-      const isLocal = !!appliedMaster.world();
+      const isLocal = appliedMaster && !!appliedMaster.world();
+      const linkToWorld = appliedMaster ? target.master.getWorldUrlFor(appliedMaster) : 'this project';
       const masterLink = this.addMorph(Icon.makeLabel(linkToWorld ? 'external-link-alt' : 'exclamation-triangle', {
         nativeCursor: 'pointer',
         fontColor: Color.white,
@@ -1253,7 +1253,7 @@ class ComponentHaloItem extends HaloItem {
     const morphsInHierarchy = [];
     target.withAllSubmorphsDoExcluding(m => {
       if (m != target) morphsInHierarchy.push(m);
-    }, m => target.master);
+    }, m => m.master);
     const nameGroups = arr.groupBy(morphsInHierarchy, m => m.name);
     const defaultStyle = { fontWeight: 'normal', fontSize: 16 };
     // initial warn to allow the user to cancel the component conversion
