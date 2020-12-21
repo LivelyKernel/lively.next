@@ -178,7 +178,8 @@ export default class Halo extends Morph {
     this.alignWithTarget();
   }
 
-  alignWithTarget () {
+  alignWithTarget (change) {
+    if (change && !['extent', 'position', 'scale', 'rotation'].includes(change.prop)) { return; }
     if (this.active || !this.target) return;
     const world = this.target.world() || $world;
     const worldBounds = world.visibleBounds();
@@ -855,7 +856,7 @@ class NameHaloItem extends HaloItem {
       this.nameHolders.forEach(nh => nh != nameHolder && nh.activate());
       this.borderWidth = 0;
       this.validityIndicator.remove();
-      this.halo.focus();
+      // this.halo.focus();
     }
     this.alignInHalo();
   }
