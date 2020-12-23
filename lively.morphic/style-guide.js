@@ -232,6 +232,17 @@ export class ComponentPolicy {
     }
   }
 
+  getStyleProperties (masterComponent) {
+    const { properties, order } = masterComponent.propertiesAndPropertySettings();
+    const styleProps = [];
+    for (const prop of order) {
+      if (properties[prop].isStyleProp) {
+        styleProps.push(prop);
+      }
+    }
+    return styleProps;
+  }
+
   apply (derivedMorph, master, animationConfig = this._animationConfig) {
     // traverse the masters submorph hierarchy
     if (this._applying) return;
@@ -254,7 +265,7 @@ export class ComponentPolicy {
             return; // style application is handled by that master
           }
 
-          for (const propName of masterSubmorph.styleProperties) {
+          for (const propName of this.getStyleProperties(masterSubmorph)) {
             if (this._overriddenProps.get(morphToBeStyled)[propName]) continue;
             // secial handling for ... layout (copy())
             if (propName == 'layout') {
@@ -363,7 +374,7 @@ export class ComponentPolicy {
   propsToSerializeForMorph (m, candidateProps) {
     if (!this.managesMorph(m)) return candidateProps;
     const excludedProps = [];
-    for (const propName of m.styleProperties) {
+    for (const propName of this.getStyleProperties(m)) {
       if (this._overriddenProps.get(m)[propName]) continue;
       if (propName == 'position' && m == this.derivedMorph) continue;
       if (propName == 'extent' && m == this.derivedMorph) continue;
