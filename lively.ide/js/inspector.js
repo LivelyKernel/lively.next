@@ -202,6 +202,7 @@ export class PropertyControl extends DraggableTreeLabel {
     if (!args.spec.type) {
       args.spec = {
         ...args.spec,
+        isFloat: !Number.isInteger(args.value),
         type: this.inferType(args)
       };
     } // non mutating
@@ -439,7 +440,8 @@ export class PropertyControl extends DraggableTreeLabel {
     return [
       ...this.renderGrabbableKey(args),
       ...node._inputMorph ? [node._inputMorph, {}] : [
-        ` ${value != undefined && (value.valueOf ? value.valueOf() : value).toFixed(spec.isFloat ? 3 : 0)} `,
+        ` ${value != undefined && (value.valueOf ? value.valueOf() : value).toFixed(spec.isFloat ? Math.max(4, num.precision(value)) : 0)} `,
+
         {
           fontColor: numberColor,
           onMouseUp: (evt) => {
