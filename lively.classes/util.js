@@ -1,28 +1,28 @@
-import { arr, obj, Path } from "lively.lang";
-import { RuntimeSourceDescriptor } from "./source-descriptors.js";
+import { arr, obj, Path } from 'lively.lang';
+import { RuntimeSourceDescriptor } from './source-descriptors.js';
 
-export function superclasses(klass) {
-  return withSuperclasses(klass).slice(1)
+export function superclasses (klass) {
+  return withSuperclasses(klass).slice(1);
 }
 
-export const initializeSymbol       = Symbol.for("lively-instance-initialize"),
-             instanceRestorerSymbol = Symbol.for("lively-instance-restorer"),
-             superclassSymbol       = Symbol.for("lively-instance-superclass"),
-             moduleMetaSymbol       = Symbol.for("lively-module-meta"),
-             objMetaSymbol          = Symbol.for("lively-object-meta"),
-             moduleSubscribeToToplevelChangesSym = Symbol.for("lively-klass-changes-subscriber");
+export const initializeSymbol = Symbol.for('lively-instance-initialize');
+export const instanceRestorerSymbol = Symbol.for('lively-instance-restorer');
+export const superclassSymbol = Symbol.for('lively-instance-superclass');
+export const moduleMetaSymbol = Symbol.for('lively-module-meta');
+export const objMetaSymbol = Symbol.for('lively-object-meta');
+export const moduleSubscribeToToplevelChangesSym = Symbol.for('lively-klass-changes-subscriber');
 
-export function getClassHierarchy(klass) {
-  var curr = klass, hierarchy = [];
+export function getClassHierarchy (klass) {
+  let curr = klass; const hierarchy = [];
   do {
-    hierarchy.push(curr)
+    hierarchy.push(curr);
     curr = curr[superclassSymbol];
-  } while (curr && curr.name)
+  } while (curr && curr.name);
   return hierarchy.map(c => c.name).join('->');
 }
 
-export function withSuperclasses(klass) {
-  var classes = [];
+export function withSuperclasses (klass) {
+  const classes = [];
   while (klass) {
     classes.push(klass);
     klass = klass[superclassSymbol];
@@ -30,110 +30,113 @@ export function withSuperclasses(klass) {
   return classes;
 }
 
-export function inheritsFrom(klass, maybeSuperclass) {
+export function inheritsFrom (klass, maybeSuperclass) {
   do {
     if (klass === maybeSuperclass) return true;
   } while (klass = klass[superclassSymbol]);
   return false;
 }
 
-export function changeClass(obj, newClass) {
-  if (obj.constructor === newClass
-   && obj.__proto__ === newClass.prototype) return obj;
+export function changeClass (obj, newClass) {
+  if (obj.constructor === newClass &&
+   obj.__proto__ === newClass.prototype) return obj;
   obj.constructor = newClass;
   obj.__proto__ = newClass.prototype;
   return obj;
 }
 
-export function isClass(klass) {
-  return klass && typeof klass === "function";
+export function isClass (klass) {
+  return klass && typeof klass === 'function';
 }
 
-export function lexicalClassMembers(klass) {
-  var {ast: parsed, type} = RuntimeSourceDescriptor.for(klass);
-  if (type !== "ClassDeclaration")
-    throw new Error(`Expected class but got ${type}`);
+function isOverridden (klass, name) {
+  while (klass != Object) {
+    klass = klass[Symbol.for('lively-instance-superclass')];
+    if (klass.prototype.hasOwnProperty(name)) return true;
+  }
+  return false;
+}
 
-  var members = Path("body.body").get(parsed);
+export function lexicalClassMembers (klass) {
+  const { ast: parsed, type } = RuntimeSourceDescriptor.for(klass);
+  if (type !== 'ClassDeclaration') { throw new Error(`Expected class but got ${type}`); }
+
+  const members = Path('body.body').get(parsed);
 
   return members.map(node => {
-    var {static: isStatic, kind, key: {type: keyType, name: id, value: literalId}} = node,
-        name = id || literalId,
-        overridden = klass[Symbol.for("lively-instance-superclass")].prototype.hasOwnProperty(name),
-        base = isStatic ? klass : klass.prototype,
-        value = kind === "get" ? base.__lookupGetter__(name) :
-                  kind === "set" ? base.__lookupSetter__(name) :
-                    base[name];
-    return {static: isStatic, name, value, kind, owner: klass, overridden}
+    const { static: isStatic, kind, key: { type: keyType, name: id, value: literalId } } = node;
+    const name = id || literalId;
+    const overridden = isOverridden(klass, name);
+    const base = isStatic ? klass : klass.prototype;
+    const value = kind === 'get' ? base.__lookupGetter__(name)
+      : kind === 'set' ? base.__lookupSetter__(name)
+        : base[name];
+    return { static: isStatic, name, value, kind, owner: klass, overridden };
   });
 }
 
-
-export function runtimeClassMembers(klass) {
+export function runtimeClassMembers (klass) {
   return runtimeNonStaticMembers(klass).concat(runtimeNonStaticMembers(klass));
 }
 
-function runtimeClassMembersInProtoChain(klass) {
+function runtimeClassMembersInProtoChain (klass) {
   return arr.uniq(
-          arr.flatmap(
-            arr.without(withSuperclasses(klass), Object),
-            ea => runtimeClassMembers(ea)));
+    arr.flatmap(
+      arr.without(withSuperclasses(klass), Object),
+      ea => runtimeClassMembers(ea)));
 }
 
-function runtimeNonStaticMembers(klass) {
-  var owner = klass.prototype,
-      descriptors = obj.getOwnPropertyDescriptors(owner);
+function runtimeNonStaticMembers (klass) {
+  const owner = klass.prototype;
+  const descriptors = obj.getOwnPropertyDescriptors(owner);
   return arr.withoutAll(
     Object.keys(descriptors),
-    ["constructor"])
-      .map(key => {
-        var descr = descriptors[key],
-            kind = typeof descr.value === "function" ? "method" :
-                    "get" in descr ? "get" : 
-                      "set" in descr ? "set" :
-                        "unknown",
-            value = kind === "method" ? descr.value :
-                      kind === "get" ? descr.get :
-                        kind === "set" ? descr.set : null
-        return {static: false, name: key, value, kind, owner};
-      });
-
+    ['constructor'])
+    .map(key => {
+      const descr = descriptors[key];
+      const kind = typeof descr.value === 'function' ? 'method'
+        : 'get' in descr ? 'get'
+          : 'set' in descr ? 'set'
+            : 'unknown';
+      const value = kind === 'method' ? descr.value
+        : kind === 'get' ? descr.get
+          : kind === 'set' ? descr.set : null;
+      return { static: false, name: key, value, kind, owner };
+    });
 }
 
-function runtimeNonstaticClassMembersInProtoChain(klass) {
+function runtimeNonstaticClassMembersInProtoChain (klass) {
   return arr.uniq(
-          arr.flatmap(
-            arr.without(withSuperclasses(klass), Object),
-            ea => runtimeNonStaticMembers(ea)));
+    arr.flatmap(
+      arr.without(withSuperclasses(klass), Object),
+      ea => runtimeNonStaticMembers(ea)));
 }
 
-export function runtimeStaticClassMembers(klass) {
-  var owner = klass,
-      descriptors = obj.getOwnPropertyDescriptors(owner);
+export function runtimeStaticClassMembers (klass) {
+  const owner = klass;
+  const descriptors = obj.getOwnPropertyDescriptors(owner);
   return arr.withoutAll(
     Object.keys(descriptors),
-    ["prototype", "name", "length", "toString"])
-      .map(key => {
-        var descr = descriptors[key],
-            kind = typeof descr.value === "function" ? "method" :
-                    "get" in descr ? "get" : 
-                      "set" in descr ? "set" :
-                        "unknown",
-            value = kind === "method" ? descr.value :
-                      kind === "get" ? descr.get :
-                        kind === "set" ? descr.set : null;
-        return {static: true, name: key, value, kind, owner};
-      });
+    ['prototype', 'name', 'length', 'toString'])
+    .map(key => {
+      const descr = descriptors[key];
+      const kind = typeof descr.value === 'function' ? 'method'
+        : 'get' in descr ? 'get'
+          : 'set' in descr ? 'set'
+            : 'unknown';
+      const value = kind === 'method' ? descr.value
+        : kind === 'get' ? descr.get
+          : kind === 'set' ? descr.set : null;
+      return { static: true, name: key, value, kind, owner };
+    });
 }
 
-export function runtimeStaticClassMembersInProtoChain(klass) {
+export function runtimeStaticClassMembersInProtoChain (klass) {
   return arr.uniq(
-          arr.flatmap(
-            arr.without(withSuperclasses(klass), Object),
-            ea => runtimeStaticClassMembers(ea)));
+    arr.flatmap(
+      arr.without(withSuperclasses(klass), Object),
+      ea => runtimeStaticClassMembers(ea)));
 }
-
-
 
 /*
 
@@ -157,73 +160,71 @@ runtimeClassMembersInProtoChain(Bar)
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-export var toJsIdentifier = (function() {
+export var toJsIdentifier = (function () {
+  const keywords = ['break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'enum', 'export', 'extends', 'false', 'finally', 'for', 'function', 'if', 'implements', 'import', 'in', 'instanceof', 'interface', 'let', 'new', 'null', 'package', 'private', 'protected', 'public', 'return', 'static', 'switch', 'super', 'this', 'throw', 'true', 'try', 'typeof', 'undefined', 'var', 'void', 'while', 'with', 'yield'];
 
-  var keywords = ["break", "case", "catch", "class", "const", "continue", "debugger", "default", "delete", "do", "else", "enum", "export", "extends", "false", "finally", "for", "function", "if", "implements", "import", "in", "instanceof", "interface", "let", "new", "null", "package", "private", "protected", "public", "return", "static", "switch", "super", "this", "throw", "true", "try", "typeof", "undefined", "var", "void", "while", "with", "yield"];
-
-  var illegalChars = {
-    "~":  "_tilde_",
-    "`":  "_backtick_",
-    "!":  "_exclamationmark_",
-    "@":  "_at_",
-    "#":  "_pound_",
-    "%":  "_percent_",
-    "^":  "_carat_",
-    "&":  "_amperstand_",
-    "*":  "_asterisk_",
-    "(":  "_leftparen_",
-    ")":  "_rightparen_",
-    "+":  "_plus_",
-    "=":  "_equals_",
-    "{":  "_leftcurly_",
-    "}":  "_rightcurly_",
-    "[":  "_leftsquare_",
-    "]":  "_rightsquare_",
-    "|":  "_pipe_",
-    "-":  "_dash_",
-    "\\": "_backslash_",
-    "\"": "_doublequote_",
-    "'":  "_singlequote_",
-    ":":  "_colon_",
-    ";":  "_semicolon_",
-    "<":  "_leftangle_",
-    ">":  "_rightangle_",
-    ",":  "_comma_",
-    ".":  "_period_",
-    "?":  "_questionmark_",
-    "/":  "_forwardslash_",
-    "\t": "_tab_",
-    "\n": "_newline_",
-    "\r": "_carriagereturn_"
+  const illegalChars = {
+    '~': '_tilde_',
+    '`': '_backtick_',
+    '!': '_exclamationmark_',
+    '@': '_at_',
+    '#': '_pound_',
+    '%': '_percent_',
+    '^': '_carat_',
+    '&': '_amperstand_',
+    '*': '_asterisk_',
+    '(': '_leftparen_',
+    ')': '_rightparen_',
+    '+': '_plus_',
+    '=': '_equals_',
+    '{': '_leftcurly_',
+    '}': '_rightcurly_',
+    '[': '_leftsquare_',
+    ']': '_rightsquare_',
+    '|': '_pipe_',
+    '-': '_dash_',
+    '\\': '_backslash_',
+    '"': '_doublequote_',
+    "'": '_singlequote_',
+    ':': '_colon_',
+    ';': '_semicolon_',
+    '<': '_leftangle_',
+    '>': '_rightangle_',
+    ',': '_comma_',
+    '.': '_period_',
+    '?': '_questionmark_',
+    '/': '_forwardslash_',
+    '\t': '_tab_',
+    '\n': '_newline_',
+    '\r': '_carriagereturn_'
   };
 
-  var nums = {
-    "0": "_zero_",
-    "1": "_one_",
-    "2": "_two_",
-    "3": "_three_",
-    "4": "_four_",
-    "5": "_five_",
-    "6": "_siz_",
-    "7": "_seven_",
-    "8": "_eight_",
-    "9": "_nine_",
+  const nums = {
+    0: '_zero_',
+    1: '_one_',
+    2: '_two_',
+    3: '_three_',
+    4: '_four_',
+    5: '_five_',
+    6: '_siz_',
+    7: '_seven_',
+    8: '_eight_',
+    9: '_nine_'
+  };
+
+  const wrapper = text => text;
+  const charWrapper = char => wrapper(illegalChars[char] || 'ASCII_' + (char.charCodeAt(0)));
+  const dedashRe = /([\s-]+.)/g;
+
+  function dedash (string) {
+    return string.replace(dedashRe, (_, m) => m[m.length - 1].toUpperCase());
   }
 
-  var wrapper = text => text,
-      charWrapper = char => wrapper(illegalChars[char] || "ASCII_" + (char.charCodeAt(0))),
-      dedashRe = /([\s-]+.)/g;
-
-  function dedash(string) {
-    return string.replace(dedashRe, (_, m) => m[m.length-1].toUpperCase());
-  }
-
-  return function toJsIdentifier(text) {
+  return function toJsIdentifier (text) {
     text = dedash(text);
     if ((keywords.indexOf(text)) >= 0) return wrapper(text);
-    if (text.length === 0) return wrapper("_null_");
+    if (text.length === 0) return wrapper('_null_');
     return text.replace(/^\d/, n => wrapper(nums[n]))
-               .replace(/[^\w\$_]/g, charWrapper);
-  }
-
+      .replace(/[^\w\$_]/g, charWrapper);
+  };
 })();
