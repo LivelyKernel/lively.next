@@ -430,7 +430,7 @@ export class EditPrompt extends AbstractPrompt {
 
   build ({ label, input, historyId, useLastInput, mode, textStyle, evalEnvironment }) {
     const title = this.addNamed('promptTitle', {
-      type: 'text', textString: label
+      type: 'text', value: label
     });
 
     if (!textStyle) textStyle = {};
@@ -540,6 +540,7 @@ export class EditPrompt extends AbstractPrompt {
 
   focus () { this.getSubmorphNamed('editor').focus(); }
 }
+
 
 export class PasswordPrompt extends AbstractPrompt {
   static get properties () {
