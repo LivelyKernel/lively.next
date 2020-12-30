@@ -91,14 +91,19 @@ export class LivelyWorld extends World {
     return win;
   }
 
+  withTopBarDo (cb) {
+    const topBar = this.get('lively top bar');
+    if (topBar) cb(topBar);
+  }
+
   onKeyUp (evt) {
-    this.get('lively top bar').onKeyUp(evt);
+    this.withTopBarDo(tb => tb.onKeyUp(evt));
   }
 
   onKeyDown (evt) {
     super.onKeyDown(evt);
     if (evt.targetMorph != this) return;
-    this.get('lively top bar').onKeyDown(evt);
+    this.withTopBarDo(tb => tb.onKeyDown(evt));
   }
 
   onMouseMove (evt) {
