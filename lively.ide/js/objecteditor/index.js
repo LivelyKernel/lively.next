@@ -279,7 +279,8 @@ export class ObjectEditor extends Morph {
       s.evalEnvironment.systemInterface = s.evalEnvironment.backend == 'local'
         ? livelySystem.localInterface : livelySystem.serverInterfaceFor(s.evalEnvironment.backend);
       delete this._serializedState;
-      await this.browse({ target: this.target, ...s });
+      if (this.target) await this.browse({ target: this.target, ...s });
+      else this.remove();
     }
   }
 
