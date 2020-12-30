@@ -971,7 +971,7 @@ export class LivelyWorld extends World {
     }
 
     items.push(['Change Tooltip', async () => {
-      self.tooltip = await self.world().editPrompt('Enter Tooltip', {
+      self.tooltip = await self.world().prompt('Enter Tooltip', {
         placeholder: 'Description',
         input: self.tooltip || ''
       });
