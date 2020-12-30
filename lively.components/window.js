@@ -200,7 +200,11 @@ export default class Window extends Morph {
     const world = this.world();
     if (!world) return;
     const bounds = this.globalBounds();
-    if (bounds.top() < world.innerBounds().top()) { this.moveBy(pt(0, world.innerBounds().top() - bounds.top())); }
+    world.withTopBarDo(tb => {
+      if (bounds.top() < tb.height) {
+        this.moveBy(pt(0, tb.height - bounds.top()));
+      }
+    });
   }
 
   buildHeader () {
