@@ -316,6 +316,11 @@ export default class Halo extends Morph {
     }
     this.active = false;
     this.alignWithTarget();
+    this.world().withTopBarDo(tb => {
+      if (tb.activeSideBars.includes('Styling Palette')) {
+        tb.stylingPalette.onHierarchyChange();
+      }
+    });
   }
 
   proportionalDelta (corner, delta, bounds) {
@@ -707,7 +712,9 @@ class NameHolder extends Morph {
 
   onKeyDown (evt) {
     if (evt.keyCombo == 'Enter') {
-      this.accept(); evt.stop();
+      this.accept();
+      this.halo.focus();
+      evt.stop();
     } else {
       super.onKeyDown(evt);
     }
@@ -1040,6 +1047,11 @@ class DragHaloItem extends HaloItem {
     }
     this.halo.target.position = newPos;
     this.updateAlignmentGuide(grid);
+    this.world().withTopBarDo(tb => {
+      if (tb.activeSideBars.includes('Styling Palette')) {
+        tb.stylingPalette.onHierarchyChange();
+      }
+    });
     if (!grid) {
       showAndSnapToGuides(
         this.halo.target, true /* showGuides */, snapToGuides,
