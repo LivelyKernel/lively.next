@@ -238,7 +238,7 @@ export class CommentMorph extends Morph {
   }
 
   deactivateButtons () {
-    const deactivatedButtonColor = Color.rgba(127, 140, 141, 0.22);
+    const deactivatedButtonColor = Color.rgba(127, 140, 141, 0.4);
 
     this.ui.resolveButton.fontColor = deactivatedButtonColor;
     this.ui.resolveButton.nativeCursor = 'default';
