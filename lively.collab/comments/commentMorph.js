@@ -242,11 +242,11 @@ export class CommentMorph extends Morph {
 
     this.ui.resolveButton.fontColor = deactivatedButtonColor;
     this.ui.resolveButton.nativeCursor = 'default';
-    this.ui.resolveButton.tooltip = 'Save comment to be able to resolve it.';
+    this.ui.resolveButton.tooltip = 'Save comment to be able to resolve it';
 
     this.ui.deleteButton.fontColor = deactivatedButtonColor;
     this.ui.deleteButton.nativeCursor = 'default';
-    this.ui.deleteButton.tooltip = 'Save comment to be able to delete it.';
+    this.ui.deleteButton.tooltip = 'Save comment to be able to delete it';
   }
 
   setEditUI () {
