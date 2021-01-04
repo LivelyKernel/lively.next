@@ -217,7 +217,7 @@ export class CommentMorph extends Morph {
 
     this.isInEditMode = false;
 
-    this.resetButtons();
+    this.enabledButtonAppearance();
     this.ui.editSaveButton.tooltip = 'Edit Comment';
 
     this.ui.commentTextField.readOnly = true;
@@ -225,7 +225,7 @@ export class CommentMorph extends Morph {
     this.ui.commentTextField.borderStyle = 'none';
   }
 
-  resetButtons () {
+  enabledButtonAppearance () {
     const buttonColor = Color.rgb(127, 140, 141);
 
     this.ui.resolveButton.fontColor = buttonColor;
@@ -237,7 +237,7 @@ export class CommentMorph extends Morph {
     this.ui.deleteButton.tooltip = 'Delete Comment';
   }
 
-  deactivateButtons () {
+  disabledButtonAppearance () {
     const deactivatedButtonColor = Color.rgba(127, 140, 141, 0.4);
 
     this.ui.resolveButton.fontColor = deactivatedButtonColor;
@@ -257,7 +257,7 @@ export class CommentMorph extends Morph {
 
     this.isInEditMode = true;
 
-    this.deactivateButtons();
+    this.disabledButtonAppearance();
     this.ui.editSaveButton.tooltip = 'Save Comment';
 
     this.ui.commentTextField.readOnly = false;
