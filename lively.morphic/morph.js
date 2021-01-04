@@ -697,9 +697,11 @@ export class Morph {
           }
           this.setProperty(
             'borderColor',
-            value ? obj.extract(value, ['top', 'left', 'right', 'bottom'], (k, v) => {
-              return obj.isArray(v) ? Color.fromTuple(v) : v;
-            }) : value
+            value
+              ? obj.extract(value, ['top', 'left', 'right', 'bottom'], (k, v) => {
+                  return obj.isArray(v) ? Color.fromTuple(v) : v;
+                })
+              : value
           );
         }
       },
@@ -914,10 +916,6 @@ export class Morph {
           (prop, value) => value && value.isColor ? value.toTuple() : value)
       };
     }
-  }
-
-  __onDeletion__ () {
-    this.emptyComments();
   }
 
   get isMorph () { return true; }
@@ -1475,7 +1473,8 @@ export class Morph {
     const myOwner = this.owner;
     const mySubmorphs = this.submorphs;
     const myTfm = this.getTransform().copy();
-    const myIndex = typeof indexForOtherMorph === 'number' ? indexForOtherMorph
+    const myIndex = typeof indexForOtherMorph === 'number'
+      ? indexForOtherMorph
       : myOwner ? myOwner.submorphs.indexOf(this) : -1;
     const otherOwner = other.owner;
     const otherSubmorphs = arr.without(other.submorphs, this);
@@ -1640,6 +1639,11 @@ export class Morph {
     this._pathDependants = [];
     this.withAllSubmorphsDo(ea => ea.onOwnerChanged(null));
     return this;
+  }
+
+  delete () {
+    this.emptyComments();
+    this.remove();
   }
 
   onOwnerChanged (newOwner) {
@@ -3282,8 +3286,10 @@ export class Path extends Morph {
 
   addVertex (v, before = null) {
     const { vertices } = this;
-    const insertIndex = typeof before === 'number' ? before
-      : before && before.isPathPoint ? vertices.indexOf(before)
+    const insertIndex = typeof before === 'number'
+      ? before
+      : before && before.isPathPoint
+        ? vertices.indexOf(before)
         : undefined;
     if (typeof insertIndex === 'number' && insertIndex > -1) { vertices.splice(insertIndex, 0, v); } else vertices.push(v);
     this.vertices = vertices;
@@ -3323,9 +3329,11 @@ export class Path extends Morph {
       minDist = dist; minDistIndex = i;
     }
 
-    const previous = minDistIndex === 0 ? null
+    const previous = minDistIndex === 0
+      ? null
       : { index: minDistIndex - 1, vertex: vertices[minDistIndex - 1] };
-    const next = minDistIndex === vertices.length - 1 ? null
+    const next = minDistIndex === vertices.length - 1
+      ? null
       : { index: minDistIndex + 1, vertex: vertices[minDistIndex + 1] };
     const closest = { index: minDistIndex, vertex: vertices[minDistIndex] };
 

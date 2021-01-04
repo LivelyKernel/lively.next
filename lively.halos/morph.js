@@ -123,19 +123,21 @@ export default class Halo extends Morph {
   initButtons () {
     this.submorphs = [
       ...this.ensureResizeHandles(),
-      ...this.resizeOnly ? [] : [
-        this.closeHalo(),
-        this.dragHalo(),
-        this.grabHalo(),
-        this.menuHalo(),
-        this.inspectHalo(),
-        this.editHalo(),
-        this.copyHalo(),
-        this.componentHalo(),
-        this.rotateHalo(),
-        this.nameHalo(),
-        this.originHalo()
-      ]
+      ...this.resizeOnly
+        ? []
+        : [
+            this.closeHalo(),
+            this.dragHalo(),
+            this.grabHalo(),
+            this.menuHalo(),
+            this.inspectHalo(),
+            this.editHalo(),
+            this.copyHalo(),
+            this.componentHalo(),
+            this.rotateHalo(),
+            this.nameHalo(),
+            this.originHalo()
+          ]
     ];
   }
 
@@ -264,7 +266,8 @@ export default class Halo extends Morph {
   async addMorphToSelection (morph) {
     const world = this.world();
     const currentTargets = this.target.isMorphSelection
-      ? this.target.selectedMorphs : [this.target];
+      ? this.target.selectedMorphs
+      : [this.target];
     if (currentTargets.includes(morph)) return;
     this.remove();
     return await world.showHaloForSelection([...currentTargets, morph], this.state.pointerId);
@@ -437,7 +440,8 @@ export default class Halo extends Morph {
     if (!evt.isCommandKey() && target == this.borderBox) return this.remove();
     if (evt.isShiftDown() && evt.isCommandKey()) {
       const actualMorph = this.target.isMorphSelection
-        ? this.target.morphBeneath(evt.position) : this.morphBeneath(evt.position);
+        ? this.target.morphBeneath(evt.position)
+        : this.morphBeneath(evt.position);
       this.isAlreadySelected(actualMorph)
         ? this.removeMorphFromSelection(actualMorph)
         : this.addMorphToSelection(actualMorph);
@@ -824,7 +828,8 @@ class NameHaloItem extends HaloItem {
     return this.halo.target.isMorphSelection
       ? this.halo.target.selectedMorphs.map(target => {
           return { target, highlightOnHover: true };
-        }) : [{ target: this.halo.target, highlightOnHover: false }];
+        })
+      : [{ target: this.halo.target, highlightOnHover: false }];
   }
 
   initNameHolders () {
@@ -911,11 +916,8 @@ class CloseHaloItem extends HaloItem {
     const { halo } = this; const o = halo.target.owner;
     o.undoStart('close-halo');
     halo.target.selectedMorphs
-      ? halo.target.selectedMorphs.forEach(m => m.emptyComments())
-      : halo.target.emptyComments();
-    halo.target.selectedMorphs
-      ? halo.target.selectedMorphs.forEach(m => m.remove())
-      : halo.target.remove();
+      ? halo.target.selectedMorphs.forEach(m => m.delete())
+      : halo.target.delete();
     o.undoStop('close-halo');
     halo.remove();
   }
