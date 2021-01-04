@@ -36,7 +36,11 @@ export class CommentBrowser extends Window {
   }
 
   static open () {
-    if (!instance || CommentBrowser.isOpen()) return;
+    if (!instance) {
+      CommentBrowser.initializeCommentBrowser();
+    }
+
+    if (CommentBrowser.isOpen()) return;
 
     if (!instance.wasOpenedBefore) {
       instance.initializeAppearance();
