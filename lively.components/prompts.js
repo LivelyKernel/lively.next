@@ -116,6 +116,10 @@ export class AbstractPrompt extends Morph {
 }
 
 export class InformPrompt extends AbstractPrompt {
+  static example () {
+    $world.inform('Computer says no.');
+  }
+
   static get properties () {
     return {
       lineWrapping: { defaultValue: true },
@@ -165,6 +169,10 @@ export class InformPrompt extends AbstractPrompt {
 // new ConfirmPrompt().openInWorld()
 
 export class ConfirmPrompt extends AbstractPrompt {
+  static example () {
+    $world.confirm('Isn\'t this a nice prompt.');
+  }
+
   static get properties () {
     return {
       lineWrapping: { defaultValue: true },
@@ -219,6 +227,10 @@ export class ConfirmPrompt extends AbstractPrompt {
 // new MultipleChoicePrompt({ label: 'hallo', choices: [1,2,3]}).openInWorld()
 
 export class MultipleChoicePrompt extends AbstractPrompt {
+  static example () {
+    $world.multipleChoicePrompt('Choose wisely:', { choices: [1, 2, 3] });
+  }
+
   static get properties () {
     return {
       title: {
@@ -430,7 +442,7 @@ export class EditPrompt extends AbstractPrompt {
 
   build ({ label, input, historyId, useLastInput, mode, textStyle, evalEnvironment }) {
     const title = this.addNamed('promptTitle', {
-      type: 'text', textString: label
+      type: 'text', value: label
     });
 
     if (!textStyle) textStyle = {};
@@ -542,6 +554,10 @@ export class EditPrompt extends AbstractPrompt {
 }
 
 export class PasswordPrompt extends AbstractPrompt {
+  static async example () {
+    await $world.passwordPrompt('Enter your secret password:');
+  }
+
   static get properties () {
     return {
       maxWidth: {

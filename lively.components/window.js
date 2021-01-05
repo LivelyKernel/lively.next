@@ -200,7 +200,11 @@ export default class Window extends Morph {
     const world = this.world();
     if (!world) return;
     const bounds = this.globalBounds();
-    if (bounds.top() < world.innerBounds().top()) { this.moveBy(pt(0, world.innerBounds().top() - bounds.top())); }
+    world.withTopBarDo(tb => {
+      if (bounds.top() < tb.height) {
+        this.moveBy(pt(0, tb.height - bounds.top()));
+      }
+    });
   }
 
   buildHeader () {
@@ -495,7 +499,7 @@ export default class Window extends Morph {
       this.withMetaDo({ metaInteraction: true }, () => {
         this.targetMorph && (this.targetMorph.visible = true);
       });
-      nonMinizedBounds = this.world().bounds().translateForInclusion(nonMinizedBounds || bounds);
+      nonMinizedBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(nonMinizedBounds || bounds);
       this.animate({
         bounds: nonMinizedBounds,
         styleClasses: ['neutral', 'active', ...arr.without(this.styleClasses, 'minimzed')],
@@ -626,8 +630,7 @@ export default class Window extends Morph {
     this.focus(evt);
 
     signal(this, 'windowActivated', this);
-    Promise.resolve(this.master.applyIfNeeded(true)).then(() =>
-      this.relayoutWindowControls());
+    Promise.resolve(this.master.applyIfNeeded(true)).then(() => this.relayoutWindowControls());
 
     return this;
   }

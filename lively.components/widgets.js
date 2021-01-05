@@ -329,42 +329,42 @@ class SliderHandle extends Ellipse {
 }
 
 export class ValueScrubber extends Text {
-  static get properties() {
+  static get properties () {
     return {
       scaleToBounds: {
         defaultValue: false,
-        set(active) {
+        set (active) {
           this.fixedWidth = true;
           this.setProperty('scaleToBounds', active);
         }
       },
       field: {
         derived: true,
-        get() {
+        get () {
           return this.owner;
         }
       },
-      value: {defaultValue: 0},
-      fill: {defaultValue: Color.transparent},
-      draggable: {defaultValue: true},
-      min: {defaultValue: -Infinity},
-      max: {defaultValue: Infinity},
-      baseFactor: {defaultValue: 1},
-      floatingPoint: {defaultValue: false}
+      value: { defaultValue: 0 },
+      fill: { defaultValue: Color.transparent },
+      draggable: { defaultValue: true },
+      min: { defaultValue: -Infinity },
+      max: { defaultValue: Infinity },
+      baseFactor: { defaultValue: 1 },
+      floatingPoint: { defaultValue: false }
     };
   }
 
-  relayout() {
+  relayout () {
     const d = 0;
     if (!this.scaleToBounds) return;
     this.scale = Math.min(1, this.width / (this.textBounds().width + d));
   }
 
-  onKeyDown(evt) {
+  onKeyDown (evt) {
     super.onKeyDown(evt);
-    if ("Enter" == evt.keyCombo) {
-      const [v, unit] = this.textString.replace('\n', '').split(" ");
-      if (typeof v == 'string') {
+    if (evt.keyCombo == 'Enter') {
+      const [v, unit] = this.textString.replace('\n', '').split(' ');
+      if (typeof v === 'string') {
         this.value = parseFloat(v);
         this.scrub(this.scrubbedValue);
       }
@@ -372,59 +372,68 @@ export class ValueScrubber extends Text {
     }
   }
 
-  scrub(val) {
+  scrub (val) {
     this.field.update(val);
   }
 
-  onDragStart(evt) {
-    this.execCommand("toggle active mark");
+  onDragStart (evt) {
+    this.execCommand('toggle active mark');
     this.initPos = evt.position;
-    this.factorLabel = new Tooltip({description: "1x"}).openInWorld(
+    this.factorLabel = new Tooltip({ description: '1x' }).openInWorld(
       evt.hand.position.addXY(10, 10)
     );
+    evt.hand.extent = pt(30, 30);
+    evt.hand.nativeCursor = 'ew-resize';
+    evt.hand.fill = Color.transparent;
+    evt.hand.reactsToPointer = true;
   }
 
-  getScaleAndOffset(evt) {
-    const {x, y} = evt.position.subPt(this.initPos),
-          scale = num.roundTo(Math.exp(-y / $world.height * 4), 0.01) * this.baseFactor;
-    return {offset: x, scale};
+  getScaleAndOffset (evt) {
+    const { x, y } = evt.position.subPt(this.initPos);
+    const scale = num.roundTo(Math.exp(-y / $world.height * 4), 0.01) * this.baseFactor;
+    return { offset: x, scale };
   }
 
-  onDrag(evt) {
+  onDrag (evt) {
     // x delta is the offset to the original value
     // y is the scale
-    const {scale, offset} = this.getScaleAndOffset(evt),
-          v = this.getCurrentValue(offset, scale);
+    const { scale, offset } = this.getScaleAndOffset(evt);
+    const v = this.getCurrentValue(offset, scale);
     this.scrub(v);
     let valueString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
-    if (this.unit) valueString += " " + this.unit;
+    if (this.unit) valueString += ' ' + this.unit;
     this.replace(this.documentRange, valueString, false, this.scaleToBounds, false, false);
-    this.factorLabel.description = scale.toFixed(3) + "x";
+    this.factorLabel.description = scale.toFixed(3) + 'x';
     this.factorLabel.position = evt.hand.position.addXY(10, 10);
+    evt.hand.moveBy(pt(-5, -5));
     this.relayout();
   }
 
-  getCurrentValue(delta, s) {
+  getCurrentValue (delta, s) {
     const v = this.scrubbedValue + (this.floatingPoint ? delta * s : Math.round(delta * s));
     return Math.max(this.min, Math.min(this.max, v));
   }
 
-  onDragEnd(evt) {
-    const {offset, scale} = this.getScaleAndOffset(evt);
+  onDragEnd (evt) {
+    const { offset, scale } = this.getScaleAndOffset(evt);
     this.value = this.getCurrentValue(offset, scale);
     this.factorLabel.softRemove();
+    evt.hand.extent = pt(1, 1);
+    evt.hand.fill = Color.orange;
+    evt.hand.reactsToPointer = false;
   }
 
-  set value(v) {
+  set value (v) {
     v = Math.max(this.min, Math.min(this.max, v));
     this.scrubbedValue = v;
     let textString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
-    if (this.unit) textString += " " + this.unit;
-    else textString += "";
+    if (this.unit) textString += ' ' + this.unit;
+    else textString += '';
     this.replace(this.documentRange, textString, false, true);
     this.relayout();
   }
 }
+
 
 export class CheckBox extends Morph {
   static get properties() {

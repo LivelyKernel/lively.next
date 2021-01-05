@@ -119,6 +119,14 @@ var convertLength = (function () {
   };
 })();
 
+function precision (f) {
+  // given a float value, returns the number of decimals
+  if (!isFinite(f)) return 0;
+  let e = 1; let p = 0;
+  while (Math.round(f * e) / e !== f) { e *= 10; p++; }
+  return p;
+}
+
 function roundTo (n, quantum) {
   // `quantum` is something like 0.01,
 
@@ -197,5 +205,6 @@ export {
   toRadians,
   backoff,
   interpolate,
-  clamp
+  clamp,
+  precision
 };

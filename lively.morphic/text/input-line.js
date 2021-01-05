@@ -167,6 +167,10 @@ export default class InputLine extends Text {
     connect(this, 'selectionChange', this, 'fixCursor');
   }
 
+  async menuItems () {
+    return [{ command: 'change placeholder', target: this }, { isDivider: true }, ...await super.menuItems()];
+  }
+
   onChange (change) {
     if (['extent',
       'fontSize',
@@ -372,6 +376,15 @@ export default class InputLine extends Text {
   // ui events
   get commands () {
     return [
+      {
+        name: 'change placeholder',
+        exec: async () => {
+          const newPlaceholder = await this.world().prompt('Enter Placeholder:', {
+            input: this.placeholder
+          });
+          if (newPlaceholder) this.placeholder = newPlaceholder;
+        }
+      },
       { name: 'accept input', exec: () => { this.acceptInput(); return true; } },
       { name: 'show previous input from history', exec: () => { this.showHistItem('prev'); return true; } },
       { name: 'show next input from history', exec: () => { this.showHistItem('next'); return true; } },
@@ -430,6 +443,7 @@ export default class InputLine extends Text {
     return input;
   }
 }
+
 
 // var i = new PasswordInputLine().openInWorld();
 // i.remove();

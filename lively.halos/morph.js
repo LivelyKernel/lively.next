@@ -181,7 +181,8 @@ export default class Halo extends Morph {
     this.alignWithTarget();
   }
 
-  alignWithTarget () {
+  alignWithTarget (change) {
+    if (change && !['extent', 'position', 'scale', 'rotation'].includes(change.prop)) { return; }
     if (this.active || !this.target) return;
     const world = this.target.world() || $world;
     const worldBounds = world.visibleBounds();
@@ -319,6 +320,11 @@ export default class Halo extends Morph {
     }
     this.active = false;
     this.alignWithTarget();
+    this.world().withTopBarDo(tb => {
+      if (tb.activeSideBars.includes('Styling Palette')) {
+        tb.stylingPalette.onHierarchyChange();
+      }
+    });
   }
 
   proportionalDelta (corner, delta, bounds) {
@@ -711,7 +717,9 @@ class NameHolder extends Morph {
 
   onKeyDown (evt) {
     if (evt.keyCombo == 'Enter') {
-      this.accept(); evt.stop();
+      this.accept();
+      this.halo.focus();
+      evt.stop();
     } else {
       super.onKeyDown(evt);
     }
@@ -799,8 +807,8 @@ class NameHaloItem extends HaloItem {
     if (!target || target.isMorphSelection) return;
     if (target.master) {
       const appliedMaster = target.master.determineMaster(target);
-      const linkToWorld = target.master.getWorldUrlFor(appliedMaster) || 'this project';
-      const isLocal = !!appliedMaster.world();
+      const isLocal = appliedMaster && !!appliedMaster.world();
+      const linkToWorld = appliedMaster ? target.master.getWorldUrlFor(appliedMaster) : 'this project';
       const masterLink = this.addMorph(Icon.makeLabel(linkToWorld ? 'external-link-alt' : 'exclamation-triangle', {
         nativeCursor: 'pointer',
         fontColor: Color.white,
@@ -861,7 +869,7 @@ class NameHaloItem extends HaloItem {
       this.nameHolders.forEach(nh => nh != nameHolder && nh.activate());
       this.borderWidth = 0;
       this.validityIndicator.remove();
-      this.halo.focus();
+      // this.halo.focus();
     }
     this.alignInHalo();
   }
@@ -1045,6 +1053,11 @@ class DragHaloItem extends HaloItem {
     }
     this.halo.target.position = newPos;
     this.updateAlignmentGuide(grid);
+    this.world().withTopBarDo(tb => {
+      if (tb.activeSideBars.includes('Styling Palette')) {
+        tb.stylingPalette.onHierarchyChange();
+      }
+    });
     if (!grid) {
       showAndSnapToGuides(
         this.halo.target, true /* showGuides */, snapToGuides,
@@ -1259,7 +1272,7 @@ class ComponentHaloItem extends HaloItem {
     const morphsInHierarchy = [];
     target.withAllSubmorphsDoExcluding(m => {
       if (m != target) morphsInHierarchy.push(m);
-    }, m => target.master);
+    }, m => m.master);
     const nameGroups = arr.groupBy(morphsInHierarchy, m => m.name);
     const defaultStyle = { fontWeight: 'normal', fontSize: 16 };
     // initial warn to allow the user to cancel the component conversion

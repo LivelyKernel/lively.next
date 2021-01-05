@@ -506,10 +506,19 @@ export class Label extends Morph {
     if (typeof newLabel === 'string') { this.textString = newLabel; }
   }
 
+  async interactivelySetIcon () {
+    const res = await this.world().filterableListPrompt('Select Icon', Object.keys(Icons).map(iconName => {
+      return { isListItem: true, label: [...Icon.textAttribute(iconName, { paddingRight: '10px' }), iconName, {}], value: iconName };
+    }));
+    const [iconName] = res.selected;
+    if (iconName) { this.value = Icon.textAttribute(iconName); }
+  }
+
   menuItems () {
     const items = super.menuItems();
     items.unshift({ isDivider: true });
     items.unshift(['change label', () => this.interactivelyChangeLabel()]);
+    items.unshift(['set Icon', () => this.interactivelySetIcon()]);
     return items;
   }
 }
