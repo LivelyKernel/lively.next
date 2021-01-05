@@ -924,8 +924,8 @@ class CloseHaloItem extends HaloItem {
     const { halo } = this; const o = halo.target.owner;
     o.undoStart('close-halo');
     halo.target.selectedMorphs
-      ? halo.target.selectedMorphs.forEach(m => m.delete())
-      : halo.target.delete();
+      ? halo.target.selectedMorphs.forEach(m => m.abandon())
+      : halo.target.abandon();
     o.undoStop('close-halo');
     halo.remove();
   }

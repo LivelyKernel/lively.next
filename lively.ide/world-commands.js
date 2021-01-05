@@ -304,8 +304,8 @@ const commands = [
       if (!halo || halo.changingName) return false;
 
       halo.target.selectedMorphs
-        ? halo.target.selectedMorphs.forEach(m => m.delete())
-        : halo.target.delete();
+        ? halo.target.selectedMorphs.forEach(m => m.abandon())
+        : halo.target.abandon();
       return true;
     }
   },

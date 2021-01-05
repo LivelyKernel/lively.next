@@ -1641,7 +1641,7 @@ export class Morph {
     return this;
   }
 
-  delete () {
+  abandon () {
     this.emptyComments();
     this.remove();
   }
