@@ -23,6 +23,10 @@ export class CommentBrowser extends Window {
     return instance && $world.get('comment browser');
   }
 
+  static showsArchive () {
+    return !!instance.showsResolvedComments;
+  }
+
   static async removeCommentForMorph (comment, morph) {
     await instance.removeCommentForMorph(comment, morph);
   }
@@ -78,6 +82,7 @@ export class CommentBrowser extends Window {
       this.commentGroups = {}; // dict Morph id -> Comment group morph
       this.resolvedCommentGroups = {};
       this.wasOpenedBefore = false;
+      this.showsResolvedComments = false;
 
       this.buildContainers();
       this.buildFilterSelector();
