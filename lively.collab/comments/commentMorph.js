@@ -194,7 +194,7 @@ export class CommentMorph extends Morph {
   initializeCommentIndicator () {
     this.commentIndicator = new CommentIndicator(this, this.comment, this.referenceMorph);
     this.commentIndicator.fontColor = this.comment.isResolved() ? Color.rgb(174, 214, 241) : Color.rgb(241, 196, 15);
-    if (CommentBrowser.isOpen() && (this.comment.isResolved() == CommentBrowser.instance.showsResolvedComments)) {
+    if (CommentBrowser.isOpen() && (this.comment.isResolved() == CommentBrowser.showsArchive())) {
       this.showCommentIndicator();
     }
   }
