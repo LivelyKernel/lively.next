@@ -11,28 +11,28 @@ let instance;
 export class CommentBrowser extends Window {
   static close () {
     if (CommentBrowser.isOpen()) {
-      instance.close();
+      CommentBrowser.instance.close();
     }
   }
 
   static get instance () {
-    return instance;
+    return $world.commentBrowser;
   }
 
   static isOpen () {
-    return instance && $world.get('comment browser');
+    return !!(CommentBrowser.instance && !!$world.get('comment browser'));
   }
 
   static showsArchive () {
-    return !!instance.showsResolvedComments;
+    return !!CommentBrowser.instance.showsResolvedComments;
   }
 
   static async removeCommentForMorph (comment, morph) {
-    await instance.removeCommentForMorph(comment, morph);
+    await CommentBrowser.instance.removeCommentForMorph(comment, morph);
   }
 
   static async addCommentForMorph (comment, morph) {
-    await instance.addCommentForMorph(comment, morph);
+    await CommentBrowser.instance.addCommentForMorph(comment, morph);
   }
 
   static initializeCommentBrowser () {
@@ -40,27 +40,27 @@ export class CommentBrowser extends Window {
   }
 
   static open () {
-    if (!instance) {
+    if (!CommentBrowser.instance) {
       CommentBrowser.initializeCommentBrowser();
     }
 
     if (CommentBrowser.isOpen()) return;
 
-    if (!instance.wasOpenedBefore) {
-      instance.initializeAppearance();
-      instance.wasOpenedBefore = true;
+    if (!CommentBrowser.instance.wasOpenedBefore) {
+      CommentBrowser.instance.initializeAppearance();
+      CommentBrowser.instance.wasOpenedBefore = true;
     }
-    $world.addMorph(instance);
+    $world.addMorph(CommentBrowser.instance);
   }
 
   static close () {
-    if (!instance) return;
+    if (!CommentBrowser.instance) return;
 
     const topbar = $world.getSubmorphNamed('lively top bar');
     if (topbar) {
       topbar.uncolorCommentBrowserButton();
     }
-    instance.remove();
+    CommentBrowser.instance.remove();
   }
 
   static toggle () {
@@ -68,15 +68,17 @@ export class CommentBrowser extends Window {
   }
 
   static async whenRendered () {
-    return instance.whenRendered();
+    return CommentBrowser.instance.whenRendered();
   }
 
   // Construction and initialization
 
   constructor () {
-    if (!instance) {
+    console.log('initialize commentbrowser');
+    if (!CommentBrowser.instance) {
+      console.log('a new comment browser is created');
       super();
-      instance = this;
+      $world.commentBrowser = this;
 
       this.name = 'comment browser';
       this.commentGroups = {}; // dict Morph id -> Comment group morph
@@ -88,7 +90,7 @@ export class CommentBrowser extends Window {
       this.buildFilterSelector();
       this.buildCommentGroupMorphs();
     }
-    return instance;
+    return CommentBrowser.instance;
   }
 
   buildContainers () {
