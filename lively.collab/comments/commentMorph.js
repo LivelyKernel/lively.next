@@ -89,7 +89,7 @@ export class CommentGroupMorph extends Morph {
   async removeCommentMorphFor (comment) {
     this.commentMorphs.forEach((commentMorph) => {
       if (commentMorph.comment.equals(comment)) {
-        commentMorph.delete();
+        commentMorph.abandon();
         remove(this.commentMorphs, commentMorph);
       }
     });
@@ -278,16 +278,16 @@ export class CommentMorph extends Morph {
   }
 
   hideCommentIndicator () {
-    this.commentIndicator.delete();
+    this.commentIndicator.abandon();
   }
 
   showCommentIndicator () {
     this.commentIndicator.display();
   }
 
-  delete () {
-    this.commentIndicator.delete();
-    this.remove();
+  abandon () {
+    this.commentIndicator.abandon();
+    super.abandon();
   }
 
   performClickAction (action) {
