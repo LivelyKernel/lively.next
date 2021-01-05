@@ -876,7 +876,7 @@ class PackageSpec {
 
       if (bin) {
         // npm allows bin to just be a string, it is then mapped to the package name
-        bin = typeof bin === "string" ? { [name]: bin } : Object.assign({}, bin);
+        bin = typeof bin === "string" ? { [name.replace(/\//g, "__SLASH__")]: bin } : Object.assign({}, bin);
       }
 
       Object.assign(self, {
