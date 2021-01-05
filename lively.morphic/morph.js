@@ -1642,6 +1642,7 @@ export class Morph {
   }
 
   abandon () {
+    // We do not have access to the JS VM, this method does not interact with the garbage collector and may not result in the actual deletion of the object. However, when an object is abandoned, no properties are guaranteed.
     this.emptyComments();
     this.remove();
   }
