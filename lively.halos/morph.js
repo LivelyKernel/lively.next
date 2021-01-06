@@ -1380,7 +1380,7 @@ class CopyHaloItem extends HaloItem {
 
     if (isMultiSelection) {
       // FIXME! haaaaack
-      const copies = target.selectedMorphs.map(ea => world.addMorph(ea.copy()));
+      const copies = target.selectedMorphs.map(ea => world.addMorph(ea.copy(true)));
       const positions = copies.map(ea => { ea.name = findNewName(target, ea.name); return ea.position; });
       copies[0].undoStart('copy-halo');
       world.addMorph(halo);
@@ -1451,7 +1451,7 @@ class CopyHaloItem extends HaloItem {
     const origin = t.globalBounds().topLeft();
     // the original morphs are needed so we can refocus them with a halo after copying
     const orig_morphsToCopy = isMultiSelection ? t.selectedMorphs : [t];
-    debugger;
+    // debugger;
     const modified_morphsToCopy = orig_morphsToCopy.forEach(m => m.copy(true));
     const snapshots = [];
     let html = `<!DOCTYPE html>

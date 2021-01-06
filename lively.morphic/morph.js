@@ -2539,6 +2539,7 @@ export class Morph {
   }
 
   emptyComments () {
+    console.log(this.comments);
     this.comments.forEach((comment) => CommentBrowser.removeCommentForMorph(comment, this));
     this.comments = [];
   }

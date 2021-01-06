@@ -89,9 +89,6 @@ export function copyMorph (morph, realCopy = false) {
   const cachedComments = morph.comments;
   morph.comments = [];
 
-  const cachedSubmorphs = morph.submorphs.filter(sm => sm instanceof CommentIndicator);
-  morph.submorphs = morph.submorphs.filter(sm => !(sm instanceof CommentIndicator));
-
   let cachedConnections = [];
   if (morph.attributeConnections) {
     cachedConnections = morph.attributeConnections.filter(ac => ac.targetObj instanceof CommentIndicator);
@@ -100,7 +97,6 @@ export function copyMorph (morph, realCopy = false) {
 
   const serializedMorph = serializeMorph(morph);
 
-  morph.submorphs = morph.submorphs.concat(cachedSubmorphs);
   morph.comments = cachedComments;
   morph.attributeConnections = morph.attributeConnections.concat(cachedConnections);
 
