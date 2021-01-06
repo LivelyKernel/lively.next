@@ -1375,9 +1375,7 @@ class CopyHaloItem extends HaloItem {
     const { halo } = this; const { target } = halo; const world = halo.world();
     const isMultiSelection = target instanceof MultiSelectionTarget;
     halo.remove();
-
     connect(hand, 'update', this, 'update');
-
     if (isMultiSelection) {
       // FIXME! haaaaack
       const copies = target.selectedMorphs.map(ea => {
