@@ -211,6 +211,7 @@ export class CommentMorph extends Morph {
 
   setDefaultUI () {
     Icon.setIcon(this.ui.editSaveButton, 'pencil-alt');
+    Icon.setIcon(this.ui.resolveButton, this.comment.resolved ? 'undo-alt' : 'check');
 
     // Edit/Save Icon widths are off by one, revert the additional padding from setEditUI
     if (this.isInEditMode) this.ui.editSaveButton.padding.width -= 1;
