@@ -1380,7 +1380,15 @@ class CopyHaloItem extends HaloItem {
 
     if (isMultiSelection) {
       // FIXME! haaaaack
-      const copies = target.selectedMorphs.map(ea => world.addMorph(ea.copy(true)));
+      const copies = target.selectedMorphs.map(ea => {
+        const copy = ea.copy(true);
+        // allows to not include morphs that return a falsy value on copy
+        if (copy) {
+          world.addMorph(copy);
+          return copy;
+        }
+      }).filter(copy => copy);
+
       const positions = copies.map(ea => { ea.name = findNewName(target, ea.name); return ea.position; });
       copies[0].undoStart('copy-halo');
       world.addMorph(halo);
@@ -1391,7 +1399,7 @@ class CopyHaloItem extends HaloItem {
       halo.alignWithTarget();
     } else {
       const pos = target.globalPosition;
-      const copy = target.copy();
+      const copy = target.copy(true);
       if (target.isComponent) {
         copy.isComponent = false;
         copy.withAllSubmorphsDoExcluding(m => {
@@ -1450,9 +1458,8 @@ class CopyHaloItem extends HaloItem {
     const isMultiSelection = t instanceof MultiSelectionTarget;
     const origin = t.globalBounds().topLeft();
     // the original morphs are needed so we can refocus them with a halo after copying
-    const orig_morphsToCopy = isMultiSelection ? t.selectedMorphs : [t];
-    // debugger;
-    const modified_morphsToCopy = orig_morphsToCopy.forEach(m => m.copy(true));
+    const morphsToCopy = isMultiSelection ? t.selectedMorphs : [t];
+    const modified_morphsToCopy = morphsToCopy.filter(m => !(m instanceof CommentIndicator)).map(m => m.copy(true));
     const snapshots = [];
     let html = `<!DOCTYPE html>
           <html lang="en">
@@ -1481,7 +1488,7 @@ class CopyHaloItem extends HaloItem {
       ]);
     } catch (e) { world.logError(e); return; }
     world.addMorph(halo);
-    halo.refocus(orig_morphsToCopy);
+    halo.refocus(morphsToCopy);
     halo.setStatusMessage('copied');
   }
 

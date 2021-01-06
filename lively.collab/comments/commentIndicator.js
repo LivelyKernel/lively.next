@@ -70,6 +70,11 @@ export class CommentIndicator extends Label {
     $world.addMorph(this);
   }
 
+  copy (trueCopy) {
+    // this is to keep it from copying itself when it was accidentally selected
+    return false;
+  }
+
   referenceMoving () {
     this._referenceMorphMoving = true;
     this.alignWithMorph();

@@ -92,13 +92,15 @@ export function copyMorph (morph, realCopy = false) {
   let cachedConnections = [];
   if (morph.attributeConnections) {
     cachedConnections = morph.attributeConnections.filter(ac => ac.targetObj instanceof CommentIndicator);
-    morph.attributeConnections = morph.attributeConnections.filter(ac => !(ac.targetObj instanceof CommentIndicator));
+    morph.attributeConnections = morph.attributeConnections.filter(ac => !(ac.targetObj instanceof CommentIndicator || ac.targetObj instanceof Halo));
   }
 
   const serializedMorph = serializeMorph(morph);
 
   morph.comments = cachedComments;
-  morph.attributeConnections = morph.attributeConnections.concat(cachedConnections);
+  if (morph.attributeConnections) {
+    morph.attributeConnections = morph.attributeConnections.concat(cachedConnections);
+  }
 
   return deserializeMorph(serializedMorph, { migrations, reinitializeIds: true });
 }
@@ -110,6 +112,7 @@ import { createFiles } from 'lively.resources';
 import { promise, graph, arr } from 'lively.lang';
 import { migrations } from './object-migration.js';
 import { CommentIndicator } from 'lively.collab';
+import { Halo } from 'lively.halos';
 
 const { registerPackage, module, getPackage, ensurePackage, lookupPackage, semver } = modules;
 
