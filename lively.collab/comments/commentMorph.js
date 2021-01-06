@@ -25,7 +25,8 @@ export class CommentGroupMorph extends Morph {
       },
       commentIndicators: {
         defaultValue: []
-      }
+      },
+      ui: {}
     };
   }
 

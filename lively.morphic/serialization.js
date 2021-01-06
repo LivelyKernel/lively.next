@@ -69,7 +69,8 @@ export async function saveWorldToResource (world = MorphicEnv.default().world, t
   if (showIndicator) {
     const { LoadingIndicator } = await System.import('lively.components/loading-indicator.js');
     i = LoadingIndicator.open(typeof showIndicator === 'string'
-      ? showIndicator : 'Snapshotting...');
+      ? showIndicator
+      : 'Snapshotting...');
     await i.whenRendered(); await promise.delay(100);
   }
 
@@ -147,7 +148,7 @@ export async function createMorphSnapshot (aMorph, options = {}) {
 
 export function loadMorphFromSnapshot (snapshot, options) {
   return deserializeMorph(snapshot, {
-    reinitializeIds: true,
+    reinitializeIds: false,
     ignoreClassNotFound: false,
     onDeserializationStart: loadPackagesAndModulesOfSnapshot,
     migrations,

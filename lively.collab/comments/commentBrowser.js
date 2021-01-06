@@ -69,6 +69,10 @@ export class CommentBrowser extends Window {
     return CommentBrowser.instance.whenRendered();
   }
 
+  static toggleArchive () {
+    CommentBrowser.instance.toggleArchive();
+  }
+
   // Construction and initialization
 
   static get properties () {
@@ -149,8 +153,8 @@ export class CommentBrowser extends Window {
         spacing: 5
       })
     });
-    connect(this.filterSelector, 'Unresolved Comments', () => { this.toggleArchive(); });
-    connect(this.filterSelector, 'Resolved Comments', () => { this.toggleArchive(); });
+    connect(this.filterSelector, 'Unresolved Comments', CommentBrowser.instance, 'toggleArchive');
+    connect(this.filterSelector, 'Resolved Comments', this, 'toggleArchive');
     this.filterContainer.addMorph(this.filterSelector);
   }
 
