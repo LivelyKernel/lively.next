@@ -13,7 +13,7 @@ import { obj, Path as PropertyPath, promise, properties, num, arr } from 'lively
 import { connect, signal, disconnect, disconnectAll, once } from 'lively.bindings';
 
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from './drag-guides.js';
-import { CommentBrowser } from 'lively.collab';
+import { CommentBrowser, CommentIndicator } from 'lively.collab';
 import { resource } from 'lively.resources';
 import { show } from './markers.js';
 
@@ -1449,7 +1449,10 @@ class CopyHaloItem extends HaloItem {
     const world = halo.world();
     const isMultiSelection = t instanceof MultiSelectionTarget;
     const origin = t.globalBounds().topLeft();
-    const morphsToCopy = isMultiSelection ? t.selectedMorphs : [t];
+    // the original morphs are needed so we can refocus them with a halo after copying
+    const orig_morphsToCopy = isMultiSelection ? t.selectedMorphs : [t];
+    debugger;
+    const modified_morphsToCopy = orig_morphsToCopy.forEach(m => m.copy(true));
     const snapshots = [];
     let html = `<!DOCTYPE html>
           <html lang="en">
@@ -1461,7 +1464,7 @@ class CopyHaloItem extends HaloItem {
 
     halo.remove(); // we do not want to copy the halo
     try {
-      for (const m of morphsToCopy) {
+      for (const m of modified_morphsToCopy) {
         const snap = await createMorphSnapshot(m, { addPreview: false, testLoad: false });
         snap.copyMeta = { offset: m.worldPoint(pt(0, 0)).subPt(origin) };
         snapshots.push(snap);
@@ -1478,7 +1481,7 @@ class CopyHaloItem extends HaloItem {
       ]);
     } catch (e) { world.logError(e); return; }
     world.addMorph(halo);
-    halo.refocus(morphsToCopy);
+    halo.refocus(orig_morphsToCopy);
     halo.setStatusMessage('copied');
   }
 
