@@ -6,8 +6,6 @@ import { connect } from 'lively.bindings';
 import { CommentMorph, Badge } from 'lively.collab';
 import { ModeSelector } from 'lively.components/widgets.js';
 
-let instance;
-
 export class CommentBrowser extends Window {
   static close () {
     if (CommentBrowser.isOpen()) {
@@ -72,6 +70,24 @@ export class CommentBrowser extends Window {
   }
 
   // Construction and initialization
+
+  static get properties () {
+    return {
+      filterContainer: {
+        defaultValue: undefined
+      },
+      commentGroups: {},
+      resolvedCommentGroups: {},
+      wasOpenedBefore: {},
+      showsResolvedComments: {},
+      filterSelector: {},
+      container: {},
+      commentContainer: {},
+      resolvedCommentContainer: {},
+      filterContainer: {}
+
+    };
+  }
 
   constructor () {
     console.log('initialize commentbrowser');
@@ -209,7 +225,8 @@ export class CommentBrowser extends Window {
       groupDictionary = this.resolvedCommentGroups;
     }
     const groupOfCommentMorph = groupDictionary[morph.id];
-
+    console.log(groupDictionary);
+    console.log(morph.id);
     await groupOfCommentMorph.removeCommentMorphFor(comment);
     if (groupOfCommentMorph.getCommentCount() === 0) {
       this.removeCommentGroup(groupOfCommentMorph, groupDictionary);

@@ -22,6 +22,9 @@ export class CommentGroupMorph extends Morph {
       },
       commentMorphs: {
         defaultValue: []
+      },
+      commentIndicators: {
+        defaultValue: []
       }
     };
   }
@@ -138,6 +141,9 @@ export class CommentMorph extends Morph {
         set (referenceMorph) {
           this.setProperty('referenceMorph', referenceMorph);
         }
+      },
+      commentIndicator: {
+        defaultValue: undefined
       }
     };
   }
