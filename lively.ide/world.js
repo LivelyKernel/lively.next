@@ -44,6 +44,17 @@ import { prefetchCoreStyleguides } from 'lively.morphic/style-guide.js';
 export class LivelyWorld extends World {
   static get properties () {
     return {
+      localComponents: {
+        initialize () {
+          this.localComponents = [];
+          // this is maybe better placed inside migrations since
+          // it only serves to make old worlds pour their components
+          // into this property automatically
+          this.whenRendered().then(() => {
+            this.localComponents = this.getListedComponents();
+          });
+        }
+      },
       hiddenComponents: {
         // declared components are exported by default
         // this property prevents some of these components to be listed in the components browser, if they themselves do not provide useful information
@@ -72,7 +83,8 @@ export class LivelyWorld extends World {
   }
 
   getListedComponents () {
-    return this.withAllSubmorphsSelect(m => m.isComponent && !this.hiddenComponents.includes(m.name));
+    const componentsInWorld = this.withAllSubmorphsSelect(m => m.isComponent && !this.hiddenComponents.includes(m.name));
+    return arr.uniq([...componentsInWorld, ...this.localComponents]);
   }
 
   activeWindow () { return this.getWindows().reverse().find(ea => ea.isActive()); }

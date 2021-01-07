@@ -162,6 +162,9 @@ export class ComponentPolicy {
 
   getWorldUrlFor (component) {
     const worldOfMaster = resource(typeof component === 'string ' ? component : this.getResourceUrlFor(component)).worldName;
+    if (worldOfMaster == getProjectName($world)) {
+      return document.location.href;
+    }
     return worldToUrl[worldOfMaster];
   }
 
@@ -199,6 +202,7 @@ export class ComponentPolicy {
 
   applyAnimated (config = { duration: 1000 }) {
     this.applyIfNeeded(true, config);
+    return promise.waitFor(config.duration * 2, () => !this._animationConfig);
   }
 
   applyIfNeeded (needsUpdate = false, animationConfig = false) {
@@ -260,8 +264,12 @@ export class ComponentPolicy {
             morphToBeStyled.master = masterSubmorph.master.spec(); // assign to the same master
             morphToBeStyled._requestMasterStyling = true;
             // but enforce extent and position since that is not done by the master itself
-            if (!this._overriddenProps.get(morphToBeStyled).position) { morphToBeStyled.position = masterSubmorph.position; }
-            if (!this._overriddenProps.get(morphToBeStyled).extent) { morphToBeStyled.extent = masterSubmorph.extent; }
+            if (!this._overriddenProps.get(morphToBeStyled).position) {
+              morphToBeStyled.position = masterSubmorph.position;
+            }
+            if (!this._overriddenProps.get(morphToBeStyled).extent) {
+              morphToBeStyled.extent = masterSubmorph.extent;
+            }
             return; // style application is handled by that master
           }
 
@@ -308,7 +316,7 @@ export class ComponentPolicy {
             }
           }
           if (morphToBeStyled._parametrizedProps) { delete morphToBeStyled._parametrizedProps; }
-          this.reconcileSubmorphs(morphToBeStyled, masterSubmorph);
+          // this.reconcileSubmorphs(morphToBeStyled, masterSubmorph);
         }, masterSubmorph => master != masterSubmorph && masterSubmorph.master);
       };
       if (animationConfig) {
@@ -355,16 +363,78 @@ export class ComponentPolicy {
     later in the game and want that to be reflected in all its derived morphs.
     By what policy are we going to reconcile this change? Via the submorphs names:
   */
-  reconcileSubmorphs (morphToBeStyled, masterSubmorph) {
-    return; // only do stuff here if configured to do so
-    const [allManaged, allOthers] = arr.partition(morphToBeStyled.submorphs, m => this.managesMorph(m));
-    const toBeAdded = masterSubmorph.submorphs
-      .filter(({ name }) => ![...allManaged, ...allOthers].find(m => m.name == name))
-      .map(m => m.copy());
-    toBeAdded.forEach(m => this.prepareMorphToBeManaged(m));
-    const toBeRemoved = allManaged.filter(({ name }) => !masterSubmorph.submorphs.find(m => m.name == name));
 
-    morphToBeStyled.submorphs = [...arr.withoutAll(allManaged, toBeRemoved), ...toBeAdded, ...allOthers];
+  get managedMorphs () {
+    const nameToMorphs = arr.groupBy(this.derivedMorph.withAllSubmorphsSelect(m => this.managesMorph(m)), m => m.name);
+    for (const name in nameToMorphs) nameToMorphs[name] = nameToMorphs[name][0];
+    return nameToMorphs;
+  }
+
+  reconcileSubmorphs () {
+    /*
+      reconciliation strategy: resolution of identity via name. try to preserve existing (local morphs) with names as much as possible. If their name is nowhere to be found in the restructured master, discard them.
+      new (not yet existing) morphs are inserted into the hierarchy at their precise relative position, and provided with their appropriate submorphs
+      this is a soft approach, since we only add morphs to the hierarchy that did not exist before, and remove morphs that are not needed any more
+    */
+
+    const managedMorphs = this.managedMorphs;
+    const insertedMorphs = [];
+    const master = this._appliedMaster;
+
+    managedMorphs[master.name] = this.derivedMorph; // hack
+
+    if (!master) return; // no applied master, nothing to reconcile...
+
+    master.withAllSubmorphsDo(masterSubmorph => {
+      if (masterSubmorph == master) {
+        // surely no change here...
+        insertedMorphs.push(masterSubmorph, this.derivedMorph);
+        return;
+      }
+      let morphToInsert;
+      // morph already exists in our hierarchy
+      if (morphToInsert = managedMorphs[masterSubmorph.name]) {
+        // ensure morph has correct owner
+        if (morphToInsert.owner.name == masterSubmorph.owner.name) {
+          // if so, we are done
+          insertedMorphs.push(morphToInsert); // already inserted...
+          return;
+        }
+        // if not we need to insert this already existing morph at the correct position
+        // if the new parent already exists, neat! We just append it to that one
+        let ownerToBeAddedTo;
+        if (ownerToBeAddedTo = managedMorphs[masterSubmorph.owner.name]) {
+          const insertionIndex = masterSubmorph.owner.submorphs.indexOf(masterSubmorph);
+          insertedMorphs.push(ownerToBeAddedTo.addMorphAt(morphToInsert, insertionIndex));
+
+          return;
+        }
+        // this cant happen really...
+        throw new Error('Missing a owner that had to be added previously....');
+      } else {
+        // insert morph into correct position
+        morphToInsert = managedMorphs[masterSubmorph.name] = masterSubmorph.copy();
+        const ownerToBeAddedTo = managedMorphs[masterSubmorph.owner.name]; // this must have been resolved
+        const insertionIndex = masterSubmorph.owner.submorphs.indexOf(masterSubmorph);
+        morphToInsert.submorphs = []; // handle submorphs separately
+        insertedMorphs.push(ownerToBeAddedTo.addMorphAt(morphToInsert, insertionIndex));
+      }
+    });
+
+    // finally we remove all the morphs that have not been inserted any more
+    Object.values(obj.dissoc(managedMorphs, insertedMorphs.map(m => m.name))).forEach(removedMorph => {
+      console.log(managedMorphs, insertedMorphs.map(m => m.name));
+      removedMorph.remove();
+    });
+
+    // const [allManaged, allOthers] = arr.partition(morphToBeStyled.submorphs, m => this.managesMorph(m));
+    // const toBeAdded = masterSubmorph.submorphs
+    //   .filter(({ name }) => ![...allManaged, ...allOthers].find(m => m.name == name))
+    //   .map(m => m.copy());
+    // toBeAdded.forEach(m => this.prepareMorphToBeManaged(m));
+    // const toBeRemoved = allManaged.filter(({ name }) => !masterSubmorph.submorphs.find(m => m.name == name));
+    //
+    // morphToBeStyled.submorphs = [...arr.withoutAll(allManaged, toBeRemoved), ...toBeAdded, ...allOthers];
   }
 
   managesMorph (m) {
@@ -567,6 +637,10 @@ var worldToUrl = worldToUrl || {};
 
 export { resolvedMasters };
 
+export function clearSnapshot (name) {
+  delete fetchedSnapshots[name];
+}
+
 class StyleGuideResource extends Resource {
   get canDealWithJSON () { return false; }
 
@@ -578,7 +652,8 @@ class StyleGuideResource extends Resource {
 
   get worldName () {
     const match = this.url.match(styleGuideURLRe);
-    const [_, worldName, name] = match;
+    let [_, worldName, name] = match;
+    if (!lively.FreezerRuntime && worldName == '$world') worldName = this.localWorldName();
     return worldName;
   }
 
@@ -646,7 +721,7 @@ class StyleGuideResource extends Resource {
       }
 
       if (await this.localWorldName() == this.worldName) {
-        component = typeof $world !== 'undefined' && $world.getSubmorphNamed(name);
+        component = typeof $world !== 'undefined' && ($world.getSubmorphNamed(name) || $world.localComponents.find(c => c.name == name));
         if (!component) { throw Error(`Master component "${name}" can not be found in "${this.worldName}"`); }
         return component;
       }
@@ -669,7 +744,7 @@ class StyleGuideResource extends Resource {
             }).url;
           } else resolveSnapshot(null); // total fail
         }
-        await loadPackagesAndModulesOfSnapshot(snapshot);
+        await loadPackagesAndModulesOfSnapshot(snapshot); // this takes a looong time... and loads a bunch of stuff we often never need
         resolveSnapshot(snapshot);
       } else snapshot = await fetchedSnapshots[this.worldName];
 
