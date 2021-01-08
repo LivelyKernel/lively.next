@@ -72,9 +72,10 @@ export class ComponentPolicy {
 
     if (args.isMorph || typeof args === 'string') {
       this.auto = args;
-      if (typeof args === 'string') { this.auto.isComponent = true; } // just to make sure. Seems a little redundant though.
+      if (args.isMorph) { this.auto.isComponent = true; } // just to make sure. Seems a little redundant though.
       // Via direct manipulation this should never be nessecary.
       // In code this can happen, when the user forgets to set this flag.
+      if (typeof args === 'string') this.resolveMasterComponents();
       return;
     }
 
