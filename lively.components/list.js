@@ -1319,66 +1319,71 @@ export class FilterableList extends Morph {
 
 
 export class DropDownList extends Button {
-
   // new DropDownList({selection: 1, items: [1,2,3,4]}).openInWorld()
 
-  static get properties() {
+  static get properties () {
     return {
 
-      padding:      {defaultValue: Rectangle.inset(3,2)},
-      listHeight:   {defaultValue: 100},
+      padding: { defaultValue: Rectangle.inset(3, 2) },
+      listHeight: { defaultValue: 100 },
 
       listAlign: {
         type: 'Enum',
         values: ['bottom', 'top'],
-        defaultValue: "bottom"
+        defaultValue: 'bottom'
       },
 
       openListInWorld: { defaultValue: false },
 
       listMorph: {
-        after: ["labelMorph"],
-        get() {
-          let list = this.getProperty("listMorph");
+        after: ['labelMorph'],
+        get () {
+          let list = this.getProperty('listMorph');
           if (list) return list;
-          list = new List({name: "dropDownList"});
-          this.setProperty("listMorph", list);
+          list = new List({ name: 'dropDownList' });
+          this.setProperty('listMorph', list);
           return list;
         }
       },
-      
-      items: {
-        derived: true, after: ["listMorph"],
-        get() { return this.listMorph.items; },
-        set(value) { this.listMorph.items = value; }
-      },
 
+      items: {
+        derived: true,
+        after: ['listMorph'],
+        get () { return this.listMorph.items; },
+        set (value) {
+          const updateSelection = this.items.find(item => item.value == this.selection);
+          this.listMorph.items = value;
+          if (updateSelection) this.selection = this.items[0].value;
+        }
+      },
       selection: {
-        after: ["listMorph", 'items'], derived: true,
-        get() {
+        after: ['listMorph', 'items'],
+        derived: true,
+        get () {
           return this.listMorph.selection;
         },
-        set(value) {
-          let {listAlign, listMorph} = this;
+        set (value) {
+          const { listAlign, listMorph } = this;
 
           if (!value) {
             listMorph.selection = null;
-            this.label = "";
-
+            this.label = '';
           } else {
-            let {items} = listMorph,
-                item = listMorph.find(value);
-            if (!item && typeof value === "string") {
+            debugger;
+            const { items } = listMorph;
+            let item = listMorph.find(value);
+            if (!item && typeof value === 'string') {
               item = items.find(ea => ea.string === value);
             }
             if (!item) return;
 
             let label = item.label || [item.string, null];
             label = [
-              ...label, " ", null,
+              ...label, ' ', null,
               ...Icon.textAttribute(
-                "caret-" + (listAlign === "bottom" ?
-                  "down" : "up"))
+                'caret-' + (listAlign === 'bottom'
+                  ? 'down'
+                  : 'up'))
             ];
             if (label[5]) {
               label[5].paddingRight = '0px';
@@ -1389,50 +1394,49 @@ export class DropDownList extends Button {
 
             listMorph.selectedIndex = items.indexOf(item);
           }
-          signal(this, "selection", listMorph.selection);
+          signal(this, 'selection', listMorph.selection);
         }
       }
 
     };
-
   }
 
-  fitLabelMorph() {
+  fitLabelMorph () {
     // do not fit!
   }
-  
-  constructor(props) {
+
+  constructor (props) {
     super(props);
-    connect(this, "fire", this, "toggleList");
+    connect(this, 'fire', this, 'toggleList');
   }
 
-  onLoad() {
+  onLoad () {
     if (!this.listMorph.selection) this.listMorph.selection = this.labelMorph.value[0];
   }
 
-  isListVisible() { return !!this.listMorph.world(); }
+  isListVisible () { return !!this.listMorph.world(); }
 
-  removeWhenFocusLost(evt) {
+  removeWhenFocusLost (evt) {
     setTimeout(() => {
-      let list = this.listMorph,
-          focused = this.world() && this.world().focusedMorph;
-      if (list !== focused && focused !== this
-          && list.world()
-          && !list.withAllSubmorphsDetect(m => m == focused)) {
+      const list = this.listMorph;
+      const focused = this.world() && this.world().focusedMorph;
+      if (list !== focused && focused !== this &&
+          list.world() &&
+          !list.withAllSubmorphsDetect(m => m == focused)) {
         list.fadeOut(200);
       } else once(touchInputDevice ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
     }, 100);
   }
 
-  async toggleList() {
-    var list = this.listMorph, bounds;
+  async toggleList () {
+    const list = this.listMorph; let bounds;
     if (this.isListVisible()) {
-      signal(this, "deactivated");
+      signal(this, 'deactivated');
       this.selection = list.selection;
       list.epiMorph = false;
       list.remove();
     } else {
-      signal(this, "activated");
+      signal(this, 'activated');
       if (this.openListInWorld) {
         list.openInWorld();
         list.epiMorph = true;
@@ -1443,9 +1447,9 @@ export class DropDownList extends Button {
         bounds = this.innerBounds();
         this.addMorph(list);
       }
-      let totalItemHeight = (list.items.length * list.itemHeight) + list.padding.top() + list.padding.bottom();
+      const totalItemHeight = (list.items.length * list.itemHeight) + list.padding.top() + list.padding.bottom();
       list.extent = pt(this.width, Math.min(this.listHeight, totalItemHeight));
-      if (this.listAlign === "top") {
+      if (this.listAlign === 'top') {
         list.bottomLeft = bounds.topLeft();
       } else {
         list.topLeft = bounds.bottomLeft();
@@ -1459,10 +1463,10 @@ export class DropDownList extends Button {
     }
   }
 
-  get commands() {
+  get commands () {
     return [
       {
-        name: "accept",
+        name: 'accept',
         exec: () => {
           if (this.isListVisible()) this.toggleList();
           return true;
@@ -1470,7 +1474,7 @@ export class DropDownList extends Button {
       },
 
       {
-        name: "cancel",
+        name: 'cancel',
         exec: () => {
           if (this.isListVisible()) this.listMorph.remove();
           return true;
@@ -1479,14 +1483,14 @@ export class DropDownList extends Button {
     ].concat(super.commands);
   }
 
-  get keybindings() {
+  get keybindings () {
     return super.keybindings.concat([
-      {keys: "Enter", command: "accept"},
-      {keys: "Escape|Ctrl-G", command: "cancel"}
+      { keys: 'Enter', command: 'accept' },
+      { keys: 'Escape|Ctrl-G', command: 'cancel' }
     ]);
   }
-
 }
+
 
 export class InteractiveItem extends ListItemMorph {
   static get properties() {
