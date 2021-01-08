@@ -469,6 +469,12 @@ export default class Halo extends Morph {
     if (target == this) this.remove();
   }
 
+  onContextMenu (evt) {
+    Promise
+      .resolve($world.defaultMenuItems(this.target)).then(items => this.target.openMenu(items, evt))
+      .catch(err => $world.logError(err));
+  }
+
   onKeyUp (evt) {
     if (!this.changingName) { this.buttonControls.map(b => b.onKeyUp(evt)); }
   }
