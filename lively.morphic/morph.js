@@ -1741,7 +1741,7 @@ export class Morph {
 
   openInWorldNearHand (optWorld) {
     const world = optWorld || this.world() || this.env.world;
-    const pos = world.firstHand ? world.firstHand.position : pt(0, 0);
+    const pos = world.firstHand ? world.firstHand.position.addPt(!this.hasFixedPosition ? world.scroll : pt(0, 0)) : pt(0, 0);
     return world ? this.openInWorldNear(pos) : undefined;
   }
 
