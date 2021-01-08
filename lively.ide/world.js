@@ -51,7 +51,7 @@ export class LivelyWorld extends World {
           // it only serves to make old worlds pour their components
           // into this property automatically
           this.whenRendered().then(() => {
-            this.localComponents = this.getListedComponents();
+            this.localComponents = this.withAllSubmorphsSelect(m => m.isComponent);
           });
         }
       },

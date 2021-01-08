@@ -731,9 +731,10 @@ const commands = [
           diffed = diff[format](a, b, opts);
           content = arr.flatmap(diffed, ({ count, value, added, removed }) => {
             const attribute = removed
-              ? { fontWeight: 'normal', textDecoration: 'line-through', fontColor: Color.red } : added
-                  ? { fontWeight: 'bold', textDecoration: '', fontColor: Color.green }
-                  : { fontWeight: 'normal', textDecoration: '', fontColor: Color.darkGray };
+              ? { fontWeight: 'normal', textDecoration: 'line-through', fontColor: Color.red }
+              : added
+                ? { fontWeight: 'bold', textDecoration: '', fontColor: Color.green }
+                : { fontWeight: 'normal', textDecoration: '', fontColor: Color.darkGray };
             return [value, attribute];
           });
         }
@@ -846,11 +847,13 @@ const commands = [
             return tokens.every(token => l.includes(token));
           });
           const title = win ? win.title : m.toString();
-          return preview ? {
-            isListItem: true,
-            string: title + ' | ' + preview,
-            value: { window: win, morph: m, row }
-          } : null;
+          return preview
+            ? {
+                isListItem: true,
+                string: title + ' | ' + preview,
+                value: { window: win, morph: m, row }
+              }
+            : null;
         }).filter(Boolean);
       }
 
@@ -889,7 +892,7 @@ const commands = [
     exec: async function (world) {
       const li = LoadingIndicator.open('loading component browser');
       await li.whenRendered();
-      const componentsBrowser = await resource('part://SystemDialogs/master component browser').read();
+      const componentsBrowser = world._componentsBrowser || (world._componentsBrowser = await resource('part://SystemDialogs/master component browser').read());
       li.remove();
       const loadedComponent = await componentsBrowser.activate();
       if (loadedComponent && !loadedComponent.world()) { loadedComponent.openInWorld(); }
@@ -1010,7 +1013,8 @@ const commands = [
       if (browser && browser.isBrowser) { browser = browser.getWindow(); } else browser = null;
 
       const { localInterface } = await System.import('lively-system-interface');
-      const systemInterface = opts && opts.systemInterface ? opts.systemInterface
+      const systemInterface = opts && opts.systemInterface
+        ? opts.systemInterface
         : browser ? browser.systemInterface : localInterface;
       const pkgs = await systemInterface.getPackages({ excluded: config.ide.js.ignoredPackages });
       const items = [];
@@ -1072,9 +1076,12 @@ const commands = [
                  (focused && focused.ownerChain().find(ea => ea.isBrowser));
       const { default: Browser } = await System.import('lively.ide/js/browser/index.js');
       const { localInterface } = await System.import('lively-system-interface');
-      const systemInterface = opts && opts.systemInterface ? opts.systemInterface
+      const systemInterface = opts && opts.systemInterface
+        ? opts.systemInterface
         : browser ? browser.systemInterface : localInterface;
-      const locationString = systemInterface.name == 'local' ? '' : ` on [${
+      const locationString = systemInterface.name == 'local'
+        ? ''
+        : ` on [${
               string.truncate(systemInterface.name, 35, '...')
           }]`;
       const pkgs = await systemInterface.getPackages();
