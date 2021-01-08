@@ -93,6 +93,8 @@ const CLASS_INSTRUMENTATION_MODULES = [
   'typeshift.components'
 ];
 
+const ESM_CDNS = ['jspm.dev', 'jspm.io', 'skypack.dev'];
+
 const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = [
   'lively.lang'
 ];
@@ -349,7 +351,6 @@ export async function interactivelyFreezePart (part, requester = false) {
   }
 
   const li = LoadingIndicator.open('Freezing Part', { status: 'Writing files...' });
-  await li.hideSpinner();
   let currentFile = '';
   publicationDir.onProgress = (evt) => {
     // set progress of loading indicator
@@ -951,10 +952,10 @@ class LivelyRollup {
     if (id.startsWith('[PART_MODULE]')) return id;
     if (!importer) return id;
     if (importer != '__root_module__' &&
-        (id.includes('jspm.io') || importer.includes('jspm.io') || id.includes('jspm.dev') || importer.includes('jspm.dev')) &&
+        ESM_CDNS.find(cdn => id.includes(cdn) || importer.includes(cdn)) &&
         this.jspm && importer) {
       const { url } = resource(importer).root();
-      if (url.includes('jspm.io') || url.includes('jspm.dev')) {
+      if (ESM_CDNS.find(cdn => url.includes(cdn))) {
         if (id.startsWith('.')) {
           id = resource(importer).parent().join(id).withRelativePartsResolved().url;
         } else {
@@ -1366,7 +1367,6 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
 
   async rollup (compressBundle, output) {
     const li = LoadingIndicator.open('Freezing Part', { status: 'Bundling...' });
-    await li.hideSpinner();
     let depsCode, bundledCode, splitModule;
 
     if (this.snapshot) this.getAssetsFromSnapshot(this.snapshot);
@@ -1486,7 +1486,6 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
     includePolyfills = this.includePolyfills && this.asBrowserModule
   }) {
     const li = LoadingIndicator.open('Freezing Part', { status: 'Optimizing...' });
-    await li.hideSpinner();
     const runtimeCode = addRuntime ? await this.getRuntimeCode() : '';
     const regeneratorSource = addRuntime ? await resource('https://unpkg.com/regenerator-runtime@0.13.7/runtime.js').read() : '';
     let polyfills = !includePolyfills ? '' : await module('lively.freezer/deps/pep.min.js').source();
@@ -1508,9 +1507,11 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
 }
 
 export async function bundlePart (partOrSnapshot, { exclude: excludedModules = [], compress = false, output = 'es2019', requester, useTerser }) {
-  const snapshot = partOrSnapshot.isMorph ? await createMorphSnapshot(partOrSnapshot, {
-    frozenSnapshot: true
-  }) : partOrSnapshot;
+  const snapshot = partOrSnapshot.isMorph
+    ? await createMorphSnapshot(partOrSnapshot, {
+        frozenSnapshot: true
+      })
+    : partOrSnapshot;
   transpileAttributeConnections(snapshot);
   const bundle = new LivelyRollup({ excludedModules, snapshot, jspm: true, useTerser });
   const rollupBundle = async () => {
