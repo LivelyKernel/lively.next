@@ -1176,6 +1176,7 @@ export class Morph {
 
     if (this.isComponent && !PropertyPath('meta.metaInteraction').get(change)) {
       const world = this.world();
+      delete this._preview;
       const derivedMorphs = world ? world.withAllSubmorphsSelect(m => m.master && m.master.uses(this)) : [];
       derivedMorphs.forEach(m => {
         m.requestMasterStyling();
