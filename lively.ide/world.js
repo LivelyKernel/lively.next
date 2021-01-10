@@ -152,24 +152,6 @@ export class LivelyWorld extends World {
     this.handleShapeCreation(evt);
   }
 
-  onLongClick (evt) {
-    const target = evt.state.prevClick.clickedOnMorph;
-    let haloTarget;
-
-    let morphsBelow = evt.world.morphsContainingPoint(evt.position);
-    let morphsBelowTarget = morphsBelow.slice(morphsBelow.indexOf(target));
-    morphsBelow = morphsBelow.filter(ea => ea.halosEnabled);
-    morphsBelowTarget = morphsBelowTarget.filter(ea => ea.halosEnabled);
-    haloTarget = morphsBelowTarget[0] || morphsBelow[0];
-
-    const removeHalo = evt.halo && !evt.targetMorphs.find(morph => morph.isHaloItem);
-    const removeLayoutHalo = evt.layoutHalo && !evt.targetMorphs.find(morph => morph.isHaloItem);
-    const addHalo = (!evt.halo || removeHalo) && haloTarget;
-    if (removeLayoutHalo) evt.layoutHalo.remove();
-    if (removeHalo) evt.halo.remove();
-    if (addHalo) { evt.stop(); this.showHaloFor(haloTarget, evt.domEvt.pointerId); }
-  }
-
   onDragStart (evt) {
     if (!this._yieldShapeOnClick && evt.leftMouseButtonPressed()) {
       this.selectionStartPos = evt.positionIn(this);
