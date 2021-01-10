@@ -46,11 +46,22 @@ export class LivelyWorld extends World {
     return {
       localComponents: {
         initialize () {
-          this.localComponents = [];
           // this is maybe better placed inside migrations since
           // it only serves to make old worlds pour their components
           // into this property automatically
           this.whenRendered().then(() => {
+            if (this.localComponents) {
+              this.localComponents.forEach(async c => {
+                if (!c.owner && c.master) {
+                  await c.master.applyIfNeeded(true);
+                  const derivedMorphs = this.withAllSubmorphsSelect(m => m.master && m.master.uses(c));
+                  derivedMorphs.forEach(m => {
+                    m.requestMasterStyling();
+                  });
+                }
+              });
+              return;
+            }
             this.localComponents = this.withAllSubmorphsSelect(m => m.isComponent);
           });
         }
@@ -476,13 +487,15 @@ export class LivelyWorld extends World {
           })]
       ],
       ['Resize',
-        this.resizePolicy === 'static' ? [
-          { command: 'resize to fit window', target: this },
-          { command: 'resize manually', target: this },
-          ['switch to automatic resizing of world', () => this.resizePolicy = 'elastic']
-        ] : [
-          ['switch to manual resizing of world', () => this.resizePolicy = 'static']
-        ]
+        this.resizePolicy === 'static'
+          ? [
+              { command: 'resize to fit window', target: this },
+              { command: 'resize manually', target: this },
+              ['switch to automatic resizing of world', () => this.resizePolicy = 'elastic']
+            ]
+          : [
+              ['switch to manual resizing of world', () => this.resizePolicy = 'static']
+            ]
       ],
       ['Troubleshooting', [
         { command: 'report a bug', target: this },
@@ -506,7 +519,8 @@ export class LivelyWorld extends World {
     const eventState = this.env.eventDispatcher.eventState;
     if (eventState.menu) eventState.menu.remove();
     return eventState.menu = items && items.length
-      ? Menu.openAtHand(items, { hand: (evt && evt.hand) || this.firstHand }) : null;
+      ? Menu.openAtHand(items, { hand: (evt && evt.hand) || this.firstHand })
+      : null;
   }
 
   async onPaste (evt) {
@@ -590,8 +604,10 @@ export class LivelyWorld extends World {
 
   showLayoutHaloFor (morph, pointerId = this.firstHand && this.firstHand.pointerId) {
     const world = this;
-    const ownerInWorld = morph === world ? null
-      : morph.owner === world ? morph
+    const ownerInWorld = morph === world
+      ? null
+      : morph.owner === world
+        ? morph
         : morph.ownerChain().slice(-2)[0];
     const insertionIndex = ownerInWorld
       ? world.submorphs.indexOf(ownerInWorld) + 1
@@ -1090,11 +1106,13 @@ export class LivelyWorld extends World {
       group => [
         group[0].group || 'uncategorized',
         group.map(ea => [
-          ea.name, actionFn ? () => actionFn(ea.name, self, ea) : async () => {
-            const { interactiveConnectGivenSource } =
+          ea.name, actionFn
+            ? () => actionFn(ea.name, self, ea)
+            : async () => {
+              const { interactiveConnectGivenSource } =
                    await System.import('lively.ide/fabrik.js');
-            interactiveConnectGivenSource(self, ea.name);
-          }
+              interactiveConnectGivenSource(self, ea.name);
+            }
         ])]);
 
     w && items.push([
@@ -1333,6 +1351,10 @@ export class LivelyWorld extends World {
     }
   }
 }
+
+
+
+
 
 class SelectionElement extends Morph {
   static get properties () {
