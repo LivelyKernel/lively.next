@@ -69,10 +69,12 @@ describe('morph', function () {
     expect(morphHasNoComments(morph)).to.be.ok;
   });
 
-  it('can be cloned to with equal comment', async function () {
+  it('with comments can be copied to morph with empty comments', async function () {
     comment = await morph.addComment(exampleText);
-    const morph2 = morph.copy();
-    expect(morph.comments[0].equals(morph2.comments[0])).to.be.ok;
+    const morph2 = morph.copy(true);
+    expect(morph2.comments.length == 0).to.be.ok;
+    expect(morph.comments[0].equals(comment)).to.be.ok;
+    morph2.remove();
   });
 
   afterEach(async function () {

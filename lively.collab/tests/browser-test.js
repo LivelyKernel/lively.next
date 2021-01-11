@@ -10,6 +10,7 @@ describe('comment browser', function () {
   const exampleName = 'a test morph';
   let browser;
   let comment;
+
   beforeEach(async function () {
     morph = new Morph();
     morph.name = exampleName;
@@ -100,6 +101,43 @@ describe('comment browser', function () {
       }
     });
     expect(commentMorphLabel).to.be.not.ok;
+  });
+
+  afterEach(function () {
+    CommentBrowser.close();
+    morph.emptyComments();
+    morph.remove();
+  });
+});
+
+describe('comment indicator', function () {
+  let morph, browser, comment;
+  const exampleText = 'Example text';
+  const exampleName = 'a test morph';
+
+  beforeEach(async function () {
+    morph = new Morph();
+    morph.name = exampleName;
+    new CommentBrowser();
+    browser = CommentBrowser.instance; // This shouldn't be neccessary
+    await CommentBrowser.whenRendered();
+    comment = await morph.addComment(exampleText);
+  });
+
+  it('is visible when browser is open', function () {
+    CommentBrowser.open();
+    expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length == 1).to.be.ok;
+  });
+
+  it('is hidden when browser is not open', function () {
+    expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length == 0).to.be.ok;
+  });
+
+  it('does not get copied when morph with comment is copied', function () {
+    CommentBrowser.open();
+    const copiedMorph = morph.copy(true);
+    expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length == 1).to.be.ok;
+    copiedMorph.remove();
   });
 
   afterEach(function () {
