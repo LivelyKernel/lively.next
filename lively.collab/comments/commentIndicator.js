@@ -105,6 +105,6 @@ export class CommentIndicator extends Label {
 
   onMouseDown (evt) {
     super.onMouseDown(evt);
-    if (this.commentMorph.owner) this.commentMorph.show();
+    this.commentMorph.show();
   }
 }
