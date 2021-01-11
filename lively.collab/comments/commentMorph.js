@@ -222,7 +222,7 @@ export class CommentMorph extends Morph {
     this.ui.editSaveButton.tooltip = 'Edit Comment';
 
     this.ui.commentTextField.readOnly = true;
-    this.ui.commentTextField.fill = Color.rgb(240, 243, 244);
+    this.ui.commentTextField.fill = Color.rgb(251, 252, 252);
     this.ui.commentTextField.borderStyle = 'none';
   }
 
