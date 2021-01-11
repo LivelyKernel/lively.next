@@ -1379,9 +1379,8 @@ class CopyHaloItem extends HaloItem {
     if (isMultiSelection) {
       // FIXME! haaaaack
       const copies = target.selectedMorphs.map(ea => {
-        const copy = ea.copy(true);
-        // allows to not include morphs that return a falsy value on copy
-        if (copy) {
+        if (ea.canBeCopied()) {
+          const copy = ea.copy(true);
           world.addMorph(copy);
           return copy;
         }
@@ -1457,7 +1456,7 @@ class CopyHaloItem extends HaloItem {
     const origin = t.globalBounds().topLeft();
     // the original morphs are needed so we can refocus them with a halo after copying
     const morphsToCopy = isMultiSelection ? t.selectedMorphs : [t];
-    const modified_morphsToCopy = morphsToCopy.filter(m => !(m instanceof CommentIndicator)).map(m => m.copy(true));
+    const modified_morphsToCopy = morphsToCopy.filter(morph => !morph.isCommentIndicator).map(morph => morph.copy(true));
     const snapshots = [];
     let html = `<!DOCTYPE html>
           <html lang="en">

@@ -91,8 +91,8 @@ export function copyMorph (morph, realCopy = false) {
 
   let cachedConnections = [];
   if (morph.attributeConnections) {
-    cachedConnections = morph.attributeConnections.filter(ac => ac.targetObj instanceof CommentIndicator);
-    morph.attributeConnections = morph.attributeConnections.filter(ac => !(ac.targetObj instanceof CommentIndicator || ac.targetObj instanceof Halo));
+    cachedConnections = morph.attributeConnections.filter(ac => ac.targetObj.isCommentIndicator);
+    morph.attributeConnections = morph.attributeConnections.filter(ac => !(ac.targetObj.isCommentIndicator || ac.targetObj.isHalo));
   }
 
   const serializedMorph = serializeMorph(morph);

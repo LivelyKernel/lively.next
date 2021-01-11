@@ -4,6 +4,10 @@ import { connect, disconnect, disconnectAll } from 'lively.bindings';
 import { CommentBrowser } from 'lively.collab';
 
 export class CommentIndicator extends Label {
+  get isCommentIndicator () {
+    return true;
+  }
+
   constructor (commentMorph, comment, referenceMorph) {
     super();
     this.referenceMorph = referenceMorph;
@@ -70,8 +74,7 @@ export class CommentIndicator extends Label {
     $world.addMorph(this);
   }
 
-  copy (trueCopy) {
-    // this is to keep it from copying itself when it was accidentally selected
+  canBeCopied () {
     return false;
   }
 

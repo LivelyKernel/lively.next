@@ -2383,6 +2383,7 @@ export class Morph {
     return morph({ type: exported.type }).initFromJSON(exported);
   }
 
+  canBeCopied () { return true; }
   copy (realCopy = false) { return copyMorph(this, realCopy); }
 
   async interactivelyPublish () {
@@ -2539,7 +2540,6 @@ export class Morph {
   }
 
   emptyComments () {
-    console.log(this.comments);
     this.comments.forEach((comment) => CommentBrowser.removeCommentForMorph(comment, this));
     this.comments = [];
   }
