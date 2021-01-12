@@ -343,4 +343,9 @@ export class CommentBrowser extends Window {
     this.filterContainer.setBounds(filterContainerBounds);
     this.container.setBounds(mainContainerBounds);
   }
+
+  close () {
+    CommentBrowser.close();
+    super.close();
+  }
 }
