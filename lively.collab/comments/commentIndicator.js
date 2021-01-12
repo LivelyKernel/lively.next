@@ -37,6 +37,10 @@ export class CommentIndicator extends Label {
     this.connectMorphs();
   }
 
+  get isCommentIndicator () {
+    return true;
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // ui
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -63,10 +67,20 @@ export class CommentIndicator extends Label {
     }
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // visibility
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-/
   display () {
     this.connectMorphs();
     this.alignWithMorph();
     $world.addMorph(this);
+  }
+
+  hide () {
+    const referenceMorph = this.referenceMorph;
+    disconnect(referenceMorph, 'onChange', this, 'referenceMoving');
+    disconnect(referenceMorph, 'onOwnerChanged', this, 'connectMorphs');
+    super.remove();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -108,17 +122,6 @@ export class CommentIndicator extends Label {
   abandon () {
     this.hide();
     super.abandon();
-  }
-
-  hide () {
-    const referenceMorph = this.referenceMorph;
-    disconnect(referenceMorph, 'onChange', this, 'referenceMoving');
-    disconnect(referenceMorph, 'onOwnerChanged', this, 'connectMorphs');
-    super.remove();
-  }
-
-  get isCommentIndicator () {
-    return true;
   }
 
   canBeCopied () {

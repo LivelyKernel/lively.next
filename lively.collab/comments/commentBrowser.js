@@ -214,6 +214,11 @@ export class CommentBrowser extends Window {
     this.showCommentIndicators();
   }
 
+  async applyResolveStatus (comment, referenceMorph) {
+    await this.removeCommentForMorph(comment, referenceMorph);
+    await this.addCommentForMorph(comment, referenceMorph);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // comment indicators
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -290,11 +295,6 @@ export class CommentBrowser extends Window {
     group.hideCommentIndicators();
     delete groupDictionary[group.referenceMorph.id];
     group.remove();
-  }
-
-  async applyResolveStatus (comment, referenceMorph) {
-    await this.removeCommentForMorph(comment, referenceMorph);
-    await this.addCommentForMorph(comment, referenceMorph);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
