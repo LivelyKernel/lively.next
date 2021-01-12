@@ -127,7 +127,6 @@ describe('comment indicator', function () {
 
   it('is visible when browser is open', function () {
     CommentBrowser.open();
-    console.log(indicatorCount);
     expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length == indicatorCount + 1).to.be.ok;
   });
 
