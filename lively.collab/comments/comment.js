@@ -17,9 +17,9 @@ export class Comment {
     return this.uuid === comment.uuid;
   }
 
-  /*
-  RESOLVE STATUS
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // resolve status
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   resolve () {
     this.resolved = new Date().getTime();
   }

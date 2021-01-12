@@ -31,9 +31,9 @@ export class Badge extends Morph {
     this.ui.count.fontColor = Color.rgb(253, 254, 254);
   }
 
-  /*
-  TEXT
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // text
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   getText () {
     return this.ui.count.textString;
   }
@@ -45,9 +45,9 @@ export class Badge extends Morph {
     }
   }
 
-  /*
-  MORPH INTEGRATION
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // interacting with morph
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   alignWithMorph () {
     this.position = this.morph.extent.addPt(pt(-this.extent.x, -this.extent.y));
   }
@@ -59,9 +59,9 @@ export class Badge extends Morph {
     connect(morph, 'onChange', this, 'alignWithMorph');
   }
 
-  /*
-  COUNTER
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // counter
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   incrementCounter (value = 1) {
     const newValue = Number(this.ui.count.textString) + value;
     this.setText(newValue);

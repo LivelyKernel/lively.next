@@ -18,9 +18,9 @@ export class CommentBrowser extends Window {
     return $world.commentBrowser;
   }
 
-  /*
-  OPENING/CLOSING/SINGLETON CREATION
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // opening/closing/singleton creation
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   static open () {
     if (!CommentBrowser.instance) {
       CommentBrowser.initializeCommentBrowser();
@@ -63,9 +63,9 @@ export class CommentBrowser extends Window {
     CommentBrowser.isOpen() ? CommentBrowser.close() : CommentBrowser.open();
   }
 
-  /*
-  BROWSER MODE
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // browser mode
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   static showsArchive () {
     return !!CommentBrowser.instance.showsResolvedComments;
   }
@@ -74,9 +74,9 @@ export class CommentBrowser extends Window {
     CommentBrowser.instance.toggleArchive();
   }
 
-  /*
-  COMMENT CREATION AND MAINTENANCE
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // comment creation and update
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   static async addCommentForMorph (comment, morph) {
     await CommentBrowser.instance.addCommentForMorph(comment, morph);
   }
@@ -89,9 +89,9 @@ export class CommentBrowser extends Window {
     CommentBrowser.instance.updateName(morph);
   }
 
-  /*
-  CONSTRUCTION AND INITIALIZATION
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // construction and initialization
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   static get properties () {
     return {
       filterContainer: {
@@ -132,9 +132,9 @@ export class CommentBrowser extends Window {
     return CommentBrowser.instance;
   }
 
-  /*
-  UI INIT
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // ui init
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   buildContainers () {
     this.container = new Morph({
       clipMode: 'auto',
@@ -197,9 +197,9 @@ export class CommentBrowser extends Window {
     this.relayoutWindowControls();
   }
 
-  /*
-  BROWSER MODE
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // browser mode
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   toggleArchive () {
     this.showsResolvedComments = !this.showsResolvedComments;
     let containerToRemove = this.resolvedCommentContainer;
@@ -215,9 +215,9 @@ export class CommentBrowser extends Window {
     this.showCommentIndicators();
   }
 
-  /*
-  COMMENT INDICATORS
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // comment indicators
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   showCommentIndicators () {
     if (this.showsResolvedComments) {
       this.resolvedCommentContainer.submorphs.forEach((commentGroup) => commentGroup.showCommentIndicators());
@@ -231,9 +231,9 @@ export class CommentBrowser extends Window {
     this.commentContainer.submorphs.forEach((commentGroup) => commentGroup.hideCommentIndicators());
   }
 
-  /*
-  COMMENT CREATION AND MAINTENANCE
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // comment creation and update
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   async addCommentForMorph (comment, morph) {
     let groupDictionary = this.commentGroups;
     let commentContainer = this.commentContainer;
@@ -272,9 +272,9 @@ export class CommentBrowser extends Window {
     this.commentGroups[morph.id] && this.commentGroups[morph.id].updateName();
   }
 
-  /*
-  UI CHANGES FOR COMMENTS
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // ui changes for comments
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   buildCommentGroupMorphs () {
     const commentGroupMorphs = [];
     $world.withAllSubmorphsDo(async (morph) => {
@@ -298,10 +298,9 @@ export class CommentBrowser extends Window {
     await this.addCommentForMorph(comment, referenceMorph);
   }
 
-  /*
-  COMMENT COUNTS
-  */
-
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // comment counts
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   getCommentCount () {
     return this.getResolvedCommentCount() + this.getUnresolvedCommentCount();
   }
@@ -333,10 +332,9 @@ export class CommentBrowser extends Window {
     }
   }
 
-  /*
-  MISC
-  */
-
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // misc
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   relayoutWindowControls () {
     super.relayoutWindowControls();
     const headerHeight = 25;

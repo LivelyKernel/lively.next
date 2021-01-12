@@ -30,9 +30,9 @@ export class CommentGroupMorph extends Morph {
     };
   }
 
-  /*
-  INIT
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // initialization
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   async initialize (referenceMorph) {
     this.referenceMorph = referenceMorph;
     await this.initializeUI();
@@ -52,9 +52,9 @@ export class CommentGroupMorph extends Morph {
     this.updateName();
   }
 
-  /*
-  COMMENT MORPH ADDITION/REMOVAL
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // comment morph addition/removal
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   async addCommentMorph (comment) {
     const commentMorph = await resource('part://CommentComponents/comment morph master').read();
     commentMorph.initialize(comment, this.referenceMorph);
@@ -84,16 +84,16 @@ export class CommentGroupMorph extends Morph {
     return result;
   }
 
-  /*
-  REFERENCE MORPH CHANGES
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // reference morph changes
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   updateName () {
     this.ui.groupNameLabel.textString = this.referenceMorph.name;
   }
 
-  /*
-  COUNTS
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // counts
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   getCommentCount () {
     return this.commentMorphs.length;
   }
@@ -106,9 +106,9 @@ export class CommentGroupMorph extends Morph {
     this.ui.commentCountLabel.textString = this.getCommentCount();
   }
 
-  /*
-  COMMENT INDICATORS
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // comment indicators
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   showCommentIndicators () {
     this.commentMorphs.forEach((commentMorph) => commentMorph.showCommentIndicator());
   }
@@ -117,9 +117,9 @@ export class CommentGroupMorph extends Morph {
     this.commentMorphs.forEach((commentMorph) => commentMorph.hideCommentIndicator());
   }
 
-  /*
-  EXPANSION
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // expansion
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   applyExpanded () {
     Icon.setIcon(this.ui.collapseIndicator, this.isExpanded ? 'caret-down' : 'caret-right');
     this.updateCommentContainerSubmorphs();
@@ -160,9 +160,9 @@ export class CommentMorph extends Morph {
     };
   }
 
-  /*
-  INIT
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // initialization
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   constructor () {
     super();
     this.isInEditMode = false;
@@ -190,9 +190,9 @@ export class CommentMorph extends Morph {
     this.ui.usernameLabel.textString = username;
   }
 
-  /*
-  UI
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // ui
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   initializeUI () {
     this.reset();
 
@@ -269,9 +269,9 @@ export class CommentMorph extends Morph {
     };
   }
 
-  /*
-  COMMENT ACTIONS
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // comment actions
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   saveComment () {
     this.comment.text = this.ui.commentTextField.textString;
     this.setDefaultUI();
@@ -292,9 +292,9 @@ export class CommentMorph extends Morph {
     await CommentBrowser.instance.applyResolveStatus(this.comment, this.referenceMorph);
   }
 
-  /*
-  COMMENT INDICATOR
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // comment indicators
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   initializeCommentIndicator () {
     this.commentIndicator = new CommentIndicator(this, this.comment, this.referenceMorph);
     this.commentIndicator.fontColor = this.comment.isResolved() ? Color.rgb(174, 214, 241) : Color.rgb(241, 196, 15);
@@ -310,9 +310,9 @@ export class CommentMorph extends Morph {
     this.commentIndicator.abandon();
   }
 
-  /*
-  LIFECYCLE
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // lifecycle
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   async onLoad () {
     this.reset();
   }
@@ -322,10 +322,9 @@ export class CommentMorph extends Morph {
     super.abandon();
   }
 
-  /*
-  INTERACTION
-  */
-
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // interaction
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   performClickAction (action) {
     switch (action) {
       case 'remove':

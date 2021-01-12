@@ -37,9 +37,9 @@ export class CommentIndicator extends Label {
     this.connectMorphs();
   }
 
-  /*
-  UI
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // ui
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   initStyling () {
     Icon.setIcon(this, 'comment-alt');
     this.fontSize = 15;
@@ -69,9 +69,9 @@ export class CommentIndicator extends Label {
     $world.addMorph(this);
   }
 
-  /*
-  TRACKING AND KEEPING POSITION IN SYNC
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // tracking and keeping position in sync
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-/
   onChange (change) {
     super.onChange(change);
     const { prop, value } = change;
@@ -102,9 +102,9 @@ export class CommentIndicator extends Label {
     this.position = morphOrigin.addPt(pt(xOffset, yOffset));
   }
 
-  /*
-  DELETION, COPYING
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // deletion/copying
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   abandon () {
     this.hide();
     super.abandon();
@@ -125,9 +125,9 @@ export class CommentIndicator extends Label {
     return false;
   }
 
-  /*
-  INTERACTION
-  */
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // interaction
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   onMouseDown (evt) {
     super.onMouseDown(evt);
     this.commentMorph.show();
