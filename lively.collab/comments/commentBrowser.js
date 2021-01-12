@@ -7,42 +7,20 @@ import { CommentMorph, Badge } from 'lively.collab';
 import { ModeSelector } from 'lively.components/widgets.js';
 
 export class CommentBrowser extends Window {
+  /*
+  //////
+  Static Methods
+  //////
+  */
+
   // static methods are the external interface
-
-  static close () {
-    if (CommentBrowser.isOpen()) {
-      CommentBrowser.instance.close();
-    }
-  }
-
   static get instance () {
     return $world.commentBrowser;
   }
 
-  static isOpen () {
-    return !!(CommentBrowser.instance && !!$world.get('comment browser'));
-  }
-
-  static showsArchive () {
-    return !!CommentBrowser.instance.showsResolvedComments;
-  }
-
-  static async removeCommentForMorph (comment, morph) {
-    await CommentBrowser.instance.removeCommentForMorph(comment, morph);
-  }
-
-  static async addCommentForMorph (comment, morph) {
-    await CommentBrowser.instance.addCommentForMorph(comment, morph);
-  }
-
-  static updateName (morph) {
-    CommentBrowser.instance.updateName(morph);
-  }
-
-  static initializeCommentBrowser () {
-    new CommentBrowser();
-  }
-
+  /*
+  OPENING/CLOSING/SINGLETON CREATION
+  */
   static open () {
     if (!CommentBrowser.instance) {
       CommentBrowser.initializeCommentBrowser();
@@ -56,6 +34,18 @@ export class CommentBrowser extends Window {
     }
     $world.addMorph(CommentBrowser.instance);
     CommentBrowser.instance.showCommentIndicators();
+  }
+
+  static isOpen () {
+    return !!(CommentBrowser.instance && !!$world.get('comment browser'));
+  }
+
+  static async whenRendered () {
+    return CommentBrowser.instance.whenRendered();
+  }
+
+  static initializeCommentBrowser () {
+    new CommentBrowser();
   }
 
   static close () {
@@ -73,16 +63,35 @@ export class CommentBrowser extends Window {
     CommentBrowser.isOpen() ? CommentBrowser.close() : CommentBrowser.open();
   }
 
-  static async whenRendered () {
-    return CommentBrowser.instance.whenRendered();
+  /*
+  BROWSER MODE
+  */
+  static showsArchive () {
+    return !!CommentBrowser.instance.showsResolvedComments;
   }
 
   static toggleArchive () {
     CommentBrowser.instance.toggleArchive();
   }
 
-  // Construction and initialization
+  /*
+  COMMENT CREATION AND MAINTENANCE
+  */
+  static async addCommentForMorph (comment, morph) {
+    await CommentBrowser.instance.addCommentForMorph(comment, morph);
+  }
 
+  static async removeCommentForMorph (comment, morph) {
+    await CommentBrowser.instance.removeCommentForMorph(comment, morph);
+  }
+
+  static updateName (morph) {
+    CommentBrowser.instance.updateName(morph);
+  }
+
+  /*
+  CONSTRUCTION AND INITIALIZATION
+  */
   static get properties () {
     return {
       filterContainer: {
@@ -97,10 +106,14 @@ export class CommentBrowser extends Window {
       commentContainer: {},
       resolvedCommentContainer: {},
       filterContainer: {}
-
     };
   }
 
+  /*
+  //////
+  Instance Methods
+  //////
+  */
   constructor () {
     if (!CommentBrowser.instance) {
       super();
@@ -119,6 +132,9 @@ export class CommentBrowser extends Window {
     return CommentBrowser.instance;
   }
 
+  /*
+  UI INIT
+  */
   buildContainers () {
     this.container = new Morph({
       clipMode: 'auto',
@@ -181,6 +197,9 @@ export class CommentBrowser extends Window {
     this.relayoutWindowControls();
   }
 
+  /*
+  BROWSER MODE
+  */
   toggleArchive () {
     this.showsResolvedComments = !this.showsResolvedComments;
     let containerToRemove = this.resolvedCommentContainer;
@@ -196,6 +215,9 @@ export class CommentBrowser extends Window {
     this.showCommentIndicators();
   }
 
+  /*
+  COMMENT INDICATORS
+  */
   showCommentIndicators () {
     if (this.showsResolvedComments) {
       this.resolvedCommentContainer.submorphs.forEach((commentGroup) => commentGroup.showCommentIndicators());
@@ -209,18 +231,9 @@ export class CommentBrowser extends Window {
     this.commentContainer.submorphs.forEach((commentGroup) => commentGroup.hideCommentIndicators());
   }
 
-  buildCommentGroupMorphs () {
-    const commentGroupMorphs = [];
-    $world.withAllSubmorphsDo(async (morph) => {
-      if (morph.comments.length == 0) {
-        return;
-      }
-      for (const comment of morph.comments) {
-        await this.addCommentForMorph(comment, morph);
-      }
-    });
-  }
-
+  /*
+  COMMENT CREATION AND MAINTENANCE
+  */
   async addCommentForMorph (comment, morph) {
     let groupDictionary = this.commentGroups;
     let commentContainer = this.commentContainer;
@@ -259,9 +272,19 @@ export class CommentBrowser extends Window {
     this.commentGroups[morph.id] && this.commentGroups[morph.id].updateName();
   }
 
-  async applyResolveStatus (comment, referenceMorph) {
-    await this.removeCommentForMorph(comment, referenceMorph);
-    await this.addCommentForMorph(comment, referenceMorph);
+  /*
+  UI CHANGES FOR COMMENTS
+  */
+  buildCommentGroupMorphs () {
+    const commentGroupMorphs = [];
+    $world.withAllSubmorphsDo(async (morph) => {
+      if (morph.comments.length == 0) {
+        return;
+      }
+      for (const comment of morph.comments) {
+        await this.addCommentForMorph(comment, morph);
+      }
+    });
   }
 
   removeCommentGroup (group, groupDictionary) {
@@ -269,6 +292,15 @@ export class CommentBrowser extends Window {
     delete groupDictionary[group.referenceMorph.id];
     group.remove();
   }
+
+  async applyResolveStatus (comment, referenceMorph) {
+    await this.removeCommentForMorph(comment, referenceMorph);
+    await this.addCommentForMorph(comment, referenceMorph);
+  }
+
+  /*
+  COMMENT COUNTS
+  */
 
   getCommentCount () {
     return this.getResolvedCommentCount() + this.getUnresolvedCommentCount();
@@ -300,6 +332,10 @@ export class CommentBrowser extends Window {
       badge.tooltip = count + ' unresolved comment' + (count == 1 ? '' : 's');
     }
   }
+
+  /*
+  MISC
+  */
 
   relayoutWindowControls () {
     super.relayoutWindowControls();
