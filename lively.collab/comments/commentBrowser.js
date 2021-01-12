@@ -36,7 +36,7 @@ export class CommentBrowser extends Window {
   }
 
   static updateName (morph) {
-    instance.updateName(morph);
+    CommentBrowser.instance.updateName(morph);
   }
 
   static initializeCommentBrowser () {
