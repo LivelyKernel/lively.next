@@ -1645,6 +1645,7 @@ export class Morph {
     // Use this method to signal the wish to permanently delete this object. Overwrite this method to clean up resources on its deletion. We do not have access to the JS VM, this method does not interact with the garbage collector and does not result in the actual deletion of the object, if there are still left over references to this object.
     this.emptyComments();
     this.remove();
+    this.submorphs.forEach(submorph => submorph.abandon());
   }
 
   onOwnerChanged (newOwner) {
