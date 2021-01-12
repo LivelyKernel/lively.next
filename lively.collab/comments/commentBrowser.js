@@ -94,9 +94,7 @@ export class CommentBrowser extends Window {
   }
 
   constructor () {
-    console.log('initialize commentbrowser');
     if (!CommentBrowser.instance) {
-      console.log('a new comment browser is created');
       super();
       $world.commentBrowser = this;
 
@@ -229,8 +227,6 @@ export class CommentBrowser extends Window {
       groupDictionary = this.resolvedCommentGroups;
     }
     const groupOfCommentMorph = groupDictionary[morph.id];
-    console.log(groupDictionary);
-    console.log(morph.id);
     await groupOfCommentMorph.removeCommentMorphFor(comment);
     if (groupOfCommentMorph.getCommentCount() === 0) {
       this.removeCommentGroup(groupOfCommentMorph, groupDictionary);
