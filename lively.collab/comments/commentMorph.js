@@ -68,16 +68,6 @@ export class CommentGroupMorph extends Morph {
     return result;
   }
 
-  onOwnerChanged () {
-    // called when comment groups enter or exit the screen
-    super.onOwnerChanged();
-    if (CommentBrowser.isOpen()) {
-      this.showCommentIndicators();
-    } else {
-      this.hideCommentIndicators();
-    }
-  }
-
   updateCommentCountLabel () {
     this.ui.commentCountLabel.textString = this.getCommentCount();
   }
