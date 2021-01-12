@@ -712,7 +712,9 @@ class NameHolder extends Morph {
   }
 
   accept () {
-    if (this.target.name !== this.nameHolder.textString) { this.updateName(this.nameHolder.textString); }
+    if (this.target.name !== this.nameHolder.textString) {
+      this.updateName(this.nameHolder.textString);
+    }
   }
 
   onKeyDown (evt) {
@@ -763,6 +765,7 @@ class NameHolder extends Morph {
     if (!this.forceUniqueName || this.validName) {
       this.target.name = newName;
       signal(this, 'active', [false, this]);
+      CommentBrowser.updateName(this.target);
     }
   }
 }

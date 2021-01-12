@@ -46,7 +46,7 @@ export class CommentGroupMorph extends Morph {
       commentCountLabel: this.get('comment count label')
     };
     connect(this.ui.header, 'onMouseDown', this, 'toggleExpanded');
-    this.ui.groupNameLabel.textString = this.referenceMorph.name;
+    this.updateName();
   }
 
   async addCommentMorph (comment) {
@@ -70,6 +70,10 @@ export class CommentGroupMorph extends Morph {
 
   updateCommentCountLabel () {
     this.ui.commentCountLabel.textString = this.getCommentCount();
+  }
+
+  updateName () {
+    this.ui.groupNameLabel.textString = this.referenceMorph.name;
   }
 
   getCommentCount () {
