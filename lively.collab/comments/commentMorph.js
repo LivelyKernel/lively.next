@@ -301,6 +301,7 @@ export class CommentMorph extends Morph {
     if (CommentBrowser.isOpen() && (this.comment.isResolved() == CommentBrowser.showsArchive())) {
       this.showCommentIndicator();
     }
+  }
 
   showCommentIndicator () {
     this.commentIndicator.display();
