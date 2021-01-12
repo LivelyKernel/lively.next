@@ -24,10 +24,6 @@ export class CommentIndicator extends Label {
     };
   }
 
-  get isCommentIndicator () {
-    return true;
-  }
-
   constructor (commentMorph, comment, referenceMorph) {
     super();
     this.referenceMorph = referenceMorph;
@@ -41,6 +37,9 @@ export class CommentIndicator extends Label {
     this.connectMorphs();
   }
 
+  /*
+  UI
+  */
   initStyling () {
     Icon.setIcon(this, 'comment-alt');
     this.fontSize = 15;
@@ -64,6 +63,15 @@ export class CommentIndicator extends Label {
     }
   }
 
+  display () {
+    this.connectMorphs();
+    this.alignWithMorph();
+    $world.addMorph(this);
+  }
+
+  /*
+  TRACKING AND KEEPING POSITION IN SYNC
+  */
   onChange (change) {
     super.onChange(change);
     const { prop, value } = change;
@@ -81,28 +89,6 @@ export class CommentIndicator extends Label {
     return pt(xRelative, yRelative);
   }
 
-  abandon () {
-    this.hide();
-    super.abandon();
-  }
-
-  hide () {
-    const referenceMorph = this.referenceMorph;
-    disconnect(referenceMorph, 'onChange', this, 'referenceMoving');
-    disconnect(referenceMorph, 'onOwnerChanged', this, 'connectMorphs');
-    super.remove();
-  }
-
-  display () {
-    this.connectMorphs();
-    this.alignWithMorph();
-    $world.addMorph(this);
-  }
-
-  canBeCopied () {
-    return false;
-  }
-
   referenceMoving () {
     this._referenceMorphMoving = true;
     this.alignWithMorph();
@@ -116,6 +102,32 @@ export class CommentIndicator extends Label {
     this.position = morphOrigin.addPt(pt(xOffset, yOffset));
   }
 
+  /*
+  DELETION, COPYING
+  */
+  abandon () {
+    this.hide();
+    super.abandon();
+  }
+
+  hide () {
+    const referenceMorph = this.referenceMorph;
+    disconnect(referenceMorph, 'onChange', this, 'referenceMoving');
+    disconnect(referenceMorph, 'onOwnerChanged', this, 'connectMorphs');
+    super.remove();
+  }
+
+  get isCommentIndicator () {
+    return true;
+  }
+
+  canBeCopied () {
+    return false;
+  }
+
+  /*
+  INTERACTION
+  */
   onMouseDown (evt) {
     super.onMouseDown(evt);
     this.commentMorph.show();

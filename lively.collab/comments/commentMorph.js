@@ -30,6 +30,9 @@ export class CommentGroupMorph extends Morph {
     };
   }
 
+  /*
+  INIT
+  */
   async initialize (referenceMorph) {
     this.referenceMorph = referenceMorph;
     await this.initializeUI();
@@ -49,11 +52,24 @@ export class CommentGroupMorph extends Morph {
     this.updateName();
   }
 
+  /*
+  COMMENT MORPH ADDITION/REMOVAL
+  */
   async addCommentMorph (comment) {
-    // TODO this has to be changed when package position changed
     const commentMorph = await resource('part://CommentComponents/comment morph master').read();
     commentMorph.initialize(comment, this.referenceMorph);
     this.commentMorphs.push(commentMorph);
+    this.updateCommentContainerSubmorphs();
+    this.updateCommentCountLabel();
+  }
+
+  async removeCommentMorphFor (comment) {
+    this.commentMorphs.forEach((commentMorph) => {
+      if (commentMorph.comment.equals(comment)) {
+        commentMorph.abandon();
+        remove(this.commentMorphs, commentMorph);
+      }
+    });
     this.updateCommentContainerSubmorphs();
     this.updateCommentCountLabel();
   }
@@ -68,14 +84,16 @@ export class CommentGroupMorph extends Morph {
     return result;
   }
 
-  updateCommentCountLabel () {
-    this.ui.commentCountLabel.textString = this.getCommentCount();
-  }
-
+  /*
+  REFERENCE MORPH CHANGES
+  */
   updateName () {
     this.ui.groupNameLabel.textString = this.referenceMorph.name;
   }
 
+  /*
+  COUNTS
+  */
   getCommentCount () {
     return this.commentMorphs.length;
   }
@@ -84,21 +102,24 @@ export class CommentGroupMorph extends Morph {
     return this.commentMorphs.filter((commentMorph) => !commentMorph.comment.isResolved()).length;
   }
 
-  async removeCommentMorphFor (comment) {
-    this.commentMorphs.forEach((commentMorph) => {
-      if (commentMorph.comment.equals(comment)) {
-        commentMorph.abandon();
-        remove(this.commentMorphs, commentMorph);
-      }
-    });
-    this.updateCommentContainerSubmorphs();
-    this.updateCommentCountLabel();
+  updateCommentCountLabel () {
+    this.ui.commentCountLabel.textString = this.getCommentCount();
   }
 
-  updateCommentContainerSubmorphs () {
-    this.ui.commentMorphContainer.submorphs = this.isExpanded ? this.commentMorphs : [];
+  /*
+  COMMENT INDICATORS
+  */
+  showCommentIndicators () {
+    this.commentMorphs.forEach((commentMorph) => commentMorph.showCommentIndicator());
   }
 
+  hideCommentIndicators () {
+    this.commentMorphs.forEach((commentMorph) => commentMorph.hideCommentIndicator());
+  }
+
+  /*
+  EXPANSION
+  */
   applyExpanded () {
     Icon.setIcon(this.ui.collapseIndicator, this.isExpanded ? 'caret-down' : 'caret-right');
     this.updateCommentContainerSubmorphs();
@@ -113,12 +134,8 @@ export class CommentGroupMorph extends Morph {
     this.applyExpanded();
   }
 
-  showCommentIndicators () {
-    this.commentMorphs.forEach((commentMorph) => commentMorph.showCommentIndicator());
-  }
-
-  hideCommentIndicators () {
-    this.commentMorphs.forEach((commentMorph) => commentMorph.hideCommentIndicator());
+  updateCommentContainerSubmorphs () {
+    this.ui.commentMorphContainer.submorphs = this.isExpanded ? this.commentMorphs : [];
   }
 }
 
@@ -143,6 +160,9 @@ export class CommentMorph extends Morph {
     };
   }
 
+  /*
+  INIT
+  */
   constructor () {
     super();
     this.isInEditMode = false;
@@ -170,42 +190,12 @@ export class CommentMorph extends Morph {
     this.ui.usernameLabel.textString = username;
   }
 
-  reset () {
-    this.ui = {
-      dateLabel: this.get('date label'),
-      commentTextField: this.get('comment text field'),
-      deleteButton: this.get('delete button'),
-      resolveButton: this.get('resolve button'),
-      editSaveButton: this.get('edit save button'),
-      usernameLabel: this.get('user name label')
-    };
-  }
-
-  async onLoad () {
-    this.reset();
-  }
-
+  /*
+  UI
+  */
   initializeUI () {
     this.reset();
 
-    this.ui.commentTextField.textString = this.comment.text;
-    this.setDefaultUI();
-  }
-
-  initializeCommentIndicator () {
-    this.commentIndicator = new CommentIndicator(this, this.comment, this.referenceMorph);
-    this.commentIndicator.fontColor = this.comment.isResolved() ? Color.rgb(174, 214, 241) : Color.rgb(241, 196, 15);
-    if (CommentBrowser.isOpen() && (this.comment.isResolved() == CommentBrowser.showsArchive())) {
-      this.showCommentIndicator();
-    }
-  }
-
-  saveComment () {
-    this.comment.text = this.ui.commentTextField.textString;
-    this.setDefaultUI();
-  }
-
-  abortCommentEdit () {
     this.ui.commentTextField.textString = this.comment.text;
     this.setDefaultUI();
   }
@@ -268,6 +258,30 @@ export class CommentMorph extends Morph {
     this.ui.commentTextField.focus();
   }
 
+  reset () {
+    this.ui = {
+      dateLabel: this.get('date label'),
+      commentTextField: this.get('comment text field'),
+      deleteButton: this.get('delete button'),
+      resolveButton: this.get('resolve button'),
+      editSaveButton: this.get('edit save button'),
+      usernameLabel: this.get('user name label')
+    };
+  }
+
+  /*
+  COMMENT ACTIONS
+  */
+  saveComment () {
+    this.comment.text = this.ui.commentTextField.textString;
+    this.setDefaultUI();
+  }
+
+  abortCommentEdit () {
+    this.ui.commentTextField.textString = this.comment.text;
+    this.setDefaultUI();
+  }
+
   toggleEditMode () {
     this.isInEditMode ? this.saveComment() : this.setEditUI();
   }
@@ -278,18 +292,39 @@ export class CommentMorph extends Morph {
     await CommentBrowser.instance.applyResolveStatus(this.comment, this.referenceMorph);
   }
 
-  hideCommentIndicator () {
-    this.commentIndicator.hide();
-  }
+  /*
+  COMMENT INDICATOR
+  */
+  initializeCommentIndicator () {
+    this.commentIndicator = new CommentIndicator(this, this.comment, this.referenceMorph);
+    this.commentIndicator.fontColor = this.comment.isResolved() ? Color.rgb(174, 214, 241) : Color.rgb(241, 196, 15);
+    if (CommentBrowser.isOpen() && (this.comment.isResolved() == CommentBrowser.showsArchive())) {
+      this.showCommentIndicator();
+    }
 
   showCommentIndicator () {
     this.commentIndicator.display();
+  }
+
+  hideCommentIndicator () {
+    this.commentIndicator.abandon();
+  }
+
+  /*
+  LIFECYCLE
+  */
+  async onLoad () {
+    this.reset();
   }
 
   abandon () {
     this.commentIndicator.abandon();
     super.abandon();
   }
+
+  /*
+  INTERACTION
+  */
 
   performClickAction (action) {
     switch (action) {
