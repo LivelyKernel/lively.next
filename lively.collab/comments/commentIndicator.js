@@ -4,10 +4,6 @@ import { connect, disconnect, disconnectAll } from 'lively.bindings';
 import { CommentBrowser } from 'lively.collab';
 
 export class CommentIndicator extends Label {
-
-  get isCommentIndicator () {
-    return true;
-
   static get properties () {
     return {
       comment: {
@@ -26,6 +22,10 @@ export class CommentIndicator extends Label {
         defaultValue: undefined
       }
     };
+  }
+
+  get isCommentIndicator () {
+    return true;
   }
 
   constructor (commentMorph, comment, referenceMorph) {
