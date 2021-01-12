@@ -9,11 +9,10 @@ import { ModeSelector } from 'lively.components/widgets.js';
 export class CommentBrowser extends Window {
   /*
   //////
-  Static Methods
+  Static Methods (external interface)
   //////
   */
 
-  // static methods are the external interface
   static get instance () {
     return $world.commentBrowser;
   }
@@ -64,7 +63,7 @@ export class CommentBrowser extends Window {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // browser mode
+  // browser mode / archive
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   static showsArchive () {
     return !!CommentBrowser.instance.showsResolvedComments;
@@ -133,7 +132,7 @@ export class CommentBrowser extends Window {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // ui init
+  // ui initialization
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   buildContainers () {
     this.container = new Morph({
@@ -198,7 +197,7 @@ export class CommentBrowser extends Window {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // browser mode
+  // browser mode / archive
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   toggleArchive () {
     this.showsResolvedComments = !this.showsResolvedComments;
@@ -273,7 +272,7 @@ export class CommentBrowser extends Window {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // ui changes for comments
+  // comment group creation/deletion
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   buildCommentGroupMorphs () {
     const commentGroupMorphs = [];
