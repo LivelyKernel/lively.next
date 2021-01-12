@@ -6,33 +6,31 @@ import { connect } from 'lively.bindings';
 import { CommentMorph, Badge } from 'lively.collab';
 import { ModeSelector } from 'lively.components/widgets.js';
 
-let instance;
-
 export class CommentBrowser extends Window {
   static close () {
     if (CommentBrowser.isOpen()) {
-      instance.close();
+      CommentBrowser.instance.close();
     }
   }
 
   static get instance () {
-    return instance;
+    return $world.commentBrowser;
   }
 
   static isOpen () {
-    return instance && $world.get('comment browser');
+    return !!(CommentBrowser.instance && !!$world.get('comment browser'));
   }
 
   static showsArchive () {
-    return !!instance.showsResolvedComments;
+    return !!CommentBrowser.instance.showsResolvedComments;
   }
 
   static async removeCommentForMorph (comment, morph) {
-    await instance.removeCommentForMorph(comment, morph);
+    await CommentBrowser.instance.removeCommentForMorph(comment, morph);
   }
 
   static async addCommentForMorph (comment, morph) {
-    await instance.addCommentForMorph(comment, morph);
+    await CommentBrowser.instance.addCommentForMorph(comment, morph);
   }
 
   static initializeCommentBrowser () {
@@ -40,27 +38,27 @@ export class CommentBrowser extends Window {
   }
 
   static open () {
-    if (!instance) {
+    if (!CommentBrowser.instance) {
       CommentBrowser.initializeCommentBrowser();
     }
 
     if (CommentBrowser.isOpen()) return;
 
-    if (!instance.wasOpenedBefore) {
-      instance.initializeAppearance();
-      instance.wasOpenedBefore = true;
+    if (!CommentBrowser.instance.wasOpenedBefore) {
+      CommentBrowser.instance.initializeAppearance();
+      CommentBrowser.instance.wasOpenedBefore = true;
     }
-    $world.addMorph(instance);
+    $world.addMorph(CommentBrowser.instance);
   }
 
   static close () {
-    if (!instance) return;
+    if (!CommentBrowser.instance) return;
 
     const topbar = $world.getSubmorphNamed('lively top bar');
     if (topbar) {
       topbar.uncolorCommentBrowserButton();
     }
-    instance.remove();
+    CommentBrowser.instance.remove();
   }
 
   static toggle () {
@@ -68,15 +66,37 @@ export class CommentBrowser extends Window {
   }
 
   static async whenRendered () {
-    return instance.whenRendered();
+    return CommentBrowser.instance.whenRendered();
+  }
+
+  static toggleArchive () {
+    CommentBrowser.instance.toggleArchive();
   }
 
   // Construction and initialization
 
+  static get properties () {
+    return {
+      filterContainer: {
+        defaultValue: undefined
+      },
+      commentGroups: {},
+      resolvedCommentGroups: {},
+      wasOpenedBefore: {},
+      showsResolvedComments: {},
+      filterSelector: {},
+      container: {},
+      commentContainer: {},
+      resolvedCommentContainer: {},
+      filterContainer: {}
+
+    };
+  }
+
   constructor () {
-    if (!instance) {
+    if (!CommentBrowser.instance) {
       super();
-      instance = this;
+      $world.commentBrowser = this;
 
       this.name = 'comment browser';
       this.commentGroups = {}; // dict Morph id -> Comment group morph
@@ -88,7 +108,7 @@ export class CommentBrowser extends Window {
       this.buildFilterSelector();
       this.buildCommentGroupMorphs();
     }
-    return instance;
+    return CommentBrowser.instance;
   }
 
   buildContainers () {
@@ -131,8 +151,8 @@ export class CommentBrowser extends Window {
         spacing: 5
       })
     });
-    connect(this.filterSelector, 'Unresolved Comments', () => { this.toggleArchive(); });
-    connect(this.filterSelector, 'Resolved Comments', () => { this.toggleArchive(); });
+    connect(this.filterSelector, 'Unresolved Comments', CommentBrowser.instance, 'toggleArchive');
+    connect(this.filterSelector, 'Resolved Comments', this, 'toggleArchive');
     this.filterContainer.addMorph(this.filterSelector);
   }
 
@@ -206,7 +226,6 @@ export class CommentBrowser extends Window {
       groupDictionary = this.resolvedCommentGroups;
     }
     const groupOfCommentMorph = groupDictionary[morph.id];
-
     await groupOfCommentMorph.removeCommentMorphFor(comment);
     if (groupOfCommentMorph.getCommentCount() === 0) {
       this.removeCommentGroup(groupOfCommentMorph, groupDictionary);

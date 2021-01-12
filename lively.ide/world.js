@@ -56,7 +56,8 @@ export class LivelyWorld extends World {
       draggable: {
         readOnly: true,
         get () { return !touchInputDevice; }
-      }
+      },
+      commentBrowser: {}
     };
   }
 
@@ -483,13 +484,15 @@ export class LivelyWorld extends World {
           })]
       ],
       ['Resize',
-        this.resizePolicy === 'static' ? [
-          { command: 'resize to fit window', target: this },
-          { command: 'resize manually', target: this },
-          ['switch to automatic resizing of world', () => this.resizePolicy = 'elastic']
-        ] : [
-          ['switch to manual resizing of world', () => this.resizePolicy = 'static']
-        ]
+        this.resizePolicy === 'static'
+          ? [
+              { command: 'resize to fit window', target: this },
+              { command: 'resize manually', target: this },
+              ['switch to automatic resizing of world', () => this.resizePolicy = 'elastic']
+            ]
+          : [
+              ['switch to manual resizing of world', () => this.resizePolicy = 'static']
+            ]
       ],
       ['Troubleshooting', [
         { command: 'report a bug', target: this },
@@ -513,7 +516,8 @@ export class LivelyWorld extends World {
     const eventState = this.env.eventDispatcher.eventState;
     if (eventState.menu) eventState.menu.remove();
     return eventState.menu = items && items.length
-      ? Menu.openAtHand(items, { hand: (evt && evt.hand) || this.firstHand }) : null;
+      ? Menu.openAtHand(items, { hand: (evt && evt.hand) || this.firstHand })
+      : null;
   }
 
   async onPaste (evt) {
@@ -597,8 +601,10 @@ export class LivelyWorld extends World {
 
   showLayoutHaloFor (morph, pointerId = this.firstHand && this.firstHand.pointerId) {
     const world = this;
-    const ownerInWorld = morph === world ? null
-      : morph.owner === world ? morph
+    const ownerInWorld = morph === world
+      ? null
+      : morph.owner === world
+        ? morph
         : morph.ownerChain().slice(-2)[0];
     const insertionIndex = ownerInWorld
       ? world.submorphs.indexOf(ownerInWorld) + 1
@@ -1115,11 +1121,13 @@ export class LivelyWorld extends World {
       group => [
         group[0].group || 'uncategorized',
         group.map(ea => [
-          ea.name, actionFn ? () => actionFn(ea.name, self, ea) : async () => {
-            const { interactiveConnectGivenSource } =
+          ea.name, actionFn
+            ? () => actionFn(ea.name, self, ea)
+            : async () => {
+              const { interactiveConnectGivenSource } =
                    await System.import('lively.ide/fabrik.js');
-            interactiveConnectGivenSource(self, ea.name);
-          }
+              interactiveConnectGivenSource(self, ea.name);
+            }
         ])]);
 
     w && items.push([

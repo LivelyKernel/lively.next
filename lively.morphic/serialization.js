@@ -169,7 +169,7 @@ export async function createMorphSnapshot (aMorph, options = {}) {
 
 export function loadMorphFromSnapshot (snapshot, options) {
   return deserializeMorph(snapshot, {
-    reinitializeIds: true,
+    reinitializeIds: false,
     ignoreClassNotFound: false,
     onDeserializationStart: loadPackagesAndModulesOfSnapshot,
     migrations,
