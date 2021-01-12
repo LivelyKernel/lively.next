@@ -31,7 +31,7 @@ describe('badge', function () {
 
     expect(badge.globalPosition.x - initX).to.equal(offset);
 
-    morph.remove();
+    morph.abandon();
   });
 
   it('can be initiated with text', async function () {
@@ -41,7 +41,7 @@ describe('badge', function () {
 
   afterEach(function () {
     if (badge) {
-      badge.remove();
+      badge.abandon();
     }
   });
 });

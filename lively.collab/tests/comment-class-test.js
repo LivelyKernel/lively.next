@@ -79,7 +79,7 @@ describe('morph', function () {
 
   afterEach(async function () {
     morph.emptyComments();
-    morph.remove();
+    morph.abandon();
   });
 
   function morphHasNoComments (morph) {

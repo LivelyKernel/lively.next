@@ -106,7 +106,7 @@ describe('comment browser', function () {
   afterEach(function () {
     CommentBrowser.close();
     morph.emptyComments();
-    morph.remove();
+    morph.abandon();
   });
 });
 
@@ -138,13 +138,13 @@ describe('comment indicator', function () {
     CommentBrowser.open();
     const copiedMorph = morph.copy(true);
     expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length == indicatorCount + 1).to.be.ok;
-    copiedMorph.remove();
+    copiedMorph.abandon();
   });
 
   afterEach(function () {
     CommentBrowser.close();
     morph.emptyComments();
-    morph.remove();
+    morph.abandon();
   });
 });
 
