@@ -1456,7 +1456,7 @@ class CopyHaloItem extends HaloItem {
     const origin = t.globalBounds().topLeft();
     // the original morphs are needed so we can refocus them with a halo after copying
     const morphsToCopy = isMultiSelection ? t.selectedMorphs : [t];
-    const modified_morphsToCopy = morphsToCopy.filter(morph => !morph.isCommentIndicator).map(morph => morph.copy(true));
+    const modifiedMorphsToCopy = morphsToCopy.filter(morph => !morph.isCommentIndicator).map(morph => morph.copy(true));
     const snapshots = [];
     let html = `<!DOCTYPE html>
           <html lang="en">
@@ -1468,7 +1468,7 @@ class CopyHaloItem extends HaloItem {
 
     halo.remove(); // we do not want to copy the halo
     try {
-      for (const m of modified_morphsToCopy) {
+      for (const m of modifiedMorphsToCopy) {
         const snap = await createMorphSnapshot(m, { addPreview: false, testLoad: false });
         snap.copyMeta = { offset: m.worldPoint(pt(0, 0)).subPt(origin) };
         snapshots.push(snap);
