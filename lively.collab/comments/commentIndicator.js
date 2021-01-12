@@ -81,7 +81,12 @@ export class CommentIndicator extends Label {
     return pt(xRelative, yRelative);
   }
 
-  remove () {
+  abandon () {
+    this.hide();
+    super.abandon();
+  }
+
+  hide () {
     const referenceMorph = this.referenceMorph;
     disconnect(referenceMorph, 'onChange', this, 'referenceMoving');
     disconnect(referenceMorph, 'onOwnerChanged', this, 'connectMorphs');
