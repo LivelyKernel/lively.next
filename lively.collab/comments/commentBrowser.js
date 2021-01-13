@@ -1,9 +1,9 @@
 import { Window } from 'lively.components';
-import { VerticalLayout, HorizontalLayout, Label, Morph } from 'lively.morphic';
+import { VerticalLayout, HorizontalLayout, Morph } from 'lively.morphic';
 import { pt, Rectangle } from 'lively.graphics';
 import { resource } from 'lively.resources';
 import { connect } from 'lively.bindings';
-import { CommentMorph, Badge } from 'lively.collab';
+import { Badge } from 'lively.collab';
 import { ModeSelector } from 'lively.components/widgets.js';
 
 export class CommentBrowser extends Window {

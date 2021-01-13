@@ -1,5 +1,5 @@
 import { Morph, HorizontalLayout, Label } from 'lively.morphic';
-import { Rectangle, pt, Color } from 'lively.graphics';
+import { pt, Color } from 'lively.graphics';
 import { connect } from 'lively.bindings';
 
 export class Badge extends Morph {

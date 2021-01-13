@@ -1,7 +1,6 @@
-import { Morph, Icon, Label } from 'lively.morphic';
+import { Icon, Label } from 'lively.morphic';
 import { pt, Rectangle, Color } from 'lively.graphics';
-import { connect, disconnect, disconnectAll } from 'lively.bindings';
-import { CommentBrowser } from 'lively.collab';
+import { connect, disconnect } from 'lively.bindings';
 
 export class CommentIndicator extends Label {
   static get properties () {
