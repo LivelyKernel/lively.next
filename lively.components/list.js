@@ -1,61 +1,61 @@
-import { Morph, Text, StyleSheet, Label, Icon, morph, touchInputDevice } from "lively.morphic";
-import { pt, LinearGradient, Color, Rectangle, rect } from "lively.graphics";
-import { arr, Path, string } from "lively.lang";
-import { signal, once } from "lively.bindings";
-import { Button } from "./buttons.js";
+import { Morph, Text, StyleSheet, Label, Icon, morph, touchInputDevice } from 'lively.morphic';
+import { pt, LinearGradient, Color, Rectangle, rect } from 'lively.graphics';
+import { arr, Path, string } from 'lively.lang';
+import { signal, noUpdate, once } from 'lively.bindings';
+import { Button } from './buttons.js';
 import bowser from 'bowser';
 
-export function asItem(obj) {
+export function asItem (obj) {
   // make sure that object is of the form
   // {isListItem: true, string: STRING, value: OBJECT}
-  if (obj && obj.isListItem && typeof obj.string === "string") return obj;
-  if (!obj || !obj.isListItem) return {isListItem: true, string: String(obj), value: obj};
-  var label = obj.string || obj.label || "no item.string";
-  obj.string = !label || typeof label === "string" ? String(label) :
-    Array.isArray(label) ?
-      label.map((text, i) => i%2==0? String(text) : "").join("") :
-      String(label);
+  if (obj && obj.isListItem && typeof obj.string === 'string') return obj;
+  if (!obj || !obj.isListItem) return { isListItem: true, string: String(obj), value: obj };
+  const label = obj.string || obj.label || 'no item.string';
+  obj.string = !label || typeof label === 'string'
+    ? String(label)
+    : Array.isArray(label)
+      ? label.map((text, i) => i % 2 == 0 ? String(text) : '').join('')
+      : String(label);
   return obj;
 }
 
 export class ListItemMorph extends Label {
-
-  static get properties() {
+  static get properties () {
     return {
-      clipMode:              {defaultValue: "hidden"},
-      autofit:               {defaultValue: false},
-      isSelected:            {defaultValue: false},
-      draggable:             {defaultValue: !touchInputDevice },
+      clipMode: { defaultValue: 'hidden' },
+      autofit: { defaultValue: false },
+      isSelected: { defaultValue: false },
+      draggable: { defaultValue: !touchInputDevice },
       fill: {
         derived: true,
-        get() {
-          if (touchInputDevice && this.pressed) return Color.gray.withA(.5);
+        get () {
+          if (touchInputDevice && this.pressed) return Color.gray.withA(0.5);
           return this.isSelected ? this.selectionColor : Color.transparent;
         }
       },
-      itemIndex:             {defaultValue: undefined},
-      selectionFontColor:    {isStyleProp: true, defaultValue: Color.white},
+      itemIndex: { defaultValue: undefined },
+      selectionFontColor: { isStyleProp: true, defaultValue: Color.white },
       selectionColor: {
         type: 'ColorGradient',
         isStyleProp: true,
         defaultValue: Color.blue
       },
-      nonSelectionFontColor: {isStyleProp: true, defaultValue: Color.rgbHex("333")},
+      nonSelectionFontColor: { isStyleProp: true, defaultValue: Color.rgbHex('333') },
       fontColor: {
         derived: true,
-        get() {
+        get () {
           return this.isSelected ? this.selectionFontColor : this.nonSelectionFontColor;
         }
       }
     };
   }
 
-  displayItem(item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
-    let itemMorph = item.morph,
-        label = itemMorph ? "" : (item.label || item.string || "no item.string");
+  displayItem (item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
+    const itemMorph = item.morph;
+    const label = itemMorph ? '' : (item.label || item.string || 'no item.string');
 
-    if (item.annotation) this.valueAndAnnotation = {value: label, annotation: item.annotation};
-    else if (typeof label === "string") this.textString = label;
+    if (item.annotation) this.valueAndAnnotation = { value: label, annotation: item.annotation };
+    else if (typeof label === 'string') this.textString = label;
     else this.value = label;
 
     this.tooltip = item.tooltip || this.tooltip || this.textString;
@@ -63,7 +63,7 @@ export class ListItemMorph extends Label {
     this.position = pos;
 
     if (style) {
-      let {
+      const {
         fontFamily,
         selectionColor,
         selectionFontColor,
@@ -72,14 +72,10 @@ export class ListItemMorph extends Label {
         fontSize,
         padding
       } = style;
-      if (selectionFontColor && this.selectionFontColor !== selectionFontColor)
-        this.selectionFontColor = selectionFontColor;
-      if (nonSelectionFontColor && this.nonSelectionFontColor !== nonSelectionFontColor)
-        this.nonSelectionFontColor = nonSelectionFontColor;
-      if (selectionColor && this.selectionColor !== selectionColor)
-        this.selectionColor = selectionColor;
-      if (borderRadius && borderRadius != this.borderRadius)
-        this.borderRadius = borderRadius;
+      if (selectionFontColor && this.selectionFontColor !== selectionFontColor) { this.selectionFontColor = selectionFontColor; }
+      if (nonSelectionFontColor && this.nonSelectionFontColor !== nonSelectionFontColor) { this.nonSelectionFontColor = nonSelectionFontColor; }
+      if (selectionColor && this.selectionColor !== selectionColor) { this.selectionColor = selectionColor; }
+      if (borderRadius && borderRadius != this.borderRadius) { this.borderRadius = borderRadius; }
       if (fontSize && this.fontSize !== fontSize) this.fontSize = fontSize;
       if (fontFamily && this.fontFamily !== fontFamily) this.fontFamily = fontFamily;
       if (padding && !this.padding.equals(padding)) this.padding = padding;
@@ -91,39 +87,37 @@ export class ListItemMorph extends Label {
       // this.extent = pt(Math.max(goalWidth, this.textBounds().width), itemHeight);
       // this is faster:
       if (item.autoFit) itemMorph.width = goalWidth;
-      let width = itemMorph ? Math.max(itemMorph.width, goalWidth) : goalWidth,
-          height = itemHeight; // itemMorph ? Math.max(itemMorph.height, itemHeight) : itemHeight;
+      const width = itemMorph ? Math.max(itemMorph.width, goalWidth) : goalWidth;
+      const height = itemHeight; // itemMorph ? Math.max(itemMorph.height, itemHeight) : itemHeight;
       this.extent = pt(width, height);
     }
 
     if (itemMorph) {
-      let tfm = itemMorph.getTransform().copy();
+      const tfm = itemMorph.getTransform().copy();
       this.submorphs = [itemMorph];
       itemMorph.setTransform(tfm);
-      itemMorph.position = pt(0,0);
-    }
-    else if (this.submorphs.length) this.submorphs = [];
+      itemMorph.position = pt(0, 0);
+    } else if (this.submorphs.length) this.submorphs = [];
 
     this.isSelected = isSelected;
   }
 
-  onDragStart(evt) {
-    let list = this.owner.owner;
-    this._dragState = {sourceIsSelected: this.isSelected, source: this, itemsTouched: []};
-    if (!list.multiSelect || !list.multiSelectViaDrag)
-      list.onItemMorphDragged(evt, this);
+  onDragStart (evt) {
+    const list = this.owner.owner;
+    this._dragState = { sourceIsSelected: this.isSelected, source: this, itemsTouched: [] };
+    if (!list.multiSelect || !list.multiSelectViaDrag) { list.onItemMorphDragged(evt, this); }
   }
 
-  onMouseDown(evt) {
+  onMouseDown (evt) {
     super.onMouseDown(evt);
     this.owner.owner.clickOnItem(evt);
   }
 
-  onDrag(evt) {
-    let list = this.owner.owner;
+  onDrag (evt) {
+    const list = this.owner.owner;
     if (list.multiSelect && list.multiSelectViaDrag) {
-      let below = evt.hand.morphBeneath(evt.position),
-          {selectedIndexes, itemMorphs} = list;
+      const below = evt.hand.morphBeneath(evt.position);
+      const { selectedIndexes, itemMorphs } = list;
       if (below === this || !itemMorphs.includes(below)) return;
       if (this._dragState.sourceIsSelected && !below.isSelected) {
         arr.pushIfNotIncluded(selectedIndexes, below.itemIndex);
@@ -137,82 +131,83 @@ export class ListItemMorph extends Label {
 }
 
 class ListScroller extends Morph {
-  
-  static get properties() {
+  static get properties () {
     return {
-      name: {defaultValue: "scroller"},
-      fill: {defaultValue: Color.transparent},
-      clipMode: {defaultValue: "auto"},
+      name: { defaultValue: 'scroller' },
+      fill: { defaultValue: Color.transparent },
+      clipMode: { defaultValue: 'auto' },
       scrollbar: {
-        derived: true, readOnly: true, after: ['submorphs'],
-        get() { return this.submorphs[0]; }
+        derived: true,
+        readOnly: true,
+        after: ['submorphs'],
+        get () { return this.submorphs[0]; }
       },
       submorphs: {
-        initialize() { this.submorphs = [{name: 'scrollbar'}]; }
+        initialize () { this.submorphs = [{ name: 'scrollbar' }]; }
       }
-    }
+    };
   }
 
-  onScroll(evt) { 
+  onScroll (evt) {
     return this.owner.update();
   }
-  
-  onMouseDown(evt) {
-    let scrollY = this.scroll.y;
+
+  onMouseDown (evt) {
+    const scrollY = this.scroll.y;
     if (touchInputDevice) {
-      let item = this.owner.itemForClick(evt);
+      const item = this.owner.itemForClick(evt);
       if (!item) return;
       item.pressed = true;
       item.makeDirty();
       setTimeout(() => {
-         item.pressed = false;
-         if (scrollY - this.scroll.y != 0) return;
-         return this.owner.clickOnItem(evt);
-      }, 300); 
+        item.pressed = false;
+        if (scrollY - this.scroll.y != 0) return;
+        return this.owner.clickOnItem(evt);
+      }, 300);
       return;
-    } 
+    }
     return this.owner.clickOnItem(evt);
   }
 }
 
-var listCommands = [
+const listCommands = [
   {
-    name: "page up",
+    name: 'page up',
     exec: (list) => {
-      var index = list.selectedIndex,
-          newIndex = Math.max(0, index - Math.round(list.height / list.itemHeight));
+      const index = list.selectedIndex;
+      const newIndex = Math.max(0, index - Math.round(list.height / list.itemHeight));
       list.gotoIndex(newIndex);
       return true;
     }
   },
 
   {
-    name: "page down",
+    name: 'page down',
     exec: (list) => {
-      var index = list.selectedIndex,
-          newIndex = Math.min(list.items.length-1, index + Math.round(list.height / list.itemHeight));
+      const index = list.selectedIndex;
+      const newIndex = Math.min(list.items.length - 1, index + Math.round(list.height / list.itemHeight));
       list.gotoIndex(newIndex);
       return true;
     }
   },
 
   {
-    name: "goto first item",
+    name: 'goto first item',
     exec: (list) => { list.gotoIndex(0); return true; }
   },
 
   {
-    name: "goto last item",
-    exec: (list) => { list.gotoIndex(list.items.length-1); return true; }
+    name: 'goto last item',
+    exec: (list) => { list.gotoIndex(list.items.length - 1); return true; }
   },
 
   {
-    name: "arrow up",
+    name: 'arrow up',
     exec: (list) => { list.gotoIndex(list.indexUp()); return true; }
   },
 
   {
-    name: "arrow down",
+    name: 'arrow down',
     exec: (list) => {
       list.gotoIndex(list.indexDown());
       return true;
@@ -220,16 +215,15 @@ var listCommands = [
   },
 
   {
-    name: "select up",
+    name: 'select up',
     exec: (list) => {
-      var selected = list.selectedIndexes;
-      if (!list.multiSelect || !selected.length)
-        return list.execCommand("arrow up");
+      const selected = list.selectedIndexes;
+      if (!list.multiSelect || !selected.length) { return list.execCommand('arrow up'); }
 
-      var current = selected[0];
-      if (typeof current !== "number") list.selectedIndexes = [current];
+      const current = selected[0];
+      if (typeof current !== 'number') list.selectedIndexes = [current];
       else {
-        var up = list.indexUp(current);
+        const up = list.indexUp(current);
         if (selected.includes(current) && selected.includes(up)) {
           list.selectedIndexes = selected.filter(ea => ea !== current);
         } else {
@@ -241,14 +235,13 @@ var listCommands = [
   },
 
   {
-    name: "select down",
+    name: 'select down',
     exec: (list) => {
-      var selected = list.selectedIndexes;
-      if (!list.multiSelect || !selected.length)
-        return list.execCommand("arrow down");
+      const selected = list.selectedIndexes;
+      if (!list.multiSelect || !selected.length) { return list.execCommand('arrow down'); }
 
-      var current = selected[0],
-          down = list.indexDown(current);
+      const current = selected[0];
+      const down = list.indexDown(current);
       if (selected.includes(current) && selected.includes(down)) {
         list.selectedIndexes = selected.filter(ea => ea !== current);
       } else {
@@ -259,21 +252,21 @@ var listCommands = [
   },
 
   {
-    name: "select all",
+    name: 'select all',
     exec: (list) => {
-      list.selectedIndexes = arr.range(list.items.length-1, 0);
+      list.selectedIndexes = arr.range(list.items.length - 1, 0);
       list.scrollIndexIntoView(list.selectedIndexes[0]);
       return true;
     }
   },
 
   {
-    name: "select via filter",
+    name: 'select via filter',
     exec: async (list) => {
-      var preselect = list.selectedIndex || 0;
-      var {selected} = await list.world().filterableListPrompt(
-        "Select item", list.items,
-        {preselect, requester: list.getWindow() || list, itemPadding: Rectangle.inset(0,2), multiSelect: true});
+      const preselect = list.selectedIndex || 0;
+      const { selected } = await list.world().filterableListPrompt(
+        'Select item', list.items,
+        { preselect, requester: list.getWindow() || list, itemPadding: Rectangle.inset(0, 2), multiSelect: true });
       if (selected.length) {
         if (list.multiSelect) list.selections = selected;
         else list.selection = selected[0];
@@ -285,13 +278,13 @@ var listCommands = [
   },
 
   {
-    name: "realign top-bottom-center",
+    name: 'realign top-bottom-center',
     exec: list => {
       if (!list.selection) return;
-      var {padding, selectedIndex: idx, itemHeight, scroll: {x: scrollX, y: scrollY}} = list,
-          pos = pt(0, idx*itemHeight),
-          offsetX = 0, offsetY = 0,
-          h = list.height - itemHeight - padding.top() - padding.bottom();
+      let { padding, selectedIndex: idx, itemHeight, scroll: { x: scrollX, y: scrollY } } = list;
+      const pos = pt(0, idx * itemHeight);
+      const offsetX = 0; const offsetY = 0;
+      const h = list.height - itemHeight - padding.top() - padding.bottom();
       if (Math.abs(pos.y - scrollY) < 2) {
         scrollY = pos.y - h;
       } else if (Math.abs(pos.y - scrollY - h * 0.5) < 2) {
@@ -305,29 +298,29 @@ var listCommands = [
   },
 
   {
-    name: "print contents in text window",
+    name: 'print contents in text window',
     exec: list => {
-      var title = "items of " + list.name,
-          content = list.items.map(item => {
-            if (typeof item === "string") return item;
-            var {string, label, annotation} = item,
-                result = "";
+      const title = 'items of ' + list.name;
+      const content = list.items.map(item => {
+        if (typeof item === 'string') return item;
+        const { string, label, annotation } = item;
+        let result = '';
 
-            if (label) {
-              if (typeof label === "string") result += label;
-              else result += label.map((text, i) => i%2==0? text: "").join("");
-            } else if (string) result += string;
+        if (label) {
+          if (typeof label === 'string') result += label;
+          else result += label.map((text, i) => i % 2 == 0 ? text : '').join('');
+        } else if (string) result += string;
 
-            if (annotation) {
-              result += " ";
-              if (typeof annotation === "string") result += annotation;
-              else result += annotation[0];
-            }
-            return result;
-          }).join("\n");
+        if (annotation) {
+          result += ' ';
+          if (typeof annotation === 'string') result += annotation;
+          else result += annotation[0];
+        }
+        return result;
+      }).join('\n');
 
-      return list.world().execCommand("open text window",
-        {title, content, name: title, fontFamily: "Monaco, monospace"});
+      return list.world().execCommand('open text window',
+        { title, content, name: title, fontFamily: 'Monaco, monospace' });
     }
   }
 ];
@@ -880,25 +873,22 @@ export class List extends Morph {
   get commands () { return listCommands; }
 }
 
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import { connect } from "lively.bindings";
+import { connect } from 'lively.bindings';
 
 export class FilterableList extends Morph {
-
-  static get properties() {
-
+  static get properties () {
     return {
 
-      fill: {defaultValue: Color.transparent},
-      borderWidth: {defaultValue: 1},
-      updateSelectionsAfterFilter: {defaultValue: false},
+      fill: { defaultValue: Color.transparent },
+      borderWidth: { defaultValue: 1 },
+      updateSelectionsAfterFilter: { defaultValue: false },
 
       theme: {
         after: ['styleClasses', 'listMorph'],
         defaultValue: 'default',
-        set(val) {
+        set (val) {
           this.removeStyleClass(this.theme);
           this.listMorph.removeStyleClass(this.theme);
           this.addStyleClass(val);
@@ -908,17 +898,17 @@ export class FilterableList extends Morph {
       },
 
       submorphs: {
-        initialize() {
-          let input = Text.makeInputLine({
-            name: "input",
+        initialize () {
+          const input = Text.makeInputLine({
+            name: 'input',
             highlightWhenFocused: false,
             fixedHeight: false,
             autofit: false
           });
           this.submorphs = [
             input,
-            new morph({name: 'padding', fill: Color.transparent}),
-            new List({name: "list", items: [], clipMode: "auto"})
+            new morph({ name: 'padding', fill: Color.transparent }),
+            new List({ name: 'list', items: [], clipMode: 'auto' })
           ];
           // rms 24.5.17 in order to ensure that the list correctly conforms to
           //   global style sheets that become active once list is opened in world
@@ -929,25 +919,32 @@ export class FilterableList extends Morph {
       },
 
       paddingMorph: {
-        derived: true, readOnly: true, after: ['submorphs'],
-        get() { return this.getSubmorphNamed('padding'); }
+        derived: true,
+        readOnly: true,
+        after: ['submorphs'],
+        get () { return this.getSubmorphNamed('padding'); }
       },
 
       listMorph: {
-        derived: true, readOnly: true, after: ["submorphs"],
-        get() { return this.getSubmorphNamed("list"); },
+        derived: true,
+        readOnly: true,
+        after: ['submorphs'],
+        get () { return this.getSubmorphNamed('list'); }
       },
 
       inputMorph: {
-        derived: true, readOnly: true, after: ["submorphs"],
-        get() { return this.getSubmorphNamed("input"); },
+        derived: true,
+        readOnly: true,
+        after: ['submorphs'],
+        get () { return this.getSubmorphNamed('input'); }
       },
 
       fontFamily: {
         isStyleProp: true,
-        derived: true, after: ["submorphs"],
-        get() { return this.listMorph.fontFamily; },
-        set(val) {
+        derived: true,
+        after: ['submorphs'],
+        get () { return this.listMorph.fontFamily; },
+        set (val) {
           this.listMorph.fontFamily = val;
           this.inputMorph.fontFamily = val;
         }
@@ -955,9 +952,10 @@ export class FilterableList extends Morph {
 
       padding: {
         isStyleProp: true,
-        derived: true, after: ["submorphs"],
-        get() { return this.listMorph.padding; },
-        set(val) {
+        derived: true,
+        after: ['submorphs'],
+        get () { return this.listMorph.padding; },
+        set (val) {
           this.listMorph.padding = val;
           this.inputMorph.padding = val;
         }
@@ -965,114 +963,125 @@ export class FilterableList extends Morph {
 
       fontSize: {
         isStyleProp: true,
-        group: "styling",
-        derived: true, after: ["submorphs"],
-        get() { return this.listMorph.fontSize; },
-        set(val) {
+        group: 'styling',
+        derived: true,
+        after: ['submorphs'],
+        get () { return this.listMorph.fontSize; },
+        set (val) {
           this.listMorph.fontSize = val;
         }
       },
 
       itemPadding: {
         isStyleProp: true,
-        derived: true, after: ["submorphs"],
-        get() { return this.listMorph.itemPadding; },
-        set(val) { this.listMorph.itemPadding = val; }
+        derived: true,
+        after: ['submorphs'],
+        get () { return this.listMorph.itemPadding; },
+        set (val) { this.listMorph.itemPadding = val; }
       },
 
       inputPadding: {
         isStyleProp: true,
-        derived: true, after: ["submorphs", "padding"],
-        get() { return this.inputMorph.padding; },
-        set(val) { this.inputMorph.padding = val; }
+        derived: true,
+        after: ['submorphs', 'padding'],
+        get () { return this.inputMorph.padding; },
+        set (val) { this.inputMorph.padding = val; }
       },
 
       input: {
-        derived: true, after: ["submorphs"], defaultValue: "",
-        get() { return this.inputMorph.input; },
-        set(val) { this.inputMorph.input = val; }
+        derived: true,
+        after: ['submorphs'],
+        defaultValue: '',
+        get () { return this.inputMorph.input; },
+        set (val) { this.inputMorph.input = val; }
       },
 
       historyId: {
-        derived: true, after: ["submorphs"], defaultValue: null,
-        get() { return this.inputMorph.historyId; },
-        set(val) { this.inputMorph.historyId = val; }
+        derived: true,
+        after: ['submorphs'],
+        defaultValue: null,
+        get () { return this.inputMorph.historyId; },
+        set (val) { this.inputMorph.historyId = val; }
       },
 
       multiSelect: {
-        derived: true, after: ["submorphs"],
-        get() { return this.listMorph.multiSelect; },
-        set(multiSelect) { this.listMorph.multiSelect = multiSelect; }
+        derived: true,
+        after: ['submorphs'],
+        get () { return this.listMorph.multiSelect; },
+        set (multiSelect) { this.listMorph.multiSelect = multiSelect; }
       },
 
       items: {
-        after: ["submorphs", "fuzzy", "fuzzySortFunction", "fuzzyFilterFunction"],
+        after: ['submorphs', 'fuzzy', 'fuzzySortFunction', 'fuzzyFilterFunction'],
         defaultValue: [],
-        set(items) {
-          this.setProperty("items", items.map(asItem));
+        set (items) {
+          this.setProperty('items', items.map(asItem));
           this.updateFilter();
         }
       },
 
       visibleItems: {
-        derived: true, after: ["submorphs"],
-        get() { return this.listMorph.items; }
+        derived: true,
+        after: ['submorphs'],
+        get () { return this.listMorph.items; }
       },
 
       selection: {
-        derived: true, after: ["submorphs"],
-        get() { return this.listMorph.selection; },
-        set(x) { this.listMorph.selection = x; }
+        derived: true,
+        after: ['submorphs'],
+        get () { return this.listMorph.selection; },
+        set (x) { this.listMorph.selection = x; }
       },
 
       selectedIndex: {
-        derived: true, after: ["submorphs"],
-        get() { return this.listMorph.selectedIndex; },
-        set(x) { this.listMorph.selectedIndex = x; }
+        derived: true,
+        after: ['submorphs'],
+        get () { return this.listMorph.selectedIndex; },
+        set (x) { this.listMorph.selectedIndex = x; }
       },
 
       selectedIndexes: {
-        derived: true, after: ["submorphs"],
-        get() { return this.listMorph.selectedIndexes; },
-        set(x) { this.listMorph.selectedIndexes = x; }
+        derived: true,
+        after: ['submorphs'],
+        get () { return this.listMorph.selectedIndexes; },
+        set (x) { this.listMorph.selectedIndexes = x; }
       },
 
       selectedItems: {
-        derived: true, after: ["submorphs"],
-        get() { return this.listMorph.selectedItems; },
-        set(x) { this.listMorph.selectedItems = x; }
+        derived: true,
+        after: ['submorphs'],
+        get () { return this.listMorph.selectedItems; },
+        set (x) { this.listMorph.selectedItems = x; }
       },
 
       selections: {
-        derived: true, after: ["submorphs"],
-        get() { return this.listMorph.selections; },
-        set(x) { this.listMorph.selections = x; }
+        derived: true,
+        after: ['submorphs'],
+        get () { return this.listMorph.selections; },
+        set (x) { this.listMorph.selections = x; }
       },
 
       fuzzy: {
-        derived: true, after: ["filterFunction", "sortFunction"],
-        set(fuzzy) {
+        derived: true,
+        after: ['filterFunction', 'sortFunction'],
+        set (fuzzy) {
           // fuzzy => bool or prop;
-          this.setProperty("fuzzy", fuzzy);
+          this.setProperty('fuzzy', fuzzy);
           if (!fuzzy) {
-            if (this.sortFunction === this.fuzzySortFunction)
-              this.sortFunction = null;
-            if (this.filterFunction === this.fuzzyFilterFunction)
-              this.filterFunction = this.defaultFilterFunction;
-          } else  {
+            if (this.sortFunction === this.fuzzySortFunction) { this.sortFunction = null; }
+            if (this.filterFunction === this.fuzzyFilterFunction) { this.filterFunction = this.defaultFilterFunction; }
+          } else {
             if (!this.sortFunction) this.sortFunction = this.fuzzySortFunction;
-            if (this.filterFunction == this.defaultFilterFunction)
-              this.filterFunction = this.fuzzyFilterFunction;
+            if (this.filterFunction == this.defaultFilterFunction) { this.filterFunction = this.fuzzyFilterFunction; }
           }
         }
       },
 
       filterFunction: {
-        get() {
-          let filterFunction = this.getProperty("filterFunction");
+        get () {
+          let filterFunction = this.getProperty('filterFunction');
           if (!filterFunction) return this.defaultFilterFunction;
-          if (typeof filterFunction === "string")
-            filterFunction = eval(`(${filterFunction})`);
+          if (typeof filterFunction === 'string') { filterFunction = eval(`(${filterFunction})`); }
           return filterFunction;
         }
       },
@@ -1081,22 +1090,22 @@ export class FilterableList extends Morph {
 
       defaultFilterFunction: {
         readOnly: true,
-        get() {
-          return this._defaultFilterFunction
-              || (this._defaultFilterFunction = (parsedInput, item) =>
+        get () {
+          return this._defaultFilterFunction ||
+              (this._defaultFilterFunction = (parsedInput, item) =>
                 parsedInput.lowercasedTokens.every(token =>
                   item.string.toLowerCase().includes(token)));
         }
       },
 
       fuzzySortFunction: {
-        get() {
-          return this._fuzzySortFunction
-              || (this._fuzzySortFunction = (parsedInput, item) => {
-                var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
+        get () {
+          return this._fuzzySortFunction ||
+              (this._fuzzySortFunction = (parsedInput, item) => {
+                const prop = typeof this.fuzzy === 'string' ? this.fuzzy : 'string';
                 // preioritize those completions that are close to the input
-                var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
-                var base = 0;
+                const fuzzyValue = String(Path(prop).get(item)).toLowerCase();
+                let base = 0;
                 parsedInput.lowercasedTokens.forEach(t => {
                   if (fuzzyValue.startsWith(t)) base -= 10;
                   else if (fuzzyValue.includes(t)) base -= 5;
@@ -1108,14 +1117,14 @@ export class FilterableList extends Morph {
       },
 
       fuzzyFilterFunction: {
-        get() {
-          return this._fuzzyFilterFunction
-              || (this._fuzzyFilterFunction = (parsedInput, item) => {
-                var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
-                var tokens = parsedInput.lowercasedTokens;
+        get () {
+          return this._fuzzyFilterFunction ||
+              (this._fuzzyFilterFunction = (parsedInput, item) => {
+                const prop = typeof this.fuzzy === 'string' ? this.fuzzy : 'string';
+                const tokens = parsedInput.lowercasedTokens;
                 if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
                 // "fuzzy" match against item.string or another prop of item
-                var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
+                const fuzzyValue = String(Path(prop).get(item)).toLowerCase();
                 return arr.sum(parsedInput.lowercasedTokens.map(token =>
                   string.levenshtein(fuzzyValue, token))) <= 3;
               });
@@ -1123,38 +1132,37 @@ export class FilterableList extends Morph {
       },
 
       selectedAction: {
-        get() { return this.getProperty("selectedAction") || "default"; }
+        get () { return this.getProperty('selectedAction') || 'default'; }
       },
 
       actions: {}
     };
-
   }
 
-  constructor(props = {}) {
+  constructor (props = {}) {
     if (!props.bounds && !props.extent) props.extent = pt(400, 360);
     super(props);
-    connect(this.inputMorph, "inputChanged", this, "updateFilter");
-    connect(this.listMorph, "selection", this, "selectionChanged");
-    connect(this.listMorph, "onItemMorphDoubleClicked", this, "acceptInput");
+    connect(this.inputMorph, 'inputChanged', this, 'updateFilter');
+    connect(this.listMorph, 'selection', this, 'selectionChanged');
+    connect(this.listMorph, 'onItemMorphDoubleClicked', this, 'acceptInput');
     this.updateFilter();
     connect(this, 'extent', this, 'relayout');
   }
 
-  resetConnections() {
-    let cs = this.attributeConnections;
+  resetConnections () {
+    const cs = this.attributeConnections;
     if (!cs) return;
-    let props = ["accepted", "canceled", "remove"];
+    const props = ['accepted', 'canceled', 'remove'];
     cs.filter(c => props.includes(c.sourceAttrName) && c.targetObj !== this)
       .forEach(c => c.disconnect());
   }
 
-  get isList() { return true; }
+  get isList () { return true; }
 
-  relayout() {
-    let {listMorph, inputMorph, paddingMorph, borderWidth: offset} = this;
+  relayout () {
+    const { listMorph, inputMorph, paddingMorph, borderWidth: offset } = this;
     inputMorph.topLeft = pt(offset, offset);
-    inputMorph.width = listMorph.width = this.width - 2*offset;
+    inputMorph.width = listMorph.width = this.width - 2 * offset;
     if (paddingMorph) {
       paddingMorph.topLeft = inputMorph.bottomLeft;
     }
@@ -1162,134 +1170,134 @@ export class FilterableList extends Morph {
     listMorph.height = this.height - listMorph.top - offset;
   }
 
-  focus() { this.get("input").focus(); }
+  focus () { this.get('input').focus(); }
 
-  selectionChanged(sel) { signal(this, "selection", sel); }
+  selectionChanged (sel) { signal(this, 'selection', sel); }
 
-  scrollSelectionIntoView() { return this.listMorph.scrollSelectionIntoView(); }
+  scrollSelectionIntoView () { return this.listMorph.scrollSelectionIntoView(); }
 
-  parseInput() {
-    var filterText = this.get("input").textString,
+  parseInput () {
+    const filterText = this.get('input').textString;
 
-        // parser that allows escapes
-        parsed = Array.from(filterText).reduce(((state, char) => {
-          // filterText = "foo bar\\ x"
-          if (char === "\\" && !state.escaped) {
-            state.escaped = true;
-            return state;
-          }
+    // parser that allows escapes
+    const parsed = Array.from(filterText).reduce((state, char) => {
+      // filterText = "foo bar\\ x"
+      if (char === '\\' && !state.escaped) {
+        state.escaped = true;
+        return state;
+      }
 
-          if (char === " " && !state.escaped) {
-            if (!state.spaceSeen && state.current) {
-              state.tokens.push(state.current);
-              state.current = "";
-            }
-            state.spaceSeen = true;
-          } else {
-            state.spaceSeen = false;
-            state.current += char;
-          }
-          state.escaped = false;
-          return state;
-        }), {tokens: [], current: "", escaped: false, spaceSeen: false});
+      if (char === ' ' && !state.escaped) {
+        if (!state.spaceSeen && state.current) {
+          state.tokens.push(state.current);
+          state.current = '';
+        }
+        state.spaceSeen = true;
+      } else {
+        state.spaceSeen = false;
+        state.current += char;
+      }
+      state.escaped = false;
+      return state;
+    }, { tokens: [], current: '', escaped: false, spaceSeen: false });
     parsed.current && parsed.tokens.push(parsed.current);
-    var lowercasedTokens = parsed.tokens.map(ea => ea.toLowerCase());
-    return {tokens: parsed.tokens, lowercasedTokens, input: filterText};
+    const lowercasedTokens = parsed.tokens.map(ea => ea.toLowerCase());
+    return { tokens: parsed.tokens, lowercasedTokens, input: filterText };
   }
 
-  updateFilter() {
-    var parsedInput = this.parseInput(),
-        filterFunction = this.filterFunction,
-        sortFunction = this.sortFunction,
-        filteredItems = this.items.filter(item => filterFunction.call(this, parsedInput, item));
+  updateFilter () {
+    const parsedInput = this.parseInput();
+    const filterFunction = this.filterFunction;
+    const sortFunction = this.sortFunction;
+    let filteredItems = this.items.filter(item => filterFunction.call(this, parsedInput, item));
 
-    if (sortFunction)
-      filteredItems = arr.sortBy(filteredItems, ea => sortFunction.call(this, parsedInput, ea));
+    if (sortFunction) { filteredItems = arr.sortBy(filteredItems, ea => sortFunction.call(this, parsedInput, ea)); }
 
-    var list = this.listMorph,
-        newSelectedIndexes = this.updateSelectionsAfterFilter ?
-          list.selectedIndexes.map(i => filteredItems.indexOf(list.items[i])).filter(i => i !== -1) :
-          list.selectedIndexes;
+    const list = this.listMorph;
+    const newSelectedIndexes = this.updateSelectionsAfterFilter
+      ? list.selectedIndexes.map(i => filteredItems.indexOf(list.items[i])).filter(i => i !== -1)
+      : list.selectedIndexes;
 
     list.items = filteredItems;
     list.selectedIndexes = newSelectedIndexes.length ? newSelectedIndexes : filteredItems.length ? [0] : [];
     this.scrollSelectionIntoView();
 
-    signal(this, "filterChanged", {parsedInput, items: list.items});
+    signal(this, 'filterChanged', { parsedInput, items: list.items });
   }
 
-  acceptInput() {
-    var list = this.listMorph;
-    this.get("input").acceptInput();
-    var result = {
+  acceptInput () {
+    const list = this.listMorph;
+    this.get('input').acceptInput();
+    const result = {
       filtered: this.items,
       selected: list.selections,
       action: this.selectedAction,
-      status: "accepted",
+      status: 'accepted'
     };
-    signal(this, "accepted", result);
+    signal(this, 'accepted', result);
     return result;
   }
 
-  get keybindings() {
+  get keybindings () {
     return [
-      {keys: "Up|Ctrl-P",                    command: "arrow up"},
-      {keys: "Down|Ctrl-N",                  command: "arrow down"},
-      {keys: "Shift-Up",                     command: "select up"},
-      {keys: "Shift-Down",                   command: "select down"},
-      {keys: "Alt-V|PageUp",                 command: "page up"},
-      {keys: "Ctrl-V|PageDown",              command: "page down"},
-      {keys: "Alt-Shift-,",                  command: "goto first item"},
-      {keys: "Alt-Shift-.",                  command: "goto last item"},
-      {keys: "Enter",                        command: "accept input"},
-      {keys: "Escape|Ctrl-G",                command: "cancel"},
-      {keys: "Tab",                          command: "choose action"},
+      { keys: 'Up|Ctrl-P', command: 'arrow up' },
+      { keys: 'Down|Ctrl-N', command: 'arrow down' },
+      { keys: 'Shift-Up', command: 'select up' },
+      { keys: 'Shift-Down', command: 'select down' },
+      { keys: 'Alt-V|PageUp', command: 'page up' },
+      { keys: 'Ctrl-V|PageDown', command: 'page down' },
+      { keys: 'Alt-Shift-,', command: 'goto first item' },
+      { keys: 'Alt-Shift-.', command: 'goto last item' },
+      { keys: 'Enter', command: 'accept input' },
+      { keys: 'Escape|Ctrl-G', command: 'cancel' },
+      { keys: 'Tab', command: 'choose action' },
       ...arr.range(0, 8).map(n => {
         return {
-          keys: "Alt-" + (n+1),
-          command: {command: "choose action and accept input", args: {actionNo: n}}};
+          keys: 'Alt-' + (n + 1),
+          command: { command: 'choose action and accept input', args: { actionNo: n } }
+        };
       })
     ].concat(super.keybindings);
   }
 
-  get commands()  {
+  get commands () {
     return super.commands.concat([
       {
-        name: "accept input",
+        name: 'accept input',
         exec: (morph) => { this.acceptInput(); return true; }
       },
 
       {
-        name: "cancel",
+        name: 'cancel',
         exec: (morph) => {
-          signal(morph, "canceled");
+          signal(morph, 'canceled');
           return true;
         }
       },
 
       {
-        name: "choose action and accept input",
+        name: 'choose action and accept input',
         exec: (flist, args = {}) => {
-          let {actionNo = 0} = args;
+          const { actionNo = 0 } = args;
           flist.selectedAction = (flist.actions || [])[actionNo];
-          return flist.execCommand("accept input");
+          return flist.execCommand('accept input');
         }
       },
 
       {
-        name: "choose action",
+        name: 'choose action',
         exec: async (morph) => {
           if (!morph.actions) return true;
 
-          let similarStyle = {...morph.style, extent: morph.extent};
-          let chooser = new FilterableList(similarStyle);
+          const similarStyle = { ...morph.style, extent: morph.extent };
+          const chooser = new FilterableList(similarStyle);
           chooser.openInWorld(morph.globalPosition);
           chooser.items = morph.actions;
           let preselect = morph.actions.indexOf(morph.selectedAction);
           if (preselect === -1) preselect = 0;
           chooser.selectedIndex = preselect;
           connect(chooser, 'accepted', morph, 'selectedAction', {
-            converter: function(result) {
+            converter: function (result) {
               this.targetObj.focus();
               this.disconnect();
               this.sourceObj.remove();
@@ -1297,7 +1305,7 @@ export class FilterableList extends Morph {
             }
           });
           connect(chooser, 'canceled', morph, 'selectedAction', {
-            converter: function(result) {
+            converter: function (result) {
               this.targetObj.focus();
               this.disconnect();
               this.sourceObj.remove();
@@ -1311,74 +1319,80 @@ export class FilterableList extends Morph {
       },
 
       ...listCommands.map(cmd =>
-        ({...cmd, exec: (morph, opts, count) => cmd.exec(this.listMorph, opts, count)}))
+        ({ ...cmd, exec: (morph, opts, count) => cmd.exec(this.listMorph, opts, count) }))
     ]);
   }
-
 }
 
-
 export class DropDownList extends Button {
-
   // new DropDownList({selection: 1, items: [1,2,3,4]}).openInWorld()
 
-  static get properties() {
+  static get properties () {
     return {
 
-      padding:      {defaultValue: Rectangle.inset(3,2)},
-      listHeight:   {defaultValue: 100},
+      padding: { defaultValue: Rectangle.inset(3, 2) },
+      listHeight: { defaultValue: 100 },
 
       listAlign: {
         type: 'Enum',
         values: ['bottom', 'top'],
-        defaultValue: "bottom"
+        defaultValue: 'bottom'
       },
 
       openListInWorld: { defaultValue: false },
 
       listMorph: {
-        after: ["labelMorph"],
-        get() {
-          let list = this.getProperty("listMorph");
+        after: ['labelMorph'],
+        get () {
+          let list = this.getProperty('listMorph');
           if (list) return list;
-          list = new List({name: "dropDownList"});
-          this.setProperty("listMorph", list);
+          list = new List({ name: 'dropDownList' });
+          this.setProperty('listMorph', list);
           return list;
         }
       },
-      
-      items: {
-        derived: true, after: ["listMorph"],
-        get() { return this.listMorph.items; },
-        set(value) { this.listMorph.items = value; }
-      },
 
+      items: {
+        derived: true,
+        after: ['listMorph'],
+        get () { return this.listMorph.items; },
+        set (value) {
+          const updateSelection = this.items.find(item => item.value == this.selection);
+          this.listMorph.items = value;
+          if (updateSelection) {
+            noUpdate(() => {
+              this.selection = this.items[0].value;
+            });
+          }
+        }
+      },
       selection: {
-        after: ["listMorph", 'items'], derived: true,
-        get() {
+        after: ['listMorph', 'items'],
+        derived: true,
+        get () {
           return this.listMorph.selection;
         },
-        set(value) {
-          let {listAlign, listMorph} = this;
+        set (value) {
+          const { listAlign, listMorph } = this;
 
           if (!value) {
             listMorph.selection = null;
-            this.label = "";
-
+            this.label = '';
           } else {
-            let {items} = listMorph,
-                item = listMorph.find(value);
-            if (!item && typeof value === "string") {
+            const { items } = listMorph;
+            let item = listMorph.find(value);
+            if (!item && typeof value === 'string') {
               item = items.find(ea => ea.string === value);
             }
             if (!item) return;
 
             let label = item.label || [item.string, null];
             label = [
-              ...label, " ", null,
+              ...label, ' ', null,
               ...Icon.textAttribute(
-                "caret-" + (listAlign === "bottom" ?
-                  "down" : "up"))
+                'caret-' + (listAlign === 'bottom'
+                  ? 'down'
+                  : 'up'))
             ];
             if (label[5]) {
               label[5].paddingRight = '0px';
@@ -1389,50 +1403,49 @@ export class DropDownList extends Button {
 
             listMorph.selectedIndex = items.indexOf(item);
           }
-          signal(this, "selection", listMorph.selection);
+          signal(this, 'selection', listMorph.selection);
         }
       }
 
     };
-
   }
 
-  fitLabelMorph() {
+  fitLabelMorph () {
     // do not fit!
   }
-  
-  constructor(props) {
+
+  constructor (props) {
     super(props);
-    connect(this, "fire", this, "toggleList");
+    connect(this, 'fire', this, 'toggleList');
   }
 
-  onLoad() {
+  onLoad () {
     if (!this.listMorph.selection) this.listMorph.selection = this.labelMorph.value[0];
   }
 
-  isListVisible() { return !!this.listMorph.world(); }
+  isListVisible () { return !!this.listMorph.world(); }
 
-  removeWhenFocusLost(evt) {
+  removeWhenFocusLost (evt) {
     setTimeout(() => {
-      let list = this.listMorph,
-          focused = this.world() && this.world().focusedMorph;
-      if (list !== focused && focused !== this
-          && list.world()
-          && !list.withAllSubmorphsDetect(m => m == focused)) {
+      const list = this.listMorph;
+      const focused = this.world() && this.world().focusedMorph;
+      if (list !== focused && focused !== this &&
+          list.world() &&
+          !list.withAllSubmorphsDetect(m => m == focused)) {
         list.fadeOut(200);
       } else once(touchInputDevice ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
     }, 100);
   }
 
-  async toggleList() {
-    var list = this.listMorph, bounds;
+  async toggleList () {
+    const list = this.listMorph; let bounds;
     if (this.isListVisible()) {
-      signal(this, "deactivated");
+      signal(this, 'deactivated');
       this.selection = list.selection;
       list.epiMorph = false;
       list.remove();
     } else {
-      signal(this, "activated");
+      signal(this, 'activated');
       if (this.openListInWorld) {
         list.openInWorld();
         list.epiMorph = true;
@@ -1443,9 +1456,9 @@ export class DropDownList extends Button {
         bounds = this.innerBounds();
         this.addMorph(list);
       }
-      let totalItemHeight = (list.items.length * list.itemHeight) + list.padding.top() + list.padding.bottom();
+      const totalItemHeight = (list.items.length * list.itemHeight) + list.padding.top() + list.padding.bottom();
       list.extent = pt(this.width, Math.min(this.listHeight, totalItemHeight));
-      if (this.listAlign === "top") {
+      if (this.listAlign === 'top') {
         list.bottomLeft = bounds.topLeft();
       } else {
         list.topLeft = bounds.bottomLeft();
@@ -1459,10 +1472,10 @@ export class DropDownList extends Button {
     }
   }
 
-  get commands() {
+  get commands () {
     return [
       {
-        name: "accept",
+        name: 'accept',
         exec: () => {
           if (this.isListVisible()) this.toggleList();
           return true;
@@ -1470,7 +1483,7 @@ export class DropDownList extends Button {
       },
 
       {
-        name: "cancel",
+        name: 'cancel',
         exec: () => {
           if (this.isListVisible()) this.listMorph.remove();
           return true;
@@ -1479,136 +1492,131 @@ export class DropDownList extends Button {
     ].concat(super.commands);
   }
 
-  get keybindings() {
+  get keybindings () {
     return super.keybindings.concat([
-      {keys: "Enter", command: "accept"},
-      {keys: "Escape|Ctrl-G", command: "cancel"}
+      { keys: 'Enter', command: 'accept' },
+      { keys: 'Escape|Ctrl-G', command: 'cancel' }
     ]);
   }
-
 }
 
 export class InteractiveItem extends ListItemMorph {
-  static get properties() {
+  static get properties () {
     return {
       draggable: {
-        defaultValue: touchInputDevice ? false : true 
+        defaultValue: !touchInputDevice
       },
       item: {
         derived: true,
-        get() {
+        get () {
           return this.list.items[this.itemIndex];
         }
       },
       list: {
         drived: true,
-        get() {
+        get () {
           return this.owner.owner;
         }
       },
       isListItem: {
-        get() {
-          return true
+        get () {
+          return true;
         }
       }
-    }
+    };
   }
 
-  fit() {
+  fit () {
     // resize the target according to the style
   }
 
-  onHaloGrabover(active) {
+  onHaloGrabover (active) {
     this.list.showDropPreviewFor(this, active);
   }
 
-  async onDrop(evt) {
-     // insert a morph item in my place, or if I receive a label morph,
-     // just a vanilla label
-     if (this.item.isPreview) {
-       let wrappedMorph = evt.hand.grabbedMorphs[0];
-       super.onDrop(evt);
-       await this.list.whenRendered();
-       this.list.addItemAt({
-         morph: wrappedMorph,
-         isListItem: true
-       }, this.itemIndex);
-       this.list.clearPreviews();
-     }
+  async onDrop (evt) {
+    // insert a morph item in my place, or if I receive a label morph,
+    // just a vanilla label
+    if (this.item.isPreview) {
+      const wrappedMorph = evt.hand.grabbedMorphs[0];
+      super.onDrop(evt);
+      await this.list.whenRendered();
+      this.list.addItemAt({
+        morph: wrappedMorph,
+        isListItem: true
+      }, this.itemIndex);
+      this.list.clearPreviews();
+    }
   }
 
-  select() {
+  select () {
     this.list.selectedIndex = this.itemIndex;
     this.item.morph.focus();
   }
 
-  onMouseDown(evt) {
-    if (!touchInputDevice)
-      this.select();
-    else
-      this._touchDown = Date.now();
+  onMouseDown (evt) {
+    if (!touchInputDevice) { this.select(); } else { this._touchDown = Date.now(); }
   }
 
-  onMouseUp(evt) {
+  onMouseUp (evt) {
     if (touchInputDevice && Date.now() - this._touchDown < 500) {
-       this.select();
+      this.select();
     }
   }
-  
-  displayItem(item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
+
+  displayItem (item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
     super.displayItem(item, itemIndex, goalWidth, itemHeight, pos, isSelected, style);
     if (item.morph) item.morph.selected = isSelected;
   }
 
-  onGrab(evt) {
+  onGrab (evt) {
     // fixme: on mobile this gesture needs to be triggered in a different way
     // maybe hold and wait?
-    let list = this.list;
-    let hasHaloAttached = evt.halo && evt.halo.target === this;
+    const list = this.list;
+    const hasHaloAttached = evt.halo && evt.halo.target === this;
     if (hasHaloAttached) evt.halo.detachFromTarget();
-    let copy = this.submorphs.length ? 
-         this.submorphs[0] : 
-         morph({ type: 'label', value: this.value});
+    const copy = this.submorphs.length
+      ? this.submorphs[0]
+      : morph({ type: 'label', value: this.value });
     evt.hand.grab(copy);
     copy.position = evt.hand.localize(this.globalPosition);
     if (hasHaloAttached) evt.halo.refocus(copy);
-    list.removeItem(this.list.items[this.itemIndex])
+    list.removeItem(this.list.items[this.itemIndex]);
     list.itemMorphs.forEach(m => m.remove());
     list.update();
   }
-  
 }
 
 export class MorphList extends List {
-
-  static get properties() {
+  static get properties () {
     return {
       touchInput: {
-        get() {
+        get () {
           return touchInputDevice;
         }
       },
       items: {
-        group: "list", defaultValue: [], after: ["submorphs"],
-        set(items) {
-          this.setProperty("items", items.map(asItem));
+        group: 'list',
+        defaultValue: [],
+        after: ['submorphs'],
+        set (items) {
+          this.setProperty('items', items.map(asItem));
           this.itemMorphs.forEach(m => m.remove());
           this.update();
-          if (this.attributeConnections)
-            signal(this, "values", this.values);
+          if (this.attributeConnections) { signal(this, 'values', this.values); }
         }
       }
-    }
+    };
   }
 
-  onLoad() {
+  onLoad () {
     super.onLoad();
     this.clipMode = this.touchInput ? 'auto' : 'hidden';
   }
 
-  showDropPreviewFor(itemMorph, active) {
-    let idx = itemMorph.itemIndex;
-    let hoveredItem = this.items[idx];
+  showDropPreviewFor (itemMorph, active) {
+    const idx = itemMorph.itemIndex;
+    const hoveredItem = this.items[idx];
     if (hoveredItem.isPreview && active) return;
     this.clearPreviews();
     if (!active) return;
@@ -1619,78 +1627,76 @@ export class MorphList extends List {
         reactsToPointer: false,
         acceptsDrops: false,
         width: this.width - 5,
-        height: this.itemHeight,        
-        fill: Color.orange.withA(.5)
+        height: this.itemHeight,
+        fill: Color.orange.withA(0.5)
       })
     }, idx);
-  
   }
 
-  clearPreviews() {
+  clearPreviews () {
     // remove embedded morphs that got detached
     this.items.filter(m => m.morph && m.morph.owner && !Path('morph.owner.isListItem').get(m))
       .map(async m => this.removeItem(m));
     this.items.filter(m => m.isPreview).map(p => this.removeItem(p));
     // this.items.filter(m => m.morph && Path('morph.owner.isListItem').get(m)).forEach(m => {
-    //   m.morph.position = pt(0,0); 
+    //   m.morph.position = pt(0,0);
     //   m.morph.extent = m.morph.owner.extent;
     // });
     // fixme: add a proper relayout routine that fits morphs that are added to the list
   }
-  
-  update() {
-    var items = this.items;
+
+  update () {
+    const items = this.items;
     if (!items) return; // pre-initialize
     if (!this.listItemContainer) return;
     if (this.scroller) this.scroller.visible = false;
     this.dontRecordChangesWhile(() => {
       var {
-            itemHeight,
-            itemMorphs, listItemContainer,
-            selectedIndexes,
-            extent: {x: width, y: height},
-            fontSize, fontFamily, fontColor,
-            padding, itemPadding, selectionColor,
-            selectionFontColor, nonSelectionFontColor,
-            itemBorderRadius, scrollBar
-          } = this,
-          {scroll: {x: left, y: top}} = this,
-          padding = padding || Rectangle.inset(0),
-          padTop = padding.top() , padLeft = padding.left(),
-          padBottom = padding.bottom(), padRight = padding.right(),
-          scrollOffset = top,
-          firstItemIndex = Math.max(0, Math.floor(top / itemHeight)),
-          lastItemIndex = Math.min(items.length, Math.ceil((top + height) / itemHeight)),
-          maxWidth = 0,
-          goalWidth = this.width - (padLeft + padRight);
+        itemHeight,
+        itemMorphs, listItemContainer,
+        selectedIndexes,
+        extent: { x: width, y: height },
+        fontSize, fontFamily, fontColor,
+        padding, itemPadding, selectionColor,
+        selectionFontColor, nonSelectionFontColor,
+        itemBorderRadius, scrollBar
+      } = this;
+      const { scroll: { x: left, y: top } } = this;
+      var padding = padding || Rectangle.inset(0);
+      const padTop = padding.top(); const padLeft = padding.left();
+      const padBottom = padding.bottom(); const padRight = padding.right();
+      const scrollOffset = top;
+      const firstItemIndex = Math.max(0, Math.floor(top / itemHeight));
+      const lastItemIndex = Math.min(items.length, Math.ceil((top + height) / itemHeight));
+      let maxWidth = 0;
+      const goalWidth = this.width - (padLeft + padRight);
 
       // try to keep itemIndexes in the items that were initially assigned to them
       let rest, upper, lower;
-      
+
       itemMorphs = arr.sortBy(itemMorphs, m => m.itemIndex);
       [upper, rest] = arr.partition(itemMorphs, m => m.itemIndex < firstItemIndex);
       [lower, rest] = arr.partition(rest, m => m.itemIndex > lastItemIndex);
       itemMorphs = [...lower, ...rest, ...upper];
 
-      let style = {
-        fontSize, fontFamily,
+      const style = {
+        fontSize,
+        fontFamily,
         fontColor: nonSelectionFontColor || fontColor,
-        padding: itemPadding, borderRadius: itemBorderRadius || 0,
+        padding: itemPadding,
+        borderRadius: itemBorderRadius || 0,
         selectionFontColor,
         nonSelectionFontColor,
         selectionColor
       };
 
-      if (itemMorphs.length && lastItemIndex-firstItemIndex > itemMorphs.length) {
-         if (firstItemIndex != itemMorphs[0].itemIndex)
-           arr.pushAt(itemMorphs, listItemContainer.addMorph(new InteractiveItem(style)), 0);
-         else if (lastItemIndex != arr.last(itemMorphs).itemIndex)
-           itemMorphs.push(listItemContainer.addMorph(new InteractiveItem(style)));
+      if (itemMorphs.length && lastItemIndex - firstItemIndex > itemMorphs.length) {
+        if (firstItemIndex != itemMorphs[0].itemIndex) { arr.pushAt(itemMorphs, listItemContainer.addMorph(new InteractiveItem(style)), 0); } else if (lastItemIndex != arr.last(itemMorphs).itemIndex) { itemMorphs.push(listItemContainer.addMorph(new InteractiveItem(style))); }
       }
 
-      for (var i = 0; i < lastItemIndex-firstItemIndex; i++) {
-        var itemIndex = firstItemIndex+i,
-            item = items[itemIndex];
+      for (let i = 0; i < lastItemIndex - firstItemIndex; i++) {
+        const itemIndex = firstItemIndex + i;
+        const item = items[itemIndex];
 
         if (!item) {
           // if no items to display, remove remaining itemMorphs
@@ -1713,9 +1719,9 @@ export class MorphList extends List {
 
         maxWidth = Math.max(maxWidth, itemMorph.width);
       }
-      
-      let containerExtent, scrollHeight = Math.max(padTop + padBottom + itemHeight * items.length, this.height);
-      containerExtent = pt(this.width, scrollHeight).subPt(pt(padLeft + padRight,0));
+
+      let containerExtent; const scrollHeight = Math.max(padTop + padBottom + itemHeight * items.length, this.height);
+      containerExtent = pt(this.width, scrollHeight).subPt(pt(padLeft + padRight, 0));
       listItemContainer.setBounds(pt(padLeft, padTop).extent(containerExtent));
 
       scrollBar.left = maxWidth - 10;
@@ -1725,16 +1731,16 @@ export class MorphList extends List {
     });
   }
 
-  onHoverIn(evt) {
+  onHoverIn (evt) {
     this.clipMode = 'auto';
   }
 
-  onHoverOut(evt) {
+  onHoverOut (evt) {
     if (this.touchInput) return;
     this.clipMode = 'hidden';
   }
 
-  onScroll(evt) {
+  onScroll (evt) {
     this.update();
   }
 }

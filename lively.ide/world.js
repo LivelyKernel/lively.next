@@ -45,6 +45,28 @@ import { prefetchCoreStyleguides } from 'lively.morphic/style-guide.js';
 export class LivelyWorld extends World {
   static get properties () {
     return {
+      localComponents: {
+        initialize () {
+          // this is maybe better placed inside migrations since
+          // it only serves to make old worlds pour their components
+          // into this property automatically
+          this.whenRendered().then(() => {
+            if (this.localComponents) {
+              this.localComponents.forEach(async c => {
+                if (!c.owner && c.master) {
+                  await c.master.applyIfNeeded(true);
+                  const derivedMorphs = this.withAllSubmorphsSelect(m => m.master && m.master.uses(c));
+                  derivedMorphs.forEach(m => {
+                    m.requestMasterStyling();
+                  });
+                }
+              });
+              return;
+            }
+            this.localComponents = this.withAllSubmorphsSelect(m => m.isComponent);
+          });
+        }
+      },
       hiddenComponents: {
         // declared components are exported by default
         // this property prevents some of these components to be listed in the components browser, if they themselves do not provide useful information
@@ -74,7 +96,8 @@ export class LivelyWorld extends World {
   }
 
   getListedComponents () {
-    return this.withAllSubmorphsSelect(m => m.isComponent && !this.hiddenComponents.includes(m.name));
+    const componentsInWorld = this.withAllSubmorphsSelect(m => m.isComponent && !this.hiddenComponents.includes(m.name));
+    return arr.uniq([...componentsInWorld, ...this.localComponents]);
   }
 
   activeWindow () { return this.getWindows().reverse().find(ea => ea.isActive()); }
@@ -140,24 +163,6 @@ export class LivelyWorld extends World {
       console.log(`Set global "that" to ${target}`);
     }
     this.handleShapeCreation(evt);
-  }
-
-  onLongClick (evt) {
-    const target = evt.state.prevClick.clickedOnMorph;
-    let haloTarget;
-
-    let morphsBelow = evt.world.morphsContainingPoint(evt.position);
-    let morphsBelowTarget = morphsBelow.slice(morphsBelow.indexOf(target));
-    morphsBelow = morphsBelow.filter(ea => ea.halosEnabled);
-    morphsBelowTarget = morphsBelowTarget.filter(ea => ea.halosEnabled);
-    haloTarget = morphsBelowTarget[0] || morphsBelow[0];
-
-    const removeHalo = evt.halo && !evt.targetMorphs.find(morph => morph.isHaloItem);
-    const removeLayoutHalo = evt.layoutHalo && !evt.targetMorphs.find(morph => morph.isHaloItem);
-    const addHalo = (!evt.halo || removeHalo) && haloTarget;
-    if (removeLayoutHalo) evt.layoutHalo.remove();
-    if (removeHalo) evt.halo.remove();
-    if (addHalo) { evt.stop(); this.showHaloFor(haloTarget, evt.domEvt.pointerId); }
   }
 
   onDragStart (evt) {
@@ -1366,6 +1371,10 @@ export class LivelyWorld extends World {
     }
   }
 }
+
+
+
+
 
 class SelectionElement extends Morph {
   static get properties () {

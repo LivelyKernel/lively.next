@@ -470,6 +470,12 @@ export default class Halo extends Morph {
     if (target == this) this.remove();
   }
 
+  onContextMenu (evt) {
+    Promise
+      .resolve($world.defaultMenuItems(this.target)).then(items => this.target.openMenu(items, evt))
+      .catch(err => $world.logError(err));
+  }
+
   onKeyUp (evt) {
     if (!this.changingName) { this.buttonControls.map(b => b.onKeyUp(evt)); }
   }
@@ -1358,6 +1364,8 @@ class ComponentHaloItem extends HaloItem {
       target.name = newName;
     }
     target.isComponent = toBeComponent && await this.checkForDuplicateNamesInHierarchy();
+    if (toBeComponent) arr.pushIfNotIncluded(target.world().localComponents, target);
+    else arr.remove(target.world().localComponents, target);
     if (!this.world()) target.world().showHaloFor(target); // halo got disposed
     else this.updateComponentIndicator();
   }

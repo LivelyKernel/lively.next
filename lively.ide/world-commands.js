@@ -893,7 +893,8 @@ const commands = [
     exec: async function (world) {
       const li = LoadingIndicator.open('loading component browser');
       await li.whenRendered();
-      const componentsBrowser = await resource('part://SystemDialogs/master component browser').read();
+      const componentsBrowser = world._componentsBrowser || (world._componentsBrowser = await resource('part://SystemDialogs/master component browser').read());
+      await componentsBrowser.whenRendered();
       li.remove();
       const loadedComponent = await componentsBrowser.activate();
       if (loadedComponent && !loadedComponent.world()) { loadedComponent.openInWorld(); }
