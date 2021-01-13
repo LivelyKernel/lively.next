@@ -4,7 +4,7 @@
 
 ## Comments
 
-It provides functionality to comment on any morph in a world. 
+It provides functionality to comment on any morph in the world. It provides functionality to comment on any morph in a world. Comments are objects that include a text, a timestamp, a relative morph position and the user that created it.
 
 ### Adding Comments
 
@@ -16,7 +16,7 @@ Most of the functionality of comments is available through the Comment Browser t
 
 ![Topbar with highlighted comment browser button](./img/topbar.png)
 
-The browser displays all comments currently existing in the world grouped after the morph the comment belongs to. Clicking on a comment will highlight the morph it belongs to in the world. 
+The browser displays all comments currently existing in the world grouped by the morph the comment belongs to. Clicking on a comment will highlight the morph it belongs to in the world.
 
 #### Actions on Comments
 
@@ -44,4 +44,4 @@ By clicking the "Resolve" button for a comment it can marked as such. Resolved c
 
 ### Programmatically Interacting With Comments
 
-The above described way to interact with the comments via GUI is the only supported way to interact with comments. That means programmatically interacting with them (e.g., removing comments through code) may get your world in an inconsistent state and break  things!
+The above described way to interact with the comments via GUI is the only supported way to interact with comments. That means programmatically interacting with them (e.g., removing comments through code) may get your world in an inconsistent state and break things!
