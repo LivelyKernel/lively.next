@@ -15,6 +15,10 @@ const { h } = vdom;
 export class Label extends Morph {
   static get properties () {
     return {
+      acceptsDrops: {
+        defaultValue: false
+      },
+
       fill: { defaultValue: Color.transparent },
       draggable: { defaultValue: false },
       nativeCursor: { defaultValue: 'default' },
@@ -379,7 +383,8 @@ export class Label extends Morph {
     // this.env.fontMetric.sizeFor(style, string)
     const { textAndAttributes, _cachedTextBounds } = this;
     return _cachedTextBounds || (this._cachedTextBounds = textAndAttributes.length <= 2
-      ? this.textBoundsSingleChunk() : this.textBoundsAllChunks());
+      ? this.textBoundsSingleChunk()
+      : this.textBoundsAllChunks());
   }
 
   forceRerender () {
