@@ -209,6 +209,13 @@ export class Label extends Morph {
     return Icon.makeLabel(iconName, props);
   }
 
+  onChange (change) {
+    super.onChange(change);
+    if (change.prop && change.prop.includes('borderWidth')) {
+      this.fit();
+    }
+  }
+
   constructor (props = {}) {
     const {
       fontMetric, position, rightCenter, leftCenter, topCenter,
@@ -268,7 +275,10 @@ export class Label extends Morph {
   }
 
   fit () {
-    this.extent = this.textBounds().extent();
+    this.extent = this.textBounds().extent().addXY(
+      this.borderWidthLeft + this.borderWidthRight,
+      this.borderWidthTop + this.borderWidthBottom
+    );
     if (!this.visible) {
       this._cachedTextBounds = null;
     } else this._needsFit = false;
