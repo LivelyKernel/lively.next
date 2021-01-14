@@ -1027,7 +1027,6 @@ export class LivelyWorld extends World {
 
     items.push({ isDivider: true });
     items.push(['Add comment', async () => {
-      // TODO: maybe use promise functionality instead of if else
       const commentText = await $world.prompt('Enter comment');
       if (commentText) {
         let relativePosition = pt(0, 0);
