@@ -704,10 +704,11 @@ const commands = [
       if (!format) var { a, b, format } = findFormat(a, b);
       else { a = String(a); b = String(b); }
 
-      const { default: diff } = await System.import('https://jspm.dev/diff');
-      let diffed = await diffInWindow(a, b, { fontFamily: 'monospace', ...opts, format });
+      const diff = await System.import('https://jspm.dev/diff');
 
-      return diffed;
+      let diffed;
+
+      diffed = await diffInWindow(a, b, { fontFamily: 'monospace', ...opts, format });
 
       function findFormat (a, b) {
         if (obj.isPrimitive(a) || a instanceof RegExp ||
@@ -748,6 +749,8 @@ const commands = [
 
         return textMorph;
       }
+
+      return diffed;
     }
   },
 
