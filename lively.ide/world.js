@@ -49,11 +49,13 @@ export class LivelyWorld extends World {
           // this is maybe better placed inside migrations since
           // it only serves to make old worlds pour their components
           // into this property automatically
+
           this.whenRendered().then(() => {
             if (this.localComponents) {
               this.localComponents.forEach(async c => {
-                if (!c.owner && c.master) {
-                  await c.master.applyIfNeeded(true);
+                if (!c.owner) {
+                  const unappliedSubMasters = c.withAllSubmorphsSelect(m => m.master && !m.master._appliedMaster);
+                  for (const subComponent of unappliedSubMasters) { await subComponent.master.applyIfNeeded(true); }
                   const derivedMorphs = this.withAllSubmorphsSelect(m => m.master && m.master.uses(c));
                   derivedMorphs.forEach(m => {
                     m.requestMasterStyling();
@@ -1351,10 +1353,6 @@ export class LivelyWorld extends World {
     }
   }
 }
-
-
-
-
 
 class SelectionElement extends Morph {
   static get properties () {
