@@ -2983,9 +2983,11 @@ export class Text extends Morph {
     let haloShadow = this.haloShadow || this.propertiesAndPropertySettings().properties.haloShadow.defaultValue;
     if (haloShadow && !haloShadow.equals) haloShadow = new ShadowObject(haloShadow);
     if (haloShadow && !haloShadow.equals(this.dropShadow)) this._originalShadow = this.dropShadow;
-    this.highlightWhenFocused && this.animate({
-      dropShadow: haloShadow,
-      duration: 200
+    this.withMetaDo({ metaInteraction: true }, () => {
+      this.highlightWhenFocused && this.animate({
+        dropShadow: haloShadow,
+        duration: 200
+      });
     });
   }
 
@@ -3472,3 +3474,4 @@ export class Text extends Morph {
     }
   }
 }
+
