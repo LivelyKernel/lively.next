@@ -523,6 +523,7 @@ export class List extends Morph {
       manualItemHeight: { type: 'Boolean' },
 
       itemHeight: {
+        isStyleProp: true,
         after: ['fontFamily', 'fontSize', 'itemPadding'],
         defaultValue: 10,
         set (val) {
@@ -872,6 +873,7 @@ export class List extends Morph {
 
   get commands () { return listCommands; }
 }
+
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -1339,6 +1341,8 @@ export class DropDownList extends Button {
         defaultValue: 'bottom'
       },
 
+      listOffset: { isStyleProp: true, defaultValue: pt(0, 0) },
+
       openListInWorld: { defaultValue: false },
 
       listMorph: {
@@ -1386,20 +1390,7 @@ export class DropDownList extends Button {
             }
             if (!item) return;
 
-            let label = item.label || [item.string, null];
-            label = [
-              ...label, ' ', null,
-              ...Icon.textAttribute(
-                'caret-' + (listAlign === 'bottom'
-                  ? 'down'
-                  : 'up'))
-            ];
-            if (label[5]) {
-              label[5].paddingRight = '0px';
-              label[5].textStyleClasses = ['fa', 'annotation'];
-            }
-            this.label = label;
-            this.relayout();
+            this.adjustLableFor(item);
 
             listMorph.selectedIndex = items.indexOf(item);
           }
@@ -1437,6 +1428,23 @@ export class DropDownList extends Button {
     }, 100);
   }
 
+  adjustLableFor (item) {
+    let label = item.label || [item.string, null];
+    label = [
+      ...label, ' ', null,
+      ...Icon.textAttribute(
+        'caret-' + (this.listAlign === 'bottom'
+          ? 'down'
+          : 'up'))
+    ];
+    if (label[5]) {
+      label[5].paddingRight = '0px';
+      label[5].textStyleClasses = ['fa', 'annotation'];
+    }
+    this.label = label;
+    this.relayout();
+  }
+
   async toggleList () {
     const list = this.listMorph; let bounds;
     if (this.isListVisible()) {
@@ -1463,6 +1471,7 @@ export class DropDownList extends Button {
       } else {
         list.topLeft = bounds.bottomLeft();
       }
+      list.moveBy(this.listOffset || pt(0, 0));
       once(list, 'onItemMorphClicked', this, 'toggleList');
       once(touchInputDevice ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
       await list.whenRendered();
@@ -1499,6 +1508,8 @@ export class DropDownList extends Button {
     ]);
   }
 }
+
+
 
 export class InteractiveItem extends ListItemMorph {
   static get properties () {
