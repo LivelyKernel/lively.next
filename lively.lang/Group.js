@@ -12,7 +12,8 @@ export default class Group {
     // // => {"0": [2,4,6], "1": [1,3,5]}
     const grouping = new Group();
     for (let i = 0, len = array.length; i < len; i++) {
-      const hash = hashFunc.call(context, array[i], i);
+      let hash = hashFunc.call(context, array[i], i);
+      if (Group.prototype.hasOwnProperty(hash)) hash = '_' + hash;
       if (!grouping[hash]) grouping[hash] = [];
       grouping[hash].push(array[i]);
     }
