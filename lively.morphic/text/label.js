@@ -532,6 +532,13 @@ export class Label extends Morph {
   menuItems () {
     const items = super.menuItems();
     items.unshift({ isDivider: true });
+    items.unshift(['edit label as rich text', async () => {
+      const editedAttributes = await $world.editPrompt('rich text', {
+        input: this.value,
+        resolveTextAttributes: true
+      });
+      if (editedAttributes) this.value = editedAttributes;
+    }]);
     items.unshift(['change label', () => this.interactivelyChangeLabel()]);
     items.unshift(['set Icon', () => this.interactivelySetIcon()]);
     return items;
