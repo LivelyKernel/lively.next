@@ -107,22 +107,6 @@ export class Button extends Morph {
         set (val) { this.labelMorph.textAndAttributes = val; }
       },
 
-      // icon: {
-      //   group: "button",
-      //   after: ['labelMorph'], derived: true, isStyleProp: true,
-      //   showInInspector: true,
-      //   type: "Icon", // "" -> no icon, else a valid font awesome icon code
-      //   get() { return this.label[0]; },
-      //   set(iconNameOrCode) {
-      //     try {
-      //       if (Array.isArray(iconNameOrCode)) this.label = iconNameOrCode;
-      //       else this.label = Icon.textAttribute(iconNameOrCode);
-      //     } catch (err) {
-      //       console.warn(`Button ${this}: Error assigning icon, ${err}`);
-      //     }
-      //   }
-      // },
-
       label: {
         group: 'button',
         after: ['labelMorph'],
@@ -273,12 +257,14 @@ export class Button extends Morph {
   }
 
   onHoverOut (evt) {
+    super.onHoverOut(evt);
     if (touchInputDevice) return;
     // When leaving the button without mouse up, reset appearance
     if (this.pressed && evt.isClickTarget(this)) this.pressed = null;
   }
 
   onHoverIn (evt) {
+    super.onHoverIn(evt);
     if (touchInputDevice) return;
     if (!this.deactivated && evt.isClickTarget(this)) { this.pressed = { originalFill: this.fill }; }
   }
@@ -298,6 +284,7 @@ export class Button extends Morph {
     return items;
   }
 }
+
 
 
 export class RadioButton extends Morph {
