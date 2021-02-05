@@ -440,17 +440,19 @@ export class EditPrompt extends AbstractPrompt {
 
   get maxWidth () { return this.env.world.visibleBounds().width - 20; }
 
-  build ({ label, input, historyId, useLastInput, mode, textStyle, evalEnvironment }) {
+  build ({ label, input, historyId, useLastInput, mode, textStyle, evalEnvironment, resolveTextAttributes = false }) {
     const title = this.addNamed('promptTitle', {
       type: 'text', value: label
     });
+
+    this.resolveTextAttributes = resolveTextAttributes;
 
     if (!textStyle) textStyle = {};
     if (mode && !textStyle.fontFamily) textStyle.fontFamily = 'Monaco, monospace';
 
     const inputEditor = this.addNamed('editor', { type: 'text' });
 
-    inputEditor.textString = input || '';
+    inputEditor.value = input || '';
     Object.assign(inputEditor, textStyle);
 
     inputEditor.changeEditorMode(mode).then(() => {
@@ -474,6 +476,10 @@ export class EditPrompt extends AbstractPrompt {
   }
 
   resolve (arg) {
+    if (this.resolveTextAttributes) {
+      return super.resolve(this.getSubmorphNamed('editor').textAndAttributes);
+    }
+
     const content = this.getSubmorphNamed('editor').textString.trim();
     if (this.historyId) {
       const hist = InputLine.getHistory(this.historyId);
@@ -799,7 +805,8 @@ export class EditListPrompt extends ListPrompt {
   async removeSelectedItemsFromList () {
     const list = this.get('prompt list');
     const selectAfterwards = list.selectedItems.length != 1
-      ? -1 : list.selectedIndex === 0 ? 0 : list.selectedIndex - 1;
+      ? -1
+      : list.selectedIndex === 0 ? 0 : list.selectedIndex - 1;
     list.items = arr.withoutAll(list.items, list.selectedItems);
     if (selectAfterwards < 0) list.selection = null;
     else list.selectedIndex = selectAfterwards;
