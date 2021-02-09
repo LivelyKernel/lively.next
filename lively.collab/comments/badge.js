@@ -10,7 +10,7 @@ export class Badge extends Morph {
   static get properties () {
     return {
       ui: {
-        defaultValue: { count: new Label({ name: 'badge label', fontColor: Color.rgb(253, 254, 254), position: pt(0, 0) }) }
+        defaultValue: { }
       },
       text: {
         derived: true,
@@ -20,6 +20,7 @@ export class Badge extends Morph {
 
         set (text) {
           if (!this.get('badge label')) {
+            this.ui.count = new Label({ name: 'badge label', fontColor: Color.rgb(253, 254, 254), position: pt(0, 0) });
             this.addMorph(this.ui.count);
             this.layout = new HorizontalLayout(
               { spacing: 4 });
