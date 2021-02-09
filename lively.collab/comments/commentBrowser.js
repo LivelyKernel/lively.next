@@ -1,10 +1,11 @@
-import { Window } from 'lively.components';
+
 import { VerticalLayout, HorizontalLayout, Morph } from 'lively.morphic';
 import { pt, Rectangle } from 'lively.graphics';
 import { resource } from 'lively.resources';
 import { connect } from 'lively.bindings';
 import { Badge } from 'lively.collab';
 import { ModeSelector } from 'lively.components/widgets.js';
+import { arr } from 'lively.lang';
 
 export class CommentBrowser extends Morph {
   /*
@@ -107,10 +108,6 @@ export class CommentBrowser extends Morph {
   static get properties () {
     return {
       filterContainer: {},
-      commentGroups: {},
-      resolvedCommentGroups: {},
-      wasOpenedBefore: {},
-      showsResolvedComments: {},
       filterSelector: {},
       container: {},
       commentContainer: {},
@@ -226,15 +223,15 @@ export class CommentBrowser extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   showCommentIndicators () {
     if (this.showsResolvedComments) {
-      this.resolvedCommentContainer.submorphs.forEach((commentGroup) => commentGroup.showCommentIndicators());
+      arr.invoke(this.resolvedCommentContainer.submorphs, 'showCommentIndicators');
     } else {
-      this.commentContainer.submorphs.forEach((commentGroup) => commentGroup.showCommentIndicators());
+      arr.invoke(this.commentContainer.submorphs, 'showCommentIndicators');
     }
   }
 
   hideAllCommentIndicators () {
-    this.resolvedCommentContainer.submorphs.forEach((commentGroup) => commentGroup.hideCommentIndicators());
-    this.commentContainer.submorphs.forEach((commentGroup) => commentGroup.hideCommentIndicators());
+    arr.invoke(this.resolvedCommentContainer.submorphs, 'hideCommentIndicators');
+    arr.invoke(this.commentContainer.submorphs, 'hideCommentIndicators');
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
