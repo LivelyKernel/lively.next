@@ -6,7 +6,7 @@ import { connect } from 'lively.bindings';
 import { Badge } from 'lively.collab';
 import { ModeSelector } from 'lively.components/widgets.js';
 
-export class CommentBrowser extends Window {
+export class CommentBrowser extends Morph {
   /*
   //////
   Static Methods (external interface)
@@ -28,11 +28,24 @@ export class CommentBrowser extends Window {
     if (CommentBrowser.isOpen()) return;
 
     if (!CommentBrowser.instance.wasOpenedBefore) {
-      CommentBrowser.instance.initializeAppearance();
+      CommentBrowser.instance.relayout();
       CommentBrowser.instance.wasOpenedBefore = true;
     }
-    $world.addMorph(CommentBrowser.instance);
+    CommentBrowser.openInWindow();
     CommentBrowser.instance.showCommentIndicators();
+  }
+
+  static openInWindow () {
+    const topbar = $world.getSubmorphNamed('lively top bar');
+    CommentBrowser.window = CommentBrowser.instance.openInWindow({
+      name: 'comment browser window',
+      title: 'Comment Browser'
+    });
+    CommentBrowser.window.position = pt($world.width - CommentBrowser.instance.width, topbar.height);
+    // when styling palette is opened, position comment browser to the left of it
+    if (topbar.activeSideBars.includes('Styling Palette')) {
+      CommentBrowser.window.position = CommentBrowser.window.position.addPt(pt(-topbar.stylingPalette.width, 0));
+    }
   }
 
   static isOpen () {
@@ -55,7 +68,7 @@ export class CommentBrowser extends Window {
       topbar.uncolorCommentBrowserButton();
     }
     CommentBrowser.instance.hideAllCommentIndicators();
-    CommentBrowser.instance.remove();
+    $world.get('comment browser window').remove();
   }
 
   static toggle () {
@@ -102,7 +115,13 @@ export class CommentBrowser extends Window {
       container: {},
       commentContainer: {},
       resolvedCommentContainer: {},
-      filterContainer: {}
+      filterContainer: {},
+      name: {
+        defaultValue: 'comment browser'
+      },
+      extent: {
+        defaultValue: pt(280, 800)
+      }
     };
   }
 
@@ -116,7 +135,6 @@ export class CommentBrowser extends Window {
       super();
       $world.commentBrowser = this;
 
-      this.name = 'comment browser';
       this.commentGroups = {}; // dict Morph id -> Comment group morph
       this.resolvedCommentGroups = {};
       this.wasOpenedBefore = false;
@@ -175,23 +193,6 @@ export class CommentBrowser extends Window {
     connect(this.filterSelector, 'Unresolved Comments', CommentBrowser.instance, 'toggleArchive');
     connect(this.filterSelector, 'Resolved Comments', this, 'toggleArchive');
     this.filterContainer.addMorph(this.filterSelector);
-  }
-
-  initializeAppearance () {
-    this.title = 'Comment Browser';
-
-    const topbar = $world.getSubmorphNamed('lively top bar');
-
-    this.height = $world.height - topbar.height;
-    this.width = 280; // perhaps use width of comment morph?
-    this.position = pt($world.width - this.width, topbar.height);
-
-    // when styling palette is opened, position comment browser to the left of it
-    if (topbar.activeSideBars.includes('Styling Palette')) {
-      this.position = this.position.addPt(pt(-topbar.stylingPalette.width, 0));
-    }
-
-    this.relayoutWindowControls();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -332,12 +333,10 @@ export class CommentBrowser extends Window {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // misc
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  relayoutWindowControls () {
-    super.relayoutWindowControls();
-    const headerHeight = 25;
+  relayout () {
     const filterContainerHeight = 30;
-    const filterContainerBounds = new Rectangle(0, headerHeight, this.width, filterContainerHeight);
-    const mainContainerBounds = new Rectangle(0, headerHeight + filterContainerHeight, this.width, this.height - headerHeight - filterContainerHeight);
+    const filterContainerBounds = new Rectangle(0, 0, this.width, filterContainerHeight);
+    const mainContainerBounds = new Rectangle(0, filterContainerHeight, this.width, this.height - filterContainerHeight);
     this.filterContainer.setBounds(filterContainerBounds);
     this.container.setBounds(mainContainerBounds);
   }
