@@ -57,7 +57,7 @@ export class CommentBrowser extends Morph {
   }
 
   static initializeCommentBrowser () {
-    new CommentBrowser();
+    $world.commentBrowser = new CommentBrowser();
   }
 
   static close () {
@@ -121,6 +121,25 @@ export class CommentBrowser extends Morph {
       },
       extent: {
         defaultValue: pt(280, 800)
+      },
+      submorphs: {
+        initialize () {
+          this.buildContainers();
+          this.buildFilterSelector();
+          this.buildCommentGroupMorphs();
+        }
+      },
+      commentGroups: {
+        defaultValue: {}// dict Morph id -> Comment group morph
+      },
+      resolvedCommentGroups: {
+        defaultValue: {}
+      },
+      wasOpenedBefore: {
+        defaultValue: false
+      },
+      showsResolvedComments: {
+        defaultValue: false
       }
     };
   }
@@ -130,22 +149,6 @@ export class CommentBrowser extends Morph {
   Instance Methods
   //////
   */
-  constructor () {
-    if (!CommentBrowser.instance) {
-      super();
-      $world.commentBrowser = this;
-
-      this.commentGroups = {}; // dict Morph id -> Comment group morph
-      this.resolvedCommentGroups = {};
-      this.wasOpenedBefore = false;
-      this.showsResolvedComments = false;
-
-      this.buildContainers();
-      this.buildFilterSelector();
-      this.buildCommentGroupMorphs();
-    }
-    return CommentBrowser.instance;
-  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // ui initialization
@@ -190,7 +193,7 @@ export class CommentBrowser extends Morph {
         spacing: 5
       })
     });
-    connect(this.filterSelector, 'Unresolved Comments', CommentBrowser.instance, 'toggleArchive');
+    connect(this.filterSelector, 'Unresolved Comments', this, 'toggleArchive');
     connect(this.filterSelector, 'Resolved Comments', this, 'toggleArchive');
     this.filterContainer.addMorph(this.filterSelector);
   }
