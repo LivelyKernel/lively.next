@@ -1,48 +1,45 @@
 import { Morph, HorizontalLayout, Label } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
-import { connect } from 'lively.bindings';
+import { connect, disconnect } from 'lively.bindings';
 
 export class Badge extends Morph {
   static newWithText (text) {
-    return new Badge({ textString: text });
+    return new Badge({ text: text });
   }
 
-  constructor (props = {}) {
-    super(props);
-    this.ui = {};
-    this.ui.count = new Label();
-    this.addMorph(this.ui.count);
-    this.layout = new HorizontalLayout(
-      { spacing: 4 });
+  static get properties () {
+    return {
+      ui: {
+        defaultValue: { count: new Label({ name: 'badge label', fontColor: Color.rgb(253, 254, 254), position: pt(0, 0) }) }
+      },
+      text: {
+        derived: true,
+        get () {
+          return this.ui.count.textString;
+        },
 
-    this.ui.count.textString = '42';
-    if (props.textString) {
-      this.ui.count.textString = props.textString;
-    }
-    this.fill = Color.rgb(149, 165, 166);
-    if (props.color) {
-      this.fill = props.color;
-    }
-
-    this.borderRadius = 12;
-
-    this.isLayoutable = false;
-
-    this.ui.count.fontColor = Color.rgb(253, 254, 254);
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // text
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  getText () {
-    return this.ui.count.textString;
-  }
-
-  setText (text) {
-    this.ui.count.textString = text;
-    if (this.morph) {
-      this.alignWithMorph();
-    }
+        set (text) {
+          if (!this.get('badge label')) {
+            this.addMorph(this.ui.count);
+            this.layout = new HorizontalLayout(
+              { spacing: 4 });
+          }
+          this.ui.count.textString = text;
+          if (this.morph) {
+            this.alignWithMorph();
+          }
+        }
+      },
+      isLayoutable: {
+        defaultValue: false
+      },
+      borderRadius: {
+        defaultValue: 12
+      },
+      fill: {
+        defaultValue: Color.rgb(149, 165, 166)
+      }
+    };
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -59,12 +56,22 @@ export class Badge extends Morph {
     connect(morph, 'onChange', this, 'alignWithMorph');
   }
 
+  removeFromMorph () {
+    disconnect(this.morph, 'onChange', this, 'alignWithMorph');
+    this.morph = undefined;
+  }
+
+  abandon () {
+    this.removeFromMorph();
+    super.abandon();
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // counter
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   incrementCounter (value = 1) {
-    const newValue = Number(this.ui.count.textString) + value;
-    this.setText(newValue);
+    const newValue = Number.parseInt(this.text) + value;
+    this.text = newValue;
   }
 
   decrementCounter (value = 1) {

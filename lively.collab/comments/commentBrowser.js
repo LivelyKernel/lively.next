@@ -317,10 +317,10 @@ export class CommentBrowser extends Window {
     let badge = $world.get('lively top bar').get('comment browser button').get('comment count badge');
     if (badge) {
       if (count <= 0) {
-        badge.remove();
+        badge.abandon();
         return;
       }
-      badge.setText(count);
+      badge.text = count;
     } else if (count > 0) {
       badge = Badge.newWithText(count);
       badge.name = 'comment count badge';
