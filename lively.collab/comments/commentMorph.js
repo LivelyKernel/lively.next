@@ -56,7 +56,7 @@ export class CommentGroupMorph extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   async addCommentMorph (comment) {
     const commentMorph = await resource('part://CommentComponents/comment morph master').read();
-    commentMorph.initialize(comment, this.referenceMorph);
+    await commentMorph.initialize(comment, this.referenceMorph);
     this.commentMorphs.push(commentMorph);
     this.updateCommentContainerSubmorphs();
     this.updateCommentCountLabel();
@@ -151,23 +151,22 @@ export class CommentMorph extends Morph {
           this.setProperty('referenceMorph', referenceMorph);
         }
       },
-      commentIndicator: {}
+      commentIndicator: {},
+      isInEditMode: {
+        defaultValue: false
+      }
     };
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // initialization
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  constructor () {
-    super();
-    this.isInEditMode = false;
-  }
 
-  initialize (comment, referenceMorph) {
+  async initialize (comment, referenceMorph) {
     this.comment = comment;
     this.referenceMorph = referenceMorph;
     this.initializeUI();
-    this.initializeCommentIndicator();
+    await this.initializeCommentIndicator();
     this.setDate();
     this.setUser();
   }
@@ -290,9 +289,10 @@ export class CommentMorph extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // comment indicators
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  initializeCommentIndicator () {
-    this.commentIndicator = new CommentIndicator(this, this.comment, this.referenceMorph);
-    this.commentIndicator.fontColor = this.comment.isResolved() ? Color.rgb(174, 214, 241) : Color.rgb(241, 196, 15);
+  async initializeCommentIndicator () {
+    this.commentIndicator = await resource('part://CommentComponents/comment indicator master').read();
+    await this.commentIndicator.initialize(this, this.comment, this.referenceMorph);
+    // this.commentIndicator.fontColor = this.comment.isResolved() ? Color.rgb(174, 214, 241) : Color.rgb(241, 196, 15);
     if (CommentBrowser.isOpen() && (this.comment.isResolved() == CommentBrowser.showsArchive())) {
       this.showCommentIndicator();
     }

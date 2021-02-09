@@ -19,13 +19,12 @@ export class CommentIndicator extends Label {
     };
   }
 
-  constructor (commentMorph, comment, referenceMorph) {
-    super();
+  initialize (commentMorph, comment, referenceMorph) {
     this.referenceMorph = referenceMorph;
     this.commentMorph = commentMorph;
     this.comment = comment;
-    this.initStyling();
 
+    this.updateStyling();
     this._referenceMorphMoving = false;
     this.alignWithMorph();
 
@@ -39,14 +38,7 @@ export class CommentIndicator extends Label {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // ui
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  initStyling () {
-    Icon.setIcon(this, 'comment-alt');
-    this.fontSize = 15;
-    this.padding = new Rectangle(0, 2, 4, 0);
-    this.width = this.fontSize + this.padding.width;
-    this.height = this.fontSize + this.padding.y;
-    this.isLayoutable = false;
-    this.nativeCursor = 'pointer';
+  updateStyling () {
     this.fontColor = this.comment.isResolved() ? Color.rgb(174, 214, 241) : Color.rgb(241, 196, 15);
     this.tooltip = this.comment.isResolved() ? 'A comment was placed here and resolved' : 'A comment was placed here';
   }
@@ -84,7 +76,7 @@ export class CommentIndicator extends Label {
   onChange (change) {
     super.onChange(change);
     const { prop, value } = change;
-    if (!this._referenceMorphMoving && prop === 'position') {
+    if (this.referenceMorph && !this._referenceMorphMoving && prop === 'position') {
       // Unsolved problem: Don't move the comment's reference point when the referenced morph moves (not a problem for now)
       this.comment.position = this.getRelativePositionInMorph();
     }
