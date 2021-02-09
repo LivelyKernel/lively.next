@@ -844,8 +844,8 @@ class NameHaloItem extends HaloItem {
     if (!this.halo.target) return [];
     return this.halo.target.isMorphSelection
       ? this.halo.target.selectedMorphs.map(target => {
-          return { target, highlightOnHover: true };
-        })
+        return { target, highlightOnHover: true };
+      })
       : [{ target: this.halo.target, highlightOnHover: false }];
   }
 
@@ -1389,13 +1389,13 @@ class CopyHaloItem extends HaloItem {
     connect(hand, 'update', this, 'update');
     if (isMultiSelection) {
       // FIXME! haaaaack
-      const copies = target.selectedMorphs.map(ea => {
+      const copies = arr.compact(target.selectedMorphs.map(ea => {
         if (ea.canBeCopied()) {
           const copy = ea.copy(true);
           world.addMorph(copy);
           return copy;
         }
-      }).filter(copy => copy);
+      }));
 
       const positions = copies.map(ea => { ea.name = findNewName(target, ea.name); return ea.position; });
       copies[0].undoStart('copy-halo');
