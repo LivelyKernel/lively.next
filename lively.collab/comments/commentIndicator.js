@@ -6,20 +6,16 @@ export class CommentIndicator extends Label {
   static get properties () {
     return {
       comment: {
-        defaultValue: undefined,
         set (comment) {
           this.setProperty('comment', comment);
         }
       },
       referenceMorph: {
-        defaultValue: undefined,
         set (referenceMorph) {
           this.setProperty('referenceMorph', referenceMorph);
         }
       },
-      commentMorph: {
-        defaultValue: undefined
-      }
+      commentMorph: {}
     };
   }
 

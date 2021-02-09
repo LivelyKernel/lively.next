@@ -9,7 +9,6 @@ export class CommentGroupMorph extends Morph {
   static get properties () {
     return {
       referenceMorph: {
-        defaultValue: undefined,
         set (referenceMorph) {
           this.setProperty('referenceMorph', referenceMorph);
         }
@@ -143,20 +142,16 @@ export class CommentMorph extends Morph {
   static get properties () {
     return {
       comment: {
-        defaultValue: undefined,
         set (comment) {
           this.setProperty('comment', comment);
         }
       },
       referenceMorph: {
-        defaultValue: undefined,
         set (referenceMorph) {
           this.setProperty('referenceMorph', referenceMorph);
         }
       },
-      commentIndicator: {
-        defaultValue: undefined
-      }
+      commentIndicator: {}
     };
   }
 

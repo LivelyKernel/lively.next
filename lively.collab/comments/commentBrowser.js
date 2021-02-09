@@ -93,9 +93,7 @@ export class CommentBrowser extends Window {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   static get properties () {
     return {
-      filterContainer: {
-        defaultValue: undefined
-      },
+      filterContainer: {},
       commentGroups: {},
       resolvedCommentGroups: {},
       wasOpenedBefore: {},
