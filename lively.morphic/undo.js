@@ -65,7 +65,8 @@ class Undo {
   toString () {
     const { name, changes, no } = this;
     const isRecording = this.isRecording();
-    const changesString = !changes.length ? 'no changes'
+    const changesString = !changes.length
+      ? 'no changes'
       : '\n  ' + changes.map(({ selector, args, prop, value, target }) =>
         selector
           ? `${target}.${selector}(${args.map(printArg)})`
@@ -159,6 +160,13 @@ export class UndoManager {
     return undo;
   }
 
+  removeLatestUndo () {
+    this.undoStop();
+    const undo = this.undos.pop();
+    arr.remove(this.grouping.current, undo);
+    return undo;
+  }
+
   undo () {
     this.undoStop();
     const undo = this.undos.pop();
@@ -181,7 +189,8 @@ export class UndoManager {
   }
 
   toString () {
-    const undosPrinted = this.undos.length === 0 ? ''
+    const undosPrinted = this.undos.length === 0
+      ? ''
       : `\n  ${this.undos.length > 20 ? '...\n  ' : ''}${this.undos.slice(-20).join('\n  ')}`;
     const undoInProgress = !!this.undoInProgress;
     return `UndoManager(${this.undos.length} undos, ${this.redos.length} redos, ${undoInProgress ? ', UNDO IN PROGRESS' : ''}${undosPrinted})`;
