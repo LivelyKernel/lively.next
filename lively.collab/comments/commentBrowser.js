@@ -127,11 +127,12 @@ export class CommentBrowser extends Morph {
         }
       },
       commentGroups: {
-        defaultValue: {}// dict Morph id -> Comment group morph
+        defaultValue: new WeakMap()
       },
       resolvedCommentGroups: {
-        defaultValue: {}
+        defaultValue: new WeakMap()
       },
+      savedWeakMaps: {},
       wasOpenedBefore: {
         defaultValue: false
       },
@@ -246,23 +247,23 @@ export class CommentBrowser extends Morph {
       commentContainer = this.resolvedCommentContainer;
     }
 
-    if (!(morph.id in groupDictionary)) {
+    if (!groupDictionary.has(morph)) {
       const commentGroupMorph = await resource('part://CommentComponents/comment group morph master').read();
       await commentGroupMorph.initialize(morph);
-      groupDictionary[morph.id] = commentGroupMorph;
+      groupDictionary.set(morph, commentGroupMorph);
       commentContainer.addMorph(commentGroupMorph);
     }
-    await groupDictionary[morph.id].addCommentMorph(comment);
+    await groupDictionary.get(morph).addCommentMorph(comment);
     this.updateCommentCountBadge();
   }
 
   async removeCommentForMorph (comment, morph) {
     let groupDictionary = this.commentGroups;
-    if (this.resolvedCommentGroups[morph.id] &&
-       this.resolvedCommentGroups[morph.id].hasCommentMorphForComment(comment)) {
+    if (this.resolvedCommentGroups.get(morph) &&
+       this.resolvedCommentGroups.get(morph).hasCommentMorphForComment(comment)) {
       groupDictionary = this.resolvedCommentGroups;
     }
-    const groupOfCommentMorph = groupDictionary[morph.id];
+    const groupOfCommentMorph = groupDictionary.get(morph);
     await groupOfCommentMorph.removeCommentMorphFor(comment);
     if (groupOfCommentMorph.getCommentCount() === 0) {
       this.removeCommentGroup(groupOfCommentMorph, groupDictionary);
@@ -271,8 +272,8 @@ export class CommentBrowser extends Morph {
   }
 
   updateName (morph) {
-    this.resolvedCommentGroups[morph.id] && this.resolvedCommentGroups[morph.id].updateName();
-    this.commentGroups[morph.id] && this.commentGroups[morph.id].updateName();
+    this.resolvedCommentGroups.get(morph) && this.resolvedCommentGroups.get(morph).updateName();
+    this.commentGroups.get(morph) && this.commentGroups.get(morph).updateName();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -292,7 +293,7 @@ export class CommentBrowser extends Morph {
 
   removeCommentGroup (group, groupDictionary) {
     group.hideCommentIndicators();
-    delete groupDictionary[group.referenceMorph.id];
+    groupDictionary.delete(group.referenceMorph);
     group.remove();
   }
 
@@ -339,6 +340,37 @@ export class CommentBrowser extends Morph {
     const mainContainerBounds = new Rectangle(0, filterContainerHeight, this.width, this.height - filterContainerHeight);
     this.filterContainer.setBounds(filterContainerBounds);
     this.container.setBounds(mainContainerBounds);
+  }
+
+  saveCommentGroupMaps () {
+    this.savedWeakMaps = { commentGroups: [], resolvedCommentGroups: [] };
+    $world.withAllSubmorphsDo(morph => {
+      if (morph.comments.length > 0) {
+        if (this.commentGroups.has(morph)) {
+          this.savedWeakMaps.commentGroups.push([morph, this.commentGroups.get(morph)]);
+        }
+        if (this.resolvedCommentGroups.has(morph)) {
+          this.savedWeakMaps.resolvedCommentGroups.push([morph, this.resolvedCommentGroups.get(morph)]);
+        }
+      }
+    });
+  }
+
+  loadCommentGroupMaps () {
+    this.commentGroups = new WeakMap();
+    this.savedWeakMaps.commentGroups.forEach((morph, commentGroupMorph) => this.commentGroups.set(morph, commentGroupMorph));
+    this.resolvedCommentGroups = new WeakMap();
+    this.savedWeakMaps.resolvedCommentGroups.forEach((morph, commentGroupMorph) => this.resolvedCommentGroups.set(morph, commentGroupMorph));
+  }
+
+  __after_deserialize__ (snapshot, ref, pool) {
+    super.__after_deserialize__(snapshot, ref, pool);
+    this.loadCommentGroupMaps();
+  }
+
+  __additionally_serialize__ (snapshot, ref, pool, addFn) {
+    super.__additionally_serialize__(snapshot, ref, pool, addFn);
+    this.saveCommentGroupMaps();
   }
 
   close () {
