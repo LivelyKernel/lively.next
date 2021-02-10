@@ -239,6 +239,7 @@ export class CommentBrowser extends Morph {
   // comment creation and update
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   async addCommentForMorph (comment, morph) {
+    console.log(`Adding a comment ${comment.text} from morph ${morph.name}`);
     let groupDictionary = this.commentGroups;
     let commentContainer = this.commentContainer;
 
@@ -343,20 +344,21 @@ export class CommentBrowser extends Morph {
   }
 
   saveCommentGroupMaps () {
-    this.savedWeakMaps = { commentGroups: [], resolvedCommentGroups: [] };
+    const savedWeakMaps = { commentGroups: [], resolvedCommentGroups: [] };
     $world.withAllSubmorphsDo(morph => {
       if (morph.comments.length > 0) {
         if (this.commentGroups.has(morph)) {
-          this.savedWeakMaps.commentGroups.push([morph, this.commentGroups.get(morph)]);
+          savedWeakMaps.commentGroups.push([morph, this.commentGroups.get(morph)]);
         }
         if (this.resolvedCommentGroups.has(morph)) {
-          this.savedWeakMaps.resolvedCommentGroups.push([morph, this.resolvedCommentGroups.get(morph)]);
+          savedWeakMaps.resolvedCommentGroups.push([morph, this.resolvedCommentGroups.get(morph)]);
         }
       }
     });
+    return savedWeakMaps;
   }
 
-  loadCommentGroupMaps () {
+  loadCommentGroupMaps (snapshot) {
     this.commentGroups = new WeakMap();
     this.savedWeakMaps.commentGroups.forEach((morph, commentGroupMorph) => this.commentGroups.set(morph, commentGroupMorph));
     this.resolvedCommentGroups = new WeakMap();
@@ -365,12 +367,12 @@ export class CommentBrowser extends Morph {
 
   __after_deserialize__ (snapshot, ref, pool) {
     super.__after_deserialize__(snapshot, ref, pool);
-    this.loadCommentGroupMaps();
+    this.loadCommentGroupMaps(snapshot);
   }
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
+    snapshot.props.savedWeakMaps = this.saveCommentGroupMaps();
     super.__additionally_serialize__(snapshot, ref, pool, addFn);
-    this.saveCommentGroupMaps();
   }
 
   close () {
