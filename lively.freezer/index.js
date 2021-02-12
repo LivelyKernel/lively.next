@@ -1425,7 +1425,12 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
             }
           }
         });
-        System.import("./__root_module__.js").then(m => { System.trace = false; m.renderFrozenPart(); });
+        window.frozenPart = {
+          renderFrozenPart: (domNode, baseURL) => {
+            if (baseURL) System.config( { baseURL });
+            System.import("__root_module__.js").then(m => { System.trace = false; m.renderFrozenPart(domNode); });
+          }
+        }
       `;
       // concat all snippets and compile them on server
       // insert hint strings
@@ -1509,8 +1514,8 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
 export async function bundlePart (partOrSnapshot, { exclude: excludedModules = [], compress = false, output = 'es2019', requester, useTerser }) {
   const snapshot = partOrSnapshot.isMorph
     ? await createMorphSnapshot(partOrSnapshot, {
-        frozenSnapshot: true
-      })
+      frozenSnapshot: true
+    })
     : partOrSnapshot;
   transpileAttributeConnections(snapshot);
   const bundle = new LivelyRollup({ excludedModules, snapshot, jspm: true, useTerser });
