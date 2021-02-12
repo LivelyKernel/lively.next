@@ -78,7 +78,7 @@ export class Renderer {
     return promise.waitFor(3000, () => this.domNode.ownerDocument)
       .then(doc => Promise.all([
         addOrChangeCSSDeclaration('lively-morphic-css', defaultCSS, doc),
-        addOrChangeLinkedCSS('lively-ibm-plex', config.css.ibmPlex),
+        addOrChangeLinkedCSS('lively-ibm-plex', config.css.ibmPlex), // those are many files, is there a smaller one?
         addOrChangeLinkedCSS('lively-font-awesome', config.css.fontAwesome, doc, false),
         addOrChangeLinkedCSS('lively-font-inconsolata', config.css.inconsolata, doc, false)]));
   }
@@ -156,6 +156,14 @@ export class Renderer {
   renderAsFixed (morph) {
     const tree = this.render(morph);
     if (!morph.isHTMLMorph) { tree.properties.style.position = 'fixed'; }
+    // in case this world is embedded, we need to add the offset of the world morph here
+    if (this.worldMorph.isEmbedded) {
+      const bbx = this.domNode.getBoundingClientRect();
+      const { top, left } = tree.properties.style;
+      tree.properties.style.top = Number.parseInt(top) + bbx.y + 'px';
+      tree.properties.style.left = Number.parseInt(left) + bbx.x + 'px';
+      // fixme: what about transform?
+    }
     return tree;
   }
 
@@ -225,14 +233,18 @@ export class Renderer {
         position: 'absolute',
         left: `${oX - (morph.isPath ? 0 : borderWidthLeft)}px`,
         top: `${oY - (morph.isPath ? 0 : borderWidthTop)}px`,
-        ...(morph.isPolygon ? {
-          height: '100%',
-          width: '100%',
-          overflow: morph.clipMode,
-          ...(morph.clipMode !== 'visible' ? {
-            [navigator.userAgent.includes('AppleWebKit') ? '-webkit-clip-path' : 'clip-path']: `url(#clipPath${morph.id})`
-          } : {})
-        } : {})
+        ...(morph.isPolygon
+          ? {
+              height: '100%',
+              width: '100%',
+              overflow: morph.clipMode,
+              ...(morph.clipMode !== 'visible'
+                ? {
+                    [navigator.userAgent.includes('AppleWebKit') ? '-webkit-clip-path' : 'clip-path']: `url(#clipPath${morph.id})`
+                  }
+                : {})
+            }
+          : {})
       }
     }, renderedSubmorphs);
   }
@@ -455,14 +467,15 @@ export class Renderer {
       if (isCtrl) r = Math.max(3, Math.ceil(r / 2));
       return isCtrl
         ? h('circle', {
-            namespace: svgNs,
-            style: { fill: 'white', 'stroke-width': 2, stroke: color },
-            attributes: { class: cssClass, cx, cy, r }
-          }) : h('circle', {
-            namespace: svgNs,
-            style: { fill: color },
-            attributes: { class: cssClass, cx, cy, r }
-          });
+          namespace: svgNs,
+          style: { fill: 'white', 'stroke-width': 2, stroke: color },
+          attributes: { class: cssClass, cx, cy, r }
+        })
+        : h('circle', {
+          namespace: svgNs,
+          style: { fill: color },
+          attributes: { class: cssClass, cx, cy, r }
+        });
     }
   }
 
@@ -581,9 +594,11 @@ export class Renderer {
       const previewBounds = tfm.transformRectToRect(
         morph.extent.extentAsRectangle());
       const offsetX = previewBounds.width < goalWidth
-        ? (goalWidth - previewBounds.width) / 2 : 0;
+        ? (goalWidth - previewBounds.width) / 2
+        : 0;
       const offsetY = previewBounds.height < goalHeight
-        ? (goalHeight - previewBounds.height) / 2 : 0;
+        ? (goalHeight - previewBounds.height) / 2
+        : 0;
       tfm = tfm.preConcatenate(new Transform(pt(offsetX, offsetY)));
     }
 
@@ -609,3 +624,4 @@ export class Renderer {
     return asNode ? node : node.outerHTML;
   }
 }
+
