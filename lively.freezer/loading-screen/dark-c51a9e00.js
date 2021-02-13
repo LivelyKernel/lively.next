@@ -1,1 +1,0 @@
-System.register(["./__root_module__-cc486366.js","kld-intersections","./user-ui-58858c09.js","./index-9493f22b.js"],function(){return{setters:[function(){},function(){},function(){},function(){}],execute:function(){}}});
