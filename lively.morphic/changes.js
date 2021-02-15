@@ -137,10 +137,14 @@ export class ChangeManager {
   doWithValueChangeMeta (meta, morph, doFn) {
     this.defaultMeta = meta;
     this.metaStack.push(meta);
-    const res = doFn(morph);
-    this.metaStack.pop();
-    this.defaultMeta = arr.last(this.metaStack) || {};
-    return res;
+    let res;
+    try {
+      res = doFn(morph);
+    } finally {
+      this.metaStack.pop();
+      this.defaultMeta = arr.last(this.metaStack) || {};
+      return res;
+    }
   }
 
   addValueChange (morph, prop, value, meta) {
