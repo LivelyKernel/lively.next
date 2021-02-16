@@ -166,7 +166,7 @@ export class CommentMorph extends Morph {
     this.comment = comment;
     this.referenceMorph = referenceMorph;
     this.initializeUI();
-    await this.initializeCommentIndicator();
+    await this.showCommentIndicator();
     this.setDate();
     this.setUser();
   }
@@ -289,21 +289,19 @@ export class CommentMorph extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // comment indicators
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  async initializeCommentIndicator () {
+  async showCommentIndicator () {
     this.commentIndicator = await resource('part://CommentComponents/comment indicator master').read();
     await this.commentIndicator.initialize(this, this.comment, this.referenceMorph);
-    // this.commentIndicator.fontColor = this.comment.isResolved() ? Color.rgb(174, 214, 241) : Color.rgb(241, 196, 15);
     if (CommentBrowser.isOpen() && (this.comment.isResolved() == CommentBrowser.showsArchive())) {
-      this.showCommentIndicator();
+      this.commentIndicator.display();
     }
   }
 
-  showCommentIndicator () {
-    this.commentIndicator.display();
-  }
-
   hideCommentIndicator () {
-    this.commentIndicator.abandon();
+    if (this.commentIndicator) {
+      this.commentIndicator.abandon();
+    }
+    this.commentIndicator = undefined;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
