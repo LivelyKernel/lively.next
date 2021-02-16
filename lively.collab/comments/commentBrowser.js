@@ -50,6 +50,7 @@ export class CommentBrowser extends Morph {
       return;
     }
     $world.commentBrowser = new CommentBrowser();
+    CommentBrowser.instance.initializeSubmorphs();
   }
 
   static close () {
@@ -108,13 +109,6 @@ export class CommentBrowser extends Morph {
       },
       extent: {
         defaultValue: pt(280, 800)
-      },
-      submorphs: {
-        initialize () {
-          this.buildContainers();
-          this.buildFilterSelector();
-          this.buildCommentGroupMorphs();
-        }
       },
       commentGroups: {
         defaultValue: new WeakMap()
@@ -200,6 +194,12 @@ export class CommentBrowser extends Morph {
     if (topbar.activeSideBars.includes('Styling Palette')) {
       this.window.position = this.window.position.addPt(pt(-topbar.stylingPalette.width, 0));
     }
+  }
+
+  initializeSubmorphs () {
+    this.buildContainers();
+    this.buildFilterSelector();
+    this.buildCommentGroupMorphs();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -364,7 +364,7 @@ export class CommentBrowser extends Morph {
     return savedWeakMaps;
   }
 
-  loadCommentGroupMaps (snapshot) {
+  loadCommentGroupMaps () {
     this.commentGroups = new WeakMap();
     this.savedWeakMaps.commentGroups.forEach((morph, commentGroupMorph) => this.commentGroups.set(morph, commentGroupMorph));
     this.resolvedCommentGroups = new WeakMap();
@@ -373,7 +373,7 @@ export class CommentBrowser extends Morph {
 
   __after_deserialize__ (snapshot, ref, pool) {
     super.__after_deserialize__(snapshot, ref, pool);
-    this.loadCommentGroupMaps(snapshot);
+    this.loadCommentGroupMaps();
   }
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {

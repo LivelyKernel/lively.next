@@ -20,6 +20,7 @@ export class CommentIndicator extends Label {
   }
 
   initialize (commentMorph, comment, referenceMorph) {
+    debugger;
     this.referenceMorph = referenceMorph;
     this.commentMorph = commentMorph;
     this.comment = comment;
