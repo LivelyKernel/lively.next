@@ -5,6 +5,7 @@ import MorphicDB from './morphicdb/db.js';
 import { ObjectPool, normalizeOptions } from 'lively.serializer2';
 import { deserializeMorph, loadPackagesAndModulesOfSnapshot } from './serialization.js';
 import { subscribeOnce } from 'lively.notifications/index.js';
+import { once } from 'lively.bindings';
 
 /*
 
@@ -54,6 +55,7 @@ function getProjectName (world) {
 export class ComponentPolicy {
   static for (derivedMorph, args) {
     let newPolicy;
+
     if (args.constructor === ComponentPolicy) newPolicy = args;
     else newPolicy = new this(derivedMorph, args);
 
@@ -211,27 +213,41 @@ export class ComponentPolicy {
 
   applyIfNeeded (needsUpdate = false, animationConfig = false) {
     if (animationConfig) this._animationConfig = animationConfig;
+    const target = this.derivedMorph;
+    if (!target.env.world) {
+      // wait for env to be installed
+      once(target.env, 'world', () => {
+        this.applyIfNeeded(needsUpdate, animationConfig);
+      });
+      return;
+    }
+    if (!target.env.eventDispatcher) {
+      // wait for env to be installed fully
+      once(target.env, 'eventDispatcher', () => {
+        this.applyIfNeeded(needsUpdate, animationConfig);
+      });
+      return;
+    }
     if (this._hasUnresolvedMaster) {
-      this._originalOpacity = this.derivedMorph.opacity;
+      this._originalOpacity = target.opacity;
       // fixme: this may still be too late if applyIfNeeded is triggered at render time
       // hide the component until it is applied
-      this.derivedMorph.withMetaDo({ metaInteraction: true }, () => {
+      target.withMetaDo({ metaInteraction: true }, () => {
         if (!animationConfig &&
-            ![this.derivedMorph, ...this.derivedMorph.ownerChain()].find(m => m.isComponent)) {
-          this.derivedMorph.opacity = 0;
+            ![target, ...target.ownerChain()].find(m => m.isComponent)) {
+          target.opacity = 0;
         }
       });
       // this clogs up the main thread. Instead use a callback from the master.
       return this._hasUnresolvedMaster.then(() => {
         this.applyIfNeeded(needsUpdate);
-        this.derivedMorph.withMetaDo({ metaInteraction: true }, () => {
-          this.derivedMorph.opacity = this._originalOpacity;
+        target.withMetaDo({ metaInteraction: true }, () => {
+          target.opacity = this._originalOpacity;
         });
         delete this._originalOpacity;
         delete this._capturedExtents;
       });
     }
-    const target = this.derivedMorph;
     const master = this.determineMaster(target);
     if (master && this._appliedMaster != master) needsUpdate = true;
     if (master && needsUpdate) {
@@ -759,7 +775,7 @@ class StyleGuideResource extends Resource {
             }).url;
           } else resolveSnapshot(null); // total fail
         }
-        await loadPackagesAndModulesOfSnapshot(snapshot); // this takes a looong time... and loads a bunch of stuff we often never need
+        await loadPackagesAndModulesOfSnapshot(snapshot); // this takes a looong time... and loads a bunch of stuff we often never need, only load the stuff that is directly required by the sub-snap
         resolveSnapshot(snapshot);
       } else snapshot = await fetchedSnapshots[this.worldName];
 
@@ -770,6 +786,8 @@ class StyleGuideResource extends Resource {
       }) || [];
 
       if (!idToDeserialize) throw Error(`Master component "${name}" can not be found in "${this.worldName}"`);
+
+      // load modules for that part of the snap, if it is required
 
       component = pool.resolveFromSnapshotAndId({ ...snapshot, id: idToDeserialize });
     }
