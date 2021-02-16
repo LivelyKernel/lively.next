@@ -2,7 +2,7 @@
 import { VerticalLayout, HorizontalLayout, Morph } from 'lively.morphic';
 import { pt, Rectangle } from 'lively.graphics';
 import { resource } from 'lively.resources';
-import { connect } from 'lively.bindings';
+import { connect, disconnect } from 'lively.bindings';
 import { Badge } from 'lively.collab';
 import { ModeSelector } from 'lively.components/widgets.js';
 import { arr } from 'lively.lang';
@@ -32,22 +32,9 @@ export class CommentBrowser extends Morph {
       CommentBrowser.instance.relayout();
       CommentBrowser.instance.wasOpenedBefore = true;
     }
-    CommentBrowser.openInWindow();
+    CommentBrowser.instance.initializeWindow();
     CommentBrowser.instance.showCommentIndicators();
     return CommentBrowser.instance;
-  }
-
-  static openInWindow () {
-    const topbar = $world.getSubmorphNamed('lively top bar');
-    CommentBrowser.window = CommentBrowser.instance.openInWindow({
-      name: 'comment browser window',
-      title: 'Comment Browser'
-    });
-    CommentBrowser.window.position = pt($world.width - CommentBrowser.instance.width, topbar.height);
-    // when styling palette is opened, position comment browser to the left of it
-    if (topbar.activeSideBars.includes('Styling Palette')) {
-      CommentBrowser.window.position = CommentBrowser.window.position.addPt(pt(-topbar.stylingPalette.width, 0));
-    }
   }
 
   static isOpen () {
@@ -59,18 +46,20 @@ export class CommentBrowser extends Morph {
   }
 
   static initializeCommentBrowser () {
+    if ($world.commentBrowser) {
+      return;
+    }
     $world.commentBrowser = new CommentBrowser();
   }
 
   static close () {
-    if (!CommentBrowser.isOpen()) return;
-
     const topbar = $world.getSubmorphNamed('lively top bar');
     if (topbar) {
       topbar.uncolorCommentBrowserButton();
     }
     CommentBrowser.instance.hideAllCommentIndicators();
-    $world.get('comment browser window').remove();
+    if (!CommentBrowser.isOpen()) return;
+    CommentBrowser.instance.window.remove();
   }
 
   static toggle () {
@@ -139,7 +128,8 @@ export class CommentBrowser extends Morph {
       },
       showsResolvedComments: {
         defaultValue: false
-      }
+      },
+      window: {}
     };
   }
 
@@ -195,6 +185,21 @@ export class CommentBrowser extends Morph {
     connect(this.filterSelector, 'Unresolved Comments', this, 'toggleArchive');
     connect(this.filterSelector, 'Resolved Comments', this, 'toggleArchive');
     this.filterContainer.addMorph(this.filterSelector);
+  }
+
+  initializeWindow () {
+    this.window = this.openInWindow({
+      name: 'comment browser window',
+      title: 'Comment Browser'
+    });
+    connect(this.window, 'close', this, 'close');
+
+    const topbar = $world.getSubmorphNamed('lively top bar');
+    this.window.position = pt($world.width - this.width, topbar.height);
+    // when styling palette is opened, position comment browser to the left of it
+    if (topbar.activeSideBars.includes('Styling Palette')) {
+      this.window.position = this.window.position.addPt(pt(-topbar.stylingPalette.width, 0));
+    }
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -361,9 +366,9 @@ export class CommentBrowser extends Morph {
 
   loadCommentGroupMaps (snapshot) {
     this.commentGroups = new WeakMap();
-    this.savedWeakMaps.commentGroups.forEach((morph, commentGroupMorph) => this.commentGroups.set(morph, commentGroupMorph));
+    snapshot.props.savedWeakMaps.commentGroups.forEach((morph, commentGroupMorph) => this.commentGroups.set(morph, commentGroupMorph));
     this.resolvedCommentGroups = new WeakMap();
-    this.savedWeakMaps.resolvedCommentGroups.forEach((morph, commentGroupMorph) => this.resolvedCommentGroups.set(morph, commentGroupMorph));
+    snapshot.props.savedWeakMaps.resolvedCommentGroups.forEach((morph, commentGroupMorph) => this.resolvedCommentGroups.set(morph, commentGroupMorph));
   }
 
   __after_deserialize__ (snapshot, ref, pool) {
@@ -377,6 +382,7 @@ export class CommentBrowser extends Morph {
   }
 
   close () {
+    disconnect(this.window, 'close', this, 'close');
     CommentBrowser.close();
   }
 }
