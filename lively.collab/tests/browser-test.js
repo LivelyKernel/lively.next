@@ -25,7 +25,7 @@ describe('comment browser', function () {
   });
 
   it('has only one instance', function () {
-    const browser2 = new CommentBrowser();
+    const browser2 = CommentBrowser.open();
     expect(browser === browser2);
   });
 

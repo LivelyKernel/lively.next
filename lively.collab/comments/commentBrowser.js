@@ -26,7 +26,7 @@ export class CommentBrowser extends Morph {
       CommentBrowser.initializeCommentBrowser();
     }
 
-    if (CommentBrowser.isOpen()) return;
+    if (CommentBrowser.isOpen()) return CommentBrowser.instance;
 
     if (!CommentBrowser.instance.wasOpenedBefore) {
       CommentBrowser.instance.relayout();
@@ -34,6 +34,7 @@ export class CommentBrowser extends Morph {
     }
     CommentBrowser.openInWindow();
     CommentBrowser.instance.showCommentIndicators();
+    return CommentBrowser.instance;
   }
 
   static openInWindow () {
@@ -62,7 +63,7 @@ export class CommentBrowser extends Morph {
   }
 
   static close () {
-    if (!CommentBrowser.instance) return;
+    if (!CommentBrowser.isOpen()) return;
 
     const topbar = $world.getSubmorphNamed('lively top bar');
     if (topbar) {
@@ -377,6 +378,5 @@ export class CommentBrowser extends Morph {
 
   close () {
     CommentBrowser.close();
-    super.close();
   }
 }
