@@ -366,9 +366,9 @@ export class CommentBrowser extends Morph {
 
   loadCommentGroupMaps () {
     this.commentGroups = new WeakMap();
-    this.savedWeakMaps.commentGroups.forEach((morph, commentGroupMorph) => this.commentGroups.set(morph, commentGroupMorph));
+    this.savedWeakMaps.commentGroups.forEach(morphGroupPair => this.commentGroups.set(morphGroupPair[0], morphGroupPair[1]));
     this.resolvedCommentGroups = new WeakMap();
-    this.savedWeakMaps.resolvedCommentGroups.forEach((morph, commentGroupMorph) => this.resolvedCommentGroups.set(morph, commentGroupMorph));
+    this.savedWeakMaps.resolvedCommentGroups.forEach(morphGroupPair => this.resolvedCommentGroups.set(morphGroupPair[0], morphGroupPair[1]));
   }
 
   __after_deserialize__ (snapshot, ref, pool) {
