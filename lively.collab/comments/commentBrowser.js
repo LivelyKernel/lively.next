@@ -366,9 +366,9 @@ export class CommentBrowser extends Morph {
 
   loadCommentGroupMaps (snapshot) {
     this.commentGroups = new WeakMap();
-    snapshot.props.savedWeakMaps.commentGroups.forEach((morph, commentGroupMorph) => this.commentGroups.set(morph, commentGroupMorph));
+    this.savedWeakMaps.commentGroups.forEach((morph, commentGroupMorph) => this.commentGroups.set(morph, commentGroupMorph));
     this.resolvedCommentGroups = new WeakMap();
-    snapshot.props.savedWeakMaps.resolvedCommentGroups.forEach((morph, commentGroupMorph) => this.resolvedCommentGroups.set(morph, commentGroupMorph));
+    this.savedWeakMaps.resolvedCommentGroups.forEach((morph, commentGroupMorph) => this.resolvedCommentGroups.set(morph, commentGroupMorph));
   }
 
   __after_deserialize__ (snapshot, ref, pool) {
@@ -377,7 +377,7 @@ export class CommentBrowser extends Morph {
   }
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
-    snapshot.props.savedWeakMaps = this.saveCommentGroupMaps();
+    addFn('savedWeakMaps', this.saveCommentGroupMaps());
     super.__additionally_serialize__(snapshot, ref, pool, addFn);
   }
 
