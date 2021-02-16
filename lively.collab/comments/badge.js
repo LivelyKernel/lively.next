@@ -39,7 +39,8 @@ export class Badge extends Morph {
       },
       fill: {
         defaultValue: Color.rgb(149, 165, 166)
-      }
+      },
+      morph: {}
     };
   }
 
@@ -63,7 +64,9 @@ export class Badge extends Morph {
   }
 
   abandon () {
-    this.removeFromMorph();
+    if (this.morph) {
+      this.removeFromMorph();
+    }
     super.abandon();
   }
 

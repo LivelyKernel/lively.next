@@ -13,9 +13,9 @@ describe('badge', function () {
   });
 
   it('can be incremented', function () {
-    badge.setText('42');
+    badge.text = '42';
     badge.incrementCounter();
-    expect(badge.getText()).to.equal('43');
+    expect(badge.text).to.equal('43');
   });
 
   it('moves with morph', async function () {
@@ -36,7 +36,7 @@ describe('badge', function () {
 
   it('can be initiated with text', async function () {
     const textBadge = Badge.newWithText('Test');
-    expect(textBadge.getText()).to.equal('Test');
+    expect(textBadge.text).to.equal('Test');
   });
 
   afterEach(function () {
