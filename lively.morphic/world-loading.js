@@ -249,7 +249,10 @@ export async function interactivelySaveWorld (world, options) {
       if (oldName !== name && options.confirmOverwrite) {
         const { exists, commitId: existingCommitId } = await db.exists('world', name);
         if (exists) {
-          const overwrite = await world.confirm(`A world "${name}" already exists, overwrite?`, { styleClasses: ['Halo'], fill: Color.rgba(0, 0, 0, 0.8) });
+          i.center = world.windowBounds().center();
+          i.visible = false;
+          const overwrite = await world.confirm(['The world\n', { fontWeight: 'normal' }, `"${name}"`, { }, '\nalready exists, overwrite?', { fontWeight: 'normal' }], { hasFixedPosition: true, width: 350 });
+          i.visible = true;
           if (!overwrite) return null;
           expectedParentCommit = existingCommitId;
         }
