@@ -57,9 +57,11 @@ export class LivelyWorld extends World {
                   const unappliedSubMasters = c.withAllSubmorphsSelect(m => m.master && !m.master._appliedMaster);
                   for (const subComponent of unappliedSubMasters) { await subComponent.master.applyIfNeeded(true); }
                   const derivedMorphs = this.withAllSubmorphsSelect(m => m.master && m.master.uses(c));
+                  const derivedMasters = this.localComponents.filter(m => m.master && m.master.uses(c));
                   derivedMorphs.forEach(m => {
                     m.requestMasterStyling();
                   });
+                  derivedMasters.forEach(m => m.master.applyIfNeeded(true));
                 }
               });
               return;
