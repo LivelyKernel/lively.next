@@ -455,13 +455,21 @@ export class LivelyWorld extends World {
         { command: 'inspect server', target: this }
       ]],
       ['Tools', [
-        { command: 'open PartsBin', target: this },
         { command: 'open javascript workspace', target: this },
         { command: 'open browser', target: this },
         { command: 'choose and browse module', target: this },
         { command: 'open code search', target: this },
         { command: 'open file browser', target: this },
-        { command: 'open shell workspace', target: this },
+        {
+          command: 'open shell workspace',
+          target: this,
+          tooltip: `Opens a workspace like interface\nthat allows you to trigger shell comands\nvia select + eval by pressing either ${new Text().keysForCommand('doit')} or ${new Text().keysForCommand('printit')}`
+        },
+        {
+          command: 'open shell terminal',
+          target: this,
+          tooltip: 'Opens a classic remote shell interface,\nthat allows you to send commands to a\nbash session running on the server.\nAlso comes with advanced git support.'
+        },
         { command: 'open workspace', args: { askForMode: true }, target: this }
       ]],
       { isDivider: true },
