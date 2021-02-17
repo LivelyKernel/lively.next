@@ -1,6 +1,7 @@
 /* global System */
 import { Rectangle, Color } from 'lively.graphics';
 import bowser from 'bowser';
+import { joinPath } from 'lively.lang/string.js';
 
 const isMac = !!bowser.mac;
 
@@ -390,9 +391,9 @@ const config = {
   },
 
   css: {
-    ibmPlex: '/lively.morphic/assets/ibm-plex/css/ibm-plex.css',
-    fontAwesome: '/lively.morphic/assets/fontawesome-free-5.12.1/css/all.css',
-    inconsolata: '/lively.morphic/assets/inconsolata/inconsolata.css'
+    ibmPlex: joinPath(System.baseURL, 'lively.morphic/assets/ibm-plex/css/ibm-plex.css'),
+    fontAwesome: joinPath(System.baseURL, '/lively.morphic/assets/fontawesome-free-5.12.1/css/all.css'),
+    inconsolata: joinPath(System.baseURL, '/lively.morphic/assets/inconsolata/inconsolata.css')
   }
 
 };

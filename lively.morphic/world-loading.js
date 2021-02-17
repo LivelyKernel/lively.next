@@ -12,10 +12,11 @@ import { pathForBrowserHistory } from './helpers.js';
 import { subscribe, emit } from 'lively.notifications';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
-import "./partsbin.js";
+import './partsbin.js';
 
 export async function loadWorldFromURL (url, oldWorld, options) {
-  const worldResource = url.isResource ? url
+  const worldResource = url.isResource
+    ? url
     : resource(System.decanonicalize(url));
   const name = worldResource.nameWithoutExt();
   return loadWorldFromDB(name, undefined, oldWorld, options);
@@ -56,7 +57,8 @@ export async function loadWorld (newWorld, oldWorld, options = {}) {
     worldLoadDialog = false,
     initializeGlobalStyleSheets = true,
     showUserFlap = typeof newWorld.showsUserFlap === 'undefined'
-      ? true : newWorld.showsUserFlap
+      ? true
+      : newWorld.showsUserFlap
   } = options;
 
   env = env || (oldWorld ? oldWorld.env : MorphicEnv.default());
@@ -74,7 +76,7 @@ export async function loadWorld (newWorld, oldWorld, options = {}) {
     localconfig && await loadLocalConfig();
 
     // if root is defined render on the root node
-    await env.setWorld(newWorld);
+    await env.setWorld(newWorld, root);
 
     worldLoadDialog && newWorld.execCommand('load world');
 
