@@ -14,7 +14,6 @@ describe('comment browser', function () {
   beforeEach(async function () {
     morph = new Morph();
     morph.name = exampleName;
-    new CommentBrowser();
     browser = CommentBrowser.instance; // This shouldn't be neccessary
     await CommentBrowser.whenRendered();
     comment = await morph.addComment(exampleText);
@@ -104,9 +103,9 @@ describe('comment browser', function () {
   });
 
   afterEach(function () {
-    CommentBrowser.close();
     morph.emptyComments();
     morph.abandon();
+    CommentBrowser.close();
   });
 });
 
@@ -118,33 +117,32 @@ describe('comment indicator', function () {
   beforeEach(async function () {
     morph = new Morph();
     morph.name = exampleName;
-    new CommentBrowser();
     browser = CommentBrowser.instance; // This shouldn't be neccessary
+    CommentBrowser.open();
     await CommentBrowser.whenRendered();
     indicatorCount = browser.getUnresolvedCommentCount();
     comment = await morph.addComment(exampleText);
   });
 
   it('is visible when browser is open', function () {
-    CommentBrowser.open();
     expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length == indicatorCount + 1).to.be.ok;
   });
 
   it('is hidden when browser is not open', function () {
+    CommentBrowser.close();
     expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length == 0).to.be.ok;
   });
 
   it('does not get copied when morph with comment is copied', function () {
-    CommentBrowser.open();
     const copiedMorph = morph.copy(true);
     expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length == indicatorCount + 1).to.be.ok;
     copiedMorph.abandon();
   });
 
   afterEach(function () {
-    CommentBrowser.close();
     morph.emptyComments();
     morph.abandon();
+    CommentBrowser.close();
   });
 });
 
