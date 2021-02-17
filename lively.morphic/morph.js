@@ -697,8 +697,8 @@ export class Morph {
             'borderColor',
             value
               ? obj.extract(value, ['top', 'left', 'right', 'bottom'], (k, v) => {
-                  return obj.isArray(v) ? Color.fromTuple(v) : v;
-                })
+                return obj.isArray(v) ? Color.fromTuple(v) : v;
+              })
               : value
           );
         }
@@ -1044,7 +1044,7 @@ export class Morph {
       if (node) node.remove();
     }
     for (const name of addedFonts) {
-      this.insertFontCSS(name, this.installedFonts[name]);
+      if (!this.env.fontMetric.isFontSupported(name)) { this.insertFontCSS(name, this.installedFonts[name]); }
     }
   }
 
@@ -2432,8 +2432,10 @@ export class Morph {
       this.master._capturedExtents = new WeakMap();
       this.withAllSubmorphsDo(m => this.master._capturedExtents.set(m, m.extent));
     }
-    if (this.master) this._requestMasterStyling = true;
-    this.makeDirty();
+    if (this.master) {
+      this._requestMasterStyling = true;
+      this.makeDirty();
+    }
   }
 
   requestStyling () {
