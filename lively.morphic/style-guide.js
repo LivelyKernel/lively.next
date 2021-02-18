@@ -309,9 +309,10 @@ export class ComponentPolicy {
           if (masterSubmorph.master && !isRoot) { // can not happen to the root since we ruled that out before
             // only do this when the master has changed
 
-            if (!masterSubmorph.master.equals(morphToBeStyled.master)) {
+            if (!masterSubmorph.master.equals(morphToBeStyled.master) &&
+                !this._overriddenProps.get(morphToBeStyled).master) {
               morphToBeStyled.master = masterSubmorph.master.spec(); // assign to the same master
-              morphToBeStyled._requestMasterStyling = true;
+              morphToBeStyled.requestMasterStyling();
             }
           }
           if (morphToBeStyled.master && !isRoot) {
@@ -578,8 +579,11 @@ export class ComponentPolicy {
     // if (this._applying || this._hasUnresolvedMaster || !this._appliedMaster) return;
     if (this._applying) return;
     if (Path('meta.metaInteraction').get(change)) return;
-    if (['_rev', 'name', 'master'].includes(change.prop)) return;
+    if (['_rev', 'name'].includes(change.prop)) return;
     if (change.prop == 'opacity') delete this._originalOpacity;
+    if (change.prop == 'master' && this.managesMorph(morph)) {
+      this._overriddenProps.get(morph).master = true;
+    }
     if (morph.styleProperties.includes(change.prop)) {
       if (this.managesMorph(morph)) {
         if (morph.master && morph.master != this) {
@@ -764,7 +768,7 @@ class StyleGuideResource extends Resource {
     if (component) return component;
 
     if (lively.FreezerRuntime) {
-      let rootDir = resource(window.location);
+      let rootDir = resource(System.baseURL);
       if (rootDir.isFile()) rootDir = rootDir.parent();
       const masterDir = rootDir.join('masters/');
       component = await this.fetchFromMasterDir(masterDir, name);
