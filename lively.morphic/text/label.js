@@ -1,6 +1,6 @@
 import { obj, promise, arr, string, properties } from 'lively.lang';
 import { Rectangle, Color } from 'lively.graphics';
-import { signal } from 'lively.bindings';
+import { signal, connect } from 'lively.bindings';
 import vdom from 'virtual-dom';
 
 import { Morph } from '../morph.js';
@@ -56,6 +56,7 @@ export class Label extends Morph {
       },
 
       textAndAttributes: {
+        after: ['autofit'],
         get () {
           let val = this.getProperty('textAndAttributes');
           if (!val || val.length < 1) val = ['', null];
@@ -131,6 +132,7 @@ export class Label extends Morph {
         type: 'Rectangle',
         isStyleProp: true,
         defaultValue: Rectangle.inset(0),
+        after: ['autofit'],
         initialize (value) { this.padding = value; /* for num -> rect conversion */ },
         set (value) {
           if (!value) value = Rectangle.inset(0);
@@ -144,6 +146,7 @@ export class Label extends Morph {
         isStyleProp: true,
         type: 'Enum',
         values: config.text.basicFontItems,
+        after: ['autofit'],
         defaultValue: 'IBM Plex Sans, Sans-Serif',
         set (fontFamily) {
           const previousFontFamily = this.fontFamily;
@@ -157,6 +160,7 @@ export class Label extends Morph {
         min: 1,
         isStyleProp: true,
         defaultValue: 12,
+        after: ['autofit'],
         set (fontSize) {
           const previousFontSize = this.fontSize;
           this.setProperty('fontSize', fontSize);
@@ -171,6 +175,7 @@ export class Label extends Morph {
         values: ['bold', 'bolder', 'light', 'lighter'],
         isStyleProp: true,
         defaultValue: 'normal',
+        after: ['autofit'],
         set (fontWeight) {
           const previousFontWeight = this.fontWeight;
           this.setProperty('fontWeight', fontWeight);
@@ -183,6 +188,7 @@ export class Label extends Morph {
         values: ['normal', 'italic', 'oblique'],
         isStyleProp: true,
         defaultValue: 'normal',
+        after: ['autofit'],
         set (fontStyle) {
           const previousFontStyle = this.fontStyle;
           this.setProperty('fontStyle', fontStyle);
@@ -196,6 +202,7 @@ export class Label extends Morph {
 
       textStyleClasses: {
         defaultValue: undefined,
+        after: ['autofit'],
         set (textStyleClasses) {
           this.setProperty('textStyleClasses', textStyleClasses);
           if (this.autofit) this.invalidateTextLayout();
@@ -246,7 +253,7 @@ export class Label extends Morph {
 
   __additionally_serialize__ (snapshot, objRef, pool, addFn) {
     super.__additionally_serialize__(snapshot, objRef, pool, addFn);
-    this.fit();
+    if (this.autofit) this.fit();
     snapshot._cachedTextBounds = this._cachedTextBounds && this._cachedTextBounds.toTuple();
   }
 
