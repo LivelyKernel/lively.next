@@ -27,6 +27,33 @@ import { once } from 'lively.bindings';
 
 */
 
+export function findLocalComponents (snapshot) {
+  return Object
+    .values(snapshot)
+    .filter(m => Path('props.isComponent.value').get(m) == true)
+    .map(m => m.props.name.value);
+}
+
+export class StyleguidePlugin {
+  afterSerialization (pool, snapshot, rootId) {
+    // determine all components that are part of this snapshot and could be resolved locally
+    // all the other ones are left as absolute paths
+    const masterURLRemapping = {};
+    const localComponentUrl = `styleguide://${getProjectName($world)}`;
+    findLocalComponents(snapshot).forEach(componentName =>
+      masterURLRemapping[`${localComponentUrl}/${componentName}`] = `styleguide://$world/${componentName}`
+    );
+    Object.values(snapshot).forEach(({ props: { master } }) => {
+      if (master && master.value) {
+        for (const url in masterURLRemapping) {
+          if (master.value.includes(url)) { master.value = master.value.split(url).join(masterURLRemapping[url]); }
+        }
+        master.value = master.value.split(localComponentUrl).join('styleguide://$world');
+      }
+    });
+  }
+}
+
 export async function prefetchCoreStyleguides (li) {
   li.label = 'loading System Elements';
   li.progress = 0;
