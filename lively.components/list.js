@@ -364,6 +364,7 @@ export class List extends Morph {
       },
 
       extent: {
+        defaultValue: pt(400, 360),
         set (value) {
           if (value.eqPt(this.extent)) return;
           this.setProperty('extent', value);
@@ -529,6 +530,7 @@ export class List extends Morph {
         set (val) {
           this.setProperty('itemHeight', val);
           this.manualItemHeight = typeof val === 'number';
+          this.update();
         },
         get () {
           const height = this.getProperty('itemHeight');
@@ -553,12 +555,6 @@ export class List extends Morph {
       }
 
     };
-  }
-
-  constructor (props = {}) {
-    if (!props.bounds && !props.extent) props.extent = pt(400, 360);
-    super(props);
-    this.update();
   }
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
@@ -873,7 +869,6 @@ export class List extends Morph {
 
   get commands () { return listCommands; }
 }
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -1508,8 +1503,6 @@ export class DropDownList extends Button {
     ]);
   }
 }
-
-
 
 export class InteractiveItem extends ListItemMorph {
   static get properties () {
