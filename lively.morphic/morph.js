@@ -55,7 +55,7 @@ export class Morph {
         initialize (name) {
           if (!name) {
             const className = getClassName(this);
-            name = (string.startsWithVowel(className) ? 'an' : 'a') + className;
+            name = string.findArticle(className) + className;
           }
           this.name = name;
         }
@@ -697,8 +697,8 @@ export class Morph {
             'borderColor',
             value
               ? obj.extract(value, ['top', 'left', 'right', 'bottom'], (k, v) => {
-                  return obj.isArray(v) ? Color.fromTuple(v) : v;
-                })
+                return obj.isArray(v) ? Color.fromTuple(v) : v;
+              })
               : value
           );
         }
