@@ -743,7 +743,8 @@ export class PointPopover extends StylePopover {
           fill: Color.red,
           borderColor: Color.black,
           borderWidth: 1,
-          center: pt(100, 100)
+          center: pt(100, 100),
+          draggable: true
         }),
         {
           type: 'label',
@@ -770,6 +771,7 @@ export class PointPopover extends StylePopover {
     return controls;
   }
 }
+
 
 export class RectanglePopover extends StylePopover {
   static get properties () {
