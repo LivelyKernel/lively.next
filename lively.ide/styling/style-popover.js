@@ -772,7 +772,6 @@ export class PointPopover extends StylePopover {
   }
 }
 
-
 export class RectanglePopover extends StylePopover {
   static get properties () {
     return {
