@@ -253,7 +253,7 @@ export class Label extends Morph {
 
   __additionally_serialize__ (snapshot, objRef, pool, addFn) {
     super.__additionally_serialize__(snapshot, objRef, pool, addFn);
-    if (this.autofit) this.fit();
+    if (this.autofit) this.fitIfNeeded();
     snapshot._cachedTextBounds = this._cachedTextBounds && this._cachedTextBounds.toTuple();
   }
 
