@@ -2,10 +2,11 @@ import { arr, properties, Path, promise, obj } from 'lively.lang';
 import { registerExtension, Resource, resource } from 'lively.resources';
 import { pt } from 'lively.graphics';
 import MorphicDB from './morphicdb/db.js';
-import { ObjectPool, normalizeOptions } from 'lively.serializer2';
+import { ObjectPool, allPlugins, normalizeOptions } from 'lively.serializer2';
 import { deserializeMorph, loadPackagesAndModulesOfSnapshot } from './serialization.js';
 import { subscribeOnce } from 'lively.notifications/index.js';
 import { once } from 'lively.bindings';
+import * as ast from 'lively.ast';
 
 /*
 
@@ -26,6 +27,43 @@ import { once } from 'lively.bindings';
   // allows to browse components locally or exported from different worlds (categorized via "/" naming scheme taken from figma)
 
 */
+
+function ensureAbsoluteComponentRefs (
+  {
+    snapshotAndPackages,
+    localComponents = findLocalComponents(snapshot),
+    localWorldName = Path('metadata.commit.name').get($world)
+  }) {
+  const { snapshot, packages } = snapshotAndPackages;
+  // transform the code inside tha packages in case the reference local components
+  Object.values(packages['local://lively-object-modules/'] || {}).forEach(pkgModules => {
+    // parse each module for local component references part://$world or styleguide://$world and replace
+    // with absolute version
+    // IF THE SNAPSHOT DOES NOT INCLUDE THAT LOCAL COMPONENT
+    Object.entries(pkgModules).forEach(([moduleName, source]) => {
+      if (moduleName.endsWith('.json')) return;
+      const parsed = ast.parse(source);
+      const nodesToReplace = [];
+      ast.AllNodesVisitor.run(parsed, (node, path) => {
+        if (node.type === 'Literal' && typeof node.value === 'string') {
+          if (node.value.match(/^styleguide:\/\/\$world\/.+/) && !localComponents.includes(node.value.replace('styleguide://$world/', ''))) {
+            nodesToReplace.push({
+              target: node,
+              replacementFunc: () => JSON.stringify(node.value.replace('$world', localWorldName))
+            });
+          }
+          if (node.value.match(/^part:\/\/\$world\/.+/) && !localComponents.includes(node.value.replace('part://$world/', ''))) {
+            nodesToReplace.push({
+              target: node,
+              replacementFunc: () => JSON.stringify(node.value.replace('$world', localWorldName))
+            });
+          }
+        }
+      });
+      pkgModules[moduleName] = ast.transform.replaceNodes(nodesToReplace, source).source;
+    });
+  });
+}
 
 export function findLocalComponents (snapshot) {
   return Object
@@ -187,7 +225,7 @@ export class ComponentPolicy {
 
   getResourceUrlFor (component) {
     if (!component) return null;
-    if (component._resourceHandle) return component._resourceHandle.url; // we leave this being for remote masters :)
+    if (component._resourceHandle) return component._resourceHandle.url.replace('$world', getProjectName($world)); // we leave this being for remote masters :)
     if (component.name == undefined) return null;
     // else we assume the component resides within the current world
     return `styleguide://${getProjectName($world)}/${component.name}`;
@@ -434,7 +472,7 @@ export class ComponentPolicy {
     await this.whenReady();
 
     const managedMorphs = this.managedMorphs;
-    const insertedMorphs = [];
+    let insertedMorphs = [];
     const master = this._appliedMaster || this.auto;
 
     managedMorphs[master.name] = this.derivedMorph; // hack
@@ -442,7 +480,7 @@ export class ComponentPolicy {
     if (!master) return; // no applied master, nothing to reconcile...
 
     master.withAllSubmorphsDo(masterSubmorph => {
-      if (masterSubmorph == master) {
+      if (master && masterSubmorph == master) {
         // surely no change here...
         insertedMorphs.push(masterSubmorph, this.derivedMorph);
         return;
@@ -476,6 +514,8 @@ export class ComponentPolicy {
         insertedMorphs.push(ownerToBeAddedTo.addMorphAt(morphToInsert, insertionIndex));
       }
     });
+
+    insertedMorphs = arr.compact(insertedMorphs);
 
     // finally we remove all the morphs that have not been inserted any more
     Object.values(obj.dissoc(managedMorphs, insertedMorphs.map(m => m.name))).forEach(removedMorph => {
@@ -806,11 +846,24 @@ class StyleGuideResource extends Resource {
             }).url;
           } else resolveSnapshot(null); // total fail
         }
+        // transpile the packages
+        ensureAbsoluteComponentRefs({ snapshotAndPackages: snapshot, localComponents: [], localWorldName: this.worldName });
         await loadPackagesAndModulesOfSnapshot(snapshot); // this takes a looong time... and loads a bunch of stuff we often never need, only load the stuff that is directly required by the sub-snap
+        // fix all the references to $world inside that snapshot
+        Object.values(snapshot.snapshot)
+          .filter(m => m.props.master)
+          .forEach(m => {
+            const masterExpr = m.props.master.value;
+            if (obj.isString(masterExpr)) {
+              m.props.master.value = masterExpr.split('$world').join(this.worldName);
+            }
+          });
         resolveSnapshot(snapshot);
       } else snapshot = await fetchedSnapshots[this.worldName];
 
-      const pool = new ObjectPool(normalizeOptions({}));
+      const pool = new ObjectPool(normalizeOptions({
+        plugins: [new StyleguidePlugin(), ...allPlugins]
+      }));
 
       const [idToDeserialize] = Object.entries(snapshot.snapshot).find(([k, v]) => {
         return Path('props.isComponent.value').get(v) && Path('props.name.value').get(v) == name;
