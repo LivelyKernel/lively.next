@@ -168,8 +168,7 @@ export class UndoManager {
   }
 
   undo () {
-    this.undoStop();
-    const undo = this.undos.pop();
+    const undo = this.removeLatestUndo();
     if (!undo) return;
     arr.remove(this.grouping.current, undo);
     this.redos.unshift(undo);
