@@ -55,7 +55,7 @@ export class Morph {
         initialize (name) {
           if (!name) {
             const className = getClassName(this);
-            name = (string.startsWithVowel(className) ? 'an' : 'a') + className;
+            name = string.findArticle(className) + className;
           }
           this.name = name;
         }

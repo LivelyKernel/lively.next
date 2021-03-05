@@ -29,10 +29,10 @@
       "child_process": {
         "node": "@node/child_process",
         "~node": "@empty"
-      }
+      },
+      "articles": "https://jspm.dev/npm:articles@0.2.2"
     }
   },
-  "dependencies": {},
   "devDependencies": {
     "babel-core": "^6.16.0",
     "babel-plugin-external-helpers": "^6.8.0",
