@@ -130,15 +130,15 @@ export class Event {
   // mouse buttons, see
   // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons
   leftMouseButtonPressed () {
-    return this.domEvt ? this.domEvt.button === 0 : false;
+    return this.domEvt ? this.domEvt.buttons === 1 : false;
   }
 
   rightMouseButtonPressed () {
-    return this.domEvt ? this.domEvt.button === 2 : false;
+    return this.domEvt ? this.domEvt.buttons === 2 : false;
   }
 
   middleMouseButtonPressed () {
-    return this.domEvt ? this.domEvt.button === 1 : false;
+    return this.domEvt ? this.domEvt.buttons === 4 : false;
   }
 
   isCommandKey () {
