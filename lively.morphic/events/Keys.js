@@ -96,7 +96,7 @@ const FUNCTION_KEYS = [
 ];
 
 function canonicalizeFunctionKey (key) {
-  key = key.toLowerCase();
+  if (key) { key = key.toLowerCase(); }
   switch (key) {
     case 'space': key = 'space'; break;
     case 'esc': key = 'escape'; break;
@@ -105,8 +105,6 @@ function canonicalizeFunctionKey (key) {
     case 'arrowright': key = 'right'; break;
     case 'arrowup': key = 'up'; break;
     case 'arrowdown': key = 'down'; break;
-    case 'esc': key = 'escape'; break;
-    case 'return': key = 'enter'; break;
   }
 
   return FUNCTION_KEYS.includes(key) ? string.capitalize(key) : '';
@@ -312,7 +310,8 @@ var Keys = {
 
   canonicalizeEvent (evt) {
     return evt._isLivelyKeyEventSpec
-      ? evt : Keys.keyComboToEventSpec(Keys.eventToKeyCombo(evt));
+      ? evt
+      : Keys.keyComboToEventSpec(Keys.eventToKeyCombo(evt));
   }
 
 };
