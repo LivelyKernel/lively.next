@@ -51,6 +51,12 @@ export class World extends Morph {
             .then(() => System.import('lively.user/morphic/user-ui.js'))
             .then(userUI => userUI.UserUI[bool ? 'showUserFlap' : 'hideUserFlap'](this));
         }
+      },
+      name: {
+        set (name) {
+          this.setProperty('name', name);
+          document.title = `lively.next - ${name}`;
+        }
       }
     };
   }
