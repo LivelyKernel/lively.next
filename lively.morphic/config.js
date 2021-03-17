@@ -208,6 +208,7 @@ const config = {
       { keys: { win: 'Ctrl-Shift-U', mac: 'Meta-Shift-U' }, command: 'undefine variable' },
 
       { keys: 'Backspace', command: 'delete backwards' },
+      { keys: 'Shift-Backspace', command: 'delete backwards' }, // temporary fix for wrong keyboard handling
       { keys: { win: 'Delete', mac: 'Delete|Ctrl-D' }, command: 'delete' },
 
       { keys: { win: 'Left|Ctrl-B', mac: 'Left|Ctrl-B' }, command: 'go left' },
