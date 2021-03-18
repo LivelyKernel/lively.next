@@ -920,7 +920,7 @@ export class Text extends Morph {
     // if there is an animation in progress, we need to wait until that
     // is finished animating, so that our dom measurement is not fucked up.
     if (meta.animation) { promise.delay(meta.animation.duration).then(updateTextEngine); } else {
-      updateTextEngine();
+      this.ownerChain().every(m => m.visible) && updateTextEngine();
     }
   }
 
@@ -2103,8 +2103,8 @@ export class Text extends Morph {
         const isFirst = currentRangeIndex === 0;
         nextRange = isFirst
           ? pos.row <= 0
-              ? null
-              : arr.last(this.textLayout.rangesOfWrappedLine(this, pos.row - 1))
+            ? null
+            : arr.last(this.textLayout.rangesOfWrappedLine(this, pos.row - 1))
           : ranges[currentRangeIndex - 1];
         if (!nextRange) return pos;
         nextRangeIsAtLineEnd = isFirst;
@@ -2112,8 +2112,8 @@ export class Text extends Morph {
         const isLast = ranges.length - 1 === currentRangeIndex;
         const nextRanges = isLast
           ? pos.row >= this.lineCount() - 1
-              ? []
-              : this.textLayout.rangesOfWrappedLine(this, pos.row + 1)
+            ? []
+            : this.textLayout.rangesOfWrappedLine(this, pos.row + 1)
           : ranges.slice(currentRangeIndex + 1);
         nextRange = nextRanges[0];
         if (!nextRange) return pos;
@@ -2130,12 +2130,12 @@ export class Text extends Morph {
     const newPos = { row: nextRow, column: nextCol };
     return Math.abs(n) > 1
       ? this.getPositionAboveOrBelow(
-          n + (n > 1 ? -1 : 1),
-          newPos,
-          useScreenPosition,
-          goalColumn,
-          goalX
-        )
+        n + (n > 1 ? -1 : 1),
+        newPos,
+        useScreenPosition,
+        goalColumn,
+        goalX
+      )
       : newPos;
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -2267,9 +2267,9 @@ export class Text extends Morph {
       : [this.selection];
     const anchors = opts.useAnchors
       ? sels.map(({ start, end }) => [
-          this.addAnchor({ ...start, id: 'save-excursion-' + string.newUUID() }),
-          this.addAnchor({ ...end, id: 'save-excursion-' + string.newUUID() })
-        ])
+        this.addAnchor({ ...start, id: 'save-excursion-' + string.newUUID() }),
+        this.addAnchor({ ...end, id: 'save-excursion-' + string.newUUID() })
+      ])
       : null;
     let isPromise = false;
     const cleanup = opts.useAnchors
@@ -2646,12 +2646,12 @@ export class Text extends Morph {
           globalBounds,
           morph: dropConfig.showDropGrid
             ? morph({
-                reactsToPointer: false,
-                acceptsDrops: false,
-                bounds: bounds,
-                border: { width: 1, color: Color.green },
-                fill: null
-              })
+              reactsToPointer: false,
+              acceptsDrops: false,
+              bounds: bounds,
+              border: { width: 1, color: Color.green },
+              fill: null
+            })
             : null
         };
       });
@@ -3474,4 +3474,3 @@ export class Text extends Morph {
     }
   }
 }
-
