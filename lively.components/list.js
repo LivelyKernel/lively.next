@@ -619,6 +619,7 @@ export class List extends Morph {
   clickOnItem (evt) {
     const item = this.itemForClick(evt);
     const { state: { clickCount } } = evt;
+    if (evt.positionIn(this).x > this.width - this.scrollbarOffset.x) return;
     const method = clickCount === 2 ? 'onItemMorphDoubleClicked' : 'onItemMorphClicked';
     this[method](evt, item);
   }
@@ -1415,11 +1416,16 @@ export class DropDownList extends Button {
     setTimeout(() => {
       const list = this.listMorph;
       const focused = this.world() && this.world().focusedMorph;
-      if (list !== focused && focused !== this &&
+      if (focused !== list &&
+          focused !== this &&
           list.world() &&
           !list.withAllSubmorphsDetect(m => m == focused)) {
         list.fadeOut(200);
-      } else once(touchInputDevice ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
+      } else if (list.world()) {
+        const target = touchInputDevice ? list.scroller : list;
+        once(target, 'onBlur', this, 'removeWhenFocusLost');
+        target.focus();
+      }
     }, 100);
   }
 
