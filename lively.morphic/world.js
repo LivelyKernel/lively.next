@@ -315,6 +315,10 @@ export class World extends Morph {
     return this.windowBounds().intersection(this.innerBounds());
   }
 
+  visibleBoundsExcludingTopBar () {
+    return this.visibleBounds();
+  }
+
   windowBounds (optWorldDOMNode) {
     if (this._cachedWindowBounds) return this._cachedWindowBounds;
     const { window } = this.env.domEnv;
