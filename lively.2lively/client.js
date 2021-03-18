@@ -269,6 +269,9 @@ export default class L2LClient extends L2LConnection {
       this._reconnectState.isReconnecting = false;
       this._reconnectState.isReconnectingViaSocketio = false;
       this.register();
+      if (this.onReconnect && typeof (this.onReconnect) === 'function') {
+        this.onReconnect();
+      }
     });
 
     this.installEventToMessageTranslator(socket);
@@ -279,6 +282,11 @@ export default class L2LClient extends L2LConnection {
       socket.once('error', reject);
       socket.once('connect', resolve);
     }).then(() => this);
+  }
+
+  async onReconnect () {
+    const dateString = new Date().toLocaleDateString();
+    console.log(`Reconnected at ${dateString}`);
   }
 
   async close () {
