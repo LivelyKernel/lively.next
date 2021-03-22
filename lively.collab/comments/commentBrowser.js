@@ -321,7 +321,7 @@ export class CommentBrowser extends Morph {
 
   updateCommentCountBadge () {
     const count = this.getUnresolvedCommentCount();
-    let badge = $world.get('lively top bar').get('comment browser button').get('comment count badge');
+    let badge = $world.get('lively top bar').commentCountBadge;
     if (badge) {
       if (count <= 0) {
         badge.abandon();
