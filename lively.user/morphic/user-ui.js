@@ -71,6 +71,7 @@ export var UserUI = {
     topBar.top = -topBar.height; // tell top bar to hide
     const dropShadow = topBar.dropShadow;
     topBar.dropShadow = null;
+    topBar.attachToTarget(world);
     // FIXME
     System.import('lively.2lively/client.js').then(async m => {
       await topBar.whenRendered();
@@ -889,13 +890,14 @@ export class UserFlap extends Morph {
     const avatar = this.getSubmorphNamed('avatar');
     const openChatItem = ['open chat', async () => { }];
     const menu = Object.assign(Menu.forItems(
-      user.isGuestUser ? [
-        openChatItem,
-        ['login', async () => {
-          this.minimize();
-          this.showLogin(user);
-        }]
-      ]
+      user.isGuestUser
+        ? [
+            openChatItem,
+            ['login', async () => {
+              this.minimize();
+              this.showLogin(user);
+            }]
+          ]
         : [
             ['show user info', () => { this.minimize(); this.showUserInfo(user); }],
             openChatItem,

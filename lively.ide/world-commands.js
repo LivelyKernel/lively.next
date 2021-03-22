@@ -895,7 +895,7 @@ const commands = [
     name: 'browse and load component',
     exec: async function (world) {
       const li = LoadingIndicator.open('loading component browser');
-      await li.whenRendered();
+      if (!world._componentsBrowser) await li.whenRendered();
       const componentsBrowser = world._componentsBrowser || (world._componentsBrowser = await resource('part://SystemDialogs/master component browser').read());
       li.remove();
       const loadedComponent = await componentsBrowser.activate();
@@ -1292,6 +1292,7 @@ const commands = [
       const status = env.printStatus();
       env.deleteHistory();
       world.setStatusMessage(status);
+      if (world._componentsBrowser) { world._componentsBrowser.reset(); }
       return true;
     }
   },
