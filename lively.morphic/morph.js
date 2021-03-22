@@ -57,7 +57,7 @@ export class Morph {
         initialize (name) {
           if (!name) {
             const className = getClassName(this);
-            name = (string.startsWithVowel(className) ? 'an' : 'a') + className;
+            name = string.findArticle(className) + className;
           }
           this.name = name;
         }
@@ -699,8 +699,8 @@ export class Morph {
             'borderColor',
             value
               ? obj.extract(value, ['top', 'left', 'right', 'bottom'], (k, v) => {
-                  return obj.isArray(v) ? Color.fromTuple(v) : v;
-                })
+                return obj.isArray(v) ? Color.fromTuple(v) : v;
+              })
               : value
           );
         }
@@ -1052,7 +1052,7 @@ export class Morph {
       if (node) node.remove();
     }
     for (const name of addedFonts) {
-      this.insertFontCSS(name, this.installedFonts[name]);
+      if (!this.env.fontMetric.isFontSupported(name)) { this.insertFontCSS(name, this.installedFonts[name]); }
     }
   }
 
@@ -1184,6 +1184,7 @@ export class Morph {
 
     if (this.isComponent && !PropertyPath('meta.metaInteraction').get(change)) {
       const world = this.world();
+      delete this._preview;
       const derivedMorphs = world ? world.withAllSubmorphsSelect(m => m.master && m.master.uses(this)) : [];
       derivedMorphs.forEach(m => {
         m.requestMasterStyling();
@@ -2447,8 +2448,10 @@ export class Morph {
       this.master._capturedExtents = new WeakMap();
       this.withAllSubmorphsDo(m => this.master._capturedExtents.set(m, m.extent));
     }
-    if (this.master) this._requestMasterStyling = true;
-    this.makeDirty();
+    if (this.master) {
+      this._requestMasterStyling = true;
+      this.makeDirty();
+    }
   }
 
   requestStyling () {

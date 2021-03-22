@@ -1,6 +1,6 @@
 import { obj, promise, arr, string, properties } from 'lively.lang';
 import { Rectangle, Color } from 'lively.graphics';
-import { signal } from 'lively.bindings';
+import { signal, connect } from 'lively.bindings';
 import vdom from 'virtual-dom';
 
 import { Morph } from '../morph.js';
@@ -15,6 +15,10 @@ const { h } = vdom;
 export class Label extends Morph {
   static get properties () {
     return {
+      acceptsDrops: {
+        defaultValue: false
+      },
+
       fill: { defaultValue: Color.transparent },
       draggable: { defaultValue: false },
       nativeCursor: { defaultValue: 'default' },
@@ -52,6 +56,7 @@ export class Label extends Morph {
       },
 
       textAndAttributes: {
+        after: ['autofit'],
         get () {
           let val = this.getProperty('textAndAttributes');
           if (!val || val.length < 1) val = ['', null];
@@ -127,6 +132,7 @@ export class Label extends Morph {
         type: 'Rectangle',
         isStyleProp: true,
         defaultValue: Rectangle.inset(0),
+        after: ['autofit'],
         initialize (value) { this.padding = value; /* for num -> rect conversion */ },
         set (value) {
           if (!value) value = Rectangle.inset(0);
@@ -140,6 +146,7 @@ export class Label extends Morph {
         isStyleProp: true,
         type: 'Enum',
         values: config.text.basicFontItems,
+        after: ['autofit'],
         defaultValue: 'IBM Plex Sans, Sans-Serif',
         set (fontFamily) {
           const previousFontFamily = this.fontFamily;
@@ -153,6 +160,7 @@ export class Label extends Morph {
         min: 1,
         isStyleProp: true,
         defaultValue: 12,
+        after: ['autofit'],
         set (fontSize) {
           const previousFontSize = this.fontSize;
           this.setProperty('fontSize', fontSize);
@@ -167,6 +175,7 @@ export class Label extends Morph {
         values: ['bold', 'bolder', 'light', 'lighter'],
         isStyleProp: true,
         defaultValue: 'normal',
+        after: ['autofit'],
         set (fontWeight) {
           const previousFontWeight = this.fontWeight;
           this.setProperty('fontWeight', fontWeight);
@@ -179,6 +188,7 @@ export class Label extends Morph {
         values: ['normal', 'italic', 'oblique'],
         isStyleProp: true,
         defaultValue: 'normal',
+        after: ['autofit'],
         set (fontStyle) {
           const previousFontStyle = this.fontStyle;
           this.setProperty('fontStyle', fontStyle);
@@ -192,6 +202,7 @@ export class Label extends Morph {
 
       textStyleClasses: {
         defaultValue: undefined,
+        after: ['autofit'],
         set (textStyleClasses) {
           this.setProperty('textStyleClasses', textStyleClasses);
           if (this.autofit) this.invalidateTextLayout();
@@ -203,6 +214,13 @@ export class Label extends Morph {
 
   static icon (iconName, props = { prefix: '', suffix: '' }) {
     return Icon.makeLabel(iconName, props);
+  }
+
+  onChange (change) {
+    super.onChange(change);
+    if (change.prop && change.prop.includes('borderWidth')) {
+      this.fit();
+    }
   }
 
   constructor (props = {}) {
@@ -235,7 +253,7 @@ export class Label extends Morph {
 
   __additionally_serialize__ (snapshot, objRef, pool, addFn) {
     super.__additionally_serialize__(snapshot, objRef, pool, addFn);
-    this.fit();
+    if (this.autofit) this.fitIfNeeded();
     snapshot._cachedTextBounds = this._cachedTextBounds && this._cachedTextBounds.toTuple();
   }
 
@@ -264,7 +282,10 @@ export class Label extends Morph {
   }
 
   fit () {
-    this.extent = this.textBounds().extent();
+    this.extent = this.textBounds().extent().addXY(
+      this.borderWidthLeft + this.borderWidthRight,
+      this.borderWidthTop + this.borderWidthBottom
+    );
     if (!this.visible) {
       this._cachedTextBounds = null;
     } else this._needsFit = false;
@@ -379,7 +400,8 @@ export class Label extends Morph {
     // this.env.fontMetric.sizeFor(style, string)
     const { textAndAttributes, _cachedTextBounds } = this;
     return _cachedTextBounds || (this._cachedTextBounds = textAndAttributes.length <= 2
-      ? this.textBoundsSingleChunk() : this.textBoundsAllChunks());
+      ? this.textBoundsSingleChunk()
+      : this.textBoundsAllChunks());
   }
 
   forceRerender () {
@@ -517,6 +539,13 @@ export class Label extends Morph {
   menuItems () {
     const items = super.menuItems();
     items.unshift({ isDivider: true });
+    items.unshift(['edit label as rich text', async () => {
+      const editedAttributes = await $world.editPrompt('rich text', {
+        input: this.value,
+        resolveTextAttributes: true
+      });
+      if (editedAttributes) this.value = editedAttributes;
+    }]);
     items.unshift(['change label', () => this.interactivelyChangeLabel()]);
     items.unshift(['set Icon', () => this.interactivelySetIcon()]);
     return items;

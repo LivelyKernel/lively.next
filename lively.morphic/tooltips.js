@@ -2,6 +2,7 @@ import { pt } from 'lively.graphics';
 import { Morph } from './morph.js';
 import { morph } from './helpers.js';
 import config from './config.js';
+import { fun } from 'lively.lang';
 
 export class TooltipViewer {
   constructor (world) {
@@ -21,16 +22,33 @@ export class TooltipViewer {
   }
 
   mouseMove (evt) {
+    // debounce
     const { hand } = evt;
-    let targetMorph = hand.morphBeneath(evt.positionIn($world));
+    const candidates = $world.morphsContainingPoint(evt.positionIn($world)).filter(m => m.reactsToPointer || m.tooltip);
+    let targetMorph, prevCandidate;
+    for (const candidate of candidates.slice(candidates.indexOf(hand) + 1)) {
+      if (prevCandidate && !prevCandidate.ownerChain().includes(candidate)) break;
+      if (candidate.tooltip) {
+        targetMorph = candidate;
+        break;
+      }
+      prevCandidate = candidate;
+    }
     while (targetMorph && !targetMorph.visible) {
       targetMorph = targetMorph.morphBeneath(evt.positionIn($world));
     }
 
-    if (!targetMorph) return;
+    if (!targetMorph) {
+      if (this.currentTooltip) {
+        this.currentTooltip.softRemove().then(() => {
+          if (this.currentTooltip && !this.currentTooltip.owner) { this.currentTooltip = null; }
+        });
+      } else this.currentMorph = null;
+      return;
+    }
 
     if (this.currentMorph === targetMorph ||
-     !this.invalidatesCurrentTooltip(targetMorph)) return;
+       !this.invalidatesCurrentTooltip(targetMorph)) return;
 
     this.hoverOutOfMorph(this.currentMorph);
     this.hoverIntoMorph(targetMorph, hand);
@@ -73,11 +91,13 @@ export class TooltipViewer {
   }
 
   showTooltipFor (morph, hand) {
-    if (!morph.tooltip || !morph.world()) return;
+    if (!morph.tooltip || !morph.world()) {
+      return;
+    }
     this.clearCurrentTooltip();
     const position = hand ? hand.position.addXY(10, 7) : morph.globalBounds().bottomRight();
     this.currentTooltip = new Tooltip({ position, description: morph.tooltip });
-    morph.world().addMorph(this.currentTooltip);
+    $world.addMorph(this.currentTooltip);
     this.currentTooltip.update(morph);
   }
 }

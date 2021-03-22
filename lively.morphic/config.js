@@ -1,6 +1,7 @@
 /* global System */
 import { Rectangle, Color } from 'lively.graphics';
 import bowser from 'bowser';
+import { joinPath } from 'lively.lang/string.js';
 
 const isMac = !!bowser.mac;
 
@@ -207,6 +208,7 @@ const config = {
       { keys: { win: 'Ctrl-Shift-U', mac: 'Meta-Shift-U' }, command: 'undefine variable' },
 
       { keys: 'Backspace', command: 'delete backwards' },
+      { keys: 'Shift-Backspace', command: 'delete backwards' }, // temporary fix for wrong keyboard handling
       { keys: { win: 'Delete', mac: 'Delete|Ctrl-D' }, command: 'delete' },
 
       { keys: { win: 'Left|Ctrl-B', mac: 'Left|Ctrl-B' }, command: 'go left' },
@@ -390,9 +392,9 @@ const config = {
   },
 
   css: {
-    ibmPlex: '/lively.morphic/assets/ibm-plex/css/ibm-plex.css',
-    fontAwesome: '/lively.morphic/assets/fontawesome-free-5.12.1/css/all.css',
-    inconsolata: '/lively.morphic/assets/inconsolata/inconsolata.css'
+    ibmPlex: joinPath(System.baseURL, 'lively.morphic/assets/ibm-plex/css/ibm-plex.css'),
+    fontAwesome: joinPath(System.baseURL, '/lively.morphic/assets/fontawesome-free-5.12.1/css/all.css'),
+    inconsolata: joinPath(System.baseURL, '/lively.morphic/assets/inconsolata/inconsolata.css')
   }
 
 };

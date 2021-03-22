@@ -277,7 +277,8 @@ export class ObjectEditor extends Morph {
     if (this._serializedState) {
       const s = this._serializedState;
       s.evalEnvironment.systemInterface = s.evalEnvironment.backend == 'local'
-        ? livelySystem.localInterface : livelySystem.serverInterfaceFor(s.evalEnvironment.backend);
+        ? livelySystem.localInterface
+        : livelySystem.serverInterfaceFor(s.evalEnvironment.backend);
       delete this._serializedState;
       if (this.target) await this.browse({ target: this.target, ...s });
       else this.remove();
@@ -690,8 +691,10 @@ export class ObjectEditor extends Morph {
   contextMenuForClassTree ({ node, evt }) {
     evt.stop();
     if (!node || !node.target) return;
-    const klass = isClass(node.target) ? node.target
-      : node.target.owner && isClass(node.target.owner) ? node.target.owner
+    const klass = isClass(node.target)
+      ? node.target
+      : node.target.owner && isClass(node.target.owner)
+        ? node.target.owner
         : obj.isString(node.target) ? node.target : null;
 
     const items = [];
@@ -804,7 +807,8 @@ export class ObjectEditor extends Morph {
 
     const ed = this.ui.sourceEditor;
     const cursorPos = ed.indexToPosition(putCursorInBody
-      ? methodNode.value.body.start + 1 : methodNode.key.start);
+      ? methodNode.value.body.start + 1
+      : methodNode.key.start);
     ed.cursorPosition = cursorPos;
     ed.scrollCursorIntoView();
 
@@ -1036,7 +1040,8 @@ export class ObjectEditor extends Morph {
       for (const mod of modules) {
         // mod = modules[0]
         const pkg = await system.getPackageForModule(mod.name);
-        const shortName = pkg ? pkg.name + '/' + system.shortModuleName(mod.name, pkg)
+        const shortName = pkg
+          ? pkg.name + '/' + system.shortModuleName(mod.name, pkg)
           : mod.name;
 
         const realModule = module(mod.name);
@@ -1154,7 +1159,7 @@ export class ObjectEditor extends Morph {
       'New Forked Package\n', {},
       'Please enter a name for the forked class and its package:', { fontSize: 16, fontWeight: 'normal' }], {
       requester: this,
-      input: await this.withContextDo(ctx => ctx.target.constructor[Symbol.for('__LivelyClassName')]) + 'Fork',
+      input: await this.withContextDo(ctx => ctx.target.constructor[Symbol.for('__LivelyClassName__')]) + 'Fork',
       historyId: 'lively.morphic-object-editor-fork-names',
       useLastInput: false
     });

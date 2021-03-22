@@ -1418,14 +1418,21 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
       // causing issues when reassigned the minified pieces
       // res = arr.uniqBy(res, (snipped1, snipped2) => snipped1.code === snipped2.code);
       const loadCode = `
-        System.config({
-          meta: {
-           ${
-            res.map(snippet => `'./${snippet.fileName}': {format: "system"}`).join(',\n') // makes sure that compressed modules are still recognized as such
-            }
+        
+        window.frozenPart = {
+          renderFrozenPart: (domNode, baseURL) => {
+            if (baseURL) System.config( { baseURL });
+            if (!baseURL) baseURL = './';
+            System.config({
+              meta: {
+               ${
+                res.map(snippet => `[baseURL + '${snippet.fileName}']: {format: "system"}`).join(',\n') // makes sure that compressed modules are still recognized as such
+                }
+              }
+            });
+            System.import("__root_module__.js").then(m => { System.trace = false; m.renderFrozenPart(domNode); });
           }
-        });
-        System.import("./__root_module__.js").then(m => { System.trace = false; m.renderFrozenPart(); });
+        }
       `;
       // concat all snippets and compile them on server
       // insert hint strings
@@ -1509,8 +1516,8 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
 export async function bundlePart (partOrSnapshot, { exclude: excludedModules = [], compress = false, output = 'es2019', requester, useTerser }) {
   const snapshot = partOrSnapshot.isMorph
     ? await createMorphSnapshot(partOrSnapshot, {
-        frozenSnapshot: true
-      })
+      frozenSnapshot: true
+    })
     : partOrSnapshot;
   transpileAttributeConnections(snapshot);
   const bundle = new LivelyRollup({ excludedModules, snapshot, jspm: true, useTerser });

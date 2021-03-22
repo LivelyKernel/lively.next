@@ -480,7 +480,7 @@ const commands = [
   {
     name: 'resize active window',
     exec: async function (world, opts = { how: null, window: null }) {
-      let { window, how } = opts;
+      const { window, how } = opts;
       const win = window || world.activeWindow();
 
       if (!win) return;
@@ -497,8 +497,8 @@ const commands = [
       if (!how) how = await askForHow();
       if (!how) return;
 
-      if (how === 'reset') delete win.normalBounds;
       win.setBounds(resizeBounds(how, worldB));
+      if (how === 'reset') delete win._normalBounds;
 
       return true;
 
@@ -522,7 +522,7 @@ const commands = [
           case 'right': return thirdColBounds.translatedBy(pt(worldB.width - thirdW, 0));
           case 'top': return worldB.divide([rect(0, 0, 1, 0.5)])[0];
           case 'bottom': return worldB.divide([rect(0, 0.5, 1, 0.5)])[0];
-          case 'reset': return win.normalBounds || pt(500, 400).extentAsRectangle().withCenter(bounds.center());
+          case 'reset': return win._normalBounds || pt(500, 400).extentAsRectangle().withCenter(bounds.center());
           default: return bounds;
         }
       }
@@ -705,10 +705,11 @@ const commands = [
       if (!format) var { a, b, format } = findFormat(a, b);
       else { a = String(a); b = String(b); }
 
-      const { default: diff } = await System.import('https://jspm.dev/diff');
-      let diffed = await diffInWindow(a, b, { fontFamily: 'monospace', ...opts, format });
+      const diff = await System.import('https://jspm.dev/diff');
 
-      return diffed;
+      let diffed;
+
+      diffed = await diffInWindow(a, b, { fontFamily: 'monospace', ...opts, format });
 
       function findFormat (a, b) {
         if (obj.isPrimitive(a) || a instanceof RegExp ||
@@ -749,6 +750,8 @@ const commands = [
 
         return textMorph;
       }
+
+      return diffed;
     }
   },
 
@@ -894,7 +897,6 @@ const commands = [
       const li = LoadingIndicator.open('loading component browser');
       await li.whenRendered();
       const componentsBrowser = world._componentsBrowser || (world._componentsBrowser = await resource('part://SystemDialogs/master component browser').read());
-      await componentsBrowser.whenRendered();
       li.remove();
       const loadedComponent = await componentsBrowser.activate();
       if (loadedComponent && !loadedComponent.world()) { loadedComponent.openInWorld(); }

@@ -364,6 +364,7 @@ export class List extends Morph {
       },
 
       extent: {
+        defaultValue: pt(400, 360),
         set (value) {
           if (value.eqPt(this.extent)) return;
           this.setProperty('extent', value);
@@ -523,11 +524,13 @@ export class List extends Morph {
       manualItemHeight: { type: 'Boolean' },
 
       itemHeight: {
+        isStyleProp: true,
         after: ['fontFamily', 'fontSize', 'itemPadding'],
         defaultValue: 10,
         set (val) {
           this.setProperty('itemHeight', val);
           this.manualItemHeight = typeof val === 'number';
+          this.update();
         },
         get () {
           const height = this.getProperty('itemHeight');
@@ -552,12 +555,6 @@ export class List extends Morph {
       }
 
     };
-  }
-
-  constructor (props = {}) {
-    if (!props.bounds && !props.extent) props.extent = pt(400, 360);
-    super(props);
-    this.update();
   }
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
@@ -622,6 +619,7 @@ export class List extends Morph {
   clickOnItem (evt) {
     const item = this.itemForClick(evt);
     const { state: { clickCount } } = evt;
+    if (evt.positionIn(this).x > this.width - this.scrollbarOffset.x) return;
     const method = clickCount === 2 ? 'onItemMorphDoubleClicked' : 'onItemMorphClicked';
     this[method](evt, item);
   }
@@ -1339,6 +1337,8 @@ export class DropDownList extends Button {
         defaultValue: 'bottom'
       },
 
+      listOffset: { isStyleProp: true, defaultValue: pt(0, 0) },
+
       openListInWorld: { defaultValue: false },
 
       listMorph: {
@@ -1386,20 +1386,7 @@ export class DropDownList extends Button {
             }
             if (!item) return;
 
-            let label = item.label || [item.string, null];
-            label = [
-              ...label, ' ', null,
-              ...Icon.textAttribute(
-                'caret-' + (listAlign === 'bottom'
-                  ? 'down'
-                  : 'up'))
-            ];
-            if (label[5]) {
-              label[5].paddingRight = '0px';
-              label[5].textStyleClasses = ['fa', 'annotation'];
-            }
-            this.label = label;
-            this.relayout();
+            this.adjustLableFor(item);
 
             listMorph.selectedIndex = items.indexOf(item);
           }
@@ -1429,12 +1416,34 @@ export class DropDownList extends Button {
     setTimeout(() => {
       const list = this.listMorph;
       const focused = this.world() && this.world().focusedMorph;
-      if (list !== focused && focused !== this &&
+      if (focused !== list &&
+          focused !== this &&
           list.world() &&
           !list.withAllSubmorphsDetect(m => m == focused)) {
         list.fadeOut(200);
-      } else once(touchInputDevice ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
+      } else if (list.world()) {
+        const target = touchInputDevice ? list.scroller : list;
+        once(target, 'onBlur', this, 'removeWhenFocusLost');
+        target.focus();
+      }
     }, 100);
+  }
+
+  adjustLableFor (item) {
+    let label = item.label || [item.string, null];
+    label = [
+      ...label, ' ', null,
+      ...Icon.textAttribute(
+        'caret-' + (this.listAlign === 'bottom'
+          ? 'down'
+          : 'up'))
+    ];
+    if (label[5]) {
+      label[5].paddingRight = '0px';
+      label[5].textStyleClasses = ['fa', 'annotation'];
+    }
+    this.label = label;
+    this.relayout();
   }
 
   async toggleList () {
@@ -1463,6 +1472,7 @@ export class DropDownList extends Button {
       } else {
         list.topLeft = bounds.bottomLeft();
       }
+      list.moveBy(this.listOffset || pt(0, 0));
       once(list, 'onItemMorphClicked', this, 'toggleList');
       once(touchInputDevice ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
       await list.whenRendered();

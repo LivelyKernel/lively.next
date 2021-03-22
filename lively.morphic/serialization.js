@@ -2,14 +2,16 @@
 import {
   requiredModulesOfSnapshot,
   deserializeWithMigrations,
-  serialize
+  serialize,
+  allPlugins
 } from 'lively.serializer2';
 import { MorphicEnv } from './env.js';
 import { resource } from 'lively.resources';
 import { newMorphId, morph, pathForBrowserHistory } from './helpers.js';
+import * as ast from 'lively.ast';
 
 function normalizeOptions (options) {
-  options = { reinitializeIds: false, ...options };
+  options = { reinitializeIds: false, plugins: [...allPlugins, new StyleguidePlugin()], ...options };
 
   if (options.reinitializeIds) {
     options.reinitializeIds = typeof options.reinitializeIds === 'function'
@@ -109,10 +111,9 @@ export function copyMorph (morph, realCopy = false) {
 
 import * as modules from 'lively.modules';
 import { createFiles } from 'lively.resources';
-import { promise, graph, arr } from 'lively.lang';
+import { promise, Path, graph, arr } from 'lively.lang';
 import { migrations } from './object-migration.js';
-import { CommentIndicator } from 'lively.collab';
-import { Halo } from 'lively.halos';
+import { StyleguidePlugin, findLocalComponents } from './style-guide.js';
 
 const { registerPackage, module, getPackage, ensurePackage, lookupPackage, semver } = modules;
 
@@ -121,7 +122,7 @@ let objectScriptingEnabled = false;
 export async function createMorphSnapshot (aMorph, options = {}) {
   const isNode = System.get('@system-env').node;
   const {
-    addPreview = false, // this is incredibely slow for large worlds. Perform on server intead.
+    addPreview = false, // this is incredibly slow for large worlds. Perform on server instead.
     previewWidth = 100, previewHeight = 100,
     previewType = 'png',
     testLoad = true,
@@ -135,6 +136,36 @@ export async function createMorphSnapshot (aMorph, options = {}) {
     // 1. save object packages
     const { packages, depMap } = await findRequiredPackagesOfSnapshot(snapshot);
     snapshot.packages = packages;
+    const localComponents = findLocalComponents(snapshot.snapshot);
+    // transform the code inside tha packages in case the reference local components
+    Object.values(packages['local://lively-object-modules/'] || {}).forEach(pkgModules => {
+      // parse each module for local component references part://$world or styleguide://$world and replace
+      // with absolute version
+      // IF THE SNAPSHOT DOES NOT INCLUDE THAT LOCAL COMPONENT
+      Object.entries(pkgModules).forEach(([moduleName, source]) => {
+        if (moduleName.endsWith('.json')) return;
+        const parsed = ast.parse(source);
+        const nodesToReplace = [];
+        const localWorldName = Path('metadata.commit.name').get($world);
+        ast.AllNodesVisitor.run(parsed, (node, path) => {
+          if (node.type === 'Literal' && typeof node.value === 'string') {
+            if (node.value.match(/^styleguide:\/\/\$world\/.+/) && !localComponents.includes(node.value.replace('styleguide://$world/', ''))) {
+              nodesToReplace.push({
+                target: node,
+                replacementFunc: () => JSON.stringify(node.value.replace('$world', localWorldName))
+              });
+            }
+            if (node.value.match(/^part:\/\/\$world\/.+/) && !localComponents.includes(node.value.replace('part://$world/', ''))) {
+              nodesToReplace.push({
+                target: node,
+                replacementFunc: () => JSON.stringify(node.value.replace('$world', localWorldName))
+              });
+            }
+          }
+        });
+        pkgModules[moduleName] = ast.transform.replaceNodes(nodesToReplace, source).source;
+      });
+    });
     snapshot.packageDepMap = depMap;
   }
 

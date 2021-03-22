@@ -278,7 +278,7 @@ export class Menu extends Morph {
     }
 
     if (item.command) {
-      let { command, showKeyShortcuts, target, alias, args } = item;
+      let { command, showKeyShortcuts, target, alias, args, tooltip } = item;
       if (!command || !target) return invalidItem;
       if (showKeyShortcuts === undefined) showKeyShortcuts = true;
       const keys = !showKeyShortcuts
@@ -288,7 +288,7 @@ export class Menu extends Morph {
           : target.keysForCommand(command);
       const label = alias || command;
       const annotation = keys ? [`\t${keys}`, { fontSize: '70%' }] : ['', {}];
-      return { string: label, annotation, action: () => target.execCommand(command, args) };
+      return { tooltip, string: label, annotation, action: () => target.execCommand(command, args) };
     }
 
     return invalidItem;
@@ -321,7 +321,7 @@ export class Menu extends Morph {
       maxWidth = Math.max(title.width, maxWidth);
     }
 
-    this.items.forEach(({ label, string, annotation, action, submenu, isDivider }) => {
+    this.items.forEach(({ label, string, annotation, action, submenu, isDivider, tooltip }) => {
       const itemMorph = this.addMorph(
         isDivider
           ? new MenuDivider({ position: pos })
@@ -330,6 +330,7 @@ export class Menu extends Morph {
             annotation,
             action,
             submenu,
+            tooltip,
             position: pos,
             ...defaultStyle
           }));
@@ -441,7 +442,8 @@ export class Menu extends Morph {
     // should fit into, when there are multiple submenus force one direction with forceDirection
     if (!direction) {
       direction = mainMenuItemBnds.right() + subMenuBnds.width > visibleBounds.right()
-        ? 'left' : 'right';
+        ? 'left'
+        : 'right';
     }
 
     const extent = subMenuBnds.extent();

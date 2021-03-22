@@ -166,9 +166,17 @@ export function runtimeDefinition() {
   };
   globalModules["@system-env"] = {executed: true, browser: true}
   
+  let loc = G.document && G.document.location.href.split('?')[0];
+
+  if (loc && loc.endsWith('.html')) {
+    // ensure we do not point to a html file
+    loc = loc.split('/').slice(0, -1).join('/') + '/';
+  }
+  
   G.lively.FreezerRuntime = {
     global: G,
-    location: G.document && G.document.location.href.split('?')[0],
+    location: loc,
+    baseURL: G.System ? G.System.baseURL : loc,
     version, registry, globalModules,
     get(moduleId, recorder = true) {
       if (moduleId && moduleId.startsWith('@')) return this.globalModules[moduleId];

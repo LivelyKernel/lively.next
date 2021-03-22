@@ -1,11 +1,12 @@
 /* global process */
-import { ObjectDBInterface } from "lively.storage";
-import { resource } from "lively.resources";
-import { HeadlessSession } from "lively.headless";
-import { string, promise } from "lively.lang";
+import { ObjectDBInterface } from 'lively.storage';
+import { resource } from 'lively.resources';
+import { HeadlessSession } from 'lively.headless';
+import { string, promise } from 'lively.lang';
+
+const errorLog = [];
 
 export default class ComponentsBrowser {
-
   /*
 
     This subserver handles the indexing and caching of exported master components of worlds.
@@ -37,34 +38,33 @@ export default class ComponentsBrowser {
 
   */
 
-  async setup(livelyServer) {
+  async setup (livelyServer) {
     // fixme: configure these from the config file
     this.customDirs = ['./lively.morphic/styleguides/'];
     this.cacheDir = './components_cache/';
-    
-    if (!await this.getCacheDir().exists())
-      this.refresh();
+
+    if (!await this.getCacheDir().exists()) { this.refresh(); }
   }
 
-  getCacheDir() {
-    const baseUrl = "file://" + process.cwd(); // assume we are running inside the lively.server folder
+  getCacheDir () {
+    const baseUrl = 'file://' + process.cwd(); // assume we are running inside the lively.server folder
     return resource(baseUrl + '/../').join(this.cacheDir).withRelativePartsResolved();
   }
 
-  async fetchWorlds() {
+  async fetchWorlds () {
     let worlds;
-    let attempts = 0;
+    const attempts = 0;
     try {
       await ObjectDBInterface.ensureDB({
         db: 'lively.morphic/objectdb/morphicdb',
         snapshotLocation: '/lively.morphic/objectdb/morphicdb/snapshots'
       });
       worlds = await ObjectDBInterface.fetchCommits({
-        db: "lively.morphic/objectdb/morphicdb",
+        db: 'lively.morphic/objectdb/morphicdb',
         type: 'world'
       });
     } catch (err) {
-	      console.log(err)
+	      console.log(err);
     }
     if (!worlds) {
       console.log('[ComponentsBrowser]: Failed to load worlds from database');
@@ -72,38 +72,38 @@ export default class ComponentsBrowser {
     }
     return worlds;
   }
-  
-  async refresh(worldToUpdate = false) {
+
+  async refresh (worldToUpdate = false) {
     // if worldName is specified, then we only update that particular world
-    const baseUrl = "file://" + process.cwd(); // assume we are running inside the lively.server folder
+    const baseUrl = 'file://' + process.cwd(); // assume we are running inside the lively.server folder
     const worlds = await this.fetchWorlds();
-    let allStyleguidesInDb = worlds.filter(commit => commit.tags.includes('styleguide')).map(snap => snap.name);
-    let additionalStyleguidesInFolders = [];
-    let cacheDir = this.getCacheDir(); // ensure?
-    await cacheDir.ensureExistance()
+    const allStyleguidesInDb = worlds.filter(commit => commit.tags.includes('styleguide')).map(snap => snap.name);
+    const additionalStyleguidesInFolders = [];
+    const cacheDir = this.getCacheDir(); // ensure?
+    await cacheDir.ensureExistance();
     let dir;
-    for (let relPath of this.customDirs) {
+    for (const relPath of this.customDirs) {
       dir = resource(baseUrl + '/../').join(relPath).withRelativePartsResolved();
-      let snapshots = await dir.dirList();
-      additionalStyleguidesInFolders.push(...snapshots.filter(d => !d.name().endsWith('.br.json') && !allStyleguidesInDb.includes(d.name().replace('.json', ''))).map(d => 
-         [
+      const snapshots = await dir.dirList();
+      additionalStyleguidesInFolders.push(...snapshots.filter(d => !d.name().endsWith('.br.json') && !allStyleguidesInDb.includes(d.name().replace('.json', ''))).map(d =>
+        [
           d.name().replace('.json', ''),
           d.url.replace(resource(baseUrl + '/../').withRelativePartsResolved().url, '')
-         ]
-        )
+        ]
+      )
       );
     }
 
-    const urlFor = (name, json = false) => 
-       json ? 
-         `http://localhost:9011/worlds/load?file=${encodeURIComponent(name)}&fastLoad=true&showsUserFlap=false` :
-         `http://localhost:9011/worlds/load?name=${encodeURIComponent(name)}&fastLoad=true&showsUserFlap=false`;
+    const urlFor = (name, json = false) =>
+      json
+        ? `http://localhost:9011/worlds/load?file=${encodeURIComponent(name)}&fastLoad=true&showsUserFlap=false`
+        : `http://localhost:9011/worlds/load?name=${encodeURIComponent(name)}&fastLoad=true&showsUserFlap=false`;
 
     this.headlessSession = new HeadlessSession();
     // fire up the headless chrome browser
-    for (let [worldName, jsonPath] of [...allStyleguidesInDb.map(m => [m]), ...additionalStyleguidesInFolders]) {
+    for (const [worldName, jsonPath] of [...allStyleguidesInDb.map(m => [m]), ...additionalStyleguidesInFolders]) {
       if (worldToUpdate && worldName != worldToUpdate) continue;
-      if (worldName == 'SystemIDE') continue;      
+      if (worldName == 'SystemIDE') continue;
       console.log('[ComponentsBrowser] indexing ' + worldName);
       try {
         await this.headlessSession.open(
@@ -115,23 +115,23 @@ export default class ComponentsBrowser {
           console.log('[ComponentsBrowser] Failed indexing ' + worldName);
           continue;
         }
-        
-        await this.headlessSession.page.emulate({ viewport: { width: 1000, height: 1000, deviceScaleFactor: 2}, userAgent: 'Chrome'})
-        
-        let listedComponents = await this.headlessSession.runEval(`
-          this.__listedComponents__ = $world.getListedComponents();
+
+        await this.headlessSession.page.emulate({ viewport: { width: 1000, height: 1000, deviceScaleFactor: 2 }, userAgent: 'Chrome' });
+
+        const listedComponents = await this.headlessSession.runEval(`
+          this.__listedComponents__ = $world.getListedComponents().filter(c => !$world.hiddenComponents.includes(c.name));
           this.__listedComponents__.map(m => m.name);
         `);
-  
+
         await promise.delay(2000);
-  
-        let worldFolder = cacheDir.join(worldName + '/');
+
+        const worldFolder = cacheDir.join(worldName + '/');
         if (await worldFolder.exists()) await worldFolder.remove(); // always make sure to start form clean slate
-  
+
         // fixme: remove deleted worlds?
-  
+
         for (let i = 0; i < listedComponents.length; i++) {
-          let [componentName, screenshotSize] = await this.headlessSession.runEval(`
+          const [componentName, screenshotSize] = await this.headlessSession.runEval(`
             let component = window.__currentComponent__ = this.__listedComponents__.pop();
             let res;
             if ($world.get('lively top bar'))
@@ -141,12 +141,12 @@ export default class ComponentsBrowser {
             $world.withAllSubmorphsSelect(m => m.hasFixedPosition && m.owner == $world)
                   .forEach(m => m.opacity = 0);
             if (component) {
+              component.openInWorld();
               if (component.master) await component.master.whenApplied();
               component.opacity = 1;
               component._origOwner = component.owner;
               component._origPos = component.position;
               component.hasFixedPosition = true;
-              component.openInWorld();
               component.top = 50;
               component.left = 50;
               res = [component.name, component.bounds().insetBy(-50)];
@@ -155,15 +155,15 @@ export default class ComponentsBrowser {
             }
             res;
           `);
-    
+
           if (!screenshotSize) break;
-  
+
           await this.headlessSession.page.screenshot({
-            path: (await worldFolder.join(componentName + '.png').ensureExistance()).url.replace('file://', ''), 
+            path: (await worldFolder.join(componentName + '.png').ensureExistance()).url.replace('file://', ''),
             clip: screenshotSize,
-            omitBackground: true,
+            omitBackground: true
           });
-    
+
           await this.headlessSession.runEval(`
             let component = window.__currentComponent__;
             component._origOwner.addMorph(component);
@@ -171,34 +171,34 @@ export default class ComponentsBrowser {
             component.hasFixedPosition = false;
           `);
         }
-
       } catch (err) {
         console.log('[ComponentsBrowser] Failed indexing ' + worldName);
+        errorLog.push('[ComponentsBrowser] Failed indexing ' + worldName);
         continue;
       }
     }
-    
+
     console.log('[ComponentsBrowser] Finished Indexing!');
     this.headlessSession.dispose();
     // write the index as a json into the root? Can be derived from the images...
   }
 
-  get pluginId() { return "ComponentsBrowser" }
+  get pluginId () { return 'ComponentsBrowser'; }
 
-  handleRequest(req, res, next) {
-    if (!req.url.startsWith("/subserver/ComponentsBrowser")) return next();
-    if (req.url.startsWith("/subserver/ComponentsBrowser/refresh")) {
+  handleRequest (req, res, next) {
+    if (!req.url.startsWith('/subserver/ComponentsBrowser')) return next();
+    if (req.url.startsWith('/subserver/ComponentsBrowser/refresh')) {
       // req = {}; req.url = "/subserver/ComponentsBrowser/refresh"
-      const [_, worldName] = req.url.split("refresh/");
+      const [_, worldName] = req.url.split('refresh/');
       return this.refresh(worldName && decodeURIComponent(worldName)).then(() => {
-        res.writeHead(200, {'Content-Type': 'text/plain'});
-        res.end("Comonents Cached");
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('Components Cached');
       }).catch(() => {
-        res.writeHead(500, {'Content-Type': 'text/plain'});
-        res.end("Error");
-      })
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Error');
+      });
     }
-    res.writeHead(200, {'Content-Type': 'text/plain'});
-    res.end("ComponentsBrowser is running!");
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('ComponentsBrowser is running!');
   }
 }

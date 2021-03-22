@@ -50,15 +50,19 @@ export class LivelyWorld extends World {
           // this is maybe better placed inside migrations since
           // it only serves to make old worlds pour their components
           // into this property automatically
+
           this.whenRendered().then(() => {
             if (this.localComponents) {
               this.localComponents.forEach(async c => {
-                if (!c.owner && c.master) {
-                  await c.master.applyIfNeeded(true);
+                if (!c.owner) {
+                  const unappliedSubMasters = c.withAllSubmorphsSelect(m => m.master && !m.master._appliedMaster);
+                  for (const subComponent of unappliedSubMasters) { await subComponent.master.applyIfNeeded(true); }
                   const derivedMorphs = this.withAllSubmorphsSelect(m => m.master && m.master.uses(c));
+                  const derivedMasters = this.localComponents.filter(m => m.master && m.master.uses(c));
                   derivedMorphs.forEach(m => {
                     m.requestMasterStyling();
                   });
+                  derivedMasters.forEach(m => m.master.applyIfNeeded(true));
                 }
               });
               return;
@@ -455,13 +459,21 @@ export class LivelyWorld extends World {
         { command: 'inspect server', target: this }
       ]],
       ['Tools', [
-        { command: 'open PartsBin', target: this },
         { command: 'open javascript workspace', target: this },
         { command: 'open browser', target: this },
         { command: 'choose and browse module', target: this },
         { command: 'open code search', target: this },
         { command: 'open file browser', target: this },
-        { command: 'open shell workspace', target: this },
+        {
+          command: 'open shell workspace',
+          target: this,
+          tooltip: `Opens a workspace like interface\nthat allows you to trigger shell comands\nvia select + eval by pressing either ${new Text().keysForCommand('doit')} or ${new Text().keysForCommand('printit')}`
+        },
+        {
+          command: 'open shell terminal',
+          target: this,
+          tooltip: 'Opens a classic remote shell interface,\nthat allows you to send commands to a\nbash session running on the server.\nAlso comes with advanced git support.'
+        },
         { command: 'open workspace', args: { askForMode: true }, target: this }
       ]],
       { isDivider: true },
@@ -1370,10 +1382,6 @@ export class LivelyWorld extends World {
     }
   }
 }
-
-
-
-
 
 class SelectionElement extends Morph {
   static get properties () {

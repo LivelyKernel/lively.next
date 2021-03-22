@@ -23,8 +23,9 @@ await versionDB.getAll()
 
 */
 var morphicDBs = morphicDBs || (morphicDBs = new Map());
-const defaultServerURL = (typeof document !== 'undefined'
-  ? document.location.origin : 'http://localhost:9001') + '/objectdb/';
+const getDefaultServerUrl = () => resource(typeof document !== 'undefined'
+  ? System.baseURL
+  : 'http://localhost:9001').join('objectdb/').url;
 
 export function convertToSerializableCommit (commit) {
   if (commit) {
@@ -51,7 +52,7 @@ export async function ensureCommitInfo (commit) {
 
 export default class MorphicDB {
   static get default () {
-    return this.named('lively.morphic/objectdb/morphicdb', { serverURL: defaultServerURL });
+    return this.named('lively.morphic/objectdb/morphicdb', { serverURL: getDefaultServerUrl() });
   }
 
   static named (name, options) {

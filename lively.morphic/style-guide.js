@@ -2,9 +2,11 @@ import { arr, properties, Path, promise, obj } from 'lively.lang';
 import { registerExtension, Resource, resource } from 'lively.resources';
 import { pt } from 'lively.graphics';
 import MorphicDB from './morphicdb/db.js';
-import { ObjectPool, normalizeOptions } from 'lively.serializer2';
+import { ObjectPool, allPlugins, normalizeOptions } from 'lively.serializer2';
 import { deserializeMorph, loadPackagesAndModulesOfSnapshot } from './serialization.js';
 import { subscribeOnce } from 'lively.notifications/index.js';
+import { once } from 'lively.bindings';
+import * as ast from 'lively.ast';
 
 /*
 
@@ -25,6 +27,70 @@ import { subscribeOnce } from 'lively.notifications/index.js';
   // allows to browse components locally or exported from different worlds (categorized via "/" naming scheme taken from figma)
 
 */
+
+function ensureAbsoluteComponentRefs (
+  {
+    snapshotAndPackages,
+    localComponents = findLocalComponents(snapshot),
+    localWorldName = Path('metadata.commit.name').get($world)
+  }) {
+  const { snapshot, packages } = snapshotAndPackages;
+  // transform the code inside tha packages in case the reference local components
+  Object.values(packages['local://lively-object-modules/'] || {}).forEach(pkgModules => {
+    // parse each module for local component references part://$world or styleguide://$world and replace
+    // with absolute version
+    // IF THE SNAPSHOT DOES NOT INCLUDE THAT LOCAL COMPONENT
+    Object.entries(pkgModules).forEach(([moduleName, source]) => {
+      if (moduleName.endsWith('.json')) return;
+      const parsed = ast.parse(source);
+      const nodesToReplace = [];
+      ast.AllNodesVisitor.run(parsed, (node, path) => {
+        if (node.type === 'Literal' && typeof node.value === 'string') {
+          if (node.value.match(/^styleguide:\/\/\$world\/.+/) && !localComponents.includes(node.value.replace('styleguide://$world/', ''))) {
+            nodesToReplace.push({
+              target: node,
+              replacementFunc: () => JSON.stringify(node.value.replace('$world', localWorldName))
+            });
+          }
+          if (node.value.match(/^part:\/\/\$world\/.+/) && !localComponents.includes(node.value.replace('part://$world/', ''))) {
+            nodesToReplace.push({
+              target: node,
+              replacementFunc: () => JSON.stringify(node.value.replace('$world', localWorldName))
+            });
+          }
+        }
+      });
+      pkgModules[moduleName] = ast.transform.replaceNodes(nodesToReplace, source).source;
+    });
+  });
+}
+
+export function findLocalComponents (snapshot) {
+  return Object
+    .values(snapshot)
+    .filter(m => Path('props.isComponent.value').get(m) == true)
+    .map(m => m.props.name.value);
+}
+
+export class StyleguidePlugin {
+  afterSerialization (pool, snapshot, rootId) {
+    // determine all components that are part of this snapshot and could be resolved locally
+    // all the other ones are left as absolute paths
+    const masterURLRemapping = {};
+    const localComponentUrl = `styleguide://${getProjectName($world)}`;
+    findLocalComponents(snapshot).forEach(componentName =>
+      masterURLRemapping[`${localComponentUrl}/${componentName}`] = `styleguide://$world/${componentName}`
+    );
+    Object.values(snapshot).forEach(({ props: { master } }) => {
+      if (master && master.value) {
+        for (const url in masterURLRemapping) {
+          if (master.value.includes(url)) { master.value = master.value.split(url).join(masterURLRemapping[url]); }
+        }
+        master.value = master.value.split(localComponentUrl).join('styleguide://$world');
+      }
+    });
+  }
+}
 
 export async function prefetchCoreStyleguides (li) {
   li.label = 'loading System Elements';
@@ -54,6 +120,7 @@ function getProjectName (world) {
 export class ComponentPolicy {
   static for (derivedMorph, args) {
     let newPolicy;
+
     if (args.constructor === ComponentPolicy) newPolicy = args;
     else newPolicy = new this(derivedMorph, args);
 
@@ -98,6 +165,9 @@ export class ComponentPolicy {
 
   equals (other) {
     if (!other) return false;
+    if (typeof other === 'string') {
+      return this.getResourceUrlFor(this.auto) == other;
+    }
     for (const master of ['auto', 'click', 'hover']) {
       if (typeof other[master] === 'string') {
         if (this.getResourceUrlFor(this[master]) != other[master] || null) return false;
@@ -155,7 +225,7 @@ export class ComponentPolicy {
 
   getResourceUrlFor (component) {
     if (!component) return null;
-    if (component._resourceHandle) return component._resourceHandle.url; // we leave this being for remote masters :)
+    if (component._resourceHandle) return component._resourceHandle.url.replace('$world', getProjectName($world)); // we leave this being for remote masters :)
     if (component.name == undefined) return null;
     // else we assume the component resides within the current world
     return `styleguide://${getProjectName($world)}/${component.name}`;
@@ -208,27 +278,41 @@ export class ComponentPolicy {
 
   applyIfNeeded (needsUpdate = false, animationConfig = false) {
     if (animationConfig) this._animationConfig = animationConfig;
+    const target = this.derivedMorph;
+    if (!target.env.world) {
+      // wait for env to be installed
+      once(target.env, 'world', () => {
+        this.applyIfNeeded(needsUpdate, animationConfig);
+      });
+      return;
+    }
+    if (!target.env.eventDispatcher) {
+      // wait for env to be installed fully
+      once(target.env, 'eventDispatcher', () => {
+        this.applyIfNeeded(needsUpdate, animationConfig);
+      });
+      return;
+    }
     if (this._hasUnresolvedMaster) {
-      this._originalOpacity = this.derivedMorph.opacity;
+      this._originalOpacity = target.opacity;
       // fixme: this may still be too late if applyIfNeeded is triggered at render time
       // hide the component until it is applied
-      this.derivedMorph.withMetaDo({ metaInteraction: true }, () => {
+      target.withMetaDo({ metaInteraction: true }, () => {
         if (!animationConfig &&
-            ![this.derivedMorph, ...this.derivedMorph.ownerChain()].find(m => m.isComponent)) {
-          this.derivedMorph.opacity = 0;
+            ![target, ...target.ownerChain()].find(m => m.isComponent)) {
+          target.opacity = 0;
         }
       });
       // this clogs up the main thread. Instead use a callback from the master.
       return this._hasUnresolvedMaster.then(() => {
         this.applyIfNeeded(needsUpdate);
-        this.derivedMorph.withMetaDo({ metaInteraction: true }, () => {
-          this.derivedMorph.opacity = this._originalOpacity;
+        target.withMetaDo({ metaInteraction: true }, () => {
+          target.opacity = this._originalOpacity;
         });
         delete this._originalOpacity;
         delete this._capturedExtents;
       });
     }
-    const target = this.derivedMorph;
     const master = this.determineMaster(target);
     if (master && this._appliedMaster != master) needsUpdate = true;
     if (master && needsUpdate) {
@@ -253,7 +337,7 @@ export class ComponentPolicy {
     if (this._applying) return;
     this._applying = true;
     try {
-      const apply = () => {
+      const apply = () => derivedMorph.withMetaDo({ metaInteraction: true }, () => {
         const nameToStylableMorph = this.prepareSubmorphsToBeManaged(derivedMorph, master);
         master.withAllSubmorphsDoExcluding(masterSubmorph => {
           const isRoot = masterSubmorph == master;
@@ -262,13 +346,21 @@ export class ComponentPolicy {
           if (obj.isArray(morphToBeStyled)) morphToBeStyled = morphToBeStyled.pop();
           if (masterSubmorph.master && !isRoot) { // can not happen to the root since we ruled that out before
             // only do this when the master has changed
-            morphToBeStyled.master = masterSubmorph.master.spec(); // assign to the same master
-            morphToBeStyled._requestMasterStyling = true;
+
+            if (!masterSubmorph.master.equals(morphToBeStyled.master) &&
+                !this._overriddenProps.get(morphToBeStyled).master) {
+              morphToBeStyled.master = masterSubmorph.master.spec(); // assign to the same master
+              morphToBeStyled.requestMasterStyling();
+            }
+          }
+          if (morphToBeStyled.master && !isRoot) {
+            const overriddenProps = morphToBeStyled.master._overriddenProps.get(morphToBeStyled) || {};
+
             // but enforce extent and position since that is not done by the master itself
-            if (!this._overriddenProps.get(morphToBeStyled).position) {
+            if (!overriddenProps.position) {
               morphToBeStyled.position = masterSubmorph.position;
             }
-            if (!this._overriddenProps.get(morphToBeStyled).extent) {
+            if (!overriddenProps.extent) {
               morphToBeStyled.extent = masterSubmorph.extent;
             }
             return; // style application is handled by that master
@@ -319,13 +411,13 @@ export class ComponentPolicy {
           if (morphToBeStyled._parametrizedProps) { delete morphToBeStyled._parametrizedProps; }
           // this.reconcileSubmorphs(morphToBeStyled, masterSubmorph);
         }, masterSubmorph => master != masterSubmorph && masterSubmorph.master);
-      };
+      });
       if (animationConfig) {
         derivedMorph.withAnimationDo(apply, animationConfig).then(() => {
           delete this._animationConfig;
           this._applying = false;
         });
-      } else derivedMorph.dontRecordChangesWhile(apply);
+      } else derivedMorph.dontRecordChangesWhile(apply); // also make sure that when we are a master, not to propagate styles in this situtation
     } finally {
       if (!animationConfig) this._applying = false;
       delete derivedMorph._parametrizedProps; // needs to be done for all managed submorphs
@@ -371,23 +463,24 @@ export class ComponentPolicy {
     return nameToMorphs;
   }
 
-  reconcileSubmorphs () {
+  async reconcileSubmorphs () {
     /*
       reconciliation strategy: resolution of identity via name. try to preserve existing (local morphs) with names as much as possible. If their name is nowhere to be found in the restructured master, discard them.
       new (not yet existing) morphs are inserted into the hierarchy at their precise relative position, and provided with their appropriate submorphs
       this is a soft approach, since we only add morphs to the hierarchy that did not exist before, and remove morphs that are not needed any more
     */
+    await this.whenReady();
 
     const managedMorphs = this.managedMorphs;
-    const insertedMorphs = [];
-    const master = this._appliedMaster;
+    let insertedMorphs = [];
+    const master = this._appliedMaster || this.auto;
 
     managedMorphs[master.name] = this.derivedMorph; // hack
 
     if (!master) return; // no applied master, nothing to reconcile...
 
     master.withAllSubmorphsDo(masterSubmorph => {
-      if (masterSubmorph == master) {
+      if (master && masterSubmorph == master) {
         // surely no change here...
         insertedMorphs.push(masterSubmorph, this.derivedMorph);
         return;
@@ -417,10 +510,12 @@ export class ComponentPolicy {
         morphToInsert = managedMorphs[masterSubmorph.name] = masterSubmorph.copy();
         const ownerToBeAddedTo = managedMorphs[masterSubmorph.owner.name]; // this must have been resolved
         const insertionIndex = masterSubmorph.owner.submorphs.indexOf(masterSubmorph);
-        morphToInsert.submorphs = []; // handle submorphs separately
+        if (!morphToInsert.master) morphToInsert.submorphs = []; // handle submorphs separately
         insertedMorphs.push(ownerToBeAddedTo.addMorphAt(morphToInsert, insertionIndex));
       }
     });
+
+    insertedMorphs = arr.compact(insertedMorphs);
 
     // finally we remove all the morphs that have not been inserted any more
     Object.values(obj.dissoc(managedMorphs, insertedMorphs.map(m => m.name))).forEach(removedMorph => {
@@ -491,24 +586,27 @@ export class ComponentPolicy {
         let superMaster = master && master.master;
         while (superMaster) {
           if (superMaster.hover) {
+            // take into account the overridden props of the masters in between
             master = superMaster.hover;
             break;
           }
-          superMaster = superMaster.auto;
+          superMaster = Path('auto.master').get(superMaster);
         }
       }
     }
     if (isClicked) {
+      master = auto; // start from beginning
       if (click) master = click;
       else {
         // drill down in the master chain if a different click can be found
         let superMaster = master && master.master;
         while (superMaster) {
           if (superMaster.click) {
+            // take into account the overridden props of the masters in between
             master = superMaster.click;
             break;
           }
-          superMaster = superMaster.auto;
+          superMaster = Path('auto.master').get(superMaster);
         }
       }
     }
@@ -521,8 +619,11 @@ export class ComponentPolicy {
     // if (this._applying || this._hasUnresolvedMaster || !this._appliedMaster) return;
     if (this._applying) return;
     if (Path('meta.metaInteraction').get(change)) return;
-    if (['_rev', 'name', 'master'].includes(change.prop)) return;
+    if (['_rev', 'name'].includes(change.prop)) return;
     if (change.prop == 'opacity') delete this._originalOpacity;
+    if (change.prop == 'master' && this.managesMorph(morph)) {
+      this._overriddenProps.get(morph).master = true;
+    }
     if (morph.styleProperties.includes(change.prop)) {
       if (this.managesMorph(morph)) {
         if (morph.master && morph.master != this) {
@@ -707,7 +808,7 @@ class StyleGuideResource extends Resource {
     if (component) return component;
 
     if (lively.FreezerRuntime) {
-      let rootDir = resource(window.location);
+      let rootDir = resource(System.baseURL);
       if (rootDir.isFile()) rootDir = rootDir.parent();
       const masterDir = rootDir.join('masters/');
       component = await this.fetchFromMasterDir(masterDir, name);
@@ -745,17 +846,32 @@ class StyleGuideResource extends Resource {
             }).url;
           } else resolveSnapshot(null); // total fail
         }
-        await loadPackagesAndModulesOfSnapshot(snapshot); // this takes a looong time... and loads a bunch of stuff we often never need
+        // transpile the packages
+        ensureAbsoluteComponentRefs({ snapshotAndPackages: snapshot, localComponents: [], localWorldName: this.worldName });
+        await loadPackagesAndModulesOfSnapshot(snapshot); // this takes a looong time... and loads a bunch of stuff we often never need, only load the stuff that is directly required by the sub-snap
+        // fix all the references to $world inside that snapshot
+        Object.values(snapshot.snapshot)
+          .filter(m => m.props.master)
+          .forEach(m => {
+            const masterExpr = m.props.master.value;
+            if (obj.isString(masterExpr)) {
+              m.props.master.value = masterExpr.split('$world').join(this.worldName);
+            }
+          });
         resolveSnapshot(snapshot);
       } else snapshot = await fetchedSnapshots[this.worldName];
 
-      const pool = new ObjectPool(normalizeOptions({}));
+      const pool = new ObjectPool(normalizeOptions({
+        plugins: [new StyleguidePlugin(), ...allPlugins]
+      }));
 
       const [idToDeserialize] = Object.entries(snapshot.snapshot).find(([k, v]) => {
         return Path('props.isComponent.value').get(v) && Path('props.name.value').get(v) == name;
       }) || [];
 
       if (!idToDeserialize) throw Error(`Master component "${name}" can not be found in "${this.worldName}"`);
+
+      // load modules for that part of the snap, if it is required
 
       component = pool.resolveFromSnapshotAndId({ ...snapshot, id: idToDeserialize });
     }

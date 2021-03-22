@@ -12,10 +12,11 @@ import { pathForBrowserHistory } from './helpers.js';
 import { subscribe, emit } from 'lively.notifications';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
-import "./partsbin.js";
+import './partsbin.js';
 
 export async function loadWorldFromURL (url, oldWorld, options) {
-  const worldResource = url.isResource ? url
+  const worldResource = url.isResource
+    ? url
     : resource(System.decanonicalize(url));
   const name = worldResource.nameWithoutExt();
   return loadWorldFromDB(name, undefined, oldWorld, options);
@@ -75,7 +76,7 @@ export async function loadWorld (newWorld, oldWorld, options = {}) {
     localconfig && await loadLocalConfig();
 
     // if root is defined render on the root node
-    await env.setWorld(newWorld);
+    await env.setWorld(newWorld, root);
 
     worldLoadDialog && newWorld.execCommand('load world');
 
@@ -248,7 +249,10 @@ export async function interactivelySaveWorld (world, options) {
       if (oldName !== name && options.confirmOverwrite) {
         const { exists, commitId: existingCommitId } = await db.exists('world', name);
         if (exists) {
-          const overwrite = await world.confirm(`A world "${name}" already exists, overwrite?`, { styleClasses: ['Halo'], fill: Color.rgba(0, 0, 0, 0.8) });
+          i.center = world.windowBounds().center();
+          i.visible = false;
+          const overwrite = await world.confirm(['The world\n', { fontWeight: 'normal' }, `"${name}"`, { }, '\nalready exists, overwrite?', { fontWeight: 'normal' }], { hasFixedPosition: true, width: 350 });
+          i.visible = true;
           if (!overwrite) return null;
           expectedParentCommit = existingCommitId;
         }

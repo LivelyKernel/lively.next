@@ -97,9 +97,9 @@ export class MorphicEnv {
     return Promise.resolve();
   }
 
-  setWorld (world) {
+  setWorld (world, rootNode = this.renderer ? this.renderer.rootNode : this.domEnv.document.body) {
     if (this._waitForDOMEnv) { return this._waitForDOMEnv.then(() => this.setWorld(world)); }
-    return this.setWorldRenderedOn(world, this.domEnv.document.body);
+    return this.setWorldRenderedOn(world, rootNode);
   }
 
   setWorldRenderedOn (world, rootNode, domNode = null) {

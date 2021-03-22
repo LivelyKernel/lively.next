@@ -63,6 +63,12 @@ export class World extends Morph {
             CommentBrowser.initializeCommentBrowser();
           }
         }
+      },
+      name: {
+        set (name) {
+          this.setProperty('name', name);
+          document.title = `lively.next - ${name}`;
+        }
       }
     };
   }
@@ -319,6 +325,10 @@ export class World extends Morph {
     // the bounds call seems to slow down halos...
     if (!this.env.renderer) return this.innerBounds();
     return this.windowBounds().intersection(this.innerBounds());
+  }
+
+  visibleBoundsExcludingTopBar () {
+    return this.visibleBounds();
   }
 
   windowBounds (optWorldDOMNode) {

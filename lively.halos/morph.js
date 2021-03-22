@@ -1281,7 +1281,7 @@ class ComponentHaloItem extends HaloItem {
     const morphsInHierarchy = [];
     target.withAllSubmorphsDoExcluding(m => {
       if (m != target) morphsInHierarchy.push(m);
-    }, m => m.master);
+    }, m => m.master && m != target);
     const nameGroups = arr.groupBy(morphsInHierarchy, m => m.name);
     const defaultStyle = { fontWeight: 'normal', fontSize: 16 };
     // initial warn to allow the user to cancel the component conversion

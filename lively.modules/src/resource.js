@@ -53,7 +53,7 @@ async function fetchResource (proceed, load) {
     const isCrossDomain = !res.url.startsWith(document.location.origin);
     if (isWebResource && isCrossDomain) {
       try {
-        result = await res.makeProxied().read();
+        result = await res.makeProxied(System.baseURL).read();
         error = null;
       } catch (e) {}
     }
