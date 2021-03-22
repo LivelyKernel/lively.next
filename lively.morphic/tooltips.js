@@ -77,7 +77,9 @@ export class TooltipViewer {
 
   scheduleTooltipFor (morph, hand) {
     this.timer = setTimeout(
-      () => this.showTooltipFor(morph, hand),
+      () => {
+        if (this.currentMorph) { this.showTooltipFor(morph, hand); }
+      },
       config.showTooltipsAfter * 1000);
   }
 
@@ -130,6 +132,7 @@ export class Tooltip extends Morph {
         initialize () {
           this.submorphs = [
             new morph({
+              reactsToPointer: false,
               type: 'label',
               width: 200
             })
