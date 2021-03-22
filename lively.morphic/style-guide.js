@@ -166,6 +166,7 @@ export class ComponentPolicy {
   equals (other) {
     if (!other) return false;
     if (typeof other === 'string') {
+      if (!lively.FreezerRuntime) { other = other.replace('styleguide://$world', `styleguide://${getProjectName($world)}`); }
       return this.getResourceUrlFor(this.auto) == other;
     }
     for (const master of ['auto', 'click', 'hover']) {
@@ -214,8 +215,10 @@ export class ComponentPolicy {
   }
 
   async whenApplied () {
+    const { promise: p, resolve: r } = promise.deferred();
+    once(this, '_appliedMaster', r);
     await this._hasUnresolvedMaster;
-    await promise.waitFor(1000, () => this._appliedMaster);
+    if (!this._appliedMaster) await p; // continue waiting until applied
     return true;
   }
 
@@ -272,8 +275,11 @@ export class ComponentPolicy {
   */
 
   applyAnimated (config = { duration: 1000 }) {
+    const { promise: p, resolve: r } = promise.deferred();
     this.applyIfNeeded(true, config);
-    return promise.waitFor(config.duration * 2, () => !this._animationConfig);
+    once(this, '_animationConfig', r);
+    return p;
+    // return promise.waitFor(config.duration * 2, () => !this._animationConfig);
   }
 
   applyIfNeeded (needsUpdate = false, animationConfig = false) {
@@ -414,7 +420,7 @@ export class ComponentPolicy {
       });
       if (animationConfig) {
         derivedMorph.withAnimationDo(apply, animationConfig).then(() => {
-          delete this._animationConfig;
+          this._animationConfig = false;
           this._applying = false;
         });
       } else derivedMorph.dontRecordChangesWhile(apply); // also make sure that when we are a master, not to propagate styles in this situtation
@@ -727,7 +733,6 @@ This is done by mainating a local registry, where the resource extension keeps a
 const styleGuideURLRe = /^styleguide:\/\/([^\/]+)\/(.*)$/;
 
 var fetchedSnapshots = fetchedSnapshots || {};
-var objectPools = objectPools || {};
 var resolvedMasters = resolvedMasters || {};
 
 var modulesToLoad = modulesToLoad || {};
