@@ -127,7 +127,6 @@ export class ObjectEditor extends Morph {
       sourceEditor: this.getSubmorphNamed('sourceEditor'),
       toggleImportsButton: this.getSubmorphNamed('toggleImportsButton'),
       classAndMethodControls: this.getSubmorphNamed('classAndMethodControls'),
-      freezeTargetButton: this.getSubmorphNamed('freezeTargetButton'),
       showFrozenPartsButton: this.getSubmorphNamed('showFrozenPartsButton')
     };
   }
@@ -166,7 +165,6 @@ export class ObjectEditor extends Morph {
       sourceEditor,
       toggleImportsButton,
       classAndMethodControls,
-      freezeTargetButton,
       showFrozenPartsButton
     } = this.ui;
 
@@ -181,11 +179,10 @@ export class ObjectEditor extends Morph {
       exec: () => this.interactivelyRemoveUnusedImports()
     }]);
 
-    connect(freezeTargetButton, 'fire', this, 'execCommand', { converter: () => 'freeze target' });
     connect(showFrozenPartsButton, 'fire', this, 'execCommand', { converter: () => 'show frozen parts' });
 
     connect(inspectObjectButton, 'fire', this, 'execCommand', { converter: () => 'open object inspector for target' });
-    connect(publishButton, 'fire', this, 'execCommand', { converter: () => 'publish target to PartsBin' });
+    connect(publishButton, 'fire', this, 'execCommand', { converter: () => 'freeze target' });
     connect(chooseTargetButton, 'fire', this, 'execCommand', { converter: () => 'choose target' });
 
     connect(classTree, 'selectedNode', this, 'onClassTreeSelection');
@@ -338,7 +335,7 @@ export class ObjectEditor extends Morph {
             topCenter: pt(200, 0),
             submorphs: [
               { ...topBtnStyle, name: 'inspectObjectButton', label: Icon.textAttribute('cogs'), tooltip: 'open object inspector' },
-              { ...topBtnStyle, name: 'publishButton', label: Icon.textAttribute('cloud-upload-alt'), tooltip: 'publish object to PartsBin' },
+              { ...topBtnStyle, name: 'publishButton', label: Icon.textAttribute('cloud-upload-alt'), tooltip: 'Freeze this morph' },
               { ...topBtnStyle, name: 'chooseTargetButton', label: Icon.textAttribute('crosshairs'), tooltip: 'select another target' }
             ]
           },
@@ -348,7 +345,6 @@ export class ObjectEditor extends Morph {
             layout: new HorizontalLayout({ direction: 'rightToLeft', spacing: 2, autoResize: false }),
             right: 400,
             submorphs: [
-              { ...topBtnStyle, name: 'freezeTargetButton', label: Icon.textAttribute('snowflake', { textStyleClasses: ['far'] }), tooltip: 'publish target' },
               { ...topBtnStyle, name: 'showFrozenPartsButton', label: Icon.textAttribute('sellsy', { textStyleClasses: ['fab'], fontWeight: 400 }), tooltip: 'show published parts' }
             ]
           }
