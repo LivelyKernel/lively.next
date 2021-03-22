@@ -1,7 +1,7 @@
 /* global System,WeakMap,FormData,fetch,DOMParser,XMLHttpRequest */
 import { resource } from 'lively.resources';
 import { Rectangle, Color, pt } from 'lively.graphics';
-import { arr, fun, obj, promise } from 'lively.lang';
+import { arr, fun, obj, promise, Path as PropertyPath } from 'lively.lang';
 import { once } from 'lively.bindings';
 import {
   GridLayout, MorphicDB, easings, HTMLMorph, Text, Label, Path, Polygon, morph, Ellipse, touchInputDevice, Icon, Morph,
@@ -135,11 +135,6 @@ export class LivelyWorld extends World {
     this.withTopBarDo(tb => tb.onKeyDown(evt));
   }
 
-  onMouseMove (evt) {
-    super.onMouseMove(evt);
-    this.handleHaloPreview(evt);
-  }
-
   onMouseDown (evt) {
     super.onMouseDown(evt);
     const target = evt.state.clickedOnMorph;
@@ -149,11 +144,11 @@ export class LivelyWorld extends World {
 
     this.handleHaloCycle(evt);
 
-    if (evt.state.menu) evt.state.menu.remove();
+    if (evt.state.menu) {
+      evt.state.menu.remove();
+    }
 
     this._tooltipViewer.mouseDown(evt);
-
-    this.handleHaloSelection(evt);
   }
 
   onMouseUp (evt) {
@@ -166,59 +161,10 @@ export class LivelyWorld extends World {
       evt.stop();
       console.log(`Set global "that" to ${target}`);
     }
-    this.handleShapeCreation(evt);
-  }
-
-  onDragStart (evt) {
-    if (!this._yieldShapeOnClick && evt.leftMouseButtonPressed()) {
-      this.selectionStartPos = evt.positionIn(this);
-      this.morphSelection = this.addMorph({
-        type: Selection,
-        epiMorph: true,
-        reactsToPointer: false,
-        position: this.selectionStartPos,
-        extent: evt.state.dragDelta
-      });
-      this.selectedMorphs = {};
-    } else this.prepareShapeCreation(evt);
   }
 
   onDrag (evt) {
-    if (!this._yieldShapeOnClick && this.morphSelection) {
-      const selectionBounds = Rectangle.fromAny(evt.position, this.selectionStartPos);
-      this.morphSelection.setBounds(selectionBounds);
-      this.submorphs.forEach(c => {
-        if (c.isSelectionElement || c.isHand) return;
-        const candidateBounds = c.bounds();
-        const included = selectionBounds.containsRect(candidateBounds);
-
-        if (!this.selectedMorphs[c.id] && included) {
-          this.selectedMorphs[c.id] = this.addMorph({
-            type: SelectionElement,
-            bounds: candidateBounds
-          }, this.morphSelection);
-        }
-        if (this.selectedMorphs[c.id] && !included) {
-          this.selectedMorphs[c.id].remove();
-          delete this.selectedMorphs[c.id];
-        }
-      });
-      return;
-    }
-    this.yieldShapeIfNeeded(evt);
-  }
-
-  onDragEnd (evt) {
-    if (this.morphSelection) {
-      this.morphSelection.fadeOut(200);
-      obj.values(this.selectedMorphs).map(m => m.remove());
-      this.showHaloForSelection(
-        Object.keys(this.selectedMorphs)
-          .map(id => this.getMorphWithId(id))
-      );
-      this.selectedMorphs = {};
-      this.morphSelection = null;
-    }
+    // prevent default dragging behavior
   }
 
   async whenReady () {
@@ -231,21 +177,25 @@ export class LivelyWorld extends World {
     this.onWindowResize();
     // some meta stuff...
     lively.modules.removeHook('fetch', window.__logFetch);
-    this._styleLoading = prefetchCoreStyleguides(window.worldLoadingIndicator);
-    await this._styleLoading;
+    if (this.showsUserFlap || resource(document.location.href).query().showsUserFlap) {
+      this._styleLoading = prefetchCoreStyleguides(window.worldLoadingIndicator);
+      await this._styleLoading;
+    }
     this.animate({ opacity: 1, duration: 1000, easing: easings.inOutExpo });
     document.body.style.overflowX = 'visible';
     document.body.style.overflowY = 'visible';
   }
 
-  // this.world().askForName()
+  async isNotUnique (worldName) {
+    return (await MorphicDB.default.exists('world', worldName)).exists || (await resource((await System.decanonicalize('lively.morphic/styleguides'))).join(worldName + '.json').exists());
+  }
 
   async askForName () {
     await this.whenRendered();
     let worldName;
     while (!worldName) {
       worldName = await this.prompt(['New Project\n', {}, 'Enter a name for this project:', { fontWeight: 'normal' }], { width: 400, hasFixedPosition: true });
-      if ((await MorphicDB.default.exists('world', worldName)).exists) {
+      if (await this.isNotUnique(worldName)) {
         await this.confirm('This Project name is already taken. Please pick a different one!', {
           hasFixedPosition: true, width: 400
         });
@@ -430,19 +380,6 @@ export class LivelyWorld extends World {
         item.getAsString((s) => inspect(s));
       }
     }
-  }
-
-  // file download serving
-
-  serveFileAsDownload (fileString, { fileName = 'file.txt', type = 'text/plain' } = {}) {
-    const isDataURL = /^\s*data:([a-z]+\/[a-z]+(;[a-z\-]+\=[a-z\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i;
-
-    const a = window.document.createElement('a');
-    a.href = obj.isString(fileString) && !!fileString.match(isDataURL) ? fileString : window.URL.createObjectURL(new Blob([fileString], { type }));
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -924,7 +861,12 @@ export class LivelyWorld extends World {
           self.undoStart('fitToSubmorphs');
           self.fitToSubmorphs(padding);
           self.undoStop('fitToSubmorphs');
-        }]
+        }],
+        ...PropertyPath('master.auto').get(self)
+          ? [
+              ['Adjust to Master Component Submorph Hierarchy', () => self.master.reconcileSubmorphs()]
+            ]
+          : []
       ]]);
     }
 
@@ -1037,6 +979,16 @@ export class LivelyWorld extends World {
     //   items.push(['connect...', connectItems]);
     // }
 
+    items.push(['export to HTML', async function () {
+      const { generateHTML } = await System.import('lively.morphic/rendering/html-generator.js');
+      new HTMLMorph({
+        name: 'exported-' + morph.name,
+        html: await generateHTML(morph, null, {
+          isFragment: true, addStyles: false
+        })
+      }).openInWorld();
+    }]);
+
     items.push({ isDivider: true });
     items.push(['Add comment', async () => {
       const commentText = await $world.prompt('Enter comment');
@@ -1051,9 +1003,7 @@ export class LivelyWorld extends World {
         $world.setStatusMessage('Comment saved', 'green');
       } else {
         $world.setStatusMessage('Comment not saved', 'red');
-      }
-    }]);
-
+      }}]);
     return items;
   }
 
@@ -1162,25 +1112,7 @@ export class LivelyWorld extends World {
     return items;
   }
 
-  //= ====== default shape creation interface ========
-
-  clearHaloPreviews () {
-    this.getSubmorphsByStyleClassName('HaloPreview').forEach(m => m.remove());
-  }
-
-  showHaloPreviews (active) {
-    if (!active) this.clearHaloPreviews();
-    this._showHaloPreview = active;
-  }
-
-  handleHaloPreview (evt) {
-    if (this._showHaloPreview) {
-      const target = this.morphsContainingPoint(evt.positionIn(this)).filter(m => {
-        return m.halosEnabled && [m, ...m.ownerChain()].every(m => m.visible && m.opacity > 0 && !m.styleClasses.includes('HaloPreview'));
-      })[0];
-      this.showHaloPreviewFor(target);
-    }
-  }
+  //= ====== hover halo interface ========
 
   handleHaloCycle (evt) {
     const target = evt.state.clickedOnMorph;
@@ -1212,178 +1144,10 @@ export class LivelyWorld extends World {
       evt.stop();
       this.showHaloFor(haloTarget, evt.domEvt.pointerId);
     }
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  }
-
-  handleHaloSelection (evt) {
-    if (this._showHaloPreview && this._currentlyHighlighted && this.halos().length == 0) {
-      evt.stop();
-      this.getSubmorphsByStyleClassName('HaloPreview').forEach(m => m.remove());
-      this.showHaloFor(this._currentlyHighlighted);
-    }
-    if (evt.targetMorph != this) return;
-    this._shapeRequest = true;
-  }
-
-  showHaloPreviewFor (aMorph) {
-    if (!aMorph) return;
-    if (![aMorph, ...aMorph.ownerChain()].find(m => m.isComponent) && aMorph.getWindow()) aMorph = null; // do not inspect windows
-    else if ([aMorph, ...aMorph.ownerChain()].find(m => m.isEpiMorph)) aMorph = null; // do not inspect epi morphs
-    else if (aMorph == this) aMorph = null; // reset halo preview
-    // if the previously highlighted morph is different one, then clean all exisiting previews
-    if (this._currentlyHighlighted != aMorph) {
-      this.clearHaloPreviews();
-      this._currentlyHighlighted = aMorph;
-    }
-
-    if (this.halos().length > 0) return;
-
-    if (!aMorph) return;
-    if (!this._previewCache) this._previewCache = new WeakMap();
-
-    let type = Morph;
-
-    switch (getClassName(aMorph)) {
-      case 'Ellipse':
-        type = Ellipse;
-        break;
-    }
-
-    const preview = this._previewCache.get(aMorph) || morph({
-      type,
-      styleClasses: ['HaloPreview'],
-      epiMorph: true,
-      fill: Color.transparent,
-      reactsToPointer: false,
-      halosEnabled: false,
-      acceptsDrops: false,
-      border: {
-        color: Color.rgb(23, 160, 251),
-        width: 1
-      }
-    });
-
-    if (!preview.owner) this.addMorph(preview);
-    preview.setBounds(aMorph.globalBounds());
-    preview.borderColor = Color.rgb(23, 160, 251);
-    preview.borderStyle = 'solid';
-    if (aMorph.master) preview.borderColor = Color.purple;
-    if (aMorph.ownerChain().find(m => m.master && m.master.managesMorph(aMorph))) {
-      preview.borderColor = Color.purple;
-      preview.borderStyle = 'dotted';
-    }
-    if (aMorph.isComponent) preview.borderColor = Color.magenta;
-    this._previewCache.set(aMorph, preview);
-  }
-
-  prepareShapeCreation (evt) {
-    const type = this._yieldShapeOnClick;
-    if (!this.canBeCreatedViaDrag(type)) return;
-    this._yieldedShape = this.addMorph(morph({
-      type,
-      position: evt.positionIn(this),
-      extent: pt(1, 1),
-      fill: Color.transparent,
-      borderWidth: 1,
-      borderColor: Color.rgb(23, 160, 251),
-      fixedHeight: true,
-      fixedWidth: true,
-      lineWrapping: true,
-      ...type == Polygon ? this.getPolyDefaultAttrs() : {},
-      ...type == Path ? this.getPathDefaultAttrs() : {}
-    }));
-    this._sizeTooltip = morph({
-      type: Tooltip,
-      padding: Rectangle.inset(5, 5, 5, 5),
-      styleClasses: ['Tooltip']
-    }).openInWorld();
-  }
-
-  yieldShapeIfNeeded (evt) {
-    if (this._yieldedShape) {
-      this._yieldedShape.extent = evt.positionIn(this).subPt(evt.state.dragStartPosition).subPt(pt(1, 1)).maxPt(pt(1, 1));
-      this._sizeTooltip.description = `${this._yieldShapeOnClick[Symbol.for('__LivelyClassName__')]}: ${this._yieldedShape.width.toFixed(0)}x${this._yieldedShape.height.toFixed(0)}`;
-      this._sizeTooltip.topLeft = evt.positionIn(this).addXY(15, 15);
-    }
-  }
-
-  getPolyDefaultAttrs () {
-    return {
-      vertices: [pt(131.4, 86.3), pt(171.0, 139.6), pt(105.9, 119.9), pt(65.3, 172.5), pt(64.7, 107.0), pt(0.0, 86.3), pt(64.7, 65.5), pt(65.3, 0.0), pt(105.9, 52.6), pt(171.0, 32.9), pt(131.4, 86.3)],
-      borderWidth: 1
-    };
-  }
-
-  getPathDefaultAttrs () {
-    return {
-      vertices: [pt(0, 0), pt(1, 1)],
-      borderWidth: 1
-    };
-  }
-
-  handleShapeCreation (evt) {
-    const type = this._yieldShapeOnClick;
-    if (this._sizeTooltip) this._sizeTooltip.remove();
-    if (evt.targetMorph != this) return;
-    if (this._shapeRequest && type && !this._yieldedShape) {
-      switch (type) {
-        case Image:
-          morph({
-            type,
-            extent: pt(150, 150),
-            fill: Color.transparent
-          }).openInWorldNearHand();
-          break;
-        case Label:
-          morph({
-            type,
-            value: 'I am a label!',
-            fill: Color.transparent
-          }).openInWorldNearHand();
-          break;
-        case Text:
-          if (evt.targetMorph.isText) return;
-          morph({
-            type,
-            textString: 'I am a text field!',
-            fill: Color.transparent
-          }).openInWorldNearHand();
-          break;
-      }
-    }
-    if (type == Text && this._yieldedShape) { this._yieldedShape.focus(); } else if (this._yieldedShape) this.showHaloFor(this._yieldedShape);
-    this._yieldedShape = null;
-    this._shapeRequest = false;
-  }
-
-  canBeCreatedViaDrag (klass) {
-    return [Morph, Ellipse, HTMLMorph, Canvas, Text, Polygon, Path, Image].includes(klass);
-  }
-
-  toggleShapeMode (active, shapeName) {
-    const shapeToClass = {
-      Rectangle: Morph,
-      Ellipse: Ellipse,
-      HTML: HTMLMorph,
-      Canvas: Canvas,
-      Image: Image,
-      Path: Path,
-      Label: Label,
-      Polygon: Polygon,
-      Text: Text
-    };
-
-    if (active) {
-      this.nativeCursor = 'crosshair';
-      this._yieldShapeOnClick = shapeToClass[shapeName];
-    } else {
-      this._yieldShapeOnClick = false;
-      this.nativeCursor = 'auto';
-    }
   }
 }
 
-class SelectionElement extends Morph {
+export class SelectionElement extends Morph {
   static get properties () {
     return {
       borderColor: { defaultValue: Color.red },
@@ -1398,7 +1162,7 @@ class SelectionElement extends Morph {
   }
 }
 
-class Selection extends Morph {
+export class Selection extends Morph {
   static get properties () {
     return {
       fill: { defaultValue: Color.gray.withA(0.2) },
