@@ -1,6 +1,8 @@
 /* global System */
 import {
-  Morph, Label, StyleSheet, HorizontalLayout,
+  Morph,
+  Label,
+  HorizontalLayout,
   Path,
   Text,
   GridLayout,
@@ -13,8 +15,8 @@ import { obj, Path as PropertyPath, promise, properties, num, arr } from 'lively
 import { connect, signal, disconnect, disconnectAll, once } from 'lively.bindings';
 
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from './drag-guides.js';
-import { CommentBrowser, CommentIndicator } from 'lively.collab';
-import { resource } from 'lively.resources';
+import { CommentBrowser } from 'lively.collab';
+
 import { show } from './markers.js';
 
 const haloBlue = Color.rgb(23, 160, 251);
