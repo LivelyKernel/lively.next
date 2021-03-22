@@ -1,5 +1,5 @@
 import { Morph, HorizontalLayout, Label } from 'lively.morphic';
-import { pt, Color } from 'lively.graphics';
+import { pt, rect, Color } from 'lively.graphics';
 import { connect, disconnect } from 'lively.bindings';
 
 export class Badge extends Morph {
@@ -20,10 +20,10 @@ export class Badge extends Morph {
 
         set (text) {
           if (!this.get('badge label')) {
-            this.ui.count = new Label({ name: 'badge label', fontColor: Color.rgb(253, 254, 254), position: pt(0, 0) });
+            this.ui.count = new Label({ name: 'badge label', fontColor: Color.white, position: pt(0, 0), padding: rect(3, 0) });
             this.addMorph(this.ui.count);
             this.layout = new HorizontalLayout(
-              { spacing: 4 });
+              { spacing: 2 });
           }
           this.ui.count.textString = text;
           if (this.morph) {
@@ -38,7 +38,7 @@ export class Badge extends Morph {
         defaultValue: 12
       },
       fill: {
-        defaultValue: Color.rgb(149, 165, 166)
+        defaultValue: Color.rgbHex('ff1744')
       },
       morph: {}
     };
@@ -48,7 +48,7 @@ export class Badge extends Morph {
   // interacting with morph
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   alignWithMorph () {
-    this.position = this.morph.extent.addPt(pt(-this.extent.x, -this.extent.y));
+    this.position = this.morph.innerBounds().topRight().addPt(pt(-this.width / 2, 0));
   }
 
   addToMorph (morph) {
@@ -82,3 +82,6 @@ export class Badge extends Morph {
     this.incrementCounter(-value);
   }
 }
+
+
+
