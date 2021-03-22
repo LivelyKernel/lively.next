@@ -20,6 +20,8 @@ import { copyMorph } from './serialization.js';
 
 import { ComponentPolicy } from './style-guide.js';
 
+import { Comment, CommentBrowser } from 'lively.collab';
+
 const defaultCommandHandler = new CommandHandler();
 
 function generateUnfolded (propName, members = ['top', 'left', 'right', 'bottom'], group = 'core') {
@@ -784,6 +786,12 @@ export class Morph {
         get () {
           return this.getProperty('installedFonts') || {};
         }
+      },
+
+      comments: {
+        doc: 'Holds all comments belonging to this Morph.',
+        type: 'list',
+        defaultValue: []
       },
 
       metadata: { group: 'core' }
@@ -1634,6 +1642,13 @@ export class Morph {
     return this;
   }
 
+  abandon () {
+    // Use this method to signal the wish to permanently delete this object. Overwrite this method to clean up resources on its deletion. We do not have access to the JS VM, this method does not interact with the garbage collector and does not result in the actual deletion of the object, if there are still left over references to this object.
+    this.emptyComments();
+    this.remove();
+    this.submorphs.forEach(submorph => submorph.abandon());
+  }
+
   onOwnerChanged (newOwner) {
     // newOwner = null => me or any of my owners was removed
     // newOwner = morp => me or any of my owners was added to another morph
@@ -2226,7 +2241,7 @@ export class Morph {
     if (evt.targetMorph !== this) return;
     if (!lively.FreezerRuntime) evt.stop();
     Promise
-      .resolve(this.menuItems()).then(items => this.openMenu(items, evt))
+      .resolve(this.menuItems(evt)).then(items => this.openMenu(items, evt))
       .catch(err => $world.logError(err));
   }
 
@@ -2235,8 +2250,8 @@ export class Morph {
     return items && items.length && world ? world.openWorldMenu(optEvt, items) : null;
   }
 
-  menuItems () {
-    return $world.defaultMenuItems(this);
+  menuItems (evt) {
+    return $world.defaultMenuItems(this, evt);
   }
 
   onCut (evt) {}
@@ -2370,7 +2385,8 @@ export class Morph {
     return morph({ type: exported.type }).initFromJSON(exported);
   }
 
-  copy () { return copyMorph(this); }
+  canBeCopied () { return true; }
+  copy (realCopy = false) { return copyMorph(this, realCopy); }
 
   async interactivelyPublish () {
     const world = this.world() || this.env.world;
@@ -2510,6 +2526,26 @@ export class Morph {
 
   removeEqualScripts (script) {
     this.stopScripts(this._tickingScripts.filter(ea => ea.equals(script)));
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // comments
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  async addComment (commentText, relativePosition = pt(0, 0)) {
+    const comment = new Comment(commentText, relativePosition);
+    this.comments.push(comment);
+    await CommentBrowser.addCommentForMorph(comment, this);
+    return comment;
+  }
+
+  async removeComment (commentToRemove) {
+    this.comments = this.comments.filter(comment => !commentToRemove.equals(comment));
+    CommentBrowser.removeCommentForMorph(commentToRemove, this);
+  }
+
+  emptyComments () {
+    this.comments.forEach((comment) => CommentBrowser.removeCommentForMorph(comment, this));
+    this.comments = [];
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -2906,7 +2942,7 @@ export class Image extends Morph {
         );
         this.extent = this.naturalExtent.scaleBy(s);
       }],
-      ['resize image to its real image size', async () => this.extent = await this.determineNaturalExtent()],
+       ['resize image to its real image size', async () => this.extent = await this.determineNaturalExtent()],
       ['resample image to fit current bounds', () => this.resampleImageToFitBounds()],
       { isDivider: true });
     return items;

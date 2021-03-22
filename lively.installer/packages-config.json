@@ -126,5 +126,9 @@
   {
     "name": "lively.freezer",
     "repoURL": "https://github.com/LivelyKernel/lively.freezer"
+  },
+  {
+    "name": "lively.collab",
+    "repoURL": "https://github.com/hpi-swa-lab/lively.next"
   }
 ]

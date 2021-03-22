@@ -39,6 +39,7 @@ import { GradientEditor } from './styling/gradient-editor.js';
 import { completions, runEval } from 'lively.vm';
 import { getClassName, serialize } from 'lively.serializer2';
 import { Canvas } from 'lively.components/canvas.js';
+import { CommentBrowser } from 'lively.collab';
 import { prefetchCoreStyleguides } from 'lively.morphic/style-guide.js';
 
 export class LivelyWorld extends World {
@@ -81,7 +82,8 @@ export class LivelyWorld extends World {
       draggable: {
         readOnly: true,
         get () { return !touchInputDevice; }
-      }
+      },
+      commentBrowser: {}
     };
   }
 
@@ -803,7 +805,7 @@ export class LivelyWorld extends World {
 
   // morph meta menu items
 
-  defaultMenuItems (morph) {
+  defaultMenuItems (morph, evt) {
     const world = this;
     const items = [];
     const self = morph;
@@ -987,6 +989,21 @@ export class LivelyWorld extends World {
       }).openInWorld();
     }]);
 
+    items.push({ isDivider: true });
+    items.push(['Add comment', async () => {
+      const commentText = await $world.prompt('Enter comment');
+      if (commentText) {
+        let relativePosition = pt(0, 0);
+        if (evt) {
+          const xRelative = self.localize(evt.position).x / self.width;
+          const yRelative = self.localize(evt.position).y / self.height;
+          relativePosition = pt(xRelative, yRelative);
+        }
+        await self.addComment(commentText, relativePosition);
+        $world.setStatusMessage('Comment saved', 'green');
+      } else {
+        $world.setStatusMessage('Comment not saved', 'red');
+      }}]);
     return items;
   }
 

@@ -84,8 +84,27 @@ export async function saveWorldToResource (world = MorphicEnv.default().world, t
   } finally { i && i.remove(); }
 }
 
-export function copyMorph (morph) {
-  return deserializeMorph(serializeMorph(morph), { migrations, reinitializeIds: true });
+export function copyMorph (morph, realCopy = false) {
+  if (!realCopy) {
+    return deserializeMorph(serializeMorph(morph), { migrations, reinitializeIds: true });
+  }
+  const cachedComments = morph.comments;
+  morph.comments = [];
+
+  let cachedConnections = [];
+  if (morph.attributeConnections) {
+    cachedConnections = morph.attributeConnections.filter(ac => ac.targetObj.isCommentIndicator);
+    morph.attributeConnections = morph.attributeConnections.filter(ac => !(ac.targetObj.isCommentIndicator || ac.targetObj.isHalo));
+  }
+
+  const serializedMorph = serializeMorph(morph);
+
+  morph.comments = cachedComments;
+  if (morph.attributeConnections) {
+    morph.attributeConnections = morph.attributeConnections.concat(cachedConnections);
+  }
+
+  return deserializeMorph(serializedMorph, { migrations, reinitializeIds: true });
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -103,7 +122,7 @@ let objectScriptingEnabled = false;
 export async function createMorphSnapshot (aMorph, options = {}) {
   const isNode = System.get('@system-env').node;
   const {
-    addPreview = false, // this is incredibely slow for large worlds. Perform on server intead.
+    addPreview = false, // this is incredibly slow for large worlds. Perform on server instead.
     previewWidth = 100, previewHeight = 100,
     previewType = 'png',
     testLoad = true,

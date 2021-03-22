@@ -12,6 +12,7 @@ import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { interactivelyFreezeWorld } from 'lively.freezer';
 import { resource } from 'lively.resources';
 import { BrowserModuleTranslationCache } from 'lively.modules/src/instrumentation.js';
+import { CommentBrowser } from 'lively.collab';
 import { once } from 'lively.bindings';
 
 const commands = [
@@ -303,8 +304,8 @@ const commands = [
       if (!halo || halo.changingName) return false;
 
       halo.target.selectedMorphs
-        ? halo.target.selectedMorphs.forEach(m => m.remove())
-        : halo.target.remove();
+        ? halo.target.selectedMorphs.forEach(m => m.abandon())
+        : halo.target.abandon();
       return true;
     }
   },
@@ -1385,6 +1386,13 @@ const commands = [
         object.metadata.externalPackages = list;
       }
       return true;
+    }
+  },
+
+  {
+    name: 'toggle comment browser',
+    exec: async (world) => {
+      CommentBrowser.toggle();
     }
   }
 

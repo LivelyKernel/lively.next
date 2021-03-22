@@ -1,6 +1,8 @@
 /* global System */
 import {
-  Morph, Label, StyleSheet, HorizontalLayout,
+  Morph,
+  Label,
+  HorizontalLayout,
   Path,
   Text,
   GridLayout,
@@ -13,7 +15,8 @@ import { obj, Path as PropertyPath, promise, properties, num, arr } from 'lively
 import { connect, signal, disconnect, disconnectAll, once } from 'lively.bindings';
 
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from './drag-guides.js';
-import { resource } from 'lively.resources';
+import { CommentBrowser } from 'lively.collab';
+
 import { show } from './markers.js';
 
 const haloBlue = Color.rgb(23, 160, 251);
@@ -717,7 +720,9 @@ class NameHolder extends Morph {
   }
 
   accept () {
-    if (this.target.name !== this.nameHolder.textString) { this.updateName(this.nameHolder.textString); }
+    if (this.target.name !== this.nameHolder.textString) {
+      this.updateName(this.nameHolder.textString);
+    }
   }
 
   onKeyDown (evt) {
@@ -768,6 +773,7 @@ class NameHolder extends Morph {
     if (!this.forceUniqueName || this.validName) {
       this.target.name = newName;
       signal(this, 'active', [false, this]);
+      CommentBrowser.updateName(this.target);
     }
   }
 }
@@ -929,8 +935,8 @@ class CloseHaloItem extends HaloItem {
     const { halo } = this; const o = halo.target.owner;
     o.undoStart('close-halo');
     halo.target.selectedMorphs
-      ? halo.target.selectedMorphs.forEach(m => m.remove())
-      : halo.target.remove();
+      ? halo.target.selectedMorphs.forEach(m => m.abandon())
+      : halo.target.abandon();
     o.undoStop('close-halo');
     halo.remove();
   }
@@ -1382,12 +1388,17 @@ class CopyHaloItem extends HaloItem {
     const { halo } = this; const { target } = halo; const world = halo.world();
     const isMultiSelection = target instanceof MultiSelectionTarget;
     halo.remove();
-
     connect(hand, 'update', this, 'update');
-
     if (isMultiSelection) {
       // FIXME! haaaaack
-      const copies = target.selectedMorphs.map(ea => world.addMorph(ea.copy()));
+      const copies = arr.compact(target.selectedMorphs.map(ea => {
+        if (ea.canBeCopied()) {
+          const copy = ea.copy(true);
+          world.addMorph(copy);
+          return copy;
+        }
+      }));
+
       const positions = copies.map(ea => { ea.name = findNewName(target, ea.name); return ea.position; });
       copies[0].undoStart('copy-halo');
       world.addMorph(halo);
@@ -1398,7 +1409,7 @@ class CopyHaloItem extends HaloItem {
       halo.alignWithTarget();
     } else {
       const pos = target.globalPosition;
-      const copy = target.copy();
+      const copy = target.copy(true);
       if (target.isComponent) {
         copy.isComponent = false;
         copy.withAllSubmorphsDoExcluding(m => {
@@ -1456,7 +1467,9 @@ class CopyHaloItem extends HaloItem {
     const world = halo.world();
     const isMultiSelection = t instanceof MultiSelectionTarget;
     const origin = t.globalBounds().topLeft();
+    // the original morphs are needed so we can refocus them with a halo after copying
     const morphsToCopy = isMultiSelection ? t.selectedMorphs : [t];
+    const modifiedMorphsToCopy = morphsToCopy.filter(morph => !morph.isCommentIndicator).map(morph => morph.copy(true));
     const snapshots = [];
     let html = `<!DOCTYPE html>
           <html lang="en">
@@ -1468,7 +1481,7 @@ class CopyHaloItem extends HaloItem {
 
     halo.remove(); // we do not want to copy the halo
     try {
-      for (const m of morphsToCopy) {
+      for (const m of modifiedMorphsToCopy) {
         const snap = await createMorphSnapshot(m, { addPreview: false, testLoad: false });
         snap.copyMeta = { offset: m.worldPoint(pt(0, 0)).subPt(origin) };
         snapshots.push(snap);

@@ -30,6 +30,8 @@
 ./scripts/test.sh lively.server
 ./scripts/test.sh lively.shell
 
+./scripts/test.sh lively.collab
+
 # no tests:
 # ./scripts/test.sh lively.traits
 # ./scripts/test.sh lively.freezer
