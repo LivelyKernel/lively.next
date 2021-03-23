@@ -9,7 +9,8 @@ import { equals as objectEquals } from './object.js';
 import { delay, once, Null as NullFunction } from './function.js';
 import Group from './Group.js';
 
-const GLOBAL = typeof System !== 'undefined' ? System.global
+const GLOBAL = typeof System !== 'undefined'
+  ? System.global
   : (typeof window !== 'undefined' ? window : global);
 
 const features = {
@@ -102,6 +103,52 @@ const detect = features.find
     }
     return undefined;
   };
+
+function binarySearchFor (array, searchValue, converter, returnClosestElement = false) {
+  // Returns the element equal to the given search value or undefined
+  // If defined, a converter function will be applied to compare an
+  //   array element with the search value
+  // If returnClosestElement is true, the element closest to the search value will be returned,
+  //   even if it is not equal
+  //   If false, only an exact match will be returned, otherwise undefined
+
+  if (!array || !isArray(array)) return;
+
+  let leftLimit = 0;
+  let rightLimit = array.length - 1;
+
+  // classic binary search with converter,
+  //   https://en.wikipedia.org/wiki/Binary_search_algorithm used for reference
+  while (leftLimit <= rightLimit) {
+    const pivot = leftLimit + Math.floor((rightLimit - leftLimit) / 2);
+
+    const compareValue = !converter ? array[pivot] : converter(array[pivot]);
+
+    if (compareValue === searchValue) {
+      return array[pivot];
+    } else {
+      if (compareValue > searchValue) {
+        rightLimit = pivot - 1;
+      } else {
+        leftLimit = pivot + 1;
+      }
+    }
+  }
+
+  if (returnClosestElement) {
+    // left and right limit point to two elements
+    //   of which one must be the elemnt closest to the search value
+    if (!array[leftLimit]) return array[rightLimit];
+    if (!array[rightLimit]) return array[leftLimit];
+    const compareValueL = !converter ? array[leftLimit] : converter(array[leftLimit]);
+    const compareValueR = !converter ? array[rightLimit] : converter(array[rightLimit]);
+    const diffOfElementL = Math.abs(compareValueL - searchValue);
+    const diffOfElementR = Math.abs(compareValueR - searchValue);
+    return diffOfElementL - diffOfElementR < 0 ? array[leftLimit] : array[rightLimit];
+  }
+
+  return undefined;
+}
 
 const findIndex = features.findIndex
   ? function (arr, iterator, context) { return arr.findIndex(iterator, context); }
@@ -253,7 +300,8 @@ function zip (/* arr, arr2, arr3 */) {
   const args = Array.from(arguments);
   const array = args.shift();
   const iterator = typeof last(args) === 'function'
-    ? args.pop() : function (x) { return x; };
+    ? args.pop()
+    : function (x) { return x; };
   const collections = [array].concat(args).map(function (ea) { return Array.from(ea); });
   return array.map(function (value, index) {
     return iterator(pluck(collections, index), index);
@@ -271,7 +319,8 @@ function flatten (array, optDepth) {
   }
   return array.reduce(function (flattened, value) {
     return flattened.concat(Array.isArray(value)
-      ? flatten(value, optDepth) : [value]);
+      ? flatten(value, optDepth)
+      : [value]);
   }, []);
 }
 
@@ -613,11 +662,13 @@ function forEachShowingProgress (/* array, progressBar, iterator, labelFunc, whe
     progressBarAdded = true;
     const Global = typeof window !== 'undefined' ? window : global;
     const world = Global.lively && lively.morphic && lively.morphic.World.current();
-    progressBar = world ? world.addProgressBar() : {
-      value: null,
-      label: null,
-      remove: function () {}
-    };
+    progressBar = world
+      ? world.addProgressBar()
+      : {
+          value: null,
+          label: null,
+          remove: function () {}
+        };
   }
   progressBar.value = 0;
 
@@ -791,7 +842,8 @@ function toTuples (array, tupleLength) {
 
 const permutations = (function () {
   function computePermutations (restArray, values) {
-    return !restArray.length ? [values]
+    return !restArray.length
+      ? [values]
       : flatmap(restArray, function (ea, i) {
         return computePermutations(
           restArray.slice(0, i).concat(restArray.slice(i + 1)),
@@ -1101,6 +1153,7 @@ export {
   genN,
   filter,
   detect,
+  binarySearchFor,
   findIndex,
   findAndGet,
   filterByKey,
