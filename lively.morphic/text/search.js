@@ -309,7 +309,7 @@ export class SearchWidget extends Morph {
     setTimeout(() => {
       const focusedMorph = world.focusedMorph;
       if (!this.withAllSubmorphsDetect(m => m.isFocused())) {
-        this.cancelSearch();
+        this.cancelSearch(false);
         return;
       }
       if (this.get('searchInput') != focusedMorph &&
@@ -325,11 +325,11 @@ export class SearchWidget extends Morph {
     this.textMap && this.textMap.update();
   }
 
-  cancelSearch () {
+  cancelSearch (resetEditor) {
     if (this.state.inProgress) { this.state.last = this.state.inProgress; }
     this.cleanup();
     this.removeTextMap();
-    if (this.state.before) {
+    if (this.state.before && resetEditor) {
       const { scroll, selectionRange } = this.state.before;
       this.target.selection = selectionRange;
       this.target.scroll = scroll;
