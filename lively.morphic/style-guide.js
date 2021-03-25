@@ -590,6 +590,7 @@ export class ComponentPolicy {
       else {
         // drill down in the master chain if a different hover can be found
         let superMaster = master && master.master;
+        const seen = [];
         while (superMaster) {
           if (superMaster.hover) {
             // take into account the overridden props of the masters in between
@@ -597,6 +598,8 @@ export class ComponentPolicy {
             break;
           }
           superMaster = Path('auto.master').get(superMaster);
+          if (seen.includes(superMaster)) break;
+          seen.push(superMaster);
         }
       }
     }
