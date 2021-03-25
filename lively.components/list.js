@@ -1243,7 +1243,7 @@ export class FilterableList extends Morph {
       { keys: 'Shift-Up', command: 'select up' },
       { keys: 'Shift-Down', command: 'select down' },
       { keys: 'Alt-V|PageUp', command: 'page up' },
-      { keys: 'Ctrl-V|PageDown', command: 'page down' },
+      { keys: 'PageDown', command: 'page down' },
       { keys: 'Alt-Shift-,', command: 'goto first item' },
       { keys: 'Alt-Shift-.', command: 'goto last item' },
       { keys: 'Enter', command: 'accept input' },
@@ -1321,6 +1321,7 @@ export class FilterableList extends Morph {
     ]);
   }
 }
+
 
 export class DropDownList extends Button {
   // new DropDownList({selection: 1, items: [1,2,3,4]}).openInWorld()
