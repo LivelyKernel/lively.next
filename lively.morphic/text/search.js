@@ -264,7 +264,7 @@ export class SearchWidget extends Morph {
     const cancelButton = this.getSubmorphNamed('cancelButton');
     const acceptButton = this.getSubmorphNamed('acceptButton');
     connect(acceptButton, 'fire', this, 'execCommand', { converter: () => 'accept search' });
-    connect(cancelButton, 'fire', this, 'execCommand', { converter: () => 'cancel search' });
+    connect(cancelButton, 'fire', this, 'execCommand', { converter: () => 'cancel search and reset cursor in text' });
     connect(nextButton, 'fire', this, 'execCommand', { converter: () => 'search next' });
     connect(prevButton, 'fire', this, 'execCommand', { converter: () => 'search prev' });
     connect(searchInput, 'inputChanged', this, 'search');
@@ -527,11 +527,12 @@ export class SearchWidget extends Morph {
 
   get keybindings () {
     return [
-      { keys: 'Enter', command: 'accept search or replace and go to next' },
+      { keys: 'Enter', command: 'search next or replace and go to next' },
+      { keys: 'Alt-Enter', command: 'search prev' },
       { keys: 'Tab', command: 'change focus' },
       { keys: 'Ctrl-O', command: 'occur with search term' },
       { keys: 'Ctrl-W', command: 'yank next word from text' },
-      { keys: 'Escape|Ctrl-G', command: 'cancel search' },
+      { keys: 'Escape', command: 'cancel search' },
       { keys: { win: 'Ctrl-F|Ctrl-S|Ctrl-G', mac: 'Meta-F|Ctrl-S|Meta-G' }, command: 'search next' },
       { keys: { win: 'Ctrl-Shift-F|Ctrl-R|Ctrl-Shift-G', mac: 'Meta-Shift-F|Ctrl-R|Meta-Shift-G' }, command: 'search prev' }
     ];
@@ -549,17 +550,19 @@ export class SearchWidget extends Morph {
         }
       },
       { name: 'accept search', exec: () => { this.acceptSearch(); return true; } },
-      { name: 'cancel search', exec: () => { this.cancelSearch(); return true; } },
+      { name: 'cancel search and reset cursor in text', exec: () => { this.cancelSearch(true); return true; } },
+      { name: 'cancel search', exec: () => { this.cancelSearch(false); return true; } },
       { name: 'search next', exec: () => { this.searchNext(); return true; } },
       { name: 'search prev', exec: () => { this.searchPrev(); return true; } },
 
       {
-        name: 'accept search or replace and go to next',
+        name: 'search next or replace and go to next',
         exec: (_, args, count) => {
+          this.get('searchInput').acceptInput();
           return this.execCommand(
             this.get('replaceInput').isFocused()
               ? 'replace and go to next'
-              : 'accept search', args, count);
+              : 'search next', args, count);
         }
       },
 
