@@ -528,7 +528,7 @@ export class SearchWidget extends Morph {
   get keybindings () {
     return [
       { keys: 'Enter', command: 'search next or replace and go to next' },
-      { keys: 'Alt-Enter', command: 'search prev' },
+      { keys: 'Alt-Enter', command: 'only search prev' },
       { keys: 'Tab', command: 'change focus' },
       { keys: 'Ctrl-O', command: 'occur with search term' },
       { keys: 'Ctrl-W', command: 'yank next word from text' },
@@ -554,6 +554,7 @@ export class SearchWidget extends Morph {
       { name: 'cancel search', exec: () => { this.cancelSearch(false); return true; } },
       { name: 'search next', exec: () => { this.searchNext(); return true; } },
       { name: 'search prev', exec: () => { this.searchPrev(); return true; } },
+      { name: 'only search prev', exec: () => { if (this.get('searchInput').isFocused()) { this.searchPrev(); return true; } } },
 
       {
         name: 'search next or replace and go to next',
