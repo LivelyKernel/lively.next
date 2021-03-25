@@ -20,7 +20,7 @@ export class Badge extends Morph {
 
         set (text) {
           if (!this.get('badge label')) {
-            this.ui.count = new Label({ name: 'badge label', fontColor: Color.white, position: pt(0, 0), padding: rect(3, 0) });
+            this.ui.count = new Label({ name: 'badge label' });
             this.addMorph(this.ui.count);
             this.layout = new HorizontalLayout(
               { spacing: 2 });
@@ -34,13 +34,12 @@ export class Badge extends Morph {
       isLayoutable: {
         defaultValue: false
       },
-      borderRadius: {
-        defaultValue: 12
-      },
-      fill: {
-        defaultValue: Color.rgbHex('ff1744')
-      },
-      morph: {}
+      morph: {},
+      master: {
+        initialize () {
+          this.master = 'styleguide://CommentComponents/comment count badge master';
+        }
+      }
     };
   }
 
@@ -82,6 +81,3 @@ export class Badge extends Morph {
     this.incrementCounter(-value);
   }
 }
-
-
-

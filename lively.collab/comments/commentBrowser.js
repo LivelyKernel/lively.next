@@ -6,6 +6,7 @@ import { connect, disconnect } from 'lively.bindings';
 import { Badge } from 'lively.collab';
 import { ModeSelector } from 'lively.components/widgets.js';
 import { arr } from 'lively.lang';
+import { adoptObject } from 'lively.classes/runtime.js';
 
 export class CommentBrowser extends Morph {
   /*
@@ -21,9 +22,9 @@ export class CommentBrowser extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // opening/closing/singleton creation
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  static open () {
+  static async open () {
     if (!CommentBrowser.instance) {
-      CommentBrowser.initializeCommentBrowser();
+      await CommentBrowser.initializeCommentBrowser();
     }
 
     if (CommentBrowser.isOpen()) return CommentBrowser.instance;
@@ -45,12 +46,13 @@ export class CommentBrowser extends Morph {
     return CommentBrowser.instance.whenRendered();
   }
 
-  static initializeCommentBrowser () {
+  static async initializeCommentBrowser () {
     if ($world.commentBrowser) {
       return;
     }
-    $world.commentBrowser = new CommentBrowser();
-    CommentBrowser.instance.initializeSubmorphs();
+    const browser = await resource('part://CommentComponents/comment browser master').read();
+    browser.name = 'comment browser';
+    $world.commentBrowser = browser;
   }
 
   static close () {
@@ -123,7 +125,13 @@ export class CommentBrowser extends Morph {
       showsResolvedComments: {
         defaultValue: false
       },
-      window: {}
+      window: {},
+      master: {
+        after: ['submorphs'],
+        initialize () {
+          this.master = 'styleguide://CommentComponents/comment browser master';
+        }
+      }
     };
   }
 
@@ -138,21 +146,12 @@ export class CommentBrowser extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   buildContainers () {
     this.container = new Morph({
-      clipMode: 'auto',
       name: 'container'
     });
     this.commentContainer = new Morph({
-      layout: new VerticalLayout({
-        spacing: 5,
-        orderByIndex: true
-      }),
       name: 'comment container'
     });
     this.resolvedCommentContainer = new Morph({
-      layout: new VerticalLayout({
-        spacing: 5,
-        orderByIndex: true
-      }),
       name: 'resolved comment container'
     });
     this.filterContainer = new Morph({
@@ -165,16 +164,12 @@ export class CommentBrowser extends Morph {
 
   buildFilterSelector () {
     this.filterSelector = new ModeSelector({
-      reactsToPointer: false,
       name: 'resolvedModeSelector',
       items: ['Unresolved Comments', 'Resolved Comments'],
       tooltips: {
         'Unresolved Comments': 'Show unresolved comments',
         'Resolved Comments': 'Show resolved comments'
-      },
-      layout: new HorizontalLayout({
-        spacing: 5
-      })
+      }
     });
     connect(this.filterSelector, 'Unresolved Comments', this, 'toggleArchive');
     connect(this.filterSelector, 'Resolved Comments', this, 'toggleArchive');
@@ -189,11 +184,14 @@ export class CommentBrowser extends Morph {
     connect(this.window, 'close', this, 'close');
 
     const topbar = $world.getSubmorphNamed('lively top bar');
-    this.window.position = pt($world.width - this.width, topbar.height);
+    const bbx = $world.visibleBoundsExcludingTopBar().insetBy(25);
+    this.window.right = bbx.right();
+    this.window.top = bbx.top();
     // when styling palette is opened, position comment browser to the left of it
     if (topbar.activeSideBars.includes('Styling Palette')) {
       this.window.position = this.window.position.addPt(pt(-topbar.stylingPalette.width, 0));
     }
+    return this.window;
   }
 
   initializeSubmorphs () {
