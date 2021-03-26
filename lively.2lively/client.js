@@ -285,7 +285,7 @@ export default class L2LClient extends L2LConnection {
   }
 
   async onReconnect () {
-    const dateString = new Date().toLocaleDateString();
+    const dateString = new Date().toTimeString();
     console.log(`Reconnected at ${dateString}`);
   }
 
