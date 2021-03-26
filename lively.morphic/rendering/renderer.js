@@ -183,23 +183,44 @@ export class Renderer {
 
     // now figure out if the order of nodes changed
     const currentFixedMorphNodes = fixedMorphs.map(m => fixedMorphNodeMap.get(m));
-    const supposedOrder = currentFixedMorphNodes.map(m => m && m.id);
+    const supposedOrder = fixedMorphs.map(m => m.id);
     const actualOrder = [...fixedMorphNode.children].map(m => m.id).filter(id => supposedOrder.includes(id));
 
-    if (!arr.equals(supposedOrder, actualOrder)) { currentFixedMorphNodes.map(n => n && n.parentNode && n.parentNode.removeChild(n)); }
+    const orderChanged = !arr.equals(supposedOrder, actualOrder);
+    const restoreScrollFor = new WeakMap();
+
+    if (orderChanged) {
+      const scrolls = new WeakMap();
+      const nodes = arr.compact(arr.flatten(fixedMorphs.map(m => m.withAllSubmorphsDo(m => this.getNodeForMorph(m)))));
+      nodes.forEach(node => scrolls.set(node, node.scrollTop));
+      currentFixedMorphNodes.map(n => n && n.parentNode && n.parentNode.removeChild(n));
+      nodes.forEach(node => {
+        if (scrolls.get(node) != node.scrollTop) {
+          restoreScrollFor.set(node, scrolls.get(node));
+        }
+      });
+    }
 
     for (const morph of fixedMorphs) {
       const tree = this.renderMap.get(morph) || this.renderAsFixed(morph);
       const newTree = this.renderAsFixed(morph);
       const patches = diff(tree, newTree);
-
       let morphNode = fixedMorphNodeMap.get(morph);
+
       if (!morphNode) {
         morphNode = createNode(tree, this.domEnvironment);
         fixedMorphNodeMap.set(morph, morphNode);
       }
       if (!morphNode.parentNode) {
         fixedMorphNode.appendChild(morphNode);
+      }
+
+      if (orderChanged) {
+        // the scroll of dom nodes is reset once they are unmounted
+        // immediately restore once added to the DOM again
+        morph.withAllSubmorphsDo(m => this.getNodeForMorph(m)).forEach(node => {
+          if (restoreScrollFor.has(node)) node.scrollTop = restoreScrollFor.get(node);
+        });
       }
 
       patch(morphNode, patches);
@@ -624,4 +645,3 @@ export class Renderer {
     return asNode ? node : node.outerHTML;
   }
 }
-
