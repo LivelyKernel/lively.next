@@ -382,6 +382,9 @@ export default class L2LClient extends L2LConnection {
       this.trackerId = trackerId;
       this._incomingOrderNumberingBySenders.set(trackerId, messageNumber || 0);
       this.emit('registered', { trackerId });
+      if (this.onReconnect && typeof (this.onReconnect) === 'function') {
+        this.onReconnect();
+      }
     } catch (e) {
       console.error(`Error in register request of ${this}: ${e}`);
       const attempt = this._reconnectState.registerAttempt++;
