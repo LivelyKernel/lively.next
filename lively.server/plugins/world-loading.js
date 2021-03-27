@@ -1,10 +1,10 @@
-/*global System,Buffer*/
-import { resource } from "lively.resources";
-import { ObjectDB } from "lively.storage";
-import { parse as parseUrl } from "url";
-import { readBody } from "../util.js";
+/* global System,Buffer */
+import { resource } from 'lively.resources';
+import { ObjectDB } from 'lively.storage';
+import { parse as parseUrl } from 'url';
+import { readBody } from '../util.js';
 
-const minute = 1000*60;
+const minute = 1000 * 60;
 const useCache = true;
 
 /*
@@ -19,79 +19,79 @@ p.handleRequest
 */
 
 export default class WorldLoadingPlugin {
-
-  constructor(config) {
+  constructor (config) {
     this.authServerURL = config.authServerURL;
     this.resetHTMLCache();
   }
-  setOptions({route} = {}) {}
 
-  get pluginId() { return "world-loading" }
+  setOptions ({ route } = {}) {}
 
-  toString() { return `<${this.pluginId}>`; }
+  get pluginId () { return 'world-loading'; }
 
-  get before() { return ["jsdav"]; }
+  toString () { return `<${this.pluginId}>`; }
 
-  setup(livelyServer) {}
+  get before () { return ['jsdav']; }
 
-  async close() {}
+  setup (livelyServer) {}
 
-  resetHTMLCache() { this.cachedHTML = {}; }
+  async close () {}
 
-  readFile(path) {
-    let htmlResource = resource(System.baseURL).join("lively.morphic/web/" + path);
-    return htmlResource.read()
+  resetHTMLCache () { this.cachedHTML = {}; }
+
+  readFile (path) {
+    const htmlResource = resource(System.baseURL).join('lively.morphic/web/' + path);
+    return htmlResource.read();
   }
 
-  addMeta(html, worldName, parsedUrl) {
-    let encodedName = encodeURIComponent(worldName),
-        tags = [
-          {property: "og:title", content: `lively.next - ${worldName}`},
-          {property: "og:description", content: "lively.next is a personal programming kit. It emphasizes liveness, directness and interactivity."},
-          {property: "og:image", content: `https://lively-next.org/object-preview-by-name/world/${encodedName}`},
-          {property: "og:url", content: `https://lively-next.org/worlds/${encodedName}`},
-          // {name: "twitter:card", content: "summary_large_image"},
-        ], tagMarkup = [];
+  addMeta (html, worldName, parsedUrl) {
+    const encodedName = encodeURIComponent(worldName);
+    const tags = [
+      { property: 'og:title', content: `lively.next - ${worldName}` },
+      { property: 'og:description', content: 'lively.next is a personal programming kit. It emphasizes liveness, directness and interactivity.' },
+      { property: 'og:image', content: `https://lively-next.org/object-preview-by-name/world/${encodedName}` },
+      { property: 'og:url', content: `https://lively-next.org/worlds/${encodedName}` }
+      // {name: "twitter:card", content: "summary_large_image"},
+    ]; const tagMarkup = [];
 
-    for (let spec of tags) {
-      let markup = "<meta"
-      for (let prop in spec) markup += ` ${prop}="${spec[prop]}"`;
-      markup += ">";
+    for (const spec of tags) {
+      let markup = '<meta';
+      for (const prop in spec) markup += ` ${prop}="${spec[prop]}"`;
+      markup += '>';
       tagMarkup.push(markup);
     }
-    return html.replace("<!--META-->", tagMarkup.join("\n"));
+    return html.replace('<!--META-->', tagMarkup.join('\n'));
   }
-  
-  async handleRequest(req, res, next) {
-    let [url, query] = req.url.split("?");
-    query = query ? "?" + query : "";
 
-    if ((url === "/" || url === "/index.html") && req.method.toUpperCase() === "GET") {
-      res.writeHead(301,  {location: "/worlds/" + query});
+  async handleRequest (req, res, next) {
+    let [url, query] = req.url.split('?');
+    query = query ? '?' + query : '';
+
+    if ((url === '/' || url === '/index.html') && req.method.toUpperCase() === 'GET') {
+      res.writeHead(301, { location: '/worlds/' + query });
       res.end();
       return;
     }
 
-    if (url.startsWith("/object-preview-by-name/")) {
-      let [_, type, name] = url.match(/^\/object-preview-by-name\/([^\/]+)\/([^\/]+)$/) || [],
-          err;
+    if (url.startsWith('/object-preview-by-name/')) {
+      let [_, type, name] = url.match(/^\/object-preview-by-name\/([^\/]+)\/([^\/]+)$/) || [];
+      let err;
       if (!type || !name) {
-        err = {code: 404, message: `Cannot find thumbnail for ${url.split("/").slice(2).join("/")}`};
+        err = { code: 404, message: `Cannot find thumbnail for ${url.split('/').slice(2).join('/')}` };
       } else {
         name = decodeURIComponent(name);
-        
+
         {
           // FIXME, support multiple DBs
           // FIXME, move somewhere else
           try {
-            let db = await ObjectDB.find("lively.morphic/objectdb/morphicdb"),
-                previewLoc = db.snapshotLocation.join(`../preview-cache/by-name/${type}/`).withRelativePartsResolved(),
-                defaultImageFile = previewLoc.join(`${name}.png`).beBinary();
-            
+            const db = await ObjectDB.find('lively.morphic/objectdb/morphicdb');
+            const previewLoc = db.snapshotLocation.join(`../preview-cache/by-name/${type}/`).withRelativePartsResolved();
+            const defaultImageFile = previewLoc.join(`${name}.png`).beBinary();
+
             // exists and is recent?
             if (await defaultImageFile.exists()) {
-              if (Date.now() - (await defaultImageFile.readProperties()).lastModified < minute*10) {
-                let buf = await defaultImageFile.read();
+              if (Date.now() - (await defaultImageFile.readProperties()).lastModified < minute * 10) {
+                const buf = await defaultImageFile.read();
                 res.writeHead(200); res.end(buf);
                 return;
               } else {
@@ -100,12 +100,12 @@ export default class WorldLoadingPlugin {
             }
 
             // otherwise read from snapshot.preview
-            let commit = await db.getLatestCommit(type, name),
-                snapshotResource = db.snapshotResourceFor(commit),
-                {preview} = await snapshotResource.readJson(),
-                [_, ext, data] = preview.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/) || [],
-                imgFile = previewLoc.join(`${name}.${ext}`).beBinary(),
-                buf = new Buffer(data, 'base64');
+            const commit = await db.getLatestCommit(type, name);
+            const snapshotResource = db.snapshotResourceFor(commit);
+            const { preview } = await snapshotResource.readJson();
+            const [_, ext, data] = preview.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/) || [];
+            const imgFile = previewLoc.join(`${name}.${ext}`).beBinary();
+            const buf = new Buffer(data, 'base64');
 
             // answer...
             res.writeHead(200); res.end(buf);
@@ -116,61 +116,74 @@ export default class WorldLoadingPlugin {
               await imgFile.write(buf);
             }).catch(err => console.error(`Error writing cached preview image for ${type}/${name}:\n${err}`));
             return;
-
           } catch (e) {
-            err = {code: 500, message: String(e)};
+            err = { code: 500, message: String(e) };
           }
         }
 
         if (err) {
-          res.writeHead(err.code,  {});
+          res.writeHead(err.code, {});
           res.end(err.message);
-          return;
         }
       }
-
-    } else if (url === "/report-world-load" && req.method.toUpperCase() === "POST") {
-      let {message} = await readBody(req),
-          ip = req.headers['x-forwarded-for'] || 
-                req.connection.remoteAddress || 
+    } else if (url === '/report-world-load' && req.method.toUpperCase() === 'POST') {
+      const { message } = await readBody(req);
+      const ip = req.headers['x-forwarded-for'] ||
+                req.connection.remoteAddress ||
                 req.socket.remoteAddress ||
                 req.connection.socket.remoteAddress;
       console.log(`[report-world-load] ${message} ${ip}`);
       res.end();
-      return;
-      
     } else if (url.startsWith('/worlds')) {
-      if (['/worlds', '/worlds/'].includes(url) && req.method.toUpperCase() === "GET") {
-         res.writeHead(301,  {location: "/dashboard/"});
-         res.end();
-         return;
+      if (['/worlds', '/worlds/'].includes(url) && req.method.toUpperCase() === 'GET') {
+        res.writeHead(301, { location: '/dashboard/' });
+        res.end();
+        return;
+      }
+
+      if (url.endsWith('worlds/__JS_FILE_HASHES__')) {
+        req.url = '/__JS_FILE_HASHES__';
+        next();
+        return;
       }
 
       // if there is stuff after this, it has got to be a request by the loaded frozen part
-      let parsedUrl = parseUrl(url, true);
-      let [_, sub] = parsedUrl.pathname.match(/^\/worlds\/?(.*)/);
-      req.url = sub == 'load' ?
-        url.replace('/worlds/load', '/lively.freezer/loading-screen/index.html') :
-        url.replace('/worlds', '/lively.freezer/loading-screen');
-      // redirect to world loading screen
+      const parsedUrl = parseUrl(url, true);
+      const [_, sub] = parsedUrl.pathname.match(/^\/worlds\/?(.*)/);
+      req.url = sub == 'load'
+        ? url.replace('/worlds/load', '/lively.freezer/loading-screen/index.html')
+        : url.replace('/worlds', '/lively.freezer/loading-screen');
+
+      if (req.url.endsWith('/lively.freezer/loading-screen/index.html')) {
+        const s = await resource(System.baseURL).join('lively.freezer/loading-screen/index.html').read();
+        res.writeHead(200);
+        res.end(s.replace('AUTH_SERVER_URL', `AUTH_SERVER_URL = "${this.authServerURL}"; window.SERVER_URL = location.origin;`));
+        return;
+      }
+      // redirect to world loading screen. set SERVER_URL ?
       next();
     } else if (url.startsWith('/dashboard')) {
-      if (url === '/dashboard' && req.method.toUpperCase() === "GET") {
-         res.writeHead(301,  {location: "/dashboard/"});
-         res.end();
-         return;
+      if (url === '/dashboard' && req.method.toUpperCase() === 'GET') {
+        res.writeHead(301, { location: '/dashboard/' });
+        res.end();
+        return;
       }
 
-      let parsedUrl = parseUrl(url, true);
-      let [_, sub] = parsedUrl.pathname.match(/^\/dashboard\/?(.*)/);
+      const parsedUrl = parseUrl(url, true);
+      const [_, sub] = parsedUrl.pathname.match(/^\/dashboard\/?(.*)/);
       req.url = url.replace('/dashboard', '/lively.freezer/dashboard');
-      if (!sub) req.url += '/index.html';
+      if (!sub) {
+        req.url += '/index.html';
+        const s = await resource(System.baseURL).join('lively.freezer/dashboard/index.html').read();
+        res.writeHead(200);
+        res.end(s.replace('AUTH_SERVER_URL', `AUTH_SERVER_URL = "${this.authServerURL}"; window.SERVER_URL = location.origin;`));
+        return;
+      }
+      // return html but inject the auth server url
       // redirect to dashboard
-      next();      
+      next();
     } else {
       next();
     }
-
   }
-
 }

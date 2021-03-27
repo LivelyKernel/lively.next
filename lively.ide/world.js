@@ -71,6 +71,12 @@ export class LivelyWorld extends World {
           });
         }
       },
+      name: {
+        set (name) {
+          this.setProperty('name', name);
+          document.title = `lively.next - ${name}`;
+        }
+      },
       hiddenComponents: {
         // declared components are exported by default
         // this property prevents some of these components to be listed in the components browser, if they themselves do not provide useful information
@@ -177,11 +183,11 @@ export class LivelyWorld extends World {
     this.onWindowResize();
     // some meta stuff...
     lively.modules.removeHook('fetch', window.__logFetch);
+    this.animate({ opacity: 1, duration: 1000, easing: easings.inOutExpo });
     if (this.showsUserFlap || resource(document.location.href).query().showsUserFlap) {
       this._styleLoading = prefetchCoreStyleguides(window.worldLoadingIndicator);
       await this._styleLoading;
     }
-    this.animate({ opacity: 1, duration: 1000, easing: easings.inOutExpo });
     document.body.style.overflowX = 'visible';
     document.body.style.overflowY = 'visible';
   }
@@ -1003,7 +1009,8 @@ export class LivelyWorld extends World {
         $world.setStatusMessage('Comment saved', 'green');
       } else {
         $world.setStatusMessage('Comment not saved', 'red');
-      }}]);
+      }
+    }]);
     return items;
   }
 

@@ -63,12 +63,6 @@ export class World extends Morph {
             CommentBrowser.initializeCommentBrowser();
           }
         }
-      },
-      name: {
-        set (name) {
-          this.setProperty('name', name);
-          document.title = `lively.next - ${name}`;
-        }
       }
     };
   }
@@ -200,7 +194,7 @@ export class World extends Morph {
 
   getCurrentUser () {
     const reg = UserRegistry.current;
-    return reg.loadUserFromLocalStorage(config.users.authServerURL);
+    return reg.loadUserFromLocalStorage(window.AUTH_SERVER_URL || config.users.authServerURL);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
