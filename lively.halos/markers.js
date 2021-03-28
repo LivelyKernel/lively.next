@@ -15,7 +15,7 @@ export function show (target, loop = false) {
   const world = MorphicEnv.default().world;
 
   if (target === null || target === undefined) target = String(target);
-  if (target.isMorph) return showRect(target.world(), target.globalBounds().translatedBy(target.world().scroll.negated()), loop);
+  if (target.isMorph) return showRect(target.world(), target.globalBounds().translatedBy(world.scroll.negated()), loop);
   if (target.isPoint) return showRect(world, new Rectangle(target.x - 5, target.y - 5, 10, 10));
   if (target.isLine) return showLine(world, target);
   if (target.isRectangle) return showRect(world, target);

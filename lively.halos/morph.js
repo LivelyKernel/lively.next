@@ -1818,12 +1818,12 @@ export class MorphHighlighter extends Morph {
     delete halo._morphHighlighters;
   }
 
-  static for (halo, morph, showLayout = false, highlightedSides = []) {
-    const store = (halo._morphHighlighters = halo._morphHighlighters || {});
+  static for (haloOrWorld, morph, showLayout = false, highlightedSides = []) {
+    const store = (haloOrWorld._morphHighlighters = haloOrWorld._morphHighlighters || {});
     properties.forEachOwn(store, (_, h) => h.alignWithHalo());
     if (!morph || morph.ownerChain().find(owner => owner.isHaloItem)) return null;
-    store[morph.id] = store[morph.id] || new this({ targetId: morph.id, halo, showLayout });
-    halo.addMorph(store[morph.id]);
+    store[morph.id] = store[morph.id] || new this({ targetId: morph.id, halo: haloOrWorld, showLayout });
+    haloOrWorld.addMorph(store[morph.id]); // this messes up other fixed morphs with scroll
     store[morph.id].highlightedSides = highlightedSides;
     return store[morph.id];
   }
