@@ -161,7 +161,7 @@ function transformImportMeta (parsed, options) {
     if (node.type == 'MetaProperty' && node.meta.name == 'import') {
       return options.classToFunction.currentModuleAccessor
         ? nodes.objectLiteral(['url', nodes.member(options.classToFunction.currentModuleAccessor, 'id')])
-        : parse('({url: _context.id})').body[0].expression;
+        : parse('({url: eval("_context").id})').body[0].expression;
     }
     return node;
   });
@@ -373,13 +373,13 @@ function replaceVarDecls (parsed, options) {
               decl.declarations[0].id,
               options.declarationWrapper
                 ? declarationWrapperCall(
-                  options.declarationWrapper,
-                  null,
-                  literal(decl.declarations[0].id.name),
-                  literal(node.kind),
-                  decl.declarations[0].init,
-                  options.captureObj,
-                  options)
+                    options.declarationWrapper,
+                    null,
+                    literal(decl.declarations[0].id.name),
+                    literal(node.kind),
+                    decl.declarations[0].init,
+                    options.captureObj,
+                    options)
                 : decl.declarations[0].init,
               false)
             : decl);
