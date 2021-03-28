@@ -1,5 +1,5 @@
 /* global process */
-import { ObjectDBInterface } from 'lively.storage';
+import { ObjectDBInterface, ObjectDB } from 'lively.storage';
 import { resource } from 'lively.resources';
 import { HeadlessSession } from 'lively.headless';
 import { string, promise } from 'lively.lang';
@@ -77,7 +77,8 @@ export default class ComponentsBrowser {
     // if worldName is specified, then we only update that particular world
     const baseUrl = 'file://' + process.cwd(); // assume we are running inside the lively.server folder
     const worlds = await this.fetchWorlds();
-    const allStyleguidesInDb = worlds.filter(commit => commit.tags.includes('styleguide')).map(snap => snap.name);
+    // always update the world to update
+    const allStyleguidesInDb = worlds.filter(commit => commit.name == worldToUpdate || commit.tags.includes('styleguide')).map(snap => snap.name);
     const additionalStyleguidesInFolders = [];
     const cacheDir = this.getCacheDir(); // ensure?
     await cacheDir.ensureExistance();
@@ -100,6 +101,7 @@ export default class ComponentsBrowser {
         : `http://localhost:9011/worlds/load?name=${encodeURIComponent(name)}&fastLoad=true&showsUserFlap=false`;
 
     this.headlessSession = new HeadlessSession();
+
     // fire up the headless chrome browser
     for (const [worldName, jsonPath] of [...allStyleguidesInDb.map(m => [m]), ...additionalStyleguidesInFolders]) {
       if (worldToUpdate && worldName != worldToUpdate) continue;
@@ -117,6 +119,21 @@ export default class ComponentsBrowser {
         }
 
         await this.headlessSession.page.emulate({ viewport: { width: 1000, height: 1000, deviceScaleFactor: 2 }, userAgent: 'Chrome' });
+
+        // clear loading indicator if present
+        await this.headlessSession.runEval(`
+          window.worldLoadingIndicator.remove();
+          await $world.execCommand("resize to fit window");
+          await $world.whenRendered();
+        `);
+        // process.exit()
+        const db = await ObjectDB.find('lively.morphic/objectdb/morphicdb');
+        const commitDB = await db._commitDB();
+        const commit = worlds.find(commit => commit.name == worldName);
+        if (commit) {
+          const preview = await this.headlessSession.page.screenshot({ encoding: 'base64', clip: { x: 0, y: 0, width: 1000, height: 1000 } });
+          await commitDB.mixin(commit._id, { preview: 'data:image/png;base64,' + preview }); // update the peview
+        }
 
         const listedComponents = await this.headlessSession.runEval(`
           this.__listedComponents__ = $world.getListedComponents().filter(c => !$world.hiddenComponents.includes(c.name));
