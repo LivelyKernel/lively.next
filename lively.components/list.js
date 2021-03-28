@@ -778,8 +778,8 @@ export class List extends Morph {
 
       const totalItemHeight = Math.max(padTop + padBottom + itemHeight * items.length, this.height);
       listItemContainer.setBounds(pt(padLeft, padTop).subXY(0, top).extent(pt(this.width, totalItemHeight)));
-      scroller.extent = this.extent;
-      scrollBar.left = maxWidth - 1;
+      scroller.extent = this.extent.subXY(this.borderWidthRight, this.borderWidthBottom);
+      scrollBar.left = maxWidth / 2;
       scroller.position = pt(0, 0);
       scrollBar.extent = pt(1, totalItemHeight);
     });
