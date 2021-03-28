@@ -24,7 +24,7 @@ await versionDB.getAll()
 */
 var morphicDBs = morphicDBs || (morphicDBs = new Map());
 const getDefaultServerUrl = () => resource(typeof document !== 'undefined'
-  ? System.baseURL
+  ? window.SERVER_URL || System.baseURL // the place that serves the modules is not nessecarily where the server sits at
   : 'http://localhost:9001').join('objectdb/').url;
 
 export function convertToSerializableCommit (commit) {
