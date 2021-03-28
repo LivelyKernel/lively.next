@@ -480,7 +480,7 @@ const commands = [
   {
     name: 'resize active window',
     exec: async function (world, opts = { how: null, window: null }) {
-      const { window, how } = opts;
+      let { window, how } = opts;
       const win = window || world.activeWindow();
 
       if (!win) return;
