@@ -353,82 +353,93 @@ class HTTPFileBrowserNode extends TreeData {
 }
 
 export default class HTTPFileBrowser extends Morph {
-
-  static forLocation(urlOrResource, props) {
-    var browser = new this(props);
+  static forLocation (urlOrResource, props) {
+    const browser = new this(props);
     browser.location = urlOrResource;
     return browser;
   }
 
-  static forFile(urlOrResource, location) {
-    var res;
+  static forFile (urlOrResource, location) {
+    let res;
     try { res = resource(urlOrResource); } catch (e) {
-      res = resource(string.joinPath(location || "", urlOrResource)); }
-    var browser = this.forLocation(location || res.root());
+      res = resource(string.joinPath(location || '', urlOrResource));
+    }
+    const browser = this.forLocation(location || res.root());
     browser.gotoFile(res)
       .then(() => browser.ui.fileTree.centerSelection());
     return browser;
   }
 
-
-  static get properties() {
+  static get properties () {
     return {
-      name:         {defaultValue: "file browser"},
-      clipMode:     {defaultValue: "visible"},
-      extent:       {defaultValue: pt(500,500)},
-      excludeFiles: {defaultValue: [".git", ".DS_Store"]},
-      draggable:    {defaultValue: false},
+      name: { defaultValue: 'file browser' },
+      clipMode: { defaultValue: 'visible' },
+      extent: { defaultValue: pt(500, 500) },
+      excludeFiles: { defaultValue: ['.git', '.DS_Store'] },
+      draggable: { defaultValue: false },
 
       submorphs: {
-        initialize() {
-          var btnStyle = {
-            type: "button", borderRadius: 5, padding: Rectangle.inset(0),
-            fontSize: 12, grabbable: false, draggable: false
+        initialize () {
+          const btnStyle = {
+            type: 'button',
+            borderRadius: 5,
+            padding: Rectangle.inset(0),
+            fontSize: 12,
+            grabbable: false,
+            draggable: false
           };
 
           this.submorphs = [
             new Tree({
-              name: "fileTree",
+              name: 'fileTree',
               treeData: new HTTPFileBrowserNode({
                 browser: this,
                 resource: null,
-                isCollapsed: true,
+                isCollapsed: true
               }),
               extent: this.extent,
               lineHeight: 1.6,
               fontSize: 14,
-              resizeNodes: true/*for right align size + date*/,
+              activateOnHover: false,
+              clipMode: 'auto',
+              resizeNodes: true/* for right align size + date */,
               fill: Color.white,
-              borderWidth: { top: 1, bottom: 1, right: 0, left: 0},
+              borderWidth: { top: 1, bottom: 1, right: 0, left: 0 },
               borderColor: Color.gray,
               padding: Rectangle.inset(4)
             }),
 
             new InputLine({
-              name: "locationInput", textString: "",
-              historyId: "http-file-browser-location-input-history",
+              name: 'locationInput',
+              textString: '',
+              historyId: 'http-file-browser-location-input-history',
               padding: Rectangle.inset(4, 2)
             }),
 
             {
-              type: "label", name: "selectedFileName",
-              padding: Rectangle.inset(2,2),
-              fontSize: 14, fontFamily: "Inconsolata, monospace",
-              readOnly: true, clipMode: "hidden", nativeCursor: 'pointer',
-              tooltip: 'click to copy', fontWeight: 'bold'
+              type: 'label',
+              name: 'selectedFileName',
+              padding: Rectangle.inset(2, 2),
+              fontSize: 14,
+              fontFamily: 'Inconsolata, monospace',
+              readOnly: true,
+              clipMode: 'hidden',
+              nativeCursor: 'pointer',
+              tooltip: 'click to copy',
+              fontWeight: 'bold'
             },
 
-            {name: "searchButton",       ...btnStyle, label: Label.icon("search"), tooltip: "search for files"},
-            {name: "reloadButton",       ...btnStyle, label: Label.icon("redo"), tooltip: "reload list"},
-            {name: "filterButton",       ...btnStyle, label: Label.icon("filter"), tooltip: "set file filter"},
-            {name: "openFileButton",     ...btnStyle, label: Label.icon("edit", { textStyleClasses: ['far']}), tooltip: "open selected file"},
-            {name: "addDirectoryButton", ...btnStyle, label: Label.icon("folder", { textStyleClasses: ['far']}), tooltip: "add directory"},
-            {name: "addFileButton",      ...btnStyle, label: Label.icon("file", { textStyleClasses: ['far']}), tooltip: "add file"},
-            {name: "renameFileButton",   ...btnStyle, label: Label.icon("clone", { textStyleClasses: ['far']}), tooltip: "rename selected file"},
-            {name: "deleteFileButton",   ...btnStyle, label: Label.icon("trash-alt", { textStyleClasses: ['far']}), tooltip: "delete selected file"}
+            { name: 'searchButton', ...btnStyle, label: Label.icon('search'), tooltip: 'search for files' },
+            { name: 'reloadButton', ...btnStyle, label: Label.icon('redo'), tooltip: 'reload list' },
+            { name: 'filterButton', ...btnStyle, label: Label.icon('filter'), tooltip: 'set file filter' },
+            { name: 'openFileButton', ...btnStyle, label: Label.icon('edit', { textStyleClasses: ['far'] }), tooltip: 'open selected file' },
+            { name: 'addDirectoryButton', ...btnStyle, label: Label.icon('folder', { textStyleClasses: ['far'] }), tooltip: 'add directory' },
+            { name: 'addFileButton', ...btnStyle, label: Label.icon('file', { textStyleClasses: ['far'] }), tooltip: 'add file' },
+            { name: 'renameFileButton', ...btnStyle, label: Label.icon('clone', { textStyleClasses: ['far'] }), tooltip: 'rename selected file' },
+            { name: 'deleteFileButton', ...btnStyle, label: Label.icon('trash-alt', { textStyleClasses: ['far'] }), tooltip: 'delete selected file' }
           ];
 
-          var {
+          const {
             fileTree,
             locationInput,
             searchButton,
@@ -442,21 +453,21 @@ export default class HTTPFileBrowser extends Morph {
             selectedFileName
           } = this.ui;
 
-          connect(this, "extent", this, "relayout");
-          connect(locationInput, "inputAccepted", this, "onLocationChanged");
-          connect(fileTree, "selectedNode", this, "showSelectedFile");
+          connect(this, 'extent', this, 'relayout');
+          connect(locationInput, 'inputAccepted', this, 'onLocationChanged');
+          connect(fileTree, 'selectedNode', this, 'showSelectedFile');
           connect(fileTree, 'contextMenuRequested', this, 'showMenuFor');
 
-          connect(searchButton,       "fire", this, "execCommand", {converter: () => "find file and select"});
-          connect(reloadButton,       "fire", this, "execCommand", {converter: () => "refresh contents"});
-          connect(filterButton,       "fire", this, "execCommand", {converter: () => "set file filter"});
-          connect(openFileButton,     "fire", this, "execCommand", {converter: () => "open selected file"});
-          connect(renameFileButton,   "fire", this, "execCommand", {converter: () => "rename file"});
-          connect(deleteFileButton,   "fire", this, "execCommand", {converter: () => "delete file or directory"});
-          connect(addFileButton,      "fire", this, "execCommand", {converter: () => "add file"});
-          connect(addDirectoryButton, "fire", this, "execCommand", {converter: () => "add directory"});
-          connect(selectedFileName,   'onMouseDown', this, "execCommand", { converter: () => "copy file path to clipboard"});
-          connect(this, 'onMouseMove', this, "hideBaseURL");
+          connect(searchButton, 'fire', this, 'execCommand', { converter: () => 'find file and select' });
+          connect(reloadButton, 'fire', this, 'execCommand', { converter: () => 'refresh contents' });
+          connect(filterButton, 'fire', this, 'execCommand', { converter: () => 'set file filter' });
+          connect(openFileButton, 'fire', this, 'execCommand', { converter: () => 'open selected file' });
+          connect(renameFileButton, 'fire', this, 'execCommand', { converter: () => 'rename file' });
+          connect(deleteFileButton, 'fire', this, 'execCommand', { converter: () => 'delete file or directory' });
+          connect(addFileButton, 'fire', this, 'execCommand', { converter: () => 'add file' });
+          connect(addDirectoryButton, 'fire', this, 'execCommand', { converter: () => 'add directory' });
+          connect(selectedFileName, 'onMouseDown', this, 'execCommand', { converter: () => 'copy file path to clipboard' });
+          connect(this, 'onMouseMove', this, 'hideBaseURL');
 
           this.onLocationChanged();
           this.relayout();
@@ -465,33 +476,37 @@ export default class HTTPFileBrowser extends Morph {
       },
 
       ui: {
-        derived: true, readOnly: true, after: ["submorphs"],
-        get() {
+        derived: true,
+        readOnly: true,
+        after: ['submorphs'],
+        get () {
           return {
-            fileTree: this.getSubmorphNamed("fileTree"),
-            locationInput: this.getSubmorphNamed("locationInput"),
-            searchButton: this.getSubmorphNamed("searchButton"),
-            reloadButton: this.getSubmorphNamed("reloadButton"),
-            filterButton: this.getSubmorphNamed("filterButton"),
-            openFileButton: this.getSubmorphNamed("openFileButton"),
-            addDirectoryButton: this.getSubmorphNamed("addDirectoryButton"),
-            addFileButton: this.getSubmorphNamed("addFileButton"),
-            renameFileButton: this.getSubmorphNamed("renameFileButton"),
-            deleteFileButton: this.getSubmorphNamed("deleteFileButton"),
-            selectedFileName: this.getSubmorphNamed("selectedFileName")
+            fileTree: this.getSubmorphNamed('fileTree'),
+            locationInput: this.getSubmorphNamed('locationInput'),
+            searchButton: this.getSubmorphNamed('searchButton'),
+            reloadButton: this.getSubmorphNamed('reloadButton'),
+            filterButton: this.getSubmorphNamed('filterButton'),
+            openFileButton: this.getSubmorphNamed('openFileButton'),
+            addDirectoryButton: this.getSubmorphNamed('addDirectoryButton'),
+            addFileButton: this.getSubmorphNamed('addFileButton'),
+            renameFileButton: this.getSubmorphNamed('renameFileButton'),
+            deleteFileButton: this.getSubmorphNamed('deleteFileButton'),
+            selectedFileName: this.getSubmorphNamed('selectedFileName')
           };
         }
       },
 
       location: {
-        derived: true, after: ["submorphs"],
-        get() {
+        derived: true,
+        after: ['submorphs'],
+        get () {
           return resource(this.ui.locationInput.input);
         },
-        set(urlOrResource) {
+        set (urlOrResource) {
           this._isLoading = true;
-          var res = typeof urlOrResource === "string" ?
-            resource(urlOrResource) : urlOrResource;
+          let res = typeof urlOrResource === 'string'
+            ? resource(urlOrResource)
+            : urlOrResource;
           if (!res.isDirectory()) res = res.asDirectory();
           this.ui.locationInput.input = res.url;
           this.ui.locationInput.acceptInput();
@@ -499,18 +514,20 @@ export default class HTTPFileBrowser extends Morph {
       },
 
       selectedFile: {
-        derived: true, after: ["submorphs"],
-        get() {
-          var sel = this.ui.fileTree.selectedNode;
+        derived: true,
+        after: ['submorphs'],
+        get () {
+          const sel = this.ui.fileTree.selectedNode;
           return sel ? sel.resource : null;
         },
-        set(urlOrResource) {
+        set (urlOrResource) {
           if (!urlOrResource) {
             this.ui.fileTree.selectedNode = null;
           } else {
-            var res = typeof urlOrResource === "string" ?
-              resource(urlOrResource) : urlOrResource;
-            var node = this.ui.fileTree.nodes.find(({resource}) => resource.url === res.url);
+            const res = typeof urlOrResource === 'string'
+              ? resource(urlOrResource)
+              : urlOrResource;
+            const node = this.ui.fileTree.nodes.find(({ resource }) => resource.url === res.url);
             this.ui.fileTree.selectedNode = node;
           }
           this.ui.fileTree.focus();
@@ -518,165 +535,165 @@ export default class HTTPFileBrowser extends Morph {
       },
 
       treeState: {
-        derived: true, after: ["submorphs"],
-        get() {
+        derived: true,
+        after: ['submorphs'],
+        get () {
           return this.ui.fileTree.buildViewState(resource => resource.url);
         },
-        set(viewState) {
+        set (viewState) {
           this.ui.fileTree.applyViewState(viewState, resource => resource.url);
         }
       }
     };
   }
 
-  get isFileBrowser() { return true; }
+  get isFileBrowser () { return true; }
 
-  relayout() {
+  relayout () {
     if (this.height <= 0) return;
 
-    var {
-          selectedFileName,
-          deleteFileButton,
-          renameFileButton,
-          addFileButton,
-          addDirectoryButton,
-          openFileButton,
-          filterButton,
-          reloadButton,
-          searchButton,
-          locationInput,
-          fileTree,
-        } = this.ui,
-        topButtons =      [searchButton,
-          filterButton,
-          reloadButton],
-        bottomButtons =   [openFileButton,
-          addFileButton,
-          addDirectoryButton,
-          renameFileButton,
-          deleteFileButton],
-        nButtons = 5,
-        locationInputHeight = 20,
-        selectedFileNameHeight = 20,
-        buttonHeight = 20;
+    const {
+      selectedFileName,
+      deleteFileButton,
+      renameFileButton,
+      addFileButton,
+      addDirectoryButton,
+      openFileButton,
+      filterButton,
+      reloadButton,
+      searchButton,
+      locationInput,
+      fileTree
+    } = this.ui;
+    const topButtons = [searchButton,
+      filterButton,
+      reloadButton];
+    const bottomButtons = [openFileButton,
+      addFileButton,
+      addDirectoryButton,
+      renameFileButton,
+      deleteFileButton];
+    const nButtons = 5;
+    const locationInputHeight = 20;
+    const selectedFileNameHeight = 20;
+    const buttonHeight = 20;
 
-    locationInput.position = pt(0,0);
-    locationInput.extent = pt(this.width-3*buttonHeight, locationInputHeight);
+    locationInput.position = pt(0, 0);
+    locationInput.extent = pt(this.width - 3 * buttonHeight, locationInputHeight);
 
     topButtons.forEach(btn => btn.extent = pt(buttonHeight, buttonHeight));
     topButtons[0].topLeft = locationInput.topRight;
-    for (var i = 1; i < topButtons.length; i++)
-      topButtons[i].topLeft = topButtons[i-1].topRight;
+    for (var i = 1; i < topButtons.length; i++) { topButtons[i].topLeft = topButtons[i - 1].topRight; }
 
     fileTree.topLeft = locationInput.bottomLeft;
     fileTree.extent = pt(this.width, this.height - locationInputHeight - selectedFileNameHeight - buttonHeight);
     selectedFileName.topLeft = fileTree.bottomLeft;
     selectedFileName.extent = pt(this.width, selectedFileNameHeight);
 
-    bottomButtons.forEach(btn => btn.extent = pt(this.width/nButtons, buttonHeight));
+    bottomButtons.forEach(btn => btn.extent = pt(this.width / nButtons, buttonHeight));
     bottomButtons[0].topLeft = selectedFileName.bottomLeft;
-    for (var i = 1; i < bottomButtons.length; i++)
-      bottomButtons[i].topLeft = bottomButtons[i-1].topRight;
+    for (var i = 1; i < bottomButtons.length; i++) { bottomButtons[i].topLeft = bottomButtons[i - 1].topRight; }
   }
 
-  whenFinishedLoading() {
+  whenFinishedLoading () {
     return promise.waitFor(3000, () => this._isLoading === false).catch(_ => undefined);
   }
 
-  hideBaseURL(evt) {
-    let fnText = this.ui.selectedFileName;
+  hideBaseURL (evt) {
+    const fnText = this.ui.selectedFileName;
     if (evt.isShiftDown()) {
       fnText.textString = fnText.textString.replace(System.baseURL, '/');
     } else {
       this.showSelectedFile();
     }
-    
   }
 
-  openLocation(urlOrResource) {
-    var res = typeof urlOrResource === "string" ?
-          resource(urlOrResource) : urlOrResource,
-        {locationInput} = this.ui;
+  openLocation (urlOrResource) {
+    const res = typeof urlOrResource === 'string'
+      ? resource(urlOrResource)
+      : urlOrResource;
+    const { locationInput } = this.ui;
     locationInput.input = res.url;
     locationInput.acceptInput();
     return this;
   }
 
-  async showMenuFor({node, evt}) {
+  async showMenuFor ({ node, evt }) {
     evt.stop();
-    let items = [];
+    const items = [];
     if (node.resource.isFile()) {
       items.push({
-        alias: "Open File in Text Editor",
-        command: "open file",
+        alias: 'Open File in Text Editor',
+        command: 'open file',
         target: this.world(),
         args: {
           url: node.resource.url
         }
-      });    
+      });
     }
     return this.world().openWorldMenu(evt, items);
   }
 
-  showSelectedFile() {
-    let sel = this.selectedFile;       
-    this.get("selectedFileName").textString =  sel ? sel.url : "";
+  showSelectedFile () {
+    const sel = this.selectedFile;
+    this.get('selectedFileName').textString = sel ? sel.url : '';
   }
 
-  async gotoFile(urlOrResource) {
+  async gotoFile (urlOrResource) {
     await this.whenFinishedLoading();
-    let target = typeof urlOrResource === "string" ?
-          resource(urlOrResource) : urlOrResource,
-        path = target.parents().concat(target),
-        td = this.ui.fileTree.treeData,
-        found = await td.followPath(path, (resource, node) => resource.equals(node.resource));
+    const target = typeof urlOrResource === 'string'
+      ? resource(urlOrResource)
+      : urlOrResource;
+    const path = target.parents().concat(target);
+    const td = this.ui.fileTree.treeData;
+    const found = await td.followPath(path, (resource, node) => resource.equals(node.resource));
     return found ? this.selectedFile = found.resource : null;
   }
 
-  async onLocationChanged() {
-    var treeData = this.ui.fileTree.treeData,
-        url = this.ui.locationInput.input;
+  async onLocationChanged () {
+    const treeData = this.ui.fileTree.treeData;
+    const url = this.ui.locationInput.input;
     if (!url) { this._isLoading = false; return; }
-    var loc = resource(url);
+    let loc = resource(url);
     if (!loc.isDirectory()) loc = loc.asDirectory();
     treeData.root = {
       browser: this,
       resource: loc,
-      isCollapsed: true,
+      isCollapsed: true
     };
-    var win = this.getWindow();
-    if (win) win.title = "file browser – " + url;
+    const win = this.getWindow();
+    if (win) win.title = 'file browser – ' + url;
     await this.ui.fileTree.uncollapse(treeData.root);
     this._isLoading = false;
     this.ui.fileTree.focus();
   }
 
-  keepFileTreeStateWhile(whileFn) {
+  keepFileTreeStateWhile (whileFn) {
     return this.ui.fileTree.maintainViewStateWhile(() =>
       whileFn.call(this),
-    ({resource: {url}}) => url);
+    ({ resource: { url } }) => url);
   }
 
-  focus() { this.ui.fileTree.focus(); }
+  focus () { this.ui.fileTree.focus(); }
 
-  get commands() { return browserCommands.concat(super.commands); }
+  get commands () { return browserCommands.concat(super.commands); }
 
-  get keybindings() {
+  get keybindings () {
     return [
-      {keys: "Enter", command: "open selected file"},
-      {keys: {mac: "Meta-Enter", win: "Ctrl-Enter"}, command: {command: "open selected file", args: {openInNewBrowser: true}}},
-      {keys: "Alt-Up", command: "focus location input"},
-      {keys: "Alt-Down", command: "focus file tree"},
-      {keys: "Alt-.", command: "set location to selection"},
-      {keys: "Shift-6"/*^*/, command: "set location to parent dir"},
-      {keys: {mac: "Meta-C|Alt-W", win: "Ctrl-C|Alt-W"}, command: "copy file path to clipboard"},
-      {keys: "Shift-=", command: "add directory"},
-      {keys: {mac: "Meta-Shift-=", win: "Ctrl-Shift-="}, command: "add file"},
-      {keys: "F2", command: "set file filter"},
-      {keys: "F3", command: "rename file"},
-      {keys: "Backspace|Delete", command: "delete file or directory"},
-      {keys: "g", command: "refresh contents"}
+      { keys: 'Enter', command: 'open selected file' },
+      { keys: { mac: 'Meta-Enter', win: 'Ctrl-Enter' }, command: { command: 'open selected file', args: { openInNewBrowser: true } } },
+      { keys: 'Alt-Up', command: 'focus location input' },
+      { keys: 'Alt-Down', command: 'focus file tree' },
+      { keys: 'Alt-.', command: 'set location to selection' },
+      { keys: 'Shift-6'/* ^ */, command: 'set location to parent dir' },
+      { keys: { mac: 'Meta-C|Alt-W', win: 'Ctrl-C|Alt-W' }, command: 'copy file path to clipboard' },
+      { keys: 'Shift-=', command: 'add directory' },
+      { keys: { mac: 'Meta-Shift-=', win: 'Ctrl-Shift-=' }, command: 'add file' },
+      { keys: 'F2', command: 'set file filter' },
+      { keys: 'F3', command: 'rename file' },
+      { keys: 'Backspace|Delete', command: 'delete file or directory' },
+      { keys: 'g', command: 'refresh contents' }
     ].concat(super.keybindings);
   }
-
 }
+
