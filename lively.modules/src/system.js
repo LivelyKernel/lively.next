@@ -7,8 +7,10 @@ import { classHolder } from './cycle-breaker.js';
 
 const isNode = System.get('@system-env').node;
 
-const GLOBAL = typeof window !== 'undefined' ? window
-  : (typeof global !== 'undefined' ? global
+const GLOBAL = typeof window !== 'undefined'
+  ? window
+  : (typeof global !== 'undefined'
+      ? global
       : (typeof self !== 'undefined' ? self : this));
 
 const defaultOptions = {
@@ -97,13 +99,15 @@ function nameOfSystem (System) {
 
 function getSystem (nameOrSystem, config) {
   return nameOrSystem && typeof nameOrSystem !== 'string'
-    ? nameOrSystem : systems()[nameOrSystem] || (systems()[nameOrSystem] = makeSystem(config));
+    ? nameOrSystem
+    : systems()[nameOrSystem] || (systems()[nameOrSystem] = makeSystem(config));
 }
 
 function removeSystem (nameOrSystem) {
   // FIXME "unload" code...???
   const name = nameOrSystem && typeof nameOrSystem !== 'string'
-    ? nameOfSystem(nameOrSystem) : nameOrSystem;
+    ? nameOfSystem(nameOrSystem)
+    : nameOrSystem;
   delete systems()[name];
 }
 
@@ -122,7 +126,8 @@ function prepareSystem (System, config) {
   config = config || {};
 
   const useModuleTranslationCache = config.hasOwnProperty('useModuleTranslationCache')
-    ? config.useModuleTranslationCache : !urlQuery().noModuleCache;
+    ? config.useModuleTranslationCache
+    : !urlQuery().noModuleCache;
   System.useModuleTranslationCache = useModuleTranslationCache;
 
   System.set('@lively-env', System.newModule(livelySystemEnv(System)));
@@ -304,9 +309,17 @@ function postNormalize (System, normalizeResult, isSync) {
   }
 
   // Fix issue with accidentally adding .js
-  const m = normalizeResult.match(jsonJsExtRe);
-  // console.log(`>> [postNormalize] ${m ? m[1] : normalizeResult}`);
-  return m ? m[1] : normalizeResult;
+  const jsonPath = normalizeResult.match(jsonJsExtRe);
+  // if (!jsExtRe.test(normalizeResult) &&
+  //   !jsxExtRe.test(normalizeResult) &&
+  //   !jsonExtRe.test(normalizeResult) &&
+  //   !nodeModRe.test(normalizeResult) &&
+  //   !nodeExtRe.test(normalizeResult)) {
+  //   // make sure this is not a package name
+  //   normalizeResult += '.js';
+  // }
+  System.debug && console.log(`>> [postNormalize] ${jsonPath ? jsonPath[1] : normalizeResult}`);
+  return jsonPath ? jsonPath[1] : normalizeResult;
 }
 
 async function checkExistence (url, System) {
@@ -314,7 +327,7 @@ async function checkExistence (url, System) {
   if (url in System._fileCheckMap) return System._fileCheckMap[url];
   // first consult if this file has been cached by local storage before
   const cache = System._livelyModulesTranslationCache;
-  if (cache && cache.fetchStoredModuleSource(url)) {
+  if (cache && (await cache.fetchStoredModuleSource(url))) {
     return System._fileCheckMap[url] = true;
   }
   return System._fileCheckMap[url] = await resource(url).exists();
@@ -340,16 +353,17 @@ async function normalizeHook (proceed, name, parent, parentAddress) {
     !nodeModRe.test(stage3) &&
     !nodeExtRe.test(stage3) &&
     // Make sure that the module as not been loaded.
-    !(System.loads && System.loads[stage3]) &&
-    // We only continue if SystemJS as resolved to a js file.
-    jsExtRe.test(stage3)
+    !(System.loads && System.loads[stage3])
   ) {
-    // fixme: repeated calling exists really slows down loading times
-    //        cache the previous answers and return those if present
-    if (await checkExistence(stage3, System)) return stage3;
-    const indexjs = stage3.replace('.js', '/index.js');
-    if (await checkExistence(indexjs, System) || !isNodePath) return indexjs;
-    return stage3.replace('.js', '/index.node');
+    if (jsExtRe.test(stage3)) {
+      if (await checkExistence(stage3, System)) return stage3;
+      const indexjs = stage3.replace('.js', '/index.js');
+      if (await checkExistence(indexjs, System) || !isNodePath) return indexjs;
+      return stage3.replace('.js', '/index.node');
+    } else if (!stage3.includes('jspm.dev') && stage3 != '@empty') {
+      if (await checkExistence(stage3 + '.js', System)) return stage3 + '.js';
+      if (await checkExistence(stage3 + '/index.js', System)) return stage3 + '/index.js';
+    }
   }
   if (jsxJsExtRe.test(stage3)) stage3 = stage3.replace('.jsx.js', '.jsx');
   return stage3;
@@ -357,6 +371,7 @@ async function normalizeHook (proceed, name, parent, parentAddress) {
 
 function decanonicalizeHook (proceed, name, parent, isPlugin) {
   let plugin;
+  // some jspm bullshit
   if (name && name.endsWith('!cjs')) {
     name = name.replace('!cjs', '');
     plugin = '!cjs';
@@ -418,7 +433,8 @@ function normalize_packageOfURL (url, System) {
   const matchingPackages = packageNames
     .map(pkgName =>
       url.indexOf(pkgName) === 0
-        ? { url: pkgName, penalty: url.slice(pkgName.length).length } : null)
+        ? { url: pkgName, penalty: url.slice(pkgName.length).length }
+        : null)
     .filter(ea => !!ea);
   const pName = matchingPackages.length
     ? matchingPackages.reduce((matchingPkg, ea) =>

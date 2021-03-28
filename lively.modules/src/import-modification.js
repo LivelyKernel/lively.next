@@ -1,6 +1,6 @@
-import { arr, Path } from "lively.lang";
-import { fuzzyParse, query, stringify } from "lively.ast";
-import { resource } from "lively.resources";
+import { arr, Path } from 'lively.lang';
+import { fuzzyParse, query, stringify } from 'lively.ast';
+import { resource } from 'lively.resources';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // injecting the import into a module
@@ -36,8 +36,7 @@ importedVarName // => "xxx"
 */
 
 export class ImportInjector {
-
-  static run(
+  static run (
     System,
     intoModuleId, intoPackage, intoModuleSource,
     importData, alias = undefined,
@@ -46,189 +45,190 @@ export class ImportInjector {
     return new this(System, intoModuleId, intoPackage, intoModuleSource, importData, alias, optAst).run();
   }
 
-  constructor(System, intoModuleId, intoPackage, intoModuleSource, importData, alias, optAst) {
-    this.System = System
+  constructor (System, intoModuleId, intoPackage, intoModuleSource, importData, alias, optAst) {
+    this.System = System;
     this.intoModuleId = intoModuleId;
     this.intoPackage = intoPackage;
-    this.intoModuleSource = intoModuleSource
+    this.intoModuleSource = intoModuleSource;
     this.fromModuleId = importData.moduleId;
-    this.importData = importData
+    this.importData = importData;
     this.alias = alias;
     this.parsed = optAst || fuzzyParse(intoModuleSource);
   }
 
-  run() {
-    var newImport = this.generateImportStatement(),
-        {standaloneImport, importedVarName} = newImport,
-        {imports, importsOfFromModule, importsOfVar} = this.existingImportsOfFromModule();
+  run () {
+    const newImport = this.generateImportStatement();
+    const { standaloneImport, importedVarName } = newImport;
+    let { imports, importsOfFromModule, importsOfVar } = this.existingImportsOfFromModule();
 
     importsOfFromModule = this.importsToBeReused(importsOfFromModule, importsOfVar, newImport);
 
     // already imported?
-    if (importsOfVar.length) return {
-      status: "not modified",
-      newSource: this.intoModuleSource,
-      generated: "",
-      importedVarName: "",
-      standaloneImport,
-      from: importsOfVar[0].start, to: importsOfVar[0].end
-    };
+    if (importsOfVar.length) {
+      return {
+        status: 'not modified',
+        newSource: this.intoModuleSource,
+        generated: '',
+        importedVarName: '',
+        standaloneImport,
+        from: importsOfVar[0].start,
+        to: importsOfVar[0].end
+      };
+    }
 
     // modify an existing import?
     if (importsOfFromModule.length) {
-      var modified = this.modifyExistingImport(importsOfFromModule, standaloneImport);
+      const modified = this.modifyExistingImport(importsOfFromModule, standaloneImport);
       if (modified) return modified;
     }
 
     // prepend new import
-    var lastImport = arr.last(imports),
-        insertPos = lastImport ? lastImport.end : 0;
+    const lastImport = arr.last(imports);
+    const insertPos = lastImport ? lastImport.end : 0;
     return this.insertNewImport(importsOfFromModule, standaloneImport, importedVarName, insertPos);
   }
 
-  importsToBeReused(importsOfFromModule, importsOfVar, newImport) {
+  importsToBeReused (importsOfFromModule, importsOfVar, newImport) {
     if (newImport.isDefault) {
       importsOfFromModule = importsOfFromModule.filter(ea =>
-        !ea.specifiers.some(spec => spec.type == "ImportDefaultSpecifier"))
+        !ea.specifiers.some(spec => spec.type == 'ImportDefaultSpecifier'));
     }
     return importsOfFromModule;
   }
 
-  generateImportStatement() {
-    var {intoModuleId, fromModuleId, importData, intoPackage, alias} = this,
-        isDefault = importData.exported === "default",
-        varName = alias ? alias : isDefault ? importData.local : importData.exported,
-        aliased = !isDefault && importData.exported !== varName,
-        intoPackageName = intoPackage && intoPackage.name,
-        exportPath = fromModuleId;
+  generateImportStatement () {
+    const { intoModuleId, fromModuleId, importData, intoPackage, alias } = this;
+    const isDefault = importData.exported === 'default';
+    const varName = alias || (isDefault ? importData.local : importData.exported);
+    const aliased = !isDefault && importData.exported !== varName;
+    const intoPackageName = intoPackage && intoPackage.name;
+    let exportPath = fromModuleId;
 
-    var {packageName, pathInPackage, isMain} = importData;
+    const { packageName, pathInPackage, isMain } = importData;
     if (isMain) exportPath = packageName;
     else if (intoPackageName === packageName) {
       try {
         exportPath = resource(fromModuleId).relativePathFrom(resource(intoModuleId));
-        if (!exportPath.startsWith(".")) exportPath = "./" + exportPath;
+        if (!exportPath.startsWith('.')) exportPath = './' + exportPath;
       } catch (e) {
-        if (packageName && packageName !== "no group" && pathInPackage)
-          exportPath = packageName + "/" + pathInPackage;
+        if (packageName && packageName !== 'no group' && pathInPackage) { exportPath = packageName + '/' + pathInPackage; }
       }
     } else {
-      if (packageName && packageName !== "no group" && pathInPackage)
-        exportPath = packageName + "/" + pathInPackage;
+      if (packageName && packageName !== 'no group' && pathInPackage) { exportPath = packageName + '/' + pathInPackage; }
     }
 
     return {
       isDefault,
-      standaloneImport: isDefault ?
-        `import ${varName} from "${exportPath}";` :
-        `import { ${importData.exported}${aliased ? ` as ${varName}` : ""} } from "${exportPath}";`,
+      standaloneImport: isDefault
+        ? `import ${varName} from "${exportPath}";`
+        : `import { ${importData.exported}${aliased ? ` as ${varName}` : ''} } from "${exportPath}";`,
       importedVarName: varName
-    }
+    };
   }
 
-  existingImportsOfFromModule() {
-    var {System, fromModuleId, intoModuleId, importData: {exported, local}, parsed, alias} = this,
-        isDefault = exported === "default",
-        imports = parsed.body.filter(({type}) => type === "ImportDeclaration"),
-        varName = isDefault ? (alias || local) : (alias || exported);
+  existingImportsOfFromModule () {
+    const { System, fromModuleId, intoModuleId, importData: { exported, local }, parsed, alias } = this;
+    const isDefault = exported === 'default';
+    const imports = parsed.body.filter(({ type }) => type === 'ImportDeclaration');
+    const varName = isDefault ? (alias || local) : (alias || exported);
 
-    var importsOfFromModule = imports.filter(ea => {
-      if (!ea.source || typeof ea.source.value !== "string") return null;
-      var sourceId = System.decanonicalize(ea.source.value, intoModuleId)
+    const importsOfFromModule = imports.filter(ea => {
+      if (!ea.source || typeof ea.source.value !== 'string') return null;
+      const sourceId = System.decanonicalize(ea.source.value, intoModuleId);
       return fromModuleId === sourceId;
     });
 
-    var importsOfImportedVar = importsOfFromModule.filter(ea =>
-        (ea.specifiers || []).some(iSpec =>
-          isDefault ?
-            iSpec.type === "ImportDefaultSpecifier" && iSpec.local.name === varName:
-            Path("imported.name").get(iSpec) === exported
-         && Path("local.name").get(iSpec) === varName));
+    const importsOfImportedVar = importsOfFromModule.filter(ea =>
+      (ea.specifiers || []).some(iSpec =>
+        isDefault
+          ? iSpec.type === 'ImportDefaultSpecifier' && iSpec.local.name === varName
+          : Path('imported.name').get(iSpec) === exported &&
+         Path('local.name').get(iSpec) === varName));
 
     return {
-      imports, importsOfFromModule,
+      imports,
+      importsOfFromModule,
       importsOfVar: importsOfImportedVar
-    }
+    };
   }
 
-  modifyExistingImport(imports, standaloneImport) {
-    var specifiers = arr.flatmap(imports, ({specifiers}) => specifiers || [])
+  modifyExistingImport (imports, standaloneImport) {
+    const specifiers = arr.flatmap(imports, ({ specifiers }) => specifiers || []);
     if (!specifiers.length) return null;
 
-    var [[defaultSpecifier], [normalSpecifier]] =
-      arr.partition(specifiers, ({type}) => type === "ImportDefaultSpecifier");
+    const [[defaultSpecifier], [normalSpecifier]] =
+      arr.partition(specifiers, ({ type }) => type === 'ImportDefaultSpecifier');
 
-      // defaultSpecifier = arr.partition(imports, ({type}) => type === "ImportDefaultSpecifier")[0][0]
-      // normalSpecifier = arr.partition(imports, ({type}) => type === "ImportDefaultSpecifier")[1][0]
+    // defaultSpecifier = arr.partition(imports, ({type}) => type === "ImportDefaultSpecifier")[0][0]
+    // normalSpecifier = arr.partition(imports, ({type}) => type === "ImportDefaultSpecifier")[1][0]
 
-    var {alias, intoModuleSource: src, importData: {exported: impName, local: defaultImpName}} = this,
-        isDefault = impName === "default";
+    const { alias, intoModuleSource: src, importData: { exported: impName, local: defaultImpName } } = this;
+    const isDefault = impName === 'default';
 
     // Since this method is only called with imports this should never happen:
-    if (isDefault) console.assert(!!normalSpecifier, "no ImportSpecifier found")
-    else console.assert(normalSpecifier || defaultSpecifier, "at least one kine of specifier is expected");
+    if (isDefault) console.assert(!!normalSpecifier, 'no ImportSpecifier found');
+    else console.assert(normalSpecifier || defaultSpecifier, 'at least one kine of specifier is expected');
 
     if (isDefault) {
-      var pos = src.slice(0, normalSpecifier.start).lastIndexOf("{")-1;
+      var pos = src.slice(0, normalSpecifier.start).lastIndexOf('{') - 1;
       if (pos < 0) return null;
 
-      var generated = (alias || defaultImpName) + ",",
-          pre = src.slice(0, pos),
-          post = src.slice(pos);
+      var generated = (alias || defaultImpName) + ',';
+      const pre = src.slice(0, pos);
+      const post = src.slice(pos);
 
-      if (!pre.endsWith(" ") || !pre.endsWith("\n")) generated = " " + generated;
-      if (!post.startsWith(" ")) generated += " ";
+      if (!pre.endsWith(' ') || !pre.endsWith('\n')) generated = ' ' + generated;
+      if (!post.startsWith(' ')) generated += ' ';
 
       return {
-        status: "modified",
+        status: 'modified',
         newSource: `${pre}${generated}${post}`,
         generated,
         standaloneImport,
         importedVarName: alias || defaultImpName,
-        from: pos, to: pos + generated.length
-      }
+        from: pos,
+        to: pos + generated.length
+      };
     }
 
-    var pos = normalSpecifier ? normalSpecifier.end : defaultSpecifier.end,
-        aliased = alias && alias !== impName,
-        namePart = aliased ? `${impName} as ${alias}` : impName
-        generated = normalSpecifier ? `, ${namePart}` : `, { ${namePart} }`;
+    var pos = normalSpecifier ? normalSpecifier.end : defaultSpecifier.end;
+    const aliased = alias && alias !== impName;
+    const namePart = aliased ? `${impName} as ${alias}` : impName;
+    generated = normalSpecifier ? `, ${namePart}` : `, { ${namePart} }`;
 
     return {
-      status: "modified",
+      status: 'modified',
       newSource: `${src.slice(0, pos)}${generated}${src.slice(pos)}`,
       generated,
       standaloneImport,
       importedVarName: aliased ? alias : impName,
-      from: pos, to: pos + generated.length
+      from: pos,
+      to: pos + generated.length
     };
-
   }
 
-  insertNewImport(importsOfFromModule, standaloneImport, importedVarName, insertPos = 0) {
-    if (importsOfFromModule && importsOfFromModule.length)
-      insertPos = arr.last(importsOfFromModule).end;
+  insertNewImport (importsOfFromModule, standaloneImport, importedVarName, insertPos = 0) {
+    if (importsOfFromModule && importsOfFromModule.length) { insertPos = arr.last(importsOfFromModule).end; }
 
-    var src = this.intoModuleSource,
-        pre = src.slice(0, insertPos),
-        post = src.slice(insertPos),
-        generated = standaloneImport;
+    const src = this.intoModuleSource;
+    const pre = src.slice(0, insertPos);
+    const post = src.slice(insertPos);
+    let generated = standaloneImport;
 
-    if (pre.length && !pre.endsWith("\n")) generated = "\n" + generated;
-    if (post.length && !post.startsWith("\n")) generated += "\n";
+    if (pre.length && !pre.endsWith('\n')) generated = '\n' + generated;
+    if (post.length && !post.startsWith('\n')) generated += '\n';
 
     return {
-      status: "modified",
+      status: 'modified',
       newSource: pre + generated + post,
       generated,
       standaloneImport,
       importedVarName,
-      from: insertPos, to: insertPos + generated.length
+      from: insertPos,
+      to: insertPos + generated.length
     };
   }
 }
-
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // removing imports from a module
@@ -239,8 +239,6 @@ export class ImportInjector {
 var src = "import { xxx, yyy } from './src/b.js'; class Foo { m() { return yyy + 1 } }";
 var unusedImports = ImportRemover.findUnusedImports(src);
 unusedImports // => [{local: "xxx", importStmt: {...}}]
-
-
 
 var {changes, removedImports, source} = ImportRemover.removeImports(src, unusedImports)
 changes // => [{start: 0, end: 38, replacement: "import { yyy } from './src/b.js';"}]
@@ -253,141 +251,148 @@ ImportRemover.removeUnusedImports(src)
 */
 
 export class GlobalInjector {
-
-  static getGlobals(src, optAst) {
-     let parsed = optAst || fuzzyParse(src, {withComments: true}),
-        globalComment = parsed.comments
-          ? parsed.comments.find(c => c.isBlock && c.text.startsWith("global"))
-          : null;
-     return globalComment
-          ? globalComment.text.replace(/^global\s*/, "")
-              .split(",").map(ea => ea.trim()).filter(Boolean)
-          : []
+  static getGlobals (src, optAst) {
+    const parsed = optAst || fuzzyParse(src, { withComments: true });
+    const globalComment = parsed.comments
+      ? parsed.comments.find(c => c.isBlock && c.text.startsWith('global'))
+      : null;
+    const declaredGlobals = globalComment
+      ? globalComment.text.replace(/^global\s*/, '')
+          .split(',').map(ea => ea.trim()).filter(Boolean)
+      : [];
+    const knownGlobals = [...declaredGlobals, ...query.knownGlobals];
+    const undefinedVariables = query.findGlobalVarRefs(parsed, { jslintGlobalComment: true })
+      .filter(ea => !knownGlobals.includes(ea.name)).map(ea => ea.name);
+    return arr.compact([...declaredGlobals, ...undefinedVariables]);
   }
-  
-  static run(src, namesToDeclareGlobal, optAst) {
-    let parsed = optAst || fuzzyParse(src, {withComments: true}),
-        globalComment = parsed.comments
-          ? parsed.comments.find(c => c.isBlock && c.text.startsWith("global"))
-          : null,
-        existingDecls = globalComment
-          ? globalComment.text.replace(/^global\s*/, "")
-              .split(",").map(ea => ea.trim()).filter(Boolean)
-          : [],
-        namesToInsert = namesToDeclareGlobal.filter(ea => !existingDecls.includes(ea));
 
-    if (!namesToInsert.length) return {
-      status: "not modified",
-      newSource: src,
-      generated: "",
-      from: 0, to: 0
+  // GlobalInjector.getGlobals(this.textString)
+
+  static run (src, namesToDeclareGlobal, optAst) {
+    const parsed = optAst || fuzzyParse(src, { withComments: true });
+    const globalComment = parsed.comments
+      ? parsed.comments.find(c => c.isBlock && c.text.startsWith('global'))
+      : null;
+    const existingDecls = globalComment
+      ? globalComment.text.replace(/^global\s*/, '')
+          .split(',').map(ea => ea.trim()).filter(Boolean)
+      : [];
+    const namesToInsert = namesToDeclareGlobal.filter(ea => !existingDecls.includes(ea));
+
+    if (!namesToInsert.length) {
+      return {
+        status: 'not modified',
+        newSource: src,
+        generated: '',
+        from: 0,
+        to: 0
+      };
     }
 
     if (!globalComment) {
-      let generated = `/*global ${namesToInsert.join(",")}*/\n`,
-          from = 0, to = generated.length,
-          newSource = generated + src;
+      const generated = `/*global ${namesToInsert.join(',')}*/\n`;
+      const from = 0; const to = generated.length;
+      const newSource = generated + src;
       return {
-        status: "modified",
+        status: 'modified',
         newSource,
         generated,
-        from, to
-      }
+        from,
+        to
+      };
     }
 
-    let from = globalComment.start + "/*".length + globalComment.text.length,
-        generated = namesToInsert.join(",");
+    const from = globalComment.start + '/*'.length + globalComment.text.length;
+    let generated = namesToInsert.join(',');
     if (!existingDecls.length) {
-      if (!globalComment.text.startsWith("global "))
-        generated = " " + generated;
+      if (!globalComment.text.startsWith('global ')) { generated = ' ' + generated; }
     } else {
-      generated = "," + generated;
+      generated = ',' + generated;
     }
-    let to = from + generated.length,
-        newSource = src.slice(0, from) + generated + src.slice(from);
+    const to = from + generated.length;
+    const newSource = src.slice(0, from) + generated + src.slice(from);
     return {
-      status: "modified",
+      status: 'modified',
       newSource,
       generated,
-      from, to
-    }
+      from,
+      to
+    };
   }
 }
 
 export class ImportRemover {
-
-  static removeImports(moduleSource, importsToRemove, optModuleAst) {
+  static removeImports (moduleSource, importsToRemove, optModuleAst) {
     // returns {
     //   source: STRING,
     //   modifications: [{start: NUMBER, end: NUMBER, replacement: STRING}]
     //   removedImports: [{local: STRING, from: STRING}]
     // }
 
-    var parsed = optModuleAst || fuzzyParse(moduleSource);
+    const parsed = optModuleAst || fuzzyParse(moduleSource);
 
     // 1.get imports with specifiers
-    var imports = arr.flatmap(parsed.body, ea => {
-      if (ea.type !== "ImportDeclaration" || !ea.specifiers.length) return [];
-      return ea.specifiers.map(spec => ({local: spec.local, importStmt: ea}));
+    const imports = arr.flatmap(parsed.body, ea => {
+      if (ea.type !== 'ImportDeclaration' || !ea.specifiers.length) return [];
+      return ea.specifiers.map(spec => ({ local: spec.local, importStmt: ea }));
     });
 
     // 3. figure out what imports need to be removed or changed
-    var importsToChange = imports.filter(ea =>
-        importsToRemove.some(rem => rem.local === ea.local.name)),
-        removedImports = importsToChange.map(ea =>
-          ({local: ea.local.name, from: ea.importStmt.source.value})),
-        affectedStmts = arr.uniq(importsToChange.map(ea => {
-          var specToRemove = ea.importStmt.specifiers.find(spec => ea.local === spec.local);
-          arr.remove(ea.importStmt.specifiers, specToRemove);
-          return ea.importStmt;
-        }));
+    const importsToChange = imports.filter(ea =>
+      importsToRemove.some(rem => rem.local === ea.local.name));
+    const removedImports = importsToChange.map(ea =>
+      ({ local: ea.local.name, from: ea.importStmt.source.value }));
+    const affectedStmts = arr.uniq(importsToChange.map(ea => {
+      const specToRemove = ea.importStmt.specifiers.find(spec => ea.local === spec.local);
+      arr.remove(ea.importStmt.specifiers, specToRemove);
+      return ea.importStmt;
+    }));
 
     // 4. Compute the actual modifications to transform source and also new source itself
-    var modifications = affectedStmts.slice().reverse().reduce((state, importStmt) => {
-      var {source, changes} = state,
-          {start, end, specifiers} = importStmt,
-          pre = source.slice(0, start), post = source.slice(end),
-          removed = source.slice(start, end),
-          replacement = !specifiers.length ? "" : stringify(importStmt);
+    const modifications = affectedStmts.slice().reverse().reduce((state, importStmt) => {
+      let { source, changes } = state;
+      const { start, end, specifiers } = importStmt;
+      const pre = source.slice(0, start); const post = source.slice(end);
+      const removed = source.slice(start, end);
+      let replacement = !specifiers.length ? '' : stringify(importStmt);
 
-      if (replacement && replacement.includes("\n") && !removed.includes("\n"))
-        replacement = replacement.replace(/\s+/g, " ");
+      if (replacement && replacement.includes('\n') && !removed.includes('\n')) { replacement = replacement.replace(/\s+/g, ' '); }
 
       source = pre + replacement + post;
-      changes = changes.concat({replacement, start, end});
-      return {source, changes};
-    }, {source: moduleSource, changes: []});
+      changes = changes.concat({ replacement, start, end });
+      return { source, changes };
+    }, { source: moduleSource, changes: [] });
 
-    return {...modifications, removedImports};
+    return { ...modifications, removedImports };
   }
 
-  static findUnusedImports(moduleSourceOrAst) {
+  static findUnusedImports (moduleSourceOrAst) {
     // get all var references of source without those included in the import
     // statments
 
     // 1.get imports with specifiers
-    var parsed = typeof moduleSourceOrAst === "string" ?
-      fuzzyParse(moduleSourceOrAst) : moduleSourceOrAst;
+    const parsed = typeof moduleSourceOrAst === 'string'
+      ? fuzzyParse(moduleSourceOrAst) : moduleSourceOrAst;
 
-    var imports = arr.flatmap(parsed.body, ea => {
-          if (ea.type !== "ImportDeclaration" || !ea.specifiers.length) return [];
-          return ea.specifiers.map(spec =>
-            ({local: spec.local, from: ea.source ? ea.source.value : "", importStmt: ea}));
-        }),
-        importIdentifiers = imports.map(ea => ea.local)
+    const imports = arr.flatmap(parsed.body, ea => {
+      if (ea.type !== 'ImportDeclaration' || !ea.specifiers.length) return [];
+      return ea.specifiers.map(spec =>
+        ({ local: spec.local, from: ea.source ? ea.source.value : '', importStmt: ea }));
+    });
+    const importIdentifiers = imports.map(ea => ea.local);
 
-    var scope = query.resolveReferences(query.scopes(parsed)),
-        refsWithoutImports = Array.from(scope.resolvedRefMap.keys()).filter(ea =>
-                                !importIdentifiers.includes(ea)),
-        realRefs = arr.uniq(refsWithoutImports.map(ea => ea.name));
+    const scope = query.resolveReferences(query.scopes(parsed));
+    const refsWithoutImports = Array.from(scope.resolvedRefMap.keys()).filter(ea =>
+      !importIdentifiers.includes(ea));
+    const realRefs = arr.uniq(refsWithoutImports.map(ea => ea.name));
 
     return imports
       .filter(ea => !realRefs.includes(ea.local.name))
-      .map(ea => ({...ea, local: ea.local.name}))
+      .map(ea => ({ ...ea, local: ea.local.name }));
   }
 
-  static removeUnusedImports(moduleSource) {
-    var parsed = fuzzyParse(moduleSource);
+  static removeUnusedImports (moduleSource) {
+    const parsed = fuzzyParse(moduleSource);
     return this.removeImports(moduleSource, this.findUnusedImports(parsed), parsed);
   }
 }
