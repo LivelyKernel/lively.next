@@ -14,8 +14,10 @@ class ObjectSpreadTransformer extends Visitor {
     const propGroups = [currentGroup];
 
     node.properties.forEach(prop => {
-      if (prop.type !== 'SpreadElement') currentGroup.push(prop);
-      else {
+      if (prop.type !== 'SpreadElement') {
+        prop.shorthand = false;// also ensure its a key value pair
+        currentGroup.push(prop);
+      } else {
         propGroups.push(prop);
         currentGroup = [];
         propGroups.push(currentGroup);
@@ -29,15 +31,18 @@ class ObjectSpreadTransformer extends Visitor {
     return funcCall(
       member('Object', 'assign'),
       ...propGroups.map(group => {
-        return group.type === 'SpreadElement' ? group.argument : {
-          properties: group,
-          type: 'ObjectExpression'
-        };
+        return group.type === 'SpreadElement'
+          ? group.argument
+          : {
+              properties: group,
+              type: 'ObjectExpression'
+            };
       }));
   }
 }
 
 export default function objectSpreadTransform (parsed) {
   // "var x = {y, ...z}" => "var x = Object.assign({ y }, z);"
+  // "var x = {y, ...z}" => "var x = Object.assign({ y: y }, z);"
   return new ObjectSpreadTransformer().accept(parsed, {}, []);
 }
