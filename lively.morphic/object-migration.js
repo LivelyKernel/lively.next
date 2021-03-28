@@ -254,7 +254,7 @@ For now only a simple default theme...
           const metaObj = snapshot[m.props.metadata.value.id];
           if (metaObj.props.commit && isReference(metaObj.props.commit.value)) {
             const { type, name, _id } = snapshot[metaObj.props.commit.value.id].props;
-            metaObj.props.commit.value = `__lv_expr__:({type: "${type.value}", name: "${name.value}", _id: "${_id.value}"})`;
+            if (type && name && _id) { metaObj.props.commit.value = `__lv_expr__:({type: "${type.value}", name: "${name.value}", _id: "${_id.value}"})`; }
           }
         }
       });
@@ -300,6 +300,10 @@ For now only a simple default theme...
       Object.values(snapshot).map(m => {
         if (m.props.master && typeof m.props.master.value === 'string') {
           m.props.master.value = m.props.master.value.split('styleguide://style guide').join('styleguide://System');
+        }
+        if (m.props.master && m.props.master.value.id) {
+          const entry = snapshot[m.props.master.value.id];
+          entry.props.auto.value = entry.props.auto.value.split('styleguide://style guide').join('styleguide://System');
         }
       });
       return idAndSnapshot;
