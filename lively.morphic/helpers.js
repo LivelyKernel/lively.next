@@ -17,6 +17,20 @@ export var touchInputDevice = touchInput;
 
 var nameToClassMapping = nameToClassMapping || {};
 
+export function sanitizeFont (font) {
+  return font && font.split(',').map(subFont => {
+    // first clear whitespace before and after
+    subFont = subFont.split(' ').filter(m => m != '').join(' ');
+    if (subFont.includes(' ')) {
+      if (subFont.startsWith("'")) subFont = subFont.slice(1);
+      if (subFont.endsWith("'")) subFont = subFont.slice(0, -1);
+      if (!subFont.startsWith('"')) subFont = '"' + subFont;
+      if (!subFont.endsWith('"')) subFont = subFont + '"';
+    }
+    return subFont;
+  }).join(',');
+}
+
 export function pathForBrowserHistory (worldName, queryString) {
   // how does the resource map to a URL shown in the browser URL bar? used for
   // browser history
@@ -59,8 +73,10 @@ export function morph (props = {}, opts = { restore: false }) {
 
 export function newMorphId (classOrClassName) {
   const prefix = typeof classOrClassName === 'function'
-    ? classOrClassName[Symbol.for('__LivelyClassName__')] : typeof classOrClassName === 'string'
-        ? classOrClassName.toLowerCase() : '';
+    ? classOrClassName[Symbol.for('__LivelyClassName__')]
+    : typeof classOrClassName === 'string'
+      ? classOrClassName.toLowerCase()
+      : '';
   return prefix + '_' + string.newUUID().replace(/-/g, '_');
 }
 

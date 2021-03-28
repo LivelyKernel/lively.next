@@ -4,7 +4,7 @@ import { string, num, obj, fun, promise, arr } from 'lively.lang';
 import { signal, noUpdate, connect, disconnect } from 'lively.bindings';
 import bowser from 'bowser';
 
-import { morph, touchInputDevice } from '../helpers.js';
+import { morph, touchInputDevice, sanitizeFont } from '../helpers.js';
 import config from '../config.js';
 import { Morph } from '../morph.js';
 import { Selection, MultiSelection } from './selection.js';
@@ -454,7 +454,10 @@ export class Text extends Morph {
         defaultValue: 'IBM Plex Sans, Sans-Serif',
         isStyleProp: true,
         isDefaultTextStyleProp: true,
-        after: ['defaultTextStyle']
+        after: ['defaultTextStyle'],
+        set (fontFamily) {
+          this.setProperty('fontFamily', sanitizeFont(fontFamily));
+        }
       },
 
       fontSize: {

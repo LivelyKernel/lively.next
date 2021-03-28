@@ -10,7 +10,7 @@ import {
 import { AnimationQueue, easings } from './rendering/animations.js';
 import { addOrChangeCSSDeclaration } from './rendering/dom-helper.js';
 import { Icon } from './text/icons.js';
-import { morph, newMorphId } from './helpers.js';
+import { morph, newMorphId, sanitizeFont } from './helpers.js';
 import { MorphicEnv } from './env.js';
 import config from './config.js';
 import CommandHandler from './CommandHandler.js';
@@ -1052,7 +1052,7 @@ export class Morph {
       if (node) node.remove();
     }
     for (const name of addedFonts) {
-      if (!this.env.fontMetric.isFontSupported(name)) { this.insertFontCSS(name, this.installedFonts[name]); }
+      if (!this.env.fontMetric.isFontSupported(sanitizeFont(name))) { this.insertFontCSS(name, this.installedFonts[name]); }
     }
   }
 
