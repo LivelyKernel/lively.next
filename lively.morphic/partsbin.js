@@ -4,6 +4,7 @@ import { resource, Resource, registerExtension } from 'lively.resources';
 import { Path, obj, date, promise } from 'lively.lang';
 import { HorizontalLayout, VerticalLayout } from './layout.js';
 import { morph } from './helpers.js';
+import { Morph } from './morph.js';
 import { pt, Color, Rectangle } from 'lively.graphics';
 import { connect } from 'lively.bindings';
 import { emit } from 'lively.notifications';
@@ -391,15 +392,16 @@ class PartResource extends Resource {
   }
 
   async read () {
-    const master = await resource(this.url.replace('part://', 'styleguide://')).read();
-    const part = master.copy();
+    const masterComponent = await resource(this.url.replace('part://', 'styleguide://')).read();
+    if (masterComponent.master) { await masterComponent.master.whenReady(); } // ensure this master is ready
+    const part = masterComponent.copy();
     part.isComponent = false;
     part.name = 'a' + getClassName(part);
     part.withAllSubmorphsDoExcluding(m => {
       if (m == part || !m.master) { delete m._parametrizedProps; }
     }, m => m.master && m != part);
     const superMaster = part.master;
-    part.master = master;
+    part.master = masterComponent;
     if (part._pool.mastersInSubHierarchy) {
       // fixme: apply these in hierarchical order
       for (const subMaster of part._pool.mastersInSubHierarchy) {
@@ -431,125 +433,138 @@ export const resourceExtension = {
 
 registerExtension(resourceExtension);
 
-export function buildCommitEditor (props) {
-  const inputStyle = {
-    type: 'input',
-    extent: pt(420, 24),
-    fixedWidth: true,
-    fixedHeight: true,
-    padding: Rectangle.inset(4, 4),
-    border: { color: Color.gray, width: 1 }
-  };
-
-  return Object.assign(morph({
-
-    extent: pt(420, 24),
-    layout: new VerticalLayout({ resizeSubmorphs: true, spacing: 3 }),
-    submorphs: [
-      { ...inputStyle, name: 'name input', placeholder: 'name' },
-      { ...inputStyle, name: 'type input', placeholder: 'type' },
-      { ...inputStyle, name: 'timestamp input', placeholder: 'timestamp' },
-      {
-        layout: new VerticalLayout({ resizeSubmorphs: true, spacing: 3 }),
-        submorphs: [
-          { ...inputStyle, name: 'author.name input', placeholder: 'author name' },
-          { ...inputStyle, name: 'author.email input', placeholder: 'author email' },
-          { ...inputStyle, name: 'author.realm input', placeholder: 'author realm' }
-        ]
+class CommitEditor extends Morph {
+  static get properties () {
+    return {
+      name: { defaultValue: 'commit editor' },
+      extent: { defaultValue: pt(420, 24) },
+      layout: {
+        initialize () {
+          this.layout = new VerticalLayout({ resizeSubmorphs: true, spacing: 3 });
+        }
       },
-      { ...inputStyle, name: 'tags input', placeholder: 'tags' },
-      { ...inputStyle, height: 70, name: 'description input', type: 'text' },
-      { ...inputStyle, height: 70, name: 'message input', type: 'text' },
-      { ...inputStyle, height: 70, name: 'metadata input', type: 'text' },
-      {
-        layout: new HorizontalLayout({ spacing: 3, direction: 'centered' }),
-        submorphs: [
-          { type: 'button', name: 'ok button', label: 'OK' },
-          { type: 'button', name: 'cancel button', label: 'Cancel' }
-        ]
+      commit: {
+        set  (commit) {
+          this._commit = commit;
+          const { name, type, timestamp, author, tags, description, metadata } = commit;
+          const {
+            nameInput,
+            typeInput,
+            timestampInput,
+            authorNameInput,
+            authorEmailInput,
+            authorRealmInput,
+            tagsInput,
+            descriptionInput,
+            messageInput,
+            metadataInput
+          } = this.ui;
+          nameInput.input = name;
+          typeInput.input = type;
+          timestampInput.input = String(new Date(timestamp));
+          authorNameInput.input = author.name;
+          authorEmailInput.input = author.email;
+          authorRealmInput.input = author.realm;
+          tagsInput.input = tags.join(' ');
+          descriptionInput.textString = description;
+          messageInput.textString = '';
+          metadataInput.textString = metadata ? JSON.stringify(metadata, null, 2) : '';
+        },
+
+        get () {
+          const commit = this._commit;
+          if (!commit) throw new Error('commit editor does not have a _commit object');
+          const {
+            nameInput,
+            typeInput,
+            timestampInput,
+            authorNameInput,
+            authorEmailInput,
+            authorRealmInput,
+            tagsInput,
+            descriptionInput,
+            messageInput,
+            metadataInput
+          } = this.ui;
+          const name = nameInput.input; const type = typeInput.input;
+          if (commit.name !== name) throw new Error(`name does not match _commit.name: ${name} vs ${commit.name}`);
+          if (commit.type !== type) throw new Error(`type does not match _commit.type: ${type} vs ${commit.type}`);
+          commit.author.name = authorNameInput.input;
+          commit.author.email = authorEmailInput.input;
+          commit.author.realm = authorRealmInput.input;
+          commit.tags = tagsInput.input.split(' ').map(ea => ea.trim()).filter(Boolean);
+          commit.description = descriptionInput.textString;
+          commit.message = messageInput.textString;
+          commit.metadata = metadataInput.textString ? JSON.parse(metadataInput.textString) : null;
+          return commit;
+        }
+      },
+      ui: {
+        get () {
+          return {
+            metadataInput: this.get('metadata input'),
+            messageInput: this.get('message input'),
+            descriptionInput: this.get('description input'),
+            tagsInput: this.get('tags input'),
+            authorRealmInput: this.get('author.realm input'),
+            authorEmailInput: this.get('author.email input'),
+            authorNameInput: this.get('author.name input'),
+            timestampInput: this.get('timestamp input'),
+            typeInput: this.get('type input'),
+            nameInput: this.get('name input'),
+            cancelButton: this.get('cancel button'),
+            okButton: this.get('ok button')
+          };
+        }
+      },
+      submorphs: {
+        initialize () {
+          const inputStyle = {
+            type: 'input',
+            extent: pt(420, 24),
+            fixedWidth: true,
+            fixedHeight: true,
+            padding: Rectangle.inset(4, 4),
+            border: { color: Color.gray, width: 1 }
+          };
+          this.submorphs = [
+            { ...inputStyle, name: 'name input', placeholder: 'name' },
+            { ...inputStyle, name: 'type input', placeholder: 'type' },
+            { ...inputStyle, name: 'timestamp input', placeholder: 'timestamp' },
+            {
+              layout: new VerticalLayout({ resizeSubmorphs: true, spacing: 3 }),
+              submorphs: [
+                { ...inputStyle, name: 'author.name input', placeholder: 'author name' },
+                { ...inputStyle, name: 'author.email input', placeholder: 'author email' },
+                { ...inputStyle, name: 'author.realm input', placeholder: 'author realm' }
+              ]
+            },
+            { ...inputStyle, name: 'tags input', placeholder: 'tags' },
+            { ...inputStyle, height: 70, name: 'description input', type: 'text' },
+            { ...inputStyle, height: 70, name: 'message input', type: 'text' },
+            { ...inputStyle, height: 70, name: 'metadata input', type: 'text' },
+            {
+              layout: new HorizontalLayout({ spacing: 3, direction: 'centered' }),
+              submorphs: [
+                { type: 'button', name: 'ok button', label: 'OK' },
+                { type: 'button', name: 'cancel button', label: 'Cancel' }
+              ]
+            }
+          ];
+        }
       }
-    ],
+    };
+  }
 
-    name: 'commit editor',
-    get ui () {
-      return {
-        metadataInput: this.get('metadata input'),
-        messageInput: this.get('message input'),
-        descriptionInput: this.get('description input'),
-        tagsInput: this.get('tags input'),
-        authorRealmInput: this.get('author.realm input'),
-        authorEmailInput: this.get('author.email input'),
-        authorNameInput: this.get('author.name input'),
-        timestampInput: this.get('timestamp input'),
-        typeInput: this.get('type input'),
-        nameInput: this.get('name input'),
-        cancelButton: this.get('cancel button'),
-        okButton: this.get('ok button')
-      };
-    },
+  onLoad () {
+    connect(this.ui.okButton, 'fire', this, 'accept');
+    connect(this.ui.cancelButton, 'fire', this, 'cancel');
+  }
 
-    set commit (commit) {
-      this._commit = commit;
-      const { name, type, timestamp, author, tags, description, metadata } = commit;
-      const {
-        nameInput,
-        typeInput,
-        timestampInput,
-        authorNameInput,
-        authorEmailInput,
-        authorRealmInput,
-        tagsInput,
-        descriptionInput,
-        messageInput,
-        metadataInput
-      } = this.ui;
-      nameInput.input = name;
-      typeInput.input = type;
-      timestampInput.input = String(new Date(timestamp));
-      authorNameInput.input = author.name;
-      authorEmailInput.input = author.email;
-      authorRealmInput.input = author.realm;
-      tagsInput.input = tags.join(' ');
-      descriptionInput.textString = description;
-      messageInput.textString = '';
-      metadataInput.textString = metadata ? JSON.stringify(metadata, null, 2) : '';
-    },
+  accept () {}
+  cancel () {}
+}
 
-    get commit () {
-      const commit = this._commit;
-      if (!commit) throw new Error('commit editor does not have a _commit object');
-      const {
-        nameInput,
-        typeInput,
-        timestampInput,
-        authorNameInput,
-        authorEmailInput,
-        authorRealmInput,
-        tagsInput,
-        descriptionInput,
-        messageInput,
-        metadataInput
-      } = this.ui;
-      const name = nameInput.input; const type = typeInput.input;
-      if (commit.name !== name) throw new Error(`name does not match _commit.name: ${name} vs ${commit.name}`);
-      if (commit.type !== type) throw new Error(`type does not match _commit.type: ${type} vs ${commit.type}`);
-      commit.author.name = authorNameInput.input;
-      commit.author.email = authorEmailInput.input;
-      commit.author.realm = authorRealmInput.input;
-      commit.tags = tagsInput.input.split(' ').map(ea => ea.trim()).filter(Boolean);
-      commit.description = descriptionInput.textString;
-      commit.message = messageInput.textString;
-      commit.metadata = metadataInput.textString ? JSON.parse(metadataInput.textString) : null;
-      return commit;
-    },
-
-    onLoad () {
-      connect(this.ui.okButton, 'fire', this, 'accept');
-      connect(this.ui.cancelButton, 'fire', this, 'cancel');
-    },
-
-    accept () {},
-    cancel () {}
-
-  }), props);
+export function buildCommitEditor (props) {
+  return new CommitEditor(props);
 }
