@@ -125,7 +125,7 @@ export class PropertyAnimation {
       delete config.dropShadow;
       morph.dropShadow = shadowBefore;
     }
-    if ('visible' in config) {
+    if ('visible' in config && config.visible != morph.visible) {
       const { originalOpacity = morph.opacity } = queue;
       queue.originalOpacity = originalOpacity;
       const targetVisibility = config.visible;
