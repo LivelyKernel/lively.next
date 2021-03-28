@@ -199,9 +199,13 @@ export class ComponentPolicy {
   __serialize__ () {
     const spec = {};
 
-    if (this.auto) spec.auto = this.getResourceUrlFor(this.auto);
-    if (this.click) spec.click = this.getResourceUrlFor(this.click);
-    if (this.hover) spec.hover = this.getResourceUrlFor(this.hover);
+    // sometimes we serialize without being fully components having been resolved yet.
+    // in those cases we just directly use the urls
+    const getResourceUrl = (c) => obj.isString(c) ? c : this.getResourceUrlFor(c);
+
+    if (this.auto) spec.auto = getResourceUrl(this.auto);
+    if (this.click) spec.click = getResourceUrl(this.click);
+    if (this.hover) spec.hover = getResourceUrl(this.hover);
 
     return {
       __expr__: `(${JSON.stringify(spec)})`
