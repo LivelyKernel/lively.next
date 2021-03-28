@@ -5,6 +5,12 @@ import { joinPath } from 'lively.lang/string.js';
 
 const isMac = !!bowser.mac;
 
+// fixme: we are now using baseURL for 2 different purposes.
+// 1.) Endpoint for loading a currently frozen part from
+// 2.) Endpoint to fetch modules from aka where the lively server sits at
+// This needs to be pulled apart.
+const baseURL = window.SERVER_URL || System.baseURL || document.location.origin;
+
 if (typeof $world !== 'undefined') {
   $world.withAllSubmorphsDo(ea =>
     ea.hasOwnProperty('_cachedKeyhandlers') && (ea._cachedKeyhandlers = null));
@@ -208,7 +214,7 @@ const config = {
       { keys: { win: 'Ctrl-Shift-U', mac: 'Meta-Shift-U' }, command: 'undefine variable' },
 
       { keys: 'Backspace', command: 'delete backwards' },
-      { keys: 'Shift-Backspace', command: 'delete backwards' }, // temporary fix for wrong keyboard handling
+      { keys: 'Shift-Backspace', command: 'delete backwards' },
       { keys: { win: 'Delete', mac: 'Delete|Ctrl-D' }, command: 'delete' },
 
       { keys: { win: 'Left|Ctrl-B', mac: 'Left|Ctrl-B' }, command: 'go left' },
@@ -392,9 +398,9 @@ const config = {
   },
 
   css: {
-    ibmPlex: joinPath(System.baseURL, 'lively.morphic/assets/ibm-plex/css/ibm-plex.css'),
-    fontAwesome: joinPath(System.baseURL, '/lively.morphic/assets/fontawesome-free-5.12.1/css/all.css'),
-    inconsolata: joinPath(System.baseURL, '/lively.morphic/assets/inconsolata/inconsolata.css')
+    ibmPlex: joinPath(baseURL, 'lively.morphic/assets/ibm-plex/css/ibm-plex.css'),
+    fontAwesome: joinPath(baseURL, '/lively.morphic/assets/fontawesome-free-5.12.1/css/all.css'),
+    inconsolata: joinPath(baseURL, '/lively.morphic/assets/inconsolata/inconsolata.css')
   }
 
 };

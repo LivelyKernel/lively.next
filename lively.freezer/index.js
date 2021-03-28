@@ -405,10 +405,10 @@ export async function interactivelyFreezePart (part, requester = false) {
   li.status = 'Copying assets...';
   const assetDir = await publicationDir.join('assets/').ensureExistance();
   // copy font awesome assets
-  await resource(System.baseURL).join(config.css.fontAwesome).parent().copyTo(assetDir.join('fontawesome-free-5.12.1/css/'));
-  await resource(System.baseURL).join(config.css.fontAwesome).parent().parent().join('webfonts/').copyTo(assetDir.join('fontawesome-free-5.12.1/webfonts/'));
+  await resource(config.css.fontAwesome).parent().copyTo(assetDir.join('fontawesome-free-5.12.1/css/'));
+  await resource(config.css.fontAwesome).parent().parent().join('webfonts/').copyTo(assetDir.join('fontawesome-free-5.12.1/webfonts/'));
   // copy inconsoloata
-  await resource(System.baseURL).join(config.css.inconsolata).parent().copyTo(assetDir.join('inconsolata/'));
+  await resource(config.css.inconsolata).parent().copyTo(assetDir.join('inconsolata/'));
   for (const asset of frozen.assets) {
     currentFile = asset.url;
     // skip if exists
