@@ -26,13 +26,13 @@ function installResolver() {
           // _ = console.log(`[_resolveFilename] searching for "${request}" from ${parentId}`),
           config = findPackageConfig(parentId),
           deps = config ? depMap(config) : {},
-          basename = request.split("/")[0],
+          basename = request.startsWith('@') ? request.split("/").slice(0, 2).join('/') : request.split('/')[0],
           {packageCollectionDirs, individualPackageDirs, devPackageDirs} = packageDirsFromEnv(),
           packageMap = ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs),
           packageFound = packageMap.lookup(basename, deps[basename])
                       || packageMap.lookup(request, deps[request])/*for package names with "/"*/,
           resolved = packageFound && findModuleInPackage(packageFound, basename, request);
-
+      
       if (resolved) return resolved;
       process.env.FLATN_VERBOSE && console.error(`Failing to require "${request}" from ${parentId}`);
 
@@ -72,11 +72,12 @@ function findModuleInPackage(requesterPackage, basename, request) {
   let {name, version, location: pathToPackage} = requesterPackage
   let fullpath;
 
-  if (basename === request) {
+  if (name === request) {
     let config = findPackageConfig(path.join(pathToPackage, "index.js"));
     if (!config || !config.main) fullpath = path.join(pathToPackage, "index.js");
     else fullpath = path.join(pathToPackage, config.main);
   } else fullpath = path.join(pathToPackage, request.slice(basename.length));
+
   if (fs.existsSync(fullpath)) {
     return !fs.statSync(fullpath).isDirectory() ?
       fullpath :

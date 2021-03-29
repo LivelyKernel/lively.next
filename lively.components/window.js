@@ -139,7 +139,7 @@ export default class Window extends Morph {
       name: 'fader', fill: Color.black.withA(0.5), opacity: 0, extent: this.extent
     });
     if (active) {
-      const shiftedBounds = this.world().visibleBounds().translateForInclusion(this.bounds());
+      const shiftedBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(this.bounds());
       this._originalBounds = this.bounds();
       this.animate({ bounds: shiftedBounds, duration: 300 });
       this.borderColor = Color.gray.darker();
