@@ -1529,7 +1529,7 @@ export async function bundlePart (partOrSnapshot, { exclude: excludedModules = [
       if (e.name == 'Exclusion Conflict') {
         // adjust the excluded Modules
         const proceed = await $world.confirm([
-          e.message.replace('Could not load __root_module__:', ''), {}, '\n', {}, 'Packages are usually excluded to reduce the payload of a frozen interactive.\nIn order to fix this issue you can either remove the problematic package from the exclusion list,\nor remove the morph that requires this package directly. Removing the package from the\nexclusion list is a quick fix yet it may increase the payload of your frozen interactive substantially.', { fontSize: 13, fontWeight: 'normal' }], { requester, confirmLabel: 'Remove Package from Exclusion Set', rejectLabel: 'Cancel' });
+          e.message.replace('Could not load __root_module__:', ''), {}, '\n', {}, 'Packages are usually excluded to reduce the payload of a frozen interactive.\nIn order to fix this issue you can either remove the problematic package from the exclusion list,\nor remove the morph that requires this package directly. Removing the package from the\nexclusion list is a quick fix yet it may increase the payload of your frozen interactive substantially.', { fontSize: 13, fontWeight: 'normal' }], { requester, width: 600, confirmLabel: 'Remove Package from Exclusion Set', rejectLabel: 'Cancel' });
         if (proceed) {
           bundle.excludedModules = e.reducedExclusionSet;
           return await rollupBundle();
