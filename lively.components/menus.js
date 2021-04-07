@@ -148,7 +148,6 @@ export class Menu extends Morph {
       borderRadius: { defaultValue: 4 },
       opacity: { defaultValue: 0.95 },
       fontSize: { defaultValue: 16 },
-      fontFamily: { defaultValue: 'Helvetica Neue, Arial, sans-serif' },
       title: {
         get () {
           return this.getProperty('title');
