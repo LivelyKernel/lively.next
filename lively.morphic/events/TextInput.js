@@ -175,11 +175,11 @@ export default class TextInput {
     }
 
     if (!morph || !morph.stealFocus) {
-      node.ownerDocument.activeElement !== node && node.focus();
+      node.getRootNode().activeElement !== node && node.focus();
     }
 
     if (bowser.firefox) // FF needs an extra invitation...
-    { Promise.resolve().then(() => node.ownerDocument.activeElement !== node && node.focus()); }
+    { Promise.resolve().then(() => node.getRootNode().activeElement !== node && node.focus()); }
 
     if (morph && morph.isText && morph.focusable) {
       // need this even if node === activeElement
@@ -282,11 +282,14 @@ export default class TextInput {
     */
     setTimeout(() => {
       const { textareaNode, rootNode } = this.domState || {};
+      if (!textareaNode || !rootNode) return;
+      const doc = textareaNode.getRootNode();
       if (
-        rootNode && document.activeElement === rootNode &&
+        (doc.activeElement === rootNode || this.world.isEmbedded && !doc.activeElement) &&
         !(this.world.focusedMorph && this.world.focusedMorph.stealFocus) &&
-        !(touchInputDevice || lively.FreezerRuntime)) {
-        textareaNode && textareaNode.focus();
+        !touchInputDevice
+      ) {
+        textareaNode.focus();
       }
     });
   }

@@ -7,6 +7,7 @@ import KillRing from './KillRing.js';
 import { Event, KeyEvent, SimulatedDOMEvent, keyLikeEvents } from './Event.js';
 import { cumulativeOffset } from '../rendering/dom-helper.js';
 import bowser from 'bowser';
+import { touchInputDevice } from '../helpers.js';
 
 // note: keydown, keyup, cut, copy, paste, compositionstart, compositionend,
 // compositionupdate, input are listened to by the text input helper
@@ -332,9 +333,11 @@ export default class EventDispatcher {
     const eventTargets = [targetMorph].concat(targetMorph.ownerChain());
     const touch = domEvt.pointerType === 'touch';
     const pointerId = domEvt.pointerId;
-    const hand = typeof pointerId === 'number' ? this.world.handForPointerId(pointerId, domEvt.isPrimary) : this.world.firstHand;
-    const halo = typeof pointerId === 'number' && !touch ? this.world.haloForPointerId(pointerId) : null;
-    const layoutHalo = typeof pointerId === 'number' && !touch ? this.world.layoutHaloForPointerId(pointerId) : null;
+    const targetNode = domEvt.composedPath()[0];
+    const considerPointerId = typeof pointerId === 'number' && (touchInputDevice || domEvt.isPrimary);
+    const hand = considerPointerId ? this.world.handForPointerId(pointerId, domEvt.isPrimary) : this.world.firstHand;
+    const halo = considerPointerId && !touch ? this.world.haloForPointerId(pointerId) : null;
+    const layoutHalo = considerPointerId && !touch ? this.world.layoutHaloForPointerId(pointerId) : null;
     const klass = keyLikeEvents.includes(type) ? KeyEvent : Event;
     const defaultEvent = new klass(type, domEvt, this, eventTargets, hand, halo, layoutHalo);
     let events = [defaultEvent];
@@ -364,7 +367,7 @@ export default class EventDispatcher {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       case 'pointerdown':
         // so that we receive pointerups even if the cursor leaves the browser
-        if (typeof domEvt.target.setPointerCapture === 'function') {
+        if (typeof targetNode.setPointerCapture === 'function') {
           try {
             // rk 2016-07-18: This currently doesn't work well with running a new
             // morphic world inside an old Lively...
@@ -425,7 +428,7 @@ export default class EventDispatcher {
         // drag release
         if (state.draggedMorph) {
           events.push(dragEndEvent(domEvt, this, targetMorph, state, hand, halo, layoutHalo));
-          defaultEvent.targetMorphs = [this.world];
+          defaultEvent.targetMorphs = [state.draggedMorph, this.world];
         }
 
         // grab release
@@ -569,7 +572,7 @@ export default class EventDispatcher {
             }
             state.scroll.interactiveScrollInProgress.debounce();
 
-            const target = domEvt.target.documentElement || domEvt.target;
+            const target = targetNode.documentElement || targetNode;
             const { scrollLeft: newX, scrollTop: newY, style } = target;
             const { x, y } = targetMorph.scroll;
             if (style.overflow != 'hidden' && x !== newX || y !== newY) targetMorph.scroll = pt(newX, newY);
@@ -644,7 +647,7 @@ export default class EventDispatcher {
       // search for the target node that represents a morph: Not all nodes with
       // event handlers might be rendered by morphs, e.g. in case of HTML morphs.
       // rms 13.4.20: What to do in case of a morph that is rendered to canvas?
-      let targetNode = domEvt.target;
+      let targetNode = domEvt.composedPath()[0];
       while (true) {
         let cssClasses = targetNode.className || '';
         if (typeof cssClasses !== 'string' && 'baseVal' in cssClasses/* svg */) { cssClasses = cssClasses.baseVal; }

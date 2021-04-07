@@ -83,15 +83,15 @@ export class Event {
 
   get position () {
     if (!this.domEvt) return pt(0, 0);
-    let worldNode = this.domEvt.target;
+    let worldNode = this.domEvt.composedPath()[0];
     while (worldNode) {
       if (worldNode.id === this.world.id) break;
       worldNode = worldNode.parentNode;
     }
 
     if (!worldNode) {
-      const target = this.domEvt.target;
-      const doc = target.nodeType === target.DOCUMENT_NODE ? target : target.ownerDocument;
+      const target = this.domEvt.composedPath()[0] || this.domEvt.target;
+      const doc = target.nodeType === target.DOCUMENT_NODE ? target : target.getRootNode();
       worldNode = doc.getElementById(this.world.id);
     }
 
