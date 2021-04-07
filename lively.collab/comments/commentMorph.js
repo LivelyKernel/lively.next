@@ -3,7 +3,8 @@ import { pt, Color } from 'lively.graphics';
 import { remove } from 'lively.lang/array.js';
 import { connect } from 'lively.bindings';
 import { resource } from 'lively.resources';
-import { CommentBrowser, CommentIndicator } from 'lively.collab';
+import { CommentBrowser } from './commentBrowser.js';
+import { CommentIndicator } from './commentIndicator.js';
 
 export class CommentGroupMorph extends Morph {
   static get properties () {

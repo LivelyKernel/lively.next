@@ -3,7 +3,7 @@ import { VerticalLayout, HorizontalLayout, Morph } from 'lively.morphic';
 import { pt, Rectangle } from 'lively.graphics';
 import { resource } from 'lively.resources';
 import { connect, disconnect } from 'lively.bindings';
-import { Badge } from 'lively.collab';
+import { Badge } from './badge.js';
 import { ModeSelector } from 'lively.components/widgets.js';
 import { arr } from 'lively.lang';
 import { adoptObject } from 'lively.classes/runtime.js';
@@ -100,7 +100,6 @@ export class CommentBrowser extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   static get properties () {
     return {
-      filterContainer: {},
       filterSelector: {},
       container: {},
       commentContainer: {},
