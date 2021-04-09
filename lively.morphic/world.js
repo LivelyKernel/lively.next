@@ -470,6 +470,7 @@ export class Hand extends Morph {
               grabbedMorphs.every(ea => ea.wantsToBeDroppedOn(m)) &&
               optFilterFn(m, i)
       : m => !this.isAncestorOf(m) && m.acceptsDrops &&
+            m.ownerChain().every(m => m.visible) &&
             grabbedMorphs.every(ea => ea.wantsToBeDroppedOn(m));
     return sortedTargets.find(filterFn);
   }
