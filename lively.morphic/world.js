@@ -364,6 +364,20 @@ export class Hand extends Morph {
       fill: { defaultValue: touchInputDevice ? Color.transparent : Color.orange },
       extent: { defaultValue: pt(1, 1) },
       reactsToPointer: { defaultValue: false },
+      pointerId: {},
+      isHand: { readOnly: true, get () { return true; } },
+      draggable: {
+        readOnly: true,
+        get () { return false; }
+      },
+      grabbable: {
+        readOnly: true,
+        get () { return false; }
+      },
+      grabbedMorphs: {
+        readOnly: true,
+        get () { return this.submorphs; }
+      },
       _grabbedMorphProperties: {
         serialize: false,
         initialize: function () { this._grabbedMorphProperties = new WeakMap(); }
@@ -384,18 +398,6 @@ export class Hand extends Morph {
     // stores properties of morphs while those are being carried
     this._grabbedMorphProperties = new WeakMap();
   }
-
-  get isHand () { return true; }
-
-  get pointerId () { return this.getProperty('pointerId'); }
-  set pointerId (id) { this.setProperty('pointerId', id); }
-
-  get draggable () { return false; }
-  set draggable (_) {}
-  get grabbable () { return false; }
-  set grabbable (_) {}
-
-  get grabbedMorphs () { return this.submorphs; }
 
   carriesMorphs () { return !!this.grabbedMorphs.length; }
 
