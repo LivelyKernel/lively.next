@@ -23,6 +23,8 @@ import { requiredModulesOfSnapshot, ExpressionSerializer, serialize, locateClass
 import { moduleOfId, isReference, referencesOfId, classNameOfId } from 'lively.serializer2/snapshot-navigation.js';
 import { runCommand, defaultDirectory } from 'lively.ide/shell/shell-interface.js';
 import { loadPart } from 'lively.morphic/partsbin.js';
+import { runEval } from 'lively.vm';
+import { localInterface } from 'lively-system-interface';
 
 const { module } = modules;
 
@@ -477,6 +479,11 @@ function belongsToObjectPackage (moduleId) {
   return Path('config.lively.isObjectPackage').get(module(moduleId).package());
 }
 
+function belongsToLivelyPackage (moduleId) {
+  const pkg = module(moduleId).package();
+  return pkg && pkg.name.startsWith('lively');
+}
+
 function cleanSnapshot ({ snapshot }) {
   Object.values(snapshot).forEach(entry => {
     delete entry.rev;
@@ -822,9 +829,9 @@ class LivelyRollup {
     this.requiredMasterComponents = new Set();
   }
 
-  resolveRelativeImport (moduleId, path) {
-    if (!path.startsWith('.')) return module(path).id;
-    return resource(module(moduleId).id).join('..').join(path).withRelativePartsResolved().url;
+  async resolveRelativeImport (moduleId, path) {
+    if (!path.startsWith('.')) return System.normalize(path);
+    return resource(await System.normalize(moduleId)).join('..').join(path).withRelativePartsResolved().url;
   }
 
   translateToEsm (jsonString) {
@@ -945,14 +952,15 @@ class LivelyRollup {
              }`;
   }
 
-  resolveId (id, importer) {
+  async resolveId (id, importer) {
     if (id == 'fs') return 'fs';
     if (this.resolved[id]) return this.resolved[id];
     if (id === '__root_module__') return id;
     if (id.startsWith('[PART_MODULE]')) return id;
     if (!importer) return id;
+    const isCdnImport = ESM_CDNS.find(cdn => id.includes(cdn) || importer.includes(cdn));
     if (importer != '__root_module__' &&
-        ESM_CDNS.find(cdn => id.includes(cdn) || importer.includes(cdn)) &&
+        isCdnImport &&
         this.jspm && importer) {
       const { url } = resource(importer).root();
       if (ESM_CDNS.find(cdn => url.includes(cdn))) {
@@ -993,14 +1001,18 @@ class LivelyRollup {
       importer = importingPackage.url;
     }
     if (id.startsWith('.')) {
-      id = this.resolveRelativeImport(importer, id);
+      id = await this.resolveRelativeImport(importer, id);
       if (!dynamicContext && this.excludedModules.includes(id)) return false;
     }
     if (!id.endsWith('.json') && module(id).format() !== 'register' && !this.jspm) {
       this.globalModules[id] = true;
       return { id, external: true };
     }
-    return this.resolved[id] = module(id).id;
+    if (!id.endsWith('.js') && !isCdnImport) {
+      const normalizedId = await System.normalize(id);
+      return this.resolved[id] = normalizedId;
+    }
+    return this.resolved[id] = module(id).id; // this does not seem to work for non .js modules
   }
 
   warn (warning, warn) {
@@ -1066,7 +1078,7 @@ class LivelyRollup {
   }
 
   needsDynamicLoadTransform (moduleId) {
-    return this.modulesWithDynamicLoads.has(moduleId); // seem to sometimes be not checked for dynamic loads
+    return this.modulesWithDynamicLoads.has(moduleId) || !belongsToLivelyPackage(moduleId); // seem to sometimes be not checked for dynamic loads
   }
 
   async transform (source, id) {
@@ -1077,7 +1089,7 @@ class LivelyRollup {
     }
 
     if (this.needsDynamicLoadTransform(id)) {
-      source = this.instrumentDynamicLoads(source);
+      source = await this.instrumentDynamicLoads(source, id);
     }
     // this capturing stuff needs to behave differently when we have dynamic imports
     if (this.needsScopeToBeCaptured(id) || this.needsClassInstrumentation(id)) {
@@ -1087,9 +1099,10 @@ class LivelyRollup {
     return source;
   }
 
-  instrumentDynamicLoads (source) {
+  async instrumentDynamicLoads (source, moduleId) {
     const parsed = ast.parse(source);
     const nodesToReplace = [];
+    let importUrls = [];
 
     ast.AllNodesVisitor.run(parsed, (node, path) => {
       // we checked beforehand if the user has decided to use dynamic imports
@@ -1118,12 +1131,27 @@ class LivelyRollup {
       }
       if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression') {
         if (node.callee.property.name === 'import' && node.callee.object.name === 'System') {
+          const idx = importUrls.push(localInterface.runEval(ast.stringify(node.arguments[0]), {
+            targetModule: moduleId
+          }));
+          nodesToReplace.push({
+            target: node.arguments[0],
+            replacementFunc: () => {
+              // if the result has not been computed, log an error
+              return `"${importUrls[idx - 1]}"`;
+            }
+          });
           nodesToReplace.push({
             target: node.callee, replacementFunc: () => 'import'
           });
         }
       }
     });
+
+    importUrls = (await Promise.all(importUrls)).map(res => res.value);
+
+    // last minute discovery of dynamic imports
+    if (!this.hasDynamicImports) this.hasDynamicImports = importUrls.length > 0;
 
     return ast.transform.replaceNodes(nodesToReplace, source).source;
   }
@@ -1378,8 +1406,8 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
         shimMissingExports: true,
         onwarn: (warning, warn) => { return this.warn(warning, warn); },
         plugins: [{
-          resolveId: (id, importer) => {
-            const res = this.resolveId(id, importer);
+          resolveId: async (id, importer) => {
+            const res = await this.resolveId(id, importer);
             return res;
           },
           resolveDynamicImport: (id, importer) => {
@@ -1406,7 +1434,7 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
       ({ code: depsCode, globals } = await this.generateGlobals(this.hasDynamicImports));
       if (this.hasDynamicImports) {
         splitModule = (await bundle.generate({ format: 'system', globals }));
-      } else { bundledCode = (await bundle.generate({ format: 'iife', globals, name: this.globalName || 'frozenPart' })).output[0].code; }
+      } else { bundledCode = (await bundle.generate({ format: this.asBrowserModule ? 'iife' : 'cjs', globals, name: this.globalName || 'frozenPart' })).output[0].code; }
     } finally {
       li.remove();
     }
