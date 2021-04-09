@@ -15,8 +15,6 @@ import { emit } from 'lively.notifications/index.js';
 import { resource } from 'lively.resources/index.js';
 import { loadMorphFromSnapshot } from './serialization.js';
 
-import { CommentBrowser } from 'lively.collab';
-
 export class World extends Morph {
   static get properties () {
     return {
@@ -60,7 +58,8 @@ export class World extends Morph {
         set (bool) {
           this.setProperty('enableComments', bool);
           if (bool) {
-            CommentBrowser.initializeCommentBrowser();
+            System.import('lively.collab').then(({ CommentBrowser }) =>
+              CommentBrowser.initializeCommentBrowser());
           }
         }
       }
