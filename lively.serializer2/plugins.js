@@ -1,5 +1,4 @@
-import { obj } from "lively.lang";
-
+import { obj } from 'lively.lang';
 
 /*
 
@@ -28,7 +27,6 @@ propertiesToSerialize(pool, ref, snapshot, keysSoFar)
 additionallySerialize(pool, ref, snapshot, addFn)
   Can modify `snapshot`.  Return value is not used.
 
-
 # deserialization
 
 beforeDeserialization(pool, idAndSnapshot)
@@ -56,117 +54,99 @@ additionallyDeserializeAfterProperties(pool, ref, newObj, snapshot, serializedOb
 export class Plugin {
 }
 
-
 class CustomSerializePlugin {
-
   // can realObj be manually serialized, e.g. into an expression?
-  serializeObject(realObj, isProperty, pool, serializedObjMap, path) {
-    if (typeof realObj.__serialize__ !== "function") return null;
+  serializeObject (realObj, isProperty, pool, serializedObjMap, path) {
+    if (typeof realObj.__serialize__ !== 'function') return null;
     let serialized = realObj.__serialize__(pool, serializedObjMap, path);
-    if (serialized && serialized.hasOwnProperty("__expr__")) {
-      let expr = pool.expressionSerializer.exprStringEncode(serialized);
-      serialized = isProperty ? expr : {__expr__: expr};
+    if (serialized && serialized.hasOwnProperty('__expr__')) {
+      const expr = pool.expressionSerializer.exprStringEncode(serialized);
+      serialized = isProperty ? expr : { __expr__: expr };
     }
     return serialized;
   }
 
-  deserializeObject(pool, ref, snapshot, path) {
-    let {__expr__} = snapshot;
+  deserializeObject (pool, ref, snapshot, path) {
+    const { __expr__ } = snapshot;
     return __expr__ ? pool.expressionSerializer.deserializeExpr(__expr__) : null;
   }
-
 }
 
 class ClassPlugin {
-
   // record class meta info for re-instantiating
-  additionallySerialize(pool, ref, snapshot, addFn) {
+  additionallySerialize (pool, ref, snapshot, addFn) {
     pool.classHelper.addClassInfo(ref, ref.realObj, snapshot);
   }
 
-  deserializeObject(pool, ref, snapshot, path) {
+  deserializeObject (pool, ref, snapshot, path) {
     return pool.classHelper.restoreIfClassInstance(ref, snapshot);
   }
-
 }
 
 class SerializationIndicationPlugin {
-  
-  serializeObject(realObj, isProperty, pool, serializedObjMap, path) {
-    if (realObj && realObj.isMorph)
-      realObj.__isBeingSerialized__ = true;
+  serializeObject (realObj, isProperty, pool, serializedObjMap, path) {
+    if (realObj && realObj.isMorph) { realObj.__isBeingSerialized__ = true; }
     return null; // do not intercept serialization
   }
-  
 }
 
 class SerializationFinishPlugin {
-  additionallySerialize(pool, ref, snapshot, addFn) {
-    if (ref.realObj && ref.realObj.isMorph)
-      ref.realObj.__isBeingSerialized__ = false;
+  additionallySerialize (pool, ref, snapshot, addFn) {
+    if (ref.realObj && ref.realObj.isMorph) { ref.realObj.__isBeingSerialized__ = false; }
   }
 }
 
 class AdditionallySerializePlugin {
   // for objects with __additionally_serialize__(snapshot, ref, pool, addFn) method
 
-  additionallySerialize(pool, ref, snapshot, addFn) {
-    let {realObj} = ref;
-    if (realObj && typeof realObj.__additionally_serialize__  === "function")
-      realObj.__additionally_serialize__(snapshot, ref, pool, addFn);
+  additionallySerialize (pool, ref, snapshot, addFn) {
+    const { realObj } = ref;
+    if (realObj && typeof realObj.__additionally_serialize__ === 'function') { realObj.__additionally_serialize__(snapshot, ref, pool, addFn); }
   }
 
-  additionallyDeserializeBeforeProperties(pool, ref, newObj, props, snapshot, serializedObjMap, path) {
-    if (typeof newObj.__deserialize__ === "function")
-      newObj.__deserialize__(snapshot, ref, serializedObjMap, pool, path);
+  additionallyDeserializeBeforeProperties (pool, ref, newObj, props, snapshot, serializedObjMap, path) {
+    if (typeof newObj.__deserialize__ === 'function') { newObj.__deserialize__(snapshot, ref, serializedObjMap, pool, path); }
   }
 
-  additionallyDeserializeAfterProperties(pool, ref, newObj, snapshot, serializedObjMap, path) {
-    if (typeof newObj.__after_deserialize__ === "function")
-      newObj.__after_deserialize__(snapshot, ref, pool);
+  additionallyDeserializeAfterProperties (pool, ref, newObj, snapshot, serializedObjMap, path) {
+    if (typeof newObj.__after_deserialize__ === 'function') { newObj.__after_deserialize__(snapshot, ref, pool); }
   }
-
 }
 
 class OnlySerializePropsPlugin {
-
- propertiesToSerialize(pool, ref, snapshot, keysSoFar) {
-   let {realObj} = ref;
-   return (realObj && realObj.__only_serialize__) || null;
- }
+  propertiesToSerialize (pool, ref, snapshot, keysSoFar) {
+    const { realObj } = ref;
+    return (realObj && realObj.__only_serialize__) || null;
+  }
 }
 
 class DontSerializePropsPlugin {
-
- propertiesToSerialize(pool, ref, snapshot, keysSoFar) {
-   let {realObj} = ref;
-   if (!realObj || !realObj.__dont_serialize__) return null;
-   let ignoredKeys = obj.mergePropertyInHierarchy(realObj, "__dont_serialize__"),
-       keys = [];
-   for (let i = 0; i < keysSoFar.length; i++) {
-     let key = keysSoFar[i];
-     if (!ignoredKeys.includes(key))
-       keys.push(key);
-   }
-   return keys;
- }
-
+  propertiesToSerialize (pool, ref, snapshot, keysSoFar) {
+    const { realObj } = ref;
+    if (!realObj || !realObj.__dont_serialize__) return null;
+    const ignoredKeys = obj.mergePropertyInHierarchy(realObj, '__dont_serialize__');
+    const keys = [];
+    for (let i = 0; i < keysSoFar.length; i++) {
+      const key = keysSoFar[i];
+      if (!ignoredKeys.includes(key)) { keys.push(key); }
+    }
+    return keys;
+  }
 }
 
 class LivelyClassPropertiesPlugin {
-
-  propertiesToSerialize(pool, ref, snapshot, keysSoFar) {
+  propertiesToSerialize (pool, ref, snapshot, keysSoFar) {
     // serialize class properties as indicated by realObj.constructor.properties
-    let {realObj} = ref,
-        classProperties = realObj.constructor[Symbol.for("lively.classes-properties-and-settings")];
+    const { realObj } = ref;
+    const classProperties = realObj.constructor[Symbol.for('lively.classes-properties-and-settings')];
 
     if (!classProperties) return null;
 
-    let {properties, propertySettings} = classProperties,
-        valueStoreProperty = propertySettings.valueStoreProperty || "_state",
-        valueStore = realObj[valueStoreProperty],
-        only = !!realObj.__only_serialize__,
-        keys = [];
+    const { properties, propertySettings } = classProperties;
+    const valueStoreProperty = propertySettings.valueStoreProperty || '_state';
+    const valueStore = realObj[valueStoreProperty];
+    const only = !!realObj.__only_serialize__;
+    const keys = [];
 
     if (!valueStore) return;
 
@@ -175,12 +155,12 @@ class LivelyClassPropertiesPlugin {
     // was producing that list.
 
     if (only) {
-      for (var i = 0; i < keysSoFar.length; i++) {
-        let key = keysSoFar[i], spec = properties[key];
+      for (let i = 0; i < keysSoFar.length; i++) {
+        const key = keysSoFar[i]; const spec = properties[key];
         if (key === valueStoreProperty) continue;
         if (spec) {
-          if (spec && (spec.derived || spec.readOnly
-                    || (spec.hasOwnProperty("serialize") && !spec.serialize))) continue;
+          if (spec && (spec.derived || spec.readOnly ||
+                    (spec.hasOwnProperty('serialize') && !spec.serialize))) continue;
         }
         keys.push(key);
       }
@@ -188,31 +168,29 @@ class LivelyClassPropertiesPlugin {
     }
 
     // Otherwise properties add to keysSoFar
-    var valueStoreKeyIdx = keysSoFar.indexOf(valueStoreProperty);
+    const valueStoreKeyIdx = keysSoFar.indexOf(valueStoreProperty);
     if (valueStoreKeyIdx > -1) keysSoFar.splice(valueStoreKeyIdx, 1);
 
-    for (var key in properties) {
-      var spec = properties[key],
-          idx = keysSoFar.indexOf(key);
+    for (const key in properties) {
+      const spec = properties[key];
+      const idx = keysSoFar.indexOf(key);
       if (spec.derived || spec.readOnly ||
-          (spec.hasOwnProperty("serialize") && !spec.serialize)) {
+          (spec.hasOwnProperty('serialize') && !spec.serialize)) {
         if (idx > -1) keysSoFar.splice(idx, 1);
       } else if (idx === -1) keys.push(key);
     }
     return keys.concat(keysSoFar);
-
   }
 
-
-  additionallyDeserializeBeforeProperties(pool, ref, newObj, props, snapshot, serializedObjMap, path) {
+  additionallyDeserializeBeforeProperties (pool, ref, newObj, props, snapshot, serializedObjMap, path) {
     // deserialize class properties as indicated by realObj.constructor.properties
-    var classProperties = newObj.constructor[Symbol.for("lively.classes-properties-and-settings")];
-    
+    const classProperties = newObj.constructor[Symbol.for('lively.classes-properties-and-settings')];
+
     if (!classProperties) return props;
 
-    var {properties, propertySettings, order: sortedKeys } = classProperties,
-        valueStoreProperty = propertySettings.valueStoreProperty || "_state",
-        props = snapshot.props;
+    const { properties, propertySettings, order: sortedKeys } = classProperties;
+    const valueStoreProperty = propertySettings.valueStoreProperty || '_state';
+    var props = snapshot.props;
 
     // if props has a valueStoreProperty then we directly deserialize that.
     // As of 2017-02-26 this is for backwards compat.
@@ -220,13 +198,12 @@ class LivelyClassPropertiesPlugin {
 
     props = obj.clone(props);
 
-    if (!newObj.hasOwnProperty(valueStoreProperty))
-      newObj.initializeProperties();
+    if (!newObj.hasOwnProperty(valueStoreProperty)) { newObj.initializeProperties(); }
 
-    var valueStore = newObj[valueStoreProperty];
-    for (var i = 0; i < sortedKeys.length; i++) {
-      var key = sortedKeys[i],
-          spec = properties[key];
+    const valueStore = newObj[valueStoreProperty];
+    for (let i = 0; i < sortedKeys.length; i++) {
+      const key = sortedKeys[i];
+      const spec = properties[key];
       if (!props.hasOwnProperty(key)) continue;
       ref.recreatePropertyAndSetProperty(newObj, props, key, serializedObjMap, pool, path);
       delete props[key];
@@ -237,19 +214,19 @@ class LivelyClassPropertiesPlugin {
 }
 
 // export class LeakDetectorPlugin {
-//   
+//
 //   afterSerialization(pool, snapshot, realObj) {
 //     let i = SnapshotInspector.forPoolAndSnapshot(snapshot, pool),
-//         weakRefs = new Set([...(i.classes.AttributeConnection || {objects: []}).objects, 
+//         weakRefs = new Set([...(i.classes.AttributeConnection || {objects: []}).objects,
 //                             ...(i.classes["{source, target}"] || {objects: []}).objects,
 //                             ...(i.classes["{_rev, source, target}"] || {objects: []}).objects].map(c => c[0])),
 //         G = i.referenceGraph(), invG = graph.invert(G),
 //         memoryLeaks = arr.compact(
 //                       arr.flatten(Object.entries(invG)
-//                          .filter(([id, c]) => 
-//                              c.length < 3 
-//                              && snapshot.id != id 
-//                              && !weakRefs.has(id) 
+//                          .filter(([id, c]) =>
+//                              c.length < 3
+//                              && snapshot.id != id
+//                              && !weakRefs.has(id)
 //                              && c.every(r => weakRefs.has(r)))
 //                          .map(([id]) => {
 //                            let subgraph = graph.subgraphReachableBy(G, id), obj = pool.resolveToObj(id);
@@ -266,14 +243,14 @@ class LivelyClassPropertiesPlugin {
 
 export var plugins = {
   livelyClassPropertiesPlugin: new LivelyClassPropertiesPlugin(),
-  dontSerializePropsPlugin:    new DontSerializePropsPlugin(),
-  onlySerializePropsPlugin:    new OnlySerializePropsPlugin(),
+  dontSerializePropsPlugin: new DontSerializePropsPlugin(),
+  onlySerializePropsPlugin: new OnlySerializePropsPlugin(),
   additionallySerializePlugin: new AdditionallySerializePlugin(),
-  classPlugin:                 new ClassPlugin(),
-  customSerializePlugin:       new CustomSerializePlugin(),
-  indicationPlugin:            new SerializationIndicationPlugin(),
-  finishPlugin:                new SerializationFinishPlugin(),
-}
+  classPlugin: new ClassPlugin(),
+  customSerializePlugin: new CustomSerializePlugin(),
+  indicationPlugin: new SerializationIndicationPlugin(),
+  finishPlugin: new SerializationFinishPlugin()
+};
 
 export var allPlugins = [
   plugins.indicationPlugin,
@@ -283,5 +260,5 @@ export var allPlugins = [
   plugins.onlySerializePropsPlugin,
   plugins.dontSerializePropsPlugin,
   plugins.livelyClassPropertiesPlugin,
-  plugins.finishPlugin,
-]
+  plugins.finishPlugin
+];
