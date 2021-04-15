@@ -143,7 +143,7 @@ export class UndoManager {
   undoStart (morph, name) {
     if (this.applyCount) return;
     if (this.undoInProgress) {
-      console.warn('There is already an undo recorded');
+      console.warn(`There is already an undo being recorded. Tried to start undo ${name} for ${morph.name}, but ${this.undoInProgress.name} is currently in progress.`);
       return;
     }
     return this.undoInProgress = new Undo(name, [morph], this.counter++).startRecording(this.filter);
