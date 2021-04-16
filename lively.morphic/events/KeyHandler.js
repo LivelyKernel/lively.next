@@ -303,8 +303,10 @@ export default class KeyHandler {
     if (typeof command === 'function') { return this.addCommand({ exec: command, bindKey: keyCombo, name: command.name || keyCombo }); }
 
     const allCombos = Array.isArray(keyCombo)
-      ? keyCombo : keyCombo.includes('|')
-          ? keyCombo.split('|') : [keyCombo];
+      ? keyCombo
+      : keyCombo.includes('|')
+        ? keyCombo.split('|')
+        : [keyCombo];
 
     allCombos.forEach((keyPart) => {
       let chain = '';
@@ -342,7 +344,8 @@ export default class KeyHandler {
 
   addCommand (command) {
     return !command || !command.bindKey
-      ? undefined : this.addCommandToBinding(command.bindKey, command);
+      ? undefined
+      : this.addCommandToBinding(command.bindKey, command);
   }
 
   addCommandToBinding (keyCombo, command) {
