@@ -197,9 +197,9 @@ export default class KeyHandler {
     const map = this._prettyCombos || (this._prettyCombos = {});
     if (this._prettyCombos[combo]) return map[combo];
     return map[combo] = combo
-      .replace(regexps.meta, '⌘')
-      .replace(regexps.alt, '⌥')
-      .replace(regexps.ctrl, '⌃')
+      .replace(regexps.meta, bowserOS() == 'mac' ? '⌘' : '⊞ ')
+      .replace(regexps.alt, bowserOS() == 'mac' ? '⌥' : 'Alt ')
+      .replace(regexps.ctrl, bowserOS() == 'mac' ? '⌃' : 'Ctrl ')
       .replace(regexps.tab, '⇥')
       .replace(regexps.enter, '⏎')
       .replace(regexps.shift, '⇧')
