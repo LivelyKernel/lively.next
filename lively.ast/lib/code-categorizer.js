@@ -68,7 +68,6 @@ export function findDecls (parsed, options) {
 
     defs.push(...found);
   }
-
   return defs;
 }
 
@@ -129,7 +128,6 @@ function varDefs (varDeclNode) {
       result.push(...def.children);
     }
   }
-
   return result;
 }
 
@@ -174,7 +172,9 @@ function functionWrapper (node, options) {
 
 function unwrapExport (node) {
   return (node.type === 'ExportNamedDeclaration' || node.type === 'ExportDefaultDeclaration') &&
-      node.declaration ? node.declaration : node;
+      node.declaration
+    ? node.declaration
+    : node;
 }
 
 function objectKeyValsAsDefs (objectExpression, parent) {
