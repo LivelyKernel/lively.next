@@ -197,9 +197,9 @@ export default class KeyHandler {
     const map = this._prettyCombos || (this._prettyCombos = {});
     if (this._prettyCombos[combo]) return map[combo];
     return map[combo] = combo
-      .replace(regexps.meta, '⌘')
-      .replace(regexps.alt, '⌥')
-      .replace(regexps.ctrl, '⌃')
+      .replace(regexps.meta, bowserOS() == 'mac' ? '⌘' : '⊞ ')
+      .replace(regexps.alt, bowserOS() == 'mac' ? '⌥' : 'Alt ')
+      .replace(regexps.ctrl, bowserOS() == 'mac' ? '⌃' : 'Ctrl ')
       .replace(regexps.tab, '⇥')
       .replace(regexps.enter, '⏎')
       .replace(regexps.shift, '⇧')
@@ -303,8 +303,10 @@ export default class KeyHandler {
     if (typeof command === 'function') { return this.addCommand({ exec: command, bindKey: keyCombo, name: command.name || keyCombo }); }
 
     const allCombos = Array.isArray(keyCombo)
-      ? keyCombo : keyCombo.includes('|')
-          ? keyCombo.split('|') : [keyCombo];
+      ? keyCombo
+      : keyCombo.includes('|')
+        ? keyCombo.split('|')
+        : [keyCombo];
 
     allCombos.forEach((keyPart) => {
       let chain = '';
@@ -342,7 +344,8 @@ export default class KeyHandler {
 
   addCommand (command) {
     return !command || !command.bindKey
-      ? undefined : this.addCommandToBinding(command.bindKey, command);
+      ? undefined
+      : this.addCommandToBinding(command.bindKey, command);
   }
 
   addCommandToBinding (keyCombo, command) {
