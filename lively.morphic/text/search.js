@@ -530,7 +530,7 @@ export class SearchWidget extends Morph {
       { keys: 'Enter', command: 'search next or replace and go to next' },
       { keys: 'Alt-Enter', command: 'only search prev' },
       { keys: 'Tab', command: 'change focus' },
-      { keys: 'Ctrl-O', command: 'occur with search term' },
+      { keys: { mac: 'Ctrl-O', win: 'Alt-O' }, command: 'occur with search term' },
       { keys: 'Ctrl-W', command: 'yank next word from text' },
       { keys: 'Escape', command: 'cancel search' },
       { keys: { win: 'Ctrl-F|Ctrl-S|Ctrl-G', mac: 'Meta-F|Ctrl-S|Meta-G' }, command: 'search next' },
