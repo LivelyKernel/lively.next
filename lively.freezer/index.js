@@ -92,7 +92,9 @@ const CLASS_INSTRUMENTATION_MODULES = [
   'lively.halos',
   'lively.user',
   'lively.bindings',
-  'typeshift.components'
+  'typeshift.components',
+  'lively.collab',
+  'https://jspm.dev/npm:rollup@2.28.2' // this contains a bunch of class definitions which right now screws up the closure compiler
 ];
 
 const ESM_CDNS = ['jspm.dev', 'jspm.io', 'skypack.dev'];
@@ -124,6 +126,68 @@ const DEFAULT_EXCLUDED_MODULES_WORLD = [
   'https://unpkg.com/rollup@1.17.0/dist/rollup.browser.js',
   'lively.halos'
 ];
+
+function generateResourceExtensionModule (frozenPart) {
+  return `
+    import { resource, unregisterExtension, registerExtension } from "lively.resources";
+    import { PartResource } from "lively.morphic/partsbin.js";
+    import { StyleGuideResource } from "lively.morphic/style-guide.js";
+    
+    const partURLRe = /^part:\\/\\/([^\\/]+)\\/(.*)$/;
+    
+    class FrozenPartResource extends PartResource {
+      async read() {
+        switch (this.url) {
+          ${
+            Object.keys(frozenPart.dynamicParts).map(partUrl => `
+              case "${partUrl}":
+                return (await import("[PART_MODULE]${partUrl}") && await super.read());`).join('\n')
+           }
+           default:
+             return await super.read();
+        }
+      }
+    }
+    
+    const frozenPart = {
+      name: 'part',
+      matches: (url) => url.match(partURLRe),
+      resourceClass: FrozenPartResource
+    }
+    
+    unregisterExtension('part')
+    registerExtension(frozenPart)
+    
+    // do this also for styleguides to remove funny frozen code from the style guide code
+    
+    class FrozenStyleGuideResource extends StyleGuideResource {
+      get worldName() {
+        const match = this.url.match(styleGuideURLRe);
+        let [_, worldName, name] = match;
+        return worldName;
+      }
+    
+      async read() {
+        let rootDir = resource(System.baseURL);
+        if (rootDir.isFile()) rootDir = rootDir.parent();
+        const masterDir = rootDir.join('masters/');
+        const component = await this.fetchFromMasterDir(masterDir, this.componentName);
+        return await this.resolveComponent(component);
+      }
+    }
+    
+    const styleGuideURLRe = /^styleguide:\\/\\/([^\\/]+)\\/(.*)$/;
+    
+    const frozenStyleGuide = {
+      name: 'styleguide',
+      matches: (url) => url.match(styleGuideURLRe),
+      resourceClass: FrozenStyleGuideResource
+    }
+    
+    unregisterExtension('styleguide')
+    registerExtension(frozenStyleGuide)
+  `;
+}
 
 export async function generateLoadHtml (part, format = 'global') {
   const addScripts = `
@@ -201,7 +265,62 @@ export async function generateLoadHtml (part, format = 'global') {
   return html;
 }
 
-// TODO: Remove coded duplication between freezeWorld and freezePart.
+function clearWorldSnapshot (snap) {
+  const deletedIds = [];
+  const toolIds = [];
+  obj.values(snap.snapshot).forEach(m => delete m.props.metadata);
+  // remove objects that are part of the lively.ide or lively.halo package (dev tools)
+  for (const id in snap.snapshot) {
+    delete snap.snapshot[id].props.localComponents; // remove local components since we dont need them in frozen snaps
+    delete snap.snapshot[id].props.metadata;
+    delete snap.snapshot[id]._cachedLineCharBounds;
+    if (id == snap.id) {
+      snap.snapshot[id].props.showsUserFlap = { value: false };
+    }
+    const module = moduleOfId(snap.snapshot, id);
+    if (!module.package) continue;
+    if (module.package.name == 'lively.ide') toolIds.push(id);
+    if (DEFAULT_EXCLUDED_MODULES_WORLD.includes(module.package.name)) {
+      // fixme: we also need to kill of packages which themselves require one of the "taboo" packages
+      delete snap.snapshot[id];
+      deletedIds.push(id);
+      continue;
+    }
+
+    // transform sources for attribute connections
+    if (classNameOfId(snap.snapshot, id) === 'AttributeConnection') {
+      const props = snap.snapshot[id].props;
+      if (props.converterString) {
+        props.converterString.value = es5Transpilation(`(${props.converterString.value})`);
+      }
+      if (props.updaterString) {
+        props.updaterString.value = es5Transpilation(`(${props.updaterString.value})`);
+      }
+    }
+  }
+
+  // remove all windows that are emptied due to the clearance process or contain tools
+  for (const id in snap.snapshot) {
+    const className = classNameOfId(snap.snapshot, id);
+    if (arr.intersect(referencesOfId(snap.snapshot, id), [...deletedIds, ...toolIds]).length > 0) {
+      if (className === 'Window') {
+        delete snap.snapshot[id];
+        continue;
+      }
+      for (const [key, { value: v }] of Object.entries(snap.snapshot[id].props)) {
+        if (isReference(v) && deletedIds.includes(v.id)) {
+          delete snap.snapshot[id].props[key];
+        }
+        if (arr.isArray(v)) {
+          // also remove references that are stuck inside array values
+          snap.snapshot[id].props[key].value = v.filter(v => !(isReference(v) && deletedIds.includes(v.id)));
+        }
+      }
+    }
+  }
+  removeUnreachableObjects([snap.id], snap.snapshot);
+  return snap;
+}
 
 export async function interactivelyFreezeWorld (world) {
   /*
@@ -226,54 +345,7 @@ export async function interactivelyFreezeWorld (world) {
   await publicationDir.ensureExistance();
 
   // remove the metadata props
-  const worldSnap = serializeMorph(world);
-  const deletedIds = [];
-  obj.values(worldSnap.snapshot).forEach(m => delete m.props.metadata);
-  // remove objects that are part of the lively.ide or lively.halo package (dev tools)
-  for (const id in worldSnap.snapshot) {
-    delete worldSnap.snapshot[id].props.metadata;
-    delete worldSnap.snapshot[id]._cachedLineCharBounds;
-    const module = moduleOfId(worldSnap.snapshot, id);
-    if (!module.package) continue;
-    if (DEFAULT_EXCLUDED_MODULES_WORLD.includes(module.package.name)) {
-      // fixme: we also need to kill of packages which themselves require one of the "taboo" packages
-      delete worldSnap.snapshot[id];
-      deletedIds.push(id);
-      continue;
-    }
-
-    // transform sources for attribute connections
-    if (classNameOfId(worldSnap.snapshot, id) === 'AttributeConnection') {
-      const props = worldSnap.snapshot[id].props;
-      if (props.converterString) {
-        props.converterString.value = es5Transpilation(`(${props.converterString.value})`);
-      }
-      if (props.updaterString) {
-        props.updaterString.value = es5Transpilation(`(${props.updaterString.value})`);
-      }
-    }
-  }
-
-  // remove all windows that are emptied due to the clearance process
-  for (const id in worldSnap.snapshot) {
-    const className = classNameOfId(worldSnap.snapshot, id);
-    if (arr.intersect(referencesOfId(worldSnap.snapshot, id), deletedIds).length > 0) {
-      if (className === 'Window') {
-        delete worldSnap.snapshot[id];
-        continue;
-      }
-      for (const [key, { value: v }] of Object.entries(worldSnap.snapshot[id].props)) {
-        if (isReference(v) && deletedIds.includes(v.id)) {
-          delete worldSnap.snapshot[id].props[key];
-        }
-        if (arr.isArray(v)) {
-          // also remove references that are stuck inside array values
-          worldSnap.snapshot[id].props[key].value = v.filter(v => !(isReference(v) && deletedIds.includes(v.id)));
-        }
-      }
-    }
-  }
-  removeUnreachableObjects([worldSnap.id], worldSnap.snapshot);
+  const worldSnap = clearWorldSnapshot(serializeMorph(world));
 
   // freeze the world
   let frozen;
@@ -339,10 +411,15 @@ export async function interactivelyFreezePart (part, requester = false) {
 
   await publicationDir.ensureExistance();
 
+  let worldSnap;
+  if (part.isWorld) {
+    worldSnap = clearWorldSnapshot(serializeMorph(part));
+  }
+
   // freeze the part
   let frozen;
   try {
-    frozen = await bundlePart(part, {
+    frozen = await bundlePart(worldSnap || part, {
       compress: true,
       useTerser: options.useTerser,
       exclude: options.excludedPackages,
@@ -570,9 +647,8 @@ async function getRequiredModulesFromSnapshot (snap, frozenPart, includeDynamicP
         frozenPart.hasDynamicImports = true;
       }
       // part loading necceciates a dynamic import. this automatically causes syleguides to be fetched dynamically too.
-      if (node.type === 'CallExpression' && Path('callee.name').get(node) == 'resource' &&
-          (Path('arguments.0.value').get(node) || '').match(/^part:\/\/.*\/.+/)) {
-        const partUrl = node.arguments[0].value;
+      if (node.type === 'Literal' && obj.isString(node.value) && node.value.match(/^part:\/\/.*\/.+/)) {
+        const partUrl = node.value;
         dynamicPartFetches.push(partUrl);
         frozenPart.hasDynamicImports = true;
       }
@@ -629,6 +705,7 @@ async function getRequiredModulesFromSnapshot (snap, frozenPart, includeDynamicP
 
     for (const partName of arr.compact(dynamicPartLoads)) {
       const dynamicCommit = await MorphicDB.default.fetchCommit('part', partName);
+      if (!dynamicCommit) continue; // this is not within the db
       const dynamicPart = frozenPart.__cachedSnapshots__[dynamicCommit._id] || await MorphicDB.default.fetchSnapshot(dynamicCommit);
       frozenPart.__cachedSnapshots__[dynamicCommit._id] = dynamicPart;
 
@@ -815,7 +892,7 @@ class LivelyRollup {
     this.snapshot = snapshot;
     this.rootModule = rootModule;
     this.globalName = globalName;
-    this.dynamicParts = {}; // parts loaded via loadPart/loadObjectsFromPartsbinFolder
+    this.dynamicParts = {}; // parts loaded via loadPart/loadObjectsFromPartsbinFolder/resource("part://....")
     this.dynamicModules = new Set(); // modules loaded via System.import(...)
     this.modulesWithDynamicLoads = new Set();
     this.hasDynamicImports = false;
@@ -849,6 +926,16 @@ class LivelyRollup {
 
   getTransformOptions (mod) {
     if (mod.id === '@empty') return {};
+    let version, name;
+    const pkg = mod.package();
+    if (pkg) {
+      name = pkg.name;
+      version = pkg.version;
+    } else {
+      // assuming the module if from jspm
+      version = mod.id.split('@')[1];
+      name = mod.id.split('npm:')[1].split('@')[0];
+    }
     const classToFunction = {
       classHolder: ast.parse(`(lively.FreezerRuntime.recorderFor("${this.normalizedId(mod.id)}"))`),
       functionNode: { type: 'Identifier', name: 'initializeES6ClassForLively' },
@@ -861,8 +948,8 @@ class LivelyRollup {
         subscribeToToplevelDefinitionChanges: () => () => {},
         package: () => { 
           return {
-            name: "${mod.package().name}",
-            version: "${mod.package().version}"
+            name: "${name}",
+            version: "${version}"
           } 
         } 
       })`).body[0].expression
@@ -908,10 +995,10 @@ class LivelyRollup {
     this.importedModules = requiredModules;
     this.checkIfImportedModuleExcluded();
     // console.log('Masters for root:', requiredMasterComponents, requiredModules);
-    return arr.uniq((await getRequiredModulesFromSnapshot(this.snapshot, this)).requiredModules.map(path => `import "${path}"`)).join('\n') +
+    return generateResourceExtensionModule(this) + arr.uniq((await getRequiredModulesFromSnapshot(this.snapshot, this)).requiredModules.map(path => `import "${path}"`)).join('\n') +
        `\nimport { World, MorphicEnv, loadMorphFromSnapshot } from "lively.morphic";
             import { deserialize } from 'lively.serializer2';
-            import { resource, loadViaScript } from 'lively.resources';
+            import { loadViaScript } from 'lively.resources';
             import { promise } from 'lively.lang';
             import { pt } from "lively.graphics";
             ${await resource(System.baseURL).join('localconfig.js').read()}
@@ -931,6 +1018,7 @@ class LivelyRollup {
                   });
                   if (obj.isWorld) {
                     obj.position = pt(0,0);
+                    obj.isEmbedded = true;
                     MorphicEnv.default().setWorldRenderedOn(obj, node, window.prerenderNode);
                     obj.resizePolicy === 'elastic' && obj.execCommand("resize to fit window");
                   } else {
@@ -977,8 +1065,8 @@ class LivelyRollup {
     const importingPackage = module(importer).package();
     const importedPackage = module(id).package();
     let mappedId;
-    if (id == 'lively.ast' && this.excludedModules.includes(id)) {
-      return { id, external: true };
+    if (['lively.ast', 'lively.modules'].includes(id) && this.excludedModules.includes(id)) {
+      return id;
     }
 
     // if we are imported from a non dynamic context this does not apply
@@ -1027,11 +1115,19 @@ class LivelyRollup {
 
   async load (id) {
     id = this.redirect[id] || id;
-    if (id == 'lively.ast' && this.excludedModules.includes(id)) {
-      return `
+    if (this.excludedModules.includes(id)) {
+      if (id == 'lively.ast') {
+        return `
         let nodes = {}, query = {}, transform = {}, BaseVisitor = Object;
         export { nodes, query, transform, BaseVisitor };`;
+      }
+      if (id == 'lively.modules') {
+        return `
+        let scripting = {};
+        export { scripting };`;
+      }
     }
+
     if (id === '__root_module__') {
       const res = await this.getRootModule();
       return res;
@@ -1071,8 +1167,7 @@ class LivelyRollup {
 
   needsClassInstrumentation (moduleId) {
     if (CLASS_INSTRUMENTATION_MODULES_EXCLUSION.some(pkgName => moduleId.includes(pkgName))) { return false; }
-    if (CLASS_INSTRUMENTATION_MODULES.some(pkgName => moduleId.includes(pkgName)) ||
-        belongsToObjectPackage(moduleId)) {
+    if (CLASS_INSTRUMENTATION_MODULES.some(pkgName => moduleId.includes(pkgName) || pkgName == moduleId) || belongsToObjectPackage(moduleId)) {
       return true;
     }
   }
@@ -1118,17 +1213,17 @@ class LivelyRollup {
           // target: node.callee, replacementFunc: () => 'lively.FreezerRuntime.loadObjectFromPartsbinFolder'
         });
       }
-      if (node.type === 'CallExpression' && Path('callee.name').get(node) == 'resource' &&
-          (Path('arguments.0.value').get(node) || '').match(/^part:\/\/.*\/.+/)) {
-        const partUrl = Path('arguments.0.value').get(node);
-        nodesToReplace.push({
-          // fixme: replace by a dynamic import of the generated deps module, followed by the import
-          // like so: `await import("${node.arguments.id}"); lively.FreezerRuntime.loadObjectFromPartsbinFolder`
-          target: node,
-          replacementFunc: () => `(await import("[PART_MODULE]${partUrl}") && await resource("${partUrl}"))`
-          // target: node.callee, replacementFunc: () => 'lively.FreezerRuntime.loadObjectFromPartsbinFolder'
-        });
-      }
+      // if (node.type === 'CallExpression' && Path('callee.name').get(node) == 'resource' &&
+      //     (Path('arguments.0.value').get(node) || '').match(/^part:\/\/.*\/.+/)) {
+      //   const partUrl = Path('arguments.0.value').get(node);
+      //   nodesToReplace.push({
+      //     // fixme: replace by a dynamic import of the generated deps module, followed by the import
+      //     // like so: `await import("${node.arguments.id}"); lively.FreezerRuntime.loadObjectFromPartsbinFolder`
+      //     target: node,
+      //     replacementFunc: () => `(await import("[PART_MODULE]${partUrl}") && await resource("${partUrl}"))`
+      //     // target: node.callee, replacementFunc: () => 'lively.FreezerRuntime.loadObjectFromPartsbinFolder'
+      //   });
+      // }
       if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression') {
         if (node.callee.property.name === 'import' && node.callee.object.name === 'System') {
           const idx = importUrls.push(localInterface.runEval(ast.stringify(node.arguments[0]), {
