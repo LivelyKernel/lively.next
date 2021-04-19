@@ -241,6 +241,28 @@ class LivelyClassPropertiesPlugin {
 //   }
 // }
 
+class SerializableCheckPlugin {
+  additionallySerialize (pool, ref, snapshot, addFn) {
+    const { realObj } = ref;
+    if (!realObj) return;
+
+    if (typeof realObj === 'function') {
+      console.error(`Cannot serialize anonymous function ${realObj}`);
+      return;
+    }
+
+    Object.keys(realObj).forEach(key => {
+      if (!this._serializable(realObj[key])) {
+        console.error(`Attribute cannot be serialized: ${key} of ${realObj}. Might be an anonymous function?`);
+      }
+    });
+  }
+
+  _serializable (object) {
+    return typeof object !== 'function' || !!object[Symbol.for('lively-module-meta')];
+  }
+}
+
 export var plugins = {
   livelyClassPropertiesPlugin: new LivelyClassPropertiesPlugin(),
   dontSerializePropsPlugin: new DontSerializePropsPlugin(),
@@ -249,6 +271,7 @@ export var plugins = {
   classPlugin: new ClassPlugin(),
   customSerializePlugin: new CustomSerializePlugin(),
   indicationPlugin: new SerializationIndicationPlugin(),
+  serializableCheckPlugin: new SerializableCheckPlugin(),
   finishPlugin: new SerializationFinishPlugin()
 };
 
@@ -260,5 +283,6 @@ export var allPlugins = [
   plugins.onlySerializePropsPlugin,
   plugins.dontSerializePropsPlugin,
   plugins.livelyClassPropertiesPlugin,
+  plugins.serializableCheckPlugin,
   plugins.finishPlugin
 ];
