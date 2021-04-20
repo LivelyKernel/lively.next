@@ -1,4 +1,4 @@
-import { obj } from 'lively.lang';
+import { obj, properties } from 'lively.lang';
 
 /*
 
@@ -246,20 +246,22 @@ class SerializableCheckPlugin {
     const { realObj } = ref;
     if (!realObj) return;
 
-    if (typeof realObj === 'function') {
-      console.error(`Cannot serialize anonymous function ${realObj}`);
+    if (!this._serializable(realObj)) {
+      console.warn(`Cannot serialize anonymous function ${realObj}`);
       return;
     }
 
-    Object.keys(realObj).forEach(key => {
-      if (!this._serializable(realObj[key])) {
-        console.error(`Attribute cannot be serialized: ${key} of ${realObj}. Might be an anonymous function?`);
+    properties.allOwnPropertiesOrFunctions(realObj, (self, property) => {
+      if (!this._serializable(realObj[property])) {
+        console.warn(`Attribute cannot be serialized: ${property} of ${realObj}. Might be an anonymous function?`);
       }
     });
   }
 
   _serializable (object) {
-    return typeof object !== 'function' || !!object[Symbol.for('lively-module-meta')];
+    // isWrapped gets functions which are only part of a AttributeConnection and are serialized anyway
+    // hasLivelyClosure is an attribute on functions which got recreated from a closure and we assume if you are using closures you will ensure saving them
+    return typeof object !== 'function' || !!object.isWrapped || !!object.hasLivelyClosure;
   }
 }
 
