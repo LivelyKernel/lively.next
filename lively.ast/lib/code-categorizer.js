@@ -208,6 +208,16 @@ function objectKeyValsAsDefs (objectExpression, parent) {
   }));
 }
 
+function arrayEntriesAsDefs (arrayExpression, parent) {
+  debugger;
+  return arrayExpression.elements.map(node => ({
+    name: node.properties[0].value.value,
+    type: node.type,
+    node,
+    parent
+  }));
+}
+
 function isFunctionWrapper (node) {
   return Path('expression.type').get(node) === 'CallExpression' &&
       Path('expression.callee.type').get(node) === 'FunctionExpression';
