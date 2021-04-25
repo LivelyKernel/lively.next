@@ -32,7 +32,6 @@ object-decl
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 export function findDecls (parsed, options) {
   // lively.debugNextMethodCall(lively.ast.codeCategorizer, "findDecls")
-
   options = options || obj.merge({ hideOneLiners: false }, options);
 
   if (typeof parsed === 'string') { parsed = parse(parsed, { addSource: true }); }
@@ -138,16 +137,20 @@ function parseCommandsMethod (node, parent, type) {
   };
   const nodes = [commandsNode];
   const children = [];
-  commandsNode.node.value.body.body[0].argument.elements.forEach(command => {
-    debugger;
-    children.push({
-      type: command.type,
-      parent: commandsNode,
-      node: command,
-      name: command.properties[0].value.value
-    });
-  });
-  commandsNode.children = children;
+  if (commandsNode.node.value.body.body) {
+    const commands = commandsNode.node.value.body.body[0].argument.elements;
+    if (commands) {
+      commands.forEach(command => {
+        children.push({
+          type: command.type,
+          parent: commandsNode,
+          node: command,
+          name: command.properties[0].value.value
+        });
+      });
+      commandsNode.children = children;
+    }
+  }
   return commandsNode;
 }
 
@@ -243,9 +246,8 @@ function objectKeyValsAsDefs (objectExpression, parent) {
 }
 
 function arrayEntriesAsDefs (arrayExpression, parent) {
-  debugger;
   return arrayExpression.elements.map(node => ({
-    name: node.properties[0].value.value,
+    name: node.value || node.properties[0].value.value,
     type: node.type,
     node,
     parent
