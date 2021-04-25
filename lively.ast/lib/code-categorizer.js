@@ -95,26 +95,9 @@ function es6ClassMethod (node, parent, i) {
   else if (node.kind === 'method') type = node.static ? 'class-class-method' : 'class-instance-method';
   else if (node.kind === 'get') type = node.static ? 'class-class-getter' : 'class-instance-getter';
   else if (node.kind === 'set') type = node.static ? 'class-class-setter' : 'class-instance-setter';
-  if (type == 'class-class-getter' && node.key.name == 'properties') {
-    const propertiesNode = {
-      type,
-      parent,
-      node,
-      name: node.key.name
-    };
-    const nodes = [propertiesNode];
-    const children = [];
-    propertiesNode.node.value.body.body[0].argument.properties.forEach(property => {
-      children.push({
-        type: property.type,
-        parent: propertiesNode,
-        node: property,
-        name: property.key ? property.key.name : property.argument.arguments[0].value
-      });
-    });
-    propertiesNode.children = children;
-    return propertiesNode;
-  }
+  if (type == 'class-instance-getter' && node.key.name == 'commands') return parseCommandsMethod(node, parent, type);
+  if (type == 'class-class-getter' && node.key.name == 'properties') return parsePropertiesMethod(node, parent, type);
+
   return type
     ? {
         type,
@@ -125,7 +108,28 @@ function es6ClassMethod (node, parent, i) {
     : null;
 }
 
-function parseCommands (node, parent, type) {
+function parsePropertiesMethod (node, parent, type) {
+  const propertiesNode = {
+    type,
+    parent,
+    node,
+    name: node.key.name
+  };
+  const nodes = [propertiesNode];
+  const children = [];
+  propertiesNode.node.value.body.body[0].argument.properties.forEach(property => {
+    children.push({
+      type: property.type,
+      parent: propertiesNode,
+      node: property,
+      name: property.key ? property.key.name : property.argument.arguments[0].value
+    });
+  });
+  propertiesNode.children = children;
+  return propertiesNode;
+}
+
+function parseCommandsMethod (node, parent, type) {
   const commandsNode = {
     type,
     parent,
