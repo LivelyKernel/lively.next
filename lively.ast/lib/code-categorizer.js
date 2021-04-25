@@ -125,6 +125,28 @@ function es6ClassMethod (node, parent, i) {
     : null;
 }
 
+function parseCommands (node, parent, type) {
+  const commandsNode = {
+    type,
+    parent,
+    node,
+    name: node.key.name
+  };
+  const nodes = [commandsNode];
+  const children = [];
+  commandsNode.node.value.body.body[0].argument.elements.forEach(command => {
+    debugger;
+    children.push({
+      type: command.type,
+      parent: commandsNode,
+      node: command,
+      name: command.properties[0].value.value
+    });
+  });
+  commandsNode.children = children;
+  return commandsNode;
+}
+
 function varDefs (varDeclNode) {
   if (varDeclNode.type !== 'VariableDeclaration') return null;
   const result = [];
@@ -139,6 +161,14 @@ function varDefs (varDeclNode) {
     if (initNode.type === 'ObjectExpression') {
       def.type = 'object-decl';
       def.children = objectKeyValsAsDefs(initNode).map(ea =>
+        ({ ...ea, type: 'object-' + ea.type, parent: def }));
+      result.push(...def.children);
+      continue;
+    }
+
+    if (initNode.type === 'ArrayExpression') {
+      def.type = 'array-decl';
+      def.children = arrayEntriesAsDefs(initNode).map(ea =>
         ({ ...ea, type: 'object-' + ea.type, parent: def }));
       result.push(...def.children);
       continue;
