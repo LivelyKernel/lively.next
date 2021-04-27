@@ -110,7 +110,8 @@ const ADVANCED_EXCLUDED_MODULES = [
   'lively.modules',
   'babel-plugin-transform-jsx',
   'lively-system-interface',
-  'lively.storage'
+  'lively.storage',
+  'lively.collab'
 ];
 
 const DEFAULT_EXCLUDED_MODULES_PART = [
