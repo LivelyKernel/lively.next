@@ -976,6 +976,7 @@ export class ObjectEditor extends Morph {
 
   async interactivelyAddObjectPackageAndMethod () {
     let objPkgName, className, methodName, stringifiedTarget;
+    const li = LoadingIndicator.open('Lookup Package...');
     try {
       ({ objPkgName, className, stringifiedTarget } = await this.withContextDo((ctx) => {
         const pkg = ObjectPackage.lookupPackageForObject(ctx.target);
@@ -987,6 +988,7 @@ export class ObjectEditor extends Morph {
       }));
 
       if (!objPkgName) {
+        li.remove();
         objPkgName = await this.world().prompt(
           ['New Object Package\n', {},
             'No object package exists yet for object\n', { fontSize: 16, fontWeight: 'normal' },
@@ -999,21 +1001,26 @@ export class ObjectEditor extends Morph {
           });
 
         if (!objPkgName) { this.setStatusMessage('Canceled'); return; }
+        li.label = 'Creating Class...';
+        li.openInWorld();
         await this.withContextDo(async (ctx) => {
           const pkg = ObjectPackage.withId(objPkgName);
           await pkg.adoptObject(ctx.target);
         }, { objPkgName });
       }
+      li.label = 'Adding method...';
       ({ className, methodName } = await this.withContextDo(async ctx => {
         const { methodName } = await ctx.addNewMethod();
         return {
           methodName, className: ctx.target.constructor[Symbol.for('__LivelyClassName__')]
         };
       }));
+      li.remove();
       await this.refresh();
       await this.selectMethod(className, methodName, true, true);
       this.focus();
     } catch (e) {
+      li.remove();
       this.showError(e);
     }
   }
