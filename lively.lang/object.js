@@ -205,6 +205,7 @@ function clone (object) {
   for (const key in object) {
     if (object.hasOwnProperty(key)) { clone[key] = object[key]; }
   }
+  clone.__proto__ = object.__proto__; // ensure same proto
   return clone;
 }
 
@@ -215,7 +216,8 @@ function extract (object, properties, mapFunc) {
   for (let i = 0; i < properties.length; i++) {
     if (properties[i] in object) {
       copied[properties[i]] = mapFunc
-        ? mapFunc(properties[i], object[properties[i]]) : object[properties[i]];
+        ? mapFunc(properties[i], object[properties[i]])
+        : object[properties[i]];
     }
   }
   return copied;
@@ -251,7 +253,8 @@ function inspect (object, options, depth) {
 
   // print function
   if (typeof object === 'function') {
-    return options.printFunctionSource ? String(object)
+    return options.printFunctionSource
+      ? String(object)
       : 'function' + (object.name ? ' ' + object.name : '') +
       '(' + argumentNames(object).join(',') + ') {/*...*/}';
   }
@@ -295,7 +298,8 @@ function inspect (object, options, depth) {
       if (isArray) inspect(object[key], options, depth + 1);
       const printedVal = inspect(object[key], options, depth + 1);
       printedProps.push((options.escapeKeys
-        ? JSON.stringify(key) : key) + ': ' + printedVal);
+        ? JSON.stringify(key)
+        : key) + ': ' + printedVal);
     }
   }
 
