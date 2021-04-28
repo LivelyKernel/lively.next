@@ -23,11 +23,15 @@ export function styleProps (morph) {
   return style;
 }
 
+export function canBePromotedToCompositionLayer (morph) {
+  return morph.renderOnGPU || (morph.dropShadow && !morph.dropShadow.fast) || morph.grayscale > 0;
+}
+
 export function addTransform (morph, style) {
   const { position, origin, scale, rotation, flipped, tilted, perspective, owner } = morph;
   const x = Math.round(position.x - origin.x - (morph._skipWrapping && owner ? owner.borderWidthLeft : 0));
   const y = Math.round(position.y - origin.y - (morph._skipWrapping && owner ? owner.borderWidthTop : 0));
-  const promoteToCompositionLayer = morph.renderOnGPU || (morph.dropShadow && !morph.dropShadow.fast) || morph.grayscale > 0;
+  const promoteToCompositionLayer = canBePromotedToCompositionLayer(morph);
   if (promoteToCompositionLayer) {
     style.willChange = 'transform';
   }

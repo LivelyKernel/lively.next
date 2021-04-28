@@ -12,7 +12,7 @@ import {
   renderMorph
 } from './morphic-default.js';
 import { Transform, pt } from 'lively.graphics';
-import { getSvgVertices } from './property-dom-mapping.js';
+import { getSvgVertices, canBePromotedToCompositionLayer } from './property-dom-mapping.js';
 import config from '../config.js';
 
 const { h, diff, patch, create: createNode } = vdom;
@@ -159,10 +159,9 @@ export class Renderer {
     // in case this world is embedded, we need to add the offset of the world morph here
     if (this.worldMorph.isEmbedded) {
       const bbx = this.domNode.getBoundingClientRect();
-      const { top, left } = tree.properties.style;
-      tree.properties.style.top = Number.parseInt(top) + bbx.y + 'px';
-      tree.properties.style.left = Number.parseInt(left) + bbx.x + 'px';
-      // fixme: what about transform?
+      const { x: left, y: top } = canBePromotedToCompositionLayer(morph) ? pt(0, 0) : morph.position;
+      tree.properties.style.top = top + bbx.y + 'px';
+      tree.properties.style.left = left + bbx.x + 'px';
     }
     return tree;
   }
