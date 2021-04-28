@@ -36,6 +36,14 @@ export default class Halo extends Morph {
       pointerId: {},
       hasFixedPosition: { defaultValue: true },
       respondsToVisibleWindow: { defaultValue: true },
+      activeItems: {
+        derived: true,
+        defaultValue: ['*'],
+        set (itemNames) {
+          this.setProperty('activeItems', itemNames);
+          this.buttonControls.forEach(b => b.visible = itemNames.includes(b.name));
+        }
+      },
       submorphs: {
         after: ['target'],
         initialize () {
@@ -152,6 +160,7 @@ export default class Halo extends Morph {
   get borderBox () {
     return this.getSubmorphNamed('border-box') || this.addMorphBack(morph({
       name: 'border-box',
+      halosEnabled: false,
       fill: Color.transparent,
       borderColor: this.target.isComponent ? componentAccent : haloBlue,
       borderWidth: 1
@@ -205,7 +214,10 @@ export default class Halo extends Morph {
     } else {
       if (this.changingName) this.nameHalo().toggleActive([false]);
       this.ensureResizeHandles().forEach(h => h.visible = true);
-      this.buttonControls.forEach(b => { b.visible = true; });
+      this.buttonControls.filter(b => {
+        if (this.activeItems.includes('*')) return true;
+        else return this.activeItems.includes(b.name);
+      }).forEach(b => { b.visible = true; });
       this.propertyDisplay.disable();
     }
     this.nameHalo().alignInHalo();
@@ -241,7 +253,7 @@ export default class Halo extends Morph {
   // click-throughs? in that case it should be dealt with in the event code.
   // Disabling morph position lookup creates a big exception for halos that
   // might complicate things
-  morphsContainingPoint (list) { return list; }
+  // morphsContainingPoint (list) { return list; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // accessing
@@ -925,9 +937,25 @@ class CloseHaloItem extends HaloItem {
 
   static get properties () {
     return {
-      styleClasses: { defaultValue: ['fas', 'fa-trash'] },
+      targetIsComponent: {
+        derived: true,
+        get () {
+          return this.halo.target.isComponent;
+        }
+      },
+      styleClasses: {
+        after: ['halo'],
+        initialize () {
+          this.styleClasses = ['fas', this.targetIsComponent ? 'fa-eye-slash' : 'fa-trash'];
+        }
+      },
       draggable: { defaultValue: false },
-      tooltip: { defaultValue: 'Remove this morph from the world' }
+      tooltip: {
+        after: ['halo'],
+        initialize () {
+          this.tooltip = this.targetIsComponent ? 'Hide this component' : 'Remove this morph from the world';
+        }
+      }
     };
   }
 
@@ -1366,8 +1394,10 @@ class ComponentHaloItem extends HaloItem {
       target.name = newName;
     }
     target.isComponent = toBeComponent && await this.checkForDuplicateNamesInHierarchy();
-    if (toBeComponent) arr.pushIfNotIncluded(target.world().localComponents, target);
-    else arr.remove(target.world().localComponents, target);
+    if (toBeComponent) {
+      arr.pushIfNotIncluded(target.world().localComponents, target);
+      arr.pushIfNotIncluded(target.world().hiddenComponents, target.name);
+    } else arr.remove(target.world().localComponents, target);
     if (!this.world()) target.world().showHaloFor(target); // halo got disposed
     else this.updateComponentIndicator();
   }
