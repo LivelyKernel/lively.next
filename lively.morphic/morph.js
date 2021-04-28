@@ -3470,12 +3470,8 @@ export class Path extends Morph {
     }
   }
 
-  onMouseDown (evt) {
-    super.onMouseDown(evt);
-    const { state: { clickCount } } = evt;
-    const double = clickCount === 2;
-
-    if (double) {
+  onDoubleMouseDown (evt) {
+    if (this.showControlPoints) {
       this.addVertexCloseTo(this.localize(evt.position));
     }
   }
@@ -3501,6 +3497,7 @@ export class Path extends Morph {
     return pt(x, y);
   }
 }
+
 
 export class Polygon extends Path {
   constructor (props) {
