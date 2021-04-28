@@ -59,6 +59,7 @@ export class ListItemMorph extends Label {
     else this.value = label;
 
     this.tooltip = item.tooltip || this.tooltip || this.textString;
+    if (item.tooltip == false) this.tooltip = false;
     this.itemIndex = itemIndex;
     this.position = pos;
 
@@ -129,6 +130,7 @@ export class ListItemMorph extends Label {
     }
   }
 }
+
 
 class ListScroller extends Morph {
   static get properties () {
