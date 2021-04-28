@@ -59,6 +59,7 @@ export default class Window extends Morph {
           }
           this.ui.windowTitle.value = truncated;
           await this.whenRendered();
+          this.ui.windowTitle.reactsToPointer = false;
           this.relayoutWindowControls();
         }
       },
@@ -287,7 +288,13 @@ export default class Window extends Morph {
       reactsToPointer: true,
       value: ''
     });
-    connect(title, 'onDoubleMouseDown', this, 'toggleMaximize');
+    connect(this, 'onDoubleMouseDown', this, 'toggleMaximize', {
+      updater: `($upd, evt) => {
+        if (source.fullContainsWorldPoint(evt.position)) {
+          $upd();
+        }
+      }`
+    });
     return this.addMorph(title);
   }
 
@@ -676,3 +683,4 @@ export default class Window extends Morph {
     ]);
   }
 }
+
