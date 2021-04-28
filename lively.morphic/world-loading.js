@@ -13,6 +13,7 @@ import { subscribe, emit } from 'lively.notifications';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
 import './partsbin.js';
+import { joinPath } from 'lively.lang/string.js';
 
 export async function loadWorldFromURL (url, oldWorld, options) {
   const worldResource = url.isResource
@@ -57,7 +58,8 @@ export async function loadWorld (newWorld, oldWorld, options = {}) {
     worldLoadDialog = false,
     initializeGlobalStyleSheets = true,
     showUserFlap = typeof newWorld.showsUserFlap === 'undefined'
-      ? true : newWorld.showsUserFlap,
+      ? true
+      : newWorld.showsUserFlap,
     enableComments = true
   } = options;
 
@@ -312,7 +314,7 @@ export async function interactivelySaveWorld (world, options) {
 
 function reportWorldLoad (world, user) {
   const userId = user ? `${user.name} (${(user.token || '').slice(0, 5)})` : '---';
-  fetch('/report-world-load', {
+  fetch(joinPath(System.baseURL, '/report-world-load'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

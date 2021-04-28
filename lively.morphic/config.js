@@ -66,7 +66,7 @@ const config = {
   showTooltipsAfter: 0.8,
 
   users: {
-    authServerURL: 'https://auth.lively-next.org',
+    authServerURL: window.AUTH_SERVER_URL || 'https://auth.lively-next.org',
     autoLoginAsGuest: false
   },
 
