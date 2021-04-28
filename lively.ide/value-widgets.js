@@ -134,7 +134,8 @@ export class LayoutWidget extends ShortcutWidget {
         after: ['submorphs'],
         initialize () {
           this.title = this.context && this.context.layout
-            ? 'Configure ' + this.context.layout.name() + ' Layout' : 'No Layout';
+            ? 'Configure ' + this.context.layout.name() + ' Layout'
+            : 'No Layout';
         }
       }
     };
@@ -142,7 +143,8 @@ export class LayoutWidget extends ShortcutWidget {
 
   layoutChanged () {
     this.title = this.context.layout
-      ? 'Configure ' + this.context.layout.name() + ' Layout' : 'No Layout';
+      ? 'Configure ' + this.context.layout.name() + ' Layout'
+      : 'No Layout';
   }
 
   async openPopover () {
@@ -180,7 +182,8 @@ export class ColorWidget extends ContextSensitiveWidget {
         set (selected) {
           if (this.getProperty('isSelected') != selected) {
             this.getSubmorphNamed('valueString').fontColor = selected
-              ? this.selectionFontColor : this.nonSelectionFontColor;
+              ? this.selectionFontColor
+              : this.nonSelectionFontColor;
             this.setProperty('isSelected', selected);
           }
         }
@@ -206,11 +209,13 @@ export class ColorWidget extends ContextSensitiveWidget {
         return;
       }
       this.submorphs = this.color.isGradient
-        ? this.renderGradientValue() : this.renderColorValue();
+        ? this.renderGradientValue()
+        : this.renderColorValue();
     } else {
       if (!this.color) return;
       this.color.isGradient
-        ? this.updateGradientValue() : this.updateColorValue();
+        ? this.updateGradientValue()
+        : this.updateColorValue();
     }
   }
 
@@ -502,9 +507,11 @@ export class NumberWidget extends Morph {
           });
         }
       },
+
       submorphs: {
         after: ['min', 'max'],
-        initialize () {
+        initialize (prev) {
+          if (prev.length > 0) return;
           this.submorphs = [
             new ValueScrubber({
               name: 'value',
@@ -514,16 +521,22 @@ export class NumberWidget extends Morph {
               min: this.min,
               max: this.max
             }),
-            Icon.makeLabel('sort-up', {
-              name: 'up'
-            }),
-            Icon.makeLabel('sort-up', {
+
+            {
+              name: 'up',
+              submorphs: [Icon.makeLabel('sort-up', {
+                name: 'icon'
+              })]
+            },
+            {
               name: 'down',
-              rotation: Math.PI
-            })
+              rotation: Math.PI,
+              submorphs: [Icon.makeLabel('sort-up', {
+                name: 'icon'
+              })]
+            }
+
           ];
-          connect(this.get('value'), 'scrub', this, 'update');
-          this.whenRendered().then(() => this.relayout());
         }
       }
     };
@@ -549,7 +562,7 @@ export class NumberWidget extends Morph {
     const upButton = this.getSubmorphNamed('up');
     const downButton = this.getSubmorphNamed('down');
     const value = this.getSubmorphNamed('value');
-    upButton.height = downButton.height = (this.height - 2) / 2;
+    upButton.height = downButton.height = Math.floor(this.height / 2);
     upButton.width = downButton.width = 20;
   }
 
