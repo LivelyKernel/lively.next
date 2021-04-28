@@ -908,7 +908,7 @@ export class FilterableList extends Morph {
           this.submorphs = [
             input,
             new morph({ name: 'padding', fill: Color.transparent }),
-            new List({ name: 'list', items: [], clipMode: 'auto' })
+            new List({ name: 'list', items: [] })
           ];
           // rms 24.5.17 in order to ensure that the list correctly conforms to
           //   global style sheets that become active once list is opened in world
@@ -1323,6 +1323,7 @@ export class FilterableList extends Morph {
     ]);
   }
 }
+
 
 
 export class DropDownList extends Button {
