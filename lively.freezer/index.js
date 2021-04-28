@@ -476,7 +476,7 @@ export async function interactivelyFreezePart (part, requester = false) {
   const dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
   for (const [partName, snapshot] of Object.entries(frozen.dynamicParts)) {
     if (partName.startsWith('part://')) {
-      arr.pushIfNotIncluded(frozen.masterComponents, partName.replace('part://', 'styleguide://'));
+      frozen.masterComponents[partName.replace('part://', 'styleguide://')] = snapshot;
       continue;
     }
     currentFile = partName + '.json';
@@ -498,13 +498,14 @@ export async function interactivelyFreezePart (part, requester = false) {
 
   // then copy over the style morphs
   li.status = 'Copying master components...';
+  // replace this by prefetched master components
   masterComponents = frozen.masterComponents;
   const masterDir = await publicationDir.join('masters/').ensureExistance();
-  for (const url of frozen.masterComponents) {
+  for (const url in frozen.masterComponents) {
     const masterFile = await masterDir
       .join(url.replace('styleguide://', '') + '.json')
       .ensureExistance();
-    await masterFile.writeJson(serialize(await resource(url).read()));
+    await masterFile.writeJson(frozen.masterComponents[url]);
   }
 
   li.remove();
@@ -610,6 +611,8 @@ async function getRequiredModulesFromSnapshot (snap, frozenPart, includeDynamicP
   const dynamicPartImports = [];
   let requiredMasterComponents = new Set();
   const objectModules = [];
+
+  frozenPart.getAssetsFromSnapshot(snap);
 
   // flatten imports to all imports of the object package
   imports = arr.flatten(
@@ -1598,9 +1601,17 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
     for (const part in this.dynamicParts) {
       this.getAssetsFromSnapshot(this.dynamicParts[part]);
     }
+    // extract the master components
+    res.masterComponents = {};
+    for (const comp of this.requiredMasterComponents) {
+      const snap = serialize(await resource(comp).read());
+      this.getAssetsFromSnapshot(snap);
+      res.masterComponents[comp] = snap;
+    }
     res.dynamicParts = this.dynamicParts;
     res.assets = this.assetsToCopy;
-    res.masterComponents = [...this.requiredMasterComponents];
+    // res.masterComponents = this.requiredMasterComponents];
+
     res.rollup = this;
 
     return res;
