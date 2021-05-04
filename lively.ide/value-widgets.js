@@ -462,6 +462,9 @@ export class NumberWidget extends Morph {
           this.master = {
             auto: 'styleguide://SystemWidgets/number field/light'
           };
+          this.master.whenApplied().then(() => {
+            this.relayout();
+          });
         }
       },
       fontColor: {
@@ -525,6 +528,7 @@ export class NumberWidget extends Morph {
             {
               name: 'up',
               submorphs: [Icon.makeLabel('sort-up', {
+                reactsToPointer: false,
                 name: 'icon'
               })]
             },
@@ -532,6 +536,7 @@ export class NumberWidget extends Morph {
               name: 'down',
               rotation: Math.PI,
               submorphs: [Icon.makeLabel('sort-up', {
+                reactsToPointer: false,
                 name: 'icon'
               })]
             }
@@ -602,6 +607,7 @@ export class NumberWidget extends Morph {
     this.update(this.number - (1 / this.scaleFactor), false);
   }
 }
+
 
 export class ShadowWidget extends Morph {
   static get properties () {
