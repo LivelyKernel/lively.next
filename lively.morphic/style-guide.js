@@ -76,6 +76,9 @@ export class StyleguidePlugin {
   afterSerialization (pool, snapshot, rootId) {
     // determine all components that are part of this snapshot and could be resolved locally
     // all the other ones are left as absolute paths
+
+    // also check for all morphs that can not be resolved locally yet declared as local
+    // in those cases convert to absolute references
     const masterURLRemapping = {};
     const localComponentUrl = `styleguide://${getProjectName($world)}`;
     findLocalComponents(snapshot).forEach(componentName =>
@@ -86,7 +89,7 @@ export class StyleguidePlugin {
         for (const url in masterURLRemapping) {
           if (master.value.includes(url)) { master.value = master.value.split(url).join(masterURLRemapping[url]); }
         }
-        master.value = master.value.split(localComponentUrl).join('styleguide://$world');
+        // master.value = master.value.split(localComponentUrl).join('styleguide://$world'); // NO! this can not nessecarily be resolved since the master components are not carried over. what is this supposed to do??
       }
     });
   }
@@ -166,8 +169,10 @@ export class ComponentPolicy {
   equals (other) {
     if (!other) return false;
     if (typeof other === 'string') {
-      if (!lively.FreezerRuntime) { other = other.replace('styleguide://$world', `styleguide://${getProjectName($world)}`); }
-      return this.getResourceUrlFor(this.auto) == other;
+      other = other.replace('styleguide://$world', `styleguide://${getProjectName($world)}`);
+      let self = this.getResourceUrlFor(this.auto);
+      if (self) self = self.replace('styleguide://$world', `styleguide://${getProjectName($world)}`);
+      return self == other;
     }
     for (const master of ['auto', 'click', 'hover']) {
       if (typeof other[master] === 'string') {
@@ -439,6 +444,12 @@ export class ComponentPolicy {
     this._overriddenProps.set(derivedMorph, obj.dissoc(spec, propsToClear));
   }
 
+  /*
+    Morphs in the styled hierarcht that define their own stling scope via master
+    are not traversed further. They manage themselves and their own hierarchy, so the
+    responsibility of the enclosing master component ends here.
+  */
+
   prepareSubmorphsToBeManaged (derivedMorph, master) {
     const nameToStylableMorph = {};
     derivedMorph.withAllSubmorphsDoExcluding(m => {
@@ -482,56 +493,64 @@ export class ComponentPolicy {
     await this.whenReady();
 
     const managedMorphs = this.managedMorphs;
-    let insertedMorphs = [];
+    const insertedMorphs = [];
     const master = this._appliedMaster || this.auto;
 
     managedMorphs[master.name] = this.derivedMorph; // hack
 
     if (!master) return; // no applied master, nothing to reconcile...
 
-    master.withAllSubmorphsDo(masterSubmorph => {
-      if (master && masterSubmorph == master) {
-        // surely no change here...
-        insertedMorphs.push(masterSubmorph, this.derivedMorph);
-        return;
-      }
-      let morphToInsert;
-      // morph already exists in our hierarchy
-      if (morphToInsert = managedMorphs[masterSubmorph.name]) {
-        // ensure morph has correct owner
-        if (morphToInsert.owner.name == masterSubmorph.owner.name) {
-          // if so, we are done
-          insertedMorphs.push(morphToInsert); // already inserted...
-          return;
-        }
-        // if not we need to insert this already existing morph at the correct position
-        // if the new parent already exists, neat! We just append it to that one
-        let ownerToBeAddedTo;
-        if (ownerToBeAddedTo = managedMorphs[masterSubmorph.owner.name]) {
-          const insertionIndex = masterSubmorph.owner.submorphs.indexOf(masterSubmorph);
-          insertedMorphs.push(ownerToBeAddedTo.addMorphAt(morphToInsert, insertionIndex));
-
-          return;
-        }
-        // this cant happen really...
-        throw new Error('Missing a owner that had to be added previously....');
-      } else {
-        // insert morph into correct position
-        morphToInsert = managedMorphs[masterSubmorph.name] = masterSubmorph.copy();
-        const ownerToBeAddedTo = managedMorphs[masterSubmorph.owner.name]; // this must have been resolved
-        const insertionIndex = masterSubmorph.owner.submorphs.indexOf(masterSubmorph);
-        if (!morphToInsert.master) morphToInsert.submorphs = []; // handle submorphs separately
-        insertedMorphs.push(ownerToBeAddedTo.addMorphAt(morphToInsert, insertionIndex));
-      }
+    this.derivedMorph.submorphs = master.copy().submorphs;
+    // enforce correct positions on all of these
+    this.derivedMorph.submorphs.forEach((m, i) => {
+      m.position = master.submorphs[i].position;
     });
 
-    insertedMorphs = arr.compact(insertedMorphs);
+    this.prepareSubmorphsToBeManaged(this.derivedMorph, master);
 
-    // finally we remove all the morphs that have not been inserted any more
-    Object.values(obj.dissoc(managedMorphs, insertedMorphs.map(m => m.name))).forEach(removedMorph => {
-      console.log(managedMorphs, insertedMorphs.map(m => m.name));
-      removedMorph.remove();
-    });
+    // master.withAllSubmorphsDo(masterSubmorph => {
+    //   if (master && masterSubmorph == master) {
+    //     // surely no change here...
+    //     insertedMorphs.push(masterSubmorph, this.derivedMorph);
+    //     return;
+    //   }
+    //   let morphToInsert;
+    //   // morph already exists in our hierarchy
+    //   if (morphToInsert = managedMorphs[masterSubmorph.name]) {
+    //     // ensure morph has correct owner
+    //     if (morphToInsert.owner.name == masterSubmorph.owner.name) {
+    //       // if so, we are done
+    //       insertedMorphs.push(morphToInsert); // already inserted...
+    //       return;
+    //     }
+    //     // if not we need to insert this already existing morph at the correct position
+    //     // if the new parent already exists, neat! We just append it to that one
+    //     let ownerToBeAddedTo;
+    //     if (ownerToBeAddedTo = managedMorphs[masterSubmorph.owner.name]) {
+    //       const insertionIndex = masterSubmorph.owner.submorphs.indexOf(masterSubmorph);
+    //       insertedMorphs.push(ownerToBeAddedTo.addMorphAt(morphToInsert, insertionIndex));
+    //
+    //       return;
+    //     }
+    //     // this cant happen really...
+    //     throw new Error('Missing a owner that had to be added previously....');
+    //   } else {
+    //     // insert morph into correct position
+    //     morphToInsert = managedMorphs[masterSubmorph.name] = masterSubmorph.copy();
+    //     const ownerToBeAddedTo = managedMorphs[masterSubmorph.owner.name]; // this must have been resolved
+    //     const insertionIndex = masterSubmorph.owner.submorphs.indexOf(masterSubmorph);
+    //     if (!morphToInsert.master) morphToInsert.submorphs = []; // handle submorphs separately
+    //     insertedMorphs.push(ownerToBeAddedTo.addMorphAt(morphToInsert, insertionIndex));
+    //   }
+    // });
+    //
+    // insertedMorphs = arr.compact(insertedMorphs);
+    //
+    // // finally we remove all the morphs that have not been inserted any more
+    // Object.values(obj.dissoc(managedMorphs, insertedMorphs.map(m => m.name))).forEach(removedMorph => {
+    //   console.log(managedMorphs, insertedMorphs.map(m => m.name));
+    //   removedMorph.remove();
+    // });
 
     // const [allManaged, allOthers] = arr.partition(morphToBeStyled.submorphs, m => this.managesMorph(m));
     // const toBeAdded = masterSubmorph.submorphs
@@ -544,6 +563,7 @@ export class ComponentPolicy {
   }
 
   managesMorph (m) {
+    // fixme: this wont work if nothing has been overridden so far
     return this._overriddenProps.has(m); // confusing, but works
   }
 
@@ -613,6 +633,7 @@ export class ComponentPolicy {
       else {
         // drill down in the master chain if a different click can be found
         let superMaster = master && master.master;
+        const seen = [];
         while (superMaster) {
           if (superMaster.click) {
             // take into account the overridden props of the masters in between
@@ -620,6 +641,8 @@ export class ComponentPolicy {
             break;
           }
           superMaster = Path('auto.master').get(superMaster);
+          if (seen.includes(superMaster)) break;
+          seen.push(superMaster);
         }
       }
     }
@@ -755,7 +778,7 @@ export function clearSnapshot (name) {
   delete fetchedSnapshots[name];
 }
 
-class StyleGuideResource extends Resource {
+export class StyleGuideResource extends Resource {
   get canDealWithJSON () { return false; }
 
   get componentName () {
@@ -767,14 +790,14 @@ class StyleGuideResource extends Resource {
   get worldName () {
     const match = this.url.match(styleGuideURLRe);
     let [_, worldName, name] = match;
-    if (!lively.FreezerRuntime && worldName == '$world') worldName = this.localWorldName();
+    if (worldName == '$world') worldName = this.localWorldName();
     return worldName;
   }
 
   async dirList (depth, opts) {
     // provide dir last by filtering the components inside the world via the slash based naming scheme
     if (this.worldName == getProjectName($world)) {
-      return $world.withAllSubmorphsSelect(m => m.isComponent);
+      return arr.uniq([...$world.localComponents, ...$world.withAllSubmorphsSelect(m => m.isComponent)]);
     }
 
     const remoteMasters = resolvedMasters[this.worldName];
@@ -819,81 +842,77 @@ class StyleGuideResource extends Resource {
     let component = Path([this.worldName, this.componentName]).get(resolvedMasters);
     if (component) return component;
 
-    if (lively.FreezerRuntime) {
-      let rootDir = resource(System.baseURL);
-      if (rootDir.isFile()) rootDir = rootDir.parent();
-      const masterDir = rootDir.join('masters/');
-      component = await this.fetchFromMasterDir(masterDir, name);
+    // announce we are about to fetch this snapshot;
+    let resolveSnapshot;
+    if (!fetchedSnapshots[this.worldName]) {
+      console.log('scheduling fetch of', this.worldName);
+      ({ resolve: resolveSnapshot, promise: fetchedSnapshots[this.worldName] } = promise.deferred());
     }
 
-    if (!lively.FreezerRuntime) {
-      // announce we are about to fetch this snapshot;
-      let resolveSnapshot;
-      if (!fetchedSnapshots[this.worldName]) {
-        console.log('scheduling fetch of', this.worldName);
-        ({ resolve: resolveSnapshot, promise: fetchedSnapshots[this.worldName] } = promise.deferred());
-      }
+    if (await this.localWorldName() == this.worldName) {
+      component = typeof $world !== 'undefined' && ($world.getSubmorphNamed(name) || $world.localComponents.find(c => c.name == name));
+      if (!component) { throw Error(`Master component "${name}" can not be found in "${this.worldName}"`); }
+      return component;
+    }
 
-      if (await this.localWorldName() == this.worldName) {
-        component = typeof $world !== 'undefined' && ($world.getSubmorphNamed(name) || $world.localComponents.find(c => c.name == name));
-        if (!component) { throw Error(`Master component "${name}" can not be found in "${this.worldName}"`); }
-        return component;
-      }
-
-      let snapshot;
-      if (resolveSnapshot) {
-        const db = MorphicDB.default;
-        if ((await db.fetchCommit('world', this.worldName))) {
-          snapshot = await db.fetchSnapshot('world', this.worldName);
+    let snapshot;
+    if (resolveSnapshot) {
+      const db = MorphicDB.default;
+      if ((await db.fetchCommit('world', this.worldName))) {
+        snapshot = await db.fetchSnapshot('world', this.worldName);
+        worldToUrl[this.worldName] = resource(System.baseURL).join('worlds/load').withQuery({
+          name: this.worldName
+        }).url;
+      } else {
+        // try to get the JSON (fallback)
+        const jsonRes = resource(System.baseURL).join('lively.morphic/styleguides').join(this.worldName + '.json');
+        if (await jsonRes.exists()) {
+          snapshot = await jsonRes.readJson();
           worldToUrl[this.worldName] = resource(System.baseURL).join('worlds/load').withQuery({
-            name: this.worldName
+            file: 'lively.morphic/styleguides/' + this.worldName + '.json'
           }).url;
-        } else {
-          // try to get the JSON (fallback)
-          const jsonRes = resource(System.baseURL).join('lively.morphic/styleguides').join(this.worldName + '.json');
-          if (await jsonRes.exists()) {
-            snapshot = await jsonRes.readJson();
-            worldToUrl[this.worldName] = resource(System.baseURL).join('worlds/load').withQuery({
-              file: 'lively.morphic/styleguides/' + this.worldName + '.json'
-            }).url;
-          } else resolveSnapshot(null); // total fail
-        }
-        // transpile the packages
-        ensureAbsoluteComponentRefs({ snapshotAndPackages: snapshot, localComponents: [], localWorldName: this.worldName });
-        await loadPackagesAndModulesOfSnapshot(snapshot); // this takes a looong time... and loads a bunch of stuff we often never need, only load the stuff that is directly required by the sub-snap
-        // fix all the references to $world inside that snapshot
-        Object.values(snapshot.snapshot)
-          .filter(m => m.props.master)
-          .forEach(m => {
-            const masterExpr = m.props.master.value;
-            if (obj.isString(masterExpr)) {
-              m.props.master.value = masterExpr.split('$world').join(this.worldName);
-            }
-          });
-        resolveSnapshot(snapshot);
-      } else snapshot = await fetchedSnapshots[this.worldName];
+        } else resolveSnapshot(null); // total fail
+      }
+      // transpile the packages
+      ensureAbsoluteComponentRefs({ snapshotAndPackages: snapshot, localComponents: [], localWorldName: this.worldName });
+      await loadPackagesAndModulesOfSnapshot(snapshot); // this takes a looong time... and loads a bunch of stuff we often never need, only load the stuff that is directly required by the sub-snap
+      // fix all the references to $world inside that snapshot
+      Object.values(snapshot.snapshot)
+        .filter(m => m.props.master)
+        .forEach(m => {
+          const masterExpr = m.props.master.value;
+          if (obj.isString(masterExpr)) {
+            m.props.master.value = masterExpr.split('$world').join(this.worldName);
+          }
+        });
+      resolveSnapshot(snapshot);
+    } else snapshot = await fetchedSnapshots[this.worldName];
 
-      const pool = new ObjectPool(normalizeOptions({
-        plugins: [new StyleguidePlugin(), ...allPlugins]
-      }));
+    const pool = new ObjectPool(normalizeOptions({
+      plugins: [new StyleguidePlugin(), ...allPlugins]
+    }));
 
-      const [idToDeserialize] = Object.entries(snapshot.snapshot).find(([k, v]) => {
-        return Path('props.isComponent.value').get(v) && Path('props.name.value').get(v) == name;
-      }) || [];
+    const [idToDeserialize] = Object.entries(snapshot.snapshot).find(([k, v]) => {
+      return Path('props.isComponent.value').get(v) && Path('props.name.value').get(v) == name;
+    }) || [];
 
-      if (!idToDeserialize) throw Error(`Master component "${name}" can not be found in "${this.worldName}"`);
+    if (!idToDeserialize) throw Error(`Master component "${name}" can not be found in "${this.worldName}"`);
 
-      // load modules for that part of the snap, if it is required
+    // load modules for that part of the snap, if it is required
 
-      component = pool.resolveFromSnapshotAndId({ ...snapshot, id: idToDeserialize });
-    }
+    component = pool.resolveFromSnapshotAndId({ ...snapshot, id: idToDeserialize });
 
+    return await this.resolveComponent(component);
+  }
+
+  async resolveComponent (component) {
+    const name = this.componentName;
     if (resolvedMasters[this.worldName]) resolvedMasters[this.worldName][name] = component;
     else resolvedMasters[this.worldName] = { [name]: component };
 
     component._resourceHandle = this;
 
-    if (component._pool.mastersInSubHierarchy) {
+    if (component._pool && component._pool.mastersInSubHierarchy) {
       // fixme: apply these in hierarchical order
       for (const master of component._pool.mastersInSubHierarchy) {
         await master.applyIfNeeded(true);
@@ -904,7 +923,7 @@ class StyleGuideResource extends Resource {
       delete component._pool;
     }
 
-    return Promise.resolve(component);
+    return component;
   }
 
   async write (source) {
