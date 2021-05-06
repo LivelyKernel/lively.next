@@ -426,8 +426,11 @@ export class NumberWidget extends Morph {
           this.get('value').floatingPoint = isFloat;
         },
         get () {
+          if (typeof this.getProperty('floatingPoint') !== 'undefined') {
+            return this.getProperty('floatingPoint');
+          }
           const m = /[+-]?([0-9]*[.])?[0-9]+/.exec(this.number);
-          return this.getProperty('floatingPoint') || (this.scaleFactor == 1 && m && !!m[1]);
+          return this.scaleFactor == 1 && m && !!m[1];
         }
       }, // infer that indirectly by looking at the floating point of the passed number value
       padding: {
@@ -607,7 +610,6 @@ export class NumberWidget extends Morph {
     this.update(this.number - (1 / this.scaleFactor), false);
   }
 }
-
 
 export class ShadowWidget extends Morph {
   static get properties () {
