@@ -29,6 +29,12 @@ class Layout {
 
   attach () {
     this.apply();
+    if (this.container.master) {
+      this.container.master.whenApplied().then(() => {
+        this.applyRequests = true;
+        this.forceLayout();
+      });
+    }
     this.refreshBoundsCache();
   }
 
@@ -266,7 +272,8 @@ class FloatLayout extends Layout {
     super(props);
     this._orderByIndex = props.orderByIndex || false;
     this._resizeSubmorphs = typeof props.resizeSubmorphs !== 'undefined'
-      ? props.resizeSubmorphs : false;
+      ? props.resizeSubmorphs
+      : false;
   }
 
   copy () {
@@ -801,7 +808,7 @@ export class TilingLayout extends Layout {
     };
   }
 
-  get possibleAxisValues () { return ['row', 'columns']; }
+  get possibleAxisValues () { return ['row', 'column']; }
   get possibleAlignValues () { return ['left', 'center', 'right']; }
 
   get orderByIndex () { return this._orderByIndex; }
@@ -849,7 +856,7 @@ export class TilingLayout extends Layout {
       var remainingWidth = width - spacing;
       let rowMorphs = arr.takeWhile(layoutableSubmorphs, m => {
         const ext = m.bounds().extent();
-        const newWidth = remainingWidth - (ext[normalizedWidthAccessor] + spacing);
+        const newWidth = remainingWidth - (Math.floor(ext[normalizedWidthAccessor]) + spacing);
         if (newWidth < 0) return false;
         remainingWidth = newWidth;
         return true;
@@ -1594,11 +1601,13 @@ export class GridLayout extends Layout {
     for (const r of arr.range(0, this.rowCount - 1)) {
       const row = this.grid.row(r);
       rows.push(r, {
-        ...(row.fixed ? {
-          fixed: row.length
-        } : {
-          height: row.height
-        }),
+        ...(row.fixed
+          ? {
+              fixed: row.length
+            }
+          : {
+              height: row.height
+            }),
         paddingTop: row.paddingTop,
         paddingBottom: row.paddingBottom
       });
@@ -1606,9 +1615,11 @@ export class GridLayout extends Layout {
     for (const c of arr.range(0, this.columnCount - 1)) {
       const col = this.grid.col(c);
       columns.push(c, {
-        ...(col.fixed ? {
-          fixed: col.length
-        } : {}),
+        ...(col.fixed
+          ? {
+              fixed: col.length
+            }
+          : {}),
         paddingLeft: col.paddingLeft,
         paddingRight: col.paddingRight
       });
