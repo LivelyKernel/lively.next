@@ -36,6 +36,11 @@ export default class Halo extends Morph {
       pointerId: {},
       hasFixedPosition: { defaultValue: true },
       respondsToVisibleWindow: { defaultValue: true },
+      maskBounds: {
+        initialize () {
+          this.maskBounds = $world.visibleBounds();
+        }
+      },
       activeItems: {
         derived: true,
         defaultValue: ['*'],
@@ -196,7 +201,7 @@ export default class Halo extends Morph {
     if (change && !['extent', 'position', 'scale', 'rotation'].includes(change.prop)) { return; }
     if (this.active || !this.target) return;
     const world = this.target.world() || $world;
-    const worldBounds = world.visibleBounds();
+    const worldBounds = this.maskBounds;
     const targetBounds = this.target.globalBounds();
     const haloBounds = targetBounds.insetBy(-36).intersection(worldBounds);
     const boxBounds = targetBounds.intersection(worldBounds);
@@ -1784,7 +1789,7 @@ class MenuHaloItem extends HaloItem {
   async onMouseDown (evt) {
     const target = this.halo.target;
     this.halo.remove();
-    const menuItems = await target.menuItems();
+    const menuItems = await target.menuItems(evt);
     target.world().openMenu(menuItems).hasFixedPosition = this.halo.hasFixedPosition;
   }
 }
