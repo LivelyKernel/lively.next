@@ -20,8 +20,6 @@ import { copyMorph } from './serialization.js';
 
 import { ComponentPolicy } from './style-guide.js';
 
-import { Comment, CommentBrowser } from 'lively.collab';
-
 const defaultCommandHandler = new CommandHandler();
 
 function generateUnfolded (propName, members = ['top', 'left', 'right', 'bottom'], group = 'core') {
@@ -2440,7 +2438,7 @@ export class Morph {
   applyLayoutIfNeeded () {
     if (!this._dirty) return;
     for (let i = 0; i < this.submorphs.length; i++) { this.submorphs[i].applyLayoutIfNeeded(); }
-    this.layout && !this.layout.manualUpdate && this.layout.forceLayout();
+    this.layout && !this.layout.manualUpdate && this.layout.onContainerRender();
   }
 
   requestMasterStyling () {
@@ -2533,6 +2531,7 @@ export class Morph {
   // comments
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   async addComment (commentText, relativePosition = pt(0, 0)) {
+    const { Comment, CommentBrowser } = await System.import('lively.collab');
     const comment = new Comment(commentText, relativePosition);
     this.comments.push(comment);
     await CommentBrowser.addCommentForMorph(comment, this);
@@ -2540,11 +2539,13 @@ export class Morph {
   }
 
   async removeComment (commentToRemove) {
+    const { CommentBrowser } = await System.import('lively.collab');
     this.comments = this.comments.filter(comment => !commentToRemove.equals(comment));
     CommentBrowser.removeCommentForMorph(commentToRemove, this);
   }
 
-  emptyComments () {
+  async emptyComments () {
+    const { CommentBrowser } = await System.import('lively.collab');
     this.comments.forEach((comment) => CommentBrowser.removeCommentForMorph(comment, this));
     this.comments = [];
   }
