@@ -591,6 +591,8 @@ export class PasswordPrompt extends AbstractPrompt {
 
     const passwordInput = this.addNamed('input', {
       type: PasswordInputLine,
+      fontSize: 22,
+      padding: rect(5, 5, 0, 0),
       name: 'input',
       placeholder: placeholder || ''
     });
