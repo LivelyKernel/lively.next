@@ -114,18 +114,21 @@ function parsePropertiesMethod (node, parent, type) {
     node,
     name: node.key.name
   };
-  const nodes = [propertiesNode];
-  const children = [];
-  propertiesNode.node.value.body.body[0].argument.properties.forEach(property => {
-    children.push({
-      type: property.type,
-      parent: propertiesNode,
-      node: property,
-      name: property.key ? property.key.name : property.argument.arguments[0].value
+  try {
+    const children = [];
+    propertiesNode.node.value.body.body[0].argument.properties.forEach(property => {
+      children.push({
+        type: property.type,
+        parent: propertiesNode,
+        node: property,
+        name: property.key ? property.key.name : property.argument.arguments[0].value
+      });
     });
-  });
-  propertiesNode.children = children;
-  return propertiesNode;
+    propertiesNode.children = children;
+  } finally {
+    // in case the try fails we are equivalent to the base case in es6ClassMethod
+    return propertiesNode;
+  }
 }
 
 function parseCommandsMethod (node, parent, type) {
@@ -135,23 +138,26 @@ function parseCommandsMethod (node, parent, type) {
     node,
     name: node.key.name
   };
-  const nodes = [commandsNode];
-  const children = [];
-  if (commandsNode.node.value.body.body) {
-    const commands = commandsNode.node.value.body.body[0].argument.elements;
-    if (commands) {
-      commands.forEach(command => {
-        children.push({
-          type: command.type,
-          parent: commandsNode,
-          node: command,
-          name: command.properties[0].value.value
+  try {
+    const children = [];
+    if (commandsNode.node.value.body.body) {
+      const commands = commandsNode.node.value.body.body[0].argument.elements;
+      if (commands) {
+        commands.forEach(command => {
+          children.push({
+            type: command.type,
+            parent: commandsNode,
+            node: command,
+            name: command.properties[0].value.value
+          });
         });
-      });
-      commandsNode.children = children;
+        commandsNode.children = children;
+      }
     }
+  } finally {
+    // in case the try fails we are equivalent to the base case in es6ClassMethod
+    return commandsNode;
   }
-  return commandsNode;
 }
 
 function varDefs (varDeclNode) {
