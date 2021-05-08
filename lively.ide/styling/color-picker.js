@@ -162,7 +162,7 @@ export class ColorPickerField extends Morph {
     if (this.gradientEnabled) {
       this.get('bottomRight').width = this.get('topLeft').width = this.submorphs[0].width = this.width;
     } else {
-      this.get('bottomRight').width = this.get('topLeft').width = this.width - pickerButton.width;
+      this.get('bottomRight').width = this.get('topLeft').width = Math.max(1, this.width - pickerButton.width);
     }
     this.get('bottomRight').left = 0;
     this.get('dropDownIndicator').right = this.get('paletteButton').width - 5;
