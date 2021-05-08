@@ -8,6 +8,7 @@ import { hyperscriptFnForDocument } from '../rendering/dom-helper.js';
 import { objectReplacementChar } from './document.js';
 import config from '../config.js';
 import { getSvgVertices } from '../rendering/property-dom-mapping.js';
+import { waitFor } from 'lively.lang/promise.js';
 
 const { h, create, patch, diff } = vdom;
 
@@ -34,8 +35,9 @@ visible lines: ${lastVisibleRow - firstVisibleRow}
 height: ${textHeight}, ${lines.length} lines`);
 }
 
-function installCSS (domEnv) {
+async function installCSS (env) {
   cssInstalled = true;
+  const domNode = await waitFor(20 * 1000, () => env.renderer && env.renderer.domNode);
   addOrChangeCSSDeclaration('new-text-css', `
 
     /* markers */
@@ -180,7 +182,7 @@ function installCSS (domEnv) {
       z-index: 3
     }
 
-  `, domEnv.document);
+  `, domNode.getRootNode());
 }
 
 // installCSS({document});
@@ -308,11 +310,11 @@ class AfterTextRenderHook {
 }
 
 export default class TextRenderer {
-  constructor (domEnv) {
-    if (!domEnv) {
+  constructor (env) {
+    if (!env.domEnv) {
       console.warn('Text renderer initialized without domEnv. Depending on what you want to do you might have bad luck...!');
-    } else if (!cssInstalled) installCSS(domEnv);
-    this.domEnv = domEnv;
+    } else if (!cssInstalled) installCSS(env);
+    this.domEnv = env.domEnv;
   }
 
   directRenderLineFn (morph) {
@@ -397,16 +399,18 @@ export default class TextRenderer {
       }
     }, [
       scrollLayer,
-      ...morph.viewState.fastScroll ? [h('div', {
-        className: 'scrollWrapper',
-        style: {
-          'pointer-events': 'none',
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          transform: `translate(-${morph.scroll.x}px, -${morph.scroll.y}px)`
-        }
-      }, subNodes)] : subNodes
+      ...morph.viewState.fastScroll
+        ? [h('div', {
+            className: 'scrollWrapper',
+            style: {
+              'pointer-events': 'none',
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              transform: `translate(-${morph.scroll.x}px, -${morph.scroll.y}px)`
+            }
+          }, subNodes)]
+        : subNodes
     ]
     );
   }
@@ -414,10 +418,12 @@ export default class TextRenderer {
   renderTextLayer (morph, renderer) {
     // this method renders the text content = lines
 
-    const children = morph.debug ? [
-      ...this.renderDebugLayer(morph),
-      ...this.renderLines(h, renderer, morph)
-    ] : this.renderLines(h, renderer, morph);
+    const children = morph.debug
+      ? [
+          ...this.renderDebugLayer(morph),
+          ...this.renderLines(h, renderer, morph)
+        ]
+      : this.renderLines(h, renderer, morph);
 
     const node = this.renderJustTextLayerNode(h, morph, null, children);
     node.properties.style.position = 'absolute';

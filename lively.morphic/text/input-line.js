@@ -423,7 +423,7 @@ export default class InputLine extends Text {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // html export
   htmlExport_transformNode (node) {
-    const doc = node.ownerDocument;
+    const doc = node.getRootNode();
     const input = doc.createElement('input');
     const textCSSProps = [
       'padding',
@@ -443,7 +443,6 @@ export default class InputLine extends Text {
     return input;
   }
 }
-
 
 // var i = new PasswordInputLine().openInWorld();
 // i.remove();
@@ -658,7 +657,7 @@ export class PasswordInputLine extends HTMLMorph {
   }
 
   htmlExport_transformNode (node) {
-    const doc = node.ownerDocument;
+    const doc = node.getRootNode();
     const wrapper = doc.createElement('div');
     let oldInput = node.querySelector('input');
     const input = doc.createElement('input');

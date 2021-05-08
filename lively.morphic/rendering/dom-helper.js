@@ -113,7 +113,7 @@ export function defaultDOMEnv () {
     ? new DomEnvironment(window, document, () => {
       // clean body
       // clean header
-      })
+    })
     : createDOMEnvironment());
 }
 
@@ -121,18 +121,18 @@ export function defaultDOMEnv () {
 
 function setCSSDef (node, cssDefString, doc) {
   arr.from(node.childNodes).forEach(c => node.removeChild(c));
-  const rules = doc.createTextNode(cssDefString);
+  const rules = document.createTextNode(cssDefString);
   if (node.styleSheet) node.styleSheet.cssText = rules.nodeValue;
   else node.appendChild(rules);
   return node;
 }
 
 function addCSSDef (id, cssString, doc) {
-  const style = doc.createElement('style');
+  const style = document.createElement('style');
   style.type = 'text/css';
   if (id) style.setAttribute('id', id);
   setCSSDef(style, cssString, doc);
-  doc.head.appendChild(style);
+  (doc.head || doc).appendChild(style);
   return style;
 }
 
@@ -147,13 +147,13 @@ export function addOrChangeLinkedCSS (id, url, doc = document, overwrite = true)
   let link = doc.getElementById(id);
   let loaded = false;
   if (!link) {
-    link = doc.createElement('link');
+    link = document.createElement('link');
     link.type = 'text/css';
     link.rel = 'stylesheet';
     link.setAttribute('id', id);
     link.setAttribute('href', url);
     link.onload = () => loaded = true;
-    doc.head.appendChild(link);
+    (doc.head || doc).appendChild(link);
     return promise.waitFor(30000, () => !!loaded && link);
   }
   if (overwrite && link.getAttribute('href') !== url) {
@@ -234,11 +234,13 @@ export const hyperscriptFnForDocument = (function () {
         for (var i = 0; i < children.length; i++) {
           const child = children[i];
           el.appendChild(typeof child === 'string'
-            ? document.createTextNode(child) : child);
+            ? document.createTextNode(child)
+            : child);
         }
       } else {
         el.appendChild(typeof children === 'string'
-          ? document.createTextNode(children) : children);
+          ? document.createTextNode(children)
+          : children);
       }
 
       return el;

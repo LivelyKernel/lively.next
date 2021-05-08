@@ -93,7 +93,7 @@ export class Text extends Morph {
         group: '_rendering',
         after: ['viewState'],
         initialize () {
-          this.textRenderer = new Renderer(this.env.domEnv);
+          this.textRenderer = new Renderer(this.env);
         }
       },
 
@@ -724,7 +724,7 @@ export class Text extends Morph {
 
     this.viewState = this.defaultViewState;
     this.markers = [];
-    this.textRenderer = new Renderer(this.env.domEnv);
+    this.textRenderer = new Renderer(this.env);
     this.textLayout = new TextLayout(this);
     this.changeDocument(Document.fromString(''));
     this.ensureUndoManager();

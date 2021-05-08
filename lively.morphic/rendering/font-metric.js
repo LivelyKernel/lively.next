@@ -48,7 +48,7 @@ export default class FontMetric {
     let doc, parentNode;
     if (this.element) {
       parentNode = this.element.parentNode;
-      doc = this.element.ownerDocument;
+      doc = this.element.getRootNode();
     }
     this.uninstall();
     this.charMap = {};
@@ -542,9 +542,11 @@ const GLOBAL = typeof System !== 'undefined'
   : window || global || self || this;
 
 const getComputedFontFamily = typeof GLOBAL.getComputedStyle === 'function'
-  ? node => GLOBAL.getComputedStyle(node).fontFamily : () => '';
+  ? node => GLOBAL.getComputedStyle(node).fontFamily
+  : () => '';
 const getComputedMarginLeft = typeof GLOBAL.getComputedStyle === 'function'
-  ? node => parseInt(GLOBAL.getComputedStyle(node).marginLeft) || 0 : () => 0;
+  ? node => parseInt(GLOBAL.getComputedStyle(node).marginLeft) || 0
+  : () => 0;
 
 function charBoundsOfBigMonospacedLine (
   morph, fontMetric, line, lineNode,

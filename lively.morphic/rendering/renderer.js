@@ -43,7 +43,7 @@ export class Renderer {
     if (!world || !world.isMorph) { throw new Error(`Trying to initialize renderer with an invalid world morph: ${world}`); }
     if (!rootNode || !('nodeType' in rootNode)) { throw new Error(`Trying to initialize renderer with an invalid root node: ${rootNode}`); }
     if (!domEnvironment) {
-      const doc = rootNode.ownerDocument;
+      const doc = rootNode.getRootNode();
       domEnvironment = { window: System.global, document: doc };
     }
     this.worldMorph = world;
@@ -75,7 +75,7 @@ export class Renderer {
   }
 
   ensureDefaultCSS () {
-    return promise.waitFor(3000, () => this.domNode.ownerDocument)
+    return promise.waitFor(3000, () => this.domNode.getRootNode())
       .then(doc => Promise.all([
         addOrChangeCSSDeclaration('lively-morphic-css', defaultCSS, doc),
         addOrChangeLinkedCSS('lively-ibm-plex', config.css.ibmPlex), // those are many files, is there a smaller one?
