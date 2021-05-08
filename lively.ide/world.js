@@ -182,12 +182,13 @@ export class LivelyWorld extends World {
     this.opacity = 0;
     this.onWindowResize();
     // some meta stuff...
-    lively.modules.removeHook('fetch', window.__logFetch);
-    this.animate({ opacity: 1, duration: 1000, easing: easings.inOutExpo });
+    if (lively.modules) lively.modules.removeHook('fetch', window.__logFetch);
+    this.animate({ opacity: 1, blur: 3, duration: 1000, easing: easings.inOutExpo });
     if (this.showsUserFlap || resource(document.location.href).query().showsUserFlap) {
       this._styleLoading = prefetchCoreStyleguides(window.worldLoadingIndicator);
       await this._styleLoading;
     }
+    this.animate({ blur: 0, duration: 1000, easing: easings.inOutExpo });
     document.body.style.overflowX = 'visible';
     document.body.style.overflowY = 'visible';
   }
@@ -488,7 +489,6 @@ export class LivelyWorld extends World {
         evt.stop();
         let snapshots = JSON.parse(data.getData('application/morphic'));
         const morphs = [];
-
         // data.clearData()
         if (!Array.isArray(snapshots)) snapshots = [snapshots];
         li = LoadingIndicator.open('pasting morphs...');
