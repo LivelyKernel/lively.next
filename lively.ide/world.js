@@ -1142,7 +1142,8 @@ export class LivelyWorld extends World {
       evt.halo.addMorphToSelection(haloTarget);
       return;
     }
-    const removeHalo = evt.halo && !evt.targetMorphs.find(morph => morph.isHaloItem);
+    const removeHalo = evt.halo && !evt.targetMorphs.find(morph =>
+      morph.isHaloItem || morph.keepHalo && morph.keepHalo(evt));
     const removeLayoutHalo = evt.layoutHalo && !evt.targetMorphs.find(morph => morph.isHaloItem);
     const addHalo = (!evt.halo || removeHalo) && haloTarget;
     if (removeLayoutHalo) evt.layoutHalo.remove();
