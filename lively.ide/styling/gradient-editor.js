@@ -22,8 +22,9 @@ import { Popover } from 'lively.components/popup.js';
 import { ColorPalette } from './color-palette.js';
 import { ColorPicker } from './color-picker.js';
 import { colorWidgets } from './style-popover.js';
+import { joinPath } from 'lively.lang/string.js';
 
-const WHEEL_URL = '/lively.ide/assets/color-wheel.png';
+const WHEEL_URL = joinPath(System.baseURL, '/lively.ide/assets/color-wheel.png');
 
 class GradientTypeSelector extends Morph {
   get defaultLinearGradient () {
