@@ -282,6 +282,7 @@ const commands = [
     exec: (world, opts = { direction: 'left', offset: 1, what: 'move' }) => {
       const halo = world.halos()[0];
       if (!halo || halo.changingName) return false;
+      if (world.focusedMorph != halo) return false;
 
       let { direction, offset, what } = opts;
       const t = halo.target;
