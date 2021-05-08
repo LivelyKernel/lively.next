@@ -23,6 +23,10 @@ A docker image exists for this to try it out in the environment of your choice.
 2. Run the docker command as follows (replacing the seccomp section with the location above where the file was saved): `docker run -d --restart=unless-stopped --init --security-opt seccomp=/path/to/chrome.json --name lively-next -p 127.0.0.1:9011:9011 engagelively/lively-next:alpha4.5.0`
 3. Once completely started, navigate to [http://localhost:9011 ](http://localhost:9011)
 
+## Documentation
+
+Some hints and documentation can be found in the [project wiki](https://github.com/LivelyKernel/lively.next/wiki).
+
 ## License
 
 This project is [MIT licensed](LICENSE).
