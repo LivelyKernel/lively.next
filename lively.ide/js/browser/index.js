@@ -63,8 +63,10 @@ class CodeDefTreeData extends TreeData {
   collapse (node, bool) { node.isCollapsed = bool; }
   getChildren (node) {
     return this.isLeaf(node)
-      ? null : this.isCollapsed(node)
-          ? [] : node.children;
+      ? null
+      : this.isCollapsed(node)
+        ? []
+        : node.children;
   }
 }
 
@@ -74,7 +76,8 @@ export default class Browser extends Morph {
     // browse spec:
     // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
     const browser = browserOrProps instanceof Browser
-      ? browserOrProps : new this(browserOrProps);
+      ? browserOrProps
+      : new this(browserOrProps);
     if (!browser.world()) browser.openInWindow();
     return browser.browse(browseSpec, optSystemInterface);
   }
@@ -1298,7 +1301,8 @@ export default class Browser extends Morph {
       const result = await this.reloadModule(false);
       sourceEditor.textString = content;
       return !result || result instanceof Error
-        ? this.showError(err) : this.save(attempt + 1);
+        ? this.showError(err)
+        : this.save(attempt + 1);
     } finally { this.state.isSaving = false; }
 
     this.setStatusMessage('saved ' + module.nameInPackage, Color.white, 5000, {
@@ -1512,7 +1516,8 @@ export default class Browser extends Morph {
   focus (evt) {
     const { metaInfoText, sourceEditor } = this.ui;
     const t = evt && evt.targetMorph === metaInfoText
-      ? metaInfoText : sourceEditor;
+      ? metaInfoText
+      : sourceEditor;
     t.focus();
   }
 

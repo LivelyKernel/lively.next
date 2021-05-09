@@ -32,7 +32,6 @@ object-decl
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 export function findDecls (parsed, options) {
   // lively.debugNextMethodCall(lively.ast.codeCategorizer, "findDecls")
-
   options = options || obj.merge({ hideOneLiners: false }, options);
 
   if (typeof parsed === 'string') { parsed = parse(parsed, { addSource: true }); }
@@ -68,7 +67,6 @@ export function findDecls (parsed, options) {
 
     defs.push(...found);
   }
-
   return defs;
 }
 
@@ -96,12 +94,70 @@ function es6ClassMethod (node, parent, i) {
   else if (node.kind === 'method') type = node.static ? 'class-class-method' : 'class-instance-method';
   else if (node.kind === 'get') type = node.static ? 'class-class-getter' : 'class-instance-getter';
   else if (node.kind === 'set') type = node.static ? 'class-class-setter' : 'class-instance-setter';
-  return type ? {
+  if (type == 'class-instance-getter' && node.key.name == 'commands') return parseCommandsMethod(node, parent, type);
+  if (type == 'class-class-getter' && node.key.name == 'properties') return parsePropertiesMethod(node, parent, type);
+
+  return type
+    ? {
+        type,
+        parent,
+        node,
+        name: node.key.name
+      }
+    : null;
+}
+
+function parsePropertiesMethod (node, parent, type) {
+  const propertiesNode = {
     type,
     parent,
     node,
     name: node.key.name
-  } : null;
+  };
+  try {
+    const children = [];
+    propertiesNode.node.value.body.body[0].argument.properties.forEach(property => {
+      children.push({
+        type: property.type,
+        parent: propertiesNode,
+        node: property,
+        name: property.key ? property.key.name : property.argument.arguments[0].value
+      });
+    });
+    propertiesNode.children = children;
+  } finally {
+    // in case the try fails we are equivalent to the base case in es6ClassMethod
+    return propertiesNode;
+  }
+}
+
+function parseCommandsMethod (node, parent, type) {
+  const commandsNode = {
+    type,
+    parent,
+    node,
+    name: node.key.name
+  };
+  try {
+    const children = [];
+    if (commandsNode.node.value.body.body) {
+      const commands = commandsNode.node.value.body.body[0].argument.elements;
+      if (commands) {
+        commands.forEach(command => {
+          children.push({
+            type: command.type,
+            parent: commandsNode,
+            node: command,
+            name: command.properties[0].value.value
+          });
+        });
+        commandsNode.children = children;
+      }
+    }
+  } finally {
+    // in case the try fails we are equivalent to the base case in es6ClassMethod
+    return commandsNode;
+  }
 }
 
 function varDefs (varDeclNode) {
@@ -123,13 +179,20 @@ function varDefs (varDeclNode) {
       continue;
     }
 
+    if (initNode.type === 'ArrayExpression') {
+      def.type = 'array-decl';
+      def.children = arrayEntriesAsDefs(initNode).map(ea =>
+        ({ ...ea, type: 'object-' + ea.type, parent: def }));
+      result.push(...def.children);
+      continue;
+    }
+
     const objDefs = someObjectExpressionCall(initNode, def);
     if (objDefs) {
       def.children = objDefs.map(d => ({ ...d, parent: def }));
       result.push(...def.children);
     }
   }
-
   return result;
 }
 
@@ -174,13 +237,24 @@ function functionWrapper (node, options) {
 
 function unwrapExport (node) {
   return (node.type === 'ExportNamedDeclaration' || node.type === 'ExportDefaultDeclaration') &&
-      node.declaration ? node.declaration : node;
+      node.declaration
+    ? node.declaration
+    : node;
 }
 
 function objectKeyValsAsDefs (objectExpression, parent) {
   return objectExpression.properties.map(node => ({
     name: node.key.name || node.key.value,
     type: node.value.type === 'FunctionExpression' ? 'method' : 'property',
+    node,
+    parent
+  }));
+}
+
+function arrayEntriesAsDefs (arrayExpression, parent) {
+  return arrayExpression.elements.map(node => ({
+    name: node.value || node.properties[0].value.value,
+    type: node.type,
     node,
     parent
   }));
