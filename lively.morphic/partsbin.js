@@ -379,7 +379,7 @@ export class SnapshotEditor {
 
 const partURLRe = /^part:\/\/([^\/]+)\/(.*)$/;
 
-class PartResource extends Resource {
+export class PartResource extends Resource {
   get canDealWithJSON () { return false; }
   // just is a small decoration on top of the styleguide resource
   // essentially fetch the master component and create an instance based off of it
