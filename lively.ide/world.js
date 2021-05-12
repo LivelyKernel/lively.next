@@ -131,6 +131,8 @@ export class LivelyWorld extends World {
     if (topBar) cb(topBar);
   }
 
+  onTopBarLoaded () {}
+
   onKeyUp (evt) {
     this.withTopBarDo(tb => tb.onKeyUp(evt));
   }

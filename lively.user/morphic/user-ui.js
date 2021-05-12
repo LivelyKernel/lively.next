@@ -72,6 +72,7 @@ export var UserUI = {
     const dropShadow = topBar.dropShadow;
     topBar.dropShadow = null;
     topBar.attachToTarget(world);
+    $world.onTopBarLoaded();
     // FIXME
     System.import('lively.2lively/client.js').then(async m => {
       await topBar.whenRendered();
