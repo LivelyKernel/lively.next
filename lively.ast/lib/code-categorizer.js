@@ -181,10 +181,11 @@ function varDefs (varDeclNode) {
 
     if (initNode.type === 'ArrayExpression') {
       def.type = 'array-decl';
-      def.children = arrayEntriesAsDefs(initNode).map(ea =>
-        ({ ...ea, type: 'object-' + ea.type, parent: def }));
-      result.push(...def.children);
-      continue;
+      try {
+        def.children = arrayEntriesAsDefs(initNode).map(ea =>
+          ({ ...ea, type: 'object-' + ea.type, parent: def }));
+        result.push(...def.children);
+      } finally { continue; }
     }
 
     const objDefs = someObjectExpressionCall(initNode, def);
