@@ -159,7 +159,10 @@ export class Renderer {
     // in case this world is embedded, we need to add the offset of the world morph here
     if (this.worldMorph.isEmbedded) {
       const bbx = this.domNode.getBoundingClientRect();
-      const { x: left, y: top } = canBePromotedToCompositionLayer(morph) ? pt(0, 0) : morph.position;
+      const { origin, owner, position } = morph;
+      const x = Math.round(position.x - origin.x - (morph._skipWrapping && owner ? owner.borderWidthLeft : 0));
+      const y = Math.round(position.y - origin.y - (morph._skipWrapping && owner ? owner.borderWidthTop : 0));
+      const { x: left, y: top } = canBePromotedToCompositionLayer(morph) ? pt(0, 0) : pt(x, y);
       tree.properties.style.top = top + bbx.y + 'px';
       tree.properties.style.left = left + bbx.x + 'px';
     }
