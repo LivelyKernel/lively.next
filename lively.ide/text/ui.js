@@ -24,6 +24,12 @@ export class RichTextControl extends Morph {
       autoRemove: { defaultValue: false },
       target: {},
       toggleColor: {},
+      buttonMaster: {
+        defaultValue: 'styleguide://System/dark button'
+      },
+      selectedButtonMaster: {
+        defaultValue: 'styleguide://SystemIDE/selected button'
+      },
       managedProps: {
         readOnly: true,
         get () {
@@ -49,7 +55,7 @@ export class RichTextControl extends Morph {
                 fb.selection = arr.last(fb.items);
               }
               fb.fit();
-              fb.width = Math.max(fb.width, 170);
+              fb.width = Math.max(fb.width, 130);
             },
             fontWeightSelection: (target, dropDownList) => {
               dropDownList.selection = target.fontWeight == 'normal' ? 'Medium' : (target.fontWeight ? string.capitalize(target.fontWeight) : 'Medium');
@@ -117,8 +123,8 @@ export class RichTextControl extends Morph {
                 control.get('padding field left').number = left;
                 control.get('padding field right').number = right;
                 control.get('padding field bottom').number = bottom;
-              } finally {
-
+              } catch (e) {
+                // ignore
               }
             },
             ...(
@@ -217,11 +223,11 @@ export class RichTextControl extends Morph {
     const { fontSelection } = this.ui;
     if (active) {
       btn.master = {
-        auto: 'styleguide://SystemIDE/selected button'
+        auto: this.selectedButtonMaster
       };
     } else {
       btn.master = {
-        auto: 'styleguide://System/dark button'
+        auto: this.buttonMaster
       };
     }
   }
@@ -280,9 +286,11 @@ export class RichTextControl extends Morph {
   update () {
     const { target, updateSpec } = this;
     const sel = target.selection;
-    const attr = sel ? (sel.isEmpty()
-      ? target.textAttributeAt(sel.start)
-      : target.getStyleInRange(sel)) : {};
+    const attr = sel
+      ? (sel.isEmpty()
+          ? target.textAttributeAt(sel.start)
+          : target.getStyleInRange(sel))
+      : {};
     const managedProps = this.managedProps;
     const targetProps = obj.select(target, managedProps);
 
@@ -314,7 +322,8 @@ export class RichTextControl extends Morph {
       target.undoManager.group();
       target.changeStyleProperty(name,
         oldVal => typeof valueOrFn === 'function'
-          ? valueOrFn(oldVal) : valueOrFn);
+          ? valueOrFn(oldVal)
+          : valueOrFn);
       target.undoManager.group();
     }
   }
@@ -518,4 +527,5 @@ export class RichTextControl extends Morph {
     });
   }
 }
+
 
