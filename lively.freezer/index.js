@@ -1481,7 +1481,7 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
         if (!v.props[prop]) continue; // may be styled and not present in snapshot
         if (v.props[prop].value.startsWith('assets')) continue; // already copied
         const path = v.props[prop].value;
-        if (path.startsWith('data:')) continue; // data URL can not be copied
+        if (path == '' || path.startsWith('data:')) continue; // data URL can not be copied
         const asset = resource(path);
         if (asset.host() != resource(System.baseURL).host()) continue;
         asset._from = k;
