@@ -337,16 +337,18 @@ export class LayoutPopover extends StylePopover {
 
   updateControls () {
     this.get('Layout Type').relayout();
-    this.getSubmorphNamed('controlContainer').animate(this.layoutHalo ? {
-      isLayoutable: true,
-      submorphs: this.layoutHalo.optionControls(this),
-      duration: 300
-    } : {
-      isLayoutable: false,
-      extent: pt(0, 0),
-      submorphs: [],
-      duration: 300
-    });
+    this.getSubmorphNamed('controlContainer').animate(this.layoutHalo
+      ? {
+          isLayoutable: true,
+          submorphs: this.layoutHalo.optionControls(this),
+          duration: 300
+        }
+      : {
+          isLayoutable: false,
+          extent: pt(0, 0),
+          submorphs: [],
+          duration: 300
+        });
   }
 
   showLayoutHaloFor (morph) {
@@ -489,15 +491,20 @@ export class FillPopover extends StylePopover {
 
   controls () {
     if (!this.gradientEnabled) {
+      const pickerField = new colorWidgets.ColorPickerField({
+        name: 'colorField',
+        colorValue: this.fillValue
+      });
+      pickerField.whenRendered().then(() => {
+        pickerField.update(this.fillValue);
+      });
+
       return [
         {
           fill: Color.transparent,
           layout: new VerticalLayout({ spacing: 0 }),
           submorphs: [
-            new colorWidgets.ColorPickerField({
-              name: 'colorField',
-              colorValue: this.fillValue
-            })
+            pickerField
           ]
         }
       ];
