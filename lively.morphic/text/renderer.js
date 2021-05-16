@@ -337,7 +337,7 @@ export default class TextRenderer {
   }
 
   renderMorph (morph, renderer) {
-    const cursorWidth = 1;
+    const cursorWidth = morph.cursorWidth || 1;
     let selectionLayer = [];
 
     const sel = morph.selection;

@@ -314,6 +314,11 @@ export class Text extends Morph {
         }
       },
 
+      cursorWidth: {
+        defaultValue: 1,
+        type: 'Number'
+      },
+
       selection: {
         group: 'selection',
         derived: true,
