@@ -9,6 +9,7 @@ import { MorphicEnv } from './env.js';
 import { resource } from 'lively.resources';
 import { newMorphId, morph, pathForBrowserHistory } from './helpers.js';
 import * as ast from 'lively.ast';
+import { StyleguidePlugin, findLocalComponents } from './style-guide.js';
 
 function normalizeOptions (options) {
   options = { reinitializeIds: false, plugins: [...allPlugins, new StyleguidePlugin()], ...options };
@@ -113,7 +114,6 @@ import * as modules from 'lively.modules';
 import { createFiles } from 'lively.resources';
 import { promise, Path, graph, arr } from 'lively.lang';
 import { migrations } from './object-migration.js';
-import { StyleguidePlugin, findLocalComponents } from './style-guide.js';
 
 const { registerPackage, module, getPackage, ensurePackage, lookupPackage, semver } = modules;
 

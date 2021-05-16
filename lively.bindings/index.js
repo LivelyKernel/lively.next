@@ -1,6 +1,6 @@
 import { string, arr, Closure, obj } from 'lively.lang';
 import { stringifyFunctionWithoutToplevelRecorder } from 'lively.source-transform';
-import { ExpressionSerializer } from 'lively.serializer2';
+import ExpressionSerializer from 'lively.serializer2/plugins/expression-serializer.js';
 
 export { connect, disconnect, disconnectAll, once, signal, noUpdate };
 
