@@ -1627,6 +1627,7 @@ export class Morph {
   }
 
   remove () {
+    signal(this, 'onRemove');
     this.ownerChain().forEach(m => {
       if (m._stylingVisitor) {
         m._stylingVisitor.deleteFromCache(this);
