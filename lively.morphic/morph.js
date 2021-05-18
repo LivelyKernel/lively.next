@@ -1530,6 +1530,8 @@ export class Morph {
     const existingIndex = this.submorphs.indexOf(submorph);
     if (existingIndex > -1 && existingIndex === index) return;
 
+    this.requestMasterStyling();
+
     this.addMethodCallChangeDoing({
       target: this,
       selector: 'addMorphAt',
