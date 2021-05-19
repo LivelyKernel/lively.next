@@ -65,7 +65,7 @@ describe('morph', function () {
     await morph.addComment(exampleText);
     await morph.addComment(exampleText);
     expect(morphHasNumberOfComments(morph, 2)).to.be.ok;
-    morph.emptyComments();
+    await morph.emptyComments();
     expect(morphHasNoComments(morph)).to.be.ok;
   });
 

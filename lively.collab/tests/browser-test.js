@@ -117,6 +117,7 @@ describe('comment indicator', function () {
   beforeEach(async function () {
     morph = new Morph();
     morph.name = exampleName;
+    morph.openInWorld();
     browser = CommentBrowser.instance; // This shouldn't be neccessary
     CommentBrowser.open();
     await CommentBrowser.whenRendered();
@@ -140,7 +141,6 @@ describe('comment indicator', function () {
   });
 
   afterEach(function () {
-    morph.emptyComments();
     morph.abandon();
     CommentBrowser.close();
   });
