@@ -293,7 +293,7 @@ export class CommentMorph extends Morph {
   async showCommentIndicator () {
     this.commentIndicator = await resource('part://CommentComponents/comment indicator master').read();
     await this.commentIndicator.initialize(this, this.comment, this.referenceMorph);
-    if (CommentBrowser.isOpen() && (this.comment.isResolved() == CommentBrowser.showsArchive())) {
+    if (CommentBrowser.isOpen() && (this.comment.isResolved() == CommentBrowser.showsArchive()) && this.referenceMorph.world()) {
       this.commentIndicator.display();
     }
   }
