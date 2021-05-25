@@ -76,17 +76,17 @@ const pathDoubleSlashRe = /(^|[^:])[\/]+/g;
 export function withRelativePartsResolved (inputPath) {
   let path = inputPath; let result = path;
 
-  // /foo/../bar --> /bar
-  do {
-    path = result;
-    result = path.replace(pathDoubleDotRe, '');
-  } while (result != path);
-
   // foo//bar --> foo/bar
   result = result.replace(pathDoubleSlashRe, '$1/');
 
   // foo/./bar --> foo/bar
   result = result.replace(pathDotRe, '/');
+
+  // /foo/../bar --> /bar
+  do {
+    path = result;
+    result = path.replace(pathDoubleDotRe, '');
+  } while (result != path);
 
   return result;
 }
