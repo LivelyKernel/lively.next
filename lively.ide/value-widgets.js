@@ -870,8 +870,17 @@ export class StringWidget extends InputLine {
       fill: { defaultValue: Color.transparent },
       fontColor: { defaultValue: Color.blue },
       nativeCursor: { defaultValue: 'auto' },
-      borderColor: { defaultValue: Color.transparent },
-      borderStyle: { defaultValue: 'dashed' },
+      borderColor: {
+        // will appear as white border in onFocus
+        defaultValue: Color.white.withA(0)
+      },
+      _borderColor: {
+        after: ['borderColor'],
+        initialize () {
+          this._borderColor = this.borderColor;
+        }
+      },
+      borderStyle: { defaultValue: 'solid' },
       borderRadius: { defaultValue: 4 },
       borderWidth: { defaultValue: 1 },
       padding: { defaultValue: rect(0, 0, 0, 0) },
@@ -908,10 +917,11 @@ export class StringWidget extends InputLine {
   }
 
   async onFocus (evt) {
+    if (!this.focus) this._borderColor = this.borderColor;
     super.onFocus(evt);
     if (this.readOnly) return;
     if (!this.stringTooLong) {
-      this.borderColor = Color.white.withA(0.9);
+      this.borderColor = this.borderColor.valueOf().withA(0.7);
       this.textString = this.stringValue;
       return;
     }
@@ -923,7 +933,7 @@ export class StringWidget extends InputLine {
   onBlur (evt) {
     super.onBlur(evt);
     if (this.readOnly) return;
-    this.borderColor = Color.transparent;
+    this.borderColor = this._borderColor;
     this.onInput(this.textString);
   }
 
