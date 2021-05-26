@@ -1,6 +1,6 @@
 import { pt } from 'lively.graphics';
 import { Morph } from './morph.js';
-import { morph } from './helpers.js';
+import { morph, touchInputDevice } from './helpers.js';
 import config from './config.js';
 import { fun } from 'lively.lang';
 
@@ -22,7 +22,7 @@ export class TooltipViewer {
   }
 
   mouseMove (evt) {
-    // debounce
+    if (touchInputDevice) return; // no mouse cursor, no tooltips
     const { hand } = evt;
     const candidates = $world.morphsContainingPoint(evt.positionIn($world)).filter(m => m.reactsToPointer || m.tooltip);
     let targetMorph, prevCandidate;
