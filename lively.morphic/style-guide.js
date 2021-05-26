@@ -774,6 +774,10 @@ var worldToUrl = worldToUrl || {};
 
 export { resolvedMasters };
 
+export function reset () {
+  localNamePromise = null;
+}
+
 export function clearSnapshot (name) {
   delete fetchedSnapshots[name];
 }
