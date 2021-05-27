@@ -2934,8 +2934,8 @@ export class Image extends Morph {
     if (typeof url === 'string') { this.imageUrl = url; }
   }
 
-  menuItems () {
-    const items = super.menuItems();
+  menuItems (evt) {
+    const items = super.menuItems(evt);
     items.unshift(
       ['change image url...', () => this.interactivelyChangeImageURL()],
       ['resize image to to fit world', () => {
@@ -3499,7 +3499,6 @@ export class Path extends Morph {
     return pt(x, y);
   }
 }
-
 
 export class Polygon extends Path {
   constructor (props) {
