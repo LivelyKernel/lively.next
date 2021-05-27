@@ -36,6 +36,7 @@ export default class Halo extends Morph {
       pointerId: {},
       hasFixedPosition: { defaultValue: true },
       respondsToVisibleWindow: { defaultValue: true },
+      acceptsDrops: { defaultValue: false },
       maskBounds: {
         initialize () {
           this.maskBounds = $world.visibleBounds();
@@ -674,7 +675,8 @@ class HaloItem extends Morph {
       fill: { defaultValue: Color.gray.withA(0.7) },
       grabbable: { defaultValue: false },
       extent: { defaultValue: pt(24, 24) },
-      halo: {}
+      halo: {},
+      acceptsDrops: { defaultValue: false }
     };
   }
 
@@ -1812,6 +1814,11 @@ export class MorphHighlighter extends Morph {
       halo: {},
       epiMorph: { defaultValue: true },
       isHighlighter: { readOnly: true, defaultValue: true },
+      acceptsDrops: {
+        get () {
+          return !!this.layoutHalo;
+        }
+      },
       highlightedSides: {
         defaultValue: [],
         set (sides) {
