@@ -64,9 +64,15 @@ export class CommentIndicator extends Label {
   }
 
   hide () {
-    const referenceMorph = this.referenceMorph;
-    disconnect(referenceMorph, 'onChange', this, 'referenceMoving');
-    disconnect(referenceMorph, 'onOwnerChanged', this, 'connectMorphs');
+    let referenceMorph = this.referenceMorph;
+    while (referenceMorph && referenceMorph != $world) {
+      referenceMorph.attributeConnections.forEach(connection => {
+        if (connection.targetObj == this) {
+          connection.disconnect();
+        }
+      });
+      referenceMorph = referenceMorph.owner;
+    }
     super.remove();
   }
 
