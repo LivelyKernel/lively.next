@@ -637,7 +637,7 @@ export class LivelyWorld extends World {
     msgMorph.targetMorph = morph;
     msgMorph.fadeIn(300);
     if (msgMorph.removeOnTargetMorphChange && morph.isText) {
-      once(morph, 'selectionChange', msgMorph, 'fadeOut', { converter: () => 200 });
+      once(morph, 'selectionChange', msgMorph, 'fadeOut', { converter: () => 200, garbageCollect: true });
     }
     return msgMorph;
   }
