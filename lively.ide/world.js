@@ -1001,12 +1001,14 @@ export class LivelyWorld extends World {
     items.push(['Add comment', async () => {
       const commentText = await $world.prompt('Enter comment');
       if (commentText) {
-        const relativePosition = pt(0, 0);
-        /* if (evt) {
-          const xRelative = self.localize(evt.hand.position).x / self.width;
-          const yRelative = self.localize(evt.hand.position).y / self.height;
+        let relativePosition = pt(0, 0);
+        if (evt && !evt.halo) {
+          const evtPosition = pt(evt.domEvt.pageX, evt.domEvt.pageY);
+          const localizedPoint = self.localize(evtPosition);
+          const xRelative = localizedPoint.x / self.width;
+          const yRelative = localizedPoint.y / self.height;
           relativePosition = pt(xRelative, yRelative);
-        } */
+        }
         await self.addComment(commentText, relativePosition);
         $world.setStatusMessage('Comment saved', 'green');
       } else {
