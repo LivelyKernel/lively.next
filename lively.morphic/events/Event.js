@@ -91,7 +91,8 @@ export class Event {
 
     if (!worldNode) {
       const target = this.domEvt.composedPath()[0] || this.domEvt.target;
-      const doc = target.nodeType === target.DOCUMENT_NODE ? target : target.getRootNode();
+      const defaultDoc = this.world.env.domEnv.document;
+      const doc = target.nodeType === target.DOCUMENT_NODE ? target : defaultDoc;
       worldNode = doc.getElementById(this.world.id);
     }
 
