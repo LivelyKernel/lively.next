@@ -1002,7 +1002,7 @@ export class LivelyWorld extends World {
       const commentText = await $world.prompt('Enter comment');
       if (commentText) {
         let relativePosition = pt(0, 0);
-        if (evt) {
+        if (evt && !evt.halo) {
           const xRelative = self.localize(evt.position).x / self.width;
           const yRelative = self.localize(evt.position).y / self.height;
           relativePosition = pt(xRelative, yRelative);
