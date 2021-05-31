@@ -97,6 +97,10 @@ export var UserUI = {
           duration: 500
         });
       }
+      const versionChecker = await resource('part://SystemUserUI/version checker').read();
+      versionChecker.openInWorld();
+      versionChecker.relayout();
+      versionChecker.checkVersion();
     });
     return topBar;
   },
