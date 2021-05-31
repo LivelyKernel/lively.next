@@ -1,5 +1,6 @@
 /* global System,TextEncoder */
 import * as Rollup from 'rollup';
+import jsonPlugin from 'https://jspm.dev/@rollup/plugin-json';
 import { MorphicDB, config, morph } from 'lively.morphic';
 import {
   createMorphSnapshot, serializeMorph,
@@ -193,7 +194,7 @@ function generateResourceExtensionModule (frozenPart) {
 export async function generateLoadHtml (part, format = 'global') {
   const addScripts = `
       <noscript>
-         <meta http-equiv="refresh" content="0;url=/noscript.html">
+         <meta http-equiv="refresh" content="0;url=noscript.html">
       </noscript>
       <title>${part.title || part.name}</title>
       ${part.__head_html__ || ''}
@@ -572,7 +573,7 @@ function cleanSnapshot ({ snapshot }) {
 
 // await evalOnServer('1 + 1')
 
-async function evalOnServer (code) {
+export async function evalOnServer (code) {
   if (System.get('@system-env').node) {
     return eval(code);
   }
@@ -635,6 +636,7 @@ async function getRequiredModulesFromSnapshot (snap, frozenPart, includeDynamicP
   });
   // [...imports, ...objectModules].map(id => belongsToObjectPackage(id))
   for (const m of [...imports, ...objectModules]) {
+    if (m.endsWith('.json')) continue;
     const mod = module(m);
     const partModuleSource = (mod._source || await mod.source());
     const parsedModuleSource = ast.parse(partModuleSource);
@@ -1152,7 +1154,8 @@ class LivelyRollup {
       return '';
     }
     if (id.endsWith('.json')) {
-      return this.translateToEsm(mod._source || await mod.source());
+      return await resource(mod.id).read();
+      // return this.translateToEsm(mod._source || await mod.source()); what is this needed for again?
     }
     let s = await mod.source();
 
@@ -1527,7 +1530,7 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
             return src;
           },
           transform: async (source, id) => { return await this.transform(source, id); }
-        }]
+        }, jsonPlugin()]
       });
       let globals;
       ({ code: depsCode, globals } = await this.generateGlobals(this.hasDynamicImports));
@@ -1630,7 +1633,7 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
     const li = LoadingIndicator.open('Freezing Part', { status: 'Optimizing...' });
     const runtimeCode = addRuntime ? await this.getRuntimeCode() : '';
     const regeneratorSource = addRuntime ? await resource('https://unpkg.com/regenerator-runtime@0.13.7/runtime.js').read() : '';
-    let polyfills = !includePolyfills ? '' : await module('lively.freezer/deps/pep.min.js').source();
+    let polyfills = ''; //! includePolyfills ? '' : await module('lively.freezer/deps/pep.min.js').source();
     polyfills += !includePolyfills ? '' : await module('lively.freezer/deps/fetch.umd.js').source();
 
     const code = runtimeCode + polyfills + regeneratorSource + depsCode + bundledCode;
