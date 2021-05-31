@@ -211,6 +211,21 @@ export class World extends Morph {
     this._tooltipViewer.mouseMove(evt);
   }
 
+  onHoverOut (evt) {
+    super.onHoverOut(evt);
+    if (evt.state.draggedMorph) {
+      const state = evt.state;
+      state.dragDelta = (state.draggedMorph.owner || this)
+        .getInverseTransform()
+        .transformDirection(
+          evt.position.subPt(
+            state.lastDragPosition));
+      state.absDragDelta = evt.position.subPt(state.clickedOnPosition);
+      evt.onAfterDispatch(() => state.lastDragPosition = evt.position);
+      evt.state.draggedMorph.onDrag(evt);
+    }
+  }
+
   onMouseDown (evt) {
     if (evt.state.menu) evt.state.menu.remove();
     this.onWindowScroll();
