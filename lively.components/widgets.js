@@ -580,16 +580,16 @@ export class LabeledCheckBox extends Morph {
 }
 
 export class ModeSelector extends Morph {
-  static example() {
-    var cb = new ModeSelector({items: {foo: {}, trottel: {}, babbel: {}}}).openInWorld();
+  static example () {
+    const cb = new ModeSelector({ items: { foo: {}, trottel: {}, babbel: {} } }).openInWorld();
     // cb.remove()
   }
 
-  static get properties() {
+  static get properties () {
     return {
       items: {
         derived: true,
-        set(items) {
+        set (items) {
           if (obj.isArray(items)) {
             this.keys = this.values = items;
           } else {
@@ -598,46 +598,46 @@ export class ModeSelector extends Morph {
           }
         }
       },
-      height: {defaultValue: 30},
+      height: { defaultValue: 30 },
       init: { },
       keys: { before: ['layout'] },
       values: { before: ['layout'] },
       tooltips: {},
       fontColor: {
-        defaultValue: Color.black,
+        defaultValue: Color.black
       },
       selectionFontColor: {
-        defaultValue: Color.white,
+        defaultValue: Color.white
       },
       master: {
-        initialize() {
+        initialize () {
           this.master = {
             auto: 'styleguide://SystemWidgets/mode selector'
-          }
+          };
         }
       },
       layout: {
-        after: ["items", 'keys', 'values'],
-        initialize() {
+        after: ['items', 'keys', 'values'],
+        initialize () {
           if (!this.keys) return;
           this.layout = new GridLayout({
-            rows: [0, {paddingBottom: 10}],
-            columns: [0, {fixed: 5}, this.keys.length + 2, {fixed: 5}],
-            grid: [[null, ...arr.interpose(this.keys.map(k => k + "Label"), null), null]],
+            rows: [0, { paddingBottom: 10 }],
+            columns: [0, { fixed: 5 }, this.keys.length + 2, { fixed: 5 }],
+            grid: [[null, ...arr.interpose(this.keys.map(k => k + 'Label'), null), null]],
             autoAssign: false,
             fitToCell: false
           });
         }
       },
       submorphs: {
-        after: ["items", 'keys', 'values', 'fontColor'],
-        initialize() {
+        after: ['items', 'keys', 'values', 'fontColor'],
+        initialize () {
           if (!this.keys) return;
           this.submorphs = [
-            {name: "typeMarker", isLayoutable: false},
+            { name: 'typeMarker', isLayoutable: false },
             ...this.createLabels(this.keys, this.values, this.tooltips)
           ];
-          connect(this, "extent", this, "relayout");
+          connect(this, 'extent', this, 'relayout');
           this.update(
             this.init ? this.init : this.keys[0],
             this.values[this.keys.includes(this.init) ? this.keys.indexOf(this.init) : 0],
@@ -648,58 +648,55 @@ export class ModeSelector extends Morph {
     };
   }
 
-  createLabels(keys, values, tooltips = {}) {
+  createLabels (keys, values, tooltips = {}) {
     return arr.zip(keys, values).map(([name, value]) => {
-      const tooltip = tooltips[name],
-            label = morph({
-              name: name + "Label",
-              master: {
-                auto: 'styleguide://SystemWidgets/mode label'
-              },
-              type: "label",
-              value: name,
-              // autofit: true,
-              // fontColor: this.fontColor,
-              ...(tooltip && {tooltip})
-            });
+      const tooltip = tooltips[name];
+      const label = morph({
+        name: name + 'Label',
+        master: 'styleguide://SystemWidgets/mode label',
+        type: 'label',
+        value: name,
+        ...(tooltip && { tooltip })
+      });
       connect(label, 'onMouseDown', this, 'update', {
-        updater: function($upd) {
+        updater: function ($upd) {
           $upd(name, value);
         },
-        varMapping: {name, value}
+        varMapping: { name, value }
       });
       return label;
     });
   }
 
-  async relayout(animated = true) {
+  async relayout (animated = true) {
     this.layout.forceLayout();
-    let tm = this.get("typeMarker"),
-        bounds = this.currentLabel.bounds();
-    animated ? await tm.animate({bounds, duration: 200}) : tm.setBounds(bounds);
+    const tm = this.get('typeMarker');
+    const bounds = this.currentLabel.bounds();
+    animated ? await tm.animate({ bounds, duration: 200 }) : tm.setBounds(bounds);
   }
 
-  animateFontColor(target, color, duration) {
-    let currentColor = target.fontColor;
+  animateFontColor (target, color, duration) {
+    const currentColor = target.fontColor;
     target.animate({
       customTween: p => target.fontColor = currentColor.interpolate(p, color),
       duration
     });
   }
-  
-  async update(label, value, silent = false) {
-    const newLabel = this.get(label + "Label");
+
+  async update (label, value, silent = false) {
+    const newLabel = this.get(label + 'Label');
     if (newLabel == this.currentLabel) return;
     this.getSubmorphsByStyleClassName('Label').forEach(m => {
-       if (m != newLabel) this.animateFontColor(m, this.fontColor, 200)
+      if (m != newLabel) this.animateFontColor(m, this.fontColor, 200);
     });
     this.currentLabel = newLabel;
     !silent && signal(this, label, value);
-    !silent && signal(this, "switchLabel", value);
+    !silent && signal(this, 'switchLabel', value);
     this.relayout(!silent);
     await this.animateFontColor(newLabel, this.selectionFontColor, 200);
   }
 }
+
 
 export class DropDownSelector extends Morph {
 
