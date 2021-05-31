@@ -203,7 +203,7 @@ export class LivelyWorld extends World {
     await this.whenRendered();
     let worldName;
     while (!worldName) {
-      worldName = await this.prompt(['New Project\n', {}, 'Enter a name for this project:', { fontWeight: 'normal' }], { width: 400, hasFixedPosition: true });
+      worldName = await this.prompt(['New Project\n', {}, 'Enter a name for this project:', { fontWeight: 'normal' }], { width: 400, hasFixedPosition: true, forceConfirm: true });
       if (await this.isNotUnique(worldName)) {
         await this.confirm('This Project name is already taken. Please pick a different one!', {
           hasFixedPosition: true, width: 400
@@ -738,8 +738,13 @@ export class LivelyWorld extends World {
     //   input: STRING, -- optional, prefilled input string
     //   historyId: STRING, -- id to identify the input history for this prompt
     //   useLastInput: BOOLEAN -- use history for default input?
+    //   forceConfirm: BOOLEAN -- force the user to proceed with a valid input
     // }
-    return this.openPrompt(new TextPrompt({ label, ...opts }), opts);
+    const textPrompt = new TextPrompt({ label, ...opts });
+    if (opts.forceConfirm) {
+      textPrompt.get('cancel button').disable();
+    }
+    return this.openPrompt(textPrompt, opts);
   }
 
   editPrompt (label, opts = { requester: null, input: '', historyId: null, useLastInput: false, textStyle: null, mode: null, evalEnvironment: null }) {
