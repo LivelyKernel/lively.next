@@ -170,7 +170,8 @@ export class LocalCoreInterface extends AbstractCoreInterface {
     if (!sourceOrAstOrNothing) { sourceOrAstOrNothing = await this.resourceRead(moduleName); }
 
     const parsed = typeof sourceOrAstOrNothing === 'string'
-      ? ast.parse(sourceOrAstOrNothing) : sourceOrAstOrNothing;
+      ? ast.parse(sourceOrAstOrNothing)
+      : sourceOrAstOrNothing;
     const id = this.normalizeSync(moduleName);
     const format = this.moduleFormat(id);
     const scope = modules.module(id).env().recorder;
