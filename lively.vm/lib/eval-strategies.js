@@ -1,72 +1,63 @@
-/*global System,location*/
-import { obj } from "lively.lang";
+/* global System,location */
+import { obj } from 'lively.lang';
 
 class EvalStrategy {
-
-  async runEval(source, options) {
+  async runEval (source, options) {
     return Promise.reject(`runEval(source, options) not yet implemented for ${this.constructor.name}`);
   }
 
-  async keysOfObject(prefix, options) {
+  async keysOfObject (prefix, options) {
     return Promise.reject(`keysOfObject(prefix, options) not yet implemented for ${this.constructor.name}`);
   }
-
 }
 
 class SimpleEvalStrategy extends EvalStrategy {
-
-  async runEval(source, options) {
+  async runEval (source, options) {
     return Promise.resolve().then(() => {
       try {
-        return Promise.resolve({value: eval(source)});
+        return Promise.resolve({ value: eval(source) });
       } catch (err) {
-        return {isError: true, value: err}
+        return { isError: true, value: err };
       }
     });
   }
 
-  async keysOfObject(prefix, options) {
+  async keysOfObject (prefix, options) {
     // for dynamic object completions
-    var result = await lively.vm.completions.getCompletions(
+    let result = await lively.vm.completions.getCompletions(
       code => this.runEval(code, options), prefix);
-    return {completions: result.completions, prefix: result.startLetters};
+    return { completions: result.completions, prefix: result.startLetters };
   }
-
 }
 
 class LivelyVmEvalStrategy extends EvalStrategy {
-
-  normalizeOptions(options) {
-    if (!options.targetModule)
-      throw new Error("runEval called but options.targetModule not specified!");
+  normalizeOptions (options) {
+    if (!options.targetModule) { throw new Error('runEval called but options.targetModule not specified!'); }
 
     return Object.assign({
-      sourceURL: options.targetModule + "_doit_" + Date.now(),
+      sourceURL: options.targetModule + '_doit_' + Date.now()
     }, options);
   }
 
-  async runEval(source, options) {
-    options = this.normalizeOptions(options)
-    var System = options.System || lively.modules.System;
-    System.config({meta: {[options.targetModule]: {format: "esm"}}});
+  async runEval (source, options) {
+    options = this.normalizeOptions(options);
+    let System = options.System || lively.modules.System;
+    System.config({ meta: { [options.targetModule]: { format: 'esm' } } });
     return lively.vm.runEval(source, options);
   }
 
-  async keysOfObject(prefix, options) {
+  async keysOfObject (prefix, options) {
     // for dynamic object completions
-    var result = await lively.vm.completions.getCompletions(
+    let result = await lively.vm.completions.getCompletions(
       code => lively.vm.runEval(code, options), prefix);
-    return {completions: result.completions, prefix: result.startLetters}
+    return { completions: result.completions, prefix: result.startLetters };
   }
-
 }
 
-
 export class RemoteEvalStrategy extends LivelyVmEvalStrategy {
-
-  sourceForRemote(action, arg, options) {
+  sourceForRemote (action, arg, options) {
     const contextFetch = obj.isString(options.context) ? options.context : false;
-    options = obj.dissoc(options, ["systemInterface", "System", "context", "classTransform"]);
+    options = obj.dissoc(options, ['systemInterface', 'System', 'context', 'classTransform']);
     return `
 (function() {
   var arg = ${JSON.stringify(arg)},
@@ -110,68 +101,63 @@ export class RemoteEvalStrategy extends LivelyVmEvalStrategy {
     return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)
       .then(result => ({isEvalResult: true, completions: result.completions, prefix: result.startLetters}));
   }
-  return ${action === "eval" ? "evalFunction" : "keysOfObjectFunction"}(arg, options)
+  return ${action === 'eval' ? 'evalFunction' : 'keysOfObjectFunction'}(arg, options)
     .catch(err => ({isEvalResult: true, isError: true, value: String(err.stack || err)}));
 })();
 `;
   }
 
-  async runEval(source, options) {
-    return this.remoteEval(this.sourceForRemote("eval", source, options), options)
+  async runEval (source, options) {
+    return this.remoteEval(this.sourceForRemote('eval', source, options), options);
   }
 
-  async keysOfObject(prefix, options) {
-    return this.remoteEval(this.sourceForRemote("keysOfObject", prefix, options), options)
+  async keysOfObject (prefix, options) {
+    return this.remoteEval(this.sourceForRemote('keysOfObject', prefix, options), options);
   }
 
-  async remoteEval(source, options) {
+  async remoteEval (source, options) {
     try {
-      var result = await this.basicRemoteEval(source, options)
-      return typeof result === "string" ? JSON.parse(result) : result;
+      var result = await this.basicRemoteEval(source, options);
+      return typeof result === 'string' ? JSON.parse(result) : result;
     } catch (e) {
-      return {isError: true, value: `Remote eval failed: ${result || e}`};
+      return { isError: true, value: `Remote eval failed: ${result || e}` };
     }
   }
 
-  async basicRemoteEval(source, options) {
-    throw new Error("Not yet implemented");
+  async basicRemoteEval (source, options) {
+    throw new Error('Not yet implemented');
   }
-
 }
 
-
 class HttpEvalStrategy extends RemoteEvalStrategy {
+  static get defaultURL () { return 'http://localhost:3000/lively'; }
 
-  static get defaultURL() { return "http://localhost:3000/lively" }
-
-  constructor(url) {
+  constructor (url) {
     super();
     this.url = url || this.constructor.defaultURL;
   }
 
-  normalizeOptions(options) {
+  normalizeOptions (options) {
     options = super.normalizeOptions(options);
     return Object.assign(
-      {serverEvalURL: this.url},
+      { serverEvalURL: this.url },
       options,
-      {context: null});
+      { context: null });
   }
 
-  async basicRemoteEval(source, options) {
+  async basicRemoteEval (source, options) {
     options = this.normalizeOptions(options);
-    var method = "basicRemoteEval_" + (System.get("@system-env").node ? "node" : "web");
-    return await this[method]({method: "POST", body: source}, options.serverEvalURL);
+    let method = 'basicRemoteEval_' + (System.get('@system-env').node ? 'node' : 'web');
+    return await this[method]({ method: 'POST', body: source }, options.serverEvalURL);
   }
 
-  async basicRemoteEval_web(payload, url) {
-    let [domain] = url.match(/[^:]+:\/\/[^\/]+/) || [url],
-        loc, crossDomain;
+  async basicRemoteEval_web (payload, url) {
+    let [domain] = url.match(/[^:]+:\/\/[^\/]+/) || [url];
+    let loc; let crossDomain;
 
     // fixme: this should be replaced by accessing the location
     //        in a canonical way
-    if (System.get("@system-env").worker) 
-      loc = window.location;
-    else {
+    if (System.get('@system-env').worker) { loc = window.location; } else {
       loc = document.location;
     }
 
@@ -180,66 +166,61 @@ class HttpEvalStrategy extends RemoteEvalStrategy {
     if (crossDomain) { // use lively.server proxy plugin
       payload.headers = {
         ...payload.headers,
-        'pragma': 'no-cache',
+        pragma: 'no-cache',
         'cache-control': 'no-cache',
-        "x-lively-proxy-request": url
-      }
+        'x-lively-proxy-request': url
+      };
       url = loc.origin;
     }
 
-    var res;
+    let res;
     try {
       res = await window.fetch(url, payload);
     } catch (e) {
-      throw new Error(`Cannot reach server at ${url}: ${e.message}`)
+      throw new Error(`Cannot reach server at ${url}: ${e.message}`);
     }
 
     if (!res.ok) {
-      throw new Error(`Server at ${url}: ${res.statusText}`)
+      throw new Error(`Server at ${url}: ${res.statusText}`);
     }
 
     return res.text();
   }
 
-  async basicRemoteEval_node(payload, url) {
-    var urlParse = System._nodeRequire("url").parse,
-        http = System._nodeRequire(url.startsWith("https:") ? "https" : "http"),
-        opts = Object.assign({method: payload.method || "GET"}, urlParse(url));
+  async basicRemoteEval_node (payload, url) {
+    let urlParse = System._nodeRequire('url').parse;
+    let http = System._nodeRequire(url.startsWith('https:') ? 'https' : 'http');
+    let opts = Object.assign({ method: payload.method || 'GET' }, urlParse(url));
     return new Promise((resolve, reject) => {
-      var request = http.request(opts, res => {
+      let request = http.request(opts, res => {
         res.setEncoding('utf8');
-        var data = "";
+        let data = '';
         res.on('data', (chunk) => data += chunk);
         res.on('end', () => resolve(data));
         res.on('error', err => reject(err));
-      })
+      });
       request.on('error', err => reject(err));
-      request.end(payload.body)
+      request.end(payload.body);
     });
   }
-
 }
 
 class L2LEvalStrategy extends RemoteEvalStrategy {
-
-  constructor(l2lClient, targetId) {
+  constructor (l2lClient, targetId) {
     super();
     this.l2lClient = l2lClient;
     this.targetId = targetId;
   }
 
-  async basicRemoteEval(source, options) {
-    let {l2lClient, targetId} = this,
-        {data: evalResult} = await l2lClient.sendToAndWait(targetId, "remote-eval", {source}, { 
-          ackTimeout: options.ackTimeout || 3500
-        });
-    if (evalResult && evalResult.value && evalResult.value.isEvalResult)
-      evalResult = evalResult.value;
+  async basicRemoteEval (source, options) {
+    let { l2lClient, targetId } = this;
+    let { data: evalResult } = await l2lClient.sendToAndWait(targetId, 'remote-eval', { source }, {
+      ackTimeout: options.ackTimeout || 3500
+    });
+    if (evalResult && evalResult.value && evalResult.value.isEvalResult) { evalResult = evalResult.value; }
     return evalResult;
   }
-
 }
-
 
 export {
   EvalStrategy,
@@ -247,4 +228,4 @@ export {
   LivelyVmEvalStrategy,
   HttpEvalStrategy,
   L2LEvalStrategy
-}
+};
