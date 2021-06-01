@@ -1,73 +1,72 @@
-import { arr, promise, obj } from "lively.lang";
-import { emit } from "lively.notifications";
-import module from "../../src/module.js";
-import { resource } from "lively.resources";
-import PackageConfiguration from "./configuration.js";
-import { isURL, join } from "../url-helpers.js";
-import { classHolder } from "../cycle-breaker.js";
+import { arr, promise, obj } from 'lively.lang';
+import { emit } from 'lively.notifications';
+import module from '../../src/module.js';
+import { resource } from 'lively.resources';
+import PackageConfiguration from './configuration.js';
+import { isURL, join } from '../url-helpers.js';
+import { classHolder } from '../cycle-breaker.js';
 
-function normalizePackageURL(System, packageURL, allPackageURLs = []) {
+function normalizePackageURL (System, packageURL, allPackageURLs = []) {
   if (allPackageURLs.some(ea => ea === packageURL)) return packageURL;
 
-  var url = System.decanonicalize(packageURL.replace(/[\/]+$/, "") + "/");
+  let url = System.decanonicalize(packageURL.replace(/[\/]+$/, '') + '/');
 
-  if (!isURL(url))
-    throw new Error(`Strange package URL: ${url} is not a valid URL`)
+  if (!isURL(url)) { throw new Error(`Strange package URL: ${url} is not a valid URL`); }
 
   // ensure it's a directory
   if (!url.match(/\.js/)) url = url;
-  else if (url.indexOf(url + ".js") > -1) url = url.replace(/\.js$/, "");
-  else url = url.split("/").slice(0,-1).join("/");
+  else if (url.indexOf(url + '.js') > -1) url = url.replace(/\.js$/, '');
+  else url = url.split('/').slice(0, -1).join('/');
 
   if (url.match(/\.js$/)) {
-    console.warn("packageURL is expected to point to a directory but seems to be a .js file: " + url);
+    console.warn('packageURL is expected to point to a directory but seems to be a .js file: ' + url);
   }
 
-  return String(url).replace(/\/$/, "");
+  return String(url).replace(/\/$/, '');
 }
 
-function lookupPackage(System, packageURL, isNormalized = false) {
-  let registry = classHolder.PackageRegistry.ofSystem(System),
-      allPackageURLs = registry.allPackageURLs(),
-      url = isNormalized
-        ? packageURL
-        : normalizePackageURL(System, packageURL, allPackageURLs);
-  return {pkg: registry.findPackageWithURL(url), url, allPackageURLs, registry};
+function lookupPackage (System, packageURL, isNormalized = false) {
+  let registry = classHolder.PackageRegistry.ofSystem(System);
+  let allPackageURLs = registry.allPackageURLs();
+  let url = isNormalized
+    ? packageURL
+    : normalizePackageURL(System, packageURL, allPackageURLs);
+  return { pkg: registry.findPackageWithURL(url), url, allPackageURLs, registry };
 }
 
-function ensurePackage(System, packageURL, isNormalized = false) {
-  let {pkg, url, registry} = lookupPackage(System, packageURL, isNormalized);
-  return pkg || registry.addPackageAt(url, "devPackageDirs");
+function ensurePackage (System, packageURL, isNormalized = false) {
+  let { pkg, url, registry } = lookupPackage(System, packageURL, isNormalized);
+  return pkg || registry.addPackageAt(url, 'devPackageDirs');
 }
 
-function getPackage(System, packageURL, isNormalized = false) {
-  let {pkg, url} = lookupPackage(System, packageURL, isNormalized);
+function getPackage (System, packageURL, isNormalized = false) {
+  let { pkg, url } = lookupPackage(System, packageURL, isNormalized);
   if (pkg) return pkg;
   throw new Error(`[getPackage] package ${packageURL} (as ${url}) not found`);
 }
 
-function applyConfig(System, packageConfig, packageURL) {
+function applyConfig (System, packageConfig, packageURL) {
   let p = getPackage(System, packageURL);
   return p.updateConfig(packageConfig);
 }
 
-function importPackage(System, packageURL) {
+function importPackage (System, packageURL) {
   return Promise.resolve(ensurePackage(System, packageURL))
-          .then(p => p.import());
+    .then(p => p.import());
 }
 
-function removePackage(System, packageURL) {
-  let {pkg, url, registry} = lookupPackage(System, packageURL);
+function removePackage (System, packageURL) {
+  let { pkg, url, registry } = lookupPackage(System, packageURL);
   return pkg ? pkg.remove() : null;
 }
 
-function reloadPackage(System, packageURL, opts) {
+function reloadPackage (System, packageURL, opts) {
   return getPackage(System, packageURL).reload(opts);
 }
 
-function registerPackage(System, packageURL, optPkgConfig) {
+function registerPackage (System, packageURL, optPkgConfig) {
   return Promise.resolve(ensurePackage(System, packageURL))
-          .then(p => p.register(optPkgConfig));
+    .then(p => p.register(optPkgConfig));
 }
 
 // function normalizeInsidePackage(System, urlOrNameOrMap, packageURL) {
@@ -83,7 +82,7 @@ function registerPackage(System, packageURL, optPkgConfig) {
 //         });
 //     if (found) return normalizeInsidePackage(System, found, packageURL);
 //   }
-// 
+//
 //   let urlOrName = urlOrNameOrMap;
 //   return isURL(urlOrName) ?
 //     // absolute
@@ -92,7 +91,7 @@ function registerPackage(System, packageURL, optPkgConfig) {
 //     urlResolve(join(urlOrName[0] === "." ? packageURL : System.baseURL, urlOrName));
 // }
 
-function getPackageSpecs(System) {
+function getPackageSpecs (System) {
   // Note does not return package instances but spec objects that can be JSON
   // stringified(!) like
   // ```
@@ -107,27 +106,25 @@ function getPackageSpecs(System) {
   return Package.allPackages(System).map(p => p.asSpec());
 }
 
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // package object
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 class Package {
+  static allPackages (System) { return obj.values(classHolder.PackageRegistry.ofSystem(System).byURL); }
 
-  static allPackages(System) { return obj.values(classHolder.PackageRegistry.ofSystem(System).byURL); }
+  static allPackageURLs (System) { return classHolder.PackageRegistry.ofSystem(System).allPackageURLs(); }
 
-  static allPackageURLs(System) { return classHolder.PackageRegistry.ofSystem(System).allPackageURLs(); }
+  static forModule (System, module) { return this.forModuleId(System, module.id); }
 
-  static forModule(System, module) { return this.forModuleId(System, module.id); }
-
-  static forModuleId(System, moduleId) {
+  static forModuleId (System, moduleId) {
     let pAddress = classHolder.ModulePackageMapping.forSystem(System).getPackageURLForModuleId(moduleId);
-    return pAddress ? getPackage(System, pAddress, true/*normalized*/) : null;
+    return pAddress ? getPackage(System, pAddress, true/* normalized */) : null;
   }
 
-  static fromJSON(System, jso) { return new Package(System).fromJSON(jso); }
+  static fromJSON (System, jso) { return new Package(System).fromJSON(jso); }
 
-  constructor(System, packageURL, name, version, config = {}) {
+  constructor (System, packageURL, name, version, config = {}) {
     this.System = System;
     this.url = packageURL;
     this.registerProcess = null;
@@ -135,158 +132,157 @@ class Package {
     this.setConfig(config);
   }
 
-  setConfig(config) {
+  setConfig (config) {
     this._name = config.name;
     this.version = config.version;
     this.dependencies = config.dependencies || {};
     this.devDependencies = config.devDependencies || {};
-    this.main = config.main || "index.js";
+    this.main = config.main || 'index.js';
     this.systemjs = config.systemjs;
     this.lively = config.lively;
   }
 
-  toJSON() {
-    let {System} = this,
-        jso = obj.select(this, [
-          "url",
-          "_name",
-          "version",
-          "map",
-          "dependencies",
-          "devDependencies",
-          "main",
-          "systemjs",
-          "lively"
-        ]);
-    if (jso.url.startsWith(System.baseURL))
-      jso.url = jso.url.slice(System.baseURL.length).replace(/^\//, "")
+  toJSON () {
+    let { System } = this;
+    let jso = obj.select(this, [
+      'url',
+      '_name',
+      'version',
+      'map',
+      'dependencies',
+      'devDependencies',
+      'main',
+      'systemjs',
+      'lively'
+    ]);
+    if (jso.url.startsWith(System.baseURL)) { jso.url = jso.url.slice(System.baseURL.length).replace(/^\//, ''); }
     return jso;
   }
-  
-  fromJSON(jso) {
-    let {System} = this;
-    this.url =             jso.url;
-    this._name =           jso._name;
-    this.version =         jso.version;
-    this.map =             jso.map || {};
-    this.main =            jso.main;
-    this.dependencies =    jso.dependencies || {};
+
+  fromJSON (jso) {
+    let { System } = this;
+    this.url = jso.url;
+    this._name = jso._name;
+    this.version = jso.version;
+    this.map = jso.map || {};
+    this.main = jso.main;
+    this.dependencies = jso.dependencies || {};
     this.devDependencies = jso.devDependencies || {};
-    this.systemjs =        jso.systemjs;
-    this.lively =          jso.lively;
-    if (!isURL(this.url))
-      this.url = join(System.baseURL, this.url);
+    this.systemjs = jso.systemjs;
+    this.lively = jso.lively;
+    if (!isURL(this.url)) { this.url = join(System.baseURL, this.url); }
     this.registerWithConfig();
     return this;
   }
 
-  asSpec() {
+  asSpec () {
     return {
       ...obj.select(this, [
-        "name", "main", "map", "meta",
-        "url", "address", "version", "lively"
+        'name', 'main', 'map', 'meta',
+        'url', 'address', 'version', 'lively'
       ]),
       modules: this.modules().map(m => {
         return {
           name: m.id,
           deps: m.directRequirements().map(ea => ea.id)
-        }
+        };
       })
-    }
+    };
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // accessing
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  get isPackage() { return true; }
+  get isPackage () { return true; }
 
-  get name() {
+  get name () {
     if (this._name) return this._name;
-    var config = this.System.get(this.url + "/package.json");
+    let config = this.System.get(this.url + '/package.json');
     if (config && config.name) return config.name;
-    return arr.last(this.url.replace(/[\/]+$/, "").split("/"));
+    return arr.last(this.url.replace(/[\/]+$/, '').split('/'));
   }
-  set name(v) { return this._name = v; }
 
-  get nameAndVersion() { return `${this.name}@${this.version}`}
+  set name (v) { return this._name = v; }
 
-  get address() { return this.url; }
-  set address(v) { return this.url = v; }
+  get nameAndVersion () { return `${this.name}@${this.version}`; }
 
-  get runtimeConfig() {
+  get address () { return this.url; }
+  set address (v) { return this.url = v; }
+
+  get runtimeConfig () {
     let {
-          name,
-          version,
-          dependencies,
-          devDependencies,
-          main, systemjs, lively
-        } = this,
-        config = {
-          name: name,
-          version: version,
-          dependencies: dependencies || {},
-          devDependencies: devDependencies || {}
-        };
+      name,
+      version,
+      dependencies,
+      devDependencies,
+      main, systemjs, lively
+    } = this;
+    let config = {
+      name: name,
+      version: version,
+      dependencies: dependencies || {},
+      devDependencies: devDependencies || {}
+    };
     if (main) config.main = main;
     if (systemjs) config.systemjs = systemjs;
     if (lively) config.lively = lively;
     return config;
   }
 
-  path() {
-    var base = this.System.baseURL;
+  path () {
+    let base = this.System.baseURL;
     return this.url.indexOf(base) === 0 ? this.url.slice(base.length) : this.url;
   }
 
-  modules() {
-    let {url, System} = this;
+  modules () {
+    let { url, System } = this;
     return classHolder.ModulePackageMapping.forSystem(System)
-            .getModuleIdsForPackageURL(url)
-            .map(id => module(System, id));
+      .getModuleIdsForPackageURL(url)
+      .map(id => module(System, id));
   }
 
-  async resources(
-    matches /*= url => url.match(/\.js$/)*/,
-    exclude = [".git", "node_modules", ".module_cache", "lively.next-node_modules"],
+  async resources (
+    matches /* = url => url.match(/\.js$/) */,
+    exclude = ['.git', 'node_modules', '.module_cache', 'lively.next-node_modules']
   ) {
-    let {System, url} = this,
-        allPackages = Package.allPackageURLs(System),
-        packagesToIgnore = allPackages.filter(purl =>
-          purl !== url && !url.startsWith(purl)/*parent packages*/),
-        dirList = await resource(url).dirList('infinity', {exclude}),
-        resourceURLs = dirList
-          .filter(ea => !ea.isDirectory()
-                     && !packagesToIgnore.some(purl => ea.url.startsWith(purl)))
-          .map(ea => ea.url),
-        loadedModules = arr.pluck(this.modules(), "id");
+    let { System, url } = this;
+    let allPackages = Package.allPackageURLs(System);
+    let packagesToIgnore = allPackages.filter(purl =>
+      purl !== url && !url.startsWith(purl)/* parent packages */);
+    let dirList = await resource(url).dirList('infinity', { exclude });
+    let resourceURLs = dirList
+      .filter(ea => !ea.isDirectory() &&
+                     !packagesToIgnore.some(purl => ea.url.startsWith(purl)))
+      .map(ea => ea.url);
+    let loadedModules = arr.pluck(this.modules(), 'id');
 
     if (matches) resourceURLs = resourceURLs.filter(matches);
 
     return resourceURLs.map(resourceURL => {
-      let nameInPackage = resourceURL.replace(url, "").replace(/^\//, ""),
-          isLoaded = loadedModules.includes(resourceURL);
-      return {isLoaded, url: resourceURL, nameInPackage, package: this};
+      let nameInPackage = resourceURL.replace(url, '').replace(/^\//, '');
+      let isLoaded = loadedModules.includes(resourceURL);
+      return { isLoaded, url: resourceURL, nameInPackage, package: this };
     });
   }
 
-  hasResource(urlOrLocalName) {
-    let {System, url: packageURL} = this,
-        res = urlOrLocalName.startsWith(packageURL) ?
-          resource(urlOrLocalName) : resource(packageURL).join(urlOrLocalName);
+  hasResource (urlOrLocalName) {
+    let { System, url: packageURL } = this;
+    let res = urlOrLocalName.startsWith(packageURL)
+      ? resource(urlOrLocalName)
+      : resource(packageURL).join(urlOrLocalName);
     return res.exists();
   }
 
-  toString() { return `Package(${this.name} - ${this.path()}/)`; }
-
+  toString () { return `Package(${this.name} - ${this.path()}/)`; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // configuration
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  mergeWithConfig(config) {
-    config = {...config};
-    var {name, map} = config;
+  mergeWithConfig (config) {
+    config = { ...config };
+    let { name, map } = config;
 
     if (name) {
       delete config.name;
@@ -302,32 +298,32 @@ class Package {
     return this;
   }
 
-  addMapping(name, url) {
+  addMapping (name, url) {
     this.map[name] = url;
-    this.System.config({packages: {[this.url]: {map: {[name]: url}}}});
+    this.System.config({ packages: { [this.url]: { map: { [name]: url } } } });
   }
 
-  async tryToLoadPackageConfig() {
-    var {System, url} = this,
-        packageConfigURL = url + "/package.json";
+  async tryToLoadPackageConfig () {
+    let { System, url } = this;
+    let packageConfigURL = url + '/package.json';
     System.config({
-      meta: {[packageConfigURL]: {format: "json"}},
-      packages: {[url]: {meta: {"package.json": {format: "json"}}}}
+      meta: { [packageConfigURL]: { format: 'json' } },
+      packages: { [url]: { meta: { 'package.json': { format: 'json' } } } }
     });
 
-    System.debug && console.log("[lively.modules package reading config] %s", packageConfigURL);
+    System.debug && console.log('[lively.modules package reading config] %s', packageConfigURL);
 
     try {
-      var config = System.get(packageConfigURL) || await System.import(packageConfigURL);
-      var packageConfigPaths = [...System.packageConfigPaths];
+      let config = System.get(packageConfigURL) || await System.import(packageConfigURL);
+      let packageConfigPaths = [...System.packageConfigPaths];
       arr.pushIfNotIncluded(packageConfigPaths, packageConfigURL); // to inform systemjs that there is a config
       System.config({ packageConfigPaths });
       return config;
     } catch (err) {
-      console.log("[lively.modules package] Unable loading package config %s for package: ", packageConfigURL, err);
+      console.log('[lively.modules package] Unable loading package config %s for package: ', packageConfigURL, err);
       delete System.meta[packageConfigURL];
-      var name = url.split("/").slice(-1)[0];
-      return {name: name}; // "pseudo-config"
+      let name = url.split('/').slice(-1)[0];
+      return { name: name }; // "pseudo-config"
     }
   }
 
@@ -335,13 +331,13 @@ class Package {
   // register / load
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async import() {
+  async import () {
     await this.register();
     // *after* the package is registered the normalize call should resolve to the
     // package's main module
-    let {url, System} = this,
-        mainModule = module(System, await System.normalize(url)),
-        exported = await System.import(mainModule.id);
+    let { url, System } = this;
+    let mainModule = module(System, await System.normalize(url));
+    let exported = await System.import(mainModule.id);
     // rk 2017-01-25: since the notifications that let the ModuleCache know
     // that the module is loaded are async, we need to wait for lively.modules to
     // "know" that the imported module (and all its dependencies) are actually
@@ -350,22 +346,22 @@ class Package {
     return exported;
   }
 
-  isRegistering() { return !!this.registerProcess; }
+  isRegistering () { return !!this.registerProcess; }
 
-  async register(optPkgConfig) {
+  async register (optPkgConfig) {
     if (this.isRegistering()) return this.registerProcess.promise;
 
-    var {System, url} = this;
+    let { System, url } = this;
     this.registerProcess = promise.deferred();
-    var registerP = this.registerProcess.promise;
+    let registerP = this.registerProcess.promise;
 
-    System.debug && console.log("[lively.modules package register] %s", url);
+    System.debug && console.log('[lively.modules package register] %s', url);
 
     try {
-      var cfg = optPkgConfig || await this.tryToLoadPackageConfig(),
-          packageConfigResult = this.registerWithConfig(cfg);
+      let cfg = optPkgConfig || await this.tryToLoadPackageConfig();
+      let packageConfigResult = this.registerWithConfig(cfg);
       this.registerProcess.resolve(cfg);
-    } catch(err) {
+    } catch (err) {
       this.registerProcess.reject(err);
       throw err;
     } finally { delete this.registerProcess; }
@@ -373,10 +369,10 @@ class Package {
     return registerP;
   }
 
-  updateConfig(config) {
-    config = {...this.runtimeConfig, ...config};
-    let {name, version} = this,
-        {name: newName, version: newVersion} = config;
+  updateConfig (config) {
+    config = { ...this.runtimeConfig, ...config };
+    let { name, version } = this;
+    let { name: newName, version: newVersion } = config;
     new PackageConfiguration(this).applyConfig(config);
     if (name !== config.name || version !== config.version) {
       console.log(`[lively.modules] Updating registry ${name}@${version} => ${newName}@${newVersion}`);
@@ -385,92 +381,89 @@ class Package {
     }
   }
 
-  registerWithConfig(config = this.runtimeConfig) {
-    var {System, url} = this,
-        result = new PackageConfiguration(this).applyConfig(config),
-        packageConfigURL = join(url, "package.json");
+  registerWithConfig (config = this.runtimeConfig) {
+    let { System, url } = this;
+    let result = new PackageConfiguration(this).applyConfig(config);
+    let packageConfigURL = join(url, 'package.json');
 
-    if (!System.get(packageConfigURL))
-      System.set(packageConfigURL, System.newModule({...config, default: config}));
+    if (!System.get(packageConfigURL)) { System.set(packageConfigURL, System.newModule({ ...config, default: config })); }
 
-    emit("lively.modules/packageregistered", {"package": url}, Date.now(), System);
+    emit('lively.modules/packageregistered', { package: url }, Date.now(), System);
 
     return result;
   }
 
-  remove(opts) {
-    opts = {forgetEnv: true, forgetDeps: false, unloadModules: true, ...opts};
-    let {System, url} = this;
-    url = url.replace(/\/$/, "");
+  remove (opts) {
+    opts = { forgetEnv: true, forgetDeps: false, unloadModules: true, ...opts };
+    let { System, url } = this;
+    url = url.replace(/\/$/, '');
 
-    if (opts.unloadModules)
-      this.modules().forEach(mod => mod.unload(opts));
+    if (opts.unloadModules) { this.modules().forEach(mod => mod.unload(opts)); }
 
     let registry = classHolder.PackageRegistry.ofSystem(System);
     registry.removePackage(this);
 
-    let conf = System.getConfig(),
-        packageConfigURL = url + "/package.json";
+    let conf = System.getConfig();
+    let packageConfigURL = url + '/package.json';
     System.delete(String(packageConfigURL));
     arr.remove(conf.packageConfigPaths || [], packageConfigURL);
     System.config({
-      meta: {[packageConfigURL]: {}},
-      packages: {[url]: {}},
+      meta: { [packageConfigURL]: {} },
+      packages: { [url]: {} },
       packageConfigPaths: conf.packageConfigPaths
     });
     delete System.packages[url];
 
-    emit("lively.modules/packageremoved", {"package": this.url}, Date.now(), System);
+    emit('lively.modules/packageremoved', { package: this.url }, Date.now(), System);
   }
 
-  reload(opts) {
-    let {System, url} = this,
-        registry = classHolder.PackageRegistry.ofSystem(System),
-        covered = registry.coversDirectory(url);
+  reload (opts) {
+    let { System, url } = this;
+    let registry = classHolder.PackageRegistry.ofSystem(System);
+    let covered = registry.coversDirectory(url);
 
     this.remove(opts);
-    registry.addPackageAt(url, covered || "devPackageDirs", {[url]: this});
+    registry.addPackageAt(url, covered || 'devPackageDirs', { [url]: this });
     return this.import();
   }
 
-  async fork(newName, newURL) {
+  async fork (newName, newURL) {
     if (!newURL) {
       newURL = resource(this.url).join(`../${newName}`).withRelativePartsResolved().url;
     }
-    return await this.changeAddress(newURL, newName, false/*removeOriginal*/);
+    return await this.changeAddress(newURL, newName, false/* removeOriginal */);
   }
 
-  async rename(newName) {
+  async rename (newName) {
     let newURL = resource(this.url).join(`../${newName}`).withRelativePartsResolved().url;
-    return await this.changeAddress(newURL, newName, true/*removeOriginal*/);
+    return await this.changeAddress(newURL, newName, true/* removeOriginal */);
   }
 
-  async changeAddress(newURL, newName = null, removeOriginal = true) {
-    newURL = newURL.replace(/\/?/, "");
+  async changeAddress (newURL, newName = null, removeOriginal = true) {
+    newURL = newURL.replace(/\/?/, '');
 
-    let {System, url: oldURL, name: oldName, version: oldVersion} = this,
-        config = await this.runtimeConfig,
-        oldPackageDir = resource(oldURL).asDirectory(),
-        newP = new Package(System, newURL),
-        newPackageDir = await resource(newURL).asDirectory();
+    let { System, url: oldURL, name: oldName, version: oldVersion } = this;
+    let config = await this.runtimeConfig;
+    let oldPackageDir = resource(oldURL).asDirectory();
+    let newP = new Package(System, newURL);
+    let newPackageDir = await resource(newURL).asDirectory();
 
     config.name = newName || this.name;
 
-    let registry = classHolder.PackageRegistry.ofSystem(System),
-        covered = registry.coversDirectory(oldURL);
+    let registry = classHolder.PackageRegistry.ofSystem(System);
+    let covered = registry.coversDirectory(oldURL);
 
     classHolder.ModulePackageMapping.forSystem(System).clearCache();
     if (System.packages[oldURL]) {
       System.packages[newURL] = System.packages[oldURL];
-      if (removeOriginal)
-        delete System.packages[oldURL];
+      if (removeOriginal) { delete System.packages[oldURL]; }
     }
 
-    Object.assign(newP, obj.select(this, ["_name", "map", "config"]))
+    Object.assign(newP, obj.select(this, ['_name', 'map', 'config']));
     await newPackageDir.ensureExistance();
 
-    let resourceURLs = (await this.resources(undefined, [])).map(ea => ea.url),
-        modules = this.modules();
+    let resourceURLs = (await this.resources(undefined, [])).map(ea => ea.url);
+    let modules = this.modules();
 
     // first move modules loaded in runtime, those now how to rename
     // themselves...
@@ -487,13 +480,13 @@ class Package {
 
     // ensure the existance of the remaining resources
     for (let url of resourceURLs) {
-      let r = resource(url),
-          localName = r.relativePathFrom(oldPackageDir);
+      let r = resource(url);
+      let localName = r.relativePathFrom(oldPackageDir);
       await r.copyTo(newPackageDir.join(localName));
     }
 
     if (removeOriginal) {
-      await this.remove({forgetEnv: true, forgetDeps: false});
+      await this.remove({ forgetEnv: true, forgetDeps: false });
       await oldPackageDir.remove();
     }
 
@@ -502,7 +495,7 @@ class Package {
       newP.name = newName;
 
       newP.config.name = newName;
-      var configFile = resource(newURL).join("package.json");
+      let configFile = resource(newURL).join('package.json');
       try {
         if (await configFile.exists()) {
           let c = await configFile.readJson();
@@ -510,18 +503,18 @@ class Package {
             c.name = newName;
             await configFile.writeJson(c, true);
           }
-          let runtimeC = System.get(configFile.url)
+          let runtimeC = System.get(configFile.url);
           if (runtimeC) {
-            System.set(configFile.url, System.newModule({...runtimeC, name: newName}));
+            System.set(configFile.url, System.newModule({ ...runtimeC, name: newName }));
           }
         }
       } catch (e) {}
     }
 
     // PackageRegistry update;
-    covered = covered || "individualPackageDirs";
-    if (covered === "individualPackageDirs" || covered === "devPackageDirs") {
-      registry._addPackageDir(newURL, covered, true/*uniqCheck*/);
+    covered = covered || 'individualPackageDirs';
+    if (covered === 'individualPackageDirs' || covered === 'devPackageDirs') {
+      registry._addPackageDir(newURL, covered, true/* uniqCheck */);
     }
     registry._addPackageWithConfig(newP, config, newURL, covered);
     registry.resetByURL();
@@ -534,21 +527,20 @@ class Package {
   // searching
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async search(needle, options = {}) {
-    var modules = options.includeUnloaded ?
-      (await this.resources(
-        url => url.endsWith(".js"),
-        [".git", "node_modules", "dist", ".module_cache", "lively.next-node_modules"]))
-          .map(({url}) => module(this.System, url)) :
-      this.modules().filter(ea => ea.isLoaded());
+  async search (needle, options = {}) {
+    let modules = options.includeUnloaded
+      ? (await this.resources(
+          url => url.endsWith('.js'),
+          ['.git', 'node_modules', 'dist', '.module_cache', 'lively.next-node_modules']))
+          .map(({ url }) => module(this.System, url))
+      : this.modules().filter(ea => ea.isLoaded());
     return Promise.all(
-        modules.map(m => m.search(needle, options)
-          .catch(err => {
-            console.error(`Error searching module ${m.name}:\n${err.stack}`);
-            return [];
-          }))).then(res => arr.flatten(res, 1));
+      modules.map(m => m.search(needle, options)
+        .catch(err => {
+          console.error(`Error searching module ${m.name}:\n${err.stack}`);
+          return [];
+        }))).then(res => arr.flatten(res, 1));
   }
-
 }
 
 export {
@@ -562,4 +554,4 @@ export {
   applyConfig,
   getPackageSpecs,
   Package
-}
+};

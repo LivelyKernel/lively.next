@@ -1,38 +1,37 @@
-import { arr, obj } from "lively.lang";
-import { isURL } from "../url-helpers.js";
-import { install as installHook, isInstalled as isHookInstalled } from "../hooks.js";
+import { arr, obj } from 'lively.lang';
+import { isURL } from '../url-helpers.js';
+import { install as installHook, isInstalled as isHookInstalled } from '../hooks.js';
 
 export default class PackageConfiguration {
-
-  constructor(pkg) {
+  constructor (pkg) {
     this.pkg = pkg;
   }
 
-  get System() { return this.pkg.System; }
-  get packageURL() { return this.pkg.url; }
+  get System () { return this.pkg.System; }
+  get packageURL () { return this.pkg.url; }
 
-  applyConfig(config) {
+  applyConfig (config) {
     // takes a config json object (typically read from a package.json file but
     // can be used standalone) and changes the System configuration to what it finds
     // in it.
     // In particular uses the "systemjs" section as described in https://github.com/systemjs/systemjs/blob/master/docs/config-api.md
     // and uses the "lively" section as described in `applyLivelyConfig`
 
-    let {System, packageURL, pkg} = this;
+    let { System, packageURL, pkg } = this;
     config = obj.deepMerge(pkg.config, config);
 
-    let name                      = config.name || packageURL.split("/").slice(-1)[0],
-        version                   = config.version,
-        sysConfig                 = config.systemjs || {},
-        livelyConfig              = config.lively,
-        main                      = config.main || "index.js";
+    let name = config.name || packageURL.split('/').slice(-1)[0];
+    let version = config.version;
+    let sysConfig = config.systemjs || {};
+    let livelyConfig = config.lively;
+    let main = config.main || 'index.js';
 
     System.config({
-      map: {[name]: packageURL},
+      map: { [name]: packageURL },
       packages: {
         [packageURL]: {
           ...sysConfig,
-          meta: {"package.json": {format: "json"}, ...sysConfig.meta},
+          meta: { 'package.json': { format: 'json' }, ...sysConfig.meta },
           configured: true
         }
       }
@@ -50,7 +49,7 @@ export default class PackageConfiguration {
       this.applySystemJSConfig(sysConfig);
     }
 
-    if (!main.match(/\.[^\/\.]+/)) main += ".js";
+    if (!main.match(/\.[^\/\.]+/)) main += '.js';
     packageInSystem.main = main;
 
     // System.packages doesn't allow us to store our own properties
@@ -59,30 +58,25 @@ export default class PackageConfiguration {
     pkg._name = name;
     pkg.mergeWithConfig(packageInSystem);
 
-    return livelyConfig ? this.applyLivelyConfig(livelyConfig) : {subPackages: []};
+    return livelyConfig ? this.applyLivelyConfig(livelyConfig) : { subPackages: [] };
   }
 
-  applySystemJSConfig(sysConfig) {
-    let {System} = this;
+  applySystemJSConfig (sysConfig) {
+    let { System } = this;
     // System.debug && console.log("[lively.modules package configuration] applying SystemJS config of %s", pkg);
-    if (sysConfig.packageConfigPaths)
-      System.config({packageConfigPaths: arr.uniq(System.packageConfigPaths.concat(sysConfig.packageConfigPaths))});
+    if (sysConfig.packageConfigPaths) { System.config({ packageConfigPaths: arr.uniq(System.packageConfigPaths.concat(sysConfig.packageConfigPaths)) }); }
     if (sysConfig.packages) // packages is normaly not support locally in a package.json
-      System.config({packages: sysConfig.packages});
-    if (sysConfig.globalmap)
-      System.config({map: sysConfig.globalmap});
-    if (sysConfig.babelOptions)
-      System.config({babelOptions: sysConfig.babelOptions});
-    if (sysConfig.meta)
-      System.config({meta: sysConfig.meta});
+    { System.config({ packages: sysConfig.packages }); }
+    if (sysConfig.globalmap) { System.config({ map: sysConfig.globalmap }); }
+    if (sysConfig.babelOptions) { System.config({ babelOptions: sysConfig.babelOptions }); }
+    if (sysConfig.meta) { System.config({ meta: sysConfig.meta }); }
   }
-
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // lively config
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  applyLivelyConfig(livelyConfig) {
+  applyLivelyConfig (livelyConfig) {
     // configures System object from lively config JSON object.
     // - adds System.package entry for package
     // - installs hook from {hooks: [{name, source}]}
@@ -95,36 +89,35 @@ export default class PackageConfiguration {
     this.applyLivelyConfigBundles(livelyConfig);
   }
 
-  applyLivelyConfigHooks(livelyConfig) {
+  applyLivelyConfigHooks (livelyConfig) {
     (livelyConfig.hooks || []).forEach(h => {
       try {
-        var f = eval("(" + h.source + ")");
-        if (!f.name || !isHookInstalled(this.System, h.target, f.name))
-          installHook(this.System, h.target, f);
+        let f = eval('(' + h.source + ')');
+        if (!f.name || !isHookInstalled(this.System, h.target, f.name)) { installHook(this.System, h.target, f); }
       } catch (e) {
-        console.error("Error installing hook for %s: %s", this.packageURL, e, h);
+        console.error('Error installing hook for %s: %s', this.packageURL, e, h);
       }
     });
   }
 
-  applyLivelyConfigBundles(livelyConfig) {
+  applyLivelyConfigBundles (livelyConfig) {
     if (!livelyConfig.bundles) return Promise.resolve();
-    var normalized = Object.keys(livelyConfig.bundles).reduce((bundles, name) => {
-      var absName = this.packageURL + "/" + name,
-          files = livelyConfig.bundles[name].map(f => this.System.decanonicalize(f, this.packageURL + "/"));
+    let normalized = Object.keys(livelyConfig.bundles).reduce((bundles, name) => {
+      let absName = this.packageURL + '/' + name;
+      let files = livelyConfig.bundles[name].map(f => this.System.decanonicalize(f, this.packageURL + '/'));
       bundles[absName] = files;
       return bundles;
     }, {});
-    this.System.config({bundles: normalized});
+    this.System.config({ bundles: normalized });
     return Promise.resolve();
   }
 
-  applyLivelyConfigMeta(livelyConfig) {
+  applyLivelyConfigMeta (livelyConfig) {
     if (!livelyConfig.meta) return;
-    var pConf = this.System.getConfig().packages[this.packageURL] || {},
-        c = {meta: {}, packages: {[this.packageURL]: pConf}};
+    let pConf = this.System.getConfig().packages[this.packageURL] || {};
+    let c = { meta: {}, packages: { [this.packageURL]: pConf } };
     Object.keys(livelyConfig.meta).forEach(key => {
-      var val = livelyConfig.meta[key];
+      let val = livelyConfig.meta[key];
       if (isURL(key)) {
         c.meta[key] = val;
       } else {
@@ -134,5 +127,4 @@ export default class PackageConfiguration {
     });
     this.System.config(c);
   }
-
 }

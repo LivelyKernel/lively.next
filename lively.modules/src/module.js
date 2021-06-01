@@ -689,7 +689,8 @@ class ModuleInterface {
     const spec = decl.specifiers.find(s => s.local.name === name);
 
     return spec.type !== 'ImportNamespaceSpecifier'
-      ? [null, null] : [decl, spec.local, id.name];
+      ? [null, null]
+      : [decl, spec.local, id.name];
   }
 
   async _resolveImportedDecl (decl) {

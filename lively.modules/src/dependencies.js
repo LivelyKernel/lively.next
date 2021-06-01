@@ -1,17 +1,17 @@
-import { graph, arr, obj } from "lively.lang";
-import { loadedModules } from "./system.js";
+import { graph, arr, obj } from 'lively.lang';
+import { loadedModules } from './system.js';
 
-function computeRequireMap(System) {
+function computeRequireMap (System) {
   if (System.loads) {
-    var store = System.loads,
-        modNames = arr.uniq(Object.keys(loadedModules(System)).concat(Object.keys(store)));
+    let store = System.loads;
+    let modNames = arr.uniq(Object.keys(loadedModules(System)).concat(Object.keys(store)));
     return modNames.reduce((requireMap, k) => {
-      var depMap = store[k] ? store[k].depMap : {};
+      let depMap = store[k] ? store[k].depMap : {};
       requireMap[k] = Object.keys(depMap).map(localName => {
-        var resolvedName = depMap[localName];
-        if (resolvedName === "@empty") return `${resolvedName}/${localName}`;
+        let resolvedName = depMap[localName];
+        if (resolvedName === '@empty') return `${resolvedName}/${localName}`;
         return resolvedName;
-      })
+      });
       return requireMap;
     }, {});
   }

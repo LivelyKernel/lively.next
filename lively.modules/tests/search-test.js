@@ -1,40 +1,38 @@
-/*global System, before, after, beforeEach, afterEach, describe, it*/
+/* global System, before, after, beforeEach, afterEach, describe, it */
 
-import { expect } from "mocha-es6";
+import { expect } from 'mocha-es6';
 
-import { removeDir, createFiles } from "./helpers.js";
+import { removeDir, createFiles } from './helpers.js';
 
-import { getSystem, searchLoadedModules, loadedModules } from "../src/system.js";
-import mod from "../src/module.js";
-import { importPackage, removePackage, getPackage } from "../src/packages/package.js";
+import { getSystem, searchLoadedModules, loadedModules } from '../src/system.js';
+import mod from '../src/module.js';
+import { importPackage, removePackage, getPackage } from '../src/packages/package.js';
 
-const dir = System.decanonicalize("lively.modules/tests/"),
-      testProjectDir = dir + "search-test-project/",
-      testProjectSpec = {
-        "file1.js": "import { y } from './file2.js';\nexport var x = 'hello';",
-        "file2.js": "export var y = 'world'; // comment",
-        "package.json": '{"name":"search-test-project","main":"file1.js"}'
-      },
-      file1m = testProjectDir + "file1.js",
-      file2m = testProjectDir + "file2.js";
+const dir = System.decanonicalize('lively.modules/tests/');
+const testProjectDir = dir + 'search-test-project/';
+const testProjectSpec = {
+  'file1.js': "import { y } from './file2.js';\nexport var x = 'hello';",
+  'file2.js': "export var y = 'world'; // comment",
+  'package.json': '{"name":"search-test-project","main":"file1.js"}'
+};
+const file1m = testProjectDir + 'file1.js';
+const file2m = testProjectDir + 'file2.js';
 
-describe("search", () => {
-
+describe('search', () => {
   let S, module1, module2;
 
   before(async () => {
     await createFiles(testProjectDir, testProjectSpec);
-    S = getSystem("test", {baseURL: dir});
+    S = getSystem('test', { baseURL: dir });
     module1 = mod(S, file1m);
     module2 = mod(S, file2m);
   });
 
   after(() => removeDir(testProjectDir));
 
-  describe("in modules", () => {
-
-    it("finds string constants", async () => {
-      const res = await module1.search("hello");
+  describe('in modules', () => {
+    it('finds string constants', async () => {
+      const res = await module1.search('hello');
       expect(res).to.containSubset([{
         moduleId: file1m,
         lineString: "export var x = 'hello';",
@@ -44,8 +42,8 @@ describe("search", () => {
       }]);
     });
 
-    it("finds comments", async () => {
-      const res = await module2.search("comment");
+    it('finds comments', async () => {
+      const res = await module2.search('comment');
       expect(res).to.containSubset([{
         moduleId: file2m,
         lineString: "export var y = 'world'; // comment",
@@ -55,7 +53,7 @@ describe("search", () => {
       }]);
     });
 
-    it("by regex", async () => {
+    it('by regex', async () => {
       const res = await module1.search(/(im|ex)port/);
       expect(res).to.containSubset([{
         moduleId: file1m,
@@ -69,20 +67,18 @@ describe("search", () => {
         length: 6
       }]);
     });
-
   });
 
-  describe("in all loaded modules", () => {
-
-    it("does not find unloaded string constants", async () => {
+  describe('in all loaded modules', () => {
+    it('does not find unloaded string constants', async () => {
       module1.unload(); module2.unload();
-      const res = await searchLoadedModules(S, "hello");
+      const res = await searchLoadedModules(S, 'hello');
       expect(res).to.containSubset([]);
     });
 
-    it("finds string constants", async () => {
+    it('finds string constants', async () => {
       await S.import(file1m);
-      const res = await searchLoadedModules(S, "hello");
+      const res = await searchLoadedModules(S, 'hello');
       expect(res).to.containSubset([{
         moduleId: file1m,
         line: 2,
@@ -91,9 +87,9 @@ describe("search", () => {
       }]);
     });
 
-    it("finds comments", async () => {
+    it('finds comments', async () => {
       await S.import(file1m);
-      const res = await searchLoadedModules(S, "comment");
+      const res = await searchLoadedModules(S, 'comment');
       expect(res).to.containSubset([{
         moduleId: file2m,
         line: 1,
@@ -102,16 +98,16 @@ describe("search", () => {
       }]);
     });
 
-    it("finds syntax", async () => {
+    it('finds syntax', async () => {
       await S.import(file1m);
       await S.import(file2m);
-      const res = await searchLoadedModules(S, "export");
+      const res = await searchLoadedModules(S, 'export');
       expect(res).to.containSubset([{
         moduleId: file1m,
         line: 2,
         column: 0,
         length: 6
-      },{
+      }, {
         moduleId: file2m,
         line: 1,
         column: 0,
@@ -119,7 +115,7 @@ describe("search", () => {
       }]);
     });
 
-    it("by regex", async () => {
+    it('by regex', async () => {
       const res = await searchLoadedModules(S, /(im|ex)port/);
       expect(res).to.containSubset([{
         moduleId: file1m,
@@ -139,40 +135,42 @@ describe("search", () => {
       }]);
     });
 
-    it("can exclude modules", async () => {
+    it('can exclude modules', async () => {
       const res = await searchLoadedModules(S,
-        /(im|ex)port/, {excludedModules: [ea => ea != file2m]});
+        /(im|ex)port/, { excludedModules: [ea => ea != file2m] });
       expect(res).to.have.length(1);
       expect(res).to.containSubset([
-        {moduleId: file2m, line: 1, column: 0, length: 6}]);
+        { moduleId: file2m, line: 1, column: 0, length: 6 }]);
     });
-
   });
 
-  describe("in packages", () => {
-
+  describe('in packages', () => {
     beforeEach(() => importPackage(S, testProjectDir));
     afterEach(() => removePackage(S, testProjectDir));
 
-    it("finds string constants", async () => {
-      const res = await getPackage(S, testProjectDir).search("hello");
+    it('finds string constants', async () => {
+      const res = await getPackage(S, testProjectDir).search('hello');
       expect(res).to.containSubset([{
-        pathInPackage: "file1.js",
-        packageName: "search-test-project",
+        pathInPackage: 'file1.js',
+        packageName: 'search-test-project',
         moduleId: file1m,
-        line: 2, column: 16, length: 5
+        line: 2,
+        column: 16,
+        length: 5
       }]);
     });
 
-    it("finds comments", async () => {
-      const res = await getPackage(S, testProjectDir).search("comment");
+    it('finds comments', async () => {
+      const res = await getPackage(S, testProjectDir).search('comment');
       expect(res).to.containSubset([{
         moduleId: file2m,
-        line: 1, column: 27, length: 7
+        line: 1,
+        column: 27,
+        length: 7
       }]);
     });
 
-    it("by regex", async () => {
+    it('by regex', async () => {
       const res = await getPackage(S, testProjectDir).search(/(im|ex)port/);
       expect(res).to.containSubset([{
         moduleId: file1m,
@@ -192,20 +190,18 @@ describe("search", () => {
       }]);
     });
 
-    it("can exclude modules", async () => {
-      const res = await getPackage(S, testProjectDir).search(/(im|ex)port/, {excludedModules: [file1m]});
+    it('can exclude modules', async () => {
+      const res = await getPackage(S, testProjectDir).search(/(im|ex)port/, { excludedModules: [file1m] });
       expect(res).to.have.length(1);
       expect(res).to.containSubset([
-        {moduleId: file2m, line: 1, column: 0, length: 6}]);
+        { moduleId: file2m, line: 1, column: 0, length: 6 }]);
     });
 
-    it("can exclude modules via regex matches", async () => {
-      const res = await getPackage(S, testProjectDir).search(/(im|ex)port/, {excludedModules: [/file1.js/]});
+    it('can exclude modules via regex matches', async () => {
+      const res = await getPackage(S, testProjectDir).search(/(im|ex)port/, { excludedModules: [/file1.js/] });
       expect(res).to.have.length(1);
       expect(res).to.containSubset([
-        {moduleId: file2m, line: 1, column: 0, length: 6}]);
+        { moduleId: file2m, line: 1, column: 0, length: 6 }]);
     });
-
   });
-
 });

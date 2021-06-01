@@ -13,8 +13,6 @@
 
   The result of the importPackage call is the promise for loading the main module.
 
-
-
   #### Specifics of the lively package format
 
   The main purpose of the lively package format is to make it easy to integrate
@@ -41,8 +39,6 @@
   ```
 
   For more examples, see [lively.modules/package.json](https://github.com/LivelyKernel/lively.modules/package.json), or [lively.ast/package.json](https://github.com/LivelyKernel/lively.ast/package.json).
-
-
 
   ### `lively.modules.System`
 
@@ -72,8 +68,6 @@
   modules in src/ will take a System loader object as first parameter, the
   implementation is loader independent.
 
-
-
   ### Loader state / module state
 
   - `lively.modules.loadedModules()`: Returns a list of ids of the currently loaded modules.
@@ -86,8 +80,6 @@
   values are lists of module ids of those modules that dependent on the key
   module (including the key module itself). I.e. the importers of that module.
 
-
-
   ### instrumentation
 
   By default lively.modules will hook into the `System.translate` process so that source code of modules get transformed to allow recording of their internal evaluation state (that is then captured in `moduleEnv`s). You can enable and disable this behavior via
@@ -95,13 +87,9 @@
   - `lively.modules.wrapModuleLoad()`
   - `lively.modules.unwrapModuleLoad()`
 
-
-
   ### evaluation
 
   * This is handled by the [lively.vm module](https://github.com/LivelyKernel/lively.vm)!
-
-
 
   ### ModuleInterface
 
@@ -184,7 +172,6 @@
     //   })
   ```
 
-
   ##### `async ModuleInterface>>source()`
 
   Returns the source code of the module.
@@ -212,8 +199,6 @@
     // => function() {...} The actual object defined in the module scope
   ```
 
-
-
   ### hooks
 
   lively.modules provides an easy way to customize the behavior of the System
@@ -226,11 +211,11 @@
     return proceed(load); // default behavior
   });
   ```
-  
+
   ### notification
-  
+
   There are five types of system-wide notifications:
-  
+
   1. `{type: "lively.modules/moduleloaded", module}`
   2. `{type: "lively.modules/modulechanged", module, oldSource, newSource, error, options}`
   3. `{type: "lively.modules/moduleunloaded", module}`
@@ -241,44 +226,46 @@
 
  */
 
-/*global global, self*/
+/* global global, self */
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // System accessors
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import {
   getSystem, removeSystem, prepareSystem,
   printSystemConfig as _printSystemConfig,
-  unwrapModuleResolution as _unwrapModuleResolution, 
+  unwrapModuleResolution as _unwrapModuleResolution,
   wrapModuleResolution as _wrapModuleResolution,
-  whenLoaded as _whenLoaded,
-} from "./src/system.js";
+  whenLoaded as _whenLoaded
+} from './src/system.js';
 import _module, {
   doesModuleExist as _doesModuleExist,
   isModuleLoaded as _isModuleLoaded
-} from "./src/module.js";
+} from './src/module.js';
 
-var GLOBAL = typeof window !== "undefined" ? window :
-              (typeof global !== "undefined" ? global :
-                (typeof self !== "undefined" ? self : this));
+let GLOBAL = typeof window !== 'undefined'
+  ? window
+  : (typeof global !== 'undefined'
+      ? global
+      : (typeof self !== 'undefined' ? self : this));
 
 var defaultSystem = defaultSystem || prepareSystem(GLOBAL.System);
-function changeSystem(newSystem, makeGlobal) {
+function changeSystem (newSystem, makeGlobal) {
   defaultSystem = newSystem;
   if (makeGlobal) GLOBAL.System = newSystem;
   return newSystem;
 }
-function wrapModuleResolution() { _wrapModuleResolution(defaultSystem); }
-function unwrapModuleResolution() { _unwrapModuleResolution(defaultSystem); }
-function loadedModules() { return Object.keys(requireMap()); }
-function module(id) { return _module(defaultSystem, id); }
-function isModuleLoaded(name, isNormalized) {
-  return _isModuleLoaded(defaultSystem, name, isNormalized)
+function wrapModuleResolution () { _wrapModuleResolution(defaultSystem); }
+function unwrapModuleResolution () { _unwrapModuleResolution(defaultSystem); }
+function loadedModules () { return Object.keys(requireMap()); }
+function module (id) { return _module(defaultSystem, id); }
+function isModuleLoaded (name, isNormalized) {
+  return _isModuleLoaded(defaultSystem, name, isNormalized);
 }
-function doesModuleExist(name, isNormalized) {
+function doesModuleExist (name, isNormalized) {
   return _doesModuleExist(defaultSystem, name, isNormalized);
 }
-function printSystemConfig() { return _printSystemConfig(defaultSystem); }
-function whenLoaded(moduleName, callback) {
+function printSystemConfig () { return _printSystemConfig(defaultSystem); }
+function whenLoaded (moduleName, callback) {
   return _whenLoaded(defaultSystem, moduleName, callback);
 }
 export {
@@ -311,19 +298,18 @@ import {
   reloadPackage as _reloadPackage,
   registerPackage as _registerPackage,
   lookupPackage as _lookupPackage
-} from "./src/packages/package.js";
+} from './src/packages/package.js';
 
-function importPackage(packageURL) { return _importPackage(defaultSystem, packageURL); }
-function registerPackage(packageURL, optPkgConfig) { return _registerPackage(defaultSystem, packageURL, optPkgConfig); }
-function removePackage(packageURL) { return _removePackage(defaultSystem, packageURL); }
-function reloadPackage(packageURL, opts) { return _reloadPackage(defaultSystem, packageURL, opts); }
-function getPackages() { return getPackageSpecs(defaultSystem); }
-function getPackage(packageURL, isNormalized = false) { return _getPackage(defaultSystem, packageURL, isNormalized); }
-function getPackageOfModule(moduleId) { return Package.forModuleId(defaultSystem, moduleId); }
-function ensurePackage(packageURL) { return _ensurePackage(defaultSystem, packageURL); }
-function applyPackageConfig(packageConfig, packageURL) { return _applyPackageConfig(defaultSystem, packageConfig, packageURL); }
-function lookupPackage(packageURL, isNormalized = false) { return _lookupPackage(defaultSystem, packageURL, isNormalized); }
-
+function importPackage (packageURL) { return _importPackage(defaultSystem, packageURL); }
+function registerPackage (packageURL, optPkgConfig) { return _registerPackage(defaultSystem, packageURL, optPkgConfig); }
+function removePackage (packageURL) { return _removePackage(defaultSystem, packageURL); }
+function reloadPackage (packageURL, opts) { return _reloadPackage(defaultSystem, packageURL, opts); }
+function getPackages () { return getPackageSpecs(defaultSystem); }
+function getPackage (packageURL, isNormalized = false) { return _getPackage(defaultSystem, packageURL, isNormalized); }
+function getPackageOfModule (moduleId) { return Package.forModuleId(defaultSystem, moduleId); }
+function ensurePackage (packageURL) { return _ensurePackage(defaultSystem, packageURL); }
+function applyPackageConfig (packageConfig, packageURL) { return _applyPackageConfig(defaultSystem, packageConfig, packageURL); }
+function lookupPackage (packageURL, isNormalized = false) { return _lookupPackage(defaultSystem, packageURL, isNormalized); }
 
 export {
   importPackage,
@@ -338,13 +324,13 @@ export {
   lookupPackage
 };
 
-import { PackageRegistry } from "./src/packages/package-registry.js";
-export { PackageRegistry }
+import { PackageRegistry } from './src/packages/package-registry.js';
+export { PackageRegistry };
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // changing modules
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-import { moduleSourceChange as _moduleSourceChange } from "./src/change.js";
-function moduleSourceChange(moduleName, newSource, options) {
+import { moduleSourceChange as _moduleSourceChange } from './src/change.js';
+function moduleSourceChange (moduleName, newSource, options) {
   return _moduleSourceChange(defaultSystem, moduleName, newSource, options);
 }
 export { moduleSourceChange };
@@ -354,8 +340,8 @@ export { moduleSourceChange };
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import {
   computeRequireMap
-} from "./src/dependencies.js";
-function requireMap() { return computeRequireMap(defaultSystem); }
+} from './src/dependencies.js';
+function requireMap () { return computeRequireMap(defaultSystem); }
 export { requireMap };
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -365,14 +351,14 @@ import {
   isInstalled as _isHookInstalled,
   install as _installHook,
   remove as _removeHook
-} from "./src/hooks.js";
-function isHookInstalled(methodName, hookOrName) {
+} from './src/hooks.js';
+function isHookInstalled (methodName, hookOrName) {
   return _isHookInstalled(defaultSystem, methodName, hookOrName);
 }
-function installHook(hookName, hook) {
+function installHook (hookName, hook) {
   return _installHook(defaultSystem, hookName, hook);
 }
-function removeHook(methodName, hookOrName) {
+function removeHook (methodName, hookOrName) {
   return _removeHook(defaultSystem, methodName, hookOrName);
 }
 export { isHookInstalled, installHook, removeHook };
@@ -383,26 +369,26 @@ export { isHookInstalled, installHook, removeHook };
 import {
   wrapModuleLoad as _wrapModuleLoad,
   unwrapModuleLoad as _unwrapModuleLoad
-} from "./src/instrumentation.js";
-function wrapModuleLoad() { _wrapModuleLoad(defaultSystem); }
-function unwrapModuleLoad() { _unwrapModuleLoad(defaultSystem); }
+} from './src/instrumentation.js';
+function wrapModuleLoad () { _wrapModuleLoad(defaultSystem); }
+function unwrapModuleLoad () { _unwrapModuleLoad(defaultSystem); }
 export { wrapModuleLoad, unwrapModuleLoad };
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // export / import tooling
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-export { default as ExportLookup } from "./src/export-lookup.js";
+export { default as ExportLookup } from './src/export-lookup.js';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // cjs
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-import * as cjs from "./cjs/dependencies.js";
+import * as cjs from './cjs/dependencies.js';
 export { cjs };
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // semver
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-export { default as semver} from "semver";
+export { default as semver } from 'semver';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // object scripting capabilities
@@ -410,18 +396,18 @@ export { default as semver} from "semver";
 import { ImportInjector } from './src/import-modification.js';
 
 const scripting = defaultSystem._scripting = {
-  module: _module, 
-  ensurePackage: _ensurePackage, 
-  registerPackage: _registerPackage, 
-  importPackage: _importPackage, 
+  module: _module,
+  ensurePackage: _ensurePackage,
+  registerPackage: _registerPackage,
+  importPackage: _importPackage,
   lookupPackage: _lookupPackage,
   ImportInjector
 };
-import { defaultClassToFunctionConverterName } from "lively.vm";
+import { defaultClassToFunctionConverterName } from 'lively.vm';
 import { runtime as classRuntime } from 'lively.classes';
 defaultSystem.global[defaultClassToFunctionConverterName] = classRuntime.initializeClass;
 import { classHolder } from './src/cycle-breaker.js';
-import ModulePackageMapping from "./src/packages/module-package-mapping.js";
+import ModulePackageMapping from './src/packages/module-package-mapping.js';
 classHolder.ModulePackageMapping = ModulePackageMapping;
 classHolder.Package = Package;
 classHolder.PackageRegistry = PackageRegistry;

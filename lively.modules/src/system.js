@@ -438,7 +438,7 @@ function normalize_packageOfURL (url, System) {
     .filter(ea => !!ea);
   const pName = matchingPackages.length
     ? matchingPackages.reduce((matchingPkg, ea) =>
-        matchingPkg.penalty > ea.penalty ? ea : matchingPkg).url
+      matchingPkg.penalty > ea.penalty ? ea : matchingPkg).url
     : null;
   const systemPackage = pName && System.packages[pName];
   return systemPackage ? { systemPackage, packageURL: pName } : null;

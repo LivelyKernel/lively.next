@@ -258,7 +258,7 @@ export class GlobalInjector {
       : null;
     const declaredGlobals = globalComment
       ? globalComment.text.replace(/^global\s*/, '')
-          .split(',').map(ea => ea.trim()).filter(Boolean)
+        .split(',').map(ea => ea.trim()).filter(Boolean)
       : [];
     const knownGlobals = [...declaredGlobals, ...query.knownGlobals];
     const undefinedVariables = query.findGlobalVarRefs(parsed, { jslintGlobalComment: true })
@@ -275,7 +275,7 @@ export class GlobalInjector {
       : null;
     const existingDecls = globalComment
       ? globalComment.text.replace(/^global\s*/, '')
-          .split(',').map(ea => ea.trim()).filter(Boolean)
+        .split(',').map(ea => ea.trim()).filter(Boolean)
       : [];
     const namesToInsert = namesToDeclareGlobal.filter(ea => !existingDecls.includes(ea));
 
@@ -372,7 +372,8 @@ export class ImportRemover {
 
     // 1.get imports with specifiers
     const parsed = typeof moduleSourceOrAst === 'string'
-      ? fuzzyParse(moduleSourceOrAst) : moduleSourceOrAst;
+      ? fuzzyParse(moduleSourceOrAst)
+      : moduleSourceOrAst;
 
     const imports = arr.flatmap(parsed.body, ea => {
       if (ea.type !== 'ImportDeclaration' || !ea.specifiers.length) return [];

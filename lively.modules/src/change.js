@@ -1,74 +1,71 @@
-import { arr }  from "lively.lang";
-import { emit } from "lively.notifications";
+import { arr } from 'lively.lang';
+import { emit } from 'lively.notifications';
 import {
   instrumentSourceOfEsmModuleLoad,
   instrumentSourceOfGlobalModuleLoad
-} from "./instrumentation.js";
-import { scheduleModuleExportsChange } from "./import-export.js";
-import { classHolder } from "./cycle-breaker.js";
+} from './instrumentation.js';
+import { scheduleModuleExportsChange } from './import-export.js';
+import { classHolder } from './cycle-breaker.js';
 
-async function moduleSourceChange(System, moduleId, newSource, format, options) {
+async function moduleSourceChange (System, moduleId, newSource, format, options) {
   try {
-    var changeResult;
-    System.debug && console.log(`[module change] ${moduleId} ${newSource.slice(0,50).replace(/\n/g, "")} ${format}`)
+    let changeResult;
+    System.debug && console.log(`[module change] ${moduleId} ${newSource.slice(0, 50).replace(/\n/g, '')} ${format}`);
 
-    if (!format || format === "es6" || format === "esm" || format === "register" || format === "defined") {
+    if (!format || format === 'es6' || format === 'esm' || format === 'register' || format === 'defined') {
       changeResult = await moduleSourceChangeEsm(System, moduleId, newSource, options);
-    } else if (format === "global") {
+    } else if (format === 'global') {
       changeResult = await moduleSourceChangeGlobal(System, moduleId, newSource, options);
     } else {
       throw new Error(`moduleSourceChange is not supported for module ${moduleId} with format ${format}`);
     }
-    
-    emit("lively.modules/modulechanged", {
-      module: moduleId, newSource, options }, Date.now(), System);
-    
+
+    emit('lively.modules/modulechanged', { module: moduleId, newSource, options }, Date.now(), System);
+
     return changeResult;
   } catch (error) {
-    emit("lively.modules/modulechanged", {
-      module: moduleId, newSource, error, options }, Date.now(), System);
+    emit('lively.modules/modulechanged', { module: moduleId, newSource, error, options }, Date.now(), System);
     throw error;
   }
 }
 
-async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
-  var debug = System.debug,
-      load = {
-        status: 'loading',
-        source: newSource,
-        name: moduleId,
-        address: moduleId,
-        linkSets: [],
-        dependencies: [],
-        metadata: {format: "esm"}
-      };
+async function moduleSourceChangeEsm (System, moduleId, newSource, options) {
+  let debug = System.debug;
+  let load = {
+    status: 'loading',
+    source: newSource,
+    name: moduleId,
+    address: moduleId,
+    linkSets: [],
+    dependencies: [],
+    metadata: { format: 'esm' }
+  };
 
   // translate the source and produce a {declare: FUNCTION, localDeps:
   // [STRING]} object
-  var updateData = await instrumentSourceOfEsmModuleLoad(System, load);
+  let updateData = await instrumentSourceOfEsmModuleLoad(System, load);
 
   // evaluate the module source, to get the register module object with execute
   // and setters fields
-  var _exports = (name, val) => scheduleModuleExportsChange(System, load.name, name, val, true),
-      declared = updateData.declare(_exports);
+  let _exports = (name, val) => scheduleModuleExportsChange(System, load.name, name, val, true);
+  let declared = updateData.declare(_exports);
 
-  debug && console.log("[lively.vm es6] sourceChange of %s with deps", load.name, updateData.localDeps);
-
+  debug && console.log('[lively.vm es6] sourceChange of %s with deps', load.name, updateData.localDeps);
 
   // ensure dependencies are loaded
-  var deps = [];
+  let deps = [];
   for (let depName of updateData.localDeps) {
     // gather the data we need for the update, this includes looking up the
     // imported modules and getting the module record and module object as
     // a fallback (module records only exist for esm modules)
-    let depId = await System.normalize(depName, load.name),
-        depModule = classHolder.module(System, depId),
-        exports = await depModule.load();
-    deps.push({name: depName, fullname: depId, module: depModule, exports});
+    let depId = await System.normalize(depName, load.name);
+    let depModule = classHolder.module(System, depId);
+    let exports = await depModule.load();
+    deps.push({ name: depName, fullname: depId, module: depModule, exports });
   }
 
   // hmm... for house keeping... not really needed right now, though
-  var prevLoad = System.loads && System.loads[load.name];
+  let prevLoad = System.loads && System.loads[load.name];
   if (prevLoad) {
     prevLoad.deps = deps.map(ea => ea.name);
     prevLoad.depMap = deps.reduce((map, dep) => { map[dep.name] = dep.fullname; return map; }, {});
@@ -79,8 +76,8 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
     }
   }
 
-  var mod = classHolder.module(System, load.name),
-      record = mod.record();
+  let mod = classHolder.module(System, load.name);
+  let record = mod.record();
 
   // 1. update the record so that when its dependencies change and cause a
   // re-execute, the correct code (new version) is run
@@ -88,91 +85,88 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
   if (record) record.execute = declared.execute;
 
   // 2. run setters to populate imports
-  deps.forEach((d,i) => declared.setters[i](d.exports));
+  deps.forEach((d, i) => declared.setters[i](d.exports));
 
   // 3. execute module body
   return declared.execute();
 }
 
-async function moduleSourceChangeGlobal(System, moduleId, newSource, options) {
-  var load = {
+async function moduleSourceChangeGlobal (System, moduleId, newSource, options) {
+  let load = {
     status: 'loading',
     source: newSource,
     name: moduleId,
     address: moduleId,
     linkSets: [],
     dependencies: [],
-    metadata: {format: "global"}
+    metadata: { format: 'global' }
   };
 
-  if (!System.get(moduleId)) await System["import"](moduleId);
+  if (!System.get(moduleId)) await System.import(moduleId);
 
   // translate the source and produce a {declare: FUNCTION, localDeps: [STRING]} object
-  var updateData = await instrumentSourceOfGlobalModuleLoad(System, load);
+  let updateData = await instrumentSourceOfGlobalModuleLoad(System, load);
 
   load.source = updateData.translated;
-  var entry = doInstantiateGlobalModule(System, load);
+  let entry = doInstantiateGlobalModule(System, load);
   System.delete(moduleId);
-  System.set(entry.name, entry.esModule)
+  System.set(entry.name, entry.esModule);
   return entry.module;
 }
 
-function doInstantiateGlobalModule(System, load) {
-
-  var entry = __createEntry();
+function doInstantiateGlobalModule (System, load) {
+  let entry = __createEntry();
   entry.name = load.name;
   entry.esmExports = true;
   load.metadata.entry = entry;
 
   entry.deps = [];
 
-  for (var g in load.metadata.globals) {
-    var gl = load.metadata.globals[g];
-    if (gl)
-      entry.deps.push(gl);
+  for (let g in load.metadata.globals) {
+    let gl = load.metadata.globals[g];
+    if (gl) { entry.deps.push(gl); }
   }
 
-  entry.execute = function executeGlobalModule(require, exports, m) {
-
+  entry.execute = function executeGlobalModule (require, exports, m) {
     // SystemJS exports detection for global modules is based in new props
     // added to the global. In order to allow re-load we remove previously
     // "exported" values
-    var prevMeta = classHolder.module(System, m.id).metadata(),
-        exports = prevMeta && prevMeta.entry
-               && prevMeta.entry.module && prevMeta.entry.module.exports;
-    if (exports)
+    let prevMeta = classHolder.module(System, m.id).metadata();
+    var exports = prevMeta && prevMeta.entry &&
+               prevMeta.entry.module && prevMeta.entry.module.exports;
+    if (exports) {
       Object.keys(exports).forEach(name => {
         try { delete System.global[name]; } catch (e) {
-          console.warn(`[lively.modules] executeGlobalModule: Cannot delete global["${name}"]`)
+          console.warn(`[lively.modules] executeGlobalModule: Cannot delete global["${name}"]`);
         }
       });
-
-    var globals;
-    if (load.metadata.globals) {
-      globals = {};
-      for (var g in load.metadata.globals)
-        if (load.metadata.globals[g])
-          globals[g] = require(load.metadata.globals[g]);
     }
 
-    var exportName = load.metadata.exports;
+    let globals;
+    if (load.metadata.globals) {
+      globals = {};
+      for (let g in load.metadata.globals) {
+        if (load.metadata.globals[g]) { globals[g] = require(load.metadata.globals[g]); }
+      }
+    }
 
-    if (exportName)
-      load.source += `\nSystem.global["${exportName}"] = ${exportName};`
+    let exportName = load.metadata.exports;
 
-    var retrieveGlobal = System.get('@@global-helpers').prepareGlobal(m.id, exportName, globals);
+    if (exportName) { load.source += `\nSystem.global["${exportName}"] = ${exportName};`; }
+
+    let retrieveGlobal = System.get('@@global-helpers').prepareGlobal(m.id, exportName, globals);
 
     __evaluateGlobalLoadSource(System, load);
 
     return retrieveGlobal();
-  }
+  };
 
   return runExecuteOfGlobalModule(System, entry);
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function __createEntry() {
+function __createEntry () {
   return {
     name: null,
     deps: null,
@@ -190,24 +184,22 @@ function __createEntry() {
   };
 }
 
-function __evaluateGlobalLoadSource(System, load) {
+function __evaluateGlobalLoadSource (System, load) {
   // System clobbering protection (mostly for Traceur)
-  var curLoad, curSystem, callCounter = 0, __global = System.global;
+  let curLoad; let curSystem; let callCounter = 0; let __global = System.global;
   return __exec.call(System, load);
 
-  function preExec(loader, load) {
-    if (callCounter++ == 0)
-      curSystem = __global.System;
+  function preExec (loader, load) {
+    if (callCounter++ == 0) { curSystem = __global.System; }
     __global.System = __global.SystemJS = loader;
   }
 
-  function postExec() {
-    if (--callCounter == 0)
-      __global.System = __global.SystemJS = curSystem;
+  function postExec () {
+    if (--callCounter == 0) { __global.System = __global.SystemJS = curSystem; }
     curLoad = undefined;
   }
 
-  function __exec(load) {
+  function __exec (load) {
     // if ((load.metadata.integrity || load.metadata.nonce) && supportsScriptExec)
     //   return scriptExec.call(this, load);
     try {
@@ -215,21 +207,20 @@ function __evaluateGlobalLoadSource(System, load) {
       curLoad = load;
       (0, eval)(load.source);
       postExec();
-    }
-    catch (e) {
+    } catch (e) {
       postExec();
       throw new Error(`Error evaluating ${load.address}:\n${e.stack}`);
     }
-  };
+  }
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function runExecuteOfGlobalModule(System, entry) {
+function runExecuteOfGlobalModule (System, entry) {
   // if (entry.module) return;
 
-  var exports = {},
-      module = entry.module = {exports: exports, id: entry.name};
+  let exports = {};
+  let module = entry.module = { exports: exports, id: entry.name };
 
   // // AMD requires execute the tree first
   // if (!entry.executingRequire) {
@@ -243,30 +234,26 @@ function runExecuteOfGlobalModule(System, entry) {
 
   // now execute
   entry.evaluated = true;
-  var output = entry.execute.call(System.global, function(name) {
-    var dep = entry.deps.find(dep => dep === name),
-        loadedDep = (dep && System.get(entry.normalizedDeps[entry.deps.indexOf(dep)]))
-                 || System.get(System.decanonicalize(name, entry.name));
+  let output = entry.execute.call(System.global, function (name) {
+    let dep = entry.deps.find(dep => dep === name);
+    let loadedDep = (dep && System.get(entry.normalizedDeps[entry.deps.indexOf(dep)])) ||
+                 System.get(System.decanonicalize(name, entry.name));
     if (loadedDep) return loadedDep;
     throw new Error('Module ' + name + ' not declared as a dependency of ' + entry.name);
   }, exports, module);
 
-  if (output)
-    module.exports = output;
+  if (output) { module.exports = output; }
 
   // create the esModule object, which allows ES6 named imports of dynamics
   exports = module.exports;
 
   // __esModule flag treats as already-named
-  var Module = System.get("@system-env").constructor;
-  if (exports && (exports.__esModule || exports instanceof Module))
-    entry.esModule = exports;
+  let Module = System.get('@system-env').constructor;
+  if (exports && (exports.__esModule || exports instanceof Module)) { entry.esModule = exports; }
   // set module as 'default' export, then fake named exports by iterating properties
-  else if (entry.esmExports && exports !== System.global)
-    entry.esModule = System.newModule(exports);
+  else if (entry.esmExports && exports !== System.global) { entry.esModule = System.newModule(exports); }
   // just use the 'default' export
-  else
-    entry.esModule = { 'default': exports };
+  else { entry.esModule = { default: exports }; }
 
   return entry;
 }

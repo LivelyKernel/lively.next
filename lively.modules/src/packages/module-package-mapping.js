@@ -1,7 +1,7 @@
-import { arr } from "lively.lang";
-import { unsubscribe, subscribe } from "lively.notifications";
-import { knownModuleNames } from '../system.js'
-import { classHolder } from "../cycle-breaker.js";
+import { arr } from 'lively.lang';
+import { unsubscribe, subscribe } from 'lively.notifications';
+import { knownModuleNames } from '../system.js';
+import { classHolder } from '../cycle-breaker.js';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // This deals with which modules are mapped to which packages. There is
@@ -13,51 +13,50 @@ import { classHolder } from "../cycle-breaker.js";
 // existing ones removed.
 
 export default class ModulePackageMapping {
-
-  static forSystem(System) {
-    var existing = System["__lively.modules__modulePackageMapCache"];
+  static forSystem (System) {
+    let existing = System['__lively.modules__modulePackageMapCache'];
     if (existing) return existing;
-    var instance = new this(System);
-    System["__lively.modules__modulePackageMapCache"] = instance;
+    let instance = new this(System);
+    System['__lively.modules__modulePackageMapCache'] = instance;
     return instance;
   }
 
-  constructor(System) {
+  constructor (System) {
     this.System = System;
     this._notificationHandlers = null;
     this.clearCache();
     this.subscribeToSystemChanges();
   }
 
-  subscribeToSystemChanges() {
+  subscribeToSystemChanges () {
     if (this._notificationHandlers) return;
-    var S = this.System;
+    let S = this.System;
     this._notificationHandlers = [
-      subscribe("lively.modules/moduleloaded", evt => this.addModuleIdToCache(evt.module), S),
-      subscribe("lively.modules/moduleunloaded", evt => this.removeModuleFromCache(evt.module), S),
-      subscribe("lively.modules/packageregistered", evt => this.clearCache(), S),
-      subscribe("lively.modules/packageremoved", evt => this.clearCache(), S)
+      subscribe('lively.modules/moduleloaded', evt => this.addModuleIdToCache(evt.module), S),
+      subscribe('lively.modules/moduleunloaded', evt => this.removeModuleFromCache(evt.module), S),
+      subscribe('lively.modules/packageregistered', evt => this.clearCache(), S),
+      subscribe('lively.modules/packageremoved', evt => this.clearCache(), S)
     ];
   }
 
-  unsubscribeFromSystemChanges() {
+  unsubscribeFromSystemChanges () {
     if (!this._notificationHandlers) return;
-    var S = this.System;
-    unsubscribe("lively.modules/moduleloaded",      this._notificationHandlers[0], S),
-    unsubscribe("lively.modules/moduleunloaded",    this._notificationHandlers[1], S),
-    unsubscribe("lively.modules/packageregistered", this._notificationHandlers[2], S),
-    unsubscribe("lively.modules/packageremoved",    this._notificationHandlers[3], S)
+    let S = this.System;
+    unsubscribe('lively.modules/moduleloaded', this._notificationHandlers[0], S),
+    unsubscribe('lively.modules/moduleunloaded', this._notificationHandlers[1], S),
+    unsubscribe('lively.modules/packageregistered', this._notificationHandlers[2], S),
+    unsubscribe('lively.modules/packageremoved', this._notificationHandlers[3], S);
     this._notificationHandlers = null;
   }
 
-  clearCache() {
+  clearCache () {
     this._cacheInitialized = false;
     this.packageToModule = {};
     this.modulesToPackage = {};
     this.modulesWithoutPackage = {};
   }
 
-  ensureCache() {
+  ensureCache () {
     // The cache is invalidated when packages are added or removed.
     // If a new module gets loaded it is added to the caches.
     // When a module gets removed it is also removed from both maps.
@@ -73,18 +72,16 @@ export default class ModulePackageMapping {
 
     let packageNames = classHolder.Package.allPackageURLs(System);
 
-    for (let j = 0; j < packageNames.length; j++)
-      packageToModule[packageNames[j]] = [];
+    for (let j = 0; j < packageNames.length; j++) { packageToModule[packageNames[j]] = []; }
 
     // bulk load the cache
     let modules = knownModuleNames(System);
     for (let i = 0; i < modules.length; i++) {
-      let moduleId = modules[i], itsPackage;
+      let moduleId = modules[i]; let itsPackage;
       for (let j = 0; j < packageNames.length; j++) {
         let packageName = packageNames[j];
-        if (moduleId.startsWith(packageName)
-         && (!itsPackage || itsPackage.length < packageName.length))
-           itsPackage = packageName;
+        if (moduleId.startsWith(packageName) &&
+         (!itsPackage || itsPackage.length < packageName.length)) { itsPackage = packageName; }
       }
       if (!itsPackage) {
         modulesWithoutPackage[moduleId] = {};
@@ -99,18 +96,17 @@ export default class ModulePackageMapping {
     return this;
   }
 
-  addModuleIdToCache(moduleId) {
+  addModuleIdToCache (moduleId) {
     this.ensureCache();
-    let {packageToModule, modulesToPackage, modulesWithoutPackage} = this;
+    let { packageToModule, modulesToPackage, modulesWithoutPackage } = this;
     if (modulesToPackage[moduleId]) return modulesToPackage[moduleId];
     if (modulesWithoutPackage[moduleId]) return null;
 
-    let packageNames = Object.keys(packageToModule), itsPackage;
+    let packageNames = Object.keys(packageToModule); let itsPackage;
     for (let j = 0; j < packageNames.length; j++) {
       let packageName = packageNames[j];
-      if (moduleId.startsWith(packageName)
-       && (!itsPackage || itsPackage.length < packageName.length))
-         itsPackage = packageName;
+      if (moduleId.startsWith(packageName) &&
+       (!itsPackage || itsPackage.length < packageName.length)) { itsPackage = packageName; }
     }
     if (!itsPackage) {
       modulesWithoutPackage[moduleId] = {};
@@ -122,27 +118,25 @@ export default class ModulePackageMapping {
     }
   }
 
-  removeModuleFromCache(moduleId) {
+  removeModuleFromCache (moduleId) {
     if (!this._cacheInitialized) return;
-    let {packageToModule, modulesToPackage, modulesWithoutPackage} = this;
+    let { packageToModule, modulesToPackage, modulesWithoutPackage } = this;
     if (modulesWithoutPackage.hasOwnProperty(moduleId)) {
       delete modulesWithoutPackage[moduleId];
       return;
     }
-    var itsPackage = modulesToPackage[moduleId];
+    let itsPackage = modulesToPackage[moduleId];
     if (!itsPackage) return;
     delete modulesToPackage[moduleId];
-    if (packageToModule[itsPackage])
-      arr.remove(packageToModule[itsPackage], moduleId);
+    if (packageToModule[itsPackage]) { arr.remove(packageToModule[itsPackage], moduleId); }
   }
 
-  getPackageURLForModuleId(moduleId) {
+  getPackageURLForModuleId (moduleId) {
     return this.modulesToPackage[moduleId] || this.addModuleIdToCache(moduleId);
   }
 
-  getModuleIdsForPackageURL(packageURL) {
+  getModuleIdsForPackageURL (packageURL) {
     this.ensureCache();
     return this.packageToModule[packageURL] || [];
   }
-
 }

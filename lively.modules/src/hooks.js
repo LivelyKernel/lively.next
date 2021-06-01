@@ -1,21 +1,21 @@
-import { arr, fun } from "lively.lang";
+import { arr, fun } from 'lively.lang';
 
-function install(System, methodName, hook, hookName = hook.name) {
+function install (System, methodName, hook, hookName = hook.name) {
   let wrapper = System[methodName] = fun.wrap(System[methodName], hook);
   wrapper.hookFunc = hook;
   hook.hookName = hookName; // function.name is not reliable when minified!
 }
 
-function remove(System, methodName, hookOrName) {
-  var chain = [], f = System[methodName];
+function remove (System, methodName, hookOrName) {
+  let chain = []; let f = System[methodName];
   while (f) {
     chain.push(f);
     f = f.originalFunction;
   }
 
-  var found = typeof hookOrName === "string" ?
-    chain.find(wrapper => wrapper.hookFunc && wrapper.hookFunc.hookName === hookOrName) :
-    chain.find(wrapper => wrapper.hookFunc === hookOrName);
+  let found = typeof hookOrName === 'string'
+    ? chain.find(wrapper => wrapper.hookFunc && wrapper.hookFunc.hookName === hookOrName)
+    : chain.find(wrapper => wrapper.hookFunc === hookOrName);
 
   if (!found) return false;
 
@@ -27,11 +27,11 @@ function remove(System, methodName, hookOrName) {
   return true;
 }
 
-function isInstalled(System, methodName, hookOrName) {
-  var f = System[methodName];
+function isInstalled (System, methodName, hookOrName) {
+  let f = System[methodName];
   while (f) {
     if (f.hookFunc) {
-      if (typeof hookOrName === "string" && f.hookFunc.hookName === hookOrName) return true;
+      if (typeof hookOrName === 'string' && f.hookFunc.hookName === hookOrName) return true;
       else if (f.hookFunc === hookOrName) return true;
     }
     f = f.originalFunction;
