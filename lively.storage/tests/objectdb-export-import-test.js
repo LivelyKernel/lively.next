@@ -1,24 +1,20 @@
-/*global declare, it, describe, beforeEach, afterEach, before, after,xit,xdescribe*/
-import { expect } from "mocha-es6";
-import ObjectDB from "../objectdb.js";
-import { fillDB2 } from "./test-helper.js";
-import { promise, obj } from "lively.lang";
+/* global declare, it, describe, beforeEach, afterEach, before, after,xit,xdescribe */
+import { expect } from 'mocha-es6';
+import ObjectDB from '../objectdb.js';
+import { fillDB2 } from './test-helper.js';
+import { promise, obj } from 'lively.lang';
 
-import { resource } from "lively.resources";
+import { resource } from 'lively.resources';
 
+let world1; let world2;
+let commit1; let commit5; let commit4; let commit3; let commit2;
+let author1; let author2;
+let objectDB2; let objectDB; let snapshotLocation;
+let exportDir = resource('local://objectdb-export-text/test1/');
+let exportLocation = resource('local://lively-morphic-objectdb-test/snapshots2/');
 
-let world1, world2,
-    commit1, commit5, commit4, commit3, commit2,
-    author1, author2,
-    objectDB2, objectDB, snapshotLocation,
-    exportDir = resource("local://objectdb-export-text/test1/"),
-    exportLocation = resource("local://lively-morphic-objectdb-test/snapshots2/");
-
-
-describe("export and import", function() {
-
-  this.timeout(30*1000);
-
+describe('export and import', function () {
+  this.timeout(30 * 1000);
 
   beforeEach(async () => {
     ({
@@ -29,72 +25,67 @@ describe("export and import", function() {
     } = await fillDB2());
   });
 
-
   afterEach(async () => {
     await objectDB.destroy();
     await snapshotLocation.remove();
     await promise.delay(100);
-    await exportDir.remove()
+    await exportDir.remove();
   });
 
-
-  it("exports to directory", async () => {
+  it('exports to directory', async () => {
     await objectDB.exportToDir(exportDir,
-      [{name: world1.name, type: "world"}], true/*copy res's*/);
+      [{ name: world1.name, type: 'world' }], true/* copy res's */);
 
-    let dirList = await exportDir.dirList("infinity", {exclude: ea => ea.isDirectory()});
+    let dirList = await exportDir.dirList('infinity', { exclude: ea => ea.isDirectory() });
     expect(dirList.map(ea => ea.name())).equals([
-      "index.json", "commits.json", "history.json",
+      'index.json', 'commits.json', 'history.json',
       ...[commit1, commit2, commit3].map(ea => objectDB.snapshotResourceFor(ea).name())
     ]);
 
-    expect(await exportDir.join("world/objectdb test world/index.json").readJson())
-      .deep.equals({type: "world", name: "objectdb test world"});
+    expect(await exportDir.join('world/objectdb test world/index.json').readJson())
+      .deep.equals({ type: 'world', name: 'objectdb test world' });
   });
 
-  describe("import", () => {
-
+  describe('import', () => {
     beforeEach(async () => {
-      objectDB2 = ObjectDB.named("lively-morphic-objectdb-test-2", {snapshotLocation: exportLocation});
+      objectDB2 = ObjectDB.named('lively-morphic-objectdb-test-2', { snapshotLocation: exportLocation });
     });
 
     afterEach(async () => {
       await objectDB2.destroy();
-      await exportLocation.remove()
-    })
+      await exportLocation.remove();
+    });
 
-    it("reads exports into new DB", async () => {
-      await objectDB.exportToDir(exportDir, [{name: world1.name, type: "world"}], true/*copy res's*/);
-      await objectDB2.objectStats()
+    it('reads exports into new DB', async () => {
+      await objectDB.exportToDir(exportDir, [{ name: world1.name, type: 'world' }], true/* copy res's */);
+      await objectDB2.objectStats();
       let importData = await objectDB2.importFromDir(exportDir, false, true);
 
       let fullStats = await objectDB2.objectStats();
       expect(fullStats).deep.equals({
         world: {
-          "objectdb test world": {count: 3, newest: commit3.timestamp, oldest: commit1.timestamp}
+          'objectdb test world': { count: 3, newest: commit3.timestamp, oldest: commit1.timestamp }
         }
       });
 
       try {
         await objectDB2.importFromDir(exportDir, false, true);
-        expect().assert(false, "overwrite not allowed");
+        expect().assert(false, 'overwrite not allowed');
       } catch (err) {}
 
       await objectDB2.importFromDir(exportDir, true, true);
       fullStats = await objectDB2.objectStats();
-      expect(fullStats).deep.equals({world: {"objectdb test world": {count: 3, newest: commit3.timestamp, oldest: commit1.timestamp}}});
+      expect(fullStats).deep.equals({ world: { 'objectdb test world': { count: 3, newest: commit3.timestamp, oldest: commit1.timestamp } } });
 
-      let hist1 = await objectDB.versionGraph("world", "objectdb test world"),
-          hist2 = await objectDB2.versionGraph("world", "objectdb test world")
-      expect(hist1.ref).equals(hist2.ref)
+      let hist1 = await objectDB.versionGraph('world', 'objectdb test world');
+      let hist2 = await objectDB2.versionGraph('world', 'objectdb test world');
+      expect(hist1.ref).equals(hist2.ref);
       expect(hist1.history).deep.equals(hist2.history);
 
-      let commits1 = await objectDB.getCommits("world", "objectdb test world"),
-          commits2 = await objectDB2.getCommits("world", "objectdb test world");
-      expect(commits1.map(ea => obj.dissoc(ea, ["_rev"])))
-        .deep.equals(commits2.map(ea => obj.dissoc(ea, ["_rev"])));
+      let commits1 = await objectDB.getCommits('world', 'objectdb test world');
+      let commits2 = await objectDB2.getCommits('world', 'objectdb test world');
+      expect(commits1.map(ea => obj.dissoc(ea, ['_rev'])))
+        .deep.equals(commits2.map(ea => obj.dissoc(ea, ['_rev'])));
     });
-
   });
-
 });
