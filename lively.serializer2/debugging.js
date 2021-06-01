@@ -1,13 +1,13 @@
-/*global System*/
-import { fun, obj, arr, num, string, graph, Path } from "lively.lang";
-import { ObjectPool } from "./object-pool.js";
+/* global System */
+import { fun, obj, arr, num, string, graph, Path } from 'lively.lang';
+import { ObjectPool } from './object-pool.js';
 import {
   lookupPath, referencesAndClassNamesOfId, modifyProperty,
   removeUnreachableObjects,
   referenceGraph,
   findPathFromToId
-} from "./snapshot-navigation.js";
-import ClassHelper from "./class-helper.js";
+} from './snapshot-navigation.js';
+import ClassHelper from './class-helper.js';
 
 /*
 import { serializeMorph, deserializeMorph } from "lively.morphic/serialization.js";
@@ -20,7 +20,6 @@ let snap = JSON.parse(await r.read());
 let idsRemoved = removeUnreachableObjects([snap.id], snap.snapshot)
 await r.write(JSON.stringify(snap, null, 2));
 
-
 let r = resource(System.decanonicalize("lively.morphic/worlds/default.json"))
 let snap = JSON.parse(await r.read())
 
@@ -32,7 +31,6 @@ var snap = serializeMorph($world.get("text editor").getWindow())
 num.humanReadableByteSize(JSON.stringify(snap).length)
 that.fontFamily = "monospace"
 that.textString = JSON.stringify(snap, null, 2)
-
 
 var b2 = deserializeMorph(snap, {reinitializeIds: true});
 
@@ -54,7 +52,6 @@ for (let [id, o] of i.classes.AttributeConnection.objects) {
   report += `${source}.${fromAttr} => ${target}.${toAttr} (${sourceId} => ${targetId})\n`
 }
 report
-
 
 var t = Date.now(); var g = referenceGraph(snap.snapshot); Date.now() - t;
 var t = Date.now(); var g = referenceGraph(snap.snapshot); Date.now() - t;
@@ -78,9 +75,6 @@ g
 
 $world.execCommand("diff and open in window", {a: x1, b: g})
 
-
-
-
 var a = {bar: 15}; a.b = {foo: 23};
 var p = new ObjectPool(); p.add(a)
 var i = SnapshotInspector.forSnapshot(p.snapshot())
@@ -93,159 +87,152 @@ i.findIdReferencePathFromToId(ids[0], ids[1]);
 // var viz = await ObjectGraphVisualizer.renderSnapshotAndOpen(snap.snapshot)
 */
 
-
-
-
 export class SnapshotInspector {
-
-  static forSnapshot(snapshot) {
+  static forSnapshot (snapshot) {
     return new this(snapshot).processSnapshot();
   }
 
-  static forPoolAndSnapshot(snapshot, pool) {
+  static forPoolAndSnapshot (snapshot, pool) {
     return new this(snapshot).processPool(pool);
   }
 
-  static checkForLeaks(pool) {
-    let inspector = new this().processPool(pool),
-        counts = inspector.referenceCounts(),
-        conns = (this.classes.AttributeConnection || {}).objects || [];
+  static checkForLeaks (pool) {
+    let inspector = new this().processPool(pool);
+    let counts = inspector.referenceCounts();
+    let conns = (this.classes.AttributeConnection || {}).objects || [];
   }
 
-  constructor(snapshot) {
+  constructor (snapshot) {
     this.snapshot = snapshot;
     this.classes = {};
     this.expressions = {};
   }
 
-  processSnapshot() {
-    var {snapshot} = this;
+  processSnapshot () {
+    let { snapshot } = this;
     if (snapshot.snapshot) snapshot = snapshot.snapshot;
     let pool = ObjectPool.fromSnapshot(snapshot);
     return this.processPool(pool);
   }
 
-  processPool(pool) {
-    let {expressions, classes} = this;
+  processPool (pool) {
+    let { expressions, classes } = this;
     this.pool = pool;
 
     pool.objectRefs().forEach(ref => {
-      let snap = ref.currentSnapshot,
-          {className} = snap[ClassHelper.classMetaForSerializationProp] || {};
+      let snap = ref.currentSnapshot;
+      let { className } = snap[ClassHelper.classMetaForSerializationProp] || {};
 
       let propNames = Object.keys(snap.props);
       if (className == null) {
-        if (propNames.length > 3) className = "{" + propNames.slice(0, 3).join(", ") + ", ...}";
-        else className = "{" + propNames.join(", ") + "}";
+        if (propNames.length > 3) className = '{' + propNames.slice(0, 3).join(', ') + ', ...}';
+        else className = '{' + propNames.join(', ') + '}';
       }
 
-      if (!classes[className])
-        classes[className] = {count: 0, bytes: 0, name: className, objects: []};
+      if (!classes[className]) { classes[className] = { count: 0, bytes: 0, name: className, objects: [] }; }
       classes[className].count++;
       classes[className].bytes += JSON.stringify(snap).length;
       classes[className].objects.push([ref.id, snap]);
 
       propNames.forEach(key => {
         let value = snap.props[key].value;
-        if (!value || typeof value !== "string"
-         || !pool.expressionSerializer.isSerializedExpression(value)) return;
+        if (!value || typeof value !== 'string' ||
+         !pool.expressionSerializer.isSerializedExpression(value)) return;
 
-        let {__expr__} = pool.expressionSerializer.exprStringDecode(value),
-            expr = expressions[__expr__];
-        if (!expr)
-          expr = expressions[__expr__] = {count: 0, bytes: 0, name: __expr__, objects: []};
+        let { __expr__ } = pool.expressionSerializer.exprStringDecode(value);
+        let expr = expressions[__expr__];
+        if (!expr) { expr = expressions[__expr__] = { count: 0, bytes: 0, name: __expr__, objects: [] }; }
         expr.count++;
         expr.bytes += value.length;
         expr.objects.push([[ref.id, key], value]);
       });
-
     });
-    
+
     return this;
   }
 
-  explainId(id) {
+  explainId (id) {
     let s = this.snapshot;
     if (s.snapshot) s = s.snapshot;
 
-    var ref = s[id];
+    let ref = s[id];
     if (!ref) return null;
-    var {className} = ref[ClassHelper.classMetaForSerializationProp] || {className: "Object"};
-    var propNames = Object.keys(ref.props)
-    if (className == "Object") {
-      if (propNames.length > 3) className = "{" + propNames.slice(0, 3).join(", ") + ", ...}";
-      else className = "{" + propNames.join(", ") + "}";
+    let { className } = ref[ClassHelper.classMetaForSerializationProp] || { className: 'Object' };
+    let propNames = Object.keys(ref.props);
+    if (className == 'Object') {
+      if (propNames.length > 3) className = '{' + propNames.slice(0, 3).join(', ') + ', ...}';
+      else className = '{' + propNames.join(', ') + '}';
     }
-    return className
+    return className;
   }
 
-  sorted(prop) {
+  sorted (prop) {
     return arr.sortBy(
       Object.keys(this[prop]).map(key => this[prop][key]),
-      tuple => isNaN(tuple.bytes) ? 0 : tuple.bytes).reverse()
+      tuple => isNaN(tuple.bytes) ? 0 : tuple.bytes).reverse();
   }
 
-  report(prop) {
-    var items = [
+  report (prop) {
+    let items = [
       ['#bytes', '#objs', 'avg', prop],
       ...this.sorted(prop).map(tuple =>
         [num.humanReadableByteSize(tuple.bytes),
-         tuple.count,
-         num.humanReadableByteSize(tuple.bytes / tuple.count),
-         string.truncate(tuple.name, 300)])];
-    return string.printTable(items, {separator: ' | '})
+          tuple.count,
+          num.humanReadableByteSize(tuple.bytes / tuple.count),
+          string.truncate(tuple.name, 300)])];
+    return string.printTable(items, { separator: ' | ' });
   }
 
-  toString() {
-    var {snapshot} = this,
-        bytesAltogether = JSON.stringify(snapshot).length,
-        objCount = Object.keys(snapshot).length;
+  toString () {
+    let { snapshot } = this;
+    let bytesAltogether = JSON.stringify(snapshot).length;
+    let objCount = Object.keys(snapshot).length;
     return string.format('Total: %s (%s objs - %s per obj)',
-                num.humanReadableByteSize(bytesAltogether), objCount,
-                num.humanReadableByteSize(bytesAltogether / objCount))
-        + '\nclasses:\n' + this.report("classes")
-        + '\nexpressions:\n' + this.report("expressions")
+      num.humanReadableByteSize(bytesAltogether), objCount,
+      num.humanReadableByteSize(bytesAltogether / objCount)) +
+        '\nclasses:\n' + this.report('classes') +
+        '\nexpressions:\n' + this.report('expressions');
   }
 
-  biggestObjectsOfType(typeString) {
+  biggestObjectsOfType (typeString) {
     return arr.sortBy(
       this.classes[typeString].objects.map(([id, obj]) => JSON.stringify(obj)),
       ea => ea.length).reverse()
-     .map(ea => JSON.parse(ea));
+      .map(ea => JSON.parse(ea));
   }
 
-  toCSV() {
-    var lines = ['type,size,size in bytes,count,size per object,size perobject in bytes'];
-    this.sorted("classes").forEach(tuple => {
+  toCSV () {
+    let lines = ['type,size,size in bytes,count,size per object,size perobject in bytes'];
+    this.sorted('classes').forEach(tuple => {
       lines.push([tuple.name, num.humanReadableByteSize(tuple.bytes), tuple.bytes, tuple.count,
-      num.humanReadableByteSize(tuple.bytes / tuple.count), tuple.bytes / tuple.count].join(','))
+        num.humanReadableByteSize(tuple.bytes / tuple.count), tuple.bytes / tuple.count].join(','));
     });
     return lines.join('\n');
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  findPathFromToId(fromId, toId, options = {}) {
+  findPathFromToId (fromId, toId, options = {}) {
     // findPathFromToId(snapshot, id, "A9E157AB-E863-400C-A15C-677CE90098B0")
     // findPathFromToId(snapshot, id, "A9E157AB-E863-400C-A15C-677CE90098B0", {hideId: false, showClassNames: true})
     let s = this.snapshot;
     if (s.snapshot) s = s.snapshot;
-    return findPathFromToId(s, fromId, toId, options)
+    return findPathFromToId(s, fromId, toId, options);
   }
 
-  referenceGraph() {
+  referenceGraph () {
     let s = this.snapshot;
     if (s.snapshot) s = s.snapshot;
     return referenceGraph(s);
   }
 
-  referenceCounts() {
-    var invertedG = graph.invert(this.referenceGraph()), counts = {};
+  referenceCounts () {
+    let invertedG = graph.invert(this.referenceGraph()); let counts = {};
     Object.keys(invertedG).forEach(key => counts[key] = invertedG[key].length);
     return counts;
   }
 
-  lookupPath(fromId, path) {
+  lookupPath (fromId, path) {
     // given a path like "submorphs.1.submorphs.0" and a starting id (root
     // object), try to resolve the path, returning the serialized object of
     // this.snapshot
@@ -254,18 +241,18 @@ export class SnapshotInspector {
     return lookupPath(s, fromId, path);
   }
 
-  idsReferencingId(id) {
+  idsReferencingId (id) {
     return graph.invert(this.referenceGraph())[id];
   }
 
-  modifyProperty(objId, pathToProperty, modifyFn) {
+  modifyProperty (objId, pathToProperty, modifyFn) {
     // modifyFn: function(obj, key, val)
-    let {snapshot} = this;
+    let { snapshot } = this;
     if (snapshot.snapshot) snapshot = snapshot.snapshot;
     return modifyProperty(snapshot, objId, pathToProperty, modifyFn);
   }
 
-  replaceReferencesTo(id, replaceFn) {
+  replaceReferencesTo (id, replaceFn) {
     // replaceFn(obj, key, val) => newVal
     let refs = graph.invert(this.referenceGraph())[id];
     for (let refId of refs) {
@@ -274,94 +261,92 @@ export class SnapshotInspector {
     }
   }
 
-  removeUnreachableObjects(rootId) {
-    let {snapshot} = this;
+  removeUnreachableObjects (rootId) {
+    let { snapshot } = this;
     if (!rootId) rootId = this.snapshot.id;
-    if (!rootId) throw new Error(`Cannot find root id`);
+    if (!rootId) throw new Error('Cannot find root id');
     if (snapshot.snapshot) snapshot = snapshot.snapshot;
     return removeUnreachableObjects([rootId], snapshot);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  reportAboutObject(id, refs, invertedRefs) {
+  reportAboutObject (id, refs, invertedRefs) {
     refs = refs || this.referenceGraph();
     invertedRefs = invertedRefs || graph.invert(refs);
     let refsTo = (invertedRefs[id] || []).map(refId =>
-          [refId, this.findPathFromToId(refId, id), this.explainId(refId)]),
-        refsFrom = (refs[id] || []).map(refId =>
-          [refId, this.findPathFromToId(id, refId), this.explainId(refId)]);
+      [refId, this.findPathFromToId(refId, id), this.explainId(refId)]);
+    let refsFrom = (refs[id] || []).map(refId =>
+      [refId, this.findPathFromToId(id, refId), this.explainId(refId)]);
 
-    return `${id}\n`
-           + ` is a ${this.explainId(id)} object\n`
-           + ` path from root: ${this.findPathFromToId(this.snapshot.id, id)}\n`
-           + ` references \n${string.indent(string.printTable(refsFrom), "  ", 2)}\n`
-           + ` referenced by:\n${string.indent(string.printTable(refsTo), "  ", 2)}\n`;
+    return `${id}\n` +
+           ` is a ${this.explainId(id)} object\n` +
+           ` path from root: ${this.findPathFromToId(this.snapshot.id, id)}\n` +
+           ` references \n${string.indent(string.printTable(refsFrom), '  ', 2)}\n` +
+           ` referenced by:\n${string.indent(string.printTable(refsTo), '  ', 2)}\n`;
   }
 
-  reportAboutObjects(ids) {
-    let refs = this.referenceGraph(),
-        invertedRefs = graph.invert(refs);
-    return ids.map(id => this.reportAboutObject(id, refs, invertedRefs)).join("\n")
+  reportAboutObjects (ids) {
+    let refs = this.referenceGraph();
+    let invertedRefs = graph.invert(refs);
+    return ids.map(id => this.reportAboutObject(id, refs, invertedRefs)).join('\n');
   }
 
-  rootObjectName() {
-    var {snapshot} = this, name = "";
+  rootObjectName () {
+    var { snapshot } = this; let name = '';
     if (snapshot.snapshot) {
-      var {id, snapshot} = snapshot;
-      if (snapshot[id].props.name)
-        name = snapshot[id].props.name.value;
+      var { id, snapshot } = snapshot;
+      if (snapshot[id].props.name) { name = snapshot[id].props.name.value; }
     }
     return name;
   }
 
-  openSummary() {
+  openSummary () {
     let name = this.rootObjectName();
-    return $world.execCommand("open text window", {
+    return $world.execCommand('open text window', {
       content: this.toString(),
-      title: "serialization debug" + (name ? " for " + name : ""),
-      fontFamily: "monospace"
+      title: 'serialization debug' + (name ? ' for ' + name : ''),
+      fontFamily: 'monospace'
     });
   }
 
-  openConnectionsList() {
-    let name = this.rootObjectName(),
-        conns = (this.classes.AttributeConnection || {}).objects || [],
-        report = conns
-          .map(c => {
-            let [connId, {props: {sourceObj, sourceAttrName, targetObj, targetMethodName}}] = c;
-            return (
-              `${this.explainId(sourceObj.value.id)}.${sourceAttrName.value} => `
-            + `${this.explainId(targetObj.value.id)}.${targetMethodName.value}\n`
-            + `  ${sourceObj.value.id} => ${targetObj.value.id}\n`
-            + `  connection id: ${connId}\n`
-            );
-          }).join("\n");
+  openConnectionsList () {
+    let name = this.rootObjectName();
+    let conns = (this.classes.AttributeConnection || {}).objects || [];
+    let report = conns
+      .map(c => {
+        let [connId, { props: { sourceObj, sourceAttrName, targetObj, targetMethodName } }] = c;
+        return (
+              `${this.explainId(sourceObj.value.id)}.${sourceAttrName.value} => ` +
+            `${this.explainId(targetObj.value.id)}.${targetMethodName.value}\n` +
+            `  ${sourceObj.value.id} => ${targetObj.value.id}\n` +
+            `  connection id: ${connId}\n`
+        );
+      }).join('\n');
 
-    return $world.execCommand("open text window", {
+    return $world.execCommand('open text window', {
       content: report,
-      title: "serialized connections" + (name ? " for " + name : ""),
-      fontFamily: "monospace"
+      title: 'serialized connections' + (name ? ' for ' + name : ''),
+      fontFamily: 'monospace'
     });
   }
 
-  openObjectReport() {
-    var {snapshot} = this, name = this.rootObjectName();
+  openObjectReport () {
+    let { snapshot } = this; let name = this.rootObjectName();
     if (snapshot.snapshot) snapshot = snapshot.snapshot;
-    $world.execCommand("open text window", {
-      title: "object report" + (name ? " for " + name : ""),
+    $world.execCommand('open text window', {
+      title: 'object report' + (name ? ' for ' + name : ''),
       content: this.reportAboutObjects(Object.keys(snapshot)),
-      fontFamily: "monospace"
+      fontFamily: 'monospace'
     });
   }
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-/* 
+/*
 import { connect } from "lively.bindings";
 import { HTMLMorph } from "lively.morphic/html-morph.js";
 
@@ -463,9 +448,7 @@ export class ObjectGraphVisualizer extends HTMLMorph {
       }
     });
 
-
     // nodes.push({group: "nodes", data: {id: "morph"}})
-
 
     var edges = arr.flatmap(Object.keys(g), id => g[id].map(id2 => {
       return {group: "edges", data: {source: id, target: id2}};
@@ -475,7 +458,7 @@ export class ObjectGraphVisualizer extends HTMLMorph {
           coseBilkentLayout = await System.import("https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.0.5/cytoscape-cose-bilkent.js");
 
     if (cytoscape && coseBilkentLayout) coseBilkentLayout(cytoscape);
-    
+
     var cy = this.state.cy = cytoscape({
       // container: iframeMorph.innerWindow.document.body,
       container: this.domNode,

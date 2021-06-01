@@ -1,32 +1,30 @@
-/*global describe, it, beforeEach, afterEach,System*/
-import { expect } from "mocha-es6";
+/* global describe, it, beforeEach, afterEach,System */
+import { expect } from 'mocha-es6';
 
-import { ObjectPool, deserialize, serialize, ObjectRef } from "../index.js";
-import ClassHelper from "../class-helper.js";
-import { resource } from "lively.resources";
-import { version as serializerVersion } from "../package.json";
-import { module } from "lively.modules/index.js";
+import { ObjectPool, deserialize, serialize, ObjectRef } from '../index.js';
+import ClassHelper from '../class-helper.js';
+import { resource } from 'lively.resources';
+import { version as serializerVersion } from '../package.json';
+import { module } from 'lively.modules/index.js';
 
-function serializationRoundtrip(obj, serializer = ObjectPool.withDefaultPlugins()) {
+function serializationRoundtrip (obj, serializer = ObjectPool.withDefaultPlugins()) {
   let snapshotAndId = JSON.parse(JSON.stringify(objPool.snapshotObject(obj)));
   return ObjectPool.withDefaultPlugins().resolveFromSnapshotAndId(snapshotAndId);
 }
 
-
-var serializerPackage = System.decanonicalize("lively.serializer/"),
-    relativeTestModulePath = System.decanonicalize("./tests/class-plugin-test.js");
+let serializerPackage = System.decanonicalize('lively.serializer/');
+let relativeTestModulePath = System.decanonicalize('./tests/class-plugin-test.js');
 
 class TestDummy {
-  constructor(n) { this.n = n }
-  get someProperty() { return 23 }
-  m1() { return this.n + 1 }
-  toString() { return 'a ' + this.constructor.name }
+  constructor (n) { this.n = n; }
+  get someProperty () { return 23; }
+  m1 () { return this.n + 1; }
+  toString () { return 'a ' + this.constructor.name; }
 }
 
-var objPool, instance1, instance2, refInstance1;
+let objPool, instance1, instance2, refInstance1;
 
-describe('class serialization', function() {
-
+describe('class serialization', function () {
   beforeEach(() => {
     instance1 = new TestDummy(1);
     instance2 = new TestDummy(2);
@@ -36,24 +34,24 @@ describe('class serialization', function() {
     refInstance1 = objPool.add(instance1);
   });
 
-  it("serialize class instance", function() {
+  it('serialize class instance', function () {
     // serialization
-    var instance1_copy = ObjectPool.withDefaultPlugins()
-      .resolveFromSnapshotAndId({id: refInstance1.id, snapshot: objPool.snapshot()});
+    let instance1_copy = ObjectPool.withDefaultPlugins()
+      .resolveFromSnapshotAndId({ id: refInstance1.id, snapshot: objPool.snapshot() });
 
     expect(instance2.specialProperty).to.equal(instance1_copy.friend.specialProperty);
     expect(instance1.n).to.equal(instance1_copy.n);
 
-    expect(instance1_copy).instanceOf(TestDummy, "obj1_b");
-    expect(instance1_copy.friend).instanceOf(TestDummy, "obj2_b");
+    expect(instance1_copy).instanceOf(TestDummy, 'obj1_b');
+    expect(instance1_copy.friend).instanceOf(TestDummy, 'obj2_b');
 
     expect().assert(instance1_copy.m1, 'deserialized does not have method');
     expect(2).to.equal(instance1_copy.m1(), 'wrong method invocation result');
 
-    Object.defineProperty(TestDummy.prototype, "someProperty", {configurable: true, value: -1});
+    Object.defineProperty(TestDummy.prototype, 'someProperty', { configurable: true, value: -1 });
     // SmartRefTestDummy.prototype.someProperty = -1; // change after serialization
-    var observed = instance1_copy.someProperty;
-    Object.defineProperty(TestDummy.prototype, "someProperty", {configurable: true, value: 23});
+    let observed = instance1_copy.someProperty;
+    Object.defineProperty(TestDummy.prototype, 'someProperty', { configurable: true, value: 23 });
     expect(-1).to.equal(observed, 'proto prop');
 
     expect(TestDummy).to.equal(instance1_copy.constructor, 'constructor 1');
@@ -62,61 +60,57 @@ describe('class serialization', function() {
     expect().assert(instance1_copy.friend instanceof TestDummy, 'instanceof 2');
   });
 
-  it("find packages and modules of classes in serialized blob", function() {
-    var serialized = objPool.snapshot(),
-        result = ClassHelper.sourceModulesIn(serialized);
+  it('find packages and modules of classes in serialized blob', function () {
+    let serialized = objPool.snapshot();
+    let result = ClassHelper.sourceModulesIn(serialized);
 
     expect(result).to.containSubset([{
-      className: "TestDummy",
+      className: 'TestDummy',
       module: {
-        package: {name: "lively.serializer2", version: serializerVersion},
-        pathInPackage: "tests/class-serialization-test.js"
+        package: { name: 'lively.serializer2', version: serializerVersion },
+        pathInPackage: 'tests/class-serialization-test.js'
       }
     }]);
   });
 
-  it("raise error when class not found", function() {
-    var objPool = ObjectPool.withDefaultPlugins(),
-        klass = class Dummy_testRaiseErrorWhenClassNotFound {},
-        instance = new klass(),
-        _ = objPool.add(instance),
-        serialized = objPool.snapshot();
+  it('raise error when class not found', function () {
+    let objPool = ObjectPool.withDefaultPlugins();
+    let klass = class Dummy_testRaiseErrorWhenClassNotFound {};
+    let instance = new klass();
+    let _ = objPool.add(instance);
+    let serialized = objPool.snapshot();
     try {
-      ObjectPool.withDefaultPlugins({ignoreClassNotFound: false}).readSnapshot(serialized);
-    } catch(e) {
+      ObjectPool.withDefaultPlugins({ ignoreClassNotFound: false }).readSnapshot(serialized);
+    } catch (e) {
       expect(String(e)).match(/Trying to deserialize instance of.*Dummy_testRaiseErrorWhenClassNotFound.*but this class cannot be found/i);
       return;
     }
-    expect().assert(false, 'No error rasied when deserializing obj without class')
+    expect().assert(false, 'No error rasied when deserializing obj without class');
   });
 
-  it("raise no error when class not found when overridden", function() {
-    var objPool = ObjectPool.withDefaultPlugins(),
-        klass = class Dummy_testDontRaiseErrorWhenClassNotFound {},
-        instance = new klass(),
-        serialized = objPool.snapshotObject(instance);
+  it('raise no error when class not found when overridden', function () {
+    let objPool = ObjectPool.withDefaultPlugins();
+    let klass = class Dummy_testDontRaiseErrorWhenClassNotFound {};
+    let instance = new klass();
+    let serialized = objPool.snapshotObject(instance);
     try {
-      var result = ObjectPool.withDefaultPlugins({ignoreClassNotFound: true})
-                    .resolveFromSnapshotAndId(serialized);
-    } catch(e) {
+      var result = ObjectPool.withDefaultPlugins({ ignoreClassNotFound: true })
+        .resolveFromSnapshotAndId(serialized);
+    } catch (e) {
       expect().assert(false, `Should ignore class not found but raised error:\n${e}`);
     }
-    expect().assert(result.isClassPlaceHolder)
-    expect("Dummy_testDontRaiseErrorWhenClassNotFound").to.equal(result.className)
+    expect().assert(result.isClassPlaceHolder);
+    expect('Dummy_testDontRaiseErrorWhenClassNotFound').to.equal(result.className);
   });
-
 });
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+let testModule = 'local://lively-serializer-class-test/class-prop-test.js';
 
-var testModule = "local://lively-serializer-class-test/class-prop-test.js";
-
-describe("class properties", () => {
-
+describe('class properties', () => {
   beforeEach(async () => {
-    var source = `export class Foo {
+    let source = `export class Foo {
        static get properties() {
          return {
            foo: {defaultValue: 23, serialize: false},
@@ -131,14 +125,13 @@ describe("class properties", () => {
 
   afterEach(async () => module(testModule).unload());
 
-  it("it can ignore properties and initializes them", async () => {
-    var {Foo} = System.get(testModule),
-        instance = new Foo(),
-        {id, snapshot} = serialize(new Foo());
-    expect(snapshot[id].props).deep.equals({bar: {value: 24}});
-    var instance2 = deserialize({id, snapshot});
+  it('it can ignore properties and initializes them', async () => {
+    let { Foo } = System.get(testModule);
+    let instance = new Foo();
+    let { id, snapshot } = serialize(new Foo());
+    expect(snapshot[id].props).deep.equals({ bar: { value: 24 } });
+    let instance2 = deserialize({ id, snapshot });
     expect(instance2.foo).equals(23);
     expect(instance2.bar).equals(24);
   });
-
 });
