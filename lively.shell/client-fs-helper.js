@@ -1,57 +1,56 @@
-import { runCommand } from "./client-command.js";
-import { string, promise, arr } from "lively.lang";
-
+import { runCommand } from './client-command.js';
+import { string, promise, arr } from 'lively.lang';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // uses the "ls" shell utility to get file properties
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-export async function fileInfo(fileName, options) {
-  var commandString = fileInfoCommandString(fileName, options),
-      result = [],
-      cmd = runCommand(commandString, options);
+export async function fileInfo (fileName, options) {
+  let commandString = fileInfoCommandString(fileName, options);
+  let result = [];
+  let cmd = runCommand(commandString, options);
 
   await cmd.whenDone();
-  var err = cmd.exitCode != 0 ? cmd.output : null;
+  let err = cmd.exitCode != 0 ? cmd.output : null;
   if (err) throw err;
-  var [fileInfo] = parseDirectoryListFromLs(cmd.stdout, options.rootDirectory || ".");
+  let [fileInfo] = parseDirectoryListFromLs(cmd.stdout, options.rootDirectory || '.');
   return fileInfo;
 }
 
-function fileInfoCommandString(filename, options = {}) {
-  var {rootDirectory, platform} = options;
+function fileInfoCommandString (filename, options = {}) {
+  let { rootDirectory, platform } = options;
 
   rootDirectory = rootDirectory || '.';
 
-  var slash = platform === 'win32' ? '\\' : '/'
+  let slash = platform === 'win32' ? '\\' : '/';
   if (platform !== 'win32' && !rootDirectory.endsWith(slash)) rootDirectory += slash;
 
   // we expect an consistent timeformat across OSs to parse the results
-  var timeFormatFix = `if [ "$(uname)" = "Darwin" ];
+  let timeFormatFix = `if [ "$(uname)" = "Darwin" ];
       then timeformat='-T'; else
       timeformat="--time-style=+%b %d %T %Y";
     fi && `;
 
   // use GMT for time settings by default so the result is comparable
   // also force US ordering of date/time elements, to help with the parsing
-  var commandString = platform === 'win32' ?
-    `cd ${rootDirectory} && ls -lLd --time-style=locale "${filename}"` :
-    timeFormatFix + `env TZ=GMT LANG=en_US.UTF-8 cd ${rootDirectory} && ls -lLd "$timeformat" "${filename}"`;
+  let commandString = platform === 'win32'
+    ? `cd ${rootDirectory} && ls -lLd --time-style=locale "${filename}"`
+    : timeFormatFix + `env TZ=GMT LANG=en_US.UTF-8 cd ${rootDirectory} && ls -lLd "$timeformat" "${filename}"`;
 
   return commandString;
 }
 
-export function parseDirectoryListFromLs(lsString, rootDirectory) {
-    // line like "-rw-r—r—       1 robert   staff       5298 Dec 17 14:04:02 2012 test.html"
+export function parseDirectoryListFromLs (lsString, rootDirectory) {
+  // line like "-rw-r—r—       1 robert   staff       5298 Dec 17 14:04:02 2012 test.html"
   return string.lines(lsString)
-    .map(line => !line.trim().length ? null :
-      new FileInfo(rootDirectory).readFromDirectoryListLine(line))
+    .map(line => !line.trim().length
+      ? null
+      : new FileInfo(rootDirectory).readFromDirectoryListLine(line))
     .filter(Boolean);
 }
 
-
 class FileInfo {
-  constructor(rootDirectory) {
+  constructor (rootDirectory) {
     this.rootDirectory = rootDirectory;
     this.path = '';
     this.fileName = '';
@@ -63,159 +62,157 @@ class FileInfo {
     this.user = '';
     this.group = '';
     this.size = 0;
-    this.rootDirectory = null
+    this.rootDirectory = null;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // parsing from directory list
 
-  get reader() {
+  get reader () {
     return [ // the order is important!
 
-      function mode(lineString, fileInfo) {
-        var idx = lineString.indexOf(' ');
+      function mode (lineString, fileInfo) {
+        let idx = lineString.indexOf(' ');
         fileInfo.mode = lineString.slice(0, idx);
         fileInfo.isDirectory = fileInfo.mode[0] === 'd';
-        return lineString.slice(idx+1).trim();
+        return lineString.slice(idx + 1).trim();
       },
 
-      function linkCount(lineString, fileInfo) {
-        var idx = lineString.indexOf(' ');
+      function linkCount (lineString, fileInfo) {
+        let idx = lineString.indexOf(' ');
         fileInfo.linkCount = Number(lineString.slice(0, idx));
-        return lineString.slice(idx+1).trim();
+        return lineString.slice(idx + 1).trim();
       },
 
-      function user(lineString, fileInfo) {
-        var idx = lineString.indexOf(' ');
+      function user (lineString, fileInfo) {
+        let idx = lineString.indexOf(' ');
         fileInfo.user = lineString.slice(0, idx);
-        return lineString.slice(idx+1).trim();
+        return lineString.slice(idx + 1).trim();
       },
 
-      function group(lineString, fileInfo) {
-        var idx = string.peekRight(lineString, 0, /\s+[0-9]/);
+      function group (lineString, fileInfo) {
+        let idx = string.peekRight(lineString, 0, /\s+[0-9]/);
         fileInfo.group = lineString.slice(0, idx).trim();
         return lineString.slice(idx).trim();
       },
 
-      function size(lineString, fileInfo) {
-        var idx = lineString.indexOf(' ');
+      function size (lineString, fileInfo) {
+        let idx = lineString.indexOf(' ');
         fileInfo.size = Number(lineString.slice(0, idx));
-        return lineString.slice(idx+1).trim();
+        return lineString.slice(idx + 1).trim();
       },
 
-      function lastModified(lineString, fileInfo) {
-        var matches = string.reMatches(lineString, /[^s]+\s+[0-9:\s]+/);
+      function lastModified (lineString, fileInfo) {
+        let matches = string.reMatches(lineString, /[^s]+\s+[0-9:\s]+/);
         if (!matches || !matches[0]) return lineString;
         fileInfo.lastModified = new Date(matches[0].match + ' GMT');
         return lineString.slice(matches[0].end).trim();
       },
 
-      function fileName(lineString, fileInfo) {
-        var string = lineString.replace(/^\.\/+/g, '').replace(/\/\//g, '/'),
-            nameAndLink = string && string.split(' -> '),
-            isLink = string === '' ? false : string && nameAndLink.length === 2,
-            path = isLink ? nameAndLink[0] : string,
-            fileName = path && path.indexOf(fileInfo.rootDirectory) === 0 ? path.slice(fileInfo.rootDirectory.length) : path;
-        fileInfo.fileName = string === '' ? '.' : fileName;
+      function fileName (lineString, fileInfo) {
+        let string = lineString.replace(/^\.\/+/g, '').replace(/\/\//g, '/');
+        let nameAndLink = string && string.split(' -> ');
+        let isLink = string === '' ? false : string && nameAndLink.length === 2;
+        let path = isLink ? nameAndLink[0] : string;
+        let fname = path && path.indexOf(fileInfo.rootDirectory) === 0 ? path.slice(fileInfo.rootDirectory.length) : path;
+        fileInfo.fileName = string === '' ? '.' : fname;
         fileInfo.path = path;
         fileInfo.isLink = isLink;
-        return fileName;
+        return fname;
       }
     ];
   }
 
-  readFromDirectoryListLine(line) {
+  readFromDirectoryListLine (line) {
     if (!line.trim().length) return null;
-    var lineRest = line;
+    let lineRest = line;
     this.reader.forEach(reader => lineRest = reader(lineRest, this));
     return this;
   }
 
-  toString() { return this.path; }
+  toString () { return this.path; }
 }
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // use the shell find comannd to list files / search for files
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-var findFilesProcesses = {};
+let findFilesProcesses = {};
 
-export async function findFiles(pattern, options) {
+export async function findFiles (pattern, options) {
   // lively.ide.CommandLineSearch.findFiles('*html',
   //   {exclude: STRING, re: BOOL, depth: NUMBER, cwd: STRING, matchPath: BOOL});
-  var {findFilesGroup, rootDirectory} = {findFilesGroup: "default-find-files-process", ...options};
+  let { findFilesGroup, rootDirectory } = { findFilesGroup: 'default-find-files-process', ...options };
 
-  var stateForThisGroup = findFilesProcesses[findFilesGroup]
-                      || (findFilesProcesses[findFilesGroup] = {promiseState: null, commands: []}),
-      {commands, promiseState} = stateForThisGroup;
+  let stateForThisGroup = findFilesProcesses[findFilesGroup] ||
+                      (findFilesProcesses[findFilesGroup] = { promiseState: null, commands: [] });
+  let { commands, promiseState } = stateForThisGroup;
 
-  if (!promiseState)
-    stateForThisGroup.promiseState = promiseState = promise.deferred();
+  if (!promiseState) { stateForThisGroup.promiseState = promiseState = promise.deferred(); }
 
-  var commandString = findFilesCommandString(pattern, options),
-      result = [];
+  let commandString = findFilesCommandString(pattern, options);
+  let result = [];
 
   commands.forEach(oldCmd => oldCmd.kill());
-  var cmd = runCommand(commandString, options);
+  let cmd = runCommand(commandString, options);
   commands.push(cmd);
   cmd.whenDone().then(() => {
     arr.remove(commands, cmd);
-    var isOutdated = commands.some(otherCmd => otherCmd.startTime > cmd.startTime);
+    let isOutdated = commands.some(otherCmd => otherCmd.startTime > cmd.startTime);
     if (isOutdated) {
       console.log(`[findFiles] command ${cmd} exited but a newer findFiles command was started for group ${findFilesGroup}, discarding output`);
     } else {
-      var err = cmd.exitCode != 0 ? cmd.output : null;
+      let err = cmd.exitCode != 0 ? cmd.output : null;
       if (err) console.warn(err);
-      var result = err ? [] : parseDirectoryListFromLs(cmd.stdout, rootDirectory) || [];
+      let result = err ? [] : parseDirectoryListFromLs(cmd.stdout, rootDirectory) || [];
       promiseState.resolve(result);
-      Object.assign(stateForThisGroup, {promiseState: null, commands: []});
+      Object.assign(stateForThisGroup, { promiseState: null, commands: [] });
     }
   }).catch(err => console.error(err));
-  
+
   return promiseState.promise;
 }
 
-var defaultExcludes = [".svn", ".git", "node_modules", ".module_cache"];
+let defaultExcludes = ['.svn', '.git', 'node_modules', '.module_cache'];
 
-function findFilesCommandString(pattern, options = {}) {
-  var {rootDirectory, exclude, depth, platform} = options;
+function findFilesCommandString (pattern, options = {}) {
+  var { rootDirectory, exclude, depth, platform } = options;
 
   rootDirectory = rootDirectory || '.';
-  exclude = exclude || ("-iname " + defaultExcludes.map(string.print).join(' -o -iname '));
+  exclude = exclude || ('-iname ' + defaultExcludes.map(string.print).join(' -o -iname '));
 
-  var slash = platform === 'win32' ? '\\' : '/'
+  let slash = platform === 'win32' ? '\\' : '/';
   if (platform !== 'win32' && !rootDirectory.endsWith(slash)) rootDirectory += slash;
 
   // we expect an consistent timeformat across OSs to parse the results
-  var timeFormatFix = `if [ "$(uname)" = "Darwin" ];
+  let timeFormatFix = `if [ "$(uname)" = "Darwin" ];
       then timeformat='-T'; else
       timeformat="--time-style=+%b %d %T %Y";
     fi && `;
 
-  var searchPart = string.format('%s "%s"',
-                    options.re ? '-iregex' : (options.matchPath ? '-ipath' : '-iname'),
-                    pattern);
+  let searchPart = string.format('%s "%s"',
+    options.re ? '-iregex' : (options.matchPath ? '-ipath' : '-iname'),
+    pattern);
 
-  var depth = typeof depth === "number" ? ' -maxdepth ' + depth : '';
+  var depth = typeof depth === 'number' ? ' -maxdepth ' + depth : '';
 
   // use GMT for time settings by default so the result is comparable
   // also force US ordering of date/time elements, to help with the parsing
-  var commandString = platform === 'win32' ?
+  let commandString = platform === 'win32'
 
-    string.format(
-      "find %s %s ( %s ) -prune -o "
-      + "%s %s -print0 | xargs -0 -I{} ls -lLd --time-style=locale {}",
+    ? string.format(
+      'find %s %s ( %s ) -prune -o ' +
+      '%s %s -print0 | xargs -0 -I{} ls -lLd --time-style=locale {}',
       rootDirectory,
       (options.re ? '-E ' : ''),
       exclude.replace(/"/g, ''),
       searchPart.replace(/"/g, ''),
-      depth) :
+      depth)
 
-    timeFormatFix + string.format(
-      "env TZ=GMT LANG=en_US.UTF-8 "
-    + "find %s %s \\( %s \\) -prune -o "
-    + "%s %s -print0 | xargs -0 -I{} ls -lLd \"$timeformat\" \"{}\"",
+    : timeFormatFix + string.format(
+      'env TZ=GMT LANG=en_US.UTF-8 ' +
+    'find %s %s \\( %s \\) -prune -o ' +
+    '%s %s -print0 | xargs -0 -I{} ls -lLd "$timeformat" "{}"',
       rootDirectory,
       (options.re ? '-E ' : ''),
       exclude, searchPart, depth);
@@ -223,29 +220,34 @@ function findFilesCommandString(pattern, options = {}) {
   return commandString;
 }
 
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // for html uploads
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-export function convertDirectoryUploadEntriesToFileInfos(entryTree) {
-  var entries = flattenTree(entryTree);
-  return entries.map(function(entry) {
-    var path = entry.fullPath.replace(/^\//, '');
+export function convertDirectoryUploadEntriesToFileInfos (entryTree) {
+  let entries = flattenTree(entryTree);
+  return entries.map(function (entry) {
+    let path = entry.fullPath.replace(/^\//, '');
     return {
-      fileName: path, path: path,
+      fileName: path,
+      path: path,
       rootDirectory: './',
       isDirectory: entry.isDirectory,
-      isLink: undefined, lastModified: undefined, linkCount: undefined,
-      mode: undefined, size: undefined, group: undefined, user: undefined
-    }
+      isLink: undefined,
+      lastModified: undefined,
+      linkCount: undefined,
+      mode: undefined,
+      size: undefined,
+      group: undefined,
+      user: undefined
+    };
   });
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function flattenTree(entryTree) {
+  function flattenTree (entryTree) {
     return Array.prototype.concat.apply(
-        [entryTree],
-        entryTree.children ? entryTree.children.map(flattenTree) : []);
+      [entryTree],
+      entryTree.children ? entryTree.children.map(flattenTree) : []);
   }
 }
