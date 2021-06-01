@@ -1,107 +1,94 @@
-/*global declare, it, describe, beforeEach, afterEach, before, after, System, xit*/
-import { morph, World, MorphicEnv } from "lively.morphic";
+/* global declare, it, describe, beforeEach, afterEach, before, after, System, xit */
+import { morph, World, MorphicEnv } from 'lively.morphic';
 import { List } from 'lively.components';
-import { expect } from "mocha-es6";
-import { arr } from "lively.lang";
-import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
+import { expect } from 'mocha-es6';
+import { arr } from 'lively.lang';
+import { pt, Color, Rectangle, Transform, rect } from 'lively.graphics';
 
-var inBrowser = System.get("@system-env").browser ? it :
-  (title) => { console.warn(`Test ${title} is currently only supported in a browser`); return xit(title); }
+let inBrowser = System.get('@system-env').browser
+  ? it
+  : (title) => { console.warn(`Test ${title} is currently only supported in a browser`); return xit(title); };
 
-var env, world;
-function createDummyWorld() {
-  return new World({name: "world", extent: pt(300,300)});
+let env, world;
+function createDummyWorld () {
+  return new World({ name: 'world', extent: pt(300, 300) });
 }
 
-
-describe("lists", function () {
-
-  var list;
+describe('lists', function () {
+  let list;
   beforeEach(() => {
-    list = new List({extent: pt(100,100)});
+    list = new List({ extent: pt(100, 100) });
   });
 
-  describe("interface", () => {
-
-    inBrowser("adds items", () => {
-      list.addItem("foo");
-      list.addItem("bar");
-      expect(list.items).containSubset([{string: "foo", value: "foo"}, {string: "bar", value: "bar"}]);
-      expect(list.itemMorphs).containSubset([{textString: "foo"}, {textString: "bar"}]);
+  describe('interface', () => {
+    inBrowser('adds items', () => {
+      list.addItem('foo');
+      list.addItem('bar');
+      expect(list.items).containSubset([{ string: 'foo', value: 'foo' }, { string: 'bar', value: 'bar' }]);
+      expect(list.itemMorphs).containSubset([{ textString: 'foo' }, { textString: 'bar' }]);
     });
-
   });
 
-  describe("selection", () => {
-
-    inBrowser("selects item", () => {
-      list.addItem("foo");
-      list.addItem("bar");
-      list.selection = "foo";
-      expect(list.selection).equals("foo");
-      expect(list.selections).equals(["foo"]);
+  describe('selection', () => {
+    inBrowser('selects item', () => {
+      list.addItem('foo');
+      list.addItem('bar');
+      list.selection = 'foo';
+      expect(list.selection).equals('foo');
+      expect(list.selections).equals(['foo']);
       expect(list.selectedItems).equals([list.items[0]]);
     });
-
   });
 
-  describe("layout", () => {
+  describe('layout', () => {
+    inBrowser('renders items as morphs and aligns them vertically', () => {
+      list.addItem('foo');
+      list.addItem('bar');
+      expect(list.itemMorphs).containSubset([{ textString: 'foo' }, { textString: 'bar' }]);
 
-    inBrowser("renders items as morphs and aligns them vertically", () => {
-      list.addItem("foo");
-      list.addItem("bar");
-      expect(list.itemMorphs).containSubset([{textString: "foo"}, {textString: "bar"}]);
-
-      var [a, b] = list.itemMorphs;
+      let [a, b] = list.itemMorphs;
       expect(list.listItemContainer.topLeft).equals(list.padding.topLeft());
       expect(b.topLeft).equals(a.bottomLeft);
     });
 
-    inBrowser("only renders necessary items", () => {
-      list.items = arr.range(0,100);
+    inBrowser('only renders necessary items', () => {
+      list.items = arr.range(0, 100);
       list.itemHeight = 18;
       list.openInWorld();
-      var nVisible = Math.ceil(list.height / list.itemMorphs[0].height);
+      let nVisible = Math.ceil(list.height / list.itemMorphs[0].height);
       // expect(list.itemMorphs.length).closeTo(nVisible, 1);
       expect(list.itemMorphs.length).below(100);
     });
-
   });
 
-
-  describe("multi select", () => {
-
-    inBrowser("test01GetSelections", function() {
-        list.items = ['1', '2', '3'];
-        list.selection = '2';
-        expect(['2']).equals(list.selections);
+  describe('multi select', () => {
+    inBrowser('test01GetSelections', function () {
+      list.items = ['1', '2', '3'];
+      list.selection = '2';
+      expect(['2']).equals(list.selections);
     });
 
-    inBrowser("test02TurnOnMultipleSelectionMode", function() {
-        list.items = ['1', '2', '3'];
-        list.selection = '2';
-        list.multiSelect = true;
-        list.selections = ['1','3'];
-        expect(['1', '3']).equals(list.selections);
+    inBrowser('test02TurnOnMultipleSelectionMode', function () {
+      list.items = ['1', '2', '3'];
+      list.selection = '2';
+      list.multiSelect = true;
+      list.selections = ['1', '3'];
+      expect(['1', '3']).equals(list.selections);
     });
 
-    inBrowser("test03SetSelection", function() {
-        list.items = ['1', '2', '3'];
-        list.multiSelect = true;
-        list.selection = '2';
-        list.execCommand("select down");
-        expect(['3', '2']).equals(list.selections);
-        list.selections = [];
-        expect([]).equals(list.selections);
+    inBrowser('test03SetSelection', function () {
+      list.items = ['1', '2', '3'];
+      list.multiSelect = true;
+      list.selection = '2';
+      list.execCommand('select down');
+      expect(['3', '2']).equals(list.selections);
+      list.selections = [];
+      expect([]).equals(list.selections);
     });
-
   });
-
 });
 
-
 // module('lively.morphic.tests.Lists').requires('lively.morphic.tests.Helper', 'lively.morphic.Layout').toRun(function() {
-
 
 // AsyncTestCase.subclass('lively.morphic.tests.Lists.MorphicList', lively.morphic.tests.MorphTests.prototype,
 // 'running', {

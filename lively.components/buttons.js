@@ -285,8 +285,6 @@ export class Button extends Morph {
   }
 }
 
-
-
 export class RadioButton extends Morph {
   static get properties () {
     return {

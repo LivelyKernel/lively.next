@@ -1,6 +1,6 @@
-import { promise } from "lively.lang";
-import { HTMLMorph } from "lively.morphic";
-"format esm";
+import { promise } from 'lively.lang';
+import { HTMLMorph } from 'lively.morphic';
+'format esm';
 
 // IFrameMorph.printTextMorph(that)
 
@@ -14,36 +14,34 @@ import { HTMLMorph } from "lively.morphic";
 // im.innerWindow
 // window.print()
 
-
 export class IFrameMorph extends HTMLMorph {
-
-  static async printTextMorph(textMorph) {
+  static async printTextMorph (textMorph) {
     // textMorph.clipMode = "visible";
 
     await textMorph.whenRendered();
 
-    var el = textMorph.env.renderer.getNodeForMorph(textMorph),
-        im = IFrameMorph.open({srcdoc: el.outerHTML});
+    let el = textMorph.env.renderer.getNodeForMorph(textMorph);
+    let im = IFrameMorph.open({ srcdoc: el.outerHTML });
 
     await im.whenLoaded();
 
-    var doc = im.innerWindow.document;
-    doc.body.style.whiteSpace = "normal";
-    doc.body.style.margin = "0.5cm";
+    let doc = im.innerWindow.document;
+    doc.body.style.whiteSpace = 'normal';
+    doc.body.style.margin = '0.5cm';
 
-    doc.querySelector(".Text").style.width = "100%";
-    doc.querySelector(".Text").style.overflow = "visible";
-    doc.querySelectorAll(".marker-layer-part").forEach(ea => ea.parentNode.removeChild(ea));
+    doc.querySelector('.Text').style.width = '100%';
+    doc.querySelector('.Text').style.overflow = 'visible';
+    doc.querySelectorAll('.marker-layer-part').forEach(ea => ea.parentNode.removeChild(ea));
 
-    var textLayer = doc.querySelector(".text-layer");
-    textLayer.style.whiteSpace = "pre-wrap";
+    let textLayer = doc.querySelector('.text-layer');
+    textLayer.style.whiteSpace = 'pre-wrap';
 
     // remove the rigid line breaks
-    var lines = Array.from(textLayer.querySelectorAll("div"));
+    let lines = Array.from(textLayer.querySelectorAll('div'));
     lines.forEach(line => {
       if (!line.childNodes[0]) return;
       Array.from(line.childNodes).forEach(ea => textLayer.insertBefore(ea, line));
-      textLayer.insertBefore(doc.createElement("br"), line);
+      textLayer.insertBefore(doc.createElement('br'), line);
       textLayer.removeChild(line);
     });
 
@@ -51,61 +49,63 @@ export class IFrameMorph extends HTMLMorph {
     im.getWindow().remove();
   }
 
-  static open(props = {}) {
-    return new this(props).openInWindow({title: props.title || "iframe"}).targetMorph;
+  static open (props = {}) {
+    return new this(props).openInWindow({ title: props.title || 'iframe' }).targetMorph;
   }
 
-  static get properties() {
+  static get properties () {
     return {
 
       iframe: {
-        after: ["domNode"], readOnly: true,
-        get() { return this.domNode; }
+        after: ['domNode'],
+        readOnly: true,
+        get () { return this.domNode; }
       },
 
       innerWindow: {
-        after: ["iframe"], readOnly: true,
-        get() { return this.iframe.contentWindow; }
+        after: ['iframe'],
+        readOnly: true,
+        get () { return this.iframe.contentWindow; }
       },
 
       innerWorld: {
-        after: ["innerWindow"], readOnly: true,
-        get() { return this.innerWindow.$world; }
+        after: ['innerWindow'],
+        readOnly: true,
+        get () { return this.innerWindow.$world; }
       },
 
-
       src: {
-        after: ["domNode"],
-        set(src) { this.changeSrc(src, null); }
+        after: ['domNode'],
+        set (src) { this.changeSrc(src, null); }
       },
 
       srcdoc: {
-        after: ["domNode"],
-        set(srcdoc) { this.changeSrc(null, srcdoc); }
+        after: ['domNode'],
+        set (srcdoc) { this.changeSrc(null, srcdoc); }
       },
 
       domNode: {
-        get() {
+        get () {
           if (!this._domNode) {
-            this._domNode = this.document.createElement("iframe");
-            this._domNode.setAttribute("style", "position: absolute; width: 100%; height: 100%;");
-            this._domNode.setAttribute("allowfullscreen", true);
+            this._domNode = this.document.createElement('iframe');
+            this._domNode.setAttribute('style', 'position: absolute; width: 100%; height: 100%;');
+            this._domNode.setAttribute('allowfullscreen', true);
           }
           return this._domNode;
         },
-        set(node) { return this._domNode = node; }
+        set (node) { return this._domNode = node; }
       }
 
     };
-
   }
-  constructor(props) {
-    if (!props.src && !props.srcdoc) props.srcdoc = "<p>Empty iframe</p>";
+
+  constructor (props) {
+    if (!props.src && !props.srcdoc) props.srcdoc = '<p>Empty iframe</p>';
     super(props);
   }
 
-  changeSrc(src, srcDoc) {
-    var {iframe, _loadPromise: p} = this;
+  changeSrc (src, srcDoc) {
+    let { iframe, _loadPromise: p } = this;
     if (p && !p.loaded) p.reject();
     this._loadPromise = promise.deferred();
     this._loadPromise.loaded = false;
@@ -113,9 +113,9 @@ export class IFrameMorph extends HTMLMorph {
       this._loadPromise.loaded = true;
       this._loadPromise.resolve(evt);
     };
-    var val = src || srcDoc,
-        set = src ? "src" : "srcdoc",
-        remove = src ? "srcdoc" : "src";
+    let val = src || srcDoc;
+    let set = src ? 'src' : 'srcdoc';
+    let remove = src ? 'srcdoc' : 'src';
     this.addValueChange(remove, null);
     this.addValueChange(set, val);
     iframe.removeAttribute(remove);
@@ -123,10 +123,10 @@ export class IFrameMorph extends HTMLMorph {
     this._loadPromise[set] = val;
   }
 
-  whenLoaded() { return this._loadPromise.promise; }
+  whenLoaded () { return this._loadPromise.promise; }
 
-  reload() { return this.iframe.src = this.src; }
-  run(func) { return this.innerWindow.eval('(' + func + ')();'); }
+  reload () { return this.iframe.src = this.src; }
+  run (func) { return this.innerWindow.eval('(' + func + ')();'); }
 
   // onIFrameLoad(func) {
   //   this.attachSystemConsole();
@@ -186,5 +186,4 @@ export class IFrameMorph extends HTMLMorph {
   //       }]
   //   ]);
   // }
-
 }

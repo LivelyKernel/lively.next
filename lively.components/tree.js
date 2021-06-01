@@ -1,8 +1,8 @@
-/*global Map,WeakMap*/
-import { arr, fun, obj, tree, string, promise } from "lively.lang";
-import { pt, Rectangle, Color } from "lively.graphics";
-import { Morph, Text, config, touchInputDevice, Label } from "lively.morphic";
-import { connect, signal } from "lively.bindings";
+/* global Map,WeakMap */
+import { arr, fun, obj, tree, string, promise } from 'lively.lang';
+import { pt, Rectangle, Color } from 'lively.graphics';
+import { Morph, Text, config, touchInputDevice, Label } from 'lively.morphic';
+import { connect, signal } from 'lively.bindings';
 import bowser from 'bowser';
 
 /*
@@ -40,85 +40,88 @@ var treeMorph = new Tree({
 */
 
 export class Tree extends Text {
-
-  static get properties() {
-
+  static get properties () {
     return {
       selectionColor: {
         type: 'ColorGradient',
-        defaultValue: Color.rgb(21,101,192),
+        defaultValue: Color.rgb(21, 101, 192)
       },
-      fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
-      nativeCursor: {defaultValue: 'auto'},
-      selectable: {defaultValue: false},
-      acceptsDrops: {defaultValue: false},
-      readOnly: {defaultValue: true},
-      fixedWidth: {defaultValue: true},
-      fixedHeight: {defaultValue: true},
-      disableIndent: {defaultValue: false},
-      activateOnHover: { defaultValue: true},
+      fontFamily: { defaultValue: config.codeEditor.defaultStyle.fontFamily },
+      nativeCursor: { defaultValue: 'auto' },
+      selectable: { defaultValue: false },
+      acceptsDrops: { defaultValue: false },
+      readOnly: { defaultValue: true },
+      fixedWidth: { defaultValue: true },
+      fixedHeight: { defaultValue: true },
+      disableIndent: { defaultValue: false },
+      activateOnHover: { defaultValue: true },
       lineHeight: {
         defaultValue: 1.5
       },
       clipMode: {
-        defaultValue: "auto",
+        defaultValue: 'auto'
       },
-      padding: {defaultValue: Rectangle.inset(3)},
+      padding: { defaultValue: Rectangle.inset(3) },
 
       master: {
-        initialize() {
+        initialize () {
           this.master = {
             auto: 'styleguide://SystemWidgets/tree/light'
-          }
+          };
         }
       },
-      
+
       resizeNodes: {
         defaultValue: false,
-        set(val) { this.setProperty("resizeNodes", val); this.resetCache(); this.update(); }
+        set (val) { this.setProperty('resizeNodes', val); this.resetCache(); this.update(); }
       },
 
       treeData: {
         after: ['selection'],
-        set(val) { this.setProperty("treeData", val); this.resetCache(); this.update(); }
+        set (val) { this.setProperty('treeData', val); this.resetCache(); this.update(); }
       },
 
       selectedIndex: {
-        derived: true, after: ["selectedNode", "nodes"],
-        get() { return this.selectedNode ? this.nodes.indexOf(this.selectedNode) : -1; },
-        set(i) { this.selectedNode = this.nodes[i]; }
+        derived: true,
+        after: ['selectedNode', 'nodes'],
+        get () { return this.selectedNode ? this.nodes.indexOf(this.selectedNode) : -1; },
+        set (i) { this.selectedNode = this.nodes[i]; }
       },
 
       nodes: {
-        derived: true, after: ["treeData"],
-        get() { return this.treeData.asList(); },
+        derived: true,
+        after: ['treeData'],
+        get () { return this.treeData.asList(); }
       },
 
       defaultViewState: {
-        get() {
-          return {...super.prototype.defaultViewState, fastScroll: false }
+        get () {
+          return { ...super.prototype.defaultViewState, fastScroll: false };
         }
       },
 
       selectedNode: {
-        set(sel) { 
-          this.setProperty("selectedNode", sel); 
-          this.update(); 
+        set (sel) {
+          this.setProperty('selectedNode', sel);
+          this.update();
         }
       },
 
       selectedNodeAndSiblings: {
-        readOnly: true, derived: true, after: ["selectedNode", "treeData"],
-        get() {
-          return this.selectedNode ?
-            this.treeData.nodeWithSiblings(this.selectedNode) : [];
-        },
+        readOnly: true,
+        derived: true,
+        after: ['selectedNode', 'treeData'],
+        get () {
+          return this.selectedNode
+            ? this.treeData.nodeWithSiblings(this.selectedNode)
+            : [];
+        }
       },
 
       selectionFontColor: {
         isStyleProp: true,
         defaultValue: Color.white,
-        set(c) {
+        set (c) {
           this.setProperty('selectionFontColor', c);
         }
       },
@@ -126,45 +129,48 @@ export class Tree extends Text {
       nonSelectionFontColor: {
         isStyleProp: true,
         defaultValue: Color.rgbHex('333'),
-        set(c) {
+        set (c) {
           this.setProperty('nonSelectionFontColor', c);
         }
       },
 
       nodeItemContainer: {
-        derived: true, readOnly: true, after: ["submorphs"],
-        get() { return this; },
+        derived: true,
+        readOnly: true,
+        after: ['submorphs'],
+        get () { return this; }
       },
 
       nodeMorphs: {
-        derived: true, readOnly: true, after: ["submorphs"],
-        get() { return this.nodeItemContainer.submorphs.slice(); }
+        derived: true,
+        readOnly: true,
+        after: ['submorphs'],
+        get () { return this.nodeItemContainer.submorphs.slice(); }
       }
 
     };
   }
 
-  constructor(props = {}) {
-    if (!props.treeData)
-      throw new Error("Cannot create tree without TreeData!");
+  constructor (props = {}) {
+    if (!props.treeData) { throw new Error('Cannot create tree without TreeData!'); }
     super(props);
     this.resetCache();
     this.update();
   }
 
-  onChange(change) {
+  onChange (change) {
     super.onChange(change);
     if (['fontSize', 'fontColor', 'selectionColor', 'disableIndent',
-         'nonSelectionFontColor', 'selectionFontColor'].includes(change.prop)) {
+      'nonSelectionFontColor', 'selectionFontColor'].includes(change.prop)) {
       this.update(true);
     }
   }
 
-  resetCache() { this._lineHeightCache = null; }
+  resetCache () { this._lineHeightCache = null; }
 
-  get isTree() { return true; }
+  get isTree () { return true; }
 
-  get nodeStyle() {
+  get nodeStyle () {
     return {
       fontFamily: this.fontFamily,
       fontSize: this.fontSize,
@@ -173,33 +179,30 @@ export class Tree extends Text {
     };
   }
 
-  lineBounds(idx) {
-    var charBounds = this.textLayout.charBoundsOfRow(this, idx),
-        tl = Rectangle.fromLiteral(arr.first(charBounds)).topLeft(),
-        br = Rectangle.fromLiteral(arr.last(charBounds)).bottomRight();
-    return Rectangle.fromAny(tl, br)
+  lineBounds (idx) {
+    let charBounds = this.textLayout.charBoundsOfRow(this, idx);
+    let tl = Rectangle.fromLiteral(arr.first(charBounds)).topLeft();
+    let br = Rectangle.fromLiteral(arr.last(charBounds)).bottomRight();
+    return Rectangle.fromAny(tl, br);
   }
 
-  recoverOriginalLine(row) {
+  recoverOriginalLine (row) {
     let attrs = this.document.getTextAndAttributesOfLine(row);
     for (let i = 0; i < attrs.length; i++) {
       let fontColor = this._originalColor[i];
       if (!fontColor || obj.isString(attrs[i])) continue;
-      if (attrs[i]) 
-        attrs[i].fontColor = fontColor;
-      else
-        attrs[i] = {fontColor}
+      if (attrs[i]) { attrs[i].fontColor = fontColor; } else { attrs[i] = { fontColor }; }
     }
-    this.document.setTextAndAttributesOfLine(row, attrs)
+    this.document.setTextAndAttributesOfLine(row, attrs);
   }
 
-  renderSelectedLine(row) {
+  renderSelectedLine (row) {
     let attrs = this.document.getTextAndAttributesOfLine(row);
     this._originalColor = new Array(attrs.length);
     for (let i = 0; i < attrs.length; i++) {
       if ((i % 2) === 0) {
         if (attrs[i] && attrs[i].isMorph) {
-          this._originalColor[i] = attrs[i] ? attrs[i].fontColor || this.nonSelectionFontColor : null
+          this._originalColor[i] = attrs[i] ? attrs[i].fontColor || this.nonSelectionFontColor : null;
           attrs[i].fontColor = this.selectionFontColor;
           attrs[i].isSelected = true;
           continue;
@@ -207,66 +210,62 @@ export class Tree extends Text {
           continue;
         }
       }
-      this._originalColor[i] = (attrs[i] ? attrs[i].fontColor : null) || this.nonSelectionFontColor
-      if (attrs[i])
-        attrs[i].fontColor = this.selectionFontColor;
-      else
-        attrs[i] = {fontColor: this.selectionFontColor};
+      this._originalColor[i] = (attrs[i] ? attrs[i].fontColor : null) || this.nonSelectionFontColor;
+      if (attrs[i]) { attrs[i].fontColor = this.selectionFontColor; } else { attrs[i] = { fontColor: this.selectionFontColor }; }
     }
-    this.document.setTextAndAttributesOfLine(row, attrs)
+    this.document.setTextAndAttributesOfLine(row, attrs);
     this.selectLine(row, true);
     this._lastSelectedIndex = this.selectedIndex;
   }
 
-  computeTreeAttributes(nodes) {
+  computeTreeAttributes (nodes) {
     if (!nodes.length) return [];
-    var containerTextAndAttributes = arr.genN(8 * (nodes.length - 1), () => null), 
-        i = 1, j, isSelected, toggleWidth = this.disableIndent ? 0 : this.fontSize * 1.3;
+    let containerTextAndAttributes = arr.genN(8 * (nodes.length - 1), () => null);
+    let i = 1; let j; let isSelected; let toggleWidth = this.disableIndent ? 0 : this.fontSize * 1.3;
     for (; i < nodes.length; i++) {
       j = 8 * (i - 1);
       isSelected = this.selectedIndex == i;
       nodes[i].node.isSelected = isSelected;
-      // indent 
-      containerTextAndAttributes[j] = " ";
+      // indent
+      containerTextAndAttributes[j] = ' ';
       containerTextAndAttributes[j + 1] = {
         fontSize: toggleWidth,
-        fontColor: Color.transparent, 
+        fontColor: Color.transparent,
         textStyleClasses: ['fas'],
         paddingRight: (toggleWidth * (nodes[i].depth - 1)) + 'px'
       };
       // toggle
       containerTextAndAttributes[j + 3] = {
-        fontColor: Color.transparent, 
+        fontColor: Color.transparent,
         textStyleClasses: ['fas'],
         paddingTop: (this.fontSize / 10) + 'px',
         paddingRight: (this.fontSize / 8) + 'px'
       };
       if (!this.treeData.isLeaf(nodes[i].node)) {
-         containerTextAndAttributes[j + 2] = this.treeData.isCollapsed(nodes[i].node) ? " \uf0da " : " \uf0d7 "; 
-         Object.assign(
-            containerTextAndAttributes[j + 3], {
-              paddingRight: this.treeData.isCollapsed(nodes[i].node) ? `${this.fontSize / 4}px` : "0px",
-              paddingTop: '0px',
-              nativeCursor: 'pointer',
-              fontColor: this.fontColor
-         })
+        containerTextAndAttributes[j + 2] = this.treeData.isCollapsed(nodes[i].node) ? ' \uf0da ' : ' \uf0d7 ';
+        Object.assign(
+          containerTextAndAttributes[j + 3], {
+            paddingRight: this.treeData.isCollapsed(nodes[i].node) ? `${this.fontSize / 4}px` : '0px',
+            paddingTop: '0px',
+            nativeCursor: 'pointer',
+            fontColor: this.fontColor
+          });
       } else {
-         containerTextAndAttributes[j + 2] = this.disableIndent ? "" : "    "; 
+        containerTextAndAttributes[j + 2] = this.disableIndent ? '' : '    ';
       }
       // node
       let displayedNode = this.treeData.safeDisplay(nodes[i].node);
       if (displayedNode.isMorph) {
-        if (displayedNode._capturedProps)
-              Object.assign(displayedNode, displayedNode._capturedProps);
+        if (displayedNode._capturedProps) { Object.assign(displayedNode, displayedNode._capturedProps); }
         if (isSelected) {
-          displayedNode._capturedProps  = obj.select(displayedNode,['fontColor']);
+          displayedNode._capturedProps = obj.select(displayedNode, ['fontColor']);
         }
         displayedNode.fontColor = this.nonSelectionFontColor;
       }
 
       containerTextAndAttributes[j + 4] = displayedNode;
       if (arr.isArray(displayedNode)) {
-        containerTextAndAttributes[j + 5] = []
+        containerTextAndAttributes[j + 5] = [];
       } else {
         containerTextAndAttributes[j + 5] = {
           fontColor: this.fontColor
@@ -279,10 +278,10 @@ export class Tree extends Text {
       fontSize: this.fontSize * 1.3,
       textStyleClasses: ['far']
     });
-    return nodes.length > 1 ? arr.flatten(containerTextAndAttributes) : []
+    return nodes.length > 1 ? arr.flatten(containerTextAndAttributes) : [];
   }
 
-  update(force) {
+  update (force) {
     // fixme: this method should only be used in cases, where the tree data is replaced.
     //        When collapsing/uncollapsing nodes, we should insert, remove ranges of the text
     //        which makes for a faster rendering of the tree.
@@ -290,36 +289,38 @@ export class Tree extends Text {
     this._updating = true;
 
     try {
-      this.withMetaDo({isLayoutAction: true}, () => {
+      this.withMetaDo({ isLayoutAction: true }, () => {
         let {
-              treeData,
-              padding,
-              extent,
-              resizeNodes,
-              nodeMorphs,
-              selectedNode
-            } = this,
-            nodes = treeData.asListWithIndexAndDepth(),
-            treeDataRestructured = this.treeData !== this.lastTreeData || 
+          treeData,
+          padding,
+          extent,
+          resizeNodes,
+          nodeMorphs,
+          selectedNode
+        } = this;
+        let nodes = treeData.asListWithIndexAndDepth();
+        let treeDataRestructured = this.treeData !== this.lastTreeData ||
                                    this.lastNumberOfNodes !== nodes.length;
-        
-        var row, attrs;
+
+        let row, attrs;
         if (treeDataRestructured || force) {
           this.replace(
-             {start: {row: 0, column: 0}, 
-              end: this.documentEndPosition}, 
-              this.computeTreeAttributes(nodes),
-              false, false);
+            {
+              start: { row: 0, column: 0 },
+              end: this.documentEndPosition
+            },
+            this.computeTreeAttributes(nodes),
+            false, false);
           this.invalidateTextLayout(true, false);
           this.whenRendered().then(async () => {
-             this.makeDirty();
+            this.makeDirty();
           });
         } else if (this._lastSelectedIndex) {
           this.recoverOriginalLine(this._lastSelectedIndex - 1);
         }
         this.lastTreeData = this.treeData;
         this.lastNumberOfNodes = nodes.length;
-        this.cursorPosition = {row: 0, column: 0};
+        this.cursorPosition = { row: 0, column: 0 };
         if (this.selectedIndex > 0) {
           this.renderSelectedLine(this.selectedIndex - 1);
         }
@@ -327,15 +328,13 @@ export class Tree extends Text {
     } finally {
       this._updating = false;
     }
-
   }
-  
-  buildViewState(nodeIdFn) {
-    if (typeof nodeIdFn !== "function")
-      nodeIdFn = node => node;
 
-    var selId = this.selectedNode ? nodeIdFn(this.selectedNode) : null,
-        collapsedMap = new Map();
+  buildViewState (nodeIdFn) {
+    if (typeof nodeIdFn !== 'function') { nodeIdFn = node => node; }
+
+    let selId = this.selectedNode ? nodeIdFn(this.selectedNode) : null;
+    let collapsedMap = new Map();
 
     tree.prewalk(this.treeData.root,
       node => collapsedMap.set(nodeIdFn(node), this.treeData.isCollapsed(node)),
@@ -348,20 +347,18 @@ export class Tree extends Text {
     };
   }
 
-  async applyViewState(viewState, nodeIdFn) {
-    if (typeof nodeIdFn !== "function")
-      nodeIdFn = node => node;
+  async applyViewState (viewState, nodeIdFn) {
+    if (typeof nodeIdFn !== 'function') { nodeIdFn = node => node; }
 
-    var { selectionId, collapsedMap, scroll } = viewState,
-        i = 0, newSelIndex = -1;
+    let { selectionId, collapsedMap, scroll } = viewState;
+    let i = 0; let newSelIndex = -1;
 
     while (true) {
-      var nodes = this.nodes;
+      let nodes = this.nodes;
       if (i >= nodes.length) break;
-      var id = nodeIdFn(nodes[i]);
+      let id = nodeIdFn(nodes[i]);
       if (selectionId === id) newSelIndex = i;
-      if (collapsedMap.has(id) && !collapsedMap.get(id))
-        await this.treeData.collapse(nodes[i], false);
+      if (collapsedMap.has(id) && !collapsedMap.get(id)) { await this.treeData.collapse(nodes[i], false); }
       i++;
     }
     this.selectedIndex = newSelIndex;
@@ -371,18 +368,18 @@ export class Tree extends Text {
     await promise.delay(0);
   }
 
-  async maintainViewStateWhile(whileFn, nodeIdFn) {
+  async maintainViewStateWhile (whileFn, nodeIdFn) {
     // keeps the scroll, selection, and node collapse state, useful when updating the list
     // specify a nodeIdFn to compare old and new nodes, useful when you
     // generate a new tree but still want to have the same elements uncollapsed in
     // the new.
 
-    var viewState = this.buildViewState(nodeIdFn);
+    let viewState = this.buildViewState(nodeIdFn);
     await whileFn();
     await this.applyViewState(viewState, nodeIdFn);
   }
 
-  async onNodeCollapseChanged({node, isCollapsed}) {
+  async onNodeCollapseChanged ({ node, isCollapsed }) {
     this.resetCache();
     try {
       await this.treeData.collapse(node, isCollapsed);
@@ -391,58 +388,58 @@ export class Tree extends Text {
     } catch (e) { this.showError(e); }
   }
 
-  async uncollapse(node = this.selectedNode) {
+  async uncollapse (node = this.selectedNode) {
     if (!node || !this.treeData.isCollapsed(node)) return;
-    await this.onNodeCollapseChanged({node, isCollapsed: false});
+    await this.onNodeCollapseChanged({ node, isCollapsed: false });
     return node;
   }
 
-  async collapse(node = this.selectedNode) {
+  async collapse (node = this.selectedNode) {
     if (!node || this.treeData.isCollapsed(node)) return;
-    await this.onNodeCollapseChanged({node, isCollapsed: true});
+    await this.onNodeCollapseChanged({ node, isCollapsed: true });
     return node;
   }
 
-  selectedPath() { return this.treeData.pathOf(this.selectedNode); }
+  selectedPath () { return this.treeData.pathOf(this.selectedNode); }
 
-  async selectPath(path) { return this.selectedNode = await this.treeData.followPath(path); }
+  async selectPath (path) { return this.selectedNode = await this.treeData.followPath(path); }
 
-  gotoIndex(i) {
+  gotoIndex (i) {
     this.selectedNode = this.nodes[i];
     this.scrollIndexIntoView(i);
   }
 
-  scrollSelectionIntoView() {
+  scrollSelectionIntoView () {
     this.selectedNode && this.scrollIndexIntoView(this.selectedIndex);
   }
 
-  scrollIndexIntoView(idx) { this.scrollToIndex(idx, "into view"); }
+  scrollIndexIntoView (idx) { this.scrollToIndex(idx, 'into view'); }
 
-  centerSelection() {
-    this.selectedNode && this.scrollToIndex(this.selectedIndex, "center");
+  centerSelection () {
+    this.selectedNode && this.scrollToIndex(this.selectedIndex, 'center');
   }
 
-  scrollToIndex(idx) {
-    this.scrollPositionIntoView({row: idx - 1, column: 0});
+  scrollToIndex (idx) {
+    this.scrollPositionIntoView({ row: idx - 1, column: 0 });
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // event handling
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  contextMenuForNode(node, evt) {
-    signal(this, "contextMenuRequested", {node, evt});
+  contextMenuForNode (node, evt) {
+    signal(this, 'contextMenuRequested', { node, evt });
   }
 
-  onKeyDown(evt) {
-    let w = this.world(),
-        f = w.focusedMorph;
+  onKeyDown (evt) {
+    let w = this.world();
+    let f = w.focusedMorph;
     // to not steal keys from inner morphs
     if (f.isText && !f.readOnly) return;
     return super.onKeyDown(evt);
   }
 
-  onDragStart(evt) {
+  onDragStart (evt) {
     super.onDragStart(evt);
     let { onDragStart, onDrag, onDragEnd } = this.textAttributeAtPoint(evt.positionIn(this)) || {};
     if (onDrag) this._onDragHandler = onDrag;
@@ -450,171 +447,164 @@ export class Tree extends Text {
     if (onDragStart) onDragStart(evt);
   }
 
-  onDrag(evt) {
+  onDrag (evt) {
     // allow text attributes to be dragged instead
     if (this._onDragHandler) this._onDragHandler(evt);
     else super.onDrag(evt);
   }
 
-  onDragEnd(evt) {
+  onDragEnd (evt) {
     super.onDragEnd(evt);
-    delete this._onDragHandler
+    delete this._onDragHandler;
     if (this._onDragEndHandler) this._onDragEndHandler(evt);
     delete this._onDragEndHandler;
   }
-  
-  async onMouseDown(evt) {
-    //super.onMouseDown(evt);
-    let {row, column} = this.textPositionFromPoint(evt.positionIn(this)),
-        clickedNode = this.nodes[row + 1];
+
+  async onMouseDown (evt) {
+    // super.onMouseDown(evt);
+    let { row, column } = this.textPositionFromPoint(evt.positionIn(this));
+    let clickedNode = this.nodes[row + 1];
     if (!clickedNode) return;
     if (!this.treeData.isLeaf(clickedNode) && column < 4) {
-      await clickedNode.isCollapsed ? 
-        this.uncollapse(clickedNode) : 
-        this.collapse(clickedNode);
+      await clickedNode.isCollapsed
+        ? this.uncollapse(clickedNode)
+        : this.collapse(clickedNode);
     } else {
-      if (this.selectedIndex != row + 1)
-         this.selectedIndex = row + 1;
+      if (this.selectedIndex != row + 1) { this.selectedIndex = row + 1; }
     }
     // check for defined onMouseDown in attributes
     let { onMouseDown } = this.textAttributeAt({ row, column }) || {};
     if (onMouseDown) onMouseDown(evt);
   }
 
-  onMouseUp(evt) {
+  onMouseUp (evt) {
     super.onMouseUp(evt);
     let { onMouseUp } = this.textAttributeAtPoint(evt.positionIn(this)) || {};
     if (onMouseUp) onMouseUp(evt);
   }
 
-  onHoverIn(evt) {
+  onHoverIn (evt) {
     super.onHoverIn(evt);
-    if (this.activateOnHover)
-      this.clipMode = 'auto';
+    if (this.activateOnHover) { this.clipMode = 'auto'; }
   }
 
-  onHoverOut(evt) {
+  onHoverOut (evt) {
     super.onHoverOut(evt);
     if (touchInputDevice) return;
-    if (this.activateOnHover)
-      this.clipMode = 'hidden';
+    if (this.activateOnHover) { this.clipMode = 'hidden'; }
   }
-  
-  onContextMenu(evt) {
+
+  onContextMenu (evt) {
     if (evt.targetMorph !== this) return;
     evt.stop();
-    let {row, column} = this.textPositionFromPoint(evt.positionIn(this)),
-        clickedNode = this.nodes[row + 1];
+    let { row, column } = this.textPositionFromPoint(evt.positionIn(this));
+    let clickedNode = this.nodes[row + 1];
     if (!clickedNode) return;
     this.contextMenuForNode(clickedNode, evt);
   }
 
-  get keybindings() {
+  get keybindings () {
     return [
-      {keys: "Up|Ctrl-P", command: "select node above"},
-      {keys: "Down|Ctrl-N", command: "select node below"},
+      { keys: 'Up|Ctrl-P', command: 'select node above' },
+      { keys: 'Down|Ctrl-N', command: 'select node below' },
 
-      {keys: "Left", command: "collapse selected node"},
-      {keys: "Right", command: "uncollapse selected node"},
+      { keys: 'Left', command: 'collapse selected node' },
+      { keys: 'Right', command: 'uncollapse selected node' },
 
-      {keys: "Alt-V|PageUp", command: "page up"},
-      {keys: "Ctrl-V|PageDown", command: "page down"},
+      { keys: 'Alt-V|PageUp', command: 'page up' },
+      { keys: 'Ctrl-V|PageDown', command: 'page down' },
 
-      {keys: "Alt-Shift-,", command: "goto first item"},
-      {keys: "Alt-Shift-.", command: "goto last item"},
+      { keys: 'Alt-Shift-,', command: 'goto first item' },
+      { keys: 'Alt-Shift-.', command: 'goto last item' },
 
-      {keys: "Alt-Space", command: "select via filter"},
+      { keys: 'Alt-Space', command: 'select via filter' },
 
-      {keys: "Ctrl-L", command: "realign top-bottom-center"},
+      { keys: 'Ctrl-L', command: 'realign top-bottom-center' },
 
-      {keys: {mac: "Meta-[", win: "Ctrl-["}, command: {command: "collapse or uncollapse all siblings", args: {what: "collapse"}}},
-      {keys: {mac: "Meta-]", win: "Ctrl-]"}, command: {command: "collapse or uncollapse all siblings", args: {what: "uncollapse"}}},
+      { keys: { mac: 'Meta-[', win: 'Ctrl-[' }, command: { command: 'collapse or uncollapse all siblings', args: { what: 'collapse' } } },
+      { keys: { mac: 'Meta-]', win: 'Ctrl-]' }, command: { command: 'collapse or uncollapse all siblings', args: { what: 'uncollapse' } } },
 
-      {keys: "Alt-N", command: "goto next sibling"},
-      {keys: "Alt-P", command: "goto prev sibling"},
-      {keys: "Alt-U", command: "goto parent"},
-    ]
-      //.concat(super.keybindings);
+      { keys: 'Alt-N', command: 'goto next sibling' },
+      { keys: 'Alt-P', command: 'goto prev sibling' },
+      { keys: 'Alt-U', command: 'goto parent' }
+    ];
+    // .concat(super.keybindings);
   }
 
-  get commands() {
+  get commands () {
     return treeCommands;
   }
 
-  highlightChangedNodes(treeData) {
+  highlightChangedNodes (treeData) {
     /* highlights all visible nodes that contain different information
        to their (location-wise) counterparts in 'treeData'. */
     let changedNodes = this.treeData.diff(treeData);
-    changedNodes.forEach(([n,_]) => n.renderedNode && n.renderedNode.highlight());
+    changedNodes.forEach(([n, _]) => n.renderedNode && n.renderedNode.highlight());
   }
-
 }
 
-
 export class TreeData {
-
-  constructor(root) {
+  constructor (root) {
     this.root = root;
     this.parentMap = new WeakMap();
   }
 
-  get __dont_serialize__() { return ["parentMap"]; }
-  __deserialize__() { this.parentMap = new WeakMap(); }
+  get __dont_serialize__ () { return ['parentMap']; }
+  __deserialize__ () { this.parentMap = new WeakMap(); }
 
-  display(node) { throw new Error("Not yet implemented"); }
-  isCollapsed(node) { throw new Error("Not yet implemented"); }
-  collapse(node, bool) { throw new Error("Not yet implemented"); }
-  getChildren(node) { throw new Error("Not yet implemented"); }
-  isLeaf(node) { throw new Error("Not yet implemented"); }
+  display (node) { throw new Error('Not yet implemented'); }
+  isCollapsed (node) { throw new Error('Not yet implemented'); }
+  collapse (node, bool) { throw new Error('Not yet implemented'); }
+  getChildren (node) { throw new Error('Not yet implemented'); }
+  isLeaf (node) { throw new Error('Not yet implemented'); }
 
-  getChildrenIfUncollapsed(node) {
-    if (this.isCollapsed(node)) return []
+  getChildrenIfUncollapsed (node) {
+    if (this.isCollapsed(node)) return [];
     return this.getChildren(node);
   }
 
-  safeDisplay(node) {
-    try { return this.display(node); }
-    catch (e) { return `[TreeData] Error when trying to display node: ${e}`;}
+  safeDisplay (node) {
+    try { return this.display(node); } catch (e) { return `[TreeData] Error when trying to display node: ${e}`; }
   }
 
-  nodeToString(node) {
+  nodeToString (node) {
     // for extracting rich text in textAttributes format
-    var value = this.safeDisplay(node);
-    if (typeof value === "string") return value;
+    let value = this.safeDisplay(node);
+    if (typeof value === 'string') return value;
     if (!value || !Array.isArray(value)) return String(value);
-    return value.map((text, i) => i%2===0? text: "").join("");
+    return value.map((text, i) => i % 2 === 0 ? text : '').join('');
   }
 
-  parentNode(childNode) {
+  parentNode (childNode) {
     return this.parentMap.get(childNode) || tree.detect(this.root,
       node => !this.isLeaf(node) && this.getChildrenIfUncollapsed(node).includes(childNode),
       node => this.getChildrenIfUncollapsed(node));
   }
 
-  nodeWithSiblings(node) {
-    var parent = this.parentNode(node);
+  nodeWithSiblings (node) {
+    let parent = this.parentNode(node);
     return parent ? this.getChildrenIfUncollapsed(parent) : [];
   }
 
-  asList() {
+  asList () {
     return this.asListWithIndexAndDepth().map(ea => ea.node);
   }
 
-  asListWithIndexAndDepth(filterFn = false) {
-    var nodesWithIndex = [];
+  asListWithIndexAndDepth (filterFn = false) {
+    let nodesWithIndex = [];
     tree.prewalk(this.root,
-      (node, i, depth) => nodesWithIndex.push({node, depth, i}),
+      (node, i, depth) => nodesWithIndex.push({ node, depth, i }),
       (node) => this.getChildrenIfUncollapsed(node));
     return filterFn ? arr.filter(nodesWithIndex, filterFn) : nodesWithIndex;
   }
 
-  pathOf(node) {
-    var path = [];
+  pathOf (node) {
+    let path = [];
     while (node) { path.unshift(node); node = this.parentNode(node); }
     return path;
   }
 
-  async followPath(path, eqFn, startNode = this.root) {
+  async followPath (path, eqFn, startNode = this.root) {
     // takes a path list that should denote a path into a node inside the tree.
     // path[n] does not necessarily be directly a node of treeData, when eqFn
     // is passed this fuction is used to find the right node for the path part
@@ -633,23 +623,21 @@ export class TreeData {
 
     if (!eqFn) eqFn = (pathPart, node) => pathPart === node;
 
-    var startIndex = path.findIndex(ea => eqFn(ea, startNode));
-    path = path.slice(startIndex+1);
+    let startIndex = path.findIndex(ea => eqFn(ea, startNode));
+    path = path.slice(startIndex + 1);
 
     if (!path.length) return null;
 
-    var currentNode = startNode;
+    let currentNode = startNode;
     while (true) {
       if (!path.length) break;
 
-      if (this.isCollapsed(currentNode))
-        await this.collapse(currentNode, false);
+      if (this.isCollapsed(currentNode)) { await this.collapse(currentNode, false); }
 
-      var nextPathPart = path.shift(),
-          nextNode = this.getChildrenIfUncollapsed(currentNode).find(ea => eqFn(nextPathPart, ea));
+      var nextPathPart = path.shift();
+      let nextNode = this.getChildrenIfUncollapsed(currentNode).find(ea => eqFn(nextPathPart, ea));
 
-      if (!nextNode)
-        throw new Error(`Cannot descend into tree, next node of ${path.join(".")} not found at ${this.safeDisplay(currentNode)}`);
+      if (!nextNode) { throw new Error(`Cannot descend into tree, next node of ${path.join('.')} not found at ${this.safeDisplay(currentNode)}`); }
 
       currentNode = nextNode;
     }
@@ -657,21 +645,21 @@ export class TreeData {
     return currentNode;
   }
 
-  diff(treeData) {
+  diff (treeData) {
     /* Returns the nodes that are different to the ones in 'treeData'.
        Once a node has been determined different, it is no longer traversed further
        which means that its children are not inspected for changes.  */
-    let changedNodes = [],
-        aList = this.asListWithIndexAndDepth(),
-        bList = treeData.asListWithIndexAndDepth();
+    let changedNodes = [];
+    let aList = this.asListWithIndexAndDepth();
+    let bList = treeData.asListWithIndexAndDepth();
     if (aList.length != bList.length) return [];
-    for (var [a, b] of arr.zip(aList, bList)) {
+    for (let [a, b] of arr.zip(aList, bList)) {
       if (!obj.equals(a.node.value, b && b.node.value)) changedNodes.push([a.node, b.node]);
     }
     return changedNodes;
   }
 
-  patch(treeData) {
+  patch (treeData) {
     /* change a tree in place, leaving all the unchanged nodes
        untouched */
     let changedNodes = this.diff(treeData);
@@ -685,7 +673,7 @@ export class TreeData {
     }
   }
 
-  async uncollapseAll(iterator, depth=0, node) {
+  async uncollapseAll (iterator, depth = 0, node) {
     if (!node) return await this.uncollapseAll(iterator, depth, this.root);
     if (iterator(node, depth)) {
       node.isCollapsed && await this.collapse(node, false);
@@ -694,22 +682,21 @@ export class TreeData {
       }
     }
   }
-
 }
 
 var treeCommands = [
 
   {
-    name: "select via filter",
+    name: 'select via filter',
     exec: async tree => {
-      var td = tree.treeData,
-          nodes = td.asListWithIndexAndDepth(),
-          data = td.asListWithIndexAndDepth().map(ea =>
-            Object.assign(ea, {string: td.nodeToString(ea.node)})),
-          lines = string.lines(
-            string.printTree(td.root, td.nodeToString.bind(td), td.getChildrenIfUncollapsed.bind(td))),
-          items = td.asList().map((ea, i) => ({isListItem: true, string: lines[i], value: ea})),
-          {selected: [node]} = await tree.world().filterableListPrompt("Select item", items);
+      let td = tree.treeData;
+      let nodes = td.asListWithIndexAndDepth();
+      let data = td.asListWithIndexAndDepth().map(ea =>
+        Object.assign(ea, { string: td.nodeToString(ea.node) }));
+      let lines = string.lines(
+        string.printTree(td.root, td.nodeToString.bind(td), td.getChildrenIfUncollapsed.bind(td)));
+      let items = td.asList().map((ea, i) => ({ isListItem: true, string: lines[i], value: ea }));
+      let { selected: [node] } = await tree.world().filterableListPrompt('Select item', items);
       if (node) {
         tree.selectedNode = node;
         tree.scrollSelectionIntoView();
@@ -719,13 +706,13 @@ var treeCommands = [
   },
 
   {
-    name: "page up",
+    name: 'page up',
     exec: tree => {
       tree.scrollPageUp(1);
-      var {scroll} = tree,
-          y = tree.padding.top(),
-          targetY = scroll.y,
-          newIndex = tree.lineHeightCache.findIndex(h => targetY <= (y += h));
+      let { scroll } = tree;
+      let y = tree.padding.top();
+      let targetY = scroll.y;
+      let newIndex = tree.lineHeightCache.findIndex(h => targetY <= (y += h));
       newIndex--; // ignore root
       tree.gotoIndex(Math.max(1, newIndex));
       return true;
@@ -733,34 +720,34 @@ var treeCommands = [
   },
 
   {
-    name: "page down",
+    name: 'page down',
     exec: tree => {
       tree.scrollPageDown(1);
-      var {scroll} = tree,
-          y = tree.padding.top(),
-          targetY = scroll.y + tree.height,
-          newIndex = tree.lineHeightCache.findIndex(h => targetY <= (y += h));
+      let { scroll } = tree;
+      let y = tree.padding.top();
+      let targetY = scroll.y + tree.height;
+      let newIndex = tree.lineHeightCache.findIndex(h => targetY <= (y += h));
       newIndex--; // ignore root
-      tree.gotoIndex(Math.min(newIndex, tree.nodes.length-1));
+      tree.gotoIndex(Math.min(newIndex, tree.nodes.length - 1));
       return true;
     }
   },
 
   {
-    name: "goto first item",
+    name: 'goto first item',
     exec: tree => { tree.gotoIndex(1); return true; }
   },
 
   {
-    name: "goto last item",
-    exec: tree => { tree.gotoIndex(tree.nodes.length-1); return true; }
+    name: 'goto last item',
+    exec: tree => { tree.gotoIndex(tree.nodes.length - 1); return true; }
   },
 
   {
-    name: "goto next sibling",
+    name: 'goto next sibling',
     exec: tree => {
-      var withSiblings = tree.selectedNodeAndSiblings,
-          next = withSiblings[withSiblings.indexOf(tree.selectedNode)+1];
+      let withSiblings = tree.selectedNodeAndSiblings;
+      let next = withSiblings[withSiblings.indexOf(tree.selectedNode) + 1];
       if (next) {
         tree.selectedNode = next;
         tree.scrollSelectionIntoView();
@@ -770,10 +757,10 @@ var treeCommands = [
   },
 
   {
-    name: "goto prev sibling",
+    name: 'goto prev sibling',
     exec: tree => {
-      var withSiblings = tree.selectedNodeAndSiblings,
-          next = withSiblings[withSiblings.indexOf(tree.selectedNode)-1];
+      let withSiblings = tree.selectedNodeAndSiblings;
+      let next = withSiblings[withSiblings.indexOf(tree.selectedNode) - 1];
       if (next) {
         tree.selectedNode = next;
         tree.scrollSelectionIntoView();
@@ -783,7 +770,7 @@ var treeCommands = [
   },
 
   {
-    name: "goto parent",
+    name: 'goto parent',
     exec: tree => {
       if (tree.selectedNode) {
         tree.selectedNode = tree.treeData.parentNode(tree.selectedNode);
@@ -794,13 +781,11 @@ var treeCommands = [
   },
 
   {
-    name: "collapse selected node",
+    name: 'collapse selected node',
     exec: async tree => {
-      var sel = tree.selectedNode;
+      let sel = tree.selectedNode;
       if (!sel) return true;
-      if (!tree.treeData.isCollapsed(sel))
-        await tree.onNodeCollapseChanged({node: tree.selectedNode, isCollapsed: true});
-      else {
+      if (!tree.treeData.isCollapsed(sel)) { await tree.onNodeCollapseChanged({ node: tree.selectedNode, isCollapsed: true }); } else {
         tree.selectedNode = tree.treeData.parentNode(sel);
         tree.scrollSelectionIntoView();
       }
@@ -809,29 +794,27 @@ var treeCommands = [
   },
 
   {
-    name: "uncollapse selected node",
+    name: 'uncollapse selected node',
     exec: async tree => {
-      if (tree.selectedNode)
-        await tree.onNodeCollapseChanged({node: tree.selectedNode, isCollapsed: false});
+      if (tree.selectedNode) { await tree.onNodeCollapseChanged({ node: tree.selectedNode, isCollapsed: false }); }
       return true;
     }
   },
 
   {
-    name: "collapse or uncollapse all siblings",
-    exec: async (treeMorph, opts = {what: "collapse"}) => {
-
-      var doCollapse = opts.what === "collapse";
-      var td = treeMorph.treeData;
-      var nodesToChange;
+    name: 'collapse or uncollapse all siblings',
+    exec: async (treeMorph, opts = { what: 'collapse' }) => {
+      let doCollapse = opts.what === 'collapse';
+      let td = treeMorph.treeData;
+      let nodesToChange;
 
       if (doCollapse) {
         // find all the parent nodes of the nodes deepest in the tree below the
         // selected node and collapse those
         if (td.isCollapsed(treeMorph.selectedNode)) return true;
 
-        var startNode = td.parentNode(treeMorph.selectedNode);
-        var maxDepth = -1;
+        let startNode = td.parentNode(treeMorph.selectedNode);
+        let maxDepth = -1;
         tree.prewalk(startNode,
           (node, i, depth) => {
             if (depth < maxDepth) return;
@@ -839,20 +822,18 @@ var treeCommands = [
               maxDepth = depth;
               nodesToChange = [];
             }
-            if (depth === maxDepth)
-              arr.pushIfNotIncluded(nodesToChange, td.parentNode(node));
+            if (depth === maxDepth) { arr.pushIfNotIncluded(nodesToChange, td.parentNode(node)); }
           },
           td.getChildrenIfUncollapsed.bind(td));
-
       } else {
         // find the non-leaf nodes below the selection that are at the same
         // depth and at least one of those non-leaf nodes is collapsed:
         // uncollapse all collapsed of this set
-        var parents = arr.compact([td.parentNode(treeMorph.selectedNode)]);
+        let parents = arr.compact([td.parentNode(treeMorph.selectedNode)]);
         while (true) {
           if (!parents.length) break;
           nodesToChange = arr.flatmap(parents, n => allNonLeafChildren(n));
-          var needCollapseChange = nodesToChange.every(n => td.isCollapsed(n) === doCollapse);
+          let needCollapseChange = nodesToChange.every(n => td.isCollapsed(n) === doCollapse);
           if (!needCollapseChange) break;
           parents = nodesToChange;
         }
@@ -864,50 +845,49 @@ var treeCommands = [
 
       return true;
 
-      function allNonLeafChildren(parent) {
+      function allNonLeafChildren (parent) {
         return arr.filter(td.getChildrenIfUncollapsed(parent), n => !td.isLeaf(n));
       }
 
-      function collapseOrUncollapse(nodes, doCollapse) {
-        return Promise.all(nodes.map(node => treeMorph.onNodeCollapseChanged({node, isCollapsed: doCollapse})));
+      function collapseOrUncollapse (nodes, doCollapse) {
+        return Promise.all(nodes.map(node => treeMorph.onNodeCollapseChanged({ node, isCollapsed: doCollapse })));
       }
-
     }
   },
 
   {
-    name: "select node above",
+    name: 'select node above',
     exec: treeMorph => {
-      var nodes = treeMorph.nodes,
-          index = treeMorph.selectedIndex;
+      let nodes = treeMorph.nodes;
+      let index = treeMorph.selectedIndex;
       if (index <= 1) index = nodes.length;
-      treeMorph.selectedNode = nodes[index-1];
+      treeMorph.selectedNode = nodes[index - 1];
       treeMorph.scrollSelectionIntoView();
       return true;
     }
   },
 
   {
-    name: "select node below",
+    name: 'select node below',
     exec: tree => {
-      var nodes = tree.nodes,
-          index = tree.selectedIndex;
-      if (index <= -1 ||  index >= nodes.length-1) index = 0;
-      tree.selectedNode = nodes[index+1];
+      let nodes = tree.nodes;
+      let index = tree.selectedIndex;
+      if (index <= -1 || index >= nodes.length - 1) index = 0;
+      tree.selectedNode = nodes[index + 1];
       tree.scrollSelectionIntoView();
       return true;
     }
   },
 
   {
-    name: "realign top-bottom-center",
+    name: 'realign top-bottom-center',
     exec: tree => {
       if (!tree.selectedNode) return;
-      var {padding, selectedIndex: idx, scroll: {x: scrollX, y: scrollY}} = tree,
-          lineBounds = tree.lineBounds(idx),
-          pos = lineBounds.topLeft(),
-          offsetX = 0, offsetY = 0,
-          h = tree.height - lineBounds.height;
+      let { padding, selectedIndex: idx, scroll: { x: scrollX, y: scrollY } } = tree;
+      let lineBounds = tree.lineBounds(idx);
+      let pos = lineBounds.topLeft();
+      let offsetX = 0; let offsetY = 0;
+      let h = tree.height - lineBounds.height;
       if (Math.abs(pos.y - scrollY) < 2) {
         scrollY = pos.y - h;
       } else if (Math.abs(pos.y - scrollY - h * 0.5) < 2) {
@@ -921,16 +901,18 @@ var treeCommands = [
   },
 
   {
-    name: "print contents in text window",
+    name: 'print contents in text window',
     exec: treeMorph => {
-      var td = treeMorph.treeData,
-          content = string.printTree(td.root, td.nodeToString.bind(td), td.getChildrenIfUncollapsed.bind(td)),
-          title = treeMorph.getWindow() ?
-            "printed " + treeMorph.getWindow().title :
-            treeMorph.name;
+      let td = treeMorph.treeData;
+      let content = string.printTree(td.root, td.nodeToString.bind(td), td.getChildrenIfUncollapsed.bind(td));
+      let title = treeMorph.getWindow()
+        ? 'printed ' + treeMorph.getWindow().title
+        : treeMorph.name;
 
-      return treeMorph.world().execCommand("open text window", {
-        title, content, name: title,
+      return treeMorph.world().execCommand('open text window', {
+        title,
+        content,
+        name: title,
         fontFamily: config.codeEditor.defaultStyle.fontFamily
       });
     }

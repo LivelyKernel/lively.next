@@ -1,21 +1,20 @@
-import { Morph, VerticalLayout, StyleSheet, Icon, CustomLayout } from "lively.morphic";
-import { Color, rect, pt } from "lively.graphics";
-import { connect } from "lively.bindings";
-import { Path } from "lively.lang";
+import { Morph, VerticalLayout, StyleSheet, Icon, CustomLayout } from 'lively.morphic';
+import { Color, rect, pt } from 'lively.graphics';
+import { connect } from 'lively.bindings';
+import { Path } from 'lively.lang';
 
 let duration = 300;
 
 export class Popover extends Morph {
-
-  static get properties() {
+  static get properties () {
     return {
       epiMorph: { defaultValue: true },
-      hasFixedPosition: {defaultValue: true },
+      hasFixedPosition: { defaultValue: true },
       master: {
-        initialize() {
+        initialize () {
           this.master = {
             auto: 'styleguide://SystemWidgets/popover/light'
-          }
+          };
         }
       },
 
@@ -27,38 +26,38 @@ export class Popover extends Morph {
           fill: Color.transparent,
           submorphs: [
             {
-              name: "placeholder",
-              type: "label",
-              value: "No Target Specified"
+              name: 'placeholder',
+              type: 'label',
+              value: 'No Target Specified'
             }
           ]
         },
-        get() { return this.get('body').submorphs[0]; },
-        set(m) {
+        get () { return this.get('body').submorphs[0]; },
+        set (m) {
           this.get('body').addMorph(m);
           this.whenRendered().then(() => this.relayout());
         }
       },
 
       submorphs: {
-        initialize() {
+        initialize () {
           this.submorphs = [
             {
-              type: "polygon",
-              name: "arrow",
-              topCenter: pt(0,0),
+              type: 'polygon',
+              name: 'arrow',
+              topCenter: pt(0, 0),
               borderColor: Color.transparent,
               vertices: [pt(-10, 0), pt(0, -15), pt(10, 0)]
             },
-            {name: "body"},
+            { name: 'body' },
             {
-              name: "close button",
-              type: "button",
-              label: Object.assign(Icon.makeLabel("times-circle"), {fontSize: 18}),
-              tooltip: "close",
+              name: 'close button',
+              type: 'button',
+              label: Object.assign(Icon.makeLabel('times-circle'), { fontSize: 18 }),
+              tooltip: 'close',
               fill: null,
-              extent: pt(16,16),
-              borderColor: Color.transparent,
+              extent: pt(16, 16),
+              borderColor: Color.transparent
             }
           ];
           let [_1, body, btn] = this.submorphs;
@@ -72,29 +71,26 @@ export class Popover extends Morph {
     };
   }
 
-  relayout(animated) {
-    let body = this.get("body"),
-        arrow = this.get("arrow"),
-        closeBtn = this.get("close button"),
-        offset = arrow.height,
-        padding = 8;
+  relayout (animated) {
+    let body = this.get('body');
+    let arrow = this.get('arrow');
+    let closeBtn = this.get('close button');
+    let offset = arrow.height;
+    let padding = 8;
 
     if (animated) {
       body.animate({
         topCenter: pt(0, offset),
-        duration: 200,
+        duration: 200
       });
-      closeBtn.animate({topRight: body.topRight.addXY(padding, -padding), duration: 200 });
+      closeBtn.animate({ topRight: body.topRight.addXY(padding, -padding), duration: 200 });
     } else {
       body.topCenter = pt(0, offset);
       closeBtn.topRight = body.topRight.addXY(padding, -padding);
     }
   }
 
-  
-
-  close() {
+  close () {
     this.fadeOut(300);
   }
-
 }
