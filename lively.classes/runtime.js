@@ -1,36 +1,38 @@
-import { prepareClassForManagedPropertiesAfterCreation } from "./properties.js";
-import { superclassSymbol, moduleSubscribeToToplevelChangesSym, moduleMetaSymbol, objMetaSymbol, initializeSymbol } from "./util.js";
+import { prepareClassForManagedPropertiesAfterCreation } from './properties.js';
+import { superclassSymbol, moduleSubscribeToToplevelChangesSym, moduleMetaSymbol, objMetaSymbol, initializeSymbol } from './util.js';
 
 const constructorArgMatcher = /\([^\\)]*\)/;
 
 const defaultPropertyDescriptorForGetterSetter = {
   enumerable: false,
   configurable: true
-}
+};
 
 const defaultPropertyDescriptorForValue = {
   enumerable: false,
   configurable: true,
   writable: true
-}
+};
 
-export const setPrototypeOf = typeof Object.setPrototypeOf === "function" ?
-  (obj, proto) => Object.setPrototypeOf(obj, proto) :
-  (obj, proto) => obj.__proto__ = proto;
+export const setPrototypeOf = typeof Object.setPrototypeOf === 'function'
+  ? (obj, proto) => Object.setPrototypeOf(obj, proto)
+  : (obj, proto) => obj.__proto__ = proto;
 
-export function adoptObject(object, newClass) {
+export function adoptObject (object, newClass) {
   // change the class of object to newClass
   if (newClass === object.constructor) return;
   object.constructor = newClass;
-  setPrototypeOf(object, newClass.prototype)
+  setPrototypeOf(object, newClass.prototype);
 }
 
-export function setSuperclass(klass, superclassOrSpec) {
+export function setSuperclass (klass, superclassOrSpec) {
   // define klass.prototype, klass.prototype[constructor], klass[superclassSymbol]
-  var superclass = !superclassOrSpec ? Object :
-    typeof superclassOrSpec === "function" ? superclassOrSpec :
-      superclassOrSpec.value ? superclassOrSpec.value : Object;
-  var existingSuperclass = klass && klass[superclassSymbol];
+  let superclass = !superclassOrSpec
+    ? Object
+    : typeof superclassOrSpec === 'function'
+      ? superclassOrSpec
+      : superclassOrSpec.value ? superclassOrSpec.value : Object;
+  let existingSuperclass = klass && klass[superclassSymbol];
   // set the superclass if necessary and set prototype
   if (!existingSuperclass || existingSuperclass !== superclass) {
     ensureInitializeStub(superclass);
@@ -38,44 +40,44 @@ export function setSuperclass(klass, superclassOrSpec) {
     setPrototypeOf(klass.prototype, superclass.prototype);
     if (superclass !== Object) setPrototypeOf(klass, superclass);
   }
-  return superclass
+  return superclass;
 }
 
-function installValueDescriptor(object, klass, descr) {
+function installValueDescriptor (object, klass, descr) {
   descr = Object.assign(descr, defaultPropertyDescriptorForValue);
   descr.value.displayName = descr.key;
   if (descr.needsDeclaringClass) {
-    var orig = descr.value.originalFunction || descr.value;
+    let orig = descr.value.originalFunction || descr.value;
     descr.value = Object.assign(
-      function declaring_class_wrapper(/*args*/) { return orig.call(this, klass, ...arguments); },
+      function declaring_class_wrapper (/* args */) { return orig.call(this, klass, ...arguments); },
       {
         originalFunction: orig,
         toString: () => orig.toString(),
         displayName: descr.key
       });
   }
-  Object.defineProperty(object, descr.key, descr)
+  Object.defineProperty(object, descr.key, descr);
 }
 
-function installGetterSetterDescriptor(klass, descr) {
+function installGetterSetterDescriptor (klass, descr) {
   descr = Object.assign(descr, defaultPropertyDescriptorForGetterSetter);
-  Object.defineProperty(klass, descr.key, descr)
+  Object.defineProperty(klass, descr.key, descr);
 }
 
-function installMethods(klass, instanceMethods, classMethods) {
+function installMethods (klass, instanceMethods, classMethods) {
   // install methods from two lists (static + instance) of {key, value} or
   // {key, get/set} descriptors
 
   classMethods && classMethods.forEach(ea => {
-    ea.value ?
-      installValueDescriptor(klass, klass, ea) :
-      installGetterSetterDescriptor(klass, ea);
+    ea.value
+      ? installValueDescriptor(klass, klass, ea)
+      : installGetterSetterDescriptor(klass, ea);
   });
 
   instanceMethods && instanceMethods.forEach(ea => {
-    ea.value ?
-      installValueDescriptor(klass.prototype, klass, ea) :
-      installGetterSetterDescriptor(klass.prototype, ea);
+    ea.value
+      ? installValueDescriptor(klass.prototype, klass, ea)
+      : installGetterSetterDescriptor(klass.prototype, ea);
   });
 
   // 4. define initializer method, in our class system the constructor is
@@ -86,10 +88,10 @@ function installMethods(klass, instanceMethods, classMethods) {
       enumerable: false,
       configurable: true,
       writable: true,
-      value: function() {}
+      value: function () {}
     });
     klass.prototype[initializeSymbol].isDefaultInitializer = true;
-    klass.prototype[initializeSymbol].displayName = "lively-initialize";
+    klass.prototype[initializeSymbol].displayName = 'lively-initialize';
   } else {
     if (Object.getOwnPropertySymbols(klass.prototype).includes(initializeSymbol)) {
       if (klass.prototype[initializeSymbol].isDefaultInitializer) {
@@ -102,24 +104,23 @@ function installMethods(klass, instanceMethods, classMethods) {
 
   // 5. undefine properties that were removed form class definition
   let instanceMethodsInClass = instanceMethods.map(m => m.key)
-                                  .concat(["constructor", "arguments", "caller"]),
-      instanceAttributes = Object.getOwnPropertyNames(klass.prototype);
+    .concat(['constructor', 'arguments', 'caller']);
+  let instanceAttributes = Object.getOwnPropertyNames(klass.prototype);
   for (let i = 0; i < instanceAttributes.length; i++) {
     let name = instanceAttributes[i];
     if (!instanceMethodsInClass.includes(name)) delete klass.prototype[name];
   }
 
   let classMethodsInClass = classMethods.map(m => m.key)
-                              .concat(["length", "name", "prototype", "arguments", "caller"]),
-      classAttributes = Object.getOwnPropertyNames(klass);
+    .concat(['length', 'name', 'prototype', 'arguments', 'caller']);
+  let classAttributes = Object.getOwnPropertyNames(klass);
   for (let i = 0; i < classAttributes.length; i++) {
     let name = classAttributes[i];
     if (!classMethodsInClass.includes(name)) delete klass[name];
   }
 }
 
-
-function ensureInitializeStub(superclass) {
+function ensureInitializeStub (superclass) {
   // when we inherit from "conventional classes" those don't have an
   // initializer method. We install a stub that calls the superclass function
   // itself
@@ -128,12 +129,12 @@ function ensureInitializeStub(superclass) {
     enumerable: false,
     configurable: true,
     writable: true,
-    value: function(/*args*/) { superclass.apply(this, arguments); }
+    value: function (/* args */) { superclass.apply(this, arguments); }
   });
-  superclass.prototype[initializeSymbol].displayName = "lively-initialize-stub";
+  superclass.prototype[initializeSymbol].displayName = 'lively-initialize-stub';
 }
 
-export function initializeClass(
+export function initializeClass (
   constructorFunc, superclassSpec,
   instanceMethods = [],
   classMethods = [],
@@ -155,14 +156,13 @@ export function initializeClass(
 
   // 1. create a new constructor function if necessary, re-use an exisiting if the
   // classHolder object has it
-  var className = constructorFunc.name,
-      klass = className && classHolder.hasOwnProperty(className) && classHolder[className],
-      existingSuperclass = klass && klass[superclassSymbol];
-  if (!klass || typeof klass !== "function" || !existingSuperclass)
-    klass = constructorFunc;
+  let className = constructorFunc.name;
+  let klass = className && classHolder.hasOwnProperty(className) && classHolder[className];
+  let existingSuperclass = klass && klass[superclassSymbol];
+  if (!klass || typeof klass !== 'function' || !existingSuperclass) { klass = constructorFunc; }
 
   // 2. set the superclass if necessary and set prototype
-  var superclass = setSuperclass(klass, superclassSpec);
+  let superclass = setSuperclass(klass, superclassSpec);
 
   // 3. Install methods
   installMethods(klass, instanceMethods, classMethods);
@@ -173,16 +173,17 @@ export function initializeClass(
   // then we also store some meta data about the module. This allows us to
   // (de)serialize class instances in lively.serializer
   if (currentModule) {
-    var p  = currentModule.package()
-    var prevMeta = klass[moduleMetaSymbol];
-    var t = Date.now();
+    let p = currentModule.package();
+    let prevMeta = klass[moduleMetaSymbol];
+    let t = Date.now();
     klass[moduleMetaSymbol] = {
-      package: p ? {name: p.name, version: p.version} : {},
+      package: p ? { name: p.name, version: p.version } : {},
       pathInPackage: p ? currentModule.pathInPackage() : currentModule.id,
       lastChange: prevMeta && prevMeta.lastChange && t <= prevMeta.lastChange
-                ? prevMeta.lastChange + 1 : t,
+        ? prevMeta.lastChange + 1
+        : t,
       lastSuperclassChange: 0
-    }
+    };
 
     // if we have a module, we can listen to toplevel changes of it in case the
     // superclass binding changes. With that we can keep our class up-to-date
@@ -201,12 +202,11 @@ export function initializeClass(
           // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''} was defined via module bindings`)
 
           // Only run through the (expensive) updates if superclass really has changes
-          let superMeta = val && val[moduleMetaSymbol],
-              myMeta = klass[moduleMetaSymbol];
+          let superMeta = val && val[moduleMetaSymbol];
+          let myMeta = klass[moduleMetaSymbol];
           if (superMeta) {
-            if (superMeta.lastChange === myMeta.lastSuperclassChange)
-              return;
-            myMeta.lastSuperclassChange = superMeta.lastChange
+            if (superMeta.lastChange === myMeta.lastSuperclassChange) { return; }
+            myMeta.lastSuperclassChange = superMeta.lastChange;
           }
           setSuperclass(klass, val);
           installMethods(klass, instanceMethods, classMethods);
@@ -216,14 +216,14 @@ export function initializeClass(
   }
 
   // 6. Add a toString method for the class to allows us to see its constructor arguments
-  klass.toString = function() {
-    var constructorArgs = String(this.prototype[initializeSymbol]).match(constructorArgMatcher),
-        className = this.name,
-        superclass = this[superclassSymbol];
-    return `class ${className} ${superclass ? `extends ${superclass.name}` : ""} {\n`
-         + `  constructor${constructorArgs ? constructorArgs[0] : "()"} { /*...*/ }`
-         + `\n}`;
-  }
+  klass.toString = function () {
+    let constructorArgs = String(this.prototype[initializeSymbol]).match(constructorArgMatcher);
+    let className = this.name;
+    let superclass = this[superclassSymbol];
+    return `class ${className} ${superclass ? `extends ${superclass.name}` : ''} {\n` +
+         `  constructor${constructorArgs ? constructorArgs[0] : '()'} { /*...*/ }` +
+         '\n}';
+  };
 
   // 7. If the class allows managed properties (auto getters/setters etc., see
   // managed-properties.js) then setup those
@@ -232,30 +232,27 @@ export function initializeClass(
   return klass;
 }
 
-
-initializeClass._get = function _get(object, property, receiver) {
+initializeClass._get = function _get (object, property, receiver) {
   if (object === null) object = Function.prototype;
-  var desc = Object.getOwnPropertyDescriptor(object, property);
+  let desc = Object.getOwnPropertyDescriptor(object, property);
   if (desc === undefined) {
-    var parent = Object.getPrototypeOf(object);
+    let parent = Object.getPrototypeOf(object);
     return parent === null ? undefined : _get(parent, property, receiver);
   }
-  if ("value" in desc) return desc.value;
-  var getter = desc.get;
+  if ('value' in desc) return desc.value;
+  let getter = desc.get;
   return getter === undefined ? undefined : getter.call(receiver);
-}
+};
 
-
-initializeClass._set = function _set(object, property, value, receiver) {
-  var desc = Object.getOwnPropertyDescriptor(object, property);
+initializeClass._set = function _set (object, property, value, receiver) {
+  let desc = Object.getOwnPropertyDescriptor(object, property);
   if (desc === undefined) {
-    var parent = Object.getPrototypeOf(object);
+    let parent = Object.getPrototypeOf(object);
     if (parent !== null) _set(parent, property, value, receiver);
-  }
-  else if ("value" in desc && desc.writable) desc.value = value;
+  } else if ('value' in desc && desc.writable) desc.value = value;
   else {
-    var setter = desc.set;
+    let setter = desc.set;
     if (setter !== undefined) setter.call(receiver, value);
   }
   return value;
-}
+};

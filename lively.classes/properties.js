@@ -6,24 +6,22 @@
 // initialization order, dependencies (ex. btn => label => submoprhs needed)
 // declaratively configuring objects
 
-
 // propertySettings: {
 //   valueStoreProperty: STRING|SYMBOL - optional, defaults to _state. This is where the
 //                                  actual values of the properties will be stored by default
 //   defaultGetter: FUNCTION(STRING) - default getter to be used
 //   defaultSetter: FUNCTION(STRING, VALUE) - default setter to be used
 // }
-// 
+//
 // ????????????
 //   propertyDescriptorCacheKey: STRING|SYMBOL - where the result of
 //                                               initializeProperties() should go
 // ????????????
 
-
 // properties:
 // {STRING: DESCRIPTOR, ...}
 // properties are merged in the proto chain
-// 
+//
 // descriptor: {
 //   get: FUNCTION       - optional
 //   set: FUNCTION       - optional
@@ -47,102 +45,104 @@
 //                            prevents the serializer from storing that value state.
 // }
 
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import { obj } from "lively.lang";
+import { obj } from 'lively.lang';
 import { getClassHierarchy } from './util.js';
 
-const defaultPropertiesSettingKey = "propertySettings",
-      defaultPropertiesKey = "properties",
-      defaultInstanceInitializerMethod = "initializeProperties",
-      propertiesAndSettingsCacheSym = Symbol.for("lively.classes-properties-and-settings");
+const defaultPropertiesSettingKey = 'propertySettings';
+const defaultPropertiesKey = 'properties';
+const defaultInstanceInitializerMethod = 'initializeProperties';
+const propertiesAndSettingsCacheSym = Symbol.for('lively.classes-properties-and-settings');
 
 const defaultPropertySettings = {
   defaultSetter: null,
   defaultGetter: null,
-  valueStoreProperty: "_state",
-}
+  valueStoreProperty: '_state'
+};
 
-function hasManagedProperties(klass) {
+function hasManagedProperties (klass) {
   return klass.hasOwnProperty(defaultPropertiesKey);
 }
 
-export function prepareClassForManagedPropertiesAfterCreation(klass) {
-  var {properties, propertySettings} = propertiesAndSettingsInHierarchyOf(klass);
+export function prepareClassForManagedPropertiesAfterCreation (klass) {
+  let { properties, propertySettings } = propertiesAndSettingsInHierarchyOf(klass);
   klass[propertiesAndSettingsCacheSym] = {
-    properties, order: obj.sortKeysWithBeforeAndAfterConstraints(properties),
-    propertySettings, classHierarchy: getClassHierarchy(klass)
+    properties,
+    order: obj.sortKeysWithBeforeAndAfterConstraints(properties),
+    propertySettings,
+    classHierarchy: getClassHierarchy(klass)
   };
-  if (!properties || typeof properties !== "object") {
-    console.warn(`Class ${klass.name} indicates it has managed properties but its `
-               + `properties accessor (${defaultPropertiesKey}) does not return `
-               + `a valid property descriptor map`);
+  if (!properties || typeof properties !== 'object') {
+    console.warn(`Class ${klass.name} indicates it has managed properties but its ` +
+               `properties accessor (${defaultPropertiesKey}) does not return ` +
+               'a valid property descriptor map');
     return;
   }
   prepareClassForProperties(klass, propertySettings, properties);
 }
 
-function prepareClassForProperties(klass, propertySettings, properties) {
+function prepareClassForProperties (klass, propertySettings, properties) {
   ensurePropertyInitializer(klass);
 
-  var {
-        valueStoreProperty,
-        defaultGetter,
-        defaultSetter
-      } = propertySettings,
-      myProto = klass.prototype,
-      keys = Object.keys(properties);
+  let {
+    valueStoreProperty,
+    defaultGetter,
+    defaultSetter
+  } = propertySettings;
+  let myProto = klass.prototype;
+  let keys = Object.keys(properties);
 
   keys.forEach(key => {
-    var descriptor = properties[key];
+    let descriptor = properties[key];
 
     // ... define a getter to the property for the outside world...
-    var hasGetter = myProto.hasOwnProperty(key) && myProto.__lookupGetter__(key);
+    let hasGetter = myProto.hasOwnProperty(key) && myProto.__lookupGetter__(key);
     if (!hasGetter || hasGetter._wasGenerated) {
-      var getter = descriptor.get
-                || (typeof defaultGetter === "function" && function() { return defaultGetter.call(this, key); })
-                || function() { return this[valueStoreProperty][key]; };
+      let getter = descriptor.get ||
+                (typeof defaultGetter === 'function' && function () { return defaultGetter.call(this, key); }) ||
+                function () { return this[valueStoreProperty][key]; };
       getter._wasGenerated = true;
       myProto.__defineGetter__(key, getter);
     }
 
     // ...define a setter if necessary
-    var hasSetter = myProto.hasOwnProperty(key) && myProto.__lookupSetter__(key);
+    let hasSetter = myProto.hasOwnProperty(key) && myProto.__lookupSetter__(key);
     if (!hasSetter || hasSetter._wasGenerated) {
-      var descrHasSetter = descriptor.hasOwnProperty("set"),
-          setterNeeded = descrHasSetter || !descriptor.readOnly;
+      let descrHasSetter = descriptor.hasOwnProperty('set');
+      let setterNeeded = descrHasSetter || !descriptor.readOnly;
       if (setterNeeded) {
-        var setter = descriptor.set
-                  || (typeof defaultSetter === "function" && function(val) { defaultSetter.call(this, key, val); })
-                  || function(val) { this[valueStoreProperty][key] = val; };
+        let setter = descriptor.set ||
+                  (typeof defaultSetter === 'function' && function (val) { defaultSetter.call(this, key, val); }) ||
+                  function (val) { this[valueStoreProperty][key] = val; };
         setter._wasGenerated = true;
         myProto.__defineSetter__(key, setter);
       }
     }
-
   });
 }
 
-function ensurePropertyInitializer(klass) {
+function ensurePropertyInitializer (klass) {
   // when we inherit from "conventional classes" those don't have an
   // initializer method. We install a stub that calls the superclass function
   // itself
-  Object.defineProperty(klass.prototype, "propertiesAndPropertySettings", {
+  Object.defineProperty(klass.prototype, 'propertiesAndPropertySettings', {
     enumerable: false,
     configurable: true,
     writable: true,
-    value: function() {
-      var klass = this.constructor,
-          cached = klass[propertiesAndSettingsCacheSym];
+    value: function () {
+      let klass = this.constructor;
+      let cached = klass[propertiesAndSettingsCacheSym];
       if (cached) {
         if (cached.classHierarchy != getClassHierarchy(klass)) {
-           let {properties, propertySettings} = propertiesAndSettingsInHierarchyOf(klass);
-           klass[propertiesAndSettingsCacheSym] = {
-             properties, propertySettings, order: obj.sortKeysWithBeforeAndAfterConstraints(properties),
-             classHierarchy: getClassHierarchy(klass)
-           };
-           prepareClassForProperties(klass, propertySettings, properties);
+          let { properties, propertySettings } = propertiesAndSettingsInHierarchyOf(klass);
+          klass[propertiesAndSettingsCacheSym] = {
+            properties,
+            propertySettings,
+            order: obj.sortKeysWithBeforeAndAfterConstraints(properties),
+            classHierarchy: getClassHierarchy(klass)
+          };
+          prepareClassForProperties(klass, propertySettings, properties);
         } else {
           return cached;
         }
@@ -150,77 +150,77 @@ function ensurePropertyInitializer(klass) {
       return klass[propertiesAndSettingsCacheSym] || propertiesAndSettingsInHierarchyOf(klass);
     }
   });
-  Object.defineProperty(klass.prototype, "initializeProperties", {
+  Object.defineProperty(klass.prototype, 'initializeProperties', {
     enumerable: false,
     configurable: true,
     writable: true,
-    value: function(values) {
-      var {properties, propertySettings, order} = this.propertiesAndPropertySettings();
-      prepareInstanceForProperties(this, propertySettings, properties, values, order)
+    value: function (values) {
+      let { properties, propertySettings, order } = this.propertiesAndPropertySettings();
+      prepareInstanceForProperties(this, propertySettings, properties, values, order);
       return this;
     }
   });
 }
 
-function propertiesAndSettingsInHierarchyOf(klass) {
+function propertiesAndSettingsInHierarchyOf (klass) {
   // walks class proto chain
-  var propertySettings = {...defaultPropertySettings},
-      properties = {},
-      allPropSettings = obj.valuesInPropertyHierarchy(klass, "propertySettings"),
-      allProps = obj.valuesInPropertyHierarchy(klass, "properties");
+  let propertySettings = { ...defaultPropertySettings };
+  let properties = {};
+  let allPropSettings = obj.valuesInPropertyHierarchy(klass, 'propertySettings');
+  let allProps = obj.valuesInPropertyHierarchy(klass, 'properties');
 
   for (var i = 0; i < allPropSettings.length; i++) {
     let current = allPropSettings[i];
-    current && typeof current === "object" && Object.assign(propertySettings, current);
+    current && typeof current === 'object' && Object.assign(propertySettings, current);
   }
 
   for (var i = 0; i < allProps.length; i++) {
     let current = allProps[i];
-    if (typeof current !== "object") {
+    if (typeof current !== 'object') {
       console.error(
         `[initializeProperties] ${klass} encountered property declaration ` +
           `that is not a JS object: ${current}`);
       continue;
     }
     // "deep" merge
-    for (var name in current) {
+    for (let name in current) {
       if (!properties.hasOwnProperty(name)) properties[name] = current[name];
       else Object.assign(properties[name], current[name]);
     }
   }
 
-  return {properties, propertySettings};
+  return { properties, propertySettings };
 }
 
-function prepareInstanceForProperties(instance, propertySettings, properties, values, sortedKeys) {
-  var {valueStoreProperty} = propertySettings,
-      sortedKeys = sortedKeys || obj.sortKeysWithBeforeAndAfterConstraints(properties),
-      propsNeedingInitialize = [],
-      initActions = {};
+function prepareInstanceForProperties (instance, propertySettings, properties, values, sortedKeys) {
+  let { valueStoreProperty } = propertySettings;
+  var sortedKeys = sortedKeys || obj.sortKeysWithBeforeAndAfterConstraints(properties);
+  let propsNeedingInitialize = [];
+  let initActions = {};
 
   // 1. this[valueStoreProperty] is were the actual values will be stored
-  if (!instance.hasOwnProperty(valueStoreProperty))
-    instance[valueStoreProperty] = {};
+  if (!instance.hasOwnProperty(valueStoreProperty)) { instance[valueStoreProperty] = {}; }
 
   for (var i = 0; i < sortedKeys.length; i++) {
-    let key = sortedKeys[i],
-        descriptor = properties[key];
+    let key = sortedKeys[i];
+    let descriptor = properties[key];
 
-    let derived = descriptor.derived, foldable = !!descriptor.foldable,
-        defaultValue = descriptor.hasOwnProperty("defaultValue") ?
-                        descriptor.defaultValue : undefined;
+    let derived = descriptor.derived; let foldable = !!descriptor.foldable;
+    let defaultValue = descriptor.hasOwnProperty('defaultValue')
+      ? descriptor.defaultValue
+      : undefined;
     if (Array.isArray(defaultValue)) defaultValue = defaultValue.slice();
     if (!derived && !foldable) instance[valueStoreProperty][key] = defaultValue;
 
     let initAction;
-    if (descriptor.hasOwnProperty("initialize")) {
-      initAction = initActions[key] = {initialize: defaultValue}
+    if (descriptor.hasOwnProperty('initialize')) {
+      initAction = initActions[key] = { initialize: defaultValue };
       propsNeedingInitialize.push(key);
     } else if (derived && defaultValue !== undefined) {
-      initAction = initActions[key] = {derived: defaultValue}
+      initAction = initActions[key] = { derived: defaultValue };
       propsNeedingInitialize.push(key);
     } else if (foldable && defaultValue !== undefined) {
-      initAction = initActions[key] = {folded: defaultValue}
+      initAction = initActions[key] = { folded: defaultValue };
       propsNeedingInitialize.push(key);
     }
 
@@ -228,7 +228,7 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
       if (descriptor.readOnly) {
         console.warn(
           `Trying to initialize read-only property ${key} in ${instance}, ` +
-            `skipping setting value`
+            'skipping setting value'
         );
       } else {
         if (!initAction) {
@@ -238,20 +238,19 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
         initAction.value = values[key];
       }
     }
-
   }
-  
+
   // 2. Run init code for properties
   // and if we have values we will initialize the properties from it. Values
   // is expected to be a JS object mapping property names to property values
   for (var i = 0; i < propsNeedingInitialize.length; i++) {
-    let key = propsNeedingInitialize[i],
-        actions = initActions[key],
-        hasValue = actions.hasOwnProperty("value");
+    let key = propsNeedingInitialize[i];
+    let actions = initActions[key];
+    let hasValue = actions.hasOwnProperty('value');
 
     // if we have an initialize function we call it either with the value from
     // values or with the defaultValue
-    if (actions.hasOwnProperty("initialize")) {
+    if (actions.hasOwnProperty('initialize')) {
       let value = hasValue ? actions.value : actions.initialize;
       properties[key].initialize.call(instance, value);
       if (hasValue) instance[key] = actions.value;
@@ -259,11 +258,9 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
 
     // if we have a derived property we will call the setter with the default
     // value or the value from values
-    else if (actions.hasOwnProperty("derived")) {
+    else if (actions.hasOwnProperty('derived')) {
       instance[key] = hasValue ? actions.value : actions.derived;
-    }
-
-    else  if (actions.hasOwnProperty("folded")) {
+    } else if (actions.hasOwnProperty('folded')) {
       instance[key] = hasValue ? actions.value : actions.folded;
     }
 
@@ -271,8 +268,5 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
     else if (hasValue) {
       instance[key] = actions.value;
     }
-
   }
-
 }
-

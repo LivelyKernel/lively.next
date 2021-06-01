@@ -68,8 +68,10 @@ export function lexicalClassMembers (klass) {
     const name = id || literalId;
     const overridden = isOverridden(klass, name);
     const base = isStatic ? klass : klass.prototype;
-    const value = kind === 'get' ? base.__lookupGetter__(name)
-      : kind === 'set' ? base.__lookupSetter__(name)
+    const value = kind === 'get'
+      ? base.__lookupGetter__(name)
+      : kind === 'set'
+        ? base.__lookupSetter__(name)
         : base[name];
     return { static: isStatic, name, value, kind, owner: klass, overridden };
   });
@@ -94,12 +96,17 @@ function runtimeNonStaticMembers (klass) {
     ['constructor'])
     .map(key => {
       const descr = descriptors[key];
-      const kind = typeof descr.value === 'function' ? 'method'
-        : 'get' in descr ? 'get'
-          : 'set' in descr ? 'set'
+      const kind = typeof descr.value === 'function'
+        ? 'method'
+        : 'get' in descr
+          ? 'get'
+          : 'set' in descr
+            ? 'set'
             : 'unknown';
-      const value = kind === 'method' ? descr.value
-        : kind === 'get' ? descr.get
+      const value = kind === 'method'
+        ? descr.value
+        : kind === 'get'
+          ? descr.get
           : kind === 'set' ? descr.set : null;
       return { static: false, name: key, value, kind, owner };
     });
@@ -120,12 +127,17 @@ export function runtimeStaticClassMembers (klass) {
     ['prototype', 'name', 'length', 'toString'])
     .map(key => {
       const descr = descriptors[key];
-      const kind = typeof descr.value === 'function' ? 'method'
-        : 'get' in descr ? 'get'
-          : 'set' in descr ? 'set'
+      const kind = typeof descr.value === 'function'
+        ? 'method'
+        : 'get' in descr
+          ? 'get'
+          : 'set' in descr
+            ? 'set'
             : 'unknown';
-      const value = kind === 'method' ? descr.value
-        : kind === 'get' ? descr.get
+      const value = kind === 'method'
+        ? descr.value
+        : kind === 'get'
+          ? descr.get
           : kind === 'set' ? descr.set : null;
       return { static: true, name: key, value, kind, owner };
     });
