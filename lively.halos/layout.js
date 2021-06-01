@@ -1,4 +1,4 @@
-/*global Sine*/
+/* global Sine */
 import {
   Ellipse, Icon,
   Morph,
@@ -7,27 +7,29 @@ import {
   HorizontalLayout,
   VerticalLayout,
   morph
-} from "lively.morphic";
-import { Color, pt, rect, Rectangle } from "lively.graphics";
-import { arr } from "lively.lang";
-import { connect, disconnect } from "lively.bindings";
-import { LabeledCheckBox, DropDownSelector } from "lively.components/widgets.js";
-import { Button } from "lively.components/buttons.js";
-import { Menu } from "lively.components/menus.js";
-import { NumberWidget } from "lively.ide/value-widgets.js";
-import { InteractiveMorphSelector } from "./morph.js";
-import { easings } from "lively.morphic/rendering/animations.js";
+} from 'lively.morphic';
+import { Color, pt, rect, Rectangle } from 'lively.graphics';
+import { arr } from 'lively.lang';
+import { connect, disconnect } from 'lively.bindings';
+import { LabeledCheckBox, DropDownSelector } from 'lively.components/widgets.js';
+import { Button } from 'lively.components/buttons.js';
+import { Menu } from 'lively.components/menus.js';
+import { NumberWidget } from 'lively.ide/value-widgets.js';
+import { InteractiveMorphSelector } from './morph.js';
+import { easings } from 'lively.morphic/rendering/animations.js';
 
 class AxisHalo extends Morph {
-
-  constructor({halo, targetAxis}) {
-    super({fill: Color.transparent,
-      halo, targetAxis,
-      container: halo.container});
+  constructor ({ halo, targetAxis }) {
+    super({
+      fill: Color.transparent,
+      halo,
+      targetAxis,
+      container: halo.container
+    });
     this.initialize();
   }
 
-  initialize() {
+  initialize () {
     this.setBounds(this.fetchBounds());
     this.minSlider = this.minSlider(),
     this.axisMenu = this.axisMenu(),
@@ -39,18 +41,18 @@ class AxisHalo extends Morph {
 
   // replace by constraint: if minSlider dragging, and mouse inside halo, hide menu
 
-  set forceMenuHidden(hidden) {
+  set forceMenuHidden (hidden) {
     this._forceMenuHidden = hidden;
     this.axisMenu.visible = !hidden;
   }
 
-  get forceMenuHidden() { return this._forceMenuHidden; }
+  get forceMenuHidden () { return this._forceMenuHidden; }
 
-  get lastAxis() { return !this.targetAxis.after; }
+  get lastAxis () { return !this.targetAxis.after; }
 
-  fetchBounds() { return this.fetchPosition().extent(this.fetchExtent()); }
+  fetchBounds () { return this.fetchPosition().extent(this.fetchExtent()); }
 
-  alignWithTarget() {
+  alignWithTarget () {
     this.extent = this.fetchExtent();
     this.position = this.fetchPosition();
     this.proportionSlider.alignWithTarget();
@@ -59,41 +61,41 @@ class AxisHalo extends Morph {
 
   // if mouse inside halo, show menu
 
-  onHoverIn() {
+  onHoverIn () {
     this.minSlider.requestToShow();
     this.axisMenu.visible = !this.forceMenuHidden && true;
   }
 
-  onHoverOut(evt) {
+  onHoverOut (evt) {
     this.minSlider.requestToHide();
     this.axisMenu.visible = this.forceMenuVisible || false;
   }
 
-  proportionSlider() {
-    var self = this,
-        proportionViewer = this.proportionViewer();
+  proportionSlider () {
+    let self = this;
+    let proportionViewer = this.proportionViewer();
 
     return this.halo.addGuide(new Morph({
       nativeCursor: this.getResizeCursor(),
       fill: Color.transparent,
       submorphs: [this.devider(), proportionViewer],
-      alignWithTarget() {
+      alignWithTarget () {
         this.setBounds(self.getProportionSliderBounds(this));
       },
-      onDragStart() {
+      onDragStart () {
         proportionViewer.visible = true;
       },
       onDrag: (evt) => {
         this.adjustStretch(this.getDelta(evt));
         this.halo.alignWithTarget();
       },
-      onDragEnd() {
+      onDragEnd () {
         proportionViewer.visible = false;
       }
     }));
   }
 
-  devider() {
+  devider () {
     return new Morph({
       visible: !this.lastAxis,
       fill: Color.black.withA(0.5),
@@ -103,32 +105,32 @@ class AxisHalo extends Morph {
     });
   }
 
-  minSlider() {
-    const self = this,
-          minSpaceVisualizer = this.minSpaceVisualizer(),
-          minViewer = this.minViewer();
+  minSlider () {
+    const self = this;
+    const minSpaceVisualizer = this.minSpaceVisualizer();
+    const minViewer = this.minViewer();
 
     return this.halo.addGuide(new Ellipse({
       nativeCursor: this.getResizeCursor(),
       fill: Color.green,
-      extent: pt(10,10),
+      extent: pt(10, 10),
       visible: false,
       submorphs: [minSpaceVisualizer, minViewer],
       becomesActiveOnHover: true,
-      alignWithTarget() {
+      alignWithTarget () {
         this.position = self.getMinSliderPosition();
       },
-      requestToShow() {
+      requestToShow () {
         this.visible = !self.targetAxis.fixed;
       },
-      requestToHide() {
+      requestToHide () {
         if (this.active) {
           this.shouldHide = true;
         } else {
           this.visible = false;
         }
       },
-      onDragStart() {
+      onDragStart () {
         self.forceMenuHidden = true;
         minViewer.visible = true;
         minSpaceVisualizer.visible = true;
@@ -138,7 +140,7 @@ class AxisHalo extends Morph {
         this.targetAxis.min += -this.getDelta(evt);
         this.halo.alignWithTarget();
       },
-      onDragEnd() {
+      onDragEnd () {
         self.forceMenuHidden = false;
         minViewer.visible = false;
         minSpaceVisualizer.visible = false;
@@ -151,140 +153,145 @@ class AxisHalo extends Morph {
     }));
   }
 
-  minViewer() {
+  minViewer () {
     const self = this;
     return this.viewer({
       position: this.getMinViewerPosition(),
-      alignWithTarget() {
-        const {min} = self.targetAxis;
+      alignWithTarget () {
+        const { min } = self.targetAxis;
         this.textString = `min: ${min.toFixed()}px !`;
       }
     });
   }
 
-  minSpaceBorder() {
+  minSpaceBorder () {
     return new Path({
-      position: pt(-1,-1),
-      borderStyle: "dashed",
+      position: pt(-1, -1),
+      borderStyle: 'dashed',
       borderColor: Color.green,
       borderWidth: 2,
       ...this.getMinSpaceBorder()
     });
   }
 
-  minSpaceVisualizer() {
-    const self = this,
-          minSpaceBorder = this.minSpaceBorder();
+  minSpaceVisualizer () {
+    const self = this;
+    const minSpaceBorder = this.minSpaceBorder();
     return this.halo.addGuide(new Morph({
       fill: Color.green.withA(0.1),
       visible: false,
       isHaloItem: true,
       submorphs: [minSpaceBorder],
-      alignWithTarget() {
+      alignWithTarget () {
         this.extent = self.getMinSpaceExtent();
-        this.topLeft = pt(5,5);
+        this.topLeft = pt(5, 5);
       }
     }));
   }
 
-  axisMenu() {
-    const lockButton = this.lockButton(),
-          menuButton = this.menuButton(),
-          self = this;
+  axisMenu () {
+    const lockButton = this.lockButton();
+    const menuButton = this.menuButton();
+    const self = this;
     return new Morph({
       layout: this.getMenuLayout(),
       submorphs: [lockButton, menuButton],
       fill: Color.transparent,
       visible: false,
       becomesActiveOnHover: true,
-      alignWithTarget() { this.bottomRight = this.owner.extent.subPt(self.getMenuOffset(this)); }
+      alignWithTarget () { this.bottomRight = this.owner.extent.subPt(self.getMenuOffset(this)); }
     });
   }
 
-  lockButton() {
+  lockButton () {
     const self = this;
     return this.halo.addGuide(new Morph({
       fill: Color.transparent,
-      extent: pt(25,25),
-      submorphs: [{center: pt(12.5, 12.5),
+      extent: pt(25, 25),
+      submorphs: [{
+        center: pt(12.5, 12.5),
         fill: Color.transparent,
-        styleClasses: ["fa", "fa-unlock"]}],
-      alignWithTarget() {
+        styleClasses: ['fa', 'fa-unlock']
+      }],
+      alignWithTarget () {
         if (self.targetAxis.fixed) {
           this.fontColor = Color.red;
-          this.submorphs[0].styleClasses = ["fa", "fa-lock"];
+          this.submorphs[0].styleClasses = ['fa', 'fa-lock'];
         } else {
           this.fontColor = Color.green;
-          this.submorphs[0].styleClasses = ["fa", "fa-unlock"];
+          this.submorphs[0].styleClasses = ['fa', 'fa-unlock'];
         }
       },
-      onMouseDown() {
+      onMouseDown () {
         this.toggleLock();
       },
-      toggleLock() {
+      toggleLock () {
         self.targetAxis.fixed = !self.targetAxis.fixed;
         self.halo.alignWithTarget();
       }
     }));
   }
 
-  menuButton() {
-    const self = this,
-          remove = () => {
-            this.targetAxis.remove();
-            this.halo.initGuides();
-            this.halo.alignWithTarget();
-          },
-          addBefore = () => {
-            this.targetAxis.addBefore();
-            this.halo.initGuides();
-            this.halo.alignWithTarget();
-          },
-          addAfter = () => {
-            this.targetAxis.addAfter();
-            this.halo.initGuides();
-            this.halo.alignWithTarget();
-          };
+  menuButton () {
+    const self = this;
+    const remove = () => {
+      this.targetAxis.remove();
+      this.halo.initGuides();
+      this.halo.alignWithTarget();
+    };
+    const addBefore = () => {
+      this.targetAxis.addBefore();
+      this.halo.initGuides();
+      this.halo.alignWithTarget();
+    };
+    const addAfter = () => {
+      this.targetAxis.addAfter();
+      this.halo.initGuides();
+      this.halo.alignWithTarget();
+    };
     return new Morph({
       fill: Color.transparent,
-      extent: pt(25,25),
-      submorphs: [{fill: Color.transparent,
-        styleClasses: ["fa", "fa-cog"],
-        center: pt(12.5,12.5)}],
-      onMouseDown(evt) {
+      extent: pt(25, 25),
+      submorphs: [{
+        fill: Color.transparent,
+        styleClasses: ['fa', 'fa-cog'],
+        center: pt(12.5, 12.5)
+      }],
+      onMouseDown (evt) {
         // is menu open keep menu visible at all times
         // only hide menu when menu was removed
         self.forceMenuVisible = true;
         this.addMorph(evt.state.menu = new Menu({
-          position: pt(15,15),
+          position: pt(15, 15),
           items: [
-            [`Remove ${self.subject}`, () => remove() ],
-            [`Insert ${self.subject} before`, () => addBefore() ],
-            [`Insert ${self.subject} after`, () => addAfter() ]]
+            [`Remove ${self.subject}`, () => remove()],
+            [`Insert ${self.subject} before`, () => addBefore()],
+            [`Insert ${self.subject} after`, () => addAfter()]]
         }));
       }
     });
   }
 
-  viewer({position, alignWithTarget}) {
+  viewer ({ position, alignWithTarget }) {
     return this.halo.addGuide(new Text({
-      styleClasses: ["Halo"],
+      styleClasses: ['Halo'],
       padding: Rectangle.inset(6),
       visible: false,
       borderRadius: 10,
       fontColor: Color.white,
       fill: Color.black.withA(0.5),
-      position, alignWithTarget,
+      position,
+      alignWithTarget,
       readOnly: true
     }));
   }
 
-  proportionViewer() {
+  proportionViewer () {
     const self = this;
     return this.viewer({
       position: this.getProportionViewerPosition(),
-      alignWithTarget() {
-        const {length} = self.targetAxis;
+      alignWithTarget () {
+        const { length } = self.targetAxis;
         this.textString = `${length.toFixed(1)}px`;
       }
     });
@@ -292,88 +299,85 @@ class AxisHalo extends Morph {
 }
 
 class RowHalo extends AxisHalo {
-
-  constructor({row, halo}) {
-    super({targetAxis: halo.target.row(row), halo});
+  constructor ({ row, halo }) {
+    super({ targetAxis: halo.target.row(row), halo });
   }
 
-  get subject() { return "row"; }
+  get subject () { return 'row'; }
 
-  adjustStretch(delta) {
+  adjustStretch (delta) {
     this.targetAxis.height += delta;
   }
 
-  getDelta(evt) { return evt.state.dragDelta.y; }
+  getDelta (evt) { return evt.state.dragDelta.y; }
 
-  axisOffset() { return this.targetAxis.origin.position.y; }
+  axisOffset () { return this.targetAxis.origin.position.y; }
 
-  fetchPosition() { return pt(-45, this.axisOffset() + 10); }
-  fetchExtent() { return pt(40, this.targetAxis.length - 10); }
+  fetchPosition () { return pt(-45, this.axisOffset() + 10); }
+  fetchExtent () { return pt(40, this.targetAxis.length - 10); }
 
-  getMenuOffset(menu) { return this.targetAxis.length > menu.height ? pt(2, 5) : pt(26, 10); }
-  getMenuLayout() { return new VerticalLayout(); }
+  getMenuOffset (menu) { return this.targetAxis.length > menu.height ? pt(2, 5) : pt(26, 10); }
+  getMenuLayout () { return new VerticalLayout(); }
 
-  getResizeCursor() { return "row-resize"; }
+  getResizeCursor () { return 'row-resize'; }
 
-  getMinViewerPosition() { return pt(50, 20);}
-  getMinSliderPosition() { return pt(0, -this.targetAxis.min); }
-  getMinSpaceExtent() { return  pt(this.container.width + 45, this.targetAxis.min); }
-  getMinSpaceBorder() {
+  getMinViewerPosition () { return pt(50, 20); }
+  getMinSliderPosition () { return pt(0, -this.targetAxis.min); }
+  getMinSpaceExtent () { return pt(this.container.width + 45, this.targetAxis.min); }
+  getMinSpaceBorder () {
     return {
       extent: pt(this.container.width + 50, 2),
-      vertices: [pt(0,1), pt(this.container.width + 50, 1)]
+      vertices: [pt(0, 1), pt(this.container.width + 50, 1)]
     };
   }
 
-  getProportionViewerPosition() { return pt(40, 20); }
-  getProportionSliderBounds(slider) { return pt(0, slider.owner.height - 5).extent(pt(40, 10)); }
+  getProportionViewerPosition () { return pt(40, 20); }
+  getProportionSliderBounds (slider) { return pt(0, slider.owner.height - 5).extent(pt(40, 10)); }
 
-  getDeviderBounds() { return pt(15, 4).extent(pt(25, 2)); }
+  getDeviderBounds () { return pt(15, 4).extent(pt(25, 2)); }
 }
 
 class ColumnHalo extends AxisHalo {
-
-  constructor({col, halo}) {
-    super({targetAxis: halo.target.col(col), halo});
+  constructor ({ col, halo }) {
+    super({ targetAxis: halo.target.col(col), halo });
   }
 
-  get subject() { return "column"; }
+  get subject () { return 'column'; }
 
-  adjustStretch(delta) {
+  adjustStretch (delta) {
     this.targetAxis.width += delta;
   }
 
-  getDelta(evt) { return evt.state.dragDelta.x; }
+  getDelta (evt) { return evt.state.dragDelta.x; }
 
-  axisOffset() { return this.targetAxis.origin.position.x; }
+  axisOffset () { return this.targetAxis.origin.position.x; }
 
-  fetchPosition() { return pt(this.axisOffset() + 10, -45); }
-  fetchExtent() { return pt(this.targetAxis.length - 10, 40); }
+  fetchPosition () { return pt(this.axisOffset() + 10, -45); }
+  fetchExtent () { return pt(this.targetAxis.length - 10, 40); }
 
-  getMenuOffset(menu) { return this.targetAxis.length > menu.width ? pt(5, 3) : pt(8, 26); }
-  getMenuLayout() { return new HorizontalLayout(); }
+  getMenuOffset (menu) { return this.targetAxis.length > menu.width ? pt(5, 3) : pt(8, 26); }
+  getMenuLayout () { return new HorizontalLayout(); }
 
-  getResizeCursor() { return "col-resize"; }
+  getResizeCursor () { return 'col-resize'; }
 
-  getMinViewerPosition() { return pt(20, 50); }
-  getMinSliderPosition() { return pt(-this.targetAxis.min, 0); }
-  getMinSpaceExtent() { return pt(this.targetAxis.min, this.container.height + 45); }
-  getMinSpaceBorder() {
+  getMinViewerPosition () { return pt(20, 50); }
+  getMinSliderPosition () { return pt(-this.targetAxis.min, 0); }
+  getMinSpaceExtent () { return pt(this.targetAxis.min, this.container.height + 45); }
+  getMinSpaceBorder () {
     return {
       extent: pt(2, this.container.height + 50),
-      vertices: [pt(1,0), pt(1, this.container.height + 50)]
+      vertices: [pt(1, 0), pt(1, this.container.height + 50)]
     };
   }
 
-  getProportionViewerPosition() { return pt(20, 40); }
-  getProportionSliderBounds(slider) { return pt(slider.owner.width - 5, 0).extent(pt(10, 40));}
+  getProportionViewerPosition () { return pt(20, 40); }
+  getProportionSliderBounds (slider) { return pt(slider.owner.width - 5, 0).extent(pt(10, 40)); }
 
-  getDeviderBounds() { return pt(4,15).extent(pt(2, 25)); }
+  getDeviderBounds () { return pt(4, 15).extent(pt(2, 25)); }
 }
 
 class CellGuide extends Morph {
-
-  static get properties() {
+  static get properties () {
     return {
       cellGroup: {
 
@@ -381,40 +385,41 @@ class CellGuide extends Morph {
     };
   }
 
-  menuItems() {
-    let checked = Icon.textAttribute('check-square-o'),
-        unchecked = Icon.textAttribute('square-o');
+  menuItems () {
+    let checked = Icon.textAttribute('check-square-o');
+    let unchecked = Icon.textAttribute('square-o');
     checked[1].textStyleClasses.push('annotation');
     unchecked[1].textStyleClasses.push('annotation');
-    unchecked[1].paddingRight = "2px";
+    unchecked[1].paddingRight = '2px';
     return [
-      ["Resize Policy", [
-        [["Rigid  ", null, ...(this.cellGroup.resize ? unchecked : checked)], () => {
+      ['Resize Policy', [
+        [['Rigid  ', null, ...(this.cellGroup.resize ? unchecked : checked)], () => {
           this.cellGroup.resize = false;
         }],
         [['Space Filling  ', null, ...(this.cellGroup.resize ? checked : unchecked)], () => {
           this.cellGroup.resize = true;
         }]]],
-      ["Align at...",
-        ['center',  ...new Rectangle().sides, ...new Rectangle().corners].map(side => {
-          return [[side, {paddingRight: '2px'}, ...(this.cellGroup.align == side ? checked : unchecked), "  ", null],
+      ['Align at...',
+        ['center', ...new Rectangle().sides, ...new Rectangle().corners].map(side => {
+          return [[side, { paddingRight: '2px' }, ...(this.cellGroup.align == side ? checked : unchecked), '  ', null],
             () => this.cellGroup.align = side];
         })
-      ],
-    ].concat(this.cellGroup.morph ? [["Release Morph from Cell", () => {
-      let m = this.cellGroup.morph;
-      if(m) {
-        this.world().firstHand.grab(m);
-        this.world().firstHand.longClickGrab = true;
-        m.position = pt(0);
-      }
-    }]] : []);
+      ]
+    ].concat(this.cellGroup.morph
+      ? [['Release Morph from Cell', () => {
+          let m = this.cellGroup.morph;
+          if (m) {
+            this.world().firstHand.grab(m);
+            this.world().firstHand.longClickGrab = true;
+            m.position = pt(0);
+          }
+        }]]
+      : []);
   }
-
 }
 
 class LayoutHalo extends Morph {
-  static get properties() {
+  static get properties () {
     return {
       container: {},
       target: {},
@@ -424,33 +429,32 @@ class LayoutHalo extends Morph {
       isHaloItem: { defaultValue: true },
       borderColor: { defaultValue: Color.orange },
       borderWidth: { defaultValue: 2 },
-      styleClasses: { defaultValue: ['Halo'] },
-    }
+      styleClasses: { defaultValue: ['Halo'] }
+    };
   }
 }
 
 export class GridLayoutHalo extends LayoutHalo {
-
-  static get properties() {
+  static get properties () {
     return {
-      fill: { defaultValue: Color.transparent},
+      fill: { defaultValue: Color.transparent },
       cells: {
         derived: true,
-        get() {
+        get () {
           return arr.flatten(this.target.col(0).items.map(c => c.row(0).items));
         }
       },
       submorphs: {
-        initialize() {
+        initialize () {
           this.initialize();
         }
       }
-    }
+    };
   }
 
-  previewDrop(morphs) {
+  previewDrop (morphs) {
     if (morphs.length < 1) return;
-    var cell = this.cellGuides.find(g => g.fullContainsWorldPoint($world.firstHand.position));
+    let cell = this.cellGuides.find(g => g.fullContainsWorldPoint($world.firstHand.position));
     if (cell != this.currentCell) {
       this.currentCell && this.currentCell.stopPreview();
     }
@@ -458,36 +462,43 @@ export class GridLayoutHalo extends LayoutHalo {
     this.currentCell && this.currentCell.startPreview();
   }
 
-  handleDrop(morph) {
-    if (this.currentCell) morph.whenRendered().then(
-      () => this.currentCell.cellGroup.morph = morph
-    );
+  handleDrop (morph) {
+    if (this.currentCell) {
+      morph.whenRendered().then(
+        () => this.currentCell.cellGroup.morph = morph
+      );
+    }
   }
 
-  initialize() {
+  initialize () {
     this.initGuides();
     this.alignWithTarget();
     this.focus();
   }
 
-  optionControls() {
-    const layout = this.target,
-          compensateOrigin = new LabeledCheckBox({
-            name: "compensateOrigin", label: 'Compensate Origin',
-            fill: Color.transparent,
-            checked: layout.compensateOrigin}),
-          fitToCell = new LabeledCheckBox({
-            label: 'Resize Submorphs', fill: Color.transparent,
-            name: "fitToCell", checked: layout.fitToCell});
-    connect(compensateOrigin, "checked", layout, "compensateOrigin");
-    connect(fitToCell, "checked", layout, "fitToCell");
-    connect(compensateOrigin, "checked", this, "alignWithTarget");
+  optionControls () {
+    const layout = this.target;
+    const compensateOrigin = new LabeledCheckBox({
+      name: 'compensateOrigin',
+      label: 'Compensate Origin',
+      fill: Color.transparent,
+      checked: layout.compensateOrigin
+    });
+    const fitToCell = new LabeledCheckBox({
+      label: 'Resize Submorphs',
+      fill: Color.transparent,
+      name: 'fitToCell',
+      checked: layout.fitToCell
+    });
+    connect(compensateOrigin, 'checked', layout, 'compensateOrigin');
+    connect(fitToCell, 'checked', layout, 'fitToCell');
+    connect(compensateOrigin, 'checked', this, 'alignWithTarget');
     return [compensateOrigin, fitToCell];
   }
 
-  get isLayoutHalo() { return false; }
+  get isLayoutHalo () { return false; }
 
-  alignWithTarget() {
+  alignWithTarget () {
     this.target.apply();
     this.position = this.container.globalPosition;
     if (this.target.compensateOrigin) this.moveBy(this.container.origin.negated());
@@ -496,13 +507,13 @@ export class GridLayoutHalo extends LayoutHalo {
     arr.reverse(this.guides).forEach(guide => guide.alignWithTarget());
   }
 
-  addMissingGuides() {
+  addMissingGuides () {
     arr.withoutAll(this.target.cellGroups,
       this.guides.map(g => g.cellGroup))
       .forEach(group => this.addMorph(this.cellGuide(group)));
   }
 
-  initGuides() {
+  initGuides () {
     this.submorphs = [];
     this.guides = [];
     this.initCellGuides();
@@ -510,7 +521,7 @@ export class GridLayoutHalo extends LayoutHalo {
     this.initRowGuides();
   }
 
-  initCellGuides() {
+  initCellGuides () {
     const cellContainer = this.addMorph({
       fill: Color.transparent,
       borderRadius: this.borderRadius,
@@ -523,13 +534,13 @@ export class GridLayoutHalo extends LayoutHalo {
     this.addMorph(this.resizer());
   }
 
-  addGuide(guide) {
+  addGuide (guide) {
     guide.isHaloItem = true;
     this.guides.push(guide);
     return guide;
   }
 
-  initRowGuides() {
+  initRowGuides () {
     const self = this;
     this.addGuide(this.addMorph(new Morph({
       width: 25,
@@ -537,15 +548,15 @@ export class GridLayoutHalo extends LayoutHalo {
       borderRadius: 15,
       height: this.container.height,
       topRight: pt(-5, 0),
-      alignWithTarget() { this.height = self.container.height; }
+      alignWithTarget () { this.height = self.container.height; }
     })));
 
     arr.range(0, this.target.rowCount - 1).forEach(row => {
-      this.addMorph(new RowHalo({row, halo: this}));
+      this.addMorph(new RowHalo({ row, halo: this }));
     });
   }
 
-  initColumnGuides() {
+  initColumnGuides () {
     const self = this;
     this.addGuide(this.addMorph(new Morph({
       height: 25,
@@ -553,78 +564,78 @@ export class GridLayoutHalo extends LayoutHalo {
       borderRadius: 15,
       width: this.container.width,
       bottomLeft: pt(0, -5),
-      alignWithTarget() { this.width = self.container.width; }
+      alignWithTarget () { this.width = self.container.width; }
     })));
 
     arr.range(0, this.target.columnCount - 1).forEach(col => {
-      this.addMorph(new ColumnHalo({col, halo: this}));
+      this.addMorph(new ColumnHalo({ col, halo: this }));
     });
   }
 
-  resizer() {
+  resizer () {
     const self = this;
     return this.addGuide(new Morph({
       fill: Color.transparent,
-      extent: pt(25,25),
+      extent: pt(25, 25),
       nativeCursor: 'nwse-resize',
-      onDrag(evt) {
+      onDrag (evt) {
         self.container.resizeBy(evt.state.dragDelta);
         self.alignWithTarget();
       },
-      alignWithTarget() {
+      alignWithTarget () {
         this.bottomRight = self.extent;
       }
     }));
   }
 
-  cellResizer(cellGroup, corner) {
-    var self = this,
-        adjacentCorner = corner == "topLeft" ? "bottomRight" : "topLeft",
-        getCorner = (c) => { return cellGroup.bounds().partNamed(c); };
+  cellResizer (cellGroup, corner) {
+    let self = this;
+    let adjacentCorner = corner == 'topLeft' ? 'bottomRight' : 'topLeft';
+    let getCorner = (c) => { return cellGroup.bounds().partNamed(c); };
     return new Ellipse({
       borderWidth: 1,
       visible: false,
       borderColor: Color.black,
-      nativeCursor: "nwse-resize",
-      removeCell(cell) {
+      nativeCursor: 'nwse-resize',
+      removeCell (cell) {
         cellGroup.disconnect(cell);
         self.alignWithTarget();
       },
-      addCell(cell) {
+      addCell (cell) {
         cellGroup.connect(cell);
         self.alignWithTarget();
       },
-      start() {
+      start () {
         this.fixpointCell = cellGroup[adjacentCorner];
         this.draggedDelta = getCorner(corner);
-        this.debugMorph = self.addMorph(new Morph({fill: Color.orange.withA(0.5)}));
+        this.debugMorph = self.addMorph(new Morph({ fill: Color.orange.withA(0.5) }));
       },
-      update(delta) {
-        this.draggedDelta =  this.draggedDelta.addPt(delta);
+      update (delta) {
+        this.draggedDelta = this.draggedDelta.addPt(delta);
         const coveringRect = Rectangle.unionPts([this.draggedDelta]).union(this.fixpointCell.bounds());
         this.debugMorph.setBounds(coveringRect);
         self.cells.forEach(cell => {
           const coverage = coveringRect.intersection(cell.bounds()).area() / cell.bounds().area();
           if (cellGroup.includes(cell) && coverage < 0.1) this.removeCell(cell);
-          if (!cellGroup.includes(cell) && coverage > 1/3) this.addCell(cell);
+          if (!cellGroup.includes(cell) && coverage > 1 / 3) this.addCell(cell);
         });
       },
-      onDragEnd(evt) {
+      onDragEnd (evt) {
         this.debugMorph.remove();
       },
-      onDragStart(evt) {
+      onDragStart (evt) {
         this.start(evt.position);
       },
-      onDrag(evt) {
+      onDrag (evt) {
         this.update(evt.state.dragDelta);
       }
     });
   }
 
-  cellGuide(cellGroup) {
-    const self = this,
-          topLeft = this.cellResizer(cellGroup, "topLeft"),
-          bottomRight = this.cellResizer(cellGroup, "bottomRight");
+  cellGuide (cellGroup) {
+    const self = this;
+    const topLeft = this.cellResizer(cellGroup, 'topLeft');
+    const bottomRight = this.cellResizer(cellGroup, 'bottomRight');
 
     return this.addGuide(new CellGuide({
       cellGroup,
@@ -635,35 +646,35 @@ export class GridLayoutHalo extends LayoutHalo {
       isHaloItem: true,
       isCell: true,
       draggable: false,
-      submorphs: [ topLeft, bottomRight ],
-      onMouseDown(evt) {
+      submorphs: [topLeft, bottomRight],
+      onMouseDown (evt) {
         this.becomeActive();
       },
-      deactivate() {
+      deactivate () {
         this.borderColor = Color.orange;
         this.fill = Color.transparent;
         this.submorphs.forEach(b => { b.visible = false; });
       },
-      becomeActive() {
+      becomeActive () {
         self.guides.forEach(guide => { if (guide.isCell) guide.deactivate(); });
-        this.borderColor = Color.rgbHex("#1565C0"),
-        this.fill = Color.rgbHex("#1565C0").withA(0.3),
+        this.borderColor = Color.rgbHex('#1565C0'),
+        this.fill = Color.rgbHex('#1565C0').withA(0.3),
         self.addMorph(this.remove());
         this.submorphs.forEach(b => { b.visible = true; });
       },
-      startPreview(evt) {
+      startPreview (evt) {
         // if hand carries a morph, preview the alignment of the morph
-        this.fill = Color.orange.withA(.7);
+        this.fill = Color.orange.withA(0.7);
       },
-      stopPreview(evt) {
+      stopPreview (evt) {
         this.fill = Color.transparent;
       },
-      onDrop(evt) {
+      onDrop (evt) {
         const [m] = evt.hand.grabbedMorphs; // pick the first of the grabbed submorphs
         evt.hand.dropMorphsOn(self.container);
         cellGroup.morph = m;
       },
-      alignWithTarget() {
+      alignWithTarget () {
         const bounds = cellGroup.bounds();
         if (bounds.isNonEmpty()) {
           this.setBounds(cellGroup.bounds());
@@ -679,123 +690,119 @@ export class GridLayoutHalo extends LayoutHalo {
 }
 
 export class TilingLayoutHalo extends LayoutHalo {
-
-  static get properties() {
+  static get properties () {
     return {
-      fill: { defaultValue: Color.transparent},
+      fill: { defaultValue: Color.transparent },
       previews: {
         defaultValue: []
       }
-    }
+    };
   }
 
-  remove() {
+  remove () {
     super.remove();
     this.removePreviews();
     return this;
   }
 
-  alignWithTarget() {
+  alignWithTarget () {
     this.setBounds(this.container.globalBounds());
   }
 
-  handleDrop(morph) {
+  handleDrop (morph) {
 
   }
 
-  removePreviews() {
+  removePreviews () {
     this.previews.forEach(p => p.clear());
   }
 
-  previewDrop(morphs) {
+  previewDrop (morphs) {
     if (this.previews.length > 0) return;
     this.previews = morphs.map(morph =>
       this.container.addMorph({
         type: DropPreview,
-        bounds: morph.bounds(),
+        bounds: morph.bounds()
       }));
     this.previews.forEach(p => {
       p.step();
     });
   }
 
-  updateSpacing(s) { this.target.spacing = s; }
-  updateAxis(a) { this.target.axis = a; }
-  updateAlign(a) { this.target.align = a; }
+  updateSpacing (s) { this.target.spacing = s; }
+  updateAxis (a) { this.target.axis = a; }
+  updateAlign (a) { this.target.align = a; }
 
-  optionControls() {
-    const layout = this.target,
-          axisControl = new DropDownSelector({
-            borderRadius: 2,
-            padding: 3,
-            selectedValue: layout.axis,
-            values: ['row', 'column']
-          }),
-          alignControl = new DropDownSelector({
-            borderRadius: 2,
-            padding: 3,
-            selectedValue: layout.align,
-            values: ['left', 'center']
-          }),
-          spacing = new NumberWidget({
-            min: 0,
-            number: layout.spacing,
-            padding: rect(5,3,0,0),
-            borderRadius: 3,
-            borderWidth: 1,
-            borderColor: Color.gray,
-            unit: "px"
-          });
+  optionControls () {
+    const layout = this.target;
+    const axisControl = new DropDownSelector({
+      borderRadius: 2,
+      padding: 3,
+      selectedValue: layout.axis,
+      values: ['row', 'column']
+    });
+    const alignControl = new DropDownSelector({
+      borderRadius: 2,
+      padding: 3,
+      selectedValue: layout.align,
+      values: ['left', 'center']
+    });
+    const spacing = new NumberWidget({
+      min: 0,
+      number: layout.spacing,
+      padding: rect(5, 3, 0, 0),
+      borderRadius: 3,
+      borderWidth: 1,
+      borderColor: Color.gray,
+      unit: 'px'
+    });
     connect(spacing, 'update', this, 'updateSpacing');
     connect(alignControl, 'update', this, 'updateAlign');
     connect(axisControl, 'update', this, 'updateAxis');
     let lineSpec = {
-      type: "label",
-      padding: rect(0,5,5,5),
+      type: 'label',
+      padding: rect(0, 5, 5, 5),
       fill: Color.transparent,
       fontColor: Color.gray.darker(),
       readOnly: true
     };
     return [
-      [{...lineSpec, textString: "Submorph Spacing"}, spacing],
-      [{...lineSpec, textString: "Tiling Align"}, alignControl],
-      [{...lineSpec, textString: "Tiling Axis"}, axisControl]
-    ].map(x => ({submorphs: x, fill: null, layout: new HorizontalLayout({spacing: 3})}));
+      [{ ...lineSpec, textString: 'Submorph Spacing' }, spacing],
+      [{ ...lineSpec, textString: 'Tiling Align' }, alignControl],
+      [{ ...lineSpec, textString: 'Tiling Axis' }, axisControl]
+    ].map(x => ({ submorphs: x, fill: null, layout: new HorizontalLayout({ spacing: 3 }) }));
   }
-
 }
 
 class DropPreview extends Morph {
-
-  static get properties() {
+  static get properties () {
     return {
-      isHaloItem: { readOnly: true, get() { return true }},
-      epiMorph: { readOnly: true, get() { return true }},
-      fill: { defaultValue: Color.orange.withA(.3)},
+      isHaloItem: { readOnly: true, get () { return true; } },
+      epiMorph: { readOnly: true, get () { return true; } },
+      fill: { defaultValue: Color.orange.withA(0.3) },
       hasFixedPosition: { defaultValue: true },
       borderColor: { defaultValue: Color.orange },
       borderWidth: { defaultValue: 2 },
-      borderStyle: { defaultValue: "dashed" },
+      borderStyle: { defaultValue: 'dashed' },
       pulseDuration: { defaultValue: 2000 }
-    }
+    };
   }
-  
-  clear() {
+
+  clear () {
     this.stopped = true;
     this.remove();
   }
-  
-  async step() {
+
+  async step () {
     const easing = easings.inOutQuad;
-    await this.animate({opacity: .5, duration: (this.pulseDuration - 10) / 2, easing});
-    await this.animate({opacity: 1, duration: (this.pulseDuration - 10) / 2, easing});
+    await this.animate({ opacity: 0.5, duration: (this.pulseDuration - 10) / 2, easing });
+    await this.animate({ opacity: 1, duration: (this.pulseDuration - 10) / 2, easing });
     if (!this.stopped) this.step();
   }
 }
 
 export class FlexLayoutHalo extends LayoutHalo {
-
-  static get properties() {
+  static get properties () {
     return {
       reactsToPointer: { defaultValue: false },
       fill: { defaultValue: Color.transparent },
@@ -803,12 +810,12 @@ export class FlexLayoutHalo extends LayoutHalo {
       previews: {
         defaultValue: []
       }
-    }
+    };
   }
 
-  handleDrop(morph) {}
+  handleDrop (morph) {}
 
-  previewDrop(morphs) {
+  previewDrop (morphs) {
     if (this.previews.length > 0) return;
     this.previews = morphs.map(morph => this.container.addMorph({
       type: DropPreview,
@@ -820,162 +827,173 @@ export class FlexLayoutHalo extends LayoutHalo {
     });
   }
 
-  remove() {
+  remove () {
     super.remove();
     this.removePreviews();
     return this;
   }
 
-  removePreviews() {
+  removePreviews () {
     this.previews.forEach(p => p.clear());
   }
 
-  onDrop(evt) {
+  onDrop (evt) {
     this.removePreviews();
     evt.hand.dropMorphsOn(this.container);
   }
 
-  alignWithTarget() {
+  alignWithTarget () {
     this.setBounds(this.container.globalBounds());
   }
 
-  updateAutoResizePolicy(auto) {
+  updateAutoResizePolicy (auto) {
     if (auto) this.originalExtent = this.container.extent;
     this.target.autoResize = auto;
     if (!auto) this.container.extent = this.originalExtent || this.container.extent;
     this.alignWithTarget();
   }
 
-  updateResizeSubmorphsPolicy(bool) {
+  updateResizeSubmorphsPolicy (bool) {
     this.target.resizeSubmorphs = bool;
     this.alignWithTarget();
   }
 
-  updateAlignmentPolicy(val) { this.target.align = val; }
+  updateAlignmentPolicy (val) { this.target.align = val; }
 
-  updateDirectionPolicy(val) { this.target.direction = val; }
+  updateDirectionPolicy (val) { this.target.direction = val; }
 
-  updateSpacing(s) {
+  updateSpacing (s) {
     this.target.spacing = s;
   }
 
-  optionControls() {
-    const layout = this.target,
-          alignmentSelector = layout.possibleAlignValues ? {
-            fill: Color.transparent, layout: new HorizontalLayout({spacing: 3, direction: "centered", align: "center"}),
-            submorphs: [
-              {type: "label", value: "align: "},
-              new DropDownSelector({
-                name: "alignment",
-                borderRadius: 2,
-                padding: 3,
-                selectedValue: layout.align,
-                values: layout.possibleAlignValues
-              })]
-          } : null,
-          directionSelector = layout.possibleDirectionValues ? {
-            fill: Color.transparent, layout: new HorizontalLayout({spacing: 3, direction: "centered", align: "center"}),
-            submorphs: [
-              {type: "label", value: "direction: "},
-              new DropDownSelector({
-                name: "direction",
-                borderRadius: 2,
-                padding: 3,
-                selectedValue: layout.direction,
-                values: layout.possibleDirectionValues
-              })
-            ]
-          } : null,
-          spacing = new NumberWidget({
-            fill: Color.white,
-            borderWidth: 1,
-            borderRadius: 4,
-            padding: rect(5,4,0,0),
-            borderColor: Color.gray,
-            min: 0,
-            number: layout.spacing,
-            unit: "px",
-          }),
-          autoResizeCb = new LabeledCheckBox({
-            name: "autoResize", label: 'Resize Container',
-            alignCheckBox: 'right',
-            fill: Color.transparent,
-            checked: layout.autoResize
-          }),
-          resizeSubmorphsCb = new LabeledCheckBox({
-            label: 'Resize Submorphs',
-            name: "resizeSubmorphs",
-            alignCheckBox: 'right',
-            fill: Color.transparent,
-            checked: layout.resizeSubmorphs
-          });
+  optionControls () {
+    const layout = this.target;
+    const alignmentSelector = layout.possibleAlignValues
+      ? {
+          fill: Color.transparent,
+          layout: new HorizontalLayout({ spacing: 3, direction: 'centered', align: 'center' }),
+          submorphs: [
+            { type: 'label', value: 'align: ' },
+            new DropDownSelector({
+              name: 'alignment',
+              borderRadius: 2,
+              padding: 3,
+              selectedValue: layout.align,
+              values: layout.possibleAlignValues
+            })]
+        }
+      : null;
+    const directionSelector = layout.possibleDirectionValues
+      ? {
+          fill: Color.transparent,
+          layout: new HorizontalLayout({ spacing: 3, direction: 'centered', align: 'center' }),
+          submorphs: [
+            { type: 'label', value: 'direction: ' },
+            new DropDownSelector({
+              name: 'direction',
+              borderRadius: 2,
+              padding: 3,
+              selectedValue: layout.direction,
+              values: layout.possibleDirectionValues
+            })
+          ]
+        }
+      : null;
+    const spacing = new NumberWidget({
+      fill: Color.white,
+      borderWidth: 1,
+      borderRadius: 4,
+      padding: rect(5, 4, 0, 0),
+      borderColor: Color.gray,
+      min: 0,
+      number: layout.spacing,
+      unit: 'px'
+    });
+    const autoResizeCb = new LabeledCheckBox({
+      name: 'autoResize',
+      label: 'Resize Container',
+      alignCheckBox: 'right',
+      fill: Color.transparent,
+      checked: layout.autoResize
+    });
+    const resizeSubmorphsCb = new LabeledCheckBox({
+      label: 'Resize Submorphs',
+      name: 'resizeSubmorphs',
+      alignCheckBox: 'right',
+      fill: Color.transparent,
+      checked: layout.resizeSubmorphs
+    });
 
     connect(spacing, 'update', this, 'updateSpacing');
-    connect(autoResizeCb, "checked", this, "updateAutoResizePolicy");
-    connect(resizeSubmorphsCb, "checked", this, "updateResizeSubmorphsPolicy");
-    alignmentSelector && connect(alignmentSelector.submorphs[1], "selectedValue", this, "updateAlignmentPolicy");
-    directionSelector && connect(directionSelector.submorphs[1], "selectedValue", this, "updateDirectionPolicy");
+    connect(autoResizeCb, 'checked', this, 'updateAutoResizePolicy');
+    connect(resizeSubmorphsCb, 'checked', this, 'updateResizeSubmorphsPolicy');
+    alignmentSelector && connect(alignmentSelector.submorphs[1], 'selectedValue', this, 'updateAlignmentPolicy');
+    directionSelector && connect(directionSelector.submorphs[1], 'selectedValue', this, 'updateDirectionPolicy');
 
     return [
       autoResizeCb,
       resizeSubmorphsCb,
       ...[alignmentSelector, directionSelector].filter(Boolean),
-      {fill: Color.transparent, layout: new HorizontalLayout(),
+      {
+        fill: Color.transparent,
+        layout: new HorizontalLayout(),
         submorphs: [
-          {type: 'label', value: 'Submorph Spacing',
+          {
+            type: 'label',
+            value: 'Submorph Spacing',
             fontColor: Color.gray.darker(),
-            padding: rect(0,5,5,5)}, spacing]}
+            padding: rect(0, 5, 5, 5)
+          }, spacing]
+      }
     ];
   }
-
 }
 
-
 export class ProportionalLayoutHalo extends LayoutHalo {
-
-  static get properties() {
+  static get properties () {
     return {
       reactsToPointer: { defaultValue: false },
       fill: { defaultValue: Color.transparent }
-    }
+    };
   }
 
-  handleDrop(morph) {}
-  onDrop(evt) { evt.hand.dropMorphsOn(this.container); }
+  handleDrop (morph) {}
+  onDrop (evt) { evt.hand.dropMorphsOn(this.container); }
 
-  alignWithTarget() {this.setBounds(this.container.globalBounds()); }
+  alignWithTarget () { this.setBounds(this.container.globalBounds()); }
 
-  updateSubmorphProportionalLayoutSettings({policy, submorph, axis}) {
-    this.target.changeSettingsFor(submorph, {[axis]: policy}, true/*save*/);
+  updateSubmorphProportionalLayoutSettings ({ policy, submorph, axis }) {
+    this.target.changeSettingsFor(submorph, { [axis]: policy }, true/* save */);
   }
 
-  onSubmorphSettingsDragStart(evt, morphWithSettings) {
+  onSubmorphSettingsDragStart (evt, morphWithSettings) {
     evt.stop();
-    let settings = this.target.settingsFor(morphWithSettings), descr = "";
+    let settings = this.target.settingsFor(morphWithSettings); let descr = '';
     for (let name in settings) descr += `${name}:${settings[name]} `;
-    let grabme = morph({type: "label", value: descr, isLayoutable: false});
+    let grabme = morph({ type: 'label', value: descr, isLayoutable: false });
     grabme.wantsToBeDroppedOn = (dropTarget) => this.target.layoutableSubmorphs.includes(dropTarget);
     grabme.onBeingDroppedOn = (hand, dropTarget) => {
       grabme.remove();
-      let target = this.target.layoutableSubmorphs.includes(dropTarget) ? dropTarget :
-        evt.world.morphsContainingPoint(evt.hand.position).find(ea =>
+      let target = this.target.layoutableSubmorphs.includes(dropTarget)
+        ? dropTarget
+        : evt.world.morphsContainingPoint(evt.hand.position).find(ea =>
           this.target.layoutableSubmorphs.includes(ea));
       if (target) {
-        this.updateSubmorphProportionalLayoutSettings({policy: settings.x, axis: "x", submorph: target});
-        this.updateSubmorphProportionalLayoutSettings({policy: settings.y, axis: "y", submorph: target});
+        this.updateSubmorphProportionalLayoutSettings({ policy: settings.x, axis: 'x', submorph: target });
+        this.updateSubmorphProportionalLayoutSettings({ policy: settings.y, axis: 'y', submorph: target });
         target.show();
-        $world.setStatusMessage("layout settings applied");
+        $world.setStatusMessage('layout settings applied');
       }
     };
     evt.hand.grab(grabme);
   }
 
-  async chooseSubmorphToChangeLayoutSettings() {
-    let morphs = this.target.layoutableSubmorphs, submorph;
-    if (this.env.eventDispatcher.isKeyPressed("Shift")) {
-      let items = morphs.map(m => ({isListItem: true, string: String(m), value: m}));
-      ({selected: [submorph]} = await $world.listPrompt(
-        "Select morph", items, {requester: this, onSelection: ea => ea.show()}));
+  async chooseSubmorphToChangeLayoutSettings () {
+    let morphs = this.target.layoutableSubmorphs; let submorph;
+    if (this.env.eventDispatcher.isKeyPressed('Shift')) {
+      let items = morphs.map(m => ({ isListItem: true, string: String(m), value: m }));
+      ({ selected: [submorph] } = await $world.listPrompt(
+        'Select morph', items, { requester: this, onSelection: ea => ea.show() }));
     } else {
       submorph = await InteractiveMorphSelector.selectMorph(
         this.world(), this, target => morphs.includes(target));
@@ -983,10 +1001,10 @@ export class ProportionalLayoutHalo extends LayoutHalo {
 
     if (!submorph) return;
 
-    let controls = this.state.popover.get("controlContainer"),
-        configItems = controls.getAllNamed(/submorph config/),
-        options = ["move", "resize", "scale", "fixed"],
-        submorphSettings = this.target.settingsFor(submorph);
+    let controls = this.state.popover.get('controlContainer');
+    let configItems = controls.getAllNamed(/submorph config/);
+    let options = ['move', 'resize', 'scale', 'fixed'];
+    let submorphSettings = this.target.settingsFor(submorph);
 
     if (!configItems.length) {
       controls.submorphs = [
@@ -995,12 +1013,13 @@ export class ProportionalLayoutHalo extends LayoutHalo {
           name: 'submorph config X-Axis policy',
           position: pt(0, this.height),
           fill: Color.transparent,
-          layout: new HorizontalLayout({spacing: 3, direction: "centered", align: "center"}),
+          layout: new HorizontalLayout({ spacing: 3, direction: 'centered', align: 'center' }),
           submorphs: [
-            {type: 'label', value: "submorph X-Axis policy: "},
+            { type: 'label', value: 'submorph X-Axis policy: ' },
             new DropDownSelector({
-              name: "x-axis policy selector",
-              borderRadius: 2, padding: 3,
+              name: 'x-axis policy selector',
+              borderRadius: 2,
+              padding: 3,
               selectedValue: submorphSettings.x,
               values: options
             })
@@ -1011,12 +1030,13 @@ export class ProportionalLayoutHalo extends LayoutHalo {
           name: 'submorph config Y-Axis policy',
           position: pt(0, this.height),
           fill: Color.transparent,
-          layout: new HorizontalLayout({spacing: 3, direction: "centered", align: "center"}),
+          layout: new HorizontalLayout({ spacing: 3, direction: 'centered', align: 'center' }),
           submorphs: [
-            {type: 'label', value: "submorph Y-Axis policy: "},
+            { type: 'label', value: 'submorph Y-Axis policy: ' },
             new DropDownSelector({
-              name: "y-axis policy selector",
-              borderRadius: 2, padding: 3,
+              name: 'y-axis policy selector',
+              borderRadius: 2,
+              padding: 3,
               selectedValue: submorphSettings.y,
               values: options
             })
@@ -1024,49 +1044,51 @@ export class ProportionalLayoutHalo extends LayoutHalo {
         },
 
         morph({
-          position: pt(0, this.height+20), draggable: true,
-          name: "dragme", type: "label", value: "drag me to copy",
+          position: pt(0, this.height + 20),
+          draggable: true,
+          name: 'dragme',
+          type: 'label',
+          value: 'drag me to copy'
         })
       ];
     }
 
-    let xSel = controls.getSubmorphNamed("x-axis policy selector"),
-        ySel = controls.getSubmorphNamed("y-axis policy selector"),
-        drag = controls.getSubmorphNamed("dragme");
-    disconnect(xSel, "selectedValue", this, "updateSubmorphProportionalLayoutSettings");
-    disconnect(ySel, "selectedValue", this, "updateSubmorphProportionalLayoutSettings");
+    let xSel = controls.getSubmorphNamed('x-axis policy selector');
+    let ySel = controls.getSubmorphNamed('y-axis policy selector');
+    let drag = controls.getSubmorphNamed('dragme');
+    disconnect(xSel, 'selectedValue', this, 'updateSubmorphProportionalLayoutSettings');
+    disconnect(ySel, 'selectedValue', this, 'updateSubmorphProportionalLayoutSettings');
 
     xSel.selectedValue = submorphSettings.x;
     ySel.selectedValue = submorphSettings.y;
 
-    connect(drag, 'onDragStart', this, 'onSubmorphSettingsDragStart', {
-      updater: ($upd, evt) => $upd(evt, submorph), varMapping: {submorph}});
+    connect(drag, 'onDragStart', this, 'onSubmorphSettingsDragStart', { updater: ($upd, evt) => $upd(evt, submorph), varMapping: { submorph } });
 
-    connect(xSel, "selectedValue", this, "updateSubmorphProportionalLayoutSettings", {
-      converter: policy => ({policy, axis: "x", submorph}), varMapping: {submorph}});
-    connect(ySel, "selectedValue", this, "updateSubmorphProportionalLayoutSettings", {
-      converter: policy => ({policy, axis: "y", submorph}), varMapping: {submorph}});
+    connect(xSel, 'selectedValue', this, 'updateSubmorphProportionalLayoutSettings', { converter: policy => ({ policy, axis: 'x', submorph }), varMapping: { submorph } });
+    connect(ySel, 'selectedValue', this, 'updateSubmorphProportionalLayoutSettings', { converter: policy => ({ policy, axis: 'y', submorph }), varMapping: { submorph } });
   }
 
-  optionControls(popover) {
+  optionControls (popover) {
     this.state.popover = popover;
-    const layout = this.target,
-          xAxis = new LabeledCheckBox({
-            name: "x-axis", label: 'X-Axis',
-            alignCheckBox: 'right',
-            fill: Color.transparent,
-            checked: layout.xAxisEnabled
-          }),
-          yAxis = new LabeledCheckBox({
-            name: "y-axis", label: 'Y-Axis',
-            alignCheckBox: 'right',
-            fill: Color.transparent,
-            checked: layout.yAxisEnabled
-          }),
-          modifySubmorphSettingsButton = new Button({
-            name: "modify submorph settings button",
-            label: [...Icon.textAttribute("crosshairs"), "\u00a0Change submorph settings"]
-          });
+    const layout = this.target;
+    const xAxis = new LabeledCheckBox({
+      name: 'x-axis',
+      label: 'X-Axis',
+      alignCheckBox: 'right',
+      fill: Color.transparent,
+      checked: layout.xAxisEnabled
+    });
+    const yAxis = new LabeledCheckBox({
+      name: 'y-axis',
+      label: 'Y-Axis',
+      alignCheckBox: 'right',
+      fill: Color.transparent,
+      checked: layout.yAxisEnabled
+    });
+    const modifySubmorphSettingsButton = new Button({
+      name: 'modify submorph settings button',
+      label: [...Icon.textAttribute('crosshairs'), '\u00a0Change submorph settings']
+    });
 
     connect(xAxis, 'checked', this, 'updateXAxisEnabled');
     connect(yAxis, 'checked', this, 'updateYAxisEnabled');
@@ -1074,5 +1096,4 @@ export class ProportionalLayoutHalo extends LayoutHalo {
 
     return [modifySubmorphSettingsButton];
   }
-
 }

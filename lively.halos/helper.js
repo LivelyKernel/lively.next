@@ -1,1 +1,1 @@
-"format esm";
+'format esm';
