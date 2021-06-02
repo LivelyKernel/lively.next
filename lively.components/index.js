@@ -4,6 +4,7 @@ export * from './menus.js';
 export * from './resizers.js';
 export * from './tree.js';
 export * from './iframe.js';
+export * from './resizeable-panel.js';
 import Window from './window.js';
 
 import * as prompts from './prompts.js';
