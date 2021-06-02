@@ -1,28 +1,26 @@
-import { string, num, promise, fun } from "lively.lang";
-import L2LClient from "lively.2lively/client.js";
-import { newUUID } from "lively.lang/string.js";
-import { ExpressionSerializer } from "lively.serializer2";
+import { string, num, promise, fun } from 'lively.lang';
+import L2LClient from 'lively.2lively/client.js';
+import { newUUID } from 'lively.lang/string.js';
+import { ExpressionSerializer } from 'lively.serializer2';
 
-var debug = false;
+let debug = false;
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // communication channel
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 export class Channel {
-
-  static for(senderRecvrA, onReceivedMethodA, senderRecvrB, onReceivedMethodB) {
+  static for (senderRecvrA, onReceivedMethodA, senderRecvrB, onReceivedMethodB) {
     if (typeof senderRecvrB === 'string') {
-      return new L2LChannel(senderRecvrA, onReceivedMethodA, senderRecvrB, onReceivedMethodB); 
+      return new L2LChannel(senderRecvrA, onReceivedMethodA, senderRecvrB, onReceivedMethodB);
     }
     return new this(senderRecvrA, onReceivedMethodA, senderRecvrB, onReceivedMethodB);
   }
 
-  constructor(senderRecvrA, onReceivedMethodA, senderRecvrB, onReceivedMethodB) {
-    if (!senderRecvrA) throw new Error("no sender / receiver a!");
-    if (!senderRecvrB) throw new Error("no sender / receiver b!");
-    if (typeof senderRecvrA[onReceivedMethodA] !== "function") throw new Error(`sender a has no receive method ${onReceivedMethodA}!`);
-    if (typeof senderRecvrB != 'string' && typeof senderRecvrB[onReceivedMethodB] !== "function")
-      throw new Error(`sender b has no receive method ${onReceivedMethodB}!`);
+  constructor (senderRecvrA, onReceivedMethodA, senderRecvrB, onReceivedMethodB) {
+    if (!senderRecvrA) throw new Error('no sender / receiver a!');
+    if (!senderRecvrB) throw new Error('no sender / receiver b!');
+    if (typeof senderRecvrA[onReceivedMethodA] !== 'function') throw new Error(`sender a has no receive method ${onReceivedMethodA}!`);
+    if (typeof senderRecvrB !== 'string' && typeof senderRecvrB[onReceivedMethodB] !== 'function') { throw new Error(`sender b has no receive method ${onReceivedMethodB}!`); }
 
     this.id = string.newUUID();
     this.senderRecvrA = senderRecvrA;
@@ -35,19 +33,19 @@ export class Channel {
     this.delayBtoA = 0;
     this.online = false;
     this.lifetime = 100;
-    this._watchdogProcess = null
+    this._watchdogProcess = null;
     this.goOnline();
   }
 
-  toString() {
-    return `<channel ${this.senderRecvrA}.${this.onReceivedMethodA} – ${this.senderRecvrB}.${this.onReceivedMethodB}>`
+  toString () {
+    return `<channel ${this.senderRecvrA}.${this.onReceivedMethodA} – ${this.senderRecvrB}.${this.onReceivedMethodB}>`;
   }
 
-  isOnline() { return this.online; }
-  goOffline() { this.online = false; }
-  goOnline() { this.online = true; this.watchdogProcess(); }
+  isOnline () { return this.online; }
+  goOffline () { this.online = false; }
+  goOnline () { this.online = true; this.watchdogProcess(); }
 
-  watchdogProcess() {
+  watchdogProcess () {
     if (!this.isOnline() || this._watchdogProcess) return;
 
     this._watchdogProcess = setTimeout(() => {
@@ -58,37 +56,36 @@ export class Channel {
     }, 800 + num.random(50));
   }
 
-  isEmpty() {
+  isEmpty () {
     return !this.queueBtoA.length && !this.queueAtoB.length;
   }
 
-  waitForDelivery() {
+  waitForDelivery () {
     return Promise.all([
       this.queueAtoB.length ? this.send([], this.senderRecvrA) : Promise.resolve(),
       this.queueBtoA.length ? this.send([], this.senderRecvrB) : Promise.resolve()]);
   }
 
-  componentsForSender(sender) {
-    if (sender !== this.senderRecvrA && sender !== this.senderRecvrB)
-      throw new Error(`send called with sender unknown to channel: ${sender}`);
+  componentsForSender (sender) {
+    if (sender !== this.senderRecvrA && sender !== this.senderRecvrB) { throw new Error(`send called with sender unknown to channel: ${sender}`); }
     return {
       recvr: this.senderRecvrA === sender ? this.senderRecvrB : this.senderRecvrA,
       queue: this.senderRecvrA === sender ? this.queueAtoB : this.queueBtoA,
       delay: this.senderRecvrA === sender ? this.delayAtoB : this.delayBtoA,
       method: this.senderRecvrA === sender ? this.onReceivedMethodB : this.onReceivedMethodA,
-      descr: this.senderRecvrA === sender ? "AtoB" : "BtoA"
-    }
+      descr: this.senderRecvrA === sender ? 'AtoB' : 'BtoA'
+    };
   }
 
-  send(content, sender) {
-    var { recvr, queue, descr } = this.componentsForSender(sender);
+  send (content, sender) {
+    let { recvr, queue, descr } = this.componentsForSender(sender);
 
     if (debug) {
-      var msgs = (Array.isArray(content) ? content : [content]);
+      let msgs = (Array.isArray(content) ? content : [content]);
       let string = `[lively.sync] sending ${sender} -> ${recvr}: `;
-      if (!msgs.length) string += " no messages"
+      if (!msgs.length) string += ' no messages';
       // else if (msgs.length === 1) string += msgs[0];
-      string += msgs.map(ea => ea.change.prop || ea.change.selector).join(",")
+      string += msgs.map(ea => ea.change.prop || ea.change.selector).join(',');
       console.log(string);
     }
 
@@ -97,51 +94,47 @@ export class Channel {
     return this.deliver(sender);
   }
 
-  deliver(sender) {
-
-    var { recvr, method, queue, delay, descr } = this.componentsForSender(sender);
+  deliver (sender) {
+    let { recvr, method, queue, delay, descr } = this.componentsForSender(sender);
 
     this.watchdogProcess();
 
     // try again later via watchdogProcess
     if (!this.isOnline()) return Promise.resolve();
 
-      Promise.resolve().then(() => {
-        if (!delay) {
-          var outgoing = queue.slice(); queue.length = 0;
-          try { recvr[method](outgoing, sender, this); }
-          catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
-        } else {
-          fun.throttleNamed(`${this.id}-${descr}`, delay*1000, () => {
-            var outgoing = queue.slice(); queue.length = 0;
-            try { recvr[method](outgoing, sender, this); }
-            catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
-          })();
-        }
-      });
+    Promise.resolve().then(() => {
+      if (!delay) {
+        let outgoing = queue.slice(); queue.length = 0;
+        try { recvr[method](outgoing, sender, this); } catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
+      } else {
+        fun.throttleNamed(`${this.id}-${descr}`, delay * 1000, () => {
+          let outgoing = queue.slice(); queue.length = 0;
+          try { recvr[method](outgoing, sender, this); } catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
+        })();
+      }
+    });
 
     return promise.waitFor(() => queue.length === 0);
   }
 }
 
 export class L2LChannel extends Channel {
-
-  constructor(...args) {
+  constructor (...args) {
     super(...args);
     // now initialize a l2lClient connection to connect to the remote
     this.initL2LConnection();
   }
 
-  async initL2LConnection() {
+  async initL2LConnection () {
     let id = this.senderRecvrB;
     this.l2lClient = await L2LClient.default();
-    await this.l2lClient.joinRoom(id)
+    await this.l2lClient.joinRoom(id);
     // start listening for incoming messages
-    this.l2lClient.addService(this.onReceivedMethodA, (tracker, msg) => 
-       this.send(msg.data, id))
+    this.l2lClient.addService(this.onReceivedMethodA, (tracker, msg) =>
+      this.send(msg.data, id));
   }
 
-  serializeContent(content) {
+  serializeContent (content) {
     let exprSerializer = new ExpressionSerializer();
     content = (Array.isArray(content) ? content : [content]);
     content = content.map(o => {
@@ -153,30 +146,30 @@ export class L2LChannel extends Channel {
             console.log(`serializeChange: failed to serialize ${key} to serialized expression`);
           }
         }
-      })
-    })
-    return content;
-  }
-
-  deserializeContent(stringifiedContent) {
-    let exprSerializer = new ExpressionSerializer();
-    let content = JSON.parse(stringifiedContent, (key, val) => {
-       if (typeof val === "string" && exprSerializer.isSerializedExpression(val)) {
-         return exprSerializer.deserializeExpr(val);
-       }
+      });
     });
     return content;
   }
-  
-  send(content, sender) {
-    var { recvr, queue, descr } = this.componentsForSender(sender);
+
+  deserializeContent (stringifiedContent) {
+    let exprSerializer = new ExpressionSerializer();
+    let content = JSON.parse(stringifiedContent, (key, val) => {
+      if (typeof val === 'string' && exprSerializer.isSerializedExpression(val)) {
+        return exprSerializer.deserializeExpr(val);
+      }
+    });
+    return content;
+  }
+
+  send (content, sender) {
+    let { recvr, queue, descr } = this.componentsForSender(sender);
 
     if (debug) {
-      var msgs = (Array.isArray(content) ? content : [content]);
+      let msgs = (Array.isArray(content) ? content : [content]);
       let string = `[lively.sync] sending ${sender} -> ${recvr}: `;
-      if (!msgs.length) string += " no messages"
+      if (!msgs.length) string += ' no messages';
       // else if (msgs.length === 1) string += msgs[0];
-      string += msgs.map(ea => ea.change.prop || ea.change.selector).join(",")
+      string += msgs.map(ea => ea.change.prop || ea.change.selector).join(',');
       console.log(string);
     }
 
@@ -187,9 +180,8 @@ export class L2LChannel extends Channel {
     return this.deliver(sender);
   }
 
-  deliver(sender) {
-
-    var { recvr, method, queue, delay, descr } = this.componentsForSender(sender);
+  deliver (sender) {
+    let { recvr, method, queue, delay, descr } = this.componentsForSender(sender);
 
     this.watchdogProcess();
 
@@ -200,16 +192,14 @@ export class L2LChannel extends Channel {
       // then we need to invoke our client
       Promise.resolve().then(() => {
         if (!delay) {
-          var outgoing = queue.slice(); queue.length = 0;
+          let outgoing = queue.slice(); queue.length = 0;
           try {
             this.l2lClient.broadcast(recvr, method, outgoing);
-          }
-          catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
+          } catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
         } else {
-          fun.throttleNamed(`${this.id}-${descr}`, delay*1000, () => {
-            var outgoing = queue.slice(); queue.length = 0;
-            try { this.l2lClient.broadcast(recvr, method, outgoing); }
-            catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
+          fun.throttleNamed(`${this.id}-${descr}`, delay * 1000, () => {
+            let outgoing = queue.slice(); queue.length = 0;
+            try { this.l2lClient.broadcast(recvr, method, outgoing); } catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
           })();
         }
       });
@@ -219,41 +209,36 @@ export class L2LChannel extends Channel {
         outgoing = this.deserializeContent(outgoing);
         if (!delay) {
           var outgoing = queue.slice(); queue.length = 0;
-          try { recvr[method](outgoing, sender, this); }
-          catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
+          try { recvr[method](outgoing, sender, this); } catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
         } else {
-          fun.throttleNamed(`${this.id}-${descr}`, delay*1000, () => {
-            var outgoing = queue.slice(); queue.length = 0;
-            try { recvr[method](outgoing, sender, this); }
-            catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
+          fun.throttleNamed(`${this.id}-${descr}`, delay * 1000, () => {
+            let outgoing = queue.slice(); queue.length = 0;
+            try { recvr[method](outgoing, sender, this); } catch (e) { console.error(`Error in ${method} of ${recvr}: ${e.stack || e}`); }
           })();
         }
-      }); 
+      });
     }
 
     return promise.waitFor(() => queue.length === 0);
   }
-  
 }
 
 export class L2LCollaboration {
-  
-  static async for(master) {
+  static async for (master) {
     let id = newUUID();
     let collaboration = new this(master, id);
     collaboration.l2lClient = await L2LClient.forLivelyInBrowser({ type: 'lively.sync master' });
     collaboration.l2lClient.addService(
-       'getInitialState', (tracker, msg, ackFn) => {
-       return ackFn(master.state.world.exportToJSON({keepFunctions: false }))
-    })
+      'getInitialState', (tracker, msg, ackFn) => {
+        return ackFn(master.state.world.exportToJSON({ keepFunctions: false }));
+      });
     await collaboration.l2lClient.joinRoom(id);
     master.addConnection(collaboration);
     return id;
   }
 
-  constructor(master, id) {
+  constructor (master, id) {
     this.opChannel = new L2LChannel(master, 'receiveOpsFromClient', id, 'receiveOpsFromMaster');
     this.metaChannel = new L2LChannel(master, 'receiveMetaMsgsFromClient', id, 'receiveMetaMsgsFromMaster');
   }
-  
 }
