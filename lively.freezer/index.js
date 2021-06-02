@@ -112,7 +112,8 @@ const ADVANCED_EXCLUDED_MODULES = [
   'babel-plugin-transform-jsx',
   'lively-system-interface',
   'lively.storage',
-  'lively.collab'
+  'lively.collab',
+  'localconfig.js'
 ];
 
 const DEFAULT_EXCLUDED_MODULES_PART = [
@@ -1007,7 +1008,7 @@ class LivelyRollup {
             import { loadViaScript } from 'lively.resources';
             import { promise } from 'lively.lang';
             import { pt } from "lively.graphics";
-            ${await resource(System.baseURL).join('localconfig.js').read()}
+            ${this.excludedModules.includes('localconfig.js') ? '' : await resource(System.baseURL).join('localconfig.js').read()}
             const snapshot = JSON.parse(${JSON.stringify(JSON.stringify(obj.dissoc(this.snapshot, ['preview', 'packages'])))})
             lively.resources = { resource, loadViaScript };
             lively.morphic = { loadMorphFromSnapshot };
