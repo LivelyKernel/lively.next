@@ -3,7 +3,8 @@ import config from 'https://jspm.dev/eslint-config-standard';
 
 Object.assign(config.rules, {
   semi: ['error', 'always'],
-  'no-extra-semi': 'error'
+  'no-extra-semi': 'error',
+  'prefer-const': 'off'
 });
 
 export default async function lint (code) {
