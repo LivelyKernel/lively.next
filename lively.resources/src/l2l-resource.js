@@ -1,4 +1,4 @@
-"format esm";
+'format esm';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -63,7 +63,6 @@
 //     } else reject(new Error("Cannot read resource: " + url));
 
 //   })
-
 
 // /*
 

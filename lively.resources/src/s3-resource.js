@@ -1,5 +1,5 @@
 import HttpResource from './http-resource.js';
-import Resource from "./resource.js";
+import Resource from './resource.js';
 
 /*
   This is a resource that encapsulates the management of an S3 endpoint.
@@ -11,35 +11,33 @@ import Resource from "./resource.js";
 */
 
 export default class S3Resource extends Resource {
-
   // todo: intercept the initialization and add in https by default to the url
-  
-  async read() {
-    
+
+  async read () {
+
   }
-  
-  async write() {
-    
+
+  async write () {
+
   }
-  
-  async mkdir() {
-    
+
+  async mkdir () {
+
   }
-  
-  async exists() {
-    
+
+  async exists () {
+
   }
-  
-  async remove() {
-    
+
+  async remove () {
+
   }
-  
-  async dirList(depth, opts) {
-    
+
+  async dirList (depth, opts) {
+
   }
-  
-  async readProperties(opts) {
-    
+
+  async readProperties (opts) {
+
   }
-  
 }
