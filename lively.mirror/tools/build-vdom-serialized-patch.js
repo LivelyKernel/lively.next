@@ -1,13 +1,12 @@
-var exec = require("child_process").execSync
-var path = require("path");
+let exec = require('child_process').execSync;
+let path = require('path');
 
-
-var cmd = "browserify "
-        + "node_modules/vdom-serialized-patch/index.js "
-        + "--standalone vdomSerializedPatch "
-        + "-o vdom-serialized-patch-browserified.js";
-var out = exec(cmd, {cwd: path.resolve(__dirname, "..")});
+let cmd = 'browserify ' +
+        'node_modules/vdom-serialized-patch/index.js ' +
+        '--standalone vdomSerializedPatch ' +
+        '-o vdom-serialized-patch-browserified.js';
+let out = exec(cmd, { cwd: path.resolve(__dirname, '..') });
 
 console.log(out.toString());
 
-console.log(`[tools/build-vdom-serialized-patch.js] DONE`);
+console.log('[tools/build-vdom-serialized-patch.js] DONE');

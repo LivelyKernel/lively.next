@@ -1,69 +1,69 @@
 import {
   serialize as serializePatch
-} from "./vdom-serialized-patch-browserified.js";
+} from './vdom-serialized-patch-browserified.js';
 
-import { diff, VNode, VText } from "virtual-dom";
+import { diff, VNode, VText } from 'virtual-dom';
 
-import L2LClient from "lively.2lively/client.js";
-import { promise, obj, tree } from "lively.lang";
-import { inspect, show } from "lively.morphic";
-import { replaceUndefinedWithPlaceholder } from "./helper.js";
+import L2LClient from 'lively.2lively/client.js';
+import { promise, obj, tree } from 'lively.lang';
+import { inspect, show } from 'lively.morphic';
+import { replaceUndefinedWithPlaceholder } from './helper.js';
 
-import vdomAsJSON from "vdom-as-json";
+import vdomAsJSON from 'vdom-as-json';
 
-const debug = true,
-      useOptimizedPatchFormat = true;
+const debug = true;
+const useOptimizedPatchFormat = true;
 
-function makeNodeSerializable(node) {
-  var serializableNode = node,
-      className = node.constructor.name;
+function makeNodeSerializable (node) {
+  let serializableNode = node;
+  let className = node.constructor.name;
 
-  if (className === "CustomVNode") {
+  if (className === 'CustomVNode') {
     // serializes an html morph...
     // currently we send over the entire HTML source...!
 
     // serializableNode = new VNode("DIV", {innerHTML: node.morph.domNode.innerHTML, ...node.properties}, node.children, node.key, node.namespace)
     // console.log(serializableNode)
-    var {morph, morphVtree} = node;
+    let { morph, morphVtree } = node;
     node = morphVtree || node.renderMorph();
-    var {properties, tagName, children, key, namespace} = node;
+    var { properties, tagName, children, key, namespace } = node;
     properties = obj.dissoc(properties, [
-      "morph-render-done-hook",
-      "morph-after-render-hook",
-      "after-text-render-hook",
-      "animation"
+      'morph-render-done-hook',
+      'morph-after-render-hook',
+      'after-text-render-hook',
+      'animation'
     ]);
     children = children ? children.slice() : [];
     serializableNode = new VNode(tagName, properties, children, key, namespace);
-    className = "VirtualNode";
+    className = 'VirtualNode';
 
     if (children[0]) {
-      var htmlNode = children[0],
-          {properties, tagName, children, key, namespace} = htmlNode;
-      serializableNode.children[0] = new VNode(tagName, {...properties}, children, key, namespace);
+      let htmlNode = children[0];
+      var { properties, tagName, children, key, namespace } = htmlNode;
+      serializableNode.children[0] = new VNode(tagName, { ...properties }, children, key, namespace);
       serializableNode.children[0].properties.innerHTML = morph.html;
     }
   }
 
-  if (className === "VirtualText") {
+  if (className === 'VirtualText') {
     // sending over the entire text content
   }
-  
-  if (className === "VirtualNode") {
+
+  if (className === 'VirtualNode') {
     // removing hooks as those can't be JSONified
-    var p = serializableNode.properties;
-    if (p && (p.hasOwnProperty("animation")
-           || p.hasOwnProperty("morph-after-render-hook")
-           || p.hasOwnProperty("morph-render-done-hook")
-           || p.hasOwnProperty("after-text-render-hook"))) {
+    let p = serializableNode.properties;
+    if (p && (p.hasOwnProperty('animation') ||
+           p.hasOwnProperty('morph-after-render-hook') ||
+           p.hasOwnProperty('morph-render-done-hook') ||
+           p.hasOwnProperty('after-text-render-hook'))) {
       serializableNode = new VNode(
         serializableNode.tagName,
         obj.dissoc(p, [
-          "morph-render-done-hook",
-          "morph-after-render-hook",
-          "after-text-render-hook",
-          "animation"]),
-          serializableNode.children, serializableNode.key, serializableNode.namespace)
+          'morph-render-done-hook',
+          'morph-after-render-hook',
+          'after-text-render-hook',
+          'animation']),
+        serializableNode.children, serializableNode.key, serializableNode.namespace);
     }
 
     if (serializableNode.children && serializableNode.children.length) {
@@ -75,63 +75,59 @@ function makeNodeSerializable(node) {
   return serializableNode;
 }
 
-function renderMorph(morph) {
+function renderMorph (morph) {
   return morph.render(morph.env.renderer);
 }
 
-
 export default class Master {
-
-  static installLively2LivelyServices(options = {}) {
-    var {l2lClient} = options;
+  static installLively2LivelyServices (options = {}) {
+    let { l2lClient } = options;
     l2lClient = l2lClient || L2LClient.default();
     Object.keys(this.services).forEach(name =>
       l2lClient.addService(name,
         async (tracker, msg, ackFn) => this.services[name](tracker, msg, ackFn)));
-    debug && console.log(`[lively.mirror master] services installed`);
+    debug && console.log('[lively.mirror master] services installed');
   }
 
-  static uninstallLively2LivelyServices(options = {}) {
-    var {l2lClient} = options;
-    l2lClient = l2lClient || L2LClient.default()
+  static uninstallLively2LivelyServices (options = {}) {
+    let { l2lClient } = options;
+    l2lClient = l2lClient || L2LClient.default();
     Object.keys(this.services).forEach(name => l2lClient.removeService(name));
-    debug && console.log(`[lively.mirror master] services uninstalled`);
+    debug && console.log('[lively.mirror master] services uninstalled');
   }
 
-
-  static invokeServices(selector, data, ackFn) {
-    this.services[selector](null, {data}, ackFn);
+  static invokeServices (selector, data, ackFn) {
+    this.services[selector](null, { data }, ackFn);
   }
 
-  static get services() {
+  static get services () {
     if (this._services) return this._services;
     return this._services = {
-      async "lively.mirror.process-client-events": (_, {data: {events, masterId}}, ackFn) => {
-        debug && console.log(`[lively.mirror master] receiving client events`);
+      'lively.mirror.process-client-events': async (_, { data: { events, masterId } }, ackFn) => {
+        debug && console.log('[lively.mirror master] receiving client events');
         try {
-
-          var master = Master.getInstance(masterId);
+          let master = Master.getInstance(masterId);
           if (!master) {
-            var msg = `[lively.mirror.process-client-events] Trying to find master for id ${masterId} failed.`;
+            let msg = `[lively.mirror.process-client-events] Trying to find master for id ${masterId} failed.`;
             $world.logError(new Error(msg));
-            if (typeof ackFn === "function") ackFn({error: msg});
+            if (typeof ackFn === 'function') ackFn({ error: msg });
             return;
           }
           await master.dispatchEvents(events);
         } catch (e) { $world.logError(e); }
 
-        if (typeof ackFn === "function") ackFn({status: "OK"});
+        if (typeof ackFn === 'function') ackFn({ status: 'OK' });
       }
-    }
+    };
   }
 
-  static get instances() {
+  static get instances () {
     if (!this._instances) this._instances = new Map();
     return this._instances;
   }
 
-  static getInstance(id) {
-    var instance = this.instances.get(id);
+  static getInstance (id) {
+    let instance = this.instances.get(id);
     if (!instance) {
       instance = this.createInstance(id);
       this.instances.set(id, instance);
@@ -139,23 +135,23 @@ export default class Master {
     return instance;
   }
 
-  static removeInstance(id) {
-    if (!this.instances) return
-    var instance = this.instances.get(id);
+  static removeInstance (id) {
+    if (!this.instances) return;
+    let instance = this.instances.get(id);
     if (!instance) return;
     instance.disconnect();
-    this.instances.delete(id)
+    this.instances.delete(id);
   }
 
-  static createInstance(id, targetMorph, channel, clientId) {
-    var instance = this.instances.get(id);
+  static createInstance (id, targetMorph, channel, clientId) {
+    let instance = this.instances.get(id);
     if (instance) instance.disconnect();
     instance = new this(id, targetMorph, channel, clientId);
     this.instances.set(id, instance);
     return instance;
   }
 
-  constructor(id, targetMorph, channel, clientId = "__default__") {
+  constructor (id, targetMorph, channel, clientId = '__default__') {
     this.id = id;
     this.channel = channel;
     this.targetMorph = targetMorph;
@@ -171,57 +167,56 @@ export default class Master {
     this.netEndTime = 0;
   }
 
-  async l2lSetup(clientL2lId) {
-    var l2lClient = L2LClient.default();
+  async l2lSetup (clientL2lId) {
+    let l2lClient = L2LClient.default();
     this.channel = {
-      send(selector, data) {
+      send (selector, data) {
         return l2lClient.sendToAndWait(clientL2lId, selector, data);
       }
-    }
+    };
 
     Master.installLively2LivelyServices();
 
     // 2b. let the client now who is its master! (for sending events)
     await l2lClient.sendToAndWait(clientL2lId,
-      "lively.mirror.install-l2l-channel",
-      {masterId: this.id, sender: l2lClient.id, id: this.clientId});
+      'lively.mirror.install-l2l-channel',
+      { masterId: this.id, sender: l2lClient.id, id: this.clientId });
   }
 
-  sendUpdate() {
+  sendUpdate () {
     if (this.sendInProgress) return;
     this.sendInProgress = true;
     return promise.finally(
-      this.prevVdomNode ?
-        this.sendViewPatch() :
-        this.sendInitialView(),
+      this.prevVdomNode
+        ? this.sendViewPatch()
+        : this.sendInitialView(),
       () => {
         this.sendInProgress = false;
         this.netEndTime = Date.now();
       });
   }
 
-  async disconnect() {
-    var id = this.clientId;
-    return this.channel.send("lively.mirror.disconnect", {id});
+  async disconnect () {
+    let id = this.clientId;
+    return this.channel.send('lively.mirror.disconnect', { id });
   }
 
-  sendInitialView() {
-    
+  sendInitialView () {
     this.debug && (this.serializationStartTime = Date.now());
-    var node = this.prevVdomNode = makeNodeSerializable(renderMorph(this.targetMorph)),
-        id = this.clientId;
+    let node = this.prevVdomNode = makeNodeSerializable(renderMorph(this.targetMorph));
+    let id = this.clientId;
     this.debug && (this.serializationEndTime = Date.now());
     // try { JSON.stringify(node); } catch (e) { throw new Error("Node cannot be serialized");  }
     // node = vdomAsJSON.toJson(node);
     this.debug && (this.netStartTime = Date.now());
     this.debug && (this.lastSendSize = JSON.stringify(node).length);
 
-    return this.channel.send("lively.mirror.render", {node, id});
+    return this.channel.send('lively.mirror.render', { node, id });
   }
 
-  sendViewPatch() {
-    var patch = this.getVdomPatch(),
-        id = this.clientId;
+  sendViewPatch () {
+    let patch = this.getVdomPatch();
+    let id = this.clientId;
     if (!patch) return Promise.resolve(null);
 
     replaceUndefinedWithPlaceholder(patch);
@@ -229,36 +224,35 @@ export default class Master {
     this.debug && (this.netStartTime = Date.now());
     this.debug && (this.lastSendSize = JSON.stringify(patch).length);
 
-    return this.channel.send("lively.mirror.render-patch",
-      {useOptimizedPatchFormat, patch, id});
+    return this.channel.send('lively.mirror.render-patch',
+      { useOptimizedPatchFormat, patch, id });
   }
 
-  getVdomPatch() {
+  getVdomPatch () {
     this.debug && (this.serializationStartTime = Date.now());
 
-    var newNode = makeNodeSerializable(renderMorph(this.targetMorph)),
-        rawPatch = diff(this.prevVdomNode, newNode);
+    let newNode = makeNodeSerializable(renderMorph(this.targetMorph));
+    let rawPatch = diff(this.prevVdomNode, newNode);
     this.prevVdomNode = newNode;
 
     if (Object.keys(rawPatch).length === 1 && rawPatch.a) return null; // no patch
-    
-    let result = useOptimizedPatchFormat ?
-            serializePatch(rawPatch) :
-            vdomAsJSON.toJson(rawPatch);
+
+    let result = useOptimizedPatchFormat
+      ? serializePatch(rawPatch)
+      : vdomAsJSON.toJson(rawPatch);
     this.debug && (this.serializationEndTime = Date.now());
     return result;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  dispatchEvents(events) {
-    var doc = this.targetMorph.env.domEnv.document;
+  dispatchEvents (events) {
+    let doc = this.targetMorph.env.domEnv.document;
     events.map(ea => {
-      var targetId = ea.target;
-      if (typeof targetId === "string") ea.target = doc.getElementById(targetId);
+      let targetId = ea.target;
+      if (typeof targetId === 'string') ea.target = doc.getElementById(targetId);
       try {
         this.targetMorph.env.eventDispatcher.dispatchDOMEvent(ea);
       } catch (e) { throw e; }
     });
   }
 }
-
