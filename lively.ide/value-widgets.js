@@ -417,8 +417,20 @@ export class NumberWidget extends Morph {
           this.relayout(false);
         }
       },
-      min: { defaultValue: -Infinity },
-      max: { defaultValue: Infinity },
+      min: {
+        defaultValue: -Infinity,
+        set (min) {
+          this.setProperty('min', min);
+          this.relayout(false);
+        }
+      },
+      max: {
+        defaultValue: Infinity,
+        set (max) {
+          this.setProperty('max', max);
+          this.relayout(false);
+        }
+      },
       floatingPoint: {
         after: ['number', 'submorphs'],
         set (isFloat) {
