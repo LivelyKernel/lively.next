@@ -1940,7 +1940,7 @@ export class InteractiveMorphSelector {
     this.whenDone = deferred.promise;
     this.selectorMorph = Icon.makeLabel('crosshairs', { fontSize: 20, hasFixedPosition: true, epiMorph: true }).openInWorld();
     connect(this.world.firstHand, 'position', this, 'scanForTargetAt');
-    once(this.selectorMorph, 'onMouseDown', this, 'selectTarget');
+    once(this.selectorMorph, 'onMouseUp', this, 'selectTarget');
     once(this.selectorMorph, 'onKeyDown', this, 'stopSelect');
     this.selectorMorph.focus();
     this.scanForTargetAt(this.world.firstHand.position);

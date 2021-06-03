@@ -998,7 +998,8 @@ export default class Inspector extends Morph {
         targetModule: 'lively://lively.morphic/inspector',
         get context () {
           return thisBindingSelector.selection == 'selection'
-            ? codeEditor.owner.selectedContext : codeEditor.owner.targetObject;
+            ? codeEditor.owner.selectedContext
+            : codeEditor.owner.targetObject;
         },
         get systemInterface () {
           return Path('treeData.systemInterface').get(propertyTree);
@@ -1031,7 +1032,8 @@ export default class Inspector extends Morph {
         targetModule: 'lively://lively.morphic/inspector',
         get context () {
           return thisBindingSelector.selection == 'selection'
-            ? codeEditor.owner.selectedContext : codeEditor.owner.targetObject;
+            ? codeEditor.owner.selectedContext
+            : codeEditor.owner.targetObject;
         },
         get systemInterface () {
           return propertyTree.treeData.systemInterface;
@@ -1040,7 +1042,7 @@ export default class Inspector extends Morph {
       }
     ).catch(err => $world.logError(err));
 
-    connect(targetPicker, 'onMouseDown', this, 'selectTarget');
+    connect(targetPicker, 'onMouseUp', this, 'selectTarget');
     connect(propertyTree, 'onScroll', this, 'repositionOpenWidget');
     connect(resizer, 'onDrag', this, 'adjustProportions');
     connect(terminalToggler, 'onMouseDown', this, 'toggleCodeEditor');
