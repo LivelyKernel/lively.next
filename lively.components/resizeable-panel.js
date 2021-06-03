@@ -3,7 +3,7 @@ import { pt, Color } from 'lively.graphics';
 import { connect, disconnectAll } from 'lively.bindings';
 
 const CONSTANTS = {
-  DEFAULT_RESIZER_WIDTH: 6
+  DEFAULT_RESIZER_WIDTH: 4
 };
 
 export class ResizeablePanel extends Morph {
@@ -42,6 +42,19 @@ export class ResizeablePanel extends Morph {
         defaultValue: pt(50, 50)
       }
     };
+  }
+
+  defaultResizerPosition (resizer, side) {
+    switch (side) {
+      case 'north':
+        return pt(0, 0);
+      case 'south':
+        return pt(0, this.height - resizer.height);
+      case 'east':
+        return pt(this.width - resizer.width, 0);
+      case 'west':
+        return pt(0, 0);
+    }
   }
 
   build () {
@@ -112,12 +125,19 @@ export class ResizeablePanel extends Morph {
     return !!this._resizeInProgress;
   }
 
-  onResize () {
+  resizeSetup () {
+    // setup before resize is conducted
+    // don't connect to this method to react to resizes, use 'onResize' instead
     this._resizeInProgress = true;
   }
 
+  onResize () {
+    // hook to connect to react to resizes in any direction
+  }
+
   onResizeNorth (evt) {
-    this.onResize();
+    this.resizeSetup();
+
     const { dragStartPanelPosition, dragStartPanelExtent, absDragDelta } = evt.state;
 
     const newHeight = dragStartPanelExtent.subPt(absDragDelta).y;
@@ -130,20 +150,24 @@ export class ResizeablePanel extends Morph {
     this.ui.resizers.north.position =
       this.defaultResizerPosition(this.ui.resizers.north, 'north');
     this.position = newPanelPosition;
+
+    this.onResize();
   }
 
   onResizeSouth () {
-    this.onResize();
+    this.resizeSetup();
     this.extent = pt(this.width, this.ui.resizers.south.center.y);
+    this.onResize();
   }
 
   onResizeEast () {
-    this.onResize();
+    this.resizeSetup();
     this.extent = pt(this.ui.resizers.east.center.x, this.height);
+    this.onResize();
   }
 
   onResizeWest (evt) {
-    this.onResize();
+    this.resizeSetup();
     const { dragStartPanelPosition, dragStartPanelExtent, absDragDelta } = evt.state;
 
     const newWidth = dragStartPanelExtent.subPt(absDragDelta).x;
@@ -154,6 +178,8 @@ export class ResizeablePanel extends Morph {
     this.ui.resizers.west.position =
       this.defaultResizerPosition(this.ui.resizers.west, 'west');
     this.position = newPanelPosition;
+
+    this.onResize();
   }
 
   onResizeEnd () {
@@ -162,7 +188,6 @@ export class ResizeablePanel extends Morph {
   }
 
   addMorphAt (submorph, index) {
-    debugger;
     const morph = super.addMorphAt(submorph, index);
     const resizers = Object.values(this.ui.resizers || {});
     if (this._building || resizers.includes(morph)) return morph;
@@ -170,21 +195,7 @@ export class ResizeablePanel extends Morph {
     return morph;
   }
 
-  defaultResizerPosition (resizer, side) {
-    switch (side) {
-      case 'north':
-        return pt(0, -resizer.height / 2);
-      case 'south':
-        return pt(0, this.height - resizer.height / 2);
-      case 'east':
-        return pt(this.width - resizer.width / 2, 0);
-      case 'west':
-        return pt(-resizer.width / 2, 0);
-    }
-  }
-
   relayout () {
-    if (this.isResizing) return;
     Object.keys(this.ui.resizers).forEach(side => {
       const resizer = this.ui.resizers[side];
       switch (side) {
