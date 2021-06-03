@@ -1,27 +1,27 @@
-/*global TextDecoder*/
-import { Morph, Text, config } from "lively.morphic";
-import { num, promise } from "lively.lang";
-import { pt, Color } from "lively.graphics";
-import { connect, signal, once } from "lively.bindings";
-import { resource } from "lively.resources";
-import { guessTextModeName } from "./editor-plugin.js";
+/* global TextDecoder */
+import { Morph, Text, config } from 'lively.morphic';
+import { num, promise } from 'lively.lang';
+import { pt, Color } from 'lively.graphics';
+import { connect, signal, once } from 'lively.bindings';
+import { resource } from 'lively.resources';
+import { guessTextModeName } from './editor-plugin.js';
 
 // this.world().openInWindow(new TextEditor).activate()
 
 const editorCommands = [
 
   {
-    name: "focus url input",
+    name: 'focus url input',
     exec: fileBrowser => { fileBrowser.ui.urlInput.focus(); return true; }
   },
 
   {
-    name: "focus content text",
+    name: 'focus content text',
     exec: fileBrowser => { fileBrowser.ui.contentText.focus(); return true; }
   },
 
   {
-    name: "load file",
+    name: 'load file',
     exec: async fileBrowser => {
       fileBrowser.location = fileBrowser.ui.urlInput.input;
       return true;
@@ -29,15 +29,15 @@ const editorCommands = [
   },
 
   {
-    name: "save file",
+    name: 'save file',
     exec: async textEditor => {
       let action = textEditor.customSaveAction || textEditor.defaultSaveAction;
       try {
         let result = await action(textEditor);
         if (result.saved) {
-          textEditor.setStatusMessage(result.message || "saved", Color.green);
-          signal(textEditor, "contentSaved");
-        } else textEditor.setStatusMessage(result.message || "not saved");
+          textEditor.setStatusMessage(result.message || 'saved', Color.green);
+          signal(textEditor, 'contentSaved');
+        } else textEditor.setStatusMessage(result.message || 'not saved');
       } catch (e) {
         textEditor.showError(`Error saving: ${e.stack || e}`);
       }
@@ -46,11 +46,11 @@ const editorCommands = [
   },
 
   {
-    name: "remove file",
+    name: 'remove file',
     exec: async textEditor => {
       let f = textEditor.locationResource;
       if (!f) {
-        textEditor.setStatusMessage("No file selected");
+        textEditor.setStatusMessage('No file selected');
         return true;
       }
 
@@ -60,115 +60,120 @@ const editorCommands = [
           textEditor.setStatusMessage(`${f.url} removed!`);
           textEditor.reload();
         } else {
-          await textEditor.world().inform("delete file canceled");
+          await textEditor.world().inform('delete file canceled');
         }
-
       } catch (e) {
         textEditor.showError(`Error writing ${f.url}: ${e.stack || e}`);
       }
 
       return true;
     }
-  },
+  }
 
 ];
 
 export default class TextEditor extends Morph {
-
-  static openURL(url, props) {
-    return this.openInWindow({location: url, ...props});
+  static openURL (url, props) {
+    return this.openInWindow({ location: url, ...props });
   }
 
-  static openAsEDITOR(file, props) {
+  static openAsEDITOR (file, props) {
     // returns "saved" or "aborted"
-    var editor = this.openURL(file, props);
+    let editor = this.openURL(file, props);
     return new Promise((resolve, reject) => {
-      once(editor, "contentSaved", resolve, "call", {
-        updater: function($upd) { $upd(null, "saved"); this.sourceObj.close(); }
+      once(editor, 'contentSaved', resolve, 'call', {
+        updater: function ($upd) { $upd(null, 'saved'); this.sourceObj.close(); }
       });
-      once(editor, "closed", resolve, "call", {updater: $upd => $upd(null, "aborted")});
+      once(editor, 'closed', resolve, 'call', { updater: $upd => $upd(null, 'aborted') });
     });
   }
 
-  static openInWindow(props) {
-    var ed = new this(props);
+  static openInWindow (props) {
+    let ed = new this(props);
     ed.env.world.openInWindow(ed).activate();
     return ed;
   }
 
-  static get properties() {
+  static get properties () {
     return {
-      name: {defaultValue: "text editor"},
-      fill: {defaultValue: Color.white},
-      border: {defaultValue: {width: 1, color: Color.black}},
-      extent: {defaultValue: pt(700,600)},
+      name: { defaultValue: 'text editor' },
+      fill: { defaultValue: Color.white },
+      border: { defaultValue: { width: 1, color: Color.black } },
+      extent: { defaultValue: pt(700, 600) },
 
-      historyId: {defaultValue: "lively.morphic-text editor url"},
+      historyId: { defaultValue: 'lively.morphic-text editor url' },
 
       submorphs: {
-        after: ["historyId"],
-        initialize() {
+        after: ['historyId'],
+        initialize () {
           this.submorphs = [
-            Text.makeInputLine({name: "urlInput", historyId: this.historyId}),
-            {name: "loadButton", type: "button", label: "reload"},
-            {name: "saveButton", type: "button", label: "save"},
-            {name: "removeButton", type: "button", label: "remove"},
+            Text.makeInputLine({ name: 'urlInput', historyId: this.historyId }),
+            { name: 'loadButton', type: 'button', label: 'reload' },
+            { name: 'saveButton', type: 'button', label: 'save' },
+            { name: 'removeButton', type: 'button', label: 'remove' },
             {
               ...config.codeEditor.defaultStyle,
-              name: "contentText", type: "text",
+              name: 'contentText',
+              type: 'text',
               lineWrapping: false
             }
           ];
-          var {urlInput, loadButton, saveButton, removeButton, contentText} = this.ui;
-          connect(this, "extent", this, "relayout");
-          connect(urlInput, "inputAccepted", this, "location");
-          connect(loadButton, "fire", this, "execCommand", {converter: () => "load file"});
-          connect(saveButton, "fire", this, "execCommand", {converter: () => "save file"});
-          connect(removeButton, "fire", this, "execCommand", {converter: () => "remove file"});        }
+          let { urlInput, loadButton, saveButton, removeButton, contentText } = this.ui;
+          connect(this, 'extent', this, 'relayout');
+          connect(urlInput, 'inputAccepted', this, 'location');
+          connect(loadButton, 'fire', this, 'execCommand', { converter: () => 'load file' });
+          connect(saveButton, 'fire', this, 'execCommand', { converter: () => 'save file' });
+          connect(removeButton, 'fire', this, 'execCommand', { converter: () => 'remove file' });
+        }
       },
 
       ui: {
-        readOnly: true, derived: true, after: ["submorphs"],
-        get() {
-          var [urlInput, loadButton, saveButton, removeButton, contentText] = this.submorphs;
-          return {urlInput, loadButton, saveButton, removeButton, contentText};
+        readOnly: true,
+        derived: true,
+        after: ['submorphs'],
+        get () {
+          let [urlInput, loadButton, saveButton, removeButton, contentText] = this.submorphs;
+          return { urlInput, loadButton, saveButton, removeButton, contentText };
         }
       },
 
       location: {
-        derived: true, after: ["submorphs"],
+        derived: true,
+        after: ['submorphs'],
 
-        get() { return this.ui.urlInput.input; },
+        get () { return this.ui.urlInput.input; },
 
-        set(val) {
-          let {url, lineNumber} = this.parseFileNameInput(val),
-              {contentText, urlInput} = this.ui;
-          urlInput.input = val || "";
+        set (val) {
+          let { url, lineNumber } = this.parseFileNameInput(val);
+          let { contentText, urlInput } = this.ui;
+          urlInput.input = val || '';
           urlInput.acceptInput();
           if (urlInput.isFocused()) contentText.focus();
           this.showFileContent(url);
-          if (typeof lineNumber !== "undefined") this.lineNumber = lineNumber;
+          if (typeof lineNumber !== 'undefined') this.lineNumber = lineNumber;
         }
       },
 
       locationResource: {
-        derived: true, after: ["location"],
-        get() {
-          let {url} = this.parseFileNameInput(this.location);
+        derived: true,
+        after: ['location'],
+        get () {
+          let { url } = this.parseFileNameInput(this.location);
           return resource(url);
         },
-        set(resource) { this.location = resource.url; }
+        set (resource) { this.location = resource.url; }
       },
 
       lineNumber: {
-        derived: true, after: ["location"],
-        get() { return this.ui.contentText.cursorPosition.row; },
-        set(val) {
-          var row = Number(val);
+        derived: true,
+        after: ['location'],
+        get () { return this.ui.contentText.cursorPosition.row; },
+        set (val) {
+          let row = Number(val);
           if (isNaN(row)) return;
           this.whenLoaded().then(() => {
-            var ed = this.ui.contentText;
-            ed.cursorPosition = {row, column: 0};
+            let ed = this.ui.contentText;
+            ed.cursorPosition = { row, column: 0 };
             ed.centerRow(row);
           });
         }
@@ -184,23 +189,23 @@ export default class TextEditor extends Morph {
     };
   }
 
-  constructor(props) {
+  constructor (props) {
     super(props);
     this.relayout();
     this._loadPromise = null;
   }
 
-  get isTextEditor() { return true; }
+  get isTextEditor () { return true; }
 
-  reload() { this.location = this.location; }
+  reload () { this.location = this.location; }
 
-  relayout() {
-    var {urlInput, loadButton, saveButton, removeButton, contentText} = this.ui;
+  relayout () {
+    let { urlInput, loadButton, saveButton, removeButton, contentText } = this.ui;
 
     urlInput.width = contentText.width = this.width;
     urlInput.top = 0;
     urlInput.height = 20;
-    var oneThird = this.width/3;
+    let oneThird = this.width / 3;
     loadButton.extent = saveButton.extent = removeButton.extent = pt(oneThird, 20);
     loadButton.topLeft = urlInput.bottomLeft;
     saveButton.topLeft = loadButton.topRight;
@@ -209,24 +214,24 @@ export default class TextEditor extends Morph {
     contentText.height = this.height - loadButton.bottom;
   }
 
-  async whenLoaded() {
+  async whenLoaded () {
     return this._loadPromise || Promise.resolve(this);
   }
 
-  parseFileNameInput(input) {
-    let url = input,
-        lineNumber = undefined,
-        colonIndex = input.lastIndexOf(":");
+  parseFileNameInput (input) {
+    let url = input;
+    let lineNumber;
+    let colonIndex = input.lastIndexOf(':');
 
-    if (colonIndex > -1 && input.slice(colonIndex+1).match(/^[0-9]+$/)) {
-      lineNumber = Number(input.slice(colonIndex+1));
+    if (colonIndex > -1 && input.slice(colonIndex + 1).match(/^[0-9]+$/)) {
+      lineNumber = Number(input.slice(colonIndex + 1));
       url = input.slice(0, colonIndex);
     }
 
-    return {lineNumber, url};
+    return { lineNumber, url };
   }
 
-  async showFileContent(url) {
+  async showFileContent (url) {
     let deferred = promise.deferred();
     this._loadPromise = deferred.promise;
     try {
@@ -237,25 +242,25 @@ export default class TextEditor extends Morph {
         res = resource(url);
         content = await res.read();
         if (content.constructor == ArrayBuffer) {
-           content = new TextDecoder().decode(content)
+          content = new TextDecoder().decode(content);
         }
       }
-      if (!content) content = "";
+      if (!content) content = '';
       await this.prepareEditorForFile(url, content);
-      var win = this.getWindow();
+      let win = this.getWindow();
       if (win) win.title = res ? res.name() : url;
       deferred.resolve(this);
     } catch (err) { this.showError(err); deferred.reject(err); }
     return this._loadPromise;
   }
 
-  async prepareEditorForFile(url, content = "") {
+  async prepareEditorForFile (url, content = '') {
     // FIXME
-    if (typeof content === "object") ({content, url} = content);
+    if (typeof content === 'object') ({ content, url } = content);
 
-    var ed = this.ui.contentText, mode, setupFn;
+    let ed = this.ui.contentText; let mode; let setupFn;
 
-    if (content.length > 2**19/*0.5MB*/) {
+    if (content.length > 2 ** 19/* 0.5MB */) {
       this.setStatusMessage(`File content very big, ${num.humanReadableByteSize(content.length)}. Styling is disabled`);
     } else {
       mode = guessTextModeName(content, url);
@@ -271,40 +276,40 @@ export default class TextEditor extends Morph {
 
     ed.textString = content;
     ed.gotoDocumentStart();
-    ed.scroll = pt(0,0);
+    ed.scroll = pt(0, 0);
   }
 
-  async defaultSaveAction(textEditor) {
+  async defaultSaveAction (textEditor) {
     let f = textEditor.locationResource;
     if (f) {
       await f.write(textEditor.ui.contentText.textString);
-      return {saved: true};
+      return { saved: true };
     }
-    return {saved: false, message: "No file selected"};
+    return { saved: false, message: 'No file selected' };
   }
 
-  focus() {
+  focus () {
     this.ui.contentText.focus();
   }
 
-  close() {
-    var win = this.getWindow();
+  close () {
+    let win = this.getWindow();
     win ? win.close() : this.remove();
   }
 
-  onWindowClose() {
-    signal(this, "closed");
+  onWindowClose () {
+    signal(this, 'closed');
   }
 
-  get commands() {
+  get commands () {
     return editorCommands.concat(super.commands);
   }
 
-  get keybindings() {
+  get keybindings () {
     return [
-      {keys: {mac: "Meta-S", win: "Ctrl-S"}, command: "save file"},
-      {keys: "Alt-Up", command: "focus url input"},
-      {keys: "Alt-Down", command: "focus content text"}
+      { keys: { mac: 'Meta-S', win: 'Ctrl-S' }, command: 'save file' },
+      { keys: 'Alt-Up', command: 'focus url input' },
+      { keys: 'Alt-Down', command: 'focus content text' }
     ].concat(super.keybindings);
   }
 }

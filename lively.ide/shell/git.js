@@ -1,12 +1,13 @@
-import { fun, arr, string, obj } from "lively.lang";
-import { defaultDirectory, runCommand } from "./shell-interface.js";
+/* global readFileFn,writeFileFn */
+import { fun, arr, string, obj } from 'lively.lang';
+import { defaultDirectory, runCommand } from './shell-interface.js';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // generic shell interface
 
-var isPublicServer = false;
+let isPublicServer = false;
 
-async function runCommands(commands) {
+async function runCommands (commands) {
   // commands is an array of command spec objects like [
   //   {name: "cmd1", command: "ls -l"},
   //   {name: "cmd2", command: "echo ls: ${cmd1}"},
@@ -21,72 +22,71 @@ async function runCommands(commands) {
   lively.ide.CommandLineInterface.runAll([{name: "cmd1", command: "ls ."}], function(err, commands) { show(commands.cmd1.resultString()); });
   */
 
-  var results = {}, group = "lively.shell-default-command-group-" + string.newUUID();
+  let results = {}; let group = 'lively.shell-default-command-group-' + string.newUUID();
 
-  var i = 0;
-  for (let {name, command, options, transform, readFile, writeFile, content} of commands) {
+  let i = 0;
+  for (let { name, command, options, transform, readFile, writeFile, content } of commands) {
     options = options || {};
     if (!group) options.group = group;
 
     // FIXME!!!! that won't work right now
-    if (readFile) { runCommand = readFileFn; command = readFile; }
-    else if (writeFile) {
+    if (readFile) { runCommand = readFileFn; command = readFile; } else if (writeFile) {
       runCommand = writeFileFn;
       command = writeFile;
       options = options || {};
       if (content) options.content = content;
     }
 
-    if (!readFile && !writeFile)
+    if (!readFile && !writeFile) {
       command = command.replace(/\$\{([^\}]+)\}/g, (_, variable) =>
-        results[variable] && results[variable].isShellCommand ?
-          results[variable].output : (results[variable] || ''));
-
+        results[variable] && results[variable].isShellCommand
+          ? results[variable].output
+          : (results[variable] || ''));
+    }
 
     console.log(`Running ${command} with options`, options);
 
-    var cmd = await runCommand(command, options)
+    let cmd = await runCommand(command, options);
     await cmd.whenDone();
 
     name = name || String(i++);
-    results[name] = typeof transform === "function" ? transform(cmd) : cmd;
+    results[name] = typeof transform === 'function' ? transform(cmd) : cmd;
   }
 
   return results;
 }
 
-export async function runGitCommands(commands, options = {cwd: null}) {
-  var defaultOptions = ['--no-pager'];
+export async function runGitCommands (commands, options = { cwd: null }) {
+  let defaultOptions = ['--no-pager'];
 
   // 1. determine working directory
-  var cwd = options.cwd ? options.cwd : await defaultDirectory();
+  let cwd = options.cwd ? options.cwd : await defaultDirectory();
 
   // 2. prepare commands
-  var cmds = commands.map(ea => {
+  let cmds = commands.map(ea => {
     if (ea.gitCommand) {
       if (Array.isArray(ea.gitCommand)) ea.gitCommand = ea.gitCommand.join(' ');
       ea.command = ['git'].concat(defaultOptions).concat([ea.gitCommand]).join(' ');
     }
-    ea.options = {cwd, group: 'lively-git-interface', ...ea.options};
+    ea.options = { cwd, group: 'lively-git-interface', ...ea.options };
     return ea;
   }).filter(Boolean);
 
   if (!options.dryRun) {
     var result = await runCommands(commands);
     result = Object.keys(result || {}).reduce((result, name) => {
-      var cmd = result[name];
+      let cmd = result[name];
       if (!cmd || !cmd.isShellCommand) return result;
       result['cmd' + string.capitalize(name)] = cmd;
       result[name] = cmd.output;
-      return result
+      return result;
     }, result);
   }
 
   return result;
 }
 
-
-export async function fileStatus(dir, options = {}) {
+export async function fileStatus (dir, options = {}) {
   /*
   var results = await fileStatus("/Users/robert/Lively/lively-dev/lively.morphic");
   */
@@ -95,32 +95,30 @@ export async function fileStatus(dir, options = {}) {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // 1. run git status
-  var commands = [{
-    name: "status",
-    gitCommand: "status --porcelain",
+  let commands = [{
+    name: 'status',
+    gitCommand: 'status --porcelain',
     transform: cmd => cmd.output
   }];
 
   try {
-    var mapping = await runGitCommands(commands, {cwd: dir}),
-        lines = mapping && mapping.status.split('\n'),
-        fileObjects = arr.flatmap(lines || [], line => {
-          if (!line) return [];
-          var m, results = [];
-          if (m = line.match(/^(\s[A-Z]|[A-Z]{2})(.*)/)) results.push({status: "unstaged",  statusString: m[0]});
-          if (m = line.match(/^[A-Z]{1,2}(.*)/))         results.push({status: "staged",    statusString: m[0]});
-          if (m = line.match(/^\s*\?\?(.*)/))            results.push({status: "untracked", statusString: m[0]});
-          return results;
-        }).filter(Boolean);
-
+    let mapping = await runGitCommands(commands, { cwd: dir });
+    let lines = mapping && mapping.status.split('\n');
+    var fileObjects = arr.flatmap(lines || [], line => {
+      if (!line) return [];
+      let m; let results = [];
+      if (m = line.match(/^(\s[A-Z]|[A-Z]{2})(.*)/)) results.push({ status: 'unstaged', statusString: m[0] });
+      if (m = line.match(/^[A-Z]{1,2}(.*)/)) results.push({ status: 'staged', statusString: m[0] });
+      if (m = line.match(/^\s*\?\?(.*)/)) results.push({ status: 'untracked', statusString: m[0] });
+      return results;
+    }).filter(Boolean);
   } catch (e) {
-    new Error("failed to run git status on " + dir + "\n" + e);
+    new Error('failed to run git status on ' + dir + '\n' + e);
   }
 
   return fileObjects.map(addFilenameAndChange);
 
-
-  function addFilenameAndChange(fileObject) {
+  function addFilenameAndChange (fileObject) {
     // statusString looks like "R  bar.txt -> foo.txt"
     //        +o   ' ' = unmodified
     //        +o    _M = modified
@@ -157,44 +155,42 @@ export async function fileStatus(dir, options = {}) {
     //            !           !    ignored
     //            -------------------------------------------------
 
-    var statusString = fileObject.statusString,
-        type= fileObject.status,
-        change = '',
-        fileName = statusString.slice(3),
-        statusFlags = statusString.slice(0,2), // git status --porcelain format
-        statusFlagIndex = statusFlags[0],
-        statusFlagWorkTree = statusFlags[1],
-        statusFlag = type === 'unstaged' ? statusFlagWorkTree : statusFlagIndex;
+    let statusString = fileObject.statusString;
+    let type = fileObject.status;
+    let change = '';
+    let fileName = statusString.slice(3);
+    let statusFlags = statusString.slice(0, 2); // git status --porcelain format
+    let statusFlagIndex = statusFlags[0];
+    let statusFlagWorkTree = statusFlags[1];
+    let statusFlag = type === 'unstaged' ? statusFlagWorkTree : statusFlagIndex;
 
     // for unmerged changes the status flags can be interpreted as follows:
-    if (statusFlags ==="DD") change = "unmerged, deleted locally and remotely";
-    else if (statusFlags ==="AU") change = "unmerged, added locally and modified remotely";
-    else if (statusFlags ==="UD") change = "unmerged, modified locally and deleted remotely";
-    else if (statusFlags ==="UA") change = "unmerged, modified locally and added remotely";
-    else if (statusFlags ==="DU") change = "unmerged, deleted locally and modified remotely";
-    else if (statusFlags ==="AA") change = "unmerged, added locally and remotely";
-    else if (statusFlags ==="UU") change = "unmerged, modified locally and remotely";
-    else if (statusFlag === "M") change = 'modfied';
-    else if (statusFlag === "R") change = 'renamed';
-    else if (statusFlag === "C") change = 'copied';
-    else if (statusFlag === "A") change = 'added';
-    else if (statusFlag === "D") change = 'deleted';
+    if (statusFlags === 'DD') change = 'unmerged, deleted locally and remotely';
+    else if (statusFlags === 'AU') change = 'unmerged, added locally and modified remotely';
+    else if (statusFlags === 'UD') change = 'unmerged, modified locally and deleted remotely';
+    else if (statusFlags === 'UA') change = 'unmerged, modified locally and added remotely';
+    else if (statusFlags === 'DU') change = 'unmerged, deleted locally and modified remotely';
+    else if (statusFlags === 'AA') change = 'unmerged, added locally and remotely';
+    else if (statusFlags === 'UU') change = 'unmerged, modified locally and remotely';
+    else if (statusFlag === 'M') change = 'modfied';
+    else if (statusFlag === 'R') change = 'renamed';
+    else if (statusFlag === 'C') change = 'copied';
+    else if (statusFlag === 'A') change = 'added';
+    else if (statusFlag === 'D') change = 'deleted';
 
-    if (change === 'renamed' || change === 'copied')
-      fileName = fileName.split('->').last().trim();
+    if (change === 'renamed' || change === 'copied') { fileName = fileName.split('->').last().trim(); }
 
     fileObject.change = change;
     fileObject.fileName = fileName;
     return fileObject;
   }
-
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // committing, staging
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-export async function applyPatchesFromEditor(action, diffEditor, options = {}) {
+export async function applyPatchesFromEditor (action, diffEditor, options = {}) {
   // takes an editor with a git patch string (produced by `git diff`) and
   // figures out how to apply this patch based on the currently selected lines
   // and the state of the repo at options.cwd or the actual cwd.
@@ -202,15 +198,15 @@ export async function applyPatchesFromEditor(action, diffEditor, options = {}) {
   // only for applying the selected lines.
 
   // 1. read files and patch
-  var mode = diffEditor.pluginFind(p => p.isDiffEditorPlugin);
+  let mode = diffEditor.pluginFind(p => p.isDiffEditorPlugin);
 
-  if (!mode) throw new Error(`Editor ${diffEditor} has no diff mode`)
+  if (!mode) throw new Error(`Editor ${diffEditor} has no diff mode`);
 
-  var hasSelection = !diffEditor.selection.isEmpty(), patches;
+  let hasSelection = !diffEditor.selection.isEmpty(); let patches;
 
   if (!hasSelection) {
-    var patchInfo = mode.getPatchAtCursor(diffEditor),
-        {patch, hunk} = patchInfo || {};
+    let patchInfo = mode.getPatchAtCursor(diffEditor);
+    let { patch, hunk } = patchInfo || {};
     if (hunk) {
       patch = patch.copy();
       patch.hunks = [hunk];
@@ -218,97 +214,99 @@ export async function applyPatchesFromEditor(action, diffEditor, options = {}) {
     patches = patch ? [patch] : null;
   } else {
     patches = mode.getPatchesFromSelection(diffEditor);
-    patches[0].createPatchString()
+    patches[0].createPatchString();
   }
 
-  if (!patches) throw new Error("Could not read patches");
+  if (!patches) throw new Error('Could not read patches');
 
   // 2. git apply patches
   return await applyPatches(action, patches, options);
 }
 
-export async function applyPatches(action, patches, options = {}) {
+export async function applyPatches (action, patches, options = {}) {
   // action = "stage" || "unstage"
   // patches should be lively.ide.FilePatch objects
 
-  console.assert(action === "stage" || action === "unstage" || action === "discard" || action === "apply" || action === "reverseApply", action + " is not expected action");
-  console.assert(patches, "gitApply needs patches");
+  console.assert(action === 'stage' || action === 'unstage' || action === 'discard' || action === 'apply' || action === 'reverseApply', action + ' is not expected action');
+  console.assert(patches, 'gitApply needs patches');
 
-  var args = [];
-  if (action === "unstage" || action === "discard" || action === "reverseApply") args.push("--reverse");
-  if (action === "stage" || action === "unstage" || action === "discard") args.push("--cached");
+  let args = [];
+  if (action === 'unstage' || action === 'discard' || action === 'reverseApply') args.push('--reverse');
+  if (action === 'stage' || action === 'unstage' || action === 'discard') args.push('--cached');
 
-  var commands = [{
-    name: "gitApply",
-    options: {stdin: arr.invoke(patches, "createPatchString").join("\n")},
-    command: "git apply " + args.join(" ") + " -"}];
+  let commands = [{
+    name: 'gitApply',
+    options: { stdin: arr.invoke(patches, 'createPatchString').join('\n') },
+    command: 'git apply ' + args.join(' ') + ' -'
+  }];
 
-  if (action === "discard") commands.push({
-    name: "gitApply",
-    options: {stdin: arr.invoke(patches, "createPatchString").join("\n")},
-    command: "git apply --reverse -"});
+  if (action === 'discard') {
+    commands.push({
+      name: 'gitApply',
+      options: { stdin: arr.invoke(patches, 'createPatchString').join('\n') },
+      command: 'git apply --reverse -'
+    });
+  }
 
-  var results = await runGitCommands(commands, options);
-  if (results.hasOwnProperty("gitApply") && results.cmdGitApply.exitCode > 0)
-    throw new Error('Could not apply patch:\n' + results.cmdGitApply.stderr);
+  let results = await runGitCommands(commands, options);
+  if (results.hasOwnProperty('gitApply') && results.cmdGitApply.exitCode > 0) { throw new Error('Could not apply patch:\n' + results.cmdGitApply.stderr); }
 
-  return {commands: results, patches};
+  return { commands: results, patches };
 }
 
-
-export async function stageOrUnstageOrDiscardFiles(action, fileObjects, options = {}) {
+export async function stageOrUnstageOrDiscardFiles (action, fileObjects, options = {}) {
   // action = "stage" || "unstage"
   // fileObjects come from git.fileStatus and should have a fileName and status property
   // patches should be lively.ide.FilePatch objects
   // EITHER fileObjects or patches are needed. patches take precdence
 
-  console.assert(action === "stage" || action === "unstage" || action === "discard", action + " is not expected action");
-  console.assert(fileObjects, "stageOrUnstage needs file status objects");
+  console.assert(action === 'stage' || action === 'unstage' || action === 'discard', action + ' is not expected action');
+  console.assert(fileObjects, 'stageOrUnstage needs file status objects');
 
-  var filter;
-  if (action === "stage") filter = fo => fo.status === "unstaged";
-  if (action === "unstage") filter = fo => fo.status === "staged";
-  if (action === "discard") filter = fo => true;
+  let filter;
+  if (action === 'stage') filter = fo => fo.status === 'unstaged';
+  if (action === 'unstage') filter = fo => fo.status === 'staged';
+  if (action === 'discard') filter = fo => true;
 
-  var cmdGroups = fileObjects.reduce(function(cmds, fo) {
-    if (!filter(fo))  return cmds;
-    var groups = [];
-    if (action === "unstage" || action === "discard") groups.push(cmds.reset);
-    if (action === "discard") groups.push(cmds.checkout);
-    if ((action === "unstage" || action === "discard") && fo.status === "staged" && fo.change === 'added') groups.push(cmds.rmCached);
-    if (action === "stage" && fo.status === "unstaged" && fo.change === 'deleted') groups.push(cmds.rm);
-    else if (action === "stage") groups.push(cmds.add);
-    arr.invoke(groups, "push", fo.fileName);
+  let cmdGroups = fileObjects.reduce(function (cmds, fo) {
+    if (!filter(fo)) return cmds;
+    let groups = [];
+    if (action === 'unstage' || action === 'discard') groups.push(cmds.reset);
+    if (action === 'discard') groups.push(cmds.checkout);
+    if ((action === 'unstage' || action === 'discard') && fo.status === 'staged' && fo.change === 'added') groups.push(cmds.rmCached);
+    if (action === 'stage' && fo.status === 'unstaged' && fo.change === 'deleted') groups.push(cmds.rm);
+    else if (action === 'stage') groups.push(cmds.add);
+    arr.invoke(groups, 'push', fo.fileName);
     return cmds;
-  }, {checkout: [], reset: [], rmCached: [], rm: [], add: []});
+  }, { checkout: [], reset: [], rmCached: [], rm: [], add: [] });
 
-  var commands = [];
-  if (cmdGroups.rm.length)       commands.push({name: "rm",       gitCommand: "rm -- "          + cmdGroups.rm.join(" ")});
-  if (cmdGroups.rmCached.length) commands.push({name: "rm",       gitCommand: "rm --cached -- " + cmdGroups.rmCached.join(" ")});
-  if (cmdGroups.add.length)      commands.push({name: "add",      gitCommand: "add -- "         + cmdGroups.add.join(" ")});
-  if (cmdGroups.reset.length)    commands.push({name: "reset",    gitCommand: "reset -- "       + cmdGroups.reset.join(" ")});
-  if (cmdGroups.checkout.length) commands.push({name: "checkout", gitCommand: "checkout -- "    + cmdGroups.checkout.join(" ")});
+  let commands = [];
+  if (cmdGroups.rm.length) commands.push({ name: 'rm', gitCommand: 'rm -- ' + cmdGroups.rm.join(' ') });
+  if (cmdGroups.rmCached.length) commands.push({ name: 'rm', gitCommand: 'rm --cached -- ' + cmdGroups.rmCached.join(' ') });
+  if (cmdGroups.add.length) commands.push({ name: 'add', gitCommand: 'add -- ' + cmdGroups.add.join(' ') });
+  if (cmdGroups.reset.length) commands.push({ name: 'reset', gitCommand: 'reset -- ' + cmdGroups.reset.join(' ') });
+  if (cmdGroups.checkout.length) commands.push({ name: 'checkout', gitCommand: 'checkout -- ' + cmdGroups.checkout.join(' ') });
 
-  var results = await runGitCommands(commands, options)
+  let results = await runGitCommands(commands, options);
 
-  return {commands: results, fileObjects}
+  return { commands: results, fileObjects };
 }
 
-export async function commit(opts) {
-  opts = {askForCommitInLively: false, ...opts};
+export async function commit (opts) {
+  opts = { askForCommitInLively: false, ...opts };
 
-  var world = $world; // FIXME
+  let world = $world; // FIXME
 
-  var {user, email} = await checkForUserNameAndEmail(opts),
-      {cmdCommit: {exitCode, stderr, output}} = await doCommit(opts, user, email);
-  if (exitCode) throw new Error("Commit failed: " + stderr);
+  let { user, email } = await checkForUserNameAndEmail(opts);
+  let { cmdCommit: { exitCode, stderr, output } } = await doCommit(opts, user, email);
+  if (exitCode) throw new Error('Commit failed: ' + stderr);
 
-  return output
+  return output;
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function commitCmd(message, author, email) {
-    var cmdString = "commit";
+  function commitCmd (message, author, email) {
+    let cmdString = 'commit';
     if (isPublicServer) {
       author = author || 'unknown-author';
       email = email || author + '@' + document.location.hostname;
@@ -318,22 +316,20 @@ export async function commit(opts) {
     return cmdString;
   }
 
-  async function doCommit(options, username, email) {
+  async function doCommit (options, username, email) {
     if (opts.askForCommitInLively) {
-      var message = await world./*edit*/prompt('Please enter a commit message:', {
-          textMode: 'text', historyId: 'lively.git.commit', input: "empty commit message"});
-      if (!message) throw new Error('No commit message, commit aborted.')
+      let message = await world./* edit */prompt('Please enter a commit message:', { textMode: 'text', historyId: 'lively.git.commit', input: 'empty commit message' });
+      if (!message) throw new Error('No commit message, commit aborted.');
       var commands = [{
-        name: "commit",
+        name: 'commit',
         gitCommand: commitCmd(message, username, email),
         options
       }];
       return runGitCommands(commands);
-
     } else {
       // git will ask us for message via shell integration
       var commands = [{
-        name: "commit",
+        name: 'commit',
         gitCommand: commitCmd(null, username, email),
         options
       }];
@@ -341,9 +337,9 @@ export async function commit(opts) {
     }
   }
 
-  async function checkForUserNameAndEmail(opts) {
-    var {user, email} = opts;
-    if (user && email) return {user, email};
+  async function checkForUserNameAndEmail (opts) {
+    var { user, email } = opts;
+    if (user && email) return { user, email };
 
     // await env()
 
@@ -352,59 +348,54 @@ export async function commit(opts) {
     //   return thenDo(null, shellEnv["GIT_AUTHOR_NAME"], shellEnv["GIT_AUTHOR_EMAIL"]);
     // }
 
-    if (!isPublicServer)
-      var {user, email} = await testForUserAndEmail(opts);
+    if (!isPublicServer) { var { user, email } = await testForUserAndEmail(opts); }
 
     if (!user) user = await askForGitUserName();
     if (!email) email = await askForGitEmail();
 
     if (!isPublicServer) await setUserAndEmail(user, email, opts);
 
-    return {user, email};
+    return { user, email };
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    async function testForUserAndEmail(options) {
+    async function testForUserAndEmail (options) {
       // is user name / email already set?
-      var commands = [
-            {name: "get username", gitCommand: "config --get user.name", options},
-            {name: "get email", gitCommand: "config --get user.email", options}],
-          mapping = await runGitCommands(commands),
-          email = mapping ? mapping['get email'].trim() : "",
-          user = mapping ? mapping['get username'].trim() : "";
-      return {user, email}
+      let commands = [
+        { name: 'get username', gitCommand: 'config --get user.name', options },
+        { name: 'get email', gitCommand: 'config --get user.email', options }];
+      let mapping = await runGitCommands(commands);
+      let email = mapping ? mapping['get email'].trim() : '';
+      let user = mapping ? mapping['get username'].trim() : '';
+      return { user, email };
     }
 
-    async function askForGitUserName() {
-      var name = await world.prompt(
+    async function askForGitUserName () {
+      let name = await world.prompt(
         'Git does not yet know your name. Please enter it here:',
-        {input: localStorage.getItem('GitUserName') || ""});
-      if (!name || !name.length) throw new Error("Missing username");
+        { input: localStorage.getItem('GitUserName') || '' });
+      if (!name || !name.length) throw new Error('Missing username');
       localStorage.setItem('GitUserName', name);
       return name;
     }
 
-    async function askForGitEmail(next) {
-      var email = await world.prompt(
+    async function askForGitEmail (next) {
+      let email = await world.prompt(
         'Please also enter your email:',
-        {input: localStorage.getItem('GitUserEmail') || ''});
-      if (!email || !email.length) throw new Error("Missing email");
+        { input: localStorage.getItem('GitUserEmail') || '' });
+      if (!email || !email.length) throw new Error('Missing email');
       localStorage.setItem('GitUserEmail', email);
       return email;
     }
 
-    function setUserAndEmail(user, email, options) {
-      var commands = [
-        {name: "set username", gitCommand: "config user.name \"" + user + "\"", options},
-        {name: "set email", gitCommand: "config user.email \"" + email + "\"", options}];
+    function setUserAndEmail (user, email, options) {
+      let commands = [
+        { name: 'set username', gitCommand: 'config user.name "' + user + '"', options },
+        { name: 'set email', gitCommand: 'config user.email "' + email + '"', options }];
       return runGitCommands(commands);
     }
   }
-
 }
-
-
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // 2016-11-20: This needs to be integrated, leaving it around so it's not forgotten

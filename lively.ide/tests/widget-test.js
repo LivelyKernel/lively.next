@@ -1,37 +1,36 @@
-/*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after,describeInBrowser*/
-import { promise } from "lively.lang";
-import { Text, World, MorphicEnv } from "lively.morphic";
-import { pt } from "lively.graphics";
-import { expect } from "mocha-es6";
-import { NumberWidget } from "../value-widgets.js";
-import { createDOMEnvironment } from "lively.morphic/rendering/dom-helper.js";
+/* global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after,describeInBrowser */
+import { promise } from 'lively.lang';
+import { Text, World, MorphicEnv } from 'lively.morphic';
+import { pt } from 'lively.graphics';
+import { expect } from 'mocha-es6';
+import { NumberWidget } from '../value-widgets.js';
+import { createDOMEnvironment } from 'lively.morphic/rendering/dom-helper.js';
 
-var env, field;
-async function createMorphicEnv() {
-  if (System.get("@system-env").browser) {
+let env, field;
+async function createMorphicEnv () {
+  if (System.get('@system-env').browser) {
     env = MorphicEnv.default();
     return;
   }
   env = new MorphicEnv(await createDOMEnvironment());
-  env.domEnv.document.body.style = "margin: 0";
+  env.domEnv.document.body.style = 'margin: 0';
   MorphicEnv.pushDefault(env);
-  await env.setWorld(new World({name: "world", extent: pt(300,300)}));
+  await env.setWorld(new World({ name: 'world', extent: pt(300, 300) }));
 }
 
-async function destroyMorphicEnv() {
+async function destroyMorphicEnv () {
   if (field) field.remove();
-  if (System.get("@system-env").browser) return;
+  if (System.get('@system-env').browser) return;
   MorphicEnv.popDefault().uninstall();
 }
 
-describe("number widget", () => {
-
+describe('number widget', () => {
   beforeEach(() => createMorphicEnv());
   afterEach(() => destroyMorphicEnv());
 
-  it("it fits bounds to content", async () => {
+  it('it fits bounds to content', async () => {
     field = new NumberWidget({
-      autofit: true, number: .5, min: 0, max: 1, floatingPoint: true
+      autofit: true, number: 0.5, min: 0, max: 1, floatingPoint: true
     });
     let valueContainer = field.getSubmorphNamed('value');
     env.world.addMorph(field);
@@ -44,9 +43,9 @@ describe("number widget", () => {
     expect(field.width).equals(field.getSubmorphNamed('down').right);
   });
 
-  it("it allows to resize widgets", async () => {
+  it('it allows to resize widgets', async () => {
     field = new NumberWidget({
-      autofit: false, number: .5, min: 0, max: 1, floatingPoint: true, width: 100, height: 25
+      autofit: false, number: 0.5, min: 0, max: 1, floatingPoint: true, width: 100, height: 25
     });
     let valueContainer = field.getSubmorphNamed('value');
     env.world.addMorph(field);
@@ -62,25 +61,26 @@ describe("number widget", () => {
     expect(field.width).equals(field.getSubmorphNamed('down').right, 'down button aligned correctly');
   });
 
-  it("keeps bounds on copy", async () => {
+  it('keeps bounds on copy', async () => {
     field = new NumberWidget({
-      autofit: false, 
-      number: .5, 
-      min: 0, max: 1, 
+      autofit: false,
+      number: 0.5,
+      min: 0,
+      max: 1,
       floatingPoint: false,
-      width: 100, height: 25
+      width: 100,
+      height: 25
     });
     let valueContainer = field.getSubmorphNamed('value');
     env.world.addMorph(field);
     await field.whenRendered();
-    expect(field.width).equals(100, "width before");
-    
+    expect(field.width).equals(100, 'width before');
+
     field.remove();
     env.world.addMorph(field = field.copy());
     await field.whenRendered();
 
-    expect(field.width).equals(100, "width after");
+    expect(field.width).equals(100, 'width after');
     expect(field.height).equals(25);
-  })
-  
-})
+  });
+});

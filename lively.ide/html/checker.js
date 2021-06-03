@@ -1,16 +1,14 @@
-var warnStyle = {"border-bottom": "2px dotted orange"},
-    errorStyle = {"background-color": "red"};
+let warnStyle = { 'border-bottom': '2px dotted orange' };
+let errorStyle = { 'background-color': 'red' };
 
 export default class HTMLChecker {
-
-  onDocumentChange(change, morph, htmlPlugin) {
-
+  onDocumentChange (change, morph, htmlPlugin) {
     // 1. parse
-    let parsed, doc = morph.document;
-    try { parsed = htmlPlugin.parse(); } catch(e) { parsed = e; }
+    let parsed; let doc = morph.document;
+    try { parsed = htmlPlugin.parse(); } catch (e) { parsed = e; }
 
   //   if (!parsed) return;
-  // 
+  //
   //   // 2. "wsarnings" such as undeclared vars
   //   var prevMarkers = (morph.markers || []).filter(({id}) => id.startsWith("js-checker-")),
   //       newMarkers = htmlPlugin.undeclaredVariables().map(({start, end, name, type}, i) => {
@@ -24,7 +22,7 @@ export default class HTMLChecker {
   //         })
   //       });
   //   prevMarkers.slice(newMarkers.length).forEach(ea => morph.removeMarker(ea))
-  // 
+  //
   //   // 3. "errors" such as syntax errors
   //   if (parsed.parseError) {
   //     var {column, line} = parsed.parseError.loc, row = line-1,
@@ -37,5 +35,4 @@ export default class HTMLChecker {
   //     });
   //   } else { morph.removeMarker("js-syntax-error"); }
   }
-
 }

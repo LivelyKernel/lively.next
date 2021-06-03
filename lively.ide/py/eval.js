@@ -1,6 +1,6 @@
-/*global WebSocket*/
-import { promise } from "lively.lang";
-import serverConfig from 'config.js'
+/* global WebSocket */
+import { promise } from 'lively.lang';
+import serverConfig from 'config.js';
 
 // let p = PyEvaluator.ensure({hostname: "127.0.0.1", port: 9942})
 // await p.connect()
@@ -14,33 +14,31 @@ import serverConfig from 'config.js'
 // formatted = await p.formatCode(source)
 // formatted = await p.formatCode(source, 0,0)
 
-
 // PyEvaluator._instances["ws://127.0.0.1:9942/"].disconnect("x")
 
 export class PyEvaluator {
-
-  static urlFor(opts) {
-    let {ssl, hostname, port, path} = opts;
-    return `ws${ssl ? "s" : ""}://${hostname}${port ? ":" + port : ""}${path}`;
+  static urlFor (opts) {
+    let { ssl, hostname, port, path } = opts;
+    return `ws${ssl ? 's' : ''}://${hostname}${port ? ':' + port : ''}${path}`;
   }
 
-  static fixOpts(opts) {
+  static fixOpts (opts) {
     return {
       ...serverConfig.pythonServer,
-      onData: (data) => console.log("data received from python - data is not being handled"),
+      onData: (data) => console.log('data received from python - data is not being handled'),
       ...opts
     };
   }
 
-  static ensure(opts) {
+  static ensure (opts) {
     opts = this.fixOpts(opts);
-    const instances = this._instances || (this._instances = {}),
-          url = this.urlFor(opts),
-          existing = instances[url];
+    const instances = this._instances || (this._instances = {});
+    const url = this.urlFor(opts);
+    const existing = instances[url];
     return existing ? existing.assignOpts(opts) : (instances[url] = new this(opts));
   }
 
-  constructor(opts = {}) {
+  constructor (opts = {}) {
     opts = this.constructor.fixOpts(opts);
     this.assignOpts(opts);
     this._websocket = null;
@@ -49,7 +47,7 @@ export class PyEvaluator {
     this.debug = false;
   }
 
-  assignOpts(opts) {
+  assignOpts (opts) {
     this.port = opts.port;
     this.hostname = opts.hostname;
     this.ssl = opts.ssl;
@@ -58,16 +56,16 @@ export class PyEvaluator {
     return this;
   }
 
-  get isConnected() {
+  get isConnected () {
     let ws = this._websocket;
     return ws && ws.readyState === ws.OPEN;
   }
 
-  get url() { return this.constructor.urlFor(this); }
+  get url () { return this.constructor.urlFor(this); }
 
-  async connect() {
+  async connect () {
     if (this.isConnected) {
-      this.debug && console.log("[PyEvaluator] already connected")
+      this.debug && console.log('[PyEvaluator] already connected');
       return Promise.resolve(this);
     }
 
@@ -78,15 +76,15 @@ export class PyEvaluator {
       ws.onopen = () => {
         this.debug && console.log(`[PyEvaluator] connected to ${this.url}`);
         resolve();
-      }
+      };
       ws.onerror = err => {
         this.debug && console.log(`[PyEvaluator] connection to ${this.url} errored`);
         reject(err);
-      }
+      };
       ws.onclose = () => {
         this.debug && console.log(`[PyEvaluator] connection to ${this.url} closed while starting`);
-        reject("closed");
-      }
+        reject('closed');
+      };
       ws.onmessage = evt => this.onMessage(evt);
     }).then(() => {
       ws.onopen = null;
@@ -94,31 +92,31 @@ export class PyEvaluator {
       ws.onclose = () => {
         this.debug && console.log(`[PyEvaluator] connection to ${this.url} closed`);
         this.disconnect();
-      }
+      };
     }).then(() => this);
   }
 
-  disconnect(reason) {
+  disconnect (reason) {
     let ws = this._websocket;
     if (!ws) return;
-    this.debug && console.log(`[PyEvaluator] disconnected`);
+    this.debug && console.log('[PyEvaluator] disconnected');
     this._websocket = null;
     ws.close();
 
-    if (!reason) reason = "disconnected from python server";
+    if (!reason) reason = 'disconnected from python server';
     if (this.taskInProgress) {
-      let {deferred: {reject}} = this.taskInProgress
+      let { deferred: { reject } } = this.taskInProgress;
       this.taskInProgress = null;
       reject(reason);
     }
     let task;
     while ((task = this.taskQueue.shift())) {
-      let {deferred: {reject}} = task;
+      let { deferred: { reject } } = task;
       reject(reason);
     }
   }
 
-  onMessage(evt) {
+  onMessage (evt) {
     this.debug && console.log(`[PyEvaluator] got message ${evt.data}`);
     let answer;
     const isDataTransfer = evt.data instanceof window.Blob;
@@ -135,7 +133,7 @@ export class PyEvaluator {
     this.processAnswer(answer, isDataTransfer);
   }
 
-  processAnswer(msg, isDataTransfer) {
+  processAnswer (msg, isDataTransfer) {
     if (isDataTransfer) {
       if (typeof this.onData === 'function') {
         this.onData(msg);
@@ -143,14 +141,14 @@ export class PyEvaluator {
       return;
     }
 
-    let {taskInProgress} = this;
+    let { taskInProgress } = this;
     if (!taskInProgress) {
       console.warn(`PyEvaluator received answer but no task is in progress! ${JSON.stringify(msg)}`);
       return;
     }
 
     this.taskInProgress = null;
-    let {deferred: {resolve}, messages} = taskInProgress;
+    let { deferred: { resolve }, messages } = taskInProgress;
     messages.push(msg);
     taskInProgress.result = msg;
     resolve(msg);
@@ -158,63 +156,63 @@ export class PyEvaluator {
     this._workTaskQueue();
   }
 
-  _workTaskQueue() {
+  _workTaskQueue () {
     if (this.taskInProgress || !this.taskQueue.length) return Promise.resolve(this.taskInProgress);
     if (!this.isConnected) return this.connect().then(() => this._workTaskQueue());
     let task = this.taskInProgress = this.taskQueue.shift();
-    if (task.type === "eval") {
-      let {source} = task;
+    if (task.type === 'eval') {
+      let { source } = task;
       this.debug && console.log(`[PyEvaluator] sending eval ${source}`);
-      this._websocket.send(JSON.stringify({action: "eval", data: {source}}));
+      this._websocket.send(JSON.stringify({ action: 'eval', data: { source } }));
     }
-    if (task.type === "completion") {
-      let {source, row, column, file} = task;
+    if (task.type === 'completion') {
+      let { source, row, column, file } = task;
       this.debug && console.log(`[PyEvaluator] sending completion req ${row}/${column} in ${file}`);
-      this._websocket.send(JSON.stringify({action: "completion", data: {source, row, column, file}}));
+      this._websocket.send(JSON.stringify({ action: 'completion', data: { source, row, column, file } }));
     }
-    if (task.type === "code_format") {
-      let {source, file, fromRow, toRow, config} = task,
-          data = {source, file, config};
+    if (task.type === 'code_format') {
+      let { source, file, fromRow, toRow, config } = task;
+      let data = { source, file, config };
       if (fromRow !== undefined && toRow !== undefined) {
-        data.lines = [[fromRow + 1, toRow + 1]]
+        data.lines = [[fromRow + 1, toRow + 1]];
       }
       this.debug && console.log(`[PyEvaluator] sending code_format req ${file}`);
-      this._websocket.send(JSON.stringify({action: "code_format", data}));
+      this._websocket.send(JSON.stringify({ action: 'code_format', data }));
     }
-    if (task.type === "fetchData") {
+    if (task.type === 'fetchData') {
       let { source } = task;
       this.debug && console.log(`[PyEvaluator] fetching data ${source}`);
-      this._websocket.send(JSON.stringify({ action: "fetchData", data: { source } }));
+      this._websocket.send(JSON.stringify({ action: 'fetchData', data: { source } }));
     }
     return Promise.resolve(task);
   }
 
-  async runEval(source) {
+  async runEval (source) {
     let deferred = promise.deferred();
-    this.taskQueue.push({type: "eval", source, deferred, messages: [], result: undefined});
+    this.taskQueue.push({ type: 'eval', source, deferred, messages: [], result: undefined });
     this._workTaskQueue();
     return deferred.promise;
   }
 
-  async complete(source, row, column, file) {
+  async complete (source, row, column, file) {
     let deferred = promise.deferred();
-    this.taskQueue.push({type: "completion", source, row, column, file, deferred, messages: [], result: undefined});
+    this.taskQueue.push({ type: 'completion', source, row, column, file, deferred, messages: [], result: undefined });
     this._workTaskQueue();
     return deferred.promise;
   }
 
-  async formatCode(source, fromRow, toRow, config, file) {
+  async formatCode (source, fromRow, toRow, config, file) {
     let deferred = promise.deferred();
-    this.taskQueue.push({type: "code_format", source, file, fromRow, toRow, config, deferred, messages: [], result: undefined});
+    this.taskQueue.push({ type: 'code_format', source, file, fromRow, toRow, config, deferred, messages: [], result: undefined });
     this._workTaskQueue();
     return deferred.promise;
   }
 
-  async fetchData(source) {
+  async fetchData (source) {
     // 2019-07-07 currently unused and not implemented server side
     // server can trigger data send an this.onData is called in that case
     let deferred = promise.deferred();
-    this.taskQueue.push({type: "fetchData", source, deferred, messages: [], result: undefined});
+    this.taskQueue.push({ type: 'fetchData', source, deferred, messages: [], result: undefined });
     this._workTaskQueue();
     return deferred.promise;
   }

@@ -4,69 +4,68 @@
 // by the text morph if the aditor plugin is added to the plugin list.
 // The abstract class implements the interface that can be used.
 
-import { fun, arr } from "lively.lang";
-import { connect, disconnect } from "lively.bindings";
+import { fun, arr } from 'lively.lang';
+import { connect, disconnect } from 'lively.bindings';
 
-import DefaultTheme from "./themes/default.js";
+import DefaultTheme from './themes/default.js';
 
-import { tokenizeDocument, modeInfo, visitDocumentTokens, getMode } from "./editor-modes.js";
-import { completionCommands } from "./text/completion.js";
-import { multiSelectCommands } from "./text/multi-select-commands.js";
-import { commands as navCommands } from "./text/code-navigation-commands.js";
-import { commands as codeCommands } from "./text/generic-code-commands.js";
-import { codeEvaluationCommands } from "./text/code-evaluation-commands.js";
-import { commands as richTextCommands } from "./text/rich-text-commands.js";
-import { Color } from "lively.graphics";
-import { Range } from "lively.morphic/text/range.js";
+import { tokenizeDocument, modeInfo, visitDocumentTokens, getMode } from './editor-modes.js';
+import { completionCommands } from './text/completion.js';
+import { multiSelectCommands } from './text/multi-select-commands.js';
+import { commands as navCommands } from './text/code-navigation-commands.js';
+import { commands as codeCommands } from './text/generic-code-commands.js';
+import { codeEvaluationCommands } from './text/code-evaluation-commands.js';
+import { commands as richTextCommands } from './text/rich-text-commands.js';
+import { Color } from 'lively.graphics';
+import { Range } from 'lively.morphic/text/range.js';
 
-export function guessTextModeName(contentOrEditor, filename = "", hint) {
+export function guessTextModeName (contentOrEditor, filename = '', hint) {
+  let mode = hint || 'text';
+  let fileExt = filename && arr.last(filename.split('.')).toLowerCase();
+  let peekString = ''; let size = 0; let maxSize = 1000;
 
-  var mode = hint || "text",
-      fileExt = filename && arr.last(filename.split(".")).toLowerCase(),
-      peekString = "", size = 0, maxSize = 1000;
-
-  let maxTextSize = 2**19/*0.5MB*/;
-  if (typeof contentOrEditor === "string") {
+  let maxTextSize = 2 ** 19/* 0.5MB */;
+  if (typeof contentOrEditor === 'string') {
     if (contentOrEditor.length > maxTextSize) return null;
   } else {
     if (contentOrEditor.document.stringSize > maxTextSize) return null;
   }
 
-  if (typeof contentOrEditor === "string") peekString = contentOrEditor.slice(0, 1000);
-  else for (let line of contentOrEditor.document.lines) {
-    let {stringSize, text} = line, nl = true;
-    if (size+stringSize > maxSize) { nl = false; stringSize = maxSize - size; }
-    peekString += text.slice(0, stringSize) + (nl ? "\n" : "");
-    size += stringSize;
-    if (size >= maxSize) break;
+  if (typeof contentOrEditor === 'string') peekString = contentOrEditor.slice(0, 1000);
+  else {
+    for (let line of contentOrEditor.document.lines) {
+      let { stringSize, text } = line; let nl = true;
+      if (size + stringSize > maxSize) { nl = false; stringSize = maxSize - size; }
+      peekString += text.slice(0, stringSize) + (nl ? '\n' : '');
+      size += stringSize;
+      if (size >= maxSize) break;
+    }
   }
 
-
   for (let info of modeInfo) {
-    let {contentTest, mode, ext, file} = info;
-    if (typeof contentTest === "function") {
+    let { contentTest, mode, ext, file } = info;
+    if (typeof contentTest === 'function') {
       try { if (contentTest(peekString)) return mode; } catch (err) {}
     }
-    if (file && file instanceof RegExp)
-      if (file.test(filename)) return mode;
-    if (ext)
-      for (let eaExt of ext)
-        if (eaExt === fileExt)
-          return mode;
+    if (file && file instanceof RegExp) { if (file.test(filename)) return mode; }
+    if (ext) {
+      for (let eaExt of ext) {
+        if (eaExt === fileExt) { return mode; }
+      }
+    }
   }
 
   return hint;
 }
 
-
-function rangedToken(row, startColumn, endColumn, token, mode) {
+function rangedToken (row, startColumn, endColumn, token, mode) {
   return {
-    start: {row, column: startColumn},
-    end: {row, column: endColumn},
-    token, mode
+    start: { row, column: startColumn },
+    end: { row, column: endColumn },
+    token,
+    mode
   };
 }
-
 
 // optional hooks:
 //
@@ -81,92 +80,91 @@ function rangedToken(row, startColumn, endColumn, token, mode) {
 // getSnippets() { /* list of snippets, see lively.ide/text/snippets.js */ }
 
 export default class EditorPlugin {
-
-  constructor() {
+  constructor () {
     this.theme = DefaultTheme.instance;
     this.checker = null;
     this._ast = null;
     this._tokens = [];
     this._tokenizerValidBefore = null;
-    this.__dont_serialize__ = ["mode", "_ast", "_tokens", "_tokenizerValidBefore"];
+    this.__dont_serialize__ = ['mode', '_ast', '_tokens', '_tokenizerValidBefore'];
   }
 
-  get isEditorPlugin() { return true; }
+  get isEditorPlugin () { return true; }
 
-  get shortName() { return null; /*override*/}
-  get longName() { return this.shortName; }
+  get shortName () { return null; /* override */ }
+  get longName () { return this.shortName; }
 
-  attach(editor) {
+  attach (editor) {
     this.textMorph = editor;
-    connect(editor, "textChange", this, "onTextChange");
-    connect(editor, "viewChange", this, "onViewChange");
+    connect(editor, 'textChange', this, 'onTextChange');
+    connect(editor, 'viewChange', this, 'onViewChange');
     this.textMorph.whenRendered().then(() => this.highlight());
   }
 
-  detach(editor) {
-    disconnect(editor, "textChange", this, "onTextChange");
-    disconnect(editor, "viewChange", this, "onViewChange");
+  detach (editor) {
+    disconnect(editor, 'textChange', this, 'onTextChange');
+    disconnect(editor, 'viewChange', this, 'onViewChange');
     this.textMorph = null;
   }
 
-  onViewChange() {
+  onViewChange () {
     // this.requestHighlight();
-    let {firstVisibleRow, lastVisibleRow} = this.textMorph.viewState;
+    let { firstVisibleRow, lastVisibleRow } = this.textMorph.viewState;
     this.requestHighlight();
   }
 
-  onTextChange(change) {
+  onTextChange (change) {
     // update _tokenizerValidBefore, set it to the start of the change so we
     // now that all token states thereafter are invalid
     this._ast = null;
     if (change) {
-      let {_tokenizerValidBefore: validMarker} = this, row, column;
-      if (change.selector === "replace") ({row, column} = change.args[0].start);
+      let { _tokenizerValidBefore: validMarker } = this; let row; let column;
+      if (change.selector === 'replace') ({ row, column } = change.args[0].start);
       else { row = 0; column = 0; }
-      if (!validMarker || row < validMarker.row
-       || (row === validMarker.row && column < validMarker.column)) {
+      if (!validMarker || row < validMarker.row ||
+       (row === validMarker.row && column < validMarker.column)) {
         row = Math.max(0, row);
-        this._tokenizerValidBefore = {row, column};
+        this._tokenizerValidBefore = { row, column };
       }
     }
     this.requestHighlight();
   }
 
-  requestHighlight(immediate = false) {
+  requestHighlight (immediate = false) {
     if (immediate) this.highlight();
-    else fun.debounceNamed(this.id + "-requestHighlight", 300, () => this.highlight())();
+    else fun.debounceNamed(this.id + '-requestHighlight', 300, () => this.highlight())();
   }
 
-  highlight() {
-    let {textMorph, theme, mode, _tokenizerValidBefore} = this;
+  highlight () {
+    let { textMorph, theme, mode, _tokenizerValidBefore } = this;
 
     if (!theme || !textMorph || !textMorph.document || !mode) return;
 
     textMorph.fill = theme.background;
     textMorph.cursorColor = theme.cursorColor || Color.black;
 
-    let {firstVisibleRow, lastVisibleRow} = textMorph.viewState,
-        morphAttrs = {},
-        {lines, tokens} = tokenizeDocument(
-          mode,
-          textMorph.document,
-          firstVisibleRow,
-          lastVisibleRow,
-          _tokenizerValidBefore);
+    let { firstVisibleRow, lastVisibleRow } = textMorph.viewState;
+    let morphAttrs = {};
+    let { lines, tokens } = tokenizeDocument(
+      mode,
+      textMorph.document,
+      firstVisibleRow,
+      lastVisibleRow,
+      _tokenizerValidBefore);
 
     if (lines.length) {
-      let row = lines[0].row,
-          attributes = [];
+      let row = lines[0].row;
+      let attributes = [];
       for (let i = 0; i < tokens.length; row++, i++) {
         let lineTokens = tokens[i];
-        for (let i = 0; i < lineTokens.length; i = i+5) {
-          let startColumn = lineTokens[i],
-              endColumn = lineTokens[i+1],
-              token = lineTokens[i+2],
-              style = theme[token] || theme.default;
+        for (let i = 0; i < lineTokens.length; i = i + 5) {
+          let startColumn = lineTokens[i];
+          let endColumn = lineTokens[i + 1];
+          let token = lineTokens[i + 2];
+          let style = theme[token] || theme.default;
           // if the style chopped of an embedded morph, fix that here
           style && attributes.push(
-            {start: {row, column: startColumn}, end: {row, column: endColumn}},
+            { start: { row, column: startColumn }, end: { row, column: endColumn } },
             style);
         }
       }
@@ -174,44 +172,41 @@ export default class EditorPlugin {
         let a = textMorph.embeddedMorphMap.get(m).anchor;
         morphAttrs[m.id] = textMorph.textAttributeAt(a.position);
       });
-      
+
       textMorph.setTextAttributesWithSortedRanges(attributes);
       textMorph.embeddedMorphs.forEach(m => {
-        let a = textMorph.embeddedMorphMap.get(m).anchor,
-            r = Range.at(a.position);
+        let a = textMorph.embeddedMorphMap.get(m).anchor;
+        let r = Range.at(a.position);
         r.end.column += 1;
         textMorph.replace(r, [m, morphAttrs[m.id]], false);
       });
-      
-      this._tokenizerValidBefore = {row: arr.last(lines).row+1, column: 0};
+
+      this._tokenizerValidBefore = { row: arr.last(lines).row + 1, column: 0 };
     }
 
-    if (this.checker)
-      this.checker.onDocumentChange({}, textMorph, this);
+    if (this.checker) { this.checker.onDocumentChange({}, textMorph, this); }
   }
 
-  visitTokensInRange({start, end}, visitFn) {
+  visitTokensInRange ({ start, end }, visitFn) {
     // visitFn(tokenName, state, row, fromCol, toCol, stream, line, mode);
-    let {mode, textMorph: {document: doc}} = this,
-        row = start.row-1,
-        newLineFn = line => row++,
-        recordFn = (name, state, fromCol, toCol, stream, line, mode) => {
-          if (row === start.row && start.column > 0) {
-            if (start.column >= toCol) return;
-            if (fromCol < start.column && start.column < toCol)
-              fromCol = start.column;
-          }
-          if (row === end.row) {
-            if (end.column <= fromCol) return;
-            if (fromCol < end.column && end.column < toCol)
-              toCol = end.column;
-          }
-          visitFn(name, state, row, fromCol, toCol, stream, line, mode);
-        };
+    let { mode, textMorph: { document: doc } } = this;
+    let row = start.row - 1;
+    let newLineFn = line => row++;
+    let recordFn = (name, state, fromCol, toCol, stream, line, mode) => {
+      if (row === start.row && start.column > 0) {
+        if (start.column >= toCol) return;
+        if (fromCol < start.column && start.column < toCol) { fromCol = start.column; }
+      }
+      if (row === end.row) {
+        if (end.column <= fromCol) return;
+        if (fromCol < end.column && end.column < toCol) { toCol = end.column; }
+      }
+      visitFn(name, state, row, fromCol, toCol, stream, line, mode);
+    };
     visitDocumentTokens(mode, doc, start.row, end.row, null, newLineFn, recordFn);
   }
 
-  tokensInRange(range) {
+  tokensInRange (range) {
     let result = [];
     this.visitTokensInRange(range,
       (token, state, row, fromCol, toCol, stream, line, mode) =>
@@ -219,22 +214,21 @@ export default class EditorPlugin {
     return result;
   }
 
-  tokensOfRow(row) {
+  tokensOfRow (row) {
     let to = this.textMorph.getLine(row).length;
-    return this.tokensInRange({start: {row, column: 0}, end: {row: row, column: to}});
+    return this.tokensInRange({ start: { row, column: 0 }, end: { row: row, column: to } });
   }
 
-  tokenAt(pos) {
+  tokenAt (pos) {
     let tokensOfRow = this.tokensOfRow(pos.row);
-    for (let i = tokensOfRow.length; i--; ) {
+    for (let i = tokensOfRow.length; i--;) {
       let token = tokensOfRow[i];
-      if (token.token && token.start.column <= pos.column && pos.column <= token.end.column)
-        return token;
+      if (token.token && token.start.column <= pos.column && pos.column <= token.end.column) { return token; }
     }
     return null;
   }
-  
-  getCommands(otherCommands) {
+
+  getCommands (otherCommands) {
     return [
       ...otherCommands,
       ...completionCommands,
@@ -243,38 +237,38 @@ export default class EditorPlugin {
       ...codeCommands,
       ...codeEvaluationCommands,
       ...richTextCommands
-    ]
+    ];
   }
 
-  getComment() {
+  getComment () {
     if (!this.mode) return null;
-    let {lineComment, blockCommentStart, blockCommentEnd} = this.mode,
-        commentSpec = {};
+    let { lineComment, blockCommentStart, blockCommentEnd } = this.mode;
+    let commentSpec = {};
     if (lineComment) commentSpec.lineCommentStart = lineComment;
     if (blockCommentStart) commentSpec.blockCommentStart = blockCommentStart;
     if (blockCommentEnd) commentSpec.blockCommentEnd = blockCommentEnd;
     return commentSpec;
   }
 
-  toString() {
+  toString () {
     return `${this.constructor.name}(${this.textMorph})`;
   }
 
   // interactive command hooks
 
-  cmd_newline(cursorPos, lineString, indentDepth) {
-    let morph = this.textMorph,
-        {row, column} = cursorPos,
-        before = lineString[column-1],
-        after = lineString[column],
-        fill = " ".repeat(indentDepth) + "\n";
-    morph.selection.text = "\n";
+  cmd_newline (cursorPos, lineString, indentDepth) {
+    let morph = this.textMorph;
+    let { row, column } = cursorPos;
+    let before = lineString[column - 1];
+    let after = lineString[column];
+    let fill = ' '.repeat(indentDepth) + '\n';
+    morph.selection.text = '\n';
     morph.selection.collapseToEnd();
-    if (before === "{" && after === "}") {
-      morph.selection.text = "\n" + " ".repeat(indentDepth);
+    if (before === '{' && after === '}') {
+      morph.selection.text = '\n' + ' '.repeat(indentDepth);
       morph.selection.collapse();
     }
-    morph.execCommand("indent according to mode", {
+    morph.execCommand('indent according to mode', {
       undo: false,
       ignoreFollowingText: false,
       firstRow: row + 1,
@@ -283,53 +277,53 @@ export default class EditorPlugin {
     return true;
   }
 
-  get openPairs() {
+  get openPairs () {
     return {
-      "{": "}",
-      "[": "]",
-      "(": ")",
-      "\"": "\"",
+      '{': '}',
+      '[': ']',
+      '(': ')',
+      '"': '"',
       "'": "'",
-      "`": "`",
+      '`': '`'
     };
   }
 
-  get closePairs() {
+  get closePairs () {
     return {
-      "}": "{",
-      "]": "[",
-      ")": "(",
-      "\"": "\"",
+      '}': '{',
+      ']': '[',
+      ')': '(',
+      '"': '"',
       "'": "'",
-      "`": "`",
+      '`': '`'
     };
   }
 
-  cmd_delete_backwards() {
-    var {textMorph: morph, openPairs} = this,
-        sel = morph.selection,
-        line = morph.getLine(sel.end.row),
-        left = line[sel.end.column-1],
-        right = line[sel.end.column];
+  cmd_delete_backwards () {
+    let { textMorph: morph, openPairs } = this;
+    let sel = morph.selection;
+    let line = morph.getLine(sel.end.row);
+    let left = line[sel.end.column - 1];
+    let right = line[sel.end.column];
     if (morph.autoInsertPairs && sel.isEmpty() && left in openPairs && right === openPairs[left]) {
       sel.growRight(1); sel.growLeft(1);
     }
     return false;
   }
 
-  cmd_insertstring(string) {
-    var {openPairs, closePairs, textMorph: morph} = this,
-        sel = morph.selection,
-        sels = sel.isMultiSelection ? sel.selections : [sel],
-        offsetColumn = 0,
-        isOpen = morph.autoInsertPairs && string in openPairs,
-        isClose = morph.autoInsertPairs && string in closePairs;
+  cmd_insertstring (string) {
+    let { openPairs, closePairs, textMorph: morph } = this;
+    let sel = morph.selection;
+    let sels = sel.isMultiSelection ? sel.selections : [sel];
+    let offsetColumn = 0;
+    let isOpen = morph.autoInsertPairs && string in openPairs;
+    let isClose = morph.autoInsertPairs && string in closePairs;
 
     if (!isOpen && !isClose) return false;
 
-    var line = morph.getLine(sel.end.row),
-        left = line[sel.end.column-1],
-        right = line[sel.end.column];
+    let line = morph.getLine(sel.end.row);
+    let left = line[sel.end.column - 1];
+    let right = line[sel.end.column];
 
     if (!sel.isEmpty()) {
       if (!isOpen) return false;
@@ -362,38 +356,34 @@ export default class EditorPlugin {
     sel.goLeft(1);
     return true;
   }
-
 }
 
 export class CodeMirrorEnabledEditorPlugin extends EditorPlugin {
-
-  constructor() {
+  constructor () {
     super();
     this.mode = null;
   }
 
-  attach(editor) {
+  attach (editor) {
     this.mode = this.codeMirrorMode(editor);
     return super.attach(editor);
   }
 
-
-  __deserialize__() {
+  __deserialize__ () {
     this.mode = this.textMorph ? this.codeMirrorMode(this.textMorph) : null;
   }
 
-  defaultCodeMirrorModeConfig(textMorph) {
+  defaultCodeMirrorModeConfig (textMorph) {
     return {
       indentWithTabs: !textMorph.useSoftTabs,
       indentUnit: textMorph.tabWidth,
-      tabSize: 4/*width of the tab character*/,
-    }
+      tabSize: 4/* width of the tab character */
+    };
   }
 
-  codeMirrorMode(textMorph) {
-    let config = this.defaultCodeMirrorModeConfig(textMorph),
-        name = this.longName;
-    return getMode(config, {name});
+  codeMirrorMode (textMorph) {
+    let config = this.defaultCodeMirrorModeConfig(textMorph);
+    let name = this.longName;
+    return getMode(config, { name });
   }
-
 }

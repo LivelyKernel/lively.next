@@ -1,45 +1,43 @@
-/*global System*/
-import "./mode.js"
-import { CodeMirrorEnabledEditorPlugin } from "../editor-plugin.js";
-import { PyEvaluator } from "./eval.js";
-import { completers } from "./completers.js";
-import { commands } from "./commands.js";
-import { config } from "lively.morphic";
-
+/* global System */
+import './mode.js';
+import { CodeMirrorEnabledEditorPlugin } from '../editor-plugin.js';
+import { PyEvaluator } from './eval.js';
+import { completers } from './completers.js';
+import { commands } from './commands.js';
+import { config } from 'lively.morphic';
 
 export default class PythonEditorPlugin extends CodeMirrorEnabledEditorPlugin {
-
-  constructor() {
+  constructor () {
     super();
     // this.checker = new JavaScriptChecker();
-    this.evalEnvironment = {targetModule: null, context: null};
+    this.evalEnvironment = { targetModule: null, context: null };
   }
 
-  get isPythonEditorPlugin() { return true }
+  get isPythonEditorPlugin () { return true; }
 
-  get shortName() { return "py"; }
-  get longName() { return "python"; }
+  get shortName () { return 'py'; }
+  get longName () { return 'python'; }
 
-  attach(editor) {
+  attach (editor) {
     editor.tabWidth = 4;
     super.attach(editor);
   }
 
-  detach(editor) {
+  detach (editor) {
     // this.checker.uninstall(this.textMorph);
     super.detach(editor);
   }
 
   // getNavigator() { return new JavaScriptNavigator(); }
 
-  getCompleters(otherCompleters) { return completers.concat(otherCompleters); }
+  getCompleters (otherCompleters) { return completers.concat(otherCompleters); }
 
-  getCommands(otherCommands) { return [...super.getCommands(otherCommands),...commands]; }
+  getCommands (otherCommands) { return [...super.getCommands(otherCommands), ...commands]; }
 
-  getKeyBindings(other) {
+  getKeyBindings (other) {
     return [
       ...other,
-      {keys: 'Shift-Tab',   command: {command: "[python] auto format code"}},
+      { keys: 'Shift-Tab', command: { command: '[python] auto format code' } }
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // ide related
       // {keys: "Ctrl-C E", command: "[javascript] list errors and warnings"},
@@ -49,7 +47,7 @@ export default class PythonEditorPlugin extends CodeMirrorEnabledEditorPlugin {
       // {keys: {mac: "Meta-Shift-L M O D E", win: "Ctrl-Shift-L M O D E"}, command: "change editor mode"},
       // {keys: "Ctrl-C I", command: "[javascript] inject import"},
       // {keys: "Ctrl-C C I", command: "[javascript] fix undeclared variables"}
-    ]
+    ];
   }
 
   // async getMenuItems(items) {}
@@ -59,16 +57,14 @@ export default class PythonEditorPlugin extends CodeMirrorEnabledEditorPlugin {
   //     new Snippet({trigger, expansion}));
   // }
 
-
-  systemInterface(env) {
-    env = {...this.evalEnvironment, ...env};
+  systemInterface (env) {
+    env = { ...this.evalEnvironment, ...env };
     return PyEvaluator.ensure(env);
   }
 
-  runEval(code, opts) {
-    var env = this.evalEnvironment,
-        endpoint = this.systemInterface(env);
+  runEval (code, opts) {
+    let env = this.evalEnvironment;
+    let endpoint = this.systemInterface(env);
     return endpoint.runEval(code, env);
   }
-
 }

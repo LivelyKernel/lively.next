@@ -115,17 +115,20 @@ export class DynamicJavaScriptCompleter {
           completion: ea,
           prefix: isValidIdentifier ? prefix : '.' + prefix,
           customInsertionFn: isValidIdentifier
-            ? (this.isMethodCallCompletion(ea) ? (complString, prefix, textMorph, { start, end }) => {
-                const expansion = complString.replace(/\((.*)\)/, (args) =>
+            ? (this.isMethodCallCompletion(ea)
+                ? (complString, prefix, textMorph, { start, end }) => {
+                    const expansion = complString.replace(/\((.*)\)/, (args) =>
                       `(${args.slice(1, -1).split(', ').map((arg, i) => `\${${i}:${arg}}`).join(', ')})`);
-                const snippet = new Snippet({ expansion });
-                textMorph.replace({ start, end }, '');
-                snippet.expandAtCursor(textMorph);
-              } : null)
+                    const snippet = new Snippet({ expansion });
+                    textMorph.replace({ start, end }, '');
+                    snippet.expandAtCursor(textMorph);
+                  }
+                : null)
             : (complString, prefix, textMorph, { start, end }) => {
                 const before = { row: start.row, column: start.column - 1 };
                 const range = textMorph.textInRange({ start: before, end: start }) === '.'
-                  ? { start: before, end } : { start, end };
+                  ? { start: before, end }
+                  : { start, end };
                 textMorph.replace(range, this.wrapInBrackets(ea));
               }
         };

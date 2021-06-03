@@ -1,33 +1,36 @@
-import { arr } from "lively.lang";
-import { connect, signal } from "lively.bindings";
-import { Color, pt } from "lively.graphics";
-import { localInterface } from "lively-system-interface";
-import { commit, branch, localBranchesOf, gitHubBranches } from "lively.changesets";
-import { activeCommit } from "lively.changesets/src/commit.js";
-import { getAuthor, setAuthor, getGitHubToken, setGitHubToken } from "lively.changesets/src/settings.js";
-import { subscribe, unsubscribe } from "lively.notifications";
+import { arr, date, string } from 'lively.lang';
+import { connect, signal } from 'lively.bindings';
+import { Color, pt } from 'lively.graphics';
+import { localInterface } from 'lively-system-interface';
+import { commit, branch, localBranchesOf, gitHubBranches } from 'lively.changesets';
+import { activeCommit } from 'lively.changesets/src/commit.js';
+import { getAuthor, setAuthor, getGitHubToken, setGitHubToken } from 'lively.changesets/src/settings.js';
+import { subscribe, unsubscribe } from 'lively.notifications';
 
-import { morph, Morph } from "../index.js";
-import { Window } from "../widgets.js";
-import CodeEditor from "./code-editor.js";
-import { GridLayout, HorizontalLayout } from "../layout.js";
+import { morph, Morph } from '../index.js';
+import { Window } from '../widgets.js';
+import CodeEditor from './code-editor.js';
+import { GridLayout, HorizontalLayout } from '../layout.js';
 
-function pad(m) { // Morph -> Morph
+function pad (m) { // Morph -> Morph
   return {
-    name: m.name + "Padded",
-    layout: new HorizontalLayout({spacing: 6}),
+    name: m.name + 'Padded',
+    layout: new HorizontalLayout({ spacing: 6 }),
     submorphs: [m]
   };
 }
 
 class GridLayoutWithPadding extends GridLayout {
-  constructor(grid) {
-    super({grid: grid.reduce((rowCells, row) => {
-      const r = row.reduce((cells, cell) => cells.concat([cell, null]), [null]);
-      return rowCells.concat([r, Array(grid[0].length).map(_ => null)]);
-    }, [Array(grid[0].length).map(_ => null)])});
+  constructor (grid) {
+    super({
+      grid: grid.reduce((rowCells, row) => {
+        const r = row.reduce((cells, cell) => cells.concat([cell, null]), [null]);
+        return rowCells.concat([r, Array(grid[0].length).map(_ => null)]);
+      }, [Array(grid[0].length).map(_ => null)])
+    });
   }
-  setupPadding(padding) {
+
+  setupPadding (padding) {
     for (let i = 0; i < this.rowCount; i += 2) {
       this.row(i).fixed = padding;
     }
@@ -38,11 +41,10 @@ class GridLayoutWithPadding extends GridLayout {
 }
 
 class CommitGraph {
-  
-  constructor(pkg, numCommits) {
+  constructor (pkg, numCommits) {
     this.pkg = pkg;
     this.numCommits = numCommits;
-    
+
     this.queue = []; // Array<Commit>
     this.commits = {}; // { [Hash]: {commit: Commit, branches: Array<Branch> }
 
@@ -51,22 +53,22 @@ class CommitGraph {
     this.edges = []; // Array<{x1, y1, x2, y2}>
   }
 
-  addCommit(commit, branches = [], active = false) {
+  addCommit (commit, branches = [], active = false) {
     if (commit.hash in this.commits) {
       const c = this.commits[commit.hash];
       c.branches = arr.union(c.branches, branches);
       if (active) c.active = true;
       return;
     }
-    
-    this.commits[commit.hash] = {commit, branches, active};
+
+    this.commits[commit.hash] = { commit, branches, active };
     this.queue.push(commit);
   }
 
-  async gatherCommits() {
+  async gatherCommits () {
     // -> { [Hash]: Commit }
-    const active = await activeCommit(this.pkg),
-          branches = await localBranchesOf(this.pkg);
+    const active = await activeCommit(this.pkg);
+    const branches = await localBranchesOf(this.pkg);
     if (this.numCommits === null) {
       this.numCommits = 3 * branches.length;
     }
@@ -75,7 +77,7 @@ class CommitGraph {
       this.addCommit(branchHead, [branches[i]]);
     }
     if (active) this.addCommit(active, [], true);
-    
+
     let toShow = this.numCommits;
     while (this.queue.length > 0) {
       const next = this.queue.shift();
@@ -86,8 +88,8 @@ class CommitGraph {
       }
     }
   }
-  
-  networkFlow(commitEntry) {
+
+  networkFlow (commitEntry) {
     // { commit, y } -> Bool
     for (let hash of commitEntry.commit.parents) {
       if (!(hash in this.commits)) continue;
@@ -111,23 +113,23 @@ class CommitGraph {
       commitEntry.y = minY - 1;
       return true;
     }
-    
+
     // no more flows possible
     return false;
   }
-  
-  determineLayers() {
+
+  determineLayers () {
     Object.keys(this.commits).forEach(hash => this.commits[hash].y = 0);
     const pseudoRoot = { commit: { parents: Object.keys(this.commits) }, y: 0 };
     while (this.networkFlow(pseudoRoot));
     this.nodes = Object.keys(this.commits).map(hash => this.commits[hash]);
     if (this.nodes.length === 0) return;
-    const maxY = arr.max(this.nodes, ({y}) => y).y;
+    const maxY = arr.max(this.nodes, ({ y }) => y).y;
     this.nodes.forEach(ce => ce.y = maxY - ce.y);
     this.layers = arr.groupBy(this.nodes, ce => ce.y);
   }
-  
-  determineColumns() {
+
+  determineColumns () {
     const assignedColumns = Object.keys(this.layers).map(x => ({}));
     for (let layerIdx = Object.keys(this.layers).length - 1; layerIdx >= 0; layerIdx--) {
       const layer = this.layers[layerIdx];
@@ -151,32 +153,31 @@ class CommitGraph {
       }
     }
   }
-  
-  createEdges() {
+
+  createEdges () {
     for (let node of this.nodes) {
       for (let pNodeHash of node.commit.parents) {
         if (pNodeHash in this.commits) {
           const pNode = this.commits[pNodeHash];
-          this.edges.push({x1: pNode.x, y1: pNode.y, x2: node.x, y2: node.y});
+          this.edges.push({ x1: pNode.x, y1: pNode.y, x2: node.x, y2: node.y });
         }
       }
     }
   }
-  
-  doLayout() {
+
+  doLayout () {
     this.determineLayers();
     this.determineColumns();
     this.createEdges();
   }
-  
-  buildGraph() {
+
+  buildGraph () {
     return this.gatherCommits().then(() => this.doLayout());
   }
 }
 
 class CommitNode extends Morph {
-  
-  constructor(props) {
+  constructor (props) {
     super({
       extent: pt(160, 40),
       borderWidth: 1,
@@ -192,31 +193,31 @@ class CommitNode extends Morph {
       ...props
     });
   }
-  
-  avatar(commit) {
-    const hash = string.md5(commit.author.email),
-          imageUrl = `https://www.gravatar.com/avatar/${hash}?s=32`;
+
+  avatar (commit) {
+    const hash = string.md5(commit.author.email);
+    const imageUrl = `https://www.gravatar.com/avatar/${hash}?s=32`;
     return {
-      type: "image",
+      type: 'image',
       position: pt(4, 4),
       extent: pt(32, 32),
       tooltip: this.commitTooltip(commit),
       imageUrl
     };
   }
-  
-  color(selected) {
+
+  color (selected) {
     return selected ? Color.rgb(180, 210, 229) : Color.rgb(229, 229, 229);
   }
 
-  description(commit, selected) {
-    const d = new Date(commit.author.date.seconds * 1000),
-          relDate = date.relativeTo(d, new Date()),
-          msg = string.truncate(commit.message.replace(/\n/g, " "), 20),
-          from = { row: 0, column: 0 },
-          to = { row: 1, column: 0 };
+  description (commit, selected) {
+    const d = new Date(commit.author.date.seconds * 1000);
+    const relDate = date.relativeTo(d, new Date());
+    const msg = string.truncate(commit.message.replace(/\n/g, ' '), 20);
+    const from = { row: 0, column: 0 };
+    const to = { row: 1, column: 0 };
     return {
-      type: "text",
+      type: 'text',
       position: pt(38, 6),
       extent: pt(60, 18),
       fill: this.color(selected),
@@ -225,98 +226,96 @@ class CommitNode extends Morph {
       textString: `${msg}\n${commit.hash.substr(0, 8)} (${relDate})`
     };
   }
-  
-  branchTags(branches) {
+
+  branchTags (branches) {
     return branches.map((branch, idx) => ({
       position: pt(90 * idx + 5, -9),
-      type: "text",
+      type: 'text',
       fontSize: 10,
       fontColor: Color.white,
       fill: Color.darkGray,
       textString: branch.name
     }));
   }
-  
-  commitTooltip(commit) {
-    const d = new Date(commit.author.date.seconds * 1000),
-          humanDate = date.format(d),
-          relDate = date.relativeTo(d, new Date());
+
+  commitTooltip (commit) {
+    const d = new Date(commit.author.date.seconds * 1000);
+    const humanDate = date.format(d);
+    const relDate = date.relativeTo(d, new Date());
     return `${commit.message}\n${commit.hash}\n\n${commit.author.name} (${commit.author.email})\n${relDate} ago (${humanDate})`;
   }
-  
-  onMouseDown(evt) {
+
+  onMouseDown (evt) {
     if (!this.selected) this.owner.selectCommit(this);
   }
-
 }
 
 class CommitTree extends Morph {
-
-  constructor(props) {
+  constructor (props) {
     super({
-      clipMode: "auto",
+      clipMode: 'auto',
       ...props
     });
     this.toShow = null;
     this.selectedCommit = null;
     this.selectedBranch = null;
   }
-  
-  addNode(x, y, commit, branches, selected, active) {
+
+  addNode (x, y, commit, branches, selected, active) {
     this.addMorph(new CommitNode({
       commit, branches, selected, active, position: pt(x * 180 + 10, y * 60 + 10)
     }));
   }
-  
-  addEdge(x1, y1, x2, y2) {
-    const mx = (x2 - x1) * 180 + 3,
-          my = (y2 - y1) * 60 - 40,
-          topLeft = pt(Math.min(x1, x2) * 180 + 87, y1 * 60 + 50),
-          xOffset = Math.max(0, x1 - x2) * 180 + 3;
+
+  addEdge (x1, y1, x2, y2) {
+    const mx = (x2 - x1) * 180 + 3;
+    const my = (y2 - y1) * 60 - 40;
+    const topLeft = pt(Math.min(x1, x2) * 180 + 87, y1 * 60 + 50);
+    const xOffset = Math.max(0, x1 - x2) * 180 + 3;
     this.addMorph(morph({
-      type: "path",
+      type: 'path',
       position: topLeft,
       extent: pt(Math.abs(x2 - x1) * 180 + 3 + 6, my),
-      borderColor: Color.rgb(112,112,112),
+      borderColor: Color.rgb(112, 112, 112),
       borderWidth: 2,
-      vertices: [{x: xOffset,y:0}, {x:xOffset,y:10}, {x:mx,y:10}, {x:mx,y:my}, {x:mx+3,y:my-6}, {x:mx,y:my}, {x:mx-3,y:my-6}, {x:mx,y:my}]
+      vertices: [{ x: xOffset, y: 0 }, { x: xOffset, y: 10 }, { x: mx, y: 10 }, { x: mx, y: my }, { x: mx + 3, y: my - 6 }, { x: mx, y: my }, { x: mx - 3, y: my - 6 }, { x: mx, y: my }]
     }));
   }
-  
-  addLoadMoreButton() {
+
+  addLoadMoreButton () {
     const btn = morph({
-      type: "button",
-      label: "load more",
+      type: 'button',
+      label: 'load more',
       position: pt(0, 0),
       fontSize: 11,
       borderRadius: 0,
       extent: pt(70, 20)
     });
     this.addMorph(btn);
-    connect(btn, "fire", this, "loadMore");
+    connect(btn, 'fire', this, 'loadMore');
   }
-  
-  loadMore() {
+
+  loadMore () {
     if (this.numCommits === null) return;
     this.numCommits += 10;
     return this.update();
   }
 
-  async update(pkg = this.pkg) {
+  async update (pkg = this.pkg) {
     if (this.pkg !== pkg) this.numCommits = null;
     this.pkg = pkg;
-    const prevSelectedCommit = this.selectedCommit,
-          prevSelectedBranch = this.selectedBranch;
+    const prevSelectedCommit = this.selectedCommit;
+    const prevSelectedBranch = this.selectedBranch;
     this.selectedCommit = null;
     this.selectedBranch = null;
     this.removeAllMorphs();
     if (!pkg) return;
-    this.addMorph({type: "text", textString: "loading..."});
+    this.addMorph({ type: 'text', textString: 'loading...' });
     const graph = new CommitGraph(pkg, this.numCommits);
     await graph.buildGraph();
     this.numCommits = graph.nodes.length;
     this.removeAllMorphs();
-    for (let {x, y, commit, branches, active} of graph.nodes) {
+    for (let { x, y, commit, branches, active } of graph.nodes) {
       const selected = prevSelectedCommit && prevSelectedCommit.hash === commit.hash;
       this.addNode(x, y, commit, branches, selected, active);
       if (selected) {
@@ -324,63 +323,61 @@ class CommitTree extends Morph {
         this.selectedBranch = branches[0] || null;
       }
     }
-    for (let {x1, y1, x2, y2} of graph.edges) {
+    for (let { x1, y1, x2, y2 } of graph.edges) {
       this.addEdge(x1, y1, x2, y2);
     }
     if (this.submorphs.length > 0) {
       this.addLoadMoreButton();
     }
   }
-  
-  selectCommit(node) {
+
+  selectCommit (node) {
     // CommitNode -> ()
     this.selectedCommit = node.commit;
     this.selectedBranch = node.branches[0] || null;
-    this.update().then(() => signal(this, "selection", node.commit));
+    this.update().then(() => signal(this, 'selection', node.commit));
   }
-
 }
 
 export default class VersionControl extends Window {
-
-  constructor(props) {
+  constructor (props) {
     super({
-      name: "VersionControl",
-      extent: pt(850,600),
+      name: 'VersionControl',
+      extent: pt(850, 600),
       ...props,
       targetMorph: this.content()
     });
     this.reset();
     this.updatePackageList();
-    connect(this.get("packageList"), "selection", this, "updateCommitTree");
-    connect(this.get("commitTree"), "selection", this, "updateCommitPanel");
-    connect(this.get("allChkBox"), "toggle", this, "toggleShowChanges");
-    connect(this.get("changedChkBox"), "toggle", this, "toggleShowChanges");
-    connect(this.get("fileList"), "selection", this, "updateEditor");
-    connect(this.get("loadBtn"), "fire", this, "loadCommit");
-    connect(this.get("commitBtn"), "fire", this, "createCommit");
-    connect(this.get("branchBtn"), "fire", this, "createBranch");
-    connect(this.get("pushBtn"), "fire", this, "pushBranch");
-    connect(this.get("pullBtn"), "fire", this, "pullBranch");
-    connect(this.get("configBtn"), "fire", this, "config");
+    connect(this.get('packageList'), 'selection', this, 'updateCommitTree');
+    connect(this.get('commitTree'), 'selection', this, 'updateCommitPanel');
+    connect(this.get('allChkBox'), 'toggle', this, 'toggleShowChanges');
+    connect(this.get('changedChkBox'), 'toggle', this, 'toggleShowChanges');
+    connect(this.get('fileList'), 'selection', this, 'updateEditor');
+    connect(this.get('loadBtn'), 'fire', this, 'loadCommit');
+    connect(this.get('commitBtn'), 'fire', this, 'createCommit');
+    connect(this.get('branchBtn'), 'fire', this, 'createBranch');
+    connect(this.get('pushBtn'), 'fire', this, 'pushBranch');
+    connect(this.get('pullBtn'), 'fire', this, 'pullBranch');
+    connect(this.get('configBtn'), 'fire', this, 'config');
     this.subscribe(true);
   }
 
-  content() {
-    var style = {fill: Color.rgb(243, 243, 243), borderWidth: 6, borderColor: Color.rgb(243, 243, 243), borderRadius: 6};
+  content () {
+    let style = { fill: Color.rgb(243, 243, 243), borderWidth: 6, borderColor: Color.rgb(243, 243, 243), borderRadius: 6 };
     const m = morph({
       fill: Color.white,
       layout: new GridLayoutWithPadding(
-        [["packageList", "commitTree"],
-          ["filePanel", "commitPanel"],
-          ["fileList", "sourceEditor"]]),
+        [['packageList', 'commitTree'],
+          ['filePanel', 'commitPanel'],
+          ['fileList', 'sourceEditor']]),
       submorphs: [
-        {name: "packageList", type: "list", ...style},
-        {name: "commitTree", type: CommitTree, ...style},
+        { name: 'packageList', type: 'list', ...style },
+        { name: 'commitTree', type: CommitTree, ...style },
         this.filePanel(style),
         this.commitPanel(style),
-        {name: "fileList", type: "list", ...style},
-        {name: "sourceEditor", type: CodeEditor}
+        { name: 'fileList', type: 'list', ...style },
+        { name: 'sourceEditor', type: CodeEditor }
       ]
     });
     m.layout.setupPadding(6);
@@ -388,150 +385,150 @@ export default class VersionControl extends Window {
     m.layout.row(3).fixed = 24;
     return m;
   }
-  
-  filePanel(style) {
-    const labelStyle = {fontSize: 11};
+
+  filePanel (style) {
+    const labelStyle = { fontSize: 11 };
     return morph({
-      name: "filePanel",
-      layout: new HorizontalLayout({spacing: 6}),
+      name: 'filePanel',
+      layout: new HorizontalLayout({ spacing: 6 }),
       submorphs: [
-        {type: "text", textString: "show:", ...labelStyle},
-        {name: "allChkBox", type: "checkbox", extend: pt(16,16), checked: false},
-        {type: "text", textString: "all", ...labelStyle},
-        {name: "changedChkBox", type: "checkbox", extend: pt(16,16), checked: true},
-        {type: "text", textString: "changed", ...labelStyle}
+        { type: 'text', textString: 'show:', ...labelStyle },
+        { name: 'allChkBox', type: 'checkbox', extend: pt(16, 16), checked: false },
+        { type: 'text', textString: 'all', ...labelStyle },
+        { name: 'changedChkBox', type: 'checkbox', extend: pt(16, 16), checked: true },
+        { type: 'text', textString: 'changed', ...labelStyle }
       ]
     });
   }
 
-  commitPanel(style) {
-    const btnStyle = {fontSize: 11, borderRadius: 0, extent: pt(40, 20)};
+  commitPanel (style) {
+    const btnStyle = { fontSize: 11, borderRadius: 0, extent: pt(40, 20) };
     return morph({
-      name: "commitPanel",
-      layout: new HorizontalLayout({spacing: 6}),
+      name: 'commitPanel',
+      layout: new HorizontalLayout({ spacing: 6 }),
       submorphs: [
-        {type: "button", label: "load", name: "loadBtn", ...btnStyle},
-        {type: "button", label: "commit", name: "commitBtn", ...btnStyle},
-        {type: "button", label: "branch", name: "branchBtn", ...btnStyle},
-        {type: "button", label: "push", name: "pushBtn", ...btnStyle},
-        {type: "button", label: "pull", name: "pullBtn", ...btnStyle},
-        {type: "button", label: "config", name: "configBtn", ...btnStyle}
+        { type: 'button', label: 'load', name: 'loadBtn', ...btnStyle },
+        { type: 'button', label: 'commit', name: 'commitBtn', ...btnStyle },
+        { type: 'button', label: 'branch', name: 'branchBtn', ...btnStyle },
+        { type: 'button', label: 'push', name: 'pushBtn', ...btnStyle },
+        { type: 'button', label: 'pull', name: 'pullBtn', ...btnStyle },
+        { type: 'button', label: 'config', name: 'configBtn', ...btnStyle }
       ]
     });
   }
 
-  reset() {
+  reset () {
     this.subscribe(false);
     this.showChanges = true;
-    this.get("packageList").items = [];
-    this.get("fileList").items = [];
-    this.get("sourceEditor").textString = "";
+    this.get('packageList').items = [];
+    this.get('fileList').items = [];
+    this.get('sourceEditor').textString = '';
   }
-  
-  toggleShowChanges() {
+
+  toggleShowChanges () {
     this.showChanges = !this.showChanges;
-    this.get("allChkBox").checked = !this.showChanges;
-    this.get("changedChkBox").checked = this.showChanges;
+    this.get('allChkBox').checked = !this.showChanges;
+    this.get('changedChkBox').checked = this.showChanges;
     return this.updateFileList();
   }
-  
-  loadCommit() {
-    const selectedCommit = this.get("commitTree").selectedCommit;
+
+  loadCommit () {
+    const selectedCommit = this.get('commitTree').selectedCommit;
     if (!selectedCommit) return;
     return selectedCommit.activate();
   }
-  
-  async createCommit() {
-    const selectedBranch = this.get("commitTree").selectedBranch;
+
+  async createCommit () {
+    const selectedBranch = this.get('commitTree').selectedBranch;
     if (!selectedBranch) return;
-    const message = await this.world().prompt("Enter commit message", {
-      historyId: "ChangeSorter/message",
+    const message = await this.world().prompt('Enter commit message', {
+      historyId: 'ChangeSorter/message',
       useLastInput: false
     });
     return selectedBranch.commitChanges(message);
   }
-  
-  async createBranch() {
-    const pkg = this.get("packageList").selection,
-          selectedCommit = this.get("commitTree").selectedCommit;
+
+  async createBranch () {
+    const pkg = this.get('packageList').selection;
+    const selectedCommit = this.get('commitTree').selectedCommit;
     if (!pkg || !selectedCommit) return;
-    const branchName = await this.world().prompt("Enter branch name", {
-      historyId: "ChangeSorter/branch",
+    const branchName = await this.world().prompt('Enter branch name', {
+      historyId: 'ChangeSorter/branch',
       useLastInput: false
     });
     const b = await branch(pkg.address, branchName);
     return b.createFrom(selectedCommit);
   }
-  
-  async config() {
-    const name = await this.world().prompt("Enter author name for commits", {
+
+  async config () {
+    const name = await this.world().prompt('Enter author name for commits', {
       input: getAuthor().name,
-      historyId: "ChangeSorter/name",
+      historyId: 'ChangeSorter/name',
       useLastInput: false
     });
-    const email = await this.world().prompt("Enter author email for commits", {
+    const email = await this.world().prompt('Enter author email for commits', {
       input: getAuthor().email,
-      historyId: "ChangeSorter/email",
+      historyId: 'ChangeSorter/email',
       useLastInput: false
     });
-    return setAuthor({name, email});
+    return setAuthor({ name, email });
   }
-  
-  async enableGitHub() {
+
+  async enableGitHub () {
     let token = getGitHubToken();
-    if (token !== "<secret>") return;
+    if (token !== '<secret>') return;
     token = await this.world().prompt(
-      "Please enter your Personal Access Token for interacting with GitHub", {
-        historyId: "lively.changesets/github-access-token",
+      'Please enter your Personal Access Token for interacting with GitHub', {
+        historyId: 'lively.changesets/github-access-token',
         useLastInput: true
       });
     setGitHubToken(token);
   }
-  
-  pushBranch() {
-    const selectedBranch = this.get("commitTree").selectedBranch;
+
+  pushBranch () {
+    const selectedBranch = this.get('commitTree').selectedBranch;
     if (!selectedBranch) return;
     return this.enableGitHub().then(() => selectedBranch.pushToGitHub());
   }
-  
-  async pullBranch() {
-    const pkg = this.get("packageList").selection;
+
+  async pullBranch () {
+    const pkg = this.get('packageList').selection;
     if (!pkg) return;
     await this.enableGitHub();
     const branches = await gitHubBranches(pkg.address);
-    const {selected: [branchName]} = await this.world().filterableListPrompt(
-      "Pull branch from GitHub",
+    const { selected: [branchName] } = await this.world().filterableListPrompt(
+      'Pull branch from GitHub',
       branches.map(branch => branch.name));
     const b = await branch(pkg.address, branchName);
     return b.pullFromGitHub();
   }
-  
-  updatePackageList() {
-    this.get("packageList").items = localInterface.getPackages().map(p =>
-      ({isListItem: true, string: p.name, value: p}));
+
+  updatePackageList () {
+    this.get('packageList').items = localInterface.getPackages().map(p =>
+      ({ isListItem: true, string: p.name, value: p }));
     return this.updateCommitTree();
   }
-  
-  updateCommitTree() {
-    const pkg = this.get("packageList").selection || null;
-    return this.get("commitTree").update(pkg && pkg.address)
+
+  updateCommitTree () {
+    const pkg = this.get('packageList').selection || null;
+    return this.get('commitTree').update(pkg && pkg.address)
       .then(() => this.updateCommitPanel());
   }
-  
-  async updateCommitPanel() {
-    const selectedCommit = this.get("commitTree").selectedCommit;
-    const selectedBranch = this.get("commitTree").selectedBranch;
-    this.get("loadBtn").active = !!selectedCommit;
-    this.get("commitBtn").active = !!selectedBranch;
-    this.get("branchBtn").active = !!selectedCommit;
-    this.get("pushBtn").active = !!selectedBranch;
-    this.get("pullBtn").active = !!this.get("packageList").selection;
+
+  async updateCommitPanel () {
+    const selectedCommit = this.get('commitTree').selectedCommit;
+    const selectedBranch = this.get('commitTree').selectedBranch;
+    this.get('loadBtn').active = !!selectedCommit;
+    this.get('commitBtn').active = !!selectedBranch;
+    this.get('branchBtn').active = !!selectedCommit;
+    this.get('pushBtn').active = !!selectedBranch;
+    this.get('pullBtn').active = !!this.get('packageList').selection;
     return this.updateFileList();
   }
-  
-  async updateFileList() {
-    const fileList = this.get("fileList"),
-          selectedCommit = this.get("commitTree").selectedCommit;
+
+  async updateFileList () {
+    const fileList = this.get('fileList');
+    const selectedCommit = this.get('commitTree').selectedCommit;
     let files;
     if (!selectedCommit) {
       files = {};
@@ -550,46 +547,46 @@ export default class VersionControl extends Window {
     fileList.selection = fileList.items.find(i => i.value === prevSelected);
     return this.updateEditor();
   }
-  
-  async updateEditor() {
-    const editor = this.get("sourceEditor"),
-          selectedCommit = this.get("commitTree").selectedCommit,
-          selectedFile = this.get("fileList").selection;
+
+  async updateEditor () {
+    const editor = this.get('sourceEditor');
+    const selectedCommit = this.get('commitTree').selectedCommit;
+    const selectedFile = this.get('fileList').selection;
     let content;
     if (!selectedCommit || !selectedFile) {
-      content = "";
+      content = '';
     } else if (this.showChanges) {
       content = await selectedCommit.diffFile(selectedFile);
     } else {
       content = await selectedCommit.getFileContent(selectedFile);
     }
     editor.textString = content;
-    editor.mode = this.showChanges ? "diff" : "javascript";
+    editor.mode = this.showChanges ? 'diff' : 'javascript';
   }
-  
-  subscribe(sub) {
+
+  subscribe (sub) {
     if (!this._update) {
       this._update = this.updatePackageList.bind(this);
     }
-    unsubscribe("lively.changesets/branchadded", this._update);
-    unsubscribe("lively.changesets/branchdeleted", this._update);
-    unsubscribe("lively.changesets/branchpushed", this._update);
-    unsubscribe("lively.changesets/branchpulled", this._update);
-    unsubscribe("lively.changesets/activated", this._update);
-    unsubscribe("lively.changesets/deactivated", this._update);
-    unsubscribe("lively.changesets/changed", this._update);
-    unsubscribe("lively.modules/packageregistered", this._update);
-    unsubscribe("lively.modules/packageremoved", this._update);
+    unsubscribe('lively.changesets/branchadded', this._update);
+    unsubscribe('lively.changesets/branchdeleted', this._update);
+    unsubscribe('lively.changesets/branchpushed', this._update);
+    unsubscribe('lively.changesets/branchpulled', this._update);
+    unsubscribe('lively.changesets/activated', this._update);
+    unsubscribe('lively.changesets/deactivated', this._update);
+    unsubscribe('lively.changesets/changed', this._update);
+    unsubscribe('lively.modules/packageregistered', this._update);
+    unsubscribe('lively.modules/packageremoved', this._update);
     if (sub) {
-      subscribe("lively.changesets/branchadded", this._update);
-      subscribe("lively.changesets/branchdeleted", this._update);
-      subscribe("lively.changesets/branchpushed", this._update);
-      subscribe("lively.changesets/branchpulled", this._update);
-      subscribe("lively.changesets/activated", this._update);
-      subscribe("lively.changesets/deactivated", this._update);
-      subscribe("lively.changesets/changed", this._update);
-      subscribe("lively.modules/packageregistered", this._update);
-      subscribe("lively.modules/packageremoved", this._update);
+      subscribe('lively.changesets/branchadded', this._update);
+      subscribe('lively.changesets/branchdeleted', this._update);
+      subscribe('lively.changesets/branchpushed', this._update);
+      subscribe('lively.changesets/branchpulled', this._update);
+      subscribe('lively.changesets/activated', this._update);
+      subscribe('lively.changesets/deactivated', this._update);
+      subscribe('lively.changesets/changed', this._update);
+      subscribe('lively.modules/packageregistered', this._update);
+      subscribe('lively.modules/packageremoved', this._update);
     }
   }
 }

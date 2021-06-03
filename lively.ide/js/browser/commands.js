@@ -16,7 +16,8 @@ export default function browserCommands (browser) {
     {
       name: 'focus list with selection',
       exec: () =>
-        focusList(codeEntityTree.selection ? codeEntityTree
+        focusList(codeEntityTree.selection
+          ? codeEntityTree
           : mList.selection ? mList : pList)
     },
     { name: 'focus code entities', exec: () => focusList(codeEntityTree) },
@@ -129,8 +130,10 @@ export default function browserCommands (browser) {
 
         const items = left.concat(right).map(loc => ({
           isListItem: true,
-          string: loc.module ? loc.module.nameInPackage
-            : loc.package ? loc.package.name || loc.package.address
+          string: loc.module
+            ? loc.module.nameInPackage
+            : loc.package
+              ? loc.package.name || loc.package.address
               : 'strange location',
           value: loc
         }));
@@ -199,7 +202,8 @@ export default function browserCommands (browser) {
         }
 
         mods.forEach(({ name, error }) =>
-          error ? browser.showError(`Error while loading module ${name}: ${error.stack || error}`)
+          error
+            ? browser.showError(`Error while loading module ${name}: ${error.stack || error}`)
             : browser.setStatusMessage(`Module ${name} loaded`));
         await browser.updateModuleList(p);
         mods.length && browser.selectModuleNamed(mods[0].name);

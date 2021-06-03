@@ -1,6 +1,7 @@
-import { lessEqPosition, lessPosition } from "lively.morphic/text/position.js";
-import { obj, arr } from "lively.lang";
-import DiffTokenizer from "./tokenizer.js";
+import { lessEqPosition, lessPosition } from 'lively.morphic/text/position.js';
+import { obj, arr } from 'lively.lang';
+import DiffTokenizer from './tokenizer.js';
+import { show } from 'lively.halos';
 
 // new DiffNavigator().findHunkStart(that, that.cursorPosition)
 // new DiffNavigator().findHunkEnd(that, that.cursorPosition)
@@ -11,56 +12,55 @@ import DiffTokenizer from "./tokenizer.js";
 // that.document.scanBackward(startPos, matchFn)
 
 export default class DiffNavigator {
-
-  ensureAST(ed) {
+  ensureAST (ed) {
     return new DiffTokenizer().tokenize(ed.textString).tokens;
   }
 
-  tokenStateAt(ed, pos = ed.cursorPosition) {
-    var p = ed.pluginFind(ea => ea.isDiffEditorPlugin);
+  tokenStateAt (ed, pos = ed.cursorPosition) {
+    let p = ed.pluginFind(ea => ea.isDiffEditorPlugin);
     if (!p) return null;
-    var {tokens, patches} = p,
-        tokenIndex = tokens.findIndex(({start,end}) =>
-          lessEqPosition(start, pos) && lessPosition(pos, end)),
-        token = tokens[tokenIndex];
-    return {token, tokenIndex, tokens, patches};
+    let { tokens, patches } = p;
+    let tokenIndex = tokens.findIndex(({ start, end }) =>
+      lessEqPosition(start, pos) && lessPosition(pos, end));
+    let token = tokens[tokenIndex];
+    return { token, tokenIndex, tokens, patches };
   }
 
-  findPatchAt(ed, pos = ed.cursorPosition) {
-    var entity = this.findContainingHunkOrPatch(ed, {start: pos, end: pos});
+  findPatchAt (ed, pos = ed.cursorPosition) {
+    let entity = this.findContainingHunkOrPatch(ed, { start: pos, end: pos });
     return !entity ? null : entity.isFilePatchHunk ? entity.patch : entity;
   }
 
-  findHunkAt(ed, pos = ed.cursorPosition) {
-    var entity = this.findContainingHunkOrPatch(ed, {start: pos, end: pos});
+  findHunkAt (ed, pos = ed.cursorPosition) {
+    let entity = this.findContainingHunkOrPatch(ed, { start: pos, end: pos });
     return !entity ? null : !entity.isFilePatchHunk ? null : entity;
   }
 
-  findPatchStart(ed, pos) {
-    var patch = this.findPatchAt(ed, pos);
+  findPatchStart (ed, pos) {
+    let patch = this.findPatchAt(ed, pos);
     return patch ? patch.tokens[0].start : pos;
   }
 
-  findPatchEnd(ed, pos) {
-    var patch = this.findPatchAt(ed, pos);
+  findPatchEnd (ed, pos) {
+    let patch = this.findPatchAt(ed, pos);
     return patch ? arr.last(patch.tokens).end : pos;
   }
 
-  findHunkStart(ed, pos) {
-    var hunk = this.findHunkAt(ed, pos);
-    return hunk ?  hunk.tokens[0].start : pos;
+  findHunkStart (ed, pos) {
+    let hunk = this.findHunkAt(ed, pos);
+    return hunk ? hunk.tokens[0].start : pos;
   }
 
-  findHunkEnd(ed, pos = ed.cursorPosition) {
-    var hunk = this.findHunkAt(ed, pos);
-    return hunk ?  arr.last(hunk.tokens).end : pos;
+  findHunkEnd (ed, pos = ed.cursorPosition) {
+    let hunk = this.findHunkAt(ed, pos);
+    return hunk ? arr.last(hunk.tokens).end : pos;
   }
 
-  backwardSexp(ed) {
+  backwardSexp (ed) {
     // nav = Navigator
-    var pos = ed.cursorPosition,
-        hunkStart = this.findHunkStart(ed),
-        patchStart = this.findPatchStart(ed);
+    let pos = ed.cursorPosition;
+    let hunkStart = this.findHunkStart(ed);
+    let patchStart = this.findPatchStart(ed);
 
     if (obj.equals(pos, hunkStart)) {
       ed.saveExcursion(() => { ed.selection.goLeft(); hunkStart = this.findHunkStart(ed); });
@@ -73,7 +73,7 @@ export default class DiffNavigator {
     }
 
     if (!hunkStart && !patchStart) return;
-    var target;
+    let target;
     if (!hunkStart) target = patchStart;
     else if (!patchStart) target = hunkStart;
     else if (hunkStart.row > patchStart.row) target = hunkStart;
@@ -82,14 +82,14 @@ export default class DiffNavigator {
     ed.scrollCursorIntoView();
   }
 
-  forwardSexp(ed) {
+  forwardSexp (ed) {
     // nav = Navigator
     // ed = that.aceEditor
-    var nav = this,
-        pos = ed.cursorPosition,
-        hunkEnd = nav.findHunkEnd(ed);
+    let nav = this;
+    let pos = ed.cursorPosition;
+    let hunkEnd = nav.findHunkEnd(ed);
     if (obj.equals(pos, hunkEnd)) {
-      ed.saveExcursion(function() { ed.selection.goRight(); hunkEnd = nav.findHunkEnd(ed); });
+      ed.saveExcursion(function () { ed.selection.goRight(); hunkEnd = nav.findHunkEnd(ed); });
       if (obj.equals(pos, hunkEnd)) hunkEnd = null;
     }
     if (!hunkEnd) return;
@@ -97,55 +97,56 @@ export default class DiffNavigator {
     ed.scrollCursorIntoView();
   }
 
-  backwardUpSexp(ed) {
+  backwardUpSexp (ed) {
     // nav = Navigator
-    var nav = this,
-        pos = ed.cursorPosition,
-        patchStart = nav.findPatchStart(ed);
+    let nav = this;
+    let pos = ed.cursorPosition;
+    let patchStart = nav.findPatchStart(ed);
     if (!patchStart) return;
     ed.cursorPosition = (patchStart);
     ed.scrollCursorIntoView();
   }
 
-  forwardDownSexp(ed) { show("Not yet implemented"); }
+  forwardDownSexp (ed) { show('Not yet implemented'); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // expansion
 
-  findContainingHunkOrPatch(ed, startingRange) {
-    var start, end,
-        {tokens, patches, token: tokenStart} = this.tokenStateAt(ed, startingRange.start),
-        {token: tokenEnd} = this.tokenStateAt(ed, startingRange.end);
+  findContainingHunkOrPatch (ed, startingRange) {
+    let start; let end;
+    let { tokens, patches, token: tokenStart } = this.tokenStateAt(ed, startingRange.start);
+    let { token: tokenEnd } = this.tokenStateAt(ed, startingRange.end);
 
     // accross patches?
     if (tokenStart.patch != tokenEnd.patch) return null;
 
-    if (tokenStart.hasOwnProperty("hunk") && tokenEnd.hasOwnProperty("hunk"))
-      if (tokenStart.hunk === tokenEnd.hunk)
-        return patches[tokenStart.patch].hunks[tokenStart.hunk];
+    if (tokenStart.hasOwnProperty('hunk') && tokenEnd.hasOwnProperty('hunk')) {
+      if (tokenStart.hunk === tokenEnd.hunk) { return patches[tokenStart.patch].hunks[tokenStart.hunk]; }
+    }
 
     return patches[tokenStart.patch];
   }
 
-  findContainingHunkOrPatchRange(ed, startingRange) {
-    var entity = this.findContainingHunkOrPatch(ed, startingRange);
+  findContainingHunkOrPatchRange (ed, startingRange) {
+    let entity = this.findContainingHunkOrPatch(ed, startingRange);
     if (!entity) return null;
-    var toks = entity.tokens,
-        start = toks[0].start,
-        end = arr.last(toks).end;
-    return {start, end};
+    let toks = entity.tokens;
+    let start = toks[0].start;
+    let end = arr.last(toks).end;
+    return { start, end };
   }
 
-  expandRegion(ed, src, ast, expandState) {
-    var newRange = this.findContainingHunkOrPatchRange(ed, ed.selection.range);
-    return newRange ? {
-      range: [ed.positionToIndex(newRange.start), ed.positionToIndex(newRange.end)],
-      prev: expandState
-    } : expandState;
+  expandRegion (ed, src, ast, expandState) {
+    let newRange = this.findContainingHunkOrPatchRange(ed, ed.selection.range);
+    return newRange
+      ? {
+          range: [ed.positionToIndex(newRange.start), ed.positionToIndex(newRange.end)],
+          prev: expandState
+        }
+      : expandState;
   }
 
-  contractRegion(ed, src, ast, expandState) {
+  contractRegion (ed, src, ast, expandState) {
     return expandState.prev || expandState;
   }
-
 }

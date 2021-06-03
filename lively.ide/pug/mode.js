@@ -1,21 +1,21 @@
-import { defineMode, copyState as cmCopyState, startState as cmStartState, mimeModes, getMode, defineMIME } from "../editor-modes.js";
+import { defineMode, copyState as cmCopyState, startState as cmStartState, mimeModes, getMode, defineMIME } from '../editor-modes.js';
 
-defineMode("pug", function (config) {
+defineMode('pug', function (config) {
   // token types
-  var KEYWORD = 'keyword';
-  var DOCTYPE = 'meta';
-  var ID = 'builtin';
-  var CLASS = 'qualifier';
+  let KEYWORD = 'keyword';
+  let DOCTYPE = 'meta';
+  let ID = 'builtin';
+  let CLASS = 'qualifier';
 
-  var ATTRS_NEST = {
+  let ATTRS_NEST = {
     '{': '}',
     '(': ')',
     '[': ']'
   };
 
-  var jsMode = getMode(config, 'javascript');
+  let jsMode = getMode(config, 'javascript');
 
-  function State() {
+  function State () {
     this.javaScriptLine = false;
     this.javaScriptLineExcludesColon = false;
 
@@ -57,7 +57,7 @@ defineMode("pug", function (config) {
    * @return {State}
    */
   State.prototype.copy = function () {
-    var res = new State();
+    let res = new State();
     res.javaScriptLine = this.javaScriptLine;
     res.javaScriptLineExcludesColon = this.javaScriptLineExcludesColon;
     res.javaScriptArguments = this.javaScriptArguments;
@@ -91,7 +91,7 @@ defineMode("pug", function (config) {
     return res;
   };
 
-  function javaScript(stream, state) {
+  function javaScript (stream, state) {
     if (stream.sol()) {
       // if javaScriptLine was set at end of line, ignore it
       state.javaScriptLine = false;
@@ -103,12 +103,12 @@ defineMode("pug", function (config) {
         state.javaScriptLineExcludesColon = false;
         return;
       }
-      var tok = jsMode.token(stream, state.jsState);
+      let tok = jsMode.token(stream, state.jsState);
       if (stream.eol()) state.javaScriptLine = false;
       return tok || true;
     }
   }
-  function javaScriptArguments(stream, state) {
+  function javaScriptArguments (stream, state) {
     if (state.javaScriptArguments) {
       if (state.javaScriptArgumentsDepth === 0 && stream.peek() !== '(') {
         state.javaScriptArguments = false;
@@ -124,24 +124,24 @@ defineMode("pug", function (config) {
         return;
       }
 
-      var tok = jsMode.token(stream, state.jsState);
+      let tok = jsMode.token(stream, state.jsState);
       return tok || true;
     }
   }
 
-  function yieldStatement(stream) {
+  function yieldStatement (stream) {
     if (stream.match(/^yield\b/)) {
-        return 'keyword';
+      return 'keyword';
     }
   }
 
-  function doctype(stream) {
+  function doctype (stream) {
     if (stream.match(/^(?:doctype) *([^\n]+)?/)) {
-        return DOCTYPE;
+      return DOCTYPE;
     }
   }
 
-  function interpolation(stream, state) {
+  function interpolation (stream, state) {
     if (stream.match('#{')) {
       state.isInterpolating = true;
       state.interpolationNesting = 0;
@@ -149,7 +149,7 @@ defineMode("pug", function (config) {
     }
   }
 
-  function interpolationContinued(stream, state) {
+  function interpolationContinued (stream, state) {
     if (state.isInterpolating) {
       if (stream.peek() === '}') {
         state.interpolationNesting--;
@@ -165,14 +165,14 @@ defineMode("pug", function (config) {
     }
   }
 
-  function caseStatement(stream, state) {
+  function caseStatement (stream, state) {
     if (stream.match(/^case\b/)) {
       state.javaScriptLine = true;
       return KEYWORD;
     }
   }
 
-  function when(stream, state) {
+  function when (stream, state) {
     if (stream.match(/^when\b/)) {
       state.javaScriptLine = true;
       state.javaScriptLineExcludesColon = true;
@@ -180,69 +180,69 @@ defineMode("pug", function (config) {
     }
   }
 
-  function defaultStatement(stream) {
+  function defaultStatement (stream) {
     if (stream.match(/^default\b/)) {
       return KEYWORD;
     }
   }
 
-  function extendsStatement(stream, state) {
+  function extendsStatement (stream, state) {
     if (stream.match(/^extends?\b/)) {
       state.restOfLine = 'string';
       return KEYWORD;
     }
   }
 
-  function append(stream, state) {
+  function append (stream, state) {
     if (stream.match(/^append\b/)) {
       state.restOfLine = 'variable';
       return KEYWORD;
     }
   }
-  function prepend(stream, state) {
+  function prepend (stream, state) {
     if (stream.match(/^prepend\b/)) {
       state.restOfLine = 'variable';
       return KEYWORD;
     }
   }
-  function block(stream, state) {
+  function block (stream, state) {
     if (stream.match(/^block\b *(?:(prepend|append)\b)?/)) {
       state.restOfLine = 'variable';
       return KEYWORD;
     }
   }
 
-  function include(stream, state) {
+  function include (stream, state) {
     if (stream.match(/^include\b/)) {
       state.restOfLine = 'string';
       return KEYWORD;
     }
   }
 
-  function includeFiltered(stream, state) {
+  function includeFiltered (stream, state) {
     if (stream.match(/^include:([a-zA-Z0-9\-]+)/, false) && stream.match('include')) {
       state.isIncludeFiltered = true;
       return KEYWORD;
     }
   }
 
-  function includeFilteredContinued(stream, state) {
+  function includeFilteredContinued (stream, state) {
     if (state.isIncludeFiltered) {
-      var tok = filter(stream, state);
+      let tok = filter(stream, state);
       state.isIncludeFiltered = false;
       state.restOfLine = 'string';
       return tok;
     }
   }
 
-  function mixin(stream, state) {
+  function mixin (stream, state) {
     if (stream.match(/^mixin\b/)) {
       state.javaScriptLine = true;
       return KEYWORD;
     }
   }
 
-  function call(stream, state) {
+  function call (stream, state) {
     if (stream.match(/^\+([-\w]+)/)) {
       if (!stream.match(/^\( *[-\w]+ *=/, false)) {
         state.javaScriptArguments = true;
@@ -256,7 +256,7 @@ defineMode("pug", function (config) {
       return interpolation(stream, state);
     }
   }
-  function callArguments(stream, state) {
+  function callArguments (stream, state) {
     if (state.mixinCallAfter) {
       state.mixinCallAfter = false;
       if (!stream.match(/^\( *[-\w]+ *=/, false)) {
@@ -267,20 +267,20 @@ defineMode("pug", function (config) {
     }
   }
 
-  function conditional(stream, state) {
+  function conditional (stream, state) {
     if (stream.match(/^(if|unless|else if|else)\b/)) {
       state.javaScriptLine = true;
       return KEYWORD;
     }
   }
 
-  function each(stream, state) {
+  function each (stream, state) {
     if (stream.match(/^(- *)?(each|for)\b/)) {
       state.isEach = true;
       return KEYWORD;
     }
   }
-  function eachContinued(stream, state) {
+  function eachContinued (stream, state) {
     if (state.isEach) {
       if (stream.match(/^ in\b/)) {
         state.javaScriptLine = true;
@@ -295,15 +295,15 @@ defineMode("pug", function (config) {
     }
   }
 
-  function whileStatement(stream, state) {
+  function whileStatement (stream, state) {
     if (stream.match(/^while\b/)) {
       state.javaScriptLine = true;
       return KEYWORD;
     }
   }
 
-  function tag(stream, state) {
-    var captures;
+  function tag (stream, state) {
+    let captures;
     if (captures = stream.match(/^(\w(?:[-:\w]*\w)?)\/?/)) {
       state.lastTag = captures[1].toLowerCase();
       if (state.lastTag === 'script') {
@@ -313,9 +313,9 @@ defineMode("pug", function (config) {
     }
   }
 
-  function filter(stream, state) {
+  function filter (stream, state) {
     if (stream.match(/^:([\w\-]+)/)) {
-      var innerMode;
+      let innerMode;
       if (config && config.innerModes) {
         innerMode = config.innerModes(stream.current().substring(1));
       }
@@ -330,26 +330,26 @@ defineMode("pug", function (config) {
     }
   }
 
-  function code(stream, state) {
+  function code (stream, state) {
     if (stream.match(/^(!?=|-)/)) {
       state.javaScriptLine = true;
       return 'punctuation';
     }
   }
 
-  function id(stream) {
+  function id (stream) {
     if (stream.match(/^#([\w-]+)/)) {
       return ID;
     }
   }
 
-  function className(stream) {
+  function className (stream) {
     if (stream.match(/^\.([\w-]+)/)) {
       return CLASS;
     }
   }
 
-  function attrs(stream, state) {
+  function attrs (stream, state) {
     if (stream.peek() == '(') {
       stream.next();
       state.isAttrs = true;
@@ -361,14 +361,14 @@ defineMode("pug", function (config) {
     }
   }
 
-  function attrsContinued(stream, state) {
+  function attrsContinued (stream, state) {
     if (state.isAttrs) {
       if (ATTRS_NEST[stream.peek()]) {
         state.attrsNest.push(ATTRS_NEST[stream.peek()]);
       }
       if (state.attrsNest[state.attrsNest.length - 1] === stream.peek()) {
         state.attrsNest.pop();
-      } else  if (stream.eat(')')) {
+      } else if (stream.eat(')')) {
         state.isAttrs = false;
         return 'punctuation';
       }
@@ -385,7 +385,7 @@ defineMode("pug", function (config) {
         return 'attribute';
       }
 
-      var tok = jsMode.token(stream, state.jsState);
+      let tok = jsMode.token(stream, state.jsState);
       if (state.attributeIsType && tok === 'string') {
         state.scriptType = stream.current().toString();
       }
@@ -397,7 +397,7 @@ defineMode("pug", function (config) {
           stream.backUp(stream.current().length);
           return attrsContinued(stream, state);
         } catch (ex) {
-          //not the end of an attribute
+          // not the end of an attribute
         }
       }
       state.attrValue += stream.current();
@@ -405,7 +405,7 @@ defineMode("pug", function (config) {
     }
   }
 
-  function attributesBlock(stream, state) {
+  function attributesBlock (stream, state) {
     if (stream.match(/^&attributes\b/)) {
       state.javaScriptArguments = true;
       state.javaScriptArgumentsDepth = 0;
@@ -413,13 +413,13 @@ defineMode("pug", function (config) {
     }
   }
 
-  function indent(stream) {
+  function indent (stream) {
     if (stream.sol() && stream.eatSpace()) {
       return 'indent';
     }
   }
 
-  function comment(stream, state) {
+  function comment (stream, state) {
     if (stream.match(/^ *\/\/(-)?([^\n]*)/)) {
       state.indentOf = stream.indentation();
       state.indentToken = 'comment';
@@ -427,13 +427,13 @@ defineMode("pug", function (config) {
     }
   }
 
-  function colon(stream) {
+  function colon (stream) {
     if (stream.match(/^: */)) {
       return 'colon';
     }
   }
 
-  function text(stream, state) {
+  function text (stream, state) {
     if (stream.match(/^(?:\| ?| )([^\n]+)/)) {
       return 'string';
     }
@@ -445,9 +445,9 @@ defineMode("pug", function (config) {
     }
   }
 
-  function dot(stream, state) {
+  function dot (stream, state) {
     if (stream.eat('.')) {
-      var innerMode = null;
+      let innerMode = null;
       if (state.lastTag === 'script' && state.scriptType.toLowerCase().indexOf('javascript') != -1) {
         innerMode = state.scriptType.toLowerCase().replace(/"|'/g, '');
       } else if (state.lastTag === 'style') {
@@ -458,13 +458,12 @@ defineMode("pug", function (config) {
     }
   }
 
-  function fail(stream) {
+  function fail (stream) {
     stream.next();
     return null;
   }
 
-
-  function setInnerMode(stream, state, mode) {
+  function setInnerMode (stream, state, mode) {
     mode = mimeModes[mode] || mode;
     mode = config.innerModes ? config.innerModes(mode) || mode : mode;
     mode = mimeModes[mode] || mode;
@@ -477,7 +476,7 @@ defineMode("pug", function (config) {
       state.indentToken = 'string';
     }
   }
-  function innerMode(stream, state, force) {
+  function innerMode (stream, state, force) {
     if (stream.indentation() > state.indentOf || (state.innerModeForLine && !stream.sol()) || force) {
       if (state.innerMode) {
         if (!state.innerState) {
@@ -497,24 +496,23 @@ defineMode("pug", function (config) {
       state.innerState = null;
     }
   }
-  function restOfLine(stream, state) {
+  function restOfLine (stream, state) {
     if (stream.sol()) {
       // if restOfLine was set at end of line, ignore it
       state.restOfLine = '';
     }
     if (state.restOfLine) {
       stream.skipToEnd();
-      var tok = state.restOfLine;
+      let tok = state.restOfLine;
       state.restOfLine = '';
       return tok;
     }
   }
 
-
-  function startState() {
+  function startState () {
     return new State();
   }
-  function copyState(state) {
+  function copyState (state) {
     return state.copy();
   }
   /**
@@ -523,47 +521,47 @@ defineMode("pug", function (config) {
    * @param {Stream} stream
    * @param {State} state
    */
-  function nextToken(stream, state) {
-    var tok = innerMode(stream, state)
-      || restOfLine(stream, state)
-      || interpolationContinued(stream, state)
-      || includeFilteredContinued(stream, state)
-      || eachContinued(stream, state)
-      || attrsContinued(stream, state)
-      || javaScript(stream, state)
-      || javaScriptArguments(stream, state)
-      || callArguments(stream, state)
+  function nextToken (stream, state) {
+    let tok = innerMode(stream, state) ||
+      restOfLine(stream, state) ||
+      interpolationContinued(stream, state) ||
+      includeFilteredContinued(stream, state) ||
+      eachContinued(stream, state) ||
+      attrsContinued(stream, state) ||
+      javaScript(stream, state) ||
+      javaScriptArguments(stream, state) ||
+      callArguments(stream, state) ||
 
-      || yieldStatement(stream, state)
-      || doctype(stream, state)
-      || interpolation(stream, state)
-      || caseStatement(stream, state)
-      || when(stream, state)
-      || defaultStatement(stream, state)
-      || extendsStatement(stream, state)
-      || append(stream, state)
-      || prepend(stream, state)
-      || block(stream, state)
-      || include(stream, state)
-      || includeFiltered(stream, state)
-      || mixin(stream, state)
-      || call(stream, state)
-      || conditional(stream, state)
-      || each(stream, state)
-      || whileStatement(stream, state)
-      || tag(stream, state)
-      || filter(stream, state)
-      || code(stream, state)
-      || id(stream, state)
-      || className(stream, state)
-      || attrs(stream, state)
-      || attributesBlock(stream, state)
-      || indent(stream, state)
-      || text(stream, state)
-      || comment(stream, state)
-      || colon(stream, state)
-      || dot(stream, state)
-      || fail(stream, state);
+      yieldStatement(stream, state) ||
+      doctype(stream, state) ||
+      interpolation(stream, state) ||
+      caseStatement(stream, state) ||
+      when(stream, state) ||
+      defaultStatement(stream, state) ||
+      extendsStatement(stream, state) ||
+      append(stream, state) ||
+      prepend(stream, state) ||
+      block(stream, state) ||
+      include(stream, state) ||
+      includeFiltered(stream, state) ||
+      mixin(stream, state) ||
+      call(stream, state) ||
+      conditional(stream, state) ||
+      each(stream, state) ||
+      whileStatement(stream, state) ||
+      tag(stream, state) ||
+      filter(stream, state) ||
+      code(stream, state) ||
+      id(stream, state) ||
+      className(stream, state) ||
+      attrs(stream, state) ||
+      attributesBlock(stream, state) ||
+      indent(stream, state) ||
+      text(stream, state) ||
+      comment(stream, state) ||
+      colon(stream, state) ||
+      dot(stream, state) ||
+      fail(stream, state);
 
     return tok === true ? null : tok;
   }

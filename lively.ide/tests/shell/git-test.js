@@ -1,14 +1,12 @@
-/*global declare, it, describe, beforeEach, afterEach*/
-import { expect } from "mocha-es6";
+/* global declare, it, describe, beforeEach, afterEach,xit */
+import { expect } from 'mocha-es6';
 
-import { parseCommand } from "lively.ide/shell/shell-interface.js";
+import { parseCommand } from 'lively.ide/shell/shell-interface.js';
 
-describe("git", () => {
-
-  xit("needs to be integrated", function() {
+describe('git', () => {
+  xit('needs to be integrated', function () {
     expect().assert(false);
   });
-
 });
 
 //     setUp: function(run) {
