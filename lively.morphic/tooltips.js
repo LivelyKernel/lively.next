@@ -22,7 +22,7 @@ export class TooltipViewer {
   }
 
   mouseMove (evt) {
-    if (touchInputDevice) return; // no mouse cursor, no tooltips
+    if (touchInputDevice || !!evt.state.draggedMorph) return; // no mouse cursor, no tooltips
     const { hand } = evt;
     const candidates = $world.morphsContainingPoint(evt.positionIn($world)).filter(m => m.reactsToPointer || m.tooltip);
     let targetMorph, prevCandidate;
@@ -93,7 +93,8 @@ export class TooltipViewer {
   }
 
   showTooltipFor (morph, hand) {
-    if (!morph.tooltip || !morph.world()) {
+    if (!morph.tooltip || !morph.world() ||
+         hand.env.eventDispatcher.eventState.draggedMorph) {
       return;
     }
     this.clearCurrentTooltip();
