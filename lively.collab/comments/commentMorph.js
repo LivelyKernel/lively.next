@@ -315,18 +315,18 @@ export class CommentMorph extends Morph {
   }
 
   abandon () {
-    this.commentIndicator.abandon();
+    if (this.commentIndicator) this.commentIndicator.abandon();
     super.abandon();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // interaction
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  performClickAction (action) {
+  async performClickAction (action) {
     switch (action) {
       case 'remove':
         if (!this.isInEditMode) {
-          this.referenceMorph.removeComment(this.comment);
+          await this.referenceMorph.removeComment(this.comment);
         }
         break;
       case 'toggle_edit':
