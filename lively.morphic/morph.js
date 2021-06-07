@@ -2544,7 +2544,7 @@ export class Morph {
   async removeComment (commentToRemove) {
     const { CommentBrowser } = await System.import('lively.collab');
     this.comments = this.comments.filter(comment => !commentToRemove.equals(comment));
-    await CommentBrowser.removeCommentForMorph(commentToRemove, this);
+    CommentBrowser.removeCommentForMorph(commentToRemove, this);
   }
 
   async emptyComments () {

@@ -63,8 +63,8 @@ export class CommentGroupMorph extends Morph {
     this.updateCommentCountLabel();
   }
 
-  async removeCommentMorphFor (comment) {
-    this.commentMorphs.forEach((commentMorph) => {
+  removeCommentMorphFor (comment) {
+    this.commentMorphs.forEach(commentMorph => {
       if (commentMorph.comment.equals(comment)) {
         commentMorph.abandon();
         remove(this.commentMorphs, commentMorph);

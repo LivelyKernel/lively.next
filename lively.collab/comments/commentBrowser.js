@@ -87,8 +87,8 @@ export class CommentBrowser extends Morph {
     await CommentBrowser.instance.addCommentForMorph(comment, morph);
   }
 
-  static async removeCommentForMorph (comment, morph) {
-    await CommentBrowser.instance.removeCommentForMorph(comment, morph);
+  static removeCommentForMorph (comment, morph) {
+    CommentBrowser.instance.removeCommentForMorph(comment, morph);
   }
 
   static updateName (morph) {
@@ -261,14 +261,14 @@ export class CommentBrowser extends Morph {
     this.updateCommentCountBadge();
   }
 
-  async removeCommentForMorph (comment, morph) {
+  removeCommentForMorph (comment, morph) {
     let groupDictionary = this.commentGroups;
     if (this.resolvedCommentGroups.get(morph) &&
        this.resolvedCommentGroups.get(morph).hasCommentMorphForComment(comment)) {
       groupDictionary = this.resolvedCommentGroups;
     }
     const groupOfCommentMorph = groupDictionary.get(morph);
-    await groupOfCommentMorph.removeCommentMorphFor(comment);
+    groupOfCommentMorph.removeCommentMorphFor(comment);
     if (groupOfCommentMorph.getCommentCount() === 0) {
       this.removeCommentGroup(groupOfCommentMorph, groupDictionary);
     }

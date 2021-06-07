@@ -27,7 +27,7 @@ describe('comment browser', function () {
     expect(browser === browser2);
   });
 
-  it('has comment displayed', async function (done) {
+  it('has comment displayed', function (done) {
     browser.withAllSubmorphsDo((submorph) => {
       if (submorph.comment && submorph.comment.equals(comment)) {
         done();
@@ -36,7 +36,7 @@ describe('comment browser', function () {
     throw new Error('Failed');
   });
 
-  it('has name of morph displayed', async function (done) {
+  it('has name of morph displayed', function (done) {
     browser.withAllSubmorphsDo((submorph) => {
       if (submorph.textString && submorph.textString.includes(exampleName)) {
         done();
@@ -45,10 +45,10 @@ describe('comment browser', function () {
     throw new Error('Failed');
   });
 
-  it('displays user name', async function () {
+  it('displays user name', function () {
     let username;
     const creatorUsername = comment.username;
-    browser.withAllSubmorphsDo(async (submorph) => {
+    browser.withAllSubmorphsDo(submorph => {
       if (submorph.comment && submorph.comment.equals(comment)) {
         username = submorph.ui.usernameLabel.textString;
       }
@@ -57,9 +57,9 @@ describe('comment browser', function () {
     expect(username.length).to.be.above(0);
   });
 
-  it('can resolve comment', async function () {
+  it('can resolve comment', function () {
     comment.unresolve();
-    browser.withAllSubmorphsDo(async (submorph) => {
+    browser.withAllSubmorphsDo(submorph => {
       if (submorph.comment && submorph.comment.equals(comment)) {
         submorph.performClickAction('resolve');
       }
@@ -67,9 +67,9 @@ describe('comment browser', function () {
     expect(comment.isResolved()).to.be.ok;
   });
 
-  async function getCommentCountLabelString () {
+  function getCommentCountLabelString () {
     let label;
-    browser.withAllSubmorphsDo(async (submorph) => {
+    browser.withAllSubmorphsDo(submorph => {
       if (submorph.name === 'comment count label') {
         label = submorph.textString;
       }
