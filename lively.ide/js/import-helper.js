@@ -114,21 +114,23 @@ export async function interactivelyChooseImports (livelySystem, opts) {
           }
         }
       });
-      return config.ide.workerEnabled ? callService('exportsOfModules', {
-        excludedPackages: config.ide.js.ignoredPackages,
-        livelySystem,
-        progress: new ProgressMonitor({
-          handlers: {
-            workerProgress: (stepName, progress) => {
-              li.progress = progress;
-              li.label = stepName;
+      return config.ide.workerEnabled
+        ? callService('exportsOfModules', {
+          excludedPackages: config.ide.js.ignoredPackages,
+          livelySystem,
+          progress: new ProgressMonitor({
+            handlers: {
+              workerProgress: (stepName, progress) => {
+                li.progress = progress;
+                li.label = stepName;
+              }
             }
-          }
+          })
         })
-      }) : livelySystem.exportsOfModules({
-        excludedPackages: config.ide.js.ignoredPackages,
-        progress
-      });
+        : livelySystem.exportsOfModules({
+          excludedPackages: config.ide.js.ignoredPackages,
+          progress
+        });
     }, 'computing imports...');
 
   // 2. Ask what to import + generate insertions

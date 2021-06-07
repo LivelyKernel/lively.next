@@ -10,7 +10,7 @@ const {
 } = scripting;
 
 import { RuntimeSourceDescriptor } from './source-descriptors.js';
-import { toJsIdentifier } from './util.js';
+import { toJsIdentifier, withSuperclasses } from './util.js';
 import { adoptObject } from './runtime.js';
 import { classToFunctionTransform } from './class-to-function-transform.js';
 
@@ -29,9 +29,9 @@ function normalizeOptions (options) {
 }
 
 export function addScript (object, funcSource, name, options = {}) {
-  const p = options.package || ObjectPackage.lookupPackageForObject(object, options);
-  if (!p) throw new Error(`Object is not part of an object package: ${object}`);
-  return p.addScript(object, funcSource, name);
+  const moduleOrPackage = options.package || ObjectPackage.lookupModuleForClass(object.constructor, options);
+  if (!moduleOrPackage) throw new Error(`Object is not part of an object package: ${object}`);
+  return moduleOrPackage.addScript(object, funcSource, name);
 }
 
 export function isObjectClass (klass, options) {
@@ -43,6 +43,17 @@ export function isObjectClass (klass, options) {
 }
 
 var _packageStore = _packageStore || {};
+
+export async function interactivelyForkPackage (target, forkedName) {
+  const klass = target.constructor;
+  const nextClass = withSuperclasses(klass)[1];
+  const { package: { name: packageName } } = klass[Symbol.for('lively-module-meta')];
+  const pkg = ObjectPackage.lookupPackageForObject(target);
+  const { baseURL, System } = pkg;
+  const forkedPackage = await pkg.fork(forkedName, { baseURL, System });
+  await adoptObject(target, forkedPackage.objectClass);
+  return forkedPackage.objectClass[Symbol.for('__LivelyClassName__')];
+}
 
 export default class ObjectPackage {
   static get packageStore () {
@@ -59,6 +70,13 @@ export default class ObjectPackage {
     const pname = modMeta ? modMeta.package.name : null;
     const { pkg } = pname ? lookupPackage(System, pname) : {};
     return pkg ? ObjectPackage.forSystemPackage(pkg) : null;
+  }
+
+  static lookupModuleForClass (klass, options) {
+    const { System } = normalizeOptions(options);
+    const pkg = this.lookupPackageForClass(klass, options);
+    const modMeta = klass[Symbol.for('lively-module-meta')];
+    return new ObjectModule(modMeta.pathInPackage, pkg);
   }
 
   static forSystemPackage (systemPackage) {
@@ -218,17 +236,17 @@ class ObjectModule {
     return this;
   }
 
-  async adoptObject (object) {
+  async adoptObject (object, optClassName) {
     if (this.objectClass === object.constructor) return;
-    const klass = await this.ensureObjectClass(object.constructor);
+    const klass = await this.ensureObjectClass(object.constructor, optClassName);
     adoptObject(object, klass);
   }
 
-  ensureObjectClass (superClass) {
+  ensureObjectClass (superClass, optClassName) {
     const klass = this.objectClass;
     if (klass && klass.prototype.__proto__ === superClass.prototype) { return klass; }
 
-    return Promise.resolve(this.ensureObjectClassSource(superClass)).then(ensured => {
+    return Promise.resolve(this.ensureObjectClassSource(superClass, optClassName)).then(ensured => {
       const { source, moduleId, className, bindings } = ensured;
       const { System } = this;
       const mod = module(System, moduleId);
@@ -252,17 +270,17 @@ class ObjectModule {
     });
   }
 
-  ensureObjectClassSource (superClass) {
+  ensureObjectClassSource (superClass, optClassName) {
     // If object is instance of a lively object class already then we just
     // need to access its module via a source descriptor
-    return this.createDefaultClassDeclaration(superClass);
+    return this.createDefaultClassDeclaration(superClass, optClassName);
   }
 
-  async createDefaultClassDeclaration (superClass = Object) {
+  async createDefaultClassDeclaration (superClass = Object, className = false) {
     // ensure that there exist an object package definition with an object class
 
     const { System, systemModule: module, objectPackage } = this;
-    let className = string.capitalize(toJsIdentifier(objectPackage.id));
+    className = className || string.capitalize(toJsIdentifier(objectPackage.id));
     let superClassName = superClass[Symbol.for('__LivelyClassName__')];
     const isAnonymousSuperclass = !superClassName;
     const globalSuperClass = globalClasses.includes(superClass);

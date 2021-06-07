@@ -15,6 +15,7 @@ import LoadingIndicator from 'lively.components/loading-indicator.js';
 // import * as AppleID from "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js";
 import { gapi } from 'https://apis.google.com/js/platform.js';
 import { pathForBrowserHistory } from 'lively.morphic/helpers.js';
+import ObjectPackage, { interactivelyForkPackage, addScript } from 'lively.classes/object-classes.js';
 
 // adoptObject(that, UserInfoWidget)
 // adoptObject(that, LoginWidget)
@@ -90,6 +91,10 @@ export var UserUI = {
         if (window.history) {
           window.history.pushState({}, 'lively.next', pathForBrowserHistory(worldName));
         }
+        // fixme: We do not want to subclass the world class. This is just a temporary solution
+        //        to reliably load the package at all times the world is loaded
+        const pkg = ObjectPackage.withId(string.camelCaseString(worldName));
+        await pkg.adoptObject(world);
         world.animate({
           customTween: p => {
             topBar.blur = world.blur = (1 - p) * 3;

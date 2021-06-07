@@ -979,6 +979,8 @@ export class ObjectEditor extends Morph {
     const li = LoadingIndicator.open('Lookup Package...');
     try {
       ({ objPkgName, className, stringifiedTarget } = await this.withContextDo((ctx) => {
+        // always get the package for the world, based on the name
+        // const pkg = ObjectPackage.withId($world.metadata.commit.name);
         const pkg = ObjectPackage.lookupPackageForObject(ctx.target);
         return {
           objPkgName: pkg && pkg.id,
@@ -989,24 +991,60 @@ export class ObjectEditor extends Morph {
 
       if (!objPkgName) {
         li.remove();
-        objPkgName = await this.world().prompt(
-          ['New Object Package\n', {},
-            'No object package exists yet for object\n', { fontSize: 16, fontWeight: 'normal' },
-            stringifiedTarget, { fontSize: 16, fontStyle: 'italic', fontWeight: 'normal' },
-            '\nEnter a name for a new package:', { fontSize: 16, fontWeight: 'normal' }], {
-            historyId: 'object-package-name-hist',
-            requester: this,
-            width: 400,
-            input: string.capitalize(className).replace(/\s+(.)/g, (_, match) => match.toUpperCase())
-          });
 
-        if (!objPkgName) { this.setStatusMessage('Canceled'); return; }
-        li.label = 'Creating Class...';
-        li.openInWorld();
-        await this.withContextDo(async (ctx) => {
-          const pkg = ObjectPackage.withId(objPkgName);
-          await pkg.adoptObject(ctx.target);
-        }, { objPkgName });
+        // check if the world has a custom object package, or if the world exists at all
+        const worldPkgUrl = await this.withContextDo(() => {
+          let pkg = ObjectPackage.lookupPackageForObject($world);
+          if (pkg) return pkg.name;
+        });
+
+        if (worldPkgUrl) {
+          className = await this.world().prompt(
+            ['New Class\n', {},
+              'Regarding the object:\n', { fontSize: 16, fontWeight: 'normal' },
+              stringifiedTarget, { fontSize: 16, fontStyle: 'italic', fontWeight: 'normal' },
+              '\nEnter a name for the new class of this object:', { fontSize: 16, fontWeight: 'normal' }], {
+              historyId: 'object-package-name-hist',
+              requester: this,
+              width: 400,
+              input: string.capitalize(className).replace(/\s+(.)/g, (_, match) => match.toUpperCase())
+            });
+
+          if (!className) { this.setStatusMessage('Canceled'); return; }
+
+          // also derive a proper module name from this className
+
+          await this.withContextDo(async (ctx) => {
+          // the adoption method of object packages are useless, we just create our
+            const pkg = ObjectPackage.withId(worldPkgUrl); // this is the world package
+            const modName = className[0].toLowerCase() + className.slice(1) + '.js';
+            const mod = await pkg.ensureSubModule(modName);
+            await mod.adoptObject(ctx.target, className);
+          }, { className, worldPkgUrl });
+        } else {
+          objPkgName = await this.world().prompt(
+            ['New Object Package\n', {},
+              'No object package exists yet for object\n', { fontSize: 16, fontWeight: 'normal' },
+              stringifiedTarget, { fontSize: 16, fontStyle: 'italic', fontWeight: 'normal' },
+              '\nEnter a name for a new package:', { fontSize: 16, fontWeight: 'normal' }], {
+              historyId: 'object-package-name-hist',
+              requester: this,
+              width: 400,
+              input: string.capitalize(className).replace(/\s+(.)/g, (_, match) => match.toUpperCase())
+            });
+
+          if (!objPkgName) { this.setStatusMessage('Canceled'); return; }
+
+          li.label = 'Creating Class...';
+          li.openInWorld();
+
+          await this.withContextDo(async (ctx) => {
+          // the adoption method of object packages are useless, we just create our
+            const pkg = ObjectPackage.withId(objPkgName); // this is the world package
+
+            await pkg.adoptObject(ctx.target);
+          }, { objPkgName });
+        }
       }
       li.label = 'Adding method...';
       ({ className, methodName } = await this.withContextDo(async ctx => {
@@ -1035,6 +1073,7 @@ export class ObjectEditor extends Morph {
   }
 
   async interactivelyAdoptByClass () {
+    const li = LoadingIndicator.open('fetching modules...');
     const items = await this.withContextDo(async (ctx) => {
       const { systemInterface: system } = ctx.evalEnvironment;
       const modules = await system.getModules();
@@ -1067,6 +1106,8 @@ export class ObjectEditor extends Morph {
       }
       return items;
     });
+
+    li.remove();
 
     const { selected: [klassAndModule] } = await $world.filterableListPrompt(
       'From which class should the target object inherit?', items, { requester: this });

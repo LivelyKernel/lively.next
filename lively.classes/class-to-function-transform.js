@@ -191,50 +191,48 @@ function replaceClass (node, state, path, options) {
   let sourceAccessorName = options.sourceAccessorName;
   let loc = node['x-lively-object-meta'] || { start, end };
 
-  if (body.length) {
-    let { inst, clazz } = body.reduce((props, propNode) => {
-      let decl; let { key, kind, value, static: classSide } = propNode;
+  let { inst, clazz } = body.reduce((props, propNode) => {
+    let decl; let { key, kind, value, static: classSide } = propNode;
 
-      if (key.type !== 'Literal' && key.type !== 'Identifier') {
-        console.warn(`Unexpected key in classToFunctionTransform! ${JSON.stringify(key)}`);
-      }
+    if (key.type !== 'Literal' && key.type !== 'Identifier') {
+      console.warn(`Unexpected key in classToFunctionTransform! ${JSON.stringify(key)}`);
+    }
 
-      if (kind === 'method') {
-        // The name is just for debugging purposes when it appears in
-        // native debuggers. We have to be careful about it b/c it shadows
-        // outer functions / vars, something that is totally not apparent for a user
-        // of the class syntax. That's the reason for making it a little cryptic
-        let methodId = id(className + '_' + ensureIdentifier(key.name || key.value || Path('property.name').get(key)) + '_');
-        let props = [
-          'key', literal(key.name || key.value || Path('property.name').get(key)),
-          'value', { ...value, id: methodId, [methodKindSymbol]: classSide ? 'static' : 'proto' }];
+    if (kind === 'method') {
+      // The name is just for debugging purposes when it appears in
+      // native debuggers. We have to be careful about it b/c it shadows
+      // outer functions / vars, something that is totally not apparent for a user
+      // of the class syntax. That's the reason for making it a little cryptic
+      let methodId = id(className + '_' + ensureIdentifier(key.name || key.value || Path('property.name').get(key)) + '_');
+      let props = [
+        'key', literal(key.name || key.value || Path('property.name').get(key)),
+        'value', { ...value, id: methodId, [methodKindSymbol]: classSide ? 'static' : 'proto' }];
 
-        decl = objectLiteral(props);
-      } else if (kind === 'get' || kind === 'set') {
-        decl = objectLiteral([
-          'key', literal(key.name || key.value || Path('property.name').get(key)),
-          kind, Object.assign({}, value, { id: id(kind), [methodKindSymbol]: classSide ? 'static' : 'proto' })]);
-      } else if (kind === 'constructor') {
-        let props = [
-          'key', funcCall(member('Symbol', 'for'), literal('lively-instance-initialize')),
-          'value', { ...value, id: id(className + '_initialize_'), [methodKindSymbol]: 'proto' }];
-        decl = objectLiteral(props);
-      } else {
-        console.warn(`[lively.classes] classToFunctionTransform encountered unknown class property with kind ${kind}, ignoring it, ${JSON.stringify(propNode)}`);
-      }
-      (classSide ? props.clazz : props.inst).push(decl);
-      return props;
-    }, {
-      inst: [],
-      clazz: addClassNameGetter ? [
+      decl = objectLiteral(props);
+    } else if (kind === 'get' || kind === 'set') {
+      decl = objectLiteral([
+        'key', literal(key.name || key.value || Path('property.name').get(key)),
+        kind, Object.assign({}, value, { id: id(kind), [methodKindSymbol]: classSide ? 'static' : 'proto' })]);
+    } else if (kind === 'constructor') {
+      let props = [
+        'key', funcCall(member('Symbol', 'for'), literal('lively-instance-initialize')),
+        'value', { ...value, id: id(className + '_initialize_'), [methodKindSymbol]: 'proto' }];
+      decl = objectLiteral(props);
+    } else {
+      console.warn(`[lively.classes] classToFunctionTransform encountered unknown class property with kind ${kind}, ignoring it, ${JSON.stringify(propNode)}`);
+    }
+    (classSide ? props.clazz : props.inst).push(decl);
+    return props;
+  }, {
+    inst: [],
+    clazz: addClassNameGetter ? [
       // explicitly add in a static property to ensure the class name is accessible also in google closure env
-        parse(`({ key: Symbol.for("__LivelyClassName__"), get: function get() { return "${className}"; } })`).body[0].expression
-      ] : []
-    });
+      parse(`({ key: Symbol.for("__LivelyClassName__"), get: function get() { return "${className}"; } })`).body[0].expression
+    ] : []
+  });
 
-    if (inst.length) instanceProps = { type: 'ArrayExpression', elements: inst };
-    if (clazz.length) classProps = { type: 'ArrayExpression', elements: clazz };
-  }
+  if (inst.length) instanceProps = { type: 'ArrayExpression', elements: inst };
+  if (clazz.length) classProps = { type: 'ArrayExpression', elements: clazz };
 
   let scope = options.scope;
   let superClassReferencedAs;

@@ -261,7 +261,8 @@ function _declaredVarNames (scope, useComments) {
   if (useComments) {
     _findJsLintGlobalDeclarations(
       scope.node.type === 'Program'
-        ? scope.node : scope.node.body, result);
+        ? scope.node
+        : scope.node.body, result);
   }
   return result;
 }
@@ -525,8 +526,10 @@ function exports (scope, resolve = false) {
           local: exportsStmt.declaration.id ? exportsStmt.declaration.id.name : null,
           exported: 'default',
           type: exportsStmt.declaration.type === 'FunctionDeclaration'
-            ? 'function' : exportsStmt.declaration.type === 'ClassDeclaration'
-                ? 'class' : null,
+            ? 'function'
+            : exportsStmt.declaration.type === 'ClassDeclaration'
+              ? 'class'
+              : null,
           fromModule: null,
           node: node,
           decl: exportsStmt.declaration,
@@ -609,8 +612,10 @@ function exports (scope, resolve = false) {
         local: exportsStmt.declaration.id ? exportsStmt.declaration.id.name : 'default',
         exported: exportsStmt.declaration.id ? exportsStmt.declaration.id.name : 'default',
         type: exportsStmt.declaration.type === 'FunctionDeclaration'
-          ? 'function' : exportsStmt.declaration.type === 'ClassDeclaration'
-              ? 'class' : null,
+          ? 'function'
+          : exportsStmt.declaration.type === 'ClassDeclaration'
+            ? 'class'
+            : null,
         fromModule: null,
         node: node,
         decl: exportsStmt.declaration,

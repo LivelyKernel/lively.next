@@ -1,20 +1,19 @@
 /* global System */
+import semver from 'semver';
 import { RuntimeSourceDescriptor } from 'lively.classes/source-descriptors.js';
 import { withSuperclasses, isClass } from 'lively.classes/util.js';
-import * as modules from 'lively.modules/index.js';
-const { module } = modules;
+import { isObjectClass, interactivelyForkPackage, addScript } from 'lively.classes/object-classes.js';
 import { string, num, promise, Path, obj } from 'lively.lang';
-import ClassTreeData from './classTree.js';
-import { subscribe, unsubscribe } from 'lively.notifications/index.js';
+import { subscribe, unsubscribe } from 'lively.notifications';
 import L2LClient from 'lively.2lively/client.js';
 import { l2lInterfaceFor, localInterface } from 'lively-system-interface';
-import ObjectPackage, { isObjectClass, addScript } from 'lively.classes/object-classes.js';
-
-import semver from 'semver';
-import { adoptObject } from 'lively.classes/runtime.js';
-import { chooseUnusedImports } from '../import-helper.js';
 import { deserialize, getClassName } from 'lively.serializer2';
 import { stringifyFunctionWithoutToplevelRecorder } from 'lively.source-transform';
+import * as modules from 'lively.modules';
+const { module } = modules;
+
+import ClassTreeData from './classTree.js';
+import { chooseUnusedImports } from '../import-helper.js';
 
 export default class ObjectEditorContext {
   static async for (target, editor, evalEnvironment) {
@@ -271,15 +270,7 @@ export default class ObjectEditorContext {
   }
 
   async forkPackage (forkedName) {
-    const t = this.target;
-    const klass = t.constructor;
-    const nextClass = withSuperclasses(klass)[1];
-    const { package: { name: packageName } } = klass[Symbol.for('lively-module-meta')];
-    const pkg = ObjectPackage.lookupPackageForObject(t);
-    const { baseURL, System } = pkg;
-    const forkedPackage = await pkg.fork(forkedName, { baseURL, System });
-    await adoptObject(t, forkedPackage.objectClass);
-    return forkedPackage.objectClass[Symbol.for('__LivelyClassName__')];
+    return await interactivelyForkPackage(this.target, forkedName);
   }
 
   async addNewMethod () {
