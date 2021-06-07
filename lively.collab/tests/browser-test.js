@@ -1,8 +1,7 @@
 /* global System, declare, done, it, xit, describe, xdescribe, beforeEach, afterEach, before, after */
 import { expect } from 'mocha-es6';
-import { Comment, CommentBrowser } from 'lively.collab';
-import { Morph, MorphicEnv } from 'lively.morphic';
-import { createDOMEnvironment } from 'lively.morphic/rendering/dom-helper.js';
+import { CommentBrowser } from 'lively.collab';
+import { Morph } from 'lively.morphic';
 
 describe('comment browser', function () {
   let morph;
@@ -82,17 +81,18 @@ describe('comment browser', function () {
     const comment2 = await morph.addComment(exampleText);
     let label = await getCommentCountLabelString();
     expect(label).equals('2');
-    morph.removeComment(comment2);
+    await morph.removeComment(comment2);
     label = await getCommentCountLabelString();
     expect(label).equals('1');
   });
 
   it('comment may be removed', async function () {
-    await browser.withAllSubmorphsDo(async (submorph) => {
-      if (submorph.comment && submorph.comment.equals(comment)) {
-        submorph.performClickAction('remove');
+    browser.withAllSubmorphsDo(async (submorph) => {
+      if (submorph.comment) {
+        await submorph.performClickAction('remove');
       }
     });
+
     let commentMorphLabel;
     browser.withAllSubmorphsDo((submorph) => {
       if (submorph.textString && submorph.textString.includes(exampleName)) {
