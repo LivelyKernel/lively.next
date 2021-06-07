@@ -27,22 +27,24 @@ describe('comment browser', function () {
     expect(browser === browser2);
   });
 
-  it('has comment displayed', function (done) {
+  it('has comment displayed', function () {
+    let submorphFound = false;
     browser.withAllSubmorphsDo((submorph) => {
-      if (submorph.comment && submorph.comment.equals(comment)) {
-        done();
+      if (submorph.comment && submorph.comment == comment) {
+        submorphFound = true;
       }
     });
-    throw new Error('Failed');
+    expect(submorphFound).to.be.ok;
   });
 
-  it('has name of morph displayed', function (done) {
+  it('has name of morph displayed', function () {
+    let submorphFound = false;
     browser.withAllSubmorphsDo((submorph) => {
       if (submorph.textString && submorph.textString.includes(exampleName)) {
-        done();
+        submorphFound = true;
       }
     });
-    throw new Error('Failed');
+    expect(submorphFound).to.be.ok;
   });
 
   it('displays user name', function () {
