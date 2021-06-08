@@ -30,7 +30,7 @@ describe('comment browser', function () {
   it('has comment displayed', function () {
     let submorphFound = false;
     browser.withAllSubmorphsDo((submorph) => {
-      if (submorph.comment && submorph.comment == comment) {
+      if (submorph.comment && submorph.comment.equals(comment)) {
         submorphFound = true;
       }
     });
@@ -94,13 +94,13 @@ describe('comment browser', function () {
         await submorph.performClickAction('remove');
       }
     });
-
     let commentMorphLabel;
     browser.withAllSubmorphsDo((submorph) => {
       if (submorph.textString && submorph.textString.includes(exampleName)) {
         commentMorphLabel = submorph;
       }
     });
+
     expect(commentMorphLabel).to.be.not.ok;
   });
 
