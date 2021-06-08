@@ -65,19 +65,23 @@ export class ResizeablePanel extends Morph {
     this.ui.resizers = {
       north: this.buildResizer({
         extent: pt(0, CONSTANTS.DEFAULT_RESIZER_WIDTH),
-        nativeCursor: 'n-resize'
+        nativeCursor: 'n-resize',
+        name: 'north resizer'
       }),
       south: this.buildResizer({
         extent: pt(0, CONSTANTS.DEFAULT_RESIZER_WIDTH),
-        nativeCursor: 's-resize'
+        nativeCursor: 's-resize',
+        name: 'south resizer'
       }),
       east: this.buildResizer({
         extent: pt(CONSTANTS.DEFAULT_RESIZER_WIDTH, 0),
-        nativeCursor: 'e-resize'
+        nativeCursor: 'e-resize',
+        name: 'east resizer'
       }),
       west: this.buildResizer({
         extent: pt(CONSTANTS.DEFAULT_RESIZER_WIDTH, 0),
-        nativeCursor: 'w-resize'
+        nativeCursor: 'w-resize',
+        name: 'west resizer'
       })
     };
 
