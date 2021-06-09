@@ -6,6 +6,12 @@ const CONSTANTS = {
   DEFAULT_RESIZER_WIDTH: 4
 };
 
+/*
+The resizable panel has resizers placed at all four of its borders.
+These can be individually enabled programmatically and are layouted correctly when used.
+E.g. the north resizer will position itself always at the top of the panels on resizements.
+It can be used e.g. as a container when creating applications with resizable sub-windows.
+*/
 export class ResizeablePanel extends Morph {
   static get properties () {
     return {
