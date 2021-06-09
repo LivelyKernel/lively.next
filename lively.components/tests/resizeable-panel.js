@@ -81,6 +81,8 @@ describe('resizeable panel', () => {
     });
 
     it('in east direction', () => {
+      expect(panel.ui.resizers.east.position).to.be.equal(pt(16, 0));
+
       $world.env.eventDispatcher.simulateDOMEvents({
         type: 'pointerdown',
         target: panel.ui.resizers.east,
@@ -107,9 +109,14 @@ describe('resizeable panel', () => {
 
       expect(panel.extent.x).to.be.equal(72);
       expect(panel.extent.y).to.be.equal(20);
+      expect(panel.ui.resizers.north.extent.x).to.be.equal(72);
+      expect(panel.ui.resizers.south.extent.x).to.be.equal(72);
+      expect(panel.ui.resizers.east.position).to.be.equal(pt(68, 0));
     });
 
     it('in west direction', () => {
+      expect(panel.ui.resizers.west.position).to.be.equal(pt(0, 0));
+
       $world.env.eventDispatcher.simulateDOMEvents({
         type: 'pointerdown',
         target: panel.ui.resizers.west,
@@ -136,9 +143,14 @@ describe('resizeable panel', () => {
 
       expect(panel.extent.x).to.be.equal(72);
       expect(panel.extent.y).to.be.equal(20);
+      expect(panel.ui.resizers.north.extent.x).to.be.equal(72);
+      expect(panel.ui.resizers.south.extent.x).to.be.equal(72);
+      expect(panel.ui.resizers.west.position).to.be.equal(pt(0, 0));
     });
 
     it('in north direction', () => {
+      expect(panel.ui.resizers.north.position).to.be.equal(pt(0, 0));
+
       $world.env.eventDispatcher.simulateDOMEvents({
         type: 'pointerdown',
         target: panel.ui.resizers.north,
@@ -165,9 +177,14 @@ describe('resizeable panel', () => {
 
       expect(panel.extent.x).to.be.equal(20);
       expect(panel.extent.y).to.be.equal(52);
+      expect(panel.ui.resizers.west.extent.y).to.be.equal(52);
+      expect(panel.ui.resizers.east.extent.y).to.be.equal(52);
+      expect(panel.ui.resizers.north.position).to.be.equal(pt(0, 0));
     });
 
     it('in south direction', () => {
+      expect(panel.ui.resizers.south.position).to.be.equal(pt(0, 16));
+
       $world.env.eventDispatcher.simulateDOMEvents({
         type: 'pointerdown',
         target: panel.ui.resizers.south,
@@ -194,6 +211,9 @@ describe('resizeable panel', () => {
 
       expect(panel.extent.x).to.be.equal(20);
       expect(panel.extent.y).to.be.equal(40);
+      expect(panel.ui.resizers.west.extent.y).to.be.equal(40);
+      expect(panel.ui.resizers.east.extent.y).to.be.equal(40);
+      expect(panel.ui.resizers.south.position).to.be.equal(pt(0, 36));
     });
   });
 });
