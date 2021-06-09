@@ -479,25 +479,23 @@ export default class Halo extends Morph {
         const t = this.target;
         const topBar = this.topBar;
         const retarget = (evt) => {
-          if (topBar) {
-            if (topBar.stylingPalette &&
+          if (topBar.stylingPalette &&
                 topBar.stylingPalette.fullContainsWorldPoint(world.firstHand.position)) {
-              t.whenRendered().then(() => {
-                once(t, 'onBlur', retarget);
-              });
+            t.whenRendered().then(() => {
               once(t, 'onBlur', retarget);
-              return;
-            }
-            topBar.setEditMode('Halo', true);
+            });
+            once(t, 'onBlur', retarget);
+            return;
           }
+          topBar.setEditMode('Halo', true);
           t.readOnly = prevReadOnly;
           t.collapseSelection();
-          world.showHaloFor(t);
+          topBar.showHaloFor(t);
         };
         this.target.whenRendered().then(() => {
           once(t, 'onBlur', retarget);
         });
-        if (topBar) topBar.setEditMode('Hand', true);
+        topBar.setEditMode('Hand', true);
         this.remove();
         return;
       }
