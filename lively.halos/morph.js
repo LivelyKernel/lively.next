@@ -67,6 +67,12 @@ export default class Halo extends Morph {
         derived: true,
         get () { return this.target.bounds().extent().dist(pt(0)) < 40; }
       },
+      topBar: {
+        serialize: false,
+        get () {
+          return this.getProperty('topBar') || this.get('lively top bar');
+        }
+      },
       target: {
         get () { return this.state ? this.state.target : null; },
         set (t) {
@@ -463,7 +469,42 @@ export default class Halo extends Morph {
 
   onMouseDown (evt) {
     const target = evt.state.clickedOnMorph;
-    if (!evt.isCommandKey() && target == this.borderBox) return this.remove();
+    if (!evt.isCommandKey() && target == this.borderBox) {
+      if (evt.state.clickCount == 2 && this.target.isText) {
+        const prevReadOnly = this.target.readOnly;
+        this.target.readOnly = false;
+        this.target.focus();
+        this.target.cursorPosition = this.target.textPositionFromPoint(evt.positionIn(this.target));
+        const world = this.world();
+        const t = this.target;
+        const topBar = this.topBar;
+        const retarget = (evt) => {
+          if (topBar) {
+            if (topBar.stylingPalette &&
+                topBar.stylingPalette.fullContainsWorldPoint(world.firstHand.position)) {
+              t.whenRendered().then(() => {
+                once(t, 'onBlur', retarget);
+              });
+              once(t, 'onBlur', retarget);
+              return;
+            }
+            topBar.setEditMode('Halo', true);
+          }
+          t.readOnly = prevReadOnly;
+          t.collapseSelection();
+          world.showHaloFor(t);
+        };
+        this.target.whenRendered().then(() => {
+          once(t, 'onBlur', retarget);
+        });
+        if (topBar) topBar.setEditMode('Hand', true);
+        this.remove();
+        return;
+      }
+      return promise.delay(200).then(() => {
+        if (evt.state.clickCount != 2) { this.remove(); }
+      });
+    }
     if (evt.isShiftDown() && evt.isCommandKey()) {
       const actualMorph = this.target.isMorphSelection
         ? this.target.morphBeneath(evt.position)
@@ -487,7 +528,11 @@ export default class Halo extends Morph {
       const newTarget = this.morphBeneath(evt.position);
       evt.world.showHaloFor(newTarget, evt.domEvt.pointerId);
     }
-    if (target == this) this.remove();
+    if (target == this) {
+      promise.delay(500).then(() => {
+        this.remove();
+      });
+    }
   }
 
   onContextMenu (evt) {
