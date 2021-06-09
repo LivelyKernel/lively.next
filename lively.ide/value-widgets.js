@@ -399,7 +399,11 @@ export class NumberWidget extends Morph {
       unit: {
         type: 'Enum',
         isStyleProp: true,
-        values: ['px', '%', 'pt', '']
+        values: ['px', '%', 'pt', ''],
+        set (unit) {
+          this.setProperty('unit', unit);
+          if (typeof this.number === 'number') this.relayout(false);
+        }
       },
       autofit: {
         defaultValue: true,
@@ -605,10 +609,10 @@ export class NumberWidget extends Morph {
       this.relayoutButtons();
     }
     if (!fromScrubber) {
-      valueContainer.value = num.roundTo(this.number * this.scaleFactor, 1);
       valueContainer.min = this.min != -Infinity ? this.min * this.scaleFactor : this.min;
       valueContainer.max = this.max != Infinity ? this.max * this.scaleFactor : this.max;
       valueContainer.unit = this.unit;
+      valueContainer.value = num.roundTo(this.number * this.scaleFactor, 1);
     }
   }
 
