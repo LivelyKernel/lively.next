@@ -81,27 +81,119 @@ describe('resizeable panel', () => {
     });
 
     it('in east direction', () => {
-      debugger;
       $world.env.eventDispatcher.simulateDOMEvents({
         type: 'pointerdown',
         target: panel.ui.resizers.east,
-        position: pt(159, 150)
+        position: pt(156, 148)
       });
 
       $world.env.eventDispatcher.simulateDOMEvents({
         type: 'pointermove',
         target: panel.ui.resizers.east,
-        position: pt(180, 150)
+        position: pt(190, 148)
+      });
+
+      $world.env.eventDispatcher.simulateDOMEvents({
+        type: 'pointermove',
+        target: panel.ui.resizers.east,
+        position: pt(210, 148)
       });
 
       $world.env.eventDispatcher.simulateDOMEvents({
         type: 'pointerup',
         target: panel.ui.resizers.east,
-        position: pt(180, 150)
+        position: pt(210, 148)
       });
 
-      expect(panel.extent.x).to.be.equal(40);
+      expect(panel.extent.x).to.be.equal(72);
       expect(panel.extent.y).to.be.equal(20);
+    });
+
+    it('in west direction', () => {
+      $world.env.eventDispatcher.simulateDOMEvents({
+        type: 'pointerdown',
+        target: panel.ui.resizers.west,
+        position: pt(142, 148)
+      });
+
+      $world.env.eventDispatcher.simulateDOMEvents({
+        type: 'pointermove',
+        target: panel.ui.resizers.west,
+        position: pt(110, 148)
+      });
+
+      $world.env.eventDispatcher.simulateDOMEvents({
+        type: 'pointermove',
+        target: panel.ui.resizers.west,
+        position: pt(90, 148)
+      });
+
+      $world.env.eventDispatcher.simulateDOMEvents({
+        type: 'pointerup',
+        target: panel.ui.resizers.west,
+        position: pt(90, 148)
+      });
+
+      expect(panel.extent.x).to.be.equal(72);
+      expect(panel.extent.y).to.be.equal(20);
+    });
+
+    it('in north direction', () => {
+      $world.env.eventDispatcher.simulateDOMEvents({
+        type: 'pointerdown',
+        target: panel.ui.resizers.north,
+        position: pt(148, 142)
+      });
+
+      $world.env.eventDispatcher.simulateDOMEvents({
+        type: 'pointermove',
+        target: panel.ui.resizers.north,
+        position: pt(148, 130)
+      });
+
+      $world.env.eventDispatcher.simulateDOMEvents({
+        type: 'pointermove',
+        target: panel.ui.resizers.north,
+        position: pt(148, 110)
+      });
+
+      $world.env.eventDispatcher.simulateDOMEvents({
+        type: 'pointerup',
+        target: panel.ui.resizers.north,
+        position: pt(148, 90)
+      });
+
+      expect(panel.extent.x).to.be.equal(20);
+      expect(panel.extent.y).to.be.equal(52);
+    });
+
+    it('in south direction', () => {
+      $world.env.eventDispatcher.simulateDOMEvents({
+        type: 'pointerdown',
+        target: panel.ui.resizers.south,
+        position: pt(148, 158)
+      });
+
+      $world.env.eventDispatcher.simulateDOMEvents({
+        type: 'pointermove',
+        target: panel.ui.resizers.south,
+        position: pt(148, 170)
+      });
+
+      $world.env.eventDispatcher.simulateDOMEvents({
+        type: 'pointermove',
+        target: panel.ui.resizers.south,
+        position: pt(148, 180)
+      });
+
+      $world.env.eventDispatcher.simulateDOMEvents({
+        type: 'pointerup',
+        target: panel.ui.resizers.south,
+        position: pt(148, 180)
+      });
+
+      expect(panel.extent.x).to.be.equal(20);
+      expect(panel.extent.y).to.be.equal(40);
     });
   });
 });
