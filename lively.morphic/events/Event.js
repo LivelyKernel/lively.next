@@ -203,4 +203,5 @@ export class SimulatedDOMEvent {
 
   preventDefault () { this.defaultPrevented = true; }
   stopPropagation () { this.propagationStopped = true; }
+  composedPath () { return [this.target]; }
 }
