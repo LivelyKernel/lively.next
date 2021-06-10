@@ -63,8 +63,8 @@ export class CommentGroupMorph extends Morph {
     this.updateCommentCountLabel();
   }
 
-  async removeCommentMorphFor (comment) {
-    this.commentMorphs.forEach((commentMorph) => {
+  removeCommentMorphFor (comment) {
+    this.commentMorphs.forEach(commentMorph => {
       if (commentMorph.comment.equals(comment)) {
         commentMorph.abandon();
         remove(this.commentMorphs, commentMorph);
@@ -315,18 +315,18 @@ export class CommentMorph extends Morph {
   }
 
   abandon () {
-    this.commentIndicator.abandon();
+    if (this.commentIndicator) this.commentIndicator.abandon();
     super.abandon();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // interaction
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  performClickAction (action) {
+  async performClickAction (action) {
     switch (action) {
       case 'remove':
         if (!this.isInEditMode) {
-          this.referenceMorph.removeComment(this.comment);
+          await this.referenceMorph.removeComment(this.comment);
         }
         break;
       case 'toggle_edit':

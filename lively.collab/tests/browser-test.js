@@ -1,8 +1,7 @@
 /* global System, declare, done, it, xit, describe, xdescribe, beforeEach, afterEach, before, after */
 import { expect } from 'mocha-es6';
-import { Comment, CommentBrowser } from 'lively.collab';
-import { Morph, MorphicEnv } from 'lively.morphic';
-import { createDOMEnvironment } from 'lively.morphic/rendering/dom-helper.js';
+import { CommentBrowser } from 'lively.collab';
+import { Morph } from 'lively.morphic';
 
 describe('comment browser', function () {
   let morph;
@@ -28,28 +27,30 @@ describe('comment browser', function () {
     expect(browser === browser2);
   });
 
-  it('has comment displayed', async function (done) {
+  it('has comment displayed', function () {
+    let submorphFound = false;
     browser.withAllSubmorphsDo((submorph) => {
       if (submorph.comment && submorph.comment.equals(comment)) {
-        done();
+        submorphFound = true;
       }
     });
-    throw new Error('Failed');
+    expect(submorphFound).to.be.ok;
   });
 
-  it('has name of morph displayed', async function (done) {
+  it('has name of morph displayed', function () {
+    let submorphFound = false;
     browser.withAllSubmorphsDo((submorph) => {
       if (submorph.textString && submorph.textString.includes(exampleName)) {
-        done();
+        submorphFound = true;
       }
     });
-    throw new Error('Failed');
+    expect(submorphFound).to.be.ok;
   });
 
-  it('displays user name', async function () {
+  it('displays user name', function () {
     let username;
     const creatorUsername = comment.username;
-    browser.withAllSubmorphsDo(async (submorph) => {
+    browser.withAllSubmorphsDo(submorph => {
       if (submorph.comment && submorph.comment.equals(comment)) {
         username = submorph.ui.usernameLabel.textString;
       }
@@ -58,9 +59,9 @@ describe('comment browser', function () {
     expect(username.length).to.be.above(0);
   });
 
-  it('can resolve comment', async function () {
+  it('can resolve comment', function () {
     comment.unresolve();
-    browser.withAllSubmorphsDo(async (submorph) => {
+    browser.withAllSubmorphsDo(submorph => {
       if (submorph.comment && submorph.comment.equals(comment)) {
         submorph.performClickAction('resolve');
       }
@@ -68,9 +69,9 @@ describe('comment browser', function () {
     expect(comment.isResolved()).to.be.ok;
   });
 
-  async function getCommentCountLabelString () {
+  function getCommentCountLabelString () {
     let label;
-    browser.withAllSubmorphsDo(async (submorph) => {
+    browser.withAllSubmorphsDo(submorph => {
       if (submorph.name === 'comment count label') {
         label = submorph.textString;
       }
@@ -82,15 +83,15 @@ describe('comment browser', function () {
     const comment2 = await morph.addComment(exampleText);
     let label = await getCommentCountLabelString();
     expect(label).equals('2');
-    morph.removeComment(comment2);
+    await morph.removeComment(comment2);
     label = await getCommentCountLabelString();
     expect(label).equals('1');
   });
 
   it('comment may be removed', async function () {
-    await browser.withAllSubmorphsDo(async (submorph) => {
-      if (submorph.comment && submorph.comment.equals(comment)) {
-        submorph.performClickAction('remove');
+    browser.withAllSubmorphsDo(async (submorph) => {
+      if (submorph.comment) {
+        await submorph.performClickAction('remove');
       }
     });
     let commentMorphLabel;
@@ -99,6 +100,7 @@ describe('comment browser', function () {
         commentMorphLabel = submorph;
       }
     });
+
     expect(commentMorphLabel).to.be.not.ok;
   });
 
