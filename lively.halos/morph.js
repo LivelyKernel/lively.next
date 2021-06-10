@@ -40,6 +40,10 @@ export default class Halo extends Morph {
       maskBounds: {
         initialize () {
           this.maskBounds = $world.visibleBounds();
+        },
+        set (b) {
+          this.setProperty('maskBounds', b);
+          this.relayout();
         }
       },
       activeItems: {
