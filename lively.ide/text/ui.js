@@ -230,10 +230,15 @@ export class RichTextControl extends Morph {
     }
   }
 
+  onLoad () {
+    this.reset();
+  }
+
   reset () {
     const { fontSelection } = this.ui;
     fontSelection.items = arr.uniq([...this.env.fontMetric.supportedFonts, ...config.text.basicFontItems]);
 
+    if (!this.target) return;
     fontSelection.selection = this.target.fontFamily || fontSelection.items[0].value;
     connect(this.target, 'selectionChange', this, 'update');
   }
@@ -531,4 +536,5 @@ export class RichTextControl extends Morph {
     });
   }
 }
+
 
