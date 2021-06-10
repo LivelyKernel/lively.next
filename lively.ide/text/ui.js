@@ -54,8 +54,6 @@ export class RichTextControl extends Morph {
                 });
                 fb.selection = arr.last(fb.items);
               }
-              fb.fit();
-              fb.width = Math.max(fb.width, 130);
             },
             fontWeightSelection: (target, dropDownList) => {
               dropDownList.selection = target.fontWeight == 'normal' ? 'Medium' : (target.fontWeight ? string.capitalize(target.fontWeight) : 'Medium');
@@ -234,8 +232,9 @@ export class RichTextControl extends Morph {
 
   reset () {
     const { fontSelection } = this.ui;
-    fontSelection.items = RichTextControl.basicFontItems();
-    fontSelection.selection = fontSelection.items[0].value;
+    fontSelection.items = arr.uniq([...this.env.fontMetric.supportedFonts, ...config.text.basicFontItems]);
+
+    fontSelection.selection = this.target.fontFamily || fontSelection.items[0].value;
     connect(this.target, 'selectionChange', this, 'update');
   }
 
@@ -259,6 +258,10 @@ export class RichTextControl extends Morph {
   }
 
   removeFocus () {
+    if (this.target && this.target.attributeConnections) {
+      this.target.attributeConnections.forEach(
+        con => con.targetObj === this && con.disconnect());
+    }
     if (this.autoRemove && this.target) {
       this.remove();
       this.target = null;
@@ -267,6 +270,7 @@ export class RichTextControl extends Morph {
 
   async focusOn (textMorph, align = true) {
     this.target = textMorph;
+    this.reset();
     this.update();
     await this.whenRendered();
     this.ui.fontSizeField.relayout();
@@ -286,7 +290,7 @@ export class RichTextControl extends Morph {
   update () {
     const { target, updateSpec } = this;
     const sel = target.selection;
-    const attr = sel
+    const attr = (!target.readOnly && sel)
       ? (sel.isEmpty()
           ? target.textAttributeAt(sel.start)
           : target.getStyleInRange(sel))
@@ -527,5 +531,4 @@ export class RichTextControl extends Morph {
     });
   }
 }
-
 

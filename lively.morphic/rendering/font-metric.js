@@ -1,5 +1,5 @@
 /* global System, global, self */
-import { string, obj } from 'lively.lang';
+import { string, arr, obj } from 'lively.lang';
 import FontDetector from './font-detector.js';
 import { cumulativeOffset } from './dom-helper.js';
 import config from '../config.js';
@@ -195,6 +195,12 @@ export default class FontMetric {
     return this.sizeFor(style, ' ').height;
   }
 
+  get supportedFonts () {
+    return arr.uniq(Object
+      .keys(this.supportedFontCache)
+      .map(font => font.split(',')[0].replaceAll(/-bold|-Medium|\"|-normal/g, '')));
+  }
+
   isFontSupported (font, weight = 'normal') {
     const fd = this.fontDetector || (this.fontDetector = new FontDetector(this.element.ownerDocument));
 
@@ -240,6 +246,7 @@ export default class FontMetric {
       rendertTextLayerFn, renderLineFn);
   }
 }
+
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // font measuring inside text
