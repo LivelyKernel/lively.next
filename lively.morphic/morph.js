@@ -2800,7 +2800,6 @@ export class Image extends Morph {
     const { ctx, image } = await this.canvasElementAndContext();
     if (!bounds) bounds = rect(0, 0, image.width, image.height);
     const { x, y, width, height } = bounds;
-    console.log(x, y);
     return ctx.getImageData(x, y, width, height);
   }
 
@@ -3318,6 +3317,10 @@ export class Path extends Morph {
   }
 
   render (renderer) {
+    if (this._requestMasterStyling) {
+      this.master && this.master.applyIfNeeded(true);
+      this._requestMasterStyling = false;
+    }
     return renderer.renderPath(this);
   }
 
