@@ -6,7 +6,7 @@ import {
 } from 'lively.morphic';
 import { pt, Rectangle, Color, LinearGradient, rect } from 'lively.graphics';
 import { signal, once, connect } from 'lively.bindings';
-import { obj } from 'lively.lang';
+import { obj, num } from 'lively.lang';
 
 import { Window } from 'lively.components';
 
@@ -14,6 +14,7 @@ import { ColorPalette } from './color-palette.js';
 import { FillPopover, colorWidgets } from './style-popover.js';
 import { Slider } from 'lively.components/widgets.js';
 import { Popover } from 'lively.components/popup.js';
+import { resource } from "lively.resources/index.js";
 
 const WHEEL_URL = '/lively.ide/assets/color-wheel.png';
 
@@ -129,10 +130,6 @@ export class ColorPickerField extends Morph {
     };
   }
 
-  get testAttr () {
-    return [42];
-  }
-
   spec () {
     return obj.dissoc(super.spec(), ['submorphs']);
   }
@@ -170,13 +167,17 @@ export class ColorPickerField extends Morph {
   }
 
   async openPicker (evt) {
-    const p = this.picker || new ColorPicker({ color: this.colorValue });
+    // this.picker = null
+    const p = this.picker || await resource('part://SystemWidgets/new color picker').read();
+    p.solidOnly = !this.gradientEnabled;
+    p.hasFixedPosition = true;
+    p.focusOnMorph(this.context, this.colorValue);
+    p.toggleHalos(false);
     p.position = pt(0, -p.height / 2);
-    connect(p, 'color', this, 'update');
+    connect(p, 'value', this, 'update');
     this.picker = p.openInWorld();
     this.picker.topLeft = this.globalBounds().bottomCenter();
     this.picker.topLeft = this.world().visibleBounds().translateForInclusion(this.picker.globalBounds()).topLeft();
-    this.removePalette();
   }
 
   removePicker () {
@@ -184,26 +185,14 @@ export class ColorPickerField extends Morph {
   }
 
   async openPalette (evt) {
-    const p =
-      this.gradientEnabled ? this.fillWidget : this.palette;
-    this.gradientEnabled ? connect(p, 'fillValue', this, 'update') : connect(p.targetMorph, 'color', this, 'update');
-    p.isLayoutable = false;
-    await p.openInWorld();
-    p.topCenter = this.get('paletteButton').globalBounds().center();
-    p.topCenter = this.world().visibleBounds().translateForInclusion(p.globalBounds()).topCenter();
-    this.removePicker();
-    once(p, 'remove', p, 'topLeft', { converter: () => pt(0, 0), varMapping: { pt } });
-  }
-
-  removePalette () {
-    this.colorValue.isGradient ? this.fillWidget.remove() : this.palette.remove();
+    this.openPicker(evt);
   }
 
   removeWidgets () {
-    this.removePalette();
     this.removePicker();
   }
 }
+
 
 colorWidgets.ColorPickerField = ColorPickerField;
 
@@ -227,10 +216,9 @@ class FieldPicker extends Morph {
         set ({ x: light, y: dark }) {
           // translate the pos to a new hsv value
           const { width, height } = this.getSubmorphNamed('hue');
-          this.saturation = Math.max(0, Math.min(light / width, 1));
-          this.brightness = Math.max(0, Math.min(1 - (dark / height), 1));
-          signal(this, 'saturation', this.saturation);
-          signal(this, 'brightness', this.brightness);
+          this.saturation = num.clamp(light / width, 0, 1);
+          this.brightness = num.clamp(1 - (dark / height), 0, 1);
+          this.refresh();
         }
       },
       submorphs: {
@@ -287,20 +275,30 @@ class FieldPicker extends Morph {
     };
   }
 
+  confirm () {
+    signal(this, 'shadeChanged', [this.brightness, this.saturation]);
+  }
+
   update (colorPicker) {
-    this.getSubmorphNamed('hue').fill = Color.hsb(colorPicker.hue, 1, 1);
-    this.brightness = colorPicker.brightness;
-    this.saturation = colorPicker.saturation;
+    const [hue, srt, brt] = colorPicker.color.toHSB();
+    this.getSubmorphNamed('hue').fill = Color.hsb(hue, 1, 1);
+    this.brightness = brt;
+    this.saturation = srt;
+    this.refresh();
+  }
+
+  refresh () {
     this.get('picker').center = this.pickerPosition;
   }
 
   onMouseDown (evt) {
     this.pickerPosition = evt.positionIn(this);
-    signal(this, 'pickerPosition', this.pickerPosition);
+    this.confirm();
   }
 
   onDrag (evt) {
     this.pickerPosition = evt.positionIn(this);
+    this.confirm();
   }
 
   relayout () {
@@ -310,6 +308,13 @@ class FieldPicker extends Morph {
     this.getSubmorphNamed('light').setBounds(bounds);
   }
 }
+
+
+
+
+
+
+
 
 class ColorPropertyView extends Text {
   static get properties () {
@@ -378,11 +383,13 @@ class HuePicker extends Morph {
         derived: true,
         after: ['submorphs'],
         get () {
-          return pt(this.width / 2, this.height * (this.hue / 360));
+          const h = this.height - 10;
+          return pt(this.width / 2, 5 + h * (this.hue / 360));
         },
         set (pos) {
-          this.hue = Math.max(0, Math.min((pos.y / this.height) * 360, 359));
-          signal(this, 'hue', this.hue);
+          const h = this.height - 10;
+          this.hue = Math.max(0, Math.min((pos.y / h) * 360, 359));
+          this.refresh();
         }
       },
       submorphs: {
@@ -403,19 +410,38 @@ class HuePicker extends Morph {
     };
   }
 
+  confirm () {
+    signal(this, 'hueChanged', this.hue);
+  }
+
   onMouseDown (evt) {
-    this.sliderPosition = pt(0, evt.positionIn(this).y);
+    const sliderWidth = this.get('slider').width;
+    this.sliderPosition = pt(0, evt.positionIn(this).y - sliderWidth / 2);
+    this.confirm();
   }
 
   onDrag (evt) {
-    this.sliderPosition = pt(0, evt.positionIn(this).y);
+    const sliderWidth = this.get('slider').width;
+    this.sliderPosition = pt(0, evt.positionIn(this).y - sliderWidth / 2);
+    this.confirm();
   }
 
   update (colorPicker) {
-    this.hue = colorPicker.hue;
+    this.hue = colorPicker.hsb[0];
+    this.refresh();
+  }
+
+  refresh () {
     this.get('slider').center = this.sliderPosition;
   }
 }
+
+
+
+
+
+
+
 
 class ColorDetails extends Morph {
   static get properties () {

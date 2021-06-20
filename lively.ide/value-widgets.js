@@ -399,11 +399,7 @@ export class NumberWidget extends Morph {
       unit: {
         type: 'Enum',
         isStyleProp: true,
-        values: ['px', '%', 'pt', ''],
-        set (unit) {
-          this.setProperty('unit', unit);
-          if (typeof this.number === 'number') this.relayout(false);
-        }
+        values: ['px', '%', 'pt', '']
       },
       autofit: {
         defaultValue: true,
@@ -421,20 +417,8 @@ export class NumberWidget extends Morph {
           this.relayout(false);
         }
       },
-      min: {
-        defaultValue: -Infinity,
-        set (min) {
-          this.setProperty('min', min);
-          this.relayout(false);
-        }
-      },
-      max: {
-        defaultValue: Infinity,
-        set (max) {
-          this.setProperty('max', max);
-          this.relayout(false);
-        }
-      },
+      min: { defaultValue: -Infinity },
+      max: { defaultValue: Infinity },
       floatingPoint: {
         after: ['number', 'submorphs'],
         set (isFloat) {
@@ -530,6 +514,17 @@ export class NumberWidget extends Morph {
         }
       },
 
+      showStepControls: {
+        derived: true,
+        get () {
+          return this.getSubmorphNamed('up').visible && this.getSubmorphNamed('down').visible;
+        },
+        set (active) {
+          this.getSubmorphNamed('up').visible = this.getSubmorphNamed('down').visible = active;
+          this.clipMode = active ? 'visible' : 'hidden';
+        }
+      },
+
       submorphs: {
         after: ['min', 'max'],
         initialize (prev) {
@@ -577,6 +572,7 @@ export class NumberWidget extends Morph {
   }
 
   update (v, fromScrubber = true) {
+    // allows us to selectively skip relayouting
     this.setProperty('number', fromScrubber ? v / this.scaleFactor : v);
     signal(this, 'number', this.number);
     this.relayout(fromScrubber);
@@ -597,22 +593,23 @@ export class NumberWidget extends Morph {
 
   relayout (fromScrubber) {
     const valueContainer = this.getSubmorphNamed('value');
+    const buttonOffset = this.showStepControls ? 20 : 0;
     if (!valueContainer) return;
     if (this.autofit) {
       if (!fromScrubber) valueContainer.value = this.number * this.scaleFactor;
       valueContainer.fit();
       this.height = valueContainer.height;
-      this.width = valueContainer.width + 20;
+      this.width = valueContainer.width + buttonOffset;
       this.relayoutButtons();
     } else {
-      if (!fromScrubber) valueContainer.width = this.width - 20;
+      if (!fromScrubber) valueContainer.width = this.width - buttonOffset;
       this.relayoutButtons();
     }
     if (!fromScrubber) {
+      valueContainer.value = num.roundTo(this.number * this.scaleFactor, 1);
       valueContainer.min = this.min != -Infinity ? this.min * this.scaleFactor : this.min;
       valueContainer.max = this.max != Infinity ? this.max * this.scaleFactor : this.max;
       valueContainer.unit = this.unit;
-      valueContainer.value = num.roundTo(this.number * this.scaleFactor, 1);
     }
   }
 
@@ -626,6 +623,8 @@ export class NumberWidget extends Morph {
     this.update(this.number - (1 / this.scaleFactor), false);
   }
 }
+
+
 
 export class ShadowWidget extends Morph {
   static get properties () {
@@ -886,17 +885,8 @@ export class StringWidget extends InputLine {
       fill: { defaultValue: Color.transparent },
       fontColor: { defaultValue: Color.blue },
       nativeCursor: { defaultValue: 'auto' },
-      borderColor: {
-        // will appear as white border in onFocus
-        defaultValue: Color.white.withA(0)
-      },
-      _originalBorderColor: {
-        after: ['borderColor'],
-        initialize () {
-          this._originalBorderColor = this.borderColor;
-        }
-      },
-      borderStyle: { defaultValue: 'solid' },
+      borderColor: { defaultValue: Color.transparent },
+      borderStyle: { defaultValue: 'dashed' },
       borderRadius: { defaultValue: 4 },
       borderWidth: { defaultValue: 1 },
       padding: { defaultValue: rect(0, 0, 0, 0) },
@@ -933,11 +923,10 @@ export class StringWidget extends InputLine {
   }
 
   async onFocus (evt) {
-    if (!this.focus) this._originalBorderColor = this.borderColor;
     super.onFocus(evt);
     if (this.readOnly) return;
     if (!this.stringTooLong) {
-      this.borderColor = this.borderColor.valueOf().withA(0.7);
+      this.borderColor = Color.white.withA(0.9);
       this.textString = this.stringValue;
       return;
     }
@@ -949,7 +938,7 @@ export class StringWidget extends InputLine {
   onBlur (evt) {
     super.onBlur(evt);
     if (this.readOnly) return;
-    this.borderColor = this._originalBorderColor;
+    this.borderColor = Color.transparent;
     this.onInput(this.textString);
   }
 
