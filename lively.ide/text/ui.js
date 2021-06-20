@@ -9,7 +9,7 @@ import {
   Icon
 } from 'lively.morphic';
 import { pt, Rectangle, Color } from 'lively.graphics';
-import { connect, once, noUpdate } from 'lively.bindings';
+import { connect, disconnect, once, noUpdate } from 'lively.bindings';
 import { ColorPicker } from '../styling/color-picker.js';
 import { DropDownList } from 'lively.components';
 
@@ -240,7 +240,9 @@ export class RichTextControl extends Morph {
 
     if (!this.target) return;
     fontSelection.selection = this.target.fontFamily || fontSelection.items[0].value;
-    connect(this.target, 'selectionChange', this, 'update');
+    connect(this.target, 'selectionChange', this, 'update', {
+      garbageCollect: true
+    });
   }
 
   alignAtTarget (animated = !!this.world()) {
@@ -274,6 +276,9 @@ export class RichTextControl extends Morph {
   }
 
   async focusOn (textMorph, align = true) {
+    if (this.target) {
+      disconnect(this.target, 'selectionChange', this, 'update');
+    }
     this.target = textMorph;
     this.reset();
     this.update();
@@ -323,7 +328,7 @@ export class RichTextControl extends Morph {
   changeAttributeInSelectionOrMorph (name, valueOrFn) {
     const { target } = this;
     const sel = target.selection;
-    if (target.isLabel || sel.isEmpty()) {
+    if (target.isLabel || sel && sel.isEmpty()) {
       target[name] = typeof valueOrFn === 'function'
         ? valueOrFn(target[name])
         : valueOrFn;
@@ -536,5 +541,3 @@ export class RichTextControl extends Morph {
     });
   }
 }
-
-
