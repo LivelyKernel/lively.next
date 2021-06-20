@@ -85,8 +85,9 @@ export class HTMLMorph extends Morph {
         set (value) {
           this.domNode.innerHTML = value;
           // manually trigger master change
-          if (this.master) {
-            this.master.onMorphChange(this, {
+          const parentWithMaster = [this, ...this.ownerChain()].find(m => m.master);
+          if (parentWithMaster) {
+            parentWithMaster.master.onMorphChange(this, {
               prop: 'html', value
             });
           }
@@ -203,6 +204,7 @@ export class HTMLMorph extends Morph {
     return items;
   }
 }
+
 
 export class IFrameMorph extends HTMLMorph {
   static async example () {
