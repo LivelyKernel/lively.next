@@ -222,12 +222,11 @@ export default class InputLine extends Text {
   // this.clearError()
 
   async indicateError (message) {
-    this.borderWidth = 3;
     this.borderColor = Color.red;
     this._errorIcon = this.addMorph(this._errorIcon || morph({
       type: 'label',
-      value: [' ' + message, { fontSize: 18 }, ' ', {}, ...Icon.textAttribute('exclamation-circle', { paddingTop: '2px' })],
-      fontSize: 20,
+      value: [' ' + message, { fontSize: this.fontSize }, ' ', {}, ...Icon.textAttribute('exclamation-circle', { paddingTop: '2px' })],
+      fontSize: this.fontSize,
       fontColor: Color.red,
       opacity: 0,
       reactsToPointer: false,
@@ -261,9 +260,9 @@ export default class InputLine extends Text {
     placeholder.defaultTextStyle = this.defaultTextStyle;
     placeholder.lineHeight = this.height + 'px';
     placeholder.fit();
-    placeholder.leftCenter = this.label.length
-      ? textB.rightCenter().addXY(0, this.borderWidth)
-      : textB.leftCenter().withX(0);
+    placeholder.topLeft = this.label.length
+      ? textB.topLeft().addXY(0, this.borderWidth)
+      : textB.topLeft().withX(0);
   }
 
   fixCursor () {
