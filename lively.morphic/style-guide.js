@@ -660,6 +660,7 @@ export class ComponentPolicy {
     if (change.prop == 'master' && this.managesMorph(morph)) {
       this._overriddenProps.get(morph).master = true;
     }
+
     if (morph.styleProperties.includes(change.prop)) {
       if (this.managesMorph(morph)) {
         if (morph.master && morph.master != this) {
@@ -854,7 +855,7 @@ export class StyleGuideResource extends Resource {
     }
 
     if (await this.localWorldName() == this.worldName) {
-      component = typeof $world !== 'undefined' && ($world.getSubmorphNamed(name) || $world.localComponents.find(c => c.name == name));
+      component = typeof $world !== 'undefined' && ($world.localComponents.find(c => c.name == name));
       if (!component) { throw Error(`Master component "${name}" can not be found in "${this.worldName}"`); }
       return component;
     }
@@ -936,13 +937,13 @@ export class StyleGuideResource extends Resource {
 
   async exists () {
     // checks if the morph exists
-    const component = typeof $world !== 'undefined' && $world.getSubmorphNamed(this.morphName);
+    const component = typeof $world !== 'undefined' && $world.localComponents.find(m => m.name == this.morphName);
     return component && component.isComponent;
   }
 
   async remove () {
     // revokes the component
-    const component = typeof $world !== 'undefined' && $world.getSubmorphNamed(this.morphName);
+    const component = typeof $world !== 'undefined' && $world.localComponents.find(m => m.name == this.morphName);
     if (component) component.isComponent = false;
     return true;
   }
