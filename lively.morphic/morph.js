@@ -2930,9 +2930,9 @@ export class Image extends Morph {
     const url = await this.world().prompt('Enter image url', {
       historyId: 'lively.morphic-image-url-inputs',
       input: this.imageUrl.startsWith('data:') ? '' : this.imageUrl,
-      requester: this
-    },
-    true);
+      requester: this,
+      selectInput: true
+    });
     if (typeof url === 'string') { this.imageUrl = url; }
   }
 

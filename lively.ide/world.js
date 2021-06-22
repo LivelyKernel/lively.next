@@ -732,7 +732,7 @@ export class LivelyWorld extends World {
     return this.openPrompt(new InformPrompt({ label, ...opts }), opts);
   }
 
-  prompt (label, opts = { requester: null, input: '', historyId: null, useLastInput: false }, selectInput = false) {
+  prompt (label, opts = { requester: null, input: '', historyId: null, useLastInput: false, selectInput: false }) {
     // await this.world().prompt("test", {input: "123"})
     // options = {
     //   input: STRING, -- optional, prefilled input string
@@ -743,9 +743,6 @@ export class LivelyWorld extends World {
     const textPrompt = new TextPrompt({ label, ...opts });
     if (opts.forceConfirm) {
       textPrompt.get('cancel button').disable();
-    }
-    if (selectInput) {
-      textPrompt.get('input').selectAll();
     }
     return this.openPrompt(textPrompt, opts);
   }

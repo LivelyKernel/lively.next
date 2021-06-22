@@ -335,7 +335,7 @@ export class TextPrompt extends AbstractPrompt {
     if (this.validate(inputLine.input)) { super.resolve(inputLine.acceptInput()); } else inputLine.indicateError(this.errorMessage);
   }
 
-  build ({ label, input, historyId, useLastInput }) {
+  build ({ label, input, historyId, useLastInput, selectInput }) {
     const title = this.addNamed('promptTitle', {
       type: 'text'
     });
@@ -381,6 +381,9 @@ export class TextPrompt extends AbstractPrompt {
 
     inputLine.gotoDocumentEnd();
     inputLine.scrollCursorIntoView();
+    if (selectInput) {
+      inputLine.selectAll();
+    }
   }
 
   initLayout () {
