@@ -2931,7 +2931,8 @@ export class Image extends Morph {
       historyId: 'lively.morphic-image-url-inputs',
       input: this.imageUrl.startsWith('data:') ? '' : this.imageUrl,
       requester: this
-    });
+    },
+    true);
     if (typeof url === 'string') { this.imageUrl = url; }
   }
 
