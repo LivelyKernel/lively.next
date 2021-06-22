@@ -524,7 +524,8 @@ export class Label extends Morph {
     const newLabel = await this.world().prompt('edit label', {
       input: this.textString,
       historyId: 'lively.morphic-label-edit-hist'
-    });
+    },
+    true);
     if (typeof newLabel === 'string') { this.textString = newLabel; }
   }
 
