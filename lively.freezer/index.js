@@ -1174,7 +1174,7 @@ class LivelyRollup {
   }
 
   needsClassInstrumentation (moduleId, moduleSource) {
-    if (moduleSource.match(/extends\ (Morph|Image|Ellipse|HTMLMorph|Path|Polygon|Text|InteractiveMorph)/)) return true;
+    if (moduleSource && moduleSource.match(/extends\ (Morph|Image|Ellipse|HTMLMorph|Path|Polygon|Text|InteractiveMorph)/)) return true;
     if (CLASS_INSTRUMENTATION_MODULES_EXCLUSION.some(pkgName => moduleId.includes(pkgName))) { return false; }
     if (CLASS_INSTRUMENTATION_MODULES.some(pkgName => moduleId.includes(pkgName) || pkgName == moduleId) || belongsToObjectPackage(moduleId)) {
       return true;
