@@ -93,6 +93,7 @@ const CLASS_INSTRUMENTATION_MODULES = [
   'lively.halos',
   'lively.user',
   'lively.bindings',
+  'lively-system-interface', // required to make inspector serializable
   'typeshift.components',
   'lively.collab',
   'https://jspm.dev/npm:rollup@2.28.2' // this contains a bunch of class definitions which right now screws up the closure compiler
