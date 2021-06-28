@@ -4,6 +4,11 @@ import { obj } from 'lively.lang';
 import { resource } from 'lively.resources';
 import { string } from 'lively.lang';
 
+const COMPRESSABLE_URLS = [
+  'lively.morphic/styleguides',
+  'components_cache'
+];
+
 // FIXME...
 let DavHandler; let FsTree;
 const jsDavPlugins = {};
@@ -88,7 +93,7 @@ export default class LivelyDAVPlugin {
         req.url.endsWith('.json') &&
         req.headers['accept-encoding'].includes('br') &&
         // fixme
-        req.url.includes('lively.morphic/styleguides')) {
+        COMPRESSABLE_URLS.find(url => req.url.includes(url))) {
       // check if there is a brotli compressed version persent and serve that instead
       req.url = req.url.replace('.json', '.br.json');
       res.setHeader('content-encoding', 'br');

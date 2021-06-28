@@ -1,8 +1,9 @@
-/* global process */
+/* global process, Buffer */
 import { ObjectDBInterface, ObjectDB } from 'lively.storage';
 import { resource } from 'lively.resources';
 import { HeadlessSession } from 'lively.headless';
 import { string, promise } from 'lively.lang';
+const brotli = System._nodeRequire('brotli');
 
 const errorLog = [];
 
@@ -105,7 +106,7 @@ export default class ComponentsBrowser {
     // fire up the headless chrome browser
     for (const [worldName, jsonPath] of [...allStyleguidesInDb.map(m => [m]), ...additionalStyleguidesInFolders]) {
       if (worldToUpdate && worldName != worldToUpdate) continue;
-      if (worldName == 'SystemIDE') continue;
+      //if (worldName == 'SystemIDE') continue;
       console.log('[ComponentsBrowser] indexing ' + worldName);
       try {
         await this.headlessSession.open(
@@ -135,15 +136,37 @@ export default class ComponentsBrowser {
           await commitDB.mixin(commit._id, { preview: 'data:image/png;base64,' + preview }); // update the peview
         }
 
-        const listedComponents = await this.headlessSession.runEval(`
-          this.__listedComponents__ = $world.getListedComponents().filter(c => !$world.hiddenComponents.includes(c.name));
-          this.__listedComponents__.map(m => m.name);
+        console.log('creating snapshots')
+
+        const [listedComponents, snapshots, errors] = await this.headlessSession.runEval(`
+          const { createMorphSnapshot } = await System.import("lively.morphic/serialization.js");
+          const listedComponents = $world.getListedComponents();
+          const snapshots = {};
+          const errors = [];
+          await Promise.all(listedComponents.map(async c => {
+             try {
+               snapshots[c.name] = await createMorphSnapshot(c);
+             } catch (err) {
+               errors.push(err.message)
+             }
+          }));
+          this.__listedComponents__ = listedComponents.filter(c => !$world.hiddenComponents.includes(c.name));          
+          [this.__listedComponents__.map(m => m.name), snapshots, errors];
         `);
 
-        await promise.delay(2000);
+        console.log('finished snaps!');
+        console.log(errors)
 
         const worldFolder = cacheDir.join(worldName + '/');
         if (await worldFolder.exists()) await worldFolder.remove(); // always make sure to start form clean slate
+
+        for (const componentName in snapshots) {
+          let res = worldFolder.join(componentName + '.json');
+          await res.ensureExistance();
+          await res.writeJson(snapshots[componentName]);
+          res = worldFolder.join(componentName + '.br.json');
+          await res.write(Buffer.from(brotli.compress(Buffer.from(JSON.stringify(snapshots[componentName])))));
+        }
 
         // fixme: remove deleted worlds?
 
@@ -176,7 +199,7 @@ export default class ComponentsBrowser {
           if (!screenshotSize) break;
 
           await this.headlessSession.page.screenshot({
-            path: (await worldFolder.join(componentName + '.png').ensureExistance()).url.replace('file://', ''),
+            path: (await worldFolder.join(componentName + '.png')).url.replace('file://', ''),
             clip: screenshotSize,
             omitBackground: true
           });
@@ -189,6 +212,7 @@ export default class ComponentsBrowser {
           `);
         }
       } catch (err) {
+        console.log(err);
         console.log('[ComponentsBrowser] Failed indexing ' + worldName);
         errorLog.push('[ComponentsBrowser] Failed indexing ' + worldName);
         continue;

@@ -764,6 +764,7 @@ This is done by mainating a local registry, where the resource extension keeps a
 const styleGuideURLRe = /^styleguide:\/\/([^\/]+)\/(.*)$/;
 
 var fetchedSnapshots = fetchedSnapshots || {};
+var fetchedMasters = fetchedMasters || {};
 var resolvedMasters = resolvedMasters || {};
 
 var modulesToLoad = modulesToLoad || {};
@@ -844,37 +845,63 @@ export class StyleGuideResource extends Resource {
 
   async read () {
     const name = this.componentName;
-    let component = Path([this.worldName, this.componentName]).get(resolvedMasters);
+    const worldName = await this.worldName;
+    let component = Path([worldName, this.componentName]).get(resolvedMasters);
     if (component) return component;
 
+    // check if an isolated file exists before fetching the entire world snapshot
+    const isolatedSnap = resource(System.baseURL).join('components_cache').join(worldName).join(name + '.json');
+    if (typeof fetchedMasters[isolatedSnap.url] === 'undefined') {
+      let resolveMasterDirectly;
+      ({ resolve: resolveMasterDirectly, promise: fetchedMasters[isolatedSnap.url] } = promise.deferred());
+      if (await this.localWorldName() == worldName) {
+        component = typeof $world !== 'undefined' && ($world.localComponents.find(c => c.name == name));
+        if (!component) { throw Error(`Master component "${name}" can not be found in "${worldName}"`); }
+        resolveMasterDirectly(component); // proceed in original control flow
+      } else if (await isolatedSnap.exists()) {
+        // this can only happen from json stored core styleguides
+        worldToUrl[worldName] = resource(System.baseURL).join('worlds/load').withQuery({
+          file: 'lively.morphic/styleguides/' + worldName + '.json'
+        }).url;
+        const snapshot = await isolatedSnap.readJson();
+        await loadPackagesAndModulesOfSnapshot(snapshot);
+        component = deserializeMorph(snapshot);
+        await this.resolveComponent(component);
+        resolveMasterDirectly(component); // notify other waiting
+      } else {
+        resolveMasterDirectly(null); // no direct resolution possible
+      }
+    } else component = await fetchedMasters[isolatedSnap.url];
+
+    if (component) return component;
     // announce we are about to fetch this snapshot;
     let resolveSnapshot;
-    if (!fetchedSnapshots[this.worldName]) {
-      console.log('scheduling fetch of', this.worldName);
-      ({ resolve: resolveSnapshot, promise: fetchedSnapshots[this.worldName] } = promise.deferred());
+    if (!fetchedSnapshots[worldName]) {
+      console.log('scheduling fetch of', worldName);
+      ({ resolve: resolveSnapshot, promise: fetchedSnapshots[worldName] } = promise.deferred());
     }
 
-    if (await this.localWorldName() == this.worldName) {
-      component = typeof $world !== 'undefined' && ($world.localComponents.find(c => c.name == name));
-      if (!component) { throw Error(`Master component "${name}" can not be found in "${this.worldName}"`); }
-      return component;
-    }
+    // if (await this.localWorldName() == this.worldName) {
+    //   component = typeof $world !== 'undefined' && ($world.localComponents.find(c => c.name == name));
+    //   if (!component) { throw Error(`Master component "${name}" can not be found in "${this.worldName}"`); }
+    //   return component;
+    // }
 
     let snapshot;
     if (resolveSnapshot) {
       const db = MorphicDB.default;
-      if ((await db.fetchCommit('world', this.worldName))) {
-        snapshot = await db.fetchSnapshot('world', this.worldName);
-        worldToUrl[this.worldName] = resource(System.baseURL).join('worlds/load').withQuery({
-          name: this.worldName
+      if ((await db.fetchCommit('world', worldName))) {
+        snapshot = await db.fetchSnapshot('world', worldName);
+        worldToUrl[worldName] = resource(System.baseURL).join('worlds/load').withQuery({
+          name: worldName
         }).url;
       } else {
         // try to get the JSON (fallback)
-        const jsonRes = resource(System.baseURL).join('lively.morphic/styleguides').join(this.worldName + '.json');
+        const jsonRes = resource(System.baseURL).join('lively.morphic/styleguides').join(worldName + '.json');
         if (await jsonRes.exists()) {
           snapshot = await jsonRes.readJson();
-          worldToUrl[this.worldName] = resource(System.baseURL).join('worlds/load').withQuery({
-            file: 'lively.morphic/styleguides/' + this.worldName + '.json'
+          worldToUrl[worldName] = resource(System.baseURL).join('worlds/load').withQuery({
+            file: 'lively.morphic/styleguides/' + worldName + '.json'
           }).url;
         } else resolveSnapshot(null); // total fail
       }
@@ -891,7 +918,7 @@ export class StyleGuideResource extends Resource {
           }
         });
       resolveSnapshot(snapshot);
-    } else snapshot = await fetchedSnapshots[this.worldName];
+    } else snapshot = await fetchedSnapshots[worldName];
 
     const pool = new ObjectPool(normalizeOptions({
       plugins: [new StyleguidePlugin(), ...allPlugins]
@@ -901,7 +928,7 @@ export class StyleGuideResource extends Resource {
       return Path('props.isComponent.value').get(v) && Path('props.name.value').get(v) == name;
     }) || [];
 
-    if (!idToDeserialize) throw Error(`Master component "${name}" can not be found in "${this.worldName}"`);
+    if (!idToDeserialize) throw Error(`Master component "${name}" can not be found in "${worldName}"`);
 
     // load modules for that part of the snap, if it is required
 
@@ -956,27 +983,3 @@ export const resourceExtension = {
 };
 
 registerExtension(resourceExtension);
-
-class StyleGuide {
-  // write to file
-  // read from file
-
-  // file can be stored in a local package / object package
-  // file can be stored on a file on the server
-
-  // can return a set of masters
-  // servers as a namespace for masters
-
-  /* namespacing of masters
-
-    windowButtons/maximize/hover
-    windowButtons/maximize/default
-
-    windowButtons/minimize/hover
-    ....
-
-    + style ref convenience methods
-    + help from the side palette master control interface
-
-  */
-}
