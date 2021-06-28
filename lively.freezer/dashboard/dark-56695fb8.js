@@ -1,1 +1,0 @@
-System.register(["./__root_module__-f418f9fd.js","lively.collab","kld-intersections","./user-ui-983ba0be.js","./index-ccf96d3d.js"],function(){return{setters:[function(){},function(){},function(){},function(){},function(){}],execute:function(){}}});

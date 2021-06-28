@@ -28,7 +28,7 @@ export async function loadWorldFromCommit (commitOrId, oldWorld, options) {
   if (oldWorld) {
     reset();
     oldWorld.name = null;
-    oldWorld.metadata.commit = {};
+    if (oldWorld.metadata) oldWorld.metadata.commit = {};
   }
   const db = MorphicDB.default;
   const newWorld = await db.load('world', undefined, options, commitOrId);
@@ -44,7 +44,7 @@ export async function loadWorldFromDB (name, ref, oldWorld, options) {
   if (oldWorld) {
     reset();
     oldWorld.name = null;
-    oldWorld.metadata.commit = {};
+    if (oldWorld.metadata) oldWorld.metadata.commit = {};
   }
   const db = MorphicDB.default;
   const newWorld = await db.load('world', name, options, undefined/* commit||id */, ref || undefined);

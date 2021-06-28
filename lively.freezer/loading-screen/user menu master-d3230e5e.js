@@ -1,0 +1,1 @@
+System.register(["./__root_module__-28353364.js","./index-2245b428.js","./index-4fd2821f.js","./editor-plugin-85896541.js"],function(){return{setters:[function(){},function(){},function(){},function(){}],execute:function(){}}});

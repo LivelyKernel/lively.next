@@ -1,13 +1,1 @@
-System.register(['./__root_module__-f418f9fd.js', 'lively.collab', 'kld-intersections'], function (exports) {
-	'use strict';
-	return {
-		setters: [function (module) {
-			exports('renderFrozenPart', module.bX);
-		}, function () {}, function () {}],
-		execute: function () {
-
-
-
-		}
-	};
-});
+System.register(["./__root_module__-46f2ff9c.js","kld-intersections"],function(Ma){return{setters:[function(rb){Ma("renderFrozenPart",rb.bT)},function(){}],execute:function(){}}});

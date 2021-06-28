@@ -1,1 +1,0 @@
-System.register("./__root_module__-f418f9fd.js lively.collab kld-intersections ./index-96ee3fea.js ./index-6e65d49f.js ./editor-plugin-c26fc353.js".split(" "),function(){return{setters:[function(){},function(){},function(){},function(){},function(){},function(){}],execute:function(){}}});
