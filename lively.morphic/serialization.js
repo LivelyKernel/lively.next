@@ -320,7 +320,8 @@ export async function findRequiredPackagesOfSnapshot (snapshot) {
         objectScriptingEnabled = !!ObjectPackage;
 
         const objPkg = ObjectPackage.forSystemPackage(p);
-        const objClass = objPkg.objectModule.systemModule._recorder[classInfo.className];
+        const objModule = await objPkg.ensureSubModule(classInfo.module.pathInPackage);
+        const objClass = objModule.systemModule._recorder[classInfo.className];
         const classes = withSuperclasses(objClass);
         classes.forEach(klass => {
           const p = ObjectPackage.lookupPackageForClass(klass);
