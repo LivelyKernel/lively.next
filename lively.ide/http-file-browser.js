@@ -1,44 +1,41 @@
-/*global System*/
-import { Morph, Image, Label, InputLine } from "lively.morphic";
-import { Tree, TreeData } from "lively.components";
-import { arr, fun, promise, num, date, string } from "lively.lang";
-import { pt, Rectangle, Color } from "lively.graphics";
-import { connect } from "lively.bindings";
-import { resource } from "lively.resources";
-import TextEditor from "./text-editor.js";
+/* global System */
+import { Morph, Image, Label, InputLine } from 'lively.morphic';
+import { Tree, TreeData } from 'lively.components';
+import { arr, fun, promise, num, date, string } from 'lively.lang';
+import { pt, Rectangle, Color } from 'lively.graphics';
+import { connect } from 'lively.bindings';
+import { resource } from 'lively.resources';
+import TextEditor from './text-editor.js';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // this.world().openInWindow(HTTPFileBrowser.forLocation(document.location.origin)).activate()
 
-var browserCommands = [
+let browserCommands = [
 
   {
-    name: "open selected file",
-    exec: (browser, opts = {openInNewBrowser: false}) => {
+    name: 'open selected file',
+    exec: (browser, opts = { openInNewBrowser: false }) => {
       // Allow "Enter" inside location input
       if (browser.ui.locationInput.isFocused()) return false;
 
-      var sel = browser.selectedFile;
+      let sel = browser.selectedFile;
       if (!sel) {
-        browser.setStatusMessage("No file selected");
-
+        browser.setStatusMessage('No file selected');
       } else if (opts.openInNewBrowser) {
-        var viewState = browser.ui.fileTree.buildViewState(({resource: {url}}) => url),
-            newBrowser = HTTPFileBrowser.forFile(browser.selectedFile, browser.location),
-            position = browser.getWindow().position.addXY(10,10);
-        browser.world().openInWindow(newBrowser, {position}).activate();
+        let viewState = browser.ui.fileTree.buildViewState(({ resource: { url } }) => url);
+        let newBrowser = HTTPFileBrowser.forFile(browser.selectedFile, browser.location);
+        let position = browser.getWindow().position.addXY(10, 10);
+        browser.world().openInWindow(newBrowser, { position }).activate();
         return newBrowser.whenFinishedLoading()
-          .then(() => newBrowser.ui.fileTree.applyViewState(viewState, ({resource: {url}}) => url))
+          .then(() => newBrowser.ui.fileTree.applyViewState(viewState, ({ resource: { url } }) => url))
           .then(() => newBrowser);
-
       } else if (sel.isDirectory()) {
-        browser.execCommand("set location to selection");
-
+        browser.execCommand('set location to selection');
       } else if (sel.url.endsWith('.svg') || sel.url.endsWith('.png')) {
-        var image = new Image({name: sel.url, imageUrl: sel.url, autoResize: true});
+        let image = new Image({ name: sel.url, imageUrl: sel.url, autoResize: true });
         image.openInWorld();
       } else {
-        var editor = TextEditor.openURL(sel.url, {extent: pt(600,800)});
+        let editor = TextEditor.openURL(sel.url, { extent: pt(600, 800) });
         setTimeout(() => editor.getWindow().activate(), 100);
       }
       return true;
@@ -46,27 +43,27 @@ var browserCommands = [
   },
 
   {
-    name: "focus file tree",
+    name: 'focus file tree',
     exec: browser => {
-      var it = browser.ui.fileTree;
+      let it = browser.ui.fileTree;
       it.show(); it.focus();
       return true;
     }
   },
 
   {
-    name: "focus location input",
+    name: 'focus location input',
     exec: browser => {
-      var it = browser.ui.locationInput;
+      let it = browser.ui.locationInput;
       it.show(); it.focus();
       return true;
     }
   },
 
   {
-    name: "set location to selection",
+    name: 'set location to selection',
     exec: async browser => {
-      var sel = browser.selectedFile;
+      let sel = browser.selectedFile;
       sel && await browser.keepFileTreeStateWhile(() =>
         browser.location = sel.isDirectory() ? sel : sel.parent());
       return true;
@@ -74,30 +71,30 @@ var browserCommands = [
   },
 
   {
-    name: "set location to parent dir",
+    name: 'set location to parent dir',
     exec: async browser => {
-      var currentLoc = browser.location;
+      let currentLoc = browser.location;
       if (currentLoc.isRoot()) return true;
       await browser.keepFileTreeStateWhile(async () => {
         await browser.openLocation(currentLoc.parent());
         browser.selectedFile = currentLoc;
-        await browser.ui.fileTree.execCommand("uncollapse selected node");
+        await browser.ui.fileTree.execCommand('uncollapse selected node');
       });
       return true;
     }
   },
 
   {
-    name: "copy file path to clipboard",
+    name: 'copy file path to clipboard',
     exec: async browser => {
       if (browser.ui.locationInput.isFocused()) return false;
 
       if (browser.selectedFile) {
-        var fnText = browser.get("selectedFileName");
+        let fnText = browser.get('selectedFileName');
         browser.env.eventDispatcher.doCopy(fnText.textString);
-        fnText.fontColor = Color.rgb(52,152,219);
+        fnText.fontColor = Color.rgb(52, 152, 219);
         await fnText.animate({
-          customTween: p => fnText.fontColor = Color.rgb(52,152,219).interpolate(p, Color.black)
+          customTween: p => fnText.fontColor = Color.rgb(52, 152, 219).interpolate(p, Color.black)
         });
       }
       return true;
@@ -105,14 +102,14 @@ var browserCommands = [
   },
 
   {
-    name: "refresh contents",
+    name: 'refresh contents',
     exec: (browser, args, count, evt) => {
       // FIXME preserve scroll and expansion state
       // FIXME!
-      if (evt && evt.keyCombo === "input-g" && browser.ui.locationInput.isFocused()) return false;
+      if (evt && evt.keyCombo === 'input-g' && browser.ui.locationInput.isFocused()) return false;
 
       return (async () => {
-        var scroll = browser.ui.fileTree.scroll;
+        let scroll = browser.ui.fileTree.scroll;
         await browser.keepFileTreeStateWhile(() => browser.location = browser.location);
         browser.ui.fileTree.scroll = scroll;
         return true;
@@ -121,36 +118,37 @@ var browserCommands = [
   },
 
   {
-    name: "set file filter",
+    name: 'set file filter',
     exec: async browser => {
       browser.excludeFiles = browser.excludeFiles || [];
-      var {list: excludeList} = await browser.world().editListPrompt("Add or remove items to be excluded from the file list", browser.excludeFiles, {
+      let { list: excludeList } = await browser.world().editListPrompt('Add or remove items to be excluded from the file list', browser.excludeFiles, {
         requester: browser
       });
       if (excludeList) {
         browser.excludeFiles = excludeList;
-        await browser.execCommand("refresh contents");
+        await browser.execCommand('refresh contents');
       }
       return true;
     }
   },
 
   {
-    name: "add directory",
+    name: 'add directory',
     exec: async browser => {
-      var loc = browser.selectedFile || browser.location;
+      let loc = browser.selectedFile || browser.location;
       if (!loc.isDirectory()) loc = loc.parent();
-      var newDir = await browser.world().prompt("Enter name of new directory:", {
-        input: loc.url, requester: browser,
-        historyId: "lively.ide/http-file-browser-file-name-query"
+      let newDir = await browser.world().prompt('Enter name of new directory:', {
+        input: loc.url,
+        requester: browser,
+        historyId: 'lively.ide/http-file-browser-file-name-query'
       });
       if (!newDir) {
-        browser.world().inform("Add directory canceled", { requester: browser });
+        browser.world().inform('Add directory canceled', { requester: browser });
       } else {
-        var res = resource(newDir);
+        let res = resource(newDir);
         if (!res.isDirectory()) res = res.asDirectory();
         await res.ensureExistance();
-        await browser.execCommand("refresh contents");
+        await browser.execCommand('refresh contents');
         browser.selectedFile = res;
       }
 
@@ -159,21 +157,22 @@ var browserCommands = [
   },
 
   {
-    name: "add file",
+    name: 'add file',
     exec: async browser => {
-      var loc = browser.selectedFile || browser.location;
+      let loc = browser.selectedFile || browser.location;
       if (!loc.isDirectory()) loc = loc.parent();
-      var newFile = await browser.world().prompt("Enter name of new file:", {
-        input: loc.url, requester: browser,
-        historyId: "lively.ide/http-file-browser-file-name-query"
+      let newFile = await browser.world().prompt('Enter name of new file:', {
+        input: loc.url,
+        requester: browser,
+        historyId: 'lively.ide/http-file-browser-file-name-query'
       });
       if (!newFile) {
-        browser.world().inform("Add file canceled",  { requester: browser });
+        browser.world().inform('Add file canceled', { requester: browser });
       } else {
-        var res = resource(newFile);
+        let res = resource(newFile);
         if (res.isDirectory()) res = res.asFile();
-        await res.ensureExistance("");
-        await browser.execCommand("refresh contents");
+        await res.ensureExistance('');
+        await browser.execCommand('refresh contents');
         browser.selectedFile = res;
       }
 
@@ -182,76 +181,78 @@ var browserCommands = [
   },
 
   {
-    name: "delete file or directory",
+    name: 'delete file or directory',
     exec: browser => {
       if (browser.ui.locationInput.isFocused()) return false;
 
       if (!browser.selectedFile) {
-        browser.setStatusMessage("Nothing selected");
+        browser.setStatusMessage('Nothing selected');
         return true;
       }
 
       return (async () => {
-        var really = await browser.world().confirm(
-          ['Confirm Delete\n', {}, 'Do you really want to remove\n', { fontWeight: 'normal', fontSize: 16},
-           `${browser.selectedFile.url}?`, { fontStyle: 'italic', fontWeight: 'normal', fontSize: 16}], {
-            requester: browser, 
+        let really = await browser.world().confirm(
+          ['Confirm Delete\n', {}, 'Do you really want to remove\n', { fontWeight: 'normal', fontSize: 16 },
+           `${browser.selectedFile.url}?`, { fontStyle: 'italic', fontWeight: 'normal', fontSize: 16 }], {
+            requester: browser,
             lineWrapping: false
           });
         if (really) {
-          var res = browser.selectedFile,
-              i = browser.ui.fileTree.selectedIndex;
+          let res = browser.selectedFile;
+          let i = browser.ui.fileTree.selectedIndex;
           await res.remove();
-          await browser.execCommand("refresh contents");
+          await browser.execCommand('refresh contents');
           await browser.whenFinishedLoading();
           browser.ui.fileTree.selectedIndex = i;
         } else {
-          browser.world().inform("Delete canceled", { requester: browser });
+          browser.world().inform('Delete canceled', { requester: browser });
         }
       })();
     }
   },
 
   {
-    name: "rename file",
+    name: 'rename file',
     exec: browser => {
       if (!browser.selectedFile) {
-        browser.setStatusMessage("Nothing selected");
+        browser.setStatusMessage('Nothing selected');
         return true;
       }
 
       return (async () => {
-        var newName = await browser.world().prompt([`Rename\n`, {}, `${browser.selectedFile.url}`, {
+        let newName = await browser.world().prompt(['Rename\n', {}, `${browser.selectedFile.url}`, {
           fontStyle: 'italic', fontWeight: 'normal', fontSize: 16
         }], {
-          input: browser.selectedFile.url, requester: browser,
-          historyId: "lively.ide/http-file-browser-file-name-query",
+          input: browser.selectedFile.url,
+          requester: browser,
+          historyId: 'lively.ide/http-file-browser-file-name-query'
         });
         if (!newName) {
-          browser.world().inform("Rename canceled", { requester: browser });
+          browser.world().inform('Rename canceled', { requester: browser });
           return true;
         }
 
-        var res = browser.selectedFile,
-            newRes = resource(newName);
+        let res = browser.selectedFile;
+        let newRes = resource(newName);
         if (res.isDirectory()) {
           if (!newRes.isDirectory()) newRes = newRes.asDirectory();
           await newRes.ensureExistance();
         } else {
-          var content = await res.read();
+          let content = await res.read();
           if (newRes.isDirectory()) newRes = newRes.asFile();
           await newRes.ensureExistance(content);
         }
         await res.remove();
-        await browser.execCommand("refresh contents");
+        await browser.execCommand('refresh contents');
 
         // var location = resource("http://localhost:9001/node_modules/lively.lang/lib/")
         // var res = resource("http://localhost:9001/node_modules/lively.lang/lib/sore.js")
         // var newRes = resource("http://localhost:9001/node_modules/lively.lang/sore.js")
-        var location = browser.location;
-        if (!location.isParentOf(newRes))
+        let location = browser.location;
+        if (!location.isParentOf(newRes)) {
           await browser.keepFileTreeStateWhile(async () =>
             await browser.openLocation(location.commonDirectory(newRes)));
+        }
 
         try {
           await browser.gotoFile(newRes);
@@ -260,29 +261,31 @@ var browserCommands = [
           browser.showError(e);
           return true;
         }
-
       })();
     }
   },
 
   {
-    name: "find file and select",
+    name: 'find file and select',
     handlesCount: true,
     exec: async (browser, _, count) => {
-      var opts = {exclude: browser.excludeFiles || []},
-          loc = browser.location,
-          items = (await loc.dirList(count || "infinity", opts)).map(ea => ({
-            isListItem: true,
-            string: ea.url.slice(loc.url.length),
-            value: ea.url
-          })),
-          {selected: [targetURL]} = await browser.world().filterableListPrompt(
-            "Choose module to open", items, {
-              historyId: "lively.ide/http-file-browser-find-file",
-              requester: browser, width: 700, multiSelect: false});
+      let opts = { exclude: browser.excludeFiles || [] };
+      let loc = browser.location;
+      let items = (await loc.dirList(count || 'infinity', opts)).map(ea => ({
+        isListItem: true,
+        string: ea.url.slice(loc.url.length),
+        value: ea.url
+      }));
+      let { selected: [targetURL] } = await browser.world().filterableListPrompt(
+        'Choose module to open', items, {
+          historyId: 'lively.ide/http-file-browser-find-file',
+          requester: browser,
+          width: 700,
+          multiSelect: false
+        });
 
       if (!targetURL) {
-        browser.setStatusMessage("Canceled");
+        browser.setStatusMessage('Canceled');
         return true;
       }
 
@@ -294,62 +297,56 @@ var browserCommands = [
         return true;
       }
     }
-  },
+  }
 
 ];
 
+export class HTTPFileBrowserNode extends TreeData {
+  display ({ resource }) {
+    let col1Size = 19; let col2Size = 8;
+    let browser = this.root.browser;
+    let { lastModified, size } = resource;
+    let datePrinted = lastModified
+      ? date.format(lastModified, 'yyyy-mm-dd HH:MM:ss')
+      : ' '.repeat(col1Size);
+    let sizePrinted = size ? num.humanReadableByteSize(size) : '';
+    let displayedName = browser.truncateNameIfNeeded(resource.name());
 
-class HTTPFileBrowserNode extends TreeData {
-
-  display({resource}) {
-    var col1Size = 19, col2Size = 8,
-        ft = this.root.browser.ui.fileTree,
-        {lastModified, size} = resource,
-        datePrinted = lastModified ?
-          date.format(lastModified, "yyyy-mm-dd HH:MM:ss") : " ".repeat(col1Size),
-        sizePrinted = size ? num.humanReadableByteSize(size) : "",
-        displayedName = resource.name(),
-        renderedLength = ft.fontMetric.sizeFor(ft.defaultTextStyle, displayedName, true).width,
-        avgCharLength = renderedLength / displayedName.length;
-
-    if (renderedLength > ft.width - 200) {
-      let charsToRemove = (renderedLength - (ft.width - 200)) / avgCharLength;
-      if (charsToRemove >= 1) displayedName = displayedName.slice(0, -charsToRemove) + '...';
-    }
-      
     return [
       displayedName, null,
       `\t${sizePrinted} ${datePrinted}`, {
-        paddingTop: "3px", fontColor: Color.darkGray,
-        fontSize: "70%", textStyleClasses: ["annotation"]
+        paddingTop: '3px',
+        fontColor: Color.darkGray,
+        fontSize: '70%',
+        textStyleClasses: ['annotation']
       }
     ];
   }
 
-  isCollapsed({isCollapsed}) { return isCollapsed; }
+  isCollapsed ({ isCollapsed }) { return isCollapsed; }
 
-  async collapse(node, bool) {
+  async collapse (node, bool) {
     if (!node.resource) return;
     if (node === this.root) bool = false;
     if (!bool && !node.subResources) {
-      let exclude = this.root.browser.excludeFiles || [],
-          [dirs, files] = arr.partition(await node.resource.dirList(1, {exclude}), ea => ea.isDirectory());
+      let exclude = this.root.browser.excludeFiles || [];
+      let [dirs, files] = arr.partition(await node.resource.dirList(1, { exclude }), ea => ea.isDirectory());
       dirs = arr.sortBy(dirs, ea => ea.name().toLowerCase());
       files = arr.sortBy(files, ea => ea.name().toLowerCase());
-      node.subNodes = dirs.concat(files).map(res => ({isCollapsed: true, resource: res}));
+      node.subNodes = dirs.concat(files).map(res => ({ isCollapsed: true, resource: res }));
     }
     node.isCollapsed = bool;
   }
 
-  getChildren(parent) {
-    var {resource, isCollapsed, subNodes} = parent,
-        result = !resource ? [] : !resource.isDirectory() ? null : isCollapsed ? [] : subNodes || [];
+  getChildren (parent) {
+    let { resource, isCollapsed, subNodes } = parent;
+    let result = !resource ? [] : !resource.isDirectory() ? null : isCollapsed ? [] : subNodes || [];
     // cache for faster parent lookup
     result && result.forEach(n => this.parentMap.set(n, parent));
     return result;
   }
 
-  isLeaf({resource}) { return resource ? !resource.isDirectory() : true; }
+  isLeaf ({ resource }) { return resource ? !resource.isDirectory() : true; }
 }
 
 export default class HTTPFileBrowser extends Morph {
@@ -595,6 +592,17 @@ export default class HTTPFileBrowser extends Morph {
     for (var i = 1; i < bottomButtons.length; i++) { bottomButtons[i].topLeft = bottomButtons[i - 1].topRight; }
   }
 
+  truncateNameIfNeeded (displayedName) {
+    const ft = this.ui.fileTree;
+    let renderedLength = ft.env.fontMetric.sizeFor(ft.defaultTextStyle, displayedName, true).width;
+    if (renderedLength > ft.width - 200) {
+      let avgCharLength = renderedLength / displayedName.length;
+      let charsToRemove = (renderedLength - (ft.width - 200)) / avgCharLength;
+      if (charsToRemove >= 1) displayedName = displayedName.slice(0, -charsToRemove) + '...';
+    }
+    return displayedName;
+  }
+
   whenFinishedLoading () {
     return promise.waitFor(3000, () => this._isLoading === false).catch(_ => undefined);
   }
@@ -696,4 +704,3 @@ export default class HTTPFileBrowser extends Morph {
     ].concat(super.keybindings);
   }
 }
-
