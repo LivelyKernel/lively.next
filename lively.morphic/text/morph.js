@@ -243,11 +243,7 @@ export class Text extends Morph {
       readOnly: {
         group: 'text',
         isStyleProp: true,
-        defaultValue: false,
-        set (value) {
-          this.nativeCursor = value ? 'default' : 'auto';
-          this.setProperty('readOnly', value);
-        }
+        defaultValue: false
       },
 
       selectable: {
@@ -450,7 +446,7 @@ export class Text extends Morph {
         }
       },
 
-      nativeCursor: { defaultValue: '', isDefaultTextStyleProp: true },
+      nativeCursor: { defaultValue: 'text', isDefaultTextStyleProp: true },
 
       fontFamily: {
         group: 'text styling',
