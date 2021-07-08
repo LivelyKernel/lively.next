@@ -316,7 +316,7 @@ export class HTTPFileBrowserNode extends TreeData {
       displayedName, null,
       `\t${sizePrinted} ${datePrinted}`, {
         paddingTop: '3px',
-        fontColor: Color.darkGray,
+        opacity: 0.5,
         fontSize: '70%',
         textStyleClasses: ['annotation']
       }
@@ -348,6 +348,7 @@ export class HTTPFileBrowserNode extends TreeData {
 
   isLeaf ({ resource }) { return resource ? !resource.isDirectory() : true; }
 }
+
 
 export default class HTTPFileBrowser extends Morph {
   static forLocation (urlOrResource, props) {
