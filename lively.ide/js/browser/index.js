@@ -28,7 +28,7 @@ import browserCommands from './commands.js';
 // -=-=-=-=-=-
 
 import { categorizer, fuzzyParse, query, parse } from 'lively.ast';
-import { testsFromSource } from '../../test-runner.js';
+import { testsFromSource, findTestModulesInPackage } from '../../test-runner.js';
 import * as modules from 'lively.modules/index.js';
 const { module, semver } = modules;
 import DarkTheme from '../../themes/dark.js';
@@ -318,7 +318,7 @@ export class PackageTreeData extends TreeData {
   async getLoadedModuleUrls () {
     const selectedPkg = this.root.subNodes.find(pkg => !pkg.isCollapsed);
     // this is super slow. Fix me!
-    const files = await this.systemInterface.resourcesOfPackage(selectedPkg.url, ['assets', 'objectdb']);
+    const files = await this.systemInterface.resourcesOfPackage(selectedPkg.url, ['assets', 'objectdb', '.git']);
     await this.systemInterface.getPackage(selectedPkg.url);
     const loadedModules = {};
     files.forEach(file => {
@@ -592,26 +592,7 @@ export default class Browser extends Morph {
 
   get ui () {
     return {
-      ...super.ui,
-      frozenWarning: this.getSubmorphNamed('frozen-warning'),
-      frozenModuleInfo: this.getSubmorphNamed('frozen-module-info'),
-      addModuleButton: this.getSubmorphNamed('addModuleButton'),
-      addPackageButton: this.getSubmorphNamed('addPackageButton'),
-      browseHistoryButton: this.getSubmorphNamed('browseHistoryButton'),
-      browseModulesButton: this.getSubmorphNamed('browseModulesButton'),
-      browserCommands: this.getSubmorphNamed('browserCommands'),
-      codeEntityTree: this.getSubmorphNamed('codeEntityTree'),
-      historyBackwardButton: this.getSubmorphNamed('historyBackwardButton'),
-      historyForwardButton: this.getSubmorphNamed('historyForwardButton'),
       verticalResizer: this.getSubmorphNamed('vertical resizer'),
-      moduleCommands: this.getSubmorphNamed('moduleCommands'),
-      codeEntityCommands: this.getSubmorphNamed('codeEntityCommands'),
-      moduleList: this.getSubmorphNamed('moduleList'),
-      removeModuleButton: this.getSubmorphNamed('removeModuleButton'),
-      removePackageButton: this.getSubmorphNamed('removePackageButton'),
-      runTestsInPackageButton: this.getSubmorphNamed('runTestsInPackageButton'),
-      runTestsInModuleButton: this.getSubmorphNamed('runTestsInModuleButton'),
-      codeEntityJumpButton: this.getSubmorphNamed('codeEntityJumpButton'),
       searchButton: this.getSubmorphNamed('searchButton'),
       metaInfoText: this.getSubmorphNamed('meta info text'),
       sourceEditor: this.getSubmorphNamed('source editor'),
@@ -1656,7 +1637,7 @@ export default class Browser extends Morph {
 
   focus (evt) {
     const { metaInfoText, sourceEditor } = this.ui;
-    sourceEditor.focus();
+    if (!this.isComponent) sourceEditor.focus();
   }
 
   get keybindings () {
