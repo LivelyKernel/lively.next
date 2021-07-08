@@ -15,6 +15,16 @@ const jsDavPlugins = {};
 (function loadJsDAV () {
   // jsDAV shows unimportant console logs while loading, hide those...
   const log = console.log;
+  const error = console.error;
+  console.error = (...err) => {
+    // jsDav just deliberately logs erros, and can not be turned silent
+    // so we will do that here:
+    if (typeof err[1] === 'object' && err[1].type == 'FileNotFound') {
+      console.log('[jsDav] 404 - ', err[1].message);
+    } else {
+      error(...err);
+    }
+  };
   console.log = () => {};
   try {
     DavHandler = System._nodeRequire('@pylonide/jsdav/lib/DAV/handler');
