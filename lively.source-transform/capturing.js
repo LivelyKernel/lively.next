@@ -64,6 +64,8 @@ export function rewriteToCaptureTopLevelVariables (parsed, assignToObj, options)
 
   let rewritten = parsed;
 
+  rewritten = removeJspmGlobalRef(rewritten, options);
+
   // "ignoreUndeclaredExcept" is null if we want to capture all globals in the toplevel scope
   // if it is a list of names we will capture all refs with those names
   if (options.ignoreUndeclaredExcept) {
@@ -154,6 +156,23 @@ export function rewriteToCaptureTopLevelVariables (parsed, assignToObj, options)
   rewritten = transformImportMeta(rewritten, options);
 
   return rewritten;
+}
+
+function removeJspmGlobalRef (parsed) {
+  // do not replace until the
+  // var _global = typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : global;
+  // declaration has been detected
+  let declarationFound = false;
+  return ReplaceVisitor.run(parsed, (node) => {
+    if (!declarationFound && node.type == 'VariableDeclarator' && node.id.name == '_global') {
+      declarationFound = stringify(node) == '_global = typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : global';
+    }
+    if (declarationFound && node.type == 'LogicalExpression' &&
+        node.right.name == '_global') {
+      return node.left;
+    }
+    return node;
+  });
 }
 
 function transformImportMeta (parsed, options) {
@@ -373,13 +392,13 @@ function replaceVarDecls (parsed, options) {
               decl.declarations[0].id,
               options.declarationWrapper
                 ? declarationWrapperCall(
-                    options.declarationWrapper,
-                    null,
-                    literal(decl.declarations[0].id.name),
-                    literal(node.kind),
-                    decl.declarations[0].init,
-                    options.captureObj,
-                    options)
+                  options.declarationWrapper,
+                  null,
+                  literal(decl.declarations[0].id.name),
+                  literal(node.kind),
+                  decl.declarations[0].init,
+                  options.captureObj,
+                  options)
                 : decl.declarations[0].init,
               false)
             : decl);
