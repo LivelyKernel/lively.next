@@ -501,11 +501,16 @@ export default class Browser extends Morph {
     var ref = pool.ref(columnView);
     if (ref.currentSnapshot.props.submorphs) { ref.currentSnapshot.props.submorphs.value = []; }
     if (ref.currentSnapshot.props.treeData) { delete ref.currentSnapshot.props.treeData; } // remove prop
-
     var ref = pool.ref(this.ui.sourceEditor);
     const props = ref.currentSnapshot.props;
     if (props.textAndAttributes) props.textAndAttributes.value = [];
-    if (props.attributeConnections) props.attributeConnections.value = [];
+    if (props.attributeConnections) {
+      // remove connections that point to plugin
+      props.attributeConnections.value = props.attributeConnections.value.filter(({ id }) => {
+        const conn = pool.resolveToObj(id);
+        return conn.targetObj && conn.targetObj.isBrowser;
+      });
+    }
     if (props.plugins) props.plugins.value = [];
     if (props.anchors) {
       props.anchors.value =
@@ -540,7 +545,7 @@ export default class Browser extends Morph {
     const ed = this.ui.sourceEditor;
     if (!ed.plugins.length) { ed.addPlugin(new JavaScriptEditorPlugin(config.codeEditor.defaultTheme)); }
 
-    if (this._serializedState) {
+    if (!this.isComponent && this._serializedState) {
       const s = this._serializedState;
       delete this._serializedState;
       await this.browse(s);
@@ -1735,4 +1740,5 @@ export default class Browser extends Morph {
     ].filter(Boolean);
   }
 }
+
 
