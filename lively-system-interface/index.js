@@ -9,7 +9,7 @@ import {
 } from './commands/packages.js';
 
 import {
-  shortModuleName,
+  shortModuleName, addModule,
   interactivelyChangeModule,
   interactivelyReloadModule,
   interactivelyUnloadModule,
@@ -58,6 +58,7 @@ export class Interface {
 
   isModuleLoaded (name, isNormalized) { return this.coreInterface.isModuleLoaded(name, isNormalized); }
   doesModuleExist (name, isNormalized) { return this.coreInterface.doesModuleExist(name, isNormalized); }
+  createModule (name) { return addModule(this.coreInterface, name); }
   importModule (name) { return this.coreInterface.importModule(name); }
   forgetModule (name, opts) { return this.coreInterface.forgetModule(name, opts); }
   reloadModule (name, opts) { return this.coreInterface.reloadModule(name, opts); }

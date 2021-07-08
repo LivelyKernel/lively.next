@@ -354,6 +354,7 @@ export default class TextRenderer {
     const markerLayer = this.renderMarkerLayer(morph, renderer);
     const horizontalScrollBarVisible = morph.document.width > morph.width;
     const scrollBarOffset = horizontalScrollBarVisible ? morph.scrollbarOffset : pt(0, 0);
+    const verticalPaddingOffset = morph.padding.top() + morph.padding.bottom();
 
     const scrollLayer = h('div', {
       className: 'scrollLayer',
@@ -367,7 +368,7 @@ export default class TextRenderer {
     }, [h('div', {
       style: {
         width: Math.max(morph.document.width, morph.width) + 'px',
-        height: Math.max(morph.document.height, morph.height) - scrollBarOffset.y + 'px'
+        height: Math.max(morph.document.height, morph.height) - scrollBarOffset.y + verticalPaddingOffset + 'px'
       }
     })]);
 
@@ -499,8 +500,8 @@ export default class TextRenderer {
     const style = { height: textHeight + 'px' };
     if (padLeft > 0) style.paddingLeft = padLeft + 'px';
     if (padRight > 0) style.paddingRight = padRight + 'px';
-    if (padTop > 0) style.paddingTop = padTop + 'px';
-    if (padBottom > 0) style.paddingBottom = padBottom + 'px';
+    if (padTop > 0) style.marginTop = padTop + 'px';
+    if (padBottom > 0) style.marginBottom = padBottom + 'px';
     if (letterSpacing) style.letterSpacing = letterSpacing;
     if (wordSpacing) style.wordSpacing = wordSpacing;
     if (lineHeight) style.lineHeight = lineHeight;

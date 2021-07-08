@@ -1081,6 +1081,7 @@ export class ObjectEditor extends Morph {
       const items = [];
       for (const mod of modules) {
         // mod = modules[0]
+        if (mod.name.endsWith('.md')) continue;
         const pkg = await system.getPackageForModule(mod.name);
         const shortName = pkg
           ? pkg.name + '/' + system.shortModuleName(mod.name, pkg)

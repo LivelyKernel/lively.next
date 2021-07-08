@@ -87,7 +87,9 @@ export class StyleguidePlugin {
     Object.values(snapshot).forEach(({ props: { master } }) => {
       if (master && master.value) {
         for (const url in masterURLRemapping) {
-          if (master.value.includes(url)) { master.value = master.value.split(url).join(masterURLRemapping[url]); }
+          if (Object.values(pool.expressionSerializer.deserializeExpr(master.value)).includes(url)) {
+            master.value = master.value.split(url).join(masterURLRemapping[url]);
+          }
         }
         // master.value = master.value.split(localComponentUrl).join('styleguide://$world'); // NO! this can not nessecarily be resolved since the master components are not carried over. what is this supposed to do??
       }
@@ -96,23 +98,49 @@ export class StyleguidePlugin {
 }
 
 export async function prefetchCoreStyleguides (li) {
+  const prefetches = [
+    {
+      label: 'core elements...',
+      url: 'styleguide://System/buttons/light'
+    },
+    {
+      label: 'core elements...',
+      url: 'styleguide://System/window/light/inactive'
+    },
+    {
+      label: 'top bar...',
+      url: 'styleguide://SystemIDE/lively top bar master'
+    },
+    {
+      label: 'styling palette...',
+      url: 'styleguide://SystemIDE/styling side bar master'
+    },
+    {
+      label: 'scene graph...',
+      url: 'styleguide://SystemIDE/scene graph side bar master'
+    },
+    {
+      label: 'world loader...',
+      url: 'styleguide://partial freezing/project browser'
+    },
+    {
+      label: 'object editor...',
+      url: 'styleguide://SystemIDE/objectEditor/light'
+    },
+    {
+      label: 'world loader...',
+      url: 'styleguide://SystemIDE/new system browser'
+    }
+  ];
   li.label = 'loading System Elements';
   li.progress = 0;
-  li.status = 'core elements...';
-  await resource('styleguide://System/buttons/light').read(),
-  li.progress = 1 / 5;
-  li.status = 'top bar...';
-  await resource('styleguide://SystemIDE/lively top bar master').read(),
-  li.progress = 2 / 5;
-  li.status = 'scene graph...';
-  await resource('styleguide://SystemIDE/styling side bar master').read(),
-  li.progress = 3 / 5;
-  li.status = 'styling palette...';
-  await resource('styleguide://SystemIDE/scene graph side bar master').read();
-  li.progress = 4 / 5;
-  li.status = 'world loader...';
-  await resource('styleguide://partial freezing/project browser').read();
-  li.progress = 5 / 5;
+  let i = 0;
+  for (let pre of prefetches) {
+    i++;
+    li.status = pre.label;
+    li.progress = i / prefetches.length;
+    await resource(pre.url).read();
+  }
   await promise.delay(500);
 }
 
@@ -288,7 +316,6 @@ export class ComponentPolicy {
     this.applyIfNeeded(true, config);
     once(this, '_animationConfig', r);
     return p;
-    // return promise.waitFor(config.duration * 2, () => !this._animationConfig);
   }
 
   applyIfNeeded (needsUpdate = false, animationConfig = false) {
@@ -322,7 +349,8 @@ export class ComponentPolicy {
       return this._hasUnresolvedMaster.then(() => {
         this.applyIfNeeded(needsUpdate);
         target.withMetaDo({ metaInteraction: true }, () => {
-          target.opacity = this._originalOpacity;
+          const opacityOverridden = typeof this._overriddenProps.get(target).opacity !== 'undefined';
+          target.opacity = this._appliedMaster && !opacityOverridden ? this._appliedMaster.opacity : this._originalOpacity;
         });
         delete this._originalOpacity;
         delete this._capturedExtents;

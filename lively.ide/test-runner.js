@@ -160,11 +160,15 @@ const testRunnerCSS = `
 
 .mocha-test-runner .run-button {
   color: rgb(30,30,30);
-  border: gray 1px solid;
+  border: rgb(150,150,150) 1px solid;
   font-size: 12px;
   border-radius: 5px;
   padding: 2px 8px;
   cursor: pointer;
+}
+
+.mocha-test-runner .run-button:active {
+  background-color: rgb(200,200,200);
 }
 
 .row .run-button {
@@ -443,7 +447,8 @@ export default class TestRunner extends HTMLMorph {
 
   collapseToggle () {
     const sel = Object.keys(this.state.collapsedSuites).length === 0
-      ? 'collapseAll' : 'uncollapseAll';
+      ? 'collapseAll'
+      : 'uncollapseAll';
     this[sel]();
   }
 
@@ -612,7 +617,8 @@ export default class TestRunner extends HTMLMorph {
       ea.type === 'test' && ea.fullTitle.indexOf(suite.fullTitle) === 0);
     const duration = arr.sum(arr.compact(myTests.map(ea => ea.duration)));
     const state = (myTests || []).some(t => t.state === 'failed')
-      ? 'failed' : (myTests.every(t => t.state === 'succeeded') ? 'succeeded' : '');
+      ? 'failed'
+      : (myTests.every(t => t.state === 'succeeded') ? 'succeeded' : '');
     const classes = ['suite', state];
     const relatedCollapsed = collapsed.filter(ea => id.indexOf(ea) === 0);
     const parentCollapsed = collapsed.includes(file) || (relatedCollapsed || []).some(ea => ea.length < id.length);
@@ -641,7 +647,8 @@ export default class TestRunner extends HTMLMorph {
     const myTests = testsAndSuites.filter(ea => ea.type === 'test');
     const duration = arr.sum(arr.compact(myTests.map(ea => ea.duration)));
     const state = (myTests || []).some(t => t.state === 'failed')
-      ? 'failed' : (myTests.every(t => t.state === 'succeeded') ? 'succeeded' : '');
+      ? 'failed'
+      : (myTests.every(t => t.state === 'succeeded') ? 'succeeded' : '');
     const sys = this.systemInterface;
     const pack = await sys.getPackageForModule(id);
     const name = pack ? pack.name + '/' + sys.shortModuleName(id, pack) : id;
@@ -691,10 +698,12 @@ export default class TestRunner extends HTMLMorph {
   }
 
   stringifyExpectedAndActualOfError (error) {
-    return !error.expected || !error.actual ? null : {
-      expected: tryPrint(error.expected),
-      actual: tryPrint(error.actual)
-    };
+    return !error.expected || !error.actual
+      ? null
+      : {
+          expected: tryPrint(error.expected),
+          actual: tryPrint(error.actual)
+        };
 
     function tryPrint (o) {
       if (typeof o === 'function') return String(o);

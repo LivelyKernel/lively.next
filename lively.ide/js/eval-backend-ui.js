@@ -11,15 +11,12 @@ export class EvalBackendButton extends Button {
   static get properties () {
     return {
 
-      defaultActiveStyle: {
-        defaultValue: {
-          borderRadius: 4,
-          borderColor: Color.rgb(204, 204, 204),
-          fill: 'linear-gradient(180deg,rgba(255,255,255,1) 0%,rgba(236,240,241,1) 100%)',
-          fontColor: Color.rgb(64, 64, 64),
-          nativeCursor: 'pointer',
-          fontSize: 10,
-          fontFamily: 'Sans-Serif'
+      master: {
+        initialize: () => {
+          this.master = {
+            auto: 'styleguide://SystemIDE/backend button/default',
+            click: 'styleguide://SystemIDE/backend button/clicked'
+          };
         }
       },
 
@@ -94,6 +91,8 @@ export class EvalBackendButton extends Button {
     }
 
     this.currentBackend = sysInterface;
+    this.fit();
+    if (this.width < 120) this.width = 120;
   }
 
   async ensureSimilarBackend () {
@@ -199,8 +198,8 @@ export default class EvalBackendChooser {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  buildEvalBackendDropdownFor (morph) {
-    const btn = new EvalBackendButton({
+  buildEvalBackendDropdownFor (morph, btn) {
+    btn = btn || new EvalBackendButton({
       name: 'eval backend button',
       master: { auto: 'styleguide://System/buttons/light' },
       fontSize: 11,

@@ -105,7 +105,8 @@ export default class TextEditor extends Morph {
 
       submorphs: {
         after: ['historyId'],
-        initialize () {
+        initialize (existing) {
+          if (existing.length) return;
           this.submorphs = [
             Text.makeInputLine({ name: 'urlInput', historyId: this.historyId }),
             { name: 'loadButton', type: 'button', label: 'reload' },
@@ -313,3 +314,4 @@ export default class TextEditor extends Morph {
     ].concat(super.keybindings);
   }
 }
+

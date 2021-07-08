@@ -442,7 +442,7 @@ export class SearchWidget extends Morph {
 
     if (!world) return;
     this.openInWorld(world.visibleBounds().center(), world);
-    this.topRight = text.globalBounds().insetBy(5).topRight();
+    this.topRight = text.globalBounds().insetBy(5).topRight().addXY(0, text.padding.top());
 
     if (text.getWindow()) once(text.getWindow(), 'remove', this, 'remove');
 
@@ -511,7 +511,7 @@ export class SearchWidget extends Morph {
     textMap.isLayoutable = false;
     this.addMorph(textMap);
     textMap.topRight = this.innerBounds().bottomRight().addXY(0, 5);
-    textMap.height = this.target.height - this.height - 15;
+    textMap.height = this.target.height - this.target.padding.top() - this.height - 15;
     textMap.update();
     this.renderOnGPU = true;
     return textMap;

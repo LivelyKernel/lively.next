@@ -1,4 +1,5 @@
 /* global URL */
+
 import { obj, promise, arr } from 'lively.lang';
 import { resource } from 'lively.resources';
 
@@ -53,12 +54,19 @@ export async function interactivelyUnloadModule (system, vmEditor, moduleName) {
 export async function interactivelyRemoveModule (system, requester, moduleName) {
   // var moduleName = this.state.selection.name
   const fullname = await system.normalize(moduleName);
-  const really = await requester.world().confirm(`Remove file ${fullname}?`, { requester });
+  const really = await requester.world().confirm(['Really remove file:\n', {}, fullname, { fontStyle: 'italic', fontWeight: 'bold' }, ' ?', {}], { requester, lineWrapping: false });
   if (!really) throw 'Canceled';
   await system.forgetModule(fullname);
   await system.resourceRemove(fullname);
   const p = await system.getPackageForModule(fullname);
   return p;
+}
+
+export async function addModule (system, moduleName) {
+  const namesAndErrors = await _createAndLoadModules(system, [moduleName]);
+  const errors = arr.compact(namesAndErrors.map(ea => ea.error));
+  const hasError = !!errors.length;
+  return hasError;
 }
 
 export async function interactivelyAddModule (system, requester, relatedPackageOrModuleName) {
@@ -78,11 +86,7 @@ export async function interactivelyAddModule (system, requester, relatedPackageO
     candidates = [fullname];
   }
 
-  const namesAndErrors = await _createAndLoadModules(system, candidates);
-  const errors = arr.compact(namesAndErrors.map(ea => ea.error));
-  const hasError = !!errors.length;
-
-  return namesAndErrors;
+  return await _createAndLoadModules(system, candidates);
 }
 
 async function _askForModuleName (system, input, world) {
@@ -174,11 +178,13 @@ async function _createAndLoadModules (system, fullnames) {
     // error occurs:
     const res = await system.resourceEnsureExistance(fullname, '"format esm";\n');
 
+    system;
+
     // if this is a test module, then load es6-mocha
     if (isTestModule(await res.read())) {
-      if (!window.Mocha || !window.chai) {
+      if (!System.global.Mocha || !System.global.chai) {
         await System.import('mocha-es6');
-        await promise.waitFor(() => !!window.Mocha && !!window.chai);
+        await promise.waitFor(() => !!System.global.Mocha && !!System.global.chai);
       }
     }
 

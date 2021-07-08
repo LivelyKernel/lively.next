@@ -677,12 +677,14 @@ export class TreeData {
     if (!node) return await this.uncollapseAll(iterator, depth, this.root);
     if (iterator(node, depth)) {
       node.isCollapsed && await this.collapse(node, false);
-      for (let i in node.children) {
-        await this.uncollapseAll(iterator, depth + 1, node.children[i]);
+      const children = this.getChildren(node);
+      for (let i in children) {
+        await this.uncollapseAll(iterator, depth + 1, children[i]);
       }
     }
   }
 }
+
 
 var treeCommands = [
 

@@ -803,7 +803,6 @@ const commands = [
         const { selected: [choice] } = await world.filterableListPrompt(
           'choose text: ', candidates, {
             onSelection: m => {
-              debugger;
               m && m.show();
             }
           });
@@ -1212,7 +1211,6 @@ const commands = [
       const li = world.commandHandler.progressIndicator;
       if (!url) {
         li.visible = false;
-        debugger;
         url = await world.prompt('Enter file location', {
           historyId: 'lively.morphic-text editor url',
           useLastInput: true

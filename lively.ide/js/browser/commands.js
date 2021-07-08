@@ -1,8 +1,14 @@
 import { arr } from 'lively.lang';
 import { Icon } from 'lively.morphic';
+import { resource } from 'lively.resources';
+import { joinPath } from 'lively.lang/string.js';
 
 function isTestModule (m, source) {
   return m && source.match(/import.*['"]mocha(-es6)?['"]/) && source.match(/it\(['"]/);
+}
+
+function isMarkdown (m) {
+  return m.type == 'md';
 }
 
 export default function browserCommands (browser) {
@@ -45,10 +51,13 @@ export default function browserCommands (browser) {
       name: 'jump to codeentity',
       exec: async browser => {
         if (isTestModule(browser.selectedModule, browser.ui.sourceEditor.textString)) { return browser.execCommand('jump to test'); }
+        if (isMarkdown(browser.selectedModule)) {
+          return browser.ui.sourceEditor.execCommand('[markdown] goto heading');
+        }
 
-        const codeEntities = browser.ui.codeEntityTree.treeData.defs;
-        const currentIdx = codeEntities.indexOf(browser.ui.codeEntityTree.selection);
-        const items = codeEntities.map(def => {
+        const codeEntities = browser.renderedCodeEntities();
+        const currentIdx = codeEntities.indexOf(browser.ui.columnView._selectedNode);
+        const items = codeEntities.map((def) => {
           const { name, type, parent } = def;
           return {
             isListItem: true,
@@ -187,7 +196,8 @@ export default function browserCommands (browser) {
 
     {
       name: 'load or add module',
-      exec: async (browser) => {
+      exec: async (browser, opts = {}) => {
+        const { dir } = opts;
         const p = browser.selectedPackage;
         const m = browser.selectedModule;
         const system = browser.systemInterface;
@@ -212,19 +222,106 @@ export default function browserCommands (browser) {
     },
 
     {
+      name: 'create new folder',
+      exec: async (browser, opts = {}) => {
+        const { dir } = opts;
+        const { columnView } = browser.ui;
+        const td = columnView.treeData;
+        if (!dir) return;
+        const coreInterface = browser.systemInterface.coreInterface;
+        const name = await browser.world().prompt('Enter folder name', { requester: browser });
+        if (!name) return;
+        let dirPath = joinPath(dir, name);
+        if (!dirPath.endsWith('/')) dirPath += '/';
+        await coreInterface.resourceMkdir(dirPath);
+        // uncollapse the parent node of the dir
+        const parentNode = columnView.getExpandedPath().find(n => n.url == dir);
+        if (parentNode) await td.collapse(parentNode, false);
+        columnView.selectNode(parentNode.subNodes.find(n => n.url == dirPath));
+        // browser.updateModuleList();
+      }
+    },
+
+    {
+      name: 'create new module',
+      exec: async (browser, opts = {}) => {
+        const { dir, type } = opts;
+        const { columnView } = browser.ui;
+        const td = columnView.treeData;
+        if (!dir) return;
+        const coreInterface = browser.systemInterface.coreInterface;
+        let name = '';
+        if (type) {
+          name = await browser.world().prompt([
+            'Enter module name', null], { requester: browser });
+          if (name) name = name + '.' + type;
+        } else {
+          while (name != undefined && !name.match(/(\.js|\.md|\.json)$/)) {
+            name = await browser.world().prompt([
+              'Enter module name\n', null,
+              'Supported file types are:\n', { fontSize: 16, fontWeight: 'normal' },
+              'markdown (.md)\nJavascript (.js)\nJSON (.json)', { fontWeight: 'normal', fontSize: 16, fontStyle: 'italic' }], { requester: browser });
+          }
+        }
+        if (!name) return;
+        let dirPath = joinPath(dir, name);
+        if (!dirPath.endsWith('/')) dirPath += '/';
+        await coreInterface.resourceMkdir(dirPath);
+        // uncollapse the parent node of the dir
+        const parentNode = columnView.getExpandedPath().find(n => n.url == dir);
+        if (parentNode) await td.collapse(parentNode, false);
+        columnView.selectNode(parentNode.subNodes.find(n => n.url == dirPath));
+      }
+    },
+
+    {
+      name: 'remove selected entity',
+      exec: async (browser, opts = {}) => {
+        const { dir } = opts;
+        const { selectedPackage, ui: { columnView }, systemInterface } = browser;
+        const coreInterface = systemInterface.coreInterface;
+        const td = columnView.treeData;
+        if (!dir || !selectedPackage) return;
+        const parentNode = browser.ui.columnView.getExpandedPath().find(n => n.url == dir);
+        const selectedNodeInDir = parentNode.subNodes.find(n => !n.isCollapsed);
+        if (!selectedNodeInDir) return;
+        if (browser.isModule(selectedNodeInDir)) {
+          return browser.execCommand('remove module', { mod: selectedNodeInDir });
+        }
+        if (selectedNodeInDir.type == 'directory') {
+          const textStyle = { fontSize: 16, fontWeight: 'normal ' };
+          const proceed = await browser.world().confirm([
+            'Folder removal\n', {},
+            'You are about to remove a folder containing several modules. ', textStyle,
+            'All of these modules will be immediately unloaded from the system.\n', textStyle,
+            'This may potentially crash the system, especially if the modules in question are currently in use by one or more objects. Proceed with caution.', textStyle
+          ], { width: 400, requester: browser });
+          if (!proceed) return;
+          const pkg = await coreInterface.getPackage(selectedPackage.address);
+          const modulesToRemove = pkg.modules.filter(m => m.name.startsWith(selectedNodeInDir.url));
+          for (let mod of modulesToRemove) {
+            await browser.execCommand('remove module', { mod });
+          }
+          await coreInterface.resourceRemove(selectedNodeInDir.url);
+          const parentNode = columnView.getExpandedPath().find(n => n.url == dir);
+          if (parentNode) await td.collapse(parentNode, false);
+          browser.updateModuleList();
+        }
+      }
+    },
+
+    {
       name: 'remove module',
-      exec: async (browser) => {
+      exec: async (browser, opts = {}) => {
         const p = browser.selectedPackage;
-        const m = browser.selectedModule;
+        const m = opts.mod || browser.selectedModule;
         const system = browser.systemInterface;
         if (!p) return browser.world().inform('No package selected', { requester: browser });
         if (!m) return browser.world().inform('No module selected', { requester: browser });
         try {
-          await system.interactivelyRemoveModule(browser, m.name || m.id);
+          await system.interactivelyRemoveModule(browser, m.url || m.name || m.id);
         } catch (e) {
-          e === 'Canceled'
-            ? browser.world().inform('Canceled module removal')
-            : browser.showError(`Error while trying to load modules:\n${e.stack || e}`);
+          if (e != 'Canceled') browser.showError(`Error while trying to load modules:\n${e.stack || e}`);
           return true;
         }
 
@@ -261,9 +358,7 @@ export default function browserCommands (browser) {
               browser, browser.selectedPackage ? browser.selectedPackage.address : null);
         } catch (e) {
           if (e === 'Canceled') {
-            browser.world().inform('Canceled package creation', {
-              requester: browser, lineWrapping: false
-            });
+
           } else throw e;
           return true;
         }
@@ -277,13 +372,12 @@ export default function browserCommands (browser) {
       name: 'remove package',
       exec: async (browser) => {
         const p = browser.selectedPackage;
-        if (!p) { browser.world().inform('No package selected'); return true; }
+        if (!p) { browser.world().inform('No package selected', { requester: browser }); return true; }
 
         try {
           const pkg = await browser.systemInterface.interactivelyRemovePackage(browser, p.address);
         } catch (e) {
-          if (e === 'Canceled') browser.world().inform('Canceled package removel');
-          else throw e;
+          if (e != 'Canceled') throw e;
           return true;
         }
 
@@ -334,7 +428,7 @@ export default function browserCommands (browser) {
         const m = opts.module || browser.selectedModule;
         const c = opts.hasOwnProperty('codeEntity') ? opts.codeEntity : browser.selectedCodeEntity;
         if (!m) {
-          browser.setStatusMessage('No module selected / specified');
+          browser.world().inform('No module selected / specified!', { requester: browser, autoWidth: true });
           return true;
         }
         const lineNumber = c ? browser.ui.sourceEditor.indexToPosition(c.node.start).row : null;
@@ -360,7 +454,7 @@ export default function browserCommands (browser) {
       exec: async browser => {
         const m = browser.selectedModule;
         if (!m) return browser.world().inform('No module selected', { requester: browser });
-        const results = await runTestsInModule(browser, m.name, null);
+        const results = await runTestsInModule(browser, m.url, null);
         browser.focus();
         return results;
       }

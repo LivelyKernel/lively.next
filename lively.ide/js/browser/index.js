@@ -1,6 +1,6 @@
 /* global System */
 import { Color, rect, pt, Rectangle } from 'lively.graphics';
-import { arr, Path, obj, fun, promise, string } from 'lively.lang';
+import { arr, tree, num, date, Path, obj, fun, promise, string } from 'lively.lang';
 import { connect } from 'lively.bindings';
 import {
   morph, Morph, easings,
@@ -16,6 +16,7 @@ import Window from 'lively.components/window.js';
 import { HorizontalResizer } from 'lively.components/resizers.js';
 import { Tree, TreeData } from 'lively.components/tree.js';
 
+import './tree.js';
 import JavaScriptEditorPlugin from '../editor-plugin.js';
 import JSONEditorPlugin from '../../json/editor-plugin.js';
 import JSXEditorPlugin from '../../jsx/editor-plugin.js';
@@ -26,7 +27,7 @@ import browserCommands from './commands.js';
 // Browser UI
 // -=-=-=-=-=-
 
-import { categorizer, query, parse } from 'lively.ast';
+import { categorizer, fuzzyParse, query, parse } from 'lively.ast';
 import { testsFromSource } from '../../test-runner.js';
 import * as modules from 'lively.modules/index.js';
 const { module, semver } = modules;
@@ -34,12 +35,376 @@ import DarkTheme from '../../themes/dark.js';
 import DefaultTheme from '../../themes/default.js';
 import { objectReplacementChar } from 'lively.morphic/text/document.js';
 import { loadPart } from 'lively.morphic/partsbin.js';
-import { serverInterfaceFor } from 'lively-system-interface/index.js';
+import { serverInterfaceFor, localInterface } from 'lively-system-interface/index.js';
 import { resource } from 'lively.resources/index.js';
 import lint from '../linter.js';
 import { isTestModule } from 'lively-system-interface/commands/modules.js';
+import { mdCompiler } from '../../md/compiler.js';
+import MarkdownEditorPlugin from '../../md/editor-plugin.js';
 
-class CodeDefTreeData extends TreeData {
+const COLORS = {
+  js: Color.rgb(46, 204, 113),
+  json: Color.rgb(128, 139, 150),
+  md: Color.rgb(142, 68, 173)
+};
+
+export class PackageControls extends Morph {
+  focusOn (browser) {
+    this._browser = browser;
+  }
+
+  onMouseUp (evt) {
+    super.onMouseUp(evt);
+    switch (evt.targetMorph.name) {
+      case 'run all pkg tests':
+        this._browser.execCommand('run all tests in package');
+        break;
+      case 'add pkg':
+        this._browser.execCommand('add package');
+        break;
+      case 'remove pkg':
+        this._browser.execCommand('remove package');
+        break;
+    }
+  }
+}
+
+export class DirectoryControls extends Morph {
+  focusOn (browser, dir) {
+    this._browser = browser;
+    this._dir = dir;
+  }
+
+  onMouseUp (evt) {
+    super.onMouseUp(evt);
+    if (evt.targetMorph.name == 'remove selected') {
+      this.removeSelected();
+    }
+    if (evt.targetMorph.name == 'add file') {
+      this.addFile(evt);
+    }
+    if (evt.targetMorph.name == 'add folder') {
+      this.addFolder();
+    }
+  }
+
+  // this is new behavior, that is not yet implemented on the browser
+  // the browser currently just knows how to remove/add modules
+  // there is no directory/file concept
+
+  addFolder () {
+    this._browser.execCommand('create new folder', { dir: this._dir });
+  }
+
+  async addFile (evt) {
+    let type;
+    const style = { paddingTop: '4px', fontSize: 14 };
+    const menu = await this.world().openWorldMenu(evt, [
+      { title: 'Select file type:' },
+      { isDivider: true },
+      [[...Icon.textAttribute('js-square', { ...style, fontColor: COLORS.js }), '  Javascript'], () => { type = 'js'; }],
+      [[...Icon.textAttribute('code', { ...style, fontColor: COLORS.json }), ' JSON'], () => { type = 'json'; }],
+      [[...Icon.textAttribute('markdown', { ...style, fontColor: COLORS.md }), ' Markdown'], () => { type = 'md'; }]
+    ]);
+    await menu.whenFinished();
+    if (!type) return;
+    this._browser.execCommand('create new module', { dir: this._dir, type });
+  }
+
+  removeSelected () {
+    this._browser.execCommand('remove selected entity', { dir: this._dir });
+  }
+}
+
+export class PackageTreeData extends TreeData {
+  get columnView () {
+    return this.root.browser.ui.columnView;
+  }
+
+  get systemInterface () {
+    return this.root.browser.systemInterface;
+  }
+
+  get editorPlugin () {
+    return this.root.browser.editorPlugin;
+  }
+
+  display (node) {
+    const { type, pkg, isCollapsed, isDeclaration, lastModified, size, name } = node;
+    if (type == 'package') {
+      return this.displayPackage(pkg);
+    } else if (isDeclaration) {
+      return this.displayDeclaration(node);
+    } else {
+      let col1Size = 19; let col2Size = 8;
+      let datePrinted = lastModified
+        ? date.format(lastModified, 'yyyy-mm-dd HH:MM:ss')
+        : ' '.repeat(col1Size);
+      let sizePrinted = size ? num.humanReadableByteSize(size) : '';
+      let displayedName;
+      const isSelected = this.columnView.isSelected(node);
+      switch (type) {
+        case 'md':
+          displayedName = this.displayMarkdown(name, isSelected);
+          break;
+        case 'js':
+          displayedName = this.displayModule(name, isSelected, node.isLoaded);
+          break;
+        case 'json':
+          displayedName = this.displayJson(name, isSelected);
+          break;
+        case 'directory':
+          displayedName = this.displayDirectory(name, !isCollapsed);
+          break;
+      }
+
+      return [
+        ...displayedName,
+        `\t${sizePrinted} ${datePrinted}`, {
+          paddingTop: '3px',
+          opacity: 0.5,
+          fontSize: '70%',
+          textStyleClasses: ['annotation']
+        }
+      ];
+    }
+  }
+
+  displayDeclaration (decl) {
+    let icon = [];
+    switch (decl.type) {
+      case 'class-instance-method':
+      case 'function-decl':
+        icon = Icon.textAttribute('dice-d6', {
+          paddingLeft: '3px',
+          paddingRight: '3px'
+        });
+        break;
+      case 'class-decl':
+        icon = Icon.textAttribute('sitemap');
+        break;
+      case 'object-decl':
+        icon = Icon.textAttribute('atom', {
+          paddingLeft: '2px',
+          paddingRight: '2px'
+        });
+        break;
+      case 'array-decl':
+        icon = Icon.textAttribute('list-ol', {
+          paddingLeft: '2px',
+          paddingRight: '2px'
+        });
+        break;
+      case 'var-decl':
+        icon = Icon.textAttribute('asterisk', {
+          paddingLeft: '2px',
+          paddingRight: '2px'
+        });
+        break;
+      case 'class-class-getter':
+        icon = Icon.textAttribute('arrow-right', {
+          paddingLeft: '2px',
+          paddingRight: '2px'
+        });
+        break;
+    }
+    return [...icon, ' ' + string.truncate(decl.name || '[PARSE_ERROR]', 19, '…'), null];
+  }
+
+  displayPackage (pkg) {
+    return [
+      ...Icon.textAttribute('cube'),
+      ' ' + string.truncate(pkg.name, 26, '…'), {
+        fontStyle: pkg.kind == 'git' ? 'italic' : 'normal'
+      },
+      `\t${pkg.kind}`, {
+        paddingTop: '3px',
+        opacity: 0.5,
+        fontSize: '70%',
+        textStyleClasses: ['annotation']
+      }
+    ];
+  }
+
+  displayDirectory (dir, isOpen) {
+    return [
+      ...Icon.textAttribute(isOpen ? 'folder-open' : 'folder', {
+        textStyleClasses: ['far']
+      }),
+      ' ' + dir, null
+    ];
+  }
+
+  displayModule (mod, isSelected, isLoaded) {
+    return [
+      ...Icon.textAttribute('js-square', {
+        fontColor: isSelected ? Color.white : COLORS.js,
+        opacity: isLoaded ? 1 : 0.5
+      }),
+      ' ' + mod, null
+    ];
+  }
+
+  displayJson (json, isSelected) {
+    return [
+      ...Icon.textAttribute('cog', {
+        fontColor: isSelected ? Color.white : COLORS.json
+      }),
+      ' ' + json, null
+    ];
+  }
+
+  displayMarkdown (md, isSelected) {
+    return [
+      ...Icon.textAttribute('markdown', {
+        fontColor: isSelected ? Color.white : COLORS.md
+      }),
+      ' ' + md, null
+    ];
+  }
+
+  async listModuleScope (moduleName) {
+    const source = await this.systemInterface.moduleRead(moduleName);
+    const parsed = fuzzyParse(source);
+    return categorizer.findDecls(parsed).filter(ea => !ea.parent && ea.name).map(ea => {
+      ea.isDeclaration = true;
+      ea.isCollapsed = true;
+      return ea;
+    });
+  }
+
+  async listJSONScope (jsonLocation) {
+    // replace with abstraction that can respond efficiently to frequent updates
+    return (await this.systemInterface.runEval(`
+      await listJSONScope('${jsonLocation}');
+    `, {
+      targetModule: 'lively.ide/js/browser/tree.js',
+      ackTimeout: 30 * 1000
+    })).value;
+  }
+
+  async listMarkdownHeadings (mdFile) {
+    const { headings } = mdCompiler.parse({ textString: await this.systemInterface.moduleRead(mdFile) });
+    return headings.map(heading => {
+      heading.isDeclaration = true;
+      heading.isCollapsed = true;
+      heading.name = heading.string.replace(/^#+\s?/, '');
+      return heading;
+    });
+  }
+
+  async listAllPackages () {
+    const pkgs = await this.systemInterface.getPackages();
+    return arr.sortBy(pkgs.map(pkg => {
+      let kind = 'git';
+      if (pkg.url.startsWith('local')) kind = 'local';
+      if (pkg.name.startsWith('lively')) kind = 'core';
+      pkg.kind = kind;
+      return {
+        url: pkg.url + (pkg.url.endsWith('/') ? '' : '/'),
+        isCollapsed: true,
+        type: 'package',
+        name: pkg.name,
+        tooltip: pkg.name,
+        pkg
+      };
+    }), ({ pkg }) => ({ core: 1, local: 2, git: 3 }[pkg.kind]));
+  }
+
+  async listEditableFilesInPackage (pkg) {
+    return await this.listEditableFilesInDir(pkg);
+  }
+
+  async getLoadedModuleUrls () {
+    const selectedPkg = this.root.subNodes.find(pkg => !pkg.isCollapsed);
+    // this is super slow. Fix me!
+    const files = await this.systemInterface.resourcesOfPackage(selectedPkg.url, ['assets', 'objectdb']);
+    await this.systemInterface.getPackage(selectedPkg.url);
+    const loadedModules = {};
+    files.forEach(file => {
+      loadedModules[file.url] = file;
+    });
+    return loadedModules;
+  }
+
+  async listEditableFilesInDir (folderLocation) {
+    // fixme: dir only works locally
+    // replace with systemInterface approach
+    const files = (await this.systemInterface.runEval(`
+      await listEditableFilesInDir('${folderLocation}');
+    `, {
+      targetModule: 'lively.ide/js/browser/tree.js',
+      ackTimeout: 30 * 1000
+    })).value;
+    const loadedModules = await this.getLoadedModuleUrls();
+    return files.map(file => {
+      Object.assign(file, loadedModules[file.url] || {});
+      return file;
+    });
+  }
+
+  isCollapsed ({ isCollapsed }) { return isCollapsed; }
+
+  async collapse (node, bool) {
+    if (node === this.root) {
+      bool = false; // never collapse root
+      node.subNodes = await this.listAllPackages();
+      node.listControl = node.listControl || await resource('part://SystemIDE/package controls').read();
+      node.listControl.focusOn(this.root.browser);
+    }
+    node.isCollapsed = bool;
+    node.isDirty = true;
+    if (!bool) {
+      if (node.type == 'package') {
+        node.subNodes = await this.listEditableFilesInPackage(node.url);
+        node.listControl = node.listControl || await resource('part://SystemIDE/directory controls').read();
+        node.listControl.focusOn(this.root.browser, node.url);
+      }
+
+      if (node.children) {
+        node.children.forEach(child => {
+          child.isDeclaration = true;
+          child.isCollapsed = true;
+          child.parent = node;
+        });
+        node.subNodes = node.children;
+      }
+
+      if (node.type == 'directory') {
+        node.subNodes = await this.listEditableFilesInDir(node.url);
+        node.listControl = node.listControl || await resource('part://SystemIDE/directory controls').read();
+        node.listControl.focusOn(this.root.browser, node.url);
+      }
+
+      if (node.type == 'js') {
+        node.subNodes = await this.listModuleScope(node.url);
+      }
+
+      if (node.type == 'md') {
+        node.subNodes = await this.listMarkdownHeadings(node.url);
+      }
+
+      if (node.type == 'json') {
+        node.subNodes = await this.listJSONScope(node.url);
+      }
+    }
+  }
+
+  getChildren (parent) {
+    let { isCollapsed, subNodes, type } = parent;
+    let result = subNodes || [];
+    // cache for faster parent lookup
+    result && result.forEach(n => this.parentMap.set(n, parent));
+    return result;
+  }
+
+  isLeaf ({ type, isDeclaration, children }) {
+    if (isDeclaration) return !children;
+    return !['package', 'directory', 'js', 'json', 'md'].includes(type);
+  }
+}
+
+export class CodeDefTreeData extends TreeData {
   constructor (defs) {
     // defs come from lively.ast.categorizer.findDecls()
     defs.forEach(ea => ea.children && (ea.isCollapsed = true));
@@ -77,32 +442,27 @@ export default class Browser extends Morph {
     // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
     const browser = browserOrProps instanceof Browser
       ? browserOrProps
-      : new this(browserOrProps);
+      : await resource('part://SystemIDE/new system browser').read();
     if (!browser.world()) browser.openInWindow();
     return browser.browse(browseSpec, optSystemInterface);
   }
 
   static get properties () {
     return {
-      name: { defaultValue: 'browser' },
-      extent: { defaultValue: pt(700, 600) },
-      fill: { defaultValue: Color.transparent },
-      reactsToPointer: { defaultValue: false },
       systemInterface: {
         derived: true,
         readOnly: true,
         after: ['editorPlugin'],
         get () {
-          return this.editorPlugin.systemInterface();
+          const env = this.editorPlugin.evalEnvironment;
+          try {
+            return this.editorPlugin.systemInterface();
+          } catch (err) {
+            return env.systemInterface;
+          }
         },
         set (systemInterface) {
           this.editorPlugin.setSystemInterfaceNamed(systemInterface);
-        }
-      },
-
-      submorphs: {
-        initialize () {
-          this.buildBrowser();
         }
       },
 
@@ -111,7 +471,7 @@ export default class Browser extends Morph {
         readOnly: true,
         derived: true,
         get () {
-          return this.get('sourceEditor').pluginFind(p => p.isEditorPlugin);
+          return this.get('source editor').pluginFind(p => p.isEditorPlugin);
         }
       }
     };
@@ -122,74 +482,25 @@ export default class Browser extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   reset () {
-    // if (!this.targetMorph) this.targetMorph = this.buildBrowser();
 
-    this._inLayout = true;
-
-    connect(this, 'extent', this, 'relayout');
-
-    const {
-      moduleList, sourceEditor,
-      searchButton,
-      addModuleButton,
-      addPackageButton,
-      browseHistoryButton,
-      browseModulesButton,
-      historyBackwardButton,
-      historyForwardButton,
-      removeModuleButton,
-      removePackageButton,
-      runTestsInModuleButton,
-      runTestsInPackageButton,
-      codeEntityJumpButton,
-      codeEntityTree
-    } = this.ui;
-
-    connect(searchButton, 'fire', this, 'execCommand', { converter: () => 'open code search' });
-    connect(historyBackwardButton, 'fire', this, 'execCommand', { converter: () => 'browser history backward' });
-    connect(historyForwardButton, 'fire', this, 'execCommand', { converter: () => 'browser history forward' });
-    connect(browseHistoryButton, 'fire', this, 'execCommand', { converter: () => 'browser history browse' });
-    connect(browseModulesButton, 'fire', this, 'execCommand', { converter: () => 'choose and browse module' });
-    connect(addPackageButton, 'fire', this, 'execCommand', { converter: () => 'add package' });
-    connect(removePackageButton, 'fire', this, 'execCommand', { converter: () => 'remove package' });
-    connect(addModuleButton, 'fire', this, 'execCommand', { converter: () => 'load or add module' });
-    connect(removeModuleButton, 'fire', this, 'execCommand', { converter: () => 'remove module' });
-    connect(runTestsInModuleButton, 'fire', this, 'execCommand', { converter: () => 'run all tests in module' });
-    connect(runTestsInPackageButton, 'fire', this, 'execCommand', { converter: () => 'run all tests in package' });
-    connect(codeEntityJumpButton, 'fire', this, 'execCommand', { converter: () => 'jump to codeentity' });
-
-    connect(moduleList, 'selection', this, 'onModuleSelected');
-    connect(codeEntityTree, 'selectedNode', this, 'onCodeEntitySelected');
-
-    connect(sourceEditor, 'textChange', this, 'updateUnsavedChangeIndicatorDebounced');
-    connect(sourceEditor, 'onMouseDown', this, 'updateFocusedCodeEntity');
-
-    moduleList.selection = null;
-    moduleList.items = [];
-    sourceEditor.textString = '';
-
-    this._inLayout = false;
   }
 
   __additionally_serialize__ (snapshot, objRef, pool, addFn) {
     super.__additionally_serialize__(snapshot, objRef, pool, addFn);
 
+    // remember browse state
+    let {
+      ui: { sourceEditor, columnView },
+      selectedPackage,
+      selectedModule,
+      selectedCodeEntity
+    } = this;
+
     // remove unncessary stuff
     // FIXME offer option in object ref or pool or removeFn to automate this stuff!
-    var ref = pool.ref(this.ui.moduleList);
-    if (ref.currentSnapshot.props.items) { ref.currentSnapshot.props.items.value = []; }
-    if (ref.currentSnapshot.props.selection) { ref.currentSnapshot.props.selection.value = null; }
-
-    var ref = pool.ref(this.ui.codeEntityTree);
-    if (ref.currentSnapshot.props.selection) { ref.currentSnapshot.props.selection.value = null; }
-
-    var ref = pool.ref(this.ui.codeEntityTree.nodeItemContainer);
+    var ref = pool.ref(columnView);
     if (ref.currentSnapshot.props.submorphs) { ref.currentSnapshot.props.submorphs.value = []; }
-
-    var ref = pool.ref(this.ui.codeEntityTree.treeData);
-    ref.currentSnapshot.props.defs.value = [];
-    ref.currentSnapshot.props.root.value = {};
-    ref.currentSnapshot.props.root.verbatim = true;
+    if (ref.currentSnapshot.props.treeData) { delete ref.currentSnapshot.props.treeData; } // remove prop
 
     var ref = pool.ref(this.ui.sourceEditor);
     const props = ref.currentSnapshot.props;
@@ -202,14 +513,6 @@ export default class Browser extends Morph {
     }
     if (props.savedMarks) props.savedMarks.value = [];
 
-    // remember browse state
-    var {
-      ui: { sourceEditor, codeEntityTree, codeEntityTree, moduleList },
-      selectedPackage,
-      selectedModule,
-      selectedCodeEntity
-    } = this;
-
     snapshot.props._serializedState = {
       verbatim: true,
       value: {
@@ -217,9 +520,7 @@ export default class Browser extends Morph {
         moduleName: selectedModule ? selectedModule.nameInPackage : null,
         codeEntity: selectedCodeEntity ? selectedCodeEntity.name : null,
         textPosition: sourceEditor.textPosition,
-        scroll: sourceEditor.scroll,
-        codeEntityTreeScroll: codeEntityTree.scroll,
-        moduleListScroll: moduleList.scroll
+        scroll: sourceEditor.scroll
       }
     };
   }
@@ -229,7 +530,7 @@ export default class Browser extends Morph {
       packageUpdateInProgress: null,
       moduleUpdateInProgress: null,
       selectedPackage: null,
-      sourceHash: null,
+      sourceHash: string.hashCode(''),
       moduleChangeWarning: null,
       isSaving: false,
       history: { left: [], right: [], navigationInProgress: null }
@@ -244,236 +545,7 @@ export default class Browser extends Morph {
       delete this._serializedState;
       await this.browse(s);
     }
-  }
-
-  buildBrowser () {
-    this._inLayout = true;
-
-    const style = {
-      // borderWidth: 1, borderColor: Color.gray,
-      draggable: false,
-      itemBorderRadius: 2.5,
-      itemHeight: 22,
-      fontSize: 14,
-      fontFamily: 'IBM Plex Sans'
-    };
-    const textStyle = {
-      borderWidth: 1,
-      borderColor: Color.gray,
-      lineWrapping: 'by-chars',
-      type: 'text',
-      nativeCursor: 'text',
-      ...config.codeEditor.defaultStyle
-    };
-
-    const btnStyle = {
-      master: {
-        auto: 'styleguide://System/buttons/light',
-        click: 'styleguide://System/buttons/pressed/light'
-      },
-      height: 18,
-      padding: rect(6, 4, 0, 0),
-      fontSize: 10,
-      type: 'button'
-    };
-
-    const btnDarkStyle = {
-      master: { auto: 'styleguide://System/systemBrowser/button/dark' },
-      type: 'button'
-    };
-
-    const bounds = this.bounds();
-
-    const [
-      browserCommandsBounds,
-      moduleListBounds,
-      codeEntityTreeBounds,
-      moduleCommandBoxBounds,
-      codeEntityCommandBoxBounds,
-      resizerBounds,
-      metaInfoBounds,
-      frozenWarningBounds,
-      sourceEditorBounds
-    ] = bounds.extent().extentAsRectangle().divide([
-      new Rectangle(0, 0, 1, 0.04),
-      new Rectangle(0, 0.04, 0.5, 0.34),
-      new Rectangle(0.5, 0.04, 0.5, 0.34),
-      new Rectangle(0, 0.335, 0.49, 0.04),
-      new Rectangle(0.5, 0.335, 0.49, 0.04),
-      new Rectangle(0, 0.38, 1, 0.01),
-      new Rectangle(0, 0.39, 1, 0.03),
-      new Rectangle(0, 0.42, 1, 0),
-      new Rectangle(0, 0.42, 1, 0.57)
-    ]);
-    const container = this;
-
-    container.submorphs = [
-      {
-        name: 'moduleList',
-        bounds: moduleListBounds,
-        borderColor: Color.gray,
-        borderWidth: {
-          top: 0, left: 0, bottom: 1, right: 1
-        },
-        type: 'list',
-        ...style
-      },
-
-      new Tree({
-        name: 'codeEntityTree',
-        treeData: new CodeDefTreeData([]),
-        bounds: codeEntityTreeBounds,
-        borderWidth: { bottom: 1, top: 0, left: 0, right: 0 },
-        borderColor: Color.gray,
-        ...style
-      }),
-
-      {
-        name: 'moduleCommands',
-        bounds: moduleCommandBoxBounds,
-        layout: new HorizontalLayout({ spacing: 3, autoResize: false, direction: 'rightToLeft' }),
-        borderRight: { color: Color.gray, width: 1 },
-        reactsToPointer: false,
-        fill: Color.transparent,
-        submorphs: [
-          { ...btnDarkStyle, name: 'addModuleButton', label: Icon.makeLabel('plus'), tooltip: 'add module' },
-          { ...btnDarkStyle, name: 'removeModuleButton', label: Icon.textAttribute('minus'), tooltip: 'remove package' },
-          {
-            ...btnDarkStyle,
-            name: 'runTestsInModuleButton',
-            label: morph({
-              type: 'label', value: 'run tests', padding: rect(1, 0, 0, -2)
-            }),
-            tooltip: 'run tests',
-            visible: false,
-            padding: rect(5, -3, 0, 2)
-          }
-        ]
-      },
-
-      {
-        name: 'codeEntityCommands',
-        bounds: codeEntityCommandBoxBounds,
-        layout: new HorizontalLayout({ spacing: 2, autoResize: false, direction: 'rightToLeft' }),
-        fill: Color.transparent,
-        submorphs: [
-          { ...btnDarkStyle, name: 'codeEntityJumpButton', label: Icon.makeLabel('search'), tooltip: 'search for code entity' }
-        ]
-      },
-
-      new HorizontalResizer({ name: 'hresizer', bounds: resizerBounds }),
-
-      {
-        name: 'metaInfoText',
-        bounds: metaInfoBounds,
-        ...textStyle,
-        type: 'text',
-        autofit: false,
-        fill: Color.white,
-        fontSize: config.codeEditor.defaultStyle.fontSize - 2,
-        clipMode: 'hidden',
-        borderWidth: 1
-      },
-      {
-        name: 'sourceEditor',
-        bounds: sourceEditorBounds,
-        borderRadius: Rectangle.inset(7, 0, 7, 7),
-        borderWidthLeft: 3,
-        ...textStyle
-      },
-      // {
-      //   name: "save note",
-      //   master: { auto: "styleguide://System/saveNote"},
-      //   submorphs: [
-      //     { name: "save module info", type: "text"},
-      //     { name: "checkmark", type: "label"},
-      //   ]
-      // },
-      {
-        name: 'frozen-warning',
-        master: { auto: 'styleguide://System/frozenWarning' },
-        height: 0,
-        submorphs: [
-          { type: 'text', name: 'frozen-module-info', fixedWidth: true },
-          Icon.makeLabel('snowflake', { name: 'snowflake' })
-        ]
-      },
-
-      {
-        name: 'browserCommands',
-        bounds: browserCommandsBounds,
-        layout: new GridLayout({
-          grid: [['commands', null, 'eval backend button', null]],
-          rows: [0, { paddingBottom: 2 }],
-          columns: [0, { paddingLeft: 2 }, 2, { fixed: 100 }, 3, { fixed: 5 }],
-          groups: { commands: { resize: false } }
-        }),
-        fill: Color.transparent,
-        reactsToPointer: false,
-        borderBottom: { color: Color.gray, width: 1 },
-        submorphs: [
-          {
-            name: 'commands',
-            layout: new HorizontalLayout({
-              spacing: 2,
-              autoResize: false,
-              layoutOrder: function (m) {
-                return this.container.submorphs.indexOf(m);
-              }
-            }),
-            fill: Color.transparent,
-            submorphs: [
-              { ...btnStyle, name: 'historyBackwardButton', label: Icon.makeLabel('step-backward'), tooltip: 'back in browse history' },
-              { ...btnStyle, name: 'browseHistoryButton', label: Icon.makeLabel('history'), tooltip: 'show browse history' },
-              { ...btnStyle, name: 'historyForwardButton', label: Icon.makeLabel('step-forward'), tooltip: 'forward in browse history' },
-
-              { extent: pt(10, 18), fill: Color.transparent },
-
-              { ...btnStyle, name: 'searchButton', label: Icon.makeLabel('search'), tooltip: 'code search' },
-              { ...btnStyle, name: 'browseModulesButton', label: Icon.makeLabel('bars'), tooltip: 'list all modules' },
-
-              { extent: pt(10, 18), fill: Color.transparent },
-
-              { ...btnStyle, name: 'addPackageButton', label: Icon.makeLabel('plus'), tooltip: 'add package' },
-              { ...btnStyle, name: 'removePackageButton', label: Icon.makeLabel('minus'), tooltip: 'remove package' },
-              { ...btnStyle, name: 'runTestsInPackageButton', label: 'run tests', tooltip: 'run tests', styleClasses: [], fontSize: 10, padding: rect(6, 3, 0, -1) }
-
-            ]
-          },
-          EvalBackendChooser.default.ensureEvalBackendDropdown(this, 'local')]
-      }
-    ];
-
-    const browserCommands = container.getSubmorphNamed('browserCommands');
-    const hresizer = container.getSubmorphNamed('hresizer');
-    const moduleList = container.getSubmorphNamed('moduleList');
-    const moduleCommands = container.getSubmorphNamed('moduleCommands');
-    const codeEntityCommands = container.getSubmorphNamed('codeEntityCommands');
-    const codeEntityTree = container.getSubmorphNamed('codeEntityTree');
-    const sourceEditor = container.getSubmorphNamed('sourceEditor');
-    const frozenWarning = container.getSubmorphNamed('frozen-warning');
-    const metaInfoText = container.getSubmorphNamed('metaInfoText');
-    const evalBackendChooser = container.getSubmorphNamed('eval backend button');
-
-    evalBackendChooser.width = 150;
-
-    browserCommands.opacity = 0;
-    frozenWarning.setBounds(frozenWarningBounds);
-
-    browserCommands.whenRendered().then(() => {
-      browserCommands.withAllSubmorphsDo(b => b != evalBackendChooser && b.isButton && b.fit());
-      browserCommands.opacity = 1;
-    });
-
-    hresizer.addScalingAbove(moduleList);
-    hresizer.addScalingAbove(codeEntityTree);
-    hresizer.addFixed(moduleCommands);
-    hresizer.addFixed(codeEntityCommands);
-    hresizer.addFixed(metaInfoText);
-    hresizer.addFixed(frozenWarning);
-    hresizer.addScalingBelow(sourceEditor);
-
-    this._inLayout = false;
+    new EvalBackendChooser().buildEvalBackendDropdownFor(this, this.ui.evalBackendList);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -481,43 +553,30 @@ export default class Browser extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   relayout () {
-    if (this._inLayout) return;
-
-    this._inLayout = true;
-
     const {
-      moduleList,
-      codeEntityTree,
-      browserCommands,
-      moduleCommands,
-      codeEntityCommands,
       metaInfoText,
+      columnView,
       sourceEditor,
-      hresizer,
-      evalBackendList,
-      frozenWarning
+      headerButtons,
+      verticalResizer,
+      smiley
     } = this.ui;
-
-    const listEditorRatio = moduleList.height / (this.height - hresizer.height);
-
-    try {
-      [moduleList, moduleCommands, codeEntityTree, codeEntityCommands]
-        .forEach(ea => ea.width = this.width / 2);
-      [moduleCommands, codeEntityCommands]
-        .forEach(ea => ea.height = hresizer.top - moduleList.bottom);
-
-      codeEntityCommands.left = codeEntityTree.left = moduleList.right;
-      if (evalBackendList) { browserCommands.layout.col(2).width = evalBackendList.width; }
-      browserCommands.width = hresizer.width = this.width;
-      metaInfoText.top = hresizer.bottom + 1;
-      metaInfoText.width = browserCommands.width + 1;
-      frozenWarning.width = this.width;
-      sourceEditor.setBounds(
-        new Rectangle(
-          0, frozenWarning.height > 0 ? frozenWarning.bottom : metaInfoText.bottom,
-          frozenWarning.width - sourceEditor.borderWidth + 1,
-          this.height - Math.max(metaInfoText.bottom, frozenWarning.bottom)));
-    } finally { this._inLayout = false; }
+    columnView.width = this.width;
+    sourceEditor.width = this.width;
+    metaInfoText.width = this.width - 15;
+    metaInfoText.left = 15 / 2;
+    headerButtons.width = this.width;
+    verticalResizer.width = this.width;
+    headerButtons.visible = this.width > 400;
+    if (!headerButtons.visible) {
+      columnView.top = 0;
+      columnView.height = verticalResizer.top;
+    } else {
+      columnView.top = 50;
+      columnView.height = verticalResizer.top - 50;
+    }
+    sourceEditor.height = this.height - columnView.bottom;
+    smiley.center = sourceEditor.center;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -529,7 +588,6 @@ export default class Browser extends Morph {
   get ui () {
     return {
       ...super.ui,
-      container: this.targetMorph,
       frozenWarning: this.getSubmorphNamed('frozen-warning'),
       frozenModuleInfo: this.getSubmorphNamed('frozen-module-info'),
       addModuleButton: this.getSubmorphNamed('addModuleButton'),
@@ -540,7 +598,7 @@ export default class Browser extends Morph {
       codeEntityTree: this.getSubmorphNamed('codeEntityTree'),
       historyBackwardButton: this.getSubmorphNamed('historyBackwardButton'),
       historyForwardButton: this.getSubmorphNamed('historyForwardButton'),
-      hresizer: this.getSubmorphNamed('hresizer'),
+      verticalResizer: this.getSubmorphNamed('vertical resizer'),
       moduleCommands: this.getSubmorphNamed('moduleCommands'),
       codeEntityCommands: this.getSubmorphNamed('codeEntityCommands'),
       moduleList: this.getSubmorphNamed('moduleList'),
@@ -550,25 +608,41 @@ export default class Browser extends Morph {
       runTestsInModuleButton: this.getSubmorphNamed('runTestsInModuleButton'),
       codeEntityJumpButton: this.getSubmorphNamed('codeEntityJumpButton'),
       searchButton: this.getSubmorphNamed('searchButton'),
-      metaInfoText: this.getSubmorphNamed('metaInfoText'),
-      sourceEditor: this.getSubmorphNamed('sourceEditor'),
-      evalBackendList: this.getSubmorphNamed('eval backend button')
+      metaInfoText: this.getSubmorphNamed('meta info text'),
+      sourceEditor: this.getSubmorphNamed('source editor'),
+      evalBackendList: this.getSubmorphNamed('eval backend button'),
+      columnView: this.getSubmorphNamed('column view'),
+      headerButtons: this.getSubmorphNamed('header buttons'),
+      smiley: this.getSubmorphNamed('smiley')
     };
   }
 
-  get selectedModule () { return this.ui.moduleList.selection; }
-  set selectedModule (m) {
-    const mlist = this.ui.moduleList;
-    if (!m) mlist.selection = null;
-    else this.selectModuleNamed(typeof m === 'string' ? m : m.name || m.id);
+  get selectedModule () {
+    return this.ui.columnView.getExpandedPath().find(node => this.isModule(node));
   }
 
-  get selectedPackage () { return this.state.selectedPackage; }
+  set selectedModule (m) {
+    const mlist = this.ui.columnView;
+    if (!m) mlist.setExpandedPath(); // only select current Package
+    else this.selectModuleNamed(typeof m === 'string' ? m : m.url || m.id);
+  }
+
+  get selectedPackage () { return this.state && this.state.selectedPackage; }
   set selectedPackage (p) {
     this.selectPackageNamed(!p ? null : typeof p === 'string' ? p : p.url || p.address);
   }
 
-  get selectedCodeEntity () { return this.ui.codeEntityTree.selectedNode; }
+  get selectedCodeEntity () {
+    return this.renderedCodeEntities().find(m => !m.isCollapsed);
+  }
+
+  get selectedDirectory () {
+    return this.ui.columnView.getExpandedPath().reverse().find(m => ['package', 'directory'].includes(m.type));
+  }
+
+  isModule (node) {
+    return node && ['js', 'json', 'md'].includes(node.type);
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // source changes
@@ -576,7 +650,10 @@ export default class Browser extends Morph {
 
   updateSource (source, cursorPos) {
     const ed = this.ui.sourceEditor;
-    if (ed.textString != source) ed.textString = source;
+    if (ed.textString != source) {
+      ed.textString = source;
+      ed.scroll = pt(0, 0);
+    }
     this.state.sourceHash = string.hashCode(source);
     this.indicateNoUnsavedChanges();
     this.state.moduleChangeWarning = null;
@@ -640,17 +717,26 @@ export default class Browser extends Morph {
   async toggleWindowStyle (animated = true) {
     const duration = 1000; const easing = easings.outExpo;
     let theme; let styleClasses;
+    const { columnView, sourceEditor } = this.ui;
+    columnView.reset();
+
     if ((await this.editorPlugin.runEval("System.get('@system-env').node")).value) {
       styleClasses = [...arr.without(this.styleClasses, 'local'), 'node'];
       theme = DarkTheme.instance;
+      columnView.listMaster = 'styleguide://SystemIDE/system browser list/dark';
     } else {
       styleClasses = ['local', ...arr.without(this.styleClasses, 'node')];
       theme = DefaultTheme.instance;
+      columnView.listMaster = 'styleguide://SystemIDE/system browser list';
     }
+
     this.editorPlugin.theme = theme;
     if (animated) {
       this.animate({ duration, styleClasses, easing });
-      this.ui.sourceEditor.animate({
+      sourceEditor.animate({
+        fill: theme.background, duration, easing
+      });
+      columnView.animate({
         fill: theme.background, duration, easing
       });
     } else {
@@ -690,7 +776,12 @@ export default class Browser extends Morph {
       moduleListScroll,
       systemInterface
     } = browseSpec;
-    const { sourceEditor, codeEntityTree, moduleList } = this.ui;
+
+    const { sourceEditor, columnView } = this.ui;
+
+    if (!columnView.treeData) {
+      await columnView.setTreeData(new PackageTreeData({ browser: this }));
+    }
 
     if (optSystemInterface || systemInterface) {
       this.systemInterface = optSystemInterface || systemInterface;
@@ -701,7 +792,7 @@ export default class Browser extends Morph {
 
     if (packageName) {
       await this.selectPackageNamed(packageName);
-      if (moduleName) await this.selectModuleNamed(moduleName);
+      if (moduleName) await this.selectModuleNamed(moduleName, false);
     } else if (moduleName) {
       const system = this.systemInterface;
       let m = await system.getModule(moduleName); let p;
@@ -719,7 +810,6 @@ export default class Browser extends Morph {
 
       if (m && p) {
         moduleName = m.id;
-        const p = await system.getPackageForModule(m.id);
         await this.selectPackageNamed(p.url);
         await this.selectModuleNamed(moduleName);
       }
@@ -740,8 +830,7 @@ export default class Browser extends Morph {
       sourceEditor.scroll = scroll;
     }
 
-    if (moduleListScroll) moduleList.scroll = moduleListScroll;
-    if (codeEntityTreeScroll) codeEntityTree.scroll = codeEntityTreeScroll;
+    await this.prepareCodeEditorForModule(this.selectedModule);
 
     return this;
   }
@@ -751,12 +840,18 @@ export default class Browser extends Morph {
 
   async selectPackageNamed (pName) {
     const p = pName ? await this.systemInterface.getPackage(pName) : null;
+    const columnView = this.ui.columnView;
+    const td = columnView.treeData;
+    await columnView.setExpandedPath(n => {
+      return n == td.root || n.url == p.address + '/';
+    }, td.root, false);
     this.onPackageSelected(p);
     await this.whenPackageUpdated();
     return p;
   }
 
   async onPackageSelected (p) {
+    this.switchMode('js');
     this.state.selectedPackage = p;
     if (!this.state.packageUpdateInProgress) {
       var deferred = promise.deferred();
@@ -764,17 +859,12 @@ export default class Browser extends Morph {
     }
 
     try {
-      const { metaInfoText, moduleList } = this.ui;
       const win = this.getWindow();
-      metaInfoText.textString = '';
       if (!p) {
-        moduleList.items = [];
         this.updateSource('');
         win.title = 'browser';
       } else {
         win.title = 'browser - ' + p.name;
-        moduleList.selection = null;
-        await this.updateModuleList(p);
       }
     } finally {
       if (deferred) {
@@ -787,31 +877,35 @@ export default class Browser extends Morph {
   // this.indicateFrozenModuleIfNeeded()
 
   async indicateFrozenModuleIfNeeded () {
-    const { frozenWarning, sourceEditor, frozenModuleInfo } = this.ui;
-    const m = await this.systemInterface.getModule(this.selectedModule.name);
+    const { frozenWarning, sourceEditor, metaInfoText } = this.ui;
+    const m = await this.systemInterface.getModule(this.selectedModule.url);
     const pkgName = m.package().name;
     const moduleName = m.pathInPackage();
 
-    let frozenWarningHeight = 0;
     if (m._frozenModule) {
-      frozenWarningHeight = 80;
-      frozenModuleInfo.textString = `The module "${pkgName}/${moduleName}" you are viewing is frozen. You are not able to make changes to this module unless you reload the world with dynamic load enabled for the package "${pkgName}".`;
+      metaInfoText.showFrozen(`The module "${pkgName}/${moduleName}" you are viewing is frozen. You are not able to make changes to this module unless you reload the world with dynamic load enabled for the package "${pkgName}".`);
     }
-    frozenWarning.animate({
-      height: frozenWarningHeight,
-      duration: 300
-    });
-    sourceEditor.animate({
-      top: frozenWarning.bottom,
-      height: this.height - frozenWarning.bottom,
-      duration: 300
-    });
   }
 
-  async selectModuleNamed (mName) {
-    const list = this.ui.moduleList;
-    let m = list.selection = list.values.find(({ nameInPackage, name }) =>
-      mName === name || mName === nameInPackage);
+  getDisplayedModuleNodes () {
+    const columnView = this.ui.columnView;
+    const moduleLists = columnView.submorphs.filter(m => ['directory', 'package'].includes(m._managedNode.type));
+    return arr.flatten(moduleLists.map(list => list.items.map(m => m.value)));
+  }
+
+  // this.selectModuleNamed('text/renderer.js')
+  // mName = 'text/renderer.js'
+  async selectModuleNamed (mName, animated = true) {
+    const columnView = this.ui.columnView;
+    let m = this.getDisplayedModuleNodes().find(({ nameInPackage, url }) =>
+      mName === url || mName === nameInPackage);
+
+    if (m) {
+      await columnView.selectNode(m, animated);
+      columnView.submorphs.forEach(list => {
+        list.scrollSelectionIntoView();
+      });
+    }
 
     if (!m) {
       const system = this.systemInterface;
@@ -829,20 +923,11 @@ export default class Browser extends Morph {
       }
 
       if (url) {
-        const isLoaded = await system.isModuleLoaded(url, true);
-        const item = {
-          isListItem: true,
-          string: nameInPackage,
-          value: {
-            isLoaded,
-            name: url,
-            nameInPackage,
-            url,
-            package: p ? p.url : null
-          }
-        };
-        list.addItem(item);
-        m = list.selection = item.value;
+        const td = columnView.treeData;
+        await columnView.setExpandedPath(node => {
+          return node == td.root || url.startsWith(node.url);
+        }, td.root, false);
+        this.updateSource(await this.systemInterface.moduleRead(url), { row: 0, column: 0 });
       }
     }
 
@@ -855,41 +940,67 @@ export default class Browser extends Morph {
     // var x= await (that.getWindow().searchForModuleAndSelect(System.decanonicalize("lively.vm")));
 
     const { selectedModule, selectedPackage } = this;
-    if (selectedModule && selectedModule.name === moduleURI) { return selectedModule; }
+    if (selectedModule && selectedModule.url === moduleURI) { return selectedModule; }
 
     const system = this.systemInterface;
     const mods = await system.getModules();
-    const m = mods.find(({ name }) => name === moduleURI);
-    const p = m && await system.getPackageForModule(m.name);
+    const m = mods.find(({ url }) => url === moduleURI);
+    const p = m && await system.getPackageForModule(m.url);
 
     if (!p) return null;
     await this.selectPackageNamed(p.address);
-    await this.selectModuleNamed(m.name);
+    await this.selectModuleNamed(m.url);
     return this.selectedModule;
   }
 
   async warnForUnsavedChanges () {
     return await this.world().confirm([
-      'Discard Changes\n', {}, 'The unsaved changes to this module are going to be discarded.\nAre you sure you want to proceed?', { fontSize: 16, fontWeight: 'normal' }], { requester: this });
+      'Discard Changes\n', {}, 'The unsaved changes to this module are going to be discarded.\nAre you sure you want to proceed?', { fontSize: 16, fontWeight: 'normal' }], { requester: this, width: 350 });
   }
 
   async loadES6Mocha () {
     const { value: isInstalled } = await this.systemInterface.runEval(`
       const g = typeof global != 'undefined' ? global : window;
      !!g.Mocha && !!g.chai
-    `, { targetModule: this.selectedModule.name });
+    `, { targetModule: this.selectedModule.url });
     if (isInstalled) return;
     await this.systemInterface.importPackage('mocha-es6');
     await this.systemInterface.runEval(`
       const g = typeof global != 'undefined' ? global : window;
       const promise = await System.import('lively.lang/promise.js')
       promise.waitFor(30 * 1000, () =>  !!g.Mocha && !!g.chai);
-    `, { targetModule: this.selectedModule.name });
+    `, { targetModule: this.selectedModule.url });
+  }
+
+  onListSelectionChange (selectedPath) {
+    // called every time the user selects something inside the column view
+    const selectedFile = arr.last(selectedPath);
+    if (this.isModule(selectedFile)) {
+      this.ui.sourceEditor.opacity = 1;
+      this.ui.sourceEditor.readOnly = false;
+      this.onModuleSelected(selectedFile);
+    }
+
+    if (selectedFile.type == 'package') {
+      this.onPackageSelected(selectedFile.pkg);
+    }
+
+    if (selectedFile.isDeclaration) {
+      this.onCodeEntitySelected(selectedFile);
+    }
+
+    if (['directory', 'package'].includes(selectedFile.type)) {
+      this.ui.sourceEditor.opacity = 0.7;
+      this.ui.sourceEditor.readOnly = true;
+      this.updateSource('');
+      this.ui.metaInfoText.showInactive();
+    }
   }
 
   async onModuleSelected (m) {
-    const pack = this.state.selectedPackage;
+    const pack = this.selectedPackage;
     const win = this.getWindow();
+    const { columnView } = this.ui;
 
     if (this._return) return;
     if (this.selectedModule && this.hasUnsavedChanges()) {
@@ -897,7 +1008,7 @@ export default class Browser extends Morph {
       if (!proceed) {
         this._return = true;
         const m = await this.state.history.navigationInProgress;
-        await this.selectModuleNamed(arr.last(this.state.history.left).module.name);
+        await this.selectModuleNamed(arr.last(this.state.history.left).module.url);
         this._return = false;
         return;
       }
@@ -927,48 +1038,43 @@ export default class Browser extends Morph {
       const system = this.systemInterface;
       const win = this.getWindow();
 
-      // in case of tests, we need to proactively load mocha-es6
-      const url = (await system.coreInterface.normalizeSync(m.name));
-
       // fixme: actuall perform that in the conext of the module
-      if (await isTestModule(await system.moduleRead(m.name))) {
+      if (await isTestModule(await system.moduleRead(m.url))) {
         await this.loadES6Mocha();
       }
 
       if (!m.isLoaded && m.name.endsWith('.js')) {
         let err;
-        try { await system.importModule(m.name); } catch (e) { err = e; }
+
+        try { await system.importModule(m.url); } catch (e) { err = e; }
 
         if (err) this.showError(err);
 
         const p = await system.getPackage(pack.address);
-        const isLoadedNow = p.modules.map(ea => ea.name).includes(m.name);
+        const isLoadedNow = p.modules.map(ea => ea.name).includes(m.url);
 
         if (isLoadedNow) {
           Object.assign(pack, p);
           m.isLoaded = true;
-          // await this.selectPackageNamed(pack.address);
           await this.updateModuleList();
           this.state.moduleUpdateInProgress = null;
-          await this.selectModuleNamed(m.name);
+          await this.selectModuleNamed(m.url);
           m = this.selectedModule;
           if (deferred) { this.state.moduleUpdateInProgress = deferred.promise; }
           return;
         }
       }
 
-      this.ui.moduleList.scrollSelectionIntoView();
       if (win) win.title = `browser - [${pack.name}] ${m.nameInPackage}`;
-      const source = await system.moduleRead(m.name);
+      const source = await system.moduleRead(m.url);
       this.updateSource(source, { row: 0, column: 0 });
 
       await this.prepareCodeEditorForModule(m);
 
       this.historyRecord();
 
-      await this.updateCodeEntities(m);
       await this.updateTestUI(m);
-      this.ui.metaInfoText.replace(this.ui.metaInfoText.documentRange, [
+      this.ui.metaInfoText.setPath([
         `[${pack.name}]`,
         {
           nativeCursor: 'pointer',
@@ -976,10 +1082,13 @@ export default class Browser extends Morph {
           doit: { code: `$world.execCommand("open file browser", {location: "${pack.url}"})` }
         },
         ' ', {},
-        m.nameInPackage, {},
-        ` (${await system.moduleFormat(m.url)} format)`, {},
-        ' - ', {}
-      ], false);
+        m.nameInPackage || '', {},
+        ` (${await system.moduleFormat(m.url)} format)`, {}
+        // ' - ', {}
+      ]);
+      this.ui.metaInfoText.showDefault();
+      m.isLoaded = true;
+      this.updateModuleList();
     } finally {
       this.indicateFrozenModuleIfNeeded();
       if (deferred) {
@@ -989,17 +1098,15 @@ export default class Browser extends Morph {
     }
   }
 
-  async prepareCodeEditorForModule (module) {
-    const system = this.systemInterface;
-    const format = (await system.moduleFormat(module.name)) || 'esm';
-    const [_, ext] = module.name.match(/\.([^\.]+)$/) || [];
-    // FIXME we already have such "mode" switching code in the text editor...
-    // combine these?!
+  // this.switchMode('js')
+
+  switchMode (mode) {
     let Mode = JavaScriptEditorPlugin;
-    switch (ext) {
+    switch (mode) {
       case 'js': /* default */break;
       case 'json': Mode = JSONEditorPlugin; break;
       case 'jsx': Mode = JSXEditorPlugin; break;
+      case 'md': Mode = MarkdownEditorPlugin; break;
     }
 
     // switch text mode
@@ -1007,44 +1114,66 @@ export default class Browser extends Morph {
       const env = this.editorPlugin.evalEnvironment;
       this.ui.sourceEditor.removePlugin(this.editorPlugin);
       this.ui.sourceEditor.addPlugin(new Mode(config.codeEditor.defaultTheme));
+      if (!this.editorPlugin.evalEnvironment) {
+        // markdown does not really have a systemInterface, so we glue one on here
+        this.editorPlugin.evalEnvironment = {
+          systemInterface: localInterface
+        };
+      }
       Object.assign(this.editorPlugin.evalEnvironment, env);
       this.editorPlugin.highlight();
     }
+  }
 
+  async prepareCodeEditorForModule (module) {
+    const system = this.systemInterface;
+    const format = (await system.moduleFormat(module.url)) || 'esm';
+    const [_, ext] = module.name.match(/\.([^\.]+)$/) || [];
+    // FIXME we already have such "mode" switching code in the text editor...
+    // combine these?!
+    this.switchMode(ext);
     Object.assign(this.editorPlugin.evalEnvironment, {
-      targetModule: module.name,
+      targetModule: module.url,
       context: this.ui.sourceEditor,
       format
     });
+    this.editorPlugin._tokenizerValidBefore = { row: 0, column: 0 };
+    this.editorPlugin.requestHighlight(true);
   }
 
   updateFocusedCodeEntity () {
-    const { sourceEditor, metaInfoText, codeEntityTree } = this.ui;
+    const { sourceEditor, metaInfoText } = this.ui;
     const cursorIdx = sourceEditor.positionToIndex(sourceEditor.cursorPosition);
-    const { parent, name } = arr.last(codeEntityTree.treeData.defs.filter(
-      ({ node: { start, end } }) => start < cursorIdx && cursorIdx < end)) || {};
-    if (name) {
-      metaInfoText.replace(metaInfoText.documentRange, [
-        ...metaInfoText.textAndAttributes.slice(0, 4),
-        `${parent ? parent.name + '>>' : ''}${name} - Line ${sourceEditor.cursorPosition.row}`], false);
-    }
+    // const { parent, name } = arr.last(codeEntityTree.treeData.defs.filter(
+    //   ({ node: { start, end } }) => start < cursorIdx && cursorIdx < end)) || {};
+    // if (name) {
+    //   metaInfoText.setPath([
+    //     ...metaInfoText.textAndAttributes.slice(0, 4),
+    //     `${parent ? parent.name + '>>' : ''}${name} - Line ${sourceEditor.cursorPosition.row}`], false);
+    // }
   }
 
   async onCodeEntitySelected (entity) {
     if (!entity) return;
     const { sourceEditor, metaInfoText } = this.ui;
-    const start = sourceEditor.indexToPosition(entity.node.start);
-    const end = sourceEditor.indexToPosition(entity.node.end);
-    sourceEditor.cursorPosition = start;
-    sourceEditor.flash({ start, end }, { id: 'codeentity', time: 1000, fill: Color.rgb(200, 235, 255) });
-    sourceEditor.centerRange({ start, end });
+    if (this.selectedModule.type == 'js') {
+      const start = sourceEditor.indexToPosition(entity.node.start);
+      const end = sourceEditor.indexToPosition(entity.node.end);
+      sourceEditor.cursorPosition = start;
+      sourceEditor.flash({ start, end }, { id: 'codeentity', time: 1000, fill: Color.rgb(200, 235, 255) });
+      sourceEditor.centerRange({ start, end });
+      sourceEditor.scrollDown(-60);
+    }
+    if (this.selectedModule.type == 'md') {
+      sourceEditor.execCommand('[markdown] goto heading', { choice: entity });
+    }
   }
 
   findCodeEntity ({ name, type, parent }) {
     const parentDef = parent ? this.findCodeEntity(parent) : null;
-    const defs = this.ui.codeEntityTree.treeData.defs;
+    const defs = this.renderedCodeEntities();
     if (!defs) return null;
-    return defs.find(def => {
+    return defs.find((def) => {
       if (parentDef && def.parent !== parentDef) return false;
       if (def.name !== name) return false;
       if (!type || def.type === type) return true;
@@ -1053,50 +1182,58 @@ export default class Browser extends Morph {
     });
   }
 
+  renderedCodeEntities () {
+    const { columnView } = this.ui;
+    const selectedModuleNode = this.selectedModule;
+    const td = columnView && columnView.treeData;
+    if (!td || !selectedModuleNode) return [];
+    return tree.filter(selectedModuleNode, node => {
+      return node.isDeclaration;
+    }, node => {
+      if (!node.subNodes && node.children) {
+        node.subNodes = node.children;
+        node.subNodes.forEach(n => n.isDeclaration = true);
+      }
+      return td.getChildren(node);
+    });
+  }
+
   async selectCodeEntity (spec) {
     if (typeof spec === 'string') spec = { name: spec };
-    const { codeEntityTree } = this.ui; const td = codeEntityTree.treeData;
     let def = this.findCodeEntity(spec);
-    const path = []; while (def) { path.unshift(def); def = def.parent; }
-    await codeEntityTree.selectPath(path);
-    codeEntityTree.centerSelection();
+    const parents = [this.selectedModule];
+    let parent = def;
+    while (parent = parent.parent) {
+      parents.push(parent);
+    }
+    await this.ui.columnView.setExpandedPath((n) => {
+      return n.name == def.name || !!parents.find(p => p.type == n.type && p.name == n.name);
+    }, this.selectedModule);
+    this.onListSelectionChange(this.ui.columnView.getExpandedPath());
     return def;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async updateModuleList (p = this.selectedPackage) {
-    if (!p) return;
-    const mods = await this.packageResources(p);
-
-    this.ui.moduleList.items = mods.sort((a, b) => {
-      if (a.isLoaded && !b.isLoaded) return -1;
-      if (!a.isLoaded && b.isLoaded) return 1;
-      if (a.nameInPackage.toLowerCase() < b.nameInPackage.toLowerCase()) return -1;
-      if (a.nameInPackage.toLowerCase() == b.nameInPackage.toLowerCase()) return 0;
-      return 1;
-    })
-      .map(m => ({ string: m.nameInPackage + (m.isLoaded ? '' : ' [not loaded]'), value: m, isListItem: true }));
-
-    await this.ui.moduleList.whenRendered();
-    this.owner.doNotAcceptDropsForThisAndSubmorphs();
+  async updateModuleList (m) {
+    const { columnView } = this.ui;
+    if (m) {
+      // clear siblings
+      const parent = columnView.treeData.parentNode(m);
+      await columnView.treeData.collapse(parent, false);
+    }
+    await columnView.refresh(false);
   }
 
-  updateCodeEntities (mod) {
-    const { editorPlugin, ui: { codeEntityTree } } = this;
-
-    if (!mod || !editorPlugin || !editorPlugin.isJSEditorPlugin) {
-      codeEntityTree.treeData = new CodeDefTreeData([]);
-      return;
-    }
-
-    const parsed = editorPlugin.getNavigator().ensureAST(editorPlugin.textMorph);
-    const decls = categorizer.findDecls(parsed);
-    codeEntityTree.treeData = new CodeDefTreeData(decls);
+  async updateCodeEntities (mod) {
+    const { editorPlugin, ui: { columnView } } = this;
+    const modNode = columnView.getExpandedPath().find(node => this.isModule(node));
+    modNode.subNodes = null;
+    await columnView.treeData.collapse(modNode, false);
   }
 
   updateTestUI (mod) {
-    const { runTestsInModuleButton, sourceEditor, moduleCommands } = this.ui;
+    const { runTestsInModuleButton, sourceEditor, moduleCommands, metaInfoText } = this.ui;
     let hasTests = false;
     if (this.editorPlugin.isJSEditorPlugin) {
       try {
@@ -1108,7 +1245,7 @@ export default class Browser extends Morph {
         hasTests = false;
       }
     }
-    runTestsInModuleButton.visible = runTestsInModuleButton.isLayoutable = !!hasTests;
+    metaInfoText.toggleTestButton(hasTests);
   }
 
   async runOnServer (source) {
@@ -1149,11 +1286,11 @@ export default class Browser extends Morph {
     return;
     for (const field of depDefFields) {
       for (const { key: { value: packageName }, value: { value: range }, end } of field.value.properties) {
-        if (semver.validRange(range) || semver.valid(range)) {
-          if (installedPackages.find(p => p._name === packageName && semver.satisfies(p.version, range))) { continue; }
+        if (modules.semver.validRange(range) || modules.semver.valid(range)) {
+          if (installedPackages.find(p => p._name === packageName && modules.semver.satisfies(p.version, range))) { continue; }
           const { versions } = await resource(`https://registry.npmjs.com/${packageName}`).makeProxied().readJson();
           // find the best match for the version that satisfies the range
-          const version = semver.minSatisfying(obj.keys(versions), range);
+          const version = modules.semver.minSatisfying(obj.keys(versions), range);
           await this.installPackage(packageName, version, end);
         }
       }
@@ -1224,15 +1361,18 @@ export default class Browser extends Morph {
   }
 
   async save (attempt = 0) {
-    const { ui: { moduleList, sourceEditor }, state } = this;
-    const module = moduleList.selection;
+    const { ui: { sourceEditor, metaInfoText }, state } = this;
+    const module = this.selectedModule;
 
     if (!module) {
-      return this.setStatusMessage('Cannot save, no module selected', Color.red, 5000, {
-        master: { auto: 'styleguide://System/errorStatusMessage' }
-      });
+      return;
     }
-    if (modules.module(module.name)._frozenModule) return this.setStatusMessage('Cannot alter frozen modules');
+    if (modules.module(module.url)._frozenModule) {
+      metaInfoText.showError('Cannot alter frozen Modules!');
+      await promise.delay(5000);
+      metaInfoText.showFrozen();
+      return;
+    }
 
     let content = this.ui.sourceEditor.textString.split(objectReplacementChar).join('');
     const system = this.systemInterface;
@@ -1241,11 +1381,10 @@ export default class Browser extends Morph {
     // current module was changed elsewhere (onModuleChanged) and it also has
     // unsaved changes
     if (state.sourceHash !== string.hashCode(content) &&
-     state.moduleChangeWarning && state.moduleChangeWarning === module.name) {
+     state.moduleChangeWarning && state.moduleChangeWarning === module.url) {
       const really = await this.world().confirm(
-        `The module ${module.name} you are trying to save changed elsewhere!\nOverwrite those changes?`);
+        ['Change Conflict\n', null, `The module ${module.url} you are trying to save changed elsewhere!\nOverwrite those changes?`, { fontSize: 16, fontWeight: 'normal' }], { requester: this, width: 350 });
       if (!really) {
-        this.setStatusMessage('Save canceled');
         return;
       }
       state.moduleChangeWarning = null;
@@ -1253,7 +1392,8 @@ export default class Browser extends Morph {
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // FIXME!!!!!! redundant with module load / prepare "mode" code!
-    const format = (await system.moduleFormat(module.name)) || 'esm';
+    // this seems to always scan the transformed code. this is not what we want...
+    const format = (await system.moduleFormat(module.url)) || 'esm';
     const [_, ext] = module.name.match(/\.([^\.]+)$/) || [];
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -1262,22 +1402,18 @@ export default class Browser extends Morph {
       // deal with non-js code, this needs to be cleaned up as well!
       if (ext !== 'js' && ext !== 'jsx') {
         if (module.nameInPackage === 'package.json') {
-          await system.packageConfChange(content, module.name);
-          this.setStatusMessage('updated package config', Color.rgb(39, 174, 96));
+          await system.packageConfChange(content, module.url);
           this.updatePackageDependencies();
         } else {
-          await system.coreInterface.resourceWrite(module.name, content);
-          this.setStatusMessage(`saved ${module.nameInPackage}`, Color.white, 5000, {
-
-          });
+          // handle markdown?
+          await system.coreInterface.resourceWrite(module.url, content);
         }
-
+        metaInfoText.showSaved();
       // js save
       } else {
         if (config.systemBrowser.fixUndeclaredVarsOnSave) {
           const fixed = await sourceEditor.execCommand('[javascript] fix undeclared variables');
           if (!fixed) {
-            this.setStatusMessage('Save canceled');
             return;
           }
 
@@ -1288,27 +1424,27 @@ export default class Browser extends Morph {
 
         if (module.isLoaded) { // is loaded in runtime
           await system.interactivelyChangeModule(
-            module.name, content, { targetModule: module.name, doEval: true });
-        } else await system.coreInterface.resourceWrite(module.name, content);
+            module.url, content, { targetModule: module.url, doEval: true });
+        } else await system.coreInterface.resourceWrite(module.url, content);
       }
       this.updateSource(content);
       await this.updateCodeEntities(module);
       await this.updateTestUI(module);
     } catch (err) {
-      if (attempt > 0 || err instanceof SyntaxError) { return sourceEditor.showError(err); }
+      if (attempt > 0 || err instanceof SyntaxError) {
+        metaInfoText.showError(err);
+        return;
+      }
 
       // try to reload the module, sometimes format changes (global => esm etc need a reload)
       const result = await this.reloadModule(false);
       sourceEditor.textString = content;
       return !result || result instanceof Error
-        ? this.showError(err)
+        ? metaInfoText.showError(err)
         : this.save(attempt + 1);
     } finally { this.state.isSaving = false; }
 
-    this.setStatusMessage('saved ' + module.nameInPackage, Color.white, 5000, {
-      extent: pt(this.width, 35),
-      master: { auto: 'styleguide://System/saveStatusMessage' }
-    });
+    metaInfoText.showSaved();
   }
 
   async reloadModule (hard = false) {
@@ -1323,7 +1459,7 @@ export default class Browser extends Morph {
     const resetEnv = !!hard;
     try {
       await systemInterface.interactivelyReloadModule(
-        null, m.name, reloadDeps, resetEnv);
+        null, m.url, reloadDeps, resetEnv);
       await this.selectModuleNamed(m.nameInPackage);
       sourceEditor.scroll = scroll;
       sourceEditor.cursorPosition = cursorPosition;
@@ -1395,14 +1531,14 @@ export default class Browser extends Morph {
     if (addToRight) {
       while ((last = this.state.history.right[0]) &&
           last.module && loc.module &&
-          (last.module.name === loc.module.name)) {
+          (last.module.url === loc.module.url)) {
         this.state.history.right.shift();
       }
       this.state.history.right.unshift(loc);
     } else {
       while ((last = arr.last(this.state.history.left)) &&
           last.module && loc.module &&
-          (last.module.name === loc.module.name)) {
+          (last.module.url === loc.module.url)) {
         this.state.history.left.pop();
       }
       this.state.history.left.push(loc);
@@ -1439,7 +1575,7 @@ export default class Browser extends Morph {
       await this.whenPackageUpdated();
       await this.whenModuleUpdated();
       if (!this.selectedPackage || loc.package.address !== this.selectedPackage.address) { await this.selectPackageNamed(loc.package.address); }
-      if (!this.selectedModule || loc.module.name !== this.selectedModule.name) { await this.selectModuleNamed(loc.module.name); }
+      if (!this.selectedModule || loc.module.url !== this.selectedModule.url) { await this.selectModuleNamed(loc.module.url); }
 
       ed.cursorPosition = loc.cursor;
       ed.scroll = loc.scroll;
@@ -1456,7 +1592,7 @@ export default class Browser extends Morph {
   async onModuleChanged (evt) {
     if (this.state.isSaving) return;
 
-    const m = module(evt.module);
+    const m = modules.module(evt.module);
     const { selectedModule, selectedPackage } = this;
 
     if (!selectedPackage) return;
@@ -1474,7 +1610,7 @@ export default class Browser extends Morph {
   async onModuleLoaded (evt) {
     if (this.state.isSaving) return;
 
-    const m = module(evt.module);
+    const m = modules.module(evt.module);
     const { selectedModule, selectedPackage } = this;
 
     if (!selectedPackage || !m.package() || m.package().address !== selectedPackage.address) { return; }
@@ -1515,10 +1651,7 @@ export default class Browser extends Morph {
 
   focus (evt) {
     const { metaInfoText, sourceEditor } = this.ui;
-    const t = evt && evt.targetMorph === metaInfoText
-      ? metaInfoText
-      : sourceEditor;
-    t.focus();
+    sourceEditor.focus();
   }
 
   get keybindings () {
@@ -1580,7 +1713,7 @@ export default class Browser extends Morph {
       if (p) codeSnip += `packageName: "${p.name}"`;
     }
     if (c) {
-      const codeEntities = this.ui.codeEntityTree.nodes;
+      const codeEntities = this.renderedCodeEntities();
       const needsDeDup = codeEntities.filter(ea => ea.name === c.name).length > 1;
       if (needsDeDup) { codeSnip += `, codeEntity: ${JSON.stringify(obj.select(c, ['name', 'type']))}`; } else { codeSnip += `, codeEntity: "${c.name}"`; }
     }
@@ -1596,8 +1729,10 @@ export default class Browser extends Morph {
     const m = this.selectedModule;
 
     return [
+      ...super.menuItems(),
       p && { command: 'open browse snippet', target: this },
       m && { command: 'open selected module in text editor', target: this }
     ].filter(Boolean);
   }
 }
+
