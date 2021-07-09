@@ -1126,6 +1126,13 @@ export class LivelyWorld extends World {
     return items;
   }
 
+  updateVisibleWindowMorphs () {
+    super.updateVisibleWindowMorphs();
+    this.halos().forEach(halo => {
+      halo.maskBounds = this.visibleBounds();
+    });
+  }
+
   //= ====== hover halo interface ========
 
   handleHaloCycle (evt) {

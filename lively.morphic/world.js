@@ -281,9 +281,6 @@ export class World extends Morph {
       }
       aMorph.relayout();
     });
-    this.halos().forEach(halo => {
-      halo.maskBounds = this.visibleBounds();
-    });
   }
 
   onWindowScroll () {
@@ -374,7 +371,6 @@ export class World extends Morph {
     document.body.removeChild(a);
   }
 }
-
 
 export class Hand extends Morph {
   static get properties () {
