@@ -2683,7 +2683,7 @@ export class Image extends Morph {
         isStyleProp: true,
         copyAssetOnFreeze: true,
         after: ['extent', 'autoResize'],
-        defaultValue: System.decanonicalize('lively.morphic/lively-web-logo-small.svg'),
+        defaultValue: config.defaultImage,
 
         set (url) {
           this.isLoaded = false;
