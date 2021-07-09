@@ -1460,7 +1460,7 @@ class LivelyRollup {
 
   async getRuntimeCode () {
     let runtimeCode = await module('lively.freezer/runtime.js').source();
-    runtimeCode = `(${runtimeCode.slice(0, -1).replace('export ', '')}})();\n`;
+    runtimeCode = `(${runtimeCode.slice(0, -1).replace('export ', '')})();\n`;
     if (!this.hasDynamicImports) {
       // If there are no dynamic imports, we compile without systemjs and
       // can stub it with our FreezerRuntime
