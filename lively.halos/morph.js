@@ -1553,7 +1553,16 @@ class CopyHaloItem extends HaloItem {
     const origin = t.globalBounds().topLeft();
     // the original morphs are needed so we can refocus them with a halo after copying
     const morphsToCopy = isMultiSelection ? t.selectedMorphs : [t];
-    const modifiedMorphsToCopy = morphsToCopy.filter(morph => !morph.isCommentIndicator).map(morph => morph.copy(true));
+    const modifiedMorphsToCopy = await Promise.all(morphsToCopy.filter(morph => !morph.isCommentIndicator).map(async morph => {
+      const cp = morph.copy(true);
+      await Promise.all(cp.withAllSubmorphsDo(m => {
+        if (m.master) {
+          m.master.applyIfNeeded();
+          return m.master.whenApplied();
+        }
+      }));
+      return cp;
+    }));
     const snapshots = [];
     let html = `<!DOCTYPE html>
           <html lang="en">
