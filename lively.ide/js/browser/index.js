@@ -1059,19 +1059,6 @@ export default class Browser extends Morph {
 
       this.historyRecord();
 
-      await this.updateTestUI(m);
-      this.ui.metaInfoText.setPath([
-        `[${pack.name}]`,
-        {
-          nativeCursor: 'pointer',
-          textDecoration: 'underline',
-          doit: { code: `$world.execCommand("open file browser", {location: "${pack.url}"})` }
-        },
-        ' ', {},
-        m.nameInPackage || '', {},
-        ` (${await system.moduleFormat(m.url)} format)`, {}
-        // ' - ', {}
-      ]);
       this.ui.metaInfoText.showDefault();
       m.isLoaded = true;
       this.updateModuleList();
@@ -1111,32 +1098,59 @@ export default class Browser extends Morph {
     }
   }
 
-  async prepareCodeEditorForModule (module) {
+  async prepareCodeEditorForModule (mod) {
     const system = this.systemInterface;
-    const format = (await system.moduleFormat(module.url)) || 'esm';
-    const [_, ext] = module.name.match(/\.([^\.]+)$/) || [];
+    const format = (await system.moduleFormat(mod.url)) || 'esm';
+    const pack = this.selectedPackage;
+    const [_, ext] = mod.name.match(/\.([^\.]+)$/) || [];
     // FIXME we already have such "mode" switching code in the text editor...
     // combine these?!
     this.switchMode(ext);
     Object.assign(this.editorPlugin.evalEnvironment, {
-      targetModule: module.url,
+      targetModule: mod.url,
       context: this.ui.sourceEditor,
       format
     });
     this.editorPlugin._tokenizerValidBefore = { row: 0, column: 0 };
     this.editorPlugin.requestHighlight(true);
+
+    await this.updateTestUI(mod);
+    this.ui.metaInfoText.setPath([
+        `[${pack.name}]`,
+        {
+          nativeCursor: 'pointer',
+          textDecoration: 'underline',
+          doit: { code: `$world.execCommand("open file browser", {location: "${pack.url}"})` }
+        },
+        ' ', {},
+        mod.nameInPackage || '', {}
+      // ` (${await system.moduleFormat(mod.url)} format)`, {}
+      // ' - ', {}
+    ]);
+  }
+
+  updateFocusedCodeEntityDebounced () {
+    fun.debounceNamed(this.id + 'updateFocusedCodeEntityDebounced', 20,
+      () => this.updateFocusedCodeEntity())();
   }
 
   updateFocusedCodeEntity () {
+    const minWidthToDisplay = 600;
     const { sourceEditor, metaInfoText } = this.ui;
     const cursorIdx = sourceEditor.positionToIndex(sourceEditor.cursorPosition);
-    // const { parent, name } = arr.last(codeEntityTree.treeData.defs.filter(
-    //   ({ node: { start, end } }) => start < cursorIdx && cursorIdx < end)) || {};
-    // if (name) {
-    //   metaInfoText.setPath([
-    //     ...metaInfoText.textAndAttributes.slice(0, 4),
-    //     `${parent ? parent.name + '>>' : ''}${name} - Line ${sourceEditor.cursorPosition.row}`], false);
-    // }
+    let { parent, name } = arr.last(this.renderedCodeEntities().filter(
+      ({ node: { start, end } }) => start < cursorIdx && cursorIdx < end)) || {};
+    const parents = parent ? [parent.name, ''] : [];
+    while (parent && (parent = parent.parent)) {
+      parents.unshift(parent.name);
+    }
+    if (name && this.width > minWidthToDisplay) {
+      metaInfoText.setPath([
+        ...metaInfoText.getPath().slice(0, 6),
+        ` - ${parents.join('>>')}${name}:${sourceEditor.cursorPosition.row}`, {
+          fontSize: 12, paddingTop: '2px'
+        }]);
+    }
   }
 
   async onCodeEntitySelected (entity) {
@@ -1721,5 +1735,4 @@ export default class Browser extends Morph {
     ].filter(Boolean);
   }
 }
-
 
