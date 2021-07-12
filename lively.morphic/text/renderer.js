@@ -497,7 +497,8 @@ export default class TextRenderer {
     if (!fixedHeight) textLayerClasses = textLayerClasses + ' auto-height';
 
     // ...and now other attribues
-    const style = { height: textHeight + 'px' };
+    const style = {};
+    if (fixedHeight) style.height = textHeight + 'px';
     if (padLeft > 0) style.paddingLeft = padLeft + 'px';
     if (padRight > 0) style.paddingRight = padRight + 'px';
     if (padTop > 0) style.marginTop = padTop + 'px';
@@ -741,7 +742,7 @@ export default class TextRenderer {
     const { textLayout } = morph;
 
     const { start, end, cursorVisible, selectionColor } = selection;
-    const { document, cursorColor } = morph;
+    const { document, cursorColor, fontColor } = morph;
     const isReverse = selection.isReverse();
     const startBounds = textLayout.boundsFor(morph, start);
     const maxBounds = textLayout.computeMaxBoundsForLineSelection(morph, selection);
@@ -1009,7 +1010,7 @@ export default class TextRenderer {
     const { padding, scroll: { x: visibleLeft, y: visibleTop } } = morph;
     const leftP = padding.left();
     const rightP = padding.right();
-    const topP = padding.top();
+    const topP = 0;
     const bottomP = padding.bottom();
 
     debugHighlights.push(h('div.debug-info', {
