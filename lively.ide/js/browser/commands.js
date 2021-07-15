@@ -265,8 +265,7 @@ export default function browserCommands (browser) {
         }
         if (!name) return;
         let dirPath = joinPath(dir, name);
-        if (!dirPath.endsWith('/')) dirPath += '/';
-        await coreInterface.resourceMkdir(dirPath);
+        await coreInterface.resourceEnsureExistance(dirPath);
         // uncollapse the parent node of the dir
         const parentNode = columnView.getExpandedPath().find(n => n.url == dir);
         if (parentNode) await td.collapse(parentNode, false);
@@ -325,8 +324,7 @@ export default function browserCommands (browser) {
           return true;
         }
 
-        await browser.updateModuleList(p);
-        p && browser.selectPackageNamed(p.name);
+        await browser.updateModuleList(m);
 
         return true;
       }
