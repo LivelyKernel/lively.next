@@ -103,6 +103,7 @@ export var UserUI = {
         });
       }
       const versionChecker = await resource('part://SystemUserUI/version checker').read();
+      versionChecker.name = 'lively version checker';
       versionChecker.openInWorld();
       versionChecker.relayout();
       versionChecker.checkVersion();
