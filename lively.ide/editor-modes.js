@@ -422,6 +422,7 @@ export var modeInfo = [
   { name: 'Cython', mime: 'text/x-cython', mode: 'python', ext: ['pyx', 'pxd', 'pxi'] },
   { name: 'Crystal', mime: 'text/x-crystal', mode: 'crystal', ext: ['cr'] },
   { name: 'CSS', mime: 'text/css', mode: 'css', ext: ['css'] },
+  { name: 'LESS', mime: 'text/x-less', mode: 'css', ext: ['less'] },
   { name: 'CQL', mime: 'text/x-cassandra', mode: 'sql', ext: ['cql'] },
   { name: 'D', mime: 'text/x-d', mode: 'd', ext: ['d'] },
   { name: 'Dart', mimes: ['application/dart', 'text/x-dart'], mode: 'dart', ext: ['dart'] },

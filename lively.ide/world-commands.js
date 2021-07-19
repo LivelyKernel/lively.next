@@ -606,6 +606,7 @@ const commands = [
         md: 'lively.ide/md/workspace.js',
         sql: 'lively.ide/sql/workspace.js',
         css: 'lively.ide/css/workspace.js',
+        less: 'lively.ide/css/less/workspace.js',
         text: null
       };
       const alias = Object.keys(config.ide.modes.aliases).reduce((inverted, ea) =>

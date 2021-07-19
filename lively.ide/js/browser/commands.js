@@ -254,7 +254,9 @@ export default function browserCommands (browser) {
         if (type) {
           name = await browser.world().prompt([
             'Enter module name', null], { requester: browser });
-          if (name) name = name + '.' + type;
+          if (name) {
+            name = name.replace(/(\.js|\.md|\.json)$/, '') + '.' + type;
+          }
         } else {
           while (name != undefined && !name.match(/(\.js|\.md|\.json)$/)) {
             name = await browser.world().prompt([
@@ -281,14 +283,24 @@ export default function browserCommands (browser) {
         const coreInterface = systemInterface.coreInterface;
         const td = columnView.treeData;
         if (!dir || !selectedPackage) return;
-        const parentNode = browser.ui.columnView.getExpandedPath().find(n => n.url == dir);
+        const parentNode = columnView.getExpandedPath().find(n => n.url == dir);
         const selectedNodeInDir = parentNode.subNodes.find(n => !n.isCollapsed);
+        const textStyle = { fontSize: 16, fontWeight: 'normal ' };
         if (!selectedNodeInDir) return;
         if (browser.isModule(selectedNodeInDir)) {
-          return browser.execCommand('remove module', { mod: selectedNodeInDir });
+          // if is .md or .less, just remove the file
+          // else remove module!
+          if (selectedNodeInDir.url.match(/(\.md|\.less)$/)) {
+            if (await browser.world().confirm([
+              'Really remove file?\n', {}, 'You are about to remove the file:\n', textStyle, selectedNodeInDir.url, { ...textStyle, fontStyle: 'italic' }
+            ], { lineWrapping: false, requester: browser })) {
+              await coreInterface.resourceRemove(selectedNodeInDir.url);
+            } else return;
+          } else {
+            return browser.execCommand('remove module', { mod: selectedNodeInDir });
+          }
         }
         if (selectedNodeInDir.type == 'directory') {
-          const textStyle = { fontSize: 16, fontWeight: 'normal ' };
           const proceed = await browser.world().confirm([
             'Folder removal\n', {},
             'You are about to remove a folder containing several modules. ', textStyle,
@@ -302,10 +314,9 @@ export default function browserCommands (browser) {
             await browser.execCommand('remove module', { mod });
           }
           await coreInterface.resourceRemove(selectedNodeInDir.url);
-          const parentNode = columnView.getExpandedPath().find(n => n.url == dir);
-          if (parentNode) await td.collapse(parentNode, false);
-          browser.updateModuleList();
         }
+        if (parentNode) await td.collapse(parentNode, false);
+        browser.updateModuleList();
       }
     },
 

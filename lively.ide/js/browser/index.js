@@ -17,6 +17,7 @@ import { HorizontalResizer } from 'lively.components/resizers.js';
 import { Tree, TreeData } from 'lively.components/tree.js';
 
 import './tree.js';
+import { editableFiles } from './tree.js';
 import JavaScriptEditorPlugin from '../editor-plugin.js';
 import JSONEditorPlugin from '../../json/editor-plugin.js';
 import JSXEditorPlugin from '../../jsx/editor-plugin.js';
@@ -41,11 +42,13 @@ import lint from '../linter.js';
 import { isTestModule } from 'lively-system-interface/commands/modules.js';
 import { mdCompiler } from '../../md/compiler.js';
 import MarkdownEditorPlugin from '../../md/editor-plugin.js';
+import LESSEditorPlugin from '../../css/less/editor-plugin.js';
 
 const COLORS = {
   js: Color.rgb(46, 204, 113),
   json: Color.rgb(128, 139, 150),
-  md: Color.rgb(142, 68, 173)
+  md: Color.rgb(142, 68, 173),
+  less: Color.rgbHex('1D365E')
 };
 
 export class PackageControls extends Morph {
@@ -104,7 +107,8 @@ export class DirectoryControls extends Morph {
       { isDivider: true },
       [[...Icon.textAttribute('js-square', { ...style, fontColor: COLORS.js }), '  Javascript'], () => { type = 'js'; }],
       [[...Icon.textAttribute('code', { ...style, fontColor: COLORS.json }), ' JSON'], () => { type = 'json'; }],
-      [[...Icon.textAttribute('markdown', { ...style, fontColor: COLORS.md }), ' Markdown'], () => { type = 'md'; }]
+      [[...Icon.textAttribute('markdown', { ...style, fontColor: COLORS.md }), ' Markdown'], () => { type = 'md'; }],
+      [[...Icon.textAttribute('less', { ...style, fontColor: COLORS.less }), ' Less (CSS)'], () => { type = 'less'; }]
     ]);
     await menu.whenFinished();
     if (!type) return;
@@ -155,6 +159,9 @@ export class PackageTreeData extends TreeData {
           break;
         case 'directory':
           displayedName = this.displayDirectory(name, !isCollapsed);
+          break;
+        case 'less':
+          displayedName = this.displayLess(name, isSelected);
           break;
       }
 
@@ -260,6 +267,15 @@ export class PackageTreeData extends TreeData {
         fontColor: isSelected ? Color.white : COLORS.md
       }),
       ' ' + md, null
+    ];
+  }
+
+  displayLess (less, isSelected) {
+    return [
+      ...Icon.textAttribute('less', {
+        fontColor: isSelected ? Color.white : COLORS.less
+      }),
+      ' ' + less, null
     ];
   }
 
@@ -627,7 +643,7 @@ export default class Browser extends Morph {
   }
 
   isModule (node) {
-    return node && ['js', 'json', 'md'].includes(node.type);
+    return node && editableFiles.includes(node.type);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1080,6 +1096,7 @@ export default class Browser extends Morph {
       case 'json': Mode = JSONEditorPlugin; break;
       case 'jsx': Mode = JSXEditorPlugin; break;
       case 'md': Mode = MarkdownEditorPlugin; break;
+      case 'less': Mode = LESSEditorPlugin; break;
     }
 
     // switch text mode
@@ -1405,7 +1422,12 @@ export default class Browser extends Morph {
           await system.packageConfChange(content, module.url);
           this.updatePackageDependencies();
         } else {
-          // handle markdown?
+          if (ext == 'less') {
+            // notify dependent html morphs that are mounted in the world
+            $world.getSubmorphsByStyleClassName('HTMLMorph').forEach(html => {
+              html.updateLessIfNeeded();
+            });
+          }
           await system.coreInterface.resourceWrite(module.url, content);
         }
         metaInfoText.showSaved();
@@ -1735,4 +1757,3 @@ export default class Browser extends Morph {
     ].filter(Boolean);
   }
 }
-

@@ -94,7 +94,8 @@ const config = {
         javascript: 'js',
         htmlmixed: 'html',
         haskell: 'hs',
-        python: 'py'
+        python: 'py',
+        less: 'css/less'
       }
     }
   },

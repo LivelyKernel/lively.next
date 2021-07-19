@@ -1,8 +1,10 @@
 import { resource } from 'lively.resources';
 
+export const editableFiles = ['md', 'js', 'json', 'less'];
+
 async function listEditableFilesInDir (url) {
   const resources = (await resource(url).dirList())
-    .filter(res => res.isDirectory() || ['md', 'js', 'json'].includes(res.ext()));
+    .filter(res => res.isDirectory() || editableFiles.includes(res.ext()));
   return resources.map(res => {
     let type;
     if (res.isDirectory()) type = 'directory';
