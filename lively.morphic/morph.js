@@ -1863,12 +1863,16 @@ export class Morph {
   }
 
   transformPointToMorph (other, p) {
-    let hasFixedParent = this.hasFixedPosition;
+    const pathToMorph = this.pathToMorph(other);
+    let hasFixedParent = !!pathToMorph.find(([_, m]) => m.hasFixedPosition && m.owner && m.owner.isWorld);
+    if (hasFixedParent && this.isWorld) {
+      p.x = p.x + this.position.x - this.scroll.x;
+      p.y = p.y + this.position.y - this.scroll.y;
+    }
     for (const [d, m] of this.pathToMorph(other)) {
       if (this != m && d == 'up') {
         p.x -= m.scroll.x;
         p.y -= m.scroll.y;
-        if (m.hasFixedPosition) hasFixedParent = m.owner && m.owner.isWorld;
         if (m.hasFixedPosition && m.owner && m.owner.owner) {
           p.x += m.owner.scroll.x;
           p.y += m.owner.scroll.y;
@@ -1878,7 +1882,6 @@ export class Morph {
       if (this != m && d == 'down') {
         p.x += m.scroll.x;
         p.y += m.scroll.y;
-        if (m.hasFixedPosition) hasFixedParent = m.owner && m.owner.isWorld;
         if (m.hasFixedPosition && m.owner && m.owner.owner/* i.e. except world */) {
           p.x -= m.owner.scroll.x;
           p.y -= m.owner.scroll.y;
@@ -1889,10 +1892,8 @@ export class Morph {
       p.x = p.x - other.position.x + other.scroll.x;
       p.y = p.y - other.position.y + other.scroll.y;
     }
-    if (hasFixedParent && this.isWorld) {
-      p.x = p.x + this.position.x - this.scroll.x;
-      p.y = p.y + this.position.y - this.scroll.y;
-    }
+    // this needs to be applied with the transform!
+
     return p;
   }
 
