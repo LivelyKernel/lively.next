@@ -635,7 +635,7 @@ export default class Browser extends Morph {
   }
 
   get selectedCodeEntity () {
-    return this.renderedCodeEntities().find(m => !m.isCollapsed);
+    return arr.last(this.ui.columnView.getExpandedPath().filter(n => n.isDeclaration));
   }
 
   get selectedDirectory () {
@@ -1757,3 +1757,4 @@ export default class Browser extends Morph {
     ].filter(Boolean);
   }
 }
+
