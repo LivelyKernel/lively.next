@@ -635,7 +635,9 @@ export default class Browser extends Morph {
   }
 
   get selectedCodeEntity () {
-    return arr.last(this.ui.columnView.getExpandedPath().filter(n => n.isDeclaration));
+    const entities = this.ui.columnView.getExpandedPath().filter(n => n.isDeclaration);
+    if (entities.length > 1) return entities;
+    return arr.last(entities);
   }
 
   get selectedDirectory () {
@@ -654,7 +656,6 @@ export default class Browser extends Morph {
     const ed = this.ui.sourceEditor;
     if (ed.textString != source) {
       ed.textString = source;
-      ed.scroll = pt(0, 0);
     }
     this.state.sourceHash = string.hashCode(source);
     this.indicateNoUnsavedChanges();
@@ -1070,6 +1071,7 @@ export default class Browser extends Morph {
       if (win) win.title = `browser - [${pack.name}] ${m.nameInPackage}`;
       const source = await system.moduleRead(m.url);
       this.updateSource(source, { row: 0, column: 0 });
+      this.ui.sourceEditor.scroll = pt(0, 0);
 
       await this.prepareCodeEditorForModule(m);
 
@@ -1186,7 +1188,10 @@ export default class Browser extends Morph {
     }
   }
 
-  findCodeEntity ({ name, type, parent }) {
+  findCodeEntity ({
+    name, type,
+    parent
+  }) {
     const parentDef = parent ? this.findCodeEntity(parent) : null;
     const defs = this.renderedCodeEntities();
     if (!defs) return null;
@@ -1217,12 +1222,25 @@ export default class Browser extends Morph {
 
   async selectCodeEntity (spec, animated = true) {
     if (typeof spec === 'string') spec = { name: spec };
-    let def = this.findCodeEntity(spec);
+    let def;
     const parents = [this.selectedModule];
-    let parent = def;
-    while (parent = parent.parent) {
-      parents.push(parent);
+    if (obj.isArray(spec)) {
+      spec = spec.map(sp => {
+        return typeof sp === 'string' ? { name: sp } : sp;
+      });
+      let current;
+      while (current = spec.shift()) {
+        current.parent = arr.last(parents);
+        parents.push(def = this.findCodeEntity(current));
+      }
+    } else {
+      def = this.findCodeEntity(spec);
+      let parent = def;
+      while (parent = parent.parent) {
+        parents.push(parent);
+      }
     }
+
     await this.ui.columnView.setExpandedPath((n) => {
       return n.name == def.name || !!parents.find(p => p.type == n.type && p.name == n.name);
     }, this.selectedModule, animated);
@@ -1735,9 +1753,7 @@ export default class Browser extends Morph {
       if (p) codeSnip += `packageName: "${p.name}"`;
     }
     if (c) {
-      const codeEntities = this.renderedCodeEntities();
-      const needsDeDup = codeEntities.filter(ea => ea.name === c.name).length > 1;
-      if (needsDeDup) { codeSnip += `, codeEntity: ${JSON.stringify(obj.select(c, ['name', 'type']))}`; } else { codeSnip += `, codeEntity: "${c.name}"`; }
+      codeSnip += `, codeEntity: ${obj.isArray(c) ? JSON.stringify(c.map(c => obj.select(c, ['name', 'type']))) : `"${c.name}"`}`;
     }
 
     if (sysI.name !== 'local') codeSnip += `, systemInterface: "${sysI.name}"`;
