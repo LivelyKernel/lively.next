@@ -813,12 +813,12 @@ export default class Browser extends Morph {
       if (m && p) {
         moduleName = m.id;
         await this.selectPackageNamed(p.url);
-        await this.selectModuleNamed(moduleName);
+        await this.selectModuleNamed(moduleName, false);
       }
     }
 
     if (codeEntity) {
-      await this.selectCodeEntity(codeEntity);
+      await this.selectCodeEntity(codeEntity, false);
     }
 
     if (textPosition) {
@@ -1215,7 +1215,7 @@ export default class Browser extends Morph {
     });
   }
 
-  async selectCodeEntity (spec) {
+  async selectCodeEntity (spec, animated = true) {
     if (typeof spec === 'string') spec = { name: spec };
     let def = this.findCodeEntity(spec);
     const parents = [this.selectedModule];
@@ -1225,7 +1225,7 @@ export default class Browser extends Morph {
     }
     await this.ui.columnView.setExpandedPath((n) => {
       return n.name == def.name || !!parents.find(p => p.type == n.type && p.name == n.name);
-    }, this.selectedModule);
+    }, this.selectedModule, animated);
     this.onListSelectionChange(this.ui.columnView.getExpandedPath());
     return def;
   }
@@ -1757,4 +1757,3 @@ export default class Browser extends Morph {
     ].filter(Boolean);
   }
 }
-
