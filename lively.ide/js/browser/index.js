@@ -248,7 +248,7 @@ export class PackageTreeData extends TreeData {
         fontColor: isSelected ? Color.white : COLORS.js,
         opacity: isLoaded ? 1 : 0.5
       }),
-      ' ' + mod, null
+      ' ' + string.truncate(mod, 26, '…'), null
     ];
   }
 
