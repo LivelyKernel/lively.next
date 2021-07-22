@@ -41,7 +41,7 @@ export function testsFromSource (sourceOrAst) {
   const testStack = []; const testsAndSuites = []; let parsed;
 
   try {
-    parsed = typeof sourceOrAst === 'string' ? parse(es5Transpilation(sourceOrAst)) : sourceOrAst;
+    parsed = typeof sourceOrAst === 'string' ? parse(sourceOrAst) : sourceOrAst;
   } catch (err) { return testsAndSuites; }
 
   walk.recursive(parsed, {}, {
@@ -312,24 +312,24 @@ export default class TestRunner extends HTMLMorph {
 
   findBrowserForFile (file) {
     const world = this.world();
-    const browsers = world.getWindows().filter(ea => ea.isBrowser);
+    const browsers = world.getWindows()
+      .map(win => win.targetMorph).filter(ea => ea.isBrowser);
     const browserWithFile = browsers.find(({ selectedModule }) =>
-      selectedModule && selectedModule.name === file);
-    return browserWithFile || world.execCommand('open browser');
+      selectedModule && selectedModule.url === file);
+    return browserWithFile || world.execCommand('open browser', null);
   }
 
   async jumpToTest (test, file) {
     try {
       const browser = await this.findBrowserForFile(file);
-      browser.activate();
+      browser.getWindow().activate();
       await browser.searchForModuleAndSelect(file);
-      let ed = browser.get('sourceEditor');
-      ed = ed.text || ed;
-
+      let ed = browser.ui.sourceEditor;
       const tests = testsFromSource(ed.textString);
       const target = tests.find(ea => ea.fullTitle === test.fullTitle);
       if (!target) throw new Error(`Cannot find test ${test.fullTitle} in file ${file}`);
 
+      // target = tests[1]
       ed.selection = ed.astNodeRange(target.node);
       ed.centerRow(ed.selection.start.row);
     } catch (err) { this.showError(err); }
@@ -524,7 +524,7 @@ export default class TestRunner extends HTMLMorph {
   async onClickFile (evt, file) {
     try {
       const browser = await this.findBrowserForFile(file);
-      browser.activate();
+      browser.getWindow().activate();
       await browser.searchForModuleAndSelect(file);
     } catch (err) { this.showError(err); }
   }

@@ -998,8 +998,13 @@ const commands = [
       if (relayed) return relayed;
 
       const { default: Browser } = await System.import('lively.ide/js/browser/index.js');
-      const loc = obj.select(args, ['packageName', 'moduleName', 'textPosition', 'codeEntity', 'systemInterface']);
-      const browser = await Browser.browse(loc, { extent: pt(700, 600) });
+      let browser;
+      if (args) {
+        const loc = obj.select(args, ['packageName', 'moduleName', 'textPosition', 'codeEntity', 'systemInterface']);
+        browser = await Browser.browse(loc, { extent: pt(700, 600) });
+      } else {
+        browser = await Browser.open();
+      }
       browser.getWindow().activate();
       return browser;
     }

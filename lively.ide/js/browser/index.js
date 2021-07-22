@@ -463,6 +463,12 @@ export default class Browser extends Morph {
     return browser.browse(browseSpec, optSystemInterface);
   }
 
+  static async open () {
+    const browser = await resource('part://SystemIDE/new system browser').read();
+    browser.openInWindow();
+    return browser;
+  }
+
   static get properties () {
     return {
       systemInterface: {
@@ -833,7 +839,7 @@ export default class Browser extends Morph {
       sourceEditor.scroll = scroll;
     }
 
-    await this.prepareCodeEditorForModule(this.selectedModule);
+    if (this.selectedModule) { await this.prepareCodeEditorForModule(this.selectedModule); }
 
     return this;
   }
@@ -941,18 +947,18 @@ export default class Browser extends Morph {
   async searchForModuleAndSelect (moduleURI) {
     // moduleURI = System.decanonicalize("lively.vm")
     // var x= await (that.getWindow().searchForModuleAndSelect(System.decanonicalize("lively.vm")));
-
     const { selectedModule, selectedPackage } = this;
     if (selectedModule && selectedModule.url === moduleURI) { return selectedModule; }
 
     const system = this.systemInterface;
     const mods = await system.getModules();
-    const m = mods.find(({ url }) => url === moduleURI);
-    const p = m && await system.getPackageForModule(m.url);
+    const m = mods.find(({ name }) => name === moduleURI);
+    const p = m && await system.getPackageForModule(m.name);
 
     if (!p) return null;
     await this.selectPackageNamed(p.address);
-    await this.selectModuleNamed(m.url);
+    await this.selectModuleNamed(m.name);
+    await this.prepareCodeEditorForModule(this.selectedModule);
     return this.selectedModule;
   }
 
