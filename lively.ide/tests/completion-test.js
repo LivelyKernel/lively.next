@@ -2,9 +2,10 @@
 import { promise } from 'lively.lang';
 import { Text } from 'lively.morphic';
 import { pt } from 'lively.graphics';
-import { CompletionController, WordCompleter } from '../../text/completion.js';
-import { DynamicJavaScriptCompleter } from '../../js/completers.js';
+import { CompletionController, WordCompleter } from '../text/completion.js';
+import { DynamicJavaScriptCompleter } from '../js/completers.js';
 import { expect } from 'mocha-es6';
+import { joinPath } from 'lively.lang/string.js';
 
 let describeInBrowser = System.get('@system-env').browser
   ? describe
@@ -37,8 +38,10 @@ describeInBrowser('completion controller', () => {
 });
 
 describeInBrowser('completion widget', () => {
-  beforeEach(() =>
-    text = new Text({ textString: 'abc\nafg\n', extent: pt(400, 300) }).openInWorld());
+  beforeEach(() => {
+    text = new Text({ textString: 'abc\nafg\n', extent: pt(400, 300), editorModeName: joinPath(System.baseURL, 'lively.ide/editor-plugin.js') }).openInWorld();
+  });
+
   afterEach(async () => {
     await promise.delay(30);
     let complMenu = text.world().get('text completion menu');
@@ -47,13 +50,15 @@ describeInBrowser('completion widget', () => {
   });
 
   it('opens it', async () => {
+    await text.whenRendered();
+    text.cursorPosition = text.documentEndPosition;
     await text.simulateKeys('Alt-Space');
-    await promise.delay(0);
-    let menu = text.world().get('text completion menu');
-    expect(menu.get('list').items.map(({ value: { completion } }) => completion).slice(0, 2)).deep.equals(['abc', 'afg']);
+    let menu = await promise.waitFor(1000, () => text.world().get('text completion menu'));
+    expect(menu.get('list').items.map(({ value: { completion } }) => completion).slice(0, 2)).deep.equals(['afg', 'abc']);
   });
 
   it('is correct aligned', async () => {
+    await text.whenRendered();
     text.cursorDown(2);
     text.insertText('a');
     await text.simulateKeys('Alt-Space');
