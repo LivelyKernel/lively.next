@@ -1,6 +1,6 @@
 // FIXME proper dependency to lively.ast
 
-import { query, fuzzyParse, acorn, custom } from 'lively.ast';
+import { query, fuzzyParse, acorn, custom, walk } from 'lively.ast';
 
 export default class JavaScriptNavigator {
   ensureAST (ed) { return this.parse(ed.textString); }
@@ -61,7 +61,7 @@ export default class JavaScriptNavigator {
 
   _forwardDownSexp (src, pos) {
     const ast = this.parse(src);
-    const found = custom.findNodeAfter(ast, pos, function (type, node) { return node.start > pos; });
+    const found = walk.findNodeAfter(ast, pos, function (type, node) { return node.start > pos; });
     return found ? found.node.start : pos;
   }
 
@@ -187,3 +187,4 @@ export default class JavaScriptNavigator {
     return expandState.prev || expandState;
   }
 }
+

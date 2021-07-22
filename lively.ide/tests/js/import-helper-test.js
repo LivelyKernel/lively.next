@@ -2,7 +2,7 @@
 import { expect } from 'mocha-es6';
 import { Text, inspect } from 'lively.morphic';
 import { cleanupUnusedImports, interactivelyInjectImportIntoText } from 'lively.ide/js/import-helper.js';
-import { JavaScriptEditorPlugin } from 'lively.ide/js/editor-plugin.js';
+import JavaScriptEditorPlugin from 'lively.ide/js/editor-plugin.js';
 
 function listItem (item) {
   // make sure that object is of the form
