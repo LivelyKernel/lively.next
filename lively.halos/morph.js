@@ -839,7 +839,7 @@ class NameHolder extends Morph {
     if (!this.forceUniqueName || this.validName) {
       this.target.name = newName;
       signal(this, 'active', [false, this]);
-      if (CommentBrowser.isOpen()) CommentBrowser.updateName(this.target);
+      if (CommentBrowser.instance) CommentBrowser.updateName(this.target);
     }
   }
 }
