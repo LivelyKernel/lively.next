@@ -75,10 +75,11 @@ export class Renderer {
   }
 
   ensureDefaultCSS () {
+    const fm = this.worldMorph.env.fontMetric;
     return promise.waitFor(3000, () => this.domNode.getRootNode())
       .then(doc => Promise.all([
         addOrChangeCSSDeclaration('lively-morphic-css', defaultCSS, doc),
-        addOrChangeLinkedCSS('lively-ibm-plex', config.css.ibmPlex), // those are many files, is there a smaller one?
+        promise.waitFor(1000, () => fm.isFontSupported('IBM Plex Sans'), false).then((isSupported) => !isSupported && addOrChangeLinkedCSS('lively-ibm-plex', config.css.ibmPlex)), // those are many files, is there a smaller one?
         addOrChangeLinkedCSS('lively-font-awesome', config.css.fontAwesome, doc, false),
         addOrChangeLinkedCSS('lively-font-inconsolata', config.css.inconsolata, doc, false)]));
   }
