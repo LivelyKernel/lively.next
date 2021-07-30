@@ -29,9 +29,11 @@ export function canBePromotedToCompositionLayer (morph) {
 
 export function addTransform (morph, style) {
   const { position, origin, scale, rotation, flipped, tilted, perspective, owner } = morph;
-  const x = Math.round(position.x - origin.x - (morph._skipWrapping && owner ? owner.borderWidthLeft : 0));
-  const y = Math.round(position.y - origin.y - (morph._skipWrapping && owner ? owner.borderWidthTop : 0));
+  let x = (position.x - origin.x - (morph._skipWrapping && owner ? owner.borderWidthLeft : 0));
+  let y = (position.y - origin.y - (morph._skipWrapping && owner ? owner.borderWidthTop : 0));
   const promoteToCompositionLayer = canBePromotedToCompositionLayer(morph);
+  x = morph.renderOnGPU ? x : Math.round(x);
+  y = morph.renderOnGPU ? y : Math.round(y);
   if (promoteToCompositionLayer) {
     style.willChange = 'transform';
   }

@@ -19,6 +19,12 @@ export default class Window extends Morph {
         }
       },
 
+      position: {
+        set (p) {
+          this.setProperty('position', p.roundTo(1));
+        }
+      },
+
       ui: {
         derived: true,
         get () {
@@ -350,37 +356,41 @@ export default class Window extends Morph {
   }
 
   relayoutResizer () {
-    const resizer = this.getSubmorphNamed('resizer');
-    const {
-      submorphs: [
-        rightResizer, bottomRightResizer, leftResizer,
-        bottomLeftResizer, bottomResizer, topResizer,
-        topLeftResizer, topRightResizer
-      ]
-    } = resizer;
-    const resizerInset = 10;
+    try {
+      const resizer = this.getSubmorphNamed('resizer');
+      const {
+        submorphs: [
+          rightResizer, bottomRightResizer, leftResizer,
+          bottomLeftResizer, bottomResizer, topResizer,
+          topLeftResizer, topRightResizer
+        ]
+      } = resizer;
+      const resizerInset = 10;
 
-    rightResizer.height = this.height - resizerInset;
-    rightResizer.bottomRight = this.extent.subXY(0, resizerInset);
+      rightResizer.height = this.height - resizerInset;
+      rightResizer.bottomRight = this.extent.subXY(0, resizerInset);
 
-    bottomRightResizer.bottomRight = this.extent;
+      bottomRightResizer.bottomRight = this.extent;
 
-    leftResizer.height = this.height - resizerInset;
-    leftResizer.bottomLeft = pt(0, this.height - resizerInset);
+      leftResizer.height = this.height - resizerInset;
+      leftResizer.bottomLeft = pt(0, this.height - resizerInset);
 
-    bottomLeftResizer.bottomLeft = pt(0, this.height);
+      bottomLeftResizer.bottomLeft = pt(0, this.height);
 
-    bottomResizer.width = this.width - 2 * resizerInset;
-    bottomResizer.bottomLeft = pt(resizerInset, this.height);
+      bottomResizer.width = this.width - 2 * resizerInset;
+      bottomResizer.bottomLeft = pt(resizerInset, this.height);
 
-    topResizer.width = this.width - 2 * resizerInset;
-    topResizer.bottomLeft = pt(resizerInset, resizerInset / 4);
+      topResizer.width = this.width - 2 * resizerInset;
+      topResizer.bottomLeft = pt(resizerInset, resizerInset / 4);
 
-    topLeftResizer.topLeft = pt(0, 0);
+      topLeftResizer.topLeft = pt(0, 0);
 
-    topRightResizer.topRight = pt(this.width, 0);
+      topRightResizer.topRight = pt(this.width, 0);
 
-    resizer.position = pt(0, 0);
+      resizer.position = pt(0, 0);
+    } catch (err) {
+
+    }
   }
 
   buildResizer () {
@@ -683,4 +693,3 @@ export default class Window extends Morph {
     ]);
   }
 }
-
