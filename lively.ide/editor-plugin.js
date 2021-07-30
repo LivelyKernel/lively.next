@@ -141,7 +141,7 @@ export default class EditorPlugin {
     if (!theme || !textMorph || !textMorph.document || !mode) return;
 
     textMorph.fill = theme.background;
-    textMorph.cursorColor = theme.cursorColor || Color.black;
+    textMorph.cursorColor = theme.cursorColor || textMorph.fontColor;
 
     let { firstVisibleRow, lastVisibleRow } = textMorph.viewState;
     let morphAttrs = {};
