@@ -7,6 +7,7 @@ import { Morph, World, config, InputLine } from 'lively.morphic';
 import ShellEditorPlugin from './editor-plugin.js';
 import DiffEditorPlugin from '../diff/editor-plugin.js';
 import EditorPlugin, { guessTextModeName } from '../editor-plugin.js';
+import { packagesOfSnapshot } from "lively.morphic/serialization.js";
 
 // var t = Terminal.runCommand("ls")
 // var t = Terminal.open()
@@ -286,7 +287,7 @@ export default class Terminal extends Morph {
             term.command.writeToStdin(opts.command + '\n');
           } else {
             term.clear();
-            term.command = term.runCommand(opts.command, obj.dissoc(opts, ['command']));
+            term.runCommand(opts.command, obj.dissoc(opts, ['command']));
           }
           return true;
         }
@@ -332,8 +333,41 @@ export default class Terminal extends Morph {
     }
   }
 
+  async diffModulesOfSnapshot (urlToSnapshot) {
+    // urlToSnapshot = 'lively.morphic/styleguides/SystemDialogs.json'
+    let cmd = this.shellPlugin.runCommand('git diff ' + urlToSnapshot);
+    await cmd.whenDone();
+    const [snapOld, snapNew] = cmd.stdout.split('\n').filter(m => m.length > 1000).map(json => JSON.parse(json.slice(1)));
+    if (snapOld && snapNew) {
+      const oldPackages = packagesOfSnapshot(snapOld);
+      const newPackages = packagesOfSnapshot(snapNew);
+      const differentFiles = [];
+      arr.zip(oldPackages, newPackages).forEach(([oldPackage, newPackage]) => {
+        if (oldPackage && newPackage) {
+          arr.zip(Object.entries(oldPackage.files), Object.entries(newPackage.files)).forEach(([[fileName, oldFile], [_, newFile]]) => {
+            if (oldFile != newFile) {
+              differentFiles.push([fileName, oldFile, newFile]);
+            }
+          });
+        }
+      });
+      differentFiles.forEach(([fName, a, b]) => {
+        this.world().execCommand('diff and open in window', {
+          a, b, title: fName
+        });
+      });
+    } else {
+      this.world().inform('No Changes!');
+    }
+  }
+
   runCommand (cmd, opts) {
     if (this.command && this.command.isRunning()) { throw new Error(`${this.command} still running`); }
+    if (cmd.includes('styleguides') && cmd.startsWith('git diff')) {
+      return this.diffModulesOfSnapshot(cmd.replace(/git diff\s*/, ''));
+    }
     return this.command = this.shellPlugin.runCommand(cmd, opts);
   }
 }
+
+
