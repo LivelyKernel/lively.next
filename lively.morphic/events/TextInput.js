@@ -284,9 +284,10 @@ export default class TextInput {
       const { textareaNode, rootNode } = this.domState || {};
       if (!textareaNode || !rootNode) return;
       const doc = textareaNode.getRootNode();
+      const focusNotStolen = !(this.world.focusedMorph && this.world.focusedMorph.stealFocus);
       if (
         (doc.activeElement === rootNode || this.world.isEmbedded && !doc.activeElement) &&
-        !(this.world.focusedMorph && this.world.focusedMorph.stealFocus) &&
+        focusNotStolen &&
         !touchInputDevice
       ) {
         textareaNode.focus();

@@ -117,7 +117,7 @@ export class MorphicEnv {
     this.eventDispatcher = new EventDispatcher(world.isEmbedded ? rootNode : this.domEnv.window, world).install(rootNode);
     world.resumeSteppingAll();
     if (this.isDefault()) this.domEnv.window.$world = world;
-    world.focus();
+    if (!world.stealFocus) world.focus();
     world.makeDirty();
     this.renderer.renderLater();
 

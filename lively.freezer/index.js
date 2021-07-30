@@ -1018,6 +1018,7 @@ class LivelyRollup {
                   let world = window.$world = window.$$world = new World({
                     name: snapshot.name, extent: pt(window.innerWidth, window.innerHeight)
                   });
+                  world.stealFocus = true;
                   MorphicEnv.default().setWorldRenderedOn(world, node, window.prerenderNode);
                 }
                 window.$world.dontRecordChangesWhile(() => {
