@@ -46,7 +46,7 @@ export function testsFromSource (sourceOrAst) {
 
   walk.recursive(parsed, {}, {
     CallExpression: (node, state, c) => {
-      if (node.callee.name && node.callee.name.match(/describe|it/) && node.arguments.length >= 2) {
+      if (node.callee.name && node.callee.name.match(/^(describe|it)$/) && node.arguments.length >= 2) {
         var spec = {
           title: node.arguments[0].value,
           type: node.callee.name.match(/describe/) ? 'suite' : 'test'
