@@ -471,36 +471,41 @@ export default class Halo extends Morph {
   // ui events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  temporaryEditTextMorph (evt) {
+    const prevReadOnly = this.target.readOnly;
+    this.target.readOnly = false;
+    this.target.focus();
+    this.target.cursorPosition = this.target.textPositionFromPoint(evt.positionIn(this.target));
+    const world = this.world();
+    const t = this.target;
+    const topBar = this.topBar;
+    const retarget = (evt) => {
+      if (topBar.stylingPalette &&
+                topBar.stylingPalette.fullContainsWorldPoint(world.firstHand.position)) {
+        t.whenRendered().then(() => {
+          once(t, 'onBlur', retarget);
+        });
+        once(t, 'onBlur', retarget);
+        return;
+      }
+      topBar.setEditMode('Halo', true);
+      t.readOnly = prevReadOnly;
+      t.collapseSelection();
+      topBar.showHaloFor(t);
+    };
+    this.target.whenRendered().then(() => {
+      once(t, 'onBlur', retarget);
+    });
+    topBar.setEditMode('Hand', true);
+    this.remove();
+  }
+
   onMouseDown (evt) {
     const target = evt.state.clickedOnMorph;
     if (!evt.isCommandKey() && target == this.borderBox) {
-      if (evt.state.clickCount == 2 && this.target.isText) {
-        const prevReadOnly = this.target.readOnly;
-        this.target.readOnly = false;
-        this.target.focus();
-        this.target.cursorPosition = this.target.textPositionFromPoint(evt.positionIn(this.target));
-        const world = this.world();
-        const t = this.target;
-        const topBar = this.topBar;
-        const retarget = (evt) => {
-          if (topBar.stylingPalette &&
-                topBar.stylingPalette.fullContainsWorldPoint(world.firstHand.position)) {
-            t.whenRendered().then(() => {
-              once(t, 'onBlur', retarget);
-            });
-            once(t, 'onBlur', retarget);
-            return;
-          }
-          topBar.setEditMode('Halo', true);
-          t.readOnly = prevReadOnly;
-          t.collapseSelection();
-          topBar.showHaloFor(t);
-        };
-        this.target.whenRendered().then(() => {
-          once(t, 'onBlur', retarget);
-        });
-        topBar.setEditMode('Hand', true);
-        this.remove();
+      if (evt.state.clickCount == 2 &&
+          this.target.isText) {
+        this.temporaryEditTextMorph(evt);
         return;
       }
       return promise.delay(200).then(() => {
