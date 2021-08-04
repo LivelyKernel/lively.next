@@ -214,6 +214,12 @@ export class PackageTreeData extends TreeData {
           paddingRight: '2px'
         });
         break;
+      case 'class-instance-getter':
+        icon = ['get ', null];
+        break;
+      case 'class-instance-setter':
+        icon = ['set ', null];
+        break;
     }
     return [...icon, ' ' + string.truncate(decl.name || '[PARSE_ERROR]', 19, '…'), null];
   }
@@ -1271,6 +1277,7 @@ export default class Browser extends Morph {
     const modNode = columnView.getExpandedPath().find(node => this.isModule(node));
     modNode.subNodes = null;
     await columnView.treeData.collapse(modNode, false);
+    await columnView.refresh(false);
   }
 
   updateTestUI (mod) {
