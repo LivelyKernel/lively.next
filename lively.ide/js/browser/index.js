@@ -669,6 +669,7 @@ export default class Browser extends Morph {
     if (ed.textString != source) {
       ed.textString = source;
     }
+    source = source.split(objectReplacementChar).join('');
     this.state.sourceHash = string.hashCode(source);
     this.indicateNoUnsavedChanges();
     this.state.moduleChangeWarning = null;
@@ -1786,3 +1787,4 @@ export default class Browser extends Morph {
     ].filter(Boolean);
   }
 }
+
