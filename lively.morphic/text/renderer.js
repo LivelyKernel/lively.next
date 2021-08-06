@@ -2,6 +2,7 @@
 import { obj, arr, num } from 'lively.lang';
 import { pt, Rectangle } from 'lively.graphics';
 import vdom from 'virtual-dom';
+import { splitTextAndAttributesIntoLines } from './attributes.js';
 import { defaultAttributes, defaultStyle } from '../rendering/morphic-default.js';
 import { addOrChangeCSSDeclaration } from '../rendering/dom-helper.js';
 import { hyperscriptFnForDocument } from '../rendering/dom-helper.js';
@@ -317,6 +318,10 @@ export default class TextRenderer {
     this.domEnv = env.domEnv;
   }
 
+  /**
+   * Used for exporting lines to HTML.
+   * @param {Text} morph - The TextMorph to be rendered.
+   */
   directRenderLineFn (morph) {
     let fn = morph.viewState._renderLineFn;
     if (!fn) {
@@ -326,6 +331,10 @@ export default class TextRenderer {
     return fn;
   }
 
+  /**
+   * Used for exporting entire text.
+   * @param {Text} morph - The TextMorph to be rendered.
+   */
   directRenderTextLayerFn (morph) {
     let fn = morph.viewState._renderTextLayerFn;
     if (!fn) {
@@ -336,53 +345,82 @@ export default class TextRenderer {
     return fn;
   }
 
+  /**
+   * @param {Text} morph - The TextMorph to be rendered.
+   * @param {Renderer} renderer - The renderer attached to the current world.
+   */
   renderMorph (morph, renderer) {
-    const cursorWidth = morph.cursorWidth || 1;
-    let selectionLayer = [];
+    if (!morph.selectable && morph.readOnly) return this.renderMorphFast(morph, renderer);
+    return this.renderInteractiveText(morph, renderer);
+  }
 
-    const sel = morph.selection;
-    if (morph.inMultiSelectMode()) {
-      const sels = sel.selections; let i = 0;
-      for (; i < sels.length - 1; i++) { selectionLayer.push(...this.renderSelectionLayer(morph, sels[i], true/* diminished */, 2)); }
-      selectionLayer.push(...this.renderSelectionLayer(morph, sels[i], false/* diminished */, 4));
-    } else {
-      selectionLayer = this.renderSelectionLayer(morph, sel, false, cursorWidth);
-    }
-
-    const textLayer = this.renderTextLayer(morph, renderer);
-    const textLayerForFontMeasure = this.renderJustTextLayerNode(h, morph, null, []);
-    const markerLayer = this.renderMarkerLayer(morph, renderer);
-    const horizontalScrollBarVisible = morph.document.width > morph.width;
-    const scrollBarOffset = horizontalScrollBarVisible ? morph.scrollbarOffset : pt(0, 0);
-    const verticalPaddingOffset = morph.padding.top() + morph.padding.bottom();
-
-    const scrollLayer = h('div', {
-      className: 'scrollLayer',
-      style: {
-        position: 'absolute',
-        top: 0 + 'px',
-        ...morph.viewState.fastScroll ? { overflow: morph.scrollActive ? morph.clipMode : 'hidden' } : {},
-        width: morph.width + 'px',
-        height: morph.height + 'px'
-      }
-    }, [h('div', {
-      style: {
-        width: Math.max(morph.document.width, morph.width) + 'px',
-        height: Math.max(morph.document.height, morph.height) - scrollBarOffset.y + verticalPaddingOffset + 'px'
-      }
-    })]);
-
-    textLayer.properties.className += ' actual';
-    textLayer.properties.style.overflow = morph.clipMode === 'visible' ? 'visible' : 'hidden';
-    textLayerForFontMeasure.properties.className += ' font-measure';
-
+  /**
+   * For TextMorphs that are read only, (fixed width and height ? maybe not really), selections disabled and no markers set, we
+   * can render the morph without involving the document index.
+   * @param {Text} morph - The TextMorph to be rendered.
+   */
+  renderMorphFast (morph, renderer) {
+    const textLayer = this.renderJustTextLayerNode(h, morph, null, this.renderAllLines(h, renderer, morph));
     const { embeddedMorphMap } = morph;
     const submorphsNotInText = embeddedMorphMap
       ? morph.submorphs.filter(ea => !embeddedMorphMap.has(ea))
       : morph.submorphs;
 
+    textLayer.properties.style.position = 'static';
+    textLayer.properties.className += ' actual';
+    textLayer.properties.style.overflow = morph.clipMode === 'visible' ? 'visible' : 'hidden';
+    this.ensureLayoutUpdateHook(morph, textLayer);
+
     const subNodes = [
-      ...selectionLayer, markerLayer,
+      textLayer,
+      renderer.renderSelectedSubmorphs(morph, submorphsNotInText)
+    ];
+
+    const style = defaultStyle(morph);
+
+    if (!morph.fixedHeight) delete style.height;
+    if (!morph.fixedWidth) delete style.width;
+
+    nextTick(() => {
+      // trigger after render completed
+      this.manuallyTriggerTextRenderHook(morph, renderer);
+    });
+
+    return h('div', {
+      ...defaultAttributes(morph, renderer),
+      style: {
+        ...style,
+
+        '-moz-user-select': 'none',
+        cursor: morph.nativeCursor === 'auto'
+          ? (morph.readOnly ? 'default' : 'text')
+          : morph.nativeCursor
+      }
+    }, subNodes);
+  }
+
+  /**
+   * Default rendering procedure for TextMorphs, supporting rich text editing capabilities.
+   * @param {Text} morph - The TextMorph to be rendered.
+   */
+  renderInteractiveText (morph, renderer) {
+    const selectionLayer = this.renderSelectionLayer(morph);
+    const textLayer = this.renderTextLayer(morph, renderer);
+    const textLayerForFontMeasure = this.renderJustTextLayerNode(h, morph, null, []);
+    const markerLayer = this.renderMarkerLayer(morph, renderer);
+    const scrollLayer = this.renderScrollLayer(morph);
+    const { embeddedMorphMap } = morph;
+    const submorphsNotInText = embeddedMorphMap
+      ? morph.submorphs.filter(ea => !embeddedMorphMap.has(ea))
+      : morph.submorphs;
+
+    textLayer.properties.className += ' actual';
+    textLayer.properties.style.overflow = morph.clipMode === 'visible' ? 'visible' : 'hidden';
+    textLayerForFontMeasure.properties.className += ' font-measure';
+
+    const subNodes = [
+      ...selectionLayer,
+      markerLayer,
       textLayerForFontMeasure,
       textLayer,
       renderer.renderSelectedSubmorphs(morph, submorphsNotInText)
@@ -416,34 +454,97 @@ export default class TextRenderer {
     );
   }
 
-  renderTextLayer (morph, renderer) {
-    // this method renders the text content = lines
+  /**
+   * When the TextMorph is set up to be interactive we decouple scrolling of the text
+   * via a separate scroll layer that captures the scroll events from the user.
+   * @param {Text} morph - The TextMorph to be rendered.
+   */
+  renderScrollLayer (morph) {
+    const horizontalScrollBarVisible = morph.document.width > morph.width;
+    const scrollBarOffset = horizontalScrollBarVisible ? morph.scrollbarOffset : pt(0, 0);
+    const verticalPaddingOffset = morph.padding.top() + morph.padding.bottom();
+    return h('div', {
+      className: 'scrollLayer',
+      style: {
+        position: 'absolute',
+        top: 0 + 'px',
+        ...morph.viewState.fastScroll ? { overflow: morph.scrollActive ? morph.clipMode : 'hidden' } : {},
+        width: morph.width + 'px',
+        height: morph.height + 'px'
+      }
+    }, [h('div', {
+      style: {
+        width: Math.max(morph.document.width, morph.width) + 'px',
+        height: Math.max(morph.document.height, morph.height) - scrollBarOffset.y + verticalPaddingOffset + 'px'
+      }
+    })]);
+  }
 
-    const children = morph.debug
+  /**
+   * When the TextMorph is set up to support selections we render our custom
+   * selection layer instead of the HTML one which we can not control.
+   * @param {Text} morph - The TextMorph to be rendered.
+   */
+  renderSelectionLayer (morph) {
+    const cursorWidth = morph.cursorWidth || 1;
+    const sel = morph.selection;
+    if (morph.inMultiSelectMode()) {
+      const selectionLayer = [];
+      const sels = sel.selections; let i = 0;
+      for (; i < sels.length - 1; i++) { selectionLayer.push(...this.renderSelectionPart(morph, sels[i], true/* diminished */, 2)); }
+      selectionLayer.push(...this.renderSelectionPart(morph, sels[i], false/* diminished */, 4));
+      return selectionLayer;
+    } else {
+      return this.renderSelectionPart(morph, sel, false, cursorWidth);
+    }
+  }
+
+  /**
+   * Renders the text content of a TextMorph to lines.
+   * @param {Text} morph - The TextMorph to be rendered.
+   * @param {Renderer} renderer - The renderer attached to the current world.
+   */
+  renderTextLayer (morph, renderer) {
+    const renderedLines = morph.debug
       ? [
           ...this.renderDebugLayer(morph),
-          ...this.renderLines(h, renderer, morph)
+          ...this.renderVisibleLines(h, renderer, morph)
         ]
-      : this.renderLines(h, renderer, morph);
+      : this.renderVisibleLines(h, renderer, morph);
+    const node = this.renderJustTextLayerNode(h, morph, null, renderedLines);
 
-    const node = this.renderJustTextLayerNode(h, morph, null, children);
     node.properties.style.position = 'absolute';
+    this.ensureLayoutUpdateHook(morph, node);
 
-    // install hook so we can update text layout from real DOM once it is rendered
-    const hook = morph.viewState.afterTextRenderHook ||
-            (morph.viewState.afterTextRenderHook = new AfterTextRenderHook());
-    hook.reset(morph);
-    node.properties['after-text-render-hook'] = hook;
     nextTick(() => {
-      // The hook only gets called on prop changes of textlayer node. We
-      // actually want to always trigger in order to update the lines, so run
-      // delayed
+      // trigger after render completed
       this.manuallyTriggerTextRenderHook(morph, renderer);
     });
 
     return node;
   }
 
+  /**
+   * Since we are rendering via VDOM we install a hook here that is invoked
+   * once the actual DOM is updated so that we can measure text bounds and
+   * update the text layout accordingly.
+   * @param {Text} morph - The TextMorph to be rendered.
+   * @param {VNode} node - The update virtual dom node that is to be rendered.
+   */
+  ensureLayoutUpdateHook (morph, node) {
+    const hook = morph.viewState.afterTextRenderHook ||
+            (morph.viewState.afterTextRenderHook = new AfterTextRenderHook());
+    hook.reset(morph);
+    node.properties['after-text-render-hook'] = hook;
+  }
+
+  /**
+   * The hook only gets called on prop changes of the textlayer node. We
+   * actually want to always trigger in order to update the lines.
+   * This function allows to force the hook's execution.
+   * @param {Text} morph - The TextMorph to be rendered.
+   * @param {Renderer} renderer - The renderer attached to the current world.
+   */
   manuallyTriggerTextRenderHook (morph, renderer) {
     const hook = morph.viewState.afterTextRenderHook;
     if (!hook || hook.called) return;
@@ -453,9 +554,16 @@ export default class TextRenderer {
     if (morph.ownerChain().every(m => m.visible)) { morph.fit(); }
   }
 
+  /**
+   * The lines of a TextMorph are wrapped inside a text layer node, that defines
+   * the "global" font styles via css (that apply to each character if its not overridden).
+   * This function just renders that text layer node and wraps the lines.
+   * @param {Function} h - VDom render function.
+   * @param {Text} morph - The TextMorph to be rendered.
+   * @param {Object} additionalStyle - Allows to override clipMode, height or width.
+   * @param {Line[]} children - The lines to be wrapped in the text layer.
+   */
   renderJustTextLayerNode (h, morph, additionalStyle, children) {
-    // this method renders the text content = lines
-
     const {
       height,
       padding: { x: padLeft, y: padTop, width: padWidth, height: padHeight },
@@ -476,16 +584,13 @@ export default class TextRenderer {
       document: doc,
       tabWidth
     } = morph;
+    const style = { overflow: 'hidden' };
     const padRight = padLeft + padWidth;
     const padBottom = padTop + padHeight;
     const textHeight = Math.max(morph.document.height, morph.height);
     let textLayerClasses = 'newtext-text-layer';
 
-    // assemble attributes of node
-
-    // start with lineWrapping
-
-    switch (lineWrapping) {
+    switch (fixedWidth && lineWrapping) {
       case true:
       case 'by-words': textLayerClasses = textLayerClasses + ' wrap-by-words'; break;
       case 'only-by-words': textLayerClasses = textLayerClasses + ' only-wrap-by-words'; break;
@@ -496,8 +601,7 @@ export default class TextRenderer {
     if (!fixedWidth) textLayerClasses = textLayerClasses + ' auto-width';
     if (!fixedHeight) textLayerClasses = textLayerClasses + ' auto-height';
 
-    // ...and now other attribues
-    const style = {};
+    const textAttrs = { className: textLayerClasses, style };
     if (fixedHeight) style.height = textHeight + 'px';
     if (padLeft > 0) style.paddingLeft = padLeft + 'px';
     if (padRight > 0) style.paddingRight = padRight + 'px';
@@ -516,10 +620,6 @@ export default class TextRenderer {
     if (backgroundColor) style.backgroundColor = backgroundColor;
     if (tabWidth !== 8) style.tabSize = tabWidth;
 
-    const textAttrs = { className: textLayerClasses, style };
-
-    style.overflow = 'hidden';
-
     if (additionalStyle) {
       const { clipMode, height, width } = additionalStyle;
       if (typeof width === 'number') { style.width = width + 'px'; }
@@ -530,7 +630,63 @@ export default class TextRenderer {
     return h('div', textAttrs, children);
   }
 
-  renderLines (h, renderer, morph) {
+  /**
+   * Render all entire set of lines of a morph, handing over the rendering to the DOM entirely.
+   * This approach only works for smaller amount of text and TextMorphs that have interactive rich
+   * text editing disabled.
+   * @param {Function} h - VDom/Direct- render function. Non-virtual-dom function is provided by the font metric.
+   * @param {Renderer} renderer - The renderer attached to the current world.
+   * @param {Text} morph - The TextMorph to be rendered.
+   */
+  renderAllLines (h, renderer, morph) {
+    const {
+      height,
+      scroll,
+      padding: { x: padLeft, y: padTop, width: padWidth, height: padHeight },
+      clipMode,
+      textAndAttributes
+    } = morph;
+    const node = renderer.getNodeForMorph(morph);
+    const padRight = padLeft + padWidth;
+    const padBottom = padTop + padHeight;
+    const scrollTop = scroll.y;
+    const scrollHeight = height;
+    const clipsContent = clipMode !== 'visible';
+    const lines = morph.document.lines;
+    const firstVisibleRow = 0;
+    const lastVisibleRow = lines.length;
+
+    // render lines via virtual-dom
+    const visibleLines = [];
+    const renderedLines = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      visibleLines.push(lines[i]);
+      const newLine = this.renderLine(h, renderer, morph, lines[i]);
+      renderedLines.push(newLine);
+      newLine.key = i;
+    }
+
+    // not really needed?
+    Object.assign(morph.viewState, {
+      scrollTop,
+      scrollHeight,
+      scrollBottom: scrollTop + scrollHeight,
+      firstVisibleRow,
+      lastVisibleRow,
+      visibleLines
+    });
+
+    return renderedLines;
+  }
+
+  /**
+   * Render all visible lines of a TextMorph (The ones that are scrolled into view).
+   * @param {Function} h - VDom/Direct- render function. Non-virtual-dom function is provided by the font metric.
+   * @param {Renderer} renderer - The renderer attached to the current world.
+   * @param {Text} morph - The TextMorph to be rendered.
+   */
+  renderVisibleLines (h, renderer, morph) {
     const {
       height,
       scroll,
@@ -545,26 +701,26 @@ export default class TextRenderer {
     const scrollHeight = height;
     const lastLineNo = doc.rowCount - 1;
     const textHeight = doc.height;
-    const clips = clipMode !== 'visible';
+    const clipsContent = clipMode !== 'visible';
 
     const {
       line: startLine,
       offset: startOffset,
       y: heightBefore,
       row: startRow
-    } = doc.findLineByVerticalOffset(clips ? Math.max(0, clips ? scrollTop - padTop : 0) : 0) ||
+    } = doc.findLineByVerticalOffset(clipsContent ? Math.max(0, clipsContent ? scrollTop - padTop : 0) : 0) ||
      { row: 0, y: 0, offset: 0, line: doc.getLine(0) };
 
     const {
       line: endLine,
       offset: endLineOffset,
       row: endRow
-    } = doc.findLineByVerticalOffset(clips ? Math.min(textHeight, (scrollTop - padTop) + scrollHeight) : textHeight) ||
+    } = doc.findLineByVerticalOffset(clipsContent ? Math.min(textHeight, (scrollTop - padTop) + scrollHeight) : textHeight) ||
      { row: lastLineNo, offset: 0, y: 0, line: doc.getLine(lastLineNo) };
 
-    const firstVisibleRow = clips ? startRow : 0;
+    const firstVisibleRow = clipsContent ? startRow : 0;
     const firstFullyVisibleRow = startOffset === 0 ? startRow : startRow + 1;
-    const lastVisibleRow = clips ? endRow + 1 : lastLineNo;
+    const lastVisibleRow = clipsContent ? endRow + 1 : lastLineNo;
     const lastFullyVisibleRow = !endLine || endLineOffset === endLine.height ? endRow : endRow - 1;
 
     // render lines via virtual-dom
@@ -606,10 +762,14 @@ export default class TextRenderer {
     return renderedLines;
   }
 
+  /**
+   * Render a single line of the TextMorph.
+   * @param {Function} h - VDom/Direct- render function. Non-virtual-dom function is provided by the font metric.
+   * @param {Renderer} renderer - The renderer attached to the current world.
+   * @param {Text} morph - The TextMorph to be rendered.
+   * @param {Line} line - The line to be rendered.
+   */
   renderLine (h, renderer, morph, line) {
-    // Note: this function is being used in the font metric as well, with a
-    // non-virtual-dom "h" function
-
     const { textAndAttributes } = line;
     const renderedChunks = [];
     const size = textAndAttributes.length;
@@ -715,11 +875,17 @@ export default class TextRenderer {
     return node;
   }
 
+  /**
+   * Render the morphs that are embedded within the rich text and flow with the text layout.
+   * @param {Function} h - VDom/Direct- render function. Non-virtual-dom function is provided by the font metric.
+   * @param {Renderer} renderer - The renderer attached to the current world.
+   * @param {Text} morph - The TextMorph to be rendered.
+   * @param {Object} attr - Custom attributes that adjust how the embedded morph is to be placed.
+   */
   renderEmbeddedSubmorph (h, renderer, morph, attr) {
-    let rendered;
     attr = attr || {};
     if (renderer) {
-      rendered = renderer.render(morph);
+      const rendered = renderer.render(morph);
       rendered.properties.style.position = 'relative';
       rendered.properties.style.transform = '';
       rendered.properties.style.textAlign = 'initial';
@@ -736,7 +902,15 @@ export default class TextRenderer {
     return h('div', { className: styleClasses.join(' '), style: { width, height } }, []);
   }
 
-  renderSelectionLayer (morph, selection, diminished = false, cursorWidth = 2) {
+  /**
+   * Since we can not control the selection of HTML DOM-Nodes we wing it ourselves.
+   * Here we render a custom DOM representation of the current selection within the TextMorph.
+   * @param {Text} morph - The TextMorph to be rendered.
+   * @param {Selection} selection - The selection to be rendered.
+   * @param {Boolean} diminished - Wether or not to render the cursor diminished.
+   * @param {Integer} cursroWidth - The width of the cursor.
+   */
+  renderSelectionPart (morph, selection, diminished = false, cursorWidth = 2) {
     if (!selection) return [];
 
     const { textLayout } = morph;
@@ -771,6 +945,7 @@ export default class TextRenderer {
       renderedSelectionPart,
       cb, line, isWrapped;
 
+    // extract the slices the selection is comprised of
     while (row <= selection.end.row) {
       line = document.getLine(row);
 
@@ -844,6 +1019,14 @@ export default class TextRenderer {
     return renderedSelection;
   }
 
+  /**
+   * Renders the slices as specified in renderSelectionLayer to SVG, utilizing a rounded corner
+   * selection style that is stolen from MS Studio Code.
+   * @param {Rectangle[]} slice - The slices to render.
+   * @param {Color} selectionColor - The color of the rendered selection.
+   * @param {Text} morph - The TextMorph to be rendered.
+   * @return {VNode[]} Collection of rendered slices as svg.
+   */
   selectionLayerRounded (slices, selectionColor, morph) {
     // split up the rectangle corners into a left and right batches
     let currentBatch;
@@ -920,6 +1103,16 @@ export default class TextRenderer {
     return svgs;
   }
 
+  /**
+   * Renders the TextMorph's text cursor.
+   * @param {Point} pos - The slices to render.
+   * @param {Number} height - The slices to render.
+   * @param {Boolean} visible - Wether or not to display the cursor.
+   * @param {Boolean} diminished - Wether or not to render the cursor diminished.
+   * @param {Number} width - The width of the cursor in pixels.
+   * @param {Color} color - The color of the cursor.
+   * @return {VNode} A virtual dom node representing the cursor.
+   */
   cursor (pos, height, visible, diminished, width, color) {
     return h('div', {
       className: 'newtext-cursor' + (diminished ? ' diminished' : ''),
@@ -934,9 +1127,11 @@ export default class TextRenderer {
     }/*, "\u00a0" */);
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // markers
-
+  /**
+   * Renders the layer comprising all the markers of the TextMorph.
+   * @param {Text} morph - The TextMorph owning the markers.
+   * @return {VNode} A virtual dom node representing the marker layer.
+   */
   renderMarkerLayer (morph) {
     const {
       markers,
@@ -954,28 +1149,37 @@ export default class TextRenderer {
 
       // single line
       if (start.row === end.row) {
-        parts.push(this.renderMarkerPart(textLayout, morph, start, end, style));
+        parts.push(this.renderMarkerPart(morph, start, end, style));
         continue;
       }
 
       // multiple lines
       // first line
-      parts.push(this.renderMarkerPart(textLayout, morph, start, morph.lineRange(start.row).end, style));
+      parts.push(this.renderMarkerPart(morph, start, morph.lineRange(start.row).end, style));
       // lines in the middle
       for (let row = start.row + 1; row <= end.row - 1; row++) {
         const { start: lineStart, end: lineEnd } = morph.lineRange(row);
-        parts.push(this.renderMarkerPart(textLayout, morph, lineStart, lineEnd, style, true));
+        parts.push(this.renderMarkerPart(morph, lineStart, lineEnd, style, true));
       }
       // last line
-      parts.push(this.renderMarkerPart(textLayout, morph, { row: end.row, column: 0 }, end, style));
+      parts.push(this.renderMarkerPart(morph, { row: end.row, column: 0 }, end, style));
     }
 
     return parts;
   }
 
-  renderMarkerPart (textLayouter, morph, start, end, style, entireLine = false) {
+  /**
+   * Renders a slice of a single/multiline marker.
+   * @param {Text} morph - The text morph owning the markers.
+   * @param {TextPosition} start - The position in the text where the marker starts.
+   * @param {TextPosition} end - The position in the text where the marker ends.
+   * @param {CSSStyle} style - Custom styles for the marker to override the defaults.
+   * @param {Boolean} entireLine - Flag to indicate wether or not the marker part covers the entire line.
+   * @return {VNode} A virtual dom node representing the respective part of the marker.
+   */
+  renderMarkerPart (morph, start, end, style, entireLine = false) {
     let startX = 0; let endX = 0; let y = 0; let height = 0;
-    const { document: doc } = morph;
+    const { document: doc, textLayout } = morph;
     const line = doc.getLine(start.row);
     if (entireLine) {
       const { padding } = morph;
@@ -984,8 +1188,8 @@ export default class TextRenderer {
       endX = startX + line.width;
       height = line.height;
     } else {
-      ({ x: startX, y } = textLayouter.boundsFor(morph, start));
-      ({ x: endX, height } = textLayouter.boundsFor(morph, end));
+      ({ x: startX, y } = textLayout.boundsFor(morph, start));
+      ({ x: endX, height } = textLayout.boundsFor(morph, end));
     }
     height = Math.ceil(height);
     return h('div.newtext-marker-layer', {
@@ -999,9 +1203,12 @@ export default class TextRenderer {
     });
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // debug layer
-
+  /**
+   * Renders the debug layer of a TextMorph, which visualizes the bounds computed
+   * by the text layout.
+   * @param {Text} morph - The text morph to visualize the text layout for.
+   * @return {VNode} A virtual dom node representing the debug layer.
+   */
   renderDebugLayer (morph) {
     const vs = morph.viewState;
     const debugHighlights = [];

@@ -249,11 +249,12 @@ export class Text extends Morph {
       selectable: {
         group: 'selection',
         isStyleProp: true,
-        after: ['selection'],
         defaultValue: true,
         set (value) {
           this.setProperty('selectable', value);
-          if (!value) this.selection.collapse();
+          if (!value && this.getProperty('selection') && !this.selection.isEmpty()) {
+            this.selection.collapse();
+          }
         }
       },
 
@@ -301,11 +302,12 @@ export class Text extends Morph {
       cursorPosition: {
         group: 'selection',
         derived: true,
-        after: ['selection'],
+        after: ['selection', 'selectable', 'readOnly'],
         get () {
           return this.selection.lead;
         },
         set (p) {
+          if (this.readOnly || !this.selectable) return;
           this.selection.range = { start: p, end: p };
         }
       },
@@ -318,7 +320,7 @@ export class Text extends Morph {
       selection: {
         group: 'selection',
         derived: true,
-        after: ['document', 'anchors'],
+        after: ['document', 'anchors', 'selectable'],
         get () {
           let sel = this.getProperty('selection');
           if (sel) return sel;
@@ -327,14 +329,15 @@ export class Text extends Morph {
           return sel;
         },
         set (selOrRange) {
-          if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
-          if (!selOrRange) {
-            if (this.selection.isMultiSelection) {
-              this.selection.disableMultiSelect();
+          // if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
+          const currentSel = this.getProperty('selection');
+          if (!selOrRange && currentSel) {
+            if (currentSel.isMultiSelection) {
+              currentSel.disableMultiSelect();
             }
-            this.selection.collapse();
+            currentSel.collapse();
           } else if (selOrRange.isSelection) this.setProperty('selection', selOrRange);
-          else this.selection.range = selOrRange;
+          else if (currentSel) currentSel.range = selOrRange;
         }
       },
 
@@ -365,7 +368,7 @@ export class Text extends Morph {
         },
         set (value) {
           value = (value != null) ? String(value) : '';
-          if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
+          // if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
           this.deleteText({ start: { column: 0, row: 0 }, end: this.document.endPosition });
           this.insertText(value, { column: 0, row: 0 });
         }
@@ -401,7 +404,7 @@ export class Text extends Morph {
           return this.document.textAndAttributes;
         },
         set (textAndAttributes) {
-          if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
+          // if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
           this.replace(
             { start: { row: 0, column: 0 }, end: this.documentEndPosition },
             textAndAttributes
@@ -726,7 +729,7 @@ export class Text extends Morph {
     this.viewState = this.defaultViewState;
     this.markers = [];
     this.textRenderer = new Renderer(this.env);
-    this.textLayout = new TextLayout(this);
+    this.textLayout = new TextLayout(this); // delayed
     this.changeDocument(Document.fromString(''));
     this.ensureUndoManager();
     if (snapshot.cachedLineBounds) {
@@ -1600,8 +1603,10 @@ export class Text extends Morph {
           }
           // When auto multi select commands run, we replace the actual selection
           // with individual normal selections
-          if (this._multiSelection) this._multiSelection.updateFromAnchors();
-          else this.selection.updateFromAnchors();
+          if (this.selectable) {
+            if (this._multiSelection) this._multiSelection.updateFromAnchors();
+            else this.selection.updateFromAnchors();
+          }
         }
 
         this._updateEmbeddedMorphsDuringReplace(
