@@ -21,7 +21,7 @@ export class Selection {
     this.startAnchor = this.textMorph.addAnchor('selection-start-' + id);
     this.endAnchor = this.textMorph.addAnchor('selection-end-' + id);
 
-    this.range = Range.isValidLiteral(range) ? range : defaultRange;
+    this.range = range;
     this._cursorVisible = true;
     this.cursorBlinkProcess = null;
   }
@@ -42,7 +42,8 @@ export class Selection {
       if (endRowA < startRowB || (endRowA === startRowB && endColA < startColB)) { return 'separate'; }
       if (endRowA === startRowB && endColA === startColB) {
         return (startRowB === endRowB && startColB === endColB)
-          ? 'overlapping' : 'bordering';
+          ? 'overlapping'
+          : 'bordering';
       }
       return 'overlapping';
     }
@@ -65,7 +66,7 @@ export class Selection {
     return true;
   }
 
-  get range () { return this._range; }
+  get range () { return this._range || defaultRange; }
   set range (range) {
     if (!range) return;
     let { start, end } = range;
