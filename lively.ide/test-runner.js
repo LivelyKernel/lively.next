@@ -46,7 +46,7 @@ export function testsFromSource (sourceOrAst) {
 
   walk.recursive(parsed, {}, {
     CallExpression: (node, state, c) => {
-      if (node.callee.name && node.callee.name.match(/^(describe|it)$/) && node.arguments.length >= 2) {
+      if (node.callee.name && node.callee.name.match(/^(describe|it|describeInBrowser|xdescribe|xit)$/) && node.arguments.length >= 2) {
         var spec = {
           title: node.arguments[0].value,
           type: node.callee.name.match(/describe/) ? 'suite' : 'test'
@@ -327,7 +327,7 @@ export default class TestRunner extends HTMLMorph {
       let ed = browser.ui.sourceEditor;
       const tests = testsFromSource(ed.textString);
       const target = tests.find(ea => ea.fullTitle === test.fullTitle);
-      if (!target) throw new Error(`Cannot find test ${test.fullTitle} in file ${file}`);
+      if (!target) throw new Error(`Cannot find test ${test.title} in file ${file}`);
 
       // target = tests[1]
       ed.selection = ed.astNodeRange(target.node);
@@ -568,6 +568,10 @@ export default class TestRunner extends HTMLMorph {
               .join('\n'));
     }
 
+    let currentScrollY = 0;
+    let [currentSuites] = this.domNode.getElementsByClassName('suites');
+    if (currentSuites) currentScrollY = currentSuites.scrollTop;
+
     this.html = `
        <div class="mocha-test-runner">
        <div class="controls" ${this.showControls ? '' : 'style="display: none;"'}>
@@ -578,6 +582,9 @@ export default class TestRunner extends HTMLMorph {
        </div>
        <div class="suites">${renderedFiles.join('\n')}</div>
        <div>`;
+    await this.whenRendered();
+    ([currentSuites] = this.domNode.getElementsByClassName('suites'));
+    currentSuites.scrollTop = currentScrollY;
   }
 
   renderTest (test, testsAndSuites, file, collapsed) {
@@ -624,7 +631,7 @@ export default class TestRunner extends HTMLMorph {
     const parentCollapsed = collapsed.includes(file) || (relatedCollapsed || []).some(ea => ea.length < id.length);
     const collapseStart = !parentCollapsed && !!relatedCollapsed.length;
     const depthOffset = suite.depth * 10;
-    const title = suite.fullTitle;
+    const title = suite.title;
 
     return `<div class="row ${parentCollapsed ? 'collapsed' : ''} ${classes.join(' ')}">
               <span
