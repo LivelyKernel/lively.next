@@ -359,8 +359,8 @@ export default class EventDispatcher {
       case 'click':
         // Note, we currently don't subscribe to click DOM events, this is just a
         // convenience for event simulation
-        var { events: downEvents } = this.processDOMEvent({ ...domEvt, type: 'pointerdown' }, targetMorph);
-        var { events: upEvents } = this.processDOMEvent({ ...domEvt, type: 'pointerup' }, targetMorph);
+        var { events: downEvents } = this.processDOMEvent(new SimulatedDOMEvent({ ...domEvt, type: 'pointerdown' }), targetMorph);
+        var { events: upEvents } = this.processDOMEvent(new SimulatedDOMEvent({ ...domEvt, type: 'pointerup' }), targetMorph);
         events = downEvents.concat(upEvents);
         break;
 

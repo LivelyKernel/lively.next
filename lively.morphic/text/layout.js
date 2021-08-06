@@ -255,14 +255,14 @@ export default class TextLayout {
     let firstIndex = column; let lastIndex = column;
 
     for (var i = column + 1; i < charBounds.length; i++) {
-      if (charBounds[i].y > bounds.y + bounds.height) break;
+      if (charBounds[i].y + charBounds[i].height > bounds.y + bounds.height) break;
       lastIndex = i;
     }
     // For last range we go until end of line
     if (lastIndex === charBounds.length - 1) lastIndex++;
 
     for (var i = column - 1; i >= 0; i--) {
-      if (charBounds[i].y < bounds.y + bounds.height) break;
+      if (charBounds[i].y + charBounds[i].height < bounds.y + bounds.height) break;
       firstIndex = i;
     }
 
@@ -365,7 +365,8 @@ export default class TextLayout {
       ? charBoundsInSelection.slice(start.column)
       : charBoundsInSelection.slice(start.column, end.column + 1);
     const maxCol = start.column + (charBoundsInSelection
-      ? charBoundsInSelection.indexOf(arr.max(charBoundsInSelection, b => b.height)) : 0);
+      ? charBoundsInSelection.indexOf(arr.max(charBoundsInSelection, b => b.height))
+      : 0);
     return textLayout.boundsFor(morph, { row: start.row, column: maxCol });
   }
 
