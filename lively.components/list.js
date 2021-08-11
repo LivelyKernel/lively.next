@@ -1,8 +1,8 @@
-import { Morph, VerticalLayout, Text, StyleSheet, Label, Icon, morph, touchInputDevice } from "lively.morphic";
-import { pt, LinearGradient, Color, Rectangle, rect } from "lively.graphics";
-import { arr, Path, string } from "lively.lang";
-import { signal, once } from "lively.bindings";
-import { Button } from "./buttons.js";
+import { Morph, VerticalLayout, Text, StyleSheet, Label, Icon, morph, touchInputDevice } from 'lively.morphic';
+import { pt, LinearGradient, Color, Rectangle, rect } from 'lively.graphics';
+import { arr, Path, string } from 'lively.lang';
+import { signal, noUpdate, once } from 'lively.bindings';
+import { Button } from './buttons.js';
 import bowser from 'bowser';
 
 export function asItem (obj) {
@@ -884,11 +884,11 @@ export class FilterableList extends Morph {
       borderWidth: { defaultValue: 1 },
       updateSelectionsAfterFilter: { defaultValue: false },
 
-      layout: {
-        initialize() {
-          this.layout = new VerticalLayout({ renderViaCSS: true });
-        }
-      },
+      // layout: {
+      //   initialize () {
+      //     this.layout = new VerticalLayout({ renderViaCSS: true });
+      //   }
+      // },
 
       theme: {
         after: ['styleClasses', 'listMorph'],
@@ -1166,13 +1166,14 @@ export class FilterableList extends Morph {
 
   relayout () {
     const { listMorph, inputMorph, paddingMorph, borderWidth: offset } = this;
+    debugger;
     inputMorph.topLeft = pt(offset, offset);
     inputMorph.width = listMorph.width = this.width - 2 * offset;
     if (paddingMorph) {
       paddingMorph.topLeft = inputMorph.bottomLeft;
     }
     listMorph.position = paddingMorph ? paddingMorph.bottomLeft : inputMorph.bottomLeft;
-    listMorph.height = this.height - listMorph.top - offset;
+    listMorph.height = Math.floor(this.height - listMorph.top - offset);
   }
 
   focus () { this.get('input').focus(); }
@@ -1328,6 +1329,7 @@ export class FilterableList extends Morph {
     ]);
   }
 }
+
 
 export class DropDownList extends Button {
   // new DropDownList({selection: 1, items: [1,2,3,4]}).openInWorld()
