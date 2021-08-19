@@ -133,7 +133,7 @@ export class ObjectEditor extends Morph {
 
   reset () {
     // this.rebuild()
-    var l = this.layout = new GridLayout({
+    let l = this.layout = new GridLayout({
       renderViaCSS: true,
       grid: [
         ['objectCommands', 'objectCommands', 'objectCommands'],
@@ -324,15 +324,15 @@ export class ObjectEditor extends Morph {
           renderViaCSS: true,
           fitToCell: false,
           grid: [
-            [null, 'target controls', 'freezer controls'],
+            [null, 'target controls', 'freezer controls']
           ],
           columns: [1, { fixed: 100 }, 2, { align: 'rightCenter' }]
         }),
-        
+
         submorphs: [
           {
             ...wrapperStyle,
-            layout: new HorizontalLayout({ renderViaCSS: true, direction: "centered", spacing: 2, autoResize: false}),
+            layout: new HorizontalLayout({ renderViaCSS: true, direction: 'centered', spacing: 2, autoResize: false }),
             name: 'target controls',
             topCenter: pt(200, 0),
             submorphs: [
@@ -344,7 +344,7 @@ export class ObjectEditor extends Morph {
           {
             ...wrapperStyle,
             name: 'freezer controls',
-            layout: new HorizontalLayout({ renderViaCSS: true, direction: "rightToLeft", spacing: 2, autoResize: false}),
+            layout: new HorizontalLayout({ renderViaCSS: true, direction: 'rightToLeft', spacing: 2, autoResize: false }),
             right: 400,
             submorphs: [
               { ...topBtnStyle, name: 'showFrozenPartsButton', label: Icon.textAttribute('sellsy', { textStyleClasses: ['fab'], fontWeight: 400 }), tooltip: 'show published parts' }
@@ -356,12 +356,14 @@ export class ObjectEditor extends Morph {
       {
         name: 'classAndMethodControls',
         width: 100,
-        layout: new HorizontalLayout({ renderViaCSS: true, direction: "centered", spacing: 2, autoResize: false}), submorphs: [
-          {...btnStyle, name: "addButton", label: Icon.textAttribute("plus"), tooltip: "add a new method"},
-          {...btnStyle, name: "removeButton", label: Icon.textAttribute("minus"), tooltip: "remove a method or class"},
-          {...btnStyle, name: "forkPackageButton", label: Icon.textAttribute("code-branch"), tooltip: "fork package"},
-          {...btnStyle, name: "openInBrowserButton", label: Icon.textAttribute("external-link-alt"), tooltip: "open selected class in system browser"},
-        ]},
+        layout: new HorizontalLayout({ renderViaCSS: true, direction: 'centered', spacing: 2, autoResize: false }),
+        submorphs: [
+          { ...btnStyle, name: 'addButton', label: Icon.textAttribute('plus'), tooltip: 'add a new method' },
+          { ...btnStyle, name: 'removeButton', label: Icon.textAttribute('minus'), tooltip: 'remove a method or class' },
+          { ...btnStyle, name: 'forkPackageButton', label: Icon.textAttribute('code-branch'), tooltip: 'fork package' },
+          { ...btnStyle, name: 'openInBrowserButton', label: Icon.textAttribute('external-link-alt'), tooltip: 'open selected class in system browser' }
+        ]
+      },
 
       { name: 'sourceEditor', ...textStyle },
 
@@ -403,7 +405,7 @@ export class ObjectEditor extends Morph {
     ];
   }
 
-  isShowingImports () { return this.get('importsList').width > 10; }
+  isShowingImports () { return this.layout.grid.col(2).width > 10; }
 
   async toggleShowingImports (timeout = 300/* ms */) {
     const importController = this.ui.importController;
@@ -411,18 +413,18 @@ export class ObjectEditor extends Morph {
     const enable = !this.isShowingImports();
     const newWidth = enable ? expandedWidth : -expandedWidth;
     const column = this.layout.grid.col(2);
+    // disable the layouts so we can make some adjustments
     this.layout.disable();
     importController.layout.disable();
     column.width += newWidth;
     column.before.width -= newWidth;
     importController.layout.col(0).width = enable ? expandedWidth : 0;
+    // enable the layouts animated
     importController.layout.enable(timeout ? { duration: timeout } : null);
     await this.layout.enable(timeout ? { duration: timeout } : null);
     (enable ? this.ui.importsList : this.ui.sourceEditor).focus();
     await promise.delay(2 * timeout);
     await this.ui.frozenWarning.whenRendered();
-
-    // this.layout.row(1).height = this.ui.frozenWarning.height;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1813,6 +1815,7 @@ export class ObjectEditor extends Morph {
   }
 }
 
+
 class ImportController extends Morph {
   static get properties () {
     return {
@@ -1862,7 +1865,7 @@ class ImportController extends Morph {
       {
         name: 'buttons',
         fill: Color.transparent,
-        layout: new HorizontalLayout({ direction: 'centered', spacing: 2 }),
+        layout: new HorizontalLayout({ direction: 'centered', spacing: 2, autoResize: false }),
         submorphs: [
           { ...btnStyle, name: 'addImportButton', label: Icon.makeLabel('plus'), tooltip: 'add new import' },
           { ...btnStyle, name: 'removeImportButton', label: Icon.makeLabel('minus'), tooltip: 'remove selected import(s)' },
@@ -1880,6 +1883,9 @@ class ImportController extends Morph {
       ]
     });
     this.layout.row(1).fixed = 30;
+    this.layout.row(1).col(0).group.resize = false;
+    this.layout.row(1).col(0).group.align = 'center';
+    this.layout.row(1).col(0).group.alignedProperty = 'center';
     this.applyLayoutIfNeeded();
 
     // FIXME
@@ -1972,3 +1978,4 @@ class ImportController extends Morph {
     }];
   }
 }
+
