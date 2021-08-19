@@ -50,7 +50,7 @@ export default function browserCommands (browser) {
     {
       name: 'jump to codeentity',
       exec: async browser => {
-        if (isTestModule(browser.selectedModule, browser.ui.sourceEditor.textString)) { return browser.execCommand('jump to test'); }
+        if (browser.isTestModule(browser.ui.sourceEditor.textString)) { return browser.execCommand('jump to test'); }
         if (isMarkdown(browser.selectedModule)) {
           return browser.ui.sourceEditor.execCommand('[markdown] goto heading');
         }

@@ -1281,14 +1281,18 @@ export default class Browser extends Morph {
     await columnView.refresh(false);
   }
 
+  isTestModule (astOrSource) {
+    const tests = testsFromSource(astOrSource);
+    return tests && tests.length;
+  }
+
   updateTestUI (mod) {
     const { runTestsInModuleButton, sourceEditor, moduleCommands, metaInfoText } = this.ui;
     let hasTests = false;
     if (this.editorPlugin.isJSEditorPlugin) {
       try {
         const ast = this.editorPlugin.getNavigator().ensureAST(sourceEditor);
-        const tests = testsFromSource(ast || sourceEditor.textString);
-        hasTests = tests && tests.length;
+        hasTests = this.isTestModule(ast || sourceEditor.textString);
       } catch (err) {
         console.warn(`sytem browser updateTestUI: ${err}`);
         hasTests = false;
