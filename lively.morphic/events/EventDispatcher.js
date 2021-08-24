@@ -428,7 +428,7 @@ export default class EventDispatcher {
         // drag release
         if (state.draggedMorph) {
           events.push(dragEndEvent(domEvt, this, targetMorph, state, hand, halo, layoutHalo));
-          defaultEvent.targetMorphs = [state.draggedMorph, this.world];
+          defaultEvent.targetMorphs = arr.uniq([state.draggedMorph, ...defaultEvent.targetMorphs, this.world]);
         }
 
         // grab release
