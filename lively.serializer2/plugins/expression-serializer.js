@@ -9,6 +9,7 @@ export default class ExpressionSerializer {
       prefix: '__lv_expr__',
       ...opts
     };
+    this._decanonicalized = {};
     this.prefix = prefix + ':';
   }
 
@@ -116,6 +117,10 @@ export default class ExpressionSerializer {
     return this.deserializeExprObj(this.exprStringDecode(encoded));
   }
 
+  resolveModule (modName) {
+    return this._decanonicalized[modName] || (this._decanonicalized[modName] = System.decanonicalize(modName));
+  }
+
   deserializeExprObj ({ __expr__: source, bindings }) {
     const __boundValues__ = {};
 
@@ -137,7 +142,7 @@ export default class ExpressionSerializer {
           }
           if (exports.exports) exports = exports.exports;
         } else {
-          exports = System.get(System.decanonicalize(modName));
+          exports = System.get(this.resolveModule(modName));
         }
         if (!exports) {
           throw new Error(`[lively.serializer] expression eval: bindings specify to import ${
