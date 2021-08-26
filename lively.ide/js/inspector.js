@@ -1,8 +1,8 @@
 /* global Map */
-import { Color, Rectangle, rect, pt } from 'lively.graphics';
+import { Color, rect, pt } from 'lively.graphics';
 import { obj, num, Path, arr, promise } from 'lively.lang';
 import { connect, disconnect, once } from 'lively.bindings';
-import { Morph, Tooltip, VerticalLayout, GridLayout, HorizontalLayout, morph, CustomLayout, Label, Icon, StyleSheet, config } from 'lively.morphic';
+import { Morph, Tooltip, VerticalLayout, HorizontalLayout, morph, Label, Icon, config } from 'lively.morphic';
 import { Tree, LoadingIndicator, DropDownList } from 'lively.components';
 import { DropDownSelector, SearchField, LabeledCheckBox } from 'lively.components/widgets.js';
 import { MorphHighlighter, InteractiveMorphSelector } from 'lively.halos';
@@ -165,15 +165,11 @@ export class PropertyControl extends DraggableTreeLabel {
         get () { return this.submorphs[0] || false; },
         set (c) { this.submorphs = [c]; }
       },
-      layout: {
-        initialize () {
-          this.layout = new CustomLayout({ relayout: (self) => { self.relayout(); } });
-        }
-      },
       submorphs: {
         initialize () {
           this.value = this.keyString + ':';
           this.submorphs = [];
+          connect(this, 'extent', this, 'relayout');
         }
       }
     };

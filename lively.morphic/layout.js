@@ -227,59 +227,6 @@ class Layout {
   }
 }
 
-export class CustomLayout extends Layout {
-  constructor (config = {}) {
-    this.relayout = config.relayout;
-    // apply JSON stringification, since else the source string does not
-    // survive serialization (improper escaping)
-    this.layouterString = JSON.stringify(String(config.relayout));
-    this.varMapping = config.varMapping || {};
-    super(config);
-  }
-
-  name () { return 'Custom Layout'; }
-
-  apply (animate) {
-    if (this.active || !this.container) return;
-    super.apply(animate);
-    this.active = true;
-    if (!this.relayout) {
-      this.relayout = Closure.fromSource(JSON.parse(this.layouterString),
-        this.varMapping).recreateFunc();
-    }
-    try {
-      this.relayout(this.container, animate);
-    } catch (err) {
-      console.error('Error in relayout() of a custom layout:', err);
-    }
-    this.lastBoundsExtent = this.container && this.container.bounds().extent();
-    this.active = false;
-  }
-}
-
-export class SnapLayout extends Layout {
-  constructor (config = {}) {
-    super(config);
-    this._spacing = config.spacing;
-  }
-
-  name () { return 'Snap'; }
-
-  description () { return 'Fits the parent morph to the combined bounds of all its submorphs.'; }
-
-  apply (animate = false) {
-    if (this.active || !this.container) return;
-    super.apply(animate);
-    const targetBounds = this.container.submorphBounds().insetBy(-this.spacing);
-    const submorphOffset = pt(this.spacing, this.spacing).subPt(targetBounds.topLeft());
-    if (submorphOffset.r()) {
-      this.container.submorphs.forEach(m =>
-        this.changePropertyAnimated(m, 'position', m.position.addPt(submorphOffset), animate));
-    }
-    this.changePropertyAnimated(this.container, 'extent', targetBounds.extent(), animate);
-  }
-}
-
 class FloatLayout extends Layout {
   constructor (props = {}) {
     super(props);
