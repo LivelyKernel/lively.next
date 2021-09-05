@@ -1,1 +1,1 @@
-System.register(["./__root_module__-37c88ebd.js","kld-intersections"],function(Wa){return{setters:[function(Ib){Wa("renderFrozenPart",Ib.bR)},function(){}],execute:function(){}}});
+System.register(["./__root_module__-db735625.js"],function(db){return{setters:[function(Zb){db("renderFrozenPart",Zb.bS)}],execute:function(){}}});
