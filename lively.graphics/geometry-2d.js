@@ -3,7 +3,7 @@ import { cssLengthToPixels } from './convert-css-length.js';
 
 export class Point {
   static ensure (duck) {
-    return duck instanceof Point
+    return (duck && duck.isPoint)
       ? duck
       : new Point(duck.x, duck.y);
   }
@@ -286,7 +286,7 @@ export class Rectangle {
   }
 
   static ensure (duck) {
-    return duck instanceof Rectangle
+    return (duck && duck.isRectangle)
       ? duck
       : new Rectangle(duck.x, duck.y, duck.width, duck.height);
   }
@@ -798,7 +798,7 @@ export class Transform {
     // Lively Transform
     // alternatively, its a combination of translation rotation and scale
     if (translation) {
-      if (translation instanceof Point) {
+      if (translation.isPoint) {
         const delta = translation;
         const angleInRadians = rotation || 0.0;
         var scale = scale;
