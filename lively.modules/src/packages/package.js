@@ -342,7 +342,12 @@ class Package {
     // that the module is loaded are async, we need to wait for lively.modules to
     // "know" that the imported module (and all its dependencies) are actually
     // loaded
-    await promise.waitFor(1000, () => mainModule.isLoaded());
+    // rms 2021-09-05 we now achieve this by an explicitly resolved promise on
+    // load of the module instead of waitFor() which has a huge impact
+    // on performance.
+    const p = promise.deferred();
+    mainModule.whenLoaded(p.resolve);
+    await p.promise;
     return exported;
   }
 

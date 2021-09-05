@@ -29,6 +29,19 @@ export function wrapModuleResolution (System) {
   if (!isHookInstalled(System, 'instantiate', 'instantiate_triggerOnLoadCallbacks')) { installHook(System, 'instantiate', instantiate_triggerOnLoadCallbacks, 'instantiate_triggerOnLoadCallbacks'); }
 
   if (!isHookInstalled(System, 'locate', 'locateHook')) { installHook(System, 'locate', locateHook, 'locateHook'); }
+  if (!System._loader.modules) System._loader.modules = {};
+  if (!System._loader.modules._originalModules) {
+    const { proxy: wrappedModules, revoke } = Proxy.revocable(System._loader.modules, {
+      set: function (target, key, mod) {
+        if (moduleLoadPromises[key]) moduleLoadPromises[key].resolve(mod);
+        target[key] = mod;
+        return true;
+      }
+    });
+    wrappedModules._revoke = revoke;
+    wrappedModules._originalModules = System._loader.modules;
+    System._loader.modules = wrappedModules;
+  }
 }
 
 export function unwrapModuleResolution (System) {
@@ -38,6 +51,13 @@ export function unwrapModuleResolution (System) {
   removeHook(System, 'newModule', 'newModule_volatile');
   removeHook(System, 'instantiate', 'instantiate_triggerOnLoadCallbacks');
   removeHook(System, 'locate', 'locateHook');
+  const wrappedModules = System._loader.modules;
+  if (wrappedModules._originalModules) {
+    System._loader.modules = wrappedModules._originalModules;
+    wrappedModules._revoke();
+    delete System._loader.modules._revoke;
+    delete System._loader.modules._originalModules;
+  }
 }
 
 // Accessible system-wide via System.get("@lively-env")
@@ -394,6 +414,12 @@ async function locateHook (proceed, load) {
   return res;
 }
 
+const moduleLoadPromises = {};
+
+async function whenSystemModuleLoaded (moduleName) {
+  return System.get(moduleName) || (moduleLoadPromises[moduleName] || (moduleLoadPromises[moduleName] = promise.deferred())).promise;
+}
+
 function normalize_doMapWithObject (mappedObject, pkg, loader) {
   // SystemJS allows stuff like {events: {"node": "@node/events", "~node": "@empty"}}
   // for conditional name lookups based on the environment. The resolution
@@ -487,7 +513,7 @@ function instantiate_triggerOnLoadCallbacks (proceed, load) {
 
     const timeout = {};
     // rms 18.11.20 fixme: replace with promise? this busy wait is a boon on performance
-    promise.waitFor(60 * 1000, () => System.get(load.name), timeout).then(result => {
+    whenSystemModuleLoaded(load.name).then(result => {
       if (result === timeout) {
         console.warn(`[lively.modules] instantiate_triggerOnLoadCallbacks for ${load.name} timed out`);
         return;

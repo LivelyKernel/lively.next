@@ -1,6 +1,6 @@
-import { obj, promise, arr, string, properties } from 'lively.lang';
+import { obj, promise, string, properties } from 'lively.lang';
 import { Rectangle, Color } from 'lively.graphics';
-import { signal, connect } from 'lively.bindings';
+import { signal } from 'lively.bindings';
 import vdom from 'virtual-dom';
 
 import { Morph } from '../morph.js';
@@ -293,14 +293,19 @@ export class Label extends Morph {
   }
 
   fitIfNeeded () {
-    if (this._needsFit && this.allFontsLoaded()) { this.fit(); }
+    if (!this._needsFit) return;
+    if (this.allFontsLoaded()) {
+      this.fit();
+      return;
+    }
+    return this.whenFontLoaded().then(() => this.fit());
   }
 
   get textAndAttributesOfLines () {
     return splitTextAndAttributesIntoLines(this.textAndAttributes, '\n');
   }
 
-  allFontsLoaded () {
+  allFontsLoaded (fontFaceSet) {
     const { fontMetric } = this.env;
     return [
       this,
@@ -312,12 +317,23 @@ export class Label extends Morph {
           };
         }
       }).filter(Boolean)
-    ].every(attr =>
-      fontMetric.isFontSupported(attr.fontFamily, attr.fontWeight)
-    );
+    ].every(attr => {
+      if (fontFaceSet) {
+        const face = fontFaceSet.find(face =>
+          face.family == attr.fontFamily &&
+          face.weight == (fontMetric.fontDetector.namedToNumeric[attr.fontWeight] || attr.fontWeight));
+        return !!face;
+        // document.fonts.check(`normal ${attr.fontWeight} 12px ${attr.fontFamily}`)
+      } else return fontMetric.isFontSupported(attr.fontFamily, attr.fontWeight);
+    });
   }
 
   async whenFontLoaded () {
+    // fixme: remove busy wait, since it kills performance
+    if (this.allFontsLoaded()) return true;
+    const fonts = [...(await document.fonts.ready)];
+    if (this.allFontsLoaded(fonts.filter(face => face.status == 'loaded'))) return true;
+    // as a last resort, do a busy wait...
     return promise.waitFor(5000, () => {
       return this.allFontsLoaded();
     });
@@ -432,30 +448,32 @@ export class Label extends Morph {
       if (i < nLines - 1) renderedText.push(h('br'));
     }
 
-    var {
-          fontColor,
-          fontFamily,
-          fontSize,
-          fontStyle,
-          fontWeight,
-          textShadow,
-          textDecoration,
-          textStyleClasses,
-        } = this.textStyle,
-        padding = this.padding,
-        style = {
-          fontFamily,
-          fontSize: typeof fontSize === "number" ? fontSize + "px" : fontSize,
-          color: fontColor ? String(fontColor) : "transparent",
-          cursor: this.nativeCursor
-        },
-        attrs = defaultAttributes(this, renderer);
+    let {
+      fontColor,
+      fontFamily,
+      fontSize,
+      fontStyle,
+      fontWeight,
+      textShadow,
+      textDecoration,
+      textStyleClasses
+    } = this.textStyle;
+    let padding = this.padding;
+    var style = {
+      fontFamily,
+      fontSize: typeof fontSize === 'number' ? fontSize + 'px' : fontSize,
+      color: fontColor ? String(fontColor) : 'transparent',
+      cursor: this.nativeCursor
+    };
+    let attrs = defaultAttributes(this, renderer);
 
     if (textShadow) style.textShadow = textShadow;
     if (fontWeight !== 'normal') style.fontWeight = fontWeight;
     if (fontStyle !== 'normal') style.fontStyle = fontStyle;
     if (textDecoration !== 'none') style.textDecoration = textDecoration;
-    if (textStyleClasses && textStyleClasses.length) { attrs.className = (attrs.className || '') + ' ' + textStyleClasses.join(' '); }
+    if (textStyleClasses && textStyleClasses.length) {
+      attrs.className = (attrs.className || '') + ' ' + textStyleClasses.join(' ');
+    }
     attrs.style = { ...defaultStyle(this), ...style };
 
     return h('div', attrs, [
@@ -551,5 +569,3 @@ export class Label extends Morph {
     return items;
   }
 }
-
-
