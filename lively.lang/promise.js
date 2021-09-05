@@ -67,6 +67,8 @@ function waitFor (ms, tester, timeoutObj) {
   // if timeoutObj is passed will resolve(!) with this object instead of raise
   // an error
   if (typeof ms === 'function') { tester = ms; ms = undefined; }
+  let value;
+  if (value = tester()) return Promise.resolve(value);
   return new Promise((resolve, reject) => {
     let stopped = false;
     let timedout = false;
