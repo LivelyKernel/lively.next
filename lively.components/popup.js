@@ -1,7 +1,6 @@
-import { Morph, VerticalLayout, StyleSheet, Icon, CustomLayout } from 'lively.morphic';
-import { Color, rect, pt } from 'lively.graphics';
+import { Morph, Icon } from 'lively.morphic';
+import { Color, pt } from 'lively.graphics';
 import { connect } from 'lively.bindings';
-import { Path } from 'lively.lang';
 
 let duration = 300;
 

@@ -132,7 +132,11 @@ export default class EditorPlugin {
 
   requestHighlight (immediate = false) {
     if (immediate) this.highlight();
-    else fun.debounceNamed(this.textMorph.id + '-requestHighlight', 300, () => this.highlight())();
+    else {
+      fun.debounceNamed(this.textMorph.id + '-requestHighlight', 300, () => {
+        this.highlight();
+      })();
+    }
   }
 
   highlight () {
@@ -357,6 +361,7 @@ export default class EditorPlugin {
     return true;
   }
 }
+
 
 
 export class CodeMirrorEnabledEditorPlugin extends EditorPlugin {

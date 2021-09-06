@@ -143,7 +143,11 @@ export default class Window extends Morph {
 
   async toggleFader (active) {
     const fader = this.getSubmorphNamed('fader') || this.addMorph({
-      name: 'fader', fill: Color.black.withA(0.5), opacity: 0, extent: this.extent
+      position: pt(0, 0),
+      name: 'fader',
+      fill: Color.black.withA(0.5),
+      opacity: 0,
+      extent: this.extent
     });
     if (active) {
       const shiftedBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(this.bounds());
@@ -689,4 +693,3 @@ export default class Window extends Morph {
     ]);
   }
 }
-

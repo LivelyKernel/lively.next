@@ -213,6 +213,7 @@ export class ConfirmPrompt extends AbstractPrompt {
       this.whenRendered().then(() => {
         title.lineWrapping = this.lineWrapping;
         const center = this.center;
+        title.invalidateTextLayout(true, true);
         this.width = Math.max(this.width, title.document.width + 100);
         this.center = center;
         this.opacity = 1;
@@ -223,6 +224,7 @@ export class ConfirmPrompt extends AbstractPrompt {
   resolve () { super.resolve(true); }
   reject () { super.resolve(false); }
 }
+
 
 // new MultipleChoicePrompt({ label: 'hallo', choices: [1,2,3]}).openInWorld()
 

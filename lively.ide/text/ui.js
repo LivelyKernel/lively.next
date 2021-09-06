@@ -113,10 +113,9 @@ export class RichTextControl extends Morph {
                 varMapping: { left }
               });
 
-              control.get('padding field').number = left;
-              control.get('padding field').visible = !isMultiVar;
-
               try {
+                control.get('padding field').number = left;
+                control.get('padding field').visible = !isMultiVar;
                 control.get('padding field top').number = top;
                 control.get('padding field left').number = left;
                 control.get('padding field right').number = right;

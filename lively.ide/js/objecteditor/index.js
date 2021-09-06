@@ -772,8 +772,7 @@ export class ObjectEditor extends Morph {
     this.layout.disable();
     row.height = moduleInfo ? 80 : 0;
     row.after.height -= prevHeight != row.height ? (moduleInfo ? 80 : -80) : 0;
-    this.layout.enable();
-    this.layout.apply({ duration: 300 });
+    this.layout.enable({ duration: 300 });
   }
 
   async selectMethod (klass, methodSpec, highlight = true, putCursorInBody = false) {
@@ -1815,7 +1814,6 @@ export class ObjectEditor extends Morph {
   }
 }
 
-
 class ImportController extends Morph {
   static get properties () {
     return {
@@ -1978,4 +1976,3 @@ class ImportController extends Morph {
     }];
   }
 }
-
