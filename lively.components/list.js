@@ -51,6 +51,7 @@ export class ListItemMorph extends Label {
   }
 
   displayItem (item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
+    if (this.itemIndex == itemIndex && isSelected == this.isSelected) return;
     const itemMorph = item.morph;
     const label = itemMorph ? '' : (item.label || item.string || 'no item.string');
 
@@ -130,6 +131,7 @@ export class ListItemMorph extends Label {
     }
   }
 }
+
 
 class ListScroller extends Morph {
   static get properties () {
@@ -1166,7 +1168,6 @@ export class FilterableList extends Morph {
 
   relayout () {
     const { listMorph, inputMorph, paddingMorph, borderWidth: offset } = this;
-    debugger;
     inputMorph.topLeft = pt(offset, offset);
     inputMorph.width = listMorph.width = this.width - 2 * offset;
     if (paddingMorph) {
