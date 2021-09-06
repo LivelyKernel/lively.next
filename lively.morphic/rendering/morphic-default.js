@@ -1,9 +1,9 @@
-import vdom from "virtual-dom";
-import parser from "vdom-parser";
-import { num, Path, obj, arr, properties, promise } from "lively.lang";
-import { Color, RadialGradient, pt, Point, LinearGradient, rect } from "lively.graphics";
-import config from "../config.js";
-import { styleProps, addSvgAttributes, addPathAttributes } from "./property-dom-mapping.js"
+import vdom from 'virtual-dom';
+import parser from 'vdom-parser';
+import { num, Path, obj, arr, properties, promise } from 'lively.lang';
+import { Color, RadialGradient, pt, Point, LinearGradient, rect } from 'lively.graphics';
+import config from '../config.js';
+import { styleProps, addSvgAttributes, addPathAttributes } from './property-dom-mapping.js';
 import bowser from 'bowser';
 
 const { h, diff, patch, create: createNode } = vdom;
@@ -291,6 +291,19 @@ export class ShadowObject {
 
 export function defaultStyle (morph) {
   const { opacity, reactsToPointer, nativeCursor, clipMode } = morph;
+  const layoutStyle = {};
+  // this also performs measure of the actual morphs height, so do that before rendering the style props
+  if (Path('owner.layout.renderViaCSS').get(morph)) {
+    morph.owner.layout.addSubmorphCSS(morph, layoutStyle);
+  }
+  if (Path('layout.renderViaCSS').get(morph)) {
+    morph.layout.addContainerCSS(morph, layoutStyle);
+  }
+  // problem: If we resize the parent, the submorphs have not yet taken the adjusted height/width
+  //          this means measuring the contentRect for these updates is not the correct ground truth but
+  //          instead the correct answer lies in the model. This is a problem for morphs like the ellipse morph
+  //          that render themselves based on the current extent in the model.
+  // now we can render the other dom props
   const domStyle = styleProps(morph);
   const maskedProps = morph._animationQueue.maskedProps('css');
 
@@ -299,6 +312,10 @@ export function defaultStyle (morph) {
   if (clipMode !== 'visible') {
     domStyle.overflow = clipMode;
     domStyle['-webkit-overflow-scrolling'] = 'touch';
+    // Fix for Safari clipping bugs
+    if (!morph.dropShadow) domStyle['clip-path'] = 'border-box';
+    else domStyle['clip-path'] = 'none';
+    if (morph.isImage) domStyle['will-change'] = 'transform';
     // Fix for Chrome scroll issue, see
     // https://github.com/noraesae/perfect-scrollbar/issues/612
     // https://developers.google.com/web/updates/2016/04/scroll-anchoring
@@ -309,12 +326,9 @@ export function defaultStyle (morph) {
   domStyle.position = 'absolute';
   domStyle['pointer-events'] = reactsToPointer ? 'auto' : 'none';
   domStyle.cursor = nativeCursor;
-  if (Path('owner.layout.renderViaCSS').get(morph)) {
-    morph.owner.layout.addSubmorphCSS(morph, domStyle);
-  }
-  if (Path('layout.renderViaCSS').get(morph)) {
-    morph.layout.addContainerCSS(morph, domStyle);
-  }
+
+  Object.assign(domStyle, layoutStyle);
+
   return domStyle;
 }
 
@@ -340,6 +354,14 @@ MorphAfterRenderHook.prototype.hook = function (node, propertyName, previousValu
     if (Path('morph.layout.renderViaCSS').get(this)) {
       this.morph.layout.ensureBoundsMonitor(node, this.morph);
     }
+    setTimeout(() => { // ensure that style has been applied already, but that is sloooow
+      if (Path('morph.owner.layout.renderViaCSS').get(this)) {
+        this.morph.owner.layout.ensureBoundsMonitor(node, this.morph);
+      }
+      if (Path('morph.layout.renderViaCSS').get(this)) {
+        this.morph.layout.ensureBoundsMonitor(node, this.morph);
+      }
+    });
   }
 
   if (isInDOM || attempt > 3) {
@@ -370,10 +392,10 @@ MorphAfterRenderHook.prototype.updateScroll = function (morph, node, fromScroll)
 
     if (morph._animationQueue.animations.find(anim => anim.animatedProps.scroll)) return;
     const scrollLayer = morph.isText && morph.viewState.fastScroll ? node.querySelector('.scrollLayer') : node;
+
     if (morph._skipScrollUpdate) return;
     if (!scrollLayer) return;
     // prevent interference with bounce back animation
-
     // this is only there to immediately respoond in the view to a setScroll
     scrollLayer.scrollTop !== y && (scrollLayer.scrollTop = y);
     scrollLayer.scrollLeft !== x && (scrollLayer.scrollLeft = x);
@@ -383,19 +405,8 @@ MorphAfterRenderHook.prototype.updateScroll = function (morph, node, fromScroll)
       scrollLayer.scrollLeft !== x && (scrollLayer.scrollLeft = x);
     }, morph.id);
   }
-}
-MorphAfterRenderHook.prototype.unhook = function(node, propName, propValue) {
-  // remove the listener to that node
-  // this is getting called on every render pass... too many times :(
-  if (Path('morph.layout.renderViaCSS').get(this) && !propValue) {
-    this.morph.layout._resizeObservers = new WeakMap();
-  }
-  // if (this.morph._boundsObserver && !propValue) {
-  //   this.morph._boundsObserver.unobserve(node);
-  //   delete this.morph._boundsObserver;
-  // }
-}
-MorphAfterRenderHook.prototype.updateScrollOfSubmorphs = function(morph, renderer) {
+};
+MorphAfterRenderHook.prototype.updateScrollOfSubmorphs = function (morph, renderer) {
   morph.submorphs.forEach(m => {
     if (m.isClip()) { this.updateScroll(m, renderer.getNodeForMorph(m)); }
     this.updateScrollOfSubmorphs(m, renderer);

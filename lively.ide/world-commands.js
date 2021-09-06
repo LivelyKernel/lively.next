@@ -92,7 +92,7 @@ const commands = [
         'Run command', items, {
           historyId: 'lively.morphic-run command',
           requester: target,
-          extent: pt(700, 900),
+          extent: pt(700, 600),
           prompt: world._cachedRunCommandPrompt
         });
 
