@@ -185,7 +185,18 @@ export class LivelyWorld extends World {
     this.onWindowResize();
     // some meta stuff...
     if (lively.modules) lively.modules.removeHook('fetch', window.__logFetch);
-    this.animate({ opacity: 1, blur: 3, duration: 1000, easing: easings.inOutExpo });
+    this.animate({ opacity: 1, blur: 3, duration: 1000, easing: easings.inOutExpo }).then(async () => {
+      let li;
+      if (li = window.worldLoadingIndicator) {
+        const oldWorld = li.world();
+        if (oldWorld != this) {
+          li.withAllSubmorphsDo(m => m._env = this.env);
+          this.addMorph(li);
+          await oldWorld.whenRendered();
+          oldWorld.env.renderer.stopRenderWorldLoop();
+        }
+      }
+    });
     if (this.showsUserFlap || resource(document.location.href).query().showsUserFlap) {
       this._styleLoading = prefetchCoreStyleguides(window.worldLoadingIndicator);
       await this._styleLoading;
