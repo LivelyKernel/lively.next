@@ -1,5 +1,5 @@
 import { Color } from 'lively.graphics';
-import { string } from 'lively.lang';
+import { string, Path } from 'lively.lang';
 import bowser from 'bowser';
 // addPathAttributes
 // addStyleProps
@@ -24,7 +24,7 @@ export function styleProps (morph) {
 }
 
 export function canBePromotedToCompositionLayer (morph) {
-  return morph.renderOnGPU || (morph.dropShadow && !morph.dropShadow.fast) || morph.grayscale > 0;
+  return (morph.renderOnGPU || (morph.dropShadow && !morph.dropShadow.fast) || morph.grayscale > 0) && !Path('owner.layout.renderViaCSS').get(morph);
 }
 
 export function addTransform (morph, style) {
@@ -37,7 +37,7 @@ export function addTransform (morph, style) {
   if (promoteToCompositionLayer) {
     style.willChange = 'transform';
   }
-  if ((owner && owner.isText) || promoteToCompositionLayer) {
+  if ((owner && owner.isText && !Path('layout.renderViaCSS').get(owner)) || promoteToCompositionLayer) {
     style.transform = (promoteToCompositionLayer ? `translate(${x}px, ${y}px)` : `translate(${x}px, ${y}px)`);
   } else {
     style.transform = '';

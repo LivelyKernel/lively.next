@@ -1,5 +1,5 @@
 /* global global,System */
-import { obj, arr, num } from 'lively.lang';
+import { obj, Path, arr, num } from 'lively.lang';
 import { pt, Rectangle } from 'lively.graphics';
 import vdom from 'virtual-dom';
 import { splitTextAndAttributesIntoLines } from './attributes.js';
@@ -350,7 +350,8 @@ export default class TextRenderer {
    * @param {Renderer} renderer - The renderer attached to the current world.
    */
   renderMorph (morph, renderer) {
-    if (!morph.selectable && morph.readOnly) return this.renderMorphFast(morph, renderer);
+    const sel = morph.getProperty('selection');
+    if ((!sel || sel.isEmpty()) && morph.readOnly) return this.renderMorphFast(morph, renderer);
     return this.renderInteractiveText(morph, renderer);
   }
 
@@ -371,10 +372,13 @@ export default class TextRenderer {
     textLayer.properties.style.overflow = morph.clipMode === 'visible' ? 'visible' : 'hidden';
     this.ensureLayoutUpdateHook(morph, textLayer);
 
-    const subNodes = [
-      textLayer,
-      renderer.renderSelectedSubmorphs(morph, submorphsNotInText)
-    ];
+    const renderedSubmorphs = renderer.renderSelectedSubmorphs(morph, submorphsNotInText);
+    const subNodes = [textLayer];
+    if (Array.isArray(renderedSubmorphs)) {
+      subNodes.push(...renderedSubmorphs);
+    } else {
+      subNodes.push(renderedSubmorphs);
+    }
 
     const style = defaultStyle(morph);
 
@@ -418,13 +422,21 @@ export default class TextRenderer {
     textLayer.properties.style.overflow = morph.clipMode === 'visible' ? 'visible' : 'hidden';
     textLayerForFontMeasure.properties.className += ' font-measure';
 
+    const renderedSubmorphs = renderer.renderSelectedSubmorphs(morph, submorphsNotInText);
     const subNodes = [
       ...selectionLayer,
       markerLayer,
       textLayerForFontMeasure,
-      textLayer,
-      renderer.renderSelectedSubmorphs(morph, submorphsNotInText)
+      textLayer
     ];
+
+    if (Array.isArray(renderedSubmorphs)) {
+      subNodes.push(...renderedSubmorphs);
+    } else {
+      subNodes.push(renderedSubmorphs);
+    }
+
+    const fastScroll = morph.viewState.fastScroll && !Path('layout.renderViaCSS').get(morph);
 
     return h('div', {
       ...defaultAttributes(morph, renderer),
@@ -438,7 +450,7 @@ export default class TextRenderer {
       }
     }, [
       scrollLayer,
-      ...morph.viewState.fastScroll
+      ...fastScroll
         ? [h('div', {
             className: 'scrollWrapper',
             style: {
@@ -886,7 +898,7 @@ export default class TextRenderer {
     attr = attr || {};
     if (renderer) {
       const rendered = renderer.render(morph);
-      rendered.properties.style.position = 'relative';
+      rendered.properties.style.position = 'sticky';
       rendered.properties.style.transform = '';
       rendered.properties.style.textAlign = 'initial';
       // fixme:  this addition screws up the bounds computation of the embedded submorph
