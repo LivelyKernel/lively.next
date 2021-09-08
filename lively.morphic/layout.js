@@ -593,8 +593,7 @@ export class TilingLayout extends Layout {
       if (makeDirty) {
         morph.position = pt(newPosX, newPosY);
       } else {
-        morph.position.x = newPosX;
-        morph.position.y = newPosY;
+        morph._morphicState.position = pt(newPosX, newPosY);
         morph.updateTransform({ position: morph.position });
         signal(morph, 'position', morph.position); // still notify connections
       }
@@ -668,7 +667,7 @@ export class TilingLayout extends Layout {
     if (!morph.isLayoutable) return;
     const { axis, hugContentsVertically, _align: align, axisAlign, hugContentsHorizontally, layoutableSubmorphs } = this;
     const node = morph.env.renderer.getNodeForMorph(morph);
-    const clip = !node || morph.clipMode != 'visible';
+    const clip = morph.clipMode != 'visible';
     const isVertical = axis == 'column';
     if (node) {
       this.updateSubmorphViaDom(morph, node, node.getBoundingClientRect());
@@ -1183,6 +1182,14 @@ export class HorizontalLayout extends TilingLayout {
     this._hugContentsVertically = active;
     this._hugContentsHorizontally = active;
     this.onConfigUpdate();
+  }
+
+  get hugContentsVertically () {
+    return this.autoResize && !this.resizeSubmorphs;
+  }
+
+  get hugContentsHorizontally () {
+    return this.autoResize;
   }
 
   getResizeHeightPolicyFor (aSubmorph) {
@@ -2481,7 +2488,6 @@ export class GridLayout extends Layout {
     await super.enable(anim);
     if (anim) await promise.delay(anim.duration);
     // If we were disabled as a CSS layout, revert back to that state.
-    debugger;
     if (this._revertToCSSOnEnable) {
       this.renderViaCSS = true;
       this.layoutableSubmorphs.forEach(m => this.tryToMeasureNodeNow(m));
@@ -2937,8 +2943,7 @@ export class GridLayout extends Layout {
         if (makeDirty) {
           layoutableSubmorph.position = newPos;
         } else {
-          layoutableSubmorph.position.x = newPos.x;
-          layoutableSubmorph.position.y = newPos.y;
+          layoutableSubmorph._morphicState.position = newPos;
           layoutableSubmorph.updateTransform({ position: newPos });
           signal(layoutableSubmorph, 'position');
         }
