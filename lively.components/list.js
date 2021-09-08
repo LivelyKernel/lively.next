@@ -51,7 +51,7 @@ export class ListItemMorph extends Label {
   }
 
   displayItem (item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
-    if (this.itemIndex == itemIndex && isSelected == this.isSelected) return;
+    if (this.itemIndex == itemIndex && isSelected == this.isSelected && item.fontFamily == this.fontFamily) return;
     const itemMorph = item.morph;
     const label = itemMorph ? '' : (item.label || item.string || 'no item.string');
 
@@ -131,7 +131,6 @@ export class ListItemMorph extends Label {
     }
   }
 }
-
 
 class ListScroller extends Morph {
   static get properties () {
@@ -1330,7 +1329,6 @@ export class FilterableList extends Morph {
     ]);
   }
 }
-
 
 export class DropDownList extends Button {
   // new DropDownList({selection: 1, items: [1,2,3,4]}).openInWorld()
