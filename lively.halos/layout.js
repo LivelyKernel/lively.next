@@ -18,24 +18,115 @@ import { NumberWidget } from 'lively.ide/value-widgets.js';
 import { InteractiveMorphSelector } from './morph.js';
 import { easings } from 'lively.morphic/rendering/animations.js';
 
+class ProportionSlider extends Morph {
+  static get properties() {
+    return {
+      axis: {},
+      view: {},
+      fill: { defaultValue: Color.transparent },
+    }
+  }
+
+  alignWithTarget() {
+    this.setBounds(this.axis.getProportionSliderBounds(this));
+  }
+  onDragStart() {
+    this.view.visible = true;
+  }
+  onDrag(evt) {
+    this.axis.adjustStretch(this.axis.getDelta(evt));
+    this.axis.halo.alignWithTarget();
+  }
+  onDragEnd() {
+    this.view.visible = false;
+  }
+}
+
+class MinViewer extends Morph {
+
+  static get properties() {
+    return {
+      axis: {}
+    }
+  }
+  
+  alignWithTarget() {
+    const {min} = this.axis.targetAxis;
+    this.textString = `min: ${min.toFixed()}px !`;
+  }
+}
+
+class MinSlider extends Ellipse {
+  
+  static get properties() {
+    return {
+      axis: {},
+      fill: { defaultValue: Color.green },
+      visible: { defaultValue: false },
+      becomesActiveOnHover: { defaultValue: true },
+    }
+  }
+
+  alignWithTarget() {
+    this.position = this.axis.getMinSliderPosition();
+  }
+  requestToShow() {
+    this.visible = !this.axis.targetAxis.fixed;
+  }
+  requestToHide() {
+    if (this.active) {
+      this.shouldHide = true;
+    } else {
+      this.visible = false;
+    }
+  }
+  onDragStart() {
+    const [ minViewer, minSpaceVisualizer ] = this.submorphs;
+    this.axis.forceMenuHidden = true;
+    minViewer.visible = true;
+    minSpaceVisualizer.visible = true;
+    this.active = true;
+  }
+  onDrag(evt) {
+    this.axis.targetAxis.min += -this.getDelta(evt);
+    this.axis.halo.alignWithTarget();
+  }
+  onDragEnd() {
+    const [ minViewer, minSpaceVisualizer ] = this.submorphs;
+    this.axis.forceMenuHidden = false;
+    minViewer.visible = false;
+    minSpaceVisualizer.visible = false;
+    this.active = false;
+    if (this.shouldHide) {
+      this.visible = false;
+      this.shouldHide = false;
+    }
+  }
+}
+
 class AxisHalo extends Morph {
-  constructor ({ halo, targetAxis }) {
-    super({
-      fill: Color.transparent,
-      halo,
-      targetAxis,
-      container: halo.container
-    });
-    this.initialize();
+
+  static get properties() {
+    return {
+      halo: {},
+      targetAxis: {},
+      container: {},
+      fill: { defaultValue: Color.transparent },
+      submorphs: {
+        initialize() {
+          this.initialize();
+        }
+      }
+    }
   }
 
   initialize () {
     this.setBounds(this.fetchBounds());
-    this.minSlider = this.minSlider(),
-    this.axisMenu = this.axisMenu(),
-    this.proportionSlider = this.proportionSlider();
-    this.proportionSlider.addMorph(this.minSlider);
-    this.submorphs = [this.proportionSlider, this.axisMenu];
+    const minSlider = this.minSlider();
+    const axisMenu = this.axisMenu();
+    const proportionSlider = this.proportionSlider();
+    proportionSlider.addMorph(minSlider);
+    this.submorphs = [proportionSlider, axisMenu];
     this.halo.addGuide(this);
   }
 
@@ -72,26 +163,13 @@ class AxisHalo extends Morph {
   }
 
   proportionSlider () {
-    let self = this;
-    let proportionViewer = this.proportionViewer();
+    var proportionViewer = this.proportionViewer();
 
-    return this.halo.addGuide(new Morph({
+    return this.halo.addGuide(new ProportionSlider({
       nativeCursor: this.getResizeCursor(),
-      fill: Color.transparent,
-      submorphs: [this.devider(), proportionViewer],
-      alignWithTarget () {
-        this.setBounds(self.getProportionSliderBounds(this));
-      },
-      onDragStart () {
-        proportionViewer.visible = true;
-      },
-      onDrag: (evt) => {
-        this.adjustStretch(this.getDelta(evt));
-        this.halo.alignWithTarget();
-      },
-      onDragEnd () {
-        proportionViewer.visible = false;
-      }
+      axis: this,
+      view: proportionViewer,
+      submorphs: [this.devider(), proportionViewer]
     }));
   }
 
@@ -110,58 +188,18 @@ class AxisHalo extends Morph {
     const minSpaceVisualizer = this.minSpaceVisualizer();
     const minViewer = this.minViewer();
 
-    return this.halo.addGuide(new Ellipse({
+    return this.halo.addGuide(new MinSlider({
       nativeCursor: this.getResizeCursor(),
-      fill: Color.green,
-      extent: pt(10, 10),
-      visible: false,
-      submorphs: [minSpaceVisualizer, minViewer],
-      becomesActiveOnHover: true,
-      alignWithTarget () {
-        this.position = self.getMinSliderPosition();
-      },
-      requestToShow () {
-        this.visible = !self.targetAxis.fixed;
-      },
-      requestToHide () {
-        if (this.active) {
-          this.shouldHide = true;
-        } else {
-          this.visible = false;
-        }
-      },
-      onDragStart () {
-        self.forceMenuHidden = true;
-        minViewer.visible = true;
-        minSpaceVisualizer.visible = true;
-        this.active = true;
-      },
-      onDrag: (evt) => {
-        this.targetAxis.min += -this.getDelta(evt);
-        this.halo.alignWithTarget();
-      },
-      onDragEnd () {
-        self.forceMenuHidden = false;
-        minViewer.visible = false;
-        minSpaceVisualizer.visible = false;
-        this.active = false;
-        if (this.shouldHide) {
-          this.visible = false;
-          this.shouldHide = false;
-        }
-      }
+      axis: this,
+      submorphs: [minSpaceVisualizer, minViewer]
     }));
   }
 
-  minViewer () {
-    const self = this;
-    return this.viewer({
+  minViewer() {
+    return this.viewer(new MinViewer({
+      axis: this,
       position: this.getMinViewerPosition(),
-      alignWithTarget () {
-        const { min } = self.targetAxis;
-        this.textString = `min: ${min.toFixed()}px !`;
-      }
-    });
+    }));
   }
 
   minSpaceBorder () {
@@ -251,13 +289,13 @@ class AxisHalo extends Morph {
     };
     return new Morph({
       fill: Color.transparent,
-      extent: pt(25, 25),
+      extent: pt(25,25),
       submorphs: [{
         fill: Color.transparent,
-        styleClasses: ['fa', 'fa-cog'],
-        center: pt(12.5, 12.5)
+        styleClasses: ["fa", "fa-cog"],
+        center: pt(12.5,12.5)
       }],
-      onMouseDown (evt) {
+      onMouseDown(evt) {
         // is menu open keep menu visible at all times
         // only hide menu when menu was removed
         self.forceMenuVisible = true;
@@ -299,8 +337,17 @@ class AxisHalo extends Morph {
 }
 
 class RowHalo extends AxisHalo {
-  constructor ({ row, halo }) {
-    super({ targetAxis: halo.target.row(row), halo });
+
+  static get properties() {
+    return {
+      row: {},
+      targetAxis: {
+        derived: true,
+        get() {
+          return this.halo.target.row(this.row)
+        }
+      }
+    }
   }
 
   get subject () { return 'row'; }
@@ -422,7 +469,7 @@ class LayoutHalo extends Morph {
   static get properties () {
     return {
       container: {},
-      target: {},
+      target: { get() { return this.container.layout } },
       pointerId: {},
       halosEnabled: { defaultValue: false },
       isEpiMorph: { defaultValue: true },
@@ -445,7 +492,8 @@ export class GridLayoutHalo extends LayoutHalo {
         }
       },
       submorphs: {
-        initialize () {
+        after: ['target'],
+        initialize() {
           this.initialize();
         }
       }

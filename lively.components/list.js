@@ -1,4 +1,4 @@
-import { Morph, Text, StyleSheet, Label, Icon, morph, touchInputDevice } from 'lively.morphic';
+import { Morph, VerticalLayout, Text, StyleSheet, Label, Icon, morph, touchInputDevice } from 'lively.morphic';
 import { pt, LinearGradient, Color, Rectangle, rect } from 'lively.graphics';
 import { arr, Path, string } from 'lively.lang';
 import { signal, noUpdate, once } from 'lively.bindings';
@@ -51,6 +51,7 @@ export class ListItemMorph extends Label {
   }
 
   displayItem (item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
+    if (this.itemIndex == itemIndex && isSelected == this.isSelected && item.fontFamily == this.fontFamily) return;
     const itemMorph = item.morph;
     const label = itemMorph ? '' : (item.label || item.string || 'no item.string');
 
@@ -884,6 +885,12 @@ export class FilterableList extends Morph {
       borderWidth: { defaultValue: 1 },
       updateSelectionsAfterFilter: { defaultValue: false },
 
+      // layout: {
+      //   initialize () {
+      //     this.layout = new VerticalLayout({ renderViaCSS: true });
+      //   }
+      // },
+
       theme: {
         after: ['styleClasses', 'listMorph'],
         defaultValue: 'default',
@@ -1166,7 +1173,7 @@ export class FilterableList extends Morph {
       paddingMorph.topLeft = inputMorph.bottomLeft;
     }
     listMorph.position = paddingMorph ? paddingMorph.bottomLeft : inputMorph.bottomLeft;
-    listMorph.height = this.height - listMorph.top - offset;
+    listMorph.height = Math.floor(this.height - listMorph.top - offset);
   }
 
   focus () { this.get('input').focus(); }

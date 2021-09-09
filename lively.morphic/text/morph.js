@@ -1605,7 +1605,9 @@ export class Text extends Morph {
           // with individual normal selections
           if (this.selectable) {
             if (this._multiSelection) this._multiSelection.updateFromAnchors();
-            else this.selection.updateFromAnchors();
+            else if (this.getProperty('selection')) {
+              this.selection.updateFromAnchors();
+            }
           }
         }
 
@@ -1664,21 +1666,14 @@ export class Text extends Morph {
         // to infer the movement). We therefore need to replace these anchor at all times
 
         if (embeddedMorphMap) {
+          let anchor;
           if (embeddedMorphMap.has(morph)) {
-            embeddedMorphMap.get(morph).anchor.position = start;
+            ({ anchor } = embeddedMorphMap.get(morph));
+            if (anchor) anchor.position = start;
             continue;
           }
-          const anchor = this.addAnchor({ id: 'embedded-' + morph.id, ...start });
-          connect(anchor, 'position', morph, 'position', {
-            updater: function ($upd, textPos) {
-              const tm = this.targetObj.owner;
-              const embeddedMorph = this.targetObj;
-              const pos = (tm && tm.isText) ? tm.charBoundsFromTextPosition(textPos).topLeft().subPt(tm.origin) : embeddedMorph.position;
-              if (tm) tm._positioningSubmorph = embeddedMorph;
-              $upd(pos);
-              if (tm) tm._positioningSubmorph = false;
-            }
-          }).update(anchor.position);
+          anchor = this.addAnchor({ id: 'embedded-' + morph.id, ...start });
+          anchor.embeddedMorph = morph;
           embeddedMorphMap.set(morph, { anchor });
         }
       }
@@ -2328,7 +2323,7 @@ export class Text extends Morph {
       if (!fixedWidth && this.width != textBounds.width) this.width = textBounds.width;
       this.embeddedMorphs.forEach(submorph => {
         const a = this.embeddedMorphMap.get(submorph).anchor;
-        a.position = a.position;
+        if (a) a.updateEmbeddedMorph();
       });
     };
     viewState._needsFit = false;

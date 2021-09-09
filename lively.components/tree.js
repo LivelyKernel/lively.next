@@ -50,11 +50,11 @@ export class Tree extends Text {
       nativeCursor: { defaultValue: 'auto' },
       selectable: { defaultValue: false },
       acceptsDrops: { defaultValue: false },
-      readOnly: { defaultValue: true },
       fixedWidth: { defaultValue: true },
       fixedHeight: { defaultValue: true },
       disableIndent: { defaultValue: false },
       activateOnHover: { defaultValue: true },
+      readOnly: { defaultValue: true },
       lineHeight: {
         defaultValue: 1.5
       },
@@ -323,6 +323,9 @@ export class Tree extends Text {
         this.cursorPosition = { row: 0, column: 0 };
         if (this.selectedIndex > 0) {
           this.renderSelectedLine(this.selectedIndex - 1);
+        } else {
+          const selection = this.getProperty('selection');
+          if (selection && !selection.isEmpty()) { selection.collapse(selection.lead); }
         }
       });
     } finally {
@@ -684,7 +687,6 @@ export class TreeData {
     }
   }
 }
-
 
 var treeCommands = [
 

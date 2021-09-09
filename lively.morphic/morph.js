@@ -212,13 +212,6 @@ export class Morph {
         defaultValue: true
       },
 
-      position: {
-        group: 'geometry',
-        type: 'Point',
-        isStyleProp: true,
-        defaultValue: pt(0, 0)
-      },
-
       origin: {
         group: 'geometry',
         type: 'Point',
@@ -226,11 +219,32 @@ export class Morph {
         defaultValue: pt(0, 0)
       },
 
+      position: {
+        group: 'geometry',
+        type: 'Point',
+        isStyleProp: true,
+        defaultValue: pt(0, 0),
+        get () {
+          if (this._askLayoutForBounds && this.owner && this.owner.layout) {
+            this._askLayoutForBounds = false;
+            this.owner.layout.updateBoundsFor(this);
+          }
+          return this.getProperty('position');
+        }
+      },
+
       extent: {
         group: 'geometry',
         type: 'Point',
         isStyleProp: true,
         defaultValue: pt(10, 10),
+        get () {
+          if (this._askLayoutForBounds && this.owner && this.owner.layout) {
+            this._askLayoutForBounds = false;
+            this.owner.layout.updateBoundsFor(this);
+          }
+          return this.getProperty('extent');
+        },
         set (ext) {
           const priorExtent = this.extent;
           this.setProperty('extent', ext);

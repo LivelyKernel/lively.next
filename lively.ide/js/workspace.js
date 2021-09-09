@@ -144,8 +144,10 @@ export default class Workspace extends Window {
           const f = await workspace.world().prompt(
             'Enter a file to save the workspace contents to',
             {
-              input: workspace.file ? workspace.file.url
-                : hist.length ? arr.last(hist)
+              input: workspace.file
+                ? workspace.file.url
+                : hist.length
+                  ? arr.last(hist)
                   : resource(System.baseURL).join('workspace.js').url,
               requester: workspace,
               historyId

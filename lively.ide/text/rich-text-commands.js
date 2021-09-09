@@ -8,10 +8,12 @@ function changeAttributeInSelectionOrMorph (target, name, valueOrFn) {
         ? valueOrFn(target[name])
         : valueOrFn;
     } else {
+      if (!target.undoManager) return;
       target.undoManager.group();
       target.changeStyleProperty(name,
         oldVal => typeof valueOrFn === 'function'
-          ? valueOrFn(oldVal) : valueOrFn);
+          ? valueOrFn(oldVal)
+          : valueOrFn);
       target.undoManager.group();
     }
   });
@@ -142,7 +144,8 @@ export var commands = [
     exec: function (morph, args = {}) {
       morph.undoManager.group();
       const range = !args.onlySelection && morph.selection.isEmpty()
-        ? morph.documentRange : morph.selection.range;
+        ? morph.documentRange
+        : morph.selection.range;
       morph.setStyleInRange(null, range);
       morph.undoManager.group();
       return true;

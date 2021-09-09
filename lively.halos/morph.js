@@ -121,6 +121,7 @@ export default class Halo extends Morph {
     const layout = this.layout = new GridLayout({
       autoAssign: false,
       fitToCell: false,
+      renderViaCSS: true,
       columns: [
         0, { fixed: 36, paddingRight: 10 },
         2, { fixed: 26 }, 4, { fixed: 26 },
@@ -142,7 +143,7 @@ export default class Halo extends Morph {
         [null, 'name', 'name', 'name', 'name', 'name', null]]
     });
 
-    layout.col(1).row(7).group.align = 'center';
+    layout.col(1).row(7).group.align = 'topCenter';
     layout.col(1).row(7).group.resize = false;
   }
 
@@ -217,10 +218,6 @@ export default class Halo extends Morph {
     const haloBounds = targetBounds.insetBy(-36).intersection(worldBounds);
     const boxBounds = targetBounds.intersection(worldBounds);
     // we could fix this, if instead of transforming to world coordinates, we just transform to halo coordinates
-    this.layout && this.layout.disable();
-
-    this.setBounds(haloBounds.translatedBy(world.scroll.negated())); // needs adhere to fixedness of halo
-    this.borderBox.setBounds($world.transformRectToMorph(this, boxBounds));
 
     if (this.state.activeButton) {
       this.buttonControls.forEach(ea => ea.visible = false);
@@ -236,10 +233,11 @@ export default class Halo extends Morph {
       }).forEach(b => { b.visible = true; });
       this.propertyDisplay.disable();
     }
+    this.setBounds(haloBounds.translatedBy(world.scroll.negated())); // needs adhere to fixedness of halo
+    this.borderBox.setBounds($world.transformRectToMorph(this, boxBounds));
     this.nameHalo().alignInHalo();
     this.ensureResizeHandles().forEach(h => h.alignInHalo());
     if (!this.resizeOnly) this.originHalo().alignInHalo();
-    this.layout && this.layout.enable();
     return this;
   }
 
@@ -472,6 +470,7 @@ export default class Halo extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   temporaryEditTextMorph (evt) {
+    if (!this.target.isText) return;
     const prevReadOnly = this.target.readOnly;
     this.target.readOnly = false;
     this.target.focus();
@@ -759,7 +758,13 @@ class NameHolder extends Morph {
       halo: {},
       layout: {
         after: ['nameHolder'],
-        initialize () { this.layout = new HorizontalLayout({ resizeContainer: true, spacing: 7 }); }
+        initialize () {
+          this.layout = new HorizontalLayout({
+            renderViaCSS: true,
+            resizeContainer: true,
+            spacing: 7
+          });
+        }
       },
       nameHolder: {
         after: ['submorphs'],
@@ -889,7 +894,7 @@ class NameHaloItem extends HaloItem {
     if (!target || target.isMorphSelection) return;
     if (target.master) {
       const appliedMaster = target.master.determineMaster(target);
-      const isLocal = appliedMaster && !!appliedMaster.world();
+      const isLocal = appliedMaster && !!target.world().localComponents.includes(appliedMaster);
       const linkToWorld = appliedMaster ? target.master.getWorldUrlFor(appliedMaster) : 'this project';
       const masterLink = this.addMorph(Icon.makeLabel(linkToWorld ? 'external-link-alt' : 'exclamation-triangle', {
         nativeCursor: 'pointer',
@@ -1030,6 +1035,8 @@ class CloseHaloItem extends HaloItem {
 
   onMouseDown (evt) { this.update(); }
 }
+
+// new NameHaloItem({ halo: window.__halo__ }).openInWorld()
 
 class GrabHaloItem extends HaloItem {
   static get morphName () { return 'grab'; }
@@ -1300,12 +1307,11 @@ class RotateHaloItem extends HaloItem {
   }
 
   detachFromLayout () {
-    this.savedLayout = this.halo.layout;
-    this.halo.layout = null;
+
   }
 
   attachToLayout () {
-    this.halo.layout = this.savedLayout;
+
   }
 
   // events
@@ -1776,8 +1782,6 @@ class ResizeHandle extends HaloItem {
     this.startPos = startPos;
     this.startBounds = position.subPt(origin).extent(extent);
     this.startOrigin = this.halo.target.origin;
-    this.savedLayout = this.halo.layout;
-    this.halo.layout = null;
     this.halo.state.activeButton = this;
     this.tfm = this.halo.target.getGlobalTransform().inverse();
     const globalRot = this.halo.target.getGlobalTransform().getRotation();
@@ -1817,8 +1821,7 @@ class ResizeHandle extends HaloItem {
   }
 
   stop (proportional) {
-    const { halo: h } = this;
-    h.layout = this.savedLayout;
+    let { halo: h } = this;
     h.state.activeButton = null;
     h.alignWithTarget();
     h.toggleDiagonal(false);

@@ -1,7 +1,7 @@
 import { arr, promise } from 'lively.lang';
 import { pt, LinearGradient, Color, Rectangle } from 'lively.graphics';
 import {
-  Label,
+  Label, GridLayout,
   morph,
   Morph,
   HorizontalLayout,
@@ -143,7 +143,11 @@ export default class Window extends Morph {
 
   async toggleFader (active) {
     const fader = this.getSubmorphNamed('fader') || this.addMorph({
-      name: 'fader', fill: Color.black.withA(0.5), opacity: 0, extent: this.extent
+      position: pt(0, 0),
+      name: 'fader',
+      fill: Color.black.withA(0.5),
+      opacity: 0,
+      extent: this.extent
     });
     if (active) {
       const shiftedBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(this.bounds());
@@ -176,31 +180,27 @@ export default class Window extends Morph {
   }
 
   relayoutWindowControls () {
-    try {
-      const innerB = this.innerBounds();
-      const title = this.ui.windowTitle;
-      const resizer = this.ui.resizer;
-      const labelBounds = innerB.withHeight(25);
-      const header = this.ui.header;
-      const lastButtonOrWrapper = this.ui.windowControls;
-      const buttonOffset = lastButtonOrWrapper.bounds().right() + 3;
-      const minLabelBounds = labelBounds.withLeftCenter(pt(buttonOffset, labelBounds.height / 2));
+    const innerB = this.innerBounds();
+    const title = this.ui.windowTitle;
+    const resizer = this.ui.resizer;
+    const labelBounds = innerB.withHeight(25);
+    const header = this.ui.header;
+    const lastButtonOrWrapper = this.ui.windowControls;
+    const buttonOffset = lastButtonOrWrapper.bounds().right() + 3;
+    const minLabelBounds = labelBounds.withLeftCenter(pt(buttonOffset, labelBounds.height / 2));
 
-      // resizer
-      resizer.bottomRight = innerB.bottomRight();
+    // resizer
+    resizer.bottomRight = innerB.bottomRight();
 
-      // targetMorph
-      if (!this.minimized && this.targetMorph && this.targetMorph.isLayoutable) this.targetMorph.setBounds(this.targetMorphBounds());
+    // title
+    title.textBounds().width < labelBounds.width - 2 * buttonOffset
+      ? (title.center = labelBounds.center())
+      : (title.leftCenter = minLabelBounds.leftCenter());
 
-      // title
-      title.textBounds().width < labelBounds.width - 2 * buttonOffset
-        ? (title.center = labelBounds.center())
-        : (title.leftCenter = minLabelBounds.leftCenter());
+    // targetMorph
+    if (!this.minimized && this.targetMorph && this.targetMorph.isLayoutable) { this.targetMorph.setBounds(this.targetMorphBounds()); }
 
-      header.width = this.width;
-    } catch (err) {
-
-    }
+    header.width = this.width;
   }
 
   ensureNotOverTheTop () {

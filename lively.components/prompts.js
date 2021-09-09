@@ -213,6 +213,7 @@ export class ConfirmPrompt extends AbstractPrompt {
       this.whenRendered().then(() => {
         title.lineWrapping = this.lineWrapping;
         const center = this.center;
+        title.invalidateTextLayout(true, true);
         this.width = Math.max(this.width, title.document.width + 100);
         this.center = center;
         this.opacity = 1;
@@ -223,6 +224,7 @@ export class ConfirmPrompt extends AbstractPrompt {
   resolve () { super.resolve(true); }
   reject () { super.resolve(false); }
 }
+
 
 // new MultipleChoicePrompt({ label: 'hallo', choices: [1,2,3]}).openInWorld()
 
@@ -666,14 +668,6 @@ export class ListPrompt extends AbstractPrompt {
     };
   }
 
-  onChange (change) {
-    super.onChange(change);
-    if (change.prop == 'extent' && this.layout && !this.layout.active) {
-      const delta = change.value.subPt(change.prevValue);
-      this.getSubmorphNamed('prompt list').height += delta.y;
-    }
-  }
-
   getMaster () {
     return this.filterable ? 'styleguide://SystemPrompts/prompts/list' : 'styleguide://SystemPrompts/prompts/edit list';
   }
@@ -684,10 +678,6 @@ export class ListPrompt extends AbstractPrompt {
 
   build ({
     label,
-    listFontSize,
-    listFontFamily,
-    labelFontSize,
-    labelFontFamily,
     filterable,
     padding,
     itemPadding,
@@ -699,12 +689,7 @@ export class ListPrompt extends AbstractPrompt {
     actions, selectedAction, theme, items,
     onSelection, onFilter
   }) {
-    this.extent = extent || pt(500, 400);
-    labelFontFamily = labelFontFamily || 'Helvetica Neue, Arial, sans-serif';
-    labelFontSize = labelFontSize || 15;
-    listFontFamily = listFontFamily || 'Monaco, monospace';
-    listFontSize = listFontSize || 12;
-
+    this.extent = extent || pt(500, 500);
     const title = this.addNamed('promptTitle', {
       type: 'text'
     });
@@ -770,6 +755,7 @@ export class ListPrompt extends AbstractPrompt {
 
   focus () { this.getSubmorphNamed('prompt list').focus(); }
 }
+
 
 export class EditListPrompt extends ListPrompt {
   static async example () {

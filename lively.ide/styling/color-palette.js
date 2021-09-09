@@ -1,16 +1,26 @@
 import {
-  Color, rect, Complementary, Triadic, Tetradic,
-  Quadratic, Analogous, Neutral, pt, Point,
-  flatDesignColors, materialDesignColors, webSafeColors
+  Color,
+  Complementary,
+  Triadic,
+  Tetradic,
+  Quadratic,
+  Analogous,
+  Neutral,
+  pt,
+  Point,
+  flatDesignColors,
+  materialDesignColors,
+  webSafeColors
 } from 'lively.graphics';
 import {
-  Morph, CustomLayout, VerticalLayout, HorizontalLayout,
-  Text, TilingLayout, Ellipse, Image, StyleSheet
+  Morph,
+  Text,
+  Ellipse,
+  Image
 } from 'lively.morphic';
 import { DropDownSelector, ModeSelector, Slider } from 'lively.components/widgets.js';
 import { connect, signal } from 'lively.bindings';
 import { num, arr } from 'lively.lang';
-import { SnapLayout } from 'lively.morphic/layout.js';
 
 const WHEEL_URL = '/lively.ide/assets/color-wheel.png';
 

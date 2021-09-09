@@ -159,31 +159,6 @@ export class SearchWidget extends Morph {
         }
       },
 
-      layout: {
-        initialize () {
-          this.layout = new GridLayout({
-            groups: {
-              nextButton: { resize: false },
-              prevButton: { resize: false },
-              acceptButton: { resize: false },
-              cancelButton: { resize: false }
-            },
-            rows: [0, { fixed: 28, paddingTop: 5, paddingBottom: 2.5 },
-              1, { fixed: 28, paddingTop: 2.5, paddingBottom: 5 }],
-            columns: [0, { paddingLeft: 5, paddingRight: 5 },
-              1, { fixed: 25 },
-              2, { fixed: 25 },
-              3, { fixed: 5 },
-              4, { fixed: 25 },
-              5, { fixed: 25 },
-              6, { fixed: 10 }
-            ],
-            grid: [['searchInput', 'nextButton', 'prevButton', null, 'acceptButton', 'cancelButton', null],
-              ['replaceInput', 'replaceButton', 'replaceButton', null, 'replaceAllButton', 'replaceAllButton', null]]
-          });
-        }
-      },
-
       submorphs: {
         after: ['extent'],
         initialize () {
@@ -647,8 +622,10 @@ export var searchCommands = [
   {
     name: 'search in text',
     exec: (morph, opts = { backwards: false }) => {
+      // update text/commands!
       const search = morph._searchWidget ||
-        (morph._searchWidget = new SearchWidget({ target: morph, extent: pt(300, 20) }));
+        (morph._searchWidget = new SearchWidget({ target: morph, extent: pt(300, 55) }));
+      search.fontFamily = 'IBM Plex Mono';
       search.state.backwards = opts.backwards;
       search.prepareForNewSearch();
 
