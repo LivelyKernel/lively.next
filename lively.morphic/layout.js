@@ -16,7 +16,6 @@ class Layout {
     this.applyRequests = false;
     this.border = { top: 0, left: 0, right: 0, bottom: 0, ...border };
     this.ignore = ignore || [];
-    this.lastBoundsExtent = this.container && this.container.bounds().extent();
     this.active = false;
     this.container = container;
     this.manualUpdate = manualUpdate;
@@ -113,6 +112,7 @@ class Layout {
 
   refreshBoundsCache () {
     this.lastExtent = this.container.extent;
+    this.lastBoundsExtent = this.container.bounds().extent();
     this.layoutableSubmorphBounds = this.layoutableSubmorphs.map(m => m.bounds());
   }
 
@@ -253,7 +253,7 @@ class Layout {
 export class TilingLayout extends Layout {
   constructor (props = {}) {
     super(props);
-    this._renderViaCSS = props.renderViaCSS || true;
+    this._renderViaCSS = typeof props.renderViaCSS !== 'undefined' ? props.renderViaCSS : true;
     this._axis = props.axis || 'row';
     this._align = props.align || 'left';
     this._verticalAlign = props.verticalAlign || 'top';
@@ -848,6 +848,7 @@ export class TilingLayout extends Layout {
       layoutableSubmorphs, padding, wrapSubmorphs,
       justifySubmorphs, hugContentsVertically, hugContentsHorizontally
     } = this;
+    const morphsToLayout = [...layoutableSubmorphs];
     const spaceSubmorphs = justifySubmorphs == 'spaced';
     const length = this.getOptimalWidth(container);
     const isHorizontal = axis == 'row';
@@ -857,14 +858,15 @@ export class TilingLayout extends Layout {
     const normalizedBreadthAccessor = isHorizontal ? 'y' : 'x';
     let posAccessor;
     if (axisAlign == 'left') posAccessor = 'topLeft';
-    if (axisAlign == 'right') posAccessor = 'bottomLeft';
-    if (axisAlign == 'center') posAccessor = 'leftCenter';
+    if (axisAlign == 'right') posAccessor = 'topRight';
+    if (axisAlign == 'center') posAccessor = 'topCenter';
+    // this.align = 'right'
     let axisToPositions = [];
     let currentAxis;
 
-    while (layoutableSubmorphs.length) {
+    while (morphsToLayout.length) {
       var remainingLength = length + spacing;
-      let morphsOnAxis = arr.takeWhile(layoutableSubmorphs, m => {
+      let morphsOnAxis = arr.takeWhile(morphsToLayout, m => {
         const ext = m.bounds().extent();
         const newLength = remainingLength - (Math.round(ext[normalizedLengthAccessor]) + spacing);
         if (wrapSubmorphs && newLength < 0) return false;
@@ -872,9 +874,9 @@ export class TilingLayout extends Layout {
         return true;
       });
 
-      if (morphsOnAxis.length > 0) layoutableSubmorphs.splice(0, morphsOnAxis.length);
+      if (morphsOnAxis.length > 0) morphsToLayout.splice(0, morphsOnAxis.length);
       else {
-        morphsOnAxis = [layoutableSubmorphs.shift()];
+        morphsOnAxis = [morphsToLayout.shift()];
         remainingLength = 0;
       }
 
@@ -902,6 +904,7 @@ export class TilingLayout extends Layout {
             fixedHeight += m.height;
           } else numDynamic++;
         }
+        this.forceLayoutsOfMorph(m);
       });
 
       // make the morphs occupy the flexible width remaining that fill in the direction of the axis
@@ -944,11 +947,11 @@ export class TilingLayout extends Layout {
           case 'center':
             offset = remainingLength / 2 + padding[lengthAccessor](); break;
           case 'right':
-            offset = remainingLength - padding[lengthAccessor](); break; // ???
+            offset = remainingLength + padding[lengthAccessor](); break; // ???
         }
 
         for (const m of morphsOnAxis) {
-          currentAxis.push([m, offset]);
+          currentAxis.push([m, num.roundTo(offset, 1)]);
           offset = offset + spacing + m.bounds().extent()[normalizedLengthAccessor];
         }
       }
@@ -959,7 +962,7 @@ export class TilingLayout extends Layout {
 
     if (this.axisAlign == 'center') {
       let totalBreadth = -spacing;
-      axisToPositions.map(([axisBreadth]) => totalBreadth += axisBreadth + spacing);
+      axisToPositions.forEach(([axisBreadth]) => totalBreadth += axisBreadth + spacing);
       currentOffset = container.extent[normalizedBreadthAccessor] / 2 - totalBreadth / 2;
       axisToPositions.map(([axisBreadth]) => {
         breadthOffsets.push(currentOffset + axisBreadth / 2);
@@ -968,7 +971,7 @@ export class TilingLayout extends Layout {
     }
 
     if (this.axisAlign == 'right') {
-      currentOffset = container.extent[normalizedBreadthAccessor] - padding.bottom();
+      currentOffset = container.extent[normalizedBreadthAccessor] - (isHorizontal ? padding.bottom() : padding.right());
       axisToPositions = axisToPositions.reverse();
       axisToPositions.map(([axisBreadth]) => {
         breadthOffsets.push(currentOffset);
@@ -977,7 +980,7 @@ export class TilingLayout extends Layout {
     }
 
     if (this.axisAlign == 'left') {
-      currentOffset = padding.top();
+      currentOffset = isHorizontal ? padding.top() : padding.left();
       axisToPositions.map(([axisBreadth]) => {
         breadthOffsets.push(currentOffset);
         currentOffset += spacing;
@@ -1010,22 +1013,22 @@ export class TilingLayout extends Layout {
   }
 
   getMinWidth () {
-    const { layoutableSubmorphs, border: { left, right } } = this;
+    const { layoutableSubmorphs, padding } = this;
     return layoutableSubmorphs.reduce((s, m) =>
-      (m.bounds().width > s) ? m.bounds().width : s, 0) + left + right;
+      (m.bounds().width > s) ? m.bounds().width : s, 0) + padding.left() + padding.right();
   }
 
   getMinHeight () {
-    const { layoutableSubmorphs, border: { top, bottom } } = this;
+    const { layoutableSubmorphs, padding } = this;
     return layoutableSubmorphs.reduce((s, e) =>
-      (e.bounds().height > s) ? e.bounds().height : s, 0) + top + bottom;
+      (e.bounds().height > s) ? e.bounds().height : s, 0) + padding.top() + padding.bottom();
   }
 
   getOptimalWidth (container) {
-    const { axis, border: { left, top, right, bottom } } = this;
+    const { axis, padding } = this;
     const width = axis == 'row'
-      ? container.width - left - right
-      : container.height - top - bottom;
+      ? container.width - padding.left() - padding.right()
+      : container.height - padding.top() - padding.bottom();
     const maxSubmorphWidth = axis == 'row' ? this.getMinWidth() : this.getMinHeight();
     return Math.max(width, maxSubmorphWidth);
   }
@@ -1040,7 +1043,7 @@ export class TilingLayout extends Layout {
 
 export class VerticalLayout extends TilingLayout {
   constructor (props) {
-    super();
+    super({ renderViaCSS: props.renderViaCSS });
     this.align = props.align || 'left';
     this.resizeSubmorphs = props.resizeSubmorphs || false;
     this.direction = props.direction || 'topToBottom';
@@ -1121,7 +1124,7 @@ export class VerticalLayout extends TilingLayout {
 
 export class HorizontalLayout extends TilingLayout {
   constructor (props) {
-    super();
+    super({ renderViaCSS: props.renderViaCSS });
     this.align = props.align || 'top';
     this.resizeSubmorphs = props.resizeSubmorphs || false;
     this.direction = props.direction || 'leftToRight';
@@ -2447,7 +2450,7 @@ export class GridLayout extends Layout {
     config = { autoAssign: true, fitToCell: true, ...config };
     this.cellGroups = [];
     this.config = config;
-    this.renderViaCSS = config.renderViaCSS || true;
+    this.renderViaCSS = typeof config.renderViaCSS !== 'undefined' ? config.renderViaCSS : true;
   }
 
   /**
