@@ -2,6 +2,7 @@ import { arr, properties, Path, promise, obj } from 'lively.lang';
 import { registerExtension, Resource, resource } from 'lively.resources';
 import { pt } from 'lively.graphics';
 import MorphicDB from './morphicdb/db.js';
+import { ProportionalLayout } from './layout.js';
 import { ObjectPool, allPlugins, normalizeOptions } from 'lively.serializer2';
 import { deserializeMorph, loadPackagesAndModulesOfSnapshot } from './serialization.js';
 import { subscribeOnce } from 'lively.notifications/index.js';
@@ -367,11 +368,17 @@ export class ComponentPolicy {
   getStyleProperties (masterComponent) {
     const { properties, order } = masterComponent.propertiesAndPropertySettings();
     const styleProps = [];
+    let foundLayout = false;
     for (const prop of order) {
+      if (prop == 'layout') {
+        foundLayout = true; // layouts can be sensitive to initial state, so apply them last always
+        continue;
+      }
       if (properties[prop].isStyleProp) {
         styleProps.push(prop);
       }
     }
+    if (foundLayout) styleProps.push('layout');
     return styleProps;
   }
 
@@ -410,7 +417,19 @@ export class ComponentPolicy {
           }
 
           for (const propName of this.getStyleProperties(masterSubmorph)) {
-            if (this._overriddenProps.get(morphToBeStyled)[propName]) continue;
+            if (this._overriddenProps.get(morphToBeStyled)[propName]) {
+              if (propName == 'extent' &&
+                  Path('owner.layout.constructor').get(morphToBeStyled) == ProportionalLayout &&
+                  !morphToBeStyled.master && !isRoot) {
+                // still apply initially since extents can be valuable for layouts even if they ovverride them
+                if (this._appliedMaster) {
+                  // do not do this when we have been already applied once!
+                  continue;
+                }
+              } else {
+                continue;
+              }
+            }
             // secial handling for ... layout (copy())
             if (propName == 'layout') {
               if (morphToBeStyled.layout && masterSubmorph.layout &&
@@ -795,6 +814,17 @@ var fetchedSnapshots = fetchedSnapshots || {};
 var fetchedMasters = fetchedMasters || {};
 var resolvedMasters = resolvedMasters || {};
 
+/*
+async function findUnresolvedMasters() {
+  const masterNames = new Set(Object.keys(fetchedMasters));
+  Object.entries(fetchedMasters).forEach(([key, val]) => {
+    val.then(() => masterNames.delete(key))
+  })
+  await promise.delay(100)
+  return [...masterNames]
+}
+await findUnresolvedMasters()
+*/
 var modulesToLoad = modulesToLoad || {};
 
 let li;
