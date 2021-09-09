@@ -199,21 +199,21 @@ function prepareInstanceForProperties (instance, propertySettings, properties, v
   let initActions = {};
 
   // 1. this[valueStoreProperty] is were the actual values will be stored
-  if (!instance.hasOwnProperty(valueStoreProperty)) { instance[valueStoreProperty] = {}; }
+  if (typeof instance[valueStoreProperty] === 'undefined') { instance[valueStoreProperty] = {}; }
 
   for (var i = 0; i < sortedKeys.length; i++) {
     let key = sortedKeys[i];
     let descriptor = properties[key];
 
     let derived = descriptor.derived; let foldable = !!descriptor.foldable;
-    let defaultValue = descriptor.hasOwnProperty('defaultValue')
+    let defaultValue = typeof descriptor.defaultValue !== 'undefined'
       ? descriptor.defaultValue
       : undefined;
     if (Array.isArray(defaultValue)) defaultValue = defaultValue.slice();
     if (!derived && !foldable) instance[valueStoreProperty][key] = defaultValue;
 
     let initAction;
-    if (descriptor.hasOwnProperty('initialize')) {
+    if (typeof descriptor.initialize !== 'undefined') {
       initAction = initActions[key] = { initialize: defaultValue };
       propsNeedingInitialize.push(key);
     } else if (derived && defaultValue !== undefined) {

@@ -893,8 +893,8 @@ export class Morph {
       if (
         descr.readOnly ||
         descr.derived ||
-        obj.equals(this[key], defaults[key]) ||
-        (descr.hasOwnProperty('serialize') && !descr.serialize)
+        (descr.hasOwnProperty('serialize') && !descr.serialize) ||
+        obj.equals(this[key], defaults[key])
       ) continue;
       propsToSerialize.push(key);
     }
@@ -1209,9 +1209,12 @@ export class Morph {
 
   onBoundsChanged (bounds) {
     signal(this, 'bounds', bounds);
-    [...bounds.corners, ...bounds.sides].forEach(c => {
+    for (let c of bounds.corners) {
       signal(this, c, bounds.partNamed(c));
-    });
+    }
+    for (let c of bounds.sides) {
+      signal(this, c, bounds.partNamed(c));
+    }
   }
 
   onSubmorphChange (change, submorph) {
@@ -1883,7 +1886,7 @@ export class Morph {
       p.x = p.x + this.position.x - this.scroll.x;
       p.y = p.y + this.position.y - this.scroll.y;
     }
-    for (const [d, m] of this.pathToMorph(other)) {
+    for (const [d, m] of pathToMorph) {
       if (this != m && d == 'up') {
         p.x -= m.scroll.x;
         p.y -= m.scroll.y;
@@ -1938,21 +1941,23 @@ export class Morph {
   pathToMorph (other) {
     let path;
     if (path = this._cachedPaths[other.id]) return path;
+    path = [];
     const commonRoot = this.closestCommonAncestor(other) || this;
-    let morph = this; const down = []; const up = [];
+    let morph = this;
     commonRoot._addPathDependant(this);
     while (morph && morph != commonRoot) {
-      up.push(['up', morph]);
+      path.push(['up', morph]);
       morph._addPathDependant(this);
       morph = morph.owner;
     }
     morph = other;
+    const firstDownIndex = path.length;
     while (morph && morph != commonRoot) {
-      down.push(['down', morph]);
+      arr.pushAt(path, ['down', morph], firstDownIndex);
       morph._addPathDependant(this);
       morph = morph.owner;
     }
-    this._cachedPaths[other.id] = path = [...up, ...down.reverse()];
+    this._cachedPaths[other.id] = path;
     return path;
   }
 
