@@ -215,16 +215,18 @@ export class Tree extends Text {
     }
     this.document.setTextAndAttributesOfLine(row, attrs);
     this.selectLine(row, true);
-    this._lastSelectedIndex = this.selectedIndex;
+    this._lastSelectedIndex = row + 1;
   }
 
   computeTreeAttributes (nodes) {
     if (!nodes.length) return [];
-    let containerTextAndAttributes = arr.genN(8 * (nodes.length - 1), () => null);
+    let containerTextAndAttributes = arr.genN(8 * (nodes.length - 1), () => undefined);
     let i = 1; let j; let isSelected; let toggleWidth = this.disableIndent ? 0 : this.fontSize * 1.3;
+    let offset = 0;
+    const { selectedIndex } = this;
     for (; i < nodes.length; i++) {
-      j = 8 * (i - 1);
-      isSelected = this.selectedIndex == i;
+      j = 8 * (i - 1) + offset;
+      isSelected = selectedIndex == i;
       nodes[i].node.isSelected = isSelected;
       // indent
       containerTextAndAttributes[j] = ' ';
@@ -263,10 +265,14 @@ export class Tree extends Text {
         displayedNode.fontColor = this.nonSelectionFontColor;
       }
 
-      containerTextAndAttributes[j + 4] = displayedNode;
       if (arr.isArray(displayedNode)) {
-        containerTextAndAttributes[j + 5] = [];
+        displayedNode = arr.flatten(displayedNode);
+        arr.pushAllAt(containerTextAndAttributes, displayedNode, j + 4);
+        const increment = Math.max(0, displayedNode.length - 2);
+        j += increment;
+        offset += increment;
       } else {
+        containerTextAndAttributes[j + 4] = displayedNode;
         containerTextAndAttributes[j + 5] = {
           fontColor: this.fontColor
         };
@@ -278,7 +284,9 @@ export class Tree extends Text {
       fontSize: this.fontSize * 1.3,
       textStyleClasses: ['far']
     });
-    return nodes.length > 1 ? arr.flatten(containerTextAndAttributes) : [];
+    console.log(containerTextAndAttributes);
+    containerTextAndAttributes = containerTextAndAttributes.filter(v => typeof v !== 'undefined');
+    return nodes.length > 1 ? containerTextAndAttributes : [];
   }
 
   update (force) {
