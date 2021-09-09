@@ -545,9 +545,19 @@ export default class TestRunner extends HTMLMorph {
     });
   }
 
+  ensureScrollPosition () {
+    let [currentSuites] = this.domNode.getElementsByClassName('suites');
+    currentSuites.scrollTop = this._currentScrollY || 0;
+  }
+
   get htmlRef () {
     // get a reference from plain html to this = test runner
     return `System.get(System.normalizeSync('lively.morphic')).MorphicEnv.default().world.getMorphWithId('${this.id}')`;
+  }
+
+  afterRenderHook () {
+    // when the vdom removes us temporarily from the dom we loose the scroll state
+    this.ensureScrollPosition();
   }
 
   async renderTests (state) {
@@ -568,10 +578,6 @@ export default class TestRunner extends HTMLMorph {
               .join('\n'));
     }
 
-    let currentScrollY = 0;
-    let [currentSuites] = this.domNode.getElementsByClassName('suites');
-    if (currentSuites) currentScrollY = currentSuites.scrollTop;
-
     this.html = `
        <div class="mocha-test-runner">
        <div class="controls" ${this.showControls ? '' : 'style="display: none;"'}>
@@ -583,8 +589,11 @@ export default class TestRunner extends HTMLMorph {
        <div class="suites">${renderedFiles.join('\n')}</div>
        <div>`;
     await this.whenRendered();
-    ([currentSuites] = this.domNode.getElementsByClassName('suites'));
-    currentSuites.scrollTop = currentScrollY;
+    let [currentSuites] = this.domNode.getElementsByClassName('suites');
+    currentSuites.onscroll = () => {
+      this._currentScrollY = currentSuites.scrollTop;
+    };
+    this.ensureScrollPosition();
   }
 
   renderTest (test, testsAndSuites, file, collapsed) {
@@ -767,3 +776,4 @@ export default class TestRunner extends HTMLMorph {
     } finally { i.remove(); }
   }
 }
+

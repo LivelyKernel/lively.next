@@ -51,6 +51,7 @@ class CustomVNode {
     // both include the same virtual placeholder, the customNode
     // will be left alone by the patch operation
     patch(domNode, patches);
+    if (this.morph.afterRenderHook) this.morph.afterRenderHook();
     return null;
   }
 
@@ -204,7 +205,6 @@ export class HTMLMorph extends Morph {
     return items;
   }
 }
-
 
 export class IFrameMorph extends HTMLMorph {
   static async example () {
