@@ -180,6 +180,9 @@ export class PackageTreeData extends TreeData {
   displayDeclaration (decl) {
     let icon = [];
     switch (decl.type) {
+      case 'class-class-method':
+        icon = ['static ', {}];
+        break;
       case 'class-instance-method':
       case 'function-decl':
         icon = Icon.textAttribute('dice-d6', {
@@ -221,7 +224,7 @@ export class PackageTreeData extends TreeData {
         icon = ['set ', null];
         break;
     }
-    return [...icon, ' ' + string.truncate(decl.name || '[PARSE_ERROR]', 19, '…'), null];
+    return [...icon, ' ' + string.truncate(decl.name || '[PARSE_ERROR]', 18, '…'), null];
   }
 
   displayPackage (pkg) {
@@ -254,7 +257,7 @@ export class PackageTreeData extends TreeData {
         fontColor: isSelected ? Color.white : COLORS.js,
         opacity: isLoaded ? 1 : 0.5
       }),
-      ' ' + string.truncate(mod, 26, '…'), null
+      ' ' + string.truncate(mod, 24, '…'), null
     ];
   }
 
@@ -1055,7 +1058,7 @@ export default class Browser extends Morph {
       const win = this.getWindow();
 
       // fixme: actuall perform that in the conext of the module
-      if (await isTestModule(await system.moduleRead(m.url))) {
+      if (this.isTestModule(await system.moduleRead(m.url))) {
         await this.loadES6Mocha();
       }
 
@@ -1656,12 +1659,11 @@ export default class Browser extends Morph {
     if (!selectedPackage) return;
     if (!m.package() || m.package().address !== selectedPackage.address) return;
 
-    const mInList = this.ui.moduleList.values.find(ea => ea.url === m.id);
-    if (selectedModule && selectedModule.url === m.id && mInList) {
+    if (selectedModule && selectedModule.url === m.id) {
       if (this.hasUnsavedChanges()) {
         this.addModuleChangeWarning(m.id);
         this.state.sourceHash = string.hashCode(await m.source());
-      } else await this.ui.sourceEditor.saveExcursion(() => this.onModuleSelected(mInList));
+      } else await this.ui.sourceEditor.saveExcursion(() => this.onModuleSelected(selectedModule));
     }
   }
 
@@ -1671,21 +1673,21 @@ export default class Browser extends Morph {
     const m = modules.module(evt.module);
     const { selectedModule, selectedPackage } = this;
 
-    if (!selectedPackage || !m.package() || m.package().address !== selectedPackage.address) { return; }
+    if (!selectedPackage || !m.package() || m.package().address !== selectedPackage.address) { }
 
-    // add new module to list
-    let mInList = this.ui.moduleList.values.find(ea => ea.url === m.id);
-    if (!mInList) {
-      await this.updateModuleList();
-      mInList = this.ui.moduleList.values.find(ea => ea.url === m.id);
-    }
-
-    if (selectedModule && selectedModule.url === m.id && mInList) {
-      if (this.hasUnsavedChanges()) {
-        this.addModuleChangeWarning(m.id);
-        this.state.sourceHash = string.hashCode(await m.source());
-      } else await this.ui.sourceEditor.saveExcursion(() => this.onModuleSelected(mInList));
-    }
+    // fixme: add new module to list
+    // let mInList = this.ui.moduleList.values.find(ea => ea.url === m.id);
+    // if (!mInList) {
+    //   await this.updateModuleList();
+    //   mInList = this.ui.moduleList.values.find(ea => ea.url === m.id);
+    // }
+    //
+    // if (selectedModule && selectedModule.url === m.id && mInList) {
+    //   if (this.hasUnsavedChanges()) {
+    //     this.addModuleChangeWarning(m.id);
+    //     this.state.sourceHash = string.hashCode(await m.source());
+    //   } else await this.ui.sourceEditor.saveExcursion(() => this.onModuleSelected(mInList));
+    // }
   }
 
   addModuleChangeWarning (mid) {
@@ -1791,4 +1793,3 @@ export default class Browser extends Morph {
     ].filter(Boolean);
   }
 }
-
