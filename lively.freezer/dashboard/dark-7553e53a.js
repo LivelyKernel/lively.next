@@ -1,1 +1,0 @@
-System.register(["./__root_module__-db735625.js","./object-classes-d20badfc.js","./user-ui-f27547c5.js","./index-1a2d973b.js"],function(){return{setters:[function(){},function(){},function(){},function(){}],execute:function(){}}});
