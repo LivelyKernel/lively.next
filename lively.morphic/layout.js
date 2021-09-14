@@ -225,15 +225,7 @@ class Layout {
   }
 
   ensureBoundsMonitor (node, morph) {
-    // if (!morph.isLayoutable) return;
-    // let observer = this._resizeObservers.get(morph);
-    // if (observer) return observer;
-    // observer = new window.ResizeObserver(([entry]) => {
-    //   this.onDomResize(observer, entry, morph);
-    // });
-    // observer.observe(node);
-    // this._resizeObservers.set(morph, observer);
-    // return observer;
+    // fixme: rename this method. bounds monitors are not longer used.
   }
 }
 
@@ -246,10 +238,6 @@ class Layout {
   wrapping enabled.
 */
 
-// fixme:Make Tiling Layout to everything that vertical and horizontal layouts do (and more).
-//       Then make make horizontal and vertical layout primitive subclasses of tiling layout.
-//       After that, gradually replace horizontal and vertical layout by Tiling Layout
-//       rename Tiling Layout to AutoLayout
 export class TilingLayout extends Layout {
   constructor (props = {}) {
     super(props);
@@ -313,6 +301,16 @@ export class TilingLayout extends Layout {
         });
       });
     }
+  }
+
+  get reactToSubmorphAnimations () {
+    return this._reactToSubmorphAnimations;
+  }
+
+  set reactToSubmorphAnimations (v) {
+    if (v == true) debugger;
+    if (this._reactToSubmorphAnimations) debugger;
+    this._reactToSubmorphAnimations = v;
   }
 
   get resizePolicies () {
@@ -525,14 +523,14 @@ export class TilingLayout extends Layout {
    * to the browser, we need to confirm the definite bounds of
    * the layoutable submorphs from there.
    */
-  onDomResize (observer, entry, morph) {
-    const { contentRect, target } = entry;
+  onDomResize (node, morph) {
+    if (morph == this.container) { return this.updateContainerViaDom(node, true); }
 
-    if (morph == this.container) { return this.updateContainerViaDom(contentRect, true, target); }
-
-    morph.withMetaDo({ isLayoutAction: true }, () => {
-      this.updateSubmorphViaDom(morph, target, contentRect, true);
-    });
+    if (morph) {
+      morph.withMetaDo({ isLayoutAction: true }, () => {
+        this.updateSubmorphViaDom(morph, node, true);
+      });
+    }
   }
 
   /**
@@ -567,7 +565,7 @@ export class TilingLayout extends Layout {
     const renderer = aSubmorph.env.renderer;
     const node = renderer && renderer.getNodeForMorph(aSubmorph);
     if (node && this.orderByIndex) { // ordering via dragging does not really work nicely...
-      this.updateSubmorphViaDom(aSubmorph, node, node.getBoundingClientRect());
+      this.updateSubmorphViaDom(aSubmorph, node);
     } else {
       this.measureAfterRender(aSubmorph);
     }
@@ -580,21 +578,22 @@ export class TilingLayout extends Layout {
    * @params { HTMLRect } contentRect - The bounding client rect of the node found in the dom.
    * @params { Boolean } makeDirty - Wether or not to update the morph
    */
-  updateSubmorphViaDom (morph, node, contentRect, makeDirty = false) {
+  updateSubmorphViaDom (morph, node, makeDirty = false) {
     const { borderWidthLeft, borderWidthTop } = this.container;
     const newPosX = Math.floor(node.offsetLeft + borderWidthLeft);
     const newPosY = Math.floor(node.offsetTop + borderWidthTop);
-    const newWidth = Math.floor(contentRect.width);
-    const newHeight = Math.floor(contentRect.height);
+    const newWidth = Math.floor(node.offsetWidth);
+    const newHeight = Math.floor(node.offsetHeight);
     const heightPolicy = this.getResizeHeightPolicyFor(morph);
     const widthPolicy = this.getResizeWidthPolicyFor(morph);
     const policy = this._resizePolicies.get(morph);
+    let updateTransform = false;
     if (newPosX != morph.position.x || newPosY != morph.position.y) {
       if (makeDirty) {
         morph.position = pt(newPosX, newPosY);
       } else {
         morph._morphicState.position = pt(newPosX, newPosY);
-        morph.updateTransform({ position: morph.position });
+        updateTransform = true;
         signal(morph, 'position', morph.position); // still notify connections
       }
     }
@@ -602,8 +601,8 @@ export class TilingLayout extends Layout {
     if (widthPolicy == 'fill' && newWidth != morph.width) {
       if (makeDirty) morph.width = newWidth;
       else {
-        morph.extent.x = newWidth;
-        morph.updateTransform({ extent: morph.extent });
+        morph._morphicState.extent = morph.extent.withX(newWidth);
+        updateTransform = true;
         signal(morph, 'extent', morph.extent);
         if (morph.layout && morph.layout.name() == 'Proportional') {
           morph.layout.applyRequests = true;
@@ -614,14 +613,19 @@ export class TilingLayout extends Layout {
     if (heightPolicy == 'fill' && newHeight != morph.height) {
       if (makeDirty) morph.height = newHeight;
       else {
-        morph.extent.y = newHeight;
-        morph.updateTransform({ extent: morph.extent });
-        signal(morph, 'extent', morph.extent);
+        morph._morphicState.extent = morph.extent.withY(newHeight);
+        updateTransform = true;
+        signal(morph, 'extent', morph.extent); // does not update the halo!
       }
     }
 
     if (morph.layout && morph.layout.renderViaCSS) {
-      morph.layout.updateContainerViaDom(contentRect);
+      morph.layout.onDomResize(node, morph);
+    }
+
+    if (updateTransform) {
+      // trigger the halo if needed
+      morph.updateTransform();
     }
   }
 
@@ -630,10 +634,11 @@ export class TilingLayout extends Layout {
    * @params { HTMLRect } contentRect - The bounding client rect of the node found in the dom.
    * @params { Boolean } makeDirty - Wether or not to update the morph
    */
-  updateContainerViaDom (contentRect, makeDirty = false, node) {
+  updateContainerViaDom (node, makeDirty = false) {
     const { container, hugContentsVertically, hugContentsHorizontally } = this;
-    const width = Math.round(contentRect.width);
-    const height = Math.round(contentRect.height);
+    if (!node) node = container.env.renderer.getNodeForMorph(container);
+    const width = Math.round(node.offsetWidth);
+    const height = Math.round(node.offsetHeight);
     if (width == 0 && height == 0) return; // we are probably not rendered
     if (node && this.hasEmbeddedContainer()) node.style.setProperty('display', 'inline-flex', 'important');
     if (this.container.submorphs.length > 0) {
@@ -654,7 +659,7 @@ export class TilingLayout extends Layout {
   updateBoundsFor (morph) {
     const node = morph.env.renderer.getNodeForMorph(morph);
     if (node) {
-      this.updateSubmorphViaDom(morph, node, node.getBoundingClientRect());
+      this.updateSubmorphViaDom(morph, node);
     } else {
       // delay update to after render
       this.measureAfterRender(morph);
@@ -670,7 +675,11 @@ export class TilingLayout extends Layout {
     const clip = morph.clipMode != 'visible';
     const isVertical = axis == 'column';
     if (node) {
-      this.updateSubmorphViaDom(morph, node, node.getBoundingClientRect());
+      this.updateSubmorphViaDom(morph, node);
+    } else {
+      morph._correctRender = (node) => {
+        this.addSubmorphCSS(morph, node.style);
+      };
     }
     let bounds;
     let originOffset = pt(0, 0);
@@ -741,9 +750,11 @@ export class TilingLayout extends Layout {
   ensureBoundsMonitor (target, submorph) {
     // repurpose for fast dom measuring
     if (!submorph.isLayoutable) return;
-    this.onDomResize(null, {
-      target, contentRect: target.getBoundingClientRect()
-    }, submorph);
+    this.onDomResize(target, submorph);
+    if (submorph._correctRender) {
+      submorph._correctRender(target);
+      delete submorph._correctRender;
+    }
   }
 
   adjustMargin (margin, submorph) {
@@ -859,7 +870,7 @@ export class TilingLayout extends Layout {
     let posAccessor;
     if (axisAlign == 'left') posAccessor = 'topLeft';
     if (axisAlign == 'right') posAccessor = 'topRight';
-    if (axisAlign == 'center') posAccessor = 'topCenter';
+    if (axisAlign == 'center') posAccessor = isHorizontal ? 'leftCenter' : 'topCenter';
     // this.align = 'right'
     let axisToPositions = [];
     let currentAxis;
@@ -991,16 +1002,17 @@ export class TilingLayout extends Layout {
     axisToPositions.forEach(([_, ...morphOffsets], i) => {
       morphOffsets.forEach(([m, offset]) => {
         const pos = isHorizontal ? pt(offset, breadthOffsets[i]) : pt(breadthOffsets[i], offset);
+        console.log(animate);
         this.changePropertyAnimated(m, posAccessor, pos, animate);
       });
     });
 
     if (hugContentsVertically) {
-      container.height = container.submorphBounds(m => layoutableSubmorphs.includes(m)).height;
+      container.height = container.submorphBounds(m => layoutableSubmorphs.includes(m)).height + padding.top() + padding.bottom();
     }
 
     if (hugContentsHorizontally) {
-      container.width = container.submorphBounds(m => layoutableSubmorphs.includes(m)).width;
+      container.width = container.submorphBounds(m => layoutableSubmorphs.includes(m)).width + +padding.left() + padding.right();
     }
 
     this.active = false;
@@ -1043,7 +1055,7 @@ export class TilingLayout extends Layout {
 
 export class VerticalLayout extends TilingLayout {
   constructor (props) {
-    super({ renderViaCSS: props.renderViaCSS });
+    super({ renderViaCSS: props.renderViaCSS, reactToSubmorphAnimations: props.reactToSubmorphAnimations });
     this.align = props.align || 'left';
     this.resizeSubmorphs = props.resizeSubmorphs || false;
     this.direction = props.direction || 'topToBottom';
@@ -1124,7 +1136,8 @@ export class VerticalLayout extends TilingLayout {
 
 export class HorizontalLayout extends TilingLayout {
   constructor (props) {
-    super({ renderViaCSS: props.renderViaCSS });
+    if (props.reactToSubmorphAnimations) debugger;
+    super({ renderViaCSS: props.renderViaCSS, reactToSubmorphAnimations: props.reactToSubmorphAnimations });
     this.align = props.align || 'top';
     this.resizeSubmorphs = props.resizeSubmorphs || false;
     this.direction = props.direction || 'leftToRight';
@@ -2453,6 +2466,11 @@ export class GridLayout extends Layout {
     this.renderViaCSS = typeof config.renderViaCSS !== 'undefined' ? config.renderViaCSS : true;
   }
 
+  forceLayout () {
+    if (this.renderViaCSS) return;
+    else super.forceLayout();
+  }
+
   /**
    * Returns the name of this layout.
    * @return { String }
@@ -2516,7 +2534,8 @@ export class GridLayout extends Layout {
     const columns = [];
     const groups = {};
     for (const r of arr.range(0, this.rowCount - 1)) {
-      grid.push(this.grid.row(r).items.map(item => item.group.state.morph ? item.group.state.morph.name || item.group.state.morph : null));
+      grid.push(this.grid.row(r).items.map(item =>
+        item.group.state.morph ? item.group.state.morph.name || item.group.state.morph : null));
     }
     for (const r of arr.range(0, this.rowCount - 1)) {
       const row = this.grid.row(r);
@@ -2839,14 +2858,14 @@ export class GridLayout extends Layout {
   onSubmorphAdded (submorph, animation) {
     super.onSubmorphAdded(submorph, animation);
     if (this.renderViaCSS) {
-      this.layoutableSubmorphs.forEach(m => this.measureAfterRender(m));
+      this.measureAfterRender(submorph);
     }
   }
 
   onChange (change) {
     super.onChange(change);
     if (change.prop == 'extent' && this.renderViaCSS) {
-      this.layoutableSubmorphs.forEach(m => this.measureAfterRender(m));
+      this.measureAfterRender(this.container);
     }
   }
 
@@ -2884,8 +2903,7 @@ export class GridLayout extends Layout {
   measureAfterRender (layoutableSubmorph) {
     // this introduces some lag. maybe fixed once we move to vanilla dom.
     layoutableSubmorph.whenRendered().then(() => {
-      const target = layoutableSubmorph.env.renderer.getNodeForMorph(layoutableSubmorph);
-      target && this.onDomResize(target);
+      this.onDomResize();
     });
   }
 
@@ -2899,7 +2917,7 @@ export class GridLayout extends Layout {
     const group = this.getCellGroupFor(layoutableSubmorph);
     if (!group) return;
     const renderer = layoutableSubmorph.env.renderer;
-    const node = renderer & renderer.getNodeForMorph(layoutableSubmorph);
+    const node = renderer && renderer.getNodeForMorph(layoutableSubmorph);
     if (node) {
       this.updateSubmorphViaDom(layoutableSubmorph, node, group.resize);
     } else {
@@ -2911,7 +2929,7 @@ export class GridLayout extends Layout {
    * Grid Layouts do not influence the container. But a resize of the container's dom node
    * will change the size/position of layoutable submorphs which we need to detect and update.
    */
-  onDomResize (resizedNode) {
+  onDomResize () {
     this.updateContainerViaDom();
     for (let { resize, morph: layoutableSubmorph } of this.cellGroups) {
       if (!layoutableSubmorph) continue;
@@ -2934,8 +2952,7 @@ export class GridLayout extends Layout {
         const newExt = pt(node.offsetWidth, node.offsetHeight);
         if (!layoutableSubmorph.extent.equals(newExt)) {
           if (makeDirty) { layoutableSubmorph.extent = newExt; } else {
-            layoutableSubmorph.extent.x = newExt.x;
-            layoutableSubmorph.extent.y = newExt.y;
+            layoutableSubmorph._morphicState.extent = newExt;
             layoutableSubmorph.updateTransform({ extent: newExt });
             signal(layoutableSubmorph, 'extent');
           }
@@ -2952,6 +2969,9 @@ export class GridLayout extends Layout {
         }
       }
     });
+    if (layoutableSubmorph.layout && layoutableSubmorph.layout.renderViaCSS) {
+      layoutableSubmorph.layout.onDomResize(node, layoutableSubmorph);
+    }
   }
 
   /**
@@ -2962,9 +2982,6 @@ export class GridLayout extends Layout {
     const node = renderer.getNodeForMorph(this.container);
     if (node && this.hasEmbeddedContainer()) {
       node.style.setProperty('display', 'inline-grid', 'important');
-    }
-    for (const group of this.cellGroups) {
-      if (group.morph) { this.updateSubmorphViaDom(group.morph, renderer.getNodeForMorph(group.morph).getBoundingClientRect(), group.resize); }
     }
   }
 
@@ -3057,6 +3074,7 @@ export class GridLayout extends Layout {
    * an immediate effect in the view and morphic scene graph.
    */
   patchContainer () {
+    if (!this.container.owner) return;
     const m = this.container;
     const renderer = m.env.renderer;
     const node = renderer && renderer.getNodeForMorph(m);
