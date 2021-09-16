@@ -676,8 +676,13 @@ export class LivelyTopBar extends Morph {
   showHaloPreviewFor (aMorph) {
     const target = this.primaryTarget || this.world();
     if (!aMorph) return;
-    if (![aMorph, ...aMorph.ownerChain()].find(m => m.isComponent) && aMorph.getWindow()) aMorph = null; // do not inspect windows
-    else if ([aMorph, ...aMorph.ownerChain()].find(m => m.isEpiMorph)) aMorph = null; // do not inspect epi morphs
+    const morphAndOwners = [aMorph, ...aMorph.ownerChain()];
+    if (!morphAndOwners.find(m => m.isComponent) && aMorph.getWindow()) {
+      // allow halos for contents of windows if they are explicitly marked
+      // setting showHalosForContent to true allows halos for this morph and all of its submorphs
+      // this allows to also partially enable halos for content in windows
+      if (!morphAndOwners.find(m => m.showHalosForContent)) aMorph = null;
+    } else if ([aMorph, ...aMorph.ownerChain()].find(m => m.isEpiMorph)) aMorph = null; // do not inspect epi morphs
     else if (aMorph == target) aMorph = null; // reset halo preview
     // if the previously highlighted morph is different one, then clean all exisiting previews
     if (this._currentlyHighlighted != aMorph) {
