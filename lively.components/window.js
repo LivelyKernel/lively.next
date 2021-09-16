@@ -141,6 +141,10 @@ export default class Window extends Morph {
     ]);
   }
 
+  isFaderActive () {
+    return !!this.getSubmorphNamed('fader');
+  }
+
   async toggleFader (active) {
     const fader = this.getSubmorphNamed('fader') || this.addMorph({
       position: pt(0, 0),
@@ -627,6 +631,7 @@ export default class Window extends Morph {
   }
 
   activate (evt) {
+    if (this.isFaderActive()) return;
     if (this.isActive()) {
       this.bringToFront();
       this.focus(evt);
