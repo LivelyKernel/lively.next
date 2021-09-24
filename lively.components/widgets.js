@@ -15,6 +15,7 @@ import {
 } from 'lively.morphic';
 
 import kld from 'kld-intersections';
+import { Menu } from 'lively.components';
 
 const { Shapes, Intersection } = kld;
 
@@ -811,7 +812,13 @@ export class DropDownSelector extends Morph {
   }
 
   onMouseDown (evt) {
-    this.menu = this.world().openWorldMenu(evt, this.getMenuEntries());
+    const eventState = this.env.eventDispatcher.eventState;
+    if (eventState.menu) eventState.menu.remove();
+
+    eventState.menu = this.getMenuEntries() && this.getMenuEntries().length
+      ? Menu.openAtHand(this.getMenuEntries(), { hand: (evt && evt.hand) })
+      : null;
+    this.menu = eventState.menu;
     this.menu.hasFixedPosition = true; // !!this.ownerChain().find(m => m.hasFixedPosition);
     this.menu.topLeft = this.globalPosition;
     // this.menu.isHaloItem = this.isHaloItem;
