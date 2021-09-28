@@ -918,14 +918,18 @@ export class StyleGuideResource extends Resource {
         resolveMasterDirectly(component); // proceed in original control flow
       } else if (await isolatedSnap.exists()) {
         // this can only happen from json stored core styleguides
-        worldToUrl[worldName] = resource(System.baseURL).join('worlds/load').withQuery({
-          file: 'lively.morphic/styleguides/' + worldName + '.json'
-        }).url;
-        const snapshot = await isolatedSnap.readJson();
-        await loadPackagesAndModulesOfSnapshot(snapshot);
-        component = deserializeMorph(snapshot);
-        await this.resolveComponent(component);
-        resolveMasterDirectly(component); // notify other waiting
+        try {
+          worldToUrl[worldName] = resource(System.baseURL).join('worlds/load').withQuery({
+            file: 'lively.morphic/styleguides/' + worldName + '.json'
+          }).url;
+          const snapshot = await isolatedSnap.readJson();
+          await loadPackagesAndModulesOfSnapshot(snapshot);
+          component = deserializeMorph(snapshot);
+          await this.resolveComponent(component);
+          resolveMasterDirectly(component); // notify other waiting
+        } catch (err) {
+          resolveMasterDirectly(null); // no direct resolution possible
+        }
       } else {
         resolveMasterDirectly(null); // no direct resolution possible
       }
