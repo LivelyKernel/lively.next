@@ -54,7 +54,7 @@ function timeToRun (prom) {
 const waitForClosures = {};
 
 function clearPendingWaitFors () {
-  Object.kets(waitForClosures).forEach(i => {
+  Object.keys(waitForClosures).forEach(i => {
     delete waitForClosures[i];
     clearInterval(i);
   });
@@ -66,6 +66,9 @@ function waitFor (ms, tester, timeoutObj) {
   // and `ms` milliseconds passed, reject with timeout error
   // if timeoutObj is passed will resolve(!) with this object instead of raise
   // an error
+  // Warning: This function has a huge performance impact if used carelessly.
+  //          Always consider this to be the absolute last resort if a problem
+  //          can not be solved by promises/events.
   if (typeof ms === 'function') { tester = ms; ms = undefined; }
   let value;
   if (value = tester()) return Promise.resolve(value);
