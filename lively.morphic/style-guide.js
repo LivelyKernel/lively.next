@@ -382,6 +382,22 @@ export class ComponentPolicy {
     return styleProps;
   }
 
+  isPositionedByLayout (aSubmorph) {
+    return aSubmorph.owner &&
+      aSubmorph.owner.layout &&
+      aSubmorph.owner.layout.layoutableSubmorphs.includes(aSubmorph);
+  }
+
+  isResizedByLayout (aSubmorph) {
+    const layout = aSubmorph.owner && aSubmorph.owner.layout;
+    if (!layout) return false;
+    if (layout.resizePolicies) {
+      return layout.getResizeHeightPolicyFor(aSubmorph) == 'fill' ||
+             layout.getResizeWidthPolicyFor(aSubmorph) == 'fill';
+    }
+    return false;
+  }
+
   apply (derivedMorph, master, animationConfig = this._animationConfig) {
     // traverse the masters submorph hierarchy
     if (this._applying) return;
@@ -438,6 +454,10 @@ export class ComponentPolicy {
               morphToBeStyled.layout = masterSubmorph.layout ? masterSubmorph.layout.copy() : undefined;
               continue;
             }
+
+            if (this.isPositionedByLayout(morphToBeStyled) && propName == 'position') continue;
+            if (this.isResizedByLayout(morphToBeStyled) && propName == 'extent') continue;
+
             if (masterSubmorph == master) {
               if (propName == 'extent' &&
                   !morphToBeStyled.extent.equals(pt(10, 10)) &&
