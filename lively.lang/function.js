@@ -150,6 +150,9 @@ function delay (func, timeout/*, arg1...argN */) {
 function throttle (func, wait) {
   // Exec func at most once every wait ms even when called more often
   // useful to calm down eagerly running updaters and such.
+  // Note: throttle may very likely drop the last couple of calls so if
+  //       you need a guarantee for the last call to "complete successfully"
+  //       throttle is not the right choice.
   // Example:
   // var i = 0;
   // var throttled = throttle(function() { alert(++i + '-' + Date.now()) }, 500);
@@ -629,7 +632,8 @@ function wrap (func, wrapper) {
   const wrappedFunc = function wrapped () {
     const args = Array.prototype.slice.call(arguments);
     const wrapperArgs = wrapper.isWrapper
-      ? args : [__method.bind(this)].concat(args);
+      ? args
+      : [__method.bind(this)].concat(args);
     return wrapper.apply(this, wrapperArgs);
   };
   wrappedFunc.isWrapper = true;
@@ -817,8 +821,9 @@ function addToObject (f, obj, name) {
 
   const methodConnections = obj.attributeConnections
     ? obj.attributeConnections.filter(function (con) {
-        return con.getSourceAttrName() === 'update';
-      }) : [];
+      return con.getSourceAttrName() === 'update';
+    })
+    : [];
 
   if (methodConnections) { methodConnections.forEach(function (ea) { ea.disconnect(); }); }
 

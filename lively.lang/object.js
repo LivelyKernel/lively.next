@@ -226,20 +226,25 @@ function extract (object, properties, mapFunc) {
 // -=-=-=-=-=-
 // inspection
 // -=-=-=-=-=-
+
+/**
+ * Prints a human-readable representation of `obj`. The printed
+ * representation will be syntactically correct JavaScript but will not
+ * necessarily evaluate to a structurally identical object. `inspect` is
+ * meant to be used while interactivively exploring JavaScript programs and
+ * state.
+ * @params { Object } object - The JavaScript Object to be inspected.
+ * @params { InspectOptions } options -
+ *   { Boolean } printFunctionSource - Wether or not to show closures' source code.
+ *   { Boolean } escapeKeys - Wether or not to escape special characters.
+ *   { Number } maxDepth - The maximum depth upon which to inspect the object.
+ *   { Function } customPrinter - Custom print function that returns an
+ *                                alternative string representation of values.
+ *   { Number } maxNumberOfKeys - Limit the number of keys to be printed of an object.
+ *   { Function } keySorter - Custom sorting function to define the order in which
+ *                            object key/value pairs are printed.
+ */
 function inspect (object, options, depth) {
-  // Prints a human-readable representation of `obj`. The printed
-  // representation will be syntactically correct JavaScript but will not
-  // necessarily evaluate to a structurally identical object. `inspect` is
-  // meant to be used while interactivively exploring JavaScript programs and
-  // state.
-  //
-  // `options` can be {
-  //   printFunctionSource: BOOLEAN,
-  //   escapeKeys: BOOLEAN,
-  //   maxDepth: NUMBER,
-  //   customPrinter: FUNCTION,
-  //   maxNumberOfKeys: NUMBER
-  // }
   options = options || {};
   depth = depth || 0;
 
@@ -277,7 +282,7 @@ function inspect (object, options, depth) {
   if (isArray) {
     printedProps = object.map(function (ea) { return inspect(ea, options, depth + 1); });
   } else {
-    const propsToPrint = Object.keys(object)
+    let propsToPrint = Object.keys(object)
       .sort(function (a, b) {
         const aIsFunc = typeof object[a] === 'function';
         const bIsFunc = typeof object[b] === 'function';
@@ -288,6 +293,9 @@ function inspect (object, options, depth) {
         }
         return aIsFunc ? 1 : -1;
       });
+    if (typeof options.keySorter === 'function') {
+      propsToPrint = propsToPrint.sort(options.keySorter);
+    }
     for (let i = 0; i < propsToPrint.length; i++) {
       if (i > (options.maxNumberOfKeys || Infinity)) {
         const hiddenEntryCount = propsToPrint.length - i;
