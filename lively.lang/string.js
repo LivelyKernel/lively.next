@@ -1139,7 +1139,7 @@ function applyChange (string, change) {
 
 function applyChanges (s, changes) {
   return changes.reduce(function (result, change) {
-    return applyChange(s, change);
+    return applyChange(result, change);
   }, s);
 }
 
