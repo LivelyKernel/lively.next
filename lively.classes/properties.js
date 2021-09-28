@@ -54,6 +54,7 @@ const defaultPropertiesSettingKey = 'propertySettings';
 const defaultPropertiesKey = 'properties';
 const defaultInstanceInitializerMethod = 'initializeProperties';
 const propertiesAndSettingsCacheSym = Symbol.for('lively.classes-properties-and-settings');
+const defaultPropertiesCacheSym = Symbol.for('lively.classes-default-properties');
 
 const defaultPropertySettings = {
   defaultSetter: null,
@@ -158,6 +159,29 @@ function ensurePropertyInitializer (klass) {
       let { properties, propertySettings, order } = this.propertiesAndPropertySettings();
       prepareInstanceForProperties(this, propertySettings, properties, values, order);
       return this;
+    }
+  });
+  Object.defineProperty(klass.prototype, 'defaultProperties', {
+    configurable: true,
+    get: function () {
+      const superklass = klass[Symbol.for('lively-instance-superclass')];
+      if (
+        !klass[defaultPropertiesCacheSym] ||
+      klass[defaultPropertiesCacheSym] ==
+        (superklass && superklass[defaultPropertiesCacheSym])
+      ) {
+        const defaults = (klass[defaultPropertiesCacheSym] = {});
+        const propDescriptors = this.propertiesAndPropertySettings().properties;
+        for (const key in propDescriptors) {
+          const descr = propDescriptors[key];
+          if (descr.hasOwnProperty('defaultValue')) {
+            let val = descr.defaultValue;
+            if (Array.isArray(val)) val = val.slice();
+            defaults[key] = val;
+          }
+        }
+      }
+      return klass[defaultPropertiesCacheSym];
     }
   });
 }

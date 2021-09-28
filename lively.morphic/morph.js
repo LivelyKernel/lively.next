@@ -995,28 +995,6 @@ export class Morph {
     return printed;
   }
 
-  get defaultProperties () {
-    const klass = this.constructor;
-    const superklass = klass[Symbol.for('lively-instance-superclass')];
-    if (
-      !klass._morphicDefaultPropertyValues ||
-      klass._morphicDefaultPropertyValues ==
-        (superklass && superklass._morphicDefaultPropertyValues)
-    ) {
-      const defaults = (this.constructor._morphicDefaultPropertyValues = {});
-      const propDescriptors = this.propertiesAndPropertySettings().properties;
-      for (const key in propDescriptors) {
-        const descr = propDescriptors[key];
-        if (descr.hasOwnProperty('defaultValue')) {
-          let val = descr.defaultValue;
-          if (Array.isArray(val)) val = val.slice();
-          defaults[key] = val;
-        }
-      }
-    }
-    return this.constructor._morphicDefaultPropertyValues;
-  }
-
   defaultProperty (key) { return this.defaultProperties[key]; }
   getProperty (key) { return this._morphicState[key]; }
   setProperty (key, value, meta) {
