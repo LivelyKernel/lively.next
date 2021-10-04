@@ -49,6 +49,12 @@ class Layout {
 
   copy () { return new this.constructor(this); }
 
+  with (props) {
+    const c = this.copy();
+    Object.assign(c, props);
+    return c;
+  }
+
   description () { return 'Describe the layout behavior here.'; }
   name () { return 'Name presented to the user.'; }
 
@@ -244,18 +250,20 @@ export class TilingLayout extends Layout {
     this._renderViaCSS = typeof props.renderViaCSS !== 'undefined' ? props.renderViaCSS : true;
     this._axis = props.axis || 'row';
     this._align = props.align || 'left';
-    this._verticalAlign = props.verticalAlign || 'top';
     this._axisAlign = props.axisAlign || 'left';
     this._justifySubmorphs = props.justifySubmorphs || 'packed';
     this._hugContentsVertically = props.hugContentsVertically || false;
     this._hugContentsHorizontally = props.hugContentsHorizontally || false;
     this._orderByIndex = props.orderByIndex || false;
-    this._resizePolicies = props.resizePolicies || new WeakMap();
     this._wrapSubmorphs = true;
     if (typeof props.wrapSubmorphs !== 'undefined') {
       this._wrapSubmorphs = props.wrapSubmorphs;
     }
-    delete this.autoResize;
+    this._resizePolicies = props.resizePolicies || new WeakMap();
+  }
+
+  equals (other) {
+    return this.__serialize__().__expr__ == (other && other.__serialize__().__expr__);
   }
 
   name () { return 'Tiling'; }
@@ -273,15 +281,21 @@ export class TilingLayout extends Layout {
   }
 
   __serialize__ () {
+    // fixme: serialize padding as rect
+    const rectSerializer = (anObject, ignoreSignal, continueInspect) => {
+      if (anObject && anObject.isRectangle) { return anObject.toString(); } else return ignoreSignal;
+    };
     return {
-      __expr__: `new TilingLayout(${obj.inspect(this.getSpec())})`,
-      bindings: { 'lively.morphic': ['TilingLayout'] }
+      __expr__: `new TilingLayout(${obj.inspect(this.getSpec(), {
+        customPrinter: rectSerializer
+      })})`,
+      bindings: { 'lively.morphic': ['TilingLayout'], 'lively.graphics/geometry-2d.js': ['rect'] }
     };
   }
 
   attach () {
-    this.initializeResizePolicies();
     super.attach();
+    this.initializeResizePolicies();
   }
 
   initializeResizePolicies () {
@@ -308,13 +322,11 @@ export class TilingLayout extends Layout {
   }
 
   set reactToSubmorphAnimations (v) {
-    if (v == true) debugger;
-    if (this._reactToSubmorphAnimations) debugger;
     this._reactToSubmorphAnimations = v;
   }
 
   get resizePolicies () {
-    return this.layoutableSubmorphs.map(m => [m.name, this._resizePolicies.get(m)]);
+    return this.layoutableSubmorphs.map(m => [m.name, this._resizePolicies.get(m) || { width: 'fixed', height: 'fixed' }]);
   }
 
   set padding (padding) {
@@ -342,23 +354,30 @@ export class TilingLayout extends Layout {
     let {
       axis, align, axisAlign, spacing, layoutOrder, orderByIndex, resizePolicies,
       reactToSubmorphAnimations, renderViaCSS, padding, wrapSubmorphs,
+      justifySubmorphs,
       _hugContentsVertically: hugContentsVertically,
       _hugContentsHorizontally: hugContentsHorizontally
     } = this;
-    return {
-      axis,
-      align,
-      axisAlign,
-      spacing,
-      orderByIndex,
-      reactToSubmorphAnimations,
-      resizePolicies,
-      renderViaCSS,
-      padding,
-      wrapSubmorphs,
-      hugContentsVertically,
-      hugContentsHorizontally
-    };
+    const spec = {}; // filter those guys
+    // only set the ones different to the default value
+    for (let [morphName, policy] of resizePolicies) {
+      if (policy.width != 'fixed' || policy.height != 'fixed') {
+        if (!spec.resizePolicies) spec.resizePolicies = [];
+        spec.resizePolicies.push([morphName, { ...policy }]);
+      }
+    }
+    if (spacing != 0) spec.spacing = spacing;
+    if (renderViaCSS != true) spec.renderViaCSS = renderViaCSS;
+    if (axis != 'row') spec.axis = axis;
+    if (align != 'left') spec.align = align;
+    if (axisAlign != 'left') spec.axisAlign = axisAlign;
+    if (justifySubmorphs != 'packed') spec.justifySubmorphs = justifySubmorphs;
+    if (hugContentsVertically != false) spec.hugContentsVertically = true;
+    if (hugContentsHorizontally != false) spec.hugContentsHorizontally = true;
+    if (orderByIndex = !false) spec.orderByIndex = true;
+    if (wrapSubmorphs != true) spec.wrapSubmorphs = false;
+    if (!rect(0).equals(padding)) spec.padding = padding;
+    return spec;
   }
 
   get possibleAxisValues () { return ['row', 'column']; }
@@ -742,6 +761,7 @@ export class TilingLayout extends Layout {
   measureAfterRender (submorph) {
     // this introduces some lag. maybe fixed once we move to vanilla dom.
     submorph.whenRendered().then(() => {
+      if (!submorph.env.renderer) return;
       const target = submorph.env.renderer.getNodeForMorph(submorph);
       target && this.ensureBoundsMonitor(target, submorph);
     });
@@ -1002,7 +1022,6 @@ export class TilingLayout extends Layout {
     axisToPositions.forEach(([_, ...morphOffsets], i) => {
       morphOffsets.forEach(([m, offset]) => {
         const pos = isHorizontal ? pt(offset, breadthOffsets[i]) : pt(breadthOffsets[i], offset);
-        console.log(animate);
         this.changePropertyAnimated(m, posAccessor, pos, animate);
       });
     });
@@ -1077,7 +1096,15 @@ export class VerticalLayout extends TilingLayout {
 
   getSpec () {
     const { autoResize, direction, resizeSubmorphs } = this;
-    return { ...super.getSpec(), autoResize, resizeSubmorphs, direction };
+    return {
+      ...obj.dissoc(super.getSpec(), [
+        'hugContentsVertically', 'hugContentsHorizontally',
+        'axis', 'axisAlign', 'padding', 'wrapSubmorphs'
+      ]),
+      autoResize,
+      resizeSubmorphs,
+      direction
+    };
   }
 
   get axis () { return 'column'; }
@@ -1136,7 +1163,6 @@ export class VerticalLayout extends TilingLayout {
 
 export class HorizontalLayout extends TilingLayout {
   constructor (props) {
-    if (props.reactToSubmorphAnimations) debugger;
     super({ renderViaCSS: props.renderViaCSS, reactToSubmorphAnimations: props.reactToSubmorphAnimations });
     this.align = props.align || 'top';
     this.resizeSubmorphs = props.resizeSubmorphs || false;
