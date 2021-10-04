@@ -169,9 +169,10 @@ export class ColorPickerField extends Morph {
   async openPicker (evt) {
     // this.picker = null
     const p = this.picker || await resource('part://SystemWidgets/new color picker').read();
+    const color = this.colorValue;
     p.solidOnly = !this.gradientEnabled;
     p.hasFixedPosition = true;
-    p.focusOnMorph(this.context, this.colorValue);
+    p.focusOnMorph(this.context, color);
     p.toggleHalos(false);
     p.position = pt(0, -p.height / 2);
     connect(p, 'value', this, 'update');
@@ -192,6 +193,7 @@ export class ColorPickerField extends Morph {
     this.removePicker();
   }
 }
+
 
 
 colorWidgets.ColorPickerField = ColorPickerField;
