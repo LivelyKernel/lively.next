@@ -40,7 +40,9 @@ import { completions, runEval } from 'lively.vm';
 import { getClassName, serialize } from 'lively.serializer2';
 import { Canvas } from 'lively.components/canvas.js';
 import { CommentBrowser } from 'lively.collab';
-import { prefetchCoreStyleguides } from 'lively.morphic/style-guide.js';
+import { prefetchCoreStyleguides } from 'lively.morphic/components/policy.js';
+import { StatusMessageDefault, StatusMessageConfirm, StatusMessageError } from 'lively.halos/components/messages.cp.js';
+import { part } from 'lively.morphic/components/core.js';
 
 export class LivelyWorld extends World {
   static get properties () {
@@ -189,7 +191,7 @@ export class LivelyWorld extends World {
       let li;
       if (li = window.worldLoadingIndicator) {
         const oldWorld = li.world();
-        if (oldWorld != this) {
+        if (oldWorld.env != this.env) {
           li.withAllSubmorphsDo(m => m._env = this.env);
           this.addMorph(li);
           await oldWorld.whenRendered();
@@ -631,20 +633,25 @@ export class LivelyWorld extends World {
   }
 
   logError (err) {
-    this.setStatusMessage(this.logErrorPreperation(err), Color.red);
+    this.setStatusMessage(this.logErrorPreperation(err), StatusMessageError);
   }
 
   showError (err) { return this.logError(err); }
 
   showErrorFor (morph, err) {
-    return this.setStatusMessageFor(morph, this.logErrorPreperation(err), Color.red);
+    return this.setStatusMessageFor(morph, this.logErrorPreperation(err), StatusMessageError);
   }
 
-  setStatusMessageFor (morph, message, color, delay = 5000, props) {
+  // $world.logError('hello')
+  // part(StatusMessageDefault, { message: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' }, { width: 300, maxLines: 3 }).openInWorld()
+
+  setStatusMessageFor (morph, message, StatusMessageComponent, delay = 5000, props) {
     if (!StatusMessageForMorph) return;
+    if (!StatusMessageComponent) StatusMessageComponent = StatusMessageDefault;
     this.visibleStatusMessagesFor(morph).forEach(ea => ea.remove());
-    const msgMorph = new StatusMessageForMorph({ message, color, ...props });
+    const msgMorph = part(StatusMessageComponent, { slidable: false, message, ...props });
     this.openStatusMessage(msgMorph, delay);
+    msgMorph.alignAtBottomOf(morph);
     msgMorph.targetMorph = morph;
     msgMorph.fadeIn(300);
     if (msgMorph.removeOnTargetMorphChange && morph.isText) {
@@ -653,11 +660,12 @@ export class LivelyWorld extends World {
     return msgMorph;
   }
 
-  setStatusMessage (message, color, delay = 5000, optStyle = {}) {
+  setStatusMessage (message, StatusMessageComponent, delay = 5000, optStyle = {}) {
     if (!StatusMessage) return;
-    console[color == Color.red ? 'error' : 'log'](message);
+    if (!StatusMessageComponent) StatusMessageComponent = StatusMessageDefault;
+    console[StatusMessageComponent == StatusMessageError ? 'error' : 'log'](message);
     return config.verboseLogging
-      ? this.openStatusMessage(new StatusMessage({ message, color, hasFixedPosition: true, ...optStyle }), delay)
+      ? this.openStatusMessage(part(StatusMessageComponent, { message }, { hasFixedPosition: true, width: 300, ...optStyle }), delay)
       : null;
   }
 
@@ -674,9 +682,11 @@ export class LivelyWorld extends World {
 
       arr.without(messages, statusMessage).forEach(async msg => {
         if (!msg.isMaximized && msg.slidable) {
-          msg.slideTo(msg.position.addPt(pt(0, -statusMessage.extent.y - 10)));
+          msg.slideTo(msg.position.subPt(pt(0, statusMessage.height + 10)));
         }
       });
+
+      // $world.logError('hello')
 
       const msgPos = this.visibleBounds().bottomRight().addXY(-20, -20);
       statusMessage.align(statusMessage.bounds().bottomRight(), msgPos);
@@ -720,6 +730,7 @@ export class LivelyWorld extends World {
         }
       }
       this.previousPrompt = promptMorph;
+      // ensure that promptMorph always in front of requester
       return promise.finally(promptMorph.activate(opts), () => focused && focused.focus());
     });
   }
@@ -1024,9 +1035,9 @@ export class LivelyWorld extends World {
           relativePosition = pt(xRelative, yRelative);
         }
         await self.addComment(commentText, relativePosition);
-        $world.setStatusMessage('Comment saved', 'green');
+        $world.setStatusMessage('Comment saved', StatusMessageConfirm);
       } else {
-        $world.setStatusMessage('Comment not saved', 'red');
+        $world.setStatusMessage('Comment not saved', StatusMessageError);
       }
     }]);
     return items;

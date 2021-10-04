@@ -14,7 +14,7 @@ import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
 import './partsbin.js';
 import { joinPath } from 'lively.lang/string.js';
-import { reset } from './style-guide.js';
+import { reset } from './components/policy.js';
 
 export async function loadWorldFromURL (url, oldWorld, options) {
   const worldResource = url.isResource

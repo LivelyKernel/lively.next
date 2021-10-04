@@ -228,7 +228,7 @@ function matchingExportsForUndeclared (undeclaredVar, allExports, preferReExport
   return preferReExported ? reExported : arr.withoutAll(matching, reExported);
 }
 
-function undeclaredVariables (source, knownGlobals) {
+export function undeclaredVariables (source, knownGlobals) {
   knownGlobals = knownGlobals || [];
   const parsed = fuzzyParse(source, { withComments: true });
   return query.findGlobalVarRefs(parsed, { jslintGlobalComment: true })

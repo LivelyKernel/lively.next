@@ -6,7 +6,7 @@ import { TreeData } from 'lively.components';
 
 import * as layouts from 'lively.morphic/layout.js';
 import { InteractiveMorphSelector } from 'lively.halos';
-import { resolvedMasters } from 'lively.morphic/style-guide.js';
+import { resolvedMasters } from 'lively.morphic/components/policy.js';
 import { resource } from 'lively.resources';
 
 export class SettingsTree extends TreeData {

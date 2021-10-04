@@ -108,6 +108,7 @@ export class DirectoryControls extends Morph {
       { title: 'Select file type:' },
       { isDivider: true },
       [[...Icon.textAttribute('js-square', { ...style, fontColor: COLORS.js }), '  Javascript'], () => { type = 'js'; }],
+      [[...Icon.textAttribute('shapes', { ...style, fontColor: COLORS.cp }), '  Component'], () => { type = 'cp.js'; }],
       [[...Icon.textAttribute('code', { ...style, fontColor: COLORS.json }), ' JSON'], () => { type = 'json'; }],
       [[...Icon.textAttribute('markdown', { ...style, fontColor: COLORS.md }), ' Markdown'], () => { type = 'md'; }],
       [[...Icon.textAttribute('less', { ...style, fontColor: COLORS.less }), ' Less (CSS)'], () => { type = 'less'; }]

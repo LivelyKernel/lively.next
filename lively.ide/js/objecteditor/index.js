@@ -26,6 +26,7 @@ import { generateReferenceExpression } from '../inspector.js';
 import { getClassName } from 'lively.serializer2';
 import { resource } from 'lively.resources';
 import lint from '../linter.js';
+import { StatusMessageConfirm, StatusMessageError } from 'lively.halos/components/messages.cp.js';
 
 const DANGEROUS_METHODS_TO_OVERRIDE = ['render', 'remove', 'addMorph', 'addMorphAt'];
 
@@ -1682,9 +1683,9 @@ export class ObjectEditor extends Morph {
             const { success, reason } = await ed.doSave();
             ed.setStatusMessage(
               success ? 'saved' : reason,
-              success ? Color.white : null,
+              success ? StatusMessageConfirm : StatusMessageError,
               5000,
-              { extent: pt(ed.width, 40), master: { auto: 'styleguide://System/saveStatusMessage' } }
+              { extent: pt(ed.width, 40) }
             );
           } catch (e) { ed.showError(e); }
           return true;

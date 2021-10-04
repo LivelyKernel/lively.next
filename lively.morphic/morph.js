@@ -18,7 +18,7 @@ import KeyHandler, { findKeysForPlatform } from './events/KeyHandler.js';
 import { TargetScript } from './ticking.js';
 import { copyMorph } from './serialization.js';
 
-import { ComponentPolicy } from './style-guide.js';
+import { ComponentPolicy } from './components/policy.js';
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -80,6 +80,13 @@ export class Morph {
           if (this.master && this.master.equals(args)) return;
           this.setProperty('master', args ? ComponentPolicy.for(this, args) : (args == false ? false : null));
           args && this.requestMasterStyling();
+        }
+      },
+
+      viewModel: {
+        set (vm) {
+          if (this.viewModel) this.viewModel.onDeactivate();
+          this.setProperty('viewModel', vm);
         }
       },
 
@@ -833,7 +840,7 @@ export class Morph {
       this._parametrizedProps.position = this.position;
     }
     if (props.height != undefined || props.width != undefined) { this._parametrizedProps.extent = this.extent; }
-    if (props.layout) this.layout = props.layout;
+    // if (props.layout) this.layout = props.layout;
 
     if (typeof this.onLoad === 'function' && !this.isComponent) this.onLoad();
   }
@@ -1137,7 +1144,7 @@ export class Morph {
 
   setStatusMessage (msg, color, delay, opts) {
     const w = this.world();
-    opts = { maxLines: 7, ...opts };
+    opts = { maxLines: 7, isCompact: true, ...opts };
     return w ? w.setStatusMessageFor(this, msg, color, delay, opts) : console.log(msg);
   }
 
@@ -1173,16 +1180,20 @@ export class Morph {
     this.layout && this.layout.onChange(change);
 
     if (this.isComponent && !PropertyPath('meta.metaInteraction').get(change)) {
-      const world = this.world();
-      delete this._preview;
-      const derivedMorphs = world ? world.withAllSubmorphsSelect(m => m.master && m.master.uses(this)) : [];
-      derivedMorphs.forEach(m => {
-        m.requestMasterStyling();
-      });
+      this.updateDerivedMorphs();
     }
     if (this.master) {
       this.master.onMorphChange(this, change);
     }
+  }
+
+  updateDerivedMorphs () {
+    const world = this.world() || $world;
+    delete this._preview;
+    const derivedMorphs = world ? world.withAllSubmorphsSelect(m => m.master && m.master.uses(this)) : [];
+    derivedMorphs.forEach(m => {
+      m.requestMasterStyling();
+    });
   }
 
   onBoundsChanged (bounds) {

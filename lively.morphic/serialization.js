@@ -9,7 +9,7 @@ import { MorphicEnv } from './env.js';
 import { resource } from 'lively.resources';
 import { newMorphId, morph, pathForBrowserHistory } from './helpers.js';
 import * as ast from 'lively.ast';
-import { StyleguidePlugin, findLocalComponents } from './style-guide.js';
+import { StyleguidePlugin, findLocalComponents } from './components/policy.js';
 
 function normalizeOptions (options) {
   options = { reinitializeIds: false, plugins: [...allPlugins, new StyleguidePlugin()], ...options };

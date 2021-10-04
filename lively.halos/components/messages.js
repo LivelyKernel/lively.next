@@ -1,0 +1,232 @@
+import { ViewModel } from 'lively.morphic/components/core.js';
+import { Color, pt } from 'lively.graphics';
+import { string } from 'lively.lang';
+import { easings } from 'lively.morphic';
+import { promise } from 'lively.lang/promise.js';
+
+export class StatusMessage extends ViewModel {
+  static get properties () {
+    return {
+      stayOpen: { defaultValue: false },
+      slidable: { defaultValue: true }, // auto slide up on new message
+      isMaximized: { defaultValue: false },
+      expandable: {
+        defaultValue: true
+      },
+      maxLines: { defaultValue: 3 },
+      isCompact: {
+        defaultValue: false,
+        set (active) {
+          this.setProperty('isCompact', active);
+          this.onRefresh();
+        }
+      },
+
+      message: {
+        after: ['view', 'extent'],
+        set (value) {
+          this.setProperty('message', value);
+          const text = this.ui.messageText;
+          if (!text) return;
+          // FIXME not yet initialized.
+          // rms: no longer a problem with view models
+          this.onRefresh();
+        }
+      },
+
+      title: {
+        isStyleProp: true,
+        derived: true,
+        set (t) {
+          this.ui.messageTitle.value = this.sanitizeString(t);
+        },
+        get () {
+          return this.ui.messageTitle.value;
+        }
+      },
+
+      color: {
+        derived: true,
+        get () {
+          return this.view.fill;
+        },
+        set (color = Color.rgba(209, 209, 209, 0.9)) {
+          this.view.fill = color;
+          if (!color) return;
+          const l = color.luma();
+          if (l > 0.5) this.fontColor = Color.rgb(66, 73, 73);
+          else this.fontColor = Color.white;
+        }
+      },
+
+      compactHeight: {
+        readOnly: true,
+        get () { return 55; }
+      },
+
+      fontColor: {
+        after: ['view'],
+        defaultValue: Color.rgb(66, 73, 73),
+        set (c) {
+          this.setProperty('fontColor', c);
+          this.onRefresh();
+        }
+      },
+
+      expose: {
+        readOnly: true,
+        get () {
+          // we are also able to expose custom props/methods on the view root morph
+          return ['isStatusMessage', 'isMaximized', 'slideTo', 'slidable', 'stayOpen', 'alignAtBottomOf'];
+        }
+      },
+
+      bindings: {
+        readOnly: true,
+        get () {
+          return [
+            { model: 'close button', signal: 'fire', handler: 'close' },
+            // view
+            { signal: 'onMouseUp', handler: 'expand' },
+            { signal: 'extent', handler: 'onViewResize' }
+          ];
+        }
+      }
+    };
+  }
+
+  sanitizeString (s) {
+    return s.split('\n').join('');
+  }
+
+  alignAtBottomOf (forMorph) {
+    const { view } = this;
+    const world = this.world();
+    if (!world) return;
+
+    view.bringToFront();
+
+    view.width = forMorph.bounds().width;
+
+    if (forMorph.world()) { view.position = forMorph.owner.worldPoint(forMorph.bounds().bottomLeft()); }
+
+    const visibleBounds = world.visibleBounds();
+    const bounds = view.bounds();
+    const overlapY = bounds.top() + view.height - visibleBounds.bottom();
+
+    if (overlapY > 0) view.moveBy(pt(0, -overlapY));
+  }
+
+  close () { this.view.remove(); }
+
+  onRefresh () {
+    if (!this.view) return;
+    this.ui.messageText.isLayoutable = !this.isCompact;
+    this.ui.messageText.visible = !this.isCompact;
+    this.updateMessage();
+  }
+
+  updateMessage () {
+    const text = this.ui.messageText;
+    const value = this.message;
+    text.value = value;
+    let textEnd = text.documentRange.end;
+    if (textEnd.row > this.maxLines) {
+      text.replace({ start: { row: this.maxLines, column: 0 }, end: textEnd }, '...\n');
+      if (!this.expandedContent) this.expandedContent = value;
+    }
+    // also check for way too long lines
+    // text.lines.filter(l => l.length);
+    // this.updateMessage()
+
+    const maxLineLength = 120;
+    let hasOversizedLine = false;
+    if (!this.isMaximized) {
+      text.modifyLines(0, Math.min(text.lineCount(), this.maxLines) - 1, l => {
+        hasOversizedLine = l.length > maxLineLength;
+        return string.truncate(l, maxLineLength, '...');
+      });
+    }
+    if (hasOversizedLine) this.expandedContent = value;
+    // this.onRefresh();
+    textEnd = text.documentEndPosition;
+    if (textEnd.column !== 0) text.insertText('\n', textEnd);
+    const f = 10;
+    this.title = string.truncate(value || '', (this.view.width / f).toFixed(), '...');
+  }
+
+  onViewResize () {
+    this.onRefresh();
+  }
+
+  isEpiMorph () {
+    return true;
+  }
+
+  isStatusMessage () {
+    return true;
+  }
+
+  setMessage (msg, color = this.color) {
+    this.message = msg;
+    this.color = color;
+  }
+
+  async slideTo (pos) {
+    const startPos = this.view.position;
+    this.sliding = this.view.animate({
+      customTween: p => {
+        this.view.position = startPos.interpolate(p, pos);
+      },
+      duration: 500
+    });
+    await this.sliding;
+    this.sliding = false;
+  }
+
+  async expand () {
+    if (!this.expandable) return;
+    if (this.sliding) await this.sliding;
+    const world = this.view.world();
+    if (!world || this.isMaximized) return;
+    this.isMaximized = true;
+    this.stayOpen = true;
+    const text = this.ui.messageText;
+    text.lineWrapping = false;
+    Object.assign(text, { clipMode: 'auto', readOnly: true, reactsToPointer: true });
+    if (this.expandedContent) text.value = this.expandedContent;
+    await text.whenRendered();
+    text.document.getLine(0).hasEstimatedExtent = true;
+    text.makeDirty();
+    await text.whenRendered();
+    let ext = text.textBounds().extent();
+    const visibleBounds = world.visibleBounds();
+    if (ext.y > visibleBounds.extent().y) ext.y = visibleBounds.extent().y - 200;
+    if (ext.x > visibleBounds.extent().x) ext.x = visibleBounds.extent().x - 200;
+    text.animate({
+      height: ext.y + 25,
+      duration: 200,
+      easing: easings.outExpo
+    });
+    this.view.animate({
+      width: ext.x,
+      center: visibleBounds.center(),
+      easing: easings.outExpo,
+      duration: 200
+    });
+    this.focus();
+  }
+
+  fit () {
+    const text = this.ui.messageText;
+    if (!text) return;
+    const minHeight = 55; const minWidth = 100;
+    this.view.extent = pt(minWidth, minHeight).maxPt(text.textBounds().extent());
+    this.relayout();
+  }
+
+  focus () {
+    const text = this.ui.messageText;
+    text && text.focus();
+  }
+}

@@ -1,7 +1,160 @@
+import { ViewModel } from 'lively.morphic/components/core.js';
 import { Morph, morph, Icon, touchInputDevice } from 'lively.morphic';
 import { Rectangle, LinearGradient, Color, pt } from 'lively.graphics';
 import { signal, connect } from 'lively.bindings';
 import { arr, obj, Closure } from 'lively.lang';
+
+export class ButtonModel extends ViewModel {
+  static get properties () {
+    return {
+      deactivated: {
+        group: 'button',
+        defaultValue: false,
+        after: ['labelMorph'],
+        set (val) {
+          this.setProperty('deactivated', val);
+          this.onRefresh();
+        }
+      },
+
+      pressed: {
+        group: '_internal',
+        defaultValue: null,
+        set (val) {
+          const oldVal = this.getProperty('pressed');
+          this.setProperty('pressed', val);
+          // this._realFill = (!val && oldVal && oldVal.originalFill);
+          if (this.view) {
+            this._realFill = val ? this.view.fill.darker() : oldVal.originalFill;
+            this.onRefresh();
+          }
+        }
+      },
+
+      // make this a merge in property
+      label: {
+        group: 'button',
+        after: ['labelMorph'],
+        isStyleProp: true,
+        type: 'RichText', // this includes an attributes Array
+        set (labelMorphProperties) {
+          const prevLabel = this.label || {};
+          this.setProperty('label', { ...prevLabel, ...labelMorphProperties });
+          this.onRefresh();
+        }
+      },
+
+      fire: {
+        group: 'button', derived: true, readOnly: true, isSignal: true
+      },
+
+      action: {
+        serialize: false
+      },
+
+      bindings: {
+        get () {
+          return [
+            { signal: 'onMouseDown', handler: 'handlePressStart' },
+            { signal: 'onMouseUp', handler: 'handlePressEnd' },
+            { signal: 'onHoverOut', handler: 'cancelPress' },
+            { signal: 'onHoverIn', handler: 'recoverPressIfNeeded' },
+            { signal: 'onDragStart', handler: 'cancelPressOnDrag' },
+            { signal: 'onDrag', handler: 'preventDrag' }
+          ];
+        }
+      }
+
+    };
+  }
+
+  handlePressStart ($onViewMouseDown, evt) {
+    $onViewMouseDown(evt);
+    if (!evt.isAltDown() && !this.deactivated && this.considerPress(evt)) {
+      this.pressed = { originalFill: this.view.fill };
+    }
+  }
+
+  handlePressEnd ($onViewMouseUp, evt) {
+    $onViewMouseUp(evt);
+    if (evt.isClickTarget(this.view) && this.pressed) {
+      this.trigger();
+      this.pressed = null;
+    }
+  }
+
+  cancelPressOnDrag ($onViewDragStart, evt) {
+    if (touchInputDevice) {
+      this.draggable = true;
+      this.pressed = null;
+    } else {
+      $onViewDragStart(evt);
+    }
+  }
+
+  preventDrag ($onViewDrag, evt) {
+    // buttons should not be draggable
+  }
+
+  cancelPress ($onViewHoverOut, evt) {
+    $onViewHoverOut(evt);
+    if (touchInputDevice) return;
+    // When leaving the button without mouse up, reset appearance
+    if (this.pressed && evt.isClickTarget(this.view)) this.pressed = null;
+  }
+
+  recoverPressIfNeeded ($onViewHoverIn, evt) {
+    $onViewHoverIn(evt);
+    if (touchInputDevice) return;
+    if (!this.deactivated && evt.isClickTarget(this.view)) {
+      this.pressed = { originalFill: this.fill };
+    }
+  }
+
+  enable () { this.deactivated = false; }
+
+  disable () { this.deactivated = true; }
+
+  onRefresh () {
+    if (!this.view) return;
+    Object.assign(this.ui.label, this.label);
+    this.view.nativeCursor = this.deactivated ? 'not-allowed' : 'pointer';
+    this.ui.label.opacity = this.deactivated ? 0.3 : 1;
+    if (this._realFill) this.view.fill = this._realFill;
+  }
+
+  trigger () {
+    try {
+      signal(this, 'fire');
+      typeof this.action === 'function' && this.action();
+    } catch (err) {
+      const w = this.world();
+      if (w) w.logError(err);
+      else console.error(err);
+    }
+  }
+
+  considerPress (evt) {
+    if (touchInputDevice) return true;
+    else return this.view.innerBoundsContainsPoint(evt.positionIn(this.view));
+  }
+
+  async interactivelyChangeLabel () {
+    const newLabel = await this.world().prompt('edit button label', {
+      input: this.labelMorph.textString,
+      historyId: 'lively.morphic-button-edit-label-hist'
+    });
+    if (typeof newLabel === 'string') { this.label = newLabel; }
+  }
+
+  // makes sense if this is model specific. At least if view model is directly defined
+  // this should override the native menuItems of a morph
+  menuItems (items) { // items from the view. we can discard or adjust.
+    items.unshift({ isDivider: true });
+    items.unshift(['change label', () => this.interactivelyChangeLabel()]);
+    return items;
+  }
+}
 
 export class Button extends Morph {
   static get properties () {
