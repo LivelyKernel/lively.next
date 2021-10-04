@@ -22,6 +22,7 @@ export class AttributeConnection {
       forceAttributeConnection: false,
       garbageCollect: false,
       signalOnAssignment: true,
+      override: false,
       ...spec
     };
 
@@ -36,6 +37,7 @@ export class AttributeConnection {
     if (spec.converter) { this.setConverter(spec.converter); }
     if (spec.updater) { this.setUpdater(spec.updater); }
     if (spec.varMapping) { this.varMapping = Object.assign(spec.varMapping, this.varMapping); }
+    this.override = spec.override;
 
     // ensure that spec is valid
     this.getSpec();
@@ -145,6 +147,7 @@ export class AttributeConnection {
     if (this.forceAttributeConnection) spec.forceAttributeConnection = true;
     if (this.hasOwnProperty('garbageCollect')) spec.garbageCollect = this.garbageCollect;
     if (this.hasOwnProperty('signalOnAssignment')) spec.signalOnAssignment = this.signalOnAssignment;
+    spec.override = !!this.override;
     return spec;
   }
 
@@ -189,7 +192,7 @@ export class AttributeConnection {
     const methodOrValue = !existingSetter && !existingGetter &&
       (this.getSourceValue() || this.getPrivateSourceValue());
 
-    // method connect... FIXME refactori into own class!
+    // method connect... FIXME refactoring into own class!
     if (typeof methodOrValue === 'function' && !forceAttributeConnection) {
       if (!methodOrValue.isWrapped) {
         this.addConnectionWrapper(sourceObj, sourceAttrName, methodOrValue);
@@ -358,11 +361,20 @@ export class AttributeConnection {
     }
     sourceObj[methodName] = function connectionWrapper () {
       if (this.attributeConnections === undefined) { throw new Error('[lively.bindings] Something is wrong with connection source object, it has no attributeConnections'); }
-      const conns = this.attributeConnections.slice();
-      const result = this[methodName].originalFunction.apply(this, arguments);
+      const conns = this.attributeConnections.filter(c => c.getSourceAttrName() == methodName);
+      const overridingConnection = conns.find(c => !!c.hasOverride);
+      let result;
+      if (overridingConnection) {
+        result = overridingConnection.targetObj[overridingConnection.targetMethodName]((...args) =>
+          this[methodName].originalFunction.apply(this, args), ...arguments
+        );
+        // result = overridingConnection.override((args) => , arguments);
+      } else {
+        result = this[methodName].originalFunction.apply(this, arguments);
+      } // make it an option to block the existing function
       for (let i = 0; i < conns.length; i++) {
-        const c = conns[i];
-        if (c.getSourceAttrName() === methodName) { c.update(arguments[0]); }
+        if (conns[i] == overridingConnection) continue;
+        conns[i].update(arguments[0]);
       }
       return result;
     };
@@ -434,6 +446,10 @@ export class AttributeConnection {
         this.sourceAttrName == other.sourceAttrName &&
         this.targetObj == other.targetObj &&
         this.targetMethodName == other.targetMethodName;
+  }
+
+  get hasOverride () {
+    return this.override;
   }
 
   toString (optValue) {
