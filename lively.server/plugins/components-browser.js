@@ -76,6 +76,9 @@ export default class ComponentsBrowser {
 
   async refresh (worldToUpdate = false) {
     // if worldName is specified, then we only update that particular world
+    await this._busy; // prevent parallel indexing
+    let done;
+    ({ promise: this._busy, resolve: done } = promise.deferred());
     const baseUrl = 'file://' + process.cwd(); // assume we are running inside the lively.server folder
     const worlds = await this.fetchWorlds();
     // always update the world to update
@@ -106,7 +109,7 @@ export default class ComponentsBrowser {
     // fire up the headless chrome browser
     for (const [worldName, jsonPath] of [...allStyleguidesInDb.map(m => [m]), ...additionalStyleguidesInFolders]) {
       if (worldToUpdate && worldName != worldToUpdate) continue;
-      //if (worldName == 'SystemIDE') continue;
+      // if (worldName == 'SystemIDE') continue;
       console.log('[ComponentsBrowser] indexing ' + worldName);
       try {
         await this.headlessSession.open(
@@ -136,7 +139,7 @@ export default class ComponentsBrowser {
           await commitDB.mixin(commit._id, { preview: 'data:image/png;base64,' + preview }); // update the peview
         }
 
-        console.log('creating snapshots')
+        console.log('creating snapshots');
 
         const [listedComponents, snapshots, errors] = await this.headlessSession.runEval(`
           const { createMorphSnapshot } = await System.import("lively.morphic/serialization.js");
@@ -155,7 +158,7 @@ export default class ComponentsBrowser {
         `);
 
         console.log('finished snaps!');
-        console.log(errors)
+        console.log(errors);
 
         const worldFolder = cacheDir.join(worldName + '/');
         if (await worldFolder.exists()) await worldFolder.remove(); // always make sure to start form clean slate
@@ -215,12 +218,14 @@ export default class ComponentsBrowser {
         console.log(err);
         console.log('[ComponentsBrowser] Failed indexing ' + worldName);
         errorLog.push('[ComponentsBrowser] Failed indexing ' + worldName);
+        done();
         continue;
       }
     }
 
     console.log('[ComponentsBrowser] Finished Indexing!');
     this.headlessSession.dispose();
+    done();
     // write the index as a json into the root? Can be derived from the images...
   }
 
