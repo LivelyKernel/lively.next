@@ -263,7 +263,9 @@ function textlayerNodeForFontMeasure (morph) {
     }
   }
   if (fontmetric_text_layer_node) {
-    if (!fontmetric_text_layer_node.className.includes('newtext-text-layer')) { morph.viewState.fontmetric_text_layer_node = fontmetric_text_layer_node = null; }
+    if (!fontmetric_text_layer_node.className.includes('newtext-text-layer')) {
+      morph.viewState.fontmetric_text_layer_node = fontmetric_text_layer_node = null;
+    }
   }
 
   if (text_layer_node && !fontmetric_text_layer_node && text_layer_node.parentNode) {

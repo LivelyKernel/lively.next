@@ -376,7 +376,7 @@ export class Hand extends Morph {
   static get properties () {
     return {
       hasFixedPosition: { defaultValue: true },
-      fill: { defaultValue: touchInputDevice ? Color.transparent : Color.orange },
+      fill: { defaultValue: lively.FreezerRuntime ? Color.transparent : Color.orange },
       extent: { defaultValue: pt(1, 1) },
       reactsToPointer: { defaultValue: false },
       pointerId: {},

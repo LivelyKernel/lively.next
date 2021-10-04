@@ -835,7 +835,10 @@ export class Text extends Morph {
   spec () {
     const spec = super.spec();
     spec.textString = this.textString;
-    return obj.dissoc(spec, ['anchors', 'embeddedMorphMap', 'plugins', 'savedMarks', 'textLayout', 'textRenderer', 'viewState', 'undoManager', 'metadata', 'document', 'displacingMorphMap']);
+    return obj.dissoc(spec, [
+      'anchors', 'embeddedMorphMap', 'plugins', 'savedMarks', 'textLayout', 'textRenderer',
+      'viewState', 'undoManager', 'metadata', 'document', 'displacingMorphMap'
+    ]);
   }
 
   get isText () {
@@ -3478,3 +3481,4 @@ export class Text extends Morph {
     }
   }
 }
+

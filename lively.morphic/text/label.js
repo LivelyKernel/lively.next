@@ -480,7 +480,7 @@ export class Label extends Morph {
       h('div', {
         style: {
           pointerEvents: 'none',
-          position: 'absolute',
+          // position: 'absolute',
           paddingLeft: padding.left() + 'px',
           paddingRight: padding.right() + 'px',
           paddingTop: padding.top() + 'px',
@@ -569,3 +569,4 @@ export class Label extends Morph {
     return items;
   }
 }
+
