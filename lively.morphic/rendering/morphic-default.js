@@ -182,7 +182,7 @@ export class ShadowObject {
     this.spread = spread || 0;
     this.color = color || Color.gray.darker();
     this.morph = morph;
-    this.fast = fast;
+    this.fast = typeof fast === 'boolean' ? fast : true;
   }
 
   get __dont_serialize__ () { return ['morph']; }
@@ -230,10 +230,13 @@ export class ShadowObject {
 
   __serialize__ () {
     let { distance, rotation, color, inset, blur, spread, fast } = this.toJson();
-    color = color.toJSExpr();
+    if (color) color = color.toJSExpr();
     return {
       __expr__: `new ShadowObject({${
-         Object.entries({ distance, rotation, color, inset, blur, spread, fast }).map(([k, v]) => `${k}:${v}`)
+         arr.compact(
+           Object.entries({ distance, rotation, color, inset, blur, spread, fast }).map(([k, v]) => {
+           return v == undefined ? null : `${k}:${v}`;
+         })).join(',')
       }})`,
       bindings: {
         'lively.graphics/color.js': ['Color'],
@@ -254,15 +257,16 @@ export class ShadowObject {
   }
 
   toJson () {
-    return obj.select(this, [
-      'rotation',
-      'distance',
-      'blur',
-      'color',
-      'inset',
-      'spread',
-      'fast'
-    ]);
+    // only select the properties that are different from default
+    const res = {};
+    if (this.rotation != 45) res.rotation = this.rotation;
+    if (this.distance != 2) res.distance = this.distance;
+    if (this.blur != 6) res.blur = this.blur;
+    if (!this.color.equals(Color.gray.darker())) res.color = this.color;
+    if (this.inset == true) res.inset = this.inset;
+    if (this.spread != 0) res.spread = this.spread;
+    if (!this.fast) res.fast = this.fast;
+    return res;
   }
 
   equals (other) {
