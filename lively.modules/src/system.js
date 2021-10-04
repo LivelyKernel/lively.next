@@ -18,9 +18,12 @@ const defaultOptions = {
 };
 
 export function wrapModuleResolution (System) {
+  // System.resolve and System.prepareImport
   if (!isHookInstalled(System, 'normalize', 'normalizeHook')) { installHook(System, 'normalize', normalizeHook, 'normalizeHook'); }
 
   if (!isHookInstalled(System, 'decanonicalize', 'decanonicalizeHook')) { installHook(System, 'decanonicalize', decanonicalizeHook, 'decanonicalizeHook'); }
+
+  if (!isHookInstalled(System, 'locate', 'locateHook')) { installHook(System, 'locate', locateHook, 'locateHook'); }
 
   if (!isHookInstalled(System, 'normalizeSync', 'decanonicalizeHook')) { installHook(System, 'normalizeSync', decanonicalizeHook, 'decanonicalizeHook'); }
 
@@ -28,7 +31,6 @@ export function wrapModuleResolution (System) {
 
   if (!isHookInstalled(System, 'instantiate', 'instantiate_triggerOnLoadCallbacks')) { installHook(System, 'instantiate', instantiate_triggerOnLoadCallbacks, 'instantiate_triggerOnLoadCallbacks'); }
 
-  if (!isHookInstalled(System, 'locate', 'locateHook')) { installHook(System, 'locate', locateHook, 'locateHook'); }
   if (!System._loader.modules) System._loader.modules = {};
   if (!System._loader.modules._originalModules) {
     const { proxy: wrappedModules, revoke } = Proxy.revocable(System._loader.modules, {

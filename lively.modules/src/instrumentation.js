@@ -1,5 +1,5 @@
 /* global System,process */
-import { parse, nodes, isValidIdentifier } from 'lively.ast';
+import { parse, stringify, nodes, isValidIdentifier, ReplaceManyVisitor, query } from 'lively.ast';
 const { funcCall, member, literal } = nodes;
 import { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from 'lively.vm';
 import { arr, string, properties } from 'lively.lang';
@@ -11,6 +11,7 @@ import {
   isInstalled as isHookInstalled
 } from './hooks.js';
 import { classToFunctionTransform } from 'lively.classes';
+import { QueryReplaceManyVisitor } from 'lively.ast/lib/visitors.js';
 
 const isNode = System.get('@system-env').node;
 
@@ -467,6 +468,8 @@ async function customTranslate (proceed, load) {
       translated = prepareTranslatedCodeForSetterCapture(System, translated, load.name, mod, options, debug);
     }
 
+    // insert the component meta stuff
+    if (load.name.endsWith('.cp.js')) translated = ensureModuleMetaForComponentDefinition(translated, load);
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // cache experiment part 2
     if (isNode && useCache && isEsm) {
@@ -495,6 +498,32 @@ async function customTranslate (proceed, load) {
   });
 }
 
+function ensureModuleMetaForComponentDefinition (translated, load) {
+  return stringify(QueryReplaceManyVisitor.run(
+    parse(translated), `
+         // ExpressionStatement [
+              /:expression AssignmentExpression [
+                  /:left MemberExpression [
+                    /:property Identifier [ @name ]
+                  ]
+               && /:right CallExpression [
+                     /:arguments "*" [
+                       CallExpression [
+                        /:callee MemberExpression [
+                           /:property Identifier [ @name == 'component' ]
+                        && /:object Identifier [ @name == '__lvVarRecorder' ]
+                          ]
+                       ]
+                     ]
+                   ]
+                ]
+              ]`,
+    (node) => {
+      const exp = node.expression;
+      return [exp, ...parse(`${stringify(exp.left)}[Symbol.for('lively-module-meta')] = { module: "${load.name.replace(System.baseURL, '')}", export: "${exp.left.property.name}"};`).body];
+    }));
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // Functions below are for re-loading modules from change.js. We typically
 // start with a load object that skips the normalize / fetch step. Since we need
@@ -504,7 +533,7 @@ async function customTranslate (proceed, load) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function instrumentSourceOfEsmModuleLoad (System, load) {
-  // brittle!
+  // brittle, since it relies on the particular format that SystemJS returns us!
   // The result of System.translate is source code for a call to
   // System.register that can't be run standalone. We parse the necessary
   // details from it that we will use to re-define the module
@@ -522,20 +551,20 @@ function instrumentSourceOfEsmModuleLoad (System, load) {
     //   };
     // });
 
+    if (load.name.endsWith('.cp.js')) translated = ensureModuleMetaForComponentDefinition(translated, load);
+
     const parsed = parse(translated);
     const callExpression = parsed.body.find(
       ea =>
         ea.expression &&
-                                ea.expression.type === 'CallExpression' &&
-                                ea.expression.callee.property.name === 'register');
+        ea.expression.type === 'CallExpression' &&
+        ea.expression.callee.property.name === 'register');
     if (!callExpression) throw new Error(`Cannot find register call in translated source of ${load.name}`);
-
     const registerCall = callExpression.expression;
     const depNames = registerCall.arguments[0].elements.map(ea => ea.value);
     const declareFuncNode = registerCall.arguments[1];
     const declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end);
-    const declare = eval(`var __moduleName = "${load.name}";(${declareFuncSource});\n//# sourceURL=${load.name}\n`);
-
+    const declare = eval(`var __moduleName = "${load.name}";\n(${declareFuncSource});\n//# sourceURL=${load.name}\n`);
     if (System.debug && $world !== 'undefined' && $world.get('log') && $world.get('log').isText) { $world.get('log').textString = declare; }
 
     return { localDeps: depNames, declare: declare };

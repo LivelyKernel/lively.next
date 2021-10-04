@@ -127,10 +127,11 @@ export class ImportInjector {
   }
 
   existingImportsOfFromModule () {
-    const { System, fromModuleId, intoModuleId, importData: { exported, local }, parsed, alias } = this;
+    let { System, fromModuleId, intoModuleId, importData: { exported, local }, parsed, alias } = this;
     const isDefault = exported === 'default';
     const imports = parsed.body.filter(({ type }) => type === 'ImportDeclaration');
     const varName = isDefault ? (alias || local) : (alias || exported);
+    fromModuleId = System.decanonicalize(fromModuleId, intoModuleId);
 
     const importsOfFromModule = imports.filter(ea => {
       if (!ea.source || typeof ea.source.value !== 'string') return null;
