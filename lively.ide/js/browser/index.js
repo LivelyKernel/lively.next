@@ -43,12 +43,14 @@ import { isTestModule } from 'lively-system-interface/commands/modules.js';
 import { mdCompiler } from '../../md/compiler.js';
 import MarkdownEditorPlugin from '../../md/editor-plugin.js';
 import LESSEditorPlugin from '../../css/less/editor-plugin.js';
+import { ComponentChangeTracker } from '../../component/editor.js';
 
 const COLORS = {
   js: Color.rgb(46, 204, 113),
   json: Color.rgb(128, 139, 150),
   md: Color.rgb(142, 68, 173),
-  less: Color.rgbHex('1D365E')
+  less: Color.rgbHex('1D365E'),
+  cp: Color.rgbHex('E67E22')
 };
 
 export class PackageControls extends Morph {
@@ -253,8 +255,8 @@ export class PackageTreeData extends TreeData {
 
   displayModule (mod, isSelected, isLoaded) {
     return [
-      ...Icon.textAttribute('js-square', {
-        fontColor: isSelected ? Color.white : COLORS.js,
+      ...Icon.textAttribute(mod.endsWith('.cp.js') ? 'shapes' : 'js-square', {
+        fontColor: isSelected ? Color.white : mod.endsWith('.cp.js') ? COLORS.cp : COLORS.js,
         opacity: isLoaded ? 1 : 0.5
       }),
       ' ' + string.truncate(mod, 24, '…'), null
@@ -885,6 +887,9 @@ export default class Browser extends Morph {
       } else {
         win.title = 'browser - ' + p.name;
       }
+      // this is super slow. find a faster way to check for tests
+      // const tests = await findTestModulesInPackage(this.systemInterface, p);
+      // $world.logError(tests.length);
     } finally {
       if (deferred) {
         this.state.packageUpdateInProgress = null;
@@ -1491,6 +1496,7 @@ export default class Browser extends Morph {
       this.updateSource(content);
       await this.updateCodeEntities(module);
       await this.updateTestUI(module);
+      await this.injectComponentTrackers();
     } catch (err) {
       if (attempt > 0 || err instanceof SyntaxError) {
         metaInfoText.showError(err);
@@ -1692,6 +1698,11 @@ export default class Browser extends Morph {
 
   addModuleChangeWarning (mid) {
     this.state.moduleChangeWarning = mid;
+  }
+
+  async injectComponentTrackers () {
+    const { url: moduleId } = this.selectedModule;
+    await ComponentChangeTracker.injectComponentTrackers(moduleId);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
