@@ -657,7 +657,9 @@ export class ShapeLayoutControl extends Morph {
   }
 
   updateLayout (prop, value) {
-    this.target.layout[prop] = value;
+    const newLayout = this.target.layout.copy();
+    newLayout[prop] = value;
+    this.target.layout = newLayout;
   }
 
   update (refresh = true) {
@@ -787,6 +789,7 @@ export class ShapeLayoutControl extends Morph {
     button.visible = button.isLayoutable = active;
   }
 }
+
 
 class MasterComponentControl extends Morph {
   focusOn (target) {
