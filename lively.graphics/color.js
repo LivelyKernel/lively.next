@@ -253,6 +253,14 @@ export class Color {
     return (this.r + this.g + this.b) / 3;
   }
 
+  /**
+   * Returns the perceived brightness of the color.
+   * @returns {number}
+   */
+  luma () {
+    return 0.299 * this.r + 0.587 * this.g + 0.114 * this.b;
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // comparing
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
