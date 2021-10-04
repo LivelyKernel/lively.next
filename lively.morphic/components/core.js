@@ -198,8 +198,8 @@ export class ViewModel {
     for (let prop of this.expose || []) {
       if (properties[prop]) {
         // install getter setter
-        if (Object.getOwnPropertyDescriptor(this.view, prop)) continue;
         Object.defineProperty(this.view, prop, {
+          configurable: true,
           get: () => { return this[prop]; },
           // if read only prop then an error will be thrown on the viewModel which is a little confusing
           // but fine for now
