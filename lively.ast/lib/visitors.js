@@ -1,4 +1,5 @@
 import Visitor from '../generated/estree-visitor.js';
+import ASTQ from 'https://jspm.dev/astq@2.7.5';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // simple ast traversing
@@ -67,8 +68,10 @@ class ReplaceManyVisitor extends Visitor {
     // return this.replacer(super.accept(node, state, path));
     const replaced = this.replacer(super.accept(node, state, path));
     return !Array.isArray(replaced)
-      ? replaced : replaced.length === 1
-          ? replaced[0] : Object.assign(block(replaced), { [canBeInlinedSym]: true });
+      ? replaced
+      : replaced.length === 1
+        ? replaced[0]
+        : Object.assign(block(replaced), { [canBeInlinedSym]: true });
   }
 
   visitBlockStatement (node, state, path) {
@@ -97,6 +100,51 @@ class ReplaceVisitor extends Visitor {
     return v.accept(parsed, null, []);
   }
 }
+
+const astq = new ASTQ();
+astq.adapter('mozast');
+
+export class QueryReplaceManyVisitor extends ReplaceManyVisitor {
+  static run (parsed, query, replacer) {
+    const matchingNodes = astq.query(parsed, query);
+    const filteredReplacer = (node) => {
+      if (matchingNodes.includes(node)) return replacer(node);
+      else return node;
+    };
+    return super.run(parsed, filteredReplacer);
+  }
+}
+
+/*
+
+  parsed = lively.ast.parse('a.b = f(__lvVarRecorder.component())')
+
+  How do we utilize this for query based visitors?
+
+Easy: We just clear all properties from the current node and assign completely new ones:
+n = QueryReplaceManyVisitor.run(parsed, `
+ // ExpressionStatement [
+      /:expression AssignmentExpression [
+          /:left MemberExpression [
+            /:property Identifier [ @name ]
+          ]
+       && /:right CallExpression [
+             /:arguments "*" [
+               CallExpression [
+                /:callee MemberExpression [
+                   /:property Identifier [ @name == 'component' ]
+                && /:object Identifier [ @name == '__lvVarRecorder' ]
+                  ]
+               ]
+             ]
+           ]
+        ]
+      ]
+`, (node) => {
+  return []
+})
+
+*/
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
