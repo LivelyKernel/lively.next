@@ -77,6 +77,12 @@ export default class Halo extends Morph {
           return this.getProperty('topBar') || this.get('lively top bar');
         }
       },
+      targetIsPositionedByLayout: {
+        derived: true,
+        get () {
+          return this.target.isLayoutable && PropertyPath('target.owner.layout.renderViaCSS').get(this);
+        }
+      },
       target: {
         get () { return this.state ? this.state.target : null; },
         set (t) {
@@ -341,10 +347,15 @@ export default class Halo extends Morph {
       delta.x * width,
       delta.y * height);
     this.active = true;
-    this.target.setBounds(bounds.insetByRect(offsetRect));
-    if (this.target.isPolygon || this.target.isPath) {
-      // refrain from adjusting origin
-      this.target.moveBy(this.target.origin.negated());
+    // if the target is controlled by a layout, we have to ignore the position, and dispatch that to the layout
+    if (this.targetIsPositionedByLayout) {
+      this.target.extent = bounds.insetByRect(offsetRect).extent();
+    } else {
+      this.target.setBounds(bounds.insetByRect(offsetRect));
+      if (this.target.isPolygon || this.target.isPath) {
+        // refrain from adjusting origin
+        this.target.moveBy(this.target.origin.negated());
+      }
     }
     this.active = false;
     this.alignWithTarget();
@@ -1797,6 +1808,7 @@ class ResizeHandle extends HaloItem {
     if (altDown) {
       delta = delta.griddedBy(pt(10, 10));
     }
+
     this.halo.updateBoundsFor(
       corner,
       shiftDown,
