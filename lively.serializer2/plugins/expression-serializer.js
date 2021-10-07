@@ -125,6 +125,16 @@ export default class ExpressionSerializer {
     return this._decanonicalized[modName] || (this._decanonicalized[modName] = System.decanonicalize(modName));
   }
 
+  getModuleRecorder (modName) {
+    const m = System.get('@lively-env').loadedModules[this.resolveModule(modName)];
+    return m ? m.recorder : {};
+  }
+
+  getModuleExports (modName) {
+    const m = System.get('@lively-env').loadedModules[this.resolveModule(modName)];
+    return m ? m.record().exports : {};
+  }
+
   deserializeExprObj ({ __expr__: source, bindings }) {
     const __boundValues__ = {};
 
@@ -148,7 +158,7 @@ export default class ExpressionSerializer {
         } else {
           exports = System.get(this.resolveModule(modName));
           if (!exports) {
-            ({ exports } = System._loader.moduleRecords[this.resolveModule(modName)] || {});
+            exports = this.getModuleExports(modName);
           }
         }
         if (!exports) {
@@ -165,7 +175,8 @@ export default class ExpressionSerializer {
           } else if (typeof varName === 'object') { // alias
             ({ local, exported } = varName);
           }
-          __boundValues__[local] = exports[exported];
+          if (!exports[exported]) __boundValues__[local] = this.getModuleRecorder(modName)[exported];
+          else __boundValues__[local] = exports[exported];
           source = `var ${local} = __boundValues__.${local};\n${source}`;
         }
       }
