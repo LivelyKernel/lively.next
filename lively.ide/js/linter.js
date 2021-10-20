@@ -5,7 +5,7 @@ let eslint;
 
 (async () => {
   // fixme: this can become a normal import once we update babel to babel
-  eslint = await importModuleViaNative('https://jspm.dev/eslint');
+  eslint = await importModuleViaNative('https://jspm.dev/eslint@7.32.0');
 })();
 
 Object.assign(config.rules, {
