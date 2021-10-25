@@ -15,28 +15,17 @@ export class StatusMessage extends ViewModel {
       },
       maxLines: { defaultValue: 3 },
       isCompact: {
-        defaultValue: false,
-        set (active) {
-          this.setProperty('isCompact', active);
-          this.onRefresh();
-        }
+        defaultValue: false
       },
 
       message: {
-        after: ['view', 'extent'],
-        set (value) {
-          this.setProperty('message', value);
-          const text = this.ui.messageText;
-          if (!text) return;
-          // FIXME not yet initialized.
-          // rms: no longer a problem with view models
-          this.onRefresh();
-        }
+        after: ['view']
       },
 
       title: {
         isStyleProp: true,
         derived: true,
+        // this does not work well when we are not yet attached
         set (t) {
           this.ui.messageTitle.value = this.sanitizeString(t);
         },
@@ -66,11 +55,7 @@ export class StatusMessage extends ViewModel {
 
       fontColor: {
         after: ['view'],
-        defaultValue: Color.rgb(66, 73, 73),
-        set (c) {
-          this.setProperty('fontColor', c);
-          this.onRefresh();
-        }
+        defaultValue: Color.rgb(66, 73, 73)
       },
 
       expose: {
@@ -119,11 +104,11 @@ export class StatusMessage extends ViewModel {
 
   close () { this.view.remove(); }
 
-  onRefresh () {
+  onRefresh (prop) {
     if (!this.view) return;
     this.ui.messageText.isLayoutable = !this.isCompact;
     this.ui.messageText.visible = !this.isCompact;
-    this.updateMessage();
+    if (prop == 'message') this.updateMessage();
   }
 
   updateMessage () {
@@ -152,7 +137,7 @@ export class StatusMessage extends ViewModel {
     textEnd = text.documentEndPosition;
     if (textEnd.column !== 0) text.insertText('\n', textEnd);
     const f = 10;
-    this.title = string.truncate(value || '', (this.view.width / f).toFixed(), '...');
+    this.title = string.truncate(text.textString || '', (this.view.width / f).toFixed(), '...');
   }
 
   onViewResize () {

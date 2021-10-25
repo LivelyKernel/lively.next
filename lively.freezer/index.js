@@ -26,6 +26,7 @@ import { runCommand, defaultDirectory } from 'lively.ide/shell/shell-interface.j
 import { loadPart } from 'lively.morphic/partsbin.js';
 import { runEval } from 'lively.vm';
 import { localInterface } from 'lively-system-interface';
+import { StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
 
 const { module } = modules;
 
@@ -377,7 +378,7 @@ export async function interactivelyFreezeWorld (world) {
     textDecoration: 'underline',
     fontWeight: 'bold',
     doit: { code: `window.open("${publicationDir.join('index.html').url}")` }
-  }, ' to view.'], Color.green, 10000);
+  }, ' to view.'], StatusMessageConfirm, 10000);
 }
 
 async function promptForFreezing (target, requester) {
@@ -517,7 +518,7 @@ export async function interactivelyFreezePart (part, requester = false) {
     textDecoration: 'underline',
     fontWeight: 'bold',
     doit: { code: `window.open("${publicationDir.join('index.html').url}")` }
-  }, ' to view.'], Color.green, false);
+  }, ' to view.'], StatusMessageConfirm, false);
 }
 
 export async function displayFrozenPartsFor (user = $world.getCurrentUser(), requester) {

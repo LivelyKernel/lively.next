@@ -8,7 +8,7 @@ import { StatusMessage } from './messages.js';
 // StatusMessageDefault.openInWorld()
 // StatusMessageError.openInWorld()
 // StatusMessageConfirm.openInWorld()
-// part(StatusMessageConfirm, { isCompact: true }).openInWorld()
+// part(StatusMessageConfirm, { viewModel: { isCompact: true }}).openInWorld()
 // part(StatusMessageDefault).openInWorld()
 // part(StatusMessageError).openInWorld()
 // $world.logError('hello man')
@@ -80,13 +80,14 @@ const StatusMessageDefault = component({
     part(
       ButtonDefault,
       {
-        label: {
-          value: Icon.textAttribute('times'),
-          fontColor: Color.rgb(66, 73, 73),
-          fontSize: 20,
-          padding: rect(1, 1, 0, 0)
-        }
-      }, {
+        viewModel: {
+          label: {
+            value: Icon.textAttribute('times'),
+            fontColor: Color.rgb(66, 73, 73),
+            fontSize: 20,
+            padding: rect(1, 1, 0, 0)
+          }
+        },
         name: 'close button',
         borderColor: Color.rgb(149, 165, 166),
         borderRadius: 5,
@@ -139,7 +140,7 @@ const StatusMessageConfirm = component(StatusMessageDefault, {
         fontColor: Color.white,
         textAndAttributes: ['Saved file...', null]
       },
-      // not need to mention the part() again since this is pure override props
+      // no need to mention the part() again since this is pure override props
       {
         name: 'close button',
         borderWidth: 0,
