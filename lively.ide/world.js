@@ -4,11 +4,18 @@ import { Rectangle, Color, pt } from 'lively.graphics';
 import { arr, fun, obj, promise, Path as PropertyPath } from 'lively.lang';
 import { once } from 'lively.bindings';
 import {
-  GridLayout, MorphicDB, easings, HTMLMorph, Text, Label, Path, Polygon, morph, Ellipse, touchInputDevice, Icon, Morph,
+  GridLayout,
+  MorphicDB,
+  easings,
+  HTMLMorph,
+  Text,
+  morph,
+  touchInputDevice,
+  Icon,
+  Morph,
   VerticalLayout,
   HorizontalLayout,
   ProportionalLayout,
-  Tooltip,
   Image,
   inspect,
   config,
@@ -32,14 +39,13 @@ import {
 
 import LoadingIndicator from 'lively.components/loading-indicator.js';
 import { Halo, MorphHighlighter, StatusMessage, StatusMessageForMorph, ProportionalLayoutHalo, GridLayoutHalo, FlexLayoutHalo } from 'lively.halos';
-import { Window, List, FilterableList, Menu } from 'lively.components';
+import { Window, Menu } from 'lively.components';
 
 import worldCommands from './world-commands.js';
-import { GradientEditor } from './styling/gradient-editor.js';
+
 import { completions, runEval } from 'lively.vm';
 import { getClassName, serialize } from 'lively.serializer2';
-import { Canvas } from 'lively.components/canvas.js';
-import { CommentBrowser } from 'lively.collab';
+
 import { prefetchCoreStyleguides } from 'lively.morphic/components/policy.js';
 import { StatusMessageDefault, StatusMessageConfirm, StatusMessageError } from 'lively.halos/components/messages.cp.js';
 import { part } from 'lively.morphic/components/core.js';
@@ -649,7 +655,7 @@ export class LivelyWorld extends World {
     if (!StatusMessageForMorph) return;
     if (!StatusMessageComponent) StatusMessageComponent = StatusMessageDefault;
     this.visibleStatusMessagesFor(morph).forEach(ea => ea.remove());
-    const msgMorph = part(StatusMessageComponent, { slidable: false, message, ...props });
+    const msgMorph = part(StatusMessageComponent, { viewModel: { slidable: false, message, ...props } });
     this.openStatusMessage(msgMorph, delay);
     msgMorph.alignAtBottomOf(morph);
     msgMorph.targetMorph = morph;
@@ -665,7 +671,7 @@ export class LivelyWorld extends World {
     if (!StatusMessageComponent) StatusMessageComponent = StatusMessageDefault;
     console[StatusMessageComponent == StatusMessageError ? 'error' : 'log'](message);
     return config.verboseLogging
-      ? this.openStatusMessage(part(StatusMessageComponent, { message }, { hasFixedPosition: true, width: 300, ...optStyle }), delay)
+      ? this.openStatusMessage(part(StatusMessageComponent, { viewModel: { message }, hasFixedPosition: true, width: 300, ...optStyle }), delay)
       : null;
   }
 
