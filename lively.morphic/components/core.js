@@ -1,29 +1,35 @@
-import { morph } from 'lively.morphic';
+import { morph, addOrChangeCSSDeclaration } from 'lively.morphic';
 import { string, arr, obj } from 'lively.lang';
 import { getClassName } from 'lively.serializer2';
 import { connect } from 'lively.bindings';
+import { deserializeMorph, serializeMorph } from '../serialization.js';
+import { sanitizeFont } from '../helpers.js';
 
 // varargs, viewModelProps can be skipped
-export function part (masterComponent, viewModelProps = {}, morphicProps = {}) {
-  const p = masterComponent.copy();
+export function part (masterComponent, overriddenProps = {}, oldParam) {
+  if (oldParam) overriddenProps = oldParam;
+  const p = masterComponent._snap ? deserializeMorph(masterComponent._snap, { reinitializeIds: true }) : masterComponent.copy();
+  // instead of that deserialize the snapshot without the master itself
   p.isComponent = false;
-  p.master = masterComponent;
   // ensure master is initialized before overriding
   delete p._parametrizedProps;
   p.withAllSubmorphsDoExcluding(m => {
     if (m != p && !m.master) { delete m._parametrizedProps; }
   }, m => m != p && m.master);
+  // this skips derived morphs that are not reachable via submorphs
+  p.master = masterComponent;
   p.withAllSubmorphsDo(m => {
     if (m.viewModel) m.viewModel.attach(m);
     if (m.master) m.master.applyIfNeeded(true);
   });
   // traverse the morphic props via submorphs and apply the props via name + structure
-  mergeInMorphicProps(p, morphicProps);
-  if (masterComponent.defaultViewModel) {
-    p.viewModel = new masterComponent.defaultViewModel(viewModelProps);
+  mergeInMorphicProps(p, overriddenProps);
+  const viewModelClass = overriddenProps.defaultViewModel || masterComponent.defaultViewModel;
+  if (viewModelClass) {
+    p.viewModel = new viewModelClass(overriddenProps.viewModel || {});
     p.viewModel.attach(p);
   }
-  mergeInModelProps(p, morphicProps);
+  mergeInModelProps(p, overriddenProps);
   // now apply viewModel adjustements to submorphs
   return p;
 }
@@ -38,8 +44,9 @@ export function component (masterComponentOrProps, overriddenProps) {
   } else {
     props = overriddenProps;
   }
+
   if (masterComponentOrProps) {
-    c = part(masterComponentOrProps, {}, overriddenProps);
+    c = part(masterComponentOrProps, overriddenProps);
     c.defaultViewModel = masterComponentOrProps.defaultViewModel;
   } else c = morph({ ...props });
   c.isComponent = true;
@@ -49,12 +56,19 @@ export function component (masterComponentOrProps, overriddenProps) {
   }
   // detect all sub view models and detach them again, since we dont
   // want to have the bahvior interfere with the morph hierarchy
-  c.withAllSubmorphsDo(m => {
+  // also gather all master in the scope so we can wait for them
+  const mastersInScope = arr.compact(c.withAllSubmorphsDo(m => {
     if (m.viewModel) m.viewModel.onDeactivate();
-  });
+    return m.master;
+  }));
   // also attach the component change monitor here? no because we do not want IDE capabilities in morphic.
   // instead perform the injection from the system browser
-  setTimeout(() => c.updateDerivedMorphs());
+  Promise.all(mastersInScope.map(m => m.whenApplied())).then(() => {
+    c.updateDerivedMorphs();
+    c._snap = serializeMorph(c);
+    // remove the master ref from the snap of the component
+    delete c._snap.snapshot[c._snap.id].props.master;
+  });
   return c;
 }
 
@@ -87,6 +101,24 @@ export function add (props, before) {
   };
 }
 
+function insertFontCSS (name, fontUrl) {
+  if (fontUrl.endsWith('.otf')) {
+    addOrChangeCSSDeclaration(`${name}`,
+         `@font-face {
+             font-family: ${name};
+             src: url("${fontUrl}") format("opentype");
+         }`);
+  } else addOrChangeCSSDeclaration(`${name}`, `@import url("${fontUrl}");`);
+}
+
+export function ensureFont (addedFonts) {
+  for (const name in addedFonts) {
+    if (!$world.env.fontMetric.isFontSupported(sanitizeFont(name))) {
+      insertFontCSS(name, addedFonts[name]);
+    }
+  }
+}
+
 export class ViewModel {
   static get propertySettings () {
     return {
@@ -97,7 +129,7 @@ export class ViewModel {
   }
 
   toString () {
-    return `<${getClassName(this)} - ${this.view.name}>`;
+    return this.view ? `<${getClassName(this)} - ${this.view.name}>` : `<Unattached ${getClassName(this)}>`;
   }
 
   static get properties () {
@@ -106,7 +138,25 @@ export class ViewModel {
         // the root morph of the hierarchy that we are responsible for
         set (v) {
           this.setProperty('view', v);
-          v.viewModel = this;
+          if (v) v.viewModel = this;
+        }
+      },
+      bindings: {
+        readOnly: true,
+        get () {
+          return [];
+        }
+      },
+      models: {
+        derived: true,
+        get () {
+          const nameModelMap = {};
+          if (lively.FreezerRuntime && this._models) return this._models;
+          this.doWithScope(m => {
+            // if a morph blocks its scope, ignore!
+            if (m.viewModel) { nameModelMap[string.camelize(m.name.split(' ').join('-'))] = m.viewModel; }
+          });
+          return this._models = nameModelMap;
         }
       },
       ui: {
@@ -147,6 +197,10 @@ export class ViewModel {
     return propsToSerialize;
   }
 
+  // __after_deserialize__ (snapshot, ref, pool) {
+  //   if (this.view) this.attach(this.view);
+  // }
+
   world () {
     return this.view.world();
   }
@@ -165,12 +219,20 @@ export class ViewModel {
   }
 
   onActivate () {
+    if (this.view.viewModel != this) return;
     // retrieve all binding connections and enable them
     this.reifyBindings();
   }
 
-  onRefresh () {
+  viewDidLoad () {
+    // called once the view is fully loaded and attached
+  }
+
+  onRefresh (change) {
     // default refresh callback to perform updates in the view
+    // fixme: Refresh should not get called if view has not been
+    // loaded fully or not attached yet
+    // maybe rename to onChange() analogous to morphs?
   }
 
   getProperty (key) {
@@ -179,18 +241,34 @@ export class ViewModel {
 
   setProperty (key, value) {
     this._viewState[key] = value;
+    if (this._isRefreshing) return;
+    // also start a refresh request
+    // prevent nested refresh calls from ending in infine loops
+    this._isRefreshing = true;
+    if (this.view) this.onRefresh(key);
+    this._isRefreshing = false;
   }
 
   reifyBindings () {
-    for (let { target, model, signal, handler } of this.bindings) {
-      if (model) target = this.view.getSubmorphNamed(model).viewModel;
-      if (typeof target === 'string') { target = this.view.getSubmorphNamed(target); }
-      if (!target) target = this.view;
-
-      connect(target, signal, this, handler, {
-        override: true
-      });
+    for (let { target, model, signal, handler, override = false } of this.bindings) {
+      try {
+        if (model) target = this.view.getSubmorphNamed(model).viewModel;
+        if (!target) target = this.view;
+        if (typeof target === 'string') { target = this.view.getSubmorphNamed(target); }
+        if (!target) continue;
+        connect(target, signal, this, handler, {
+          override
+        });
+      } catch (err) {
+        console.warn('Failed to reify biniding: ', target, model, signal, handler);
+      }
     }
+  }
+
+  async withoutBindingsDo (cb) {
+    this.onDeactivate();
+    await cb();
+    this.onActivate();
   }
 
   reifyExposedProps () {
@@ -208,7 +286,7 @@ export class ViewModel {
         continue;
       }
       this.view[prop] = (...args) => {
-        this[prop](...args);
+        return this[prop](...args);
       };
     }
   }
@@ -216,15 +294,21 @@ export class ViewModel {
   getBindingConnections () {
     const bindingConnections = [];
     const bindingDefinitions = this.bindings;
+    const collect = conns => {
+      conns.forEach(conn => {
+        if (conn.targetObj == this && !!bindingDefinitions.find(def => {
+          return conn.sourceAttrName == def.signal && conn.targetMethodName == def.handler;
+        })) {
+          bindingConnections.push(conn);
+        }
+      });
+    };
     this.doWithScope(m => {
       if (m.attributeConnections) {
-        m.attributeConnections.forEach(conn => {
-          if (conn.targetObj == this && !!bindingDefinitions.find(def => {
-            return conn.sourceAttrName == def.signal && conn.targetMethodName == def.handler;
-          })) {
-            bindingConnections.push(conn);
-          }
-        });
+        collect(m.attributeConnections);
+      }
+      if (m.viewModel && m.viewModel.attributeConnections) {
+        collect(m.viewModel.attributeConnections);
       }
     });
     return bindingConnections;
@@ -247,7 +331,7 @@ function mergeInHierarchy (root, props, iterator, executeCommands = false) {
   for (let submorph of root.submorphs) {
     if (!props) break;
     if (submorph.name == props.name) {
-      mergeInHierarchy(submorph, props, iterator);
+      mergeInHierarchy(submorph, props, iterator, executeCommands);
       props = nextPropsToApply.shift();
     }
   }
@@ -261,15 +345,20 @@ function mergeInHierarchy (root, props, iterator, executeCommands = false) {
 
     if (cmd.COMMAND == 'add') {
       const beforeMorph = root.submorphs.find(m => m.name == cmd.before);
-      root.addMorph(cmd.props, beforeMorph);
+      root.addMorph(cmd.props, beforeMorph).__wasAddedToDerived__ = true;
     }
   }
 }
 
 function mergeInMorphicProps (root, props) {
+  const layoutAssignments = [];
   mergeInHierarchy(root, props, (aMorph, props) => {
-    Object.assign(aMorph, obj.dissoc(props, ['submorphs', 'viewModel']));
+    Object.assign(aMorph, obj.dissoc(props, ['submorphs', 'viewModel', 'layout']));
+    if (props.layout) layoutAssignments.push([aMorph, props.layout]);
   }, true);
+  for (let [aMorph, layout] of layoutAssignments) {
+    aMorph.layout = layout; // trigger assignment now after commands have run through
+  }
 }
 
 function mergeInModelProps (root, props) {
