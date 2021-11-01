@@ -1447,22 +1447,6 @@ export class ConstraintLayout extends Layout {
   copy () {
     return new this.constructor(this.getSpec()); // no container
   }
-
-  /**
-   * Invoked once a new morph is added to the container.
-   * @override
-   */
-  onSubmorphAdded (submorph, animation) {
-    this.apply(undefined, false);
-  }
-
-  /**
-   * Invoked once a morph in the container has changed their bounds.
-   * @override
-   */
-  onSubmorphResized (submorph, change) {
-    this.apply(undefined, false);
-  }
 }
 
 /**
