@@ -3,7 +3,7 @@ import { expect } from 'mocha-es6';
 import { Morph, morph, VerticalLayout, HorizontalLayout, TilingLayout, GridLayout, MorphicEnv } from '../index.js';
 import { pt, Rectangle, Point, Color, rect } from 'lively.graphics';
 import { arr } from 'lively.lang';
-import { ProportionalLayout } from '../layout.js';
+import { ConstraintLayout } from '../layout.js';
 
 let world, m, env, grid, layout;
 
@@ -862,12 +862,12 @@ describe('layout', () => {
     });
   });
 
-  describe('proportional layout', () => {
+  describe('constraint layout', () => {
     let container;
     beforeEach(() => container = morph({
       extent: pt(100, 100),
       fill: Color.yellow,
-      layout: new ProportionalLayout({}),
+      layout: new ConstraintLayout({}),
       submorphs: [
         { name: 'a', extent: pt(10, 10), fill: Color.red, position: pt(10, 10) },
         { name: 'b', extent: pt(10, 10), fill: Color.orange, position: pt(50, 50) }
@@ -880,15 +880,15 @@ describe('layout', () => {
       expect(container.submorphs[0].bounds()).equals(rect(12, 12, 12, 12));
     });
 
-    it('moves', () => {
-      container.layout = new ProportionalLayout({ submorphSettings: [['a', 'move']] });
+    it('has bottom and right constraint', () => {
+      container.layout = new ConstraintLayout({ submorphConstraints: [['a', { typeX: 'right', typeX: 'bottom' }]] });
       container.extent = pt(120, 120);
       container.applyLayoutIfNeeded();
       expect(container.submorphs[0].bounds()).equals(rect(30, 30, 10, 10));
     });
 
-    it('fixed', () => {
-      container.layout = new ProportionalLayout({ submorphSettings: [['a', 'fixed']] });
+    it('has top and left constraint', () => {
+      container.layout = new ConstraintLayout({ submorphConstraints: [['a', { typeX: 'left', typeY: 'top' }]] });
       container.extent = pt(120, 120);
       container.applyLayoutIfNeeded();
       expect(container.submorphs[0].bounds()).equals(rect(10, 10, 10, 10));

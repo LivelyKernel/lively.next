@@ -15,7 +15,7 @@ import {
   Morph,
   VerticalLayout,
   HorizontalLayout,
-  ProportionalLayout,
+  ConstraintLayout,
   Image,
   inspect,
   config,
@@ -592,7 +592,7 @@ export class LivelyWorld extends World {
       : world.submorphs.length;
     let overlay;
     switch (morph.layout.constructor) {
-      case ProportionalLayout:
+      case ConstraintLayout:
         overlay = new ProportionalLayoutHalo({ container: morph, pointerId });
         break;
       case HorizontalLayout:

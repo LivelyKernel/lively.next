@@ -9,7 +9,6 @@ import {
   GridLayout,
   config,
   Icon,
-  ProportionalLayout,
   ShadowObject
 } from 'lively.morphic';
 import Window from 'lively.components/window.js';

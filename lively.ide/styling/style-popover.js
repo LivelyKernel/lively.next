@@ -2,7 +2,7 @@
 import {
   Morph,
   Icon,
-  ProportionalLayout,
+  ConstraintLayout,
   config,
   Text,
   ShadowObject,
@@ -310,7 +310,7 @@ export class LayoutPopover extends StylePopover {
       new HorizontalLayout({ autoResize: false }),
       new VerticalLayout({ autoResize: false }),
       new TilingLayout(),
-      new ProportionalLayout(),
+      new ConstraintLayout(),
       new GridLayout({ grid: [[null], [null], [null]] })
     ];
   }

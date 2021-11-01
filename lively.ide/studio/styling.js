@@ -757,10 +757,10 @@ export class ShapeLayoutControl extends Morph {
     if (!submorph) return;
 
     let { xAxisPolicyControl, yAxisPolicyControl } = this.ui;
-    let submorphSettings = this.target.layout.settingsFor(submorph);
+    let submorphConstraint = this.target.layout.constraintsFor(submorph);
     noUpdate(() => {
-      xAxisPolicyControl.selection = submorphSettings.x;
-      yAxisPolicyControl.selection = submorphSettings.y;
+      xAxisPolicyControl.selection = submorphConstraint.x;
+      yAxisPolicyControl.selection = submorphConstraint.y;
     });
   }
 
@@ -789,7 +789,6 @@ export class ShapeLayoutControl extends Morph {
     button.visible = button.isLayoutable = active;
   }
 }
-
 
 class MasterComponentControl extends Morph {
   focusOn (target) {

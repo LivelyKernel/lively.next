@@ -7,7 +7,7 @@ import { once } from 'lively.bindings';
 import * as ast from 'lively.ast';
 
 import MorphicDB from '../morphicdb/db.js';
-import { ProportionalLayout } from '../layout.js';
+import { ConstraintLayout } from '../layout.js';
 import { deserializeMorph, loadPackagesAndModulesOfSnapshot } from '../serialization.js';
 
 function ensureAbsoluteComponentRefs (
@@ -430,7 +430,7 @@ export class ComponentPolicy {
           for (const propName of this.getStyleProperties(masterSubmorph)) {
             if (this._overriddenProps.get(morphToBeStyled)[propName]) {
               if (propName == 'extent' &&
-                  Path('owner.layout.constructor').get(morphToBeStyled) == ProportionalLayout &&
+                  Path('owner.layout.constructor').get(morphToBeStyled) == ConstraintLayout &&
                   !morphToBeStyled.master && !isRoot) {
                 // still apply initially since extents can be valuable for layouts even if they ovverride them
                 if (this._appliedMaster) {

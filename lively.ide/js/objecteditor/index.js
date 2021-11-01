@@ -1,6 +1,6 @@
 /* global System, localStorage */
 import { arr, obj, t, Path, string, fun, promise } from 'lively.lang';
-import { Icon, ShadowObject, ProportionalLayout, StyleSheet, Morph, HorizontalLayout, GridLayout, config } from 'lively.morphic';
+import { Icon, ShadowObject, StyleSheet, Morph, HorizontalLayout, GridLayout, config } from 'lively.morphic';
 import { pt, rect, Color } from 'lively.graphics';
 import JavaScriptEditorPlugin from '../editor-plugin.js';
 import { withSuperclasses, isClass } from 'lively.classes/util.js';

@@ -308,5 +308,33 @@ For now only a simple default theme...
       });
       return idAndSnapshot;
     }
+  },
+
+  {
+    date: '2021-11-01',
+    name: 'refactor ProportionalLayout into ConstraintLayout',
+    snapshotConverter: idAndSnapshot => {
+      const { snapshot } = idAndSnapshot;
+      for (const key in snapshot) {
+        const serializedObject = snapshot[key];
+        const hasProportionalLayout = serializedObject.props.layout &&
+                                      serializedObject.props.layout.value
+                                        .startsWith('__lv_expr__:{ProportionalLayout}');
+        if (hasProportionalLayout) {
+          const layout = serializedObject.props.layout;
+          layout.value = layout.value.replaceAll('ProportionalLayout', 'ConstraintLayout');
+          layout.value = layout.value.replaceAll('submorphSettings', 'submorphConstraints');
+          layout.value = layout.value.replace(/x: "fixed"/, 'typeX: "left"');
+          layout.value = layout.value.replace(/y: "fixed"/, 'typeY: "top"');
+          layout.value = layout.value.replace(/x: "resize"/, 'typeX: "left-right"');
+          layout.value = layout.value.replace(/y: "resize"/, 'typeY: "top-bottom"');
+          layout.value = layout.value.replace(/x: "move"/, 'typeX: "right"');
+          layout.value = layout.value.replace(/y: "move"/, 'typeY: "bottom"');
+          layout.value = layout.value.replace(/x: "scale"/, 'typeX: "scale"');
+          layout.value = layout.value.replace(/y: "scale"/, 'typeY: "scale"');
+        }
+      }
+      return idAndSnapshot;
+    }
   }
 ];

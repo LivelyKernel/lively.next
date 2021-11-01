@@ -1,5 +1,5 @@
 import { serializeSpec, ExpressionSerializer, deserialize, serialize } from 'lively.serializer2';
-import { Icon, ProportionalLayout, Label, Text, ShadowObject, Morph, morph, icons } from 'lively.morphic';
+import { Icon, Label, Text, ShadowObject, Morph, morph, icons } from 'lively.morphic';
 import { Icons } from 'lively.morphic/text/icons.js';
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
 import { Button } from 'lively.components';
