@@ -4,7 +4,6 @@ import './mode.js';
 import { tokenizeDocument } from '../editor-modes.js';
 import { arr, string } from 'lively.lang';
 
-import marked from 'https://raw.githubusercontent.com/chjj/marked/master/lib/marked.js';
 import { loadPart } from 'lively.morphic/partsbin.js';
 import { addOrChangeLinkedCSS } from 'lively.morphic/rendering/dom-helper.js';
 import { mdCompiler } from './compiler.js';
