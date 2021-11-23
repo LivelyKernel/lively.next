@@ -6,11 +6,28 @@ export class Differ {
     this.diff(morph1, morph2);
   }
 
-  diff (morph1, morph2) {
-    if (!morph1 || !morph2 || JSON.stringify(morph1.styleClasses) != JSON.stringify(morph2.styleClasses)) {
+  diff (firstMorph, secondMorph) {
+    if (!firstMorph || !secondMorph || JSON.stringify(firstMorph.styleClasses) != JSON.stringify(secondMorph.styleClasses)) {
       $world.setStatusMessage('Cant diff morphs, classes differ or morphs not found');
     } else {
-      $world.setStatusMessage('Diffing');
+      const firstMorphProperties = firstMorph.propertiesAndPropertySettings().properties;
+      const secondMorphProperties = secondMorph.propertiesAndPropertySettings().properties;
+      let matchingProperties = {};
+      let differentProperties = {};
+
+      for (const [key, value] of Object.entries(firstMorphProperties)) {
+        if (key == 'submorphs' && firstMorph[key].length > 0 && secondMorph[key].length > 0) {
+          console.log('Uh shit they have submorphs'); // TODO
+        }
+        if (firstMorph[key] == secondMorph[key]) {
+          matchingProperties[key] = firstMorph[key];
+        } else {
+          differentProperties[key] = [firstMorph[key], secondMorph[key]];
+        }
+      }
+
+      console.log('matching: ', matchingProperties);
+      console.log('different: ', differentProperties);
     }
   }
 }
