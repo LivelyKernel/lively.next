@@ -4,17 +4,14 @@ import { Rectangle, LinearGradient, Color, pt } from 'lively.graphics';
 import { signal, connect } from 'lively.bindings';
 import { arr, obj, Closure } from 'lively.lang';
 
+// fixme: Review if this model is really nessecary or rather overkill
 export class ButtonModel extends ViewModel {
   static get properties () {
     return {
       deactivated: {
         group: 'button',
         defaultValue: false,
-        after: ['labelMorph'],
-        set (val) {
-          this.setProperty('deactivated', val);
-          this.onRefresh();
-        }
+        after: ['labelMorph']
       },
 
       pressed: {
@@ -22,12 +19,11 @@ export class ButtonModel extends ViewModel {
         defaultValue: null,
         set (val) {
           const oldVal = this.getProperty('pressed');
-          this.setProperty('pressed', val);
           // this._realFill = (!val && oldVal && oldVal.originalFill);
           if (this.view) {
             this._realFill = val ? this.view.fill.darker() : oldVal.originalFill;
-            this.onRefresh();
           }
+          this.setProperty('pressed', val);
         }
       },
 
@@ -40,7 +36,6 @@ export class ButtonModel extends ViewModel {
         set (labelMorphProperties) {
           const prevLabel = this.label || {};
           this.setProperty('label', { ...prevLabel, ...labelMorphProperties });
-          this.onRefresh();
         }
       },
 
@@ -59,8 +54,8 @@ export class ButtonModel extends ViewModel {
             { signal: 'onMouseUp', handler: 'handlePressEnd' },
             { signal: 'onHoverOut', handler: 'cancelPress' },
             { signal: 'onHoverIn', handler: 'recoverPressIfNeeded' },
-            { signal: 'onDragStart', handler: 'cancelPressOnDrag' },
-            { signal: 'onDrag', handler: 'preventDrag' }
+            { signal: 'onDragStart', handler: 'cancelPressOnDrag', override: true },
+            { signal: 'onDrag', handler: 'preventDrag', override: true }
           ];
         }
       }
@@ -68,15 +63,13 @@ export class ButtonModel extends ViewModel {
     };
   }
 
-  handlePressStart ($onViewMouseDown, evt) {
-    $onViewMouseDown(evt);
+  handlePressStart (evt) {
     if (!evt.isAltDown() && !this.deactivated && this.considerPress(evt)) {
       this.pressed = { originalFill: this.view.fill };
     }
   }
 
-  handlePressEnd ($onViewMouseUp, evt) {
-    $onViewMouseUp(evt);
+  handlePressEnd (evt) {
     if (evt.isClickTarget(this.view) && this.pressed) {
       this.trigger();
       this.pressed = null;
@@ -96,15 +89,13 @@ export class ButtonModel extends ViewModel {
     // buttons should not be draggable
   }
 
-  cancelPress ($onViewHoverOut, evt) {
-    $onViewHoverOut(evt);
+  cancelPress (evt) {
     if (touchInputDevice) return;
     // When leaving the button without mouse up, reset appearance
     if (this.pressed && evt.isClickTarget(this.view)) this.pressed = null;
   }
 
-  recoverPressIfNeeded ($onViewHoverIn, evt) {
-    $onViewHoverIn(evt);
+  recoverPressIfNeeded (evt) {
     if (touchInputDevice) return;
     if (!this.deactivated && evt.isClickTarget(this.view)) {
       this.pressed = { originalFill: this.fill };
@@ -116,7 +107,7 @@ export class ButtonModel extends ViewModel {
   disable () { this.deactivated = true; }
 
   onRefresh () {
-    if (!this.view) return;
+    if (!this.ui.label) return;
     Object.assign(this.ui.label, this.label);
     this.view.nativeCursor = this.deactivated ? 'not-allowed' : 'pointer';
     this.ui.label.opacity = this.deactivated ? 0.3 : 1;
@@ -156,6 +147,7 @@ export class ButtonModel extends ViewModel {
   }
 }
 
+// custom morph implementations
 export class Button extends Morph {
   static get properties () {
     return {

@@ -349,14 +349,17 @@ export class ValueScrubber extends Text {
       min: { defaultValue: -Infinity },
       max: { defaultValue: Infinity },
       baseFactor: { defaultValue: 1 },
-      floatingPoint: { defaultValue: false }
+      floatingPoint: { defaultValue: false },
+      precision: { defaultValue: 3 }
     };
   }
 
   relayout () {
-    const d = 0;
-    if (!this.scaleToBounds) return;
-    this.scale = Math.min(1, this.width / (this.textBounds().width + d));
+    this.withMetaDo({ metaInteraction: true }, () => {
+      const d = 0;
+      if (!this.scaleToBounds) return;
+      this.scale = Math.min(1, this.width / (this.textBounds().width + d));
+    });
   }
 
   onKeyDown (evt) {
@@ -399,10 +402,10 @@ export class ValueScrubber extends Text {
     const { scale, offset } = this.getScaleAndOffset(evt);
     const v = this.getCurrentValue(offset, scale);
     this.scrub(v);
-    let valueString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
+    let valueString = this.floatingPoint ? v.toFixed(this.precision) : obj.safeToString(v);
     if (this.unit) valueString += ' ' + this.unit;
     this.replace(this.documentRange, valueString, false, this.scaleToBounds, false, false);
-    this.factorLabel.description = scale.toFixed(3) + 'x';
+    this.factorLabel.description = scale.toFixed(this.precision) + 'x';
     this.factorLabel.position = evt.hand.position.addXY(10, 10);
     evt.hand.moveBy(pt(-5, -5));
     this.relayout();
@@ -425,7 +428,7 @@ export class ValueScrubber extends Text {
   set value (v) {
     v = Math.max(this.min, Math.min(this.max, v));
     this.scrubbedValue = v;
-    let textString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
+    let textString = this.floatingPoint ? v.toFixed(this.precision) : obj.safeToString(v);
     if (this.unit) textString += ' ' + this.unit;
     else textString += '';
     this.replace(this.documentRange, textString, false, true);
