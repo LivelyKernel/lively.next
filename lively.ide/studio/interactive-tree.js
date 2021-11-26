@@ -1,7 +1,7 @@
 import { Tree, TreeData } from 'lively.components/tree.js';
 import { morph, Icon, HorizontalLayout, easings, Morph } from 'lively.morphic/index.js';
 import { Color, Rectangle, rect, pt } from 'lively.graphics/index.js';
-import { noUpdate } from 'lively.bindings/index.js';
+import { noUpdate, signal } from 'lively.bindings/index.js';
 import { arr, obj, fun, tree } from 'lively.lang/index.js';
 
 import { getClassName } from 'lively.serializer2';
@@ -240,7 +240,7 @@ export class InteractiveTree extends Tree {
     this.treeData.remove(this._previewNode);
     await this.whenRendered();
     this.update(true);
-    newParent.container.onChildAdded(node);
+    if (newParent.container) newParent.container.onChildAdded(node);
   }
 
   scrollUpSlowly () {
@@ -336,7 +336,7 @@ export class InteractiveTree extends Tree {
         this.treeData.addAfter(placeholder, node);
         this.update(true);
       } else {
-        hoveredContainer.fill = Color.gray;
+        hoveredContainer.fill = Color.gray.withA(0.5);
         if (!previewIsShown) return;
         this.treeData.remove(placeholder);
         this.update(true);
@@ -351,7 +351,7 @@ export class InteractiveTree extends Tree {
         container: morph({
           acceptsDrops: false,
           reactsToPointer: false,
-          fill: Color.gray,
+          fill: Color.gray.withA(0.5),
           borderRadius: 5
         }),
         isCollapsed: true,
@@ -368,12 +368,8 @@ export class InteractiveTree extends Tree {
       if (!node.container) continue;
       if (!this.isLineVisible(i)) continue;
       node.container.nativeCursor = 'grab';
-      const newWidth = this.width - 25 - node.container.left;
+      const newWidth = this.width - node.container.left - 25;
       if (node.container.width != newWidth) { node.container.width = newWidth; }
-      if (node.container.toggleSelected) { node.container.toggleSelected(i == selectedIndex); }
-      if (node.container.isContainer) {
-        node.container.getLabel().fitIfNeeded();
-      }
     }
   }
 }
@@ -408,8 +404,18 @@ export class SceneGraphTree extends InteractiveTree {
   }
 
   selectMorphInTarget (morph) {
-    const node = this.treeData.asList().find(n => n.container && n.container.target === morph);
-    if (node && this.selectedNode != node) this.selectPath(this.treeData.pathOf(node));
+    let node = this.treeData.asList().find(n => n.container && n.container.target === morph);
+    if (node && this.selectedNode != node) {
+      this.selectPath(this.treeData.pathOf(node));
+    }
+
+    if (node) return;
+    this.refresh();
+    this.treeData.followPath([morph, ...morph.ownerChain()].reverse(), (m, node) => {
+      return node.container && node.container.target == m;
+    }).then(node => {
+      if (node) this.selectedNode = node;
+    });
   }
 
   async onLoad () {
@@ -417,10 +423,6 @@ export class SceneGraphTree extends InteractiveTree {
     await this.whenRendered();
     if (this.ownerChain().find(m => m.isComponent)) return;
     this.submorphs = [];
-    await this.whenRendered();
-    this.get('inspector').makeEditorVisible(true);
-    this.get('inspector').makeEditorVisible(false);
-    this.setTarget($world);
   }
 
   adjustProportions (evt) {
@@ -452,11 +454,12 @@ export class SceneGraphTree extends InteractiveTree {
   // this.setTarget($world)
   // this.treeData
 
-  setTarget (morph) {
+  async setTarget (morph) {
     // scan the morph hierarchy, collapse all initially, create all nodes
     this.target = morph;
     this.treeData = this.getTreeFromSubmorphHierarchy(morph);
-    this.uncollapse(this.treeData.root);
+    await this.uncollapse(this.treeData.root);
+    this.refresh();
   }
 
   isNodeOutOfSync (node) {
@@ -516,7 +519,7 @@ export class SceneGraphTree extends InteractiveTree {
 
   ignoreMorph (m) {
     if (!m.isMorph) return false;
-    return m.isContainer || m.isWindow || m.getWindow() || m.isEpiMorph || m.isHand ||
+    return m.isContainer || m.isWindow || m.getWindow() || m.isEpiMorph || m.isHand || m.isHaloItem ||
       ['lively.halos'].includes(m.constructor[Symbol.for('lively-module-meta')].package.name) ||
       ['MorphicSideBar', 'SideBarToggler', 'UserFlap', 'Menu', 'CommentIndicator'].includes(m.constructor.name);
   }
@@ -547,14 +550,15 @@ export class SceneGraphTree extends InteractiveTree {
 
   readMorphHierarchy (morph) {
     return tree.mapTree(morph, (m, children) => {
-      return {
+      const res = {
         name: m.name,
         isCollapsed: true,
         getContainer: () => this.renderContainerFor(m),
-        // container: this.renderContainerFor(m), // only once displayed!
         visible: true,
         children
       };
+      if (m.isWorld) res.container = res.getContainer();
+      return res;
     }, m => {
       return m.submorphs.filter(sub =>
         m.isWorld ? !this.ignoreMorph(sub) : true

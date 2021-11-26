@@ -1,13 +1,14 @@
-import { Morph, touchInputDevice, morph, Icon, easings } from 'lively.morphic';
-import { pt, Color } from 'lively.graphics/index.js';
-import { fun, Path, arr, string, obj } from 'lively.lang/index.js';
-import { connect, once, noUpdate } from 'lively.bindings/index.js';
+import { Morph, TilingLayout, touchInputDevice, morph, Icon, easings } from 'lively.morphic';
+import { pt, Rectangle, rect, Color } from 'lively.graphics/index.js';
+import { fun, num, Path, arr, string, obj } from 'lively.lang/index.js';
+import { connect, signal, once, noUpdate } from 'lively.bindings/index.js';
 import { TreeData } from 'lively.components';
 
 import * as layouts from 'lively.morphic/layout.js';
 import { InteractiveMorphSelector } from 'lively.halos';
 import { resolvedMasters } from 'lively.morphic/components/policy.js';
 import { resource } from 'lively.resources';
+import { ViewModel, part } from 'lively.morphic/components/core.js';
 
 export class SettingsTree extends TreeData {
   static default () {
@@ -789,7 +790,6 @@ export class ShapeLayoutControl extends Morph {
     button.visible = button.isLayoutable = active;
   }
 }
-
 
 class MasterComponentControl extends Morph {
   focusOn (target) {

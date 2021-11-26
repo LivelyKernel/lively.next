@@ -9,6 +9,8 @@ import { getClassName } from 'lively.serializer2/index.js';
 import { Selection, SelectionElement } from 'lively.ide/world.js';
 import { connect, signal, once, disconnect } from 'lively.bindings/index.js';
 import { CommentBrowser } from 'lively.collab/index.js';
+import { part } from 'lively.morphic/components/core.js';
+import { PropertiesPanel } from './properties-panel.cp.js';
 
 export class FastLoadToggler extends Morph {
   static get properties () {
@@ -327,8 +329,10 @@ export class LivelyTopBar extends Morph {
       if (!this.stylingPalette) {
         const li = LoadingIndicator.open('loading side bar');
         await li.whenRendered();
-        this.stylingPalette = await resource('part://SystemIDE/styling side bar master').read();
-        this.stylingPalette.collapseAll();
+        // this.stylingPalette.remove()
+        // this.stylingPalette = null
+        this.stylingPalette = part(PropertiesPanel);
+        // this.stylingPalette.collapseAll();
         this.stylingPalette.hasFixedPosition = true;
         this.stylingPalette.respondsToVisibleWindow = true;
         this.stylingPalette.openInWorld();
@@ -676,13 +680,8 @@ export class LivelyTopBar extends Morph {
   showHaloPreviewFor (aMorph) {
     const target = this.primaryTarget || this.world();
     if (!aMorph) return;
-    const morphAndOwners = [aMorph, ...aMorph.ownerChain()];
-    if (!morphAndOwners.find(m => m.isComponent) && aMorph.getWindow()) {
-      // allow halos for contents of windows if they are explicitly marked
-      // setting showHalosForContent to true allows halos for this morph and all of its submorphs
-      // this allows to also partially enable halos for content in windows
-      if (!morphAndOwners.find(m => m.showHalosForContent)) aMorph = null;
-    } else if ([aMorph, ...aMorph.ownerChain()].find(m => m.isEpiMorph)) aMorph = null; // do not inspect epi morphs
+    if (![aMorph, ...aMorph.ownerChain()].find(m => m.isComponent) && aMorph.getWindow()) aMorph = null; // do not inspect windows
+    else if ([aMorph, ...aMorph.ownerChain()].find(m => m.isEpiMorph)) aMorph = null; // do not inspect epi morphs
     else if (aMorph == target) aMorph = null; // reset halo preview
     // if the previously highlighted morph is different one, then clean all exisiting previews
     if (this._currentlyHighlighted != aMorph) {
@@ -845,3 +844,4 @@ export class LivelyTopBar extends Morph {
     });
   }
 }
+
