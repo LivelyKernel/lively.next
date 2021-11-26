@@ -46,7 +46,6 @@ import worldCommands from './world-commands.js';
 import { completions, runEval } from 'lively.vm';
 import { getClassName, serialize } from 'lively.serializer2';
 
-import { prefetchCoreStyleguides } from 'lively.morphic/components/policy.js';
 import { StatusMessageDefault, StatusMessageConfirm, StatusMessageError } from 'lively.halos/components/messages.cp.js';
 import { part } from 'lively.morphic/components/core.js';
 
@@ -205,10 +204,6 @@ export class LivelyWorld extends World {
         }
       }
     });
-    if (this.showsUserFlap || resource(document.location.href).query().showsUserFlap) {
-      this._styleLoading = prefetchCoreStyleguides(window.worldLoadingIndicator);
-      await this._styleLoading;
-    }
     this.animate({ blur: 0, duration: 1000, easing: easings.inOutExpo });
     document.body.style.overflowX = 'visible';
     document.body.style.overflowY = 'visible';

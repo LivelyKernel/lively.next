@@ -81,53 +81,6 @@ export class StyleguidePlugin {
   }
 }
 
-export async function prefetchCoreStyleguides (li) {
-  const prefetches = [
-    {
-      label: 'core elements...',
-      url: 'styleguide://System/buttons/light'
-    },
-    {
-      label: 'core elements...',
-      url: 'styleguide://System/window/light/inactive'
-    },
-    {
-      label: 'top bar...',
-      url: 'styleguide://SystemIDE/lively top bar master'
-    },
-    {
-      label: 'styling palette...',
-      url: 'styleguide://SystemIDE/styling side bar master'
-    },
-    {
-      label: 'scene graph...',
-      url: 'styleguide://SystemIDE/scene graph side bar master'
-    },
-    {
-      label: 'world loader...',
-      url: 'styleguide://partial freezing/project browser'
-    },
-    {
-      label: 'object editor...',
-      url: 'styleguide://SystemIDE/objectEditor/light'
-    },
-    {
-      label: 'world loader...',
-      url: 'styleguide://SystemIDE/new system browser'
-    }
-  ];
-  li.label = 'loading System Elements';
-  li.progress = 0;
-  let i = 0;
-  for (let pre of prefetches) {
-    i++;
-    li.status = pre.label;
-    li.progress = i / prefetches.length;
-    await resource(pre.url).read();
-  }
-  await promise.delay(500);
-}
-
 function getProjectName (world) {
   return Path('metadata.commit.name').get(world) || world.name;
 }
@@ -154,7 +107,9 @@ export class ComponentPolicy {
 
     if (args.isMorph || typeof args === 'string') {
       this.auto = args;
-      if (args.isMorph) { this.auto.isComponent = true; } // just to make sure. Seems a little redundant though.
+      if (args.isMorph && !args.isComponent) {
+        this.auto.isComponent = true;
+      }
       // Via direct manipulation this should never be nessecary.
       // In code this can happen, when the user forgets to set this flag.
       if (typeof args === 'string') this.resolveMasterComponents();
@@ -316,6 +271,7 @@ export class ComponentPolicy {
   applyIfNeeded (needsUpdate = false, animationConfig = false) {
     if (animationConfig) this._animationConfig = animationConfig;
     const target = this.derivedMorph;
+    // when does this happen???
     if (!target.env.world) {
       // wait for env to be installed
       once(target.env, 'world', () => {
@@ -415,7 +371,7 @@ export class ComponentPolicy {
             }
           }
           if (morphToBeStyled.master && !isRoot) {
-            const overriddenProps = morphToBeStyled.master._overriddenProps.get(morphToBeStyled) || {};
+            const overriddenProps = morphToBeStyled.master._overriddenProps.get(morphToBeStyled) || morphToBeStyled._parametrizedProps || {};
 
             // but enforce extent and position since that is not done by the master itself
             if (!overriddenProps.position) {

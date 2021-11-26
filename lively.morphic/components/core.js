@@ -20,6 +20,9 @@ export function part (masterComponent, overriddenProps = {}, oldParam) {
   p.master = masterComponent;
   p.withAllSubmorphsDo(m => {
     if (m.viewModel) m.viewModel.attach(m);
+    // this is only needed to detrmine the overriden props.
+    // This can also be achieved via proper serialization...
+    // This saves us from unnessecary and possibly expensive application cycles
     if (m.master) m.master.applyIfNeeded(true);
   });
   // traverse the morphic props via submorphs and apply the props via name + structure
@@ -63,11 +66,16 @@ export function component (masterComponentOrProps, overriddenProps) {
   }));
   // also attach the component change monitor here? no because we do not want IDE capabilities in morphic.
   // instead perform the injection from the system browser
-  Promise.all(mastersInScope.map(m => m.whenApplied())).then(() => {
+  Promise.all(mastersInScope.map(m => {
+    if (!m._appliedMaster) m.applyIfNeeded(true);
+    return m.whenApplied();
+  })).then(() => {
+    // this is often not called... especially in cases where we derive from a master
     c.updateDerivedMorphs();
     c._snap = serializeMorph(c);
     // remove the master ref from the snap of the component
     delete c._snap.snapshot[c._snap.id].props.master;
+    delete c._snap.snapshot[c._snap.id].props.isComponent;
   });
   return c;
 }
@@ -245,7 +253,11 @@ export class ViewModel {
     // also start a refresh request
     // prevent nested refresh calls from ending in infine loops
     this._isRefreshing = true;
-    if (this.view) this.onRefresh(key);
+    try {
+      if (this.view) this.onRefresh(key);
+    } catch (err) {
+
+    }
     this._isRefreshing = false;
   }
 
@@ -365,6 +377,9 @@ function mergeInModelProps (root, props) {
   mergeInHierarchy(root, props, (aMorph, props) => {
     if (aMorph.viewModel && props.viewModel) {
       Object.assign(aMorph.viewModel, props.viewModel);
+    }
+    if (!aMorph.viewModel && props.viewModel && props.viewModel instanceof ViewModel) {
+      props.viewModel.attach(aMorph);
     }
   });
 }
