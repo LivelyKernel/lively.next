@@ -19,7 +19,7 @@ export class Differ {
         if (key == 'submorphs' && firstMorph[key].length > 0 && secondMorph[key].length > 0) {
           console.log('Uh shit they have submorphs'); // TODO
         }
-        if (firstMorph[key] == secondMorph[key]) {
+        if (JSON.stringify(firstMorph[key]) == JSON.stringify(secondMorph[key])) {
           matchingProperties[key] = firstMorph[key];
         } else {
           differentProperties[key] = [firstMorph[key], secondMorph[key]];
