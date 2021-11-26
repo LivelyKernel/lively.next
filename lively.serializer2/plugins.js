@@ -285,6 +285,6 @@ export var allPlugins = [
   plugins.onlySerializePropsPlugin,
   plugins.dontSerializePropsPlugin,
   plugins.livelyClassPropertiesPlugin,
-  plugins.serializableCheckPlugin,
+  // plugins.serializableCheckPlugin,
   plugins.finishPlugin
 ];
