@@ -1,7 +1,7 @@
 /* global Map,System */
 import { obj, num, arr, string } from 'lively.lang';
 import { connect, signal } from 'lively.bindings';
-import { TreeData } from 'lively.components';
+import { TreeData, Tree } from 'lively.components';
 import { newUUID } from 'lively.lang/string.js';
 import { localInterface } from 'lively-system-interface';
 
@@ -592,7 +592,8 @@ function propertiesOf (node) {
   const seen = { _rev: true }; let props = [];
   const isCollapsed = true;
   const customProps = typeof target.livelyCustomInspect === 'function'
-    ? target.livelyCustomInspect() : {};
+    ? target.livelyCustomInspect()
+    : {};
   const options = {
     ...defaultPropertyOptions,
     ...customProps
@@ -640,4 +641,10 @@ function propertiesOf (node) {
   if (options.sort) props = options.sortFunction(target, props);
 
   return props;
+}
+
+export class PropertyTree extends Tree {
+  onDrag (evt) {
+    if (this._onDragHandler) this._onDragHandler(evt);
+  }
 }
