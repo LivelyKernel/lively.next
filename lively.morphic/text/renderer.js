@@ -619,8 +619,8 @@ export default class TextRenderer {
     if (padRight > 0) style.paddingRight = padRight + 'px';
     if (padTop > 0) style.marginTop = padTop + 'px';
     if (padBottom > 0) style.marginBottom = padBottom + 'px';
-    if (letterSpacing) style.letterSpacing = letterSpacing;
-    if (wordSpacing) style.wordSpacing = wordSpacing;
+    if (letterSpacing) style.letterSpacing = letterSpacing + 'px';
+    if (wordSpacing) style.wordSpacing = wordSpacing + 'px';
     if (lineHeight) style.lineHeight = lineHeight;
     if (fontFamily) style.fontFamily = fontFamily;
     if (fontWeight) style.fontWeight = fontWeight;
@@ -872,8 +872,8 @@ export default class TextRenderer {
     if (morph.fontSize > minFontSize) lineStyle.fontSize = minFontSize + 'px';
     if (lineHeight) lineStyle.lineHeight = lineHeight;
     if (textAlign) lineStyle.textAlign = textAlign;
-    if (letterSpacing) lineStyle.letterSpacing = letterSpacing;
-    if (wordSpacing) lineStyle.wordSpacing = wordSpacing;
+    if (letterSpacing) lineStyle.letterSpacing = letterSpacing + 'px';
+    if (wordSpacing) lineStyle.wordSpacing = wordSpacing + 'px';
 
     let node = h(lineTag,
       { className: 'line', style: lineStyle, dataset: { row: line.row } },
