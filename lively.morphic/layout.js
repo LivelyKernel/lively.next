@@ -36,7 +36,10 @@ class Layout {
   }
 
   attach () {
-    if (this.renderViaCSS) return;
+    if (this.renderViaCSS) {
+      this.layoutableSubmorphs.forEach(m => m.makeDirty());
+      return;
+    }
     this.apply();
     if (this.container.master) {
       this.container.master.whenApplied().then(() => {
@@ -45,6 +48,12 @@ class Layout {
       });
     }
     this.refreshBoundsCache();
+  }
+
+  getNodeFor (aMorph) {
+    const { renderer } = aMorph.env;
+    if (!renderer) return null;
+    return renderer.getNodeForMorph(aMorph);
   }
 
   copy () { return new this.constructor(this); }
@@ -188,6 +197,7 @@ class Layout {
         this.onSubmorphAdded(submorph, anim);
         break;
     }
+    if (prop == 'borderWidth' && this.renderViaCSS) this.layoutableSubmorphs.forEach(m => m.makeDirty());
     if (prop === 'extent' && value && prevValue &&
         (prevValue.x !== value.x || prevValue.y !== value.y)) { this.scheduleApply(submorph, anim); }
   }
@@ -232,6 +242,14 @@ class Layout {
 
   ensureBoundsMonitor (node, morph) {
     // fixme: rename this method. bounds monitors are not longer used.
+  }
+
+  resizesMorphVertically (aMorph) {
+    return false;
+  }
+
+  resizesMorphHorizontally (aMorph) {
+    return false;
   }
 }
 
@@ -478,7 +496,6 @@ export class TilingLayout extends Layout {
    * @enum {string}
    */
   get justifySubmorphs () {
-    if (this.wrapSubmorphs && this.axis == 'column') return false;
     return this._justifySubmorphs;
   }
 
@@ -513,6 +530,14 @@ export class TilingLayout extends Layout {
     this.onConfigUpdate();
   }
 
+  resizesMorphHorizontally (aMorph) {
+    return this.getResizeWidthPolicyFor(aMorph) == 'fill';
+  }
+
+  resizesMorphVertially (aMorph) {
+    return this.getResizeHeightPolicyFor(aMorph) == 'fill';
+  }
+
   /**
    * Defines wether or not this specific layout object should be rendered via CSS
    * (therefore dispatching any layout ops to the browser stack) or manually computing
@@ -543,7 +568,12 @@ export class TilingLayout extends Layout {
    * the layoutable submorphs from there.
    */
   onDomResize (node, morph) {
-    if (morph == this.container) { return this.updateContainerViaDom(node, true); }
+    if (morph == this.container) {
+      morph.withMetaDo({ isLayoutAction: true }, () => {
+        this.updateContainerViaDom(node, true);
+      });
+      return;
+    }
 
     if (morph) {
       morph.withMetaDo({ isLayoutAction: true }, () => {
@@ -581,8 +611,7 @@ export class TilingLayout extends Layout {
    * the next render pass.
    */
   tryToMeasureNodeNow (aSubmorph) {
-    const renderer = aSubmorph.env.renderer;
-    const node = renderer && renderer.getNodeForMorph(aSubmorph);
+    const node = this.getNodeFor(aSubmorph);
     if (node && this.orderByIndex) { // ordering via dragging does not really work nicely...
       this.updateSubmorphViaDom(aSubmorph, node);
     } else {
@@ -655,11 +684,12 @@ export class TilingLayout extends Layout {
    */
   updateContainerViaDom (node, makeDirty = false) {
     const { container, hugContentsVertically, hugContentsHorizontally } = this;
-    if (!node) node = container.env.renderer.getNodeForMorph(container);
+    if (!node && !(node = this.getNodeFor(container))) return;
+    if (node && this.hasEmbeddedContainer()) node.style.setProperty('display', 'inline-flex', 'important');
     const width = Math.round(node.offsetWidth);
     const height = Math.round(node.offsetHeight);
     if (width == 0 && height == 0) return; // we are probably not rendered
-    if (node && this.hasEmbeddedContainer()) node.style.setProperty('display', 'inline-flex', 'important');
+
     if (this.container.submorphs.length > 0) {
       if (hugContentsVertically && container.height != height) {
         container.height = height;
@@ -676,7 +706,7 @@ export class TilingLayout extends Layout {
    * @param { Morph } morph - The layoutable submorph for which to update the bounds for.
    */
   updateBoundsFor (morph) {
-    const node = morph.env.renderer.getNodeForMorph(morph);
+    const node = this.getNodeFor(morph);
     if (node) {
       this.updateSubmorphViaDom(morph, node);
     } else {
@@ -690,7 +720,7 @@ export class TilingLayout extends Layout {
   addSubmorphCSS (morph, style) {
     if (!morph.isLayoutable) return;
     const { axis, hugContentsVertically, _align: align, axisAlign, hugContentsHorizontally, layoutableSubmorphs } = this;
-    const node = morph.env.renderer.getNodeForMorph(morph);
+    const node = this.getNodeFor(morph);
     const clip = morph.clipMode != 'visible';
     const isVertical = axis == 'column';
     if (node) {
@@ -761,15 +791,14 @@ export class TilingLayout extends Layout {
   measureAfterRender (submorph) {
     // this introduces some lag. maybe fixed once we move to vanilla dom.
     submorph.whenRendered().then(() => {
-      if (!submorph.env.renderer) return;
-      const target = submorph.env.renderer.getNodeForMorph(submorph);
+      const target = this.getNodeFor(submorph);
       target && this.ensureBoundsMonitor(target, submorph);
     });
   }
 
   ensureBoundsMonitor (target, submorph) {
     // repurpose for fast dom measuring
-    if (!submorph.isLayoutable) return;
+    if (submorph != this.container && !submorph.isLayoutable) return;
     this.onDomResize(target, submorph);
     if (submorph._correctRender) {
       submorph._correctRender(target);
@@ -809,11 +838,14 @@ export class TilingLayout extends Layout {
     const {
       axis, padding, _align: align, axisAlign,
       hugContentsHorizontally, hugContentsVertically,
-      wrapSubmorphs, spacing, justifySubmorphs
+      wrapSubmorphs, spacing, justifySubmorphs, container
     } = this;
     this._configChanged = false;
     if (containerMorph.visible) style.display = 'flex';
-    style.gap = `${spacing}px`;
+    const spacingOffset = axis == 'row'
+      ? container.borderWidthLeft + container.borderWidthRight
+      : container.borderWidthTop + container.borderWidthBottom;
+    style.gap = `${spacing + spacingOffset}px`;
     style.justifyContent = ({
       left: 'flex-start',
       center: 'center',
@@ -855,6 +887,9 @@ export class TilingLayout extends Layout {
   delaySubmorphBounds () {
     this.layoutableSubmorphs.forEach(m => {
       if (this.hasBoundsConnection(m)) {
+        this.measureAfterRender(m);
+      } else if (m.isEllipse) {
+        // fixme: There is still a rendering glitch which occurs due to the async nature of the virtual dom render  loop
         this.measureAfterRender(m);
       } else {
         m._askLayoutForBounds = true; // only if this is confirmed by a resize observer
@@ -2565,30 +2600,33 @@ export class GridLayout extends Layout {
     }
     for (const r of arr.range(0, this.rowCount - 1)) {
       const row = this.grid.row(r);
-      rows.push(r, {
-        ...(row.fixed
-          ? {
-              fixed: row.length
-            }
-          : {
-              height: row.height
-            }),
-        paddingTop: row.paddingTop,
-        paddingBottom: row.paddingBottom
-      });
+      const rowSpec = row.fixed
+        ? {
+            fixed: row.length
+          }
+        : {
+            height: row.height
+          };
+      if (row.paddingTop) { rowSpec.paddingTop = row.paddingTop; }
+      if (row.paddingBottom) { rowSpec.paddingBottom = row.paddingBottom; }
+      rows.push(r, rowSpec);
     }
     for (const c of arr.range(0, this.columnCount - 1)) {
       const col = this.grid.col(c);
-      columns.push(c, {
+      const colSpec = {
         ...(col.fixed
           ? {
               fixed: col.length
             }
-          : {}),
-        paddingLeft: col.paddingLeft,
-        paddingRight: col.paddingRight
-      });
+          : {
+              width: col.width
+            })
+      };
+      if (col.paddingLeft) { colSpec.paddingLeft = col.paddingLeft; }
+      if (col.paddingRight) { colSpec.paddingRight = col.paddingRight; }
+      columns.push(c, colSpec);
     }
+
     for (const cell of this.cellGroups) {
       if (cell.state.morph) {
         groups[typeof cell.state.morph === 'string' ? cell.state.morph : cell.morph.name] = obj.select(cell, ['align', 'resize']);
@@ -2942,8 +2980,7 @@ export class GridLayout extends Layout {
   tryToMeasureNodeNow (layoutableSubmorph) {
     const group = this.getCellGroupFor(layoutableSubmorph);
     if (!group) return;
-    const renderer = layoutableSubmorph.env.renderer;
-    const node = renderer && renderer.getNodeForMorph(layoutableSubmorph);
+    const node = this.getNodeFor(layoutableSubmorph);
     if (node) {
       this.updateSubmorphViaDom(layoutableSubmorph, node, group.resize);
     } else {
@@ -2959,7 +2996,7 @@ export class GridLayout extends Layout {
     this.updateContainerViaDom();
     for (let { resize, morph: layoutableSubmorph } of this.cellGroups) {
       if (!layoutableSubmorph) continue;
-      const node = layoutableSubmorph.env.renderer.getNodeForMorph(layoutableSubmorph);
+      const node = this.getNodeFor(layoutableSubmorph);
       if (!node) continue;
       this.updateSubmorphViaDom(layoutableSubmorph, node, resize, true);
     }
@@ -3005,7 +3042,8 @@ export class GridLayout extends Layout {
    */
   updateContainerViaDom () {
     const renderer = this.container.env.renderer;
-    const node = renderer.getNodeForMorph(this.container);
+    if (!renderer) return;
+    const node = this.getNodeFor(this.container);
     if (node && this.hasEmbeddedContainer()) {
       node.style.setProperty('display', 'inline-grid', 'important');
     }
@@ -3102,8 +3140,7 @@ export class GridLayout extends Layout {
   patchContainer () {
     if (!this.container.owner) return;
     const m = this.container;
-    const renderer = m.env.renderer;
-    const node = renderer && renderer.getNodeForMorph(m);
+    const node = this.getNodeFor(m);
     if (node) {
       this.addContainerCSS(m, node.style);
     }
@@ -3121,10 +3158,30 @@ export class GridLayout extends Layout {
     const renderer = this.container.renderer;
     groupsToMeasure.forEach(({ morph: m, resize }) => {
       if (!m) return;
-      const node = renderer && renderer.getNodeForMorph(m);
+      const node = this.getNodeFor(m);
       if (node) {
         this.updateSubmorphViaDom(m, node, resize);
       }
     });
+  }
+
+  /**
+   * Convenience method that allows us to determine wether or not a particular
+   * morph is being resizes *horizontally* by the grid.
+   * @param {Morph} aMorph - The morph to check for.
+   */
+  resizesMorphHorizontally (aMorph) {
+    const g = this.getCellGroupFor(aMorph);
+    return g && g.resize;
+  }
+
+  /**
+   * Convenience method that allows us to determine wether or not a particular
+   * morph is being resizes *vertically* by the grid.
+   * @param {Morph} aMorph - The morph to check for.
+   */
+  resizesMorphVertically (aMorph) {
+    const g = this.getCellGroupFor(aMorph);
+    return g && g.resize;
   }
 }
