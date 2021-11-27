@@ -135,7 +135,7 @@ export class LivelyWorld extends World {
 
   withTopBarDo (cb) {
     const topBar = this.get('lively top bar');
-    if (topBar) cb(topBar);
+    if (topBar) cb(topBar.viewModel);
   }
 
   onTopBarLoaded () {}
@@ -650,7 +650,7 @@ export class LivelyWorld extends World {
     if (!StatusMessageForMorph) return;
     if (!StatusMessageComponent) StatusMessageComponent = StatusMessageDefault;
     this.visibleStatusMessagesFor(morph).forEach(ea => ea.remove());
-    const msgMorph = part(StatusMessageComponent, { viewModel: { slidable: false, message, ...props } });
+    const msgMorph = part(StatusMessageComponent, { epiMorph: true, viewModel: { slidable: false, message, ...props } });
     this.openStatusMessage(msgMorph, delay);
     msgMorph.alignAtBottomOf(morph);
     msgMorph.targetMorph = morph;
@@ -666,7 +666,7 @@ export class LivelyWorld extends World {
     if (!StatusMessageComponent) StatusMessageComponent = StatusMessageDefault;
     console[StatusMessageComponent == StatusMessageError ? 'error' : 'log'](message);
     return config.verboseLogging
-      ? this.openStatusMessage(part(StatusMessageComponent, { viewModel: { message }, hasFixedPosition: true, width: 300, ...optStyle }), delay)
+      ? this.openStatusMessage(part(StatusMessageComponent, { epiMorph: true, viewModel: { message }, hasFixedPosition: true, width: 300, ...optStyle }), delay)
       : null;
   }
 
@@ -1184,7 +1184,13 @@ export class LivelyWorld extends World {
     const removeLayoutHalo = evt.layoutHalo && !evt.targetMorphs.find(morph => morph.isHaloItem);
     const addHalo = (!evt.halo || removeHalo) && haloTarget;
     if (removeLayoutHalo) evt.layoutHalo.remove();
-    if (removeHalo) evt.halo.remove();
+    if (removeHalo) {
+      evt.halo.remove();
+      this.withTopBarDo(tb => {
+        if (tb.stylingPalette) { tb.stylingPalette.clearFocus(); }
+        if (tb.sideBar) { tb.sideBar.clearFocus(); }
+      });
+    }
     if (addHalo) {
       evt.stop();
       this.showHaloFor(haloTarget, evt.domEvt.pointerId);

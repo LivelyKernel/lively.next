@@ -179,11 +179,9 @@ export class StatusMessage extends ViewModel {
     const text = this.ui.messageText;
     text.lineWrapping = false;
     Object.assign(text, { clipMode: 'auto', readOnly: true, reactsToPointer: true });
+    text.fixedWidth = false;
     if (this.expandedContent) text.value = this.expandedContent;
-    await text.whenRendered();
     text.document.getLine(0).hasEstimatedExtent = true;
-    text.makeDirty();
-    await text.whenRendered();
     let ext = text.textBounds().extent();
     const visibleBounds = world.visibleBounds();
     if (ext.y > visibleBounds.extent().y) ext.y = visibleBounds.extent().y - 200;
@@ -194,7 +192,7 @@ export class StatusMessage extends ViewModel {
       easing: easings.outExpo
     });
     this.view.animate({
-      width: ext.x,
+      width: ext.x + 50,
       center: visibleBounds.center(),
       easing: easings.outExpo,
       duration: 200
