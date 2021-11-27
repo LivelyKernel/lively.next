@@ -233,8 +233,8 @@ export class Renderer {
   renderMorph (morph) {
     const submorphs = this.renderSubmorphs(morph);
     return h('div', {
-      ...defaultAttributes(morph, this),
-      style: defaultStyle(morph)
+      style: defaultStyle(morph),
+      ...defaultAttributes(morph, this)
     }, submorphs);
   }
 
@@ -242,19 +242,19 @@ export class Renderer {
     return this.renderSelectedSubmorphs(morph, morph.submorphs);
   }
 
-  renderSelectedSubmorphs(morph, submorphs) {
-    let {borderWidthLeft, borderWidthTop, origin: {x: oX, y: oY}} = morph,
-        i = submorphs.length - 1, renderedSubmorphs = new Array(i + 1),
-        skipWrapping = morph.layout && morph.layout.renderViaCSS;
+  renderSelectedSubmorphs (morph, submorphs) {
+    let { borderWidthLeft, borderWidthTop, origin: { x: oX, y: oY } } = morph;
+    let i = submorphs.length - 1; let renderedSubmorphs = new Array(i + 1);
+    let skipWrapping = morph.layout && morph.layout.renderViaCSS;
     for (; i >= 0; i--) {
       renderedSubmorphs[i] = this.render(submorphs[i]);
     }
     if (skipWrapping || renderedSubmorphs.length == 0) {
       return renderedSubmorphs;
     }
-    
-    return h("div", {
-      key: "submorphs-" + morph.id,
+
+    return h('div', {
+      key: 'submorphs-' + morph.id,
       style: {
         position: 'absolute',
         left: `${oX - (morph.isPath ? 0 : borderWidthLeft)}px`,

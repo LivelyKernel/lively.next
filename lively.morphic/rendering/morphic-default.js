@@ -358,14 +358,13 @@ MorphAfterRenderHook.prototype.hook = function (node, propertyName, previousValu
     if (Path('morph.layout.renderViaCSS').get(this)) {
       this.morph.layout.ensureBoundsMonitor(node, this.morph);
     }
-    setTimeout(() => { // ensure that style has been applied already, but that is sloooow
-      if (Path('morph.owner.layout.renderViaCSS').get(this)) {
-        this.morph.owner.layout.ensureBoundsMonitor(node, this.morph);
-      }
-      if (Path('morph.layout.renderViaCSS').get(this)) {
-        this.morph.layout.ensureBoundsMonitor(node, this.morph);
-      }
-    });
+  }
+
+  if (Path('morph.owner.layout.renderViaCSS').get(this)) {
+    this.morph.owner.layout.ensureBoundsMonitor(node, this.morph);
+  }
+  if (Path('morph.layout.renderViaCSS').get(this)) {
+    this.morph.layout.ensureBoundsMonitor(node, this.morph);
   }
 
   if (isInDOM || attempt > 3) {
