@@ -16,6 +16,8 @@ import LoadingIndicator from 'lively.components/loading-indicator.js';
 import { gapi } from 'https://apis.google.com/js/platform.js';
 import { pathForBrowserHistory } from 'lively.morphic/helpers.js';
 import ObjectPackage, { interactivelyForkPackage, addScript } from 'lively.classes/object-classes.js';
+import { part } from 'lively.morphic/components/core.js';
+import { TopBar } from 'lively.ide/studio/top-bar.cp.js';
 
 // adoptObject(that, UserInfoWidget)
 // adoptObject(that, LoginWidget)
@@ -62,8 +64,10 @@ export var UserUI = {
     return UserRegistry.current.loadUserFromLocalStorage(config.users.authServerURL);
   },
 
-  async showUserFlap (world = $world) {
-    const topBar = await resource('part://SystemIDE/lively top bar master').read();
+  // fixme: move this logic into the top bar itself...
+  showUserFlap (world = $world) {
+    const topBar = part(TopBar);
+    topBar.epiMorph = true;
     topBar.name = 'lively top bar';
     topBar.hasFixedPosition = true;
     topBar.respondsToVisibleWindow = true;
@@ -75,7 +79,9 @@ export var UserUI = {
     topBar.attachToTarget(world);
     $world.onTopBarLoaded();
     // FIXME
-    System.import('lively.2lively/client.js').then(async m => {
+    System.import('lively.2lively/client.js');
+    (async () => {
+      topBar.showCurrentUser();
       await topBar.whenRendered();
       await topBar.animate({ position: pt(0, 0), dropShadow, duration: 500 }); // tell top bar to show in
       if (!world.metadata) {
@@ -102,12 +108,14 @@ export var UserUI = {
           duration: 500
         });
       }
+      topBar.viewModel.openSideBar('Scene Graph');
+      topBar.viewModel.openSideBar('Styling Palette');
       const versionChecker = await resource('part://SystemUserUI/version checker').read();
       versionChecker.name = 'lively version checker';
       versionChecker.openInWorld();
       versionChecker.relayout();
       versionChecker.checkVersion();
-    });
+    })();
     return topBar;
   },
 
