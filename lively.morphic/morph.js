@@ -84,6 +84,7 @@ export class Morph {
       },
 
       viewModel: {
+        after: ['submorphs'],
         set (vm) {
           if (this.viewModel) this.viewModel.onDeactivate();
           this.setProperty('viewModel', vm);
@@ -879,6 +880,9 @@ export class Morph {
     if (!this.isComponent || this.owner) delete this._pool;
     if (this.master) {
       if (pool.mastersInSubHierarchy) { pool.mastersInSubHierarchy.push(this.master); } else { pool.mastersInSubHierarchy = [this.master]; }
+    }
+    if (this.viewModel) {
+      this.viewModel.attach(this);
     }
   }
 
@@ -2632,6 +2636,7 @@ export class Ellipse extends Morph {
           };
         }
       },
+      isEllipse: { get () { return true; } },
       borderRadiusLeft: { get () { return this.height; }, set () {} },
       borderRadiusRight: { get () { return this.height; }, set () {} },
       borderRadiusTop: { get () { return this.width; }, set () {} },
