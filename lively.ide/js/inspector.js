@@ -1187,14 +1187,12 @@ export default class Inspector extends Morph {
       ...config.codeEditor.defaultStyle,
       textString: ''
     };
-    const rightArrow = Icon.textAttribute('long-arrow-alt-right', { textStyleClasses: ['fas'] });
+    const rightArrow = Icon.textAttribute('long-arrow-alt-right', { textStyleClasses: ['fas'], paddingTop: '2px' });
     const searchBarBounds = rect(0, 0, this.width, 30);
     const searchField = new SearchField({
       styleClasses: ['idle'],
       name: 'searchField'
     });
-
-    rightArrow[1].paddingTop = '2px';
 
     this.submorphs = [
       {

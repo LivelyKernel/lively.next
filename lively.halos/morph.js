@@ -18,6 +18,7 @@ import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } 
 import { CommentBrowser } from 'lively.collab';
 
 import { show } from './markers.js';
+import { part } from 'lively.morphic/components/core.js';
 
 const haloBlue = Color.rgb(23, 160, 251);
 const componentAccent = Color.magenta;
@@ -261,19 +262,13 @@ export default class Halo extends Morph {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // morphic bheavior
+  // morphic behavior
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   remove () {
     this.detachFromTarget();
     super.remove();
   }
-
-  // rk 2017-01-20 FIXME why is this overwritten? To remove the halo from
-  // click-throughs? in that case it should be dealt with in the event code.
-  // Disabling morph position lookup creates a big exception for halos that
-  // might complicate things
-  // morphsContainingPoint (list) { return list; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // accessing
@@ -560,6 +555,10 @@ export default class Halo extends Morph {
 
   onKeyUp (evt) {
     if (!this.changingName) { this.buttonControls.map(b => b.onKeyUp(evt)); }
+  }
+
+  indicateLooseMovement (active) {
+    this.borderBox.borderStyle = active ? 'dotted' : 'solid';
   }
 
   getMesh ({ x, y }, offset = pt(0, 0)) {
@@ -1133,7 +1132,7 @@ class DragHaloItem extends HaloItem {
     };
   }
 
-  valueForPropertyDisplay () { return this.halo.target.position; }
+  valueForPropertyDisplay () { return this._dontShowPosition ? undefined : this.halo.target.position; }
 
   updateAlignmentGuide (active) {
     let mesh = this.halo.getSubmorphNamed('mesh');
@@ -1147,7 +1146,15 @@ class DragHaloItem extends HaloItem {
 
   init () {
     const target = this.halo.target;
+    const interferingLayout = target.owner.layout;
     target.undoStart('drag-halo');
+
+    if (interferingLayout &&
+        interferingLayout.name() == 'Tiling' &&
+        interferingLayout.layoutableSubmorphs.includes(target)) {
+      this._dontShowPosition = true;
+      this.halo.indicateLooseMovement(true);
+    }
     this.halo.state.activeButton = this;
     this.actualPos = target.position;
     this.targetTransform = target.owner.getGlobalTransform().inverse();
@@ -1157,6 +1164,8 @@ class DragHaloItem extends HaloItem {
     this.halo.target.undoStop('drag-halo');
     this.halo.state.activeButton = null;
     this.halo.alignWithTarget();
+    this.halo.indicateLooseMovement(false);
+    this._dontShowPosition = false;
     this.updateAlignmentGuide(false);
     removeSnapToGuidesOf(this.halo.target);
   }
@@ -1200,7 +1209,7 @@ class InspectHaloItem extends HaloItem {
 
   onMouseDown (evt) {
     (async () => {
-      const { default: Inspector } = await System.import('lively.ide/js/inspector.js');
+      const { SystemInspector } = await System.import('lively.ide/js/inspector/ui.cp.js');
       const existing = this.world().getSubmorphsByStyleClassName('Inspector')
         .find(i => i.targetObject == this.halo.target);
       let win;
@@ -1209,7 +1218,7 @@ class InspectHaloItem extends HaloItem {
         win.activate();
         win.animate({ center: this.world().visibleBounds().center(), duration: 200 });
       } else {
-        Inspector.openInWindow({ targetObject: this.halo.target });
+        part(SystemInspector, { viewModel: { targetObject: this.halo.target } }).openInWindow();
       }
       this.halo.remove();
     })();
