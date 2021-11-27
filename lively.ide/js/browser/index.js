@@ -1104,6 +1104,7 @@ export default class Browser extends Morph {
       this.updateModuleList();
     } finally {
       this.indicateFrozenModuleIfNeeded();
+      await this.injectComponentTrackers();
       if (deferred) {
         this.state.moduleUpdateInProgress = null;
         deferred.resolve(m);
